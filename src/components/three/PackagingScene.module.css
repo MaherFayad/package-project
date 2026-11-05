@@ -44,3 +44,34 @@
   color: var(--p-color-text-secondary, #616161);
   text-align: center;
 }
+
+/* Added by finishes: poster-to-canvas cross-fade. */
+.poster {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 480ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.poster[data-hidden="true"] {
+  opacity: 0;
+}
+
+.canvas[data-fade] {
+  transition: opacity 480ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.canvas[data-fade="out"] {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .poster,
+  .canvas[data-fade] {
+    transition: none;
+  }
+}

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600" role="img" aria-label="Self-locking display tray">
+<rect width="800" height="600" fill="#f7f7f7"/>
+<ellipse cx="400" cy="478.3" rx="273.6" ry="33" fill="rgba(0,0,0,.07)"/>
+<g stroke="rgba(0,0,0,.18)" stroke-width="1" stroke-linejoin="round"><path d="M687 232.3L305.4 106.9L305.4 214.2L687 339.7Z" fill-rule="evenodd" fill="#98744d"/><path d="M307.9 106.7L113.5 237L113.5 344.4L307.9 214Z" fill-rule="evenodd" fill="#826342"/><path d="M308.4 212.9L118.8 340L118.8 236.4L308.4 109.3Z" fill-rule="evenodd" fill="#8d6f4e"/><path d="M688 337.4L306.4 211.9L112 342.3L493.6 467.7Z" fill-rule="evenodd" fill="#ad8458"/><path d="M682.7 232.3L493.1 359.4L493.1 463L682.7 335.9Z" fill-rule="evenodd" fill="#826342"/><path d="M688 339L493.6 469.3L493.6 362L688 231.6Z" fill-rule="evenodd" fill="#8d6f4e"/><path d="M493.6 469.3L112 343.9L112 236.5L136.5 244.6L186.3 314.6L419.3 391.2L469.1 353.9L493.6 362Z" fill-rule="evenodd" fill="#a4815b"/></g>
+</svg>

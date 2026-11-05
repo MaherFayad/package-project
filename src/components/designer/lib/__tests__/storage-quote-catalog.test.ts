@@ -81,7 +81,8 @@ describe("catalog routing", () => {
     expect(structureFromParam("mailer-box")).toBe("FEFCO_0427");
     expect(structureFromParam("fefco_0201")).toBe("FEFCO_0201");
     expect(structureFromParam("ECMA-RTE")).toBe("ECMA_RTE");
-    expect(structureFromParam("rigid-box")).toBeNull();
+    expect(structureFromParam("rigid-box")).toBe("RIGID_BOX");
+    expect(structureFromParam("gift-bag")).toBeNull();
     expect(designerPath("ar", "PIZZA", { preset: "pizza-30", d: undefined })).toBe("/ar/design/pizza-box?preset=pizza-30");
   });
 

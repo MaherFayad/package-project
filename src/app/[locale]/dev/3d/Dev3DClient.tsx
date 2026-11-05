@@ -321,7 +321,7 @@ export function Dev3DClient({ locale }: { locale: Locale }) {
           </label>
 
           <div className={styles.row}>
-            {(["iso", "front", "back", "left", "right", "top"] as const).map((v) => (
+            {(["iso", "front", "back", "left", "right", "top", "bottom"] as const).map((v) => (
               <button key={v} type="button" className={styles.button} onClick={() => viewRef.current?.setView(v)}>
                 {v}
               </button>

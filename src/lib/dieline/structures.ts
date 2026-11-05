@@ -388,7 +388,11 @@ export function rsc(dims: Dims, t: number, f: StructureFeatures = {}): Structure
   s.build();
   if (f.handle) handHoles(b, ["left", "right"], Math.max(25, dims.H * 0.1));
   if (f.tearStrip) tearBand(b, ["front", "right", "back", "left"], Math.min(60, dims.H * 0.3));
-  if (f.partitions) addPartitions(b, t, IDENTITY, dims, f.partitions, 2 * t);
+  if (f.partitions) {
+    // Bottom flaps (stages 1–2) close, the dividers drop in (3), then the top flaps (4–5).
+    defer(b, (p) => p.id.startsWith("topFlap_"), 3);
+    addPartitions(b, t, IDENTITY, dims, f.partitions, 2 * t, 3);
+  }
   return { builder: b, closedRotation: IDENTITY };
 }
 
@@ -417,7 +421,10 @@ export function telescope(dims: Dims, t: number, f: StructureFeatures = {}): Str
 
   if (f.thumbNotch) for (const id of ["front", "back"]) notchPanel(b.byId(id), rectEdges(base.walls[id as "front" | "back"]).top, Math.min(15, dims.L * 0.08));
   if (f.handle && lidH < dims.H * 0.6) handHoles(b, ["left", "right"], lidH + 10);
-  if (f.partitions) addPartitions(b, t, IDENTITY, dims, f.partitions, 2 * t);
+  if (f.partitions) {
+    defer(b, (p) => p.id === "lid_front", 1); // dividers (3) before the lid (4)
+    addPartitions(b, t, IDENTITY, dims, f.partitions, 2 * t, 3);
+  }
   return { builder: b, closedRotation: IDENTITY, faceDepthTol: clear + t + 0.5 };
 }
 
@@ -567,7 +574,11 @@ export function trayWithLid(dims: Dims, t: number, o: TrayOpts, f: StructureFeat
       p.holes = [...(p.holes ?? []), stadium(mid.x + (c.x - mid.x) * k, mid.y + (c.y - mid.y) * k, w, h)];
     }
   }
-  if (f.partitions) addPartitions(b, t, closedRotation, dims, f.partitions, t);
+  if (f.partitions) {
+    // Dividers go in before the lid closes.
+    if (o.lid) defer(b, (p) => ["top", "lidTuck", "lidDustL", "lidDustR"].includes(p.id), 1);
+    addPartitions(b, t, closedRotation, dims, f.partitions, t, 3);
+  }
   return { builder: b, closedRotation };
 }
 
@@ -609,12 +620,21 @@ export function displayTray(dims: Dims, t: number, f: StructureFeatures = {}): S
 
 /* ───────────────────────── Partitions (divider grid) ───────────────────────── */
 
+/** Push the closing panels (lid, top flaps, lid piece) `by` stages later. */
+function defer(b: DielineBuilder, match: (p: DielinePanel) => boolean, by: number) {
+  for (const p of b.panels) {
+    if (!match(p)) continue;
+    if (p.assembly) p.assembly.stage += by;
+    else p.foldStage += by;
+  }
+}
+
 /**
  * Slotted divider strips (separate blanks) laid below the box on the sheet and assembled
  * into a rows × cols grid inside the closed box. Strips along L are slotted from the top,
  * strips along W from the bottom (half height each), so they interlock.
  */
-function addPartitions(b: DielineBuilder, t: number, closedRotation: [number, number, number, number], dims: Dims, grid: { rows: number; cols: number }, floor: number) {
+function addPartitions(b: DielineBuilder, t: number, closedRotation: [number, number, number, number], dims: Dims, grid: { rows: number; cols: number }, floor: number, stageAt?: number) {
   const box = mainClosedBounds(b, t, closedRotation);
   const cx = (box.min.x + box.max.x) / 2;
   const cz = (box.min.z + box.max.z) / 2;
@@ -625,7 +645,7 @@ function addPartitions(b: DielineBuilder, t: number, closedRotation: [number, nu
   const slotW = t + 0.6;
   const xs = Array.from({ length: grid.cols - 1 }, (_, i) => cx - dims.L / 2 + ((i + 1) * dims.L) / grid.cols);
   const zs = Array.from({ length: grid.rows - 1 }, (_, i) => cz - dims.W / 2 + ((i + 1) * dims.W) / grid.rows);
-  const stage = maxStageOf(b) + 1;
+  const stage = stageAt ?? maxStageOf(b) + 1;
   let sx = sheetLeft(b);
   const sy = sheetBottom(b) + 15;
 
@@ -802,7 +822,9 @@ export function paperTube(dims: Dims, t: number, f: StructureFeatures = {}): Str
       }
       if (body) {
         // body top edge sits t below the closed top (under the lid disc)
-        parts.push({ panelId: body.id, rect: { x: u, y: Hl, width: s, height: Math.max(0.5, height - Hl) }, transform: [1, 0, 0, 1, body.bbox.x - u, body.bbox.y - t] });
+        // From the body's top edge (t below the closed top): the label runs on under the
+        // lid, so the design continues when the lid is off.
+        parts.push({ panelId: body.id, rect: { x: u, y: t, width: s, height: Math.max(0.5, height - t) }, transform: [1, 0, 0, 1, body.bbox.x - u, body.bbox.y - t] });
       }
     }
     return { face, width, height, parts };
@@ -909,7 +931,7 @@ export function rigidBox(dims: Dims, t: number, f: StructureFeatures = {}): Stru
       if (near) notchPanel(ti, near, r);
     }
   }
-  if (f.partitions) addPartitions(b, t, closedRotation, dims, f.partitions, t);
+  if (f.partitions) addPartitions(b, t, closedRotation, dims, f.partitions, t, 2); // before the lid (3)
   return { builder: b, closedRotation, faceDepthTol: clear + t + 0.5 };
 }
 

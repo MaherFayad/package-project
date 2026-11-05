@@ -129,7 +129,7 @@ export function VesselModel(props: VesselModelProps) {
   // ---------------------------------------------------------------- geometry
   const body = useDisposable(() => (revolved ? bodyGeometry(profile, 128) : null), [profileKey]);
   const tubeLabel = isTube ? labels.find((l) => l.spec.kind === "WRAP") : undefined;
-  const tubeGeo = useDisposable(() => (isTube ? tubeBodyGeometry(dims, tubeLabel?.spec) : null), [profileKey, isTube, tubeLabel?.spec.id]);
+  const tubeGeo = useDisposable(() => (isTube ? tubeBodyGeometry(dims, tubeLabel?.spec) : null), [profileKey, isTube, tubeLabel ? JSON.stringify(tubeLabel.spec.placement) + tubeLabel.spec.printWidthMm : ""]);
   const pouchGeo = useMemo(() => {
     if (!isPouch) return null;
     const front = pouchPanelGeometry(dims, "front");
@@ -236,7 +236,7 @@ export function VesselModel(props: VesselModelProps) {
   const fillY = (f: number) => profile.baseMm + (profile.fillMaxY - profile.baseMm) * clamp01(f);
 
   useFrame((_, rawDelta) => {
-    const dt = Math.min(rawDelta, 1 / 20);
+    const dt = Math.min(rawDelta, 1 / 8);
     const a = anim.current;
     let busy = false;
     const step = (cur: number, target: number, durS: number) => {

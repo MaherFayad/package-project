@@ -20,6 +20,13 @@ export type BoardColor = "KRAFT" | "WHITE";
 export const FINISH_CODES = ["NONE", "MATTE_LAMINATION", "GLOSS_LAMINATION", "SPOT_UV"] as const;
 export type FinishCode = (typeof FINISH_CODES)[number];
 
+/**
+ * Added by configurator: finishes a printer can offer that rate cards do not price yet
+ * (quoted manually). Listed per vendor in VendorCapabilities.extraFinishes.
+ */
+export const EXTRA_FINISH_CODES = ["SOFT_TOUCH_LAMINATION", "VARNISH", "HOT_FOIL", "EMBOSS", "DEBOSS"] as const;
+export type ExtraFinishCode = (typeof EXTRA_FINISH_CODES)[number];
+
 /** OUTSIDE = 1 side printed, BOTH = outside + inside. */
 export type PrintSides = "OUTSIDE" | "BOTH";
 

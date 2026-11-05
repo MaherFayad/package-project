@@ -18,6 +18,7 @@ import {
   supportedFeatures,
   validateDims,
   type DielineModel,
+  type DielinePanel,
 } from "..";
 
 const model = (code: StructureCode, features?: StructureFeatures, dims = DEFAULT_DIMS[code]) =>
@@ -189,5 +190,40 @@ describe("two-piece structures", () => {
     expect(body.reduce((s, p) => s + p.foldAngleClosed, 0)).toBeCloseTo(360 - body[0].foldAngleClosed, 6);
     // front + back cover the full circumference
     expect(m.faces.front!.width + m.faces.back!.width).toBeCloseTo(Math.PI * (DEFAULT_DIMS.PAPER_TUBE.L + 2 * m.thicknessMm), -1);
+  });
+});
+
+describe("fold animation", () => {
+  const everything: StructureFeatures = { thumbNotch: true, handle: true, tearStrip: true, partitions: { rows: 2, cols: 2 }, displayFront: false };
+  it.each(STRUCTURE_CODES)("%s: every pose is finite through the whole fold, with and without features", (code) => {
+    const win = FEATURE_SUPPORT[code].windowFaces[0];
+    for (const m of [model(code), model(code, { ...everything, ...(win ? { window: { face: win } } : {}) })]) {
+      for (let i = 0; i <= 20; i++) {
+        const poses = computePoses(m, i / 20);
+        for (const pose of poses.values()) expect(pose.world.elements.every(Number.isFinite)).toBe(true);
+      }
+    }
+  });
+
+  it("dividers go in before the lid closes", () => {
+    for (const code of ["FEFCO_0427", "FEFCO_0201", "FEFCO_0320", "RIGID_BOX"] as const) {
+      const m = model(code, { partitions: { rows: 2, cols: 2 } });
+      const div = Math.min(...m.panels.filter((p) => p.assembly && p.role === "inner").map((p) => p.assembly!.stage));
+      const closing = (p: DielinePanel) =>
+        (p.assembly && p.role !== "inner") || (code === "FEFCO_0427" && ["top", "lidTuck"].includes(p.id)) || (code === "FEFCO_0201" && p.id.startsWith("topFlap_"));
+      const lidStages = m.panels.filter(closing).map((p) => p.assembly?.stage ?? p.foldStage);
+      expect(lidStages.length).toBeGreaterThan(0);
+      for (const s of lidStages) expect(s).toBeGreaterThan(div);
+    }
+  });
+});
+
+describe("illustration", () => {
+  it.each(STRUCTURE_CODES)("%s renders a clean SVG thumbnail from the fold model", async (code) => {
+    const { structureIllustrationSvg } = await import("..");
+    const out = structureIllustrationSvg(model(code), { outside: "#c49a6c", inside: "#b58a5c", title: STRUCTURES[code].name.en });
+    expect(out.startsWith("<svg")).toBe(true);
+    expect(out).not.toMatch(/NaN|undefined|Infinity/);
+    expect((out.match(/<path /g) ?? []).length).toBeGreaterThan(3);
   });
 });

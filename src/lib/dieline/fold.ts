@@ -62,9 +62,17 @@ export function rootIds(input: Pick<DielineModel, "panels" | "rootId">): string[
  * points (X = sheet x, Y = -sheet y) to model space; flat on the sheet it sits where it
  * was cut, next to the main blank, then moves to its assembled place.
  */
-export function assemblyPoseAt(panel: DielinePanel, progress: number, stages: number, mainPivot: Vector3, ownPivot: Vector3): Matrix4 {
+export function assemblyPoseAt(
+  panel: DielinePanel,
+  progress: number,
+  stages: number,
+  mainPivot: Vector3,
+  ownPivot: Vector3,
+  /** Main root's rotation now × its closed rotation⁻¹: pieces ride along while it tilts. */
+  follow: Matrix4 = new Matrix4(),
+): Matrix4 {
   const flat = new Matrix4().makeTranslation(-mainPivot.x, -mainPivot.y, -mainPivot.z);
-  const target = new Matrix4().fromArray(panel.assembly!.matrix);
+  const target = follow.clone().multiply(new Matrix4().fromArray(panel.assembly!.matrix));
   const a = panelFoldAmount({ ...panel, foldStage: panel.assembly!.stage }, progress, stages);
   const own = new Matrix4().makeTranslation(ownPivot.x, ownPivot.y, ownPivot.z);
   if (a <= 0) return flat.multiply(own);
@@ -142,7 +150,12 @@ export function computePoses(input: FoldInput, progress: number): Map<string, Pa
     pivots.set(panel.id, pivot);
     const local = new Matrix4();
     if (!panel.parentId) {
-      if (panel.assembly) local.copy(assemblyPoseAt(panel, progress, stages, pivots.get(input.rootId)!, pivot));
+      if (panel.assembly) {
+        const follow = new Matrix4()
+          .makeRotationFromQuaternion(rootRotationAt(input, progress))
+          .multiply(new Matrix4().makeRotationFromQuaternion(new Quaternion(...input.closedRotation)).invert());
+        local.copy(assemblyPoseAt(panel, progress, stages, pivots.get(input.rootId)!, pivot, follow));
+      }
       else local.makeRotationFromQuaternion(rootRotationAt(input, progress));
       poses.set(panel.id, { local, world: local.clone() });
       continue;

@@ -5,7 +5,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, type ReactElement } from "
 import { Color, DoubleSide, MeshBasicMaterial, MeshPhysicalMaterial, Vector3, type BufferGeometry, type Group, type Texture } from "three";
 import type { FinishCode, MaterialCode } from "@/types";
 import { boardAppearance, boundsAt, computePoses, rootIds, type BoardAppearance, type DielineModel, type DielinePanel, type Segment } from "@/lib/dieline";
-import { createBoardMaterials } from "./boardMaterials";
+import { createBoardMaterials, type BoardMaterialSet } from "./boardMaterials";
 import { buildFilmGeometry, buildPanelGeometry, buildPerfGeometry, pointInPolygon } from "./panelGeometry";
 
 /** World units are metres; dieline geometry is in millimetres. */
@@ -31,6 +31,11 @@ export interface PackagingModelProps {
    */
   foldProgress: number | { readonly current: number };
   castShadow?: boolean;
+  /**
+   * Added by finishes: use these [outside, inside, edge] materials instead of building them
+   * (FinishedPackagingModel owns and disposes them; `material` / `finish` are then ignored).
+   */
+  materialsOverride?: BoardMaterialSet;
 }
 
 /**
@@ -45,6 +50,7 @@ export function PackagingModel({
   printInside,
   foldProgress,
   castShadow = true,
+  materialsOverride,
 }: PackagingModelProps) {
   const invalidate = useThree((s) => s.invalidate);
   const appearance = typeof material === "string" ? boardAppearance(material) : material;
@@ -52,13 +58,15 @@ export function PackagingModel({
   const insideMap = artworkTextures?.inside ?? null;
   const showInside = printInside ?? !!insideMap;
 
-  const materials = useMemo(
-    () => createBoardMaterials({ appearance, finish, outsideMap, insideMap, sheet: dieline.sheet, printInside: showInside }),
+  const ownMaterials = useMemo(
+    () =>
+      materialsOverride ? null : createBoardMaterials({ appearance, finish, outsideMap, insideMap, sheet: dieline.sheet, printInside: showInside }),
     // appearance is derived from `material`; compare its fields, not identity
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [JSON.stringify(appearance), finish, outsideMap, insideMap, dieline.sheet.width, dieline.sheet.height, showInside],
+    [materialsOverride, JSON.stringify(appearance), finish, outsideMap, insideMap, dieline.sheet.width, dieline.sheet.height, showInside],
   );
-  useEffect(() => () => materials.dispose(), [materials]);
+  useEffect(() => () => ownMaterials?.dispose(), [ownMaterials]);
+  const materials = (materialsOverride ?? ownMaterials)!;
 
   const geometries = useMemo(() => new Map(dieline.panels.map((p) => [p.id, buildPanelGeometry(dieline, p)])), [dieline]);
   useEffect(() => () => geometries.forEach((g) => g.dispose()), [geometries]);

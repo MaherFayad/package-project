@@ -85,8 +85,14 @@ function buildDieline(code: StructureCode, dims: Dims, options: DielineOptions):
 
   // Creases = hinges (+ extra creases). Roll hinges are virtual: neither cut nor crease.
   const hinges: Segment[] = panels.flatMap((p) => (p.hinge ? [p.hinge] : []));
+  // A crease only runs where the child panel actually has board along its hinge (a notch
+  // through a turn-in leaves a gap in the crease, not a scored line across the hole).
+  const creaseOf = (p: DielinePanel): Segment[] => {
+    const gaps = subtractSegments(p.hinge!, edgesOf(p.polygon));
+    return gaps.length ? subtractSegments(p.hinge!, gaps) : [p.hinge!];
+  };
   const creaseLines: Segment[] = [
-    ...panels.flatMap((p) => (p.hinge && p.hingeKind !== "roll" ? [p.hinge] : [])),
+    ...panels.flatMap((p) => (p.hinge && p.hingeKind !== "roll" ? creaseOf(p) : [])),
     ...draft.builder.extraCreases.map(mvSeg),
   ];
   const cutLines: Segment[] = [];

@@ -1,5 +1,5 @@
 import type { LocalizedText } from "./common";
-import type { FinishCode, MaterialCode } from "./material";
+import type { ExtraFinishCode, FinishCode, MaterialCode } from "./material";
 import type { StructureCode } from "./structure";
 
 /** Canonical city keys (Vendor.city). Labels live in the dictionaries under `cities.*`. */
@@ -32,6 +32,8 @@ export interface VendorCapabilities {
   maxColors: number;
   digitalShortRun: boolean; // can do < 500 units economically
   monthlyCapacityUnits: number;
+  /** Added by configurator: finishes quoted manually (foil, emboss, soft-touch…). Missing = none. */
+  extraFinishes?: ExtraFinishCode[];
 }
 
 /** Stored in Vendor.certifications (Json array). */

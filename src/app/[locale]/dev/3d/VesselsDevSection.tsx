@@ -289,7 +289,7 @@ export function VesselsDevSection() {
                 closureColor={closureColor}
                 liquid={liquid}
                 fill={fill}
-                labels={painted}
+                labels={painted.filter((l) => specs.includes(l.spec))}
                 artworkVersion={artVersion}
                 quality={quality}
                 open={open}
@@ -415,7 +415,7 @@ export function VesselsDevSection() {
       </div>
 
       {specs.length && activeSpec ? (
-        <Card title="Print areas" padding="0">
+        <Card title="Print areas">
           <Tabs tabs={specs.map((s) => ({ id: `spec-${s.id}`, content: SURFACE_LABEL[s.kind] }))} selected={Math.min(tab, specs.length - 1)} onSelect={setTab}>
             <SpecPanel key={activeSpec.id} spec={activeSpec} artUrl={artUrl} choice={choiceFor(activeSpec)} onChoice={(c) => setChoices((cur) => ({ ...cur, [activeSpec.kind]: c }))} />
           </Tabs>

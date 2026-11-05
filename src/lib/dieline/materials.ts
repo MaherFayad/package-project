@@ -98,7 +98,8 @@ export function boardAppearance(material: MaterialCode): BoardAppearance {
     return { outside: "#f7f5f0", inside: "#ece6da", edge: "#efebe3", fluteColor: null, flutePitchMm: null, roughness: 0.5 };
   }
   if (spec.family === "TUBE") {
-    return { outside: "#f8f7f3", inside: KRAFT_INNER, edge: "#b4895a", fluteColor: null, flutePitchMm: null, roughness: 0.55 };
+    // The label paper is rolled over the tube's rims, so the visible edges read as label.
+    return { outside: "#f8f7f3", inside: KRAFT_INNER, edge: "#e8e2d6", fluteColor: null, flutePitchMm: null, roughness: 0.55 };
   }
   return { outside: SBS_WHITE, inside: "#f0eee8", edge: "#ecebe6", fluteColor: null, flutePitchMm: null, roughness: 0.62 };
 }

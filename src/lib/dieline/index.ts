@@ -44,6 +44,7 @@ export {
   type FeatureKey,
 } from "./features";
 export { tubeSegments } from "./structures";
+export { structureIllustrationSvg, type IllustrationOptions } from "./illustration";
 export {
   computePoses,
   boundsAt,

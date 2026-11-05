@@ -383,7 +383,7 @@
 .spec {
   display: grid;
   gap: var(--p-space-400, 16px);
-  padding: var(--p-space-400, 16px);
+  padding-block-start: var(--p-space-400, 16px);
   grid-template-columns: minmax(0, 1fr);
   animation: hudIn var(--p-motion-duration-200, 200ms) var(--p-motion-ease-out, ease-out) both;
 }

@@ -164,20 +164,21 @@ const structures: StructureSeed[] = [
 
 // Structure-library styles: catalogue facts come from the dieline registry
 // (src/lib/dieline/registry.ts); only the sample rate-card economics live here.
-const LIBRARY_PRICING: Partial<Record<StructureCode, Pick<StructureSeed, "refArea" | "baseTiers" | "dieCost">>> = {
-  FEFCO_0320: { refArea: 0.56, baseTiers: [55, 40, 29, 22, 18], dieCost: 0 },
-  ECMA_CLB: { refArea: 0.12, baseTiers: [22, 13, 8.5, 5.6, 4.2], dieCost: 1100 },
-  ECMA_SLB: { refArea: 0.08, baseTiers: [19, 11, 7, 4.6, 3.4], dieCost: 1000 },
-  FEFCO_0422: { refArea: 0.38, baseTiers: [26, 18, 13, 10, 8], dieCost: 1300 },
-  GABLE_BOX: { refArea: 0.16, baseTiers: [24, 15, 10, 7, 5.5], dieCost: 1300 },
-  PAPER_TUBE: { refArea: 0.09, baseTiers: [60, 42, 30, 24, 20], dieCost: 0 },
-  RIGID_BOX: { refArea: 0.27, baseTiers: [140, 105, 80, 65, 55], dieCost: 700 },
-};
-for (const [code, money] of Object.entries(LIBRARY_PRICING) as [StructureCode, Pick<StructureSeed, "refArea" | "baseTiers" | "dieCost">][]) {
+const LIBRARY_PRICING: { code: StructureCode; slug: string; refArea: number; baseTiers: StructureSeed["baseTiers"]; dieCost: number }[] = [
+  { code: "FEFCO_0320", slug: "telescope-box", refArea: 0.56, baseTiers: [55, 40, 29, 22, 18], dieCost: 0 },
+  { code: "ECMA_CLB", slug: "crash-lock-carton", refArea: 0.12, baseTiers: [22, 13, 8.5, 5.6, 4.2], dieCost: 1100 },
+  { code: "ECMA_SLB", slug: "snap-lock-carton", refArea: 0.08, baseTiers: [19, 11, 7, 4.6, 3.4], dieCost: 1000 },
+  { code: "FEFCO_0422", slug: "display-tray", refArea: 0.38, baseTiers: [26, 18, 13, 10, 8], dieCost: 1300 },
+  { code: "GABLE_BOX", slug: "gable-box", refArea: 0.16, baseTiers: [24, 15, 10, 7, 5.5], dieCost: 1300 },
+  { code: "PAPER_TUBE", slug: "paper-tube", refArea: 0.09, baseTiers: [60, 42, 30, 24, 20], dieCost: 0 },
+  { code: "RIGID_BOX", slug: "rigid-box", refArea: 0.27, baseTiers: [140, 105, 80, 65, 55], dieCost: 700 },
+];
+for (const { code, slug, ...money } of LIBRARY_PRICING) {
   const def = STRUCTURES[code];
+  if (def.slug !== slug) throw new Error(`seed slug ${slug} != registry ${def.slug}`);
   structures.push({
     code,
-    slug: def.slug,
+    slug,
     family: def.family,
     nameAr: def.name.ar,
     nameEn: def.name.en,
