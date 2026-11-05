@@ -21,7 +21,8 @@ describe.each(STRUCTURE_CODES)("panel geometry %s", (code) => {
       const hv = holes.reduce((s, h) => s + h.length, 0);
       // earcut: V - 2 + 2 × holes triangles per face; 2 triangles per outline/aperture edge
       const tris = n + hv - 2 + 2 * holes.length;
-      expect(pos.count).toBe(tris * 3 * 2 + (n + hv) * 6);
+      const rollEdges = (panel.hingeKind === "roll" ? 1 : 0) + model.panels.filter((c) => c.parentId === panel.id && c.hingeKind === "roll").length;
+      expect(pos.count).toBe(tris * 3 * 2 + (n + hv - rollEdges) * 6);
       expect(g.groups.map((x) => x.materialIndex)).toEqual([MAT_OUTSIDE, MAT_INSIDE, MAT_EDGE]);
       expect(Array.from(pos.array as Float32Array).every(Number.isFinite)).toBe(true);
       // outside face points +Z, triangles wound counter-clockwise (front-facing)

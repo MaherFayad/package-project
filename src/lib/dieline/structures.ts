@@ -757,7 +757,7 @@ export function paperTube(dims: Dims, t: number, f: StructureFeatures = {}): Str
   }
   // Label overlap (glued under the other end).
   {
-    const r = rect(x0 + (nR - 1) * s, 0, s, Hb);
+    const r = rect(x0 + nR * s, 0, s, Hb);
     b.attach("bodyGlue", "glue", `body${nR}`, rectEdges(r).right, overlap, { kind: "rect" }, { fold: roll, stage: 0, stack: -1, hingeKind: "roll", label: "Label overlap" });
   }
   disc("body0", "bodyBottom", rectEdges(rect(x0, 0, s, Hb)).bottom, s, "bottom", "Bottom end");
@@ -780,7 +780,7 @@ export function paperTube(dims: Dims, t: number, f: StructureFeatures = {}): Str
     b.attach(`lid${N - j}`, N - j >= (3 * N) / 4 ? "front" : "back", parent, rectEdges(r).left, sl, { kind: "rect" }, { fold: roll, stage: 0, hingeKind: "roll", label: "Lid label" });
   }
   {
-    const r = rect(xl0 + (nR - 1) * sl, y0, sl, Hl);
+    const r = rect(xl0 + nR * sl, y0, sl, Hl);
     b.attach("lidGlue", "glue", `lid${nR}`, rectEdges(r).right, overlap, { kind: "rect" }, { fold: roll, stage: 0, stack: -1, hingeKind: "roll", label: "Label overlap" });
   }
   disc("lid0", "lidTop", rectEdges(lidRootRect).top, sl, "top", "Lid top");

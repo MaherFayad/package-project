@@ -104,7 +104,13 @@ export function buildPanelGeometry(model: DielineModel, panel: DielinePanel): Bu
   geo.addGroup(start, pos.length / 3 - start, MAT_INSIDE);
   start = pos.length / 3;
 
-  // Cut edges: outline (normals outward) and apertures (normals into the hole).
+  // Cut edges: outline (normals outward) and apertures (normals into the hole). Edges on a
+  // roll hinge are inside the curved wall: no side face there (it would show as a seam).
+  const rollHinges: Segment[] = [
+    ...(panel.hinge && panel.hingeKind === "roll" ? [panel.hinge] : []),
+    ...model.panels.filter((c) => c.parentId === panel.id && c.hinge && c.hingeKind === "roll").map((c) => c.hinge!),
+  ];
+  const onRoll = (a: Pt, b: Pt) => rollHinges.some((h) => onSegment(a, h) && onSegment(b, h));
   const pitch = model.thicknessMm >= 1 ? (model.thicknessMm >= 2.5 ? 6.5 : 3.3) : 10;
   let base = 0;
   loops.forEach((loop, li) => {
@@ -121,6 +127,10 @@ export function buildPanelGeometry(model: DielineModel, panel: DielinePanel): Bu
       const e = new Vector3().subVectors(o[j], o[i]);
       const l = e.length();
       if (l < 1e-6) continue;
+      if (li === 0 && onRoll(loop[i], loop[j])) {
+        run += l;
+        continue;
+      }
       const normal = new Vector3(e.y, -e.x, 0).normalize();
       if (flip) normal.negate();
       const u0 = run / pitch;

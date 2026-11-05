@@ -418,12 +418,22 @@
   min-block-size: 160px;
 }
 
-.templateSvg :global(svg) {
-  display: block;
-  inline-size: 100%;
-  block-size: auto;
+.templateArt {
+  position: relative;
+  inline-size: min(100%, calc(340px * var(--ratio, 3)));
+  max-inline-size: 100%;
   max-block-size: 340px;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.12));
+}
+
+.templateImg,
+.templateGuides,
+.templateGuides :global(svg) {
+  position: absolute;
+  inset: 0;
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
 }
 
 .templateLegend {

@@ -223,6 +223,14 @@ export function VesselsDevSection() {
   const transparent = VESSEL_MATERIALS[material].transparent;
   const env = description.envelope;
 
+  // picture of the painted artwork for the flat template preview
+  const [artUrl, setArtUrl] = useState<string | null>(null);
+  const activeId = activeSpec?.id;
+  useEffect(() => {
+    const c = activeId ? canvases.current.get(activeId) : undefined;
+    setArtUrl(c && c.width > 2 ? c.toDataURL("image/png") : null);
+  }, [artVersion, activeId]);
+
   return (
     <section ref={sectionRef} className={styles.section} aria-labelledby="vessels-title">
       <header className={styles.header}>
@@ -409,7 +417,7 @@ export function VesselsDevSection() {
       {specs.length && activeSpec ? (
         <Card title="Print areas" padding="0">
           <Tabs tabs={specs.map((s) => ({ id: `spec-${s.id}`, content: SURFACE_LABEL[s.kind] }))} selected={Math.min(tab, specs.length - 1)} onSelect={setTab}>
-            <SpecPanel key={activeSpec.id} spec={activeSpec} choice={choiceFor(activeSpec)} onChoice={(c) => setChoices((cur) => ({ ...cur, [activeSpec.kind]: c }))} />
+            <SpecPanel key={activeSpec.id} spec={activeSpec} artUrl={artUrl} choice={choiceFor(activeSpec)} onChoice={(c) => setChoices((cur) => ({ ...cur, [activeSpec.kind]: c }))} />
           </Tabs>
         </Card>
       ) : (
@@ -423,8 +431,8 @@ export function VesselsDevSection() {
   );
 }
 
-function SpecPanel({ spec, choice, onChoice }: { spec: LabelSpec; choice: SurfaceChoice; onChoice: (c: SurfaceChoice) => void }) {
-  const svg = useMemo(() => labelSvg(spec, { title: `${spec.name.en} template` }), [spec]);
+function SpecPanel({ spec, artUrl, choice, onChoice }: { spec: LabelSpec; artUrl: string | null; choice: SurfaceChoice; onChoice: (c: SurfaceChoice) => void }) {
+  const svg = useMemo(() => labelSvg(spec, { title: `${spec.name.en} template`, overlay: !!artUrl }), [spec, artUrl]);
   const runs = [1000, 5000, 10000].map((q) => ({ q, run: labelRun(spec, q) }));
   const finishes = finishesForStock(choice.stock);
   const rows: [string, string][] = [
@@ -446,7 +454,15 @@ function SpecPanel({ spec, choice, onChoice }: { spec: LabelSpec; choice: Surfac
   return (
     <div className={styles.spec}>
       <div className={styles.template}>
-        <div className={styles.templateSvg} dangerouslySetInnerHTML={{ __html: svg }} />
+        <div className={styles.templateSvg}>
+          <div className={styles.templateArt} style={{ aspectRatio: `${spec.printWidthMm} / ${spec.printHeightMm}` }}>
+            {artUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={artUrl} alt="" className={styles.templateImg} />
+            ) : null}
+            <div className={styles.templateGuides} dangerouslySetInnerHTML={{ __html: svg }} />
+          </div>
+        </div>
         <p className={styles.templateLegend}>
           <span className={styles.keyTrim} /> Trim <span className={styles.keyBleed} /> Bleed <span className={styles.keySafe} /> Safe zone
           {spec.overlapMm ? (

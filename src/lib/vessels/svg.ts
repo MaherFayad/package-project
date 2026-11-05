@@ -6,6 +6,8 @@ export interface LabelSvgOptions {
   guides?: boolean;
   /** Fill of the label face. Default white. */
   face?: string;
+  /** Guides only (no fills), to lay over a picture of the artwork. */
+  overlay?: boolean;
 }
 
 const f = (n: number) => (Math.round(n * 100) / 100).toString();
@@ -50,8 +52,8 @@ export function labelSvg(spec: LabelSpec, opts: LabelSvgOptions = {}): string {
   const parts: string[] = [];
   parts.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${f(W)} ${f(H)}" width="${f(W)}mm" height="${f(H)}mm" role="img">`);
   if (opts.title) parts.push(`<title>${opts.title.replace(/[<&>]/g, "")}</title>`);
-  if (guides) parts.push(`<path d="${labelOutlinePath(spec, spec.bleedMm)}" fill="#ffd9e4" stroke="#e0457b" stroke-width="0.3"/>`);
-  parts.push(`<path d="${labelOutlinePath(spec, 0)}" fill="${face}" stroke="#303030" stroke-width="0.4"/>`);
+  if (guides) parts.push(`<path d="${labelOutlinePath(spec, spec.bleedMm)}" fill="${opts.overlay ? "none" : "#ffd9e4"}" stroke="#e0457b" stroke-width="0.3"/>`);
+  parts.push(`<path d="${labelOutlinePath(spec, 0)}" fill="${opts.overlay ? "none" : face}" stroke="#303030" stroke-width="0.4"/>`);
   if (guides) {
     parts.push(`<path d="${labelOutlinePath(spec, -spec.safeMm)}" fill="none" stroke="#1a9c55" stroke-width="0.3" stroke-dasharray="0.6 0.9"/>`);
     if (spec.overlapMm && spec.shape === "rect") {

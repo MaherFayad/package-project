@@ -253,11 +253,18 @@ function paintSample(ctx: CanvasRenderingContext2D, spec: LabelSpec, opts: Paint
     ctx.fill();
   }
 
-  const big = Math.min(th * (spec.kind === "SHRINK_SLEEVE" ? 0.1 : 0.26), spec.trimWidthMm * 0.12);
-  const repeats = spec.kind === "WRAP" || spec.kind === "SHRINK_SLEEVE" ? 2 : 1;
+  const around = spec.kind === "WRAP" || spec.kind === "SHRINK_SLEEVE";
+  // the brand must fit the part of the label a viewer sees from the front
+  const visibleW = spec.shape === "sector" ? spec.trimWidthMm * 0.5 : (spec.trimWidthMm - (spec.overlapMm ?? 0)) * (around ? 0.26 : 0.78);
+  let big = Math.min(th * (spec.kind === "SHRINK_SLEEVE" ? 0.1 : 0.26), spec.trimWidthMm * 0.12);
+  ctx.font = `750 ${big}px ${font}`;
+  const measured = ctx.measureText(brand).width;
+  if (measured > visibleW) big *= visibleW / measured;
+  // wraps repeat the brand on the back, split across the seam so it joins up
+  const copies = around ? [0.5, 0, 1] : [0.5];
   const tBrand = spec.kind === "SHRINK_SLEEVE" ? 0.36 : 0.56;
-  for (let rep = 0; rep < repeats; rep++) {
-    const s = repeats === 1 ? 0.5 : rep === 0 ? 0.5 : 0.02; // second copy sits at the back seam
+  for (let rep = 0; rep < copies.length; rep++) {
+    const s = copies[rep];
     if (spec.shape === "sector") {
       if (rep > 0) break;
       arcText(ctx, spec, brand, tBrand, big, 750, font, ink);
