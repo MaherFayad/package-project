@@ -1,4 +1,4 @@
-import type { Dims, FaceId, PrintSurface, StructureCode } from "./structure";
+import type { Dims, FaceId, PrintSurface, StructureCode, StructureFeatures } from "./structure";
 import type { FinishCode, MaterialCode, PrintSides } from "./material";
 
 /**
@@ -82,6 +82,8 @@ export interface DesignDoc {
   finishCode: FinishCode;
   printSides: PrintSides;
   artwork: Artwork;
+  /** Optional structure features (window, handle, partitions…). Absent = none. */
+  features?: StructureFeatures;
 }
 
 export function emptyArtwork(): Artwork {

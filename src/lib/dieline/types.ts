@@ -1,4 +1,4 @@
-import type { Dims, FaceId, StructureCode } from "@/types";
+import type { Dims, FaceId, StructureCode, StructureFeatures } from "@/types";
 
 /**
  * Dieline model types.
@@ -15,7 +15,10 @@ export interface Pt {
   y: number;
 }
 
-/** Convex polygon, vertices in order (no repeated closing vertex). */
+/**
+ * Simple polygon, vertices in order (no repeated closing vertex). Most panels are convex;
+ * notches, slots and display cut-downs make some concave (triangulated with earcut).
+ */
 export type Polygon = Pt[];
 
 export interface Segment {
@@ -56,8 +59,10 @@ export interface DielinePanel {
   role: PanelRole;
   /** Short English description, for debugging and SVG labels. */
   label: string;
-  /** Panel outline in sheet mm. Always convex. */
+  /** Panel outline in sheet mm (simple polygon, usually convex). */
   polygon: Polygon;
+  /** Die-cut apertures inside the outline (windows, hand holes). Cut lines, no board. */
+  holes?: Polygon[];
   bbox: Rect;
   /** null for the root panel (stays still while the box folds around it). */
   parentId: string | null;
@@ -84,6 +89,34 @@ export interface DielinePanel {
   pivotDepth: number;
   /** false for glue flaps (must stay ink-free); excluded from print regions. */
   printable: boolean;
+  /**
+   * "crease" (default): a real crease line on the die. "roll": a virtual hinge used to
+   * bend a curved wall (tube label) out of narrow strips: no crease is drawn, no cut either,
+   * and the 3D view shades across it smoothly.
+   */
+  hingeKind?: "crease" | "roll";
+  /**
+   * Root of an extra piece (telescope lid, partition strip, rigid-box lid). Its closed pose
+   * in model space (column-major 4×4, mm) and the fold stage in which it moves there.
+   */
+  assembly?: { matrix: number[]; stage: number; lift?: number };
+  /** Piece this panel belongs to (root id). Set by the engine. */
+  pieceId?: string;
+}
+
+/** A separately cut blank of a multi-piece structure. */
+export interface DielinePiece {
+  rootId: string;
+  /** Short English name (debug / SVG): "Base", "Lid", "Divider". */
+  label: string;
+  /** Die bounding box of this blank on the sheet. */
+  bounds: Rect;
+}
+
+/** Clear window film patch glued on the inside of a panel (sheet mm). */
+export interface FilmPatch {
+  panelId: string;
+  polygon: Polygon;
 }
 
 /** One rigid panel's share of a face of the closed box. */
@@ -120,6 +153,12 @@ export interface DielineMetrics {
   /** Total knife length and crease length (die complexity). */
   cutLengthMm: number;
   creaseLengthMm: number;
+  /** Perforation length (tear strips). */
+  perfLengthMm: number;
+  /** Number of separately cut blanks (1 unless lid/base/partitions). */
+  pieceCount: number;
+  /** Clear window film per box (m²), 0 without a filmed window. */
+  filmAreaM2: number;
 }
 
 export interface DielineModel {
@@ -137,6 +176,14 @@ export interface DielineModel {
   rootId: string;
   cutLines: Segment[];
   creaseLines: Segment[];
+  /** Perforation lines (tear strips). Dash-dot on the die. */
+  perfLines: Segment[];
+  /** Separately cut blanks (one for single-piece structures). */
+  pieces: DielinePiece[];
+  /** Window film patches (inside). */
+  films: FilmPatch[];
+  /** Features actually applied (unsupported requests dropped). */
+  features: StructureFeatures;
   /** Per printable panel: its outline grown by the bleed on cut edges. */
   bleedRegions: { panelId: string; polygon: Polygon }[];
   /** Per face panel: the safe zone (keep text and logos inside). */
@@ -163,4 +210,6 @@ export interface DielineOptions {
   bleedMm?: number;
   /** Default 3 mm for folding cartons, 5 mm for corrugated. */
   safeMm?: number;
+  /** Optional construction features (window, handle, partitions…). */
+  features?: StructureFeatures;
 }

@@ -1,3 +1,4 @@
+import { Matrix4 } from "three";
 import type { Dims, StructureCode, StructureParamLimits } from "@/types";
 import { STRUCTURE_FAMILY } from "./materials";
 import { computeFaces } from "./fold";
@@ -14,7 +15,8 @@ import {
 import { panelCreases } from "./builder";
 import { DielineValidationError, thicknessSchema, validateDims } from "./limits";
 import { GENERATORS } from "./structures";
-import type { DielineModel, DielineOptions, DielinePanel, Polygon, Segment } from "./types";
+import { supportedFeatures } from "./features";
+import type { DielineModel, DielineOptions, DielinePanel, DielinePiece, FilmPatch, Polygon, Pt, Segment } from "./types";
 
 export const DEFAULT_BLEED_MM = 3;
 
@@ -53,32 +55,49 @@ function buildDieline(code: StructureCode, dims: Dims, options: DielineOptions):
   const t = options.thicknessMm;
   const bleed = options.bleedMm ?? DEFAULT_BLEED_MM;
   const safe = options.safeMm ?? (STRUCTURE_FAMILY[code] === "CORRUGATED" ? 5 : 3);
-  const draft = GENERATORS[code](dims, t);
+  const features = supportedFeatures(code, options.features);
+  const draft = GENERATORS[code](dims, t, features);
   const raw = draft.builder.panels;
 
   // Normalise: die bounds start at (bleed, bleed).
   const all = bboxOf(raw.flatMap((p) => p.polygon));
   const dx = bleed - all.x;
   const dy = bleed - all.y;
-  const mv = (p: { x: number; y: number }) => ({ x: p.x + dx, y: p.y + dy });
+  const mv = (p: Pt) => ({ x: p.x + dx, y: p.y + dy });
+  const mvSeg = (s: Segment) => ({ a: mv(s.a), b: mv(s.b) });
+  // Flat frame is (x, -y): a sheet shift of (dx, dy) is (dx, -dy) there.
+  const unshift = new Matrix4().makeTranslation(-dx, dy, 0);
   const panels: DielinePanel[] = raw.map((p) => {
     const polygon = p.polygon.map(mv);
-    return {
+    const out: DielinePanel = {
       ...p,
       polygon,
       bbox: bboxOf(polygon),
-      hinge: p.hinge ? { a: mv(p.hinge.a), b: mv(p.hinge.b) } : null,
+      hinge: p.hinge ? mvSeg(p.hinge) : null,
     };
+    if (p.holes) out.holes = p.holes.map((h) => h.map(mv));
+    if (p.assembly) out.assembly = { ...p.assembly, matrix: new Matrix4().fromArray(p.assembly.matrix).multiply(unshift).toArray() };
+    return out;
   });
+  const byId = new Map(panels.map((p) => [p.id, p]));
+  const pieceOf = (p: DielinePanel): string => (p.parentId ? pieceOf(byId.get(p.parentId)!) : p.id);
+  for (const p of panels) p.pieceId = pieceOf(p);
 
-  // Creases = hinges. Cuts = every other piece of every outline (deduplicated).
-  const creaseLines: Segment[] = panels.flatMap((p) => (p.hinge ? [p.hinge] : []));
+  // Creases = hinges (+ extra creases). Roll hinges are virtual: neither cut nor crease.
+  const hinges: Segment[] = panels.flatMap((p) => (p.hinge ? [p.hinge] : []));
+  const creaseLines: Segment[] = [
+    ...panels.flatMap((p) => (p.hinge && p.hingeKind !== "roll" ? [p.hinge] : [])),
+    ...draft.builder.extraCreases.map(mvSeg),
+  ];
   const cutLines: Segment[] = [];
   for (const p of panels) {
     for (const e of edgesOf(p.polygon)) {
-      for (const piece of subtractSegments(e, [...creaseLines, ...cutLines])) cutLines.push(piece);
+      for (const piece of subtractSegments(e, [...hinges, ...cutLines])) cutLines.push(piece);
     }
+    for (const h of p.holes ?? []) cutLines.push(...edgesOf(h));
   }
+  const perfLines = draft.builder.perfLines.map(mvSeg);
+  const films: FilmPatch[] = draft.builder.films.map((f) => ({ panelId: f.panelId, polygon: f.polygon.map(mv) }));
 
   // Bleed: grow each printable panel on its cut edges.
   const bleedRegions = panels
@@ -95,16 +114,30 @@ function buildDieline(code: StructureCode, dims: Dims, options: DielineOptions):
     thicknessMm: t,
     closedRotation: draft.closedRotation,
   };
-  const { faces, closedOuter } = computeFaces(draftModel);
+  const computed = computeFaces(draftModel, draft.faceDepthTol);
+  const faces = draft.faces ? draft.faces(panels, computed.faces) : computed.faces;
+  const closedOuter = computed.closedOuter;
 
   const facePanelIds = new Set(Object.values(faces).flatMap((f) => f!.parts.map((x) => x.panelId)));
-  const safeZones = panels
-    .filter((p) => facePanelIds.has(p.id))
-    .map((p) => ({ panelId: p.id, rect: insetRect(p.bbox, safe) }));
+  const safeZones = draft.safeZones
+    ? draft.safeZones(panels, safe)
+    : panels.filter((p) => facePanelIds.has(p.id)).map((p) => ({ panelId: p.id, rect: insetRect(p.bbox, safe) }));
 
   const printPolys = bleedRegions.map((r) => r.polygon);
   const blankW = all.width;
   const blankH = all.height;
+
+  // Pieces: separately cut blanks. Board use = sum of each blank's rectangle.
+  const pieces: DielinePiece[] = panels
+    .filter((p) => p.parentId === null)
+    .sort((a, b) => (a.id === draftModel.rootId ? -1 : b.id === draftModel.rootId ? 1 : 0))
+    .map((root) => ({
+      rootId: root.id,
+      label: draft.builder.pieceLabels.get(root.id) ?? root.label,
+      bounds: bboxOf(panels.filter((p) => p.pieceId === root.id).flatMap((p) => p.polygon)),
+    }));
+  const blankArea = pieces.length > 1 ? pieces.reduce((s, p) => s + p.bounds.width * p.bounds.height, 0) : blankW * blankH;
+  const holeArea = (p: DielinePanel) => (p.holes ?? []).reduce((s, h) => s + polygonArea(h), 0);
 
   return {
     structureCode: code,
@@ -118,6 +151,10 @@ function buildDieline(code: StructureCode, dims: Dims, options: DielineOptions):
     rootId: draft.builder.rootId,
     cutLines,
     creaseLines,
+    perfLines,
+    pieces,
+    films,
+    features,
     bleedRegions,
     safeZones,
     printRegions: { outside: printPolys, inside: printPolys },
@@ -127,10 +164,13 @@ function buildDieline(code: StructureCode, dims: Dims, options: DielineOptions):
     metrics: {
       blankWidthMm: blankW,
       blankHeightMm: blankH,
-      blankAreaM2: (blankW * blankH) / 1e6,
-      netAreaM2: panels.reduce((s, p) => s + polygonArea(p.polygon), 0) / 1e6,
+      blankAreaM2: blankArea / 1e6,
+      netAreaM2: panels.reduce((s, p) => s + polygonArea(p.polygon) - holeArea(p), 0) / 1e6,
       cutLengthMm: cutLines.reduce((s, l) => s + segLength(l), 0),
       creaseLengthMm: creaseLines.reduce((s, l) => s + segLength(l), 0),
+      perfLengthMm: perfLines.reduce((s, l) => s + segLength(l), 0),
+      pieceCount: pieces.length,
+      filmAreaM2: films.reduce((s, f) => s + polygonArea(f.polygon), 0) / 1e6,
     },
   };
 }

@@ -8,6 +8,13 @@ export const STRUCTURE_FAMILY: Record<StructureCode, StructureFamily> = {
   ECMA_STE: "FOLDING_CARTON",
   PIZZA: "CORRUGATED",
   SLEEVE: "FOLDING_CARTON",
+  FEFCO_0320: "CORRUGATED",
+  ECMA_CLB: "FOLDING_CARTON",
+  ECMA_SLB: "FOLDING_CARTON",
+  FEFCO_0422: "CORRUGATED",
+  GABLE_BOX: "FOLDING_CARTON",
+  PAPER_TUBE: "TUBE",
+  RIGID_BOX: "RIGID",
 };
 
 export interface BoardSpec {
@@ -26,11 +33,24 @@ export const BOARD_SPECS: Record<MaterialCode, BoardSpec> = {
   B_FLUTE_KRAFT: { code: "B_FLUTE_KRAFT", family: "CORRUGATED", thicknessMm: 3, flute: "B", color: "KRAFT" },
   SBS_300: { code: "SBS_300", family: "FOLDING_CARTON", thicknessMm: 0.4, flute: null, color: "WHITE" },
   SBS_350: { code: "SBS_350", family: "FOLDING_CARTON", thicknessMm: 0.48, flute: null, color: "WHITE" },
+  // 2 mm greyboard + 157 gsm wrap paper (~0.15 mm): the wall a rigid box is built from.
+  GREYBOARD_WRAP: { code: "GREYBOARD_WRAP", family: "RIGID", thicknessMm: 2.15, flute: null, color: "WHITE" },
+  // Spiral-wound kraft tube wall with a printed paper label.
+  KRAFT_TUBE: { code: "KRAFT_TUBE", family: "TUBE", thicknessMm: 1.5, flute: null, color: "WHITE" },
 };
 
 /** Sensible default board per structure family (for previews before a material is chosen). */
 export function defaultMaterialFor(code: StructureCode): MaterialCode {
-  return STRUCTURE_FAMILY[code] === "CORRUGATED" ? "E_FLUTE_KRAFT" : "SBS_350";
+  switch (STRUCTURE_FAMILY[code]) {
+    case "CORRUGATED":
+      return "E_FLUTE_KRAFT";
+    case "RIGID":
+      return "GREYBOARD_WRAP";
+    case "TUBE":
+      return "KRAFT_TUBE";
+    default:
+      return "SBS_350";
+  }
 }
 
 export function materialFitsStructure(material: MaterialCode, code: StructureCode): boolean {
@@ -72,6 +92,13 @@ export function boardAppearance(material: MaterialCode): BoardAppearance {
       flutePitchMm: pitch,
       roughness: 0.92,
     };
+  }
+  if (spec.family === "RIGID") {
+    // Art paper over greyboard; the paper wraps the rim, so cut edges read as paper too.
+    return { outside: "#f7f5f0", inside: "#ece6da", edge: "#efebe3", fluteColor: null, flutePitchMm: null, roughness: 0.5 };
+  }
+  if (spec.family === "TUBE") {
+    return { outside: "#f8f7f3", inside: KRAFT_INNER, edge: "#b4895a", fluteColor: null, flutePitchMm: null, roughness: 0.55 };
   }
   return { outside: SBS_WHITE, inside: "#f0eee8", edge: "#ecebe6", fluteColor: null, flutePitchMm: null, roughness: 0.62 };
 }

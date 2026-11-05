@@ -14,6 +14,14 @@ export const STRUCTURE_LIMITS: Record<StructureCode, StructureParamLimits> = {
   ECMA_STE: { L: { min: 30, max: 220 }, W: { min: 20, max: 160 }, H: { min: 40, max: 300 } },
   PIZZA: { L: { min: 200, max: 500 }, W: { min: 200, max: 500 }, H: { min: 30, max: 60 }, rules: ["L == W"] },
   SLEEVE: { L: { min: 60, max: 450 }, W: { min: 40, max: 350 }, H: { min: 20, max: 200 } },
+  FEFCO_0320: { L: { min: 100, max: 800 }, W: { min: 80, max: 600 }, H: { min: 40, max: 600 } },
+  ECMA_CLB: { L: { min: 40, max: 250 }, W: { min: 30, max: 200 }, H: { min: 50, max: 350 } },
+  ECMA_SLB: { L: { min: 40, max: 250 }, W: { min: 30, max: 200 }, H: { min: 50, max: 350 } },
+  FEFCO_0422: { L: { min: 120, max: 600 }, W: { min: 80, max: 400 }, H: { min: 30, max: 200 } },
+  GABLE_BOX: { L: { min: 60, max: 300 }, W: { min: 50, max: 200 }, H: { min: 60, max: 300 } },
+  // L = W = inner diameter of the tube.
+  PAPER_TUBE: { L: { min: 40, max: 150 }, W: { min: 40, max: 150 }, H: { min: 60, max: 350 }, rules: ["L == W"] },
+  RIGID_BOX: { L: { min: 60, max: 450 }, W: { min: 50, max: 350 }, H: { min: 20, max: 200 } },
 };
 
 /** Default inner dims per structure (mirrors Structure.defaultDims in the seed). */
@@ -24,6 +32,13 @@ export const DEFAULT_DIMS: Record<StructureCode, Dims> = {
   ECMA_STE: { L: 90, W: 50, H: 150 },
   PIZZA: { L: 300, W: 300, H: 40 },
   SLEEVE: { L: 220, W: 150, H: 60 },
+  FEFCO_0320: { L: 330, W: 250, H: 100 },
+  ECMA_CLB: { L: 80, W: 80, H: 200 },
+  ECMA_SLB: { L: 70, W: 70, H: 120 },
+  FEFCO_0422: { L: 380, W: 280, H: 100 },
+  GABLE_BOX: { L: 160, W: 100, H: 120 },
+  PAPER_TUBE: { L: 75, W: 75, H: 150 },
+  RIGID_BOX: { L: 250, W: 180, H: 80 },
 };
 
 export type DimsIssueCode = "TOO_SMALL" | "TOO_LARGE" | "RULE" | "INVALID";

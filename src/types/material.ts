@@ -7,10 +7,12 @@ export const MATERIAL_CODES = [
   "B_FLUTE_KRAFT",
   "SBS_300",
   "SBS_350",
+  "GREYBOARD_WRAP", // 2 mm greyboard wrapped in 157 gsm printed art paper (rigid boxes)
+  "KRAFT_TUBE", //     spiral-wound kraft tube, 1.5 mm wall, printed paper label (tubes)
 ] as const;
 export type MaterialCode = (typeof MATERIAL_CODES)[number];
 
-export type BoardType = "CORRUGATED" | "SBS";
+export type BoardType = "CORRUGATED" | "SBS" | "GREYBOARD" | "TUBE";
 export type Flute = "E" | "B";
 export type BoardColor = "KRAFT" | "WHITE";
 

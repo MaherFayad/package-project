@@ -27,7 +27,7 @@ export const smoothstep = (x: number): number => {
   return t * t * (3 - 2 * t);
 };
 
-/** Parents before children. */
+/** Parents before children. The main root's tree first, then each extra piece. */
 export function panelOrder(input: Pick<DielineModel, "panels" | "rootId">): DielinePanel[] {
   const children = new Map<string | null, DielinePanel[]>();
   for (const p of input.panels) {
@@ -36,7 +36,10 @@ export function panelOrder(input: Pick<DielineModel, "panels" | "rootId">): Diel
     children.set(p.parentId, list);
   }
   const out: DielinePanel[] = [];
-  const queue = input.panels.filter((p) => p.id === input.rootId);
+  const queue = [
+    ...input.panels.filter((p) => p.id === input.rootId),
+    ...input.panels.filter((p) => p.parentId === null && p.id !== input.rootId),
+  ];
   while (queue.length) {
     const p = queue.shift()!;
     out.push(p);
@@ -46,7 +49,37 @@ export function panelOrder(input: Pick<DielineModel, "panels" | "rootId">): Diel
 }
 
 export function maxStage(input: Pick<DielineModel, "panels">): number {
-  return input.panels.reduce((m, p) => Math.max(m, p.foldStage), 0);
+  return input.panels.reduce((m, p) => Math.max(m, p.foldStage, p.assembly?.stage ?? 0), 0);
+}
+
+/** Root ids: the main root first, then extra pieces (lid, dividers…). */
+export function rootIds(input: Pick<DielineModel, "panels" | "rootId">): string[] {
+  return [input.rootId, ...input.panels.filter((p) => p.parentId === null && p.id !== input.rootId).map((p) => p.id)];
+}
+
+/**
+ * Local pose of an extra piece's root at a progress. `assembly.matrix` maps flat-frame
+ * points (X = sheet x, Y = -sheet y) to model space; flat on the sheet it sits where it
+ * was cut, next to the main blank, then moves to its assembled place.
+ */
+export function assemblyPoseAt(panel: DielinePanel, progress: number, stages: number, mainPivot: Vector3, ownPivot: Vector3): Matrix4 {
+  const flat = new Matrix4().makeTranslation(-mainPivot.x, -mainPivot.y, -mainPivot.z);
+  const target = new Matrix4().fromArray(panel.assembly!.matrix);
+  const a = panelFoldAmount({ ...panel, foldStage: panel.assembly!.stage }, progress, stages);
+  const own = new Matrix4().makeTranslation(ownPivot.x, ownPivot.y, ownPivot.z);
+  if (a <= 0) return flat.multiply(own);
+  if (a >= 1) return target.multiply(own);
+  const p0 = new Vector3();
+  const q0 = new Quaternion();
+  const p1 = new Vector3();
+  const q1 = new Quaternion();
+  const sc = new Vector3();
+  flat.decompose(p0, q0, sc);
+  target.decompose(p1, q1, sc);
+  const p = p0.lerp(p1, a);
+  // Arc over the box (no flying through walls): lift along model +Y mid-way.
+  p.y += Math.sin(Math.PI * a) * (panel.assembly!.lift ?? 0);
+  return new Matrix4().compose(p, q0.slerp(q1, a), new Vector3(1, 1, 1)).multiply(own);
 }
 
 /** 0..1 fold amount of a panel at overall progress `progress` (stages overlap a little). */
@@ -108,7 +141,8 @@ export function computePoses(input: FoldInput, progress: number): Map<string, Pa
     pivots.set(panel.id, pivot);
     const local = new Matrix4();
     if (!panel.parentId) {
-      local.makeRotationFromQuaternion(rootRotationAt(input, progress));
+      if (panel.assembly) local.copy(assemblyPoseAt(panel, progress, stages, pivots.get(input.rootId)!, pivot));
+      else local.makeRotationFromQuaternion(rootRotationAt(input, progress));
       poses.set(panel.id, { local, world: local.clone() });
       continue;
     }
@@ -164,14 +198,14 @@ const axisPick = (box: Box3, i: 0 | 1 | 2, wantMax: boolean) =>
  * Detect which panels form each face of the closed box (outer surface on the box's
  * outermost plane, facing out, not stacked inward) and the face↔sheet transforms.
  */
-export function computeFaces(input: FoldInput): { faces: Partial<Record<FaceId, FaceInfo>>; closedOuter: Dims } {
+export function computeFaces(input: FoldInput, depthTolMm?: number): { faces: Partial<Record<FaceId, FaceInfo>>; closedOuter: Dims } {
   const t = input.thicknessMm;
   const poses = computePoses(input, 1);
   const box = boundsAt(input, 1, poses);
   const size = box.getSize(new Vector3());
   const closedOuter: Dims = { L: size.x, W: size.z, H: size.y };
   const faces: Partial<Record<FaceId, FaceInfo>> = {};
-  const tol = Math.max(0.05, t * 0.25);
+  const tol = Math.max(0.05, t * 0.25, depthTolMm ?? 0);
 
   for (const face of Object.keys(FACE_FRAMES) as FaceId[]) {
     const { n, r, d } = FACE_FRAMES[face];
@@ -196,7 +230,7 @@ export function computeFaces(input: FoldInput): { faces: Partial<Record<FaceId, 
         return { u: w.dot(r), v: w.dot(d), h: w.dot(n) };
       };
       const c0 = toFace(panel.polygon[0]);
-      if (Math.abs(c0.h) > tol) continue;
+      if (c0.h > 1e-6 + Math.max(0.05, t * 0.25) || -c0.h > tol) continue;
 
       // q = M p + c  (sheet → face); invert for face → sheet.
       const o = toFace({ x: 0, y: 0 });
