@@ -1,6 +1,6 @@
 # 3D Packaging Preview + Egyptian Print-Vendor Marketplace: Research Study and Build Plan
 
-**Version:** 1.0 · **Date:** 5 Nov 2026 · **Market:** Egypt (Cairo, Giza, Alexandria first)
+**Version:** 1.1 (3D tool repositioned as free acquisition feature) · **Date:** 5 Nov 2026 · **Market:** Egypt (Cairo, Giza, Alexandria first)
 
 > **How to read this:** Section 0 is the decision. Sections 1–9 are the evidence. Section 10 is the step-by-step plan. Every figure has a source at the end. Where sources disagree, the range is shown and labelled. Figures marked **[ASSUMPTION]** are mine and must be replaced with real vendor quotes before you use them in a pitch.
 
@@ -24,7 +24,9 @@ Why not an open listings marketplace (vendors set their own prices, customer mes
 
 ### Three business models compared
 
-| | **A. SaaS visualizer only** | **B. Open vendor marketplace** | **C. Managed marketplace (recommended)** |
+> **Founder decision (v1.1):** the 3D preview is a **free feature** whose job is acquisition. Model A below (charging for the 3D tool) is ruled out and kept only for comparison. Revenue comes from orders (Model C). See §1.3 for how the free tool feeds the order funnel.
+
+| | **A. Paid 3D visualizer (ruled out)** | **B. Open vendor marketplace** | **C. Managed marketplace (recommended)** |
 |---|---|---|---|
 | What you sell | 3D mockup tool subscription to designers/printers | Listings + lead gen; vendors quote | Finished printed packaging, delivered |
 | Who sets price | n/a | Vendor | You (instant price from rate cards) |
@@ -35,11 +37,11 @@ Why not an open listings marketplace (vendors set their own prices, customer mes
 | Defensibility | Low (global players) | Low | **High** (vendor network + rate data + brand) |
 | Cash needed | Low | Low–medium | Medium (working capital for vendor advances) |
 
-**Hybrid to keep in your pocket:** once C works, sell the 3D editor + order flow as **white-label SaaS to Egyptian printers** (Model A on top of C). That's how Pacdora monetizes its Editor API, and printers will pay for it once they see your conversion.
+**How the pieces fit:** the free 3D tool is the top of the funnel (traffic, SEO, social sharing, designer adoption). The managed marketplace is where the money is made. Every free mockup is one click away from "Price this box" and "Order it". Pacdora charges for exactly what you give away; that's the wedge against them and against free flat mockup sites, because your mockup is accurate to a real dieline and can actually be printed.
 
 ### The five decisions that matter most
 1. **Catalog first, not "any package".** Launch with 6–8 standard structures (mailer box, RSC shipping box, tuck-end folding carton, sleeve, pizza/food box, rigid gift box later). Every structure is parametric (L×W×H, material, print sides) so you can price and 3D-render it automatically. Bottles and labels come in Phase 3.
-2. **Build vs buy the 3D.** Start by **buying** (Pacdora Editor API, roughly $0.2–$0.6 per user, tiered) to ship fast, *or* build a parametric three.js engine for your 6–8 structures (8–12 weeks of one strong 3D engineer). My call: **build**, because the catalog is small, it's your core IP, and Pacdora doesn't support editing on mobile, which is where Egyptian SMEs live. Use Pacdora only if your team has no 3D engineer.
+2. **Build the 3D, don't buy it.** Because the 3D tool is free and meant to attract as many people as possible, per-user licensing is the wrong cost model: Pacdora's Editor API at roughly $0.2 to $0.6 per user means 50,000 free users cost about $10,000 plus platform fees while generating zero direct revenue. A parametric three.js engine for 6 to 8 structures (8 to 12 weeks of one strong 3D engineer) runs in the visitor's browser, so the marginal cost of a free user is close to zero. It is also your core IP, and Pacdora doesn't support editing on mobile, which is where Egyptian SMEs live. Use Pacdora only for a time-boxed validation test (§10, Phase 0).
 3. **Payments:** a licensed gateway (Paymob or Kashier) with cards, wallets, InstaPay, Fawry reference codes, plus a deposit-based COD alternative. Never hold vendor money yourself outside a licensed product. See §7.
 4. **Legal:** PDPL 151/2020 now has executive regulations (Nov 2025) and a licensing regime; the one-year grace period appears to have ended around **31 Oct 2026**. Budget for a PDPC licence from day one. See §8.
 5. **Wedge segment:** Instagram/TikTok D2C brands and food/cosmetics SMEs ordering **100–2,000 units**. They're underserved by converters and over-served by nobody.
@@ -62,6 +64,44 @@ Why not an open listings marketplace (vendors set their own prices, customer mes
 - It catches **orientation errors** (logo upside down on a tuck flap, text across a fold, artwork on the glue flap). These are the most common reasons a box run is wasted.
 - It makes the **dieline invisible** to non-designers: they drag artwork onto faces; the system writes the print-ready PDF.
 - It lets customers **approve with confidence**, which cuts disputes. A recorded 3D proof approval is your best defence when a customer later says "that's not what I ordered".
+
+### 1.3 The free 3D tool as the acquisition engine
+The 3D designer is free. Its only jobs are to bring people in, collect leads, and turn a mockup into an order. Design every screen around that.
+
+**What "free" includes.** Unlimited 3D designs on all catalog structures, fold/unfold, rotate, and a standard-resolution PNG export. No credit card ever.
+
+**Where to ask for something in return (gating options):**
+
+| Option | Free without account | Needs free account (phone/email) | Paid | Trade-off |
+|---|---|---|---|---|
+| **G1. Open (max reach)** | Design + PNG export with small "Made with [brand]" mark | Save designs, HD export, video | Only printed orders | Most traffic and SEO, fewest leads per visitor |
+| **G2. Soft gate (recommended)** | Design + live 3D preview | Any export, save, share link, instant price | Only printed orders | Visitor feels the value first, then gives a phone number at the moment of highest intent |
+| **G3. Hard gate** | Nothing (landing page only) | Everything | Only printed orders | Most leads per visitor, but kills SEO and sharing; feels like a trap |
+
+**My pick: G2.** Egyptian SMEs will happily give a WhatsApp number to get a price and a file they can post. Ask for the phone number (not email) and verify by OTP; it's your sales channel. Collect consent for marketing messages separately to satisfy PDPL 151/2020.
+
+**Bridges from free mockup to paid order** (each is a product feature, not a marketing afterthought):
+1. **Live price badge** on the editor: "500 of these: from EGP X, delivered in 7 days". It's the single highest-value element on the screen.
+2. **"Order this exact box"** button on every export, share link and saved design.
+3. **Printable-ready check:** the free tool runs the same preflight as production (DPI, bleed, text near folds). A green "Ready to print" state is a nudge to order.
+4. **Free physical sample credit** for accounts with a saved design and a verified business (cap and track the cost).
+5. **WhatsApp follow-up** 24 h after a saved design with no order, from a real person, with the 3D render attached.
+6. **Retargeting** with the visitor's own mockup (consent required).
+
+**Growth loops the free tool unlocks:**
+- **Social loop:** brands post their mockup on Instagram/TikTok ("coming soon"); the small mark and share link bring new visitors.
+- **Designer loop:** freelance designers (Khamsat, Behance, agencies) use the tool for client presentations. Give them a free "designer" account with client share links and a referral commission on orders their clients place. They become your sales force.
+- **SEO loop:** one public page per structure and size ("علبة شحن 30×20×10 مطبوعة"), each with a live 3D preview and price. Search traffic for Arabic print terms is uncontested.
+
+**Risk: people use the free tool and print elsewhere.** Accept some of it; it still builds the brand. Reduce it by: not exporting the print-ready dieline PDF for free (that ships only with an order), keeping price and lead time in the tool so comparing is easy, and making reorder one click.
+
+**Cost control for a free tool:** rendering happens client-side, so hosting cost per user is small. Server-side costs come from HD/video exports and file storage; keep those behind the free account and expire unsaved anonymous designs after 30 days.
+
+**Metrics for the free tool** (track separately from order KPIs):
+- Visitors → designs started → designs completed → accounts created → price viewed → ordered.
+- Cost per account created; % of accounts ordering within 30/90 days.
+- Share links created and visitors from shares (viral coefficient).
+- Designer accounts and orders attributed to them.
 
 ---
 
@@ -268,8 +308,8 @@ price = (board_cost(material, sheet_area × qty × waste_factor)
 | Samples | Paid sample (credited against the order) | MVP |
 | Design services | Commission on vetted freelance designers (Khamsat-level gigs at $5–30 show the price point) or in-house | V1 |
 | Rush fee | +X% for faster lane | V1 |
-| Vendor subscriptions | Featured profile, white-label editor for their own site | V2 |
-| White-label 3D/SaaS | License your editor to printers (Pacdora-style, priced per user) | V2–V3 |
+| Vendor subscriptions | Featured profile, priority in "Best match" routing | V2 |
+| Free 3D designer | **No direct revenue by design.** Measured on accounts and orders it generates (§1.3) | MVP |
 | Data | Packaging cost index for Egypt (anonymised) | V3 |
 
 ### 6.2 Illustrative order economics **[ALL ASSUMPTIONS: replace with vendor quotes]**
@@ -286,7 +326,8 @@ Example: 500 printed mailer boxes, E-flute, 1 colour outside.
 - Payment fee note: Paymob's fixed EGP 3 matters on small baskets (5.75% on EGP 100, 3.05% on EGP 1,000). Your baskets will be EGP thousands, so it's ~2.8%.
 
 ### 6.3 KPIs to run the business on
-- Funnel: visitor → design started → price viewed → proof approved → paid (target **2–4%** visitor→paid for B2B SMB **[ASSUMPTION]**).
+- Funnel: visitor → free design started → account created → price viewed → proof approved → paid (target **2 to 4%** visitor→paid for B2B SMB **[ASSUMPTION]**). Free-tool metrics are in §1.3.
+- **Acquisition cost per order**, counting the free tool as a marketing cost (engineering + hosting + sample credits ÷ orders it sourced).
 - Average order value, repeat rate at 90 days (packaging is recurring: target ≥ 40%).
 - On-time delivery %, reprint rate (target < 3%), dispute rate.
 - Vendor: acceptance rate, lead-time adherence, QC pass rate.
@@ -374,7 +415,7 @@ Custom packaging can't be resold, so 100% COD is unacceptable risk. Options, fro
 1. **Customer interviews (15–20):** D2C brands on Instagram, 3 bakeries/cloud kitchens, 3 cosmetics brands, 3 agencies. Ask: last packaging purchase, quantity, price, pain, would they pay online. (Use a structured interview guide; record quotes.)
 2. **Vendor interviews (10):** visit converters in 6th of October, 10th of Ramadan, Obour, and print shops downtown. Ask: minimums, digital vs offset breakpoints, die ownership, lead times, interest in steady online jobs, payment terms.
 3. **Reference pricing:** define 5 reference jobs (e.g. 250 mailers 25×20×8 cm kraft 1-colour; 1,000 tuck-end cartons SBS 4-colour matte; 500 pizza boxes; 300 shipping RSC 2-colour; 100 rigid gift boxes). Get 3 quotes each. Build the first rate card in a spreadsheet.
-4. **Landing page + waitlist** (Arabic/English) with 3D renders (Pacdora consumer plan or a three.js demo). Run ~EGP 15–30k of Meta ads to D2C brand owners **[ASSUMPTION]**; measure sign-ups and "get a price" clicks.
+4. **Free 3D teaser + waitlist** (Arabic/English): one structure (the printed mailer box) in a minimal three.js demo, with "Get a price" behind a phone-number form (the G2 soft gate from §1.3). A time-boxed Pacdora trial is acceptable here only if no 3D engineer is available yet. Run ~EGP 15 to 30k of Meta ads to D2C brand owners **[ASSUMPTION]**; measure designs started, phone numbers collected and "get a price" clicks.
 5. **Legal foundation:** incorporate LLC; open bank account; start PDPC licence process; VAT registration; engage accountant for ETA integration.
 6. **Decision gate:** ≥ 30 qualified leads, ≥ 5 pre-paid orders or signed LOIs, 3 vendors willing to commit at margin. If not, revisit segment or model.
 
@@ -411,7 +452,7 @@ Custom packaging can't be resold, so 100% COD is unacceptable risk. Options, fro
 28. AR preview (GLB/USDZ via model-viewer), turntable video export for social ads.
 29. Reorder in one click; brand kit storage; team accounts for agencies.
 30. B2B credit terms (net-30) for verified companies; corporate gifting landing pages for Ramadan/Eid.
-31. White-label editor for printers (SaaS revenue) once your own conversion data proves value.
+31. Expand the free tool's reach: designer accounts with referral commission, public SEO pages per structure and size, share links with "Order this box".
 32. Raise a seed round on traction (orders/month, repeat rate, margin).
 
 ### Phase 4: Region (18 months+)
@@ -429,7 +470,8 @@ Wk 0────6────────14────────────�
 | Item | Notes |
 |---|---|
 | Core team of 5–6 (Phase 2 onward) | Largest cost line; Egyptian senior engineering salaries have risen fast with remote USD jobs, so budget accordingly |
-| Pacdora API (if Option B) | ~$0.2–0.6/user + platform fee |
+| Pacdora API (validation test only) | ~$0.2 to $0.6/user + platform fee; does not scale for a free tool |
+| Free-tool costs (marketing line) | HD/video export compute, storage, sample credits |
 | Cloud + SaaS tools | Low hundreds of USD/month at MVP scale |
 | Working capital | Vendor advances (30–50% of order cost) × order volume × ~2 weeks |
 | Legal/accounting/PDPC licence | One-off + yearly |
