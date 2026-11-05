@@ -19,7 +19,7 @@
 .Title { margin: 0; font-size: var(--p-text-heading-sm-font-size); font-weight: var(--p-font-weight-semibold); }
 .Empty { padding: var(--p-space-400); }
 .TableArea { position: relative; min-width: 0; }
-.Scroll { overflow-x: auto; min-width: 0; -webkit-overflow-scrolling: touch; }
+.Scroll { position: relative; overflow-x: auto; min-width: 0; -webkit-overflow-scrolling: touch; }
 .Scroll:focus-visible { outline: var(--p-focus-ring-width) solid var(--p-color-border-focus); outline-offset: -2px; }
 
 .Table {

@@ -21,6 +21,7 @@ import {
 import { rowToDoc } from "@/components/designer/server";
 import { priceTable, quote, toPublicOffer, zoneForGovernorate, type PublicVendorOffer, type QuoteOutcome, type VendorOffer } from "@/lib/pricing";
 import { loadPricingData } from "@/lib/pricing/server";
+import { loadPricingConfig } from "@/components/admin/server/settings";
 import { getPaymentProvider, mockPaymentsEnabled, paymentConfig, type Intention, type WebhookOutcome, type WebhookRequest } from "@/lib/payments";
 import { getShippingProvider, type TrackingEvent } from "@/lib/shipping";
 import { notify } from "@/lib/notify";
@@ -84,6 +85,7 @@ export async function quoteDesign(doc: DesignDoc, opts: { quantity: number; gove
       zone,
     },
     await loadPricingData(),
+    { config: await loadPricingConfig() },
   );
 }
 
@@ -753,6 +755,7 @@ export async function tierPrices(doc: DesignDoc, governorate?: string): Promise<
       zone,
     },
     await loadPricingData(),
+    { config: await loadPricingConfig() },
   );
   const pct = paymentConfig().prepayDiscountPct;
   return rows.map((r) => {

@@ -216,6 +216,12 @@ export const adminAr: Widen<typeof adminEn> = {
       kinds: { FIRST_SHEET: "أول فرخ", PACKED_BUNDLE: "الحزمة المعبأة", OTHER: "أخرى" },
       statuses: { PENDING: "بالانتظار", APPROVED: "معتمدة", REJECTED: "مرفوضة" },
     },
+    ship: {
+      title: "الشحن",
+      help: "اجتاز الطلب فحص الجودة. احجز استلام شركة الشحن من المطبعة، وسيصل رقم التتبع إلى المشتري.",
+      action: "حجز استلام الشحنة",
+      done: "تم حجز شركة الشحن. الطلب في الطريق.",
+    },
     timeline: {
       title: "السجل الزمني",
       placeholder: "اكتب ملاحظة داخلية…",
@@ -429,7 +435,7 @@ export const adminAr: Widen<typeof adminEn> = {
     },
     saved: "تم حفظ إعدادات التسعير",
     lastSaved: "آخر حفظ {date}",
-    notWired: "تقرأ عروض أسعار المشترين هذه الإعدادات عندما يستخدم مسار التسعير loadPricingConfig().",
+    notWired: "تطبق الإعدادات المحفوظة على عروض الأسعار الجديدة والدفع وأسعار \"تبدأ من\" العامة. تحتفظ العروض والطلبات الحالية بسعرها.",
   },
   catalog: {
     title: "الكتالوج",
@@ -556,6 +562,7 @@ export const adminAr: Widen<typeof adminEn> = {
       ORDER_REFUND: "استرداد طلب",
       ORDER_QC_APPROVE: "اعتماد الجودة",
       ORDER_QC_REJECT: "رفض الجودة",
+      ORDER_SHIP: "حجز شركة الشحن",
       ORDER_NOTE: "إضافة ملاحظة",
       ORDER_REPRINT: "إنشاء إعادة طباعة",
       VENDOR_SUSPEND: "إيقاف مطبعة",

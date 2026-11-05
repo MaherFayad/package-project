@@ -1,5 +1,6 @@
 import "server-only";
 import type {
+  Dims,
   DimsPreset,
   EgyptCity,
   FinishCode,
@@ -12,7 +13,7 @@ import type {
 import { db } from "@/lib/db";
 import { fromJson } from "@/lib/json";
 import { quote, type QuoteOptions } from "./engine";
-import type { PricingData, PricingVendor, QuoteInput, QuoteOutcome } from "./types";
+import type { OwnedDie, PricingData, PricingVendor, QuoteInput, QuoteOutcome } from "./types";
 
 /** Load everything the pricing engine needs from the database (active rows only). */
 export async function loadPricingData(): Promise<PricingData> {
@@ -23,6 +24,20 @@ export async function loadPricingData(): Promise<PricingData> {
     db.finish.findMany({ where: { active: true } }),
     db.structure.findMany({ where: { active: true }, select: { code: true, presets: true } }),
   ]);
+
+  // Standard dies a vendor entered on its rate cards (vendor portal) waive the die cost.
+  const diesByVendor = new Map<string, OwnedDie[]>();
+  for (const c of cards) {
+    const dies = fromJson<Dims[] | null>(c.standardDies) ?? [];
+    if (!Array.isArray(dies) || dies.length === 0) continue;
+    const list = diesByVendor.get(c.vendorId) ?? [];
+    for (const d of dies) {
+      if (d && Number.isFinite(d.L) && Number.isFinite(d.W) && Number.isFinite(d.H)) {
+        list.push({ structureCode: c.structure.code as StructureCode, dims: { L: d.L, W: d.W, H: d.H } });
+      }
+    }
+    diesByVendor.set(c.vendorId, list);
+  }
 
   return {
     vendors: vendors.map(
@@ -39,6 +54,7 @@ export async function loadPricingData(): Promise<PricingData> {
         capabilities: fromJson<VendorCapabilities>(v.capabilities),
         verified: v.verified,
         status: v.status as PricingVendor["status"],
+        ...(diesByVendor.has(v.id) ? { ownedDies: diesByVendor.get(v.id) } : {}),
       }),
     ),
     rateCards: cards.map((c) => ({

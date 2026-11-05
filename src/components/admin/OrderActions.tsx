@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Avatar, BlockStack, Button, ButtonGroup, Card, InlineStack, Modal, Select, Text, TextField } from "@/components/ui";
 import { useI18n } from "@/i18n/client";
 import { formatMoney } from "@/lib/format";
-import { addOrderNoteAction, overrideOrderAction, reassignOrderAction, refundOrderAction, reviewQcAction } from "./server/actions";
+import { addOrderNoteAction, overrideOrderAction, reassignOrderAction, refundOrderAction, reviewQcAction, shipOrderAction } from "./server/actions";
 import { applyGoodsOverride } from "./lib/orders";
 import { egpToPiastersInput, fieldError, piastersToInput, useAdminAction, useAdminErrorText } from "./useAdminAction";
 import type { AdminActionResponse } from "./server/context";
@@ -289,6 +289,28 @@ export function QcActions({ orderId }: { orderId: string }) {
         )}
       </InlineStack>
     </BlockStack>
+  );
+}
+
+/* ───────────────────────── Dispatch ───────────────────────── */
+
+/** READY_TO_SHIP: book the courier pickup (creates the shipment and marks the order shipped). */
+export function ShipCard({ orderId }: { orderId: string }) {
+  const { t } = useI18n();
+  const { run, busy } = useAdminAction();
+  return (
+    <Card title={t("admin.order.ship.title")}>
+      <BlockStack gap="300">
+        <Text as="p" tone="subdued" variant="bodySm">
+          {t("admin.order.ship.help")}
+        </Text>
+        <InlineStack align="end">
+          <Button variant="primary" loading={busy === "ship"} onClick={() => run("ship", () => shipOrderAction({ orderId }), t("admin.order.ship.done"))}>
+            {t("admin.order.ship.action")}
+          </Button>
+        </InlineStack>
+      </BlockStack>
+    </Card>
   );
 }
 

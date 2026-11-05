@@ -212,6 +212,12 @@ export const adminEn = {
       kinds: { FIRST_SHEET: "First sheet", PACKED_BUNDLE: "Packed bundle", OTHER: "Other" },
       statuses: { PENDING: "Waiting", APPROVED: "Approved", REJECTED: "Rejected" },
     },
+    ship: {
+      title: "Dispatch",
+      help: "QC passed. Book the courier pickup from the vendor; the buyer gets the tracking number.",
+      action: "Book courier pickup",
+      done: "Courier booked. The order is on its way.",
+    },
     timeline: {
       title: "Timeline",
       placeholder: "Leave an internal note…",
@@ -425,7 +431,7 @@ export const adminEn = {
     },
     saved: "Pricing settings saved",
     lastSaved: "Last saved {date}",
-    notWired: "Buyer quotes read these settings once the quote route uses loadPricingConfig().",
+    notWired: "Saved settings apply to new buyer quotes, checkout and the public \"from\" prices. Existing quotes and orders keep their price.",
   },
   catalog: {
     title: "Catalogue",
@@ -552,6 +558,7 @@ export const adminEn = {
       ORDER_REFUND: "Order refunded",
       ORDER_QC_APPROVE: "QC approved",
       ORDER_QC_REJECT: "QC rejected",
+      ORDER_SHIP: "Courier booked",
       ORDER_NOTE: "Note added",
       ORDER_REPRINT: "Reprint created",
       VENDOR_SUSPEND: "Vendor suspended",

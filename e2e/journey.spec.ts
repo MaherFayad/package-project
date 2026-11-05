@@ -1,0 +1,147 @@
+import { expect, test, type BrowserContext, type Page } from "@playwright/test";
+import { PrismaClient } from "@prisma/client";
+import { createHash, randomBytes } from "node:crypto";
+import path from "node:path";
+
+/**
+ * End-to-end journey across every area (seeded DB):
+ * home → free designer (anonymous) → soft gate (phone + OTP) → instant price → "Order this box"
+ * → checkout → proof approval → mock card payment → order tracking;
+ * the assigned vendor accepts the job → production → QC photos;
+ * admin approves QC → books the courier → buyer sees the order shipped.
+ * Vendor and admin sign in by inserting a session row (same hashing as src/lib/auth).
+ */
+const dbUrl = process.env.ELBA_DATABASE_URL ?? `file:${path.resolve(__dirname, "../prisma/dev.db")}`;
+const db = new PrismaClient({ datasources: { db: { url: dbUrl } } });
+
+const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
+
+async function sessionFor(context: BrowserContext, baseURL: string, userId: string) {
+  const token = randomBytes(32).toString("base64url");
+  await db.session.create({ data: { tokenHash: createHash("sha256").update(token).digest("hex"), userId, expiresAt: new Date(Date.now() + 3600_000) } });
+  await context.addCookies([{ name: "elba_session", value: token, url: baseURL }]);
+}
+
+async function noHorizontalScroll(page: Page) {
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  expect(overflow).toBeLessThanOrEqual(0);
+}
+
+test.afterAll(async () => {
+  await db.$disconnect();
+});
+
+test("home → design → gate → price → checkout → pay → vendor → QC → shipped → admin", async ({ page, browser, baseURL }, info) => {
+  test.skip(info.project.name !== "desktop", "mutating end-to-end flow runs once (desktop)");
+  test.setTimeout(240_000);
+  await page.context().addCookies([{ name: "elba_cookie_ack", value: "1", url: baseURL! }]);
+
+  // 1. Home → "Start designing free" deep link opens the mailer editor directly.
+  await page.goto("/en");
+  await page.getByRole("link", { name: "Start designing free" }).first().click();
+  await expect(page).toHaveURL(/\/en\/design\/mailer-box/, { timeout: 30_000 });
+  await expect(page.getByRole("application", { name: "3D preview of your box" })).toBeVisible({ timeout: 30_000 });
+
+  // 2. Anonymous design: background + text, autosaved to the server.
+  await page.getByRole("tab", { name: "Artwork" }).click();
+  await page.getByRole("button", { name: "Colour #1f3d2b" }).first().click();
+  await page.getByRole("button", { name: "Add text" }).click();
+  await expect(page).toHaveURL(/[?&]d=[\w-]+/, { timeout: 20_000 });
+
+  // 3. Price badge → soft gate → instant price → "Order this box".
+  await page.getByTestId("price-badge").click();
+  const gate = page.getByRole("dialog", { name: "Create your free account" });
+  await expect(gate).toBeVisible();
+  const phone = `012${String(Date.now() % 100_000_000).padStart(8, "0")}`;
+  await gate.getByLabel("Mobile number").fill(phone);
+  await gate.getByRole("button", { name: "Send code" }).click();
+  const banner = gate.getByTestId("otp-dev-code");
+  await expect(banner).toBeVisible({ timeout: 20_000 });
+  await gate.getByLabel("Verification code").fill((await banner.textContent())!.match(/\d{6}/)![0]);
+  await gate.getByLabel(/I agree to the Terms/).check();
+  await gate.getByRole("button", { name: "Verify and continue" }).click();
+  const price = page.getByRole("dialog", { name: "Instant price" });
+  await expect(price.getByText("Total with VAT")).toBeVisible({ timeout: 30_000 });
+  await price.getByRole("button", { name: "Order this box" }).click();
+
+  // 4. Checkout → address → proof approval → mock card payment.
+  await expect(page).toHaveURL(/\/en\/checkout\/[\w-]+$/, { timeout: 30_000 });
+  await expect(page.getByTestId("vendor-offer").first()).toBeVisible({ timeout: 30_000 });
+  const summary = page.getByRole("complementary").filter({ hasText: "Summary" });
+  await summary.getByRole("button", { name: "Continue" }).click();
+  await page.getByLabel("Full name").fill("Journey Buyer");
+  await page.getByLabel("Mobile number").fill("010 1234 5678");
+  await page.getByLabel("Governorate").selectOption("Cairo");
+  await page.getByLabel("City or district").fill("Nasr City");
+  await page.getByLabel("Street address").fill("5 Abbas El Akkad St");
+  await summary.getByRole("button", { name: "Continue" }).click();
+  await expect(page.getByRole("tab", { name: "3D proof" })).toBeVisible({ timeout: 30_000 });
+  await page.getByLabel("I approve this proof for printing").check();
+  await summary.getByRole("button", { name: "Approve proof and pay" }).click();
+  await expect(page).toHaveURL(/\/en\/checkout\/pay\//, { timeout: 30_000 });
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByLabel("Card number").fill("4242 4242 4242 4242");
+  await page.getByLabel("Expiry (MM/YY)").fill("12/30");
+  await page.getByLabel("Security code").fill("123");
+  await page.getByRole("button", { name: /^Pay / }).click();
+
+  // 5. Order tracking for the buyer.
+  await expect(page).toHaveURL(/\/en\/orders\/[^/?]+\?paid=1/, { timeout: 30_000 });
+  const orderUrl = page.url().split("?")[0]!;
+  const orderId = orderUrl.split("/").pop()!;
+  const order = await db.order.findUniqueOrThrow({ where: { id: orderId } });
+  expect(order.status).toBe("PAID");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(order.number);
+
+  // 6. The assigned vendor accepts, produces and uploads QC photos.
+  const vendorUser = await db.user.findFirstOrThrow({ where: { vendorId: order.vendorId, role: "VENDOR" } });
+  const vendorCtx = await browser.newContext({ baseURL });
+  await vendorCtx.addCookies([{ name: "elba_cookie_ack", value: "1", url: baseURL! }]);
+  await sessionFor(vendorCtx, baseURL!, vendorUser.id);
+  const vp = await vendorCtx.newPage();
+  await vp.goto(`/en/vendor/jobs/${order.number}`);
+  await expect(vp.getByRole("heading", { level: 1, name: order.number })).toBeVisible({ timeout: 30_000 });
+  await vp.getByRole("button", { name: "Accept job" }).first().click();
+  await vp.getByRole("dialog").getByRole("button", { name: "Accept job" }).click();
+  await expect(vp.getByText("Accepted by vendor").first()).toBeVisible({ timeout: 30_000 });
+  await vp.getByRole("button", { name: "Start production" }).first().click();
+  await expect(vp.getByText("In production").first()).toBeVisible({ timeout: 30_000 });
+  const qc = vp.locator("#qc");
+  await qc.locator('input[type="file"]').setInputFiles({ name: "sheet.png", mimeType: "image/png", buffer: PNG });
+  await expect(qc.getByRole("listitem").filter({ hasText: "First printed sheet" })).toBeVisible({ timeout: 30_000 });
+  await qc.getByLabel("Photo type").selectOption("PACKED_BUNDLE");
+  await qc.locator('input[type="file"]').setInputFiles({ name: "bundle.png", mimeType: "image/png", buffer: PNG });
+  await expect(qc.getByRole("listitem").filter({ hasText: "Packed bundle" })).toBeVisible({ timeout: 30_000 });
+  await qc.getByRole("button", { name: "Submit for quality check" }).click();
+  await expect(vp.getByText("Quality check in progress")).toBeVisible({ timeout: 30_000 });
+  await vendorCtx.close();
+
+  // 7. Admin approves QC and books the courier.
+  const admin = await db.user.findUniqueOrThrow({ where: { phone: "+201000000001" } });
+  const adminCtx = await browser.newContext({ baseURL });
+  await adminCtx.addCookies([{ name: "elba_cookie_ack", value: "1", url: baseURL! }]);
+  await sessionFor(adminCtx, baseURL!, admin.id);
+  const ap = await adminCtx.newPage();
+  await ap.goto(`/en/admin/orders/${order.number}`);
+  await expect(ap.getByRole("heading", { level: 1, name: order.number })).toBeVisible({ timeout: 30_000 });
+  await ap.getByRole("button", { name: "Approve for dispatch" }).click();
+  await expect(ap.getByRole("button", { name: "Book courier pickup" })).toBeVisible({ timeout: 30_000 });
+  await ap.getByRole("button", { name: "Book courier pickup" }).click();
+  await expect(ap.getByRole("button", { name: "Book courier pickup" })).toHaveCount(0, { timeout: 30_000 });
+  await expect.poll(async () => (await db.order.findUniqueOrThrow({ where: { id: orderId } })).status, { timeout: 30_000 }).toMatch(/SHIPPED|DELIVERED/);
+
+  // The admin index lists the order; the audit log has the dispatch.
+  await ap.goto(`/en/admin/orders?q=${order.number}`);
+  await expect(ap.getByRole("link", { name: order.number })).toBeVisible({ timeout: 30_000 });
+  await ap.goto("/en/admin/audit");
+  await expect(ap.getByRole("row").filter({ hasText: order.number }).filter({ hasText: "Courier booked" }).first()).toBeVisible({ timeout: 30_000 });
+  await adminCtx.close();
+
+  // 8. Buyer sees the shipment with a tracking number.
+  await page.goto(orderUrl);
+  const progress = page.getByRole("navigation", { name: "Progress" });
+  await expect(progress).toBeVisible();
+  const shipment = await db.shipment.findFirstOrThrow({ where: { orderId } });
+  await expect(page.getByText(shipment.trackingNumber!).first()).toBeVisible({ timeout: 30_000 });
+  await noHorizontalScroll(page);
+});

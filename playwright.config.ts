@@ -27,7 +27,10 @@ const PORT = Number(process.env.E2E_PORT ?? 3100);
 export default defineConfig({
   testDir: "./e2e",
   timeout: 60_000,
+  // Pages render on demand and the 3D proof uses software WebGL in CI, so allow slower steps.
+  expect: { timeout: 15_000 },
   fullyParallel: true,
+  workers: process.env.CI ? 2 : 3,
   reporter: [["list"]],
   use: {
     baseURL: `http://localhost:${PORT}`,

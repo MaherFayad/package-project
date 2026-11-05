@@ -16,7 +16,7 @@ import {
   Timeline,
   type TimelineGroup,
 } from "@/components/ui";
-import { NoteComposer, OverrideCard, QcActions, RefundCard, RoutingCard } from "@/components/admin/OrderActions";
+import { NoteComposer, OverrideCard, QcActions, RefundCard, RoutingCard, ShipCard } from "@/components/admin/OrderActions";
 import { OrderStatusBadge } from "@/components/admin/OrdersIndex";
 import { NotFoundCard } from "@/components/admin/NotFoundCard";
 import { adminStyles } from "@/components/admin/charts";
@@ -185,6 +185,8 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
                 </BlockStack>
               </Card>
             ) : null}
+
+            {order.status === "READY_TO_SHIP" ? <ShipCard orderId={order.id} /> : null}
 
             <Card title={t("admin.order.items")}>
               <BlockStack gap="300">

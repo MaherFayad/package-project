@@ -4,6 +4,7 @@ import { apiRequireRole } from "@/lib/auth";
 import { rateLimit } from "@/lib/rate-limit";
 import { DEFAULT_PRICING_CONFIG, DELIVERY_ZONES, QuoteInputError, quote, toPublicOutcome, zoneForGovernorate } from "@/lib/pricing";
 import { loadPricingData } from "@/lib/pricing/server";
+import { loadPricingConfig } from "@/components/admin/server/settings";
 
 const Mm = z.number().finite().positive().max(5000);
 
@@ -59,7 +60,7 @@ export async function POST(req: Request) {
   if (!zone) return Response.json({ error: "UNKNOWN_GOVERNORATE" }, { status: 400 });
 
   try {
-    const data = await loadPricingData();
+    const [data, config] = await Promise.all([loadPricingData(), loadPricingConfig()]);
     const outcome = quote(
       {
         structureCode: b.structureCode,
@@ -73,6 +74,7 @@ export async function POST(req: Request) {
         zone,
       },
       data,
+      { config },
     );
     return Response.json(toPublicOutcome(outcome), { headers: { "Cache-Control": "no-store" } });
   } catch (e) {

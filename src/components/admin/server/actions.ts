@@ -12,7 +12,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { fromJson, toJson } from "@/lib/json";
-import { transitionOrder } from "@/lib/orders/service";
+import { OrderError, shipOrder, transitionOrder } from "@/lib/orders/service";
 import { getPaymentProvider } from "@/lib/payments";
 import { QuoteInputError, quote, type PricingConfig } from "@/lib/pricing";
 import { loadPricingData } from "@/lib/pricing/server";
@@ -222,6 +222,36 @@ export async function reviewQcAction(input: z.input<typeof qcSchema>): Promise<A
     });
     revalidateAdmin();
     return null;
+  });
+}
+
+const shipSchema = z.object({ orderId: z.string().min(1).max(64) });
+
+/** Book the courier pickup for a QC-approved order (READY_TO_SHIP → SHIPPED via shipOrder()). */
+export async function shipOrderAction(input: z.input<typeof shipSchema>): Promise<AdminActionResponse<{ trackingNumber: string }>> {
+  return runAdminAction(async () => {
+    const admin = await adminForMutation();
+    const d = parse(shipSchema, input);
+    const order = await db.order.findUnique({ where: { id: d.orderId }, select: { id: true, number: true, status: true } });
+    if (!order) throw new AdminActionError("NOT_FOUND");
+    if (order.status !== "READY_TO_SHIP") throw new AdminActionError("NOT_ALLOWED");
+    let trackingNumber: string;
+    try {
+      ({ trackingNumber } = await shipOrder(order.id, { role: "ADMIN", userId: admin.id }));
+    } catch (e) {
+      if (e instanceof OrderError) throw new AdminActionError("NOT_ALLOWED");
+      throw e;
+    }
+    await audit(admin, {
+      action: "ORDER_SHIP",
+      entityType: "ORDER",
+      entityId: order.id,
+      summary: `${order.number}: ${trackingNumber}`,
+      before: { status: order.status },
+      after: { status: "SHIPPED", trackingNumber },
+    });
+    revalidateAdmin();
+    return { trackingNumber };
   });
 }
 

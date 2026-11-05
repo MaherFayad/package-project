@@ -276,6 +276,8 @@
 
 /* ── MetricsStrip ─────────────────────────────────────────── */
 .Metrics {
+  /* Contain absolutely-positioned visually-hidden text so it cannot widen the page. */
+  position: relative;
   display: flex;
   align-items: stretch;
   overflow-x: auto;

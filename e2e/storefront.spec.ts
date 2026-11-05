@@ -52,7 +52,12 @@ test("vendor directory filters and vendor profile lightbox", async ({ page }) =>
   await expect(page.getByTestId("vendor-card")).toHaveCount(1);
   await expect(page.getByTestId("vendor-card")).toContainText("Alex Print House");
 
-  await page.getByRole("link", { name: "View profile: Alex Print House" }).click();
+  // The filter form is a plain GET (full page load); a click that lands while React is still
+  // hydrating can be swallowed, so retry until the profile route is reached.
+  await expect(async () => {
+    if (!/\/vendors\/alex-print-house/.test(page.url())) await page.getByRole("link", { name: "View profile: Alex Print House" }).click();
+    await expect(page).toHaveURL(/\/en\/vendors\/alex-print-house/, { timeout: 3000 });
+  }).toPass({ timeout: 30_000 });
   await expect(page.getByRole("heading", { level: 1, name: "Alex Print House" })).toBeVisible();
   await expect(page.getByText("Food-contact safe")).toBeVisible();
   await page.waitForLoadState("networkidle"); // gallery is a client island

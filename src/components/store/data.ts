@@ -19,6 +19,7 @@ import { fromJson } from "@/lib/json";
 import { defaultMaterialFor, materialFitsStructure } from "@/lib/dieline";
 import { priceTable, toPublicOffer, type PricingData, type VendorOffer } from "@/lib/pricing";
 import { loadPricingData } from "@/lib/pricing/server";
+import { loadPricingConfig } from "@/components/admin/server/settings";
 import type { VendorListItem } from "./vendor-filters";
 
 /** Storefront read models (owner: storefront). All DB access for public pages goes through here. */
@@ -168,6 +169,7 @@ export interface PriceFrom {
 }
 
 const pricingData = cache(async (): Promise<PricingData> => loadPricingData());
+const pricingConfig = cache(() => loadPricingConfig());
 
 /**
  * Public "from" prices for the catalogue: best offer per quantity tier for the cheapest
@@ -182,6 +184,7 @@ export async function getPriceFrom(code: StructureCode, dims: Dims, material?: M
     const table = priceTable(
       { structureCode: code, dims, materialId: mat, finishes: [], printSides: "OUTSIDE", colours: 1, zone: "GREATER_CAIRO" },
       data,
+      { config: await pricingConfig() },
     );
     const rows: PriceFromRow[] = [];
     let validUntil: string | null = null;
