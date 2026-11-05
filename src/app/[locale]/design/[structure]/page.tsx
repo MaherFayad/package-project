@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import type { DesignDoc, DimsPreset, StructureCode } from "@/types";
+import { MATERIAL_CODES, type DesignDoc, type Dims, type DimsPreset, type MaterialCode, type StructureCode } from "@/types";
+import { validateDims } from "@/lib/dieline";
 import { getT, toLocale } from "@/i18n";
 import type { DictKey } from "@/i18n/types";
 import { DesignerApp } from "@/components/designer/DesignerApp";
@@ -57,7 +58,16 @@ export default async function DesignEditorPage({ params, searchParams }: { param
     } else loadError = "notFound";
   }
   if (!doc) {
-    doc = createDesignDoc({ structureCode: code, dims: presetDims(code, one(sp.preset), presetsByCode[code]) });
+    // Deep links from the storefront (designHref): ?L=&W=&H=&material= override the preset when valid.
+    let dims: Dims = presetDims(code, one(sp.preset), presetsByCode[code]);
+    const [L, W, H] = [one(sp.L), one(sp.W), one(sp.H)].map((v) => Number(v));
+    if ([L, W, H].every((n) => Number.isFinite(n) && n > 0)) {
+      const v = validateDims(code, { L, W, H });
+      if (v.ok) dims = v.dims;
+    }
+    const m = one(sp.material);
+    const materialCode = m && (MATERIAL_CODES as readonly string[]).includes(m) ? (m as MaterialCode) : undefined;
+    doc = createDesignDoc({ structureCode: code, dims, materialCode });
   }
 
   return (

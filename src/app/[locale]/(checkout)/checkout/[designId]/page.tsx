@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import type { Prisma } from "@prisma/client";
 import { MAX_INSTANT_QTY, QTY_TIERS, type ShippingAddress } from "@/types";
 import { getT, toLocale } from "@/i18n";
 import { requireUser } from "@/lib/auth/session";
@@ -25,12 +27,38 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
  * Signed-in owners only (soft gate G2). Prices are computed on the server; the browser only
  * ever sees buyer prices (no vendor cost or margin).
  */
-export default async function CheckoutPage({ params }: { params: Params }) {
+export default async function CheckoutPage({ params, searchParams }: { params: Params; searchParams: Promise<{ share?: string | string[] }> }) {
   const { locale: raw, designId } = await params;
   const locale = toLocale(raw);
   const t = getT(locale);
-  const user = await requireUser(locale, `/${locale}/checkout/${encodeURIComponent(designId)}`);
+  const shareRaw = (await searchParams).share;
+  const share = Array.isArray(shareRaw) ? shareRaw[0] : shareRaw;
+  const self = `/${locale}/checkout/${encodeURIComponent(designId)}${share ? `?share=${encodeURIComponent(share)}` : ""}`;
+  const user = await requireUser(locale, self);
   const design = await loadCheckoutDesign(designId, user);
+
+  // Ordering from a share link (/[locale]/s/[token]): the visitor does not own the design, so
+  // give them their own copy (the shared original stays read-only) and check out that copy.
+  if (!design && share && /^[\w-]{1,64}$/.test(share) && /^[\w-]{1,64}$/.test(designId)) {
+    const src = await db.design.findFirst({ where: { id: designId, shareToken: share } });
+    if (src) {
+      const copy = await db.design.create({
+        data: {
+          ownerId: user.id,
+          name: src.name,
+          structureCode: src.structureCode,
+          dims: src.dims as Prisma.InputJsonValue,
+          materialId: src.materialId,
+          finishCode: src.finishCode,
+          printSides: src.printSides,
+          artwork: src.artwork as Prisma.InputJsonValue,
+          thumbnailUrl: src.thumbnailUrl,
+        },
+        select: { id: true },
+      });
+      redirect(`/${locale}/checkout/${encodeURIComponent(copy.id)}`);
+    }
+  }
 
   if (!design) {
     return (

@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { Footprints, Pizza, Shirt, SprayCan } from "lucide-react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getT, toLocale } from "@/i18n";
 import type { DictKey } from "@/i18n/types";
 import { Badge, BlockStack, Box, Button, EmptyState, EmptyBoxIllustration, InlineStack, Page, Text } from "@/components/ui";
-import { PRODUCT_PRESETS, designerPath } from "@/components/designer/lib/catalog";
+import { PRODUCT_PRESETS, designerPath, structureFromParam } from "@/components/designer/lib/catalog";
 import { loadPickerStructures } from "@/components/designer/server";
 import { ResumeCard } from "@/components/designer/ResumeCard";
 import styles from "@/components/designer/designer.module.css";
@@ -24,8 +25,32 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 const PRODUCT_ICONS = { tshirt: Shirt, shoe: Footprints, perfume50: SprayCan, pizza30: Pizza } as const;
 
 /** Structure picker: pick a style (or a product shortcut), then design for free. */
-export default async function DesignPickerPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function DesignPickerPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const locale = toLocale((await params).locale);
+  // Storefront deep links (designHref in src/components/store/catalog.ts):
+  // ?structure=CODE&L=&W=&H=&material=&vendor= opens the editor; ?design=<id> opens a saved design.
+  const sp = await searchParams;
+  const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
+  const linkCode = one(sp.structure) ? structureFromParam(one(sp.structure)!) : null;
+  const designId = one(sp.design);
+  if (designId) redirect(designerPath(locale, linkCode ?? "FEFCO_0427", { d: designId }));
+  if (linkCode) {
+    redirect(
+      designerPath(locale, linkCode, {
+        L: one(sp.L),
+        W: one(sp.W),
+        H: one(sp.H),
+        material: one(sp.material),
+        vendor: one(sp.vendor),
+      }),
+    );
+  }
   const t = getT(locale);
   const structures = await loadPickerStructures();
 

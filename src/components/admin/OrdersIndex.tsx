@@ -1,8 +1,8 @@
 "use client";
 
 import { ClipboardList } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useMemo, useState } from "react";
 import {
   Badge,
   BlockStack,
@@ -45,10 +45,8 @@ export function OrderStatusBadge({ status }: { status: string }) {
 /** Admin orders index: metrics strip, view tabs with counts, "Search and filter", vendor filter, sort. */
 export function OrdersIndex({ rows, vendors, openDisputes }: { rows: AdminOrderRow[]; vendors: { id: string; name: string }[]; openDisputes: number }) {
   const { t, locale } = useI18n();
-  const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
-  const [, startTransition] = useTransition();
 
   const view = asOrderView(params.get("view"));
   const sort = asSort(params.get("sort"));
@@ -62,7 +60,9 @@ export function OrdersIndex({ rows, vendors, openDisputes }: { rows: AdminOrderR
       else next.set(k, v);
     }
     const qs = next.toString();
-    startTransition(() => router.replace(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false }));
+    // Filtering is client-side (the page does not read searchParams), so update the URL without a
+    // server round trip; a pending router.replace could otherwise race a row-link navigation.
+    window.history.replaceState(null, "", `${pathname}${qs ? `?${qs}` : ""}`);
   };
 
   const counts = useMemo(() => countByOrderView(rows), [rows]);
