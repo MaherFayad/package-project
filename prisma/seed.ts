@@ -353,6 +353,10 @@ async function wipe() {
   await db.otpCode.deleteMany();
   await db.user.deleteMany();
   await db.organization.deleteMany();
+  await db.vendorApplication.deleteMany(); // vendor portal onboarding
+  await db.dataRequest.deleteMany(); // added by admin: rows point at users recreated below
+  await db.auditLog.deleteMany(); // added by admin
+  await db.platformSetting.deleteMany(); // added by admin
   await db.vendor.deleteMany();
   await db.finish.deleteMany();
   await db.material.deleteMany();
@@ -531,6 +535,161 @@ async function main() {
   await db.payout.create({
     data: { vendorId: vendorIds[0], orderId: order.id, kind: "ADVANCE", amountPiasters: Math.round((egp(19) * qty + egp(600)) * 0.4), status: "PAID", approvedAt: now, paidAt: now },
   });
+
+  // ── Vendor portal sample jobs (added by vendor portal): one job per state the portal shows.
+  //    ELB-26201 Delta Cartons, paid and awaiting acceptance (used by e2e/vendor.spec.ts, which resets it).
+  //    ELB-26202 Nile Pack, paid and awaiting acceptance.  ELB-26203 Nile Pack, delivered (balance waits on e-invoice).
+  {
+    const shippingBox = structureRows.get("FEFCO_0201")!;
+    const portalJobs = [
+      { number: "ELB-26201", vendor: 1, status: "PAID", structure: "FEFCO_0201" as const, material: "B_FLUTE_KRAFT" as const, finish: "NONE" as const, qty: 250, unitEgp: 24, costEgp: 18, dueDays: 9, placedH: -5 },
+      { number: "ELB-26202", vendor: 0, status: "PAID", structure: "FEFCO_0427" as const, material: "E_FLUTE_WHITE" as const, finish: "GLOSS_LAMINATION" as const, qty: 1000, unitEgp: 21, costEgp: 15.5, dueDays: 2, placedH: -20 },
+      { number: "ELB-26203", vendor: 0, status: "DELIVERED", structure: "FEFCO_0427" as const, material: "E_FLUTE_KRAFT" as const, finish: "NONE" as const, qty: 250, unitEgp: 26, costEgp: 19.5, dueDays: -12, placedH: -24 * 20 },
+    ];
+    for (const j of portalJobs) {
+      const st = j.structure === "FEFCO_0201" ? shippingBox : mailer;
+      const placed = new Date(now.getTime() + j.placedH * 3600_000);
+      const doc = {
+        v: 1, name: `${j.number} box`, structureCode: j.structure, dims: st.seed.defaultDims,
+        materialCode: j.material, finishCode: j.finish, printSides: "OUTSIDE", artwork,
+      };
+      const d = await db.design.create({
+        data: {
+          ownerId: buyer.id, name: doc.name, structureCode: j.structure, dims: st.seed.defaultDims as object,
+          materialId: materialRows.get(j.material)!.id, finishCode: j.finish, printSides: "OUTSIDE", artwork: artwork as object,
+        },
+      });
+      const snap = { ...doc, id: d.id };
+      const pr = await db.proof.create({
+        data: {
+          designId: d.id, snapshot: toJson(snap), hash: createHash("sha256").update(canonicalJson(snap)).digest("hex"),
+          approvedAt: placed, approvedIp: "127.0.0.1", approvedById: buyer.id,
+        },
+      });
+      const sub = egp(j.unitEgp) * j.qty;
+      const ship = egp(120);
+      const vat = Math.round((sub + ship) * 0.14);
+      const cost = egp(j.costEgp) * j.qty;
+      const o = await db.order.create({
+        data: {
+          number: j.number, buyerId: buyer.id, vendorId: vendorIds[j.vendor], status: j.status,
+          subtotalPiasters: sub + ship, vatPiasters: vat, shippingPiasters: ship, totalPiasters: sub + ship + vat, vendorCostPiasters: cost,
+          shippingAddress: { name: "منى عادل", phone: "+201000000002", governorate: "Giza", city: "Dokki", street: "5 Mesaha Sq" },
+          placedAt: placed, paidAt: new Date(placed.getTime() + 600_000),
+          dueDate: new Date(now.getTime() + j.dueDays * 86_400_000),
+          deliveredAt: j.status === "DELIVERED" ? new Date(now.getTime() - 10 * 86_400_000) : null,
+          items: {
+            create: [{
+              proofId: pr.id, structureCode: j.structure, dims: st.seed.defaultDims as object, materialCode: j.material,
+              finishCode: j.finish, printSides: "OUTSIDE", quantity: j.qty, unitPiasters: egp(j.unitEgp), lineTotalPiasters: sub,
+            }],
+          },
+          productionEvents: {
+            create: [
+              { type: "ORDER_PLACED", createdAt: placed },
+              { type: "PROOF_APPROVED", createdAt: placed },
+              { type: "PAYMENT_CONFIRMED", createdAt: new Date(placed.getTime() + 600_000) },
+              ...(j.status === "DELIVERED"
+                ? [
+                    { type: "VENDOR_ACCEPTED", createdAt: new Date(placed.getTime() + 3 * 3600_000) },
+                    { type: "PRODUCTION_STARTED", createdAt: new Date(placed.getTime() + 24 * 3600_000) },
+                    { type: "QC_UPLOADED", createdAt: new Date(placed.getTime() + 5 * 86_400_000) },
+                    { type: "QC_APPROVED", createdAt: new Date(placed.getTime() + 5.2 * 86_400_000) },
+                    { type: "SHIPPED", createdAt: new Date(placed.getTime() + 6 * 86_400_000) },
+                    { type: "DELIVERED", createdAt: new Date(placed.getTime() + 7 * 86_400_000) },
+                  ]
+                : []),
+            ],
+          },
+          payments: { create: [{ provider: "mock", method: "CARD", status: "PAID", amountPiasters: sub + ship + vat, providerRef: `mock_${j.number}` }] },
+        },
+      });
+      if (j.status === "DELIVERED") {
+        const adv = Math.round(cost * 0.4);
+        await db.payout.create({ data: { vendorId: vendorIds[j.vendor], orderId: o.id, kind: "ADVANCE", amountPiasters: adv, status: "PAID", approvedAt: placed, paidAt: placed } });
+        await db.payout.create({ data: { vendorId: vendorIds[j.vendor], orderId: o.id, kind: "BALANCE", amountPiasters: cost - adv, status: "PENDING" } });
+      }
+    }
+  }
+
+  // ── Admin sample data (added by admin): one job waiting for QC review, an open dispute on the
+  //    delivered job ELB-26203, a pending vendor application and an open PDPL data request.
+  //    e2e/admin.spec.ts resets ELB-26301 before it runs.
+  {
+    const qcVendor = vendors[2];
+    const placed = new Date(now.getTime() - 6 * 86_400_000);
+    const qty = 500;
+    const sub = egp(17) * qty;
+    const ship = egp(150);
+    const vat = Math.round((sub + ship) * 0.14);
+    const qcDesign = await db.design.create({
+      data: {
+        ownerId: buyer.id, name: "ELB-26301 box", structureCode: "FEFCO_0427", dims: mailer.seed.defaultDims as object,
+        materialId: materialRows.get("E_FLUTE_KRAFT")!.id, finishCode: "NONE", printSides: "OUTSIDE", artwork: artwork as object,
+      },
+    });
+    const qcSnap = { v: 1, id: qcDesign.id, name: qcDesign.name, structureCode: "FEFCO_0427", dims: mailer.seed.defaultDims, materialCode: "E_FLUTE_KRAFT", finishCode: "NONE", printSides: "OUTSIDE", artwork };
+    const qcProof = await db.proof.create({
+      data: { designId: qcDesign.id, snapshot: toJson(qcSnap), hash: createHash("sha256").update(canonicalJson(qcSnap)).digest("hex"), approvedAt: placed, approvedIp: "127.0.0.1", approvedById: buyer.id },
+    });
+    await db.order.create({
+      data: {
+        number: "ELB-26301", buyerId: buyer.id, vendorId: vendorIds[2], status: "QC_PENDING",
+        subtotalPiasters: sub + ship, vatPiasters: vat, shippingPiasters: ship, totalPiasters: sub + ship + vat, vendorCostPiasters: egp(12.5) * qty,
+        shippingAddress: { name: "منى عادل", phone: "+201000000002", governorate: "Cairo", city: "Nasr City", street: "12 Makram Ebeid" },
+        placedAt: placed, paidAt: new Date(placed.getTime() + 600_000), dueDate: new Date(now.getTime() + 2 * 86_400_000),
+        items: { create: [{ proofId: qcProof.id, structureCode: "FEFCO_0427", dims: mailer.seed.defaultDims as object, materialCode: "E_FLUTE_KRAFT", finishCode: "NONE", printSides: "OUTSIDE", quantity: qty, unitPiasters: egp(17), lineTotalPiasters: sub }] },
+        productionEvents: {
+          create: [
+            { type: "ORDER_PLACED", createdAt: placed },
+            { type: "PAYMENT_CONFIRMED", createdAt: new Date(placed.getTime() + 600_000) },
+            { type: "VENDOR_ACCEPTED", createdAt: new Date(placed.getTime() + 4 * 3600_000) },
+            { type: "PRODUCTION_STARTED", createdAt: new Date(placed.getTime() + 86_400_000) },
+            { type: "QC_UPLOADED", createdAt: new Date(now.getTime() - 3600_000) },
+          ],
+        },
+        qcPhotos: {
+          create: [
+            { url: `/seed/portfolio/${qcVendor.slug}-2.svg`, kind: "FIRST_SHEET" },
+            { url: `/seed/portfolio/${qcVendor.slug}-3.svg`, kind: "PACKED_BUNDLE" },
+          ],
+        },
+        payments: { create: [{ provider: "mock", method: "WALLET", status: "PAID", amountPiasters: sub + ship + vat, providerRef: "mock_ELB-26301" }] },
+      },
+    });
+
+    const delivered = await db.order.findUnique({ where: { number: "ELB-26203" } });
+    if (delivered) {
+      await db.dispute.create({
+        data: {
+          orderId: delivered.id, openedById: buyer.id, reason: "PRINT_DEFECT", status: "OPEN",
+          description: "The logo on the lid is shifted about 4 mm to the left on most boxes.",
+          createdAt: new Date(now.getTime() - 2 * 86_400_000),
+        },
+      });
+    }
+
+    const applicant = await db.user.create({ data: { phone: "+201000000020", name: "Karim Fathy", role: "BUYER", locale: "ar", consentAt: now } });
+    const pendingVendor = await db.vendor.create({
+      data: {
+        slug: "giza-carton-lab", nameAr: "معمل الجيزة للكرتون", nameEn: "Giza Carton Lab", city: "GIZA", cityAr: "الجيزة", cityEn: "Giza",
+        bioAr: "مطبعة كرتون مضلع في أبو رواش.", bioEn: "Corrugated print shop in Abu Rawash.",
+        machines: [{ kind: "FLEXO", model: "2-colour flexo", count: 1 }, { kind: "DIE_CUTTER", model: "Flatbed die cutter", count: 1 }],
+        capabilities: { structures: ["FEFCO_0201", "FEFCO_0427"], materials: ["B_FLUTE_KRAFT", "E_FLUTE_KRAFT"], finishes: ["NONE"], maxColors: 2, digitalShortRun: false, monthlyCapacityUnits: 40000 },
+        certifications: [], serviceAreas: ["GIZA", "CAIRO"], verified: false, status: "PENDING", minOrderQty: 250, leadTimeDays: 8,
+      },
+    });
+    await db.vendorApplication.create({
+      data: {
+        applicantId: applicant.id, vendorId: pendingVendor.id, legalName: "Giza Carton Lab LLC", commercialRegisterNo: "CR-118204",
+        taxCardNo: "512-339-870", factoryAddress: "Industrial zone, Abu Rawash", factoryCity: "GIZA", contactName: "Karim Fathy",
+        contactPhone: "+201000000020", documents: [], message: "We print shipping boxes for furniture and appliance makers.",
+        createdAt: new Date(now.getTime() - 86_400_000),
+      },
+    });
+
+    await db.dataRequest.create({ data: { userId: buyer.id, kind: "EXPORT", status: "OPEN", createdAt: new Date(now.getTime() - 3 * 86_400_000) } });
+  }
 
   const counts = {
     structures: await db.structure.count(), materials: await db.material.count(), finishes: await db.finish.count(),

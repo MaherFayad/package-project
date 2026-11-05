@@ -1,0 +1,114 @@
+/** Serializable view models passed from server pages to client components (dates as ISO strings). */
+import type { Dims, FinishCode, MaterialCode, OrderStatus, PrintSides, RateTier, StructureCode, VendorCertification, VendorMachine, EgyptCity } from "@/types";
+import type { ScheduleRow } from "./lib/payouts";
+
+export interface JobEventDTO {
+  id: string;
+  type: string;
+  note: string | null;
+  createdAt: string;
+  /** Who wrote it, as far as the vendor should know. */
+  by: "you" | "elba" | "system";
+}
+
+export interface JobListItemDTO {
+  id: string;
+  number: string;
+  status: OrderStatus;
+  paidAt: string | null;
+  placedAt: string;
+  dueDate: string | null;
+  buyerName: string;
+  structureCode: StructureCode;
+  quantity: number;
+  vendorCostPiasters: number;
+  events: { type: string; createdAt: string }[];
+  qcPhotos: { kind: string; status: string }[];
+}
+
+export interface JobItemDTO {
+  id: string;
+  structureCode: StructureCode;
+  dims: Dims;
+  materialCode: MaterialCode;
+  finishCode: FinishCode;
+  printSides: PrintSides;
+  quantity: number;
+  proof: { hash: string; version: number; approvedAt: string | null } | null;
+}
+
+export interface QcPhotoDTO {
+  id: string;
+  url: string;
+  kind: string;
+  status: string;
+  reviewNote: string | null;
+  uploadedAt: string;
+}
+
+export interface JobDetailDTO extends Omit<JobListItemDTO, "events" | "qcPhotos"> {
+  items: JobItemDTO[];
+  events: JobEventDTO[];
+  qcPhotos: QcPhotoDTO[];
+  shipTo: { city: string; governorate: string };
+  payouts: { kind: string; amountPiasters: number; status: string }[];
+}
+
+export interface RateCardRowDTO {
+  id: string;
+  structureCode: StructureCode;
+  materialCode: MaterialCode;
+  qtyTiers: RateTier[];
+  setupPiasters: number;
+  dieCostPiasters: number;
+  leadTimeDays: number;
+  active: boolean;
+}
+
+export interface RateCardDetailDTO extends RateCardRowDTO {
+  referenceAreaM2: number;
+  printSidesSurchargePct: number;
+  finishSurcharges: Partial<Record<FinishCode, number>>;
+  standardDies: Dims[];
+  updatedAt: string;
+}
+
+export interface PortfolioItemDTO {
+  id: string;
+  imageUrl: string;
+  captionAr: string;
+  captionEn: string;
+  structureCode: StructureCode | null;
+}
+
+export interface VendorProfileDTO {
+  id: string;
+  slug: string;
+  nameAr: string;
+  nameEn: string;
+  city: EgyptCity;
+  status: string;
+  verified: boolean;
+  foodSafe: boolean;
+  rating: number;
+  ratingCount: number;
+  onTimePct: number;
+  bioAr: string;
+  bioEn: string;
+  machines: VendorMachine[];
+  structures: StructureCode[];
+  materials: MaterialCode[];
+  finishes: FinishCode[];
+  maxColors: number;
+  digitalShortRun: boolean;
+  monthlyCapacityUnits: number;
+  leadTimeDays: number;
+  minOrderQty: number;
+  serviceAreas: EgyptCity[];
+  certifications: VendorCertification[];
+  updatedAt: string;
+}
+
+export interface PayoutsDTO {
+  rows: ScheduleRow[];
+}

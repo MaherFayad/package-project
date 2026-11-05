@@ -1,0 +1,9 @@
+vendor_slug,structure_code,material_code,reference_area_m2,tier_100_unit_piasters,tier_250_unit_piasters,tier_500_unit_piasters,tier_1000_unit_piasters,tier_2000_unit_piasters,setup_piasters,die_cost_piasters,print_sides_surcharge_pct,finish_MATTE_LAMINATION_unit_piasters,finish_GLOSS_LAMINATION_unit_piasters,finish_SPOT_UV_unit_piasters,lead_time_days,active,valid_from,colours_quoted,source_quote_ref,reference_job,notes
+EXAMPLE-nile-pack,FEFCO_0427,E_FLUTE_KRAFT,0.25,3800,2700,1900,1400,1100,60000,180000,35,90,80,,6,true,2026-11-01,4,DEMO-SEED,,Demo values from prisma/seed.ts; delete this row before import
+EXAMPLE-delta-cartons,ECMA_RTE,SBS_350,0.06,2137,1187,772,499,368,45000,100700,35,95,85,170,9,true,2026-11-01,4,DEMO-SEED,,Demo values from prisma/seed.ts; delete this row before import
+,FEFCO_0427,E_FLUTE_KRAFT,,,,,,,,,,,,,,true,,,,R1,250 x 200 x 80 mm; 1 colour outside quoted: normalise to 4 colours (see how-to)
+,ECMA_RTE,SBS_350,,,,,,,,,,,,,,true,,,,R2,65 x 55 x 160 mm; 4 colours; matte lamination quoted separately into finish column
+,PIZZA,E_FLUTE_WHITE,,,,,,,,,,,,,,true,,,,R3,310 x 310 x 40 mm; 2 colours; food-safe evidence required
+,FEFCO_0201,B_FLUTE_KRAFT,,,,,,,,,,,,,,true,,,,R4,300 x 200 x 150 mm; 2 colours flexo
+,ECMA_STE,SBS_300,,,,,,,,,,,,,,true,,,,,
+,SLEEVE,SBS_300,,,,,,,,,,,,,,true,,,,,

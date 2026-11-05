@@ -1,0 +1,40 @@
+.Banner {
+  --banner-bg: var(--p-color-bg-surface-info);
+  --banner-fg: var(--p-color-text-info);
+  --banner-icon-bg: var(--p-color-bg-fill-info);
+  --banner-icon-fg: var(--p-color-text-info-on-bg-fill);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--p-space-200);
+  padding: var(--p-space-300);
+  border-radius: var(--p-border-radius-300);
+  background: var(--banner-bg);
+  color: var(--p-color-text);
+  box-shadow: var(--e-shadow-card);
+}
+.inCard { box-shadow: none; border-radius: var(--p-border-radius-200); padding: var(--p-space-200) var(--p-space-300); }
+.tone-info { --banner-bg: var(--p-color-bg-surface-info); --banner-fg: var(--p-color-text-info); --banner-icon-bg: var(--p-color-bg-fill-info); --banner-icon-fg: var(--p-color-text-info-on-bg-fill); }
+.tone-success { --banner-bg: var(--p-color-bg-surface-success); --banner-fg: var(--p-color-text-success); --banner-icon-bg: var(--p-color-bg-fill-success); --banner-icon-fg: var(--p-color-text-success-on-bg-fill); }
+.tone-warning { --banner-bg: var(--p-color-bg-surface-warning); --banner-fg: var(--p-color-text-warning); --banner-icon-bg: var(--p-color-bg-fill-warning); --banner-icon-fg: var(--p-color-text-warning-on-bg-fill); }
+.tone-critical { --banner-bg: var(--p-color-bg-surface-critical); --banner-fg: var(--p-color-text-critical); --banner-icon-bg: var(--p-color-bg-fill-critical); --banner-icon-fg: var(--p-color-text-critical-on-bg-fill); }
+
+.IconBox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  border-radius: var(--p-border-radius-200);
+  background: var(--banner-icon-bg);
+  color: var(--banner-icon-fg);
+}
+.inCard .IconBox, .noTitle .IconBox { background: transparent; color: var(--banner-fg); inline-size: 1.25rem; block-size: 1.25rem; margin-block-start: 0; }
+.Body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: var(--p-space-100); padding-block-start: var(--p-space-050); }
+.noTitle .Body, .inCard .Body { padding-block-start: 0; }
+.Title { margin: 0; font-weight: var(--p-font-weight-semibold); color: var(--banner-fg); }
+.Content { color: var(--banner-fg); }
+.Content :global(a) { color: inherit; }
+.Actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--p-space-200); margin-block-start: var(--p-space-100); }
+.Dismiss { flex: none; margin-block: calc(-1 * var(--p-space-050)); }
+.Dismiss .DismissButton { background: transparent; color: var(--banner-fg); }

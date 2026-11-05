@@ -1,0 +1,36 @@
+.bar {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--p-space-100, 4px);
+  padding: var(--p-space-100, 4px);
+  background: var(--p-color-bg-surface, #fff);
+  border-radius: var(--p-border-radius-300, 12px);
+  box-shadow: var(--p-shadow-bevel-100, 0 1px 0 rgba(26, 26, 26, 0.07));
+}
+
+.button {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 44px;
+  block-size: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--p-border-radius-200, 8px);
+  background: transparent;
+  color: var(--p-color-icon, #4a4a4a);
+  cursor: pointer;
+}
+
+.button:hover {
+  background: var(--p-color-bg-fill-transparent-hover, rgba(0, 0, 0, 0.05));
+  color: var(--p-color-icon-hover, #303030);
+}
+
+.button:active {
+  background: var(--p-color-bg-fill-transparent-active, rgba(0, 0, 0, 0.08));
+}
+
+.button:focus-visible {
+  outline: var(--p-focus-ring-width, 2px) solid var(--p-color-border-focus, #005bd3);
+  outline-offset: var(--p-focus-ring-offset, 1px);
+}

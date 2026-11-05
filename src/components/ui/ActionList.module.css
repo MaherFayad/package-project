@@ -1,0 +1,47 @@
+.ActionList { padding: var(--p-space-150); }
+.Section + .Section { margin-block-start: var(--p-space-150); }
+.withDivider {
+  border-block-start: 1px solid var(--p-color-border-secondary);
+  padding-block-start: var(--p-space-150);
+  margin-inline: calc(-1 * var(--p-space-150));
+  padding-inline: var(--p-space-150);
+}
+.SectionTitle {
+  margin: 0;
+  padding: var(--p-space-100) var(--p-space-200);
+  font-size: var(--p-text-heading-xs-font-size);
+  font-weight: var(--p-font-weight-semibold);
+  color: var(--p-color-text-secondary);
+}
+.List { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--p-space-050); }
+.Item {
+  display: flex;
+  align-items: center;
+  gap: var(--p-space-200);
+  inline-size: 100%;
+  min-block-size: var(--p-control-height-slim);
+  padding: var(--p-space-150) var(--p-space-200);
+  border: 0;
+  border-radius: var(--p-border-radius-200);
+  background: transparent;
+  color: var(--p-color-text);
+  font: inherit;
+  font-size: var(--p-text-body-md-font-size);
+  font-weight: var(--p-font-weight-medium);
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+}
+@media (pointer: coarse) { .Item { min-block-size: var(--e-control-height-touch); } }
+.Item:hover { background: var(--p-color-bg-surface-hover); color: var(--p-color-text); }
+.Item:active { background: var(--p-color-bg-surface-active); }
+.Item:focus-visible { outline: var(--p-focus-ring-width) solid var(--p-color-border-focus); outline-offset: -1px; }
+.active { background: var(--p-color-bg-surface-selected); font-weight: var(--p-font-weight-semibold); }
+.destructive, .destructive:hover { color: var(--p-color-text-critical); }
+.destructive:hover { background: var(--p-color-bg-surface-critical); }
+.disabled, .disabled:hover { color: var(--p-color-text-disabled); background: transparent; cursor: default; }
+.Prefix, .Suffix { display: inline-flex; flex: none; color: var(--p-color-icon); }
+.destructive .Prefix { color: var(--p-color-icon-critical); }
+.Suffix { margin-inline-start: auto; color: var(--p-color-text-secondary); }
+.Text { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
+.HelpText { font-size: var(--p-text-body-sm-font-size); color: var(--p-color-text-secondary); font-weight: var(--p-font-weight-regular); }

@@ -1,11 +1,8 @@
-import { Placeholder } from "@/components/placeholder/Placeholder";
-import { getT, toLocale } from "@/i18n";
+import { permanentRedirect } from "next/navigation";
+import { toLocale } from "@/i18n";
 
-
-/** FOUNDATION PLACEHOLDER — owner: storefront agent (structure / SEO page per slug). Replace this page. */
-export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
-  const locale = toLocale((await params).locale);
-
-  const t = getT(locale);
-  return <Placeholder title={t("catalog.title")} note={t("common.placeholderPage")} />;
+/** Old catalogue detail URL: structure pages live at /[locale]/boxes/[structure]. */
+export default async function Page({ params }: { params: Promise<{ locale: string; slug: string }> }) {
+  const { locale, slug } = await params;
+  permanentRedirect(`/${toLocale(locale)}/boxes/${encodeURIComponent(slug)}`);
 }

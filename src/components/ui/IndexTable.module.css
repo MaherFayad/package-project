@@ -1,0 +1,181 @@
+.IndexTable, .DataTable {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--p-color-bg-surface);
+  border-radius: var(--p-border-radius-300);
+  box-shadow: var(--e-shadow-card);
+  overflow: hidden;
+}
+.Toolbar { border-block-end: 1px solid var(--p-color-border-secondary); }
+.TitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--p-space-200);
+  padding: var(--p-space-200) var(--p-space-300);
+  min-block-size: 2.75rem;
+}
+.Title { margin: 0; font-size: var(--p-text-heading-sm-font-size); font-weight: var(--p-font-weight-semibold); }
+.Empty { padding: var(--p-space-400); }
+.TableArea { position: relative; min-width: 0; }
+.Scroll { overflow-x: auto; min-width: 0; -webkit-overflow-scrolling: touch; }
+.Scroll:focus-visible { outline: var(--p-focus-ring-width) solid var(--p-color-border-focus); outline-offset: -2px; }
+
+.Table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--p-text-body-md-font-size);
+  line-height: var(--p-font-line-height-500);
+  font-variant-numeric: tabular-nums;
+}
+.HeadRow { background: var(--p-color-bg-surface-secondary); }
+.Th {
+  block-size: 2.25rem;
+  padding: var(--p-space-150) var(--p-space-300);
+  border-block-end: 1px solid var(--p-color-border-secondary);
+  color: var(--p-color-text-secondary);
+  font-size: var(--p-text-body-sm-font-size);
+  font-weight: var(--p-font-weight-semibold);
+  text-align: start;
+  white-space: nowrap;
+}
+.headHidden .Th { visibility: hidden; }
+.Td {
+  padding: var(--p-space-150) var(--p-space-300);
+  border-block-end: 1px solid var(--p-color-border-secondary);
+  text-align: start;
+  vertical-align: middle;
+  white-space: nowrap;
+  font-weight: inherit;
+}
+.Row:last-child > .Td,
+.Row:last-child > th { border-block-end: 0; }
+.Row { background: var(--p-color-bg-surface); }
+.Row:hover { background: var(--p-color-bg-surface-hover); }
+.IndexTable .Row:has(a[data-primary-link]) { cursor: pointer; }
+.selected, .selected:hover { background: var(--p-color-bg-surface-secondary-selected); }
+.strike .Td { color: var(--p-color-text-secondary); text-decoration: line-through; }
+.tone-critical { background: var(--p-color-bg-surface-critical); }
+.tone-success { background: var(--p-color-bg-surface-success); }
+.tone-warning { background: var(--p-color-bg-surface-warning); }
+.rowDisabled .Td { color: var(--p-color-text-disabled); }
+.align-start { text-align: start; }
+.align-center { text-align: center; }
+.align-end, .numeric { text-align: end; }
+.numeric { font-variant-numeric: tabular-nums; }
+.flush { padding: 0; }
+.CheckCell { inline-size: 2.5rem; padding-inline-end: 0; }
+.CheckCell > div { display: inline-flex; }
+.RowLink { color: var(--p-color-text); font-weight: var(--p-font-weight-semibold); text-decoration: none; }
+.RowLink:hover { color: var(--p-color-text); text-decoration: underline; }
+.RowHeader { font-weight: var(--p-font-weight-medium); color: var(--p-color-text); }
+.TotalsRow > * { font-weight: var(--p-font-weight-semibold); background: var(--p-color-bg-surface-secondary); }
+.dense .Td, .dense .Th { padding-block: var(--p-space-100); }
+.Caption { padding: var(--p-space-300); text-align: start; font-weight: var(--p-font-weight-semibold); }
+.Footer {
+  padding: var(--p-space-300);
+  border-block-start: 1px solid var(--p-color-border-secondary);
+  display: flex;
+  justify-content: center;
+}
+
+/* Bulk bar replaces the header row while rows are selected */
+.BulkBar {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--p-space-200);
+  min-block-size: 2.25rem;
+  padding-inline: var(--p-space-300);
+  background: var(--p-color-bg-surface-secondary);
+  border-block-end: 1px solid var(--p-color-border-secondary);
+  overflow-x: auto;
+}
+.BulkCount { flex: none; font-weight: var(--p-font-weight-semibold); white-space: nowrap; }
+.BulkActions { display: flex; flex-wrap: nowrap; gap: var(--p-space-100); }
+
+/* IndexFilters */
+.Filters { display: flex; flex-direction: column; }
+.FiltersRow {
+  display: flex;
+  align-items: center;
+  gap: var(--p-space-200);
+  padding: var(--p-space-150) var(--p-space-200);
+  min-block-size: 2.75rem;
+}
+.Views { min-width: 0; flex: 0 1 auto; max-inline-size: 50%; }
+.Query {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1 1 10rem;
+  min-width: 0;
+  min-block-size: var(--p-control-height-slim);
+  border-radius: var(--p-border-radius-200);
+}
+.Query:hover { background: var(--p-color-bg-surface-hover); }
+.Query:focus-within { background: var(--p-color-bg-surface); outline: var(--p-focus-ring-width) solid var(--p-color-border-focus); outline-offset: 0; }
+.QueryIcon { display: inline-flex; padding-inline: var(--p-space-150) var(--p-space-100); }
+.QueryInput {
+  flex: 1 1 auto;
+  min-width: 0;
+  block-size: var(--p-control-height-slim);
+  border: 0;
+  background: transparent;
+  color: var(--p-color-text);
+  font: inherit;
+  font-size: var(--p-text-body-md-font-size);
+  outline: none;
+}
+.QueryInput::placeholder { color: var(--p-color-text-secondary); opacity: 1; }
+.QueryInput::-webkit-search-cancel-button { display: none; }
+@media (max-width: 767.98px) { .QueryInput { font-size: var(--p-font-size-400); } }
+@media (pointer: coarse) { .Query, .QueryInput { min-block-size: var(--e-control-height-touch); } }
+.QueryClear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  margin-inline-end: var(--p-space-100);
+  padding: 0;
+  border: 0;
+  border-radius: var(--p-border-radius-full);
+  background: transparent;
+  color: var(--p-color-icon-secondary);
+}
+.FilterButtons { display: flex; gap: var(--p-space-100); flex: none; }
+@media (max-width: 489.98px) {
+  .FiltersRow { flex-wrap: wrap; }
+  .Views { max-inline-size: 100%; flex-basis: 100%; }
+}
+.Applied { list-style: none; margin: 0; display: flex; flex-wrap: wrap; gap: var(--p-space-100); padding: 0 var(--p-space-300) var(--p-space-200); }
+.Pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--p-space-050);
+  min-block-size: 1.5rem;
+  padding-inline: var(--p-space-200) var(--p-space-050);
+  border: 1px dashed var(--p-color-border-tertiary);
+  border-radius: var(--p-border-radius-200);
+  background: var(--p-color-bg-surface);
+  font-size: var(--p-text-body-sm-font-size);
+  font-weight: var(--p-font-weight-medium);
+}
+.PillRemove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--p-border-radius-150);
+  background: transparent;
+  color: var(--p-color-icon);
+}
+.PillRemove:hover { background: var(--p-color-bg-fill-transparent-hover); }

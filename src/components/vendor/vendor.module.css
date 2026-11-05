@@ -1,0 +1,178 @@
+/* Vendor portal layout helpers. Tokens only (src/styles/tokens.css); logical properties for RTL. */
+
+/* Resource list inside a card (rows with dividers, Polaris ResourceList look). */
+.List {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  margin-inline: calc(-1 * var(--card-pad, var(--p-space-400)));
+}
+.ListItem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--p-space-200) var(--p-space-300);
+  padding: var(--p-space-300) var(--card-pad, var(--p-space-400));
+  border-block-start: 1px solid var(--p-color-border-secondary);
+}
+.ListItem:first-child { border-block-start: 0; }
+.ListMain {
+  flex: 1 1 12rem;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--p-space-050);
+}
+.ListMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--p-space-200);
+}
+
+/* Definition rows (spec list, payout summary). */
+.Defs {
+  display: grid;
+  grid-template-columns: minmax(8rem, 40%) 1fr;
+  gap: var(--p-space-200) var(--p-space-400);
+  margin: 0;
+}
+.Defs dt { color: var(--p-color-text-secondary); }
+.Defs dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 30.6rem) {
+  .Defs { grid-template-columns: 1fr; gap: var(--p-space-050); }
+  .Defs dd { margin-block-end: var(--p-space-200); }
+}
+
+.SummaryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--p-space-300);
+  padding-block: var(--p-space-100);
+}
+.SummaryRow > :last-child { flex: none; white-space: nowrap; }
+.Grow { flex: 1 1 auto; min-width: 0; }
+.PreWrap { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* Dieline preview: never mirrored in RTL. */
+.Dieline {
+  direction: ltr;
+  display: block;
+  inline-size: 100%;
+  max-block-size: 22rem;
+  object-fit: contain;
+  background: var(--p-color-bg-surface-secondary);
+  border: 1px solid var(--p-color-border);
+  border-radius: var(--p-border-radius-200);
+}
+
+/* Photo grids (QC photos, portfolio). */
+.Photos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: var(--p-space-300);
+}
+.Photo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--p-space-200);
+  min-width: 0;
+}
+.PhotoImg {
+  inline-size: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--p-border-radius-200);
+  border: 1px solid var(--p-color-border);
+  background: var(--p-color-bg-surface-secondary);
+}
+
+/* Portfolio manager rows. */
+.Portfolio {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--p-space-300);
+}
+.PortfolioItem {
+  display: grid;
+  grid-template-columns: 7.5rem minmax(0, 1fr);
+  gap: var(--p-space-300);
+  padding: var(--p-space-300);
+  border: 1px solid var(--p-color-border);
+  border-radius: var(--p-border-radius-300);
+  background: var(--p-color-bg-surface);
+}
+.PortfolioItem[data-dragging="true"] { opacity: 0.5; }
+.PortfolioItem[data-over="true"] { outline: 2px dashed var(--p-color-border-focus); outline-offset: 2px; }
+.PortfolioMedia { display: flex; flex-direction: column; gap: var(--p-space-200); }
+.PortfolioActions { display: flex; flex-wrap: wrap; gap: var(--p-space-200); align-items: center; }
+@media (max-width: 30.6rem) {
+  .PortfolioItem { grid-template-columns: 1fr; }
+}
+
+/* Repeating editor rows (machines, tiers, dies, certificates). */
+.Rows { display: flex; flex-direction: column; gap: var(--p-space-300); }
+.Row {
+  display: grid;
+  gap: var(--p-space-300);
+  align-items: end;
+  grid-template-columns: repeat(var(--row-cols, 3), minmax(0, 1fr)) auto;
+}
+@media (max-width: 47.9rem) {
+  .Row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding-block-end: var(--p-space-300);
+    border-block-end: 1px solid var(--p-color-border-secondary);
+  }
+  .Row > :first-child { grid-column: 1 / -1; }
+}
+
+/* Checkbox groups in columns. */
+.Checks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: var(--p-space-100) var(--p-space-400);
+}
+.Fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+.Legend {
+  padding: 0;
+  margin-block-end: var(--p-space-200);
+  font-weight: var(--p-font-weight-medium);
+}
+
+/* Setup checklist (dashboard). */
+.Checklist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--p-space-200); }
+.ChecklistItem { display: flex; gap: var(--p-space-200); align-items: flex-start; }
+
+.Steps { margin: 0; padding-inline-start: var(--p-space-500); display: flex; flex-direction: column; gap: var(--p-space-200); }
+
+/* Document list in the application form. */
+.Docs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--p-space-200); }
+.Doc {
+  display: flex;
+  align-items: center;
+  gap: var(--p-space-200);
+  justify-content: space-between;
+  padding: var(--p-space-200) var(--p-space-300);
+  border: 1px solid var(--p-color-border);
+  border-radius: var(--p-border-radius-200);
+}
+.DocName { min-width: 0; overflow-wrap: anywhere; }
+
+/* Sticky aside on wide screens (detail pages). */
+@media (min-width: 65rem) {
+  .Sticky { position: sticky; inset-block-start: calc(var(--p-space-400)); }
+}
+
+.Apply {
+  max-inline-size: 62rem;
+  margin-inline: auto;
+  padding: var(--p-space-600) var(--p-page-gutter, var(--p-space-400)) var(--p-space-1200);
+}

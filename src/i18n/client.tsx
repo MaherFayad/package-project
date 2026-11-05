@@ -42,3 +42,8 @@ export function useI18n(): I18nValue {
   if (!v) throw new Error("useI18n must be used inside <I18nProvider>");
   return v;
 }
+
+/** Like useI18n, but returns null outside <I18nProvider> instead of throwing (used by the UI kit). */
+export function useOptionalI18n(): I18nValue | null {
+  return useContext(I18nContext);
+}

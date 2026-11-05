@@ -1,0 +1,279 @@
+"use client";
+
+import { useCallback, useMemo, useState } from "react";
+import { Banner, BlockStack, Button, ButtonGroup, Card, Checkbox, DataTable, InlineGrid, InlineStack, Text, TextField } from "@/components/ui";
+import { useI18n } from "@/i18n/client";
+import type { DictKey } from "@/i18n";
+import { formatMoney, formatNumber, formatPercent } from "@/lib/format";
+import { DELIVERY_ZONES, type DeliveryZone, type ZoneRate } from "@/lib/pricing";
+import { MATERIAL_CODES, type MaterialCode } from "@/types";
+import { applyIndexUpdateAction, previewPricingAction, savePricingSettingsAction, type PricingPreview } from "./server/actions";
+import { bumpBoard, type SettingsForm } from "./lib/pricingSettings";
+import { useAdminSaveBar } from "./AdminFrame";
+import { adminStyles } from "./charts";
+import { fieldError, useAdminAction, useAdminErrorText } from "./useAdminAction";
+import type { AdminActionResponse } from "./server/context";
+
+/* ───────────────────────── Preview table ───────────────────────── */
+
+function PreviewResult({ preview }: { preview: PricingPreview }) {
+  const { t, locale } = useI18n();
+  const signed = (n: number | null) => (n === null ? t("admin.common.none") : `${n > 0 ? "+" : ""}${formatPercent(n, locale)}`);
+  return (
+    <BlockStack gap="300">
+      <Banner tone={preview.affected ? "info" : "success"} inCard announce>
+        {preview.affected
+          ? t("admin.pricing.preview.affected", { count: formatNumber(preview.affected), total: formatNumber(preview.rows.length), pct: signed(preview.avgChangePct) })
+          : t("admin.pricing.preview.none")}
+      </Banner>
+      <DataTable
+        caption={t("admin.pricing.preview.caption")}
+        columnContentTypes={["text", "text", "numeric", "numeric", "numeric"]}
+        headings={[t("admin.pricing.preview.columns.structure"), t("admin.pricing.preview.columns.material"), t("admin.pricing.preview.columns.current"), t("admin.pricing.preview.columns.proposed"), t("admin.pricing.preview.columns.change")]}
+        rows={preview.rows.map((r) => [
+          t(`structures.${r.structureCode}` as DictKey),
+          t(`materials.${r.materialCode}` as DictKey),
+          r.currentUnitPiasters === null ? t("admin.pricing.preview.notPriced") : formatMoney(r.currentUnitPiasters, locale),
+          r.proposedUnitPiasters === null ? t("admin.pricing.preview.notPriced") : formatMoney(r.proposedUnitPiasters, locale),
+          signed(r.changePct),
+        ])}
+      />
+    </BlockStack>
+  );
+}
+
+/* ───────────────────────── Settings (margin, validity, zones) ───────────────────────── */
+
+type ZoneDraft = Record<DeliveryZone, Record<keyof ZoneRate, string>>;
+const ZONE_FIELDS: (keyof ZoneRate)[] = ["basePiasters", "includedKg", "perExtraKgPiasters", "freightPerLoadPiasters", "transitDays"];
+const ZONE_LABEL: Record<keyof ZoneRate, string> = { basePiasters: "base", includedKg: "includedKg", perExtraKgPiasters: "perKg", freightPerLoadPiasters: "freight", transitDays: "transit" };
+const MONEY_FIELDS = new Set<keyof ZoneRate>(["basePiasters", "perExtraKgPiasters", "freightPerLoadPiasters"]);
+
+function toDraft(s: SettingsForm) {
+  return {
+    margin: String(Math.round(s.marginPct * 1000) / 10),
+    marginOnShipping: s.marginOnShipping,
+    validity: String(s.quoteValidityHours),
+    zones: Object.fromEntries(
+      DELIVERY_ZONES.map((z) => [z, Object.fromEntries(ZONE_FIELDS.map((f) => [f, MONEY_FIELDS.has(f) ? (s.zones[z][f] / 100).toFixed(2) : String(s.zones[z][f])]))]),
+    ) as ZoneDraft,
+  };
+}
+
+function fromDraft(d: ReturnType<typeof toDraft>): SettingsForm {
+  const num = (v: string) => (v.trim() === "" ? NaN : Number(v.replace(/,/g, "")));
+  return {
+    marginPct: Math.round(num(d.margin) * 10) / 1000,
+    marginOnShipping: d.marginOnShipping,
+    quoteValidityHours: num(d.validity),
+    zones: Object.fromEntries(
+      DELIVERY_ZONES.map((z) => [z, Object.fromEntries(ZONE_FIELDS.map((f) => [f, MONEY_FIELDS.has(f) ? Math.round(num(d.zones[z][f]) * 100) : num(d.zones[z][f])]))]),
+    ) as SettingsForm["zones"],
+  };
+}
+
+export function PricingSettingsForm({ initial }: { initial: SettingsForm }) {
+  const { t } = useI18n();
+  const { run, busy } = useAdminAction();
+  const errorText = useAdminErrorText();
+  const start = useMemo(() => toDraft(initial), [initial]);
+  const [draft, setDraft] = useState(start);
+  const [res, setRes] = useState<AdminActionResponse<unknown> | null>(null);
+  const [preview, setPreview] = useState<PricingPreview | null>(null);
+  const dirty = JSON.stringify(draft) !== JSON.stringify(start);
+
+  const save = useCallback(async () => {
+    const r = await run("save", () => savePricingSettingsAction(fromDraft(draft)), t("admin.pricing.saved"));
+    setRes(r);
+    if (r?.ok) setPreview(null);
+  }, [run, draft, t]);
+  const discard = useCallback(() => {
+    setDraft(start);
+    setRes(null);
+    setPreview(null);
+  }, [start]);
+  useAdminSaveBar({ dirty, saving: busy === "save", onSave: save, onDiscard: discard });
+
+  const setZone = (z: DeliveryZone, f: keyof ZoneRate, v: string) => setDraft((d) => ({ ...d, zones: { ...d.zones, [z]: { ...d.zones[z], [f]: v } } }));
+  const err = (k: string) => fieldError(res, k, errorText);
+
+  return (
+    <BlockStack gap="400">
+      <Card title={t("admin.pricing.settings.title")}>
+        <BlockStack gap="300">
+          <InlineGrid columns={{ xs: 1, md: 2 }} gap="300">
+            <TextField
+              label={t("admin.pricing.settings.margin")}
+              autoComplete="off"
+              inputMode="decimal"
+              dir="ltr"
+              suffix="%"
+              value={draft.margin}
+              onChange={(v) => setDraft((d) => ({ ...d, margin: v }))}
+              helpText={t("admin.pricing.settings.marginHelp")}
+              error={err("marginPct")}
+            />
+            <TextField
+              label={t("admin.pricing.settings.validity")}
+              autoComplete="off"
+              inputMode="numeric"
+              dir="ltr"
+              value={draft.validity}
+              onChange={(v) => setDraft((d) => ({ ...d, validity: v }))}
+              helpText={t("admin.pricing.settings.validityHelp")}
+              error={err("quoteValidityHours")}
+            />
+          </InlineGrid>
+          <Checkbox label={t("admin.pricing.settings.marginOnShipping")} checked={draft.marginOnShipping} onChange={(v) => setDraft((d) => ({ ...d, marginOnShipping: v }))} />
+        </BlockStack>
+      </Card>
+
+      <Card title={t("admin.pricing.zones.title")}>
+        <BlockStack gap="300">
+          <Text as="p" variant="bodySm" tone="subdued">
+            {t("admin.pricing.zones.help")}
+          </Text>
+          <BlockStack gap="400">
+            {DELIVERY_ZONES.map((z) => (
+              <fieldset key={z} className={adminStyles.Fieldset}>
+                <legend>
+                  <Text as="span" variant="headingSm">
+                    {t(`pricing.zones.${z}` as DictKey)}
+                  </Text>
+                </legend>
+                <InlineGrid columns={{ xs: 2, md: 5 }} gap="300">
+                  {ZONE_FIELDS.map((f) => (
+                    <TextField
+                      key={f}
+                      label={t(`admin.pricing.zones.columns.${ZONE_LABEL[f]}` as DictKey)}
+                      autoComplete="off"
+                      inputMode="decimal"
+                      dir="ltr"
+                      value={draft.zones[z][f]}
+                      onChange={(v) => setZone(z, f, v)}
+                      error={err(`zones.${z}.${f}`)}
+                    />
+                  ))}
+                </InlineGrid>
+              </fieldset>
+            ))}
+          </BlockStack>
+        </BlockStack>
+      </Card>
+
+      <Card title={t("admin.pricing.preview.title")}>
+        <BlockStack gap="300">
+          <Text as="p" variant="bodySm" tone="subdued">
+            {t("admin.pricing.preview.help", { qty: formatNumber(500) })}
+          </Text>
+          <InlineStack align="end">
+            <ButtonGroup>
+              <Button
+                loading={busy === "preview"}
+                onClick={async () => {
+                  const r = await run("preview", () => previewPricingAction({ kind: "settings", settings: fromDraft(draft) }));
+                  setRes(r);
+                  if (r?.ok) setPreview(r.data);
+                }}
+              >
+                {t("admin.pricing.preview.run")}
+              </Button>
+              <Button variant="primary" disabled={!dirty} loading={busy === "save"} onClick={save}>
+                {t("admin.common.save")}
+              </Button>
+            </ButtonGroup>
+          </InlineStack>
+          {preview ? <PreviewResult preview={preview} /> : null}
+        </BlockStack>
+      </Card>
+    </BlockStack>
+  );
+}
+
+/* ───────────────────────── FX / board index bulk update ───────────────────────── */
+
+export function PriceIndexForm({ current }: { current: { fx: number; board: Partial<Record<MaterialCode, number>> } }) {
+  const { t } = useI18n();
+  const { run, busy } = useAdminAction();
+  const errorText = useAdminErrorText();
+  const today = new Date().toISOString().slice(0, 10);
+  const [fx, setFx] = useState(String(current.fx));
+  const [board, setBoard] = useState<Record<MaterialCode, string>>(() => Object.fromEntries(MATERIAL_CODES.map((m) => [m, String(current.board[m] ?? 1)])) as Record<MaterialCode, string>);
+  const [bump, setBump] = useState("");
+  const [from, setFrom] = useState(today);
+  const [note, setNote] = useState("");
+  const [res, setRes] = useState<AdminActionResponse<unknown> | null>(null);
+  const [preview, setPreview] = useState<PricingPreview | null>(null);
+  const payload = () => ({ effectiveFrom: from, fx: Number(fx), board: Object.fromEntries(MATERIAL_CODES.map((m) => [m, Number(board[m])])) as Record<MaterialCode, number>, note });
+  const err = (k: string) => fieldError(res, k, errorText);
+
+  return (
+    <BlockStack gap="300">
+      <InlineGrid columns={{ xs: 1, md: 2 }} gap="300">
+        <TextField label={t("admin.pricing.index.fx")} autoComplete="off" inputMode="decimal" dir="ltr" prefix="×" value={fx} onChange={setFx} error={err("fx")} />
+        <TextField label={t("admin.pricing.index.effectiveFrom")} type="date" autoComplete="off" dir="ltr" value={from} onChange={setFrom} error={err("effectiveFrom")} />
+      </InlineGrid>
+      <Text as="h3" variant="headingSm">
+        {t("admin.pricing.index.board")}
+      </Text>
+      <InlineGrid columns={{ xs: 1, sm: 2, md: 3 }} gap="300">
+        {MATERIAL_CODES.map((m) => (
+          <TextField
+            key={m}
+            label={t(`materials.${m}` as DictKey)}
+            autoComplete="off"
+            inputMode="decimal"
+            dir="ltr"
+            prefix="×"
+            value={board[m]}
+            onChange={(v) => setBoard((b) => ({ ...b, [m]: v }))}
+            error={err(`board.${m}`)}
+          />
+        ))}
+      </InlineGrid>
+      <InlineStack gap="200" blockAlign="end" wrap>
+        <TextField label={t("admin.pricing.index.bump")} autoComplete="off" inputMode="decimal" dir="ltr" suffix="%" value={bump} onChange={setBump} />
+        <Button
+          disabled={!bump.trim() || Number.isNaN(Number(bump))}
+          onClick={() => {
+            const next = bumpBoard(Object.fromEntries(MATERIAL_CODES.map((m) => [m, Number(board[m]) || 1])) as Record<MaterialCode, number>, Number(bump));
+            setBoard(Object.fromEntries(MATERIAL_CODES.map((m) => [m, String(next[m])])) as Record<MaterialCode, string>);
+            setBump("");
+          }}
+        >
+          {t("admin.pricing.index.bumpApply")}
+        </Button>
+      </InlineStack>
+      <TextField label={t("admin.pricing.index.note")} autoComplete="off" value={note} onChange={setNote} maxLength={200} />
+      <InlineStack align="end">
+        <ButtonGroup>
+          <Button
+            loading={busy === "ipreview"}
+            onClick={async () => {
+              const r = await run("ipreview", () => previewPricingAction({ kind: "index", index: payload() }));
+              setRes(r);
+              if (r?.ok) setPreview(r.data);
+            }}
+          >
+            {t("admin.pricing.index.preview")}
+          </Button>
+          <Button
+            variant="primary"
+            loading={busy === "iapply"}
+            onClick={async () => {
+              const r = await run("iapply", () => applyIndexUpdateAction(payload()), t("admin.pricing.index.applied"));
+              setRes(r);
+              if (r?.ok) setPreview(null);
+            }}
+          >
+            {t("admin.pricing.index.apply")}
+          </Button>
+        </ButtonGroup>
+      </InlineStack>
+      {preview ? <PreviewResult preview={preview} /> : null}
+      <Text as="p" variant="bodySm" tone="subdued">
+        {t("admin.pricing.preview.help", { qty: formatNumber(500) })}
+      </Text>
+    </BlockStack>
+  );
+}

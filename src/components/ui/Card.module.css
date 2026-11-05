@@ -1,0 +1,74 @@
+.Card {
+  --card-pad: var(--p-space-300);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--p-space-300);
+  padding: var(--card-pad);
+  border-radius: var(--p-border-radius-300);
+  box-shadow: var(--e-shadow-card);
+  color: var(--p-color-text);
+  min-width: 0;
+}
+@media (min-width: 490px) {
+  .Card { --card-pad: var(--p-space-400); }
+}
+@media (max-width: 489.98px) {
+  .rounded-sm { border-radius: 0; margin-inline: calc(-1 * var(--p-page-gutter)); }
+}
+@media (max-width: 767.98px) {
+  .rounded-md { border-radius: 0; margin-inline: calc(-1 * var(--p-page-gutter)); }
+}
+
+.Header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--p-space-200);
+  min-block-size: var(--p-space-500);
+}
+.Title {
+  margin: 0;
+  font-size: var(--p-text-heading-sm-font-size);
+  line-height: var(--p-text-heading-sm-font-line-height);
+  font-weight: var(--p-text-heading-sm-font-weight);
+}
+.HeaderActions {
+  display: flex;
+  align-items: center;
+  gap: var(--p-space-100);
+  margin-block: calc(-1 * var(--p-space-100));
+}
+
+.Footer {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--p-space-200);
+}
+
+.Section {
+  margin-inline: calc(-1 * var(--card-pad));
+  padding-inline: var(--card-pad);
+  padding-block-start: var(--card-pad);
+  border-block-start: 1px solid var(--p-color-border-secondary);
+}
+.Section:last-child { padding-block-end: 0; }
+.subdued {
+  background: var(--p-color-bg-surface-secondary);
+  padding-block-end: var(--card-pad);
+}
+.Section.subdued:last-child {
+  margin-block-end: calc(-1 * var(--card-pad));
+  padding-block-end: var(--card-pad);
+  border-end-start-radius: var(--p-border-radius-300);
+  border-end-end-radius: var(--p-border-radius-300);
+}
+.flush { padding-inline: 0; }
+
+.Inset {
+  padding: var(--p-space-300);
+  border: 1px solid var(--p-color-border);
+  border-radius: var(--p-border-radius-200);
+}
+.insetSubdued { background: var(--p-color-bg-surface-secondary); }

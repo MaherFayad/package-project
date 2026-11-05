@@ -1,0 +1,19 @@
+.Avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  overflow: hidden;
+  font-weight: var(--p-font-weight-semibold);
+  user-select: none;
+}
+.square { border-radius: var(--p-border-radius-200); }
+.round { border-radius: var(--p-border-radius-full); }
+.size-xs { inline-size: 1.25rem; block-size: 1.25rem; font-size: 0.5625rem; border-radius: var(--p-border-radius-150); }
+.size-sm { inline-size: 1.5rem; block-size: 1.5rem; font-size: var(--p-font-size-275); }
+.size-md { inline-size: 1.75rem; block-size: 1.75rem; font-size: var(--p-font-size-300); }
+.size-lg { inline-size: 2.5rem; block-size: 2.5rem; font-size: var(--p-font-size-400); }
+.size-xl { inline-size: 3.75rem; block-size: 3.75rem; font-size: var(--p-font-size-600); border-radius: var(--p-border-radius-300); }
+.round.size-xs, .round.size-xl { border-radius: var(--p-border-radius-full); }
+.Image { inline-size: 100%; block-size: 100%; object-fit: cover; }
+.Initials { line-height: 1; }

@@ -1,0 +1,46 @@
+.viewport {
+  position: relative;
+  inline-size: 100%;
+  block-size: 100%;
+  min-block-size: 240px;
+  overflow: hidden;
+  border-radius: inherit;
+  /* keep pinch/drag gestures on the canvas instead of scrolling the page */
+  touch-action: none;
+}
+
+.viewport:focus {
+  outline: none;
+}
+
+.viewport:focus-visible {
+  outline: var(--p-focus-ring-width, 2px) solid var(--p-color-border-focus, #005bd3);
+  outline-offset: calc(-1 * var(--p-focus-ring-width, 2px));
+}
+
+.canvas {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.hint {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.fallback {
+  display: grid;
+  place-items: center;
+  block-size: 100%;
+  padding: var(--p-space-400, 16px);
+  color: var(--p-color-text-secondary, #616161);
+  text-align: center;
+}

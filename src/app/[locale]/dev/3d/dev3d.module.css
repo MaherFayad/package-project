@@ -1,0 +1,191 @@
+.page {
+  max-inline-size: var(--p-page-max-width, 1200px);
+  margin-inline: auto;
+  padding: var(--p-space-600, 24px) var(--p-page-gutter, 16px);
+  display: grid;
+  gap: var(--p-space-600, 24px);
+}
+
+.header {
+  display: grid;
+  gap: var(--p-space-100, 4px);
+}
+
+.title {
+  font-size: var(--p-font-size-600, 1.5rem);
+  font-weight: var(--p-font-weight-bold, 700);
+  line-height: 1.3;
+}
+
+.h2 {
+  font-size: var(--p-font-size-400, 1rem);
+  font-weight: var(--p-font-weight-semibold, 600);
+}
+
+.sub {
+  color: var(--p-color-text-secondary, #616161);
+}
+
+.layout {
+  display: grid;
+  gap: var(--p-space-400, 16px);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 900px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr) 320px;
+  }
+}
+
+.viewer {
+  position: relative;
+  block-size: min(70vh, 640px);
+  min-block-size: 320px;
+  background: linear-gradient(180deg, #f6f4f0, #e9e5de);
+  border-radius: var(--p-border-radius-300, 12px);
+  box-shadow: var(--p-shadow-bevel-100, none);
+  overflow: hidden;
+}
+
+.overlay {
+  position: absolute;
+  inset-block-end: var(--p-space-300, 12px);
+  inset-inline: var(--p-space-300, 12px);
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.overlay > * {
+  pointer-events: auto;
+}
+
+.panel {
+  display: grid;
+  gap: var(--p-space-300, 12px);
+  align-content: start;
+  padding: var(--p-space-400, 16px);
+  background: var(--p-color-bg-surface, #fff);
+  border-radius: var(--p-border-radius-300, 12px);
+  box-shadow: var(--p-shadow-bevel-100, none);
+  min-inline-size: 0;
+}
+
+.field {
+  display: grid;
+  gap: var(--p-space-100, 4px);
+  min-inline-size: 0;
+}
+
+.field select,
+.field input[type="number"] {
+  min-block-size: 36px;
+  inline-size: 100%;
+  padding-inline: var(--p-space-200, 8px);
+  border: 1px solid var(--p-color-input-border, #8a8a8a);
+  border-radius: var(--p-border-radius-200, 8px);
+  background: var(--p-color-input-bg-surface, #fdfdfd);
+  font: inherit;
+}
+
+.field input[type="range"] {
+  inline-size: 100%;
+  min-block-size: 24px;
+}
+
+.dims {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--p-space-200, 8px);
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.dims legend {
+  margin-block-end: var(--p-space-100, 4px);
+}
+
+.error {
+  color: var(--p-color-text-critical, #8e0b21);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--p-space-200, 8px);
+}
+
+.check {
+  display: flex;
+  gap: var(--p-space-200, 8px);
+  align-items: center;
+  min-block-size: 24px;
+}
+
+.check input {
+  inline-size: 18px;
+  block-size: 18px;
+}
+
+.button,
+.primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--p-space-100, 4px);
+  min-block-size: 36px;
+  padding-inline: var(--p-space-300, 12px);
+  border: 0;
+  border-radius: var(--p-border-radius-200, 8px);
+  font: inherit;
+  font-weight: var(--p-font-weight-medium, 550);
+  cursor: pointer;
+  background: var(--p-color-bg-fill, #fff);
+  color: var(--p-color-text, #303030);
+  box-shadow: var(--p-shadow-button, inset 0 -1px 0 #b5b5b5, inset 0 0 0 1px #e3e3e3);
+}
+
+.primary {
+  background: var(--p-color-bg-fill-brand, #303030);
+  color: var(--p-color-text-brand-on-bg-fill, #fff);
+  box-shadow: var(--p-shadow-button-primary, none);
+}
+
+.button:focus-visible,
+.primary:focus-visible {
+  outline: var(--p-focus-ring-width, 2px) solid var(--p-color-border-focus, #005bd3);
+  outline-offset: var(--p-focus-ring-offset, 1px);
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--p-space-100, 4px) var(--p-space-300, 12px);
+  font-size: var(--p-font-size-325, 13px);
+}
+
+.metrics dt {
+  color: var(--p-color-text-secondary, #616161);
+}
+
+.dieline {
+  display: grid;
+  gap: var(--p-space-200, 8px);
+}
+
+.svg {
+  background: var(--p-color-bg-surface, #fff);
+  border-radius: var(--p-border-radius-300, 12px);
+  padding: var(--p-space-400, 16px);
+  box-shadow: var(--p-shadow-bevel-100, none);
+  overflow: auto;
+}
+
+.svg :global(svg) {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  max-block-size: 70vh;
+}

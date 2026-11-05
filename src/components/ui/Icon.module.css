@@ -1,0 +1,33 @@
+.Icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  color: var(--icon-color, currentColor);
+}
+.Svg,
+.Icon > svg {
+  inline-size: 1rem;
+  block-size: 1rem;
+}
+.size-small { inline-size: 1rem; block-size: 1rem; }
+.size-small .Svg, .size-small > svg { inline-size: 0.875rem; block-size: 0.875rem; }
+.size-large { inline-size: 1.5rem; block-size: 1.5rem; }
+.size-large .Svg, .size-large > svg { inline-size: 1.25rem; block-size: 1.25rem; }
+
+.tone-inherit { --icon-color: currentColor; }
+.tone-base { --icon-color: var(--p-color-icon); }
+.tone-subdued { --icon-color: var(--p-color-icon-secondary); }
+.tone-info { --icon-color: var(--p-color-icon-info); }
+.tone-success { --icon-color: var(--p-color-icon-success); }
+.tone-caution { --icon-color: var(--p-color-icon-caution); }
+.tone-warning { --icon-color: var(--p-color-icon-warning); }
+.tone-critical { --icon-color: var(--p-color-icon-critical); }
+.tone-emphasis,
+.tone-interactive { --icon-color: var(--p-color-icon-emphasis); }
+.tone-textInverse { --icon-color: var(--p-color-icon-inverse); }
+.tone-disabled { --icon-color: var(--p-color-icon-disabled); }
+
+:global([dir="rtl"]) .flip { transform: scaleX(-1); }

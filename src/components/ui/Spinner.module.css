@@ -1,0 +1,11 @@
+.Spinner { display: inline-flex; color: inherit; }
+.Svg { animation: spin 500ms linear infinite; }
+.small { inline-size: 1.25rem; block-size: 1.25rem; }
+.large { inline-size: 2.75rem; block-size: 2.75rem; }
+.Track { stroke: currentColor; opacity: 0.18; }
+.Arc { stroke: currentColor; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  /* Keep a slow rotation so "busy" is still perceivable, but calmer. */
+  .Svg { animation-duration: 1.5s !important; animation-iteration-count: infinite !important; }
+}

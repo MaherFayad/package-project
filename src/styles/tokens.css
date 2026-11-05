@@ -1,107 +1,217 @@
 /*
- * Elba design tokens — FIRST PASS modelled on the Polaris (Shopify admin) design language.
- * Values are our own CSS custom properties; no Polaris package or asset is imported.
- * Owner: UI kit agent (refines). Everyone else: consume tokens, never hard-code colours/spacing.
- * Naming mirrors Polaris roles with our own prefix: --p-*.
+ * Elba design tokens — modelled on the Polaris (Shopify admin) design LANGUAGE.
+ *
+ * - These are our own CSS custom properties written by hand. No Shopify package, icon,
+ *   logo or asset is imported or bundled (see docs/design-system.md, "Licence notes").
+ * - Naming mirrors Polaris roles with the --p-* prefix so the docs at polaris.shopify.com
+ *   map 1:1 onto our names. Elba-only additions use the --e-* prefix.
+ * - Light mode is primary. The dark block at the end is a ready structure (semantic
+ *   roles only) switched with <html data-theme="dark">; it is not auto-enabled.
+ *
+ * Owner: UI kit. Everyone else: consume tokens, never hard-code colours, sizes or shadows.
  */
-:root {
+:root,
+:root[data-theme="light"] {
   color-scheme: light;
 
-  /* ── Colour: backgrounds ───────────────────────────── */
-  --p-color-bg: #f1f1f1;                    /* app/page canvas */
-  --p-color-bg-inverse: #1a1a1a;            /* top bar (admin frame) */
-  --p-color-bg-surface: #ffffff;            /* cards */
+  /* ── Colour: backgrounds ───────────────────────────────────────────── */
+  --p-color-bg: #f1f1f1;                         /* app canvas */
+  --p-color-bg-inverse: #1a1a1a;                 /* top bar */
+  --p-color-bg-surface: #ffffff;                 /* cards, popovers, modals */
   --p-color-bg-surface-hover: #f7f7f7;
   --p-color-bg-surface-active: #f3f3f3;
   --p-color-bg-surface-selected: #f1f1f1;
   --p-color-bg-surface-disabled: rgba(0, 0, 0, 0.05);
-  --p-color-bg-surface-secondary: #f7f7f7;
+  --p-color-bg-surface-secondary: #f7f7f7;       /* table headers, card footers */
   --p-color-bg-surface-secondary-hover: #f1f1f1;
   --p-color-bg-surface-secondary-active: #ebebeb;
+  --p-color-bg-surface-secondary-selected: #ebebeb;
   --p-color-bg-surface-tertiary: #f3f3f3;
+  --p-color-bg-surface-tertiary-hover: #ebebeb;
+  --p-color-bg-surface-tertiary-active: #e3e3e3;
   --p-color-bg-surface-brand: #e3e3e3;
+  --p-color-bg-surface-brand-hover: #ebebeb;
+  --p-color-bg-surface-brand-active: #f1f1f1;
+  --p-color-bg-surface-brand-selected: #f1f1f1;
   --p-color-bg-surface-info: #eaf4ff;
-  --p-color-bg-surface-success: #cdfee1;
+  --p-color-bg-surface-info-hover: #e0f0ff;
+  --p-color-bg-surface-info-active: #cae6ff;
+  --p-color-bg-surface-success: #cdfed4;
+  --p-color-bg-surface-success-hover: #affebf;
+  --p-color-bg-surface-success-active: #92fcac;
   --p-color-bg-surface-caution: #fff8db;
+  --p-color-bg-surface-caution-hover: #fff4bf;
+  --p-color-bg-surface-caution-active: #ffef9d;
   --p-color-bg-surface-warning: #fff1e3;
-  --p-color-bg-surface-critical: #fee9e8;
+  --p-color-bg-surface-warning-hover: #ffebd5;
+  --p-color-bg-surface-warning-active: #ffe4c6;
+  --p-color-bg-surface-critical: #fee8eb;
+  --p-color-bg-surface-critical-hover: #fee1e6;
+  --p-color-bg-surface-critical-active: #fed9df;
+  --p-color-bg-surface-emphasis: #f0f2ff;
+  --p-color-bg-surface-emphasis-hover: #eaedff;
+  --p-color-bg-surface-emphasis-active: #e2e7ff;
   --p-color-bg-surface-magic: #f8f7ff;
+  --p-color-bg-surface-inverse: #303030;         /* toast */
+  --p-color-bg-surface-transparent: transparent;
 
-  /* fills (buttons, badges, indicators) */
-  --p-color-bg-fill: #ffffff;
+  /* fills: buttons, badges, indicators */
+  --p-color-bg-fill: #ffffff;                    /* secondary button */
   --p-color-bg-fill-hover: #fafafa;
   --p-color-bg-fill-active: #f7f7f7;
+  --p-color-bg-fill-selected: #cccccc;
   --p-color-bg-fill-disabled: rgba(0, 0, 0, 0.05);
   --p-color-bg-fill-secondary: #f1f1f1;
-  --p-color-bg-fill-tertiary: #e3e3e3;
-  --p-color-bg-fill-brand: #303030;          /* primary button */
+  --p-color-bg-fill-secondary-hover: #ebebeb;
+  --p-color-bg-fill-secondary-active: #e3e3e3;
+  --p-color-bg-fill-tertiary: #e3e3e3;           /* neutral badge */
+  --p-color-bg-fill-tertiary-hover: #d4d4d4;
+  --p-color-bg-fill-tertiary-active: #cccccc;
+  --p-color-bg-fill-brand: #303030;              /* primary button: dark, not green */
   --p-color-bg-fill-brand-hover: #1a1a1a;
   --p-color-bg-fill-brand-active: #1a1a1a;
+  --p-color-bg-fill-brand-selected: #303030;
   --p-color-bg-fill-brand-disabled: rgba(0, 0, 0, 0.17);
   --p-color-bg-fill-info: #91d0ff;
-  --p-color-bg-fill-info-secondary: #d5ebff;
-  --p-color-bg-fill-success: #29845a;
-  --p-color-bg-fill-success-secondary: #cdfee1;
+  --p-color-bg-fill-info-hover: #51c0ff;
+  --p-color-bg-fill-info-active: #0094d5;
+  --p-color-bg-fill-info-secondary: #d5ebff;     /* info badge */
+  --p-color-bg-fill-success: #047b5d;
+  --p-color-bg-fill-success-hover: #035e4c;
+  --p-color-bg-fill-success-active: #014b40;
+  --p-color-bg-fill-success-secondary: #affebf;  /* success badge */
   --p-color-bg-fill-caution: #ffe600;
-  --p-color-bg-fill-caution-secondary: #ffeb78;
+  --p-color-bg-fill-caution-hover: #ead300;
+  --p-color-bg-fill-caution-active: #e1cb00;
+  --p-color-bg-fill-caution-secondary: #ffeb78;  /* attention badge */
   --p-color-bg-fill-warning: #ffb800;
-  --p-color-bg-fill-warning-secondary: #ffd6a4;
-  --p-color-bg-fill-critical: #c70a24;
-  --p-color-bg-fill-critical-hover: #a3061a;
-  --p-color-bg-fill-critical-secondary: #fedad9;
+  --p-color-bg-fill-warning-hover: #e5a500;
+  --p-color-bg-fill-warning-active: #b28400;
+  --p-color-bg-fill-warning-secondary: #ffd6a4;  /* warning badge */
+  --p-color-bg-fill-critical: #c70a24;           /* critical button */
+  --p-color-bg-fill-critical-hover: #a30a24;
+  --p-color-bg-fill-critical-active: #8e0b21;
+  --p-color-bg-fill-critical-selected: #8e0b21;
+  --p-color-bg-fill-critical-secondary: #fed1d7; /* critical badge */
   --p-color-bg-fill-emphasis: #005bd3;
+  --p-color-bg-fill-emphasis-hover: #004299;
+  --p-color-bg-fill-emphasis-active: #002e6a;
+  --p-color-bg-fill-inverse: #303030;
+  --p-color-bg-fill-inverse-hover: #4a4a4a;
+  --p-color-bg-fill-inverse-active: #616161;
   --p-color-bg-fill-transparent: rgba(0, 0, 0, 0.02);
   --p-color-bg-fill-transparent-hover: rgba(0, 0, 0, 0.05);
   --p-color-bg-fill-transparent-active: rgba(0, 0, 0, 0.08);
+  --p-color-bg-fill-transparent-selected: rgba(0, 0, 0, 0.08);
+  --p-color-bg-fill-transparent-secondary: rgba(0, 0, 0, 0.06);       /* page header actions */
+  --p-color-bg-fill-transparent-secondary-hover: rgba(0, 0, 0, 0.08);
+  --p-color-bg-fill-transparent-secondary-active: rgba(0, 0, 0, 0.11);
 
-  /* ── Colour: text ──────────────────────────────────── */
+  /* ── Colour: text ──────────────────────────────────────────────────── */
   --p-color-text: #303030;
   --p-color-text-secondary: #616161;
   --p-color-text-disabled: #b5b5b5;
   --p-color-text-link: #005bd3;
   --p-color-text-link-hover: #004299;
+  --p-color-text-link-active: #002e6a;
+  --p-color-text-link-inverse: #c5d0ff;
   --p-color-text-brand: #4a4a4a;
+  --p-color-text-brand-hover: #303030;
   --p-color-text-brand-on-bg-fill: #ffffff;
+  --p-color-text-brand-on-bg-fill-hover: #e3e3e3;
+  --p-color-text-brand-on-bg-fill-active: #cccccc;
   --p-color-text-info: #003a5a;
+  --p-color-text-info-secondary: #007cb4;
+  --p-color-text-info-on-bg-fill: #002133;
   --p-color-text-success: #014b40;
+  --p-color-text-success-secondary: #047b5d;
+  --p-color-text-success-on-bg-fill: #fafffb;
   --p-color-text-caution: #4f4700;
+  --p-color-text-caution-secondary: #827500;
+  --p-color-text-caution-on-bg-fill: #332e00;
   --p-color-text-warning: #5e4200;
+  --p-color-text-warning-secondary: #956f00;
+  --p-color-text-warning-on-bg-fill: #251a00;
   --p-color-text-critical: #8e0b21;
+  --p-color-text-critical-secondary: #c70a24;
+  --p-color-text-critical-on-bg-fill: #fffafb;
+  --p-color-text-emphasis: #005bd3;
+  --p-color-text-emphasis-on-bg-fill: #fcfdff;
   --p-color-text-inverse: #e3e3e3;
   --p-color-text-inverse-secondary: #b5b5b5;
   --p-color-text-on-fill: #ffffff;
 
-  /* ── Colour: icons ─────────────────────────────────── */
+  /* ── Colour: icons ─────────────────────────────────────────────────── */
   --p-color-icon: #4a4a4a;
+  --p-color-icon-hover: #303030;
+  --p-color-icon-active: #1a1a1a;
   --p-color-icon-secondary: #8a8a8a;
+  --p-color-icon-secondary-hover: #616161;
   --p-color-icon-disabled: #cccccc;
-  --p-color-icon-success: #29845a;
-  --p-color-icon-critical: #c70a24;
-  --p-color-icon-info: #00527c;
-  --p-color-icon-caution: #4f4700;
-  --p-color-icon-warning: #8a6116;
+  --p-color-icon-brand: #1a1a1a;
+  --p-color-icon-info: #0094d5;
+  --p-color-icon-success: #047b5d;
+  --p-color-icon-caution: #998a00;
+  --p-color-icon-warning: #b28400;
+  --p-color-icon-critical: #e22c38;
+  --p-color-icon-emphasis: #005bd3;
+  --p-color-icon-inverse: #e3e3e3;
 
-  /* ── Colour: borders ───────────────────────────────── */
+  /* ── Colour: borders ───────────────────────────────────────────────── */
   --p-color-border: #e3e3e3;
   --p-color-border-hover: #cccccc;
-  --p-color-border-secondary: #ebebeb;
+  --p-color-border-secondary: #ebebeb;           /* table row dividers */
   --p-color-border-tertiary: #cccccc;
   --p-color-border-disabled: #ebebeb;
   --p-color-border-focus: #005bd3;
+  --p-color-border-brand: #e3e3e3;
   --p-color-border-emphasis: #005bd3;
   --p-color-border-inverse: #616161;
-  --p-color-border-success: #0c5132;
-  --p-color-border-critical: #e51c00;
-  --p-color-border-caution: #998a00;
-  --p-color-border-info: #a8dbff;
-  --p-color-input-border: #8a8a8a;
-  --p-color-input-border-hover: #616161;
-  --p-color-input-bg-surface: #fdfdfd;
+  --p-color-border-info: #a8d8ff;
+  --p-color-border-success: #92fcac;
+  --p-color-border-caution: #ffeb78;
+  --p-color-border-warning: #ffc879;
+  --p-color-border-critical: #fec1c7;
+  --p-color-border-critical-secondary: #8e0b21;  /* input in error */
 
-  /* backdrop / overlays */
+  /* inputs */
+  --p-color-input-bg-surface: #fdfdfd;
+  --p-color-input-bg-surface-hover: #fafafa;
+  --p-color-input-bg-surface-active: #f7f7f7;
+  --p-color-input-border: #8a8a8a;               /* 3.4:1 on white, passes 1.4.11 */
+  --p-color-input-border-hover: #616161;
+  --p-color-input-border-active: #1a1a1a;
+
+  /* side navigation */
+  --p-color-nav-bg: #ebebeb;
+  --p-color-nav-bg-surface-hover: #f1f1f1;
+  --p-color-nav-bg-surface-active: #fafafa;
+  --p-color-nav-bg-surface-selected: #fafafa;
+
+  /* top bar search pill */
+  --e-color-topbar-search-bg: #303030;
+  --e-color-topbar-search-bg-hover: #3a3a3a;
+  --e-color-topbar-search-border: #4a4a4a;
+  --e-color-topbar-text: #e3e3e3;
+  --e-color-topbar-text-secondary: #b5b5b5;
+
+  /* avatars: our own palette (all pairs >= 4.5:1) */
+  --e-color-avatar-1-bg: #b8f0e8;  --e-color-avatar-1-text: #033c39;
+  --e-color-avatar-2-bg: #ffd6a4;  --e-color-avatar-2-text: #4a2a00;
+  --e-color-avatar-3-bg: #d5ebff;  --e-color-avatar-3-text: #002133;
+  --e-color-avatar-4-bg: #e4deff;  --e-color-avatar-4-text: #2d0070;
+  --e-color-avatar-5-bg: #affebf;  --e-color-avatar-5-text: #014b40;
+  --e-color-avatar-6-bg: #fed1d7;  --e-color-avatar-6-text: #5f0716;
+
+  /* Elba brand: kraft-board accent, used ONLY for our wordmark and marketing art,
+     never for UI controls (keeps the product visually ours). */
+  --e-color-brand-kraft: #c8964f;
+  --e-color-brand-kraft-strong: #8a5a1c;
+
+  /* backdrop */
   --p-color-backdrop-bg: rgba(0, 0, 0, 0.71);
 
-  /* ── Typography ────────────────────────────────────── */
+  /* ── Typography ────────────────────────────────────────────────────── */
   --p-font-family-latin: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --p-font-family-arabic: var(--font-plex-arabic), "Segoe UI", Tahoma, sans-serif;
   --p-font-family-sans: var(--p-font-family-latin), var(--p-font-family-arabic);
@@ -109,7 +219,7 @@
 
   --p-font-size-275: 0.6875rem; /* 11px */
   --p-font-size-300: 0.75rem;   /* 12px */
-  --p-font-size-325: 0.8125rem; /* 13px — Polaris bodyMd */
+  --p-font-size-325: 0.8125rem; /* 13px */
   --p-font-size-350: 0.875rem;  /* 14px */
   --p-font-size-400: 1rem;      /* 16px */
   --p-font-size-450: 1.125rem;  /* 18px */
@@ -117,6 +227,7 @@
   --p-font-size-550: 1.375rem;  /* 22px */
   --p-font-size-600: 1.5rem;    /* 24px */
   --p-font-size-750: 1.875rem;  /* 30px */
+  --p-font-size-800: 2rem;      /* 32px */
   --p-font-size-900: 2.25rem;   /* 36px */
   --p-font-size-1000: 2.5rem;   /* 40px */
 
@@ -139,17 +250,58 @@
   --p-font-letter-spacing-dense: -0.0125rem;
   --p-font-letter-spacing-normal: 0;
 
-  /* text variants (Polaris Text variant equivalents) */
-  --p-text-heading-2xl-size: var(--p-font-size-750);
-  --p-text-heading-xl-size: var(--p-font-size-600);
-  --p-text-heading-lg-size: var(--p-font-size-500);
-  --p-text-heading-md-size: var(--p-font-size-350);
-  --p-text-heading-sm-size: var(--p-font-size-325);
-  --p-text-body-lg-size: var(--p-font-size-350);
-  --p-text-body-md-size: var(--p-font-size-325);
-  --p-text-body-sm-size: var(--p-font-size-300);
+  /* Text variants (consumed by <Text variant=…>). size / line-height / weight / tracking */
+  --p-text-heading-3xl-font-size: var(--p-font-size-900);
+  --p-text-heading-3xl-font-line-height: var(--p-font-line-height-1200);
+  --p-text-heading-3xl-font-weight: var(--p-font-weight-bold);
+  --p-text-heading-3xl-font-letter-spacing: var(--p-font-letter-spacing-densest);
+  --p-text-heading-2xl-font-size: var(--p-font-size-750);
+  --p-text-heading-2xl-font-line-height: var(--p-font-line-height-1000);
+  --p-text-heading-2xl-font-weight: var(--p-font-weight-bold);
+  --p-text-heading-2xl-font-letter-spacing: var(--p-font-letter-spacing-denser);
+  --p-text-heading-xl-font-size: var(--p-font-size-600);
+  --p-text-heading-xl-font-line-height: var(--p-font-line-height-800);
+  --p-text-heading-xl-font-weight: var(--p-font-weight-bold);
+  --p-text-heading-xl-font-letter-spacing: var(--p-font-letter-spacing-dense);
+  --p-text-heading-lg-font-size: var(--p-font-size-500);
+  --p-text-heading-lg-font-line-height: var(--p-font-line-height-600);
+  --p-text-heading-lg-font-weight: var(--p-font-weight-semibold);
+  --p-text-heading-lg-font-letter-spacing: var(--p-font-letter-spacing-dense);
+  --p-text-heading-md-font-size: var(--p-font-size-350);
+  --p-text-heading-md-font-line-height: var(--p-font-line-height-500);
+  --p-text-heading-md-font-weight: var(--p-font-weight-semibold);
+  --p-text-heading-md-font-letter-spacing: var(--p-font-letter-spacing-normal);
+  --p-text-heading-sm-font-size: var(--p-font-size-325);
+  --p-text-heading-sm-font-line-height: var(--p-font-line-height-500);
+  --p-text-heading-sm-font-weight: var(--p-font-weight-semibold);
+  --p-text-heading-sm-font-letter-spacing: var(--p-font-letter-spacing-normal);
+  --p-text-heading-xs-font-size: var(--p-font-size-300);
+  --p-text-heading-xs-font-line-height: var(--p-font-line-height-400);
+  --p-text-heading-xs-font-weight: var(--p-font-weight-semibold);
+  --p-text-heading-xs-font-letter-spacing: var(--p-font-letter-spacing-normal);
+  --p-text-body-lg-font-size: var(--p-font-size-350);
+  --p-text-body-lg-font-line-height: var(--p-font-line-height-500);
+  --p-text-body-lg-font-weight: var(--p-font-weight-regular);
+  --p-text-body-md-font-size: var(--p-font-size-325);
+  --p-text-body-md-font-line-height: var(--p-font-line-height-500);
+  --p-text-body-md-font-weight: var(--p-font-weight-regular);
+  --p-text-body-sm-font-size: var(--p-font-size-300);
+  --p-text-body-sm-font-line-height: var(--p-font-line-height-400);
+  --p-text-body-sm-font-weight: var(--p-font-weight-regular);
+  --p-text-body-xs-font-size: var(--p-font-size-275);
+  --p-text-body-xs-font-line-height: var(--p-font-line-height-300);
 
-  /* ── Space (4px scale) ─────────────────────────────── */
+  /* Short aliases kept from the foundation pass (other areas may use them). */
+  --p-text-heading-2xl-size: var(--p-text-heading-2xl-font-size);
+  --p-text-heading-xl-size: var(--p-text-heading-xl-font-size);
+  --p-text-heading-lg-size: var(--p-text-heading-lg-font-size);
+  --p-text-heading-md-size: var(--p-text-heading-md-font-size);
+  --p-text-heading-sm-size: var(--p-text-heading-sm-font-size);
+  --p-text-body-lg-size: var(--p-text-body-lg-font-size);
+  --p-text-body-md-size: var(--p-text-body-md-font-size);
+  --p-text-body-sm-size: var(--p-text-body-sm-font-size);
+
+  /* ── Space (4px base; names are px × 4 / 100 like Polaris) ─────────── */
   --p-space-0: 0;
   --p-space-025: 0.0625rem; /* 1px */
   --p-space-050: 0.125rem;  /* 2px */
@@ -166,39 +318,41 @@
   --p-space-1600: 4rem;     /* 64px */
   --p-space-2000: 5rem;     /* 80px */
   --p-space-2400: 6rem;     /* 96px */
-  --p-space-2800: 7rem;
-  --p-space-3200: 8rem;
+  --p-space-2800: 7rem;     /* 112px */
+  --p-space-3200: 8rem;     /* 128px */
 
-  /* ── Radius ────────────────────────────────────────── */
+  /* ── Radius ────────────────────────────────────────────────────────── */
   --p-border-radius-0: 0;
   --p-border-radius-050: 0.125rem; /* 2px */
-  --p-border-radius-100: 0.25rem;  /* 4px */
-  --p-border-radius-150: 0.375rem; /* 6px */
-  --p-border-radius-200: 0.5rem;   /* 8px — buttons, inputs */
-  --p-border-radius-300: 0.75rem;  /* 12px — cards */
-  --p-border-radius-400: 1rem;
-  --p-border-radius-500: 1.25rem;
-  --p-border-radius-750: 1.875rem;
-  --p-border-radius-full: 9999px;
+  --p-border-radius-100: 0.25rem;  /* 4px — checkbox */
+  --p-border-radius-150: 0.375rem; /* 6px — micro buttons, thumbnails sm */
+  --p-border-radius-200: 0.5rem;   /* 8px — buttons, inputs, insets, nav items */
+  --p-border-radius-300: 0.75rem;  /* 12px — cards, modals, popovers */
+  --p-border-radius-400: 1rem;     /* 16px */
+  --p-border-radius-500: 1.25rem;  /* 20px */
+  --p-border-radius-750: 1.875rem; /* 30px */
+  --p-border-radius-full: 9999px;  /* badges, pills, toasts */
 
   --p-border-width-0165: 0.04125rem;
   --p-border-width-025: 0.0625rem; /* 1px */
   --p-border-width-050: 0.125rem;  /* 2px */
-  --p-border-width-100: 0.25rem;
+  --p-border-width-100: 0.25rem;   /* 4px */
 
-  /* ── Shadows & bevels ──────────────────────────────── */
+  /* ── Shadows & bevels ─────────────────────────────────────────────── */
   --p-shadow-0: none;
-  --p-shadow-100: 0 1px 0 0 rgba(26, 26, 26, 0.07);
+  --p-shadow-100: 0 1px 0 0 rgba(26, 26, 26, 0.07);              /* cards */
   --p-shadow-200: 0 3px 1px -1px rgba(26, 26, 26, 0.07);
-  --p-shadow-300: 0 4px 6px -2px rgba(26, 26, 26, 0.2);
-  --p-shadow-400: 0 8px 16px -4px rgba(26, 26, 26, 0.22);
+  --p-shadow-300: 0 4px 6px -2px rgba(26, 26, 26, 0.2);          /* popovers */
+  --p-shadow-400: 0 8px 16px -4px rgba(26, 26, 26, 0.22);        /* toasts, menus */
   --p-shadow-500: 0 12px 20px -8px rgba(26, 26, 26, 0.24);
-  --p-shadow-600: 0 20px 20px -8px rgba(26, 26, 26, 0.28);
+  --p-shadow-600: 0 20px 20px -8px rgba(26, 26, 26, 0.28);       /* modals */
   --p-shadow-bevel-100:
     1px 0 0 0 rgba(0, 0, 0, 0.13) inset, -1px 0 0 0 rgba(0, 0, 0, 0.13) inset,
     0 -1px 0 0 rgba(0, 0, 0, 0.17) inset, 0 1px 0 0 rgba(204, 204, 204, 0.5) inset;
   --p-shadow-inset-100: 0 1px 2px 0 rgba(26, 26, 26, 0.15) inset, 0 1px 1px 0 rgba(26, 26, 26, 0.15) inset;
-  --p-shadow-inset-200: 0 2px 1px 0 rgba(26, 26, 26, 0.2) inset, 1px 0 1px 0 rgba(26, 26, 26, 0.12) inset, -1px 0 1px 0 rgba(26, 26, 26, 0.12) inset;
+  --p-shadow-inset-200:
+    0 2px 1px 0 rgba(26, 26, 26, 0.2) inset, 1px 0 1px 0 rgba(26, 26, 26, 0.12) inset,
+    -1px 0 1px 0 rgba(26, 26, 26, 0.12) inset;
   --p-shadow-button:
     0 -1px 0 0 #b5b5b5 inset, 0 0 0 1px rgba(0, 0, 0, 0.1) inset, 0 0.5px 0 1.5px #ffffff inset;
   --p-shadow-button-hover:
@@ -216,15 +370,25 @@
   --p-shadow-button-primary-critical:
     0 -1px 0 1px rgba(142, 31, 11, 0.8) inset, 0 0 0 1px rgba(181, 38, 11, 0.8) inset,
     0 0.5px 0 1.5px rgba(255, 255, 255, 0.349) inset;
+  --p-shadow-button-primary-critical-hover:
+    0 1px 0 0 rgba(255, 255, 255, 0.48) inset, 1px 0 0 0 rgba(255, 255, 255, 0.2) inset,
+    -1px 0 0 0 rgba(255, 255, 255, 0.2) inset, 0 -1.5px 0 0 rgba(0, 0, 0, 0.25) inset;
+  --p-shadow-button-primary-critical-inset:
+    -1px 0 1px 0 rgba(0, 0, 0, 0.2) inset, 1px 0 1px 0 rgba(0, 0, 0, 0.2) inset,
+    0 2px 0 0 rgba(0, 0, 0, 0.6) inset;
   --p-shadow-border-inset: 0 0 0 1px rgba(0, 0, 0, 0.08) inset;
+  /* card = 100 shadow + hairline outline */
+  --e-shadow-card: 0 1px 0 0 rgba(26, 26, 26, 0.07), 0 0 0 1px rgba(0, 0, 0, 0.06);
+  /* nav selected pill */
+  --e-shadow-nav-selected: 0 1px 0 0 rgba(26, 26, 26, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
 
-  /* ── Focus ring (WCAG 2.4.7 / 2.4.13) ──────────────── */
+  /* ── Focus ring (WCAG 2.4.7 / 2.4.13) ─────────────────────────────── */
   --p-focus-ring-width: 2px;
   --p-focus-ring-offset: 1px;
   --p-focus-ring: 0 0 0 var(--p-focus-ring-offset) var(--p-color-bg-surface),
     0 0 0 calc(var(--p-focus-ring-offset) + var(--p-focus-ring-width)) var(--p-color-border-focus);
 
-  /* ── Motion ────────────────────────────────────────── */
+  /* ── Motion ───────────────────────────────────────────────────────── */
   --p-motion-duration-0: 0ms;
   --p-motion-duration-50: 50ms;
   --p-motion-duration-100: 100ms;
@@ -232,26 +396,35 @@
   --p-motion-duration-200: 200ms;
   --p-motion-duration-250: 250ms;
   --p-motion-duration-300: 300ms;
+  --p-motion-duration-350: 350ms;
+  --p-motion-duration-400: 400ms;
+  --p-motion-duration-450: 450ms;
   --p-motion-duration-500: 500ms;
+  --p-motion-duration-5000: 5000ms; /* toast default */
   --p-motion-ease: cubic-bezier(0.25, 0.1, 0.25, 1);
   --p-motion-ease-in: cubic-bezier(0.42, 0, 1, 1);
   --p-motion-ease-out: cubic-bezier(0.19, 0.91, 0.38, 1);
   --p-motion-ease-in-out: cubic-bezier(0.42, 0, 0.58, 1);
+  --p-motion-linear: cubic-bezier(0, 0, 1, 1);
 
-  /* ── Layout ────────────────────────────────────────── */
+  /* ── Layout ───────────────────────────────────────────────────────── */
   --p-breakpoint-xs: 0px;
   --p-breakpoint-sm: 490px;
   --p-breakpoint-md: 768px;
   --p-breakpoint-lg: 1040px;
   --p-breakpoint-xl: 1440px;
-  --p-page-max-width: 62.375rem;       /* 998px — Polaris default Page */
-  --p-page-max-width-wide: 75rem;      /* storefront / fullWidth-ish */
+  --p-page-max-width: 62.375rem;       /* 998px default Page */
+  --p-page-max-width-narrow: 41.375rem; /* 662px narrowWidth */
+  --p-page-max-width-wide: 75rem;      /* storefront */
   --p-page-gutter: var(--p-space-400); /* 16px on phones */
   --p-top-bar-height: 3.5rem;          /* 56px */
   --p-nav-width: 15rem;                /* 240px side navigation */
   --p-touch-target-min: 2.75rem;       /* 44px comfortable; WCAG 2.5.8 floor is 24px */
-  --p-control-height: 2rem;            /* 32px desktop controls */
-  --p-control-height-lg: 2.75rem;      /* 44px mobile/large */
+  --p-control-height-micro: 1.5rem;    /* 24px */
+  --p-control-height-slim: 1.75rem;    /* 28px */
+  --p-control-height: 2rem;            /* 32px inputs */
+  --p-control-height-lg: 2.75rem;      /* 44px */
+  --e-control-height-touch: 2.5rem;    /* 40px on coarse pointers */
 
   --p-z-index-1: 100;
   --p-z-index-2: 400;   /* top bar */
@@ -260,18 +433,72 @@
   --p-z-index-5: 513;   /* modal */
   --p-z-index-6: 514;   /* toast */
   --p-z-index-7: 515;   /* tooltip */
+  --p-z-index-popover: 520; /* popovers can open from inside modals */
 }
 
-/* Arabic: IBM Plex Sans Arabic first, Inter for Latin runs. */
+/* Arabic: IBM Plex Sans Arabic first, Inter for Latin runs. Plex sits optically
+   smaller than Inter, so Arabic body text is 1px larger and weights snap to the
+   static Plex cuts (400/500/600/700). */
 :root:lang(ar) {
   --p-font-family-sans: var(--p-font-family-arabic), var(--p-font-family-latin);
   --p-font-weight-regular: 400;
   --p-font-weight-medium: 500;
   --p-font-weight-semibold: 600;
+  --p-text-body-md-font-size: var(--p-font-size-350);
+  --p-text-body-md-font-line-height: var(--p-font-line-height-600);
+  --p-text-body-sm-font-size: var(--p-font-size-325);
+  --p-text-body-sm-font-line-height: var(--p-font-line-height-500);
+  --p-text-heading-sm-font-size: var(--p-font-size-350);
+  --p-text-heading-xs-font-size: var(--p-font-size-325);
+  --p-text-heading-xs-font-line-height: var(--p-font-line-height-500);
+  --p-font-letter-spacing-densest: 0;
+  --p-font-letter-spacing-denser: 0;
+  --p-font-letter-spacing-dense: 0;
 }
 
 @media (min-width: 768px) {
   :root {
     --p-page-gutter: var(--p-space-600);
   }
+}
+
+/*
+ * Dark theme — structure only (semantic roles). Light is the product default.
+ * Opt in per subtree or document with data-theme="dark".
+ */
+:root[data-theme="dark"],
+[data-theme="dark"] {
+  color-scheme: dark;
+  --p-color-bg: #1a1a1a;
+  --p-color-bg-surface: #303030;
+  --p-color-bg-surface-hover: #3a3a3a;
+  --p-color-bg-surface-active: #424242;
+  --p-color-bg-surface-selected: #424242;
+  --p-color-bg-surface-secondary: #2a2a2a;
+  --p-color-bg-surface-secondary-hover: #333333;
+  --p-color-bg-surface-tertiary: #3a3a3a;
+  --p-color-bg-surface-inverse: #e3e3e3;
+  --p-color-bg-fill: #3a3a3a;
+  --p-color-bg-fill-hover: #424242;
+  --p-color-bg-fill-active: #4a4a4a;
+  --p-color-bg-fill-tertiary: #4a4a4a;
+  --p-color-bg-fill-brand: #f1f1f1;
+  --p-color-bg-fill-brand-hover: #ffffff;
+  --p-color-bg-fill-brand-active: #e3e3e3;
+  --p-color-text-brand-on-bg-fill: #1a1a1a;
+  --p-color-text: #e3e3e3;
+  --p-color-text-secondary: #b5b5b5;
+  --p-color-text-disabled: #6b6b6b;
+  --p-color-text-link: #8fb8ff;
+  --p-color-text-link-hover: #b8d2ff;
+  --p-color-icon: #cccccc;
+  --p-color-icon-secondary: #9a9a9a;
+  --p-color-border: #4a4a4a;
+  --p-color-border-secondary: #3a3a3a;
+  --p-color-border-focus: #8fb8ff;
+  --p-color-input-bg-surface: #262626;
+  --p-color-input-border: #8a8a8a;
+  --p-color-nav-bg: #222222;
+  --p-color-nav-bg-surface-selected: #303030;
+  --p-color-nav-bg-surface-hover: #2a2a2a;
 }

@@ -11,3 +11,9 @@ playwright-report
 *.tsbuildinfo
 .DS_Store
 coverage
+
+# Generated private files (print PDFs, proof previews)
+/storage
+
+# Vendor portal local uploads (QC photos, certificates, portfolio, applications)
+var/

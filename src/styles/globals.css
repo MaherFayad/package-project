@@ -18,8 +18,8 @@ body {
   background: var(--p-color-bg);
   color: var(--p-color-text);
   font-family: var(--p-font-family-sans);
-  font-size: var(--p-font-size-350);
-  line-height: var(--p-font-line-height-500);
+  font-size: var(--p-text-body-md-font-size);
+  line-height: var(--p-text-body-md-font-line-height);
   font-weight: var(--p-font-weight-regular);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -69,6 +69,10 @@ html {
 [dir="rtl"] .num {
   direction: ltr;
   unicode-bidi: isolate;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }
 
 .visually-hidden {

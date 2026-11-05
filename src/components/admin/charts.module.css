@@ -1,0 +1,118 @@
+/* Admin charts: plain CSS bars on Elba tokens. Charts never mirror in RTL (time runs left to right). */
+.Columns {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--p-space-100);
+  block-size: 160px;
+  padding-block-start: var(--p-space-200);
+  border-block-end: var(--p-border-width-025, 1px) solid var(--p-color-border);
+  direction: ltr;
+}
+.Column {
+  flex: 1 1 0;
+  min-inline-size: 4px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  block-size: 100%;
+}
+.ColumnBar {
+  background: var(--p-color-bg-fill-info-active);
+  border-start-start-radius: var(--p-border-radius-100);
+  border-start-end-radius: var(--p-border-radius-100);
+  min-block-size: 2px;
+}
+.ColumnBarNegative {
+  background: var(--p-color-bg-fill-critical);
+}
+.Axis {
+  display: flex;
+  justify-content: space-between;
+  direction: ltr;
+  margin-block-start: var(--p-space-100);
+  color: var(--p-color-text-secondary);
+  font-size: var(--p-font-size-275, 11px);
+  line-height: var(--p-font-line-height-300, 12px);
+}
+.Funnel {
+  display: grid;
+  gap: var(--p-space-300);
+}
+.FunnelRow {
+  display: grid;
+  grid-template-columns: minmax(96px, 30%) 1fr auto;
+  align-items: center;
+  gap: var(--p-space-300);
+}
+@media (max-width: 489px) {
+  .FunnelRow {
+    grid-template-columns: 1fr auto;
+  }
+  .FunnelTrack {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+.FunnelTrack {
+  block-size: 12px;
+  background: var(--p-color-bg-surface-secondary-active);
+  border-radius: var(--p-border-radius-full);
+  overflow: hidden;
+}
+.FunnelBar {
+  block-size: 100%;
+  background: var(--p-color-bg-fill-info-active);
+  border-radius: var(--p-border-radius-full);
+}
+.Value {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--p-font-weight-semibold);
+  white-space: nowrap;
+}
+.Photos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--p-space-300);
+}
+.Photo {
+  display: block;
+  inline-size: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--p-border-radius-200);
+  border: var(--p-border-width-025, 1px) solid var(--p-color-border);
+  background: var(--p-color-bg-surface-secondary);
+}
+.PreWrap {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.Json {
+  margin: 0;
+  padding: var(--p-space-200);
+  background: var(--p-color-bg-surface-secondary);
+  border-radius: var(--p-border-radius-200);
+  font-family: var(--p-font-family-mono, ui-monospace, monospace);
+  font-size: var(--p-font-size-275, 11px);
+  line-height: var(--p-font-line-height-400, 16px);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-block-size: 240px;
+  overflow: auto;
+  direction: ltr;
+  text-align: start;
+}
+.Ltr {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+.Fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-inline-size: 0;
+}
+.Fieldset > legend {
+  padding: 0;
+  margin-block-end: var(--p-space-200);
+}

@@ -219,6 +219,9 @@ model RateCard {
   printSidesSurchargePct Float @default(0) // extra % for 2-sided print
   finishSurcharges Json  // Partial<Record<FinishCode, number>> unit piasters
   leadTimeDays  Int
+  // Added by vendor portal: cutting dies the vendor already owns for this structure, Dims[] (inner mm).
+  // Sizes within ±2 mm are "standard" for this vendor (no die cost). Maps to pricing `ownedDies`.
+  standardDies  Json     @default("[]")
   active        Boolean  @default(true)
   validFrom     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -460,4 +463,77 @@ model Dispute {
   resolution String?
   createdAt  DateTime @default(now())
   resolvedAt DateTime?
+}
+
+// ───────────────────────────── Privacy (PDPL 151/2020 data-subject requests) ─────────────────────────────
+// Added by storefront (account area). Export requests are fulfilled instantly (download) and logged;
+// delete requests are queued for ops (orders/invoices must be kept for tax law, so deletion is reviewed).
+model DataRequest {
+  id          String    @id @default(cuid())
+  userId      String    // no relation on purpose (row must survive account anonymisation)
+  kind        String    // DataRequestKind: EXPORT | DELETE
+  status      String    @default("OPEN") // OPEN | IN_PROGRESS | COMPLETED | REJECTED
+  note        String?
+  ip          String?
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  @@index([userId, kind])
+}
+
+// ───────────────────────────── Vendor onboarding (added by vendor portal) ─────────────────────────────
+// /[locale]/vendor/apply creates a Vendor row with status PENDING plus this application. Admin reviews it:
+// on approval set Vendor.status = ACTIVE (+ verified), User(applicantId).role = VENDOR and .vendorId = vendorId.
+// Document keys point at private uploads served by /api/vendor/files/<key> (admin + applicant only).
+model VendorApplication {
+  id                   String    @id @default(cuid())
+  applicantId          String    // User.id of the person who applied
+  vendorId             String    @unique // the PENDING Vendor row created with the application
+  legalName            String
+  commercialRegisterNo String
+  taxCardNo            String
+  factoryAddress       String
+  factoryCity          String    // EgyptCity
+  contactName          String
+  contactPhone         String    // E.164
+  documents            Json      // VendorApplicationDocument[] { kind, key, name, size, type }
+  message              String?
+  status               String    @default("SUBMITTED") // SUBMITTED | UNDER_REVIEW | APPROVED | REJECTED
+  reviewNote           String?
+  reviewedById         String?
+  reviewedAt           DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@index([applicantId])
+  @@index([status])
+}
+
+// ───────────────────────────── Admin (added by admin) ─────────────────────────────
+// Append-only log of every admin mutation (who, what, before/after). Never updated or deleted.
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?  // User.id of the admin (no relation: the row must outlive account deletion)
+  actorPhone String?
+  action     String   // AuditAction, e.g. ORDER_REASSIGN, ORDER_REFUND, VENDOR_SUSPEND, PRICING_UPDATE
+  entityType String   // ORDER | VENDOR | VENDOR_APPLICATION | DISPUTE | USER | DATA_REQUEST | STRUCTURE | MATERIAL | FINISH | SETTINGS
+  entityId   String?
+  summary    String?  // short human-readable detail (e.g. order number)
+  before     Json?
+  after      Json?
+  ip         String?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@index([actorId])
+}
+
+// Platform settings edited from /admin (key/value). Key "pricing" holds AdminPricingSettings
+// (margin, quote validity, zone rates, price index rows) merged onto DEFAULT_PRICING_CONFIG.
+model PlatformSetting {
+  key         String   @id
+  value       Json
+  updatedById String?
+  updatedAt   DateTime @updatedAt
 }

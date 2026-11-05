@@ -1,0 +1,25 @@
+.Layout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--p-space-400);
+  min-width: 0;
+}
+.Section { min-width: 0; display: flex; flex-direction: column; gap: var(--p-space-400); }
+.primary { flex: 2 2 30rem; }
+.oneThird { flex: 1 1 15rem; }
+.oneHalf { flex: 1 1 22rem; }
+.fullWidth { flex: 1 1 100%; }
+@media (max-width: 489.98px) {
+  .primary, .oneThird, .oneHalf { flex-basis: 100%; }
+}
+.Annotated {
+  flex: 1 1 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--p-space-400);
+}
+.Annotation { flex: 1 1 15rem; padding-block-start: var(--p-space-400); }
+.AnnotationTitle { margin: 0; font-size: var(--p-text-heading-md-font-size); font-weight: var(--p-font-weight-semibold); }
+.AnnotationDescription { margin-block-start: var(--p-space-200); color: var(--p-color-text-secondary); }
+.AnnotationContent { flex: 2 2 30rem; min-width: 0; display: flex; flex-direction: column; gap: var(--p-space-400); }

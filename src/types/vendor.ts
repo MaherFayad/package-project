@@ -39,7 +39,22 @@ export interface VendorCertification {
   code: "FOOD_SAFE" | "ISO_9001" | "FSC" | "ISO_22000";
   issuer: string;
   validUntil?: string; // ISO date
+  /** Added by vendor portal: private upload key of the certificate document (served by /api/vendor/files/<key>). */
+  documentKey?: string;
+  /** Added by vendor portal: PENDING until Elba ops checks the document. Missing = verified (seed data). */
+  status?: "PENDING" | "VERIFIED" | "REJECTED";
 }
+
+/** Added by vendor portal: a document attached to a VendorApplication row (Json column `documents`). */
+export interface VendorApplicationDocument {
+  kind: "COMMERCIAL_REGISTER" | "TAX_CARD" | "SAMPLE" | "FOOD_SAFE_CERT" | "OTHER";
+  key: string; // upload key, served by /api/vendor/files/<key>
+  name: string;
+  size: number;
+  type: string; // detected MIME type
+}
+
+export type VendorApplicationStatus = "SUBMITTED" | "UNDER_REVIEW" | "APPROVED" | "REJECTED";
 
 /** Public card/profile view. */
 export interface VendorSummary {
