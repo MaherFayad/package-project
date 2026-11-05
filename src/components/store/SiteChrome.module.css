@@ -1,0 +1,92 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: var(--p-z-index-2);
+  background: var(--p-color-bg-surface);
+  border-block-end: var(--p-border-width-025) solid var(--p-color-border);
+}
+.headerInner {
+  max-width: var(--p-page-max-width-wide);
+  margin-inline: auto;
+  min-height: var(--p-top-bar-height);
+  padding-inline: var(--p-page-gutter);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--p-space-400);
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--p-space-200);
+  min-height: 2.75rem;
+  color: var(--p-color-text);
+  text-decoration: none;
+  font-weight: var(--p-font-weight-bold);
+  font-size: var(--p-font-size-450);
+}
+.brand:hover { color: var(--p-color-text); }
+.nav {
+  /* phones: second row, wraps (never scrolls sideways) */
+  order: 3;
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--p-space-050);
+  margin-inline: calc(-1 * var(--p-space-300));
+}
+.nav a,
+.lang,
+.signIn,
+.iconLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--p-space-150);
+  min-height: 2.75rem;
+  padding-inline: var(--p-space-300);
+  border-radius: var(--p-border-radius-200);
+  color: var(--p-color-text);
+  text-decoration: none;
+  font-weight: var(--p-font-weight-medium);
+}
+.nav a:hover,
+.lang:hover,
+.iconLink:hover {
+  background: var(--p-color-bg-fill-transparent-hover);
+  color: var(--p-color-text);
+}
+.actions {
+  margin-inline-start: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--p-space-100);
+}
+.signIn {
+  background: var(--p-color-bg-fill-brand);
+  color: var(--p-color-text-brand-on-bg-fill);
+  box-shadow: var(--p-shadow-button-primary);
+  min-height: 2.25rem;
+}
+.signIn:hover {
+  background: var(--p-color-bg-fill-brand-hover);
+  color: var(--p-color-text-brand-on-bg-fill);
+}
+.footer {
+  margin-block-start: var(--p-space-1600);
+  border-block-start: var(--p-border-width-025) solid var(--p-color-border);
+  background: var(--p-color-bg-surface);
+  color: var(--p-color-text-secondary);
+}
+.footerInner {
+  max-width: var(--p-page-max-width-wide);
+  margin-inline: auto;
+  padding: var(--p-space-600) var(--p-page-gutter);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--p-space-300);
+  justify-content: space-between;
+}
+@media (min-width: 768px) {
+  .headerInner { flex-wrap: nowrap; }
+  .nav { order: 0; width: auto; flex: 1; margin-inline: 0; }
+}

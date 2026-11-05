@@ -1,0 +1,111 @@
+@import "./tokens.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  font-size: 100%; /* 1rem = 16px; respect user zoom */
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--p-color-bg);
+  color: var(--p-color-text);
+  font-family: var(--p-font-family-sans);
+  font-size: var(--p-font-size-350);
+  line-height: var(--p-font-line-height-500);
+  font-weight: var(--p-font-weight-regular);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6, p, figure, blockquote, dl, dd {
+  margin: 0;
+}
+
+img, svg, video, canvas {
+  display: block;
+  max-width: 100%;
+}
+
+input, button, textarea, select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: var(--p-color-text-link);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+a:hover {
+  color: var(--p-color-text-link-hover);
+}
+
+/* Visible focus for every interactive element (WCAG 2.4.7); inputs get the Polaris ring. */
+:focus-visible {
+  outline: var(--p-focus-ring-width) solid var(--p-color-border-focus);
+  outline-offset: var(--p-focus-ring-offset);
+}
+
+/* Focus not obscured by sticky headers (WCAG 2.4.11). */
+html {
+  scroll-padding-top: calc(var(--p-top-bar-height) + var(--p-space-400));
+}
+
+/* Western digits stay LTR inside RTL text. */
+.ltr-nums,
+[dir="rtl"] .num {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.skip-link {
+  position: absolute;
+  inset-inline-start: var(--p-space-400);
+  top: var(--p-space-200);
+  z-index: var(--p-z-index-7);
+  padding: var(--p-space-200) var(--p-space-400);
+  background: var(--p-color-bg-surface);
+  color: var(--p-color-text);
+  border-radius: var(--p-border-radius-200);
+  box-shadow: var(--p-shadow-300);
+  transform: translateY(-200%);
+}
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

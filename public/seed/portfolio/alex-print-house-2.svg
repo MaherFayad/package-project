@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600" role="img">
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7f7f7"/><stop offset="1" stop-color="#e3e3e3"/></linearGradient></defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <ellipse cx="400" cy="520" rx="260" ry="34" fill="rgba(0,0,0,.08)"/>
+  
+  <polygon points="400,180 590.5255888325765,290 400,400 209.47441116742348,290" fill="#c49a6c"/>
+  <polygon points="209.47441116742348,290 400,400 400,600 209.47441116742348,490" fill="#b58a5c"/>
+  <polygon points="400,400 590.5255888325765,290 590.5255888325765,490 400,600" fill="#a77b4f"/>
+  <g stroke="rgba(0,0,0,.18)" stroke-width="1.5" fill="none">
+    <polyline points="400,180 590.5255888325765,290 400,400 209.47441116742348,290 400,180"/><polyline points="209.47441116742348,290 209.47441116742348,490 400,600 400,400"/><polyline points="590.5255888325765,290 590.5255888325765,490 400,600"/>
+  </g><rect x="372" y="122" width="56" height="12" rx="3" fill="#005f73" transform="skewX(0)"/>
+</svg>

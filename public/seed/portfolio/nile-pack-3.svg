@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600" role="img">
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7f7f7"/><stop offset="1" stop-color="#e3e3e3"/></linearGradient></defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <ellipse cx="400" cy="520" rx="260" ry="34" fill="rgba(0,0,0,.08)"/>
+  
+  <polygon points="400,180 503.92304845413264,240 434.6410161513775,280 330.7179676972449,220" fill="#ffffff"/>
+  <polygon points="330.7179676972449,220 434.6410161513775,280 434.6410161513775,520 330.7179676972449,460" fill="#f1f1f1"/>
+  <polygon points="434.6410161513775,280 503.92304845413264,240 503.92304845413264,480 434.6410161513775,520" fill="#e3e3e3"/>
+  <g stroke="rgba(0,0,0,.18)" stroke-width="1.5" fill="none">
+    <polyline points="400,180 503.92304845413264,240 434.6410161513775,280 330.7179676972449,220 400,180"/><polyline points="330.7179676972449,220 330.7179676972449,460 434.6410161513775,520 434.6410161513775,280"/><polyline points="503.92304845413264,240 503.92304845413264,480 434.6410161513775,520"/>
+  </g><rect x="300" y="300" width="70" height="70" rx="35" fill="#0b6e4f" opacity=".9"/>
+</svg>
