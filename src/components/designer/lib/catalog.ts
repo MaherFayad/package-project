@@ -1,5 +1,5 @@
 import { STRUCTURE_CODES, type Dims, type DimsPreset, type StructureCode } from "@/types";
-import { DEFAULT_DIMS } from "@/lib/dieline";
+import { DEFAULT_DIMS, STRUCTURES } from "@/lib/dieline";
 
 /**
  * Static catalog facts the designer needs on the client (mirrors prisma/seed.ts). Server pages
@@ -12,6 +12,13 @@ export const STRUCTURE_SLUGS: Record<StructureCode, string> = {
   ECMA_STE: "straight-tuck-end",
   PIZZA: "pizza-box",
   SLEEVE: "sleeve",
+  FEFCO_0320: STRUCTURES.FEFCO_0320.slug,
+  ECMA_CLB: STRUCTURES.ECMA_CLB.slug,
+  ECMA_SLB: STRUCTURES.ECMA_SLB.slug,
+  FEFCO_0422: STRUCTURES.FEFCO_0422.slug,
+  GABLE_BOX: STRUCTURES.GABLE_BOX.slug,
+  PAPER_TUBE: STRUCTURES.PAPER_TUBE.slug,
+  RIGID_BOX: STRUCTURES.RIGID_BOX.slug,
 };
 
 /** Accepts a slug ("mailer-box") or a code in any case ("fefco_0427"). */
@@ -61,6 +68,13 @@ export const FALLBACK_PRESETS: Record<StructureCode, DimsPreset[]> = {
     { id: "dessert-tray", name: { ar: "علبة حلويات", en: "Dessert tray" }, dims: { L: 220, W: 150, H: 60 }, standard: true },
     { id: "meal-box", name: { ar: "علبة وجبة", en: "Meal box" }, dims: { L: 230, W: 160, H: 70 } },
   ],
+  FEFCO_0320: STRUCTURES.FEFCO_0320.presets,
+  ECMA_CLB: STRUCTURES.ECMA_CLB.presets,
+  ECMA_SLB: STRUCTURES.ECMA_SLB.presets,
+  FEFCO_0422: STRUCTURES.FEFCO_0422.presets,
+  GABLE_BOX: STRUCTURES.GABLE_BOX.presets,
+  PAPER_TUBE: STRUCTURES.PAPER_TUBE.presets,
+  RIGID_BOX: STRUCTURES.RIGID_BOX.presets,
 };
 
 /** Product shortcuts shown on the picker ("shoe box", "perfume 50 ml", ...). */

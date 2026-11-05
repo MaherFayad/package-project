@@ -2,11 +2,11 @@
 
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useLayoutEffect, useMemo, useRef, type ReactElement } from "react";
-import { Vector3, type Group, type Texture } from "three";
+import { Color, DoubleSide, MeshBasicMaterial, MeshPhysicalMaterial, Vector3, type BufferGeometry, type Group, type Texture } from "three";
 import type { FinishCode, MaterialCode } from "@/types";
-import { boardAppearance, boundsAt, computePoses, type BoardAppearance, type DielineModel, type DielinePanel } from "@/lib/dieline";
+import { boardAppearance, boundsAt, computePoses, rootIds, type BoardAppearance, type DielineModel, type DielinePanel, type Segment } from "@/lib/dieline";
 import { createBoardMaterials } from "./boardMaterials";
-import { buildPanelGeometry } from "./panelGeometry";
+import { buildFilmGeometry, buildPanelGeometry, buildPerfGeometry, pointInPolygon } from "./panelGeometry";
 
 /** World units are metres; dieline geometry is in millimetres. */
 export const MM = 0.001;
@@ -63,6 +63,43 @@ export function PackagingModel({
   const geometries = useMemo(() => new Map(dieline.panels.map((p) => [p.id, buildPanelGeometry(dieline, p)])), [dieline]);
   useEffect(() => () => geometries.forEach((g) => g.dispose()), [geometries]);
 
+  // Window film (inside) and tear-strip perforations (outside), per panel.
+  const extras = useMemo(() => {
+    const films = new Map<string, BufferGeometry[]>();
+    for (const f of dieline.films ?? []) {
+      const panel = dieline.panels.find((p) => p.id === f.panelId);
+      if (!panel) continue;
+      films.set(panel.id, [...(films.get(panel.id) ?? []), buildFilmGeometry(dieline, panel, f.polygon)]);
+    }
+    const perfByPanel = new Map<string, Segment[]>();
+    for (const s of dieline.perfLines ?? []) {
+      const mid = { x: (s.a.x + s.b.x) / 2, y: (s.a.y + s.b.y) / 2 };
+      const panel = dieline.panels.find((p) => pointInPolygon(mid, p.polygon));
+      if (panel) perfByPanel.set(panel.id, [...(perfByPanel.get(panel.id) ?? []), s]);
+    }
+    const perfs = new Map<string, BufferGeometry>();
+    for (const [id, lines] of perfByPanel) perfs.set(id, buildPerfGeometry(dieline, dieline.panels.find((p) => p.id === id)!, lines));
+    return { films, perfs };
+  }, [dieline]);
+  useEffect(
+    () => () => {
+      extras.films.forEach((list) => list.forEach((g) => g.dispose()));
+      extras.perfs.forEach((g) => g.dispose());
+    },
+    [extras],
+  );
+  const extraMaterials = useMemo(
+    () => ({
+      film: new MeshPhysicalMaterial({ color: new Color("#ffffff"), transparent: true, opacity: 0.16, roughness: 0.06, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.05, side: DoubleSide, depthWrite: false }),
+      perf: new MeshBasicMaterial({ color: new Color("#1a1a1a"), transparent: true, opacity: 0.5, depthWrite: false }),
+    }),
+    [],
+  );
+  useEffect(() => () => {
+    extraMaterials.film.dispose();
+    extraMaterials.perf.dispose();
+  }, [extraMaterials]);
+
   const children = useMemo(() => {
     const m = new Map<string, DielinePanel[]>();
     for (const p of dieline.panels) {
@@ -116,14 +153,21 @@ export function PackagingModel({
       }}
     >
       <mesh geometry={geometries.get(panel.id)} material={materials.list} castShadow={castShadow} receiveShadow />
+      {extras.perfs.has(panel.id) ? <mesh geometry={extras.perfs.get(panel.id)} material={extraMaterials.perf} renderOrder={1} /> : null}
+      {(extras.films.get(panel.id) ?? []).map((g, i) => (
+        <mesh key={`film${i}`} geometry={g} material={extraMaterials.film} renderOrder={2} />
+      ))}
       {(children.get(panel.id) ?? []).map(renderPanel)}
     </group>
   );
 
-  const root = dieline.panels.find((p) => p.id === dieline.rootId);
+  // Main blank first, then extra pieces (lid, dividers): each is its own root group.
+  const roots = rootIds(dieline)
+    .map((id) => dieline.panels.find((p) => p.id === id))
+    .filter((p): p is DielinePanel => !!p);
   return (
     <group scale={MM}>
-      <group ref={centre}>{root ? renderPanel(root) : null}</group>
+      <group ref={centre}>{roots.map(renderPanel)}</group>
     </group>
   );
 }

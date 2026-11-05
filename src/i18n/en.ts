@@ -99,6 +99,13 @@ export const en = {
     ECMA_STE: "Straight tuck end carton",
     PIZZA: "Pizza box",
     SLEEVE: "Sleeve",
+    FEFCO_0320: "Telescope box (lid and base)",
+    ECMA_CLB: "Crash-lock bottom carton",
+    ECMA_SLB: "Snap-lock bottom carton (1-2-3)",
+    FEFCO_0422: "Self-locking display tray",
+    GABLE_BOX: "Gable box with handle",
+    PAPER_TUBE: "Paper tube",
+    RIGID_BOX: "Rigid box (lid and base)",
   },
   materials: {
     E_FLUTE_KRAFT: "E-flute kraft",
@@ -106,6 +113,8 @@ export const en = {
     B_FLUTE_KRAFT: "B-flute kraft",
     SBS_300: "SBS board 300 gsm",
     SBS_350: "SBS board 350 gsm",
+    GREYBOARD_WRAP: "Greyboard 2 mm, printed wrap",
+    KRAFT_TUBE: "Kraft tube 1.5 mm, printed label",
   },
   finishes: {
     NONE: "No finish",

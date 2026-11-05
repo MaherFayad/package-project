@@ -30,6 +30,13 @@ const ESTIMATE_FACTOR: Record<StructureCode, { blank: number; net: number }> = {
   ECMA_STE: { blank: 1.75, net: 1.27 },
   PIZZA: { blank: 1.72, net: 1.34 },
   SLEEVE: { blank: 0.88, net: 0.88 },
+  FEFCO_0320: { blank: 2.0, net: 1.95 },
+  ECMA_CLB: { blank: 1.61, net: 1.23 },
+  ECMA_SLB: { blank: 1.9, net: 1.32 },
+  FEFCO_0422: { blank: 1.11, net: 0.98 },
+  GABLE_BOX: { blank: 1.7, net: 1.36 },
+  PAPER_TUBE: { blank: 1.58, net: 1.08 },
+  RIGID_BOX: { blank: 1.71, net: 1.44 },
 };
 
 export function estimateBoardArea(code: StructureCode, dims: Dims): BoardArea {

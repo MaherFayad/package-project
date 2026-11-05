@@ -4,7 +4,7 @@
  */
 import type { Dims, Locale, MaterialCode, StructureCode } from "@/types";
 import { STRUCTURE_CODES } from "@/types";
-import { DEFAULT_DIMS, STRUCTURE_LIMITS, validateDims } from "@/lib/dieline";
+import { DEFAULT_DIMS, STRUCTURE_LIMITS, STRUCTURES, validateDims } from "@/lib/dieline";
 
 /** URL slug per structure. Mirrors Structure.slug in prisma/seed.ts (a test keeps them in sync). */
 export const STRUCTURE_SLUGS: Record<StructureCode, string> = {
@@ -14,6 +14,13 @@ export const STRUCTURE_SLUGS: Record<StructureCode, string> = {
   ECMA_STE: "straight-tuck-end",
   PIZZA: "pizza-box",
   SLEEVE: "sleeve",
+  FEFCO_0320: STRUCTURES.FEFCO_0320.slug,
+  ECMA_CLB: STRUCTURES.ECMA_CLB.slug,
+  ECMA_SLB: STRUCTURES.ECMA_SLB.slug,
+  FEFCO_0422: STRUCTURES.FEFCO_0422.slug,
+  GABLE_BOX: STRUCTURES.GABLE_BOX.slug,
+  PAPER_TUBE: STRUCTURES.PAPER_TUBE.slug,
+  RIGID_BOX: STRUCTURES.RIGID_BOX.slug,
 };
 
 export function structureFromSlug(slug: string): StructureCode | null {
@@ -70,6 +77,14 @@ export const SEO_SIZES: Record<StructureCode, Dims[]> = {
     { L: 220, W: 150, H: 60 },
     { L: 300, W: 200, H: 80 },
   ],
+  // New structure-library styles: their catalogue presets.
+  FEFCO_0320: STRUCTURES.FEFCO_0320.presets.map((p) => p.dims),
+  ECMA_CLB: STRUCTURES.ECMA_CLB.presets.map((p) => p.dims),
+  ECMA_SLB: STRUCTURES.ECMA_SLB.presets.map((p) => p.dims),
+  FEFCO_0422: STRUCTURES.FEFCO_0422.presets.map((p) => p.dims),
+  GABLE_BOX: STRUCTURES.GABLE_BOX.presets.map((p) => p.dims),
+  PAPER_TUBE: STRUCTURES.PAPER_TUBE.presets.map((p) => p.dims),
+  RIGID_BOX: STRUCTURES.RIGID_BOX.presets.map((p) => p.dims),
 };
 
 /** "300x200x150" (mm, ASCII x so the URL is stable). */

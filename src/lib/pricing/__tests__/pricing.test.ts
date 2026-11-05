@@ -523,7 +523,7 @@ describe("board area from the dieline engine", () => {
   });
 
   it("fallback estimate stays within 15% of the dieline at default sizes", () => {
-    const mats: Record<StructureCode, "E_FLUTE_KRAFT" | "SBS_350"> = {
+    const mats: Partial<Record<StructureCode, "E_FLUTE_KRAFT" | "SBS_350">> = {
       FEFCO_0427: "E_FLUTE_KRAFT",
       FEFCO_0201: "E_FLUTE_KRAFT",
       PIZZA: "E_FLUTE_KRAFT",
@@ -532,7 +532,7 @@ describe("board area from the dieline engine", () => {
       SLEEVE: "SBS_350",
     };
     for (const code of Object.keys(mats) as StructureCode[]) {
-      const real = blankAreaM2(code, DEFAULT_DIMS[code], mats[code]);
+      const real = blankAreaM2(code, DEFAULT_DIMS[code], mats[code]!);
       const est = estimateBoardArea(code, DEFAULT_DIMS[code]).blankAreaM2;
       expect(Math.abs(est - real) / real).toBeLessThan(0.15);
     }

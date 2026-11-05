@@ -16,3 +16,5 @@ export type { ArtworkTextures, PackagingModelProps } from "./PackagingModel";
 export type { ScreenshotOptions } from "./screenshot";
 export { PackagingSceneLazy } from "./LazyPackagingScene";
 export { ViewControls, DEFAULT_VIEW_CONTROL_LABELS, type ViewControlsLabels } from "./ViewControls";
+// Bottles, jars, cans, tins, pouches and tubes (labels and sleeves): see ./vessels
+export { VesselSceneLazy, paintLabel, labelCanvasSize, type VesselSceneHandle, type VesselSceneProps, type VesselLabel, type VesselQuality, type LabelArtStyle } from "./vessels";

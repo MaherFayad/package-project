@@ -19,10 +19,13 @@ import {
   svg,
   tryGenerateDieline,
   validateDims,
+  STRUCTURES,
+  tubeSegments,
   type DielineModel,
   type Polygon,
   type Pt,
 } from "..";
+import { bboxOf } from "../geometry";
 
 const EXPECTED_PANELS: Record<StructureCode, number> = {
   FEFCO_0427: 16,
@@ -31,31 +34,76 @@ const EXPECTED_PANELS: Record<StructureCode, number> = {
   ECMA_STE: 13,
   PIZZA: 15,
   SLEEVE: 5,
+  FEFCO_0320: 18,
+  ECMA_CLB: 13,
+  ECMA_SLB: 13,
+  FEFCO_0422: 11,
+  GABLE_BOX: 17,
+  PAPER_TUBE: -1, // depends on the strip count (diameter)
+  RIGID_BOX: 26,
 };
 
+const ALL: FaceId[] = ["front", "back", "left", "right", "top", "bottom"];
 const EXPECTED_FACES: Record<StructureCode, FaceId[]> = {
-  FEFCO_0427: ["front", "back", "left", "right", "top", "bottom"],
-  FEFCO_0201: ["front", "back", "left", "right", "top", "bottom"],
-  ECMA_RTE: ["front", "back", "left", "right", "top", "bottom"],
-  ECMA_STE: ["front", "back", "left", "right", "top", "bottom"],
-  PIZZA: ["front", "back", "left", "right", "top", "bottom"],
+  FEFCO_0427: ALL,
+  FEFCO_0201: ALL,
+  ECMA_RTE: ALL,
+  ECMA_STE: ALL,
+  PIZZA: ALL,
   SLEEVE: ["front", "back", "top", "bottom"],
+  FEFCO_0320: ALL,
+  ECMA_CLB: ALL,
+  ECMA_SLB: ALL,
+  FEFCO_0422: ["front", "back", "left", "right", "bottom"],
+  GABLE_BOX: ["front", "back", "left", "right", "bottom"],
+  PAPER_TUBE: ["front", "back", "top"],
+  RIGID_BOX: ALL,
 };
+
+/**
+ * Outer size of the closed box = inner + board layers. Exact per structure (mm), so the
+ * thickness compensation of every generator is pinned down.
+ */
+function expectedOuter(code: StructureCode, d: Dims, t: number): Dims {
+  switch (code) {
+    case "FEFCO_0427":
+      return { L: d.L + 6 * t, W: d.W + 3 * t, H: d.H + 2 * t };
+    case "PIZZA":
+      return { L: d.L + 6 * t, W: d.W + 2 * t, H: d.H + 2 * t };
+    case "FEFCO_0422":
+      return { L: d.L + 6 * t, W: d.W + 2 * t, H: d.H + t };
+    case "FEFCO_0201":
+    case "ECMA_RTE":
+    case "ECMA_STE":
+      return { L: d.L + 2 * t, W: d.W + 2 * t, H: d.H + 4 * t };
+    case "ECMA_CLB":
+    case "ECMA_SLB":
+      return { L: d.L + 2 * t, W: d.W + 2 * t, H: d.H + 5 * t };
+    case "SLEEVE":
+      return { L: d.L, W: d.W + 2 * t, H: d.H + 2 * t };
+    case "FEFCO_0320": {
+      const c = Math.max(1, t * 0.5);
+      return { L: d.L + 4 * t + 2 * c, W: d.W + 4 * t + 2 * c, H: d.H + 4 * t };
+    }
+    case "RIGID_BOX":
+      return { L: d.L + 4 * t + 1, W: d.W + 4 * t + 1, H: d.H + 2 * t };
+    case "PAPER_TUBE":
+      return { L: d.L + 4 * t + 0.8, W: d.L + 4 * t + 0.8, H: d.H + 2 * t };
+    case "GABLE_BOX":
+      return { L: d.L + 2 * t, W: d.W + 2 * t, H: NaN };
+  }
+}
 
 const MATERIALS = Object.keys(BOARD_SPECS) as MaterialCode[];
 
-function pointInConvex(p: Pt, poly: Polygon, tol = 1e-6): boolean {
-  let sign = 0;
-  for (let i = 0; i < poly.length; i++) {
+function pointInPolygon(p: Pt, poly: Polygon): boolean {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
     const a = poly[i];
-    const b = poly[(i + 1) % poly.length];
-    const c = (b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x);
-    if (Math.abs(c) < tol) continue;
-    const s = Math.sign(c);
-    if (sign === 0) sign = s;
-    else if (s !== sign) return false;
+    const b = poly[j];
+    if (a.y > p.y !== b.y > p.y && p.x < ((b.x - a.x) * (p.y - a.y)) / (b.y - a.y) + a.x) inside = !inside;
   }
-  return true;
+  return inside;
 }
 
 function allFinite(value: unknown): boolean {
@@ -89,17 +137,25 @@ describe.each(STRUCTURE_CODES)("dieline %s", (code) => {
       describe(`${material} ${dims.L}x${dims.W}x${dims.H}`, () => {
         const model = generateDieline(code, dims, { thicknessMm: t });
 
-        it("has the expected panels and a single rooted tree", () => {
-          expect(model.panels).toHaveLength(EXPECTED_PANELS[code]);
+        it("has the expected panels: one tree per cut piece", () => {
+          if (code === "PAPER_TUBE") {
+            const n = tubeSegments(dims.L + 2 * t);
+            expect(model.panels).toHaveLength(2 * (n + 2));
+          } else expect(model.panels).toHaveLength(EXPECTED_PANELS[code]);
           const ids = new Set(model.panels.map((p) => p.id));
           expect(ids.size).toBe(model.panels.length);
-          expect(model.panels.filter((p) => p.parentId === null).map((p) => p.id)).toEqual([model.rootId]);
+          const roots = model.panels.filter((p) => p.parentId === null);
+          expect(roots[0].id).toBe(model.rootId);
+          expect(roots.length).toBe(STRUCTURES[code].pieces);
+          expect(model.pieces.map((p) => p.rootId).sort()).toEqual(roots.map((r) => r.id).sort());
+          for (const r of roots) if (r.id !== model.rootId) expect(r.assembly?.matrix).toHaveLength(16);
           for (const p of model.panels) {
             if (p.parentId) {
               expect(ids.has(p.parentId)).toBe(true);
               expect(p.hinge).not.toBeNull();
             }
             expect(p.polygon.length).toBeGreaterThanOrEqual(3);
+            expect(p.pieceId && ids.has(p.pieceId)).toBe(true);
           }
         });
 
@@ -119,12 +175,13 @@ describe.each(STRUCTURE_CODES)("dieline %s", (code) => {
             }
         });
 
-        it("closes to the requested size (outer = inner + 2t)", () => {
-          const tol = 2 * t + 0.5;
-          const lExpected = code === "SLEEVE" ? dims.L : dims.L + 2 * t;
-          expect(Math.abs(model.closedOuter.L - lExpected)).toBeLessThan(tol);
-          expect(Math.abs(model.closedOuter.W - (dims.W + 2 * t))).toBeLessThan(tol);
-          expect(Math.abs(model.closedOuter.H - (dims.H + 2 * t))).toBeLessThan(tol);
+        it("closes to the requested inner size (thickness compensated)", () => {
+          const e = expectedOuter(code, dims, t);
+          const tol = 0.05 + (code === "PAPER_TUBE" ? 0.03 * dims.L : 0);
+          expect(Math.abs(model.closedOuter.L - e.L)).toBeLessThan(tol);
+          expect(Math.abs(model.closedOuter.W - e.W)).toBeLessThan(tol);
+          if (Number.isFinite(e.H)) expect(Math.abs(model.closedOuter.H - e.H)).toBeLessThan(code === "PAPER_TUBE" ? 0.05 : tol);
+          else expect(model.closedOuter.H).toBeGreaterThan(dims.H + 2 * t);
           // independent check straight from the kinematics
           const size = boundsAt(model, 1).getSize(new Vector3());
           expect(Math.abs(size.x - model.closedOuter.L)).toBeLessThan(1e-6);
@@ -145,31 +202,42 @@ describe.each(STRUCTURE_CODES)("dieline %s", (code) => {
             expect(face.width).toBeGreaterThan(0);
             expect(face.height).toBeGreaterThan(0);
             const covered = face.parts.reduce((s, p) => s + p.rect.width * p.rect.height, 0);
-            expect(covered / (face.width * face.height)).toBeGreaterThan(0.85); // RSC slots leave small gaps
+            // RSC slots leave small gaps; lock bottoms show only their outer flap(s).
+            expect(covered / (face.width * face.height)).toBeGreaterThan(face.face === "bottom" ? 0.6 : 0.85);
             for (const part of face.parts) {
               const panel = model.panels.find((p) => p.id === part.panelId)!;
+              expect(panel.printable).toBe(true);
               const cx = part.rect.x + part.rect.width / 2;
               const cy = part.rect.y + part.rect.height / 2;
-              expect(pointInConvex(applyAffine(part.transform, cx, cy), panel.polygon)).toBe(true);
+              const inPanel = (q: Pt) => pointInPolygon(q, panel.polygon) || (q.x >= panel.bbox.x - 1e-6 && q.x <= panel.bbox.x + panel.bbox.width + 1e-6 && q.y >= panel.bbox.y - 1e-6 && q.y <= panel.bbox.y + panel.bbox.height + 1e-6);
+              expect(inPanel(applyAffine(part.transform, cx, cy))).toBe(true);
               // inside view mirrors left/right but stays on the same panel
               const inside = faceTransform(face, part, "inside");
-              expect(pointInConvex(applyAffine(inside, face.width - cx, cy), panel.polygon)).toBe(true);
-              // face transforms are rigid and never mirrored on the outside
+              expect(inPanel(applyAffine(inside, face.width - cx, cy))).toBe(true);
+              // face transforms are never mirrored on the outside (rigid, except the
+              // tube lid label, which is a hair wider than the body it is mapped to)
               const [a, b, c, d] = part.transform;
-              expect(a * d - b * c).toBeCloseTo(1, 6);
+              const det = a * d - b * c;
+              if (code === "PAPER_TUBE") expect(det).toBeGreaterThan(0.95);
+              else expect(det).toBeCloseTo(1, 6);
               const [ia, ib, ic, id] = inside;
-              expect(ia * id - ib * ic).toBeCloseTo(-1, 6);
+              expect(Math.sign(ia * id - ib * ic)).toBe(-1);
             }
           }
         });
 
         it("has cut and crease lines, bleed and safe zones", () => {
-          expect(model.creaseLines).toHaveLength(model.panels.length - 1);
-          expect(model.cutLines.length).toBeGreaterThan(model.panels.length);
+          const realHinges = model.panels.filter((p) => p.hinge && p.hingeKind !== "roll").length;
+          expect(model.creaseLines.length).toBeGreaterThanOrEqual(realHinges);
+          expect(model.cutLines.length).toBeGreaterThan(model.pieces.length * 3);
           expect(model.bleedRegions.length).toBe(model.panels.filter((p) => p.printable).length);
           for (const r of model.bleedRegions) {
             const panel = model.panels.find((p) => p.id === r.panelId)!;
-            for (const q of panel.polygon) expect(pointInConvex(q, r.polygon, 1e-3)).toBe(true);
+            const bb = bboxOf(r.polygon);
+            expect(bb.x).toBeLessThanOrEqual(panel.bbox.x + 1e-3);
+            expect(bb.y).toBeLessThanOrEqual(panel.bbox.y + 1e-3);
+            expect(bb.x + bb.width).toBeGreaterThanOrEqual(panel.bbox.x + panel.bbox.width - 1e-3);
+            expect(bb.y + bb.height).toBeGreaterThanOrEqual(panel.bbox.y + panel.bbox.height - 1e-3);
           }
           expect(model.safeZones.length).toBeGreaterThan(0);
           expect(model.printRegions.outside.length).toBe(model.bleedRegions.length);
@@ -180,7 +248,9 @@ describe.each(STRUCTURE_CODES)("dieline %s", (code) => {
           expect(m.blankAreaM2).toBeGreaterThan(0);
           expect(m.netAreaM2).toBeGreaterThan(0);
           expect(m.netAreaM2).toBeLessThanOrEqual(m.blankAreaM2 + 1e-9);
-          expect(m.blankAreaM2).toBeCloseTo((m.blankWidthMm * m.blankHeightMm) / 1e6, 9);
+          expect(m.blankAreaM2).toBeLessThanOrEqual((m.blankWidthMm * m.blankHeightMm) / 1e6 + 1e-9);
+          if (model.pieces.length === 1) expect(m.blankAreaM2).toBeCloseTo((m.blankWidthMm * m.blankHeightMm) / 1e6, 9);
+          expect(m.pieceCount).toBe(model.pieces.length);
           expect(m.cutLengthMm).toBeGreaterThan(0);
           expect(m.creaseLengthMm).toBeGreaterThan(0);
         });

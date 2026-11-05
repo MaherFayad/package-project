@@ -89,23 +89,34 @@ function tuckClosure(b: DielineBuilder, w: Walls, where: "top" | "bottom", owner
  * tongue past the centre line. Folded, the long flaps cover the bottom (front outermost).
  */
 function crashLockBottom(b: DielineBuilder, w: Walls, t: number, Lp: number, Wp: number) {
+  // Side flaps fold across L, long flaps across W: each stays inside its half.
   const h = Wp / 2;
-  const e = Math.min(12, Wp * 0.22);
-  const long = (id: "front" | "back", stack: number) => {
-    const f = b.frame(id, rectEdges(w[id]).bottom);
-    const L = f.length;
-    const x1 = L * 0.28;
-    const x2 = L * 0.62;
-    const ch = Math.min(h - t, L * 0.3);
-    const poly: Polygon = [f.at(f.a, 0, 0), f.at(f.a, L, 0), f.at(f.a, L, h - ch), f.at(f.a, L - ch, h), f.at(f.a, x2, h), f.at(f.a, x2 - e * 0.6, h + e), f.at(f.a, x1 + e * 0.6, h + e), f.at(f.a, x1, h), f.at(f.a, 0, h)];
-    b.attachPoly(`bottom_${id}`, id === "front" ? "bottom" : "flap", id, [f.a, f.b], poly, { stage: 2, stack, label: "Crash-lock flap" });
-    b.extraCreases.push({ a: f.at(f.a, 0, 0), b: f.at(f.a, Math.min(h, L * 0.45), Math.min(h, L * 0.45)) });
-  };
-  long("front", 0);
-  long("back", -1);
+  const e0 = Math.min(12, Wp * 0.22);
+  // Front flap: hook tongue past the centre line. Back flap: the matching notch, so the
+  // two lock edge to edge and the bottom reads as one flat panel from below.
+  const L0 = w.front.width;
+  const x1 = L0 * 0.28;
+  const x2 = L0 * 0.62;
+  const ch = Math.min(h - t, L0 * 0.3);
+  const e = Math.min(e0, ((x2 - x1) / 1.2) * 0.9);
+  {
+    const f = b.frame("front", rectEdges(w.front).bottom);
+    const poly: Polygon = [f.at(f.a, 0, 0), f.at(f.a, L0, 0), f.at(f.a, L0, h - ch), f.at(f.a, L0 - ch, h), f.at(f.a, x2, h), f.at(f.a, x2 - e * 0.6, h + e), f.at(f.a, x1 + e * 0.6, h + e), f.at(f.a, x1, h), f.at(f.a, 0, h)];
+    b.attachPoly("bottom_front", "bottom", "front", [f.a, f.b], poly, { stage: 2, stack: 0, label: "Crash-lock flap" });
+    b.extraCreases.push({ a: f.at(f.a, 0, 0), b: f.at(f.a, Math.min(h, L0 * 0.25), Math.min(h, L0 * 0.25)) });
+  }
+  {
+    // Back panel runs the other way round the box: local u ↔ box x = L - u.
+    const f = b.frame("back", rectEdges(w.back).bottom);
+    const n1 = L0 - x2;
+    const n2 = L0 - x1;
+    const poly: Polygon = [f.at(f.a, 0, 0), f.at(f.a, L0, 0), f.at(f.a, L0, h - t), f.at(f.a, n2, h - t), f.at(f.a, n2 - e * 0.6, h - t - e), f.at(f.a, n1 + e * 0.6, h - t - e), f.at(f.a, n1, h - t), f.at(f.a, ch, h - t), f.at(f.a, 0, h - t - ch)];
+    b.attachPoly("bottom_back", "flap", "back", [f.a, f.b], poly, { stage: 2, stack: 0, label: "Crash-lock flap" });
+    b.extraCreases.push({ a: f.at(f.a, L0, 0), b: f.at(f.a, L0 - Math.min(h - t, L0 * 0.25), Math.min(h - t, L0 * 0.25)) });
+  }
   for (const side of ["left", "right"] as const) {
     const f = b.frame(side, rectEdges(w[side]).bottom);
-    const d = Math.min(h - t, f.length * 0.48);
+    const d = Math.min(h - t, f.length * 0.48, Lp / 2 - t);
     const poly: Polygon = [f.at(f.a, 0, 0), f.at(f.a, f.length, 0), f.at(f.a, f.length - d * 0.3, d), f.at(f.a, d * 0.3, d)];
     b.attachPoly(`bottom_${side}`, "flap", side, [f.a, f.b], poly, { stage: 1, stack: -2, label: "Crash-lock glue flap" });
     b.extraCreases.push({ a: f.at(f.a, 0, 0), b: f.at(f.a, d, d) });
@@ -117,9 +128,10 @@ function crashLockBottom(b: DielineBuilder, w: Walls, t: number, Lp: number, Wp:
  * slot, (3) back flap whose two locking tabs push through and catch.
  */
 function snapLockBottom(b: DielineBuilder, w: Walls, t: number, Wp: number) {
+  const Lp = w.front.width;
   for (const side of ["left", "right"] as const) {
     const f = b.frame(side, rectEdges(w[side]).bottom);
-    const d = Math.min(Wp * 0.45, f.length * 0.48);
+    const d = Math.min(Wp * 0.45, f.length * 0.48, Lp / 2 - t);
     b.attach(`bottom_${side}`, "dust", side, [f.a, f.b], d, { kind: "trapezoid", taperA: d * 0.35, taperB: d * 0.35 }, { stage: 1, stack: -2, label: "Bottom dust flap (1)" });
   }
   {
@@ -136,7 +148,8 @@ function snapLockBottom(b: DielineBuilder, w: Walls, t: number, Wp: number) {
   {
     const f = b.frame("back", rectEdges(w.back).bottom);
     const L = f.length;
-    const d = Wp * 0.5 + Math.min(8, Wp * 0.15) - t;
+    // Flap 3 is the big one: it covers most of the bottom and locks over flap 2.
+    const d = Math.max(Wp * 0.5 + Math.min(8, Wp * 0.15), Wp * 0.72) - t;
     const tab = Math.min(10, Wp * 0.18);
     const tw = Math.min(L * 0.18, 25);
     const ch = Math.min(d * 0.3, L * 0.12);
@@ -271,6 +284,8 @@ export function gableBox(dims: Dims, t: number, f: StructureFeatures = {}): Stru
         ...rest,
         front: columnFace("front", panels, ["handle_front", "roof_front", "front"]),
         back: columnFace("back", panels, ["handle_back", "roof_back", "back"]),
+        left: columnFace("left", panels, ["left"]),
+        right: columnFace("right", panels, ["right"]),
       };
     },
   };

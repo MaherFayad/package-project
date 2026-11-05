@@ -23,6 +23,7 @@ import type {
   EgyptCity,
 } from "../src/types";
 import { canonicalJson, toJson } from "../src/lib/json";
+import { STRUCTURES } from "../src/lib/dieline/registry";
 
 const db = new PrismaClient();
 const egp = (n: number) => Math.round(n * 100);
@@ -31,7 +32,7 @@ const egp = (n: number) => Math.round(n * 100);
 interface StructureSeed {
   code: StructureCode;
   slug: string;
-  family: "CORRUGATED" | "FOLDING_CARTON";
+  family: "CORRUGATED" | "FOLDING_CARTON" | "RIGID" | "TUBE";
   nameAr: string;
   nameEn: string;
   descriptionAr: string;
@@ -161,6 +162,34 @@ const structures: StructureSeed[] = [
   },
 ];
 
+// Structure-library styles: catalogue facts come from the dieline registry
+// (src/lib/dieline/registry.ts); only the sample rate-card economics live here.
+const LIBRARY_PRICING: Partial<Record<StructureCode, Pick<StructureSeed, "refArea" | "baseTiers" | "dieCost">>> = {
+  FEFCO_0320: { refArea: 0.56, baseTiers: [55, 40, 29, 22, 18], dieCost: 0 },
+  ECMA_CLB: { refArea: 0.12, baseTiers: [22, 13, 8.5, 5.6, 4.2], dieCost: 1100 },
+  ECMA_SLB: { refArea: 0.08, baseTiers: [19, 11, 7, 4.6, 3.4], dieCost: 1000 },
+  FEFCO_0422: { refArea: 0.38, baseTiers: [26, 18, 13, 10, 8], dieCost: 1300 },
+  GABLE_BOX: { refArea: 0.16, baseTiers: [24, 15, 10, 7, 5.5], dieCost: 1300 },
+  PAPER_TUBE: { refArea: 0.09, baseTiers: [60, 42, 30, 24, 20], dieCost: 0 },
+  RIGID_BOX: { refArea: 0.27, baseTiers: [140, 105, 80, 65, 55], dieCost: 700 },
+};
+for (const [code, money] of Object.entries(LIBRARY_PRICING) as [StructureCode, Pick<StructureSeed, "refArea" | "baseTiers" | "dieCost">][]) {
+  const def = STRUCTURES[code];
+  structures.push({
+    code,
+    slug: def.slug,
+    family: def.family,
+    nameAr: def.name.ar,
+    nameEn: def.name.en,
+    descriptionAr: def.description.ar,
+    descriptionEn: def.description.en,
+    params: def.params,
+    defaultDims: def.defaultDims,
+    presets: def.presets,
+    ...money,
+  });
+}
+
 // ───────────────────────── Materials & finishes ─────────────────────────
 const materials = [
   { code: "E_FLUTE_KRAFT", family: "CORRUGATED", boardType: "CORRUGATED", flute: "E", color: "KRAFT", gsm: 380, thicknessMm: 1.5, nameAr: "كرتون مضلع E كرافت", nameEn: "E-flute kraft", foodSafe: false, mult: 1 },
@@ -168,6 +197,8 @@ const materials = [
   { code: "B_FLUTE_KRAFT", family: "CORRUGATED", boardType: "CORRUGATED", flute: "B", color: "KRAFT", gsm: 450, thicknessMm: 3, nameAr: "كرتون مضلع B كرافت", nameEn: "B-flute kraft", foodSafe: false, mult: 1.2 },
   { code: "SBS_300", family: "FOLDING_CARTON", boardType: "SBS", flute: null, color: "WHITE", gsm: 300, thicknessMm: 0.4, nameAr: "كرتون دوبلكس SBS 300 جم", nameEn: "SBS board 300 gsm", foodSafe: true, mult: 1 },
   { code: "SBS_350", family: "FOLDING_CARTON", boardType: "SBS", flute: null, color: "WHITE", gsm: 350, thicknessMm: 0.48, nameAr: "كرتون دوبلكس SBS 350 جم", nameEn: "SBS board 350 gsm", foodSafe: true, mult: 1.12 },
+  { code: "GREYBOARD_WRAP", family: "RIGID", boardType: "GREYBOARD", flute: null, color: "WHITE", gsm: 1360, thicknessMm: 2.15, nameAr: "كرتون رمادي 2 مم بورق تغليف مطبوع", nameEn: "Greyboard 2 mm, printed wrap", foodSafe: false, mult: 1 },
+  { code: "KRAFT_TUBE", family: "TUBE", boardType: "TUBE", flute: null, color: "WHITE", gsm: 950, thicknessMm: 1.5, nameAr: "أنبوب كرافت 1.5 مم بملصق مطبوع", nameEn: "Kraft tube 1.5 mm, printed label", foodSafe: true, mult: 1 },
 ] as const;
 
 const finishes = [
@@ -218,7 +249,7 @@ const vendors: VendorSeed[] = [
       { kind: "DIE_CUTTER", model: "Bobst SP 102 die-cutter", count: 1 },
       { kind: "FOLDER_GLUER", model: "Automatic folder-gluer", count: 1 },
     ],
-    capabilities: { structures: ["FEFCO_0427", "FEFCO_0201", "PIZZA"], materials: corr, finishes: ["NONE", "MATTE_LAMINATION", "GLOSS_LAMINATION"], maxColors: 4, digitalShortRun: true, monthlyCapacityUnits: 400_000 },
+    capabilities: { structures: ["FEFCO_0427", "FEFCO_0201", "PIZZA", "FEFCO_0320", "FEFCO_0422"], materials: corr, finishes: ["NONE", "MATTE_LAMINATION", "GLOSS_LAMINATION"], maxColors: 4, digitalShortRun: true, monthlyCapacityUnits: 400_000 },
     certifications: [{ code: "ISO_9001", issuer: "Bureau Veritas", validUntil: "2027-06-30" }],
     rating: 4.7, ratingCount: 128, onTimePct: 96, leadTimeDays: 6, minOrderQty: 100,
     serviceAreas: ["CAIRO", "GIZA", "SIXTH_OF_OCTOBER", "ALEXANDRIA"],
@@ -243,7 +274,7 @@ const vendors: VendorSeed[] = [
       { kind: "UV_COATER", model: "Spot UV screen coater", count: 1 },
       { kind: "LAMINATOR", model: "Thermal laminator", count: 1 },
     ],
-    capabilities: { structures: ["ECMA_RTE", "ECMA_STE", "SLEEVE"], materials: fc, finishes: allFinishes, maxColors: 5, digitalShortRun: false, monthlyCapacityUnits: 1_500_000 },
+    capabilities: { structures: ["ECMA_RTE", "ECMA_STE", "SLEEVE", "ECMA_CLB", "ECMA_SLB", "GABLE_BOX"], materials: fc, finishes: allFinishes, maxColors: 5, digitalShortRun: false, monthlyCapacityUnits: 1_500_000 },
     certifications: [
       { code: "FOOD_SAFE", issuer: "NFSA", validUntil: "2027-03-31" },
       { code: "ISO_22000", issuer: "TÜV", validUntil: "2027-09-30" },
@@ -269,7 +300,7 @@ const vendors: VendorSeed[] = [
       { kind: "DIGITAL", model: "Flatbed UV printer", count: 2 },
       { kind: "DIE_CUTTER", model: "Digital cutting table", count: 2 },
     ],
-    capabilities: { structures: ["FEFCO_0427", "ECMA_RTE", "ECMA_STE", "SLEEVE"], materials: ["E_FLUTE_KRAFT", "E_FLUTE_WHITE", "SBS_300", "SBS_350"], finishes: ["NONE", "MATTE_LAMINATION", "GLOSS_LAMINATION"], maxColors: 4, digitalShortRun: true, monthlyCapacityUnits: 60_000 },
+    capabilities: { structures: ["FEFCO_0427", "ECMA_RTE", "ECMA_STE", "SLEEVE", "ECMA_SLB", "GABLE_BOX", "RIGID_BOX", "PAPER_TUBE"], materials: ["E_FLUTE_KRAFT", "E_FLUTE_WHITE", "SBS_300", "SBS_350", "GREYBOARD_WRAP", "KRAFT_TUBE"], finishes: ["NONE", "MATTE_LAMINATION", "GLOSS_LAMINATION"], maxColors: 4, digitalShortRun: true, monthlyCapacityUnits: 60_000 },
     certifications: [],
     rating: 4.5, ratingCount: 61, onTimePct: 98, leadTimeDays: 4, minOrderQty: 50,
     serviceAreas: ["CAIRO", "GIZA", "OBOUR"],
@@ -293,7 +324,7 @@ const vendors: VendorSeed[] = [
       { kind: "DIE_CUTTER", model: "Automatic platen die-cutter", count: 2 },
       { kind: "LAMINATOR", model: "Water-based laminator", count: 1 },
     ],
-    capabilities: { structures: ["PIZZA", "FEFCO_0201", "FEFCO_0427", "ECMA_STE"], materials: ["E_FLUTE_KRAFT", "E_FLUTE_WHITE", "B_FLUTE_KRAFT", "SBS_300"], finishes: ["NONE", "MATTE_LAMINATION", "GLOSS_LAMINATION"], maxColors: 4, digitalShortRun: false, monthlyCapacityUnits: 300_000 },
+    capabilities: { structures: ["PIZZA", "FEFCO_0201", "FEFCO_0427", "ECMA_STE", "FEFCO_0422", "ECMA_CLB"], materials: ["E_FLUTE_KRAFT", "E_FLUTE_WHITE", "B_FLUTE_KRAFT", "SBS_300"], finishes: ["NONE", "MATTE_LAMINATION", "GLOSS_LAMINATION"], maxColors: 4, digitalShortRun: false, monthlyCapacityUnits: 300_000 },
     certifications: [{ code: "FOOD_SAFE", issuer: "NFSA", validUntil: "2027-01-31" }],
     rating: 4.4, ratingCount: 77, onTimePct: 89, leadTimeDays: 8, minOrderQty: 250,
     serviceAreas: ["ALEXANDRIA", "CAIRO"],
@@ -316,7 +347,7 @@ const vendors: VendorSeed[] = [
       { kind: "DIE_CUTTER", model: "Rotary die-cutter", count: 1 },
       { kind: "FOLDER_GLUER", model: "Semi-automatic folder-gluer", count: 1 },
     ],
-    capabilities: { structures: ["FEFCO_0201", "FEFCO_0427"], materials: ["E_FLUTE_KRAFT", "B_FLUTE_KRAFT"], finishes: ["NONE"], maxColors: 3, digitalShortRun: false, monthlyCapacityUnits: 800_000 },
+    capabilities: { structures: ["FEFCO_0201", "FEFCO_0427", "FEFCO_0320"], materials: ["E_FLUTE_KRAFT", "B_FLUTE_KRAFT"], finishes: ["NONE"], maxColors: 3, digitalShortRun: false, monthlyCapacityUnits: 800_000 },
     certifications: [{ code: "FSC", issuer: "FSC (supplier chain)", validUntil: "2026-12-31" }],
     rating: 4.2, ratingCount: 39, onTimePct: 87, leadTimeDays: 10, minOrderQty: 500,
     serviceAreas: ["NEW_DAMIETTA", "CAIRO", "ALEXANDRIA"],

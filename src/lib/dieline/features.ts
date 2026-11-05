@@ -102,7 +102,11 @@ export function roundedRect(cx: number, cy: number, w: number, h: number, r: num
       out.push(pt(x + Math.cos(a) * rr, y + Math.sin(a) * rr));
     }
   }
-  return out;
+  // Stadiums (r = h / 2) make neighbouring arcs share an end point: drop duplicates.
+  return out.filter((q, i) => {
+    const prev = out[(i - 1 + out.length) % out.length];
+    return Math.hypot(q.x - prev.x, q.y - prev.y) > 1e-6;
+  });
 }
 
 /** Hand-hole: a stadium (rounded slot) centred at (cx, cy). */

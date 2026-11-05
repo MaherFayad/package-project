@@ -93,7 +93,7 @@ export function createVesselMaterial(code: VesselMaterialCode, quality: VesselQu
     case "TINPLATE":
       return new MeshPhysicalMaterial({ color: "#d4d8dc", roughness: 0.18, metalness: 1, envMapIntensity: 1.25 });
     case "KRAFT_POUCH":
-      return new MeshStandardMaterial({ color: "#c39a6b", roughness: 0.92, metalness: 0, map: opts.kraftMap ?? null, side: DoubleSide });
+      return new MeshStandardMaterial({ color: opts.kraftMap ? "#ffffff" : "#c39a6b", roughness: 0.92, metalness: 0, map: opts.kraftMap ?? null, side: DoubleSide });
     case "WHITE_POUCH":
       return new MeshStandardMaterial({ color: "#f4f3ef", roughness: 0.82, metalness: 0, side: DoubleSide });
     case "PE_TUBE_WHITE":

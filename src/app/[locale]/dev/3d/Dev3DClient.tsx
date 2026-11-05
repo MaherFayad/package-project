@@ -2,12 +2,14 @@
 
 import { Camera } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FINISH_CODES, STRUCTURE_CODES, type Dims, type FinishCode, type Locale, type MaterialCode, type StructureCode } from "@/types";
+import { FINISH_CODES, STRUCTURE_CODES, type Dims, type FinishCode, type Locale, type MaterialCode, type StructureCode, type StructureFeatures } from "@/types";
 import type { DictKey } from "@/i18n/types";
 import { useI18n } from "@/i18n/client";
 import {
   BOARD_SPECS,
   DEFAULT_DIMS,
+  FEATURE_SUPPORT,
+  STRUCTURES,
   STRUCTURE_LIMITS,
   boardAppearance,
   defaultMaterialFor,
@@ -34,6 +36,22 @@ function resolveFont(family: "Inter" | "IBM Plex Sans Arabic") {
   return v ? `${v}, system-ui, sans-serif` : `"${family}", system-ui, sans-serif`;
 }
 
+/** Dev deep link: ?code=RIGID_BOX&fold=0.6&features={"window":{"face":"top"}} */
+function initialFromUrl(): { code: StructureCode; fold: number; features: StructureFeatures } {
+  const fallback = { code: "FEFCO_0427" as StructureCode, fold: 1, features: {} };
+  if (typeof window === "undefined") return fallback;
+  const q = new URLSearchParams(window.location.search);
+  const c = q.get("code") as StructureCode | null;
+  let features: StructureFeatures = {};
+  try {
+    features = JSON.parse(q.get("features") ?? "{}") as StructureFeatures;
+  } catch {
+    /* ignore */
+  }
+  const fold = Number(q.get("fold"));
+  return { code: c && STRUCTURE_CODES.includes(c) ? c : fallback.code, fold: Number.isFinite(fold) && q.has("fold") ? fold : 1, features };
+}
+
 export function Dev3DClient({ locale }: { locale: Locale }) {
   const { t } = useI18n();
   const [code, setCode] = useState<StructureCode>("FEFCO_0427");
@@ -41,6 +59,16 @@ export function Dev3DClient({ locale }: { locale: Locale }) {
   const [material, setMaterial] = useState<MaterialCode>("E_FLUTE_KRAFT");
   const [finish, setFinish] = useState<FinishCode>("NONE");
   const [fold, setFold] = useState(1);
+  const [features, setFeatures] = useState<StructureFeatures>({});
+  // Deep link (after hydration, so server and client render the same first frame).
+  useEffect(() => {
+    const init = initialFromUrl();
+    setCode(init.code);
+    setDims(DEFAULT_DIMS[init.code]);
+    setMaterial(defaultMaterialFor(init.code));
+    setFold(init.fold);
+    setFeatures(init.features);
+  }, []);
   const [animate, setAnimate] = useState(true);
   const [pattern, setPattern] = useState(true);
   const [inside, setInside] = useState(false);
@@ -52,11 +80,11 @@ export function Dev3DClient({ locale }: { locale: Locale }) {
   const lastValid = useRef<ReturnType<typeof generateDieline> | null>(null);
   const dieline = useMemo(() => {
     if (!validation.ok) return lastValid.current;
-    const m = generateDieline(code, validation.dims, { thicknessMm: BOARD_SPECS[material].thicknessMm });
+    const m = generateDieline(code, validation.dims, { thicknessMm: BOARD_SPECS[material].thicknessMm, features });
     lastValid.current = m;
     return m;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [code, dims.L, dims.W, dims.H, material, validation.ok]);
+  }, [code, dims.L, dims.W, dims.H, material, validation.ok, JSON.stringify(features)]);
 
   // Paint test-pattern textures (outside + inside) in sheet space.
   const [canvases, setCanvases] = useState<{ outside: HTMLCanvasElement; inside: HTMLCanvasElement } | null>(null);
@@ -92,7 +120,9 @@ export function Dev3DClient({ locale }: { locale: Locale }) {
     setCode(c);
     setDims(DEFAULT_DIMS[c]);
     if (!materialFitsStructure(material, c)) setMaterial(defaultMaterialFor(c));
+    setFeatures({});
   };
+  const support = FEATURE_SUPPORT[code];
 
   const screenshot = async () => {
     const blob = await viewRef.current?.screenshot({ width: 2048, height: 2048 });
@@ -193,6 +223,66 @@ export function Dev3DClient({ locale }: { locale: Locale }) {
             </select>
           </label>
 
+          <fieldset className={styles.dims}>
+            <legend>Features ({STRUCTURES[code].standard})</legend>
+            <label className={styles.field}>
+              <span>Presets</span>
+              <select value="" onChange={(e) => { const p = STRUCTURES[code].presets.find((x) => x.id === e.target.value); if (p) setDims(p.dims); }}>
+                <option value="">Choose a size…</option>
+                {STRUCTURES[code].presets.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name.en} ({p.dims.L}×{p.dims.W}×{p.dims.H})
+                  </option>
+                ))}
+              </select>
+            </label>
+            {support.windowFaces.length ? (
+              <label className={styles.field}>
+                <span>Window</span>
+                <select value={features.window?.face ?? ""} onChange={(e) => setFeatures({ ...features, window: e.target.value ? { face: e.target.value as "front" } : null })}>
+                  <option value="">None</option>
+                  {support.windowFaces.map((f) => (
+                    <option key={f} value={f}>
+                      {f}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+            {(["thumbNotch", "handle", "tearStrip", "displayFront"] as const)
+              .filter((k) => support[k])
+              .map((k) => (
+                <label key={k} className={styles.check}>
+                  <input type="checkbox" checked={!!features[k] || (k === "handle" && features.handle === undefined && code === "GABLE_BOX")} onChange={(e) => setFeatures({ ...features, [k]: e.target.checked })} /> {k}
+                </label>
+              ))}
+            {support.partitions ? (
+              <label className={styles.field}>
+                <span>Dividers (rows × cols)</span>
+                <select
+                  value={features.partitions ? `${features.partitions.rows}x${features.partitions.cols}` : ""}
+                  onChange={(e) => {
+                    const [r, c] = e.target.value.split("x").map(Number);
+                    setFeatures({ ...features, partitions: e.target.value ? { rows: r, cols: c } : null });
+                  }}
+                >
+                  <option value="">None</option>
+                  {["1x2", "2x2", "2x3", "3x4"].map((v) => (
+                    <option key={v} value={v}>
+                      {v}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+            {support.lidHeight ? (
+              <label className={styles.field}>
+                <span>Lid depth (mm)</span>
+                <input type="number" min={10} value={features.lidHeightMm ?? ""} placeholder="auto" onChange={(e) => setFeatures({ ...features, lidHeightMm: e.target.value ? Number(e.target.value) : undefined })} />
+              </label>
+            ) : null}
+          </fieldset>
+
           <label className={styles.field}>
             <span>Finish</span>
             <select value={finish} onChange={(e) => setFinish(e.target.value as FinishCode)}>
@@ -262,8 +352,10 @@ export function Dev3DClient({ locale }: { locale: Locale }) {
               <dd>
                 {fmt(dieline.metrics.cutLengthMm / 1000, 2)} m / {fmt(dieline.metrics.creaseLengthMm / 1000, 2)} m
               </dd>
-              <dt>Panels</dt>
-              <dd>{dieline.panels.length}</dd>
+              <dt>Panels / pieces</dt>
+              <dd>
+                {dieline.panels.length} / {dieline.metrics.pieceCount}
+              </dd>
               <dt>Faces</dt>
               <dd>{Object.keys(dieline.faces).join(", ")}</dd>
             </dl>

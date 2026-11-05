@@ -98,6 +98,13 @@ export const ar: Dictionary = {
     ECMA_STE: "علبة كرتون بلسان مستقيم",
     PIZZA: "علبة بيتزا",
     SLEEVE: "غلاف منزلق",
+    FEFCO_0320: "علبة تلسكوبية بغطاء منفصل",
+    ECMA_CLB: "علبة كرتون بقاع أوتوماتيكي",
+    ECMA_SLB: "علبة كرتون بقاع مقفل 1-2-3",
+    FEFCO_0422: "صينية عرض ذاتية القفل",
+    GABLE_BOX: "علبة حمل بمقبض",
+    PAPER_TUBE: "علبة أسطوانية ورقية",
+    RIGID_BOX: "علبة صلبة بغطاء وقاعدة",
   },
   materials: {
     E_FLUTE_KRAFT: "كرتون مضلع E كرافت",
@@ -105,6 +112,8 @@ export const ar: Dictionary = {
     B_FLUTE_KRAFT: "كرتون مضلع B كرافت",
     SBS_300: "كرتون دوبلكس SBS 300 جم",
     SBS_350: "كرتون دوبلكس SBS 350 جم",
+    GREYBOARD_WRAP: "كرتون رمادي 2 مم بورق تغليف مطبوع",
+    KRAFT_TUBE: "أنبوب كرافت 1.5 مم بملصق مطبوع",
   },
   finishes: {
     NONE: "بدون تشطيب",

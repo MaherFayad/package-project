@@ -5,7 +5,7 @@
  *   const model = generateDieline("FEFCO_0427", { L: 250, W: 180, H: 80 }, { thicknessMm: 1.5 });
  *   dielineToSvg(model); boardArea(model).blankAreaM2; model.faces.front
  */
-import type { Dims, MaterialCode, StructureCode } from "@/types";
+import type { Dims, MaterialCode, StructureCode, StructureFeatures } from "@/types";
 import { generateDieline } from "./generate";
 import { BOARD_SPECS } from "./materials";
 import type { DielineMetrics, DielineModel } from "./types";
@@ -34,11 +34,23 @@ export {
   type BoardAppearance,
 } from "./materials";
 export { dielineToSvg, svg, type DielineSvgOptions } from "./svg";
+export { STRUCTURES, STRUCTURE_LIST, structureBySlug, type StructureDef } from "./registry";
+export {
+  FEATURE_SUPPORT,
+  DEFAULT_FEATURES,
+  MAX_PARTITION_CELLS,
+  supportedFeatures,
+  type FeatureSupport,
+  type FeatureKey,
+} from "./features";
+export { tubeSegments } from "./structures";
 export {
   computePoses,
   boundsAt,
   computeFaces,
   panelOrder,
+  rootIds,
+  assemblyPoseAt,
   panelPivot,
   panelAxis,
   panelLocalPoint,
@@ -70,11 +82,11 @@ export function boardArea(model: DielineModel): DielineMetrics {
 }
 
 /** Convenience: dieline for a material code (thickness from BOARD_SPECS). */
-export function generateDielineForMaterial(code: StructureCode, dims: Dims, material: MaterialCode): DielineModel {
-  return generateDieline(code, dims, { thicknessMm: BOARD_SPECS[material].thicknessMm });
+export function generateDielineForMaterial(code: StructureCode, dims: Dims, material: MaterialCode, features?: StructureFeatures): DielineModel {
+  return generateDieline(code, dims, { thicknessMm: BOARD_SPECS[material].thicknessMm, features });
 }
 
 /** Blank area in m² for a structure + size + material, without keeping the model. */
-export function blankAreaM2(code: StructureCode, dims: Dims, material: MaterialCode): number {
-  return generateDielineForMaterial(code, dims, material).metrics.blankAreaM2;
+export function blankAreaM2(code: StructureCode, dims: Dims, material: MaterialCode, features?: StructureFeatures): number {
+  return generateDielineForMaterial(code, dims, material, features).metrics.blankAreaM2;
 }

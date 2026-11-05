@@ -94,8 +94,9 @@ export function panelFoldAmount(panel: DielinePanel, progress: number, stages: n
 /** Pivot of a panel in the flat frame. */
 export function panelPivot(panel: DielinePanel, thicknessMm: number): Vector3 {
   if (!panel.hinge) {
-    const c = centroid(panel.polygon);
-    return new Vector3(c.x, -c.y, 0);
+    // Bounding-box centre (stable when a notch adds outline vertices).
+    const b = bboxOf(panel.polygon);
+    return new Vector3(b.x + b.width / 2, -(b.y + b.height / 2), 0);
   }
   const mx = (panel.hinge.a.x + panel.hinge.b.x) / 2;
   const my = (panel.hinge.a.y + panel.hinge.b.y) / 2;

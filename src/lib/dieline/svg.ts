@@ -13,12 +13,13 @@ export interface DielineSvgOptions {
   strokeMm?: number;
   /** Optional fill per panel (e.g. a face preview); default white. */
   panelFill?: string;
-  colors?: Partial<{ cut: string; crease: string; bleed: string; safe: string; glue: string; label: string }>;
+  colors?: Partial<{ cut: string; crease: string; perf: string; bleed: string; safe: string; glue: string; label: string; film: string }>;
 }
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const n = (v: number) => String(round(v, 2));
 const polyPath = (p: Polygon) => `M${p.map((q) => `${n(q.x)} ${n(q.y)}`).join("L")}Z`;
+const panelPath = (p: { polygon: Polygon; holes?: Polygon[] }) => [p.polygon, ...(p.holes ?? [])].map(polyPath).join("");
 const segPath = (segs: Segment[]) => segs.map((s) => `M${n(s.a.x)} ${n(s.a.y)}L${n(s.b.x)} ${n(s.b.y)}`).join("");
 
 /**
@@ -33,6 +34,8 @@ export function dielineToSvg(model: DielineModel, opts: DielineSvgOptions = {}):
     safe: "#29845a",
     glue: "#e3e3e3",
     label: "#616161",
+    perf: "#c70a24",
+    film: "#2c6ecb",
     ...opts.colors,
   };
   const sw = opts.strokeMm ?? 0.35;
@@ -47,7 +50,7 @@ export function dielineToSvg(model: DielineModel, opts: DielineSvgOptions = {}):
   }
   parts.push(
     `<g data-layer="panels" stroke="none">${model.panels
-      .map((p) => `<path data-panel="${esc(p.id)}" d="${polyPath(p.polygon)}" fill="${p.role === "glue" ? c.glue : (opts.panelFill ?? "#ffffff")}"/>`)
+      .map((p) => `<path data-panel="${esc(p.id)}" d="${panelPath(p)}" fill-rule="evenodd" fill="${p.role === "glue" ? c.glue : (opts.panelFill ?? "#ffffff")}"/>`)
       .join("")}</g>`,
   );
   if (opts.showSafeZones !== false) {
@@ -58,6 +61,13 @@ export function dielineToSvg(model: DielineModel, opts: DielineSvgOptions = {}):
     );
   }
   parts.push(`<path data-layer="crease" d="${segPath(model.creaseLines)}" fill="none" stroke="${c.crease}" stroke-width="${n(sw)}" stroke-dasharray="${n(sw * 8)} ${n(sw * 5)}"/>`);
+  if (model.films?.length) {
+    parts.push(`<g data-layer="film" fill="none" stroke="${c.film}" stroke-width="${n(sw * 0.6)}" stroke-dasharray="${n(sw * 1.5)} ${n(sw * 1.5)}">${model.films.map((f) => `<path d="${polyPath(f.polygon)}"/>`).join("")}</g>`);
+  }
+  if (model.perfLines?.length) {
+    // Perforation: short cut / short bridge (dash-dot reads as "perf" to die makers).
+    parts.push(`<path data-layer="perf" d="${segPath(model.perfLines)}" fill="none" stroke="${c.perf}" stroke-width="${n(sw)}" stroke-dasharray="${n(sw * 6)} ${n(sw * 3)} ${n(sw)} ${n(sw * 3)}"/>`);
+  }
   parts.push(`<path data-layer="cut" d="${segPath(model.cutLines)}" fill="none" stroke="${c.cut}" stroke-width="${n(sw)}" stroke-linecap="round"/>`);
   if (opts.showLabels !== false) {
     const fs = Math.max(2.5, Math.min(10, Math.min(width, height) / 30));
