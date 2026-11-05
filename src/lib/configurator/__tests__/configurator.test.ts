@@ -14,6 +14,8 @@ import {
   evaluateConfig,
   finishRule,
   fromDesignDoc,
+  matchVendors,
+  orderability,
   parseModelConfig,
   requiredCapabilities,
   safeParseModelConfig,
@@ -23,6 +25,7 @@ import {
   vendorCanMake,
   type BoxConfig,
   type ModelConfig,
+  type VendorForMatch,
 } from "..";
 
 const box = (patch: Partial<BoxConfig> = {}): BoxConfig => ({ ...defaultBoxConfig("FEFCO_0427"), ...patch });
@@ -342,4 +345,61 @@ describe("vendor capabilities", () => {
     expect(vendorCanMake(cfg, caps).ok).toBe(false);
     expect(vendorCanMake(cfg, caps, [{ kind: "LAMINATOR", model: "x", count: 1 }]).ok).toBe(true);
   });
+
+  const vendor = (id: string, patch: Partial<VendorForMatch> = {}): VendorForMatch => ({
+    id,
+    status: "ACTIVE",
+    verified: true,
+    minOrderQty: 100,
+    capabilities: caps,
+    machines: [],
+    rateCards: [{ structureCode: "FEFCO_0427", materialCode: "E_FLUTE_WHITE", finishes: ["NONE", "MATTE_LAMINATION"] }],
+    ...patch,
+  });
+
+  it("matches only printers with a rate card that prices every finish", () => {
+    const cfg = box({ material: "E_FLUTE_WHITE", finishes: [{ code: "MATTE_LAMINATION" }] });
+    const [a, b, c] = matchVendors(cfg, [
+      vendor("a"),
+      vendor("b", { rateCards: [{ structureCode: "FEFCO_0427", materialCode: "E_FLUTE_WHITE", finishes: ["NONE"] }] }),
+      vendor("c", { rateCards: [] }),
+    ]);
+    expect(a.ok).toBe(true);
+    expect(b.missing.map((m) => m.code)).toEqual(["NO_PRICE_MATTE_LAMINATION"]);
+    expect(c.missing.map((m) => m.code)).toEqual(["NO_RATE_CARD"]);
+    expect(matchVendors({ ...cfg, quantity: 50 }, [vendor("a")])[0].missing.map((m) => m.code)).toEqual(["BELOW_MIN_QTY"]);
+    expect(matchVendors(cfg, [vendor("x", { status: "SUSPENDED" })])[0].missing[0].code).toBe("INACTIVE");
+  });
+
+  it("orders only valid configs some printer can make", () => {
+    const cfg = box({ material: "E_FLUTE_WHITE", finishes: [{ code: "MATTE_LAMINATION" }] });
+    const ok = orderability(cfg, [vendor("u", { verified: false }), vendor("v")]);
+    expect(ok.ok).toBe(true);
+    expect(ok.vendorIds).toEqual(["v", "u"]); // verified first
+    expect(orderability(cfg, [vendor("v")], { vendorId: "nope" }).reasons.map((r) => r.code)).toEqual(["VENDOR_CANNOT_MAKE"]);
+
+    // a foil job needs a printer with hot foil; then it is orderable but priced manually
+    const foil = box({ material: "E_FLUTE_WHITE", finishes: [{ code: "FOIL_GOLD", mask: mask() }] });
+    expect(orderability(foil, [vendor("v")]).reasons.map((r) => r.code)).toEqual(["NO_VENDOR"]);
+    const foiler = orderability(foil, [vendor("f", { capabilities: { ...caps, extraFinishes: ["HOT_FOIL"] } })]);
+    expect(foiler.ok).toBe(true);
+    expect(foiler.manual.map((m) => m.code)).toEqual(["FINISH_NOT_PRICED"]);
+
+    // invalid configs carry the rules engine's reasons
+    const bad = orderability(box({ material: "E_FLUTE_KRAFT", finishes: [{ code: "SPOT_UV", mask: mask() }] }), [vendor("v")]);
+    expect(bad.ok).toBe(false);
+    expect(bad.reasons[0].code).toBe("FINISH_UV_UNCOATED");
+    expect(hasArabic(bad.reasons[0].message.ar)).toBe(true);
+
+    // boards without rate cards and labels go to a quote
+    expect(orderability({ ...defaultBoxConfig("FEFCO_0201"), material: "BC_FLUTE_KRAFT" as const }, [vendor("v")]).reasons.map((r) => r.code)).toContain("BOARD_BY_QUOTE");
+    expect(orderability(defaultVesselConfig("WIDE_JAR"), [vendor("v")]).reasons.map((r) => r.code)).toContain("LABELS_BY_QUOTE");
+  });
+
+  it("keeps the built-in gable handle through sanitize", () => {
+    const { config, removed } = sanitizeConfig(defaultBoxConfig("GABLE_BOX"));
+    expect(config.addOns.handle).toBe(true);
+    expect(removed).toEqual([]);
+  });
 });
+

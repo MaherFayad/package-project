@@ -2,6 +2,7 @@ import { designerEn } from "./designer.en";
 import { vendorPortalEn } from "./vendorPortal.en";
 import { checkoutEn } from "./checkout.en";
 import { adminEn } from "./admin.en";
+import { marketingEn } from "./marketing.en";
 
 /**
  * English dictionary. This file DEFINES the dictionary shape (type `Dictionary`);
@@ -206,6 +207,7 @@ export const en = {
   ...checkoutEn,
   vendorPortal: vendorPortalEn,
   admin: adminEn,
+  marketing: marketingEn,
   viewer: {
     label: "3D preview of your box",
     roleDescription: "3D viewer",

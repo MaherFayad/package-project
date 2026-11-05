@@ -3,6 +3,7 @@ import { designerAr } from "./designer.ar";
 import { vendorPortalAr } from "./vendorPortal.ar";
 import { checkoutAr } from "./checkout.ar";
 import { adminAr } from "./admin.ar";
+import { marketingAr } from "./marketing.ar";
 
 /**
  * Arabic dictionary (default locale). MSA, noun-form labels, no diacritics,
@@ -205,6 +206,7 @@ export const ar: Dictionary = {
   ...checkoutAr,
   vendorPortal: vendorPortalAr,
   admin: adminAr,
+  marketing: marketingAr,
   viewer: {
     label: "معاينة ثلاثية الأبعاد للعلبة",
     roleDescription: "عارض ثلاثي الأبعاد",

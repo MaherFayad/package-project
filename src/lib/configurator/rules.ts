@@ -647,8 +647,9 @@ export function sanitizeConfig(cfg: ModelConfig): { config: ModelConfig; removed
   for (const key of ["handle", "tearStrip"] as const) {
     if (!a[key]) continue;
     const v = addOnRule(next, key);
-    if (!v.ok) {
-      if (v.code !== "ADDON_HANDLE_BUILTIN") drop(key, v);
+    // A built-in handle (gable box) is part of the structure: keep it on.
+    if (!v.ok && v.code !== "ADDON_HANDLE_BUILTIN") {
+      drop(key, v);
       a[key] = false;
     }
   }

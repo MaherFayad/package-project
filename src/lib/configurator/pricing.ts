@@ -246,6 +246,100 @@ export function vendorCanMake(cfg: ModelConfig, caps: VendorCapabilities, machin
   return { ok: missing.length === 0, missing };
 }
 
+/** A printer as the orderability check sees it (DB row, or test fixture). */
+export interface VendorForMatch {
+  id: string;
+  status: string;
+  verified?: boolean;
+  minOrderQty: number;
+  capabilities: VendorCapabilities;
+  machines?: VendorMachine[];
+  /** Active rate cards: structure + material code (+ the finishes it prices). */
+  rateCards: { structureCode: StructureCode; materialCode: MaterialCode; finishes: FinishCode[] }[];
+}
+
+export interface VendorMatch {
+  vendorId: string;
+  ok: boolean;
+  verified: boolean;
+  missing: VendorFit["missing"];
+}
+
+/**
+ * Which printers can make this config: capability fit (structure, board, finishes, extra
+ * finishes, colours) plus an active rate card for the structure and board that prices every
+ * rate-card finish, plus the printer's minimum run. Mirrors the pricing engine's eligibility,
+ * so a config that matches here is one the engine (or the printer, for extra finishes) prices.
+ */
+export function matchVendors(cfg: ModelConfig, vendors: readonly VendorForMatch[]): VendorMatch[] {
+  const req = requiredCapabilities(cfg);
+  return vendors.map((v) => {
+    const fit = vendorCanMake(cfg, v.capabilities, v.machines ?? []);
+    const missing = [...fit.missing];
+    if (v.status !== "ACTIVE") missing.unshift({ code: "INACTIVE", message: t("This printer is not taking orders.", "هذه المطبعة لا تستقبل طلبات حاليا.") });
+    if (req.structure && req.material) {
+      const card = v.rateCards.find((c) => c.structureCode === req.structure && c.materialCode === req.material);
+      if (!card) missing.push({ code: "NO_RATE_CARD", message: t("No price list for this box and board.", "لا توجد قائمة أسعار لهذه العلبة وهذه الخامة.") });
+      else
+        for (const f of req.finishes)
+          if (!card.finishes.includes(f))
+            missing.push({ code: `NO_PRICE_${f}`, message: t(`No price for ${FINISHES[f as ConfigFinishCode]?.name.en.toLowerCase() ?? f} on this box.`, `لا يوجد سعر لـ${FINISHES[f as ConfigFinishCode]?.name.ar ?? f} على هذه العلبة.`) });
+    }
+    if (cfg.quantity < v.minOrderQty)
+      missing.push({ code: "BELOW_MIN_QTY", message: t(`Minimum run is ${v.minOrderQty} pieces.`, `أقل كمية ${v.minOrderQty} قطعة.`) });
+    // de-duplicate (vendorCanMake and the rate card can both flag a finish)
+    const seen = new Set<string>();
+    const unique = missing.filter((m) => (seen.has(m.code) ? false : (seen.add(m.code), true)));
+    return { vendorId: v.id, ok: unique.length === 0, verified: !!v.verified, missing: unique };
+  });
+}
+
+export interface Orderability {
+  /** The config is valid and at least one active printer can make it. */
+  ok: boolean;
+  evaluation: ConfigEvaluation;
+  /** Printers that can make it (verified first). */
+  vendorIds: string[];
+  /** Why it cannot be ordered (empty when ok). */
+  reasons: { code: string; message: LocalizedText }[];
+  /** Orderable, but needs a manual price (extra finishes, board without rate cards, big runs). */
+  manual: ManualReason[];
+}
+
+/**
+ * Gate for checkout: only a valid config that some active printer can make may be ordered.
+ * `vendorId` narrows it to the printer the buyer picked. Labels and sleeves always go to a
+ * manual quote (no rate cards yet), so they are never instantly orderable.
+ */
+export function orderability(cfg: ModelConfig, vendors: readonly VendorForMatch[], opts: { vendorId?: string } = {}): Orderability {
+  const pricing = toPricingRequest(cfg, opts);
+  const evaluation = pricing.evaluation;
+  const reasons: Orderability["reasons"] = [];
+  if (!evaluation.ok)
+    for (const i of evaluation.issues) if (i.severity === "error") reasons.push({ code: i.code, message: i.message });
+  if (!isBoxConfig(cfg)) {
+    reasons.push({ code: "LABELS_BY_QUOTE", message: t("Labels and sleeves are ordered through a quote.", "الملصقات والأغلفة تطلب من خلال عرض سعر.") });
+    return { ok: false, evaluation, vendorIds: [], reasons, manual: pricing.manual };
+  }
+  const board = BOX_BOARDS[cfg.material];
+  if (!board.pricingMaterial) {
+    reasons.push({ code: "BOARD_BY_QUOTE", message: t(`${board.name.en} is ordered through a quote: printers confirm it within 24 hours.`, `${board.name.ar} يطلب من خلال عرض سعر، وتؤكده المطابع خلال 24 ساعة.`) });
+    return { ok: false, evaluation, vendorIds: [], reasons, manual: pricing.manual };
+  }
+  const pool = opts.vendorId ? vendors.filter((v) => v.id === opts.vendorId) : vendors;
+  const matches = matchVendors(cfg, pool).filter((m) => m.ok);
+  matches.sort((a, b) => Number(b.verified) - Number(a.verified));
+  if (evaluation.ok && matches.length === 0) {
+    reasons.push(
+      opts.vendorId
+        ? { code: "VENDOR_CANNOT_MAKE", message: t("This printer cannot make this box as configured. Choose another printer or change the options.", "هذه المطبعة لا تستطيع تنفيذ هذه العلبة بهذه الخيارات. اختر مطبعة أخرى أو غير الخيارات.") }
+        : { code: "NO_VENDOR", message: t("No printer on Elba can make this combination yet. Change the board or finishes.", "لا توجد مطبعة على علبة تستطيع تنفيذ هذه التركيبة بعد. غير الخامة أو التشطيبات.") },
+    );
+  }
+  const manual = pricing.manual.filter((m) => m.code !== "INVALID_CONFIG");
+  return { ok: reasons.length === 0, evaluation, vendorIds: matches.map((m) => m.vendorId), reasons, manual };
+}
+
 /* ───────────────────────────── design doc bridge ───────────────────────────── */
 
 /** Primary priced finish for the single `DesignDoc.finishCode` column (spot UV wins, then lamination). */
