@@ -3,8 +3,8 @@ import { getSession } from "@/lib/auth/session";
 import { rateLimit } from "@/lib/rate-limit";
 import { canOpenDispute } from "@/lib/orders/state";
 import type { OrderStatus } from "@/types";
-import { fileUrl, UPLOAD_RULES } from "@/components/vendor/lib/files";
-import { saveUpload } from "@/components/vendor/server/storage";
+import { fileUrl, parseKey, UPLOAD_RULES } from "@/components/vendor/lib/files";
+import { deleteUpload, saveUpload } from "@/components/vendor/server/storage";
 import { readFormCapped } from "../../../_lib/body";
 
 /**
@@ -39,4 +39,24 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const saved = await saveUpload("dispute", id, new Uint8Array(await file.arrayBuffer()));
   if (!saved.ok) return err(saved.error, saved.error === "TOO_LARGE" ? 413 : 400);
   return Response.json({ ok: true, key: saved.key, url: fileUrl(saved.key) }, { headers: { "Cache-Control": "no-store" } });
+}
+
+/**
+ * DELETE /api/orders/<id>/dispute-photos?key=dispute/<id>/…  (R10-03)
+ * The buyer removed a photo before sending: delete the stored file (PDPL data minimisation).
+ * Only this order's own report uploads that no report uses yet.
+ */
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const s = await getSession();
+  if (!s) return err("UNAUTHENTICATED", 401);
+  const { id } = await params;
+  const key = new URL(req.url).searchParams.get("key") ?? "";
+  const parsed = parseKey(key);
+  if (!/^[\w-]{1,40}$/.test(id) || !parsed || parsed.scope !== "dispute" || parsed.ownerId !== id) return err("NOT_FOUND", 404);
+  const order = await db.order.findUnique({ where: { id }, select: { buyerId: true, disputes: { select: { photos: true } } } });
+  if (!order || order.buyerId !== s.user.id) return err("NOT_FOUND", 404);
+  const used = order.disputes.some((d) => Array.isArray(d.photos) && (d.photos as unknown[]).includes(key));
+  if (used) return err("NOT_ALLOWED", 409);
+  await deleteUpload(key);
+  return Response.json({ ok: true }, { headers: { "Cache-Control": "no-store" } });
 }

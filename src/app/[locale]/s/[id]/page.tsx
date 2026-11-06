@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth/session";
 import type { DictKey } from "@/i18n/types";
 import { formatDims, formatMoney } from "@/lib/format";
 import { quoteDesign, tierPrices } from "@/lib/orders/service";
+import { loadCheckoutSettings } from "@/lib/orders/checkout-settings";
 import { Badge } from "@/components/ui/Badge";
 import { BlockStack, InlineStack } from "@/components/ui/Stack";
 import { Button } from "@/components/ui/Button";
@@ -96,7 +97,7 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
   const isVessel = lib?.kind === "vessel";
   // R4-12: the visitor sees the price before being asked to sign in, the same figure checkout
   // shows for 500 boxes (best match, prepay discount, delivery to Greater Cairo, excl. VAT).
-  const { price, quoteReason } = await sharePrice(doc);
+  const [{ price, quoteReason }, { prepayDiscountPct }] = await Promise.all([sharePrice(doc), loadCheckoutSettings()]);
   // R6-05: also a special-gluing model that no printer lists yet (the engine says "by quote").
   const order = orderModeOf(doc.modelCode);
   const reason = order.mode === "quote" || order.mode === "preview" ? order.reason : quoteReason;
@@ -126,8 +127,17 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
               <BlockStack gap="300">
                 {price ? (
                   <p className={styles.price} data-testid="share-price">
-                    {t("buyer.sharePrice", { qty: price.quantity, price: formatMoney(price.unitPiasters, locale), days: price.days })}
+                    {price.prepayPct > 0
+                      ? t("buyer.sharePricePrepay", { qty: price.quantity, price: formatMoney(price.unitPiasters, locale), days: price.days, pct: price.prepayPct })
+                      : t("buyer.sharePrice", { qty: price.quantity, price: formatMoney(price.unitPiasters, locale), days: price.days })}
                   </p>
+                ) : null}
+                {/* R5-JR-15: this unit is after the prepay discount (tierPrices), the designer's badge is
+                    before it; say which, so the two numbers read as one price. */}
+                {price && prepayDiscountPct > 0 ? (
+                  <Text as="p" variant="bodySm" tone="subdued">
+                    {t("designer.shared.prepayNote", { pct: prepayDiscountPct })}
+                  </Text>
                 ) : null}
                 <Text as="p">{reason ? ORDER_MODE_COPY[reason][locale] : t("designer.shared.ctaHelp")}</Text>
                 <Button variant="primary" fullWidth url={`/${locale}/checkout/${encodeURIComponent(designId)}?share=${encodeURIComponent(id)}&model=${encodeURIComponent(modelCode)}`}>
@@ -172,13 +182,13 @@ function vesselSize(d: { D: number; H: number; G?: number }, mm: string): string
 }
 
 /** Headline price for the share page, or null when the box has no instant price (quote only). */
-async function sharePrice(doc: Parameters<typeof quoteDesign>[0]): Promise<{ price: { quantity: number; unitPiasters: number; days: number } | null; quoteReason: OrderModeReason | null }> {
+async function sharePrice(doc: Parameters<typeof quoteDesign>[0]): Promise<{ price: { quantity: number; unitPiasters: number; days: number; prepayPct: number } | null; quoteReason: OrderModeReason | null }> {
   try {
-    const [tiers, outcome] = await Promise.all([tierPrices(doc), quoteDesign(doc, { quantity: SHARE_PRICE_QTY })]);
+    const [tiers, outcome, settings] = await Promise.all([tierPrices(doc), quoteDesign(doc, { quantity: SHARE_PRICE_QTY }), loadCheckoutSettings()]);
     const unit = tiers.find((x) => x.quantity === SHARE_PRICE_QTY)?.unitPiasters ?? null;
     const best = outcome.mode === "instant" ? outcome.offers[0] : null;
     const quoteReason = outcome.mode === "manual_quote" && outcome.reason === "MODEL_BY_QUOTE" ? (outcome.orderReason ?? "QUOTE_ONLY_STOCK") : null;
-    return { price: unit !== null && best ? { quantity: SHARE_PRICE_QTY, unitPiasters: unit, days: best.deliveryDays } : null, quoteReason };
+    return { price: unit !== null && best ? { quantity: SHARE_PRICE_QTY, unitPiasters: unit, days: best.deliveryDays, prepayPct: settings.prepayDiscountPct } : null, quoteReason };
   } catch {
     return { price: null, quoteReason: null };
   }

@@ -1,6 +1,7 @@
 import type { Dims, FaceId, StructureFeatures } from "@/types";
 import { DielineBuilder, insetSeg, rectEdges } from "../../../builder";
 import { cutWindow } from "../../../features";
+import { computeFaces } from "../../../fold";
 import { clamp, pt, rectPolygon } from "../../../geometry";
 import { pizza, trayWithLid, type StructureDraft } from "../../../structures";
 import type { Polygon, Pt } from "../../../types";
@@ -226,6 +227,12 @@ export function noodlePail(dims: Dims, t: number, f: StructureFeatures = {}): St
         const fi = obliqueFace(face, panels, "base", t, TRAY_ROTATION, face);
         if (fi) out[face] = fi;
       }
+      // The back closure flap shows behind the front one on top (half the lid): the automatic
+      // top face skips it (stacked one caliper in), which left it plain board and cut the
+      // top artwork in half (R5-3Q-D-07). Same face frame; the stack only shifts it along n.
+      const lifted = panels.map((p) => (p.id === "backFlap" ? { ...p, stackOffset: 0 } : p));
+      const back = computeFaces({ panels: lifted, rootId: "base", thicknessMm: t, closedRotation: TRAY_ROTATION }).faces.top?.parts.find((x) => x.panelId === "backFlap");
+      if (out.top && back) out.top = { ...out.top, parts: [back, ...out.top.parts] };
       return out;
     },
   };
@@ -306,6 +313,10 @@ export function sandwichWedge(dims: Dims, t: number, f: StructureFeatures = {}):
   return {
     builder: b,
     closedRotation: TRAY_ROTATION,
+    // The sloped lid's board edge at its two hinges stands ~0.7 t proud of the base and back
+    // planes, so the automatic back and bottom faces (0.25 t deep) came out empty: the back
+    // wall and base printed nothing (R5-3Q-D-08).
+    faceDepthTol: t,
     faces: (panels, computed) => {
       const top = obliqueFace("top", panels, "base", t, TRAY_ROTATION, "top");
       return top ? { ...computed, top, front: { ...top, face: "front" } } : computed;
@@ -356,5 +367,21 @@ export function pizzaSlice(dims: Dims, t: number, f: StructureFeatures = {}): St
     lid.holes = [slot(c, w, h)];
     if (f.window.film !== false) b.films.push({ panelId: "top", polygon: slot(c, w + 12, h + 12) });
   }
-  return { builder: b, closedRotation: TRAY_ROTATION };
+  return {
+    builder: b,
+    closedRotation: TRAY_ROTATION,
+    // The oblique side walls' board ends stand ~0.4 t behind the back wall plane at the back
+    // corners, so the automatic back face (0.25 t deep) was empty (R5-3Q-D-09).
+    faceDepthTol: t,
+    // The two long side walls are what shows on the counter: print them (left / right) as
+    // oblique faces (they were plain board, R5-3Q-D-09).
+    faces: (panels, computed) => {
+      const out = { ...computed };
+      for (const [face, id] of [["right", "sideR"], ["left", "sideL"]] as const) {
+        const fi = obliqueFace(face, panels, "base", t, TRAY_ROTATION, id);
+        if (fi) out[face] = fi;
+      }
+      return out;
+    },
+  };
 }

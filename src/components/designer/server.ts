@@ -112,7 +112,7 @@ export function rowToDoc(row: DesignRow): DesignDoc | null {
   const extra = configSchema.safeParse({ modelCode: row.modelCode ?? undefined, ...(fromJson<object | null>(row.config ?? null) ?? {}) });
   if (extra.success) {
     const e = extra.data;
-    const withModel = { ...doc, ...(e.modelCode ? { modelCode: e.modelCode } : {}), ...(e.features ? { features: e.features } : {}), ...(e.finishes ? { finishes: e.finishes } : {}), ...(e.vessel ? { vessel: e.vessel } : {}) } as DesignDoc;
+    const withModel = { ...doc, ...(e.modelCode ? { modelCode: e.modelCode } : {}), ...(e.features ? { features: e.features } : {}), ...(e.finishes ? { finishes: e.finishes } : {}), ...(e.vessel ? { vessel: e.vessel } : {}), ...(e.brandColors?.length ? { brandColors: e.brandColors } : {}) } as DesignDoc;
     // A model whose material was changed underneath (admin edits): keep the base design.
     if (designDocSchema.safeParse(withModel).success) return withModel;
     // Keep the model even when its options no longer validate: dropping it would turn a model
@@ -124,8 +124,14 @@ export function rowToDoc(row: DesignRow): DesignDoc | null {
 }
 
 /** The DesignDoc fields stored in Design.config / OrderItem.config. */
-export function docConfig(doc: DesignDoc): { features?: DesignDoc["features"]; finishes?: DesignDoc["finishes"]; vessel?: DesignDoc["vessel"] } | null {
-  const c = { ...(doc.features ? { features: doc.features } : {}), ...(doc.finishes?.length ? { finishes: doc.finishes } : {}), ...(doc.vessel ? { vessel: doc.vessel } : {}) };
+export function docConfig(doc: DesignDoc): Pick<DesignDoc, "features" | "finishes" | "vessel" | "brandColors"> | null {
+  const c = {
+    ...(doc.features ? { features: doc.features } : {}),
+    ...(doc.finishes?.length ? { finishes: doc.finishes } : {}),
+    ...(doc.vessel ? { vessel: doc.vessel } : {}),
+    // Brand colours (designer): their CMYK and spot references go to the printer with the proof.
+    ...(doc.brandColors?.length ? { brandColors: doc.brandColors } : {}),
+  };
   return Object.keys(c).length ? c : null;
 }
 

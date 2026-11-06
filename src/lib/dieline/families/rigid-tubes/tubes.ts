@@ -202,10 +202,15 @@ export function tubeDraft(variant: TubeVariant, dims: Dims, t: number, f: Struct
     const hr = f.window?.heightRatio ?? 0.7;
     const nw = Math.max(2, Math.min(N / 2 - 4, Math.round((N / 2) * wr)));
     const k0 = N / 2 - Math.floor(nw / 2);
-    const avail = Hb - (pushUp ? 0 : t) - visTop - 24;
+    // Margins above / below the aperture: 12 mm, down to 20 % of the visible body on short
+    // tubes. A flat 12 mm left no room on a Ø30 × 50 tube, so the WINDOW model and the window
+    // option silently built a plain tube at small sizes (R5-3Q-E-05).
+    const visible = Hb - (pushUp ? 0 : t) - visTop;
+    const margin = Math.min(12, visible * 0.2);
+    const avail = visible - 2 * margin;
     const wh = avail * hr;
-    if (wh >= 15) {
-      const yTop = visTop + 12 + (avail - wh) / 2;
+    if (wh >= 10) {
+      const yTop = visTop + margin + (avail - wh) / 2;
       window = { k0, k1: k0 + nw, yTop, yBot: yTop + wh };
     }
   }
@@ -279,13 +284,20 @@ export function tubeDraft(variant: TubeVariant, dims: Dims, t: number, f: Struct
       const visFrom = Math.max(v0, clipTop);
       const visTo = Math.min(faceHeight, v0 + p.height);
       const sc = p.s / sb;
+      // Label top in the panels' frame. assembleDieline shifts every panel by (bleed − sheet
+      // min), so the draft's `p.y0` is NOT where the label sits any more: measured against it,
+      // every label's artwork landed that shift (7 mm) too low — the top 7 mm of the cap and of
+      // the visible body stayed bare board, and the body art stopped 7 mm short of the base
+      // (R5-3Q-E-04).
+      const strips = panels.filter((q) => stripOf(q.id, p.pre) >= 0);
+      const labelTop = strips.length ? Math.min(...strips.map((q) => q.bbox.y)) : p.y0;
       for (const panel of panels) {
         const k = stripOf(panel.id, p.pre);
         if (k < 0) continue;
         const idx = order.indexOf(k);
         if (idx < 0) continue;
         const u = idx * sb;
-        const vp0 = v0 + (panel.bbox.y - p.y0);
+        const vp0 = v0 + (panel.bbox.y - labelTop);
         const a = Math.max(vp0, visFrom);
         const z = Math.min(vp0 + panel.bbox.height, visTo);
         if (z - a < 0.5) continue;

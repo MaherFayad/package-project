@@ -19,6 +19,27 @@ export const WRAP_VISUAL_MM = 0.3;
 export const turnInStack = (t: number) => -Math.max(0, t - WRAP_VISUAL_MM) / t;
 /** stackOffset for corner tabs / glue flaps: inside the wall they lie on, half a paper proud. */
 export const tabStack = (t: number) => -(WRAP_VISUAL_MM / 2) / t;
+/**
+ * Hinge depth (mm) of a corner tab / glue flap that folds 90° in behind its neighbour. Hinged on
+ * the printed face itself, the tab's hinge end face (one caliper wide, unprinted) lay IN the
+ * parent wall's printed face and z-fought with it: a ragged white slab down every corner of the
+ * lid and base, and along the drawer sleeve's glued edge (R5-3Q-E-01, same fix as the core
+ * RIGID_BOX). 0.08 mm deep puts that end face just behind the print.
+ */
+export const TAB_PIVOT_MM = 0.08;
+/** pivotDepth (in calipers) for corner tabs / glue flaps (see TAB_PIVOT_MM). */
+export const tabPivot = (t: number) => TAB_PIVOT_MM / t;
+/**
+ * Hinge depth (mm) of a printed board that folds 90° off its neighbour (tray walls, sleeve and
+ * cover boards). Hinged on the printed face, each board's fold edge face (the end face along the
+ * crease, which the renderer paints with the crease's print) lay IN the other board's printed
+ * face over one caliper: a ragged band of the neighbour's colour along every lid / base / sleeve
+ * edge, 2 mm wide on greyboard (R5-3Q-E-03). 0.05 mm deep puts both end faces just behind the
+ * print; the open notch at the corner is 0.05 mm, far below a pixel.
+ */
+export const WALL_PIVOT_MM = 0.05;
+/** pivotDepth (in calipers) for printed 90° boards (see WALL_PIVOT_MM). */
+export const wallPivot = (t: number) => WALL_PIVOT_MM / t;
 
 export const IDENTITY: [number, number, number, number] = [0, 0, 0, 1];
 

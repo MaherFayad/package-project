@@ -58,7 +58,7 @@ export const models: VesselModelDef[] = BTL.DEFINITIONS.map((def) => {
       const p = BTL.bottlePreset(def, presetId);
       const v = BTL.validateBottleDims(def, dims);
       if (!v.ok) throw new Error(`Invalid dims for ${def.code}`);
-      const profile = BTL.profileFor(def, dims, p.finish);
+      const profile = BTL.profileFor(def, dims, BTL.finishForDims(def, dims, p.finish));
       const labels = labelSpecsFor(coreKind, dims, profile, surfaces.filter(isSurface));
       return { profile, areas: labels.map(labelArea), envelope: BTL.bottleEnvelope(def, profile, dims) };
     },

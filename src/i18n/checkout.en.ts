@@ -446,6 +446,7 @@ export const checkoutEn = {
     STATUS_CHANGED: "Elba: order {number} is now: {status}. Details: {url}",
     SHIPPED: "Elba: order {number} is on its way. Track it: {url}",
     DELIVERED: "Elba: order {number} was delivered. Tell us how it went: {url}",
+    REFUNDED: "Elba: order {number} is cancelled and {amount} is on its way back to your {method}. Details: {url}",
     DISPUTE_OPENED: "Elba: we received your report about order {number} and will reply within one working day.",
     REVIEW_THANKS: "Elba: thanks for rating order {number}.",
     DESIGN_FOLLOW_UP:
@@ -543,6 +544,7 @@ export const checkoutEn = {
       added: "Added",
       remove: "Remove {name}",
       type: "Use a JPG, PNG or WebP photo.",
+      heic: "iPhone HEIC photos cannot be added. Share the photo as JPG (Photos app: Share, Options, Most Compatible), or take a screenshot of it.",
       tooLarge: "This photo is over 10 MB. Choose a smaller one.",
       tooMany: "You can add up to {max} photos. The extra ones were left out.",
       failed: "This photo could not be uploaded. Try again.",
@@ -572,6 +574,9 @@ export const checkoutEn = {
     order: "Order",
     shareOwnCopy: "Ordering gives you your own copy to order or edit. The original design stays unchanged.",
     sharePrice: "{qty:box} from {price} each excl. VAT, delivered in {days:day}",
+    // R5-JR-15: the share price and offer unit are after the prepay discount.
+    sharePricePrepay: "{qty:box} from {price} each after the {pct}% prepay discount, excl. VAT, delivered in {days:day}",
+    unitPrepay: "{price} per box after the {pct}% prepay discount (excl.\u00a0VAT)",
     shareSignIn: "You will sign in with your mobile number first. It takes a minute.",
     shareOwner: "This is your design. Anyone with this link sees this read-only page and can order their own copy.",
     addName: "Add your name in Profile. It appears on your account and on your receipts; the courier uses the name on each delivery address.",

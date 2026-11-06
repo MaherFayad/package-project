@@ -5,8 +5,10 @@ import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { InlineStack } from "@/components/ui/Stack";
 import { Text } from "@/components/ui/Text";
 import { TextField } from "@/components/ui/TextField";
+import { Button } from "@/components/ui/Button";
 import { useI18n } from "@/i18n/client";
-import { normalizeHex } from "./lib/color";
+import { luminance as luminanceOf, normalizeHex } from "./lib/color";
+import { useBrandColors } from "./BrandColors";
 import type { DictKey } from "@/i18n/types";
 import styles from "./designer.module.css";
 
@@ -100,9 +102,31 @@ export function ColorField({
   const [hex, setHex] = useState(value ?? "");
   useEffect(() => setHex(value ?? ""), [value]);
   const valid = normalizeHex(hex) !== null;
+  const brand = useBrandColors();
+  const inBrand = !!value && !!brand?.colors.some((c) => c.hex.toLowerCase() === value.toLowerCase());
   return (
     <fieldset className={styles.colorField} aria-describedby={helpText ? `${id}-help` : undefined}>
       <legend className={styles.fieldLegend}>{label}</legend>
+      {/* Brand colours first (integrator decision): the buyer's own named colours. */}
+      {brand?.colors.length ? (
+        <div className={styles.swatches} role="group" aria-label={t("designer.brand.title")} data-testid="brand-swatches">
+          {brand.colors.map((c) => (
+            <button
+              key={c.hex}
+              type="button"
+              className={styles.swatch}
+              style={{ background: c.hex }}
+              data-light={normalizeHex(c.hex) && luminanceOf(c.hex) > 0.75 ? "true" : undefined}
+              aria-pressed={value?.toLowerCase() === c.hex.toLowerCase()}
+              aria-label={t("designer.brand.swatch", { name: c.name, hex: c.hex })}
+              title={c.name}
+              onClick={() => onChange(c.hex)}
+            >
+              {value?.toLowerCase() === c.hex.toLowerCase() && <Check aria-hidden size={16} />}
+            </button>
+          ))}
+        </div>
+      ) : null}
       <div className={styles.swatches} role="group" aria-label={label}>
         {allowNone && (
           <button
@@ -162,6 +186,18 @@ export function ColorField({
           />
         </div>
       </InlineStack>
+      {brand ? (
+        <InlineStack gap="200" wrap>
+          {value && !inBrand ? (
+            <Button size="slim" variant="tertiary" onClick={() => brand.saveCurrent(value)}>
+              {t("designer.brand.saveCurrent")}
+            </Button>
+          ) : null}
+          <Button size="slim" variant="tertiary" onClick={brand.manage}>
+            {t("designer.brand.manage")}
+          </Button>
+        </InlineStack>
+      ) : null}
       {helpText ? (
         <Text as="p" variant="bodySm" tone="subdued" id={`${id}-help`}>
           {helpText}

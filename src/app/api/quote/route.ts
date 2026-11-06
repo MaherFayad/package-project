@@ -8,6 +8,7 @@ import type { QuoteModel } from "@/lib/pricing";
 import { designConfigSchema } from "@/components/designer/lib/doc";
 import { loadPricingConfig } from "@/components/admin/server/settings";
 import { readJsonCapped } from "../_lib/body";
+import { loadCheckoutSettings } from "@/lib/orders/checkout-settings";
 import { deviceOf, track } from "@/lib/analytics/track";
 
 const Mm = z.number().finite().positive().max(5000);
@@ -101,7 +102,9 @@ export async function POST(req: Request) {
         { userId: auth.id },
       );
     }
-    return Response.json(toPublicOutcome(outcome), { headers: { "Cache-Control": "no-store" } });
+    // R5-JR-15 (designer): the admin prepay discount, so the price dialog can show both prices.
+    const { prepayDiscountPct } = await loadCheckoutSettings();
+    return Response.json({ ...toPublicOutcome(outcome), prepayDiscountPct }, { headers: { "Cache-Control": "no-store" } });
   } catch (e) {
     if (e instanceof QuoteInputError) {
       return Response.json({ error: e.code, details: e.details }, { status: 400 });

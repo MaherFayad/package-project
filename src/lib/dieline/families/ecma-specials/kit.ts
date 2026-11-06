@@ -167,3 +167,25 @@ export function withDeepParts(
   const parts = [...(base?.parts ?? []).filter((p) => !ids.includes(p.panelId)), ...extra];
   return { ...faces, [face]: { face, width: deep.width, height: deep.height, parts } };
 }
+
+/**
+ * Add panels that show on a face but are stacked one or more calipers inside the outermost
+ * layer (a seal flap overlapped by the outer flap: half of it is still seen) to that face.
+ * The automatic face skips inner-stacked panels; the stack offset only moves a panel along
+ * the face normal, so its face mapping is taken with the offset cleared.
+ */
+export function withLiftedParts(
+  faces: Partial<Record<FaceId, FaceInfo>>,
+  input: { panels: DielinePanel[]; rootId: string; thicknessMm: number; closedRotation: Quat },
+  face: FaceId,
+  ids: string[],
+  depthTolMm?: number,
+): Partial<Record<FaceId, FaceInfo>> {
+  const base = faces[face];
+  if (!base) return faces;
+  const lifted = input.panels.map((p) => (ids.includes(p.id) ? { ...p, stackOffset: Math.max(0, p.stackOffset) } : p));
+  const extra = computeFaces({ ...input, panels: lifted }, depthTolMm).faces[face]?.parts.filter((p) => ids.includes(p.panelId)) ?? [];
+  if (!extra.length) return faces;
+  // Inner layers first so the outer flap's part is drawn over them where they overlap.
+  return { ...faces, [face]: { ...base, parts: [...extra, ...base.parts.filter((p) => !ids.includes(p.panelId))] } };
+}

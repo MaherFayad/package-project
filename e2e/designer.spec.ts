@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { sendOtp, uniquePhone } from "./fixtures/factory";
+import { createUser, sendOtp, signInAs, track, uniquePhone } from "./fixtures/factory";
 
 /**
  * Designer main flow (seeded DB): pick a product preset, design anonymously (autosaved to the
@@ -204,4 +204,100 @@ test("two devices on one design: the older save is refused and the visitor choos
   expect((await after.json()).doc.name).toBe("Typed on device B");
   await a.close();
   await b.close();
+});
+
+/** A 400 × 200 PNG (two colour halves) for the crop test, built in the page. */
+async function twoToneImage(page: Page): Promise<Buffer> {
+  const b64 = await page.evaluate(() => {
+    const c = document.createElement("canvas");
+    c.width = 400;
+    c.height = 200;
+    const x = c.getContext("2d")!;
+    x.fillStyle = "#1f3d2b";
+    x.fillRect(0, 0, 200, 200);
+    x.fillStyle = "#d13b3b";
+    x.fillRect(200, 0, 200, 200);
+    return c.toDataURL("image/png").split(",")[1];
+  });
+  return Buffer.from(b64, "base64");
+}
+
+test("crop an image to a square: non-destructive, kept in the saved design", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === "mobile", "inspector fields are checked on desktop");
+  test.setTimeout(120_000);
+  await page.goto("/en/design/mailer-box");
+  await expect(page.getByTestId("stage-3d").locator("canvas").first()).toBeVisible({ timeout: 45_000 });
+  await page.getByRole("tab", { name: "Artwork" }).click();
+  await page.locator("input[type=file]").first().setInputFiles({ name: "two-tone.png", mimeType: "image/png", buffer: await twoToneImage(page) });
+  const crop = page.getByRole("button", { name: "Crop", exact: true });
+  await expect(crop).toBeVisible({ timeout: 15_000 });
+  await crop.click();
+  const dlg = page.getByRole("dialog", { name: "Crop image" });
+  await dlg.getByRole("button", { name: "Square", exact: true }).click();
+  // Keyboard alternative to dragging (WCAG 2.5.7): the frame moves with the arrow keys.
+  await dlg.getByTestId("crop-frame").focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(dlg.getByLabel("Width %")).toHaveValue("50");
+  await dlg.getByRole("button", { name: "Apply crop" }).click();
+  await expect(dlg).toBeHidden();
+  const w = Number(await page.getByLabel("Width (mm)", { exact: true }).inputValue());
+  const h = Number(await page.getByLabel("Height (mm)", { exact: true }).inputValue());
+  expect(Math.abs(w - h)).toBeLessThan(0.6);
+  await expect(page.getByRole("button", { name: "Remove crop" })).toBeVisible();
+  await expect(page).toHaveURL(/[?&]d=[\w-]+/, { timeout: 20_000 });
+  await expect(page.getByTestId("save-status")).toHaveAttribute("data-state", "saved", { timeout: 20_000 });
+  const id = new URL(page.url()).searchParams.get("d");
+  const saved = await (await page.request.get(`/api/designs/${id}`)).json();
+  const img = saved.doc.artwork.outside.layers.find((l: { kind: string }) => l.kind === "image");
+  expect(img.crop.width).toBeCloseTo(0.5, 2);
+  expect(img.pxWidth).toBe(400); // the whole image is kept
+});
+
+test("brand colours: saved per account, shown first, sent with the design", async ({ page, context, baseURL }, testInfo) => {
+  test.skip(testInfo.project.name === "mobile", "covered on desktop");
+  test.setTimeout(120_000);
+  const user = track(await createUser({ name: "Brand colours e2e" }));
+  await signInAs(context, baseURL!, user.id);
+  await page.goto("/ar/design/mailer-box");
+  await expect(page.getByTestId("stage-3d").locator("canvas").first()).toBeVisible({ timeout: 45_000 });
+  await page.getByRole("tab", { name: "التصميم" }).click();
+  await page.getByRole("textbox", { name: "رمز اللون" }).first().fill("#7a1fa2");
+  await page.getByRole("button", { name: "حفظ في ألوان العلامة" }).first().click();
+  const dlg = page.getByRole("dialog", { name: "ألوان العلامة التجارية" });
+  await expect(dlg.getByRole("textbox", { name: "رمز اللون" })).toHaveValue("#7a1fa2");
+  await dlg.getByRole("textbox", { name: "الاسم" }).fill("بنفسجي الشركة");
+  // Arabic-keyboard digits in the CMYK fields.
+  for (const [k, v] of [["C", "٥٠"], ["M", "٩٠"], ["Y", "0"], ["K", "10"]]) await dlg.getByRole("textbox", { name: k, exact: true }).fill(v);
+  await dlg.getByRole("textbox", { name: "مرجع اللون الخاص (اختياري)" }).fill("PMS 2603 C");
+  await dlg.getByRole("button", { name: "إضافة اللون" }).click();
+  await expect(dlg.getByTestId("brand-list")).toContainText("بنفسجي الشركة");
+  await expect(dlg.getByTestId("brand-list")).toContainText("CMYK 50 / 90 / 0 / 10");
+  await dlg.getByRole("button", { name: "إغلاق" }).first().click();
+  // First in the picker, and kept on the account.
+  await expect(page.getByTestId("brand-swatches").first().getByRole("button", { name: /لون العلامة بنفسجي الشركة/ })).toBeVisible();
+  const stored = await (await page.request.get("/api/designs/brand-colors")).json();
+  expect(stored.colors).toEqual([{ name: "بنفسجي الشركة", hex: "#7a1fa2", cmyk: [50, 90, 0, 10], spot: "PMS 2603 C" }]);
+  // The design uses it (background), so its references travel with the saved design.
+  await expect(page).toHaveURL(/[?&]d=[\w-]+/, { timeout: 20_000 });
+  await expect(page.getByTestId("save-status")).toHaveAttribute("data-state", "saved", { timeout: 20_000 });
+  const id = new URL(page.url()).searchParams.get("d");
+  const saved = await (await page.request.get(`/api/designs/${id}`)).json();
+  expect(saved.doc.brandColors?.[0]?.spot).toBe("PMS 2603 C");
+});
+
+test("phones can rename a design from More actions (R5-JR-14)", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile", "the toolbar name field covers desktop");
+  test.setTimeout(90_000);
+  await page.goto("/en/design/mailer-box");
+  await expect(page.getByTestId("stage-3d").locator("canvas").first()).toBeVisible({ timeout: 45_000 });
+  await page.getByRole("button", { name: "More actions" }).click();
+  await page.getByRole("menuitem", { name: "Rename" }).click();
+  const dlg = page.getByRole("dialog", { name: "Rename design" });
+  await dlg.getByLabel("Design name").fill("Phone named box");
+  await dlg.getByRole("button", { name: "Done" }).click();
+  await expect(dlg).toBeHidden();
+  await expect(page).toHaveURL(/[?&]d=[\w-]+/, { timeout: 20_000 });
+  await expect(page.getByTestId("save-status")).toHaveAttribute("data-state", "saved", { timeout: 20_000 });
+  const saved = await (await page.request.get(`/api/designs/${new URL(page.url()).searchParams.get("d")}`)).json();
+  expect(saved.doc.name).toBe("Phone named box");
 });

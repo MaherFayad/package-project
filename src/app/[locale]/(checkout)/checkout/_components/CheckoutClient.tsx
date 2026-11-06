@@ -642,7 +642,7 @@ export function CheckoutClient(props: {
               <fieldset className={styles.offers}>
                 <legend className="visually-hidden">{t("checkout.offers.title")}</legend>
                 {visibleOffers.map((o) => (
-                  <OfferCard key={o.vendorId} offer={o} checked={o.vendorId === vendorId} onSelect={() => setVendorId(o.vendorId)} locale={locale} sample={!!result.sample} />
+                  <OfferCard key={o.vendorId} offer={o} checked={o.vendorId === vendorId} onSelect={() => setVendorId(o.vendorId)} locale={locale} sample={!!result.sample} prepayPct={props.prepayDiscountPct} />
                 ))}
               </fieldset>
               {offers.length > 3 ? (
@@ -1099,11 +1099,12 @@ function Tick({ value, children }: { value: number; children: ReactNode }) {
   );
 }
 
-function OfferCard({ offer, checked, onSelect, locale, sample }: { offer: CheckoutOffer; checked: boolean; onSelect: () => void; locale: Locale; sample?: boolean }) {
+function OfferCard({ offer, checked, onSelect, locale, sample, prepayPct = 0 }: { offer: CheckoutOffer; checked: boolean; onSelect: () => void; locale: Locale; sample?: boolean; prepayPct?: number }) {
   const { t } = useI18n();
   const name = locale === "ar" ? offer.vendor.name.ar : offer.vendor.name.en;
   const unit = Math.round(offer.pay.subtotalPiasters / offer.quantity);
-  const unitParts = t("checkout.offers.unit", { price: "\u0000" }).split("\u0000");
+  // R5-JR-15: the unit is after the prepay discount; say so wherever that figure is shown.
+  const unitParts = (offer.pay.discountPiasters > 0 && prepayPct > 0 ? t("buyer.unitPrepay", { price: "\u0000", pct: prepayPct }) : t("checkout.offers.unit", { price: "\u0000" })).split("\u0000");
   return (
     <label className={styles.offer} data-testid="vendor-offer">
       <input className={styles.radio} type="radio" name="vendor" value={offer.vendorId} checked={checked} onChange={onSelect} aria-label={t("checkout.offers.select", { vendor: name })} />

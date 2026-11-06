@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Dims, FaceId } from "@/types";
 import { applyAffine, boundsAt, computePoses } from "../../../fold";
 import { polygonArea } from "../../../geometry";
-import { WRAP_VISUAL_MM } from "../common";
+import { WALL_PIVOT_MM, WRAP_VISUAL_MM } from "../common";
 import { DISC_SEAT_MM } from "../tubes";
 import { DEFINITIONS, DEFINITION_BY_CODE, FAMILY_MATERIALS, FamilyValidationError, octabinChamfer, printAreas, type CatalogueDefinition, type FamilyDielineModel } from "..";
 
@@ -235,6 +235,29 @@ describe.each(DEFINITIONS.map((d) => [d.code, d] as const))("%s", (_code, def) =
 });
 
 describe("family specifics", () => {
+  it("tube label artwork lands on its own strip and covers the whole front (R5-3Q-E-04)", () => {
+    for (const def of DEFINITIONS.filter((d) => d.shape === "cylinder")) {
+      for (const dims of [def.defaultDims, { L: def.params.L.min, W: def.params.L.min, H: def.params.H.min }]) {
+        const m = def.generate(dims as Dims);
+        const front = m.faces.front!;
+        let covered = 0;
+        for (const part of front.parts) {
+          const p = m.panels.find((q) => q.id === part.panelId)!;
+          const tr = part.transform!;
+          // face rect → sheet rect must lie inside the panel (no bare board on the strip)
+          const y0 = part.rect.y + tr[5];
+          const y1 = part.rect.y + part.rect.height + tr[5];
+          expect(y0, `${def.code} ${part.panelId}`).toBeGreaterThanOrEqual(p.bbox.y - 1e-6);
+          expect(y1, `${def.code} ${part.panelId}`).toBeLessThanOrEqual(p.bbox.y + p.bbox.height + 1e-6);
+          covered += part.rect.width * part.rect.height;
+        }
+        // window strips are split, so allow the aperture; every other tube is covered edge to edge
+        const min = def.code === "TUBE_WINDOW" ? 0.6 : 0.99;
+        expect(covered / (front.width * front.height), `${def.code} ${JSON.stringify(dims)} covered`).toBeGreaterThan(min);
+      }
+    }
+  });
+
   it("rigid boxes show the board thickness and roll turn-ins inside", () => {
     const def = DEFINITION_BY_CODE.RIGID_LID_BASE;
     const m = def.generate({ L: 200, W: 150, H: 80 }, { material: "GREYBOARD_2500_WRAP" });
@@ -242,18 +265,22 @@ describe("family specifics", () => {
     const turns = m.panels.filter((p) => p.label === "Turn-in");
     expect(turns.length).toBe(8);
     for (const p of turns) expect(p.foldAngleClosed).toBe(180);
-    // Inner space of the base = requested inner size: walls stand inside L + 2t.
+    // Inner space of the base = requested inner size: walls stand inside L + 2t. The walls hinge
+    // WALL_PIVOT_MM inside the base board (R5-3Q-E-03, no end face in a printed face), so the base
+    // panel is cut 2 × that smaller and the closed inner / outer sizes stay exact.
     const base = m.panels.find((p) => p.id === "bottom")!;
-    expect(base.bbox.width).toBeCloseTo(200 + 2 * 2.65, 6);
-    expect(base.bbox.height).toBeCloseTo(150 + 2 * 2.65, 6);
+    expect(base.bbox.width).toBeCloseTo(200 + 2 * 2.65 - 2 * WALL_PIVOT_MM, 6);
+    expect(base.bbox.height).toBeCloseTo(150 + 2 * 2.65 - 2 * WALL_PIVOT_MM, 6);
   });
 
   it("lid depth is adjustable up to a full telescope lid", () => {
     const def = DEFINITION_BY_CODE.RIGID_LID_BASE;
     const shallow = def.generate({ L: 200, W: 150, H: 80 }, { features: { lidHeightMm: 20 } });
     const full = def.generate({ L: 200, W: 150, H: 80 }, { features: { lidHeightMm: 80 } });
-    expect(shallow.panels.find((p) => p.id === "lid_front")!.bbox.height).toBeCloseTo(20 + shallow.thicknessMm, 6);
-    expect(full.panels.find((p) => p.id === "lid_front")!.bbox.height).toBeCloseTo(80 + full.thicknessMm, 6);
+    // Walls are cut WALL_PIVOT_MM shorter: they hinge that much inside the top board (R5-3Q-E-03),
+    // so the closed lid depth is still lidHeight + t.
+    expect(shallow.panels.find((p) => p.id === "lid_front")!.bbox.height).toBeCloseTo(20 + shallow.thicknessMm - WALL_PIVOT_MM, 6);
+    expect(full.panels.find((p) => p.id === "lid_front")!.bbox.height).toBeCloseTo(80 + full.thicknessMm - WALL_PIVOT_MM, 6);
   });
 
   it("window boxes cut an aperture and add film", () => {
@@ -263,6 +290,9 @@ describe("family specifics", () => {
     const tube = DEFINITION_BY_CODE.TUBE_WINDOW.generate({ L: 75, W: 75, H: 150 });
     expect(tube.panels.some((p) => /^body\d+t$/.test(p.id))).toBe(true);
     expect(tube.metrics.filmAreaM2).toBeGreaterThan(0);
+    // R5-3Q-E-05: the smallest window tube still has its window.
+    const lim = DEFINITION_BY_CODE.TUBE_WINDOW.params;
+    expect(DEFINITION_BY_CODE.TUBE_WINDOW.generate({ L: lim.L.min, W: lim.L.min, H: lim.H.min }).metrics.filmAreaM2).toBeGreaterThan(0);
     // The plain tube has no split strips.
     expect(DEFINITION_BY_CODE.TUBE_LID_BASE.generate({ L: 75, W: 75, H: 150 }).panels.some((p) => /^body\d+t$/.test(p.id))).toBe(false);
   });

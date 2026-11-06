@@ -1,5 +1,5 @@
 import type { DielineModel, PanelRole, Polygon, Segment } from "./types";
-import { centroid, round } from "./geometry";
+import { centroid, polygonArea, round } from "./geometry";
 
 export interface DielineSvgOptions {
   showBleed?: boolean;
@@ -90,7 +90,9 @@ export function dielineToSvg(model: DielineModel, opts: DielineSvgOptions = {}):
     parts.push(
       `<g data-layer="labels" fill="${c.label}" font-family="Inter, 'IBM Plex Sans Arabic', system-ui, sans-serif" font-size="${n(fs)}" font-weight="500" text-anchor="middle" dominant-baseline="middle"${locale === "ar" ? ' direction="rtl"' : ""}>${model.panels
         .map((p) => ({ p, text: opts.labels?.[p.id] ?? opts.labels?.[p.role] ?? roleLabels[p.role] ?? p.label }))
-        .filter(({ p, text }) => p.bbox.width > Math.max(fs * 4, text.length * fs * 0.62) && p.bbox.height > fs * 2)
+        // R5-3Q-L-02: a thin diagonal sliver (cone facets) passes the bbox test but cannot hold
+        // text: also require the panel to fill at least 40 % of its bbox.
+        .filter(({ p, text }) => p.bbox.width > Math.max(fs * 4, text.length * fs * 0.62) && p.bbox.height > fs * 2 && polygonArea(p.polygon) > 0.4 * p.bbox.width * p.bbox.height)
         .map(({ p, text }) => {
           const cc = centroid(p.polygon);
           return `<text x="${n(cc.x)}" y="${n(cc.y)}">${esc(text)}</text>`;

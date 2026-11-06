@@ -668,13 +668,22 @@ function buyerLink(locale: Locale, path: string): string {
 async function notifyStatus(order: { id: string; number: string; buyer: { locale: string; phone: string; email: string | null } }, to: OrderStatus, tracking?: string): Promise<void> {
 
   const locale = (order.buyer.locale === "en" ? "en" : "ar") as Locale;
-  const template = to === "SHIPPED" ? "SHIPPED" : to === "DELIVERED" ? "DELIVERED" : "STATUS_CHANGED";
+  let template: "SHIPPED" | "DELIVERED" | "REFUNDED" | "STATUS_CHANGED" = to === "SHIPPED" ? "SHIPPED" : to === "DELIVERED" ? "DELIVERED" : "STATUS_CHANGED";
   const { getT } = await import("@/i18n");
+  // R10-04: a refund says how much went back and where.
+  let refund: { amount: string; method: string } | null = null;
+  if (to === "REFUNDED") {
+    const p = await db.payment.findFirst({ where: { orderId: order.id, status: { in: ["REFUNDED", "PAID"] } }, orderBy: { createdAt: "desc" }, select: { amountPiasters: true, method: true } });
+    if (p) {
+      refund = { amount: formatMoney(p.amountPiasters, locale, { alwaysDecimals: true }), method: getT(locale)(`paymentMethods.${p.method}` as never) };
+      template = "REFUNDED";
+    }
+  }
   await notify({
     to: { phone: order.buyer.phone, email: order.buyer.email },
     locale,
     template,
-    params: { number: order.number, status: getT(locale)(`orderStatus.${to}`), url: buyerLink(locale, `/orders/${order.id}`), tracking: tracking ?? "" },
+    params: { number: order.number, status: getT(locale)(`orderStatus.${to}`), url: buyerLink(locale, `/orders/${order.id}`), tracking: tracking ?? "", amount: refund?.amount ?? "", method: refund?.method ?? "" },
   });
 }
 

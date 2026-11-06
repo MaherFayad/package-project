@@ -71,6 +71,7 @@ export {
   surfaceCanvasSize,
   paintArtworkSurface,
   drawLayer,
+  imagePlacement,
   testPatternArtwork,
   MAX_TEXTURE_PX,
   type PaintOptions,
