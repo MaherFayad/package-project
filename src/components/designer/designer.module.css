@@ -119,25 +119,32 @@
 .structureFoot { margin-block-start: auto; padding-block-start: var(--p-space-200); }
 .productGrid {
   display: grid;
-  gap: var(--p-space-300);
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.5rem), 1fr));
+  gap: var(--p-space-200);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   list-style: none;
   margin: 0;
   padding: 0;
 }
+.productGrid > li { display: flex; }
 .productLink {
   display: flex;
   align-items: center;
   gap: var(--p-space-300);
-  min-block-size: 3.5rem;
+  inline-size: 100%;
+  min-block-size: 3.75rem;
   padding: var(--p-space-300);
+  border: var(--p-border-width-025, 1px) solid var(--p-color-border-secondary);
   border-radius: var(--p-border-radius-300);
   background: var(--p-color-bg-surface);
-  box-shadow: var(--e-shadow-card);
   color: var(--p-color-text);
   text-decoration: none;
+  transition:
+    border-color var(--p-motion-duration-150, 150ms) var(--p-motion-ease-out, ease-out),
+    background-color var(--p-motion-duration-150, 150ms) var(--p-motion-ease-out, ease-out);
 }
 .productLink:hover { background: var(--p-color-bg-surface-hover); }
+.productLink:active { background: var(--p-color-bg-surface-active, var(--p-color-bg-surface-hover)); }
+.productLink[data-active="true"] { border-color: var(--p-color-text); }
 .productLink:focus-visible {
   outline: var(--p-focus-ring-width, 2px) solid var(--p-color-border-focus);
   outline-offset: 1px;
@@ -152,6 +159,144 @@
   background: var(--p-color-bg-fill-tertiary);
   color: var(--p-color-icon);
 }
+.productText { display: flex; flex-direction: column; gap: var(--p-space-050, 2px); min-inline-size: 0; }
+.productName { font-weight: var(--p-font-weight-semibold); line-height: 1.3; }
+.productMeta { font-size: var(--p-font-size-300, 0.75rem); color: var(--p-color-text-secondary); line-height: 1.3; }
+
+/* ── start page: live 3D hero + catalogue ────────────────────────────── */
+.startPage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--p-space-800, 2rem);
+  inline-size: 100%;
+  max-inline-size: 80rem;
+  margin-inline: auto;
+  padding: var(--p-space-400) var(--p-space-400) var(--p-space-1200, 3rem);
+}
+@media (min-width: 768px) {
+  .startPage { padding: var(--p-space-800, 2rem) var(--p-space-600, 1.5rem) var(--p-space-1600, 4rem); }
+}
+.start {
+  display: grid;
+  gap: var(--p-space-600, 1.5rem);
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "copy" "stage" "presets";
+}
+@media (min-width: 900px) {
+  .start {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    grid-template-areas: "copy stage" "presets stage";
+    grid-template-rows: auto 1fr;
+    align-items: start;
+    gap: var(--p-space-1200, 3rem);
+  }
+}
+.startCopy { grid-area: copy; display: flex; flex-direction: column; gap: var(--p-space-400); min-inline-size: 0; }
+.startEyebrow {
+  align-self: flex-start;
+  padding: var(--p-space-050, 2px) var(--p-space-200);
+  border-radius: var(--p-border-radius-full);
+  background: var(--p-color-bg-fill-success-secondary);
+  color: var(--p-color-text-success);
+  font-size: var(--p-font-size-325, 0.8125rem);
+  font-weight: var(--p-font-weight-semibold);
+}
+.startTitle {
+  margin: 0;
+  font-size: clamp(2rem, 1.2rem + 3.6vw, 3.5rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-weight: var(--p-font-weight-bold);
+  text-wrap: balance;
+}
+:global([dir="rtl"]) .startTitle { letter-spacing: 0; line-height: 1.3; }
+.startBody {
+  margin: 0;
+  max-inline-size: 36rem;
+  font-size: var(--p-font-size-400, 1rem);
+  line-height: 1.6;
+  color: var(--p-color-text-secondary);
+}
+.startSteps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--p-space-200) var(--p-space-400);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-weight: var(--p-font-weight-medium);
+}
+.startSteps li { display: inline-flex; align-items: center; gap: var(--p-space-200); }
+.startStepNum {
+  display: grid;
+  place-items: center;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  border-radius: var(--p-border-radius-full);
+  background: var(--p-color-bg-inverse);
+  color: var(--p-color-text-inverse, #fff);
+  font-size: var(--p-font-size-300, 0.75rem);
+}
+.startPresets { grid-area: presets; display: flex; flex-direction: column; gap: var(--p-space-200); padding-block-start: var(--p-space-200); }
+.startPresetsHeading { margin: 0; font-size: var(--p-font-size-400, 1rem); font-weight: var(--p-font-weight-semibold); }
+.startPresetsHint { margin: 0; font-size: var(--p-font-size-325, 0.8125rem); color: var(--p-color-text-secondary); }
+.startStageCol { grid-area: stage; align-self: center; display: flex; flex-direction: column; gap: var(--p-space-300); min-inline-size: 0; }
+.startStage {
+  position: relative;
+  aspect-ratio: 5 / 4;
+  max-block-size: 34rem;
+  inline-size: 100%;
+  overflow: hidden;
+  border-radius: var(--p-border-radius-500, 1rem);
+  background:
+    radial-gradient(120% 90% at 50% 20%, var(--p-color-bg-surface) 0%, var(--p-color-bg-surface-secondary) 70%);
+  box-shadow: var(--e-shadow-card);
+}
+@media (max-width: 899px) {
+  .startStage { aspect-ratio: 1 / 1; max-block-size: 22rem; }
+}
+.startViewer { position: absolute; inset: 0; }
+/* A preview inside a scrolling page: vertical swipes scroll, horizontal drags turn the box. */
+.startViewer :global(canvas),
+.startViewer > * { touch-action: pan-y; }
+.startPoster {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+  padding: var(--p-space-1200, 3rem);
+}
+.startToggle { position: absolute; inset-block-end: var(--p-space-300); inset-inline-end: var(--p-space-300); }
+.startCta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--p-space-300);
+  flex-wrap: wrap;
+}
+.startCtaLabel { font-weight: var(--p-font-weight-semibold); color: var(--p-color-text-secondary); }
+.startCtaLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--p-space-200);
+  min-block-size: 3rem;
+  padding-inline: var(--p-space-600, 1.5rem);
+  border-radius: var(--p-border-radius-full);
+  background: var(--p-color-bg-fill-brand, var(--p-color-bg-inverse));
+  color: var(--p-color-text-brand-on-bg-fill, #fff);
+  font-weight: var(--p-font-weight-semibold);
+  text-decoration: none;
+  transition: background-color var(--p-motion-duration-150, 150ms) var(--p-motion-ease-out, ease-out), transform var(--p-motion-duration-100, 100ms) var(--p-motion-ease-out, ease-out);
+}
+.startCtaLink:hover { background: var(--p-color-bg-fill-brand-hover, var(--p-color-bg-inverse)); }
+.startCtaLink:active { transform: scale(0.98); }
+.startCtaLink:focus-visible { outline: var(--p-focus-ring-width, 2px) solid var(--p-color-border-focus); outline-offset: 2px; }
+@media (max-width: 899px) {
+  .startCtaLink { flex: 1 1 100%; }
+}
+.startCatalog { scroll-margin-block-start: var(--p-space-400); }
 
 /* ── editor grid ─────────────────────────────────────────────────────── */
 .editor {
@@ -500,6 +645,7 @@
   border-radius: var(--p-border-radius-full);
   background: var(--p-color-border-tertiary);
 }
+.sheetToggle { touch-action: none; }
 .sheetToggle:focus-visible {
   outline: var(--p-focus-ring-width, 2px) solid var(--p-color-border-focus);
   outline-offset: -2px;
@@ -635,5 +781,86 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .panel { transition: none; }
+  .panel,
+  .productLink,
+  .startCtaLink { transition: none; }
+}
+
+/* ── pass 1 audit additions ──────────────────────────────────────────── */
+/* Phones: 3D view buttons in their own row under the stage (never over the box). */
+.viewControlsRow {
+  display: flex;
+  justify-content: center;
+  padding: var(--p-space-200) var(--p-space-300) 0;
+  border-block-start: var(--p-border-width-025, 1px) solid var(--p-color-border-secondary);
+}
+.viewControlsRow + .foldRow { border-block-start: 0; padding-block-start: var(--p-space-200); }
+/* The tab bar stays visible while the panel scrolls (long inspector). */
+.panelInner > * > :first-child:has(> [role="tablist"]) {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+  background: var(--p-color-bg-surface);
+}
+.saveStatus[data-state="error"] { color: var(--p-color-text-critical); }
+.saveStatus[data-state="saved"] { color: var(--p-color-text-success); }
+.saveStatus[data-state="saved"] .saveStatusText { color: var(--p-color-text-secondary); }
+.skeletonBar {
+  display: block;
+  block-size: 2rem;
+  border-radius: var(--p-border-radius-200);
+  background: var(--p-color-bg-fill-tertiary, #e3e3e3);
+}
+
+/* Phones with the sheet pulled up: the short stage keeps only the 3D view (controls return when it closes). */
+@media (max-width: 1039px) {
+  .editor[data-sheet="open"] .viewControlsRow,
+  .editor[data-sheet="open"] .foldRow { display: none; }
+  .faceSelect { flex: 1 1 auto; }
+}
+/* Landscape phones (short and wide): stage and panel side by side, no page scroll. */
+@media (max-height: 500px) and (min-width: 640px) and (max-width: 1039px) {
+  .editor {
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 40%);
+    grid-template-areas:
+      "toolbar toolbar"
+      "banner banner"
+      "price panel"
+      "stage panel";
+    grid-template-rows: auto auto auto minmax(0, 1fr);
+    min-block-size: 0;
+    padding-block-end: var(--p-space-200);
+  }
+  .panel,
+  .editor[data-sheet="open"] .panel {
+    block-size: auto;
+    margin-inline: 0;
+    border-radius: var(--p-border-radius-300);
+  }
+  .sheetToggle { display: none; }
+  .stageHeader { padding-block: var(--p-space-100); }
+  .stageBody { min-block-size: 0; }
+  .viewControlsRow { padding-block-start: var(--p-space-100); }
+  /* Fold stays on the 3D view's keyboard / portrait layout; here the stage needs the height. */
+  .foldRow { display: none; }
+  .editor .viewControlsRow { display: flex; }
+}
+/* The viewer's own 240 px floor must not push it under the rows below a short stage. */
+.stageBody { overflow: hidden; }
+.sceneWrap > * { min-block-size: 0; }
+/* Model thumbnail in the stage until the first 3D frame, then fades (PERF-10). */
+.stagePoster {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+  padding: 12%;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity var(--p-motion-duration-300, 300ms) var(--p-motion-ease-out, ease-out);
+}
+.stagePoster[data-hidden="true"] { opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .stagePoster { transition: none; }
 }

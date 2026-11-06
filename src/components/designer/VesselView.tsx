@@ -31,6 +31,7 @@ export default function VesselView({
   roleDescription,
   keyboardHint,
   fallback,
+  onReady,
 }: {
   model: VesselModelDef;
   doc: DesignDoc;
@@ -44,6 +45,8 @@ export default function VesselView({
   roleDescription: string;
   keyboardHint: string;
   fallback: string;
+  /** First frame rendered (the stage fades its poster out). */
+  onReady?: () => void;
 }) {
   const v = doc.vessel!;
   const desc = geo.vessel!;
@@ -159,6 +162,7 @@ export default function VesselView({
       roleDescription={roleDescription}
       keyboardHint={keyboardHint}
       fallback={<p className={styles.sceneFallback}>{fallback}</p>}
+      onReady={onReady}
     />
   );
 }

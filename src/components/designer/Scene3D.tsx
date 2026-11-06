@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, type Ref } from "react";
+import { memo, useMemo, type Ref } from "react";
 import type { Artwork, DesignFinish, FinishCode, Locale, MaterialCode } from "@/types";
 import type { DielineModel } from "@/lib/dieline";
 import { BOX_BOARD_CODES, type BoxBoardCode } from "@/lib/configurator";
@@ -14,7 +14,8 @@ import styles from "./designer.module.css";
  * so three.js stays out of the first page load. Real finishes (foil, spot UV, emboss, soft
  * touch, kraft fibre) come from the configurator's finish materials when the design has any.
  */
-export default function Scene3D({
+/** Memoised so panel / price updates do not re-render the 3D view (PERF-18). */
+export default memo(function Scene3D({
   model,
   material,
   finish,
@@ -34,6 +35,8 @@ export default function Scene3D({
   roleDescription,
   keyboardHint,
   fallback,
+  poster,
+  onReady,
 }: {
   model: DielineModel;
   material: MaterialCode;
@@ -54,6 +57,10 @@ export default function Scene3D({
   roleDescription: string;
   keyboardHint: string;
   fallback: string;
+  /** Shown until the first 3D frame (the model's picker thumbnail). */
+  poster?: string;
+  /** First frame rendered (the stage fades its poster out). */
+  onReady?: () => void;
 }) {
   const outside = useArtworkTexture(canvases?.outside, version);
   const inside = useArtworkTexture(printInside ? canvases?.inside : null, version);
@@ -82,10 +89,12 @@ export default function Scene3D({
       surfaceFinish={surfaceFinish}
       stage={stage}
       autoRotate={turntable}
+      poster={poster}
+      onReady={onReady}
       ariaLabel={ariaLabel}
       roleDescription={roleDescription}
       keyboardHint={keyboardHint}
       fallback={<p className={styles.sceneFallback}>{fallback}</p>}
     />
   );
-}
+});

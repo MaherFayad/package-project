@@ -24,7 +24,7 @@ test("design a box, sign up at the price gate, share and export", async ({ page 
 
   // 1. Picker → product preset.
   await page.goto("/en/design");
-  await expect(page.getByRole("heading", { level: 1, name: "Pick a box style" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Design your box in 3D. Free." })).toBeVisible();
   await noHorizontalScroll(page);
   await page.getByRole("link", { name: /Mailer for a T-shirt/ }).click();
   await expect(page).toHaveURL(/\/en\/design\/mailer-box\?preset=tshirt/);

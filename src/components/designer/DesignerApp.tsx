@@ -2,11 +2,13 @@
 
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ChevronDown, ChevronUp, CloudCheck, CloudOff, Download, MoreHorizontal, Redo2, Save, Share2, Undo2 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { ArrowLeft, ChevronDown, ChevronUp, CloudCheck, CloudOff, CloudUpload, Download, MoreHorizontal, Redo2, Save, Share2, Undo2 } from "lucide-react";
+import { startTransition, useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { FACE_IDS, type ArtworkLayer, type DesignDoc, type DesignFinishCode, type DimsPreset, type FaceId, type Locale, type PrintSurface, type StructureCode } from "@/types";
 import { boardAppearance, type DielineModel } from "@/lib/dieline";
-import { MODELS, modelByCode, toCard, type ModelDef } from "@/lib/library";
+import { modelByCode, type ModelDef } from "@/lib/library";
+import type { ModelCard } from "@/lib/library/search";
+import { defaultMaxDpr } from "@/components/three/hooks";
 import { docGeometry, docModel, docModelCode, facesForAreas, normaliseDocModel } from "@/lib/library/doc";
 import { FINISHES } from "@/lib/configurator";
 import { ViewControls, type PackagingSceneHandle } from "@/components/three";
@@ -53,8 +55,8 @@ import { BADGE_QTY, fetchQuote, quoteKey, type PriceState } from "./lib/quote";
 import { designerPath } from "./lib/catalog";
 import { pruneFinishes, toggleFinish } from "./lib/config";
 import { createModelDoc } from "./lib/doc";
+import { layerName } from "./lib/describe";
 import { ConfigPanel, surfaceName, type ViewOptions } from "./ConfigPanel";
-import { ModelPicker } from "./ModelPicker";
 import lib from "./library.module.css";
 import { loadLocalDraft, saveLocalDraft } from "./lib/storage";
 import { useArtworkCanvases } from "./useArtworkCanvases";
@@ -70,6 +72,8 @@ import styles from "./designer.module.css";
 
 const StageSkeleton = () => <div className={lib.stageSkeleton} aria-hidden="true" />;
 const Scene3D = dynamic(() => import("./Scene3D"), { ssr: false, loading: StageSkeleton });
+// The picker (370 cards, search) loads only when it is opened (PERF-04).
+const ModelPicker = dynamic(() => import("./ModelPicker").then((m) => m.ModelPicker), { ssr: false });
 const VesselView = dynamic(() => import("./VesselView"), { ssr: false, loading: StageSkeleton });
 
 type View = "3d" | "face" | "dieline";
@@ -91,9 +95,9 @@ export interface DesignerAppProps {
   loadError: "notFound" | null;
   /** Restore this device's autosaved draft on mount (?resume=1). */
   resumeLocal?: boolean;
+  /** Light picker cards, built on the server (no generators shipped for them; PERF-04). */
+  pickerCards?: ModelCard[];
 }
-
-const PICKER_CARDS = MODELS.map(toCard);
 
 const reducer = (s: History<DesignDoc>, a: HistoryAction<DesignDoc>) => historyReducer(s, a);
 
@@ -127,7 +131,7 @@ function slugify(name: string) {
   );
 }
 
-export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, loadError, resumeLocal }: DesignerAppProps) {
+export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, loadError, resumeLocal, pickerCards = [] }: DesignerAppProps) {
   const { t } = useI18n();
   const router = useRouter();
   const toast = useToast();
@@ -141,10 +145,20 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
   const seal = useCallback(() => dispatch({ type: "seal" }), []);
 
   // Box dieline, or the print-area sheet of a container (src/lib/library/doc).
+  // While a size field is being typed (coalesced "dims" / "vessel" steps), the dieline, textures
+  // and 3D mesh wait for 150 ms of quiet instead of rebuilding on every keystroke (PERF-08).
+  const typingSize = hist.lastKey === "dims" || hist.lastKey === "vessel";
+  const [settledDoc, setSettledDoc] = useState(doc);
+  useEffect(() => {
+    if (!typingSize) return;
+    const id = setTimeout(() => setSettledDoc(docRef.current), 150);
+    return () => clearTimeout(id);
+  }, [typingSize, doc.dims, doc.vessel]);
+  const geoSrc = typingSize ? settledDoc : doc;
   const geo = useMemo(
-    () => docGeometry(doc),
+    () => docGeometry(geoSrc),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [doc.modelCode, doc.structureCode, doc.dims, doc.materialCode, doc.features, doc.vessel],
+    [geoSrc.modelCode, geoSrc.structureCode, geoSrc.dims, geoSrc.materialCode, geoSrc.features, geoSrc.vessel],
   );
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const libModel = useMemo<ModelDef | null>(() => docModel(doc), [doc.modelCode, doc.structureCode]);
@@ -152,6 +166,11 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
   const isVessel = !!geo?.vessel;
   const modelRef = useRef(model);
   modelRef.current = model;
+  // Faces of the latest committed geometry (ahead of `model` while typing) for artwork rescaling.
+  const geoFacesRef = useRef(model?.faces);
+  useEffect(() => {
+    if (!typingSize) geoFacesRef.current = model?.faces;
+  }, [model, typingSize]);
   const faces = useMemo(() => model?.faces ?? {}, [model]);
   const bothSides = doc.printSides === "BOTH";
 
@@ -167,6 +186,8 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
   const [fold, setFold] = useState(1);
   const [tab, setTab] = useState(0);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const swipeY = useRef<number | null>(null);
+  const swipedRef = useRef(false);
   const [saveState, setSaveState] = useState<SaveState>(initialDesignId ? "saved" : "idle");
   const [gate, setGate] = useState<{ reason: GateReason; then: () => void } | null>(null);
   const [modal, setModal] = useState<ModalName>(null);
@@ -179,9 +200,26 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
   const [shareError, setShareError] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  // Mounted on first open and kept (so closing animates and returns focus).
+  const [pickerUsed, setPickerUsed] = useState(false);
+  useEffect(() => {
+    if (pickerOpen) setPickerUsed(true);
+  }, [pickerOpen]);
   const [viewOpts, setViewOpts] = useState<ViewOptions>({ dimensions: false, scene: "none", turntable: false, open: false });
   const [notFound, setNotFound] = useState(loadError === "notFound");
   const sceneRef = useRef<PackagingSceneHandle | null>(null);
+  const [sceneReady, setSceneReady] = useState(false);
+  const onSceneReady = useCallback(() => setSceneReady(true), []);
+  // Phones: the 3D view is short, so its buttons sit in the row under it instead of over the box.
+  const [wide, setWide] = useState(true);
+  useEffect(() => {
+    const mq = window.matchMedia?.("(min-width: 768px) and (min-height: 600px)");
+    if (!mq) return;
+    const on = () => setWide(mq.matches);
+    on();
+    mq.addEventListener?.("change", on);
+    return () => mq.removeEventListener?.("change", on);
+  }, []);
   const savedDocRef = useRef<DesignDoc | null>(initialDesignId ? initialDoc : null);
 
   const selected = findLayer(doc, selectedId);
@@ -226,7 +264,9 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
   }, [bothSides, surface]);
 
   // ── textures ─────────────────────────────────────────────────────
-  const { canvases, version, images, imgVersion, fonts } = useArtworkCanvases(model, doc.artwork, doc.materialCode, bothSides);
+  // Phones and 1x screens: a 1024 px artwork sheet (≈ 4x less texture memory and upload; PERF-22).
+  const [sheetPx] = useState(() => (typeof window !== "undefined" && defaultMaxDpr() < 2 ? 1024 : 2048));
+  const { canvases, version, images, imgVersion, fonts } = useArtworkCanvases(model, doc.artwork, doc.materialCode, bothSides, sheetPx);
 
   // ── preflight ────────────────────────────────────────────────────
   const issues = useMemo(() => (model ? runPreflight(doc, model) : []), [doc, model]);
@@ -234,6 +274,13 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
 
   // ── saving ───────────────────────────────────────────────────────
   const inflight = useRef<Promise<string | null> | null>(null);
+  // Failed server saves retry on their own (10 s, 20 s, 40 s … up to 2 min) and when the
+  // browser comes back online; the local draft is always written first (WCAG 3.3: recovery).
+  const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retryDelay = useRef(10_000);
+  const saveRef = useRef<() => Promise<string | null>>(async () => null);
+  const [online, setOnline] = useState(true);
+  const touchedRef = useRef(false);
 
   const setUrl = useCallback(
     (id: string | null, code: StructureCode | string) => {
@@ -274,9 +321,17 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
           setUrl(json.id, docModelCode(current));
           saveLocalDraft({ doc: current, designId: json.id, savedAt: Date.now() });
           setSaveState(docRef.current === current ? "saved" : "dirty");
+          retryDelay.current = 10_000;
           return json.id;
         } catch {
           setSaveState("error");
+          saveLocalDraft({ doc: current, designId: designIdRef.current, savedAt: Date.now() });
+          if (retryTimer.current) clearTimeout(retryTimer.current);
+          retryTimer.current = setTimeout(() => {
+            retryTimer.current = null;
+            if (savedDocRef.current !== docRef.current) void saveRef.current();
+          }, retryDelay.current);
+          retryDelay.current = Math.min(retryDelay.current * 2, 120_000);
           return null;
         }
       })();
@@ -290,8 +345,33 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
     [setUrl],
   );
 
+  saveRef.current = () => saveToServer();
+  useEffect(() => {
+    setOnline(typeof navigator === "undefined" ? true : navigator.onLine !== false);
+    const up = () => {
+      setOnline(true);
+      if (touchedRef.current && savedDocRef.current !== docRef.current) void saveRef.current();
+    };
+    const down = () => setOnline(false);
+    window.addEventListener("online", up);
+    window.addEventListener("offline", down);
+    return () => {
+      window.removeEventListener("online", up);
+      window.removeEventListener("offline", down);
+      if (retryTimer.current) clearTimeout(retryTimer.current);
+    };
+  }, []);
+
+  const retryNow = () => {
+    if (retryTimer.current) clearTimeout(retryTimer.current);
+    retryTimer.current = null;
+    retryDelay.current = 10_000;
+    void saveToServer();
+  };
+
   // Autosave: this device right away, the server after a pause (anonymous designs too).
   const touched = hist.past.length > 0 || designId !== null;
+  touchedRef.current = touched;
   useEffect(() => {
     if (!touched) return;
     if (savedDocRef.current !== doc) setSaveState((s) => (s === "saving" ? s : "dirty"));
@@ -337,7 +417,7 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
       fetchQuote(docRef.current, BADGE_QTY, ctrl.signal)
         .then((s) => {
           if (s.status === "locked") setUser(null);
-          setPrice(s);
+          startTransition(() => setPrice(s));
         })
         .catch(() => undefined);
     }, 500);
@@ -356,7 +436,8 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
       if (!nextGeo) return false;
       const m = docModel(normal);
       const pruned = m ? pruneFinishes(normal, m) : { doc: normal, removed: [] as DesignFinishCode[] };
-      const { doc: rescaled, removed } = rescaleArtwork(pruned.doc, faceSizesOf(modelRef.current?.faces), faceSizesOf(nextGeo.dieline.faces));
+      const { doc: rescaled, removed } = rescaleArtwork(pruned.doc, faceSizesOf(geoFacesRef.current), faceSizesOf(nextGeo.dieline.faces));
+      geoFacesRef.current = nextGeo.dieline.faces;
       commit(rescaled, coalesce);
       if (removed) toast.show(t("designer.box.removedLayers", { count: removed }));
       if (pruned.removed.length) toast.show(t("library.panel.removedFinishes", { list: pruned.removed.map((c) => FINISHES[c].name[locale]).join("، ") }));
@@ -382,6 +463,10 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
     const next: DesignDoc = { ...fresh, artwork: cur.artwork, printSides: m.kind === "box" ? cur.printSides : "OUTSIDE", finishes: cur.finishes, finishCode: cur.finishCode };
     if (applyGeometry(next)) setUrl(designIdRef.current, code);
   };
+
+  const openPicker = useCallback(() => setPickerOpen(true), []);
+  const onFinish = useCallback((code: DesignFinishCode, on: boolean) => commit(toggleFinish(docRef.current, code, on)), [commit]);
+  const onPrintSides = useCallback((p: DesignDoc["printSides"]) => commit({ ...docRef.current, printSides: p }), [commit]);
 
   const onLayerChange = useCallback(
     (layer: ArtworkLayer, coalesce?: string) => commit(updateLayer(docRef.current, layer.id, () => fitTextBox(layer)), coalesce),
@@ -422,6 +507,7 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
   const onDelete = (id: string) => {
     commit(removeLayer(docRef.current, id));
     if (selectedId === id) setSelectedId(null);
+    toast.show(t("designer.artwork.deleted"), { action: { content: t("designer.history.undo"), onAction: () => dispatch({ type: "undo" }) } });
   };
   const onPlace = (where: Placement) => {
     if (!selected || !model) return;
@@ -535,7 +621,9 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
           ? t("designer.save.savedAccount")
           : t("designer.save.savedLocal")
         : saveState === "error"
-          ? t("designer.save.failed")
+          ? online
+            ? t("designer.save.failed")
+            : t("designer.save.offline")
           : saveState === "dirty"
             ? t("designer.save.unsaved")
             : "";
@@ -567,7 +655,26 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
     { id: "check", content: t("designer.tabs.check"), badge: summary.errors + summary.warnings || undefined },
   ];
 
+  const viewControls = (
+    <ViewControls
+      handle={sceneRef}
+      labels={{
+        group: t("viewer.controls"),
+        rotateLeft: t("viewer.rotateLeft"),
+        rotateRight: t("viewer.rotateRight"),
+        tiltUp: t("viewer.tiltUp"),
+        tiltDown: t("viewer.tiltDown"),
+        zoomIn: t("viewer.zoomIn"),
+        zoomOut: t("viewer.zoomOut"),
+        reset: t("viewer.reset"),
+      }}
+    />
+  );
+
   const faceOptions = FACE_IDS.filter((f) => faces[f]).map((f) => ({ value: f, label: faceLabel(f) }));
+  // Open-top styles (FEFCO 0700…) never close: fold 100 % reads "Assembled". The catalogue adds
+  // `openTop` to the library; read it defensively until then.
+  const openTop = !!(libModel as { openTop?: boolean } | null)?.openTop;
   const structureName = libModel?.name[locale] ?? t(`structures.${doc.structureCode}` as DictKey);
 
   return (
@@ -599,10 +706,21 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
           <Button icon={Undo2} accessibilityLabel={t("designer.history.undo")} disabled={!canUndo(hist)} onClick={() => dispatch({ type: "undo" })} />
           <Button icon={Redo2} accessibilityLabel={t("designer.history.redo")} disabled={!canRedo(hist)} onClick={() => dispatch({ type: "redo" })} />
         </ButtonGroup>
-        <span className={styles.saveStatus} role="status" data-testid="save-status">
-          {saveState === "error" ? <CloudOff size={16} aria-hidden /> : saveState === "saved" ? <CloudCheck size={16} aria-hidden /> : null}
+        <span className={styles.saveStatus} role="status" data-testid="save-status" data-state={saveState} title={statusText || undefined}>
+          {saveState === "error" ? (
+            <CloudOff size={16} aria-hidden />
+          ) : saveState === "saved" ? (
+            <CloudCheck size={16} aria-hidden />
+          ) : saveState === "saving" || saveState === "dirty" ? (
+            <CloudUpload size={16} aria-hidden />
+          ) : null}
           <span className={styles.saveStatusText}>{statusText}</span>
         </span>
+        {saveState === "error" && online ? (
+          <Button size="slim" variant="tertiary" onClick={retryNow}>
+            {t("designer.save.retry")}
+          </Button>
+        ) : null}
         <span className={styles.toolbarSpacer} />
         <span className={styles.preflightChip}>
           <PreflightBadge summary={summary} />
@@ -698,6 +816,7 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
                     roleDescription={t("viewer.roleDescription")}
                     keyboardHint={t("viewer.keyboardHint")}
                     fallback={t("viewer.unsupported")}
+                    onReady={onSceneReady}
                   />
                 ) : (
                   <Scene3D
@@ -716,27 +835,20 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
                     scene={viewOpts.scene}
                     turntable={viewOpts.turntable}
                     locale={locale}
+                    poster={libModel ? `/models/${libModel.slug}.svg` : undefined}
+                    onReady={onSceneReady}
                     ariaLabel={t("viewer.label")}
                     roleDescription={t("viewer.roleDescription")}
                     keyboardHint={t("viewer.keyboardHint")}
                     fallback={t("viewer.unsupported")}
                   />
                 )}
-                <div className={styles.viewControls}>
-                  <ViewControls
-                    handle={sceneRef}
-                    labels={{
-                      group: t("viewer.controls"),
-                      rotateLeft: t("viewer.rotateLeft"),
-                      rotateRight: t("viewer.rotateRight"),
-                      tiltUp: t("viewer.tiltUp"),
-                      tiltDown: t("viewer.tiltDown"),
-                      zoomIn: t("viewer.zoomIn"),
-                      zoomOut: t("viewer.zoomOut"),
-                      reset: t("viewer.reset"),
-                    }}
-                  />
-                </div>
+                {/* Large poster from the first paint until the 3D chunk renders a frame (PERF-10). */}
+                {libModel ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={`/models/${libModel.slug}.svg`} alt="" aria-hidden="true" className={styles.stagePoster} data-hidden={sceneReady ? "true" : undefined} />
+                ) : null}
+                {wide ? <div className={styles.viewControls}>{viewControls}</div> : null}
               </div>
               {view === "face" && faceInfo ? (
                 <FaceEditor
@@ -756,8 +868,9 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
                   onChange={onLayerChange}
                   onCommit={seal}
                   onDelete={onDelete}
-                  label={t("designer.view.faceEditorLabel", { face: t(`designer.faces.${face}` as DictKey) })}
+                  label={t("designer.view.faceEditorLabel", { face: faceLabel(face) })}
                   hint={t("designer.view.faceEditorHint")}
+                  selectedLabel={(l) => `${t("designer.artwork.selected")}: ${layerName(l, t)}`}
                 />
               ) : null}
               {view === "dieline" ? (
@@ -778,6 +891,7 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
           )}
         </div>
 
+        {view === "3d" && !wide ? <div className={styles.viewControlsRow}>{viewControls}</div> : null}
         {view === "3d" && isVessel ? (
           <div className={styles.foldRow}>
             <ButtonGroup variant="segmented" accessibilityLabel={t("library.panel.closure")}>
@@ -815,7 +929,7 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
                 {t("designer.view.half")}
               </Button>
               <Button size="slim" pressed={fold === 1} onClick={() => setFold(1)}>
-                {t("designer.view.closed")}
+                {openTop ? t("designer.view.assembled") : t("designer.view.closed")}
               </Button>
             </ButtonGroup>
           </div>
@@ -824,12 +938,39 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
 
       {/* ── side panel / bottom sheet ── */}
       <aside className={styles.panel} aria-label={t("designer.tabs.label")}>
-        <button type="button" className={styles.sheetToggle} aria-expanded={sheetOpen} onClick={() => setSheetOpen((o) => !o)}>
+        <button
+          type="button"
+          className={styles.sheetToggle}
+          aria-expanded={sheetOpen}
+          aria-controls="designer-panel"
+          onClick={() => {
+            if (swipedRef.current) swipedRef.current = false;
+            else setSheetOpen((o) => !o);
+          }}
+          // Swipe the handle up / down as a shortcut; a tap does the same (WCAG 2.5.7).
+          onPointerDown={(e) => {
+            swipeY.current = e.clientY;
+            swipedRef.current = false;
+            e.currentTarget.setPointerCapture?.(e.pointerId);
+          }}
+          onPointerUp={(e) => {
+            if (swipeY.current === null) return;
+            const dy = e.clientY - swipeY.current;
+            swipeY.current = null;
+            if (Math.abs(dy) > 24) {
+              swipedRef.current = true;
+              setSheetOpen(dy < 0);
+            }
+          }}
+          onPointerCancel={() => {
+            swipeY.current = null;
+          }}
+        >
           {sheetOpen ? <ChevronDown size={20} aria-hidden /> : <ChevronUp size={20} aria-hidden />}
           <span>{sheetOpen ? t("designer.sheet.collapse") : t("designer.sheet.expand")}</span>
         </button>
-        <div className={styles.panelInner}>
-          <Tabs tabs={tabs} selected={tab} onSelect={setTab} fitted accessibilityLabel={t("designer.tabs.label")}>
+        <div className={styles.panelInner} id="designer-panel">
+          <Tabs tabs={tabs} selected={tab} onSelect={(i) => startTransition(() => setTab(i))} fitted accessibilityLabel={t("designer.tabs.label")}>
             <div className={styles.panelBody} data-tab={TAB_IDS[tab]}>
               {tab === 0 ? (
                 libModel ? (
@@ -839,15 +980,16 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
                     geo={geo}
                     view={viewOpts}
                     onView={setViewOpts}
-                    onOpenPicker={() => setPickerOpen(true)}
+                    onOpenPicker={openPicker}
                     onGeometry={changeGeometry}
-                    onFinish={(code, on) => commit(toggleFinish(docRef.current, code, on))}
-                    onPrintSides={(p) => commit({ ...docRef.current, printSides: p })}
+                    onFinish={onFinish}
+                    onPrintSides={onPrintSides}
                   />
                 ) : null
               ) : tab === 1 ? (
                 <ArtworkPanel
                   faces={faces}
+                  faceLabel={faceLabel}
                   face={face}
                   surface={surface}
                   bothSides={bothSides}
@@ -876,9 +1018,9 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
                   onDelete={() => selected && onDelete(selected.id)}
                 />
               ) : tab === 2 ? (
-                <LayersPanel doc={doc} faces={faces} issues={issues} selectedId={selectedId} onSelect={(id, f, s) => goToLayer(id, f, s)} />
+                <LayersPanel doc={doc} faces={faces} faceLabel={faceLabel} issues={issues} selectedId={selectedId} onSelect={(id, f, s) => goToLayer(id, f, s)} />
               ) : (
-                <PreflightPanel issues={issues} summary={summary} layers={allLayers(doc)} onShow={(id, f) => goToLayer(id, f)} />
+                <PreflightPanel issues={issues} summary={summary} layers={allLayers(doc)} faceLabel={faceLabel} onShow={(id, f) => goToLayer(id, f)} />
               )}
               {!user && tab !== 3 ? (
                 <Text as="p" variant="bodySm" tone="subdued">
@@ -890,7 +1032,7 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
         </div>
       </aside>
 
-      <ModelPicker open={pickerOpen} cards={PICKER_CARDS} current={docModelCode(doc)} onClose={() => setPickerOpen(false)} onPick={onModel} />
+      {pickerUsed ? <ModelPicker open={pickerOpen} cards={pickerCards} current={docModelCode(doc)} onClose={() => setPickerOpen(false)} onPick={onModel} /> : null}
       <GateModal reason={gate?.reason ?? null} onClose={() => setGate(null)} onSuccess={onSignedIn} />
       <PriceModal
         open={modal === "price"}

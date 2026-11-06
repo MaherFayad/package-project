@@ -1,38 +1,13 @@
-import { STRUCTURE_CODES, type Dims, type DimsPreset, type StructureCode } from "@/types";
+import { type Dims, type DimsPreset, type StructureCode } from "@/types";
 import { DEFAULT_DIMS, STRUCTURES } from "@/lib/dieline";
+import { STRUCTURE_SLUGS } from "./paths";
 import { modelByCode } from "@/lib/library";
 
 /**
  * Static catalog facts the designer needs on the client (mirrors prisma/seed.ts). Server pages
  * read the Structure rows from the DB and fall back to this when the DB is empty.
  */
-export const STRUCTURE_SLUGS: Record<StructureCode, string> = {
-  FEFCO_0427: "mailer-box",
-  FEFCO_0201: "shipping-box",
-  ECMA_RTE: "reverse-tuck-end",
-  ECMA_STE: "straight-tuck-end",
-  PIZZA: "pizza-box",
-  SLEEVE: "sleeve",
-  FEFCO_0320: STRUCTURES.FEFCO_0320.slug,
-  ECMA_CLB: STRUCTURES.ECMA_CLB.slug,
-  ECMA_SLB: STRUCTURES.ECMA_SLB.slug,
-  FEFCO_0422: STRUCTURES.FEFCO_0422.slug,
-  GABLE_BOX: STRUCTURES.GABLE_BOX.slug,
-  PAPER_TUBE: STRUCTURES.PAPER_TUBE.slug,
-  RIGID_BOX: STRUCTURES.RIGID_BOX.slug,
-  ROLL_LABEL: STRUCTURES.ROLL_LABEL.slug,
-  PRINTED_POUCH: STRUCTURES.PRINTED_POUCH.slug,
-  PRINTED_TUBE: STRUCTURES.PRINTED_TUBE.slug,
-};
-
-/** Accepts a slug ("mailer-box") or a code in any case ("fefco_0427"). */
-export function structureFromParam(param: string): StructureCode | null {
-  const p = decodeURIComponent(param).trim();
-  const bySlug = (Object.entries(STRUCTURE_SLUGS) as [StructureCode, string][]).find(([, s]) => s === p.toLowerCase());
-  if (bySlug) return bySlug[0];
-  const upper = p.toUpperCase().replace(/-/g, "_");
-  return (STRUCTURE_CODES as readonly string[]).includes(upper) ? (upper as StructureCode) : null;
-}
+export { STRUCTURE_SLUGS, structureFromParam, PRODUCT_PRESETS, type ProductPresetKey } from "./paths";
 
 /** Editor URL for a core structure or ANY library model code (family style, container). */
 export function designerPath(locale: string, code: StructureCode | string, query?: Record<string, string | undefined>): string {
@@ -87,14 +62,7 @@ export const FALLBACK_PRESETS: Record<StructureCode, DimsPreset[]> = {
 };
 
 /** Product shortcuts shown on the picker ("shoe box", "perfume 50 ml", ...). */
-export const PRODUCT_PRESETS = [
-  { key: "tshirt", structureCode: "FEFCO_0427", presetId: "tshirt" },
-  { key: "shoe", structureCode: "FEFCO_0427", presetId: "shoe" },
-  { key: "perfume50", structureCode: "ECMA_RTE", presetId: "perfume-50ml" },
-  { key: "pizza30", structureCode: "PIZZA", presetId: "pizza-30" },
-] as const satisfies readonly { key: string; structureCode: StructureCode; presetId: string }[];
 
-export type ProductPresetKey = (typeof PRODUCT_PRESETS)[number]["key"];
 
 /** Dims for a preset id, or the structure default. */
 export function presetDims(code: StructureCode, presetId: string | null | undefined, presets = FALLBACK_PRESETS[code]): Dims {

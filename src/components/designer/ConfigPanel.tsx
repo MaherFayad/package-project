@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode, memo } from "react";
 import { FACE_IDS, type DesignDoc, type DesignFinishCode, type Dims, type FaceId, type MaterialCode, type StructureFeatures } from "@/types";
 import { CLOSURE_COLORS, LIQUIDS, type ClosureColorCode, type LiquidCode, type VesselDims } from "@/lib/vessels";
 import { BOARD_SPECS } from "@/lib/dieline";
@@ -40,7 +40,8 @@ export interface ConfigPanelProps {
  * option is listed, the ones no printer can make are disabled WITH the reason (Arabic or
  * English), warnings are shown under the option.
  */
-export function ConfigPanel(props: ConfigPanelProps) {
+/** Memoised: a price badge or tab click does not re-render the configurator (PERF-18). */
+export const ConfigPanel = memo(function ConfigPanel(props: ConfigPanelProps) {
   const { doc, model, onOpenPicker } = props;
   const { t, locale } = useI18n();
   const base = t(`structures.${doc.structureCode}` as DictKey);
@@ -53,9 +54,11 @@ export function ConfigPanel(props: ConfigPanelProps) {
           <Text as="h3" variant="headingSm">
             <span data-testid="model-name">{model.name[locale]}</span>
           </Text>
-          <Text as="p" variant="bodySm" tone="subdued">
-            <span dir="ltr">{model.standard || model.code}</span>
-          </Text>
+          {model.standard && model.standard !== "none" ? (
+            <Text as="p" variant="bodySm" tone="subdued">
+              <span dir="ltr">{model.standard}</span>
+            </Text>
+          ) : null}
           {model.code !== doc.structureCode ? (
             <Text as="p" variant="bodySm" tone="subdued">
               {t("library.panel.base", { base })}
@@ -71,7 +74,7 @@ export function ConfigPanel(props: ConfigPanelProps) {
       {model.kind === "box" ? <BoxSection {...props} model={model} /> : <VesselSection {...props} model={model} />}
     </div>
   );
-}
+});
 
 /* ───────────────────────────── shared bits ───────────────────────────── */
 
@@ -275,7 +278,7 @@ function BoxSection({ doc, model, geo, view, onView, onGeometry, onFinish, onPri
               value={draft[axis]}
               onChange={(v) => tryDims({ ...draft, [axis]: v })}
               helpText={`${lims[axis].min}–${lims[axis].max}`}
-              suffix="mm"
+              suffix={t("common.mm")}
             />
           ))}
         </div>
@@ -441,7 +444,7 @@ function VesselSection({ doc, model, geo, view, onView, onGeometry, onFinish }: 
                 value={draft[a]}
                 onChange={(val) => tryDims({ ...draft, [a]: val })}
                 helpText={`${r.min}–${r.max}`}
-                suffix="mm"
+                suffix={t("common.mm")}
               />
             );
           })}

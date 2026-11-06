@@ -8,6 +8,7 @@ import { Badge, BlockStack, Button, Card, EmptyState, EmptyBoxIllustration, Inli
 import { SharedViewerLazy } from "./SharedViewerLazy";
 import { designerPath } from "@/components/designer/lib/catalog";
 import { loadSharedDesign } from "@/components/designer/server";
+import { modelByCode } from "@/lib/library";
 
 export const dynamic = "force-dynamic";
 
@@ -65,7 +66,7 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
     <Page title={name} subtitle={t("designer.shared.subtitle")} titleMetadata={<Badge tone="info">{t(`structures.${doc.structureCode}` as DictKey)}</Badge>}>
       <Layout>
         <LayoutSection>
-          <SharedViewerLazy doc={doc} />
+          <SharedViewerLazy doc={doc} poster={`/models/${modelByCode(doc.modelCode ?? doc.structureCode)?.slug ?? "mailer-box"}.svg`} />
         </LayoutSection>
         <LayoutSection variant="oneThird" as="aside">
           <BlockStack gap="400">

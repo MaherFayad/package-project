@@ -51,6 +51,7 @@ export function DesignScene({
       printInside={doc.printSides === "BOTH"}
       handleRef={handleRef}
       locale={locale}
+      poster={`/models/${geo.model.slug}.svg`}
       {...labels}
     />
   );

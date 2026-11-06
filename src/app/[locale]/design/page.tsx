@@ -1,13 +1,11 @@
 import type { Metadata } from "next";
-import { Footprints, Pizza, Shirt, SprayCan } from "lucide-react";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getT, toLocale } from "@/i18n";
-import type { DictKey } from "@/i18n/types";
-import { Badge, BlockStack, Box, EmptyState, EmptyBoxIllustration, Page, Text } from "@/components/ui";
-import { PRODUCT_PRESETS, designerPath, structureFromParam } from "@/components/designer/lib/catalog";
+import { BlockStack, Box, EmptyState, EmptyBoxIllustration, Text } from "@/components/ui";
+import { designerPath, structureFromParam } from "@/components/designer/lib/catalog";
 import { loadPickerStructures } from "@/components/designer/server";
 import { ResumeCard } from "@/components/designer/ResumeCard";
+import { DesignStart } from "@/components/designer/DesignStart";
 import { ModelLinks } from "@/components/designer/ModelLinks";
 import { MODELS } from "@/lib/library";
 import { formatNumber } from "@/lib/format";
@@ -24,8 +22,6 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     alternates: { canonical: `/${locale}/design`, languages: { ar: "/ar/design", en: "/en/design" } },
   };
 }
-
-const PRODUCT_ICONS = { tshirt: Shirt, shoe: Footprints, perfume50: SprayCan, pizza30: Pizza } as const;
 
 /** Structure picker: pick a style (or a product shortcut), then design for free. */
 export default async function DesignPickerPage({
@@ -58,49 +54,14 @@ export default async function DesignPickerPage({
   const structures = await loadPickerStructures();
 
   return (
-    <Page title={t("designer.picker.heading")} subtitle={t("designer.picker.subtitle")} titleMetadata={<Badge tone="success">{t("designer.freeBadge")}</Badge>}>
-      <BlockStack gap="600">
+    <div className={styles.startPage}>
         <ResumeCard locale={locale} />
+        <DesignStart locale={locale} />
 
-        <section aria-labelledby="presets-heading">
+        <section aria-labelledby="styles-heading" className={styles.startCatalog}>
           <BlockStack gap="300">
             <BlockStack gap="100">
-              <Text as="h2" variant="headingMd" id="presets-heading">
-                {t("designer.picker.presetsHeading")}
-              </Text>
-              <Text as="p" tone="subdued">
-                {t("designer.picker.presetsSubtitle")}
-              </Text>
-            </BlockStack>
-            <ul className={styles.productGrid}>
-              {PRODUCT_PRESETS.map((p) => {
-                const IconC = PRODUCT_ICONS[p.key];
-                return (
-                  <li key={p.key}>
-                    <Link className={styles.productLink} href={designerPath(locale, p.structureCode, { preset: p.presetId })}>
-                      <span className={styles.productIcon} aria-hidden="true">
-                        <IconC size={20} />
-                      </span>
-                      <BlockStack gap="050">
-                        <Text as="span" fontWeight="semibold">
-                          {t(`designer.productPresets.${p.key}` as DictKey)}
-                        </Text>
-                        <Text as="span" variant="bodySm" tone="subdued">
-                          {t(`structures.${p.structureCode}` as DictKey)}
-                        </Text>
-                      </BlockStack>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </BlockStack>
-        </section>
-
-        <section aria-labelledby="styles-heading">
-          <BlockStack gap="300">
-            <BlockStack gap="100">
-              <Text as="h2" variant="headingMd" id="styles-heading">
+              <Text as="h2" variant="headingLg" id="styles-heading">
                 {t("library.picker.title")}
               </Text>
               <Text as="p" tone="subdued">
@@ -118,7 +79,6 @@ export default async function DesignPickerPage({
             )}
           </BlockStack>
         </section>
-      </BlockStack>
-    </Page>
+    </div>
   );
 }

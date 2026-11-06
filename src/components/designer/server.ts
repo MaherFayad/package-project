@@ -254,3 +254,27 @@ export async function loadPresets(code: StructureCode): Promise<DimsPreset[]> {
   const p = row ? fromJson<DimsPreset[]>(row.presets) : null;
   return Array.isArray(p) && p.length ? p : FALLBACK_PRESETS[code];
 }
+
+// ── 3D chunk preloads (PERF-10) ───────────────────────────────────────────
+let loadable: Record<string, { files?: string[] }> | null | undefined;
+
+/**
+ * JS files of a `next/dynamic` import in DesignerApp ("./Scene3D" or "./VesselView"), read from
+ * the build's react-loadable manifest, so the page can ask the browser to fetch three.js while it
+ * hydrates instead of after. Empty under `next dev` or when the manifest is missing.
+ */
+export function lazyChunkHrefs(entry: "./Scene3D" | "./VesselView"): string[] {
+  if (loadable === undefined) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const fs = require("node:fs") as typeof import("node:fs");
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const path = require("node:path") as typeof import("node:path");
+      loadable = JSON.parse(fs.readFileSync(path.join(process.cwd(), ".next", "react-loadable-manifest.json"), "utf8"));
+    } catch {
+      loadable = null;
+    }
+  }
+  const files = loadable?.[`components/designer/DesignerApp.tsx -> ${entry}`]?.files ?? [];
+  return files.filter((f) => f.endsWith(".js") && /^static\/chunks\/[\w.-]+\.js$/.test(f)).map((f) => `/_next/${f}`);
+}

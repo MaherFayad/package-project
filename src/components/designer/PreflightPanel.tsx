@@ -16,11 +16,13 @@ export function PreflightPanel({
   issues,
   summary,
   layers,
+  faceLabel,
   onShow,
 }: {
   issues: PreflightIssue[];
   summary: PreflightSummary;
   layers: ArtworkLayer[];
+  faceLabel?: (f: FaceId) => string;
   onShow: (layerId: string | undefined, face: FaceId | undefined) => void;
 }) {
   const { t } = useI18n();
@@ -71,7 +73,7 @@ export function PreflightPanel({
                       <Badge tone={TONE[i.severity]}>{t(`designer.check.severity.${i.severity}` as DictKey)}</Badge>
                       {i.face && layer ? (
                         <Text as="span" variant="bodySm" tone="subdued">
-                          {t("designer.check.on", { face: t(`designer.faces.${i.face}` as DictKey), layer: layerName(layer, t) })}
+                          {t("designer.check.on", { face: faceLabel ? faceLabel(i.face) : t(`designer.faces.${i.face}` as DictKey), layer: layerName(layer, t) })}
                         </Text>
                       ) : null}
                     </InlineStack>

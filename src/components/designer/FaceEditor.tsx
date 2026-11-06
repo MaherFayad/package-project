@@ -37,16 +37,18 @@ export interface FaceEditorProps {
   onDelete: (id: string) => void;
   label: string;
   hint: string;
+  /** Spoken when the selection changes ("Text “Your brand”"). */
+  selectedLabel?: (layer: ArtworkLayer) => string;
 }
 
 /**
  * 2D artwork editor for one face (face-local mm, as seen from outside; never mirrored in RTL).
  * Pointer: drag to move, corner handle to resize, top handle to rotate.
  * Keyboard (WCAG 2.1.1): arrows move 1 mm (Shift: 10 mm), + / - resize, [ / ] rotate 15°,
- * Delete removes, Escape deselects. The Artwork panel offers the same with buttons (WCAG 2.5.7).
+ * Enter / Space selects the next item, Delete removes, Escape deselects. The Artwork panel offers the same with buttons (WCAG 2.5.7).
  */
 export function FaceEditor(props: FaceEditorProps) {
-  const { face, surface, layers, background, boardColor, safeMm, images, paintVersion, selectedId, onSelect, onChange, onCommit, onDelete, label, hint } = props;
+  const { face, surface, layers, background, boardColor, safeMm, images, paintVersion, selectedId, onSelect, onChange, onCommit, onDelete, label, hint, selectedLabel } = props;
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -146,6 +148,17 @@ export function FaceEditor(props: FaceEditorProps) {
   const selected = layers.find((l) => l.id === selectedId) ?? null;
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    // Enter / Space picks the next item on this panel (top-most first), so a keyboard user can
+    // reach every item without the pointer (WCAG 2.1.1). Shift goes back.
+    if ((e.key === "Enter" || e.key === " ") && e.target === e.currentTarget) {
+      const visible = layers.filter((l) => !l.hidden).reverse();
+      if (!visible.length) return;
+      const i = selected ? visible.findIndex((l) => l.id === selected.id) : -1;
+      const next = visible[(i + (e.shiftKey ? -1 : 1) + visible.length) % visible.length] ?? visible[0];
+      onSelect(next.id);
+      e.preventDefault();
+      return;
+    }
     if (!selected) return;
     if (e.key === "Escape") {
       onSelect(null);
@@ -213,6 +226,9 @@ export function FaceEditor(props: FaceEditorProps) {
     >
       <span id={hintId} className="visually-hidden">
         {hint}
+      </span>
+      <span className="visually-hidden" aria-live="polite">
+        {selected ? selectedLabel?.(selected) : ""}
       </span>
       {scale > 0 && (
         <div className={styles.faceSheet} style={{ width: cssW, height: cssH }}>
