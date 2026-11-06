@@ -227,9 +227,9 @@ export const COSMETIC_DEFINITIONS: CatalogueVesselDefinition[] = [
     family: "COSMETIC",
     subFamily: MAKEUP,
     standard: null,
-    coreKind: null,
+    coreKind: "ROUND_BOTTLE", // screw-cap core so the renderer draws its BULLET_CAP style
     geometry: "lathe",
-    shape: { type: "case", section: "round", capSplit: 0.42, wallMm: 0.8 },
+    shape: { type: "case", section: "round", capSplit: 0.42, wallMm: 0.8, cap: "bullet" },
     materials: ["ALUMINIUM", "ABS_BLACK"],
     defaultMaterial: "ALUMINIUM",
     closures: ["BULLET_CAP"],

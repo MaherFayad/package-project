@@ -11,3 +11,4 @@ export { solveShape, panelPoint, stripLength, orient, type FlexShape, type Shape
 export { buildFlexibleModel, crimpNormalTexture, wrinkleAt, type FlexModel, type FlexMeshPart, type FlexPartRole } from "./geometry";
 export { FILM_MATERIALS, createFilmMaterial, createHardwareMaterial, type FilmMaterial, type FilmMaterialOptions } from "./materials";
 export { buildFlexibleGroup, type FlexGroupOptions } from "./group";
+export { flexDisplayEnvelope, defaultPrintPanels } from "./display";

@@ -8,12 +8,19 @@ const geo = (code: string) => {
 };
 
 describe("closure anchors (core closure placement)", () => {
-  it.each(["CAN-TUNA", "CAN-SARDINE", "CAN-OVAL-FISH"])("%s: core pull tab lies on the end panel", (code) => {
+  it.each(["CAN-TUNA", "CAN-SARDINE", "CAN-OVAL-FISH", "CAN-FOOD-3PC"])("%s: closure anchored on the end panel (EOE_RING / PEEL_FOIL sit there, core tab stays under it)", (code) => {
     const { def, d, g } = geo(code);
     expect(def.coreKind ?? "CAN").toBe("CAN");
     const endDepth = def.shape.type === "metalcan" ? def.shape.endDepthMm : 0;
-    // CAN_END tab underside sits 5.15 mm below finishTopY
-    expect(g.profile!.finishTopY - 5.15).toBeCloseTo(d.H - endDepth, 3);
+    expect(g.profile!.finishTopY).toBeCloseTo(d.H - endDepth, 3);
+  });
+
+  it("lipstick: bullet overcap anchored so its top is the case top, split groove under its edge", () => {
+    const { def, d, g } = geo("COS-LIPSTICK");
+    expect(def.coreKind).toBe("ROUND_BOTTLE");
+    const R = d.D / 2;
+    const h = Math.max(24, 3.2 * (R + 1));
+    expect(g.profile!.finishTopY + 0.45 * h).toBeCloseTo(d.H, 3);
   });
 
   it.each(["TIN-GIFT-SQUARE", "TIN-TEA-CADDY", "CAN-PAINT", "COS-DEO-STICK"])("%s: lid is in the profile and the round core closure is hidden inside", (code) => {
@@ -35,7 +42,7 @@ describe("closure anchors (core closure placement)", () => {
 });
 
 describe("non-round tubs and trays (3d-visual V-12)", () => {
-  it.each(["TUB-ICE-RECT", "TRAY-CLAMSHELL", "TRAY-PUNNET"])("%s: lid follows the footprint, core closure shrunk and parked under the base", (code) => {
+  it.each(["TUB-ICE-RECT", "TRAY-CLAMSHELL"])("%s: lid in the profile follows the footprint, core closure shrunk and parked under the base", (code) => {
     const { d, g } = geo(code);
     const p = g.profile!;
     expect(p.section.kind).toBe("roundedRect");
@@ -44,5 +51,13 @@ describe("non-round tubs and trays (3d-visual V-12)", () => {
     const last = p.outer[p.outer.length - 1];
     expect(last.r).toBeLessThan(0.5);
     expect(last.y).toBeGreaterThan(d.H - 1);
+  });
+
+  it("TRAY-PUNNET: open rim at H for the renderer's section-following PEEL_FOIL; round fallback shrunk", () => {
+    const { d, g } = geo("TRAY-PUNNET");
+    const p = g.profile!;
+    expect(p.finishTopY).toBeCloseTo(d.H, 1);
+    expect(p.finishR).toBeLessThan(1);
+    expect(Math.max(...p.outer.map((q) => q.y))).toBeCloseTo(d.H, 1);
   });
 });
