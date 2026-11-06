@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ChevronDown, ChevronUp, CloudCheck, CloudOff, CloudUpload, Download, Move3d, MoreHorizontal, Redo2, RotateCcw, Save, Share2, Undo2, ZoomIn, ZoomOut } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ChevronDown, ChevronUp, CloudCheck, CloudOff, CloudUpload, Download, Move3d, MoreHorizontal, Pencil, Redo2, RotateCcw, Save, Share2, Undo2, ZoomIn, ZoomOut } from "lucide-react";
 import { startTransition, useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { FACE_IDS, type ArtworkLayer, type DesignDoc, type DesignFinishCode, type DimsPreset, type FaceId, type Locale, type PrintSurface, type StructureCode } from "@/types";
 import { boardAppearance, type DielineModel } from "@/lib/dieline";
@@ -22,6 +22,7 @@ import {
   Button,
   ButtonGroup,
   Icon,
+  Modal,
   Popover,
   RangeSlider,
   Select,
@@ -242,6 +243,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
   const [shareError, setShareError] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [viewMenuOpen, setViewMenuOpen] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   // Mounted on first open and kept (so closing animates and returns focus).
   const [pickerUsed, setPickerUsed] = useState(false);
@@ -1017,6 +1019,9 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
                 { content: t("designer.export.button"), icon: Download, onAction: doExport },
                 { content: t("designer.share.button"), icon: Share2, onAction: doShare },
                 { content: t("designer.save.save"), icon: Save, onAction: doSave },
+                // R5-JR-14: phones have no name field in the toolbar; the share page and follow-ups
+                // used the style name for every phone design.
+                { content: t("designer.save.rename"), icon: Pencil, onAction: () => setRenameOpen(true) },
               ]}
             />
           </Popover>
@@ -1361,6 +1366,31 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
         }}
       />
       <ShareModal open={modal === "share"} onClose={() => setModal(null)} url={shareUrl} error={shareError} vessel={isVessel} />
+      <Modal
+        open={renameOpen}
+        onClose={() => {
+          seal();
+          setRenameOpen(false);
+        }}
+        title={t("designer.save.renameHeading")}
+        size="small"
+        primaryAction={{
+          content: t("designer.save.renameDone"),
+          onAction: () => {
+            seal();
+            setRenameOpen(false);
+          },
+        }}
+      >
+        <TextField
+          label={t("designer.save.name")}
+          autoComplete="off"
+          maxLength={120}
+          placeholder={t(isVessel ? "designer.container.untitled" : "designer.untitled")}
+          value={doc.name}
+          onChange={(v) => commit({ ...docRef.current, name: v }, "name")}
+        />
+      </Modal>
       <BrandColorsModal open={brandModal !== null} colors={brandColors} initialHex={brandModal?.hex ?? null} onClose={() => setBrandModal(null)} onSave={saveBrandColors} />
     </div>
     </BrandColorsProvider>

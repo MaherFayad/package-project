@@ -284,3 +284,20 @@ test("brand colours: saved per account, shown first, sent with the design", asyn
   const saved = await (await page.request.get(`/api/designs/${id}`)).json();
   expect(saved.doc.brandColors?.[0]?.spot).toBe("PMS 2603 C");
 });
+
+test("phones can rename a design from More actions (R5-JR-14)", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile", "the toolbar name field covers desktop");
+  test.setTimeout(90_000);
+  await page.goto("/en/design/mailer-box");
+  await expect(page.getByTestId("stage-3d").locator("canvas").first()).toBeVisible({ timeout: 45_000 });
+  await page.getByRole("button", { name: "More actions" }).click();
+  await page.getByRole("menuitem", { name: "Rename" }).click();
+  const dlg = page.getByRole("dialog", { name: "Rename design" });
+  await dlg.getByLabel("Design name").fill("Phone named box");
+  await dlg.getByRole("button", { name: "Done" }).click();
+  await expect(dlg).toBeHidden();
+  await expect(page).toHaveURL(/[?&]d=[\w-]+/, { timeout: 20_000 });
+  await expect(page.getByTestId("save-status")).toHaveAttribute("data-state", "saved", { timeout: 20_000 });
+  const saved = await (await page.request.get(`/api/designs/${new URL(page.url()).searchParams.get("d")}`)).json();
+  expect(saved.doc.name).toBe("Phone named box");
+});

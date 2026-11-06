@@ -26,7 +26,7 @@ export type PriceState =
   | { status: "idle" }
   | { status: "locked" }
   | { status: "loading" }
-  | { status: "ready"; quantity: number; best: BadgeOffer; vendorCount: number; suggestion: BadgeSuggestion | null; validUntil: string }
+  | { status: "ready"; quantity: number; best: BadgeOffer; vendorCount: number; suggestion: BadgeSuggestion | null; validUntil: string; prepayDiscountPct?: number }
   | { status: "none" }
   /** Added by catalogue (B-16): the model is priced by quote (special gluing, quote-only stock, rare in Egypt, filling line). */
   | { status: "quote"; reason: "SPECIAL_GLUING" | "QUOTE_ONLY_STOCK" | "RARE_IN_EGYPT" | "FILLING_LINE" }
@@ -80,6 +80,7 @@ export function toPriceState(status: number, body: unknown): PriceState {
     offers?: BadgeOffer[];
     suggestion?: BadgeSuggestion | null;
     validUntil?: string;
+    prepayDiscountPct?: number;
   };
   if (b.mode === "manual_quote" && b.reason === "MODEL_BY_QUOTE") return { status: "quote", reason: b.orderReason ?? "QUOTE_ONLY_STOCK" };
   if (b.mode !== "instant" || !Array.isArray(b.offers)) return { status: "error" };
@@ -92,6 +93,7 @@ export function toPriceState(status: number, body: unknown): PriceState {
     vendorCount: b.offers.length,
     suggestion: b.suggestion ?? null,
     validUntil: b.validUntil ?? best.validUntil,
+    ...(typeof b.prepayDiscountPct === "number" && b.prepayDiscountPct > 0 ? { prepayDiscountPct: b.prepayDiscountPct } : {}),
   };
 }
 
