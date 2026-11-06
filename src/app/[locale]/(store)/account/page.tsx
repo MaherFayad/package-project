@@ -10,6 +10,7 @@ import type { Dims, OrderStatus } from "@/types";
 import { Badge, Button, Card, EmptyBoxIllustration, EmptyState, Layout, LayoutSection, Text, Thumbnail } from "@/components/ui";
 import { designHref } from "@/components/store/catalog";
 import type { DataRequestStatus } from "@/components/store/account-logic";
+import { statusBadge } from "@/lib/orders/state";
 import { AccountSignOut, DataRights, DeleteDesignButton, MarketingConsent, ProfileForm } from "./AccountClient";
 import styles from "@/components/store/store.module.css";
 
@@ -19,14 +20,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const locale = toLocale((await params).locale);
   return { title: getT(locale)("account.title"), robots: { index: false, follow: false } };
 }
-
-const STATUS_TONE: Partial<Record<OrderStatus, "success" | "attention" | "info" | "warning" | "critical" | "neutral">> = {
-  PENDING_PAYMENT: "warning",
-  DELIVERED: "success",
-  SHIPPED: "info",
-  CANCELLED: "critical",
-  REFUNDED: "neutral",
-};
 
 /** Buyer account: saved designs, orders, profile, consent management and PDPL data rights. */
 export default async function AccountPage({ params }: Props) {
@@ -53,6 +46,11 @@ export default async function AccountPage({ params }: Props) {
             <Text as="p" tone="subdued">
               {name ? t("account.greeting", { name }) : t("account.greetingNoName")}
             </Text>
+            {!name ? (
+              <Text as="p" variant="bodySm" tone="subdued">
+                {t("buyer.addName")}
+              </Text>
+            ) : null}
           </div>
           <AccountSignOut />
         </div>
@@ -89,8 +87,11 @@ export default async function AccountPage({ params }: Props) {
                             </Text>
                           </div>
                           <div className={styles.designActions}>
-                            <Button url={designHref(locale, { design: d.id })} size="slim" accessibilityLabel={`${t("account.openDesign")}: ${label}`}>
+                            <Button url={designHref(locale, { design: d.id })} size="slim" variant="plain" accessibilityLabel={`${t("account.openDesign")}: ${label}`}>
                               {t("account.openDesign")}
+                            </Button>
+                            <Button url={`/${locale}/checkout/${encodeURIComponent(d.id)}`} size="slim" accessibilityLabel={`${t("buyer.order")}: ${label}`}>
+                              {t("buyer.order")}
                             </Button>
                             <DeleteDesignButton id={d.id} name={label} />
                           </div>
@@ -132,7 +133,7 @@ export default async function AccountPage({ params }: Props) {
                             {formatDate(o.placedAt, locale)} · <bdi>{formatMoney(o.totalPiasters, locale)}</bdi>
                           </Text>
                         </div>
-                        <Badge tone={STATUS_TONE[o.status as OrderStatus] ?? "attention"} progress={o.status === "DELIVERED" ? "complete" : "partiallyComplete"}>
+                        <Badge tone={statusBadge(o.status as OrderStatus).tone} progress={statusBadge(o.status as OrderStatus).progress}>
                           {t(`orderStatus.${o.status}` as DictKey)}
                         </Badge>
                       </li>

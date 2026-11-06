@@ -113,7 +113,8 @@ test("buyer checks out a saved design, pays by mock card and tracks the order", 
   await page.getByLabel("Card number").fill("4000 0000 0000 0002");
   await page.getByRole("button", { name: /^Pay / }).click();
   await expect(page.getByText("Your card was declined.")).toBeVisible();
-  await page.getByRole("button", { name: "Continue" }).click();
+  // A declined card keeps the buyer on the card form with a fresh attempt (no restart).
+  await expect(page.getByLabel("Card number")).toHaveValue("");
   await page.getByLabel("Card number").fill("4242 4242 4242 4242");
   await page.getByLabel("Expiry (MM/YY)").fill("12/30");
   await page.getByLabel("Security code").fill("123");

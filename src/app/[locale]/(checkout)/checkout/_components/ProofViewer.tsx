@@ -51,6 +51,7 @@ export function ProofViewer({ doc, handleRef }: { doc: DesignDoc; handleRef: Ref
             {geo ? <DesignScene doc={doc} geo={geo} canvases={canvases} version={version} fold={fold} handleRef={handleRef} /> : null}
             <div className={styles.viewControls}>
               <ViewControls
+                className={styles.viewBar}
                 handle={handleRef}
                 labels={{
                   group: t("viewer.controls"),

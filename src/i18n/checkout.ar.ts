@@ -4,7 +4,7 @@ import type { Dictionary } from "./types";
  * Checkout, orders, payment and notification strings in Arabic (owner: checkout).
  * MSA, noun-form labels, no diacritics, Western digits. Must match checkout.en.ts key for key.
  */
-export const checkoutAr: Pick<Dictionary, "checkout" | "payment" | "orders" | "shipment" | "governorates" | "notify"> = {
+export const checkoutAr: Pick<Dictionary, "checkout" | "payment" | "orders" | "shipment" | "governorates" | "notify" | "buyer"> = {
   checkout: {
     title: "إتمام الطلب",
     metaTitle: "إتمام الطلب: {name}",
@@ -443,5 +443,30 @@ export const checkoutAr: Pick<Dictionary, "checkout" | "payment" | "orders" | "s
     DELIVERED: "علبة: تم تسليم الطلب {number}. أخبرنا برأيك.",
     DISPUTE_OPENED: "علبة: استلمنا بلاغك عن الطلب {number} وسنرد خلال يوم عمل واحد.",
     REVIEW_THANKS: "علبة: شكرا على تقييم الطلب {number}.",
+  },
+  buyer: {
+    secureCheckout: "دفع آمن",
+    nextStep: "التالي: {step}",
+    subtotalExVat: "الإجمالي قبل الضريبة",
+    amountDue: "المبلغ المستحق الآن",
+    priceUpdated: "تم تحديث الإجمالي: {amount}",
+    viewSummary: "تفاصيل السعر",
+    manualOrderMax: "طلب {max} علبة الآن",
+    manualHelp: "الأسعار الفورية حتى {max} علبة. للكميات الأكبر اطلب {max} علبة الآن، ثم أعد الطلب للباقي من صفحة الطلب.",
+    qtyRange: "من 1 إلى {max}",
+    cancelTitle: "إلغاء الطلب؟",
+    cancelBody: "الطلب غير مدفوع، فلن يخصم أي مبلغ. يبقى تصميمك محفوظا ويمكنك طلبه مرة أخرى.",
+    keepOrder: "الإبقاء على الطلب",
+    declinedNewAttempt: "تم رفض البطاقة. راجع الرقم أو جرب بطاقة أخرى. لم يخصم أي مبلغ.",
+    successBody: "وصلت البروفة المعتمدة إلى {vendor}. التسليم المتوقع {date}. نرسل لك رسالة واتساب في كل خطوة.",
+    successBodyNoDate: "وصلت البروفة المعتمدة إلى {vendor}. نرسل لك رسالة واتساب في كل خطوة.",
+    whatNext: "الخطوات التالية",
+    next1: "تراجع المطبعة الملف وتبدأ الإنتاج.",
+    next2: "يراجع فريقنا صور أول فرخ مطبوع قبل الشحن.",
+    next3: "يتصل بك المندوب قبل التوصيل.",
+    order: "طلب",
+    shareOwnCopy: "عند الطلب تحصل على نسخة خاصة بك للطلب أو التعديل، ويبقى التصميم الأصلي كما هو.",
+    shareSignIn: "ستسجل الدخول برقم الموبايل أولا، والأمر يستغرق دقيقة.",
+    addName: "أضف اسمك في الملف الشخصي حتى يعرف المندوب من يسأل عنه.",
   },
 };

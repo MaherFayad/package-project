@@ -2,7 +2,7 @@
 
 import { BadgeCheck, Check, Clock, Star, Truck } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
 import { MAX_INSTANT_QTY, type DesignDoc, type Locale, type QuoteLine } from "@/types";
 import type { PackagingSceneHandle } from "@/components/three";
 import { useI18n } from "@/i18n/client";
@@ -105,6 +105,14 @@ export function CheckoutClient(props: {
 
   const offers = result.ok && result.mode === "instant" ? result.offers : [];
   const selected = offers.find((o) => o.vendorId === vendorId) ?? null;
+  const total = selected?.pay.totalPiasters ?? null;
+  const [announce, setAnnounce] = useState("");
+  const lastTotal = useRef(total);
+  useEffect(() => {
+    if (total === null || total === lastTotal.current) return;
+    lastTotal.current = total;
+    setAnnounce(t("buyer.priceUpdated", { amount: formatMoney(total, locale) }));
+  }, [total, locale, t]);
 
   const fetchOffers = useCallback(
     (quantity: number, governorate: string, after?: () => void) => {
@@ -128,7 +136,7 @@ export function CheckoutClient(props: {
   };
 
   const applyCustom = () => {
-    const n = Number(customQty);
+    const n = Number(customQty.trim().replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))).replace(/[,\s]/g, ""));
     if (!Number.isInteger(n) || n < 1) {
       setCustomErr(t("checkout.quantity.invalid", { max: MAX_INSTANT_QTY }));
       return;
@@ -283,24 +291,33 @@ export function CheckoutClient(props: {
         <Text as="p" variant="bodySm" tone="subdued" id="qty-help">
           {t("checkout.quantity.help", { max: MAX_INSTANT_QTY.toLocaleString("en-US") })}
         </Text>
-        <InlineStack gap="200" blockAlign="end" wrap={false}>
-          <Box width="100%">
+        <form
+          className={styles.customQty}
+          noValidate
+          onSubmit={(e) => {
+            e.preventDefault();
+            applyCustom();
+          }}
+        >
+          <div className={styles.customField}>
             <TextField
               label={t("checkout.quantity.custom")}
-              type="number"
+              type="text"
               inputMode="numeric"
               autoComplete="off"
-              min={1}
+              placeholder={t("buyer.qtyRange", { max: MAX_INSTANT_QTY.toLocaleString("en-US") })}
               value={customQty}
               onChange={setCustomQty}
               error={customErr}
               dir="ltr"
             />
-          </Box>
-          <Button onClick={applyCustom} disabled={!customQty}>
-            {t("checkout.quantity.apply")}
-          </Button>
-        </InlineStack>
+          </div>
+          <div className={styles.customApply}>
+            <Button submit disabled={!customQty.trim() || loading}>
+              {t("checkout.quantity.apply")}
+            </Button>
+          </div>
+        </form>
       </BlockStack>
 
       <Divider />
@@ -325,8 +342,12 @@ export function CheckoutClient(props: {
               {t("checkout.offers.error")}
             </Banner>
           ) : result.mode === "manual_quote" ? (
-            <Banner tone="info" title={t("checkout.quantity.manualTitle")}>
-              {t("checkout.quantity.manualBody", { max: MAX_INSTANT_QTY.toLocaleString("en-US") })}
+            <Banner
+              tone="info"
+              title={t("checkout.quantity.manualTitle")}
+              action={{ content: t("buyer.manualOrderMax", { max: MAX_INSTANT_QTY.toLocaleString("en-US") }), onAction: () => pickQty(MAX_INSTANT_QTY) }}
+            >
+              {t("buyer.manualHelp", { max: MAX_INSTANT_QTY.toLocaleString("en-US") })}
             </Banner>
           ) : offers.length === 0 ? (
             <Banner tone="warning">{t("checkout.offers.none")}</Banner>
@@ -500,9 +521,22 @@ export function CheckoutClient(props: {
       backAction={step > 0 ? { content: t("checkout.actions.back"), onAction: () => goTo((step - 1) as Step) } : { content: props.designName, url: editUrl }}
     >
       <BlockStack gap="400">
-        <Card>
-          <Stepper steps={steps} current={step} accessibilityLabel={t("checkout.steps.label")} />
-        </Card>
+        <div className={styles.stepperWide}>
+          <Card>
+            <Stepper steps={steps} current={step} accessibilityLabel={t("checkout.steps.label")} />
+          </Card>
+        </div>
+        <div className={styles.stepperCompact} aria-hidden="true">
+          <div className={styles.compactHead}>
+            <span className={styles.compactCount}>{t("checkout.stepOf", { current: step + 1, total: 4 })}</span>
+            <span className={styles.compactNext}>{t("buyer.nextStep", { step: steps[step + 1].label })}</span>
+          </div>
+          <div className={styles.segments}>
+            {steps.map((s, i) => (
+              <span key={s.id} className={styles.segment} data-state={i < step ? "done" : i === step ? "current" : "todo"} />
+            ))}
+          </div>
+        </div>
         <div className={styles.layout}>
           <BlockStack gap="400">
             <Card
@@ -551,16 +585,28 @@ export function CheckoutClient(props: {
                           </dd>
                         </div>
                       ))}
+                      <div className={`${styles.line} ${styles.lineSub}`}>
+                        <dt>{t("buyer.subtotalExVat")}</dt>
+                        <dd>
+                          <Tick value={selected.pay.totalPiasters - selected.pay.vatPiasters}>
+                            <PriceTag amount={selected.pay.totalPiasters - selected.pay.vatPiasters} size="small" locale={locale} />
+                          </Tick>
+                        </dd>
+                      </div>
                       <div className={styles.line}>
                         <dt>{t("checkout.summary.vat")}</dt>
                         <dd>
-                          <PriceTag amount={selected.pay.vatPiasters} size="small" locale={locale} />
+                          <Tick value={selected.pay.vatPiasters}>
+                            <PriceTag amount={selected.pay.vatPiasters} size="small" locale={locale} />
+                          </Tick>
                         </dd>
                       </div>
                       <div className={`${styles.line} ${styles.lineTotal}`}>
                         <dt>{t("checkout.summary.total")}</dt>
                         <dd data-testid="checkout-total">
-                          <PriceTag amount={selected.pay.totalPiasters} size="medium" locale={locale} />
+                          <Tick value={selected.pay.totalPiasters}>
+                            <PriceTag amount={selected.pay.totalPiasters} size="medium" locale={locale} />
+                          </Tick>
                         </dd>
                       </div>
                     </dl>
@@ -583,9 +629,30 @@ export function CheckoutClient(props: {
                     {placeErr}
                   </Banner>
                 ) : null}
-                <Button variant="primary" size="large" fullWidth onClick={onPrimary} loading={placing} disabled={!selected || loading}>
-                  {primaryLabel}
-                </Button>
+                <div className={selected ? styles.actionBar : undefined}>
+                  {selected ? (
+                    <div className={styles.actionBarTotal}>
+                      <button
+                        type="button"
+                        className={styles.actionBarLink}
+                        onClick={() => document.getElementById("summary-title")?.scrollIntoView({ block: "start", behavior: "smooth" })}
+                      >
+                        {t("buyer.viewSummary")}
+                      </button>
+                      <Tick value={selected.pay.totalPiasters}>
+                        <PriceTag amount={selected.pay.totalPiasters} size="medium" locale={locale} />
+                      </Tick>
+                    </div>
+                  ) : null}
+                  <div className={styles.actionBarButton}>
+                    <Button variant="primary" size="large" fullWidth onClick={onPrimary} loading={placing} disabled={!selected || loading}>
+                      {primaryLabel}
+                    </Button>
+                  </div>
+                </div>
+                <span className="visually-hidden" role="status">
+                  {announce}
+                </span>
                 <Banner tone="info" inCard>
                   {t("checkout.summary.prepaidNote")}
                 </Banner>
@@ -595,6 +662,22 @@ export function CheckoutClient(props: {
         </div>
       </BlockStack>
     </Page>
+  );
+}
+
+/** Re-runs a short "tick" on the price when the value changes (not on first paint). */
+function Tick({ value, children }: { value: number; children: ReactNode }) {
+  const prev = useRef(value);
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    if (prev.current === value) return;
+    prev.current = value;
+    setN((x) => x + 1);
+  }, [value]);
+  return (
+    <span key={n} className={n ? styles.tick : undefined}>
+      {children}
+    </span>
   );
 }
 

@@ -27,7 +27,8 @@
 /* Quantity tiers: radio cards */
 .tiers {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 8.5rem), 1fr));
+  /* phones: one compact row per tier; wider: one column per tier (5 tiers, no orphan) */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--p-space-200);
   margin: 0;
   padding: 0;
@@ -81,10 +82,9 @@
   min-inline-size: 0;
 }
 .offerHead {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
   gap: var(--p-space-200);
 }
 .offerFacts {
@@ -235,4 +235,179 @@
 }
 .mono {
   font-family: var(--p-font-family-mono, ui-monospace, monospace);
+}
+
+@media (max-width: 489px) {
+  .tier {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding-block: var(--p-space-250, 10px);
+  }
+}
+@media (min-width: 490px) {
+  .tiers {
+    grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  }
+}
+
+/* Custom quantity: field grows, Apply keeps its full label */
+.customQty {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--p-space-200);
+}
+.customField {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+.customApply {
+  flex: none;
+  /* line the button up with the input under the label */
+  padding-block-start: calc(var(--p-font-line-height-500, 20px) + var(--p-space-100));
+}
+
+/* Steps: full stepper from tablet up, compact progress on phones */
+.stepperCompact {
+  display: none;
+}
+@media (max-width: 639px) {
+  .stepperWide {
+    display: none;
+  }
+  .stepperCompact {
+    display: grid;
+    gap: var(--p-space-150);
+    padding-inline: var(--p-space-100);
+  }
+}
+.compactHead {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--p-space-200);
+  font-size: var(--p-text-body-sm-font-size, 0.75rem);
+}
+.compactCount {
+  font-weight: var(--p-font-weight-semibold);
+}
+.compactNext {
+  color: var(--p-color-text-secondary);
+}
+.segments {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--p-space-100);
+}
+.segment {
+  block-size: 4px;
+  border-radius: var(--p-border-radius-full);
+  background: var(--p-color-border-secondary, #ebebeb);
+  transition: background-color var(--p-motion-duration-200) var(--p-motion-ease-out);
+}
+.segment[data-state="done"],
+.segment[data-state="current"] {
+  background: var(--p-color-bg-fill-brand);
+}
+
+/* Summary: subtotal before VAT */
+.lineSub {
+  border-block-start: var(--p-border-width-025, 1px) solid var(--p-color-border-secondary, var(--p-color-border));
+  padding-block-start: var(--p-space-150);
+}
+
+/* Price tick when a total changes */
+.tick {
+  display: inline-block;
+  animation: price-tick var(--p-motion-duration-250) var(--p-motion-ease-out);
+}
+@keyframes price-tick {
+  from {
+    opacity: 0.35;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tick {
+    animation: none;
+  }
+  .segment {
+    transition: none;
+  }
+}
+
+/* Primary action: in the summary on desktop, a sticky bar with the total on phones/tablets */
+.actionBarTotal {
+  display: none;
+}
+@media (max-width: 1039px) {
+  .actionBar {
+    position: fixed;
+    inset-inline: 0;
+    inset-block-end: 0;
+    z-index: var(--p-z-index-2);
+    display: flex;
+    align-items: center;
+    gap: var(--p-space-300);
+    padding: var(--p-space-300) var(--p-page-gutter) calc(var(--p-space-300) + env(safe-area-inset-bottom, 0px));
+    background: var(--p-color-bg-surface);
+    border-block-start: var(--p-border-width-025, 1px) solid var(--p-color-border);
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.06);
+  }
+  .actionBarTotal {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    flex: none;
+  }
+  .actionBarButton {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+  }
+}
+.actionBarLink {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  min-block-size: 24px;
+  color: var(--p-color-text-link, #005bd3);
+  font: inherit;
+  font-size: var(--p-text-body-sm-font-size, 0.75rem);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.actionBarLink:focus-visible {
+  outline: var(--p-border-width-050, 2px) solid var(--p-color-border-focus);
+  outline-offset: 2px;
+}
+
+/* Payment: amount due next to the main action */
+.due {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--p-space-300);
+  padding: var(--p-space-300);
+  border-radius: var(--p-border-radius-200);
+  border: var(--p-border-width-025, 1px) solid var(--p-color-border-secondary, var(--p-color-border));
+}
+
+/* Proof view controls: keep all seven 44px buttons on one row on phones */
+@media (max-width: 489px) {
+  .viewControls .viewBar {
+    flex-wrap: nowrap;
+    gap: 0;
+    padding: 2px;
+  }
+}
+
+/* Offer price column: never squeeze the printer name to one word per line */
+.offerHead > :last-child {
+  max-inline-size: 10.5rem;
+  text-align: end;
 }

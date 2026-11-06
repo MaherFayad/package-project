@@ -42,6 +42,16 @@ export default async function CheckoutPage({ params, searchParams }: { params: P
   if (!design && share && /^[\w-]{1,64}$/.test(share) && /^[\w-]{1,64}$/.test(designId)) {
     const src = await db.design.findFirst({ where: { id: designId, shareToken: share } });
     if (src) {
+      // Re-opening the same share link must not pile up duplicate copies in the buyer's designs.
+      const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+      const mine = await db.design.findMany({
+        where: { ownerId: user.id, structureCode: src.structureCode, name: src.name, materialId: src.materialId, finishCode: src.finishCode, printSides: src.printSides },
+        orderBy: { updatedAt: "desc" },
+        take: 20,
+        select: { id: true, dims: true, artwork: true },
+      });
+      const existing = mine.find((d) => same(d.dims, src.dims) && same(d.artwork, src.artwork));
+      if (existing) redirect(`/${locale}/checkout/${encodeURIComponent(existing.id)}`);
       const copy = await db.design.create({
         data: {
           ownerId: user.id,

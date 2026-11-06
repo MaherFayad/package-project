@@ -1,0 +1,58 @@
+/* Focused checkout chrome (owner: checkout). Tokens only; logical properties for RTL. */
+.bar {
+  max-inline-size: var(--p-page-max-width-wide);
+  margin-inline: auto;
+  min-block-size: var(--p-top-bar-height);
+  padding-inline: var(--p-page-gutter);
+  display: flex;
+  align-items: center;
+  gap: var(--p-space-300);
+}
+.secure {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--p-space-100);
+  color: var(--e-color-topbar-text);
+  font-size: var(--p-text-body-sm-font-size, 0.75rem);
+  font-weight: var(--p-font-weight-medium);
+  white-space: nowrap;
+}
+.actions {
+  margin-inline-start: auto;
+  display: flex;
+  align-items: center;
+}
+.footer {
+  margin-block-start: var(--p-space-800);
+  padding: var(--p-space-400) var(--p-page-gutter) var(--p-space-600);
+  border-block-start: var(--p-border-width-025, 1px) solid var(--p-color-border-secondary, var(--p-color-border));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--p-space-200) var(--p-space-400);
+  color: var(--p-color-text-secondary);
+  font-size: var(--p-text-body-sm-font-size, 0.75rem);
+}
+.footer p {
+  margin: 0;
+}
+.links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--p-space-100) var(--p-space-400);
+}
+.links a {
+  color: inherit;
+  display: inline-flex;
+  min-block-size: 24px;
+  align-items: center;
+}
+@media (max-width: 1039px) {
+  /* room for the sticky mobile action bar */
+  .footer {
+    padding-block-end: calc(var(--p-space-600) + 88px);
+  }
+}

@@ -1,0 +1,53 @@
+# Audit: buyer journey after design (key: checkout)
+
+Scope: `src/app/[locale]/(checkout)`, `src/app/[locale]/orders`, `src/app/[locale]/(store)/account`, `src/app/[locale]/s`, their components, buyer i18n keys (additive `buyer.*` block in `src/i18n/checkout.{en,ar}.ts`).
+
+Method: walked the journey as a first-time Egyptian D2C brand owner with Playwright (390x844 and 1440x900, `ar` and `en`): sign-in gate, saved designs, quantity + printer, delivery address (empty, invalid, valid), proof (3D + flat, approval required), mock payment (declined card, then paid), success, order tracking, invoice, orders list, account, share link (owner copy, anonymous visitor, unknown token), not-found states, >2,000 manual quote, unpaid-order cancel. axe-core (WCAG 2.0/2.1/2.2 A + AA tags) on every screen. Before/after screenshots: `docs/screenshots/audit/checkout/`.
+
+Step count (phone, design saved to paid): before 9 taps + full re-entry of the card after a decline; after 7 taps, card form kept on decline. Scroll to the primary action on phones: before ~1,700px on step 1; after 0 (sticky bar).
+
+## Findings
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| CO-01 | critical | `/orders` (IndexFilters → `components/ui/Tabs.tsx`) | View tabs set `aria-controls` to a tab panel that is never rendered; axe `aria-valid-attr-value` (critical) on every orders page. | WCAG 4.1.2 | `aria-controls` only when a panel is rendered for the selected tab (out-of-scope file, one line). | fixed |
+| CO-02 | critical | payment declined (`components/ui/Button.module.css`) | A loading button hides its label with `visibility:hidden`, so the busy primary "Pay" button has no accessible name; axe `button-name` (critical). | WCAG 4.1.2 | Hide with `opacity:0` instead (label stays in the accessibility tree). Out-of-scope file, one line. | fixed |
+| CO-03 | high | checkout, all steps (phone) | The only primary action sits under three offer cards and the full price breakdown: about 1,700px of scroll on 390px before "Continue". | ISO 9241-110 (efficiency), Polaris checkout pattern | Sticky bottom action bar below 1040px with the live total, "View price breakdown" and the primary button (same button element as desktop, so tests and focus order are unchanged). Hidden when there is no offer. | fixed |
+| CO-04 | high | checkout stepper (phone) | Vertical 4-step stepper takes ~300px above the fold on every step. | ISO 9241-110 | Compact progress on phones: "Step 1 of 4", "Next: Delivery", 4-segment bar; full stepper from 640px. | fixed |
+| CO-05 | high | checkout, custom quantity | "Apply" truncated to "A…" / "تط…" at every width; Enter in the field did nothing; `type=number` rejected Arabic-Indic digits and commas. | WCAG 1.4.10, 3.3.2 | Real `<form>` (Enter submits), button keeps its width, text input with numeric keypad, accepts `٢٠٠٠` and `2,000`, range hint "1 to 2,000". | fixed |
+| CO-06 | high | checkout, >2,000 boxes | Dead end: banner says "we reply within one working day" but there is no quote request behind it and no action; the primary button is disabled. | ISO 9241-110 (error tolerance) | Honest copy ("Instant prices go up to 2,000 …") plus a banner action "Order 2,000 boxes now". A real manual-quote request needs an API (see Open). | fixed (partial, see Open) |
+| CO-07 | high | payment, declined card | A decline threw the buyer back to the method list: tap Continue again and retype every field. | ISO 9241-110 (error tolerance), WCAG 3.3.1 | Open a fresh attempt with the same method automatically, keep expiry / CVC / name, clear only the number, show the error on the number field and focus it ("Nothing was charged"). The form stays busy until the new attempt exists (no race). e2e updated to the shorter path; assertions kept. | fixed |
+| CO-08 | high | `/orders` (phone) | Index table clips on 390px: total, payment and status are scrolled off-screen, so the list shows only number, date, printer. | WCAG 1.4.10 | Phone layout: one tappable card per order (number, total, date · printer · boxes, status badge, chevron); table from 640px. Shared filters. | fixed |
+| CO-09 | high | order page after payment | The success moment led with "Reorder" as the primary action and a one-line banner; no "what happens next". | ISO 9241-110 (self-descriptiveness) | Success banner (one 300ms entrance, off under reduced motion) with printer, estimated delivery date and 3 next steps. Reorder becomes primary only once delivered; before that a quiet tertiary action. | fixed |
+| CO-10 | high | order page, cancelled | Cancelled order showed a "Pending" payment badge and "Due EGP 24,199.35", plus "print file is prepared after payment"; the banner had no way forward. | ISO 9241-110 | Hide payment-pending badge, due row and print hint on cancelled/refunded orders; banner action "Order this design" (restarts checkout with the same design). | fixed |
+| CO-11 | medium | checkout chrome | Full store navigation and marketing footer around checkout pull attention away at the moment of highest intent. | Polaris checkout (screen 19) | Focused `CheckoutShell`: wordmark, lock + "Secure checkout", language switch, compact legal footer (returns, privacy, terms, VAT note). Cookie notice kept (PDPL). Orders/account keep the store chrome. | fixed |
+| CO-12 | medium | checkout + payment summaries | No subtotal before VAT: the 14% line had no visible base, unlike the invoice (net, VAT, total). | Egyptian VAT 14%, ETA e-invoice layout | "Subtotal (excl. VAT)" line before VAT in both summaries. | fixed |
+| CO-13 | medium | checkout totals | Totals changed silently when quantity, printer or governorate changed; nothing announced to screen readers. | WCAG 4.1.3 | 250ms price tick on changed amounts (skipped on first paint and under `prefers-reduced-motion`), polite status "Total updated: EGP …". | fixed |
+| CO-14 | medium | checkout quantity tiers | 5 tiers in an auto-fill grid left an orphan card (4+1 desktop, 2+2+1 phone). | Polaris layout rhythm | One row per tier on phones (quantity left, price per box right); one column per tier from 490px. | fixed |
+| CO-15 | medium | offer cards (phone) | Price block wrapped under the name and floated centre. | Visual hierarchy | Two-column head (name + badges / price + per box), price column capped. | fixed |
+| CO-16 | medium | payment, cancel order | `window.confirm` (unstyled, browser language, no context). | Polaris modal (screen 20), WCAG 3.3.4 | Modal: "Cancel this order?", explains nothing is charged and the design stays saved; "Keep order" / destructive "Cancel order". | fixed |
+| CO-17 | medium | payment, method step (phone) | The amount is only in the summary card below the fold when choosing a method. | ISO 9241-110 | "Amount due now" box right above Continue. | fixed |
+| CO-18 | medium | payment, card form | Expiry placeholder "12/30" read as a pre-filled value (worse in Arabic); card number not grouped. | WCAG 3.3.2 | Placeholders "0000 0000 0000 0000" and "MM/YY"; number grouped in fours, slash inserted after the month, Arabic-Indic digits accepted. | fixed |
+| CO-19 | medium | account, recent orders | Own status-tone table disagreed with the orders list (different tones and progress icons for the same status). | Consistency (Polaris badges) | Uses the shared `statusBadge()`. | fixed |
+| CO-20 | medium | account, saved designs | Journey dead-ends at "Open in designer"; no way to order a saved design from the account. | ISO 9241-110 | "Order" button per design (to `/checkout/[id]`); "Open in designer" becomes plain. | fixed |
+| CO-21 | medium | share link `/s/[id]` → checkout | Every tap on "Order this box" created another copy in the visitor's saved designs; the page did not say a copy is made or that sign-in comes first. | ISO 9241-110 | Reuse an identical copy the visitor already owns (same structure, dims, material, finish, artwork); helper text "Ordering gives you your own copy…" and, when signed out, "You will sign in with your mobile number first". | fixed |
+| CO-22 | medium | checkout start list | "Order this design" was a secondary button next to a link; no clear primary. | Polaris (one primary per card) | Primary. | fixed |
+| CO-23 | low | proof viewer (phone) | Seven 44px view controls wrapped to two rows (reset alone) on 390px. | Visual polish (targets stay 44px, WCAG 2.5.8) | Tighter toolbar gap/padding on phones; one row. | fixed |
+| CO-24 | low | account header | New accounts see a bare "Hello" with no hint. | UX copy | Hint to add a name in Profile. | fixed |
+| CO-25 | low | phone order cards | Pending orders showed both "Awaiting payment" status and a "Pending" payment badge. | Copy redundancy | Payment badge on cards only when refunded. | fixed |
+
+Counts: critical 2, high 8, medium 12, low 3 (25 total). Fixed 25 (CO-06 partially, see below).
+
+## Open / outside scope (reported, not changed)
+
+- **Manual quote request (>2,000 boxes)**: there is no endpoint or admin queue to request a hand-priced quote, and no support WhatsApp number in config. Needs the technical session (API + `NEXT_PUBLIC_SUPPORT_WHATSAPP` or a quote request model). The UI now avoids the dead end and the false promise.
+- **Cookie notice overlaps the checkout action bar** until dismissed (`components/store/CookieNotice`, storefront owner). It is dismissed once per browser, but on a first visit it covers the primary action on phones (WCAG 2.4.11 focus not obscured). Suggest moving it above a fixed bottom bar or offsetting it when `[data-sticky-action]` is present.
+- **Page "More actions" popover in RTL on phones** opens at the top of the viewport over the top bar instead of under the ⋯ button (`components/ui/Page` / `Popover`, UI-kit owner).
+- **Designer price modal and soft sign-up gate** live in `src/components/designer` (designer session). Not changed here.
+- Seeded and API-created designs have no thumbnail, so checkout/account lists show the placeholder icon (thumbnail generation is designer-owned).
+
+## Files touched outside scope
+
+- `src/components/ui/Tabs.tsx` (one line, CO-01)
+- `src/components/ui/Button.module.css` (one line, CO-02)
+- `e2e/checkout.spec.ts` (decline step follows the shorter flow; all assertions kept, one added)
