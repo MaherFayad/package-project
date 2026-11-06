@@ -1,4 +1,4 @@
-import { Vector3 } from "three";
+import { Vec3 as Vector3 } from "@/lib/dieline/math";
 import { describe, expect, it } from "vitest";
 import type { Dims } from "@/types";
 import { BOARD_SPECS, boundsAt, computePoses, type DielineModel } from "../../..";

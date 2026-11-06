@@ -12,6 +12,7 @@ import { BOARD_SPECS } from "@/lib/dieline";
 import { FALLBACK_PRESETS, designerPath, presetDims, structureFromParam } from "@/components/designer/lib/catalog";
 import { currentActor, lazyChunkHrefs, loadDesign, loadPickerStructures } from "@/components/designer/server";
 import { preload } from "react-dom";
+import { modelPosterSrc } from "@/app/model-poster";
 
 export const dynamic = "force-dynamic";
 
@@ -80,10 +81,11 @@ export default async function DesignEditorPage({ params, searchParams }: { param
         : createModelDoc(libModel, { presetId: one(sp.preset), materialCode, ...(libModel.kind === "box" ? { dims: validBoxDims(libModel, [L, W, H]) } : {}) });
   }
 
-  // Start fetching the 3D renderer while the page hydrates (PERF-10).
-  for (const href of lazyChunkHrefs("./Stage3D")) preload(href, { as: "script" });
-  // R6-02: the stage poster is the phone LCP element; fetch it with the HTML, not after the CSS.
-  preload(`/models/${libModel.slug}.svg`, { as: "image", fetchPriority: "high" });
+  // Start fetching the 3D renderer while the page hydrates (PERF-10), at low priority so its
+  // ~10 chunks do not hold the poster and the page's own scripts back on a slow network.
+  // The poster itself (R6-02, the phone LCP) is preloaded from the editor layout, above the
+  // Suspense boundary, so the hint is in <head> rather than in this streamed segment.
+  for (const href of lazyChunkHrefs("./Stage3D")) preload(href, { as: "script", fetchPriority: "low" });
 
   return (
     <DesignerApp
@@ -95,6 +97,7 @@ export default async function DesignEditorPage({ params, searchParams }: { param
       loadError={loadError}
       resumeLocal={!d && one(sp.resume) === "1"}
       posterSlug={libModel.slug}
+      posterSrc={modelPosterSrc(libModel.slug)}
     />
   );
 }

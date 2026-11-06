@@ -4,6 +4,9 @@ import { MAT_EDGE, MAT_INSIDE, MAT_OUTSIDE } from "./boardMaterials";
 
 const DEG = Math.PI / 180;
 
+/** The dieline engine returns its own three-free vectors (src/lib/dieline/math.ts); the mesh code uses three's. */
+const v3 = (v: { x: number; y: number; z: number }) => new Vector3(v.x, v.y, v.z);
+
 function onSegment(p: Pt, s: Segment, tol = 1e-3): boolean {
   const dx = s.b.x - s.a.x;
   const dy = s.b.y - s.a.y;
@@ -22,9 +25,9 @@ function vertexNormals(model: DielineModel, panel: DielinePanel, poly: Polygon):
   const up = new Vector3(0, 0, 1);
   const out = poly.map(() => up.clone());
   const adjust: { seg: Segment; axis: Vector3; angle: number }[] = [];
-  if (panel.hinge && panel.hingeKind === "roll") adjust.push({ seg: panel.hinge, axis: panelAxis(panel), angle: (-panel.foldAngleClosed * DEG) / 2 });
+  if (panel.hinge && panel.hingeKind === "roll") adjust.push({ seg: panel.hinge, axis: v3(panelAxis(panel)), angle: (-panel.foldAngleClosed * DEG) / 2 });
   for (const c of model.panels) {
-    if (c.parentId === panel.id && c.hinge && c.hingeKind === "roll") adjust.push({ seg: c.hinge, axis: panelAxis(c), angle: (c.foldAngleClosed * DEG) / 2 });
+    if (c.parentId === panel.id && c.hinge && c.hingeKind === "roll") adjust.push({ seg: c.hinge, axis: v3(panelAxis(c)), angle: (c.foldAngleClosed * DEG) / 2 });
   }
   if (!adjust.length) return out;
   poly.forEach((p, i) => {
@@ -57,8 +60,8 @@ export function buildPanelGeometry(model: DielineModel, panel: DielinePanel): Bu
   const { width: sw, height: sh } = model.sheet;
   const loops: Polygon[] = [panel.polygon, ...(panel.holes ?? [])];
   const flat = loops.flat();
-  const outerAll = flat.map((p) => panelLocalPoint(panel, p, 0, pivot, t));
-  const innerAll = flat.map((p) => panelLocalPoint(panel, p, 1, pivot, t));
+  const outerAll = flat.map((p) => v3(panelLocalPoint(panel, p, 0, pivot, t)));
+  const innerAll = flat.map((p) => v3(panelLocalPoint(panel, p, 1, pivot, t)));
   const uvAll = flat.map((p) => [p.x / sw, 1 - p.y / sh] as const);
   const normalsAll = vertexNormals(model, panel, flat);
 
@@ -203,7 +206,7 @@ export function buildPanelGeometry(model: DielineModel, panel: DielinePanel): Bu
 export function buildFilmGeometry(model: DielineModel, panel: DielinePanel, polygon: Polygon): BufferGeometry {
   const t = model.thicknessMm;
   const pivot = panelPivot(panel, t);
-  const pts = polygon.map((p) => panelLocalPoint(panel, p, 1, pivot, t));
+  const pts = polygon.map((p) => v3(panelLocalPoint(panel, p, 1, pivot, t)));
   const z = pts[0].z - Math.min(0.15, t * 0.3);
   const contour = pts.map((p) => new Vector2(p.x, p.y));
   const tris = ShapeUtils.triangulateShape(contour, []);
@@ -242,7 +245,7 @@ export function buildPerfGeometry(model: DielineModel, panel: DielinePanel, line
         { x: p1.x - uy * half, y: p1.y + ux * half },
         { x: p1.x + uy * half, y: p1.y - ux * half },
         { x: p0.x + uy * half, y: p0.y - ux * half },
-      ].map((p) => panelLocalPoint(panel, p, 0, pivot, t));
+      ].map((p) => v3(panelLocalPoint(panel, p, 0, pivot, t)));
       for (const v of q) v.z += 0.06;
       for (const k of [0, 1, 2, 0, 2, 3]) pos.push(q[k].x, q[k].y, q[k].z);
     }

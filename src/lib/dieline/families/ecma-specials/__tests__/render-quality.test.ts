@@ -9,7 +9,7 @@
  *    face artwork lands on it un-mirrored and, on the walls, the right way up.
  */
 import { describe, expect, it } from "vitest";
-import { Vector3 } from "three";
+import { Vec3 as Vector3 } from "@/lib/dieline/math";
 import { BOX_MODELS } from "@/lib/library";
 import { BOARD_SPECS, computePoses, panelLocalPoint, panelPivot, type DielineModel } from "../../..";
 import { FACE_FRAMES, applyAffine } from "../../../fold";

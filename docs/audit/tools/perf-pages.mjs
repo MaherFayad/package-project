@@ -1,7 +1,7 @@
 // Page-level performance harness (production build). Report-only, touches no app code.
 //
 //   BASE=http://localhost:3000 OUT=/tmp/perf-pages.json SHOTS=docs/screenshots/audit/performance \
-//   DESIGN_ID=... SHARE=... ORDER=ELB-26001 node docs/audit/tools/perf-pages.mjs [filter]
+//   DESIGN_ID=... SHARE=... ORDER=ELB-26001 [ISOLATE=1] [PROFILES=phone] [LOCALES=ar] node docs/audit/tools/perf-pages.mjs [filter]
 //
 // Profiles
 //   desktop: 1440x900, DPR 1, no throttling
@@ -48,8 +48,14 @@ const PHONES = { buyer: "+201000000002", vendor: "+201000000010", admin: "+20100
 
 async function login(request, role) {
   const phone = PHONES[role];
-  const r1 = await request.post(`${BASE}/api/auth/request-otp`, { data: { phone } });
-  const { devCode } = await r1.json();
+  // Per-phone OTP limit is 1 per 30 s: wait and retry instead of failing the whole run.
+  let devCode;
+  for (let i = 0; i < 4 && !devCode; i++) {
+    const r1 = await request.post(`${BASE}/api/auth/request-otp`, { data: { phone } });
+    const j = await r1.json();
+    devCode = j.devCode;
+    if (!devCode) await new Promise((r) => setTimeout(r, ((j.retryAfterSec ?? 30) + 1) * 1000));
+  }
   const r2 = await request.post(`${BASE}/api/auth/verify-otp`, { data: { phone, code: devCode, locale: "en", acceptTerms: true } });
   if (!r2.ok()) throw new Error(`login ${role} failed ${r2.status()}`);
 }
@@ -245,9 +251,12 @@ async function runOne(browser, profile, locale, pg, storage) {
   return out;
 }
 
-const browser = await chromium.launch({ args: ["--enable-precise-memory-info", "--ignore-gpu-blocklist", "--enable-unsafe-swiftshader"] });
+const LAUNCH_ARGS = ["--enable-precise-memory-info", "--ignore-gpu-blocklist", "--enable-unsafe-swiftshader"];
+const browser = await chromium.launch({ args: LAUNCH_ARGS });
 const storages = {};
-for (const role of Object.keys(PHONES)) {
+// Log in only the roles the selected pages need (the OTP limit is 5 per phone per hour).
+const needed = new Set(PAGES.filter((pg) => !filter || filter.test(pg.key)).map((pg) => pg.role).filter(Boolean));
+for (const role of Object.keys(PHONES).filter((r) => needed.has(r))) {
   const ctx = await browser.newContext();
   await login(ctx.request, role);
   storages[role] = await ctx.storageState();
@@ -258,7 +267,12 @@ for (const profile of PROFILES)
   for (const locale of LOCALES)
     for (const pg of PAGES.filter((p) => !process.env.ONLY || process.env.ONLY.split(",").includes(p.key))) {
       if (filter && !filter.test(pg.key)) continue;
-      const r = await runOne(browser, profile, locale, pg, pg.role ? storages[pg.role] : undefined).catch((e) => ({ page: pg.key, profile, locale, error: String(e) }));
+      // ISOLATE=1: a fresh browser per page. Without it, a page measured right after a heavy
+      // WebGL page (bottle, pouch) shares the GPU process with that page's teardown and its
+      // FCP on the 4x-throttled phone profile can come out 2-3 s late (round 4).
+      const br = process.env.ISOLATE ? await chromium.launch({ args: LAUNCH_ARGS }) : browser;
+      const r = await runOne(br, profile, locale, pg, pg.role ? storages[pg.role] : undefined).catch((e) => ({ page: pg.key, profile, locale, error: String(e) }));
+      if (br !== browser) await br.close();
       results.push(r);
       console.log(
         [profile, locale, pg.key, r.status, `ttfb=${Math.round(r.ttfb)}`, `fcp=${Math.round(r.fcp)}`, `lcp=${Math.round(r.lcp)}`, `cls=${r.cls?.toFixed(3)}`, `inp=${Math.round(r.inp ?? -1)}`, `tbt=${r.tbt}`, `js=${Math.round((r.bytes?.js ?? 0) / 1024)}KB`, `img=${Math.round((r.bytes?.img ?? 0) / 1024)}KB`, `font=${Math.round((r.bytes?.font ?? 0) / 1024)}KB`, r.error || ""].join(" "),

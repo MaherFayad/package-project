@@ -1,4 +1,4 @@
-import { Matrix4, Vector3 } from "three";
+import { Mat4 as Matrix4, Vec3 as Vector3 } from "@/lib/dieline/math";
 import type { Dims } from "@/types";
 import { DielineBuilder, insetSeg, rectEdges } from "@/lib/dieline/builder";
 import { boundsAt } from "@/lib/dieline/fold";

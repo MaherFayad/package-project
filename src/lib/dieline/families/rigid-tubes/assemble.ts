@@ -1,4 +1,4 @@
-import { Matrix4 } from "three";
+import { Mat4 as Matrix4 } from "@/lib/dieline/math";
 import type { Dims, StructureCode, StructureFeatures } from "@/types";
 import { panelCreases } from "../../builder";
 import { computeFaces } from "../../fold";

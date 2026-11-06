@@ -1,4 +1,4 @@
-import { Box3, Euler, Matrix4, Quaternion, Vector3 } from "three";
+import { Box3, Euler, Mat4 as Matrix4, Quat as Quaternion, Vec3 as Vector3 } from "@/lib/dieline/math";
 import type { FaceId } from "@/types";
 import { DielineBuilder, rectEdges } from "../../builder";
 import { boundsAt, computeFaces, computePoses, panelLocalPoint, panelPivot } from "../../fold";

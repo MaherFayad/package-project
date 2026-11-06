@@ -1,4 +1,4 @@
-import { Matrix4 } from "three";
+import { Mat4 as Matrix4 } from "@/lib/dieline/math";
 import type { Dims, StructureFeatures } from "@/types";
 import { DielineBuilder, rectEdges } from "../../builder";
 import { boundsAt } from "../../fold";

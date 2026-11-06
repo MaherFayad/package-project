@@ -1,4 +1,4 @@
-import { Euler, Quaternion } from "three";
+import { Euler, Quat as Quaternion } from "@/lib/dieline/math";
 import type { Dims, StructureFeatures } from "@/types";
 import { DielineBuilder, insetSeg, rectEdges } from "../../builder";
 import { cutWindow, notchPanel, stadium } from "../../features";

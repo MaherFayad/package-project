@@ -5,6 +5,7 @@ import { preload } from "react-dom";
 import { inter, plexArabic, PLEX_PRELOAD_WEIGHTS } from "@/app/fonts";
 import { interPreloadUrl, plexArabicPreloadUrls } from "@/app/font-preload";
 import { dirOf, getDictionary, getPublicDictionary, isLocale } from "@/i18n";
+import type { Dictionary } from "@/i18n/types";
 import { I18nProvider } from "@/i18n/client";
 import { LOCALES } from "@/types";
 import { VisitBeacon } from "@/lib/analytics/VisitBeacon";
@@ -29,6 +30,18 @@ export async function generateMetadata({
     // language, so each page sets its own (`alternates.languages`). A layout-level
     // { ar: "/ar", en: "/en" } told search engines every page was a translation of home.
   };
+}
+
+/**
+ * Dictionary sent to the browser on every page (it is serialised into the HTML's RSC payload).
+ * `legal` (the long policy texts) and `notify` (email / SMS templates) are read only by server
+ * code, so they stay out of the client copy: ~9 KB raw less in every page (PERF-R4-05).
+ */
+function clientDictionary(locale: "ar" | "en"): Dictionary {
+  const { legal: _legal, notify: _notify, ...rest } = getPublicDictionary(locale);
+  void _legal;
+  void _notify;
+  return rest as Dictionary;
 }
 
 export const viewport: Viewport = {
@@ -73,7 +86,7 @@ export default async function LocaleLayout({
         <a className="skip-link" href="#main">
           {dict.common.skipToContent}
         </a>
-        <I18nProvider locale={locale} dict={getPublicDictionary(locale)}>
+        <I18nProvider locale={locale} dict={clientDictionary(locale)}>
           {children}
         </I18nProvider>
         {/* First-party `visit` event (B-19): one beacon per browser session, no third-party pixel. */}

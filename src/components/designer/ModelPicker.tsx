@@ -7,7 +7,9 @@ import { MODEL_GROUPS, MODEL_GROUP_NAMES, type ModelGroup } from "@/lib/library/
 import { matchesQuery, type ModelCard } from "@/lib/library/search";
 import { formatNumber } from "@/lib/format";
 import { useI18n } from "@/i18n/client";
-import { Badge, Modal, TextField } from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { Modal } from "@/components/ui/Modal";
+import { TextField } from "@/components/ui/TextField";
 import { EGYPT_BADGE, byWedge, egyptOf, orderModeOf } from "@/data/catalogue/order-mode";
 import styles from "./library.module.css";
 

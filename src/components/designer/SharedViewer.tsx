@@ -6,7 +6,7 @@ import type { DesignDoc } from "@/types";
 import type { PackagingSceneHandle } from "@/components/three";
 import { ViewControls } from "@/components/three/ViewControls";
 import { useI18n } from "@/i18n/client";
-import { Button, ButtonGroup } from "@/components/ui";
+import { Button, ButtonGroup } from "@/components/ui/Button";
 import styles from "./designer.module.css";
 import lib from "./library.module.css";
 

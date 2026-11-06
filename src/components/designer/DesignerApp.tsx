@@ -9,7 +9,7 @@ import { boardAppearance, type DielineModel } from "@/lib/dieline";
 import type { ModelDef } from "@/lib/library";
 import { loadModel, modelByCode } from "@/lib/library/registry";
 import { useLibraryModel } from "@/lib/library/useLibraryModel";
-import { defaultMaxDpr } from "@/components/three/hooks";
+import { defaultMaxDpr } from "@/components/three/dpr";
 import { docGeometry, docModel, docModelCode, facesForAreas, normaliseDocModel } from "@/lib/library/doc";
 import { FINISHES } from "@/lib/configurator";
 import { ViewControls, type PackagingSceneHandle } from "@/components/three";
@@ -101,6 +101,8 @@ export interface DesignerAppProps {
   resumeLocal?: boolean;
   /** Library slug of the model (its /models/<slug>.svg poster), known on the server (R4-12). */
   posterSlug?: string;
+  /** Same poster as a data: URL when small (src/app/model-poster.ts): paints with the HTML, no extra round trip (PERF R4-02). */
+  posterSrc?: string;
 }
 
 const reducer = (s: History<DesignDoc>, a: HistoryAction<DesignDoc>) => historyReducer(s, a);
@@ -149,14 +151,14 @@ export function DesignerApp(props: DesignerAppProps) {
             box itself at first paint, not seconds later once the family pack and 3D chunk load. */}
         {props.posterSlug ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={`/models/${props.posterSlug}.svg`} alt="" aria-hidden="true" className={styles.stagePoster} />
+          <img src={props.posterSrc ?? `/models/${props.posterSlug}.svg`} alt="" aria-hidden="true" className={styles.stagePoster} fetchPriority="high" decoding="async" />
         ) : null}
       </div>
     );
   return <DesignerEditor {...props} />;
 }
 
-function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, loadError, resumeLocal }: DesignerAppProps) {
+function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, loadError, resumeLocal, posterSrc }: DesignerAppProps) {
   const { t } = useI18n();
   const router = useRouter();
   const toast = useToast();
@@ -970,7 +972,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
                 {/* Large poster from the first paint until the 3D chunk renders a frame (PERF-10). */}
                 {libModel ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={`/models/${libModel.slug}.svg`} alt="" aria-hidden="true" className={styles.stagePoster} data-hidden={sceneReady ? "true" : undefined} />
+                  <img src={posterSrc && libModel.code === docModelCode(initialDoc) ? posterSrc : `/models/${libModel.slug}.svg`} alt="" aria-hidden="true" className={styles.stagePoster} data-hidden={sceneReady ? "true" : undefined} />
                 ) : null}
                 {wide ? <div className={styles.viewControls}>{viewControls}</div> : null}
               </div>

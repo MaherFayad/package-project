@@ -1,0 +1,1742 @@
+{
+ "FEFCO_0427": {
+  "dieline": "05f03f069cf54458badacc1b",
+  "poses": "5ebd747e2abb76e0d22762f9",
+  "bounds": "cd8df84051652c323a1a74be",
+  "svg": "c5c7137096de2fd33d681054"
+ },
+ "FEFCO_0201": {
+  "dieline": "d73de1253a168cabed01132d",
+  "poses": "9556e66f2b150c50fa8c47fb",
+  "bounds": "8d7de509c65161baa74be5a0",
+  "svg": "e51683c209b58a815893802d"
+ },
+ "ECMA_RTE": {
+  "dieline": "3638461773d8dd3ee6a5b467",
+  "poses": "330614198c39c305d908782a",
+  "bounds": "4a9d31c722dbd6defd8d1060",
+  "svg": "b1cc528dd47e3ca40872aafe"
+ },
+ "ECMA_STE": {
+  "dieline": "5658af5902c39e0c721707c5",
+  "poses": "f2909d51604b8c4d910e1b09",
+  "bounds": "ff35dfec1d7c7ced44250bed",
+  "svg": "c74cfb07bdc727a04ccb70c8"
+ },
+ "PIZZA": {
+  "dieline": "ed41fc896dcc65202c3f1f0c",
+  "poses": "c3613a1248f650ea8d878002",
+  "bounds": "f8f4211240915b3fe2988a22",
+  "svg": "799aacdf1cfc731d11755d7d"
+ },
+ "SLEEVE": {
+  "dieline": "0fdd1bd2eaea09392f280de0",
+  "poses": "3ce4b25700d9ff76b90d25ef",
+  "bounds": "53dba23453ce473549a96218",
+  "svg": "7e6ff048da827360294fd04d"
+ },
+ "FEFCO_0320": {
+  "dieline": "618207abe65494a8aa4cb69b",
+  "poses": "e9fb32839d029bf4351795c0",
+  "bounds": "456b5d635022b3e3c2c57857",
+  "svg": "814d99f5f39d69d8403e623e"
+ },
+ "ECMA_CLB": {
+  "dieline": "35a58a3b65848526a7db176c",
+  "poses": "7287a392177921fd4d6dc6a9",
+  "bounds": "2add7b3f2c8e43fc55dc4cf6",
+  "svg": "6aeb9b4108206c2e68027edf"
+ },
+ "ECMA_SLB": {
+  "dieline": "8f6948697c2f816952727cbc",
+  "poses": "2ce093d63b7338fc3ea67a03",
+  "bounds": "c23d4c15ec1b04c26a08784a",
+  "svg": "452049cb1364b6418175bb71"
+ },
+ "FEFCO_0422": {
+  "dieline": "2ce8cdb746def9b059619792",
+  "poses": "b63ccb85a2f3421c60bf07cd",
+  "bounds": "3a27bf389d7371c2d350d675",
+  "svg": "4b718f77393b4c44edbf0f6f"
+ },
+ "GABLE_BOX": {
+  "dieline": "8c8379ca0f2b350d668ef001",
+  "poses": "26ef41ce95fbe73bde018edb",
+  "bounds": "474b4543fef46a2f56f16b03",
+  "svg": "6f5bcdbde3884957319a8314"
+ },
+ "PAPER_TUBE": {
+  "dieline": "47d993c052b1fe4c36fb803e",
+  "poses": "6b3a966de53a9d94de88657f",
+  "bounds": "695042d2c8e899e2afcfa534",
+  "svg": "2c1fcf9c677880ff9447d081"
+ },
+ "RIGID_BOX": {
+  "dieline": "cb3cfb416e2ac326d3e54abe",
+  "poses": "18e93f8bd0570af80e7db01c",
+  "bounds": "03011a1ea62b892a2d20831c",
+  "svg": "62922ce7e4f8820474c9cf9d"
+ },
+ "FEFCO_0200": {
+  "dieline": "3c9f2606dc94c68986ee153e",
+  "poses": "c9f32461061aa2807246b0c1",
+  "bounds": "6f3302b36e00dc04c0274d5a",
+  "svg": "859bcfa86dd95b56bb09e3ad"
+ },
+ "FEFCO_0202": {
+  "dieline": "ec84bb987bf75858ff59b8f7",
+  "poses": "ed9c81f80b9b9692e6bf29e0",
+  "bounds": "323b586d2335e6607a153c78",
+  "svg": "3cd98a785068e7304bcac440"
+ },
+ "FEFCO_0203": {
+  "dieline": "7fea43bdb26274a9f7826f99",
+  "poses": "ef4b46b434f001467d3f5449",
+  "bounds": "e857de5814b5449e159feb2b",
+  "svg": "3e7bc1557e49fc1882b3283a"
+ },
+ "FEFCO_0204": {
+  "dieline": "1a98cf91bc47474ec29514b5",
+  "poses": "46b0e31ec17a055f4419cb0c",
+  "bounds": "b0ab0f25a3727793743fa5dd",
+  "svg": "ba9ae045f7b7ac7cf67b4cfc"
+ },
+ "FEFCO_0205": {
+  "dieline": "7ad2e60a85448d2336d02fdd",
+  "poses": "5c8d2ab1c46a4b3516d89e00",
+  "bounds": "74e4b543323448b37bc24c0f",
+  "svg": "0257c5704b6cedf055b8df9b"
+ },
+ "FEFCO_0206": {
+  "dieline": "ea424439fefcdc3f6197c5b8",
+  "poses": "ef4b46b434f001467d3f5449",
+  "bounds": "e857de5814b5449e159feb2b",
+  "svg": "3e7bc1557e49fc1882b3283a"
+ },
+ "FEFCO_0207": {
+  "dieline": "e0581ad71e6f42ca7ebaa1ca",
+  "poses": "e3ebabba6f8bc45177a1b34b",
+  "bounds": "4631299924e14147e7fd731b",
+  "svg": "2c9770754ed3b706aeae7d1a"
+ },
+ "FEFCO_0208": {
+  "dieline": "63f4fddbd493905898aa2efd",
+  "poses": "090df5f438877113b1536302",
+  "bounds": "bd11e5c9a4779f22c9c8fb01",
+  "svg": "cf7e946bcec2857d38919964"
+ },
+ "FEFCO_0209": {
+  "dieline": "4400649498ff622e8d72d79f",
+  "poses": "a54f478f22c9832e030b092f",
+  "bounds": "f8669713b11d6724a66fd936",
+  "svg": "38afcf00521fc32346ff17de"
+ },
+ "FEFCO_0210": {
+  "dieline": "367173560feafcf4fb0f285e",
+  "poses": "7867e414bcd7f89dabda3d4e",
+  "bounds": "a0ceb7108978db18f09c55a7",
+  "svg": "67655efb464521206f478b88"
+ },
+ "FEFCO_0211": {
+  "dieline": "a0458f222ebdef8fdd9d3245",
+  "poses": "eacffafce526d99c3f1576c1",
+  "bounds": "a0ceb7108978db18f09c55a7",
+  "svg": "fcf14386a16196d29962f826"
+ },
+ "FEFCO_0212": {
+  "dieline": "4c011922cd4860d115d31317",
+  "poses": "7ba669250b1e7f9aca230cf5",
+  "bounds": "139a2f6fcac0bc247996cd9f",
+  "svg": "b468c5895ce5b4b96170abf5"
+ },
+ "FEFCO_0214": {
+  "dieline": "6794376fc4e26bcb56a845cb",
+  "poses": "b840682360f60aec625d871f",
+  "bounds": "63f016f38e51a77c7c7202d7",
+  "svg": "aa2f1d8697da62b2334efcf7"
+ },
+ "FEFCO_0215": {
+  "dieline": "306b60a89586e24289e55547",
+  "poses": "627095bda431f131d07b711a",
+  "bounds": "65344724ff34f7409fdb71c7",
+  "svg": "1234cb62087064ebc8e6c5bc"
+ },
+ "FEFCO_0216": {
+  "dieline": "3f31ff54012ef1de654f4749",
+  "poses": "026be7c1da09b84dc93a7a98",
+  "bounds": "77cd540cec11b9da447aba13",
+  "svg": "05b450773cce3d3d9c8cdad6"
+ },
+ "FEFCO_0217": {
+  "dieline": "9f8b0ea27ad3d8aeb53ccc01",
+  "poses": "a0c87e14e8debc25209b8314",
+  "bounds": "52fb74811235d485351bd758",
+  "svg": "50f1b6b072f57f7300f6c9e5"
+ },
+ "FEFCO_0218": {
+  "dieline": "34efc18dd5c666f50674c123",
+  "poses": "f769932cf0c40aff4d54de10",
+  "bounds": "e6d4cc80f592ea199441b352",
+  "svg": "11effc9746f0fb02ae40b6c3"
+ },
+ "FEFCO_0225": {
+  "dieline": "221045734f451f707dcf7362",
+  "poses": "aa7b0cb267f71e221a72677d",
+  "bounds": "b24e002b9962c630314bde96",
+  "svg": "caf807728ad867786889f19f"
+ },
+ "FEFCO_0226": {
+  "dieline": "b11e7889b15f877d197b08f3",
+  "poses": "8cafaf76e04a9811d94f3d08",
+  "bounds": "6e7a30cdb7e00ed98c7391d5",
+  "svg": "c5292e8907bdf447ca5cf4a7"
+ },
+ "FEFCO_0227": {
+  "dieline": "9d5b52259892d0caf75aedd9",
+  "poses": "63a22330c918af76281a34a1",
+  "bounds": "af1894363073dcef83165e24",
+  "svg": "209aeecf884cc996563a0026"
+ },
+ "FEFCO_0228": {
+  "dieline": "90f0e65eb0fb42bd9a7ecd03",
+  "poses": "8b5f22ddd92663cff3dab65e",
+  "bounds": "97dbde260cbb99440238c7c7",
+  "svg": "0c6e2f71cca7d26339181f1f"
+ },
+ "FEFCO_0229": {
+  "dieline": "36e2c42b49771cc8b37297e3",
+  "poses": "ae2d196576c77ed934e45fce",
+  "bounds": "1040dc9f9a352861ba498ede",
+  "svg": "95c9906516dd827cd1d5b8e0"
+ },
+ "FEFCO_0230": {
+  "dieline": "621b150a081f8ed3501b488e",
+  "poses": "6dff99b6dafdbf95a16471f0",
+  "bounds": "73f4a6498150e1d950328229",
+  "svg": "21ee775b42451a04ff9c7332"
+ },
+ "FEFCO_0231": {
+  "dieline": "f009e20f695d6180ba8572e8",
+  "poses": "c7ed80b4ca233ec05771b875",
+  "bounds": "32e842696150e89078efe3a7",
+  "svg": "752daa7d5420b14e72b3eabb"
+ },
+ "FEFCO_0300": {
+  "dieline": "2ac0fc57d3ad98e5e3f021e3",
+  "poses": "e52c44f306855171476ea836",
+  "bounds": "637a9a27921417777d06ee24",
+  "svg": "21fa081642052d6d0459e13b"
+ },
+ "FEFCO_0301": {
+  "dieline": "dbd93c4f118f5a67dbc80c44",
+  "poses": "fcb0a19273a900247a35a0ae",
+  "bounds": "f4ea7a37b3f9631588825006",
+  "svg": "c7eb5b8a4f9e4f74804a68df"
+ },
+ "FEFCO_0302": {
+  "dieline": "81bd2dbb5df95034738a7144",
+  "poses": "78241406172fbd04f6773104",
+  "bounds": "feb8585a0dfc8ef7e0be1551",
+  "svg": "700bcf12a13eadf09d98b84e"
+ },
+ "FEFCO_0303": {
+  "dieline": "533fc35c2a9f12632172f7e1",
+  "poses": "f57e82c8b7cb145be4934d18",
+  "bounds": "993ab24eab925bf7803dc78e",
+  "svg": "f01d9e8c9e62ca5677d29a49"
+ },
+ "FEFCO_0304": {
+  "dieline": "dc149ef24988dc4e34744b6b",
+  "poses": "cd127270e70c1b334a55ccf4",
+  "bounds": "a3b338212285113720d04fd0",
+  "svg": "b75c09524755fc74d955c992"
+ },
+ "FEFCO_0306": {
+  "dieline": "462c9620d36421a90e987eb0",
+  "poses": "627f5560a01330c23ce50171",
+  "bounds": "a2e034552c3472296f9cad4a",
+  "svg": "3961ce21b2ef4836386821b5"
+ },
+ "FEFCO_0307": {
+  "dieline": "621d1065eb5637251d8dde04",
+  "poses": "0215b828ea15c6f2a2af8ca8",
+  "bounds": "33894229c7fd27e2389e0964",
+  "svg": "94a1f4abddedde3ecc4fa1b4"
+ },
+ "FEFCO_0308": {
+  "dieline": "ee03c5823be208eb811e6c8f",
+  "poses": "a2b0b68f125aedfa3a135f0d",
+  "bounds": "03dcabdba893e602d559108a",
+  "svg": "2282b7bcd8a5520dd257776d"
+ },
+ "FEFCO_0309": {
+  "dieline": "af342fc4abca2296f904e6d3",
+  "poses": "7a3f866f71d0ca62aa97e9b7",
+  "bounds": "8ff0db3f132586b1604493dd",
+  "svg": "c707582eb5cbe31deecf7d91"
+ },
+ "FEFCO_0310": {
+  "dieline": "fc5dba0bc4fdc68530bc597c",
+  "poses": "b2442a252b0637bbbf52c1be",
+  "bounds": "8ffc46ae745dc46b08dacc83",
+  "svg": "0085f3549903f9f3623ac6b9"
+ },
+ "FEFCO_0312": {
+  "dieline": "26af2af6bce6aadff642046e",
+  "poses": "71edac8f83db42b8710803b2",
+  "bounds": "b178ee22c75ec9f43dc390ec",
+  "svg": "f4c868fcd45d41b0465702e2"
+ },
+ "FEFCO_0313": {
+  "dieline": "8490452d6ee5fe1dbdf85b5f",
+  "poses": "0004f7c08d7e61e2f5f2b68c",
+  "bounds": "82dff25aa089371559ed4c85",
+  "svg": "4208ddd79e9306f798d4c8ba"
+ },
+ "FEFCO_0314": {
+  "dieline": "612344ef547840e432a934f8",
+  "poses": "7c9df45723e6f87ab70ff4c7",
+  "bounds": "fa0f7c6ad4a786dfd469f1e3",
+  "svg": "af10363005bbef0ddef05d2e"
+ },
+ "FEFCO_0321": {
+  "dieline": "e3125e96c85ef10e1560c4a5",
+  "poses": "ae1f5508d2a8b807162df28e",
+  "bounds": "5cfea0f5f08c7babf4fe82e4",
+  "svg": "ae216f4e3defc1285c39b602"
+ },
+ "FEFCO_0322": {
+  "dieline": "401dc16d64ea06a3d44be1b5",
+  "poses": "2c71104cc896da797ccde1d8",
+  "bounds": "d84c7392484807c774f9acd5",
+  "svg": "3e64df17bf2ebee90046dc1b"
+ },
+ "FEFCO_0323": {
+  "dieline": "b9ed6c3a47a741723d7e4a6f",
+  "poses": "360e25ff27216926a140583b",
+  "bounds": "b5af55f46476da554f9fe6b6",
+  "svg": "9fe09944f63a53fa78a74e19"
+ },
+ "FEFCO_0325": {
+  "dieline": "e13ff81fbedffb26c423faac",
+  "poses": "bf39b4577bc6435651fb6dee",
+  "bounds": "00cdf9a35af6ae5d40e6cbc3",
+  "svg": "b13c722f947650ae834f72a4"
+ },
+ "FEFCO_0330": {
+  "dieline": "5f08d5a64148f70da944f900",
+  "poses": "238cb4c410beccbd7adcc0a4",
+  "bounds": "57118899ad690c5d9839959b",
+  "svg": "1493afbaa58eb15540561b56"
+ },
+ "FEFCO_0331": {
+  "dieline": "7106ba1009754cf02c85db44",
+  "poses": "5bbae506bdaa7f7e2fe708c1",
+  "bounds": "d9f9a750e28fb55b113f38d9",
+  "svg": "bfbe32641fe48c96dea7ef27"
+ },
+ "FEFCO_0350": {
+  "dieline": "d8502524a0dcde5b49451004",
+  "poses": "62552c8e867ded9f80f2a4b4",
+  "bounds": "7bdc66f87baf21e8534aea3c",
+  "svg": "67255669e31a2de4e4222afe"
+ },
+ "FEFCO_0351": {
+  "dieline": "df44860479f93a8e7f15a8f3",
+  "poses": "33fdca3c30ab11429dd8b847",
+  "bounds": "2c797b09abf32552129a564e",
+  "svg": "8608cee1904fd86e9eacb7d9"
+ },
+ "FEFCO_0352": {
+  "dieline": "c5666013a52a9c3d28533016",
+  "poses": "e7fc81616c36a84a7bcac2d5",
+  "bounds": "8ec34ba1eb5cdcb636573a08",
+  "svg": "7af55c078fd59cfe8f2f3ce7"
+ },
+ "FEFCO_0501": {
+  "dieline": "91e7bc4cb397edbe48388904",
+  "poses": "299dcaa8c40e87d091d3c08a",
+  "bounds": "3159faa155d996637ed177ce",
+  "svg": "e237f809fcc0127b3c0abfff"
+ },
+ "FEFCO_0502": {
+  "dieline": "d1f880a1fc9fe7bc1b23f741",
+  "poses": "1e8fadbbe2d051de3b905551",
+  "bounds": "2ef856ecf0ef93122c619062",
+  "svg": "81ee9ff414ddb748b02dcca0"
+ },
+ "FEFCO_0503": {
+  "dieline": "c86b33732d38afdef3936d5d",
+  "poses": "3036710cd19058a9c4d0027b",
+  "bounds": "93659c65375064371e3428f0",
+  "svg": "8836a5db508cf7f7fc1fd0a4"
+ },
+ "FEFCO_0504": {
+  "dieline": "8243043845788a0072d663ee",
+  "poses": "726baa02cf25ae3ae71defdd",
+  "bounds": "718ea357c3a571870074d05f",
+  "svg": "e92f1f1aea94f38c6933f3af"
+ },
+ "FEFCO_0505": {
+  "dieline": "96c26b36786a8f799e878a62",
+  "poses": "eca9528d539cb6685fc12ae8",
+  "bounds": "62199435b0a1876a94ef426b",
+  "svg": "9badc7bd4791591dcabc8805"
+ },
+ "FEFCO_0507": {
+  "dieline": "dbea189c5565817e94169349",
+  "poses": "abc009f0a96cb960ff7336dd",
+  "bounds": "dd828abe7035b313b26494ce",
+  "svg": "e2a503ee4065f28a6602cb23"
+ },
+ "FEFCO_0509": {
+  "dieline": "380c646b9badd4528b94b08a",
+  "poses": "050628cc457c7e3e1a06c89d",
+  "bounds": "a0df4dec7e38c97c5547beb7",
+  "svg": "6407c43a64f8331451132e44"
+ },
+ "FEFCO_0510": {
+  "dieline": "d9ebe7b98f156b6343d93b70",
+  "poses": "cd039652b57ad9feba0c6e88",
+  "bounds": "4251119b9e7c531531b9e0a9",
+  "svg": "6058b3da541ba37f8f6bb991"
+ },
+ "FEFCO_0511": {
+  "dieline": "6b019d966379aa8f7588a410",
+  "poses": "f2a8e1a43a2934a55ec6b487",
+  "bounds": "cbb09ec593c63babea6437af",
+  "svg": "6058b3da541ba37f8f6bb991"
+ },
+ "FEFCO_0512": {
+  "dieline": "602bfd7e247674f4a36ff1d4",
+  "poses": "23f71f5e75263da64c0e9446",
+  "bounds": "601daecca64c22b75de0133e",
+  "svg": "a8fe6509f87bb893124a42ca"
+ },
+ "FEFCO_0400": {
+  "dieline": "5af4946df442cecc35fe19e3",
+  "poses": "0dcc9850a7ddc4727ae28c42",
+  "bounds": "f51f28afba53aa2a67dffd2f",
+  "svg": "e1f56e79d16845c62e7ee463"
+ },
+ "FEFCO_0401": {
+  "dieline": "31c21ee417b6ea4fd2a1798b",
+  "poses": "fe1141cc7e738194bac55bad",
+  "bounds": "3fd630b27bc351f16a9d0745",
+  "svg": "4583ece042b064254189b8cf"
+ },
+ "FEFCO_0402": {
+  "dieline": "63c330909e5f4bc4ad2dc2ab",
+  "poses": "d47168435ea7e38b0274e849",
+  "bounds": "4d3a72fa511da1406400552d",
+  "svg": "b3a1d3924bb797d23d64f72a"
+ },
+ "FEFCO_0403": {
+  "dieline": "21584f596d4b13b359d3e0a6",
+  "poses": "81aca30262b9cd8c8e89c975",
+  "bounds": "00af5f6cc869b51b318eceaa",
+  "svg": "b337685a34eb177d1f095f08"
+ },
+ "FEFCO_0412": {
+  "dieline": "3545f518cbb365a47df317ec",
+  "poses": "f7d0e529be5a639961eeacb2",
+  "bounds": "371688d8fb006725a8ec2762",
+  "svg": "be4c780aea781f1f2ff7b20c"
+ },
+ "FEFCO_0413": {
+  "dieline": "eccd1dc9ad97f1d5c1df04a6",
+  "poses": "b201493b4d4795fd14818855",
+  "bounds": "f95634e18819d4fd15f2813d",
+  "svg": "b3184c661dc8801100649308"
+ },
+ "FEFCO_0415": {
+  "dieline": "4bd2cf60b19ec4d61779930a",
+  "poses": "fb26c1801ce3eb9a11fb848f",
+  "bounds": "8ca6199cc0ad8c8703e350e3",
+  "svg": "adff64f82d2697d351e88bbc"
+ },
+ "FEFCO_0415a": {
+  "dieline": "e8070d5925073a8a5ddad354",
+  "poses": "63280c6c019232b9c642982a",
+  "bounds": "8f2cbd09ae88a18dce90309e",
+  "svg": "68d102816ac7912a0d86e31f"
+ },
+ "FEFCO_0416": {
+  "dieline": "b65b5dad8479e18a8f8329b1",
+  "poses": "19a47d7322d9ebc81352e047",
+  "bounds": "a1bba3046f2b3f29a16885e2",
+  "svg": "4c33c1c634d33a95b9e34b8a"
+ },
+ "FEFCO_0416a": {
+  "dieline": "15cd93bf8ee207d061f75152",
+  "poses": "2ffa8092b0be649afdd0d601",
+  "bounds": "d5dd4b99e2b968c3ee087e65",
+  "svg": "4c33c1c634d33a95b9e34b8a"
+ },
+ "FEFCO_0420": {
+  "dieline": "b4a0ad0933f7787006fb3152",
+  "poses": "379d215c7967ef0645e48426",
+  "bounds": "b48cdbd250380398b0c34678",
+  "svg": "825555d191d8edf7d0fd1388"
+ },
+ "FEFCO_0404": {
+  "dieline": "a58c48434013bf3ee3f55f56",
+  "poses": "b0348c0c5ea266ea4a569dac",
+  "bounds": "b06a67a79a667bfed071d7b6",
+  "svg": "eca97df577bb98454aab0f96"
+ },
+ "FEFCO_0406": {
+  "dieline": "8926eae40ffe8df179d9ba48",
+  "poses": "c54bf690593ea8db5601f70e",
+  "bounds": "551c9357f09aa47c957ccd0c",
+  "svg": "90917e2bc69eb20e1c929dd4"
+ },
+ "FEFCO_0409": {
+  "dieline": "dc3108a4faa8bf517b2e5cd6",
+  "poses": "ce008e59a9463b9edc53bd31",
+  "bounds": "16ebbaca2f6507831a135aaf",
+  "svg": "a0ab850040624b169a56711c"
+ },
+ "FEFCO_0409a": {
+  "dieline": "2b1e22890d40be245cc75413",
+  "poses": "ce008e59a9463b9edc53bd31",
+  "bounds": "7120547f1fe9e386a27682d5",
+  "svg": "a0ab850040624b169a56711c"
+ },
+ "FEFCO_0410": {
+  "dieline": "69d17a1bbc7e2ca0dc11d69d",
+  "poses": "dfb97fc802658eccb9c00fa4",
+  "bounds": "a06a9077092f221b6ed5226e",
+  "svg": "39df33ae5e6830d0240b8d8e"
+ },
+ "FEFCO_0410a": {
+  "dieline": "3f0298eeb0a0731b46c60836",
+  "poses": "dfb97fc802658eccb9c00fa4",
+  "bounds": "192453d7229d0943671af184",
+  "svg": "39df33ae5e6830d0240b8d8e"
+ },
+ "FEFCO_0411": {
+  "dieline": "7db5dd9d615c68e0354d1269",
+  "poses": "8da3509192bf686992e0d599",
+  "bounds": "7c359df6f308097a1e6e47a4",
+  "svg": "1fb943a81eb6aae07111f1ef"
+ },
+ "FEFCO_0411a": {
+  "dieline": "a3c8e0f61b580947e4355679",
+  "poses": "bd75c11665efbf0e08a05a52",
+  "bounds": "cab9d16f956e9f73a8eacde2",
+  "svg": "e2aeba494c8749ba7bd2f414"
+ },
+ "FEFCO_0405": {
+  "dieline": "298f953bfdf3817e7ec94c2f",
+  "poses": "0322d2ffb272f59bc705cc0e",
+  "bounds": "db44be00977c29eacb4465b2",
+  "svg": "cc9a991fe1719b4523e6e3bf"
+ },
+ "FEFCO_0421": {
+  "dieline": "29182a0751ce2c8b93571045",
+  "poses": "93688fcc9a155f2fb4f541b5",
+  "bounds": "e2c6c793e151a2af6837e545",
+  "svg": "83daf32403ed3bc473f30a50"
+ },
+ "FEFCO_0421_1": {
+  "dieline": "e5b7a1f98fc5a88b8cab5769",
+  "poses": "8b73491e9a4edf73ba258128",
+  "bounds": "b7d9e4737a530ddb084aeec8",
+  "svg": "83daf32403ed3bc473f30a50"
+ },
+ "FEFCO_0421a": {
+  "dieline": "a24d217354a91bc700545264",
+  "poses": "3bb710fd31875a8bc9b8d356",
+  "bounds": "8b0228d12741714fa014903e",
+  "svg": "570425059132c079d477ce39"
+ },
+ "FEFCO_0422_1": {
+  "dieline": "b3a9083e84b518eb81245444",
+  "poses": "a3e9e2766edb059680f1da20",
+  "bounds": "072157ed61f78cf5bf2f7b92",
+  "svg": "01a28eca66ea21a33ef23d04"
+ },
+ "FEFCO_0422_2": {
+  "dieline": "e927c462b2b39d5d10c08109",
+  "poses": "2b33af012aacf8294ba90aca",
+  "bounds": "77a7304a6056ee39e43ee333",
+  "svg": "ee869b96ecaf0b99856ff1f5"
+ },
+ "FEFCO_0422a": {
+  "dieline": "da0914560cb7c23260b31054",
+  "poses": "55361a9f5ebc0e177760328b",
+  "bounds": "932be0d0cbde10d59558ccb2",
+  "svg": "eca4bf76868c2163255211f3"
+ },
+ "FEFCO_0423": {
+  "dieline": "999139c2ffdcae4ac7ad43cc",
+  "poses": "2a33f86acf930f1d0ca59b5b",
+  "bounds": "9ada4914e909a1d0c0f0b4b1",
+  "svg": "d92ed4f351812ffff7bdffd5"
+ },
+ "FEFCO_0423_1": {
+  "dieline": "3ba828266b3dd5b547514bf7",
+  "poses": "2a33f86acf930f1d0ca59b5b",
+  "bounds": "9ada4914e909a1d0c0f0b4b1",
+  "svg": "62eaaa5bab5991ba8407f9ea"
+ },
+ "FEFCO_0423a": {
+  "dieline": "e24dd331134cd202bd407117",
+  "poses": "e2a9b91b6adf6e7ff356f801",
+  "bounds": "1a4b03cad804b2e8bd1a8b53",
+  "svg": "ad3ce286fdadd6626794d1f1"
+ },
+ "FEFCO_0423_1a": {
+  "dieline": "6442f1dd18ef7a6dc7398477",
+  "poses": "e2a9b91b6adf6e7ff356f801",
+  "bounds": "1a4b03cad804b2e8bd1a8b53",
+  "svg": "62dad9e75ebedb7ca3e6632c"
+ },
+ "FEFCO_0424": {
+  "dieline": "a456eaf2af50fe67f12623a0",
+  "poses": "417bb03a69c9a35cd3d4db59",
+  "bounds": "f7c060a798ee89eaf072c186",
+  "svg": "4865d96f2048532c6ae4fa04"
+ },
+ "FEFCO_0424a": {
+  "dieline": "b53eb1849e77062644c79934",
+  "poses": "48c2a05c3edacaf8cdaf02e7",
+  "bounds": "d88536aff8a30efcce480b4d",
+  "svg": "c952cf1e62243b3471577740"
+ },
+ "FEFCO_0425": {
+  "dieline": "64f31ff919dc4a33360c2bfc",
+  "poses": "1513b63a6c4b46fa2a28f21c",
+  "bounds": "511baea69983d6159a68e4be",
+  "svg": "2364d3c6f27bf621d37a09c8"
+ },
+ "FEFCO_0425a": {
+  "dieline": "b15d1456e6edec461afdb0ec",
+  "poses": "d42a26db6ec7a3308ce8229a",
+  "bounds": "b98fd133c7bc007bece8e963",
+  "svg": "25b85219f47fbe20adfb8978"
+ },
+ "FEFCO_0426a": {
+  "dieline": "b84699127ceea4d79de264c6",
+  "poses": "93688fcc9a155f2fb4f541b5",
+  "bounds": "87f690e6c3117e79dc5a8d5e",
+  "svg": "83daf32403ed3bc473f30a50"
+ },
+ "FEFCO_0427_1": {
+  "dieline": "430e8ad55306b34a34b12814",
+  "poses": "3bb710fd31875a8bc9b8d356",
+  "bounds": "1183f9821b5cbee3b18712d7",
+  "svg": "570425059132c079d477ce39"
+ },
+ "FEFCO_0428": {
+  "dieline": "00f0d98cbd6f2b9dce03ec5a",
+  "poses": "a44d70b3ac501d7f890ba872",
+  "bounds": "91da525805c2f20f46120f57",
+  "svg": "b732c2c1752a3772ed70b4f5"
+ },
+ "FEFCO_0428a": {
+  "dieline": "d00caa48ea8bf633a6288ff1",
+  "poses": "e3754625bf2c31cea7e5e891",
+  "bounds": "97ff04e5409583bce5b0e081",
+  "svg": "b732c2c1752a3772ed70b4f5"
+ },
+ "FEFCO_0429": {
+  "dieline": "fd00b64463583cca09bdd9a6",
+  "poses": "4d9a0e352015d7b32c32ebf0",
+  "bounds": "e96d86be878b598090b45cc8",
+  "svg": "f6d9fbc1a0583e68561b2eef"
+ },
+ "FEFCO_0429a": {
+  "dieline": "4211c5daa2a52471d8fd7abf",
+  "poses": "08e5e51b72562652fd7a5f8d",
+  "bounds": "64d82c122d52971570119849",
+  "svg": "95d6c91050051dc144aa2592"
+ },
+ "FEFCO_0430": {
+  "dieline": "177692812145c2b559a42f1d",
+  "poses": "a3e9e2766edb059680f1da20",
+  "bounds": "072157ed61f78cf5bf2f7b92",
+  "svg": "01a28eca66ea21a33ef23d04"
+ },
+ "FEFCO_0431": {
+  "dieline": "891a6450302bef8fe5414466",
+  "poses": "aeb20c1645def4bca17c9816",
+  "bounds": "a07c8ba9ef501e0976e73868",
+  "svg": "cd8bf94c3cbb4c6e0e87ff2b"
+ },
+ "FEFCO_0432": {
+  "dieline": "a8d52574e66b07368a56505c",
+  "poses": "8812bcc5f6be4cefe3bcbeec",
+  "bounds": "fabfde7513cd6425d3017959",
+  "svg": "20b891aec9af6a0e25e87d74"
+ },
+ "FEFCO_0432a": {
+  "dieline": "7f5a10b70e79e5140fa2f127",
+  "poses": "8812bcc5f6be4cefe3bcbeec",
+  "bounds": "fabfde7513cd6425d3017959",
+  "svg": "e4fd3f502d97da541efe2d1b"
+ },
+ "FEFCO_0433": {
+  "dieline": "1ed440901c249cd7b9c0ab96",
+  "poses": "e134db14793bf9423e022c33",
+  "bounds": "00a064ac7b592ddde0b4afa2",
+  "svg": "46a53451e556023ff7e8417e"
+ },
+ "FEFCO_0434": {
+  "dieline": "ff9e31fb74732349a1e85d8d",
+  "poses": "c2acd0db9a51b0678aa55d7b",
+  "bounds": "4d82e863ffa975e27b76f316",
+  "svg": "44ca3ea8271e1c8f61027899"
+ },
+ "FEFCO_0435": {
+  "dieline": "7969e45b4043e1fbe28328de",
+  "poses": "55361a9f5ebc0e177760328b",
+  "bounds": "7ee9a7658fbee25a540fceff",
+  "svg": "cd32f330beecc35a72a4b8fc"
+ },
+ "FEFCO_0435a": {
+  "dieline": "184df1ac1b2b5b75d9780cc2",
+  "poses": "7db5a7e3c5b990ef43d55ffd",
+  "bounds": "5a73dd27e8f058292a8bdadd",
+  "svg": "e77f43155e9323cd395ba665"
+ },
+ "FEFCO_0436": {
+  "dieline": "23e2d25d181c715cf10917ff",
+  "poses": "4cb89b94520260f402e6fc01",
+  "bounds": "06a9070ce74048e02d22856f",
+  "svg": "df3913a337d9855cc06f4a29"
+ },
+ "FEFCO_0437": {
+  "dieline": "4af8e6200eab37d507b3bcc7",
+  "poses": "801ff1793e0cb7239b969109",
+  "bounds": "d46c1283de9d8c4791d16c9e",
+  "svg": "97bbfd0fbc3b9bcff9261a01"
+ },
+ "FEFCO_0437_1": {
+  "dieline": "8027eee91c7a64c74cec33c9",
+  "poses": "801ff1793e0cb7239b969109",
+  "bounds": "d46c1283de9d8c4791d16c9e",
+  "svg": "9b66d65a1b2ebc6d835d49f4"
+ },
+ "FEFCO_0439": {
+  "dieline": "e112ed5d10b5b0e3d13ae795",
+  "poses": "0ac43abcb003df96583fca87",
+  "bounds": "b8ac52107c73e7c2258998f5",
+  "svg": "0715886a181357dcca0760a7"
+ },
+ "FEFCO_0439a": {
+  "dieline": "d197fa44c196005d576a95d9",
+  "poses": "0ac43abcb003df96583fca87",
+  "bounds": "b8ac52107c73e7c2258998f5",
+  "svg": "7e9710e819cd931ba44ee389"
+ },
+ "FEFCO_0447": {
+  "dieline": "256dcf015258d02615dfd600",
+  "poses": "1a35197487496ae113b3aa85",
+  "bounds": "9d0f726f70c271ba32011ce8",
+  "svg": "e7ebff1aa2dc1d908788e846"
+ },
+ "FEFCO_0449": {
+  "dieline": "19cdc4447a87afcda053c635",
+  "poses": "55361a9f5ebc0e177760328b",
+  "bounds": "700298f4587b3b1cf4f468d9",
+  "svg": "c85e88cb9713527fc87bc975"
+ },
+ "FEFCO_0457": {
+  "dieline": "2fbd51b7dd4244a64ca21734",
+  "poses": "1ad971cbdc30870529d771db",
+  "bounds": "cd49293530272c0b64486109",
+  "svg": "0b5a8f157dee94444dd34673"
+ },
+ "FEFCO_0440": {
+  "dieline": "05d3f9d4fed5cfd112179998",
+  "poses": "38fbe6911eff48deda435f54",
+  "bounds": "b2890e4da6475e90f89f213d",
+  "svg": "65c9905732d4cebb0ecc9048"
+ },
+ "FEFCO_0441": {
+  "dieline": "6e1ecafc51340d2fb6988a84",
+  "poses": "84cf67239dc3dcbe4260fac6",
+  "bounds": "fe77d7a0d059ebe4079ccc84",
+  "svg": "e7ebff1aa2dc1d908788e846"
+ },
+ "FEFCO_0442": {
+  "dieline": "46ef31fef48e91661fa1462e",
+  "poses": "9f241daadb5a4cda45331ddd",
+  "bounds": "f040958490bb6fc9af98e555",
+  "svg": "e40c1d1b878182123e8a7c67"
+ },
+ "FEFCO_0443": {
+  "dieline": "28a6ff5f3116f7d944c17011",
+  "poses": "ca4fc0e869df3380ff7df5e6",
+  "bounds": "3f0fdb2d20630595160a2aa7",
+  "svg": "1ddc07da44e7e44d1d785d9a"
+ },
+ "FEFCO_0444": {
+  "dieline": "b54976f6c413d5b46fee77c4",
+  "poses": "c5ff9fa0becbb95e8f6efdd9",
+  "bounds": "50404a48f793bdfccc531416",
+  "svg": "cf896ce55d966d7f6abf5289"
+ },
+ "FEFCO_0445": {
+  "dieline": "31568b6164a4731177596d52",
+  "poses": "f3d3a1513d69895cfe98adb8",
+  "bounds": "de5af06e9da896b1e4540856",
+  "svg": "4015b60c9c48aa134ada9e1a"
+ },
+ "FEFCO_0448": {
+  "dieline": "0af399ade9a012f70004a469",
+  "poses": "ae5204a614b4d499b0331a1d",
+  "bounds": "01f27fa5fac660977c717fba",
+  "svg": "4b1b655ed71be27aa467e45e"
+ },
+ "FEFCO_0450": {
+  "dieline": "883402ca93ce27674de30a5b",
+  "poses": "b8504a2690a018cdc3476e00",
+  "bounds": "3da0aa8425432684577ccefa",
+  "svg": "2445d864da1e01fae2753a5a"
+ },
+ "FEFCO_0451": {
+  "dieline": "c425dc94a90cf3efbcce690b",
+  "poses": "77455a61213a323fc067639c",
+  "bounds": "c1eb5c0b5d42415e7b753de7",
+  "svg": "efae04665f0f4b2f4076a512"
+ },
+ "FEFCO_0451_1": {
+  "dieline": "8f96a368b217b86fee860245",
+  "poses": "b307f560e55b5b2219046469",
+  "bounds": "c6840930fdba5db7639f85f1",
+  "svg": "ed0abb1e522cc662cc8f9bb0"
+ },
+ "FEFCO_0451_2": {
+  "dieline": "b54c755f7b44c1590967910c",
+  "poses": "ed7b20f46c4d3f2b2ea05963",
+  "bounds": "adb422ef5a5bd532ee71b56e",
+  "svg": "d378713cc7f0b61ccefaaacc"
+ },
+ "FEFCO_0452": {
+  "dieline": "c9d634b4341b793c57f0994d",
+  "poses": "f3d3a1513d69895cfe98adb8",
+  "bounds": "de5af06e9da896b1e4540856",
+  "svg": "4015b60c9c48aa134ada9e1a"
+ },
+ "FEFCO_0453": {
+  "dieline": "5397195e7e948337fbb5c1a4",
+  "poses": "1ad971cbdc30870529d771db",
+  "bounds": "cd49293530272c0b64486109",
+  "svg": "0b5a8f157dee94444dd34673"
+ },
+ "FEFCO_0454": {
+  "dieline": "04d694bb7ab3761c857a76fc",
+  "poses": "2a33f86acf930f1d0ca59b5b",
+  "bounds": "9ada4914e909a1d0c0f0b4b1",
+  "svg": "d92ed4f351812ffff7bdffd5"
+ },
+ "FEFCO_0454_1": {
+  "dieline": "672bffc6e814a9520a5ffc0f",
+  "poses": "8812bcc5f6be4cefe3bcbeec",
+  "bounds": "fabfde7513cd6425d3017959",
+  "svg": "20b891aec9af6a0e25e87d74"
+ },
+ "FEFCO_0455": {
+  "dieline": "15475a4332b8b1edddee60cd",
+  "poses": "a3e9e2766edb059680f1da20",
+  "bounds": "072157ed61f78cf5bf2f7b92",
+  "svg": "0774a85362c7e8b1fbe61e26"
+ },
+ "FEFCO_0455_1": {
+  "dieline": "04d1079f4ae4bdbb9c290f4d",
+  "poses": "2b33af012aacf8294ba90aca",
+  "bounds": "77a7304a6056ee39e43ee333",
+  "svg": "ee869b96ecaf0b99856ff1f5"
+ },
+ "FEFCO_0458": {
+  "dieline": "029a864a29d6f8e7a5263a6c",
+  "poses": "00668d0e98d9be632fe8767e",
+  "bounds": "e90068e17795d12e06db4b3c",
+  "svg": "348bccc3554ef87846c4d6e9"
+ },
+ "FEFCO_0459": {
+  "dieline": "bef49485153931550540068f",
+  "poses": "e7b11ce7a8ddb8b682270bf4",
+  "bounds": "c4809d8d3af400505006b756",
+  "svg": "f70f89bc3de44ddd199e0f7b"
+ },
+ "FEFCO_0460": {
+  "dieline": "06b42a7987fa9f9e380fabe8",
+  "poses": "31e5e943667904fa20482290",
+  "bounds": "7e28b13d25d46be7e48c756e",
+  "svg": "62adb180889dc31a85cedc73"
+ },
+ "FEFCO_0470": {
+  "dieline": "e6a40b751dbf7fdfb5ec0fb1",
+  "poses": "e3754625bf2c31cea7e5e891",
+  "bounds": "97ff04e5409583bce5b0e081",
+  "svg": "b732c2c1752a3772ed70b4f5"
+ },
+ "FEFCO_0471": {
+  "dieline": "144b8044c56c45ec674a7012",
+  "poses": "7b42f672e1cdd01554264785",
+  "bounds": "6bd9f67b7e52e5a86d787e70",
+  "svg": "d984ea5bb2a2e5cd4aa6c8ed"
+ },
+ "FEFCO_0471a": {
+  "dieline": "54e188aa126796531c32fb40",
+  "poses": "0ac43abcb003df96583fca87",
+  "bounds": "b8ac52107c73e7c2258998f5",
+  "svg": "0715886a181357dcca0760a7"
+ },
+ "FEFCO_0472": {
+  "dieline": "9e963637a5e1af0e8713fac4",
+  "poses": "7276a5a83efea1a9a32a92d0",
+  "bounds": "c8fc83377a61819110738590",
+  "svg": "b74e7789477c91bbf6900c2c"
+ },
+ "FEFCO_0601": {
+  "dieline": "4eebe270e262843c928d1f56",
+  "poses": "ab41d58522fd8df871816ca2",
+  "bounds": "4123f269e3640034e92f079e",
+  "svg": "4cedfc80f448469616bae3e3"
+ },
+ "FEFCO_0602": {
+  "dieline": "7dfeb2113132353605d9d858",
+  "poses": "b7078a7d017cd7523de538f4",
+  "bounds": "d1b3469e216734fa8562e0be",
+  "svg": "4cedfc80f448469616bae3e3"
+ },
+ "FEFCO_0605": {
+  "dieline": "b9c9a5cb2ad10c7ad6359818",
+  "poses": "54522281e32b282796310663",
+  "bounds": "75365e55e8c1620516df3952",
+  "svg": "e28d9dc25130bb63cbb865e6"
+ },
+ "FEFCO_0606": {
+  "dieline": "747bccbf9b82eb32bc7e76ce",
+  "poses": "305dcf923817a2a1efd00cfa",
+  "bounds": "654ee73a9999263b4e049383",
+  "svg": "49d61817732baa9c578747e1"
+ },
+ "FEFCO_0607": {
+  "dieline": "509ed46d6061b13ccca7bd3d",
+  "poses": "3b3d21e7b606cea429438b6a",
+  "bounds": "390fbee921f06164646dada0",
+  "svg": "c8df10a36fc9857271178344"
+ },
+ "FEFCO_0608": {
+  "dieline": "5610dc59c3130e1cd0fd9cd4",
+  "poses": "d052685474031764be068f6d",
+  "bounds": "b1e72c37f4b33262c0466998",
+  "svg": "c8df10a36fc9857271178344"
+ },
+ "FEFCO_0610": {
+  "dieline": "e13dd7553073dd06af0d16e7",
+  "poses": "3b3d21e7b606cea429438b6a",
+  "bounds": "1e7c55b3995171949dbfa9e3",
+  "svg": "2196856dc6bb4b073a820d24"
+ },
+ "FEFCO_0615": {
+  "dieline": "9be80c4141493fd8a7b9b775",
+  "poses": "97bcd1a3b2b3e9122ae64175",
+  "bounds": "01f9e5775450fbc1cf42ccde",
+  "svg": "28a186ca57e38a59a88c5f77"
+ },
+ "FEFCO_0616": {
+  "dieline": "32276e7a46a451d4d63072f5",
+  "poses": "aaab62828885e0c4ae27053d",
+  "bounds": "341b4002cd624cfd2a9132c9",
+  "svg": "78b81102469baf8b3f91ecd3"
+ },
+ "FEFCO_0620": {
+  "dieline": "cdbfc5c7f6f8570add3a7a85",
+  "poses": "59faa533ddf536f94a7f81d2",
+  "bounds": "6ab8c92e5e11244e14bdb129",
+  "svg": "e169a9791e70a36b580a4cd3"
+ },
+ "FEFCO_0621": {
+  "dieline": "abae57f09541063379dd37e7",
+  "poses": "42627c92d9b38a72e41c567a",
+  "bounds": "c64705e606b6d543a8b07bc6",
+  "svg": "010ad00cd8695d0e6f2b29be"
+ },
+ "FEFCO_0700": {
+  "dieline": "22c5d6a5abe06c28720c588c",
+  "poses": "6b029ba54c789214a54d46c9",
+  "bounds": "ae9c4797826f1b196c8cefd9",
+  "svg": "d98e60821075098ea6e061c0"
+ },
+ "FEFCO_0701": {
+  "dieline": "ffbe0ba7a18d6e94eff5d38d",
+  "poses": "53e252fe40853917caf93a01",
+  "bounds": "74e5fda2c710e18f0e29cd91",
+  "svg": "6bfa8f0b6e337d5be8c75b51"
+ },
+ "FEFCO_0703": {
+  "dieline": "02fdd31dc9f9ee8f43b0cfe7",
+  "poses": "0befd410b8c3e86c97b1fad1",
+  "bounds": "83ebc10294b349ae6aa4b0ef",
+  "svg": "7a383b5fd199b8ab5f7edf7f"
+ },
+ "FEFCO_0711": {
+  "dieline": "36ac353721a0e907a214015a",
+  "poses": "53e252fe40853917caf93a01",
+  "bounds": "58c423abd30e33dd2a28e902",
+  "svg": "6bfa8f0b6e337d5be8c75b51"
+ },
+ "FEFCO_0712": {
+  "dieline": "e59a1f2b5e21d27f4bae722b",
+  "poses": "53e252fe40853917caf93a01",
+  "bounds": "d4fc59b16de5966a409de532",
+  "svg": "ff6ba359f236207c1367ce86"
+ },
+ "FEFCO_0713": {
+  "dieline": "5c6c75434de31d0d956a6c3a",
+  "poses": "07674c2931edb75a8142f0fb",
+  "bounds": "f46bf7597c4d973a0df2ad6b",
+  "svg": "63d897c35d505c77c9c04202"
+ },
+ "FEFCO_0714": {
+  "dieline": "ad160833b1971b2b31a295f4",
+  "poses": "d828beb6ffefa2a887b6749b",
+  "bounds": "99180ed40dfd7f0609dde284",
+  "svg": "abf6c9d858609a773247d772"
+ },
+ "FEFCO_0715": {
+  "dieline": "46544a1a24b15a056874df54",
+  "poses": "34d49cbe98fbc0f084e4a2d1",
+  "bounds": "7eb07c028dac5ea07d0a761f",
+  "svg": "000a6bd129bf530d64d0739d"
+ },
+ "FEFCO_0716": {
+  "dieline": "9f40ef79db45327d57de461a",
+  "poses": "53e252fe40853917caf93a01",
+  "bounds": "d4fc59b16de5966a409de532",
+  "svg": "ff6ba359f236207c1367ce86"
+ },
+ "FEFCO_0717": {
+  "dieline": "e397d5ce36c25ebcd3cbf6cb",
+  "poses": "c1aad42d8cdc14f08450276d",
+  "bounds": "11dd6432f3ced43bb4cb87f1",
+  "svg": "a9a96900d3efb19731ed75cd"
+ },
+ "FEFCO_0718": {
+  "dieline": "d253589815c25d85e9b36827",
+  "poses": "918052582c58eb9f1b88c73a",
+  "bounds": "9f465562d3de003619c69563",
+  "svg": "0eb6c71e600ed2ba076712b5"
+ },
+ "FEFCO_0747": {
+  "dieline": "5b32ae45b488fa656bf9f29a",
+  "poses": "50015fc5d915a108a68accf0",
+  "bounds": "d852a7ad14f1873d3be1e53a",
+  "svg": "bc7507df3cf3ef1484baf87b"
+ },
+ "FEFCO_0748": {
+  "dieline": "ac81ba898ccef90a1ab76cdb",
+  "poses": "5d544a60c54ff66ac51e385b",
+  "bounds": "e9f6455792edf0e97749492f",
+  "svg": "76ead00baae16ad4ee74558f"
+ },
+ "FEFCO_0751": {
+  "dieline": "fef083938dcffd30b3dc9b84",
+  "poses": "5d544a60c54ff66ac51e385b",
+  "bounds": "e9f6455792edf0e97749492f",
+  "svg": "61266231a032a232199f4463"
+ },
+ "FEFCO_0752": {
+  "dieline": "165ce11a74f22e41b3d52a90",
+  "poses": "e6cee82e174eb369c5e34520",
+  "bounds": "8c34abdca1b69bea20b90c15",
+  "svg": "67e72e2182a4203e52913558"
+ },
+ "FEFCO_0759": {
+  "dieline": "03afbf96585fac88a134d7fe",
+  "poses": "15105d6e11e02be8326e8d9d",
+  "bounds": "ae845e294207da4a3bc69caa",
+  "svg": "e1e15ec99e72b83603808753"
+ },
+ "FEFCO_0761": {
+  "dieline": "9c390b0dcf0e603da3044326",
+  "poses": "a002c85409913584ad863bcd",
+  "bounds": "1a80224c8c1879219de764b4",
+  "svg": "76ead00baae16ad4ee74558f"
+ },
+ "FEFCO_0770": {
+  "dieline": "ac0f90133775ca7543dd3e12",
+  "poses": "c2003ebe96ecc189a868c4fe",
+  "bounds": "36daa125b7b5d37bab820d2c",
+  "svg": "d2a118e0bef1351a79d79703"
+ },
+ "FEFCO_0771": {
+  "dieline": "e92a931196d81353edf02258",
+  "poses": "c2003ebe96ecc189a868c4fe",
+  "bounds": "48224974f6242052ba4b15c0",
+  "svg": "09a2b1ce0e4b77187581317b"
+ },
+ "FEFCO_0772": {
+  "dieline": "7ea68217bac15a90722e4ce6",
+  "poses": "c85ae28642749ebc805d56c3",
+  "bounds": "edbdad52247713cf274e56a0",
+  "svg": "d5133fee16a46629f00b6eaa"
+ },
+ "FEFCO_0773": {
+  "dieline": "e7ee9a976dcf6be1021a63b0",
+  "poses": "466236a04687b2a9b6b82334",
+  "bounds": "6f218a02610a400d7fcaab68",
+  "svg": "abe6012514945e044ad043b1"
+ },
+ "FEFCO_0774": {
+  "dieline": "06d452f491d8239caa11df3e",
+  "poses": "466236a04687b2a9b6b82334",
+  "bounds": "6f218a02610a400d7fcaab68",
+  "svg": "cff1ef95619c21b92e2b08da"
+ },
+ "ECMA_TUCK_STE": {
+  "dieline": "0135f20681bf43dc9b80a90b",
+  "poses": "f2909d51604b8c4d910e1b09",
+  "bounds": "ff35dfec1d7c7ced44250bed",
+  "svg": "c74cfb07bdc727a04ccb70c8"
+ },
+ "ECMA_TUCK_RTE": {
+  "dieline": "ed0cfae3917f07c7f9de7b51",
+  "poses": "330614198c39c305d908782a",
+  "bounds": "23bc914b391d094fca917536",
+  "svg": "b1cc528dd47e3ca40872aafe"
+ },
+ "ECMA_TUCK_AIRPLANE": {
+  "dieline": "b3cc2983957f3c98d7fab4fb",
+  "poses": "43380bf97ac8c149f02ae124",
+  "bounds": "1ab8994d54c80fea38fe5c69",
+  "svg": "75bca9b7f15165f3d07ab24f"
+ },
+ "ECMA_TUCK_FRENCH_RTE": {
+  "dieline": "3a7e9d85fc6a11acae77f683",
+  "poses": "a383379a4586879bcdb05a15",
+  "bounds": "55ac009affd0ca651e0c1a8d",
+  "svg": "ee09ec8ff1c7f4a8dd21e5cd"
+ },
+ "ECMA_TUCK_SNAP_LOCK": {
+  "dieline": "57a4315fd0b5b981ff6e588f",
+  "poses": "e00ad32df96e78a7ff669f22",
+  "bounds": "62bba6598796ab1c9524262d",
+  "svg": "6fb64d6f59841f41537b4d9e"
+ },
+ "ECMA_TUCK_CRASH_LOCK": {
+  "dieline": "1d3c27c79a3d52b6d5047f95",
+  "poses": "ea9a2fd1536952b768f047e5",
+  "bounds": "37e556aaf2de01c6a3b779b7",
+  "svg": "6df8d3a78a7820b72f863f67"
+ },
+ "ECMA_SEAL_END": {
+  "dieline": "409f642e69700ffd8d665b2c",
+  "poses": "55d1ef47bf34d33cd999d8ca",
+  "bounds": "7e4fbbb17194aa534c865846",
+  "svg": "d6900e525d2001a7643b5224"
+ },
+ "ECMA_SEAL_END_TEAR": {
+  "dieline": "574e4119338676101307b9e0",
+  "poses": "471a260168d2c14fb36b4fd6",
+  "bounds": "946c406b0f338d38a3064825",
+  "svg": "ed52da7330df790c89e1d4b4"
+ },
+ "ECMA_HANGER_EURO": {
+  "dieline": "7a28ae3d24b0a1faf5a9312e",
+  "poses": "8d17df9f4df365855ac121d1",
+  "bounds": "739729cf2cd85dc8fb1c1b0b",
+  "svg": "6f9f736a52a2ce1d9fc45808"
+ },
+ "ECMA_HANGER_ROUND": {
+  "dieline": "fd80c29cea38e7a20b3d16e2",
+  "poses": "7e369ab03d1abe72f49e09c7",
+  "bounds": "263b175ca5af3c5297515761",
+  "svg": "04d277a15a09c46e6512f594"
+ },
+ "ECMA_WINDOW_RTE": {
+  "dieline": "f16a43ba7f9a8f98baa55164",
+  "poses": "f2ff08c6770e20c33833d573",
+  "bounds": "04fbb1eea95067ce5c510ba7",
+  "svg": "86e5cf1d60801cb5ba7abc70"
+ },
+ "ECMA_PHARMA_RTE": {
+  "dieline": "f0c371b7e9de9b925f89bd79",
+  "poses": "1b0aafa7cef9bfb55a4cf982",
+  "bounds": "ec85235e89f309e0c7f72e4f",
+  "svg": "fc6b023a97faea1536eb3315"
+ },
+ "ECMA_FLIP_TOP": {
+  "dieline": "b840773801b4af83d1b03932",
+  "poses": "c750aeb97a47b6b312ecfa3c",
+  "bounds": "c3bd7bd3a4d8a0fc3c861f8d",
+  "svg": "ec26c8219d04b6ad62fb676d"
+ },
+ "ECMA_DOUBLE_WALL_TUCK": {
+  "dieline": "49849997d0562814dc491405",
+  "poses": "5bfc3bc6573822d1a907fe53",
+  "bounds": "c75d7bf6c52fca45dd7be224",
+  "svg": "5d652054b36fd075f2325bcf"
+ },
+ "ECMA_TRAY_4C": {
+  "dieline": "57ce4210d4c17429cebd1704",
+  "poses": "2f3a645def2e21bd1a50000c",
+  "bounds": "cc9b9cd992c892c9dd3778bf",
+  "svg": "689e6d1e2264bc22962dbf5a"
+ },
+ "ECMA_TRAY_BEERS": {
+  "dieline": "3105f2f91d8cad4b09852623",
+  "poses": "5fb016e18195e2bebd6573ef",
+  "bounds": "e4bbb653efa8a03bde577a55",
+  "svg": "615d549d7eef64daa7671066"
+ },
+ "ECMA_TRAY_BRIGHTWOOD": {
+  "dieline": "88fc4bfaac43bae23ee539aa",
+  "poses": "5e18186a81de93e933b26643",
+  "bounds": "4a61ae99e16b366add28142b",
+  "svg": "9f78921d5bdc0fd8ef3a2036"
+ },
+ "ECMA_TRAY_6C_LID": {
+  "dieline": "6c301e24187e08eff500fa86",
+  "poses": "a763f2d89e43f63c1f04f9ac",
+  "bounds": "fd001f396fe17f46727998c8",
+  "svg": "9f7065e636cc0f2a6f0a2b81"
+ },
+ "ECMA_TRAY_HINGED_TUCK": {
+  "dieline": "841a25d49085308e3757b93f",
+  "poses": "49222dfae78bab8deb4bd715",
+  "bounds": "24e795d43a9a887317db6fad",
+  "svg": "c9462272ec220422569763b9"
+ },
+ "ECMA_SLEEVE_OPEN": {
+  "dieline": "37634eccbfb1abbd3240055c",
+  "poses": "aecb8aad231eeb27eb91c079",
+  "bounds": "04b3780ca0adc2995b18fe50",
+  "svg": "b4d2526a541f0b9f1fce0bba"
+ },
+ "ECMA_WRAP_LOCK": {
+  "dieline": "95b8c411301528fd7a2b5036",
+  "poses": "0c8b7a58570013c8bd5c188f",
+  "bounds": "fac66f58158fcf0430a22f4f",
+  "svg": "4696a5b2c1a15150b96a4411"
+ },
+ "FOLDER_PRESENTATION": {
+  "dieline": "3339f19cad2350acb8f79296",
+  "poses": "cf41722bad43c93615270a8d",
+  "bounds": "cf808d6a053cf393c3bc166e",
+  "svg": "22ee58d51c6b7c4307d855c9"
+ },
+ "ECMA_WALLET_ENDFLAP": {
+  "dieline": "d94cbe4ee7d8400d7332cb9e",
+  "poses": "2184d410be2ce3cf7fb719a9",
+  "bounds": "a3d2fb3e87080a2d84935fa5",
+  "svg": "f677d9f784d8471cc1d77818"
+ },
+ "ECMA_PILLOW": {
+  "dieline": "7b0d25691255528471418577",
+  "poses": "43b5503204052ce69b80cb76",
+  "bounds": "48b65b946d762f26b21a581f",
+  "svg": "9fd33c89b4edbebed5f4d523"
+ },
+ "CONE": {
+  "dieline": "03e0c39cf3879c4fcdf4125a",
+  "poses": "82749a291d8031f0941f98aa",
+  "bounds": "ccdf0ed5878dc06223c4be89",
+  "svg": "b9cb6b11046c9597109c692d"
+ },
+ "ECMA_HEXAGON": {
+  "dieline": "929a1d8f74bae102bdf78776",
+  "poses": "7ed15d9cf652b48066785a72",
+  "bounds": "fccab1d4eb28bb90e4a627ba",
+  "svg": "a25ae69e8ed406968c67ead4"
+ },
+ "ECMA_OCTAGON": {
+  "dieline": "0f11dd85f9c1ae2e7e46a111",
+  "poses": "696621937f1eccf6e9f34d5f",
+  "bounds": "b207d7c4c3e1326424e77c66",
+  "svg": "ad5fabeb9b36890ea2d636e9"
+ },
+ "GABLE_CARRY_CLB": {
+  "dieline": "3fbfe3dd8235136aefacd682",
+  "poses": "567b7737f7d728c2a3f99644",
+  "bounds": "5214dbeb1ef198ebfbc44b7d",
+  "svg": "c8e6cfb0dff0599485424732"
+ },
+ "CUP_CARRIER": {
+  "dieline": "924c6ac5626c83da1e7b5ae5",
+  "poses": "8d40ca659f736812343a940d",
+  "bounds": "c5009056ec13c424ee05753d",
+  "svg": "3fc2039f9d57e6023c0fa4b1"
+ },
+ "BOTTLE_BASKET_4": {
+  "dieline": "c7f0b6a182114423583bf09f",
+  "poses": "fd41064b7588bc968185a418",
+  "bounds": "ec0cf13a84f6f35e657b41bc",
+  "svg": "d8fd47cc49bd42139e476417"
+ },
+ "BOTTLE_BASKET_6": {
+  "dieline": "6792d8e0e9e718a03ad97c12",
+  "poses": "e9ada334484c361dcf71ed58",
+  "bounds": "3318a84c940c5330078282d9",
+  "svg": "4e5244b40636f224eb9a05c1"
+ },
+ "ECMA_COUNTER_DISPLAY": {
+  "dieline": "b1f46695f3431f3fab003130",
+  "poses": "3e1ce05d6f2b29c66bf62726",
+  "bounds": "1f150c2490e43547d5f4e530",
+  "svg": "877595c8cfb29ecc5fe7e2fb"
+ },
+ "LIQUID_GABLE_TOP": {
+  "dieline": "0d0c9efb222bab0ff28e86a2",
+  "poses": "2513e015f15865a0579419b3",
+  "bounds": "8d011b394802265511bfe24b",
+  "svg": "b1f24919bf5f6d893cc95015"
+ },
+ "LIQUID_ASEPTIC_BRICK": {
+  "dieline": "76bd6b266b59ece0e9e64742",
+  "poses": "733fbcc4a7738fde2d7338ae",
+  "bounds": "1ae8c1f6fbe1b5b9bc6701bc",
+  "svg": "28173c83988cebd4d07b9bcd"
+ },
+ "FS_CAKE_BOX_WINDOW": {
+  "dieline": "95ef6800b993445144f7497d",
+  "poses": "fb22b1e466c042b186258409",
+  "bounds": "e933ee773d35cf2c8ec3fca0",
+  "svg": "ad7054328ddd893e1ecd826b"
+ },
+ "FS_BAKERY_BOX": {
+  "dieline": "72ca0f47a2803a46ec84d353",
+  "poses": "c598ea2d884f922ca031cb87",
+  "bounds": "8fe9d67b2ee0689e15e559a9",
+  "svg": "fec9a8605dc29a1aaa6f4a5b"
+ },
+ "FS_BURGER_CLAMSHELL": {
+  "dieline": "9230956d4f43d8eaae81165a",
+  "poses": "e8aec68eb19840b7401fceba",
+  "bounds": "0e405e8dc773478cae5d5ce2",
+  "svg": "f3c5d08b4c5e02542baf2cd1"
+ },
+ "FS_NOODLE_PAIL": {
+  "dieline": "424450da2e375d06da112b32",
+  "poses": "2ec76592a9302b1040ff2bce",
+  "bounds": "9ee9dd0123348e04fc21adb2",
+  "svg": "02037ad6164e2af285f6a7ae"
+ },
+ "FS_FRIES_SCOOP": {
+  "dieline": "5fb81578497795e5959c3298",
+  "poses": "772d620d2e0a9063df67edad",
+  "bounds": "41cb3144d8e19a0cd6d99e7e",
+  "svg": "ad448656825bb8563cf28412"
+ },
+ "FS_SANDWICH_WEDGE": {
+  "dieline": "9eab8e4918fa0c7f1dbc630a",
+  "poses": "0973145a82babd0fd2edb2f1",
+  "bounds": "636ad499feadbf90168ac10f",
+  "svg": "3358e99b1532b2027a577be8"
+ },
+ "FS_PIZZA_SLICE": {
+  "dieline": "d91c58a37835c928259fcf44",
+  "poses": "1edd7d1a49f2803d36cd69c4",
+  "bounds": "c6f95ba99627eb0c26a599a2",
+  "svg": "334f0f7119015a8340e3566b"
+ },
+ "FS_PIZZA_ROUND": {
+  "dieline": "cef1991d99a08121ff133d9a",
+  "poses": "ee3fdc9413f8ce192180c713",
+  "bounds": "9b1c5325b5ba4ead36437457",
+  "svg": "79fceb1fca8167d16ad95749"
+ },
+ "RIGID_LID_BASE": {
+  "dieline": "392e6610f659155ca53fa7d7",
+  "poses": "446a5247bf2cc90a42acb50d",
+  "bounds": "c15fd303d5feaa5d165440fa",
+  "svg": "e06105308e348ddd303372bd"
+ },
+ "RIGID_SHOULDER": {
+  "dieline": "41e7699aa540fbd4abbf7552",
+  "poses": "87a56f0a116222b439306f91",
+  "bounds": "4d4dff90444a198d18318788",
+  "svg": "997cee808bc110673f790c3b"
+ },
+ "RIGID_BOOK_MAGNETIC": {
+  "dieline": "662ba49f970cc32f16b0e27e",
+  "poses": "ebc96f07de7029e8461b1db6",
+  "bounds": "8a60671cdf068442bbab9639",
+  "svg": "014c3dd78c4615ca40d27aaa"
+ },
+ "RIGID_DRAWER": {
+  "dieline": "19ea7a4589e509d22e9520fc",
+  "poses": "b698a740e453277191074b8a",
+  "bounds": "efe4911d96f7f1a1bc7f10c1",
+  "svg": "5cacb5ded5d89cda7287395e"
+ },
+ "RIGID_HINGED_LID": {
+  "dieline": "349cbee526cb7e443031f238",
+  "poses": "90a4f5b2831b27db83d8aff3",
+  "bounds": "e4517cad7b27cd59c1c5b845",
+  "svg": "1f653ee515d03de6d4be47ed"
+ },
+ "RIGID_COLLAPSIBLE": {
+  "dieline": "a01bc09fa5cd509bc0822598",
+  "poses": "3f5910fe7b0489a9b194266d",
+  "bounds": "c1400b69f282e1fb5e5fb62d",
+  "svg": "0af1796e55a943b34b3e2c7b"
+ },
+ "RIGID_WINDOW": {
+  "dieline": "a04bf9021043634c408ed05a",
+  "poses": "e321c2436d130a022c85d05f",
+  "bounds": "5b47f5026153cedcd0c6e1dd",
+  "svg": "c8f4afed986bce3a43c3d649"
+ },
+ "TUBE_LID_BASE": {
+  "dieline": "ab14af4b6c8329a712c9f42f",
+  "poses": "3b6489963934990cb7c24c20",
+  "bounds": "4f70c62fcfbe526e3a0fa523",
+  "svg": "8213652c6ee3a0c64427307e"
+ },
+ "TUBE_ROLLED_EDGE": {
+  "dieline": "45fe23381ab6785f7903febf",
+  "poses": "bd4effc5d6b943f52e3767fb",
+  "bounds": "bf8637deceb763e80b985740",
+  "svg": "8213652c6ee3a0c64427307e"
+ },
+ "TUBE_TELESCOPING": {
+  "dieline": "b1e395f9887e91c7b9e8da97",
+  "poses": "c5e8c01e6b04906a08d75d09",
+  "bounds": "cd9d2b1760f4d3b4bb3c8530",
+  "svg": "a40664d707ef09cbc290a178"
+ },
+ "TUBE_PUSH_UP": {
+  "dieline": "a91bbb6b14ecd8aefe16edf7",
+  "poses": "ea0a02f5b000021274bc2f57",
+  "bounds": "e82434cba78a5cd42d3f56f9",
+  "svg": "ab69082439d34f489fa674c1"
+ },
+ "TUBE_WINDOW": {
+  "dieline": "41b2b3c88f1e367c0497bd07",
+  "poses": "51dfe1563ba1c8f5bac4fa68",
+  "bounds": "4f70c62fcfbe526e3a0fa523",
+  "svg": "8e6667b35bdbf48359044cf1"
+ },
+ "TUBE_SHOULDER": {
+  "dieline": "2a1844e575475e59128cd043",
+  "poses": "4f5434256d91ddf2a95d990e",
+  "bounds": "4a8dc96fe996c24c5c681b4f",
+  "svg": "2c0c5fa5d8342103f5d7908d"
+ },
+ "PALLET_BOX": {
+  "dieline": "0ab52d0b693019ebd2ebc65c",
+  "poses": "d3b54cebaab29b951d916848",
+  "bounds": "270a7b72ef4d11aa709a6924",
+  "svg": "b466e7ed656860f0cefca473"
+ },
+ "FEFCO_0900": {
+  "dieline": "502583f3f91744c52eaa04e3",
+  "poses": "d61ac3afa66713e81bbedd7e",
+  "bounds": "48e70f348d3cae8d49bee47c",
+  "svg": "ce3884c341884f1de106f858"
+ },
+ "FEFCO_0901": {
+  "dieline": "9b9e1e3ee3f9dd8ffec53ab0",
+  "poses": "d61ac3afa66713e81bbedd7e",
+  "bounds": "608ede319be77f3b9d36f940",
+  "svg": "d313bcdadadf34da442bdd0d"
+ },
+ "FEFCO_0902": {
+  "dieline": "bdce7eadec689edfbde0b235",
+  "poses": "ff9a0d021c143ba4fdf034c6",
+  "bounds": "2a5d5d0cc192629773d7b0b9",
+  "svg": "3befcae0c3f89faa8c444e7d"
+ },
+ "FEFCO_0903": {
+  "dieline": "e134af5d9f9ca438fe53437b",
+  "poses": "2ed70b82fff958ab5ecb2212",
+  "bounds": "785517e00e38fd4a69b6117a",
+  "svg": "67e3d2b944130bc541cb516e"
+ },
+ "FEFCO_0904": {
+  "dieline": "96c273e74ef07068a99c37cf",
+  "poses": "783d7e85769e7c9ab8b346f7",
+  "bounds": "c0df8f332301e397133b5d91",
+  "svg": "c9eedfbfaed26c6ac76494bc"
+ },
+ "FEFCO_0905": {
+  "dieline": "b420f69b6e69a688b9498cd0",
+  "poses": "ff4f9c1743dfedb741ea903d",
+  "bounds": "d5f1321f1c7b2a45ded19409",
+  "svg": "0004f6740e4ad01a730a226e"
+ },
+ "FEFCO_0906": {
+  "dieline": "d6e0bff965c028ab0b4f489c",
+  "poses": "6c1feb39c0ec2ad8a8e28238",
+  "bounds": "430dcac3a91d4184df814532",
+  "svg": "0d292077afaf3e6f70a1c388"
+ },
+ "FEFCO_0907": {
+  "dieline": "78d0bedc37001b7f041c2ee7",
+  "poses": "6fcd15ccc46bd15a78f2a5d8",
+  "bounds": "b1783164360bd40caaaaa345",
+  "svg": "c2c17c86d52c5a19538144ea"
+ },
+ "FEFCO_0908": {
+  "dieline": "ca746f99bd2edcd3635bc3c1",
+  "poses": "a02e20f8e527a2167923d610",
+  "bounds": "5d4c25df14e9f5e640c90b55",
+  "svg": "4dbc35b6db529a0c61c321ff"
+ },
+ "FEFCO_0909": {
+  "dieline": "af68b46dd98cadaa040cb62c",
+  "poses": "049cd10f97cc0cd31341f4df",
+  "bounds": "1078d46a4085423d52d02cc5",
+  "svg": "e6354309daee35b2d0687095"
+ },
+ "FEFCO_0910": {
+  "dieline": "f34cf830884d571a31cd74cd",
+  "poses": "c29a69937c9dba256909e40c",
+  "bounds": "10a1a803706a65ce4bd11a7c",
+  "svg": "17c346d785ee7813800e1b8e"
+ },
+ "FEFCO_0911": {
+  "dieline": "23c6efe2d717d4f80506dd99",
+  "poses": "a78fb80eacff9370bada72a2",
+  "bounds": "d0c10daf8708b32f8ccf9e91",
+  "svg": "d818c182d1afe9ce62d744fe"
+ },
+ "FEFCO_0913": {
+  "dieline": "ba233fb1ca6e575a02bcb9c7",
+  "poses": "a78fb80eacff9370bada72a2",
+  "bounds": "d0c10daf8708b32f8ccf9e91",
+  "svg": "c83a6f104edd871d20f1c9a4"
+ },
+ "FEFCO_0914": {
+  "dieline": "129ea4460db53800cdae16b7",
+  "poses": "8e24f32548f0768f9cb384b7",
+  "bounds": "c4d3c76bdf3d14125c10df32",
+  "svg": "e6354309daee35b2d0687095"
+ },
+ "FEFCO_0920": {
+  "dieline": "7a23b7392e3774978f78c775",
+  "poses": "e89d35f2745bbb8d2efedbba",
+  "bounds": "288b9904d286d782b6b2dcfb",
+  "svg": "6bb5d5945f09ee5ec846d404"
+ },
+ "FEFCO_0921": {
+  "dieline": "b73cdff9664ca56fc953a571",
+  "poses": "37b75f7a09a6b08ad1da7b72",
+  "bounds": "0cf7ef058fc0a7bf3e18b089",
+  "svg": "3fc3fccfd38e1044f3f28c7c"
+ },
+ "FEFCO_0929": {
+  "dieline": "bf3151730d1ec827fda9e289",
+  "poses": "34c45147f44c4447af6c0372",
+  "bounds": "d9a9a49e118b1a936bf21fad",
+  "svg": "d3c52df5c2eda3beb107357b"
+ },
+ "FEFCO_0931": {
+  "dieline": "9ede4bde92f22262a096344c",
+  "poses": "7590f43471e6c57c7827b12f",
+  "bounds": "7ff405801c3182b4b7f57749",
+  "svg": "c0f5760e6558a07e3b9dba73"
+ },
+ "FEFCO_0932": {
+  "dieline": "c1afb29a5840008d503a037f",
+  "poses": "c3f35f5822b27a6e51212ecf",
+  "bounds": "e758a2b7243cbcae5fa4855a",
+  "svg": "0a60b7919090164e718c6df4"
+ },
+ "FEFCO_0940": {
+  "dieline": "f33cc89c4a234bcfd3db08d6",
+  "poses": "2dc11ac243670ad3d85b1568",
+  "bounds": "96b9b28a5eb5f87c2aaec4bf",
+  "svg": "912f7d05a9ae2fe9d32e8c92"
+ },
+ "FEFCO_0941": {
+  "dieline": "6aea9e829a6a8f799c003c03",
+  "poses": "49cd555b3215454a42aa2193",
+  "bounds": "b77fccb3078b47e7d58d35fa",
+  "svg": "6a365ff364b839692433c1d4"
+ },
+ "FEFCO_0942": {
+  "dieline": "7d53d121acd8c83d4e64390b",
+  "poses": "4b82017ae00b76f7d6c693a1",
+  "bounds": "84a14de01ccec63ceb9c7d1e",
+  "svg": "7badf676c04cbc2bbba32c5e"
+ },
+ "FEFCO_0943": {
+  "dieline": "25383a9e323243227d6c5bd5",
+  "poses": "a231b7d442cc8d00cfb5eadb",
+  "bounds": "b4eb9931571ef5220168dbe1",
+  "svg": "a3cc2a1dc40b8c23d4261323"
+ },
+ "FEFCO_0944": {
+  "dieline": "60b11ab2147211487fa00e0c",
+  "poses": "bb55833f547186e424a70984",
+  "bounds": "5532073d6cde7e102f87bf7f",
+  "svg": "b383df01a0c3dfc892965e09"
+ },
+ "FEFCO_0945": {
+  "dieline": "1e6ba110de1639c2e2a272d8",
+  "poses": "3a1d1603862d9aeedcc07d8d",
+  "bounds": "b68da110d2e3ae527d501c8f",
+  "svg": "c0f0d3be6e37cbef51eb5921"
+ },
+ "FEFCO_0948": {
+  "dieline": "0bfb277c1a79203c669cb68a",
+  "poses": "77bfb3533d6a7823e7c2a6cc",
+  "bounds": "57240f1eae8e6b94ff9ab7b3",
+  "svg": "baa311abea9de936b17e6918"
+ },
+ "FEFCO_0950": {
+  "dieline": "1f494a721a0379f76d30231b",
+  "poses": "752bed804468183d51370357",
+  "bounds": "29524c8e74e9821dae18eaa5",
+  "svg": "41c92a4c51a8f8cd72aec399"
+ },
+ "FEFCO_0950A": {
+  "dieline": "c9288e0a38fe66a591e5ede9",
+  "poses": "8e8e6cfa971e12e59207b339",
+  "bounds": "9d069b5264ee9743ae2a1932",
+  "svg": "95f9dd21d55286ffcb16bc23"
+ },
+ "FEFCO_0951": {
+  "dieline": "c880727a768396fcd154c437",
+  "poses": "c84066fc5dcadc4f466fcc56",
+  "bounds": "93c809c332537fd14b986881",
+  "svg": "d20d0ff13c77bdccc4198335"
+ },
+ "FEFCO_0967": {
+  "dieline": "477029ba4deabb2d6f29dae8",
+  "poses": "0f25d4620e53b40ec9bb728d",
+  "bounds": "608ede319be77f3b9d36f940",
+  "svg": "d313bcdadadf34da442bdd0d"
+ },
+ "FEFCO_0970": {
+  "dieline": "e0a45e0b885763affadb2cf6",
+  "poses": "593eade66870aaaad4080964",
+  "bounds": "08b37c501cd9a930affaf089",
+  "svg": "9b4009683e3e69de944ab71c"
+ },
+ "FEFCO_0971": {
+  "dieline": "13a1a90ff759b95de6244c2f",
+  "poses": "cee80b579b4ae777be3d0e81",
+  "bounds": "331ba17251638ae79ed24551",
+  "svg": "319488127aa7672000a892b7"
+ },
+ "FEFCO_0971A": {
+  "dieline": "a4cd78d6df5a25432738f847",
+  "poses": "4e8f3038fe67d56650800fed",
+  "bounds": "2f8cff23577af1fab36441ee",
+  "svg": "319488127aa7672000a892b7"
+ },
+ "FEFCO_0972": {
+  "dieline": "68c5c9a44d55c2163c81db88",
+  "poses": "7f753d7a7e36b613e8907e8a",
+  "bounds": "608d1492f56e565d94f92d01",
+  "svg": "3293d2d52f12e1e6bb2f97b9"
+ },
+ "FEFCO_0972A": {
+  "dieline": "7ec5178262c678bece0bd596",
+  "poses": "506e8718069138bf1f367cd7",
+  "bounds": "c8ddbef860dd48efcf67b3d7",
+  "svg": "c698c15630d2abb5028b9355"
+ },
+ "FEFCO_0976A": {
+  "dieline": "5cdeaed1aa609227d9e24dd1",
+  "poses": "c64f5f08949c13bb53c11afb",
+  "bounds": "d3d7ccb6f080c8b415ef5e65",
+  "svg": "61b4608a09c604ad9b0dbd28"
+ },
+ "FEFCO_0427+features": {
+  "dieline": "405e8740e8106bc651802977",
+  "poses": "8437245e78980e6ea87bdb4d",
+  "bounds": "164c62be1c246dfb35b1ec04",
+  "svg": "332dfade10e93ec3abe6c22f"
+ },
+ "FEFCO_0201+features": {
+  "dieline": "40a2a23fb781ac9d929585b6",
+  "poses": "2a1df983376936081dd5d7af",
+  "bounds": "16a4e089a6b90a285e31e12b",
+  "svg": "f7b1de158310fc521edbfbf7"
+ },
+ "ECMA_RTE+features": {
+  "dieline": "4723f4266cf211affcab3833",
+  "poses": "445f598c68508c9b79eab896",
+  "bounds": "c68df237469346ca818d926e",
+  "svg": "328984b20b52c206e201a1c4"
+ },
+ "ECMA_STE+features": {
+  "dieline": "320686fef5dff9ac1b9ac9c5",
+  "poses": "13e5acf63202a350850a9e23",
+  "bounds": "dff3582e2d4ad9d64375a577",
+  "svg": "c115ab1b59791813f929ef4d"
+ },
+ "PIZZA+features": {
+  "dieline": "442aa70ec44c6d9633da2cc2",
+  "poses": "c3613a1248f650ea8d878002",
+  "bounds": "f8f4211240915b3fe2988a22",
+  "svg": "8dbd465e8d57da0d1a8cef84"
+ },
+ "SLEEVE+features": {
+  "dieline": "16cab3c4c9e7ca9d76e22a0c",
+  "poses": "2f5de0190a328a2372bec580",
+  "bounds": "2739ebbdf2cfc7c2f424586d",
+  "svg": "14f1f7331dba1d71d1107cc2"
+ },
+ "FEFCO_0320+features": {
+  "dieline": "33618e0148ca075d2ac38b21",
+  "poses": "dd1103bcc32e9d45b7f84ffa",
+  "bounds": "bf85f14df32b447fe324775c",
+  "svg": "024d6b8fd4e94ffd413470a1"
+ },
+ "ECMA_CLB+features": {
+  "dieline": "c5c2bed8f7c0abb51da101d1",
+  "poses": "e5ff12ad91dbdfcf15ac8533",
+  "bounds": "d983e5f82cf8a1dc8ae75b7a",
+  "svg": "5e50ec1d703e98dcd5f6dd26"
+ },
+ "ECMA_SLB+features": {
+  "dieline": "650049a4577b1251db8939e8",
+  "poses": "c0f35f5c2e1d2a2b2daf58ba",
+  "bounds": "c1cfcf99ef4ccd0b52925425",
+  "svg": "4f0ddebd934bab58d220a1df"
+ },
+ "FEFCO_0422+features": {
+  "dieline": "46a5b7afe2f6c69ab84f132f",
+  "poses": "74ea4029e1b19528fba95efb",
+  "bounds": "df1d19bb01d0556cbeac12b5",
+  "svg": "1db4801039c1eabf149c16bd"
+ },
+ "GABLE_BOX+features": {
+  "dieline": "e4f935456c2d0fce497c52bd",
+  "poses": "6b27bd5ff20e64a987399262",
+  "bounds": "3fb377ecfc17e1058d1221ef",
+  "svg": "5e7540bd3e39de5c1d78f525"
+ },
+ "PAPER_TUBE+features": {
+  "dieline": "47d993c052b1fe4c36fb803e",
+  "poses": "6b3a966de53a9d94de88657f",
+  "bounds": "695042d2c8e899e2afcfa534",
+  "svg": "2c1fcf9c677880ff9447d081"
+ },
+ "RIGID_BOX+features": {
+  "dieline": "d1f63efb46e9f951924f2fbc",
+  "poses": "7c63ed338ff9ee645f4a4f4e",
+  "bounds": "1d3282aacf330327e635b53e",
+  "svg": "8f450ff7f81c5be4c724fab8"
+ },
+ "ROLL_LABEL+features": {
+  "dieline": "37ee30bcc345c935fee4de21",
+  "poses": "751ba9fe070a61153377af60",
+  "bounds": "de9fd375fadeb36336b6a2f5",
+  "svg": "74f6fdd38073101c58d77ce7"
+ },
+ "PRINTED_POUCH+features": {
+  "dieline": "4fe2b3c3f9f1e85cb2d60ce1",
+  "poses": "751ba9fe070a61153377af60",
+  "bounds": "efddd0867e64befe5ec4d680",
+  "svg": "95b983fbc62da4c97eaeb9fc"
+ },
+ "PRINTED_TUBE+features": {
+  "dieline": "ab1d537d8148f368894a50d5",
+  "poses": "751ba9fe070a61153377af60",
+  "bounds": "249ee9cd905c5299d84b5b48",
+  "svg": "9fbaa36b3fc9f3f6ffe2e427"
+ }
+}
