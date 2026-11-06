@@ -346,3 +346,35 @@ For the founder list: (a) the charge-back policy (when to charge a printer back,
 - `src/lib/money/input.ts` (moved from admin, shared), `src/components/vendor/lib/rateCard.ts` (`parseNumber` delegates to it).
 - `src/lib/vendors/on-time.ts`, `on-time-sync.ts` (new); `src/lib/orders/service.ts` (one call after DELIVERED); `src/lib/jobs/index.ts` (one step in the daily job).
 - `e2e/admin.spec.ts`: reprint test added; bio test uses a seeded vendor.
+
+## Round 8
+
+Asked by the integrator: ship a default for founder item (b) now, then an audit of the round 7 work: the reprint form at 390 ar, the funnel numbers against a hand count on the seed, and the charge-back maths with partial amounts and Arabic digits. Base: this branch at `7c35da0` with main merged (no conflicts). Method: a fresh seeded database (`prisma/ad8.db`), events produced through the real app (the `checkout` e2e journey for three buyers, one of whom paid, plus two anonymous browser visits), then three new tools: `admin-r8-funnel.cjs` (raw funnel events grouped by person, next to what the overview renders), `admin-r8-chargeback.cjs` (types quantities and amounts into the reprint form at 390 ar, prints the live summary or error, applies one partial decision and prints the stored plan), and a check of the public pages for the new on-time rule.
+
+### Default for founder item (b)
+
+A printer's on-time percentage is public only after **5 judged deliveries** (admin setting: Pricing › "Printer figures shown to buyers", 1 to 50, audited as `VENDOR_METRICS_SETTINGS`; saving re-syncs every printer and purges the public cache). Two additive `Vendor` columns, `onTimeJudged` and `onTimePublic`, are written by `syncVendorOnTime` (after each delivery, in the daily job, and on saving the setting). `onTimePct` is overwritten only once a printer is public, so seeded printers keep their seeded figure. Below the threshold the directory, profile, showcase cards, checkout offer cards and the order page show "New on Elba" / «جديد على علبة», and the store home average uses measured printers only. The admin vendor scorecard shows the raw figure with "n of 5 deliveries. Buyers see “New on Elba” until then." On the fresh seed every printer has 0 judged deliveries, so every public card reads «جديد على علبة» (checked at 390 ar: directory 6, profile 1, home 3, no "% on time" left). It stays on the founder list.
+
+### Findings (new this round)
+
+| id | sev | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R8-AD-01 | high | Overview visitor funnel (`cohortFunnel`, my round 7 R5-JR-13 change) | The hand count showed that a `visit` usually carries neither id: the anon cookie exists only once an anonymous design is saved, and repeat visits from one browser within 30 minutes are dropped server-side. The round 7 rule kept only visitors with an id and required a visit for every later step, so on real events the funnel read **0 visitors** and hid itself ("no data yet"), and a paying buyer would never count. | Plan §6.3, §10 (the 2 to 4% gate); data correctness | Revised rule: anon and user ids joined into one person; a person counts at every step up to the furthest they reached (anyone who designed or paid counts as a visitor); an id-less visit is one visitor of its own. Steps never exceed the one before and visitor to paid stays at or under 100%; it can over-count visitors slightly, never under-count. Hand count on the seed run: raw events are 2 id-less visits and 3 buyers (all designed, signed in, saw a price and started checkout, one paid). Expected 5 · 3 · 3 · 3 · 3 · 3 · 1 and 20%; rendered **Visitors 5 · Design started 3 · … · Paid 1 · Visitor to paid 20%**. The hand-count rows are a unit test; the card description states the rule. | fixed |
+| R8-AD-02 | low | Reprint form, partial charge-back | A malformed amount ("١٢٣,٤٥" with a decimal comma, "-5") got the range message "Enter an amount from 0 to the reprint buy price", which does not say what is wrong. | WCAG 3.3.3 error suggestion | Malformed amounts get "Enter an amount in EGP, for example 1500 or 18.50"; only a clear number above the reprint cost gets the range message. | fixed |
+
+Checked and correct, no finding:
+- Charge-back maths at 390 ar on ELB-26203 (250 boxes, buy price EGP 4,875.00). Quantity «٤٠» and "40" both read as 40. "٠", "251" and "4,0" get the quantity error. Amounts «١٢٣٫٤٥» and "123.45" both read as EGP 123.45; "1,000.50" (above the EGP 780.00 reprint cost) and "99999" get the range error. Live summary: «سعر شراء إعادة الطباعة 780.00 ج.م، المحمل على المطبعة 123.45 ج.م، وتدفع علبة للمطبعة 656.55 ج.م.» Stored plan after Apply: `quantity 40, reprintCostPiasters 78000, chargeBackPiasters 12345, reprintVendorCostPiasters 65655, owedPiasters 0`, the same as the preview to the piaster.
+- The reprint form at 390 ar: no overflow, nothing cut, the summary wraps under the choices, and the Arabic numbers and «ج.م» isolate correctly.
+
+Counts (round 8, new, before fixing): **critical 0, high 1, medium 0, low 1 (2)**. Both fixed. The high finding was in round 7's own funnel change, caught by the hand count this round asked for, so the stop rule is not met yet.
+
+### Verification (round 8)
+
+- `npm run lint`, `npm run typecheck`, `npm run build`: clean. `npm test`: 8,754 passed (the geometry snapshot is green again on the merged main).
+- e2e (`--workers=2 --trace off`, fresh seed): `admin`, `admin-quote-price`, `checkout-quote`, `vendor` gave 25 passed and 17 skipped, twice in a row. `checkout`, `smoke`, `storefront` gave 32 passed (storefront covers the directory and profile with the new on-time rule).
+
+### Files outside admin (round 8)
+
+- `prisma/schema.prisma`: `Vendor.onTimeJudged`, `Vendor.onTimePublic` (additive, defaults 0 / false).
+- `src/lib/vendors/on-time.ts` (`onTimeWrite`), `on-time-sync.ts`, `on-time-settings.ts` (new).
+- Public display, one condition each: `src/components/store/VendorCard.tsx`, `src/components/marketing/VendorShowcaseCard.tsx`, `src/app/[locale]/(detail)/vendors/[slug]/page.tsx`, `src/app/[locale]/(checkout)/checkout/_components/CheckoutClient.tsx` (offer card), `src/app/[locale]/orders/[id]/page.tsx`, `src/app/[locale]/(store)/page.tsx` (average); data: `src/components/store/data.ts`, `src/components/store/vendor-filters.ts` (optional `onTimeShown`), `src/lib/pricing/server.ts`, `engine.ts`, `types.ts` (optional `onTimeShown` on the offer vendor); copy: `src/i18n/en.ts`, `ar.ts` (`store.vendors.onTimeNew`).

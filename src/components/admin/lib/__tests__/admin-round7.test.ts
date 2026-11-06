@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { cohortFunnel, visitorToPaid } from "../events";
 
-describe("visitor-cohort funnel (R5-JR-13)", () => {
+describe("visitor funnel (R5-JR-13, rule from the round 8 hand count)", () => {
   it("joins an anonymous visit to the same person's signed-in steps", () => {
     const rows = [
       { name: "visit", userId: null, anonId: "a1" },
@@ -14,21 +14,28 @@ describe("visitor-cohort funnel (R5-JR-13)", () => {
     expect(f).toMatchObject({ visit: 1, design_started: 1, gate_shown: 1, account_created: 1, price_viewed: 1, order_started: 1, payment_succeeded: 1 });
     expect(visitorToPaid(f)).toBe(100);
   });
-  it("leaves out people with no visit in the window and never lets a step exceed the one before", () => {
+  it("hand count of the seeded e2e run: 2 id-less visits and 3 signed-in buyers (1 paid)", () => {
     const rows = [
-      { name: "visit", userId: null, anonId: "a1" },
-      { name: "visit", userId: null, anonId: "a2" },
-      { name: "visit", userId: null, anonId: "a3" },
-      { name: "visit", userId: null, anonId: "a4" },
-      { name: "design_started", userId: null, anonId: "a1" },
-      { name: "design_started", userId: null, anonId: "a1" },
-      { name: "design_started", userId: null, anonId: "zz" }, // no visit: not in the cohort
-      { name: "payment_succeeded", userId: "u9", anonId: null }, // paid without a linked visit
+      { name: "visit", userId: null, anonId: null },
+      { name: "visit", userId: null, anonId: null },
+      ...["b1", "b2", "b3"].flatMap((u) => ["design_started", "account_created", "price_viewed", "order_started"].map((name) => ({ name, userId: u, anonId: null }))),
+      { name: "payment_succeeded", userId: "b3", anonId: null },
     ];
     const f = cohortFunnel(rows);
-    expect(f.visit).toBe(4);
+    expect(f).toEqual({ visit: 5, design_started: 3, gate_shown: 3, account_created: 3, price_viewed: 3, order_started: 3, payment_succeeded: 1 });
+    expect(visitorToPaid(f)).toBe(20);
+  });
+  it("never lets a step exceed the one before; id-less later steps are not counted", () => {
+    const rows = [
+      { name: "visit", userId: null, anonId: "a1" },
+      { name: "design_started", userId: null, anonId: "a1" },
+      { name: "design_started", userId: null, anonId: "a1" },
+      { name: "design_started", userId: null, anonId: null },
+      { name: "visit", userId: null, anonId: null },
+    ];
+    const f = cohortFunnel(rows);
+    expect(f.visit).toBe(2);
     expect(f.design_started).toBe(1);
-    expect(f.payment_succeeded).toBe(0);
     const v = Object.values(f);
     for (let i = 1; i < v.length; i++) expect(v[i]).toBeLessThanOrEqual(v[i - 1]!);
   });

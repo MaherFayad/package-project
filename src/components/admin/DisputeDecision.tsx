@@ -73,7 +73,16 @@ export function DisputeDecision({
           terms: { quantity: qty, chargeBack: charge, chargeBackPiasters: charge === "PARTIAL" ? (chargeP ?? undefined) : undefined },
         })
       : null;
-  const chargeError = charge === "PARTIAL" && (chargeText.trim() !== "" || tried) && (chargeP === null || Number.isNaN(chargeP) || preview === "CHARGE_RANGE") ? "CHARGE_BACK_RANGE" : null;
+  // R8-AD: a malformed amount ("١٢٣,٤٥", "-5") says how to type it; only a clear number above the
+  // reprint cost gets the range message.
+  const chargeError =
+    charge !== "PARTIAL" || (chargeText.trim() === "" && !tried)
+      ? null
+      : chargeP === null || Number.isNaN(chargeP)
+        ? "AMOUNT_INVALID"
+        : preview === "CHARGE_RANGE"
+          ? "CHARGE_BACK_RANGE"
+          : null;
   // R7-AD: the button explains itself instead of staying disabled (same rule as R6-AD-02).
   const noteError = tried && needsNote && note.trim().length < 3 ? "NOTE_REQUIRED" : null;
   const blocked = !decision || (needsNote && note.trim().length < 3) || (decision === "REPRINT" && (!!qtyError || !!chargeError || (charge === "PARTIAL" && chargeText.trim() === "")));
