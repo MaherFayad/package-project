@@ -14,6 +14,12 @@ describe("parseMmInput (R5-JR-20)", () => {
     // One shared rule: a comma is always the decimal separator in a size ("1,5" mm).
     expect(parseMmInput("1,5")).toBe(1.5);
   });
+  it("drops a pasted unit (R13-02)", () => {
+    expect(parseMmInput("330 مم")).toBe(330);
+    expect(parseMmInput("340mm")).toBe(340);
+    expect(parseMmInput("350 ملم")).toBe(350);
+    expect(Number.isNaN(parseMmInput("mm"))).toBe(true);
+  });
   it("is NaN for anything else", () => {
     for (const v of ["", " ", "abc", "1.2.3", "-5", "25o"]) expect(Number.isNaN(parseMmInput(v))).toBe(true);
   });

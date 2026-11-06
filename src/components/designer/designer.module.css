@@ -859,6 +859,19 @@
   /* Sheet pulled up: leave room for the banner too (R4-08's 21rem + ~9rem banner). */
   .editor[data-sheet="open"][data-banner="true"] .panel { block-size: min(var(--sheet-open), calc(100dvh - var(--p-top-bar-height) - 30rem)); }
 }
+/* R13-01: short landscape (phones turned sideways) with a banner: the banner goes to the panel
+   column, above the panel, so the stage keeps its height (the canvas was 19 px at 844 × 390). */
+@media (max-height: 500px) and (min-width: 640px) and (max-width: 999px) {
+  .editor[data-banner="true"] {
+    grid-template-areas:
+      "toolbar toolbar"
+      "price banner"
+      "stage banner"
+      "stage panel";
+    grid-template-rows: auto auto auto minmax(0, 1fr);
+  }
+  .editor[data-banner="true"] .banner { align-self: start; }
+}
 /* R12-01: landscape screens from 768 to 999 px wide (small tablets, split views) take the side
    panel too: with the phone sheet their 3D view was ~200 px tall. */
 @media (orientation: landscape) and (min-width: 768px) and (max-width: 999px) and (min-height: 501px) {
