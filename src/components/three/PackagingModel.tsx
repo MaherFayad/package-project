@@ -7,6 +7,7 @@ import type { FinishCode, MaterialCode } from "@/types";
 import { boardAppearance, boundsAt, computePoses, rootIds, type BoardAppearance, type DielineModel, type DielinePanel, type Segment } from "@/lib/dieline";
 import { createBoardMaterials, type BoardMaterialSet } from "./boardMaterials";
 import { buildFilmGeometry, buildPanelGeometry, buildPerfGeometry, pointInPolygon } from "./panelGeometry";
+import { useTextureQuality } from "./perf";
 
 /** World units are metres; dieline geometry is in millimetres. */
 export const MM = 0.001;
@@ -57,6 +58,8 @@ export function PackagingModel({
   const outsideMap = artworkTextures?.outside ?? null;
   const insideMap = artworkTextures?.inside ?? null;
   const showInside = printInside ?? !!insideMap;
+  // sharp artwork on faces seen at an angle (renderer max, capped at 8×)
+  useTextureQuality(outsideMap, insideMap);
 
   const ownMaterials = useMemo(
     () =>

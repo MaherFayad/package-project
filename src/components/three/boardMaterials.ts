@@ -9,7 +9,10 @@ import {
   type Texture,
 } from "three";
 import type { FinishCode } from "@/types";
-import { finishSurface, type BoardAppearance } from "@/lib/dieline";
+import { boardAppearance, finishSurface, type BoardAppearance } from "@/lib/dieline";
+
+/** Kraft liner colour from boardAppearance (lib/dieline/materials.ts). */
+const KRAFT_HEX = boardAppearance("E_FLUTE_KRAFT").outside.toLowerCase();
 
 /** Material slots used by panel geometry groups. */
 export const MAT_OUTSIDE = 0;
@@ -36,9 +39,16 @@ function fibreTexture(base: string, strength: number, sheet: { width: number; he
   const c = makeCanvas(size, size);
   const ctx = c?.getContext("2d");
   if (!c || !ctx) return null;
-  ctx.fillStyle = base;
-  ctx.fillRect(0, 0, size, size);
-  const img = ctx.getImageData(0, 0, size, size);
+  // createImageData + manual fill: getImageData would read back from a GPU canvas (pipeline stall)
+  const rgb = { r: 0, g: 0, b: 0 };
+  new Color(base).getRGB(rgb, SRGBColorSpace);
+  const img = ctx.createImageData(size, size);
+  for (let i = 0; i < img.data.length; i += 4) {
+    img.data[i] = rgb.r * 255;
+    img.data[i + 1] = rgb.g * 255;
+    img.data[i + 2] = rgb.b * 255;
+    img.data[i + 3] = 255;
+  }
   // Deterministic LCG so every load looks the same.
   let seed = 1234567;
   const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
@@ -74,7 +84,7 @@ function fibreTexture(base: string, strength: number, sheet: { width: number; he
  * Corrugated cut edge: liners top and bottom with the flute wave between.
  * Edge UVs run u = mm along the edge / flute pitch, v = 0 (printed side) … 1 (inside).
  */
-function fluteTexture(edge: string, flute: string, liner: string): Texture | null {
+function fluteTexture(edge: string, flute: string, liner: string, inner: string = liner): Texture | null {
   const w = 64;
   const h = 32;
   const c = makeCanvas(w, h);
@@ -96,6 +106,8 @@ function fluteTexture(edge: string, flute: string, liner: string): Texture | nul
   ctx.stroke();
   ctx.fillStyle = liner;
   ctx.fillRect(0, 0, w, 4);
+  // the inside liner keeps its own colour (white-top board is white on the print side only)
+  ctx.fillStyle = inner;
   ctx.fillRect(0, h - 4, w, 4);
   const tex = new CanvasTexture(c);
   tex.colorSpace = SRGBColorSpace;
@@ -122,8 +134,11 @@ export function createBoardMaterials(input: BoardMaterialInput): BoardMaterialSe
 
   const outsideMap = input.outsideMap ?? fibreTexture(appearance.outside, appearance.fluteColor ? 10 : 3, sheet);
   if (!input.outsideMap && outsideMap) owned.push(outsideMap);
+  // Process inks are transparent and there is no white underprint: on kraft the print multiplies
+  // with the brown liner (same rule as the finished-board path).
+  const kraftShowThrough = !!input.outsideMap && appearance.outside.toLowerCase() === KRAFT_HEX;
   const outsideParams = {
-    color: new Color(outsideMap ? "#ffffff" : appearance.outside),
+    color: new Color(kraftShowThrough ? "#dcc7a8" : outsideMap ? "#ffffff" : appearance.outside),
     map: outsideMap ?? null,
     roughness: surface.roughness,
     metalness: 0,
@@ -142,7 +157,7 @@ export function createBoardMaterials(input: BoardMaterialInput): BoardMaterialSe
     metalness: 0,
   });
 
-  const edgeTex = appearance.fluteColor ? fluteTexture(appearance.edge, appearance.fluteColor, appearance.outside) : null;
+  const edgeTex = appearance.fluteColor ? fluteTexture(appearance.edge, appearance.fluteColor, appearance.outside, appearance.inside) : null;
   if (edgeTex) owned.push(edgeTex);
   const edge = new MeshStandardMaterial({
     color: new Color(edgeTex ? "#ffffff" : appearance.edge),

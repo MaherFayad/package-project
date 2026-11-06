@@ -84,6 +84,10 @@ export interface VesselOption {
   name: LocalizedText;
   /** Core renderer code: VesselMaterialCode for containers, ClosureKind for closures. */
   core: string;
+  /** Added by 3D engine (X-01): body colour (sRGB hex) when the core material is only the nearest look (green / cobalt glass, coloured plastics). */
+  tint?: string;
+  /** Added by 3D engine (X-01): closure style the core kind cannot express ("CROWN" | "ROPP" | "CORK_CAPSULE" | "SPARKLING" | "POURER"). */
+  closureStyle?: string;
 }
 
 /** One flat print area of a container (label, sleeve, pouch panel, tube body). mm. */
