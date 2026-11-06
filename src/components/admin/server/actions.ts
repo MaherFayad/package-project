@@ -21,7 +21,7 @@ import { loadPricingData } from "@/lib/pricing/server";
 import { STRUCTURE_LIMITS } from "@/lib/dieline";
 import type { Dims, OrderStatus, ShippingAddress, StructureCode, StructureParamLimits, VendorCapabilities } from "@/types";
 import { AdminActionError, AdminFieldErrors, adminForMutation, audit, issuesToFields, runAdminAction, type AdminActionResponse } from "./context";
-import { loadPricingSettings } from "./settings";
+import { loadPricingConfig, loadPricingSettings } from "./settings";
 import {
   applyGoodsOverride,
   canOverrideCost,
@@ -68,7 +68,11 @@ import {
 import { leadState, leadStepSchema } from "../lib/quoteLeads";
 import { checkoutSettingsFormSchema } from "../lib/checkoutSettings";
 import { CHECKOUT_SETTING_KEY, loadCheckoutSettings } from "@/lib/orders/checkout-settings";
-import { QUOTE_REQUESTED } from "@/lib/orders/quote-requests";
+import { QUOTE_PRICED, QUOTE_REQUESTED, quoteCheckoutPath } from "@/lib/orders/quote-status";
+import { priceLines, sendPriceSchema } from "../lib/quotePricing";
+import { createModelDoc } from "@/components/designer/lib/doc";
+import { saveDesign } from "@/components/designer/server";
+import { modelByCode } from "@/lib/library";
 import { bioCleanSchema, bioEditDecisionSchema, canApprovePortfolio, portfolioReviewSchema, reviewNoteRequired } from "../lib/moderation";
 import { bioReviewData, canApproveBio } from "@/components/vendor/lib/bio-review";
 import type { AuditAction } from "../lib/audit";
@@ -222,13 +226,111 @@ export async function quoteLeadStepAction(input: z.input<typeof leadStepSchema>)
   return runAdminAction(async () => {
     const admin = await adminForMutation();
     const d = parse(leadStepSchema, input);
-    const q = await db.quote.findUnique({ where: { id: d.quoteId }, select: { id: true, status: true } });
-    if (!q || q.status !== QUOTE_REQUESTED) throw new AdminActionError("NOT_FOUND");
-    const events = await db.auditLog.findMany({ where: { entityType: "QUOTE", entityId: q.id, action: { in: ["QUOTE_CONTACTED", "QUOTE_CLOSED"] } }, select: { action: true, createdAt: true } });
+    const q = await db.quote.findUnique({ where: { id: d.quoteId }, select: { id: true, status: true, validUntil: true } });
+    if (!q || (q.status !== QUOTE_REQUESTED && q.status !== QUOTE_PRICED)) throw new AdminActionError("NOT_FOUND");
+    // A sent price is followed up by closing it (or by the buyer paying); "contacted" is for open requests.
+    if (q.status === QUOTE_PRICED && d.step !== "CLOSED") throw new AdminActionError("NOT_ALLOWED");
+    const events = await db.auditLog.findMany({ where: { entityType: "QUOTE", entityId: q.id, action: { in: ["QUOTE_CONTACTED", "QUOTE_CLOSED", "QUOTE_PRICED"] } }, select: { action: true, createdAt: true } });
     if (leadState(events) === "CLOSED") throw new AdminActionError("NOT_ALLOWED");
-    await audit(admin, { action: d.step === "CONTACTED" ? "QUOTE_CONTACTED" : "QUOTE_CLOSED", entityType: "QUOTE", entityId: q.id, summary: d.note });
+    const now = new Date();
+    await db.$transaction(async (tx) => {
+      // Closing a sent price withdraws the buyer's link: checkout accepts a PRICED quote only while
+      // validUntil is in the future, so it is ended now (the row and its lines stay for the record).
+      if (q.status === QUOTE_PRICED) {
+        const u = await tx.quote.updateMany({ where: { id: q.id, status: QUOTE_PRICED }, data: { validUntil: now < q.validUntil ? now : q.validUntil } });
+        if (u.count !== 1) throw new AdminActionError("STALE");
+      }
+      await audit(
+        admin,
+        { action: d.step === "CONTACTED" ? "QUOTE_CONTACTED" : "QUOTE_CLOSED", entityType: "QUOTE", entityId: q.id, summary: d.note, ...(q.status === QUOTE_PRICED ? { before: { validUntil: q.validUntil }, after: { validUntil: now < q.validUntil ? now : q.validUntil } } : {}) },
+        tx,
+      );
+    });
     revalidateAdmin();
+    revalidatePath("/[locale]/(store)/account", "page");
     return null;
+  });
+}
+
+/**
+ * R4-B-03 (admin half): send a fixed price for a quote lead. The lead's own Quote row becomes
+ * PRICED with the printer, ex-VAT lines (engine line kinds), totals with 14% VAT, validUntil from
+ * the admin quote-validity setting, pricedAt, deliveryDays and the printer's agreed buy price. The
+ * buyer pays it through checkout's quoted path (`/checkout/<design>?quote=<id>`), which lifts the
+ * 2,000-box cap and the quote-only rule for this quote only. Sending again before the buyer pays
+ * replaces the price and restarts the validity. A catalogue request has no design: one is created
+ * in the buyer's account from the requested model and size (plain artwork they can edit first),
+ * so the same checkout path applies.
+ */
+export async function sendQuotePriceAction(input: z.input<typeof sendPriceSchema>): Promise<AdminActionResponse<{ path: string; validUntil: string; totalPiasters: number }>> {
+  return runAdminAction(async () => {
+    const admin = await adminForMutation();
+    const d = parse(sendPriceSchema, input);
+    const q = await db.quote.findUnique({ where: { id: d.quoteId }, include: { user: { select: { id: true, name: true, phone: true, role: true, locale: true } } } });
+    if (!q || (q.status !== QUOTE_REQUESTED && q.status !== QUOTE_PRICED)) throw new AdminActionError("NOT_FOUND");
+    if (!q.user) throw new AdminActionError("NOT_ALLOWED", "QUOTE_NO_BUYER");
+    const events = await db.auditLog.findMany({ where: { entityType: "QUOTE", entityId: q.id, action: { in: ["QUOTE_CONTACTED", "QUOTE_CLOSED", "QUOTE_PRICED"] } }, select: { action: true, createdAt: true } });
+    if (leadState(events) === "CLOSED") throw new AdminActionError("NOT_ALLOWED");
+    const vendor = await db.vendor.findUnique({ where: { id: d.vendorId }, select: { id: true, nameEn: true, status: true } });
+    if (!vendor || vendor.status !== "ACTIVE") throw new AdminFieldErrors({ vendorId: "VENDOR_INACTIVE" });
+    const priced = priceLines(d);
+
+    // A catalogue request has no design yet: make one for the buyer from the requested model.
+    let designId = q.designId;
+    let designCreated = false;
+    if (!designId) {
+      const line = (fromJson<Record<string, unknown>[]>(q.lines) ?? [])[0] ?? {};
+      const model = modelByCode(typeof line.modelCode === "string" ? line.modelCode : null);
+      if (!model) throw new AdminActionError("NOT_ALLOWED", "QUOTE_NO_MODEL");
+      const dims = line.dims as { L?: number; W?: number; H?: number } | undefined;
+      const name = line.name && typeof line.name === "object" ? (line.name as { ar?: string; en?: string }) : {};
+      const doc = createModelDoc(model, {
+        presetId: typeof line.presetId === "string" ? line.presetId : undefined,
+        dims: model.kind === "box" && dims && [dims.L, dims.W, dims.H].every((n) => typeof n === "number" && n > 0) ? { L: dims.L!, W: dims.W!, H: dims.H! } : undefined,
+        name: ((q.user.locale === "en" ? name.en : name.ar) ?? model.name[q.user.locale === "en" ? "en" : "ar"]).slice(0, 80),
+      });
+      const saved = await saveDesign(doc, { user: { id: q.user.id, role: q.user.role } as never, anonId: null });
+      if (!saved.ok) throw new AdminActionError("NOT_ALLOWED", "QUOTE_NO_MODEL");
+      designId = saved.id;
+      designCreated = true;
+    }
+
+    const now = new Date();
+    const validUntil = new Date(now.getTime() + (await loadPricingConfig()).quoteValidityHours * 3_600_000);
+    const data = {
+      vendorId: vendor.id,
+      designId,
+      lines: toJson(priced.lines),
+      subtotalPiasters: priced.subtotalPiasters,
+      vatPiasters: priced.vatPiasters,
+      shippingPiasters: priced.shippingPiasters,
+      totalPiasters: priced.totalPiasters,
+      validUntil,
+      status: QUOTE_PRICED,
+      pricedAt: now,
+      deliveryDays: d.deliveryDays,
+      vendorCostPiasters: d.vendorCostPiasters,
+    };
+    await db.$transaction(async (tx) => {
+      const u = await tx.quote.updateMany({ where: { id: q.id, status: q.status, validUntil: q.validUntil }, data });
+      if (u.count !== 1) throw new AdminActionError("STALE");
+      await audit(
+        admin,
+        {
+          action: "QUOTE_PRICED",
+          entityType: "QUOTE",
+          entityId: q.id,
+          summary: `${d.quantity.toLocaleString("en-US")} boxes · ${vendor.nameEn} · EGP ${(priced.totalPiasters / 100).toFixed(2)} incl. VAT${d.note ? `. ${d.note}` : ""}`,
+          before: { status: q.status, vendorId: q.vendorId, totalPiasters: q.totalPiasters, validUntil: q.validUntil, designId: q.designId },
+          after: { ...data, lines: priced.lines, designCreated },
+        },
+        tx,
+      );
+    });
+    revalidateAdmin();
+    revalidatePath("/[locale]/(store)/account", "page");
+    const path = quoteCheckoutPath(q.user.locale === "en" ? "en" : "ar", { id: q.id, designId })!;
+    return { path, validUntil: validUntil.toISOString(), totalPiasters: priced.totalPiasters };
   });
 }
 

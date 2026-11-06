@@ -2,7 +2,7 @@ import "server-only";
 import { db } from "@/lib/db";
 import { fromJson } from "@/lib/json";
 import { pick } from "@/i18n";
-import type { Dims, Locale, MaterialCode, OrderStatus, StructureParamLimits, VendorCapabilities } from "@/types";
+import type { Dims, Locale, MaterialCode, OrderStatus, QuoteLine, StructureParamLimits, VendorCapabilities } from "@/types";
 import {
   bucketDaysFor,
   bucketSeries,
@@ -32,7 +32,7 @@ import { contactFlags } from "../lib/moderation";
 import { FUNNEL_STEPS as EVENT_FUNNEL_STEPS, loadShareLoop } from "@/lib/analytics/funnel";
 import { eventFunnel, visitorToPaid } from "../lib/events";
 import { isOverdue, leadState, replyDueAt, type LeadState } from "../lib/quoteLeads";
-import { listQuoteRequests, QUOTE_REQUESTED } from "@/lib/orders/quote-requests";
+import { listQuoteRequests, QUOTE_ACCEPTED, QUOTE_PRICED, QUOTE_REQUESTED, quoteCheckoutPath } from "@/lib/orders/quote-requests";
 import { payoutSchedule, type ScheduleRow } from "@/components/vendor/lib/payouts";
 
 /** Orders whose vendor has earned at least the advance (accepted or later). */
@@ -713,23 +713,67 @@ export interface AdminQuoteLead {
   state: LeadState;
   overdue: boolean;
   lastNote: string | null;
+  /** Quote.status: REQUESTED, PRICED or ACCEPTED. */
+  status: string;
+  /** The price the team sent (R4-B-03), for PRICED and ACCEPTED leads. */
+  priced: {
+    vendorId: string | null;
+    vendorName: string | null;
+    lines: QuoteLine[];
+    subtotalPiasters: number;
+    vatPiasters: number;
+    totalPiasters: number;
+    vendorCostPiasters: number | null;
+    deliveryDays: number | null;
+    pricedAt: string | null;
+    /** Buyer link, in the buyer's language (checkout's quoted path). */
+    path: string | null;
+    orderNumber: string | null;
+  } | null;
+  /** Buyer's language, for the link and the message. */
+  buyerLocale: Locale;
+}
+
+/** Active printers for the "Send price" form. */
+export async function loadQuoteVendors(locale: Locale): Promise<{ id: string; name: string; city: string }[]> {
+  const vs = await db.vendor.findMany({ where: { status: "ACTIVE" }, orderBy: { nameEn: "asc" }, select: { id: true, nameAr: true, nameEn: true, cityAr: true, cityEn: true } });
+  return vs.map((v) => ({ id: v.id, name: pick(locale, v.nameAr, v.nameEn), city: pick(locale, v.cityAr, v.cityEn) }));
 }
 
 /** Quote requests with the ops outcome from the audit log (checkout leads and catalogue requests). */
 export async function loadQuoteLeads(locale: Locale, now = new Date()): Promise<AdminQuoteLead[]> {
-  const leads = await listQuoteRequests({ take: 300 });
-  if (!leads.length) return [];
-  const ids = leads.map((l) => l.quoteId);
-  const [events, quotes] = await Promise.all([
-    db.auditLog.findMany({ where: { entityType: "QUOTE", entityId: { in: ids }, action: { in: ["QUOTE_CONTACTED", "QUOTE_CLOSED"] } }, orderBy: { createdAt: "desc" }, select: { entityId: true, action: true, createdAt: true, summary: true } }),
-    db.quote.findMany({ where: { id: { in: ids } }, select: { id: true, lines: true } }),
+  // R4-B-03: priced leads stay in the inbox for the follow-up, and paid ones show as ordered. Only
+  // ACCEPTED quotes the team priced (pricedAt set) are leads; instant engine quotes are not.
+  const [requested, priced, accepted] = await Promise.all([
+    listQuoteRequests({ take: 300 }),
+    listQuoteRequests({ status: QUOTE_PRICED, take: 300 }),
+    listQuoteRequests({ status: QUOTE_ACCEPTED, take: 300 }),
   ]);
-  const linesById = new Map(quotes.map((q) => [q.id, fromJson<Record<string, unknown>[]>(q.lines)?.[0] ?? {}]));
+  const all = [...requested, ...priced, ...accepted];
+  if (!all.length) return [];
+  const quotes = await db.quote.findMany({
+    where: { id: { in: all.map((l) => l.quoteId) } },
+    select: { id: true, lines: true, status: true, vendorId: true, subtotalPiasters: true, vatPiasters: true, totalPiasters: true, vendorCostPiasters: true, deliveryDays: true, pricedAt: true, designId: true, user: { select: { locale: true } }, orders: { select: { number: true }, take: 1 } },
+  });
+  const byId = new Map(quotes.map((q) => [q.id, q]));
+  const leads = all.filter((l) => l.status !== QUOTE_ACCEPTED || byId.get(l.quoteId)?.pricedAt).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  const ids = leads.map((l) => l.quoteId);
+  const vendorIds = [...new Set(quotes.map((q) => q.vendorId).filter((v): v is string => !!v))];
+  const [events, vendors] = await Promise.all([
+    db.auditLog.findMany({ where: { entityType: "QUOTE", entityId: { in: ids }, action: { in: ["QUOTE_CONTACTED", "QUOTE_CLOSED", "QUOTE_PRICED"] } }, orderBy: { createdAt: "desc" }, select: { entityId: true, action: true, createdAt: true, summary: true } }),
+    vendorIds.length ? db.vendor.findMany({ where: { id: { in: vendorIds } }, select: { id: true, nameAr: true, nameEn: true } }) : Promise.resolve([]),
+  ]);
+  const vendorName = new Map(vendors.map((v) => [v.id, pick(locale, v.nameAr, v.nameEn)]));
   return leads.map((l) => {
     const ev = events.filter((e) => e.entityId === l.quoteId);
     const dueAt = replyDueAt(l.createdAt);
-    const state = leadState(ev);
-    const line = linesById.get(l.quoteId) ?? {};
+    const row = byId.get(l.quoteId);
+    const state = leadState(ev, row?.status);
+    const rawLines = fromJson<Record<string, unknown>[]>(row?.lines ?? null) ?? [];
+    // A priced quote's lines are engine lines; the request snapshot lives on the audit row (spec).
+    const line = row?.status === QUOTE_REQUESTED ? (rawLines[0] ?? {}) : {};
+    const buyerLocale: Locale = row?.user?.locale === "en" ? "en" : "ar";
+    const isPriced = row && row.status !== QUOTE_REQUESTED;
     const spec = l.spec ?? {};
     const code = (spec.modelCode as string | null) ?? (line.modelCode as string | undefined) ?? (spec.structureCode as string | undefined) ?? null;
     const lib = modelByCode(code);
@@ -751,10 +795,28 @@ export async function loadQuoteLeads(locale: Locale, now = new Date()): Promise<
       standard: lib?.standard ?? ((line.standard as string | undefined) ?? null),
       dims,
       materialCode: (spec.materialCode as string | undefined) ?? null,
-      source: line.type === "CATALOGUE_REQUEST" ? "catalogue" : "checkout",
+      // Checkout snapshots carry structureCode; catalogue requests carry presetId (and no design at request time).
+      source: line.type === "CATALOGUE_REQUEST" || (!("structureCode" in spec) && "presetId" in spec) ? "catalogue" : "checkout",
       state,
       overdue: isOverdue(state, dueAt, now),
       lastNote: ev[0]?.summary ?? null,
+      status: row?.status ?? l.status,
+      buyerLocale,
+      priced: isPriced
+        ? {
+            vendorId: row.vendorId,
+            vendorName: row.vendorId ? (vendorName.get(row.vendorId) ?? null) : null,
+            lines: rawLines as unknown as QuoteLine[],
+            subtotalPiasters: row.subtotalPiasters,
+            vatPiasters: row.vatPiasters,
+            totalPiasters: row.totalPiasters,
+            vendorCostPiasters: row.vendorCostPiasters,
+            deliveryDays: row.deliveryDays,
+            pricedAt: row.pricedAt?.toISOString() ?? null,
+            path: quoteCheckoutPath(buyerLocale, { id: row.id, designId: row.designId }),
+            orderNumber: row.orders[0]?.number ?? null,
+          }
+        : null,
     };
   });
 }
