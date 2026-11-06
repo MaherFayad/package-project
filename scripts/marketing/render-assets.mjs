@@ -53,7 +53,7 @@ const COLLAGE = [
   { id: "tube-turn", shot: "tube", az: 35, polar: 8 },
 ];
 const LOOPS = ["mailer", "perfume", "can", "pouch", "rigid-box"];
-const LOOP_ZOOM = { mailer: 0.7, "rigid-box": 0.74, perfume: 0.84, can: 0.84, pouch: 0.84 };
+const LOOP_ZOOM = { mailer: 1, "rigid-box": 1, perfume: 0.92, can: 0.92, pouch: 0.92 };
 export const CARDS = [
   { id: "nour", shot: "mailer", latin: "NOUR", arabic: "نور", bg: "#c9572f", ink: "#fff3e4", en: "Atelier mailer", ar: "علبة شحن أتيليه" },
   { id: "attar", shot: "rigid-box", latin: "ATTAR", arabic: "عطار", bg: "#14161c", ink: "#e9cf8f", en: "Perfume gift box", ar: "علبة هدايا عطور" },
@@ -290,7 +290,7 @@ async function cards() {
 }
 
 async function loops() {
-  const FPS = 24, SECONDS = 4, N = FPS * SECONDS, F = 840; // F: frame px (product + engine contact shadow)
+  const FPS = 24, SECONDS = 4, N = FPS * SECONDS, F = 1080; // F: frame px (product + engine contact shadow)
   const bg = await sharp(studioSvg(1920, 1080, "dark")).png().toBuffer();
   const bgFile = path.join(RAW, "loop-bg.png");
   fs.writeFileSync(bgFile, bg);
@@ -302,8 +302,8 @@ async function loops() {
       // two pages render interleaved halves of the turn; each frame is an absolute angle so the loop is seamless
       const halves = [missing.filter((i) => i % 2 === 0), missing.filter((i) => i % 2 === 1)];
       await Promise.all(halves.map(async (frames) => {
-        const s = await stage(id, { w: 840, h: 840 });
-        await s.zoom(LOOP_ZOOM[id] ?? 0.8); // fill the frame: the studio is 1920x1080, the product sits in the middle 840 px
+        const s = await stage(id, { w: F, h: F });
+        await s.zoom(LOOP_ZOOM[id] ?? 0.8); // the studio is 1920x1080; the product frame is the middle 1080x1080
         await s.page.waitForTimeout(300);
         let at = 0;
         for (const i of frames) {
@@ -319,8 +319,8 @@ async function loops() {
     fs.mkdirSync(vdir, { recursive: true });
     // the frame (product + the engine's own soft contact shadow, transparent) centred on the 1920x1080 studio, over a floor glow
     const sh = path.join(RAW, `loop-shadow-${id}.png`);
-    fs.writeFileSync(sh, await sharp(shadowSvg(1920, 1080, 960, 120 + F * 0.78, 300, true)).png().toBuffer());
-    const X = (1920 - F) / 2, Y = 120;
+    fs.writeFileSync(sh, await sharp(shadowSvg(1920, 1080, 960, F * 0.8, 380, true)).png().toBuffer());
+    const X = (1920 - F) / 2, Y = 0;
     const filter = `[0][1]overlay[b];[b][2]overlay=x=${X}:y=${Y}:shortest=1,format=yuv420p`;
     const inputs = ["-loop", "1", "-i", bgFile, "-loop", "1", "-i", sh, "-framerate", String(FPS), "-i", path.join(dir, "f%03d.png")];
     const ff = (extra) => execFileSync("ffmpeg", ["-y", "-loglevel", "error", ...inputs, "-filter_complex", extra.filter, "-frames:v", String(N), "-an", ...extra.codec, extra.out]);
