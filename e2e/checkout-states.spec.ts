@@ -51,7 +51,7 @@ test("a paid order is never offered for payment again: Back after paying, a seco
 
   // Tab 1 opens a Fawry code; tab 2 pays by card.
   await fawryTab.goto(`/en/checkout/pay/${o.id}`);
-  await fawryTab.getByRole("radio", { name: /Fawry reference code/ }).check();
+  await fawryTab.getByRole("radio", { name: /Fawry reference/ }).check();
   await fawryTab.getByRole("button", { name: "Continue" }).click();
   await expect(fawryTab.getByTestId("fawry-code")).toBeVisible();
   // The second tab resumes the open Fawry attempt; the buyer switches to card there.

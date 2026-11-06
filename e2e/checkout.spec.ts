@@ -201,6 +201,6 @@ test("a share link shows the checkout price to a signed-out visitor", async ({ p
   const visitor = await browser.newContext({ baseURL });
   const anon = await visitor.newPage();
   await anon.goto(`/en${path}`);
-  await expect(anon.getByTestId("share-price")).toContainText(`500 boxes from ${unit} each excl. VAT`);
+  await expect(anon.getByTestId("share-price")).toContainText(`500 boxes from ${unit} each after the 3% prepay discount, excl. VAT`);
   await visitor.close();
 });
