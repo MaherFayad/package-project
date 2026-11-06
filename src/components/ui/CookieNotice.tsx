@@ -6,6 +6,7 @@ import { useI18n } from "@/i18n/client";
 // Acknowledgement lives in a dependency-free module (no CSS, no UI kit) so the marketing chrome
 // does not pull the Polaris kit into its render-blocking CSS (R2-MK-01).
 import { COOKIE_ACK, COOKIE_HIDE_SCRIPT, useCookieAck } from "@/components/store/cookieAck";
+import { uiStrings } from "./strings";
 import styles from "./CookieNotice.module.css";
 
 export { COOKIE_ACK, COOKIE_HIDE_SCRIPT, useCookieAck };
@@ -43,7 +44,20 @@ export function CookieNotice() {
     apply();
     const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(apply) : null;
     ro?.observe(el);
+    // Scroll padding only helps when the browser scrolls. A control that is already inside the
+    // viewport but under the notice gets focus without any scroll and stays hidden (2.4.11,
+    // R4-K01: "Other quantity" at checkout on a 390 px phone). Move it clear of the notice.
+    const onFocusIn = (e: FocusEvent) => {
+      const target = e.target;
+      if (!(target instanceof HTMLElement) || el.contains(target)) return;
+      const n = el.getBoundingClientRect();
+      const r = target.getBoundingClientRect();
+      const covered = r.bottom > n.top && r.top < n.bottom && r.right > n.left && r.left < n.right;
+      if (covered) window.scrollBy({ top: r.bottom - n.top + 16, behavior: "instant" as ScrollBehavior });
+    };
+    document.addEventListener("focusin", onFocusIn);
     return () => {
+      document.removeEventListener("focusin", onFocusIn);
       ro?.disconnect();
       root.style.removeProperty("--e-cookie-h");
       root.style.scrollPaddingBlockEnd = "";
@@ -64,7 +78,9 @@ export function CookieNotice() {
         className={styles.notice}
         data-leaving={leaving ? "true" : undefined}
         role="region"
-        aria-label={t("store.cookie.label")}
+        // Kit string, not store.cookie.label: that equals the /legal/cookies page title, and two
+        // landmarks with one name on that page fail 1.3.1 / landmark-unique (R4-K02).
+        aria-label={uiStrings[locale === "ar" ? "ar" : "en"].cookieBanner}
         onAnimationEnd={(e) => {
           if (leaving && e.target === e.currentTarget) setGone(true);
         }}
