@@ -229,7 +229,7 @@ export function PaymentClient(props: {
             {payment.fawry.referenceCode}
           </p>
           <Text as="p" fontWeight="semibold">
-            <PriceTag amount={props.totalPiasters} locale={locale} />
+            <PriceTag alwaysDecimals amount={props.totalPiasters} locale={locale} />
           </Text>
           <Text as="p" tone="caution">
             {t("payment.fawry.expires", { date: formatDateTime(payment.fawry.expiresAt, locale) })}
@@ -278,7 +278,7 @@ export function PaymentClient(props: {
           </dd>
           <dt>{t("payment.instapay.amount")}</dt>
           <dd>
-            <PriceTag amount={props.totalPiasters} locale={locale} />
+            <PriceTag alwaysDecimals amount={props.totalPiasters} locale={locale} />
           </dd>
         </dl>
         <Text as="p">{t("payment.instapay.steps")}</Text>
@@ -361,7 +361,7 @@ export function PaymentClient(props: {
                         <Text as="span" fontWeight="semibold">
                           {t("buyer.amountDue")}
                         </Text>
-                        <PriceTag amount={props.totalPiasters} size="medium" locale={locale} />
+                        <PriceTag alwaysDecimals amount={props.totalPiasters} size="medium" locale={locale} />
                       </div>
                       <Text as="p" variant="bodySm" tone="subdued">
                         {t("payment.chooseHelp")}
@@ -406,26 +406,26 @@ export function PaymentClient(props: {
                     <div className={styles.line} key={i}>
                       <dt>{t((l.labelKey === "pricing.line.shipping" ? "checkout.summary.shipping" : l.labelKey) as DictKey)}</dt>
                       <dd>
-                        <PriceTag amount={l.totalPiasters} size="small" locale={locale} />
+                        <PriceTag alwaysDecimals amount={l.totalPiasters} size="small" locale={locale} tone={l.totalPiasters < 0 ? "success" : "base"} />
                       </dd>
                     </div>
                   ))}
                   <div className={`${styles.line} ${styles.lineSub}`}>
                     <dt>{t("buyer.subtotalExVat")}</dt>
                     <dd>
-                      <PriceTag amount={props.totalPiasters - props.vatPiasters} size="small" locale={locale} />
+                      <PriceTag alwaysDecimals amount={props.totalPiasters - props.vatPiasters} size="small" locale={locale} />
                     </dd>
                   </div>
                   <div className={styles.line}>
                     <dt>{t("checkout.summary.vat")}</dt>
                     <dd>
-                      <PriceTag amount={props.vatPiasters} size="small" locale={locale} />
+                      <PriceTag alwaysDecimals amount={props.vatPiasters} size="small" locale={locale} />
                     </dd>
                   </div>
                   <div className={`${styles.line} ${styles.lineTotal}`}>
                     <dt>{t("checkout.summary.total")}</dt>
                     <dd data-testid="pay-total">
-                      <PriceTag amount={props.totalPiasters} locale={locale} />
+                      <PriceTag alwaysDecimals amount={props.totalPiasters} locale={locale} />
                     </dd>
                   </div>
                 </dl>

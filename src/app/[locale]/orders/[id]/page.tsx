@@ -7,10 +7,13 @@ import { fromJson } from "@/lib/json";
 import { formatDate, formatDateTime, formatDims } from "@/lib/format";
 import { formatEgyptPhone } from "@/lib/phone";
 import { getOrderForViewer, moneyOf, syncShipments, type OrderDetail } from "@/lib/orders/service";
-import { BUYER_STEPS, buyerStepIndex, canBuyerCancel, canOpenDispute, canReview, isPaidStatus, stoppedStepIndex } from "@/lib/orders/state";
+import { canBuyerCancel, canOpenDispute, canReview, isPaidStatus } from "@/lib/orders/state";
+import { BUYER_TRACK, buyerTrackIndex, buyerTrackStopped } from "@/lib/orders/buyer-track";
 import { paymentTone, statusTone } from "@/lib/orders/status-tone";
 import { modelPoster } from "@/lib/orders/poster";
 import { governorateKey } from "@/lib/orders/governorates";
+import { sellerTaxReady } from "@/lib/orders/tax-document";
+import { IsolatedList } from "../_components/IsolatedList";
 import type { TrackingEvent } from "@/lib/shipping";
 import {
   Badge,
@@ -117,7 +120,9 @@ export default async function OrderPage({ params, searchParams }: { params: Para
     return (
       <Page title={t("orders.title")} narrowWidth backAction={{ content: t("orders.detail.back"), url: `/${locale}/orders` }}>
         <Card>
-          <EmptyState heading={t("checkout.errors.NOT_FOUND")} image={<EmptyBoxIllustration />} action={<Button url={`/${locale}/orders`}>{t("orders.title")}</Button>} />
+          <EmptyState heading={t("buyer.orderNotFound.title")} image={<EmptyBoxIllustration />} action={<Button url={`/${locale}/orders`}>{t("buyer.orderNotFound.action")}</Button>}>
+          {t("buyer.orderNotFound.body")}
+        </EmptyState>
         </Card>
       </Page>
     );
@@ -140,19 +145,20 @@ export default async function OrderPage({ params, searchParams }: { params: Para
   const terminal = status === "CANCELLED" || status === "REFUNDED";
   const eventTypes = order.productionEvents.map((e) => e.type as ProductionEventType);
   const firstOf = (type: ProductionEventType) => order!.productionEvents.find((e) => e.type === type)?.createdAt;
-  const stepDates: Partial<Record<(typeof BUYER_STEPS)[number], Date | null | undefined>> = {
+  const stepDates: Partial<Record<(typeof BUYER_TRACK)[number], Date | null | undefined>> = {
     PROOF_APPROVED: firstOf("PROOF_APPROVED") ?? proof?.approvedAt,
     PAID: order.paidAt,
+    PRINTER_ACCEPTED: firstOf("VENDOR_ACCEPTED"),
     IN_PRODUCTION: firstOf("PRODUCTION_STARTED"),
     QC_PASSED: firstOf("QC_APPROVED"),
     SHIPPED: firstOf("SHIPPED"),
     DELIVERED: order.deliveredAt,
   };
-  const current = terminal ? stoppedStepIndex(eventTypes) : buyerStepIndex(status);
-  const stepAt = (s: (typeof BUYER_STEPS)[number]) => BUYER_STEPS.indexOf(s);
+  const current = terminal ? buyerTrackStopped(eventTypes) : buyerTrackIndex(status);
+  const stepAt = (s: (typeof BUYER_TRACK)[number]) => BUYER_TRACK.indexOf(s);
   const shipmentAhead = !terminal && current <= stepAt("SHIPPED");
   const qcAhead = !terminal && current <= stepAt("QC_PASSED");
-  const steps = BUYER_STEPS.map((s, i) => ({
+  const steps = BUYER_TRACK.map((s, i) => ({
     id: s,
     label: t(`orders.detail.steps.${s}` as DictKey),
     description: stepDates[s] && i < current ? formatDate(stepDates[s]!, locale) : undefined,
@@ -188,7 +194,7 @@ export default async function OrderPage({ params, searchParams }: { params: Para
       subtitle={t("orders.detail.placed", { date: formatDateTime(order.placedAt, locale) })}
       backAction={{ content: t("orders.detail.back"), url: `/${locale}/orders` }}
       primaryAction={primary}
-      secondaryActions={invoice ? [{ content: t("orders.detail.invoice"), url: `/${locale}/orders/${order.id}/invoice`, icon: <Icon source={Receipt} /> }] : []}
+      secondaryActions={invoice ? [{ content: t(sellerTaxReady() ? "orders.detail.invoice" : "buyer.receipt.view"), url: `/${locale}/orders/${order.id}/invoice`, icon: <Icon source={Receipt} /> }] : []}
     >
       <BlockStack gap="400">
         {paid && isPaidStatus(status) ? (
@@ -238,14 +244,14 @@ export default async function OrderPage({ params, searchParams }: { params: Para
                               <Text as="h3" variant="headingSm">
                                 {t(`structures.${item.structureCode}` as DictKey)}
                               </Text>
-                              <PriceTag amount={item.lineTotalPiasters} locale={locale} />
+                              <PriceTag alwaysDecimals amount={item.lineTotalPiasters} locale={locale} />
                             </InlineStack>
                             <Text as="p" variant="bodySm" tone="subdued">
                               {formatDims(dims, locale)} · {t(`materials.${item.materialCode}` as DictKey)} · {t(`finishes.${item.finishCode}` as DictKey)} ·{" "}
                               {t(`checkout.proof.sides${item.printSides === "BOTH" ? "BOTH" : "OUTSIDE"}` as DictKey)}
                             </Text>
                             <Text as="p" variant="bodySm" numeric>
-                              <bdi>{item.quantity.toLocaleString("en-US")}</bdi> × <PriceTag amount={item.unitPiasters} size="small" locale={locale} />
+                              <bdi>{item.quantity.toLocaleString("en-US")}</bdi> × <PriceTag alwaysDecimals amount={item.unitPiasters} size="small" locale={locale} />
                             </Text>
                             <InlineStack gap="300">
                               {item.proof ? (
@@ -286,7 +292,7 @@ export default async function OrderPage({ params, searchParams }: { params: Para
                           <div className={styles.line} key={i}>
                             <dt>{t((l.labelKey === "pricing.line.shipping" ? "checkout.summary.shipping" : l.labelKey) as DictKey)}</dt>
                             <dd>
-                              <PriceTag amount={l.totalPiasters} size="small" locale={locale} />
+                              <PriceTag alwaysDecimals amount={l.totalPiasters} size="small" locale={locale} tone={l.totalPiasters < 0 ? "success" : "base"} />
                             </dd>
                           </div>
                         ))
@@ -295,13 +301,13 @@ export default async function OrderPage({ params, searchParams }: { params: Para
                           <div className={styles.line}>
                             <dt>{t("pricing.line.product")}</dt>
                             <dd>
-                              <PriceTag amount={money.goodsPiasters} size="small" locale={locale} />
+                              <PriceTag alwaysDecimals amount={money.goodsPiasters} size="small" locale={locale} />
                             </dd>
                           </div>
                           <div className={styles.line}>
                             <dt>{t("checkout.summary.shipping")}</dt>
                             <dd>
-                              <PriceTag amount={money.shippingPiasters} size="small" locale={locale} />
+                              <PriceTag alwaysDecimals amount={money.shippingPiasters} size="small" locale={locale} />
                             </dd>
                           </div>
                         </>
@@ -309,19 +315,19 @@ export default async function OrderPage({ params, searchParams }: { params: Para
                       <div className={`${styles.line} ${styles.lineSub}`}>
                         <dt>{t("buyer.subtotalExVat")}</dt>
                         <dd>
-                          <PriceTag amount={money.totalPiasters - money.vatPiasters} size="small" locale={locale} />
+                          <PriceTag alwaysDecimals amount={money.totalPiasters - money.vatPiasters} size="small" locale={locale} />
                         </dd>
                       </div>
                       <div className={styles.line}>
                         <dt>{t("checkout.summary.vat")}</dt>
                         <dd>
-                          <PriceTag amount={money.vatPiasters} size="small" locale={locale} />
+                          <PriceTag alwaysDecimals amount={money.vatPiasters} size="small" locale={locale} />
                         </dd>
                       </div>
                       <div className={`${styles.line} ${styles.total}`}>
                         <dt>{t("checkout.summary.total")}</dt>
                         <dd>
-                          <PriceTag amount={money.totalPiasters} locale={locale} />
+                          <PriceTag alwaysDecimals amount={money.totalPiasters} locale={locale} />
                         </dd>
                       </div>
                     </dl>
@@ -333,14 +339,14 @@ export default async function OrderPage({ params, searchParams }: { params: Para
                         {paidSum > 0 ? t("orders.detail.paid") : t("orders.detail.due")}
                         {paidMethod ? ` · ${t(`paymentMethods.${paidMethod}` as DictKey)}` : ""}
                       </Text>
-                      <PriceTag amount={paidSum > 0 ? paidSum : money.totalPiasters} locale={locale} />
+                      <PriceTag alwaysDecimals amount={paidSum > 0 ? paidSum : money.totalPiasters} locale={locale} />
                     </div>
                   </Inset>
                   ) : null}
                   {invoice ? (
                     <InlineStack>
                       <Button variant="plain" url={`/${locale}/orders/${order.id}/invoice`}>
-                        {t("orders.detail.invoice")}
+                        {t(sellerTaxReady() ? "orders.detail.invoice" : "buyer.receipt.view")}
                       </Button>
                     </InlineStack>
                   ) : null}
@@ -484,20 +490,23 @@ export default async function OrderPage({ params, searchParams }: { params: Para
 
               <Card title={t("orders.detail.address")}>
                 <BlockStack gap="050">
-                  <Text as="p">{address.name}</Text>
+                  {/* R4-CR-02: what the buyer typed (often Latin in an Arabic page) is isolated per part,
+                      so "14 Abbas El Akkad St" never reverses around the Arabic labels and commas. */}
                   <Text as="p">
-                    {[address.street, address.building, address.floor && `${t("checkout.address.floor")} ${address.floor}`, address.apartment && `${t("checkout.address.apartment")} ${address.apartment}`]
-                      .filter(Boolean)
-                      .join(locale === "ar" ? "، " : ", ")}
+                    <bdi>{address.name}</bdi>
                   </Text>
                   <Text as="p">
-                    {address.city}
-                    {locale === "ar" ? "، " : ", "}
-                    {govKey ? t(`governorates.${govKey}` as DictKey) : address.governorate}
+                    <IsolatedList
+                      sep={locale === "ar" ? "، " : ", "}
+                      parts={[address.street, address.building, address.floor && `${t("checkout.address.floor")} ${address.floor}`, address.apartment && `${t("checkout.address.apartment")} ${address.apartment}`]}
+                    />
+                  </Text>
+                  <Text as="p">
+                    <IsolatedList sep={locale === "ar" ? "، " : ", "} parts={[address.city, govKey ? t(`governorates.${govKey}` as DictKey) : address.governorate]} />
                   </Text>
                   {address.landmark ? (
                     <Text as="p" tone="subdued" variant="bodySm">
-                      {address.landmark}
+                      <bdi>{address.landmark}</bdi>
                     </Text>
                   ) : null}
                   <Text as="p">
