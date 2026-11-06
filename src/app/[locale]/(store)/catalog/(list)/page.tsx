@@ -7,7 +7,7 @@ import { formatNumber } from "@/lib/format";
 import { CatalogueBrowser } from "@/components/catalogue/CatalogueBrowser";
 import { COPY, fill } from "@/components/catalogue/copy";
 import { getCatalogueData } from "@/components/catalogue/server";
-import rs from "@/components/marketing/restyle/restyle.module.css";
+import styles from "@/components/catalogue/catalogue.module.css";
 import { Sheet } from "@/components/marketing/kit/Sheet";
 import { Display, Eyebrow, Lead } from "@/components/marketing/kit/Display";
 
@@ -36,34 +36,34 @@ export default async function CatalogPage({ params }: Props) {
   const base = siteUrl();
   const data = await getCatalogueData();
   return (
-    <div className={rs.page}>
+    <div>
       <JsonLd
         data={breadcrumbJsonLd([
           { name: t("nav.home"), url: `${base}/${locale}` },
           { name: t("nav.catalog"), url: `${base}/${locale}/catalog` },
         ])}
       />
-      <Sheet tone="dark" hero className={`${rs.heroCompact} ${rs.glow}`} aria-labelledby="catalogue-title">
+      <Sheet tone="dark" hero className={`${styles.heroCompact} ${styles.heroGlow}`} aria-labelledby="catalogue-title">
         <Eyebrow className="m-enter">{COPY.eyebrow[locale]}</Eyebrow>
         <Display as="h1" size="64" id="catalogue-title" className="m-enter-lcp">
           {COPY.title[locale]}
         </Display>
         <Lead className="m-enter-lcp">{fill(COPY.lead[locale], { count: formatNumber(data.counts.total) })}</Lead>
-        <dl className={`${rs.stats} m-enter`}>
+        <dl className={`${styles.stats} m-enter`}>
           {[
             [data.counts.total, COPY.statModels],
             [data.counts.designer, COPY.statDesigner],
             [data.counts.egypt, COPY.statEgypt],
             [data.counts.instant, COPY.statInstant],
           ].map(([n, label]) => (
-            <div key={(label as { en: string }).en} className={rs.stat}>
-              <dt className={rs.statLabel}>{(label as { ar: string; en: string })[locale]}</dt>
-              <dd className={rs.statNum}>{formatNumber(n as number)}</dd>
+            <div key={(label as { en: string }).en} className={styles.stat}>
+              <dt className={styles.statLabel}>{(label as { ar: string; en: string })[locale]}</dt>
+              <dd className={styles.statNum}>{formatNumber(n as number)}</dd>
             </div>
           ))}
         </dl>
       </Sheet>
-      <Sheet tone="white" className={rs.sheetTop} aria-label={COPY.eyebrow[locale]}>
+      <Sheet tone="white" className={styles.sheetTop} aria-label={COPY.eyebrow[locale]}>
         <CatalogueBrowser locale={locale} cards={data.cards} taxonomy={data.taxonomy} />
       </Sheet>
     </div>

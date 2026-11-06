@@ -13,7 +13,6 @@ import { QuoteRequestForm } from "@/components/catalogue/QuoteRequestForm";
 import { ModelCard } from "@/components/catalogue/CatalogueBrowser";
 import { getCatalogueData } from "@/components/catalogue/server";
 import { STRUCTURE_LIST } from "@/lib/dieline";
-import rs from "@/components/marketing/restyle/restyle.module.css";
 import { Sheet } from "@/components/marketing/kit/Sheet";
 import { Display, Eyebrow, Lead } from "@/components/marketing/kit/Display";
 import { Pill } from "@/components/marketing/kit/Pill";
@@ -60,9 +59,9 @@ export default async function Page({ params }: Props) {
   const presets = e.presets.map((p) => ({ ...p, label: `${p.name[locale]} · ${sizeText(locale, e.axes, p.dims, p.capacityMl)}` }));
 
   return (
-    <div className={rs.page}>
-      <Sheet tone="dark" hero className={`${rs.heroCompact} ${rs.glow}`} aria-labelledby="model-title">
-        <nav aria-label={COPY.back[locale]} className={`${rs.crumbs} m-enter`}>
+    <div>
+      <Sheet tone="dark" hero className={`${styles.heroCompact} ${styles.heroGlow}`} aria-labelledby="model-title">
+        <nav aria-label={COPY.back[locale]} className={`${styles.crumbs} m-enter`}>
           <ol>
             <li>
               <Link href={`/${locale}/catalog`}>{COPY.back[locale]}</Link>
@@ -87,12 +86,12 @@ export default async function Page({ params }: Props) {
         </Display>
         <Lead className="m-enter-lcp">{e.description[locale]}</Lead>
         {e.source === "fefco-09" ? (
-          <p className={rs.small} style={{ marginBlockStart: 12 }}>
+          <p className={styles.heroNote}>
             {COPY.hostNote[locale]}
           </p>
         ) : null}
       </Sheet>
-      <Sheet tone="white" className={rs.sheetTop}>
+      <Sheet tone="white" className={styles.sheetTop}>
         <div className={styles.detail}>
           <DetailStage locale={locale} code={e.code} render={e.render} source={e.source} name={e.name[locale]} />
           <div className={styles.facts}>
@@ -100,7 +99,7 @@ export default async function Page({ params }: Props) {
               <p className={styles.priceTitle}>
                 {mode.mode === "instant" ? (e.render === "vessel" ? COPY.instantLabelsTitle[locale] : COPY.instantTitle[locale]) : COPY.quoteTitle[locale]}
               </p>
-              <p className={rs.muted} style={{ margin: 0 }}>
+              <p className={styles.cardMuted}>
                 {mode.mode === "instant"
                   ? fill(COPY.instantBody[locale], { count: formatNumber(mode.vendorIds.length) })
                   : mode.reason === "NO_VENDOR"
@@ -156,7 +155,7 @@ export default async function Page({ params }: Props) {
 
             {e.presets.length ? (
               <div>
-                <h2 className={rs.cardTitle} style={{ marginBlockEnd: 12 }}>
+                <h2 className={styles.cardHeading}>
                   {COPY.sizes[locale]}
                 </h2>
                 <ul className={styles.sizes}>
@@ -174,7 +173,7 @@ export default async function Page({ params }: Props) {
       </Sheet>
       {related.length ? (
         <Sheet tone="light" aria-labelledby="related-title">
-          <Display size="44" id="related-title" className={rs.headGap}>
+          <Display size="44" id="related-title" className={styles.relatedTitle}>
             {fill(COPY.related[locale], { name: sub[locale] })}
           </Display>
           <ul className={styles.relatedGrid}>
