@@ -599,3 +599,21 @@ Files touched outside scope (crop, brand colours): `src/types/design.ts` (two op
 | R5-JR-20 | medium | size fields (`BoxPanel`, `ConfigPanel` box + vessel, `fields.tsx NumberField`) | Native `type="number"`: Chromium refuses Arabic-Indic digits, so «٢٥٠» left the size unchanged without a word. "250,5" failed the same way. | `type="text"` + `inputMode="decimal"`, read with `parseMmInput` (`designer/lib/mm.ts`, on top of the shared `normaliseNumberInput` / `parseDecimalInput` in `lib/money/input.ts`, plus a decimal comma before 1–2 digits for sizes). Spin-button semantics are kept through a new optional `spinbutton` prop on `TextField`: `role="spinbutton"`, `aria-valuenow/min/max`, ↑/↓ step (Shift ×10), PageUp/PageDown. Unit test `mm.test.ts`. | fixed: «٢٥٠» → 250 (pouch 230 → 250 applied); "250,5" → 250.5 and the outer size updates; ↑ / Shift+↓ step; "abc" shows the size error; axe 0, ar + en |
 
 Files touched outside scope (journeys items): `src/app/api/quote/route.ts` (`prepayDiscountPct` in the response), `src/components/ui/TextField.tsx` (optional `spinbutton` prop).
+
+## Verification (crop, brand colours, round 12 and journeys items; on main fd40cef + 69054fb)
+
+- Lint and typecheck are clean (including main's no-barrel rule). `npm test`: **108 files, 8,755 passed** (new: `crop.test.ts`, `mm.test.ts`). `npm run build` OK.
+- Playwright `designer` + `smoke` + `journey` + `checkout` + `storefront` + `catalogue` (`--workers=2`): **69 passed, 10 skipped**, 0 failed. The first run had 3 checkout / journey failures from a dev database that had not been `db push`ed after merging main (Prisma error on the pay page, new columns). After the push: checkout + journey 11 passed, 1 skipped. The full models run on the crop / brand colour build: 430 passed, 378 skipped, 0 failed.
+- Hydration e2e, 16 × 2: **32 / 32 passed**.
+- Re-run on the final build:
+  - JR-20 (ar box, en box, ar pouch): «٢٥٠» → 250, "250,5" → 250.5, ↑ → 251.5, Shift+↓ → 241.5, axe 0.
+  - R12: 409 banner overflow 0 (ar, en); 999 / 1000 / 1024 / 1180 px all side panel with a 398–450 px canvas; crop dialog axe 0; anonymous brand save opens the gate and «#١٢٣٤٥٦» → #123456.
+
+## Counts (round 12, new findings before fixing)
+
+| severity | found | fixed | open |
+|---|---|---|---|
+| critical | 0 | 0 | 0 |
+| high | 0 | 0 | 0 |
+| medium | 2 (R12-01, R12-02) + 1 from journeys (R5-JR-20) | 3 | 0 |
+| low | 0 + 2 from journeys (R5-JR-14, R5-JR-15 designer half) | 2 | 0 |
