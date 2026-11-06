@@ -52,7 +52,7 @@ import { runPreflight, summarizePreflight } from "./lib/preflight";
 import { placeLayer, type Placement } from "./lib/geometry";
 import { BADGE_QTY, fetchQuote, quoteKey, type PriceState } from "./lib/quote";
 import { designerPath } from "./lib/catalog";
-import { pruneFinishes, toggleFinish } from "./lib/config";
+import { fillEmptyFinishMasks, pruneFinishes, setLayerFinish, toggleFinish } from "./lib/config";
 import { createModelDoc } from "./lib/doc";
 import { layerName } from "./lib/describe";
 import { ConfigPanel, surfaceName, type ViewOptions } from "./ConfigPanel";
@@ -491,7 +491,8 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
 
   const add = (layer: ArtworkLayer) => {
     if (layerCount(docRef.current) >= 60) return;
-    commit(addLayer(docRef.current, layer));
+    // A masked finish switched on before any artwork existed starts on the first item (FN-02).
+    commit(fillEmptyFinishMasks(addLayer(docRef.current, layer)));
     setSelectedId(layer.id);
     setView("face");
   };
@@ -525,7 +526,7 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
   };
   const onAddShape = (shape: "rect" | "ellipse") => faceInfo && add(makeShapeLayer(face, surface, faceInfo, shape));
   const onDelete = (id: string) => {
-    commit(removeLayer(docRef.current, id));
+    commit(fillEmptyFinishMasks(removeLayer(docRef.current, id)));
     if (selectedId === id) setSelectedId(null);
     toast.show(t("designer.artwork.deleted"), { action: { content: t("designer.history.undo"), onAction: () => dispatch({ type: "undo" }) } });
   };
@@ -695,6 +696,14 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
     />
   );
 
+  // Masked finishes the selected item can carry ("Spot UV on this item", FN-02).
+  const layerFinishes = useMemo(
+    () =>
+      !isVessel && selected
+        ? (doc.finishes ?? []).filter((f) => FINISHES[f.code].masked).map((f) => ({ code: f.code, name: FINISHES[f.code].name[locale], on: !!f.mask?.layerIds.includes(selected.id) }))
+        : [],
+    [doc.finishes, selected, isVessel, locale],
+  );
   const faceOptions = FACE_IDS.filter((f) => faces[f]).map((f) => ({ value: f, label: faceLabel(f) }));
   // Open-top styles (FEFCO 0700…) never close: fold 100 % reads "Assembled". The catalogue adds
   // `openTop` to the library; read it defensively until then.
@@ -720,7 +729,7 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
             autoComplete="off"
             size="slim"
             maxLength={120}
-            placeholder={t("designer.untitled")}
+            placeholder={t(isVessel ? "designer.container.untitled" : "designer.untitled")}
             value={doc.name}
             onChange={(v) => commit({ ...docRef.current, name: v }, "name")}
             onBlur={seal}
@@ -781,12 +790,12 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
           </Popover>
         </div>
         <Button variant="primary" onClick={doOrder} loading={ordering}>
-          {t("designer.order.button")}
+          {t(isVessel ? "designer.container.order" : "designer.order.button")}
         </Button>
       </div>
 
       <div className={styles.priceRow}>
-        <PriceBadge state={price} onClick={openPrice} />
+        <PriceBadge state={price} onClick={openPrice} vessel={isVessel} />
       </div>
 
       {notFound ? (
@@ -991,7 +1000,7 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
           }}
         >
           {sheetOpen ? <ChevronDown size={20} aria-hidden /> : <ChevronUp size={20} aria-hidden />}
-          <span>{sheetOpen ? t("designer.sheet.collapse") : t("designer.sheet.expand")}</span>
+          <span>{sheetOpen ? t(isVessel ? "designer.container.collapse" : "designer.sheet.collapse") : t("designer.sheet.expand")}</span>
         </button>
         <div className={styles.panelInner} id="designer-panel">
           <Tabs tabs={tabs} selected={tab} onSelect={(i) => startTransition(() => setTab(i))} fitted accessibilityLabel={t("designer.tabs.label")}>
@@ -1040,6 +1049,8 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
                     if (r.id) setSelectedId(r.id);
                   }}
                   onDelete={() => selected && onDelete(selected.id)}
+                  layerFinishes={layerFinishes}
+                  onLayerFinish={(code, on) => selected && commit(setLayerFinish(docRef.current, code, selected.id, on))}
                 />
               ) : tab === 2 ? (
                 <LayersPanel doc={doc} faces={faces} faceLabel={faceLabel} issues={issues} selectedId={selectedId} onSelect={(id, f, s) => goToLayer(id, f, s)} />

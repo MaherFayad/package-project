@@ -46,12 +46,12 @@ export function GateModal({ reason, onClose, onSuccess }: { reason: GateReason |
 }
 
 /** The live price badge on the editor ("500 boxes from EGP X each, delivered in N days"). */
-export function PriceBadge({ state, onClick }: { state: PriceState; onClick: () => void }) {
+export function PriceBadge({ state, onClick, vessel = false }: { state: PriceState; onClick: () => void; vessel?: boolean }) {
   const { t, locale } = useI18n();
   let label: string;
   switch (state.status) {
     case "ready":
-      label = t("designer.price.badge", {
+      label = t(vessel ? "designer.container.badge" : "designer.price.badge", {
         qty: formatNumber(state.quantity),
         price: formatMoney(state.best.unitPiasters, locale),
         days: state.best.deliveryDays,
@@ -61,13 +61,13 @@ export function PriceBadge({ state, onClick }: { state: PriceState; onClick: () 
       label = t("designer.price.loading");
       break;
     case "none":
-      label = t("designer.price.unavailable");
+      label = t(vessel ? "designer.container.unavailable" : "designer.price.unavailable");
       break;
     case "error":
       label = t("designer.price.errorBody");
       break;
     default:
-      label = t("designer.price.badgeLocked", { qty: formatNumber(BADGE_QTY) });
+      label = t(vessel ? "designer.container.badgeLocked" : "designer.price.badgeLocked", { qty: formatNumber(BADGE_QTY) });
   }
   return (
     <button type="button" className={styles.priceBadge} onClick={onClick} aria-live="polite" data-state={state.status} data-testid="price-badge">
@@ -99,6 +99,8 @@ export function PriceModal({
   ordering: boolean;
 }) {
   const { t, locale } = useI18n();
+  // Containers price per piece, not per box (R2-04).
+  const vessel = !!doc.vessel;
   const [qty, setQty] = useState<number>(BADGE_QTY);
   const [state, setState] = useState<PriceState>({ status: "idle" });
   const [attempt, setAttempt] = useState(0);
@@ -120,7 +122,7 @@ export function PriceModal({
       open={open}
       onClose={onClose}
       title={t("designer.price.heading")}
-      primaryAction={{ content: t("designer.order.button"), onAction: onOrder, loading: ordering, disabled: state.status !== "ready" }}
+      primaryAction={{ content: t(vessel ? "designer.container.order" : "designer.order.button"), onAction: onOrder, loading: ordering, disabled: state.status !== "ready" }}
       secondaryActions={[{ content: t("common.close"), onAction: onClose }]}
     >
       <BlockStack gap="400">
@@ -142,7 +144,7 @@ export function PriceModal({
             <Inset>
               <BlockStack gap="200">
                 <InlineStack align="space-between" blockAlign="center" gap="200">
-                  <Text as="span">{t("designer.price.perBox")}</Text>
+                  <Text as="span">{t(vessel ? "designer.container.perPiece" : "designer.price.perBox")}</Text>
                   <PriceTag amount={state.best.unitPiasters} locale={locale} vat="excluded" />
                 </InlineStack>
                 <InlineStack align="space-between" blockAlign="center" gap="200">
@@ -186,7 +188,7 @@ export function PriceModal({
           </BlockStack>
         ) : state.status === "none" ? (
           <Banner tone="warning" inCard>
-            {t("designer.price.unavailable")}
+            {t(vessel ? "designer.container.unavailable" : "designer.price.unavailable")}
           </Banner>
         ) : (
           <Banner tone="critical" inCard action={{ content: t("designer.price.retry"), onAction: () => setAttempt((a) => a + 1) }}>

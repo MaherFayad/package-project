@@ -98,46 +98,56 @@ function OptionGroup<T extends string>({
   extra?: (c: Choice<T>) => ReactNode;
 }) {
   const { t, locale } = useI18n();
+  const row = (c: Choice<T>) => {
+    const checked = selected.includes(c.value);
+    // A selected option the rules no longer allow stays editable (so it can be removed).
+    const disabled = !c.enabled && !checked;
+    const id = `${name}-${c.value}`;
+    return (
+      <li key={c.value}>
+        <label className={styles.optionRow} htmlFor={id} data-checked={checked} data-disabled={disabled}>
+          <input
+            id={id}
+            type={type}
+            name={name}
+            value={c.value}
+            checked={checked}
+            disabled={disabled}
+            aria-describedby={c.reason || c.warning ? `${id}-note` : undefined}
+            onChange={(e) => onChange(c.value, e.currentTarget.checked)}
+          />
+          <span className={styles.optionText}>
+            <span className={styles.optionName}>{label(c)}</span>
+            {c.reason && !c.enabled ? (
+              <span id={`${id}-note`} className={styles.optionReason}>
+                {t("library.panel.notAvailable")}: {c.reason[locale]}
+              </span>
+            ) : c.warning ? (
+              <span id={`${id}-note`} className={styles.optionWarning}>
+                {c.warning[locale]}
+              </span>
+            ) : null}
+            {checked && extra ? extra(c) : null}
+          </span>
+        </label>
+      </li>
+    );
+  };
+  // Usable options first; two or more the rules rule out fold into one disclosure, so their
+  // reasons do not bury the choices that work (R2-05). Each reason stays tied to its input.
+  const off = choices.filter((c) => !c.enabled && !selected.includes(c.value));
+  const fold = off.length >= 2;
+  const on = fold ? choices.filter((c) => !off.includes(c)) : choices;
   return (
     <fieldset className={styles.group} data-testid={`group-${name}`}>
       <legend className={styles.groupTitle}>{legend}</legend>
-      <ul className={styles.optionList}>
-        {choices.map((c) => {
-          const checked = selected.includes(c.value);
-          // A selected option the rules no longer allow stays editable (so it can be removed).
-          const disabled = !c.enabled && !checked;
-          const id = `${name}-${c.value}`;
-          return (
-            <li key={c.value}>
-              <label className={styles.optionRow} htmlFor={id} data-checked={checked} data-disabled={disabled}>
-                <input
-                  id={id}
-                  type={type}
-                  name={name}
-                  value={c.value}
-                  checked={checked}
-                  disabled={disabled}
-                  aria-describedby={c.reason || c.warning ? `${id}-note` : undefined}
-                  onChange={(e) => onChange(c.value, e.currentTarget.checked)}
-                />
-                <span className={styles.optionText}>
-                  <span className={styles.optionName}>{label(c)}</span>
-                  {c.reason && !c.enabled ? (
-                    <span id={`${id}-note`} className={styles.optionReason}>
-                      {t("library.panel.notAvailable")}: {c.reason[locale]}
-                    </span>
-                  ) : c.warning ? (
-                    <span id={`${id}-note`} className={styles.optionWarning}>
-                      {c.warning[locale]}
-                    </span>
-                  ) : null}
-                  {checked && extra ? extra(c) : null}
-                </span>
-              </label>
-            </li>
-          );
-        })}
-      </ul>
+      <ul className={styles.optionList}>{on.map(row)}</ul>
+      {fold ? (
+        <details className={styles.unavailable}>
+          <summary>{t("library.panel.unavailableCount", { count: formatNumber(off.length) })}</summary>
+          <ul className={styles.optionList}>{off.map(row)}</ul>
+        </details>
+      ) : null}
     </fieldset>
   );
 }
@@ -157,14 +167,18 @@ function FinishesGroup({ doc, model, onFinish }: Pick<ConfigPanelProps, "doc" | 
         label={(c) => c.name[locale]}
         onChange={(v, on) => onFinish(v, on)}
         extra={(c) => {
-          if (!FINISHES[c.value].masked) return null;
+          // Containers: the finish covers the whole label, so there is nothing to choose.
+          if (!FINISHES[c.value].masked || model.kind !== "box") return null;
           const f = doc.finishes?.find((x) => x.code === c.value);
-          const n = f?.mask?.layerIds.length ?? 0;
-          return (
-            <span className={styles.optionReason}>
-              {n > 0 ? `${t("library.panel.finishOn")}: ${t("library.panel.finishAllArtwork")}` : t("library.panel.finishNeedsArt")}
-            </span>
-          );
+          if (!f) return null;
+          const live = doc.artwork.outside.layers.filter((l) => !l.hidden && f.mask?.layerIds.includes(l.id));
+          const text =
+            live.length === 0
+              ? t("library.panel.finishWholeFace")
+              : live.every((l) => l.kind === "image")
+                ? t(live.length === 1 ? "library.panel.finishOnLogo" : "library.panel.finishOnImages", { count: formatNumber(live.length) })
+                : t("library.panel.finishOnItems", { count: formatNumber(live.length) });
+          return <span className={styles.optionReason}>{text}</span>;
         }}
       />
       <Text as="p" variant="bodySm" tone="subdued">
@@ -354,7 +368,7 @@ function BoxSection({ doc, model, geo, view, onView, onGeometry, onFinish, onPri
               step={5}
               value={Math.min(Math.round(doc.dims.H), f.lidHeightMm ?? Math.round(doc.dims.H))}
               output
-              formatValue={(v) => `${formatNumber(v)} mm`}
+              formatValue={(v) => `${formatNumber(v)} ${t("common.mm")}`}
               onChange={(v) => setFeature({ lidHeightMm: v })}
             />
           ) : null}
