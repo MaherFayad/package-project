@@ -25,6 +25,9 @@ const LOOK: Record<ProductPresetKey, { material: MaterialCode; bg: string | null
 
 /** Degrees per second of the slow turntable. */
 const SPEED = 16;
+/** Longest bounded turn (R4-24): auto-moving content stops within 8 s (WCAG 2.2.2 allows 5 s for
+ * blinking; the turntable also stops for good under reduced motion). */
+const TURN_MS = 8000;
 
 function sampleArtwork(model: DielineModel, locale: Locale, look: (typeof LOOK)[ProductPresetKey]): ArtworkSurface {
   const ar = locale === "ar";
@@ -56,15 +59,27 @@ export default function StartViewer({
   playing,
   wrapRef,
   labels,
-  poster,
+  onReady,
+  turn,
+  onTurnDone,
 }: {
   active: ProductPresetKey;
   locale: Locale;
   playing: boolean;
   wrapRef: RefObject<HTMLDivElement | null>;
   labels: { viewer: string; roleDescription: string; keyboardHint: string; unsupported: string };
-  poster?: string;
+  /** First frame drawn (DesignStart then fades its poster out, R4-11). */
+  onReady?: () => void;
+  /**
+   * R4-24 (WCAG 2.2.2): a new value starts one bounded turn: it stops after a full turn or 8 s of
+   * turning, whichever comes first, then calls `onTurnDone`. `null` turns until paused (the
+   * visitor pressed Play).
+   */
+  turn?: number | null;
+  onTurnDone?: () => void;
 }) {
+  const doneRef = useRef(onTurnDone);
+  doneRef.current = onTurnDone;
   const handle = useRef<PackagingSceneHandle>(null);
   const preset = PRODUCT_PRESETS.find((p) => p.key === active)!;
   const look = LOOK[active];
@@ -106,12 +121,25 @@ export default function StartViewer({
     let raf = 0;
     let last = performance.now();
     let visible = true;
+    let turned = 0;
+    let elapsed = 0;
+    const bounded = turn !== null && turn !== undefined;
     const io = typeof IntersectionObserver !== "undefined" ? new IntersectionObserver(([e]) => (visible = e.isIntersecting)) : null;
     if (wrapRef.current) io?.observe(wrapRef.current);
     const tick = (now: number) => {
-      const dt = Math.min(now - last, 64);
+      // Wall-clock time for the 8 s budget (slow GPUs draw few frames); a capped step for the turn.
+      const real = Math.min(now - last, 1000);
+      const dt = Math.min(real, 64);
       last = now;
-      if (visible && document.visibilityState === "visible") handle.current?.rotate((SPEED * dt) / 1000);
+      if (visible && document.visibilityState === "visible") {
+        handle.current?.rotate((SPEED * dt) / 1000);
+        turned += (SPEED * dt) / 1000;
+        elapsed += real;
+        if (bounded && (turned >= 360 || elapsed >= TURN_MS)) {
+          doneRef.current?.();
+          return;
+        }
+      }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -119,7 +147,7 @@ export default function StartViewer({
       cancelAnimationFrame(raf);
       io?.disconnect();
     };
-  }, [playing, wrapRef]);
+  }, [playing, wrapRef, turn]);
 
   return (
     <PackagingSceneLazy
@@ -132,7 +160,7 @@ export default function StartViewer({
       artworkTextures={{ outside: texture }}
       artworkVersion={version}
       handleRef={handle}
-      poster={poster}
+      onReady={onReady}
       ariaLabel={labels.viewer}
       roleDescription={labels.roleDescription}
       keyboardHint={labels.keyboardHint}

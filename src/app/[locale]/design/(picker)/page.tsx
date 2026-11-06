@@ -8,6 +8,8 @@ import { ResumeCard } from "@/components/designer/ResumeCard";
 import { DesignStart } from "@/components/designer/DesignStart";
 import { ModelLinks } from "@/components/designer/ModelLinks";
 import { MODELS } from "@/lib/library";
+import Link from "next/link";
+import { CATALOGUE } from "@/data/catalogue";
 import { formatNumber } from "@/lib/format";
 import styles from "@/components/designer/designer.module.css";
 
@@ -65,7 +67,10 @@ export default async function DesignPickerPage({
                 {t("library.picker.title")}
               </Text>
               <Text as="p" tone="subdued">
-                {t("library.catalog.subtitle", { count: formatNumber(MODELS.length) })}
+                {t("library.catalog.subtitle", { count: formatNumber(MODELS.length) })}{" "}
+                {/* R4-CR-06: one source (the catalogue rows) for both totals. */}
+                {t("library.catalog.more", { count: formatNumber(CATALOGUE.length - MODELS.length) })}{" "}
+                <Link href={`/${locale}/catalog`}>{t("library.catalog.moreLink")}</Link>
               </Text>
             </BlockStack>
             {structures.length === 0 && MODELS.length === 0 ? (

@@ -18,3 +18,12 @@
   block-size: 100%;
   object-fit: contain;
 }
+/* R4-12: headline price above the order button, the first thing a visitor reads in the card. */
+.price {
+  margin: 0;
+  font-size: var(--p-font-size-400, 1rem);
+  line-height: 1.5;
+  font-weight: var(--p-font-weight-semibold, 600);
+  font-variant-numeric: tabular-nums;
+  color: var(--p-color-text);
+}

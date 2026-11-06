@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { MODELS } from "@/lib/library";
 import { STRUCTURE_CODES } from "@/types";
-import { jobModel, modelsForCard, modelsForStructure, structureCoverage } from "../coverage";
+import { instantModelsForCard, jobModel, listedGroups, modelsForCard, modelsForStructure, structureCoverage } from "../coverage";
 import { filterJobs } from "../jobs";
 
 describe("vendor model coverage (R2-01..R2-04)", () => {
@@ -28,8 +28,26 @@ describe("vendor model coverage (R2-01..R2-04)", () => {
   it("coverage counts match the lists and carry the industry reference", () => {
     const cov = structureCoverage("en");
     expect(cov.FEFCO_0201.standard).toBe("FEFCO 0201");
-    expect(cov.FEFCO_0201.count).toBe(modelsForStructure("FEFCO_0201").length);
+    // R4: the tick count is what gets an instant price; special gluing models are counted apart.
+    const all = modelsForStructure("FEFCO_0201");
+    expect(cov.FEFCO_0201.count).toBe(all.filter((m) => m.mode === "instant").length);
+    expect(cov.FEFCO_0201.listed).toBeGreaterThan(0);
+    expect(cov.FEFCO_0201.count + all.filter((m) => m.mode !== "instant").length).toBe(all.length);
     expect(cov.FEFCO_0201.examples.length).toBeLessThanOrEqual(3);
+  });
+
+  it("R4: special gluing models are grouped by base style and only priced once listed", () => {
+    const groups = listedGroups();
+    const codes = groups.flatMap((g) => g.models.map((m) => m.code));
+    expect(new Set(codes).size).toBe(codes.length);
+    expect(codes).toEqual(expect.arrayContaining(["FEFCO_0711", "ECMA_TUCK_CRASH_LOCK", "ECMA_TRAY_4C", "BOTTLE_BASKET_4"]));
+    for (const g of groups) for (const m of g.models) expect(m.bases).toContain(g.structure);
+    const tray = instantModelsForCard("FEFCO_0422", "E_FLUTE_KRAFT").map((m) => m.code);
+    expect(tray).not.toContain("FEFCO_0443");
+    expect(instantModelsForCard("FEFCO_0422", "E_FLUTE_KRAFT", ["FEFCO_0443"]).map((m) => m.code)).toContain("FEFCO_0443");
+    // Never instant: models routed to a quote or preview.
+    expect(modelsForCard("ECMA_STE", "SBS_350").some((m) => m.mode === "preview")).toBe(true);
+    expect(instantModelsForCard("ECMA_STE", "SBS_350", ["LIQUID_ASEPTIC_BRICK"]).some((m) => m.mode === "preview")).toBe(false);
   });
 
   it("jobModel resolves the exact model and the jobs search matches its reference", () => {

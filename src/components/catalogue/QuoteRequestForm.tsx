@@ -21,9 +21,11 @@ export function QuoteRequestForm({ locale, code, slug, presets, signedIn }: { lo
 
   if (!signedIn)
     return (
-      <Link className={`${mk.pill} ${mk.pillLarge}`} href={`/${locale}/login?next=${encodeURIComponent(`/${locale}/catalog/${slug}#quote`)}`}>
-        {COPY.formSignIn[locale]}
-      </Link>
+      <div className={styles.ctaRow}>
+        <Link className={`${mk.pill} ${mk.pillLarge}`} href={`/${locale}/login?next=${encodeURIComponent(`/${locale}/catalog/${slug}#quote`)}`}>
+          {COPY.formSignIn[locale]}
+        </Link>
+      </div>
     );
 
   if (state === "sent")
@@ -59,7 +61,7 @@ export function QuoteRequestForm({ locale, code, slug, presets, signedIn }: { lo
         <label htmlFor={`${id}-q`}>{COPY.formQty[locale]}</label>
         <input id={`${id}-q`} inputMode="numeric" value={qty} onChange={(e) => setQty(e.target.value)} aria-invalid={state === "qty" || undefined} aria-describedby={state === "qty" ? `${id}-qe` : undefined} required />
         {state === "qty" ? (
-          <p id={`${id}-qe`} className={styles.error}>
+          <p id={`${id}-qe`} className={styles.error} role="alert">
             {COPY.formErrorQty[locale]}
           </p>
         ) : null}

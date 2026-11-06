@@ -80,3 +80,88 @@ PDPC licence and DPO appointment (grace period ended around 31 Oct 2026); VAT re
 - Report: `docs/audit/business.md` (this file).
 - Screenshots: `docs/screenshots/audit/business/*.png` (1x DPR).
 - No source files changed.
+
+---
+
+# Round 4
+
+**Key:** business · **Scope:** report only, no source changes · **Base:** `781d663` (rounds 1 to 3 merged) · **Date:** 2026-11-06
+
+**Method.** `npm ci`, `prisma db push` + seed on a fresh SQLite DB, `npm run build`, `next start` with `OTP_DEV_ECHO=1 ALLOW_MOCK_PAYMENTS=1`. Playwright (Chromium) at 1440×900 and 390×844, `en` and `ar`, as an anonymous visitor, the seeded buyer (`+201000000002`), a second buyer (`+201000000099`), vendor staff (`+201000000010`) and admin (`+201000000001`). I ran a paid sample order end to end with the mock card, sent a 5,000-unit price request, ran `npm run jobs:daily` at T+26 h, called `/api/events` and `/api/designs` directly, and ran the vendor contact filter (`src/components/vendor/lib/contact.ts`) against 22 bypass strings. Screenshots: `docs/screenshots/audit/business/r4/`. The one vendor bio change (contact bypass test) was reverted and confirmed gone from `/en/vendors/nile-pack`.
+
+## R4.1 New gaps (found this round, before any fix)
+
+| Rank | ID | Impact | Gap | Owner |
+|---|---|---|---|---|
+| 1 | R4-B-01 | critical | **Ordering from a share link turns a quote-only model into an instant order.** The share-link fork drops the model. | checkout (share fork), designer (share page) |
+| 2 | R4-B-02 | high | **The vendor contact filter is easy to bypass.** Bio text goes live with no review. | vendor, admin |
+| 3 | R4-B-03 | high | **A price request above 2,000 units cannot become an order.** Admin can only mark a lead contacted or closed. | admin, checkout |
+| 4 | R4-B-04 | medium | **Anyone can inflate "Visitors".** Rotating the `elba_anon` cookie skips the `/api/events` rate limit. | platform |
+| 5 | R4-B-05 | medium | **The sample offer card says "excl. VAT" under a VAT-inclusive total.** | checkout |
+| 6 | R4-B-06 | medium | **The checkout for a quote-only model is confused.** It gives the wrong reason, shows a dead "Order 2,000 boxes now" button, and the sample tile errors. | checkout |
+| 7 | R4-B-07 | medium | **The invoice says it "is submitted to the ETA"** when there is no adapter and no seller tax number. | checkout, platform (founder: TRN) |
+| 8 | R4-B-08 | medium | **The WhatsApp follow-up has holes.** Untitled designs read «», there is no reply-STOP opt-out, and designs with an open price request still get "order here". | platform |
+| 9 | R4-B-09 | low | The quantity error says "between 1 and 2000" while 2,001+ is accepted (as a request); 999,999,999 is ignored silently. | checkout |
+| 10 | R4-B-10 | low | The designer says "Made and priced as Straight tuck end carton" on a model that is priced by quote. | catalogue, designer |
+| 11 | R4-B-11 | low | Sample margin on the dashboard uses a hard-coded 60% vendor share, not a real buy price. | admin, checkout |
+| 12 | R4-B-12 | low | The admin funnel step "Designer opened" counts `design_started` (the visitor changed something), not opens. | admin |
+| 13 | R4-B-13 | low | Checkout tier tiles show the per-box price after the 3% prepay discount without saying so (EGP 28.76 vs 29.61 on the public page and badge). | checkout |
+
+**Counts of new gaps:** critical 1 · high 2 · medium 5 · low 5.
+
+## R4.2 New gaps: detail
+
+| ID | Impact | Evidence | Finding | Standard / plan | What I'd ship | Status |
+|---|---|---|---|---|---|---|
+| R4-B-01 | critical | `b16-share-page-aseptic.png`, `b16-share-fork-checkout.png`; DB: design `cmw4nznk…` has `modelCode: LIQUID_ASEPTIC_BRICK`, and its fork `cmw4nzu5b…` has `modelCode: null, config: null, structureCode: ECMA_STE` | The buyer saved an aseptic brick (checkout correctly shows "Not available" on every tier and asks for a price request), then shared it. A second account opened the share link and pressed "Order this box". `checkout/[designId]/page.tsx:52-74` copies `structureCode, dims, material, finish, printSides, artwork`, but **not `modelCode` or `config`**. The copy is a plain straight tuck end carton with instant prices (100 → EGP 41.06, 500 → EGP 12, 2,000 → EGP 4.89) and a payable printer offer. The share page itself already titles it "Straight tuck end carton". The same loss affects every library model: a shared crash-lock, auto-bottom or vessel design is ordered as its base box, with its features and finishes dropped, so the buyer pays for a product that differs from the proof they saw. This is a direct bypass of B-16 and a wrong-product risk on prepaid orders. | Plan §4.2 scope; B-16; Consumer Protection Law 181/2018 (goods must match what was sold) | Copy `modelCode` and `config` in the fork (and in the duplicate check), then re-run `designDocSchema` on the copy. Render the model name on `/s/[id]`. Add an e2e test: share a preview model, fork it, expect a price request and no offers. | open |
+| R4-B-02 | high | `b08-vendor-bio-bypass-saved.png`, `b08-public-profile-bypass.png`; filter run on 22 strings | Saved through `/en/vendor/profile` and **live on `/en/vendors/nile-pack` at once**: "Sales: 010 1234 / 5678. Follow us on انستقرام nilepack. Or nilepack[.]com". Other strings `findContactDetails()` returns as clean: `010    1234    5678` (4+ spaces), `０１００１２３４５６７` (full-width digits), `𝟎1𝟎𝟎1234567`, `O1OO1234567` (letter O), `What​sApp` (zero-width space), `nilepack . com`, `sales＠nilepack．com`. "انستقرام" (with ق) is the common Egyptian spelling and is not in the list; only "انستجرام / انستغرام" are. Photos go through moderation, but bio text does not: it publishes on save. | Plan §0, §9 risk 1 (disintermediation) | (1) Normalise first: NFKC, strip zero-width and bidi controls, map O/o→0 and l/I→1 next to digits, then match. (2) Count digits across any non-letter separators in a 40-character window (≥ 8 digits = phone). (3) Domain pattern: `[.]`, `(.)`, ` . `, `dot`. (4) Add انستقرام, انستا, ig, insta, واتس, و ت س ا ب. (5) Send bio changes to the existing `/admin/moderation` queue, as photos already are. | open (B-08 reopened) |
+| R4-B-03 | high | `b15-request-sent.png`, `b15-admin-quotes.png` | Request side works: "Request a price for 5,000 boxes" with "Needed by" and notes; the confirmation names the phone; the lead shows in `/admin/quotes` with spec, buyer, quantity, governorate, a 24 h SLA and "Mark contacted / Close". But **nothing issues a price**: there is no admin action to attach a priced offer (printer, unit price, lead time, validity) and no buyer link into checkout. The checkout caps instant orders at 2,000, so the highest-value buyers cannot pay through Elba. Ops would have to take payment off-platform, which breaks the prepaid, merchant-of-record model. | Plan §4.1 step 4 ("sends a fixed price"), §7.3 prepaid | An admin "Send price" form on a lead (printer, unit price ex-VAT, setup, delivery, lead days; validity from the admin setting). It creates a `Quote` tied to the design and quantity and sends the buyer a link to `/checkout/[designId]?quote=<id>`, which skips the 2,000 cap for that quote only. Track `quote_sent` and `quote_paid`, and time-to-quote. | open |
+| R4-B-04 | medium | 90 of 90 `POST /api/events {"name":"visit"}` with a fresh random `elba_anon` cookie → 204; `b19-admin-overview.png`: Visitors 154, visitor to paid 0.6% | The rate limit is keyed by the anon cookie value when it is present (`events/route.ts:44`), and the cookie is unsigned. Any script can add unlimited "unique visitors", which pushes visitor-to-paid (a plan decision gate, target 2 to 4%) to any value. The same applies to `artwork_uploaded`, `design_completed`, `gate_shown` and `export_png`. | Plan §6.3, §10 milestone gates | Sign the anon cookie (HMAC, like the session cookie) and ignore unsigned values. Rate-limit per IP as well as per anon ID. Only count `visit` from an anon ID that also loaded a page (server-side `visit` in middleware for HTML requests). | open |
+| R4-B-05 | medium | `b05-1-sample-offers.png`; `CheckoutClient.tsx:1001-1007`; `checkout.en.ts:469`, `checkout.ar.ts:471` | Each sample printer card shows **EGP 1,016.88 "Sample + delivery, excl. VAT"**. That figure is `pay.totalPiasters`: EGP 750 + 142 delivery + 124.88 VAT. Ex-VAT is EGP 892. The summary beside it is correct, so the page contradicts itself on tax. | Egyptian VAT Law 67/2016 (show VAT separately and correctly); Consumer Protection Law 181/2018 art. 4 (price display) | Change the label to "Sample + delivery, incl. VAT" / "العينة والتوصيل، شامل الضريبة", or show `subtotalPiasters` under the existing label. | open |
+| R4-B-06 | medium | `b16-owner-checkout-aseptic.png`, `b05-sample-on-quote-only-model.png`, `b16-ar-390-quote-only-checkout.png` | On a quote-only model (aseptic brick): (a) at the default 100 boxes the request card explains "Instant prices go up to 2,000 boxes. For larger runs…"; only after pressing "Order 2,000 boxes now" does it show the real reason (filling-line contracts of 200,000+); (b) "Order 2,000 boxes now" / "طلب 2,000 علبة الآن" is offered although no quantity can be ordered; (c) the summary says "Large orders are priced by our team" for a 100-box request; (d) the "Sample · 5 boxes, EGP 750" tile is shown, and choosing it gives "We could not load prices. Try again". | Plan §1.3 (a clear next step at peak intent); WCAG 3.3.1 (the error does not say what is wrong) | Branch on `reason === "MODEL_BY_QUOTE"`: show `ORDER_MODE_COPY[orderReason]` at every quantity; hide "Order 2,000 now" and the sample tile; change the summary to "This model is priced by quote". | open |
+| R4-B-07 | medium | `b05-6-invoice.png` (INV-26002) | The document is titled "Tax invoice". The seller tax registration number and commercial register read "To be assigned", the status reads "Pending submission", and the footer says "This invoice is submitted to the ETA e-invoicing system; the UUID appears once validated". There is no ETA adapter (B-13), so nothing is ever submitted. The buyer half of B-13 works (company name and TRN entered in Arabic-Indic digits, stored and printed as 123-456-789). | Egyptian e-invoicing mandate (ETA), VAT Law 67/2016 | Until the adapter and TRN exist, call it "Order receipt (not a tax invoice)", set the status to "Not submitted", and remove the "is submitted" sentence. Block a live deployment while `ELBA_TAX_ID` is unset. | open |
+| R4-B-08 | medium | `npm run jobs:daily -- 2026-11-07T10:00Z`: considered 4, sent 1 (design `cmw4o356q…`, `name: ""`), skipped no_consent 1 and user_cooldown 2; `checkout.en.ts:450`; `followUp.ts:136-143` | It works as specified: MARKETING consent required, one message per design, one per user per 7 days. Gaps: (a) most designs are untitled, so the message reads 'your design “” is saved'; (b) opt-out means signing in to the account page. A WhatsApp marketing message should honour a "STOP" reply, and the platform report notes there is no handler; (c) a design with an open price request (B-15) or a share-fork order has no order, so the buyer is nudged to "order printing here" while the team is pricing it. | PDPL 151/2020 (withdrawal as easy as consent); WhatsApp Business messaging policy (opt-out) | Fall back to the model name ("your mailer box design"); add "Reply STOP to stop" and a webhook that records a MARKETING withdrawal; exclude designs with an open `QuoteRequest`. | open |
+| R4-B-09 | low | `b15.cjs` run | Typing 2000.5 or −5 gives "Enter a whole number between 1 and 2000.", yet 2,001 is accepted and turns into a price request. 999,999,999 does nothing and shows no message. | WCAG 3.3.1 / 3.3.3 | "Enter a whole number. Above 2,000 we price by hand." Cap at 1,000,000 with a message. | open |
+| R4-B-10 | low | `b16-designer-LIQUID_ASEPTIC_BRICK.png` | The top bar says "Request a quote · Priced by quote: see why", while the panel says "Made and priced as Straight tuck end carton". | Plan §4.2 | For quote and preview modes, say "Made as …; priced by quote". | open |
+| R4-B-11 | low | `sample.ts:22` `SAMPLE_VENDOR_SHARE = 0.6`; dashboard margin 24.4% | The sample vendor cost is an assumed 60% of the sample price, not a rate-card price, and it feeds GMV margin. §6.3 asks for real sample cost per order sourced. | Plan §6.1, §6.3 | A per-vendor sample price on the rate card, or an admin setting, shown as an assumption on the dashboard. | open |
+| R4-B-12 | low | `b19-admin-overview.png`: "Designer opened 1" vs free-tool "Designs started 10"; `admin/lib/events.ts:7` | The step label does not match the event (`design_started` = "changes anything", launch-metrics §1). | launch-metrics.md §1 | Rename it to "Design started". | open |
+| R4-B-13 | low | `b26-public-shipping-box.png`, `b26-badge-shipping-box.png`, `b26-checkout-shipping-box.png` | Public page and badge: 500 at EGP 29.61 (setup and delivery included). Checkout tile: EGP 28.76, which is the same price after the 3% prepay discount. The summary explains it, but the tile does not. | Plan §1.3 (one price in the tool) | Tile sub-line: "after 3% prepay discount". | open |
+
+## R4.3 Re-verification of round 2 / 3 rows
+
+| ID | Round 4 status | Evidence (round 4) | Note |
+|---|---|---|---|
+| B-01 | done | Anonymous Export opens "Create your free account · Download your mockup with a free account" | |
+| B-02 | fixed | Badge: "500 boxes from EGP 40.06 each excl. VAT · delivered in 10 days" | |
+| B-03 | fixed | `b03-export-modal.png`: "Order this box" in the export modal | |
+| B-04 | fixed | `b05-3-proof.png`: "Print check" on the proof step, with "Fix in the designer" | An empty design is only a note, so a blank box can be approved. That is acceptable for plain boxes. |
+| B-05 | **fixed** | `b05-1` to `b05-7`: sample of 5 at EGP 750 + EGP 142 delivery + VAT, paid by mock card (ELB-26302), then "Sample credit −EGP 750" on the next 500-box order of the same design | See R4-B-05 (VAT label), R4-B-06 (d) and R4-B-11. |
+| B-06 | done | Admin: "Share link visits 1 · Links created 1" | Share visits are now counted. |
+| B-07 | done (not re-tested) | Export modal: "The print-ready dieline PDF is prepared by our team when you order" | |
+| B-08 | **reopened** | R4-B-02 | The straight case from round 2 ("WhatsApp us direct: 01001234567") is now blocked; simple variants are not. |
+| B-09 | not re-tested | | |
+| B-10 | done | | |
+| B-11 | fixed | "Paying in full now takes 3% off the boxes"; summary line "Prepayment discount −EGP 426.45" | |
+| B-12 | done | VAT 14% shown separately in summary and invoice | |
+| B-13 | partial | `b05-6-invoice.png`: buyer "Mona Foods LLC · Customer tax number: 123-456-789" (typed in Arabic-Indic digits) | Buyer half done. ETA adapter, seller TRN and EGS codes are still missing; see R4-B-07. |
+| B-14 | fixed | Admin validity field `max(72)`; checkout "Price valid until Nov 9, 2026, 9:49 AM" (72 h) | |
+| B-15 | **partial** | `b15-request-sent.png`, `b15-admin-quotes.png` | Capture and inbox done; there is no way to price a lead and convert it (R4-B-03). |
+| B-16 | **reopened** | Designer "Request a quote"; owner checkout "Not available" on all tiers; `/api/quote` with the model → `manual_quote` | The direct path is closed. The share-link fork bypasses it (R4-B-01). |
+| B-17 | fixed | Gate: "You choose whether to get offers on the next step." | |
+| B-18 | not re-tested | | |
+| B-19 | fixed, integrity gap | `b19-admin-overview.png`: event funnel (Visitors to Paid), share loop, repeat-buyer and vendor-acceptance tiles, quote-request to-do | Visitors are spoofable (R4-B-04); label (R4-B-12). |
+| B-20 / B-21 | spot-checked | Designer panel shows "Imported" for the aseptic brick | Catalogue surfaces were not re-walked this round (owned and verified by the catalogue round 3). |
+| B-22 | fixed (copy) | Export modal: "Standard PNG … Carries a small Elba mark. HD PNG … No mark." | Download stays disabled in headless Chromium until the canvas is ready, so the pixel mark was not checked here. |
+| B-23 | fixed (mocked sender), gaps | Daily job report above | See R4-B-08. |
+| B-24 | Phase 3 | "Designer referrals: not tracked until the designer programme starts" | |
+| B-26 | **fixed** | Shipping box 500: public EGP 29.61 / 5 days = badge EGP 29.61 / 5 days; mailer 500: public 40.06 / 10 days = badge 40.06 / 10 days; checkout pre-selects the same best-match printer | See R4-B-13 for the tile wording. |
+
+## R4.4 Founder actions (unchanged, outside the product)
+
+PDPC licence and DPO (grace period ended around 31 Oct 2026); seller VAT/TRN (`ELBA_TAX_ID`) and an ETA accredited provider; WhatsApp Business account with a STOP handler; Paymob marketplace letter; vendor non-solicit clause.
+
+## R4.5 Files
+
+- Report: this section of `docs/audit/business.md`.
+- Screenshots: `docs/screenshots/audit/business/r4/*.png` (25 files, 4.6 MB, 1x DPR).
+- No source files changed. Test data created in the local dev DB only (designs, sample order ELB-26302, a follow-up order, one price request); the vendor bio was restored.

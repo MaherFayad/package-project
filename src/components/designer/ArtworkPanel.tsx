@@ -168,7 +168,7 @@ function LayerInspector({ layer, onLayer, onSeal, onPlace, onReorder, onDuplicat
         ) : null}
 
         <BlockStack gap="200">
-          <Text as="h4" variant="headingXs">
+          <Text as="h3" variant="headingXs">
             {t("designer.layer.move")}
           </Text>
           <div className={styles.nudgePad} dir="ltr">
@@ -195,7 +195,7 @@ function LayerInspector({ layer, onLayer, onSeal, onPlace, onReorder, onDuplicat
         </BlockStack>
 
         <BlockStack gap="200">
-          <Text as="h4" variant="headingXs">
+          <Text as="h3" variant="headingXs">
             {t("designer.layer.placement")}
           </Text>
           <div className={styles.presetRow} role="group" aria-label={t("designer.layer.placement")}>
@@ -208,7 +208,7 @@ function LayerInspector({ layer, onLayer, onSeal, onPlace, onReorder, onDuplicat
         </BlockStack>
 
         <BlockStack gap="200">
-          <Text as="h4" variant="headingXs">
+          <Text as="h3" variant="headingXs">
             {t("designer.layer.position")}
           </Text>
           <InlineGrid columns={2} gap="200">

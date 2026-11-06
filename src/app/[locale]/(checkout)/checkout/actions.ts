@@ -195,7 +195,8 @@ export async function cancelOrderAction(orderId: string): Promise<{ ok: true } |
 
 const quoteRequestSchema = z.object({
   designId: idSchema,
-  quantity: z.number().int().min(MAX_INSTANT_QTY + 1).max(1_000_000),
+  // Above the instant cap, or any quantity for a model priced by quote (B-16), checked below.
+  quantity: z.number().int().min(1).max(1_000_000),
   // Stored as the governorate code (CAIRO, GIZA…); the client sends the address name or a code.
   governorate: z
     .string()
@@ -223,6 +224,11 @@ export async function requestQuoteAction(input: unknown): Promise<{ ok: true; qu
   const design = await loadCheckoutDesign(p.data.designId, s.user);
   if (!design) return { ok: false, error: "NOT_FOUND" };
   const { designId, quantity } = p.data;
+  if (quantity <= MAX_INSTANT_QTY) {
+    // Below the cap only models no printer prices instantly are requested by hand (B-16).
+    const outcome = await quoteDesign(design.doc, { quantity, governorate: p.data.governorate }).catch(() => null);
+    if (!(outcome?.mode === "manual_quote" && outcome.reason === "MODEL_BY_QUOTE")) return { ok: false, error: "INVALID", fields: ["quantity"] };
+  }
   const now = new Date();
   try {
     const open = await db.quote.findMany({

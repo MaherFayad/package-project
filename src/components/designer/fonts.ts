@@ -16,6 +16,11 @@ let measureCtx: CanvasRenderingContext2D | null | undefined;
 /**
  * Size (mm) of a text layer's rendered text, matching drawLayer (line height 1.25 em), so the
  * layer box — used for selection, placement and preflight — is exactly the printed text.
+ *
+ * Event handlers only (add text, edit text): never call this, or fitTextBox, while rendering. It
+ * estimates on the server but measures with canvas in the browser, and the result changes once the
+ * webfont loads, so a render that used it would not hydrate (R4-09). The stored layer width and
+ * height are what every render path reads.
  */
 export function measureText(l: Pick<TextLayer, "text" | "fontFamily" | "fontSizePt" | "fontWeight">): { width: number; height: number } {
   const sizeMm = l.fontSizePt * PT_TO_MM;

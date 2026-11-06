@@ -48,6 +48,12 @@ export function QuoteLeadsIndex({ rows, now }: { rows: AdminQuoteLead[]; now: st
     const s = t(key as DictKey);
     return s === key ? g : s;
   };
+  /** R4-09: a retired or unknown board code shows as written, never as a raw "materials.X" key. */
+  const materialLabel = (code: string) => {
+    const key = `materials.${code}`;
+    const s = t(key as DictKey);
+    return s === key ? code : s;
+  };
   const units = rows.filter((r) => r.state !== "CLOSED").reduce((s, r) => s + r.quantity, 0);
 
   const sla = (r: AdminQuoteLead) => {
@@ -132,7 +138,7 @@ export function QuoteLeadsIndex({ rows, now }: { rows: AdminQuoteLead[]; now: st
                       <bdi>{r.modelName ?? t("admin.common.none")}</bdi>
                     </Text>
                     <Text as="span" variant="bodySm" tone="subdued">
-                      {[r.standard ? <bdi key="s" dir="ltr">{r.standard}</bdi> : null, r.dims ? <bdi key="d" dir="ltr">{formatDims(r.dims, locale)}</bdi> : null, r.materialCode ? t(`materials.${r.materialCode}` as DictKey) : null]
+                      {[r.standard ? <bdi key="s" dir="ltr">{r.standard}</bdi> : null, r.dims ? <bdi key="d" dir="ltr">{formatDims(r.dims, locale)}</bdi> : null, r.materialCode ? materialLabel(r.materialCode) : null]
                         .filter(Boolean)
                         .flatMap((x, i) => (i ? [" · ", x] : [x]))}
                     </Text>
@@ -146,13 +152,23 @@ export function QuoteLeadsIndex({ rows, now }: { rows: AdminQuoteLead[]; now: st
                         </span>
                       </Text>
                     ) : null}
+                    {/* R4-05: on phones the table scrolls sideways, so the buyer's call link and the
+                        next step live here too (the desktop copies are hidden on phones). */}
                     <div className={adminStyles.PhoneOnly}>
-                      <InlineStack gap="200" blockAlign="center">
-                        {stateBadge(r)}
-                        <Text as="span" variant="bodySm" numeric>
-                          {t("admin.quotes.units", { count: formatNumber(r.quantity) })}
-                        </Text>
-                      </InlineStack>
+                      <BlockStack gap="200">
+                        <InlineStack gap="200" blockAlign="center">
+                          {stateBadge(r)}
+                          <Text as="span" variant="bodySm" numeric>
+                            {t("admin.quotes.units", { count: formatNumber(r.quantity) })}
+                          </Text>
+                        </InlineStack>
+                        {r.buyerPhone ? (
+                          <Link url={`tel:${r.buyerPhone}`} className={adminStyles.TapLink}>
+                            <bdi>{r.buyerName ?? t("admin.users.noName")}</bdi> · <bdi dir="ltr">{r.buyerPhone}</bdi>
+                          </Link>
+                        ) : null}
+                        {r.state !== "CLOSED" ? <LeadActions lead={r} align="start" /> : null}
+                      </BlockStack>
                     </div>
                   </BlockStack>
                 </IndexTableCell>
@@ -166,9 +182,11 @@ export function QuoteLeadsIndex({ rows, now }: { rows: AdminQuoteLead[]; now: st
                       <bdi>{r.buyerName ?? t("admin.users.noName")}</bdi>
                     )}
                     {r.buyerPhone ? (
-                      <Link url={`tel:${r.buyerPhone}`} className={adminStyles.TapLink}>
-                        <bdi dir="ltr">{r.buyerPhone}</bdi>
-                      </Link>
+                      <span className={adminStyles.DesktopOnly}>
+                        <Link url={`tel:${r.buyerPhone}`} className={adminStyles.TapLink}>
+                          <bdi dir="ltr">{r.buyerPhone}</bdi>
+                        </Link>
+                      </span>
                     ) : null}
                   </BlockStack>
                 </IndexTableCell>
@@ -196,7 +214,9 @@ export function QuoteLeadsIndex({ rows, now }: { rows: AdminQuoteLead[]; now: st
                   </BlockStack>
                 </IndexTableCell>
                 <IndexTableCell alignment="end">
-                  {r.state !== "CLOSED" ? <LeadActions lead={r} /> : <Text as="span" tone="subdued">{t("admin.common.none")}</Text>}
+                  <span className={adminStyles.DesktopOnly}>
+                    {r.state !== "CLOSED" ? <LeadActions lead={r} /> : <Text as="span" tone="subdued">{t("admin.common.none")}</Text>}
+                  </span>
                 </IndexTableCell>
               </IndexTableRow>
             ))}
@@ -207,7 +227,7 @@ export function QuoteLeadsIndex({ rows, now }: { rows: AdminQuoteLead[]; now: st
   );
 }
 
-function LeadActions({ lead }: { lead: AdminQuoteLead }) {
+function LeadActions({ lead, align = "end" }: { lead: AdminQuoteLead; align?: "start" | "end" }) {
   const { t } = useI18n();
   const { run, busy } = useAdminAction();
   const errorText = useAdminErrorText();
@@ -217,7 +237,7 @@ function LeadActions({ lead }: { lead: AdminQuoteLead }) {
   const who = lead.buyerName ?? lead.buyerPhone ?? "";
   return (
     <span onClick={(e) => e.stopPropagation()} style={{ display: "contents" }}>
-      <InlineStack gap="200" align="end" wrap={false}>
+      <InlineStack gap="200" align={align} wrap={false}>
         {lead.state === "OPEN" ? (
           <Button size="slim" variant="primary" onClick={() => setStep("CONTACTED")} accessibilityLabel={`${t("admin.quotes.contacted")}: ${who}`}>
             {t("admin.quotes.contacted")}

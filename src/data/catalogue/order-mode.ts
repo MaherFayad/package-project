@@ -13,7 +13,7 @@ import { EGYPT_TABLE, ORDER_MODE_TABLE } from "./order-mode-table";
  * - "quote": a stock no seeded printer prices (cupstock, moulded fibre, kraft paper, envelopes,
  *   bulk triple wall, blister foil).
  * - "preview": not made by Egyptian SME converters (availability "rare", or liquid cartons that
- *   ship on filling-line contracts at 200,000+ packs). Design and preview free, request a quote.
+ *   ship on filling-line contracts at 100,000+ (docs/packaging-availability.md #2) packs). Design and preview free, request a quote.
  */
 export type OrderMode = "instant" | "listed" | "quote" | "preview";
 
@@ -30,12 +30,23 @@ const SPECIAL_GLUING_CODES = new Set([
   "BOTTLE_BASKET_4",
   "BOTTLE_BASKET_6",
 ]);
-const FILLING_LINE = new Set(["folding-carton/aseptic-liquid", "folding-carton/gable-top-liquid"]);
+// docs/packaging-availability.md "What I'd ship" #2: aseptic and gable-top liquid cartons and
+// blister films are sold with filling-line contracts at 100,000+ units: preview only (R4-11).
+// (Printed 2-piece cans are vessels priced as their label, #3, so they stay instant.)
+const FILLING_LINE = new Set(["folding-carton/aseptic-liquid", "folding-carton/gable-top-liquid", "cosmetic-pharma/blister"]);
+/**
+ * Formats the availability table gives no price basis for at the wedge's 100 to 2,000 units
+ * (price "n/a"): roll stock for the buyer's own form-fill-seal line (minimum 300 to 1,000 kg of
+ * film), imported bag-in-box bladders and noodle pails, dry-offset aluminium tubes (10,000+). A
+ * base-structure rate card must not price them instantly (R4-12).
+ */
+const NO_PRICE_BASIS = new Set(["flexible/flow-wrap", "flexible/pillow-bag", "flexible/stick-pack", "flexible/bag-in-box", "food-service/noodle-box", "cosmetic-pharma/aluminium-tube"]);
 
 export function orderModeForEntry(e: Pick<CatalogueEntry, "code" | "source" | "style" | "subFamily" | "availableInEgypt" | "quoteOnly">): { mode: OrderMode; reason: OrderModeReason } {
-  if (e.quoteOnly) return { mode: "quote", reason: "QUOTE_ONLY_STOCK" };
+  // Not made by Egyptian SME converters at all: preview, even for quote-only stock (octabin, R4-13).
   if (FILLING_LINE.has(e.subFamily)) return { mode: "preview", reason: "FILLING_LINE" };
   if (e.availableInEgypt === "rare") return { mode: "preview", reason: "RARE_IN_EGYPT" };
+  if (e.quoteOnly || NO_PRICE_BASIS.has(e.subFamily)) return { mode: "quote", reason: "QUOTE_ONLY_STOCK" };
   // Core structures (ECMA_CLB …) are listed by printers through capabilities.structures already.
   if (e.source !== "core" && (SPECIAL_GLUING_CODES.has(e.code) || SPECIAL_GLUING.test(e.style))) return { mode: "listed", reason: "SPECIAL_GLUING" };
   return { mode: "instant", reason: "STANDARD" };
@@ -74,8 +85,8 @@ export const ORDER_MODE_COPY: Record<OrderModeReason, LocalizedText> = {
     en: "This format is rare in Egypt. Design and preview it free; we route your request to importers and regional converters.",
   },
   FILLING_LINE: {
-    ar: "تصنع هذه العبوة على خطوط تعبئة بعقود من 200,000 عبوة فأكثر. صممها وعاينها مجانا واطلب عرض سعر.",
-    en: "This pack is made on filling lines under contracts of 200,000+ packs. Design and preview it free, then request a quote.",
+    ar: "تصنع هذه العبوة على خطوط تعبئة بعقود من 100,000 عبوة فأكثر. صممها وعاينها مجانا واطلب عرض سعر.",
+    en: "This pack is made on filling lines under contracts of 100,000+ packs. Design and preview it free, then request a quote.",
   },
 };
 

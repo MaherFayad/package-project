@@ -21,6 +21,10 @@ import { TextField } from "../TextField";
 import { ToastProvider, useToast } from "../Toast";
 import { Tooltip } from "../Tooltip";
 import { Button } from "../Button";
+import { CookieNotice } from "../CookieNotice";
+import { Stepper } from "../Stepper";
+import { I18nProvider } from "@/i18n/client";
+import { getDictionary } from "@/i18n";
 
 afterEach(() => {
   cleanup();
@@ -158,5 +162,73 @@ describe("UI kit accessibility contracts", () => {
     expect(screen.getByRole("tooltip").className).toContain("visually-hidden");
     expect(onClose).not.toHaveBeenCalled();
     expect(screen.getByRole("dialog")).toBeTruthy();
+  });
+  // ── Round 4 ──────────────────────────────────────────────────────────────
+  it("the order stepper is a named group, not a navigation landmark without links (1.3.1)", () => {
+    wrap(<Stepper accessibilityLabel="Progress" current={1} steps={[{ id: "a", label: "Placed" }, { id: "b", label: "Printing" }]} />);
+    expect(screen.getByRole("group", { name: "Progress" })).toBeTruthy();
+    expect(screen.queryByRole("navigation")).toBeNull();
+  });
+
+  it("dismissing a toast from the keyboard returns focus to where it came from (2.4.3)", () => {
+    function Fire() {
+      const toast = useToast();
+      return <button onClick={() => toast.show("Draft deleted", { action: { content: "Undo", onAction: () => {} } })}>fire</button>;
+    }
+    render(
+      <AppProvider locale="en">
+        <ToastProvider>
+          <Fire />
+        </ToastProvider>
+      </AppProvider>,
+    );
+    const opener = screen.getByText("fire");
+    fireEvent.click(opener);
+    opener.focus();
+    const dismiss = screen.getByRole("button", { name: "Dismiss" });
+    dismiss.focus();
+    fireEvent.click(dismiss);
+    expect(document.activeElement).toBe(opener);
+  });
+
+  it("the cookie banner landmark is not named like the cookie policy page (1.3.1 landmark-unique)", () => {
+    for (const locale of ["en", "ar"] as const) {
+      const dict = getDictionary(locale);
+      const { unmount } = render(
+        <I18nProvider locale={locale} dict={dict}>
+          <h1>{(dict as unknown as { store: { cookie: { label: string } } }).store.cookie.label}</h1>
+          <CookieNotice />
+        </I18nProvider>,
+      );
+      const region = screen.getByRole("region");
+      expect(region.getAttribute("aria-label")).not.toBe(screen.getByRole("heading", { level: 1 }).textContent);
+      unmount();
+    }
+  });
+
+  it("a control focused under the cookie banner is scrolled clear of it (2.4.11)", () => {
+    const dict = getDictionary("en");
+    render(
+      <I18nProvider locale="en" dict={dict}>
+        <input aria-label="Other quantity" />
+        <CookieNotice />
+      </I18nProvider>,
+    );
+    const banner = screen.getByRole("region");
+    const field = screen.getByLabelText("Other quantity");
+    const rect = (top: number, bottom: number) => ({ top, bottom, left: 0, right: 390, width: 390, height: bottom - top, x: 0, y: top, toJSON: () => ({}) }) as DOMRect;
+    banner.getBoundingClientRect = () => rect(655, 750);
+    field.getBoundingClientRect = () => rect(656, 688);
+    const scrollBy = vi.fn();
+    window.scrollBy = scrollBy as unknown as typeof window.scrollBy;
+    field.focus();
+    expect(scrollBy).toHaveBeenCalledWith(expect.objectContaining({ top: 688 - 655 + 16 }));
+    // A pointer press never scrolls mid-click (it would move the target away from the pointer).
+    field.blur();
+    scrollBy.mockClear();
+    fireEvent.pointerDown(field);
+    field.focus();
+    fireEvent.pointerUp(field);
+    expect(scrollBy).not.toHaveBeenCalled();
   });
 });

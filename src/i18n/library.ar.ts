@@ -18,6 +18,8 @@ export const libraryAr: typeof libraryEn = {
   panel: {
     model: "النموذج",
     base: "يصنع ويسعر على أنه {base}",
+    baseByQuote: "يصنع على أنه {base}، ويسعر بعرض سعر",
+    byQuote: "يسعر بعرض سعر",
     size: "المقاس",
     presets: "مقاسات شائعة",
     diameter: "القطر",
@@ -37,7 +39,7 @@ export const libraryAr: typeof libraryEn = {
     surfaces: "مناطق الطباعة",
     surfaceSize: "{w} × {h} مم",
     finishes: "التشطيبات",
-    finishesHelp: "تبدأ البصمة واليو في والطباعة البارزة على الشعار. اختر عنصرا لإضافته أو إزالته.",
+    finishesHelp: "تبدأ البصمة وطلاء UV الموضعي والطباعة البارزة على الشعار. اختر عنصرا لإضافته أو إزالته.",
     finishOnLogo: "على الشعار",
     finishOnImages: "على الصور: {count}",
     finishOnItems: "على العناصر: {count}",
@@ -65,7 +67,7 @@ export const libraryAr: typeof libraryEn = {
     sceneReference: "بجانب علبة مشروبات",
     turntable: "دوران تلقائي",
     openClosure: "فتح",
-    closeClosure: "إغلاق",
+    closeClosure: "غلق",
     removedFinishes: "حذفنا التشطيبات التي لا تناسب هذه الخامة: {list}",
   },
   colors: {
@@ -81,6 +83,8 @@ export const libraryAr: typeof libraryEn = {
   catalog: {
     heading: "كل النماذج التي نطبعها",
     subtitle: "{count:model} من العلب والكراتين والصواني والأنابيب والملصقات والأكياس، وكل نموذج يفتح في المصمم ثلاثي الأبعاد المجاني.",
+    more: "{count} نوعا آخر (أكواب وأكياس ورقية وعبوات لب الورق وفواصل داخلية) في الكتالوج بعرض سعر.",
+    moreLink: "فتح الكتالوج",
     design: "تصميم هذا النموذج",
     groupCount: "النماذج: {count}",
   },
