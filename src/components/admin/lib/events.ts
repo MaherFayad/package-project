@@ -38,21 +38,27 @@ export function conversionBand(p: number | null): "none" | "below" | "in" | "abo
 }
 
 export interface FunnelEventRow {
+  id?: string;
   name: string;
   userId: string | null;
   anonId: string | null;
 }
 
 /**
- * R5-JR-13: visitor-cohort funnel. The old count de-duplicated each step on its own key (a visit
- * by anon id, later steps often by user id once signed in), so one person could be two actors and
- * a step could exceed the one before ("Visitor to paid 100%", "Designer opened 200% of visitors").
+ * R5-JR-13 (rule revised in admin round 8 after a hand count on real events). The old count
+ * de-duplicated each step on its own key, so one person could be two actors and a step could
+ * exceed the one before ("Visitor to paid 100%", "Designer opened 200% of visitors").
  *
- * Now: (1) anon ids and user ids are joined into one person whenever any event row carries both
- * (sign-in on the same browser); (2) only people with a `visit` in the window are counted; (3) a
- * person counts at a step when they reached that step or any later one ("reached at least"), so a
- * signed-in buyer who never saw the sign-in gate still passes it. Every step is at most the one
- * before, and visitor → paid can never exceed 100%.
+ * Facts from the event table: a `visit` usually carries neither id (the anon cookie only exists
+ * once an anonymous design is saved, and repeat visits from one browser within 30 minutes are
+ * dropped server-side), so a visit can rarely be joined to the same person's later steps.
+ *
+ * Rule: (1) anon ids and user ids are one person whenever an event row carries both; (2) a person
+ * counts at a step when they reached it or any later one ("reached at least"), so everyone who
+ * designed or paid also counts as a visitor (nobody designs without visiting); (3) a visit with no
+ * id is one visitor of its own. Every step is at most the one before and visitor to paid stays
+ * at or under 100%. It can over-count visitors slightly (an id-less visit by someone who later
+ * signs in counts twice), never under-count.
  */
 export function cohortFunnel(rows: FunnelEventRow[], steps: readonly EventStep[] = EVENT_STEPS): Record<EventStep, number> {
   const parent = new Map<string, string>();
@@ -62,32 +68,31 @@ export function cohortFunnel(rows: FunnelEventRow[], steps: readonly EventStep[]
     parent.set(x, r);
     return r;
   };
-  const union = (a: string, b: string) => {
-    const ra = find(a);
-    const rb = find(b);
-    if (ra !== rb) parent.set(ra, rb);
-  };
   for (const r of rows) {
     if (r.userId) find(`u:${r.userId}`);
     if (r.anonId) find(`a:${r.anonId}`);
-    if (r.userId && r.anonId) union(`a:${r.anonId}`, `u:${r.userId}`);
+    if (r.userId && r.anonId) {
+      const ra = find(`a:${r.anonId}`);
+      const rb = find(`u:${r.userId}`);
+      if (ra !== rb) parent.set(ra, rb);
+    }
   }
-  const key = (r: FunnelEventRow) => (r.userId ? find(`u:${r.userId}`) : r.anonId ? find(`a:${r.anonId}`) : null);
-  // Furthest step each person reached.
   const index = new Map(steps.map((s, i) => [s as string, i]));
   const furthest = new Map<string, number>();
-  const visitors = new Set<string>();
-  for (const r of rows) {
-    const k = key(r);
+  let anonymousVisits = 0;
+  rows.forEach((r) => {
     const i = index.get(r.name);
-    if (!k || i === undefined) continue;
-    if (i === 0) visitors.add(k);
+    if (i === undefined) return;
+    const k = r.userId ? find(`u:${r.userId}`) : r.anonId ? find(`a:${r.anonId}`) : null;
+    if (!k) {
+      // An id-less later step cannot be tied to anyone: only visits count on their own.
+      if (i === 0) anonymousVisits++;
+      return;
+    }
     furthest.set(k, Math.max(furthest.get(k) ?? -1, i));
-  }
+  });
   const out = Object.fromEntries(steps.map((s) => [s, 0])) as Record<EventStep, number>;
-  for (const k of visitors) {
-    const f = furthest.get(k) ?? 0;
-    for (let i = 0; i <= f; i++) out[steps[i]!]++;
-  }
+  out[steps[0]!] += anonymousVisits;
+  for (const f of furthest.values()) for (let i = 0; i <= f; i++) out[steps[i]!]++;
   return out;
 }

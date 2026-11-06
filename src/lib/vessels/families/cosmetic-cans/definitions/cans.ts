@@ -26,7 +26,7 @@ export const CAN_DEFINITIONS: CatalogueVesselDefinition[] = [
     closures: ["CAN_END"],
     defaultClosure: "CAN_END",
     neck: N.END_202,
-    limits: { D: { min: 50, max: 70 }, H: { min: 80, max: 175 } },
+    limits: { D: { min: 53, max: 70 }, H: { min: 80, max: 175 } }, // R5-3Q-G: 200 end (Ø50.8) needs a Ø53 body
     presets: [
       preset("bev-150-slim", "150 ml slim", "150 مل رفيعة", 150, { D: 53.6, H: 88.5 }, "BIS 150 ml slim: Ø53.6 x 88.5 mm, brimful ~180 ml, 200 end", { neck: N.END_200, brimfulMl: 180 }),
       preset("bev-250-slim", "250 ml slim", "250 مل رفيعة", 250, { D: 53.4, H: 134 }, "Ardagh 250 ml slim: Ø53.4 x 134.0 mm, 200 end", { neck: N.END_200, egypt: true }),
@@ -255,7 +255,8 @@ export const CAN_DEFINITIONS: CatalogueVesselDefinition[] = [
     standard: "IS 2552 (BIS round paint tins, lever lid) as reference",
     coreKind: "CAN", // can-end core: no lid-label disc; the renderer draws EOE_RING / LEVER_LID
     geometry: "lathe",
-    shape: { type: "metalcan", section: "round", bottomSeam: true, beads: false, endDepthMm: 7 },
+    // R5-3Q-G: the description promises a wire handle from 1 litre (Ø108): bail folded down the back
+    shape: { type: "metalcan", section: "round", bottomSeam: true, beads: false, endDepthMm: 7, bailFromD: 100 },
     materials: ["TINPLATE"],
     defaultMaterial: "TINPLATE",
     closures: ["LEVER_LID"],

@@ -37,11 +37,11 @@ Page-local code: `src/components/marketing/start/copy.ts` (ar/en copy, tested in
 |---|---|
 | `npm run lint` | 0 errors (1 warning in ASSETS' `scripts/marketing/render-ui.mjs`, not this page) |
 | `npm run typecheck` | pass |
-| `npm test` | 108 files, 8757 tests pass (adds `start/__tests__/copy.test.ts`: key/placeholder parity, no Arabic diacritics, sample labelling, no social-proof words) |
+| `npm test` | 113 files, 8775 tests pass (adds `start/__tests__/copy.test.ts`: key/placeholder parity, no Arabic diacritics, sample labelling, no social-proof words) |
 | `npm run build` | pass; `/[locale]/start` SSG, revalidate 1 h |
 | `e2e/start.spec.ts` (desktop + mobile, ar + en) | 18/18: sections and h1, engine prices in the table, every fan card says Sample, every body link goes to `/design`, header pill goes to `/start`, empty phone submit opens the designer, bad number shows the error and a good one goes to login without the number in the URL, axe 0 (WCAG 2.2 AA tags), no horizontal scroll, reduced motion static (pinned card not sticky, no transform), no console or hydration errors |
 | `e2e/journey.spec.ts`, `e2e/storefront.spec.ts` | pass (35/35 with start.spec; journey goes home → /start → designer → … → admin) |
-| Perf, phone (390, 4x CPU, Slow 4G) | ar LCP 1.79 s, CLS 0.009; en LCP 1.64 s, CLS 0.000 |
+| Perf, phone (390, 4x CPU, Slow 4G) | ar LCP 1.87 s, CLS 0.009; en LCP 1.65 s, CLS 0.000 |
 | Perf, desktop | ar LCP 0.33 s, en 0.22 s, CLS 0.000 |
 | Sitemap | `/ar/start`, `/en/start` (priority 0.9) |
 
@@ -51,7 +51,8 @@ CLS note: the Arabic display face swaps in late on Slow 4G; the hero lines are f
 - `src/components/marketing/navModel.ts`: `startHref()` now returns `/${locale}/start`; new `newDesignHref()`.
 - `src/components/marketing/MarketingHeader.tsx` + `StartLink.tsx`: `signedInHref`, so signed-in "New design" still opens the designer.
 - Home `cta.primary` and `/boxes` "Start designing free" links → `/start`.
-- `e2e/journey.spec.ts` step 1 follows home → `/start` → designer.
+- `e2e/journey.spec.ts` and `e2e/journeys/j1-brand-orders.spec.ts` step 1 follow home → `/start` → designer.
+- `src/i18n/scopes.generated.ts` regenerated after the foundation/main merge (`--check` clean).
 - `src/app/sitemap.ts`, `docs/audit/tools/perf-pages.mjs` list `/start`.
 
 ## Open

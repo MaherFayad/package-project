@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { createRequire } from "node:module";
 import { contentSecurityPolicy as csp, securityHeaders as headersFor } from "./src/lib/security-headers";
 
 const isDev = process.env.NODE_ENV !== "production";
@@ -39,6 +40,16 @@ const nextConfig: NextConfig = {
     // connections) that was 3-4 round trips before the first paint. Inline, the CSS arrives
     // with the HTML and FCP/LCP no longer wait on it. Production only (dev keeps <link>s).
     inlineCss: true,
+  },
+  // R5-PL-11: replace Next's strict CSS chunking plugin with the vendored copy that never merges
+  // a module into a chunk used by routes that do not import it (scripts/next/css-chunking-plugin.cjs).
+  webpack(config) {
+    const i = config.plugins.findIndex((p: { constructor?: { name?: string } }) => p?.constructor?.name === "CssChunkingPlugin");
+    if (i >= 0 && (config.plugins[i] as { strict?: boolean }).strict) {
+      const { CssChunkingPlugin } = createRequire(`${process.cwd()}/`)("./scripts/next/css-chunking-plugin.cjs");
+      config.plugins[i] = new CssChunkingPlugin(true);
+    }
+    return config;
   },
   async headers() {
     return [

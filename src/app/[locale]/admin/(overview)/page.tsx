@@ -48,6 +48,8 @@ export default async function AdminOverviewPage({ params, searchParams }: { para
     </span>
   );
 
+  /** R9-AD: an amount inside a sentence never splits from its currency («14,324.79 / ج.م» at 320 px). */
+  const keep = (m: string) => m.replace(/ /g, "\u00a0");
   const money = (p: number | null) => (p === null ? t("admin.common.none") : <bdi>{formatMoney(p, locale, { alwaysDecimals: true })}</bdi>);
   const seriesRows = o.gmvSeries.map((p, i) => [formatDate(p.start, locale, "medium"), formatMoney(p.value, locale, { alwaysDecimals: true }), formatMoney(o.marginSeries[i]?.value ?? 0, locale, { alwaysDecimals: true })]);
 
@@ -98,8 +100,8 @@ export default async function AdminOverviewPage({ params, searchParams }: { para
           accessibilityLabel={t("admin.overview.metricsLabel")}
           metrics={[
             { label: label("admin.overview.metrics.gmv", "admin.overview.help.gmv"), value: cell(money(o.money.gmvPiasters), signed(o.gmvChangePct)) },
-            { label: label("admin.overview.metrics.margin", checkout.sample.vendorCostPiasters === null ? "admin.overview.help.marginSampleAssumed" : "admin.overview.help.margin"), value: cell(money(o.money.marginPiasters), t("admin.overview.marginOfNet", { pct: pct(o.money.marginPct), net: formatMoney(o.money.netPiasters, locale, { alwaysDecimals: true }) })) },
-            { label: t("admin.overview.metrics.orders"), value: cell(formatNumber(o.money.orders), t("admin.overview.aovShort", { amount: o.money.aovPiasters === null ? t("admin.common.none") : formatMoney(o.money.aovPiasters, locale, { alwaysDecimals: true }) })) },
+            { label: label("admin.overview.metrics.margin", checkout.sample.vendorCostPiasters === null ? "admin.overview.help.marginSampleAssumed" : "admin.overview.help.margin"), value: cell(money(o.money.marginPiasters), t("admin.overview.marginOfNet", { pct: pct(o.money.marginPct), net: keep(formatMoney(o.money.netPiasters, locale, { alwaysDecimals: true })) })) },
+            { label: t("admin.overview.metrics.orders"), value: cell(formatNumber(o.money.orders), t("admin.overview.aovShort", { amount: o.money.aovPiasters === null ? t("admin.common.none") : keep(formatMoney(o.money.aovPiasters, locale, { alwaysDecimals: true })) })) },
             { label: label("admin.overview.metrics.onTime", "admin.overview.help.onTime"), value: cell(pct(o.ops.onTimePct), t("admin.overview.ofDelivered", { count: formatNumber(o.ops.delivered) })) },
             { label: label("admin.overview.metrics.reprint", "admin.overview.help.reprint"), value: cell(pct(o.ops.reprintPct), t("admin.overview.reprintCount", { count: formatNumber(o.ops.reprints) })) },
             { label: label("admin.overview.metrics.disputes", "admin.overview.help.disputes"), value: cell(pct(o.ops.disputePct), t("admin.overview.openDisputes", { count: formatNumber(o.ops.openDisputes) })) },

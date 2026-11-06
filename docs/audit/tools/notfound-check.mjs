@@ -75,7 +75,7 @@ for (const c of CASES)
 await browser.close();
 if (process.env.OUT) fs.writeFileSync(process.env.OUT, JSON.stringify(rows, null, 1));
 // SOFT: routes under a loading.tsx stream, so the status is already 200 when notFound() runs (R5-PL-03).
-const SOFT = new Set(["locale-share", "locale-order", "admin-order", "admin-user", "admin-vendor", "admin-application", "admin-dispute"]);
+const SOFT = new Set(["admin-order", "admin-user", "admin-vendor", "admin-application", "admin-dispute"]);
 const bad = rows.filter((r) => (r.status !== 404 && !SOFT.has(r.key)) || !r.styled || r.errors.length || r.overflow || r.mains !== 1);
 console.log(bad.length ? `${bad.length} problem rows` : "all not-found pages OK");
 process.exit(bad.length ? 1 : 0);

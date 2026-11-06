@@ -112,7 +112,9 @@ export default async function HomePage({ params }: Props) {
   const featured = filterVendors(vendors, { sort: "recommended" }).slice(0, 3);
   const lead = featured[0];
   const row500 = mailerPrice.rows.find((r) => r.quantity === 500) ?? mailerPrice.rows[0];
-  const onTime = vendors.length ? Math.round(vendors.reduce((s, v) => s + v.onTimePct, 0) / vendors.length) : null;
+  // Admin round 8: only printers with enough judged deliveries count toward the average.
+  const measured = vendors.filter((v) => v.onTimeShown !== false);
+  const onTime = measured.length ? Math.round(measured.reduce((s, v) => s + v.onTimePct, 0) / measured.length) : null;
   const faq = [1, 2, 3, 4, 5, 6].map((n) => ({ q: t(`store.home.faq.q${n}` as DictKey), a: t(`store.home.faq.a${n}` as DictKey) }));
   const startHref = designHref(locale, { structure: "FEFCO_0427" });
   const structureName = (code: StructureCode) => {

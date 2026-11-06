@@ -14,6 +14,8 @@ export const kitAr: Widen<typeof kitEn> = {
     start: "البدء مجانا",
     menu: "القائمة",
     close: "إغلاق القائمة",
+    account: "حسابي",
+    newDesign: "تصميم جديد",
     back: "رجوع",
     groups: {
       packaging: "التغليف",
