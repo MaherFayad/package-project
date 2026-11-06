@@ -1,0 +1,1405 @@
+{
+ "generatedAt": "2026-11-06T16:33:00.825Z",
+ "files": {
+  "/marketing/r6/cutouts/bottle-front.avif": {
+   "w": 480,
+   "h": 480,
+   "bytes": 10106
+  },
+  "/marketing/r6/cutouts/bottle-front.webp": {
+   "w": 480,
+   "h": 480,
+   "bytes": 12946
+  },
+  "/marketing/r6/cutouts/bottle-front@2x.avif": {
+   "w": 960,
+   "h": 960,
+   "bytes": 20400
+  },
+  "/marketing/r6/cutouts/bottle-front@2x.webp": {
+   "w": 960,
+   "h": 960,
+   "bytes": 26578
+  },
+  "/marketing/r6/cutouts/bottle-iso.avif": {
+   "w": 480,
+   "h": 480,
+   "bytes": 10170
+  },
+  "/marketing/r6/cutouts/bottle-iso.webp": {
+   "w": 480,
+   "h": 480,
+   "bytes": 13318
+  },
+  "/marketing/r6/cutouts/bottle-iso@2x.avif": {
+   "w": 960,
+   "h": 960,
+   "bytes": 20547
+  },
+  "/marketing/r6/cutouts/bottle-iso@2x.webp": {
+   "w": 960,
+   "h": 960,
+   "bytes": 27202
+  },
+  "/marketing/r6/cutouts/can-front.avif": {
+   "w": 480,
+   "h": 480,
+   "bytes": 13555
+  },
+  "/marketing/r6/cutouts/can-front.webp": {
+   "w": 480,
+   "h": 480,
+   "bytes": 17234
+  },
+  "/marketing/r6/cutouts/can-front@2x.avif": {
+   "w": 960,
+   "h": 960,
+   "bytes": 26432
+  },
+  "/marketing/r6/cutouts/can-front@2x.webp": {
+   "w": 960,
+   "h": 960,
+   "bytes": 33794
+  },
+  "/marketing/r6/cutouts/can-iso.avif": {
+   "w": 480,
+   "h": 480,
+   "bytes": 13640
+  },
+  "/marketing/r6/cutouts/can-iso.webp": {
+   "w": 480,
+   "h": 480,
+   "bytes": 18200
+  },
+  "/marketing/r6/cutouts/can-iso@2x.avif": {
+   "w": 960,
+   "h": 960,
+   "bytes": 27652
+  },
+  "/marketing/r6/cutouts/can-iso@2x.webp": {
+   "w": 960,
+   "h": 960,
+   "bytes": 37024
+  },
+  "/marketing/r6/cutouts/coffee-bag-front.avif": {
+   "w": 480,
+   "h": 480,
+   "bytes": 13244
+  },
+  "/marketing/r6/cutouts/coffee-bag-front.webp": {
+   "w": 480,
+   "h": 480,
+   "bytes": 16010
+  },
+  "/marketing/r6/cutouts/coffee-bag-front@2x.avif": {
+   "w": 960,
+   "h": 960,
+   "bytes": 23880
+  },
+  "/marketing/r6/cutouts/coffee-bag-front@2x.webp": {
+   "w": 960,
+   "h": 960,
+   "bytes": 32596
+  },
+  "/marketing/r6/cutouts/coffee-bag-iso.avif": {
+   "w": 480,
+   "h": 480,
+   "bytes": 14954
+  },
+  "/marketing/r6/cutouts/coffee-bag-iso.webp": {
+   "w": 480,
+   "h": 480,
+   "bytes": 18414
+  },
+  "/marketing/r6/cutouts/coffee-bag-iso@2x.avif": {
+   "w": 960,
+   "h": 960,
+   "bytes": 29580
+  },
+  "/marketing/r6/cutouts/coffee-bag-iso@2x.webp": {
+   "w": 960,
+   "h": 960,
+   "bytes": 39984
+  },
+  "/marketing/r6/cutouts/cup-front.avif": {
+   "w": 480,
+   "h": 480,
+   "bytes": 15432
+  },
+  "/marketing/r6/cutouts/cup-front.webp": {
+   "w": 480,
+   "h": 480,
+   "bytes": 22686
+  },
+  "/marketing/r6/cutouts/cup-front@2x.avif": {
+   "w": 960,
+   "h": 960,
+   "bytes": 28129
+  },
+  "/marketing/r6/cutouts/cup-front@2x.webp": {
+   "w": 960,
+   "h": 960,
+   "bytes": 37974
+  },
+  "/marketing/r6/cutouts/cup-iso.avif": {
+   "w": 480,
+   "h": 480,
+   "bytes": 16118
+  },
+  "/marketing/r6/cutouts/cup-iso.webp": {
+   "w": 480,
+   "h": 480,
+   "bytes": 22960
+  },
+  "/marketing/r6/cutouts/cup-iso@2x.avif": {
+   "w": 960,
+   "h": 960,
+   "bytes": 29570
+  },
+  "/marketing/r6/cutouts/cup-iso@2x.webp": {
+   "w": 960,
+   "h": 960,
+   "bytes": 39346
+  },
+  "/marketing/r6/cutouts/drawer-box-front.avif": {
+   "w": 480,
+   "h": 480,
+   "bytes": 16142
+  },
+  "/marketing/r6/cutouts/drawer-box-front.webp": {
+   "w": 480,
+   "h": 480,
+   "bytes": 17240
+  },
+  "/marketing/r6/cutouts/drawer-box-front@2x.avif": {
+   "w": 960,
+   "h": 960,
+   "bytes": 32195
+  },
+  "/marketing/r6/cutouts/drawer-box-front@2x.webp": {
+   "w": 960,
+   "h": 960,
+   "bytes": 37310
+  },
+  "/marketing/r6/cutouts/drawer-box-iso.avif": {
+   "w": 480,
+   "h": 480,
+   "bytes": 21901
+  },
+  "/marketing/r6/cutouts/drawer-box-iso.webp": {
+   "w": 480,
+   "h": 480,
+   "bytes": 27304
+  },
+  "/marketing/r6/cutouts/drawer-box-iso@2x.avif": {
+   "w": 960,
+   "h": 960,
+   "bytes": 48640
+  },
+  "/marketing/r6/cutouts/drawer-box-iso@2x.webp": {
+   "w": 960,
+   "h": 960,
+   "bytes": 67408
+  },
+  "/marketing/r6/cutouts/dropper-front.avif": {
+   "w": 480,
+   "h": 480,
+   "bytes": 7800
+  },
+  "/marketing/r6/cutouts/dropper-front.webp": {
+   "w": 480,
+   "h": 480,
+   "bytes": 9992
+  },
+  "/marketing/r6/cutouts/dropper-front@2x.avif": {
+   "w": 960,
+   "h": 960,
+   "bytes": 15043
+  },
+  "/marketing/r6/cutouts/dropper-front@2x.webp": {
+   "w": 960,
+   "h": 960,
+   "bytes": 19992
+  },
+  "/marketing/r6/cutouts/dropper-iso.avif": {
+   "w": 480,
+   "h": 480,
+   "bytes": 7970
+  },
+  "/marketing/r6/cutouts/dropper-iso.webp": {
+   "w": 480,
+   "h": 480,
+   "bytes": 10552
+  },
+  "/marketing/r6/cutouts/dropper-iso@2x.avif": {
+   "w": 960,
+   "h": 960,
+   "bytes": 15712
+  },
+  "/marketing/r6/cutouts/dropper-iso@2x.webp": {
+   "w": 960,
+   "h": 960,
+   "bytes": 20890
+  },
+  "/marketing/r6/cutouts/jar-front.avif": {
+   "w": 480,
+   "h": 480,
+   "bytes": 11861
+  },
+  "/marketing/r6/cutouts/jar-front.webp": {
+   "w": 480,
+   "h": 480,
+   "bytes": 17328
+  },
+  "/marketing/r6/cutouts/jar-front@2x.avif": {
+   "w": 960,
+   "h": 960,
+   "bytes": 21952
+  },
+  "/marketing/r6/cutouts/jar-front@2x.webp": {
+   "w": 960,
+   "h": 960,
+   "bytes": 28730
+  },
+  "/marketing/r6/cutouts/jar-iso.avif": {
+   "w": 480,
+   "h": 480,
+   "bytes": 13096
+  },
+  "/marketing/r6/cutouts/jar-iso.webp": {
+   "w": 480,
+   "h": 480,
+   "bytes": 19456
+  },
+  "/marketing/r6/cutouts/jar-iso@2x.avif": {
+   "w": 960,
+   "h": 960,
+   "bytes": 27009
+  },
+  "/marketing/r6/cutouts/jar-iso@2x.webp": {
+   "w": 960,
+   "h": 960,
+   "bytes": 37810
+  },
+  "/marketing/r6/cutouts/mailer-front.avif": {
+   "w": 480,
+   "h": 480,
+   "bytes": 12029
+  },
+  "/marketing/r6/cutouts/mailer-front.webp": {
+   "w": 480,
+   "h": 480,
+   "bytes": 13670
+  },
+  "/marketing/r6/cutouts/mailer-front@2x.avif": {
+   "w": 960,
+   "h": 960,
+   "bytes": 25229
+  },
+  "/marketing/r6/cutouts/mailer-front@2x.webp": {
+   "w": 960,
+   "h": 960,
+   "bytes": 32406
+  },
+  "/marketing/r6/cutouts/mailer-iso.avif": {
+   "w": 480,
+   "h": 480,
+   "bytes": 16846
+  },
+  "/marketing/r6/cutouts/mailer-iso.webp": {
+   "w": 480,
+   "h": 480,
+   "bytes": 23202
+  },
+  "/marketing/r6/cutouts/mailer-iso@2x.avif": {
+   "w": 960,
+   "h": 960,
+   "bytes": 37495
+  },
+  "/marketing/r6/cutouts/mailer-iso@2x.webp": {
+   "w": 960,
+   "h": 960,
+   "bytes": 59460
+  },
+  "/marketing/r6/cutouts/perfume-front.avif": {
+   "w": 480,
+   "h": 480,
+   "bytes": 6536
+  },
+  "/marketing/r6/cutouts/perfume-front.webp": {
+   "w": 480,
+   "h": 480,
+   "bytes": 7948
+  },
+  "/marketing/r6/cutouts/perfume-front@2x.avif": {
+   "w": 960,
+   "h": 960,
+   "bytes": 13727
+  },
+  "/marketing/r6/cutouts/perfume-front@2x.webp": {
+   "w": 960,
+   "h": 960,
+   "bytes": 16018
+  },
+  "/marketing/r6/cutouts/perfume-iso.avif": {
+   "w": 480,
+   "h": 480,
+   "bytes": 7647
+  },
+  "/marketing/r6/cutouts/perfume-iso.webp": {
+   "w": 480,
+   "h": 480,
+   "bytes": 10410
+  },
+  "/marketing/r6/cutouts/perfume-iso@2x.avif": {
+   "w": 960,
+   "h": 960,
+   "bytes": 17146
+  },
+  "/marketing/r6/cutouts/perfume-iso@2x.webp": {
+   "w": 960,
+   "h": 960,
+   "bytes": 22176
+  },
+  "/marketing/r6/cutouts/pouch-front.avif": {
+   "w": 480,
+   "h": 480,
+   "bytes": 11188
+  },
+  "/marketing/r6/cutouts/pouch-front.webp": {
+   "w": 480,
+   "h": 480,
+   "bytes": 13426
+  },
+  "/marketing/r6/cutouts/pouch-front@2x.avif": {
+   "w": 960,
+   "h": 960,
+   "bytes": 31680
+  },
+  "/marketing/r6/cutouts/pouch-front@2x.webp": {
+   "w": 960,
+   "h": 960,
+   "bytes": 32340
+  },
+  "/marketing/r6/cutouts/pouch-iso.avif": {
+   "w": 480,
+   "h": 480,
+   "bytes": 12368
+  },
+  "/marketing/r6/cutouts/pouch-iso.webp": {
+   "w": 480,
+   "h": 480,
+   "bytes": 15402
+  },
+  "/marketing/r6/cutouts/pouch-iso@2x.avif": {
+   "w": 960,
+   "h": 960,
+   "bytes": 34751
+  },
+  "/marketing/r6/cutouts/pouch-iso@2x.webp": {
+   "w": 960,
+   "h": 960,
+   "bytes": 36444
+  },
+  "/marketing/r6/cutouts/rigid-box-front.avif": {
+   "w": 480,
+   "h": 480,
+   "bytes": 19757
+  },
+  "/marketing/r6/cutouts/rigid-box-front.webp": {
+   "w": 480,
+   "h": 480,
+   "bytes": 22340
+  },
+  "/marketing/r6/cutouts/rigid-box-front@2x.avif": {
+   "w": 960,
+   "h": 960,
+   "bytes": 39960
+  },
+  "/marketing/r6/cutouts/rigid-box-front@2x.webp": {
+   "w": 960,
+   "h": 960,
+   "bytes": 48360
+  },
+  "/marketing/r6/cutouts/rigid-box-iso.avif": {
+   "w": 480,
+   "h": 480,
+   "bytes": 24373
+  },
+  "/marketing/r6/cutouts/rigid-box-iso.webp": {
+   "w": 480,
+   "h": 480,
+   "bytes": 31664
+  },
+  "/marketing/r6/cutouts/rigid-box-iso@2x.avif": {
+   "w": 960,
+   "h": 960,
+   "bytes": 58281
+  },
+  "/marketing/r6/cutouts/rigid-box-iso@2x.webp": {
+   "w": 960,
+   "h": 960,
+   "bytes": 80036
+  },
+  "/marketing/r6/cutouts/tea-tin-front.avif": {
+   "w": 480,
+   "h": 480,
+   "bytes": 12807
+  },
+  "/marketing/r6/cutouts/tea-tin-front.webp": {
+   "w": 480,
+   "h": 480,
+   "bytes": 18348
+  },
+  "/marketing/r6/cutouts/tea-tin-front@2x.avif": {
+   "w": 960,
+   "h": 960,
+   "bytes": 24277
+  },
+  "/marketing/r6/cutouts/tea-tin-front@2x.webp": {
+   "w": 960,
+   "h": 960,
+   "bytes": 34748
+  },
+  "/marketing/r6/cutouts/tea-tin-iso.avif": {
+   "w": 480,
+   "h": 480,
+   "bytes": 14550
+  },
+  "/marketing/r6/cutouts/tea-tin-iso.webp": {
+   "w": 480,
+   "h": 480,
+   "bytes": 21928
+  },
+  "/marketing/r6/cutouts/tea-tin-iso@2x.avif": {
+   "w": 960,
+   "h": 960,
+   "bytes": 28008
+  },
+  "/marketing/r6/cutouts/tea-tin-iso@2x.webp": {
+   "w": 960,
+   "h": 960,
+   "bytes": 40932
+  },
+  "/marketing/r6/cutouts/tube-front.avif": {
+   "w": 480,
+   "h": 480,
+   "bytes": 7288
+  },
+  "/marketing/r6/cutouts/tube-front.webp": {
+   "w": 480,
+   "h": 480,
+   "bytes": 9094
+  },
+  "/marketing/r6/cutouts/tube-front@2x.avif": {
+   "w": 960,
+   "h": 960,
+   "bytes": 14126
+  },
+  "/marketing/r6/cutouts/tube-front@2x.webp": {
+   "w": 960,
+   "h": 960,
+   "bytes": 19542
+  },
+  "/marketing/r6/cutouts/tube-iso.avif": {
+   "w": 480,
+   "h": 480,
+   "bytes": 7153
+  },
+  "/marketing/r6/cutouts/tube-iso.webp": {
+   "w": 480,
+   "h": 480,
+   "bytes": 9514
+  },
+  "/marketing/r6/cutouts/tube-iso@2x.avif": {
+   "w": 960,
+   "h": 960,
+   "bytes": 14423
+  },
+  "/marketing/r6/cutouts/tube-iso@2x.webp": {
+   "w": 960,
+   "h": 960,
+   "bytes": 20002
+  },
+  "/marketing/r6/cutouts/tuck-carton-front.avif": {
+   "w": 480,
+   "h": 480,
+   "bytes": 14483
+  },
+  "/marketing/r6/cutouts/tuck-carton-front.webp": {
+   "w": 480,
+   "h": 480,
+   "bytes": 17340
+  },
+  "/marketing/r6/cutouts/tuck-carton-front@2x.avif": {
+   "w": 960,
+   "h": 960,
+   "bytes": 30130
+  },
+  "/marketing/r6/cutouts/tuck-carton-front@2x.webp": {
+   "w": 960,
+   "h": 960,
+   "bytes": 38394
+  },
+  "/marketing/r6/cutouts/tuck-carton-iso.avif": {
+   "w": 480,
+   "h": 480,
+   "bytes": 20331
+  },
+  "/marketing/r6/cutouts/tuck-carton-iso.webp": {
+   "w": 480,
+   "h": 480,
+   "bytes": 24768
+  },
+  "/marketing/r6/cutouts/tuck-carton-iso@2x.avif": {
+   "w": 960,
+   "h": 960,
+   "bytes": 46467
+  },
+  "/marketing/r6/cutouts/tuck-carton-iso@2x.webp": {
+   "w": 960,
+   "h": 960,
+   "bytes": 62592
+  },
+  "/marketing/r6/hero/bottle-front-dark.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 8654
+  },
+  "/marketing/r6/hero/bottle-front-dark.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 8852
+  },
+  "/marketing/r6/hero/bottle-front-dark@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 19709
+  },
+  "/marketing/r6/hero/bottle-front-dark@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 21642
+  },
+  "/marketing/r6/hero/bottle-iso-dark.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 8817
+  },
+  "/marketing/r6/hero/bottle-iso-dark.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 9534
+  },
+  "/marketing/r6/hero/bottle-iso-dark@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 19936
+  },
+  "/marketing/r6/hero/bottle-iso-dark@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 22124
+  },
+  "/marketing/r6/hero/bottle-iso-light.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 8371
+  },
+  "/marketing/r6/hero/bottle-iso-light.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 8696
+  },
+  "/marketing/r6/hero/bottle-iso-light@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 19172
+  },
+  "/marketing/r6/hero/bottle-iso-light@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 20714
+  },
+  "/marketing/r6/hero/can-front-dark.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 13665
+  },
+  "/marketing/r6/hero/can-front-dark.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 15246
+  },
+  "/marketing/r6/hero/can-front-dark@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 28041
+  },
+  "/marketing/r6/hero/can-front-dark@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 32388
+  },
+  "/marketing/r6/hero/can-iso-dark.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 13716
+  },
+  "/marketing/r6/hero/can-iso-dark.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 15282
+  },
+  "/marketing/r6/hero/can-iso-dark@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 28965
+  },
+  "/marketing/r6/hero/can-iso-dark@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 33608
+  },
+  "/marketing/r6/hero/can-iso-light.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 13442
+  },
+  "/marketing/r6/hero/can-iso-light.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 14748
+  },
+  "/marketing/r6/hero/can-iso-light@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 29318
+  },
+  "/marketing/r6/hero/can-iso-light@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 33150
+  },
+  "/marketing/r6/hero/coffee-bag-front-dark.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 14664
+  },
+  "/marketing/r6/hero/coffee-bag-front-dark.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 16158
+  },
+  "/marketing/r6/hero/coffee-bag-front-dark@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 28347
+  },
+  "/marketing/r6/hero/coffee-bag-front-dark@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 35096
+  },
+  "/marketing/r6/hero/coffee-bag-iso-dark.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 15929
+  },
+  "/marketing/r6/hero/coffee-bag-iso-dark.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 17512
+  },
+  "/marketing/r6/hero/coffee-bag-iso-dark@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 33070
+  },
+  "/marketing/r6/hero/coffee-bag-iso-dark@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 40726
+  },
+  "/marketing/r6/hero/coffee-bag-iso-light.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 16381
+  },
+  "/marketing/r6/hero/coffee-bag-iso-light.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 18198
+  },
+  "/marketing/r6/hero/coffee-bag-iso-light@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 35138
+  },
+  "/marketing/r6/hero/coffee-bag-iso-light@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 42300
+  },
+  "/marketing/r6/hero/cup-front-dark.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 12597
+  },
+  "/marketing/r6/hero/cup-front-dark.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 14702
+  },
+  "/marketing/r6/hero/cup-front-dark@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 26989
+  },
+  "/marketing/r6/hero/cup-front-dark@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 30414
+  },
+  "/marketing/r6/hero/cup-iso-dark.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 13066
+  },
+  "/marketing/r6/hero/cup-iso-dark.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 15452
+  },
+  "/marketing/r6/hero/cup-iso-dark@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 28121
+  },
+  "/marketing/r6/hero/cup-iso-dark@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 31810
+  },
+  "/marketing/r6/hero/cup-iso-light.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 12298
+  },
+  "/marketing/r6/hero/cup-iso-light.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 14390
+  },
+  "/marketing/r6/hero/cup-iso-light@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 27083
+  },
+  "/marketing/r6/hero/cup-iso-light@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 30076
+  },
+  "/marketing/r6/hero/drawer-box-front-dark.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 15669
+  },
+  "/marketing/r6/hero/drawer-box-front-dark.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 16192
+  },
+  "/marketing/r6/hero/drawer-box-front-dark@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 31682
+  },
+  "/marketing/r6/hero/drawer-box-front-dark@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 37630
+  },
+  "/marketing/r6/hero/drawer-box-iso-dark.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 19668
+  },
+  "/marketing/r6/hero/drawer-box-iso-dark.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 21284
+  },
+  "/marketing/r6/hero/drawer-box-iso-dark@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 44738
+  },
+  "/marketing/r6/hero/drawer-box-iso-dark@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 53186
+  },
+  "/marketing/r6/hero/drawer-box-iso-light.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 19293
+  },
+  "/marketing/r6/hero/drawer-box-iso-light.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 20596
+  },
+  "/marketing/r6/hero/drawer-box-iso-light@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 43813
+  },
+  "/marketing/r6/hero/drawer-box-iso-light@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 51304
+  },
+  "/marketing/r6/hero/dropper-front-dark.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 6660
+  },
+  "/marketing/r6/hero/dropper-front-dark.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 7010
+  },
+  "/marketing/r6/hero/dropper-front-dark@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 14958
+  },
+  "/marketing/r6/hero/dropper-front-dark@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 16924
+  },
+  "/marketing/r6/hero/dropper-iso-dark.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 6950
+  },
+  "/marketing/r6/hero/dropper-iso-dark.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 7214
+  },
+  "/marketing/r6/hero/dropper-iso-dark@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 15467
+  },
+  "/marketing/r6/hero/dropper-iso-dark@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 17506
+  },
+  "/marketing/r6/hero/dropper-iso-light.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 5949
+  },
+  "/marketing/r6/hero/dropper-iso-light.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 6202
+  },
+  "/marketing/r6/hero/dropper-iso-light@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 14440
+  },
+  "/marketing/r6/hero/dropper-iso-light@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 15932
+  },
+  "/marketing/r6/hero/jar-front-dark.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 9844
+  },
+  "/marketing/r6/hero/jar-front-dark.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 10806
+  },
+  "/marketing/r6/hero/jar-front-dark@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 21313
+  },
+  "/marketing/r6/hero/jar-front-dark@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 24104
+  },
+  "/marketing/r6/hero/jar-iso-dark.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 11111
+  },
+  "/marketing/r6/hero/jar-iso-dark.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 11894
+  },
+  "/marketing/r6/hero/jar-iso-dark@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 23919
+  },
+  "/marketing/r6/hero/jar-iso-dark@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 26764
+  },
+  "/marketing/r6/hero/jar-iso-light.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 9914
+  },
+  "/marketing/r6/hero/jar-iso-light.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 10430
+  },
+  "/marketing/r6/hero/jar-iso-light@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 22262
+  },
+  "/marketing/r6/hero/jar-iso-light@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 24428
+  },
+  "/marketing/r6/hero/mailer-front-dark.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 12637
+  },
+  "/marketing/r6/hero/mailer-front-dark.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 14082
+  },
+  "/marketing/r6/hero/mailer-front-dark@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 26881
+  },
+  "/marketing/r6/hero/mailer-front-dark@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 34426
+  },
+  "/marketing/r6/hero/mailer-iso-dark.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 15216
+  },
+  "/marketing/r6/hero/mailer-iso-dark.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 18376
+  },
+  "/marketing/r6/hero/mailer-iso-dark@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 34903
+  },
+  "/marketing/r6/hero/mailer-iso-dark@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 48248
+  },
+  "/marketing/r6/hero/mailer-iso-light.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 15046
+  },
+  "/marketing/r6/hero/mailer-iso-light.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 18522
+  },
+  "/marketing/r6/hero/mailer-iso-light@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 35040
+  },
+  "/marketing/r6/hero/mailer-iso-light@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 48576
+  },
+  "/marketing/r6/hero/perfume-front-dark.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 7187
+  },
+  "/marketing/r6/hero/perfume-front-dark.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 7724
+  },
+  "/marketing/r6/hero/perfume-front-dark@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 15969
+  },
+  "/marketing/r6/hero/perfume-front-dark@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 18896
+  },
+  "/marketing/r6/hero/perfume-iso-dark.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 7910
+  },
+  "/marketing/r6/hero/perfume-iso-dark.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 8476
+  },
+  "/marketing/r6/hero/perfume-iso-dark@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 18520
+  },
+  "/marketing/r6/hero/perfume-iso-dark@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 20970
+  },
+  "/marketing/r6/hero/perfume-iso-light.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 7432
+  },
+  "/marketing/r6/hero/perfume-iso-light.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 7960
+  },
+  "/marketing/r6/hero/perfume-iso-light@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 18062
+  },
+  "/marketing/r6/hero/perfume-iso-light@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 20256
+  },
+  "/marketing/r6/hero/pouch-front-dark.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 11434
+  },
+  "/marketing/r6/hero/pouch-front-dark.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 11718
+  },
+  "/marketing/r6/hero/pouch-front-dark@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 35173
+  },
+  "/marketing/r6/hero/pouch-front-dark@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 33158
+  },
+  "/marketing/r6/hero/pouch-iso-dark.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 12490
+  },
+  "/marketing/r6/hero/pouch-iso-dark.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 12790
+  },
+  "/marketing/r6/hero/pouch-iso-dark@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 37493
+  },
+  "/marketing/r6/hero/pouch-iso-dark@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 36054
+  },
+  "/marketing/r6/hero/pouch-iso-light.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 12062
+  },
+  "/marketing/r6/hero/pouch-iso-light.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 12338
+  },
+  "/marketing/r6/hero/pouch-iso-light@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 37437
+  },
+  "/marketing/r6/hero/pouch-iso-light@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 35928
+  },
+  "/marketing/r6/hero/rigid-box-front-dark.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 19100
+  },
+  "/marketing/r6/hero/rigid-box-front-dark.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 19870
+  },
+  "/marketing/r6/hero/rigid-box-front-dark@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 41183
+  },
+  "/marketing/r6/hero/rigid-box-front-dark@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 46240
+  },
+  "/marketing/r6/hero/rigid-box-iso-dark.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 23010
+  },
+  "/marketing/r6/hero/rigid-box-iso-dark.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 25006
+  },
+  "/marketing/r6/hero/rigid-box-iso-dark@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 55948
+  },
+  "/marketing/r6/hero/rigid-box-iso-dark@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 64630
+  },
+  "/marketing/r6/hero/rigid-box-iso-light.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 23545
+  },
+  "/marketing/r6/hero/rigid-box-iso-light.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 26934
+  },
+  "/marketing/r6/hero/rigid-box-iso-light@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 58881
+  },
+  "/marketing/r6/hero/rigid-box-iso-light@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 68298
+  },
+  "/marketing/r6/hero/tea-tin-front-dark.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 11173
+  },
+  "/marketing/r6/hero/tea-tin-front-dark.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 13426
+  },
+  "/marketing/r6/hero/tea-tin-front-dark@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 24382
+  },
+  "/marketing/r6/hero/tea-tin-front-dark@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 29498
+  },
+  "/marketing/r6/hero/tea-tin-iso-dark.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 12529
+  },
+  "/marketing/r6/hero/tea-tin-iso-dark.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 15268
+  },
+  "/marketing/r6/hero/tea-tin-iso-dark@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 28242
+  },
+  "/marketing/r6/hero/tea-tin-iso-dark@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 33738
+  },
+  "/marketing/r6/hero/tea-tin-iso-light.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 12171
+  },
+  "/marketing/r6/hero/tea-tin-iso-light.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 14860
+  },
+  "/marketing/r6/hero/tea-tin-iso-light@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 28047
+  },
+  "/marketing/r6/hero/tea-tin-iso-light@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 33020
+  },
+  "/marketing/r6/hero/tube-front-dark.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 6569
+  },
+  "/marketing/r6/hero/tube-front-dark.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 7162
+  },
+  "/marketing/r6/hero/tube-front-dark@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 14567
+  },
+  "/marketing/r6/hero/tube-front-dark@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 17712
+  },
+  "/marketing/r6/hero/tube-iso-dark.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 6590
+  },
+  "/marketing/r6/hero/tube-iso-dark.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 7374
+  },
+  "/marketing/r6/hero/tube-iso-dark@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 14839
+  },
+  "/marketing/r6/hero/tube-iso-dark@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 17532
+  },
+  "/marketing/r6/hero/tube-iso-light.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 6125
+  },
+  "/marketing/r6/hero/tube-iso-light.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 6624
+  },
+  "/marketing/r6/hero/tube-iso-light@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 14735
+  },
+  "/marketing/r6/hero/tube-iso-light@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 16548
+  },
+  "/marketing/r6/hero/tuck-carton-front-dark.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 15826
+  },
+  "/marketing/r6/hero/tuck-carton-front-dark.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 16952
+  },
+  "/marketing/r6/hero/tuck-carton-front-dark@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 34376
+  },
+  "/marketing/r6/hero/tuck-carton-front-dark@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 42936
+  },
+  "/marketing/r6/hero/tuck-carton-iso-dark.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 21896
+  },
+  "/marketing/r6/hero/tuck-carton-iso-dark.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 23760
+  },
+  "/marketing/r6/hero/tuck-carton-iso-dark@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 49921
+  },
+  "/marketing/r6/hero/tuck-carton-iso-dark@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 63302
+  },
+  "/marketing/r6/hero/tuck-carton-iso-light.avif": {
+   "w": 640,
+   "h": 800,
+   "bytes": 21912
+  },
+  "/marketing/r6/hero/tuck-carton-iso-light.webp": {
+   "w": 640,
+   "h": 800,
+   "bytes": 24372
+  },
+  "/marketing/r6/hero/tuck-carton-iso-light@2x.avif": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 51110
+  },
+  "/marketing/r6/hero/tuck-carton-iso-light@2x.webp": {
+   "w": 1280,
+   "h": 1600,
+   "bytes": 65096
+  }
+ }
+}
