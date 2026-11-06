@@ -20,6 +20,9 @@ export function TopBarLanguage() {
     <Link
       href={href}
       hrefLang={other}
+      // No prefetch: the other locale's payload carries its font preloads (PERF-05), and the
+      // switch is rarely used.
+      prefetch={false}
       lang={other}
       className={styles.topBarLink}
       onClick={(e) => {
