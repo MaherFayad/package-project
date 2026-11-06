@@ -1,5 +1,7 @@
 import { formatTaxId } from "@/lib/orders/company";
 import { governorateKey } from "@/lib/orders/governorates";
+import { sellerTaxReady } from "@/lib/orders/tax-document";
+import { IsolatedList } from "../../_components/IsolatedList";
 import type { Metadata } from "next";
 import type { Dims, PaymentMethod, ShippingAddress } from "@/types";
 import { getT, toLocale, type DictKey } from "@/i18n";
@@ -17,7 +19,8 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { locale } = await params;
-  return { title: getT(toLocale(locale))("orders.invoice.metaTitle", { number: "" }).trim(), robots: { index: false } };
+  const t = getT(toLocale(locale));
+  return { title: (sellerTaxReady() ? t("orders.invoice.metaTitle", { number: "" }) : t("buyer.receipt.metaTitle")).trim(), robots: { index: false } };
 }
 
 /**
@@ -42,6 +45,8 @@ export default async function InvoicePage({ params }: { params: Params }) {
     );
   }
 
+  const taxReady = sellerTaxReady();
+  const docTitle = taxReady ? t("orders.invoice.title", { number: invoice.number }) : t("buyer.receipt.title", { number: invoice.number });
   const money = moneyOf(order);
   const b = invoiceBreakdown({ subtotalPiasters: money.netPiasters, vatPiasters: money.vatPiasters, shippingPiasters: money.shippingPiasters });
   const addr = fromJson<ShippingAddress>(order.shippingAddress);
@@ -53,7 +58,7 @@ export default async function InvoicePage({ params }: { params: Params }) {
   const governorateLabel = govKey ? t(`governorates.${govKey}` as DictKey) : addr.governorate;
 
   return (
-    <Page title={t("orders.invoice.title", { number: invoice.number })} subtitle={t("orders.detail.title", { number: order.number })} backAction={back} primaryAction={<PrintButton label={t("orders.invoice.print")} />}>
+    <Page title={docTitle} subtitle={t("orders.detail.title", { number: order.number })} backAction={back} primaryAction={<PrintButton label={t("orders.invoice.print")} />}>
       <BlockStack gap="400">
         <Card>
           <div className={styles.invoice}>
@@ -78,9 +83,11 @@ export default async function InvoicePage({ params }: { params: Params }) {
                   <Text as="h2" variant="headingSm">
                     {t("orders.invoice.buyer")}
                   </Text>
-                  <Text as="p">{buyerName}</Text>
+                  <Text as="p">
+                    <bdi>{buyerName}</bdi>
+                  </Text>
                   <Text as="p" tone="subdued">
-                    {[addr.street, addr.city, governorateLabel].filter(Boolean).join(locale === "ar" ? "، " : ", ")}
+                    <IsolatedList sep={locale === "ar" ? "، " : ", "} parts={[addr.street, addr.city, governorateLabel]} />
                   </Text>
                   <Text as="p" variant="bodySm">
                     {t("orders.invoice.buyerTaxId")}: <bdi>{order.buyer.organization?.taxId ? formatTaxId(order.buyer.organization.taxId) : "-"}</bdi>
@@ -96,7 +103,7 @@ export default async function InvoicePage({ params }: { params: Params }) {
 
               <div className={styles.tableWrap}>
                 <table className={styles.invTable} role="table">
-                  <caption className="visually-hidden">{t("orders.invoice.title", { number: invoice.number })}</caption>
+                  <caption className="visually-hidden">{docTitle}</caption>
                   <thead role="rowgroup">
                     <tr role="row">
                       <th role="columnheader" scope="col">{t("orders.invoice.description")}</th>
@@ -124,10 +131,10 @@ export default async function InvoicePage({ params }: { params: Params }) {
                         </td>
                         <td role="cell" className={`${styles.num} ${styles.invQty}`}>{it.quantity.toLocaleString("en-US")}</td>
                         <td role="cell" className={styles.num}>
-                          <PriceTag amount={it.unitPiasters} size="small" locale={locale} />
+                          <PriceTag alwaysDecimals amount={it.unitPiasters} size="small" locale={locale} />
                         </td>
                         <td role="cell" className={styles.num}>
-                          <PriceTag amount={it.lineTotalPiasters} size="small" locale={locale} />
+                          <PriceTag alwaysDecimals amount={it.lineTotalPiasters} size="small" locale={locale} />
                         </td>
                       </tr>
                     ))}
@@ -136,10 +143,10 @@ export default async function InvoicePage({ params }: { params: Params }) {
                         <td role="cell">{t((l.labelKey === "pricing.line.shipping" ? "checkout.summary.shipping" : l.labelKey) as DictKey)}</td>
                         <td role="cell" className={`${styles.num} ${styles.invQty}`}>{l.quantity.toLocaleString("en-US")}</td>
                         <td role="cell" className={styles.num}>
-                          <PriceTag amount={l.unitPiasters} size="small" locale={locale} />
+                          <PriceTag alwaysDecimals amount={l.unitPiasters} size="small" locale={locale} />
                         </td>
                         <td role="cell" className={styles.num}>
-                          <PriceTag amount={l.totalPiasters} size="small" locale={locale} />
+                          <PriceTag alwaysDecimals amount={l.totalPiasters} size="small" locale={locale} />
                         </td>
                       </tr>
                     ))}
@@ -148,10 +155,10 @@ export default async function InvoicePage({ params }: { params: Params }) {
                         <td role="cell">{t("checkout.summary.shipping")}</td>
                         <td role="cell" className={`${styles.num} ${styles.invQty}`}>1</td>
                         <td role="cell" className={styles.num}>
-                          <PriceTag amount={b.shippingPiasters} size="small" locale={locale} />
+                          <PriceTag alwaysDecimals amount={b.shippingPiasters} size="small" locale={locale} />
                         </td>
                         <td role="cell" className={styles.num}>
-                          <PriceTag amount={b.shippingPiasters} size="small" locale={locale} />
+                          <PriceTag alwaysDecimals amount={b.shippingPiasters} size="small" locale={locale} />
                         </td>
                       </tr>
                     ) : null}
@@ -164,19 +171,19 @@ export default async function InvoicePage({ params }: { params: Params }) {
                   <div className={styles.line}>
                     <dt>{t("orders.invoice.netTotal")}</dt>
                     <dd>
-                      <PriceTag amount={b.netPiasters} locale={locale} />
+                      <PriceTag alwaysDecimals amount={b.netPiasters} locale={locale} />
                     </dd>
                   </div>
                   <div className={styles.line}>
                     <dt>{t("orders.invoice.vat")}</dt>
                     <dd>
-                      <PriceTag amount={b.vatPiasters} locale={locale} />
+                      <PriceTag alwaysDecimals amount={b.vatPiasters} locale={locale} />
                     </dd>
                   </div>
                   <div className={`${styles.line} ${styles.total}`}>
                     <dt>{t("orders.invoice.grandTotal")}</dt>
                     <dd data-testid="invoice-total">
-                      <PriceTag amount={b.totalPiasters} locale={locale} />
+                      <PriceTag alwaysDecimals amount={b.totalPiasters} locale={locale} />
                     </dd>
                   </div>
                 </dl>
@@ -190,6 +197,7 @@ export default async function InvoicePage({ params }: { params: Params }) {
           </div>
         </Card>
 
+        {taxReady ? (
         <Card title={t("orders.invoice.eta")}>
           <BlockStack gap="300">
             <dl className={styles.dl}>
@@ -224,6 +232,20 @@ export default async function InvoicePage({ params }: { params: Params }) {
             </div>
           </BlockStack>
         </Card>
+        ) : (
+          <Card>
+            <BlockStack gap="300">
+              <Text as="p" tone="subdued">
+                {t("buyer.receipt.note")}
+              </Text>
+              <div className={styles.noPrint}>
+                <Button variant="plain" url={back.url}>
+                  {t("orders.invoice.back")}
+                </Button>
+              </div>
+            </BlockStack>
+          </Card>
+        )}
       </BlockStack>
     </Page>
   );

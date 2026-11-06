@@ -9,7 +9,7 @@ import { requireUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { fromJson } from "@/lib/json";
 import { formatEgyptPhone } from "@/lib/phone";
-import { loadCheckoutDesign, quoteDesign, sampleCreditFor, tierPrices, toCheckoutOffer } from "@/lib/orders/service";
+import { loadCheckoutDesign, minOrderQuantity, quoteDesign, sampleCreditFor, tierPrices, toCheckoutOffer } from "@/lib/orders/service";
 import { designerPath } from "@/components/designer/lib/catalog";
 import { loadCheckoutSettings } from "@/lib/orders/checkout-settings";
 import { orderModeOf } from "@/data/catalogue/order-mode";
@@ -124,10 +124,11 @@ export default async function CheckoutPage({ params, searchParams }: { params: P
   // B-16: a model no Egyptian SME printer makes is never ordered here, not even as a paid sample.
   const byQuote = ["quote", "preview"].includes(orderModeOf(doc.modelCode).mode);
   const initialQty = tiers.find((x) => x.quantity === 500 && x.unitPiasters !== null)?.quantity ?? tiers.find((x) => x.unitPiasters !== null)?.quantity ?? QTY_TIERS[0];
-  const [settings, credit, org] = await Promise.all([
+  const [settings, credit, org, minQty] = await Promise.all([
     loadCheckoutSettings(),
     sampleCreditFor(user.id, designId),
     db.user.findUnique({ where: { id: user.id }, select: { organization: { select: { name: true, taxId: true, commercialRegister: true } } } }),
+    minOrderQuantity(),
   ]);
   // Same production preflight as the designer (B-04), run on the server.
   const geo = docGeometry(doc);
@@ -178,6 +179,7 @@ export default async function CheckoutPage({ params, searchParams }: { params: P
       contactPhone={formatEgyptPhone(user.phone)}
       sample={settings.sample.enabled && !byQuote && !(initial.ok && initial.mode === "manual_quote" && initial.reason === "MODEL_BY_QUOTE") ? { pieces: settings.sample.maxPieces, pricePiasters: settings.sample.pricePiasters, creditDays: settings.sample.creditDays } : null}
       prepayDiscountPct={settings.prepayDiscountPct}
+      minQty={minQty}
       preflight={preflight}
       defaultCompany={org?.organization ? { name: org.organization.name, taxId: org.organization.taxId ?? "", commercialRegister: org.organization.commercialRegister ?? "" } : null}
     />

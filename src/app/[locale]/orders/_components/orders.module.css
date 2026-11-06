@@ -173,8 +173,10 @@
     white-space: nowrap;
   }
   .invTable tbody tr {
-    display: grid;
-    grid-template-columns: auto auto minmax(0, 1fr);
+    /* Flex with wrap, not a fixed grid: at 320 px a long amount moves to its own line instead of
+       pushing the row wider than the card (a11y R4-04: nothing in the table scrolls). */
+    display: flex;
+    flex-wrap: wrap;
     align-items: baseline;
     column-gap: var(--p-space-100);
     padding-block: var(--p-space-300);
@@ -185,7 +187,7 @@
     border: 0;
   }
   .invTable tbody td:first-child {
-    grid-column: 1 / -1;
+    flex-basis: 100%;
     margin-block-end: var(--p-space-100);
   }
   .invTable tbody td:nth-child(2),
@@ -196,6 +198,7 @@
     content: " ×";
   }
   .invTable tbody td:last-child {
+    margin-inline-start: auto;
     font-weight: var(--p-font-weight-semibold);
   }
 }
@@ -365,4 +368,24 @@
 .phoneOnly,
 .wideOnly {
   font-variant-numeric: tabular-nums;
+}
+
+/* R4-CR-23: the view tabs scroll sideways on phones; an end fade shows there is more, and end
+   padding lets the last tab ("Delivered") scroll fully clear of the fade. */
+.tabsFade :where(div:has(> [role="tablist"])) {
+  mask-image: linear-gradient(to right, #000 calc(100% - 2rem), transparent);
+}
+:global([dir="rtl"]) .tabsFade :where(div:has(> [role="tablist"])) {
+  mask-image: linear-gradient(to left, #000 calc(100% - 2rem), transparent);
+}
+.tabsFade [role="tablist"] {
+  padding-inline-end: 2rem;
+}
+@media (min-width: 640px) {
+  .tabsFade :where(div:has(> [role="tablist"])) {
+    mask-image: none;
+  }
+  .tabsFade [role="tablist"] {
+    padding-inline-end: 0;
+  }
 }

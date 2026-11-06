@@ -41,6 +41,7 @@ import { assertTransition, canBuyerCancel, canViewOrder, canOpenDispute, canRevi
 import { isQuoteValid, nextSequence, orderTotals } from "./totals";
 import { decidePaymentOutcome, storedGatewayRef } from "./payment-rules";
 import { preflightBlocks, proofPreflight, type ProofPreflight } from "./preflight";
+import { instantOrderBlock } from "./order-guard";
 
 /**
  * Order service (owner: checkout). Every order mutation in the app goes through here so the
@@ -93,6 +94,13 @@ const pricingInputs = cache(async () => {
   const [data, config] = await Promise.all([loadPricingData(), loadPricingConfig()]);
   return { data, config };
 });
+
+/** Smallest run any active printer takes (R4-CR-07: the one minimum checkout states and checks). */
+export async function minOrderQuantity(): Promise<number> {
+  const { data } = await pricingInputs();
+  const mins = data.vendors.map((v) => v.minOrderQty).filter((n) => Number.isFinite(n) && n > 0);
+  return mins.length ? Math.min(...mins) : 1;
+}
 
 /** Instant quote for a design (internal: includes vendor cost; never send to the browser). */
 export async function quoteDesign(doc: DesignDoc, opts: { quantity: number; governorate?: string; vendorId?: string }): Promise<QuoteOutcome> {
@@ -277,6 +285,8 @@ export async function placeOrder(user: SessionUser, input: PlaceOrderInput): Pro
 async function createOrderFromOffer(
   user: SessionUser,
   p: {
+    /** Set only when the order comes from a price the team sent for a price request (R4-B-03). */
+    quoteId?: string | null;
     doc: DesignDoc;
     offer: VendorOffer;
     address: ShippingAddress;
@@ -290,6 +300,8 @@ async function createOrderFromOffer(
     preflight?: ProofPreflight;
   },
 ): Promise<{ orderId: string; number: string }> {
+  // B-16 / R4-B-01: the last check before any order is written (checkout, sample, reorder).
+  if (instantOrderBlock(p.doc, p.offer, p.quoteId)) throw new OrderError("MANUAL_QUOTE");
   const totals = buyerTotals(p.offer.lines, (await loadCheckoutSettings()).prepayDiscountPct, { sample: p.sample, creditPiasters: p.credit?.piasters });
   const product = p.offer.lines.find((l) => l.kind === "PRODUCT");
   const now = new Date();
