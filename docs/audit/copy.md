@@ -240,9 +240,11 @@ The next copy round should recheck the open rows once the owners merge.
 | R5-CP-122 | low | why, designer-page | «سعر عند الطلب», «يستخدمه الدفع», «ملاءمة الوجه» (the designer says «ملء الوجه»), «يحمل النموذج» (reads as "carries"). | aligned | fixed |
 | R5-CP-123 | low | /start meta title and closing, designer-page start heading | Imperative titles («ابدأ تصميم علبتك مجانا», «ابدأ التصميم مجانا»), and a masculine-only «جاهز لتصميم علبتك؟». | «بدء …», «هل تريد تصميم علبتك الآن؟». The e2e/start.spec.ts heading list was updated. Hero slogans such as «ابدأ اليوم» stay as marketing convention. | fixed |
 | R5-CP-124 | low | `mk.nav.featured.latest` | «جديد علبة» is ungrammatical. | «الجديد في علبة» | fixed |
-| R5-CP-125 | low | home `wall.body`, `finishes.body` | `{groups} مجموعات` and `{finishes} تشطيبات` are right for today's values (10 or fewer) but break above 10. | Use the page's `counted()` helper. | open (marketing owner) |
+| R5-CP-125 | low | home `wall.title`, `wall.body`, `finishes.body` | `{models} نموذجا`, `{groups} مجموعات` and `{finishes} تشطيبات` had fixed noun forms, which break when the count crosses 10 (or lands on a round hundred). | `modelsWord`, `groupsWord` and `finishesWord` (built on the page's `counted()`) are passed from `(store)/page.tsx`. Browser check: «370 نموذجا», «8 مجموعات», «8 تشطيبات»; 8 groups, 8 finishes. Integrator asked me to fix this. | fixed |
 
-Not new this pass: designer-page and why still say "First orders are paid in full" (R5-CP-81, open for a business decision).
+**R5-CP-81, resolved by the integrator's decision.** Copy must match what the product does today, which is full payment for every order at checkout. "First orders are paid in full" is replaced with "Every order is paid in full when you place it" / «يدفع كل طلب كاملا عند إتمامه». This covers the designer page (pay card and FAQ), `store.home.faq.a5` and `legal.terms.sections.payment` (the draft banner and lawyer flags are unchanged). I dropped the prepay clause because the discount does not apply to every order. A unit test now fails on any "first order(s) … paid" wording. **Founder decision logged:** payment terms for repeat buyers (credit, deposit or pay-on-delivery) are not offered today and are for the founder to decide; the copy will change only when the product does.
+
+**Also aligned:** the prepay discount is «خصم الدفع المقدم» everywhere, as in checkout. /why said «المسبق» (7 strings).
 
 **New guard.** `src/i18n/__tests__/copy-rules.test.ts` now also scans every Arabic string in the four page copy.ts files, including the template functions. It fails on:
 - diacritics, tatweel or Arabic-Indic digits
@@ -256,3 +258,5 @@ Not new this pass: designer-page and why still say "First orders are paid in ful
 - **Playwright** (`--workers=2 --trace off`): start, marketing-kit, marketing-spacing, why-pricing, designer-page, admin-quote-price, checkout-quote, checkout, checkout-states, smoke, storefront, journey and a11y specs; every copy assertion passes.
   - Two more specs (designer-page, start) looked up the old «أنماط العلب» / «محرر علبة» names; their selectors now use the new copy.
   - The only remaining failure is `marketing-kit.spec.ts:305` (the `Sheet tone="dark-2"` background on /en/dev/kit). It checks CSS, which this pass does not touch, and it failed on only one project in each run (mobile, then desktop), so it belongs to the kit owner.
+
+**Verification, follow-up.** Unit tests (144), typecheck, lint and build pass. The storefront, marketing-kit, marketing-spacing, designer-page, why-pricing, start, smoke and a11y specs ran: 154 passed, 40 skipped, 0 failed. The marketing-kit dark-2 check passed in this run, so the earlier failure was intermittent.
