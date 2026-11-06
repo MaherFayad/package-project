@@ -3,7 +3,7 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type Ref } from "react";
-import { PerspectiveCamera, Spherical, Vector3, type Group } from "three";
+import { PerspectiveCamera, Spherical, Vector3, type DirectionalLight, type Group } from "three";
 import { boundsAt, maxStage, type DielineModel } from "@/lib/dieline";
 import { BOX_BOARD_CODES, type BoxBoardCode, type ConfigFinishCode } from "@/lib/configurator";
 import { usePrefersReducedMotion } from "./hooks";
@@ -612,9 +612,56 @@ export function PackagingSceneContent(props: PackagingSceneContentProps) {
           />
         )}
       </SwapIn>
+      <FoilSweep active={!!effectiveFinish?.finishes.some((f) => f.code.startsWith("FOIL_"))} sweepKey={`${modelKey(dieline)}|${effectiveFinish?.finishes.map((f) => f.code).join(",") ?? ""}`} />
       {children}
     </>
   );
+}
+
+/**
+ * R4-CR-10: one soft light sweep across the model when it carries hot foil, so the foil reads as
+ * metal (a highlight travels over it) instead of flat ochre ink. Runs once, 1.5 s, after the model
+ * or its finishes change and the view has been still for 0.6 s; never loops (WCAG 2.2.2) and is
+ * skipped under prefers-reduced-motion (WCAG 2.3.3). The light stays mounted at zero intensity so
+ * toggling it never recompiles the board shaders.
+ */
+function FoilSweep({ active, sweepKey }: { active: boolean; sweepKey: string }) {
+  const light = useRef<DirectionalLight>(null);
+  const reduced = usePrefersReducedMotion();
+  const invalidate = useThree((s) => s.invalidate);
+  const state = useRef<{ key: string; t: number } | null>(null);
+  useEffect(() => {
+    if (!active || reduced) {
+      state.current = null;
+      if (light.current) light.current.intensity = 0;
+      invalidate();
+      return;
+    }
+    // start after a short settle (fold / camera tweens land first)
+    state.current = { key: sweepKey, t: -0.6 };
+    invalidate();
+  }, [active, reduced, sweepKey, invalidate]);
+  useFrame((_, dt) => {
+    const s = state.current;
+    const l = light.current;
+    if (!s || !l) return;
+    s.t += Math.min(dt, 0.05);
+    const p = s.t / 1.5;
+    if (p >= 1) {
+      l.intensity = 0;
+      state.current = null;
+      invalidate();
+      return;
+    }
+    if (p > 0) {
+      // a front-left to front-right arc above the model; intensity eases in and out
+      const a = (-0.9 + 1.8 * p) * Math.PI * 0.5;
+      l.position.set(Math.sin(a) * 3, 2.6, Math.cos(a) * 3);
+      l.intensity = 1.6 * Math.sin(Math.PI * p);
+    }
+    invalidate();
+  });
+  return <directionalLight ref={light} intensity={0} position={[0, 2.6, 3]} color="#fffaf0" />;
 }
 
 /**
