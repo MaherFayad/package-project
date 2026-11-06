@@ -87,7 +87,8 @@ describe("commerce path", () => {
       const q = quoteMode(m.code, [EVERYTHING]);
       const order = orderModeOf(m.code);
       // B-16: rare-in-Egypt and filling-line formats are always a quote, whatever the printers.
-      if (order.mode === "preview") expect(q, m.code).toEqual({ mode: "quote", reason: order.reason });
+      // R4-12: formats with no price basis at 100 to 2,000 units (roll stock, alu tubes…) likewise.
+      if (order.mode === "preview" || order.mode === "quote") expect(q, m.code).toEqual({ mode: "quote", reason: order.reason });
       else expect(q.mode, m.code).toBe("instant");
     }
     // Special gluing: instant only from a printer that lists the model.
@@ -95,6 +96,12 @@ describe("commerce path", () => {
     expect(quoteMode("LIQUID_ASEPTIC_BRICK", [EVERYTHING])).toEqual({ mode: "quote", reason: "FILLING_LINE" });
     expect(quoteMode("FEFCO_0427", [])).toEqual({ mode: "quote", reason: "NO_VENDOR" });
     expect(quoteMode("FS_CUP_DOUBLE", [EVERYTHING])).toEqual({ mode: "quote", reason: "QUOTE_ONLY_STOCK" });
+    expect(quoteMode("FLEX_STICK_PACK", [EVERYTHING])).toEqual({ mode: "quote", reason: "QUOTE_ONLY_STOCK" });
+    expect(quoteMode("PH-BLISTER", [EVERYTHING])).toEqual({ mode: "quote", reason: "FILLING_LINE" });
+    expect(quoteMode("OCTABIN", [EVERYTHING])).toEqual({ mode: "quote", reason: "RARE_IN_EGYPT" });
+    // Label-only vessels: the can itself is imported, Egyptian printers print its label (#3).
+    expect(quoteMode("CAN", [EVERYTHING]).mode).toBe("instant");
+    expect(quoteMode("FLEX_SACHET", [EVERYTHING]).mode).toBe("instant");
   });
 
   it("an inactive or narrow printer does not give an instant price", () => {

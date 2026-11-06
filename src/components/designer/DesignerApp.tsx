@@ -181,7 +181,10 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
   const libModel = useMemo<ModelDef | null>(() => docModel(doc), [doc.modelCode, doc.structureCode]);
   const model: DielineModel | null = geo?.dieline ?? null;
   const isVessel = !!geo?.vessel;
-  const orderLabel = t(isVessel ? "designer.container.order" : "designer.order.button");
+  // B-16: models no Egyptian SME printer makes go to checkout's quote request, not an order. The
+  // same label on the top bar, the export modal and the export toast (R4-02).
+  const byQuote = ["quote", "preview"].includes(orderModeOf(docModelCode(doc)).mode);
+  const orderLabel = byQuote ? (locale === "ar" ? "اطلب عرض سعر" : "Request a quote") : t(isVessel ? "designer.container.order" : "designer.order.button");
   const modelRef = useRef(model);
   modelRef.current = model;
   // Faces of the latest committed geometry (ahead of `model` while typing) for artwork rescaling.
@@ -731,8 +734,6 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
   // Open-top styles (FEFCO 0700…) never close: fold 100 % reads "Assembled". The catalogue adds
   // `openTop` to the library; read it defensively until then.
   const openTop = !!(libModel as { openTop?: boolean } | null)?.openTop;
-  // B-16: models no Egyptian SME printer makes go to checkout's quote request, not an order.
-  const byQuote = ["quote", "preview"].includes(orderModeOf(docModelCode(doc)).mode);
   const structureName = libModel?.name[locale] ?? t(`structures.${doc.structureCode}` as DictKey);
 
   return (
@@ -815,7 +816,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
           </Popover>
         </div>
         <Button variant="primary" onClick={doOrder} loading={ordering}>
-          {byQuote ? (locale === "ar" ? "اطلب عرض سعر" : "Request a quote") : orderLabel}
+          {orderLabel}
         </Button>
       </div>
 

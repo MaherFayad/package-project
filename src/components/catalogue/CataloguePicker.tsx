@@ -7,7 +7,7 @@ import type { CatalogueEntry } from "@/data/catalogue/types";
 // Generated rows (scripts/generate-catalogue-rows.ts): no generators in this chunk (PERF-04).
 import PICKER_ROWS from "@/data/catalogue/picker-rows.generated.json";
 import { searchRanked } from "./rank";
-import { byWedge } from "@/data/catalogue/order-mode";
+import { byWedge, orderModeOf } from "@/data/catalogue/order-mode";
 import { formatNumber } from "@/lib/format";
 import { useI18n } from "@/i18n/client";
 import { Badge, Modal, TextField } from "@/components/ui";
@@ -28,7 +28,10 @@ const ROWS: PickerRow[] = (PICKER_ROWS as Omit<PickerRow, "search">[]).map((r) =
   search: [r.code, r.code.replace(/[_-]/g, " "), r.name.en, r.name.ar, r.standard.label, r.standard.code ? `${r.standard.system} ${r.standard.code}` : "", NAMES(r.subFamily)].join(" ").toLowerCase(),
 }));
 const TREE = buildTaxonomy(ROWS.map((e) => e.subFamily));
-const EGYPT_TONE = { local: "success", imported: "attention", rare: "critical" } as const;
+// "Limited" is a caution, not an error: warning, not critical (R4-09).
+const EGYPT_TONE = { local: "success", imported: "attention", rare: "warning" } as const;
+/** B-16: models always priced by quote (rare, filling-line, quote-only stock) say so before they are picked. */
+const byQuote = (code: string) => ["quote", "preview"].includes(orderModeOf(code).mode);
 
 /**
  * In-app model picker (Polaris look): family / sub-family navigation, "Available in Egypt"
@@ -141,7 +144,8 @@ export function CataloguePickerBody({ current, onPick, searchRef }: { current?: 
   );
 }
 
-const ROW_TEXT = 100;
+// Name (2 lines), standard line, one badge row, padding (R4-11).
+const ROW_TEXT = 108;
 const GAP = 12;
 
 function PickerGrid({ items, current, onPick }: { items: PickerRow[]; current?: string; onPick: (code: string) => void }) {
@@ -209,11 +213,14 @@ function PickerGrid({ items, current, onPick }: { items: PickerRow[]; current?: 
                     <img src={`/models/${encodeURIComponent(e.code)}.webp`} alt="" width={240} height={240} loading="lazy" decoding="async" />
                   </span>
                   <span className={styles.name}>{e.name[locale]}</span>
+                  <span className={styles.std}>
+                    {/* Codes read left to right but sit at the start of the line in Arabic too (R4-07); no internal code names (R4-08). */}
+                    {e.standard.code ? <bdi dir="ltr">{`${e.standard.system} ${e.standard.code}`}</bdi> : subFamilyName(e.subFamily)[locale]}
+                  </span>
                   <span className={styles.meta}>
-                    <span dir="ltr" className={styles.std}>
-                      {e.standard.code ? `${e.standard.system} ${e.standard.code}` : e.standard.label || e.code.replace(/_/g, " ")}
-                    </span>
-                    {isCurrent ? <Badge tone="info">{locale === "ar" ? "الحالي" : "Current"}</Badge> : <Badge tone={EGYPT_TONE[e.availableInEgypt]}>{COPY.egypt[e.availableInEgypt][locale]}</Badge>}
+                    {isCurrent ? <Badge tone="info">{locale === "ar" ? "الحالي" : "Current"}</Badge> : null}
+                    <Badge tone={EGYPT_TONE[e.availableInEgypt]}>{COPY.egypt[e.availableInEgypt][locale]}</Badge>
+                    {byQuote(e.code) ? <Badge>{COPY.quote[locale]}</Badge> : null}
                   </span>
                 </button>
               </li>

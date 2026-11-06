@@ -680,7 +680,7 @@ export async function loadQuoteLeads(locale: Locale, now = new Date()): Promise<
       governorate: l.governorate,
       neededBy: l.neededBy,
       note: l.note ?? ((line.notes as string | undefined) || null),
-      modelName: lib ? pick(locale, lib.name.ar, lib.name.en) : ((spec.name as string | undefined) ?? code),
+      modelName: lib ? pick(locale, lib.name.ar, lib.name.en) : typeof spec.name === "string" ? pick(locale, typeof spec.nameAr === "string" ? spec.nameAr : spec.name, spec.name) : code,
       standard: lib?.standard ?? ((line.standard as string | undefined) ?? null),
       dims,
       materialCode: (spec.materialCode as string | undefined) ?? null,

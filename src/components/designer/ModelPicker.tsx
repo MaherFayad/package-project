@@ -8,7 +8,7 @@ import { matchesQuery, type ModelCard } from "@/lib/library/search";
 import { formatNumber } from "@/lib/format";
 import { useI18n } from "@/i18n/client";
 import { Badge, Modal, TextField } from "@/components/ui";
-import { EGYPT_BADGE, byWedge, egyptOf } from "@/data/catalogue/order-mode";
+import { EGYPT_BADGE, byWedge, egyptOf, orderModeOf } from "@/data/catalogue/order-mode";
 import styles from "./library.module.css";
 
 /**
@@ -21,7 +21,7 @@ export function modelImage(slug: string, code?: string): string {
 
 /** Cards shown per group before "Show all N" (CR-30 / designer R-02). */
 const PER_GROUP = 12;
-const EGYPT_TONE = { local: "success", imported: "attention", rare: "critical" } as const;
+const EGYPT_TONE = { local: "success", imported: "attention", rare: "warning" } as const;
 
 /**
  * Model picker: every model of the library, grouped (Boxes, Cartons, Rigid boxes, Trays, Tubes,
@@ -193,14 +193,16 @@ function ModelCardBody({ model, current }: { model: ModelCard; current: boolean 
       </span>
       <span className={styles.modelName}>{model.name[locale]}</span>
       {model.standard && model.standard.toLowerCase() !== "none" ? (
-        <span className={styles.modelMeta} dir="ltr">
-          {model.standard}
+        <span className={styles.modelMeta}>
+          <bdi dir="ltr">{model.standard}</bdi>
         </span>
       ) : null}
       <span className={styles.modelEgypt}>
         <Badge tone={EGYPT_TONE[egyptOf(model.code)]} size="small">
           {EGYPT_BADGE[egyptOf(model.code)][locale]}
         </Badge>
+        {/* B-16: say "by quote" before the model is opened (R4-04). */}
+        {["quote", "preview"].includes(orderModeOf(model.code).mode) ? <Badge size="small">{locale === "ar" ? "بعرض سعر" : "By quote"}</Badge> : null}
       </span>
       {current ? (
         <span className={styles.modelBadge}>

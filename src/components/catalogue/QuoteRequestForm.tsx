@@ -21,9 +21,11 @@ export function QuoteRequestForm({ locale, code, slug, presets, signedIn }: { lo
 
   if (!signedIn)
     return (
-      <Link className={`${mk.pill} ${mk.pillLarge}`} href={`/${locale}/login?next=${encodeURIComponent(`/${locale}/catalog/${slug}#quote`)}`}>
-        {COPY.formSignIn[locale]}
-      </Link>
+      <div className={styles.ctaRow}>
+        <Link className={`${mk.pill} ${mk.pillLarge}`} href={`/${locale}/login?next=${encodeURIComponent(`/${locale}/catalog/${slug}#quote`)}`}>
+          {COPY.formSignIn[locale]}
+        </Link>
+      </div>
     );
 
   if (state === "sent")

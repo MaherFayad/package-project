@@ -42,12 +42,14 @@ export default async function AccountPage({ params }: Props) {
   // Price requests above the instant cap (CO-06). The quantity is the single line's quantity.
   const now = new Date();
   const quoteRequests = quoteRows.map((q) => {
-    const lines = fromJson<{ quantity?: number }[]>(q.lines);
+    const lines = fromJson<{ quantity?: number; name?: { ar?: string; en?: string } }[]>(q.lines);
     const design = designs.find((d) => d.id === q.designId);
+    // Catalogue requests (no design) carry the model name (R4-05).
+    const modelName = Array.isArray(lines) ? lines[0]?.name?.[locale] : undefined;
     return {
       id: q.id,
       quantity: Array.isArray(lines) ? (lines[0]?.quantity ?? 0) : 0,
-      design: design ? design.name || t("account.untitled") : t("account.untitled"),
+      design: design ? design.name || t("account.untitled") : modelName || t("account.untitled"),
       createdAt: q.createdAt,
       open: q.validUntil > now,
     };

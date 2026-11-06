@@ -118,6 +118,16 @@ test("quote request: signed-in buyer sends a request", async ({ page, baseURL },
   await expect(page.getByRole("status").filter({ hasText: "Request sent" })).toBeVisible();
   const saved = await db.quote.findFirst({ where: { userId: user.id, status: "REQUESTED" }, orderBy: { createdAt: "desc" } });
   expect((saved?.lines as { modelCode: string; quantity: number }[])[0]).toMatchObject({ modelCode: "FS_PULP_EGG_6", quantity: 5000 });
+  // The request also writes a QUOTE_REQUEST audit row with the spec snapshot for the admin inbox (R4-05).
+  const audit = await db.auditLog.findFirst({ where: { action: "QUOTE_REQUEST", entityId: saved!.id } });
+  expect((audit?.after as { spec?: unknown } | null)?.spec).toMatchObject({ modelCode: "FS_PULP_EGG_6" });
+  // Sending the same request again returns the open one, not a second lead.
+  await page.reload();
+  await page.getByLabel("Quantity").fill("5000");
+  await page.getByRole("button", { name: "Send request" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Request sent" })).toBeVisible();
+  expect(await db.quote.count({ where: { userId: user.id, status: "REQUESTED" } })).toBe(1);
+  await db.auditLog.deleteMany({ where: { actorId: user.id } });
   await db.quote.deleteMany({ where: { userId: user.id } });
   await cleanup();
 });

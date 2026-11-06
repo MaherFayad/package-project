@@ -319,8 +319,8 @@ export function ModelCard({ locale, card, eager = false }: { locale: Locale; car
         <img src={`/models/${encodeURIComponent(card.code)}.webp`} alt="" width={480} height={480} loading={eager ? "eager" : "lazy"} decoding="async" />
       </span>
       <span className={styles.cardBody}>
-        <span className={styles.cardStd} dir="ltr">
-          {card.standard.code ? `${card.standard.system} ${card.standard.code}` : card.standard.label || COPY.noStandard[locale]}
+        <span className={styles.cardStd}>
+          {card.standard.code ? <bdi dir="ltr">{`${card.standard.system} ${card.standard.code}`}</bdi> : card.standard.label ? <bdi dir="auto">{card.standard.label}</bdi> : COPY.noStandard[locale]}
         </span>
         <span className={styles.cardName}>{card.name[locale]}</span>
         <span className={styles.badges}>
