@@ -131,3 +131,26 @@ The face test pattern draws a white stroke round each face, so with it the wrapp
 | Browser console on `/en/dev/3d` (all structures, fold 0 ↔ 1) and `/en/dev/finishes` | no page errors; remaining "unmount a root while rendering" message is React StrictMode in `next dev` only |
 
 Re-measured after the last commit (final build): 50 draw calls, 0 idle frames, 14.7 fps drag / 15.5 fps keyboard at 4× in SwiftShader, 13 live textures and 14 framebuffers at both 0 and 50 switches.
+
+### Pass 3 (cans / flexible session, section B of `docs/audit/3d-cans-flexible.md`)
+
+| id | sev | file | finding | fix | status |
+|---|---|---|---|---|---|
+| E-46 / CF E-01 | high | `vessels/materials.ts` | Tinplate black. | Done in pass 1 (E-28). | fixed |
+| E-47 / CF E-04 | high | `vessels/closures.ts`, `lib/library/vessels.ts` | Cosmetic / can closures collapsed to the core default. | New styles `ROLL_ON_BALL`, `AIRLESS_PUMP`, `BULLET_CAP`, `PEEL_FOIL` (follows the mouth section: rectangular film on trays), `EOE_RING` (ring-pull end); catalogue codes mapped through `closureStyle`. Hiding closures in the family geometry (`closureY`) is the family's to remove. | fixed (engine + mapping) |
+| E-48 / CF E-05 | medium | `vessels/closures.ts · CAN_END` | Pull tab took the cap colour; fixed 22 mm tab. | Aluminium tab; tab, rivet and opening scale with the end (`finishR / 27`). | fixed |
+| E-49 / CF E-10 | low | vessel shadow | Underside black from below. | `SoftShadow` plane is front-face only, so it is culled from below. | fixed |
+| E-50 / CF E-12 | low | `VesselScene.tsx` | Turntable 20°/s, stops for good. | Done in pass 1 (E-23). | fixed |
+| — / CF E-02, E-03, E-06..E-09, E-11 | — | `lib/library/vessels.ts`, designer | Surfaces, default liquid, flexible envelope / surfaces / options, oval tube, container copy. | Library and designer data, not engine: left to those sessions. | not engine |
+
+Also for the designer (PERF-09): `EngineCanvas` gains `onContentReady`, fired after each content component's first frame (every box ↔ container switch).
+
+### Pass 2 verification (after the EngineCanvas split, closures and tint)
+
+| Check | Result |
+|---|---|
+| lint, typecheck, `npm test` (5 905), `npm run build` | pass |
+| `e2e/models.spec.ts` desktop (every library model through the designer viewers) | 371 passed, 1 failed once on a React #418 hydration mismatch (CAN-TUNA; not 3D: the viewer is client-only), passed 3/3 on re-run |
+| Production console on `/en/dev/3d` (all structures, fold 0 ↔ 1) and `/en/dev/finishes` | no errors |
+| Probe after the refactor | 50 draw calls, 0 idle frames, 13 textures / 14 framebuffers at 0 and 50 switches (unchanged) |
+| Browser check | Bordeaux bottle renders green glass with a cork capsule; beer longneck renders a fluted crown (were amber glass / screw caps) |

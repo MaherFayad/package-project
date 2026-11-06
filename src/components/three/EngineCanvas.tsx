@@ -36,6 +36,8 @@ export interface EngineViewApi {
 
 interface EngineCanvasContextValue {
   register(api: EngineViewApi | null): void;
+  /** A content component mounted and drew its first frame. */
+  contentReady(): void;
 }
 
 const EngineCanvasContext = createContext<EngineCanvasContextValue | null>(null);
@@ -58,7 +60,16 @@ export function useRegisterViewApi(apiRef: { current: EngineViewApi | null }) {
       onKeyboard: () => apiRef.current?.onKeyboard?.(),
     };
     ctx.register(proxy);
-    return () => ctx.register(null);
+    // report the first frame of this content (after a model / kind switch too)
+    let r2 = 0;
+    const r1 = requestAnimationFrame(() => {
+      r2 = requestAnimationFrame(() => ctx.contentReady());
+    });
+    return () => {
+      cancelAnimationFrame(r1);
+      cancelAnimationFrame(r2);
+      ctx.register(null);
+    };
   }, [ctx, apiRef]);
 }
 
@@ -87,6 +98,8 @@ export interface EngineCanvasProps {
   style?: CSSProperties;
   /** Called once the WebGL canvas exists. */
   onReady?: () => void;
+  /** Called after each content component (box / container) mounts and has drawn its first frame, i.e. after every switch. */
+  onContentReady?: () => void;
   /** Image shown until the first compiled frame, then cross-faded to the canvas. */
   poster?: string;
   /** Default "neutral" (Khronos PBR Neutral: keeps approved sRGB colours). */
@@ -107,6 +120,7 @@ export function EngineCanvas({
   className,
   style,
   onReady,
+  onContentReady,
   poster,
   toneMapping = "neutral",
   exposure = 1,
@@ -125,7 +139,10 @@ export function EngineCanvas({
   const register = useCallback((a: EngineViewApi | null) => {
     api.current = a;
   }, []);
-  const ctx = useMemo(() => ({ register }), [register]);
+  const contentReadyRef = useRef(onContentReady);
+  contentReadyRef.current = onContentReady;
+  const contentReady = useCallback(() => contentReadyRef.current?.(), []);
+  const ctx = useMemo(() => ({ register, contentReady }), [register, contentReady]);
   const tm = TONE_MAPPING[toneMapping] ?? NeutralToneMapping;
   const onWarm = useCallback(() => setReady(true), []);
 
