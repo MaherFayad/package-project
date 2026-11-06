@@ -1,7 +1,5 @@
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
-import { PrismaClient } from "@prisma/client";
-import { createHash, randomBytes } from "node:crypto";
-import path from "node:path";
+import { SEEDED, db, sendOtp, signInAs, uniquePhone } from "./fixtures/factory";
 
 /**
  * End-to-end journey across every area (seeded DB):
@@ -11,25 +9,17 @@ import path from "node:path";
  * admin approves QC → books the courier → buyer sees the order shipped.
  * Vendor and admin sign in by inserting a session row (same hashing as src/lib/auth).
  */
-const dbUrl = process.env.ELBA_DATABASE_URL ?? `file:${path.resolve(__dirname, "../prisma/dev.db")}`;
-const db = new PrismaClient({ datasources: { db: { url: dbUrl } } });
 
 const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
 
-async function sessionFor(context: BrowserContext, baseURL: string, userId: string) {
-  const token = randomBytes(32).toString("base64url");
-  await db.session.create({ data: { tokenHash: createHash("sha256").update(token).digest("hex"), userId, expiresAt: new Date(Date.now() + 3600_000) } });
-  await context.addCookies([{ name: "elba_session", value: token, url: baseURL }]);
-}
+const sessionFor = (context: BrowserContext, baseURL: string, userId: string) => signInAs(context, baseURL, userId);
 
 async function noHorizontalScroll(page: Page) {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(overflow).toBeLessThanOrEqual(0);
 }
 
-test.afterAll(async () => {
-  await db.$disconnect();
-});
+// The journey creates its own buyer (unique phone) and its own order through the app.
 
 test("home → design → gate → price → checkout → pay → vendor → QC → shipped → admin", async ({ page, browser, baseURL }, info) => {
   test.skip(info.project.name !== "desktop", "mutating end-to-end flow runs once (desktop)");
@@ -52,12 +42,8 @@ test("home → design → gate → price → checkout → pay → vendor → QC 
   await page.getByTestId("price-badge").click();
   const gate = page.getByRole("dialog", { name: "Create your free account" });
   await expect(gate).toBeVisible();
-  const phone = `012${String(Date.now() % 100_000_000).padStart(8, "0")}`;
-  await gate.getByLabel("Mobile number").fill(phone);
-  await gate.getByRole("button", { name: "Send code" }).click();
-  const banner = gate.getByTestId("otp-dev-code");
-  await expect(banner).toBeVisible({ timeout: 20_000 });
-  await gate.getByLabel("Verification code").fill((await banner.textContent())!.match(/\d{6}/)![0]);
+  const phone = (await uniquePhone("12")).local;
+  await gate.getByLabel("Verification code").fill(await sendOtp(gate, phone));
   await gate.getByLabel(/I agree to the Terms/).check();
   await gate.getByRole("button", { name: "Verify and continue" }).click();
   const price = page.getByRole("dialog", { name: "Instant price" });
@@ -122,7 +108,7 @@ test("home → design → gate → price → checkout → pay → vendor → QC 
   await vendorCtx.close();
 
   // 7. Admin approves QC and books the courier.
-  const admin = await db.user.findUniqueOrThrow({ where: { phone: "+201000000001" } });
+  const admin = await db.user.findUniqueOrThrow({ where: { phone: SEEDED.admin } });
   const adminCtx = await browser.newContext({ baseURL });
   await adminCtx.addCookies([{ name: "elba_cookie_ack", value: "1", url: baseURL! }]);
   await sessionFor(adminCtx, baseURL!, admin.id);

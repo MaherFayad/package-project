@@ -1,6 +1,6 @@
 import "server-only";
 import { db } from "@/lib/db";
-import { otpDevEcho } from "@/lib/env";
+import { otpDevEcho, otpIpLimits } from "@/lib/env";
 import { rateLimit } from "@/lib/rate-limit";
 import {
   OTP_LENGTH,
@@ -53,7 +53,7 @@ export async function requestOtp(phone: string, ip: string): Promise<RequestOtpR
   for (const [ns, key, limit, windowMs] of [
     ["otp:phone:30s", phone, 1, 30_000],
     ["otp:phone:1h", phone, 5, 3_600_000],
-    ["otp:ip:1h", ip, 20, 3_600_000],
+    ["otp:ip:1h", ip, otpIpLimits().requestPerHour, 3_600_000],
   ] as const) {
     const r = rateLimit(ns, key, limit, windowMs);
     if (!r.ok) return { ok: false, error: "RATE_LIMITED", retryAfterSec: r.retryAfterSec };

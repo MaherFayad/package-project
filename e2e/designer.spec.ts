@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { sendOtp, uniquePhone } from "./fixtures/factory";
 
 /**
  * Designer main flow (seeded DB): pick a product preset, design anonymously (autosaved to the
@@ -56,12 +57,8 @@ test("design a box, sign up at the price gate, share and export", async ({ page 
   await page.getByTestId("price-badge").click();
   const gate = page.getByRole("dialog", { name: "Create your free account" });
   await expect(gate).toBeVisible();
-  const suffix = String(Date.now() % 100_000_000).padStart(8, "0");
-  await gate.getByLabel("Mobile number").fill(`011${suffix}`);
-  await gate.getByRole("button", { name: "Send code" }).click();
-  const banner = gate.getByTestId("otp-dev-code");
-  await expect(banner).toBeVisible({ timeout: 20_000 });
-  const code = (await banner.textContent())!.match(/\d{6}/)![0];
+  // Unique per test and worker (OTP limits are per phone): e2e/fixtures/factory.ts.
+  const code = await sendOtp(gate, (await uniquePhone("11")).local);
   await gate.getByLabel("Verification code").fill(code);
   const marketing = gate.getByRole("checkbox", { name: /offers|marketing|WhatsApp/i });
   if (await marketing.count()) await expect(marketing.first()).not.toBeChecked();

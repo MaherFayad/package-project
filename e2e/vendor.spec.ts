@@ -1,38 +1,18 @@
-import { expect, test, type BrowserContext, type Page } from "@playwright/test";
-import { PrismaClient } from "@prisma/client";
-import { createHash, randomBytes } from "node:crypto";
-import path from "node:path";
+import { expect, test, type Page } from "@playwright/test";
+import { SEEDED, cleanup, cloneOrder, createUser, db, signInAs, signInPhone, track } from "./fixtures/factory";
 
 /**
- * Vendor portal main flow on seeded data (npm run db:seed):
- * Delta Cartons (01000000011) gets job ELB-26201 (paid, awaiting acceptance). The test resets that
- * job first, so it can run again without reseeding. Sign-in is done by inserting a session row
- * (same hashing as src/lib/auth) to avoid the OTP rate limit on a shared seeded phone.
+ * Vendor portal. Parallel-safe: the mutating flow clones ELB-26201 (Delta Cartons, paid, awaiting
+ * acceptance) into its own order and signs in as a fresh Delta staff account, so no other worker
+ * or spec touches that job (e2e/fixtures/factory.ts). Read-only checks use the seeded accounts.
  */
-const dbUrl = process.env.ELBA_DATABASE_URL ?? `file:${path.resolve(__dirname, "../prisma/dev.db")}`;
-const db = new PrismaClient({ datasources: { db: { url: dbUrl } } });
-const JOB = "ELB-26201";
+const TEMPLATE_JOB = "ELB-26201";
 const OTHER_VENDOR_JOB = "ELB-26001"; // Nile Pack's order
 
 // 1x1 PNG
 const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
 
-async function signIn(context: BrowserContext, baseURL: string, phone: string) {
-  const user = await db.user.findUniqueOrThrow({ where: { phone } });
-  const token = randomBytes(32).toString("base64url");
-  await db.session.create({ data: { tokenHash: createHash("sha256").update(token).digest("hex"), userId: user.id, expiresAt: new Date(Date.now() + 3600_000) } });
-  await context.addCookies([{ name: "elba_session", value: token, url: baseURL }]);
-}
-
-async function resetJob() {
-  const order = await db.order.findUniqueOrThrow({ where: { number: JOB } });
-  await db.$transaction([
-    db.productionEvent.deleteMany({ where: { orderId: order.id, type: { notIn: ["ORDER_PLACED", "PROOF_APPROVED", "PAYMENT_CONFIRMED"] } } }),
-    db.qcPhoto.deleteMany({ where: { orderId: order.id } }),
-    db.payout.deleteMany({ where: { orderId: order.id } }),
-    db.order.update({ where: { id: order.id }, data: { status: "PAID" } }),
-  ]);
-}
+const signIn = signInPhone;
 
 async function noHorizontalScroll(page: Page) {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
@@ -40,15 +20,18 @@ async function noHorizontalScroll(page: Page) {
 }
 
 test.afterAll(async () => {
-  await db.$disconnect();
+  await cleanup();
 });
 
 test.describe("vendor portal", () => {
   test("accept a job, start production, upload QC photos and submit for QC", async ({ page, context, baseURL }, info) => {
     test.skip(info.project.name !== "desktop", "mutating flow runs once (desktop)");
     test.setTimeout(120_000);
-    await resetJob();
-    await signIn(context, baseURL!, "+201000000011");
+    // Its own job and its own Delta Cartons staff account.
+    const job = await cloneOrder(TEMPLATE_JOB, { status: "PAID", label: "V" });
+    const JOB = job.number;
+    const staff = track(await createUser({ role: "VENDOR", vendorId: job.vendorId, name: "E2E Delta staff" }));
+    await signInAs(context, baseURL!, staff.id);
 
     // Dashboard shows the waiting job.
     await page.goto("/en/vendor");
@@ -61,7 +44,12 @@ test.describe("vendor portal", () => {
     await expect(page).toHaveURL(/\/en\/vendor\/jobs/);
     await page.getByRole("tab", { name: /Awaiting answer/ }).click();
     await expect(page).toHaveURL(/view=awaiting/);
-    await page.getByRole("link", { name: JOB }).click();
+    // The tab switch is a client navigation that re-renders the list; a click that lands on the
+    // outgoing list is lost, so click until the job page opens (assertion unchanged).
+    await expect(async () => {
+      if (!page.url().includes(`/vendor/jobs/${JOB}`)) await page.getByRole("link", { name: JOB }).click({ timeout: 5_000 });
+      await expect(page).toHaveURL(new RegExp(`/en/vendor/jobs/${JOB}$`), { timeout: 5_000 });
+    }).toPass({ timeout: 30_000 });
     await expect(page.getByRole("heading", { level: 1, name: JOB })).toBeVisible();
 
     // Production files: the dieline is available, the print PDF is locked before acceptance.
@@ -116,7 +104,7 @@ test.describe("vendor portal", () => {
   });
 
   test("a vendor cannot see another vendor's job or its files", async ({ page, context, baseURL }) => {
-    await signIn(context, baseURL!, "+201000000011");
+    await signIn(context, baseURL!, SEEDED.deltaStaff);
     await page.goto(`/en/vendor/jobs/${OTHER_VENDOR_JOB}`);
     await expect(page.getByText("This job does not exist or is not routed to you.")).toBeVisible();
     const other = await db.order.findUniqueOrThrow({ where: { number: OTHER_VENDOR_JOB } });
@@ -131,16 +119,16 @@ test.describe("vendor portal", () => {
       if (phone) await signIn(c, baseURL!, phone);
       return c;
     };
-    const owner = await ctx("+201000000010"); // Nile Pack staff
+    const owner = await ctx(SEEDED.nileStaff); // Nile Pack staff
     const up = await owner.request.post("/api/vendor/uploads", { multipart: { scope: "portfolio", file: { name: "job.png", mimeType: "image/png", buffer: PNG } } });
     expect(up.ok()).toBe(true);
     const { url, item } = (await up.json()) as { url: string; item: { id: string; status: string } };
     expect(item.status).toBe("PENDING");
     try {
       const anon = await ctx();
-      const otherVendor = await ctx("+201000000011");
-      const buyer = await ctx("+201000000002");
-      const admin = await ctx("+201000000001");
+      const otherVendor = await ctx(SEEDED.deltaStaff);
+      const buyer = await ctx(SEEDED.buyer);
+      const admin = await ctx(SEEDED.admin);
       for (const c of [anon, otherVendor, buyer]) expect((await c.request.get(url)).status()).toBe(404);
       const own = await owner.request.get(url);
       expect(own.status()).toBe(200);
@@ -164,7 +152,7 @@ test.describe("vendor portal", () => {
   });
 
   test("buyers are kept out of the portal", async ({ page, context, baseURL }) => {
-    await signIn(context, baseURL!, "+201000000002");
+    await signIn(context, baseURL!, SEEDED.buyer);
     await page.goto("/en/vendor");
     await expect(page).toHaveURL(/\/en\?denied=1$/);
     // …but can open the vendor application.
@@ -173,7 +161,7 @@ test.describe("vendor portal", () => {
   });
 
   test("Arabic portal is RTL and fits a phone screen", async ({ page, context, baseURL }) => {
-    await signIn(context, baseURL!, "+201000000010");
+    await signIn(context, baseURL!, SEEDED.nileStaff);
     for (const p of ["/ar/vendor", "/ar/vendor/jobs", "/ar/vendor/jobs/ELB-26202", "/ar/vendor/profile", "/ar/vendor/rate-cards", "/ar/vendor/payouts"]) {
       await page.goto(p);
       await expect(page.locator("html")).toHaveAttribute("dir", "rtl");

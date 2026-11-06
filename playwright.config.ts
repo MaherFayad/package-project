@@ -26,6 +26,8 @@ const PORT = Number(process.env.E2E_PORT ?? 3100);
 
 export default defineConfig({
   testDir: "./e2e",
+  // Warms every heavy route once before the first test (cold-start timeouts), see the file.
+  globalSetup: "./e2e/global-setup.ts",
   timeout: 60_000,
   // Pages render on demand and the 3D proof uses software WebGL in CI, so allow slower steps.
   expect: { timeout: 15_000 },
@@ -45,6 +47,9 @@ export default defineConfig({
     command: `npm run start -- -p ${PORT}`,
     url: `http://localhost:${PORT}/ar`,
     reuseExistingServer: true,
+    // Test-only marker: with the OTP dev echo it relaxes the PER-IP OTP limits for this local
+    // server (src/lib/env.ts otpIpLimits); per-phone limits still apply. Never set in a deployment.
+    env: { ELBA_E2E: "1" },
     timeout: 120_000,
   },
 });

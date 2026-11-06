@@ -1,3 +1,4 @@
+import { otpIpLimits } from "@/lib/env";
 import { cookies } from "next/headers";
 import { z } from "zod";
 import { db } from "@/lib/db";
@@ -42,7 +43,7 @@ const Body = z.object({
 export async function POST(req: Request) {
   if (isCrossSiteRequest(req.headers)) return crossSiteResponse();
   const ip = clientIp(req.headers);
-  const rl = rateLimit("otp:verify:ip", ip, 30, 600_000);
+  const rl = rateLimit("otp:verify:ip", ip, otpIpLimits().verifyPer10Min, 600_000);
   if (!rl.ok) {
     return Response.json(
       { error: "RATE_LIMITED", retryAfterSec: rl.retryAfterSec },

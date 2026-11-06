@@ -179,3 +179,20 @@ describe("B-04 the designer's preflight also runs at proof approval (server side
     expect(preflightBlocks(ack)).toBe(false);
   });
 });
+
+describe("OTP per-IP limits: relaxed only for the local e2e server (both test markers)", async () => {
+  const { otpIpLimits, OTP_IP_LIMITS } = await import("@/lib/env");
+  it("a deployment keeps the production limits", () => {
+    expect(otpIpLimits({ NODE_ENV: "production" })).toEqual(OTP_IP_LIMITS);
+    expect(OTP_IP_LIMITS).toEqual({ requestPerHour: 20, verifyPer10Min: 30 });
+    // One marker alone is never enough.
+    expect(otpIpLimits({ NODE_ENV: "production", ELBA_E2E: "1" })).toEqual(OTP_IP_LIMITS);
+    expect(otpIpLimits({ NODE_ENV: "production", OTP_DEV_ECHO: "1" })).toEqual(OTP_IP_LIMITS);
+    expect(otpIpLimits({ NODE_ENV: "production", ELBA_E2E: "1", OTP_DEV_ECHO: "0" })).toEqual(OTP_IP_LIMITS);
+    expect(otpIpLimits({ NODE_ENV: "development", ELBA_E2E: "1", OTP_DEV_ECHO: "0" })).toEqual(OTP_IP_LIMITS);
+  });
+  it("the local e2e server (ELBA_E2E=1 + OTP dev echo) gets room for many fresh phones", () => {
+    expect(otpIpLimits({ NODE_ENV: "production", ELBA_E2E: "1", OTP_DEV_ECHO: "1" }).requestPerHour).toBeGreaterThan(1000);
+    expect(otpIpLimits({ NODE_ENV: "development", ELBA_E2E: "1" }).verifyPer10Min).toBeGreaterThan(1000);
+  });
+});
