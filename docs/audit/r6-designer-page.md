@@ -66,7 +66,7 @@ FOUNDATION kit used as-is: `Sheet`, `Display`, `Pill`, `IconPill`, tokens (`--mk
 
 | Check | Result |
 |---|---|
-| `npm run lint` (incl. direct UI-kit imports rule) | 0 errors, 0 warnings |
+| `npm run lint` (incl. direct UI-kit imports rule) | 0 errors; 0 warnings in this page's files (2 unused-variable warnings come from the merged ASSETS script `scripts/marketing/render-ui.mjs`) |
 | `npm run typecheck` | clean |
 | `npm test` | 108 files, 8,757 tests passed (5 new in `designer-page/__tests__/copy.test.ts`) |
 | `npm run build` | passes; `/[locale]/designer` SSG, revalidate 1h, 9.25 kB route JS, 117 kB first load (gz) |
