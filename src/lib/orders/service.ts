@@ -33,6 +33,7 @@ import { getPaymentProvider, mockPaymentsEnabled, paymentConfig, type Intention,
 import { getShippingProvider, type TrackingEvent } from "@/lib/shipping";
 import { notify } from "@/lib/notify";
 import { track } from "@/lib/analytics/track";
+import { rateLimit } from "@/lib/rate-limit";
 import { isReprint } from "@/components/admin/lib/metrics";
 import { generatePrintPdf } from "./pdf/print";
 import { putFile, getFile } from "./storage";
@@ -925,6 +926,10 @@ export async function shipOrder(orderId: string, actor: TransitionActor): Promis
 
 /** Refresh tracking for a shipped order; marks it delivered when the courier says so. */
 export async function syncShipments(orderId: string): Promise<void> {
+  // R4-14: the order page calls this on every view of a SHIPPED order. One courier poll per order
+  // per minute (per process) is enough; reloads no longer fan out to the courier API, each call
+  // bounded only by its 15 s timeout (ASVS V12/V13 resource limits on outbound calls).
+  if (!rateLimit("shipments:sync", orderId, 1, 60_000).ok) return;
   const order = await db.order.findUnique({ where: { id: orderId }, include: { shipments: true } });
   if (!order || order.status !== "SHIPPED") return;
   for (const s of order.shipments) {

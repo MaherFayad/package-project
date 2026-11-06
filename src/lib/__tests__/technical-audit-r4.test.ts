@@ -234,3 +234,28 @@ describe("R4-11 proof previews are images only, served sandboxed", () => {
     expect(svc).toContain("isPngOrJpeg(p.preview)");
   });
 });
+
+describe("R4-13 X-Real-IP trust can be switched off for edges that pass it through", () => {
+  it("default unchanged (nginx / Vercel set it); TRUST_X_REAL_IP=0 falls back to the trusted X-Forwarded-For hop", async () => {
+    const { clientIp } = await import("@/lib/rate-limit");
+    const h = new Headers({ "x-real-ip": "6.6.6.6", "x-forwarded-for": "6.6.6.6, 203.0.113.9" });
+    expect(clientIp(h)).toBe("6.6.6.6");
+    const before = process.env.TRUST_X_REAL_IP;
+    process.env.TRUST_X_REAL_IP = "0";
+    try {
+      expect(clientIp(h)).toBe("203.0.113.9");
+    } finally {
+      if (before === undefined) delete process.env.TRUST_X_REAL_IP;
+      else process.env.TRUST_X_REAL_IP = before;
+    }
+  });
+});
+
+describe("R4-14 courier polling from the order page is throttled per order", () => {
+  it("syncShipments returns early when the per-order limiter refuses (1 per minute)", () => {
+    const svc = readFileSync(path.resolve(__dirname, "../orders/service.ts"), "utf8");
+    const fn = svc.slice(svc.indexOf("export async function syncShipments"), svc.indexOf("export async function syncShipments") + 600);
+    expect(fn).toContain('if (!rateLimit("shipments:sync", orderId, 1, 60_000).ok) return;');
+    expect(fn.indexOf("rateLimit(")).toBeLessThan(fn.indexOf("db.order.findUnique"));
+  });
+});
