@@ -96,6 +96,11 @@ test.describe("vendor portal", () => {
     await qc.locator('input[type="file"]').setInputFiles({ name: "bundle.png", mimeType: "image/png", buffer: PNG });
     await expect(photos.getByRole("listitem").filter({ hasText: "Packed bundle" })).toBeVisible();
     await expect(submit).toBeEnabled();
+    // QC photos go to the ops QC review (QcPhoto PENDING), never into portfolio moderation (B-08):
+    // no VendorPortfolioItem is created and the job can be submitted right away.
+    const staged = await db.order.findUniqueOrThrow({ where: { number: JOB }, include: { qcPhotos: true } });
+    expect(staged.qcPhotos.map((p) => p.status)).toEqual(["PENDING", "PENDING"]);
+    expect(await db.vendorPortfolioItem.count({ where: { imageUrl: { in: staged.qcPhotos.map((p) => p.url) } } })).toBe(0);
     await submit.click();
     await expect(page.getByText("Quality check in progress")).toBeVisible();
 

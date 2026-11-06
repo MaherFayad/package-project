@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { findContactDetails, hasContactDetails, stripContactDetails } from "../contact";
 import { portfolioCaptionSchema } from "../profile";
 import { statusTone } from "@/lib/orders/status-tone";
-import { statusBadge } from "../jobs";
+import { allowedActions, hasRequiredQcPhotos, statusBadge } from "../jobs";
 
 describe("B-08 contact detail filter", () => {
   it.each([
@@ -43,6 +43,18 @@ describe("B-08 contact detail filter", () => {
     const cap = portfolioCaptionSchema.safeParse({ captionAr: "علب هدايا", captionEn: "Call 01001234567", structureCode: null });
     expect(cap.success).toBe(false);
     expect(cap.error!.issues.some((i) => i.message === "CONTACT")).toBe(true);
+  });
+});
+
+describe("QC photos vs portfolio moderation", () => {
+  it("freshly uploaded QC photos (PENDING ops review) unlock 'submit for QC'; only rejected ones do not count", () => {
+    const pending = [
+      { kind: "FIRST_SHEET", status: "PENDING" },
+      { kind: "PACKED_BUNDLE", status: "PENDING" },
+    ];
+    expect(hasRequiredQcPhotos(pending)).toBe(true);
+    expect(allowedActions({ status: "IN_PRODUCTION", paidAt: new Date().toISOString(), events: [], qcPhotos: pending })).toContain("submitQc");
+    expect(hasRequiredQcPhotos([{ kind: "FIRST_SHEET", status: "PENDING" }, { kind: "PACKED_BUNDLE", status: "REJECTED" }])).toBe(false);
   });
 });
 
