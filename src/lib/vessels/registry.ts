@@ -165,7 +165,7 @@ export const VESSELS: Record<VesselKind, VesselDefinition> = {
     closures: ["LUG_LID"],
     defaultClosure: "LUG_LID",
     neck: P.TO63,
-    limits: { D: { min: 45, max: 110 }, H: { min: 40, max: 160 }, taper: { min: 0, max: 12 } },
+    limits: { D: { min: 54, max: 110 }, H: { min: 40, max: 160 }, taper: { min: 0, max: 12 } }, // D >= 54: the smallest lug neck here (TO 53) may not overhang the jar (R5-3Q-F-18)
     presets: [
       { id: "jar-100g", name: { ar: "100 جم", en: "100 g" }, capacityMl: 70, dims: { D: 54, H: 52 }, neck: P.TO53, source: "100 g honey jar, TO 53 (approx. Ø54 x 52 mm; honey 1.42 g/ml)" },
       { id: "jar-250g", name: { ar: "250 جم", en: "250 g" }, capacityMl: 180, dims: { D: 68, H: 76 }, neck: P.TO63, source: "250 g honey jar, TO 63 (approx. Ø68 x 76 mm)" },

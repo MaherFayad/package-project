@@ -33,7 +33,13 @@ export const models: VesselModelDef[] = VESSEL_KINDS.map((kind) => {
     defaultLiquid: d.defaultLiquid,
     pricing: pricingOf(kind),
     describe(dims, surfaces, presetId) {
-      const neck = d.presets.find((p) => p.id === presetId)?.neck ?? d.neck;
+      let neck = d.presets.find((p) => p.id === presetId)?.neck ?? d.neck;
+      // custom dims narrower than the neck: take the largest neck of this kind's presets that is
+      // no wider than the body (a TO 63 lug lid overhung a 40 mm jar, R5-3Q-F-18)
+      if (neck && !flat && neck.outerDiameterMm > dims.D) {
+        const fits = d.presets.map((p) => p.neck).filter((n): n is NonNullable<typeof n> => !!n && n.thread === neck!.thread && n.outerDiameterMm <= dims.D);
+        neck = fits.sort((a, b) => b.outerDiameterMm - a.outerDiameterMm)[0] ?? neck;
+      }
       const r = describeVessel({ kind, dims: clampDims(kind, dims), neck, surfaces: surfaces.filter(isSurface) });
       return { profile: r.profile, areas: r.labels.map(labelArea), envelope: r.envelope };
     },

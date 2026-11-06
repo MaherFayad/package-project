@@ -31,6 +31,21 @@ export function profileFor(def: BottleDefinition, dims: VesselDims, finish: Bott
   return buildBottleProfile(def.recipe, dims, typeof finish === "string" ? finishById(finish) : finish);
 }
 
+/**
+ * The preset's finish, or for custom dims too narrow for it, the largest finish of the same kind
+ * the model offers that is no wider than the body (R5-3Q-F-16): a 58 mm lug lid on a 40 mm hex
+ * jar overhung the glass by 9 mm a side. A smaller jar comes with a smaller lid, as in the trade.
+ * Rim (open-top tub) finishes are sized from the body and are left alone.
+ */
+export function finishForDims(def: BottleDefinition, dims: VesselDims, finishId: string): BottleFinish {
+  const f = finishById(finishId);
+  if (f.kind === "rim") return f;
+  const half = Math.min(dims.D, dims.G ?? dims.D) / 2;
+  if (f.outerDiameterMm / 2 <= half) return f;
+  const same = def.finishes.map(finishById).filter((x) => x.kind === f.kind).sort((a, b) => b.outerDiameterMm - a.outerDiameterMm);
+  return same.find((x) => x.outerDiameterMm / 2 <= half) ?? same[same.length - 1] ?? f;
+}
+
 /** Outer envelope incl. closure and handle (what a carton or shipper must hold), mm. */
 export function bottleEnvelope(def: BottleDefinition, profile: BottleProfile, dims: VesselDims, closure: BottleClosureCode = def.defaultClosure) {
   let maxR = 0;
@@ -80,8 +95,7 @@ export function describeBottle(cfg: BottleConfig): BottleDescription {
   const dims = cfg.dims ?? preset.dims;
   const v = validateBottleDims(def, dims);
   if (!v.ok) throw new Error(`Invalid dims for ${def.code}: ${v.errors.join("; ")}`);
-  const finishId = cfg.finish && def.finishes.includes(cfg.finish) ? cfg.finish : preset.finish;
-  const finish = finishById(finishId);
+  const finish = cfg.finish && def.finishes.includes(cfg.finish) ? finishById(cfg.finish) : finishForDims(def, dims, preset.finish);
   const closure = cfg.closure && def.closures.includes(cfg.closure) && BOTTLE_CLOSURES[cfg.closure].fits.includes(finish.kind) ? cfg.closure : (def.closures.find((c) => BOTTLE_CLOSURES[c].fits.includes(finish.kind)) ?? def.defaultClosure);
   const profile = profileFor(def, dims, finish);
   const surfaces = (cfg.surfaces ?? def.defaultSurfaces).filter((s) => def.surfaces.includes(s));
