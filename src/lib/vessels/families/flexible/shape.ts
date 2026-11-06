@@ -47,7 +47,7 @@ export interface FlexShape {
   bodyTopY: Mm;
   topY: Mm;
   /** Base shape (stand-up oval, box rectangle). */
-  base?: { kind: "oval"; a: Mm; b: Mm } | { kind: "rect"; a: Mm; c: Mm };
+  base?: { kind: "oval"; a: Mm; b: Mm; n?: number } | { kind: "rect"; a: Mm; c: Mm };
   /** Enclosed volume of the filled body (ml). */
   volumeMl: number;
   envelope: { width: Mm; depth: Mm; height: Mm };
@@ -55,8 +55,12 @@ export interface FlexShape {
   horizontal: boolean;
 }
 
-const ROWS = 48;
-const COLS = 32;
+/** Enough rows / columns to carry film wrinkles of ~7 mm wavelength (about 10k triangles a pack). */
+const ROWS = 56;
+const COLS = 40;
+
+/** Superellipse exponent of the stand-up pouch cross-section (< 2 = pointed ends at the side seals). */
+const STANDUP_LENS = 1.35;
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 const smooth = (e0: number, e1: number, v: number) => {
@@ -240,12 +244,14 @@ function standup(cfg: FlexConfig): FlexShape {
   const { u, Y } = arcRows(half, Hi, ROWS);
   const rows: ShapeRow[] = u.map((t, i) => {
     const b = half(t);
-    const curve = b < 1e-6 ? sampleCurve(Wi / 2, () => 0) : solveHalfWidth(Wi, () => lens(b, 2));
+    // front and back meet at the side seals at an angle: an eye-shaped (pointed) lens, not an
+    // ellipse, so the faces stay nearly full width down to the base like a real doypack
+    const curve = b < 1e-6 ? sampleCurve(Wi / 2, () => 0) : solveHalfWidth(Wi, () => lens(b, STANDUP_LENS));
     const front = resample(curve, COLS, side);
     return { y: Y * t, tFlat: H - i * dl, strips: [{ panel: "front", pts: front }, { panel: "back", pts: mirrorBack(front) }] };
   });
   const a = rows[0].strips[0].pts[COLS].x;
-  return finish(cfg, "standup", rows, { top, bottom: 0, side }, { kind: "oval", a, b: half(0) }, false);
+  return finish(cfg, "standup", rows, { top, bottom: 0, side }, { kind: "oval", a, b: half(0), n: STANDUP_LENS }, false);
 }
 
 function box(cfg: FlexConfig): FlexShape {

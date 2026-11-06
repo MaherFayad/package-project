@@ -16,6 +16,7 @@ import {
   ZIPPER_BELOW_TOP_SEAL_MM,
 } from "./constants";
 import { definitionFor } from "./definitions";
+import { FILM_MATERIALS } from "./materials";
 import { baseFoldMm, panelUv, printLayout, rectUv } from "./layout";
 import type { FlexConfig } from "./schema";
 import { orient, panelPoint, solveShape, type FlexShape } from "./shape";
@@ -28,7 +29,7 @@ import type { FlexPanelId, FlexPrintLayout, FlexPrintPanel } from "./types";
  * for a repeating crimp normal map (texture.channel = 1, see crimpNormalTexture()).
  */
 
-export type FlexPartRole = "face" | "seal" | "fin" | "base" | "zipper" | "valve" | "spout" | "tinTie" | "flap";
+export type FlexPartRole = "face" | "seal" | "fin" | "base" | "zipper" | "valve" | "spout" | "tinTie" | "flap" | "product";
 
 export interface FlexMeshPart {
   id: string;
@@ -130,6 +131,47 @@ function finalizeGeometry(g: BufferGeometry, shape: FlexShape): BufferGeometry {
 // Faces
 // ---------------------------------------------------------------------------------------------
 
+/**
+ * Film wrinkles: film cannot stretch, so where the filled body pinches into a flat seal the spare
+ * width gathers into soft ripples that fan out from the seal and fade into the body (strongest at
+ * the corners). Returned in mm along the outward normal; 0 for sleeves and empty packs. Two
+ * incommensurate wavelengths and a slow phase drift keep the ripples irregular, and a hash of the
+ * panel keeps front and back different. Positions only: UVs are untouched, so artwork does not move.
+ */
+export function wrinkleAt(shape: FlexShape, panel: FlexPanelId, s: number, tFlat: number, s0: number, s1: number): number {
+  if (shape.model === "sleeve") return 0;
+  const fill = shape.config.fill;
+  if (fill < 0.05) return 0;
+  const rows = shape.rows;
+  const tTop = rows[rows.length - 1].tFlat;
+  const tBottom = rows[0].tFlat;
+  const H = Math.max(1, tBottom - tTop);
+  const W = Math.max(1, s1 - s0);
+  const reach = Math.min(24, 0.2 * H);
+  const seed = panel === "front" ? 0.37 : panel === "back" ? 1.91 : panel === "gussetLeft" ? 2.73 : 3.59;
+  const ramp = (d: number, L: number) => {
+    const x = Math.min(1, Math.max(0, d / L));
+    return (1 - x) * (1 - x);
+  };
+  // across the face from the nearest side edge: 0 at the edge, 1 at the centre line
+  const across = Math.min(s - s0, s1 - s) / (W / 2);
+  const corner = 0.55 + 0.45 * (1 - Math.min(1, across * 1.6));
+  const top = ramp(tFlat - tTop, reach);
+  // stand-up and box packs sit on a base: no gathered film at the bottom
+  const bottom = shape.model === "pillow" ? ramp(tBottom - tFlat, reach) : 0;
+  const lam1 = Math.max(7, Math.min(16, W / 9));
+  const ripples = (u: number, v: number) =>
+    0.65 * Math.sin((2 * Math.PI * u) / lam1 + seed + 0.8 * Math.sin(v / 9 + seed)) + 0.35 * Math.sin((2 * Math.PI * u) / (lam1 * 0.57) + 2.1 * seed);
+  const amp = 0.55 + 0.6 * fill;
+  let w = amp * corner * (top + bottom) * ripples(s, tFlat);
+  // side seals (pillows with side seals): weaker ripples running across, fading toward the centre
+  if (shape.seals.side > 0) {
+    const side = ramp(Math.min(s - s0, s1 - s), Math.min(14, W * 0.15));
+    w += 0.45 * amp * side * ripples(tFlat, s) * (1 - Math.max(top, bottom));
+  }
+  return w * Math.min(1, fill * 1.4);
+}
+
 function faceParts(shape: FlexShape, layout: FlexPrintLayout): FlexMeshPart[] {
   const parts: FlexMeshPart[] = [];
   const ids = shape.rows[0].strips.map((s) => s.panel);
@@ -139,8 +181,22 @@ function faceParts(shape: FlexShape, layout: FlexPrintLayout): FlexMeshPart[] {
     const uv: [number, number][][] = [];
     for (const row of shape.rows) {
       const strip = row.strips.find((s) => s.panel === id)!;
-      pos.push(strip.pts.map((p) => [p.x, row.y, p.z] as V3));
-      uv.push(strip.pts.map((p) => panelUv(panel, p.s, row.tFlat)));
+      const pts = strip.pts;
+      const s0 = pts[0].s;
+      const s1 = pts[pts.length - 1].s;
+      pos.push(
+        pts.map((p, j) => {
+          const a = pts[Math.max(0, j - 1)];
+          const b = pts[Math.min(pts.length - 1, j + 1)];
+          const tx = b.x - a.x;
+          const tz = b.z - a.z;
+          const l = Math.hypot(tx, tz) || 1;
+          // the outermost columns stay on the seal line so faces and seals still meet
+          const w = j === 0 || j === pts.length - 1 ? 0 : wrinkleAt(shape, id, p.s, row.tFlat, s0, s1);
+          return [p.x - (tz / l) * w, row.y, p.z + (tx / l) * w] as V3;
+        }),
+      );
+      uv.push(pts.map((p) => panelUv(panel, p.s, row.tFlat)));
     }
     parts.push({ id: `face-${id}`, role: "face", panel: id, doubleSided: shape.model === "sleeve", geometry: finalizeGeometry(grid(pos, uv), shape) });
   }
@@ -416,7 +472,9 @@ function baseParts(shape: FlexShape, layout: FlexPrintLayout): FlexMeshPart[] {
         let x: number;
         let z: number;
         if (b.kind === "oval") {
-          const half = Math.sqrt(Math.max(0, 1 - zn * zn));
+          // same superellipse as the body's bottom row, so the base meets the faces edge to edge
+          const n = b.n ?? 2;
+          const half = Math.pow(Math.max(0, 1 - Math.pow(Math.abs(zn), n)), 1 / n);
           x = xn * b.a * half;
           z = zn * b.b;
         } else {
@@ -535,6 +593,29 @@ function featureParts(shape: FlexShape, layout: FlexPrintLayout): FlexMeshPart[]
 }
 
 // ---------------------------------------------------------------------------------------------
+// Product (seen through clear film)
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Clear film shows what is inside. Without a product the far face's artwork reads mirrored through
+ * the near face. The product is the filled body shrunk 8% toward the centre line, closed ring per row.
+ */
+function productParts(shape: FlexShape): FlexMeshPart[] {
+  const cfg = shape.config;
+  if (shape.model === "sleeve" || !FILM_MATERIALS[cfg.material].transparent || cfg.fill < 0.15) return [];
+  const k = 0.92;
+  const pos: V3[][] = [];
+  for (const row of shape.rows) {
+    const ring: V3[] = [];
+    for (const st of row.strips) for (let j = 0; j < st.pts.length - 1; j++) ring.push([st.pts[j].x * k, row.y, st.pts[j].z * k]);
+    ring.push(ring[0]);
+    pos.push(ring);
+  }
+  const g = grid(pos, plainUv(pos));
+  return [{ id: "product", role: "product", geometry: finalizeGeometry(g, shape) }];
+}
+
+// ---------------------------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------------------------
 
@@ -542,7 +623,7 @@ function featureParts(shape: FlexShape, layout: FlexPrintLayout): FlexMeshPart[]
 export function buildFlexibleModel(cfg: FlexConfig): FlexModel {
   const shape = solveShape(cfg);
   const layout = printLayout(cfg);
-  const parts = [...faceParts(shape, layout), ...sealParts(shape, layout), ...finParts(shape, layout), ...baseParts(shape, layout), ...featureParts(shape, layout)];
+  const parts = [...faceParts(shape, layout), ...sealParts(shape, layout), ...finParts(shape, layout), ...baseParts(shape, layout), ...featureParts(shape, layout), ...productParts(shape)];
   const front = layout.panels.find((p) => p.id === "front");
   return { config: cfg, shape, layout, parts, windowUv: front?.window ? rectUv(front, front.window) : undefined };
 }
@@ -556,7 +637,8 @@ export function crimpNormalTexture(size = 32): DataTexture {
   for (let y = 0; y < 4; y++)
     for (let x = 0; x < size; x++) {
       const slope = Math.cos((2 * Math.PI * x) / size);
-      const nx = slope * 0.7;
+      // soft serration: 0.7 read as hard ruler lines at 1x DPR
+      const nx = slope * 0.42;
       const nz = Math.sqrt(1 - nx * nx);
       const k = (y * size + x) * 4;
       data[k] = Math.round((nx * 0.5 + 0.5) * 255);

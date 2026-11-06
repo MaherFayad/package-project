@@ -58,8 +58,12 @@ Film materials: `FILM_MATTE`, `FILM_GLOSS`, `FILM_METALLISED`, `FILM_KRAFT_LAMIN
 - Side-gusset bag: the lower `G/2` of each face folds into the block base, so the standing height
   is `H - G/2`; the base mesh is textured from the bottom of the front and back panels.
 - Quad-seal and flat-bottom pouches have a separate `bottom` panel (W x G).
-- Flow wrap is built upright then turned -90° about Z (top seal at +X). The panels stay W x H, so
-  artwork for a bar should be laid out rotated (panel top = right end of the bar).
+- Flow wrap is built upright then turned -90° about Z (top seal at +X). Its print panels are
+  LANDSCAPE (H x W, `panel.landscape`): front has the top seal on the right, back (seen from
+  behind) on the left, so artwork laid out in the editor reads along the bar. `panelUv` handles it.
+- Film wrinkles (`wrinkleAt`) are a displacement along the normal near end and side seals, scaled by
+  fill; UVs are untouched. Clear film packs get an opaque `product` part so print never reads
+  mirrored through the film.
 - Shrink sleeve: `fill` means "conform" (0 = loose tube, 1 = shrunk 45% at the neck). It is not
   placed on a container here; the vessel engine can wrap it around its own profiles.
 - The mailer flap is the unprinted inner side of the back ply; it is a keep-out on the front.
