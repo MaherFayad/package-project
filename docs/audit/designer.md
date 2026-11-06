@@ -36,6 +36,7 @@ Screenshots: `docs/screenshots/audit/designer/` (`before-*`, `after-*`).
 | D-23 | low | stage header, 390 px | The face select was squeezed to about 9rem and cut container names ("الوجه ملصق دائري…"). | | The select takes the remaining width on phones. | fixed |
 | D-24 | low | `Scene3D.tsx`, `DesignScene.tsx` (from 3d-visual X-11) | The editor, share and proof 3D views showed a blank skeleton for 1 to 3 s on first load; the model's thumbnail already exists. | perceived performance | `poster` = `/models/<slug>.svg` passed to `PackagingScene` (cross-fades to the canvas on the first frame). Vessels: `VesselScene` has no `poster` prop (engine). | fixed |
 | D-25 | low | fold control (`DesignerApp.tsx`, `SharedViewer.tsx`) (from 3d-visual F67-06) | Open-top styles (FEFCO 0700…) never close, but the 100 % fold button said "Closed". | ISO 9241-110 (self-descriptiveness) | Shows "Assembled" / "مجمعة" when the model has `openTop`. The field is read defensively until the catalogue adds it to the library. The checkout `ProofViewer` has the same label (checkout owner). | fixed (needs the `openTop` flag to take effect) |
+| D-26 | medium | editor, new design (CR-15, designer half) | A new design opened as a blank board: nothing told a first-time owner where their logo would go. | onboarding / ISO 9241-110 (self-descriptiveness) | Preview-only hint "Your logo" / "شعارك هنا" on the lid (front if there is no lid) in `#616161` at 75 % opacity, in the 3D and dieline textures only while the outside has no layers and no background. It is never in the document, so the face editor, preflight, saved designs and the print PDF never contain it (`previewSurface` in `useArtworkCanvases.ts`, unit-tested). It disappears with the first item or background colour. | fixed |
 
 ## Reported to other owners (not edited)
 
@@ -67,7 +68,7 @@ Screenshots: `docs/screenshots/audit/designer/` (`before-*`, `after-*`).
 |---|---|---|---|
 | critical | 0 | 0 | 0 |
 | high | 7 | 7 | 0 |
-| medium | 10 | 10 | 0 |
+| medium | 11 | 11 | 0 |
 | low | 8 | 8 | 0 |
 
 Plus 6 items reported to other owners (R-01 to R-06), not edited.
@@ -86,4 +87,4 @@ Measured with the report's own harness (`docs/audit/tools/bundle-report.mjs`, `p
 | PERF-22 | `useArtworkCanvases` sheet capped at 1024 px when `defaultMaxDpr() < 2`. | resident texture after config 37.3 MB; texture data uploaded over 12 changes 438 MB | **23.3 MB**; **11 MB** (23 uploads) |
 | PERF-18 | Quote results and tab switches are applied in `startTransition`; `ConfigPanel` and `Scene3D` are `memo`, with stable `onOpenPicker` / `onFinish` / `onPrintSides`. | INP 168-336 ms | Not re-measured (needs the page harness's INP run). |
 | PERF-19 | Undo stack capped at 50 (was 100). Snapshots are `DesignDoc`s only, with no geometry and images shared by reference. | heap 16.6 → 41.3 MB after 50 switches | 17.1 → 28.1 MB after 20 switches (same harness, `SWITCHES=20`). The rest scales with WebGL context churn (PERF-09). |
-| PERF-09 | One persistent `<Canvas>` needs engine API (`PackagingSceneContent` / `VesselSceneContent` without their own Canvas). Requested from the engine session; not changed yet. | 16 contexts over 20 switches | unchanged |
+| PERF-09 | `Stage3D.tsx` (lazy): one un-keyed `<EngineCanvas>` (engine API, branch `…-3d-engine` up to dc0e0a9, merged here) with `PackagingSceneContent` / `VesselSceneContent` children via `Scene3D` / `VesselView` `embedded` mode; the stage poster fades on `onContentReady`. The leak hunt on the shared canvas found 3 textures per container visit (engine PMREM target, fixed 3a4cd84), then 1 (engine label material holding a disposed texture, fixed dc0e0a9), plus the pouch group's own maps (`VesselView`, fixed here). | 16 contexts over 20 mixed switches (a new context, environment and shaders on every box ↔ container switch); switch p50 3,734 ms | Mixed 5-model cycle: **1 context**, textures flat (11 live / 8.6 MB after 10 switches, 11 / 8.9 MB after 30), switch p50 3,051 ms (it includes opening the picker). JS heap 17 → 32.9 MB after 30 switches is the undo history (≤ 50 snapshots, PERF-19). |

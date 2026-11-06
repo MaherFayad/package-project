@@ -128,6 +128,7 @@ export const designerEn = {
       "#e4deff": "Lavender",
     },
     deleted: "Item deleted",
+    placeholderLogo: "Your logo",
     upload: "Upload a logo or image",
     uploadHint: "PNG, JPG, WebP or SVG, up to 10 MB",
     uploadAction: "Add image",
