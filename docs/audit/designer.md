@@ -725,3 +725,5 @@ Scope, as asked: only the areas changed in R12 to R14, plus one keyboard-only ed
 | low | 2 (R15-03, R15-04) | 2 | 0 |
 
 R14-04 (bottle card "PP28") went to the 3D QA session.
+
+Verification (round 15, on 60049bdd + R15-04): lint and typecheck clean; unit tests **8,957 passed**; build OK. E2E (designer, smoke, journey, checkout, storefront, catalogue; `--workers=2 --trace off`, `OTP_DEV_ECHO=1 ALLOW_MOCK_PAYMENTS=1`): **60 passed, 9 skipped, 1 failed**. The failure was `checkout.spec.ts:58` (desktop) in the full run. It passed alone, and **40 / 40** in `checkout.spec.ts --repeat-each=4`, so it is a one-off under load; the designer change in this round (size parser) is not on its path. "designer pages hydrate without errors" with `--repeat-each=16`: **32 / 32 passed**.
