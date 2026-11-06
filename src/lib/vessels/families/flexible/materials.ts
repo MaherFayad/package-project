@@ -121,7 +121,9 @@ export function createHardwareMaterial(role: "zipper" | "valve" | "spout" | "tin
     case "tinTie":
       return new MeshStandardMaterial({ color: "#c9a14a", roughness: 0.4, metalness: 0.6, side: DoubleSide });
     case "flap":
-      return new MeshStandardMaterial({ color: "#5c5f66", roughness: 0.7, side: DoubleSide });
+      // R5-3Q-G: siliconised release liner over the adhesive strip is white / off-white paper, not a
+      // dark grey band across the top of the print
+      return new MeshStandardMaterial({ color: "#efede6", roughness: 0.6, side: DoubleSide });
     default:
       return new MeshStandardMaterial({ color: "#ffffff", roughness: 0.4, transparent: true, opacity: 0.35 });
   }

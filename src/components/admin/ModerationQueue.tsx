@@ -261,7 +261,7 @@ function BioCard({ b }: { b: ModerationBio }) {
         onClose={() => setOpen(false)}
         title={t("admin.moderation.cleanTitle", { vendor: b.vendorName })}
         primaryAction={{
-          content: t("admin.moderation.clean"),
+          content: t("admin.moderation.cleanConfirm"), // R9-AD: the long label was cut at 320 px; the title says what is removed
           loading: busy === `bio-${b.vendorId}`,
           onAction: async () => {
             const r = await run(`bio-${b.vendorId}`, () => cleanBioAction({ vendorId: b.vendorId }), t("admin.moderation.cleaned"));
@@ -443,7 +443,7 @@ function BioEditCard({ b, onDone }: { b: ModerationBioEdit; onDone: () => void }
         open={dialog === "CLEAN"}
         onClose={() => setDialog(null)}
         title={t("admin.moderation.bio.cleanTitle", { vendor: b.vendorName })}
-        primaryAction={{ content: t("admin.moderation.bio.clean"), loading: busy === `bio-CLEAN-${b.vendorId}`, onAction: () => decide("CLEAN", t("admin.moderation.bio.cleaned")) }}
+        primaryAction={{ content: t("admin.moderation.cleanConfirm"), loading: busy === `bio-CLEAN-${b.vendorId}`, onAction: () => decide("CLEAN", t("admin.moderation.bio.cleaned")) }}
         secondaryActions={[{ content: t("admin.common.cancel"), onAction: () => setDialog(null) }]}
       >
         <BlockStack gap="300">

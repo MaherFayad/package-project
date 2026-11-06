@@ -43,6 +43,7 @@ export const AUDIT_ACTIONS = [
   "QUOTE_CLOSED",
   "QUOTE_PRICED",
   "QUOTE_ACCEPTED",
+  "VENDOR_METRICS_SETTINGS",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

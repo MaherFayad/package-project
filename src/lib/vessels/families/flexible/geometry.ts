@@ -13,6 +13,7 @@ import {
   VALVE_BELOW_TOP_MM,
   VALVE_D_MM,
   VALVE_HEIGHT_MM,
+  ZIPPER_BAND_MM,
   ZIPPER_BELOW_TOP_SEAL_MM,
 } from "./constants";
 import { definitionFor } from "./definitions";
@@ -402,7 +403,13 @@ function finParts(shape: FlexShape, layout: FlexPrintLayout): FlexMeshPart[] {
       pos.push(row);
       uv.push(ru);
     }
-    if (shape.seals.top > 0) addFlat(shape.topY, 0);
+    if (shape.seals.top > 0) {
+      // R5-3Q-G: the punched hang hole goes through the folded back fin too: stop the fin under the
+      // hole (it ran across it as a printed strip seen through the slot)
+      const hh = cfg.options.hangHole === "none" ? 0 : cfg.options.hangHole === "round" ? HANG_HOLE_ROUND_D_MM : HANG_HOLE_EURO.h;
+      const yEnd = hh ? (shape.bodyTopY + shape.topY) / 2 - hh / 2 - 0.6 : shape.topY;
+      addFlat(yEnd, (shape.topY - yEnd));
+    }
     parts.push({ id: "fin-back", role: "fin", panel: "back", doubleSided: true, geometry: finalizeGeometry(grid(pos, uv), shape) });
   }
   if (c.cornerFins > 0 && shape.model === "box") {
@@ -553,7 +560,9 @@ function featureParts(shape: FlexShape, layout: FlexPrintLayout): FlexMeshPart[]
     if (pos) parts.push({ id: "tin-tie", role: "tinTie", doubleSided: true, geometry: finalizeGeometry(grid(pos, plainUv(pos)), shape) });
   }
   if (o.valve) {
-    const q = panelPoint(shape, "front", W / 2, VALVE_BELOW_TOP_MM);
+    // R5-3Q-G: valves sit about a fifth of the way down a large coffee bag (1 kg: ~70 mm), not
+    // tucked under the top seal of every size
+    const q = panelPoint(shape, "front", W / 2, Math.max(VALVE_BELOW_TOP_MM, 0.2 * shape.faceH));
     if (q) {
       const base = placeCylinder(new CylinderGeometry(VALVE_D_MM / 2, VALVE_D_MM / 2, VALVE_HEIGHT_MM, 40), q.p, q.n, VALVE_HEIGHT_MM / 2);
       const cap = placeCylinder(new CylinderGeometry(VALVE_D_MM * 0.22, VALVE_D_MM * 0.22, VALVE_HEIGHT_MM * 1.6, 24), q.p, q.n, VALVE_HEIGHT_MM * 0.8);
@@ -604,13 +613,26 @@ function productParts(shape: FlexShape): FlexMeshPart[] {
   const cfg = shape.config;
   if (shape.model === "sleeve" || !FILM_MATERIALS[cfg.material].transparent || cfg.fill < 0.15) return [];
   const k = 0.92;
+  // R5-3Q-G: the product settles below the zipper / header instead of running up to the top seal as
+  // a flat full-width sheet (through clear film its top edge showed as a row of teeth under the seal
+  // crimp). Horizontal packs (flow wrap) keep clear of both end seals. The top is closed.
+  const zipperClear = cfg.options.zipper ? ZIPPER_BELOW_TOP_SEAL_MM + ZIPPER_BAND_MM / 2 + 4 : 12;
+  const yMax = shape.bodyTopY - (shape.horizontal ? 8 : zipperClear);
+  const yMin = shape.bodyBottomY + (shape.horizontal ? 8 : shape.seals.bottom > 0 && shape.model !== "standup" ? 6 : 0);
+  const rows = shape.rows.filter((r) => r.y >= yMin - 1e-6 && r.y <= yMax + 1e-6);
+  if (rows.length < 2) return [];
   const pos: V3[][] = [];
-  for (const row of shape.rows) {
+  for (const row of rows) {
     const ring: V3[] = [];
     for (const st of row.strips) for (let j = 0; j < st.pts.length - 1; j++) ring.push([st.pts[j].x * k, row.y, st.pts[j].z * k]);
     ring.push(ring[0]);
     pos.push(ring);
   }
+  // close the top: shrink the last ring onto the centre line
+  const last = pos[pos.length - 1];
+  const cx = last.reduce((a, q) => a + q[0], 0) / last.length;
+  const cz = last.reduce((a, q) => a + q[2], 0) / last.length;
+  pos.push(last.map((q) => [cx + (q[0] - cx) * 0.02, q[1] + 0.5, cz + (q[2] - cz) * 0.02] as V3));
   const g = grid(pos, plainUv(pos));
   return [{ id: "product", role: "product", geometry: finalizeGeometry(g, shape) }];
 }

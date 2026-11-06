@@ -66,7 +66,7 @@ export function VendorShowcaseCard({ locale, vendor, index = 0, headingLevel = "
             </li>
             <li>
               <Clock size={16} aria-hidden />
-              <span>{t("marketing.printers.onTime", { pct: formatNumber(vendor.onTimePct) })}</span>
+              <span>{vendor.onTimeShown === false ? t("store.vendors.onTimeNew") : t("marketing.printers.onTime", { pct: formatNumber(vendor.onTimePct) })}</span>
             </li>
             <li>
               <Timer size={16} aria-hidden />

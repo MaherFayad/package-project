@@ -149,28 +149,13 @@ test.describe("admin", () => {
     test.skip(info.project.name !== "desktop", "mutating flow runs once, on desktop");
     test.setTimeout(120_000);
     const tag = Math.random().toString(36).replace(/[^a-z]/g, "").slice(0, 8);
-    const base = await db.vendor.findUniqueOrThrow({ where: { slug: "nile-pack" } });
-    // Own vendor row (parallel-safe: the vendor spec edits nile-pack's bio).
-    const vendor = await db.vendor.create({
-      data: {
-        slug: `e2e-bio-${tag}`,
-        nameAr: `مطبعة اختبار ${tag}`,
-        nameEn: `E2E Bio Print ${tag}`,
-        city: base.city,
-        cityAr: base.cityAr,
-        cityEn: base.cityEn,
-        bioAr: "نبذة قديمة",
-        bioEn: `Old public bio ${tag}`,
-        bioArPending: "نطبع علب الهدايا والكرتون المضلع",
-        bioEnPending: `New reviewed bio ${tag}: gift boxes and corrugated mailers`,
-        bioReviewStatus: "PENDING",
-        bioSubmittedAt: new Date(),
-        machines: base.machines ?? [],
-        capabilities: base.capabilities ?? {},
-        certifications: base.certifications ?? [],
-        serviceAreas: base.serviceAreas ?? [],
-        status: "ACTIVE",
-      },
+    // A seeded vendor no other spec edits (the vendor spec edits nile-pack). A temporary ACTIVE vendor
+    // was picked up by other specs' findFirst({ status: "ACTIVE" }) and then deleted under them.
+    const vendor = await db.vendor.findUniqueOrThrow({ where: { slug: "damietta-packaging" } });
+    const saved = { bioAr: vendor.bioAr, bioEn: vendor.bioEn, bioArPending: vendor.bioArPending, bioEnPending: vendor.bioEnPending, bioReviewStatus: vendor.bioReviewStatus, bioReviewNote: vendor.bioReviewNote, bioSubmittedAt: vendor.bioSubmittedAt };
+    await db.vendor.update({
+      where: { id: vendor.id },
+      data: { bioAr: "نبذة قديمة", bioEn: `Old public bio ${tag}`, bioArPending: "نطبع علب الهدايا والكرتون المضلع", bioEnPending: `New reviewed bio ${tag}: gift boxes and corrugated mailers`, bioReviewStatus: "PENDING", bioReviewNote: null, bioSubmittedAt: new Date() },
     });
     try {
       await signIn(context, baseURL!);
@@ -202,8 +187,8 @@ test.describe("admin", () => {
       expect(rejected.bioEn).toBe(`New reviewed bio ${tag}: gift boxes and corrugated mailers`);
       expect(await db.auditLog.count({ where: { entityId: vendor.id, action: "VENDOR_BIO_REJECT" } })).toBe(1);
     } finally {
-      await db.auditLog.deleteMany({ where: { entityId: vendor.id } });
-      await db.vendor.delete({ where: { id: vendor.id } }).catch(() => {});
+      await db.auditLog.deleteMany({ where: { entityId: vendor.id, action: { in: ["VENDOR_BIO_APPROVE", "VENDOR_BIO_REJECT", "VENDOR_BIO_CLEAN"] }, createdAt: { gte: new Date(Date.now() - 600_000) } } });
+      await db.vendor.update({ where: { id: vendor.id }, data: saved });
     }
   });
 
@@ -256,7 +241,10 @@ test.describe("admin disputes (R5-JR-09)", () => {
       await expect(page.getByText(/Elba pays the printer EGP 0\.00\./)).toBeVisible();
       await page.getByLabel("Resolution note").fill("Reprinting the 40 smudged boxes at the printer's cost");
       await page.getByRole("button", { name: "Apply decision" }).click();
-      await expect(page.getByText(/Reprint .* created/)).toBeVisible({ timeout: 30_000 });
+      await expect(page.getByRole("status").getByText(`Reprint ${order.number}-R1 created`).first()).toBeVisible({ timeout: 30_000 });
+      // The decision card leaves once the dispute is resolved; the Reprints card lists the new order.
+      await expect(page.getByRole("heading", { level: 2, name: "Reprints" })).toBeVisible({ timeout: 30_000 });
+      await expect(page.getByText(`${order.number}-R1`).first()).toBeVisible();
       const reprint = await db.order.findFirstOrThrow({ where: { notes: { startsWith: `REPRINT_OF:${order.number}` } }, include: { items: true } });
       reprintId = reprint.id;
       expect(reprint.items.reduce((s, i) => s + i.quantity, 0)).toBe(40);
@@ -300,5 +288,35 @@ test.describe("admin routing (round 4)", () => {
     expect(after.payouts.find((p) => p.id === oldAdvance.id)).toBeUndefined();
     const audit = await db.auditLog.findFirstOrThrow({ where: { action: "ORDER_REASSIGN", entityId: order.id } });
     expect(JSON.stringify(audit.before)).toContain(oldAdvance.id);
+  });
+});
+
+test.describe("admin detail routes answer 404 for unknown records (R5-PL-03)", () => {
+  test("orders, vendors, applications, users and disputes: unknown id or slug → HTTP 404 with the admin not-found card", async ({ page, context, baseURL }) => {
+    await signIn(context, baseURL!);
+    const cases: [string, string][] = [
+      ["/en/admin/orders/ELB-NOPE-0000", "orders"],
+      ["/ar/admin/vendors/no-such-printer", "vendors"],
+      ["/en/admin/vendors/applications/nosuchapplication000000", "applications"],
+      ["/en/admin/users/nosuchuser0000000000000", "users"],
+      ["/ar/admin/disputes/nosuchdispute00000000000", "disputes"],
+    ];
+    for (const [path] of cases) {
+      const res = await page.request.get(path);
+      expect(res.status(), path).toBe(404);
+    }
+    // A malformed escape is refused by the server itself (400), never a 200 page.
+    expect([400, 404]).toContain((await page.request.get("/en/admin/orders/%E0%A4%A")).status());
+    // The page itself still renders the admin not-found card inside the frame.
+    await page.goto("/en/admin/users/nosuchuser0000000000000");
+    await expect(page.getByRole("heading", { level: 1, name: "Not found" })).toBeVisible();
+    await expect(page.getByText("This record does not exist or was removed.")).toBeVisible();
+    // Known records still answer 200.
+    const known = await db.order.findFirstOrThrow({ where: { number: "ELB-26203" }, select: { number: true } });
+    const vendor = await db.vendor.findFirstOrThrow({ where: { status: "ACTIVE" }, select: { slug: true } });
+    for (const path of [`/en/admin/orders/${known.number}`, `/en/admin/vendors/${vendor.slug}`, "/en/admin", "/en/admin/orders", "/ar/admin/quotes"]) {
+      const res = await page.request.get(path);
+      expect(res.status(), path).toBe(200);
+    }
   });
 });
