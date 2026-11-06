@@ -1,5 +1,6 @@
 import type { DesignDoc, Dims, Piasters } from "@/types";
 import { designPricedFinishes } from "@/types";
+import { headlineOffer } from "@/lib/pricing/headline";
 
 /** The live price badge quantity ("500 of these: from EGP X"). */
 export const BADGE_QTY = 500;
@@ -58,11 +59,14 @@ export function quoteKey(doc: DesignDoc, quantity: number): string {
     doc.printSides,
     quantity,
     JSON.stringify(doc.features ?? null),
-    doc.vessel ? JSON.stringify([doc.vessel.dims, doc.vessel.surfaces, doc.vessel.presetId, doc.vessel.container]) : "",
+    doc.vessel ? JSON.stringify([doc.vessel.dims, doc.vessel.surfaces, doc.vessel.presetId, doc.vessel.container, doc.vessel.options ?? null]) : "",
   ].join("|");
 }
 
-/** Reduce an /api/quote response to what the badge shows: the cheapest offer. */
+/**
+ * Reduce an /api/quote response to what the badge shows: the HEADLINE offer (best match, the one
+ * checkout pre-selects), so the badge, the public page and checkout agree (B-26 / B-02).
+ */
 export function toPriceState(status: number, body: unknown): PriceState {
   if (status === 401) return { status: "locked" };
   if (status !== 200 || !body || typeof body !== "object") return { status: "error" };
@@ -75,7 +79,7 @@ export function toPriceState(status: number, body: unknown): PriceState {
   };
   if (b.mode !== "instant" || !Array.isArray(b.offers)) return { status: "error" };
   if (b.offers.length === 0) return { status: "none" };
-  const best = [...b.offers].sort((x, y) => x.totalPiasters - y.totalPiasters || x.deliveryDays - y.deliveryDays)[0];
+  const best = headlineOffer(b.offers)!;
   return {
     status: "ready",
     quantity: b.quantity ?? BADGE_QTY,

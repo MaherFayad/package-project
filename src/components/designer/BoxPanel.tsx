@@ -79,7 +79,7 @@ export function BoxPanel({
 
       {presets.length > 0 && (
         <BlockStack gap="200">
-          <Text as="h3" variant="headingSm">
+          <Text as="h2" variant="headingSm">
             {t("designer.box.presets")}
           </Text>
           <div className={styles.presetRow} role="group" aria-label={t("designer.box.presets")}>
@@ -114,7 +114,7 @@ export function BoxPanel({
               max={limits[axis].max}
               value={draft[axis]}
               onChange={(v) => change(axis, v)}
-              helpText={`${limits[axis].min}–${limits[axis].max}`}
+              helpText={<bdi dir="ltr">{`${limits[axis].min}–${limits[axis].max}`}</bdi>}
               error={issues.some((i) => i.path === axis && i.code !== "RULE") ? errorFor(axis) : undefined}
             />
           ))}

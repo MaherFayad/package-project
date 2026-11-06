@@ -13,6 +13,7 @@ import type { DictKey } from "@/i18n/types";
 import { Badge, BlockStack, Button, Checkbox, InlineGrid, RangeSlider, Select, Text, TextField } from "@/components/ui";
 import { featureSupportOf, finishChoicesFor, materialChoices, printSidesChoices, type Choice } from "./lib/config";
 import { modelImage } from "./ModelPicker";
+import { FlexOptionsGroup } from "./FlexOptionsGroup";
 import styles from "./library.module.css";
 
 export interface ViewOptions {
@@ -51,7 +52,7 @@ export const ConfigPanel = memo(function ConfigPanel(props: ConfigPanelProps) {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={modelImage(model.slug)} alt="" width={72} height={54} />
         <div className={styles.modelCurrentText}>
-          <Text as="h3" variant="headingSm">
+          <Text as="h2" variant="headingSm">
             <span data-testid="model-name">{model.name[locale]}</span>
           </Text>
           {model.standard && model.standard !== "none" ? (
@@ -291,7 +292,7 @@ function BoxSection({ doc, model, geo, view, onView, onGeometry, onFinish, onPri
               max={lims[axis].max}
               value={draft[axis]}
               onChange={(v) => tryDims({ ...draft, [axis]: v })}
-              helpText={`${lims[axis].min}–${lims[axis].max}`}
+              helpText={<bdi dir="ltr">{`${lims[axis].min}–${lims[axis].max}`}</bdi>}
               suffix={t("common.mm")}
             />
           ))}
@@ -457,7 +458,7 @@ function VesselSection({ doc, model, geo, view, onView, onGeometry, onFinish }: 
                 max={r.max}
                 value={draft[a]}
                 onChange={(val) => tryDims({ ...draft, [a]: val })}
-                helpText={`${r.min}–${r.max}`}
+                helpText={<bdi dir="ltr">{`${r.min}–${r.max}`}</bdi>}
                 suffix={t("common.mm")}
               />
             );
@@ -478,6 +479,7 @@ function VesselSection({ doc, model, geo, view, onView, onGeometry, onFinish }: 
           onChange={(val) => setVessel({ container: val })}
         />
       ) : null}
+      {model.render === "flexible" ? <FlexOptionsGroup code={model.code} vessel={v} onChange={(options) => setVessel({ options })} /> : null}
       {model.closures.length > 0 ? (
         <>
           <Select

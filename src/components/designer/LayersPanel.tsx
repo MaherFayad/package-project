@@ -32,7 +32,7 @@ export function LayersPanel({
   return (
     <BlockStack gap="400">
       <BlockStack gap="100">
-        <Text as="h3" variant="headingSm">
+        <Text as="h2" variant="headingSm">
           {t("designer.layers.heading")}
         </Text>
         <Text as="p" tone="subdued">

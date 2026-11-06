@@ -18,6 +18,7 @@ import {
   Modal,
   PriceTag,
   Select,
+  SkeletonBodyText,
   Spinner,
   Text,
   TextField,
@@ -49,11 +50,14 @@ export function GateModal({ reason, onClose, onSuccess }: { reason: GateReason |
 export function PriceBadge({ state, onClick, vessel = false }: { state: PriceState; onClick: () => void; vessel?: boolean }) {
   const { t, locale } = useI18n();
   let label: string;
+  let price: string | null = null;
+  const MARK = "\u2063";
   switch (state.status) {
     case "ready":
+      price = formatMoney(state.best.unitPiasters, locale);
       label = t(vessel ? "designer.container.badge" : "designer.price.badge", {
         qty: formatNumber(state.quantity),
-        price: formatMoney(state.best.unitPiasters, locale),
+        price: MARK,
         days: state.best.deliveryDays,
       });
       break;
@@ -69,14 +73,32 @@ export function PriceBadge({ state, onClick, vessel = false }: { state: PriceSta
     default:
       label = t(vessel ? "designer.container.badgeLocked" : "designer.price.badgeLocked", { qty: formatNumber(BADGE_QTY) });
   }
+  const [before, after] = price !== null ? label.split(MARK) : [label, ""];
+  const loading = state.status === "loading";
   return (
-    <button type="button" className={styles.priceBadge} onClick={onClick} aria-live="polite" data-state={state.status} data-testid="price-badge">
+    <button
+      type="button"
+      className={styles.priceBadge}
+      onClick={onClick}
+      aria-live="polite"
+      aria-busy={loading || undefined}
+      data-state={state.status}
+      data-testid="price-badge"
+    >
       <span className={styles.priceBadgeIcon} aria-hidden="true">
-        {state.status === "loading" ? <Spinner size="small" /> : state.status === "ready" ? <Tag size={16} /> : <Lock size={16} />}
+        {state.status === "ready" ? <Tag size={16} /> : loading ? <Tag size={16} /> : <Lock size={16} />}
       </span>
-      {/* Re-keyed on every new price so the number ticks in (CSS; off under reduced motion). */}
-      <span key={label} className={`${styles.priceBadgeText} ${state.status === "ready" ? lib.priceTick : ""}`}>
-        {label}
+      <span className={styles.priceBadgeText}>
+        {before}
+        {/* Only the amount re-keys and ticks in (CR-20); off under reduced motion. */}
+        {price !== null ? (
+          <span key={price} className={`${styles.priceBadgeAmount} ${lib.priceTick}`}>
+            {price}
+          </span>
+        ) : null}
+        {after}
+        {/* Loading: a shimmer bar, not a spinner (CR-21); the text alone is the accessible name. */}
+        {loading ? <span className={styles.priceShimmer} aria-hidden="true" /> : null}
       </span>
     </button>
   );
@@ -133,12 +155,10 @@ export function PriceModal({
           onChange={(v) => setQty(Number(v))}
         />
         {state.status === "loading" || state.status === "idle" ? (
-          <InlineStack gap="200" blockAlign="center">
-            <Spinner size="small" />
-            <Text as="span" tone="subdued">
-              {t("designer.price.loading")}
-            </Text>
-          </InlineStack>
+          <div role="status" aria-busy="true">
+            <span className="visually-hidden">{t("designer.price.loading")}</span>
+            <SkeletonBodyText lines={4} />
+          </div>
         ) : state.status === "ready" ? (
           <BlockStack gap="300">
             <Inset>
@@ -203,7 +223,22 @@ export function PriceModal({
 export type ExportSize = "standard" | "hd";
 
 /** PNG mockup export (screen 20 anatomy: choice list with a "Recommended" badge). No dieline PDF. */
-export function ExportModal({ open, onClose, onExport, busy }: { open: boolean; onClose: () => void; onExport: (s: ExportSize) => void; busy: boolean }) {
+export function ExportModal({
+  open,
+  onClose,
+  onExport,
+  busy,
+  onOrder,
+  orderLabel,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onExport: (s: ExportSize) => void;
+  busy: boolean;
+  /** "Order this box / design" next to the download (B-03 bridge: every export leads back to an order). */
+  onOrder?: () => void;
+  orderLabel?: string;
+}) {
   const { t } = useI18n();
   const [size, setSize] = useState<ExportSize | null>(null);
   useEffect(() => {
@@ -216,7 +251,10 @@ export function ExportModal({ open, onClose, onExport, busy }: { open: boolean; 
       title={t("designer.export.heading")}
       size="small"
       primaryAction={{ content: t("designer.export.download"), disabled: !size, loading: busy, onAction: () => size && onExport(size) }}
-      secondaryActions={[{ content: t("common.cancel"), onAction: onClose }]}
+      secondaryActions={[
+        ...(onOrder && orderLabel ? [{ content: orderLabel, onAction: onOrder }] : []),
+        { content: t("common.cancel"), onAction: onClose },
+      ]}
     >
       <BlockStack gap="400">
         <ChoiceList

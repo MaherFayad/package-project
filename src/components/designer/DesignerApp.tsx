@@ -23,7 +23,6 @@ import {
   Popover,
   RangeSlider,
   Select,
-  Spinner,
   Tabs,
   Text,
   TextField,
@@ -60,6 +59,8 @@ import lib from "./library.module.css";
 import { loadLocalDraft, saveLocalDraft } from "./lib/storage";
 import { useArtworkCanvases } from "./useArtworkCanvases";
 import { prepareImage } from "./uploadImage";
+import { stampExportMark } from "@/components/marketing/exportMark";
+import { formatNumber } from "@/lib/format";
 import { fitTextBox, measureText } from "./fonts";
 import { FaceEditor } from "./FaceEditor";
 import { DielineView } from "./DielineView";
@@ -162,6 +163,7 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
   const libModel = useMemo<ModelDef | null>(() => docModel(doc), [doc.modelCode, doc.structureCode]);
   const model: DielineModel | null = geo?.dieline ?? null;
   const isVessel = !!geo?.vessel;
+  const orderLabel = t(isVessel ? "designer.container.order" : "designer.order.button");
   const modelRef = useRef(model);
   modelRef.current = model;
   // Faces of the latest committed geometry (ahead of `model` while typing) for artwork rescaling.
@@ -595,11 +597,13 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
       // Wait for the lazily loaded 3D view to be ready.
       for (let i = 0; i < 40 && !sceneRef.current?.getCanvas(); i++) await new Promise((r) => setTimeout(r, 100));
       const px = size === "hd" ? 2160 : 1080;
-      const blob = await sceneRef.current!.screenshot({ width: px, height: px, background: "#ffffff" });
+      const shot = await sceneRef.current!.screenshot({ width: px, height: px, background: "#ffffff" });
+      // B-22: the standard PNG carries the small Elba mark (social loop); HD stays clean.
+      const blob = size === "hd" ? shot : await stampExportMark(shot, { locale }).catch(() => shot);
       downloadBlob(blob, `elba-${slugify(doc.name || libModel?.slug || doc.structureCode)}-${px}.png`);
       trackClient("export_png", { size, structure_code: doc.structureCode, locale });
       setModal(null);
-      toast.show(t("designer.export.done"));
+      toast.show(t("designer.export.done"), { action: { content: orderLabel, onAction: doOrder } });
     } catch {
       toast.show(t("designer.export.failed"), { tone: "critical" });
     } finally {
@@ -790,7 +794,7 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
           </Popover>
         </div>
         <Button variant="primary" onClick={doOrder} loading={ordering}>
-          {t(isVessel ? "designer.container.order" : "designer.order.button")}
+          {orderLabel}
         </Button>
       </div>
 
@@ -818,7 +822,8 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
           </ButtonGroup>
           {view !== "dieline" ? (
             <div className={styles.faceSelect}>
-              <Select labelInline label={t("designer.artwork.face")} size="slim" value={face} options={faceOptions} onChange={(v) => pickFace(v as FaceId)} />
+              {/* Label above, value only inside (CR-47 / CR-58: no "الوجه الأمام" run-on, one type size). */}
+              <Select label={t("designer.artwork.face")} size="slim" value={face} options={faceOptions} onChange={(v) => pickFace(v as FaceId)} />
             </div>
           ) : bothSides ? (
             <ButtonGroup variant="segmented" accessibilityLabel={t("designer.view.sideView")}>
@@ -903,6 +908,9 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
                   label={t("designer.view.faceEditorLabel", { face: faceLabel(face) })}
                   hint={t("designer.view.faceEditorHint")}
                   selectedLabel={(l) => `${t("designer.artwork.selected")}: ${layerName(l, t)}`}
+                  positionLabel={(l) =>
+                    t("designer.layer.positionAnnounce", { x: formatNumber(l.x, 1), y: formatNumber(l.y, 1), w: formatNumber(l.width, 1), h: formatNumber(l.height, 1), r: formatNumber(l.rotation) })
+                  }
                 />
               ) : null}
               {view === "dieline" ? (
@@ -918,8 +926,10 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
               ) : null}
             </>
           ) : (
-            <div className={styles.sceneLoading}>
-              <Spinner size="large" accessibilityLabel={t("designer.view.loading")} />
+            <div className={styles.sceneLoading} role="status" aria-busy="true">
+              {/* Skeleton, not a spinner (CR-21 / CR-24), same as the route loader. */}
+              <StageSkeleton />
+              <span className="visually-hidden">{t("designer.view.loading")}</span>
             </div>
           )}
         </div>
@@ -1083,7 +1093,17 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
           setModal(null);
         }}
       />
-      <ExportModal open={modal === "export"} onClose={() => setModal(null)} onExport={exportPng} busy={exporting} />
+      <ExportModal
+        open={modal === "export"}
+        onClose={() => setModal(null)}
+        onExport={exportPng}
+        busy={exporting}
+        orderLabel={orderLabel}
+        onOrder={() => {
+          setModal(null);
+          doOrder();
+        }}
+      />
       <ShareModal open={modal === "share"} onClose={() => setModal(null)} url={shareUrl} error={shareError} />
     </div>
   );

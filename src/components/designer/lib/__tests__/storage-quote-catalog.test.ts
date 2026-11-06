@@ -71,7 +71,8 @@ describe("price badge", () => {
       validUntil: "2026-11-08T00:00:00.000Z",
     });
     const s = toPriceState(200, { mode: "instant", quantity: 500, offers: [offer("a", 9000, 5), offer("b", 8000, 9)], suggestion: null, validUntil: "x" });
-    expect(s.status === "ready" && s.best.vendor.id).toBe("b");
+    // B-26: the headline (best-match, first-ranked) offer, not the cheapest.
+    expect(s.status === "ready" && s.best.vendor.id).toBe("a");
     expect(s.status === "ready" && s.vendorCount).toBe(2);
   });
 });

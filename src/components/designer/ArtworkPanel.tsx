@@ -146,7 +146,7 @@ function LayerInspector({ layer, onLayer, onSeal, onPlace, onReorder, onDuplicat
     <section aria-labelledby={`insp-${layer.id}`} className={styles.inspector} onBlur={onSeal}>
       <BlockStack gap="400">
         <InlineStack align="space-between" blockAlign="center" gap="200">
-          <Text as="h3" variant="headingSm" id={`insp-${layer.id}`}>
+          <Text as="h2" variant="headingSm" id={`insp-${layer.id}`}>
             {t("designer.artwork.selected")}: {layerName(layer, t)}
           </Text>
         </InlineStack>
