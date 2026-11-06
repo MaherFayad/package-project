@@ -1,6 +1,7 @@
 import { Suspense, type ReactNode } from "react";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
+import { preload } from "react-dom";
 import { modelFromParam } from "@/lib/library";
 import { toLocale } from "@/i18n";
 import { AppProvider } from "@/components/ui";
@@ -17,7 +18,11 @@ export default async function DesignLayout({ children, params }: { children: Rea
   // Unknown model → real 404. This must run here, above the Suspense boundary below: a notFound()
   // inside it would be streamed with status 200 (x-elba-path is set by src/middleware.ts).
   const model = ((await headers()).get("x-elba-path") ?? "").split("/")[3];
-  if (model && !modelFromParam(model)) notFound();
+  const libModel = model ? modelFromParam(model) : null;
+  if (model && !libModel) notFound();
+  // The model poster is the phone LCP (PERF-R4-02). Preloaded here, above the Suspense boundary,
+  // so the hint is in <head>; from the page it streamed after the shell and started ~1.5 s late.
+  if (libModel) preload(`/models/${libModel.slug}.svg`, { as: "image", fetchPriority: "high" });
   return (
     <AppProvider locale={locale}>
       <div className={styles.shell}>

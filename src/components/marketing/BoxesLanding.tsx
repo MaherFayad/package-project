@@ -5,6 +5,7 @@ import { getT } from "@/i18n";
 import type { DictKey } from "@/i18n";
 import { designHref } from "@/components/store/catalog";
 import { getLowestUnit, listStructures } from "@/components/store/data";
+import { HeroImage } from "./HeroImage";
 import { ProductCard } from "./ProductCard";
 import { renderDims, renderSrc, srcSetFor } from "./assets";
 import styles from "./marketing.module.css";
@@ -35,6 +36,8 @@ export async function BoxesLanding({
 }) {
   const t = getT(locale);
   const H = titleAs;
+  // The 0427 render in the hero showcase is the phone LCP. HeroImage preloads its AVIF from <head>
+  // (R4-MK-06); a second webp preload here made the render download twice (PERF-R4-06 merge).
   const structures = await listStructures();
   const prices = new Map(await Promise.all(structures.map(async (s) => [s.code, await getLowestUnit(s.code, s.defaultDims)] as const)));
   const base = `/${locale}`;
@@ -66,8 +69,13 @@ export async function BoxesLanding({
           <div className={`${styles.heroShowcase} m-enter-lcp`} style={{ ["--m-i" as string]: 4 }} aria-hidden="true">
             {SHOWCASE.map((c) => (
               <div key={c} className={styles.showcaseItem}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={renderSrc(c)} srcSet={srcSetFor(renderSrc(c))} sizes="(min-width: 1024px) 260px, 34vw" alt="" {...renderDims(renderSrc(c))} fetchPriority={c === "FEFCO_0427" ? "high" : "auto"} />
+                {c === "FEFCO_0427" ? (
+                  <HeroImage src={renderSrc(c)} sizes="(min-width: 1024px) 260px, 34vw" alt="" {...renderDims(renderSrc(c))} />
+                ) : (
+                  // Side renders: low priority and no preload, so only the LCP render competes with the CSS (R4-MK-06).
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={renderSrc(c)} srcSet={srcSetFor(renderSrc(c))} sizes="(min-width: 1024px) 260px, 34vw" alt="" {...renderDims(renderSrc(c))} fetchPriority="low" decoding="async" />
+                )}
               </div>
             ))}
           </div>
@@ -90,7 +98,7 @@ export async function BoxesLanding({
                   </div>
                   <span className={styles.small}>{t("marketing.boxes.count", { count: list.length })}</span>
                 </div>
-                <ul className={`${styles.productGrid} ${styles.productRail}`}>
+                <ul className={`${styles.productGrid} ${styles.productRail}`} data-rail="">
                   {list.map((s, i) => (
                     <ProductCard key={s.code} locale={locale} structure={s} fromPiasters={prices.get(s.code) ?? null} index={i} />
                   ))}

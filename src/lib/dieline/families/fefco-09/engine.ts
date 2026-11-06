@@ -1,4 +1,4 @@
-import { Euler, Matrix4, Quaternion, Vector3 } from "three";
+import { Euler, Mat4 as Matrix4, Quat as Quaternion, Vec3 as Vector3 } from "@/lib/dieline/math";
 import { z } from "zod";
 import type { Dims } from "@/types";
 import { DielineBuilder, panelCreases, rectEdges } from "../../builder";

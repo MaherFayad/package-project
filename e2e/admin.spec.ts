@@ -128,6 +128,17 @@ test.describe("admin", () => {
       await expect(page.getByRole("heading", { level: 1, name: "Moderation" })).toBeVisible({ timeout: 30_000 });
       await page.getByRole("button", { name: `Approve: ${caption}` }).click();
       await expect.poll(async () => (await db.vendorPortfolioItem.findUnique({ where: { id: item.id } }))?.status, { timeout: 15_000 }).toBe("APPROVED");
+      // R8-01: the approval purges the "/[locale]" layout path. Prerendered box style and legal pages
+      // must still answer 200 afterwards (with dynamicParams = false they 404ed until the next build),
+      // and unknown slugs must still answer a real 404.
+      for (const path of ["/en/boxes/mailer-box", "/ar/boxes/mailer-box", "/en/legal/terms", "/ar/legal/privacy"]) {
+        const res = await page.request.get(path);
+        expect(res.status(), path).toBe(200);
+      }
+      for (const path of ["/en/boxes/no-such-box", "/en/legal/no-such-doc"]) {
+        const res = await page.request.get(path);
+        expect(res.status(), path).toBe(404);
+      }
     } finally {
       await db.vendorPortfolioItem.delete({ where: { id: item.id } }).catch(() => {});
       await db.auditLog.deleteMany({ where: { summary: { contains: item.id } } });

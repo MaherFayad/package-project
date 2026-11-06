@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useState, type KeyboardEvent } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Text } from "@/components/ui/Text";
+import { Text } from "@/components/marketing/mkui";
 import styles from "./store.module.css";
 
 export interface GalleryItem {

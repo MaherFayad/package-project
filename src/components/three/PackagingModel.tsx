@@ -150,7 +150,7 @@ export function PackagingModel({
     for (const [id, pose] of poses) {
       const g = groups.current.get(id);
       if (!g) continue;
-      g.matrix.copy(pose.local);
+      g.matrix.fromArray(pose.local.elements);
       g.matrixWorldNeedsUpdate = true;
     }
     const box = boundsAt(dieline, progress, poses);

@@ -696,7 +696,7 @@ export const adminAr: Widen<typeof adminEn> = {
     photoAlt: "صورة من أعمال {vendor}: {caption}",
     fullSize: "فتح الصورة بالحجم الكامل",
     flagged: "بيانات تواصل: {kinds}",
-    kinds: { PHONE: "هاتف", EMAIL: "بريد إلكتروني", URL: "موقع", HANDLE: "حساب", MESSENGER: "تطبيق مراسلة" },
+    kinds: { PHONE: "هاتف", EMAIL: "بريد إلكتروني", URL: "موقع", HANDLE: "حساب", MESSENGER: "تطبيق مراسلة", SOLICIT: "دعوة للتواصل خارج علبة" },
     statuses: { APPROVED: "معتمدة", REJECTED: "مرفوضة", PENDING: "للمراجعة" },
     viewPublic: "فتح الملف العام",
     clean: "حذف بيانات التواصل",

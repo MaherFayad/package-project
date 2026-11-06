@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Vector3 } from "three";
+import { Vec3 as Vector3 } from "@/lib/dieline/math";
 import type { Dims, FaceId } from "@/types";
 import { boundsAt, computePoses } from "../../../fold";
 import { polygonArea } from "../../../geometry";

@@ -217,3 +217,119 @@ Before these fixes, the same three runs gave 1 failure each in the first attempt
 | E-08 | medium | `src/lib/env.ts` `otpIpLimits()`, `src/lib/auth/otp.ts`, `api/auth/verify-otp`, `playwright.config.ts` | The per-IP OTP limits (20 requests/h, 30 verifies/10 min) are shared by every e2e sign-in from 127.0.0.1, and back-to-back runs on a reused server exceed them even with unique phones. | Relaxed ONLY when both test markers are set: `ELBA_E2E=1` (set by playwright's `webServer.env`) AND the OTP dev echo (`OTP_DEV_ECHO=1` under `next start`, which already puts codes in API responses and must never be set in a deployment). The brief suggested "only when NODE_ENV is not production", but the e2e server IS `next start` (NODE_ENV=production), so that would not have helped. Per-phone limits and the lockout are unchanged. Unit tests: production keeps 20/30; either marker alone keeps 20/30. | fixed |
 | E-09 | medium (product) | designer page (`/[locale]/design/*`), owners: designer / 3D | Intermittent React #418 hydration mismatch ("server rendered HTML didn't match the client") during hydration, ~0.7 s after navigation and before any interaction. Seen on 3 of ~370 model pages in the full run (FEFCO_0300, FEFCO_0748, BTL_PET_WATER_EG: box, tray and bottle, so the designer shell, not one model) and on other models in earlier full runs. The server HTML is byte-identical across requests, so the mismatch comes from the client. It reproduces only on the production build under full-suite load: 40 throttled loads on `next dev` were clean. The tests are right to fail (`errors` must be empty); they were not loosened. Traces: `test-results/models-model-*/trace.zip` from the run. | Lead for the owners: `designer/fonts.ts` `measureText()` estimates on the server (`length × 0.55`) but measures with the canvas on the client, and that measurement changes once the webfont has loaded, which depends on timing. If any measured text size reaches hydrated markup, it would mismatch only when fonts finish loading before hydration. Also check other render-time reads of browser state in the designer tree. | open |
 | E-10 | — | `e2e/journey.spec.ts` "stops at the checkout card step" (designer session report) | Not a checkout bug. Journey passes alone (24.6 s), with the model specs in the other worker (24.2 s), and in the full run (35.4 s, same slot as the earlier timeout). The earlier 4-minute timeout happened while the other worker ran the heaviest `catalogue-models` batches under software WebGL. The cold-start warm-up (E-06) and the hydration-safe OTP send (E-04) removed the slow first hits. The card fields (number, expiry, CVC) are controlled inputs like the OTP field, but no lost card input appeared in any trace. | test isolation / load (fixed by E-04, E-06) | fixed |
+
+---
+
+# Round 4
+
+Base: main at 781d663 (rounds 1 to 3 merged). Scope: `src/app/api`, `src/lib` (except analytics, library, dieline, vessels), `prisma/schema.prisma` (additive), `next.config.ts`, e2e infrastructure, tests. Standard: OWASP ASVS 4.0.3 (V4 access control, V5 validation, V11 business logic, V12/V13 resource limits, V14 configuration), Top 10 2021; Egyptian VAT Law 67/2016 (14%); PDPL 151/2020.
+
+Method: `next build` + `next start` (`OTP_DEV_ECHO=1 ALLOW_MOCK_PAYMENTS=1`), seeded SQLite. Live probes as anonymous, two unrelated buyers, Nile Pack staff, Delta Cartons staff and admin against **every route handler** and **every server action** (47 actions, called through their real `Next-Action` ids from `.next/server/server-reference-manifest.json`). Data-changing probes use private orders from `e2e/fixtures/factory.ts` (`cloneOrder`, `createUser`) and clean up after themselves. Races are fired with `Promise.all` against the running server.
+
+## Re-verification of earlier rows (live, on the round 4 base)
+
+| row | check | result |
+|---|---|---|
+| T-02 | other vendor's print PDF of a PAID order | 404 |
+| T-03 | vendor → QC_PENDING with no QC photos | 409 |
+| T-04 | admin → PAID / → REFUNDED through the status API | 409 / 409 |
+| T-06 | forged mock webhook under `next start` | 401 |
+| T-11 | 300 KB webhook body | 413 |
+| T-22 | other vendor's order on the status API | 404 (not 403) |
+| R2-02 | vendor on an unpaid order: order page, pay page, proof PDF, dieline | not-found view (no number, no address); 404; 404. Buyer still sees it |
+| R2-11 | admin print PDF of an unpaid order | 409 |
+| R2-15 | margin edit → public price | **reopened**, see R4-04 (it was worse than recorded: up to 1 h, not 300 s) |
+| R2-16 | quote-request: 5 KB body / unknown key | 413 / 400 |
+| R2-01, R2-08 | CSP on pages incl. new `/en/catalog/[code]`, `/en/admin/quotes`; API routes keep their own policy | unchanged, correct |
+| all others | covered by the unit suites (unchanged and passing) | fixed |
+
+### Authorisation matrix (live, after fixes)
+
+Route handlers (status codes; `buyer2` is an unrelated buyer):
+
+| route | anon | buyer (owner) | buyer2 | Nile staff | Delta staff | admin |
+|---|---|---|---|---|---|---|
+| `GET /api/orders/:id/print-pdf` (Delta job, PAID, not accepted) | 401 | 200 | 404 | 404 | 404 | 200 |
+| `GET /api/orders/:id/print-pdf` (Nile job, IN_PRODUCTION) | 401 | 200 | 404 | 200 | 404 | 200 |
+| `GET /api/orders/:id/proof-pdf` | 401 | 200 | 404 | 200 | 404 | 200 |
+| `GET /api/vendor/jobs/:id/dieline` | 401 | 403 | 403 | 200 | 404 | 200 |
+| `GET /api/vendor/jobs/:id/print-pdf` | 401 | 403 | 403 | 302 | 404 | 302 |
+| `POST /api/orders/:id/status` | 401 | 403 | 403 | 409 | 404 | 409 |
+| `GET /api/designs/:id` | 404 | 200 | 404 | 404 | 404 | 200 |
+| `POST /api/designs/:id/share` | 401 | 200 | 403 | 403 | 403 | 403 |
+| `GET /api/admin/users/:id/export` | 401 | 403 | 403 | 403 | 403 | 200 |
+| `POST /api/catalogue/quote-request` | 401 | 201 | 201 | **403** (was 201) | **403** | 201 |
+| `POST /api/jobs/follow-up` (no CRON_SECRET, production) | 503 | 503 | 503 | 503 | 503 | 503 |
+| `POST /api/events` cross-site | 403 | | | | | |
+
+Server actions (anonymous / unrelated buyer / Nile staff): every checkout, order, account, vendor and admin action returned `FORBIDDEN`/`UNAUTHENTICATED`, `NOT_FOUND` or `notFound` for rows the caller does not own, before touching data. Admin actions (refund, checkout settings, quote leads, portfolio moderation, bio clean, pricing, data requests …) → `FORBIDDEN` for buyer and vendor. Vendor actions on another vendor's portfolio item or rate card → `NOT_FOUND`. Vendor files: approved portfolio photos public; PENDING/REJECTED only to the owning vendor and admin (`private, no-store`); QC files only to the order's vendor and buyer.
+
+## Round 4 findings
+
+New findings before fixing, all passes: **critical 0, high 2, medium 5, low 7** (14). Pass 1: R4-01 to R4-08 (high 2, medium 3, low 3). Pass 2: R4-09 to R4-12 (medium 2, low 2). Pass 3: R4-13, R4-14 (low 2).
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R4-01 | high | `components/admin/server/actions.ts` `refundOrderInternal` (refund and dispute-refund) | A double click, a second tab or two admins refunded the same payment several times at the gateway. Every call read the payment as PAID, called `provider.refund()`, and only then hit the state machine. Live, 3 concurrent `refundOrderAction` on one order: 1 ok + 2 `INVALID_STATE` **after** their refund calls, i.e. 3 gateway refunds for one payment. | ASVS V11.1.6 (business logic concurrency), V11.1.1; money integrity | Claim before calling: conditional `PAID → REFUNDED` per payment; a lost claim skips the gateway call; nothing claimed → `STALE`. A declined refund releases the claim; an unknown outcome (timeout, network error) keeps it and writes `REFUND_UNCONFIRMED:<paymentId>` on the timeline, because a retry could refund twice. Live after: 1 ok + 2 `STALE`, one audit row, order REFUNDED. | fixed |
+| R4-02 | high | `lib/orders/service.ts` `placeOrder` → `createOrderFromOffer`, new `lib/orders/sample-credit.ts` | Sample credit (B-05) used more than once. `sampleCreditFor()` ran before the order transaction, so orders placed at once all saw the credit unused. Live: one paid 750 EGP sample, 3 concurrent `placeOrderAction` → **3 orders each discounted by 750 EGP** (3 `SAMPLE_CREDIT` notes). | ASVS V11.1.6; money integrity; VAT Law 67/2016 (discount reduces the taxable value once) | `claimSampleCredit()` runs first inside the order transaction: it re-checks usage (serialised writers on SQLite see the first claim) and takes an optimistic lock on the sample order's `updatedAt` (concurrent writers on Postgres: the second conditional update matches 0 rows). A lost claim throws `QUOTE_EXPIRED` ("This price has expired. Get a new price"), so the buyer re-prices and sees the total without the credit instead of paying a total they were not shown. Live after: 1 order placed, 1 credited. Unit tests with an in-memory table that has Postgres-like conditional updates. | fixed |
+| R4-03 | medium | `api/orders/[id]/status`, `lib/orders/api-rules.ts` | Vendor staff could mark their own SHIPPED order DELIVERED through the generic API (the portal has no such action). That stamps `deliveredAt` without courier proof, starts the buyer's review and dispute clock early and makes the balance payout earnable. Live: Nile staff → 200, order DELIVERED. | ASVS V11.1.1 (business-logic sequence), V4.1.3; Top 10 A04 | Vendors may only set ACCEPTED, IN_PRODUCTION, QC_PENDING and SHIPPED through the API (each still checked by the portal's `can()` rules). Delivery comes from the courier sync (SYSTEM) or ops. Live after: 409 `NOT_ALLOWED`, order stays SHIPPED. | fixed |
+| R4-04 (reopens R2-15) | medium | `components/admin/server/actions.ts` `savePricingSettingsAction`, `applyIndexUpdateAction`; `components/vendor/server/actions.ts` `saveRateCard`; new `lib/catalog-cache.ts` | Stale public prices after an admin price edit. Live: margin 25% → 50%: `/api/quote` (and checkout) moved from 58.33 to 70.00 EGP per box at once, while `/en/boxes/mailer-box/330x200x120` kept showing 34.60 EGP. The R2 note said "within the 300 s TTL", but the `/boxes/...` pages are ISR (`revalidate = 3600`) and are prerendered while the data cache is bypassed, so they do not carry the `catalog` tag: the old price stayed for up to **one hour**. Breaks "one price on every surface" (B-26). | Freshness / money display; B-26 | `purgeCatalogCache()` = `revalidateTag("catalog")` + `revalidatePath("/[locale]", "layout")` (the same purge every catalogue edit already uses), called after pricing settings, FX/board index and rate-card saves. Live after: the page shows 41.43 EGP on the very next request (34.60 × 1.197, the same ratio as the live quote), and 34.60 again after restoring. | fixed |
+| R4-05 | medium (perf) | `prisma/schema.prisma` (additive) | Two new lookups were full table scans (SQLite `EXPLAIN QUERY PLAN`: `SCAN`): the platform-wide monthly sample cap counts `ProductionEvent` NOTE `SAMPLE_ORDER` since the 1st on every sample offer request (the table grows with every order event), and the admin quote-leads inbox lists `Quote` by status newest first (`SCAN Quote; USE TEMP B-TREE FOR ORDER BY`). | performance budget (N+1 / scans) | `ProductionEvent @@index([note, createdAt])`, `Quote @@index([status, createdAt])`. After: `SEARCH ProductionEvent USING INDEX (note=? AND createdAt>?)`, `SEARCH Quote USING INDEX (status=?)` with no temp sort. Other new lookups were already indexed (`AuditLog(entityType, entityId)`, `VendorPortfolioItem(vendorId)`, `Order(buyerId)`). | fixed |
+| R4-06 | low | `api/catalogue/quote-request` | Any role could file a buyer quote lead (vendor staff and admin got 201), and a double submit or re-send created a duplicate lead each time (rate limit 5/min = up to 7,200/day in the admin inbox). | ASVS V4.1.3, V11.1.6 | Buyers (and admin) only: vendor staff 403. The same open request (model, preset, quantity) within 72 h returns the existing lead (200 `{ id, repeat: true }`), the same rule as the checkout quote request. Live: 201 then 200 with the same id; vendor 403. | fixed |
+| R4-07 | low | `lib/orders/service.ts` `sampleCreditFor` | One `count` query per candidate sample order (at most 10), for the "credit in use" check. | PERF-20 | Accepted: bounded at 10 and usually 1 row. Moved to the shared `sampleCreditInUse()`. | open (accepted) |
+| R4-08 | low | `components/admin/server/actions.ts` refund of a sample order | If a sample order is refunded after its credit was used, the buyer keeps both the refund and the credit already given on the next order. | money integrity | Ops decision (the refund is manual). Suggested for the admin owner: show "credit used by ELB-…" on the refund dialog of a sample order. | open (admin owner) |
+
+### Pass 2 (fresh read of the remaining routes and libs: designs, quote, auth/OTP, jobs, ETA, proof preview, mock gateway, cache invalidation of moderation)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R4-09 | low | `lib/jobs/followUp.ts` (B-23 job) | The follow-up claim (`updateMany` setting `followedUpAt`) also moved `Design.updatedAt` to the job time (Prisma `@updatedAt` applies to `updateMany`; measured: 2026-11-01 → the run time). The account page sorts and labels designs by it, so a buyer saw every nudged design as "edited today", and a failed send's release moved it again. | data integrity; PDPL 151/2020 accuracy | `claim()` and `release()` write the design's own last-save time back (`updatedAt: c.updatedAt`); the store interface keeps the argument optional for the in-memory test store. | fixed |
+| R4-10 | medium | `components/admin/server/actions.ts` `reviewPortfolioAction`, `cleanBioAction` (B-08); `(store)/account/actions.ts` | `revalidatePath("/[locale]/vendors/[slug]", "page")` names a route without its `(store)` group, so it matched nothing. Live: an admin REJECTED an approved portfolio photo and the public profile kept showing it (and its caption) on the next requests, for 5 minutes to 1 hour depending on the page's ISR state. The same mistake made the account actions' `"/[locale]/account"` a no-op (harmless there: the page is dynamic). The checkout settings path had it too. | B-08 moderation; PDPL 151/2020 (contact details on a public profile) | Moderation actions call `purgeCatalogCache()` (catalogue tag + locale layout). The checkout and account paths now include their groups. A new unit test walks `src/` and fails if any `revalidatePath(pattern, "page" | "layout")` does not name a real directory under `src/app`, so this cannot come back. Live, same probe on two builds: old line → after REJECT the caption is still on `/en/vendors/delta-cartons` (6 image references); fixed → caption gone on the next request (4 references left, all in other sections). | fixed |
+| R4-11 | low | `lib/orders/service.ts` (proof preview store), `api/orders/proofs/[proofId]/preview` | The approval preview was stored as whatever bytes the `data:image/png;base64,…` URL decoded to (the action checks the prefix, not the bytes) and served from an API route, which carries no page CSP. `nosniff` + an image Content-Type stopped HTML rendering, so defence in depth only. | ASVS V12.5.2, V14.4.3 | Stored only if the bytes are PNG or JPEG (magic bytes); served with `default-src 'none'; sandbox` and a filename, like served uploads. | fixed |
+| R4-12 | medium | `lib/orders/sample-credit.ts` | An order is created at proof approval, before payment. A buyer who approved with the sample credit and walked away kept a PENDING_PAYMENT order that held the credit for ever: its quote expires after at most 72 h and `startPayment` then refuses it, so it can never be paid, yet the next order got no credit unless the buyer found and cancelled the old one. | consumer fairness (Consumer Protection Law 181/2018); money integrity | "In use" now means: not cancelled, and not an unpaid order whose quote has expired. Paid, in-production, delivered and refunded orders still consume it. Live: with order A (credited, unpaid) open, no credit is offered; after A's quote expires the credit is offered again and order B is credited once. | fixed |
+
+### Pass 3 (short re-read of rate limiting and outbound calls)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R4-13 | low | `lib/rate-limit.ts` `clientIp` | `X-Real-IP` always wins. Correct behind nginx and Vercel (they set it), but behind an edge that passes a client's own header through (a bare cloud load balancer), a client could send a new value per request and skip the per-IP OTP limits (SMS pumping). The platform test pins the current default on purpose. | ASVS V11.1.4 (anti-automation) | Opt-out `TRUST_X_REAL_IP=0` falls back to the trusted `X-Forwarded-For` hop; the default is unchanged. Deployment note: set it unless the edge overwrites `X-Real-IP`. | fixed (config) |
+| R4-14 | low | `lib/orders/service.ts` `syncShipments` (called by the order page) | Every view of a SHIPPED order polled the courier API (15 s timeout each), so reloads or several viewers fanned out outbound calls with no limit. | ASVS V12/V13 resource limits | At most one courier poll per order per minute per process; the page still renders the stored tracking. | fixed |
+
+### Checked and found sound in round 4
+- **Webhook HMAC and idempotency**: Paymob HMAC is SHA-512 over the documented field list, constant-time compare, hex-only; signed callbacks are bound to the gateway order id stored at intention time (T-01), plus provider, currency and exact amount. Replays → `DUPLICATE`; refund before capture → `REFUND_WITHOUT_PAYMENT`; partial refund → note only; voided / auth-only never PAID. 413 above 200 KB. Unchanged and covered by `payment-rules.test.ts`.
+- **Money math**: VAT 14% in integer piasters (`vatOf`), prepay discount in integer basis points on goods only, sample credit capped at net goods with VAT recomputed on the lower base, sample price never discounted; the credit note mirrors the sale invoice. Admin price override voids open PENDING payments so a stale amount cannot be captured.
+- **State machine**: every move is a conditional update plus its event in one transaction; ship claims before booking; reassign, payouts, QC review, portfolio review and bio cleaning are conditional (`STALE` on a lost race); dispute reprint numbers are unique (a double click fails on the unique number).
+- **Input validation**: every route and action parses with zod (strict where it matters), ids are regex-checked before queries, bodies are capped while streaming, error lists are capped.
+- **CSP / headers**: full policy on all pages including the new catalogue model, admin quotes and moderation pages; API routes keep per-route sandbox CSP on served files; `/api/events` refuses cross-site requests; the cron route is disabled in production without `CRON_SECRET` and compares the bearer token in constant time.
+
+## E2E reliability (round 4)
+
+| id | severity | file | finding | fix | status |
+|---|---|---|---|---|---|
+| E-11 | medium | `e2e/global-setup.ts` | A server under test started without `SESSION_SECRET` (or without `OTP_DEV_ECHO=1` under `next start`) failed every OTP spec (checkout ×2, designer, journey) with 30 s timeouts and no hint: `request-otp` answered 500 `SESSION_SECRET is not set` only in the server log. Seen in this round on a fresh container (the repo ships `.env.example` only). | Global setup now requests one OTP for a throwaway phone right after the server is up and stops the run with a clear message ("Is SESSION_SECRET set…?" / "start the server with OTP_DEV_ECHO=1") when it cannot sign in; the OTP row is deleted. No test was skipped or loosened. | fixed |
+
+Full suite on the final build (commit with all round 4 fixes), `next start` with `SESSION_SECRET`, `OTP_DEV_ECHO=1`, `ALLOW_MOCK_PAYMENTS=1`, `ELBA_E2E=1`; `npx playwright test --workers=2 --trace off`, all specs including `models` and `catalogue-models` (854 tests; 401 are the specs' own desktop-only / mobile-only splits):
+
+| run | passed | failed | skipped by design | time |
+|---|---|---|---|---|
+| 1 | 453 | 0 | 401 | 37.8 min |
+| 2 | 453 | 0 | 401 | 37.2 min |
+| 3 | 453 | 0 | 401 | 37.0 min |
+
+The four OTP-spec failures seen before E-11 was found were the missing `SESSION_SECRET`, not flakiness; with the server configured, the three runs above had no failure and no retry.
+
+## Round 4 verification
+
+| check | result |
+|---|---|
+| `npm run lint`, `npm run typecheck` | pass |
+| `npm test` | 80 files, 8,314 tests, all pass (19 new in `src/lib/__tests__/technical-audit-r4.test.ts`) |
+| `npm run build`, `npm run test:size` | pass; 45 / 45 non-3D pages within 200 KB gz |
+| e2e full suite ×3 (`--workers=2`) | 453 passed, 0 failed, each run (table above) |
+| live probes | every row above, before and after; evidence `docs/screenshots/audit/technical-r4/live-probes-before-after.png` |
+| deployment notes | set `TRUST_X_REAL_IP=0` unless the edge overwrites `X-Real-IP` (R4-13); `CRON_SECRET` enables the daily job in production; still open from earlier rounds: T-29 (in-memory rate limiter), T-30 (`'unsafe-inline'` scripts), R2-14 (admin/vendor query counts, owned by those sessions), E-09 (designer hydration, designer owner) |
+
+## Files touched outside the listed scope (round 4)
+- `src/components/admin/server/actions.ts` (admin): R4-01 claim-before-refund in `refundOrderInternal`; R4-04 one `purgeCatalogCache()` call in `savePricingSettingsAction` and `applyIndexUpdateAction`; R4-10 `purgeCatalogCache()` in `reviewPortfolioAction` and `cleanBioAction`, route-group path in `saveCheckoutSettingsAction`.
+- `src/components/vendor/server/actions.ts` (vendor): R4-04 one `purgeCatalogCache()` call in `saveRateCard`.
+- `src/app/[locale]/(store)/account/actions.ts` (storefront): R4-10 the four `revalidatePath` calls name `/[locale]/(store)/account`.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Box3, Vector3 } from "three";
+import { Box3, Vec3 as Vector3 } from "@/lib/dieline/math";
 import { boundsAt, computePoses, panelLocalPoint, panelPivot } from "@/lib/dieline/fold";
 import { polygonArea, segLength } from "@/lib/dieline/geometry";
 import { DielineValidationError } from "@/lib/dieline/limits";

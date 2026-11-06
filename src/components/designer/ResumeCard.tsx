@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import type { Locale } from "@/types";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n/types";
-import { Banner } from "@/components/ui";
+import { Banner } from "@/components/ui/Banner";
 import { designerPathLite, readDraftSummary, type DraftSummary } from "./lib/paths";
 
 /**

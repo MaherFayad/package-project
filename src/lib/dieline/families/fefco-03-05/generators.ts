@@ -1,4 +1,4 @@
-import { Box3, Vector3 } from "three";
+import { Box3, Vec3 as Vector3 } from "@/lib/dieline/math";
 import type { Dims, FaceId, StructureFeatures } from "@/types";
 import { DielineBuilder, rectEdges } from "../../builder";
 import { clamp, pt, rectPolygon } from "../../geometry";

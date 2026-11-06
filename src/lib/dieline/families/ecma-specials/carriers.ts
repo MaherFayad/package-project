@@ -1,4 +1,4 @@
-import { Vector3 } from "three";
+import { Vec3 as Vector3 } from "@/lib/dieline/math";
 import type { Dims, StructureFeatures } from "@/types";
 import { DielineBuilder, insetSeg, rectEdges } from "../../builder";
 import { cutWindow, stadium } from "../../features";

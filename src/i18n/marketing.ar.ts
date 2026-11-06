@@ -165,7 +165,7 @@ export const marketingAr: Widen<typeof marketingEn> = {
     body: "ابدأ بعلبة بريدية أو اختر نوعا آخر. يمكنك تغيير كل شيء لاحقا.",
     primary: "بدء التصميم مجانا",
     secondary: "دليل المطابع",
-    tileOrder: "طلب EL-1042",
+    tileOrder: "طلب ELB-26014",
     tileOrderStatus: "خرج للتوصيل",
     tileOrderMeta: "الإسكندرية · تتبع",
     tilePay: "ادفع بطريقتك",

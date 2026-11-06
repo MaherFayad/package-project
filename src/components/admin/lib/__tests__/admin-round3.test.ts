@@ -41,7 +41,7 @@ describe("profile moderation (B-08)", async () => {
   const { canApprovePortfolio, contactFlags, reviewNoteRequired, portfolioReviewSchema } = await import("../moderation");
   it("flags contact details in either language, Arabic-Indic digits included", () => {
     expect(contactFlags("نطبع علب الشحن", "We print shipping boxes.")).toEqual([]);
-    expect(contactFlags("كلمنا واتساب ٠١٠٠١٢٣٤٥٦٧", "")).toEqual(["MESSENGER", "PHONE"]);
+    expect(contactFlags("كلمنا واتساب ٠١٠٠١٢٣٤٥٦٧", "")).toEqual(["MESSENGER", "PHONE", "SOLICIT"]); // R6 (vendor): "كلمنا" (call us) is an invitation to contact off Elba
     expect(contactFlags("", "Visit www.nilepack-direct.com")).toContain("URL");
   });
   it("cannot approve a caption with contact details or a photo already reviewed", () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Box3, Vector3 } from "three";
+import { Box3, Vec3 as Vector3 } from "@/lib/dieline/math";
 import type { Dims } from "@/types";
 import { BOARD_SPECS, DielineValidationError, boundsAt, computePoses, panelLocalPoint, panelPivot, maxStage } from "../../..";
 import { polygonArea, segLength } from "../../../geometry";

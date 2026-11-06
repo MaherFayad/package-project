@@ -4,6 +4,7 @@ import { getT, toLocale } from "@/i18n";
 import type { DictKey } from "@/i18n";
 import { designHref } from "@/components/store/catalog";
 import { VESSEL_RENDERS, renderDims, srcSetFor, vesselSrc } from "@/components/marketing/assets";
+import { HeroImage } from "@/components/marketing/HeroImage";
 import styles from "@/components/marketing/marketing.module.css";
 
 /** Prerendered; prices and printer data refresh hourly (ISR). */
@@ -53,8 +54,13 @@ export default async function BottlesPage({ params }: Props) {
           <div className={`${styles.heroShowcase} m-enter-lcp`} style={{ ["--m-i" as string]: 4 }} aria-hidden="true">
             {(["dropper", "jar", "bottle", "can", "pump"] as const).map((v) => (
               <div key={v} className={styles.showcaseItem}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={vesselSrc(v)} srcSet={srcSetFor(vesselSrc(v))} sizes="(min-width: 1024px) 200px, 30vw" alt="" {...renderDims(vesselSrc(v))} fetchPriority={v === "bottle" ? "high" : "auto"} />
+                {v === "bottle" ? (
+                  <HeroImage src={vesselSrc(v)} sizes="(min-width: 1024px) 200px, 30vw" alt="" {...renderDims(vesselSrc(v))} />
+                ) : (
+                  // Side renders: low priority and no preload (R4-MK-06).
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={vesselSrc(v)} srcSet={srcSetFor(vesselSrc(v))} sizes="(min-width: 1024px) 200px, 30vw" alt="" {...renderDims(vesselSrc(v))} fetchPriority="low" decoding="async" />
+                )}
               </div>
             ))}
           </div>

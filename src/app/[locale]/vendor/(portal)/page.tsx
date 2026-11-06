@@ -88,10 +88,22 @@ export default async function VendorDashboard({ params }: { params: Promise<{ lo
     { key: "rateCards", label: "vendorPortal.dashboard.setup.rateCards", url: `${base}/rate-cards` },
   ];
   const done = setupItems.filter((s) => d.setup[s.key]).length;
+  // R7 (CR-35): one money precision per group: the two money metrics, and the payouts card column.
+  const upcoming = d.payouts.pendingPiasters + d.payouts.approvedPiasters + d.payouts.scheduledPiasters;
+  const hasPiasters = (...v: number[]) => ({ alwaysDecimals: v.some((x) => Math.round(x) % 100 !== 0) });
+  const metricDec = hasPiasters(d.payouts.paidPiasters, upcoming);
+  const cardDec = hasPiasters(d.payouts.paidPiasters, d.payouts.pendingPiasters + d.payouts.approvedPiasters, d.payouts.scheduledPiasters);
 
   return (
     <Page fullWidth title={t("vendorPortal.dashboard.greeting", { name: pick(locale, vendor.nameAr, vendor.nameEn) })} subtitle={t("vendorPortal.dashboard.subtitle")}>
       <BlockStack gap="400">
+        {d.bioReview ? (
+          <Banner
+            tone={d.bioReview === "PENDING" ? "info" : "warning"}
+            title={t(d.bioReview === "PENDING" ? "vendorPortal.dashboard.bioPending" : "vendorPortal.dashboard.bioRejected")}
+            action={{ content: t("vendorPortal.dashboard.bioAction"), url: `${base}/profile` }}
+          />
+        ) : null}
         <div className={styles.MetricsWrap}>
           <MetricsStrip
             accessibilityLabel={t("vendorPortal.dashboard.metricsLabel")}
@@ -105,8 +117,8 @@ export default async function VendorDashboard({ params }: { params: Promise<{ lo
                 value: t("vendorPortal.dashboard.ratingValue", { rating: d.rating.toFixed(1) }),
                 trend: t("vendorPortal.dashboard.ratingCount", { count: formatNumber(d.ratingCount) }),
               },
-              { label: t("vendorPortal.dashboard.metrics.paidOut"), value: formatMoney(d.payouts.paidPiasters, locale) },
-              { label: t("vendorPortal.dashboard.metrics.upcoming"), value: formatMoney(d.payouts.pendingPiasters + d.payouts.approvedPiasters + d.payouts.scheduledPiasters, locale) },
+              { label: t("vendorPortal.dashboard.metrics.paidOut"), value: formatMoney(d.payouts.paidPiasters, locale, metricDec) },
+              { label: t("vendorPortal.dashboard.metrics.upcoming"), value: formatMoney(upcoming, locale, metricDec) },
             ]}
           />
         </div>
@@ -166,7 +178,7 @@ export default async function VendorDashboard({ params }: { params: Promise<{ lo
                         {t(label)}
                       </Text>
                       <Text as="span" numeric fontWeight="semibold">
-                        {formatMoney(amount, locale)}
+                        {formatMoney(amount, locale, cardDec)}
                       </Text>
                     </div>
                   ))}

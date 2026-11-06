@@ -27,10 +27,13 @@ import { loadPricingConfig } from "@/components/admin/server/settings";
 import { HEADLINE_DEFAULTS } from "@/lib/pricing/headline";
 import { loadCheckoutSettings } from "./checkout-settings";
 import { SAMPLE_LINE_LABEL, SAMPLE_ORDER_NOTE, applySampleCredit, sampleOffer } from "./sample";
+import { claimSampleCredit, sampleCreditInUse, type SampleCreditClient } from "./sample-credit";
+import { isPngOrJpeg } from "./image-magic";
 import { getPaymentProvider, mockPaymentsEnabled, paymentConfig, type Intention, type WebhookOutcome, type WebhookRequest } from "@/lib/payments";
 import { getShippingProvider, type TrackingEvent } from "@/lib/shipping";
 import { notify } from "@/lib/notify";
 import { track } from "@/lib/analytics/track";
+import { rateLimit } from "@/lib/rate-limit";
 import { isReprint } from "@/components/admin/lib/metrics";
 import { generatePrintPdf } from "./pdf/print";
 import { putFile, getFile } from "./storage";
@@ -157,11 +160,7 @@ export async function sampleCreditFor(userId: string, designId: string, now = ne
     take: 10,
   });
   for (const r of rows) {
-    const usedBy = r.productionEvents.map((e) => e.note!.slice("SAMPLE_CREDITED:".length));
-    if (usedBy.length) {
-      const live = await db.order.count({ where: { number: { in: usedBy }, status: { notIn: ["CANCELLED"] } } });
-      if (live > 0) continue;
-    }
+    if (await sampleCreditInUse(db as unknown as SampleCreditClient, r.productionEvents, now)) continue;
     const lines = r.quote ? fromJson<QuoteLine[]>(r.quote.lines) : null;
     const goods = (lines ?? []).filter((l) => l.labelKey === SAMPLE_LINE_LABEL).reduce((sum, l) => sum + l.totalPiasters, 0);
     if (goods <= 0 || !r.paidAt) continue;
@@ -302,6 +301,8 @@ async function createOrderFromOffer(
 
   const result = await withRetry(() =>
     db.$transaction(async (tx) => {
+      // R4-02: claim the credit atomically (see ./sample-credit); a lost claim means re-price.
+      if (p.credit && !(await claimSampleCredit(tx as unknown as SampleCreditClient, p.credit.sampleOrderId, now))) throw new OrderError("QUOTE_EXPIRED");
       let proofId = p.existingProofId;
       if (!proofId) {
         const version = (await tx.proof.count({ where: { designId } })) + 1;
@@ -394,7 +395,9 @@ async function createOrderFromOffer(
     }),
   );
 
-  if (p.preview && !p.existingProofId) {
+  // R4-11: only a real PNG or JPEG is kept (the data-URL prefix is checked by the action, the bytes
+  // were not): anything else is dropped, so the private preview route can only ever serve an image.
+  if (p.preview && !p.existingProofId && isPngOrJpeg(p.preview)) {
     try {
       await putFile(`proofs/${result.proofId}.img`, p.preview);
       await db.proof.update({ where: { id: result.proofId }, data: { previewUrl: `/api/orders/proofs/${result.proofId}/preview` } });
@@ -923,6 +926,10 @@ export async function shipOrder(orderId: string, actor: TransitionActor): Promis
 
 /** Refresh tracking for a shipped order; marks it delivered when the courier says so. */
 export async function syncShipments(orderId: string): Promise<void> {
+  // R4-14: the order page calls this on every view of a SHIPPED order. One courier poll per order
+  // per minute (per process) is enough; reloads no longer fan out to the courier API, each call
+  // bounded only by its 15 s timeout (ASVS V12/V13 resource limits on outbound calls).
+  if (!rateLimit("shipments:sync", orderId, 1, 60_000).ok) return;
   const order = await db.order.findUnique({ where: { id: orderId }, include: { shipments: true } });
   if (!order || order.status !== "SHIPPED") return;
   for (const s of order.shipments) {

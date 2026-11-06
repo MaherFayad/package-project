@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Vector3 } from "three";
+import { Vec3 as Vector3 } from "@/lib/dieline/math";
 import { BOARD_SPECS, DielineValidationError, boundsAt, computePoses, panelLocalPoint, panelPivot } from "../../..";
 import { polygonArea } from "../../../geometry";
 import { DEFINITIONS, IMPLEMENTED_IN_CORE, definitionByCode, generateFamilyDieline, tryGenerateFamilyDieline, validateFamilyDims, type Fefco04Definition, type Fefco04Model } from "..";

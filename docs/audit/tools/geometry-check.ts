@@ -7,7 +7,7 @@
  *  - non-finite vertices, zero-area panels, missing faces (front/top)
  * usage: npx tsx --tsconfig tsconfig.json docs/audit/tools/geometry-check.ts > out.json
  */
-import { Vector3 } from "three";
+import { Vec3 as Vector3 } from "@/lib/dieline/math";
 import { BOX_MODELS } from "@/lib/library";
 import { BOARD_SPECS, computePoses, boundsAt, panelPivot, panelLocalPoint, type DielineModel } from "@/lib/dieline";
 

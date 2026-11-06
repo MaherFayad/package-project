@@ -1,4 +1,4 @@
-import { Matrix4 } from "three";
+import { Mat4 as Matrix4 } from "./math";
 import type { Dims, StructureCode, StructureParamLimits } from "@/types";
 import { STRUCTURE_FAMILY } from "./materials";
 import { computeFaces } from "./fold";

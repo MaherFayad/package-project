@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Vector3 } from "three";
+import { Vec3 as Vector3 } from "@/lib/dieline/math";
 import { STRUCTURE_CODES, type Dims, type FaceId, type MaterialCode, type StructureCode } from "@/types";
 import {
   BOARD_SPECS,

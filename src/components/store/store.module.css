@@ -242,11 +242,6 @@
 .prose { display: flex; flex-direction: column; gap: var(--p-space-300); }
 .prose p { margin: 0; }
 
-/* filters bar (vendors) */
-.filters { display: grid; gap: var(--p-space-300); grid-template-columns: repeat(auto-fill, minmax(min(100%, 11rem), 1fr)); align-items: end; }
-.filterChecks { display: flex; flex-wrap: wrap; gap: var(--p-space-100) var(--p-space-400); }
-.filterActions { display: flex; flex-wrap: wrap; gap: var(--p-space-200); align-items: center; }
-
 /* portfolio gallery */
 .gallery { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--p-space-300); grid-template-columns: repeat(auto-fill, minmax(min(100%, 9rem), 1fr)); }
 .galleryButton {
@@ -364,16 +359,6 @@
 .galleryNav:hover:not(:disabled) { background: #f5f5f3; }
 .galleryNav:disabled { opacity: 0.4; cursor: default; }
 .galleryNav:focus-visible { outline: 2px solid var(--p-color-border-focus, #005bd3); outline-offset: 2px; }
-/* Info note on the printer profile (was a UI kit Banner, which pulled Button + Spinner CSS). */
-.infoNote {
-  margin: 0;
-  padding: 12px 16px;
-  border-radius: 12px;
-  background: #eaf4ff;
-  color: #00336b;
-  font-size: 0.875rem;
-  line-height: 1.5;
-}
 /* Printer links on the public structure page: ink, not the admin link blue (R2-MK-09). */
 .makerList .designMain > a { color: var(--p-color-text, #1a1a1a); font-weight: 600; text-underline-offset: 3px; }
 .makerList .designMain > a:hover { text-decoration-thickness: 2px; }

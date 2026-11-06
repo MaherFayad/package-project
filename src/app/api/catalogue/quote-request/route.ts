@@ -25,10 +25,12 @@ const Body = z.object({
  * so the admin quote-leads inbox shows the model, standard and size, and the same request sent
  * again within 14 days returns the open one instead of a duplicate lead.
  *
- * 201 { id } | 200 { id, repeat: true } | 400 { error: "INVALID_BODY" | "UNKNOWN_MODEL" } | 401 | 429 { retryAfterSec }
+ * 201 { id } | 200 { id, repeat: true } | 400 { error: "INVALID_BODY" | "UNKNOWN_MODEL" } | 401 | 403 | 429 { retryAfterSec }
  */
 export async function POST(req: Request) {
-  const auth = await apiRequireRole();
+  // Buyers (and ops testing the flow). Vendor staff accounts are portal accounts: their requests
+  // would only add noise to the admin quote-leads inbox (R4-06).
+  const auth = await apiRequireRole(["BUYER", "ADMIN"]);
   if (auth instanceof Response) return auth;
   const rl = rateLimit("catalogue-quote", auth.id, 5, 60_000);
   if (!rl.ok) return Response.json({ error: "RATE_LIMITED", retryAfterSec: rl.retryAfterSec }, { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } });

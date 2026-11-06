@@ -1,4 +1,4 @@
-import { Vector3 } from "three";
+import { Vec3 as Vector3 } from "./math";
 import { computePoses, panelLocalPoint, panelPivot } from "./fold";
 import { round } from "./geometry";
 import type { DielineModel } from "./types";

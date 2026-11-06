@@ -19,5 +19,14 @@ export async function GET(_req: Request, { params }: { params: Promise<{ proofId
   const bytes = await getFile(`proofs/${proofId}.img`);
   if (!bytes) return new Response(null, { status: 404 });
   const type = bytes[0] === 0x89 ? "image/png" : "image/jpeg";
-  return new Response(new Uint8Array(bytes), { headers: { "Content-Type": type, "Cache-Control": "private, no-cache", "X-Content-Type-Options": "nosniff" } });
+  // Same lock-down as served uploads (R4-11, ASVS V12.5.2 / V14.4.3): API routes carry no page CSP.
+  return new Response(new Uint8Array(bytes), {
+    headers: {
+      "Content-Type": type,
+      "Cache-Control": "private, no-cache",
+      "X-Content-Type-Options": "nosniff",
+      "Content-Security-Policy": "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; sandbox",
+      "Content-Disposition": `inline; filename="proof-${proofId}.${type === "image/png" ? "png" : "jpg"}"`,
+    },
+  });
 }

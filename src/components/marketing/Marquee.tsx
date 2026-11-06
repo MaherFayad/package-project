@@ -14,14 +14,17 @@ export function Marquee({ items, label, pause, play }: { items: { src: string; a
   const [paused, setPaused] = useState(false);
   const loop = [...items, ...items];
   return (
-    <section className={styles.marquee} aria-label={label} data-paused={paused ? "true" : "false"}>
+    // a11y R4-03: one named region, on the scroller itself. It is focusable, so when the strip is
+    // paused or reduced-motion makes it a plain scroller, keyboard users can scroll it (WCAG 2.1.1).
+    // The <section> carries no name, so the label is not announced twice.
+    <section className={styles.marquee} data-paused={paused ? "true" : "false"}>
       <div className={`${styles.container} ${styles.marqueeHead}`}>
         <p className={styles.small}>{label}</p>
         <button type="button" className={styles.iconPill} onClick={() => setPaused((p) => !p)} aria-label={paused ? play : pause}>
           {paused ? <Play size={16} aria-hidden /> : <Pause size={16} aria-hidden />}
         </button>
       </div>
-      <div className={styles.marqueeViewport} role="group" aria-label={label}>
+      <div className={styles.marqueeViewport} role="region" aria-label={label} tabIndex={0}>
         <ul className={styles.marqueeTrack}>
           {loop.map((it, i) => (
             <li key={i} className={styles.marqueeItem} aria-hidden={i >= items.length || undefined}>
