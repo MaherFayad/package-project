@@ -441,7 +441,7 @@ Base: `4c11648` (main with rounds 1 to 4 merged). Production build (`next build 
 
 **R4-08: fixed.**
 - **Codemod:** `scripts/codemods/debarrel-ui.mjs` reads the barrel's export map (`src/components/ui/index.ts`) and turns each `import { … } from "@/components/ui"` into one import per kit file. Type-only specifiers are kept, and every other byte of the file is untouched.
-- **Scope:** it rewrote 89 files: \`components/admin\` 23, admin routes 11, \`components/vendor\` 10, vendor portal and apply 11, \`components/designer\` 10, editor routes 2, checkout 9, orders 7, account 3, dev 3.
+- **Scope:** it rewrote 89 files: `components/admin` 23, admin routes 11, `components/vendor` 10, vendor portal and apply 11, `components/designer` 10, editor routes 2, checkout 9, orders 7, account 3, dev 3.
 - **Lint rule:** `no-restricted-imports` in `eslint.config.mjs` rejects `@/components/ui` and `@/components/ui/index` anywhere in `src/` outside the kit. The error message names the codemod.
 - **Check:** `node scripts/codemods/debarrel-ui.mjs --check` exits 1 if a barrel import is left.
 
