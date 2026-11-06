@@ -9,15 +9,16 @@ import { formatMoney } from "@/lib/format";
 import { siteUrl } from "@/lib/env";
 import { MODEL_INDEX } from "@/lib/library/model-index.generated";
 import { MODEL_GROUPS } from "@/lib/library/types";
-import { FINISH_CODES, type StructureCode } from "@/types";
+import { FINISH_CODES } from "@/types";
 import { designHref, structureHref } from "@/components/store/catalog";
 import { getPriceFrom, listStructures, listVendors } from "@/components/store/data";
 import { DeniedBanner } from "@/components/marketing/DeniedBanner";
 import { startHref as kitStartHref } from "@/components/marketing/MarketingHeader";
-import { TILE_BG, renderSrc, srcSetFor, vesselSrc, type VesselRender } from "@/components/marketing/assets";
-import { Sheet } from "@/components/marketing/kit/Sheet";
+import { Sheet, SheetCard } from "@/components/marketing/kit/Sheet";
+import { SectionHead, Stack } from "@/components/marketing/kit/SectionHead";
+import { Grid } from "@/components/marketing/kit/Grid";
 import { Container } from "@/components/marketing/kit/Container";
-import { Display } from "@/components/marketing/kit/Display";
+import { Body, Display } from "@/components/marketing/kit/Display";
 import { Pill, PillRow } from "@/components/marketing/kit/Pill";
 import { Reveal } from "@/components/marketing/kit/Reveal";
 import { Marquee } from "@/components/marketing/kit/Marquee";
@@ -25,7 +26,8 @@ import { Orbit } from "@/components/marketing/kit/Orbit";
 import { Stat } from "@/components/marketing/kit/CountUp";
 import { Steps } from "@/components/marketing/kit/Steps";
 import { MotionScope } from "@/components/marketing/kit/MotionScope";
-import { R6, R6_MODELS, SAMPLE_LABEL, type R6Image, type R6ModelId } from "@/components/marketing/kit/assets";
+import { R6, R6_MODELS, SAMPLE_LABEL, src, srcSetW, type R6Image, type R6ModelId } from "@/components/marketing/kit/assets";
+import { MediaCard } from "@/components/marketing/kit/MediaCard";
 import { HomeHero, type HeroVideo } from "@/components/marketing/home/HomeHero";
 import { EgyptDots } from "@/components/marketing/home/EgyptDots";
 import { R6Pic } from "@/components/marketing/home/R6Pic";
@@ -61,14 +63,24 @@ const MODEL_COUNT = Object.keys(MODEL_INDEX).length;
 const GROUP_COUNT = MODEL_GROUPS.length;
 const FINISH_COUNT = FINISH_CODES.filter((f) => f !== "NONE").length;
 
-/** The hero turntable loop, once the assets branch ships the files (poster first, 720p first). */
-function heroVideo(): HeroVideo | null {
-  const loop = R6.loops.mailer;
+type LoopId = keyof typeof R6.loops;
+
+/** A turntable loop from the assets branch (720p below 1024px, 1080p above), or null if not shipped. */
+function loopVideo(id: LoopId): HeroVideo | null {
+  const loop = R6.loops[id];
   const has = loop.sources.every((x) => fs.existsSync(path.join(process.cwd(), "public", x.src)));
   if (!has) return null;
-  const order = [...loop.sources].sort((a, b) => a.height - b.height);
-  return { sources: order.map((x) => ({ src: x.src, type: x.type })), poster: `${loop.poster.base}.webp` };
+  const small = loop.sources.filter((x) => x.height === 720).map((x) => ({ src: x.src, type: x.type, media: "(max-width: 1023px)" }));
+  const large = loop.sources.filter((x) => x.height === 1080).map((x) => ({ src: x.src, type: x.type }));
+  return { sources: [...small, ...large], poster: `${loop.poster.base}.webp` };
 }
+
+/** Set pieces on the hero's studio floor (logical x: they mirror in Arabic). depth < 0 sits further back. */
+const HERO_PROPS: { id: R6ModelId; view: "iso" | "front"; x: string; y: string; w: string; depth: number; phone: boolean }[] = [
+  { id: "perfume", view: "iso", x: "52%", y: "68%", w: "12%", depth: 1, phone: true },
+  { id: "rigid-box", view: "iso", x: "86%", y: "70%", w: "16%", depth: 1, phone: false },
+  { id: "can", view: "front", x: "95%", y: "40%", w: "10%", depth: -1, phone: false },
+]
 
 /** Rail: our studio renders, dark and light, mixed like the reference's storefront strip. */
 const RAIL: { id: R6ModelId; tone: "dark" | "light" }[] = [
@@ -84,12 +96,9 @@ const RAIL: { id: R6ModelId; tone: "dark" | "light" }[] = [
   { id: "tea-tin", tone: "light" },
 ];
 
-/** Icon wall tiles: the smallest variant of our renders (64 to 72 px slots), no srcset. */
-const smallest = (src: string) => srcSetFor(src)?.split(" ")[0] ?? src;
-const WALL_ITEMS: { small: string; tone: string }[] = [
-  ...(["FEFCO_0427", "FEFCO_0201", "ECMA_RTE", "ECMA_STE", "PIZZA", "SLEEVE", "FEFCO_0320", "ECMA_CLB", "ECMA_SLB", "FEFCO_0422", "GABLE_BOX", "PAPER_TUBE", "RIGID_BOX"] as StructureCode[]).map((c) => ({ small: smallest(renderSrc(c)), tone: TILE_BG[c] })),
-  ...(["jar", "bottle", "dropper", "pump", "can"] as VesselRender[]).map((v, i) => ({ small: smallest(vesselSrc(v)), tone: ["#f6ecd2", "#e2efec", "#ece6f3", "#f3e3d9", "#dfe7f1"][i]! })),
-];
+/** Icon wall tiles: R6 cutouts (transparent, 1x file only: 68 px slots). */
+const WALL_TONES = ["#f3e3d9", "#e2efec", "#ece6f3", "#f6ecd2", "#dfe7f1", "#efe5ef", "#e6e6e3"];
+const WALL_ITEMS: { small: string; tone: string }[] = (Object.keys(R6_MODELS) as R6ModelId[]).map((id, i) => ({ small: src(R6.cutouts[`${id}-iso`]!), tone: WALL_TONES[i % WALL_TONES.length]! }));
 
 const FINISH_SPOTS: { t: string; s: string; dl: string }[] = [
   { t: "12%", s: "8%", dl: "0s" },
@@ -113,6 +122,13 @@ const THUMBS: { id: R6ModelId; t: string; s: string; z: string; dl: string }[] =
 
 const cut = (id: R6ModelId, view: "iso" | "front" = "iso"): R6Image => R6.cutouts[`${id}-${view}`]!;
 const studio = (id: R6ModelId, tone: "dark" | "light", view: "iso" | "front" = "iso"): R6Image => R6.hero[`${id}-${view}-${tone}`]!;
+
+/** webm + mp4 (720p) for a kit MediaCard. */
+function loopSources(id: LoopId): { webm?: string; mp4?: string } | undefined {
+  const v = loopVideo(id);
+  if (!v) return undefined;
+  return { webm: v.sources.find((x) => x.type === "video/webm")?.src, mp4: v.sources.find((x) => x.type === "video/mp4")?.src };
+}
 
 export default async function HomePage({ params }: Props) {
   const locale = toLocale((await params).locale);
@@ -172,15 +188,22 @@ export default async function HomePage({ params }: Props) {
         <DeniedBanner message={t("store.deniedBanner")} />
       </Suspense>
 
-      {/* 1 ───────── Hero: full bleed, rotating headline over our turntable ───────── */}
+      {/* 1 ───────── Hero: full-bleed studio scene, rotating headline (kit Sheet hero) ───────── */}
       <HomeHero
         titles={c.hero.titles}
         lead={c.hero.lead}
         labels={{ pause: c.hero.pause, play: c.hero.play }}
-        video={heroVideo()}
-        media={<R6Pic a={studio("mailer", "dark")} sizes="(min-width: 768px) 50vw, 88vw" className={s.heroPoster} priority />}
+        scenes={(["mailer", "rigid-box"] as LoopId[]).map((id, i) => ({
+          poster: <R6Pic a={R6.loops[id].poster} sizes="(min-width: 1024px) 100vw, 160vw" className={s.heroPoster} priority={i === 0} />,
+          video: loopVideo(id),
+        }))}
+        props={HERO_PROPS.map((p) => (
+          <div key={p.id} className={s.heroProp} data-depth={p.depth} data-phone={p.phone ? "true" : "false"} style={{ ["--x" as string]: p.x, ["--y" as string]: p.y, ["--w" as string]: p.w }}>
+            <R6Pic a={cut(p.id, p.view)} sizes="(min-width: 1024px) 18vw, 30vw" />
+          </div>
+        ))}
         actions={
-          <PillRow className={s.pills}>
+          <PillRow className={s.heroPills}>
             <Pill href={startHref} size="lg">
               {c.hero.primary}
             </Pill>
@@ -191,53 +214,46 @@ export default async function HomePage({ params }: Props) {
         }
       />
 
-      {/* 2 ───────── Statement + studio rail (sheet over the hero) ───────── */}
-      <Sheet tone="dark" pad="none" container={false} className={s.statementSheet} aria-labelledby="statement-title">
-        <Container>
-          <h2 id="statement-title" className={s.statement}>
-            {c.statement.lead}
-            <span className={s.statementRest}>{c.statement.rest}</span>
-          </h2>
-        </Container>
-        <div className={s.railWrap}>
-          <Marquee
-            className={s.rail}
-            label={c.rail.label}
-            pauseLabel={c.rail.pause}
-            playLabel={c.rail.play}
-            duration={90}
-            gap="16px"
-            items={RAIL.map((r) => (
-              <figure key={r.id} className={s.railItem}>
-                <div className={s.railCard}>
-                  <R6Pic a={studio(r.id, r.tone)} sizes="300px" alt={studio(r.id, r.tone).alt[locale]} />
-                </div>
-                <figcaption className={s.railCaption}>{modelCaption(r.id)}</figcaption>
-              </figure>
-            ))}
-          />
-          <p className={`${s.caption} ${s.railNote}`}>{sample}</p>
-        </div>
+      {/* 2 ───────── After-hero statement + studio rail (xl sheet over the hero) ───────── */}
+      <Sheet tone="dark" y="xl" aria-labelledby="statement-title">
+        <SectionHead
+          id="statement-title"
+          title={
+            <>
+              {c.statement.lead}
+              <span className={s.statementRest}>{c.statement.rest}</span>
+            </>
+          }
+        >
+          <Stack gap="title-sub">
+            <Marquee
+              label={c.rail.label}
+              pauseLabel={c.rail.pause}
+              playLabel={c.rail.play}
+              duration={90}
+              gap="var(--mk-grid-gap)"
+              items={RAIL.map((r) => (
+                <figure key={r.id} className={s.railItem}>
+                  <div className={s.railCard}>
+                    <R6Pic a={studio(r.id, r.tone)} sizes="360px" alt={studio(r.id, r.tone).alt[locale]} />
+                  </div>
+                  <figcaption className={s.railCaption}>{modelCaption(r.id)}</figcaption>
+                </figure>
+              ))}
+            />
+            <p className={s.caption}>{sample}</p>
+          </Stack>
+        </SectionHead>
       </Sheet>
 
       {/* 3 ───────── Feature card: design in the browser ───────── */}
-      <section className={s.section} aria-labelledby="feature-title">
-        <Container>
-          <Reveal as="article" className={s.featureCard}>
-            <div className={s.featureCopy}>
-              <Display id="feature-title" size="56">
-                {c.feature.title}
-              </Display>
-              <p className={s.body}>
-                {c.feature.body}{" "}
-                <Link href={designerHref} className={s.textLink}>
-                  {c.feature.link}
-                </Link>
-              </p>
-            </div>
+      <Sheet tone="dark" aria-labelledby="feature-title">
+        <Reveal>
+          <SheetCard tone="green" as="article" className={s.featureCard}>
+            <SectionHead id="feature-title" title={c.feature.title} sub={<>{c.feature.body}{" "}<Link href={designerHref} className={s.textLink}>{c.feature.link}</Link></>} />
             <MotionScope className={s.featureVisual} pauseLabel={c.motion.feature[0]} playLabel={c.motion.feature[1]} buttonClassName={s.scopeBtn}>
               <div aria-hidden="true" className={s.fill}>
-                <R6Pic a={cut("tuck-carton")} sizes="(min-width: 1024px) 380px, 70vw" className={s.featureImg} />
+                <R6Pic a={cut("tuck-carton")} sizes="(min-width: 1024px) 460px, 70vw" className={s.featureImg} />
                 <div className={s.prompt}>
                   <span className={s.promptText}>{c.feature.prompt}</span>
                   <span className={s.promptGo}>
@@ -253,35 +269,38 @@ export default async function HomePage({ params }: Props) {
                 ) : null}
               </div>
             </MotionScope>
-          </Reveal>
-        </Container>
-      </section>
+          </SheetCard>
+        </Reveal>
+      </Sheet>
 
       {/* 4 ───────── Every step in one place: 1:2:1 cards, kit Orbit in the middle ───────── */}
-      <section className={s.section} aria-labelledby="everywhere-title">
-        <Container>
-          <Reveal className={s.sectionHead}>
-            <Display id="everywhere-title" size="56" className={s.light}>
+      <Sheet tone="dark" aria-labelledby="everywhere-title">
+        <SectionHead
+          id="everywhere-title"
+          title={
+            <span className={s.light}>
               {c.everywhere.title}
               <br />
               {c.everywhere.titleRest}
-            </Display>
-          </Reveal>
-          <ul className={s.trio}>
+            </span>
+          }
+        >
+          <Grid as="ul" cols={4} colsMd={2} className={s.trio}>
             <Reveal as="li" className={s.mediaCard} index={0}>
-              <div className={s.mediaFrame} data-pad="true">
-                <R6Pic a={ui("designer")} sizes="(min-width: 1024px) 300px, 92vw" className={s.uiShot} />
+              <div className={s.mediaFrame}>
+                <R6Pic a={studio("perfume", "dark")} sizes="(min-width: 1024px) 320px, 92vw" />
+                <R6Pic a={ui("price-badge")} sizes="(min-width: 1024px) 280px, 80vw" className={s.floatUi} />
               </div>
-              <div className={s.mediaCaption}>
-                <Display as="h3" size="20" className={s.cardTitle}>
+              <div>
+                <Display as="h3" size="20">
                   <Link href={designerHref} className={s.cardLink}>
                     {c.everywhere.cards[0]!.title}
                   </Link>
                 </Display>
-                <p className={s.caption}>{c.everywhere.cards[0]!.body}</p>
+                <Body>{c.everywhere.cards[0]!.body}</Body>
               </div>
             </Reveal>
-            <Reveal as="li" className={s.mediaCard} index={1}>
+            <Reveal as="li" className={`${s.mediaCard} ${s.span2}`} index={1}>
               <div className={s.mediaFrame} data-orbit="true">
                 <div className={s.orbitGlow} aria-hidden="true" />
                 <Orbit
@@ -297,45 +316,41 @@ export default async function HomePage({ params }: Props) {
                   nodes={c.everywhere.nodes.map((n) => ({ label: n }))}
                 />
               </div>
-              <div className={s.mediaCaption}>
-                <Display as="h3" size="20" className={s.cardTitle}>
+              <div>
+                <Display as="h3" size="20">
                   <Link href={`${base}/orders`} className={s.cardLink}>
                     {c.everywhere.cards[1]!.title}
                   </Link>
                 </Display>
-                <p className={s.caption}>{c.everywhere.cards[1]!.body}</p>
+                <Body>{c.everywhere.cards[1]!.body}</Body>
               </div>
             </Reveal>
             <Reveal as="li" className={s.mediaCard} index={2}>
-              <div className={s.mediaFrame} data-pad="true">
-                <R6Pic a={ui("vendor-job")} sizes="(min-width: 1024px) 300px, 92vw" className={s.uiShot} />
+              <div className={s.mediaFrame}>
+                <R6Pic a={studio("drawer-box", "light")} sizes="(min-width: 1024px) 320px, 92vw" />
+                <R6Pic a={ui("vendor-job")} sizes="(min-width: 1024px) 240px, 70vw" className={`${s.floatUi} ${s.floatUiCard}`} />
               </div>
-              <div className={s.mediaCaption}>
-                <Display as="h3" size="20" className={s.cardTitle}>
+              <div>
+                <Display as="h3" size="20">
                   <Link href={`${base}/vendors`} className={s.cardLink}>
                     {c.everywhere.cards[2]!.title}
                   </Link>
                 </Display>
-                <p className={s.caption}>{fill(c.everywhere.cards[2]!.body, vars)}</p>
+                <Body>{fill(c.everywhere.cards[2]!.body, vars)}</Body>
               </div>
             </Reveal>
-          </ul>
-        </Container>
-      </section>
+          </Grid>
+        </SectionHead>
+      </Sheet>
 
       {/* 5 ───────── Delivered across Egypt ───────── */}
-      <section className={s.section} aria-labelledby="delivery-title">
-        <Container>
-          <Reveal className={s.sectionHead}>
-            <Display id="delivery-title" size="56">
-              {c.delivery.title}
-            </Display>
-          </Reveal>
+      <Sheet tone="dark" aria-labelledby="delivery-title">
+        <SectionHead id="delivery-title" title={c.delivery.title}>
           <Reveal as="article" className={s.mapCard}>
             <MotionScope className={s.mapStage} pauseLabel={c.motion.delivery[0]} playLabel={c.motion.delivery[1]} buttonClassName={s.scopeBtn}>
               <div aria-hidden="true" className={s.fill}>
-                <div className={s.mapGlow} style={{ inlineSize: 540, blockSize: 540, insetBlockStart: -120, insetInlineStart: -160 }} />
-                <div className={s.mapGlow} style={{ inlineSize: 480, blockSize: 420, insetBlockEnd: -140, insetInlineEnd: -80, opacity: 0.6 }} />
+                <div className={s.mapGlow} data-at="start" />
+                <div className={s.mapGlow} data-at="end" />
                 <EgyptDots />
                 <div className={s.orderCard}>
                   <R6Pic a={studio("mailer", "light")} sizes="240px" className={s.orderImg} />
@@ -358,24 +373,19 @@ export default async function HomePage({ params }: Props) {
               </div>
             </MotionScope>
             <div className={s.mapCaption}>
-              <Display as="h3" size="20" className={s.cardTitle}>
+              <Display as="h3" size="20">
                 {c.delivery.cardTitle}
               </Display>
-              <p className={s.body}>{fill(c.delivery.cardBody, vars)}</p>
+              <Body>{fill(c.delivery.cardBody, vars)}</Body>
             </div>
           </Reveal>
-        </Container>
-      </section>
+        </SectionHead>
+      </Sheet>
 
       {/* 6 ───────── For every business ───────── */}
-      <section className={`${s.section} ${s.sectionTail}`} aria-labelledby="anyone-title">
-        <Container>
-          <Reveal className={`${s.sectionHead} ${s.narrowHead}`}>
-            <Display id="anyone-title" size="56">
-              {c.anyone.title}
-            </Display>
-          </Reveal>
-          <ul className={s.anyone}>
+      <Sheet tone="dark" y="lg" aria-labelledby="anyone-title">
+        <SectionHead id="anyone-title" title={c.anyone.title}>
+          <Grid as="ul" cols={3} colsMd={3} className={s.plainList}>
             {(
               [
                 { id: "mailer", href: structureHref(locale, "FEFCO_0427") },
@@ -384,80 +394,82 @@ export default async function HomePage({ params }: Props) {
               ] as { id: R6ModelId; href: string }[]
             ).map((a, i) => (
               <Reveal as="li" key={a.id} className={s.mediaCard} index={i}>
-                <div className={s.mediaFrame}>
-                  <R6Pic a={studio(a.id, "light")} sizes="(min-width: 768px) 420px, 82vw" />
+                <div className={s.mediaFrame} data-ratio="wide">
+                  <R6Pic a={studio(a.id, "light")} sizes="(min-width: 768px) 420px, 92vw" />
                   <span className={s.sampleTag}>{sample}</span>
                 </div>
-                <div className={s.mediaCaption}>
-                  <Display as="h3" size="20" className={s.cardTitle}>
+                <div>
+                  <Display as="h3" size="20">
                     <Link href={a.href} className={s.cardLink}>
                       {c.anyone.cards[i]!.title}
                     </Link>
                   </Display>
-                  <p className={s.body}>{c.anyone.cards[i]!.body}</p>
+                  <Body>{c.anyone.cards[i]!.body}</Body>
                 </div>
               </Reveal>
             ))}
-          </ul>
-          <div className={s.centerRow}>
+          </Grid>
+          <PillRow align="center">
             <Pill href={catalogHref} variant="outline" size="lg">
               {c.anyone.cta}
             </Pill>
-          </div>
-        </Container>
-      </section>
+          </PillRow>
+        </SectionHead>
+      </Sheet>
 
       {/* 7 ───────── Violet sheet: the 3D designer ───────── */}
-      <Sheet tone="violet" pad="none" className={s.sheetViolet} aria-labelledby="designer-title">
-        <Reveal className={s.sectionHead}>
-          <Display id="designer-title" size="56">
-            {c.designer.title}
-          </Display>
-        </Reveal>
-        <div className={s.duo}>
-          <Reveal as="article" className={s.darkCard} index={0}>
-            <div className={s.darkCardMedia} aria-hidden="true">
-              <R6Pic a={ui("designer")} sizes="(min-width: 1024px) 820px, 92vw" className={s.darkCardShot} />
-              <div className={s.promptDark}>
-                <Sparkles size={18} className={s.sparkle} />
-                <span className={s.promptText}>{c.designer.prompt}</span>
-                <span className={s.promptGo}>
-                  <ArrowUp size={16} />
-                </span>
+      <Sheet tone="violet" y="lg" aria-labelledby="designer-title">
+        <SectionHead id="designer-title" title={c.designer.title}>
+          <Grid cols={3} colsMd={1}>
+            <Reveal as="article" className={`${s.darkCard} ${s.span2}`} index={0}>
+              <div className={s.darkCardMedia} aria-hidden="true">
+                <R6Pic a={ui("designer")} sizes="(min-width: 1024px) 820px, 92vw" className={s.darkCardShot} />
+                <div className={s.promptDark}>
+                  <Sparkles size={18} className={s.sparkle} />
+                  <span className={s.promptText}>{c.designer.prompt}</span>
+                  <span className={s.promptGo}>
+                    <ArrowUp size={16} />
+                  </span>
+                </div>
               </div>
-            </div>
-            <div className={s.darkCardBody}>
-              <Display as="h3" size="20" className={s.cardTitle}>
-                <Sparkles size={18} className={s.sparkle} aria-hidden />
-                <Link href={designerHref} className={s.cardLink}>
-                  {c.designer.wideTitle}
-                </Link>
-              </Display>
-              <p className={s.body}>{c.designer.wideBody}</p>
-            </div>
-          </Reveal>
-          <Reveal as="article" className={s.darkCard} index={1}>
-            <div className={s.darkCardMedia} aria-hidden="true">
-              <div className={s.violetGlow} />
-              <R6Pic a={cut("rigid-box")} sizes="(min-width: 1024px) 360px, 80vw" className={s.darkCardCut} />
-            </div>
-            <div className={s.darkCardBody}>
-              <Display as="h3" size="20" className={s.cardTitle}>
-                {c.designer.narrowTitle}
-              </Display>
-              <p className={s.body}>{c.designer.narrowBody}</p>
-            </div>
-          </Reveal>
-        </div>
+              <div className={s.darkCardBody}>
+                <Display as="h3" size="20">
+                  <Sparkles size={18} className={s.sparkle} aria-hidden />{" "}
+                  <Link href={designerHref} className={s.cardLink}>
+                    {c.designer.wideTitle}
+                  </Link>
+                </Display>
+                <Body>{c.designer.wideBody}</Body>
+              </div>
+            </Reveal>
+            <Reveal as="article" className={s.darkCard} index={1}>
+              <div className={s.darkCardMedia}>
+                <MediaCard
+                  className={s.loopCard}
+                  ratio="auto"
+                  poster={{ src: src(R6.loops.perfume.poster), srcSet: srcSetW(R6.loops.perfume.poster, "webp"), sizes: "(min-width: 1024px) 420px, 92vw", width: R6.loops.perfume.poster.width, height: R6.loops.perfume.poster.height, alt: R6.loops.perfume.alt[locale] }}
+                  video={loopSources("perfume")}
+                />
+              </div>
+              <div className={s.darkCardBody}>
+                <Display as="h3" size="20">
+                  {c.designer.narrowTitle}
+                </Display>
+                <Body>{c.designer.narrowBody}</Body>
+              </div>
+            </Reveal>
+          </Grid>
+        </SectionHead>
       </Sheet>
 
       {/* 8 ───────── Catalogue wall (the reference's app grid), paused by MotionScope ───────── */}
-      <section className={s.bandNavy} aria-labelledby="wall-title">
+      <Sheet tone="navy" y="lg" overlap={false} container={false} className={s.wallSheet} aria-labelledby="wall-title">
         <MotionScope className={s.wall} pauseLabel={c.wall.pause} playLabel={c.wall.play} buttonClassName={s.wallControl}>
           <div className={s.wallRows} aria-hidden="true">
-            {[0, 1, 2, 3, 4].map((r) => {
+            {[0, 1, 2, 3].map((r) => {
               const k = (r * 5) % WALL_ITEMS.length;
-              const row = [...WALL_ITEMS.slice(k), ...WALL_ITEMS.slice(0, k)];
+              const once = [...WALL_ITEMS.slice(k), ...WALL_ITEMS.slice(0, k)];
+              const row = [...once, ...once];
               return (
                 <ul key={r} className={s.wallRow} style={{ ["--dur" as string]: `${80 + r * 9}s` }}>
                   {[...row, ...row].map((it, i) => (
@@ -472,38 +484,19 @@ export default async function HomePage({ params }: Props) {
           </div>
           <Container>
             <Reveal className={s.wallCopy} variant="fade">
-              <Display id="wall-title" size="56">
-                {fill(c.wall.title, vars)}
-              </Display>
-              <p className={s.body}>
-                {fill(c.wall.body, vars)}{" "}
-                <Link href={catalogHref} className={s.textLink}>
-                  {c.wall.link}
-                </Link>
-              </p>
+              <SectionHead id="wall-title" title={fill(c.wall.title, vars)} sub={<>{fill(c.wall.body, vars)}{" "}<Link href={catalogHref} className={s.textLink}>{c.wall.link}</Link></>} />
             </Reveal>
           </Container>
         </MotionScope>
-      </section>
+      </Sheet>
 
-      {/* 9 ───────── Finishes (navy) ───────── */}
-      <section className={`${s.section} ${s.sectionTail} ${s.bandNavy}`} aria-labelledby="finishes-title">
-        <Container>
-          <Reveal className={`${s.sectionHead} ${s.navyHead}`}>
-            <Display id="finishes-title" size="56">
-              {c.finishes.title}
-            </Display>
-            <p className={s.body}>
-              {fill(c.finishes.body, vars)}{" "}
-              <Link href={structureHref(locale, "RIGID_BOX")} className={s.textLink}>
-                {c.finishes.link}
-              </Link>
-            </p>
-          </Reveal>
+      {/* 9 ───────── Finishes (navy, collapses into the wall band) ───────── */}
+      <Sheet tone="navy" y="lg" overlap={false} aria-labelledby="finishes-title">
+        <SectionHead id="finishes-title" title={c.finishes.title} sub={<>{fill(c.finishes.body, vars)}{" "}<Link href={structureHref(locale, "RIGID_BOX")} className={s.textLink}>{c.finishes.link}</Link></>}>
           <Reveal variant="scale">
             <MotionScope className={s.navyPanel} pauseLabel={c.motion.finishes[0]} playLabel={c.motion.finishes[1]} buttonClassName={s.scopeBtn}>
               <div className={s.navyGlow} aria-hidden="true" />
-              <R6Pic a={cut("rigid-box")} sizes="(min-width: 1024px) 420px, 60vw" className={s.navyImg} />
+              <R6Pic a={cut("rigid-box")} sizes="(min-width: 1024px) 520px, 60vw" className={s.navyImg} />
               <ul className={s.finishList}>
                 {c.finishes.names.map((n, i) => (
                   <li key={n} className={s.finishChip} style={{ ["--t" as string]: FINISH_SPOTS[i]!.t, ["--s" as string]: FINISH_SPOTS[i]!.s, ["--dl" as string]: FINISH_SPOTS[i]!.dl }}>
@@ -513,114 +506,109 @@ export default async function HomePage({ params }: Props) {
               </ul>
             </MotionScope>
           </Reveal>
-        </Container>
-      </section>
-
-      {/* 10 ───────── Green sheet: price, real numbers, secure payment ───────── */}
-      <Sheet tone="green" pad="none" className={s.sheetGreen} aria-labelledby="stats-title">
-        <Reveal className={s.greenHead}>
-          <Display id="stats-title" size="64" align="center" className={s.narrowTitle}>
-            {c.stats.title}
-          </Display>
-        </Reveal>
-        <div className={s.split}>
-          <Reveal>
-            <Display as="h3" size="44">
-              {c.stats.checkoutTitle}
-            </Display>
-            <ul className={s.stats}>
-              {stats.map((st) => (
-                <li key={st.label} className={s.stat}>
-                  <Stat value={st.value} label={st.label} />
-                </li>
-              ))}
-            </ul>
-            {row500 ? <p className={s.rule}>{fill(c.stats.rule, vars)}</p> : null}
-            <p className={s.footnote}>{c.stats.note}</p>
-          </Reveal>
-          <MotionScope className={s.splitVisual} pauseLabel={c.motion.price[0]} playLabel={c.motion.price[1]} buttonClassName={s.scopeBtn}>
-            <div aria-hidden="true" className={s.fill}>
-              {THUMBS.map((th) => (
-                <div key={th.id} className={s.thumb} style={{ ["--t" as string]: th.t, ["--s" as string]: th.s, ["--z" as string]: th.z, ["--dl" as string]: th.dl }}>
-                  <R6Pic a={cut(th.id)} sizes="80px" />
-                </div>
-              ))}
-              {row500 ? (
-                <div className={s.receipt}>
-                  <div className={s.receiptHead}>
-                    <R6Pic a={cut("mailer")} sizes="56px" />
-                    <div>
-                      <strong>{c.stats.receipt.title}</strong>
-                      <div className={s.chipMuted}>{c.stats.receipt.line}</div>
-                    </div>
-                  </div>
-                  <div className={s.receiptRow}>
-                    <span>{c.stats.receipt.setup}</span>
-                    <span>{c.stats.receipt.included}</span>
-                  </div>
-                  <div className={s.receiptRow}>
-                    <span>{c.stats.receipt.delivery}</span>
-                    <span>{c.stats.receipt.included}</span>
-                  </div>
-                  <div className={s.receiptRow}>
-                    <span>{c.stats.receipt.subtotal}</span>
-                    <span>{money(row500.subtotalPiasters)}</span>
-                  </div>
-                  <div className={s.receiptRow}>
-                    <span>{c.stats.receipt.vat}</span>
-                    <span>{money(vatOf(row500.subtotalPiasters))}</span>
-                  </div>
-                  <div className={s.receiptTotal}>
-                    <span>{c.stats.receipt.total}</span>
-                    <span>{money(row500.subtotalPiasters + vatOf(row500.subtotalPiasters))}</span>
-                  </div>
-                  <div className={s.receiptPay}>{c.stats.receipt.pay}</div>
-                </div>
-              ) : null}
-            </div>
-          </MotionScope>
-        </div>
-        <div className={`${s.split} ${s.secure}`}>
-          <Reveal>
-            <Display as="h3" size="44">
-              {c.stats.secureTitle}
-            </Display>
-            <p className={s.body}>{c.stats.secureBody}</p>
-          </Reveal>
-          <MotionScope className={s.splitVisual} pauseLabel={c.motion.pay[0]} playLabel={c.motion.pay[1]} buttonClassName={s.scopeBtn}>
-            <div aria-hidden="true" className={s.fill}>
-              <div className={s.globe} />
-              {c.stats.payChips.map((m, i) => (
-                <div key={m} className={`${s.chip} ${s.chipDark} ${s.payChip}`} style={{ insetBlockStart: ["14%", "40%", "64%", "84%"][i], insetInlineStart: ["6%", "70%", "2%", "58%"][i], animationDelay: `${-1.5 * i}s` } as CSSProperties}>
-                  {m}
-                </div>
-              ))}
-            </div>
-          </MotionScope>
-        </div>
+        </SectionHead>
       </Sheet>
 
-      {/* 11 ───────── Steps sheet (kit Steps: tabs, progress underline, media swap) ───────── */}
-      <Sheet tone="dark" pad="none" className={s.sheetSteps} aria-labelledby="steps-title">
-        <Reveal className={s.sectionHead}>
-          <Display id="steps-title" size="64">
-            {c.steps.title}
-          </Display>
-        </Reveal>
-        <Steps
-          className={s.steps}
-          label={c.steps.title}
-          items={[
-            { title: c.steps.items[0]!, media: stepMedia(studio("tuck-carton", "light"), cut("perfume")) },
-            { title: c.steps.items[1]!, media: stepMedia(studio("mailer", "dark"), ui("price-badge")) },
-            { title: c.steps.items[2]!, media: stepMedia(studio("rigid-box", "dark"), ui("order-timeline")) },
-          ]}
-        />
-        <PillRow className={s.stepsCta}>
-          <Pill href={startHref} size="lg">
-            {c.steps.cta}
-          </Pill>
-        </PillRow>
+      {/* 10 ───────── Green sheet: price, real numbers, secure payment ───────── */}
+      <Sheet tone="green" y="lg" aria-labelledby="stats-title">
+        <SectionHead id="stats-title" title={c.stats.title} size="64" align="center" lg>
+          <Stack gap="head-content-lg">
+            <Grid cols={2} colsMd={1} className={s.middle}>
+              <Reveal>
+                <SectionHead as="h3" size="44" title={c.stats.checkoutTitle}>
+                  <Stack gap="head-content">
+                    <Grid as="ul" cols={2} colsMd={2} colsSm={2} gap="bento" className={s.plainList}>
+                      {stats.map((st) => (
+                        <li key={st.label} className={s.stat}>
+                          <Stat value={st.value} label={st.label} />
+                        </li>
+                      ))}
+                    </Grid>
+                    <Stack gap="title-sub">
+                      {row500 ? <p className={s.rule}>{fill(c.stats.rule, vars)}</p> : null}
+                      <p className={s.footnote}>{c.stats.note}</p>
+                    </Stack>
+                  </Stack>
+                </SectionHead>
+              </Reveal>
+              <MotionScope className={s.splitVisual} pauseLabel={c.motion.price[0]} playLabel={c.motion.price[1]} buttonClassName={s.scopeBtn}>
+                <div aria-hidden="true" className={s.fill}>
+                  {THUMBS.map((th) => (
+                    <div key={th.id} className={s.thumb} style={{ ["--t" as string]: th.t, ["--s" as string]: th.s, ["--z" as string]: th.z, ["--dl" as string]: th.dl }}>
+                      <R6Pic a={cut(th.id)} sizes="80px" />
+                    </div>
+                  ))}
+                  {row500 ? (
+                    <div className={s.receipt}>
+                      <div className={s.receiptHead}>
+                        <R6Pic a={cut("mailer")} sizes="56px" />
+                        <div>
+                          <strong>{c.stats.receipt.title}</strong>
+                          <div className={s.chipMuted}>{c.stats.receipt.line}</div>
+                        </div>
+                      </div>
+                      <div className={s.receiptRow}>
+                        <span>{c.stats.receipt.setup}</span>
+                        <span>{c.stats.receipt.included}</span>
+                      </div>
+                      <div className={s.receiptRow}>
+                        <span>{c.stats.receipt.delivery}</span>
+                        <span>{c.stats.receipt.included}</span>
+                      </div>
+                      <div className={s.receiptRow}>
+                        <span>{c.stats.receipt.subtotal}</span>
+                        <span>{money(row500.subtotalPiasters)}</span>
+                      </div>
+                      <div className={s.receiptRow}>
+                        <span>{c.stats.receipt.vat}</span>
+                        <span>{money(vatOf(row500.subtotalPiasters))}</span>
+                      </div>
+                      <div className={s.receiptTotal}>
+                        <span>{c.stats.receipt.total}</span>
+                        <span>{money(row500.subtotalPiasters + vatOf(row500.subtotalPiasters))}</span>
+                      </div>
+                      <div className={s.receiptPay}>{c.stats.receipt.pay}</div>
+                    </div>
+                  ) : null}
+                </div>
+              </MotionScope>
+            </Grid>
+            <Grid cols={2} colsMd={1} className={s.middle}>
+              <Reveal>
+                <SectionHead as="h3" size="44" title={c.stats.secureTitle} sub={c.stats.secureBody} />
+              </Reveal>
+              <MotionScope className={s.splitVisual} pauseLabel={c.motion.pay[0]} playLabel={c.motion.pay[1]} buttonClassName={s.scopeBtn}>
+                <div aria-hidden="true" className={s.fill}>
+                  <div className={s.globe} />
+                  {c.stats.payChips.map((m, i) => (
+                    <div key={m} className={`${s.chip} ${s.chipDark} ${s.payChip}`} style={{ insetBlockStart: ["14%", "40%", "64%", "84%"][i], insetInlineStart: ["6%", "70%", "2%", "58%"][i], animationDelay: `${-1.5 * i}s` } as CSSProperties}>
+                      {m}
+                    </div>
+                  ))}
+                </div>
+              </MotionScope>
+            </Grid>
+          </Stack>
+        </SectionHead>
+      </Sheet>
+
+      {/* 11 ───────── Steps (closing xl sheet; kit Steps: tabs, progress underline, media swap) ───────── */}
+      <Sheet tone="dark" y="xl" className={s.sheetSteps} aria-labelledby="steps-title">
+        <SectionHead id="steps-title" title={c.steps.title} size="64">
+          <Steps
+            label={c.steps.title}
+            items={[
+              { title: c.steps.items[0]!, media: stepMedia(studio("tuck-carton", "light"), cut("perfume")) },
+              { title: c.steps.items[1]!, media: stepMedia(studio("mailer", "dark"), ui("price-badge")) },
+              { title: c.steps.items[2]!, media: stepMedia(studio("rigid-box", "dark"), ui("order-timeline")) },
+            ]}
+          />
+          <PillRow>
+            <Pill href={startHref} size="lg">
+              {c.steps.cta}
+            </Pill>
+          </PillRow>
+        </SectionHead>
       </Sheet>
     </div>
   );
