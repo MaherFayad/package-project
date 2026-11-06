@@ -69,6 +69,6 @@ Checked and correct (no change): closure owners and tuck / dust flap layout for 
 | `npm run lint`, `npm run typecheck` | clean |
 | `npm test` | 44 files, 6 713 tests pass |
 | `npm run build` | passes |
-| Playwright `e2e/models.spec.ts`, `e2e/designer.spec.ts` (`--workers=2 --trace off`) | see below |
+| Playwright `e2e/models.spec.ts`, `e2e/designer.spec.ts` (`--workers=2 --trace off`, desktop + mobile) | 380 passed, 370 skipped (by design in the spec). The first run had 2 designer sign-up failures caused by my local `next start` lacking `SESSION_SECRET` (request-otp threw); re-run with it set: 6 / 6 pass. |
 
 Open (by design, outside scope): O-01…O-10 above, for the engine / library / designer owners.
