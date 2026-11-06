@@ -13,6 +13,7 @@ import {
   useMemo,
   useRef,
   useState,
+  Suspense,
   type KeyboardEvent,
   type ReactNode,
 } from "react";
@@ -134,12 +135,18 @@ export function Frame({ topBar, navigation, children, navigationLabel, contentEl
               {navOpen ? <div className={styles.NavBackdrop} onClick={closeNav} aria-hidden="true" /> : null}
             </>
           ) : null}
+          {/* R5-PL-17: a boundary between the frame and the page. Under a slow phone CPU a page's
+              client chunk or RSC row can still be pending when hydration reaches <main>; without a
+              boundary React could not wait, reported #418 and re-rendered the whole app on the
+              client (LCP ~5 s). With it, React keeps the server HTML and hydrates it when ready. */}
           {contentElement === "main" ? (
             <main id="main" tabIndex={-1} className={styles.Main}>
-              {children}
+              <Suspense fallback={null}>{children}</Suspense>
             </main>
           ) : (
-            <div className={styles.Main}>{children}</div>
+            <div className={styles.Main}>
+              <Suspense fallback={null}>{children}</Suspense>
+            </div>
           )}
         </div>
       </div>

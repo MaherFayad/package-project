@@ -19,6 +19,10 @@ export const inter = Inter({
   // Preloaded by `[locale]/layout.tsx` on English pages only (R4-MK-05, see ./font-preload.ts).
   preload: false,
   variable: "--font-inter",
+  // R5-PL-21: our own Latin-only fallback (src/styles/font-fallbacks.css). next/font's generated one
+  // has no unicode-range, so where Arial has Arabic glyphs it captured Arabic text ahead of Plex.
+  adjustFontFallback: false,
+  fallback: ["Elba Inter Fallback"],
 });
 
 export const plexArabic = IBM_Plex_Sans_Arabic({
@@ -27,6 +31,10 @@ export const plexArabic = IBM_Plex_Sans_Arabic({
   display: "swap",
   preload: false,
   variable: "--font-plex-arabic",
+  // R5-PL-16: metric-matched Arabic fallbacks (src/styles/font-fallbacks.css) instead of next/font's
+  // Arial-based one, which neither has Arabic on Android nor matches Plex's Arabic widths.
+  adjustFontFallback: false,
+  fallback: ["Elba Plex Fallback Noto", "Elba Plex Fallback DejaVu"],
 });
 
 /**
