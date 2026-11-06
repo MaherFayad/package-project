@@ -151,11 +151,22 @@ export const DEFAULT_PRICING_CONFIG: PricingConfig = {
   priceIndex: PRICE_INDEX_TABLE,
 };
 
-/** Merge a partial override (e.g. from admin settings) onto the defaults. */
+/**
+ * Merge a partial override (e.g. from admin settings) onto the defaults.
+ * Legal/contract limits are pinned so a settings row can never break them: VAT is the statutory
+ * 14% (Egyptian VAT Law 67/2016), quotes stay valid at most 72 h, and instant prices stop at
+ * 2,000 units (above that a manual quote). Margins/weights stay configurable.
+ */
 export function makeConfig(overrides: Partial<PricingConfig> = {}): PricingConfig {
+  const clamp = (v: unknown, min: number, max: number, fallback: number) =>
+    typeof v === "number" && Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : fallback;
   return {
     ...DEFAULT_PRICING_CONFIG,
     ...overrides,
+    vatRate: DEFAULT_PRICING_CONFIG.vatRate,
+    quoteValidityHours: clamp(overrides.quoteValidityHours, 1, DEFAULT_PRICING_CONFIG.quoteValidityHours, DEFAULT_PRICING_CONFIG.quoteValidityHours),
+    maxInstantQty: Math.floor(clamp(overrides.maxInstantQty, 1, DEFAULT_PRICING_CONFIG.maxInstantQty, DEFAULT_PRICING_CONFIG.maxInstantQty)),
+    marginPct: clamp(overrides.marginPct, 0, 5, DEFAULT_PRICING_CONFIG.marginPct),
     digital: { ...DEFAULT_PRICING_CONFIG.digital, ...overrides.digital },
     shipping: { ...DEFAULT_PRICING_CONFIG.shipping, ...overrides.shipping },
     ranking: { ...DEFAULT_PRICING_CONFIG.ranking, ...overrides.ranking },

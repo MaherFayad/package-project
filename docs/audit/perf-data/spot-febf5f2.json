@@ -1,0 +1,1842 @@
+[
+ {
+  "page": "home",
+  "profile": "desktop",
+  "locale": "en",
+  "url": "http://localhost:3000/en",
+  "status": 200,
+  "finalUrl": "http://localhost:3000/en",
+  "loadMs": 398,
+  "ttfb": 53.700000000186265,
+  "domContentLoaded": 379.5,
+  "loadEvent": 391.90000000037253,
+  "htmlTransfer": 76132,
+  "htmlDecoded": 270176,
+  "lcp": 932,
+  "lcpEl": "div.PackagingScene_poster__H_AAF [renders/fefco-0427.webp] size=181728",
+  "fcp": 292,
+  "clsLoad": 0.48333333333333334,
+  "domNodes": 830,
+  "canvases": 1,
+  "fontsLoaded": [
+   "Inter 100 900",
+   "IBM Plex Sans Arabic 500",
+   "IBM Plex Sans Arabic 500"
+  ],
+  "cls": 0.48333333333333334,
+  "shifts": [
+   {
+    "t": 521,
+    "v": 0.4833,
+    "nodes": [
+     "footer.marketing_footer__QH6rz"
+    ]
+   }
+  ],
+  "inp": 304,
+  "inpDetail": [
+   {
+    "id": 7794,
+    "name": "pointerdown",
+    "d": 304,
+    "input": 129,
+    "proc": 2,
+    "target": "null"
+   },
+   {
+    "id": 7808,
+    "name": "pointerdown",
+    "d": 48,
+    "input": 4,
+    "proc": 0,
+    "target": "null"
+   },
+   {
+    "id": 7822,
+    "name": "keydown",
+    "d": 24,
+    "input": 0,
+    "proc": 2,
+    "target": "button.marketing_iconPill__us9Tt"
+   }
+  ],
+  "clicks": 2,
+  "longTasks": 39,
+  "longTaskMax": 741,
+  "tbt": 3412,
+  "tbtLoad": 1316,
+  "bytes": {
+   "total": 1171196,
+   "js": 546746,
+   "css": 45808,
+   "img": 199699,
+   "font": 248076,
+   "doc": 77516,
+   "fetch": 53351
+  },
+  "requests": 82,
+  "fonts": [
+   {
+    "f": "79d9077e4fd7eddc-s.p.woff2",
+    "b": 15392
+   },
+   {
+    "f": "17efc7caebbb6a73-s.p.woff2",
+    "b": 14244
+   },
+   {
+    "f": "99dc19e540dbb87b-s.p.woff2",
+    "b": 14508
+   },
+   {
+    "f": "b729ad8c86c7d641-s.p.woff2",
+    "b": 15092
+   },
+   {
+    "f": "9da48a48bf6500f8-s.p.woff2",
+    "b": 33812
+   },
+   {
+    "f": "e4af272ccee01ff0-s.p.woff2",
+    "b": 48732
+   },
+   {
+    "f": "f022b1629605b85c-s.p.woff2",
+    "b": 36184
+   },
+   {
+    "f": "fb66eb17bf011c3b-s.p.woff2",
+    "b": 33928
+   },
+   {
+    "f": "e4efb0298547fad0-s.p.woff2",
+    "b": 36184
+   }
+  ],
+  "js": [
+   {
+    "f": "/_next/static/chunks/bd904a5c-a41790b73ae35279.js",
+    "b": 100982
+   },
+   {
+    "f": "/_next/static/chunks/b536a0f1.1baeceb98d44d20d.js",
+    "b": 80115
+   },
+   {
+    "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
+    "b": 54801
+   },
+   {
+    "f": "/_next/static/chunks/e49654ac.234a1a0f7c8300b1.js",
+    "b": 52910
+   },
+   {
+    "f": "/_next/static/chunks/1255-d8a1861c775d9bcc.js",
+    "b": 46831
+   },
+   {
+    "f": "/_next/static/chunks/4257-0087af2d6bd45f7f.js",
+    "b": 36397
+   },
+   {
+    "f": "/_next/static/chunks/9898.18a4db5fd2edc486.js",
+    "b": 30203
+   },
+   {
+    "f": "/_next/static/chunks/4750-4b3d8f86d1fd346d.js",
+    "b": 26688
+   },
+   {
+    "f": "/_next/static/chunks/7133.8f53581e6ad4c833.js",
+    "b": 14915
+   },
+   {
+    "f": "/_next/static/chunks/8734-4d58837a0fb35942.js",
+    "b": 13482
+   },
+   {
+    "f": "/_next/static/chunks/6890-eaef710216aa92a5.js",
+    "b": 12578
+   },
+   {
+    "f": "/_next/static/chunks/3211.d350d5c8d1031f6f.js",
+    "b": 9210
+   }
+  ]
+ },
+ {
+  "page": "boxes",
+  "profile": "desktop",
+  "locale": "en",
+  "url": "http://localhost:3000/en/boxes",
+  "status": 200,
+  "finalUrl": "http://localhost:3000/en/boxes",
+  "loadMs": 545,
+  "ttfb": 34.700000000186265,
+  "domContentLoaded": 534,
+  "loadEvent": 541.2000000001863,
+  "htmlTransfer": 104222,
+  "htmlDecoded": 539692,
+  "lcp": 448,
+  "lcpEl": "p size=21840",
+  "fcp": 448,
+  "clsLoad": 0.48333333333333334,
+  "domNodes": 2817,
+  "canvases": 0,
+  "fontsLoaded": [
+   "Inter 100 900",
+   "IBM Plex Sans Arabic 500",
+   "IBM Plex Sans Arabic 500"
+  ],
+  "cls": 0.48333333333333334,
+  "shifts": [
+   {
+    "t": 852,
+    "v": 0.4833,
+    "nodes": [
+     "footer.marketing_footer__QH6rz"
+    ]
+   }
+  ],
+  "inp": 24,
+  "inpDetail": [
+   {
+    "id": 9644,
+    "name": "keydown",
+    "d": 24,
+    "input": 0,
+    "proc": 7,
+    "target": "body"
+   }
+  ],
+  "clicks": 0,
+  "longTasks": 3,
+  "longTaskMax": 186,
+  "tbt": 141,
+  "tbtLoad": 141,
+  "bytes": {
+   "total": 981781,
+   "js": 195618,
+   "css": 36410,
+   "img": 337518,
+   "font": 248076,
+   "doc": 105581,
+   "fetch": 58578
+  },
+  "requests": 62,
+  "fonts": [
+   {
+    "f": "17efc7caebbb6a73-s.p.woff2",
+    "b": 14244
+   },
+   {
+    "f": "99dc19e540dbb87b-s.p.woff2",
+    "b": 14508
+   },
+   {
+    "f": "79d9077e4fd7eddc-s.p.woff2",
+    "b": 15392
+   },
+   {
+    "f": "9da48a48bf6500f8-s.p.woff2",
+    "b": 33812
+   },
+   {
+    "f": "b729ad8c86c7d641-s.p.woff2",
+    "b": 15092
+   },
+   {
+    "f": "e4af272ccee01ff0-s.p.woff2",
+    "b": 48732
+   },
+   {
+    "f": "e4efb0298547fad0-s.p.woff2",
+    "b": 36184
+   },
+   {
+    "f": "f022b1629605b85c-s.p.woff2",
+    "b": 36184
+   },
+   {
+    "f": "fb66eb17bf011c3b-s.p.woff2",
+    "b": 33928
+   }
+  ],
+  "js": [
+   {
+    "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
+    "b": 54801
+   },
+   {
+    "f": "/_next/static/chunks/1255-d8a1861c775d9bcc.js",
+    "b": 46831
+   },
+   {
+    "f": "/_next/static/chunks/4750-4b3d8f86d1fd346d.js",
+    "b": 26688
+   },
+   {
+    "f": "/_next/static/chunks/8734-4d58837a0fb35942.js",
+    "b": 13482
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/layout-1ce93ae28cd4305d.js",
+    "b": 8765
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/vendor/apply/page-0750faef1263979e.js",
+    "b": 8132
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/account/page-e57f7f3fa4568d6e.js",
+    "b": 5849
+   },
+   {
+    "f": "/_next/static/chunks/1005-ea67390bf2c961f7.js",
+    "b": 4845
+   },
+   {
+    "f": "/_next/static/chunks/2619-04bc32f026a0d946.js",
+    "b": 3802
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/boxes/page-b30d813817711ee7.js",
+    "b": 3374
+   },
+   {
+    "f": "/_next/static/chunks/9185-da9503aad72cc0ff.js",
+    "b": 3263
+   },
+   {
+    "f": "/_next/static/chunks/webpack-d7f360cba30236cc.js",
+    "b": 3030
+   }
+  ]
+ },
+ {
+  "page": "design-picker",
+  "profile": "desktop",
+  "locale": "en",
+  "url": "http://localhost:3000/en/design",
+  "status": 200,
+  "finalUrl": "http://localhost:3000/en/design",
+  "loadMs": 698,
+  "ttfb": 47,
+  "domContentLoaded": 104.90000000037253,
+  "loadEvent": 695,
+  "htmlTransfer": 87460,
+  "htmlDecoded": 473042,
+  "lcp": 580,
+  "lcpEl": "img [models/mailer-box.svg] size=13266",
+  "fcp": 300,
+  "clsLoad": 0,
+  "domNodes": 2450,
+  "canvases": 0,
+  "fontsLoaded": [
+   "Inter 100 900",
+   "IBM Plex Sans Arabic 700",
+   "IBM Plex Sans Arabic 700"
+  ],
+  "cls": 0,
+  "shifts": [],
+  "inp": 32,
+  "inpDetail": [
+   {
+    "id": 3442,
+    "name": "keyup",
+    "d": 32,
+    "input": 0,
+    "proc": 1,
+    "target": "input#_R_5n5fj5uivb_.Form_Input__wNMRS"
+   },
+   {
+    "id": 3449,
+    "name": "keydown",
+    "d": 32,
+    "input": 0,
+    "proc": 0,
+    "target": "input#_R_5n5fj5uivb_.Form_Input__wNMRS"
+   },
+   {
+    "id": 3491,
+    "name": "pointerdown",
+    "d": 32,
+    "input": 2,
+    "proc": 1,
+    "target": "button.library_chip__8KvFg"
+   }
+  ],
+  "clicks": 5,
+  "longTasks": 3,
+  "longTaskMax": 124,
+  "tbt": 105,
+  "tbtLoad": 105,
+  "bytes": {
+   "total": 1062083,
+   "js": 501731,
+   "css": 44831,
+   "img": 175227,
+   "font": 248076,
+   "doc": 89100,
+   "fetch": 3118
+  },
+  "requests": 211,
+  "fonts": [
+   {
+    "f": "17efc7caebbb6a73-s.p.woff2",
+    "b": 14244
+   },
+   {
+    "f": "9da48a48bf6500f8-s.p.woff2",
+    "b": 33812
+   },
+   {
+    "f": "b729ad8c86c7d641-s.p.woff2",
+    "b": 15092
+   },
+   {
+    "f": "79d9077e4fd7eddc-s.p.woff2",
+    "b": 15392
+   },
+   {
+    "f": "99dc19e540dbb87b-s.p.woff2",
+    "b": 14508
+   },
+   {
+    "f": "f022b1629605b85c-s.p.woff2",
+    "b": 36184
+   },
+   {
+    "f": "e4af272ccee01ff0-s.p.woff2",
+    "b": 48732
+   },
+   {
+    "f": "fb66eb17bf011c3b-s.p.woff2",
+    "b": 33928
+   },
+   {
+    "f": "e4efb0298547fad0-s.p.woff2",
+    "b": 36184
+   }
+  ],
+  "js": [
+   {
+    "f": "/_next/static/chunks/9786-b5450314594f8265.js",
+    "b": 175971
+   },
+   {
+    "f": "/_next/static/chunks/bd904a5c-a41790b73ae35279.js",
+    "b": 100982
+   },
+   {
+    "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
+    "b": 54801
+   },
+   {
+    "f": "/_next/static/chunks/1255-d8a1861c775d9bcc.js",
+    "b": 46831
+   },
+   {
+    "f": "/_next/static/chunks/4257-0087af2d6bd45f7f.js",
+    "b": 36397
+   },
+   {
+    "f": "/_next/static/chunks/4750-4b3d8f86d1fd346d.js",
+    "b": 26688
+   },
+   {
+    "f": "/_next/static/chunks/8734-4d58837a0fb35942.js",
+    "b": 13482
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/layout-1ce93ae28cd4305d.js",
+    "b": 8765
+   },
+   {
+    "f": "/_next/static/chunks/9832-4a60e860e1d72153.js",
+    "b": 5569
+   },
+   {
+    "f": "/_next/static/chunks/1005-ea67390bf2c961f7.js",
+    "b": 4845
+   },
+   {
+    "f": "/_next/static/chunks/2619-04bc32f026a0d946.js",
+    "b": 3802
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/design/layout-aaf4bbbc8ff48951.js",
+    "b": 3610
+   }
+  ]
+ },
+ {
+  "page": "designer-box",
+  "profile": "desktop",
+  "locale": "en",
+  "url": "http://localhost:3000/en/design/mailer-box",
+  "status": 200,
+  "finalUrl": "http://localhost:3000/en/design/mailer-box?d=cmw4aoabb000e7dwhhuohwp1e",
+  "loadMs": 380,
+  "ttfb": 26.799999999813735,
+  "domContentLoaded": 113.90000000037253,
+  "loadEvent": 367.70000000018626,
+  "htmlTransfer": 50203,
+  "htmlDecoded": 175284,
+  "lcp": 232,
+  "lcpEl": "img [models/mailer-box.svg] size=3888",
+  "fcp": 216,
+  "clsLoad": 0,
+  "domNodes": 482,
+  "canvases": 1,
+  "fontsLoaded": [
+   "Inter 100 900",
+   "IBM Plex Sans Arabic 700",
+   "IBM Plex Sans Arabic 700"
+  ],
+  "cls": 0,
+  "shifts": [],
+  "inp": 248,
+  "inpDetail": [
+   {
+    "id": 3714,
+    "name": "pointerdown",
+    "d": 248,
+    "input": 2,
+    "proc": 1,
+    "target": "span.Button_Text__pcn_S"
+   },
+   {
+    "id": 3742,
+    "name": "pointerdown",
+    "d": 248,
+    "input": 2,
+    "proc": 0,
+    "target": "span.designer_priceBadgeText__ON7PY"
+   },
+   {
+    "id": 3728,
+    "name": "pointerdown",
+    "d": 232,
+    "input": 1,
+    "proc": 0,
+    "target": "span.Button_Text__pcn_S"
+   }
+  ],
+  "clicks": 5,
+  "longTasks": 23,
+  "longTaskMax": 709,
+  "tbt": 2759,
+  "tbtLoad": 1362,
+  "bytes": {
+   "total": 1086278,
+   "js": 739481,
+   "css": 44831,
+   "img": 843,
+   "font": 248076,
+   "doc": 51403,
+   "fetch": 1644
+  },
+  "requests": 55,
+  "fonts": [
+   {
+    "f": "17efc7caebbb6a73-s.p.woff2",
+    "b": 14244
+   },
+   {
+    "f": "79d9077e4fd7eddc-s.p.woff2",
+    "b": 15392
+   },
+   {
+    "f": "99dc19e540dbb87b-s.p.woff2",
+    "b": 14508
+   },
+   {
+    "f": "b729ad8c86c7d641-s.p.woff2",
+    "b": 15092
+   },
+   {
+    "f": "9da48a48bf6500f8-s.p.woff2",
+    "b": 33812
+   },
+   {
+    "f": "e4af272ccee01ff0-s.p.woff2",
+    "b": 48732
+   },
+   {
+    "f": "fb66eb17bf011c3b-s.p.woff2",
+    "b": 33928
+   },
+   {
+    "f": "e4efb0298547fad0-s.p.woff2",
+    "b": 36184
+   },
+   {
+    "f": "f022b1629605b85c-s.p.woff2",
+    "b": 36184
+   }
+  ],
+  "js": [
+   {
+    "f": "/_next/static/chunks/9786-b5450314594f8265.js",
+    "b": 175971
+   },
+   {
+    "f": "/_next/static/chunks/bd904a5c-a41790b73ae35279.js",
+    "b": 100982
+   },
+   {
+    "f": "/_next/static/chunks/b536a0f1.1baeceb98d44d20d.js",
+    "b": 80115
+   },
+   {
+    "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
+    "b": 54801
+   },
+   {
+    "f": "/_next/static/chunks/e49654ac.234a1a0f7c8300b1.js",
+    "b": 52910
+   },
+   {
+    "f": "/_next/static/chunks/1255-d8a1861c775d9bcc.js",
+    "b": 46831
+   },
+   {
+    "f": "/_next/static/chunks/4257-0087af2d6bd45f7f.js",
+    "b": 36397
+   },
+   {
+    "f": "/_next/static/chunks/9898.18a4db5fd2edc486.js",
+    "b": 30203
+   },
+   {
+    "f": "/_next/static/chunks/4750-4b3d8f86d1fd346d.js",
+    "b": 26688
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/design/%5Bstructure%5D/page-89ecdcf3c5cd6994.js",
+    "b": 20430
+   },
+   {
+    "f": "/_next/static/chunks/7133.8f53581e6ad4c833.js",
+    "b": 14915
+   },
+   {
+    "f": "/_next/static/chunks/8734-4d58837a0fb35942.js",
+    "b": 13482
+   }
+  ]
+ },
+ {
+  "page": "checkout",
+  "profile": "desktop",
+  "locale": "en",
+  "url": "http://localhost:3000/en/checkout/cmw4alpet00gq7dqp7jaj2q7v",
+  "status": 200,
+  "finalUrl": "http://localhost:3000/en/checkout/cmw4alpet00gq7dqp7jaj2q7v",
+  "loadMs": 396,
+  "ttfb": 41.700000000186265,
+  "domContentLoaded": 167.79999999981374,
+  "loadEvent": 392.6000000005588,
+  "htmlTransfer": 51917,
+  "htmlDecoded": 182881,
+  "lcp": 412,
+  "lcpEl": "p.SiteChrome_cookieText__0DHlX size=19018",
+  "fcp": 268,
+  "clsLoad": 0,
+  "domNodes": 459,
+  "canvases": 0,
+  "fontsLoaded": [
+   "Inter 100 900",
+   "IBM Plex Sans Arabic 700",
+   "IBM Plex Sans Arabic 700"
+  ],
+  "cls": 0,
+  "shifts": [],
+  "inp": 48,
+  "inpDetail": [
+   {
+    "id": 2768,
+    "name": "pointerdown",
+    "d": 48,
+    "input": 2,
+    "proc": 1,
+    "target": "span.Button_Text__pcn_S"
+   },
+   {
+    "id": 2782,
+    "name": "keydown",
+    "d": 16,
+    "input": 0,
+    "proc": 2,
+    "target": "span.checkout_stepHeading__ksQqI"
+   }
+  ],
+  "clicks": 1,
+  "longTasks": 2,
+  "longTaskMax": 82,
+  "tbt": 47,
+  "tbtLoad": 47,
+  "bytes": {
+   "total": 934968,
+   "js": 540564,
+   "css": 44831,
+   "img": 0,
+   "font": 248076,
+   "doc": 53145,
+   "fetch": 48352
+  },
+  "requests": 60,
+  "fonts": [
+   {
+    "f": "17efc7caebbb6a73-s.p.woff2",
+    "b": 14244
+   },
+   {
+    "f": "79d9077e4fd7eddc-s.p.woff2",
+    "b": 15392
+   },
+   {
+    "f": "99dc19e540dbb87b-s.p.woff2",
+    "b": 14508
+   },
+   {
+    "f": "9da48a48bf6500f8-s.p.woff2",
+    "b": 33812
+   },
+   {
+    "f": "b729ad8c86c7d641-s.p.woff2",
+    "b": 15092
+   },
+   {
+    "f": "e4af272ccee01ff0-s.p.woff2",
+    "b": 48732
+   },
+   {
+    "f": "fb66eb17bf011c3b-s.p.woff2",
+    "b": 33928
+   },
+   {
+    "f": "e4efb0298547fad0-s.p.woff2",
+    "b": 36184
+   },
+   {
+    "f": "f022b1629605b85c-s.p.woff2",
+    "b": 36184
+   }
+  ],
+  "js": [
+   {
+    "f": "/_next/static/chunks/9786-b5450314594f8265.js",
+    "b": 175971
+   },
+   {
+    "f": "/_next/static/chunks/bd904a5c-a41790b73ae35279.js",
+    "b": 100982
+   },
+   {
+    "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
+    "b": 54801
+   },
+   {
+    "f": "/_next/static/chunks/1255-d8a1861c775d9bcc.js",
+    "b": 46831
+   },
+   {
+    "f": "/_next/static/chunks/4257-0087af2d6bd45f7f.js",
+    "b": 36397
+   },
+   {
+    "f": "/_next/static/chunks/4750-4b3d8f86d1fd346d.js",
+    "b": 26688
+   },
+   {
+    "f": "/_next/static/chunks/8734-4d58837a0fb35942.js",
+    "b": 13482
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(checkout)/checkout/%5BdesignId%5D/page-e657e3071bf731a2.js",
+    "b": 13174
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/layout-1ce93ae28cd4305d.js",
+    "b": 8765
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/account/page-e57f7f3fa4568d6e.js",
+    "b": 5849
+   },
+   {
+    "f": "/_next/static/chunks/9832-4a60e860e1d72153.js",
+    "b": 5569
+   },
+   {
+    "f": "/_next/static/chunks/1005-ea67390bf2c961f7.js",
+    "b": 4845
+   }
+  ]
+ },
+ {
+  "page": "order-tracking",
+  "profile": "desktop",
+  "locale": "en",
+  "url": "http://localhost:3000/en/orders/ELB-26001",
+  "status": 200,
+  "finalUrl": "http://localhost:3000/en/orders/ELB-26001",
+  "loadMs": 230,
+  "ttfb": 30.300000000745058,
+  "domContentLoaded": 106.80000000074506,
+  "loadEvent": 225.40000000037253,
+  "htmlTransfer": 55064,
+  "htmlDecoded": 186531,
+  "lcp": 260,
+  "lcpEl": "p.SiteChrome_cookieText__0DHlX size=19018",
+  "fcp": 192,
+  "clsLoad": 0,
+  "domNodes": 415,
+  "canvases": 0,
+  "fontsLoaded": [
+   "Inter 100 900",
+   "IBM Plex Sans Arabic 500",
+   "IBM Plex Sans Arabic 500",
+   "IBM Plex Sans Arabic 700",
+   "IBM Plex Sans Arabic 700"
+  ],
+  "cls": 0,
+  "shifts": [],
+  "inp": 16,
+  "inpDetail": [
+   {
+    "id": 5525,
+    "name": "keydown",
+    "d": 16,
+    "input": 0,
+    "proc": 2,
+    "target": "body"
+   }
+  ],
+  "clicks": 0,
+  "longTasks": 0,
+  "longTaskMax": 0,
+  "tbt": 0,
+  "tbtLoad": 0,
+  "bytes": {
+   "total": 544133,
+   "js": 196307,
+   "css": 36952,
+   "img": 0,
+   "font": 248076,
+   "doc": 56334,
+   "fetch": 6464
+  },
+  "requests": 48,
+  "fonts": [
+   {
+    "f": "17efc7caebbb6a73-s.p.woff2",
+    "b": 14244
+   },
+   {
+    "f": "79d9077e4fd7eddc-s.p.woff2",
+    "b": 15392
+   },
+   {
+    "f": "99dc19e540dbb87b-s.p.woff2",
+    "b": 14508
+   },
+   {
+    "f": "b729ad8c86c7d641-s.p.woff2",
+    "b": 15092
+   },
+   {
+    "f": "9da48a48bf6500f8-s.p.woff2",
+    "b": 33812
+   },
+   {
+    "f": "f022b1629605b85c-s.p.woff2",
+    "b": 36184
+   },
+   {
+    "f": "e4efb0298547fad0-s.p.woff2",
+    "b": 36184
+   },
+   {
+    "f": "e4af272ccee01ff0-s.p.woff2",
+    "b": 48732
+   },
+   {
+    "f": "fb66eb17bf011c3b-s.p.woff2",
+    "b": 33928
+   }
+  ],
+  "js": [
+   {
+    "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
+    "b": 54801
+   },
+   {
+    "f": "/_next/static/chunks/1255-d8a1861c775d9bcc.js",
+    "b": 46831
+   },
+   {
+    "f": "/_next/static/chunks/4750-4b3d8f86d1fd346d.js",
+    "b": 26688
+   },
+   {
+    "f": "/_next/static/chunks/8734-4d58837a0fb35942.js",
+    "b": 13482
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/layout-1ce93ae28cd4305d.js",
+    "b": 8765
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/account/page-e57f7f3fa4568d6e.js",
+    "b": 5849
+   },
+   {
+    "f": "/_next/static/chunks/1005-ea67390bf2c961f7.js",
+    "b": 4845
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/orders/%5Bid%5D/page-37b5ffad28212b52.js",
+    "b": 4039
+   },
+   {
+    "f": "/_next/static/chunks/2619-04bc32f026a0d946.js",
+    "b": 3802
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/page-b30d813817711ee7.js",
+    "b": 3374
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/vendors/page-89c2688da9931754.js",
+    "b": 3347
+   },
+   {
+    "f": "/_next/static/chunks/9185-da9503aad72cc0ff.js",
+    "b": 3263
+   }
+  ]
+ },
+ {
+  "page": "home",
+  "profile": "phone",
+  "locale": "en",
+  "url": "http://localhost:3000/en",
+  "status": 200,
+  "finalUrl": "http://localhost:3000/en",
+  "loadMs": 7774,
+  "ttfb": 29.90000000037253,
+  "domContentLoaded": 2515,
+  "loadEvent": 7769.5999999996275,
+  "htmlTransfer": 76132,
+  "htmlDecoded": 270176,
+  "lcp": 3340,
+  "lcpEl": "h1#hero-title.marketing_h1__b7CQX.m-enter size=37905",
+  "fcp": 2476,
+  "clsLoad": 0,
+  "domNodes": 827,
+  "canvases": 1,
+  "fontsLoaded": [
+   "Inter 100 900",
+   "IBM Plex Sans Arabic 500",
+   "IBM Plex Sans Arabic 500"
+  ],
+  "cls": 0,
+  "shifts": [],
+  "inp": 736,
+  "inpDetail": [
+   {
+    "id": 8820,
+    "name": "click",
+    "d": 736,
+    "input": 573,
+    "proc": 21,
+    "target": "null"
+   },
+   {
+    "id": 8827,
+    "name": "click",
+    "d": 56,
+    "input": 35,
+    "proc": 5,
+    "target": "null"
+   },
+   {
+    "id": 8841,
+    "name": "keydown",
+    "d": 48,
+    "input": 1,
+    "proc": 9,
+    "target": "button.marketing_iconPill__us9Tt"
+   }
+  ],
+  "clicks": 1,
+  "longTasks": 54,
+  "longTaskMax": 521,
+  "tbt": 5017,
+  "tbtLoad": 2516,
+  "bytes": {
+   "total": 1101760,
+   "js": 528379,
+   "css": 45808,
+   "img": 199699,
+   "font": 248076,
+   "doc": 77516,
+   "fetch": 2282
+  },
+  "requests": 61,
+  "fonts": [
+   {
+    "f": "17efc7caebbb6a73-s.p.woff2",
+    "b": 14244
+   },
+   {
+    "f": "99dc19e540dbb87b-s.p.woff2",
+    "b": 14508
+   },
+   {
+    "f": "79d9077e4fd7eddc-s.p.woff2",
+    "b": 15392
+   },
+   {
+    "f": "b729ad8c86c7d641-s.p.woff2",
+    "b": 15092
+   },
+   {
+    "f": "9da48a48bf6500f8-s.p.woff2",
+    "b": 33812
+   },
+   {
+    "f": "e4af272ccee01ff0-s.p.woff2",
+    "b": 48732
+   },
+   {
+    "f": "e4efb0298547fad0-s.p.woff2",
+    "b": 36184
+   },
+   {
+    "f": "fb66eb17bf011c3b-s.p.woff2",
+    "b": 33928
+   },
+   {
+    "f": "f022b1629605b85c-s.p.woff2",
+    "b": 36184
+   }
+  ],
+  "js": [
+   {
+    "f": "/_next/static/chunks/bd904a5c-a41790b73ae35279.js",
+    "b": 100982
+   },
+   {
+    "f": "/_next/static/chunks/b536a0f1.1baeceb98d44d20d.js",
+    "b": 80115
+   },
+   {
+    "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
+    "b": 54801
+   },
+   {
+    "f": "/_next/static/chunks/e49654ac.234a1a0f7c8300b1.js",
+    "b": 52910
+   },
+   {
+    "f": "/_next/static/chunks/1255-d8a1861c775d9bcc.js",
+    "b": 46831
+   },
+   {
+    "f": "/_next/static/chunks/4257-0087af2d6bd45f7f.js",
+    "b": 36397
+   },
+   {
+    "f": "/_next/static/chunks/9898.18a4db5fd2edc486.js",
+    "b": 30203
+   },
+   {
+    "f": "/_next/static/chunks/4750-4b3d8f86d1fd346d.js",
+    "b": 26688
+   },
+   {
+    "f": "/_next/static/chunks/7133.8f53581e6ad4c833.js",
+    "b": 14915
+   },
+   {
+    "f": "/_next/static/chunks/8734-4d58837a0fb35942.js",
+    "b": 13482
+   },
+   {
+    "f": "/_next/static/chunks/6890-eaef710216aa92a5.js",
+    "b": 12578
+   },
+   {
+    "f": "/_next/static/chunks/3211.d350d5c8d1031f6f.js",
+    "b": 9210
+   }
+  ]
+ },
+ {
+  "page": "boxes",
+  "profile": "phone",
+  "locale": "en",
+  "url": "http://localhost:3000/en/boxes",
+  "status": 200,
+  "finalUrl": "http://localhost:3000/en/boxes",
+  "loadMs": 5653,
+  "ttfb": 32.10000000055879,
+  "domContentLoaded": 2519.9000000003725,
+  "loadEvent": 5648.600000000559,
+  "htmlTransfer": 104222,
+  "htmlDecoded": 539692,
+  "lcp": 4660,
+  "lcpEl": "img [renders/fefco-0427.webp] size=64396",
+  "fcp": 2412,
+  "clsLoad": 0.0030458984594348734,
+  "domNodes": 2815,
+  "canvases": 0,
+  "fontsLoaded": [
+   "Inter 100 900",
+   "IBM Plex Sans Arabic 500",
+   "IBM Plex Sans Arabic 500"
+  ],
+  "cls": 0.0030458984594348734,
+  "shifts": [
+   {
+    "t": 4608,
+    "v": 0.003,
+    "nodes": [
+     "section.marketing_band__pEC7K"
+    ]
+   }
+  ],
+  "inp": 32,
+  "inpDetail": [
+   {
+    "id": 9761,
+    "name": "keydown",
+    "d": 32,
+    "input": 1,
+    "proc": 23,
+    "target": "body"
+   }
+  ],
+  "clicks": 0,
+  "longTasks": 3,
+  "longTaskMax": 194,
+  "tbt": 210,
+  "tbtLoad": 210,
+  "bytes": {
+   "total": 797900,
+   "js": 169618,
+   "css": 36410,
+   "img": 235980,
+   "font": 248076,
+   "doc": 105581,
+   "fetch": 2235
+  },
+  "requests": 44,
+  "fonts": [
+   {
+    "f": "17efc7caebbb6a73-s.p.woff2",
+    "b": 14244
+   },
+   {
+    "f": "99dc19e540dbb87b-s.p.woff2",
+    "b": 14508
+   },
+   {
+    "f": "79d9077e4fd7eddc-s.p.woff2",
+    "b": 15392
+   },
+   {
+    "f": "b729ad8c86c7d641-s.p.woff2",
+    "b": 15092
+   },
+   {
+    "f": "9da48a48bf6500f8-s.p.woff2",
+    "b": 33812
+   },
+   {
+    "f": "e4af272ccee01ff0-s.p.woff2",
+    "b": 48732
+   },
+   {
+    "f": "e4efb0298547fad0-s.p.woff2",
+    "b": 36184
+   },
+   {
+    "f": "f022b1629605b85c-s.p.woff2",
+    "b": 36184
+   },
+   {
+    "f": "fb66eb17bf011c3b-s.p.woff2",
+    "b": 33928
+   }
+  ],
+  "js": [
+   {
+    "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
+    "b": 54801
+   },
+   {
+    "f": "/_next/static/chunks/1255-d8a1861c775d9bcc.js",
+    "b": 46831
+   },
+   {
+    "f": "/_next/static/chunks/4750-4b3d8f86d1fd346d.js",
+    "b": 26688
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/layout-1ce93ae28cd4305d.js",
+    "b": 8765
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/account/page-e57f7f3fa4568d6e.js",
+    "b": 5849
+   },
+   {
+    "f": "/_next/static/chunks/1005-ea67390bf2c961f7.js",
+    "b": 4845
+   },
+   {
+    "f": "/_next/static/chunks/2619-04bc32f026a0d946.js",
+    "b": 3802
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/boxes/page-b30d813817711ee7.js",
+    "b": 3374
+   },
+   {
+    "f": "/_next/static/chunks/9185-da9503aad72cc0ff.js",
+    "b": 3263
+   },
+   {
+    "f": "/_next/static/chunks/webpack-d7f360cba30236cc.js",
+    "b": 3030
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(auth)/layout-2d8ee86c77d48aad.js",
+    "b": 2917
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/error-fc5f0ac78ec0b3b4.js",
+    "b": 2219
+   }
+  ]
+ },
+ {
+  "page": "design-picker",
+  "profile": "phone",
+  "locale": "en",
+  "url": "http://localhost:3000/en/design",
+  "status": 200,
+  "finalUrl": "http://localhost:3000/en/design",
+  "loadMs": 6834,
+  "ttfb": 46.10000000055879,
+  "domContentLoaded": 5089.300000000745,
+  "loadEvent": 6830.200000000186,
+  "htmlTransfer": 87460,
+  "htmlDecoded": 473042,
+  "lcp": 4848,
+  "lcpEl": "img [models/mailer-box.svg] size=14456",
+  "fcp": 3180,
+  "clsLoad": 0,
+  "domNodes": 2447,
+  "canvases": 0,
+  "fontsLoaded": [
+   "Inter 100 900",
+   "IBM Plex Sans Arabic 700",
+   "IBM Plex Sans Arabic 700"
+  ],
+  "cls": 0,
+  "shifts": [],
+  "inp": 144,
+  "inpDetail": [
+   {
+    "id": 5979,
+    "name": "click",
+    "d": 144,
+    "input": 34,
+    "proc": 29,
+    "target": "button.library_chip__8KvFg"
+   },
+   {
+    "id": 5965,
+    "name": "click",
+    "d": 136,
+    "input": 38,
+    "proc": 59,
+    "target": "button.library_chip__8KvFg"
+   },
+   {
+    "id": 5930,
+    "name": "keyup",
+    "d": 128,
+    "input": 86,
+    "proc": 2,
+    "target": "input#_R_5n5fj5uivb_.Form_Input__wNMRS"
+   }
+  ],
+  "clicks": 5,
+  "longTasks": 13,
+  "longTaskMax": 813,
+  "tbt": 1605,
+  "tbtLoad": 1287,
+  "bytes": {
+   "total": 1000056,
+   "js": 501731,
+   "css": 44831,
+   "img": 109326,
+   "font": 248076,
+   "doc": 89100,
+   "fetch": 6992
+  },
+  "requests": 147,
+  "fonts": [
+   {
+    "f": "17efc7caebbb6a73-s.p.woff2",
+    "b": 14244
+   },
+   {
+    "f": "99dc19e540dbb87b-s.p.woff2",
+    "b": 14508
+   },
+   {
+    "f": "79d9077e4fd7eddc-s.p.woff2",
+    "b": 15392
+   },
+   {
+    "f": "b729ad8c86c7d641-s.p.woff2",
+    "b": 15092
+   },
+   {
+    "f": "9da48a48bf6500f8-s.p.woff2",
+    "b": 33812
+   },
+   {
+    "f": "e4af272ccee01ff0-s.p.woff2",
+    "b": 48732
+   },
+   {
+    "f": "e4efb0298547fad0-s.p.woff2",
+    "b": 36184
+   },
+   {
+    "f": "fb66eb17bf011c3b-s.p.woff2",
+    "b": 33928
+   },
+   {
+    "f": "f022b1629605b85c-s.p.woff2",
+    "b": 36184
+   }
+  ],
+  "js": [
+   {
+    "f": "/_next/static/chunks/9786-b5450314594f8265.js",
+    "b": 175971
+   },
+   {
+    "f": "/_next/static/chunks/bd904a5c-a41790b73ae35279.js",
+    "b": 100982
+   },
+   {
+    "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
+    "b": 54801
+   },
+   {
+    "f": "/_next/static/chunks/1255-d8a1861c775d9bcc.js",
+    "b": 46831
+   },
+   {
+    "f": "/_next/static/chunks/4257-0087af2d6bd45f7f.js",
+    "b": 36397
+   },
+   {
+    "f": "/_next/static/chunks/4750-4b3d8f86d1fd346d.js",
+    "b": 26688
+   },
+   {
+    "f": "/_next/static/chunks/8734-4d58837a0fb35942.js",
+    "b": 13482
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/layout-1ce93ae28cd4305d.js",
+    "b": 8765
+   },
+   {
+    "f": "/_next/static/chunks/9832-4a60e860e1d72153.js",
+    "b": 5569
+   },
+   {
+    "f": "/_next/static/chunks/1005-ea67390bf2c961f7.js",
+    "b": 4845
+   },
+   {
+    "f": "/_next/static/chunks/2619-04bc32f026a0d946.js",
+    "b": 3802
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/design/layout-aaf4bbbc8ff48951.js",
+    "b": 3610
+   }
+  ]
+ },
+ {
+  "page": "designer-box",
+  "profile": "phone",
+  "locale": "en",
+  "url": "http://localhost:3000/en/design/mailer-box",
+  "status": 200,
+  "finalUrl": "http://localhost:3000/en/design/mailer-box",
+  "loadMs": 6676,
+  "ttfb": 38,
+  "domContentLoaded": 2515.399999999441,
+  "loadEvent": 6672.0999999996275,
+  "htmlTransfer": 50203,
+  "htmlDecoded": 175284,
+  "lcp": 3616,
+  "lcpEl": "img [models/mailer-box.svg] size=3875",
+  "fcp": 2476,
+  "clsLoad": 0,
+  "domNodes": 477,
+  "canvases": 1,
+  "fontsLoaded": [
+   "Inter 100 900",
+   "IBM Plex Sans Arabic 700",
+   "IBM Plex Sans Arabic 700"
+  ],
+  "cls": 0,
+  "shifts": [],
+  "inp": 320,
+  "inpDetail": [
+   {
+    "id": 6787,
+    "name": "click",
+    "d": 320,
+    "input": 83,
+    "proc": 64,
+    "target": "span.designer_priceBadgeText__ON7PY"
+   },
+   {
+    "id": 6773,
+    "name": "click",
+    "d": 272,
+    "input": 38,
+    "proc": 79,
+    "target": "circle"
+   },
+   {
+    "id": 6829,
+    "name": "click",
+    "d": 272,
+    "input": 28,
+    "proc": 108,
+    "target": "span.Button_Text__pcn_S"
+   }
+  ],
+  "clicks": 5,
+  "longTasks": 27,
+  "longTaskMax": 941,
+  "tbt": 3112,
+  "tbtLoad": 2451,
+  "bytes": {
+   "total": 1091610,
+   "js": 739481,
+   "css": 44831,
+   "img": 843,
+   "font": 248076,
+   "doc": 51403,
+   "fetch": 6976
+  },
+  "requests": 54,
+  "fonts": [
+   {
+    "f": "17efc7caebbb6a73-s.p.woff2",
+    "b": 14244
+   },
+   {
+    "f": "99dc19e540dbb87b-s.p.woff2",
+    "b": 14508
+   },
+   {
+    "f": "79d9077e4fd7eddc-s.p.woff2",
+    "b": 15392
+   },
+   {
+    "f": "b729ad8c86c7d641-s.p.woff2",
+    "b": 15092
+   },
+   {
+    "f": "9da48a48bf6500f8-s.p.woff2",
+    "b": 33812
+   },
+   {
+    "f": "e4af272ccee01ff0-s.p.woff2",
+    "b": 48732
+   },
+   {
+    "f": "e4efb0298547fad0-s.p.woff2",
+    "b": 36184
+   },
+   {
+    "f": "f022b1629605b85c-s.p.woff2",
+    "b": 36184
+   },
+   {
+    "f": "fb66eb17bf011c3b-s.p.woff2",
+    "b": 33928
+   }
+  ],
+  "js": [
+   {
+    "f": "/_next/static/chunks/9786-b5450314594f8265.js",
+    "b": 175971
+   },
+   {
+    "f": "/_next/static/chunks/bd904a5c-a41790b73ae35279.js",
+    "b": 100982
+   },
+   {
+    "f": "/_next/static/chunks/b536a0f1.1baeceb98d44d20d.js",
+    "b": 80115
+   },
+   {
+    "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
+    "b": 54801
+   },
+   {
+    "f": "/_next/static/chunks/e49654ac.234a1a0f7c8300b1.js",
+    "b": 52910
+   },
+   {
+    "f": "/_next/static/chunks/1255-d8a1861c775d9bcc.js",
+    "b": 46831
+   },
+   {
+    "f": "/_next/static/chunks/4257-0087af2d6bd45f7f.js",
+    "b": 36397
+   },
+   {
+    "f": "/_next/static/chunks/9898.18a4db5fd2edc486.js",
+    "b": 30203
+   },
+   {
+    "f": "/_next/static/chunks/4750-4b3d8f86d1fd346d.js",
+    "b": 26688
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/design/%5Bstructure%5D/page-89ecdcf3c5cd6994.js",
+    "b": 20430
+   },
+   {
+    "f": "/_next/static/chunks/7133.8f53581e6ad4c833.js",
+    "b": 14915
+   },
+   {
+    "f": "/_next/static/chunks/8734-4d58837a0fb35942.js",
+    "b": 13482
+   }
+  ]
+ },
+ {
+  "page": "checkout",
+  "profile": "phone",
+  "locale": "en",
+  "url": "http://localhost:3000/en/checkout/cmw4alpet00gq7dqp7jaj2q7v",
+  "status": 200,
+  "finalUrl": "http://localhost:3000/en/checkout/cmw4alpet00gq7dqp7jaj2q7v",
+  "loadMs": 6697,
+  "ttfb": 28.199999999254942,
+  "domContentLoaded": 2500.5999999996275,
+  "loadEvent": 6693.899999999441,
+  "htmlTransfer": 51917,
+  "htmlDecoded": 182881,
+  "lcp": 6760,
+  "lcpEl": "p.SiteChrome_cookieText__0DHlX size=22310",
+  "fcp": 2492,
+  "clsLoad": 0,
+  "domNodes": 458,
+  "canvases": 0,
+  "fontsLoaded": [
+   "Inter 100 900",
+   "IBM Plex Sans Arabic 700",
+   "IBM Plex Sans Arabic 700"
+  ],
+  "cls": 0,
+  "shifts": [],
+  "inp": 16,
+  "inpDetail": [
+   {
+    "id": 7891,
+    "name": "keydown",
+    "d": 16,
+    "input": 2,
+    "proc": 8,
+    "target": "body"
+   }
+  ],
+  "clicks": 0,
+  "longTasks": 5,
+  "longTaskMax": 352,
+  "tbt": 514,
+  "tbtLoad": 514,
+  "bytes": {
+   "total": 893029,
+   "js": 540564,
+   "css": 44831,
+   "img": 0,
+   "font": 248076,
+   "doc": 53145,
+   "fetch": 6413
+  },
+  "requests": 57,
+  "fonts": [
+   {
+    "f": "17efc7caebbb6a73-s.p.woff2",
+    "b": 14244
+   },
+   {
+    "f": "99dc19e540dbb87b-s.p.woff2",
+    "b": 14508
+   },
+   {
+    "f": "79d9077e4fd7eddc-s.p.woff2",
+    "b": 15392
+   },
+   {
+    "f": "b729ad8c86c7d641-s.p.woff2",
+    "b": 15092
+   },
+   {
+    "f": "9da48a48bf6500f8-s.p.woff2",
+    "b": 33812
+   },
+   {
+    "f": "e4af272ccee01ff0-s.p.woff2",
+    "b": 48732
+   },
+   {
+    "f": "e4efb0298547fad0-s.p.woff2",
+    "b": 36184
+   },
+   {
+    "f": "f022b1629605b85c-s.p.woff2",
+    "b": 36184
+   },
+   {
+    "f": "fb66eb17bf011c3b-s.p.woff2",
+    "b": 33928
+   }
+  ],
+  "js": [
+   {
+    "f": "/_next/static/chunks/9786-b5450314594f8265.js",
+    "b": 175971
+   },
+   {
+    "f": "/_next/static/chunks/bd904a5c-a41790b73ae35279.js",
+    "b": 100982
+   },
+   {
+    "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
+    "b": 54801
+   },
+   {
+    "f": "/_next/static/chunks/1255-d8a1861c775d9bcc.js",
+    "b": 46831
+   },
+   {
+    "f": "/_next/static/chunks/4257-0087af2d6bd45f7f.js",
+    "b": 36397
+   },
+   {
+    "f": "/_next/static/chunks/4750-4b3d8f86d1fd346d.js",
+    "b": 26688
+   },
+   {
+    "f": "/_next/static/chunks/8734-4d58837a0fb35942.js",
+    "b": 13482
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(checkout)/checkout/%5BdesignId%5D/page-e657e3071bf731a2.js",
+    "b": 13174
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/layout-1ce93ae28cd4305d.js",
+    "b": 8765
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/account/page-e57f7f3fa4568d6e.js",
+    "b": 5849
+   },
+   {
+    "f": "/_next/static/chunks/9832-4a60e860e1d72153.js",
+    "b": 5569
+   },
+   {
+    "f": "/_next/static/chunks/1005-ea67390bf2c961f7.js",
+    "b": 4845
+   }
+  ]
+ },
+ {
+  "page": "order-tracking",
+  "profile": "phone",
+  "locale": "en",
+  "url": "http://localhost:3000/en/orders/ELB-26001",
+  "status": 200,
+  "finalUrl": "http://localhost:3000/en/orders/ELB-26001",
+  "loadMs": 4812,
+  "ttfb": 32.5,
+  "domContentLoaded": 2484.9000000003725,
+  "loadEvent": 4808.9000000003725,
+  "htmlTransfer": 55064,
+  "htmlDecoded": 186531,
+  "lcp": 4700,
+  "lcpEl": "p.SiteChrome_cookieText__0DHlX size=22310",
+  "fcp": 2436,
+  "clsLoad": 0,
+  "domNodes": 410,
+  "canvases": 0,
+  "fontsLoaded": [
+   "Inter 100 900",
+   "IBM Plex Sans Arabic 500",
+   "IBM Plex Sans Arabic 500",
+   "IBM Plex Sans Arabic 700",
+   "IBM Plex Sans Arabic 700"
+  ],
+  "cls": 0,
+  "shifts": [],
+  "inp": 64,
+  "inpDetail": [
+   {
+    "id": 7920,
+    "name": "click",
+    "d": 64,
+    "input": 24,
+    "proc": 21,
+    "target": "svg"
+   },
+   {
+    "id": 7927,
+    "name": "keydown",
+    "d": 40,
+    "input": 1,
+    "proc": 28,
+    "target": "null"
+   },
+   {
+    "id": 7934,
+    "name": "keyup",
+    "d": 16,
+    "input": 6,
+    "proc": 1,
+    "target": "button.Button_Button__hsx4z.Button_primary__oSpWt"
+   }
+  ],
+  "clicks": 1,
+  "longTasks": 4,
+  "longTaskMax": 301,
+  "tbt": 353,
+  "tbtLoad": 353,
+  "bytes": {
+   "total": 536534,
+   "js": 193499,
+   "css": 36952,
+   "img": 0,
+   "font": 248076,
+   "doc": 56334,
+   "fetch": 1673
+  },
+  "requests": 46,
+  "fonts": [
+   {
+    "f": "17efc7caebbb6a73-s.p.woff2",
+    "b": 14244
+   },
+   {
+    "f": "99dc19e540dbb87b-s.p.woff2",
+    "b": 14508
+   },
+   {
+    "f": "79d9077e4fd7eddc-s.p.woff2",
+    "b": 15392
+   },
+   {
+    "f": "b729ad8c86c7d641-s.p.woff2",
+    "b": 15092
+   },
+   {
+    "f": "9da48a48bf6500f8-s.p.woff2",
+    "b": 33812
+   },
+   {
+    "f": "e4af272ccee01ff0-s.p.woff2",
+    "b": 48732
+   },
+   {
+    "f": "e4efb0298547fad0-s.p.woff2",
+    "b": 36184
+   },
+   {
+    "f": "f022b1629605b85c-s.p.woff2",
+    "b": 36184
+   },
+   {
+    "f": "fb66eb17bf011c3b-s.p.woff2",
+    "b": 33928
+   }
+  ],
+  "js": [
+   {
+    "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
+    "b": 54801
+   },
+   {
+    "f": "/_next/static/chunks/1255-d8a1861c775d9bcc.js",
+    "b": 46831
+   },
+   {
+    "f": "/_next/static/chunks/4750-4b3d8f86d1fd346d.js",
+    "b": 26688
+   },
+   {
+    "f": "/_next/static/chunks/8734-4d58837a0fb35942.js",
+    "b": 13482
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/layout-1ce93ae28cd4305d.js",
+    "b": 8765
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/account/page-e57f7f3fa4568d6e.js",
+    "b": 5849
+   },
+   {
+    "f": "/_next/static/chunks/1005-ea67390bf2c961f7.js",
+    "b": 4845
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/orders/%5Bid%5D/page-37b5ffad28212b52.js",
+    "b": 4039
+   },
+   {
+    "f": "/_next/static/chunks/2619-04bc32f026a0d946.js",
+    "b": 3802
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/page-b30d813817711ee7.js",
+    "b": 3374
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/vendors/page-89c2688da9931754.js",
+    "b": 3347
+   },
+   {
+    "f": "/_next/static/chunks/9185-da9503aad72cc0ff.js",
+    "b": 3263
+   }
+  ]
+ }
+]

@@ -1,5 +1,5 @@
 /** Serializable view models passed from server pages to client components (dates as ISO strings). */
-import type { Dims, FinishCode, MaterialCode, OrderStatus, PrintSides, RateTier, StructureCode, VendorCertification, VendorMachine, EgyptCity } from "@/types";
+import type { Dims, FinishCode, LocalizedText, MaterialCode, OrderStatus, PrintSides, RateTier, StructureCode, VendorCertification, VendorMachine, EgyptCity } from "@/types";
 import type { ScheduleRow } from "./lib/payouts";
 
 export interface JobEventDTO {
@@ -20,15 +20,25 @@ export interface JobListItemDTO {
   dueDate: string | null;
   buyerName: string;
   structureCode: StructureCode;
+  /** The library model the buyer designed on (FEFCO 0203, a bottle label…); null for legacy jobs. */
+  model: JobModelDTO | null;
   quantity: number;
   vendorCostPiasters: number;
   events: { type: string; createdAt: string }[];
   qcPhotos: { kind: string; status: string }[];
 }
 
+/** Exact model of a job (the rate card is only its pricing base). */
+export interface JobModelDTO {
+  code: string;
+  standard: string;
+  name: LocalizedText;
+}
+
 export interface JobItemDTO {
   id: string;
   structureCode: StructureCode;
+  model: JobModelDTO | null;
   dims: Dims;
   materialCode: MaterialCode;
   finishCode: FinishCode;
@@ -63,6 +73,11 @@ export interface RateCardRowDTO {
   dieCostPiasters: number;
   leadTimeDays: number;
   active: boolean;
+}
+
+export interface RateCardRowWithCoverageDTO extends RateCardRowDTO {
+  /** Library models priced with this card (count + industry reference of the core structure). */
+  modelCount: number;
 }
 
 export interface RateCardDetailDTO extends RateCardRowDTO {

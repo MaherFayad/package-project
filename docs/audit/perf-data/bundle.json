@@ -1,0 +1,3305 @@
+{
+ "routes": {
+  "/_not-found/page": {
+   "jsGz": 103577,
+   "jsRaw": 353891,
+   "cssGz": 0,
+   "tags": [],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "webpack-d7f360cba30236cc.js",
+     "gz": 2634,
+     "tags": []
+    },
+    {
+     "f": "main-app-50231691739065db.js",
+     "gz": 237,
+     "tags": []
+    }
+   ]
+  },
+  "/not-found": {
+   "jsGz": 106948,
+   "jsRaw": 362384,
+   "cssGz": 0,
+   "tags": [],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "2619-04bc32f026a0d946.js",
+     "gz": 3404,
+     "tags": []
+    },
+    {
+     "f": "webpack-d7f360cba30236cc.js",
+     "gz": 2634,
+     "tags": []
+    }
+   ]
+  },
+  "/layout": {
+   "jsGz": 103551,
+   "jsRaw": 353831,
+   "cssGz": 3955,
+   "tags": [],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "webpack-d7f360cba30236cc.js",
+     "gz": 2634,
+     "tags": []
+    },
+    {
+     "f": "main-app-50231691739065db.js",
+     "gz": 237,
+     "tags": []
+    }
+   ]
+  },
+  "/api/admin/users/[id]/export/route": {
+   "jsGz": 103577,
+   "jsRaw": 353891,
+   "cssGz": 0,
+   "tags": [],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "webpack-d7f360cba30236cc.js",
+     "gz": 2634,
+     "tags": []
+    },
+    {
+     "f": "main-app-50231691739065db.js",
+     "gz": 237,
+     "tags": []
+    }
+   ]
+  },
+  "/api/auth/logout/route": {
+   "jsGz": 103577,
+   "jsRaw": 353891,
+   "cssGz": 0,
+   "tags": [],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "webpack-d7f360cba30236cc.js",
+     "gz": 2634,
+     "tags": []
+    },
+    {
+     "f": "main-app-50231691739065db.js",
+     "gz": 237,
+     "tags": []
+    }
+   ]
+  },
+  "/api/auth/request-otp/route": {
+   "jsGz": 103577,
+   "jsRaw": 353891,
+   "cssGz": 0,
+   "tags": [],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "webpack-d7f360cba30236cc.js",
+     "gz": 2634,
+     "tags": []
+    },
+    {
+     "f": "main-app-50231691739065db.js",
+     "gz": 237,
+     "tags": []
+    }
+   ]
+  },
+  "/api/designs/[id]/route": {
+   "jsGz": 103577,
+   "jsRaw": 353891,
+   "cssGz": 0,
+   "tags": [],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "webpack-d7f360cba30236cc.js",
+     "gz": 2634,
+     "tags": []
+    },
+    {
+     "f": "main-app-50231691739065db.js",
+     "gz": 237,
+     "tags": []
+    }
+   ]
+  },
+  "/api/auth/verify-otp/route": {
+   "jsGz": 103577,
+   "jsRaw": 353891,
+   "cssGz": 0,
+   "tags": [],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "webpack-d7f360cba30236cc.js",
+     "gz": 2634,
+     "tags": []
+    },
+    {
+     "f": "main-app-50231691739065db.js",
+     "gz": 237,
+     "tags": []
+    }
+   ]
+  },
+  "/api/designs/route": {
+   "jsGz": 103577,
+   "jsRaw": 353891,
+   "cssGz": 0,
+   "tags": [],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "webpack-d7f360cba30236cc.js",
+     "gz": 2634,
+     "tags": []
+    },
+    {
+     "f": "main-app-50231691739065db.js",
+     "gz": 237,
+     "tags": []
+    }
+   ]
+  },
+  "/api/designs/[id]/share/route": {
+   "jsGz": 103577,
+   "jsRaw": 353891,
+   "cssGz": 0,
+   "tags": [],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "webpack-d7f360cba30236cc.js",
+     "gz": 2634,
+     "tags": []
+    },
+    {
+     "f": "main-app-50231691739065db.js",
+     "gz": 237,
+     "tags": []
+    }
+   ]
+  },
+  "/api/orders/[id]/print-pdf/route": {
+   "jsGz": 103577,
+   "jsRaw": 353891,
+   "cssGz": 0,
+   "tags": [],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "webpack-d7f360cba30236cc.js",
+     "gz": 2634,
+     "tags": []
+    },
+    {
+     "f": "main-app-50231691739065db.js",
+     "gz": 237,
+     "tags": []
+    }
+   ]
+  },
+  "/api/orders/[id]/proof-pdf/route": {
+   "jsGz": 103577,
+   "jsRaw": 353891,
+   "cssGz": 0,
+   "tags": [],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "webpack-d7f360cba30236cc.js",
+     "gz": 2634,
+     "tags": []
+    },
+    {
+     "f": "main-app-50231691739065db.js",
+     "gz": 237,
+     "tags": []
+    }
+   ]
+  },
+  "/api/orders/[id]/status/route": {
+   "jsGz": 103577,
+   "jsRaw": 353891,
+   "cssGz": 0,
+   "tags": [],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "webpack-d7f360cba30236cc.js",
+     "gz": 2634,
+     "tags": []
+    },
+    {
+     "f": "main-app-50231691739065db.js",
+     "gz": 237,
+     "tags": []
+    }
+   ]
+  },
+  "/api/payments/mock/route": {
+   "jsGz": 103577,
+   "jsRaw": 353891,
+   "cssGz": 0,
+   "tags": [],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "webpack-d7f360cba30236cc.js",
+     "gz": 2634,
+     "tags": []
+    },
+    {
+     "f": "main-app-50231691739065db.js",
+     "gz": 237,
+     "tags": []
+    }
+   ]
+  },
+  "/api/orders/proofs/[proofId]/preview/route": {
+   "jsGz": 103577,
+   "jsRaw": 353891,
+   "cssGz": 0,
+   "tags": [],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "webpack-d7f360cba30236cc.js",
+     "gz": 2634,
+     "tags": []
+    },
+    {
+     "f": "main-app-50231691739065db.js",
+     "gz": 237,
+     "tags": []
+    }
+   ]
+  },
+  "/api/payments/webhook/route": {
+   "jsGz": 103577,
+   "jsRaw": 353891,
+   "cssGz": 0,
+   "tags": [],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "webpack-d7f360cba30236cc.js",
+     "gz": 2634,
+     "tags": []
+    },
+    {
+     "f": "main-app-50231691739065db.js",
+     "gz": 237,
+     "tags": []
+    }
+   ]
+  },
+  "/api/quote/route": {
+   "jsGz": 103577,
+   "jsRaw": 353891,
+   "cssGz": 0,
+   "tags": [],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "webpack-d7f360cba30236cc.js",
+     "gz": 2634,
+     "tags": []
+    },
+    {
+     "f": "main-app-50231691739065db.js",
+     "gz": 237,
+     "tags": []
+    }
+   ]
+  },
+  "/api/vendor/files/[...key]/route": {
+   "jsGz": 103577,
+   "jsRaw": 353891,
+   "cssGz": 0,
+   "tags": [],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "webpack-d7f360cba30236cc.js",
+     "gz": 2634,
+     "tags": []
+    },
+    {
+     "f": "main-app-50231691739065db.js",
+     "gz": 237,
+     "tags": []
+    }
+   ]
+  },
+  "/api/vendor/jobs/[id]/dieline/route": {
+   "jsGz": 103577,
+   "jsRaw": 353891,
+   "cssGz": 0,
+   "tags": [],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "webpack-d7f360cba30236cc.js",
+     "gz": 2634,
+     "tags": []
+    },
+    {
+     "f": "main-app-50231691739065db.js",
+     "gz": 237,
+     "tags": []
+    }
+   ]
+  },
+  "/api/vendor/jobs/[id]/print-pdf/route": {
+   "jsGz": 103577,
+   "jsRaw": 353891,
+   "cssGz": 0,
+   "tags": [],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "webpack-d7f360cba30236cc.js",
+     "gz": 2634,
+     "tags": []
+    },
+    {
+     "f": "main-app-50231691739065db.js",
+     "gz": 237,
+     "tags": []
+    }
+   ]
+  },
+  "/api/vendor/uploads/route": {
+   "jsGz": 103577,
+   "jsRaw": 353891,
+   "cssGz": 0,
+   "tags": [],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "webpack-d7f360cba30236cc.js",
+     "gz": 2634,
+     "tags": []
+    },
+    {
+     "f": "main-app-50231691739065db.js",
+     "gz": 237,
+     "tags": []
+    }
+   ]
+  },
+  "/robots.txt/route": {
+   "jsGz": 103577,
+   "jsRaw": 353891,
+   "cssGz": 0,
+   "tags": [],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "webpack-d7f360cba30236cc.js",
+     "gz": 2634,
+     "tags": []
+    },
+    {
+     "f": "main-app-50231691739065db.js",
+     "gz": 237,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/(store)/account/export/route": {
+   "jsGz": 103577,
+   "jsRaw": 353891,
+   "cssGz": 0,
+   "tags": [],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "webpack-d7f360cba30236cc.js",
+     "gz": 2634,
+     "tags": []
+    },
+    {
+     "f": "main-app-50231691739065db.js",
+     "gz": 237,
+     "tags": []
+    }
+   ]
+  },
+  "/api/auth/me/route": {
+   "jsGz": 103577,
+   "jsRaw": 353891,
+   "cssGz": 0,
+   "tags": [],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "webpack-d7f360cba30236cc.js",
+     "gz": 2634,
+     "tags": []
+    },
+    {
+     "f": "main-app-50231691739065db.js",
+     "gz": 237,
+     "tags": []
+    }
+   ]
+  },
+  "/sitemap.xml/route": {
+   "jsGz": 103577,
+   "jsRaw": 353891,
+   "cssGz": 0,
+   "tags": [],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "webpack-d7f360cba30236cc.js",
+     "gz": 2634,
+     "tags": []
+    },
+    {
+     "f": "main-app-50231691739065db.js",
+     "gz": 237,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/layout": {
+   "jsGz": 104077,
+   "jsRaw": 354910,
+   "cssGz": 1246,
+   "tags": [],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "webpack-d7f360cba30236cc.js",
+     "gz": 2634,
+     "tags": []
+    },
+    {
+     "f": "layout-b1dabb8b6cf033dd.js",
+     "gz": 701,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/not-found": {
+   "jsGz": 107604,
+   "jsRaw": 363721,
+   "cssGz": 0,
+   "tags": [],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "2619-04bc32f026a0d946.js",
+     "gz": 3404,
+     "tags": []
+    },
+    {
+     "f": "webpack-d7f360cba30236cc.js",
+     "gz": 2634,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/(store)/layout": {
+   "jsGz": 148642,
+   "jsRaw": 490866,
+   "cssGz": 28647,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "layout-1ce93ae28cd4305d.js",
+     "gz": 8353,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/(store)/error": {
+   "jsGz": 142113,
+   "jsRaw": 469539,
+   "cssGz": 30677,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "1005-ea67390bf2c961f7.js",
+     "gz": 4444,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/(store)/loading": {
+   "jsGz": 136174,
+   "jsRaw": 454480,
+   "cssGz": 27074,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "2619-04bc32f026a0d946.js",
+     "gz": 3404,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/(store)/bottles/page": {
+   "jsGz": 106948,
+   "jsRaw": 362384,
+   "cssGz": 0,
+   "tags": [],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "2619-04bc32f026a0d946.js",
+     "gz": 3404,
+     "tags": []
+    },
+    {
+     "f": "webpack-d7f360cba30236cc.js",
+     "gz": 2634,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/(store)/boxes/page": {
+   "jsGz": 143267,
+   "jsRaw": 472670,
+   "cssGz": 28052,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "1005-ea67390bf2c961f7.js",
+     "gz": 4444,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/(store)/account/loading": {
+   "jsGz": 136174,
+   "jsRaw": 454480,
+   "cssGz": 27074,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "2619-04bc32f026a0d946.js",
+     "gz": 3404,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/(store)/account/page": {
+   "jsGz": 145734,
+   "jsRaw": 481786,
+   "cssGz": 39614,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "page-e57f7f3fa4568d6e.js",
+     "gz": 5445,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/(store)/catalog/[slug]/page": {
+   "jsGz": 103577,
+   "jsRaw": 353891,
+   "cssGz": 0,
+   "tags": [],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "webpack-d7f360cba30236cc.js",
+     "gz": 2634,
+     "tags": []
+    },
+    {
+     "f": "main-app-50231691739065db.js",
+     "gz": 237,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/(store)/catalog/page": {
+   "jsGz": 143267,
+   "jsRaw": 472670,
+   "cssGz": 28052,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "1005-ea67390bf2c961f7.js",
+     "gz": 4444,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/(store)/vendors/[slug]/page": {
+   "jsGz": 142699,
+   "jsRaw": 471610,
+   "cssGz": 30677,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "1005-ea67390bf2c961f7.js",
+     "gz": 4444,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/(store)/page": {
+   "jsGz": 115057,
+   "jsRaw": 384936,
+   "cssGz": 16587,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "page-732098a5a0e428d8.js",
+     "gz": 4868,
+     "tags": []
+    },
+    {
+     "f": "8467-d020726048cb3218.js",
+     "gz": 3409,
+     "tags": [
+      "lucide"
+     ]
+    }
+   ]
+  },
+  "/[locale]/(store)/vendors/page": {
+   "jsGz": 156293,
+   "jsRaw": 530252,
+   "cssGz": 30677,
+   "tags": [
+    "lucide",
+    "zod"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "8734-4d58837a0fb35942.js",
+     "gz": 13054,
+     "tags": [
+      "zod"
+     ]
+    }
+   ]
+  },
+  "/[locale]/(auth)/layout": {
+   "jsGz": 142797,
+   "jsRaw": 472358,
+   "cssGz": 28052,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "1005-ea67390bf2c961f7.js",
+     "gz": 4444,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/(auth)/login/page": {
+   "jsGz": 105599,
+   "jsRaw": 359608,
+   "cssGz": 8937,
+   "tags": [],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "webpack-d7f360cba30236cc.js",
+     "gz": 2634,
+     "tags": []
+    },
+    {
+     "f": "page-410ee0f37a0b713d.js",
+     "gz": 2223,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/(checkout)/layout": {
+   "jsGz": 142797,
+   "jsRaw": 472358,
+   "cssGz": 28052,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "1005-ea67390bf2c961f7.js",
+     "gz": 4444,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/(checkout)/checkout/error": {
+   "jsGz": 141068,
+   "jsRaw": 467042,
+   "cssGz": 28052,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "1005-ea67390bf2c961f7.js",
+     "gz": 4444,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/(checkout)/checkout/loading": {
+   "jsGz": 136174,
+   "jsRaw": 454480,
+   "cssGz": 27074,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "2619-04bc32f026a0d946.js",
+     "gz": 3404,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/(checkout)/checkout/page": {
+   "jsGz": 136174,
+   "jsRaw": 454480,
+   "cssGz": 27074,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "2619-04bc32f026a0d946.js",
+     "gz": 3404,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/(checkout)/checkout/[designId]/page": {
+   "jsGz": 483285,
+   "jsRaw": 1704750,
+   "cssGz": 36989,
+   "tags": [
+    "three",
+    "lucide",
+    "zod",
+    "dielineEngine",
+    "library370"
+   ],
+   "largest": [
+    {
+     "f": "9786-b5450314594f8265.js",
+     "gz": 175105,
+     "tags": [
+      "library370",
+      "dielineEngine"
+     ]
+    },
+    {
+     "f": "bd904a5c-a41790b73ae35279.js",
+     "gz": 100149,
+     "tags": [
+      "three"
+     ]
+    },
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/(checkout)/checkout/pay/[orderId]/page": {
+   "jsGz": 144240,
+   "jsRaw": 478117,
+   "cssGz": 36989,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "1005-ea67390bf2c961f7.js",
+     "gz": 4444,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/(store)/boxes/[structure]/page": {
+   "jsGz": 137193,
+   "jsRaw": 457010,
+   "cssGz": 29699,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "2619-04bc32f026a0d946.js",
+     "gz": 3404,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/(store)/legal/[doc]/page": {
+   "jsGz": 108272,
+   "jsRaw": 365396,
+   "cssGz": 0,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "2619-04bc32f026a0d946.js",
+     "gz": 3404,
+     "tags": []
+    },
+    {
+     "f": "webpack-d7f360cba30236cc.js",
+     "gz": 2634,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/(store)/boxes/[structure]/[size]/page": {
+   "jsGz": 137193,
+   "jsRaw": 457010,
+   "cssGz": 29699,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "2619-04bc32f026a0d946.js",
+     "gz": 3404,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/dev/layout": {
+   "jsGz": 103577,
+   "jsRaw": 353891,
+   "cssGz": 0,
+   "tags": [],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "webpack-d7f360cba30236cc.js",
+     "gz": 2634,
+     "tags": []
+    },
+    {
+     "f": "main-app-50231691739065db.js",
+     "gz": 237,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/dev/finishes/page": {
+   "jsGz": 276730,
+   "jsRaw": 961324,
+   "cssGz": 10218,
+   "tags": [
+    "three",
+    "zod",
+    "lucide",
+    "dielineEngine"
+   ],
+   "largest": [
+    {
+     "f": "bd904a5c-a41790b73ae35279.js",
+     "gz": 100149,
+     "tags": [
+      "three"
+     ]
+    },
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4257-0087af2d6bd45f7f.js",
+     "gz": 35957,
+     "tags": [
+      "dielineEngine"
+     ]
+    }
+   ]
+  },
+  "/[locale]/dev/ui/page": {
+   "jsGz": 154252,
+   "jsRaw": 510644,
+   "cssGz": 28770,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "page-3534cf698347a267.js",
+     "gz": 11910,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/dev/3d/page": {
+   "jsGz": 509871,
+   "jsRaw": 1779893,
+   "cssGz": 38270,
+   "tags": [
+    "three",
+    "lucide",
+    "zod",
+    "dielineEngine",
+    "library370"
+   ],
+   "largest": [
+    {
+     "f": "9786-b5450314594f8265.js",
+     "gz": 175105,
+     "tags": [
+      "library370",
+      "dielineEngine"
+     ]
+    },
+    {
+     "f": "bd904a5c-a41790b73ae35279.js",
+     "gz": 100149,
+     "tags": [
+      "three"
+     ]
+    },
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/admin/layout": {
+   "jsGz": 145368,
+   "jsRaw": 480746,
+   "cssGz": 36989,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "1509-04401c63af0e2877.js",
+     "gz": 4713,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/admin/error": {
+   "jsGz": 141075,
+   "jsRaw": 467034,
+   "cssGz": 28052,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "1005-ea67390bf2c961f7.js",
+     "gz": 4444,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/admin/loading": {
+   "jsGz": 136174,
+   "jsRaw": 454480,
+   "cssGz": 27074,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "2619-04bc32f026a0d946.js",
+     "gz": 3404,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/admin/disputes/page": {
+   "jsGz": 155806,
+   "jsRaw": 529215,
+   "cssGz": 28052,
+   "tags": [
+    "lucide",
+    "zod"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "8734-4d58837a0fb35942.js",
+     "gz": 13054,
+     "tags": [
+      "zod"
+     ]
+    }
+   ]
+  },
+  "/[locale]/admin/catalog/page": {
+   "jsGz": 144126,
+   "jsRaw": 477930,
+   "cssGz": 28052,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "1005-ea67390bf2c961f7.js",
+     "gz": 4444,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/admin/audit/page": {
+   "jsGz": 142719,
+   "jsRaw": 471689,
+   "cssGz": 36989,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "1005-ea67390bf2c961f7.js",
+     "gz": 4444,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/admin/disputes/[id]/page": {
+   "jsGz": 161395,
+   "jsRaw": 544310,
+   "cssGz": 36989,
+   "tags": [
+    "lucide",
+    "zod"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "8734-4d58837a0fb35942.js",
+     "gz": 13054,
+     "tags": [
+      "zod"
+     ]
+    }
+   ]
+  },
+  "/[locale]/admin/orders/[number]/page": {
+   "jsGz": 160959,
+   "jsRaw": 545480,
+   "cssGz": 36989,
+   "tags": [
+    "lucide",
+    "zod"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "8734-4d58837a0fb35942.js",
+     "gz": 13054,
+     "tags": [
+      "zod"
+     ]
+    }
+   ]
+  },
+  "/[locale]/admin/orders/page": {
+   "jsGz": 157334,
+   "jsRaw": 533255,
+   "cssGz": 28052,
+   "tags": [
+    "lucide",
+    "zod"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "8734-4d58837a0fb35942.js",
+     "gz": 13054,
+     "tags": [
+      "zod"
+     ]
+    }
+   ]
+  },
+  "/[locale]/admin/pricing/page": {
+   "jsGz": 473365,
+   "jsRaw": 1675990,
+   "cssGz": 36989,
+   "tags": [
+    "three",
+    "lucide",
+    "zod",
+    "dielineEngine",
+    "library370"
+   ],
+   "largest": [
+    {
+     "f": "9786-b5450314594f8265.js",
+     "gz": 175105,
+     "tags": [
+      "library370",
+      "dielineEngine"
+     ]
+    },
+    {
+     "f": "bd904a5c-a41790b73ae35279.js",
+     "gz": 100149,
+     "tags": [
+      "three"
+     ]
+    },
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/admin/page": {
+   "jsGz": 141664,
+   "jsRaw": 469059,
+   "cssGz": 36989,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "1005-ea67390bf2c961f7.js",
+     "gz": 4444,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/admin/users/[id]/page": {
+   "jsGz": 160021,
+   "jsRaw": 540784,
+   "cssGz": 28052,
+   "tags": [
+    "lucide",
+    "zod"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "8734-4d58837a0fb35942.js",
+     "gz": 13054,
+     "tags": [
+      "zod"
+     ]
+    }
+   ]
+  },
+  "/[locale]/admin/users/page": {
+   "jsGz": 155691,
+   "jsRaw": 528976,
+   "cssGz": 28052,
+   "tags": [
+    "lucide",
+    "zod"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "8734-4d58837a0fb35942.js",
+     "gz": 13054,
+     "tags": [
+      "zod"
+     ]
+    }
+   ]
+  },
+  "/[locale]/admin/vendors/[slug]/page": {
+   "jsGz": 157230,
+   "jsRaw": 534271,
+   "cssGz": 28052,
+   "tags": [
+    "lucide",
+    "zod"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "8734-4d58837a0fb35942.js",
+     "gz": 13054,
+     "tags": [
+      "zod"
+     ]
+    }
+   ]
+  },
+  "/[locale]/admin/vendors/applications/[id]/page": {
+   "jsGz": 159279,
+   "jsRaw": 540298,
+   "cssGz": 36989,
+   "tags": [
+    "lucide",
+    "zod"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "8734-4d58837a0fb35942.js",
+     "gz": 13054,
+     "tags": [
+      "zod"
+     ]
+    }
+   ]
+  },
+  "/[locale]/admin/privacy/page": {
+   "jsGz": 156399,
+   "jsRaw": 531452,
+   "cssGz": 28052,
+   "tags": [
+    "lucide",
+    "zod"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "8734-4d58837a0fb35942.js",
+     "gz": 13054,
+     "tags": [
+      "zod"
+     ]
+    }
+   ]
+  },
+  "/[locale]/admin/vendors/page": {
+   "jsGz": 142385,
+   "jsRaw": 471740,
+   "cssGz": 28052,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "1005-ea67390bf2c961f7.js",
+     "gz": 4444,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/design/layout": {
+   "jsGz": 139047,
+   "jsRaw": 461742,
+   "cssGz": 36989,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "2619-04bc32f026a0d946.js",
+     "gz": 3404,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/design/error": {
+   "jsGz": 142213,
+   "jsRaw": 470100,
+   "cssGz": 36989,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "1005-ea67390bf2c961f7.js",
+     "gz": 4444,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/design/page": {
+   "jsGz": 471610,
+   "jsRaw": 1668938,
+   "cssGz": 28052,
+   "tags": [
+    "three",
+    "lucide",
+    "zod",
+    "dielineEngine",
+    "library370"
+   ],
+   "largest": [
+    {
+     "f": "9786-b5450314594f8265.js",
+     "gz": 175105,
+     "tags": [
+      "library370",
+      "dielineEngine"
+     ]
+    },
+    {
+     "f": "bd904a5c-a41790b73ae35279.js",
+     "gz": 100149,
+     "tags": [
+      "three"
+     ]
+    },
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/orders/layout": {
+   "jsGz": 142797,
+   "jsRaw": 472358,
+   "cssGz": 28052,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "1005-ea67390bf2c961f7.js",
+     "gz": 4444,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/orders/error": {
+   "jsGz": 141020,
+   "jsRaw": 466900,
+   "cssGz": 28052,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "1005-ea67390bf2c961f7.js",
+     "gz": 4444,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/orders/loading": {
+   "jsGz": 136174,
+   "jsRaw": 454480,
+   "cssGz": 27074,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "2619-04bc32f026a0d946.js",
+     "gz": 3404,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/orders/[id]/invoice/page": {
+   "jsGz": 141465,
+   "jsRaw": 468679,
+   "cssGz": 29181,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "1005-ea67390bf2c961f7.js",
+     "gz": 4444,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/orders/page": {
+   "jsGz": 142018,
+   "jsRaw": 470301,
+   "cssGz": 28052,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "1005-ea67390bf2c961f7.js",
+     "gz": 4444,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/s/layout": {
+   "jsGz": 142797,
+   "jsRaw": 472358,
+   "cssGz": 28052,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "1005-ea67390bf2c961f7.js",
+     "gz": 4444,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/s/[id]/loading": {
+   "jsGz": 136174,
+   "jsRaw": 454480,
+   "cssGz": 27074,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "2619-04bc32f026a0d946.js",
+     "gz": 3404,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/s/[id]/page": {
+   "jsGz": 473953,
+   "jsRaw": 1675239,
+   "cssGz": 36989,
+   "tags": [
+    "three",
+    "lucide",
+    "zod",
+    "dielineEngine",
+    "library370"
+   ],
+   "largest": [
+    {
+     "f": "9786-b5450314594f8265.js",
+     "gz": 175105,
+     "tags": [
+      "library370",
+      "dielineEngine"
+     ]
+    },
+    {
+     "f": "bd904a5c-a41790b73ae35279.js",
+     "gz": 100149,
+     "tags": [
+      "three"
+     ]
+    },
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/orders/[id]/page": {
+   "jsGz": 143932,
+   "jsRaw": 475314,
+   "cssGz": 29181,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "1005-ea67390bf2c961f7.js",
+     "gz": 4444,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/vendor/layout": {
+   "jsGz": 103577,
+   "jsRaw": 353891,
+   "cssGz": 0,
+   "tags": [],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "webpack-d7f360cba30236cc.js",
+     "gz": 2634,
+     "tags": []
+    },
+    {
+     "f": "main-app-50231691739065db.js",
+     "gz": 237,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/vendor/(portal)/layout": {
+   "jsGz": 144577,
+   "jsRaw": 478521,
+   "cssGz": 36989,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "1005-ea67390bf2c961f7.js",
+     "gz": 4444,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/vendor/(portal)/error": {
+   "jsGz": 141082,
+   "jsRaw": 467071,
+   "cssGz": 28052,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "1005-ea67390bf2c961f7.js",
+     "gz": 4444,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/vendor/(portal)/loading": {
+   "jsGz": 136174,
+   "jsRaw": 454480,
+   "cssGz": 27074,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "2619-04bc32f026a0d946.js",
+     "gz": 3404,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/vendor/(portal)/jobs/page": {
+   "jsGz": 145072,
+   "jsRaw": 477522,
+   "cssGz": 28052,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "page-f665847011a1573a.js",
+     "gz": 4783,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/vendor/(portal)/page": {
+   "jsGz": 143439,
+   "jsRaw": 473392,
+   "cssGz": 36989,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "1005-ea67390bf2c961f7.js",
+     "gz": 4444,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/vendor/(portal)/profile/page": {
+   "jsGz": 170436,
+   "jsRaw": 574779,
+   "cssGz": 36989,
+   "tags": [
+    "lucide",
+    "zod"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "8734-4d58837a0fb35942.js",
+     "gz": 13054,
+     "tags": [
+      "zod"
+     ]
+    }
+   ]
+  },
+  "/[locale]/vendor/(portal)/jobs/[number]/page": {
+   "jsGz": 148916,
+   "jsRaw": 493411,
+   "cssGz": 36989,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "page-ba07818693f0eede.js",
+     "gz": 8627,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/vendor/(portal)/payouts/page": {
+   "jsGz": 136600,
+   "jsRaw": 455446,
+   "cssGz": 36011,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "2619-04bc32f026a0d946.js",
+     "gz": 3404,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/vendor/(portal)/rate-cards/[id]/page": {
+   "jsGz": 164971,
+   "jsRaw": 555937,
+   "cssGz": 36989,
+   "tags": [
+    "lucide",
+    "zod"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "8734-4d58837a0fb35942.js",
+     "gz": 13054,
+     "tags": [
+      "zod"
+     ]
+    }
+   ]
+  },
+  "/[locale]/vendor/(portal)/rate-cards/page": {
+   "jsGz": 136174,
+   "jsRaw": 454480,
+   "cssGz": 27074,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "2619-04bc32f026a0d946.js",
+     "gz": 3404,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/vendor/apply/layout": {
+   "jsGz": 142797,
+   "jsRaw": 472358,
+   "cssGz": 28052,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "1005-ea67390bf2c961f7.js",
+     "gz": 4444,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/vendor/apply/error": {
+   "jsGz": 141026,
+   "jsRaw": 466936,
+   "cssGz": 28052,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "1005-ea67390bf2c961f7.js",
+     "gz": 4444,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/vendor/apply/loading": {
+   "jsGz": 136174,
+   "jsRaw": 454480,
+   "cssGz": 27074,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "2619-04bc32f026a0d946.js",
+     "gz": 3404,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/vendor/apply/page": {
+   "jsGz": 161075,
+   "jsRaw": 546136,
+   "cssGz": 36989,
+   "tags": [
+    "lucide",
+    "zod"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "8734-4d58837a0fb35942.js",
+     "gz": 13054,
+     "tags": [
+      "zod"
+     ]
+    }
+   ]
+  },
+  "/[locale]/design/[structure]/layout": {
+   "jsGz": 103577,
+   "jsRaw": 353891,
+   "cssGz": 0,
+   "tags": [],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "webpack-d7f360cba30236cc.js",
+     "gz": 2634,
+     "tags": []
+    },
+    {
+     "f": "main-app-50231691739065db.js",
+     "gz": 237,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/design/[structure]/loading": {
+   "jsGz": 136174,
+   "jsRaw": 454480,
+   "cssGz": 27074,
+   "tags": [
+    "lucide"
+   ],
+   "largest": [
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    },
+    {
+     "f": "4750-4b3d8f86d1fd346d.js",
+     "gz": 26207,
+     "tags": []
+    },
+    {
+     "f": "2619-04bc32f026a0d946.js",
+     "gz": 3404,
+     "tags": []
+    }
+   ]
+  },
+  "/[locale]/design/[structure]/page": {
+   "jsGz": 516858,
+   "jsRaw": 1806453,
+   "cssGz": 36989,
+   "tags": [
+    "three",
+    "lucide",
+    "zod",
+    "dielineEngine",
+    "library370"
+   ],
+   "largest": [
+    {
+     "f": "9786-b5450314594f8265.js",
+     "gz": 175105,
+     "tags": [
+      "library370",
+      "dielineEngine"
+     ]
+    },
+    {
+     "f": "bd904a5c-a41790b73ae35279.js",
+     "gz": 100149,
+     "tags": [
+      "three"
+     ]
+    },
+    {
+     "f": "4bd1b696-100b9d70ed4e49c1.js",
+     "gz": 54247,
+     "tags": []
+    },
+    {
+     "f": "1255-d8a1861c775d9bcc.js",
+     "gz": 46258,
+     "tags": []
+    }
+   ]
+  }
+ },
+ "chunks": [
+  {
+   "file": "static/chunks/9786-b5450314594f8265.js",
+   "raw": 643167,
+   "gz": 175105,
+   "tags": [
+    "library370",
+    "dielineEngine"
+   ],
+   "initial": true
+  },
+  {
+   "file": "static/chunks/bd904a5c-a41790b73ae35279.js",
+   "raw": 379026,
+   "gz": 100149,
+   "tags": [
+    "three"
+   ],
+   "initial": true
+  },
+  {
+   "file": "static/chunks/b536a0f1.1baeceb98d44d20d.js",
+   "raw": 335334,
+   "gz": 79491,
+   "tags": [
+    "three"
+   ],
+   "initial": false
+  },
+  {
+   "file": "static/chunks/framework-9cf8fdd6867d6a80.js",
+   "raw": 182738,
+   "gz": 57733,
+   "tags": [],
+   "initial": false
+  },
+  {
+   "file": "static/chunks/4bd1b696-100b9d70ed4e49c1.js",
+   "raw": 173025,
+   "gz": 54247,
+   "tags": [],
+   "initial": true
+  },
+  {
+   "file": "static/chunks/e49654ac.234a1a0f7c8300b1.js",
+   "raw": 167100,
+   "gz": 52344,
+   "tags": [
+    "three",
+    "r3f"
+   ],
+   "initial": false
+  },
+  {
+   "file": "static/chunks/1255-d8a1861c775d9bcc.js",
+   "raw": 174644,
+   "gz": 46258,
+   "tags": [],
+   "initial": true
+  },
+  {
+   "file": "static/chunks/polyfills-42372ed130431b0a.js",
+   "raw": 112594,
+   "gz": 39520,
+   "tags": [],
+   "initial": false
+  },
+  {
+   "file": "static/chunks/main-cd0d5a4cbb38e41b.js",
+   "raw": 129097,
+   "gz": 37657,
+   "tags": [],
+   "initial": false
+  },
+  {
+   "file": "static/chunks/4257-0087af2d6bd45f7f.js",
+   "raw": 104751,
+   "gz": 35957,
+   "tags": [
+    "dielineEngine"
+   ],
+   "initial": true
+  },
+  {
+   "file": "static/chunks/9898.18a4db5fd2edc486.js",
+   "raw": 87846,
+   "gz": 29773,
+   "tags": [
+    "three",
+    "drei"
+   ],
+   "initial": false
+  },
+  {
+   "file": "static/chunks/4750-4b3d8f86d1fd346d.js",
+   "raw": 82547,
+   "gz": 26207,
+   "tags": [],
+   "initial": true
+  },
+  {
+   "file": "static/chunks/app/[locale]/design/[structure]/page-319625c1dfbe8f70.js",
+   "raw": 62780,
+   "gz": 19943,
+   "tags": [],
+   "initial": true
+  },
+  {
+   "file": "static/chunks/7133.8f53581e6ad4c833.js",
+   "raw": 39826,
+   "gz": 14506,
+   "tags": [
+    "dielineEngine"
+   ],
+   "initial": false
+  },
+  {
+   "file": "static/chunks/5365.245d80e217030cf5.js",
+   "raw": 37602,
+   "gz": 13698,
+   "tags": [],
+   "initial": false
+  },
+  {
+   "file": "static/chunks/app/[locale]/dev/3d/page-49937f5eb47c254d.js",
+   "raw": 37515,
+   "gz": 13069,
+   "tags": [
+    "dielineEngine"
+   ],
+   "initial": true
+  },
+  {
+   "file": "static/chunks/8734-4d58837a0fb35942.js",
+   "raw": 57610,
+   "gz": 13054,
+   "tags": [
+    "zod"
+   ],
+   "initial": true
+  },
+  {
+   "file": "static/chunks/app/[locale]/(checkout)/checkout/[designId]/page-e657e3071bf731a2.js",
+   "raw": 38669,
+   "gz": 12757,
+   "tags": [],
+   "initial": true
+  },
+  {
+   "file": "static/chunks/6890-eaef710216aa92a5.js",
+   "raw": 35548,
+   "gz": 12180,
+   "tags": [],
+   "initial": true
+  },
+  {
+   "file": "static/chunks/app/[locale]/dev/ui/page-3534cf698347a267.js",
+   "raw": 37967,
+   "gz": 11910,
+   "tags": [],
+   "initial": true
+  },
+  {
+   "file": "static/chunks/3211.d350d5c8d1031f6f.js",
+   "raw": 27620,
+   "gz": 8795,
+   "tags": [],
+   "initial": false
+  },
+  {
+   "file": "static/chunks/app/[locale]/vendor/(portal)/jobs/[number]/page-ba07818693f0eede.js",
+   "raw": 27792,
+   "gz": 8627,
+   "tags": [],
+   "initial": true
+  },
+  {
+   "file": "static/chunks/app/[locale]/(store)/layout-1ce93ae28cd4305d.js",
+   "raw": 25247,
+   "gz": 8353,
+   "tags": [],
+   "initial": true
+  },
+  {
+   "file": "static/chunks/app/[locale]/vendor/(portal)/profile/page-fa8ec99173c24507.js",
+   "raw": 28352,
+   "gz": 8317,
+   "tags": [],
+   "initial": true
+  },
+  {
+   "file": "static/chunks/1082-3bbfe71cb784096f.js",
+   "raw": 24108,
+   "gz": 8144,
+   "tags": [
+    "dielineEngine"
+   ],
+   "initial": true
+  },
+  {
+   "file": "static/chunks/app/[locale]/vendor/apply/page-0750faef1263979e.js",
+   "raw": 22907,
+   "gz": 7732,
+   "tags": [],
+   "initial": true
+  },
+  {
+   "file": "static/chunks/app/[locale]/s/[id]/page-8accbb441db87b08.js",
+   "raw": 15992,
+   "gz": 5705,
+   "tags": [],
+   "initial": true
+  },
+  {
+   "file": "static/chunks/app/[locale]/(store)/account/page-e57f7f3fa4568d6e.js",
+   "raw": 16167,
+   "gz": 5445,
+   "tags": [],
+   "initial": true
+  },
+  {
+   "file": "static/chunks/app/[locale]/dev/finishes/page-c12d354c3c9be8c9.js",
+   "raw": 13164,
+   "gz": 5174,
+   "tags": [],
+   "initial": true
+  },
+  {
+   "file": "static/chunks/9832-4a60e860e1d72153.js",
+   "raw": 13917,
+   "gz": 5170,
+   "tags": [],
+   "initial": true
+  }
+ ]
+}

@@ -164,6 +164,10 @@
   --p-color-border-tertiary: #cccccc;
   --p-color-border-disabled: #ebebeb;
   --p-color-border-focus: #005bd3;
+  /* Focus ring on dark surfaces (top bar, toasts, dark marketing bands): #005bd3 is only
+     2.85:1 on #1a1a1a and 2.16:1 on #303030, below the 3:1 a focus indicator needs against
+     what it sits on (WCAG 2.4.7 / 1.4.11, 2.4.13 guidance). White is 17:1 / 12.6:1. */
+  --e-color-border-focus-inverse: #ffffff;
   --p-color-border-brand: #e3e3e3;
   --p-color-border-emphasis: #005bd3;
   --p-color-border-inverse: #616161;
@@ -406,6 +410,8 @@
   --p-motion-ease-out: cubic-bezier(0.19, 0.91, 0.38, 1);
   --p-motion-ease-in-out: cubic-bezier(0.42, 0, 0.58, 1);
   --p-motion-linear: cubic-bezier(0, 0, 1, 1);
+  /* Distance for enter animations (rise/slide). Zeroed under reduced motion below. */
+  --e-motion-distance: 12px;
 
   /* ── Layout ───────────────────────────────────────────────────────── */
   --p-breakpoint-xs: 0px;
@@ -436,13 +442,15 @@
   --p-z-index-popover: 520; /* popovers can open from inside modals */
 }
 
-/* Arabic: IBM Plex Sans Arabic first, Inter for Latin runs. Plex sits optically
+/* Arabic: Inter first so Latin runs and digits use the Inter file every page already has,
+   and Arabic glyphs (absent from Inter) fall through to IBM Plex Sans Arabic. This keeps the
+   Plex Latin files from downloading on Arabic pages (PERF-05). Plex sits optically
    smaller than Inter, so Arabic body text is 1px larger and weights snap to the
-   static Plex cuts (400/500/600/700). */
+   static Plex cuts that are loaded (400/600/700; medium uses 600). */
 :root:lang(ar) {
-  --p-font-family-sans: var(--p-font-family-arabic), var(--p-font-family-latin);
+  --p-font-family-sans: var(--font-inter), var(--p-font-family-arabic), var(--p-font-family-latin);
   --p-font-weight-regular: 400;
-  --p-font-weight-medium: 500;
+  --p-font-weight-medium: 600;
   --p-font-weight-semibold: 600;
   --p-text-body-md-font-size: var(--p-font-size-350);
   --p-text-body-md-font-line-height: var(--p-font-line-height-600);
@@ -459,6 +467,26 @@
 @media (min-width: 768px) {
   :root {
     --p-page-gutter: var(--p-space-600);
+  }
+}
+
+/* Reduced motion (WCAG 2.3.3): durations collapse and movement distance is zero at the token
+   level, so components, inline styles and JS that read these tokens (getComputedStyle) all
+   honour the setting, not only CSS transitions caught by the global override in globals.css.
+   Opacity-only fades stay instant rather than removed so state changes remain visible. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --p-motion-duration-50: 0ms;
+    --p-motion-duration-100: 0ms;
+    --p-motion-duration-150: 0ms;
+    --p-motion-duration-200: 0ms;
+    --p-motion-duration-250: 0ms;
+    --p-motion-duration-300: 0ms;
+    --p-motion-duration-350: 0ms;
+    --p-motion-duration-400: 0ms;
+    --p-motion-duration-450: 0ms;
+    --p-motion-duration-500: 0ms;
+    --e-motion-distance: 0px;
   }
 }
 
@@ -496,6 +524,7 @@
   --p-color-border: #4a4a4a;
   --p-color-border-secondary: #3a3a3a;
   --p-color-border-focus: #8fb8ff;
+  --e-color-border-focus-inverse: #1a1a1a;
   --p-color-input-bg-surface: #262626;
   --p-color-input-border: #8a8a8a;
   --p-color-nav-bg: #222222;

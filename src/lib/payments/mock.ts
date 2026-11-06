@@ -18,8 +18,19 @@ export const MOCK_SIGNATURE_HEADER = "x-mock-signature";
 export const MOCK_DECLINE_CARD = "4000000000000002";
 export const MOCK_SUCCESS_CARD = "4242424242424242";
 
+/**
+ * Webhook secret of the mock gateway. In development a fixed value keeps tests simple; under
+ * `next start` (local prod builds, e2e) the published default would let anyone forge "paid"
+ * callbacks, so it is replaced by a random per-process secret unless MOCK_PAYMENTS_SECRET is set.
+ * The mock "hosted page" signs in the same process, so nothing else needs to know it.
+ * (OWASP ASVS 4.0.3 V2.10.4 / V6.4.1: no hard-coded secrets in production.)
+ */
+const g = globalThis as unknown as { __elbaMockSecret?: string };
 export function mockSecret(env: Record<string, string | undefined> = process.env): string {
-  return env.MOCK_PAYMENTS_SECRET || "elba-dev-mock-webhook-secret";
+  if (env.MOCK_PAYMENTS_SECRET) return env.MOCK_PAYMENTS_SECRET;
+  if (env.NODE_ENV !== "production") return "elba-dev-mock-webhook-secret";
+  g.__elbaMockSecret ??= randomBytes(32).toString("hex");
+  return g.__elbaMockSecret;
 }
 
 export function signMock(rawBody: string, secret = mockSecret()): string {
@@ -88,7 +99,7 @@ export class MockProvider implements PaymentProvider {
   async createIntention(input: IntentionInput): Promise<Intention> {
     const cfg = paymentConfig();
     const providerRef = `mock_${randomBytes(8).toString("hex")}`;
-    const base: Intention = { providerRef, method: input.method, status: "REQUIRES_ACTION" };
+    const base: Intention = { providerRef, method: input.method, status: "REQUIRES_ACTION", gatewayOrderId: providerRef };
     if (input.method === "FAWRY") {
       return {
         ...base,
@@ -121,6 +132,9 @@ export class MockProvider implements PaymentProvider {
       status: b.status,
       amountPiasters: b.amountPiasters,
       raw: { provider: "mock", type: b.type, status: b.status, method: b.method, reason: b.reason ?? null },
+      provider: "mock",
+      gatewayRef: b.providerRef,
+      currency: "EGP",
     };
   }
 

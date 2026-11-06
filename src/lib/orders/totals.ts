@@ -1,8 +1,13 @@
 import { VAT_RATE, type Piasters, type QuoteLine } from "@/types";
+import { vatOf } from "@/lib/pricing/money";
 
-/** VAT in whole piasters, half up (same rule as the pricing engine). */
+/**
+ * VAT in whole piasters, half up. Delegates to the pricing engine's exact integer rule so a quote
+ * and the order/invoice built from it can never differ by a piaster (the old float version relied
+ * on a 1e-9 nudge and lost precision on large subtotals).
+ */
 export function vatOn(subtotal: Piasters, rate = VAT_RATE): Piasters {
-  return Math.round(subtotal * rate + 1e-9);
+  return vatOf(subtotal, rate);
 }
 
 export interface OrderTotals {
@@ -26,7 +31,8 @@ export function orderTotals(lines: QuoteLine[], prepayDiscountPct = 0): OrderTot
   const shipping = base.filter((l) => l.kind === "SHIPPING").reduce((s, l) => s + l.totalPiasters, 0);
   const goods = base.filter((l) => l.kind !== "SHIPPING").reduce((s, l) => s + l.totalPiasters, 0);
   const pct = Math.max(0, Math.min(20, prepayDiscountPct));
-  const discount = pct > 0 ? Math.round((goods * pct) / 100) : 0;
+  // Half-up on integer basis points (pct may be fractional, e.g. 2.5%).
+  const discount = pct > 0 ? Math.floor((goods * Math.round(pct * 100) + 5_000) / 10_000) : 0;
   const out = [...base];
   if (discount > 0) {
     out.push({ kind: "DISCOUNT", labelKey: PREPAY_DISCOUNT_LABEL, quantity: 1, unitPiasters: -discount, totalPiasters: -discount });

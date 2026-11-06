@@ -11,6 +11,9 @@ import { breadcrumbJsonLd, productJsonLd } from "@/components/store/jsonld";
 import { formatCm, parseValidSize, seoSizeParams, sizeSlug, structureFromSlug, structureImage } from "@/components/store/catalog";
 import { getPriceFrom, getStructureBySlug, listMaterials, listVendors } from "@/components/store/data";
 
+/** Prerendered; prices and printer data refresh hourly (ISR). */
+export const revalidate = 3600;
+
 type Props = { params: Promise<{ locale: string; structure: string; size: string }> };
 
 /** Common sizes are pre-listed (sitemap + static params); any other valid size renders on demand. */

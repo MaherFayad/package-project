@@ -69,7 +69,9 @@ export default async function CheckoutStartPage({ params }: { params: Promise<{ 
                     <Button variant="plain" url={designerPath(locale, code, { d: d.id })}>
                       {t("checkout.proof.edit")}
                     </Button>
-                    <Button url={`/${locale}/checkout/${d.id}`}>{t("checkout.start.orderThis")}</Button>
+                    <Button variant="primary" url={`/${locale}/checkout/${d.id}`}>
+                      {t("checkout.start.orderThis")}
+                    </Button>
                   </InlineStack>
                 </InlineStack>
               </Card>

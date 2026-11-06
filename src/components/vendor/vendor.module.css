@@ -147,6 +147,53 @@
   font-weight: var(--p-font-weight-medium);
 }
 
+/* Capabilities grouped by production family (R2-02): Polaris inset sections inside the card. */
+.Families { display: flex; flex-direction: column; gap: var(--p-space-300); }
+.Family {
+  display: flex;
+  flex-direction: column;
+  gap: var(--p-space-300);
+  padding: var(--p-space-300);
+  border: 1px solid var(--p-color-border-secondary);
+  border-radius: var(--p-border-radius-200);
+}
+.FamilyBody { display: grid; gap: var(--p-space-300); }
+@media (min-width: 48em) {
+  .FamilyBody { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: var(--p-space-500); }
+}
+.SubLegend {
+  padding: 0;
+  margin-block-end: var(--p-space-200);
+  font-size: var(--p-text-body-sm-font-size);
+  font-weight: var(--p-font-weight-medium);
+  color: var(--p-color-text-secondary);
+}
+.StyleChecks { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: var(--p-space-200) var(--p-space-400); }
+.BoardChecks { display: flex; flex-direction: column; gap: var(--p-space-100); }
+.CoverageExamples { display: block; }
+.ApplyFamily { display: flex; flex-direction: column; gap: var(--p-space-150); }
+
+/* Model coverage list (rate card editor, R2-04). */
+.ModelList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.ModelItem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--p-space-050);
+  padding-block: var(--p-space-150);
+  border-block-start: 1px solid var(--p-color-border-secondary);
+}
+.ModelItem:first-child { border-block-start: 0; }
+
+/* Dashboard / payouts metrics: two columns on phones instead of a hidden sideways scroll (R2-05). */
+@media (max-width: 47.99em) {
+  .MetricsWrap > section { overflow: visible; }
+  .MetricsWrap > section > dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); inline-size: 100%; }
+  .MetricsWrap > section > dl > div { border-inline-start: 0; border-block-start: 1px solid var(--p-color-border-secondary); }
+  .MetricsWrap > section > dl > div:nth-child(-n + 2) { border-block-start: 0; }
+  .MetricsWrap > section > dl > div:nth-child(2n) { border-inline-start: 1px solid var(--p-color-border-secondary); }
+  .MetricsWrap > section > dl > div:last-child:nth-child(odd) { grid-column: 1 / -1; }
+}
+
 /* Setup checklist (dashboard). */
 .Checklist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--p-space-200); }
 .ChecklistItem { display: flex; gap: var(--p-space-200); align-items: flex-start; }
@@ -176,3 +223,57 @@
   margin-inline: auto;
   padding: var(--p-space-600) var(--p-page-gutter, var(--p-space-400)) var(--p-space-1200);
 }
+
+/* Job detail: the notes/activity row below the 2/3 + 1/3 layout keeps the main-column width. */
+.NotesSection { flex: 2 2 30rem; min-width: 0; display: flex; flex-direction: column; gap: var(--p-space-200); }
+.NotesSpacer { flex: 1 1 15rem; }
+@media (max-width: 489.98px) {
+  .NotesSection { flex-basis: 100%; }
+  .NotesSpacer { display: none; }
+}
+
+/* Jobs index: view tabs on their own row above "Search and filter". */
+.ViewTabs {
+  padding: var(--p-space-150) var(--p-space-200) 0;
+}
+.JobsTable, .CondensedTable { min-width: 0; }
+.Condensed { display: none; }
+@media (max-width: 47.99rem) {
+  /* Condensed rows on phones: one cell per job, no sideways scrolling to reach status or price. */
+  .JobsTable :global(thead),
+  .CondensedTable :global(thead) { display: none; }
+  .WideOnly { display: none; }
+  .Condensed {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--p-space-100);
+    margin-block-start: var(--p-space-100);
+    white-space: normal;
+  }
+  .CondensedMeta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--p-space-200);
+    inline-size: 100%;
+  }
+}
+
+@media (min-width: 48rem) {
+  /* Machines: make and model gets the room; the count is short. */
+  .MachineRow { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 7rem) auto; }
+  /* Tier editor reads as a table: labels show on the first row only (still read by screen readers). */
+  .TierRows > .Row + .Row :global(label) {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+.ErrorSummary { border-radius: var(--p-border-radius-300); }
+.ErrorSummary:focus-visible { outline: var(--p-focus-ring-width) solid var(--p-color-border-focus); outline-offset: 2px; }

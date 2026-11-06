@@ -2,15 +2,17 @@ import { z } from "zod";
 import { normalizeEgyptPhone } from "@/lib/phone";
 import { clientIp } from "@/lib/rate-limit";
 import { requestOtp } from "@/lib/auth/otp";
+import { crossSiteResponse, isCrossSiteRequest } from "@/lib/auth/csrf";
 
 const Body = z.object({ phone: z.string().min(6).max(32) });
 
 /**
  * POST /api/auth/request-otp  { phone }
  * 200 { ok: true, phone: "+20...", expiresAt, devCode? }   (devCode only when OTP dev echo is on)
- * 400 { error: "INVALID_PHONE" } | 429 { error: "RATE_LIMITED", retryAfterSec }
+ * 400 { error: "INVALID_PHONE" } | 429 { error: "RATE_LIMITED", retryAfterSec } | 403 (cross-site)
  */
 export async function POST(req: Request) {
+  if (isCrossSiteRequest(req.headers)) return crossSiteResponse();
   const parsed = Body.safeParse(await req.json().catch(() => null));
   const phone = parsed.success ? normalizeEgyptPhone(parsed.data.phone) : null;
   if (!phone) return Response.json({ error: "INVALID_PHONE" }, { status: 400 });
@@ -22,5 +24,8 @@ export async function POST(req: Request) {
       { status: 429, headers: { "Retry-After": String(r.retryAfterSec) } },
     );
   }
-  return Response.json({ ok: true, phone, expiresAt: r.expiresAt.toISOString(), devCode: r.devCode });
+  return Response.json(
+    { ok: true, phone, expiresAt: r.expiresAt.toISOString(), devCode: r.devCode },
+    { headers: { "Cache-Control": "no-store" } },
+  );
 }

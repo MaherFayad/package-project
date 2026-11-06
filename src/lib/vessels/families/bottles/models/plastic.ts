@@ -67,7 +67,7 @@ export const PLASTIC_BOTTLES: BottleDefinition[] = [
     description: { ar: "قارورة قابلة لإعادة التعبئة بحلقات تقوية وعنق كبس 55 مم", en: "Returnable cooler bottle with stiffening rings and a 55 mm snap neck" },
     standard: "55 mm water-cooler snap neck",
     coreKind: "ROUND_BOTTLE",
-    recipe: { glass: false, section: "round", wallMm: 0.8, baseMm: 1, base: { kind: "flat" }, heel: 0.16, bodyTop: 0.7, shoulder: "boston", neckLen: 0.08, neckFlare: 2.5, ribs: [0.16, 0.44, 0.66], ribDepth: 6, label: [0.19, 0.41] },
+    recipe: { glass: false, section: "round", wallMm: 0.8, baseMm: 1, base: { kind: "flat" }, heel: 0.3, bodyTop: 0.58, shoulder: "boston", neckLen: 0.08, neckFlare: 2.5, ribs: [0.17, 0.43, 0.55], ribDepth: 9, label: [0.2, 0.4] },
     materials: ["PET_BLUE", "PET_CLEAR"],
     defaultMaterial: "PET_BLUE",
     finishes: ["SNAP_55"],

@@ -53,11 +53,16 @@ export function Tooltip({ content, children, preferredPosition = "above", hoverD
 
   useEffect(() => {
     if (!open) return;
+    // Capture phase + stopPropagation: Escape dismisses only the tooltip, not the Modal or
+    // Popover around it (WCAG 1.4.13 "dismissible" without side effects).
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        setOpen(false);
+      }
     };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    document.addEventListener("keydown", onKey, true);
+    return () => document.removeEventListener("keydown", onKey, true);
   }, [open]);
 
   const focusable = isValidElement(children) && getFocusableLike(children);

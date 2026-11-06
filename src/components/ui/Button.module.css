@@ -153,6 +153,7 @@
 .Disclosure { display: inline-flex; margin-inline-end: calc(-1 * var(--p-space-100)); transition: transform var(--p-motion-duration-150); }
 .up { transform: rotate(180deg); }
 
+.loading { cursor: progress; }
 .disabled,
 .disabled:hover,
 .disabled:active {
@@ -173,7 +174,7 @@
 
 .loading .Text,
 .loading .Icon,
-.loading .Disclosure { visibility: hidden; }
+.loading .Disclosure { opacity: 0; } /* opacity, not visibility: keeps the accessible name while loading (WCAG 4.1.2) */
 .loading { --btn-color: var(--p-color-text-secondary); }
 .primary.loading { --btn-color: var(--p-color-text-brand-on-bg-fill); }
 .Spinner {

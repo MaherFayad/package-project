@@ -5,7 +5,7 @@ import { cutWindow, stadium } from "../../features";
 import { clamp, pt, rectPolygon } from "../../geometry";
 import { crashLockCarton, tuckEndCarton } from "../../structures";
 import type { Polygon } from "../../types";
-import { IDENTITY, blockFace, circle, closedBounds, deg, maxStageOf, pieceMatrix, quat, rect, removePanels, reshape, sheetBox } from "./kit";
+import { IDENTITY, blockFace, circle, closedBounds, deg, maxStageOf, pieceMatrix, quat, rect, removePanels, reshape, sheetBox, withDeepParts } from "./kit";
 import type { EcmaDraft } from "./types";
 
 /** Drop the tuck top (lid, tuck, two dust flaps) that crashLockCarton puts on the back panel. */
@@ -102,7 +102,20 @@ export function cupCarrier(dims: Dims, t: number, f: StructureFeatures = {}): Ec
   b.attach("footB", "bottom", "legB", rectEdges(legB).top, fd, { kind: "rect" }, { fold: 90, stage: 3, label: "Foot" });
   b.attach("legA", "front", "deckA", rectEdges(deckA).bottom, Hl, { kind: "rect" }, { fold: 90, stage: 2, label: "Front leg" });
   b.attach("footA", "bottom", "legA", rectEdges(legA).bottom, fd, { kind: "rect" }, { fold: 90, stage: 3, label: "Foot" });
-  return { builder: b, closedRotation: quat(-Math.PI / 2, 0, 0) };
+  const closedRotation = quat(-Math.PI / 2, 0, 0);
+  return {
+    builder: b,
+    closedRotation,
+    // The decks (the printed top a customer sees) sit below the handle crest and the handle
+    // plies stand behind the legs: neither is on the outermost plane, so add them explicitly.
+    faces: (panels, computed) => {
+      const input = { panels, rootId: b.rootId, thicknessMm: t, closedRotation };
+      let faces = withDeepParts(computed, input, "top", ["deckA", "deckB"], Hh + 2 * t);
+      faces = withDeepParts(faces, input, "front", ["handleA", "handleB"], Dd + 2 * t);
+      faces = withDeepParts(faces, input, "back", ["handleA", "handleB"], Dd + 2 * t);
+      return faces;
+    },
+  };
 }
 
 /* ───────────────────────── Bottle basket carrier (E23 group) ───────────────────────── */
@@ -136,15 +149,22 @@ export function basketCarrier(dims: Dims, t: number, grid: BasketGrid): EcmaDraf
   let sx = sb.x;
   const sy = sb.y + sb.height + 15;
 
-  // Centre handle partition.
+  // Centre handle partition: one blank folded double over its crest (two plies, each printed
+  // side out), as on production baskets, so the handle carries artwork from front and back.
   const rise = basketHandleRise(dims);
   const len = dims.L - 1;
   const hD = dims.H + rise;
   const ch = Math.min(len * 0.22, rise * 0.9);
-  const poly: Polygon = [pt(sx, sy + rise), pt(sx + ch, sy), pt(sx + len - ch, sy), pt(sx + len, sy + rise), pt(sx + len, sy + hD), pt(sx, sy + hD)];
-  const hole = stadium(sx + len / 2, sy + Math.max(16, rise * 0.42), Math.min(90, len * 0.5), Math.min(28, rise * 0.4));
-  const handleRect = rect(sx, sy, len, hD);
-  b.piece("handle", "inner", poly, "Handle partition", { matrix: pieceMatrix(handleRect, new Vector3(cx, y0 + hD / 2, cz), false), stage, lift: dims.H * 1.3 }, { label: "Handle partition", holes: [hole] });
+  const hy = sy + hD; // crest crease; ply A below it, ply B (mirrored) above
+  const poly: Polygon = [pt(sx, hy + rise), pt(sx + ch, hy), pt(sx + len - ch, hy), pt(sx + len, hy + rise), pt(sx + len, hy + hD), pt(sx, hy + hD)];
+  const holeY = Math.max(16, rise * 0.42);
+  const holeW = Math.min(90, len * 0.5);
+  const holeH = Math.min(28, rise * 0.4);
+  const handleRect = rect(sx, hy, len, hD);
+  // Ply A printed side toward the front, one caliper in front of the centre plane.
+  b.piece("handle", "inner", poly, "Handle partition", { matrix: pieceMatrix(handleRect, new Vector3(cx, y0 + hD / 2, cz + t), false), stage, lift: dims.H * 1.3 }, { label: "Handle partition", holes: [stadium(sx + len / 2, hy + holeY, holeW, holeH)] });
+  const plyB: Polygon = poly.map((q) => pt(q.x, 2 * hy - q.y));
+  b.attachPoly("handleBack", "inner", "handle", [pt(sx + ch, hy), pt(sx + len - ch, hy)], plyB, { fold: 180, pivotDepth: 1, stage, label: "Handle partition (back ply)", holes: [stadium(sx + len / 2, hy - holeY, holeW, holeH)] });
   sx += len + 10;
 
   // Cross partitions (cols − 1), along W.
@@ -156,7 +176,15 @@ export function basketCarrier(dims: Dims, t: number, grid: BasketGrid): EcmaDraf
     b.piece(`divider${i}`, "inner", rectPolygon(sx, sy, lenW, hC), "Cross partition", { matrix: pieceMatrix(r, new Vector3(x + t / 2, y0 + hC / 2, cz), true), stage, lift: dims.H * 1.3 }, { label: "Cross partition" }).printable = false;
     sx += lenW + 10;
   }
-  return { builder: b, closedRotation: IDENTITY };
+  return {
+    builder: b,
+    closedRotation: IDENTITY,
+    faces: (panels, computed) => {
+      const input = { panels, rootId: b.rootId, thicknessMm: t, closedRotation: IDENTITY };
+      const deep = dims.W / 2 + 4 * t;
+      return withDeepParts(withDeepParts(computed, input, "front", ["handle"], deep), input, "back", ["handleBack"], deep);
+    },
+  };
 }
 
 /* ───────────────────────── Counter display with tear-off header (A20 + X35) ───────────────────────── */

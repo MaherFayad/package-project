@@ -1,0 +1,20 @@
+/* Placeholder with the viewer's footprint while its chunk loads (no layout shift). */
+.viewerSkeleton {
+  block-size: min(70dvh, 36rem);
+  min-block-size: 24rem;
+  border-radius: var(--p-border-radius-300);
+  background: var(--p-color-bg-surface-secondary);
+}
+.viewerSkeleton {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+/* A hair wider than the 3D poster that replaces it (LCP keeps the first paint of the box
+   unless a later element is strictly larger); the 2% is not visible in the cross-fade. */
+.viewerPoster {
+  inline-size: 102%;
+  max-inline-size: none;
+  block-size: 100%;
+  object-fit: contain;
+}

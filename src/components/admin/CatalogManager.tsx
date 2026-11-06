@@ -6,9 +6,10 @@ import { useState, useTransition } from "react";
 import { Badge, BlockStack, Button, Card, Checkbox, DataTable, InlineGrid, Modal, Page, Tabs, Text, TextField } from "@/components/ui";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
-import { formatDims, formatMoney, formatNumber } from "@/lib/format";
+import { formatMoney, formatNumber } from "@/lib/format";
 import type { Dims, StructureParamLimits } from "@/types";
 import { updateFinishAction, updateMaterialAction, updateStructureAction } from "./server/actions";
+import { adminStyles } from "./charts";
 import { fieldError, useAdminAction, useAdminErrorText } from "./useAdminAction";
 import type { AdminActionResponse } from "./server/context";
 
@@ -21,6 +22,11 @@ export interface CatalogData {
 const TABS = ["structures", "materials", "finishes"] as const;
 type Tab = (typeof TABS)[number];
 type Editing = { kind: "structure"; id: string } | { kind: "material"; id: string } | { kind: "finish"; id: string } | null;
+
+/** Labels and pouches are sized flat: the width axis is pinned to 1 mm. */
+function isFlat(p: StructureParamLimits): boolean {
+  return p.W.max <= 1;
+}
 
 function ActiveBadge({ active }: { active: boolean }) {
   const { t } = useI18n();
@@ -40,7 +46,17 @@ export function CatalogManager({ data }: { data: CatalogData }) {
   const tab: Tab = (TABS as readonly string[]).includes(params.get("tab") ?? "") ? (params.get("tab") as Tab) : "structures";
   const [editing, setEditing] = useState<Editing>(null);
   const name = (r: { nameAr: string; nameEn: string }) => (locale === "ar" ? r.nameAr : r.nameEn);
-  const range = (r: { min: number; max: number }) => <bdi dir="ltr">{`${r.min}–${r.max}`}</bdi>;
+  const span = (r: { min: number; max: number }) => (r.min === r.max ? `${r.min}` : `${r.min}–${r.max}`);
+  /** L × W × H limits in one cell; flat items (labels, pouches: width fixed at 1 mm) show L × H only. */
+  const limits = (p: StructureParamLimits) => (
+    <bdi dir="ltr" className={adminStyles.Nowrap}>
+      {(isFlat(p) ? [p.L, p.H] : [p.L, p.W, p.H]).map(span).join(" × ")}
+    </bdi>
+  );
+  const defaultSize = (s: CatalogData["structures"][number]) => {
+    const d = s.defaultDims;
+    return <bdi dir="ltr" className={adminStyles.Nowrap}>{(isFlat(s.params) ? [d.L, d.H] : [d.L, d.W, d.H]).map((n) => formatNumber(n)).join(" × ")}</bdi>;
+  };
   const editBtn = (label: string, onClick: () => void) => (
     <Button variant="tertiary" size="slim" icon={Pencil} accessibilityLabel={label} onClick={onClick}>
       {t("admin.common.edit")}
@@ -58,13 +74,11 @@ export function CatalogManager({ data }: { data: CatalogData }) {
           {tab === "structures" ? (
             <DataTable
               caption={t("admin.catalog.structures.caption")}
-              columnContentTypes={["text", "text", "numeric", "numeric", "numeric", "text", "text", "text"]}
+              columnContentTypes={["text", "text", "text", "text", "text", "text"]}
               headings={[
                 t("admin.catalog.structures.columns.name"),
                 t("admin.catalog.structures.columns.family"),
-                t("admin.catalog.structures.columns.L"),
-                t("admin.catalog.structures.columns.W"),
-                t("admin.catalog.structures.columns.H"),
+                t("admin.catalog.structures.columns.limits"),
                 t("admin.catalog.structures.columns.default"),
                 t("admin.catalog.structures.columns.status"),
                 "",
@@ -72,10 +86,8 @@ export function CatalogManager({ data }: { data: CatalogData }) {
               rows={data.structures.map((s) => [
                 name(s),
                 t(`admin.catalog.families.${s.family}` as DictKey),
-                range(s.params.L),
-                range(s.params.W),
-                range(s.params.H),
-                formatDims(s.defaultDims, locale),
+                limits(s.params),
+                defaultSize(s),
                 <ActiveBadge key="a" active={s.active} />,
                 editBtn(t("admin.catalog.structures.editTitle", { name: name(s) }), () => setEditing({ kind: "structure", id: s.id })),
               ])}

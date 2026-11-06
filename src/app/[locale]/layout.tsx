@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
-import { inter, plexArabic } from "@/app/fonts";
+import { preload } from "react-dom";
+import { inter, plexArabic, PLEX_PRELOAD_WEIGHTS } from "@/app/fonts";
+import { plexArabicPreloadUrls } from "@/app/font-preload";
 import { dirOf, getDictionary, isLocale } from "@/i18n";
 import { I18nProvider } from "@/i18n/client";
 import { LOCALES } from "@/types";
@@ -22,7 +24,9 @@ export async function generateMetadata({
     title: { default: `${d.meta.siteName} · ${d.meta.tagline}`, template: `%s · ${d.meta.siteName}` },
     description: d.meta.description,
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
-    alternates: { languages: { ar: "/ar", en: "/en" } },
+    // No site-wide hreflang here: alternates must point at the SAME page in the other
+    // language, so each page sets its own (`alternates.languages`). A layout-level
+    // { ar: "/ar", en: "/en" } told search engines every page was a translation of home.
   };
 }
 
@@ -49,6 +53,12 @@ export default async function LocaleLayout({
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
   const dict = getDictionary(locale);
+  // Arabic pages only: preload the two Plex Arabic cuts used above the fold (PERF-05).
+  if (locale === "ar") {
+    for (const href of plexArabicPreloadUrls(PLEX_PRELOAD_WEIGHTS)) {
+      preload(href, { as: "font", type: "font/woff2", crossOrigin: "anonymous" });
+    }
+  }
   return (
     <html lang={locale} dir={dirOf(locale)} className={`${inter.variable} ${plexArabic.variable}`}>
       <body>

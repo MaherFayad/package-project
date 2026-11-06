@@ -28,6 +28,7 @@ import { STRUCTURES } from "../src/lib/dieline/registry";
 import { materialFitsStructure } from "../src/lib/dieline/materials";
 import { MODELS } from "../src/lib/library";
 import { baseOf, vesselPrintMaterials } from "../src/lib/library/doc";
+import { extendCatalogueCapabilities } from "./seed-catalogue";
 
 const db = new PrismaClient();
 const egp = (n: number) => Math.round(n * 100);
@@ -808,6 +809,9 @@ async function main() {
 
     await db.dataRequest.create({ data: { userId: buyer.id, kind: "EXPORT", status: "OPEN", createdAt: new Date(now.getTime() - 3 * 86_400_000) } });
   }
+
+  // ── Catalogue: families seeded printers also make (additive; prisma/seed-catalogue.ts).
+  console.log("Catalogue capability extension:", await extendCatalogueCapabilities(db));
 
   const counts = {
     structures: await db.structure.count(), materials: await db.material.count(), finishes: await db.finish.count(),

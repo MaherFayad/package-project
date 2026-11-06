@@ -1,0 +1,70 @@
+# Technical audit: server correctness and security
+
+Scope: `src/app/api` (except `api/auth`), `src/lib/{orders,payments,pricing,shipping,notify}`, `src/lib/{db,env}.ts`, `prisma/schema.prisma` (additive), `next.config.ts`, unit tests.
+Method: code review of every route and service in scope, then live requests against `next dev` and `next start` as each seeded role (anonymous, applicant `+201000000020`, buyer `…002`, vendor staff `…010` Nile Pack and `…011` Delta Cartons, admin `…001`), two passes. Each fix has a unit test (`src/lib/__tests__/technical-audit.test.ts`, `src/lib/orders/__tests__/{payment-rules,guards,totals}.test.ts`).
+
+Standards: OWASP ASVS 4.0.3 (V2, V4, V6, V7, V11, V12, V13, V14) and OWASP Top 10 2021 (A01 broken access control, A04 insecure design, A05 misconfiguration, A08 integrity), Egypt PDPL Law 151/2020, Egyptian VAT Law 67/2016 (14%).
+
+## Findings
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| T-01 | critical | `src/lib/payments/paymob.ts`, `src/lib/orders/service.ts` | Paymob webhooks were trusted on HMAC alone, but Paymob's HMAC does not cover `merchant_order_id` (our Payment id). A buyer sees one signed callback (it is echoed on the redirect URL) and can replay it with another `merchant_order_id` to mark a second order of the same amount paid. | ASVS V11.1.1, V13.2.6; Top 10 A04, A08 | The intention's `intention_order_id` is stored on the Payment (`raw.intention.gatewayOrderId`). Every webhook must carry the signed `order.id` that matches it, plus EGP currency, the same provider and the exact amount. The logic lives in the pure `decidePaymentOutcome()` (`src/lib/orders/payment-rules.ts`), with 9 tests. Mismatches are logged to the order timeline and change nothing. `[VERIFY with Paymob]` the response field name. | fixed |
+| T-02 | high | `api/orders/[id]/print-pdf` | Vendor staff could download the print-ready PDF (the buyer's artwork) of a PAID job before accepting it, through the order route. The vendor-job route enforced that lock but this route did not. Live: vendor `…011` on ELB-26201 (PAID) got 200 + PDF. | ASVS V4.2.1, V4.1.3; A01 | The shared `canDownloadPrintFile()` + `PRINT_FILES_UNLOCKED` in `orders/state.ts` is used by both routes. After the fix the same request returns 404. | fixed |
+| T-03 | high | `api/orders/[id]/status` | The generic status API was a side door around the vendor job rules. Live: vendor `…010` moved ELB-26001 IN_PRODUCTION → QC_PENDING with zero QC photos (200). It could also accept a job it had already declined. | ASVS V11.1.1–V11.1.2; A01, A04 | `vendorMoveAllowed()` (`src/lib/orders/api-rules.ts`) applies the portal's `can()` rules. Suspended vendors get 403. Live result is now 409 NOT_ALLOWED. | fixed |
+| T-04 | high | `api/orders/[id]/status` | ADMIN (any edge allowed) could set `PAID` or `REFUNDED` through the API. That leaves an order "paid" with no Payment row and no invoice, which breaks "webhooks are the only way an order becomes paid" and the e-invoice trail. | ASVS V11.1.2; A04 | `MONEY_STATUSES` are refused with 409 from every role. Money moves only through the verified webhook and the refund flow. | fixed |
+| T-05 | high | `next.config.ts` | No security headers at all: no CSP, no frame-ancestors (the proof-approval and payment pages could be framed for clickjacking), no Referrer-Policy, no nosniff, no HSTS. | ASVS V14.4.1–V14.4.7; A05 | Added CSP (`default-src 'self'`, `frame-ancestors 'none'`, `object-src 'none'`, `base-uri`/`form-action 'self'`, no `unsafe-eval` in production), X-Frame-Options DENY, nosniff, `strict-origin-when-cross-origin`, Permissions-Policy, COOP, and HSTS only when `NEXT_PUBLIC_SITE_URL` is https. Checked in Chromium on home, designer (WebGL) and catalogue: 0 CSP violations. | fixed |
+| T-06 | high | `src/lib/payments/mock.ts` | Under `next start` with `ALLOW_MOCK_PAYMENTS=1`, the mock webhook secret was the published constant, so anyone could forge a signed "PAID" callback to `/api/payments/webhook?provider=mock`. | ASVS V6.4.1, V2.10.4; A02, A08 | In production the secret is now random per process (shared through `globalThis`) unless `MOCK_PAYMENTS_SECRET` is set. The in-process mock page still signs. | fixed |
+| T-07 | high | `src/lib/orders/service.ts` `shipOrder` | Race: two concurrent "ship" requests (a double click, or two staff members) both booked a courier before the status check failed, giving two paid shipments. | ASVS V11.1.6 (concurrency); A04 | The order is claimed first with a conditional `READY_TO_SHIP → SHIPPED` update, then the courier is booked. A failed booking releases the claim. Shipment + event are written in one transaction. | fixed |
+| T-08 | medium | `service.ts` `transitionOrder` | The status update and its timeline event were two separate writes. A crash between them left a status with no event, and the event had a different timestamp. | ASVS V11.1.6 | Both writes are in one `$transaction` with a conditional update. A lost race (double accept) throws INVALID_STATE and writes nothing. | fixed |
+| T-09 | medium | `service.ts` `applyPaymentOutcome` | A REFUNDED callback for a payment that was never captured marked it REFUNDED. FAILED and PAID updates were unconditional, so a late FAILED could overwrite a concurrent PAID. | ASVS V11.1.1, V11.1.6 | Refunds need a PAID payment. FAILED, REFUNDED and PAID writes are conditional on the prior status. In the PAID transaction, losing the payment row rolls the order back too. | fixed |
+| T-10 | medium | `api/payments/mock` | ADMIN could "pay" any buyer's order by card, wallet or Fawry; the doc says only the InstaPay confirmation is admin's. The route also answered `{status:"PAID"}` when the order had been cancelled meanwhile (NEEDS_REFUND). | ASVS V4.2.1; A01 | Only the buyer can pay by card, wallet or Fawry; admin only `instapay`. Outcomes other than PAID, FAILED or PENDING return 409 with the real result. | fixed |
+| T-11 | medium | webhook, uploads, designs, quote, status, mock | Bodies were read whole before any size check (`req.text()`, `req.formData()`, `req.json()`). A chunked request without Content-Length bypassed the 12 MB check on uploads and was buffered in full. | ASVS V12.1.1, V13.1.3 | `src/app/api/_lib/body.ts` streams with a hard byte cap: webhook 200 KB, uploads 11 MB, designs 12 MB, quote 16 KB, status and mock 4 KB. Tested with chunked streams. | fixed |
+| T-12 | medium | `api/vendor/uploads` | `cert` and `apply` files are not rows until a form is saved, so an applicant could store 60 × 10 MB every 10 minutes indefinitely (disk exhaustion). | ASVS V12.1.2; A04 | Additional cap of 30 loose files per user per day. | fixed |
+| T-13 | medium | `src/lib/env.ts` | In production SESSION_SECRET was only checked for 16 characters (the docs say 32), and the `.env.example` value was accepted. | ASVS V2.9.1, V6.4.1, V14.1.3 | `sessionSecretProblem()`: 32+ characters, and no published placeholder unless the run is marked as a local production build (`OTP_DEV_ECHO=1`, never set in a deployment). | fixed |
+| T-14 | medium | `src/lib/notify/index.ts` | Every notification logged the full phone or email and message text (order numbers, Fawry codes) in production, and kept them in an in-memory outbox in production. | PDPL 151/2020 (data minimisation); ASVS V7.1.1 | Addresses are masked (`+2010****67`, `m***@domain`), message text is logged only in `development`, and the outbox is off in production. | fixed |
+| T-15 | medium | `src/lib/payments/paymob.ts`, `src/lib/shipping/bosta.ts` | Outbound gateway and courier `fetch` calls had no timeout, so a slow provider held request workers open with no limit. | ASVS V12/V13 resource limits | `AbortSignal.timeout(15s)`. | fixed |
+| T-16 | medium | `src/lib/pricing/config.ts` | `makeConfig()` passed admin overrides straight through. A settings row could change the VAT rate, stretch quote validity past 72 h, or raise the 2,000-unit instant cap. | VAT Law 67/2016; business rules | VAT is pinned at 14%. Validity is clamped to 1–72 h, the instant cap to 1–2,000, and the margin to 0–500%. | fixed |
+| T-17 | medium | `prisma/schema.prisma` | Neither SQLite nor Postgres indexes foreign keys automatically, so these lookups were full scans: order items, payments, QC photos, shipments, invoices, disputes, payouts, quotes by user, vendor staff (`User.vendorId`, used on every payment), proofs by approver, and the admin order list by status/date. | performance (N+1/scan) | 14 additive `@@index` lines; `prisma db push` applied. | fixed |
+| T-18 | low | `src/lib/orders/totals.ts` | Order VAT used a float `Math.round(x*0.14+1e-9)`, a different rule from the engine's exact integer `vatOf`. That risks a 1-piaster gap between quote and invoice on large amounts. | VAT Law 67/2016; ETA e-invoice totals | `vatOn` delegates to `vatOf`; tests compare all subtotals 0–20,000 plus large values. | fixed |
+| T-19 | low | `totals.ts` | Prepay discount on a fractional percentage used float math. | money integrity | Integer basis points, half up. Tested. | fixed |
+| T-20 | low | `src/lib/notify/index.ts` | A broken template threw into the order flow, against the module's own contract. | ASVS V7.4.1 | Rendering is wrapped; the error is logged and an empty send is returned. | fixed |
+| T-21 | low | `src/lib/shipping/bosta.ts` | An unknown Bosta state code reset the shipment to CREATED. | correctness | `bostaStatus()` keeps the last known status. | fixed |
+| T-22 | low | `api/orders/[id]/status` | Another vendor's order returned 403 here (404 everywhere else), which confirmed the id exists. | ASVS V4.2.1 | Returns 404. | fixed |
+| T-23 | low | `api/vendor/jobs/_shared.ts`, `api/orders/[id]/proof-pdf` | Vendor staff could fetch the dieline and the watermarked proof of PENDING_PAYMENT orders, which are never routed to a vendor. | ASVS V4.2.1 | 404 for vendors on unpaid orders; ids validated. | fixed |
+| T-24 | low | `api/vendor/jobs/[id]/print-pdf` | The redirect followed any stored value starting with `/`, including protocol-relative `//host` (open redirect if the column were ever tainted). | ASVS V5.1.5 | Only `/api/orders/...` is followed. | fixed |
+| T-25 | low | `service.ts` `submitReview` | A NaN rating or a double submit (unique `[orderId, authorId]`) surfaced as a 500. | ASVS V5.1.3, V7.4.1 | NaN is rejected; P2002 maps to NOT_ALLOWED; the body is capped at 2,000 characters. | fixed |
+| T-26 | low | `api/quote` | The 400 response echoed every zod issue (unbounded). | ASVS V7.4.1 | Capped at 10, like the design routes. | fixed |
+| T-27 | low | print-pdf, status | No rate limit on PDF generation (CPU-heavy) or on status moves. | ASVS V11.1.4 | 30 PDFs per 10 minutes and 60 moves per minute per user, with `Retry-After`. | fixed |
+| T-28 | low | `service.ts` `openDispute` | Two simultaneous submits can open two disputes. The check-then-insert is not atomic, and a partial unique index (status = OPEN) is not portable to SQLite. | ASVS V11.1.6 | Needs a Postgres partial unique index at the prod migration, or a server-action debounce (the action is outside this scope). | open |
+| T-29 | low | `src/lib/rate-limit.ts` | The rate limiter is in-memory per process, so limits multiply with instances. | ASVS V11.1.4 | Swap for Redis/Upstash at deploy time (foundation-owned file; infra). | open |
+| T-30 | low | `next.config.ts` | The CSP keeps `script-src 'unsafe-inline'`, because Next's inline hydration needs it unless every page uses per-request nonces, which disables static rendering. | ASVS V14.4.3 | Accepted for now. Move to a nonce-based CSP in middleware when the static pages move to ISR. | open |
+
+### Checked and found sound (no change)
+- Designs (`/api/designs*`): owner or anonymous cookie only. Other users get 404 on GET and 403 on PUT. Share needs an account and ownership. Verified live as applicant and vendor.
+- Admin export (`/api/admin/users/:id/export`): 401 for anonymous, 403 for buyer and vendor, 200 and audited for admin.
+- Vendor files (`/api/vendor/files/...`): strict key regex (no traversal; `..%2F` gives 404), magic-byte sniffing (PNG/JPEG/WebP/PDF, never SVG), `nosniff` + `sandbox` CSP on served files, private scopes checked per order or owner.
+- Dieline SVG is served with `sandbox` CSP and `nosniff`. Proof preview is private.
+- Mock gateway is off outside dev unless `ALLOW_MOCK_PAYMENTS=1`. The webhook accepts only the configured provider. Unsigned calls get 401 (e2e covered).
+- Quotes: >2,000 units returns `manual_quote`. Checkout caps validity at 72 h; `startPayment` refuses expired quotes. Offers never include vendor cost or margin.
+- Order numbering retries on unique-number races (P2002).
+- N+1: none in the routes in scope. Order reads use a single `include`. The vendor-staff notify loop is sequential I/O, not queries per row.
+
+## Verification
+
+| check | result |
+|---|---|
+| `npm run typecheck` | pass |
+| `npm run lint` | pass |
+| `npm test` | 46 files, 5,941+ tests, all pass (36 new tests for these fixes) |
+| `npm run build` | pass |
+| e2e `checkout`, `vendor`, `admin` on `next start` (`--workers=2 --trace off`, desktop + mobile) | 17 passed, 3 skipped by design (mutating flows run on desktop only, the 360px layout check on mobile only) |
+| Live role probe (`next dev` pass 1, `next start` pass 2) | T-02: 200 → 404; T-03: 200 → 409; T-22: 403 → 404; T-06: forged mock webhook → 401; T-11: 300 KB webhook → 413; T-08: 3 parallel accepts → 200/409/409 with one event; designs/admin/files unchanged |
+| CSP in Chromium (home, catalogue, designer WebGL, login; dev and prod) | 0 violations |
+
+Evidence: `docs/screenshots/audit/technical/live-probe-before-after.png`, `designer-under-csp-after.png`.
+
+## Files touched outside the listed scope
+- `src/app/api/_lib/body.ts` (new, under `src/app/api`): shared capped body readers.
+- `src/lib/orders/payment-rules.ts`, `src/lib/orders/api-rules.ts` (new, in `src/lib/orders`). `api-rules.ts` imports the pure `can()` from `src/components/vendor/lib/jobs.ts` (read only, not modified).
+- No UI pages were changed.

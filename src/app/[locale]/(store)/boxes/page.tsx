@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { getT, toLocale } from "@/i18n";
 import { BoxesLanding } from "@/components/marketing/BoxesLanding";
 
+/** Prerendered; prices and printer data refresh hourly (ISR). */
+export const revalidate = 3600;
+
 type Props = { params: Promise<{ locale: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -17,5 +20,5 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 /** Products → Boxes and cartons: category landing. */
 export default async function BoxesPage({ params }: Props) {
-  return <BoxesLanding locale={toLocale((await params).locale)} />;
+  return <BoxesLanding locale={toLocale((await params).locale)} library="teaser" />;
 }

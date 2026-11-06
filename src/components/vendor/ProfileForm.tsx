@@ -25,7 +25,7 @@ import {
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { formatNumber, formatPercent } from "@/lib/format";
-import { EGYPT_CITIES, FINISH_CODES, MATERIAL_CODES, STRUCTURE_CODES, type EgyptCity, type FinishCode, type MaterialCode, type StructureCode, type VendorCertification } from "@/types";
+import { EGYPT_CITIES, FINISH_CODES, MATERIAL_CODES, STRUCTURE_CODES, type EgyptCity, type FinishCode, type MaterialCode, type StructureCode, type StructureFamily, type VendorCertification } from "@/types";
 import { CERT_CODES, MACHINE_KINDS, issuesToErrors, profileSchema } from "./lib/profile";
 import { fileUrl, formatBytes, UPLOAD_RULES } from "./lib/files";
 import { parseNumber } from "./lib/rateCard";
@@ -34,6 +34,8 @@ import { uploadFile, useVendorErrorText } from "./useVendorAction";
 import { useContextualSaveBar } from "./VendorFrame";
 import { PortfolioManager } from "./PortfolioManager";
 import type { PortfolioItemDTO, VendorProfileDTO } from "./types";
+import type { StructureCoverage } from "./lib/coverage";
+import { BOARD_SPECS, STRUCTURE_FAMILY } from "@/lib/dieline/materials";
 import styles from "./vendor.module.css";
 
 type MachineKind = (typeof MACHINE_KINDS)[number];
@@ -95,11 +97,14 @@ function toInput(f: FormState) {
   };
 }
 
+/** Production families in the order printers think of them (also the designer's group order). */
+const FAMILIES: StructureFamily[] = ["CORRUGATED", "FOLDING_CARTON", "RIGID", "TUBE", "LABEL", "FLEXIBLE"];
+
 function toggle<T>(list: T[], v: T, on: boolean): T[] {
   return on ? (list.includes(v) ? list : [...list, v]) : list.filter((x) => x !== v);
 }
 
-export function ProfileForm({ profile, portfolio }: { profile: VendorProfileDTO; portfolio: PortfolioItemDTO[] }) {
+export function ProfileForm({ profile, portfolio, coverage }: { profile: VendorProfileDTO; portfolio: PortfolioItemDTO[]; coverage: StructureCoverage }) {
   const { t, locale } = useI18n();
   const router = useRouter();
   const toast = useToast();
@@ -254,7 +259,7 @@ export function ProfileForm({ profile, portfolio }: { profile: VendorProfileDTO;
                   ) : null}
                   <div className={styles.Rows}>
                     {form.machines.map((m, i) => (
-                      <div key={i} className={styles.Row} style={{ ["--row-cols" as string]: 3 }}>
+                      <div key={i} className={`${styles.Row} ${styles.MachineRow}`} style={{ ["--row-cols" as string]: 3 }}>
                         <Select
                           label={t("vendorPortal.profile.machineKind")}
                           value={m.kind}
@@ -299,39 +304,84 @@ export function ProfileForm({ profile, portfolio }: { profile: VendorProfileDTO;
 
               <Card title={t("vendorPortal.profile.capabilitiesTitle")}>
                 <BlockStack gap="500">
-                  <fieldset className={styles.Fieldset}>
-                    <legend className={styles.Legend}>{t("vendorPortal.profile.structures")}</legend>
-                    <div className={styles.Checks}>
-                      {STRUCTURE_CODES.map((c, i) => (
-                        <Checkbox
-                          key={c}
-                          label={t(`structures.${c}` as DictKey)}
-                          checked={form.structures.includes(c)}
-                          onChange={(on) => set("structures", toggle(form.structures, c, on))}
-                          error={form.structures.indexOf(c) >= 0 ? err(`structures.${form.structures.indexOf(c)}`) : undefined}
-                          id={`structure-${c}-${i}`}
-                        />
-                      ))}
-                    </div>
-                    {err("structures") ? (
-                      <Text as="p" tone="critical">
-                        {err("structures")}
-                      </Text>
-                    ) : null}
-                  </fieldset>
-                  <fieldset className={styles.Fieldset}>
-                    <legend className={styles.Legend}>{t("vendorPortal.profile.materials")}</legend>
-                    <div className={styles.Checks}>
-                      {MATERIAL_CODES.map((c) => (
-                        <Checkbox key={c} label={t(`materials.${c}` as DictKey)} checked={form.materials.includes(c)} onChange={(on) => set("materials", toggle(form.materials, c, on))} />
-                      ))}
-                    </div>
-                    {err("materials") ? (
-                      <Text as="p" tone="critical">
-                        {err("materials")}
-                      </Text>
-                    ) : null}
-                  </fieldset>
+                  <Text as="p" tone="subdued">
+                    {t("vendorPortal.profile.capabilitiesHelp")}
+                  </Text>
+                  {err("structures") ? (
+                    <Text as="p" tone="critical">
+                      {err("structures")}
+                    </Text>
+                  ) : null}
+                  {err("materials") ? (
+                    <Text as="p" tone="critical">
+                      {err("materials")}
+                    </Text>
+                  ) : null}
+                  {/* One group per production family: the box styles it covers (with how many designer
+                      models each style brings in) next to the boards that family runs on. */}
+                  <div className={styles.Families}>
+                    {FAMILIES.map((fam) => {
+                      const famStructures = STRUCTURE_CODES.filter((c) => STRUCTURE_FAMILY[c] === fam);
+                      const famMaterials = MATERIAL_CODES.filter((c) => BOARD_SPECS[c].family === fam);
+                      const selected = famStructures.filter((c) => form.structures.includes(c)).length + famMaterials.filter((c) => form.materials.includes(c)).length;
+                      const famId = `cap-family-${fam}`;
+                      return (
+                        <section key={fam} className={styles.Family} aria-labelledby={famId}>
+                          <InlineStack align="space-between" blockAlign="center" gap="200">
+                            <Text as="h3" variant="headingSm" id={famId}>
+                              {t(`vendorPortal.profile.families.${fam}` as DictKey)}
+                            </Text>
+                            {selected ? <Badge tone="info">{t("vendorPortal.profile.familySelected", { count: formatNumber(selected) })}</Badge> : null}
+                          </InlineStack>
+                          <div className={styles.FamilyBody}>
+                            <fieldset className={styles.Fieldset}>
+                              <legend className={styles.SubLegend}>
+                                <span className="visually-hidden">{`${t(`vendorPortal.profile.families.${fam}` as DictKey)}: `}</span>
+                                {t("vendorPortal.profile.familyStyles")}
+                              </legend>
+                              <div className={styles.StyleChecks}>
+                                {famStructures.map((c) => {
+                                  const cov = coverage[c];
+                                  const idx = form.structures.indexOf(c);
+                                  return (
+                                    <Checkbox
+                                      key={c}
+                                      id={`structure-${c}`}
+                                      label={t(`structures.${c}` as DictKey)}
+                                      helpText={
+                                        cov ? (
+                                          <>
+                                            <bdi dir="ltr">{cov.standard}</bdi>
+                                            {" · "}
+                                            {t("vendorPortal.rateCards.modelCount", { count: formatNumber(cov.count) })}
+                                            {cov.examples.length ? <span className={styles.CoverageExamples}>{t("vendorPortal.profile.coverageExamples", { examples: cov.examples.join(locale === "ar" ? "، " : ", ") })}</span> : null}
+                                          </>
+                                        ) : undefined
+                                      }
+                                      checked={idx >= 0}
+                                      onChange={(on) => set("structures", toggle(form.structures, c, on))}
+                                      error={idx >= 0 ? err(`structures.${idx}`) : undefined}
+                                    />
+                                  );
+                                })}
+                              </div>
+                            </fieldset>
+                            <fieldset className={styles.Fieldset}>
+                              <legend className={styles.SubLegend}>
+                                <span className="visually-hidden">{`${t(`vendorPortal.profile.families.${fam}` as DictKey)}: `}</span>
+                                {t("vendorPortal.profile.familyBoards")}
+                              </legend>
+                              <div className={styles.BoardChecks}>
+                                {famMaterials.map((c) => (
+                                  <Checkbox key={c} label={t(`materials.${c}` as DictKey)} checked={form.materials.includes(c)} onChange={(on) => set("materials", toggle(form.materials, c, on))} />
+                                ))}
+                              </div>
+                            </fieldset>
+                          </div>
+                        </section>
+                      );
+                    })}
+                  </div>
                   <fieldset className={styles.Fieldset}>
                     <legend className={styles.Legend}>{t("vendorPortal.profile.finishes")}</legend>
                     <div className={styles.Checks}>

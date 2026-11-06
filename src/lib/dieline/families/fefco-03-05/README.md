@@ -98,7 +98,9 @@ Each def also carries the same rule as `lidDepth(dims)`.
   - 0511: as 0510, plus dust flaps on the outer sleeve's ends.
   - 0512: the wrap plus an internal U liner (back and end walls), "assembly made internally".
 
-**Fold stages.** Walls go first, then flaps / ears / gussets, then roll-overs, then each extra blank moves in its own stage. In 0510–0512 the top flap closes last (stage 3), after the sleeve or liner is in place.
+**Fold stages.** Erection order, so no panel sweeps through another: the wall pair that carries corner flaps or ears goes up first (stage 0), the flaps / ears / gussets fold in (1), the other wall pair rises over them (2), roll-overs fold last (3), then each extra blank moves in its own stage. Corner flaps and ears start one caliper (+0.5 mm) off the floor crease. The 0350 bottom flaps close in sequence (corner flaps, then the side flaps one caliper further out, then the two majors), so neighbouring flaps never share a plane. In 0510–0512 the top flap closes last, after the sleeve or liner is in place.
+
+**3D faces.** Faces are cropped to the panels that carry them (an octagon's flat side, a tray floor under a larger lid). Cap faces count the cap walls' own layers (0314: rolled walls with ears), so the sleeve between the caps stays printed. The minor envelope flaps of 0321 join the end faces (the shared fold engine leaves stacked panels out). `__tests__/fefco-03-05-3d.test.ts` checks every style assembled: no interpenetration, no coplanar same-facing surfaces, faces covered and unmirrored.
 
 ## Sources
 

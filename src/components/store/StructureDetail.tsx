@@ -11,7 +11,7 @@ import { PriceFromTable } from "./PriceFromTable";
 import type { VendorListItem } from "./vendor-filters";
 import styles from "./store.module.css";
 import mk from "@/components/marketing/marketing.module.css";
-import { renderSrc } from "@/components/marketing/assets";
+import { renderSrc, srcSetFor } from "@/components/marketing/assets";
 
 const RULE_KEYS: Record<string, DictKey> = {
   "H <= W": "store.structure.rule.HW",
@@ -74,7 +74,7 @@ export function StructureDetail({
             <span className={`${mk.eyebrow} m-enter`} style={{ ["--m-i" as string]: 1, marginBlockEnd: 0 }}>
               {t(`marketing.boxes.family.${structure.family}` as DictKey)}
             </span>
-            <h1 id="structure-title" className={`${mk.h1} m-enter`} style={{ ["--m-i" as string]: 2 }}>
+            <h1 id="structure-title" className={`${mk.h1} m-enter-lcp`} style={{ ["--m-i" as string]: 2 }}>
               {title}
             </h1>
             <p className={`${mk.lead} m-enter`} style={{ ["--m-i" as string]: 3 }}>
@@ -105,7 +105,7 @@ export function StructureDetail({
           </div>
           <div className={`${mk.detailMedia} m-enter-scale`} style={{ ["--m-i" as string]: 2 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={renderSrc(structure.code)} alt={t("marketing.boxes.renderAlt", { name })} width={960} height={720} fetchPriority="high" />
+            <img src={renderSrc(structure.code)} srcSet={srcSetFor(renderSrc(structure.code))} sizes="(min-width: 1024px) 600px, 92vw" alt={t("marketing.boxes.renderAlt", { name })} width={960} height={720} fetchPriority="high" />
           </div>
         </div>
       </section>

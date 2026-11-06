@@ -27,10 +27,11 @@ import { RATE_LIMITS, rateCardToForm, unitAt, validateRateCard, type RateCardErr
 import { saveRateCard } from "./server/actions";
 import { useVendorErrorText } from "./useVendorAction";
 import { useContextualSaveBar } from "./VendorFrame";
-import type { RateCardDetailDTO } from "./types";
+import type { JobModelDTO, RateCardDetailDTO } from "./types";
+import { ModelCoverage } from "./ModelCoverage";
 import styles from "./vendor.module.css";
 
-export function RateCardForm({ card, offeredFinishes }: { card: RateCardDetailDTO; offeredFinishes: FinishCode[] }) {
+export function RateCardForm({ card, offeredFinishes, models }: { card: RateCardDetailDTO; offeredFinishes: FinishCode[]; models: JobModelDTO[] }) {
   const { t, locale } = useI18n();
   const router = useRouter();
   const toast = useToast();
@@ -121,7 +122,7 @@ export function RateCardForm({ card, offeredFinishes }: { card: RateCardDetailDT
                       {err("tiers")}
                     </Text>
                   ) : null}
-                  <div className={styles.Rows} role="group" aria-label={t("vendorPortal.rateCards.tiersTitle")}>
+                  <div className={`${styles.Rows} ${styles.TierRows}`} role="group" aria-label={t("vendorPortal.rateCards.tiersTitle")}>
                     {form.tiers.map((tier, i) => (
                       <div key={i} className={styles.Row} style={{ ["--row-cols" as string]: 2 }} role="group" aria-label={t("vendorPortal.rateCards.tierRow", { index: i + 1 })}>
                         <TextField
@@ -166,7 +167,7 @@ export function RateCardForm({ card, offeredFinishes }: { card: RateCardDetailDT
                 <InlineGrid columns={{ xs: 1, sm: 2 }} gap="300" alignItems="start">
                   <TextField label={t("vendorPortal.rateCards.setup")} autoComplete="off" inputMode="decimal" dir="ltr" suffix={egp} value={form.setupEgp} onChange={(v) => set("setupEgp", v)} helpText={t("vendorPortal.rateCards.setupHelp")} error={err("setupEgp")} />
                   <TextField label={t("vendorPortal.rateCards.die")} autoComplete="off" inputMode="decimal" dir="ltr" suffix={egp} value={form.dieCostEgp} onChange={(v) => set("dieCostEgp", v)} helpText={t("vendorPortal.rateCards.dieHelp")} error={err("dieCostEgp")} />
-                  <TextField label={t("vendorPortal.rateCards.lead")} autoComplete="off" inputMode="numeric" dir="ltr" value={form.leadTimeDays} onChange={(v) => set("leadTimeDays", v)} helpText={t("vendorPortal.rateCards.leadHelp")} error={err("leadTimeDays")} />
+                  <TextField label={t("vendorPortal.rateCards.lead")} autoComplete="off" inputMode="numeric" dir="ltr" suffix={t("vendorPortal.common.daysUnit")} value={form.leadTimeDays} onChange={(v) => set("leadTimeDays", v)} helpText={t("vendorPortal.rateCards.leadHelp")} error={err("leadTimeDays")} />
                   <TextField label={t("vendorPortal.rateCards.printSides")} autoComplete="off" inputMode="decimal" dir="ltr" suffix="%" value={form.printSidesSurchargePct} onChange={(v) => set("printSidesSurchargePct", v)} helpText={t("vendorPortal.rateCards.printSidesHelp")} error={err("printSidesSurchargePct")} />
                 </InlineGrid>
               </Card>
@@ -266,6 +267,7 @@ export function RateCardForm({ card, offeredFinishes }: { card: RateCardDetailDT
                 increasedTableDensity
                 footerContent={t("vendorPortal.rateCards.previewNote")}
               />
+              <ModelCoverage models={models} material={t(`materials.${card.materialCode}` as DictKey)} />
               <Card title={t("vendorPortal.rateCards.referenceTitle")}>
                 <Text as="p" tone="subdued">
                   {t("vendorPortal.rateCards.referenceBody", { area: card.referenceAreaM2.toFixed(3) })}

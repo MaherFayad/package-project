@@ -115,6 +115,7 @@ The face test pattern draws a white stroke round each face, so with it the wrapp
 ## Files outside scope
 
 - `scripts/perf/measure-3d.cjs`, `scripts/perf/shots-3d.cjs` (new, measurement only).
+- `src/app/api/vendor/jobs/[id]/dieline/route.ts` (reads `?lang=`), `src/components/vendor/JobDetail.tsx` (passes the locale): CR-27, additive.
 - `src/lib/library/types.ts` (optional `tint`, `closureStyle` on `VesselOption`), `src/lib/library/vessels.ts` (fills them), `src/components/designer/VesselView.tsx` (passes them, 5 lines): additive, at the integrator's request for X-01.
 - `docs/audit/perf-3d/*.json`, this report, screenshots.
 
@@ -153,6 +154,15 @@ Re-measured after the last commit (final build): 50 draw calls, 0 idle frames, 1
 
 Also for the designer (PERF-09): `EngineCanvas` gains `onContentReady`, fired after each content component's first frame (every box ↔ container switch).
 
+### Pass 4 (round 3: `docs/audit/craft.md` 3d-engine rows)
+
+| id | sev | page / file | finding | fix | status |
+|---|---|---|---|---|---|
+| E-56 / CR-13 | high | `fit.ts`, `PackagingScene.tsx`, `vessels/VesselScene.tsx`, `ViewControls.tsx`, `screenshot.ts` | Camera fit framed the model to the whole canvas; the floating view toolbar (~64 px) hid its base on phones. | Fit insets: the camera fits the model inside the visible rectangle and shifts the projection centre to it (`setViewOffset`). `ViewControls` measures its own overlap with the canvas (ResizeObserver) and reports it through the handle (`setFitInsets`), so every viewer with the toolbar re-frames without consumer changes; a `fitInsets` prop covers other overlays. Screenshots drop the shift (exports stay centred). | fixed |
+| E-57 / CR-14 | medium | share viewer | Box sat low with ~35 % headroom. | Same fit as the designer (projected-box fit, centred target, insets): at 1440 the box is centred above the toolbar; at 390 it fills the width of the portrait canvas. | fixed |
+| E-58 / CR-15 | high | `PackagingScene.tsx`, `finishes/finishMaterial.ts`, `FinishedPackagingModel.tsx`, `boardMaterials.ts` | A new design opened as a flat, unprinted orange block. | Every configurator board now renders through the finished-board materials even before a finish is chosen (legacy coating codes map to coatings): kraft grain, a low-strength fibre bump (the grain tile, strongest on kraft, faint under laminates), real flute / liner edges and the lid seam, studio lighting and soft contact shadow. Ink-on-kraft fixed: only printed pixels multiply with the liner (the artwork canvas is pre-filled with the liner colour, so the previous rule darkened the whole board twice; this also reverts my pass-1 legacy multiply). The "Your logo" sample artwork is a designer default and is left to that session. | fixed (engine) |
+| E-59 / CR-27 | medium | `lib/dieline/svg.ts`, `api/vendor/jobs/[id]/dieline/route.ts`, `vendor/JobDetail.tsx` | Vendor dieline labels in English on Arabic pages and ~7 px. | `PANEL_ROLE_LABELS` (ar / en, MSA noun forms) used when no labels are passed; `locale` option; label size from the sheet's long side (10–16 px at a typical fit); a label is drawn only where its panel can hold it. The route reads `?lang=` and the job page passes its locale. | fixed |
+
 ### Pass 2 verification (after the EngineCanvas split, closures and tint)
 
 | Check | Result |
@@ -162,3 +172,13 @@ Also for the designer (PERF-09): `EngineCanvas` gains `onContentReady`, fired af
 | Production console on `/en/dev/3d` (all structures, fold 0 ↔ 1) and `/en/dev/finishes` | no errors |
 | Probe after the refactor | 50 draw calls, 0 idle frames, 13 textures / 14 framebuffers at 0 and 50 switches (unchanged) |
 | Browser check | Bordeaux bottle renders green glass with a cork capsule; beer longneck renders a fluted crown (were amber glass / screw caps) |
+
+### Pass 4 verification (round 3, merged with the main branch)
+
+| Check | Result |
+|---|---|
+| `npm run lint`, `npm run typecheck` | clean |
+| `npm test` | 64 files, 8 157 tests passed |
+| `npm run build` | passes |
+| `e2e/models.spec.ts --workers=2` (every library model) | 366 passed, 4 failed on React #418 hydration mismatches in server-rendered HTML (FEFCO_0203, FEFCO_0206, COS-DROPPER, TUBE-OVAL; the viewer is client-only), all 4 passed on `--last-failed`; 370 mobile cases skipped by the spec |
+| Browser | designer first render (kraft grain, flute edges, lid seam) and share viewer framing at 390 / 1440: `after-r3-*.png` |

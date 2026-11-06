@@ -9,7 +9,7 @@ import { breadcrumbJsonLd } from "@/components/store/jsonld";
 import { listVendors } from "@/components/store/data";
 import { activeFilterCount, filterVendors, parseVendorFilters } from "@/components/store/vendor-filters";
 import { VendorShowcaseCard } from "@/components/marketing/VendorShowcaseCard";
-import { renderSrc } from "@/components/marketing/assets";
+import { renderSrc, srcSetFor } from "@/components/marketing/assets";
 import styles from "@/components/marketing/marketing.module.css";
 
 type Props = { params: Promise<{ locale: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
@@ -48,7 +48,7 @@ export default async function VendorsPage({ params, searchParams }: Props) {
       <section className={`${styles.centerHero} ${styles.bandMint}`} aria-labelledby="vendors-title" style={{ paddingBlockEnd: "clamp(48px, 6vw, 80px)" }}>
         <div className={styles.container}>
           <span className={`${styles.eyebrow} m-enter`}>{t("marketing.vendors.eyebrow")}</span>
-          <h1 id="vendors-title" className={`${styles.h1} m-enter`} style={{ ["--m-i" as string]: 1 }}>
+          <h1 id="vendors-title" className={`${styles.h1} m-enter-lcp`} style={{ ["--m-i" as string]: 1 }}>
             {t("marketing.vendors.title")}
           </h1>
           <p className={`${styles.lead} m-enter`} style={{ ["--m-i" as string]: 2 }}>
@@ -79,7 +79,7 @@ export default async function VendorsPage({ params, searchParams }: Props) {
           ) : (
             <div className={`${styles.card} ${styles.center}`} style={{ justifyItems: "center", textAlign: "center", paddingBlock: 48 }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={renderSrc("FEFCO_0201")} alt="" width={160} height={120} style={{ inlineSize: 160, blockSize: "auto" }} />
+              <img src={renderSrc("FEFCO_0201")} srcSet={srcSetFor(renderSrc("FEFCO_0201"))} sizes="160px" loading="lazy" decoding="async" alt="" width={160} height={120} style={{ inlineSize: 160, blockSize: "auto" }} />
               <h3 className={styles.h3}>{t("store.vendors.emptyTitle")}</h3>
               <p className={styles.body}>{t("store.vendors.emptyBody")}</p>
               <Link href={action} className={`${styles.pill} ${styles.pillOutline}`}>

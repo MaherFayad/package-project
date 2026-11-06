@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { MATERIAL_CODES, type MaterialCode } from "@/types";
-import { DEFAULT_PRICING_CONFIG, DELIVERY_ZONES, makeConfig, resolvePriceIndex, type DeliveryZone, type PriceIndexRow, type PricingConfig, type ZoneRate } from "@/lib/pricing";
+// Leaf modules, not the @/lib/pricing barrel: this file ships to the pricing page's client bundle.
+import { DEFAULT_PRICING_CONFIG, makeConfig, resolvePriceIndex, type PriceIndexRow, type PricingConfig, type ZoneRate } from "@/lib/pricing/config";
+import { DELIVERY_ZONES, type DeliveryZone } from "@/lib/pricing/types";
 
 /**
  * Admin-editable pricing settings, stored as PlatformSetting key "pricing" and merged onto

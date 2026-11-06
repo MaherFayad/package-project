@@ -77,6 +77,15 @@ function groupOf(family: StructureFamily, sub: string, code: string): ModelGroup
   return "BOXES";
 }
 
+/** Styles whose folded state has no top: trays, half slotted containers, open displays and sleeves. */
+export function isOpenTop(code: string, sub: string): boolean {
+  const s = `${sub} ${code}`.toLowerCase();
+  // Lidded trays, telescope sets, capped sleeves, hinged lids and wraps close.
+  if (/(^|[\s_-])lid|lidded|telescope|caps|hinged|wrap/.test(s)) return false;
+  if (/tray|display|open|sleeve|liner|pad|partition|cushion|corner|scoop|carrier|basket/.test(s)) return true;
+  return ["FEFCO_0200", "FEFCO_0422", "SLEEVE", "ECMA_SLEEVE_OPEN"].includes(code);
+}
+
 const search = (...parts: (string | undefined | null)[]) => parts.filter(Boolean).join(" ").toLowerCase();
 
 interface RawDef {
@@ -123,6 +132,7 @@ function familyEntry(source: ModelSource, d: RawDef, build: BoxModelDef["build"]
     baseFor: (m) => baseStructure(source, sub, m, d.code),
     build,
     fidelity: d.fidelity === "simplified" ? "simplified" : "exact",
+    ...(isOpenTop(d.code, sub) ? { openTop: true } : {}),
   };
 }
 
@@ -148,6 +158,7 @@ const CORE: BoxModelDef[] = STRUCTURE_LIST.filter((s) => s.shape !== "flat").map
   baseFor: () => s.code,
   build: (dims, o) => generateDieline(s.code, dims, { thicknessMm: o.thicknessMm, features: o.features }),
   fidelity: "exact",
+  ...(isOpenTop(s.code, "") ? { openTop: true } : {}),
 }));
 
 /* ───────────────────────────── families ───────────────────────────── */

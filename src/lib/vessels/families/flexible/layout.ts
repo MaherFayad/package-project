@@ -171,6 +171,8 @@ export function printLayout(cfg: FlexConfig): FlexPrintLayout {
     blank = { widthMm: W, lengthMm: 2 * H, areaM2: (2 * W * H) / 1e6, note: "two webs W x H sealed on four edges" };
   }
 
+  if (c.orientation === "horizontal") for (let i = 0; i < panels.length; i++) panels[i] = toLandscape(panels[i], panels[i].id === "back" ? "topLeft" : "topRight");
+
   return {
     code: cfg.code,
     panels,
@@ -180,10 +182,35 @@ export function printLayout(cfg: FlexConfig): FlexPrintLayout {
   };
 }
 
+/**
+ * Turn a portrait panel (built upright, top seal at the top) into the landscape print area of a
+ * horizontal pack, so artwork laid out in the 2D editor reads along the bar in 3D.
+ */
+function toLandscape(p: FlexPrintPanel, landscape: "topRight" | "topLeft"): FlexPrintPanel {
+  const Pw = p.printWidthMm;
+  const Ph = p.printHeightMm;
+  const rot = (r: FlatRect): FlatRect =>
+    landscape === "topRight" ? { x: r1(Ph - r.y - r.h), y: r.x, w: r.h, h: r.w } : { x: r.y, y: r1(Pw - r.x - r.w), w: r.h, h: r.w };
+  return {
+    ...p,
+    trimWidthMm: p.trimHeightMm,
+    trimHeightMm: p.trimWidthMm,
+    printWidthMm: Ph,
+    printHeightMm: Pw,
+    safeRect: rot(p.safeRect),
+    seals: p.seals.map(rot),
+    keepOut: p.keepOut.map((k) => ({ ...k, rect: rot(k.rect) })),
+    window: p.window ? rot(p.window) : undefined,
+    landscape,
+  };
+}
+
 /** UV (0..1, v up) on a panel's print area for flat face coordinates (s across, t down from the face top). */
 export function panelUv(panel: FlexPrintPanel, s: Mm, t: Mm): [number, number] {
   const x = panel.bleedMm + panel.faceOrigin.x + s;
   const y = panel.bleedMm + panel.faceOrigin.y + t;
+  if (panel.landscape === "topRight") return [(panel.printWidthMm - y) / panel.printWidthMm, 1 - x / panel.printHeightMm];
+  if (panel.landscape === "topLeft") return [y / panel.printWidthMm, 1 - (panel.printHeightMm - x) / panel.printHeightMm];
   return [x / panel.printWidthMm, 1 - y / panel.printHeightMm];
 }
 

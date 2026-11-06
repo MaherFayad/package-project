@@ -43,7 +43,7 @@ export default async function LegalPage({ params }: Props) {
       <section className={`${mk.centerHero} ${mk.bandMint}`} style={{ paddingBlockEnd: "clamp(40px, 5vw, 72px)" }} aria-labelledby="legal-title">
         <div className={`${mk.container} ${mk.narrow}`}>
           <span className={`${mk.eyebrow} m-enter`}>{t("marketing.legal.eyebrow")}</span>
-          <h1 id="legal-title" className={`${mk.h1} m-enter`} style={{ ["--m-i" as string]: 1 }}>
+          <h1 id="legal-title" className={`${mk.h1} m-enter-lcp`} style={{ ["--m-i" as string]: 1 }}>
             {title}
           </h1>
           <p className={`${mk.lead} m-enter`} style={{ ["--m-i" as string]: 2 }}>

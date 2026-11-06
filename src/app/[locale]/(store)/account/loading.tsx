@@ -2,7 +2,7 @@ import { BlockStack, Card, SkeletonBodyText, SkeletonDisplayText, SkeletonPage, 
 
 export default function Loading() {
   return (
-    <div role="status" aria-busy="true">
+    <div role="status" aria-busy="true" style={{ minBlockSize: "100dvh" }}>
       <SkeletonPage>
         <Layout>
           <LayoutSection>

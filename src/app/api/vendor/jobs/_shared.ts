@@ -9,12 +9,16 @@ export async function loadJobItem(orderId: string, itemId: string | null) {
   const auth = await apiRequireRole(["VENDOR"]);
   if (auth instanceof Response) return auth;
   if (!/^[A-Za-z0-9_-]{1,40}$/.test(orderId)) return new Response("Not found", { status: 404 });
+  if (itemId !== null && !/^[A-Za-z0-9_-]{1,40}$/.test(itemId)) return new Response("Not found", { status: 404 });
   const order = await db.order.findUnique({
     where: { id: orderId },
     include: { items: { include: { proof: true } } },
   });
-  // Vendors only see their own orders; a mismatch is a 404 so ids are not confirmed.
-  if (!order || (auth.role !== "ADMIN" && order.vendorId !== auth.vendorId)) return new Response("Not found", { status: 404 });
+  // Vendors only see their own, paid orders (unpaid ones are never routed to a vendor); a
+  // mismatch is a 404 so ids are not confirmed (OWASP ASVS 4.0.3 V4.2.1).
+  if (!order || (auth.role !== "ADMIN" && (!auth.vendorId || order.vendorId !== auth.vendorId || order.status === "PENDING_PAYMENT"))) {
+    return new Response("Not found", { status: 404 });
+  }
   const item = itemId ? order.items.find((i) => i.id === itemId) : order.items[0];
   if (!item) return new Response("Not found", { status: 404 });
   return { user: auth, order, item };

@@ -85,10 +85,13 @@ export function DropZone({ label, labelHidden, accept, allowMultiple = true, max
 
   return (
     <div className={styles.DropZoneField}>
-      <label htmlFor={id} className={cx(styles.DropLabel, labelHidden && "visually-hidden")}>
+      <label id={`${id}-label`} htmlFor={id} className={cx(styles.DropLabel, labelHidden && "visually-hidden")}>
         {label}
       </label>
       <div
+        // Named group so the "Add files" button is announced with the field's label (WCAG 1.3.1, 2.4.6).
+        role="group"
+        aria-labelledby={`${id}-label`}
         className={cx(styles.DropZone, dragging && styles.dragging, error && styles.dropError, disabled && styles.dropDisabled)}
         onDragEnter={onDragEnter}
         onDragOver={(e) => e.preventDefault()}
@@ -109,7 +112,9 @@ export function DropZone({ label, labelHidden, accept, allowMultiple = true, max
           id={id}
           type="file"
           className="visually-hidden"
-          tabIndex={-1}
+          // With custom children there is no "Add files" button, so the input itself is the tab stop
+          // (keyboard access, WCAG 2.1.1); its focus ring is drawn on the zone.
+          tabIndex={children ? undefined : -1}
           accept={accept}
           multiple={allowMultiple}
           disabled={disabled}

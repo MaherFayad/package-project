@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 import { db } from "@/lib/db";
 import { isProd } from "@/lib/env";
+import { clientIp } from "@/lib/rate-limit";
 import type { Locale, Role } from "@/types";
 import { DEFAULT_LOCALE } from "@/types";
 import { SESSION_COOKIE, SESSION_TTL_DAYS } from "./constants";
@@ -97,33 +98,54 @@ export async function apiRequireRole(roles?: Role | Role[]): Promise<SessionUser
   return s.user;
 }
 
-/** Create a DB session and set the cookie. Call only from Route Handlers / Server Actions. */
+/**
+ * Create a DB session and set the cookie. Call only from Route Handlers / Server Actions.
+ * Any session the browser already carried is revoked first (session rotation on sign-in,
+ * OWASP ASVS 3.2.1), and expired sessions of this user are purged.
+ */
 export async function createSession(userId: string): Promise<void> {
+  const jar = await cookies();
+  const previous = jar.get(SESSION_COOKIE)?.value;
+  const now = new Date();
+  await db.session.deleteMany({
+    where: {
+      OR: [
+        ...(previous ? [{ tokenHash: sha256(previous) }] : []),
+        { userId, expiresAt: { lt: now } },
+      ],
+    },
+  });
   const token = randomToken();
-  const expiresAt = new Date(Date.now() + SESSION_TTL_DAYS * 86_400_000);
+  const expiresAt = new Date(now.getTime() + SESSION_TTL_DAYS * 86_400_000);
   const h = await headers();
+  const ip = clientIp(h);
   await db.session.create({
     data: {
       tokenHash: sha256(token),
       userId,
       expiresAt,
-      ip: h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
+      ip: ip === "unknown" ? null : ip,
       userAgent: h.get("user-agent")?.slice(0, 300) ?? null,
     },
   });
-  const jar = await cookies();
-  jar.set(SESSION_COOKIE, token, {
+  jar.set(SESSION_COOKIE, token, sessionCookieOptions(expiresAt));
+}
+
+/** HttpOnly (no JS access), SameSite=Lax (no cross-site sends), Secure outside local dev. */
+export function sessionCookieOptions(expires: Date) {
+  return {
     httpOnly: true,
-    sameSite: "lax",
+    sameSite: "lax" as const,
     secure: isProd && !process.env.E2E_INSECURE_COOKIES,
     path: "/",
-    expires: expiresAt,
-  });
+    expires,
+  };
 }
 
 export async function destroySession(): Promise<void> {
   const jar = await cookies();
   const token = jar.get(SESSION_COOKIE)?.value;
   if (token) await db.session.deleteMany({ where: { tokenHash: sha256(token) } });
-  jar.delete(SESSION_COOKIE);
+  // Expire with the same attributes it was set with, so every browser drops it.
+  jar.set(SESSION_COOKIE, "", { ...sessionCookieOptions(new Date(0)), maxAge: 0 });
 }

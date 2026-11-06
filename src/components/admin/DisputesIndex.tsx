@@ -48,57 +48,59 @@ export function DisputesIndex({ rows }: { rows: DisputeRow[] }) {
 
   return (
     <Page fullWidth title={t("admin.disputes.title")} titleIcon={Gavel}>
-      <IndexTable
-        resourceName={{ singular: t("admin.disputes.resourceSingular"), plural: t("admin.disputes.resourcePlural") }}
-        caption={t("admin.disputes.title")}
-        rowIds={shown.map((r) => r.id)}
-        toolbar={
-          <IndexFilters
-            views={DISPUTE_VIEWS.map((v) => ({ id: `disputes-${v}`, content: t(`admin.disputes.views.${v}` as DictKey), badge: counts[v] ? formatNumber(counts[v]) : undefined }))}
-            selectedView={DISPUTE_VIEWS.indexOf(view)}
-            onSelectView={(i) => start(() => router.replace(`${pathname}${DISPUTE_VIEWS[i] === "open" ? "" : `?view=${DISPUTE_VIEWS[i]}`}`, { scroll: false }))}
-            queryValue={query}
-            onQueryChange={setQuery}
-            queryPlaceholder={t("admin.orders.search")}
-          />
-        }
-        headings={[
-          { title: t("admin.disputes.columns.order") },
-          { title: t("admin.disputes.columns.reason") },
-          { title: t("admin.disputes.columns.buyer") },
-          { title: t("admin.disputes.columns.vendor") },
-          { title: t("admin.disputes.columns.opened") },
-          { title: t("admin.disputes.columns.value"), alignment: "end" },
-          { title: t("admin.disputes.columns.status") },
-        ]}
-        emptyState={
-          <EmptyState heading={t("admin.disputes.empty")} image={<EmptyBoxIllustration size={96} />} compact>
-            {t("admin.disputes.emptyBody")}
-          </EmptyState>
-        }
-      >
-        {shown.map((r) => (
-          <IndexTableRow key={r.id} id={r.id}>
-            <IndexTableCell>
-              <IndexTableRowLink url={`/${locale}/admin/disputes/${r.id}`}>
-                <bdi>{r.orderNumber}</bdi>
-              </IndexTableRowLink>
-            </IndexTableCell>
-            <IndexTableCell>{t(`admin.disputes.reasons.${r.reason}` as DictKey)}</IndexTableCell>
-            <IndexTableCell>{r.buyerName || t("admin.users.noName")}</IndexTableCell>
-            <IndexTableCell>{locale === "ar" ? r.vendorNameAr : r.vendorNameEn}</IndexTableCell>
-            <IndexTableCell>
-              <time dateTime={r.createdAt}>{formatDate(r.createdAt, locale, "medium")}</time>
-            </IndexTableCell>
-            <IndexTableCell alignment="end" numeric>
-              {formatMoney(r.totalPiasters, locale)}
-            </IndexTableCell>
-            <IndexTableCell>
-              <DisputeStatusBadge status={r.status} />
-            </IndexTableCell>
-          </IndexTableRow>
-        ))}
-      </IndexTable>
+      <div id="admin-disputes-table">
+        <IndexTable
+          resourceName={{ singular: t("admin.disputes.resourceSingular"), plural: t("admin.disputes.resourcePlural") }}
+          caption={t("admin.disputes.title")}
+          rowIds={shown.map((r) => r.id)}
+          toolbar={
+            <IndexFilters
+              views={DISPUTE_VIEWS.map((v) => ({ id: `disputes-${v}`, panelID: "admin-disputes-table", content: t(`admin.disputes.views.${v}` as DictKey), badge: counts[v] ? formatNumber(counts[v]) : undefined }))}
+              selectedView={DISPUTE_VIEWS.indexOf(view)}
+              onSelectView={(i) => start(() => router.replace(`${pathname}${DISPUTE_VIEWS[i] === "open" ? "" : `?view=${DISPUTE_VIEWS[i]}`}`, { scroll: false }))}
+              queryValue={query}
+              onQueryChange={setQuery}
+              queryPlaceholder={t("admin.orders.search")}
+            />
+          }
+          headings={[
+            { title: t("admin.disputes.columns.order") },
+            { title: t("admin.disputes.columns.reason") },
+            { title: t("admin.disputes.columns.buyer") },
+            { title: t("admin.disputes.columns.vendor") },
+            { title: t("admin.disputes.columns.opened") },
+            { title: t("admin.disputes.columns.value"), alignment: "end" },
+            { title: t("admin.disputes.columns.status") },
+          ]}
+          emptyState={
+            <EmptyState heading={t("admin.disputes.empty")} image={<EmptyBoxIllustration size={96} />} compact>
+              {t("admin.disputes.emptyBody")}
+            </EmptyState>
+          }
+        >
+          {shown.map((r) => (
+            <IndexTableRow key={r.id} id={r.id}>
+              <IndexTableCell>
+                <IndexTableRowLink url={`/${locale}/admin/disputes/${r.id}`}>
+                  <bdi>{r.orderNumber}</bdi>
+                </IndexTableRowLink>
+              </IndexTableCell>
+              <IndexTableCell>{t(`admin.disputes.reasons.${r.reason}` as DictKey)}</IndexTableCell>
+              <IndexTableCell>{r.buyerName || t("admin.users.noName")}</IndexTableCell>
+              <IndexTableCell>{locale === "ar" ? r.vendorNameAr : r.vendorNameEn}</IndexTableCell>
+              <IndexTableCell>
+                <time dateTime={r.createdAt}>{formatDate(r.createdAt, locale, "medium")}</time>
+              </IndexTableCell>
+              <IndexTableCell alignment="end" numeric>
+                {formatMoney(r.totalPiasters, locale)}
+              </IndexTableCell>
+              <IndexTableCell>
+                <DisputeStatusBadge status={r.status} />
+              </IndexTableCell>
+            </IndexTableRow>
+          ))}
+        </IndexTable>
+      </div>
     </Page>
   );
 }

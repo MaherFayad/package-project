@@ -7,6 +7,14 @@ import type { CreateShipmentInput, CreatedShipment, ShippingProvider, TrackingRe
  * [VERIFY with Bosta before go-live]: delivery payload fields, state codes, flat-pack size
  * classes and the volumetric rate card we negotiated (report §7.4).
  */
+/** Courier calls never hang a request (OWASP ASVS 4.0.3 V12/V13 resource limits). */
+export const BOSTA_TIMEOUT_MS = 15_000;
+
+/** Map a Bosta state code; unknown codes keep the last known status instead of resetting it. */
+export function bostaStatus(code: number | undefined, fallback: ShipmentStatus = "CREATED"): ShipmentStatus {
+  return (code !== undefined && STATE_MAP[code]) || fallback;
+}
+
 const STATE_MAP: Record<number, ShipmentStatus> = {
   10: "CREATED",
   20: "PICKED_UP",
@@ -33,6 +41,7 @@ export class BostaProvider implements ShippingProvider {
     const res = await fetch(`${this.base}/deliveries`, {
       method: "POST",
       headers: this.headers(),
+      signal: AbortSignal.timeout(BOSTA_TIMEOUT_MS),
       body: JSON.stringify({
         type: 10,
         specs: { packageType: "Parcel", packageDetails: { itemsCount: input.bundles, description: input.description }, weight: input.weightKg },
@@ -58,13 +67,13 @@ export class BostaProvider implements ShippingProvider {
   }
 
   async track(trackingNumber: string): Promise<TrackingResult> {
-    const res = await fetch(`${this.base}/deliveries/business/${encodeURIComponent(trackingNumber)}`, { headers: this.headers() });
+    const res = await fetch(`${this.base}/deliveries/business/${encodeURIComponent(trackingNumber)}`, { headers: this.headers(), signal: AbortSignal.timeout(BOSTA_TIMEOUT_MS) });
     if (!res.ok) throw new Error(`BOSTA_TRACK_FAILED:${res.status}`);
     const body = (await res.json()) as { data?: { state?: { code?: number }; timeline?: { code?: number; date?: string }[] } };
     const events = (body.data?.timeline ?? [])
       .map((e) => ({ status: STATE_MAP[e.code ?? -1], at: e.date ?? "" }))
       .filter((e): e is { status: ShipmentStatus; at: string } => Boolean(e.status && e.at));
-    return { status: STATE_MAP[body.data?.state?.code ?? 10] ?? "CREATED", events };
+    return { status: bostaStatus(body.data?.state?.code, events[events.length - 1]?.status ?? "CREATED"), events };
   }
 
   trackingUrl(trackingNumber: string): string {

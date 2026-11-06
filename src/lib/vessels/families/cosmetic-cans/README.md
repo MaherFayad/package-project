@@ -109,6 +109,14 @@ UVs: `printUv(spec, s, t)` → WebGL UV (v up) for a texture covering the whole 
 
 Presets whose source says "approx., confirm with the supplier drawing" are typical catalogue sizes, not checked against one drawing. The capacity tests cover all of them: brimful must be within 0.95 to 1.5 × nominal, or ±20% of the stated brimful or overflow.
 
+## Closure anchor (`closureY`)
+The renderer draws the nearest core closure at `profile.finishTopY`, and core closures are round. Where
+the real lid is part of this profile (square and rect tins, lever-lid paint tins, the oval stick cap),
+`finishTopY` is moved inside the closed body and the model uses core kind `CAN`, so the small core pull
+tab stays hidden. Drawn ring-pull ends (tuna, sardine, oval fish) set `finishTopY = panel + 5.15 mm`
+(`ringPullAnchor`) so the core tab lies on the end panel. Remove this once the renderer has its own
+closure models per catalogue closure (see docs/audit/3d-cans-flexible.md, E-04).
+
 ## Integrator to-do
 1. **Registry merge.** `VesselKind`, `VesselMaterialCode`, `ClosureKind` and `PrintSurfaceKind` are closed unions in core. This folder defines supersets (`CatalogueMaterialCode`, `CatalogueClosureKind`, `CatalogueSurfaceKind`) and keys models by `code`. Either widen the core unions, or keep catalogue models in their own table keyed by `code`.
 2. **Renderer.** Render `geometry.profile` with the existing lathe builder; `section.kind = "roundedRect"` already works through `sectionPoint`. Add:

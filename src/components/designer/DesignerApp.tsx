@@ -7,7 +7,6 @@ import { startTransition, useCallback, useEffect, useMemo, useReducer, useRef, u
 import { FACE_IDS, type ArtworkLayer, type DesignDoc, type DesignFinishCode, type DimsPreset, type FaceId, type Locale, type PrintSurface, type StructureCode } from "@/types";
 import { boardAppearance, type DielineModel } from "@/lib/dieline";
 import { modelByCode, type ModelDef } from "@/lib/library";
-import type { ModelCard } from "@/lib/library/search";
 import { defaultMaxDpr } from "@/components/three/hooks";
 import { docGeometry, docModel, docModelCode, facesForAreas, normaliseDocModel } from "@/lib/library/doc";
 import { FINISHES } from "@/lib/configurator";
@@ -74,7 +73,7 @@ const StageSkeleton = () => <div className={lib.stageSkeleton} aria-hidden="true
 // One persistent 3D canvas for boxes and containers (PERF-09).
 const Stage3D = dynamic(() => import("./Stage3D"), { ssr: false, loading: StageSkeleton });
 // The picker (370 cards, search) loads only when it is opened (PERF-04).
-const ModelPicker = dynamic(() => import("./ModelPicker").then((m) => m.ModelPicker), { ssr: false });
+const ModelPicker = dynamic(() => import("@/components/catalogue/CataloguePicker").then((m) => m.ModelPicker), { ssr: false });
 
 type View = "3d" | "face" | "dieline";
 type SaveState = "idle" | "dirty" | "saving" | "saved" | "error";
@@ -95,8 +94,6 @@ export interface DesignerAppProps {
   loadError: "notFound" | null;
   /** Restore this device's autosaved draft on mount (?resume=1). */
   resumeLocal?: boolean;
-  /** Light picker cards, built on the server (no generators shipped for them; PERF-04). */
-  pickerCards?: ModelCard[];
 }
 
 const reducer = (s: History<DesignDoc>, a: HistoryAction<DesignDoc>) => historyReducer(s, a);
@@ -131,7 +128,7 @@ function slugify(name: string) {
   );
 }
 
-export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, loadError, resumeLocal, pickerCards = [] }: DesignerAppProps) {
+export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, loadError, resumeLocal }: DesignerAppProps) {
   const { t } = useI18n();
   const router = useRouter();
   const toast = useToast();
@@ -886,6 +883,7 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
                   label={t("designer.view.dielineLabel")}
                   legend={t("designer.view.dielineLegend")}
                   panelLabels={panelLabels}
+                  locale={locale}
                 />
               ) : null}
             </>
@@ -1037,7 +1035,7 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
         </div>
       </aside>
 
-      {pickerUsed ? <ModelPicker open={pickerOpen} cards={pickerCards} current={docModelCode(doc)} onClose={() => setPickerOpen(false)} onPick={onModel} /> : null}
+      {pickerUsed ? <ModelPicker open={pickerOpen} current={docModelCode(doc)} onClose={() => setPickerOpen(false)} onPick={onModel} /> : null}
       <GateModal reason={gate?.reason ?? null} onClose={() => setGate(null)} onSuccess={onSignedIn} />
       <PriceModal
         open={modal === "price"}

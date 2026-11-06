@@ -9,6 +9,15 @@ import { STRUCTURE_THEME, sampleArtwork } from "./sampleArtwork";
 const CODE = "FEFCO_0427" as const;
 /** Degrees per second of the hero turntable. */
 const SPEED = 16;
+/** The turntable runs this long, then rests (no endless WebGL frames); hover or focus resumes it. */
+const SPIN_MS = 8000;
+
+/** Give the main thread back between heavy steps so a first tap is not stuck behind them (INP). */
+function yieldToMain(): Promise<void> {
+  const s = (globalThis as { scheduler?: { yield?: () => Promise<void> } }).scheduler;
+  if (s?.yield) return s.yield();
+  return new Promise((r) => setTimeout(r, 0));
+}
 
 function resolveFont() {
   const v = getComputedStyle(document.documentElement).getPropertyValue("--font-inter").trim();
@@ -17,7 +26,6 @@ function resolveFont() {
 
 export interface HeroScene3DProps {
   playing: boolean;
-  poster: string;
   labels: { viewer: string; roleDescription: string; keyboardHint: string; unsupported: string };
   onReady?: () => void;
   onInteract?: () => void;
@@ -25,18 +33,37 @@ export interface HeroScene3DProps {
 
 /**
  * The live hero box (loaded lazily by HeroVisual): the same mailer, size, board and sample
- * artwork as the static poster (scripts/marketing/CapturePage.tsx), so the swap is seamless.
- * Real dieline, real fold, real board. Turns slowly while `playing` and on screen.
+ * artwork as the static poster (scripts/marketing/CapturePage.tsx), so the cross-fade over the
+ * poster <img> (which stays mounted underneath as the LCP element) is seamless.
+ * Real dieline, real fold, real board. The dieline build, the artwork paint and the canvas mount
+ * are separate tasks with a yield between them. Turns for SPIN_MS while `playing` and on screen,
+ * then rests until the pointer enters or the viewer gets focus.
  */
-export default function HeroScene3D({ playing, poster, labels, onReady, onInteract }: HeroScene3DProps) {
-  const material = defaultMaterialFor(CODE);
-  const model = useMemo(() => generateDielineForMaterial(CODE, DEFAULT_DIMS[CODE], material), [material]);
+export default function HeroScene3D({ playing, labels, onReady, onInteract }: HeroScene3DProps) {
+  const material = useMemo(() => defaultMaterialFor(CODE), []);
+  const [model, setModel] = useState<ReturnType<typeof generateDielineForMaterial> | null>(null);
+  const [spinKey, setSpinKey] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      await yieldToMain();
+      if (cancelled) return;
+      const m = generateDielineForMaterial(CODE, DEFAULT_DIMS[CODE], material);
+      await yieldToMain();
+      if (!cancelled) setModel(m);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [material]);
   const handle = useRef<PackagingSceneHandle>(null);
   const wrap = useRef<HTMLDivElement>(null);
   const [canvas, setCanvas] = useState<HTMLCanvasElement | null>(null);
   const [version, setVersion] = useState(0);
 
   useEffect(() => {
+    if (!model) return;
     let cancelled = false;
     const c = document.createElement("canvas");
     const size = surfaceCanvasSize(model, 1536);
@@ -54,8 +81,14 @@ export default function HeroScene3D({ playing, poster, labels, onReady, onIntera
       setCanvas(c);
       setVersion((v) => v + 1);
     };
-    paint();
-    document.fonts?.ready.then(paint).catch(() => undefined);
+    yieldToMain()
+      .then(() => {
+        paint();
+        return document.fonts?.ready;
+      })
+      .then(() => yieldToMain())
+      .then(paint)
+      .catch(() => undefined);
     return () => {
       cancelled = true;
       c.width = 0;
@@ -68,24 +101,35 @@ export default function HeroScene3D({ playing, poster, labels, onReady, onIntera
     if (!playing) return;
     let raf = 0;
     let last = performance.now();
+    let spun = 0;
     let visible = true;
     const io = typeof IntersectionObserver !== "undefined" ? new IntersectionObserver(([e]) => (visible = e.isIntersecting)) : null;
     if (wrap.current) io?.observe(wrap.current);
     const tick = (now: number) => {
       const dt = Math.min(now - last, 64);
       last = now;
-      if (visible && document.visibilityState === "visible") handle.current?.rotate((SPEED * dt) / 1000);
-      raf = requestAnimationFrame(tick);
+      if (visible && document.visibilityState === "visible") {
+        handle.current?.rotate((SPEED * dt) / 1000);
+        spun += dt;
+      }
+      if (spun < SPIN_MS) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => {
       cancelAnimationFrame(raf);
       io?.disconnect();
     };
-  }, [playing]);
+  }, [playing, spinKey]);
 
+  if (!model) return null;
   return (
-    <div ref={wrap} style={{ inlineSize: "100%", blockSize: "100%" }} onPointerDown={onInteract} onFocusCapture={onInteract}>
+    <div
+      ref={wrap}
+      style={{ inlineSize: "100%", blockSize: "100%" }}
+      onPointerDown={onInteract}
+      onFocusCapture={onInteract}
+      onPointerEnter={() => setSpinKey((k) => k + 1)}
+    >
       <PackagingSceneLazy
         dieline={model}
         material={material}
@@ -95,7 +139,6 @@ export default function HeroScene3D({ playing, poster, labels, onReady, onIntera
         artworkTextures={{ outside: texture }}
         artworkVersion={version}
         handleRef={handle}
-        poster={poster}
         ariaLabel={labels.viewer}
         roleDescription={labels.roleDescription}
         keyboardHint={labels.keyboardHint}

@@ -32,7 +32,7 @@ All styles are corrugated (`E_FLUTE_KRAFT`, `E_FLUTE_WHITE`, `B_FLUTE_KRAFT`), s
 | FEFCO_0217 | Gable carry box with handle | علبة حمل جملونية بمقبض | FEFCO 0217 | slotted-lock | none | simplified |
 | FEFCO_0218 | Full overlap box with locking tongue | علبة بألسنة كاملة ولسان قفل | FEFCO 0218 | slotted-lock | none | simplified |
 | FEFCO_0225 | Slotted box with integral base and inner liner | علبة بقاع متصل وبطانة داخلية | FEFCO 0225 | slotted-divided | `linerHeightMm` (h ≤ H) | exact |
-| FEFCO_0226 | Slotted box with bevelled gusset flaps | علبة بألسنة مائلة | FEFCO 0226 | slotted-open | `bevelFoldDeg` | simplified |
+| FEFCO_0226 | Slotted box with bevelled gusset flaps (pinch-folding top) | علبة بألسنة مائلة | FEFCO 0226 | slotted-open | `bevelFoldDeg` (default 60°) | simplified |
 | FEFCO_0227 | Tall slotted box with lid flaps and thumb notch | علبة طويلة بغطاء وفتحة إصبع | FEFCO 0227 | slotted-tuck | none | exact |
 | FEFCO_0228 | Slotted box with integral centre partition | علبة بفاصل أوسط مدمج | FEFCO 0228 | slotted-divided | `overlapMm` (o) | exact |
 | FEFCO_0229 | Slotted box with double-folded flaps | علبة بألسنة مزدوجة الطي | FEFCO 0229 | slotted-divided | none | simplified |
@@ -47,10 +47,12 @@ The Code assigns no styles to 0213, 0219–0224 or anything above 0231. No numbe
 ## Conventions
 
 - **Dimensions:** `Dims` are INNER mm. FEFCO's L is the longer side of the opening and B is the shorter side (B is called `W` here). H is the height.
-- **Thickness compensation:** crease-to-crease sizes are L + 2t and B + 2t (one wall layer on each side), and H + (top layers + bottom layers) × t. The layers per style are in `END_LAYERS` and `definition.endLayers`. Exceptions: in 0225 the liner adds layers (L + 4t, B + 3t), and in 0228, 0230 and 0231 the overlapped half-wall sits one layer further out.
+- **Thickness compensation:** crease-to-crease sizes are L + 2t and B + 2t (one wall layer on each side), and H + (top layers + bottom layers) × t. The layers per style are in `END_LAYERS` and `definition.endLayers`. Exceptions: in 0225 the liner adds layers (L + 4t, B + 3t; its left wing sits inside the glued joint, so the liner is inset 3t on that side and 2t on the other), and in 0228, 0230 and 0231 the overlapped half-wall sits one layer further out.
 - **Sheet view:** the sheet is drawn from the printed outside, laid out as joint | front L | right B | back L | left B. FEFCO draws from the inside, so this is the mirror image of the same die. The front wall is the root, so `closedRotation` is the identity.
 - **Slots and flaps:** slots are 2t + 2 mm wide (4 to 8 mm). Flaps are inset by half a slot at each end. When flaps overlap, the back flap sits one layer inside the front flap and the minor flaps one layer further in (`stackOffset`).
-- **Joint, bleed and safe zone:** the glued joint is 15 to 35 mm wide (at most 0.4 × H) and is not printable. Bleed is 3 mm on cut edges only. The safe zone is 5 mm (the corrugated default).
+- **Joint, bleed and safe zone:** the glued joint is 15 to 35 mm wide (at most 0.4 × H), stops 2t + 1 mm short of each end crease and is not printable. Bleed is 3 mm on cut edges only. The safe zone is 5 mm (the corrugated default).
+- **3D faces:** faces are cropped to the panels that carry them. Flaps that show beside an outer flap (overlap closures, snap-lock bottoms, a frame's minors, the inner flap round a tuck tongue) join the end face (`deepEnds`): the shared fold engine leaves every stacked panel out of the faces. 0217 and 0226 have no flat top: their wall faces run on over the roof, handle or leaning flap (`stripFace`), so artwork crosses the fold without a seam.
+- **Fold order:** panels fold in erection order so nothing sweeps through a wall or another flap: 0207 divisions swing in one flap at a time, 0208 / 0229 divisions are pre-folded, 0225 wings → liner → base. `__tests__/fefco02-3d.test.ts` checks every style closed (no interpenetration, no coplanar same-facing surfaces, faces covered, unmirrored) and these sequences half-way.
 
 ## Files
 

@@ -37,6 +37,11 @@ export interface Intention {
   fawry?: { referenceCode: string; expiresAt: string };
   /** InstaPay: transfer to this address with this reference; ops confirm by hand. */
   instapay?: { address: string; reference: string };
+  /**
+   * Gateway order the webhook will report (Paymob `intention_order_id`, mock: providerRef).
+   * Stored on Payment.raw.intention and compared with every webhook (see orders/payment-rules).
+   */
+  gatewayOrderId?: string;
 }
 
 export interface WebhookRequest {
@@ -56,6 +61,12 @@ export type WebhookOutcome =
       amountPiasters: Piasters;
       /** Sanitised payload to store on Payment.raw (no card data). */
       raw: Record<string, unknown>;
+      /** Which adapter verified it. */
+      provider?: "mock" | "paymob";
+      /** Signed gateway order reference (Paymob `order.id`), bound to the stored Payment. */
+      gatewayRef?: string;
+      /** ISO currency from the signed payload (must be EGP). */
+      currency?: string;
     }
   | { ok: false; error: "INVALID_SIGNATURE" | "INVALID_PAYLOAD" | "UNSUPPORTED_EVENT" };
 

@@ -7,6 +7,7 @@ import { fileUrl, UPLOAD_RULES, UPLOAD_SCOPES } from "@/components/vendor/lib/fi
 import { can, QC_PHOTO_KINDS } from "@/components/vendor/lib/jobs";
 import { MAX_PORTFOLIO_ITEMS } from "@/components/vendor/lib/profile";
 import { saveUpload, deleteUpload } from "@/components/vendor/server/storage";
+import { readFormCapped } from "../../_lib/body";
 
 /**
  * POST /api/vendor/uploads  (multipart/form-data)
@@ -22,6 +23,10 @@ import { saveUpload, deleteUpload } from "@/components/vendor/server/storage";
  * Route handler rather than a server action: server action bodies are capped at 1 MB.
  */
 const MAX_QC_PHOTOS = 20;
+/** Largest multipart body: the biggest per-scope file (10 MB) plus form overhead. */
+const MAX_BODY_BYTES = 11 * 1024 * 1024;
+/** cert/apply files are not rows until a form is saved, so cap them per user and day (disk abuse). */
+const DAILY_LOOSE_FILES = 30;
 
 const fields = z.object({
   scope: z.enum(UPLOAD_SCOPES),
@@ -37,15 +42,10 @@ export async function POST(req: Request) {
   const user = s.user;
   if (!rateLimit("vendor-upload", user.id, 60, 10 * 60_000).ok) return err("RATE_LIMITED", 429);
 
-  const len = Number(req.headers.get("content-length") ?? 0);
-  if (len > 12 * 1024 * 1024) return err("TOO_LARGE", 413);
-
-  let form: FormData;
-  try {
-    form = await req.formData();
-  } catch {
-    return err("INVALID", 400);
-  }
+  // Capped while streaming: a chunked request without Content-Length cannot make us buffer
+  // an unbounded body (OWASP ASVS 4.0.3 V12.1.1).
+  const form = await readFormCapped(req, MAX_BODY_BYTES);
+  if (form instanceof Response) return form;
   const parsed = fields.safeParse({
     scope: form.get("scope") ?? undefined,
     orderId: form.get("orderId") ?? undefined,
@@ -55,6 +55,7 @@ export async function POST(req: Request) {
   if (!parsed.success || !(file instanceof File)) return err("INVALID", 400);
   const { scope, orderId, kind } = parsed.data;
   if (file.size > UPLOAD_RULES[scope].maxBytes) return err("TOO_LARGE", 413);
+  if ((scope === "apply" || scope === "cert") && !rateLimit("vendor-upload:loose", user.id, DAILY_LOOSE_FILES, 86_400_000).ok) return err("RATE_LIMITED", 429);
 
   // ── Authorisation per scope
   let vendorId: string | null = null;

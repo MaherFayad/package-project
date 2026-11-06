@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { rateLimit } from "@/lib/rate-limit";
+import { readJsonCapped } from "../_lib/body";
 import { designDocSchema } from "@/components/designer/lib/doc";
 import type { Actor } from "@/components/designer/server";
 
@@ -17,17 +18,12 @@ export const SaveBody = z.object({
     .optional(),
 });
 
-/** Parse a JSON body with a size cap. Returns a ready error Response on failure. */
+/**
+ * Parse a JSON body with a size cap counted in BYTES while streaming (the old check counted
+ * UTF-16 characters after buffering the whole body). Returns a ready error Response on failure.
+ */
 export async function readJson(req: Request): Promise<unknown | Response> {
-  const len = Number(req.headers.get("content-length") ?? 0);
-  if (len > MAX_BODY_BYTES) return Response.json({ error: "TOO_LARGE" }, { status: 413 });
-  const text = await req.text().catch(() => "");
-  if (text.length > MAX_BODY_BYTES) return Response.json({ error: "TOO_LARGE" }, { status: 413 });
-  try {
-    return JSON.parse(text);
-  } catch {
-    return Response.json({ error: "INVALID_BODY" }, { status: 400 });
-  }
+  return readJsonCapped(req, MAX_BODY_BYTES);
 }
 
 /** 120 writes per 10 minutes per user or browser. */

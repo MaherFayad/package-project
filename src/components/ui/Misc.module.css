@@ -111,13 +111,15 @@
   justify-content: center;
   min-block-size: 7.5rem;
   padding: var(--p-space-400);
-  border: 1px dashed var(--p-color-border-tertiary);
+  /* 3.4:1 dashed edge: the drop target is identifiable (WCAG 1.4.11); was #ccc at 1.6:1. */
+  border: 1px dashed var(--p-color-input-border);
   border-radius: var(--p-border-radius-200);
   background: var(--p-color-bg-surface);
   cursor: pointer;
   transition: background-color var(--p-motion-duration-100), border-color var(--p-motion-duration-100);
 }
-.DropZone:hover { background: var(--p-color-bg-surface-hover); border-color: var(--p-color-input-border); }
+.DropZone:hover { background: var(--p-color-bg-surface-hover); border-color: var(--p-color-input-border-hover); }
+.DropZone:has(> input:focus-visible) { outline: var(--p-focus-ring-width) solid var(--p-color-border-focus); outline-offset: var(--p-focus-ring-offset); }
 .dragging { border-color: var(--p-color-border-emphasis); background: var(--p-color-bg-surface-emphasis); }
 .dropError { border-color: var(--p-color-border-critical-secondary); background: var(--p-color-bg-surface-critical); }
 .dropDisabled { cursor: not-allowed; opacity: 0.6; }

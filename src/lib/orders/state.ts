@@ -204,3 +204,33 @@ export function canReview(status: OrderStatus, alreadyReviewed: boolean): boolea
 export function canBuyerCancel(status: OrderStatus): boolean {
   return status === "PENDING_PAYMENT";
 }
+
+// ───────────────────────── production files & API guards ─────────────────────────
+
+/**
+ * Statuses in which the vendor may download the print-ready PDF (buyer artwork). Before the vendor
+ * accepts, it only sees the dieline (spec) so it can decide without taking the artwork.
+ */
+export const PRINT_FILES_UNLOCKED: readonly OrderStatus[] = ["ACCEPTED", "IN_PRODUCTION", "QC_PENDING", "READY_TO_SHIP", "SHIPPED", "DELIVERED"];
+
+/**
+ * May this user download the print-ready PDF of an order? Buyer (their own artwork) and ADMIN once
+ * the order is paid; vendor staff of the order's vendor only after accepting the job.
+ * (OWASP ASVS 4.0.3 V4.1.3 / V4.2.1, OWASP Top 10 A01:2021.)
+ */
+export function canDownloadPrintFile(
+  order: { buyerId: string; vendorId: string; status: string },
+  user: { id: string; role: Role; vendorId: string | null },
+): boolean {
+  const s = order.status as OrderStatus;
+  if (!isPaidStatus(s)) return false;
+  if (user.role === "ADMIN" || order.buyerId === user.id) return true;
+  return user.role === "VENDOR" && !!user.vendorId && user.vendorId === order.vendorId && PRINT_FILES_UNLOCKED.includes(s);
+}
+
+/**
+ * Targets the generic status endpoint never accepts, even from ADMIN: money states change only
+ * through verified payment webhooks (PAID) and the refund flow (REFUNDED), so an order can never be
+ * "paid" without a Payment row and an invoice.
+ */
+export const MONEY_STATUSES: readonly OrderStatus[] = ["PAID", "REFUNDED"];

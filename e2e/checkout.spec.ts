@@ -113,7 +113,8 @@ test("buyer checks out a saved design, pays by mock card and tracks the order", 
   await page.getByLabel("Card number").fill("4000 0000 0000 0002");
   await page.getByRole("button", { name: /^Pay / }).click();
   await expect(page.getByText("Your card was declined.")).toBeVisible();
-  await page.getByRole("button", { name: "Continue" }).click();
+  // A declined card keeps the buyer on the card form with a fresh attempt (no restart).
+  await expect(page.getByLabel("Card number")).toHaveValue("");
   await page.getByLabel("Card number").fill("4242 4242 4242 4242");
   await page.getByLabel("Expiry (MM/YY)").fill("12/30");
   await page.getByLabel("Security code").fill("123");
@@ -151,6 +152,30 @@ test("buyer checks out a saved design, pays by mock card and tracks the order", 
   await expect(page.getByRole("heading", { level: 1 })).toContainText("الطلب");
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(overflow).toBeLessThanOrEqual(0);
+});
+
+test("above 2,000 boxes the buyer sends a price request and sees it in the account", async ({ page }) => {
+  test.setTimeout(120_000);
+  await signIn(page);
+  const res = await page.request.post("/api/designs", { data: { doc } });
+  const { id: designId } = (await res.json()) as { id: string };
+
+  await page.goto(`/en/checkout/${designId}`);
+  await expect(page.getByTestId("vendor-offer").first()).toBeVisible();
+  await page.getByLabel("Other quantity").fill("5,000");
+  await page.getByLabel("Other quantity").press("Enter");
+  await expect(page.getByRole("heading", { name: "Request a price for 5,000 boxes" })).toBeVisible();
+  // No dead end: no disabled "Continue" for a quantity that cannot be ordered instantly.
+  await expect(page.getByRole("button", { name: "Continue" })).toHaveCount(0);
+  await page.getByLabel(/Anything we should know/).fill("Delivery in two batches");
+  await page.getByRole("button", { name: "Request a price" }).click();
+  await expect(page.getByText("Price request sent for 5,000 boxes")).toBeVisible();
+
+  await page.getByRole("link", { name: "View my requests" }).click();
+  await expect(page).toHaveURL(/\/en\/account#quote-requests$/);
+  const list = page.locator("#quote-requests");
+  await expect(list).toContainText("5,000 boxes · E2E mailer");
+  await expect(list).toContainText("Waiting for price");
 });
 
 test("webhook rejects unsigned payment callbacks", async ({ request }) => {

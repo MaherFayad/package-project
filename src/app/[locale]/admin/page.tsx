@@ -1,23 +1,23 @@
 import type { Metadata } from "next";
+import NextLink from "next/link";
+import type { ReactNode } from "react";
 import { BarChart3, ChevronRight } from "lucide-react";
 import {
-  Badge,
   BlockStack,
-  Box,
   Card,
+  CountBadge,
   DataTable,
   Icon,
   InlineGrid,
-  InlineStack,
   Layout,
   LayoutSection,
-  Link,
   MetricsStrip,
   Page,
   Text,
+  Tooltip,
 } from "@/components/ui";
 import { ChartTableToggle } from "@/components/admin/ChartTableToggle";
-import { ColumnChart, FunnelBars } from "@/components/admin/charts";
+import { adminStyles, ColumnChart, FunnelBars } from "@/components/admin/charts";
 import { RangeSelect } from "@/components/admin/RangeSelect";
 import { loadOverview } from "@/components/admin/server/queries";
 import { asRange, RANGES } from "@/components/admin/lib/metrics";
@@ -37,19 +37,28 @@ export default async function AdminOverviewPage({ params, searchParams }: { para
   const base = `/${locale}/admin`;
   const pct = (n: number | null) => (n === null ? t("admin.common.none") : formatPercent(n, locale));
   const signed = (n: number | null) => (n === null ? t("admin.overview.noPrev") : t("admin.overview.vsPrev", { pct: `${n > 0 ? "+" : ""}${formatPercent(n, locale)}` }));
-  const label = (key: DictKey, help: DictKey) => {
-    void help;
-    return t(key);
-  };
+  /** Metric label with its definition as a dotted-underline tooltip (Polaris metric pattern). */
+  const label = (key: DictKey, help: DictKey) => (
+    <Tooltip content={t(help)} dotted>
+      {t(key)}
+    </Tooltip>
+  );
+  /** Value on its own line (never breaks inside an amount), trend underneath. */
+  const cell = (value: ReactNode, sub: ReactNode) => (
+    <span className={adminStyles.MetricStack}>
+      <span className={adminStyles.MetricNum}>{value}</span>
+      <span className={adminStyles.MetricSub}>{sub}</span>
+    </span>
+  );
 
   const money = (p: number | null) => (p === null ? t("admin.common.none") : <bdi>{formatMoney(p, locale)}</bdi>);
   const seriesRows = o.gmvSeries.map((p, i) => [formatDate(p.start, locale, "medium"), formatMoney(p.value, locale), formatMoney(o.marginSeries[i]?.value ?? 0, locale)]);
 
   const tasks = [
-    { n: o.tasks.qcPending, text: t("admin.overview.tasks.qc", { count: formatNumber(o.tasks.qcPending) }), url: `${base}/orders?view=qc` },
-    { n: o.tasks.applications, text: t("admin.overview.tasks.applications", { count: formatNumber(o.tasks.applications) }), url: `${base}/vendors?tab=applications` },
-    { n: o.tasks.openDisputes, text: t("admin.overview.tasks.disputes", { count: formatNumber(o.tasks.openDisputes) }), url: `${base}/disputes` },
-    { n: o.tasks.dataRequests, text: t("admin.overview.tasks.dataRequests", { count: formatNumber(o.tasks.dataRequests) }), url: `${base}/privacy` },
+    { n: o.tasks.qcPending, text: t("admin.overview.tasks.qc"), url: `${base}/orders?view=qc` },
+    { n: o.tasks.applications, text: t("admin.overview.tasks.applications"), url: `${base}/vendors?tab=applications` },
+    { n: o.tasks.openDisputes, text: t("admin.overview.tasks.disputes"), url: `${base}/disputes` },
+    { n: o.tasks.dataRequests, text: t("admin.overview.tasks.dataRequests"), url: `${base}/privacy` },
   ].filter((x) => x.n > 0);
 
   return (
@@ -64,12 +73,12 @@ export default async function AdminOverviewPage({ params, searchParams }: { para
         <MetricsStrip
           accessibilityLabel={t("admin.overview.metricsLabel")}
           metrics={[
-            { label: label("admin.overview.metrics.gmv", "admin.overview.help.gmv"), value: money(o.money.gmvPiasters), trend: signed(o.gmvChangePct) },
-            { label: label("admin.overview.metrics.margin", "admin.overview.help.margin"), value: money(o.money.marginPiasters), trend: t("admin.overview.marginPct", { pct: pct(o.money.marginPct) }) },
-            { label: t("admin.overview.metrics.orders"), value: formatNumber(o.money.orders), trend: <>{t("admin.overview.metrics.aov")}: {money(o.money.aovPiasters)}</> },
-            { label: label("admin.overview.metrics.onTime", "admin.overview.help.onTime"), value: pct(o.ops.onTimePct), trend: t("admin.overview.ofDelivered", { count: formatNumber(o.ops.delivered) }) },
-            { label: label("admin.overview.metrics.reprint", "admin.overview.help.reprint"), value: pct(o.ops.reprintPct), trend: t("admin.overview.reprintCount", { count: formatNumber(o.ops.reprints) }) },
-            { label: label("admin.overview.metrics.disputes", "admin.overview.help.disputes"), value: pct(o.ops.disputePct), trend: t("admin.overview.openDisputes", { count: formatNumber(o.ops.openDisputes) }) },
+            { label: label("admin.overview.metrics.gmv", "admin.overview.help.gmv"), value: cell(money(o.money.gmvPiasters), signed(o.gmvChangePct)) },
+            { label: label("admin.overview.metrics.margin", "admin.overview.help.margin"), value: cell(money(o.money.marginPiasters), t("admin.overview.marginOfNet", { pct: pct(o.money.marginPct), net: formatMoney(o.money.netPiasters, locale) })) },
+            { label: t("admin.overview.metrics.orders"), value: cell(formatNumber(o.money.orders), t("admin.overview.aovShort", { amount: o.money.aovPiasters === null ? t("admin.common.none") : formatMoney(o.money.aovPiasters, locale) })) },
+            { label: label("admin.overview.metrics.onTime", "admin.overview.help.onTime"), value: cell(pct(o.ops.onTimePct), t("admin.overview.ofDelivered", { count: formatNumber(o.ops.delivered) })) },
+            { label: label("admin.overview.metrics.reprint", "admin.overview.help.reprint"), value: cell(pct(o.ops.reprintPct), t("admin.overview.reprintCount", { count: formatNumber(o.ops.reprints) })) },
+            { label: label("admin.overview.metrics.disputes", "admin.overview.help.disputes"), value: cell(pct(o.ops.disputePct), t("admin.overview.openDisputes", { count: formatNumber(o.ops.openDisputes) })) },
           ]}
         />
 
@@ -146,40 +155,22 @@ export default async function AdminOverviewPage({ params, searchParams }: { para
             <BlockStack gap="400">
               <Card title={t("admin.overview.tasks.title")}>
                 {tasks.length ? (
-                  <BlockStack gap="300">
+                  <ul className={adminStyles.TaskList}>
                     {tasks.map((x) => (
-                      <div key={x.url}>
-                        <InlineStack gap="200" blockAlign="center" wrap={false}>
-                          <Badge tone="attention" progress="incomplete">
-                            {formatNumber(x.n)}
-                          </Badge>
-                          <Link url={x.url}>{x.text}</Link>
+                      <li key={x.url}>
+                        <NextLink href={x.url} className={adminStyles.TaskLink}>
+                          <CountBadge>{formatNumber(x.n)}</CountBadge>
+                          <span className={adminStyles.TaskText}>{x.text}</span>
                           <Icon source={ChevronRight} tone="subdued" flipInRtl />
-                        </InlineStack>
-                      </div>
+                        </NextLink>
+                      </li>
                     ))}
-                  </BlockStack>
+                  </ul>
                 ) : (
                   <Text as="p" tone="subdued">
                     {t("admin.overview.tasks.allClear")}
                   </Text>
                 )}
-              </Card>
-              <Card title={t("admin.overview.ops.title")}>
-                <Box>
-                  <DataTable
-                    caption={t("admin.overview.ops.title")}
-                    columnContentTypes={["text", "numeric"]}
-                    headings={[t("admin.overview.ops.metric"), t("admin.overview.ops.value")]}
-                    rows={[
-                      [t("admin.overview.metrics.net"), formatMoney(o.money.netPiasters, locale)],
-                      [t("admin.overview.metrics.aov"), o.money.aovPiasters === null ? t("admin.common.none") : formatMoney(o.money.aovPiasters, locale)],
-                      [t("admin.overview.metrics.onTime"), pct(o.ops.onTimePct)],
-                      [t("admin.overview.metrics.reprint"), pct(o.ops.reprintPct)],
-                      [t("admin.overview.metrics.disputes"), pct(o.ops.disputePct)],
-                    ]}
-                  />
-                </Box>
               </Card>
               <Card title={t("admin.overview.ops.definitions")}>
                 <BlockStack gap="200">

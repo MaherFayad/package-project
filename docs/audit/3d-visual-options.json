@@ -1,0 +1,180 @@
+{
+ "FEFCO_0201": [
+  {
+   "id": "material-E_FLUTE_WHITE",
+   "changedPct": 0.81
+  },
+  {
+   "id": "material-B_FLUTE_KRAFT",
+   "changedPct": 1.98
+  },
+  {
+   "id": "sides-BOTH",
+   "changedPct": 0
+  },
+  {
+   "id": "finish-MATTE_VARNISH",
+   "changedPct": 14.99
+  },
+  {
+   "id": "_r_0_",
+   "changedPct": 0.29
+  },
+  {
+   "id": "_R_9l9qatpet5rl5rlb_",
+   "changedPct": 0.2
+  },
+  {
+   "id": "_R_1fl9qatpet5rl5rlb_",
+   "changedPct": 0.03
+  },
+  {
+   "id": "_R_dt9qatpet5rl5rlb_",
+   "changedPct": 0
+  },
+  {
+   "id": "_R_7t9qatpet5rl5rlb_",
+   "changedPct": 0
+  }
+ ],
+ "ECMA_RTE": [
+  {
+   "id": "material-SBS_350",
+   "changedPct": 0.57
+  },
+  {
+   "id": "sides-BOTH",
+   "changedPct": 0
+  },
+  {
+   "id": "finish-MATTE_LAMINATION",
+   "changedPct": 0
+  },
+  {
+   "id": "finish-GLOSS_LAMINATION",
+   "changedPct": 3.45
+  },
+  {
+   "id": "finish-SOFT_TOUCH_LAMINATION",
+   "changedPct": 12.32
+  },
+  {
+   "id": "finish-GLOSS_VARNISH",
+   "changedPct": 1.08
+  },
+  {
+   "id": "finish-MATTE_VARNISH",
+   "changedPct": 0
+  },
+  {
+   "id": "finish-SPOT_UV",
+   "changedPct": 0
+  },
+  {
+   "id": "finish-FOIL_GOLD",
+   "changedPct": 0.16
+  },
+  {
+   "id": "finish-FOIL_SILVER",
+   "changedPct": 0.18
+  },
+  {
+   "id": "finish-FOIL_ROSE_GOLD",
+   "changedPct": 0.18
+  },
+  {
+   "id": "finish-EMBOSS",
+   "changedPct": 0.11
+  },
+  {
+   "id": "finish-DEBOSS",
+   "changedPct": 0.1
+  },
+  {
+   "id": "_R_15l9qatpet5rl5rlb_",
+   "changedPct": 1.96
+  },
+  {
+   "id": "_r_0_",
+   "changedPct": 0.06
+  },
+  {
+   "id": "_R_dt9qatpet5rl5rlb_",
+   "changedPct": 0
+  },
+  {
+   "id": "_R_7t9qatpet5rl5rlb_",
+   "changedPct": 0
+  }
+ ],
+ "RIGID_BOX": [
+  {
+   "id": "sides-BOTH",
+   "changedPct": 0
+  },
+  {
+   "id": "finish-MATTE_LAMINATION",
+   "changedPct": 0
+  },
+  {
+   "id": "finish-GLOSS_LAMINATION",
+   "changedPct": 7.71
+  },
+  {
+   "id": "finish-SOFT_TOUCH_LAMINATION",
+   "changedPct": 14.14
+  },
+  {
+   "id": "finish-GLOSS_VARNISH",
+   "changedPct": 0
+  },
+  {
+   "id": "finish-MATTE_VARNISH",
+   "changedPct": 0
+  },
+  {
+   "id": "finish-SPOT_UV",
+   "changedPct": 0
+  },
+  {
+   "id": "finish-FOIL_GOLD",
+   "changedPct": 0.17
+  },
+  {
+   "id": "finish-FOIL_SILVER",
+   "changedPct": 0.19
+  },
+  {
+   "id": "finish-FOIL_ROSE_GOLD",
+   "changedPct": 0.19
+  },
+  {
+   "id": "finish-EMBOSS",
+   "changedPct": 0.1
+  },
+  {
+   "id": "finish-DEBOSS",
+   "changedPct": 0.09
+  },
+  {
+   "id": "_R_15l9qatpet5rl5rlb_",
+   "changedPct": 1.37
+  },
+  {
+   "id": "_r_0_",
+   "changedPct": 0.02
+  },
+  {
+   "id": "_R_1fl9qatpet5rl5rlb_",
+   "changedPct": 0.08
+  },
+  {
+   "id": "_R_dt9qatpet5rl5rlb_",
+   "changedPct": 0
+  },
+  {
+   "id": "_R_7t9qatpet5rl5rlb_",
+   "changedPct": 0
+  }
+ ]
+}

@@ -47,6 +47,6 @@
 }
 .Action { text-decoration: underline; }
 .Action:hover, .Close:hover { background: rgba(255, 255, 255, 0.12); }
-.Action:focus-visible, .Close:focus-visible { outline: 2px solid #ffffff; outline-offset: 1px; }
+.Action:focus-visible, .Close:focus-visible { outline: var(--p-focus-ring-width) solid var(--e-color-border-focus-inverse); outline-offset: var(--p-focus-ring-offset); }
 @media (pointer: coarse) { .Close, .Action { min-block-size: 2.25rem; min-inline-size: 2.25rem; } }
-@keyframes in { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+@keyframes in { from { opacity: 0; transform: translateY(calc(var(--e-motion-distance) * 1.33)); } to { opacity: 1; transform: none; } }

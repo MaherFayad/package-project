@@ -46,7 +46,7 @@ export default async function AdminPricingPage({ params }: { params: Promise<{ l
             caption={t("admin.pricing.index.historyCaption")}
             columnContentTypes={["text", "text", "numeric", "numeric", "text"]}
             headings={[t("admin.pricing.index.columns.id"), t("admin.pricing.index.columns.from"), t("admin.pricing.index.columns.fx"), t("admin.pricing.index.columns.board"), t("admin.pricing.index.columns.note")]}
-            rows={[...settings.priceIndex].reverse().map((r) => [<bdi key={r.id}>{r.id}</bdi>, formatDate(r.effectiveFrom, locale, "medium"), `×${formatNumber(r.fx, 4)}`, range(r.board), r.note ?? t("admin.common.none")])}
+            rows={[...settings.priceIndex].reverse().map((r) => [<bdi key={r.id}>{r.id}</bdi>, formatDate(r.effectiveFrom, locale, "medium"), <bdi key="fx" dir="ltr">{`×${formatNumber(r.fx, 4)}`}</bdi>, <bdi key="b" dir="ltr">{range(r.board)}</bdi>, r.note ?? t("admin.common.none")])}
           />
         </Card>
       </BlockStack>

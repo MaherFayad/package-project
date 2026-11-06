@@ -80,9 +80,14 @@ describe.each(DEFINITIONS.map((d) => [d.code, d] as const))("%s dieline", (_code
 
         // Closed outer size: never smaller than the inner size, at most a few calipers larger.
         const o = m.closedOuter;
+        // Outside gussets (0303 against the long walls, 0304 against the end walls) of a tray
+        // deeper than half that wall overlap: the second pair lies two boards further out on
+        // base and lid (4 extra layers on that axis) instead of sharing the first pair's plane.
+        const against = def.code === "FEFCO_0304" ? "W" : def.code === "FEFCO_0303" ? "L" : null;
+        const overlapAxis = against && 2 * (dims.H + t) > dims[against] ? (against === "W" ? "L" : "W") : null;
         for (const k of ["L", "W", "H"] as const) {
           expect(o[k], `${k} outer`).toBeGreaterThanOrEqual(dims[k] - 0.01);
-          expect(o[k], `${k} outer`).toBeLessThanOrEqual(dims[k] + 14 * t + 8);
+          expect(o[k], `${k} outer`).toBeLessThanOrEqual(dims[k] + 14 * t + 8 + (k === overlapAxis ? 8 * t : 0));
         }
 
         // The requested inner cavity is free of board (flaps fold the right way, layers compensated).

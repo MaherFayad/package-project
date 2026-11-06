@@ -215,6 +215,8 @@ export interface JobRow extends JobStateInput {
   number: string;
   buyerName: string;
   structureCode: string;
+  /** Exact library model (search matches its reference and both names). */
+  model?: { code: string; standard: string; name: { ar: string; en: string } } | null;
   quantity: number;
   dueDate: Date | string | null;
   placedAt: Date | string;
@@ -252,7 +254,11 @@ export function filterJobs<T extends JobRow>(rows: T[], f: JobFilter = {}): T[] 
       const d = dueState(r.dueDate, r.status, now);
       if (d !== "dueSoon" && d !== "overdue") return false;
     }
-    if (q && !`${r.number} ${r.buyerName}`.toLowerCase().includes(q)) return false;
+    if (q) {
+      const m = r.model;
+      const hay = `${r.number} ${r.buyerName} ${m ? `${m.code} ${m.standard} ${m.name.ar} ${m.name.en}` : ""}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
     return true;
   });
   const sort = f.sort ?? "due";

@@ -90,13 +90,17 @@ export function createFilmMaterial(code: FilmMaterialCode, opts: FilmMaterialOpt
   const m = new MeshPhysicalMaterial({
     color: opts.map ? "#ffffff" : r.color,
     roughness: r.roughness,
-    metalness: opts.map && code === "FILM_METALLISED" ? 0.35 : r.metalness,
+    // printed metallised film carries a white underlay under the ink: it reads as printed film, not metal
+    metalness: opts.map && code === "FILM_METALLISED" ? 0.12 : r.metalness,
     clearcoat: r.clearcoat,
     clearcoatRoughness: r.clearcoatRoughness,
     transmission: opts.map ? 0 : r.transmission,
+    // printed film is opaque where it carries ink (white underlay); a mapped clear film keeps the
+    // artwork's own alpha so only unprinted areas stay see-through
     transparent: r.opacity < 1 || !!opts.alphaMap,
-    opacity: r.opacity,
-    side: opts.doubleSided || r.transmission > 0 ? DoubleSide : FrontSide,
+    opacity: opts.map ? 1 : r.opacity,
+    // printed clear film is single-sided: with DoubleSide the far face's artwork reads mirrored through the near one
+    side: opts.doubleSided || (r.transmission > 0 && !opts.map) ? DoubleSide : FrontSide,
   });
   if (opts.map) m.map = opts.map;
   if (opts.alphaMap) m.alphaMap = opts.alphaMap;
@@ -105,8 +109,11 @@ export function createFilmMaterial(code: FilmMaterialCode, opts: FilmMaterialOpt
 }
 
 /** Plain materials for hardware parts (zipper, valve, spout, tin tie, flap). */
-export function createHardwareMaterial(role: "zipper" | "valve" | "spout" | "tinTie" | "flap"): MeshStandardMaterial {
+export function createHardwareMaterial(role: "zipper" | "valve" | "spout" | "tinTie" | "flap" | "product"): MeshStandardMaterial {
   switch (role) {
+    case "product":
+      // neutral food tone seen through clear film (cheese, meat, snacks)
+      return new MeshStandardMaterial({ color: "#d9b98a", roughness: 0.75, side: DoubleSide });
     case "valve":
       return new MeshStandardMaterial({ color: "#f2f2f2", roughness: 0.5 });
     case "spout":

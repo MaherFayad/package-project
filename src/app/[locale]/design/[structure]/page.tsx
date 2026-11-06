@@ -12,7 +12,6 @@ import { BOARD_SPECS } from "@/lib/dieline";
 import { FALLBACK_PRESETS, designerPath, presetDims, structureFromParam } from "@/components/designer/lib/catalog";
 import { currentActor, lazyChunkHrefs, loadDesign, loadPickerStructures } from "@/components/designer/server";
 import { preload } from "react-dom";
-import { MODELS, toCard } from "@/lib/library";
 
 export const dynamic = "force-dynamic";
 
@@ -86,7 +85,6 @@ export default async function DesignEditorPage({ params, searchParams }: { param
 
   return (
     <DesignerApp
-      pickerCards={MODELS.map(toCard)}
       locale={locale}
       initialDoc={doc}
       initialDesignId={designId}

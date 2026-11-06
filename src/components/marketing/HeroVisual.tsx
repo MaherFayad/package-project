@@ -1,12 +1,14 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { BadgeCheck, MapPin, Pause, Play, Star } from "lucide-react";
 import type { HeroScene3DProps } from "./HeroScene3D";
+import { srcSetFor } from "./assets";
 import styles from "./marketing.module.css";
 
-const HeroScene3D = dynamic<HeroScene3DProps>(() => import("./HeroScene3D"), { ssr: false });
+const loadHeroScene = () => import("./HeroScene3D");
+const HeroScene3D = dynamic<HeroScene3DProps>(loadHeroScene, { ssr: false });
 
 export interface HeroChips {
   priceTitle: string;
@@ -21,10 +23,14 @@ export interface HeroChips {
 }
 
 /**
- * Hero visual: a static poster render (the LCP image) that becomes the live 3D box once the
- * hero is on screen and the browser is idle, with floating proof chips around it. One pause
- * button stops both the turntable and the floating chips (WCAG 2.2.2); both start paused
- * under prefers-reduced-motion.
+ * Hero visual: a static poster render (the same mailer, artwork and angle) that stays mounted as
+ * the LCP element. The live 3D box (three + r3f, ~260 KB gz and a ~0.5 s boot) mounts over it
+ * only on intent: the pointer enters or presses the box itself (not the pause button, which must
+ * never start heavier motion). Keyboard users keep the poster; the designer has the full
+ * keyboard-operable 3D viewer. Booting it on idle blocked first taps (INP 600+ ms on phones, 300 ms on desktop). It fades in after its
+ * first frame, with floating proof chips around it. One pause button
+ * stops both the turntable and the floating chips (WCAG 2.2.2); both start paused under
+ * prefers-reduced-motion.
  */
 export function HeroVisual({
   poster,
@@ -36,48 +42,37 @@ export function HeroVisual({
   labels: { viewer: string; roleDescription: string; keyboardHint: string; unsupported: string; pause: string; play: string };
 }) {
   const [mount3d, setMount3d] = useState(false);
+  const [ready3d, setReady3d] = useState(false);
   const [playing, setPlaying] = useState(true);
-  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) setPlaying(false);
-    const el = ref.current;
-    if (!el) return;
-    const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
-    let idle = 0;
-    let timer = 0;
-    const start = () => {
-      if (w.requestIdleCallback) idle = w.requestIdleCallback(() => setMount3d(true), { timeout: 2000 });
-      else timer = window.setTimeout(() => setMount3d(true), 400);
-    };
-    const io =
-      typeof IntersectionObserver !== "undefined"
-        ? new IntersectionObserver(([e]) => {
-            if (e.isIntersecting) {
-              io?.disconnect();
-              start();
-            }
-          })
-        : null;
-    if (io) io.observe(el);
-    else start();
-    return () => {
-      io?.disconnect();
-      if (idle) w.cancelIdleCallback?.(idle);
-      if (timer) window.clearTimeout(timer);
-    };
   }, []);
 
+  // Load the 3D chunk first, then mount on the next idle period so the pointer event that
+  // showed intent paints immediately.
+  const intent = () => {
+    if (mount3d) return;
+    void loadHeroScene()
+      .catch(() => undefined)
+      .then(() => {
+        const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
+        if (w.requestIdleCallback) w.requestIdleCallback(() => setMount3d(true), { timeout: 1000 });
+        else window.setTimeout(() => setMount3d(true), 50);
+      });
+  };
+
   return (
-    <div className={styles.heroVisual} ref={ref} data-paused={playing ? "false" : "true"}>
+    <div className={styles.heroVisual} data-paused={playing ? "false" : "true"}>
       <div className={styles.heroGlow} aria-hidden="true" />
-      <div className={styles.heroStage}>
+      <div className={styles.heroStage} data-live={ready3d ? "true" : "false"} onPointerEnter={intent} onPointerDown={intent}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={poster} srcSet={srcSetFor(poster)} sizes="(min-width: 1024px) 600px, 92vw" alt="" className={styles.heroPoster} width={960} height={640} fetchPriority="high" decoding="async" />
         {mount3d ? (
-          <HeroScene3D playing={playing} poster={poster} labels={labels} onInteract={() => setPlaying(false)} />
-        ) : (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={poster} alt="" className={styles.heroPoster} width={960} height={640} fetchPriority="high" decoding="async" />
-        )}
+          <div className={styles.heroCanvas} data-ready={ready3d ? "true" : "false"}>
+            <HeroScene3D playing={playing} labels={labels} onReady={() => setReady3d(true)} onInteract={() => setPlaying(false)} />
+          </div>
+        ) : null}
       </div>
 
       <div className={`${styles.chip} ${styles.chipDark} ${styles.chipPrice}`} style={{ ["--chip-i" as string]: 0 }} aria-hidden="true">

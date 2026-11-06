@@ -69,7 +69,7 @@ export default async function ApplyPage({ params }: { params: Promise<{ locale: 
                   {t(`vendorPortal.apply.statuses.${application.status}` as DictKey)}
                 </Badge>
               </InlineStack>
-              <Text as="p">{t("vendorPortal.apply.submittedBody", { phone: formatEgyptPhone(application.contactPhone) })}</Text>
+              <Text as="p">{t("vendorPortal.apply.submittedBody", { phone: `\u2066${formatEgyptPhone(application.contactPhone)}\u2069` })}</Text>
               <Text as="p" tone="subdued" variant="bodySm">
                 {t("vendorPortal.apply.submittedOn", { date: formatDate(application.createdAt, locale) })}
               </Text>

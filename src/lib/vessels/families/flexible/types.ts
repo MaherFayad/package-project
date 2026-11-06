@@ -177,6 +177,12 @@ export interface FlexPrintPanel {
   trimAreaM2: number;
   /** Trim coordinates of the face's flat origin (where 3D flat coords s = 0, tFlat = 0 land). */
   faceOrigin: { x: Mm; y: Mm };
+  /**
+   * Horizontal packs (flow wrap): the print area is landscape, as the bar is seen on the shelf.
+   * "topRight": the face's top seal edge is the right edge of the print area (front);
+   * "topLeft": it is the left edge (back, seen from behind). Rects above are already rotated.
+   */
+  landscape?: "topRight" | "topLeft";
 }
 
 export interface FlexPrintLayout {

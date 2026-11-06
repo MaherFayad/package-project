@@ -43,7 +43,8 @@ export function Banner({ tone = "info", title, children, action, secondaryAction
       id={id}
       className={cx(styles.Banner, styles[`tone-${tone}`], inCard && styles.inCard, !title && styles.noTitle)}
       role={role}
-      aria-labelledby={title ? titleId : undefined}
+      // Naming is prohibited on a role-less <div> (ARIA 1.2, generic): only name live banners.
+      aria-labelledby={title && role ? titleId : undefined}
     >
       <span className={styles.IconBox}>
         <Icon source={ICONS[tone]} />
