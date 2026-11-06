@@ -24,3 +24,10 @@ Claude-Session: https://claude.ai/code/session_01ErLBsbrJGKcLzRPdTmLyhq
 and push to your outcome branch (git push -u origin <branch>, retry with backoff on network errors). Commit and push after each pass, not only at the end. Do not open a pull request. Do not put model names in commits or files.
 
 FINAL REPLY: counts of findings by severity, what was fixed, anything left open and why, files touched outside scope, and the test results.
+
+ROUND 2 (and later rounds)
+- Your base already contains the round 1 fixes of every area. First read docs/audit/<your-key>.md (if it exists) and every other docs/audit/*.md that touches your area.
+- Re-verify every item marked fixed in the real browser; reopen any that is not truly fixed (status: reopened, round 2).
+- Then do a completely fresh audit as if you had never seen the product: new findings get ids prefixed R2-.
+- Append a "Round 2" section to docs/audit/<your-key>.md (keep round 1 rows). Same severity scale, same fix-and-verify method, same commit rules.
+- Measure performance of your pages with docs/audit/tools/perf-pages.mjs and docs/audit/tools/perf-3d.mjs where relevant; budgets: LCP < 2.5 s, CLS < 0.1, INP < 200 ms, non-3D JS < 200 KB gz.
