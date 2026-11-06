@@ -27,6 +27,7 @@ const IMAGES: SniffedType[] = ["image/png", "image/jpeg", "image/webp"];
 const IMAGES_AND_PDF: SniffedType[] = [...IMAGES, "application/pdf"];
 
 export const UPLOAD_RULES: Record<UploadScope, { types: SniffedType[]; maxBytes: number; accept: string; public: boolean }> = {
+  // Public only after review (B-08): see canReadFile().
   portfolio: { types: IMAGES, maxBytes: 8 * 1024 * 1024, accept: "image/png,image/jpeg,image/webp", public: true },
   qc: { types: IMAGES, maxBytes: 10 * 1024 * 1024, accept: "image/png,image/jpeg,image/webp", public: false },
   cert: { types: IMAGES_AND_PDF, maxBytes: 10 * 1024 * 1024, accept: "image/png,image/jpeg,image/webp,application/pdf", public: false },
@@ -108,13 +109,23 @@ export interface Viewer {
 }
 
 /**
- * Who may read a file. `orderParties` must be looked up for `qc/` keys (vendor + buyer of the order).
+ * Who may read a file. `orderParties` must be looked up for `qc/` keys (vendor + buyer of the order);
+ * `portfolioStatus` for `portfolio/` keys (the VendorPortfolioItem row pointing at the file).
+ * B-08: a portfolio photo is public only once Elba APPROVED it. PENDING, REJECTED or orphan files
+ * (no row) are readable by the owning vendor and admins only, so a leaked URL shows nothing.
  */
-export function canReadFile(key: ParsedKey, viewer: Viewer | null, orderParties?: { vendorId: string; buyerId: string } | null): boolean {
-  if (key.scope === "portfolio") return true;
+export function canReadFile(
+  key: ParsedKey,
+  viewer: Viewer | null,
+  orderParties?: { vendorId: string; buyerId: string } | null,
+  portfolioStatus?: string | null,
+): boolean {
+  if (key.scope === "portfolio" && portfolioStatus === "APPROVED") return true;
   if (!viewer) return false;
   if (viewer.role === "ADMIN") return true;
   switch (key.scope) {
+    case "portfolio":
+      return viewer.vendorId === key.ownerId;
     case "cert":
       return viewer.vendorId === key.ownerId;
     case "apply":
