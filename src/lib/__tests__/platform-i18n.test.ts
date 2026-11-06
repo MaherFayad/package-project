@@ -51,6 +51,12 @@ describe("dictionaries", () => {
     const bad = Object.entries(A).filter(([k, v]) => !/En$/.test(k) && v === E[k] && /[a-z]{3}/.test(v) && !allowed.test(v));
     expect(bad).toEqual([]);
   });
+  it("space-separated digit groups in Arabic text are LTR-isolated (else they render reversed)", () => {
+    const bad = Object.entries(A).filter(
+      ([, v]) => /[\u0600-\u06ff]/.test(v) && /\d+ \d+/.test(v.replace(/\u2066[^\u2069]*\u2069/g, "")),
+    );
+    expect(bad).toEqual([]);
+  });
   it("Arabic uses Arabic punctuation (، ؟ ؛) next to Arabic letters", () => {
     const bad = Object.entries(A).filter(([, v]) => /[؀-ۿ]\s?[,;?]/.test(v));
     expect(bad).toEqual([]);

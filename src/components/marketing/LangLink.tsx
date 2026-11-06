@@ -18,6 +18,9 @@ export function LangLink({ className, showIcon = true }: { className?: string; s
     <Link
       href={href}
       hrefLang={other}
+      // No prefetch: the other locale's payload carries its font preloads (PERF-05), and the
+      // switch is rarely used.
+      prefetch={false}
       lang={other}
       className={className}
       onClick={() => {

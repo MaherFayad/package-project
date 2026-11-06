@@ -43,9 +43,11 @@ Severity: critical = broken flow / data / security; high = clearly wrong, ugly o
 | P-32 | low | browser console | Chrome logs "Failed to load resource: 400" for expected validation answers (wrong code, invalid phone). | — | Correct HTTP semantics; not changed. | won't fix |
 | P-34 | medium | `legal.privacy.sections.retention` (pass 2) | The privacy policy did not say how long OTP codes (phone + IP) and sign-in sessions are kept. | PDPL 151/2020 (inform data subjects of retention) | Added: codes deleted after 24 h, sessions end after 30 days (matches the code). | fixed |
 | P-35 | low | `auth.*` (pass 2) | Links and checkbox said "Privacy Notice" but the page and footer are titled "Privacy policy" / "سياسة الخصوصية". | WCAG 3.2.4 consistent identification | Link and error texts use the page title. | fixed |
+| P-36 | high | `src/app/fonts.ts`, `[locale]/layout.tsx`, `tokens.css` (PERF-05, from the performance audit) | Every page, English included, preloaded 9 font files and downloaded ~240 KB of fonts (Plex Arabic in 4 weights x Arabic + Latin, all preloaded). | Core Web Vitals (LCP), performance budget | Plex: `subsets: ["arabic"]`, `preload: false`, weights 400/500/600/700 declared (unused cuts never download; 500 kept for the designer's "Medium"). `[locale]/layout.tsx` preloads Plex 400 + 700 on Arabic pages only (URLs read from the built CSS by `src/app/font-preload.ts`, unit-tested). Arabic font stack puts Inter first so digits and Latin use the Inter file every page already has; Arabic medium maps to 600. Language switch links no longer prefetch the other locale (its payload carried the other locale's font preloads). Measured: `/ar` 9 files / 240 KB -> 5 / 183 KB, `/ar/login` -> 4 / 148 KB, `/en` -> 2 / 82 KB; preloads 9 -> 3 (ar) / 1 (en). Arabic rendering compared before/after (`perf05-before-*`, `perf05-after-*`): same shapes and metrics, digits now Inter. | fixed |
+| P-37 | medium | `auth.phoneHint`, `auth.errors.INVALID_PHONE`, `checkout.payment.card.testHint` | Space-separated digit groups inside Arabic sentences rendered reversed ("5678 1234 010"). | WCAG 1.3.2 meaningful sequence | Wrapped in LTR isolates; a dictionary test now fails on any un-isolated digit groups in Arabic. | fixed |
 | P-33 | low | lockout | Someone who knows a phone number can lock that number's sign-in for up to an hour by entering wrong codes. | NIST 800-63B §5.2.2 accepts throttling with this trade-off | Kept; window is 60 min, not permanent. | accepted |
 
-Counts: critical 2, high 7, medium 15, low 11 (35 total). Fixed 32 (P-16 and P-24 fixed in scope with a remainder below), open 1, won't fix 1, accepted 1.
+Counts: critical 2, high 8, medium 16, low 11 (37 total). Fixed 34 (P-16 and P-24 fixed in scope with a remainder below), open 1, won't fix 1, accepted 1.
 
 ## Open (needs another owner or a deploy decision)
 
@@ -60,6 +62,7 @@ Counts: critical 2, high 7, medium 15, low 11 (35 total). Fixed 32 (P-16 and P-2
 - `src/components/store/CookieNotice.tsx`: two lines to reserve body padding while the notice is visible (P-27).
 - Dictionary values in `checkout.ar.ts`, `marketing.ar.ts`, `designer.ar.ts`, `admin.{ar,en}.ts` (owned for quality per the brief; values only, `admin.privacy.dueIn` now takes a pre-formatted count).
 - `package.json` / `package-lock.json`: `@axe-core/playwright` dev dependency for the audit.
+- PERF-05 (requested by the integrator): `src/app/fonts.ts`, `src/styles/tokens.css` (`:root:lang(ar)` font stack and medium weight), and `prefetch={false}` on `src/components/store/LanguageSwitcher.tsx`, `src/components/marketing/LangLink.tsx`, `src/components/designer/TopBarLanguage.tsx`.
 
 ## Verification
 

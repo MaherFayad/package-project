@@ -436,13 +436,15 @@
   --p-z-index-popover: 520; /* popovers can open from inside modals */
 }
 
-/* Arabic: IBM Plex Sans Arabic first, Inter for Latin runs. Plex sits optically
+/* Arabic: Inter first so Latin runs and digits use the Inter file every page already has,
+   and Arabic glyphs (absent from Inter) fall through to IBM Plex Sans Arabic. This keeps the
+   Plex Latin files from downloading on Arabic pages (PERF-05). Plex sits optically
    smaller than Inter, so Arabic body text is 1px larger and weights snap to the
-   static Plex cuts (400/500/600/700). */
+   static Plex cuts that are loaded (400/600/700; medium uses 600). */
 :root:lang(ar) {
-  --p-font-family-sans: var(--p-font-family-arabic), var(--p-font-family-latin);
+  --p-font-family-sans: var(--font-inter), var(--p-font-family-arabic), var(--p-font-family-latin);
   --p-font-weight-regular: 400;
-  --p-font-weight-medium: 500;
+  --p-font-weight-medium: 600;
   --p-font-weight-semibold: 600;
   --p-text-body-md-font-size: var(--p-font-size-350);
   --p-text-body-md-font-line-height: var(--p-font-line-height-600);
