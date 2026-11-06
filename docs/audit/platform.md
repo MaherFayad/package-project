@@ -434,3 +434,109 @@ Counts (new findings this pass, before fixing): critical 0 · high 0 · medium 0
 Verification: `npm run lint`, `npm run typecheck`, `npm test` (85 files, 8,419 tests) and `npm run build` pass. e2e (`--workers=2`) for smoke, storefront, admin, vendor, designer and checkout: 58 passed, 12 skipped by the specs. Screenshots: `docs/screenshots/audit/platform/r5b-*`.
 
 Files outside the listed scope: none. `next.config.ts` was changed for the experiment and restored.
+
+### Round 5 (c): barrel imports (R4-08), locale 404 (R4-09), fresh shell pass
+
+Base: `4c11648` (main with rounds 1 to 4 merged). Production build (`next build && next start`, `OTP_DEV_ECHO=1`), Playwright at 390 and 1440 in ar and en. Other sessions are editing checkout, admin, designer and 3D files, so in their files **only import lines changed**.
+
+**R4-08: fixed.**
+- **Codemod:** `scripts/codemods/debarrel-ui.mjs` reads the barrel's export map (`src/components/ui/index.ts`) and turns each `import { … } from "@/components/ui"` into one import per kit file. Type-only specifiers are kept, and every other byte of the file is untouched.
+- **Scope:** it rewrote 89 files: 23 admin, 10 vendor, 10 designer, 8 vendor portal, 9 checkout, 11 orders/account, plus dev.
+- **Lint rule:** `no-restricted-imports` in `eslint.config.mjs` rejects `@/components/ui` and `@/components/ui/index` anywhere in `src/` outside the kit. The error message names the codemod.
+- **Check:** `node scripts/codemods/debarrel-ui.mjs --check` exits 1 if a barrel import is left.
+
+**R4-09: re-verified fixed** (round 5 b gave the locale 404 its own 2 KB sheet).
+- `docs/audit/tools/notfound-check.mjs` opens all 15 not-found boundaries: root, `[...missing]`, store, box style, catalogue, printers, legal, editor, share, order, and 5 admin. It runs each in ar and en at 390 and 1440, 58 runs in all.
+- Every run is styled (tokens loaded, brand font, h1 ≥ 18 px), has one `<main>`, no overflow and no console errors.
+- Every one answers 404 except the streamed pages (R5-PL-03).
+- The locale 404 sheet appears exactly twice per page (`<style>` and RSC copy, about 2 KB). Admin, editor and checkout pages carry no marketing CSS (`marketing_bandMint` is not in the HTML).
+- Screenshots: `docs/screenshots/audit/platform/r5c/404-*`.
+
+**Bytes before → after.** Measured with `perf-pages.mjs`, phone profile, `ISOLATE=1`, 18 routes × 2 locales. The harness now records inline `<style>` bytes and the RSC payload (`self.__next_f`), both UTF-8 and uncompressed. Raw data: `docs/audit/perf-data/r5-platform/pages-{before,after}-phone.json`.
+
+| Route | Inline CSS ar (KB) | RSC payload ar (KB) | HTML on the wire ar (KB gz) | Inline CSS en (KB) | RSC payload en (KB) | Phone LCP ar (s) |
+|---|---|---|---|---|---|---|
+| home | 108 → **111** (+3) | 286 → **282** (-4) | 102 → **103** | 108 → **111** | 255 → **251** | 2.68 → 1.52 |
+| boxes | 108 → **111** (+3) | 270 → **266** (-4) | 90 → **91** | 108 → **111** | 240 → **236** | 1.46 → 1.47 |
+| bottles | 108 → **111** (+3) | 237 → **233** (-4) | 83 → **84** | 108 → **111** | 211 → **207** | 1.56 → 1.56 |
+| catalog | 127 → **134** (+8) | 480 → **481** (+1) | 126 → **129** | 127 → **134** | 453 → **454** | 2.09 → 2.18 |
+| vendors | 108 → **111** (+3) | 267 → **263** (-4) | 105 → **103** | 108 → **111** | 239 → **235** | 1.54 → 1.41 |
+| design-picker | 200 → **194** (-6) | 484 → **472** (-12) | 161 → **160** | 200 → **194** | 458 → **445** | 2.65 → 2.81 |
+| designer-box | 189 → **159** (-29) | 321 → **289** (-32) | 123 → **113** | 189 → **159** | 296 → **263** | 1.43 → 1.36 |
+| designer-bottle | 189 → **159** (-29) | 324 → **292** (-32) | 124 → **115** | 189 → **159** | 299 → **267** | 1.45 → 1.34 |
+| designer-pouch | 189 → **159** (-29) | 321 → **289** (-32) | 123 → **113** | 189 → **159** | 296 → **263** | 1.41 → 1.34 |
+| designer-fefco09 | 189 → **159** (-29) | 321 → **289** (-32) | 123 → **113** | 189 → **159** | 295 → **263** | 1.40 → 1.31 |
+| share | 164 → **175** (+11) | 328 → **315** (-13) | 145 → **146** | 164 → **175** | 301 → **288** | 1.94 → 2.35 |
+| checkout | 134 → **116** (-18) | 269 → **302** (+33) | 106 → **114** | 134 → **116** | 243 → **277** | 2.00 → 2.04 |
+| order-tracking | 204 → **210** (+6) | 439 → **380** (-59) | 163 → **150** | 204 → **210** | 411 → **353** | 2.15 → 2.21 |
+| account | 236 → **214** (-22) | 470 → **380** (-90) | 174 → **148** | 236 → **214** | 443 → **353** | 2.09 → 2.12 |
+| vendor-portal | 146 → **130** (-16) | 376 → **352** (-24) | 135 → **129** | 146 → **130** | 321 → **297** | 1.91 → 1.18 |
+| vendor-jobs | 146 → **146** (-0) | 360 → **353** (-7) | 128 → **130** | 146 → **146** | 306 → **299** | 1.16 → 1.10 |
+| admin | 146 → **124** (-23) | 395 → **386** (-8) | 144 → **141** | 146 → **124** | 338 → **330** | 2.43 → 2.14 |
+| admin-orders | 146 → **132** (-15) | 361 → **361** (-0) | 131 → **132** | 146 → **132** | 307 → **307** | 4.63 → 1.13 |
+
+Across the 18 Arabic routes:
+- inline CSS fell by **181 KB** in total;
+- the RSC payload fell by **324 KB**;
+- gzip HTML fell by **74 KB**.
+
+By route:
+- **Editor:** −29 KB CSS and −32 KB RSC on each of the four routes.
+- **Account:** −22 / −90 KB.
+- **Order tracking:** −59 KB RSC.
+- **Admin and vendor:** −15 to −23 KB CSS.
+- **Marketing routes:** +3 KB CSS (the new locale error boundary's segment), −4 KB RSC (R5-PL-06).
+
+Two routes went up:
+- **Checkout** gained 33 KB of RSC even though its CSS fell 18 KB. Without the barrel, its page, loading and error segments each inline their own small chunks (R5-PL-07).
+- **Share** gained 11 KB of CSS for the same reason.
+
+LCP is reported for context only. Both runs passed the budget except `design-picker` (R4-15, designer). The after run shared the CPU with lint and unit tests, so ±0.3 s is noise.
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R4-08 | medium | 89 files in admin, vendor, designer, checkout, orders, account | Barrel imports pulled every kit stylesheet into the route. With `inlineCss` that CSS lands twice: in `<head>` and in the RSC payload. | Performance budget | Codemod + lint rule (above). | fixed |
+| R4-09 | medium | `[locale]/not-found.tsx` | Re-verified in the browser (above). | Performance budget | (round 5 b) | fixed, verified |
+| R5-PL-01 | high | `src/app/[locale]/error.tsx` (new), `src/app/global-error.tsx` (new) | There was no locale-level error boundary and no `global-error`. An exception on sign-in, unsubscribe, share, legal or dev pages, or in any area layout, showed Next's unstyled English "Application error" with no way back. Arabic users got English. | WCAG 3.1.1, 3.3.1; ISO 9241-110 (error tolerance) | **Locale boundary:** one `<main>`, a `role="alert"` h1, a retry button that calls `reset()`, and a home link that keeps the locale. It reuses the locale 404 sheet, so it costs no new CSS.<br>**`global-error`:** bilingual, `lang`/`dir` per part, a title, noindex. Its links are plain `<a>` so they force a full reload.<br>The error message is never shown. Unit test: `src/app/__tests__/error-boundaries.test.tsx`. | fixed |
+| R5-PL-02 | low | `src/app/not-found.tsx` | The root 404 still repeated its heading in the body. Round 5 b fixed only the locale copy. | Copy | Same wording as `common.notFoundBody` (ar/en). | fixed |
+| R5-PL-03 | low | admin detail `not-found.tsx` (5), `orders/[id]`, `s/[id]` | These "not found" states answer **HTTP 200**: the segment's `loading.tsx` starts streaming before `notFound()` runs. `AdminNotFound`'s comment says "a real HTTP 404". The page itself is styled and correct, and noindex. | HTTP semantics; SEO for share links | Owners (admin, orders, designer): validate the id above the Suspense boundary (in the layout, as `design/(editor)` does with `x-elba-path`) or drop `loading.tsx` for detail pages. Not done here: only import lines may change in those files. `notfound-check.mjs` lists them as SOFT. | open (owners) |
+| R5-PL-04 | medium | `src/app/global-error.tsx` (pass 1 of this round) | My first `global-error` imported `globals.css` and `next/font`. Next keeps the global error boundary in every page's tree and embeds its CSS in each RSC payload, so every page gained ~30 KB. Pass 2 caught it with the measurement. It was never merged, but I count it. | Performance budget | Self-contained: system font stack and literal colours, no CSS or font import. A unit test blocks either import. Home RSC went from 320 to 282 KB. | fixed |
+| R5-PL-05 | medium | `components/ui/Misc.module.css` | One 18 KB sheet held 11 components (EmptyState, Skeleton, Thumbnail, ProgressBar, Tooltip, DropZone, Link, PriceTag, Stepper, Timeline, MetricsStrip). Every segment that rendered any one of them inlined all of it: `/vendor/apply` carried it 3 times, 53 KB. | Performance budget | Split into one `<Component>.module.css` per component. The sections were already self-contained (checked: no shared selectors; dynamic `size-`/`tone-` classes stay with their component). `Misc.module.css` is deleted. | fixed |
+| R5-PL-06 | medium | `src/app/layout.tsx`, `src/app/not-found.tsx`, `[locale]/layout.tsx` | Every page inlined the `@font-face` CSS twice (9 KB raw): the root 404 and the locale layout import the fonts from different segments, and Next inlines CSS once per segment. | Performance budget | `import "@/app/fonts"` in the root layout, so the CSS belongs to the root segment and both users share it. Verified: 0 duplicated text rows on `/ar`, and Inter + Plex Arabic 400–700 still load on `/ar`, `/en/admin` and the root 404. | fixed |
+| R5-PL-07 | medium | checkout, account, admin orders (Next `inlineCss` behaviour) | With `inlineCss` the RSC payload inlines a chunk again for each segment that uses it (page, `loading.tsx`, `error.tsx`). Measured duplicates: checkout **61 KB** (`checkout.module.css` chunk ×3, the OTP/login chunk ×2), account **29 KB**, admin orders 7 KB, vendor 0. A parent segment's chunk is not repeated (R5-PL-06 relies on that). | Performance budget | Owners: import the CSS that the area's page, loading and error share in the area layout (checkout: `checkout.module.css`, Card, Page, Stack), so it belongs to the ancestor. Out of scope (import-only rule), measured for them. | open (checkout, account owners) |
+| R5-PL-08 | medium | `[locale]/layout.tsx` (`clientDictionary`) | Every page serialises the whole public dictionary into the RSC payload: **90 KB raw ar / 64 KB en** after R4-11. The largest namespaces are designer 15.5, store 15.1, marketing 12.6, checkout 7.8, orders 7.5 and buyer 5.6 KB. Marketing pages need about a third of it. | Performance budget | Per-area namespaces: the locale layout passes a core set (common, nav, meta, auth, store, marketing), and area layouts (designer, checkout, orders, account) wrap their subtree in a provider that adds theirs. This touches every area layout and needs a missing-key test per area, so it is left for the integrator with the measurement. | open (platform + area owners) |
+| R5-PL-09 | low | `admin/AdminFrame.tsx`, `vendor/VendorFrame.tsx` | The language switch in the user menu drops the query string (a filtered `/admin/orders?status=…` loses its filter). Its label ("English" in the Arabic UI) has no `lang`, so a screen reader pronounces it with the Arabic voice. The marketing and checkout `LangLink` does both. | WCAG 3.1.2 | Reuse `LangLink`'s href and `lang` logic in the two frames. | open (admin, vendor owners) |
+| R5-PL-10 | low | strict CSS chunking | Marketing pages inline a 4.7 KB chunk that starts with `CheckoutShell` CSS. `cssChunking: "strict"` grouped it with modules that the shell does use. | Performance budget | Accepted: changing chunking was measured worse in round 4 (performance R4.3). | accepted |
+
+**Fresh shell pass (`docs/audit/tools/platform-shell.cjs`).** 12 routes (home, catalogue, boxes, printers, legal, sign-in, design picker, vendor apply, account, orders, admin, vendor) were each run in ar and en at 390 and 1440, with `prefers-reduced-motion: reduce`. Results:
+- **axe** (WCAG 2.0 to 2.2 A/AA): 0 violations.
+- **Layout:** no overflow, correct `lang`/`dir`, one `<main>` and one `h1`.
+- **Skip link:** the first Tab lands on it and Enter moves focus into `<main>`.
+- **Motion:** no infinite animation runs under reduced motion.
+- **Console:** no errors.
+- **Language switch:** `/ar/catalog?family=boxes` goes to `/en/catalog?family=boxes` with `lang=en dir=ltr`, and `elba_locale=en` is set.
+- **Motion tokens:** every transition in the shell uses the 80/150/200/300 ms tokens. The literal values left are loop periods or designer-owned (`library.module.css`).
+- **Loading states:** every `loading.tsx` is a skeleton with `aria-busy` and a `role="status"` label (in `SkeletonPage`).
+
+Screenshots: `docs/screenshots/audit/platform/r5c/shell-*`.
+
+### Round 5 (c) counts (new findings, before fixing)
+
+critical 0 · high 1 (R5-PL-01) · medium 5 (R5-PL-04 to R5-PL-08) · low 4 (R5-PL-02, 03, 09, 10). Of these, 5 are fixed (01, 02, 04, 05, 06), 4 are open for other owners or the integrator (03, 07, 08, 09) and 1 is accepted (10). R4-08 is fixed and R4-09 re-verified. Medium findings were found this round, so the rounds continue: R5-PL-07 and R5-PL-08 are the next byte wins.
+
+### Round 5 (c) verification
+
+- `npm run lint` clean, including the new rule; a probe file with a barrel import fails it.
+- `npm run typecheck` clean.
+- `npm test`: 93 files, 8,505 tests (new: `error-boundaries.test.tsx`).
+- `npm run build` clean.
+- e2e (`--workers=2`, `next start`):
+  - smoke + storefront + designer: **32 passed**;
+  - checkout + admin + vendor: **30 passed, 12 skipped by project**.
+- `notfound-check.mjs`: 58 / 58 OK.
+
+### Files touched outside the listed scope (round 5 c)
+
+- **Import lines only** (codemod): 89 files under `src/components/{admin,vendor,designer,store}` and `src/app/[locale]/{admin,vendor,(checkout),orders,(store)/account,design,dev}`. Nothing else changed in them.
+- `src/components/ui/*`: the `Misc.module.css` split (11 new sheets, one import line in each component).
+- `eslint.config.mjs`; `docs/audit/tools/perf-pages.mjs` (new metrics, plus an `account` route).

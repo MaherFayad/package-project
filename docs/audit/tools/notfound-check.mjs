@@ -5,7 +5,7 @@ import fs from "node:fs";
 const BASE = process.env.BASE || "http://localhost:3000";
 const SHOTS = process.env.SHOTS || "";
 const CASES = [
-  { key: "root", path: "/zz/not-a-locale/page", locale: null },
+  { key: "root", path: "/no-such-file.txt", locale: null },
   { key: "missing", path: "/{l}/no-such-page" },
   { key: "store", path: "/{l}/bottles/no-such-bottle" },
   { key: "boxes-structure", path: "/{l}/boxes/no-such-style" },
