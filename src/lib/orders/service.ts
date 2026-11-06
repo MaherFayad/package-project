@@ -6,7 +6,7 @@ import { canonicalJson, fromJson, toJson } from "@/lib/json";
 import type { SessionUser } from "@/lib/auth/session";
 import { siteUrl } from "@/lib/env";
 import {
-  QUOTE_VALIDITY_HOURS,
+  QTY_TIERS,
   type DesignDoc,
   type DisputeReason,
   type Dims,
@@ -22,6 +22,8 @@ import { rowToDoc } from "@/components/designer/server";
 import { designQuoteFields, priceTable, quote, toPublicOffer, zoneForGovernorate, type PublicVendorOffer, type QuoteOutcome, type VendorOffer } from "@/lib/pricing";
 import { loadPricingData } from "@/lib/pricing/server";
 import { loadPricingConfig } from "@/components/admin/server/settings";
+import { loadCheckoutSettings } from "./checkout-settings";
+import { SAMPLE_LINE_LABEL, SAMPLE_ORDER_NOTE, applySampleCredit, sampleOffer } from "./sample";
 import { getPaymentProvider, mockPaymentsEnabled, paymentConfig, type Intention, type WebhookOutcome, type WebhookRequest } from "@/lib/payments";
 import { getShippingProvider, type TrackingEvent } from "@/lib/shipping";
 import { notify } from "@/lib/notify";
@@ -91,9 +93,77 @@ export interface CheckoutOffer extends PublicVendorOffer {
   pay: ReturnType<typeof orderTotals>;
 }
 
-export function toCheckoutOffer(o: VendorOffer | PublicVendorOffer): CheckoutOffer {
+/**
+ * `prepayDiscountPct` comes from `loadCheckoutSettings()` (admin setting, default 3%, B-11).
+ * Samples pay their fixed price (no prepay discount); a regular order can carry a sample credit (B-05).
+ */
+export function toCheckoutOffer(o: VendorOffer | PublicVendorOffer, prepayDiscountPct: number, opts: { sample?: boolean; creditPiasters?: number } = {}): CheckoutOffer {
   const pub = "internal" in o ? toPublicOffer(o as VendorOffer) : o;
-  return { ...pub, pay: orderTotals(pub.lines, paymentConfig().prepayDiscountPct) };
+  return { ...pub, pay: buyerTotals(pub.lines, prepayDiscountPct, opts) };
+}
+
+function buyerTotals(lines: QuoteLine[], prepayDiscountPct: number, opts: { sample?: boolean; creditPiasters?: number }) {
+  if (opts.sample) return orderTotals(lines, 0);
+  return applySampleCredit(orderTotals(lines, prepayDiscountPct), opts.creditPiasters ?? 0);
+}
+
+// ───────────────────────── samples (B-05) ─────────────────────────
+
+export interface SampleCredit {
+  piasters: number;
+  sampleOrderId: string;
+  sampleNumber: string;
+  expiresAt: Date;
+}
+
+/**
+ * The buyer's unused sample credit for this design: a paid (not cancelled or refunded) sample
+ * order of the same design, paid within `creditDays`, whose credit is not used by a live order.
+ */
+export async function sampleCreditFor(userId: string, designId: string, now = new Date()): Promise<SampleCredit | null> {
+  const settings = (await loadCheckoutSettings()).sample;
+  if (settings.creditDays <= 0) return null;
+  const since = new Date(now.getTime() - settings.creditDays * 86_400_000);
+  const rows = await db.order.findMany({
+    where: {
+      buyerId: userId,
+      paidAt: { gte: since },
+      status: { notIn: ["CANCELLED", "REFUNDED", "PENDING_PAYMENT"] },
+      productionEvents: { some: { type: "NOTE", note: SAMPLE_ORDER_NOTE } },
+      items: { some: { proof: { designId } } },
+    },
+    orderBy: { paidAt: "asc" },
+    select: { id: true, number: true, paidAt: true, quote: { select: { lines: true } }, productionEvents: { where: { type: "NOTE", note: { startsWith: "SAMPLE_CREDITED:" } }, select: { note: true } } },
+    take: 10,
+  });
+  for (const r of rows) {
+    const usedBy = r.productionEvents.map((e) => e.note!.slice("SAMPLE_CREDITED:".length));
+    if (usedBy.length) {
+      const live = await db.order.count({ where: { number: { in: usedBy }, status: { notIn: ["CANCELLED"] } } });
+      if (live > 0) continue;
+    }
+    const lines = r.quote ? fromJson<QuoteLine[]>(r.quote.lines) : null;
+    const goods = (lines ?? []).filter((l) => l.labelKey === SAMPLE_LINE_LABEL).reduce((sum, l) => sum + l.totalPiasters, 0);
+    if (goods <= 0 || !r.paidAt) continue;
+    return { piasters: goods, sampleOrderId: r.id, sampleNumber: r.number, expiresAt: new Date(r.paidAt.getTime() + settings.creditDays * 86_400_000) };
+  }
+  return null;
+}
+
+/** Samples ordered this calendar month (Cairo time is close enough for a cap), platform-wide. */
+async function samplesThisMonth(now = new Date()): Promise<number> {
+  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  return db.productionEvent.count({ where: { type: "NOTE", note: SAMPLE_ORDER_NOTE, createdAt: { gte: start } } });
+}
+
+/** Sample offers for a design: each capable printer's delivery, the fixed sample price. */
+export async function sampleOffers(doc: DesignDoc, governorate?: string): Promise<{ offers: VendorOffer[]; pieces: number } | null> {
+  const settings = (await loadCheckoutSettings()).sample;
+  if (!settings.enabled) return null;
+  if (settings.monthlyCap > 0 && (await samplesThisMonth()) >= settings.monthlyCap) return null;
+  const outcome = await quoteDesign(doc, { quantity: QTY_TIERS[0], governorate });
+  if (outcome.mode !== "instant" || outcome.offers.length === 0) return null;
+  return { offers: outcome.offers.map((o) => sampleOffer(o, settings.maxPieces, settings.pricePiasters)), pieces: settings.maxPieces };
 }
 
 // ───────────────────────── numbering ─────────────────────────
@@ -137,6 +207,10 @@ export interface PlaceOrderInput {
   /** 3D render (PNG/JPEG bytes) captured in the browser at approval time. */
   preview?: Buffer | null;
   locale: Locale;
+  /** Paid sample (B-05): `quantity` is ignored, the sample pieces and price come from settings. */
+  sample?: boolean;
+  /** Preflight error codes the buyer approved anyway (B-04); recorded on the order timeline. */
+  preflightOverride?: string[];
 }
 
 /**
@@ -147,6 +221,21 @@ export interface PlaceOrderInput {
 export async function placeOrder(user: SessionUser, input: PlaceOrderInput): Promise<{ orderId: string; number: string }> {
   const design = await loadCheckoutDesign(input.designId, user);
   if (!design) throw new OrderError("NOT_FOUND");
+  if (input.sample) {
+    const samples = await sampleOffers(design.doc, input.address.governorate);
+    const offer = samples?.offers.find((o) => o.vendorId === input.vendorId);
+    if (!offer) throw new OrderError("OFFER_UNAVAILABLE");
+    return createOrderFromOffer(user, {
+      doc: { ...design.doc, id: input.designId },
+      offer,
+      sample: true,
+      preflightOverride: input.preflightOverride,
+      address: input.address,
+      approval: input.approval,
+      preview: input.preview ?? null,
+      locale: input.locale,
+    });
+  }
   const outcome = await quoteDesign(design.doc, { quantity: input.quantity, governorate: input.address.governorate, vendorId: input.vendorId });
   if (outcome.mode !== "instant") throw new OrderError("MANUAL_QUOTE");
   const offer = outcome.offers.find((o) => o.vendorId === input.vendorId);
@@ -154,6 +243,8 @@ export async function placeOrder(user: SessionUser, input: PlaceOrderInput): Pro
   return createOrderFromOffer(user, {
     doc: { ...design.doc, id: input.designId },
     offer,
+    credit: await sampleCreditFor(user.id, input.designId),
+    preflightOverride: input.preflightOverride,
     address: input.address,
     approval: input.approval,
     preview: input.preview ?? null,
@@ -172,13 +263,18 @@ async function createOrderFromOffer(
     preview: Buffer | null;
     locale: Locale;
     note?: string;
+    sample?: boolean;
+    credit?: SampleCredit | null;
+    preflightOverride?: string[];
   },
 ): Promise<{ orderId: string; number: string }> {
-  const cfg = paymentConfig();
-  const totals = orderTotals(p.offer.lines, cfg.prepayDiscountPct);
+  const totals = buyerTotals(p.offer.lines, (await loadCheckoutSettings()).prepayDiscountPct, { sample: p.sample, creditPiasters: p.credit?.piasters });
   const product = p.offer.lines.find((l) => l.kind === "PRODUCT");
   const now = new Date();
-  const validUntil = new Date(Math.min(new Date(p.offer.validUntil).getTime(), now.getTime() + QUOTE_VALIDITY_HOURS * 3_600_000));
+  // Admin's quote validity (clamped to 1 to 72 h in makeConfig), the same value the designer and
+  // the public pages promise (B-14). The offer's own validUntil already used it; this is the cap.
+  const validityHours = (await loadPricingConfig()).quoteValidityHours;
+  const validUntil = new Date(Math.min(new Date(p.offer.validUntil).getTime(), now.getTime() + validityHours * 3_600_000));
   const designId = p.doc.id!;
 
   const result = await withRetry(() =>
@@ -255,10 +351,16 @@ async function createOrderFromOffer(
             create: [
               { type: "ORDER_PLACED", actorId: user.id, note: p.note ?? null, createdAt: now },
               { type: "PROOF_APPROVED", actorId: user.id, createdAt: now },
+              ...(p.sample ? [{ type: "NOTE", actorId: user.id, note: SAMPLE_ORDER_NOTE, createdAt: now }] : []),
+              ...(p.credit ? [{ type: "NOTE", actorId: user.id, note: `SAMPLE_CREDIT:${p.credit.sampleNumber}`, createdAt: now }] : []),
+              ...(p.preflightOverride?.length ? [{ type: "NOTE", actorId: user.id, note: `PREFLIGHT_OVERRIDE:${p.preflightOverride.join(",")}`, createdAt: now }] : []),
             ],
           },
         },
       });
+      if (p.credit) {
+        await tx.productionEvent.create({ data: { orderId: p.credit.sampleOrderId, type: "NOTE", actorId: user.id, note: `SAMPLE_CREDITED:${number}`, createdAt: now } });
+      }
       return { orderId: order.id, number, proofId };
     }),
   );
@@ -814,7 +916,7 @@ export async function tierPrices(doc: DesignDoc, governorate?: string): Promise<
     await loadPricingData(),
     { config: await loadPricingConfig() },
   );
-  const pct = paymentConfig().prepayDiscountPct;
+  const pct = (await loadCheckoutSettings()).prepayDiscountPct;
   return rows.map((r) => {
     if (!r.best) return { quantity: r.quantity, unitPiasters: null, totalPiasters: null };
     const t = orderTotals(r.best.lines, pct);

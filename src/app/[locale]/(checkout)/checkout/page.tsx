@@ -6,6 +6,7 @@ import { fromJson } from "@/lib/json";
 import { formatDate, formatDims } from "@/lib/format";
 import type { Dims, StructureCode } from "@/types";
 import { designerPath } from "@/components/designer/lib/catalog";
+import { modelPoster } from "@/lib/orders/poster";
 import { BlockStack, Button, Card, EmptyState, EmptyBoxIllustration, InlineStack, Page, Text, Thumbnail } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +25,7 @@ export default async function CheckoutStartPage({ params }: { params: Promise<{ 
     where: { ownerId: user.id },
     orderBy: { updatedAt: "desc" },
     take: 50,
-    select: { id: true, name: true, structureCode: true, dims: true, thumbnailUrl: true, updatedAt: true },
+    select: { id: true, name: true, structureCode: true, modelCode: true, dims: true, thumbnailUrl: true, updatedAt: true },
   });
 
   return (
@@ -52,7 +53,7 @@ export default async function CheckoutStartPage({ params }: { params: Promise<{ 
               <Card key={d.id}>
                 <InlineStack gap="300" blockAlign="center" align="space-between">
                   <InlineStack gap="300" blockAlign="center" wrap={false}>
-                    <Thumbnail source={d.thumbnailUrl ?? undefined} alt={name} size="medium" />
+                    <Thumbnail source={d.thumbnailUrl ?? modelPoster(d.modelCode, d.structureCode)} alt={name} size="medium" />
                     <BlockStack gap="050">
                       <Text as="h2" variant="headingSm">
                         {name}
