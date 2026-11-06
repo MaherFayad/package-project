@@ -122,6 +122,7 @@ const en = {
     finishes: ["Pause the finishes", "Play the finishes"],
     price: ["Pause the order summary", "Play the order summary"],
     pay: ["Pause the payment methods", "Play the payment methods"],
+    designer: ["Pause the designer preview animation", "Play the designer preview animation"],
   },
   steps: {
     title: "Start your box today",
@@ -243,6 +244,7 @@ const ar: HomeCopy = {
     finishes: ["إيقاف حركة التشطيبات", "تشغيل حركة التشطيبات"],
     price: ["إيقاف حركة ملخص الطلب", "تشغيل حركة ملخص الطلب"],
     pay: ["إيقاف حركة وسائل الدفع", "تشغيل حركة وسائل الدفع"],
+    designer: ["إيقاف حركة معاينة المصمم", "تشغيل حركة معاينة المصمم"],
   },
   steps: {
     title: "ابدأ علبتك اليوم",

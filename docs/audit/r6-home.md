@@ -134,3 +134,11 @@ Measured on /ar (cookie acknowledged):
 | Sheet radius | 48 | 32 | ✓ |
 
 Checks: `e2e/marketing-spacing.spec.ts` passes for /ar and /en (home was already on in the foundation spec; no fixme to flip) · full e2e set incl. spacing: 138 passed, 34 skipped (other pages' fixme plus desktop-only) · lint clean · tsc · unit 8,791 · build (`/[locale]` 3.45 kB) · i18n `--check` clean · axe 0 in all 8 · phone LCP 1.97 s ar / 1.84 s en, CLS 0.007 / 0, INP 144 / 112 ms · desktop LCP 0.36 s, CLS 0. Side-by-sides re-captured per section at 1440 and 390 (local only); ours are in docs/screenshots/r6/home/.
+
+### R6-AX-15 (medium, WCAG 2.2.2): loops kept running after pause
+
+The violet band's prompt caret (`h-caret` 1s) and sparkles (`h-sparkle` 8s) sat outside any MotionScope, and a leftover `violetGlow` rule (`h-glow` 8s) was still in the CSS. The violet cards now sit inside their own kit `MotionScope` («إيقاف حركة معاينة المصمم»), and the unused glow is removed. Every other page-local loop (chips, city dots, globe, wall rows, finishes, thumbnails, feature caret) was already inside a section MotionScope; the hero drift and video follow the hero control. Merged foundation `588c6c5e` (MotionScope hook for page-local loops).
+
+Verified (Playwright, `document.getAnimations()`): after pressing all 11 pause controls, 0 of 49 (ar 1440) and 0 of 46 (en 390) infinite time-based animations are still running · fixed.
+
+Re-verified: spacing spec /ar and /en pass · e2e set 147 passed, 35 skipped · lint clean · tsc · unit 8,791 · i18n `--check` · axe 0 in all 8 · phone LCP 1.94 s ar / 1.82 s en, CLS 0.007 / 0.
