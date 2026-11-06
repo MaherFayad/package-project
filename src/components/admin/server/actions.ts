@@ -22,7 +22,7 @@ import { loadPricingData } from "@/lib/pricing/server";
 import { STRUCTURE_LIMITS } from "@/lib/dieline";
 import type { Dims, OrderStatus, ShippingAddress, StructureCode, StructureParamLimits, VendorCapabilities } from "@/types";
 import { AdminActionError, AdminFieldErrors, adminForMutation, audit, issuesToFields, runAdminAction, type AdminActionResponse } from "./context";
-import { loadPricingSettings } from "./settings";
+import { loadPricingConfig, loadPricingSettings } from "./settings";
 import {
   applyGoodsOverride,
   canOverrideCost,
@@ -54,6 +54,9 @@ import {
   statusForDecision,
   vendorStatusAfter,
   vendorStatusSchema,
+  defaultChargeBack,
+  planReprint,
+  type ReprintPlan,
 } from "../lib/ops";
 import {
   appendIndexRow,
@@ -69,8 +72,14 @@ import {
 import { leadState, leadStepSchema } from "../lib/quoteLeads";
 import { checkoutSettingsFormSchema } from "../lib/checkoutSettings";
 import { CHECKOUT_SETTING_KEY, loadCheckoutSettings } from "@/lib/orders/checkout-settings";
-import { QUOTE_REQUESTED } from "@/lib/orders/quote-requests";
-import { bioCleanSchema, canApprovePortfolio, portfolioReviewSchema, reviewNoteRequired } from "../lib/moderation";
+import { QUOTE_PRICED, QUOTE_REQUESTED, quoteCheckoutPath } from "@/lib/orders/quote-status";
+import { priceLines, sendPriceSchema } from "../lib/quotePricing";
+import { createModelDoc } from "@/components/designer/lib/doc";
+import { saveDesign } from "@/components/designer/server";
+import { modelByCode } from "@/lib/library";
+import { bioCleanSchema, bioEditDecisionSchema, canApprovePortfolio, portfolioReviewSchema, reviewNoteRequired } from "../lib/moderation";
+import { bioReviewData, canApproveBio } from "@/components/vendor/lib/bio-review";
+import type { AuditAction } from "../lib/audit";
 import { stripContactDetails } from "@/components/vendor/lib/contact";
 import { orderModeOf, vendorListsModel } from "@/data/catalogue/order-mode";
 import { canRaisePayout, payoutAmount, payoutStepSchema, STEP_FROM, STEP_TO } from "../lib/payouts";
@@ -221,13 +230,111 @@ export async function quoteLeadStepAction(input: z.input<typeof leadStepSchema>)
   return runAdminAction(async () => {
     const admin = await adminForMutation();
     const d = parse(leadStepSchema, input);
-    const q = await db.quote.findUnique({ where: { id: d.quoteId }, select: { id: true, status: true } });
-    if (!q || q.status !== QUOTE_REQUESTED) throw new AdminActionError("NOT_FOUND");
-    const events = await db.auditLog.findMany({ where: { entityType: "QUOTE", entityId: q.id, action: { in: ["QUOTE_CONTACTED", "QUOTE_CLOSED"] } }, select: { action: true, createdAt: true } });
+    const q = await db.quote.findUnique({ where: { id: d.quoteId }, select: { id: true, status: true, validUntil: true } });
+    if (!q || (q.status !== QUOTE_REQUESTED && q.status !== QUOTE_PRICED)) throw new AdminActionError("NOT_FOUND");
+    // A sent price is followed up by closing it (or by the buyer paying); "contacted" is for open requests.
+    if (q.status === QUOTE_PRICED && d.step !== "CLOSED") throw new AdminActionError("NOT_ALLOWED");
+    const events = await db.auditLog.findMany({ where: { entityType: "QUOTE", entityId: q.id, action: { in: ["QUOTE_CONTACTED", "QUOTE_CLOSED", "QUOTE_PRICED"] } }, select: { action: true, createdAt: true } });
     if (leadState(events) === "CLOSED") throw new AdminActionError("NOT_ALLOWED");
-    await audit(admin, { action: d.step === "CONTACTED" ? "QUOTE_CONTACTED" : "QUOTE_CLOSED", entityType: "QUOTE", entityId: q.id, summary: d.note });
+    const now = new Date();
+    await db.$transaction(async (tx) => {
+      // Closing a sent price withdraws the buyer's link: checkout accepts a PRICED quote only while
+      // validUntil is in the future, so it is ended now (the row and its lines stay for the record).
+      if (q.status === QUOTE_PRICED) {
+        const u = await tx.quote.updateMany({ where: { id: q.id, status: QUOTE_PRICED }, data: { validUntil: now < q.validUntil ? now : q.validUntil } });
+        if (u.count !== 1) throw new AdminActionError("STALE");
+      }
+      await audit(
+        admin,
+        { action: d.step === "CONTACTED" ? "QUOTE_CONTACTED" : "QUOTE_CLOSED", entityType: "QUOTE", entityId: q.id, summary: d.note, ...(q.status === QUOTE_PRICED ? { before: { validUntil: q.validUntil }, after: { validUntil: now < q.validUntil ? now : q.validUntil } } : {}) },
+        tx,
+      );
+    });
     revalidateAdmin();
+    revalidatePath("/[locale]/(store)/account", "page");
     return null;
+  });
+}
+
+/**
+ * R4-B-03 (admin half): send a fixed price for a quote lead. The lead's own Quote row becomes
+ * PRICED with the printer, ex-VAT lines (engine line kinds), totals with 14% VAT, validUntil from
+ * the admin quote-validity setting, pricedAt, deliveryDays and the printer's agreed buy price. The
+ * buyer pays it through checkout's quoted path (`/checkout/<design>?quote=<id>`), which lifts the
+ * 2,000-box cap and the quote-only rule for this quote only. Sending again before the buyer pays
+ * replaces the price and restarts the validity. A catalogue request has no design: one is created
+ * in the buyer's account from the requested model and size (plain artwork they can edit first),
+ * so the same checkout path applies.
+ */
+export async function sendQuotePriceAction(input: z.input<typeof sendPriceSchema>): Promise<AdminActionResponse<{ path: string; validUntil: string; totalPiasters: number }>> {
+  return runAdminAction(async () => {
+    const admin = await adminForMutation();
+    const d = parse(sendPriceSchema, input);
+    const q = await db.quote.findUnique({ where: { id: d.quoteId }, include: { user: { select: { id: true, name: true, phone: true, role: true, locale: true } } } });
+    if (!q || (q.status !== QUOTE_REQUESTED && q.status !== QUOTE_PRICED)) throw new AdminActionError("NOT_FOUND");
+    if (!q.user) throw new AdminActionError("NOT_ALLOWED", "QUOTE_NO_BUYER");
+    const events = await db.auditLog.findMany({ where: { entityType: "QUOTE", entityId: q.id, action: { in: ["QUOTE_CONTACTED", "QUOTE_CLOSED", "QUOTE_PRICED"] } }, select: { action: true, createdAt: true } });
+    if (leadState(events) === "CLOSED") throw new AdminActionError("NOT_ALLOWED");
+    const vendor = await db.vendor.findUnique({ where: { id: d.vendorId }, select: { id: true, nameEn: true, status: true } });
+    if (!vendor || vendor.status !== "ACTIVE") throw new AdminFieldErrors({ vendorId: "VENDOR_INACTIVE" });
+    const priced = priceLines(d);
+
+    // A catalogue request has no design yet: make one for the buyer from the requested model.
+    let designId = q.designId;
+    let designCreated = false;
+    if (!designId) {
+      const line = (fromJson<Record<string, unknown>[]>(q.lines) ?? [])[0] ?? {};
+      const model = modelByCode(typeof line.modelCode === "string" ? line.modelCode : null);
+      if (!model) throw new AdminActionError("NOT_ALLOWED", "QUOTE_NO_MODEL");
+      const dims = line.dims as { L?: number; W?: number; H?: number } | undefined;
+      const name = line.name && typeof line.name === "object" ? (line.name as { ar?: string; en?: string }) : {};
+      const doc = createModelDoc(model, {
+        presetId: typeof line.presetId === "string" ? line.presetId : undefined,
+        dims: model.kind === "box" && dims && [dims.L, dims.W, dims.H].every((n) => typeof n === "number" && n > 0) ? { L: dims.L!, W: dims.W!, H: dims.H! } : undefined,
+        name: ((q.user.locale === "en" ? name.en : name.ar) ?? model.name[q.user.locale === "en" ? "en" : "ar"]).slice(0, 80),
+      });
+      const saved = await saveDesign(doc, { user: { id: q.user.id, role: q.user.role } as never, anonId: null });
+      if (!saved.ok) throw new AdminActionError("NOT_ALLOWED", "QUOTE_NO_MODEL");
+      designId = saved.id;
+      designCreated = true;
+    }
+
+    const now = new Date();
+    const validUntil = new Date(now.getTime() + (await loadPricingConfig()).quoteValidityHours * 3_600_000);
+    const data = {
+      vendorId: vendor.id,
+      designId,
+      lines: toJson(priced.lines),
+      subtotalPiasters: priced.subtotalPiasters,
+      vatPiasters: priced.vatPiasters,
+      shippingPiasters: priced.shippingPiasters,
+      totalPiasters: priced.totalPiasters,
+      validUntil,
+      status: QUOTE_PRICED,
+      pricedAt: now,
+      deliveryDays: d.deliveryDays,
+      vendorCostPiasters: d.vendorCostPiasters,
+    };
+    await db.$transaction(async (tx) => {
+      const u = await tx.quote.updateMany({ where: { id: q.id, status: q.status, validUntil: q.validUntil }, data });
+      if (u.count !== 1) throw new AdminActionError("STALE");
+      await audit(
+        admin,
+        {
+          action: "QUOTE_PRICED",
+          entityType: "QUOTE",
+          entityId: q.id,
+          summary: `${d.quantity.toLocaleString("en-US")} boxes · ${vendor.nameEn} · EGP ${(priced.totalPiasters / 100).toFixed(2)} incl. VAT${d.note ? `. ${d.note}` : ""}`,
+          before: { status: q.status, vendorId: q.vendorId, totalPiasters: q.totalPiasters, validUntil: q.validUntil, designId: q.designId },
+          after: { ...data, lines: priced.lines, designCreated },
+        },
+        tx,
+      );
+    });
+    revalidateAdmin();
+    revalidatePath("/[locale]/(store)/account", "page");
+    const path = quoteCheckoutPath(q.user.locale === "en" ? "en" : "ar", { id: q.id, designId })!;
+    return { path, validUntil: validUntil.toISOString(), totalPiasters: priced.totalPiasters };
   });
 }
 
@@ -248,7 +355,7 @@ export async function reviewPortfolioAction(input: z.input<typeof portfolioRevie
       if (u.count !== 1) throw new AdminActionError("STALE");
       await audit(
         admin,
-        { action: d.decision === "APPROVE" ? "PORTFOLIO_APPROVE" : "PORTFOLIO_REJECT", entityType: "VENDOR", entityId: item.vendorId, summary: `${item.vendor.nameEn} photo ${item.id}${d.note ? `: ${d.note}` : ""}`, before: { status: item.status }, after: { status } },
+        { action: d.decision === "APPROVE" ? "PORTFOLIO_APPROVE" : "PORTFOLIO_REJECT", entityType: "VENDOR", entityId: item.vendorId, summary: `${item.vendor.nameEn} photo "${(item.captionEn || item.captionAr).slice(0, 60)}"${d.note ? `: ${d.note}` : ""}`, before: { itemId: item.id, status: item.status }, after: { itemId: item.id, status } },
         tx,
       );
     });
@@ -278,6 +385,64 @@ export async function cleanBioAction(input: z.input<typeof bioCleanSchema>): Pro
     // R4-10: the route lives under the (store) group, so this pattern without it matched nothing and
     // the public profile kept a rejected photo or an uncleaned bio for up to the 1 h ISR window.
     purgeCatalogCache();
+    return null;
+  });
+}
+
+/**
+ * R6-05 / R4-B-02 (admin half): decide a vendor's bio edit. Approve copies the edit live (only if
+ * the contact filter passes) and purges the public catalogue cache; reject keeps the edit with a
+ * reason the vendor sees; clean removes the sentences with contact details from the waiting text,
+ * which stays in review so a person still approves it. Every decision is audited with both texts.
+ */
+export async function reviewBioEditAction(input: z.input<typeof bioEditDecisionSchema>): Promise<AdminActionResponse> {
+  return runAdminAction(async () => {
+    const admin = await adminForMutation();
+    const d = parse(bioEditDecisionSchema, input);
+    if (d.decision === "REJECT" && reviewNoteRequired("REJECT", d.note)) throw new AdminFieldErrors({ note: "NOTE_REQUIRED" });
+    const v = await db.vendor.findUnique({
+      where: { id: d.vendorId },
+      select: { id: true, nameEn: true, bioAr: true, bioEn: true, bioArPending: true, bioEnPending: true, bioReviewStatus: true, bioReviewNote: true, bioSubmittedAt: true },
+    });
+    if (!v) throw new AdminActionError("NOT_FOUND");
+    // The reviewer decides on the edit they saw: a newer save (or a decision by someone else) is stale.
+    if (v.bioReviewStatus !== "PENDING" || (v.bioSubmittedAt?.toISOString() ?? null) !== d.submittedAt) throw new AdminActionError("STALE");
+    let data: Record<string, unknown>;
+    let action: AuditAction;
+    if (d.decision === "APPROVE") {
+      if (!canApproveBio(v)) throw new AdminActionError("NOT_ALLOWED", "CONTACT_IN_BIO");
+      data = bioReviewData("APPROVE", v);
+      action = "VENDOR_BIO_APPROVE";
+    } else if (d.decision === "REJECT") {
+      data = bioReviewData("REJECT", v, d.note);
+      action = "VENDOR_BIO_REJECT";
+    } else {
+      const cleaned = { bioArPending: stripContactDetails(v.bioArPending ?? v.bioAr), bioEnPending: stripContactDetails(v.bioEnPending ?? v.bioEn) };
+      if (cleaned.bioArPending === (v.bioArPending ?? v.bioAr) && cleaned.bioEnPending === (v.bioEnPending ?? v.bioEn)) throw new AdminActionError("STALE");
+      data = cleaned;
+      action = "VENDOR_BIO_CLEAN";
+    }
+    await db.$transaction(async (tx) => {
+      const u = await tx.vendor.updateMany({ where: { id: v.id, bioReviewStatus: "PENDING", bioSubmittedAt: v.bioSubmittedAt, bioArPending: v.bioArPending, bioEnPending: v.bioEnPending }, data });
+      if (u.count !== 1) throw new AdminActionError("STALE");
+      const summary =
+        d.decision === "APPROVE" ? `${v.nameEn}: bio edit approved and public` : d.decision === "REJECT" ? `${v.nameEn}: bio edit not approved. ${d.note ?? ""}`.trim() : `${v.nameEn}: contact details removed from the bio edit`;
+      await audit(
+        admin,
+        {
+          action,
+          entityType: "VENDOR",
+          entityId: v.id,
+          summary,
+          before: { bioAr: v.bioAr, bioEn: v.bioEn, bioArPending: v.bioArPending, bioEnPending: v.bioEnPending, bioReviewStatus: v.bioReviewStatus },
+          after: data,
+        },
+        tx,
+      );
+    });
+    revalidateAdmin();
+    revalidatePath("/[locale]/vendor", "layout"); // the vendor's "waiting for review" banner
+    if (d.decision === "APPROVE") purgeCatalogCache(); // the public profile is cached (catalog tag)
     return null;
   });
 }
@@ -465,6 +630,7 @@ export async function decideDisputeAction(input: z.input<typeof disputeDecisionS
     if (!allowedDecisions(dispute.status).includes(d.decision)) throw new AdminActionError("NOT_ALLOWED");
     const status = statusForDecision(d.decision);
     let reprint: string | undefined;
+    let reprintPlan: ReprintPlan | undefined;
 
     if (d.decision === "REFUND") {
       await refundOrderInternal(admin, dispute.orderId, d.note, dispute.id);
@@ -474,6 +640,19 @@ export async function decideDisputeAction(input: z.input<typeof disputeDecisionS
       const vendorId = d.vendorId ?? original.vendorId;
       const vendor = await db.vendor.findUnique({ where: { id: vendorId } });
       if (!vendor || vendor.status !== "ACTIVE") throw new AdminActionError("NOT_ALLOWED", "VENDOR_INACTIVE");
+      // R5-JR-09: only the defective boxes are redone, and the charge-back is the admin's choice.
+      const originalQty = original.items.reduce((s, i) => s + i.quantity, 0) || 1;
+      const paid = await db.payout.findMany({ where: { orderId: original.id, vendorId: original.vendorId, status: "PAID" }, select: { amountPiasters: true } });
+      const plan = planReprint({
+        originalQty,
+        originalCostPiasters: original.vendorCostPiasters,
+        paidToOriginalPiasters: paid.reduce((s, p) => s + p.amountPiasters, 0),
+        sameVendor: vendorId === original.vendorId,
+        terms: { quantity: d.reprintQuantity ?? originalQty, chargeBack: d.chargeBack ?? defaultChargeBack(dispute.reason), chargeBackPiasters: d.chargeBackPiasters },
+      });
+      if (plan === "QTY_RANGE") throw new AdminFieldErrors({ reprintQuantity: "REPRINT_QTY_RANGE" });
+      if (plan === "CHARGE_RANGE") throw new AdminFieldErrors({ chargeBackPiasters: "CHARGE_BACK_RANGE" });
+      reprintPlan = plan;
       const existing = await db.order.findMany({ where: { number: { startsWith: `${original.number}-R` } }, select: { number: true } });
       reprint = reprintNumber(original.number, existing.map((e) => e.number));
       const now = new Date();
@@ -489,13 +668,14 @@ export async function decideDisputeAction(input: z.input<typeof disputeDecisionS
           vatPiasters: 0,
           shippingPiasters: 0,
           totalPiasters: 0,
-          vendorCostPiasters: original.vendorCostPiasters,
+          vendorCostPiasters: plan.reprintVendorCostPiasters,
           shippingAddress: original.shippingAddress ?? toJson<ShippingAddress | null>(null),
           notes: reprintNote(original.number, dispute.id),
           placedAt: now,
           paidAt: now,
           dueDate: new Date(now.getTime() + lead * 86_400_000),
           items: {
+            // One line per original item, scaled to the reprinted share (one-item orders: exact).
             create: original.items.map((i) => ({
               proofId: i.proofId,
               structureCode: i.structureCode,
@@ -503,7 +683,7 @@ export async function decideDisputeAction(input: z.input<typeof disputeDecisionS
               materialCode: i.materialCode,
               finishCode: i.finishCode,
               printSides: i.printSides,
-              quantity: i.quantity,
+              quantity: original.items.length === 1 ? plan.quantity : Math.max(1, Math.round((i.quantity * plan.quantity) / originalQty)),
               unitPiasters: 0,
               lineTotalPiasters: 0,
               printPdfUrl: i.printPdfUrl,
@@ -519,7 +699,18 @@ export async function decideDisputeAction(input: z.input<typeof disputeDecisionS
       });
       // launch-metrics.md §1 `reprint_opened` (reprint rate = these / delivered orders).
       void track("reprint_opened", { reason: dispute.reason, same_vendor: vendorId === original.vendorId }, { userId: original.buyerId, orderId: created.id });
-      await audit(admin, { action: "ORDER_REPRINT", entityType: "ORDER", entityId: created.id, summary: `${reprint} ← ${original.number}: ${d.note}`, after: { vendorId, vendorCostPiasters: original.vendorCostPiasters } });
+      // Charge-back on another printer: the original buy price goes down (its balance shrinks).
+      if (plan.originalVendorCostPiasters !== original.vendorCostPiasters) {
+        await db.order.update({ where: { id: original.id }, data: { vendorCostPiasters: plan.originalVendorCostPiasters } });
+      }
+      await audit(admin, {
+        action: "ORDER_REPRINT",
+        entityType: "ORDER",
+        entityId: created.id,
+        summary: `${reprint} ← ${original.number}: ${plan.quantity.toLocaleString("en-US")} of ${originalQty.toLocaleString("en-US")} boxes; charge-back EGP ${(plan.chargeBackPiasters / 100).toFixed(2)}. ${d.note}`,
+        before: { originalVendorCostPiasters: original.vendorCostPiasters },
+        after: { vendorId, chargeBack: d.chargeBack ?? defaultChargeBack(dispute.reason), ...plan },
+      });
     }
 
     const u = await db.dispute.updateMany({
@@ -533,7 +724,7 @@ export async function decideDisputeAction(input: z.input<typeof disputeDecisionS
       entityId: dispute.id,
       summary: `${dispute.order.number}${reprint ? ` → ${reprint}` : ""}${d.note ? `: ${d.note}` : ""}`,
       before: { status: dispute.status },
-      after: { status, ...(reprint ? { reprint } : {}) },
+      after: { status, ...(reprint ? { reprint, ...reprintPlan } : {}) },
     });
     revalidateAdmin();
     return { reprintNumber: reprint };

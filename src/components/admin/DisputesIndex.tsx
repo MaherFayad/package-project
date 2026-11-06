@@ -53,6 +53,7 @@ export function DisputesIndex({ rows }: { rows: DisputeRow[] }) {
     <Page fullWidth title={t("admin.disputes.title")} titleIcon={Gavel}>
       <div id="admin-disputes-table">
         <IndexTable
+          condensed
           resourceName={{ singular: t("admin.disputes.resourceSingular"), plural: t("admin.disputes.resourcePlural") }}
           caption={t("admin.disputes.title")}
           rowIds={shown.map((r) => r.id)}

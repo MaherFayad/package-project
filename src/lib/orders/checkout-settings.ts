@@ -26,6 +26,11 @@ export interface CheckoutSettings {
     maxPieces: number;
     creditDays: number;
     monthlyCap: number;
+    /**
+     * R4-B-11 (admin): ex-VAT price paid to the printer for one sample pack. null = not agreed yet:
+     * the sample's buy price is assumed at SAMPLE_VENDOR_SHARE of the sample price.
+     */
+    vendorCostPiasters: number | null;
   };
 }
 
@@ -35,7 +40,7 @@ export function defaultCheckoutSettings(env: Record<string, string | undefined> 
   const fromEnv = env.PREPAY_DISCOUNT_PCT !== undefined && env.PREPAY_DISCOUNT_PCT !== "";
   return {
     prepayDiscountPct: fromEnv ? paymentConfig(env).prepayDiscountPct : DEFAULT_PREPAY_DISCOUNT_PCT,
-    sample: { enabled: true, pricePiasters: 75_000, maxPieces: 5, creditDays: 60, monthlyCap: 100 },
+    sample: { enabled: true, pricePiasters: 75_000, maxPieces: 5, creditDays: 60, monthlyCap: 100, vendorCostPiasters: null },
   };
 }
 
@@ -49,6 +54,7 @@ const storedSchema = z
         maxPieces: z.number().int().min(1).max(5),
         creditDays: z.number().int().min(0).max(365),
         monthlyCap: z.number().int().min(0).max(100_000),
+        vendorCostPiasters: z.number().int().min(0).max(10_000_000).nullable(),
       })
       .partial(),
   })

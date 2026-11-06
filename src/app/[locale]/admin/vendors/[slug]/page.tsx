@@ -11,6 +11,7 @@ import { MetricsStrip } from "@/components/ui/MetricsStrip";
 import { Page } from "@/components/ui/Page";
 import { Text } from "@/components/ui/Text";
 import { Tooltip } from "@/components/ui/Tooltip";
+import { readableSummary } from "@/components/admin/lib/audit";
 import { adminStyles } from "@/components/admin/charts";
 import { HealthBadge } from "@/components/admin/HealthBadge";
 import { OrderStatusBadge } from "@/components/admin/OrdersIndex";
@@ -68,7 +69,7 @@ export default async function AdminVendorPage({ params }: { params: Params }) {
           accessibilityLabel={t("admin.vendors.scorecard.title")}
           metrics={[
             { label: t("admin.vendors.scorecard.orders"), value: <span className={adminStyles.MetricStack}><span className={adminStyles.MetricNum}>{formatNumber(score.orders)}</span><span className={adminStyles.MetricSub}>{formatMoney(score.gmvPiasters, locale, { alwaysDecimals: true })}</span></span> },
-            { label: t("admin.vendors.scorecard.onTime"), value: <span className={adminStyles.MetricStack}><span className={adminStyles.MetricNum}>{pct(score.onTimePct)}</span><span className={adminStyles.MetricSub}>{`${t("admin.vendors.scorecard.delivered")}: ${formatNumber(score.delivered)}`}</span></span> },
+            { label: t("admin.vendors.scorecard.onTime"), value: <span className={adminStyles.MetricStack}><span className={adminStyles.MetricNum}>{pct(score.onTimePct)}</span><span className={adminStyles.MetricSub}>{`${t("admin.vendors.scorecard.delivered")}: ${formatNumber(score.delivered)}`}</span>{score.onTimePct === null ? <span className={adminStyles.MetricSub}>{t("admin.vendors.scorecard.publicNoDeliveries")}</span> : null}</span> },
             { label: t("admin.vendors.scorecard.reprint"), value: pct(score.reprintPct) },
             { label: t("admin.vendors.scorecard.dispute"), value: pct(score.disputePct) },
             { label: t("admin.vendors.scorecard.qcPass"), value: pct(score.qcPassPct) },
@@ -79,7 +80,7 @@ export default async function AdminVendorPage({ params }: { params: Params }) {
                   {t("admin.vendors.scorecard.health")}
                 </Tooltip>
               ),
-              value: score.health === null ? t("admin.common.none") : <HealthBadge score={score.health} label={t("admin.vendors.scorecard.health")} delivered={score.delivered} earlyLabel={t("admin.vendors.scorecard.early")} />,
+              value: score.health === null ? t("admin.common.none") : <HealthBadge score={score.health} label={t("admin.vendors.scorecard.health")} delivered={score.delivered} earlyLabel={t("admin.vendors.scorecard.early")} stacked />,
             },
           ]}
         />
@@ -90,10 +91,11 @@ export default async function AdminVendorPage({ params }: { params: Params }) {
                 {orders.length ? (
                   <DataTable
                     caption={t("admin.vendors.detail.recentOrders")}
+                    condensed
                     columnContentTypes={["text", "text", "text", "numeric"]}
                     headings={[t("admin.orders.columns.order"), t("admin.orders.columns.date"), t("admin.orders.columns.status"), t("admin.orders.columns.total")]}
                     rows={orders.slice(0, 20).map((o) => [
-                      <Link key={o.id} url={`${base}/orders/${o.number}`}>
+                      <Link key={o.id} url={`${base}/orders/${o.number}`} className={adminStyles.TapLink}>
                         <bdi>{o.number}</bdi>
                       </Link>,
                       formatDate(o.placedAt, locale, "medium"),
@@ -116,7 +118,7 @@ export default async function AdminVendorPage({ params }: { params: Params }) {
                           <Text as="span" fontWeight="semibold">
                             {t(`admin.audit.actions.${a.action}` as DictKey)}
                           </Text>
-                          {a.summary ? ` · ${a.summary}` : ""}
+                          {a.summary ? <bdi>{` · ${readableSummary(a.summary)}`}</bdi> : ""}
                         </Text>
                         <Text as="p" variant="bodySm" tone="subdued">
                           {formatDateTime(a.createdAt, locale)}
@@ -137,7 +139,7 @@ export default async function AdminVendorPage({ params }: { params: Params }) {
               <Card title={t("admin.vendors.detail.publicProfile")}>
                 <BlockStack gap="200">
                   {vendor.status === "ACTIVE" ? (
-                    <Link url={`/${locale}/vendors/${vendor.slug}`} external>
+                    <Link url={`/${locale}/vendors/${vendor.slug}`} external className={adminStyles.TapLink}>
                       {t("admin.vendors.detail.openProfile")}
                     </Link>
                   ) : (
@@ -145,7 +147,7 @@ export default async function AdminVendorPage({ params }: { params: Params }) {
                       {t("admin.vendors.detail.profileHidden")}
                     </Text>
                   )}
-                  {application ? <Link url={`${base}/vendors/applications/${application.id}`}>{t("admin.vendors.detail.application")}</Link> : null}
+                  {application ? <Link url={`${base}/vendors/applications/${application.id}`} className={adminStyles.TapLink}>{t("admin.vendors.detail.application")}</Link> : null}
                 </BlockStack>
               </Card>
               <Card title={t("admin.vendors.detail.staff")}>
@@ -153,7 +155,7 @@ export default async function AdminVendorPage({ params }: { params: Params }) {
                   <BlockStack gap="200" as="ul" className={adminStyles.PlainList}>
                     {vendor.staff.map((s) => (
                       <li key={s.id}>
-                        <Link url={`${base}/users/${s.id}`}><bdi>{s.name ?? t("admin.users.noName")}</bdi></Link>
+                        <Link url={`${base}/users/${s.id}`} className={adminStyles.TapLink}><bdi>{s.name ?? t("admin.users.noName")}</bdi></Link>
                         <Text as="p" variant="bodySm" tone="subdued">
                           <bdi dir="ltr">{s.phone}</bdi>
                         </Text>
@@ -170,7 +172,7 @@ export default async function AdminVendorPage({ params }: { params: Params }) {
                 <BlockStack gap="200">
                   <Text as="p">{t("admin.vendors.detail.rateCardCount", { count: formatNumber(vendor.rateCards.filter((r) => r.active).length) })}</Text>
                   {vendor.status === "ACTIVE" ? (
-                    <Link url={`${base}/catalog?vendor=${vendor.slug}`}>
+                    <Link url={`${base}/catalog?vendor=${vendor.slug}`} className={adminStyles.TapLink}>
                       {t("admin.vendors.detail.modelsCount", { count: formatNumber(models.priced), total: formatNumber(models.total) })}
                     </Link>
                   ) : null}

@@ -10,10 +10,11 @@ import { IndexFilters, IndexTable, IndexTableCell, IndexTableRow, type AppliedFi
 import { Page } from "@/components/ui/Page";
 import { Select } from "@/components/ui/Select";
 import { Text } from "@/components/ui/Text";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { formatDateTime, formatNumber } from "@/lib/format";
-import { AUDIT_ACTIONS } from "./lib/audit";
+import { AUDIT_ACTIONS, readableSummary } from "./lib/audit";
 import { adminStyles } from "./charts";
 
 export interface AuditRow {
@@ -22,6 +23,7 @@ export interface AuditRow {
   entityType: string;
   entityId: string | null;
   summary: string | null;
+  actorName: string | null;
   actorPhone: string | null;
   ip: string | null;
   createdAt: string;
@@ -62,6 +64,7 @@ export function AuditIndex({ rows }: { rows: AuditRow[] }) {
   return (
     <Page fullWidth title={t("admin.audit.title")} titleIcon={History} subtitle={t("admin.audit.subtitle")}>
       <IndexTable
+        condensed
         resourceName={{ singular: t("admin.audit.resourceSingular"), plural: t("admin.audit.resourcePlural") }}
         caption={t("admin.audit.title")}
         rowIds={rows.map((r) => r.id)}
@@ -115,11 +118,11 @@ export function AuditIndex({ rows }: { rows: AuditRow[] }) {
             <IndexTableCell>
               <BlockStack gap="100">
                 <Text as="span">
-                  <span className={adminStyles.PreWrap} dir="auto">{r.summary ?? t("admin.common.none")}</span>
+                  <span className={adminStyles.PreWrap} dir="auto">{r.summary ? readableSummary(r.summary) : t("admin.common.none")}</span>
                 </Text>
                 {r.before || r.after ? (
                   <details>
-                    <summary>
+                    <summary className={adminStyles.DetailsSummary}>
                       <Text as="span" variant="bodySm" tone="subdued">
                         {t("admin.audit.showChanges")}
                       </Text>
@@ -147,7 +150,15 @@ export function AuditIndex({ rows }: { rows: AuditRow[] }) {
               </BlockStack>
             </IndexTableCell>
             <IndexTableCell>
-              <bdi dir="ltr">{r.actorPhone ?? t("admin.common.none")}</bdi>
+              {r.actorName && r.actorPhone ? (
+                <Tooltip content={<bdi dir="ltr">{r.actorPhone}</bdi>} dotted>
+                  <bdi>{r.actorName}</bdi>
+                </Tooltip>
+              ) : r.actorName ? (
+                <bdi>{r.actorName}</bdi>
+              ) : (
+                <bdi dir="ltr">{r.actorPhone ?? t("admin.common.none")}</bdi>
+              )}
             </IndexTableCell>
           </IndexTableRow>
         ))}

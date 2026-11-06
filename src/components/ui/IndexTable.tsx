@@ -2,7 +2,7 @@
 
 import { ArrowUpDown, ListFilter, Search, X } from "lucide-react";
 import NextLink from "next/link";
-import { Children, createContext, useContext, useId, useState, type MouseEvent, type ReactNode } from "react";
+import { Children, cloneElement, createContext, isValidElement, useContext, useId, useState, type MouseEvent, type ReactElement, type ReactNode } from "react";
 import { ActionList } from "./ActionList";
 import { useUi } from "./AppProvider";
 import { Button } from "./Button";
@@ -37,6 +37,8 @@ interface SelectionCtx {
   toggle: (id: string, on: boolean) => void;
   resourceSingular: string;
   s: ReturnType<typeof useUi>["s"];
+  /** Column titles of a condensed table (null = not condensed). */
+  stackLabels: ReactNode[] | null;
 }
 const IndexCtx = createContext<SelectionCtx | null>(null);
 
@@ -63,6 +65,11 @@ export interface IndexTableProps {
   footer?: ReactNode;
   /** Visible caption for screen readers (falls back to resourceName.plural). */
   caption?: string;
+  /**
+   * Polaris `condensed` (R4-CR-03): under 490 px each row is a card. The first cell is the title and
+   * every other cell is a "column label · value" line, so nothing is squeezed or scrolled sideways.
+   */
+  condensed?: boolean;
   children?: ReactNode;
 }
 
@@ -87,6 +94,7 @@ function IndexTableRoot({
   loading,
   footer,
   caption,
+  condensed = false,
   children,
 }: IndexTableProps) {
   const { s } = useUi();
@@ -106,8 +114,8 @@ function IndexTableRoot({
   const isEmpty = rowIds.length === 0 && Children.count(children) === 0;
 
   return (
-    <IndexCtx.Provider value={{ selectable, selected, toggle, resourceSingular: resourceName.singular, s }}>
-      <div className={styles.IndexTable} aria-busy={loading || undefined}>
+    <IndexCtx.Provider value={{ selectable, selected, toggle, resourceSingular: resourceName.singular, s, stackLabels: condensed ? headings.map((h) => (h.hidden ? null : h.title)) : null }}>
+      <div className={cx(styles.IndexTable, condensed && styles.condensed)} aria-busy={loading || undefined}>
         {toolbar ? <div className={styles.Toolbar}>{toolbar}</div> : null}
         {title || titleAction ? (
           <div className={styles.TitleRow}>
@@ -224,17 +232,48 @@ export function IndexTableRow({ id, children, tone, strikethrough, disabled, sel
           />
         </td>
       ) : null}
-      {children}
+      {ctx?.stackLabels
+        ? Children.map(children, (child, i) => (i > 0 && isValidElement(child) && child.type === IndexTableCell ? cloneElement(child as ReactElement<IndexTableCellProps>, { stackLabel: ctx.stackLabels![i] ?? null }) : child))
+        : children}
     </tr>
   );
 }
 
-export function IndexTableCell({ children, alignment, flush, className, as = "td", numeric }: { children?: ReactNode; alignment?: "start" | "center" | "end"; flush?: boolean; className?: string; as?: "td" | "th"; numeric?: boolean }) {
+interface IndexTableCellProps {
+  children?: ReactNode;
+  alignment?: "start" | "center" | "end";
+  flush?: boolean;
+  className?: string;
+  as?: "td" | "th";
+  numeric?: boolean;
+  /** Set by a condensed table's row: the column title shown beside the value under 490 px. */
+  stackLabel?: ReactNode;
+}
+
+export function IndexTableCell({ children, alignment, flush, className, as = "td", numeric, stackLabel }: IndexTableCellProps) {
   const Tag = as;
   return (
     <Tag scope={as === "th" ? "row" : undefined} className={cx(styles.Td, alignment && styles[`align-${alignment}`], flush && styles.flush, numeric && styles.numeric, className)}>
-      {children}
+      {stackLabel !== undefined ? <StackCell label={stackLabel}>{children}</StackCell> : children}
     </Tag>
+  );
+}
+
+/**
+ * Label + value of a condensed row. The label is aria-hidden: the cell keeps its column header for
+ * screen readers (table semantics stay), so it would otherwise be read twice. Both wrappers are
+ * `display: contents` above 490 px, so wide tables render exactly as before.
+ */
+function StackCell({ label, children }: { label: ReactNode; children?: ReactNode }) {
+  return (
+    <>
+      {label !== null && label !== "" && label !== false ? (
+        <span className={styles.StackLabel} aria-hidden="true">
+          {label}
+        </span>
+      ) : null}
+      <span className={styles.StackValue}>{children}</span>
+    </>
   );
 }
 
@@ -394,10 +433,12 @@ export interface DataTableProps {
   /** Fixed first column (row headers) — the first cell of each row is a <th scope="row">. */
   rowHeaders?: boolean;
   increasedTableDensity?: boolean;
+  /** Stacked label/value rows under 490 px (see IndexTable `condensed`, R4-CR-03). */
+  condensed?: boolean;
 }
 
 /** Static data table for reports (price tiers, payouts). Numeric columns align to the end and use tabular digits. */
-export function DataTable({ columnContentTypes, headings, rows, totals, totalsName = "Totals", showTotalsInFooter, footerContent, caption, hideCaption = true, rowHeaders = true, increasedTableDensity }: DataTableProps) {
+export function DataTable({ columnContentTypes, headings, rows, totals, totalsName = "Totals", showTotalsInFooter, footerContent, caption, hideCaption = true, rowHeaders = true, increasedTableDensity, condensed = false }: DataTableProps) {
   const { s } = useUi();
   const align = (i: number) => (columnContentTypes[i] === "numeric" ? styles.numeric : undefined);
   const totalsRow = totals ? (
@@ -406,7 +447,7 @@ export function DataTable({ columnContentTypes, headings, rows, totals, totalsNa
     </tr>
   ) : null;
   return (
-    <div className={styles.DataTable}>
+    <div className={cx(styles.DataTable, condensed && styles.condensed)}>
       {/* Focusable, named scroll region so keyboard users can scroll wide tables (WCAG 2.1.1). */}
       <div className={styles.Scroll} tabIndex={0} role="region" aria-label={caption}>
         <table className={cx(styles.Table, increasedTableDensity && styles.dense)}>
@@ -431,7 +472,7 @@ export function DataTable({ columnContentTypes, headings, rows, totals, totalsNa
                     </th>
                   ) : (
                     <td key={ci} className={cx(styles.Td, align(ci))}>
-                      {c}
+                      {condensed && ci > 0 ? <StackCell label={headings[ci] ?? null}>{c}</StackCell> : c}
                     </td>
                   ),
                 )}

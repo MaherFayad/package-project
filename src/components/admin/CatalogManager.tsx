@@ -1,6 +1,7 @@
 "use client";
 
 import { Boxes, Pencil } from "lucide-react";
+import { parseNumberInput } from "@/lib/money/input";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Badge } from "@/components/ui/Badge";
@@ -331,7 +332,7 @@ function StructureModal({
         content: t("admin.common.save"),
         loading: busy === "structure",
         onAction: async () => {
-          const toNum = (s: string) => Number(s);
+          const toNum = (s: string) => parseNumberInput(s);
           const r = await run(
             "structure",
             () =>
@@ -428,8 +429,8 @@ function MaterialModal({
             () =>
               updateMaterialAction({
                 id: row.id,
-                gsm: Number(v.gsm),
-                thicknessMm: Number(v.thicknessMm),
+                gsm: parseNumberInput(v.gsm),
+                thicknessMm: parseNumberInput(v.thicknessMm),
                 foodSafe: v.foodSafe,
                 active: v.active,
               }),
@@ -510,8 +511,8 @@ function FinishModal({
             () =>
               updateFinishAction({
                 id: row.id,
-                unitSurchargePiasters: Math.round(Number(v.unit) * 100),
-                setupPiasters: Math.round(Number(v.setup) * 100),
+                unitSurchargePiasters: Math.round(parseNumberInput(v.unit) * 100),
+                setupPiasters: Math.round(parseNumberInput(v.setup) * 100),
                 active: v.active,
               }),
             t("admin.catalog.saved"),

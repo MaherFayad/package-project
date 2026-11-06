@@ -36,3 +36,58 @@ export function conversionBand(p: number | null): "none" | "below" | "in" | "abo
   if (p === null) return "none";
   return p < 2 ? "below" : p > 4 ? "above" : "in";
 }
+
+export interface FunnelEventRow {
+  name: string;
+  userId: string | null;
+  anonId: string | null;
+}
+
+/**
+ * R5-JR-13: visitor-cohort funnel. The old count de-duplicated each step on its own key (a visit
+ * by anon id, later steps often by user id once signed in), so one person could be two actors and
+ * a step could exceed the one before ("Visitor to paid 100%", "Designer opened 200% of visitors").
+ *
+ * Now: (1) anon ids and user ids are joined into one person whenever any event row carries both
+ * (sign-in on the same browser); (2) only people with a `visit` in the window are counted; (3) a
+ * person counts at a step when they reached that step or any later one ("reached at least"), so a
+ * signed-in buyer who never saw the sign-in gate still passes it. Every step is at most the one
+ * before, and visitor → paid can never exceed 100%.
+ */
+export function cohortFunnel(rows: FunnelEventRow[], steps: readonly EventStep[] = EVENT_STEPS): Record<EventStep, number> {
+  const parent = new Map<string, string>();
+  const find = (x: string): string => {
+    let r = x;
+    while (parent.get(r) && parent.get(r) !== r) r = parent.get(r)!;
+    parent.set(x, r);
+    return r;
+  };
+  const union = (a: string, b: string) => {
+    const ra = find(a);
+    const rb = find(b);
+    if (ra !== rb) parent.set(ra, rb);
+  };
+  for (const r of rows) {
+    if (r.userId) find(`u:${r.userId}`);
+    if (r.anonId) find(`a:${r.anonId}`);
+    if (r.userId && r.anonId) union(`a:${r.anonId}`, `u:${r.userId}`);
+  }
+  const key = (r: FunnelEventRow) => (r.userId ? find(`u:${r.userId}`) : r.anonId ? find(`a:${r.anonId}`) : null);
+  // Furthest step each person reached.
+  const index = new Map(steps.map((s, i) => [s as string, i]));
+  const furthest = new Map<string, number>();
+  const visitors = new Set<string>();
+  for (const r of rows) {
+    const k = key(r);
+    const i = index.get(r.name);
+    if (!k || i === undefined) continue;
+    if (i === 0) visitors.add(k);
+    furthest.set(k, Math.max(furthest.get(k) ?? -1, i));
+  }
+  const out = Object.fromEntries(steps.map((s) => [s, 0])) as Record<EventStep, number>;
+  for (const k of visitors) {
+    const f = furthest.get(k) ?? 0;
+    for (let i = 0; i <= f; i++) out[steps[i]!]++;
+  }
+  return out;
+}

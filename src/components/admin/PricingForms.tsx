@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { parseNumberInput } from "@/lib/money/input";
 import { Banner } from "@/components/ui/Banner";
 import { BlockStack, InlineGrid, InlineStack } from "@/components/ui/Stack";
 import { Button, ButtonGroup } from "@/components/ui/Button";
@@ -37,6 +38,7 @@ function PreviewResult({ preview }: { preview: PricingPreview }) {
       </Banner>
       <DataTable
         caption={t("admin.pricing.preview.caption")}
+        condensed
         columnContentTypes={["text", "text", "numeric", "numeric", "numeric"]}
         headings={[t("admin.pricing.preview.columns.structure"), t("admin.pricing.preview.columns.material"), t("admin.pricing.preview.columns.current"), t("admin.pricing.preview.columns.proposed"), t("admin.pricing.preview.columns.change")]}
         rows={preview.rows.map((r) => [
@@ -70,7 +72,7 @@ function toDraft(s: SettingsForm) {
 }
 
 function fromDraft(d: ReturnType<typeof toDraft>): SettingsForm {
-  const num = (v: string) => (v.trim() === "" ? NaN : Number(v.replace(/,/g, "")));
+  const num = parseNumberInput; // R6-AD: "750,50" is not 75050
   return {
     marginPct: Math.round(num(d.margin) * 10) / 1000,
     marginOnShipping: d.marginOnShipping,
@@ -164,6 +166,11 @@ export function PricingSettingsForm({ initial }: { initial: SettingsForm }) {
                     <th scope="row">{t(`pricing.zones.${z}` as DictKey)}</th>
                     {ZONE_FIELDS.map((f) => (
                       <td key={f}>
+                        {/* R6-AD: under 490 px each zone is a stacked group, so the column name shows above
+                            its field (the input keeps its full hidden label, so this is aria-hidden). */}
+                        <span className={adminStyles.ZoneFieldLabel} aria-hidden="true">
+                          {t(`admin.pricing.zones.columns.${ZONE_LABEL[f]}` as DictKey)}
+                        </span>
                         <TextField
                           label={`${t(`pricing.zones.${z}` as DictKey)}: ${t(`admin.pricing.zones.columns.${ZONE_LABEL[f]}` as DictKey)}`}
                           labelHidden

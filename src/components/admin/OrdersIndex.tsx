@@ -16,7 +16,6 @@ import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { formatDate, formatMoney, formatNumber } from "@/lib/format";
 import { statusTone } from "@/lib/orders/status-tone";
-import { adminStyles } from "./charts";
 import { asOrderView, countByOrderView, filterOrders, ORDER_SORTS, ORDER_VIEWS, type AdminOrderRow, type OrderSort } from "./lib/orders";
 
 function asSort(v: string | null): OrderSort {
@@ -84,6 +83,7 @@ export function OrdersIndex({ rows, vendors, openDisputes }: { rows: AdminOrderR
         />
         <div id="admin-orders-table">
           <IndexTable
+            condensed
             resourceName={{ singular: t("admin.orders.resourceSingular"), plural: t("admin.orders.resourcePlural") }}
             caption={t("admin.orders.title")}
             rowIds={shown.map((r) => r.id)}
@@ -160,15 +160,6 @@ export function OrdersIndex({ rows, vendors, openDisputes }: { rows: AdminOrderR
                       </Badge>
                     ) : null}
                   </InlineStack>
-                  {/* Phones: the table scrolls sideways, so status and total also sit under the number. */}
-                  <div className={adminStyles.PhoneOnly}>
-                    <InlineStack gap="200" blockAlign="center">
-                      <OrderStatusBadge status={r.status} />
-                      <Text as="span" variant="bodySm" numeric>
-                        <bdi>{formatMoney(r.totalPiasters, locale, { alwaysDecimals: true })}</bdi>
-                      </Text>
-                    </InlineStack>
-                  </div>
                 </IndexTableCell>
                 <IndexTableCell>
                   <time dateTime={r.placedAt}>{formatDate(r.placedAt, locale, "medium")}</time>
