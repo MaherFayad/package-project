@@ -604,3 +604,85 @@ critical 0 · high 0 · medium 2 (R5-PL-11, R5-PL-13) · low 1 (R5-PL-12). Fixed
   - checkout + admin + vendor: **31 passed, 14 skipped, 1 failed** (`admin.spec.ts:239`, R5-PL-13, admin-owned).
 - `notfound-check.mjs`: 58 / 58. `platform-shell.cjs`: 96 / 96.
 - Screenshots: `docs/screenshots/audit/platform/r5d/`.
+
+### Round 5 (e): R5-PL-07, R5-PL-08 and R5-PL-11 (assigned by the integrator)
+
+Base: `044c9f8` (main `fd40cef` + round 5 d). Scope kept to the dictionary loader, the shared kit CSS, area layouts (imports and one provider wrapper each) and the build config. `marketing.module.css` is untouched (the R6 foundation session is replacing it).
+
+**R5-PL-11: fixed.** The cause is in Next's strict `CssChunkingPlugin`. While a chunk is under `MIN_CSS_CHUNK_SIZE` (30 KB), it keeps absorbing the next CSS module, even when that module is also used by other routes. Those routes then receive the whole merged chunk, so `checkout.module.css` (12 KB) took `EmptyState` with it to every empty-state page. Merging saves CSS requests, but with `inlineCss` there are none, so it only adds bytes.
+- **The fix:** `scripts/next/css-chunking-plugin.cjs` is a verbatim copy of next@15.5.29's plugin (MIT, attributed) with `MIN_CSS_CHUNK_SIZE = 0`. `next.config.ts` swaps it in for Next's instance; `cssChunking: "strict"` stays.
+- **What is unchanged:** the strict order check, so cascade order is preserved, and modules that always load together still merge.
+- **Result:** `EmptyState` is its own 1 KB chunk, and marketing pages no longer carry `CheckoutShell` CSS (R5-PL-10 is closed too).
+- **Guard:** `src/app/__tests__/css-chunking.test.ts` fails if the installed Next's file differs from the copy, so a Next upgrade forces a fresh copy.
+
+**R5-PL-08: fixed.** Each area now ships only the dictionary keys its code can read.
+- **Generator:** `scripts/generate-i18n-scopes.ts` walks the import graph from each area's route files (page, layout, loading, error, not-found). It collects every key literal, every key prefix (`"materials."`, ``store.badges.${x}``) and every `dict.<ns>` access, and writes `src/i18n/scopes.generated.ts`. The scopes are root, design, share, checkout, orders, account, admin, vendor and dev.
+- **Shipping:** `src/i18n/scope.ts` ships each scope by **second-level subtree** (for example `store.cookie`, `designer.price`), not by leaf. A key chosen at run time inside a named subtree (`t(RULE_KEYS[r])`, `t(\`materials.${code}\`)`) is therefore always present.
+- **Wiring:** the locale layout ships the root scope. Area layouts wrap their output in `<I18nScope>`, and `I18nProvider` merges a nested dictionary into its parent's. Admin and vendor keep their whole namespace but **no longer ship a second full dictionary** (R5-PL-14).
+- **Sizes:** marketing pages carry **38.1 KB ar / 26.5 KB en** (target < 40 KB), down from 99.7 / 69.6 KB. Area pages add 7 to 24 KB (admin 58 KB, vendor 38 KB).
+- **Tests** (`src/i18n/__tests__/scopes.test.tsx`): the generated file is current; the root scope is < 40 KB ar and < 30 KB en; `legal` and `notify` never reach the browser; every key a scope's code names resolves in root + that scope in both locales; nested providers merge.
+- **Browser check:** `platform-shell.cjs` now flags any raw dictionary key rendered on the page.
+- **When adding keys:** after adding a key in a new subtree, run `npx tsx scripts/generate-i18n-scopes.ts` (the test says so when it is stale).
+
+**R5-PL-07: fixed.** Each area layout (checkout, orders, share, account, admin, vendor and the new `design/layout.tsx`) imports the kit sheets that its page, loading, error and not-found segments share. Those sheets now belong to the ancestor segment and are not repeated per segment. With `docs/audit/tools/rsc-breakdown.mjs`, duplicated CSS in the RSC payload is **0 KB** on all 15 probed routes, against 64 KB on checkout, 61 KB on order tracking, 30 KB on share and 29 KB on account before.
+
+**Bytes, merged `fd40cef` → this pass** (phone, `ISOLATE=1`, `perf-data/r5-platform/pages-r5e-phone.json`):
+
+| Route | Inline CSS ar (KB) | RSC payload ar (KB) | HTML gz ar (KB) | Inline CSS en (KB) | RSC en (KB) | Phone LCP ar (s) |
+|---|---|---|---|---|---|---|
+| home | 111 → **95** (-16) | 292 → **216** (-75) | 105 → **82** | 111 → **95** | 258 → **199** | 1.61 → 1.54 |
+| boxes | 111 → **95** (-16) | 275 → **200** (-75) | 93 → **70** | 111 → **95** | 243 → **184** | 1.40 → 1.42 |
+| bottles | 111 → **95** (-16) | 243 → **167** (-75) | 86 → **63** | 111 → **95** | 213 → **154** | 1.54 → 1.54 |
+| catalog | 137 → **111** (-26) | 493 → **408** (-84) | 132 → **106** | 137 → **111** | 463 → **395** | 2.12 → 2.13 |
+| vendors | 111 → **95** (-16) | 272 → **197** (-75) | 108 → **85** | 111 → **95** | 241 → **182** | 1.45 → 1.49 |
+| design-picker | 200 → **172** (-27) | 476 → **410** (-66) | 162 → **143** | 200 → **172** | 447 → **391** | 1.29 → 1.34 |
+| designer-box | 161 → **141** (-20) | 300 → **231** (-69) | 115 → **96** | 161 → **141** | 272 → **212** | 1.32 → 1.31 |
+| designer-bottle | 161 → **141** (-20) | 303 → **234** (-69) | 117 → **98** | 161 → **141** | 275 → **216** | 1.36 → 1.29 |
+| designer-pouch | 161 → **141** (-20) | 300 → **231** (-69) | 115 → **96** | 161 → **141** | 272 → **212** | 1.32 → 1.28 |
+| designer-fefco09 | 161 → **141** (-20) | 300 → **230** (-69) | 115 → **96** | 161 → **141** | 272 → **212** | 1.31 → 1.28 |
+| share | 177 → **125** (-52) | 359 → **228** (-131) | 158 → **118** | 177 → **125** | 329 → **212** | 2.35 → 1.40 |
+| checkout | 119 → **98** (-20) | 317 → **190** (-127) | 118 → **85** | 119 → **98** | 289 → **172** | 2.06 → 2.06 |
+| order-tracking | 216 → **156** (-59) | 427 → **268** (-159) | 164 → **116** | 216 → **156** | 397 → **249** | 2.08 → 1.99 |
+| account | 218 → **161** (-57) | 394 → **254** (-139) | 152 → **110** | 218 → **161** | 364 → **239** | 2.12 → 2.00 |
+| vendor-portal | 133 → **97** (-36) | 373 → **216** (-157) | 135 → **91** | 133 → **97** | 313 → **193** | 1.12 → 1.32 |
+| vendor-jobs | 152 → **115** (-37) | 376 → **212** (-164) | 136 → **90** | 152 → **115** | 317 → **189** | 1.10 → 1.34 |
+| admin | 141 → **115** (-26) | 418 → **268** (-150) | 150 → **109** | 141 → **115** | 356 → **236** | 1.20 → 1.41 |
+| admin-orders | 137 → **104** (-33) | 383 → **226** (-157) | 138 → **91** | 137 → **104** | 323 → **196** | 1.05 → 1.05 |
+
+Totals over the 18 Arabic routes:
+- inline CSS **−518 KB**;
+- RSC payload **−1,913 KB**;
+- gzipped HTML **−557 KB**.
+
+Home is 105 → 82 KB gzip, share 158 → 118 KB, the vendor portal 135 → 91 KB. Phone LCP stays within budget on every route; share is 2.35 → 1.40 s.
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R5-PL-07 | medium | area layouts | (above) | Performance budget | Shared kit CSS imported in the area layout | fixed |
+| R5-PL-08 | medium | `[locale]/layout.tsx`, `src/i18n` | (above) | Performance budget | Scoped client dictionaries | fixed |
+| R5-PL-11 | medium | `next.config.ts` | (above) | Performance budget | Vendored strict chunking with no cross-route merging | fixed |
+| R5-PL-10 | low | marketing pages | `CheckoutShell` CSS on marketing pages (round 5 c). | Performance budget | Closed by R5-PL-11 | fixed |
+| R5-PL-14 | medium | `admin/layout.tsx`, `vendor/layout.tsx` | Found this pass. Both mounted a second `<I18nProvider>` with the **full** dictionary (107 KB raw ar), so admin and vendor pages, and the public `/vendor/apply`, serialised the dictionary twice (97 + 107 KB). | Performance budget | `<I18nScope scope="admin" / "vendor">`, which adds only the area namespace and keys: 57.7 / 37.6 KB. | fixed |
+
+### Round 5 (e) counts (new findings, before fixing)
+
+critical 0 · high 0 · medium 1 (R5-PL-14) · low 0. The assigned rows R5-PL-07, R5-PL-08 and R5-PL-11 are fixed, and R5-PL-10 closes with them. R5-PL-03 (admin detail 404s) went to admin, and R5-PL-13 is fixed on admin's branch (integrator).
+
+### Round 5 (e) verification
+
+- `npm run lint` clean and `npm run typecheck` clean.
+- `npm test`: 109 files, 8,759 passed (new: `scopes.test.tsx`, `css-chunking.test.ts`).
+- `npm run build` clean. `generate-i18n-scopes.ts --check` and `debarrel-ui.mjs --check` both clean.
+- e2e (`--workers=2`):
+  - smoke + storefront + designer: **36 passed, 4 skipped**;
+  - checkout + admin + vendor + journey + catalogue: **47 passed, 19 skipped**;
+  - a11y: **4 passed**.
+- `notfound-check.mjs`: 58 / 58.
+- `platform-shell.cjs`: 96 / 96 (16 routes × ar/en × 320/390/1440), with no raw keys, axe 0, no overflow and no console errors.
+- Screenshots: `docs/screenshots/audit/platform/r5e/`.
+
+### Files touched outside the listed scope (round 5 e)
+
+- **Area layouts**, one `<I18nScope>` wrapper plus kit CSS imports each: `(checkout)/layout.tsx`, `orders/layout.tsx`, `s/layout.tsx`, `admin/layout.tsx`, `vendor/layout.tsx`, `dev/layout.tsx`.
+- **New files:** `design/layout.tsx` and `(store)/account/layout.tsx`.
+- **Build config:** `next.config.ts` (webpack hook) and `scripts/next/css-chunking-plugin.cjs`.
