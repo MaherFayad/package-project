@@ -258,10 +258,15 @@ describe("three.js geometry", () => {
           if (uv && (part.role === "face" || part.role === "seal" || part.role === "base")) {
             const a = uv.array as Float32Array;
             expect(finiteAttr(a)).toBe(true);
+            // same bound on every component, checked in one assertion (thousands of expect() calls timed out)
+            let lo = Infinity;
+            let hi = -Infinity;
             for (let i = 0; i < a.length; i++) {
-              expect(a[i], `${code} ${part.id}`).toBeGreaterThanOrEqual(-1e-3);
-              expect(a[i], `${code} ${part.id}`).toBeLessThanOrEqual(1 + 1e-3);
+              lo = Math.min(lo, a[i]);
+              hi = Math.max(hi, a[i]);
             }
+            expect(lo, `${code} ${part.id}`).toBeGreaterThanOrEqual(-1e-3);
+            expect(hi, `${code} ${part.id}`).toBeLessThanOrEqual(1 + 1e-3);
           }
         }
         const face = m.parts.find((p) => p.id === "face-front" || p.id === "face-sleeve")!;
