@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth/session";
 import type { DictKey } from "@/i18n/types";
 import { formatDims, formatMoney } from "@/lib/format";
 import { quoteDesign, tierPrices } from "@/lib/orders/service";
+import { loadCheckoutSettings } from "@/lib/orders/checkout-settings";
 import { Badge } from "@/components/ui/Badge";
 import { BlockStack, InlineStack } from "@/components/ui/Stack";
 import { Button } from "@/components/ui/Button";
@@ -126,7 +127,9 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
               <BlockStack gap="300">
                 {price ? (
                   <p className={styles.price} data-testid="share-price">
-                    {t("buyer.sharePrice", { qty: price.quantity, price: formatMoney(price.unitPiasters, locale), days: price.days })}
+                    {price.prepayPct > 0
+                      ? t("buyer.sharePricePrepay", { qty: price.quantity, price: formatMoney(price.unitPiasters, locale), days: price.days, pct: price.prepayPct })
+                      : t("buyer.sharePrice", { qty: price.quantity, price: formatMoney(price.unitPiasters, locale), days: price.days })}
                   </p>
                 ) : null}
                 <Text as="p">{reason ? ORDER_MODE_COPY[reason][locale] : t("designer.shared.ctaHelp")}</Text>
@@ -172,13 +175,13 @@ function vesselSize(d: { D: number; H: number; G?: number }, mm: string): string
 }
 
 /** Headline price for the share page, or null when the box has no instant price (quote only). */
-async function sharePrice(doc: Parameters<typeof quoteDesign>[0]): Promise<{ price: { quantity: number; unitPiasters: number; days: number } | null; quoteReason: OrderModeReason | null }> {
+async function sharePrice(doc: Parameters<typeof quoteDesign>[0]): Promise<{ price: { quantity: number; unitPiasters: number; days: number; prepayPct: number } | null; quoteReason: OrderModeReason | null }> {
   try {
-    const [tiers, outcome] = await Promise.all([tierPrices(doc), quoteDesign(doc, { quantity: SHARE_PRICE_QTY })]);
+    const [tiers, outcome, settings] = await Promise.all([tierPrices(doc), quoteDesign(doc, { quantity: SHARE_PRICE_QTY }), loadCheckoutSettings()]);
     const unit = tiers.find((x) => x.quantity === SHARE_PRICE_QTY)?.unitPiasters ?? null;
     const best = outcome.mode === "instant" ? outcome.offers[0] : null;
     const quoteReason = outcome.mode === "manual_quote" && outcome.reason === "MODEL_BY_QUOTE" ? (outcome.orderReason ?? "QUOTE_ONLY_STOCK") : null;
-    return { price: unit !== null && best ? { quantity: SHARE_PRICE_QTY, unitPiasters: unit, days: best.deliveryDays } : null, quoteReason };
+    return { price: unit !== null && best ? { quantity: SHARE_PRICE_QTY, unitPiasters: unit, days: best.deliveryDays, prepayPct: settings.prepayDiscountPct } : null, quoteReason };
   } catch {
     return { price: null, quoteReason: null };
   }

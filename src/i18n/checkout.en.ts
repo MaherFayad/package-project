@@ -574,6 +574,9 @@ export const checkoutEn = {
     order: "Order",
     shareOwnCopy: "Ordering gives you your own copy to order or edit. The original design stays unchanged.",
     sharePrice: "{qty:box} from {price} each excl. VAT, delivered in {days:day}",
+    // R5-JR-15: the share price and offer unit are after the prepay discount.
+    sharePricePrepay: "{qty:box} from {price} each after the {pct}% prepay discount, excl. VAT, delivered in {days:day}",
+    unitPrepay: "{price} per box after the {pct}% prepay discount (excl.\u00a0VAT)",
     shareSignIn: "You will sign in with your mobile number first. It takes a minute.",
     shareOwner: "This is your design. Anyone with this link sees this read-only page and can order their own copy.",
     addName: "Add your name in Profile. It appears on your account and on your receipts; the courier uses the name on each delivery address.",
