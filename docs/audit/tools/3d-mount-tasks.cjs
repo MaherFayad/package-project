@@ -30,6 +30,8 @@ const _bucketOf = (fn, url) => {
   await page.addInitScript(() => {
     window.__lt = [];
     new PerformanceObserver((l) => { for (const e of l.getEntries()) window.__lt.push({ start: e.startTime, dur: e.duration }); }).observe({ type: "longtask", buffered: true });
+    window.__ev = [];
+    new PerformanceObserver((l) => { for (const e of l.getEntries()) if (e.interactionId) window.__ev.push({ t: e.startTime, d: e.duration, name: e.name }); }).observe({ type: "event", durationThreshold: 16, buffered: true });
   });
   const cdp = await ctx.newCDPSession(page);
   await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
@@ -40,10 +42,22 @@ const _bucketOf = (fn, url) => {
   const mark = await page.evaluate(() => performance.now());
   await cdp.send("Profiler.start");
   if (tap) await page.getByRole("button", { name: tap }).first().tap();
+  // TYPE=1: the visitor keeps going: a key press into the page's first text field every 150 ms
+  // while the 3D view loads (the R6-R1 / R8 INP scenario), then idle
+  if (process.env.TYPE) {
+    const field = page.locator('main input[type="search"], main input[type="text"]').first();
+    for (let i = 0; i < 16; i++) {
+      await page.waitForTimeout(150);
+      await field.press("a", { timeout: 3000 }).catch(() => {});
+    }
+  }
   await page.waitForTimeout(12000);
   const { profile } = await cdp.send("Profiler.stop");
   const lts = (await page.evaluate(() => window.__lt)).filter((t) => t.start >= mark - 50);
   lts.sort((a, b) => b.dur - a.dur);
+  const ev = (await page.evaluate(() => window.__ev)).filter((e) => e.t >= mark - 50);
+  const tbt = lts.reduce((a, x) => a + Math.max(0, x.dur - 50), 0);
+  console.log(JSON.stringify({ inp: Math.round(Math.max(0, ...ev.map((e) => e.d))), interactions: ev.length, tbtAfterTap: Math.round(tbt), longest: Math.round(lts[0]?.dur ?? 0), over50: lts.length }));
   console.log("long tasks after", tap ? `tap "${tap}"` : "navigation", ":", lts.map((t) => Math.round(t.dur)).join(", "), "ms; total", Math.round(lts.reduce((s, t) => s + t.dur, 0)), "ms");
   // Split the samples into contiguous busy segments (a gap of > 4 ms of idle = a task boundary) and
   // break the largest ones down by script (chunk) and by function.
