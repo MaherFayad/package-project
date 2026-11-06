@@ -590,7 +590,7 @@ export const en = {
       metaDescription: "The cookies Elba uses and why.",
       intro: "Elba uses a small number of essential cookies and in-house measurement of site use that is never shared. We do not use advertising cookies or third-party tracking.",
       sections: {
-        essential: { title: "Essential cookies", body: "elba_session keeps you signed in (30 days). elba_locale remembers your language (1 year). elba_anon keeps an unsaved design for up to 30 days so you don't lose it." },
+        essential: { title: "Essential cookies", body: "elba_session keeps you signed in (30 days). elba_locale remembers your language (1 year). elba_anon keeps an unsaved design for up to 30 days so you don't lose it. elba_cookie_ack remembers that you closed this notice (1 year). elba_announce remembers that you closed the announcement bar (30 days)." },
         analytics: { title: "In-house measurement", body: "We record steps of site use in our own database, such as opening the site, starting a design, seeing a price and completing an order, to learn where customers stop and improve the service. Each step carries only your account id or the random designer id, never your mobile number, email, address or IP address, and is deleted after 13 months. Your browser keeps the time of your last visit (elba_visit in local storage) so a visit is not counted twice, and an elba_gate cookie keeps, for 30 minutes, which prompt asked you to create an account. We use no third-party analytics or retargeting tools; if we add any later, we will ask for your consent first." },
         choices: { title: "Your choices", body: "You can delete cookies in your browser settings. Without essential cookies you can still browse, but you cannot stay signed in." },
       },

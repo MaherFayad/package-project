@@ -26,7 +26,7 @@ export function CheckoutShell({ locale, children }: { locale: Locale; children: 
               <Wordmark locale={locale} />
             </Link>
             <span className={styles.secure}>
-              <Lock aria-hidden size={14} />
+              <Lock aria-hidden size={16} strokeWidth={1.75} />
               {t("buyer.secureCheckout")}
             </span>
             <div className={styles.actions}>

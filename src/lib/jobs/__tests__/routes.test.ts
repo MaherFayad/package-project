@@ -86,6 +86,34 @@ describe("POST /api/events", () => {
     expect(res.status).toBe(413);
   });
 
+  it("rotating the anonymous cookie does not add visits (R4-B-04)", async () => {
+    for (let i = 0; i < 90; i++) {
+      cookieJar.set("elba_anon", `anon_rotated_${String(i).padStart(8, "0")}`);
+      expect((await postEvent(eventReq({ name: "visit" }, { "user-agent": "bot/1.0" }))).status).toBe(204);
+    }
+    expect((trackMock.mock.calls as unknown[][]).filter((c) => c[0] === "visit")).toHaveLength(1);
+    // Different browsers behind one IP still count, up to the per-IP cap (30 per 30 minutes).
+    for (let i = 0; i < 40; i++) await postEvent(eventReq({ name: "visit" }, { "user-agent": `browser/${i}` }));
+    expect((trackMock.mock.calls as unknown[][]).filter((c) => c[0] === "visit")).toHaveLength(30);
+  });
+
+  it("caps other client events per IP even with rotating cookies", async () => {
+    for (let i = 0; i < 50; i++) {
+      cookieJar.set("elba_anon", `anon_rotated_${String(i).padStart(8, "0")}`);
+      await postEvent(eventReq({ name: "artwork_uploaded" }));
+    }
+    expect((trackMock.mock.calls as unknown[][]).filter((c) => c[0] === "artwork_uploaded")).toHaveLength(30);
+  });
+
+  it("is rate-limited per IP across rotating cookies", async () => {
+    let limited = 0;
+    for (let i = 0; i < 130; i++) {
+      cookieJar.set("elba_anon", `anon_rotated_${String(i).padStart(8, "0")}`);
+      if ((await postEvent(eventReq({ name: "gate_shown" }))).status === 429) limited++;
+    }
+    expect(limited).toBe(10);
+  });
+
   it("is rate-limited per browser", async () => {
     for (let i = 0; i < 60; i++) expect((await postEvent(eventReq({ name: "visit" }))).status).toBe(204);
     const res = await postEvent(eventReq({ name: "visit" }));

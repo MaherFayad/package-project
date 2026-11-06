@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import { db } from "@/lib/db";
-import { CONSENT_TEXT_VERSION } from "@/lib/auth/constants";
+import { withdrawMarketingConsent } from "@/lib/auth/marketing-consent";
 import { verifyUnsubscribeToken } from "@/lib/auth/unsubscribe";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { toLocale } from "@/i18n";
@@ -23,25 +23,9 @@ export async function unsubscribeAction(_prev: UnsubscribeState, form: FormData)
   const ip = clientIp(h);
   if (!rateLimit("unsubscribe", `${ip}:${userId}`, 10, 60_000).ok) return { status: "error" };
   try {
-    const user = await db.user.findUnique({ where: { id: userId }, select: { id: true, phone: true, marketingConsent: true } });
+    const user = await db.user.findUnique({ where: { id: userId }, select: { id: true } });
     if (!user) return { status: "invalid" };
-    if (user.marketingConsent) {
-      await db.$transaction([
-        db.user.update({ where: { id: user.id }, data: { marketingConsent: false, consentAt: new Date() } }),
-        db.consent.create({
-          data: {
-            userId: user.id,
-            phone: user.phone,
-            kind: "MARKETING",
-            granted: false,
-            textVersion: CONSENT_TEXT_VERSION,
-            locale: toLocale(form.get("locale")),
-            ip,
-            userAgent: h.get("user-agent")?.slice(0, 300) ?? null,
-          },
-        }),
-      ]);
-    }
+    await withdrawMarketingConsent(user.id, { locale: toLocale(form.get("locale")), ip, userAgent: h.get("user-agent") });
     return { status: "done" };
   } catch (e) {
     console.error("[unsubscribe] failed", e instanceof Error ? e.message : e);

@@ -1,10 +1,10 @@
-import Link from "next/link";
 import { getT } from "@/i18n";
 import type { Locale } from "@/types";
 import { designHref } from "@/components/store/catalog";
 import { AccountLink } from "./AccountLink";
 import { HeaderNav, type NavModel } from "./HeaderNav";
 import { LangLink } from "./LangLink";
+import { StartLink } from "./StartLink";
 import { Wordmark } from "./Wordmark";
 import styles from "./marketing.module.css";
 
@@ -56,9 +56,7 @@ export function MarketingHeader({ locale }: { locale: Locale }) {
     },
     sheetActions: (
       <>
-        <Link href={start} className={`${styles.pill} ${styles.pillLarge}`}>
-          {t("marketing.nav.start")}
-        </Link>
+        <StartLink href={start} label={t("marketing.nav.start")} signedInLabel={t("marketing.nav.newDesign")} className={`${styles.pill} ${styles.pillLarge}`} />
         <AccountLink variant="sheet" login={login} account={account} signOutLabel={signOut} home={base} className={`${styles.pill} ${styles.pillOutline} ${styles.pillLarge}`} />
         <LangLink className={styles.langLink} />
       </>
@@ -69,9 +67,7 @@ export function MarketingHeader({ locale }: { locale: Locale }) {
     <HeaderNav model={model}>
       <LangLink className={`${styles.langLink} ${styles.langDesktop}`} />
       <AccountLink login={login} account={account} signOutLabel={signOut} home={base} className={`${styles.navLink} ${styles.loginLink}`} />
-      <Link href={start} className={`${styles.pill} ${styles.pillSmall} ${styles.headerCta}`}>
-        {t("marketing.nav.start")}
-      </Link>
+      <StartLink href={start} label={t("marketing.nav.start")} signedInLabel={t("marketing.nav.newDesign")} className={`${styles.pill} ${styles.pillSmall} ${styles.headerCta}`} />
     </HeaderNav>
   );
 }
