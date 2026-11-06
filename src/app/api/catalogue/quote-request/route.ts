@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { apiRequireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { rateLimit } from "@/lib/rate-limit";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { toJson } from "@/lib/json";
 import { catalogueEntry } from "@/data/catalogue";
 import { readJsonCapped } from "../../_lib/body";
 
@@ -20,7 +21,11 @@ const Body = z.object({
  * Egypt PDPL 151/2020). Stored as a Quote row with status REQUESTED and zero totals until a
  * converter prices it.
  *
- * 201 { id } | 400 { error: "INVALID_BODY" | "UNKNOWN_MODEL" } | 401 | 429 { retryAfterSec }
+ * Like checkout's request (B-15) it also writes a QUOTE_REQUEST audit row with a spec snapshot,
+ * so the admin quote-leads inbox shows the model, standard and size, and the same request sent
+ * again within 14 days returns the open one instead of a duplicate lead.
+ *
+ * 201 { id } | 200 { id, repeat: true } | 400 { error: "INVALID_BODY" | "UNKNOWN_MODEL" } | 401 | 429 { retryAfterSec }
  */
 export async function POST(req: Request) {
   const auth = await apiRequireRole();
@@ -38,29 +43,63 @@ export async function POST(req: Request) {
   if (!e) return Response.json({ error: "UNKNOWN_MODEL" }, { status: 400 });
   const preset = b.presetId ? e.presets.find((p) => p.id === b.presetId) : undefined;
 
-  const row = await db.quote.create({
-    data: {
-      userId: auth.id,
-      lines: [
-        {
-          type: "CATALOGUE_REQUEST",
-          modelCode: e.code,
-          slug: e.slug,
-          family: e.subFamily,
-          standard: e.standard.label,
-          presetId: preset?.id ?? null,
-          dims: preset?.dims ?? e.defaultDims,
+  const dims = preset?.dims ?? e.defaultDims;
+  const now = new Date();
+  const open = await db.quote.findMany({ where: { userId: auth.id, designId: null, status: "REQUESTED", validUntil: { gt: now } }, select: { id: true, lines: true }, take: 50 });
+  const same = open.find((q) => {
+    const l = (Array.isArray(q.lines) ? q.lines : [])[0] as { type?: string; modelCode?: string; presetId?: string | null; quantity?: number } | undefined;
+    return l?.type === "CATALOGUE_REQUEST" && l.modelCode === e.code && (l.presetId ?? null) === (preset?.id ?? null) && l.quantity === b.quantity;
+  });
+  if (same) return Response.json({ id: same.id, repeat: true }, { status: 200 });
+
+  const row = await db.$transaction(async (tx) => {
+    const q = await tx.quote.create({
+      data: {
+        userId: auth.id,
+        lines: [
+          {
+            type: "CATALOGUE_REQUEST",
+            modelCode: e.code,
+            slug: e.slug,
+            // Both names, so the buyer's account and the admin inbox can label the request.
+            name: { ar: e.name.ar, en: e.name.en },
+            family: e.subFamily,
+            standard: e.standard.label,
+            presetId: preset?.id ?? null,
+            dims,
+            quantity: b.quantity,
+            notes: b.notes ?? "",
+          },
+        ],
+        subtotalPiasters: 0,
+        vatPiasters: 0,
+        totalPiasters: 0,
+        validUntil: new Date(now.getTime() + 14 * 24 * 3600_000),
+        status: "REQUESTED",
+      },
+      select: { id: true },
+    });
+    await tx.auditLog.create({
+      data: {
+        actorId: auth.id,
+        actorPhone: auth.phone,
+        action: "QUOTE_REQUEST",
+        entityType: "QUOTE",
+        entityId: q.id,
+        summary: `${b.quantity.toLocaleString("en-US")} x ${e.code} · catalogue`,
+        after: toJson({
+          designId: null,
           quantity: b.quantity,
-          notes: b.notes ?? "",
-        },
-      ],
-      subtotalPiasters: 0,
-      vatPiasters: 0,
-      totalPiasters: 0,
-      validUntil: new Date(Date.now() + 14 * 24 * 3600_000),
-      status: "REQUESTED",
-    },
-    select: { id: true },
+          governorate: null,
+          neededBy: null,
+          note: b.notes || null,
+          phone: auth.phone,
+          spec: { name: e.name.en, nameAr: e.name.ar, modelCode: e.code, standard: e.standard.label || null, presetId: preset?.id ?? null, dims },
+        }),
+        ip: clientIp(req.headers),
+      },
+    });
+    return q;
   });
   return Response.json({ id: row.id }, { status: 201 });
 }

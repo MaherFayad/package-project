@@ -81,7 +81,7 @@ export function MarketingFooter({ locale }: { locale: Locale }) {
         </div>
         <div className={styles.footerBottom}>
           <span className={styles.footerRegion}>
-            <Globe size={16} aria-hidden />
+            <Globe size={16} strokeWidth={1.75} aria-hidden />
             {t("marketing.footer.region")}
           </span>
           <LangLink showIcon={false} />

@@ -183,7 +183,7 @@ export function DesignStart({ locale }: { locale: Locale }) {
                   }}
                 >
                   <span className={styles.productIcon} aria-hidden="true">
-                    <IconC size={20} />
+                    <IconC size={20} strokeWidth={1.75} />
                   </span>
                   <span className={styles.productText}>
                     <span className={styles.productName}>{t(`designer.productPresets.${p.key}` as DictKey)}</span>

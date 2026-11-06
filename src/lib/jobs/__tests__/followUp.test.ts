@@ -13,7 +13,7 @@ import {
 } from "@/lib/jobs/followUp";
 import { currentConsentGranted } from "@/lib/auth/consent";
 import { renderNotification, notifyOutbox } from "@/lib/notify";
-import { notifySender } from "@/lib/jobs/followUp";
+import { designLabel, notifySender } from "@/lib/jobs/followUp";
 import { unsubscribeUrl, verifyUnsubscribeToken } from "@/lib/auth/unsubscribe";
 
 const H = 3_600_000;
@@ -117,6 +117,23 @@ describe("24 h boundary", () => {
     const r = await runFollowUps({ now: NOW, store, send: sender, trackFn, baseUrl: "https://elba.test" });
     expect(r.sent).toEqual(["edge"]);
   });
+  it("designs with a price request are not nudged to order (the team is pricing them)", () => {
+    const r = selectFollowUps([cand({ designId: "d1", priceRequested: true })], [grant("u1", ago(500))], new Set(), NOW);
+    expect(r.send).toEqual([]);
+    expect(r.skipped[0].reason).toBe("price_requested");
+  });
+
+  it("untitled designs are named after their box style, never «»", () => {
+    for (const locale of ["ar", "en"] as const) {
+      const label = designLabel({ designName: "   ", modelCode: null, structureCode: "FEFCO_0427" }, locale);
+      expect(label.length).toBeGreaterThan(2);
+      expect(label).not.toMatch(/^structures\./);
+    }
+    expect(designLabel({ designName: "", modelCode: null, structureCode: "FEFCO_0427" }, "ar")).toMatch(/[\u0600-\u06ff]/);
+    expect(designLabel({ designName: "", modelCode: null, structureCode: "NOPE" }, "en")).toBe("your box");
+    expect(designLabel({ designName: " Coffee ", modelCode: null, structureCode: "FEFCO_0427" }, "en")).toBe("Coffee");
+  });
+
   it("users with an open erasure request are never messaged (PDPL)", () => {
     const r = selectFollowUps([cand({ designId: "d1", erasurePending: true })], [grant("u1", ago(500))], new Set(), NOW);
     expect(r.send).toEqual([]);
@@ -193,12 +210,15 @@ describe("message (opt-out, locale, links)", () => {
     expect(en).toMatch(/^Elba:/);
     expect(en).toContain("To stop these messages");
     expect(en).toContain("Coffee box");
+    // Reply-STOP opt-out in both languages (WhatsApp Business policy).
+    expect(ar).toContain("«إيقاف»");
+    expect(en).toContain("reply STOP");
   });
 
   it("builds locale links and sends through the notify seam, WhatsApp only", async () => {
     const store = memoryStore([cand({ designId: "d1", designName: "  ", owner: { id: "u1", phone: "+201001234567", locale: "en" } })], [grant("u1", ago(500))]);
     await runFollowUps({ now: NOW, store, send: sender, trackFn, baseUrl: "https://elba.test/" });
-    expect(sent[0]).toEqual({ phone: "+201001234567", locale: "en", params: { design: "Untitled", url: "https://elba.test/en/checkout/d1", stop: unsubscribeUrl("https://elba.test", "en", "u1") } });
+    expect(sent[0]).toEqual({ phone: "+201001234567", locale: "en", params: { design: designLabel({ designName: "", modelCode: null, structureCode: "FEFCO_0427" }, "en"), url: "https://elba.test/en/checkout/d1", stop: unsubscribeUrl("https://elba.test", "en", "u1") } });
     // The stop link is a signed one-click opt-out for this user only (no sign-in, no phone number).
     const stop = new URL(sent[0].params.stop);
     expect(stop.pathname).toBe("/en/unsubscribe");

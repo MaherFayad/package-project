@@ -237,3 +237,32 @@ test.describe("vendor portal, round 4", () => {
     }
   });
 });
+
+test.describe("vendor portal, round 5", () => {
+  test("bio changes wait for Elba's review; contact details in a bio are blocked", async ({ page, context, baseURL }, info) => {
+    test.skip(info.project.name !== "desktop", "mutates Nile Pack's bio (desktop only, restored after)");
+    test.setTimeout(90_000);
+    const vendor = await db.vendor.findUniqueOrThrow({ where: { slug: "nile-pack" } });
+    try {
+      const staff = track(await createUser({ role: "VENDOR", vendorId: vendor.id, name: "E2E Nile staff" }));
+      await signInAs(context, baseURL!, staff.id);
+      await page.goto("/en/vendor/profile");
+      const en = page.getByLabel("Bio in English");
+      await en.fill(`${vendor.bioEn} Sales: 010 1234 / 5678. Follow us on انستقرام nilepack. Or nilepack[.]com`);
+      await page.locator("#vendor-profile-form button[type=submit]").click();
+      await expect(en).toHaveAttribute("aria-invalid", "true");
+
+      await en.fill(`${vendor.bioEn} BIO-R5`);
+      await page.locator("#vendor-profile-form button[type=submit]").click();
+      await expect(page.getByText("Your bio changes were sent for review.")).toBeVisible();
+      await expect(page.getByText("Your bio changes are in review.")).toBeVisible();
+      const v = await db.vendor.findUniqueOrThrow({ where: { id: vendor.id } });
+      expect(v.bioReviewStatus).toBe("PENDING");
+      expect(v.bioEn).toBe(vendor.bioEn);
+      await page.goto(`/en/vendors/${vendor.slug}`);
+      expect(await page.content()).not.toContain("BIO-R5");
+    } finally {
+      await db.vendor.update({ where: { id: vendor.id }, data: { bioAr: vendor.bioAr, bioEn: vendor.bioEn, bioArPending: null, bioEnPending: null, bioReviewStatus: null, bioReviewNote: null, bioSubmittedAt: null } });
+    }
+  });
+});

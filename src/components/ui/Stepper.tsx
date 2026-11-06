@@ -29,11 +29,13 @@ export interface StepperProps {
 /**
  * Order-status stepper (Placed › Proof › Printing › Shipped › Delivered). An ordered list;
  * the current step has aria-current="step" and every step states its status in text.
+ * A named group, not a <nav>: it holds no links, so it is not a navigation landmark
+ * (1.3.1; R2-24).
  */
 export function Stepper({ steps, current, currentTone = "default", orientation = "horizontal", accessibilityLabel }: StepperProps) {
   const { s } = useUi();
   return (
-    <nav aria-label={accessibilityLabel}>
+    <div role="group" aria-label={accessibilityLabel}>
       <ol className={cx(styles.Stepper, orientation === "vertical" && styles.stepperVertical)}>
         {steps.map((step, i) => {
           const state = i < current ? "complete" : i === current ? "current" : "upcoming";
@@ -59,6 +61,6 @@ export function Stepper({ steps, current, currentTone = "default", orientation =
           );
         })}
       </ol>
-    </nav>
+    </div>
   );
 }

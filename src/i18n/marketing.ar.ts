@@ -6,6 +6,7 @@ type Widen<T> = T extends string ? string : { [K in keyof T]: Widen<T[K]> };
 export const marketingAr: Widen<typeof marketingEn> = {
   announce: {
     text: "جديد: معاينة ثلاثية الأبعاد للبصمة الحرارية وطلاء UV الموضعي والسلوفان المخملي.",
+    textShort: "جديد: معاينة البصمة والسلوفان ثلاثية الأبعاد.",
     link: "عرض التشطيبات",
     dismiss: "إغلاق الإعلان",
   },
@@ -18,6 +19,7 @@ export const marketingAr: Widen<typeof marketingEn> = {
     login: "تسجيل الدخول",
     account: "حسابي",
     start: "بدء التصميم مجانا",
+    newDesign: "تصميم جديد",
     menu: "القائمة",
     close: "إغلاق القائمة",
     productsMenu: {

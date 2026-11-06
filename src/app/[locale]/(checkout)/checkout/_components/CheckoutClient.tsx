@@ -209,6 +209,9 @@ export function CheckoutClient(props: {
   }, [address.governorate, qty, fetchOffers, t, sampleMode]);
 
   const manual = result.ok && result.mode === "manual_quote";
+  // B-16: the model itself is priced by quote (any quantity), not only runs above the cap.
+  const modelQuote = (r: OffersResult) => r.ok && r.mode === "manual_quote" && r.reason === "MODEL_BY_QUOTE";
+  const byQuote = modelQuote(result) || modelQuote(props.initial);
 
   const requestQuote = async () => {
     setQuoteErr(null);
@@ -368,14 +371,14 @@ export function CheckoutClient(props: {
                 name="qty"
                 value={tier.quantity}
                 checked={!sampleMode && qty === tier.quantity}
-                disabled={tier.unitPiasters === null}
+                disabled={tier.unitPiasters === null && !byQuote}
                 onChange={() => pickQty(tier.quantity)}
               />
               <Text as="span" variant="headingSm" numeric>
                 {t("checkout.summary.quantity", { qty: tier.quantity.toLocaleString("en-US") })}
               </Text>
               <Text as="span" variant="bodySm" tone="subdued">
-                {tier.unitPiasters === null ? t("checkout.quantity.unavailable") : t("checkout.quantity.perBox", { price: formatMoney(tier.unitPiasters, locale) })}
+                {tier.unitPiasters === null ? (byQuote ? (locale === "ar" ? "بعرض سعر" : "By quote") : t("checkout.quantity.unavailable")) : t("checkout.quantity.perBox", { price: formatMoney(tier.unitPiasters, locale) })}
               </Text>
             </label>
           ))}
@@ -397,7 +400,7 @@ export function CheckoutClient(props: {
           </Text>
         ) : null}
         <Text as="p" variant="bodySm" tone="subdued" id="qty-help">
-          {t("checkout.quantity.help", { max: MAX_INSTANT_QTY.toLocaleString("en-US") })}
+          {byQuote ? (locale === "ar" ? "اختر الكمية التي تريد عرض سعر لها." : "Choose the quantity you want a price for.") : t("checkout.quantity.help", { max: MAX_INSTANT_QTY.toLocaleString("en-US") })}
         </Text>
         <form
           className={styles.customQty}
@@ -431,14 +434,16 @@ export function CheckoutClient(props: {
       <Divider />
 
       <BlockStack gap="300">
-        <BlockStack gap="100">
-          <Text as="h3" variant="headingSm">
-            {t("checkout.offers.title")}
-          </Text>
-          <Text as="p" variant="bodySm" tone="subdued">
-            {t("checkout.offers.help")}
-          </Text>
-        </BlockStack>
+        {byQuote ? null : (
+          <BlockStack gap="100">
+            <Text as="h3" variant="headingSm">
+              {t("checkout.offers.title")}
+            </Text>
+            <Text as="p" variant="bodySm" tone="subdued">
+              {t("checkout.offers.help")}
+            </Text>
+          </BlockStack>
+        )}
         <div aria-live="polite" aria-busy={loading}>
           {loading ? (
             <BlockStack gap="200">
@@ -511,9 +516,11 @@ export function CheckoutClient(props: {
                     <Button variant="primary" submit loading={quoteBusy}>
                       {t("buyer.quote.send")}
                     </Button>
-                    <Button variant="plain" onClick={() => pickQty(MAX_INSTANT_QTY)} disabled={quoteBusy}>
-                      {t("buyer.manualOrderMax", { max: MAX_INSTANT_QTY.toLocaleString("en-US") })}
-                    </Button>
+                    {byQuote ? null : (
+                      <Button variant="plain" onClick={() => pickQty(MAX_INSTANT_QTY)} disabled={quoteBusy}>
+                        {t("buyer.manualOrderMax", { max: MAX_INSTANT_QTY.toLocaleString("en-US") })}
+                      </Button>
+                    )}
                   </div>
                   <Text as="p" variant="bodySm" tone="subdued">
                     {t("buyer.quote.contact", { phone: props.contactPhone })}
@@ -911,7 +918,7 @@ export function CheckoutClient(props: {
                   </>
                 ) : (
                   <Text as="p" tone="subdued">
-                    {manual ? t("buyer.quote.summary") : t("checkout.summary.noOffer")}
+                    {byQuote ? (locale === "ar" ? "يسعر هذا النوع بعرض سعر. أرسل الطلب لتحصل على إجمالي ثابت." : "This format is priced by quote. Send a request to get a fixed total.") : manual ? t("buyer.quote.summary") : t("checkout.summary.noOffer")}
                   </Text>
                 )}
                 {placeErr ? (

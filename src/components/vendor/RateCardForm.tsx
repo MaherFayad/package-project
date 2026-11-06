@@ -58,6 +58,10 @@ export function RateCardForm({ card, offeredFinishes, models, listed = [] }: { c
     });
   }, [form, card, finishes]);
 
+  // R5 (CR-35): one money precision per preview column.
+  const unitDec = { alwaysDecimals: preview.some((p) => p.unit !== null && Math.round(p.unit) % 100 !== 0) };
+  const totalDec = { alwaysDecimals: preview.some((p) => p.total !== null && Math.round(p.total) % 100 !== 0) };
+
   const onSave = useCallback(async () => {
     const local = validateRateCard(form, card.structureCode, finishes);
     if (!local.ok) {
@@ -268,7 +272,7 @@ export function RateCardForm({ card, offeredFinishes, models, listed = [] }: { c
                 hideCaption={false}
                 columnContentTypes={["numeric", "numeric", "numeric"]}
                 headings={[t("vendorPortal.rateCards.previewQty"), t("vendorPortal.rateCards.previewUnit", u), t("vendorPortal.rateCards.previewTotal")]}
-                rows={preview.map((p) => [formatNumber(p.q), p.unit === null ? "—" : formatMoney(p.unit, locale), p.total === null ? "—" : formatMoney(p.total, locale)])}
+                rows={preview.map((p) => [formatNumber(p.q), p.unit === null ? "—" : formatMoney(p.unit, locale, unitDec), p.total === null ? "—" : formatMoney(p.total, locale, totalDec)])}
                 increasedTableDensity
                 footerContent={t("vendorPortal.rateCards.previewNote")}
               />

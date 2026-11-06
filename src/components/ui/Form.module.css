@@ -273,6 +273,10 @@
 .RangeInput:focus-visible { outline: none; }
 .RangeInput:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 1px var(--p-color-input-border), 0 0 0 2px var(--p-color-bg-surface), 0 0 0 4px var(--p-color-border-focus); }
 .RangeInput:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 1px var(--p-color-input-border), 0 0 0 2px var(--p-color-bg-surface), 0 0 0 4px var(--p-color-border-focus); }
+/* Forced colours drop box-shadows, so the thumb ring vanishes: draw a system outline instead (2.4.7, R4-K04). */
+@media (forced-colors: active) {
+  .RangeInput:focus-visible { outline: var(--p-focus-ring-width) solid Highlight; outline-offset: var(--p-focus-ring-offset); }
+}
 .rangeDisabled .RangeInput { cursor: not-allowed; opacity: 0.5; }
 @media (pointer: coarse) {
   .RangeInput { block-size: 2.75rem; }

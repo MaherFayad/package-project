@@ -33,6 +33,9 @@ export default async function PayoutsPage({ params }: { params: Promise<{ locale
   if (!vendor || vendor.status === "PENDING") return null;
   const rows = await getPayoutRows(vendor.id);
   const sum = payoutSummary(rows);
+  // R5 (CR-35): one money precision per column: two decimals for all amounts when any has piasters.
+  const metricDec = { alwaysDecimals: [sum.paidPiasters, sum.approvedPiasters, sum.pendingPiasters, sum.scheduledPiasters].some((v) => Math.round(v) % 100 !== 0) };
+  const rowDec = { alwaysDecimals: rows.some((r) => Math.round(r.amountPiasters) % 100 !== 0) };
 
   return (
     <Page fullWidth title={t("vendorPortal.payouts.title")} titleIcon={<Banknote aria-hidden="true" />} subtitle={t("vendorPortal.payouts.subtitle")}>
@@ -41,10 +44,10 @@ export default async function PayoutsPage({ params }: { params: Promise<{ locale
           <MetricsStrip
             accessibilityLabel={t("vendorPortal.payouts.metricsLabel")}
             metrics={[
-              { label: t("vendorPortal.payouts.metrics.paid"), value: formatMoney(sum.paidPiasters, locale) },
-              { label: t("vendorPortal.payouts.metrics.approved"), value: formatMoney(sum.approvedPiasters, locale) },
-              { label: t("vendorPortal.payouts.metrics.pending"), value: formatMoney(sum.pendingPiasters, locale) },
-              { label: t("vendorPortal.payouts.metrics.scheduled"), value: formatMoney(sum.scheduledPiasters, locale) },
+              { label: t("vendorPortal.payouts.metrics.paid"), value: formatMoney(sum.paidPiasters, locale, metricDec) },
+              { label: t("vendorPortal.payouts.metrics.approved"), value: formatMoney(sum.approvedPiasters, locale, metricDec) },
+              { label: t("vendorPortal.payouts.metrics.pending"), value: formatMoney(sum.pendingPiasters, locale, metricDec) },
+              { label: t("vendorPortal.payouts.metrics.scheduled"), value: formatMoney(sum.scheduledPiasters, locale, metricDec) },
             ]}
           />
         </div>
@@ -95,7 +98,7 @@ export default async function PayoutsPage({ params }: { params: Promise<{ locale
                         {t(`vendorPortal.payouts.statuses.${r.status}` as DictKey)}
                       </Badge>
                       <Text as="span" numeric fontWeight="semibold">
-                        {formatMoney(r.amountPiasters, locale)}
+                        {formatMoney(r.amountPiasters, locale, rowDec)}
                       </Text>
                     </span>
                     {r.date ? (
@@ -118,7 +121,7 @@ export default async function PayoutsPage({ params }: { params: Promise<{ locale
                 </IndexTableCell>
                 <IndexTableCell className={styles.WideOnly}>{r.date ? <time dateTime={r.date}>{formatDate(r.date, locale)}</time> : "—"}</IndexTableCell>
                 <IndexTableCell className={styles.WideOnly} alignment="end" numeric>
-                  {formatMoney(r.amountPiasters, locale)}
+                  {formatMoney(r.amountPiasters, locale, rowDec)}
                 </IndexTableCell>
               </IndexTableRow>
             );

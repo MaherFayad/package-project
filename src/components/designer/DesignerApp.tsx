@@ -189,10 +189,9 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
   const libModel = useMemo<ModelDef | null>(() => docModel(doc), [doc.modelCode, doc.structureCode]);
   const model: DielineModel | null = geo?.dieline ?? null;
   const isVessel = !!geo?.vessel;
-  // B-16: models no Egyptian SME printer makes go to checkout's quote request, not an order. One
-  // label for the toolbar, the export modal and the export toast (R4-03).
-  const byQuote = ["quote", "preview"].includes(orderModeOf(docModelCode(doc)).mode);
-  const orderLabel = byQuote ? t("designer.price.quoteAction") : t(isVessel ? "designer.container.order" : "designer.order.button");
+  // B-16: models no Egyptian SME printer makes go to checkout's quote request, not an order. The
+  // same label on the top bar, the export modal and the export toast (R4-02).
+  const staticQuote = ["quote", "preview"].includes(orderModeOf(docModelCode(doc)).mode);
   const modelRef = useRef(model);
   modelRef.current = model;
   // Faces of the latest committed geometry (ahead of `model` while typing) for artwork rescaling.
@@ -221,6 +220,9 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
   const [gate, setGate] = useState<{ reason: GateReason; then: () => void } | null>(null);
   const [modal, setModal] = useState<ModalName>(null);
   const [price, setPrice] = useState<PriceState>(initialUser ? { status: "idle" } : { status: "locked" });
+  // R6-05: also when the live price says "by quote" (a special-gluing model no printer lists yet).
+  const byQuote = staticQuote || price.status === "quote";
+  const orderLabel = byQuote ? t("designer.price.quoteAction") : t(isVessel ? "designer.container.order" : "designer.order.button");
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
