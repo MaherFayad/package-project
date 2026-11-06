@@ -136,18 +136,15 @@ export default async function VendorProfilePage({ params }: Props) {
           <dl className={`${rs.stats} ${rs.stats2} m-enter`} aria-label={t("store.vendor.statsTitle")}>
             <div className={rs.stat}>
               <dt className={`${rs.statLabel} ${rs.inlineIcon}`}>
-                <RatingStars rating={v.rating} label={t("store.vendor.stars", { rating: v.rating.toFixed(1) })} />
+                {v.ratingCount > 0 ? <RatingStars rating={v.rating} label={t("store.vendor.stars", { rating: v.rating.toFixed(1) })} /> : null}
                 {t("store.vendor.rating")}
               </dt>
-              <dd className={rs.statNum}>
-                <bdi>{v.rating.toFixed(1)}</bdi>
-              </dd>
+              {/* R5-JR-05: no reviews yet reads "New", not a 0.0 rating with empty stars. */}
+              <dd className={rs.statNum}>{v.ratingCount > 0 ? <bdi>{v.rating.toFixed(1)}</bdi> : t("store.vendor.newBadge")}</dd>
             </div>
             <div className={rs.stat}>
               <dt className={rs.statLabel}>{t("store.vendor.onTime")}</dt>
-              <dd className={rs.statNum}>
-                <bdi>{formatNumber(v.onTimePct)}%</bdi>
-              </dd>
+              <dd className={rs.statNum}>{v.onTimeShown === false ? t("store.vendors.onTimeNew") : <bdi>{formatNumber(v.onTimePct)}%</bdi>}</dd>
             </div>
             <div className={rs.stat}>
               <dt className={rs.statLabel}>{t("store.vendor.leadTime")}</dt>

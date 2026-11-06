@@ -85,6 +85,8 @@ export interface PricingVendor {
   rating: number; // 0..5
   ratingCount: number;
   onTimePct: number; // 0..100
+  /** R5-JR-05 (admin round 8): false = fewer judged deliveries than the minimum; show "New on Elba". */
+  onTimeShown?: boolean;
   leadTimeDays: number;
   minOrderQty: number;
   capabilities: VendorCapabilities;
@@ -161,6 +163,7 @@ export interface VendorOffer extends QuoteResult {
     rating: number;
     ratingCount: number;
     onTimePct: number;
+    onTimeShown?: boolean;
     verified: boolean;
   };
   printMethod: PrintMethod;

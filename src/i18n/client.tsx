@@ -4,6 +4,7 @@ import { createContext, useContext, useMemo, type ReactNode } from "react";
 import type { Locale } from "@/types";
 import type { DictKey, Dictionary, TFunction } from "./types";
 import { interpolate, lookup } from "./core";
+import { mergeDictionaries } from "./merge";
 
 interface I18nValue {
   locale: Locale;
@@ -14,7 +15,10 @@ interface I18nValue {
 
 const I18nContext = createContext<I18nValue | null>(null);
 
-/** Mounted once in src/app/[locale]/layout.tsx. */
+/**
+ * Mounted in src/app/[locale]/layout.tsx with the "root" scope; area layouts nest another one
+ * (<I18nScope>) whose dictionary is merged into the parent's (R5-PL-08).
+ */
 export function I18nProvider({
   locale,
   dict,
@@ -24,15 +28,16 @@ export function I18nProvider({
   dict: Dictionary;
   children: ReactNode;
 }) {
-  const value = useMemo<I18nValue>(
-    () => ({
+  const parent = useContext(I18nContext);
+  const value = useMemo<I18nValue>(() => {
+    const merged = parent && parent.locale === locale ? mergeDictionaries(parent.dict, dict) : dict;
+    return {
       locale,
       dir: locale === "ar" ? "rtl" : "ltr",
-      dict,
-      t: (key: DictKey, vars) => interpolate(lookup(dict, key), vars, locale),
-    }),
-    [locale, dict],
-  );
+      dict: merged,
+      t: (key: DictKey, vars) => interpolate(lookup(merged, key), vars, locale),
+    };
+  }, [parent, locale, dict]);
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
 

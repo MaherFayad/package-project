@@ -234,6 +234,7 @@ function priceVendor(
       rating: vendor.rating,
       ratingCount: vendor.ratingCount,
       onTimePct: vendor.onTimePct,
+      onTimeShown: vendor.onTimeShown,
       verified: vendor.verified,
     },
     printMethod: chosen.method,

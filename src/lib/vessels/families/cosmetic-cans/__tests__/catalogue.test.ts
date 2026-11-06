@@ -139,7 +139,12 @@ describe("geometry", () => {
       // drawn by the renderer (HINGED_LID, max(8, min(30, 0.35 hb)) deep above the hinge line hb).
       const hinged = def.shape.type === "cup" && def.shape.lid === "hinged";
       const top = Math.max(...ys);
-      expect(hinged ? top + Math.max(8, Math.min(30, 0.35 * top)) : top).toBeCloseTo(preset.dims.H, 0);
+      // R5-3Q-G: lipstick / stick cases carry their overcap in the renderer (BULLET_CAP / TWIST_UP,
+      // anchored so the cap top is H: closures.test.ts); the inner sleeve under it stops below H so it
+      // cannot poke through the cap.
+      const overcap = def.shape.type === "case" && (def.shape.cap === "bullet" || def.shape.cap === "twist");
+      if (overcap) expect(top).toBeLessThan(preset.dims.H - 0.5);
+      else expect(hinged ? top + Math.max(8, Math.min(30, 0.35 * top)) : top).toBeCloseTo(preset.dims.H, 0);
       // body radius = D/2 (cups: interpolated between base and rim)
       const mid = (p.body.y0 + p.body.y1) / 2;
       const expected = def.shape.type === "cup" ? (p.body.r0 + p.body.r1) / 2 : preset.dims.D / 2;

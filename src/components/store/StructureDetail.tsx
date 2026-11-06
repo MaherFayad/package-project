@@ -129,7 +129,7 @@ export function StructureDetail({
                 {t("store.structure.designCta")}
               </Pill>
               <Pill href="#prices" variant="outline" size="lg">
-                {t("marketing.nav.pricing")}
+                {t("mk.nav.pricing")}
               </Pill>
             </PillRow>
           </div>

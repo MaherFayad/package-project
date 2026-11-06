@@ -266,9 +266,10 @@
   .storyMediaItem[data-active="true"] { opacity: 1; transform: none; }
   .storyMediaItem > :where(img, video, picture) { inline-size: 100%; block-size: 100%; object-fit: cover; display: block; }
   .storySteps { display: grid; }
-  .storyStep { min-block-size: 80svh; align-content: center; opacity: 0.35; transition: opacity var(--mk-dur-3) var(--mk-ease-standard); }
-  .storyStep[data-active="true"] { opacity: 1; }
-  .story:not([data-js="true"]) .storyStep { opacity: 1; }
+  /* Inactive steps dim by colour (muted keeps 4.5:1 on every tone), not opacity. */
+  .storyStep { min-block-size: 80svh; align-content: center; color: var(--mk-muted); transition: color var(--mk-dur-3) var(--mk-ease-standard); }
+  .storyStep[data-active="true"], .story:not([data-js="true"]) .storyStep { color: inherit; }
+  .storyStep[data-active="true"] .body { color: var(--mk-muted); }
   .storyStepMedia { display: none; }
 }
 
@@ -314,7 +315,8 @@
 .marquee:hover .marqueeTrack, .marquee:focus-within .marqueeTrack, .marquee[data-paused="true"] .marqueeTrack { animation-play-state: paused; }
 .marqueeHead { display: flex; justify-content: flex-end; margin-block-end: 16px; }
 @media (prefers-reduced-motion: reduce) {
-  .marqueeTrack { animation: none; inline-size: auto; flex-wrap: nowrap; }
+  /* Match every selector that sets the animation (the RTL name rule outranks a bare class). */
+  .marqueeTrack, .marqueeTrack:dir(rtl), [dir="rtl"] .marqueeTrack, .marquee[data-reverse="true"] .marqueeTrack { animation: none; inline-size: auto; flex-wrap: nowrap; }
   .marqueeViewport { overflow-x: auto; mask-image: none; }
   .marqueeTrack > li[aria-hidden="true"] { display: none; }
   .marqueeHead { display: none; }
@@ -425,10 +427,13 @@ html[data-motion="on"] .fan:not([data-revealed]) .fanCard { transform: translate
   text-align: start;
   cursor: pointer;
   position: relative;
-  opacity: 0.55;
-  transition: opacity var(--mk-dur-2) var(--mk-ease-standard);
+  /* Inactive steps dim by colour, not opacity, so they keep 4.5:1 (WCAG 1.4.3). */
+  color: var(--mk-muted);
+  transition: color var(--mk-dur-2) var(--mk-ease-standard);
 }
-.stepBtn[aria-selected="true"], .stepBtn:hover { opacity: 1; }
+.stepBtn[aria-selected="true"], .stepBtn:hover { color: inherit; }
+.stepBtn[aria-selected="true"] { color: var(--mk-on-dark); }
+.sheet[data-tone="light"] .stepBtn[aria-selected="true"], .sheet[data-tone="white"] .stepBtn[aria-selected="true"] { color: var(--mk-on-light); }
 .stepNum { font-size: var(--mk-fs-14); font-variant-numeric: tabular-nums; color: var(--mk-muted); padding-block-start: 6px; }
 .stepTitle { font-size: var(--mk-fs-44); font-weight: var(--mk-fw-heading); line-height: 1.15; }
 .stepTitle:lang(ar) { line-height: 1.35; }
