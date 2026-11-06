@@ -81,3 +81,24 @@ FOUNDATION kit used as-is (cdf37a4): `Sheet`, `Display`, `Pill`, `IconPill`, `Ma
 Kit bug found (reported to FOUNDATION): under reduced motion the kit `Marquee` keeps looping in Arabic, because `.marqueeTrack:dir(rtl)` re-sets `animation-name` over the reduced-motion `animation: none` (also visible on `/ar/dev/kit`). Fixed in the kit (r6-foundation 6208abd); the page-scoped override is removed.
 
 Open: the R6 turntable loops are declared in the ASSETS kit but their files were not pushed yet; the page plays the mailer loop automatically once `public/marketing/r6/loops/mailer-*.{webm,mp4}` exist (server-side check), with no code change.
+
+## 7. Spacing pass (spec section 7, r6-foundation a7b9fc2)
+
+Every section is a kit `Sheet` with a `y` size; heads are `SectionHead`, card grids `Grid`, vertical rhythm `Stack`, columns kit `Container`. The page CSS has no section padding, margin or gap values left; the remaining px are inside the editor-UI drawings and cards.
+
+| Band | Kit | Measured 1440 (ar) | Spec |
+|---|---|---|---|
+| Hero | `Sheet hero` | 72 / 100 | header height / section-y-lg |
+| Prompt head | `Sheet` md, same tone as hero | 0 / 64 (collapsed, rule 2) | 0 / 64 |
+| Violet prompt band | `Sheet violet y="lg"` inside `MotionScope` | 100 / 100 | 100 / 100 |
+| Style wall | `Sheet` md | 64 / 64 | 64 / 64 |
+| Bento (white sheet) | `Sheet white y="lg"`, overlap 48 | 100 / 100 | 100 / 100 |
+| Trust trio | `Sheet y="lg"`, overlap 48 | 100 / 100 | 100 / 100 |
+| Materials, start | `Sheet` md, same tone | 0 / 64 each (collapsed) | 0 / 64 |
+| FAQ (closing) | `Sheet y="xl"` | 128 / 128 | 128 / 128 |
+
+Container 1260 at x=90 (phone 358 at x=16); title→sub 16; head→content 40 (phone 32); bento gap 32, card grids 24, h2 56 (FAQ 64), phone h2 36, sheet radius 32 on phone. The -44px heading overlap is gone: each head CTA pill now follows the head in the DOM (laid out at the head's top end from 768px, in flow under the head on phones). `e2e/marketing-spacing.spec.ts` runs `/designer` (entry removed from `NOT_YET`): ar + en pass at 1440, 1024, 768 and 390.
+
+Side-by-side with shopify.com/sa/website/builder re-captured at 1440 and 390 (ar); the reference frames stay out of git, our frames are in `docs/screenshots/audit/r6-designer-page/` (webp).
+
+R6-AX-15 (WCAG 2.2.2): the violet band's rotating backdrop and the prompt's typing examples now pause from one kit `MotionScope` button; e2e covers it.
