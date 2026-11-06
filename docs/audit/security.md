@@ -59,3 +59,52 @@ Tests: `src/lib/__tests__/security-r5.test.ts` (10 tests) and `src/components/ma
 - R5-SEC-05 follow-up (marketing): the hero form validates the number but no longer carries it. If the login form should be prefilled, pass it in `sessionStorage`, never the URL.
 - R5-SEC-09, R5-SEC-10: accepted and deploy-time, see the table.
 - Carried from technical.md: T-29 (Redis rate limiter at deploy), T-30 (nonce CSP).
+
+## Pass 2 findings (fresh read: logs, storage paths, cache headers, names, sessions, OTP cost)
+
+| id | severity | page / file | finding (with proof) | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R5-SEC-11 | low | `api/auth/verify-otp` (`name`), `components/store/account-logic.ts` `profileSchema`, `lib/orders/schemas.ts` `addressSchema` | Stored names and address text accepted control and bidi-override characters. Proof: verify-otp with `name: "Ahmed ‮FEDCBA‬\u0000\u0007 Admin"` returned 200 and stored it as is. The right-to-left override reverses how the rest of the line renders in admin tables, on the receipt and on the courier label (display spoofing). NUL and BEL break PDFs, logs and the ETA e-invoice JSON this text will be sent in. | ASVS V5.1.4, V5.2.2; Unicode TR #36 (bidi spoofing) | New pure `lib/auth/display-name.ts` `cleanDisplayName()`: NFC, drop C0/C1 controls, bidi embeddings, overrides, isolates, LRM/RLM/ALM and BOM, collapse whitespace. ZWJ/ZWNJ (Arabic shaping) are kept. Used for the sign-up name, the profile name and the delivery address name, city, street and optional lines. | fixed |
+| R5-SEC-12 | low | `lib/auth/session.ts` `getSession` | ADMIN sessions lasted the full 30 days. Proof: the admin session's `createdAt` set 3 days back, then `/en/admin` returned 200 and `/api/auth/me` returned the admin. An admin can refund, read and export every buyer's data. | ASVS V3.3.2 (Level 2: re-authenticate within 12 hours); V3.3.1 | `sessionLive()` (pure, `lib/auth/constants.ts`): an ADMIN session ends 12 hours after sign-in (`ADMIN_SESSION_MAX_HOURS`). The dead row is deleted on first use. Buyers and vendor staff keep 30 days, the product decision for a phone-OTP shop; idle timeout needs a `lastSeenAt` column (open, below). | fixed |
+| R5-SEC-13 | low | `lib/auth/otp.ts` `requestOtp` | No global ceiling on OTP sends. The per-phone (1 per 30 s, 5 per hour) and per-IP (20 per hour) limits stop one client, but a botnet can send to many numbers (SMS or WhatsApp pumping, a cost attack). Proof: 8 requests from 8 client IPs to 8 new numbers, all 200. | ASVS V11.1.4 (anti-automation), V2.2.1 | Open, provider side: when the SMS/WhatsApp BSP is wired (`sendOtpSms` is still a stub), turn on its fraud guard (per-prefix rate limits, conversion-based blocking) and add an alert on the daily send count. A hard global cap in the app would let an attacker lock out every sign-in. | open |
+
+Counts of new findings in pass 2: critical 0, high 0, medium 0, low 3.
+
+### Checked and found sound (pass 2)
+
+- **Cache**: `/account`, `/orders`, order detail, `/admin`, `/vendor/*` answer `private, no-cache, no-store`; `/api/auth/me` and the export `no-store`.
+- **Storage paths**: `lib/orders/storage.ts` allows `[\w./-]` only, refuses `..` and checks the resolved path stays under the root. Vendor uploads are keyed by the strict `KEY_RE` and read through `path.join` on parsed parts only. `printPdfBytes` re-checks that the item belongs to the order.
+- **Logs**: the only phone in a log line is the OTP dev echo (off in a deployment). Notifications log a masked address and the text only in dev. Error logs carry `e.message`, never request bodies.
+- **Buyer-side service functions** (`cancelOrder`, `reorder`, `submitReview`, `openDispute`, `markInstapaySent`, `startPayment`) check `buyerId === user.id` and answer NOT_FOUND otherwise. Vendor queries (`getJob`, `getRateCard`) filter by the caller's vendor.
+- **Unsubscribe**: HMAC of the user id (192 bits shown), compared in constant time; the GET page reads only the consent flag; withdrawal needs the POST.
+
+## Re-test on the rebuilt server (pass 2)
+
+| id | request | before | after |
+|---|---|---|---|
+| R5-SEC-11 | verify-otp with the RLO/NUL/BEL name above (new phone) | stored as sent | `"Ahmed FEDCBA Admin"` |
+| R5-SEC-12 | `/en/admin` with a session created 3 days ago | 200 | 307 to `/en/login?next=%2Fen%2Fadmin`, `/api/auth/me` → `{user:null}`; a fresh admin sign-in → 200; a 3-day-old buyer session still works |
+
+Tests added to `src/lib/__tests__/security-r5.test.ts` (now 13 tests). With the schema changes stashed, the R5-SEC-11 schema test fails. `sessionLive` is new, so its live before/after is the proof.
+
+## Summary
+
+New findings this round, counted before fixing: **critical 0, high 1, medium 2, low 10** (13 in total). Pass 2 found nothing of medium severity or worse.
+
+Fixed: R5-SEC-01 to R5-SEC-08 and R5-SEC-11, R5-SEC-12 (R5-SEC-08 needs a designer UI button). Open: R5-SEC-09 (lockout DoS, accepted), R5-SEC-10 (`__Host-` cookies at HTTPS deploy), R5-SEC-13 (provider fraud guard), the R5-SEC-05 prefill follow-up, plus the carried T-29 and T-30. One more for later: an idle timeout for 30-day buyer and vendor sessions (ASVS V3.3.2 at Level 2) needs an additive `Session.lastSeenAt` column. Not done this round because the schema is shared with sessions working in parallel.
+
+Verification: `npm run lint` clean; `npm run typecheck` clean; `npm test` 94 files, 8,515 tests passed; `npm run build` OK; Playwright on `next start` (`--workers=2 --trace off`): vendor, admin, storefront, journey, smoke (43 passed, 13 skipped by project), catalogue-models and checkout (28 passed, 18 skipped), and after pass 2 smoke, storefront, admin, checkout and journey (42 passed, 8 skipped). The skips are project-specific tests (desktop-only or mobile-only).
+
+## Files touched
+
+In scope (`src/lib/auth`, `src/app/api`): `src/lib/auth/erasure.ts` (new), `src/lib/auth/display-name.ts` (new), `src/lib/auth/constants.ts`, `src/lib/auth/session.ts`, `src/app/api/designs/[id]/share/route.ts`, `src/app/api/webhooks/whatsapp/route.ts`, `src/app/api/auth/verify-otp/route.ts`.
+
+Outside that scope (each change is a few lines and additive):
+- `src/lib/orders/state.ts`: new `canViewBuyerOrder` (R5-SEC-01).
+- `src/lib/orders/service.ts`: `getOrderForViewer` uses it (R5-SEC-01; one import, one line).
+- `src/lib/orders/schemas.ts`: address text cleaned (R5-SEC-11).
+- `src/components/admin/server/actions.ts`: one import plus one call in the erasure transaction (R5-SEC-02).
+- `src/app/[locale]/(store)/account/export/route.ts`, `src/components/store/account-logic.ts`: export categories and cross-site check (R5-SEC-03, 07); profile name cleaned (R5-SEC-11).
+- `src/app/[locale]/dev/layout.tsx`, `src/lib/env.ts` (`devPagesEnabled`): R5-SEC-04.
+- `src/components/marketing/HeroPhoneForm.tsx`: R5-SEC-05.
+- Tests: `src/lib/__tests__/security-r5.test.ts`, `src/components/marketing/__tests__/hero-phone-privacy.test.tsx`.

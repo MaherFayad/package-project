@@ -2,6 +2,7 @@
  * Account area logic (owner: storefront). Pure: zod schemas for the account forms and the
  * PDPL data-export document builder. Server actions in app/[locale]/(store)/account use these.
  */
+import { cleanDisplayName } from "@/lib/auth/display-name";
 import { z } from "zod";
 
 export const DATA_REQUEST_KINDS = ["EXPORT", "DELETE"] as const;
@@ -19,8 +20,9 @@ export type ActionResult<T = undefined> =
 export const profileSchema = z.object({
   name: z
     .string()
-    .trim()
-    .max(80, { message: "nameTooLong" })
+    // R5-SEC-11: control and bidi-override characters removed before the length check.
+    .transform(cleanDisplayName)
+    .pipe(z.string().max(80, { message: "nameTooLong" }))
     .transform((v) => (v === "" ? null : v)),
   email: z
     .string()

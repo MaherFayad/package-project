@@ -2,12 +2,15 @@ import { z } from "zod";
 import { DISPUTE_REASONS_LIST, PAYMENT_METHODS } from "./schema-constants";
 import { GOVERNORATE_NAMES } from "./governorates";
 import { normalizeEgyptPhone } from "@/lib/phone";
+import { cleanDisplayName } from "@/lib/auth/display-name";
 
 /** Zod schemas shared by server actions and route handlers (client-safe). */
-const opt = (max: number) => z.string().trim().max(max).optional().transform((v) => (v ? v : undefined));
+/** Address text goes on the courier label and the tax invoice: no control or bidi-override characters (R5-SEC-11). */
+const text = (min: number, max: number) => z.string().transform(cleanDisplayName).pipe(z.string().min(min).max(max));
+const opt = (max: number) => z.string().max(max * 2).transform(cleanDisplayName).pipe(z.string().max(max)).optional().transform((v) => (v ? v : undefined));
 
 export const addressSchema = z.object({
-  name: z.string().trim().min(2).max(80),
+  name: text(2, 80),
   phone: z
     .string()
     .trim()
@@ -21,8 +24,8 @@ export const addressSchema = z.object({
       return n;
     }),
   governorate: z.string().refine((g) => GOVERNORATE_NAMES.includes(g), "INVALID_GOVERNORATE"),
-  city: z.string().trim().min(2).max(60),
-  street: z.string().trim().min(3).max(160),
+  city: text(2, 60),
+  street: text(3, 160),
   building: opt(40),
   floor: opt(20),
   apartment: opt(20),

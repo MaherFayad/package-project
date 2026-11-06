@@ -38,6 +38,10 @@ import { getOrderForViewer } from "@/lib/orders/service";
 import { scrubAuditSnapshot, scrubErasedUserTraces, scrubQuoteLines, type ErasureClient } from "@/lib/auth/erasure";
 import { buildDataExport } from "@/components/store/account-logic";
 import { devPagesEnabled } from "@/lib/env";
+import { cleanDisplayName } from "@/lib/auth/display-name";
+import { ADMIN_SESSION_MAX_HOURS, sessionLive } from "@/lib/auth/constants";
+import { parseProfile } from "@/components/store/account-logic";
+import { addressSchema } from "@/lib/orders/schemas";
 import { GET as exportGet } from "@/app/[locale]/(store)/account/export/route";
 import { DELETE as unshare } from "@/app/api/designs/[id]/share/route";
 import { POST as whatsappPost } from "@/app/api/webhooks/whatsapp/route";
@@ -194,5 +198,39 @@ describe("R5-SEC-06 the WhatsApp webhook stops reading an oversized body", () =>
     expect(r.status).toBe(413);
     expect(pulled).toBeLessThan(total / 2);
     vi.unstubAllEnvs();
+  });
+});
+
+describe("R5-SEC-11 stored names carry no control or bidi-override characters", () => {
+  const evil = "Ahmed \u202eFEDCBA\u202c\u0000\u0007 Admin";
+
+  it("cleanDisplayName keeps Arabic, Latin and shaping joiners, drops controls and overrides", () => {
+    expect(cleanDisplayName(evil)).toBe("Ahmed FEDCBA Admin");
+    expect(cleanDisplayName("  منى\u200c عادل  ")).toBe("منى\u200c عادل");
+    expect(cleanDisplayName("Bloom\u2066 Candles\u2069\ufeff")).toBe("Bloom Candles");
+  });
+
+  it("profile form and delivery address are cleaned before validation", () => {
+    const p = parseProfile({ name: evil, email: "" });
+    expect(p.ok && p.data?.name).toBe("Ahmed FEDCBA Admin");
+    const a = addressSchema.parse({ name: evil, phone: "01012345678", governorate: "Cairo", city: "Nasr\u202e City", street: "14 Abbas\u0000 El Akkad St" });
+    expect(a.name).toBe("Ahmed FEDCBA Admin");
+    expect(a.city).toBe("Nasr City");
+    expect(a.street).toBe("14 Abbas El Akkad St");
+  });
+});
+
+describe("R5-SEC-12 admin sessions end 12 hours after sign-in", () => {
+  const now = new Date("2026-11-06T12:00:00Z");
+  const ago = (h: number) => new Date(now.getTime() - h * 3_600_000);
+  const in30d = new Date(now.getTime() + 30 * 86_400_000);
+
+  it("a 3-day-old admin session no longer counts; buyers and vendor staff keep 30 days", () => {
+    expect(ADMIN_SESSION_MAX_HOURS).toBe(12);
+    expect(sessionLive({ createdAt: ago(72), expiresAt: in30d }, "ADMIN", now)).toBe(false);
+    expect(sessionLive({ createdAt: ago(11), expiresAt: in30d }, "ADMIN", now)).toBe(true);
+    expect(sessionLive({ createdAt: ago(72), expiresAt: in30d }, "BUYER", now)).toBe(true);
+    expect(sessionLive({ createdAt: ago(72), expiresAt: in30d }, "VENDOR", now)).toBe(true);
+    expect(sessionLive({ createdAt: ago(1), expiresAt: ago(0.5) }, "BUYER", now)).toBe(false);
   });
 });
