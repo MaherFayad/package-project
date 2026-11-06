@@ -15,12 +15,14 @@ import styles from "./designer.module.css";
 export function LayersPanel({
   doc,
   faces,
+  faceLabel,
   issues,
   selectedId,
   onSelect,
 }: {
   doc: DesignDoc;
   faces: Partial<Record<FaceId, FaceInfo>>;
+  faceLabel?: (f: FaceId) => string;
   issues: PreflightIssue[];
   selectedId: string | null;
   onSelect: (id: string, face: FaceId, surface: PrintSurface) => void;
@@ -52,7 +54,7 @@ export function LayersPanel({
           <ul className={styles.faceList}>
             {FACE_IDS.filter((f) => faces[f]).map((f) => {
               const info = faces[f]!;
-              const d = describeFace(f, surface, info, doc.artwork[surface].layers, t);
+              const d = describeFace(f, surface, info, doc.artwork[surface].layers, t, faceLabel?.(f));
               return (
                 <li key={f}>
                   <Card padding="300">
@@ -97,7 +99,7 @@ export function LayersPanel({
             .filter((l) => !faces[l.face])
             .map((l) => (
               <Text key={l.id} as="p" variant="bodySm" tone="subdued">
-                {t(`designer.faces.${l.face}` as DictKey)}: {t("designer.layers.noPanel")}
+                {faceLabel ? faceLabel(l.face) : t(`designer.faces.${l.face}` as DictKey)}: {t("designer.layers.noPanel")}
               </Text>
             ))}
         </BlockStack>

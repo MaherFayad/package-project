@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ChevronDown, ChevronUp, CloudCheck, CloudOff, Download, MoreHorizontal, Redo2, Save, Share2, Undo2 } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, CloudCheck, CloudOff, CloudUpload, Download, MoreHorizontal, Redo2, Save, Share2, Undo2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { FACE_IDS, type ArtworkLayer, type DesignDoc, type DesignFinishCode, type DimsPreset, type FaceId, type Locale, type PrintSurface, type StructureCode } from "@/types";
 import { boardAppearance, type DielineModel } from "@/lib/dieline";
@@ -53,6 +53,7 @@ import { BADGE_QTY, fetchQuote, quoteKey, type PriceState } from "./lib/quote";
 import { designerPath } from "./lib/catalog";
 import { pruneFinishes, toggleFinish } from "./lib/config";
 import { createModelDoc } from "./lib/doc";
+import { layerName } from "./lib/describe";
 import { ConfigPanel, surfaceName, type ViewOptions } from "./ConfigPanel";
 import { ModelPicker } from "./ModelPicker";
 import lib from "./library.module.css";
@@ -182,6 +183,16 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
   const [viewOpts, setViewOpts] = useState<ViewOptions>({ dimensions: false, scene: "none", turntable: false, open: false });
   const [notFound, setNotFound] = useState(loadError === "notFound");
   const sceneRef = useRef<PackagingSceneHandle | null>(null);
+  // Phones: the 3D view is short, so its buttons sit in the row under it instead of over the box.
+  const [wide, setWide] = useState(true);
+  useEffect(() => {
+    const mq = window.matchMedia?.("(min-width: 768px)");
+    if (!mq) return;
+    const on = () => setWide(mq.matches);
+    on();
+    mq.addEventListener?.("change", on);
+    return () => mq.removeEventListener?.("change", on);
+  }, []);
   const savedDocRef = useRef<DesignDoc | null>(initialDesignId ? initialDoc : null);
 
   const selected = findLayer(doc, selectedId);
@@ -234,6 +245,13 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
 
   // ── saving ───────────────────────────────────────────────────────
   const inflight = useRef<Promise<string | null> | null>(null);
+  // Failed server saves retry on their own (10 s, 20 s, 40 s … up to 2 min) and when the
+  // browser comes back online; the local draft is always written first (WCAG 3.3: recovery).
+  const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retryDelay = useRef(10_000);
+  const saveRef = useRef<() => Promise<string | null>>(async () => null);
+  const [online, setOnline] = useState(true);
+  const touchedRef = useRef(false);
 
   const setUrl = useCallback(
     (id: string | null, code: StructureCode | string) => {
@@ -274,9 +292,17 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
           setUrl(json.id, docModelCode(current));
           saveLocalDraft({ doc: current, designId: json.id, savedAt: Date.now() });
           setSaveState(docRef.current === current ? "saved" : "dirty");
+          retryDelay.current = 10_000;
           return json.id;
         } catch {
           setSaveState("error");
+          saveLocalDraft({ doc: current, designId: designIdRef.current, savedAt: Date.now() });
+          if (retryTimer.current) clearTimeout(retryTimer.current);
+          retryTimer.current = setTimeout(() => {
+            retryTimer.current = null;
+            if (savedDocRef.current !== docRef.current) void saveRef.current();
+          }, retryDelay.current);
+          retryDelay.current = Math.min(retryDelay.current * 2, 120_000);
           return null;
         }
       })();
@@ -290,8 +316,33 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
     [setUrl],
   );
 
+  saveRef.current = () => saveToServer();
+  useEffect(() => {
+    setOnline(typeof navigator === "undefined" ? true : navigator.onLine !== false);
+    const up = () => {
+      setOnline(true);
+      if (touchedRef.current && savedDocRef.current !== docRef.current) void saveRef.current();
+    };
+    const down = () => setOnline(false);
+    window.addEventListener("online", up);
+    window.addEventListener("offline", down);
+    return () => {
+      window.removeEventListener("online", up);
+      window.removeEventListener("offline", down);
+      if (retryTimer.current) clearTimeout(retryTimer.current);
+    };
+  }, []);
+
+  const retryNow = () => {
+    if (retryTimer.current) clearTimeout(retryTimer.current);
+    retryTimer.current = null;
+    retryDelay.current = 10_000;
+    void saveToServer();
+  };
+
   // Autosave: this device right away, the server after a pause (anonymous designs too).
   const touched = hist.past.length > 0 || designId !== null;
+  touchedRef.current = touched;
   useEffect(() => {
     if (!touched) return;
     if (savedDocRef.current !== doc) setSaveState((s) => (s === "saving" ? s : "dirty"));
@@ -422,6 +473,7 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
   const onDelete = (id: string) => {
     commit(removeLayer(docRef.current, id));
     if (selectedId === id) setSelectedId(null);
+    toast.show(t("designer.artwork.deleted"), { action: { content: t("designer.history.undo"), onAction: () => dispatch({ type: "undo" }) } });
   };
   const onPlace = (where: Placement) => {
     if (!selected || !model) return;
@@ -535,7 +587,9 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
           ? t("designer.save.savedAccount")
           : t("designer.save.savedLocal")
         : saveState === "error"
-          ? t("designer.save.failed")
+          ? online
+            ? t("designer.save.failed")
+            : t("designer.save.offline")
           : saveState === "dirty"
             ? t("designer.save.unsaved")
             : "";
@@ -566,6 +620,22 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
     { id: "layers", content: t("designer.tabs.layers") },
     { id: "check", content: t("designer.tabs.check"), badge: summary.errors + summary.warnings || undefined },
   ];
+
+  const viewControls = (
+    <ViewControls
+      handle={sceneRef}
+      labels={{
+        group: t("viewer.controls"),
+        rotateLeft: t("viewer.rotateLeft"),
+        rotateRight: t("viewer.rotateRight"),
+        tiltUp: t("viewer.tiltUp"),
+        tiltDown: t("viewer.tiltDown"),
+        zoomIn: t("viewer.zoomIn"),
+        zoomOut: t("viewer.zoomOut"),
+        reset: t("viewer.reset"),
+      }}
+    />
+  );
 
   const faceOptions = FACE_IDS.filter((f) => faces[f]).map((f) => ({ value: f, label: faceLabel(f) }));
   const structureName = libModel?.name[locale] ?? t(`structures.${doc.structureCode}` as DictKey);
@@ -599,10 +669,21 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
           <Button icon={Undo2} accessibilityLabel={t("designer.history.undo")} disabled={!canUndo(hist)} onClick={() => dispatch({ type: "undo" })} />
           <Button icon={Redo2} accessibilityLabel={t("designer.history.redo")} disabled={!canRedo(hist)} onClick={() => dispatch({ type: "redo" })} />
         </ButtonGroup>
-        <span className={styles.saveStatus} role="status" data-testid="save-status">
-          {saveState === "error" ? <CloudOff size={16} aria-hidden /> : saveState === "saved" ? <CloudCheck size={16} aria-hidden /> : null}
+        <span className={styles.saveStatus} role="status" data-testid="save-status" data-state={saveState} title={statusText || undefined}>
+          {saveState === "error" ? (
+            <CloudOff size={16} aria-hidden />
+          ) : saveState === "saved" ? (
+            <CloudCheck size={16} aria-hidden />
+          ) : saveState === "saving" || saveState === "dirty" ? (
+            <CloudUpload size={16} aria-hidden />
+          ) : null}
           <span className={styles.saveStatusText}>{statusText}</span>
         </span>
+        {saveState === "error" && online ? (
+          <Button size="slim" variant="tertiary" onClick={retryNow}>
+            {t("designer.save.retry")}
+          </Button>
+        ) : null}
         <span className={styles.toolbarSpacer} />
         <span className={styles.preflightChip}>
           <PreflightBadge summary={summary} />
@@ -722,21 +803,7 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
                     fallback={t("viewer.unsupported")}
                   />
                 )}
-                <div className={styles.viewControls}>
-                  <ViewControls
-                    handle={sceneRef}
-                    labels={{
-                      group: t("viewer.controls"),
-                      rotateLeft: t("viewer.rotateLeft"),
-                      rotateRight: t("viewer.rotateRight"),
-                      tiltUp: t("viewer.tiltUp"),
-                      tiltDown: t("viewer.tiltDown"),
-                      zoomIn: t("viewer.zoomIn"),
-                      zoomOut: t("viewer.zoomOut"),
-                      reset: t("viewer.reset"),
-                    }}
-                  />
-                </div>
+                {wide ? <div className={styles.viewControls}>{viewControls}</div> : null}
               </div>
               {view === "face" && faceInfo ? (
                 <FaceEditor
@@ -756,8 +823,9 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
                   onChange={onLayerChange}
                   onCommit={seal}
                   onDelete={onDelete}
-                  label={t("designer.view.faceEditorLabel", { face: t(`designer.faces.${face}` as DictKey) })}
+                  label={t("designer.view.faceEditorLabel", { face: faceLabel(face) })}
                   hint={t("designer.view.faceEditorHint")}
+                  selectedLabel={(l) => `${t("designer.artwork.selected")}: ${layerName(l, t)}`}
                 />
               ) : null}
               {view === "dieline" ? (
@@ -778,6 +846,7 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
           )}
         </div>
 
+        {view === "3d" && !wide ? <div className={styles.viewControlsRow}>{viewControls}</div> : null}
         {view === "3d" && isVessel ? (
           <div className={styles.foldRow}>
             <ButtonGroup variant="segmented" accessibilityLabel={t("library.panel.closure")}>
@@ -848,6 +917,7 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
               ) : tab === 1 ? (
                 <ArtworkPanel
                   faces={faces}
+                  faceLabel={faceLabel}
                   face={face}
                   surface={surface}
                   bothSides={bothSides}
@@ -876,9 +946,9 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
                   onDelete={() => selected && onDelete(selected.id)}
                 />
               ) : tab === 2 ? (
-                <LayersPanel doc={doc} faces={faces} issues={issues} selectedId={selectedId} onSelect={(id, f, s) => goToLayer(id, f, s)} />
+                <LayersPanel doc={doc} faces={faces} faceLabel={faceLabel} issues={issues} selectedId={selectedId} onSelect={(id, f, s) => goToLayer(id, f, s)} />
               ) : (
-                <PreflightPanel issues={issues} summary={summary} layers={allLayers(doc)} onShow={(id, f) => goToLayer(id, f)} />
+                <PreflightPanel issues={issues} summary={summary} layers={allLayers(doc)} faceLabel={faceLabel} onShow={(id, f) => goToLayer(id, f)} />
               )}
               {!user && tab !== 3 ? (
                 <Text as="p" variant="bodySm" tone="subdued">

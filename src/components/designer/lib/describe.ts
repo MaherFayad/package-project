@@ -66,9 +66,11 @@ export function describeFace(
   size: { width: number; height: number },
   layers: ArtworkLayer[],
   t: TFunction,
+  /** Display name (containers name their print areas: "Wrap label", "Back label"…). */
+  name?: string,
 ): FaceDescription {
   const on = layers.filter((l) => l.face === face && l.surface === surface).reverse();
-  const heading = t("designer.describe.face", { face: t(`designer.faces.${face}` as DictKey), w: mm(size.width), h: mm(size.height) });
+  const heading = t("designer.describe.face", { face: name ?? t(`designer.faces.${face}` as DictKey), w: mm(size.width), h: mm(size.height) });
   const summary = on.length === 0 ? t("designer.layers.empty") : on.length === 1 ? t("designer.describe.oneItem") : t("designer.describe.items", { count: on.length });
   return { face, surface, heading, summary, items: on.map((l) => ({ id: l.id, text: describeLayer(l, size, t), layer: l })) };
 }

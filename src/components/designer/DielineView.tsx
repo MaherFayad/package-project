@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { dielineToSvg, type DielineModel } from "@/lib/dieline";
 import styles from "./designer.module.css";
 
@@ -24,6 +24,16 @@ export function DielineView({
   panelLabels: Record<string, string>;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const figRef = useRef<HTMLElement>(null);
+  // Panel names only when the sheet is drawn large enough to read them (phones: legend only).
+  const [roomy, setRoomy] = useState(true);
+  useEffect(() => {
+    const el = figRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => setRoomy(el.clientWidth >= 560));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => {
     const c = canvasRef.current;
@@ -57,16 +67,17 @@ export function DielineView({
         showBleed: false,
         panelFill: "none",
         labels: panelLabels,
+        showLabels: roomy,
         colors: { glue: "rgba(48, 48, 48, 0.18)", label: "#303030" },
         strokeMm: Math.max(0.35, Math.max(model.sheet.width, model.sheet.height) / 900),
       }),
-    [model, panelLabels],
+    [model, panelLabels, roomy],
   );
   // White halo so panel names stay readable on dark artwork.
   const haloed = svg.replace('<g data-layer="labels"', `<g data-layer="labels" stroke="#ffffff" stroke-width="${Math.max(0.6, model.sheet.width / 500)}" paint-order="stroke" stroke-linejoin="round"`);
 
   return (
-    <figure className={styles.dieline} dir="ltr" aria-label={label}>
+    <figure ref={figRef} className={styles.dieline} dir="ltr" aria-label={label}>
       <div className={styles.dielineSheet} style={{ aspectRatio: `${model.sheet.width} / ${model.sheet.height}` }}>
         <canvas ref={canvasRef} className={styles.dielineCanvas} aria-hidden="true" />
         <div className={styles.dielineSvg} aria-hidden="true" dangerouslySetInnerHTML={{ __html: haloed }} />

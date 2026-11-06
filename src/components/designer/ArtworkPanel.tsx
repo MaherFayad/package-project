@@ -34,6 +34,7 @@ import styles from "./designer.module.css";
 
 export interface ArtworkPanelProps {
   faces: Partial<Record<FaceId, FaceInfo>>;
+  faceLabel?: (f: FaceId) => string;
   face: FaceId;
   surface: PrintSurface;
   bothSides: boolean;
@@ -60,7 +61,7 @@ export interface ArtworkPanelProps {
 export function ArtworkPanel(p: ArtworkPanelProps) {
   const { t } = useI18n();
   const full = p.layerTotal >= MAX_LAYERS;
-  const faceOptions = FACE_IDS.filter((f) => p.faces[f]).map((f) => ({ value: f, label: t(`designer.faces.${f}` as DictKey) }));
+  const faceOptions = FACE_IDS.filter((f) => p.faces[f]).map((f) => ({ value: f, label: p.faceLabel ? p.faceLabel(f) : t(`designer.faces.${f}` as DictKey) }));
 
   return (
     <BlockStack gap="400">

@@ -4,6 +4,7 @@ import { Check } from "lucide-react";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { InlineStack, Text, TextField } from "@/components/ui";
 import { useI18n } from "@/i18n/client";
+import type { DictKey } from "@/i18n/types";
 import styles from "./designer.module.css";
 
 /**
@@ -121,8 +122,8 @@ export function ColorField({
             style={{ background: c }}
             data-light={c === "#ffffff" || c === "#f2c14e" || c === "#e4deff" ? "true" : undefined}
             aria-pressed={value?.toLowerCase() === c}
-            aria-label={t("designer.artwork.swatch", { color: c })}
-            title={c}
+            aria-label={t("designer.artwork.swatch", { color: `${c}${t("designer.describe.sep")}${t(`designer.artwork.colorNames.${c}` as DictKey)}` })}
+            title={t(`designer.artwork.colorNames.${c}` as DictKey)}
             onClick={() => onChange(c)}
           >
             {value?.toLowerCase() === c && <Check aria-hidden size={14} />}
@@ -139,7 +140,7 @@ export function ColorField({
             dir="ltr"
             maxLength={7}
             size="slim"
-            error={hex && !valid ? " " : undefined}
+            error={hex && !valid ? t("designer.artwork.hexError") : undefined}
             onChange={(v) => {
               const next = v.startsWith("#") ? v : `#${v}`;
               setHex(v === "" ? "" : next);
