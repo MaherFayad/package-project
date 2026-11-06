@@ -53,6 +53,10 @@
   from { opacity: 0; transform: scale(0.94); }
   to { opacity: 1; transform: none; }
 }
+@keyframes m-scale-only {
+  from { transform: scale(0.96); }
+  to { transform: none; }
+}
 @keyframes m-float {
   0%, 100% { transform: translate3d(0, 0, 0); }
   50% { transform: translate3d(0, -10px, 0); }
@@ -93,13 +97,16 @@ html[data-motion="on"] [data-reveal="scale"]:not([data-revealed]) { transform: s
   animation: m-rise-in var(--m-dur-reveal) var(--m-ease-out) both;
   animation-delay: calc(var(--motion-instant) + var(--m-i, 0) * var(--m-stagger));
 }
-/* Display headlines (the LCP text): rise without fading, so they count as painted at once. */
+/* LCP candidates (display headlines, hero leads, hero media): rise or settle WITHOUT fading.
+   Chrome does not count a paint at opacity 0 as the LCP, and a delayed `both` fade keeps the
+   element at opacity 0 until the main thread is free to start the animation; on a 4x-throttled
+   phone that is after hydration, up to 1.2 s after first paint (R2-MK-03). */
 .m-enter-lcp {
   animation: m-rise-only var(--m-dur-reveal) var(--m-ease-out) both;
   animation-delay: calc(var(--motion-instant) + var(--m-i, 0) * var(--m-stagger));
 }
 .m-enter-scale {
-  animation: m-scale-in var(--m-dur-reveal) var(--m-ease-out) both;
+  animation: m-scale-only var(--m-dur-reveal) var(--m-ease-out) both;
   animation-delay: calc(120ms + var(--m-i, 0) * var(--m-stagger));
 }
 

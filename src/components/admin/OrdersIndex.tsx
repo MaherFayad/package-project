@@ -24,8 +24,8 @@ import {
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { formatDate, formatMoney, formatNumber } from "@/lib/format";
-import { statusBadge } from "@/lib/orders/state";
-import type { OrderStatus } from "@/types";
+import { statusTone } from "@/lib/orders/status-tone";
+import { adminStyles } from "./charts";
 import { asOrderView, countByOrderView, filterOrders, ORDER_SORTS, ORDER_VIEWS, type AdminOrderRow, type OrderSort } from "./lib/orders";
 
 function asSort(v: string | null): OrderSort {
@@ -37,7 +37,8 @@ const ADMIN_STATUS_LABELS = new Set(["PAID"]);
 
 export function OrderStatusBadge({ status }: { status: string }) {
   const { t } = useI18n();
-  const b = statusBadge(status as OrderStatus);
+  // CR-08: one tone map for buyer, vendor and admin (labels stay per area).
+  const b = statusTone(status);
   return (
     <Badge tone={b.tone} progress={b.progress}>
       {t((ADMIN_STATUS_LABELS.has(status) ? `admin.orders.statusLabel.${status}` : `orderStatus.${status}`) as DictKey)}
@@ -82,6 +83,7 @@ export function OrdersIndex({ rows, vendors, openDisputes }: { rows: AdminOrderR
     <Page fullWidth title={t("admin.orders.title")} titleIcon={ClipboardList}>
       <BlockStack gap="400">
         <MetricsStrip
+          accessibilityLabel={t("admin.orders.metricsLabel")}
           metrics={[
             { label: t("admin.orders.metrics.total"), value: formatNumber(counts.all) },
             { label: t("admin.orders.metrics.attention"), value: formatNumber(counts.attention) },
@@ -167,17 +169,26 @@ export function OrdersIndex({ rows, vendors, openDisputes }: { rows: AdminOrderR
                       </Badge>
                     ) : null}
                   </InlineStack>
+                  {/* Phones: the table scrolls sideways, so status and total also sit under the number. */}
+                  <div className={adminStyles.PhoneOnly}>
+                    <InlineStack gap="200" blockAlign="center">
+                      <OrderStatusBadge status={r.status} />
+                      <Text as="span" variant="bodySm" numeric>
+                        <bdi>{formatMoney(r.totalPiasters, locale, { alwaysDecimals: true })}</bdi>
+                      </Text>
+                    </InlineStack>
+                  </div>
                 </IndexTableCell>
                 <IndexTableCell>
                   <time dateTime={r.placedAt}>{formatDate(r.placedAt, locale, "medium")}</time>
                 </IndexTableCell>
-                <IndexTableCell>{r.buyerName || <bdi dir="ltr">{r.buyerPhone}</bdi>}</IndexTableCell>
+                <IndexTableCell>{r.buyerName ? <bdi>{r.buyerName}</bdi> : <bdi dir="ltr">{r.buyerPhone}</bdi>}</IndexTableCell>
                 <IndexTableCell>{r.vendorName}</IndexTableCell>
                 <IndexTableCell alignment="end" numeric>
-                  {formatMoney(r.totalPiasters, locale)}
+                  {formatMoney(r.totalPiasters, locale, { alwaysDecimals: true })}
                 </IndexTableCell>
                 <IndexTableCell alignment="end" numeric>
-                  {formatMoney(r.marginPiasters, locale)}
+                  {formatMoney(r.marginPiasters, locale, { alwaysDecimals: true })}
                 </IndexTableCell>
                 <IndexTableCell>
                   {r.paymentStatus ? (

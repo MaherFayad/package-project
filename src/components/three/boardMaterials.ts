@@ -9,10 +9,7 @@ import {
   type Texture,
 } from "three";
 import type { FinishCode } from "@/types";
-import { boardAppearance, finishSurface, type BoardAppearance } from "@/lib/dieline";
-
-/** Kraft liner colour from boardAppearance (lib/dieline/materials.ts). */
-const KRAFT_HEX = boardAppearance("E_FLUTE_KRAFT").outside.toLowerCase();
+import { finishSurface, type BoardAppearance } from "@/lib/dieline";
 
 /** Material slots used by panel geometry groups. */
 export const MAT_OUTSIDE = 0;
@@ -134,11 +131,10 @@ export function createBoardMaterials(input: BoardMaterialInput): BoardMaterialSe
 
   const outsideMap = input.outsideMap ?? fibreTexture(appearance.outside, appearance.fluteColor ? 10 : 3, sheet);
   if (!input.outsideMap && outsideMap) owned.push(outsideMap);
-  // Process inks are transparent and there is no white underprint: on kraft the print multiplies
-  // with the brown liner (same rule as the finished-board path).
-  const kraftShowThrough = !!input.outsideMap && appearance.outside.toLowerCase() === KRAFT_HEX;
+  // (Ink-on-kraft tinting lives in the finished-board shader, which can tell printed pixels from the
+  // liner-coloured background; configurator boards always render through it.)
   const outsideParams = {
-    color: new Color(kraftShowThrough ? "#dcc7a8" : outsideMap ? "#ffffff" : appearance.outside),
+    color: new Color(outsideMap ? "#ffffff" : appearance.outside),
     map: outsideMap ?? null,
     roughness: surface.roughness,
     metalness: 0,

@@ -41,3 +41,15 @@ export function governorateKey(name: string): GovernorateKey | null {
   const n = name.trim().toLowerCase();
   return GOVERNORATES.find((g) => g.name.toLowerCase() === n)?.key ?? null;
 }
+
+export const GOVERNORATE_KEYS = GOVERNORATES.map((g) => g.key) as readonly GovernorateKey[];
+
+/**
+ * Governorate code (e.g. "CAIRO") from either a code or a stored English name ("Cairo").
+ * Codes are what new records (quote leads) store; addresses keep the English name.
+ */
+export function toGovernorateKey(v: string | null | undefined): GovernorateKey | null {
+  if (!v) return null;
+  const up = v.trim().toUpperCase();
+  return (GOVERNORATE_KEYS as readonly string[]).includes(up) ? (up as GovernorateKey) : governorateKey(v);
+}

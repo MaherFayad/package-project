@@ -86,13 +86,13 @@ export function DisputesIndex({ rows }: { rows: DisputeRow[] }) {
                 </IndexTableRowLink>
               </IndexTableCell>
               <IndexTableCell>{t(`admin.disputes.reasons.${r.reason}` as DictKey)}</IndexTableCell>
-              <IndexTableCell>{r.buyerName || t("admin.users.noName")}</IndexTableCell>
+              <IndexTableCell><bdi>{r.buyerName || t("admin.users.noName")}</bdi></IndexTableCell>
               <IndexTableCell>{locale === "ar" ? r.vendorNameAr : r.vendorNameEn}</IndexTableCell>
               <IndexTableCell>
                 <time dateTime={r.createdAt}>{formatDate(r.createdAt, locale, "medium")}</time>
               </IndexTableCell>
               <IndexTableCell alignment="end" numeric>
-                {formatMoney(r.totalPiasters, locale)}
+                {formatMoney(r.totalPiasters, locale, { alwaysDecimals: true })}
               </IndexTableCell>
               <IndexTableCell>
                 <DisputeStatusBadge status={r.status} />

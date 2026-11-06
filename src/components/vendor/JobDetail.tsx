@@ -62,7 +62,8 @@ export function JobDetail({ job, vendorName }: { job: JobDetailDTO; vendorName: 
   const base = `/${locale}/vendor`;
   const pdfUnlocked = ["ACCEPTED", "IN_PRODUCTION", "QC_PENDING", "READY_TO_SHIP", "SHIPPED", "DELIVERED"].includes(job.status);
   const pdfUrl = `/api/vendor/jobs/${job.id}/print-pdf${item ? `?item=${item.id}` : ""}`;
-  const dielineUrl = `/api/vendor/jobs/${job.id}/dieline${item ? `?item=${item.id}` : ""}`;
+  // Added by 3D engine (CR-27): localized panel labels
+  const dielineUrl = `/api/vendor/jobs/${job.id}/dieline?lang=${locale}${item ? `&item=${item.id}` : ""}`;
   const structureName = t(`structures.${job.structureCode}` as DictKey);
   // The exact model the buyer designed on; the rate card structure is only how it is priced.
   const model = item?.model && item.model.code !== item.structureCode ? item.model : null;
@@ -78,13 +79,9 @@ export function JobDetail({ job, vendorName }: { job: JobDetailDTO; vendorName: 
       loading: busy === "start",
       onAction: () => run("start", () => startProduction(job.id), t("vendorPortal.job.productionStarted")),
     };
-  else if (actions.includes("uploadQc"))
-    primaryAction = {
-      content: t("vendorPortal.job.actions.submitQc"),
-      disabled: !actions.includes("submitQc"),
-      loading: busy === "submitQc",
-      onAction: () => run("submitQc", () => submitQc(job.id), t("vendorPortal.job.qcSubmitted")),
-    };
+  // CR-52: "Submit for quality check" lives once, at the bottom of the QC card, next to the
+  // checklist that explains why it is disabled. The header links there instead.
+  else if (actions.includes("uploadQc")) primaryAction = { content: t("vendorPortal.job.actions.goToQc"), url: "#qc" };
 
   // Downloads live in the "Production files" card; the header keeps only the workflow actions.
   const secondaryActions: PageAction[] = [
@@ -129,7 +126,7 @@ export function JobDetail({ job, vendorName }: { job: JobDetailDTO; vendorName: 
               {e.by === "you" ? vendorName : t("meta.siteName")}
             </Text>
             {": "}
-            <span className={styles.PreWrap}>{e.note}</span>
+            <span className={styles.PreWrap} dir="auto">{e.note}</span>
           </span>
         );
       } else if (e.type === "VENDOR_DECLINED") {
@@ -264,7 +261,7 @@ export function JobDetail({ job, vendorName }: { job: JobDetailDTO; vendorName: 
                   </dl>
                 ) : null}
                 {/* eslint-disable-next-line @next/next/no-img-element -- generated SVG from our API, sized by CSS */}
-                <img className={styles.Dieline} src={`${dielineUrl}${item ? "&" : "?"}inline=1`} alt={t("vendorPortal.job.dielinePreview", { name: productName })} loading="lazy" />
+                <img className={styles.Dieline} src={`${dielineUrl}&inline=1`} alt={t("vendorPortal.job.dielinePreview", { name: productName })} loading="lazy" />
               </BlockStack>
             </Card>
 
@@ -285,9 +282,9 @@ export function JobDetail({ job, vendorName }: { job: JobDetailDTO; vendorName: 
             </Card>
 
             {showQcCard ? (
+              <div id="qc" className={styles.Anchor}>
               <Card
                 title={t("vendorPortal.job.qcTitle")}
-                id="qc"
                 footer={
                   canUploadQc ? (
                     <Button
@@ -390,6 +387,7 @@ export function JobDetail({ job, vendorName }: { job: JobDetailDTO; vendorName: 
                   ) : null}
                 </BlockStack>
               </Card>
+              </div>
             ) : null}
 
           </BlockStack>

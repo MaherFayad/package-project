@@ -1,12 +1,14 @@
 import "server-only";
 import { createHash } from "node:crypto";
+import { cache } from "react";
+import { revalidateTag } from "next/cache";
 import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { canonicalJson, fromJson, toJson } from "@/lib/json";
 import type { SessionUser } from "@/lib/auth/session";
 import { siteUrl } from "@/lib/env";
 import {
-  QUOTE_VALIDITY_HOURS,
+  QTY_TIERS,
   type DesignDoc,
   type DisputeReason,
   type Dims,
@@ -22,6 +24,9 @@ import { rowToDoc } from "@/components/designer/server";
 import { designQuoteFields, priceTable, quote, toPublicOffer, zoneForGovernorate, type PublicVendorOffer, type QuoteOutcome, type VendorOffer } from "@/lib/pricing";
 import { loadPricingData } from "@/lib/pricing/server";
 import { loadPricingConfig } from "@/components/admin/server/settings";
+import { HEADLINE_DEFAULTS } from "@/lib/pricing/headline";
+import { loadCheckoutSettings } from "./checkout-settings";
+import { SAMPLE_LINE_LABEL, SAMPLE_ORDER_NOTE, applySampleCredit, sampleOffer } from "./sample";
 import { getPaymentProvider, mockPaymentsEnabled, paymentConfig, type Intention, type WebhookOutcome, type WebhookRequest } from "@/lib/payments";
 import { getShippingProvider, type TrackingEvent } from "@/lib/shipping";
 import { notify } from "@/lib/notify";
@@ -29,9 +34,10 @@ import { track } from "@/lib/analytics/track";
 import { isReprint } from "@/components/admin/lib/metrics";
 import { generatePrintPdf } from "./pdf/print";
 import { putFile, getFile } from "./storage";
-import { assertTransition, canBuyerCancel, canOpenDispute, canReview, isPaidStatus, type Actor } from "./state";
+import { assertTransition, canBuyerCancel, canViewOrder, canOpenDispute, canReview, isPaidStatus, type Actor } from "./state";
 import { isQuoteValid, nextSequence, orderTotals } from "./totals";
 import { decidePaymentOutcome, storedGatewayRef } from "./payment-rules";
+import { preflightBlocks, proofPreflight, type ProofPreflight } from "./preflight";
 
 /**
  * Order service (owner: checkout). Every order mutation in the app goes through here so the
@@ -51,6 +57,7 @@ export class OrderError extends Error {
       | "AMOUNT_MISMATCH"
       | "MANUAL_QUOTE"
       | "PAYMENT_UNAVAILABLE"
+      | "PREFLIGHT_BLOCKED"
       | "NOT_ALLOWED",
   ) {
     super(code);
@@ -58,7 +65,8 @@ export class OrderError extends Error {
   }
 }
 
-const DEFAULT_COLOURS = 4;
+// Same inputs as the public pages and the designer badge for anything the buyer has not chosen (B-26).
+const DEFAULT_COLOURS = HEADLINE_DEFAULTS.colours;
 
 // ───────────────────────── designs & quotes ─────────────────────────
 
@@ -72,9 +80,21 @@ export async function loadCheckoutDesign(designId: string, user: SessionUser): P
   return doc ? { doc, thumbnailUrl: row.thumbnailUrl } : null;
 }
 
+/**
+ * Rate cards, vendors, materials and pricing settings for this request, read in parallel and only
+ * once per request (`react.cache`: the checkout page prices the chosen quantity AND the tier table,
+ * which used to read everything twice, PERF-20). Deliberately NOT cached across requests: prices
+ * that become an order must come from the database as it is now.
+ */
+const pricingInputs = cache(async () => {
+  const [data, config] = await Promise.all([loadPricingData(), loadPricingConfig()]);
+  return { data, config };
+});
+
 /** Instant quote for a design (internal: includes vendor cost; never send to the browser). */
 export async function quoteDesign(doc: DesignDoc, opts: { quantity: number; governorate?: string; vendorId?: string }): Promise<QuoteOutcome> {
-  const zone = (opts.governorate && zoneForGovernorate(opts.governorate)) || "GREATER_CAIRO";
+  const zone = (opts.governorate && zoneForGovernorate(opts.governorate)) || HEADLINE_DEFAULTS.zone;
+  const { data, config } = await pricingInputs();
   return quote(
     {
       ...designQuoteFields(doc),
@@ -83,8 +103,8 @@ export async function quoteDesign(doc: DesignDoc, opts: { quantity: number; gove
       vendorId: opts.vendorId,
       zone,
     },
-    await loadPricingData(),
-    { config: await loadPricingConfig() },
+    data,
+    { config },
   );
 }
 
@@ -93,9 +113,77 @@ export interface CheckoutOffer extends PublicVendorOffer {
   pay: ReturnType<typeof orderTotals>;
 }
 
-export function toCheckoutOffer(o: VendorOffer | PublicVendorOffer): CheckoutOffer {
+/**
+ * `prepayDiscountPct` comes from `loadCheckoutSettings()` (admin setting, default 3%, B-11).
+ * Samples pay their fixed price (no prepay discount); a regular order can carry a sample credit (B-05).
+ */
+export function toCheckoutOffer(o: VendorOffer | PublicVendorOffer, prepayDiscountPct: number, opts: { sample?: boolean; creditPiasters?: number } = {}): CheckoutOffer {
   const pub = "internal" in o ? toPublicOffer(o as VendorOffer) : o;
-  return { ...pub, pay: orderTotals(pub.lines, paymentConfig().prepayDiscountPct) };
+  return { ...pub, pay: buyerTotals(pub.lines, prepayDiscountPct, opts) };
+}
+
+function buyerTotals(lines: QuoteLine[], prepayDiscountPct: number, opts: { sample?: boolean; creditPiasters?: number }) {
+  if (opts.sample) return orderTotals(lines, 0);
+  return applySampleCredit(orderTotals(lines, prepayDiscountPct), opts.creditPiasters ?? 0);
+}
+
+// ───────────────────────── samples (B-05) ─────────────────────────
+
+export interface SampleCredit {
+  piasters: number;
+  sampleOrderId: string;
+  sampleNumber: string;
+  expiresAt: Date;
+}
+
+/**
+ * The buyer's unused sample credit for this design: a paid (not cancelled or refunded) sample
+ * order of the same design, paid within `creditDays`, whose credit is not used by a live order.
+ */
+export async function sampleCreditFor(userId: string, designId: string, now = new Date()): Promise<SampleCredit | null> {
+  const settings = (await loadCheckoutSettings()).sample;
+  if (settings.creditDays <= 0) return null;
+  const since = new Date(now.getTime() - settings.creditDays * 86_400_000);
+  const rows = await db.order.findMany({
+    where: {
+      buyerId: userId,
+      paidAt: { gte: since },
+      status: { notIn: ["CANCELLED", "REFUNDED", "PENDING_PAYMENT"] },
+      productionEvents: { some: { type: "NOTE", note: SAMPLE_ORDER_NOTE } },
+      items: { some: { proof: { designId } } },
+    },
+    orderBy: { paidAt: "asc" },
+    select: { id: true, number: true, paidAt: true, quote: { select: { lines: true } }, productionEvents: { where: { type: "NOTE", note: { startsWith: "SAMPLE_CREDITED:" } }, select: { note: true } } },
+    take: 10,
+  });
+  for (const r of rows) {
+    const usedBy = r.productionEvents.map((e) => e.note!.slice("SAMPLE_CREDITED:".length));
+    if (usedBy.length) {
+      const live = await db.order.count({ where: { number: { in: usedBy }, status: { notIn: ["CANCELLED"] } } });
+      if (live > 0) continue;
+    }
+    const lines = r.quote ? fromJson<QuoteLine[]>(r.quote.lines) : null;
+    const goods = (lines ?? []).filter((l) => l.labelKey === SAMPLE_LINE_LABEL).reduce((sum, l) => sum + l.totalPiasters, 0);
+    if (goods <= 0 || !r.paidAt) continue;
+    return { piasters: goods, sampleOrderId: r.id, sampleNumber: r.number, expiresAt: new Date(r.paidAt.getTime() + settings.creditDays * 86_400_000) };
+  }
+  return null;
+}
+
+/** Samples ordered this calendar month (Cairo time is close enough for a cap), platform-wide. */
+async function samplesThisMonth(now = new Date()): Promise<number> {
+  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  return db.productionEvent.count({ where: { type: "NOTE", note: SAMPLE_ORDER_NOTE, createdAt: { gte: start } } });
+}
+
+/** Sample offers for a design: each capable printer's delivery, the fixed sample price. */
+export async function sampleOffers(doc: DesignDoc, governorate?: string): Promise<{ offers: VendorOffer[]; pieces: number } | null> {
+  const settings = (await loadCheckoutSettings()).sample;
+  if (!settings.enabled) return null;
+  if (settings.monthlyCap > 0 && (await samplesThisMonth()) >= settings.monthlyCap) return null;
+  const outcome = await quoteDesign(doc, { quantity: QTY_TIERS[0], governorate });
+  if (outcome.mode !== "instant" || outcome.offers.length === 0) return null;
+  return { offers: outcome.offers.map((o) => sampleOffer(o, settings.maxPieces, settings.pricePiasters)), pieces: settings.maxPieces };
 }
 
 // ───────────────────────── numbering ─────────────────────────
@@ -139,6 +227,10 @@ export interface PlaceOrderInput {
   /** 3D render (PNG/JPEG bytes) captured in the browser at approval time. */
   preview?: Buffer | null;
   locale: Locale;
+  /** Paid sample (B-05): `quantity` is ignored, the sample pieces and price come from settings. */
+  sample?: boolean;
+  /** The buyer saw the red preflight issues and approves anyway (recorded on the proof). */
+  acknowledgePreflight?: boolean;
 }
 
 /**
@@ -149,6 +241,24 @@ export interface PlaceOrderInput {
 export async function placeOrder(user: SessionUser, input: PlaceOrderInput): Promise<{ orderId: string; number: string }> {
   const design = await loadCheckoutDesign(input.designId, user);
   if (!design) throw new OrderError("NOT_FOUND");
+  // B-04: production preflight on the exact snapshot being approved (same rules as the designer).
+  const preflight = proofPreflight({ ...design.doc, id: input.designId }, input.acknowledgePreflight === true);
+  if (preflightBlocks(preflight)) throw new OrderError("PREFLIGHT_BLOCKED");
+  if (input.sample) {
+    const samples = await sampleOffers(design.doc, input.address.governorate);
+    const offer = samples?.offers.find((o) => o.vendorId === input.vendorId);
+    if (!offer) throw new OrderError("OFFER_UNAVAILABLE");
+    return createOrderFromOffer(user, {
+      doc: { ...design.doc, id: input.designId },
+      offer,
+      sample: true,
+      preflight,
+      address: input.address,
+      approval: input.approval,
+      preview: input.preview ?? null,
+      locale: input.locale,
+    });
+  }
   const outcome = await quoteDesign(design.doc, { quantity: input.quantity, governorate: input.address.governorate, vendorId: input.vendorId });
   if (outcome.mode !== "instant") throw new OrderError("MANUAL_QUOTE");
   const offer = outcome.offers.find((o) => o.vendorId === input.vendorId);
@@ -156,10 +266,12 @@ export async function placeOrder(user: SessionUser, input: PlaceOrderInput): Pro
   return createOrderFromOffer(user, {
     doc: { ...design.doc, id: input.designId },
     offer,
+    credit: await sampleCreditFor(user.id, input.designId),
     address: input.address,
     approval: input.approval,
     preview: input.preview ?? null,
     locale: input.locale,
+    preflight,
   });
 }
 
@@ -174,13 +286,18 @@ async function createOrderFromOffer(
     preview: Buffer | null;
     locale: Locale;
     note?: string;
+    sample?: boolean;
+    credit?: SampleCredit | null;
+    preflight?: ProofPreflight;
   },
 ): Promise<{ orderId: string; number: string }> {
-  const cfg = paymentConfig();
-  const totals = orderTotals(p.offer.lines, cfg.prepayDiscountPct);
+  const totals = buyerTotals(p.offer.lines, (await loadCheckoutSettings()).prepayDiscountPct, { sample: p.sample, creditPiasters: p.credit?.piasters });
   const product = p.offer.lines.find((l) => l.kind === "PRODUCT");
   const now = new Date();
-  const validUntil = new Date(Math.min(new Date(p.offer.validUntil).getTime(), now.getTime() + QUOTE_VALIDITY_HOURS * 3_600_000));
+  // Admin's quote validity (clamped to 1 to 72 h in makeConfig), the same value the designer and
+  // the public pages promise (B-14). The offer's own validUntil already used it; this is the cap.
+  const validityHours = (await loadPricingConfig()).quoteValidityHours;
+  const validUntil = new Date(Math.min(new Date(p.offer.validUntil).getTime(), now.getTime() + validityHours * 3_600_000));
   const designId = p.doc.id!;
 
   const result = await withRetry(() =>
@@ -198,6 +315,7 @@ async function createOrderFromOffer(
             approvedAt: now,
             approvedIp: p.approval?.ip ?? null,
             approvedById: user.id,
+            ...(p.preflight ? { preflight: toJson(p.preflight) } : {}),
           },
         });
         proofId = proof.id;
@@ -256,11 +374,22 @@ async function createOrderFromOffer(
           productionEvents: {
             create: [
               { type: "ORDER_PLACED", actorId: user.id, note: p.note ?? null, createdAt: now },
-              { type: "PROOF_APPROVED", actorId: user.id, createdAt: now },
+              {
+                type: "PROOF_APPROVED",
+                actorId: user.id,
+                createdAt: now,
+                // Vendor and ops see what was approved: e.g. "PREFLIGHT:1E/2W:ACK".
+                note: p.preflight?.ran ? `PREFLIGHT:${p.preflight.errors}E/${p.preflight.warnings}W${p.preflight.acknowledged && p.preflight.errors ? ":ACK" : ""}` : null,
+              },
+              ...(p.sample ? [{ type: "NOTE", actorId: user.id, note: SAMPLE_ORDER_NOTE, createdAt: now }] : []),
+              ...(p.credit ? [{ type: "NOTE", actorId: user.id, note: `SAMPLE_CREDIT:${p.credit.sampleNumber}`, createdAt: now }] : []),
             ],
           },
         },
       });
+      if (p.credit) {
+        await tx.productionEvent.create({ data: { orderId: p.credit.sampleOrderId, type: "NOTE", actorId: user.id, note: `SAMPLE_CREDITED:${number}`, createdAt: now } });
+      }
       return { orderId: order.id, number, proofId };
     }),
   );
@@ -308,12 +437,8 @@ const orderInclude = {
 
 export type OrderDetail = Prisma.OrderGetPayload<{ include: typeof orderInclude }>;
 
-/** Buyer owns it, vendor staff of its vendor, or ADMIN. */
-export function canViewOrder(order: { buyerId: string; vendorId: string }, user: SessionUser): boolean {
-  if (user.role === "ADMIN") return true;
-  if (order.buyerId === user.id) return true;
-  return user.role === "VENDOR" && !!user.vendorId && user.vendorId === order.vendorId;
-}
+/** Buyer, ADMIN, or the order's vendor staff once it was paid (pure rule in ./state). */
+export { canViewOrder };
 
 export async function getOrderForViewer(idOrNumber: string, user: SessionUser): Promise<OrderDetail | null> {
   if (!/^[\w-]{1,64}$/.test(idOrNumber)) return null;
@@ -390,6 +515,7 @@ export async function transitionOrder(orderId: string, to: OrderStatus, actor: T
     });
     if (updated.count !== 1) return false;
     await tx.productionEvent.create({ data: { orderId, type: rule.event, note: note ?? null, actorId: actor.userId ?? null, createdAt: now } });
+    if (to === "REFUNDED") await issueCreditNote(tx, orderId, now);
     return true;
   });
   if (!changed) throw new OrderError("INVALID_STATE");
@@ -399,6 +525,31 @@ export async function transitionOrder(orderId: string, to: OrderStatus, actor: T
     void track("order_delivered", { by: actor.role, on_time: onTime, reprint: isReprint(order) }, { userId: order.buyerId, orderId });
   }
   await notifyStatus(order, to);
+}
+
+/**
+ * A refunded sale needs a credit note that reverses its tax invoice (Egyptian VAT Law 67/2016 and
+ * the ETA e-invoicing system: an issued invoice is never edited or deleted, it is cancelled by a
+ * credit note "C" document referencing it). Same amounts as the SALE invoice, positive, numbered
+ * CN-YYnnn. Idempotent; runs inside the REFUNDED transition so both commit together.
+ */
+async function issueCreditNote(tx: Prisma.TransactionClient, orderId: string, now: Date): Promise<void> {
+  const sale = await tx.invoice.findFirst({ where: { orderId, kind: "SALE" }, orderBy: { issuedAt: "asc" } });
+  if (!sale) return; // never invoiced (not paid): nothing to reverse
+  if (await tx.invoice.count({ where: { orderId, kind: "CREDIT_NOTE" } })) return;
+  const prefix = `CN-${String(now.getUTCFullYear()).slice(2)}`;
+  const rows = await tx.invoice.findMany({ where: { number: { startsWith: prefix } }, select: { number: true }, orderBy: { issuedAt: "desc" }, take: 200 });
+  await tx.invoice.create({
+    data: {
+      orderId,
+      number: nextSequence(prefix, rows.map((r) => r.number)),
+      kind: "CREDIT_NOTE",
+      subtotalPiasters: sale.subtotalPiasters,
+      vatPiasters: sale.vatPiasters,
+      totalPiasters: sale.totalPiasters,
+      issuedAt: now,
+    },
+  });
 }
 
 async function notifyStatus(order: { number: string; buyer: { locale: string; phone: string; email: string | null } }, to: OrderStatus): Promise<void> {
@@ -540,6 +691,12 @@ export async function applyPaymentOutcome(o: Extract<WebhookOutcome, { ok: true 
     return decision.result;
   }
 
+  if (decision.action === "PARTIAL_REFUND") {
+    await db.payment.update({ where: { id: payment.id }, data: { raw: lastRaw } });
+    await db.productionEvent.create({ data: { orderId: order.id, type: "NOTE", note: "PARTIAL_REFUND_REPORTED" } });
+    return "PARTIAL_REFUND";
+  }
+
   if (decision.action === "PENDING") {
     await db.payment.update({ where: { id: payment.id }, data: { raw: lastRaw } });
     return "PENDING";
@@ -568,9 +725,9 @@ export async function applyPaymentOutcome(o: Extract<WebhookOutcome, { ok: true 
 
   const now = new Date();
   const paidRaw = lastRaw;
-  if (decision.action === "PAID_LATE") {
-    // Paid after cancel/expiry (or a second attempt after another one won): keep the money on
-    // record and flag for a refund by ops.
+  // Paid after cancel/expiry, or a second attempt captured after another one won: keep the money
+  // on record and flag it for a refund by ops. Never drop a capture silently.
+  const recordLatePayment = async (): Promise<string> => {
     const upd = await db.payment.updateMany({
       where: { id: payment.id, status: { not: "PAID" } },
       data: { status: "PAID", providerRef: o.providerRef || payment.providerRef, raw: paidRaw },
@@ -578,7 +735,8 @@ export async function applyPaymentOutcome(o: Extract<WebhookOutcome, { ok: true 
     if (upd.count !== 1) return "ALREADY_PAID";
     await db.productionEvent.create({ data: { orderId: order.id, type: "NOTE", note: "PAID_AFTER_CANCEL_REFUND_NEEDED" } });
     return "NEEDS_REFUND";
-  }
+  };
+  if (decision.action === "PAID_LATE") return recordLatePayment();
   const leadMs = order.dueDate ? Math.max(0, order.dueDate.getTime() - order.placedAt.getTime()) : 7 * 86_400_000;
   const changed = await db
     .$transaction(async (tx) => {
@@ -616,7 +774,14 @@ export async function applyPaymentOutcome(o: Extract<WebhookOutcome, { ok: true 
       if (e instanceof OrderError) return false;
       throw e;
     });
-  if (!changed) return "ALREADY_PAID";
+  if (!changed) {
+    // Lost the race: another payment of this order (two tabs, two methods) was confirmed between
+    // our read and our write. If THIS payment was captured too, it is a double charge: record it
+    // and flag the refund instead of dropping it (money integrity; ASVS V11.1.6).
+    const fresh = await db.payment.findUnique({ where: { id: payment.id }, select: { status: true } });
+    if (fresh && fresh.status !== "PAID") return recordLatePayment();
+    return "ALREADY_PAID";
+  }
   // launch-metrics.md §1 `payment_succeeded`: the source of truth for "paid order" is this
   // verified gateway webhook, after the PAID transition committed.
   void trackPaymentSucceeded(order, payment);
@@ -811,14 +976,24 @@ export async function submitReview(orderId: string, user: SessionUser, rating: n
   try {
     await db.$transaction(async (tx) => {
       await tx.review.create({ data: { orderId, vendorId: order.vendorId, authorId: user.id, rating: r, body: body?.slice(0, 2000) || null } });
-      const v = await tx.vendor.findUniqueOrThrow({ where: { id: order.vendorId }, select: { rating: true, ratingCount: true } });
-      const count = v.ratingCount + 1;
-      await tx.vendor.update({ where: { id: order.vendorId }, data: { ratingCount: count, rating: Math.round(((v.rating * v.ratingCount + r) / count) * 100) / 100 } });
+      // Recomputed from the review rows, not read-modify-write on the vendor: two buyers reviewing
+      // the same vendor at once cannot lose an update, and any earlier drift heals itself.
+      const agg = await tx.review.aggregate({ where: { vendorId: order.vendorId }, _avg: { rating: true }, _count: { _all: true } });
+      await tx.vendor.update({
+        where: { id: order.vendorId },
+        data: { ratingCount: agg._count._all, rating: Math.round((agg._avg.rating ?? r) * 100) / 100 },
+      });
     });
   } catch (e) {
     // @@unique([orderId, authorId]): a double submit loses the race instead of double-counting.
     if ((e as { code?: string }).code === "P2002") throw new OrderError("NOT_ALLOWED");
     throw e;
+  }
+  // The vendor's public rating and reviews are served from the catalogue cache (store/data.ts).
+  try {
+    revalidateTag("catalog");
+  } catch {
+    /* outside a request (scripts, tests): nothing cached to purge */
   }
   await notify({ to: { phone: user.phone }, locale: user.locale, template: "REVIEW_THANKS", params: { number: order.number } });
 }
@@ -828,10 +1003,25 @@ export async function openDispute(orderId: string, user: SessionUser, reason: Di
   if (!order || order.buyerId !== user.id) throw new OrderError("NOT_FOUND");
   const hasOpen = order.disputes.some((d) => d.status === "OPEN" || d.status === "UNDER_REVIEW");
   if (!canOpenDispute(order.status as OrderStatus, order.deliveredAt, new Date(), hasOpen)) throw new OrderError("NOT_ALLOWED");
-  await db.dispute.create({ data: { orderId, openedById: user.id, reason, description } });
-  // launch-metrics.md §1 `dispute_opened` (reason only; the free-text description stays out of analytics).
+  // `seq` = how many disputes the order already had; @@unique([orderId, seq]) makes two
+  // simultaneous submits (double click, two tabs) collide instead of opening two disputes
+  // (portable to SQLite and Postgres, unlike a partial unique index on status). T-28.
+  try {
+    await db.$transaction(async (tx) => {
+      // Serialised writers (SQLite) see the first dispute here; concurrent ones (Postgres) both
+      // read the same seq and the unique index rejects the second.
+      if (await tx.dispute.count({ where: { orderId, status: { in: ["OPEN", "UNDER_REVIEW"] } } })) throw new OrderError("NOT_ALLOWED");
+      const seq = await tx.dispute.count({ where: { orderId } });
+      await tx.dispute.create({ data: { orderId, openedById: user.id, reason, description: description.slice(0, 4000), seq } });
+      await tx.productionEvent.create({ data: { orderId, type: "NOTE" as ProductionEventType, note: `DISPUTE_OPENED:${reason}`, actorId: user.id } });
+    });
+  } catch (e) {
+    if ((e as { code?: string }).code === "P2002") throw new OrderError("NOT_ALLOWED");
+    throw e;
+  }
+  // launch-metrics.md §1 `dispute_opened` (reason only; the free-text description stays out of
+  // analytics). After the transaction, so a rejected duplicate is never counted.
   void track("dispute_opened", { reason }, { userId: user.id, orderId });
-  await db.productionEvent.create({ data: { orderId, type: "NOTE" as ProductionEventType, note: `DISPUTE_OPENED:${reason}`, actorId: user.id } });
   await notify({ to: { phone: user.phone }, locale: user.locale, template: "DISPUTE_OPENED", params: { number: order.number } });
 }
 
@@ -842,17 +1032,18 @@ export function itemDims(item: { dims: Prisma.JsonValue }): Dims {
 
 /** Best price per quantity tier (buyer-safe numbers only) for the quantity picker. */
 export async function tierPrices(doc: DesignDoc, governorate?: string): Promise<{ quantity: number; unitPiasters: number | null; totalPiasters: number | null }[]> {
-  const zone = (governorate && zoneForGovernorate(governorate)) || "GREATER_CAIRO";
+  const zone = (governorate && zoneForGovernorate(governorate)) || HEADLINE_DEFAULTS.zone;
+  const { data, config } = await pricingInputs();
   const rows = priceTable(
     {
       ...designQuoteFields(doc),
       colours: DEFAULT_COLOURS,
       zone,
     },
-    await loadPricingData(),
-    { config: await loadPricingConfig() },
+    data,
+    { config },
   );
-  const pct = paymentConfig().prepayDiscountPct;
+  const pct = (await loadCheckoutSettings()).prepayDiscountPct;
   return rows.map((r) => {
     if (!r.best) return { quantity: r.quantity, unitPiasters: null, totalPiasters: null };
     const t = orderTotals(r.best.lines, pct);

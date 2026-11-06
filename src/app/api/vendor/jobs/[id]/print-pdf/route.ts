@@ -1,7 +1,7 @@
 import { fromJson } from "@/lib/json";
 import { generatePrintPdf } from "@/lib/orders/pdf/print";
 import type { DesignDoc, OrderStatus } from "@/types";
-import { PRINT_FILES_UNLOCKED } from "@/lib/orders/state";
+import { PRINT_FILES_UNLOCKED, isPaidStatus } from "@/lib/orders/state";
 import { loadJobItem, safeFilename } from "../../_shared";
 
 /** The print-ready PDF (buyer artwork) unlocks only once the vendor has accepted the job. */
@@ -17,7 +17,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const r = await loadJobItem((await params).id, url.searchParams.get("item"));
   if (r instanceof Response) return r;
   const { order, item, user } = r;
-  if (user.role !== "ADMIN" && !UNLOCKED.includes(order.status as OrderStatus)) {
+  // Print files exist only for paid orders (same rule as /api/orders/:id/print-pdf), for ADMIN too.
+  if (!isPaidStatus(order.status as OrderStatus) || (user.role !== "ADMIN" && !UNLOCKED.includes(order.status as OrderStatus))) {
     return Response.json({ error: "NOT_ALLOWED" }, { status: 409 });
   }
   // Only our own stored route; never follow a stored value off-site ("//host" is protocol-relative).

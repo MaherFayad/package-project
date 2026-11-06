@@ -39,7 +39,7 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
 
   if (!shared) {
     return (
-      <Page narrowWidth>
+      <Page narrowWidth title={t("designer.shared.notFoundTitle")}>
         <Card>
           <EmptyState
             heading={t("designer.shared.notFoundTitle")}

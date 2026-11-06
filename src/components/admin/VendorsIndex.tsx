@@ -138,7 +138,7 @@ export function VendorsIndex({
                   {v.score.rating === null ? t("admin.common.none") : formatNumber(v.score.rating, 1)}
                 </IndexTableCell>
                 <IndexTableCell alignment="end" numeric>
-                  {v.score.health === null ? t("admin.common.none") : <HealthBadge score={v.score.health} label={t("admin.vendors.columns.health")} />}
+                  {v.score.health === null ? t("admin.common.none") : <HealthBadge score={v.score.health} label={t("admin.vendors.columns.health")} delivered={v.score.delivered} earlyLabel={t("admin.vendors.scorecard.early")} />}
                 </IndexTableCell>
               </IndexTableRow>
             ))}
@@ -164,7 +164,7 @@ export function VendorsIndex({
             {appRows.map((a) => (
               <IndexTableRow key={a.id} id={a.id}>
                 <IndexTableCell>
-                  <IndexTableRowLink url={`/${locale}/admin/vendors/applications/${a.id}`}>{a.legalName}</IndexTableRowLink>
+                  <IndexTableRowLink url={`/${locale}/admin/vendors/applications/${a.id}`}><bdi>{a.legalName}</bdi></IndexTableRowLink>
                 </IndexTableCell>
                 <IndexTableCell>{t(`cities.${a.factoryCity}` as DictKey)}</IndexTableCell>
                 <IndexTableCell>

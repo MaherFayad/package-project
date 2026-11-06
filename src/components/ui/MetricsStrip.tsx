@@ -13,7 +13,8 @@ export interface Metric {
  *  First cell can hold a period selector. Scrolls inside itself on phones. */
 export function MetricsStrip({ metrics, leading, accessibilityLabel }: { metrics: Metric[]; leading?: ReactNode; accessibilityLabel?: string }) {
   return (
-    <section className={styles.Metrics} aria-label={accessibilityLabel}>
+    // tabIndex: the strip scrolls sideways on phones, so keyboard users must be able to focus it (WCAG 2.1.1).
+    <section className={styles.Metrics} aria-label={accessibilityLabel} tabIndex={0}>
       {leading ? <div className={styles.MetricLeading}>{leading}</div> : null}
       <dl className={styles.MetricList}>
         {metrics.map((m, i) => (

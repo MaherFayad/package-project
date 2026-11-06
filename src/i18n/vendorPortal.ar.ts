@@ -108,6 +108,7 @@ export const vendorPortalAr: Widen<typeof vendorPortalEn> = {
     eInvoiceReminder: "دفعات متبقية بانتظار فاتورتك الإلكترونية: {count}",
     setupTitle: "إعداد الملف التعريفي",
     setupProgress: "الخطوات المكتملة: {done} من {total}",
+    setupDone: "مكتملة",
     setup: {
       bio: "كتابة النبذة بالعربية والإنجليزية",
       machines: "إضافة الماكينات",
@@ -180,6 +181,7 @@ export const vendorPortalAr: Widen<typeof vendorPortalEn> = {
     filesHelp: "اطبع من هذه الملفات فقط. احتفظ بها داخل المطبعة ولا تشاركها.",
     filesLocked: "اقبل الطلب لتنزيل ملف PDF الجاهز للطباعة.",
     actions: {
+      goToQc: "إضافة صور الفحص",
       accept: "قبول الطلب",
       decline: "رفض",
       startProduction: "بدء الإنتاج",
@@ -288,7 +290,7 @@ export const vendorPortalAr: Widen<typeof vendorPortalEn> = {
     aboutTitle: "نبذة",
     bioAr: "النبذة بالعربية",
     bioEn: "النبذة بالإنجليزية",
-    bioHelp: "من 40 إلى 1200 حرف. اذكر تخصصاتك والماكينات وعملاءك المعتادين.",
+    bioHelp: "من 40 إلى 1200 حرف. اذكر تخصصاتك والماكينات وعملاءك المعتادين. دون أرقام هاتف أو بريد إلكتروني أو مواقع أو حسابات تواصل.",
     machinesTitle: "الماكينات",
     machinesHelp: "أضف الماكينات المستخدمة في الإنتاج.",
     machineKind: "نوع الماكينة",
@@ -311,7 +313,7 @@ export const vendorPortalAr: Widen<typeof vendorPortalEn> = {
     materials: "أنواع الكرتون",
     families: {
       CORRUGATED: "كرتون مضلع",
-      FOLDING_CARTON: "علب كرتون مطوية",
+      FOLDING_CARTON: "علب دوبلكس",
       RIGID: "علب صلبة",
       TUBE: "أنابيب ورقية",
       LABEL: "ملصقات وأغلفة انكماش",
@@ -352,6 +354,7 @@ export const vendorPortalAr: Widen<typeof vendorPortalEn> = {
     onTime: "{pct} في الموعد",
     viewPublic: "عرض الصفحة العامة",
     errors: {
+      CONTACT: "احذف بيانات التواصل: أرقام الهاتف والبريد الإلكتروني والمواقع وحسابات التواصل وتطبيقات المراسلة. تتولى علبة كل التواصل مع العملاء.",
       REQUIRED: "حقل مطلوب.",
       INVALID: "تحقق من هذه القيمة.",
       TOO_LONG: "النص طويل جدا.",
@@ -382,7 +385,8 @@ export const vendorPortalAr: Widen<typeof vendorPortalEn> = {
   },
   portfolio: {
     title: "معرض الأعمال",
-    help: "صور لأعمال حقيقية نفذتها. يثق العملاء في صور العلب الحقيقية أكثر من التصاميم.",
+    help: "صور لأعمال حقيقية نفذتها. يثق العملاء في صور العلب الحقيقية أكثر من التصاميم. تراجع علبة كل صورة قبل نشرها: دون أرقام هاتف أو مواقع أو رموز QR أو بيانات تواصل على العلبة أو في الصورة.",
+    status: { PENDING: "قيد المراجعة", APPROVED: "منشورة", REJECTED: "غير معتمدة" },
     upload: "إضافة صور",
     uploadHint: "أو أفلت صور JPG أو PNG أو WebP (حتى {size})",
     empty: "لا توجد صور بعد. أضف 3 صور على الأقل.",
@@ -397,6 +401,7 @@ export const vendorPortalAr: Widen<typeof vendorPortalEn> = {
     moved: "تم نقل الصورة إلى الموضع {index}",
     remove: "حذف الصورة",
     removeTitle: "حذف هذه الصورة؟",
+    uploadedForReview: "أرسلت الصور للمراجعة (العدد: {count}). تظهر للعملاء بعد اعتماد علبة لها.",
     removeBody: "ستختفي من صفحتك العامة فورا.",
     removed: "تم حذف الصورة",
     saveCaption: "حفظ الوصف",

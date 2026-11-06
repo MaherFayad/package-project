@@ -63,7 +63,7 @@ export function VendorStatusActions({ vendorId, name, status, verified }: { vend
       >
         <BlockStack gap="300">
           <Text as="p">{t("admin.vendors.detail.suspendBody")}</Text>
-          <TextField label={t("admin.common.reason")} autoComplete="off" value={reason} onChange={setReason} multiline={2} maxLength={500} helpText={t("admin.common.reasonHelp")} />
+          <TextField label={t("admin.common.reason")} autoComplete="off" dir="auto" value={reason} onChange={setReason} multiline={2} maxLength={500} helpText={t("admin.common.reasonHelp")} />
         </BlockStack>
       </Modal>
     </>
@@ -116,7 +116,7 @@ export function ApplicationReview({ applicationId, status, initialChecklist, ini
       {editable ? (
         <Card title={t("admin.application.decision.title")}>
           <BlockStack gap="300">
-            <TextField label={t("admin.application.decision.note")} autoComplete="off" value={note} onChange={setNote} multiline={3} maxLength={1000} error={fieldError(res, "note", errorText)} />
+            <TextField label={t("admin.application.decision.note")} autoComplete="off" dir="auto" value={note} onChange={setNote} multiline={3} maxLength={1000} error={fieldError(res, "note", errorText)} />
             <InlineStack align="end">
               <ButtonGroup>
                 {status === "SUBMITTED" ? (
@@ -132,6 +132,12 @@ export function ApplicationReview({ applicationId, status, initialChecklist, ini
                 </Button>
               </ButtonGroup>
             </InlineStack>
+            {/* CR-65: say why Approve is disabled, next to it. */}
+            {!canApprove(checked) ? (
+              <Text as="p" variant="bodySm" tone="subdued" alignment="end">
+                {t("admin.application.decision.approveBlocked", { count: missing.length })}
+              </Text>
+            ) : null}
           </BlockStack>
         </Card>
       ) : null}
@@ -154,7 +160,7 @@ export function ApplicationReview({ applicationId, status, initialChecklist, ini
       >
         <BlockStack gap="300">
           <Text as="p">{t("admin.application.decision.rejectBody")}</Text>
-          <TextField label={t("admin.application.decision.note")} autoComplete="off" value={note} onChange={setNote} multiline={3} maxLength={1000} />
+          <TextField label={t("admin.application.decision.note")} autoComplete="off" dir="auto" value={note} onChange={setNote} multiline={3} maxLength={1000} />
         </BlockStack>
       </Modal>
     </BlockStack>

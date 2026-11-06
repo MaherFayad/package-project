@@ -3,8 +3,10 @@ import { MAX_INSTANT_QTY } from "@/types";
 import { getT } from "@/i18n";
 import type { DictKey } from "@/i18n";
 import { formatDims, formatMoney, formatNumber } from "@/lib/format";
-import { Card, DataTable, Text } from "@/components/ui";
+import { Card } from "@/components/ui/Card";
+import { Text } from "@/components/ui/Text";
 import type { PriceFrom } from "./data";
+import { SpecTable } from "./SpecTable";
 import styles from "./store.module.css";
 
 /** Public "price from" table per quantity tier (ex-VAT, delivery included). */
@@ -18,9 +20,9 @@ export function PriceFromTable({ locale, dims, price, title }: { locale: Locale;
         </Text>
         {price.rows.length ? (
           <div className={styles.tableWrap}>
-            <DataTable
+            <SpecTable
               caption={t("store.structure.tableCaption")}
-              columnContentTypes={["text", "numeric", "numeric", "numeric"]}
+              numeric={[1, 2]}
               headings={[t("store.structure.qty"), t("store.structure.perBox"), t("store.structure.subtotal"), t("store.structure.delivery")]}
               rows={price.rows.map((r) => [
                 <bdi key="q">{formatNumber(r.quantity)}</bdi>,

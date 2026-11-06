@@ -1,7 +1,10 @@
 import "@/styles/motion.css";
-import { Suspense, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import type { Locale } from "@/types";
-import { AppProvider, CookieNotice } from "@/components/ui";
+// Direct imports, not the "@/components/ui" barrel: keeps the Polaris kit CSS out of the
+// marketing pages' render-blocking stylesheets (R2-MK-01).
+import { CookieNotice } from "@/components/ui/CookieNotice";
+import { MarketingProviders } from "./MarketingProviders";
 import { AnnouncementBar } from "./AnnouncementBar";
 import { MarketingFooter } from "./MarketingFooter";
 import { MarketingHeader } from "./MarketingHeader";
@@ -17,12 +20,13 @@ import styles from "./marketing.module.css";
  */
 export function MarketingShell({ locale, children }: { locale: Locale; children: ReactNode }) {
   return (
-    <AppProvider locale={locale}>
+    <MarketingProviders locale={locale}>
       <div className={styles.site}>
         <AnnouncementBar />
-        <Suspense fallback={<div className={styles.headerFallback} aria-hidden="true" />}>
-          <MarketingHeader locale={locale} />
-        </Suspense>
+        {/* No Suspense here: the header reads no request data (session is a client island), so it
+            renders inline in the static HTML. Behind a 64 px fallback it streamed in late as a
+            73 px header and pushed the page down (CLS 0.0055, CR-45). */}
+        <MarketingHeader locale={locale} />
         <main id="main" className={styles.main} tabIndex={-1}>
           {children}
         </main>
@@ -30,6 +34,6 @@ export function MarketingShell({ locale, children }: { locale: Locale; children:
         <CookieNotice />
         <RevealScope />
       </div>
-    </AppProvider>
+    </MarketingProviders>
   );
 }

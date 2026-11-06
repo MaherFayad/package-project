@@ -10,7 +10,8 @@ import type { Dims, OrderStatus } from "@/types";
 import { Badge, Button, Card, EmptyBoxIllustration, EmptyState, Layout, LayoutSection, Text, Thumbnail } from "@/components/ui";
 import { designHref } from "@/components/store/catalog";
 import type { DataRequestStatus } from "@/components/store/account-logic";
-import { statusBadge } from "@/lib/orders/state";
+import { modelPoster } from "@/lib/orders/poster";
+import { statusTone } from "@/lib/orders/status-tone";
 import { AccountSignOut, DataRights, DeleteDesignButton, MarketingConsent, ProfileForm } from "./AccountClient";
 import styles from "@/components/store/store.module.css";
 import accountStyles from "./account.module.css";
@@ -90,7 +91,7 @@ export default async function AccountPage({ params }: Props) {
                       const label = d.name || t("account.untitled");
                       return (
                         <li key={d.id} className={`${styles.designRow} ${accountStyles.designRow}`}>
-                          <Thumbnail source={d.thumbnailUrl ?? undefined} alt="" size="small" />
+                          <Thumbnail source={d.thumbnailUrl ?? modelPoster(d.modelCode, d.structureCode)} alt="" size="small" />
                           <div className={styles.designMain}>
                             <Text as="span" fontWeight="semibold" truncate>
                               {label}
@@ -146,11 +147,11 @@ export default async function AccountPage({ params }: Props) {
                             <bdi>{o.number}</bdi>
                           </Link>
                           <Text as="span" variant="bodySm" tone="subdued">
-                            {formatDate(o.placedAt, locale)} · <bdi>{formatMoney(o.totalPiasters, locale)}</bdi>
+                            {formatDate(o.placedAt, locale)} · <bdi>{formatMoney(o.totalPiasters, locale, { alwaysDecimals: true })}</bdi>
                           </Text>
                         </div>
-                        <Badge tone={statusBadge(o.status as OrderStatus).tone} progress={statusBadge(o.status as OrderStatus).progress}>
-                          {t(`orderStatus.${o.status}` as DictKey)}
+                        <Badge tone={statusTone(o.status as OrderStatus).tone} progress={statusTone(o.status as OrderStatus).progress}>
+                          {o.status === "PAID" ? t("buyer.awaitingPrinter") : t(`orderStatus.${o.status}` as DictKey)}
                         </Badge>
                       </li>
                     ))}

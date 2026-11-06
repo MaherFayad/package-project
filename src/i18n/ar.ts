@@ -351,6 +351,10 @@ export const ar: Dictionary = {
       family: {
         CORRUGATED: "كرتون مضلع",
         FOLDING_CARTON: "علب دوبلكس",
+        RIGID: "علب مقواة فاخرة",
+        TUBE: "أسطوانات ورقية",
+        LABEL: "ملصقات",
+        FLEXIBLE: "تغليف مرن",
       },
       fromPrice: "من {price} للعلبة",
       priceOnRequest: "السعر عند الطلب",
@@ -390,7 +394,7 @@ export const ar: Dictionary = {
       materialSpec: "{gsm} جم، سمك {mm} مم",
       foodSafe: "آمن للأغذية",
       priceTitle: "الأسعار تبدأ من",
-      priceIntro: "أفضل سعر للعلبة بمقاس {dims}: طباعة لون واحد من الخارج، {material}، توصيل للقاهرة الكبرى.",
+      priceIntro: "سعر العلبة لدى المطبعة الأنسب بمقاس {dims}: طباعة كاملة الألوان من الخارج، {material}، توصيل للقاهرة الكبرى. يبدأ المصمم وصفحة الدفع من السعر نفسه.",
       qty: "الكمية",
       perBox: "سعر العلبة",
       subtotal: "الإجمالي دون الضريبة",
@@ -408,7 +412,7 @@ export const ar: Dictionary = {
     },
     seo: {
       title: "{keyword} {cm} سم",
-      h1: "{keyword} {cm} سم",
+      h1: "{keyword} {dims}",
       description: "{keyword} {cm} سم ({dims}): صممها مجانا ثلاثي الأبعاد، الأسعار من {price} للعلبة، الطلب من 100 علبة، توصيل لكل مصر.",
       descriptionNoPrice: "{keyword} {cm} سم ({dims}): صممها مجانا ثلاثي الأبعاد، الطلب من 100 علبة، توصيل لكل مصر.",
       intro: "{name} بمقاس داخلي {dims}. اطبع شعارك من الخارج أو الوجهين، واختر التشطيب، واطلب من مطابع مصرية معتمدة.",

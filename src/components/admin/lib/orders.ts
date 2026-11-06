@@ -203,3 +203,33 @@ export function reprintSource(notes: string | null): string | null {
   if (!notes?.startsWith(REPRINT_NOTE_PREFIX)) return null;
   return notes.slice(REPRINT_NOTE_PREFIX.length).split(":")[0] ?? null;
 }
+
+/* ───────────────────────── Quote-only routing and margin preview ───────────────────────── */
+
+/**
+ * A job is quote-only when no active vendor has an active rate card for its production style and
+ * board: nothing can price it from rate cards, so whoever takes it needs a hand-agreed buy price.
+ */
+export function isQuoteOnly(vendors: { capable: boolean }[]): boolean {
+  return !vendors.some((v) => v.capable);
+}
+
+/**
+ * Moving a job to a vendor without a rate card for it: the old buy price came from another vendor's
+ * card, so ops must enter the price agreed with the new vendor.
+ */
+export function needsManualCost(targetCapable: boolean, newCostPiasters: number | null): boolean {
+  return !targetCapable && newCostPiasters === null;
+}
+
+/** Business-plan take rate (research report §6.2): 20 to 30% of the ex-VAT sell price. */
+export const TARGET_MARGIN_PCT = { min: 20, max: 30 } as const;
+
+export type MarginBand = "loss" | "below" | "in" | "above";
+
+export function marginPreview(goodsPiasters: number, vendorCostPiasters: number): { marginPiasters: number; pct: number | null; band: MarginBand } {
+  const marginPiasters = goodsPiasters - vendorCostPiasters;
+  const pct = goodsPiasters > 0 ? Math.round((marginPiasters / goodsPiasters) * 1000) / 10 : null;
+  const band: MarginBand = marginPiasters < 0 ? "loss" : pct === null || pct < TARGET_MARGIN_PCT.min ? "below" : pct > TARGET_MARGIN_PCT.max ? "above" : "in";
+  return { marginPiasters, pct, band };
+}

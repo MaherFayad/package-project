@@ -19,6 +19,16 @@ export async function priceViewedUsers(w: Window): Promise<number> {
   return distinctUsers("price_viewed", w);
 }
 
+/** The user ids behind priceViewedUsers, for callers that union them with other sources. */
+export async function priceViewedUserIds(w: Window): Promise<string[]> {
+  const rows = await db.event.findMany({
+    where: { name: "price_viewed", at: { gte: w.from, lt: w.to }, userId: { not: null } },
+    select: { userId: true },
+    distinct: ["userId"],
+  });
+  return rows.flatMap((r) => (r.userId ? [r.userId] : []));
+}
+
 export async function distinctUsers(name: EventName, w: Window): Promise<number> {
   const rows = await db.event.findMany({
     where: { name, at: { gte: w.from, lt: w.to }, userId: { not: null } },

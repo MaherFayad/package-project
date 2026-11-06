@@ -3,6 +3,8 @@
  * Error messages are i18n codes: `vendorPortal.profile.errors.<code>`.
  */
 import { z } from "zod";
+import { hasContactDetails } from "./contact";
+
 import {
   EGYPT_CITIES,
   FINISH_CODES,
@@ -12,7 +14,11 @@ import {
   type StructureCode,
   type VendorCertification,
 } from "@/types";
+
 import { materialFitsStructure } from "@/lib/dieline/materials";
+
+/** B-08: buyers must never get a direct line to the vendor from public profile text. */
+const noContact = (s: string) => !hasContactDetails(s);
 
 export const MACHINE_KINDS = ["OFFSET", "FLEXO", "DIGITAL", "DIE_CUTTER", "FOLDER_GLUER", "LAMINATOR", "UV_COATER"] as const;
 export const CERT_CODES = ["FOOD_SAFE", "ISO_9001", "FSC", "ISO_22000"] as const;
@@ -30,13 +36,13 @@ export const uploadKeySchema = z.string().regex(/^[a-z]+\/[A-Za-z0-9_-]{1,40}\/[
 
 export const machineSchema = z.object({
   kind: z.enum(MACHINE_KINDS),
-  model: z.string().trim().min(2, "MODEL").max(80, "TOO_LONG"),
+  model: z.string().trim().min(2, "MODEL").max(80, "TOO_LONG").refine(noContact, "CONTACT"),
   count: z.number().int("WHOLE").min(1, "MIN_1").max(50, "TOO_HIGH"),
 });
 
 export const certificationSchema = z.object({
   code: z.enum(CERT_CODES),
-  issuer: z.string().trim().min(2, "ISSUER").max(120, "TOO_LONG"),
+  issuer: z.string().trim().min(2, "ISSUER").max(120, "TOO_LONG").refine(noContact, "CONTACT"),
   validUntil: isoDate.optional().or(z.literal("").transform(() => undefined)),
   documentKey: uploadKeySchema.optional(),
 });
@@ -49,8 +55,9 @@ export const profileSchema = z
       .min(40, "BIO_SHORT")
       .max(1200, "TOO_LONG")
       .refine(hasArabic, "BIO_AR_SCRIPT")
-      .refine((s) => !/[ً-ْ]/.test(s), "DIACRITICS"),
-    bioEn: z.string().trim().min(40, "BIO_SHORT").max(1200, "TOO_LONG").refine(hasLatin, "BIO_EN_SCRIPT"),
+      .refine((s) => !/[ً-ْ]/.test(s), "DIACRITICS")
+      .refine(noContact, "CONTACT"),
+    bioEn: z.string().trim().min(40, "BIO_SHORT").max(1200, "TOO_LONG").refine(hasLatin, "BIO_EN_SCRIPT").refine(noContact, "CONTACT"),
     machines: z.array(machineSchema).min(1, "MACHINES_EMPTY").max(30, "TOO_MANY"),
     structures: z.array(z.enum(STRUCTURE_CODES)).min(1, "STRUCTURES_EMPTY"),
     materials: z.array(z.enum(MATERIAL_CODES)).min(1, "MATERIALS_EMPTY"),
@@ -128,8 +135,8 @@ export function isFoodSafe(certs: VendorCertification[]): boolean {
 /* ───────────── Portfolio ───────────── */
 
 export const portfolioCaptionSchema = z.object({
-  captionAr: z.string().trim().min(2, "CAPTION_SHORT").max(140, "TOO_LONG").refine((s) => !/[ً-ْ]/.test(s), "DIACRITICS"),
-  captionEn: z.string().trim().min(2, "CAPTION_SHORT").max(140, "TOO_LONG"),
+  captionAr: z.string().trim().min(2, "CAPTION_SHORT").max(140, "TOO_LONG").refine((s) => !/[ً-ْ]/.test(s), "DIACRITICS").refine(noContact, "CONTACT"),
+  captionEn: z.string().trim().min(2, "CAPTION_SHORT").max(140, "TOO_LONG").refine(noContact, "CONTACT"),
   structureCode: z.enum(STRUCTURE_CODES).nullable(),
 });
 

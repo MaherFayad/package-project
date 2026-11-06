@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Artwork, MaterialCode } from "@/types";
+import type { Artwork, ArtworkSurface, MaterialCode, TextLayer } from "@/types";
 import { boardAppearance, paintArtworkSurface, surfaceCanvasSize, type DielineModel } from "@/lib/dieline";
 import { resolveFont } from "./fonts";
 
@@ -57,7 +57,51 @@ export function useFontsReady(): number {
  * maps them onto the panels; the dieline view draws them flat. Repaints are batched to one per
  * animation frame (drags stay smooth on mid-range phones).
  */
-export function useArtworkCanvases(model: DielineModel | null, artwork: Artwork, material: MaterialCode, printInside: boolean, maxPx = 2048) {
+/** Preview-only hint on an empty design ("Your logo" on the lid). Never stored, never printed. */
+export interface ArtworkPlaceholder {
+  text: string;
+  fontFamily: TextLayer["fontFamily"];
+  direction: TextLayer["direction"];
+  color: string;
+}
+
+/** The outside surface to paint: the real artwork, or (when it is empty) the placeholder hint. */
+export function previewSurface(model: DielineModel, art: ArtworkSurface, placeholder?: ArtworkPlaceholder | null): ArtworkSurface {
+  if (!placeholder || art.layers.length > 0 || art.background) return art;
+  const face = model.faces.top && model.faces.top.height > 30 ? "top" : model.faces.front ? "front" : null;
+  const info = face ? model.faces[face] : null;
+  if (!face || !info) return art;
+  const pt = Math.max(8, Math.min(48, (info.width * 0.6) / (placeholder.text.length * 0.19), info.height * 0.3 * 2.83));
+  const layer: TextLayer = {
+    id: "__placeholder",
+    kind: "text",
+    face,
+    surface: "outside",
+    x: info.width / 2,
+    y: info.height / 2,
+    width: info.width * 0.7,
+    height: info.height * 0.35,
+    rotation: 0,
+    opacity: 0.75,
+    text: placeholder.text,
+    fontFamily: placeholder.fontFamily,
+    fontSizePt: Math.round(pt),
+    fontWeight: 600,
+    color: placeholder.color,
+    align: "center",
+    direction: placeholder.direction,
+  };
+  return { background: null, layers: [layer] };
+}
+
+export function useArtworkCanvases(
+  model: DielineModel | null,
+  artwork: Artwork,
+  material: MaterialCode,
+  printInside: boolean,
+  maxPx = 2048,
+  placeholder?: ArtworkPlaceholder | null,
+) {
   const [canvases, setCanvases] = useState<{ outside: HTMLCanvasElement; inside: HTMLCanvasElement } | null>(null);
   const [version, setVersion] = useState(0);
   const { images, version: imgVersion } = useImageCache(artwork);
@@ -81,7 +125,7 @@ export function useArtworkCanvases(model: DielineModel | null, artwork: Artwork,
         }
         const ctx = c.getContext("2d");
         if (!ctx) continue;
-        paintArtworkSurface(ctx, model, artwork[surface], {
+        paintArtworkSurface(ctx, model, surface === "outside" ? previewSurface(model, artwork.outside, placeholder) : artwork[surface], {
           surface,
           pxPerMm: size.pxPerMm,
           boardColor: surface === "outside" ? look.outside : look.inside,
@@ -92,7 +136,7 @@ export function useArtworkCanvases(model: DielineModel | null, artwork: Artwork,
       setVersion((v) => v + 1);
     });
     return () => cancelAnimationFrame(raf);
-  }, [canvases, model, artwork, material, printInside, images, imgVersion, fonts, maxPx]);
+  }, [canvases, model, artwork, material, printInside, images, imgVersion, fonts, maxPx, placeholder]);
 
   return { canvases, version, images, imgVersion, fonts };
 }

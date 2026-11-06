@@ -15,6 +15,7 @@ export function DielineView({
   label,
   legend,
   panelLabels,
+  locale = "en",
 }: {
   model: DielineModel;
   source: HTMLCanvasElement | null;
@@ -22,6 +23,8 @@ export function DielineView({
   label: string;
   legend: string;
   panelLabels: Record<string, string>;
+  /** Role names (tuck, dust flap, ear…) for panels without a face label (CR-27). */
+  locale?: "ar" | "en";
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const figRef = useRef<HTMLElement>(null);
@@ -68,10 +71,11 @@ export function DielineView({
         panelFill: "none",
         labels: panelLabels,
         showLabels: roomy,
+        locale,
         colors: { glue: "rgba(48, 48, 48, 0.18)", label: "#303030" },
         strokeMm: Math.max(0.35, Math.max(model.sheet.width, model.sheet.height) / 900),
       }),
-    [model, panelLabels, roomy],
+    [model, panelLabels, roomy, locale],
   );
   // White halo so panel names stay readable on dark artwork.
   const haloed = svg.replace('<g data-layer="labels"', `<g data-layer="labels" stroke="#ffffff" stroke-width="${Math.max(0.6, model.sheet.width / 500)}" paint-order="stroke" stroke-linejoin="round"`);

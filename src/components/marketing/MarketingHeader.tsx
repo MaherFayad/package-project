@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Suspense } from "react";
 import { getT } from "@/i18n";
 import type { Locale } from "@/types";
 import { designHref } from "@/components/store/catalog";
@@ -10,7 +9,7 @@ import { Wordmark } from "./Wordmark";
 import styles from "./marketing.module.css";
 
 /**
- * White marketing header: wordmark, Products / Printers menus, Pricing, How it works, Log in (an
+ * White marketing header: wordmark, Products / Printers menus, Box styles, How it works, Log in (an
  * account menu with sign-out once signed in) + black pill. It reads no cookies: the signed-in parts (account link, orders, portal links) are
  * client islands, so every page under the marketing layout can be prerendered.
  */
@@ -46,7 +45,8 @@ export function MarketingHeader({ locale }: { locale: Locale }) {
       ],
     },
     links: [
-      { href: `${base}/catalog`, label: t("marketing.nav.pricing") },
+      // CR-55: this item opens the box catalogue, so it is named for it (prices live on each style page).
+      { href: `${base}/catalog`, label: t("nav.catalog") },
       { href: `${base}#how`, label: t("marketing.nav.how") },
     ],
     signedInLinks: {
@@ -60,18 +60,14 @@ export function MarketingHeader({ locale }: { locale: Locale }) {
           {t("marketing.nav.start")}
         </Link>
         <AccountLink variant="sheet" login={login} account={account} signOutLabel={signOut} home={base} className={`${styles.pill} ${styles.pillOutline} ${styles.pillLarge}`} />
-        <Suspense fallback={null}>
-          <LangLink className={styles.langLink} />
-        </Suspense>
+        <LangLink className={styles.langLink} />
       </>
     ),
   };
 
   return (
     <HeaderNav model={model}>
-      <Suspense fallback={null}>
-        <LangLink className={`${styles.langLink} ${styles.langDesktop}`} />
-      </Suspense>
+      <LangLink className={`${styles.langLink} ${styles.langDesktop}`} />
       <AccountLink login={login} account={account} signOutLabel={signOut} home={base} className={`${styles.navLink} ${styles.loginLink}`} />
       <Link href={start} className={`${styles.pill} ${styles.pillSmall} ${styles.headerCta}`}>
         {t("marketing.nav.start")}

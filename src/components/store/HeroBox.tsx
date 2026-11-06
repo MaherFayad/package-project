@@ -6,7 +6,7 @@ import type { ArtworkSurface, Locale } from "@/types";
 import { BOARD_SPECS, boardAppearance, generateDieline, paintArtworkSurface, surfaceCanvasSize, type DielineModel } from "@/lib/dieline";
 import { PackagingSceneLazy, type PackagingSceneHandle } from "@/components/three";
 import { useArtworkTexture } from "@/components/three/hooks";
-import { Button } from "@/components/ui";
+import { Button } from "@/components/ui/Button";
 import styles from "./store.module.css";
 
 const DIMS = { L: 250, W: 180, H: 80 } as const;

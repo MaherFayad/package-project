@@ -104,6 +104,7 @@ export const vendorPortalEn = {
     eInvoiceReminder: "Balance payouts waiting for your e-invoice: {count}",
     setupTitle: "Profile setup",
     setupProgress: "Steps done: {done} of {total}",
+    setupDone: "done",
     setup: {
       bio: "Write your bio in Arabic and English",
       machines: "List your machines",
@@ -176,6 +177,7 @@ export const vendorPortalEn = {
     filesHelp: "Print from these files only. Keep them inside your factory and do not share them.",
     filesLocked: "Accept the job to download the print-ready PDF.",
     actions: {
+      goToQc: "Add QC photos",
       accept: "Accept job",
       decline: "Decline",
       startProduction: "Start production",
@@ -284,7 +286,7 @@ export const vendorPortalEn = {
     aboutTitle: "About",
     bioAr: "Bio in Arabic",
     bioEn: "Bio in English",
-    bioHelp: "40 to 1,200 characters. Mention your specialities, machines and typical customers.",
+    bioHelp: "40 to 1,200 characters. Mention your specialities, machines and typical customers. No phone numbers, emails, websites or social handles.",
     machinesTitle: "Machines",
     machinesHelp: "List the machines you run in production.",
     machineKind: "Machine type",
@@ -348,6 +350,7 @@ export const vendorPortalEn = {
     onTime: "{pct} on time",
     viewPublic: "View public profile",
     errors: {
+      CONTACT: "Remove contact details: phone numbers, emails, websites, social handles and messaging apps. Elba handles every buyer conversation.",
       REQUIRED: "Required.",
       INVALID: "Check this value.",
       TOO_LONG: "Too long.",
@@ -378,7 +381,8 @@ export const vendorPortalEn = {
   },
   portfolio: {
     title: "Portfolio",
-    help: "Photos of real jobs you produced. Buyers trust photos of real boxes more than renders.",
+    help: "Photos of real jobs you produced. Buyers trust photos of real boxes more than renders. Elba reviews every photo before it goes public: no phone numbers, websites, QR codes or contact details on the box or in the shot.",
+    status: { PENDING: "In review", APPROVED: "Public", REJECTED: "Not approved" },
     upload: "Add photos",
     uploadHint: "or drop JPG, PNG or WebP photos (up to {size})",
     empty: "No photos yet. Add at least 3.",
@@ -394,6 +398,7 @@ export const vendorPortalEn = {
     remove: "Delete photo",
     removeTitle: "Delete this photo?",
     removeBody: "It disappears from your public profile right away.",
+    uploadedForReview: "{count} photos sent for review. They go public once Elba approves them.",
     removed: "Photo deleted",
     saveCaption: "Save captions",
     captionSaved: "Captions saved",

@@ -129,6 +129,7 @@ export const designerAr: Dictionary["designer"] = {
       "#e4deff": "بنفسجي فاتح",
     },
     deleted: "تم حذف العنصر",
+    placeholderLogo: "شعارك هنا",
     upload: "رفع شعار أو صورة",
     uploadHint: "PNG أو JPG أو WebP أو SVG حتى 10 ميجابايت",
     uploadAction: "إضافة صورة",

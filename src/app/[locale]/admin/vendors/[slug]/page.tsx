@@ -1,13 +1,13 @@
+import { db } from "@/lib/db";
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Badge, BlockStack, Card, DataTable, InlineStack, Layout, LayoutSection, Link, MetricsStrip, Page, Text, Tooltip } from "@/components/ui";
 import { adminStyles } from "@/components/admin/charts";
 import { HealthBadge } from "@/components/admin/HealthBadge";
 import { OrderStatusBadge } from "@/components/admin/OrdersIndex";
 import { VendorStatusActions } from "@/components/admin/VendorActions";
-import { NotFoundCard } from "@/components/admin/NotFoundCard";
-import { loadVendorDetail } from "@/components/admin/server/queries";
+import { loadVendorDetail, vendorModelCoverage } from "@/components/admin/server/queries";
 import { getT, pick, toLocale, type DictKey } from "@/i18n";
-import { db } from "@/lib/db";
 import { formatDate, formatDateTime, formatMoney, formatNumber, formatPercent } from "@/lib/format";
 
 type Params = Promise<{ locale: string; slug: string }>;
@@ -16,9 +16,9 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const { locale: raw, slug } = await params;
   const locale = toLocale(raw);
   const t = getT(locale);
-  const v = await db.vendor.findUnique({ where: { slug }, select: { nameAr: true, nameEn: true } }).catch(() => null);
-  const section = `${t("admin.vendors.title")} · ${t("admin.title")}`;
-  return { title: v ? `${pick(locale, v.nameAr, v.nameEn)} · ${section}` : section };
+  // Entity first (WCAG 2.4.2, CR-49): "Nile Pack · Vendors · Admin".
+  const v = /^[\w-]{1,80}$/.test(slug) ? await db.vendor.findUnique({ where: { slug }, select: { nameAr: true, nameEn: true } }) : null;
+  return { title: `${v ? `${pick(locale, v.nameAr, v.nameEn)} · ` : ""}${t("admin.vendors.title")} · ${t("admin.title")}` };
 }
 
 export default async function AdminVendorPage({ params }: { params: Params }) {
@@ -27,8 +27,9 @@ export default async function AdminVendorPage({ params }: { params: Params }) {
   const t = getT(locale);
   const base = `/${locale}/admin`;
   const data = await loadVendorDetail(slug);
-  if (!data) return <NotFoundCard locale={locale} backUrl={`${base}/vendors`} backLabel={t("admin.vendors.detail.back")} />;
+  if (!data) notFound();
   const { vendor, orders, score, application, auditRows } = data;
+  const models = await vendorModelCoverage(vendor.id);
   const name = pick(locale, vendor.nameAr, vendor.nameEn);
   // Capabilities: active rate cards grouped by box style (one row per style, materials listed).
   const rateCardGroups = [
@@ -57,7 +58,7 @@ export default async function AdminVendorPage({ params }: { params: Params }) {
         <MetricsStrip
           accessibilityLabel={t("admin.vendors.scorecard.title")}
           metrics={[
-            { label: t("admin.vendors.scorecard.orders"), value: <span className={adminStyles.MetricStack}><span className={adminStyles.MetricNum}>{formatNumber(score.orders)}</span><span className={adminStyles.MetricSub}>{formatMoney(score.gmvPiasters, locale)}</span></span> },
+            { label: t("admin.vendors.scorecard.orders"), value: <span className={adminStyles.MetricStack}><span className={adminStyles.MetricNum}>{formatNumber(score.orders)}</span><span className={adminStyles.MetricSub}>{formatMoney(score.gmvPiasters, locale, { alwaysDecimals: true })}</span></span> },
             { label: t("admin.vendors.scorecard.onTime"), value: <span className={adminStyles.MetricStack}><span className={adminStyles.MetricNum}>{pct(score.onTimePct)}</span><span className={adminStyles.MetricSub}>{`${t("admin.vendors.scorecard.delivered")}: ${formatNumber(score.delivered)}`}</span></span> },
             { label: t("admin.vendors.scorecard.reprint"), value: pct(score.reprintPct) },
             { label: t("admin.vendors.scorecard.dispute"), value: pct(score.disputePct) },
@@ -69,7 +70,7 @@ export default async function AdminVendorPage({ params }: { params: Params }) {
                   {t("admin.vendors.scorecard.health")}
                 </Tooltip>
               ),
-              value: score.health === null ? t("admin.common.none") : <HealthBadge score={score.health} label={t("admin.vendors.scorecard.health")} />,
+              value: score.health === null ? t("admin.common.none") : <HealthBadge score={score.health} label={t("admin.vendors.scorecard.health")} delivered={score.delivered} earlyLabel={t("admin.vendors.scorecard.early")} />,
             },
           ]}
         />
@@ -88,7 +89,7 @@ export default async function AdminVendorPage({ params }: { params: Params }) {
                       </Link>,
                       formatDate(o.placedAt, locale, "medium"),
                       <OrderStatusBadge key="s" status={o.status} />,
-                      formatMoney(o.totalPiasters, locale),
+                      formatMoney(o.totalPiasters, locale, { alwaysDecimals: true }),
                     ])}
                   />
                 ) : (
@@ -143,7 +144,7 @@ export default async function AdminVendorPage({ params }: { params: Params }) {
                   <BlockStack gap="200" as="ul" className={adminStyles.PlainList}>
                     {vendor.staff.map((s) => (
                       <li key={s.id}>
-                        <Link url={`${base}/users/${s.id}`}>{s.name ?? t("admin.users.noName")}</Link>
+                        <Link url={`${base}/users/${s.id}`}><bdi>{s.name ?? t("admin.users.noName")}</bdi></Link>
                         <Text as="p" variant="bodySm" tone="subdued">
                           <bdi dir="ltr">{s.phone}</bdi>
                         </Text>
@@ -159,6 +160,11 @@ export default async function AdminVendorPage({ params }: { params: Params }) {
               <Card title={t("admin.vendors.detail.rateCards")}>
                 <BlockStack gap="200">
                   <Text as="p">{t("admin.vendors.detail.rateCardCount", { count: formatNumber(vendor.rateCards.filter((r) => r.active).length) })}</Text>
+                  {vendor.status === "ACTIVE" ? (
+                    <Link url={`${base}/catalog?vendor=${vendor.slug}`}>
+                      {t("admin.vendors.detail.modelsCount", { count: formatNumber(models.priced), total: formatNumber(models.total) })}
+                    </Link>
+                  ) : null}
                   <BlockStack gap="200" as="ul" className={adminStyles.PlainList}>
                     {rateCardGroups.map(([code, materials]) => (
                       <li key={code}>

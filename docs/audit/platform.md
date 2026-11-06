@@ -272,3 +272,18 @@ Platform rows: 21 from ROUND3.md and 3 new (R3-01 to R3-03), all fixed. B-24 is 
 ### Files touched outside the listed scope (round 3)
 
 Chrome and UI kit (`src/components/marketing/*`, `src/components/ui/*`, `src/styles/*`, `src/components/store/*` deletions, checkout shell), catalogue, designer and 3D CSS (motion tokens and icon sizes only), admin and vendor detail-page metadata (CR-49), admin queries and actions (B-19), designer `DesignerApp.tsx` and `server.ts` (event calls), `src/lib/orders/service.ts` (event calls), `prisma/schema.prisma` (Event, `Design.followedUpAt`, `Order.referrerId`), `package.json` (`jobs:daily`), `docs/ARCHITECTURE.md`, `docs/business/compliance-checklist.md` (row 2.9).
+
+### Round 3: merge with the integration branch (5df9871)
+
+Resolved 19 conflicts so both sides survive:
+- **Deleted store chrome:** main had only changed import paths in StoreShell, SiteHeader, SiteFooter and CookieBar, which my side deleted. They stay deleted.
+- **Cookie notice:** the single notice (`ui/CookieNotice`) now takes its acknowledgement from main's dependency-free `store/cookieAck.ts`. MarketingShell imports it directly rather than through the UI-kit barrel, and keeps main's `MarketingProviders` and its no-Suspense header. Both keep the kit's CSS out of marketing pages (R2-MK-01, CR-45).
+- **Admin detail-page titles (CR-49):** I took the admin owner's version from main.
+- **"Price viewed" in the funnel:** a user counts if any of three sources shows it: event log, saved quotes, orders.
+- **Orders service (`service.ts`):** main's double-charge recovery and race-safe dispute creation are kept. My `payment_succeeded` and `dispute_opened` events fire after those succeed.
+- **Dictionaries:** every key from both sides is kept, with the glossary applied to main's new admin strings. Main's new sample-credit text uses `{days:day}`.
+
+After the merge:
+- `npm run lint`, `npm run typecheck`, `npm test` (76 files, 8,271 tests) and `npm run build` pass.
+- The smoke, storefront, checkout, admin and vendor e2e specs (`--workers=2`) gave 41 passed, 8 skipped and 1 failed per run. The failing test was different each run (vendor accept-job, smoke mobile sign-in, admin QC).
+- Each failing test passes on its own against a fresh seed. They share seeded orders and phone numbers when two run in parallel.
