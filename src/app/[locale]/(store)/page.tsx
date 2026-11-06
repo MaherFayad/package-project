@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import {
   AppWindow,
   ArrowRight,
@@ -30,15 +31,19 @@ import { faqJsonLd } from "@/components/store/jsonld";
 import { designHref, structureHref } from "@/components/store/catalog";
 import { getPriceFrom, listStructures, listVendors } from "@/components/store/data";
 import { filterVendors } from "@/components/store/vendor-filters";
+import { DeniedBanner } from "@/components/marketing/DeniedBanner";
 import { HeroVisual } from "@/components/marketing/HeroVisual";
 import { HeroPhoneForm } from "@/components/marketing/HeroPhoneForm";
 import { Marquee } from "@/components/marketing/Marquee";
 import { MarketingFaq } from "@/components/marketing/Faq";
 import { VendorShowcaseCard } from "@/components/marketing/VendorShowcaseCard";
-import { SAMPLES, renderSrc } from "@/components/marketing/assets";
+import { SAMPLES, renderSrc, srcSetFor } from "@/components/marketing/assets";
 import styles from "@/components/marketing/marketing.module.css";
 
-type Props = { params: Promise<{ locale: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
+type Props = { params: Promise<{ locale: string }> };
+
+/** Prerendered; prices, printers and ratings refresh hourly. */
+export const revalidate = 3600;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const locale = toLocale((await params).locale);
@@ -95,9 +100,8 @@ const STAT_TAGS = [
   { label: { ar: "بورسعيد", en: "Port Said" }, top: "54%", start: "70%" },
 ];
 
-export default async function HomePage({ params, searchParams }: Props) {
+export default async function HomePage({ params }: Props) {
   const locale = toLocale((await params).locale);
-  const sp = await searchParams;
   const t = getT(locale);
   const base = `/${locale}`;
   const [structures, vendors, mailerPrice] = await Promise.all([
@@ -121,13 +125,9 @@ export default async function HomePage({ params, searchParams }: Props) {
   return (
     <>
       <JsonLd data={faqJsonLd(faq)} />
-      {sp.denied ? (
-        <div className={styles.container}>
-          <p className={styles.managed} role="status" style={{ marginBlockStart: 16 }}>
-            {t("store.deniedBanner")}
-          </p>
-        </div>
-      ) : null}
+      <Suspense fallback={null}>
+        <DeniedBanner message={t("store.deniedBanner")} />
+      </Suspense>
 
       {/* ───────── Hero (split, live 3D) ───────── */}
       <section className={styles.hero} aria-labelledby="hero-title">
@@ -301,7 +301,7 @@ export default async function HomePage({ params, searchParams }: Props) {
               <span className={styles.browserUrl}>elba.eg/design</span>
             </div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`/marketing/designer-${locale}.webp`} alt={t("marketing.design.imageAlt")} width={1440} height={900} loading="lazy" decoding="async" />
+            <img src={`/marketing/designer-${locale}.webp`} srcSet={srcSetFor(`/marketing/designer-${locale}.webp`)} sizes="(min-width: 1344px) 1280px, 94vw" alt={t("marketing.design.imageAlt")} width={1440} height={900} loading="lazy" decoding="async" />
           </div>
           <ol className={styles.steps}>
             {[1, 2, 3].map((n) => (
@@ -411,7 +411,7 @@ export default async function HomePage({ params, searchParams }: Props) {
           <ul className={styles.ctaTiles} aria-hidden="true">
             <li className={styles.ctaTile}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={SAMPLES[2].src} alt="" loading="lazy" width={320} height={400} />
+              <img src={SAMPLES[2].src} srcSet={srcSetFor(SAMPLES[2].src)} sizes="(min-width: 1024px) 240px, 46vw" alt="" loading="lazy" decoding="async" width={320} height={400} />
             </li>
             <li className={styles.ctaCardUi}>
               <span className={styles.chipMeta}>{t("marketing.cta.tileOrder")}</span>
@@ -424,17 +424,17 @@ export default async function HomePage({ params, searchParams }: Props) {
             </li>
             <li className={styles.ctaTile}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={SAMPLES[0].src} alt="" loading="lazy" width={320} height={400} />
+              <img src={SAMPLES[0].src} srcSet={srcSetFor(SAMPLES[0].src)} sizes="(min-width: 1024px) 240px, 46vw" alt="" loading="lazy" decoding="async" width={320} height={400} />
             </li>
             <li className={styles.ctaCardUi}>
               <span className={styles.chipMeta}>{t("marketing.cta.tileProofMeta")}</span>
               <strong>{t("marketing.cta.tileProof")}</strong>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={renderSrc("ECMA_RTE")} alt="" loading="lazy" width={200} height={150} style={{ inlineSize: "100%", blockSize: "auto", marginBlockStart: "auto" }} />
+              <img src={renderSrc("ECMA_RTE")} srcSet={srcSetFor(renderSrc("ECMA_RTE"))} sizes="(min-width: 1024px) 240px, 46vw" alt="" loading="lazy" decoding="async" width={200} height={150} style={{ inlineSize: "100%", blockSize: "auto", marginBlockStart: "auto" }} />
             </li>
             <li className={styles.ctaTile}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={SAMPLES[6].src} alt="" loading="lazy" width={320} height={400} />
+              <img src={SAMPLES[6].src} srcSet={srcSetFor(SAMPLES[6].src)} sizes="(min-width: 1024px) 240px, 46vw" alt="" loading="lazy" decoding="async" width={320} height={400} />
             </li>
           </ul>
         </div>

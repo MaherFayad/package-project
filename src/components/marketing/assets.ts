@@ -68,3 +68,58 @@ export const SAMPLES: { src: string; structure?: StructureCode; vessel?: VesselR
   { src: "/marketing/samples/sample-11.webp", structure: "PAPER_TUBE" },
   { src: "/marketing/samples/sample-12.webp", vessel: "pump" },
 ];
+
+/**
+ * Native widths of the marketing images (printed by scripts/marketing/responsive-variants.cjs,
+ * which also writes the smaller `.<w>w.webp` variant next to each file). Used as srcset
+ * descriptors so small slots download the small file (PERF-16).
+ */
+const NATIVE_W: Record<string, number> = {
+  "renders/bottle.webp": 383, "renders/can.webp": 572, "renders/dropper.webp": 398, "renders/ecma-clb.webp": 442,
+  "renders/ecma-rte.webp": 462, "renders/ecma-slb.webp": 547, "renders/ecma-ste.webp": 517, "renders/fefco-0201.webp": 848,
+  "renders/fefco-0320.webp": 910, "renders/fefco-0422.webp": 926, "renders/fefco-0427.webp": 914, "renders/gable-box.webp": 618,
+  "renders/jar.webp": 687, "renders/paper-tube.webp": 431, "renders/pizza.webp": 915, "renders/pump.webp": 433,
+  "renders/rigid-box.webp": 909, "renders/sleeve.webp": 922,
+  "designer-ar.webp": 1440, "designer-en.webp": 1440,
+};
+const VARIANT_W: Record<string, number> = { renders: 400, samples: 320, designer: 720 };
+
+/** srcset for a /marketing image: its small variant plus the original at its native width. */
+export function srcSetFor(src: string): string | undefined {
+  const m = /^\/marketing\/(.+)\.webp$/.exec(src);
+  if (!m) return undefined;
+  const rel = `${m[1]}.webp`;
+  const kind = rel.startsWith("renders/") ? "renders" : rel.startsWith("samples/") ? "samples" : rel.startsWith("designer-") ? "designer" : null;
+  if (!kind) return undefined;
+  const native = NATIVE_W[rel] ?? (kind === "samples" ? 640 : undefined);
+  const small = VARIANT_W[kind];
+  if (!native || native <= small) return undefined;
+  return `/marketing/${m[1]}.${small}w.webp ${small}w, ${src} ${native}w`;
+}
+
+/** Intrinsic size of each render, for width/height attributes where the image sizes itself (no CLS). */
+const RENDER_DIMS: Record<string, [number, number]> = {
+  "bottle": [383, 825],
+  "can": [572, 842],
+  "dropper": [398, 833],
+  "ecma-clb": [442, 802],
+  "ecma-rte": [462, 803],
+  "ecma-slb": [547, 794],
+  "ecma-ste": [517, 786],
+  "fefco-0201": [848, 665],
+  "fefco-0320": [910, 603],
+  "fefco-0422": [926, 583],
+  "fefco-0427": [914, 608],
+  "gable-box": [618, 734],
+  "jar": [687, 778],
+  "paper-tube": [431, 745],
+  "pizza": [915, 529],
+  "pump": [433, 834],
+  "rigid-box": [909, 607],
+  "sleeve": [922, 587],
+};
+export function renderDims(src: string): { width: number; height: number } {
+  const id = /\/renders\/([a-z0-9-]+)\.webp$/.exec(src)?.[1];
+  const d = (id && RENDER_DIMS[id]) || [480, 360];
+  return { width: d[0], height: d[1] };
+}

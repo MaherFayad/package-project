@@ -5,7 +5,7 @@ import { getT, pick } from "@/i18n";
 import type { DictKey } from "@/i18n";
 import { formatNumber } from "@/lib/format";
 import type { VendorListItem } from "@/components/store/vendor-filters";
-import { TILE_BG, renderSrc } from "./assets";
+import { TILE_BG, renderSrc, srcSetFor } from "./assets";
 import styles from "./marketing.module.css";
 
 /**
@@ -28,7 +28,7 @@ export function VendorShowcaseCard({ locale, vendor, index = 0, headingLevel = "
           {shots.map((code) => (
             <figure key={code} style={{ ["--tile-bg" as string]: TILE_BG[code] }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={renderSrc(code)} alt="" loading="lazy" decoding="async" width={320} height={240} />
+              <img src={renderSrc(code)} srcSet={srcSetFor(renderSrc(code))} sizes="(min-width: 1024px) 240px, (min-width: 640px) 30vw, 60vw" alt="" loading="lazy" decoding="async" width={320} height={240} />
             </figure>
           ))}
         </div>

@@ -5,7 +5,7 @@ import type { DictKey } from "@/i18n";
 import { designHref } from "@/components/store/catalog";
 import { getLowestUnit, listStructures } from "@/components/store/data";
 import { ProductCard } from "./ProductCard";
-import { renderSrc } from "./assets";
+import { renderDims, renderSrc, srcSetFor } from "./assets";
 import styles from "./marketing.module.css";
 import { ModelLinks } from "@/components/designer/ModelLinks";
 import { MODELS } from "@/lib/library";
@@ -58,11 +58,11 @@ export async function BoxesLanding({
               {t("marketing.boxes.alreadyLink")}
             </Link>
           </p>
-          <div className={`${styles.heroShowcase} m-enter-scale`} style={{ ["--m-i" as string]: 4 }} aria-hidden="true">
+          <div className={`${styles.heroShowcase} m-enter-lcp`} style={{ ["--m-i" as string]: 4 }} aria-hidden="true">
             {SHOWCASE.map((c) => (
               <div key={c} className={styles.showcaseItem}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={renderSrc(c)} alt="" width={480} height={360} fetchPriority={c === "FEFCO_0427" ? "high" : "auto"} />
+                <img src={renderSrc(c)} srcSet={srcSetFor(renderSrc(c))} sizes="(min-width: 1024px) 260px, 34vw" alt="" {...renderDims(renderSrc(c))} fetchPriority={c === "FEFCO_0427" ? "high" : "auto"} />
               </div>
             ))}
           </div>

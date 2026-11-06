@@ -9,7 +9,7 @@ import { breadcrumbJsonLd } from "@/components/store/jsonld";
 import { listVendors } from "@/components/store/data";
 import { activeFilterCount, filterVendors, parseVendorFilters } from "@/components/store/vendor-filters";
 import { VendorShowcaseCard } from "@/components/marketing/VendorShowcaseCard";
-import { renderSrc } from "@/components/marketing/assets";
+import { renderSrc, srcSetFor } from "@/components/marketing/assets";
 import styles from "@/components/marketing/marketing.module.css";
 
 type Props = { params: Promise<{ locale: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
@@ -79,7 +79,7 @@ export default async function VendorsPage({ params, searchParams }: Props) {
           ) : (
             <div className={`${styles.card} ${styles.center}`} style={{ justifyItems: "center", textAlign: "center", paddingBlock: 48 }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={renderSrc("FEFCO_0201")} alt="" width={160} height={120} style={{ inlineSize: 160, blockSize: "auto" }} />
+              <img src={renderSrc("FEFCO_0201")} srcSet={srcSetFor(renderSrc("FEFCO_0201"))} sizes="160px" loading="lazy" decoding="async" alt="" width={160} height={120} style={{ inlineSize: 160, blockSize: "auto" }} />
               <h3 className={styles.h3}>{t("store.vendors.emptyTitle")}</h3>
               <p className={styles.body}>{t("store.vendors.emptyBody")}</p>
               <Link href={action} className={`${styles.pill} ${styles.pillOutline}`}>

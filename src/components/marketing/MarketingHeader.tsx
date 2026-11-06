@@ -1,22 +1,25 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { getSession } from "@/lib/auth/session";
 import { getT } from "@/i18n";
 import type { Locale } from "@/types";
 import { designHref } from "@/components/store/catalog";
+import { AccountLink } from "./AccountLink";
 import { HeaderNav, type NavModel } from "./HeaderNav";
 import { LangLink } from "./LangLink";
 import { Wordmark } from "./Wordmark";
 import styles from "./marketing.module.css";
 
-/** White marketing header: wordmark, Products / Printers menus, Pricing, How it works, Log in + black pill. */
-export async function MarketingHeader({ locale }: { locale: Locale }) {
+/**
+ * White marketing header: wordmark, Products / Printers menus, Pricing, How it works, Log in +
+ * black pill. It reads no cookies: the signed-in parts (account link, orders, portal links) are
+ * client islands, so every page under the marketing layout can be prerendered.
+ */
+export function MarketingHeader({ locale }: { locale: Locale }) {
   const t = getT(locale);
-  const user = (await getSession())?.user;
   const base = `/${locale}`;
   const start = designHref(locale, { structure: "FEFCO_0427" });
-  const account = user ? { href: `${base}/account`, label: t("marketing.nav.account") } : { href: `${base}/login`, label: t("marketing.nav.login") };
-  const extra = user?.role === "VENDOR" ? { href: `${base}/vendor`, label: t("nav.vendorPortal") } : user?.role === "ADMIN" ? { href: `${base}/admin`, label: t("nav.admin") } : null;
+  const login = { href: `${base}/login`, label: t("marketing.nav.login") };
+  const account = { href: `${base}/account`, label: t("marketing.nav.account") };
 
   const model: NavModel = {
     label: t("marketing.nav.label"),
@@ -44,17 +47,18 @@ export async function MarketingHeader({ locale }: { locale: Locale }) {
     links: [
       { href: `${base}/catalog`, label: t("marketing.nav.pricing") },
       { href: `${base}#how`, label: t("marketing.nav.how") },
-      ...(user ? [{ href: `${base}/orders`, label: t("nav.orders") }] : []),
-      ...(extra ? [extra] : []),
     ],
+    signedInLinks: {
+      orders: { href: `${base}/orders`, label: t("nav.orders") },
+      vendor: { href: `${base}/vendor`, label: t("nav.vendorPortal") },
+      admin: { href: `${base}/admin`, label: t("nav.admin") },
+    },
     sheetActions: (
       <>
         <Link href={start} className={`${styles.pill} ${styles.pillLarge}`}>
           {t("marketing.nav.start")}
         </Link>
-        <Link href={account.href} className={`${styles.pill} ${styles.pillOutline} ${styles.pillLarge}`}>
-          {account.label}
-        </Link>
+        <AccountLink login={login} account={account} className={`${styles.pill} ${styles.pillOutline} ${styles.pillLarge}`} />
         <Suspense fallback={null}>
           <LangLink className={styles.langLink} />
         </Suspense>
@@ -67,9 +71,7 @@ export async function MarketingHeader({ locale }: { locale: Locale }) {
       <Suspense fallback={null}>
         <LangLink className={`${styles.langLink} ${styles.langDesktop}`} />
       </Suspense>
-      <Link href={account.href} className={`${styles.navLink} ${styles.loginLink}`}>
-        {account.label}
-      </Link>
+      <AccountLink login={login} account={account} className={`${styles.navLink} ${styles.loginLink}`} />
       <Link href={start} className={`${styles.pill} ${styles.pillSmall} ${styles.headerCta}`}>
         {t("marketing.nav.start")}
       </Link>

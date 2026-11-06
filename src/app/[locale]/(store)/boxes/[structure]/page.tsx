@@ -11,6 +11,9 @@ import { breadcrumbJsonLd, productJsonLd } from "@/components/store/jsonld";
 import { STRUCTURE_SLUGS, structureImage } from "@/components/store/catalog";
 import { getPriceFrom, getStructureBySlug, listMaterials, listVendors } from "@/components/store/data";
 
+/** Prerendered; prices and printer data refresh hourly (ISR). */
+export const revalidate = 3600;
+
 type Props = { params: Promise<{ locale: string; structure: string }> };
 
 export function generateStaticParams() {

@@ -28,6 +28,14 @@ import Link from "next/link";
 import styles from "@/components/store/store.module.css";
 import mk from "@/components/marketing/marketing.module.css";
 
+/** Prerendered; prices and printer data refresh hourly (ISR). */
+export const revalidate = 3600;
+
+/** No build-time list: each printer page is rendered on first request, then cached (ISR). */
+export function generateStaticParams() {
+  return [];
+}
+
 type Props = { params: Promise<{ locale: string; slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

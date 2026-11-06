@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Pause, Play } from "lucide-react";
+import { srcSetFor } from "./assets";
 import styles from "./marketing.module.css";
 
 /**
@@ -25,7 +26,7 @@ export function Marquee({ items, label, pause, play }: { items: { src: string; a
           {loop.map((it, i) => (
             <li key={i} className={styles.marqueeItem} aria-hidden={i >= items.length || undefined}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={it.src} alt={i >= items.length ? "" : it.alt} width={240} height={300} decoding="async" fetchPriority="low" />
+              <img src={it.src} srcSet={srcSetFor(it.src)} sizes="240px" alt={i >= items.length ? "" : it.alt} width={240} height={300} loading="lazy" decoding="async" fetchPriority="low" />
             </li>
           ))}
         </ul>

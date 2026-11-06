@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { createPortal } from "react-dom";
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Boxes, ChevronDown, Menu, Milk, PackageOpen, Printer, Rotate3d, Store, X } from "lucide-react";
+import { useSessionRole } from "./useSessionRole";
 import styles from "./marketing.module.css";
 
 export interface MenuEntry {
@@ -18,6 +19,8 @@ export interface NavModel {
   products: { label: string; items: MenuEntry[] };
   printers: { label: string; items: MenuEntry[] };
   links: { href: string; label: string }[];
+  /** Extra links for signed-in visitors (resolved on the client, see useSessionRole). */
+  signedInLinks?: { orders: { href: string; label: string }; vendor: { href: string; label: string }; admin: { href: string; label: string } };
   menuLabel: string;
   closeLabel: string;
   /** Rendered inside the mobile sheet (login, CTA, language). */
@@ -98,6 +101,12 @@ export function HeaderNav({ model, children }: { model: NavModel; children: Reac
   const [menu, setMenu] = useState<"products" | "printers" | null>(null);
   const [sheet, setSheet] = useState(false);
   const pathname = usePathname();
+  const me = useSessionRole();
+  const extra = model.signedInLinks;
+  const links =
+    me && extra
+      ? [...model.links, extra.orders, ...(me.role === "VENDOR" ? [extra.vendor] : me.role === "ADMIN" ? [extra.admin] : [])]
+      : model.links;
   const header = useRef<HTMLElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
   const openBtn = useRef<HTMLButtonElement>(null);
@@ -166,7 +175,7 @@ export function HeaderNav({ model, children }: { model: NavModel; children: Reac
           <ul className={styles.navList}>
             <DropMenu label={model.products.label} items={model.products.items} open={menu === "products"} onToggle={() => setMenu((m) => (m === "products" ? null : "products"))} onClose={close} />
             <DropMenu label={model.printers.label} items={model.printers.items} open={menu === "printers"} onToggle={() => setMenu((m) => (m === "printers" ? null : "printers"))} onClose={close} />
-            {model.links.map((l) => (
+            {links.map((l) => (
               <li key={l.href}>
                 <Link href={l.href} className={styles.navLink} aria-current={isCurrent(l.href) ? "page" : undefined}>
                   {l.label}
@@ -208,7 +217,7 @@ export function HeaderNav({ model, children }: { model: NavModel; children: Reac
                   </div>
                 ))}
                 <div className={styles.sheetGroup}>
-                  {model.links.map((l) => (
+                  {links.map((l) => (
                     <Link key={l.href} href={l.href} className={styles.sheetLink} onClick={() => setSheet(false)}>
                       {l.label}
                     </Link>

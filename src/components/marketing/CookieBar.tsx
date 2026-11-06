@@ -1,18 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useI18n } from "@/i18n/client";
-import { COOKIE_ACK } from "@/components/store/CookieNotice";
+import { COOKIE_HIDE_SCRIPT, useCookieAck } from "@/components/store/CookieNotice";
 import styles from "./marketing.module.css";
-
-function acknowledged(): boolean {
-  try {
-    return document.cookie.split("; ").some((c) => c === `${COOKIE_ACK}=1`);
-  } catch {
-    return true;
-  }
-}
 
 /**
  * Essential-cookies notice as a bottom bar. It never covers content: while it is shown the
@@ -21,10 +13,9 @@ function acknowledged(): boolean {
  */
 export function CookieBar() {
   const { t, locale } = useI18n();
-  const [show, setShow] = useState(false);
+  const [ack, dismiss] = useCookieAck();
+  const show = !ack;
   const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => setShow(!acknowledged()), []);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -46,21 +37,20 @@ export function CookieBar() {
   }, [show]);
 
   if (!show) return null;
-  const dismiss = () => {
-    document.cookie = `${COOKIE_ACK}=1; path=/; max-age=31536000; samesite=lax`;
-    setShow(false);
-  };
   return (
-    <div ref={ref} className={styles.cookie} role="region" aria-label={t("store.cookie.label")}>
-      <div className={`${styles.container} ${styles.cookieInner}`}>
-        <p className={styles.cookieText}>
-          {t("store.cookie.message")}{" "}
-          <Link href={`/${locale}/legal/cookies`}>{t("store.cookie.more")}</Link>
-        </p>
-        <button type="button" className={`${styles.pill} ${styles.pillSmall}`} onClick={dismiss}>
-          {t("store.cookie.ok")}
-        </button>
+    <>
+      <div ref={ref} className={styles.cookie} role="region" aria-label={t("store.cookie.label")} suppressHydrationWarning>
+        <div className={`${styles.container} ${styles.cookieInner}`}>
+          <p className={styles.cookieText}>
+            {t("store.cookie.message")}{" "}
+            <Link href={`/${locale}/legal/cookies`}>{t("store.cookie.more")}</Link>
+          </p>
+          <button type="button" className={`${styles.pill} ${styles.pillSmall}`} onClick={dismiss}>
+            {t("store.cookie.ok")}
+          </button>
+        </div>
       </div>
-    </div>
+      <script dangerouslySetInnerHTML={{ __html: COOKIE_HIDE_SCRIPT }} />
+    </>
   );
 }
