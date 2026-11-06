@@ -9,6 +9,10 @@
     justify-content: flex-start;
     padding-inline-start: calc(40px + var(--p-space-300));
   }
+  /* Price requests have no thumbnail: their actions line up with the text edge (R5-03). */
+  .quoteActions.quoteActions.quoteActions {
+    padding-inline-start: 0;
+  }
 }
 
 /* Consent history (R4-07): every entry is the same two lines, state then date, instead of the

@@ -93,7 +93,9 @@ export async function getOffersAction(input: { designId: string; quantity: numbe
 
 const placeSchema = z.object({
   designId: idSchema,
-  quantity: z.number().int().min(1).max(MAX_INSTANT_QTY),
+  // Above the instant cap only with a price the team sent (R4-B-03); the service re-checks both.
+  quantity: z.number().int().min(1).max(1_000_000),
+  quoteId: idSchema.optional(),
   vendorId: idSchema,
   address: addressSchema,
   approved: z.literal(true),
@@ -116,7 +118,7 @@ const placeSchema = z.object({
     .nullable()
     .optional(),
   locale,
-});
+}).refine((v) => !!v.quoteId || v.quantity <= MAX_INSTANT_QTY, { path: ["quantity"] });
 
 export async function placeOrderAction(input: unknown): Promise<{ ok: true; orderId: string; number: string } | ActionError> {
   const s = await getSession();
@@ -142,6 +144,7 @@ export async function placeOrderAction(input: unknown): Promise<{ ok: true; orde
       locale: p.data.locale as Locale,
       sample: p.data.sample,
       acknowledgePreflight: p.data.acknowledgePreflight === true,
+      quoteId: p.data.quoteId,
     });
     return { ok: true, orderId: r.orderId, number: r.number };
   } catch (e) {

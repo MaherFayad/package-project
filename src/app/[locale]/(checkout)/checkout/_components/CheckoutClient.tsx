@@ -99,6 +99,12 @@ export function CheckoutClient(props: {
   sample: { pieces: number; pricePiasters: number; creditDays: number } | null;
   /** Prepayment discount in percent (B-11). */
   prepayDiscountPct: number;
+  /** Smallest run any printer takes (R4-CR-07). */
+  minQty: number;
+  /** R4-B-03: a price the team sent for this buyer's request (fixed quantity, printer and total). */
+  quoted?: { id: string; quantity: number; validUntil: string } | null;
+  /** The `?quote=` link is expired, used or not this buyer's: say so above the normal checkout. */
+  quoteInvalid?: boolean;
   /** Saved company invoice details (B-13). */
   defaultCompany: { name: string; taxId: string; commercialRegister: string } | null;
   /** Production preflight run on the server with the designer's rules (B-04). */
@@ -182,8 +188,17 @@ export function CheckoutClient(props: {
 
   const applyCustom = () => {
     const n = Number(customQty.trim().replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))).replace(/[,\s٬،]/g, ""));
+    // R4-B-09 / R4-CR-07: one honest message per case; above 2,000 is a price request, not an error.
     if (!Number.isInteger(n) || n < 1) {
-      setCustomErr(t("checkout.quantity.invalid", { max: MAX_INSTANT_QTY }));
+      setCustomErr(t("buyer.qty.invalid", { max: MAX_INSTANT_QTY }));
+      return;
+    }
+    if (n < props.minQty) {
+      setCustomErr(t(props.sample ? "buyer.qty.belowMinSample" : "buyer.qty.belowMin", { min: props.minQty }));
+      return;
+    }
+    if (n > MAX_REQUEST_QTY) {
+      setCustomErr(t("buyer.qty.tooLarge", { max: MAX_REQUEST_QTY }));
       return;
     }
     setCustomErr(undefined);
@@ -195,7 +210,9 @@ export function CheckoutClient(props: {
   };
 
   // Delivery price depends on the governorate: re-price when it changes.
+  const isQuoted = !!props.quoted;
   useEffect(() => {
+    if (isQuoted) return; // the sent price includes delivery to the governorate it was asked for
     if (address.governorate === lastGov.current) return;
     lastGov.current = address.governorate;
     if (!address.governorate) return;
@@ -206,7 +223,7 @@ export function CheckoutClient(props: {
       () => setShippingNote(g ? t("checkout.address.shippingChanged", { governorate: t(`governorates.${g.key}` as DictKey) }) : null),
       sampleMode,
     );
-  }, [address.governorate, qty, fetchOffers, t, sampleMode]);
+  }, [address.governorate, qty, fetchOffers, t, sampleMode, isQuoted]);
 
   const manual = result.ok && result.mode === "manual_quote";
   // B-16: the model itself is priced by quote (any quantity), not only runs above the cap.
@@ -320,6 +337,7 @@ export function CheckoutClient(props: {
       sample: sampleMode || undefined,
       company: wantCompany ? { name: company.name.trim(), taxId: company.taxId, commercialRegister: company.commercialRegister.trim() } : null,
       acknowledgePreflight: props.preflight.errors > 0 ? override : undefined,
+      quoteId: props.quoted?.id,
     });
     if (r.ok) {
       router.push(`/${locale}/checkout/pay/${r.orderId}`);
@@ -378,7 +396,7 @@ export function CheckoutClient(props: {
                 {t("checkout.summary.quantity", { qty: tier.quantity.toLocaleString("en-US") })}
               </Text>
               <Text as="span" variant="bodySm" tone="subdued">
-                {tier.unitPiasters === null ? (byQuote ? (locale === "ar" ? "بعرض سعر" : "By quote") : t("checkout.quantity.unavailable")) : t("checkout.quantity.perBox", { price: formatMoney(tier.unitPiasters, locale) })}
+                {tier.unitPiasters === null ? (byQuote ? t("buyer.qty.byQuote") : t("checkout.quantity.unavailable")) : t("checkout.quantity.perBox", { price: formatMoney(tier.unitPiasters, locale, { alwaysDecimals: true }) })}
               </Text>
             </label>
           ))}
@@ -389,7 +407,7 @@ export function CheckoutClient(props: {
                 {t("buyer.sample.tier", { pieces: props.sample.pieces })}
               </Text>
               <Text as="span" variant="bodySm" tone="subdued">
-                {t("buyer.sample.price", { price: formatMoney(props.sample.pricePiasters, locale) })}
+                {t("buyer.sample.price", { price: formatMoney(props.sample.pricePiasters, locale, { alwaysDecimals: true }) })}
               </Text>
             </label>
           ) : null}
@@ -400,7 +418,9 @@ export function CheckoutClient(props: {
           </Text>
         ) : null}
         <Text as="p" variant="bodySm" tone="subdued" id="qty-help">
-          {byQuote ? (locale === "ar" ? "اختر الكمية التي تريد عرض سعر لها." : "Choose the quantity you want a price for.") : t("checkout.quantity.help", { max: MAX_INSTANT_QTY.toLocaleString("en-US") })}
+          {byQuote ? t("buyer.qty.byQuoteHelp") : t("checkout.quantity.help", { max: MAX_INSTANT_QTY.toLocaleString("en-US") })}
+          {/* R4-B-13: the tile price already has the prepay discount taken off; say so on the tiles. */}
+          {!byQuote && props.prepayDiscountPct > 0 ? ` ${t("buyer.qty.tierNote", { pct: props.prepayDiscountPct })}` : ""}
         </Text>
         <form
           className={styles.customQty}
@@ -416,7 +436,7 @@ export function CheckoutClient(props: {
               type="text"
               inputMode="numeric"
               autoComplete="off"
-              placeholder={t("buyer.qtyRange", { max: MAX_INSTANT_QTY.toLocaleString("en-US") })}
+              placeholder={t("buyer.qtyRange", { min: props.minQty.toLocaleString("en-US"), max: MAX_INSTANT_QTY.toLocaleString("en-US") })}
               value={customQty}
               onChange={setCustomQty}
               error={customErr}
@@ -576,6 +596,22 @@ export function CheckoutClient(props: {
     </BlockStack>
   );
 
+  // R4-B-03: ordering at the price the team sent. One offer, nothing to choose; the request's
+  // quantity and governorate are fixed by that price.
+  const quotedOfferStep = props.quoted ? (
+    <BlockStack gap="400">
+      <Banner tone="info" title={t("buyer.quoted.title", { qty: props.quoted.quantity })}>
+        {t("buyer.quoted.body", { date: formatDateTime(props.quoted.validUntil, locale) })}
+      </Banner>
+      <fieldset className={styles.offers}>
+        <legend className="visually-hidden">{t("checkout.offers.title")}</legend>
+        {offers.map((o) => (
+          <OfferCard key={o.vendorId} offer={o} checked onSelect={() => setVendorId(o.vendorId)} locale={locale} />
+        ))}
+      </fieldset>
+    </BlockStack>
+  ) : null;
+
   const deliveryStep = (
     <BlockStack gap="300">
       <Text as="p" tone="subdued">
@@ -605,6 +641,8 @@ export function CheckoutClient(props: {
           placeholder={t("checkout.address.governoratePlaceholder")}
           value={address.governorate}
           onChange={set("governorate")}
+          disabled={!!props.quoted}
+          helpText={props.quoted ? t("buyer.quoted.governorate") : undefined}
           error={addrErrors.governorate}
           requiredIndicator
         />
@@ -809,7 +847,7 @@ export function CheckoutClient(props: {
   );
 
   const stepTitles = [t("checkout.steps.offer"), t("checkout.address.title"), t("checkout.proof.title")];
-  const bodies = [offerStep, deliveryStep, proofStep];
+  const bodies = [quotedOfferStep ?? offerStep, deliveryStep, proofStep];
 
   return (
     <Page
@@ -818,6 +856,11 @@ export function CheckoutClient(props: {
       backAction={step > 0 ? { content: stepTitles[step - 1], onAction: () => goTo((step - 1) as Step) } : { content: props.designName, url: editUrl }}
     >
       <BlockStack gap="400">
+        {props.quoteInvalid ? (
+          <Banner tone="warning" title={t("buyer.quoted.invalidTitle")}>
+            {t("buyer.quoted.invalidBody")}
+          </Banner>
+        ) : null}
         <div className={styles.stepperWide}>
           <Card>
             <Stepper steps={steps} current={step} accessibilityLabel={t("checkout.steps.label")} />
@@ -878,7 +921,7 @@ export function CheckoutClient(props: {
                         <div className={styles.line} key={i}>
                           <dt>{lineLabel(t, l)}</dt>
                           <dd>
-                            <PriceTag amount={l.totalPiasters} size="small" locale={locale} />
+                            <PriceTag alwaysDecimals amount={l.totalPiasters} size="small" locale={locale} tone={l.totalPiasters < 0 ? "success" : "base"} />
                           </dd>
                         </div>
                       ))}
@@ -886,7 +929,7 @@ export function CheckoutClient(props: {
                         <dt>{t("buyer.subtotalExVat")}</dt>
                         <dd>
                           <Tick value={selected.pay.totalPiasters - selected.pay.vatPiasters}>
-                            <PriceTag amount={selected.pay.totalPiasters - selected.pay.vatPiasters} size="small" locale={locale} />
+                            <PriceTag alwaysDecimals amount={selected.pay.totalPiasters - selected.pay.vatPiasters} size="small" locale={locale} />
                           </Tick>
                         </dd>
                       </div>
@@ -894,7 +937,7 @@ export function CheckoutClient(props: {
                         <dt>{t("checkout.summary.vat")}</dt>
                         <dd>
                           <Tick value={selected.pay.vatPiasters}>
-                            <PriceTag amount={selected.pay.vatPiasters} size="small" locale={locale} />
+                            <PriceTag alwaysDecimals amount={selected.pay.vatPiasters} size="small" locale={locale} />
                           </Tick>
                         </dd>
                       </div>
@@ -902,7 +945,7 @@ export function CheckoutClient(props: {
                         <dt>{t("checkout.summary.total")}</dt>
                         <dd data-testid="checkout-total">
                           <Tick value={selected.pay.totalPiasters}>
-                            <PriceTag amount={selected.pay.totalPiasters} size="medium" locale={locale} />
+                            <PriceTag alwaysDecimals amount={selected.pay.totalPiasters} size="medium" locale={locale} />
                           </Tick>
                         </dd>
                       </div>
@@ -918,7 +961,7 @@ export function CheckoutClient(props: {
                   </>
                 ) : (
                   <Text as="p" tone="subdued">
-                    {byQuote ? (locale === "ar" ? "يسعر هذا النوع بعرض سعر. أرسل الطلب لتحصل على إجمالي ثابت." : "This format is priced by quote. Send a request to get a fixed total.") : manual ? t("buyer.quote.summary") : t("checkout.summary.noOffer")}
+                    {byQuote ? t("buyer.qty.byQuoteSummary") : manual ? t("buyer.quote.summary") : t("checkout.summary.noOffer")}
                   </Text>
                 )}
                 {placeErr ? (
@@ -938,7 +981,7 @@ export function CheckoutClient(props: {
                         {t("buyer.viewSummary")}
                       </button>
                       <Tick value={selected.pay.totalPiasters}>
-                        <PriceTag amount={selected.pay.totalPiasters} size="medium" locale={locale} />
+                        <PriceTag alwaysDecimals amount={selected.pay.totalPiasters} size="medium" locale={locale} />
                       </Tick>
                     </div>
                   ) : null}
@@ -954,7 +997,7 @@ export function CheckoutClient(props: {
                 </span>
                 <Banner tone="info" inCard>
                   {t("checkout.summary.prepaidNote")}
-                  {props.prepayDiscountPct > 0 && !sampleMode && !manual ? ` ${t("buyer.prepayNote", { pct: props.prepayDiscountPct })}` : ""}
+                  {props.prepayDiscountPct > 0 && !sampleMode && !manual && !props.quoted ? ` ${t("buyer.prepayNote", { pct: props.prepayDiscountPct })}` : ""}
                 </Banner>
               </BlockStack>
             </Card>
@@ -1007,7 +1050,7 @@ function OfferCard({ offer, checked, onSelect, locale, sample }: { offer: Checko
         </InlineStack>
         <BlockStack gap="050" inlineAlign="end">
           <Tick value={offer.pay.totalPiasters}>
-            <PriceTag amount={offer.pay.totalPiasters} size="medium" locale={locale} />
+            <PriceTag alwaysDecimals amount={offer.pay.totalPiasters} size="medium" locale={locale} />
           </Tick>
           {sample ? (
             <Text as="span" variant="bodySm" tone="subdued">
@@ -1017,7 +1060,7 @@ function OfferCard({ offer, checked, onSelect, locale, sample }: { offer: Checko
             <Text as="span" variant="bodySm" tone="subdued">
               {/* Only the figure ticks, the words around it stay still (CR-19, same lesson as CR-20). */}
               {unitParts[0]}
-              <Tick value={unit}>{formatMoney(unit, locale)}</Tick>
+              <Tick value={unit}>{formatMoney(unit, locale, { alwaysDecimals: true })}</Tick>
               {unitParts[1]}
             </Text>
           )}
@@ -1061,6 +1104,9 @@ function OfferCard({ offer, checked, onSelect, locale, sample }: { offer: Checko
   );
 }
 
+
+/** Largest quantity a price request takes (same cap as requestQuoteAction). */
+const MAX_REQUEST_QTY = 1_000_000;
 
 /** Smooth scrolling only when the buyer has not asked for reduced motion (WCAG 2.3.3, R4-10). */
 function scrollBehavior(): ScrollBehavior {

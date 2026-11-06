@@ -53,6 +53,7 @@ export function OrdersTable({ rows, locale }: { rows: OrderRow[]; locale: Locale
   }, [rows, view, q]);
 
   const filters = (
+    <div className={styles.tabsFade}>
     <IndexFilters
       views={VIEWS.map((v) => ({ id: `orders-view-${v.id}`, content: t(`orders.views.${v.id}` as DictKey) }))}
       selectedView={view}
@@ -62,6 +63,7 @@ export function OrdersTable({ rows, locale }: { rows: OrderRow[]; locale: Locale
       onQueryClear={() => setQ("")}
       queryPlaceholder={t("orders.searchPlaceholder")}
     />
+    </div>
   );
   const payBadge = (r: OrderRow) => (
     <Badge tone={paymentTone(r.paymentStatus).tone} progress={paymentTone(r.paymentStatus).progress}>
