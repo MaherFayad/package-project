@@ -23,7 +23,9 @@
 /* break-word, not anywhere: "anywhere" shrinks min-content to one character, so auto-layout tables
    squeezed badge columns to a letter per line (admin orders at 390 px). */
 :global(:lang(ar)) .Badge { font-size: var(--p-font-size-325); }
-.Label { min-width: 0; }
+/* min-content, not 0: with 0 the flex label shrank below one word and auto-layout tables broke
+   badges mid-word ("Pai/d", "بانتظا/ر") at 390 px. Between-word wrapping (1.4.12) still works. */
+.Label { min-inline-size: min-content; }
 .Pip, .Icon { display: inline-flex; flex: none; }
 .Badge:has(.Pip) { padding-inline-start: var(--p-space-150); }
 .size-small { min-block-size: 1rem; padding-block: 0; padding-inline: var(--p-space-150); font-size: var(--p-font-size-275); }
