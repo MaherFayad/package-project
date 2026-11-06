@@ -1,4 +1,5 @@
 import { Vector3 } from "three";
+import { computePoses, panelLocalPoint, panelPivot } from "../../fold";
 import type { Dims, StructureFeatures } from "@/types";
 import { DielineBuilder, insetSeg, rectEdges } from "../../builder";
 import { cutWindow } from "../../features";
@@ -64,70 +65,134 @@ export function polygonalCarton(dims: Dims, t: number, n: 6 | 8, closure: "tuck"
   closureAt("top", half);
   closureAt("bottom", 0);
   if (f.window) cutWindow(b, "front", { ...f.window, widthRatio: Math.min(0.6, f.window.widthRatio ?? 0.55) });
-  return { builder: b, closedRotation: IDENTITY };
+  // Every wall carries artwork: the oblique panels between front and back print as the left /
+  // right faces (contiguous strips on the sheet, read from outside like a wrap).
+  const rightIds = Array.from({ length: half - 1 }, (_, i) => id(i + 1));
+  const leftIds = Array.from({ length: half - 1 }, (_, i) => id(half + 1 + i));
+  return {
+    builder: b,
+    closedRotation: IDENTITY,
+    // Front / back are single panels (the automatic face would span the across-corners width).
+    faces: (panels, computed) => ({
+      ...computed,
+      front: blockFace("front", panels, ["front"])!,
+      back: blockFace("back", panels, ["back"])!,
+      left: blockFace("left", panels, leftIds)!,
+      right: blockFace("right", panels, rightIds)!,
+    }),
+  };
 }
 
 /* ───────────────────────── F70.01 pillow pack ───────────────────────── */
 
+/** Roll-hinged strips per curved face of the pillow (smooth shading, curved creases). */
+export const PILLOW_STRIPS = 8;
+
+/** Lens geometry of a pillow pack: circular-arc faces through the side folds. */
+export function pillowLens(dims: Dims, t: number) {
+  const chord = dims.L + 2 * t;
+  const sag = dims.W / 2 + t;
+  const R = (chord * chord) / 4 / (2 * sag) + sag / 2;
+  const theta = Math.asin(Math.min(1, chord / (2 * R)));
+  return { chord, sag, R, theta };
+}
+
 /**
- * Pillow pack (ECMA F70.01, end flaps completely covered): a long-seam-glued tube whose
- * curved end lobes close it without glue. The lens-shaped cross section is modelled as a
- * rhombus (two facets per face joined by a smooth "roll" hinge; the side folds are real
- * creases), each lobe hinged on its facet's end and folded in until it reaches the centre
- * plane. L = width, W = thickness at the centre, H = straight body length.
+ * Pillow pack (ECMA F70.01, end flaps completely covered): a long-seam-glued tube whose two
+ * faces are bowed into a lens and whose ends close along CURVED creases, without glue.
+ *
+ * Each face is a circular arc through the side folds (chord L + 2t, rise W/2 + t), built from
+ * `PILLOW_STRIPS` strips on smooth `roll` hinges, so it shades as one curved surface. The end
+ * creases are arcs on the sheet (sagitta `crease` at the face centre, 0 at the side folds) and
+ * the cut outline beyond them is a second, deeper arc. Every strip carries its slice of the
+ * end lobe, hinged on its stretch of the curved crease and folded in until the lobe edge
+ * reaches the centre plane (back lobes first, front lobes over them), so the closed ends read
+ * as the familiar curved "pillow" lobes. L = width, W = thickness at the centre, H = body
+ * length at the side folds (the centre is longer by the crease arcs).
  */
 export function pillowPack(dims: Dims, t: number, f: StructureFeatures = {}): EcmaDraft {
   void f;
-  const halfL = dims.L / 2 + t;
-  const halfW = dims.W / 2 + t;
-  const s = Math.hypot(halfL, halfW);
-  const alpha = Math.atan2(halfW, halfL);
-  const ridge = deg(2 * alpha);
-  const side = 180 - ridge;
+  const M = PILLOW_STRIPS;
+  const { sag, R, theta } = pillowLens(dims, t);
+  const w = 2 * R * Math.sin(theta / M); // strip width (chord of 2θ/M of arc)
+  const Fw = M * w; // flat face width
   const H = dims.H;
-  const d = clamp(dims.W * 0.85, 10, s * 0.95);
-  const lobeFold = deg(Math.asin(Math.min(0.95, halfW / d)));
-  const b = new DielineBuilder();
-  const ids = ["frontL", "frontR", "backR", "backL"] as const;
-  const strip = (i: number) => rect(i * s, 0, s, H);
-  b.root("frontL", "front", rectPolygon(0, 0, s, H), "Front (left half)");
-  b.attach("frontR", "front", "frontL", rectEdges(strip(0)).right, s, { kind: "rect" }, { fold: ridge, stage: 0, hingeKind: "roll", label: "Front (right half)" });
-  b.attach("backR", "back", "frontR", rectEdges(strip(1)).right, s, { kind: "rect" }, { fold: side, stage: 0, label: "Back (right half)" });
-  b.attach("backL", "back", "backR", rectEdges(strip(2)).right, s, { kind: "rect" }, { fold: ridge, stage: 0, hingeKind: "roll", label: "Back (left half)" });
-  const g = glueWidth(dims.W + 20);
-  b.attach("glue", "glue", "backL", rectEdges(strip(3)).right, g, { kind: "trapezoid", taperA: g * 0.5, taperB: g * 0.5 }, { fold: side, stage: 0, stack: -1, label: "Glue flap" });
+  const roll = deg((2 * theta) / M);
+  const sideFold = 180 - deg((2 * theta * (M - 1)) / M);
+  const creaseSag = clamp(sag * 0.55, 4, H * 0.12);
+  const lobe = clamp(sag * 1.3, 8, Fw * 0.45); // lobe depth beyond the crease at the centre
+  const prof = (u: number) => Math.max(0, 1 - (2 * u / Fw - 1) ** 2); // 1 at the centre, 0 at the folds
+  const crease = (u: number) => creaseSag * prof(u);
+  const cut = (u: number) => (creaseSag + lobe) * prof(u);
 
-  // Lobes: one parabolic arc per face (sagitta d at the face centre, 0 at the side folds).
-  const arc = (i: number, top: boolean): Polygon => {
-    const pair0 = i < 2 ? 0 : 2 * s;
-    const x0 = i * s;
-    const y0 = top ? 0 : H;
-    const sign = top ? -1 : 1;
-    const steps = 8;
-    const pts: Pt[] = [pt(x0, y0), pt(x0 + s, y0)];
-    for (let k = steps; k >= 0; k--) {
-      const x = x0 + (k / steps) * s;
-      const u = (x - pair0 - s) / s;
-      const h = d * (1 - u * u);
-      if (h > 1e-6) pts.push(pt(x, y0 + sign * h));
-    }
-    return pts;
+  const b = new DielineBuilder();
+  const sid = (face: "front" | "back", k: number) => `${face}${k}`;
+  const x0 = (face: "front" | "back", k: number) => (face === "front" ? 0 : Fw) + k * w;
+  const strip = (face: "front" | "back", k: number): Polygon => {
+    const xa = x0(face, k);
+    const ua = k * w;
+    return [pt(xa, -crease(ua)), pt(xa + w, -crease(ua + w)), pt(xa + w, H + crease(ua + w)), pt(xa, H + crease(ua))];
   };
-  ids.forEach((pid, i) => {
-    for (const top of [true, false]) {
-      const e = top ? rectEdges(strip(i)).top : rectEdges(strip(i)).bottom;
-      const front = i < 2;
-      b.attachPoly(`${pid}${top ? "Top" : "Bot"}`, "flap", pid, e, arc(i, top), { fold: lobeFold, stage: front ? 2 : 1, stack: front ? 0 : -1, label: "End lobe" });
+  const edge = (poly: Polygon, side: "left" | "right"): [Pt, Pt] => (side === "right" ? [poly[1], poly[2]] : [poly[0], poly[3]]);
+
+  // Root: the front strip right of the centre; the rest chain out to both sides.
+  const root = M / 2;
+  b.root(sid("front", root), "front", strip("front", root), "Front");
+  for (let k = root + 1; k < M; k++) b.attachPoly(sid("front", k), "front", sid("front", k - 1), edge(strip("front", k - 1), "right"), strip("front", k), { fold: roll, stage: 0, hingeKind: "roll", label: "Front" });
+  for (let k = root - 1; k >= 0; k--) b.attachPoly(sid("front", k), "front", sid("front", k + 1), edge(strip("front", k + 1), "left"), strip("front", k), { fold: roll, stage: 0, hingeKind: "roll", label: "Front" });
+  b.attachPoly(sid("back", 0), "back", sid("front", M - 1), edge(strip("front", M - 1), "right"), strip("back", 0), { fold: sideFold, stage: 0, label: "Back" });
+  for (let k = 1; k < M; k++) b.attachPoly(sid("back", k), "back", sid("back", k - 1), edge(strip("back", k - 1), "right"), strip("back", k), { fold: roll, stage: 0, hingeKind: "roll", label: "Back" });
+  const g = glueWidth(dims.W + 20);
+  b.attach("glue", "glue", sid("back", M - 1), edge(strip("back", M - 1), "right"), g, { kind: "trapezoid", taperA: g * 0.5, taperB: g * 0.5 }, { fold: sideFold, stage: 0, stack: -1, label: "Glue flap" });
+
+  // End lobes, one slice per strip, hinged on the strip's stretch of the curved crease.
+  const SUB = 4;
+  for (const face of ["front", "back"] as const) {
+    for (let k = 0; k < M; k++) {
+      const ua = k * w;
+      const xa = x0(face, k);
+      const um = ua + w / 2;
+      // Closed: the strip's distance from the centre plane and its tilt against it.
+      const beta = -theta + ((k + 0.5) * 2 * theta) / M;
+      const z = R * Math.cos(theta / M) * Math.cos(beta) - (R - sag);
+      const d = cut(um) - crease(um);
+      const target = Math.max(0, z - 0.6 * t);
+      const fold = d > 0.5 ? deg(Math.asin(Math.min(0.97, target / (d * Math.cos(beta))))) : 90;
+      for (const top of [true, false]) {
+        const sgn = top ? -1 : 1;
+        const y = (v: number) => (top ? 0 : H) + sgn * v;
+        const hinge: [Pt, Pt] = [pt(xa, y(crease(ua))), pt(xa + w, y(crease(ua + w)))];
+        const outline: Polygon = [hinge[0], hinge[1]];
+        for (let i = SUB; i >= 0; i--) {
+          const u = ua + (i / SUB) * w;
+          const c = cut(u);
+          if (c - crease(u) > 1e-3) outline.push(pt(xa + (i / SUB) * w, y(c)));
+        }
+        if (outline.length < 3) continue;
+        b.attachPoly(`${sid(face, k)}${top ? "Top" : "Bot"}`, "flap", sid(face, k), hinge, outline, {
+          fold,
+          stage: face === "front" ? 2 : 1,
+          stack: face === "front" ? 0 : -1,
+          label: "End lobe",
+        });
+      }
     }
-  });
-  // Curved creases are drawn as the hinge chords; the arcs are cut lines.
+  }
+
+  // Closed orientation: turn about Y so the front chord (side fold to side fold) runs along +X.
+  const input = { panels: b.panels, rootId: b.rootId, thicknessMm: t, closedRotation: IDENTITY };
+  const poses = computePoses(input, 1);
+  const world = (id: string, q: Pt) => {
+    const panel = b.byId(id);
+    return panelLocalPoint(panel, q, 0, panelPivot(panel, t), t).applyMatrix4(poses.get(id)!.world);
+  };
+  const v = world(sid("front", M - 1), pt(Fw, H / 2)).sub(world(sid("front", 0), pt(0, H / 2)));
+  const closedRotation = quat(0, Math.atan2(v.z, v.x), 0);
+  const faceIds = (face: "front" | "back") => b.panels.filter((p) => p.id.startsWith(face)).map((p) => p.id);
   return {
     builder: b,
-    closedRotation: quat(0, -alpha, 0),
-    faces: (panels) => ({
-      front: blockFace("front", panels, ["frontL", "frontR"])!,
-      back: blockFace("back", panels, ["backR", "backL"])!,
-    }),
+    closedRotation,
+    faces: (panels) => ({ front: blockFace("front", panels, faceIds("front"))!, back: blockFace("back", panels, faceIds("back"))! }),
   };
 }
 
@@ -160,7 +225,9 @@ export function cone(dims: Dims, t: number, f: StructureFeatures = {}): EcmaDraf
   const b = new DielineBuilder();
   const apex = pt(0, 0);
   const theta0 = Math.PI / 2 - (N * gamma) / 2;
-  const ray = (k: number) => pt(Math.cos(theta0 + k * gamma) * sl, Math.sin(theta0 + k * gamma) * sl);
+  // Apex at the bottom of the sheet, mouth arc at the top: the artwork reads upright on the
+  // closed cone (mouth up). k runs right → left so the glue flap stays on the sheet's left.
+  const ray = (k: number) => pt(-Math.cos(theta0 + k * gamma) * sl, -Math.sin(theta0 + k * gamma) * sl);
   const facet = (k: number): Polygon => [apex, ray(k), ray(k + 1)];
   const root = N / 2;
   const fid = (k: number) => (k === root ? "front" : `facet${k}`);

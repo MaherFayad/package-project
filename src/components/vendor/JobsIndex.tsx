@@ -25,7 +25,7 @@ import type { DictKey } from "@/i18n";
 import { formatDate, formatMoney, formatNumber } from "@/lib/format";
 import { STRUCTURE_CODES } from "@/types";
 import { countByView, filterJobs, JOB_SORTS, JOB_VIEWS, type JobSort, type JobView } from "./lib/jobs";
-import { DueLabel, JobStatusBadge } from "./JobBits";
+import { DueLabel, JobStatusBadge, useProductName } from "./JobBits";
 import type { JobListItemDTO } from "./types";
 import styles from "./vendor.module.css";
 
@@ -65,6 +65,7 @@ export function JobsIndex({ jobs }: { jobs: JobListItemDTO[] }) {
   const counts = useMemo(() => countByView(jobs), [jobs]);
   const rows = useMemo(() => filterJobs(jobs, { view, query, structure, dueSoonOnly, sort }), [jobs, view, query, structure, dueSoonOnly, sort]);
   const structureName = (code: string) => t(`structures.${code}` as DictKey);
+  const productName = useProductName();
 
   const applied: AppliedFilter[] = [];
   if (structure) applied.push({ key: "structure", label: t("vendorPortal.jobs.appliedStructure", { name: structureName(structure) }), onRemove: () => setParam({ structure: null }) });
@@ -163,7 +164,7 @@ export function JobsIndex({ jobs }: { jobs: JobListItemDTO[] }) {
                 <div className={styles.Condensed}>
                   <JobStatusBadge job={j} />
                   <Text as="span" tone="subdued" variant="bodySm">
-                    {structureName(j.structureCode)} · {t("vendorPortal.common.pcs", { count: formatNumber(j.quantity) })}
+                    {productName(j)} · {t("vendorPortal.common.pcs", { count: formatNumber(j.quantity) })}
                   </Text>
                   <span className={styles.CondensedMeta}>
                     <DueLabel dueDate={j.dueDate} status={j.status} compact />
@@ -177,8 +178,9 @@ export function JobsIndex({ jobs }: { jobs: JobListItemDTO[] }) {
                 <time dateTime={j.placedAt}>{formatDate(j.placedAt, locale, "medium")}</time>
               </IndexTableCell>
               <IndexTableCell className={styles.WideOnly}>
-                {structureName(j.structureCode)}
+                {productName(j)}
                 <Text as="span" tone="subdued" variant="bodySm">
+                  {j.model && j.model.code !== j.structureCode ? <> · <bdi dir="ltr">{j.model.standard}</bdi></> : null}
                   {" · "}
                   <bdi>{j.buyerName}</bdi>
                 </Text>

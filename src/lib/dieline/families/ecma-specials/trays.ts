@@ -78,6 +78,7 @@ export function fourCornerTray(dims: Dims, t: number, f: StructureFeatures = {})
  * the web doubles on its diagonal and lies flat inside the end wall where it is glued, so the
  * tray knocks down flat for shipping and pops up for filling (bakery / confectionery).
  * Tree: web half A hangs on the long wall (fold 90°), half B on A's diagonal (fold 180°);
+ * layers inside each end wall, outside → in: end wall | B (glued to it) | A (stack −2).
  * B's other edge is a crease shared with the end wall (a "join").
  */
 export function beersTray(dims: Dims, t: number, f: StructureFeatures = {}): EcmaDraft {
@@ -97,7 +98,7 @@ export function beersTray(dims: Dims, t: number, f: StructureFeatures = {}): Ecm
     const wallEdgeEnd = P(cx, cy + sy * Hp); // along the long wall's side edge
     const outer = P(cx + sx * Hp, cy + sy * Hp);
     const endEdgeEnd = P(cx + sx * Hp, cy); // along the end wall's edge
-    b.attachPoly(`web${k}A`, "ear", wall, [c, wallEdgeEnd], [c, wallEdgeEnd, outer], { fold: 90, stage: 0, stack: -1, label: "Corner web" });
+    b.attachPoly(`web${k}A`, "ear", wall, [c, wallEdgeEnd], [c, wallEdgeEnd, outer], { fold: 90, stage: 0, stack: -2, label: "Corner web" });
     b.attachPoly(`web${k}B`, "ear", `web${k}A`, [c, outer], [c, outer, endEdgeEnd], { fold: 180, pivotDepth: 1, stage: 0, label: "Corner web" });
     joins.push({ a: c, b: endEdgeEnd });
   }

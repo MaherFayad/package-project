@@ -3,6 +3,7 @@
 import NextLink from "next/link";
 import { ChevronDown } from "lucide-react";
 import { forwardRef, type MouseEvent, type ReactNode, type Ref } from "react";
+import { useUi } from "./AppProvider";
 import { Icon, renderIcon, type IconSource } from "./Icon";
 import { Spinner } from "./Spinner";
 import { cx } from "./utils";
@@ -84,6 +85,7 @@ export const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPr
   },
   ref,
 ) {
+  const { s } = useUi();
   const iconOnly = Boolean(icon) && (children === undefined || children === null || children === "");
   const cls = cx(
     styles.Button,
@@ -145,6 +147,7 @@ export const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPr
           onClick={onClick}
         >
           {content}
+          {external && !accessibilityLabel ? <span className="visually-hidden"> {s.opensInNewTab}</span> : null}
         </a>
       );
     }
@@ -160,8 +163,11 @@ export const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPr
       {...common}
       ref={ref as Ref<HTMLButtonElement>}
       type={submit ? "submit" : "button"}
-      disabled={disabled || loading}
-      onClick={onClick}
+      // A loading button stays focusable (aria-disabled, clicks ignored) so keyboard and screen
+      // reader users keep their place while the action runs (WCAG 2.4.3, 4.1.2).
+      disabled={disabled}
+      aria-disabled={loading && !disabled ? true : undefined}
+      onClick={loading ? (e) => e.preventDefault() : onClick}
     >
       {content}
     </button>

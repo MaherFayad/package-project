@@ -74,6 +74,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
         onBlur={onBlur}
         disabled={disabled}
         required={required}
+        aria-required={requiredIndicator && !required ? true : undefined}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy(id, error, helpText)}
         className={cx(styles.Input, styles.Select)}

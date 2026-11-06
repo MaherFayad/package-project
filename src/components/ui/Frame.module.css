@@ -162,7 +162,7 @@
   text-decoration: none;
 }
 .LogoLink:hover { color: var(--p-color-text-on-fill); }
-.LogoLink:focus-visible, .TopBarIconButton:focus-visible, .UserButton:focus-visible { outline: 2px solid #ffffff; outline-offset: 1px; }
+.LogoLink:focus-visible, .TopBarIconButton:focus-visible, .UserButton:focus-visible { outline: var(--p-focus-ring-width) solid var(--e-color-border-focus-inverse); outline-offset: var(--p-focus-ring-offset); }
 
 .Wordmark {
   display: inline-flex;
@@ -206,6 +206,7 @@
 }
 
 .UserButton {
+  position: relative; /* contains the visually hidden name / role hint */
   display: inline-flex;
   align-items: center;
   gap: var(--p-space-200);
@@ -219,9 +220,13 @@
   font-weight: var(--p-font-weight-semibold);
 }
 .UserButton:hover { background: var(--e-color-topbar-search-bg); }
-/* Hidden visually (not display:none) on narrow screens so it still names the account button. */
-.UserName { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-@media (min-width: 1040px) { .UserName { position: static; inline-size: auto; block-size: auto; clip-path: none; text-overflow: ellipsis; } }
+/* Below 1040px the name is visually hidden (not display:none) so it stays the button's name. */
+.UserName {
+  position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap;
+}
+@media (min-width: 1040px) {
+  .UserName { position: static; inline-size: auto; block-size: auto; clip: auto; overflow: hidden; text-overflow: ellipsis; }
+}
 .UserHeader { display: flex; flex-direction: column; padding: var(--p-space-300) var(--p-space-300) var(--p-space-100); }
 .UserHeaderName { font-weight: var(--p-font-weight-semibold); }
 .UserHeaderDetail { color: var(--p-color-text-secondary); font-size: var(--p-text-body-sm-font-size); }
@@ -239,7 +244,7 @@
   color: var(--e-color-topbar-text);
 }
 .Search:hover { background: var(--e-color-topbar-search-bg-hover); }
-.Search:focus-within { outline: 2px solid #ffffff; outline-offset: 1px; background: var(--e-color-topbar-search-bg-hover); }
+.Search:focus-within { outline: var(--p-focus-ring-width) solid var(--e-color-border-focus-inverse); outline-offset: var(--p-focus-ring-offset); background: var(--e-color-topbar-search-bg-hover); }
 .SearchIcon { display: inline-flex; padding-inline: var(--p-space-300) var(--p-space-150); color: var(--e-color-topbar-text-secondary); }
 .SearchInput {
   flex: 1 1 auto;
@@ -312,7 +317,7 @@
 .SaveBarSave { background: #ffffff; color: var(--p-color-text); box-shadow: var(--p-shadow-button); }
 .SaveBarSave:hover { background: #f1f1f1; }
 .SaveBarSave:disabled { background: #616161; color: #cccccc; box-shadow: none; cursor: default; }
-.SaveBarDiscard:focus-visible, .SaveBarSave:focus-visible { outline: 2px solid #ffffff; outline-offset: 1px; }
+.SaveBarDiscard:focus-visible, .SaveBarSave:focus-visible { outline: var(--p-focus-ring-width) solid var(--e-color-border-focus-inverse); outline-offset: var(--p-focus-ring-offset); }
 @media (pointer: coarse) { .SaveBarDiscard, .SaveBarSave { min-block-size: 2.25rem; } }
 @media (max-width: 489.98px) {
   .SaveBarMessage > span:last-child { display: none; }

@@ -73,6 +73,7 @@ for pricing and shipping.
 - **Web (gusset) corners** (`webCorner`). The corner square is split on its diagonal. Triangle A
   hinges 90° against the adjacent wall (its mesh pushed one board inward). Triangle B folds 180° onto
   A with pivotDepth 1.5, so the double web lies inside the wall and the outer size is unchanged.
+- **No shared board.** Body flaps over the ends (0601, 0602, 0606) are mitred at 45° (taper = depth + 0.5 mm) so flaps of adjacent walls meet on the diagonal. 0605's end top flaps stop where the rim flanges start. 0608's tuck goes in behind the stitched end flaps (stack −2). 0621's joint tab pivots on its outer face so it lies behind the long wall. 0714's lid clears the base by t + 0.5 mm per side, room for the lid's own joint tab. A test checks every model, preset and limit corner (closed, and half folded) for parallel panels that share board volume.
 - **Thickness compensation.** It follows the core engine: crease-to-crease = inner + layers × t.
   Tests check the folded model's `closedOuter` against `outerSize` at t = 1.5 and 3 mm, for the
   default size, every preset and every corner of the limits.

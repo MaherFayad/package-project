@@ -155,7 +155,7 @@ export type ShapeSpec =
       /** Decorative collar over the crimp finish (perfume), mm high. */
       collarMm?: Mm;
     }
-  | { type: "case"; section: SectionKind; capSplit: number; wallMm: Mm }
+  | { type: "case"; section: SectionKind; capSplit: number; wallMm: Mm; /** Overcap drawn by the renderer: "bullet" (lipstick), "twist" (stick); the split sits under its edge. */ cap?: "bullet" | "twist" }
   | { type: "ampoule" }
   | { type: "jar"; doubleWall: boolean; wallMm: Mm; baseMm: Mm }
   | { type: "bevcan" }

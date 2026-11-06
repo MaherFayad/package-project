@@ -6,7 +6,8 @@ import { useEffect, useRef, useState } from "react";
 import { Banner, BlockStack, Button, Card, Checkbox, DropZone, Icon, InlineGrid, InlineStack, Select, Text, TextField, useToast } from "@/components/ui";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
-import { EGYPT_CITIES, STRUCTURE_CODES, type StructureCode, type VendorApplicationDocument } from "@/types";
+import { STRUCTURE_FAMILY } from "@/lib/dieline/materials";
+import { EGYPT_CITIES, STRUCTURE_CODES, type StructureCode, type StructureFamily, type VendorApplicationDocument } from "@/types";
 import { applicationSchema, DOC_KINDS } from "./lib/application";
 import { issuesToErrors } from "./lib/profile";
 import { formatBytes, UPLOAD_RULES } from "./lib/files";
@@ -21,6 +22,8 @@ const SLOTS: { kind: DocKind; multiple: boolean }[] = [
   { kind: "SAMPLE", multiple: true },
   { kind: "FOOD_SAFE_CERT", multiple: false },
 ];
+
+const APPLY_FAMILIES: StructureFamily[] = ["CORRUGATED", "FOLDING_CARTON", "RIGID", "TUBE", "LABEL", "FLEXIBLE"];
 
 export function ApplyForm({ defaultName, defaultPhone }: { defaultName: string; defaultPhone: string }) {
   const { t, locale } = useI18n();
@@ -209,14 +212,24 @@ export function ApplyForm({ defaultName, defaultPhone }: { defaultName: string; 
           <BlockStack gap="300">
             <fieldset className={styles.Fieldset}>
               <legend className={styles.Legend}>{t("vendorPortal.apply.structures")}</legend>
-              <div className={styles.Checks}>
-                {STRUCTURE_CODES.map((c) => (
-                  <Checkbox
-                    key={c}
-                    label={t(`structures.${c}` as DictKey)}
-                    checked={v.structures.includes(c)}
-                    onChange={(on) => set("structures", on ? [...v.structures, c] : v.structures.filter((x) => x !== c))}
-                  />
+              {/* Grouped by production family so 16 styles stay scannable (R2-08). */}
+              <div className={styles.Families}>
+                {APPLY_FAMILIES.map((fam) => (
+                  <div key={fam} className={styles.ApplyFamily} role="group" aria-labelledby={`apply-family-${fam}`}>
+                    <Text as="h3" variant="headingXs" tone="subdued" id={`apply-family-${fam}`}>
+                      {t(`vendorPortal.profile.families.${fam}` as DictKey)}
+                    </Text>
+                    <div className={styles.Checks}>
+                      {STRUCTURE_CODES.filter((c) => STRUCTURE_FAMILY[c] === fam).map((c) => (
+                        <Checkbox
+                          key={c}
+                          label={t(`structures.${c}` as DictKey)}
+                          checked={v.structures.includes(c)}
+                          onChange={(on) => set("structures", on ? [...v.structures, c] : v.structures.filter((x) => x !== c))}
+                        />
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
               {err("structures") ? (

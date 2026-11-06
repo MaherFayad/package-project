@@ -38,7 +38,7 @@ const model = generateEcmaDieline(def, def.defaultDims, { thicknessMm: 0.48, mod
 - **Thickness compensation** (engine convention, crease-to-crease = inner + layers × t):
   `L + 2t`, `W + 2t`; height `H + 4t` (tuck both ends: closure + dust flap), `H + 5t`
   (tuck top + 3-layer lock bottom), `H + 6t` (seal end: minor + 2 majors each end).
-  Double wall: `W + 4t` (front and back are two layers).
+  Double wall: `W + 5t` (front two layers, back three with the glue flap).
 - **Closure owners (A20.20.xx.yy, pair 3 = bottom panel, pair 4 = lid panel)**: STE both on the
   back; RTE top back / bottom front; Airplane both on the front; French (inverted) reverse
   tuck top front / bottom back.
@@ -46,14 +46,17 @@ const model = generateEcmaDieline(def, def.defaultDims, { thicknessMm: 0.48, mod
   from the lid corners. Dust flaps trapezoidal, depth `min(0.8 W, 0.45 L)`. Optional slit lock
   (`tuckLock: "slit"`): two 0.5 mm × ≤ 8 mm cuts at the tuck crease ends, as holes in the lid.
 - **Lock bottoms**: 1-2-3 snap lock (dust flaps, slot flap, lock flap with two tabs) and crash lock
-  (45° glue-assist creases as extra creases). Side flaps clamp to `L/2 − t` so wide-and-shallow
+  (45° glue-assist creases as extra creases). Both crash-lock main flaps close flush on the outer
+  bottom plane and meet on the centre line; their locking tongues are children on a virtual
+  `roll` hinge one caliper further in, so the whole bottom carries artwork without z-fighting. Side flaps clamp to `L/2 − t` so wide-and-shallow
   sizes (W > L) never overlap past the centre.
 - **Seal end** (ECMA A10 "full overlapping closure"): minor flaps, inner major (W − t), outer
   major (W), glued. Tear strip: two perforations 6 mm apart round all four walls and the glue
   flap, `clamp(0.15 H, 10, 30)` mm below the top crease.
 - **Hanger** (A20.21 "tuck closure with extended back panel"): the back runs on past the top
   crease as a header (virtual `roll` hinge: no crease, no cut), with a 180° doubler, so the tab is
-  two layers; the hang hole is cut through both in register (mirrored about the fold). The top
+  two layers; the hang hole is cut through both in register (mirrored about the fold). The
+  doubler is the front of the tab and joins the front face (printed). The top
   closure is hinged on the front. Euro slot: 30 × 5 mm slot with a Ø10 mm half-round at the top
   centre (scaled down only when the header is narrower than 38 mm). Round hole: Ø8 mm (peg
   hooks up to ~7 mm). Header 30 mm (Euro) / 25 mm (round), 20–80 mm.
@@ -65,9 +68,13 @@ const model = generateEcmaDieline(def, def.defaultDims, { thicknessMm: 0.48, mod
 - **Flip-top**: glued shell; the lid is cut free of the body on the front and sides and stays
   hinged on a crease across the back (fold 0 when closed); glued ends with lips + dust flaps;
   separate **inner frame** blank (front + two part sides, thumb notch) placed inside the body
-  front by an assembly matrix (`pieces: 2`). No bevel on the lid sides (generic geometry,
+  front by an assembly matrix (`pieces: 2`). The lid front and sides stop 0.4 mm short of the
+  body (cut clearance, so the closed pack shows the lid line); the lid's glue lip is
+  `min(8, 0.35 × lid)` and the frame rises to just below it. No bevel on the lid sides (generic geometry,
   no trademarked shape).
 - **Double wall**: reverse tuck whose front and back fold an inner wall 180° from their free edge.
+  Layers, outside → in: front = wall | inner wall | top tuck; back = wall | glue flap | inner
+  wall | bottom tuck, so the side panels are W + 5t.
 
 ## Options (`model` in `generateEcmaDieline`, zod `ecmaTuckOptionsSchema`, strict)
 

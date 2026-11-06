@@ -56,6 +56,10 @@
   margin: 0;
   text-align: end;
 }
+.lineSub {
+  border-block-start: var(--p-border-width-025, 1px) solid var(--p-color-border-secondary, var(--p-color-border));
+  padding-block-start: var(--p-space-150);
+}
 .total {
   font-weight: var(--p-font-weight-semibold);
 }
