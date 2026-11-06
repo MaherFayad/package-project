@@ -97,8 +97,12 @@ Page skeleton:
 | Component | Props (defaults first) | Notes |
 |---|---|---|
 | `Sheet` | `tone: "dark" \| "green" \| "navy" \| "violet" \| "light" \| "white"`, `overlap = true`, `hero = false`, `pad: "default" \| "sm" \| "none"`, `container: "default" \| "narrow" \| "wide" \| "full" \| false`, `as = "section"`, `id`, `aria-label(ledby)` | Sets text, muted (`--mk-muted`), line (`--mk-line`) and focus ring for its tone. `hero` adds header-height top padding and marks the page so the header starts transparent. |
+| `Sheet` spacing (section 7) | `y = "md" \| "lg" \| "xl"` (64/56/40, 100/80/64, 128/96/80); overlap = `--mk-radius-sheet` 48/40/32 with the first heading `--mk-section-y-lg` below the top edge; same-tone neighbours collapse to one `--mk-section-y`; `hero` top = header height | Never add page padding to a Sheet (rule 1); `pad="none"` only for full-bleed media that lays itself out. |
+| `SectionHead` | `title`, `sub?`, `eyebrow?`, `as = "h2"`, `size = "56"`, `align`, `lg`, `id`, `children` (the content) | title → sub 16; head → content 40/32/32 (`lg`: 80/64/48); centred heads max 760px. Use it for every section heading block. |
+| `Stack` | `gap = "head-content" \| "title-sub" \| "head-content-lg" \| "grid"`, `as` | Vertical rhythm from the tokens; replaces page-local margins. |
+| `Grid` | `cols = 3`, `colsMd = 2`, `colsSm = 1`, `gap = "default" \| "tight" \| "bento"`, `as` | Gaps 24/24/16, 16/16/12, 32/24/16. `Bento` uses the bento gap. |
 | `SheetCard` | `tone = "green"`, `as`, `className` | Rounded 32px band inside the container (the reference's green feature card). |
-| `Container` | `size = "default"` (1280), `"narrow"` (880), `"wide"` (1440), `"full"`; `as` | Fluid gutter 16 / 32 / 40px. |
+| `Container` | `size = "default"` (1260 content box), `"narrow"` (880), `"wide"` (1440), `"full"`; `as` | Gutter 16 phone, 32 tablet, `max(24px, (100vw - 1260px) / 2)` desktop (90 at 1440). |
 | `Display` (alias `Heading`) | `as = "h2"`, `size: "hero" \| "96" \| "64" \| "56" \| "44" \| "20"` (default 64), `align: "start" \| "center"`, `id` | Weights 300 (hero, 96), 330 (64/56/44), 450 (20). Arabic: no tracking, line height 1.25. |
 | `Eyebrow`, `Lead`, `Body` | `children`, `align` (Lead) | Eyebrow is green on dark, deep green on light, lilac on violet. |
 | `Pill` | `href?` (Link) or button props; `variant = "light" \| "outline" \| "tint" \| "dark" \| "outline-dark" \| "ghost"`; `size = "md"` (44px) `\| "sm"` (40) `\| "lg"` (56) | light/outline on dark, tint on violet, dark/outline-dark on light sheets. |
@@ -142,3 +146,36 @@ Foundation notes (measured on the reference, 6 Nov 2026, 1440x900 and 390x844):
 - Keyframes on the home page: `mc-glow-fade` / `mc-glow-fade-bloom` (8s), `mc-spin`, `mc-spin-rev`, `logo-group-marquee(-reverse)`, `scroll-x`, `shimmer`, `fade-in`, `pulse`.
 - Fonts in this build: Inter first in both locales, then Noto Sans Arabic (one 166 KB variable file, Arabic block, preloaded on Arabic marketing pages only). English pages render the one Arabic word (language switch) in the system face. Plex stays for the designer, checkout, vendor and admin frames (`preloadPlexArabic`).
 - Mega-menu panels mount after hydration (their links are also in the phone menu and footer), which keeps about 10 KB out of every marketing page's HTML.
+
+## 7. Spacing system (measured 6 Nov 2026, binding for every marketing page)
+
+Measured with Playwright on shopify.com/sa, /sa/start, /sa/sell, /sa/website/builder and /sa/pricing at 1440x900 and 390x844 (section bands, paddings, heading offsets, grid gaps, container boxes), against our /ar, /ar/start, /ar/why-elba, /ar/designer and /ar/pricing on main c828b8a. Every marketing page uses these tokens and nothing else. No page-local padding, margin or gap values in px.
+
+| Token | Desktop (≥1024) | Tablet (768 to 1023) | Phone (<768) | Shopify evidence |
+|---|---|---|---|---|
+| `--mk-container` | 1260px max, centred | 100% minus 2 × gutter | 100% minus 2 × gutter | content box 1260 at x=90 on every page |
+| `--mk-gutter` | 90px at 1440 (`max(24px, (100vw - 1260px)/2)`) | 32px | 16px | x=90 / x=16 |
+| `--mk-section-y` (standard band) | 64px top and bottom | 56px | 40px | 64/64 on most home bands; phone 40/40 |
+| `--mk-section-y-lg` (feature, sheet, violet/green bands) | 100px | 80px | 64px | violet sheet 100/100, phone 64/64 |
+| `--mk-section-y-xl` (closing CTA, after-hero statement) | 128px | 96px | 80px | 128 on CTA and closing bands |
+| `--mk-hero-top` | header height (72px), content then vertically placed | 72px | 72px | hero padding-top 72 |
+| `--mk-stack-title-sub` (heading → its one-line subtitle) | 16px | 16px | 16px | gapAfterH 16 |
+| `--mk-stack-head-content` (heading block → cards/media) | 40px | 32px | 32px | 32 to 40 |
+| `--mk-stack-head-content-lg` (big feature) | 80px | 64px | 48px | 80 |
+| `--mk-grid-gap` | 24px | 24px | 16px | 24 |
+| `--mk-grid-gap-tight` (dense rows, logo/icon walls) | 16px | 16px | 12px | 16 |
+| `--mk-grid-gap-bento` | 32px | 24px | 16px | 32 |
+| `--mk-radius-sheet` | 48px | 40px | 32px | 48 desktop, 32 phone |
+| Type: h1 hero | 96px (start hero 180px) | 72px | 56px | 96 / 180; phone 56 |
+| Type: h2 section | 56px (64 for page-closing) | 48px | 36px | 56/64; phone 36 |
+| Type: h3 | 44px | 36px | 28px | 44 |
+
+Rules:
+1. Bands never add their own padding on top of a Sheet's padding; a Sheet is the band.
+2. Adjacent bands of the same tone collapse to one `--mk-section-y` between them (no doubled 64 + 64 = 128 gaps).
+3. Overlapping sheets: the next sheet's top edge sits `--mk-radius-sheet` into the previous band; the first heading inside sits `--mk-section-y-lg` below the sheet top.
+4. No negative gaps: a heading must never overlap the block after it (designer page had -44px).
+5. Line length: body text max 60ch in a 630px column (half container) as on Shopify; centred section intros max 760px.
+6. Every page is checked by e2e/marketing-spacing.spec.ts (owned by the foundation): container width and gutter, section paddings by band type, heading-to-content gap and grid gaps within ±2px of the tokens, at 1440, 1024, 768 and 390 in ar and en.
+
+Section 7 in code (foundation): every value above is a token in `kit/tokens.css` (`--mk-container`, `--mk-gutter`, `--mk-section-y(-lg|-xl)`, `--mk-hero-top`, `--mk-stack-title-sub`, `--mk-stack-head-content(-lg)`, `--mk-grid-gap(-tight|-bento)`, `--mk-radius-sheet`, `--mk-sheet-overlap`, `--mk-measure` 60ch, `--mk-intro-max` 760px; type `--mk-fs-96` 96/72/56, `--mk-fs-64` 64/48/36, `--mk-fs-56` 56/48/36, `--mk-fs-44` 44/36/28). `Lead` sits 16px under its heading and caps at 60ch (760px centred); `PillRow` sits `--mk-stack-head-content` under the head. `e2e/marketing-spacing.spec.ts` measures the kit's `data-mk-*` hooks; pages listed in its `NOT_YET` set run as `test.fixme` until their owner conforms them and deletes the entry (at the foundation push: /why-elba, /designer, /boxes, /catalog, /vendors; /, /start and /pricing pass).

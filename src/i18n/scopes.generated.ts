@@ -150,6 +150,11 @@ export const I18N_SCOPES = {
     "mk.nav.products",
     "mk.nav.start",
     "mk.nav.why",
+    "mk.phone.error",
+    "mk.phone.fine",
+    "mk.phone.label",
+    "mk.phone.placeholder",
+    "mk.phone.submit",
     "nav.admin",
     "nav.catalog",
     "nav.home",
@@ -1193,6 +1198,12 @@ export const I18N_SCOPES = {
     "buyer.quoted.statusPriced",
     "orderStatus."
   ],
+  "why": [
+    "buyer.sample.credit",
+    "buyer.sample.line",
+    "checkout.summary.prepayDiscount",
+    "pricing.badge.BEST_MATCH"
+  ],
   "admin": [
     "account.consentKind.",
     "account.granted",
@@ -1739,11 +1750,6 @@ export const I18N_SCOPES = {
     "library.picker.simplified",
     "library.picker.title",
     "library.picker.use",
-    "mk.phone.error",
-    "mk.phone.fine",
-    "mk.phone.label",
-    "mk.phone.placeholder",
-    "mk.phone.submit",
     "viewer.controls",
     "viewer.reset",
     "viewer.rotateLeft",

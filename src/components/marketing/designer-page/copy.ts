@@ -1,0 +1,323 @@
+import type { Locale } from "@/types";
+
+/**
+ * Strings for /[locale]/designer only. Kept out of the shared dictionary on purpose: the
+ * dictionary is serialised into every public page's client payload, and these strings are
+ * rendered on the server (client islands get the few they need as props).
+ * Arabic: MSA natural for Egypt, noun-form labels, no diacritics.
+ * Placeholders: {price}, {count}, {vendors}, {models}, {rate}.
+ */
+const en = {
+  meta: {
+    title: "Free 3D packaging designer",
+    description:
+      "Design mailers, cartons, rigid boxes and tubes on a live 3D model, free in your browser. Upload your artwork, add Arabic or English text, check the real dieline, then order from a vetted Egyptian printer.",
+  },
+  families: { CORRUGATED: "Corrugated", FOLDING_CARTON: "Folding carton", RIGID: "Rigid box", TUBE: "Paper tube" },
+  hero: {
+    eyebrow: "Elba 3D packaging designer",
+    title: "Your brand on every face",
+    body: "Design your box on a live 3D model, free in your browser. What you see is the real dieline your printer cuts.",
+    cta: "Start designing free",
+    secondary: "Browse box styles",
+    small: "No account needed to design. Sign in to save or order.",
+    frameTag: "Heading",
+    layers: "Faces",
+    layerItems: ["Front", "Lid", "Left side", "Inside"],
+    addLayer: "Add text",
+    swatches: "Brand colours",
+    finish: "Soft-touch lamination",
+    priceTitle: "Price at 500 boxes",
+    priceValue: "{price} / box",
+    priceNote: "Before {rate}% VAT",
+    turn: "Turn in 3D",
+    turnHint: "Loads the live 3D model",
+    viewer: "Live 3D mailer box with sample artwork",
+    pause: "Pause the moving editor pieces",
+    play: "Play the moving editor pieces",
+  },
+  prompt: {
+    title: "Describe your box",
+    body: "Type what you are packing. We show the box styles that fit, and you take it from there in the designer.",
+    label: "What are you packing?",
+    examples: ["mailer", "pizza", "gift", "coffee", "perfume", "rigid"],
+    submit: "Find box styles",
+    note: "Searches all {models} models by name and use.",
+  },
+  wall: {
+    title: "Or start from one of our box styles",
+    body: "Pick a style and the designer opens with it, at a common size you can change.",
+    using: "Open in the designer",
+    all: "See every model",
+    pause: "Pause the box styles strip",
+    play: "Play the box styles strip",
+    label: "Box styles",
+  },
+  make: {
+    title: "Make it yours, no design software needed",
+    body: "Everything you need to put your brand on a box, in the browser, on your phone too.",
+    cta: "Try it now",
+    cards: [
+      { key: "artwork", title: "Upload and crop your artwork", body: "Drop in a logo or a full wrap. Crop, rotate and place it on any face, and see it fold in 3D." },
+      { key: "colours", title: "Your brand colours", body: "Set your colours once and use them on every face, every text and every box you design." },
+      { key: "text", title: "Arabic and English text on every face", body: "Type in Arabic or English. Letters join and run right to left as they should, with fonts made for Arabic." },
+      { key: "dieline", title: "The flat dieline, checked", body: "See the real cut and fold lines with bleed and the safe zone, so nothing important gets trimmed." },
+    ],
+  },
+  share: {
+    title: "Share it, then print it",
+    body: "Your design is a link and a print-ready file, not a screenshot.",
+    cta: "Open the designer",
+    cards: [
+      { key: "link", title: "Share links", body: "Create a link with a free account and send it to a partner or a client. They turn the box in 3D without signing in." },
+      { key: "export", title: "A proof before printing", body: "When you order, our team prepares the print-ready PDF with bleed, and you approve a 3D and PDF proof first." },
+      { key: "views", title: "Mockups for your shop", body: "Download a clean 3D mockup of your box for your store, your menu or your social posts." },
+      { key: "order", title: "Order from the same design", body: "Pick a quantity and a printer. The file the printer gets is the one you approved." },
+    ],
+  },
+  trust: {
+    title: "Ready to order from day one",
+    cards: [
+      { key: "printers", title: "Vetted Egyptian printers", body: "Printers checked for machines, quality and delivery times. You compare them, and Elba stays the seller on every order." },
+      { key: "vat", title: "Receipts with {rate}% VAT", body: "Every price shows Egyptian VAT on its own line, and you can add your company name and tax registration number at checkout for the receipt." },
+      { key: "pay", title: "Pay your way", body: "Pay by card, mobile wallet, Fawry or InstaPay. First orders are paid in full before printing starts." },
+    ],
+    payLabels: { CARD: "Card", WALLET: "Wallet", FAWRY: "Fawry", INSTAPAY: "InstaPay" },
+    vatLines: { subtotal: "Subtotal", vat: "VAT {rate}%", total: "Total" },
+    printerTags: ["Offset", "Die cutting", "Foil"],
+    printersStat: "Active printers today",
+  },
+  materials: {
+    title: "{count} boards and finishes for that",
+    body: "From kraft mailers to soft-touch rigid boxes, every board and finish shows in 3D the way it prints.",
+    linkLabel: "Browse the catalogue",
+    pause: "Pause the materials strip",
+    play: "Play the materials strip",
+    label: "Boards and finishes",
+    groups: [
+      { key: "corrugated", title: "Corrugated board", body: "E and B flute, kraft or white, for mailers and shipping boxes" },
+      { key: "carton", title: "Folding carton", body: "SBS board for retail cartons, sleeves and gable boxes" },
+      { key: "rigid", title: "Rigid board", body: "2 mm greyboard wrapped in printed paper" },
+      { key: "tube", title: "Paper tubes", body: "Spiral-wound kraft with a printed label" },
+      { key: "labels", title: "Labels and sleeves", body: "Paper and film labels for jars, bottles and cans" },
+      { key: "pouch", title: "Pouches", body: "PET and kraft laminates for stand-up and flat bags" },
+      { key: "lamination", title: "Lamination", body: "Matte, gloss or soft-touch, previewed in 3D" },
+      { key: "uv", title: "Spot UV and varnish", body: "Shine on the logo only, or a protective coat" },
+      { key: "foil", title: "Foil, emboss and deboss", body: "Hot foil and raised or pressed details" },
+    ],
+  },
+  start: {
+    title: "Start designing for free",
+    body: "Three steps from an idea to a box at your door.",
+    cta: "Get started",
+    prev: "Previous step",
+    next: "Next step",
+    label: "Steps to get started",
+    steps: [
+      "Pick a box style and a size, or describe what you are packing.",
+      "Add your artwork, colours and text, and check the dieline.",
+      "Choose a quantity and a vetted printer, pay, and track the order to your door.",
+    ],
+  },
+  ui: {
+    upload: "logo.svg uploaded",
+    crop: "Crop",
+    rotate: "Rotate",
+    fit: "Fit to face",
+    colours: [
+      { name: "Nile green", hex: "#2F5D50" },
+      { name: "Sand", hex: "#F6EFE2" },
+      { name: "Terracotta", hex: "#C8553D" },
+      { name: "Ink", hex: "#1F2124" },
+    ],
+    textAr: "قهوة الصباح",
+    textEn: "Morning coffee",
+    textTool: ["Aa", "Plex Arabic", "Bold", "RTL"],
+    legend: { cut: "Cut", crease: "Fold", safe: "Safe zone", bleed: "Bleed" },
+    shareButton: "Copy link",
+    proofRows: [["Dieline", "Mailer box"], ["Bleed", "3 mm"], ["Safe zone", "3 mm"]] as [string, string][],
+    proofOk: "Proof approved",
+    download: "Download mockup",
+    orderTitle: "Quantity",
+    qty: ["250", "500", "1,000", "2,000"],
+    dielineTitle: "Flat dieline of a mailer box",
+  },
+  faq: {
+    title: "Frequently asked questions",
+    items: [
+      { q: "Is the 3D designer really free?", a: "Yes. Designing, saving and sharing are free. You pay only when you order printed boxes." },
+      { q: "Do I need an account to start?", a: "No. You can design straight away. Sign in with your phone number when you want to save, share, download a mockup or order." },
+      { q: "Which box styles can I design?", a: "Mailer and shipping boxes, folding cartons, sleeves, pizza and food boxes, gable boxes, rigid boxes and paper tubes, plus labels for jars, bottles and cans. See the full list in the catalogue." },
+      { q: "Can I write in Arabic on my box?", a: "Yes. Arabic text joins and runs right to left on every face, and you can mix Arabic and English in the same design." },
+      { q: "What files can I upload?", a: "PNG, JPG, WebP and SVG artwork. For the sharpest print, upload your logo as SVG or a large PNG with a transparent background." },
+      { q: "What are bleed and the safe zone?", a: "Bleed is the extra artwork past the cut line, so no white edge shows after cutting. The safe zone is the area inside the cut where text and logos stay clear of the knife. The designer shows both on the flat dieline." },
+      { q: "Do I get a print-ready file?", a: "When you order, our team prepares the print-ready PDF of your dieline with bleed, and you approve a 3D and PDF proof before printing starts. With a free account you can also download a 3D mockup image." },
+      { q: "How do prices work?", a: "Prices come from the pricing engine for your style, size, board, finish and quantity, with 14% VAT on its own line, before you pay. Larger runs get a quote." },
+      { q: "How do I pay?", a: "By card, mobile wallet, Fawry reference code or InstaPay. First orders are paid in full before printing starts." },
+      { q: "Who prints my boxes?", a: "A vetted Egyptian printer you choose by price, delivery time and past work. Elba is the seller on every order and pays the printer." },
+    ],
+  },
+};
+
+type Copy = typeof en;
+
+const ar: Copy = {
+  meta: {
+    title: "مصمم العلب ثلاثي الأبعاد المجاني",
+    description:
+      "صمم صناديق الشحن والعلب الكرتونية والعلب الفاخرة والأنابيب على نموذج ثلاثي الأبعاد مباشر، مجانا من متصفحك. ارفع تصميمك وأضف نصا عربيا أو إنجليزيا وراجع خط القص الفعلي، ثم اطلب الطباعة من مطبعة مصرية معتمدة.",
+  },
+  families: { CORRUGATED: "كرتون مضلع", FOLDING_CARTON: "كرتون مطوي", RIGID: "علبة فاخرة", TUBE: "أنبوب ورقي" },
+  hero: {
+    eyebrow: "مصمم العلب ثلاثي الأبعاد من علبة",
+    title: "علامتك على كل وجه",
+    body: "صمم علبتك على نموذج ثلاثي الأبعاد مباشر، مجانا من متصفحك. ما تراه هو خط القص الفعلي الذي تقصه المطبعة.",
+    cta: "ابدأ التصميم مجانا",
+    secondary: "تصفح أنماط العلب",
+    small: "التصميم بدون حساب. سجل الدخول للحفظ أو الطلب.",
+    frameTag: "عنوان",
+    layers: "الأوجه",
+    layerItems: ["الأمام", "الغطاء", "الجانب الأيسر", "الداخل"],
+    addLayer: "إضافة نص",
+    swatches: "ألوان العلامة",
+    finish: "سلوفان مخملي",
+    priceTitle: "السعر عند 500 علبة",
+    priceValue: "{price} للعلبة",
+    priceNote: "قبل ضريبة {rate}%",
+    turn: "تدوير ثلاثي الأبعاد",
+    turnHint: "يحمل النموذج ثلاثي الأبعاد المباشر",
+    viewer: "صندوق شحن ثلاثي الأبعاد مباشر بتصميم تجريبي",
+    pause: "إيقاف حركة عناصر المصمم",
+    play: "تشغيل حركة عناصر المصمم",
+  },
+  prompt: {
+    title: "صف علبتك",
+    body: "اكتب ما تريد تغليفه، وسنعرض لك أنماط العلب المناسبة لتكمل تصميمها في المصمم.",
+    label: "ماذا تريد أن تغلف؟",
+    examples: ["بيتزا", "هدايا", "قهوة", "عطر", "حلويات", "تجميل"],
+    submit: "بحث عن أنماط العلب",
+    note: "البحث في كل النماذج ({models}) بالاسم والاستخدام.",
+  },
+  wall: {
+    title: "أو ابدأ من أحد أنماط العلب",
+    body: "اختر نمطا ليفتح المصمم عليه بمقاس شائع يمكنك تغييره.",
+    using: "فتح في المصمم",
+    all: "عرض كل النماذج",
+    pause: "إيقاف شريط أنماط العلب",
+    play: "تشغيل شريط أنماط العلب",
+    label: "أنماط العلب",
+  },
+  make: {
+    title: "علبة بهويتك، دون برامج تصميم",
+    body: "كل ما تحتاجه لوضع علامتك على علبة، من المتصفح، وعلى هاتفك أيضا.",
+    cta: "جربه الآن",
+    cards: [
+      { key: "artwork", title: "رفع التصميم وقصه", body: "أضف شعارا أو تصميما كاملا، ثم قصه وأدره وضعه على أي وجه، وشاهده يطوى في ثلاثة أبعاد." },
+      { key: "colours", title: "ألوان علامتك", body: "حدد ألوانك مرة واحدة واستخدمها على كل وجه وكل نص وكل علبة تصممها." },
+      { key: "text", title: "نص عربي وإنجليزي على كل وجه", body: "اكتب بالعربية أو الإنجليزية. تتصل الحروف وتسير من اليمين إلى اليسار كما ينبغي، بخطوط مصممة للعربية." },
+      { key: "dieline", title: "خط القص المسطح بعد المراجعة", body: "شاهد خطوط القص والطي الفعلية مع هامش النزف والمنطقة الآمنة، حتى لا يقص شيء مهم." },
+    ],
+  },
+  share: {
+    title: "شاركه ثم اطبعه",
+    body: "تصميمك رابط وملف جاهز للطباعة، لا صورة شاشة.",
+    cta: "فتح المصمم",
+    cards: [
+      { key: "link", title: "روابط المشاركة", body: "أنشئ رابطا بحساب مجاني وأرسله لشريك أو عميل، ليدير العلبة في ثلاثة أبعاد دون تسجيل الدخول." },
+      { key: "export", title: "بروفة قبل الطباعة", body: "عند الطلب يجهز فريقنا ملف PDF جاهزا للطباعة بهامش النزف، وتعتمد أنت بروفة ثلاثية الأبعاد وPDF أولا." },
+      { key: "views", title: "صور عرض لمتجرك", body: "نزل صورة عرض ثلاثية الأبعاد نظيفة لعلبتك لمتجرك أو قائمتك أو منشوراتك." },
+      { key: "order", title: "الطلب من التصميم نفسه", body: "اختر الكمية والمطبعة. الملف الذي تستلمه المطبعة هو الملف الذي اعتمدته." },
+    ],
+  },
+  trust: {
+    title: "جاهز للطلب من اليوم الأول",
+    cards: [
+      { key: "printers", title: "مطابع مصرية معتمدة", body: "مطابع روجعت ماكيناتها وجودتها والتزامها بالمواعيد. تقارن بينها، وتبقى علبة هي البائع في كل طلب." },
+      { key: "vat", title: "إيصالات بضريبة {rate}%", body: "تظهر ضريبة القيمة المضافة المصرية في سطر مستقل مع كل سعر، ويمكنك إضافة اسم شركتك ورقم التسجيل الضريبي عند الدفع ليظهرا في الإيصال." },
+      { key: "pay", title: "الدفع بطريقتك", body: "ادفع بالبطاقة أو المحفظة الإلكترونية أو فوري أو إنستاباي. يدفع الطلب الأول كاملا قبل بدء الطباعة." },
+    ],
+    payLabels: { CARD: "بطاقة", WALLET: "محفظة", FAWRY: "فوري", INSTAPAY: "إنستاباي" },
+    vatLines: { subtotal: "المجموع الفرعي", vat: "الضريبة {rate}%", total: "الإجمالي" },
+    printerTags: ["أوفست", "تكسير", "بصمة حرارية"],
+    printersStat: "المطابع النشطة اليوم",
+  },
+  materials: {
+    title: "{count} خامة وتشطيبا لعلبتك",
+    body: "من صناديق الكرافت إلى العلب الفاخرة بالسلوفان المخملي، تظهر كل خامة وكل تشطيب في ثلاثة أبعاد كما يطبع.",
+    linkLabel: "تصفح الكتالوج",
+    pause: "إيقاف شريط الخامات",
+    play: "تشغيل شريط الخامات",
+    label: "الخامات والتشطيبات",
+    groups: [
+      { key: "corrugated", title: "الكرتون المضلع", body: "مضلع E وB، كرافت أو أبيض، لصناديق الشحن والتوصيل" },
+      { key: "carton", title: "الكرتون المطوي", body: "كرتون SBS لعلب التجزئة والأغلفة والعلب بمقبض" },
+      { key: "rigid", title: "الكرتون المقوى", body: "كرتون رمادي 2 مم مغلف بورق مطبوع" },
+      { key: "tube", title: "الأنابيب الورقية", body: "كرافت ملفوف بملصق مطبوع" },
+      { key: "labels", title: "الملصقات والأغلفة", body: "ملصقات ورقية وبلاستيكية للبرطمانات والزجاجات والعلب" },
+      { key: "pouch", title: "الأكياس", body: "رقائق PET وكرافت للأكياس الواقفة والمسطحة" },
+      { key: "lamination", title: "السلوفان", body: "مطفي أو لامع أو مخملي، بمعاينة ثلاثية الأبعاد" },
+      { key: "uv", title: "UV موضعي وورنيش", body: "لمعة على الشعار فقط، أو طبقة حماية" },
+      { key: "foil", title: "بصمة وطباعة بارزة وغائرة", body: "بصمة حرارية وتفاصيل بارزة أو غائرة" },
+    ],
+  },
+  start: {
+    title: "ابدأ التصميم مجانا",
+    body: "ثلاث خطوات من الفكرة إلى علبة على بابك.",
+    cta: "البدء",
+    prev: "الخطوة السابقة",
+    next: "الخطوة التالية",
+    label: "خطوات البدء",
+    steps: [
+      "اختر نمط العلبة والمقاس، أو صف ما تريد تغليفه.",
+      "أضف تصميمك وألوانك ونصوصك، وراجع خط القص.",
+      "اختر الكمية ومطبعة معتمدة، وادفع، وتابع الطلب حتى يصل إلى بابك.",
+    ],
+  },
+  ui: {
+    upload: "تم رفع logo.svg",
+    crop: "قص",
+    rotate: "تدوير",
+    fit: "ملاءمة الوجه",
+    colours: [
+      { name: "أخضر النيل", hex: "#2F5D50" },
+      { name: "رملي", hex: "#F6EFE2" },
+      { name: "طوبي", hex: "#C8553D" },
+      { name: "حبر", hex: "#1F2124" },
+    ],
+    textAr: "قهوة الصباح",
+    textEn: "Morning coffee",
+    textTool: ["أب", "Plex Arabic", "عريض", "من اليمين"],
+    legend: { cut: "قص", crease: "طي", safe: "المنطقة الآمنة", bleed: "هامش النزف" },
+    shareButton: "نسخ الرابط",
+    proofRows: [["خط القص", "صندوق شحن"], ["هامش النزف", "3 مم"], ["المنطقة الآمنة", "3 مم"]] as [string, string][],
+    proofOk: "تم اعتماد البروفة",
+    download: "تنزيل صورة العرض",
+    orderTitle: "الكمية",
+    qty: ["250", "500", "1,000", "2,000"],
+    dielineTitle: "خط القص المسطح لصندوق شحن",
+  },
+  faq: {
+    title: "الأسئلة الشائعة",
+    items: [
+      { q: "هل المصمم ثلاثي الأبعاد مجاني فعلا؟", a: "نعم. التصميم والحفظ والمشاركة مجانا، ولا تدفع إلا عند طلب طباعة العلب." },
+      { q: "هل أحتاج إلى حساب للبدء؟", a: "لا. يمكنك التصميم فورا، ثم تسجيل الدخول برقم هاتفك عند الحفظ أو المشاركة أو تنزيل صورة العرض أو الطلب." },
+      { q: "ما أنماط العلب المتاحة للتصميم؟", a: "صناديق الشحن والتوصيل، والعلب الكرتونية، والأغلفة، وعلب البيتزا والطعام، والعلب بمقبض، والعلب الفاخرة، والأنابيب الورقية، إلى جانب ملصقات البرطمانات والزجاجات والعلب. القائمة الكاملة في الكتالوج." },
+      { q: "هل يمكنني الكتابة بالعربية على علبتي؟", a: "نعم. يتصل النص العربي ويسير من اليمين إلى اليسار على كل وجه، ويمكنك الجمع بين العربية والإنجليزية في التصميم نفسه." },
+      { q: "ما الملفات التي يمكنني رفعها؟", a: "صور PNG وJPG وWebP وSVG. للحصول على أوضح طباعة، ارفع شعارك بصيغة SVG أو PNG كبيرة بخلفية شفافة." },
+      { q: "ما هامش النزف والمنطقة الآمنة؟", a: "هامش النزف هو امتداد التصميم خارج خط القص حتى لا تظهر حافة بيضاء بعد القص. والمنطقة الآمنة هي المساحة داخل خط القص التي تبقى فيها النصوص والشعارات بعيدة عن السكين. يعرض المصمم الاثنين على خط القص المسطح." },
+      { q: "هل أحصل على ملف جاهز للطباعة؟", a: "عند الطلب يجهز فريقنا ملف PDF جاهزا للطباعة لخط القص بهامش النزف، وتعتمد بروفة ثلاثية الأبعاد وPDF قبل بدء الطباعة. وبحساب مجاني يمكنك أيضا تنزيل صورة عرض ثلاثية الأبعاد." },
+      { q: "كيف تحسب الأسعار؟", a: "تأتي الأسعار من محرك التسعير حسب النمط والمقاس والخامة والتشطيب والكمية، مع ضريبة 14% في سطر مستقل، قبل الدفع. والكميات الكبيرة تحصل على عرض سعر." },
+      { q: "كيف أدفع؟", a: "بالبطاقة أو المحفظة الإلكترونية أو كود فوري أو إنستاباي. يدفع الطلب الأول كاملا قبل بدء الطباعة." },
+      { q: "من يطبع علبي؟", a: "مطبعة مصرية معتمدة تختارها حسب السعر ومدة التنفيذ والأعمال السابقة. علبة هي البائع في كل طلب، وهي التي تدفع للمطبعة." },
+    ],
+  },
+};
+
+export function designerPageCopy(locale: Locale): Copy {
+  return locale === "ar" ? ar : en;
+}
+
+/** "{price} / box" → "EGP 4.20 / box". */
+export function fill(s: string, vars: Record<string, string | number>): string {
+  return s.replace(/\{(\w+)\}/g, (_, k: string) => String(vars[k] ?? `{${k}}`));
+}

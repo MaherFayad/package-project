@@ -14,7 +14,12 @@ export interface SheetProps {
    * the page scrolls). Adds header-height top padding and a near-full-height block. Implies overlap=false.
    */
   hero?: boolean;
-  /** Vertical padding: default (fluid 80 to 144px), sm (half), none. */
+  /**
+   * Band padding (spec section 7): "md" standard band 64/56/40 (default), "lg" feature, sheet,
+   * violet and green bands 100/80/64, "xl" closing CTA and after-hero statement 128/96/80.
+   */
+  y?: "md" | "lg" | "xl";
+  /** "none" removes the band padding (full-bleed media that lays itself out). "sm" is kept as an alias of y="md". */
   pad?: "default" | "sm" | "none";
   /** Wrap children in <Container size>. Pass false to lay out full-bleed yourself. Default "default". */
   container?: ContainerProps["size"] | false;
@@ -29,10 +34,12 @@ export interface SheetProps {
 
 /**
  * A page section as a rounded sheet that overlaps the one before it (each later sheet stacks
- * above the earlier one). Sets text colour, muted text, lines and focus ring for its tone.
+ * above the earlier one). Spacing follows spec section 7: the overlap equals --mk-radius-sheet
+ * and the first heading sits --mk-section-y-lg below the sheet's top edge (rule 3); two adjacent
+ * sheets of the same tone collapse to one --mk-section-y between them (rule 2). Sets text colour, muted text, lines and focus ring for its tone.
  * Server component; no JS.
  */
-export function Sheet({ tone = "dark", overlap, hero = false, pad = "default", container = "default", as: Tag = "section", className, children, ...rest }: SheetProps) {
+export function Sheet({ tone = "dark", overlap, hero = false, y = "md", pad = "default", container = "default", as: Tag = "section", className, children, ...rest }: SheetProps) {
   const over = hero ? false : overlap ?? true;
   return (
     <Tag
@@ -41,7 +48,9 @@ export function Sheet({ tone = "dark", overlap, hero = false, pad = "default", c
       data-overlap={over ? "true" : "false"}
       data-hero={hero ? "true" : undefined}
       data-mk-header-overlay={hero ? "" : undefined}
-      data-pad={pad === "default" ? undefined : pad}
+      data-pad={pad === "none" ? "none" : undefined}
+      data-y={y}
+      data-mk-band={hero ? "hero" : y}
       {...rest}
     >
       {container === false ? children : <Container size={container}>{children}</Container>}

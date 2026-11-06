@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+import { signInPhone } from "./fixtures/factory";
 
 /**
  * Marketing kit foundation (docs/design-refs/shopify-2026-reference.md, section 6): the dev
@@ -64,6 +65,48 @@ for (const locale of ["ar", "en"] as const) {
     const running = await page.evaluate(() => document.getAnimations().filter((a) => a.playState === "running" && (a.effect as KeyframeEffect | null)?.getComputedTiming().iterations === Infinity).length);
     expect(running).toBe(0);
     await axeClean(page);
+    await ctx.close();
+  });
+}
+
+/** Elements (with their pseudo-elements) whose computed animation-name is not "none". */
+const animated = (page: Page) =>
+  page.evaluate(() =>
+    Array.from(document.querySelectorAll("body *")).flatMap((el) =>
+      [null, "::before", "::after"].flatMap((pseudo) => {
+        const name = getComputedStyle(el, pseudo).animationName;
+        return name && name !== "none" ? [`${el.tagName.toLowerCase()}.${String((el as HTMLElement).className).split(" ")[0]}${pseudo ?? ""}: ${name}`] : [];
+      }),
+    ),
+  );
+
+for (const locale of ["ar", "en"] as const) {
+  // WCAG 2.3.3: under reduced motion no kit element runs any animation, in either direction.
+  // Computed animation-name (not getAnimations) also catches a direction-specific rule such as
+  // `.track:dir(rtl) { animation-name }` outranking the reduced-motion reset.
+  test(`reduced motion: computed animation-name is none everywhere (${locale})`, async ({ browser, baseURL }, info) => {
+    test.setTimeout(120_000);
+    const ctx = await browser.newContext({ ...info.project.use, reducedMotion: "reduce", baseURL });
+    await ctx.addCookies([{ name: "elba_cookie_ack", value: "1", url: baseURL! }]);
+    const page = await ctx.newPage();
+    await page.goto(`/${locale}/dev/kit`);
+    await page.waitForLoadState("networkidle");
+    await isGallery(page);
+    await revealAll(page);
+    expect(await animated(page)).toEqual([]);
+    if (info.project.name === "mobile") {
+      await page.getByRole("button", { name: locale === "ar" ? "القائمة" : "Menu" }).click();
+      const dialog = page.getByRole("dialog");
+      await expect(dialog).toBeVisible();
+      expect(await animated(page)).toEqual([]);
+      await dialog.getByRole("button", { name: locale === "ar" ? "المنتجات" : "Products" }).click();
+      await expect(dialog.getByRole("button", { name: locale === "ar" ? "رجوع" : "Back" })).toBeVisible();
+      expect(await animated(page)).toEqual([]);
+    } else {
+      await page.getByRole("button", { name: locale === "ar" ? "المنتجات" : "Products" }).click();
+      await expect(page.getByRole("button", { name: locale === "ar" ? "المنتجات" : "Products" })).toHaveAttribute("aria-expanded", "true");
+      expect(await animated(page)).toEqual([]);
+    }
     await ctx.close();
   });
 }
@@ -155,3 +198,48 @@ test("kit gallery is not in the sitemap and is disallowed in robots", async ({ r
   const robots = await (await request.get("/robots.txt")).text();
   expect(robots).toContain("Disallow: /*/dev/");
 });
+
+/** Header controls that run past either edge of the viewport, and the page's horizontal overflow. */
+const headerOverflow = (page: Page) =>
+  page.evaluate(() => {
+    const h = document.querySelector("header")!;
+    const out = Array.from(h.querySelectorAll<HTMLElement>("a, button"))
+      .filter((e) => {
+        const r = e.getBoundingClientRect();
+        return r.width > 0 && (r.right > window.innerWidth + 0.5 || r.left < -0.5);
+      })
+      .map((e) => e.textContent?.trim() || e.getAttribute("aria-label"));
+    return { page: document.documentElement.scrollWidth - window.innerWidth, out };
+  });
+
+// R6-AX-10 (WCAG 1.4.10): the desktop header fits from 1000 to 1280 px in both locales, signed out
+// and signed in with the longest role (vendor: Orders + Vendor portal; admin: Orders + Admin).
+for (const who of [
+  { key: "anon", phone: null },
+  { key: "buyer", phone: "+201000000002" },
+  { key: "vendor", phone: "+201000000010" },
+  { key: "admin", phone: "+201000000001" },
+] as const) {
+  test(`header fits 1000 to 1280 px, ar and en (${who.key})`, async ({ page, baseURL }, info) => {
+    test.skip(info.project.name !== "desktop", "desktop widths");
+    test.setTimeout(120_000);
+    if (who.phone) await signInPhone(page.context(), baseURL!, who.phone);
+    for (const locale of ["ar", "en"] as const) {
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.goto(`/${locale}/vendors`);
+      await page.waitForLoadState("networkidle");
+      // Signed in for real (the account menu replaces "Log in"); desktop actions show from 1024 px.
+      if (who.phone) await expect(page.locator("header").getByRole("button", { name: locale === "ar" ? "حسابي" : "My account" })).toBeVisible();
+      for (let w = 1000; w <= 1280; w += 20) {
+        await page.setViewportSize({ width: w, height: 800 });
+        expect(await headerOverflow(page), `${locale} ${who.key} at ${w}px`).toEqual({ page: 0, out: [] });
+      }
+    }
+    if (who.key === "vendor" || who.key === "admin") {
+      // The role links moved from the bar into the account menu.
+      await page.getByRole("button", { name: "My account" }).click();
+      await expect(page.getByRole("link", { name: "Orders" })).toBeVisible();
+      await expect(page.getByRole("link", { name: who.key === "vendor" ? "Vendor portal" : "Admin" })).toBeVisible();
+    }
+  });
+}
