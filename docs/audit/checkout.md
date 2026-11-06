@@ -318,3 +318,36 @@ Counts (round 5, new findings before fixing): **critical 0, high 0, medium 2, lo
 - `prisma/schema.prisma`: `Quote.pricedAt`, `Quote.deliveryDays`, `Quote.vendorCostPiasters` (nullable, additive; agreed with admin).
 - `src/lib/orders/`: `order-guard.ts`, `buyer-track.ts`, `tax-document.ts`, `quote-status.ts` (new); `service.ts` (guard call, `minOrderQuantity`, `loadPricedQuote`, quoted order path, `OrderOffer` type); `quote-requests.ts` (re-exports, `quoteGovernorate`); three new unit tests.
 - `e2e/checkout-quote.spec.ts`, `e2e/checkout-share-guard.spec.ts` (new). `e2e/checkout.spec.ts`: two assertions follow the intended changes (receipt title, "Printer acceptance"); nothing removed or weakened.
+
+## Round 6
+
+Base: main at `d61f21f` (my round 5 merged, plus designer R8, performance, marketing and catalogue R8; `boxes/[structure]` and `legal/[doc]` now sit in the `(detail)` group with guard layouts). Fresh audit of the whole scope on a freshly seeded DB under `next start`:
+- the full journey walk (88 screens, en/ar × 390/1440);
+- the round 5 screens (quoted checkout, account price row, 404s, 320 px receipt);
+- for the first time in these rounds, the three non-card payment methods (mobile wallet, Fawry, InstaPay) at ar/en × 390/1440, including the clipboard.
+
+### Re-verification of round 5
+
+All round 5 rows still hold after the merge. Every walk screen had axe 0 and 0 px overflow. The tracker shows "Printer acceptance" after payment. The receipt title applies while `ELBA_TAX_ID` is unset. Unknown or other buyers' orders and unknown share tokens answer 404 (e2e). The guard and the quoted path pass their e2e. The admin "Send price" form is not on main yet (see Open).
+
+### Findings (new this round)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R6-01 | medium | payment, InstaPay (`PaymentClient.tsx`) | The buyer must type the InstaPay address and the order number into the bank app exactly, but neither had a copy action (Fawry has one). A wrong note means a transfer ops cannot match. | ISO 9241-110 (error tolerance); WCAG 3.3.4 spirit (prevent errors on financial actions) | "Copy address" and "Copy note" buttons (`buyer.copy.*`, "تم النسخ" toast) next to each value, wrapping under the value on phones. Verified: the clipboard holds exactly the order number. | fixed |
+| R6-02 | low | payment, card and wallet | "Pay EGP 14,250" / "دفع 14,250 ج.م" next to a summary that says "EGP 14,250.00". | CR-35 consistency | The pay amount always has two decimals. | fixed |
+| R6-03 | low | account header hint | "Add your name in Profile so the courier knows who to ask for" was not true: the courier uses the name on each delivery address. | Copy accuracy | "Add your name in Profile. It appears on your account and on your receipts; the courier uses the name on each delivery address." (ar likewise). | fixed |
+| R6-04 | low | payment, Fawry | The 13-digit reference was one unbroken run of digits, hard to read out at an outlet. | Readability | Shown in groups of four; screen readers and Copy get the raw digits (visually hidden span). | fixed |
+
+Counts (round 6, new findings before fixing): **critical 0, high 0, medium 1, low 3** (4 total). All fixed and re-checked in the browser. R6-01 is medium, so the stop rule ("no medium or worse") is not met yet. The re-walk after these fixes (journey en-390 and ar-1440, plus the payment-method screens) found nothing new.
+
+### Verification (round 6)
+
+- `npm run lint` and `npm run typecheck` are clean. `npm test` passed 8,508 tests. `next build` is OK with no warnings.
+- e2e (`--workers=2 --trace off`, desktop + mobile, fresh DB): `checkout`, `checkout-quote`, `checkout-share-guard`, `catalogue-order-modes`, `journey`, `smoke`, `storefront`, `admin` and `vendor` gave 59 passed and 17 skipped by the specs themselves, with 0 failures.
+- Browser: the payment methods had axe 0 and 0 px overflow, with focus on the step heading after Continue (X-01 holds). The journey re-walk had axe 0 and 0 px overflow on every screen.
+
+### Open (round 6)
+
+- **Admin "Send price"** (R4-B-03 admin half) is not on main yet. Until it is, a price request can only be priced by writing the row directly.
+- Native date input ("Needed by") shows the browser's date format, e.g. "mm/dd/yyyy" in an Arabic page; it follows the browser locale and is not set by the page.

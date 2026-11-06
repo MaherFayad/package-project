@@ -66,7 +66,8 @@ export function PaymentClient(props: {
   const [instapaySent, setInstapaySent] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [cancelling, setCancelling] = useState(false);
-  const amount = formatMoney(props.totalPiasters, locale);
+  // R6-02: the pay button shows the same two decimals as the summary beside it.
+  const amount = formatMoney(props.totalPiasters, locale, { alwaysDecimals: true });
   const steps = [
     { id: "offer", label: t("checkout.steps.offer") },
     { id: "delivery", label: t("checkout.steps.delivery") },
@@ -225,8 +226,10 @@ export function PaymentClient(props: {
           <Text as="p" variant="bodySm" tone="subdued">
             {t("payment.fawry.code")}
           </Text>
+          {/* R6-04: grouped in fours for reading out at the outlet; copy and screen readers get the raw digits. */}
           <p className={styles.code} data-testid="fawry-code">
-            {payment.fawry.referenceCode}
+            <span aria-hidden="true">{payment.fawry.referenceCode.replace(/(\d{4})(?=\d)/g, "$1 ")}</span>
+            <span className="visually-hidden">{payment.fawry.referenceCode}</span>
           </p>
           <Text as="p" fontWeight="semibold">
             <PriceTag alwaysDecimals amount={props.totalPiasters} locale={locale} />
@@ -268,13 +271,16 @@ export function PaymentClient(props: {
           </span>
         </Text>
         <dl className={styles.specs}>
+          {/* R6-01: both values must be typed exactly into the bank app, so each gets a copy button. */}
           <dt>{t("payment.instapay.address")}</dt>
-          <dd>
+          <dd className={styles.copyRow}>
             <bdi className={styles.mono}>{payment.instapay.address}</bdi>
+            <CopyButton value={payment.instapay.address} label={t("buyer.copy.address")} done={t("buyer.copy.done")} />
           </dd>
           <dt>{t("payment.instapay.reference")}</dt>
-          <dd>
-            <bdi>{payment.instapay.reference}</bdi>
+          <dd className={styles.copyRow}>
+            <bdi className={styles.mono}>{payment.instapay.reference}</bdi>
+            <CopyButton value={payment.instapay.reference} label={t("buyer.copy.reference")} done={t("buyer.copy.done")} />
           </dd>
           <dt>{t("payment.instapay.amount")}</dt>
           <dd>
@@ -482,4 +488,25 @@ function formatExpiry(v: string, prev: string): string {
 
 function toLatin(v: string): string {
   return v.replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)));
+}
+
+/** Small "Copy" action next to a value the buyer has to type elsewhere (InstaPay address, transfer note). */
+function CopyButton({ value, label, done }: { value: string; label: string; done: string }) {
+  const toast = useToast();
+  return (
+    <Button
+      size="slim"
+      icon={Copy}
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(value);
+          toast.show(done);
+        } catch {
+          /* clipboard blocked: the value is on screen */
+        }
+      }}
+    >
+      {label}
+    </Button>
+  );
 }
