@@ -11,9 +11,10 @@ export const MIN_TEXT_PT = 6;
 const SEVERITY_ORDER: Record<PreflightSeverity, number> = { error: 0, warning: 1, info: 2 };
 
 /** Effective DPI of an image layer at its printed size. */
-export function effectiveDpi(l: Pick<ImageLayer, "width" | "height" | "pxWidth" | "pxHeight" | "fit">): number {
-  const iw = Math.max(1, l.pxWidth);
-  const ih = Math.max(1, l.pxHeight);
+export function effectiveDpi(l: Pick<ImageLayer, "width" | "height" | "pxWidth" | "pxHeight" | "fit" | "crop">): number {
+  // A crop prints fewer pixels over the same box (designer: crop).
+  const iw = Math.max(1, l.pxWidth * (l.crop?.width ?? 1));
+  const ih = Math.max(1, l.pxHeight * (l.crop?.height ?? 1));
   const fit = l.fit ?? "contain";
   if (fit === "stretch") return Math.min(iw / (l.width / 25.4), ih / (l.height / 25.4));
   const mmPerPx = fit === "contain" ? Math.min(l.width / iw, l.height / ih) : Math.max(l.width / iw, l.height / ih);

@@ -1,6 +1,6 @@
 "use client";
 
-import { parseTypedWhole } from "@/lib/number-input";
+import { parseWholeInput } from "@/lib/money/input";
 import Link from "next/link";
 import { useId, useState, type FormEvent } from "react";
 import type { Locale } from "@/types";
@@ -39,7 +39,7 @@ export function QuoteRequestForm({ locale, code, slug, presets, signedIn }: { lo
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     // R5-JR-19: Arabic-Indic digits ("٥٠٠٠") used to be stripped to 0 and refused.
-    const quantity = parseTypedWhole(qty) ?? NaN;
+    const quantity = parseWholeInput(qty) ?? NaN;
     if (!Number.isInteger(quantity) || quantity < 100 || quantity > 1_000_000) return setState("qty");
     setState("sending");
     try {

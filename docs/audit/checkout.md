@@ -469,3 +469,71 @@ Checked and fine this round:
 - `src/app/[locale]/admin/disputes/[id]/page.tsx` (additive gallery); `src/i18n/admin.{en,ar}.ts` (`buyerPhotos`, `buyerPhoto`).
 - `src/i18n/{en,ar}.ts`: the returns policy line restored.
 - New: `src/app/api/orders/[id]/dispute-photos/route.ts`, `e2e/checkout-dispute-photos.spec.ts`.
+
+## Round 10 (audit-only pass on R7 to R9 changes)
+
+Focus: dispute photo flow on a phone (camera capture, iPhone HEIC, slow uploads, removal mid-upload), the checkout draft restored across reload on every step, refunded and cancelled order views, and the SMS/WhatsApp texts in both languages. Audited at 390 and 1440, ar and en, with axe.
+
+### Findings
+
+| ID | Severity | Where | Finding | Fix |
+|---|---|---|---|---|
+| R10-01 | Medium | Report a problem, photos | Some Android camera and gallery pickers hand over a `File` with an empty `type`. The client rejected it as "Use a JPG, PNG or WebP photo.", so a buyer taking a photo of a damaged box could not attach it. The server already sniffs magic bytes, so the client check was stricter than the real gate. | Empty `type` passes the client check; the server's magic-byte check decides. |
+| R10-02 | Low | Report a problem, photos | An iPhone HEIC photo got the generic type error, which does not tell the buyer what to do. | A HEIC-specific message (by MIME or `.heic/.heif` name) with the iOS steps: Share, Options, Most Compatible, or a screenshot. Also used when the server refuses the type. |
+| R10-03 | Low | Report a problem, photos | The remove button was disabled while a photo uploaded, so a slow upload could not be cancelled; a photo removed after upload stayed on disk although it was never sent (PDPL 151/2020, data minimisation). | Remove is always enabled: it aborts an upload in flight (`AbortController`), and for an uploaded photo calls the new `DELETE /api/orders/[id]/dispute-photos?key=` (buyer only, `dispute/<orderId>/` keys only, refused when the key already belongs to a sent report). |
+| R10-04 | Low | SMS/WhatsApp, refund | A refunded order sent the generic "status changed" text, with no amount and no payment method (Consumer Protection Law 181/2018: the buyer should know what is refunded and where). | New `REFUNDED` template: en "Elba: order {number} is cancelled and {amount} is on its way back to your {method}. Details: {url}"; ar "علبة: ألغي الطلب {number} وجار رد {amount} إلى {method}. التفاصيل: {url}". Falls back to the generic text when no payment row exists. |
+
+Checked and not a finding: the photo input has no `capture` attribute, so phones offer both camera and gallery (right for a report that may use older photos); the restored draft on reload holds on steps 1 to 4, including the proof step for a buyer whose address comes from a previous order, and two Back presses return to the chosen tier; no address or phone goes to sessionStorage; refunded and cancelled order views, receipt and credit note read correctly in both languages; Arabic SMS texts stay within 2 UCS-2 segments.
+
+Counts of NEW findings: critical 0, high 0, medium 1, low 3.
+
+### Verification
+
+- lint clean, `tsc --noEmit` clean, unit tests 8510 passed, build clean.
+- e2e (checkout*, journey, smoke, storefront, admin, vendor, catalogue-order-modes, `--workers=2 --trace off`): 64 passed, 22 skipped (single-project tests), 0 failed.
+- New e2e in `checkout-dispute-photos.spec.ts` (mobile): HEIC message, empty-type camera photo uploads, removing an uploaded photo sends DELETE 200; passed 3 of 3 with `--repeat-each=3`.
+- Browser checks at 390: removal mid-upload with a 3 s delayed upload leaves 0 rows and 0 files on disk; removal after upload deletes the stored file.
+- Walker (ar-390, en-1440): 44 screens, 0 overflow, 0 axe violations.
+- Screenshots: `r10-en-390-dispute-heic.png`, `r10-ar-390-dispute-heic.png`.
+
+### Files touched outside scope
+
+- `src/lib/notify/index.ts`: `REFUNDED` added to `NOTIFY_TEMPLATES` (additive).
+
+Medium finding present, so by the stop rule one more round is due.
+
+## Round 11 (audit-only pass on the merged code)
+
+Main (`eda6d57`) merged into this branch with no conflicts. Walked the whole buyer path again in ar 390 and en 1440 on the merged build: soft gate, step 1 with the quote request, delivery with errors and company invoice, proof with print check, mock payment with decline and success, order, receipt, orders list, account, share links (owner and signed out). I also checked the printer's view of the order event rules.
+
+### Findings
+
+| ID | Severity | Where | Finding | Fix |
+|---|---|---|---|---|
+| R11-01 | Low | `/orders/[id]` and its receipt, opened by printer staff | Security R5-SEC-01 (on main) keeps printer staff off buyer order pages through `getOrderForViewer`, but the order layout still gated on `canViewOrder`. So the order's printer got the buyer "We could not find this order" card with status 200, not a real 404 and not a way to its job. A printer following a link from a message or the admin to `/orders/<id>` hit a dead end. | The layout now gates on `canViewBuyerOrder`. The order's own printer staff are redirected to `/vendor/jobs/<number>` while the order is in a status the portal shows, where their notes are. Everyone else gets the same 404 as an unknown id. No buyer address or phone reaches printers (B-08, PDPL 151/2020). |
+
+Folded in from the journeys audit (R5-JR-15, already logged there, so not counted as new here): the share page line and the checkout offer card show a per-box price that already has the prepay discount taken off, but said only "excl. VAT". Both now say so, and only when the discount actually applies (not for samples or an accepted quote): en "500 boxes from EGP 38.53 each after the 3% prepay discount, excl. VAT, delivered in 10 days", "EGP 38.53 per box after the 3% prepay discount (excl. VAT)"; ar "500 علبة ابتداء من 38.53 ج.م للعلبة بعد خصم الدفع المقدم 3%، دون الضريبة، والتوصيل خلال 10 أيام", "38.53 ج.م للعلبة بعد خصم الدفع المقدم 3% (دون الضريبة)". The percentage comes from the admin setting (`loadCheckoutSettings`). The step 1 tiles already said it (R4-B-13). The designer badge and price dialog are the designer's half. `checkout.spec.ts` share assertion updated to the new wording. Screenshots `r11-{ar-390,en-1440}-{share,offer}-prepay.png`.
+
+Checked and not a finding:
+- **Printer notes.** The vendor job page shows every note the portal lets a printer write: free notes, decline reason and QC rejection. A note sent through the status API on accept or start-production is not shown in the portal, but that path is API-only and owned by the vendor portal; noted for that owner. The buyer sees none of these notes in ar or en (B-08).
+- **axe `target-size` on ar-390 step 1 after opening the quote form.** Opening the form scrolls the page 84 px, and the page back link (28×28 px) is then partly under the sticky checkout header. That is content scrolled under a sticky bar, not an undersized target: at the top of the page it is 28×28 with 65 px to the nearest target (WCAG 2.2 SC 2.5.8 passes).
+- **Pre-existing, out of scope.** `src/lib/dieline/__tests__/geometry-snapshot.test.ts` fails on main itself (all 127 generators differ from the recorded snapshot after the dieline merges). Left for the designer and dieline owner.
+
+Counts of NEW findings: critical 0, high 0, medium 0, low 1.
+
+### Verification
+
+- **Static checks.** Lint clean, typecheck clean, build clean.
+- **Unit tests.** 8647 passed and 1 failed: the dieline snapshot above, which fails on main too.
+- **e2e.** The run covered checkout*, journey, smoke, storefront, admin, vendor, catalogue-order-modes and security, with `--workers=2 --trace off`. Result: 66 passed, 24 skipped (single-project tests), 0 failed.
+- **e2e changes.**
+  - New `checkout-vendor-view.spec.ts`: the printer is redirected to its job page and sees its note, the receipt redirects too, another buyer gets 404, and the buyer never sees the note.
+  - `checkout-states.spec.ts`: the Fawry radio selector now follows main's copy change ("reference code" to "reference number").
+- **Walker** (ar-390, en-1440, full page): 41 screens, 0 overflow, 0 page errors. axe is clean except the scrolled `target-size` case above.
+- **Screenshots.** `r11-vendor-job-en-1440.png`, `r11-vendor-job-ar-390.png`, `r11-buyer-order-en-1440.png`, `r11-buyer-order-ar-390.png`.
+
+### Files touched outside scope
+
+None. `orders/[id]/layout.tsx` is in scope; it imports `VENDOR_VISIBLE_STATUSES` read-only.
+
+No medium or worse finding this round, so by the BRIEF stop rule the checkout rounds stop here.

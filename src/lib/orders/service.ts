@@ -24,6 +24,7 @@ import { rowToDoc } from "@/components/designer/server";
 import { designQuoteFields, priceTable, quote, toPublicOffer, zoneForGovernorate, type PublicVendorOffer, type QuoteOutcome, type VendorOffer } from "@/lib/pricing";
 import { loadPricingData } from "@/lib/pricing/server";
 import { loadPricingConfig } from "@/components/admin/server/settings";
+import { syncVendorOnTime } from "@/lib/vendors/on-time-sync";
 import { HEADLINE_DEFAULTS } from "@/lib/pricing/headline";
 import { loadCheckoutSettings } from "./checkout-settings";
 import { SAMPLE_LINE_LABEL, SAMPLE_ORDER_NOTE, applySampleCredit, sampleOffer } from "./sample";
@@ -193,7 +194,7 @@ export async function sampleOffers(doc: DesignDoc, governorate?: string): Promis
   if (settings.monthlyCap > 0 && (await samplesThisMonth()) >= settings.monthlyCap) return null;
   const outcome = await quoteDesign(doc, { quantity: QTY_TIERS[0], governorate });
   if (outcome.mode !== "instant" || outcome.offers.length === 0) return null;
-  return { offers: outcome.offers.map((o) => sampleOffer(o, settings.maxPieces, settings.pricePiasters)), pieces: settings.maxPieces };
+  return { offers: outcome.offers.map((o) => sampleOffer(o, settings.maxPieces, settings.pricePiasters, settings.vendorCostPiasters)), pieces: settings.maxPieces };
 }
 
 // ───────────────────────── numbering ─────────────────────────
@@ -628,6 +629,8 @@ export async function transitionOrder(orderId: string, to: OrderStatus, actor: T
   if (to === "DELIVERED") {
     const onTime = order.dueDate ? now.getTime() <= order.dueDate.getTime() : null;
     void track("order_delivered", { by: actor.role, on_time: onTime, reprint: isReprint(order) }, { userId: order.buyerId, orderId });
+    // R5-JR-05 (admin): the public on-time figure follows real deliveries.
+    void syncVendorOnTime([order.vendorId]).catch(() => undefined);
   }
   await notifyStatus(order, to);
 }
@@ -665,13 +668,22 @@ function buyerLink(locale: Locale, path: string): string {
 async function notifyStatus(order: { id: string; number: string; buyer: { locale: string; phone: string; email: string | null } }, to: OrderStatus, tracking?: string): Promise<void> {
 
   const locale = (order.buyer.locale === "en" ? "en" : "ar") as Locale;
-  const template = to === "SHIPPED" ? "SHIPPED" : to === "DELIVERED" ? "DELIVERED" : "STATUS_CHANGED";
+  let template: "SHIPPED" | "DELIVERED" | "REFUNDED" | "STATUS_CHANGED" = to === "SHIPPED" ? "SHIPPED" : to === "DELIVERED" ? "DELIVERED" : "STATUS_CHANGED";
   const { getT } = await import("@/i18n");
+  // R10-04: a refund says how much went back and where.
+  let refund: { amount: string; method: string } | null = null;
+  if (to === "REFUNDED") {
+    const p = await db.payment.findFirst({ where: { orderId: order.id, status: { in: ["REFUNDED", "PAID"] } }, orderBy: { createdAt: "desc" }, select: { amountPiasters: true, method: true } });
+    if (p) {
+      refund = { amount: formatMoney(p.amountPiasters, locale, { alwaysDecimals: true }), method: getT(locale)(`paymentMethods.${p.method}` as never) };
+      template = "REFUNDED";
+    }
+  }
   await notify({
     to: { phone: order.buyer.phone, email: order.buyer.email },
     locale,
     template,
-    params: { number: order.number, status: getT(locale)(`orderStatus.${to}`), url: buyerLink(locale, `/orders/${order.id}`), tracking: tracking ?? "" },
+    params: { number: order.number, status: getT(locale)(`orderStatus.${to}`), url: buyerLink(locale, `/orders/${order.id}`), tracking: tracking ?? "", amount: refund?.amount ?? "", method: refund?.method ?? "" },
   });
 }
 

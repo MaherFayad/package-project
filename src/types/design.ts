@@ -32,6 +32,30 @@ export interface ImageLayer extends LayerBase {
   pxWidth: number;
   pxHeight: number;
   fit?: "contain" | "cover" | "stretch";
+  /**
+   * Added by designer (crop): the part of the image that is shown, as fractions of the full image
+   * (0..1, top-left origin). Non-destructive: `src` keeps the whole image. Absent = the whole image.
+   */
+  crop?: ImageCrop;
+}
+
+export interface ImageCrop {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/**
+ * Added by designer (brand colours): a buyer's saved colour. `cmyk` (0..100 each) and `spot` (a
+ * reference such as a Pantone number the buyer types) are passed to the printer as references to
+ * match, not as guarantees. No colour library is bundled.
+ */
+export interface BrandColor {
+  name: string;
+  hex: string;
+  cmyk?: [number, number, number, number];
+  spot?: string;
 }
 
 export interface TextLayer extends LayerBase {
@@ -96,6 +120,8 @@ export interface DesignDoc {
   finishes?: DesignFinish[];
   /** Added by 3D integration: container settings when `modelCode` is a vessel. */
   vessel?: DesignVessel;
+  /** Added by designer: the brand colours this design uses (snapshot for the printer's spec). */
+  brandColors?: BrandColor[];
 }
 
 /** Finishes a buyer can pick in the designer (mirrors CONFIG_FINISH_CODES in src/lib/configurator). */

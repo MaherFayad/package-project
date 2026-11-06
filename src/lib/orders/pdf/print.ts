@@ -342,6 +342,11 @@ export async function generatePrintPdf(doc: DesignDoc, opts: PrintPdfOptions = {
       ]
         .filter(Boolean)
         .join("  |  ");
+      // Brand colours (designer): the buyer's CMYK / spot references, for the printer to match.
+      const colours = (doc.brandColors ?? [])
+        .map((c) => [c.hex.toUpperCase(), c.cmyk ? `CMYK ${c.cmyk.join("/")}` : null, c.spot ? `ref ${c.spot}` : null].filter(Boolean).join(" "))
+        .join("; ");
+      const colourLine = colours ? `Buyer colour references (match, not guaranteed): ${colours}` : null;
       page.pushOperators(
         rawOps.beginLayer(PDFName.of("Mrk")),
         pushGraphicsState(),
@@ -356,6 +361,9 @@ export async function generatePrintPdf(doc: DesignDoc, opts: PrintPdfOptions = {
         setTextMatrix(1, 0, 0, 1, 6 * K, 5 * K),
         showText(helv.encodeText(slug.replace(/[^ -~]/g, "?"))),
         endText(),
+        ...(colourLine
+          ? [beginText(), setFontAndSize(F1, 6), setTextMatrix(1, 0, 0, 1, 6 * K, 1.8 * K), showText(helv.encodeText(colourLine.replace(/[^ -~]/g, "?").slice(0, 400))), endText()]
+          : []),
         popGraphicsState(),
         rawOps.endLayer(),
       );

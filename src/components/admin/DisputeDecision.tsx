@@ -13,8 +13,10 @@ import { TextField } from "@/components/ui/TextField";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { decideDisputeAction } from "./server/actions";
-import { allowedDecisions, type DisputeDecision as Decision } from "./lib/ops";
-import { fieldError, useAdminAction, useAdminErrorText } from "./useAdminAction";
+import { allowedDecisions, CHARGE_BACK_MODES, defaultChargeBack, planReprint, type ChargeBackMode, type DisputeDecision as Decision } from "./lib/ops";
+import { egpToPiastersInput, fieldError, useAdminAction, useAdminErrorText } from "./useAdminAction";
+import { parseWholeInput } from "@/lib/money/input";
+import { formatMoney, formatNumber } from "@/lib/format";
 import type { AdminActionResponse } from "./server/context";
 
 /** Resolve a dispute: start review, reprint (same or other vendor), refund, or reject. */
@@ -24,14 +26,26 @@ export function DisputeDecision({
   vendors,
   originalVendorId,
   refundable,
+  reason,
+  originalQuantity,
+  originalCostPiasters,
+  paidToVendorPiasters,
 }: {
   disputeId: string;
   status: string;
   vendors: { id: string; name: string }[];
   originalVendorId: string;
   refundable: boolean;
+  /** R5-JR-09: dispute reason (picks the default charge-back), boxes and buy price of the order. */
+  reason: string;
+  originalQuantity: number;
+  originalCostPiasters: number;
+  paidToVendorPiasters: number;
 }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const [qtyText, setQtyText] = useState(String(originalQuantity));
+  const [charge, setCharge] = useState<ChargeBackMode>(defaultChargeBack(reason));
+  const [chargeText, setChargeText] = useState("");
   const { run, busy } = useAdminAction();
   const errorText = useAdminErrorText();
   const options = allowedDecisions(status).filter((d) => d !== "REFUND" || refundable);
@@ -43,9 +57,27 @@ export function DisputeDecision({
   const [confirmRefund, setConfirmRefund] = useState(false);
   if (!options.length) return null;
   const needsNote = decision !== "REVIEW";
+  const qty = parseWholeInput(qtyText);
+  const chargeP = egpToPiastersInput(chargeText);
+  const qtyError = qty === null || Number.isNaN(qty) || qty < 1 || qty > originalQuantity ? "REPRINT_QTY_RANGE" : null;
+  const preview =
+    !qtyError && qty
+      ? planReprint({
+          originalQty: originalQuantity,
+          originalCostPiasters,
+          paidToOriginalPiasters: paidToVendorPiasters,
+          sameVendor: vendorId === originalVendorId,
+          terms: { quantity: qty, chargeBack: charge, chargeBackPiasters: charge === "PARTIAL" ? (chargeP ?? undefined) : undefined },
+        })
+      : null;
+  const chargeError = charge === "PARTIAL" && chargeText.trim() !== "" && (chargeP === null || Number.isNaN(chargeP) || preview === "CHARGE_RANGE") ? "CHARGE_BACK_RANGE" : null;
   const submit = async () => {
     if (!decision) return;
-    const r = await run("decide", () => decideDisputeAction({ disputeId, decision, note, vendorId: decision === "REPRINT" ? vendorId : undefined }), t("admin.disputes.detail.success"));
+    const reprintTerms =
+      decision === "REPRINT"
+        ? { reprintQuantity: parseWholeInput(qtyText) ?? undefined, chargeBack: charge, chargeBackPiasters: charge === "PARTIAL" ? (egpToPiastersInput(chargeText) ?? undefined) : undefined }
+        : {};
+    const r = await run("decide", () => decideDisputeAction({ disputeId, decision, note, vendorId: decision === "REPRINT" ? vendorId : undefined, ...reprintTerms }), t("admin.disputes.detail.success"));
     setRes(r);
     setConfirmRefund(false);
     if (r?.ok) setNote("");
@@ -77,7 +109,53 @@ export function DisputeDecision({
                 d === "REPRINT"
                   ? (sel) =>
                       sel ? (
-                        <Select label={t("admin.disputes.detail.reprintVendor")} value={vendorId} onChange={setVendorId} options={vendors.map((v) => ({ value: v.id, label: v.name }))} />
+                        <BlockStack gap="300">
+                          <Select label={t("admin.disputes.detail.reprintVendor")} value={vendorId} onChange={setVendorId} options={vendors.map((v) => ({ value: v.id, label: v.name }))} />
+                          <TextField
+                            label={t("admin.disputes.detail.reprintQty")}
+                            helpText={t("admin.disputes.detail.reprintQtyHelp", { count: formatNumber(originalQuantity) })}
+                            autoComplete="off"
+                            inputMode="numeric"
+                            value={qtyText}
+                            onChange={setQtyText}
+                            error={qtyError ? errorText(qtyError) : fieldError(res, "reprintQuantity", errorText)}
+                          />
+                          <ChoiceList
+                            title={t("admin.disputes.detail.chargeBack")}
+                            selected={[charge]}
+                            onChange={(v) => setCharge((v[0] as ChargeBackMode) ?? "NONE")}
+                            choices={CHARGE_BACK_MODES.map((m) => ({
+                              value: m,
+                              label: t(`admin.disputes.detail.chargeBackModes.${m}` as DictKey),
+                              renderChildren:
+                                m === "PARTIAL"
+                                  ? (on) =>
+                                      on ? (
+                                        <TextField
+                                          label={t("admin.disputes.detail.chargeBackAmount")}
+                                          autoComplete="off"
+                                          inputMode="decimal"
+                                          value={chargeText}
+                                          onChange={setChargeText}
+                                          error={chargeError ? errorText(chargeError) : fieldError(res, "chargeBackPiasters", errorText)}
+                                        />
+                                      ) : null
+                                  : undefined,
+                            }))}
+                          />
+                          {preview && typeof preview === "object" ? (
+                            <Text as="p" variant="bodySm" tone="subdued">
+                              <span aria-live="polite">
+                                {t(vendorId === originalVendorId ? "admin.disputes.detail.chargeSameVendor" : "admin.disputes.detail.chargeOtherVendor", {
+                                  cost: formatMoney(preview.reprintCostPiasters, locale, { alwaysDecimals: true }),
+                                  charge: formatMoney(preview.chargeBackPiasters, locale, { alwaysDecimals: true }),
+                                  pays: formatMoney(preview.reprintVendorCostPiasters, locale, { alwaysDecimals: true }),
+                                })}
+                                {preview.owedPiasters > 0 ? ` ${t("admin.disputes.detail.chargeOwed", { amount: formatMoney(preview.owedPiasters, locale, { alwaysDecimals: true }) })}` : ""}
+                              </span>
+                            </Text>
+                          ) : null}
+                        </BlockStack>
                       ) : null
                   : undefined,
             }))}
@@ -109,7 +187,7 @@ export function DisputeDecision({
               submit
               variant="primary"
               tone={decision === "REFUND" || decision === "REJECT" ? "critical" : undefined}
-              disabled={!decision || (needsNote && note.trim().length < 3)}
+              disabled={!decision || (needsNote && note.trim().length < 3) || (decision === "REPRINT" && (!!qtyError || !!chargeError || (charge === "PARTIAL" && chargeText.trim() === "")))}
               loading={busy === "decide"}
             >
               {t("admin.disputes.detail.submit")}

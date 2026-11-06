@@ -56,5 +56,5 @@ for src, codes in by.items():
         sheet = Image.new("RGB", (W, H), "white"); y = 0
         for i in imgs:
             sheet.paste(i, (0, y)); y += i.height + 6
-        sheet.save(os.path.join(out, f"{src}-{k // rows_per + 1:02d}.jpg"), quality=72)
+        sheet.save(os.path.join(out, f"{src}-{k // rows_per + 1:02d}.jpg"), quality=int(os.environ.get("Q", "55")))
 print("ok")

@@ -35,9 +35,21 @@ export const AUDIT_ACTIONS = [
   "PORTFOLIO_APPROVE",
   "PORTFOLIO_REJECT",
   "VENDOR_BIO_CLEAN",
+  "VENDOR_BIO_APPROVE",
+  "VENDOR_BIO_REJECT",
   "CHECKOUT_SETTINGS",
   "QUOTE_REQUEST",
   "QUOTE_CONTACTED",
   "QUOTE_CLOSED",
+  "QUOTE_PRICED",
+  "QUOTE_ACCEPTED",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
+
+/**
+ * R4-CR-13: older rows embed raw record ids ("… photo cmw4ogi87000…"). The id stays in Changes
+ * and in search; the summary line drops it. New rows store the caption instead.
+ */
+export function readableSummary(s: string): string {
+  return s.replace(/\s*\bc(?=[a-z0-9]*\d)[a-z0-9]{20,30}\b/g, "").replace(/\s{2,}/g, " ").trim();
+}

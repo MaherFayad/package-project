@@ -46,7 +46,7 @@ export const JARS: BottleDefinition[] = [
     recipe: glassJar({ section: "polygon", sides: 6, cornerRatio: 0.1, bodyTop: 0.8, label: [0.12, 0.72] }),
     materials: ["GLASS_FLINT", "GLASS_FROSTED", "GLASS_AMBER"],
     defaultMaterial: "GLASS_FLINT",
-    finishes: ["TO43", "TO58", "TO63"],
+    finishes: ["TO38", "TO43", "TO58", "TO63"],
     closures: ["LUG_LID"],
     defaultClosure: "LUG_LID",
     limits: { D: { min: 40, max: 95 }, H: { min: 45, max: 130 } },
@@ -75,7 +75,7 @@ export const JARS: BottleDefinition[] = [
     recipe: glassJar({ bodyTop: 0.84, shoulderRound: 0.3, label: [0.12, 0.76] }),
     materials: ["GLASS_FLINT"],
     defaultMaterial: "GLASS_FLINT",
-    finishes: ["TO63", "TO66", "TO70"],
+    finishes: ["TO53", "TO63", "TO66", "TO70"],
     closures: ["LUG_LID"],
     defaultClosure: "LUG_LID",
     limits: { D: { min: 55, max: 100 }, H: { min: 60, max: 150 } },
@@ -107,7 +107,7 @@ export const JARS: BottleDefinition[] = [
     finishes: ["MASON_70", "MASON_86"],
     closures: ["MASON_LID_BAND"],
     defaultClosure: "MASON_LID_BAND",
-    limits: { D: { min: 65, max: 110 }, H: { min: 80, max: 200 } },
+    limits: { D: { min: 70, max: 110 }, H: { min: 80, max: 200 } }, // D >= 70: the 70 mm mason band may not overhang the jar (R5-3Q-F-16)
     aspect: { min: 1.1, max: 2.1 },
     presets: [
       { id: "mason-half-pint", name: { ar: "240 مل", en: "Half pint (240 ml)" }, capacityMl: 240, dims: { D: 72, H: 96 }, finish: "MASON_70", egypt: false, source: "Typ. half-pint regular mouth (approx. Ø72 x 96 mm)" },
@@ -136,7 +136,7 @@ export const JARS: BottleDefinition[] = [
     finishes: ["F70_400", "F89_400"],
     closures: ["SCREW_CAP", "SCREW_CAP_TE"],
     defaultClosure: "SCREW_CAP",
-    limits: { D: { min: 65, max: 120 }, H: { min: 70, max: 190 } },
+    limits: { D: { min: 70, max: 120 }, H: { min: 70, max: 190 } }, // D >= 70: a 70-400 cap may not overhang the jar (R5-3Q-F-16)
     aspect: { min: 0.9, max: 1.8 },
     presets: [
       { id: "nut-340g", name: { ar: "340 جم", en: "340 g" }, capacityMl: 310, dims: { D: 76, H: 88 }, finish: "F70_400", egypt: true, source: "Typ. 12 oz peanut butter PET, 70-400 (approx. Ø76 x 88 mm; 1.1 g/ml)" },

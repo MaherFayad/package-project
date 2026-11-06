@@ -547,3 +547,45 @@ Files touched outside scope (round 11): `src/lib/dieline/texture.ts` (the R11-03
 | high | 0 | 0 | 0 |
 | medium | 3 (R11-01, R11-02, R11-03) | 3 | 0 |
 | low | 1 (R11-04) | 1 | 0 |
+
+# Integrator decisions after round 11: image crop and brand colours
+
+## Image crop (built)
+
+| part | change |
+|---|---|
+| Doc (`types/design.ts`, `designer/lib/doc.ts`) | `ImageLayer.crop?: { x, y, width, height }` as fractions of the whole image (0..1), validated inside the image. **Non-destructive**: `src`, `pxWidth` and `pxHeight` keep the whole image. |
+| Renderers (`lib/dieline/texture.ts`, outside scope, additive) | `imagePlacement()` (pure, exported): the whole image is drawn, scaled so the crop fills the box, and a clip hides the rest. That needs only the 5-argument `drawImage` and a rectangular clip, which the print PDF's canvas shim already supports. So the 3D preview, the face editor, the dieline and the **print PDF** all honour the crop through `drawLayer`. |
+| Preflight | `effectiveDpi` counts only the cropped pixels, so a heavy crop is flagged as low DPI. |
+| UI (`CropDialog.tsx`, `ArtworkPanel`) | "Crop" / "قص" on each image, plus "Remove crop" when one is set. Shapes: **Panel shape** (the face's aspect), Square, Original, Free. The frame is dragged, or its 24 px corner. **Keyboard**: the frame is focusable; arrows move it, Shift + arrows resize (WCAG 2.5.7, 2.1.1). Four **numeric fields** (left / top / width / height %) set it exactly, and a live line gives the result in pixels. The image is never mirrored in RTL. On apply, the layer box takes the crop's shape, keeping its centre and staying inside the panel. |
+| Tests | Unit `crop.test.ts`: placement maths (no crop is the old fit; a right-half crop fills the box), DPI, the schema, the frame rules (inside the image, locked aspect in pixels, centred) and `withCrop` (shape applied and removed). e2e "crop an image to a square": upload, Square, an arrow key, apply → box W = H, "Remove crop" shown, and the saved doc has `crop.width` 0.5 with `pxWidth` 400 (the whole image kept). |
+
+## Brand colours (built; no Pantone library, as decided)
+
+| part | change |
+|---|---|
+| Storage (`prisma/schema.prisma`, outside scope, additive) | `User.brandColors Json?`. |
+| API (`api/designs/brand-colors`) | `GET` / `PUT` for signed-in buyers only. Up to **12** `{ name ≤ 40, hex, cmyk? [0..100 × 4], spot? ≤ 60 }`, one per colour code, rate-limited. |
+| Picker (`fields.tsx`, `BrandColors.tsx`) | Brand colours come **first** in every colour field (background, shape fill, text), as named swatches ("لون العلامة {name}، {hex}"). "Save to brand colours" appears under any colour not yet saved, plus "Manage brand colours". Both ask for the free account first. The manager has a name, the colour code (the R11-02 normaliser), optional CMYK (Arabic-keyboard digits accepted, all four or none) and an optional **"Spot colour reference"** with the help text "The printer uses it as a reference to match; it is not a colour guarantee." / "تستخدمه المطبعة مرجعا للمطابقة، وليس ضمانا لدقة اللون." |
+| To the printer | A save adds `doc.brandColors`: the brand colours the design actually uses. It is kept in `Design.config` (`docConfig` / `rowToDoc`), so the proof snapshot carries it. The **print PDF** slug gets a second line: "Buyer colour references (match, not guaranteed): #7A1FA2 CMYK 50/90/0/10 ref PMS 2603 C". Names are left out because that line is ASCII. Saving brand colours re-saves an open design, so its snapshot stays current. |
+| Tests | Unit: `brandColorSchema` (name, hex, CMYK 0..100, spot). e2e "brand colours" (ar, signed in): save "بنفسجي الشركة" with CMYK typed as "٥٠ / ٩٠ / 0 / 10" and spot "PMS 2603 C". It appears first in the picker; the account API returns exactly that entry; the saved design's `brandColors[0].spot` is "PMS 2603 C". |
+
+# Round 12 (audit of the R10 to R12 changes)
+
+Angles from the integrator: the 409 banner on a phone; the 1000 px breakpoint at 999 / 1000 / 1024 / 1180; crop on Arabic faces; brand colours with the Arabic keyboard.
+
+| angle | result |
+|---|---|
+| 1000 px breakpoint | 1000 / 1024 / 1180 × 768 / 820: side panel (384 px), canvas 398–450 px tall, no scroll. **999 × 768: phone sheet, canvas 199 px** → R12-01 |
+| 409 banner on a phone (ar + en, sheet up) | Shows with both actions ("Load the latest" 40 px, "Keep this version" 28 px ≥ 24 px) and "Autosave paused", axe 0. **The page overflowed by 94 to 106 px** → R12-02 |
+| Crop on an Arabic face | "شكل الوجه" sets the panel's aspect (100 % × 64.1 % of a 2:1 image). Shift + ← shrinks it while keeping the aspect (95 % × 60.9 %). Corner target 24 × 24 px, axe 0 on the dialog. The face shows the cropped part filling the box (`r12-crop-face-ar.png`) |
+| Brand colours with an Arabic keyboard | "#١٢٣٤٥٦" becomes #123456 and applies. Anonymous "Save to brand colours" opens the account gate. CMYK in Arabic digits is stored as numbers (e2e above) |
+
+## Findings (round 12)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R12-01 | medium | editor, landscape 768–999 px (`designer.module.css`) | The R11-01 breakpoint fixed 1024 px, but any landscape screen from 768 to 999 px (small tablets, split view, 999 × 768) still got the phone sheet with a **199 px** canvas. | WCAG 1.4.10; craft | Landscape 768–999 px wide and more than 500 px tall uses the side panel too (panel `minmax(16rem, 38%)`, no sheet handle). | fixed: 999 × 768 canvas **418 px**, panel 374 px, no scroll (`r12-bp-999x768-ar.png`) |
+| R12-02 | medium | 409 / "not found" banner on phones (`DesignerApp`, `designer.module.css`) | The ~130 px banner pushed the editor **94 to 106 px** past the viewport (sheet up), so the stage header scrolled under the sticky top bar: the same class of problem as R4-08. | WCAG 2.4.11, 1.4.10 | `data-banner` on the editor. While a banner shows, the phone stage's floor drops to 12rem (sheet down) and the pulled-up sheet leaves 9rem more. | fixed: overflow **0** in ar and en with the banner and the sheet up (`r12-409-banner-ar-390.png`) |
+
+Files touched outside scope (crop, brand colours): `src/types/design.ts` (two optional fields and two types), `src/lib/dieline/texture.ts` + `index.ts` (`imagePlacement`, crop in `drawLayer`), `src/lib/orders/pdf/print.ts` (the colour reference slug line), `prisma/schema.prisma` (`User.brandColors Json?`).

@@ -1,6 +1,6 @@
 "use client";
 
-import { parseTypedWhole } from "@/lib/number-input";
+import { parseWholeInput } from "@/lib/money/input";
 import { ORDER_MODE_COPY } from "@/data/catalogue/order-mode";
 import { BadgeCheck, Check, Clock, Star, Truck } from "lucide-react";
 import dynamic from "next/dynamic";
@@ -184,7 +184,7 @@ export function CheckoutClient(props: {
 
   const applyCustom = () => {
     // R5-JR-21: "5.000" used to be read as 5 boxes, and Persian digits were refused.
-    const n = parseTypedWhole(customQty) ?? NaN;
+    const n = parseWholeInput(customQty) ?? NaN;
     // R4-B-09 / R4-CR-07: one honest message per case; above 2,000 is a price request, not an error.
     if (!Number.isInteger(n) || n < 1) {
       setCustomErr(t("buyer.qty.invalid", { max: MAX_INSTANT_QTY }));
@@ -644,7 +644,7 @@ export function CheckoutClient(props: {
               <fieldset className={styles.offers}>
                 <legend className="visually-hidden">{t("checkout.offers.title")}</legend>
                 {visibleOffers.map((o) => (
-                  <OfferCard key={o.vendorId} offer={o} checked={o.vendorId === vendorId} onSelect={() => setVendorId(o.vendorId)} locale={locale} sample={!!result.sample} />
+                  <OfferCard key={o.vendorId} offer={o} checked={o.vendorId === vendorId} onSelect={() => setVendorId(o.vendorId)} locale={locale} sample={!!result.sample} prepayPct={props.prepayDiscountPct} />
                 ))}
               </fieldset>
               {offers.length > 3 ? (
@@ -1101,11 +1101,12 @@ function Tick({ value, children }: { value: number; children: ReactNode }) {
   );
 }
 
-function OfferCard({ offer, checked, onSelect, locale, sample }: { offer: CheckoutOffer; checked: boolean; onSelect: () => void; locale: Locale; sample?: boolean }) {
+function OfferCard({ offer, checked, onSelect, locale, sample, prepayPct = 0 }: { offer: CheckoutOffer; checked: boolean; onSelect: () => void; locale: Locale; sample?: boolean; prepayPct?: number }) {
   const { t } = useI18n();
   const name = locale === "ar" ? offer.vendor.name.ar : offer.vendor.name.en;
   const unit = Math.round(offer.pay.subtotalPiasters / offer.quantity);
-  const unitParts = t("checkout.offers.unit", { price: "\u0000" }).split("\u0000");
+  // R5-JR-15: the unit is after the prepay discount; say so wherever that figure is shown.
+  const unitParts = (offer.pay.discountPiasters > 0 && prepayPct > 0 ? t("buyer.unitPrepay", { price: "\u0000", pct: prepayPct }) : t("checkout.offers.unit", { price: "\u0000" })).split("\u0000");
   return (
     <label className={styles.offer} data-testid="vendor-offer">
       <input className={styles.radio} type="radio" name="vendor" value={offer.vendorId} checked={checked} onChange={onSelect} aria-label={t("checkout.offers.select", { vendor: name })} />

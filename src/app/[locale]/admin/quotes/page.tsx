@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { getT, toLocale } from "@/i18n";
 import { QuoteLeadsIndex } from "@/components/admin/QuoteLeadsIndex";
-import { loadQuoteLeads } from "@/components/admin/server/queries";
+import { loadQuoteLeads, loadQuoteVendors } from "@/components/admin/server/queries";
+import { loadPricingConfig } from "@/components/admin/server/settings";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const t = getT(toLocale((await params).locale));
@@ -11,10 +12,11 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 
 export default async function AdminQuotesPage({ params }: { params: Promise<{ locale: string }> }) {
   const now = new Date();
-  const rows = await loadQuoteLeads(toLocale((await params).locale), now);
+  const locale = toLocale((await params).locale);
+  const [rows, vendors, config] = await Promise.all([loadQuoteLeads(locale, now), loadQuoteVendors(locale), loadPricingConfig()]);
   return (
     <Suspense>
-      <QuoteLeadsIndex rows={rows} now={now.toISOString()} />
+      <QuoteLeadsIndex rows={rows} now={now.toISOString()} vendors={vendors} validityHours={config.quoteValidityHours} />
     </Suspense>
   );
 }

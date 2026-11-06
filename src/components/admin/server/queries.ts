@@ -2,7 +2,7 @@ import "server-only";
 import { db } from "@/lib/db";
 import { fromJson } from "@/lib/json";
 import { pick } from "@/i18n";
-import type { Dims, Locale, MaterialCode, OrderStatus, StructureParamLimits, VendorCapabilities } from "@/types";
+import type { Dims, Locale, MaterialCode, OrderStatus, QuoteLine, StructureParamLimits, VendorCapabilities } from "@/types";
 import {
   bucketDaysFor,
   bucketSeries,
@@ -30,9 +30,10 @@ import type { AdminOrderRow } from "../lib/orders";
 import { adminPayoutStatus, needsAction } from "../lib/payouts";
 import { contactFlags } from "../lib/moderation";
 import { FUNNEL_STEPS as EVENT_FUNNEL_STEPS, loadShareLoop } from "@/lib/analytics/funnel";
-import { eventFunnel, visitorToPaid } from "../lib/events";
+import { cohortFunnel, eventFunnel, visitorToPaid } from "../lib/events";
 import { isOverdue, leadState, replyDueAt, type LeadState } from "../lib/quoteLeads";
-import { listQuoteRequests, QUOTE_REQUESTED } from "@/lib/orders/quote-requests";
+import { PRICED_FOLLOW_UP_HOURS } from "../lib/quotePricing";
+import { listQuoteRequests, QUOTE_ACCEPTED, QUOTE_PRICED, QUOTE_REQUESTED, quoteCheckoutPath } from "@/lib/orders/quote-requests";
 import { payoutSchedule, type ScheduleRow } from "@/components/vendor/lib/payouts";
 
 /** Orders whose vendor has earned at least the advance (accepted or later). */
@@ -65,21 +66,17 @@ const metricSelect = {
  */
 async function loadCustomerEventFunnel(w: { from: Date; to: Date }): Promise<Record<(typeof EVENT_FUNNEL_STEPS)[number], number>> {
   const staff = (await db.user.findMany({ where: { role: { in: ["ADMIN", "VENDOR"] } }, select: { id: true } })).map((u) => u.id);
-  const counts = await Promise.all(
-    EVENT_FUNNEL_STEPS.map(async (name) => {
-      const rows = await db.event.findMany({
-        where: { name, at: { gte: w.from, lt: w.to }, OR: [{ userId: null }, { userId: { notIn: staff } }] },
-        select: { userId: true, anonId: true, id: true },
-      });
-      return new Set(rows.map((r) => r.userId ?? (r.anonId ? `a:${r.anonId}` : `e:${r.id}`))).size;
-    }),
-  );
-  return Object.fromEntries(EVENT_FUNNEL_STEPS.map((s, i) => [s, counts[i]])) as Record<(typeof EVENT_FUNNEL_STEPS)[number], number>;
+  // R5-JR-13: one query, then the visitor-cohort rule (see cohortFunnel).
+  const rows = await db.event.findMany({
+    where: { name: { in: [...EVENT_FUNNEL_STEPS] }, at: { gte: w.from, lt: w.to }, OR: [{ userId: null }, { userId: { notIn: staff } }] },
+    select: { name: true, userId: true, anonId: true },
+  });
+  return cohortFunnel(rows, EVENT_FUNNEL_STEPS) as Record<(typeof EVENT_FUNNEL_STEPS)[number], number>;
 }
 
 export async function loadOverview(range: RangeKey, now = new Date()) {
   const { from, to, prevFrom } = rangeWindow(range, now);
-  const [orders, disputes, designs, accounts, priceViewers, orderUsers, qcPending, awaitingVendor, applications, dataRequests, payouts, buyerOrders, vendorEvents, moderation, quoteLeads, eventSteps, shareLoop] = await Promise.all([
+  const [orders, disputes, designs, accounts, priceViewers, orderUsers, qcPending, awaitingVendor, applications, dataRequests, payouts, buyerOrders, vendorEvents, moderation, quoteLeads, pricedExpiring, eventSteps, shareLoop] = await Promise.all([
     db.order.findMany({ where: { OR: [{ placedAt: { gte: prevFrom } }, { deliveredAt: { gte: prevFrom } }] }, select: metricSelect }),
     db.dispute.findMany({ select: { createdAt: true, status: true } }),
     db.design.count({ where: { createdAt: { gte: from, lt: to } } }),
@@ -100,6 +97,7 @@ export async function loadOverview(range: RangeKey, now = new Date()) {
     db.productionEvent.findMany({ where: { type: { in: ["VENDOR_ACCEPTED", "VENDOR_DECLINED"] }, createdAt: { gte: from, lt: to } }, select: { type: true } }),
     countModeration(),
     countOpenQuoteLeads(),
+    countPricedExpiring(),
     // B-19: launch-metrics.md funnel from the first-party Event table (unique actors per step).
     loadCustomerEventFunnel({ from, to }),
     loadShareLoop({ from, to }),
@@ -144,7 +142,7 @@ export async function loadOverview(range: RangeKey, now = new Date()) {
     repeat: repeatRate90(buyerOrders, now),
     acceptance: acceptanceRate(vendorEvents),
     events: { funnel: eventFunnel(eventSteps), visitorToPaidPct: visitorToPaid(eventSteps), share: shareLoop },
-    tasks: { qcPending, awaitingVendor, applications, openDisputes: ops.openDisputes, dataRequests, payouts, moderation, quoteLeads },
+    tasks: { qcPending, awaitingVendor, applications, openDisputes: ops.openDisputes, dataRequests, payouts, moderation, quoteLeads, pricedExpiring },
   };
 }
 
@@ -431,7 +429,7 @@ export async function loadDispute(id: string) {
     },
   });
   if (!d) return null;
-  const [vendors, reprints, auditRows] = await Promise.all([
+  const [vendors, reprints, auditRows, paidPayouts] = await Promise.all([
     db.vendor.findMany({
       where: { status: "ACTIVE" },
       select: {
@@ -445,6 +443,7 @@ export async function loadDispute(id: string) {
     }),
     db.order.findMany({ where: { notes: { startsWith: `REPRINT_OF:${d.order.number}` } }, select: { number: true, status: true } }),
     db.auditLog.findMany({ where: { entityType: "DISPUTE", entityId: d.id }, orderBy: { createdAt: "desc" } }),
+    db.payout.findMany({ where: { orderId: d.order.id, vendorId: d.order.vendorId, status: "PAID" }, select: { amountPiasters: true } }),
   ]);
   // R5-JR-08: a reprint can only go to a vendor that makes this job (an active rate card for the
   // style and board, and the model where one must be listed), like "Change vendor" on the order.
@@ -459,6 +458,7 @@ export async function loadDispute(id: string) {
     vendors: vendors.filter((v) => v.id === d.order.vendorId || capable(v)).map((v) => ({ id: v.id, nameAr: v.nameAr, nameEn: v.nameEn })),
     reprints,
     auditRows,
+    paidToVendorPiasters: paidPayouts.reduce((s, p) => s + p.amountPiasters, 0),
   };
 }
 
@@ -550,12 +550,18 @@ export async function loadAudit(filter: { entityType?: string | null; action?: s
     orderBy: { createdAt: "desc" },
     take: 300,
   });
+  // R4-CR-13: show who acted by name (phone in a tooltip). No relation on purpose: the row outlives
+  // account deletion, so a missing user falls back to the phone kept on the row.
+  const actorIds = [...new Set(rows.map((r) => r.actorId).filter((x): x is string => !!x))];
+  const actors = actorIds.length ? await db.user.findMany({ where: { id: { in: actorIds } }, select: { id: true, name: true } }) : [];
+  const names = new Map(actors.map((a) => [a.id, a.name]));
   return rows.map((r) => ({
     id: r.id,
     action: r.action,
     entityType: r.entityType,
     entityId: r.entityId,
     summary: r.summary,
+    actorName: r.actorId ? (names.get(r.actorId) ?? null) : null,
     actorPhone: r.actorPhone,
     ip: r.ip,
     createdAt: r.createdAt.toISOString(),
@@ -640,7 +646,23 @@ export interface ModerationBio {
   flags: string[];
 }
 
-export async function loadModeration(locale: Locale): Promise<{ photos: ModerationPhoto[]; bios: ModerationBio[] }> {
+/** R6-05 / R4-B-02: a bio edit waiting for review (the live bio stays public until it is approved). */
+export interface ModerationBioEdit {
+  vendorId: string;
+  vendorSlug: string;
+  vendorName: string;
+  liveAr: string;
+  liveEn: string;
+  pendingAr: string;
+  pendingEn: string;
+  submittedAt: string | null;
+  /** Contact kinds in the waiting text: it cannot be approved until cleaned or rejected. */
+  flags: string[];
+}
+
+const BIO_EDIT_SELECT = { id: true, slug: true, nameAr: true, nameEn: true, bioAr: true, bioEn: true, bioArPending: true, bioEnPending: true, bioSubmittedAt: true } as const;
+
+export async function loadModeration(locale: Locale): Promise<{ photos: ModerationPhoto[]; bios: ModerationBio[]; bioEdits: ModerationBioEdit[] }> {
   const [items, vendors] = await Promise.all([
     db.vendorPortfolioItem.findMany({
       where: { OR: [{ status: "PENDING" }, { status: "REJECTED" }, { createdAt: { gte: new Date(Date.now() - 30 * 86_400_000) } }] },
@@ -650,7 +672,23 @@ export async function loadModeration(locale: Locale): Promise<{ photos: Moderati
     }),
     db.vendor.findMany({ select: { id: true, slug: true, nameAr: true, nameEn: true, bioAr: true, bioEn: true } }),
   ]);
+  const edits = await db.vendor.findMany({ where: { bioReviewStatus: "PENDING" }, orderBy: { bioSubmittedAt: "asc" }, select: BIO_EDIT_SELECT });
   return {
+    bioEdits: edits.map((v) => {
+      const pendingAr = v.bioArPending ?? v.bioAr;
+      const pendingEn = v.bioEnPending ?? v.bioEn;
+      return {
+        vendorId: v.id,
+        vendorSlug: v.slug,
+        vendorName: pick(locale, v.nameAr, v.nameEn),
+        liveAr: v.bioAr,
+        liveEn: v.bioEn,
+        pendingAr,
+        pendingEn,
+        submittedAt: v.bioSubmittedAt?.toISOString() ?? null,
+        flags: contactFlags(pendingAr, pendingEn),
+      };
+    }),
     photos: items.map((i) => ({
       id: i.id,
       vendorId: i.vendorId,
@@ -670,13 +708,14 @@ export async function loadModeration(locale: Locale): Promise<{ photos: Moderati
   };
 }
 
-/** Pending photos plus bios with contact details (nav badge, overview to-do). */
+/** Pending photos, bio edits waiting for review and live bios with contact details (nav badge, overview to-do). */
 export async function countModeration(): Promise<number> {
-  const [pending, vendors] = await Promise.all([
+  const [pending, edits, vendors] = await Promise.all([
     db.vendorPortfolioItem.count({ where: { status: "PENDING" } }),
+    db.vendor.count({ where: { bioReviewStatus: "PENDING" } }),
     db.vendor.findMany({ select: { bioAr: true, bioEn: true } }),
   ]);
-  return pending + vendors.filter((v) => contactFlags(v.bioAr, v.bioEn).length > 0).length;
+  return pending + edits + vendors.filter((v) => contactFlags(v.bioAr, v.bioEn).length > 0).length;
 }
 
 /* ───────────────────────── Quote leads (B-15) ───────────────────────── */
@@ -703,23 +742,67 @@ export interface AdminQuoteLead {
   state: LeadState;
   overdue: boolean;
   lastNote: string | null;
+  /** Quote.status: REQUESTED, PRICED or ACCEPTED. */
+  status: string;
+  /** The price the team sent (R4-B-03), for PRICED and ACCEPTED leads. */
+  priced: {
+    vendorId: string | null;
+    vendorName: string | null;
+    lines: QuoteLine[];
+    subtotalPiasters: number;
+    vatPiasters: number;
+    totalPiasters: number;
+    vendorCostPiasters: number | null;
+    deliveryDays: number | null;
+    pricedAt: string | null;
+    /** Buyer link, in the buyer's language (checkout's quoted path). */
+    path: string | null;
+    orderNumber: string | null;
+  } | null;
+  /** Buyer's language, for the link and the message. */
+  buyerLocale: Locale;
+}
+
+/** Active printers for the "Send price" form. */
+export async function loadQuoteVendors(locale: Locale): Promise<{ id: string; name: string; city: string }[]> {
+  const vs = await db.vendor.findMany({ where: { status: "ACTIVE" }, orderBy: { nameEn: "asc" }, select: { id: true, nameAr: true, nameEn: true, cityAr: true, cityEn: true } });
+  return vs.map((v) => ({ id: v.id, name: pick(locale, v.nameAr, v.nameEn), city: pick(locale, v.cityAr, v.cityEn) }));
 }
 
 /** Quote requests with the ops outcome from the audit log (checkout leads and catalogue requests). */
 export async function loadQuoteLeads(locale: Locale, now = new Date()): Promise<AdminQuoteLead[]> {
-  const leads = await listQuoteRequests({ take: 300 });
-  if (!leads.length) return [];
-  const ids = leads.map((l) => l.quoteId);
-  const [events, quotes] = await Promise.all([
-    db.auditLog.findMany({ where: { entityType: "QUOTE", entityId: { in: ids }, action: { in: ["QUOTE_CONTACTED", "QUOTE_CLOSED"] } }, orderBy: { createdAt: "desc" }, select: { entityId: true, action: true, createdAt: true, summary: true } }),
-    db.quote.findMany({ where: { id: { in: ids } }, select: { id: true, lines: true } }),
+  // R4-B-03: priced leads stay in the inbox for the follow-up, and paid ones show as ordered. Only
+  // ACCEPTED quotes the team priced (pricedAt set) are leads; instant engine quotes are not.
+  const [requested, priced, accepted] = await Promise.all([
+    listQuoteRequests({ take: 300 }),
+    listQuoteRequests({ status: QUOTE_PRICED, take: 300 }),
+    listQuoteRequests({ status: QUOTE_ACCEPTED, take: 300 }),
   ]);
-  const linesById = new Map(quotes.map((q) => [q.id, fromJson<Record<string, unknown>[]>(q.lines)?.[0] ?? {}]));
+  const all = [...requested, ...priced, ...accepted];
+  if (!all.length) return [];
+  const quotes = await db.quote.findMany({
+    where: { id: { in: all.map((l) => l.quoteId) } },
+    select: { id: true, lines: true, status: true, vendorId: true, subtotalPiasters: true, vatPiasters: true, totalPiasters: true, vendorCostPiasters: true, deliveryDays: true, pricedAt: true, designId: true, user: { select: { locale: true } }, orders: { select: { number: true }, take: 1 } },
+  });
+  const byId = new Map(quotes.map((q) => [q.id, q]));
+  const leads = all.filter((l) => l.status !== QUOTE_ACCEPTED || byId.get(l.quoteId)?.pricedAt).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  const ids = leads.map((l) => l.quoteId);
+  const vendorIds = [...new Set(quotes.map((q) => q.vendorId).filter((v): v is string => !!v))];
+  const [events, vendors] = await Promise.all([
+    db.auditLog.findMany({ where: { entityType: "QUOTE", entityId: { in: ids }, action: { in: ["QUOTE_CONTACTED", "QUOTE_CLOSED", "QUOTE_PRICED"] } }, orderBy: { createdAt: "desc" }, select: { entityId: true, action: true, createdAt: true, summary: true } }),
+    vendorIds.length ? db.vendor.findMany({ where: { id: { in: vendorIds } }, select: { id: true, nameAr: true, nameEn: true } }) : Promise.resolve([]),
+  ]);
+  const vendorName = new Map(vendors.map((v) => [v.id, pick(locale, v.nameAr, v.nameEn)]));
   return leads.map((l) => {
     const ev = events.filter((e) => e.entityId === l.quoteId);
     const dueAt = replyDueAt(l.createdAt);
-    const state = leadState(ev);
-    const line = linesById.get(l.quoteId) ?? {};
+    const row = byId.get(l.quoteId);
+    const state = leadState(ev, row?.status);
+    const rawLines = fromJson<Record<string, unknown>[]>(row?.lines ?? null) ?? [];
+    // A priced quote's lines are engine lines; the request snapshot lives on the audit row (spec).
+    const line = row?.status === QUOTE_REQUESTED ? (rawLines[0] ?? {}) : {};
+    const buyerLocale: Locale = row?.user?.locale === "en" ? "en" : "ar";
+    const isPriced = row && row.status !== QUOTE_REQUESTED;
     const spec = l.spec ?? {};
     const code = (spec.modelCode as string | null) ?? (line.modelCode as string | undefined) ?? (spec.structureCode as string | undefined) ?? null;
     const lib = modelByCode(code);
@@ -741,12 +824,41 @@ export async function loadQuoteLeads(locale: Locale, now = new Date()): Promise<
       standard: lib?.standard ?? ((line.standard as string | undefined) ?? null),
       dims,
       materialCode: (spec.materialCode as string | undefined) ?? null,
-      source: line.type === "CATALOGUE_REQUEST" ? "catalogue" : "checkout",
+      // Checkout snapshots carry structureCode; catalogue requests carry presetId (and no design at request time).
+      source: line.type === "CATALOGUE_REQUEST" || (!("structureCode" in spec) && "presetId" in spec) ? "catalogue" : "checkout",
       state,
       overdue: isOverdue(state, dueAt, now),
       lastNote: ev[0]?.summary ?? null,
+      status: row?.status ?? l.status,
+      buyerLocale,
+      priced: isPriced
+        ? {
+            vendorId: row.vendorId,
+            vendorName: row.vendorId ? (vendorName.get(row.vendorId) ?? null) : null,
+            lines: rawLines as unknown as QuoteLine[],
+            subtotalPiasters: row.subtotalPiasters,
+            vatPiasters: row.vatPiasters,
+            totalPiasters: row.totalPiasters,
+            vendorCostPiasters: row.vendorCostPiasters,
+            deliveryDays: row.deliveryDays,
+            pricedAt: row.pricedAt?.toISOString() ?? null,
+            path: quoteCheckoutPath(buyerLocale, { id: row.id, designId: row.designId }),
+            orderNumber: row.orders[0]?.number ?? null,
+          }
+        : null,
     };
   });
+}
+
+/**
+ * Sent prices the buyer has not paid that expire within PRICED_FOLLOW_UP_HOURS and were not closed
+ * (overview to-do: call the buyer before the link stops working, R4-B-03).
+ */
+export async function countPricedExpiring(now = new Date()): Promise<number> {
+  const rows = await db.quote.findMany({ where: { status: QUOTE_PRICED, validUntil: { gt: now, lte: new Date(now.getTime() + PRICED_FOLLOW_UP_HOURS * 3_600_000) } }, select: { id: true } });
+  if (!rows.length) return 0;
+  const closed = await db.auditLog.findMany({ where: { entityType: "QUOTE", action: "QUOTE_CLOSED", entityId: { in: rows.map((r) => r.id) } }, select: { entityId: true }, distinct: ["entityId"] });
+  return rows.length - closed.length;
 }
 
 /** Open quote requests (nav badge, overview to-do). */

@@ -16,6 +16,8 @@ export const checkoutSettingsFormSchema = z.object({
     maxPieces: int(1, 5, "SAMPLE_PIECES_RANGE"),
     creditDays: int(0, 365, "SAMPLE_DAYS_RANGE"),
     monthlyCap: int(0, 100_000, "SAMPLE_CAP_RANGE"),
+    /** R4-B-11: the printer's ex-VAT price for one sample pack; null = assumed 60% of the sample price. */
+    vendorCostPiasters: int(0, 10_000_000, "SAMPLE_PRICE_RANGE").nullable().default(null),
   }),
 });
 export type CheckoutSettingsForm = z.infer<typeof checkoutSettingsFormSchema>;

@@ -1,10 +1,10 @@
-import { parseTypedNumber } from "@/lib/number-input";
 /**
  * Rate card editor validation (pure; used by the client form and re-run by the server action).
  * Vendors type prices in EGP; we store integer piasters (1 EGP = 100).
  * Error codes map to i18n keys `vendorPortal.rateCards.errors.<CODE>`.
  */
 import { z } from "zod";
+import { parseDecimalInput } from "@/lib/money/input";
 import { FINISH_CODES, QTY_TIERS, type Dims, type FinishCode, type RateTier, type StructureCode } from "@/types";
 import { validateDims } from "@/lib/dieline/limits";
 
@@ -64,12 +64,12 @@ export type RateCardErrors = Partial<Record<string, RateCardErrorCode>>;
 
 export type RateCardResult = { ok: true; value: RateCardUpdate } | { ok: false; errors: RateCardErrors };
 
-/** Accept Arabic-Indic digits, Arabic decimal separator and thousands commas. */
+/**
+ * Accept Arabic-Indic digits, the Arabic decimal separator and thousands commas. Shared reader
+ * (`@/lib/money/input`, admin R6-AD-01): a decimal comma ("18,50") is invalid, never 1850.
+ */
 export function parseNumber(raw: string | number | null | undefined): number | null {
-  if (raw === null || raw === undefined) return null;
-  if (typeof raw === "number") return Number.isFinite(raw) ? raw : null;
-  // R5-JR-18: commas used to be dropped, so "18,50" (a decimal comma) became EGP 1,850 per piece.
-  return parseTypedNumber(raw, { allowNegative: true });
+  return parseDecimalInput(raw, { allowNegative: true });
 }
 
 export const egpToPiasters = (egp: number) => Math.round(egp * 100);

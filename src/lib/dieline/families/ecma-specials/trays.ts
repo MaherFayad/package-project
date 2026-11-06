@@ -139,7 +139,11 @@ export function sixCornerTray(dims: Dims, t: number, f: StructureFeatures = {}):
   const { b, Lp, Wp, Hp, walls } = fr;
   cornerGlueFlaps(fr, t);
   const c = 0.5;
-  const e = t + c; // lid overhang per side so its side flaps clear the end walls
+  // Lid overhang per side: the side flap (t) sits outside the front flap's corner glue flap
+  // (t), which lies on the end wall, so the overhang is 2 caliper + clearance. A 1t overhang
+  // only cleared SBS (0.4 mm glue flap in a 0.5 mm gap); E-flute glue flaps (1.5 mm) cut
+  // 1 mm into the end walls (R5-3Q-D-01).
+  const e = 2 * t + c;
   const Wl = Wp + t + c;
   const dL = clamp(Math.min(dims.H * 0.5, 40), 12, Hp - 2);
   const y0 = Wp + Hp;

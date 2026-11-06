@@ -198,6 +198,13 @@ export function PriceModal({
               <Badge>{t("designer.price.vendor", { vendor: state.best.vendor.name[locale] })}</Badge>
               <Badge>{t("designer.price.vendorsCount", { count: state.vendorCount })}</Badge>
             </InlineStack>
+            {/* R5-JR-15: the share page and checkout show the price after the prepay discount; say
+                both here so the numbers match what the buyer sees next. */}
+            {state.prepayDiscountPct ? (
+              <Text as="p" variant="bodySm">
+                {t("designer.price.prepay", { pct: state.prepayDiscountPct })}
+              </Text>
+            ) : null}
             <Text as="p" variant="bodySm" tone="subdued">
               {t("designer.price.validUntil", { date: formatDate(state.validUntil, locale) })} · {t("designer.price.note")}
             </Text>

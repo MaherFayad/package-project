@@ -103,7 +103,10 @@ function crashLockBottom(b: DielineBuilder, w: Walls, t: number, Lp: number, Wp:
   const L0 = w.front.width;
   const x1 = L0 * 0.28;
   const x2 = L0 * 0.62;
-  const ch = Math.min(h - t, L0 * 0.3);
+  // R5-3Q-L-01: both long flaps chamfer the SAME box corner (the back runs the other way round),
+  // so a large chamfer left a triangular hole in the bottom showing the unprinted glue flap.
+  // Only a small clearance chamfer, as the ecma-tuck family's crashLockBottom (3d-ecma E-05).
+  const ch = Math.min(6, h - t, L0 * 0.1);
   const e = Math.min(e0, ((x2 - x1) / 1.2) * 0.9);
   {
     const f = b.frame("front", rectEdges(w.front).bottom);

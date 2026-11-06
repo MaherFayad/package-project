@@ -34,7 +34,7 @@ export default async function AdminDisputePage({ params }: { params: Params }) {
   const base = `/${locale}/admin`;
   const data = await loadDispute(id);
   if (!data) notFound();
-  const { dispute: d, vendors, reprints, auditRows } = data;
+  const { dispute: d, vendors, reprints, auditRows, paidToVendorPiasters } = data;
   const order = d.order;
   const buyerPhotos = (Array.isArray(d.photos) ? d.photos : []).filter((k): k is string => typeof k === "string" && parseKey(k)?.scope === "dispute").map(fileUrl);
 
@@ -88,6 +88,10 @@ export default async function AdminDisputePage({ params }: { params: Params }) {
               status={d.status}
               originalVendorId={order.vendorId}
               refundable={canRefund(order.status, order.payments)}
+              reason={d.reason}
+              originalQuantity={order.items.reduce((s, i) => s + i.quantity, 0)}
+              originalCostPiasters={order.vendorCostPiasters}
+              paidToVendorPiasters={paidToVendorPiasters}
               vendors={vendors.map((v) => ({ id: v.id, name: pick(locale, v.nameAr, v.nameEn) }))}
             />
             {d.resolution || d.resolvedAt ? (

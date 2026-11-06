@@ -25,6 +25,8 @@ export const NOTIFY_TEMPLATES = [
   "STATUS_CHANGED",
   "SHIPPED",
   "DELIVERED",
+  // Added by checkout R10-04: refund with amount and method (falls back to STATUS_CHANGED).
+  "REFUNDED",
   "DISPUTE_OPENED",
   "REVIEW_THANKS",
   // Marketing (B-23): only sent by src/lib/jobs/followUp.ts to users whose CURRENT MARKETING

@@ -29,7 +29,7 @@ export function isSampleLines(lines: QuoteLine[] | null | undefined): boolean {
  * Turn a printer's regular offer into a sample offer from the same printer: the fixed sample
  * price for `pieces` boxes plus that offer's delivery line. No die, setup or prepay discount.
  */
-export function sampleOffer(offer: VendorOffer, pieces: number, pricePiasters: number): VendorOffer {
+export function sampleOffer(offer: VendorOffer, pieces: number, pricePiasters: number, vendorCostPiasters: number | null = null): VendorOffer {
   const shipping = offer.lines.filter((l) => l.kind === "SHIPPING");
   const product: QuoteLine = {
     kind: "PRODUCT",
@@ -54,7 +54,11 @@ export function sampleOffer(offer: VendorOffer, pieces: number, pricePiasters: n
     deliveryDays: SAMPLE_PRODUCTION_DAYS + transit,
     standardSize: offer.standardSize,
     badges: [],
-    internal: { ...offer.internal, vendorCostPiasters: Math.round(pricePiasters * SAMPLE_VENDOR_SHARE), marginPiasters: Math.round(pricePiasters * (1 - SAMPLE_VENDOR_SHARE)) },
+    // R4-B-11: the sample buy price set by admin; the 60% share is only the fallback assumption.
+    internal: (() => {
+      const cost = vendorCostPiasters ?? Math.round(pricePiasters * SAMPLE_VENDOR_SHARE);
+      return { ...offer.internal, vendorCostPiasters: cost, marginPiasters: pricePiasters - cost };
+    })(),
   };
 }
 
