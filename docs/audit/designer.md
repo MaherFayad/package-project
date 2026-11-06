@@ -28,6 +28,12 @@ Screenshots: `docs/screenshots/audit/designer/` (`before-*`, `after-*`).
 | D-15 | low | Arabic / en copy | Sheet toggle "عرض المزيد من العلبة" / "Show more of the box" read oddly. | | "تكبير عرض العلبة" / "Show the box larger". | fixed |
 | D-16 | low | `DielineView.tsx`, 390 px | Panel names were drawn at about 3 px on a phone: unreadable noise. | WCAG 1.4.4 | Names show only when the sheet is at least 560 px wide; the legend explains the lines on small screens. | fixed |
 | D-17 | low | start page product cards | Cards had uneven heights, the perfume card wrapped to 4 lines, and the cards had a shadow but no hover or press state. | Polaris; WCAG 2.3.3 | 2-column grid, equal heights, border, hover / active / selected state (150 ms ease-out, off under reduced motion). | fixed |
+| D-18 | high | editor, landscape phone (844x390) | The portrait layout was used: a 32rem minimum height made the page scroll, the 3D stage shrank to a strip, and the viewer's own 240 px floor pushed the canvas under the rows below it, so the controls covered the box. | WCAG 1.3.4 (orientation), 2.4.11 | At most 500 px high and 640 to 1039 px wide: stage and panel side by side, no page scroll, fold row hidden (portrait only). The 3D controls move to a row, and the stage body clips the viewer. | fixed |
+| D-19 | medium | `ConfigPanel.tsx` model card | For models without a standard code the card printed the raw internal code ("STAND_UP_POUCH"). | content quality | The line shows only a real standard (not empty or "none"). | fixed |
+| D-20 | medium | `ConfigPanel.tsx` size fields (ar) | The size field suffix was a hard-coded Latin "mm" in the Arabic UI. | MSA localisation | Uses `common.mm` ("مم"). | fixed |
+| D-21 | medium | editor, 390 px, sheet open | With the sheet pulled up (72dvh), the 3D control and fold rows ate the remaining stage, leaving about 40 px of model. | visual | While the sheet is open on phones, those rows are hidden and the stage keeps the box. They come back when it closes. | fixed |
+| D-22 | low | bottom sheet handle | The sheet looked draggable (grab handle) but only a tap worked. | ISO 9241-110 (conformity with expectations) | Swiping the handle up or down opens or closes it (pointer capture, 24 px threshold). A tap still toggles it (WCAG 2.5.7), and `aria-controls` points at the panel. | fixed |
+| D-23 | low | stage header, 390 px | The face select was squeezed to about 9rem and cut container names ("الوجه ملصق دائري…"). | | The select takes the remaining width on phones. | fixed |
 
 ## Reported to other owners (not edited)
 
@@ -44,3 +50,21 @@ Screenshots: `docs/screenshots/audit/designer/` (`before-*`, `after-*`).
 - `npm run lint`: clean. `npm run typecheck`: clean. `npm test`: 43 files, 5,905 tests passed. `npm run build`: OK.
 - `npx playwright test e2e/designer.spec.ts e2e/smoke.spec.ts --workers=2 --trace off`: 12 / 12 passed (desktop + mobile).
 - No horizontal scroll at 390 or 1440 (ar and en) on the start page or the editor. No console errors.
+
+## Verification (pass 2)
+
+- Re-audit in the browser: every pass 1 fix was re-checked (D-09 reopened: the first sticky rule targeted the tablist, whose scrolling wrapper blocked `sticky`; now fixed and verified in `after-sticky-tabs-ar-390.png`). Wheel over the start-page hero scrolls the page (scrollY 0 → 500). The handle swipe opens the sheet. Container models (wide jar, stand-up pouch) use the same print-area names in every panel.
+- axe-core after the fixes: 0 violations (start page, editor, face editor with selection, gate).
+- `npm run lint` clean, `npm run typecheck` clean, `npm test` 5,905 / 5,905 passed, `npm run build` OK.
+- Playwright `designer`, `smoke`, `journey` (desktop + mobile, `--workers=2 --trace off`): 13 passed, 1 skipped (journey's own desktop-only skip), 0 failed. `e2e/models.spec.ts` (every model, catalogue / engine owned) was not run.
+
+## Counts
+
+| severity | found | fixed | open |
+|---|---|---|---|
+| critical | 0 | 0 | 0 |
+| high | 7 | 7 | 0 |
+| medium | 10 | 10 | 0 |
+| low | 6 | 6 | 0 |
+
+Plus 5 items reported to other owners (R-01 to R-05), not edited.

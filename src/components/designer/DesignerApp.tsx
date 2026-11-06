@@ -168,6 +168,8 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
   const [fold, setFold] = useState(1);
   const [tab, setTab] = useState(0);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const swipeY = useRef<number | null>(null);
+  const swipedRef = useRef(false);
   const [saveState, setSaveState] = useState<SaveState>(initialDesignId ? "saved" : "idle");
   const [gate, setGate] = useState<{ reason: GateReason; then: () => void } | null>(null);
   const [modal, setModal] = useState<ModalName>(null);
@@ -186,7 +188,7 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
   // Phones: the 3D view is short, so its buttons sit in the row under it instead of over the box.
   const [wide, setWide] = useState(true);
   useEffect(() => {
-    const mq = window.matchMedia?.("(min-width: 768px)");
+    const mq = window.matchMedia?.("(min-width: 768px) and (min-height: 600px)");
     if (!mq) return;
     const on = () => setWide(mq.matches);
     on();
@@ -893,11 +895,38 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
 
       {/* ── side panel / bottom sheet ── */}
       <aside className={styles.panel} aria-label={t("designer.tabs.label")}>
-        <button type="button" className={styles.sheetToggle} aria-expanded={sheetOpen} onClick={() => setSheetOpen((o) => !o)}>
+        <button
+          type="button"
+          className={styles.sheetToggle}
+          aria-expanded={sheetOpen}
+          aria-controls="designer-panel"
+          onClick={() => {
+            if (swipedRef.current) swipedRef.current = false;
+            else setSheetOpen((o) => !o);
+          }}
+          // Swipe the handle up / down as a shortcut; a tap does the same (WCAG 2.5.7).
+          onPointerDown={(e) => {
+            swipeY.current = e.clientY;
+            swipedRef.current = false;
+            e.currentTarget.setPointerCapture?.(e.pointerId);
+          }}
+          onPointerUp={(e) => {
+            if (swipeY.current === null) return;
+            const dy = e.clientY - swipeY.current;
+            swipeY.current = null;
+            if (Math.abs(dy) > 24) {
+              swipedRef.current = true;
+              setSheetOpen(dy < 0);
+            }
+          }}
+          onPointerCancel={() => {
+            swipeY.current = null;
+          }}
+        >
           {sheetOpen ? <ChevronDown size={20} aria-hidden /> : <ChevronUp size={20} aria-hidden />}
           <span>{sheetOpen ? t("designer.sheet.collapse") : t("designer.sheet.expand")}</span>
         </button>
-        <div className={styles.panelInner}>
+        <div className={styles.panelInner} id="designer-panel">
           <Tabs tabs={tabs} selected={tab} onSelect={setTab} fitted accessibilityLabel={t("designer.tabs.label")}>
             <div className={styles.panelBody} data-tab={TAB_IDS[tab]}>
               {tab === 0 ? (

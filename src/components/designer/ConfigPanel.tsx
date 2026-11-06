@@ -53,9 +53,11 @@ export function ConfigPanel(props: ConfigPanelProps) {
           <Text as="h3" variant="headingSm">
             <span data-testid="model-name">{model.name[locale]}</span>
           </Text>
-          <Text as="p" variant="bodySm" tone="subdued">
-            <span dir="ltr">{model.standard || model.code}</span>
-          </Text>
+          {model.standard && model.standard !== "none" ? (
+            <Text as="p" variant="bodySm" tone="subdued">
+              <span dir="ltr">{model.standard}</span>
+            </Text>
+          ) : null}
           {model.code !== doc.structureCode ? (
             <Text as="p" variant="bodySm" tone="subdued">
               {t("library.panel.base", { base })}
@@ -275,7 +277,7 @@ function BoxSection({ doc, model, geo, view, onView, onGeometry, onFinish, onPri
               value={draft[axis]}
               onChange={(v) => tryDims({ ...draft, [axis]: v })}
               helpText={`${lims[axis].min}–${lims[axis].max}`}
-              suffix="mm"
+              suffix={t("common.mm")}
             />
           ))}
         </div>
@@ -441,7 +443,7 @@ function VesselSection({ doc, model, geo, view, onView, onGeometry, onFinish }: 
                 value={draft[a]}
                 onChange={(val) => tryDims({ ...draft, [a]: val })}
                 helpText={`${r.min}–${r.max}`}
-                suffix="mm"
+                suffix={t("common.mm")}
               />
             );
           })}

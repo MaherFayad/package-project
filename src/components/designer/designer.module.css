@@ -645,6 +645,7 @@
   border-radius: var(--p-border-radius-full);
   background: var(--p-color-border-tertiary);
 }
+.sheetToggle { touch-action: none; }
 .sheetToggle:focus-visible {
   outline: var(--p-focus-ring-width, 2px) solid var(--p-color-border-focus);
   outline-offset: -2px;
@@ -810,3 +811,40 @@
   border-radius: var(--p-border-radius-200);
   background: var(--p-color-bg-fill-tertiary, #e3e3e3);
 }
+
+/* Phones with the sheet pulled up: the short stage keeps only the 3D view (controls return when it closes). */
+@media (max-width: 1039px) {
+  .editor[data-sheet="open"] .viewControlsRow,
+  .editor[data-sheet="open"] .foldRow { display: none; }
+  .faceSelect { flex: 1 1 auto; }
+}
+/* Landscape phones (short and wide): stage and panel side by side, no page scroll. */
+@media (max-height: 500px) and (min-width: 640px) and (max-width: 1039px) {
+  .editor {
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 40%);
+    grid-template-areas:
+      "toolbar toolbar"
+      "banner banner"
+      "price panel"
+      "stage panel";
+    grid-template-rows: auto auto auto minmax(0, 1fr);
+    min-block-size: 0;
+    padding-block-end: var(--p-space-200);
+  }
+  .panel,
+  .editor[data-sheet="open"] .panel {
+    block-size: auto;
+    margin-inline: 0;
+    border-radius: var(--p-border-radius-300);
+  }
+  .sheetToggle { display: none; }
+  .stageHeader { padding-block: var(--p-space-100); }
+  .stageBody { min-block-size: 0; }
+  .viewControlsRow { padding-block-start: var(--p-space-100); }
+  /* Fold stays on the 3D view's keyboard / portrait layout; here the stage needs the height. */
+  .foldRow { display: none; }
+  .editor .viewControlsRow { display: flex; }
+}
+/* The viewer's own 240 px floor must not push it under the rows below a short stage. */
+.stageBody { overflow: hidden; }
+.sceneWrap > * { min-block-size: 0; }
