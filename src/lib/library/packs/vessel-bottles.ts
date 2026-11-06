@@ -23,6 +23,9 @@ export const models: VesselModelDef[] = BTL.DEFINITIONS.map((def) => {
     return { code: m, name: mat.name, core: mat.coreMaterial, ...(mat.code !== mat.coreMaterial ? { tint: mat.hex } : {}) };
   });
   const closures: VesselOption[] = def.closures.map((c) => {
+    // A wine ROPP is a BVS 30H60 (Stelvin) shell 60 mm long; the engine ROPP style is a fixed 18 mm
+    // skirt, so wine bottles keep the smooth metal LUG_LID drawn over the whole finishH (R5-3Q-F-02).
+    if (c === "ROPP_CAP" && def.finishes.includes("BVS_30H60")) return { code: c, name: BTL.BOTTLE_CLOSURES[c].name, core: "LUG_LID" };
     const style = BOTTLE_CLOSURE_STYLE[c];
     return { code: c, name: BTL.BOTTLE_CLOSURES[c].name, core: BTL.BOTTLE_CLOSURES[c].coreClosure, ...(style ? { closureStyle: style } : {}) };
   });

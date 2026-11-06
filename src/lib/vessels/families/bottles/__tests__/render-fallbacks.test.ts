@@ -1,4 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { buildClosure, type ClosureStyle } from "@/components/three/vessels/closures";
+import { models as PACK } from "@/lib/library/packs/vessel-bottles";
+import type { ClosureKind, VesselKind } from "@/lib/vessels";
 import { BOTTLE_CLOSURES, BOTTLE_MATERIALS, DEFINITIONS, FINISHES, profileFor } from "../index";
 
 /**
@@ -10,16 +13,51 @@ describe("3D render fallbacks", () => {
     for (const c of Object.values(BOTTLE_CLOSURES)) expect(c.coreClosure, c.code).not.toBe("FLIP_TOP");
   });
 
-  it("draws metal closures (crown, ROPP, pourer, cork capsule, foil) as metal, not as a ribbed plastic cap", () => {
-    for (const code of ["ROPP_CAP", "POURER_CAP", "CROWN_26", "CROWN_29", "NATURAL_CORK", "SPARKLING_CORK"] as const) {
-      expect(BOTTLE_CLOSURES[code].coreClosure, code).toBe("LUG_LID");
+  it("draws metal closures (crown, ROPP, pourer, cork capsule, foil) with their own closure style, not the core cap", () => {
+    // R5-3Q-F-01: these used to ride on core LUG_LID, but `buildClosure` only lets a bottle-neck
+    // style replace a screw-cap core (LUG_LID / SLIP_LID / CAN_END are refused), so every crown,
+    // ROPP, cork capsule, sparkling hood and pourer rendered as the plain lug lid. Core SCREW_CAP +
+    // the pack's closureStyle is what the engine expects; the build below proves the style is drawn.
+    const styled = ["ROPP_CAP", "POURER_CAP", "CROWN_26", "CROWN_29", "NATURAL_CORK", "SPARKLING_CORK"] as const;
+    for (const code of styled) expect(BOTTLE_CLOSURES[code].coreClosure, code).toBe("SCREW_CAP");
+    const count = (m: ReturnType<typeof buildClosure>) => m.parts.reduce((n, p) => n + p.geometry.getAttribute("position").count, 0);
+    let checked = 0;
+    for (const model of PACK) {
+      const preset = model.presets.find((p) => p.id === model.defaultPresetId)!;
+      const profile = model.describe(preset.dims, [], preset.id).profile!;
+      for (const opt of model.closures) {
+        if (!(styled as readonly string[]).includes(opt.code)) continue;
+        if (opt.code === "ROPP_CAP" && (DEFINITIONS.find((d) => d.code === model.code)!.finishes as string[]).includes("BVS_30H60")) {
+          // wine Stelvin (BVS 30H60): the tall metal shell over finishH, not the 18 mm ROPP style
+          expect(opt.core, `${model.code}/${opt.code}`).toBe("LUG_LID");
+          expect(opt.closureStyle, `${model.code}/${opt.code}`).toBeUndefined();
+          continue;
+        }
+        expect(opt.closureStyle, `${model.code}/${opt.code}`).toBeTruthy();
+        const withStyle = buildClosure(model.coreKind as VesselKind, opt.core as ClosureKind, preset.dims, profile, opt.closureStyle as ClosureStyle);
+        const plain = buildClosure(model.coreKind as VesselKind, opt.core as ClosureKind, preset.dims, profile, null);
+        expect(withStyle.parts[0].role, `${model.code}/${opt.code}`).toBe("capMetal");
+        expect(count(withStyle), `${model.code}/${opt.code} draws its style`).not.toBe(count(plain));
+        checked++;
+      }
     }
+    expect(checked).toBeGreaterThanOrEqual(14);
   });
 
   it("never renders a container in a different colour family", () => {
-    // tinted glass / PET must not fall back to a different tint (green glass was shown amber)
-    expect(BOTTLE_MATERIALS.GLASS_GREEN.coreMaterial).not.toBe("GLASS_AMBER");
-    expect(BOTTLE_MATERIALS.GLASS_COBALT.coreMaterial).not.toBe("GLASS_AMBER");
+    // tinted glass / PET must not fall back to a different tint (green glass was shown amber).
+    // R5-3Q-F-04: green / cobalt now ride on the dense amber base ON PURPOSE, because the pack
+    // always carries their own colour as `tint` (which replaces the base colour); assert that.
+    for (const model of PACK) {
+      for (const opt of model.containers) {
+        const mat = BOTTLE_MATERIALS[opt.code as keyof typeof BOTTLE_MATERIALS];
+        if (mat.coreMaterial !== mat.code) expect(opt.tint, `${model.code}/${opt.code}`).toBe(mat.hex);
+      }
+    }
+    for (const code of ["GLASS_GREEN", "GLASS_COBALT"] as const) {
+      expect(BOTTLE_MATERIALS[code].coreMaterial, code).toBe("GLASS_AMBER");
+      expect(BOTTLE_MATERIALS[code].hex, code).not.toBe(BOTTLE_MATERIALS.GLASS_AMBER.hex);
+    }
     expect(BOTTLE_MATERIALS.PET_AMBER.coreMaterial).toBe("GLASS_AMBER");
     // translucent plastics read milky, not opaque white or water clear
     expect(BOTTLE_MATERIALS.HDPE_NATURAL.coreMaterial).toBe("GLASS_FROSTED");

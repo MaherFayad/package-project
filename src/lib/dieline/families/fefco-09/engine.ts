@@ -1,9 +1,9 @@
 import { Euler, Mat4 as Matrix4, Quat as Quaternion, Vec3 as Vector3 } from "@/lib/dieline/math";
 import { z } from "zod";
 import type { Dims } from "@/types";
-import { DielineBuilder, panelCreases, rectEdges } from "../../builder";
+import { DielineBuilder, edgeBleed, panelCreases, rectEdges } from "../../builder";
 import { boundsAt, computeFaces } from "../../fold";
-import { bboxOf, coveredFraction, edgesOf, insetRect, offsetConvex, polygonArea, segLength, subtractSegments } from "../../geometry";
+import { bboxOf, edgesOf, insetRect, offsetConvex, polygonArea, segLength, subtractSegments } from "../../geometry";
 import { DielineValidationError, thicknessSchema, type DimsIssue } from "../../limits";
 import type { DielinePanel, DielinePiece, PanelRole, Polygon, Pt, Rect, Segment } from "../../types";
 import type { FittingDefinition, FittingDraft, FittingModel, FittingOptionKey, FittingParams, ResolvedFittingParams } from "./types";
@@ -292,7 +292,7 @@ export function finalizeFitting(def: FittingDefinition, params: ResolvedFittingP
     .filter((p) => p.printable)
     .map((p) => {
       const creases = panelCreases(p, panels);
-      const distances = edgesOf(p.polygon).map((e) => (coveredFraction(e, creases) > 0.98 ? 0 : bleed));
+      const distances = edgesOf(p.polygon).map((e) => edgeBleed(e, creases, panels, bleed));
       return { panelId: p.id, polygon: offsetConvex(p.polygon, distances) as Polygon };
     });
 
