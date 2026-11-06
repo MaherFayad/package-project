@@ -125,7 +125,8 @@ export function boardAppearance(material: MaterialCode): BoardAppearance {
     // The label paper is rolled over the tube's rims, so the visible edges read as label.
     return { outside: "#f8f7f3", inside: KRAFT_INNER, edge: "#e8e2d6", fluteColor: null, flutePitchMm: null, roughness: 0.55 };
   }
-  return { outside: SBS_WHITE, inside: "#f0eee8", edge: "#ecebe6", fluteColor: null, flutePitchMm: null, roughness: 0.62 };
+  // R5-3Q-D-11: SBS is bleached on both sides; the beige inside read as clay-back / CUK.
+  return { outside: SBS_WHITE, inside: "#f3f2ef", edge: "#ecebe6", fluteColor: null, flutePitchMm: null, roughness: 0.62 };
 }
 
 /** Surface roughness / clearcoat for the printed side after the finish. */
