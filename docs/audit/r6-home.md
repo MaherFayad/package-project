@@ -142,3 +142,7 @@ The violet band's prompt caret (`h-caret` 1s) and sparkles (`h-sparkle` 8s) sat 
 Verified (Playwright, `document.getAnimations()`): after pressing all 11 pause controls, 0 of 49 (ar 1440) and 0 of 46 (en 390) infinite time-based animations are still running · fixed.
 
 Re-verified: spacing spec /ar and /en pass · e2e set 147 passed, 35 skipped · lint clean · tsc · unit 8,791 · i18n `--check` · axe 0 in all 8 · phone LCP 1.94 s ar / 1.82 s en, CLS 0.007 / 0.
+
+### Noun-form labels (owner rule; merge21 J1 failure on mobile)
+
+Every Arabic button and link on the home page is now a noun form: «بدء التصميم مجانا» (hero and closing CTA, was «ابدأ…»), «عرض النماذج» (hero secondary and the business-cards CTA, was «تصفح…»), «عرض الكتالوج» (wall link), «التعرف على المطابع». Kept: «فتح المصمم», «عرض التشطيبات», «طلب», «الدفع», «إيقاف…/تشغيل…», «تدوير العلبة». Headings and body text are not buttons and keep their sentence forms. J1 unchanged; it passes on desktop and mobile (`e2e/journeys/j1-brand-orders.spec.ts`), together with smoke, storefront, a11y, a11y-routes, spacing and journey: 116 passed, 28 skipped. This is the only page this session owns.
