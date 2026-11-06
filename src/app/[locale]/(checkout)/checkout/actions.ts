@@ -50,7 +50,7 @@ export type OffersResult =
       /** Unused sample credit applied to these totals (B-05). */
       credit?: { piasters: number; sampleNumber: string; expiresAt: string } | null;
     }
-  | { ok: true; mode: "manual_quote"; quantity: number; max: number }
+  | { ok: true; mode: "manual_quote"; quantity: number; max: number; reason?: "QUANTITY_ABOVE_INSTANT_MAX" | "MODEL_BY_QUOTE"; orderReason?: "SPECIAL_GLUING" | "QUOTE_ONLY_STOCK" | "RARE_IN_EGYPT" | "FILLING_LINE" }
   | ActionError;
 
 export async function getOffersAction(input: { designId: string; quantity: number; governorate?: string; sample?: boolean }): Promise<OffersResult> {
@@ -73,7 +73,8 @@ export async function getOffersAction(input: { designId: string; quantity: numbe
       return { ok: true, mode: "instant", quantity: samples.pieces, offers, suggestion: null, validUntil: offers[0]?.validUntil ?? new Date().toISOString(), sample: true };
     }
     const outcome = await quoteDesign(design.doc, { quantity: p.data.quantity, governorate: p.data.governorate });
-    if (outcome.mode === "manual_quote") return { ok: true, mode: "manual_quote", quantity: outcome.quantity, max: MAX_INSTANT_QTY };
+    if (outcome.mode === "manual_quote")
+      return { ok: true, mode: "manual_quote", quantity: outcome.quantity, max: MAX_INSTANT_QTY, reason: outcome.reason, ...(outcome.orderReason ? { orderReason: outcome.orderReason } : {}) };
     const credit = await sampleCreditFor(s.user.id, p.data.designId);
     return {
       ok: true,

@@ -7,6 +7,7 @@ import type { Locale } from "@/types";
 import type { CatalogueCard } from "@/data/catalogue/types";
 import type { TaxonomyNode } from "@/data/catalogue/taxonomy";
 import { searchRanked } from "./rank";
+import { byWedge } from "@/data/catalogue/order-mode";
 import { formatNumber } from "@/lib/format";
 import { COPY, fill } from "./copy";
 import styles from "./catalogue.module.css";
@@ -63,7 +64,8 @@ export function CatalogueBrowser({ locale, cards, taxonomy }: { locale: Locale; 
     return cards.map((c) => ({ ...c, search: `${c.search} ${names.get(c.family) ?? ""} ${names.get(c.subFamily) ?? ""}`.toLowerCase() }));
   }, [cards, taxonomy]);
   const scoped = useMemo(() => (scope === "egypt" ? indexed.filter(inEgypt) : indexed), [indexed, scope]);
-  const searched = useMemo(() => searchRanked(scoped, q), [scoped, q]);
+  // No query: lead with the launch formats (B-21); with a query: relevance.
+  const searched = useMemo(() => (q.trim() ? searchRanked(scoped, q) : byWedge(scoped)), [scoped, q]);
   const familyCounts = useMemo(() => {
     const m = new Map<string, number>();
     for (const c of searched) {
@@ -84,8 +86,7 @@ export function CatalogueBrowser({ locale, cards, taxonomy }: { locale: Locale; 
 
   return (
     <div className={styles.browser}>
-      <div className={styles.toolbar}>
-        <div className={styles.searchRow}>
+      <div className={styles.searchRow}>
           <label className={styles.search}>
             <span className="visually-hidden">{COPY.search[locale]}</span>
             <Search size={20} aria-hidden className={styles.searchIcon} />
@@ -121,6 +122,7 @@ export function CatalogueBrowser({ locale, cards, taxonomy }: { locale: Locale; 
           </div>
         </div>
 
+      <div className={styles.toolbar}>
         <div className={styles.chipRow} role="group" aria-label={COPY.familiesLabel[locale]}>
           <button type="button" className={styles.chip} aria-pressed={!family} onClick={() => (setFamily(""), setSub(""))}>
             {COPY.all[locale]} <span className={styles.chipCount}>{formatNumber(searched.length)}</span>
@@ -184,6 +186,8 @@ export function CatalogueBrowser({ locale, cards, taxonomy }: { locale: Locale; 
 
 const GAP = 16;
 const TEXT_H = 132;
+/** Cards in the server-rendered grid before the first measurement (3 rows at 4 columns). */
+const STATIC_ROWS_ITEMS = 12;
 
 function columnsFor(width: number) {
   if (width >= 1100) return 4;
@@ -264,27 +268,45 @@ function VirtualGrid({ locale, items }: { locale: Locale; items: CatalogueCard[]
     measure();
   };
 
+  // Before the first measurement (server render, first client paint) the first rows are a plain
+  // CSS grid whose container queries mirror columnsFor / gap / row height, so a 360 px phone never
+  // lays out at desktop width (WCAG 1.4.10, no CLS); the windowed grid takes over once measured.
+  if (!width)
+    return (
+      <div className={styles.gridWrap}>
+        <ul ref={ref} className={styles.gridStatic} data-testid="catalogue-grid" aria-label={fill(COPY.results[locale], { count: formatNumber(items.length) })}>
+          {items.slice(0, STATIC_ROWS_ITEMS).map((c, i) => (
+            <li key={c.code} data-index={i} aria-setsize={items.length} aria-posinset={i + 1}>
+              <ModelCard locale={locale} card={c} eager={i < 8} />
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+
   const slice = items.slice(range.from, Math.min(range.to, items.length));
   return (
-    <ul ref={ref} className={styles.grid} style={{ blockSize: rows * rowH - gap }} onKeyDown={onKeyDown} data-testid="catalogue-grid" aria-label={fill(COPY.results[locale], { count: formatNumber(items.length) })}>
-      {slice.map((c, k) => {
-        const i = range.from + k;
-        const row = Math.floor(i / cols);
-        const col = i % cols;
-        return (
-          <li
-            key={c.code}
-            data-index={i}
-            aria-setsize={items.length}
-            aria-posinset={i + 1}
-            className={styles.cell}
-            style={{ insetBlockStart: row * rowH, insetInlineStart: col * (colW + gap), inlineSize: colW, blockSize: colW + TEXT_H }}
-          >
-            <ModelCard locale={locale} card={c} eager={i < cols * 2} />
-          </li>
-        );
-      })}
-    </ul>
+    <div className={styles.gridWrap}>
+      <ul ref={ref} className={styles.grid} style={{ blockSize: rows * rowH - gap }} onKeyDown={onKeyDown} data-testid="catalogue-grid" aria-label={fill(COPY.results[locale], { count: formatNumber(items.length) })}>
+        {slice.map((c, k) => {
+          const i = range.from + k;
+          const row = Math.floor(i / cols);
+          const col = i % cols;
+          return (
+            <li
+              key={c.code}
+              data-index={i}
+              aria-setsize={items.length}
+              aria-posinset={i + 1}
+              className={styles.cell}
+              style={{ insetBlockStart: row * rowH, insetInlineStart: col * (colW + gap), inlineSize: colW, blockSize: colW + TEXT_H }}
+            >
+              <ModelCard locale={locale} card={c} eager={i < cols * 2} />
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }
 

@@ -2,8 +2,12 @@
 
 import { Search } from "lucide-react";
 import { useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type RefObject } from "react";
-import { CATALOGUE, taxonomy as buildTaxonomy, type CatalogueEntry } from "@/data/catalogue";
+import { familyName, subFamilyName, taxonomy as buildTaxonomy } from "@/data/catalogue/taxonomy";
+import type { CatalogueEntry } from "@/data/catalogue/types";
+// Generated rows (scripts/generate-catalogue-rows.ts): no generators in this chunk (PERF-04).
+import PICKER_ROWS from "@/data/catalogue/picker-rows.generated.json";
 import { searchRanked } from "./rank";
+import { byWedge } from "@/data/catalogue/order-mode";
 import { formatNumber } from "@/lib/format";
 import { useI18n } from "@/i18n/client";
 import { Badge, Modal, TextField } from "@/components/ui";
@@ -12,7 +16,17 @@ import { COPY, fill } from "./copy";
 import styles from "./picker.module.css";
 
 /** Designer-ready rows only (the library); the rest are on the public catalogue. */
-const ROWS: CatalogueEntry[] = CATALOGUE.filter((e) => e.designer);
+type PickerRow = Pick<CatalogueEntry, "code" | "slug" | "name" | "family" | "subFamily" | "standard" | "availableInEgypt" | "search">;
+const NAMES = (slug: string) => {
+  const f = familyName(slug);
+  const s = subFamilyName(slug);
+  return `${f.ar} ${f.en} ${s.ar} ${s.en}`;
+};
+/** Search text built here (codes, both names, standard, family names) to keep the rows file small. */
+const ROWS: PickerRow[] = (PICKER_ROWS as Omit<PickerRow, "search">[]).map((r) => ({
+  ...r,
+  search: [r.code, r.code.replace(/[_-]/g, " "), r.name.en, r.name.ar, r.standard.label, r.standard.code ? `${r.standard.system} ${r.standard.code}` : "", NAMES(r.subFamily)].join(" ").toLowerCase(),
+}));
 const TREE = buildTaxonomy(ROWS.map((e) => e.subFamily));
 const EGYPT_TONE = { local: "success", imported: "attention", rare: "critical" } as const;
 
@@ -22,11 +36,20 @@ const EGYPT_TONE = { local: "success", imported: "attention", rare: "critical" }
  * grid of real 3D thumbnails inside the dialog's scroll area. Same props as the designer's
  * ModelPicker, so it drops in; `cards` is accepted for compatibility and ignored.
  */
+/**
+ * Search gets focus on open only with a mouse or trackpad. On touch, focusing it opens the
+ * keyboard over the grid, so the dialog keeps its default focus and its title is read first
+ * (WCAG 2.4.3 focus order).
+ */
+function finePointer(): boolean {
+  return typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia("(pointer: fine)").matches;
+}
+
 export function ModelPicker({ open, current, onClose, onPick }: { open: boolean; cards?: ModelCard[]; current: string; onClose: () => void; onPick: (code: string) => void }) {
   const { locale } = useI18n();
   const searchRef = useRef<HTMLInputElement | null>(null);
   return (
-    <Modal open={open} onClose={onClose} title={locale === "ar" ? "اختر نموذجا" : "Choose a model"} size="large" initialFocusRef={searchRef} flush>
+    <Modal open={open} onClose={onClose} title={locale === "ar" ? "اختر نموذجا" : "Choose a model"} size="large" initialFocusRef={finePointer() ? searchRef : undefined} flush>
       <CataloguePickerBody current={current} onPick={onPick} searchRef={searchRef} />
     </Modal>
   );
@@ -40,7 +63,10 @@ export function CataloguePickerBody({ current, onPick, searchRef }: { current?: 
   const [sub, setSub] = useState("");
   const q = useDeferredValue(query);
 
-  const searched = useMemo(() => searchRanked(ROWS.filter((e) => scope === "world" || e.availableInEgypt !== "rare"), q), [scope, q]);
+  const searched = useMemo(() => {
+    const scoped = ROWS.filter((e) => scope === "world" || e.availableInEgypt !== "rare");
+    return q.trim() ? searchRanked(scoped, q) : byWedge(scoped);
+  }, [scope, q]);
   const counts = useMemo(() => {
     const m = new Map<string, number>();
     for (const e of searched) {
@@ -118,7 +144,7 @@ export function CataloguePickerBody({ current, onPick, searchRef }: { current?: 
 const ROW_TEXT = 100;
 const GAP = 12;
 
-function PickerGrid({ items, current, onPick }: { items: CatalogueEntry[]; current?: string; onPick: (code: string) => void }) {
+function PickerGrid({ items, current, onPick }: { items: PickerRow[]; current?: string; onPick: (code: string) => void }) {
   const { locale } = useI18n();
   const scroller = useRef<HTMLDivElement | null>(null);
   const [box, setBox] = useState({ w: 0, h: 600 });

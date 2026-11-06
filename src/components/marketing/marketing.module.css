@@ -1174,7 +1174,7 @@
 @media (min-width: 560px) { .productGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (min-width: 1024px) { .productGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; } }
 @media (min-width: 1200px) { .productGrid.five { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
-.productCard { padding: 0; overflow: hidden; gap: 0; }
+.productCard { padding: 0; overflow: hidden; gap: 0; display: flex; flex-direction: column; }
 .productMedia {
   position: relative;
   aspect-ratio: 4 / 3;
@@ -1193,11 +1193,13 @@
   transition: transform var(--m-dur-reveal) var(--m-ease-out);
 }
 .productCard:hover .productMedia img { transform: scale(1.06) rotate(-1.5deg); }
-.productBody { display: grid; gap: 8px; padding: 20px 24px 24px; align-content: start; }
+.productBody { display: flex; flex-direction: column; gap: 8px; padding: 20px 24px 24px; flex: 1; }
+/* CR-31: descriptions clamp to 2 lines and the action row sits at the bottom, so rows line up. */
+.productDesc { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .productBody .h3 { font-size: 1.125rem; }
 .productCode { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; color: var(--mk-muted); }
 .productPrice { font-weight: 650; color: var(--mk-ink); margin-block-start: 4px; }
-.productActions { display: flex; flex-wrap: wrap; gap: 8px; margin-block-start: 12px; position: relative; z-index: 1; }
+.productActions { display: flex; flex-wrap: wrap; gap: 8px; margin-block-start: auto; padding-block-start: 12px; position: relative; z-index: 1; }
 .soonBadge { position: absolute; inset-block-start: 14px; inset-inline-start: 14px; z-index: 1; }
 
 /* Structure detail hero (split) */

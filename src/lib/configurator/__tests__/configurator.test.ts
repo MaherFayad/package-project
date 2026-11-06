@@ -136,7 +136,7 @@ describe("finish rules follow real print constraints", () => {
     expect(enabled(kraft, "MATTE_LAMINATION").enabled).toBe(false);
     expect(enabled(kraft, "SOFT_TOUCH_LAMINATION").enabled).toBe(false);
     expect(enabled(kraft, "SPOT_UV").enabled).toBe(false);
-    expect(enabled(kraft, "SPOT_UV").reason?.en).toMatch(/coated or laminated/);
+    expect(enabled(kraft, "SPOT_UV").reason?.en).toMatch(/cannot be laminated/);
     expect(enabled(kraft, "FOIL_GOLD").enabled).toBe(true);
     expect(enabled(kraft, "FOIL_GOLD").warning?.en).toMatch(/0.5 mm/);
     expect(enabled(kraft, "MATTE_VARNISH").enabled).toBe(true);
@@ -409,3 +409,31 @@ describe("vendor capabilities", () => {
   });
 });
 
+
+describe("spot UV on corrugated: rule and message agree (designer report)", () => {
+  const withFinishes = (material: BoxConfig["material"], codes: ("MATTE_LAMINATION" | "SPOT_UV")[]) =>
+    box({ material, finishes: codes.map((code) => (code === "SPOT_UV" ? { code, mask: { surface: "outside" as const, layerIds: ["l1"] } } : { code })) });
+
+  it("white-top B flute: no lamination and no spot UV, and the reason names the board to switch to, not lamination", () => {
+    const cfg = withFinishes("B_FLUTE_WHITE", ["MATTE_LAMINATION"]);
+    expect(finishRule(cfg, "MATTE_LAMINATION").ok).toBe(false);
+    const uv = finishRule(cfg, "SPOT_UV");
+    expect(uv.ok).toBe(false);
+    expect(uv.code).toBe("FINISH_UV_WHITE_TOP");
+    expect(uv.reason!.en).toMatch(/cannot be laminated/);
+    expect(uv.reason!.en).toMatch(/white E-flute/);
+    expect(uv.reason!.ar).toMatch(/الكرتون الأبيض E/);
+  });
+
+  it("kraft: the reason does not suggest adding lamination either", () => {
+    const uv = finishRule(withFinishes("E_FLUTE_KRAFT", []), "SPOT_UV");
+    expect(uv.ok).toBe(false);
+    expect(uv.reason!.en).toMatch(/cannot be laminated/);
+  });
+
+  it("white E-flute (litho-lam) with matte lamination takes spot UV", () => {
+    const cfg = withFinishes("E_FLUTE_WHITE", ["MATTE_LAMINATION"]);
+    expect(finishRule(cfg, "SPOT_UV").ok).toBe(true);
+    expect(evaluateConfig(withFinishes("E_FLUTE_WHITE", ["MATTE_LAMINATION", "SPOT_UV"])).issues.filter((i) => i.severity === "error")).toEqual([]);
+  });
+});

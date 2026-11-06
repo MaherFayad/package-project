@@ -1,3 +1,5 @@
+// Eager model library: doc helpers below read the registry (PERF-04).
+import "@/lib/library";
 import type { DesignDoc, Dims, MaterialCode, StructureCode } from "@/types";
 import { emptyArtwork } from "@/types";
 import { docBoardArea } from "@/lib/library/doc";

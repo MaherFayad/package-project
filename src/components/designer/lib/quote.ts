@@ -28,6 +28,8 @@ export type PriceState =
   | { status: "loading" }
   | { status: "ready"; quantity: number; best: BadgeOffer; vendorCount: number; suggestion: BadgeSuggestion | null; validUntil: string }
   | { status: "none" }
+  /** Added by catalogue (B-16): the model is priced by quote (special gluing, quote-only stock, rare in Egypt, filling line). */
+  | { status: "quote"; reason: "SPECIAL_GLUING" | "QUOTE_ONLY_STOCK" | "RARE_IN_EGYPT" | "FILLING_LINE" }
   | { status: "error" };
 
 export function quoteBody(doc: DesignDoc, quantity: number) {
@@ -72,11 +74,14 @@ export function toPriceState(status: number, body: unknown): PriceState {
   if (status !== 200 || !body || typeof body !== "object") return { status: "error" };
   const b = body as {
     mode?: string;
+    reason?: string;
+    orderReason?: "SPECIAL_GLUING" | "QUOTE_ONLY_STOCK" | "RARE_IN_EGYPT" | "FILLING_LINE";
     quantity?: number;
     offers?: BadgeOffer[];
     suggestion?: BadgeSuggestion | null;
     validUntil?: string;
   };
+  if (b.mode === "manual_quote" && b.reason === "MODEL_BY_QUOTE") return { status: "quote", reason: b.orderReason ?? "QUOTE_ONLY_STOCK" };
   if (b.mode !== "instant" || !Array.isArray(b.offers)) return { status: "error" };
   if (b.offers.length === 0) return { status: "none" };
   const best = headlineOffer(b.offers)!;

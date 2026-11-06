@@ -9,35 +9,18 @@ import type { Locale } from "@/types";
 import { BOX_MODELS, EXCLUDED_FAMILY_MODELS, baseStructure } from "./boxes";
 import { VESSEL_MODELS, describeVesselModel } from "./vessels";
 import { matchesQuery, type ModelCard } from "./search";
-import { MODEL_GROUPS, MODEL_GROUP_NAMES, type BoxModelDef, type ModelDef, type ModelGroup, type VesselModelDef } from "./types";
+import { MODEL_GROUPS, MODEL_GROUP_NAMES, type ModelDef, type ModelGroup } from "./types";
+import { registerModels } from "./registry";
 
 export * from "./types";
 export { BOX_MODELS, VESSEL_MODELS, EXCLUDED_FAMILY_MODELS, baseStructure, describeVesselModel };
 
 export const MODELS: ModelDef[] = [...BOX_MODELS, ...VESSEL_MODELS];
 
-const BY_CODE = new Map<string, ModelDef>(MODELS.map((m) => [m.code, m]));
-const BY_SLUG = new Map<string, ModelDef>(MODELS.map((m) => [m.slug, m]));
-
-export function modelByCode(code: string | null | undefined): ModelDef | null {
-  return code ? (BY_CODE.get(code) ?? null) : null;
-}
-
-/** Slug ("mailer-box"), or a code in any case ("fefco_0203", "BTL_GLASS_…"). */
-export function modelFromParam(param: string): ModelDef | null {
-  const p = decodeURIComponent(param).trim();
-  return BY_SLUG.get(p.toLowerCase()) ?? BY_CODE.get(p) ?? BY_CODE.get(p.toUpperCase().replace(/-/g, "_")) ?? null;
-}
-
-export function boxModel(code: string | null | undefined): BoxModelDef | null {
-  const m = modelByCode(code);
-  return m?.kind === "box" ? m : null;
-}
-
-export function vesselModel(code: string | null | undefined): VesselModelDef | null {
-  const m = modelByCode(code);
-  return m?.kind === "vessel" ? m : null;
-}
+// Eager entry (server, scripts, tests): every model is in the registry. The browser imports
+// ./registry and loads only the open family (PERF-04).
+registerModels(MODELS);
+export { modelByCode, modelFromParam, boxModel, vesselModel, loadModel, isModelLoaded, modelSourceOf } from "./registry";
 
 export { normaliseSearch, matchesQuery, type ModelCard } from "./search";
 

@@ -1,5 +1,7 @@
 import type { LocalizedText, MaterialCode, StructureCode } from "@/types";
 import { modelByCode, type BoxModelDef, type VesselModelDef } from "@/lib/library";
+import { baseOf, vesselPrintMaterials } from "@/lib/library/doc";
+import { orderModeOf, vendorListsModel } from "@/data/catalogue/order-mode";
 import type { VesselKind } from "@/lib/vessels";
 import { catalogueEntry, type CatalogueEntry, type CatalogueRender } from "@/data/catalogue";
 import {
@@ -170,26 +172,39 @@ export function catalogueOptions(code: string, familyMaterials: readonly string[
 
 export type QuoteMode =
   | { mode: "instant"; vendorIds: string[] }
-  | { mode: "quote"; reason: "QUOTE_ONLY_STOCK" | "LABELS_BY_QUOTE" | "NO_VENDOR" };
+  | { mode: "quote"; reason: "QUOTE_ONLY_STOCK" | "NO_VENDOR" | "SPECIAL_GLUING" | "RARE_IN_EGYPT" | "FILLING_LINE" };
 
 /**
- * Commerce path of a model against the live printer list: instant price when some active
- * printer can make it on one of its boards (capability + rate card for the base structure),
- * else a free design routed to "request a quote".
+ * Commerce path of a model against the live printer list, the same gate as the pricing engine
+ * (`src/lib/pricing/engine.ts`): models no Egyptian SME printer makes (order mode quote /
+ * preview, B-16) always go to a quote; special-gluing models are instant only from printers
+ * that list the model; the rest are instant when some active printer has the capability and a
+ * rate card for the base structure and board (containers: their label / pouch / tube stock).
  */
 export function quoteMode(code: string, vendors: readonly VendorForMatch[]): QuoteMode {
   const e = catalogueEntry(code);
   const m = modelByCode(code);
-  if (!e || e.quoteOnly || !m) return { mode: "quote", reason: "QUOTE_ONLY_STOCK" };
-  if (m.kind === "vessel") return { mode: "quote", reason: "LABELS_BY_QUOTE" };
+  if (!e || !m) return { mode: "quote", reason: "QUOTE_ONLY_STOCK" };
+  const order = orderModeOf(code);
+  if (order.mode === "quote" || order.mode === "preview") return { mode: "quote", reason: order.reason as "QUOTE_ONLY_STOCK" | "RARE_IN_EGYPT" | "FILLING_LINE" };
+  const listed = (v: VendorForMatch) => vendorListsModel(order.mode, code, v.capabilities.models);
   const ids = new Set<string>();
-  for (const board of boardsFor(m)) {
-    if (!BOX_BOARDS[board].pricingMaterial || !boxMaterialVerdict(m, board).ok) continue;
-    const cfg = catalogueModelConfig(code, { board, quantity: 1000 });
-    if (!cfg) continue;
-    for (const r of matchVendors(cfg, vendors)) if (r.ok) ids.add(r.vendorId);
+  if (m.kind === "vessel") {
+    for (const mat of vesselPrintMaterials(m)) {
+      const base = baseOf(m, mat);
+      for (const v of vendors)
+        if (v.status === "ACTIVE" && listed(v) && v.capabilities.structures.includes(base) && v.capabilities.materials.includes(mat) && v.rateCards.some((c) => c.structureCode === base && c.materialCode === mat)) ids.add(v.id);
+    }
+  } else {
+    for (const board of boardsFor(m)) {
+      if (!BOX_BOARDS[board].pricingMaterial || !boxMaterialVerdict(m, board).ok) continue;
+      const cfg = catalogueModelConfig(code, { board, quantity: 1000 });
+      if (!cfg) continue;
+      for (const r of matchVendors(cfg, vendors.filter(listed))) if (r.ok) ids.add(r.vendorId);
+    }
   }
-  return ids.size ? { mode: "instant", vendorIds: [...ids] } : { mode: "quote", reason: "NO_VENDOR" };
+  if (ids.size) return { mode: "instant", vendorIds: [...ids] };
+  return { mode: "quote", reason: order.mode === "listed" ? "SPECIAL_GLUING" : "NO_VENDOR" };
 }
 
 /** Bilingual copy for the two commerce paths (catalogue cards, detail page, picker). */

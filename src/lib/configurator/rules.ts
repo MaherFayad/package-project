@@ -353,8 +353,13 @@ function surfaceFinishRule(cfg: ModelConfig, code: ConfigFinishCode): Verdict {
       return OK;
     }
     case "spotUv": {
-      if (surface === "KRAFT_LINER" || surface === "WHITE_TOP_LINER")
-        return deny("FINISH_UV_UNCOATED", "Spot UV needs a coated or laminated surface; on uncoated board it soaks in and loses its shine.", "اليو في الموضعي يحتاج سطحا مطليا أو مغلفا بالسلوفان، وعلى الكرتون غير المطلي يتشربه الكرتون ويفقد لمعانه.");
+      // Spot UV only shows on a sealed surface: coated board or a laminated litho sheet. Kraft and
+      // white-top liners are printed flexo directly and cannot be laminated (FINISH_LAM_*), so the
+      // remedy is another board, never "add lamination".
+      if (surface === "KRAFT_LINER")
+        return deny("FINISH_UV_UNCOATED", "Spot UV soaks into uncoated kraft and loses its shine, and kraft cannot be laminated. Choose white E-flute (a printed, laminated sheet) for spot UV.", "اليو في الموضعي يتشربه الكرتون البني غير المطلي فيفقد لمعانه، ولا يمكن تغليف الكرتون البني بالسلوفان. اختر الكرتون الأبيض E لليو في الموضعي.");
+      if (surface === "WHITE_TOP_LINER")
+        return deny("FINISH_UV_WHITE_TOP", "B and BC white board is printed directly and cannot be laminated, so spot UV has no sealed surface to sit on. Choose white E-flute for spot UV.", "الكرتون الأبيض B وBC يطبع مباشرة ولا يمكن تغليفه بالسلوفان، فلا يجد اليو في الموضعي سطحا مناسبا. اختر الكرتون الأبيض E لليو في الموضعي.");
       return OK;
     }
     case "foil": {

@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, type Ref } from "react";
 import type { DesignDoc } from "@/types";
-import { docGeometry } from "@/lib/library/doc";
+import { docGeometry, docModelCode } from "@/lib/library/doc";
+import { useLibraryModel } from "@/lib/library/useLibraryModel";
 import type { PackagingSceneHandle } from "@/components/three";
 import { DesignScene } from "./DesignScene";
 import { useArtworkCanvases } from "./useArtworkCanvases";
@@ -23,7 +24,9 @@ export default function SharedScene({
   /** Reports whether the model is an open-top style ("Assembled" instead of "Closed"). */
   onOpenTop?: (openTop: boolean) => void;
 }) {
-  const geo = useMemo(() => docGeometry(doc), [doc]);
+  // Only this design's family pack is fetched (PERF-04); geometry once it is in the registry.
+  const ready = useLibraryModel(docModelCode(doc));
+  const geo = useMemo(() => (ready ? docGeometry(doc) : null), [doc, ready]);
   const model = geo?.dieline ?? null;
   const both = doc.printSides === "BOTH";
   const { canvases, version } = useArtworkCanvases(model, doc.artwork, doc.materialCode, both, 1024);

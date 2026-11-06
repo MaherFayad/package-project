@@ -34,6 +34,12 @@ export interface VendorCapabilities {
   monthlyCapacityUnits: number;
   /** Added by configurator: finishes quoted manually (foil, emboss, soft-touch…). Missing = none. */
   extraFinishes?: ExtraFinishCode[];
+  /**
+   * Added by catalogue (B-16): model codes this printer has confirmed it makes, for styles that
+   * need special equipment (auto-bottom / crash-lock gluing, corner-glued trays). Those models get
+   * an instant price only from printers that list them here; otherwise they go to a quote.
+   */
+  models?: string[];
 }
 
 /** Stored in Vendor.certifications (Json array). */

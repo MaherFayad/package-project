@@ -4,7 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { CatmullRomCurve3, Matrix4, MeshStandardMaterial, TubeGeometry, Vector3 } from "three";
 import type { Dims, MaterialCode } from "@/types";
 import { BOARD_SPECS, boundsAt, type BoardAppearance, type DielineModel } from "@/lib/dieline";
-import { modelByCode } from "@/lib/library";
+import { modelByCode } from "@/lib/library/registry";
+import { useLibraryModel } from "@/lib/library/useLibraryModel";
 import { docGeometry } from "@/lib/library/doc";
 import * as F02 from "@/lib/dieline/families/fefco-02";
 import * as F09 from "@/lib/dieline/families/fefco-09";
@@ -77,6 +78,13 @@ function useCanvasReady(ref: React.RefObject<HTMLDivElement | null>, onReady?: (
 /* ───────────────────────────── library models ───────────────────────────── */
 
 function LibraryView({ code, onReady }: { code: string; onReady?: () => void }) {
+  // Only this model's family pack is fetched (PERF-04).
+  const ready = useLibraryModel(code);
+  if (!ready) return null;
+  return <LibraryScene code={code} onReady={onReady} />;
+}
+
+function LibraryScene({ code, onReady }: { code: string; onReady?: () => void }) {
   const m = modelByCode(code)!;
   const doc = useMemo(() => createModelDoc(m, { name: m.name.en }), [m]);
   const geo = useMemo(() => docGeometry(doc), [doc]);

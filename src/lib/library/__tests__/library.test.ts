@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { MATERIAL_CODES, STRUCTURE_CODES, type MaterialCode, type StructureCode } from "@/types";
 import { BOARD_SPECS, materialFitsStructure } from "@/lib/dieline";
 import { quote, designQuoteFields, type PricingData } from "@/lib/pricing";
+import { orderModeOf } from "@/data/catalogue/order-mode";
 import { BOX_MODELS, MODELS, MODEL_GROUPS, VESSEL_MODELS, matchesQuery, modelByCode, modelFromParam, modelGroups } from "..";
 import { baseOf, docGeometry, docBoardArea, normaliseDocModel, vesselPrintMaterials } from "../doc";
 import { createModelDoc } from "@/components/designer/lib/doc";
@@ -77,7 +78,8 @@ function fullData(): PricingData {
     onTimePct: 95,
     leadTimeDays: 7,
     minOrderQty: 1,
-    capabilities: { structures: [...STRUCTURE_CODES], materials: [...MATERIAL_CODES] as MaterialCode[], finishes: ["NONE", ...finishes.map((f) => f.code)] as never, maxColors: 6, digitalShortRun: true, monthlyCapacityUnits: 1e6 },
+    // Lists every special-gluing model too (B-16 "listed" models need a printer that names them).
+    capabilities: { structures: [...STRUCTURE_CODES], materials: [...MATERIAL_CODES] as MaterialCode[], finishes: ["NONE", ...finishes.map((f) => f.code)] as never, maxColors: 6, digitalShortRun: true, monthlyCapacityUnits: 1e6, models: MODELS.map((m) => m.code) },
     verified: true,
     status: "ACTIVE" as const,
   };
@@ -105,11 +107,31 @@ describe("every model is priced through its base structure with its own area", (
     const doc = createModelDoc(m);
     expect(doc.structureCode).toBe(baseOf(m, doc.materialCode));
     const r = quote({ ...designQuoteFields(doc), colours: 4, quantity: 500, zone: "GREATER_CAIRO" }, data);
+    // B-16: formats no Egyptian SME printer makes (rare in Egypt, filling-line cartons) go to a quote.
+    const order = orderModeOf(m.code);
+    if (order.mode === "quote" || order.mode === "preview") {
+      expect(r).toMatchObject({ mode: "manual_quote", reason: "MODEL_BY_QUOTE", orderReason: order.reason });
+      return;
+    }
     expect(r.mode).toBe("instant");
     if (r.mode === "instant") {
       expect(r.offers.length).toBe(1);
       expect(r.areaM2).toBeCloseTo(Math.round(docBoardArea(doc)!.blankAreaM2 * 1e4) / 1e4, 4);
     }
+  });
+
+  it("B-16: special-gluing models are instant only from a printer that lists them", () => {
+    const unlisted: PricingData = { ...data, vendors: data.vendors.map((v) => ({ ...v, capabilities: { ...v.capabilities, models: [] } })) };
+    const auto = createModelDoc(modelByCode("FEFCO_0711")!);
+    expect(quote({ ...designQuoteFields(auto), colours: 4, quantity: 500, zone: "GREATER_CAIRO" }, unlisted)).toMatchObject({ mode: "manual_quote", orderReason: "SPECIAL_GLUING" });
+    expect(quote({ ...designQuoteFields(auto), colours: 4, quantity: 500, zone: "GREATER_CAIRO" }, data).mode).toBe("instant");
+    for (const code of ["LIQUID_ASEPTIC_BRICK", "LIQUID_GABLE_TOP"]) {
+      const d = createModelDoc(modelByCode(code)!);
+      expect(quote({ ...designQuoteFields(d), colours: 4, quantity: 500, zone: "GREATER_CAIRO" }, data)).toMatchObject({ mode: "manual_quote", reason: "MODEL_BY_QUOTE", orderReason: "FILLING_LINE" });
+    }
+    // A core structure stays instant through its rate card.
+    const mailer = createModelDoc(modelByCode("FEFCO_0427")!);
+    expect(quote({ ...designQuoteFields(mailer), colours: 4, quantity: 500, zone: "GREATER_CAIRO" }, unlisted).mode).toBe("instant");
   });
 
   it("rejects a model priced as a cheaper base structure", () => {

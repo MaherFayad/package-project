@@ -3,7 +3,8 @@
 import { DesignScene } from "@/components/designer/DesignScene";
 import { useMemo, useState, type RefObject } from "react";
 import { FACE_IDS, type DesignDoc } from "@/types";
-import { docGeometry } from "@/lib/library/doc";
+import { docGeometry, docModelCode } from "@/lib/library/doc";
+import { useLibraryModel } from "@/lib/library/useLibraryModel";
 import { ViewControls, type PackagingSceneHandle } from "@/components/three";
 import { useArtworkCanvases } from "@/components/designer/useArtworkCanvases";
 import { DielineView } from "@/components/designer/DielineView";
@@ -22,7 +23,9 @@ export function ProofViewer({ doc, handleRef }: { doc: DesignDoc; handleRef: Ref
   const [tab, setTab] = useState(0);
   const [fold, setFold] = useState(1);
   // Box dieline or container print sheet (src/lib/library/doc).
-  const geo = useMemo(() => docGeometry(doc), [doc]);
+  // Only this design's family pack is fetched (PERF-04).
+  const ready = useLibraryModel(docModelCode(doc));
+  const geo = useMemo(() => (ready ? docGeometry(doc) : null), [doc, ready]);
   const model = geo?.dieline ?? null;
   const both = doc.printSides === "BOTH";
   // Open-top models (trays, open styles) are "assembled", not "closed"; the flag is read

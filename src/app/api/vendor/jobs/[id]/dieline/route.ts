@@ -1,3 +1,5 @@
+// Eager model library: doc helpers below read the registry (PERF-04).
+import "@/lib/library";
 import { fromJson } from "@/lib/json";
 import { dielineToSvg, generateDielineForMaterial, DielineValidationError } from "@/lib/dieline";
 import { emptyArtwork, type Dims, type MaterialCode, type StructureCode } from "@/types";

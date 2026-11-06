@@ -9,7 +9,9 @@ import { materialFitsStructure } from "../src/lib/dieline/materials";
  *
  * - Damietta (export produce and furniture cluster): self-locking produce trays, FEFCO 0422.
  * - Alexandria print house (export cartons): full telescope boxes, FEFCO 0320.
- * - Obour short-run digital shop: E-flute shipping cases (FEFCO 0201) and crash-lock cartons.
+ * - Obour short-run digital shop: E-flute shipping cases (FEFCO 0201).
+ * - Delta Cartons (already runs the core crash-lock carton on its gluer) lists the crash-lock and
+ *   corner-glued carton models, so they get instant prices from it (B-16 "listed" models).
  *
  * New rate cards are copied from an existing card for the same structure and board, scaled by
  * the printer's own price level (its ratio to that card's vendor on a structure both price).
@@ -18,7 +20,12 @@ import { materialFitsStructure } from "../src/lib/dieline/materials";
 const EXTENSIONS: { vendor: string; structures: StructureCode[] }[] = [
   { vendor: "damietta-packaging", structures: ["FEFCO_0422"] },
   { vendor: "alex-print-house", structures: ["FEFCO_0320"] },
-  { vendor: "obour-box-works", structures: ["FEFCO_0201", "ECMA_CLB"] },
+  { vendor: "obour-box-works", structures: ["FEFCO_0201"] },
+];
+
+/** Special-gluing models (src/data/catalogue/order-mode.ts "listed") a printer confirms it makes. */
+const LISTED_MODELS: { vendor: string; models: string[] }[] = [
+  { vendor: "delta-cartons", models: ["ECMA_TUCK_CRASH_LOCK", "GABLE_CARRY_CLB", "ECMA_TRAY_4C", "ECMA_TRAY_BEERS", "ECMA_TRAY_BRIGHTWOOD", "ECMA_TRAY_6C_LID"] },
 ];
 
 type Card = Awaited<ReturnType<PrismaClient["rateCard"]["findMany"]>>[number] & { structure: { code: string }; material: { code: string } };
@@ -67,6 +74,13 @@ export async function extendCatalogueCapabilities(db: PrismaClient): Promise<{ a
       }
       if (!caps.structures.includes(code)) caps.structures = [...caps.structures, code];
     }
+    await db.vendor.update({ where: { id: vendor.id }, data: { capabilities: caps as object } });
+  }
+  for (const l of LISTED_MODELS) {
+    const vendor = await db.vendor.findUnique({ where: { slug: l.vendor } });
+    if (!vendor) continue;
+    const caps = vendor.capabilities as unknown as VendorCapabilities;
+    caps.models = [...new Set([...(caps.models ?? []), ...l.models])];
     await db.vendor.update({ where: { id: vendor.id }, data: { capabilities: caps as object } });
   }
   return { added };

@@ -183,7 +183,9 @@ export type IneligibleReason =
   | "MATERIAL_UNSUPPORTED"
   | "FINISH_UNSUPPORTED"
   | "TOO_MANY_COLOURS"
-  | "BELOW_MIN_QTY";
+  | "BELOW_MIN_QTY"
+  /** Added by catalogue (B-16): special-gluing model the printer has not listed. */
+  | "MODEL_NOT_LISTED";
 
 export interface StandardSizeSuggestion {
   presetId: string;
@@ -214,7 +216,10 @@ export interface InstantQuote<O extends PublicVendorOffer = VendorOffer> {
 
 export interface ManualQuote {
   mode: "manual_quote";
-  reason: "QUANTITY_ABOVE_INSTANT_MAX";
+  /** QUANTITY_ABOVE_INSTANT_MAX: above 2,000 units. MODEL_BY_QUOTE: the model itself is quote-only (B-16). */
+  reason: "QUANTITY_ABOVE_INSTANT_MAX" | "MODEL_BY_QUOTE";
+  /** MODEL_BY_QUOTE only: why (src/data/catalogue/order-mode.ts). */
+  orderReason?: "SPECIAL_GLUING" | "QUOTE_ONLY_STOCK" | "RARE_IN_EGYPT" | "FILLING_LINE";
   quantity: number;
   maxInstantQty: number;
 }
