@@ -8,11 +8,18 @@
 import { MODELS, modelByCode } from "@/lib/library";
 import { BOARD_SPECS, STRUCTURE_LIST } from "@/lib/dieline";
 import { MATERIAL_CODES, STRUCTURE_CODES, type LocalizedText, type MaterialCode, type StructureCode } from "@/types";
+import { orderModeOf, type OrderMode } from "@/data/catalogue/order-mode";
 
 export interface ModelRef {
   code: string;
   standard: string;
   name: LocalizedText;
+  /**
+   * R4: how buyers can order it (src/data/catalogue/order-mode.ts). "instant" models are priced by
+   * the rate card; "listed" (special gluing) only when the printer lists the code in its profile;
+   * "quote" / "preview" never get an instant price.
+   */
+  mode: OrderMode;
 }
 
 const VESSEL_BASE = { LABEL: "ROLL_LABEL", POUCH: "PRINTED_POUCH", TUBE: "PRINTED_TUBE" } as const satisfies Record<string, StructureCode>;
@@ -33,7 +40,7 @@ function build() {
     if (!all.some((r) => r.code === ref.code)) all.push(ref);
   };
   for (const m of MODELS) {
-    const ref: ModelRef = { code: m.code, standard: m.standard, name: m.name };
+    const ref: ModelRef = { code: m.code, standard: m.standard, name: m.name, mode: orderModeOf(m.code).mode };
     if (m.kind === "box") {
       for (const mat of m.materials) add(m.baseFor(mat), mat, ref);
     } else {
@@ -69,21 +76,70 @@ export function modelsForStructure(structure: StructureCode): ModelRef[] {
   return data().byStructure.get(structure) ?? [];
 }
 
-/** Per box style: how many models it covers and a few examples (for the capability checklist). */
-export type StructureCoverage = Record<StructureCode, { standard: string; count: number; examples: string[] }>;
+/**
+ * Per box style: how many models a tick gives an instant price for, how many special-gluing models
+ * the printer can add on top (by listing them), and a few instant examples (capability checklist).
+ */
+export type StructureCoverage = Record<StructureCode, { standard: string; count: number; listed: number; examples: string[] }>;
 
 export function structureCoverage(locale: "ar" | "en", examples = 3): StructureCoverage {
   const out = {} as StructureCoverage;
   for (const def of STRUCTURE_LIST) {
     const s = def.code;
-    const list = modelsForStructure(s).filter((r) => r.code !== s);
-    out[s] = { standard: def.standard, count: modelsForStructure(s).length, examples: list.slice(0, examples).map((r) => r.name[locale]) };
+    const all = modelsForStructure(s);
+    const instant = all.filter((r) => r.mode === "instant");
+    const list = instant.filter((r) => r.code !== s);
+    out[s] = {
+      standard: def.standard,
+      count: instant.length,
+      listed: listedGroups().filter((g) => g.structure === s).reduce((n, g) => n + g.models.length, 0),
+      examples: list.slice(0, examples).map((r) => r.name[locale]),
+    };
   }
   return out;
+}
+
+/** Models a rate card gives an instant price for, given the printer's listed special-gluing codes. */
+export function instantModelsForCard(structure: StructureCode, material: MaterialCode, listed: readonly string[] = []): ModelRef[] {
+  return modelsForCard(structure, material).filter((m) => m.mode === "instant" || (m.mode === "listed" && listed.includes(m.code)));
+}
+
+/** A special-gluing model and every core structure that can produce it (one per board it runs on). */
+export interface ListedModelRef extends ModelRef {
+  bases: StructureCode[];
+}
+
+let listedCache: { structure: StructureCode; models: ListedModelRef[] }[] | null = null;
+
+/**
+ * R4: special-gluing models (order mode "listed") grouped by the box style they are produced and
+ * priced as. A printer may list a model only when it runs one of its base styles; the engine then
+ * prices it with that style's rate card.
+ */
+export function listedGroups(): { structure: StructureCode; models: ListedModelRef[] }[] {
+  if (listedCache) return listedCache;
+  const groups = new Map<StructureCode, ListedModelRef[]>();
+  for (const m of MODELS) {
+    if (m.kind !== "box" || orderModeOf(m.code).mode !== "listed") continue;
+    const bases = [...new Set(m.materials.map((mat) => m.baseFor(mat)))] as StructureCode[];
+    const list = groups.get(bases[0]!) ?? [];
+    list.push({ code: m.code, standard: m.standard, name: m.name, mode: "listed", bases });
+    groups.set(bases[0]!, list);
+  }
+  const order = STRUCTURE_CODES as readonly StructureCode[];
+  listedCache = [...groups.entries()]
+    .sort((a, b) => order.indexOf(a[0]) - order.indexOf(b[0]))
+    .map(([structure, models]) => ({ structure, models: models.sort((a, b) => a.standard.localeCompare(b.standard, "en", { numeric: true })) }));
+  return listedCache;
+}
+
+/** Every listable code with its base styles (server-side validation of a profile save). */
+export function listedBases(): Map<string, StructureCode[]> {
+  return new Map(listedGroups().flatMap((g) => g.models.map((m) => [m.code, m.bases] as const)));
 }
 
 /** The exact model a job item was designed on (null for legacy items without a model code). */
 export function jobModel(modelCode: string | null | undefined): ModelRef | null {
   const m = modelByCode(modelCode);
-  return m ? { code: m.code, standard: m.standard, name: m.name } : null;
+  return m ? { code: m.code, standard: m.standard, name: m.name, mode: orderModeOf(m.code).mode } : null;
 }

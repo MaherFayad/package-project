@@ -25,6 +25,7 @@ import { rateCardFormSchema, validateRateCard } from "../lib/rateCard";
 import { isFoodSafe, isPermutation, issuesToErrors, mergeCertifications, portfolioCaptionSchema, profileSchema, MAX_PORTFOLIO_ITEMS } from "../lib/profile";
 import { applicationSchema, slugify, uniqueSlug } from "../lib/application";
 import { keyFromUrl, parseKey } from "../lib/files";
+import { listedBases } from "../lib/coverage";
 import { FieldErrors, VendorActionError, runAction, vendorForMutation, type ActionResponse } from "./context";
 import { deleteUpload, uploadRoot } from "./storage";
 import path from "node:path";
@@ -160,6 +161,9 @@ export async function saveProfile(input: unknown, expectedUpdatedAt?: string): P
       const k = parseKey(c.documentKey);
       if (!k || k.scope !== "cert" || k.ownerId !== vendor.id) fields[`certifications.${i}.documentKey`] = "KEY";
     });
+    // R4: a special-gluing model is priced with its base style's rate card, so that style must be on.
+    const bases = listedBases();
+    if (v.models.some((c) => !bases.get(c)?.some((b) => v.structures.includes(b)))) fields.models = "MODEL_NEEDS_STYLE";
     if (Object.keys(fields).length) throw new FieldErrors(fields);
 
     const prevCerts = fromJson<VendorCertification[]>(vendor.certifications) ?? [];
@@ -173,6 +177,7 @@ export async function saveProfile(input: unknown, expectedUpdatedAt?: string): P
       maxColors: v.maxColors,
       digitalShortRun: v.digitalShortRun,
       monthlyCapacityUnits: v.monthlyCapacityUnits,
+      models: v.models,
     };
     const updated = await db.vendor.update({
       where: { id: vendor.id },

@@ -55,7 +55,12 @@ interface FormState {
   minOrderQty: string;
   serviceAreas: EgyptCity[];
   certifications: { code: CertCode; issuer: string; validUntil: string; documentKey: string; status?: VendorCertification["status"] }[];
+  /** R4: special-gluing model codes the plant lists. */
+  models: string[];
 }
+
+/** Special-gluing models grouped by the base style they are priced as (from `listedGroups()`). */
+export type GluingGroup = { structure: StructureCode; models: { code: string; standard: string; name: { ar: string; en: string }; bases: StructureCode[] }[] };
 
 function toForm(p: VendorProfileDTO): FormState {
   return {
@@ -72,10 +77,17 @@ function toForm(p: VendorProfileDTO): FormState {
     minOrderQty: String(p.minOrderQty),
     serviceAreas: p.serviceAreas,
     certifications: p.certifications.map((c) => ({ code: c.code, issuer: c.issuer, validUntil: c.validUntil ?? "", documentKey: c.documentKey ?? "", status: c.status })),
+    models: p.models,
   };
 }
 
-function toInput(f: FormState) {
+/** A listed model counts only while one of its base styles is ticked (the UI shows the rest off). */
+function activeModels(f: FormState, gluing: GluingGroup[]): string[] {
+  const bases = new Map(gluing.flatMap((g) => g.models.map((m) => [m.code, m.bases] as const)));
+  return f.models.filter((c) => bases.get(c)?.some((b) => f.structures.includes(b)));
+}
+
+function toInput(f: FormState, gluing: GluingGroup[]) {
   const n = (s: string) => {
     const v = parseNumber(s);
     return v === null || Number.isNaN(v) ? NaN : v;
@@ -94,6 +106,7 @@ function toInput(f: FormState) {
     minOrderQty: n(f.minOrderQty),
     serviceAreas: f.serviceAreas,
     certifications: f.certifications.map((c) => ({ code: c.code, issuer: c.issuer, validUntil: c.validUntil || undefined, documentKey: c.documentKey || undefined })),
+    models: activeModels(f, gluing),
   };
 }
 
@@ -104,7 +117,7 @@ function toggle<T>(list: T[], v: T, on: boolean): T[] {
   return on ? (list.includes(v) ? list : [...list, v]) : list.filter((x) => x !== v);
 }
 
-export function ProfileForm({ profile, portfolio, coverage }: { profile: VendorProfileDTO; portfolio: PortfolioItemDTO[]; coverage: StructureCoverage }) {
+export function ProfileForm({ profile, portfolio, coverage, gluing }: { profile: VendorProfileDTO; portfolio: PortfolioItemDTO[]; coverage: StructureCoverage; gluing: GluingGroup[] }) {
   const { t, locale } = useI18n();
   const router = useRouter();
   const toast = useToast();
@@ -132,7 +145,7 @@ export function ProfileForm({ profile, portfolio, coverage }: { profile: VendorP
   };
 
   const onSave = useCallback(async () => {
-    const input = toInput(form);
+    const input = toInput(form, gluing);
     const local = profileSchema.safeParse(input);
     if (!local.success) {
       const e = issuesToErrors(local.error.issues);
@@ -161,7 +174,7 @@ export function ProfileForm({ profile, portfolio, coverage }: { profile: VendorP
     } finally {
       setSaving(false);
     }
-  }, [form, updatedAt, toast, t, router, errorText]);
+  }, [form, gluing, updatedAt, toast, t, router, errorText]);
 
   const onDiscard = useCallback(() => {
     setForm(initial);
@@ -355,6 +368,7 @@ export function ProfileForm({ profile, portfolio, coverage }: { profile: VendorP
                                             {" · "}
                                             {t("vendorPortal.rateCards.modelCount", { count: formatNumber(cov.count) })}
                                             {cov.examples.length ? <span className={styles.CoverageExamples}>{t("vendorPortal.profile.coverageExamples", { examples: cov.examples.join(locale === "ar" ? "، " : ", ") })}</span> : null}
+                                            {cov.listed ? <span className={styles.CoverageExamples}>{t("vendorPortal.profile.coverageListed", { count: formatNumber(cov.listed) })}</span> : null}
                                           </>
                                         ) : undefined
                                       }
@@ -441,6 +455,75 @@ export function ProfileForm({ profile, portfolio, coverage }: { profile: VendorP
                   />
                 </BlockStack>
               </Card>
+
+              {gluing.length ? (
+                <Card title={t("vendorPortal.profile.gluingTitle")} id="special-gluing">
+                  <BlockStack gap="400">
+                    <Text as="p" tone="subdued">
+                      {t("vendorPortal.profile.gluingHelp")}
+                    </Text>
+                    {!form.machines.some((m) => m.kind === "FOLDER_GLUER") ? <Banner tone="warning" title={t("vendorPortal.profile.gluingNoGluer")} /> : null}
+                    {err("models") ? (
+                      <Text as="p" tone="critical">
+                        {err("models")}
+                      </Text>
+                    ) : null}
+                    <div className={styles.Families}>
+                      {gluing.map((g) => {
+                        const style = t(`structures.${g.structure}` as DictKey);
+                        const on = g.models.filter((m) => m.bases.some((b) => form.structures.includes(b)));
+                        const picked = on.filter((m) => form.models.includes(m.code));
+                        const groupId = `gluing-${g.structure}`;
+                        const offStyles = [...new Set(g.models.flatMap((m) => m.bases))].map((b) => t(`structures.${b}` as DictKey)).join(locale === "ar" ? " أو " : " or ");
+                        return (
+                          <fieldset key={g.structure} className={`${styles.Family} ${styles.Fieldset}`} aria-describedby={`${groupId}-help`}>
+                            <legend className="visually-hidden">{t("vendorPortal.profile.gluingGroupLabel", { style })}</legend>
+                            <InlineStack align="space-between" blockAlign="center" gap="200">
+                              <Text as="h3" variant="headingSm">
+                                {style}
+                              </Text>
+                              {picked.length ? <Badge tone="info">{t("vendorPortal.profile.familySelected", { count: formatNumber(picked.length) })}</Badge> : null}
+                            </InlineStack>
+                            <Text as="p" variant="bodySm" tone="subdued" id={`${groupId}-help`}>
+                              {on.length
+                                ? t("vendorPortal.profile.gluingPricedAs", {
+                                    style: [...new Set(on.flatMap((m) => m.bases.filter((x) => form.structures.includes(x))))].map((x) => t(`structures.${x}` as DictKey)).join(locale === "ar" ? " أو " : " or "),
+                                  })
+                                : t("vendorPortal.profile.gluingStyleOff", { style: offStyles })}
+                            </Text>
+                            {on.length > 1 ? (
+                              <Checkbox
+                                label={picked.length === on.length ? t("vendorPortal.profile.gluingClearAll", { style }) : t("vendorPortal.profile.gluingSelectAll", { style })}
+                                checked={picked.length === 0 ? false : picked.length === on.length ? true : "indeterminate"}
+                                onChange={() => {
+                                  const codes = on.map((m) => m.code);
+                                  const all = picked.length === on.length;
+                                  set("models", all ? form.models.filter((c) => !codes.includes(c)) : [...form.models, ...codes.filter((c) => !form.models.includes(c))]);
+                                }}
+                              />
+                            ) : null}
+                            <div className={styles.StyleChecks}>
+                              {g.models.map((m) => {
+                                const enabled = m.bases.some((b) => form.structures.includes(b));
+                                return (
+                                  <Checkbox
+                                    key={m.code}
+                                    label={m.name[locale]}
+                                    helpText={<bdi dir="ltr">{m.standard}</bdi>}
+                                    disabled={!enabled}
+                                    checked={enabled && form.models.includes(m.code)}
+                                    onChange={(v) => set("models", toggle(form.models, m.code, v))}
+                                  />
+                                );
+                              })}
+                            </div>
+                          </fieldset>
+                        );
+                      })}
+                    </div>
+                  </BlockStack>
+                </Card>
+              ) : null}
 
               <Card title={t("vendorPortal.profile.areasTitle")}>
                 <fieldset className={styles.Fieldset}>

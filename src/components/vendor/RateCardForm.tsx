@@ -23,7 +23,7 @@ import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { formatMoney, formatNumber } from "@/lib/format";
 import { QTY_TIERS, type FinishCode } from "@/types";
-import { RATE_LIMITS, rateCardToForm, unitAt, validateRateCard, type RateCardErrors, type RateCardForm as Form } from "./lib/rateCard";
+import { RATE_LIMITS, rateCardToForm, rateUnit, unitAt, validateRateCard, type RateCardErrors, type RateCardForm as Form } from "./lib/rateCard";
 import { saveRateCard } from "./server/actions";
 import { useVendorErrorText } from "./useVendorAction";
 import { useContextualSaveBar } from "./VendorFrame";
@@ -31,7 +31,7 @@ import type { JobModelDTO, RateCardDetailDTO } from "./types";
 import { ModelCoverage } from "./ModelCoverage";
 import styles from "./vendor.module.css";
 
-export function RateCardForm({ card, offeredFinishes, models }: { card: RateCardDetailDTO; offeredFinishes: FinishCode[]; models: JobModelDTO[] }) {
+export function RateCardForm({ card, offeredFinishes, models, listed = [] }: { card: RateCardDetailDTO; offeredFinishes: FinishCode[]; models: JobModelDTO[]; listed?: string[] }) {
   const { t, locale } = useI18n();
   const router = useRouter();
   const toast = useToast();
@@ -94,12 +94,17 @@ export function RateCardForm({ card, offeredFinishes, models }: { card: RateCard
 
   useContextualSaveBar({ dirty, saving, onSave, onDiscard });
 
+  // R4: labels, pouches and tubes are priced per label / pouch / tube, not "per box".
+  const family = rateUnit(card.structureCode);
+  const u = { unit: t(`vendorPortal.rateCards.units.${family}` as DictKey), theUnit: t(`vendorPortal.rateCards.theUnits.${family}` as DictKey) };
+  // Pouches and squeeze tubes have no cutting die: the one-off cost is tooling for a new shape or size.
+  const tooling = family === "pouch" || family === "tube";
   const title = t("vendorPortal.rateCards.editTitle", { structure: t(`structures.${card.structureCode}` as DictKey), material: t(`materials.${card.materialCode}` as DictKey) });
   const egp = locale === "ar" ? "ج.م" : "EGP";
   const errorCount = Object.keys(errors).length;
 
   return (
-    <Page title={title} titleIcon={Table2} backAction={{ content: t("vendorPortal.rateCards.back"), url: `/${locale}/vendor/rate-cards` }} subtitle={t("vendorPortal.rateCards.subtitle")}>
+    <Page title={title} titleIcon={Table2} backAction={{ content: t("vendorPortal.rateCards.back"), url: `/${locale}/vendor/rate-cards` }} subtitle={t("vendorPortal.rateCards.editSubtitle", u)}>
       <form
         noValidate
         onSubmit={(e) => {
@@ -112,17 +117,17 @@ export function RateCardForm({ card, offeredFinishes, models }: { card: RateCard
             <BlockStack gap="400">
               {errorCount ? <Banner tone="critical" title={t("vendorPortal.rateCards.errors.summary", { count: errorCount })} /> : null}
 
-              <Card title={t("vendorPortal.rateCards.tiersTitle")}>
+              <Card title={t("vendorPortal.rateCards.tiersTitle", u)}>
                 <BlockStack gap="300">
                   <Text as="p" tone="subdued">
-                    {t("vendorPortal.rateCards.tiersHelp")}
+                    {t("vendorPortal.rateCards.tiersHelp", u)}
                   </Text>
                   {err("tiers") ? (
                     <Text as="p" tone="critical">
                       {err("tiers")}
                     </Text>
                   ) : null}
-                  <div className={`${styles.Rows} ${styles.TierRows}`} role="group" aria-label={t("vendorPortal.rateCards.tiersTitle")}>
+                  <div className={`${styles.Rows} ${styles.TierRows}`} role="group" aria-label={t("vendorPortal.rateCards.tiersTitle", u)}>
                     {form.tiers.map((tier, i) => (
                       <div key={i} className={styles.Row} style={{ ["--row-cols" as string]: 2 }} role="group" aria-label={t("vendorPortal.rateCards.tierRow", { index: i + 1 })}>
                         <TextField
@@ -136,7 +141,7 @@ export function RateCardForm({ card, offeredFinishes, models }: { card: RateCard
                           error={err(`tiers.${i}.minQty`)}
                         />
                         <TextField
-                          label={t("vendorPortal.rateCards.unitPrice")}
+                          label={t("vendorPortal.rateCards.unitPrice", u)}
                           autoComplete="off"
                           inputMode="decimal"
                           dir="ltr"
@@ -166,9 +171,9 @@ export function RateCardForm({ card, offeredFinishes, models }: { card: RateCard
               <Card title={t("vendorPortal.rateCards.oneOffTitle")}>
                 <InlineGrid columns={{ xs: 1, sm: 2 }} gap="300" alignItems="start">
                   <TextField label={t("vendorPortal.rateCards.setup")} autoComplete="off" inputMode="decimal" dir="ltr" suffix={egp} value={form.setupEgp} onChange={(v) => set("setupEgp", v)} helpText={t("vendorPortal.rateCards.setupHelp")} error={err("setupEgp")} />
-                  <TextField label={t("vendorPortal.rateCards.die")} autoComplete="off" inputMode="decimal" dir="ltr" suffix={egp} value={form.dieCostEgp} onChange={(v) => set("dieCostEgp", v)} helpText={t("vendorPortal.rateCards.dieHelp")} error={err("dieCostEgp")} />
+                  <TextField label={t(tooling ? "vendorPortal.rateCards.tooling" : "vendorPortal.rateCards.die")} autoComplete="off" inputMode="decimal" dir="ltr" suffix={egp} value={form.dieCostEgp} onChange={(v) => set("dieCostEgp", v)} helpText={t(tooling ? "vendorPortal.rateCards.toolingHelp" : "vendorPortal.rateCards.dieHelp")} error={err("dieCostEgp")} />
                   <TextField label={t("vendorPortal.rateCards.lead")} autoComplete="off" inputMode="numeric" dir="ltr" suffix={t("vendorPortal.common.daysUnit")} value={form.leadTimeDays} onChange={(v) => set("leadTimeDays", v)} helpText={t("vendorPortal.rateCards.leadHelp")} error={err("leadTimeDays")} />
-                  <TextField label={t("vendorPortal.rateCards.printSides")} autoComplete="off" inputMode="decimal" dir="ltr" suffix="%" value={form.printSidesSurchargePct} onChange={(v) => set("printSidesSurchargePct", v)} helpText={t("vendorPortal.rateCards.printSidesHelp")} error={err("printSidesSurchargePct")} />
+                  <TextField label={t("vendorPortal.rateCards.printSides")} autoComplete="off" inputMode="decimal" dir="ltr" suffix="%" value={form.printSidesSurchargePct} onChange={(v) => set("printSidesSurchargePct", v)} helpText={t("vendorPortal.rateCards.printSidesHelp", u)} error={err("printSidesSurchargePct")} />
                 </InlineGrid>
               </Card>
 
@@ -176,7 +181,7 @@ export function RateCardForm({ card, offeredFinishes, models }: { card: RateCard
                 <Card title={t("vendorPortal.rateCards.finishesTitle")}>
                   <BlockStack gap="300">
                     <Text as="p" tone="subdued">
-                      {t("vendorPortal.rateCards.finishesHelp")}
+                      {t("vendorPortal.rateCards.finishesHelp", u)}
                     </Text>
                     <InlineGrid columns={{ xs: 1, sm: 2 }} gap="300" alignItems="start">
                       {finishes.map((f) => (
@@ -186,7 +191,7 @@ export function RateCardForm({ card, offeredFinishes, models }: { card: RateCard
                           autoComplete="off"
                           inputMode="decimal"
                           dir="ltr"
-                          suffix={`${egp} ${t("vendorPortal.rateCards.perBox")}`}
+                          suffix={`${egp} ${t("vendorPortal.rateCards.perBox", u)}`}
                           value={form.finishSurcharges[f] ?? ""}
                           onChange={(v) => set("finishSurcharges", { ...form.finishSurcharges, [f]: v })}
                           error={err(`finish.${f}`)}
@@ -197,20 +202,20 @@ export function RateCardForm({ card, offeredFinishes, models }: { card: RateCard
                 </Card>
               ) : null}
 
-              <Card title={t("vendorPortal.rateCards.diesTitle")}>
+              <Card title={t(tooling ? "vendorPortal.rateCards.sizesTitle" : "vendorPortal.rateCards.diesTitle")}>
                 <BlockStack gap="300">
                   <Text as="p" tone="subdued">
-                    {t("vendorPortal.rateCards.diesHelp")}
+                    {t(tooling ? "vendorPortal.rateCards.sizesHelp" : "vendorPortal.rateCards.diesHelp")}
                   </Text>
                   {form.standardDies.length === 0 ? (
                     <Text as="p" tone="subdued">
-                      {t("vendorPortal.rateCards.diesEmpty")}
+                      {t(tooling ? "vendorPortal.rateCards.sizesEmpty" : "vendorPortal.rateCards.diesEmpty")}
                     </Text>
                   ) : null}
                   <div className={styles.Rows}>
                     {form.standardDies.map((d, i) => (
                       <BlockStack key={i} gap="100">
-                        <div className={styles.Row} style={{ ["--row-cols" as string]: 3 }} role="group" aria-label={`${t("vendorPortal.rateCards.diesTitle")} ${i + 1}`}>
+                        <div className={styles.Row} style={{ ["--row-cols" as string]: 3 }} role="group" aria-label={`${t(tooling ? "vendorPortal.rateCards.sizesTitle" : "vendorPortal.rateCards.diesTitle")} ${i + 1}`}>
                           {(["L", "W", "H"] as const).map((k) => (
                             <TextField
                               key={k}
@@ -224,7 +229,7 @@ export function RateCardForm({ card, offeredFinishes, models }: { card: RateCard
                               error={Boolean(errors[`dies.${i}`])}
                             />
                           ))}
-                          <Button variant="tertiary" icon={Trash2} accessibilityLabel={t("vendorPortal.rateCards.removeDie", { index: i + 1 })} onClick={() => set("standardDies", form.standardDies.filter((_, j) => j !== i))} />
+                          <Button variant="tertiary" icon={Trash2} accessibilityLabel={t(tooling ? "vendorPortal.rateCards.removeSize" : "vendorPortal.rateCards.removeDie", { index: i + 1 })} onClick={() => set("standardDies", form.standardDies.filter((_, j) => j !== i))} />
                         </div>
                         {err(`dies.${i}`) ? (
                           <Text as="p" tone="critical" variant="bodySm">
@@ -236,7 +241,7 @@ export function RateCardForm({ card, offeredFinishes, models }: { card: RateCard
                   </div>
                   <InlineStack>
                     <Button icon={Plus} disabled={form.standardDies.length >= RATE_LIMITS.maxDies} onClick={() => set("standardDies", [...form.standardDies, { L: "", W: "", H: "" }])}>
-                      {t("vendorPortal.rateCards.addDie")}
+                      {t(tooling ? "vendorPortal.rateCards.addSize" : "vendorPortal.rateCards.addDie")}
                     </Button>
                   </InlineStack>
                 </BlockStack>
@@ -262,12 +267,12 @@ export function RateCardForm({ card, offeredFinishes, models }: { card: RateCard
                 caption={t("vendorPortal.rateCards.previewTitle")}
                 hideCaption={false}
                 columnContentTypes={["numeric", "numeric", "numeric"]}
-                headings={[t("vendorPortal.rateCards.previewQty"), t("vendorPortal.rateCards.previewUnit"), t("vendorPortal.rateCards.previewTotal")]}
+                headings={[t("vendorPortal.rateCards.previewQty"), t("vendorPortal.rateCards.previewUnit", u), t("vendorPortal.rateCards.previewTotal")]}
                 rows={preview.map((p) => [formatNumber(p.q), p.unit === null ? "—" : formatMoney(p.unit, locale), p.total === null ? "—" : formatMoney(p.total, locale)])}
                 increasedTableDensity
                 footerContent={t("vendorPortal.rateCards.previewNote")}
               />
-              <ModelCoverage models={models} material={t(`materials.${card.materialCode}` as DictKey)} />
+              <ModelCoverage models={models} listed={listed} material={t(`materials.${card.materialCode}` as DictKey)} />
               <Card title={t("vendorPortal.rateCards.referenceTitle")}>
                 <Text as="p" tone="subdued">
                   {t("vendorPortal.rateCards.referenceBody", { area: card.referenceAreaM2.toFixed(3) })}
