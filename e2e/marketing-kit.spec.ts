@@ -304,17 +304,19 @@ for (const locale of ["ar", "en"] as const) {
 
 test('Sheet tone="dark-2": raised dark that overlaps a dark band instead of collapsing', async ({ page }) => {
   await page.goto("/en/dev/kit");
-  const band = page.locator('section[data-tone="dark-2"]').first();
-  const r = await band.evaluate((el) => {
-    const cs = getComputedStyle(el);
-    const prev = el.previousElementSibling as HTMLElement;
-    return { bg: cs.backgroundColor, mt: parseFloat(cs.marginTop), radius: parseFloat(cs.borderTopLeftRadius), prevTone: prev?.dataset.tone, color: cs.color };
-  });
-  expect(r.prevTone).toBe("dark");
-  expect(r.bg).toBe("rgb(20, 26, 26)");
-  expect(r.mt).toBeLessThan(0);
-  expect(r.radius).toBeGreaterThan(0);
-  expect(r.color).toBe("rgb(255, 255, 255)");
+  await page.waitForLoadState("networkidle");
+  // Hydrated (RevealScope ran): nothing re-renders the bands after this point.
+  await page.waitForFunction(() => document.documentElement.dataset.motion === "on" || matchMedia("(prefers-reduced-motion: reduce)").matches);
+  // The one gallery band for this tone, by its accessible name (not the first CSS match).
+  const band = page.getByRole("region", { name: "Sheet tone dark-2", exact: true });
+  await expect(band).toHaveCount(1);
+  await expect(band).toHaveAttribute("data-tone", "dark-2");
+  // Web-first, retrying assertions instead of a single computed-style snapshot.
+  await expect(band).toHaveCSS("background-color", "rgb(20, 26, 26)");
+  await expect(band).toHaveCSS("color", "rgb(255, 255, 255)");
+  await expect(band.locator("xpath=preceding-sibling::*[1]")).toHaveAttribute("data-tone", "dark");
+  await expect.poll(() => band.evaluate((el) => parseFloat(getComputedStyle(el).marginTop))).toBeLessThan(0);
+  await expect.poll(() => band.evaluate((el) => parseFloat(getComputedStyle(el).borderTopLeftRadius))).toBeGreaterThan(0);
 });
 
 // R6-AX-18 (WCAG 2.4.11 Focus Not Obscured): tabbing through a moving Marquee at 320 px, every
