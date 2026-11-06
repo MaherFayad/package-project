@@ -5,7 +5,9 @@ import { Banner, BlockStack, Button, ButtonGroup, Card, Checkbox, DataTable, Inl
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { formatMoney, formatNumber, formatPercent } from "@/lib/format";
-import { DELIVERY_ZONES, type DeliveryZone, type ZoneRate } from "@/lib/pricing";
+// Leaf modules only: the @/lib/pricing barrel pulls the quote engine, model library and dieline into this client bundle.
+import { DELIVERY_ZONES, type DeliveryZone } from "@/lib/pricing/types";
+import type { ZoneRate } from "@/lib/pricing/config";
 import { MATERIAL_CODES, type MaterialCode } from "@/types";
 import { applyIndexUpdateAction, previewPricingAction, savePricingSettingsAction, type PricingPreview } from "./server/actions";
 import { bumpBoard, type SettingsForm } from "./lib/pricingSettings";
