@@ -70,8 +70,9 @@ describe("round 4: faceted sections, handles, petaloid, conforming face labels",
           sectionPoint(prof.section, r, sq, k / 720, o);
           best = Math.min(best, Math.hypot(o.x - pos.getX(i), o.z - pos.getZ(i)));
         }
-        expect(best, `${code} vertex ${i}`).toBeLessThan(0.6);
-        if (Math.abs(pos.getZ(i)) < (p.dims.G ?? p.dims.D) / 2 - 1) curved++;
+        expect(best, `${code} vertex ${i}`).toBeLessThan(0.8);
+        expect(best, `${code} vertex ${i} proud of the wall`).toBeGreaterThan(0.3);
+        if (Math.abs(pos.getZ(i)) < Math.abs(pos.getZ(0 + 16)) - 0.3) curved++;
       }
       expect(curved, code).toBeGreaterThan(0);
       g.dispose();
@@ -99,5 +100,26 @@ describe("round 4: faceted sections, handles, petaloid, conforming face labels",
     const [wrap] = labelSpecsFor("ROUND_BOTTLE", p.dims, d.profile!, ["WRAP"]);
     expect(wrap.placement.type === "band" && wrap.placement.section).toBeFalsy();
     bandLabelGeometry(wrap, 0.18, 32).dispose();
+  });
+});
+
+describe("rounded-rect section walk (R4-12)", () => {
+  it("is continuous and monotonic round the whole outline", () => {
+    const sec = { kind: "roundedRect", cornerRatio: 0.3, depthRatio: 0.55 } as const;
+    const o = { x: 0, z: 0, nx: 0, nz: 0 };
+    let prev: { x: number; z: number } | null = null;
+    let len = 0;
+    for (let i = 0; i <= 2000; i++) {
+      sectionPoint(sec, 50, 1, -0.5 + i / 2000, o);
+      if (prev) {
+        const step = Math.hypot(o.x - prev.x, o.z - prev.z);
+        expect(step, `step at ${i}`).toBeLessThan(0.5);
+        len += step;
+      }
+      prev = { x: o.x, z: o.z };
+    }
+    expect(len).toBeCloseTo(sectionPerimeter(sec, 50), 0);
+    sectionPoint(sec, 50, 1, -0.1, o);
+    expect(o.x).toBeLessThan(0);
   });
 });

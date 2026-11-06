@@ -274,6 +274,10 @@ const VesselLights = memo(function VesselLights() {
             the left / right / back, which stay dark). */}
         <Lightformer form="rect" intensity={1.1} color="#f2efe9" position={[0, -0.9, 4.2]} rotation-x={-Math.PI / 10} scale={[12, 2.4, 1]} />
         <Lightformer form="rect" intensity={0.7} color="#ece8e1" position={[0, -2.5, 0.8]} rotation-x={-Math.PI / 2} scale={[10, 8, 1]} />
+        {/* same low sweep behind and at the sides, so the turntable never swings a tin wall into the void */}
+        <Lightformer form="rect" intensity={0.9} color="#f2efe9" position={[0, -0.9, -4.2]} rotation-y={Math.PI} rotation-x={Math.PI / 10} scale={[12, 2.4, 1]} />
+        <Lightformer form="rect" intensity={0.8} color="#f2efe9" position={[4.2, -0.9, 0]} rotation-y={-Math.PI / 2} scale={[12, 2.4, 1]} />
+        <Lightformer form="rect" intensity={0.8} color="#f2efe9" position={[-4.2, -0.9, 0]} rotation-y={Math.PI / 2} scale={[12, 2.4, 1]} />
       </EnvironmentScene>
     </>
   );

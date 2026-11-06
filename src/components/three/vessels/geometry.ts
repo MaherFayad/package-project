@@ -167,7 +167,8 @@ export function sectionPoint(section: CrossSection, a: number, s: number, p: num
     nz = 0;
   } else if ((d -= segs[7]) < 0) corner(-sx, sz, (3 * Math.PI) / 2, d + q);
   else {
-    rx = -sx + (sx + d);
+    // last half of the front face: d (>= 0) runs from the front-left corner to the centre (R4-12)
+    rx = -sx + d;
     rz = hd;
     nx = 0;
     nz = 1;
@@ -579,18 +580,20 @@ export function faceLabelGeometry(spec: LabelSpec, faceZ: number, profile?: Vess
   // standing off them as a flat card, and a tapered tub's label follows the taper.
   const outer = profile.outer as SectionPoint[];
   const sp = { x: 0, z: 0, nx: 0, nz: 1 };
-  const off = 0.18;
+  // proud of the wall along the wall normal (a radius offset is only ~half that on the short axis
+  // of an oval and z-fights); enough to clear the body's chords at the corner radius
+  const off = 0.45;
   return gridSurface(
-    24,
+    32,
     6,
     (u, v) => {
       const y = y0 + (y1 - y0) * v;
-      const a = radiusAt(outer, y) + off;
+      const a = radiusAt(outer, y);
       const sq = squarenessAt(outer, y);
       const x = x0 + (x1 - x0) * u;
       const per = sectionPerimeter(section, a, sq) || 1;
       sectionPoint(section, a, sq, (face === "front" ? 0 : 0.5) + x / per, sp);
-      return [sp.x, y, sp.z];
+      return [sp.x + sp.nx * off, y, sp.z + sp.nz * off];
     },
     (u, v) => surfaceUv(spec, u, v),
   );

@@ -15,7 +15,7 @@ const { chromium } = require("playwright");
 const [modelsFile, outDir, shardArg = "0", nArg = "1"] = process.argv.slice(2);
 const shard = Number(shardArg), n = Number(nArg);
 const only = process.env.ONLY ? new Set(process.env.ONLY.split(",")) : null;
-const models = JSON.parse(fs.readFileSync(modelsFile, "utf8")).filter((m, i) => (only ? only.has(m.code) : i % n === shard));
+const models = JSON.parse(fs.readFileSync(modelsFile, "utf8")).filter((m) => !only || only.has(m.code)).filter((m, i) => i % n === shard);
 const base = process.env.BASE || "http://localhost:3100";
 const IGNORED = [/Download the React DevTools/, /Fast Refresh/, /HMR/];
 fs.mkdirSync(outDir, { recursive: true });
