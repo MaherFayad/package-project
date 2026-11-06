@@ -1,6 +1,5 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { preload } from "react-dom";
 import type { Locale, StructureFamily } from "@/types";
 import { getT } from "@/i18n";
 import type { DictKey } from "@/i18n";
@@ -37,10 +36,8 @@ export async function BoxesLanding({
 }) {
   const t = getT(locale);
   const H = titleAs;
-  // The 0427 render in the hero showcase is the phone LCP: start it from <head> (PERF-R4-06).
-  // Found by the parser only, it sometimes queued behind the card renders on Slow 4G (LCP 4.4-4.9 s).
-  const lcpRender = renderSrc("FEFCO_0427");
-  preload(lcpRender, { as: "image", imageSrcSet: srcSetFor(lcpRender), imageSizes: "(min-width: 1024px) 260px, 34vw", fetchPriority: "high" });
+  // The 0427 render in the hero showcase is the phone LCP. HeroImage preloads its AVIF from <head>
+  // (R4-MK-06); a second webp preload here made the render download twice (PERF-R4-06 merge).
   const structures = await listStructures();
   const prices = new Map(await Promise.all(structures.map(async (s) => [s.code, await getLowestUnit(s.code, s.defaultDims)] as const)));
   const base = `/${locale}`;
