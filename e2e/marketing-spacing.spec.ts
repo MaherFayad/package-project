@@ -38,8 +38,6 @@ const PAGES = [
 
 /** Pages that do not use the section-7 tokens yet (page owners: delete your entry once it passes). */
 const NOT_YET = new Set<string>([
-  // why-elba: bands add their own bottom padding / zero it (rule 1), hero bottom 24 not section-y-lg.
-  "/why-elba",
 ]);
 
 type Bp = "desktop" | "tablet" | "phone";
