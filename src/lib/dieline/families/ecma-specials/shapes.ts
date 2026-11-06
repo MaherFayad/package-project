@@ -211,7 +211,10 @@ export const coneSectorDeg = (r: number, h: number) => (360 * r) / Math.hypot(r,
 export function cone(dims: Dims, t: number, f: StructureFeatures = {}): EcmaDraft {
   void f;
   const N = CONE_FACETS;
-  const R = dims.L / 2 + t;
+  // Circumradius of the 24-facet mouth: the across-flats inner width (the narrowest mouth a
+  // product meets) is L, so the facets' apothem is L / 2 + t (R5-3Q-D-02: a corner radius of
+  // L / 2 + t left the mouth 0.6–0.9 mm under L across the flats).
+  const R = (dims.L / 2 + t) / Math.cos(Math.PI / N);
   const H = dims.H;
   const sl = Math.hypot(R, H);
   const chord = 2 * R * Math.sin(Math.PI / N);

@@ -123,3 +123,16 @@ describe.each(cases)("$code $dims.L×$dims.W×$dims.H t=$t", ({ m, dims, t }) =>
     }
   });
 });
+
+// Corrugated boards (E-flute, 1.5 mm) on the trays, carriers and display that allow them: the
+// layer stack has to follow the caliper, not the 0.4 mm SBS one (R5-3Q-D-01: the six-corner
+// tray's cover glue flaps cut 1 mm into the end walls on E-flute).
+const corrugated = MODELS.flatMap((m) =>
+  [m.defaultDims, ...m.presets.map((p) => p.dims)].flatMap((dims) => m.materials.filter((mat) => BOARD_SPECS[mat].family === "CORRUGATED").map((mat) => ({ code: m.code, m, dims, mat, t: BOARD_SPECS[mat].thicknessMm }))),
+);
+
+describe.each(corrugated)("$code $dims.L×$dims.W×$dims.H $mat", ({ m, dims, t }) => {
+  it("has no coplanar or interpenetrating boards when closed", () => {
+    expect(overlaps(m.build(dims, { thicknessMm: t }))).toEqual([]);
+  });
+});
