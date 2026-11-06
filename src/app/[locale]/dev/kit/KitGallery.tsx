@@ -21,6 +21,8 @@ import { Faq } from "@/components/marketing/kit/Faq";
 import { PhoneSignup } from "@/components/marketing/kit/PhoneSignup";
 import { MockupFrame } from "@/components/marketing/kit/MockupFrame";
 import { MotionScope } from "@/components/marketing/kit/MotionScope";
+import { SectionHead, Stack } from "@/components/marketing/kit/SectionHead";
+import { Grid } from "@/components/marketing/kit/Grid";
 import { renderSrc, SAMPLES, srcSetFor, vesselSrc } from "@/components/marketing/assets";
 import { startHref } from "@/components/marketing/MarketingHeader";
 import { GalleryToolbar } from "./GalleryToolbar";
@@ -141,6 +143,38 @@ export function KitGallery({ locale }: { locale: Locale }) {
             {c.more}
           </Pill>
         </PillRow>
+      </Sheet>
+
+      <Sheet tone="light" y="lg" aria-label="SectionHead and Grid">
+        <Spec name="SectionHead / Stack / Grid (spec section 7)" api='<SectionHead title sub eyebrow size align lg><Grid cols={3} gap="default|tight|bento">…</Grid></SectionHead> · <Stack gap="title-sub|head-content|head-content-lg|grid" /> · <Sheet y="md|lg|xl" />' />
+        <SectionHead eyebrow={c.heroEyebrow} title={c.tones} sub={c.lead}>
+          <Grid cols={3}>
+            {[1, 2, 3].map((n) => (
+              <SheetCard key={n} tone="dark">
+                <Stack gap="title-sub">
+                  <Display as="h3" size="20">
+                    {c.card} {n}
+                  </Display>
+                  <Body>{c.cardBody}</Body>
+                </Stack>
+              </SheetCard>
+            ))}
+          </Grid>
+        </SectionHead>
+      </Sheet>
+
+      <Sheet tone="light" aria-label="SectionHead centred, collapsed same-tone band">
+        <SectionHead title={c.type} sub={c.lead} align="center" lg>
+          <Grid cols={4} colsMd={2} colsSm={2} gap="tight">
+            {[1, 2, 3, 4].map((n) => (
+              <SheetCard key={n} tone="white">
+                <Display as="h3" size="20">
+                  {c.card} {n}
+                </Display>
+              </SheetCard>
+            ))}
+          </Grid>
+        </SectionHead>
       </Sheet>
 
       <Sheet tone="navy" aria-labelledby="kit-type">
