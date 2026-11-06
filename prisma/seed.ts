@@ -478,19 +478,25 @@ async function main() {
   }
 
   const vendorIds: string[] = [];
+  // CR-42: portfolio tiles use the rendered printed-sample images (same set as the home strip),
+  // rotated so no two neighbouring vendors repeat; the old geometric SVGs read as placeholders.
+  const SAMPLE_COUNT = 12;
+  let sampleIdx = 0;
+  const nextSample = () => `/marketing/samples/sample-${String((sampleIdx++ % SAMPLE_COUNT) + 1).padStart(2, "0")}.webp`;
   for (const v of vendors) {
+    const portfolioImages = v.portfolio.map(() => nextSample());
     const row = await db.vendor.create({
       data: {
         slug: v.slug, nameAr: v.nameAr, nameEn: v.nameEn, city: v.city, cityAr: v.cityAr, cityEn: v.cityEn,
         bioAr: v.bioAr, bioEn: v.bioEn,
         logoUrl: `/seed/vendors/${v.slug}.svg`,
-        coverUrl: `/seed/portfolio/${v.slug}-1.svg`,
+        coverUrl: portfolioImages[0] ?? `/seed/portfolio/${v.slug}-1.svg`,
         machines: v.machines as object[], capabilities: v.capabilities as object, certifications: v.certifications as object[],
         foodSafe: v.certifications.some((c) => c.code === "FOOD_SAFE"),
         rating: v.rating, ratingCount: v.ratingCount, onTimePct: v.onTimePct, leadTimeDays: v.leadTimeDays,
         minOrderQty: v.minOrderQty, serviceAreas: v.serviceAreas, verified: true, status: "ACTIVE",
         portfolio: {
-          create: v.portfolio.map((p, i) => ({ ...p, imageUrl: `/seed/portfolio/${v.slug}-${i + 1}.svg`, sortOrder: i })),
+          create: v.portfolio.map((p, i) => ({ ...p, imageUrl: portfolioImages[i], sortOrder: i })),
         },
       },
     });
@@ -561,7 +567,7 @@ async function main() {
   // ── Users
   const now = new Date();
   await db.user.create({
-    data: { phone: "+201000000001", name: "Elba Ops Admin", role: "ADMIN", locale: "ar", consentAt: now },
+    data: { phone: "+201000000001", name: "فريق تشغيل علبة", role: "ADMIN", locale: "ar", consentAt: now },
   });
   const org = await db.organization.create({ data: { name: "Bloom Candles", city: "CAIRO" } });
   const buyer = await db.user.create({
