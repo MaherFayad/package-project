@@ -63,6 +63,10 @@ import {
   type PreviewRow,
   type PreviewSample,
 } from "../lib/pricingSettings";
+import { leadState, leadStepSchema } from "../lib/quoteLeads";
+import { checkoutSettingsFormSchema } from "../lib/checkoutSettings";
+import { CHECKOUT_SETTING_KEY, loadCheckoutSettings } from "@/lib/orders/checkout-settings";
+import { QUOTE_REQUESTED } from "@/lib/orders/quote-requests";
 import { bioCleanSchema, canApprovePortfolio, portfolioReviewSchema, reviewNoteRequired } from "../lib/moderation";
 import { stripContactDetails } from "@/components/vendor/lib/contact";
 import { canRaisePayout, payoutAmount, payoutStepSchema, STEP_FROM, STEP_TO } from "../lib/payouts";
@@ -171,6 +175,44 @@ export async function payoutStepAction(input: z.input<typeof payoutStepSchema>):
         tx,
       );
     });
+    revalidateAdmin();
+    return null;
+  });
+}
+
+/* ───────────────────────── Checkout settings (B-05, B-11) ───────────────────────── */
+
+export async function saveCheckoutSettingsAction(input: z.input<typeof checkoutSettingsFormSchema>): Promise<AdminActionResponse> {
+  return runAdminAction(async () => {
+    const admin = await adminForMutation();
+    const d = parse(checkoutSettingsFormSchema, input);
+    const before = await loadCheckoutSettings();
+    await db.$transaction(async (tx) => {
+      await tx.platformSetting.upsert({
+        where: { key: CHECKOUT_SETTING_KEY },
+        create: { key: CHECKOUT_SETTING_KEY, value: toJson(d), updatedById: admin.id },
+        update: { value: toJson(d), updatedById: admin.id },
+      });
+      await audit(admin, { action: "CHECKOUT_SETTINGS", entityType: "SETTINGS", entityId: CHECKOUT_SETTING_KEY, summary: `prepay ${d.prepayDiscountPct}%, sample ${d.sample.enabled ? "on" : "off"}`, before, after: d }, tx);
+    });
+    revalidateAdmin();
+    revalidatePath("/[locale]/checkout/[designId]", "page");
+    return null;
+  });
+}
+
+/* ───────────────────────── Quote leads (B-15) ───────────────────────── */
+
+/** Record the ops follow-up on a quote request (contacted / closed) in the audit log. */
+export async function quoteLeadStepAction(input: z.input<typeof leadStepSchema>): Promise<AdminActionResponse> {
+  return runAdminAction(async () => {
+    const admin = await adminForMutation();
+    const d = parse(leadStepSchema, input);
+    const q = await db.quote.findUnique({ where: { id: d.quoteId }, select: { id: true, status: true } });
+    if (!q || q.status !== QUOTE_REQUESTED) throw new AdminActionError("NOT_FOUND");
+    const events = await db.auditLog.findMany({ where: { entityType: "QUOTE", entityId: q.id, action: { in: ["QUOTE_CONTACTED", "QUOTE_CLOSED"] } }, select: { action: true, createdAt: true } });
+    if (leadState(events) === "CLOSED") throw new AdminActionError("NOT_ALLOWED");
+    await audit(admin, { action: d.step === "CONTACTED" ? "QUOTE_CONTACTED" : "QUOTE_CLOSED", entityType: "QUOTE", entityId: q.id, summary: d.note });
     revalidateAdmin();
     return null;
   });

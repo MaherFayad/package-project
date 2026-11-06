@@ -224,3 +224,6 @@
 .ModGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: var(--p-space-400); }
 .ModImage { display: block; inline-size: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: var(--p-color-bg-surface-secondary); border-start-start-radius: inherit; border-start-end-radius: inherit; }
 .ModBody { padding: var(--p-space-400); }
+
+/* Stacked links in a table cell: 24 px targets with no overlap (WCAG 2.5.8). */
+.TapLink { display: inline-block; min-block-size: 1.5rem; padding-block: 0.125rem; }
