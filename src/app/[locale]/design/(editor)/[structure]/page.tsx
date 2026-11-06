@@ -92,6 +92,7 @@ export default async function DesignEditorPage({ params, searchParams }: { param
       presetsByCode={presetsByCode}
       loadError={loadError}
       resumeLocal={!d && one(sp.resume) === "1"}
+      posterSlug={libModel.slug}
     />
   );
 }

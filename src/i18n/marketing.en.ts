@@ -2,6 +2,7 @@
 export const marketingEn = {
   announce: {
     text: "New: preview foil, spot UV and soft-touch finishes in 3D.",
+    textShort: "New: preview foil and soft-touch in 3D.",
     link: "See finishes",
     dismiss: "Dismiss announcement",
   },
@@ -14,6 +15,7 @@ export const marketingEn = {
     login: "Sign in",
     account: "My account",
     start: "Start designing free",
+    newDesign: "New design",
     menu: "Menu",
     close: "Close menu",
     productsMenu: {

@@ -29,5 +29,9 @@ export const plexArabic = IBM_Plex_Sans_Arabic({
   variable: "--font-plex-arabic",
 });
 
-/** Plex weights preloaded on Arabic pages (body and headings; 600 loads on demand). */
-export const PLEX_PRELOAD_WEIGHTS = [400, 700] as const;
+/**
+ * Plex weights preloaded on Arabic pages: 400 body, 600 chips, buttons and sub-headings, 700
+ * headings. 600 used to load on demand and swapped in ~450 ms late, widening the catalogue
+ * chips (CLS 0.075 on /ar/catalog, R4-CR-05).
+ */
+export const PLEX_PRELOAD_WEIGHTS = [400, 600, 700] as const;

@@ -227,7 +227,7 @@ export const VESSELS: Record<VesselKind, VesselDefinition> = {
   STAND_UP_POUCH: {
     kind: "STAND_UP_POUCH",
     family: "POUCH",
-    name: { ar: "كيس واقف بسوستة", en: "Stand-up pouch" },
+    name: { ar: "كيس واقف بسحاب", en: "Stand-up pouch with zip" },
     description: { ar: "كيس دوي باك بقاعدة وسوستة للبن والمكسرات والتوابل", en: "Doypack with bottom gusset and zip for coffee, nuts and spices" },
     materials: ["KRAFT_POUCH", "WHITE_POUCH"],
     defaultMaterial: "KRAFT_POUCH",
@@ -249,7 +249,7 @@ export const VESSELS: Record<VesselKind, VesselDefinition> = {
   SQUEEZE_TUBE: {
     kind: "SQUEEZE_TUBE",
     family: "TUBE",
-    name: { ar: "أنبوبة كريم", en: "Squeeze tube" },
+    name: { ar: "أنبوبة قابلة للعصر", en: "Squeeze tube" },
     description: { ar: "أنبوبة بلاستيك للكريمات بغطاء قلاب أو لولبي", en: "PE cosmetic tube with flip-top or screw cap" },
     materials: ["PE_TUBE_WHITE"],
     defaultMaterial: "PE_TUBE_WHITE",

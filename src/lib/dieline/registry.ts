@@ -78,7 +78,7 @@ const ENTRIES: Record<StructureCode, Entry> = {
   },
   ECMA_RTE: {
     slug: "reverse-tuck-end",
-    standard: "ECMA A20 (reverse tuck)",
+    standard: "ECMA A20.20.03.01",
     name: { ar: "علبة كرتون بلسان عكسي", en: "Reverse tuck end carton" },
     description: {
       ar: "علبة كرتون دوبلكس خفيفة بلسانين في اتجاهين متعاكسين، شائعة لمستحضرات التجميل والعطور.",
@@ -96,7 +96,7 @@ const ENTRIES: Record<StructureCode, Entry> = {
   },
   ECMA_STE: {
     slug: "straight-tuck-end",
-    standard: "ECMA A20 (straight tuck)",
+    standard: "ECMA A20.20.03.03",
     name: { ar: "علبة كرتون بلسان مستقيم", en: "Straight tuck end carton" },
     description: {
       ar: "علبة كرتون دوبلكس بلسانين في نفس الاتجاه لواجهة أمامية نظيفة، مناسبة للأغذية الجافة والهدايا.",
@@ -131,7 +131,7 @@ const ENTRIES: Record<StructureCode, Entry> = {
   },
   SLEEVE: {
     slug: "sleeve",
-    standard: "ECMA A01 (sleeve)",
+    standard: "ECMA A01.01.00.00",
     name: { ar: "غلاف منزلق", en: "Sleeve" },
     description: {
       ar: "غلاف كرتون مطبوع ينزلق حول علبة أو منتج، طريقة اقتصادية لإضافة علامتك التجارية.",

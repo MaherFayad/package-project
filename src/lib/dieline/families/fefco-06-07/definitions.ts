@@ -467,7 +467,7 @@ export const GROUP_07: FamilyStructureDef[] = [
     { webs: "ends", lid: "tuckDust" },
   ),
   tray(
-    { num: "0770", slug: "fefco-0770-produce-tray-lugs", ar: "صينية خضر وفاكهة بنتوءات تستيف", en: "Produce tray with stacking lugs", descAr: "صينية بأركان مطوية ونتوءات على الجدران الطرفية تثبت الصواني فوق بعضها.", descEn: "Web-corner produce tray with stacking lugs on the end-wall rims.", uses: ["produce", "food"], presets: PRODUCE_PRESETS, defaultDims: { L: 580, W: 380, H: 150 }, params: PRODUCE_LIMITS, materials: HEAVY, joint: "M" },
+    { num: "0770", slug: "fefco-0770-produce-tray-lugs", ar: "صينية خضر وفاكهة بنتوءات تكديس", en: "Produce tray with stacking lugs", descAr: "صينية بأركان مطوية ونتوءات على الجدران الطرفية تثبت الصواني فوق بعضها.", descEn: "Web-corner produce tray with stacking lugs on the end-wall rims.", uses: ["produce", "food"], presets: PRODUCE_PRESETS, defaultDims: { L: 580, W: 380, H: 150 }, params: PRODUCE_LIMITS, materials: HEAVY, joint: "M" },
     { webs: "ends", lugs: true },
   ),
   tray(
@@ -483,7 +483,7 @@ export const GROUP_07: FamilyStructureDef[] = [
     { webs: "ends", doubleLong: true },
   ),
   tray(
-    { num: "0774", slug: "fefco-0774-produce-tray-double-walls-handles", ar: "صينية خضر وفاكهة بجدران مزدوجة ومقابض", en: "Produce tray, double long walls with hand holes", descAr: "صينية بأركان مطوية وجدران طولية مزدوجة بها مقابض.", descEn: "Produce tray with web corners and rolled double long walls carrying hand holes.", uses: ["produce", "food"], presets: PRODUCE_PRESETS, defaultDims: { L: 580, W: 380, H: 150 }, params: PRODUCE_LIMITS, materials: HEAVY, joint: "M" },
+    { num: "0774", slug: "fefco-0774-produce-tray-double-walls-handles", ar: "صينية خضر وفاكهة بجدران طولية مزدوجة وفتحات يد", en: "Produce tray, double long walls with hand holes", descAr: "صينية بأركان مطوية وجدران طولية مزدوجة بها فتحات يد.", descEn: "Produce tray with web corners and rolled double long walls carrying hand holes.", uses: ["produce", "food"], presets: PRODUCE_PRESETS, defaultDims: { L: 580, W: 380, H: 150 }, params: PRODUCE_LIMITS, materials: HEAVY, joint: "M" },
     { webs: "ends", doubleLong: true, longHandHoles: true },
   ),
 ];

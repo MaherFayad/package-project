@@ -25,13 +25,17 @@ export function formatMoney(
   locale: Locale,
   opts: { alwaysDecimals?: boolean } = {},
 ): string {
-  const egp = piastersToEgp(p);
+  const egp = piastersToEgp(Math.abs(p));
   const hasFraction = Math.round(p) % 100 !== 0;
   const digits = opts.alwaysDecimals || hasFraction ? 2 : 0;
   const n = new Intl.NumberFormat("en-US", {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
   }).format(egp);
+  // Discounts and credits: a true minus sign (U+2212) in front of the amount, "−EGP 621.53".
+  // In Arabic the signed number is LTR-isolated, else the bidi algorithm moved the ASCII hyphen
+  // behind the digits ("621.53- ج.م"). Positive amounts are unchanged.
+  if (p < 0 && Math.round(Math.abs(p)) > 0) return locale === "ar" ? `\u2066\u2212${n}\u2069 ج.م` : `\u2212EGP ${n}`;
   return locale === "ar" ? `${n} ج.م` : `EGP ${n}`;
 }
 

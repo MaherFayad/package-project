@@ -189,3 +189,77 @@ Merged the marketing (B-26 `lib/pricing/headline.ts`), vendor (shared `status-to
 - **Conflicts outside scope**: in `components/store/data.ts` and `api/vendor/uploads/route.ts`, vendor and technical conflicted with each other. Kept both sides: technical's cached select plus vendor's approved-only portfolio; vendor's review status plus technical's `revalidateTag("catalog")`.
 - **Re-verified** after the merges: lint and typecheck clean; `npm test` 69 files / 8,206 tests pass; `next build` ok. e2e `checkout`, `journey`, `smoke`, `admin`, `vendor`, `storefront`: 38 passed, 4 skipped by the specs. The round 3 browser walk (en 390, ar 1440) is all axe 0 with 0 px overflow, no page errors. The preflight override places the order and shows on the timeline.
 - **B-15 follow-up (reported by admin via the integrator)**: price-request leads stored whatever string the client sent for the governorate, which was the English address name ("Cairo"); nothing validated it. `requestQuoteAction` now accepts a name or a code, stores the governorate code (`CAIRO`) and rejects unknown values (`toGovernorateKey()` and `GOVERNORATE_KEYS` in `lib/orders/governorates.ts`). `listQuoteRequests()` returns codes, also for leads written before the fix. Addresses keep the English name, which is the canonical form in `ShippingAddress`. Tests: name/code mapping, and a legacy row read back as a code. Checked: new e2e leads store `CAIRO`. The checkout e2e specs never wrote a governorate into leads; fixtures that seed leads on the admin branch should write codes.
+
+## Round 4
+
+Base: main at `781d663` (rounds 1 to 3 merged). I walked the journey again as a first-time Egyptian brand owner with a fresh account per run, using `docs/audit/tools/checkout-walk.cjs` (new). The walk covers the soft gate, the empty start list, the start list with a design, step 1 (tiers, sample, 5,000-box quote and quote sent), step 2 (empty, errors, company invoice), step 3 (proof, approval error), payment (method, card, declined), paid, order, invoice, orders list, account, and the share link as owner and as an anonymous visitor. That is 22 screens for each of en and ar at 390 and 1440, plus the seeded orders (in production, awaiting printer, QC, delivered with a dispute, unknown id, unknown share token). Every screen ran axe-core (WCAG 2.0/2.1/2.2 A + AA plus best practice) and a horizontal-overflow check, under `next start` with `OTP_DEV_ECHO=1` and `ALLOW_MOCK_PAYMENTS=1`. Screenshots are in `docs/screenshots/audit/checkout/round4/{before,after}/`.
+
+### Re-verification of rounds 1 to 3
+
+| rows | result |
+|---|---|
+| CO-01, CO-02, X-01, X-06 | axe found 0 violations on every walk screen, before and after. Keyboard Continue on the payment method step moves focus to the card number. Still fixed. |
+| CO-03, CO-04, CO-26, CO-27 | At 390 the sticky bar shows the total, "View price breakdown" and Continue on steps 1 to 3, and "Step n of 4" shows on every step including payment (R2-03). The cookie notice sits above the bar. Still fixed. |
+| CO-05, R2-01, B-15 | `5000` and `٥٠٠٠` give the price request. Enter submits. The sent banner takes focus and the account lists the request. Still fixed. The input now also shows the grouped value (R4-09). |
+| CO-07, CR-22 | A declined card keeps the form, clears only the number and focuses it. The Pay button keeps its label and shows "Paying…". Still fixed. |
+| CO-08, CO-19, CO-25, CR-08, CR-35 | Phone order cards and status tones: in production is info, awaiting printer is attention, QC is info, delivered is success. "Paid" is never yellow, and every amount has two decimals. Still fixed. |
+| CO-09, CR-23 | The success header has the check, the delivery date and three next steps. Still fixed. |
+| CO-10, CO-16 | Cancel modal and the cancelled order view were checked in code, and the e2e paths are unchanged. Still fixed. |
+| CO-12, R2-05, CR-59 | "Subtotal (excl. VAT)" appears on checkout, payment and the order. `ELB-26001` reconciles: 12,350 + 150 = 12,500, VAT 1,750, total 14,250. Still fixed. |
+| CO-30, CO-31, R2-08 | First-load JS: checkout 159 KB, pay 150 KB, orders 147 KB, order 149 KB, invoice 146 KB, account 152 KB, share 142 KB. CLS is 0.000 to 0.001. Still fixed. |
+| CR-09, CR-19, CR-34, CR-48, CR-51 | Poster fallback, price tick, Activity card, back label "Back: Quantity and printer" and no-break "(excl. VAT)" are all seen in the captures. Still fixed. |
+| B-04, B-05, B-11, B-13, B-14 | The print check shows on the proof step. The sample tier is "EGP 750 + VAT". The 3% prepay line shows. The company fields validate and print on the invoice. Prices stay valid for 72 h. Still fixed. |
+
+No row reopened.
+
+### Findings (new this round)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R4-01 | high | invoice, 390 (`orders/[id]/invoice/page.tsx`, `orders.module.css`) | The 4-column invoice table was cut off on phones. The Amount column read "Amoun" and "EGP 16,52", and the description wrapped one word per line in a 90 px column. The table sat in a scroll box, so the overflow checker reported 0. | WCAG 1.4.10 Reflow; ETA (every line must be readable) | Below 640 px each line is one block: the description on its own line, then "500 × EGP 33.04" in secondary tone and the amount at the end in semibold. The header row stays for assistive technology (visually hidden). Explicit table roles keep the table semantics when the display changes. Print and desktop layouts are unchanged. | fixed |
+| R4-02 | medium | every money figure with a negative value (`lib/format.ts`) | The prepayment discount and sample credit read "EGP -621.53" with an ASCII hyphen. In Arabic the bidi algorithm moved it behind the digits: "621.53- ج.م" on checkout, payment, the order and the invoice. | Typography; Unicode bidi (UAX #9); WCAG 1.3.2 | A true minus (U+2212) goes in front: "−EGP 621.53". In Arabic the signed number is LTR-isolated ("⁦−621.53⁩ ج.م"). Positive amounts are unchanged. Unit test added. | fixed |
+| R4-03 | medium | Arabic invoice | The customer address read "12 شارع التحرير, الدقي, Giza": the governorate in English and Latin commas. The order page localises it, the invoice did not. | Localisation; ETA receiver address | The governorate comes from `governorates.<KEY>` in the page language and is joined with "، " in Arabic. Result: "12 شارع التحرير، الدقي، الجيزة". | fixed |
+| R4-04 | medium | step 2, 390 (`checkout.module.css`) | Building, floor and apartment: "Building (Optional)" wraps to two lines and "Floor (Optional)" does not, so the three inputs sat at different heights. | Visual rhythm; Polaris form layout | `.grid3` aligns to the end, so the inputs share one baseline in both languages. | fixed |
+| R4-05 | medium | company invoice, tax number | The placeholder "123-456-789" in a field of the same colour read as a pre-filled number. Round 1 fixed the same issue on the card expiry (CO-18). | WCAG 3.3.2 Labels or instructions | The placeholder is removed. The example moves into the help text: "9 digits, as on your tax card, for example 123-456-789." The Arabic example is LTR-isolated. | fixed |
+| R4-06 | low | payment, card and method steps | Heading order went from h1 to h3 (axe `heading-order`, the only axe result in the round 4 walk, 4 screens). | WCAG 1.3.1 | The step headings are h2 with the same visual variant. | fixed |
+| R4-07 | medium | account, consent history (`account/page.tsx`, `account.module.css`) | A new account shows "Marketing messages: Withdrawn" although the buyer never gave it (the box at sign-up was left unticked). The date also jumped under the long labels only. | Egypt PDPL 151/2020 (an accurate consent record); visual consistency | A refusal with no earlier "yes" for that kind reads "Not given" / "دون موافقة". "Withdrawn" is kept for a real withdrawal. Every entry shows the state with the date beneath it. | fixed |
+| R4-08 | low | step 1 in quote mode | The summary still said "Paying in full now takes 3% off the boxes" next to "Large orders are priced by our team". | Copy accuracy | The prepay note is hidden in quote mode, as it already was for samples. | fixed |
+| R4-09 | low | step 1, other quantity | After Apply the field kept "5000" while every other figure is grouped. The Arabic thousands separator "٬" and the Arabic comma were not accepted. | Consistency; WCAG 3.3.2 | The field echoes the applied value as "5,000". "٬" and "،" are accepted as group separators. | fixed |
+| R4-10 | low | step changes and "View price breakdown" | `scrollIntoView({ behavior: "smooth" })` ran even with `prefers-reduced-motion: reduce`. | WCAG 2.3.3 | `scrollBehavior()` returns "auto" under reduced motion. | fixed |
+| R4-11 | low | Arabic print check | "الطباعة كما هو" (wrong agreement) in the override label, its error and `PREFLIGHT_BLOCKED`. | MSA grammar | "الطباعة كما هي". | fixed |
+| R4-12 | medium | share link `/s/[id]` (`s/[id]/page.tsx`, `share.module.css`) | A visitor from a share link saw the box and "Order this box" but no price, and was asked to sign in before seeing one. The plan puts price and lead time at peak intent (§1.3), and B-26 asks every surface to show the same number. | Plan §1.3 (G2 soft gate after the price); B-26 | A headline line above the order button: "500 boxes from EGP 41.21 each excl. VAT, delivered in 10 days" / "500 علبة من 41.21 ج.م للعلبة دون الضريبة، والتوصيل خلال 10 أيام". The figure comes from the checkout 500-box tier (`tierPrices`) and the lead time from the best-match offer, so the visitor sees exactly what checkout shows. It is hidden for quote-only models or when pricing fails. TTFB is still 17 to 31 ms. New e2e compares it to the checkout tier. | fixed |
+| R4-13 | medium | order page, delivered (`orders/[id]/page.tsx`) | A delivered, paid order said "The print file is prepared after payment". Its tracking card said "Tracking appears here when the printer hands your boxes to the courier", and its QC card said "Photos appear here during production" (seeded `ELB-26203`). | ISO 9241-110 (self-descriptiveness); trust | The "after payment" hint shows only before payment. The tracking and QC empty states show only while that stage is still ahead. A delivered or cancelled order without a record hides the empty card instead of promising one. | fixed |
+| R4-14 | low | order page, rating (`orders.module.css`) | The "Rating" legend used the browser's legend size and looked bigger than its card title. | Type scale | It uses the form label size and weight (14 px semibold). | fixed |
+| R4-15 | low | account, profile | The mobile number showed as "+201507263242" while checkout and the order page show "015 0726 3242". | Consistency | Formatted with `formatEgyptPhone`. The field is read-only and is not submitted. | fixed |
+| R4-16 | low | invoice, ETA card | The "To be assigned" placeholder for the ETA UUID used the small monospace hash style, unlike the other placeholders. | Typography | The mono style applies only to a real UUID. | fixed |
+
+Counts (round 4, new findings before fixing): **critical 0, high 1, medium 7, low 8** (16 total). All 16 are fixed and re-verified in the browser.
+
+### Verification (round 4)
+
+- Pass 2 (rebuilt, `next start`): the full walk at en/ar × 390/1440 (88 captures) had axe 0 violations and 0 px overflow on every screen. The seeded orders at ar 390 had axe 0 and 0 px overflow. Checks run: the Arabic invoice reads "12 شارع التحرير، الدقي، الجيزة" with 2-line rows. The discount shows as "−EGP 621.53" and "⁦−621.53⁩ ج.م". The three address inputs line up. The account consent reads "الرسائل التسويقية: دون موافقة" and the phone reads "015 0544 9312". The share price is the same as the checkout tier (en and ar). The delivered order no longer shows the three contradicting messages.
+- `npm run lint` and `npm run typecheck` are clean. `npm test` passed 79 files and 8,296 tests (new: the negative-amount format). `next build` is OK.
+- e2e (`--workers=2 --trace off`, desktop + mobile): `checkout`, `journey` and `smoke` gave 17 passed and 1 skipped by the journey spec itself. The new test is "a share link shows the checkout price to a signed-out visitor". `admin`, `vendor` and `storefront` (which also use `formatMoney`) gave 28 passed and 8 skipped by the specs.
+- Performance (`perf-pages.mjs`, new `ONLY=` filter; phone = 4× CPU on Slow 4G):
+
+| page | profile | LCP (ar / en) | CLS | INP | note |
+|---|---|---|---|---|---|
+| share | desktop | 632 / 688 ms | 0.000 | 264 ms | INP comes from the lazy 3D chunk (TBT 3.5 s), not from this round's text |
+| share | phone | 4.11 / 3.58 s | 0.000 / 0.001 | 184 / 192 ms | FCP-bound, same as round 2 |
+| order tracking | desktop | 284 / 392 ms | 0.000 / 0.001 | 24 / 16 ms | |
+| order tracking | phone | 3.92 / 4.11 s | 0.000 | 72 / 80 ms | FCP-bound (fonts, CSS, cookie notice) |
+
+### Open / for other owners (round 4)
+
+- **Soft gate copy (auth owner)**: the login page reached from checkout or a share link still says only "Sign in or create a free account". It does not name the box or say the design is kept. The share page now shows the price and says that sign-in comes first. The login page itself is outside this scope.
+- **Seller tax registration and commercial register** on the invoice show "To be assigned" until `ELBA_TAX_ID` and `ELBA_COMMERCIAL_REGISTER` are set. This is CR-43 and needs the real legal entity. An invoice without the seller's tax number is not a valid ETA tax invoice.
+- **Share page INP 264 ms on desktop** (budget 200 ms) and TBT about 3.5 s. Both come from the 3D viewer chunk (3d-engine / performance owners). Round 2 measured 160 ms, so the change is in the 3D bundle, not in this page's code.
+- **Phone LCP 3.6 to 4.1 s** on share and tracking: FCP-bound by fonts, render-blocking CSS and the shared cookie notice (shell owners, PERF-07).
+- **Success `Banner` tone** (UI kit) is a saturated mint fill. It is used for the "Price request sent" message, which round 3 calmed on the paid header (CR-23) but which is shared kit styling.
+
+### Files touched outside scope (round 4)
+
+- `src/lib/format.ts`: the negative branch of `formatMoney` (R4-02); positive output is unchanged. `src/lib/__tests__/foundation.test.ts` has one new test.
+- `src/i18n/en.ts`, `src/i18n/ar.ts`: one key, `account.notGiven` (R4-07).
+- `docs/audit/tools/perf-pages.mjs`: an optional `ONLY=` page filter. `docs/audit/tools/checkout-walk.cjs` is new.
+- `e2e/checkout.spec.ts`: one new test. Existing tests are unchanged.

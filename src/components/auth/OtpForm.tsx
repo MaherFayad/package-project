@@ -339,11 +339,19 @@ export function OtpForm({ onSuccess, reason }: { onSuccess: (u: OtpSuccess) => v
               </div>
             </div>
             <div className={styles.check}>
-              <input id={`${uid}-mkt`} type="checkbox" checked={marketing} onChange={(e) => setMarketing(e.target.checked)} />
-              <label htmlFor={`${uid}-mkt`}>
-                {t("auth.marketingConsent")}
-                <span className={styles.checkHint}>{t("auth.marketingHint")}</span>
-              </label>
+              <input
+                id={`${uid}-mkt`}
+                type="checkbox"
+                checked={marketing}
+                onChange={(e) => setMarketing(e.target.checked)}
+                aria-describedby={`${uid}-mkthint`}
+              />
+              <div>
+                <label htmlFor={`${uid}-mkt`}>{t("auth.marketingConsent")}</label>
+                <span id={`${uid}-mkthint`} className={styles.checkHint}>
+                  {t("auth.marketingHint")}
+                </span>
+              </div>
             </div>
           </fieldset>
           <button type="submit" className={styles.primary} aria-disabled={busy || undefined} aria-busy={busy || undefined}>

@@ -67,7 +67,9 @@ function eventText(t: TFunction, type: ProductionEventType, note: string | null,
       return { content: t(key, { number: code[2] ?? "" }), detail: code[1] === "DISPUTE_OPENED" && code[2] ? t(`orders.dispute.reasons.${code[2]}` as DictKey) : undefined };
     }
     if (code) return internal ? { content: note! } : null;
-    return note ? { content: t("orders.detail.events.NOTE"), detail: note } : null;
+    // R4 (vendor audit): free-text notes are written by the vendor to the Elba team ("Only you and the
+    // Elba team can see notes"), so buyers never see them (they could also carry contact details).
+    return note && internal ? { content: t("orders.detail.events.NOTE"), detail: note } : null;
   }
   const content = t(`orders.detail.events.${type}` as DictKey);
   if (!note) return { content };
@@ -147,6 +149,9 @@ export default async function OrderPage({ params, searchParams }: { params: Para
     DELIVERED: order.deliveredAt,
   };
   const current = terminal ? stoppedStepIndex(eventTypes) : buyerStepIndex(status);
+  const stepAt = (s: (typeof BUYER_STEPS)[number]) => BUYER_STEPS.indexOf(s);
+  const shipmentAhead = !terminal && current <= stepAt("SHIPPED");
+  const qcAhead = !terminal && current <= stepAt("QC_PASSED");
   const steps = BUYER_STEPS.map((s, i) => ({
     id: s,
     label: t(`orders.detail.steps.${s}` as DictKey),
@@ -258,7 +263,7 @@ export default async function OrderPage({ params, searchParams }: { params: Para
                                     {t("orders.detail.downloadPrint")}
                                   </InlineStack>
                                 </Link>
-                              ) : terminal ? null : (
+                              ) : terminal || isPaidStatus(status) ? null : (
                                 <Text as="span" variant="bodySm" tone="subdued">
                                   {t("orders.detail.printOnlyPaid")}
                                 </Text>
@@ -342,6 +347,9 @@ export default async function OrderPage({ params, searchParams }: { params: Para
                 </BlockStack>
               </Card>
 
+              {/* R4-13: the "appears here later" empty states only while that stage is still ahead;
+                  a delivered or cancelled order without a record does not promise one. */}
+              {order.shipments.length === 0 && !shipmentAhead ? null : (
               <Card title={t("orders.detail.shipment")}>
                 {order.shipments.length === 0 ? (
                   <Text as="p" tone="subdued">
@@ -388,19 +396,22 @@ export default async function OrderPage({ params, searchParams }: { params: Para
                   </BlockStack>
                 )}
               </Card>
+              )}
 
+              {order.qcPhotos.length === 0 && !qcAhead ? null : (
               <Card title={t("orders.detail.qc")}>
                 <BlockStack gap="300">
                   <Text as="p" variant="bodySm" tone="subdued">
                     {t("orders.detail.qcHelp")}
                   </Text>
-                  {order.qcPhotos.length === 0 ? (
+                  {/* R4 (vendor audit): buyers see QC photos once Elba ops approved them (the file route enforces it too). */}
+                  {order.qcPhotos.filter((p) => internal || p.status === "APPROVED").length === 0 ? (
                     <Text as="p" tone="subdued">
                       {t("orders.detail.noQc")}
                     </Text>
                   ) : (
                     <ul className={styles.qcGrid}>
-                      {order.qcPhotos.map((p) => {
+                      {order.qcPhotos.filter((p) => internal || p.status === "APPROVED").map((p) => {
                         const kind = ["FIRST_SHEET", "PACKED_BUNDLE"].includes(p.kind) ? p.kind : "OTHER";
                         const st = ["APPROVED", "REJECTED"].includes(p.status) ? p.status : "PENDING";
                         return (
@@ -424,6 +435,7 @@ export default async function OrderPage({ params, searchParams }: { params: Para
                   )}
                 </BlockStack>
               </Card>
+              )}
 
               {isBuyer && myReview ? (
                 <Card title={t("orders.review.title")}>

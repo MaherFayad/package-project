@@ -55,6 +55,7 @@ export const designerEn = {
     face: "Face",
     dieline: "Dieline",
     fold: "Fold",
+    adjust: "Adjust view",
     flat: "Flat",
     half: "Half",
     closed: "Closed",
@@ -267,7 +268,7 @@ export const designerEn = {
   price: {
     badgeLocked: "{qty:box}: see the price",
     badge: "{qty:box} from {price} each excl. VAT · delivered in {days:day}",
-    badgeShort: "{qty} pcs from {price}",
+    badgeShort: "{qty:piece} from {price}",
     loading: "Getting the price",
     unavailable: "Price not available for this box yet",
     heading: "Instant price",
@@ -283,6 +284,10 @@ export const designerEn = {
     retry: "Try again",
     suggestion: "Standard size {dims} fits your product: save {pct}% and get it {days:day} sooner.",
     useSuggestion: "Use this size",
+    quoteBadge: "Priced by quote: see why",
+    quoteHeading: "Request a quote",
+    quoteTitle: "This model is priced by quote",
+    quoteAction: "Request a quote",
   },
   gate: {
     title: "Create your free account",
@@ -318,6 +323,7 @@ export const designerEn = {
     copied: "Link copied",
     creating: "Creating link",
     failed: "Could not create the link. Try again.",
+    copyFailed: "Could not copy. Select the link and copy it.",
     open: "Open",
   },
   flex: {
@@ -343,6 +349,7 @@ export const designerEn = {
     unavailable: "Price not available for this design yet",
     perPiece: "Per piece",
     collapse: "Show the model larger",
+    shareBody: "Anyone with this link can view the design in 3D. They cannot edit it.",
   },
   order: {
     button: "Order this box",
@@ -372,5 +379,9 @@ export const designerEn = {
     printing: "Printing",
     notFoundTitle: "Link not found",
     notFoundBody: "This share link is not valid or was turned off by its owner.",
+    subtitleDesign: "Shared packaging design",
+    sizeVessel: "Size",
+    printMaterial: "Print material",
+    model: "Model",
   },
 } as const;

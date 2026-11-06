@@ -1,7 +1,7 @@
 import { ProfileForm } from "@/components/vendor/ProfileForm";
 import { requireVendorContext } from "@/components/vendor/server/context";
 import { getProfile } from "@/components/vendor/server/queries";
-import { structureCoverage } from "@/components/vendor/lib/coverage";
+import { listedGroups, structureCoverage } from "@/components/vendor/lib/coverage";
 import { getT, toLocale } from "@/i18n";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
@@ -16,5 +16,5 @@ export default async function ProfilePage({ params }: { params: Promise<{ locale
   const data = await getProfile(vendor.id);
   if (!data) return null;
   // Remount the form when the stored profile changes (after save or a refresh from another tab).
-  return <ProfileForm key={data.profile.updatedAt} profile={data.profile} portfolio={data.portfolio} coverage={structureCoverage(locale, 2)} />;
+  return <ProfileForm key={data.profile.updatedAt} profile={data.profile} portfolio={data.portfolio} coverage={structureCoverage(locale, 2)} gluing={listedGroups()} />;
 }

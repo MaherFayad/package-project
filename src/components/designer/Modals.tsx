@@ -19,7 +19,6 @@ import {
   PriceTag,
   Select,
   SkeletonBodyText,
-  Spinner,
   Text,
   TextField,
 } from "@/components/ui";
@@ -72,7 +71,7 @@ export function PriceBadge({ state, onClick, vessel = false }: { state: PriceSta
       label = t(vessel ? "designer.container.unavailable" : "designer.price.unavailable");
       break;
     case "quote":
-      label = locale === "ar" ? "بعرض سعر: اضغط للتفاصيل" : "Priced by quote: see why";
+      label = t("designer.price.quoteBadge");
       break;
     case "error":
       label = t("designer.price.errorBody");
@@ -93,7 +92,7 @@ export function PriceBadge({ state, onClick, vessel = false }: { state: PriceSta
       data-testid="price-badge"
     >
       <span className={styles.priceBadgeIcon} aria-hidden="true">
-        {state.status === "ready" ? <Tag size={16} /> : loading ? <Tag size={16} /> : <Lock size={16} />}
+        {state.status === "ready" || state.status === "quote" || loading ? <Tag size={16} /> : <Lock size={16} />}
       </span>
       <span className={styles.priceBadgeText}>
         {before}
@@ -150,10 +149,10 @@ export function PriceModal({
     <Modal
       open={open}
       onClose={onClose}
-      title={state.status === "quote" ? (locale === "ar" ? "طلب عرض سعر" : "Request a quote") : t("designer.price.heading")}
+      title={state.status === "quote" ? t("designer.price.quoteHeading") : t("designer.price.heading")}
       primaryAction={
         state.status === "quote"
-          ? { content: locale === "ar" ? "اطلب عرض سعر" : "Request a quote", url: quoteUrl(locale, doc) }
+          ? { content: t("designer.price.quoteAction"), url: quoteUrl(locale, doc) }
           : { content: t(vessel ? "designer.container.order" : "designer.order.button"), onAction: onOrder, loading: ordering, disabled: state.status !== "ready" }
       }
       secondaryActions={[{ content: t("common.close"), onAction: onClose }]}
@@ -218,7 +217,7 @@ export function PriceModal({
             ) : null}
           </BlockStack>
         ) : state.status === "quote" ? (
-          <Banner tone="info" inCard title={locale === "ar" ? "يسعر هذا النموذج بعرض سعر" : "This model is priced by quote"}>
+          <Banner tone="info" inCard title={t("designer.price.quoteTitle")}>
             {ORDER_MODE_COPY[state.reason][locale]}
           </Banner>
         ) : state.status === "none" ? (
@@ -300,9 +299,9 @@ export function ExportModal({
 }
 
 /** Read-only share link for a saved design. */
-export function ShareModal({ open, onClose, url, error }: { open: boolean; onClose: () => void; url: string | null; error: boolean }) {
+export function ShareModal({ open, onClose, url, error, vessel = false }: { open: boolean; onClose: () => void; url: string | null; error: boolean; vessel?: boolean }) {
   const { t } = useI18n();
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<boolean | "failed">(false);
   useEffect(() => {
     if (open) setCopied(false);
   }, [open, url]);
@@ -312,39 +311,53 @@ export function ShareModal({ open, onClose, url, error }: { open: boolean; onClo
       await navigator.clipboard.writeText(url);
       setCopied(true);
     } catch {
-      setCopied(false);
+      // Clipboard blocked (permissions, insecure origin): say so instead of failing silently (R4-06).
+      setCopied("failed");
     }
   };
+  const status = copied === true ? t("designer.share.copied") : copied === "failed" ? t("designer.share.copyFailed") : "";
   return (
     <Modal open={open} onClose={onClose} title={t("designer.share.heading")} size="small" secondaryActions={[{ content: t("common.close"), onAction: onClose }]}>
       <BlockStack gap="300">
-        <Text as="p">{t("designer.share.body")}</Text>
+        <Text as="p">{t(vessel ? "designer.container.shareBody" : "designer.share.body")}</Text>
         {error ? (
           <Banner tone="critical" inCard>
             {t("designer.share.failed")}
           </Banner>
         ) : url ? (
           <>
-            <TextField label={t("designer.share.link")} autoComplete="off" value={url} readOnly dir="ltr" onFocus={() => undefined} />
+            <TextField
+              label={t("designer.share.link")}
+              autoComplete="off"
+              value={url}
+              readOnly
+              dir="ltr"
+              // One tap selects the whole link, ready to copy by hand (R4-06).
+              onFocus={() => (document.activeElement as HTMLInputElement | null)?.select?.()}
+            />
             <InlineStack gap="200" wrap>
               <Button icon={Copy} variant="primary" onClick={copy}>
-                {copied ? t("designer.share.copied") : t("designer.share.copy")}
+                {copied === true ? t("designer.share.copied") : t("designer.share.copy")}
               </Button>
               <Button icon={ExternalLink} url={url} external>
                 {t("designer.share.open")}
               </Button>
             </InlineStack>
+            {copied === "failed" ? (
+              <Text as="p" variant="bodySm" tone="critical">
+                {status}
+              </Text>
+            ) : null}
             <span role="status" className="visually-hidden">
-              {copied ? t("designer.share.copied") : ""}
+              {status}
             </span>
           </>
         ) : (
-          <InlineStack gap="200" blockAlign="center">
-            <Spinner size="small" />
-            <Text as="span" tone="subdued">
-              {t("designer.share.creating")}
-            </Text>
-          </InlineStack>
+          // Skeleton of the link field, not a spinner (CR-21 pattern, R4-04).
+          <div role="status" aria-busy="true">
+            <span className="visually-hidden">{t("designer.share.creating")}</span>
+            <SkeletonBodyText lines={2} />
+          </div>
         )}
       </BlockStack>
     </Modal>

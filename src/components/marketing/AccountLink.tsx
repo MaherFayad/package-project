@@ -103,7 +103,7 @@ function AccountMenu({ account, signOutLabel, home, initial }: { account: L; sig
           {initial || <span className={styles.accountAvatarDot} />}
         </span>
         {account.label}
-        <ChevronDown size={16} aria-hidden />
+        <ChevronDown size={16} strokeWidth={1.75} aria-hidden />
       </button>
       {open ? (
         <div className={`${styles.menuPanel} ${styles.accountPanel}`} id={id}>

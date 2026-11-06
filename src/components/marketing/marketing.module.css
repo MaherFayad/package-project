@@ -290,6 +290,13 @@
   padding-inline-start: calc(var(--mk-gutter) + 36px);
 }
 .announceInner p { margin: 0; }
+/* R4-CR-09: one line on phones (short text) and the link never splits across lines. */
+.announceShort { display: none; }
+.announceLink { white-space: nowrap; }
+@media (max-width: 480px) {
+  .announceLong { display: none; }
+  .announceShort { display: inline; }
+}
 .announceClose {
   position: absolute;
   inset-inline-end: var(--mk-gutter);
