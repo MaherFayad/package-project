@@ -42,7 +42,9 @@ export function HeroPhoneForm({
       setError(true);
       return;
     }
-    router.push(`/${locale}/login?next=${encodeURIComponent(designPath)}&phone=${phone}`);
+    // Never put the number in the URL (R5-SEC-05; PDPL 151/2020 data minimisation, OWASP ASVS
+    // 4.0.3 V8.3.1): query strings land in server and proxy logs, browser history and shared links.
+    router.push(`/${locale}/login?next=${encodeURIComponent(designPath)}`);
   };
   return (
     <form className={styles.heroForm} onSubmit={onSubmit} noValidate>
