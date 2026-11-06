@@ -48,15 +48,10 @@ export function AdminFrame({ locale, userName, counts, children }: AdminFramePro
   const router = useRouter();
   const pathname = usePathname() ?? `/${locale}/admin`;
   const [query, setQuery] = useState("");
-  // R9-AD: at 320 px the search placeholder was cut mid-word; under 400 px use the short one.
-  const [narrow, setNarrow] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 24.99rem)");
-    const on = () => setNarrow(mq.matches);
-    on();
-    mq.addEventListener("change", on);
-    return () => mq.removeEventListener("change", on);
-  }, []);
+  // R9-AD: the placeholder is short enough for 320 px. No viewport state here on purpose: a state
+  // update in the frame right after hydration reached Suspense boundaries that were still streaming
+  // on slow phones, React client-rendered them, and the server copy stayed beside the client one
+  // (two banners on the order page, two search fields on the quote inbox; journeys J2 and J5).
   const [saveBar, setSaveBar] = useState<SaveBarState | null>(null);
   const register = useCallback((s: SaveBarState | null) => setSaveBar(s), []);
   const base = `/${locale}/admin`;
@@ -102,7 +97,7 @@ export function AdminFrame({ locale, userName, counts, children }: AdminFramePro
         <TopBarSearchField
           value={query}
           onChange={setQuery}
-          placeholder={narrow ? t("admin.topBar.searchShort") : t("admin.topBar.search")}
+          placeholder={t("admin.topBar.search")}
           onSubmit={(q) => router.push(`${base}/orders${q.trim() ? `?q=${encodeURIComponent(q.trim())}` : ""}`)}
         />
       }
