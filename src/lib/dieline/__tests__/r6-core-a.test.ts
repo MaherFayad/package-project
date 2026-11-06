@@ -83,3 +83,16 @@ describe("split-wall seam (0228, 0230)", () => {
     }
   }
 });
+
+describe("telescope with a partial lid prints the base walls below it", () => {
+  for (const material of ["E_FLUTE_KRAFT", "B_FLUTE_KRAFT"]) {
+    it(`FEFCO_0320 ${material}, lid 0.4 H: every side face holds the base wall and the lid wall`, () => {
+      const { d } = build("FEFCO_0320", { L: 330, W: 250, H: 60 }, { lidHeightMm: 24 }, material);
+      for (const [face, base] of [["front", "front"], ["back", "back"], ["left", "left"], ["right", "right"]] as const) {
+        const ids = d.faces[face]!.parts.map((p) => p.panelId);
+        expect(ids).toContain(base);
+        expect(ids).toContain(`lid_${base}`);
+      }
+    });
+  }
+});
