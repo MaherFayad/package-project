@@ -56,6 +56,8 @@ const nextConfig: NextConfig = {
   transpilePackages: ["three"],
   experimental: {
     optimizePackageImports: ["lucide-react", "@react-three/drei"],
+    // PERF-17: per-route CSS so admin/vendor pages stop loading designer and marketing CSS.
+    cssChunking: "strict",
   },
   async headers() {
     return [
