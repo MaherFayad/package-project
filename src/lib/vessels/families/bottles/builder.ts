@@ -102,7 +102,7 @@ function finishPoints(f: BottleFinish, rootR: Mm, rootY: Mm, topY: Mm, wall: Mm)
   return { pts, rootR };
 }
 
-function handleFor(kind: ShapeRecipe["handle"], dims: VesselDims, depth: Mm, bodyTopY: Mm, finishBaseY: Mm, Rt: Mm, T: Mm): HandleSpec | undefined {
+function handleFor(kind: ShapeRecipe["handle"], dims: VesselDims, depth: Mm, bodyTopY: Mm, finishBaseY: Mm, Rt: Mm, T: Mm, labelTopY: Mm = 0): HandleSpec | undefined {
   const H = dims.H;
   switch (kind) {
     case "jerrycan": {
@@ -125,14 +125,18 @@ function handleFor(kind: ShapeRecipe["handle"], dims: VesselDims, depth: Mm, bod
       const zb = -depth / 2;
       const out = Math.max(22, depth * 0.2);
       const yHi = bodyTopY + (finishBaseY - bodyTopY) * 0.55;
+      // the grip joins the back wall above the back label, not across it (R5-3Q-F-05)
+      const tube = Math.max(8, dims.D * 0.06);
+      const yLow = Math.max(bodyTopY - H * 0.3, labelTopY + tube + 3);
+      const yMid = Math.max(bodyTopY - H * 0.12, yLow + (yHi - yLow) * 0.35);
       return {
         kind: "integrated",
-        tubeRadiusMm: Math.max(8, dims.D * 0.06),
+        tubeRadiusMm: tube,
         path: [
           { x: 0, y: yHi, z: zb * 0.4 },
           { x: 0, y: yHi, z: zb - out * 0.6 },
-          { x: 0, y: bodyTopY - H * 0.12, z: zb - out },
-          { x: 0, y: bodyTopY - H * 0.3, z: zb + 4 },
+          { x: 0, y: yMid, z: zb - out },
+          { x: 0, y: yLow, z: zb + 4 },
         ],
       };
     }
@@ -183,6 +187,18 @@ export function closureCoverMm(finish: BottleFinish, H: Mm, neckBaseY: Mm): Mm {
     default:
       return finish.heightMm;
   }
+}
+
+/**
+ * How far a foil sleeve of the closure runs down from the top (mm), 0 when none. The 3D view
+ * draws the wine capsule (CORK_CAPSULE style) 48 mm deep and the sparkling foil hood
+ * (SPARKLING style, the only closure on the 29 mm sparkling finish besides a crown) 85 mm deep;
+ * a neck label under them pokes through the foil, so the neck zone stops above them.
+ */
+export function neckSleeveMm(finish: BottleFinish, H: Mm, neckBaseY: Mm): Mm {
+  if (finish.kind === "cork") return Math.max(48, closureCoverMm(finish, H, neckBaseY));
+  if (finish.id === "CROWN_29") return 85;
+  return 0;
 }
 
 /** Build the profile. Throws if the proportions collapse (validated dims never do). */
@@ -305,9 +321,11 @@ export function buildBottleProfile(recipe: ShapeRecipe, dims: VesselDims, finish
     }
     if (neckLen >= 12) {
       const y0 = neckBaseY + Math.max(Math.min(6, neckLen * 0.2), 3.2);
-      const y1 = finishBaseY - Math.min(4, neckLen * 0.1);
+      // a neck label ends 3 mm under a foil sleeve that runs down the neck (R5-3Q-F-03)
+      const sleeve = neckSleeveMm(finish, H, neckBaseY);
+      const y1 = Math.min(finishBaseY - Math.min(4, neckLen * 0.1), sleeve > 0 ? H - sleeve - 3 : Infinity);
       const at = (y: Mm) => lerp(nb, nt, (y - neckBaseY) / (finishBaseY - neckBaseY));
-      neckZone = { y0, y1, r0: at(y0), r1: at(y1) };
+      if (y1 - y0 >= 10) neckZone = { y0, y1, r0: at(y0), r1: at(y1) };
     }
     ctrl.push({ r: nt, y: finishBaseY, round: 0.8, s: 0 });
     ctrl.push(...finishPoints(finish, nt, finishBaseY, H, recipe.glass ? 2.5 : 1.2).pts);
@@ -343,7 +361,7 @@ export function buildBottleProfile(recipe: ShapeRecipe, dims: VesselDims, finish
     finishR: T,
     finishH: closureCoverMm(finish, H, neckBaseY),
     fillMaxY: Y(isRim ? H - finish.heightMm - 2 : finishBaseY),
-    handle: handleFor(recipe.handle, dims, depthAt, bodyTopY, finishBaseY, Rt, T),
+    handle: handleFor(recipe.handle, dims, depthAt, bodyTopY, finishBaseY, Rt, T, ly1),
   };
 }
 
