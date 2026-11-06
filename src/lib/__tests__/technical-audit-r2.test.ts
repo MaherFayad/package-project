@@ -146,3 +146,36 @@ describe("R2-06 SQLite uses one connection so concurrent transactions queue inst
     expect(databaseUrl(undefined)).toBeUndefined();
   });
 });
+
+describe("B-04 the designer's preflight also runs at proof approval (server side)", async () => {
+  const { proofPreflight, preflightBlocks } = await import("@/lib/orders/preflight");
+  const { emptyArtwork } = await import("@/types");
+  const base = {
+    v: 1 as const,
+    name: "t",
+    structureCode: "FEFCO_0201" as const,
+    dims: { L: 300, W: 200, H: 150 },
+    materialCode: "E_FLUTE_KRAFT" as const,
+    finishCode: "NONE" as const,
+    printSides: "OUTSIDE" as const,
+    artwork: emptyArtwork(),
+  };
+  it("a blank design only has an info issue and never blocks", () => {
+    const p = proofPreflight(base as never);
+    expect(p.ran).toBe(true);
+    expect(p.errors).toBe(0);
+    expect(preflightBlocks(p)).toBe(false);
+  });
+  it("a 40 px image stretched over a panel is a red LOW_DPI issue: blocks unless acknowledged", () => {
+    const art = emptyArtwork();
+    art.outside.layers = [
+      { id: "i1", kind: "image", surface: "outside", face: "front", x: 0, y: 0, width: 200, height: 120, rotation: 0, pxWidth: 40, pxHeight: 24, src: "data:image/png;base64,AAAA", fit: "contain" } as never,
+    ];
+    const p = proofPreflight({ ...base, artwork: art } as never);
+    expect(p.issues.some((i) => i.code === "LOW_DPI" && i.severity === "error")).toBe(true);
+    expect(preflightBlocks(p)).toBe(true);
+    const ack = proofPreflight({ ...base, artwork: art } as never, true);
+    expect(ack.acknowledged).toBe(true);
+    expect(preflightBlocks(ack)).toBe(false);
+  });
+});

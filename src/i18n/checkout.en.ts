@@ -144,6 +144,7 @@ export const checkoutEn = {
       NOT_ALLOWED: "This action is not available for this order.",
       FORBIDDEN: "You do not have access to this order.",
       RATE_LIMITED: "Too many attempts. Wait a moment and try again.",
+      PREFLIGHT_BLOCKED: "Your design has print problems marked in red. Open it in the designer, fix them in the Check tab, then approve the proof again.",
     },
     notFound: {
       title: "Design not found",

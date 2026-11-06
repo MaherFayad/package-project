@@ -300,6 +300,9 @@ model Proof {
   approvedAt  DateTime?
   approvedIp  String?
   approvedById String?
+  /// Added by technical audit round 3 (B-04): server-side preflight of the snapshot at approval
+  /// ({ errors, warnings, issues[], acknowledged, ran }), the same check the designer shows.
+  preflight   Json?
   createdAt   DateTime  @default(now())
 
   orderItems OrderItem[]

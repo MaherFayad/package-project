@@ -146,6 +146,7 @@ export const checkoutAr: Pick<Dictionary, "checkout" | "payment" | "orders" | "s
       NOT_ALLOWED: "هذا الإجراء غير متاح لهذا الطلب.",
       FORBIDDEN: "ليس لديك صلاحية على هذا الطلب.",
       RATE_LIMITED: "محاولات كثيرة. انتظر قليلا ثم حاول مرة أخرى.",
+      PREFLIGHT_BLOCKED: "في التصميم مشكلات طباعة باللون الأحمر. افتح التصميم وأصلحها من تبويب الفحص، ثم اعتمد البروفة مرة أخرى.",
     },
     notFound: {
       title: "التصميم غير موجود",

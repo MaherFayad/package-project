@@ -70,6 +70,8 @@ const placeSchema = z.object({
   vendorId: idSchema,
   address: addressSchema,
   approved: z.literal(true),
+  /** B-04: approve despite red preflight issues (recorded on the proof). */
+  acknowledgePreflight: z.boolean().optional(),
   preview: z
     .string()
     .max(3_000_000)
@@ -100,6 +102,7 @@ export async function placeOrderAction(input: unknown): Promise<{ ok: true; orde
       approval: { ip: clientIp(h), userAgent: h.get("user-agent") ?? undefined },
       preview,
       locale: p.data.locale as Locale,
+      acknowledgePreflight: p.data.acknowledgePreflight === true,
     });
     return { ok: true, orderId: r.orderId, number: r.number };
   } catch (e) {

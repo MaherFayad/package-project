@@ -162,3 +162,25 @@ Evidence: `docs/screenshots/audit/technical-r2/` (designer, home and checkout un
 - `src/middleware.ts` (platform): `secure()` now calls the shared `applySecurityHeaders()`; nothing else changed.
 - `src/lib/security-headers.ts` (new): shared header set used by `next.config.ts` and middleware.
 - `package.json`: `test:size` script. `scripts/check-bundle-size.mjs` (new).
+
+## Re-test after merging the integrated base (`origin/claude/exciting-albattani-8kzgsu` at d1ea599)
+
+Merged with no conflicts. On the merged code, re-seeded, `next start`:
+
+| check | result |
+|---|---|
+| CSP on pages | full policy on `/ar`, `/en/catalog`; Chromium on 11 pages incl. the new catalogue model page (3D canvas 636×636) and the designer (WebGL, image upload): **0 violations** |
+| API headers | `nosniff` + `X-Frame-Options` on `/api/*`; served files keep their `sandbox` CSP |
+| authz (fresh fixtures) | vendor on unpaid / cancelled-unpaid orders: page not found, proof PDF and dieline 404; other vendor's proof 404; vendor print PDF before accept 404; admin `PAID` 409; admin print PDF on unpaid 409; buyer still sees own unpaid order |
+| caching | admin suspends Delta Cartons → `/vendors/delta-cartons` 404 and gone from `/vendors` at once; reinstate → back at once |
+| unit / lint / types / build / size | 8,170 tests pass; lint and typecheck clean; build ok; 41/41 non-3D pages ≤ 200 KB (max 172 KB) |
+| e2e checkout, vendor, admin, smoke, journey, storefront, designer | 44 passed, 4 skipped by design |
+
+### New findings on the merged code
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R2-16 | medium | `api/catalogue/quote-request` (new route from the catalogue session) | Body read with `req.json()`, uncapped: a chunked body was buffered in full (the T-11 pattern). Unknown keys were silently accepted. | ASVS V12.1.1, V13.1.3 | `readJsonCapped(req, 4 KB)` → 413 `TOO_LARGE`; schema `.strict()`. Live: 5 KB body 413; unknown key 400; anonymous 401; unknown model 400; valid request 201 (`Quote` REQUESTED, totals 0); 6th request in a minute 429. | fixed |
+| R2-17 (B-04, server side) | medium | `lib/orders/preflight.ts` (new), `service.ts` `placeOrder`, `schema.prisma` `Proof.preflight` (additive) | "Ready to print" ran only in the designer. The proof approval never ran preflight, so a design with red issues (image under 150 dpi, text across a fold) could be approved and sent to print. | Business plan §1.3 bridge 3; Consumer Protection Law 181/2018 (informed approval) | At approval, the server runs the designer's own `runPreflight()` on the exact snapshot that becomes the proof. Red issues block with `PREFLIGHT_BLOCKED` unless the buyer explicitly acknowledges (`acknowledgePreflight`). The result (counts, codes, faces, acknowledged) is stored on `Proof.preflight` and in the PROOF_APPROVED timeline note (`PREFLIGHT:1E/0W:ACK`), so vendor and ops see it. Geometry errors never block. Error copy in en/ar points to the designer's "Check" tab ("الفحص"). Unit tests: blank design passes, a 40 px image over a panel blocks, acknowledgement passes. Live: the e2e orders recorded `PREFLIGHT:0E/0W`. **Left to checkout**: show the result on the proof step and offer the acknowledge checkbox (the action already accepts the flag). | fixed (server); UI open |
+
+Files touched outside scope for R2-17: `src/app/[locale]/(checkout)/checkout/actions.ts` (optional `acknowledgePreflight`, passed through) and `src/i18n/checkout.{en,ar}.ts` (one `PREFLIGHT_BLOCKED` string each).

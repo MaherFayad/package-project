@@ -32,6 +32,7 @@ import { putFile, getFile } from "./storage";
 import { assertTransition, canBuyerCancel, canViewOrder, canOpenDispute, canReview, isPaidStatus, type Actor } from "./state";
 import { isQuoteValid, nextSequence, orderTotals } from "./totals";
 import { decidePaymentOutcome, storedGatewayRef } from "./payment-rules";
+import { preflightBlocks, proofPreflight, type ProofPreflight } from "./preflight";
 
 /**
  * Order service (owner: checkout). Every order mutation in the app goes through here so the
@@ -51,6 +52,7 @@ export class OrderError extends Error {
       | "AMOUNT_MISMATCH"
       | "MANUAL_QUOTE"
       | "PAYMENT_UNAVAILABLE"
+      | "PREFLIGHT_BLOCKED"
       | "NOT_ALLOWED",
   ) {
     super(code);
@@ -151,6 +153,8 @@ export interface PlaceOrderInput {
   /** 3D render (PNG/JPEG bytes) captured in the browser at approval time. */
   preview?: Buffer | null;
   locale: Locale;
+  /** The buyer saw the red preflight issues and approves anyway (recorded on the proof). */
+  acknowledgePreflight?: boolean;
 }
 
 /**
@@ -161,6 +165,9 @@ export interface PlaceOrderInput {
 export async function placeOrder(user: SessionUser, input: PlaceOrderInput): Promise<{ orderId: string; number: string }> {
   const design = await loadCheckoutDesign(input.designId, user);
   if (!design) throw new OrderError("NOT_FOUND");
+  // B-04: production preflight on the exact snapshot being approved (same rules as the designer).
+  const preflight = proofPreflight({ ...design.doc, id: input.designId }, input.acknowledgePreflight === true);
+  if (preflightBlocks(preflight)) throw new OrderError("PREFLIGHT_BLOCKED");
   const outcome = await quoteDesign(design.doc, { quantity: input.quantity, governorate: input.address.governorate, vendorId: input.vendorId });
   if (outcome.mode !== "instant") throw new OrderError("MANUAL_QUOTE");
   const offer = outcome.offers.find((o) => o.vendorId === input.vendorId);
@@ -172,6 +179,7 @@ export async function placeOrder(user: SessionUser, input: PlaceOrderInput): Pro
     approval: input.approval,
     preview: input.preview ?? null,
     locale: input.locale,
+    preflight,
   });
 }
 
@@ -186,6 +194,7 @@ async function createOrderFromOffer(
     preview: Buffer | null;
     locale: Locale;
     note?: string;
+    preflight?: ProofPreflight;
   },
 ): Promise<{ orderId: string; number: string }> {
   const cfg = paymentConfig();
@@ -210,6 +219,7 @@ async function createOrderFromOffer(
             approvedAt: now,
             approvedIp: p.approval?.ip ?? null,
             approvedById: user.id,
+            ...(p.preflight ? { preflight: toJson(p.preflight) } : {}),
           },
         });
         proofId = proof.id;
@@ -268,7 +278,13 @@ async function createOrderFromOffer(
           productionEvents: {
             create: [
               { type: "ORDER_PLACED", actorId: user.id, note: p.note ?? null, createdAt: now },
-              { type: "PROOF_APPROVED", actorId: user.id, createdAt: now },
+              {
+                type: "PROOF_APPROVED",
+                actorId: user.id,
+                createdAt: now,
+                // Vendor and ops see what was approved: e.g. "PREFLIGHT:1E/2W:ACK".
+                note: p.preflight?.ran ? `PREFLIGHT:${p.preflight.errors}E/${p.preflight.warnings}W${p.preflight.acknowledged && p.preflight.errors ? ":ACK" : ""}` : null,
+              },
             ],
           },
         },
