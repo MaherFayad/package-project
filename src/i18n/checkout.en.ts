@@ -333,6 +333,9 @@ export const checkoutEn = {
     },
     dispute: {
       title: "Report a problem",
+      outcomeTitle: "Your report",
+      last: "Reported: {reason}",
+      reprintLink: "Track the free reprint {number}",
       help: "Print defects, damage or wrong items can be reported up to 30 days after delivery. We reprint or refund.",
       reason: "What went wrong?",
       reasons: {

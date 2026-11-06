@@ -31,7 +31,7 @@ test("J1 · coffee brand: design → share → OTP → company checkout → pay 
   // 2. Design: name, background colour, logo upload, text, gold foil on white board.
   // The phone toolbar has no name field (R5-JR-15, designer): name it on wider screens only.
   const nameField = page.getByLabel(tr(locale, "Design name"));
-  const named = await nameField.isVisible();
+  const named = info.project.name !== "mobile";
   if (named) await nameField.fill("Bunn Coffee");
   const panel = page.getByRole("complementary", { name: tr(locale, "Designer panels") });
   await panel.getByRole("tab", { name: tr(locale, "Artwork") }).click();
@@ -51,7 +51,7 @@ test("J1 · coffee brand: design → share → OTP → company checkout → pay 
   // 3. Share → the account gate (OTP) → the share link.
   // Phones fold Export / Share / Save into "More actions".
   const more = page.getByRole("button", { name: tr(locale, "More actions") });
-  if (await more.isVisible()) {
+  if (info.project.name === "mobile") {
     await more.click();
     await page.getByRole("menuitem", { name: t("designer.share.button") }).click();
   } else await page.getByRole("button", { name: t("designer.share.button") }).first().click();

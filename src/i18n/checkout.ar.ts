@@ -335,6 +335,9 @@ export const checkoutAr: Pick<Dictionary, "checkout" | "payment" | "orders" | "s
     },
     dispute: {
       title: "الإبلاغ عن مشكلة",
+      outcomeTitle: "بلاغك",
+      last: "البلاغ: {reason}",
+      reprintLink: "تتبع إعادة الطباعة المجانية {number}",
       help: "يمكن الإبلاغ عن عيوب الطباعة أو التلف أو الخطأ في الطلب خلال 30 يوما من الاستلام، ونعيد الطباعة أو نرد المبلغ.",
       reason: "ما المشكلة؟",
       reasons: {

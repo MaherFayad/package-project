@@ -83,23 +83,22 @@ export async function ackCookies(context: BrowserContext, baseURL: string): Prom
  * Same hydration guard (a late re-render can wipe the typed phone; only then is it typed again).
  */
 export async function sendOtpIn(scope: Page | Locator, phone: string, locale: Locale): Promise<string> {
+  const page = "page" in scope ? scope.page() : scope;
   const input = scope.getByLabel(tr(locale, "Mobile number"));
   const send = scope.getByRole("button", { name: tr(locale, "Send code") });
   const banner = scope.getByTestId("otp-dev-code");
-  const type = async () => {
-    await expect(async () => {
-      await input.fill("");
-      await input.fill(phone);
-      await expect(input).toHaveValue(phone, { timeout: 1000 });
-      await expect(send).toBeEnabled({ timeout: 1000 });
-    }).toPass({ timeout: 60_000 });
-    await send.click();
-  };
-  await type();
+  // Press "Send code" until a request actually leaves the page: a press before hydration, or a late
+  // re-render that wiped the typed phone, sends nothing (and so never touches the per-phone limit).
   await expect(async () => {
-    if ((await banner.count()) === 0 && (await input.inputValue().catch(() => phone)) !== phone) await type();
-    await expect(banner).toBeVisible({ timeout: 3000 });
-  }).toPass({ timeout: 30_000 });
+    await input.fill("");
+    await input.fill(phone);
+    await expect(input).toHaveValue(phone, { timeout: 1000 });
+    await expect(send).toBeEnabled({ timeout: 1000 });
+    const sent = page.waitForRequest((r) => r.url().includes("/api/auth/request-otp") && r.method() === "POST", { timeout: 3000 });
+    await send.click();
+    await sent;
+  }).toPass({ timeout: 60_000 });
+  await expect(banner).toBeVisible({ timeout: 30_000 });
   return (await banner.textContent())!.match(/\d{6}/)![0];
 }
 
@@ -136,3 +135,52 @@ export async function logoPng(page: Page): Promise<Buffer> {
 }
 
 export const ONE_PX_PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
+
+/**
+ * Signed-in buyer: a quick design (background colour, autosaved), then checkout up to the payment
+ * step. Returns the design id and the order id of the PENDING_PAYMENT order.
+ */
+export async function designToPayStep(page: Page, locale: Locale, opts: { company?: boolean } = {}): Promise<{ designId: string; orderId: string }> {
+  const t = getT(locale);
+  await page.goto(`/${locale}/design/mailer-box`);
+  await expect(page.getByRole("application", { name: tr(locale, "3D preview of your box") })).toBeVisible({ timeout: 30_000 });
+  const panel = page.getByRole("complementary", { name: tr(locale, "Designer panels") });
+  await panel.getByRole("tab", { name: tr(locale, "Artwork") }).click();
+  await panel.getByRole("button", { name: /#c70a24/ }).first().click();
+  await expect(page).toHaveURL(/[?&]d=[\w-]+/, { timeout: 30_000 });
+  const designId = new URL(page.url()).searchParams.get("d")!;
+  await page.goto(`/${locale}/checkout/${designId}`);
+  await expect(page.getByTestId("vendor-offer").first()).toBeVisible({ timeout: 30_000 });
+  const summary = page.getByRole("complementary").filter({ hasText: t("checkout.summary.title") });
+  await summary.getByRole("button", { name: t("checkout.actions.continue") }).click();
+  await page.getByLabel(t("checkout.address.name")).fill("Mona Adel");
+  await page.getByLabel(t("checkout.address.phone")).fill("010 1234 5678");
+  await page.getByLabel(t("checkout.address.governorate")).selectOption("Cairo");
+  await page.getByLabel(t("checkout.address.city")).fill("Heliopolis");
+  await page.getByLabel(t("checkout.address.street")).fill("3 Baghdad St");
+  if (opts.company) {
+    await page.getByLabel(t("buyer.company.toggle")).check();
+    await page.getByLabel(t("buyer.company.name")).fill("Mona Foods LLC");
+    await page.getByLabel(t("buyer.company.taxId")).fill("111222333");
+  }
+  await summary.getByRole("button", { name: t("checkout.actions.continue") }).click();
+  await expect(page.getByRole("tab", { name: t("checkout.proof.tab3d") })).toBeVisible({ timeout: 30_000 });
+  await page.getByLabel(t("checkout.proof.approve")).check();
+  await summary.getByRole("button", { name: t("checkout.actions.approveAndPay") }).click();
+  await expect(page).toHaveURL(new RegExp(`/${locale}/checkout/pay/`), { timeout: 30_000 });
+  return { designId, orderId: page.url().split("/").pop()! };
+}
+
+/** Pay the open payment step by mock card (`4000 0000 0000 0002` is declined). */
+export async function payByCard(page: Page, locale: Locale, card = "4242 4242 4242 4242"): Promise<void> {
+  const t = getT(locale);
+  const cont = page.getByRole("button", { name: t("checkout.actions.continue") });
+  const number = page.getByLabel(t("payment.card.number"));
+  // The method step (Continue) or, after a declined card, the card form again.
+  await expect(cont.or(number).first()).toBeVisible({ timeout: 30_000 });
+  if (await cont.isVisible()) await cont.click();
+  await number.fill(card);
+  await page.getByLabel(t("payment.card.expiry")).fill("12/30");
+  await page.getByLabel(t("payment.card.cvc")).fill("123");
+  await page.getByRole("button", { name: new RegExp(`^${rx(t("payment.pay", { amount: "" }).trim()).source}\\s`) }).click();
+}

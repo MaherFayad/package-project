@@ -24,6 +24,7 @@ import { AdminActionError, AdminFieldErrors, adminForMutation, audit, issuesToFi
 import { loadPricingSettings } from "./settings";
 import { seedStarterRateCards } from "./starter-rate-cards";
 import { notify } from "@/lib/notify";
+import { getT, type DictKey } from "@/i18n";
 import {
   applyGoodsOverride,
   canOverrideCost,
@@ -553,6 +554,18 @@ export async function decideDisputeAction(input: z.input<typeof disputeDecisionS
       before: { status: dispute.status },
       after: { status, ...(reprint ? { reprint } : {}) },
     });
+    // R5-JR-16: tell the buyer the outcome (the order page shows it, with the reprint to track).
+    if (d.decision !== "REVIEW") {
+      try {
+        const buyer = await db.user.findUnique({ where: { id: dispute.order.buyerId }, select: { phone: true, locale: true } });
+        if (buyer) {
+          const loc = buyer.locale === "en" ? "en" : "ar";
+          await notify({ to: { phone: buyer.phone }, locale: loc, template: "STATUS_CHANGED", params: { number: dispute.order.number, status: getT(loc)(`orders.dispute.status.${status}` as DictKey) } });
+        }
+      } catch (e) {
+        console.error("[admin] dispute notification failed", e);
+      }
+    }
     revalidateAdmin();
     return { reprintNumber: reprint };
   });

@@ -10,7 +10,7 @@
 
 ## 1. Findings (new this round, before any fix)
 
-**Counts:** critical 1 · high 4 · medium 6 · low 4 (15 new).
+**Counts:** critical 1 · high 4 · medium 7 · low 5 (17 new; R5-JR-16 and R5-JR-17 were found in pass 2 while turning J4 into a spec).
 
 | ID | Severity | Journey · page / file | Finding | Standard / plan | Fix | Owner | Status |
 |---|---|---|---|---|---|---|---|
@@ -29,6 +29,8 @@
 | R5-JR-13 | low | J4 · `/admin` funnel | "Visitor to paid: **100%**" and "Designer opened 200% of visitors": step counts come from different de-duplication rules (visit = one per IP + browser per 30 min, the rest per event), so a step can exceed the one before and the plan's 2 to 4% gate reads as met. `r5-jr-13-funnel.png` | Plan §6.3, §10 milestone gates | Cap the headline ratio at the visitor cohort, or count paid buyers whose anon id has a visit. | admin, platform | open |
 | R5-JR-14 | low | J1 · designer at 360 px | The phone toolbar has **no design-name field** (the menu holds Export / Share / Save only), so phone designs stay untitled: share page and WhatsApp follow-up fall back to the style name. | Plan §1.3 (share loop) | Add "Rename" to the More actions menu. | designer | open |
 | R5-JR-15 | low | J1 · share page vs designer badge | Share page: "500 boxes from EGP 50.70 each" (after the 3% prepay discount); the designer's badge and price dialog for the same box say EGP 52.24. Neither says which. Same root as R4-B-13 (checkout tiles). | Plan §1.3 (one price in the tool) | Say "after 3% prepay discount" wherever the discounted unit is shown. | designer, checkout | open |
+| R5-JR-16 | medium | J4 · `orders/[id]` (buyer), dispute decision | **After ops resolve a report, the buyer sees nothing**: the order page shows no outcome, no link to the free reprint (`ELB-…-R1`), only "Report a problem" again, and no message is sent. The buyer cannot tell whether a reprint is coming. `r5-jr-16-after-dispute-outcome.png` (after) | Plan §4.1 ops "dispute centre"; Consumer Protection Law 181/2018 (remedy communicated) | "Your report" card with the outcome badge ("Resolved: reprint") and "Track the free reprint ELB-…-R1"; a WhatsApp STATUS_CHANGED with the outcome on every decision except "Start review". | checkout (order page), admin (notify) | fixed |
+| R5-JR-17 | low | J3 · `/vendor/rate-cards` | Paused cards are struck through on every cell (style, prices, setup, lead time), so a new printer's starter cards read as cancelled rather than "review and switch on". `r5-jr-01-after-starter-rate-cards.png` | WCAG 1.4.1 (state not by styling alone is met by the badge; legibility of prices suffers) | Mute paused rows (subdued text) instead of line-through; keep the "Paused" badge. | vendor | open |
 
 Already logged and still open (not counted as new): **R4-B-03** — a 5,000-unit price request reaches `/admin/quotes` and the buyer's account ("Waiting for price"), but there is still no way for admin to price it and for the buyer to accept and pay (`r5-jr-11-quote-lead-no-price-action.png`; owners admin + checkout, in progress this round). **R4-B-07** — the receipt is still titled "Tax invoice" and says it "is submitted to the ETA" (owner checkout). **R4-B-13** — see R5-JR-15.
 
@@ -54,8 +56,9 @@ Already logged and still open (not counted as new): **R4-B-03** — a 5,000-unit
 | R5-JR-07 | `src/app/[locale]/admin/orders/[number]/page.tsx`, `src/i18n/admin.{en,ar}.ts` |
 | R5-JR-08 | `src/components/admin/server/queries.ts` (loadDispute) |
 | R5-JR-11 | `src/components/admin/server/actions.ts` |
+| R5-JR-16 | `src/app/[locale]/orders/[id]/page.tsx`, `src/i18n/checkout.{en,ar}.ts`, `src/components/admin/server/actions.ts` (notify) |
 
-Files owned by other sessions this round (kept minimal, listed for the integrator): checkout (`actions.ts`, `PaymentClient.tsx`, `CheckoutClient.tsx` offer card, invoice page), admin (`actions.ts`, `queries.ts`, order page, i18n), designer (`DesignerApp.tsx`, designs API, share page), vendor (`JobDetail.tsx`, `queries.ts`, `types.ts`), store (`VendorCard.tsx`, vendor page), schema (`Order.billing`).
+Files owned by other sessions this round (kept minimal, listed for the integrator): tests (`e2e/storefront.spec.ts` vendor count, see §4); checkout (`actions.ts`, `PaymentClient.tsx`, `CheckoutClient.tsx` offer card, invoice page, buyer order page, `checkout.{en,ar}.ts`), admin (`actions.ts`, `queries.ts`, order page, i18n), designer (`DesignerApp.tsx`, designs API, share page), vendor (`JobDetail.tsx`, `queries.ts`, `types.ts`), store (`VendorCard.tsx`, vendor page), schema (`Order.billing`).
 
 ## 4. Journey specs
 
@@ -64,3 +67,11 @@ Files owned by other sessions this round (kept minimal, listed for the integrato
 | Spec | Covers |
 |---|---|
 | `j1-brand-orders.spec.ts` | Home → designer (logo upload, text, colour, white board, gold foil) → share (OTP gate) → share page names gold foil → instant price → checkout with company + tax number → proof → mock card → Back does not return to payment → printer sees gold foil, accepts, produces, QC photos → admin QC + courier → delivered → receipt with the frozen company, same total and VAT |
+| `j2-price-request.spec.ts` | 5,000 boxes → "Request a price" with a note → no order, one `REQUESTED` quote → account "Waiting for price" → admin inbox row with quantity and note → "Mark contacted" with the reply. The convert-and-pay half is `test.fixme` until R4-B-03 lands (admin + checkout). |
+| `j3-printer-onboarding.spec.ts` | Apply with papers (PDPL consent) → admin review, checklist, approve → paused starter rate cards exist → public profile says "New" → printer switches a card on → paid job → accept → production → QC photos → admin QC + courier → 40% advance approved and paid → vendor payouts shows it |
+| `j4-admin-day.spec.ts` | Buyer reports a defect → reprint (no incapable printer in the list; reprint keeps model and finishes; buyer sees the outcome and the reprint link); refund of a paid order (payments REFUNDED); advance raise → approve → pay (40%); portfolio photo approved; checkout setting (sample credit days) changed by ops reaches checkout (DB mutex across workers, restored after); KPI overview has no NaN / undefined |
+| `j5-failure-paths.spec.ts` | OTP wrong code → 5 tries → code dead (right code refused, no session); card declined → refresh → retried: one FAILED + one PAID row = order total; expired price → no pay button → "Get a new price"; printer declines (phone: More actions) → admin "declined" banner → reassign to a capable printer → banner back to "waiting"; offline mid-design → saved when back online → refresh keeps it; two tabs → stale tab gets the conflict state, the other tab's change is kept, Reload recovers |
+
+**Runs** (`next start` on the seeded `jr.db`, `OTP_DEV_ECHO=1 ALLOW_MOCK_PAYMENTS=1`): `npx playwright test e2e/journeys --workers=2 --trace off` → 30 passed, 2 fixme (R4-B-03), twice in a row. One earlier run had a 30 s stall in `verify-otp` with both workers writing to SQLite at once (dev DB only; no server error logged).
+
+Regression check of the specs that cover the files I touched (`checkout`, `designer`, `admin`, `vendor`, `journey`, `storefront`, `smoke`, `--workers=2`): 61 passed, 13 skipped (desktop-only or phone-only by design), 2 failed in `storefront.spec.ts` on an exact "6 vendor cards" count: the J3 journey approves its own vendor while it runs. I changed that assertion to "each of the six seeded vendors is listed" (`e2e/storefront.spec.ts`, store owner), which keeps its intent and passes in parallel. `npm run lint`, `npm run typecheck` and `npm test` (93 files, 8,504 tests, including the new `finish-label.test.ts`) pass. The 900-test catalogue-model specs were not re-run (untouched area).
