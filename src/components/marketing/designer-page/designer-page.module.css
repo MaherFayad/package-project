@@ -106,15 +106,6 @@
   background-size: 48px 48px;
   mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 30%, transparent 75%);
 }
-.heroGlow {
-  position: absolute; z-index: -1; pointer-events: none;
-  inset-inline: 10%; inset-block-start: 22%; block-size: 60%;
-  background: radial-gradient(closest-side, rgba(91, 61, 245, 0.35), rgba(91, 61, 245, 0) 70%);
-  filter: blur(20px);
-  animation: dp-glow 8s ease-in-out infinite alternate;
-}
-@keyframes dp-glow { from { opacity: 0.6; transform: scale(0.95); } to { opacity: 1; transform: scale(1.05); } }
-
 .heroInner { display: grid; justify-items: center; text-align: center; gap: 28px; position: relative; }
 .frame {
   position: relative;
@@ -143,7 +134,7 @@
   animation-delay: calc(var(--i, 0) * -1.6s);
 }
 @keyframes dp-float { from { translate: 0 -6px; } to { translate: 0 8px; } }
-.stage[data-paused="true"] .float, .stage[data-paused="true"] ~ .heroGlow { animation-play-state: paused; }
+.stage[data-paused="true"] .float { animation-play-state: paused; }
 .floatLayers { inset-inline-start: 0; inset-block-start: 6%; inline-size: 210px; padding: 14px; }
 .floatSwatches { inset-inline-end: 2%; inset-block-start: 0; padding: 12px 14px; }
 .floatTiles { inset-inline-start: 6%; inset-block-end: 4%; padding: 10px; display: flex; gap: 8px; }
@@ -257,18 +248,9 @@
 .wall { text-align: center; }
 .wallHead { display: grid; gap: 16px; justify-items: center; padding-block-start: clamp(64px, 8vw, 120px); margin-block-end: 40px; }
 .wallEnd { block-size: clamp(96px, 10vw, 140px); }
+/* Kit Marquee: centre its pause button under the heading like the reference wall. */
+.wallRail > :first-child { justify-content: center; }
 .wallHead .lead { margin-inline: auto; }
-.wallBar { display: flex; justify-content: center; gap: 12px; align-items: center; margin-block-start: 28px; }
-.wallViewport {
-  overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
-  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
-}
-.wallViewport::-webkit-scrollbar { display: none; }
-.wallTrack { list-style: none; margin: 0; padding: 8px 0; display: flex; gap: 16px; inline-size: max-content; animation: dp-marquee 70s linear infinite; }
-.page:dir(rtl) .wallTrack { animation-name: dp-marquee-rtl; }
-.wallViewport:hover .wallTrack, .wallViewport:focus-within .wallTrack, [data-paused="true"] .wallTrack { animation-play-state: paused; }
-@keyframes dp-marquee { to { translate: -50% 0; } }
-@keyframes dp-marquee-rtl { to { translate: 50% 0; } }
 .styleCard {
   position: relative; display: grid; grid-template-rows: auto 1fr auto;
   inline-size: clamp(240px, 24vw, 320px); block-size: clamp(320px, 30vw, 420px);
@@ -391,11 +373,7 @@
 
 /* ───────── 7. Materials wall ───────── */
 .page .materials[data-tone] { padding-block-end: 0; }
-.matRail { margin-block: 40px; overflow-x: auto; scrollbar-width: none; mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); }
-.matRail::-webkit-scrollbar { display: none; }
-.matTrack { list-style: none; margin: 0; padding: 8px 0; display: flex; gap: 12px; inline-size: max-content; animation: dp-marquee 50s linear infinite; }
-.page:dir(rtl) .matTrack { animation-name: dp-marquee-rtl; }
-.matRail:hover .matTrack, .matRail:focus-within .matTrack, [data-paused="true"] .matTrack { animation-play-state: paused; }
+.matRail { margin-block: 40px; }
 .matTile { inline-size: 88px; display: grid; gap: 8px; justify-items: center; }
 .matSwatch { inline-size: 88px; block-size: 88px; border-radius: 16px; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12); }
 .matName { font-size: 0.75rem; line-height: 1.3; text-align: center; color: var(--dp-muted); }
@@ -425,30 +403,18 @@
 
 /* ───────── 9. FAQ ───────── */
 
-.faqList { margin: 48px auto 0; max-inline-size: 1080px; border-block-start: 1px solid var(--dp-line-2); interpolate-size: allow-keywords; }
-.faqItem { border-block-end: 1px solid var(--dp-line-2); }
-.faqItem summary {
-  display: flex; align-items: center; justify-content: space-between; gap: 24px;
-  min-block-size: 44px; padding-block: 24px; cursor: pointer; list-style: none;
-  font-size: clamp(1.125rem, 1rem + 0.4vw, 1.375rem); line-height: 1.4;
-}
-.faqItem summary::-webkit-details-marker { display: none; }
-.faqItem summary span:first-child { max-inline-size: 40ch; }
-.plus { position: relative; flex: none; inline-size: 32px; block-size: 32px; border-radius: 9999px; background: #fff; transition: transform 0.3s var(--dp-ease); }
-.plus::before, .plus::after { content: ""; position: absolute; inset-block-start: 50%; inset-inline-start: 50%; inline-size: 12px; block-size: 2px; margin: -1px 0 0 -6px; background: #000; }
-.plus::after { transform: rotate(90deg); transition: transform 0.3s var(--dp-ease); }
-.faqItem[open] .plus::after { transform: rotate(0deg); }
-.faqItem::details-content { block-size: 0; overflow: clip; transition: block-size 0.3s var(--dp-ease), content-visibility 0.3s allow-discrete; }
-.faqItem[open]::details-content { block-size: auto; }
-.faqAnswer { margin: 0; padding-block-end: 24px; color: var(--dp-muted); max-inline-size: 68ch; font-size: 1rem; line-height: 1.6; }
+.faqList { margin: 48px auto 0; max-inline-size: 1080px; }
 
 /* Below-the-fold sections skip layout and paint until near the viewport. */
 .lazySection { content-visibility: auto; contain-intrinsic-size: auto 900px; }
 
 /* Calm page under reduced motion: same content, nothing moves (WCAG 2.3.3). */
 @media (prefers-reduced-motion: reduce) {
-  .heroGlow, .float, .violet::before, .wallTrack, .matTrack { animation: none !important; }
-  .wallTrack, .matTrack { inline-size: auto; flex-wrap: nowrap; }
+  .float, .violet::before { animation: none !important; }
+  /* Kit Marquee in RTL: `.marqueeTrack:dir(rtl)` re-sets animation-name over the kit's own
+     reduced-motion `animation: none`, so Arabic strips kept looping. Reported to FOUNDATION;
+     remove once kit.module.css fixes it. */
+  .wallRail ul, .matRail ul { animation: none !important; }
   .stepsViewport { scroll-behavior: auto; }
   .styleCard, .styleCard img, .pill { transition: none; }
   .styleCard:hover, .styleCard:hover img { transform: none; }

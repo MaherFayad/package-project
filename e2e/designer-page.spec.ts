@@ -73,7 +73,7 @@ for (const locale of LOCALES) {
       // Stop the drifting strip first (its own pause button): a moving card never settles for a click.
       await page.getByRole("button", { name: locale === "ar" ? "إيقاف شريط أنماط العلب" : "Pause the box styles strip" }).click();
       // A style card (the first real one, not the loop copy).
-      const card = page.locator(`#dp-styles a[href*="/${locale}/design?structure="]:not([tabindex="-1"])`).first();
+      const card = page.locator(`#dp-styles li:not([aria-hidden]) a[href*="/${locale}/design?structure="]`).first();
       const href = await card.getAttribute("href");
       expect(href).toMatch(new RegExp(`^/${locale}/design\\?structure=[A-Z0-9_]+$`));
       await expect(async () => {
@@ -119,7 +119,7 @@ test("reduced motion: content visible, loops stopped, no pause buttons for still
   const state = await page.evaluate(() => {
     const anim = (sel: string) => Array.from(document.querySelectorAll(sel)).map((el) => getComputedStyle(el).animationName);
     const hidden = Array.from(document.querySelectorAll("[data-reveal]")).filter((el) => Number(getComputedStyle(el).opacity) < 0.99).length;
-    return { tracks: anim('[class*="wallTrack"], [class*="matTrack"]'), floats: anim('[class*="float"]'), hidden };
+    return { tracks: anim('[class*="marqueeTrack"]'), floats: anim('[class*="float"]'), hidden };
   });
   expect(state.tracks.length).toBeGreaterThan(0);
   expect(state.tracks.every((a) => a === "none")).toBe(true);
@@ -139,7 +139,7 @@ test("pause controls stop the moving strips (WCAG 2.2.2)", async ({ page }) => {
   await pause.scrollIntoViewIfNeeded();
   await pause.click();
   await expect(page.getByRole("button", { name: "Play the box styles strip" })).toBeVisible();
-  const playState = await page.locator('[class*="wallTrack"]').evaluate((el) => getComputedStyle(el).animationPlayState);
+  const playState = await page.locator('#dp-styles [class*="marqueeTrack"]').evaluate((el) => getComputedStyle(el).animationPlayState);
   expect(playState).toBe("paused");
 });
 
