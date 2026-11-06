@@ -95,3 +95,31 @@ Contact sheets: `fefco-04-01..08.jpg`. Overall the strongest family: every folde
 | F04-03 | FEFCO_0459 | medium | Octagonal tray corner ears coplanar with the neighbouring ear (`ear_back_a↔ear_right_b` etc., d = 0, ~200 mm² × 4). | — | `catalog.ts` 0459 ears: alternate `stack` −1/−2. |
 | F04-04 | FEFCO_0409–0411a | low | Long folders (aspect ≥ 6:1) occupy ~10 % of the frame height at the default 3/4 view (X-02 sphere fit is worst for long thin shapes). | — | X-02 projected-box fit. |
 | F04-05 | all | low | 50 % fold: lids rotate through the opposite wall on 0402, 0422_2, 0424, 0435, 0455_1, 0472 (X-09). | — | Wall panels `foldStage` before lid flaps (already true for most). |
+
+## 5. FEFCO 06 rigid-type + 07 ready-glued families (33) — `src/lib/dieline/families/fefco-06-07`
+
+Contact sheets: `fefco-06-07-01..04.jpg`. Three-piece 06xx boxes (separate end panels 0615/0616/0752) and crash-lock 07xx bottoms assemble correctly; bottle-hole 0751 and vented 0771/0772 bottoms render to life.
+
+| ID | Model | Sev | Finding | Real-world reference | Fix |
+|---|---|---|---|---|---|
+| F67-01 | FEFCO_0601, 0602, 0606 | medium | Corner flaps coplanar (`frontFlap_left↔bottomFlap_left`, `bottomFlap_*↔backFlap_*`, d = 0, ~370–410 mm² × 4): z-fight at all four bottom corners. | FEFCO 0601: flaps glued to the end panels in a set order. | `families/fefco-06-07/group06.ts`: stack flaps −1/−2 in fold order. |
+| F67-02 | FEFCO_0605 | medium | Rim panels coplanar with end-panel top flaps (`rimFront↔endL_flap_top` …, 655 mm² × 4). | — | `group06.ts` 0605 rim `stack -2`. |
+| F67-03 | FEFCO_0608 | medium | Tuck coplanar with end-panel flaps (`tuck↔endL_flap_right`, 1 002 mm² × 2). | — | 0608 tuck `stack -2`. |
+| F67-04 | FEFCO_0621 | medium | Tab sits 1 mm inside the front wall (`front↔tab`, d 0.5 of 1.5, 10 421 mm², both pieces). | — | `parts.ts` tab `stack -1` full caliper. |
+| F67-05 | FEFCO_0714 | low | Lid joint 0.5 mm inside the back wall (1 512 mm²). | — | `group07.ts` lid joint `stack -1`. |
+| F67-06 | FEFCO_0700 | low | Default closed state leaves the top **open** (no top flaps folded): matches the code (crash-lock bottom, open top) but the "closed" button suggests a closed box. | FEFCO 0700 open-top. | Label the fold-1 state "Assembled" for open-top styles in `LibraryDevSection` / designer fold control. |
+| F67-07 | FEFCO_0717 | — | H 285 vs 210 inner: carry handle above the top (expected). | — | Exclude from outer-H check. |
+
+## 6. ECMA specials (20) — `src/lib/dieline/families/ecma-specials`
+
+Contact sheets: `ecma-specials-01..02.jpg`.
+
+| ID | Model | Sev | Finding | Real-world reference | Fix |
+|---|---|---|---|---|---|
+| SP-01 | CONE | high | Front artwork on the cone renders **upside down and mirrored** ("ELBA" reads as rotated glyphs near the seam) and the face transform squeezes it toward the tip. | Paper cones (fries / ice cream) are printed on an annular-sector blank; copy reads upright from the side. | `families/ecma-specials/shapes.ts` cone: the sector panel's `faces.front` transform must map face-up to the cone's apex-down axis — compose a 180° rotation (`[-1,0,0,-1,w,h]`) in the face part transform and use the sector's mid-radius arc as the face width. Add a test-pattern unit check (up arrow points to the rim). |
+| SP-02 | LIQUID_ASEPTIC_BRICK | high | Top **ears stand up unprinted** (grey triangle at the top corner) instead of folding down flat onto the side panels; the top seal fin is missing. | Aseptic brick (TBA 200/1000 ml): top and bottom ears are folded flat and glued onto the side panels / base; transverse seal fin lies flat on top. | `families/ecma-specials/carriers.ts` (brick): ear panels `foldAngleClosed −90 → −180` with a second hinge onto the side, `printable: true`; add a 6 mm top fin panel folded flat. |
+| SP-03 | ECMA_TRAY_BEERS | medium | Corner webs coplanar (`webFLA↔webFLB` … d = 0, 1 750–1 840 mm² × 4): z-fight in every corner. | Beers tray: web halves fold onto each other. | `trays.ts` web `B` halves `stack -1` vs `A`. |
+| SP-04 | ECMA_PILLOW | low | Pillow ends drawn as two flat facets per end (visible crease ridges); H +47 mm vs inner is the curved end (expected). | Pillow box: smooth curved end panels. | `shapes.ts` pillow: split each end into ≥ 8 `hingeKind: "roll"` strips (same technique as tube labels) for smooth normals. |
+| SP-05 | ECMA_HEXAGON, ECMA_OCTAGON | low | Lids lift and swing through the body at 50 % fold (X-09). HEXAGON outer L 93 vs 80 inner = across-corners (expected). | — | `assembly.lift`. |
+| SP-06 | FOLDER_PRESENTATION, ECMA_WALLET_ENDFLAP | low | Closed state is a flat 2-panel folder standing on its edge: fine, but the default view shows it edge-on-ish (X-04 / X-02). | — | Default view `front` for flat folders. |
+| SP-07 | CUP_CARRIER, BOTTLE_BASKET_4/6, GABLE_CARRY_CLB, LIQUID_GABLE_TOP, ECMA_TRAY_4C/6C_LID/BRIGHTWOOD/HINGED_TUCK, ECMA_SLEEVE_OPEN, ECMA_WRAP_LOCK, ECMA_COUNTER_DISPLAY | — | Assemble correctly; handle cut-outs, cup holes and gable-top fin read to life (H excess on carriers = handles, expected). | ECMA catalogue. | — |
