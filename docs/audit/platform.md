@@ -753,3 +753,56 @@ critical 0 · high 0 · medium 2 (R5-PL-16, R5-PL-17) · low 1 (R5-PL-15). Fixed
   - smoke + storefront + designer: **36 passed, 4 skipped**;
   - checkout + admin + vendor + journey + catalogue + a11y: **53 passed, 19 skipped**.
 - `notfound-check.mjs`: 58 / 58. `platform-shell.cjs`: 96 / 96. `rawkey-sweep.cjs`: 78 screens, no raw keys.
+
+### Round 5 (g): R6-RS-11, server-rendered 404s (assigned by the integrator)
+
+Base: main `c9b4f9a4` (R6 public pages) merged into this branch.
+
+**Root cause.** Missing CSS was a symptom. **Every** 404 response (catch-all, legal, catalogue, share, editor, orders, admin, root) was Next's SSR error shell: `<html id="__next_error__">` with an empty body and no `<style>`. The not-found UI rendered only after the JavaScript loaded, so phone LCP was 4.4 to 4.9 s.
+- **Mechanism:** in Next 15.5 a `notFound()` thrown while rendering a request reaches React's SSR shell, which has no error boundaries. Next then sends that error document and renders the 404 on the client.
+- **Reproduced in a minimal app** with the same Next (`[locale]/[...missing]/page.js` calling `notFound()` next to `not-found.js`): error shell with and without `inlineCss`, with a normal or pass-through root layout, and with `experimental.globalNotFound`.
+- **What does render on the server:** a route that does not throw, rewritten by middleware with `status: 404`. Related upstream reports: [vercel/next.js#62228](https://github.com/vercel/next.js/issues/62228), [#69480](https://github.com/vercel/next.js/issues/69480).
+
+**Fix (shell level).**
+- **Middleware:** `src/middleware.ts` checks the path against `isKnownMissing()` (`src/lib/routing/static-404.ts`). URLs that are certainly unknown without a database lookup are rewritten, **with HTTP 404**, to `/{locale}/page-not-found`. The address bar keeps the visitor's URL.
+- **The page:** `src/app/[locale]/(store)/page-not-found/page.tsx` is a statically generated page that renders the marketing `NotFoundState` without throwing. Its HTML is complete: `<style>`, marketing chrome, title "الصفحة غير موجودة · علبة", noindex.
+- **URLs covered:**
+  - an unknown first segment (the catch-all case);
+  - an unknown legal document;
+  - an unknown editor model (`/design/<x>`, matched like `modelFromParam` against the generated `MODEL_INDEX`);
+  - a malformed share token (tokens are always 16 base64url characters);
+  - `/page-not-found` itself.
+- **Tests** (`src/lib/routing/__tests__/static-404.test.ts`): `TOP_SEGMENTS` equals the route folders under `src/app/[locale]`, so a new top-level route fails the test until it is listed. No real page is ever treated as missing. The editor-model check agrees with `modelFromParam` on all 370+ slugs, codes and dashed codes and on invalid inputs.
+
+**Phone LCP, 404 renders** (`perf-pages.mjs`, phone, `ISOLATE=1`, data `perf-data/r5-platform/pages-404-phone.json`):
+
+| 404 | Before LCP ar / en (s) | After LCP ar / en (s) | After FCP ar / en (s) | HTML |
+|---|---|---|---|---|
+| `/no-such-page` | 4.69 / 4.37 (r6-restyle) | **2.27 / 1.88** | 1.03 / 0.96 | SSR, `<style>` in head |
+| `/s/no-such-token-123` | 4.87 / 4.45 (r6-restyle) | **2.28 / 1.90** | 1.03 / 0.98 | SSR |
+| `/legal/no-such-policy` | error shell | **2.26 / 1.92** | 1.04 / 0.95 | SSR |
+| `/design/no-such-model` | error shell | **2.25 / 1.85** | 1.08 / 0.98 | SSR |
+| `/catalog/no-such-model` | error shell | 5.06 / 4.68 | 5.06 / 4.68 | still the error shell (R5-PL-19) |
+| `/s/aaaaaaaaaaaaaaaa` (well-formed, unknown) | error shell | 4.70 / 4.39 | 4.70 / 4.39 | still the error shell (R5-PL-19) |
+
+All four rewritten 404s are under 2.5 s in ar and en, CLS ≤ 0.007.
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R6-RS-11 | high | every 404 | (above) | CWV LCP < 2.5 s | Middleware rewrite to the static 404 page | fixed for unknown paths, legal documents, editor models and malformed share tokens |
+| R5-PL-19 | medium | 404s that need a lookup: catalogue model, box style, bottle, printer, order, admin record, a well-formed unknown share token | These still use `notFound()`, so they still get the client-rendered error shell (phone LCP 4.4 to 5.1 s). This is a Next 15.5 limitation: the middleware cannot see the database. | CWV LCP | Catalogue and box styles are static datasets. Their owner can generate a slug set for the middleware, as `MODEL_INDEX` is used for the editor. Entities in the database need a framework change, so re-check on the next Next upgrade. | open (catalogue, then Next upgrade) |
+| R5-PL-20 | low | `/{locale}/page-not-found` | The rewritten 404 inherits the static page's `Cache-Control: s-maxage=31536000`, so a CDN keeps a 404 for that URL until the next deploy. | – | Accepted. A URL can only stop being missing through a deploy, which purges the CDN. | accepted |
+
+### Round 5 (g) counts (new findings, before fixing)
+
+critical 0 · high 0 · medium 1 (R5-PL-19, open) · low 1 (R5-PL-20, accepted). R6-RS-11 (from r6-restyle) is fixed for every 404 the middleware can decide.
+
+### Round 5 (g) verification
+
+- `npm run lint` clean and `npm run typecheck` clean.
+- `npm test`: 116 files, 8,795 passed (new: `static-404.test.ts`).
+- `npm run build` clean (middleware 40.6 KB).
+- e2e (`--workers=2`):
+  - smoke + storefront + designer: **36 passed, 4 skipped**; this includes "unknown marketing URLs answer a real 404 with the marketing chrome" and "unknown structure is a 404";
+  - checkout + admin + vendor + journey + catalogue + a11y: **53 passed, 19 skipped**.
+- `notfound-check.mjs`: 58 / 58 (404 status, styled, one `<main>`, no console errors). Screenshots: `docs/screenshots/audit/platform/r5g/`.
