@@ -15,7 +15,15 @@ import type { FamilyDraft } from "./types";
  * Pallet box with lid: FEFCO 0320 (two FEFCO 0200 HSC halves).
  */
 export const palletBox = (dims: Dims, t: number, f: StructureFeatures = {}): FamilyDraft => rsc(dims, t, f);
-export const palletBoxWithLid = (dims: Dims, t: number, f: StructureFeatures = {}): FamilyDraft => telescope(dims, t, { ...f, lidHeightMm: f.lidHeightMm ?? clamp(Math.round(dims.H * 0.2), 60, 200) });
+export function palletBoxWithLid(dims: Dims, t: number, f: StructureFeatures = {}): FamilyDraft {
+  const draft = telescope(dims, t, { ...f, lidHeightMm: f.lidHeightMm ?? clamp(Math.round(dims.H * 0.2), 60, 200) });
+  // The core telescope lid clears the base by max(1, t/2) per side, but its joint flap sits a
+  // full caliper inside the lid wall: on 7 mm BC board it pierced the base wall by 3.5 mm.
+  // Draw the joint mostly inside the lid wall, standing proud by less than the clearance.
+  const joint = draft.builder.panels.find((p) => p.id === "lid_glue");
+  if (joint) joint.stackOffset = -Math.min(0.9, Math.max(0.1, (Math.max(1, t * 0.5) - 0.2) / t));
+  return draft;
+}
 
 /** Corner chamfer (inner leg, mm) of an octabin: a regular octagon on the shorter side. */
 export const octabinChamfer = (L: number, W: number) => Math.round(Math.min(L, W) * (1 - 1 / (1 + Math.SQRT2)) * 0.5 * 10) / 10;
@@ -71,7 +79,7 @@ export function octabin(dims: Dims, t: number, f: StructureFeatures = {}): Famil
       const edge = where === "top" ? rectEdges(r).top : rectEdges(r).bottom;
       if (p.role === "flap") {
         const d = Math.min(c * 0.6, diag * 0.5);
-        b.attach(`${where}Flap_${p.id}`, "flap", p.id, insetSeg(edge, slot / 2), d, { kind: "trapezoid", taperA: d * 0.7, taperB: d * 0.7 }, { stage: 1, stack: -1, label: "Corner flap" });
+        b.attach(`${where}Flap_${p.id}`, "flap", p.id, insetSeg(edge, slot / 2), d, { kind: "trapezoid", taperA: d * 0.7, taperB: d * 0.7 }, { stage: 1, stack: -2, label: "Corner flap" }); // under the minor flaps
         continue;
       }
       const major = p.role === "front" || p.role === "back";

@@ -91,7 +91,9 @@
   font-size: var(--p-text-body-sm-font-size);
   font-variant-numeric: tabular-nums;
 }
-.multiline .Count { align-self: flex-end; padding-block-end: var(--p-space-150); }
+/* Textareas: the counter sits on its own line under the text, never over the last line (V-22). */
+.multiline { flex-wrap: wrap; }
+.multiline .Count { flex: 1 0 100%; text-align: end; padding-block-end: var(--p-space-150); }
 .Clear {
   display: inline-flex;
   align-items: center;

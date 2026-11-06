@@ -2,6 +2,7 @@ import { Button, Card, EmptyBoxIllustration, EmptyState, Page } from "@/componen
 import { RateCardForm } from "@/components/vendor/RateCardForm";
 import { requireVendorContext } from "@/components/vendor/server/context";
 import { getRateCard } from "@/components/vendor/server/queries";
+import { modelsForCard } from "@/components/vendor/lib/coverage";
 import { getT, toLocale } from "@/i18n";
 import { fromJson } from "@/lib/json";
 import type { VendorCapabilities } from "@/types";
@@ -28,5 +29,5 @@ export default async function RateCardPage({ params }: { params: Promise<{ local
     );
   }
   const caps = fromJson<VendorCapabilities>(vendor.capabilities);
-  return <RateCardForm key={card.updatedAt} card={card} offeredFinishes={caps?.finishes ?? []} />;
+  return <RateCardForm key={card.updatedAt} card={card} offeredFinishes={caps?.finishes ?? []} models={modelsForCard(card.structureCode, card.materialCode)} />;
 }

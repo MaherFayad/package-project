@@ -1,5 +1,5 @@
 import type { Dims, StructureFeatures } from "@/types";
-import { DielineBuilder, rectEdges } from "../../builder";
+import { DielineBuilder, insetSeg, rectEdges } from "../../builder";
 import { rectPolygon } from "../../geometry";
 import type { StructureDraft } from "../../structures";
 import type { Pt, Rect } from "../../types";
@@ -71,8 +71,13 @@ export function wrapFolder(dims: Dims, t: number, o: WrapOpts, _f: StructureFeat
       const parent = chain[i - dir];
       const edge = dir > 0 ? rectEdges(parent.r).bottom : rectEdges(parent.r).top;
       const closing = c.id === "glue" || c.id === "fifth";
-      b.attach(c.id, c.role, parent.id, edge, c.r.height, { kind: "rect" }, {
-        stage: 0,
+      // The fifth (overlap) panel lies on the base inside the tube: keep it clear of the end flaps
+      // that stand at both ends (endLayers calipers + 0.5 mm each side).
+      const hinge = c.id === "fifth" ? insetSeg(edge, endLayers * t + 0.5) : edge;
+      b.attach(c.id, c.role, parent.id, hinge, c.r.height, { kind: "rect" }, {
+        // The closing panel (glue flap / fifth panel) is pre-folded square, then the tube wraps
+        // around the product and the closing panel lands flat on the base.
+        stage: closing ? 0 : 1,
         stack: closing ? -1 : 0,
         printable: c.role !== "glue",
         label: c.id === "fifth" ? "Fifth (overlap) panel" : c.id === "glue" ? "Glue flap" : `${c.id} panel`,
@@ -83,6 +88,14 @@ export function wrapFolder(dims: Dims, t: number, o: WrapOpts, _f: StructureFeat
   // End flaps: on the x = 0 and x = Lp edges of every tube panel.
   const kindOf = (across: "w" | "h") => (across === "w" ? wPanels : hPanels);
   const counter = { w: 0, h: 0 };
+  const tubeDone = 2; // closing panel (0), then the tube panels (1)
+  const innerKind = outer === "w" ? hPanels : wPanels;
+  const innerStages = innerKind === "none" ? 0 : innerKind === "full" ? 2 : 1;
+  const stageOf = (isOuter: boolean, order: number) => {
+    const kind = isOuter ? kindOf(outer) : innerKind;
+    const step = kind === "full" ? order % 2 : 0;
+    return tubeDone + (isOuter ? innerStages : 0) + step;
+  };
   for (const c of chain) {
     if (c.id === "glue" || c.id === "fifth") continue;
     const kind = kindOf(c.across);
@@ -93,7 +106,8 @@ export function wrapFolder(dims: Dims, t: number, o: WrapOpts, _f: StructureFeat
     const depth = kind === "full" ? span - 2 * t : span / 2 - 1;
     const order = counter[c.across]++;
     const stackBase = isOuter ? 0 : -(outer === "w" ? (wPanels === "full" ? 2 : 1) : hPanels === "full" ? 2 : 1);
-    const stack = stackBase - (kind === "full" ? order % 2 : 0);
+    // Of a fully overlapping pair the first to fold lies deeper, so the second closes over it.
+    const stack = stackBase - (kind === "full" ? 1 - (order % 2) : 0);
     const e = rectEdges(c.r);
     const sides: [string, [Pt, Pt]][] = [
       ["R", e.left],
@@ -101,8 +115,11 @@ export function wrapFolder(dims: Dims, t: number, o: WrapOpts, _f: StructureFeat
     ];
     for (const [s, edge] of sides) {
       const taper = isOuter ? 0 : Math.min(depth * 0.3, c.r.height * 0.15);
-      b.attach(`end_${c.id}_${s}`, "flap", c.id, edge, depth, { kind: "trapezoid", taperA: taper, taperB: taper }, {
-        stage: isOuter ? 2 : 1,
+      // Hinge stops one caliper short of each corner: the neighbouring tube panels run to the
+      // end, so a full-width flap would sit inside their board edge (z-fighting strip).
+      b.attach(`end_${c.id}_${s}`, "flap", c.id, insetSeg(edge, t + 0.2), depth, { kind: "trapezoid", taperA: taper, taperB: taper }, {
+        // Inner end flaps, then outer ones; fully overlapping pairs fold one after the other.
+        stage: stageOf(isOuter, order),
         stack,
         label: isOuter ? "Outer end flap" : "Inner end flap",
       });

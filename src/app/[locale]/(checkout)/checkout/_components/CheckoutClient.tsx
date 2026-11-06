@@ -32,7 +32,8 @@ import {
   Text,
   TextField,
 } from "@/components/ui";
-import { getOffersAction, placeOrderAction, type OffersResult } from "../actions";
+import { getOffersAction, placeOrderAction, requestQuoteAction, type OffersResult } from "../actions";
+import { QUOTE_NOTE_MAX } from "../quote-request";
 import type { DocSpec } from "@/lib/library/spec";
 import styles from "./checkout.module.css";
 
@@ -88,6 +89,8 @@ export function CheckoutClient(props: {
   initial: OffersResult;
   defaultAddress: AddressState;
   spec: DocSpec;
+  /** Buyer's mobile number, formatted, for the "we will reply on …" line of a quote request. */
+  contactPhone: string;
 }) {
   const { locale, designId, doc, editUrl } = props;
   const { t } = useI18n();
@@ -107,6 +110,11 @@ export function CheckoutClient(props: {
   const [placing, setPlacing] = useState(false);
   const [placeErr, setPlaceErr] = useState<string | null>(null);
   const [shippingNote, setShippingNote] = useState<string | null>(null);
+  const [quoteNote, setQuoteNote] = useState("");
+  const [quoteBusy, setQuoteBusy] = useState(false);
+  const [quoteErr, setQuoteErr] = useState<string | null>(null);
+  /** Quantities a quote request was sent for in this visit (re-sending the same one is a no-op on the server). */
+  const [quoteSent, setQuoteSent] = useState<number | null>(null);
   const headingRefs = [useRef<HTMLHeadingElement>(null), useRef<HTMLHeadingElement>(null), useRef<HTMLHeadingElement>(null)];
   const sceneRef = useRef<PackagingSceneHandle | null>(null);
   const lastGov = useRef(props.defaultAddress.governorate);
@@ -164,6 +172,22 @@ export function CheckoutClient(props: {
       setShippingNote(g ? t("checkout.address.shippingChanged", { governorate: t(`governorates.${g.key}` as DictKey) }) : null),
     );
   }, [address.governorate, qty, fetchOffers, t]);
+
+  const manual = result.ok && result.mode === "manual_quote";
+
+  const requestQuote = async () => {
+    setQuoteErr(null);
+    setQuoteBusy(true);
+    const r = await requestQuoteAction({ designId, quantity: qty, governorate: address.governorate || undefined, note: quoteNote.trim() || undefined });
+    setQuoteBusy(false);
+    if (r.ok) {
+      setQuoteSent(qty);
+      requestAnimationFrame(() => document.getElementById("quote-sent")?.focus());
+      return;
+    }
+    const key = `checkout.errors.${r.error}` as DictKey;
+    setQuoteErr(t(key) === key ? t("checkout.errors.generic") : t(key));
+  };
 
   const goTo = (s: Step) => {
     setStep(s);
@@ -350,13 +374,64 @@ export function CheckoutClient(props: {
               {t("checkout.offers.error")}
             </Banner>
           ) : result.mode === "manual_quote" ? (
-            <Banner
-              tone="info"
-              title={t("checkout.quantity.manualTitle")}
-              action={{ content: t("buyer.manualOrderMax", { max: MAX_INSTANT_QTY.toLocaleString("en-US") }), onAction: () => pickQty(MAX_INSTANT_QTY) }}
-            >
-              {t("buyer.manualHelp", { max: MAX_INSTANT_QTY.toLocaleString("en-US") })}
-            </Banner>
+            quoteSent === qty ? (
+              <div id="quote-sent" tabIndex={-1} className={styles.quoteSent}>
+                <Banner
+                  tone="success"
+                  title={t("buyer.quote.sentTitle", { qty: qty.toLocaleString("en-US") })}
+                  action={{ content: t("buyer.quote.viewRequests"), url: `/${locale}/account#quote-requests` }}
+                  announce
+                >
+                  {t("buyer.quote.sentBody", { phone: props.contactPhone })}
+                </Banner>
+              </div>
+            ) : (
+              <form
+                className={styles.quoteForm}
+                noValidate
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void requestQuote();
+                }}
+              >
+                <BlockStack gap="300">
+                  <BlockStack gap="100">
+                    <Text as="h4" variant="headingSm">
+                      {t("buyer.quote.title", { qty: qty.toLocaleString("en-US") })}
+                    </Text>
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      {t("buyer.quote.body", { max: MAX_INSTANT_QTY.toLocaleString("en-US") })}
+                    </Text>
+                  </BlockStack>
+                  <TextField
+                    label={t("buyer.quote.note")}
+                    helpText={t("buyer.quote.noteHelp")}
+                    autoComplete="off"
+                    multiline={3}
+                    maxLength={QUOTE_NOTE_MAX}
+                    value={quoteNote}
+                    onChange={setQuoteNote}
+                    optional
+                  />
+                  {quoteErr ? (
+                    <Banner tone="critical" announce>
+                      {quoteErr}
+                    </Banner>
+                  ) : null}
+                  <div className={styles.quoteActions}>
+                    <Button variant="primary" submit loading={quoteBusy}>
+                      {t("buyer.quote.send")}
+                    </Button>
+                    <Button variant="plain" onClick={() => pickQty(MAX_INSTANT_QTY)} disabled={quoteBusy}>
+                      {t("buyer.manualOrderMax", { max: MAX_INSTANT_QTY.toLocaleString("en-US") })}
+                    </Button>
+                  </div>
+                  <Text as="p" variant="bodySm" tone="subdued">
+                    {t("buyer.quote.contact", { phone: props.contactPhone })}
+                  </Text>
+                </BlockStack>
+              </form>
+            )
           ) : offers.length === 0 ? (
             <Banner tone="warning">{t("checkout.offers.none")}</Banner>
           ) : (
@@ -629,7 +704,7 @@ export function CheckoutClient(props: {
                   </>
                 ) : (
                   <Text as="p" tone="subdued">
-                    {t("checkout.summary.noOffer")}
+                    {manual ? t("buyer.quote.summary") : t("checkout.summary.noOffer")}
                   </Text>
                 )}
                 {placeErr ? (
@@ -637,6 +712,7 @@ export function CheckoutClient(props: {
                     {placeErr}
                   </Banner>
                 ) : null}
+                {manual ? null : (
                 <div className={selected ? styles.actionBar : undefined} data-sticky-action={selected ? "" : undefined}>
                   {selected ? (
                     <div className={styles.actionBarTotal}>
@@ -658,6 +734,7 @@ export function CheckoutClient(props: {
                     </Button>
                   </div>
                 </div>
+                )}
                 <span className="visually-hidden" role="status">
                   {announce}
                 </span>

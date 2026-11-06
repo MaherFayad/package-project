@@ -201,7 +201,14 @@ export function VesselModel(props: VesselModelProps) {
   }, [closureModel, closureColor]);
   useEffect(() => () => closureMats.forEach((m) => m.dispose()), [closureMats]);
   const labelMats = useMemo(
-    () => labelGeos.map((g) => createLabelMaterial(g.label.stock, g.label.finish, g.label.texture)),
+    // Build from the CURRENT label inputs (matched by spec id), not g.label: labelGeos is memoised
+    // on geometry only, so g.label.texture can be a texture that ownTextures already disposed, and
+    // three silently re-uploads a disposed texture that is still referenced (one orphan per mount).
+    () =>
+      labelGeos.map((g) => {
+        const cur = labels.find((l) => l.spec.id === g.label.spec.id) ?? g.label;
+        return createLabelMaterial(cur.stock, cur.finish, cur.texture);
+      }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [labelGeos, labels.map((l) => `${l.stock}:${l.finish}:${l.texture?.uuid ?? ""}`).join("|")],
   );

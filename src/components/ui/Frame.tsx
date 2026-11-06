@@ -213,18 +213,27 @@ export function TopBar({ logo, logoUrl = "/", searchField, secondaryMenu, userMe
 
 /** Square icon button styled for the dark top bar. */
 export function TopBarIconButton({ icon, label, onClick, url, badge }: { icon: IconSource; label: string; onClick?: () => void; url?: string; badge?: number }) {
+  // The name is built from content (hidden label + visible count) instead of aria-label, so the
+  // visible "3" is part of it (WCAG 2.5.3) and the count reaches screen readers (1.3.1).
   const inner = (
     <>
       {renderIcon(icon)}
-      {badge ? <span className={styles.Dot}>{badge > 9 ? "9+" : badge}</span> : null}
+      <span className="visually-hidden">{label}</span>
+      {badge ? (
+        <span className={styles.Dot}>
+          <span className="visually-hidden"> (</span>
+          {badge > 9 ? "9+" : badge}
+          <span className="visually-hidden">)</span>
+        </span>
+      ) : null}
     </>
   );
   return url ? (
-    <NextLink href={url} className={styles.TopBarIconButton} aria-label={label}>
+    <NextLink href={url} className={styles.TopBarIconButton}>
       {inner}
     </NextLink>
   ) : (
-    <button type="button" className={styles.TopBarIconButton} aria-label={label} onClick={onClick}>
+    <button type="button" className={styles.TopBarIconButton} onClick={onClick}>
       {inner}
     </button>
   );
@@ -262,6 +271,7 @@ export function TopBarSearchField({ value, onChange, onSubmit, placeholder, shor
   return (
     <form
       role="search"
+      aria-label={placeholder ?? s.search}
       className={styles.Search}
       onSubmit={(e) => {
         e.preventDefault();
@@ -306,9 +316,14 @@ function UserMenu({ name, detail, initials, avatarSource, actions }: UserMenuPro
       preferredAlignment="end"
       ariaHaspopup="menu"
       activator={
-        <button type="button" className={styles.UserButton} onClick={() => setOpen((o) => !o)} aria-label={`${s.accountMenu}: ${name}`}>
+        <button type="button" className={styles.UserButton} onClick={() => setOpen((o) => !o)}>
           <Avatar name={name} initials={initials} source={avatarSource} size="md" decorative />
-          <span className={styles.UserName}>{name}</span>
+          {/* Visible name first, then the hidden role hint, so the accessible name contains the
+              visible label (WCAG 2.5.3). dir="auto" keeps a Latin name ending right in RTL. */}
+          <span className={styles.UserName} dir="auto">
+            {name}
+          </span>
+          <span className="visually-hidden">, {s.accountMenu}</span>
         </button>
       }
     >

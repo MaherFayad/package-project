@@ -79,4 +79,4 @@
 }
 
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
-@keyframes rise { from { opacity: 0; transform: translateY(12px) scale(0.99); } to { opacity: 1; transform: none; } }
+@keyframes rise { from { opacity: 0; transform: translateY(var(--e-motion-distance)) scale(0.99); } to { opacity: 1; transform: none; } }

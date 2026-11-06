@@ -47,3 +47,11 @@ export function DueLabel({ dueDate, status, compact }: { dueDate: string | null;
     </Text>
   );
 }
+
+/** What was ordered: the exact library model ("FEFCO 0203 · Full overlap slotted container"),
+ *  or the box style for jobs placed before the model library. */
+export function useProductName() {
+  const { t, locale } = useI18n();
+  return (job: { structureCode: string; model?: { code: string; standard: string; name: { ar: string; en: string } } | null }) =>
+    job.model && job.model.code !== job.structureCode ? job.model.name[locale] : t(`structures.${job.structureCode}` as DictKey);
+}

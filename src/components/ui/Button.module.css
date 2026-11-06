@@ -153,6 +153,7 @@
 .Disclosure { display: inline-flex; margin-inline-end: calc(-1 * var(--p-space-100)); transition: transform var(--p-motion-duration-150); }
 .up { transform: rotate(180deg); }
 
+.loading { cursor: progress; }
 .disabled,
 .disabled:hover,
 .disabled:active {

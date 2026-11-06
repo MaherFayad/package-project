@@ -94,6 +94,10 @@ Entry point: `import { DEFINITIONS, describeBottle } from "@/lib/vessels/familie
 2. **Renderer** (`src/components/three/vessels`):
    - Revolve `profile.outer` with `sectionPointAtArc(bottleSection, r, u, s)` in place of the core rounded-rect helper, which also covers the hexagon.
    - Draw `profile.handle.path` as a `TubeGeometry`, and the petaloid feet (`base.feet`) as 5 lobes.
+   - Until then the 3D view draws the core closure named by `coreClosure` over `profile.finishH`, which is the height the
+     closure really covers (`closureCoverMm`: crown 6.5 mm, swing-top head 7.5 mm, cork capsule down the neck, else the finish).
+     Metal closures fall back to the metal `LUG_LID`; nothing may use the core `FLIP_TOP` (a tube cap drawn at y = 0).
+     `coreMaterial` never swaps colour family (green glass falls back to clear, natural HDPE / PP to frosted). See `docs/audit/3d-bottles.md`.
    - Draw closures from `BOTTLE_CLOSURES` (`heightAboveMm`, `skirtMm`, `extraDiameterMm`). Swing-top wire and lugs are not lathe parts.
    - Jerrycans: the real spout is off-centre towards one corner, but the lathe puts the neck on the axis. Offset it in the renderer if needed.
 3. **i18n / catalogue / prisma**: names and descriptions are in the definitions; slugs are unique and URL-safe. Seed
