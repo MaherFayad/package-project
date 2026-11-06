@@ -89,7 +89,7 @@ export default async function Page({ params }: Props) {
         <Lead className="m-enter-lcp">{e.description[locale]}</Lead>
         {e.source === "fefco-09" ? <p className={styles.heroNote}>{COPY.hostNote[locale]}</p> : null}
       </Sheet>
-      <Sheet tone="white" className={styles.sheetTop}>
+      <Sheet tone="white">
         <div className={styles.detail}>
           <DetailStage locale={locale} code={e.code} render={e.render} source={e.source} name={e.name[locale]} />
           <div className={styles.facts}>

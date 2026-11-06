@@ -16,6 +16,8 @@ import { Display, Eyebrow, Lead } from "./kit/Display";
 import { HeroTitle } from "./kit/HeroTitle";
 import { Pill, PillRow } from "./kit/Pill";
 import { Reveal } from "./kit/Reveal";
+import { SectionHead } from "./kit/SectionHead";
+import { Grid } from "./kit/Grid";
 import { MODELS } from "@/lib/library";
 import { formatNumber } from "@/lib/format";
 
@@ -63,7 +65,7 @@ export async function BoxesLanding({
             {t("marketing.boxes.secondary")}
           </Pill>
         </PillRow>
-        <p className={`${rs.small} m-enter`} style={{ marginBlockStart: 20 }}>
+        <p className={`${rs.small} ${rs.afterPills} m-enter`}>
           {t("marketing.boxes.already")}{" "}
           <Link href={`${base}/account`} className={rs.textLink}>
             {t("marketing.boxes.alreadyLink")}
@@ -93,47 +95,41 @@ export async function BoxesLanding({
         <p className={`${rs.small} ${rs.sampleNote} ${rs.heroLandingNote}`}>{SAMPLE_LABEL[locale]}</p>
       </Sheet>
 
-      <Sheet tone="white" className={rs.sheetTop} aria-label={t("marketing.boxes.eyebrow")}>
-        {FAMILIES.map((family) => {
-          const list = structures.filter((s) => s.family === family);
-          if (!list.length) return null;
-          return (
-            <section key={family} id={family} className={rs.section} aria-labelledby={`fam-${family}`} style={{ scrollMarginBlockStart: 96 }}>
-              <Reveal className={rs.head}>
-                <div>
-                  <Display size="56" id={`fam-${family}`}>
-                    {t(`marketing.boxes.family.${family}` as DictKey)}
-                  </Display>
-                  <Lead>{t(`marketing.boxes.familyBody.${family}` as DictKey)}</Lead>
-                </div>
-                <span className={rs.small}>{t("marketing.boxes.count", { count: list.length })}</span>
-              </Reveal>
-              <ul className={`${dt.cards} ${dt.rail}`} data-rail="">
-                {list.map((s, i) => (
-                  <ProductCard key={s.code} locale={locale} structure={s} fromPiasters={prices.get(s.code) ?? null} index={i} />
-                ))}
-              </ul>
-            </section>
-          );
-        })}
-      </Sheet>
+      {/* One white sheet per family: the first overlaps the hero, the next ones collapse onto it
+          to one --mk-section-y (spec section 7, rule 2). */}
+      {FAMILIES.map((family) => {
+        const list = structures.filter((s) => s.family === family);
+        if (!list.length) return null;
+        return (
+          <Sheet key={family} tone="white" id={family} className={rs.anchor} aria-labelledby={`fam-${family}`}>
+            <SectionHead
+              id={`fam-${family}`}
+              eyebrow={t("marketing.boxes.count", { count: list.length })}
+              title={t(`marketing.boxes.family.${family}` as DictKey)}
+              sub={t(`marketing.boxes.familyBody.${family}` as DictKey)}
+            >
+              <div data-rail="">
+                <Grid as="ul" cols={3} colsMd={2} colsSm={1} className={`${dt.cards} ${dt.rail}`}>
+                  {list.map((s, i) => (
+                    <ProductCard key={s.code} locale={locale} structure={s} fromPiasters={prices.get(s.code) ?? null} index={i} />
+                  ))}
+                </Grid>
+              </div>
+            </SectionHead>
+          </Sheet>
+        );
+      })}
 
       {!library ? (
         <>
           <Sheet tone="light" aria-labelledby="all-models-title">
-            <Reveal className={rs.head} style={{ marginBlockEnd: 0 }}>
-              <div>
-                <Display size="56" id="all-models-title">
-                  {t("library.catalog.heading")}
-                </Display>
-                <Lead>{t("library.catalog.subtitle", { count: formatNumber(MODELS.length) })}</Lead>
-              </div>
+            <SectionHead id="all-models-title" title={t("library.catalog.heading")} sub={t("library.catalog.subtitle", { count: formatNumber(MODELS.length) })}>
               <Pill href={`${base}/catalog#all-models`} variant="outline-dark" size="lg">
                 {t("marketing.boxes.libraryCta", { count: formatNumber(MODELS.length) })}
               </Pill>
-            </Reveal>
+            </SectionHead>
           </Sheet>
-          <Sheet tone="dark" className={rs.clip} container="narrow" aria-labelledby="boxes-cta-title">
+          <Sheet tone="dark" y="xl" className={rs.clip} container="narrow" aria-labelledby="boxes-cta-title">
             <Glow color="violet" x="85%" y="0%" size="70vmax" />
             <Glow color="green" x="5%" y="110%" size="45vmax" />
             <Reveal className={rs.heroCenter}>
@@ -153,16 +149,10 @@ export async function BoxesLanding({
           </Sheet>
         </>
       ) : (
-        <Sheet tone="white" id="all-models" aria-labelledby="all-models-title" style={{ scrollMarginBlockStart: 96 }}>
-          <div className={rs.head}>
-            <div>
-              <Display size="56" id="all-models-title">
-                {t("library.catalog.heading")}
-              </Display>
-              <Lead>{t("library.catalog.subtitle", { count: formatNumber(MODELS.length) })}</Lead>
-            </div>
-          </div>
-          {library}
+        <Sheet tone="white" id="all-models" className={rs.anchor} aria-labelledby="all-models-title">
+          <SectionHead id="all-models-title" title={t("library.catalog.heading")} sub={t("library.catalog.subtitle", { count: formatNumber(MODELS.length) })}>
+            {library}
+          </SectionHead>
         </Sheet>
       )}
     </div>

@@ -63,7 +63,7 @@ export default async function LegalPage({ params }: Props) {
           {t("legal.draftBanner")}
         </span>
       </Sheet>
-      <Sheet tone="white" className={rs.sheetTop}>
+      <Sheet tone="white">
         <div className={lg.legalGrid}>
           <aside className={lg.toc} aria-label={t("legal.contents")}>
             <nav aria-labelledby="toc-title" id="legal-toc">

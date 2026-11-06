@@ -142,7 +142,7 @@ export function StructureDetail({
           </figure>
         </div>
       </Sheet>
-      <Sheet tone="white" className={rs.sheetTop}>
+      <Sheet tone="white">
         <Layout>
           <LayoutSection>
             <div className={dt.stack}>

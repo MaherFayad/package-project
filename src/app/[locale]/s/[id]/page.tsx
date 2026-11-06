@@ -109,7 +109,7 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
     <div className={styles.page}>
       {/* No `hero`: this page streams in after the header (force-dynamic, guarded layout), and the
           hero's transparent-header offset applied late shifted <main> by the header height (CLS 0.08). */}
-      <Sheet tone="dark" overlap={false} className={`${styles.hero} ${styles.clip}`} aria-labelledby="share-title">
+      <Sheet tone="dark" overlap={false} y="lg" className={styles.clip} aria-labelledby="share-title">
         <Glow color="violet" x="85%" y="0%" size="70vmax" />
         <Glow color="green" x="5%" y="110%" size="45vmax" />
         <Eyebrow>{styleName}</Eyebrow>
@@ -118,7 +118,7 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
         </Display>
         <Lead>{t(isVessel ? "designer.shared.subtitleDesign" : "designer.shared.subtitle")}</Lead>
       </Sheet>
-      <Sheet tone="white" className={styles.sheetTop}>
+      <Sheet tone="white">
         <div className={styles.layout}>
           <div className={styles.viewerTile}>
             <SharedViewerLazy doc={doc} poster={inlinePublicImage(`/models/${encodeURIComponent(modelCode)}.webp`)} />
@@ -140,9 +140,7 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
               {/* R5-JR-15: this unit is after the prepay discount (tierPrices), the designer's badge is
                   before it; say which, so the two numbers read as one price. */}
               {price && prepayDiscountPct > 0 ? <p className={styles.small}>{t("designer.shared.prepayNote", { pct: prepayDiscountPct })}</p> : null}
-              <p className={styles.muted} style={{ margin: 0 }}>
-                {reason ? ORDER_MODE_COPY[reason][locale] : t("designer.shared.ctaHelp")}
-              </p>
+              <p className={styles.muted}>{reason ? ORDER_MODE_COPY[reason][locale] : t("designer.shared.ctaHelp")}</p>
               <Pill href={orderHref} size="lg" className={styles.full}>
                 {byQuote ? t("designer.price.quoteAction") : isVessel ? t("designer.container.order") : t("designer.shared.cta")}
               </Pill>

@@ -65,7 +65,7 @@ export default async function CatalogPage({ params }: Props) {
           ))}
         </dl>
       </Sheet>
-      <Sheet tone="white" className={styles.sheetTop} aria-label={COPY.eyebrow[locale]}>
+      <Sheet tone="white" aria-label={COPY.eyebrow[locale]}>
         <CatalogueBrowser locale={locale} cards={data.cards} taxonomy={data.taxonomy} />
       </Sheet>
     </div>

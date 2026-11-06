@@ -129,9 +129,7 @@ export default async function VendorProfilePage({ params }: Props) {
                 {t("marketing.printers.all")}
               </Pill>
             </PillRow>
-            <p className={`${rs.small} m-enter`} style={{ marginBlockStart: 16 }}>
-              {t("store.vendor.designHint")}
-            </p>
+            <p className={`${rs.small} ${rs.afterPills} m-enter`}>{t("store.vendor.designHint")}</p>
           </div>
           <dl className={`${rs.stats} ${rs.stats2} m-enter`} aria-label={t("store.vendor.statsTitle")}>
             <div className={rs.stat}>
@@ -160,7 +158,7 @@ export default async function VendorProfilePage({ params }: Props) {
         </div>
       </Sheet>
 
-      <Sheet tone="white" className={rs.sheetTop} aria-label={t("store.vendor.about")}>
+      <Sheet tone="white" aria-label={t("store.vendor.about")}>
         <Layout>
           <LayoutSection>
             <div className={dt.stack}>

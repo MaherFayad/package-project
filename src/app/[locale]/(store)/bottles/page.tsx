@@ -11,7 +11,7 @@ import { SAMPLE_LABEL } from "@/components/marketing/kit/assets";
 import { Eyebrow, Lead } from "@/components/marketing/kit/Display";
 import { HeroTitle } from "@/components/marketing/kit/HeroTitle";
 import { Pill, PillRow } from "@/components/marketing/kit/Pill";
-import { Stagger } from "@/components/marketing/kit/Reveal";
+import { Grid } from "@/components/marketing/kit/Grid";
 
 /** Prerendered; prices and printer data refresh hourly (ISR). */
 export const revalidate = 3600;
@@ -78,13 +78,13 @@ export default async function BottlesPage({ params }: Props) {
         </div>
         <p className={`${rs.small} ${rs.sampleNote} ${rs.heroLandingNote}`}>{SAMPLE_LABEL[locale]}</p>
       </Sheet>
-      <Sheet tone="white" className={rs.sheetTop} aria-labelledby="vessels-title">
+      <Sheet tone="white" aria-labelledby="vessels-title">
         <h2 id="vessels-title" className="visually-hidden">
           {t("marketing.bottles.eyebrow")}
         </h2>
-        <Stagger as="ul" className={`${dt.cards} ${dt.five}`}>
-          {VESSEL_RENDERS.map((v) => (
-            <li key={v}>
+        <Grid as="ul" cols={5} colsMd={2} colsSm={1} className={dt.cards}>
+          {VESSEL_RENDERS.map((v, i) => (
+            <li key={v} data-reveal="" suppressHydrationWarning style={{ ["--m-i" as string]: i % 4 }}>
               <article className={dt.card}>
                 <div className={dt.cardMedia}>
                   <span className={`${dt.tag} ${dt.soon}`}>{t("marketing.bottles.soon")}</span>
@@ -106,7 +106,7 @@ export default async function BottlesPage({ params }: Props) {
               </article>
             </li>
           ))}
-        </Stagger>
+        </Grid>
       </Sheet>
     </div>
   );
