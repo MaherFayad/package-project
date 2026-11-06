@@ -1,73 +1,48 @@
 import { getT } from "@/i18n";
 import type { Locale } from "@/types";
-import { designHref } from "@/components/store/catalog";
 import { AccountLink } from "./AccountLink";
-import { HeaderNav, type NavModel } from "./HeaderNav";
+import { HeaderNav, type NavSlots } from "./HeaderNav";
+import { startHref } from "./navModel";
 import { LangLink } from "./LangLink";
 import { StartLink } from "./StartLink";
 import { Wordmark } from "./Wordmark";
-import styles from "./marketing.module.css";
+import styles from "./kit/chrome.module.css";
+
+export { startHref };
 
 /**
- * White marketing header: wordmark, Products / Printers menus, Box styles, How it works, Log in (an
- * account menu with sign-out once signed in) + black pill. It reads no cookies: the signed-in parts (account link, orders, portal links) are
- * client islands, so every page under the marketing layout can be prerendered.
+ * Marketing header (shopify.com 2026 language): wordmark, Products and Why Elba mega-menus,
+ * Pricing and Box styles links; language, Log in and a white "Start free" pill at the end.
+ * Transparent over a <Sheet hero> and solid once the page scrolls (see HeaderNav). It reads no
+ * cookies: the signed-in parts are client islands, so every page under the shell prerenders.
  */
 export function MarketingHeader({ locale }: { locale: Locale }) {
   const t = getT(locale);
   const base = `/${locale}`;
-  const start = designHref(locale, { structure: "FEFCO_0427" });
-  const login = { href: `${base}/login`, label: t("marketing.nav.login") };
-  const account = { href: `${base}/account`, label: t("marketing.nav.account") };
+  const start = startHref(locale);
+  const login = { href: `${base}/login`, label: t("mk.nav.login") };
+  const account = { href: `${base}/account`, label: t("mk.nav.account") };
   const signOut = t("nav.signOut");
 
-  const model: NavModel = {
-    label: t("marketing.nav.label"),
-    homeHref: base,
+  const slots: NavSlots = {
     brand: <Wordmark locale={locale} />,
-    brandLabel: `${t("meta.siteName")}, ${t("nav.home")}`,
-    menuLabel: t("marketing.nav.menu"),
-    closeLabel: t("marketing.nav.close"),
-    products: {
-      label: t("marketing.nav.products"),
-      items: [
-        { href: `${base}/boxes`, title: t("marketing.nav.productsMenu.boxes"), body: t("marketing.nav.productsMenu.boxesBody"), icon: "boxes" },
-        { href: `${base}/boxes#FOLDING_CARTON`, title: t("marketing.nav.productsMenu.cartons"), body: t("marketing.nav.productsMenu.cartonsBody"), icon: "cartons" },
-        { href: `${base}/bottles`, title: t("marketing.nav.productsMenu.bottles"), body: t("marketing.nav.productsMenu.bottlesBody"), icon: "bottles" },
-        { href: `${base}/design`, title: t("marketing.nav.productsMenu.designer"), body: t("marketing.nav.productsMenu.designerBody"), icon: "designer" },
-      ],
-    },
-    printers: {
-      label: t("marketing.nav.printers"),
-      items: [
-        { href: `${base}/vendors`, title: t("marketing.nav.printersMenu.directory"), body: t("marketing.nav.printersMenu.directoryBody"), icon: "directory" },
-        { href: `${base}/vendor/apply`, title: t("marketing.nav.printersMenu.join"), body: t("marketing.nav.printersMenu.joinBody"), icon: "join" },
-      ],
-    },
-    links: [
-      // CR-55: this item opens the box catalogue, so it is named for it (prices live on each style page).
-      { href: `${base}/catalog`, label: t("nav.catalog") },
-      { href: `${base}#how`, label: t("marketing.nav.how") },
-    ],
-    signedInLinks: {
-      orders: { href: `${base}/orders`, label: t("nav.orders") },
-      vendor: { href: `${base}/vendor`, label: t("nav.vendorPortal") },
-      admin: { href: `${base}/admin`, label: t("nav.admin") },
-    },
+    mobileActions: <StartLink href={start} label={t("mk.nav.start")} signedInLabel={t("mk.nav.newDesign")} className={`${styles.textLink} ${styles.ctaMobile} ${styles.mobileOnly}`} />,
     sheetActions: (
       <>
-        <StartLink href={start} label={t("marketing.nav.start")} signedInLabel={t("marketing.nav.newDesign")} className={`${styles.pill} ${styles.pillLarge}`} />
-        <AccountLink variant="sheet" login={login} account={account} signOutLabel={signOut} home={base} className={`${styles.pill} ${styles.pillOutline} ${styles.pillLarge}`} />
-        <LangLink className={styles.langLink} />
+        <StartLink href={start} label={t("mk.nav.start")} signedInLabel={t("mk.nav.newDesign")} className={styles.ctaPill} />
+        <AccountLink variant="sheet" login={login} account={account} signOutLabel={signOut} home={base} className={styles.outlinePill} />
+        <LangLink className={`${styles.textLink} ${styles.mobileLang}`} />
       </>
     ),
   };
 
   return (
-    <HeaderNav model={model}>
-      <LangLink className={`${styles.langLink} ${styles.langDesktop}`} />
-      <AccountLink login={login} account={account} signOutLabel={signOut} home={base} className={`${styles.navLink} ${styles.loginLink}`} />
-      <StartLink href={start} label={t("marketing.nav.start")} signedInLabel={t("marketing.nav.newDesign")} className={`${styles.pill} ${styles.pillSmall} ${styles.headerCta}`} />
+    <HeaderNav slots={slots}>
+      <LangLink className={`${styles.textLink} ${styles.desktopOnly}`} />
+      <span className={styles.desktopOnly}>
+        <AccountLink login={login} account={account} signOutLabel={signOut} home={base} className={styles.textLink} />
+      </span>
+      <StartLink href={start} label={t("mk.nav.start")} signedInLabel={t("mk.nav.newDesign")} className={`${styles.ctaPill} ${styles.desktopOnly}`} />
     </HeaderNav>
   );
 }

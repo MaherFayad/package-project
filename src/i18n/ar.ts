@@ -3,6 +3,7 @@ import { designerAr } from "./designer.ar";
 import { vendorPortalAr } from "./vendorPortal.ar";
 import { checkoutAr } from "./checkout.ar";
 import { adminAr } from "./admin.ar";
+import { kitAr } from "./kit.ar";
 import { marketingAr } from "./marketing.ar";
 import { libraryAr } from "./library.ar";
 
@@ -243,6 +244,7 @@ export const ar: Dictionary = {
   admin: adminAr,
   library: libraryAr,
   marketing: marketingAr,
+  mk: kitAr,
   viewer: {
     label: "معاينة ثلاثية الأبعاد للعلبة",
     roleDescription: "عارض ثلاثي الأبعاد",
