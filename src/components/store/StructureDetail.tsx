@@ -14,6 +14,10 @@ import styles from "./store.module.css";
 /** The hero render is about 74% of a phone viewport (was declared 92vw, which picked the full file). */
 const HERO_SIZES = "(min-width: 1024px) 600px, 74vw";
 import rs from "@/components/marketing/restyle/restyle.module.css";
+import dt from "@/components/marketing/restyle/detail.module.css";
+import { Sheet } from "@/components/marketing/kit/Sheet";
+import { Display, Eyebrow, Lead } from "@/components/marketing/kit/Display";
+import { Pill, PillRow } from "@/components/marketing/kit/Pill";
 import { renderSrc } from "@/components/marketing/assets";
 import { HeroImage } from "@/components/marketing/HeroImage";
 
@@ -78,8 +82,8 @@ export function StructureDetail({
 
   return (
     <div className={rs.page}>
-      <section className={`${rs.dark} ${rs.glow} ${rs.hero}`} aria-labelledby="structure-title">
-        <div className={`${rs.container} ${rs.split}`}>
+      <Sheet tone="dark" hero className={`${rs.heroCompact} ${rs.glow}`} aria-labelledby="structure-title">
+        <div className={rs.split}>
           <div>
             <nav aria-label={t("store.breadcrumb")} className={`${rs.crumbs} m-enter`}>
               <ol>
@@ -88,15 +92,11 @@ export function StructureDetail({
                 ))}
               </ol>
             </nav>
-            <p className={`${rs.eyebrow} m-enter`} style={{ ["--m-i" as string]: 1 }}>
-              {t(`marketing.boxes.family.${structure.family}` as DictKey)}
-            </p>
-            <h1 id="structure-title" className={`${rs.h1} m-enter-lcp`} style={{ ["--m-i" as string]: 2 }}>
+            <Eyebrow className="m-enter">{t(`marketing.boxes.family.${structure.family}` as DictKey)}</Eyebrow>
+            <Display as="h1" size="64" id="structure-title" className="m-enter-lcp">
               {title}
-            </h1>
-            <p className={`${rs.lead} m-enter-lcp`} style={{ ["--m-i" as string]: 3 }}>
-              {intro}
-            </p>
+            </Display>
+            <Lead className="m-enter-lcp">{intro}</Lead>
             <ul className={`${rs.chips} m-enter`} style={{ ["--m-i" as string]: 4 }}>
               {/^FEFCO_/.test(structure.code) ? (
                 <li>
@@ -113,182 +113,180 @@ export function StructureDetail({
                 {t("store.structure.minimumValue")}
               </li>
             </ul>
-            <div className={`${rs.actions} m-enter`} style={{ ["--m-i" as string]: 5 }}>
-              <Link href={cta} className={rs.pill}>
+            <PillRow className="m-enter">
+              <Pill href={cta} size="lg">
                 {t("store.structure.designCta")}
-              </Link>
-              <a href="#prices" className={`${rs.pill} ${rs.pillOutline}`}>
+              </Pill>
+              <Pill href="#prices" variant="outline" size="lg">
                 {t("marketing.nav.pricing")}
-              </a>
-            </div>
+              </Pill>
+            </PillRow>
           </div>
           <div className={`${rs.mediaCard} m-enter-scale`} style={{ ["--m-i" as string]: 2 }}>
             {/* The hero render is the LCP on phones: AVIF, preloaded from <head> (R4-MK-06). */}
             <HeroImage src={renderSrc(structure.code)} sizes={HERO_SIZES} alt={t("marketing.boxes.renderAlt", { name })} width={960} height={720} />
           </div>
         </div>
-      </section>
-      <div className={rs.sheet}>
-        <div className={rs.container}>
-          <Layout>
-            <LayoutSection>
-              <div className={rs.stack}>
-                <div id="prices" style={{ scrollMarginBlockStart: 96 }} />
-                <PriceFromTable locale={locale} dims={dims} price={price} />
+      </Sheet>
+      <Sheet tone="white" className={rs.sheetTop}>
+        <Layout>
+          <LayoutSection>
+            <div className={dt.stack}>
+              <div id="prices" style={{ scrollMarginBlockStart: 96 }} />
+              <PriceFromTable locale={locale} dims={dims} price={price} />
 
-                <Card title={t("store.structure.specsTitle")} as="section">
-                  <dl className={styles.specs}>
-                    <div className={styles.specRow}>
-                      <dt>{t("store.structure.family")}</dt>
-                      <dd>{t(`store.catalog.family.${structure.family}` as DictKey)}</dd>
-                    </div>
-                    <div className={styles.specRow}>
-                      <dt>{t("store.structure.defaultSize")}</dt>
-                      <dd>{formatDims(structure.defaultDims, locale)}</dd>
-                    </div>
-                    {(["L", "W", "H"] as const).map((k) => (
-                      <div key={k} className={styles.specRow}>
-                        <dt>
-                          {t(`store.structure.dimension.${k}` as DictKey)} ({t("common.mm")})
-                        </dt>
-                        <dd>
-                          <bdi>
-                            {t("store.structure.rangeValue", {
-                              min: formatNumber(p[k].min),
-                              max: formatNumber(p[k].max),
-                            })}
-                          </bdi>
-                        </dd>
-                      </div>
-                    ))}
-                    {p.rules?.length ? (
-                      <div className={styles.specRow}>
-                        <dt>{t("store.structure.rules")}</dt>
-                        <dd>{p.rules.map((r) => (RULE_KEYS[r] ? t(RULE_KEYS[r]) : r)).join(" ")}</dd>
-                      </div>
-                    ) : null}
-                    <div className={styles.specRow}>
-                      <dt>{t("store.structure.printing")}</dt>
-                      <dd>{t("store.structure.printingValue")}</dd>
-                    </div>
-                    <div className={styles.specRow}>
-                      <dt>{t("store.structure.finishes")}</dt>
+              <Card title={t("store.structure.specsTitle")} as="section">
+                <dl className={styles.specs}>
+                  <div className={styles.specRow}>
+                    <dt>{t("store.structure.family")}</dt>
+                    <dd>{t(`store.catalog.family.${structure.family}` as DictKey)}</dd>
+                  </div>
+                  <div className={styles.specRow}>
+                    <dt>{t("store.structure.defaultSize")}</dt>
+                    <dd>{formatDims(structure.defaultDims, locale)}</dd>
+                  </div>
+                  {(["L", "W", "H"] as const).map((k) => (
+                    <div key={k} className={styles.specRow}>
+                      <dt>
+                        {t(`store.structure.dimension.${k}` as DictKey)} ({t("common.mm")})
+                      </dt>
                       <dd>
-                        {(["MATTE_LAMINATION", "GLOSS_LAMINATION", "SPOT_UV"] as const)
-                          .map((f) => t(`finishes.${f}` as DictKey))
-                          .join(locale === "ar" ? "، " : ", ")}
+                        <bdi>
+                          {t("store.structure.rangeValue", {
+                            min: formatNumber(p[k].min),
+                            max: formatNumber(p[k].max),
+                          })}
+                        </bdi>
                       </dd>
                     </div>
+                  ))}
+                  {p.rules?.length ? (
                     <div className={styles.specRow}>
-                      <dt>{t("store.structure.minimum")}</dt>
-                      <dd>{t("store.structure.minimumValue")}</dd>
+                      <dt>{t("store.structure.rules")}</dt>
+                      <dd>{p.rules.map((r) => (RULE_KEYS[r] ? t(RULE_KEYS[r]) : r)).join(" ")}</dd>
                     </div>
-                  </dl>
-                </Card>
+                  ) : null}
+                  <div className={styles.specRow}>
+                    <dt>{t("store.structure.printing")}</dt>
+                    <dd>{t("store.structure.printingValue")}</dd>
+                  </div>
+                  <div className={styles.specRow}>
+                    <dt>{t("store.structure.finishes")}</dt>
+                    <dd>
+                      {(["MATTE_LAMINATION", "GLOSS_LAMINATION", "SPOT_UV"] as const)
+                        .map((f) => t(`finishes.${f}` as DictKey))
+                        .join(locale === "ar" ? "، " : ", ")}
+                    </dd>
+                  </div>
+                  <div className={styles.specRow}>
+                    <dt>{t("store.structure.minimum")}</dt>
+                    <dd>{t("store.structure.minimumValue")}</dd>
+                  </div>
+                </dl>
+              </Card>
 
-                <Card title={t("store.structure.sizesTitle")} as="section">
+              <Card title={t("store.structure.sizesTitle")} as="section">
+                <div className={styles.prose}>
+                  <Text as="p" tone="subdued">
+                    {t("store.structure.sizesBody")}
+                  </Text>
+                  <ul className={styles.chips}>
+                    {sizes.map((s) => {
+                      const current = currentSize && sizeSlug(currentSize) === sizeSlug(s.dims);
+                      return (
+                        <li key={sizeSlug(s.dims)}>
+                          <Link href={sizeHref(locale, structure.code, s.dims)} className={styles.chip} aria-current={current ? "page" : undefined}>
+                            <Icon source={Ruler} size="small" />
+                            <span>
+                              {s.label ? `${s.label} · ` : ""}
+                              {formatDims(s.dims, locale)}
+                            </span>
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  <Text as="h3" variant="headingSm">
+                    {t("store.structure.customTitle")}
+                  </Text>
+                  <Text as="p" tone="subdued">
+                    {t("store.structure.customBody")}
+                  </Text>
+                </div>
+              </Card>
+
+              <Card title={t("store.structure.materialsTitle")} as="section">
+                <dl className={styles.specs}>
+                  {mats.map((m) => (
+                    <div key={m.code} className={styles.specRow}>
+                      <dt>{t(`materials.${m.code}` as DictKey)}</dt>
+                      <dd>
+                        <span>
+                          {t("store.structure.materialSpec", {
+                            gsm: m.gsm,
+                            mm: m.thicknessMm,
+                          })}
+                        </span>{" "}
+                        {m.foodSafe ? <Badge tone="info">{t("store.structure.foodSafe")}</Badge> : null}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </Card>
+            </div>
+          </LayoutSection>
+
+          <LayoutSection variant="oneThird" as="aside" aria-label={t("store.structure.designCta")}>
+            <div className={dt.stack}>
+              <Card tone="dark">
+                <div className={styles.ctaCard}>
+                  <Text as="h2" variant="headingMd">
+                    {name}
+                  </Text>
+                  <Text as="p" numeric>
+                    {formatDims(dims, locale)}
+                  </Text>
+                  <Pill href={cta} size="lg" className={styles.ctaFull}>
+                    {t("store.structure.designCta")}
+                  </Pill>
+                  <Text as="p" variant="bodySm" tone="subdued">
+                    {t("store.structure.designHint")}
+                  </Text>
+                </div>
+              </Card>
+              {makers.length ? (
+                <Card title={t("store.structure.vendorsTitle")} as="section">
                   <div className={styles.prose}>
                     <Text as="p" tone="subdued">
-                      {t("store.structure.sizesBody")}
-                    </Text>
-                    <ul className={styles.chips}>
-                      {sizes.map((s) => {
-                        const current = currentSize && sizeSlug(currentSize) === sizeSlug(s.dims);
-                        return (
-                          <li key={sizeSlug(s.dims)}>
-                            <Link href={sizeHref(locale, structure.code, s.dims)} className={styles.chip} aria-current={current ? "page" : undefined}>
-                              <Icon source={Ruler} size="small" />
-                              <span>
-                                {s.label ? `${s.label} · ` : ""}
-                                {formatDims(s.dims, locale)}
-                              </span>
-                            </Link>
-                          </li>
-                        );
+                      {t("store.structure.vendorsCount", {
+                        count: makers.length,
                       })}
+                    </Text>
+                    <ul className={`${styles.plainList} ${styles.makerList}`}>
+                      {makers.slice(0, 5).map((v) => (
+                        <li key={v.id} className={styles.designRow}>
+                          <div className={styles.designMain}>
+                            <Link href={`/${locale}/vendors/${v.slug}`}>{pick(locale, v.name.ar, v.name.en)}</Link>
+                            <Text as="span" variant="bodySm" tone="subdued">
+                              {t(`cities.${v.city}` as DictKey)} ·{" "}
+                              {t("store.vendors.leadValue", {
+                                days: v.leadTimeDays,
+                              })}
+                            </Text>
+                          </div>
+                        </li>
+                      ))}
                     </ul>
-                    <Text as="h3" variant="headingSm">
-                      {t("store.structure.customTitle")}
-                    </Text>
-                    <Text as="p" tone="subdued">
-                      {t("store.structure.customBody")}
-                    </Text>
-                  </div>
-                </Card>
-
-                <Card title={t("store.structure.materialsTitle")} as="section">
-                  <dl className={styles.specs}>
-                    {mats.map((m) => (
-                      <div key={m.code} className={styles.specRow}>
-                        <dt>{t(`materials.${m.code}` as DictKey)}</dt>
-                        <dd>
-                          <span>
-                            {t("store.structure.materialSpec", {
-                              gsm: m.gsm,
-                              mm: m.thicknessMm,
-                            })}
-                          </span>{" "}
-                          {m.foodSafe ? <Badge tone="info">{t("store.structure.foodSafe")}</Badge> : null}
-                        </dd>
-                      </div>
-                    ))}
-                  </dl>
-                </Card>
-              </div>
-            </LayoutSection>
-
-            <LayoutSection variant="oneThird" as="aside" aria-label={t("store.structure.designCta")}>
-              <div className={rs.stack}>
-                <Card tone="dark">
-                  <div className={styles.ctaCard}>
-                    <Text as="h2" variant="headingMd">
-                      {name}
-                    </Text>
-                    <Text as="p" numeric>
-                      {formatDims(dims, locale)}
-                    </Text>
-                    <Link href={cta} className={`${rs.pill} ${styles.ctaFull}`}>
-                      {t("store.structure.designCta")}
+                    <Link href={`/${locale}/vendors?structure=${structure.code}`} className={styles.textLink}>
+                      {t("store.home.vendorsAll")}
                     </Link>
-                    <Text as="p" variant="bodySm" tone="subdued">
-                      {t("store.structure.designHint")}
-                    </Text>
                   </div>
                 </Card>
-                {makers.length ? (
-                  <Card title={t("store.structure.vendorsTitle")} as="section">
-                    <div className={styles.prose}>
-                      <Text as="p" tone="subdued">
-                        {t("store.structure.vendorsCount", {
-                          count: makers.length,
-                        })}
-                      </Text>
-                      <ul className={`${styles.plainList} ${styles.makerList}`}>
-                        {makers.slice(0, 5).map((v) => (
-                          <li key={v.id} className={styles.designRow}>
-                            <div className={styles.designMain}>
-                              <Link href={`/${locale}/vendors/${v.slug}`}>{pick(locale, v.name.ar, v.name.en)}</Link>
-                              <Text as="span" variant="bodySm" tone="subdued">
-                                {t(`cities.${v.city}` as DictKey)} ·{" "}
-                                {t("store.vendors.leadValue", {
-                                  days: v.leadTimeDays,
-                                })}
-                              </Text>
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                      <Link href={`/${locale}/vendors?structure=${structure.code}`} className={styles.textLink}>
-                        {t("store.home.vendorsAll")}
-                      </Link>
-                    </div>
-                  </Card>
-                ) : null}
-              </div>
-            </LayoutSection>
-          </Layout>
-        </div>
-      </div>
+              ) : null}
+            </div>
+          </LayoutSection>
+        </Layout>
+      </Sheet>
     </div>
   );
 }

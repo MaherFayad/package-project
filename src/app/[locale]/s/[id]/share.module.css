@@ -1,29 +1,23 @@
+/* Share page (R6 restyle): 3D viewer on a grey tile, order card in the dark tone, specs list. */
+.viewerTile { border-radius: 24px; background: var(--mk-sheet, #f5f5f3); overflow: hidden; }
 /* Placeholder with the viewer's footprint while its chunk loads (no layout shift). */
-.viewerSkeleton {
-  block-size: min(70dvh, 36rem);
-  min-block-size: 24rem;
-  border-radius: var(--p-border-radius-300);
-  background: var(--p-color-bg-surface-secondary);
-}
 .viewerSkeleton {
   display: grid;
   place-items: center;
   overflow: hidden;
+  block-size: min(70dvh, 36rem);
+  min-block-size: 24rem;
+  border-radius: 24px;
+  background: var(--mk-sheet, #f5f5f3);
 }
 /* A hair wider than the 3D poster that replaces it (LCP keeps the first paint of the box
    unless a later element is strictly larger); the 2% is not visible in the cross-fade. */
-.viewerPoster {
-  inline-size: 102%;
-  max-inline-size: none;
-  block-size: 100%;
-  object-fit: contain;
-}
+.viewerPoster { inline-size: 102%; max-inline-size: none; block-size: 100%; object-fit: contain; }
 /* R4-12: headline price above the order button, the first thing a visitor reads in the card. */
-.price {
-  margin: 0;
-  font-size: var(--p-font-size-400, 1rem);
-  line-height: 1.5;
-  font-weight: var(--p-font-weight-semibold, 600);
-  font-variant-numeric: tabular-nums;
-  color: var(--p-color-text);
-}
+.price { margin: 0; font-size: var(--mk-fs-20, 1.25rem); line-height: 1.4; font-weight: 450; font-variant-numeric: tabular-nums; }
+.full { inline-size: 100%; white-space: normal; text-align: center; }
+.specs { display: grid; margin: 0; }
+.specs > div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 16px; padding-block: 12px; border-block-start: 1px solid var(--mk-line-light); }
+.specs > div:first-child { border-block-start: 0; padding-block-start: 0; }
+.specs dt { color: var(--mk-on-light-muted); }
+.specs dd { margin: 0; font-weight: 550; }

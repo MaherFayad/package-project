@@ -7,8 +7,9 @@ import { formatNumber } from "@/lib/format";
 import { CatalogueBrowser } from "@/components/catalogue/CatalogueBrowser";
 import { COPY, fill } from "@/components/catalogue/copy";
 import { getCatalogueData } from "@/components/catalogue/server";
-import mk from "@/components/marketing/marketing.module.css";
-import styles from "@/components/catalogue/catalogue.module.css";
+import rs from "@/components/marketing/restyle/restyle.module.css";
+import { Sheet } from "@/components/marketing/kit/Sheet";
+import { Display, Eyebrow, Lead } from "@/components/marketing/kit/Display";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -35,44 +36,36 @@ export default async function CatalogPage({ params }: Props) {
   const base = siteUrl();
   const data = await getCatalogueData();
   return (
-    <>
+    <div className={rs.page}>
       <JsonLd
         data={breadcrumbJsonLd([
           { name: t("nav.home"), url: `${base}/${locale}` },
           { name: t("nav.catalog"), url: `${base}/${locale}/catalog` },
         ])}
       />
-      <section className={`${mk.band} ${mk.bandMint}`} aria-labelledby="catalogue-title" style={{ paddingBlockStart: "clamp(48px, 6vw, 80px)", paddingBlockEnd: 40 }}>
-        <div className={mk.container}>
-          <span className={`${mk.eyebrow} m-enter`}>{COPY.eyebrow[locale]}</span>
-          <h1 id="catalogue-title" className={`${mk.h1} m-enter`} style={{ ["--m-i" as string]: 1 }}>
-            {COPY.title[locale]}
-          </h1>
-          <p className={`${mk.lead} m-enter`} style={{ ["--m-i" as string]: 2, marginBlockStart: 20 }}>
-            {fill(COPY.lead[locale], { count: formatNumber(data.counts.total) })}
-          </p>
-          <dl className={`${styles.stats} m-enter`} style={{ ["--m-i" as string]: 3 }}>
-            {[
-              [data.counts.total, COPY.statModels],
-              [data.counts.designer, COPY.statDesigner],
-              [data.counts.egypt, COPY.statEgypt],
-              [data.counts.instant, COPY.statInstant],
-            ].map(([n, label]) => (
-              <div key={(label as { en: string }).en} className={styles.stat}>
-                <dt className={styles.statLabel}>{(label as { ar: string; en: string })[locale]}</dt>
-                <dd className={styles.statNum} style={{ order: -1, margin: 0 }}>
-                  {formatNumber(n as number)}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-      </section>
-      <section className={mk.band} style={{ paddingBlockStart: 0 }} aria-label={COPY.eyebrow[locale]}>
-        <div className={mk.container}>
-          <CatalogueBrowser locale={locale} cards={data.cards} taxonomy={data.taxonomy} />
-        </div>
-      </section>
-    </>
+      <Sheet tone="dark" hero className={`${rs.heroCompact} ${rs.glow}`} aria-labelledby="catalogue-title">
+        <Eyebrow className="m-enter">{COPY.eyebrow[locale]}</Eyebrow>
+        <Display as="h1" size="64" id="catalogue-title" className="m-enter-lcp">
+          {COPY.title[locale]}
+        </Display>
+        <Lead className="m-enter-lcp">{fill(COPY.lead[locale], { count: formatNumber(data.counts.total) })}</Lead>
+        <dl className={`${rs.stats} m-enter`}>
+          {[
+            [data.counts.total, COPY.statModels],
+            [data.counts.designer, COPY.statDesigner],
+            [data.counts.egypt, COPY.statEgypt],
+            [data.counts.instant, COPY.statInstant],
+          ].map(([n, label]) => (
+            <div key={(label as { en: string }).en} className={rs.stat}>
+              <dt className={rs.statLabel}>{(label as { ar: string; en: string })[locale]}</dt>
+              <dd className={rs.statNum}>{formatNumber(n as number)}</dd>
+            </div>
+          ))}
+        </dl>
+      </Sheet>
+      <Sheet tone="white" className={rs.sheetTop} aria-label={COPY.eyebrow[locale]}>
+        <CatalogueBrowser locale={locale} cards={data.cards} taxonomy={data.taxonomy} />
+      </Sheet>
+    </div>
   );
 }

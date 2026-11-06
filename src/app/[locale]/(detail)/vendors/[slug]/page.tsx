@@ -16,7 +16,11 @@ import { designHref } from "@/components/store/catalog";
 import { getVendorBySlug } from "@/components/store/data";
 import Link from "next/link";
 import styles from "@/components/store/store.module.css";
-import mk from "@/components/marketing/marketing.module.css";
+import rs from "@/components/marketing/restyle/restyle.module.css";
+import dt from "@/components/marketing/restyle/detail.module.css";
+import { Sheet } from "@/components/marketing/kit/Sheet";
+import { Display, Eyebrow, Lead } from "@/components/marketing/kit/Display";
+import { Pill, PillRow } from "@/components/marketing/kit/Pill";
 
 /** Prerendered; prices and printer data refresh hourly (ISR). */
 export const revalidate = 3600;
@@ -57,10 +61,18 @@ export default async function VendorProfilePage({ params }: Props) {
   const sep = locale === "ar" ? "، " : ", ";
 
   return (
-    <>
+    <div className={rs.page}>
       <JsonLd
         data={[
-          vendorJsonLd({ name, url, logo: v.logoUrl ? `${base}${v.logoUrl}` : null, city, description: pick(locale, v.bio.ar, v.bio.en), rating: v.rating, ratingCount: v.ratingCount }),
+          vendorJsonLd({
+            name,
+            url,
+            logo: v.logoUrl ? `${base}${v.logoUrl}` : null,
+            city,
+            description: pick(locale, v.bio.ar, v.bio.en),
+            rating: v.rating,
+            ratingCount: v.ratingCount,
+          }),
           breadcrumbJsonLd([
             { name: t("nav.home"), url: `${base}/${locale}` },
             { name: t("vendors.title"), url: `${base}/${locale}/vendors` },
@@ -68,97 +80,91 @@ export default async function VendorProfilePage({ params }: Props) {
           ]),
         ]}
       />
-      <section className={`${mk.hero} ${mk.vendorHero}`} aria-labelledby="vendor-title">
-        <div className={`${mk.container} ${mk.vendorHeroInner}`}>
-          <nav aria-label={t("store.breadcrumb")} className={mk.crumbs}>
-            <ol>
-              <li>
-                <Link href={`/${locale}`}>{t("nav.home")}</Link>
-              </li>
-              <li>
-                <Link href={`/${locale}/vendors`}>{t("vendors.title")}</Link>
-              </li>
-              <li>
-                <span aria-current="page">{name}</span>
-              </li>
-            </ol>
-          </nav>
-          <div className={mk.vendorHeroGrid}>
-            <div className={mk.vendorHeroCopy}>
-              <div className={`${mk.vendorIdentity} m-enter`}>
-                {v.logoUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={v.logoUrl} alt="" className={mk.vendorHeroLogo} width={72} height={72} />
-                ) : null}
-                <span className={mk.eyebrow}>
-                  <MapPin size={16} aria-hidden />
-                  {city}
-                </span>
-              </div>
-              <h1 id="vendor-title" className={`${mk.h1} ${mk.vendorTitle} m-enter-lcp`} style={{ ["--m-i" as string]: 1 }}>
-                {name}
-              </h1>
-              <p className={`${mk.lead} m-enter-lcp`} style={{ ["--m-i" as string]: 2 }}>
-                {pick(locale, v.bio.ar, v.bio.en)}
-              </p>
-              <div className={`${styles.badges} m-enter`} style={{ ["--m-i" as string]: 2 }}>
-                {v.verified ? (
-                  <Badge tone="success" icon={<Icon source={BadgeCheck} size="small" />}>
-                    {t("vendors.verified")}
-                  </Badge>
-                ) : null}
-                {v.foodSafe ? <Badge tone="info">{t("vendors.foodSafe")}</Badge> : null}
-                {v.capabilities.digitalShortRun ? <Badge>{t("store.vendors.digital")}</Badge> : null}
-              </div>
-              <div className={`${mk.actions} m-enter`} style={{ ["--m-i" as string]: 3 }}>
-                <Link href={cta} className={`${mk.pill} ${mk.pillLarge}`}>
-                  {t("store.vendor.designCta")}
-                </Link>
-                <Link href={`/${locale}/vendors`} className={`${mk.pill} ${mk.pillOutline} ${mk.pillLarge}`}>
-                  {t("marketing.printers.all")}
-                </Link>
-              </div>
-              <p className={`${mk.fine} m-enter`} style={{ ["--m-i" as string]: 4 }}>
-                {t("store.vendor.designHint")}
-              </p>
+      <Sheet tone="dark" hero className={`${rs.heroCompact} ${rs.glow}`} aria-labelledby="vendor-title">
+        <nav aria-label={t("store.breadcrumb")} className={`${rs.crumbs} m-enter`}>
+          <ol>
+            <li>
+              <Link href={`/${locale}`}>{t("nav.home")}</Link>
+            </li>
+            <li>
+              <Link href={`/${locale}/vendors`}>{t("vendors.title")}</Link>
+            </li>
+            <li>
+              <span aria-current="page">{name}</span>
+            </li>
+          </ol>
+        </nav>
+        <div className={rs.split}>
+          <div>
+            <div className={`${dt.identity} m-enter`}>
+              {v.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={v.logoUrl} alt="" className={dt.logo} width={72} height={72} />
+              ) : null}
+              <Eyebrow className={rs.inlineIcon}>
+                <MapPin size={16} aria-hidden />
+                {city}
+              </Eyebrow>
             </div>
-            <ul className={`${mk.statsList} ${mk.vendorStats}`} aria-label={t("store.vendor.statsTitle")}>
-              <li className={`${mk.statItem} m-enter`} style={{ ["--m-i" as string]: 2 }}>
-                <span className={mk.statValue}>
-                  <bdi>{v.rating.toFixed(1)}</bdi>
-                </span>
-                <span className={`${mk.statLabel} ${mk.inlineIcon}`}>
-                  <RatingStars rating={v.rating} label={t("store.vendor.stars", { rating: v.rating.toFixed(1) })} />
-                  {t("store.vendor.rating")}
-                </span>
-              </li>
-              <li className={`${mk.statItem} m-enter`} style={{ ["--m-i" as string]: 3 }}>
-                <span className={mk.statValue}>
-                  <bdi>{formatNumber(v.onTimePct)}%</bdi>
-                </span>
-                <span className={mk.statLabel}>{t("store.vendor.onTime")}</span>
-              </li>
-              <li className={`${mk.statItem} m-enter`} style={{ ["--m-i" as string]: 4 }}>
-                <span className={mk.statValue}>{t("store.structure.deliveryDays", { days: v.leadTimeDays })}</span>
-                <span className={mk.statLabel}>{t("store.vendor.leadTime")}</span>
-              </li>
-              <li className={`${mk.statItem} m-enter`} style={{ ["--m-i" as string]: 5 }}>
-                <span className={mk.statValue}>
-                  <bdi>{formatNumber(v.minOrderQty)}</bdi>
-                </span>
-                <span className={mk.statLabel}>{t("store.vendor.minOrder")}</span>
-              </li>
-            </ul>
+            <Display as="h1" size="64" id="vendor-title" className="m-enter-lcp">
+              {name}
+            </Display>
+            <Lead className="m-enter-lcp">{pick(locale, v.bio.ar, v.bio.en)}</Lead>
+            <div className={`${dt.badges} m-enter`}>
+              {v.verified ? (
+                <Badge tone="success" icon={<Icon source={BadgeCheck} size="small" />}>
+                  {t("vendors.verified")}
+                </Badge>
+              ) : null}
+              {v.foodSafe ? <Badge tone="info">{t("vendors.foodSafe")}</Badge> : null}
+              {v.capabilities.digitalShortRun ? <Badge>{t("store.vendors.digital")}</Badge> : null}
+            </div>
+            <PillRow className="m-enter">
+              <Pill href={cta} size="lg">
+                {t("store.vendor.designCta")}
+              </Pill>
+              <Pill href={`/${locale}/vendors`} variant="outline" size="lg">
+                {t("marketing.printers.all")}
+              </Pill>
+            </PillRow>
+            <p className={`${rs.small} m-enter`} style={{ marginBlockStart: 16 }}>
+              {t("store.vendor.designHint")}
+            </p>
           </div>
+          <dl className={`${rs.stats} ${rs.stats2} m-enter`} aria-label={t("store.vendor.statsTitle")}>
+            <div className={rs.stat}>
+              <dt className={`${rs.statLabel} ${rs.inlineIcon}`}>
+                <RatingStars rating={v.rating} label={t("store.vendor.stars", { rating: v.rating.toFixed(1) })} />
+                {t("store.vendor.rating")}
+              </dt>
+              <dd className={rs.statNum}>
+                <bdi>{v.rating.toFixed(1)}</bdi>
+              </dd>
+            </div>
+            <div className={rs.stat}>
+              <dt className={rs.statLabel}>{t("store.vendor.onTime")}</dt>
+              <dd className={rs.statNum}>
+                <bdi>{formatNumber(v.onTimePct)}%</bdi>
+              </dd>
+            </div>
+            <div className={rs.stat}>
+              <dt className={rs.statLabel}>{t("store.vendor.leadTime")}</dt>
+              <dd className={rs.statNum}>{t("store.structure.deliveryDays", { days: v.leadTimeDays })}</dd>
+            </div>
+            <div className={rs.stat}>
+              <dt className={rs.statLabel}>{t("store.vendor.minOrder")}</dt>
+              <dd className={rs.statNum}>
+                <bdi>{formatNumber(v.minOrderQty)}</bdi>
+              </dd>
+            </div>
+          </dl>
         </div>
-      </section>
+      </Sheet>
 
-      <section className={`${mk.band} ${mk.bandGrey} ${mk.profileBody}`} aria-label={t("store.vendor.about")}>
-        <div className={mk.container}>
+      <Sheet tone="white" className={rs.sheetTop} aria-label={t("store.vendor.about")}>
         <Layout>
           <LayoutSection>
-            <div className={mk.detailStack}>
-
+            <div className={dt.stack}>
               <Card title={t("store.vendor.portfolioTitle")} as="section">
                 {v.portfolio.length ? (
                   <PortfolioGallery
@@ -217,7 +223,9 @@ export default async function VendorProfilePage({ params }: Props) {
                       headings={[t("store.vendor.machineType"), t("store.vendor.machineModel"), t("store.vendor.machineQty")]}
                       rows={v.machines.map((m) => [
                         t(`store.vendor.machineKind.${m.kind}` as DictKey),
-                        <bdi key="m" dir="ltr">{m.model}</bdi>,
+                        <bdi key="m" dir="ltr">
+                          {m.model}
+                        </bdi>,
                         <bdi key="c">{m.count}</bdi>,
                       ])}
                     />
@@ -280,7 +288,7 @@ export default async function VendorProfilePage({ params }: Props) {
           </LayoutSection>
 
           <LayoutSection variant="oneThird" as="aside" aria-label={t("store.vendor.serviceAreas")}>
-            <div className={mk.detailStack}>
+            <div className={dt.stack}>
               <Card>
                 <dl className={styles.specs}>
                   <div className={styles.specRow}>
@@ -292,12 +300,11 @@ export default async function VendorProfilePage({ params }: Props) {
                   {t("store.vendor.joined", { date: formatDate(v.joinedAt, locale) })}
                 </Text>
               </Card>
-              <p className={mk.managed}>{t("store.vendor.contactNote")}</p>
+              <p className={rs.small}>{t("store.vendor.contactNote")}</p>
             </div>
           </LayoutSection>
         </Layout>
-        </div>
-      </section>
-    </>
+      </Sheet>
+    </div>
   );
 }

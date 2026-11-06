@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { getT, toLocale } from "@/i18n";
 import type { DictKey } from "@/i18n";
 import { designHref } from "@/components/store/catalog";
 import { VESSEL_RENDERS, renderDims, srcSetFor, vesselSrc } from "@/components/marketing/assets";
 import { HeroImage } from "@/components/marketing/HeroImage";
 import rs from "@/components/marketing/restyle/restyle.module.css";
+import dt from "@/components/marketing/restyle/detail.module.css";
+import { Sheet } from "@/components/marketing/kit/Sheet";
+import { Display, Eyebrow, Lead } from "@/components/marketing/kit/Display";
+import { Pill, PillRow } from "@/components/marketing/kit/Pill";
+import { Stagger } from "@/components/marketing/kit/Reveal";
 
 /** Prerendered; prices and printer data refresh hourly (ISR). */
 export const revalidate = 3600;
@@ -35,78 +39,74 @@ export default async function BottlesPage({ params }: Props) {
   const t = getT(locale);
   return (
     <div className={rs.page}>
-      <section className={`${rs.dark} ${rs.catHero}`} aria-labelledby="bottles-title">
-        <div className={rs.container}>
-          <p className={`${rs.eyebrow} m-enter`}>{t("marketing.bottles.eyebrow")}</p>
-          <h1 id="bottles-title" className={`${rs.h1xl} m-enter-lcp`} style={{ ["--m-i" as string]: 1 }}>
-            {t("marketing.bottles.title")}
-          </h1>
-          <p className={`${rs.lead} m-enter-lcp`} style={{ ["--m-i" as string]: 2 }}>
-            {t("marketing.bottles.body")}
-          </p>
-          <div className={`${rs.actions} ${rs.actionsCenter} m-enter`} style={{ ["--m-i" as string]: 3 }}>
-            <Link href={designHref(locale, { structure: "ECMA_RTE" })} className={rs.pill}>
-              {t("marketing.bottles.primary")}
-            </Link>
-            <Link href={`/${locale}/boxes`} className={`${rs.pill} ${rs.pillOutline}`}>
-              {t("marketing.bottles.secondary")}
-            </Link>
-          </div>
-          <div className={`${rs.showcase} m-enter-lcp`} style={{ ["--m-i" as string]: 4 }} aria-hidden="true">
-            {(["dropper", "jar", "bottle", "can", "pump"] as const).map((v) => (
-              <div key={v} className={rs.showcaseItem}>
-                {v === "bottle" ? (
-                  <HeroImage src={vesselSrc(v)} sizes="(min-width: 1024px) 200px, 30vw" alt="" {...renderDims(vesselSrc(v))} />
-                ) : (
-                  // Side renders: low priority and no preload (R4-MK-06).
-                  // eslint-disable-next-line @next/next/no-img-element
+      <Sheet tone="dark" hero className={rs.heroLanding} aria-labelledby="bottles-title">
+        <Eyebrow className="m-enter">{t("marketing.bottles.eyebrow")}</Eyebrow>
+        <Display as="h1" size="96" align="center" id="bottles-title" className="m-enter-lcp">
+          {t("marketing.bottles.title")}
+        </Display>
+        <Lead align="center" className="m-enter-lcp">
+          {t("marketing.bottles.body")}
+        </Lead>
+        <PillRow align="center" className="m-enter">
+          <Pill href={designHref(locale, { structure: "ECMA_RTE" })} size="lg">
+            {t("marketing.bottles.primary")}
+          </Pill>
+          <Pill href={`/${locale}/boxes`} variant="outline" size="lg">
+            {t("marketing.bottles.secondary")}
+          </Pill>
+        </PillRow>
+        <div className={`${dt.showcase} m-enter-lcp`} aria-hidden="true">
+          {(["dropper", "jar", "bottle", "can", "pump"] as const).map((v) => (
+            <div key={v} className={dt.showcaseItem}>
+              {v === "bottle" ? (
+                <HeroImage src={vesselSrc(v)} sizes="(min-width: 1024px) 200px, 30vw" alt="" {...renderDims(vesselSrc(v))} />
+              ) : (
+                // Side renders: low priority and no preload (R4-MK-06).
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={vesselSrc(v)}
+                  srcSet={srcSetFor(vesselSrc(v))}
+                  sizes="(min-width: 1024px) 200px, 30vw"
+                  alt=""
+                  {...renderDims(vesselSrc(v))}
+                  fetchPriority="low"
+                  decoding="async"
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      </Sheet>
+      <Sheet tone="white" className={rs.sheetTop} aria-labelledby="vessels-title">
+        <h2 id="vessels-title" className="visually-hidden">
+          {t("marketing.bottles.eyebrow")}
+        </h2>
+        <Stagger as="ul" className={`${dt.cards} ${dt.five}`}>
+          {VESSEL_RENDERS.map((v) => (
+            <li key={v}>
+              <article className={dt.card}>
+                <div className={dt.cardMedia}>
+                  <span className={`${dt.tag} ${dt.soon}`}>{t("marketing.bottles.soon")}</span>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={vesselSrc(v)}
                     srcSet={srcSetFor(vesselSrc(v))}
-                    sizes="(min-width: 1024px) 200px, 30vw"
+                    sizes="(min-width: 1200px) 240px, (min-width: 560px) 46vw, 92vw"
                     alt=""
-                    {...renderDims(vesselSrc(v))}
-                    fetchPriority="low"
+                    loading="lazy"
                     decoding="async"
+                    width={360}
+                    height={480}
                   />
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-      <section className={rs.sheet} aria-labelledby="vessels-title">
-        <div className={rs.container}>
-          <h2 id="vessels-title" className="visually-hidden">
-            {t("marketing.bottles.eyebrow")}
-          </h2>
-          <ul className={`${rs.cards} ${rs.five}`}>
-            {VESSEL_RENDERS.map((v, i) => (
-              <li key={v} data-reveal="" suppressHydrationWarning style={{ ["--m-i" as string]: i % 4 }}>
-                <article className={rs.card}>
-                  <div className={rs.cardMedia}>
-                    <span className={`${rs.tag} ${rs.soon}`}>{t("marketing.bottles.soon")}</span>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={vesselSrc(v)}
-                      srcSet={srcSetFor(vesselSrc(v))}
-                      sizes="(min-width: 1200px) 240px, (min-width: 560px) 46vw, 92vw"
-                      alt=""
-                      loading="lazy"
-                      decoding="async"
-                      width={360}
-                      height={480}
-                    />
-                  </div>
-                  <div className={rs.cardBody}>
-                    <h3 className={rs.cardTitle}>{t(`marketing.bottles.items.${v}` as DictKey)}</h3>
-                  </div>
-                </article>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
+                </div>
+                <div className={dt.cardBody}>
+                  <h3 className={rs.cardTitle}>{t(`marketing.bottles.items.${v}` as DictKey)}</h3>
+                </div>
+              </article>
+            </li>
+          ))}
+        </Stagger>
+      </Sheet>
     </div>
   );
 }

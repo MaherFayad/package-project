@@ -13,7 +13,10 @@ import { QuoteRequestForm } from "@/components/catalogue/QuoteRequestForm";
 import { ModelCard } from "@/components/catalogue/CatalogueBrowser";
 import { getCatalogueData } from "@/components/catalogue/server";
 import { STRUCTURE_LIST } from "@/lib/dieline";
-import mk from "@/components/marketing/marketing.module.css";
+import rs from "@/components/marketing/restyle/restyle.module.css";
+import { Sheet } from "@/components/marketing/kit/Sheet";
+import { Display, Eyebrow, Lead } from "@/components/marketing/kit/Display";
+import { Pill } from "@/components/marketing/kit/Pill";
 import styles from "@/components/catalogue/catalogue.module.css";
 
 type Props = { params: Promise<{ locale: string; slug: string }> };
@@ -57,126 +60,135 @@ export default async function Page({ params }: Props) {
   const presets = e.presets.map((p) => ({ ...p, label: `${p.name[locale]} · ${sizeText(locale, e.axes, p.dims, p.capacityMl)}` }));
 
   return (
-    <>
-      <section className={mk.band} style={{ paddingBlockStart: 32 }}>
-        <div className={mk.container}>
-          <nav aria-label={COPY.back[locale]} className={styles.crumbs}>
-            <Link href={`/${locale}/catalog`}>{COPY.back[locale]}</Link>
-            <span aria-hidden="true">/</span>
-            <Link href={`/${locale}/catalog?family=${e.family}&scope=world`}>{fam[locale]}</Link>
+    <div className={rs.page}>
+      <Sheet tone="dark" hero className={`${rs.heroCompact} ${rs.glow}`} aria-labelledby="model-title">
+        <nav aria-label={COPY.back[locale]} className={`${rs.crumbs} m-enter`}>
+          <ol>
+            <li>
+              <Link href={`/${locale}/catalog`}>{COPY.back[locale]}</Link>
+            </li>
+            <li>
+              <Link href={`/${locale}/catalog?family=${e.family}&scope=world`}>{fam[locale]}</Link>
+            </li>
             {e.subFamily.includes("/") ? (
-              <>
-                <span aria-hidden="true">/</span>
+              <li>
                 <Link href={`/${locale}/catalog?family=${e.family}&sub=${encodeURIComponent(e.subFamily)}&scope=world`}>{sub[locale]}</Link>
-              </>
+              </li>
             ) : null}
-          </nav>
-          <div className={styles.detail}>
-            <DetailStage locale={locale} code={e.code} render={e.render} source={e.source} name={e.name[locale]} />
-            <div className={styles.facts}>
-              {e.standard.label ? (
-                <span className={mk.eyebrow} dir="ltr" style={{ marginBlockEnd: 0, justifySelf: "start" }}>
-                  {e.standard.code ? `${e.standard.system} ${e.standard.code}` : e.standard.label}
-                </span>
-              ) : null}
-              <h1 className={mk.h2}>{e.name[locale]}</h1>
-              <p className={mk.lead}>{e.description[locale]}</p>
-              {e.source === "fefco-09" ? <p className={mk.small}>{COPY.hostNote[locale]}</p> : null}
-
-              <div className={styles.priceCard} data-mode={mode.mode} data-testid="price-path">
-                <p className={styles.priceTitle}>{mode.mode === "instant" ? (e.render === "vessel" ? COPY.instantLabelsTitle[locale] : COPY.instantTitle[locale]) : COPY.quoteTitle[locale]}</p>
-                <p className={mk.body}>
-                  {mode.mode === "instant"
-                    ? fill(COPY.instantBody[locale], { count: formatNumber(mode.vendorIds.length) })
-                    : mode.reason === "NO_VENDOR"
-                      ? COPY.quoteBody[locale]
-                      : ORDER_MODE_COPY[mode.reason][locale]}
-                </p>
-                {e.designer ? (
-                  <div className={styles.ctaRow}>
-                    {/* One primary per card: with a quote path the request is primary, design is secondary (R4-10). */}
-                    <Link href={`/${locale}/design/${e.slug}`} className={`${mk.pill} ${mode.mode === "instant" ? "" : mk.pillOutline} ${mk.pillLarge}`} prefetch={false}>
-                      {COPY.designCta[locale]}
-                    </Link>
-                    {CORE_SLUGS.has(e.slug) ? (
-                      <Link href={`/${locale}/boxes/${e.slug}`} className={`${mk.pill} ${mk.pillOutline} ${mk.pillLarge}`}>
-                        {fill(COPY.sizesPrices[locale], { name: e.name[locale] })}
-                      </Link>
-                    ) : null}
-                  </div>
-                ) : null}
-                {mode.mode === "quote" ? <QuoteRequestForm locale={locale} code={e.code} slug={e.slug} presets={presets} signedIn={!!session} /> : null}
-              </div>
-
-              <dl className={styles.factList}>
-                <div className={styles.fact}>
-                  <dt>{COPY.family[locale]}</dt>
-                  <dd>
-                    {fam[locale]}
-                    {e.subFamily.includes("/") ? <span className={styles.factSub}>{sub[locale]}</span> : null}
-                  </dd>
-                </div>
-                <div className={styles.fact}>
-                  <dt>{COPY.standard[locale]}</dt>
-                  <dd dir="auto">{e.standard.label || COPY.noStandard[locale]}</dd>
-                </div>
-                <div className={styles.fact}>
-                  <dt>{COPY.availability[locale]}</dt>
-                  <dd>
-                    <span className={styles.badge} data-egypt={e.availableInEgypt}>
-                      {COPY.egypt[e.availableInEgypt][locale]}
-                    </span>
-                    <span className={styles.factSub}>{COPY.egyptLong[e.availableInEgypt][locale]}</span>
-                  </dd>
-                </div>
-                <div className={styles.fact}>
-                  <dt>{COPY.regions[locale]}</dt>
-                  <dd>{e.regions.map((r) => COPY.regionNames[r][locale]).join(locale === "ar" ? "، " : ", ")}</dd>
-                </div>
-                <div className={styles.fact}>
-                  <dt>{COPY.defaultSize[locale]}</dt>
-                  <dd>{sizeText(locale, e.axes, e.defaultDims)}</dd>
-                </div>
-              </dl>
-
-              {e.presets.length ? (
-                <div>
-                  <h2 className={mk.h3} style={{ marginBlockEnd: 12 }}>
-                    {COPY.sizes[locale]}
-                  </h2>
-                  <ul className={styles.sizes}>
-                    {e.presets.slice(0, 8).map((p) => (
-                      <li key={p.id}>
-                        <strong>{p.name[locale]}</strong>
-                        {sizeText(locale, e.axes, p.dims, p.capacityMl)}
-                      </li>
-                    ))}
-                  </ul>
+          </ol>
+        </nav>
+        {e.standard.label ? (
+          <Eyebrow className="m-enter">
+            <bdi dir="ltr">{e.standard.code ? `${e.standard.system} ${e.standard.code}` : e.standard.label}</bdi>
+          </Eyebrow>
+        ) : null}
+        <Display as="h1" size="64" id="model-title" className="m-enter-lcp">
+          {e.name[locale]}
+        </Display>
+        <Lead className="m-enter-lcp">{e.description[locale]}</Lead>
+        {e.source === "fefco-09" ? (
+          <p className={rs.small} style={{ marginBlockStart: 12 }}>
+            {COPY.hostNote[locale]}
+          </p>
+        ) : null}
+      </Sheet>
+      <Sheet tone="white" className={rs.sheetTop}>
+        <div className={styles.detail}>
+          <DetailStage locale={locale} code={e.code} render={e.render} source={e.source} name={e.name[locale]} />
+          <div className={styles.facts}>
+            <div className={styles.priceCard} data-mode={mode.mode} data-testid="price-path">
+              <p className={styles.priceTitle}>
+                {mode.mode === "instant" ? (e.render === "vessel" ? COPY.instantLabelsTitle[locale] : COPY.instantTitle[locale]) : COPY.quoteTitle[locale]}
+              </p>
+              <p className={rs.muted} style={{ margin: 0 }}>
+                {mode.mode === "instant"
+                  ? fill(COPY.instantBody[locale], { count: formatNumber(mode.vendorIds.length) })
+                  : mode.reason === "NO_VENDOR"
+                    ? COPY.quoteBody[locale]
+                    : ORDER_MODE_COPY[mode.reason][locale]}
+              </p>
+              {e.designer ? (
+                <div className={styles.ctaRow}>
+                  {/* One primary per card: with a quote path the request is primary, design is secondary (R4-10). */}
+                  <Pill href={`/${locale}/design/${e.slug}`} variant={mode.mode === "instant" ? "dark" : "outline-dark"} size="lg" prefetch={false}>
+                    {COPY.designCta[locale]}
+                  </Pill>
+                  {CORE_SLUGS.has(e.slug) ? (
+                    <Pill href={`/${locale}/boxes/${e.slug}`} variant="outline-dark" size="lg">
+                      {fill(COPY.sizesPrices[locale], { name: e.name[locale] })}
+                    </Pill>
+                  ) : null}
                 </div>
               ) : null}
+              {mode.mode === "quote" ? <QuoteRequestForm locale={locale} code={e.code} slug={e.slug} presets={presets} signedIn={!!session} /> : null}
             </div>
+
+            <dl className={styles.factList}>
+              <div className={styles.fact}>
+                <dt>{COPY.family[locale]}</dt>
+                <dd>
+                  {fam[locale]}
+                  {e.subFamily.includes("/") ? <span className={styles.factSub}>{sub[locale]}</span> : null}
+                </dd>
+              </div>
+              <div className={styles.fact}>
+                <dt>{COPY.standard[locale]}</dt>
+                <dd dir="auto">{e.standard.label || COPY.noStandard[locale]}</dd>
+              </div>
+              <div className={styles.fact}>
+                <dt>{COPY.availability[locale]}</dt>
+                <dd>
+                  <span className={styles.badge} data-egypt={e.availableInEgypt}>
+                    {COPY.egypt[e.availableInEgypt][locale]}
+                  </span>
+                  <span className={styles.factSub}>{COPY.egyptLong[e.availableInEgypt][locale]}</span>
+                </dd>
+              </div>
+              <div className={styles.fact}>
+                <dt>{COPY.regions[locale]}</dt>
+                <dd>{e.regions.map((r) => COPY.regionNames[r][locale]).join(locale === "ar" ? "، " : ", ")}</dd>
+              </div>
+              <div className={styles.fact}>
+                <dt>{COPY.defaultSize[locale]}</dt>
+                <dd>{sizeText(locale, e.axes, e.defaultDims)}</dd>
+              </div>
+            </dl>
+
+            {e.presets.length ? (
+              <div>
+                <h2 className={rs.cardTitle} style={{ marginBlockEnd: 12 }}>
+                  {COPY.sizes[locale]}
+                </h2>
+                <ul className={styles.sizes}>
+                  {e.presets.slice(0, 8).map((p) => (
+                    <li key={p.id}>
+                      <strong>{p.name[locale]}</strong>
+                      {sizeText(locale, e.axes, p.dims, p.capacityMl)}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
           </div>
         </div>
-      </section>
+      </Sheet>
       {related.length ? (
-        <section className={`${mk.band} ${mk.bandGrey}`} aria-labelledby="related-title">
-          <div className={mk.container}>
-            <h2 id="related-title" className={mk.h2} style={{ marginBlockEnd: 40 }}>
-              {fill(COPY.related[locale], { name: sub[locale] })}
-            </h2>
-            <ul className={styles.relatedGrid}>
-              {related.map((r) => {
-                const c = cards.get(r.code);
-                return c ? (
-                  <li key={r.code}>
-                    <ModelCard locale={locale} card={c} />
-                  </li>
-                ) : null;
-              })}
-            </ul>
-          </div>
-        </section>
+        <Sheet tone="light" aria-labelledby="related-title">
+          <Display size="44" id="related-title" className={rs.headGap}>
+            {fill(COPY.related[locale], { name: sub[locale] })}
+          </Display>
+          <ul className={styles.relatedGrid}>
+            {related.map((r) => {
+              const c = cards.get(r.code);
+              return c ? (
+                <li key={r.code}>
+                  <ModelCard locale={locale} card={c} />
+                </li>
+              ) : null;
+            })}
+          </ul>
+        </Sheet>
       ) : null}
-    </>
+    </div>
   );
 }

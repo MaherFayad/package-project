@@ -6,8 +6,11 @@ import type { DictKey } from "@/i18n";
 import { formatDate } from "@/lib/format";
 import { TriangleAlert } from "lucide-react";
 import { LEGAL_DOCS, LEGAL_DOC_IDS, LEGAL_UPDATED, isLegalDoc, paragraphs } from "@/components/store/legal";
+import { Sheet } from "@/components/marketing/kit/Sheet";
+import { Display, Eyebrow, Lead } from "@/components/marketing/kit/Display";
 import { TocSpy } from "@/components/marketing/restyle/TocSpy";
 import rs from "@/components/marketing/restyle/restyle.module.css";
+import lg from "@/components/marketing/restyle/legal.module.css";
 
 type Props = { params: Promise<{ locale: string; doc: string }> };
 
@@ -47,28 +50,22 @@ export default async function LegalPage({ params }: Props) {
 
   return (
     <div className={rs.page}>
-      <section className={`${rs.dark} ${rs.legalHero}`} aria-labelledby="legal-title">
-        <div className={`${rs.container} ${rs.narrow}`}>
-          <p className={`${rs.eyebrow} m-enter`}>
-            {t("legal.updated", {
-              date: formatDate(LEGAL_UPDATED, locale, "long"),
-            })}
-          </p>
-          <h1 id="legal-title" className={`${rs.h1} m-enter-lcp`} style={{ ["--m-i" as string]: 1 }}>
-            {title}
-          </h1>
-          <p className={`${rs.lead} m-enter-lcp`} style={{ ["--m-i" as string]: 2 }}>
-            {t(`legal.${doc}.metaDescription` as DictKey)}
-          </p>
-          <span className={`${rs.draft} m-enter`} role="note" style={{ ["--m-i" as string]: 3 }}>
-            <TriangleAlert size={16} aria-hidden />
-            {t("legal.draftBanner")}
-          </span>
-        </div>
-      </section>
-      <section className={rs.sheet}>
-        <div className={`${rs.container} ${rs.legalGrid}`}>
-          <aside className={rs.toc} aria-label={t("legal.contents")}>
+      <Sheet tone="dark" hero container="narrow" className={`${rs.heroCompact} ${rs.heroCenter}`} aria-labelledby="legal-title">
+        <Eyebrow className="m-enter">{t("legal.updated", { date: formatDate(LEGAL_UPDATED, locale, "long") })}</Eyebrow>
+        <Display as="h1" size="64" align="center" id="legal-title" className="m-enter-lcp">
+          {title}
+        </Display>
+        <Lead align="center" className="m-enter-lcp">
+          {t(`legal.${doc}.metaDescription` as DictKey)}
+        </Lead>
+        <span className={`${lg.draft} m-enter`} role="note">
+          <TriangleAlert size={16} aria-hidden />
+          {t("legal.draftBanner")}
+        </span>
+      </Sheet>
+      <Sheet tone="white" className={rs.sheetTop}>
+        <div className={lg.legalGrid}>
+          <aside className={lg.toc} aria-label={t("legal.contents")}>
             <nav aria-labelledby="toc-title" id="legal-toc">
               <h2 id="toc-title">{t("legal.contents")}</h2>
               <ul>
@@ -93,7 +90,7 @@ export default async function LegalPage({ params }: Props) {
             </nav>
             <TocSpy navId="legal-toc" />
           </aside>
-          <article className={rs.prose} data-testid="legal-body">
+          <article className={lg.prose} data-testid="legal-body">
             <p>{t(`legal.${doc}.intro` as DictKey)}</p>
             {sections.map((id) => (
               <section key={id} id={id} aria-labelledby={`h-${id}`}>
@@ -105,7 +102,7 @@ export default async function LegalPage({ params }: Props) {
             ))}
           </article>
         </div>
-      </section>
+      </Sheet>
     </div>
   );
 }

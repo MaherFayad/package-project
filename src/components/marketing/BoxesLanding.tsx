@@ -9,6 +9,11 @@ import { HeroImage } from "./HeroImage";
 import { ProductCard } from "./ProductCard";
 import { renderDims, renderSrc, srcSetFor } from "./assets";
 import rs from "./restyle/restyle.module.css";
+import dt from "./restyle/detail.module.css";
+import { Sheet } from "./kit/Sheet";
+import { Display, Eyebrow, Lead } from "./kit/Display";
+import { Pill, PillRow } from "./kit/Pill";
+import { Reveal } from "./kit/Reveal";
 import { MODELS } from "@/lib/library";
 import { formatNumber } from "@/lib/format";
 
@@ -43,145 +48,120 @@ export async function BoxesLanding({
   const base = `/${locale}`;
   return (
     <div className={rs.page}>
-      <section className={`${rs.dark} ${rs.catHero}`} aria-labelledby="boxes-title">
-        <div className={rs.container}>
-          <p className={`${rs.eyebrow} m-enter`}>{t("marketing.boxes.eyebrow")}</p>
-          <H id="boxes-title" className={`${rs.h1xl} m-enter-lcp`} style={{ ["--m-i" as string]: 1 }}>
-            {t("marketing.boxes.title")}
-          </H>
-          <p className={`${rs.lead} m-enter-lcp`} style={{ ["--m-i" as string]: 2 }}>
-            {t("marketing.boxes.body")}
-          </p>
-          <div className={`${rs.actions} ${rs.actionsCenter} m-enter`} style={{ ["--m-i" as string]: 3 }}>
-            <Link href={designHref(locale, { structure: "FEFCO_0427" })} className={rs.pill}>
-              {t("marketing.boxes.primary")}
-            </Link>
-            <Link href={`${base}/vendors`} className={`${rs.pill} ${rs.pillOutline}`}>
-              {t("marketing.boxes.secondary")}
-            </Link>
-          </div>
-          <p
-            className={`${rs.small} m-enter`}
-            style={{
-              ["--m-i" as string]: 4,
-              marginBlockStart: 20,
-              color: "var(--rs-on-dark-2)",
-            }}
-          >
-            {t("marketing.boxes.already")}{" "}
-            <Link href={`${base}/account`} className={rs.textLink}>
-              {t("marketing.boxes.alreadyLink")}
-            </Link>
-          </p>
-          <div className={`${rs.showcase} m-enter-lcp`} style={{ ["--m-i" as string]: 4 }} aria-hidden="true">
-            {SHOWCASE.map((c) => (
-              <div key={c} className={rs.showcaseItem}>
-                {c === "FEFCO_0427" ? (
-                  <HeroImage src={renderSrc(c)} sizes="(min-width: 1024px) 260px, 34vw" alt="" {...renderDims(renderSrc(c))} />
-                ) : (
-                  // Side renders: low priority and no preload, so only the LCP render competes with the CSS (R4-MK-06).
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={renderSrc(c)}
-                    srcSet={srcSetFor(renderSrc(c))}
-                    sizes="(min-width: 1024px) 260px, 34vw"
-                    alt=""
-                    {...renderDims(renderSrc(c))}
-                    fetchPriority="low"
-                    decoding="async"
-                  />
-                )}
-              </div>
-            ))}
-          </div>
+      <Sheet tone="dark" hero className={rs.heroLanding} aria-labelledby="boxes-title">
+        <Eyebrow className="m-enter">{t("marketing.boxes.eyebrow")}</Eyebrow>
+        <Display as={H} size="96" align="center" id="boxes-title" className="m-enter-lcp">
+          {t("marketing.boxes.title")}
+        </Display>
+        <Lead align="center" className="m-enter-lcp">
+          {t("marketing.boxes.body")}
+        </Lead>
+        <PillRow align="center" className="m-enter">
+          <Pill href={designHref(locale, { structure: "FEFCO_0427" })} size="lg">
+            {t("marketing.boxes.primary")}
+          </Pill>
+          <Pill href={`${base}/vendors`} variant="outline" size="lg">
+            {t("marketing.boxes.secondary")}
+          </Pill>
+        </PillRow>
+        <p className={`${rs.small} m-enter`} style={{ marginBlockStart: 20 }}>
+          {t("marketing.boxes.already")}{" "}
+          <Link href={`${base}/account`} className={rs.textLink}>
+            {t("marketing.boxes.alreadyLink")}
+          </Link>
+        </p>
+        <div className={`${dt.showcase} m-enter-lcp`} aria-hidden="true">
+          {SHOWCASE.map((c) => (
+            <div key={c} className={dt.showcaseItem}>
+              {c === "FEFCO_0427" ? (
+                <HeroImage src={renderSrc(c)} sizes="(min-width: 1024px) 260px, 34vw" alt="" {...renderDims(renderSrc(c))} />
+              ) : (
+                // Side renders: low priority and no preload, so only the LCP render competes with the CSS (R4-MK-06).
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={renderSrc(c)}
+                  srcSet={srcSetFor(renderSrc(c))}
+                  sizes="(min-width: 1024px) 260px, 34vw"
+                  alt=""
+                  {...renderDims(renderSrc(c))}
+                  fetchPriority="low"
+                  decoding="async"
+                />
+              )}
+            </div>
+          ))}
         </div>
-      </section>
+      </Sheet>
 
-      <section className={rs.sheet} aria-label={t("marketing.boxes.eyebrow")}>
-        <div className={rs.container}>
-          {FAMILIES.map((family) => {
-            const list = structures.filter((s) => s.family === family);
-            if (!list.length) return null;
-            return (
-              <section key={family} id={family} className={rs.section} aria-labelledby={`fam-${family}`} style={{ scrollMarginBlockStart: 96 }}>
-                <div className={rs.head} data-reveal="" suppressHydrationWarning>
-                  <div>
-                    <h2 id={`fam-${family}`} className={rs.h2}>
-                      {t(`marketing.boxes.family.${family}` as DictKey)}
-                    </h2>
-                    <p className={rs.lead}>{t(`marketing.boxes.familyBody.${family}` as DictKey)}</p>
-                  </div>
-                  <span className={rs.small}>{t("marketing.boxes.count", { count: list.length })}</span>
+      <Sheet tone="white" className={rs.sheetTop} aria-label={t("marketing.boxes.eyebrow")}>
+        {FAMILIES.map((family) => {
+          const list = structures.filter((s) => s.family === family);
+          if (!list.length) return null;
+          return (
+            <section key={family} id={family} className={rs.section} aria-labelledby={`fam-${family}`} style={{ scrollMarginBlockStart: 96 }}>
+              <Reveal className={rs.head}>
+                <div>
+                  <Display size="56" id={`fam-${family}`}>
+                    {t(`marketing.boxes.family.${family}` as DictKey)}
+                  </Display>
+                  <Lead>{t(`marketing.boxes.familyBody.${family}` as DictKey)}</Lead>
                 </div>
-                <ul className={`${rs.cards} ${rs.rail}`} data-rail="">
-                  {list.map((s, i) => (
-                    <ProductCard key={s.code} locale={locale} structure={s} fromPiasters={prices.get(s.code) ?? null} index={i} />
-                  ))}
-                </ul>
-              </section>
-            );
-          })}
-        </div>
-      </section>
+                <span className={rs.small}>{t("marketing.boxes.count", { count: list.length })}</span>
+              </Reveal>
+              <ul className={`${dt.cards} ${dt.rail}`} data-rail="">
+                {list.map((s, i) => (
+                  <ProductCard key={s.code} locale={locale} structure={s} fromPiasters={prices.get(s.code) ?? null} index={i} />
+                ))}
+              </ul>
+            </section>
+          );
+        })}
+      </Sheet>
 
       {!library ? (
         <>
-          <section className={`${rs.band} ${rs.bandGrey}`} aria-labelledby="all-models-title">
-            <div className={rs.container}>
-              <div className={rs.head} style={{ marginBlockEnd: 0 }} data-reveal="" suppressHydrationWarning>
-                <div>
-                  <h2 id="all-models-title" className={rs.h2}>
-                    {t("library.catalog.heading")}
-                  </h2>
-                  <p className={rs.lead}>
-                    {t("library.catalog.subtitle", {
-                      count: formatNumber(MODELS.length),
-                    })}
-                  </p>
-                </div>
-                <Link href={`${base}/catalog#all-models`} className={`${rs.pill} ${rs.pillOutline}`}>
-                  {t("marketing.boxes.libraryCta", {
-                    count: formatNumber(MODELS.length),
-                  })}
-                </Link>
+          <Sheet tone="light" aria-labelledby="all-models-title">
+            <Reveal className={rs.head} style={{ marginBlockEnd: 0 }}>
+              <div>
+                <Display size="56" id="all-models-title">
+                  {t("library.catalog.heading")}
+                </Display>
+                <Lead>{t("library.catalog.subtitle", { count: formatNumber(MODELS.length) })}</Lead>
               </div>
-            </div>
-          </section>
-          <section className={`${rs.dark} ${rs.glow} ${rs.cta}`} aria-labelledby="boxes-cta-title">
-            <div className={rs.container} data-reveal="" suppressHydrationWarning>
-              <h2 id="boxes-cta-title" className={rs.h2}>
+              <Pill href={`${base}/catalog#all-models`} variant="outline-dark" size="lg">
+                {t("marketing.boxes.libraryCta", { count: formatNumber(MODELS.length) })}
+              </Pill>
+            </Reveal>
+          </Sheet>
+          <Sheet tone="dark" className={rs.glow} container="narrow" aria-labelledby="boxes-cta-title">
+            <Reveal className={rs.heroCenter}>
+              <Display size="64" align="center" id="boxes-cta-title">
                 {t("marketing.boxes.closingTitle")}
-              </h2>
-              <p className={rs.lead}>{t("marketing.boxes.closingBody")}</p>
-              <div className={`${rs.actions} ${rs.actionsCenter}`}>
-                <Link href={designHref(locale, { structure: "FEFCO_0427" })} className={rs.pill}>
+              </Display>
+              <Lead align="center">{t("marketing.boxes.closingBody")}</Lead>
+              <PillRow align="center">
+                <Pill href={designHref(locale, { structure: "FEFCO_0427" })} size="lg">
                   {t("marketing.boxes.primary")}
-                </Link>
-                <Link href={`${base}/vendors`} className={`${rs.pill} ${rs.pillOutline}`}>
+                </Pill>
+                <Pill href={`${base}/vendors`} variant="outline" size="lg">
                   {t("marketing.boxes.secondary")}
-                </Link>
-              </div>
-            </div>
-          </section>
+                </Pill>
+              </PillRow>
+            </Reveal>
+          </Sheet>
         </>
       ) : (
-        <section className={rs.band} id="all-models" aria-labelledby="all-models-title" style={{ scrollMarginBlockStart: 96 }}>
-          <div className={rs.container}>
-            <div className={rs.head}>
-              <div>
-                <h2 id="all-models-title" className={rs.h2}>
-                  {t("library.catalog.heading")}
-                </h2>
-                <p className={rs.lead}>
-                  {t("library.catalog.subtitle", {
-                    count: formatNumber(MODELS.length),
-                  })}
-                </p>
-              </div>
+        <Sheet tone="white" id="all-models" aria-labelledby="all-models-title" style={{ scrollMarginBlockStart: 96 }}>
+          <div className={rs.head}>
+            <div>
+              <Display size="56" id="all-models-title">
+                {t("library.catalog.heading")}
+              </Display>
+              <Lead>{t("library.catalog.subtitle", { count: formatNumber(MODELS.length) })}</Lead>
             </div>
-            {library}
           </div>
-        </section>
+          {library}
+        </Sheet>
       )}
     </div>
   );

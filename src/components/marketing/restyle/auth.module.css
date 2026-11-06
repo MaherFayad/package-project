@@ -1,0 +1,6 @@
+/* R6 restyle, sign-in page: dark hero sheet, title at the start, the one-time-code form in a white card at the end. */
+.auth.auth[data-hero="true"] { min-block-size: min(100svh, 900px); justify-content: center; }
+.authGrid { display: grid; gap: 40px; align-items: center; }
+@media (min-width: 1024px) { .authGrid { grid-template-columns: minmax(0, 1fr) minmax(0, 460px); gap: 96px; } }
+.badge { display: inline-grid; place-items: center; inline-size: 48px; block-size: 48px; margin-block-end: 24px; border: 1px solid var(--mk-line-dark-strong); border-radius: 50%; color: var(--mk-green); }
+.authCard { min-inline-size: 0; display: grid; gap: 24px; padding: clamp(24px, 2vw + 12px, 40px); border-radius: var(--mk-radius-card); background: #ffffff; color: var(--mk-on-light); box-shadow: var(--mk-shadow-float); --mk-ring: var(--mk-focus-light); }

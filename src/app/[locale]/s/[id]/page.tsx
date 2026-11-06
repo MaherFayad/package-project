@@ -6,17 +6,15 @@ import type { DictKey } from "@/i18n/types";
 import { formatDims, formatMoney } from "@/lib/format";
 import { quoteDesign, tierPrices } from "@/lib/orders/service";
 import { loadCheckoutSettings } from "@/lib/orders/checkout-settings";
-import { Badge } from "@/components/ui/Badge";
-import { BlockStack, InlineStack } from "@/components/ui/Stack";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { EmptyState, EmptyBoxIllustration } from "@/components/ui/EmptyState";
-import { Layout, LayoutSection } from "@/components/ui/Layout";
-import { Page } from "@/components/ui/Page";
-import { Text } from "@/components/ui/Text";
 import { SharedViewerLazy } from "./SharedViewerLazy";
 import { inlinePublicImage } from "@/app/model-poster";
 import styles from "./share.module.css";
+import { Sheet } from "@/components/marketing/kit/Sheet";
+import { Display, Eyebrow, Lead } from "@/components/marketing/kit/Display";
+import { Pill } from "@/components/marketing/kit/Pill";
+import { LostState } from "@/components/marketing/restyle/LostState";
+import rs from "@/components/marketing/restyle/restyle.module.css";
+import dt from "@/components/marketing/restyle/detail.module.css";
 import { designerPath } from "@/components/designer/lib/catalog";
 import { loadSharedDesign } from "@/components/designer/server";
 import { modelByCode } from "@/lib/library";
@@ -50,30 +48,23 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
   const [shared, session] = await Promise.all([getShared(id), getSession()]);
 
   if (!shared) {
+    // The [id] layout already answers 404 for unknown tokens; this is a defensive fallback.
     return (
-      <Page narrowWidth title={t("designer.shared.notFoundTitle")}>
-        <Card>
-          <EmptyState
-            heading={t("designer.shared.notFoundTitle")}
-            image={<EmptyBoxIllustration />}
-            action={
-              <Button variant="primary" url={`/${locale}/design`}>
-                {t("designer.shared.copyDesign")}
-              </Button>
-            }
-          >
-            <p>{t("designer.shared.notFoundBody")}</p>
-          </EmptyState>
-        </Card>
-      </Page>
+      <LostState
+        titleId="share-missing-title"
+        title={t("designer.shared.notFoundTitle")}
+        body={t("designer.shared.notFoundBody")}
+        links={[
+          { label: t("designer.shared.copyDesign"), href: `/${locale}/design` },
+          { label: t("common.goHome"), href: `/${locale}` },
+        ]}
+      />
     );
   }
 
   const { doc, designId } = shared;
   // The owner opening their own link orders the original; nobody else gets a copy notice wrong.
-  const isOwner = session
-    ? (await db.design.findUnique({ where: { id: designId }, select: { ownerId: true } }))?.ownerId === session.user.id
-    : false;
+  const isOwner = session ? (await db.design.findUnique({ where: { id: designId }, select: { ownerId: true } }))?.ownerId === session.user.id : false;
   // launch-metrics.md §1 `share_link_visit` (the owner opening their own link is not a visit).
   // "returning" = the browser already had an Elba id (account session or anonymous designer cookie).
   if (!isOwner) {
@@ -107,68 +98,85 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
     [t("designer.shared.model"), modelCode.replace(/_/g, " ")],
     // Containers: their own size (Ø × H, or W × G × H for pouches), not the box dims of the label
     // sheet ("100 × 1 × 100 mm"), and "print material" rather than "board".
-    doc.vessel
-      ? [t("designer.shared.sizeVessel"), vesselSize(doc.vessel.dims, t("common.mm"))]
-      : [t("designer.shared.size"), formatDims(doc.dims, locale)],
+    doc.vessel ? [t("designer.shared.sizeVessel"), vesselSize(doc.vessel.dims, t("common.mm"))] : [t("designer.shared.size"), formatDims(doc.dims, locale)],
     [t(doc.vessel ? "designer.shared.printMaterial" : "designer.shared.board"), t(`materials.${doc.materialCode}` as DictKey)],
     [t("designer.shared.finish"), t(`finishes.${doc.finishCode}` as DictKey)],
     [t("designer.shared.printing"), doc.printSides === "BOTH" ? t("designer.box.printBoth") : t("designer.box.printOutside")],
   ];
 
+  const orderHref = `/${locale}/checkout/${encodeURIComponent(designId)}?share=${encodeURIComponent(id)}&model=${encodeURIComponent(modelCode)}`;
   return (
-    <Page title={name} subtitle={t(isVessel ? "designer.shared.subtitleDesign" : "designer.shared.subtitle")} titleMetadata={<Badge tone="info">{styleName}</Badge>}>
-      <Layout>
-        <LayoutSection>
-          <SharedViewerLazy doc={doc} poster={inlinePublicImage(`/models/${encodeURIComponent(modelCode)}.webp`)} />
-        </LayoutSection>
-        <LayoutSection variant="oneThird" as="aside">
-          <BlockStack gap="400">
-            <Card>
-              <BlockStack gap="300">
-                {price ? (
-                  <p className={styles.price} data-testid="share-price">
-                    {price.prepayPct > 0
-                      ? t("buyer.sharePricePrepay", { qty: price.quantity, price: formatMoney(price.unitPiasters, locale), days: price.days, pct: price.prepayPct })
-                      : t("buyer.sharePrice", { qty: price.quantity, price: formatMoney(price.unitPiasters, locale), days: price.days })}
-                  </p>
-                ) : null}
-                {/* R5-JR-15: this unit is after the prepay discount (tierPrices), the designer's badge is
-                    before it; say which, so the two numbers read as one price. */}
-                {price && prepayDiscountPct > 0 ? (
-                  <Text as="p" variant="bodySm" tone="subdued">
-                    {t("designer.shared.prepayNote", { pct: prepayDiscountPct })}
-                  </Text>
-                ) : null}
-                <Text as="p">{reason ? ORDER_MODE_COPY[reason][locale] : t("designer.shared.ctaHelp")}</Text>
-                <Button variant="primary" fullWidth url={`/${locale}/checkout/${encodeURIComponent(designId)}?share=${encodeURIComponent(id)}&model=${encodeURIComponent(modelCode)}`}>
-                  {byQuote ? t("designer.price.quoteAction") : isVessel ? t("designer.container.order") : t("designer.shared.cta")}
-                </Button>
-                <Text as="p" variant="bodySm" tone="subdued">
-                  {isOwner ? t("buyer.shareOwner") : <>{t("buyer.shareOwnCopy")} {session ? null : t("buyer.shareSignIn")}</>}
-                </Text>
-                <Button fullWidth url={isOwner ? designerPath(locale, modelCode, { d: designId }) : designerPath(locale, modelCode)}>
-                  {isOwner ? t("account.openDesign") : t("designer.shared.copyDesign")}
-                </Button>
-              </BlockStack>
-            </Card>
-            <Card title={t("designer.shared.specs")}>
-              <BlockStack as="dl" gap="200">
+    <div className={rs.page}>
+      <Sheet tone="dark" hero className={`${rs.heroCompact} ${rs.glow}`} aria-labelledby="share-title">
+        <Eyebrow>{styleName}</Eyebrow>
+        <Display as="h1" size="64" id="share-title">
+          {name}
+        </Display>
+        <Lead>{t(isVessel ? "designer.shared.subtitleDesign" : "designer.shared.subtitle")}</Lead>
+      </Sheet>
+      <Sheet tone="white" className={rs.sheetTop}>
+        <div className={dt.withAside}>
+          <div className={`${dt.stack} ${styles.viewerTile}`}>
+            <SharedViewerLazy doc={doc} poster={inlinePublicImage(`/models/${encodeURIComponent(modelCode)}.webp`)} />
+          </div>
+          <aside className={`${dt.stack} ${dt.aside}`}>
+            <div className={`${dt.tile} ${dt.tileDark}`}>
+              {price ? (
+                <p className={styles.price} data-testid="share-price">
+                  {price.prepayPct > 0
+                    ? t("buyer.sharePricePrepay", {
+                        qty: price.quantity,
+                        price: formatMoney(price.unitPiasters, locale),
+                        days: price.days,
+                        pct: price.prepayPct,
+                      })
+                    : t("buyer.sharePrice", { qty: price.quantity, price: formatMoney(price.unitPiasters, locale), days: price.days })}
+                </p>
+              ) : null}
+              {/* R5-JR-15: this unit is after the prepay discount (tierPrices), the designer's badge is
+                  before it; say which, so the two numbers read as one price. */}
+              {price && prepayDiscountPct > 0 ? <p className={rs.small}>{t("designer.shared.prepayNote", { pct: prepayDiscountPct })}</p> : null}
+              <p className={rs.muted} style={{ margin: 0 }}>
+                {reason ? ORDER_MODE_COPY[reason][locale] : t("designer.shared.ctaHelp")}
+              </p>
+              <Pill href={orderHref} size="lg" className={styles.full}>
+                {byQuote ? t("designer.price.quoteAction") : isVessel ? t("designer.container.order") : t("designer.shared.cta")}
+              </Pill>
+              <p className={rs.small}>
+                {isOwner ? (
+                  t("buyer.shareOwner")
+                ) : (
+                  <>
+                    {t("buyer.shareOwnCopy")} {session ? null : t("buyer.shareSignIn")}
+                  </>
+                )}
+              </p>
+              <Pill
+                href={isOwner ? designerPath(locale, modelCode, { d: designId }) : designerPath(locale, modelCode)}
+                variant="outline"
+                size="lg"
+                className={styles.full}
+              >
+                {isOwner ? t("account.openDesign") : t("designer.shared.copyDesign")}
+              </Pill>
+            </div>
+            <section className={dt.tile} aria-labelledby="share-specs-title">
+              <h2 id="share-specs-title" className={dt.tileTitle}>
+                {t("designer.shared.specs")}
+              </h2>
+              <dl className={styles.specs}>
                 {specs.map(([k, v]) => (
-                  <InlineStack key={k} as="div" align="space-between" gap="200" wrap>
-                    <Text as="dt" tone="subdued">
-                      {k}
-                    </Text>
-                    <Text as="dd" fontWeight="medium">
-                      {v}
-                    </Text>
-                  </InlineStack>
+                  <div key={k}>
+                    <dt>{k}</dt>
+                    <dd>{v}</dd>
+                  </div>
                 ))}
-              </BlockStack>
-            </Card>
-          </BlockStack>
-        </LayoutSection>
-      </Layout>
-    </Page>
+              </dl>
+            </section>
+          </aside>
+        </div>
+      </Sheet>
+    </div>
   );
 }
 
@@ -182,13 +190,18 @@ function vesselSize(d: { D: number; H: number; G?: number }, mm: string): string
 }
 
 /** Headline price for the share page, or null when the box has no instant price (quote only). */
-async function sharePrice(doc: Parameters<typeof quoteDesign>[0]): Promise<{ price: { quantity: number; unitPiasters: number; days: number; prepayPct: number } | null; quoteReason: OrderModeReason | null }> {
+async function sharePrice(
+  doc: Parameters<typeof quoteDesign>[0],
+): Promise<{ price: { quantity: number; unitPiasters: number; days: number; prepayPct: number } | null; quoteReason: OrderModeReason | null }> {
   try {
     const [tiers, outcome, settings] = await Promise.all([tierPrices(doc), quoteDesign(doc, { quantity: SHARE_PRICE_QTY }), loadCheckoutSettings()]);
     const unit = tiers.find((x) => x.quantity === SHARE_PRICE_QTY)?.unitPiasters ?? null;
     const best = outcome.mode === "instant" ? outcome.offers[0] : null;
     const quoteReason = outcome.mode === "manual_quote" && outcome.reason === "MODEL_BY_QUOTE" ? (outcome.orderReason ?? "QUOTE_ONLY_STOCK") : null;
-    return { price: unit !== null && best ? { quantity: SHARE_PRICE_QTY, unitPiasters: unit, days: best.deliveryDays, prepayPct: settings.prepayDiscountPct } : null, quoteReason };
+    return {
+      price: unit !== null && best ? { quantity: SHARE_PRICE_QTY, unitPiasters: unit, days: best.deliveryDays, prepayPct: settings.prepayDiscountPct } : null,
+      quoteReason,
+    };
   } catch {
     return { price: null, quoteReason: null };
   }
