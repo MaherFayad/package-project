@@ -1,0 +1,157 @@
+import AxeBuilder from "@axe-core/playwright";
+import { expect, test, type Page } from "@playwright/test";
+
+/**
+ * Marketing kit foundation (docs/design-refs/shopify-2026-reference.md, section 6): the dev
+ * gallery is axe-clean in both locales and both motion settings, the header mega-menus work by
+ * hover, click and keyboard, the phone menu traps focus, and every kit section's content is
+ * visible without scrolling animations (reduced motion).
+ */
+
+const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
+
+test.beforeEach(async ({ context, baseURL }) => {
+  await context.addCookies([{ name: "elba_cookie_ack", value: "1", url: baseURL! }]);
+});
+
+async function axeClean(page: Page) {
+  const r = await new AxeBuilder({ page }).withTags(TAGS).analyze();
+  expect(r.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`)).toEqual([]);
+}
+
+/** The gallery really rendered (not a 404): every kit section is on the page. */
+async function isGallery(page: Page) {
+  expect(await page.locator("main [data-tone]").count()).toBeGreaterThan(15);
+  await expect(page.getByRole("tablist")).toHaveCount(1);
+}
+
+async function revealAll(page: Page) {
+  // Scroll through so every reveal, count-up and lazy image has run, then back to the top.
+  const h = await page.evaluate(() => document.documentElement.scrollHeight);
+  for (let y = 0; y < h; y += 700) {
+    await page.evaluate((v) => window.scrollTo(0, v), y);
+    await page.waitForTimeout(60);
+  }
+  await page.waitForTimeout(1600);
+  await page.evaluate(() => window.scrollTo(0, 0));
+}
+
+for (const locale of ["ar", "en"] as const) {
+  test(`kit gallery is axe-clean (${locale}, motion)`, async ({ page }) => {
+    test.setTimeout(120_000);
+    await page.goto(`/${locale}/dev/kit`);
+    await expect(page.locator("html")).toHaveAttribute("dir", locale === "ar" ? "rtl" : "ltr");
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await isGallery(page);
+    await revealAll(page);
+    await axeClean(page);
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    expect(overflow).toBeLessThanOrEqual(0);
+  });
+
+  test(`kit gallery under reduced motion shows everything (${locale})`, async ({ browser, baseURL }) => {
+    test.setTimeout(120_000);
+    const ctx = await browser.newContext({ reducedMotion: "reduce", baseURL });
+    await ctx.addCookies([{ name: "elba_cookie_ack", value: "1", url: baseURL! }]);
+    const page = await ctx.newPage();
+    await page.goto(`/${locale}/dev/kit`);
+    await page.waitForLoadState("networkidle");
+    await isGallery(page);
+    // Nothing waits for a scroll reveal: a section far down is already fully opaque.
+    const hidden = await page.evaluate(() => Array.from(document.querySelectorAll("[data-reveal]")).filter((el) => getComputedStyle(el).opacity !== "1").length);
+    expect(hidden).toBe(0);
+    // No pause buttons for motion that does not run (MotionScope hides its own), marquee is a scroller.
+    const running = await page.evaluate(() => document.getAnimations().filter((a) => a.playState === "running" && (a.effect as KeyframeEffect | null)?.getComputedTiming().iterations === Infinity).length);
+    expect(running).toBe(0);
+    await axeClean(page);
+    await ctx.close();
+  });
+}
+
+test("header: transparent over a hero, solid after scroll; mega-menu by hover, click and keyboard", async ({ page }, info) => {
+  test.skip(info.project.name !== "desktop", "desktop navigation");
+  await page.goto("/en/dev/kit");
+  await page.waitForLoadState("networkidle");
+  const header = page.locator("header").first();
+  const bg = () => header.evaluate((el) => getComputedStyle(el, "::after").opacity);
+  expect(await bg()).toBe("0");
+  await page.mouse.wheel(0, 600);
+  await expect.poll(bg).toBe("1");
+  await page.evaluate(() => window.scrollTo(0, 0));
+
+  const products = page.getByRole("button", { name: "Products" });
+  await products.hover();
+  await expect(products).toHaveAttribute("aria-expanded", "true");
+  await expect(page.getByRole("link", { name: "Mailer and shipping boxes" })).toBeVisible();
+  await page.mouse.move(700, 880);
+  await expect(products).toHaveAttribute("aria-expanded", "false");
+  await expect(page.getByRole("link", { name: "Mailer and shipping boxes" })).toBeHidden();
+
+  await products.click();
+  await expect(products).toHaveAttribute("aria-expanded", "true");
+  await page.keyboard.press("Escape");
+  await expect(products).toHaveAttribute("aria-expanded", "false");
+  await expect(products).toBeFocused();
+
+  // Keyboard: ArrowDown opens and focuses the first link; Tab walks the panel.
+  await products.press("ArrowDown");
+  await expect(page.getByRole("link", { name: "Mailer and shipping boxes" })).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("link", { name: "Folding cartons" })).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(products).toBeFocused();
+  await expect(page.getByRole("link", { name: "Start free" }).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: "Log in" })).toHaveAttribute("href", "/en/login");
+});
+
+test("phone menu: full screen, drill-down, focus trapped, Escape returns focus", async ({ page }, info) => {
+  test.skip(info.project.name !== "mobile", "phone navigation");
+  await page.goto("/ar/dev/kit");
+  await page.waitForLoadState("networkidle");
+  const open = page.getByRole("button", { name: "القائمة" });
+  await open.click();
+  const dialog = page.getByRole("dialog", { name: "القائمة" });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "المنتجات" }).click();
+  await expect(dialog.getByRole("link", { name: "علب بريدية وكراتين شحن" })).toBeVisible();
+  await expect(dialog.getByRole("button", { name: "رجوع" })).toBeFocused();
+  await dialog.getByRole("button", { name: "رجوع" }).click();
+  await expect(dialog.getByRole("link", { name: "الأسعار" })).toBeVisible();
+  for (let i = 0; i < 12; i++) await page.keyboard.press("Tab");
+  expect(await dialog.evaluate((d) => d.contains(document.activeElement))).toBe(true);
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+  await expect(open).toBeFocused();
+});
+
+test("footer: four columns, language switch, legal and social links", async ({ page }) => {
+  await page.goto("/en/dev/kit");
+  const footer = page.locator("footer");
+  for (const name of ["Products", "Elba", "Printers", "Support"]) await expect(footer.getByRole("heading", { name, exact: true })).toBeVisible();
+  await expect(footer.getByRole("link", { name: "العربية" })).toHaveAttribute("href", "/ar/dev/kit");
+  await expect(footer.getByRole("link", { name: "Privacy policy" })).toBeVisible();
+  await expect(footer.getByRole("link", { name: "Elba on Instagram" })).toHaveAttribute("rel", /noopener/);
+});
+
+test("marquee and steps pause controls (WCAG 2.2.2)", async ({ page }) => {
+  await page.goto("/en/dev/kit");
+  await page.waitForLoadState("networkidle");
+  const pauseStrip = page.getByRole("button", { name: "Pause the moving strip" }).first();
+  await pauseStrip.scrollIntoViewIfNeeded();
+  await pauseStrip.click();
+  await expect(page.getByRole("button", { name: "Play the moving strip" }).first()).toHaveAttribute("aria-pressed", "true");
+  const tabs = page.getByRole("tablist", { name: "Getting started" });
+  await tabs.scrollIntoViewIfNeeded();
+  await page.getByRole("button", { name: "Pause steps" }).click();
+  await tabs.getByRole("tab").nth(1).click();
+  await expect(tabs.getByRole("tab").nth(1)).toHaveAttribute("aria-selected", "true");
+  await tabs.getByRole("tab").nth(1).press("ArrowDown");
+  await expect(tabs.getByRole("tab").nth(2)).toBeFocused();
+});
+
+test("kit gallery is not in the sitemap and is disallowed in robots", async ({ request }) => {
+  const sm = await (await request.get("/sitemap.xml")).text();
+  expect(sm).not.toContain("/dev/");
+  const robots = await (await request.get("/robots.txt")).text();
+  expect(robots).toContain("Disallow: /*/dev/");
+});
