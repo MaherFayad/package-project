@@ -136,3 +136,17 @@ html[data-mk-reduced][data-motion="on"] [data-reveal]:not([data-revealed]) {
   opacity: 1;
   transform: none;
 }
+
+/* English pages: the one Arabic word ("العربية" in the language switch) uses the system Arabic
+   face, so English visitors never download the 166 KB Noto Sans Arabic file. The name "Noto Sans
+   Arabic" must not appear here: it now matches our @font-face and would fetch the web font. */
+[data-mk][data-mk]:lang(en) [lang="ar"] {
+  font-family: system-ui, -apple-system, "Segoe UI", "Geeza Pro", Tahoma, sans-serif;
+}
+
+/* Outside the shell root but on a marketing page (the skip link, portals): same face, so Arabic
+   pages do not fetch a Plex cut just for the skip link's text. */
+body:has([data-mk]) {
+  --p-font-family-sans: var(--font-inter), var(--font-noto-arabic), "Segoe UI", Tahoma, sans-serif;
+  font-family: var(--p-font-family-sans);
+}

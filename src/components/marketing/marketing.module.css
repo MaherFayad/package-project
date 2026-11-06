@@ -1547,4 +1547,4 @@
 
 /* R4-MK-07: the one Arabic word on English pages (the language switch, header and footer) uses the
    system Arabic face, so English pages do not download a 36 KB Plex Arabic cut for it. */
-.site:lang(en) [lang="ar"] { font-family: system-ui, -apple-system, "Segoe UI", "Noto Sans Arabic", "Geeza Pro", sans-serif; }
+.site:lang(en) [lang="ar"] { font-family: system-ui, -apple-system, "Segoe UI", "Geeza Pro", Tahoma, sans-serif; }
