@@ -411,10 +411,6 @@
 /* Calm page under reduced motion: same content, nothing moves (WCAG 2.3.3). */
 @media (prefers-reduced-motion: reduce) {
   .float, .violet::before { animation: none !important; }
-  /* Kit Marquee in RTL: `.marqueeTrack:dir(rtl)` re-sets animation-name over the kit's own
-     reduced-motion `animation: none`, so Arabic strips kept looping. Reported to FOUNDATION;
-     remove once kit.module.css fixes it. */
-  .wallRail ul, .matRail ul { animation: none !important; }
   .stepsViewport { scroll-behavior: auto; }
   .styleCard, .styleCard img, .pill { transition: none; }
   .styleCard:hover, .styleCard:hover img { transform: none; }

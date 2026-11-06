@@ -78,6 +78,6 @@ FOUNDATION kit used as-is (cdf37a4): `Sheet`, `Display`, `Pill`, `IconPill`, `Ma
 | Desktop perf (1440x900) | ar: LCP 0.49 s, CLS 0.006 · en: LCP 0.39 s, CLS 0.000. The harness clicks "Turn in 3D", so its JS and TBT include the on-demand three.js boot; one desktop-ar INP sample (288 ms) is a click on the prompt field landing while that boot runs. First load ships no three.js |
 | Sitemap | `/ar/designer`, `/en/designer` (priority 0.9, hreflang alternates) |
 
-Kit bug found (reported to FOUNDATION): under reduced motion the kit `Marquee` keeps looping in Arabic, because `.marqueeTrack:dir(rtl)` re-sets `animation-name` over the reduced-motion `animation: none` (also visible on `/ar/dev/kit`). This page carries a page-scoped override until the kit is fixed.
+Kit bug found (reported to FOUNDATION): under reduced motion the kit `Marquee` keeps looping in Arabic, because `.marqueeTrack:dir(rtl)` re-sets `animation-name` over the reduced-motion `animation: none` (also visible on `/ar/dev/kit`). Fixed in the kit (r6-foundation 6208abd); the page-scoped override is removed.
 
 Open: the R6 turntable loops are declared in the ASSETS kit but their files were not pushed yet; the page plays the mailer loop automatically once `public/marketing/r6/loops/mailer-*.{webm,mp4}` exist (server-side check), with no code change.
