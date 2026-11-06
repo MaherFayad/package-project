@@ -24,8 +24,10 @@ type Params = Promise<{ locale: string; id: string }>;
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { locale, id } = await params;
   const t = getT(toLocale(locale));
-  const d = (await isAdminSession()) && /^[\w-]{1,40}$/.test(id) ? await db.dispute.findUnique({ where: { id }, select: { order: { select: { number: true } } } }) : null;
-  return { title: `${d ? `${d.order.number} · ` : ""}${t("admin.disputes.title")} · ${t("admin.title")}` };
+  const isAdmin = await isAdminSession();
+  const d = isAdmin && /^[\w-]{1,40}$/.test(id) ? await db.dispute.findUnique({ where: { id }, select: { order: { select: { number: true } } } }) : null;
+  // a11y R6-AX-11 (WCAG 2.4.2): a missing record says so in the tab title too.
+  return { title: `${d ? `${d.order.number} · ` : isAdmin ? `${t("admin.common.notFoundTitle")} · ` : ""}${t("admin.disputes.title")} · ${t("admin.title")}` };
 }
 
 export default async function AdminDisputePage({ params }: { params: Params }) {

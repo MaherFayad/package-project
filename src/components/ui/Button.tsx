@@ -2,7 +2,8 @@
 
 import NextLink from "next/link";
 import { ChevronDown } from "lucide-react";
-import { forwardRef, useState, type MouseEvent, type ReactNode, type Ref } from "react";
+import { forwardRef, useCallback, useLayoutEffect, useRef, useState, type MouseEvent, type ReactNode, type Ref } from "react";
+import { captureFocusRescue } from "./focusRescue";
 import { useUi } from "./AppProvider";
 import { Icon, renderIcon, type IconSource } from "./Icon";
 import { Spinner } from "./Spinner";
@@ -91,6 +92,19 @@ export const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPr
   // submit, a step that completes) stays focusable as aria-disabled until focus moves on, instead
   // of dropping keyboard focus to <body> (WCAG 2.4.3; a11y R5-AX-05).
   const [focused, setFocused] = useState(false);
+  // R6-AX-01: a button removed while it has focus (a row's Remove, a banner action that closes the
+  // banner) hands focus to the nearest remaining control instead of <body>. The layout-effect
+  // cleanup runs while the node is still attached.
+  const self = useRef<HTMLButtonElement | HTMLAnchorElement | null>(null);
+  const setRef = useCallback(
+    (node: HTMLButtonElement | HTMLAnchorElement | null) => {
+      self.current = node;
+      if (typeof ref === "function") ref(node);
+      else if (ref) (ref as React.MutableRefObject<HTMLButtonElement | HTMLAnchorElement | null>).current = node;
+    },
+    [ref],
+  );
+  useLayoutEffect(() => () => captureFocusRescue(self.current), []);
   const iconOnly = Boolean(icon) && (children === undefined || children === null || children === "");
   const cls = cx(
     styles.Button,
@@ -150,7 +164,7 @@ export const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPr
       return (
         <a
           {...common}
-          ref={ref as Ref<HTMLAnchorElement>}
+          ref={setRef as Ref<HTMLAnchorElement>}
           href={url}
           target={external ? "_blank" : undefined}
           rel={external ? "noopener noreferrer" : undefined}
@@ -163,7 +177,7 @@ export const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPr
       );
     }
     return (
-      <NextLink {...common} ref={ref as Ref<HTMLAnchorElement>} href={url} onClick={onClick}>
+      <NextLink {...common} ref={setRef as Ref<HTMLAnchorElement>} href={url} onClick={onClick}>
         {content}
       </NextLink>
     );
@@ -172,7 +186,7 @@ export const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPr
   return (
     <button
       {...common}
-      ref={ref as Ref<HTMLButtonElement>}
+      ref={setRef as Ref<HTMLButtonElement>}
       type={submit ? "submit" : "button"}
       // A loading button stays focusable (aria-disabled, clicks ignored) so keyboard and screen
       // reader users keep their place while the action runs (WCAG 2.4.3, 4.1.2).

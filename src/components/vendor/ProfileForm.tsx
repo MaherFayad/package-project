@@ -2,7 +2,7 @@
 
 import { Plus, Trash2, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { Banner } from "@/components/ui/Banner";
 import { BlockStack, InlineGrid, InlineStack } from "@/components/ui/Stack";
@@ -16,6 +16,7 @@ import { Page } from "@/components/ui/Page";
 import { Select } from "@/components/ui/Select";
 import { Text } from "@/components/ui/Text";
 import { TextField } from "@/components/ui/TextField";
+import { rememberFocusedField, useRestoreRememberedFocus } from "@/components/ui/focusRescue";
 import { useToast } from "@/components/ui/Toast";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
@@ -139,6 +140,7 @@ export function ProfileForm({ profile, portfolio, coverage, gluing }: { profile:
     return s === key ? t("vendorPortal.profile.errors.INVALID") : s;
   };
 
+  const lastField = useRef<HTMLElement | null>(null);
   const onSave = useCallback(async () => {
     const input = toInput(form, gluing);
     const local = profileSchema.safeParse(input);
@@ -157,6 +159,8 @@ export function ProfileForm({ profile, portfolio, coverage, gluing }: { profile:
         setUpdatedAt(res.data.updatedAt);
         const bioChanged = form.bioAr !== initial.bioAr || form.bioEn !== initial.bioEn;
         toast.show(t(bioChanged ? "vendorPortal.profile.bioSentForReview" : "vendorPortal.common.saved"));
+        // a11y R6-AX-06: the form remounts with the saved data; keep the keyboard on the same field.
+        rememberFocusedField(lastField.current);
         router.refresh();
       } else if (res.fieldErrors) {
         setErrors(res.fieldErrors);
@@ -177,6 +181,7 @@ export function ProfileForm({ profile, portfolio, coverage, gluing }: { profile:
     setErrors({});
   }, [initial]);
 
+  useRestoreRememberedFocus();
   useContextualSaveBar({ dirty, saving, onSave, onDiscard });
 
   async function uploadCert(i: number, files: File[], rejected: { reason: "type" | "size" }[]) {
@@ -217,7 +222,10 @@ export function ProfileForm({ profile, portfolio, coverage, gluing }: { profile:
           <BlockStack gap="400">
             <form
               id="vendor-profile-form"
-              noValidate
+              onFocusCapture={(e) => {
+          lastField.current = e.target as HTMLElement;
+        }}
+        noValidate
               onSubmit={(e) => {
                 e.preventDefault();
                 void onSave();

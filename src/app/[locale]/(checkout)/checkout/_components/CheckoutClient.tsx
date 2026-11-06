@@ -452,6 +452,16 @@ export function CheckoutClient(props: {
     { id: "proof", label: t("checkout.steps.proof") },
     { id: "payment", label: t("checkout.steps.payment") },
   ];
+  // a11y R6-AX-12 (WCAG 2.4.2): each step is its own history entry, so its title names the step
+  // ("Delivery address · Checkout · Elba"), in the history list and for screen readers.
+  const baseTitle = useRef<string | null>(null);
+  useEffect(() => {
+    if (baseTitle.current === null) baseTitle.current = document.title;
+    const label = steps[step]?.label;
+    document.title = step > 0 && label ? `${label} · ${baseTitle.current}` : baseTitle.current;
+    // steps only changes with the locale; the step is what matters.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
 
   // ── step bodies ───────────────────────────────────────────────────
   const offerStep = (
