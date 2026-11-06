@@ -1,0 +1,2900 @@
+[
+ {
+  "page": "404-missing",
+  "profile": "phone",
+  "locale": "ar",
+  "url": "http://localhost:3000/ar/no-such-page",
+  "status": 404,
+  "finalUrl": "http://localhost:3000/ar/no-such-page",
+  "loadMs": 4293,
+  "ttfb": 106.79999999888241,
+  "domContentLoaded": 1057.2999999988824,
+  "loadEvent": 4289,
+  "htmlTransfer": 66732,
+  "htmlDecoded": 300155,
+  "lcp": 2272,
+  "lcpEl": "p.CookieNotice_text__RwVwp size=25296",
+  "fcp": 1032,
+  "clsLoad": 0.0073676128475671804,
+  "long": [
+   {
+    "t": 829,
+    "d": 183
+   },
+   {
+    "t": 2436,
+    "d": 157
+   },
+   {
+    "t": 3451,
+    "d": 55
+   }
+  ],
+  "imgs": [
+   {
+    "src": "http://localhost:3000/marketing/renders/fefco-0427.webp",
+    "nw": 0,
+    "nh": 0,
+    "w": 0,
+    "h": 0,
+    "loading": "lazy",
+    "fp": null,
+    "inView": false,
+    "complete": false
+   }
+  ],
+  "domNodes": 389,
+  "canvases": 0,
+  "inlineCss": 109301,
+  "inlineStyleTags": 1,
+  "rsc": 169383,
+  "rscCss": 109301,
+  "fontsLoaded": [
+   "Inter 100 900",
+   "Noto Sans Arabic 100 900"
+  ],
+  "cls": 0.0073676128475671804,
+  "shifts": [
+   {
+    "t": 3376,
+    "v": 0.0074,
+    "nodes": [
+     "div.CookieNotice_notice__Xr_DK",
+     "#text",
+     "#text"
+    ],
+    "rects": [
+     "0,713 390x131 -> 0,732 390x112",
+     "16,200 358x48 -> 16,200 358x48",
+     "16,138 358x36 -> 16,138 358x36"
+    ]
+   }
+  ],
+  "inp": 24,
+  "inpDetail": [
+   {
+    "id": 8862,
+    "name": "keydown",
+    "d": 24,
+    "input": 1,
+    "proc": 8,
+    "target": "body"
+   }
+  ],
+  "clicks": 0,
+  "longTasks": 3,
+  "longTaskMax": 183,
+  "tbt": 245,
+  "tbtLoad": 245,
+  "bytes": {
+   "total": 845762,
+   "js": 271218,
+   "css": 0,
+   "img": 55867,
+   "font": 216384,
+   "doc": 67707,
+   "fetch": 234091
+  },
+  "requests": 44,
+  "js": [
+   {
+    "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
+    "b": 55400
+   },
+   {
+    "f": "/_next/static/chunks/1255-d8a1861c775d9bcc.js",
+    "b": 47430
+   },
+   {
+    "f": "/_next/static/chunks/7398-4f17a9a0c05e267d.js",
+    "b": 29113
+   },
+   {
+    "f": "/_next/static/chunks/8734-72cd3d8fa3f6c0cf.js",
+    "b": 14032
+   },
+   {
+    "f": "/_next/static/chunks/1898-0fb042056b9d4885.js",
+    "b": 11988
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/start/page-b4dad24ace012b2c.js",
+    "b": 11870
+   },
+   {
+    "f": "/_next/static/chunks/9909-92d9dde2b90f5fbe.js",
+    "b": 7690
+   },
+   {
+    "f": "/_next/static/chunks/4240-53ec143248516299.js",
+    "b": 7175
+   },
+   {
+    "f": "/_next/static/chunks/8166-a92c6ad006c9ab55.js",
+    "b": 6503
+   },
+   {
+    "f": "/_next/static/chunks/302-bef3166f019ca821.js",
+    "b": 6494
+   },
+   {
+    "f": "/_next/static/chunks/7914-1234a02f41148c77.js",
+    "b": 6336
+   },
+   {
+    "f": "/_next/static/chunks/1640-69e3811ea1693e9b.js",
+    "b": 5845
+   },
+   {
+    "f": "/_next/static/chunks/4375-37d619d292bb8f59.js",
+    "b": 5528
+   },
+   {
+    "f": "/_next/static/chunks/9001-195b0e0c37d0343d.js",
+    "b": 5215
+   },
+   {
+    "f": "/_next/static/chunks/webpack-fcdbccfc4f340776.js",
+    "b": 4934
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-89f125e2e1a4a398.js",
+    "b": 4494
+   },
+   {
+    "f": "/_next/static/chunks/2619-04bc32f026a0d946.js",
+    "b": 4401
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/layout-d075c945e6c27605.js",
+    "b": 4392
+   },
+   {
+    "f": "/_next/static/chunks/6882-0b5aef423e84e709.js",
+    "b": 3906
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/error-ef6b063c984f94d5.js",
+    "b": 3833
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/not-found-9ce1e96d51e539c9.js",
+    "b": 3805
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/(why)/layout-8f65ed548b6c3d79.js",
+    "b": 3325
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/page-2803a4e0723504c7.js",
+    "b": 2981
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/%5Bdoc%5D/page-ec925f676a03ef01.js",
+    "b": 2485
+   },
+   {
+    "f": "/_next/static/chunks/app/global-error-ed675084e5fb037e.js",
+    "b": 2172
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-4adeb04b2a9d69ec.js",
+    "b": 1765
+   },
+   {
+    "f": "/_next/static/chunks/main-app-c659b7c05baec7d9.js",
+    "b": 1473
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/loading-b56e3f1aef8ebda4.js",
+    "b": 1155
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/error-6c05dd993aa22ad7.js",
+    "b": 1138
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-not-found/page-58e7582a9e887c58.js",
+    "b": 1085
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/not-found-11fad0872f5d25c7.js",
+    "b": 1085
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/%5B...missing%5D/not-found-0d91ed180171e471.js",
+    "b": 1085
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/catalog/not-found-759db7f93ad92fb4.js",
+    "b": 1085
+   }
+  ],
+  "images": [
+   {
+    "f": "/marketing/r6/hero/mailer-iso-dark@2x.avif",
+    "mime": "image/avif",
+    "b": 31717
+   },
+   {
+    "f": "/marketing/r6/collage/mailer-tilt@2x.avif",
+    "mime": "image/avif",
+    "b": 24150
+   }
+  ],
+  "fonts": [
+   {
+    "f": "e4af272ccee01ff0-s.woff2",
+    "b": 49331
+   },
+   {
+    "f": "b261c59b2d76913d-s.woff2",
+    "b": 167053
+   }
+  ]
+ },
+ {
+  "page": "404-share",
+  "profile": "phone",
+  "locale": "ar",
+  "url": "http://localhost:3000/ar/s/no-such-token-123",
+  "status": 404,
+  "finalUrl": "http://localhost:3000/ar/s/no-such-token-123",
+  "loadMs": 4297,
+  "ttfb": 18.59999999962747,
+  "domContentLoaded": 1060.0999999996275,
+  "loadEvent": 4289.200000001118,
+  "htmlTransfer": 66732,
+  "htmlDecoded": 300155,
+  "lcp": 2280,
+  "lcpEl": "p.CookieNotice_text__RwVwp size=25296",
+  "fcp": 1028,
+  "clsLoad": 0.0073676128475671804,
+  "long": [
+   {
+    "t": 821,
+    "d": 190
+   },
+   {
+    "t": 2434,
+    "d": 201
+   },
+   {
+    "t": 3433,
+    "d": 53
+   }
+  ],
+  "imgs": [
+   {
+    "src": "http://localhost:3000/marketing/renders/fefco-0427.webp",
+    "nw": 0,
+    "nh": 0,
+    "w": 0,
+    "h": 0,
+    "loading": "lazy",
+    "fp": null,
+    "inView": false,
+    "complete": false
+   }
+  ],
+  "domNodes": 389,
+  "canvases": 0,
+  "inlineCss": 109301,
+  "inlineStyleTags": 1,
+  "rsc": 169383,
+  "rscCss": 109301,
+  "fontsLoaded": [
+   "Inter 100 900",
+   "Noto Sans Arabic 100 900"
+  ],
+  "cls": 0.0073676128475671804,
+  "shifts": [
+   {
+    "t": 3379,
+    "v": 0.0074,
+    "nodes": [
+     "div.CookieNotice_notice__Xr_DK",
+     "#text",
+     "#text"
+    ],
+    "rects": [
+     "0,713 390x131 -> 0,732 390x112",
+     "16,200 358x48 -> 16,200 358x48",
+     "16,138 358x36 -> 16,138 358x36"
+    ]
+   }
+  ],
+  "inp": 16,
+  "inpDetail": [
+   {
+    "id": 4658,
+    "name": "keydown",
+    "d": 16,
+    "input": 1,
+    "proc": 8,
+    "target": "body"
+   }
+  ],
+  "clicks": 0,
+  "longTasks": 3,
+  "longTaskMax": 201,
+  "tbt": 294,
+  "tbtLoad": 294,
+  "bytes": {
+   "total": 845762,
+   "js": 271218,
+   "css": 0,
+   "img": 55867,
+   "font": 216384,
+   "doc": 67707,
+   "fetch": 234091
+  },
+  "requests": 44,
+  "js": [
+   {
+    "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
+    "b": 55400
+   },
+   {
+    "f": "/_next/static/chunks/1255-d8a1861c775d9bcc.js",
+    "b": 47430
+   },
+   {
+    "f": "/_next/static/chunks/7398-4f17a9a0c05e267d.js",
+    "b": 29113
+   },
+   {
+    "f": "/_next/static/chunks/8734-72cd3d8fa3f6c0cf.js",
+    "b": 14032
+   },
+   {
+    "f": "/_next/static/chunks/1898-0fb042056b9d4885.js",
+    "b": 11988
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/start/page-b4dad24ace012b2c.js",
+    "b": 11870
+   },
+   {
+    "f": "/_next/static/chunks/9909-92d9dde2b90f5fbe.js",
+    "b": 7690
+   },
+   {
+    "f": "/_next/static/chunks/4240-53ec143248516299.js",
+    "b": 7175
+   },
+   {
+    "f": "/_next/static/chunks/8166-a92c6ad006c9ab55.js",
+    "b": 6503
+   },
+   {
+    "f": "/_next/static/chunks/302-bef3166f019ca821.js",
+    "b": 6494
+   },
+   {
+    "f": "/_next/static/chunks/7914-1234a02f41148c77.js",
+    "b": 6336
+   },
+   {
+    "f": "/_next/static/chunks/1640-69e3811ea1693e9b.js",
+    "b": 5845
+   },
+   {
+    "f": "/_next/static/chunks/4375-37d619d292bb8f59.js",
+    "b": 5528
+   },
+   {
+    "f": "/_next/static/chunks/9001-195b0e0c37d0343d.js",
+    "b": 5215
+   },
+   {
+    "f": "/_next/static/chunks/webpack-fcdbccfc4f340776.js",
+    "b": 4934
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-89f125e2e1a4a398.js",
+    "b": 4494
+   },
+   {
+    "f": "/_next/static/chunks/2619-04bc32f026a0d946.js",
+    "b": 4401
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/layout-d075c945e6c27605.js",
+    "b": 4392
+   },
+   {
+    "f": "/_next/static/chunks/6882-0b5aef423e84e709.js",
+    "b": 3906
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/error-ef6b063c984f94d5.js",
+    "b": 3833
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/not-found-9ce1e96d51e539c9.js",
+    "b": 3805
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/(why)/layout-8f65ed548b6c3d79.js",
+    "b": 3325
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/page-2803a4e0723504c7.js",
+    "b": 2981
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/%5Bdoc%5D/page-ec925f676a03ef01.js",
+    "b": 2485
+   },
+   {
+    "f": "/_next/static/chunks/app/global-error-ed675084e5fb037e.js",
+    "b": 2172
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-4adeb04b2a9d69ec.js",
+    "b": 1765
+   },
+   {
+    "f": "/_next/static/chunks/main-app-c659b7c05baec7d9.js",
+    "b": 1473
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/loading-b56e3f1aef8ebda4.js",
+    "b": 1155
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/error-6c05dd993aa22ad7.js",
+    "b": 1138
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-not-found/page-58e7582a9e887c58.js",
+    "b": 1085
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/not-found-11fad0872f5d25c7.js",
+    "b": 1085
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/%5B...missing%5D/not-found-0d91ed180171e471.js",
+    "b": 1085
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/catalog/not-found-759db7f93ad92fb4.js",
+    "b": 1085
+   }
+  ],
+  "images": [
+   {
+    "f": "/marketing/r6/hero/mailer-iso-dark@2x.avif",
+    "mime": "image/avif",
+    "b": 31717
+   },
+   {
+    "f": "/marketing/r6/collage/mailer-tilt@2x.avif",
+    "mime": "image/avif",
+    "b": 24150
+   }
+  ],
+  "fonts": [
+   {
+    "f": "e4af272ccee01ff0-s.woff2",
+    "b": 49331
+   },
+   {
+    "f": "b261c59b2d76913d-s.woff2",
+    "b": 167053
+   }
+  ]
+ },
+ {
+  "page": "404-legal",
+  "profile": "phone",
+  "locale": "ar",
+  "url": "http://localhost:3000/ar/legal/no-such-policy",
+  "status": 404,
+  "finalUrl": "http://localhost:3000/ar/legal/no-such-policy",
+  "loadMs": 4281,
+  "ttfb": 14.899999998509884,
+  "domContentLoaded": 1057.8999999985099,
+  "loadEvent": 4277.5,
+  "htmlTransfer": 66732,
+  "htmlDecoded": 300155,
+  "lcp": 2256,
+  "lcpEl": "p.CookieNotice_text__RwVwp size=25296",
+  "fcp": 1044,
+  "clsLoad": 0.0073676128475671804,
+  "long": [
+   {
+    "t": 822,
+    "d": 199
+   },
+   {
+    "t": 2426,
+    "d": 186
+   },
+   {
+    "t": 3444,
+    "d": 56
+   }
+  ],
+  "imgs": [
+   {
+    "src": "http://localhost:3000/marketing/renders/fefco-0427.webp",
+    "nw": 0,
+    "nh": 0,
+    "w": 0,
+    "h": 0,
+    "loading": "lazy",
+    "fp": null,
+    "inView": false,
+    "complete": false
+   }
+  ],
+  "domNodes": 389,
+  "canvases": 0,
+  "inlineCss": 109301,
+  "inlineStyleTags": 1,
+  "rsc": 169383,
+  "rscCss": 109301,
+  "fontsLoaded": [
+   "Inter 100 900",
+   "Noto Sans Arabic 100 900"
+  ],
+  "cls": 0.0073676128475671804,
+  "shifts": [
+   {
+    "t": 3374,
+    "v": 0.0074,
+    "nodes": [
+     "div.CookieNotice_notice__Xr_DK",
+     "#text",
+     "#text"
+    ],
+    "rects": [
+     "0,713 390x131 -> 0,732 390x112",
+     "16,200 358x48 -> 16,200 358x48",
+     "16,138 358x36 -> 16,138 358x36"
+    ]
+   }
+  ],
+  "inp": 16,
+  "inpDetail": [
+   {
+    "id": 3969,
+    "name": "keydown",
+    "d": 16,
+    "input": 1,
+    "proc": 9,
+    "target": "body"
+   }
+  ],
+  "clicks": 0,
+  "longTasks": 3,
+  "longTaskMax": 199,
+  "tbt": 291,
+  "tbtLoad": 291,
+  "bytes": {
+   "total": 845762,
+   "js": 271218,
+   "css": 0,
+   "img": 55867,
+   "font": 216384,
+   "doc": 67707,
+   "fetch": 234091
+  },
+  "requests": 44,
+  "js": [
+   {
+    "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
+    "b": 55400
+   },
+   {
+    "f": "/_next/static/chunks/1255-d8a1861c775d9bcc.js",
+    "b": 47430
+   },
+   {
+    "f": "/_next/static/chunks/7398-4f17a9a0c05e267d.js",
+    "b": 29113
+   },
+   {
+    "f": "/_next/static/chunks/8734-72cd3d8fa3f6c0cf.js",
+    "b": 14032
+   },
+   {
+    "f": "/_next/static/chunks/1898-0fb042056b9d4885.js",
+    "b": 11988
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/start/page-b4dad24ace012b2c.js",
+    "b": 11870
+   },
+   {
+    "f": "/_next/static/chunks/9909-92d9dde2b90f5fbe.js",
+    "b": 7690
+   },
+   {
+    "f": "/_next/static/chunks/4240-53ec143248516299.js",
+    "b": 7175
+   },
+   {
+    "f": "/_next/static/chunks/8166-a92c6ad006c9ab55.js",
+    "b": 6503
+   },
+   {
+    "f": "/_next/static/chunks/302-bef3166f019ca821.js",
+    "b": 6494
+   },
+   {
+    "f": "/_next/static/chunks/7914-1234a02f41148c77.js",
+    "b": 6336
+   },
+   {
+    "f": "/_next/static/chunks/1640-69e3811ea1693e9b.js",
+    "b": 5845
+   },
+   {
+    "f": "/_next/static/chunks/4375-37d619d292bb8f59.js",
+    "b": 5528
+   },
+   {
+    "f": "/_next/static/chunks/9001-195b0e0c37d0343d.js",
+    "b": 5215
+   },
+   {
+    "f": "/_next/static/chunks/webpack-fcdbccfc4f340776.js",
+    "b": 4934
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-89f125e2e1a4a398.js",
+    "b": 4494
+   },
+   {
+    "f": "/_next/static/chunks/2619-04bc32f026a0d946.js",
+    "b": 4401
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/layout-d075c945e6c27605.js",
+    "b": 4392
+   },
+   {
+    "f": "/_next/static/chunks/6882-0b5aef423e84e709.js",
+    "b": 3906
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/error-ef6b063c984f94d5.js",
+    "b": 3833
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/not-found-9ce1e96d51e539c9.js",
+    "b": 3805
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/(why)/layout-8f65ed548b6c3d79.js",
+    "b": 3325
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/page-2803a4e0723504c7.js",
+    "b": 2981
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/%5Bdoc%5D/page-ec925f676a03ef01.js",
+    "b": 2485
+   },
+   {
+    "f": "/_next/static/chunks/app/global-error-ed675084e5fb037e.js",
+    "b": 2172
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-4adeb04b2a9d69ec.js",
+    "b": 1765
+   },
+   {
+    "f": "/_next/static/chunks/main-app-c659b7c05baec7d9.js",
+    "b": 1473
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/loading-b56e3f1aef8ebda4.js",
+    "b": 1155
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/error-6c05dd993aa22ad7.js",
+    "b": 1138
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-not-found/page-58e7582a9e887c58.js",
+    "b": 1085
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/not-found-11fad0872f5d25c7.js",
+    "b": 1085
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/%5B...missing%5D/not-found-0d91ed180171e471.js",
+    "b": 1085
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/catalog/not-found-759db7f93ad92fb4.js",
+    "b": 1085
+   }
+  ],
+  "images": [
+   {
+    "f": "/marketing/r6/hero/mailer-iso-dark@2x.avif",
+    "mime": "image/avif",
+    "b": 31717
+   },
+   {
+    "f": "/marketing/r6/collage/mailer-tilt@2x.avif",
+    "mime": "image/avif",
+    "b": 24150
+   }
+  ],
+  "fonts": [
+   {
+    "f": "e4af272ccee01ff0-s.woff2",
+    "b": 49331
+   },
+   {
+    "f": "b261c59b2d76913d-s.woff2",
+    "b": 167053
+   }
+  ]
+ },
+ {
+  "page": "404-design",
+  "profile": "phone",
+  "locale": "ar",
+  "url": "http://localhost:3000/ar/design/no-such-model",
+  "status": 404,
+  "finalUrl": "http://localhost:3000/ar/design/no-such-model",
+  "loadMs": 4291,
+  "ttfb": 16.800000000745058,
+  "domContentLoaded": 1124.2000000011176,
+  "loadEvent": 4287.0999999996275,
+  "htmlTransfer": 66732,
+  "htmlDecoded": 300155,
+  "lcp": 2248,
+  "lcpEl": "p.CookieNotice_text__RwVwp size=25296",
+  "fcp": 1084,
+  "clsLoad": 0.0073676128475671804,
+  "long": [
+   {
+    "t": 821,
+    "d": 241
+   },
+   {
+    "t": 2425,
+    "d": 169
+   },
+   {
+    "t": 3456,
+    "d": 58
+   }
+  ],
+  "imgs": [
+   {
+    "src": "http://localhost:3000/marketing/renders/fefco-0427.webp",
+    "nw": 0,
+    "nh": 0,
+    "w": 0,
+    "h": 0,
+    "loading": "lazy",
+    "fp": null,
+    "inView": false,
+    "complete": false
+   }
+  ],
+  "domNodes": 389,
+  "canvases": 0,
+  "inlineCss": 109301,
+  "inlineStyleTags": 1,
+  "rsc": 169383,
+  "rscCss": 109301,
+  "fontsLoaded": [
+   "Inter 100 900",
+   "Noto Sans Arabic 100 900"
+  ],
+  "cls": 0.0073676128475671804,
+  "shifts": [
+   {
+    "t": 3367,
+    "v": 0.0074,
+    "nodes": [
+     "div.CookieNotice_notice__Xr_DK",
+     "#text",
+     "#text"
+    ],
+    "rects": [
+     "0,713 390x131 -> 0,732 390x112",
+     "16,200 358x48 -> 16,200 358x48",
+     "16,138 358x36 -> 16,138 358x36"
+    ]
+   }
+  ],
+  "inp": 16,
+  "inpDetail": [
+   {
+    "id": 9358,
+    "name": "keydown",
+    "d": 16,
+    "input": 1,
+    "proc": 9,
+    "target": "body"
+   }
+  ],
+  "clicks": 0,
+  "longTasks": 3,
+  "longTaskMax": 241,
+  "tbt": 318,
+  "tbtLoad": 318,
+  "bytes": {
+   "total": 845762,
+   "js": 271218,
+   "css": 0,
+   "img": 55867,
+   "font": 216384,
+   "doc": 67707,
+   "fetch": 234091
+  },
+  "requests": 44,
+  "js": [
+   {
+    "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
+    "b": 55400
+   },
+   {
+    "f": "/_next/static/chunks/1255-d8a1861c775d9bcc.js",
+    "b": 47430
+   },
+   {
+    "f": "/_next/static/chunks/7398-4f17a9a0c05e267d.js",
+    "b": 29113
+   },
+   {
+    "f": "/_next/static/chunks/8734-72cd3d8fa3f6c0cf.js",
+    "b": 14032
+   },
+   {
+    "f": "/_next/static/chunks/1898-0fb042056b9d4885.js",
+    "b": 11988
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/start/page-b4dad24ace012b2c.js",
+    "b": 11870
+   },
+   {
+    "f": "/_next/static/chunks/9909-92d9dde2b90f5fbe.js",
+    "b": 7690
+   },
+   {
+    "f": "/_next/static/chunks/4240-53ec143248516299.js",
+    "b": 7175
+   },
+   {
+    "f": "/_next/static/chunks/8166-a92c6ad006c9ab55.js",
+    "b": 6503
+   },
+   {
+    "f": "/_next/static/chunks/302-bef3166f019ca821.js",
+    "b": 6494
+   },
+   {
+    "f": "/_next/static/chunks/7914-1234a02f41148c77.js",
+    "b": 6336
+   },
+   {
+    "f": "/_next/static/chunks/1640-69e3811ea1693e9b.js",
+    "b": 5845
+   },
+   {
+    "f": "/_next/static/chunks/4375-37d619d292bb8f59.js",
+    "b": 5528
+   },
+   {
+    "f": "/_next/static/chunks/9001-195b0e0c37d0343d.js",
+    "b": 5215
+   },
+   {
+    "f": "/_next/static/chunks/webpack-fcdbccfc4f340776.js",
+    "b": 4934
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-89f125e2e1a4a398.js",
+    "b": 4494
+   },
+   {
+    "f": "/_next/static/chunks/2619-04bc32f026a0d946.js",
+    "b": 4401
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/layout-d075c945e6c27605.js",
+    "b": 4392
+   },
+   {
+    "f": "/_next/static/chunks/6882-0b5aef423e84e709.js",
+    "b": 3906
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/error-ef6b063c984f94d5.js",
+    "b": 3833
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/not-found-9ce1e96d51e539c9.js",
+    "b": 3805
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/(why)/layout-8f65ed548b6c3d79.js",
+    "b": 3325
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/page-2803a4e0723504c7.js",
+    "b": 2981
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/%5Bdoc%5D/page-ec925f676a03ef01.js",
+    "b": 2485
+   },
+   {
+    "f": "/_next/static/chunks/app/global-error-ed675084e5fb037e.js",
+    "b": 2172
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-4adeb04b2a9d69ec.js",
+    "b": 1765
+   },
+   {
+    "f": "/_next/static/chunks/main-app-c659b7c05baec7d9.js",
+    "b": 1473
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/loading-b56e3f1aef8ebda4.js",
+    "b": 1155
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/error-6c05dd993aa22ad7.js",
+    "b": 1138
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-not-found/page-58e7582a9e887c58.js",
+    "b": 1085
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/not-found-11fad0872f5d25c7.js",
+    "b": 1085
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/%5B...missing%5D/not-found-0d91ed180171e471.js",
+    "b": 1085
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/catalog/not-found-759db7f93ad92fb4.js",
+    "b": 1085
+   }
+  ],
+  "images": [
+   {
+    "f": "/marketing/r6/hero/mailer-iso-dark@2x.avif",
+    "mime": "image/avif",
+    "b": 31717
+   },
+   {
+    "f": "/marketing/r6/collage/mailer-tilt@2x.avif",
+    "mime": "image/avif",
+    "b": 24150
+   }
+  ],
+  "fonts": [
+   {
+    "f": "e4af272ccee01ff0-s.woff2",
+    "b": 49331
+   },
+   {
+    "f": "b261c59b2d76913d-s.woff2",
+    "b": 167053
+   }
+  ]
+ },
+ {
+  "page": "404-catalog",
+  "profile": "phone",
+  "locale": "ar",
+  "url": "http://localhost:3000/ar/catalog/no-such-model",
+  "status": 404,
+  "finalUrl": "http://localhost:3000/ar/catalog/no-such-model",
+  "loadMs": 5056,
+  "ttfb": 80.59999999962747,
+  "domContentLoaded": 855.4000000003725,
+  "loadEvent": 5052.4000000003725,
+  "htmlTransfer": 51121,
+  "htmlDecoded": 192059,
+  "lcp": 5064,
+  "lcpEl": "p.marketing_lead__u7C3p size=18020",
+  "fcp": 5064,
+  "clsLoad": 0,
+  "long": [
+   {
+    "t": 2371,
+    "d": 301
+   },
+   {
+    "t": 2708,
+    "d": 50
+   },
+   {
+    "t": 4765,
+    "d": 178
+   }
+  ],
+  "imgs": [
+   {
+    "src": "http://localhost:3000/marketing/renders/fefco-0427.webp",
+    "nw": 0,
+    "nh": 0,
+    "w": 0,
+    "h": 0,
+    "loading": "lazy",
+    "fp": null,
+    "inView": false,
+    "complete": false
+   }
+  ],
+  "domNodes": 390,
+  "canvases": 0,
+  "inlineCss": 109301,
+  "inlineStyleTags": 8,
+  "rsc": 182383,
+  "rscCss": 109301,
+  "fontsLoaded": [
+   "Inter 100 900",
+   "Noto Sans Arabic 100 900"
+  ],
+  "cls": 0,
+  "shifts": [],
+  "inp": 16,
+  "inpDetail": [
+   {
+    "id": 9991,
+    "name": "keydown",
+    "d": 16,
+    "input": 0,
+    "proc": 2,
+    "target": "body"
+   }
+  ],
+  "clicks": 0,
+  "longTasks": 3,
+  "longTaskMax": 301,
+  "tbt": 379,
+  "tbtLoad": 379,
+  "bytes": {
+   "total": 839370,
+   "js": 280044,
+   "css": 0,
+   "img": 55867,
+   "font": 216384,
+   "doc": 52489,
+   "fetch": 234091
+  },
+  "requests": 45,
+  "js": [
+   {
+    "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
+    "b": 55400
+   },
+   {
+    "f": "/_next/static/chunks/1255-d8a1861c775d9bcc.js",
+    "b": 47430
+   },
+   {
+    "f": "/_next/static/chunks/7398-4f17a9a0c05e267d.js",
+    "b": 29113
+   },
+   {
+    "f": "/_next/static/chunks/8734-72cd3d8fa3f6c0cf.js",
+    "b": 14032
+   },
+   {
+    "f": "/_next/static/chunks/1898-0fb042056b9d4885.js",
+    "b": 11988
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/start/page-b4dad24ace012b2c.js",
+    "b": 11870
+   },
+   {
+    "f": "/_next/static/chunks/9909-92d9dde2b90f5fbe.js",
+    "b": 7690
+   },
+   {
+    "f": "/_next/static/chunks/4240-53ec143248516299.js",
+    "b": 7175
+   },
+   {
+    "f": "/_next/static/chunks/8166-a92c6ad006c9ab55.js",
+    "b": 6503
+   },
+   {
+    "f": "/_next/static/chunks/302-bef3166f019ca821.js",
+    "b": 6494
+   },
+   {
+    "f": "/_next/static/chunks/7914-1234a02f41148c77.js",
+    "b": 6336
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/catalog/%5Bslug%5D/page-06d566d314da3e0c.js",
+    "b": 6062
+   },
+   {
+    "f": "/_next/static/chunks/1640-69e3811ea1693e9b.js",
+    "b": 5845
+   },
+   {
+    "f": "/_next/static/chunks/4375-37d619d292bb8f59.js",
+    "b": 5528
+   },
+   {
+    "f": "/_next/static/chunks/9001-195b0e0c37d0343d.js",
+    "b": 5215
+   },
+   {
+    "f": "/_next/static/chunks/webpack-fcdbccfc4f340776.js",
+    "b": 4934
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-89f125e2e1a4a398.js",
+    "b": 4494
+   },
+   {
+    "f": "/_next/static/chunks/2619-04bc32f026a0d946.js",
+    "b": 4401
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/layout-d075c945e6c27605.js",
+    "b": 4392
+   },
+   {
+    "f": "/_next/static/chunks/6882-0b5aef423e84e709.js",
+    "b": 3906
+   },
+   {
+    "f": "/_next/static/chunks/8749-fa63bd3b324250f3.js",
+    "b": 3849
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/error-ef6b063c984f94d5.js",
+    "b": 3833
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/not-found-9ce1e96d51e539c9.js",
+    "b": 3805
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/(why)/layout-8f65ed548b6c3d79.js",
+    "b": 3325
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/page-2803a4e0723504c7.js",
+    "b": 2981
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/%5Bdoc%5D/page-ec925f676a03ef01.js",
+    "b": 2485
+   },
+   {
+    "f": "/_next/static/chunks/app/global-error-ed675084e5fb037e.js",
+    "b": 2172
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-4adeb04b2a9d69ec.js",
+    "b": 1765
+   },
+   {
+    "f": "/_next/static/chunks/main-app-c659b7c05baec7d9.js",
+    "b": 1473
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/loading-b56e3f1aef8ebda4.js",
+    "b": 1155
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/error-6c05dd993aa22ad7.js",
+    "b": 1138
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/catalog/not-found-759db7f93ad92fb4.js",
+    "b": 1085
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/not-found-11fad0872f5d25c7.js",
+    "b": 1085
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/%5B...missing%5D/not-found-0d91ed180171e471.js",
+    "b": 1085
+   }
+  ],
+  "images": [
+   {
+    "f": "/marketing/r6/hero/mailer-iso-dark@2x.avif",
+    "mime": "image/avif",
+    "b": 31717
+   },
+   {
+    "f": "/marketing/r6/collage/mailer-tilt@2x.avif",
+    "mime": "image/avif",
+    "b": 24150
+   }
+  ],
+  "fonts": [
+   {
+    "f": "e4af272ccee01ff0-s.woff2",
+    "b": 49331
+   },
+   {
+    "f": "b261c59b2d76913d-s.woff2",
+    "b": 167053
+   }
+  ]
+ },
+ {
+  "page": "404-share-wellformed",
+  "profile": "phone",
+  "locale": "ar",
+  "url": "http://localhost:3000/ar/s/aaaaaaaaaaaaaaaa",
+  "status": 404,
+  "finalUrl": "http://localhost:3000/ar/s/aaaaaaaaaaaaaaaa",
+  "loadMs": 4821,
+  "ttfb": 45.79999999888241,
+  "domContentLoaded": 933.7999999988824,
+  "loadEvent": 4817.4000000003725,
+  "htmlTransfer": 64954,
+  "htmlDecoded": 228455,
+  "lcp": 4700,
+  "lcpEl": "p size=6144",
+  "fcp": 4700,
+  "clsLoad": 0,
+  "long": [
+   {
+    "t": 2364,
+    "d": 224
+   },
+   {
+    "t": 3815,
+    "d": 60
+   },
+   {
+    "t": 4461,
+    "d": 121
+   }
+  ],
+  "imgs": [
+   {
+    "src": "http://localhost:3000/marketing/renders/fefco-0427.webp",
+    "nw": 0,
+    "nh": 0,
+    "w": 0,
+    "h": 0,
+    "loading": "lazy",
+    "fp": null,
+    "inView": false,
+    "complete": false
+   }
+  ],
+  "domNodes": 441,
+  "canvases": 0,
+  "inlineCss": 129638,
+  "inlineStyleTags": 16,
+  "rsc": 216170,
+  "rscCss": 129638,
+  "fontsLoaded": [
+   "Inter 100 900",
+   "Noto Sans Arabic 100 900"
+  ],
+  "cls": 0,
+  "shifts": [],
+  "inp": 24,
+  "inpDetail": [
+   {
+    "id": 5001,
+    "name": "keydown",
+    "d": 24,
+    "input": 1,
+    "proc": 6,
+    "target": "body"
+   }
+  ],
+  "clicks": 0,
+  "longTasks": 3,
+  "longTaskMax": 224,
+  "tbt": 255,
+  "tbtLoad": 255,
+  "bytes": {
+   "total": 772920,
+   "js": 272906,
+   "css": 0,
+   "img": 55867,
+   "font": 216384,
+   "doc": 66496,
+   "fetch": 160772
+  },
+  "requests": 43,
+  "js": [
+   {
+    "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
+    "b": 55400
+   },
+   {
+    "f": "/_next/static/chunks/1255-d8a1861c775d9bcc.js",
+    "b": 47430
+   },
+   {
+    "f": "/_next/static/chunks/7398-4f17a9a0c05e267d.js",
+    "b": 29113
+   },
+   {
+    "f": "/_next/static/chunks/8734-72cd3d8fa3f6c0cf.js",
+    "b": 14032
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/start/page-b4dad24ace012b2c.js",
+    "b": 11870
+   },
+   {
+    "f": "/_next/static/chunks/9909-92d9dde2b90f5fbe.js",
+    "b": 7690
+   },
+   {
+    "f": "/_next/static/chunks/4240-53ec143248516299.js",
+    "b": 7175
+   },
+   {
+    "f": "/_next/static/chunks/8166-a92c6ad006c9ab55.js",
+    "b": 6503
+   },
+   {
+    "f": "/_next/static/chunks/302-bef3166f019ca821.js",
+    "b": 6494
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/s/%5Bid%5D/page-1d87f4d5c079bb15.js",
+    "b": 6342
+   },
+   {
+    "f": "/_next/static/chunks/7914-1234a02f41148c77.js",
+    "b": 6336
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/s/not-found-8ef9368eec7db212.js",
+    "b": 6035
+   },
+   {
+    "f": "/_next/static/chunks/1640-69e3811ea1693e9b.js",
+    "b": 5845
+   },
+   {
+    "f": "/_next/static/chunks/4375-37d619d292bb8f59.js",
+    "b": 5528
+   },
+   {
+    "f": "/_next/static/chunks/9001-195b0e0c37d0343d.js",
+    "b": 5215
+   },
+   {
+    "f": "/_next/static/chunks/1207-d912c1bdb7547a2f.js",
+    "b": 5210
+   },
+   {
+    "f": "/_next/static/chunks/webpack-fcdbccfc4f340776.js",
+    "b": 4934
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-89f125e2e1a4a398.js",
+    "b": 4494
+   },
+   {
+    "f": "/_next/static/chunks/2619-04bc32f026a0d946.js",
+    "b": 4401
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/layout-d075c945e6c27605.js",
+    "b": 4392
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/error-ef6b063c984f94d5.js",
+    "b": 3833
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/not-found-9ce1e96d51e539c9.js",
+    "b": 3805
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/s/%5Bid%5D/loading-cc202f3a1315c033.js",
+    "b": 3595
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/(why)/layout-8f65ed548b6c3d79.js",
+    "b": 3325
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/s/layout-b89349eed3292259.js",
+    "b": 2706
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/%5Bdoc%5D/page-ec925f676a03ef01.js",
+    "b": 2485
+   },
+   {
+    "f": "/_next/static/chunks/app/global-error-ed675084e5fb037e.js",
+    "b": 2172
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-4adeb04b2a9d69ec.js",
+    "b": 1765
+   },
+   {
+    "f": "/_next/static/chunks/main-app-c659b7c05baec7d9.js",
+    "b": 1473
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/error-6c05dd993aa22ad7.js",
+    "b": 1138
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/not-found-11fad0872f5d25c7.js",
+    "b": 1085
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/%5B...missing%5D/not-found-0d91ed180171e471.js",
+    "b": 1085
+   }
+  ],
+  "images": [
+   {
+    "f": "/marketing/r6/hero/mailer-iso-dark@2x.avif",
+    "mime": "image/avif",
+    "b": 31717
+   },
+   {
+    "f": "/marketing/r6/collage/mailer-tilt@2x.avif",
+    "mime": "image/avif",
+    "b": 24150
+   }
+  ],
+  "fonts": [
+   {
+    "f": "e4af272ccee01ff0-s.woff2",
+    "b": 49331
+   },
+   {
+    "f": "b261c59b2d76913d-s.woff2",
+    "b": 167053
+   }
+  ]
+ },
+ {
+  "page": "404-missing",
+  "profile": "phone",
+  "locale": "en",
+  "url": "http://localhost:3000/en/no-such-page",
+  "status": 404,
+  "finalUrl": "http://localhost:3000/en/no-such-page",
+  "loadMs": 3587,
+  "ttfb": 31,
+  "domContentLoaded": 983.6000000014901,
+  "loadEvent": 3583.5,
+  "htmlTransfer": 64240,
+  "htmlDecoded": 288093,
+  "lcp": 1876,
+  "lcpEl": "p.CookieNotice_text__RwVwp size=25854",
+  "fcp": 956,
+  "clsLoad": 0,
+  "long": [
+   {
+    "t": 826,
+    "d": 110
+   },
+   {
+    "t": 2189,
+    "d": 200
+   },
+   {
+    "t": 2808,
+    "d": 52
+   }
+  ],
+  "imgs": [
+   {
+    "src": "http://localhost:3000/marketing/renders/fefco-0427.webp",
+    "nw": 0,
+    "nh": 0,
+    "w": 0,
+    "h": 0,
+    "loading": "lazy",
+    "fp": null,
+    "inView": false,
+    "complete": false
+   }
+  ],
+  "domNodes": 389,
+  "canvases": 0,
+  "inlineCss": 109301,
+  "inlineStyleTags": 1,
+  "rsc": 158431,
+  "rscCss": 109301,
+  "fontsLoaded": [
+   "Inter 100 900"
+  ],
+  "cls": 0,
+  "shifts": [],
+  "inp": 24,
+  "inpDetail": [
+   {
+    "id": 3996,
+    "name": "keydown",
+    "d": 24,
+    "input": 1,
+    "proc": 8,
+    "target": "body"
+   }
+  ],
+  "clicks": 0,
+  "longTasks": 3,
+  "longTaskMax": 200,
+  "tbt": 212,
+  "tbtLoad": 212,
+  "bytes": {
+   "total": 667029,
+   "js": 271218,
+   "css": 0,
+   "img": 55867,
+   "font": 49331,
+   "doc": 65208,
+   "fetch": 224910
+  },
+  "requests": 43,
+  "js": [
+   {
+    "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
+    "b": 55400
+   },
+   {
+    "f": "/_next/static/chunks/1255-d8a1861c775d9bcc.js",
+    "b": 47430
+   },
+   {
+    "f": "/_next/static/chunks/7398-4f17a9a0c05e267d.js",
+    "b": 29113
+   },
+   {
+    "f": "/_next/static/chunks/8734-72cd3d8fa3f6c0cf.js",
+    "b": 14032
+   },
+   {
+    "f": "/_next/static/chunks/1898-0fb042056b9d4885.js",
+    "b": 11988
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/start/page-b4dad24ace012b2c.js",
+    "b": 11870
+   },
+   {
+    "f": "/_next/static/chunks/9909-92d9dde2b90f5fbe.js",
+    "b": 7690
+   },
+   {
+    "f": "/_next/static/chunks/4240-53ec143248516299.js",
+    "b": 7175
+   },
+   {
+    "f": "/_next/static/chunks/8166-a92c6ad006c9ab55.js",
+    "b": 6503
+   },
+   {
+    "f": "/_next/static/chunks/302-bef3166f019ca821.js",
+    "b": 6494
+   },
+   {
+    "f": "/_next/static/chunks/7914-1234a02f41148c77.js",
+    "b": 6336
+   },
+   {
+    "f": "/_next/static/chunks/1640-69e3811ea1693e9b.js",
+    "b": 5845
+   },
+   {
+    "f": "/_next/static/chunks/4375-37d619d292bb8f59.js",
+    "b": 5528
+   },
+   {
+    "f": "/_next/static/chunks/9001-195b0e0c37d0343d.js",
+    "b": 5215
+   },
+   {
+    "f": "/_next/static/chunks/webpack-fcdbccfc4f340776.js",
+    "b": 4934
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-89f125e2e1a4a398.js",
+    "b": 4494
+   },
+   {
+    "f": "/_next/static/chunks/2619-04bc32f026a0d946.js",
+    "b": 4401
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/layout-d075c945e6c27605.js",
+    "b": 4392
+   },
+   {
+    "f": "/_next/static/chunks/6882-0b5aef423e84e709.js",
+    "b": 3906
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/error-ef6b063c984f94d5.js",
+    "b": 3833
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/not-found-9ce1e96d51e539c9.js",
+    "b": 3805
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/(why)/layout-8f65ed548b6c3d79.js",
+    "b": 3325
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/page-2803a4e0723504c7.js",
+    "b": 2981
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/%5Bdoc%5D/page-ec925f676a03ef01.js",
+    "b": 2485
+   },
+   {
+    "f": "/_next/static/chunks/app/global-error-ed675084e5fb037e.js",
+    "b": 2172
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-4adeb04b2a9d69ec.js",
+    "b": 1765
+   },
+   {
+    "f": "/_next/static/chunks/main-app-c659b7c05baec7d9.js",
+    "b": 1473
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/loading-b56e3f1aef8ebda4.js",
+    "b": 1155
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/error-6c05dd993aa22ad7.js",
+    "b": 1138
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-not-found/page-58e7582a9e887c58.js",
+    "b": 1085
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/not-found-11fad0872f5d25c7.js",
+    "b": 1085
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/%5B...missing%5D/not-found-0d91ed180171e471.js",
+    "b": 1085
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/catalog/not-found-759db7f93ad92fb4.js",
+    "b": 1085
+   }
+  ],
+  "images": [
+   {
+    "f": "/marketing/r6/hero/mailer-iso-dark@2x.avif",
+    "mime": "image/avif",
+    "b": 31717
+   },
+   {
+    "f": "/marketing/r6/collage/mailer-tilt@2x.avif",
+    "mime": "image/avif",
+    "b": 24150
+   }
+  ],
+  "fonts": [
+   {
+    "f": "e4af272ccee01ff0-s.woff2",
+    "b": 49331
+   }
+  ]
+ },
+ {
+  "page": "404-share",
+  "profile": "phone",
+  "locale": "en",
+  "url": "http://localhost:3000/en/s/no-such-token-123",
+  "status": 404,
+  "finalUrl": "http://localhost:3000/en/s/no-such-token-123",
+  "loadMs": 3622,
+  "ttfb": 15.300000000745058,
+  "domContentLoaded": 990.2000000011176,
+  "loadEvent": 3619.60000000149,
+  "htmlTransfer": 64240,
+  "htmlDecoded": 288093,
+  "lcp": 1900,
+  "lcpEl": "p.CookieNotice_text__RwVwp size=25854",
+  "fcp": 976,
+  "clsLoad": 0,
+  "long": [
+   {
+    "t": 831,
+    "d": 129
+   },
+   {
+    "t": 2215,
+    "d": 178
+   },
+   {
+    "t": 2823,
+    "d": 69
+   }
+  ],
+  "imgs": [
+   {
+    "src": "http://localhost:3000/marketing/renders/fefco-0427.webp",
+    "nw": 0,
+    "nh": 0,
+    "w": 0,
+    "h": 0,
+    "loading": "lazy",
+    "fp": null,
+    "inView": false,
+    "complete": false
+   }
+  ],
+  "domNodes": 390,
+  "canvases": 0,
+  "inlineCss": 109301,
+  "inlineStyleTags": 1,
+  "rsc": 158431,
+  "rscCss": 109301,
+  "fontsLoaded": [
+   "Inter 100 900"
+  ],
+  "cls": 0,
+  "shifts": [],
+  "inp": 16,
+  "inpDetail": [
+   {
+    "id": 2854,
+    "name": "keydown",
+    "d": 16,
+    "input": 0,
+    "proc": 8,
+    "target": "body"
+   }
+  ],
+  "clicks": 0,
+  "longTasks": 3,
+  "longTaskMax": 178,
+  "tbt": 226,
+  "tbtLoad": 226,
+  "bytes": {
+   "total": 667029,
+   "js": 271218,
+   "css": 0,
+   "img": 55867,
+   "font": 49331,
+   "doc": 65208,
+   "fetch": 224910
+  },
+  "requests": 43,
+  "js": [
+   {
+    "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
+    "b": 55400
+   },
+   {
+    "f": "/_next/static/chunks/1255-d8a1861c775d9bcc.js",
+    "b": 47430
+   },
+   {
+    "f": "/_next/static/chunks/7398-4f17a9a0c05e267d.js",
+    "b": 29113
+   },
+   {
+    "f": "/_next/static/chunks/8734-72cd3d8fa3f6c0cf.js",
+    "b": 14032
+   },
+   {
+    "f": "/_next/static/chunks/1898-0fb042056b9d4885.js",
+    "b": 11988
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/start/page-b4dad24ace012b2c.js",
+    "b": 11870
+   },
+   {
+    "f": "/_next/static/chunks/9909-92d9dde2b90f5fbe.js",
+    "b": 7690
+   },
+   {
+    "f": "/_next/static/chunks/4240-53ec143248516299.js",
+    "b": 7175
+   },
+   {
+    "f": "/_next/static/chunks/8166-a92c6ad006c9ab55.js",
+    "b": 6503
+   },
+   {
+    "f": "/_next/static/chunks/302-bef3166f019ca821.js",
+    "b": 6494
+   },
+   {
+    "f": "/_next/static/chunks/7914-1234a02f41148c77.js",
+    "b": 6336
+   },
+   {
+    "f": "/_next/static/chunks/1640-69e3811ea1693e9b.js",
+    "b": 5845
+   },
+   {
+    "f": "/_next/static/chunks/4375-37d619d292bb8f59.js",
+    "b": 5528
+   },
+   {
+    "f": "/_next/static/chunks/9001-195b0e0c37d0343d.js",
+    "b": 5215
+   },
+   {
+    "f": "/_next/static/chunks/webpack-fcdbccfc4f340776.js",
+    "b": 4934
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-89f125e2e1a4a398.js",
+    "b": 4494
+   },
+   {
+    "f": "/_next/static/chunks/2619-04bc32f026a0d946.js",
+    "b": 4401
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/layout-d075c945e6c27605.js",
+    "b": 4392
+   },
+   {
+    "f": "/_next/static/chunks/6882-0b5aef423e84e709.js",
+    "b": 3906
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/error-ef6b063c984f94d5.js",
+    "b": 3833
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/not-found-9ce1e96d51e539c9.js",
+    "b": 3805
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/(why)/layout-8f65ed548b6c3d79.js",
+    "b": 3325
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/page-2803a4e0723504c7.js",
+    "b": 2981
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/%5Bdoc%5D/page-ec925f676a03ef01.js",
+    "b": 2485
+   },
+   {
+    "f": "/_next/static/chunks/app/global-error-ed675084e5fb037e.js",
+    "b": 2172
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-4adeb04b2a9d69ec.js",
+    "b": 1765
+   },
+   {
+    "f": "/_next/static/chunks/main-app-c659b7c05baec7d9.js",
+    "b": 1473
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/loading-b56e3f1aef8ebda4.js",
+    "b": 1155
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/error-6c05dd993aa22ad7.js",
+    "b": 1138
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-not-found/page-58e7582a9e887c58.js",
+    "b": 1085
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/not-found-11fad0872f5d25c7.js",
+    "b": 1085
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/%5B...missing%5D/not-found-0d91ed180171e471.js",
+    "b": 1085
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/catalog/not-found-759db7f93ad92fb4.js",
+    "b": 1085
+   }
+  ],
+  "images": [
+   {
+    "f": "/marketing/r6/hero/mailer-iso-dark@2x.avif",
+    "mime": "image/avif",
+    "b": 31717
+   },
+   {
+    "f": "/marketing/r6/collage/mailer-tilt@2x.avif",
+    "mime": "image/avif",
+    "b": 24150
+   }
+  ],
+  "fonts": [
+   {
+    "f": "e4af272ccee01ff0-s.woff2",
+    "b": 49331
+   }
+  ]
+ },
+ {
+  "page": "404-legal",
+  "profile": "phone",
+  "locale": "en",
+  "url": "http://localhost:3000/en/legal/no-such-policy",
+  "status": 404,
+  "finalUrl": "http://localhost:3000/en/legal/no-such-policy",
+  "loadMs": 3638,
+  "ttfb": 11.799999998882413,
+  "domContentLoaded": 982.0999999996275,
+  "loadEvent": 3635.2999999988824,
+  "htmlTransfer": 64240,
+  "htmlDecoded": 288093,
+  "lcp": 1920,
+  "lcpEl": "p.CookieNotice_text__RwVwp size=25854",
+  "fcp": 948,
+  "clsLoad": 0,
+  "long": [
+   {
+    "t": 823,
+    "d": 109
+   },
+   {
+    "t": 2212,
+    "d": 175
+   },
+   {
+    "t": 2823,
+    "d": 50
+   }
+  ],
+  "imgs": [
+   {
+    "src": "http://localhost:3000/marketing/renders/fefco-0427.webp",
+    "nw": 0,
+    "nh": 0,
+    "w": 0,
+    "h": 0,
+    "loading": "lazy",
+    "fp": null,
+    "inView": false,
+    "complete": false
+   }
+  ],
+  "domNodes": 390,
+  "canvases": 0,
+  "inlineCss": 109301,
+  "inlineStyleTags": 1,
+  "rsc": 158431,
+  "rscCss": 109301,
+  "fontsLoaded": [
+   "Inter 100 900"
+  ],
+  "cls": 0,
+  "shifts": [],
+  "inp": 32,
+  "inpDetail": [
+   {
+    "id": 1886,
+    "name": "keydown",
+    "d": 32,
+    "input": 12,
+    "proc": 15,
+    "target": "body"
+   }
+  ],
+  "clicks": 0,
+  "longTasks": 3,
+  "longTaskMax": 175,
+  "tbt": 184,
+  "tbtLoad": 184,
+  "bytes": {
+   "total": 667029,
+   "js": 271218,
+   "css": 0,
+   "img": 55867,
+   "font": 49331,
+   "doc": 65208,
+   "fetch": 224910
+  },
+  "requests": 43,
+  "js": [
+   {
+    "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
+    "b": 55400
+   },
+   {
+    "f": "/_next/static/chunks/1255-d8a1861c775d9bcc.js",
+    "b": 47430
+   },
+   {
+    "f": "/_next/static/chunks/7398-4f17a9a0c05e267d.js",
+    "b": 29113
+   },
+   {
+    "f": "/_next/static/chunks/8734-72cd3d8fa3f6c0cf.js",
+    "b": 14032
+   },
+   {
+    "f": "/_next/static/chunks/1898-0fb042056b9d4885.js",
+    "b": 11988
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/start/page-b4dad24ace012b2c.js",
+    "b": 11870
+   },
+   {
+    "f": "/_next/static/chunks/9909-92d9dde2b90f5fbe.js",
+    "b": 7690
+   },
+   {
+    "f": "/_next/static/chunks/4240-53ec143248516299.js",
+    "b": 7175
+   },
+   {
+    "f": "/_next/static/chunks/8166-a92c6ad006c9ab55.js",
+    "b": 6503
+   },
+   {
+    "f": "/_next/static/chunks/302-bef3166f019ca821.js",
+    "b": 6494
+   },
+   {
+    "f": "/_next/static/chunks/7914-1234a02f41148c77.js",
+    "b": 6336
+   },
+   {
+    "f": "/_next/static/chunks/1640-69e3811ea1693e9b.js",
+    "b": 5845
+   },
+   {
+    "f": "/_next/static/chunks/4375-37d619d292bb8f59.js",
+    "b": 5528
+   },
+   {
+    "f": "/_next/static/chunks/9001-195b0e0c37d0343d.js",
+    "b": 5215
+   },
+   {
+    "f": "/_next/static/chunks/webpack-fcdbccfc4f340776.js",
+    "b": 4934
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-89f125e2e1a4a398.js",
+    "b": 4494
+   },
+   {
+    "f": "/_next/static/chunks/2619-04bc32f026a0d946.js",
+    "b": 4401
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/layout-d075c945e6c27605.js",
+    "b": 4392
+   },
+   {
+    "f": "/_next/static/chunks/6882-0b5aef423e84e709.js",
+    "b": 3906
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/error-ef6b063c984f94d5.js",
+    "b": 3833
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/not-found-9ce1e96d51e539c9.js",
+    "b": 3805
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/(why)/layout-8f65ed548b6c3d79.js",
+    "b": 3325
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/page-2803a4e0723504c7.js",
+    "b": 2981
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/%5Bdoc%5D/page-ec925f676a03ef01.js",
+    "b": 2485
+   },
+   {
+    "f": "/_next/static/chunks/app/global-error-ed675084e5fb037e.js",
+    "b": 2172
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-4adeb04b2a9d69ec.js",
+    "b": 1765
+   },
+   {
+    "f": "/_next/static/chunks/main-app-c659b7c05baec7d9.js",
+    "b": 1473
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/loading-b56e3f1aef8ebda4.js",
+    "b": 1155
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/error-6c05dd993aa22ad7.js",
+    "b": 1138
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-not-found/page-58e7582a9e887c58.js",
+    "b": 1085
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/not-found-11fad0872f5d25c7.js",
+    "b": 1085
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/%5B...missing%5D/not-found-0d91ed180171e471.js",
+    "b": 1085
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/catalog/not-found-759db7f93ad92fb4.js",
+    "b": 1085
+   }
+  ],
+  "images": [
+   {
+    "f": "/marketing/r6/hero/mailer-iso-dark@2x.avif",
+    "mime": "image/avif",
+    "b": 31717
+   },
+   {
+    "f": "/marketing/r6/collage/mailer-tilt@2x.avif",
+    "mime": "image/avif",
+    "b": 24150
+   }
+  ],
+  "fonts": [
+   {
+    "f": "e4af272ccee01ff0-s.woff2",
+    "b": 49331
+   }
+  ]
+ },
+ {
+  "page": "404-design",
+  "profile": "phone",
+  "locale": "en",
+  "url": "http://localhost:3000/en/design/no-such-model",
+  "status": 404,
+  "finalUrl": "http://localhost:3000/en/design/no-such-model",
+  "loadMs": 3568,
+  "ttfb": 10.700000001117587,
+  "domContentLoaded": 1000.8000000007451,
+  "loadEvent": 3564.7000000011176,
+  "htmlTransfer": 64240,
+  "htmlDecoded": 288093,
+  "lcp": 1848,
+  "lcpEl": "p.CookieNotice_text__RwVwp size=25854",
+  "fcp": 980,
+  "clsLoad": 0,
+  "long": [
+   {
+    "t": 818,
+    "d": 144
+   },
+   {
+    "t": 2174,
+    "d": 218
+   },
+   {
+    "t": 2799,
+    "d": 60
+   }
+  ],
+  "imgs": [
+   {
+    "src": "http://localhost:3000/marketing/renders/fefco-0427.webp",
+    "nw": 0,
+    "nh": 0,
+    "w": 0,
+    "h": 0,
+    "loading": "lazy",
+    "fp": null,
+    "inView": false,
+    "complete": false
+   }
+  ],
+  "domNodes": 388,
+  "canvases": 0,
+  "inlineCss": 109301,
+  "inlineStyleTags": 1,
+  "rsc": 158431,
+  "rscCss": 109301,
+  "fontsLoaded": [
+   "Inter 100 900"
+  ],
+  "cls": 0,
+  "shifts": [],
+  "inp": 24,
+  "inpDetail": [
+   {
+    "id": 6823,
+    "name": "keydown",
+    "d": 24,
+    "input": 2,
+    "proc": 9,
+    "target": "body"
+   }
+  ],
+  "clicks": 0,
+  "longTasks": 3,
+  "longTaskMax": 218,
+  "tbt": 272,
+  "tbtLoad": 272,
+  "bytes": {
+   "total": 667029,
+   "js": 271218,
+   "css": 0,
+   "img": 55867,
+   "font": 49331,
+   "doc": 65208,
+   "fetch": 224910
+  },
+  "requests": 43,
+  "js": [
+   {
+    "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
+    "b": 55400
+   },
+   {
+    "f": "/_next/static/chunks/1255-d8a1861c775d9bcc.js",
+    "b": 47430
+   },
+   {
+    "f": "/_next/static/chunks/7398-4f17a9a0c05e267d.js",
+    "b": 29113
+   },
+   {
+    "f": "/_next/static/chunks/8734-72cd3d8fa3f6c0cf.js",
+    "b": 14032
+   },
+   {
+    "f": "/_next/static/chunks/1898-0fb042056b9d4885.js",
+    "b": 11988
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/start/page-b4dad24ace012b2c.js",
+    "b": 11870
+   },
+   {
+    "f": "/_next/static/chunks/9909-92d9dde2b90f5fbe.js",
+    "b": 7690
+   },
+   {
+    "f": "/_next/static/chunks/4240-53ec143248516299.js",
+    "b": 7175
+   },
+   {
+    "f": "/_next/static/chunks/8166-a92c6ad006c9ab55.js",
+    "b": 6503
+   },
+   {
+    "f": "/_next/static/chunks/302-bef3166f019ca821.js",
+    "b": 6494
+   },
+   {
+    "f": "/_next/static/chunks/7914-1234a02f41148c77.js",
+    "b": 6336
+   },
+   {
+    "f": "/_next/static/chunks/1640-69e3811ea1693e9b.js",
+    "b": 5845
+   },
+   {
+    "f": "/_next/static/chunks/4375-37d619d292bb8f59.js",
+    "b": 5528
+   },
+   {
+    "f": "/_next/static/chunks/9001-195b0e0c37d0343d.js",
+    "b": 5215
+   },
+   {
+    "f": "/_next/static/chunks/webpack-fcdbccfc4f340776.js",
+    "b": 4934
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-89f125e2e1a4a398.js",
+    "b": 4494
+   },
+   {
+    "f": "/_next/static/chunks/2619-04bc32f026a0d946.js",
+    "b": 4401
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/layout-d075c945e6c27605.js",
+    "b": 4392
+   },
+   {
+    "f": "/_next/static/chunks/6882-0b5aef423e84e709.js",
+    "b": 3906
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/error-ef6b063c984f94d5.js",
+    "b": 3833
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/not-found-9ce1e96d51e539c9.js",
+    "b": 3805
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/(why)/layout-8f65ed548b6c3d79.js",
+    "b": 3325
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/page-2803a4e0723504c7.js",
+    "b": 2981
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/%5Bdoc%5D/page-ec925f676a03ef01.js",
+    "b": 2485
+   },
+   {
+    "f": "/_next/static/chunks/app/global-error-ed675084e5fb037e.js",
+    "b": 2172
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-4adeb04b2a9d69ec.js",
+    "b": 1765
+   },
+   {
+    "f": "/_next/static/chunks/main-app-c659b7c05baec7d9.js",
+    "b": 1473
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/loading-b56e3f1aef8ebda4.js",
+    "b": 1155
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/error-6c05dd993aa22ad7.js",
+    "b": 1138
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-not-found/page-58e7582a9e887c58.js",
+    "b": 1085
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/not-found-11fad0872f5d25c7.js",
+    "b": 1085
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/%5B...missing%5D/not-found-0d91ed180171e471.js",
+    "b": 1085
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/catalog/not-found-759db7f93ad92fb4.js",
+    "b": 1085
+   }
+  ],
+  "images": [
+   {
+    "f": "/marketing/r6/hero/mailer-iso-dark@2x.avif",
+    "mime": "image/avif",
+    "b": 31717
+   },
+   {
+    "f": "/marketing/r6/collage/mailer-tilt@2x.avif",
+    "mime": "image/avif",
+    "b": 24150
+   }
+  ],
+  "fonts": [
+   {
+    "f": "e4af272ccee01ff0-s.woff2",
+    "b": 49331
+   }
+  ]
+ },
+ {
+  "page": "404-catalog",
+  "profile": "phone",
+  "locale": "en",
+  "url": "http://localhost:3000/en/catalog/no-such-model",
+  "status": 404,
+  "finalUrl": "http://localhost:3000/en/catalog/no-such-model",
+  "loadMs": 4675,
+  "ttfb": 35,
+  "domContentLoaded": 844.4000000003725,
+  "loadEvent": 4671.5,
+  "htmlTransfer": 49075,
+  "htmlDecoded": 181015,
+  "lcp": 4684,
+  "lcpEl": "p.marketing_lead__u7C3p size=25800",
+  "fcp": 4684,
+  "clsLoad": 0,
+  "long": [
+   {
+    "t": 2053,
+    "d": 208
+   },
+   {
+    "t": 4317,
+    "d": 84
+   },
+   {
+    "t": 4401,
+    "d": 179
+   }
+  ],
+  "imgs": [
+   {
+    "src": "http://localhost:3000/marketing/renders/fefco-0427.webp",
+    "nw": 0,
+    "nh": 0,
+    "w": 0,
+    "h": 0,
+    "loading": "lazy",
+    "fp": null,
+    "inView": false,
+    "complete": false
+   }
+  ],
+  "domNodes": 390,
+  "canvases": 0,
+  "inlineCss": 109301,
+  "inlineStyleTags": 8,
+  "rsc": 171441,
+  "rscCss": 109301,
+  "fontsLoaded": [
+   "Inter 100 900"
+  ],
+  "cls": 0,
+  "shifts": [],
+  "inp": 16,
+  "inpDetail": [
+   {
+    "id": 3132,
+    "name": "keydown",
+    "d": 16,
+    "input": 0,
+    "proc": 7,
+    "target": "body"
+   }
+  ],
+  "clicks": 0,
+  "longTasks": 3,
+  "longTaskMax": 208,
+  "tbt": 321,
+  "tbtLoad": 321,
+  "bytes": {
+   "total": 660977,
+   "js": 280044,
+   "css": 0,
+   "img": 55867,
+   "font": 49331,
+   "doc": 50330,
+   "fetch": 224910
+  },
+  "requests": 44,
+  "js": [
+   {
+    "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
+    "b": 55400
+   },
+   {
+    "f": "/_next/static/chunks/1255-d8a1861c775d9bcc.js",
+    "b": 47430
+   },
+   {
+    "f": "/_next/static/chunks/7398-4f17a9a0c05e267d.js",
+    "b": 29113
+   },
+   {
+    "f": "/_next/static/chunks/8734-72cd3d8fa3f6c0cf.js",
+    "b": 14032
+   },
+   {
+    "f": "/_next/static/chunks/1898-0fb042056b9d4885.js",
+    "b": 11988
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/start/page-b4dad24ace012b2c.js",
+    "b": 11870
+   },
+   {
+    "f": "/_next/static/chunks/9909-92d9dde2b90f5fbe.js",
+    "b": 7690
+   },
+   {
+    "f": "/_next/static/chunks/4240-53ec143248516299.js",
+    "b": 7175
+   },
+   {
+    "f": "/_next/static/chunks/8166-a92c6ad006c9ab55.js",
+    "b": 6503
+   },
+   {
+    "f": "/_next/static/chunks/302-bef3166f019ca821.js",
+    "b": 6494
+   },
+   {
+    "f": "/_next/static/chunks/7914-1234a02f41148c77.js",
+    "b": 6336
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/catalog/%5Bslug%5D/page-06d566d314da3e0c.js",
+    "b": 6062
+   },
+   {
+    "f": "/_next/static/chunks/1640-69e3811ea1693e9b.js",
+    "b": 5845
+   },
+   {
+    "f": "/_next/static/chunks/4375-37d619d292bb8f59.js",
+    "b": 5528
+   },
+   {
+    "f": "/_next/static/chunks/9001-195b0e0c37d0343d.js",
+    "b": 5215
+   },
+   {
+    "f": "/_next/static/chunks/webpack-fcdbccfc4f340776.js",
+    "b": 4934
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-89f125e2e1a4a398.js",
+    "b": 4494
+   },
+   {
+    "f": "/_next/static/chunks/2619-04bc32f026a0d946.js",
+    "b": 4401
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/layout-d075c945e6c27605.js",
+    "b": 4392
+   },
+   {
+    "f": "/_next/static/chunks/6882-0b5aef423e84e709.js",
+    "b": 3906
+   },
+   {
+    "f": "/_next/static/chunks/8749-fa63bd3b324250f3.js",
+    "b": 3849
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/error-ef6b063c984f94d5.js",
+    "b": 3833
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/not-found-9ce1e96d51e539c9.js",
+    "b": 3805
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/(why)/layout-8f65ed548b6c3d79.js",
+    "b": 3325
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/page-2803a4e0723504c7.js",
+    "b": 2981
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/%5Bdoc%5D/page-ec925f676a03ef01.js",
+    "b": 2485
+   },
+   {
+    "f": "/_next/static/chunks/app/global-error-ed675084e5fb037e.js",
+    "b": 2172
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-4adeb04b2a9d69ec.js",
+    "b": 1765
+   },
+   {
+    "f": "/_next/static/chunks/main-app-c659b7c05baec7d9.js",
+    "b": 1473
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/loading-b56e3f1aef8ebda4.js",
+    "b": 1155
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/error-6c05dd993aa22ad7.js",
+    "b": 1138
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/catalog/not-found-759db7f93ad92fb4.js",
+    "b": 1085
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/not-found-11fad0872f5d25c7.js",
+    "b": 1085
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/%5B...missing%5D/not-found-0d91ed180171e471.js",
+    "b": 1085
+   }
+  ],
+  "images": [
+   {
+    "f": "/marketing/r6/hero/mailer-iso-dark@2x.avif",
+    "mime": "image/avif",
+    "b": 31717
+   },
+   {
+    "f": "/marketing/r6/collage/mailer-tilt@2x.avif",
+    "mime": "image/avif",
+    "b": 24150
+   }
+  ],
+  "fonts": [
+   {
+    "f": "e4af272ccee01ff0-s.woff2",
+    "b": 49331
+   }
+  ]
+ },
+ {
+  "page": "404-share-wellformed",
+  "profile": "phone",
+  "locale": "en",
+  "url": "http://localhost:3000/en/s/aaaaaaaaaaaaaaaa",
+  "status": 404,
+  "finalUrl": "http://localhost:3000/en/s/aaaaaaaaaaaaaaaa",
+  "loadMs": 4508,
+  "ttfb": 36.59999999962747,
+  "domContentLoaded": 923.1999999992549,
+  "loadEvent": 4503.699999999255,
+  "htmlTransfer": 62203,
+  "htmlDecoded": 214597,
+  "lcp": 4388,
+  "lcpEl": "p size=11088",
+  "fcp": 4388,
+  "clsLoad": 0,
+  "long": [
+   {
+    "t": 2055,
+    "d": 194
+   },
+   {
+    "t": 3522,
+    "d": 55
+   },
+   {
+    "t": 4132,
+    "d": 170
+   }
+  ],
+  "imgs": [
+   {
+    "src": "http://localhost:3000/marketing/renders/fefco-0427.webp",
+    "nw": 0,
+    "nh": 0,
+    "w": 0,
+    "h": 0,
+    "loading": "lazy",
+    "fp": null,
+    "inView": false,
+    "complete": false
+   }
+  ],
+  "domNodes": 441,
+  "canvases": 0,
+  "inlineCss": 129638,
+  "inlineStyleTags": 16,
+  "rsc": 202447,
+  "rscCss": 129638,
+  "fontsLoaded": [
+   "Inter 100 900"
+  ],
+  "cls": 0,
+  "shifts": [],
+  "inp": 16,
+  "inpDetail": [
+   {
+    "id": 8560,
+    "name": "keydown",
+    "d": 16,
+    "input": 1,
+    "proc": 6,
+    "target": "body"
+   }
+  ],
+  "clicks": 0,
+  "longTasks": 3,
+  "longTaskMax": 194,
+  "tbt": 269,
+  "tbtLoad": 269,
+  "bytes": {
+   "total": 595800,
+   "js": 272906,
+   "css": 0,
+   "img": 55867,
+   "font": 49331,
+   "doc": 63639,
+   "fetch": 153562
+  },
+  "requests": 42,
+  "js": [
+   {
+    "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
+    "b": 55400
+   },
+   {
+    "f": "/_next/static/chunks/1255-d8a1861c775d9bcc.js",
+    "b": 47430
+   },
+   {
+    "f": "/_next/static/chunks/7398-4f17a9a0c05e267d.js",
+    "b": 29113
+   },
+   {
+    "f": "/_next/static/chunks/8734-72cd3d8fa3f6c0cf.js",
+    "b": 14032
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/start/page-b4dad24ace012b2c.js",
+    "b": 11870
+   },
+   {
+    "f": "/_next/static/chunks/9909-92d9dde2b90f5fbe.js",
+    "b": 7690
+   },
+   {
+    "f": "/_next/static/chunks/4240-53ec143248516299.js",
+    "b": 7175
+   },
+   {
+    "f": "/_next/static/chunks/8166-a92c6ad006c9ab55.js",
+    "b": 6503
+   },
+   {
+    "f": "/_next/static/chunks/302-bef3166f019ca821.js",
+    "b": 6494
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/s/%5Bid%5D/page-1d87f4d5c079bb15.js",
+    "b": 6342
+   },
+   {
+    "f": "/_next/static/chunks/7914-1234a02f41148c77.js",
+    "b": 6336
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/s/not-found-8ef9368eec7db212.js",
+    "b": 6035
+   },
+   {
+    "f": "/_next/static/chunks/1640-69e3811ea1693e9b.js",
+    "b": 5845
+   },
+   {
+    "f": "/_next/static/chunks/4375-37d619d292bb8f59.js",
+    "b": 5528
+   },
+   {
+    "f": "/_next/static/chunks/9001-195b0e0c37d0343d.js",
+    "b": 5215
+   },
+   {
+    "f": "/_next/static/chunks/1207-d912c1bdb7547a2f.js",
+    "b": 5210
+   },
+   {
+    "f": "/_next/static/chunks/webpack-fcdbccfc4f340776.js",
+    "b": 4934
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-89f125e2e1a4a398.js",
+    "b": 4494
+   },
+   {
+    "f": "/_next/static/chunks/2619-04bc32f026a0d946.js",
+    "b": 4401
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/layout-d075c945e6c27605.js",
+    "b": 4392
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/error-ef6b063c984f94d5.js",
+    "b": 3833
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/not-found-9ce1e96d51e539c9.js",
+    "b": 3805
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/s/%5Bid%5D/loading-cc202f3a1315c033.js",
+    "b": 3595
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/(why)/layout-8f65ed548b6c3d79.js",
+    "b": 3325
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/s/layout-b89349eed3292259.js",
+    "b": 2706
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/%5Bdoc%5D/page-ec925f676a03ef01.js",
+    "b": 2485
+   },
+   {
+    "f": "/_next/static/chunks/app/global-error-ed675084e5fb037e.js",
+    "b": 2172
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-4adeb04b2a9d69ec.js",
+    "b": 1765
+   },
+   {
+    "f": "/_next/static/chunks/main-app-c659b7c05baec7d9.js",
+    "b": 1473
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/error-6c05dd993aa22ad7.js",
+    "b": 1138
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/not-found-11fad0872f5d25c7.js",
+    "b": 1085
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/%5B...missing%5D/not-found-0d91ed180171e471.js",
+    "b": 1085
+   }
+  ],
+  "images": [
+   {
+    "f": "/marketing/r6/hero/mailer-iso-dark@2x.avif",
+    "mime": "image/avif",
+    "b": 31717
+   },
+   {
+    "f": "/marketing/r6/collage/mailer-tilt@2x.avif",
+    "mime": "image/avif",
+    "b": 24150
+   }
+  ],
+  "fonts": [
+   {
+    "f": "e4af272ccee01ff0-s.woff2",
+    "b": 49331
+   }
+  ]
+ }
+]
