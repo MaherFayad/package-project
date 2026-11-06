@@ -5,14 +5,14 @@ Contact sheets: `docs/screenshots/audit/3d-fefco-04/` (`before-NN.jpg` / `after-
 
 ## Summary
 
-| Severity | Found | Fixed | Open (outside scope) |
+| Severity | Found | Fixed (family) | Open (engine / designer / library, not editable here) |
 |---|---|---|---|
 | critical | 0 | 0 | 0 |
-| high | 4 | 4 | 1 |
-| medium | 6 | 5 | 5 |
-| low | 3 | 1 | 4 |
+| high | 6 | 5 | 1 (E-07) |
+| medium | 10 | 6 | 4 (E-01, E-04, E-05, E-06) |
+| low | 7 | 1 | 6 (E-02, E-03, E-08, E-09, L-01, F04-13) |
 
-Open items are all in the shared engine (`src/components/three`, `src/lib/dieline/fold.ts`), the designer, or the library layer, and are listed in §3 with a precise fix. One low (F04-13) is a residual one-frame contact that the new test explicitly allows.
+Open items are all in the shared engine (`src/components/three`, `src/lib/dieline/fold.ts`), the designer, or the library layer, and are listed in §3 with a precise fix. F04-13 is a residual one-frame contact in the family that needs engine easing (E-09) and is explicitly allowed in the new test.
 
 ## Method
 
@@ -35,6 +35,7 @@ Open items are all in the shared engine (`src/components/three`, `src/lib/dielin
 | F04-10 | medium | 0459 | Corner walls rose before the glue ears folded: **ears passed through the corner walls** 45–90 %. | — | `octagon.ts`: main walls + ears stage 0, corner walls stage 1. | fixed |
 | F04-11 | medium | 0406, 0409–0411a | Wrap end flaps ran the full panel width, so their edges sat **inside the neighbouring panels' board** at the tube end (1.5 × 1.5 mm strip, z-fighting with the cut edge); the **fifth panel ran through the end flaps**. | End flaps are cut between the creases; the fifth panel stops at the inner flaps. | `wraps.ts`: end-flap hinges stop `t + 0.2` short of each corner; fifth panel inset by `endLayers·t + 0.5` each end. | fixed |
 | F04-12 | low | 0421.1, 0428, 0447 (and every lid with dust / tuck flaps) | Lid side (dust) flaps folded with the lid and **clipped the end walls** at 95 %. | Dust flaps squared before the lid closes; outside wrap-over flaps after. | `kit.ts`: inside lid flaps at `topBase`, lid + tuck at `topBase + 1`, outside front / side flaps at `topBase + 2`. | fixed |
+| F04-15 | high | 0405 | Pass 2: both Bliss end panels were cut to the right of the body, so the **left end flew through the body and out through the front wall** (visible over the printed front at 55–68 %). | Bliss ends are fitted from their own side. | `bliss.ts`: one end panel on each side of the body (the side it ends on), `lift = 0.7 H`. Residual: one 1–2 % frame where the left end's corner grazes the front edge (engine path, E-08). | fixed |
 | F04-14 | medium | 0422.1, 0423.1, 0430, 0432a, 0434, 0437.1, 0439a (handle); 0443, 0444, 0448 (thumb notch) | **Options that did nothing**: the Handle toggle was offered on styles whose hand holes are built in; the Thumb notch toggle was offered on rim-flap trays where the generator ignores it. | "Every configuration option visibly applied." | `catalog.ts · featuresFor`: offer `handle` only without built-in hand holes and without a lid; `thumbNotch` only with an open, full-height front. | fixed |
 
 Regression tests: `__tests__/fefco-04-3d.test.ts` (162 tests). For every model: no stacked board inside board at the closed state (all presets, E and B); no panel sweeps through another at 19 fold steps; ears fold no later than their wall and before every wall that traps them; interior bottom flaps rest 0–0.5 mm above the base. On the old code 93 of them fail; all pass now.
@@ -62,6 +63,8 @@ Regression tests: `__tests__/fefco-04-3d.test.ts` (162 tests). For every model: 
 | E-06 (= X-10) | medium | `fold.ts · faceTransform(…, "inside")` | Inside print on the hinged lids of 0421, 0426a, 0427.1, 0428, 0441, 0447, 0470, 0471 reads upside down when the lid opens toward the viewer. | Compose a 180° turn for lid parts on the inside surface. |
 | E-07 | high | designer stage, 390 × 844 (`src/components/designer` stage + `ViewControls` overlay) | On a phone the 3D model is mostly hidden: the stage is ~240 px tall and the view-control bar overlays its lower half, and the box is framed below the visible area (see `mobile-*.png`). | Give the stage `min-height: 52svh` on narrow screens, move `ViewControls` below the canvas (or collapse to a single "view" button), and frame with the overlay's height as a bottom inset. WCAG 2.2 · 2.4.11 (focus not obscured) applies to the controls covering the canvas focus target. |
 | L-01 | low | `src/lib/library/boxes.ts · baseStructure` | 0409 five panel folder shows "Made and priced as Mailer box" in the model card; the closest core quote base for a long glued FPF is the RSC / FEFCO 0201, not the 0427 mailer. | Map `five-panel-folder` and `wrap-around` sub-families to `FEFCO_0201`. |
+| E-08 | low | `src/lib/dieline/fold.ts · assemblyPoseAt` | Extra pieces lerp their **frame origin**, not their centre, while slerping the rotation, so a piece cut far from the sheet origin swings on a wide curve (0405 left end grazes the front edge for one frame). | Lerp the piece centre: `p = lerp(p0 + q0·c, p1 + q1·c, a) − slerp(q0,q1,a)·c` with `c = ownPivot`. |
+| E-09 | low | rigid-panel folding (engine) | Fine sampling (80 steps) shows every rigid tuck flap grazing the inside of the front wall in the last 1–3 % of the lid's swing, and lid dust flaps touching the end walls for one frame (0421.1, 0428, 0447, 0471). Hidden under the lid; real tucks flex. | Per-panel easing (`foldCurve`) so the tuck stays at ~70° until the lid is at 97 %, then squares. |
 | F04-13 | low | `kit.ts`, 0429 only | One frame (85 %) of contact while the tuck slides behind the front wall under a wrap-over lid. Allowed explicitly in the new test. | Would need an engine-side eased tuck (E-02); geometry is correct at rest. |
 
 ## 4. Files touched
