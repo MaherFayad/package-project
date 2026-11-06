@@ -320,3 +320,9 @@ Base: this branch merged with main at `8278994`. The performance branch (`699a95
 **New findings this pass, before fixing:** high 1 (R4-MK-13, a regression from my own pass 2), medium 0, low 0. By the stop rule a fresh pass after merging main follows (pass 4).
 
 **For the integrator when merging the performance branch:** (1) its `BoxesLanding.tsx` line (`preload(… fefco-0427 WebP …)`) merges without conflict, but it would duplicate this branch's AVIF preload from `HeroImage` and download the render twice. Drop that line. (2) Fonts: both branches preload Inter on English only. This branch also preloads it at low priority on Arabic pages; either resolution measured fine with inline CSS. Keep main's `PLEX_PRELOAD_WEIGHTS = [400, 600, 700]`.
+
+### Round 4, pass 4 (fresh pass after merging main at `0cc1957`)
+
+Clean merge (one catalogue screenshot conflict, main's copy taken). Fresh audit on the rebuilt branch. Sweep of 11 routes x ar/en x 390/1440: 0 axe violations, no horizontal scroll, no console errors. Nothing animates under reduced motion. The mobile menu returns focus on Escape. No focused control is fully obscured (6 page and viewport pairs, 90 tab stops each). The 3D hero mounts on intent. #418: 0/32 (/ar, /en, /ar/vendors, a size page; 8 cold throttled loads each). Unknown printer, box style, size, legal doc, path and catalogue model all answer 404. `perf-pages`, phone, LCP (FCP): ar home 1,536 (1,156), /boxes 1,392 (1,236), /bottles 1,496 (1,148), /vendors 1,492 (1,064); en home 972, /boxes 1,280, /bottles 1,392, /vendors 1,072. CLS ≤ 0.013.
+
+**New findings this pass:** critical 0, high 0, medium 0, low 0. By the stop rule the marketing rounds can stop.
