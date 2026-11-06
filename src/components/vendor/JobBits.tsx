@@ -1,6 +1,7 @@
 "use client";
 
-import { Badge, Text } from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { Text } from "@/components/ui/Text";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { formatDate } from "@/lib/format";

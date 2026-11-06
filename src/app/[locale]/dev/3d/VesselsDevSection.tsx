@@ -45,7 +45,17 @@ import {
 } from "@/lib/vessels";
 import { ViewControls, VesselSceneLazy, paintLabel, type LabelArtStyle, type VesselLabel, type VesselQuality, type VesselSceneHandle } from "@/components/three";
 import { downloadBlob } from "@/components/three/screenshot";
-import { Badge, Banner, BlockStack, Button, ButtonGroup, Card, Checkbox, InlineStack, MetricsStrip, RangeSlider, Select, Tabs, Text } from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { Banner } from "@/components/ui/Banner";
+import { BlockStack, InlineStack } from "@/components/ui/Stack";
+import { Button, ButtonGroup } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Checkbox } from "@/components/ui/Checkbox";
+import { MetricsStrip } from "@/components/ui/MetricsStrip";
+import { RangeSlider } from "@/components/ui/RangeSlider";
+import { Select } from "@/components/ui/Select";
+import { Tabs } from "@/components/ui/Tabs";
+import { Text } from "@/components/ui/Text";
 import styles from "./vessels.module.css";
 
 const ICONS: Record<VesselKind, LucideIcon> = {

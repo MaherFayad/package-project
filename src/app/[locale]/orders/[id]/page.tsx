@@ -12,28 +12,21 @@ import { paymentTone, statusTone } from "@/lib/orders/status-tone";
 import { modelPoster } from "@/lib/orders/poster";
 import { governorateKey } from "@/lib/orders/governorates";
 import type { TrackingEvent } from "@/lib/shipping";
-import {
-  Badge,
-  Banner,
-  BlockStack,
-  Button,
-  Card,
-  EmptyState,
-  EmptyBoxIllustration,
-  Icon,
-  InlineStack,
-  Inset,
-  Layout,
-  LayoutSection,
-  Link,
-  Page,
-  PriceTag,
-  Stepper,
-  Text,
-  Thumbnail,
-  Timeline,
-  type TimelineGroup,
-} from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { Banner } from "@/components/ui/Banner";
+import { BlockStack, InlineStack } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { Card, Inset } from "@/components/ui/Card";
+import { EmptyState, EmptyBoxIllustration } from "@/components/ui/EmptyState";
+import { Icon } from "@/components/ui/Icon";
+import { Layout, LayoutSection } from "@/components/ui/Layout";
+import { Link } from "@/components/ui/Link";
+import { Page } from "@/components/ui/Page";
+import { PriceTag } from "@/components/ui/PriceTag";
+import { Stepper } from "@/components/ui/Stepper";
+import { Text } from "@/components/ui/Text";
+import { Thumbnail } from "@/components/ui/Thumbnail";
+import { Timeline, type TimelineGroup } from "@/components/ui/Timeline";
 import { PaidHeader } from "../_components/PaidHeader";
 import { CancelOrderButton, DisputeForm, ReorderButton, ReviewForm } from "../_components/OrderActions";
 import styles from "../_components/orders.module.css";

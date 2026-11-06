@@ -15,21 +15,18 @@ import { FINISHES } from "@/lib/configurator";
 import { ViewControls, type PackagingSceneHandle } from "@/components/three";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n/types";
-import {
-  ActionList,
-  Badge,
-  Banner,
-  Button,
-  ButtonGroup,
-  Icon,
-  Popover,
-  RangeSlider,
-  Select,
-  Tabs,
-  Text,
-  TextField,
-  useToast,
-} from "@/components/ui";
+import { ActionList } from "@/components/ui/ActionList";
+import { Badge } from "@/components/ui/Badge";
+import { Banner } from "@/components/ui/Banner";
+import { Button, ButtonGroup } from "@/components/ui/Button";
+import { Icon } from "@/components/ui/Icon";
+import { Popover } from "@/components/ui/Popover";
+import { RangeSlider } from "@/components/ui/RangeSlider";
+import { Select } from "@/components/ui/Select";
+import { Tabs } from "@/components/ui/Tabs";
+import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
+import { useToast } from "@/components/ui/Toast";
 import type { OtpSuccess } from "@/components/auth";
 import {
   addLayer,

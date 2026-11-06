@@ -6,7 +6,10 @@ import { requireUser } from "@/lib/auth/session";
 import { mockPaymentsEnabled, paymentConfig } from "@/lib/payments";
 import { getOrderForViewer, moneyOf, paymentView } from "@/lib/orders/service";
 import { isQuoteValid } from "@/lib/orders/totals";
-import { Button, Card, EmptyState, EmptyBoxIllustration, Page } from "@/components/ui";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { EmptyState, EmptyBoxIllustration } from "@/components/ui/EmptyState";
+import { Page } from "@/components/ui/Page";
 import { PaymentClient } from "../../_components/PaymentClient";
 
 type Params = Promise<{ locale: string; orderId: string }>;

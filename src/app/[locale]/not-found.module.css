@@ -60,6 +60,8 @@
   line-height: 1.2;
   text-decoration: none;
   white-space: nowrap;
+  font-family: inherit;
+  cursor: pointer;
   transition: background-color var(--p-motion-duration-150, 150ms) var(--p-motion-ease-out, ease-out);
 }
 .pill:hover, .pill:focus-visible { background: #2b2b2b; border-color: #2b2b2b; color: #ffffff; }

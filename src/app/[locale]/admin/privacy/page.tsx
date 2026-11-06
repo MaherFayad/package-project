@@ -1,6 +1,13 @@
 import type { Metadata } from "next";
 import { FileLock2 } from "lucide-react";
-import { Badge, BlockStack, Card, DataTable, EmptyBoxIllustration, EmptyState, Link, Page, Text } from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { BlockStack } from "@/components/ui/Stack";
+import { Card } from "@/components/ui/Card";
+import { DataTable } from "@/components/ui/IndexTable";
+import { EmptyBoxIllustration, EmptyState } from "@/components/ui/EmptyState";
+import { Link } from "@/components/ui/Link";
+import { Page } from "@/components/ui/Page";
+import { Text } from "@/components/ui/Text";
 import { DataRequestActions } from "@/components/admin/DataRequestActions";
 import { loadDataRequests } from "@/components/admin/server/queries";
 import { canDecideRequest, maskPhone } from "@/components/admin/lib/ops";

@@ -39,6 +39,7 @@ const PAGES = [
   { key: "share", path: `/s/${SHARE}`, threeD: true },
   { key: "checkout", path: `/checkout/${DESIGN_ID}`, role: "buyer" },
   { key: "order-tracking", path: `/orders/${ORDER}`, role: "buyer" },
+  { key: "account", path: "/account", role: "buyer" },
   { key: "vendor-portal", path: "/vendor", role: "vendor" },
   { key: "vendor-jobs", path: "/vendor/jobs", role: "vendor" },
   { key: "admin", path: "/admin", role: "admin" },
@@ -195,6 +196,21 @@ async function runOne(browser, profile, locale, pg, storage) {
       imgs,
       domNodes: document.getElementsByTagName("*").length,
       canvases: document.querySelectorAll("canvas").length,
+      // Round 5 (R4-08): bytes of CSS inlined as <style> (experimental.inlineCss) and of the RSC
+      // payload (self.__next_f chunks), UTF-8, uncompressed. rscCss = the part of the RSC payload
+      // that repeats an inlined stylesheet (each <style>'s text found verbatim, JSON-escaped).
+      ...(() => {
+        const u8 = (s) => new TextEncoder().encode(s).length;
+        const styles = [...document.querySelectorAll("style")].map((s) => s.textContent || "");
+        const rsc = (self.__next_f || []).filter((x) => x[0] === 1 && typeof x[1] === "string").map((x) => x[1]).join("");
+        let rscCss = 0;
+        for (const css of styles) {
+          if (css.length < 200) continue;
+          const probe = JSON.stringify(css.slice(0, 120)).slice(1, -1);
+          if (rsc.includes(probe) || rsc.includes(css.slice(0, 120))) rscCss += u8(css);
+        }
+        return { inlineCss: styles.reduce((a, s) => a + u8(s), 0), inlineStyleTags: styles.length, rsc: u8(rsc), rscCss };
+      })(),
       fontsLoaded: [...document.fonts].filter((f) => f.status === "loaded").map((f) => `${f.family} ${f.weight}`),
     };
   });
@@ -275,7 +291,7 @@ for (const profile of PROFILES)
       if (br !== browser) await br.close();
       results.push(r);
       console.log(
-        [profile, locale, pg.key, r.status, `ttfb=${Math.round(r.ttfb)}`, `fcp=${Math.round(r.fcp)}`, `lcp=${Math.round(r.lcp)}`, `cls=${r.cls?.toFixed(3)}`, `inp=${Math.round(r.inp ?? -1)}`, `tbt=${r.tbt}`, `js=${Math.round((r.bytes?.js ?? 0) / 1024)}KB`, `img=${Math.round((r.bytes?.img ?? 0) / 1024)}KB`, `font=${Math.round((r.bytes?.font ?? 0) / 1024)}KB`, r.error || ""].join(" "),
+        [profile, locale, pg.key, r.status, `ttfb=${Math.round(r.ttfb)}`, `fcp=${Math.round(r.fcp)}`, `lcp=${Math.round(r.lcp)}`, `cls=${r.cls?.toFixed(3)}`, `inp=${Math.round(r.inp ?? -1)}`, `tbt=${r.tbt}`, `js=${Math.round((r.bytes?.js ?? 0) / 1024)}KB`, `img=${Math.round((r.bytes?.img ?? 0) / 1024)}KB`, `font=${Math.round((r.bytes?.font ?? 0) / 1024)}KB`, `css=${Math.round((r.inlineCss ?? 0) / 1024)}KB`, `rsc=${Math.round((r.rsc ?? 0) / 1024)}KB`, r.error || ""].join(" "),
       );
       fs.writeFileSync(OUT, JSON.stringify(results, null, 1));
     }

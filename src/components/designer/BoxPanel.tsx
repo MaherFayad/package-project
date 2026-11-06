@@ -6,7 +6,13 @@ import { BOARD_SPECS, STRUCTURE_LIMITS, materialFitsStructure, validateDims, typ
 import { formatDims } from "@/lib/format";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n/types";
-import { Badge, BlockStack, Button, ChoiceList, InlineGrid, InlineStack, Select, Text, TextField } from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { BlockStack, InlineGrid, InlineStack } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { ChoiceList } from "@/components/ui/ChoiceList";
+import { Select } from "@/components/ui/Select";
+import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
 import { matchingPreset } from "./lib/catalog";
 import styles from "./designer.module.css";
 

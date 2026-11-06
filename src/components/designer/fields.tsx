@@ -2,7 +2,9 @@
 
 import { Check } from "lucide-react";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { InlineStack, Text, TextField } from "@/components/ui";
+import { InlineStack } from "@/components/ui/Stack";
+import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n/types";
 import styles from "./designer.module.css";

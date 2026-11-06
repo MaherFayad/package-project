@@ -4,7 +4,7 @@ import { requireRole } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { getDictionary, toLocale } from "@/i18n";
 import { I18nProvider } from "@/i18n/client";
-import { AppProvider } from "@/components/ui";
+import { AppProvider } from "@/components/ui/AppProvider";
 import { AdminFrame } from "@/components/admin/AdminFrame";
 import { countModeration, countOpenQuoteLeads, countPayoutsToAct } from "@/components/admin/server/queries";
 

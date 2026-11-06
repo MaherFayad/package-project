@@ -1,7 +1,12 @@
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { BlockStack, Card, InlineStack, Layout, LayoutSection, Link, Page, Text } from "@/components/ui";
+import { BlockStack, InlineStack } from "@/components/ui/Stack";
+import { Card } from "@/components/ui/Card";
+import { Layout, LayoutSection } from "@/components/ui/Layout";
+import { Link } from "@/components/ui/Link";
+import { Page } from "@/components/ui/Page";
+import { Text } from "@/components/ui/Text";
 import { DisputeDecision } from "@/components/admin/DisputeDecision";
 import { DisputeStatusBadge } from "@/components/admin/DisputesIndex";
 import { OrderStatusBadge } from "@/components/admin/OrdersIndex";

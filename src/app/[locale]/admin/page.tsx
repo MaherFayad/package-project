@@ -2,21 +2,16 @@ import type { Metadata } from "next";
 import NextLink from "next/link";
 import type { ReactNode } from "react";
 import { BarChart3, ChevronRight } from "lucide-react";
-import {
-  BlockStack,
-  Card,
-  CountBadge,
-  DataTable,
-  Icon,
-  InlineGrid,
-  InlineStack,
-  Layout,
-  LayoutSection,
-  MetricsStrip,
-  Page,
-  Text,
-  Tooltip,
-} from "@/components/ui";
+import { BlockStack, InlineGrid, InlineStack } from "@/components/ui/Stack";
+import { Card } from "@/components/ui/Card";
+import { CountBadge } from "@/components/ui/Badge";
+import { DataTable } from "@/components/ui/IndexTable";
+import { Icon } from "@/components/ui/Icon";
+import { Layout, LayoutSection } from "@/components/ui/Layout";
+import { MetricsStrip } from "@/components/ui/MetricsStrip";
+import { Page } from "@/components/ui/Page";
+import { Text } from "@/components/ui/Text";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { ChartTableToggle } from "@/components/admin/ChartTableToggle";
 import { adminStyles, ColumnChart, FunnelBars } from "@/components/admin/charts";
 import { RangeSelect } from "@/components/admin/RangeSelect";

@@ -2,7 +2,9 @@
 
 import { useEffect } from "react";
 import { useI18n } from "@/i18n/client";
-import { Banner, Box, Button, InlineStack } from "@/components/ui";
+import { Banner } from "@/components/ui/Banner";
+import { Box, InlineStack } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
 import styles from "@/components/designer/designer.module.css";
 
 /** Error state for the designer area. Local autosave keeps the user's work. */

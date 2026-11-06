@@ -18,7 +18,10 @@ import { runPreflight, summarizePreflight } from "@/components/designer/lib/pref
 import { docSpec } from "@/lib/library/spec";
 import { track } from "@/lib/analytics/track";
 import { rateLimit } from "@/lib/rate-limit";
-import { Button, Card, EmptyState, EmptyBoxIllustration, Page } from "@/components/ui";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { EmptyState, EmptyBoxIllustration } from "@/components/ui/EmptyState";
+import { Page } from "@/components/ui/Page";
 import { CheckoutClient, type AddressState } from "../_components/CheckoutClient";
 import type { OffersResult } from "../actions";
 
