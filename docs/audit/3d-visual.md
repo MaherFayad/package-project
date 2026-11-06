@@ -123,3 +123,19 @@ Contact sheets: `ecma-specials-01..02.jpg`.
 | SP-05 | ECMA_HEXAGON, ECMA_OCTAGON | low | Lids lift and swing through the body at 50 % fold (X-09). HEXAGON outer L 93 vs 80 inner = across-corners (expected). | — | `assembly.lift`. |
 | SP-06 | FOLDER_PRESENTATION, ECMA_WALLET_ENDFLAP | low | Closed state is a flat 2-panel folder standing on its edge: fine, but the default view shows it edge-on-ish (X-04 / X-02). | — | Default view `front` for flat folders. |
 | SP-07 | CUP_CARRIER, BOTTLE_BASKET_4/6, GABLE_CARRY_CLB, LIQUID_GABLE_TOP, ECMA_TRAY_4C/6C_LID/BRIGHTWOOD/HINGED_TUCK, ECMA_SLEEVE_OPEN, ECMA_WRAP_LOCK, ECMA_COUNTER_DISPLAY | — | Assemble correctly; handle cut-outs, cup holes and gable-top fin read to life (H excess on carriers = handles, expected). | ECMA catalogue. | — |
+
+## 7. Food service (8) + rigid boxes and tubes (14) — `families/foodservice`, `families/rigid-tubes`
+
+Contact sheets: `foodservice-rigid-tubes-01..02.jpg`.
+
+| ID | Model | Sev | Finding | Real-world reference | Fix |
+|---|---|---|---|---|---|
+| FR-01 | RIGID_LID_BASE, RIGID_WINDOW, RIGID_DRAWER, RIGID_BOOK_MAGNETIC | high | Lid / sleeve / cover turn-ins occupy the base walls (`front↔lid_frontTurn` 0.5 mm into 2.15 mm board, 2 100–3 500 mm² per wall; drawer sleeve 0.75 mm); book cover turn-ins **coplanar** with the base bottom (`bottom↔cover_bottomTurnF` d = 0, 3 071 mm²) → z-fight on the underside. | Lid inner = base outer + 1–1.5 mm; book cover board is glued under the base (one caliper + wrap). | `families/rigid-tubes/rigid.ts`: lid/sleeve inner dims `+ 2*t + 1.0`; cover turn-ins `stack -1` relative to the base bottom. |
+| FR-02 | RIGID_SHOULDER, RIGID_HINGED_LID | medium | Neck panels coplanar with the base turn-ins (`frontTurn↔neck_front` 1 406 mm², d = 0) and side tabs coplanar with turns (`leftTurn↔frontTabL` ~50 mm²): flicker at the shoulder line. | Shoulder (neck) box: neck is a separate tray glued **inside** the base, one caliper in. | `rigid.ts` neck piece `stack -1`; tabs `-1`. |
+| FR-03 | all RIGID_* | medium | White cut edge on every rim (X-06). | Wrapped edges. | X-06. |
+| FR-04 | TUBE_LID_BASE, TUBE_ROLLED_EDGE, TUBE_TELESCOPING, TUBE_PUSH_UP, TUBE_WINDOW, TUBE_SHOULDER | medium | Label overlap stripe visible down the back (unprinted overlap, same as C-03); `lidGlue` / `bodyGlue` 0.4 mm into the body; TUBE_SHOULDER neck coplanar with `bodyGlue` (899 mm²); ROLLED_EDGE rolled-curl strips 0.4 mm into the body all round. | Composite cans: overlap under the label, hairline seam. | `rigid-tubes/tubes.ts`: overlap printable + `stack` under the next strip (see C-03); curl strips radius `+ t`. |
+| FR-05 | all TUBE_* | low | Front copy cut by the silhouette at the default view (X-07). | — | X-07. |
+| FR-06 | FS_NOODLE_PAIL | medium | Noodle pail renders as a tapered open box: no **wire handle** and no folded top closure flaps (outer 101×91 vs 70×60 is the flare, expected). | Oyster pail (16/26/32 oz): flared square body, four interlocking top flaps, wire bail handle. | `families/foodservice/generators/boxes.ts`: add 4 top flaps (`foldAngleClosed 90`, interlocking) and render a bail handle as a `TubeGeometry` child in `PackagingModel` (`dieline.extras.handle`). |
+| FR-07 | FS_PIZZA_SLICE | low | Side ears 0.56 mm into the side walls (766 mm² × 2). | — | `boxes.ts` ears `stack -1`. |
+| FR-08 | FS_FRIES_SCOOP | low | `glue↔bottomTuck` coplanar (94 mm²). | — | `bottomTuck stack -2`. |
+| FR-09 | FS_CAKE_BOX_WINDOW, FS_BAKERY_BOX, FS_BURGER_CLAMSHELL, FS_SANDWICH_WEDGE, FS_PIZZA_ROUND, RIGID_COLLAPSIBLE, PALLET_BOX | — | Assemble correctly; window film on cake box and sandwich wedge reads as clear film. | — | — |
