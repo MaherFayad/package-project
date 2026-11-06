@@ -290,3 +290,33 @@ test.describe("admin routing (round 4)", () => {
     expect(JSON.stringify(audit.before)).toContain(oldAdvance.id);
   });
 });
+
+test.describe("admin detail routes answer 404 for unknown records (R5-PL-03)", () => {
+  test("orders, vendors, applications, users and disputes: unknown id or slug → HTTP 404 with the admin not-found card", async ({ page, context, baseURL }) => {
+    await signIn(context, baseURL!);
+    const cases: [string, string][] = [
+      ["/en/admin/orders/ELB-NOPE-0000", "orders"],
+      ["/ar/admin/vendors/no-such-printer", "vendors"],
+      ["/en/admin/vendors/applications/nosuchapplication000000", "applications"],
+      ["/en/admin/users/nosuchuser0000000000000", "users"],
+      ["/ar/admin/disputes/nosuchdispute00000000000", "disputes"],
+    ];
+    for (const [path] of cases) {
+      const res = await page.request.get(path);
+      expect(res.status(), path).toBe(404);
+    }
+    // A malformed escape is refused by the server itself (400), never a 200 page.
+    expect([400, 404]).toContain((await page.request.get("/en/admin/orders/%E0%A4%A")).status());
+    // The page itself still renders the admin not-found card inside the frame.
+    await page.goto("/en/admin/users/nosuchuser0000000000000");
+    await expect(page.getByRole("heading", { level: 1, name: "Not found" })).toBeVisible();
+    await expect(page.getByText("This record does not exist or was removed.")).toBeVisible();
+    // Known records still answer 200.
+    const known = await db.order.findFirstOrThrow({ where: { number: "ELB-26203" }, select: { number: true } });
+    const vendor = await db.vendor.findFirstOrThrow({ where: { status: "ACTIVE" }, select: { slug: true } });
+    for (const path of [`/en/admin/orders/${known.number}`, `/en/admin/vendors/${vendor.slug}`, "/en/admin", "/en/admin/orders", "/ar/admin/quotes"]) {
+      const res = await page.request.get(path);
+      expect(res.status(), path).toBe(200);
+    }
+  });
+});
