@@ -2,6 +2,7 @@ import type { Dims, StructureFeatures } from "@/types";
 import { DielineBuilder, insetSeg, rectEdges } from "../../builder";
 import { cutWindow, notchPanel } from "../../features";
 import { clamp, rectPolygon } from "../../geometry";
+import { cutWindowInBand } from "../ecma-tuck/closures";
 import { IDENTITY, glueWidth, rect, slit, tube4 } from "./kit";
 import type { EcmaDraft } from "./types";
 
@@ -57,6 +58,10 @@ export function lockWrap(dims: Dims, t: number, f: StructureFeatures = {}): Ecma
   }
   const tp = b.byId("top");
   tp.holes = [slit(Lx * 0.25, top.y + cd - t, nibW + 1), slit(Lx * 0.75, top.y + cd - t, nibW + 1)];
-  if (f.window) cutWindow(b, f.window.face === "top" ? "top" : "front", f.window);
+  // A top window stays between the lock slits and the front crease: centred on the panel it
+  // cut through both slits (nothing left for the nibs to catch) and showed the plain
+  // closing flap under it.
+  if (f.window?.face === "top") cutWindowInBand(b, "top", f.window, top.y + cd + 1, top.y + Wp, 6);
+  else if (f.window) cutWindow(b, "front", f.window);
   return { builder: b, closedRotation: IDENTITY };
 }

@@ -408,3 +408,51 @@ describe("closed dimensions match the inputs", () => {
     expect(m.faces.top!.parts.map((p) => p.panelId).sort()).toEqual(["top", "top_back"]);
   });
 });
+
+describe("R6-3Q-D: windows keep clear of locks and tear lines", () => {
+  const win = (face: "front" | "top") => ({ face, widthRatio: 0.55, heightRatio: 0.45, film: true });
+  it("wrap-lock top window never reaches the lock slits", () => {
+    const d = def("ECMA_WRAP_LOCK");
+    for (const dims of [d.defaultDims, ...d.presets.map((p) => p.dims)]) {
+      const m = generateFamilyDieline(d, dims, { thicknessMm: SBS, features: { window: win("top") } });
+      const top = m.panels.find((p) => p.id === "top")!;
+      const holes = top.holes ?? [];
+      // Two lock slits (thin) + the window (tall).
+      const slits = holes.filter((h) => Math.max(...h.map((q) => q.y)) - Math.min(...h.map((q) => q.y)) < 2);
+      const windows = holes.filter((h) => !slits.includes(h));
+      expect(slits).toHaveLength(2);
+      expect(windows).toHaveLength(1);
+      const slitY = Math.max(...slits.flatMap((h) => h.map((q) => q.y)));
+      const shapes = [...windows, ...m.films.filter((f) => f.panelId === "top").map((f) => f.polygon)];
+      for (const s of shapes) expect(Math.min(...s.map((q) => q.y))).toBeGreaterThan(slitY);
+    }
+  });
+  it("counter display window stays in the display front below the tear line", () => {
+    const d = def("ECMA_COUNTER_DISPLAY");
+    for (const dims of [d.defaultDims, { L: d.params.L.min, W: d.params.W.min, H: d.params.H.min }, { L: d.params.L.max, W: d.params.W.max, H: d.params.H.max }]) {
+      const m = generateFamilyDieline(d, dims, { thicknessMm: SBS, features: { window: win("front") } });
+      const front = m.panels.find((p) => p.id === "front")!;
+      const perf = m.perfLines.find((l) => Math.abs(l.a.y - l.b.y) < 1e-6 && l.a.x >= front.bbox.x - 0.01 && l.b.x <= front.bbox.x + front.bbox.width + 0.01)!;
+      expect(front.holes ?? []).toHaveLength(1);
+      const shapes = [...front.holes!, ...m.films.filter((f) => f.panelId === "front").map((f) => f.polygon)];
+      for (const s of shapes) expect(Math.min(...s.map((q) => q.y))).toBeGreaterThan(perf.a.y);
+    }
+  });
+  it("basket partitions clear the walls by at least 1 mm", () => {
+    for (const code of ["BOTTLE_BASKET_4", "BOTTLE_BASKET_6"]) {
+      const d = def(code);
+      const m = gen(d);
+      const poses = computePoses(m, 1);
+      const walls = boundsAt({ ...m, panels: m.panels.filter((p) => ["front", "back", "left", "right"].includes(p.id)) }, 1, poses);
+      for (const id of m.panels.filter((p) => /^divider|^handle/.test(p.id)).map((p) => p.id)) {
+        const b = boundsAt({ ...m, panels: m.panels.filter((p) => p.id === id) }, 1, poses);
+        const t = m.thicknessMm;
+        // Inside faces of the walls are one caliper in from the outer bounds.
+        expect(b.min.x - (walls.min.x + t)).toBeGreaterThan(1);
+        expect(walls.max.x - t - b.max.x).toBeGreaterThan(1);
+        expect(b.min.z - (walls.min.z + t)).toBeGreaterThan(0.9);
+        expect(walls.max.z - t - b.max.z).toBeGreaterThan(0.9);
+      }
+    }
+  });
+});

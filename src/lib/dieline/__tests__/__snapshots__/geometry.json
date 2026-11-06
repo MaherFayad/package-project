@@ -1266,16 +1266,16 @@
   "svg": "3fc2039f9d57e6023c0fa4b1"
  },
  "BOTTLE_BASKET_4": {
-  "dieline": "328ee667b13f1eb9168cb5ba",
-  "poses": "d65338edaeccf0d0858a12cf",
+  "dieline": "778da7cba585ce43a7b8b1cd",
+  "poses": "462cf8acbc6a0d7dacd3db67",
   "bounds": "dfdb1553e944f52c1a007617",
-  "svg": "a167cf7a72d129586489fef1"
+  "svg": "a163009366839a26b0ac06c4"
  },
  "BOTTLE_BASKET_6": {
-  "dieline": "4233e5dcb19946cf956d1d88",
-  "poses": "2b119f1eb565aeba7a464dbe",
-  "bounds": "a48ce9813011bdf95c95773f",
-  "svg": "3e80fa454518094f0c5cebc0"
+  "dieline": "b9b1c08e5f0cf4591f9c7b52",
+  "poses": "233f4113078583ab48037c70",
+  "bounds": "45602d60ff5821ccb7a92c84",
+  "svg": "2e667cda4786ef2a21cad3d3"
  },
  "ECMA_COUNTER_DISPLAY": {
   "dieline": "b1f46695f3431f3fab003130",
@@ -1326,7 +1326,7 @@
   "svg": "ad448656825bb8563cf28412"
  },
  "FS_SANDWICH_WEDGE": {
-  "dieline": "9d1ac65d64d528db36df40a1",
+  "dieline": "41ba4dff192a71b3e6a9a384",
   "poses": "0973145a82babd0fd2edb2f1",
   "bounds": "636ad499feadbf90168ac10f",
   "svg": "3358e99b1532b2027a577be8"
