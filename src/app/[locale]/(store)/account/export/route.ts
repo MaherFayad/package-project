@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth/session";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { crossSiteResponse, isCrossSiteRequest } from "@/lib/auth/csrf";
 import { buildDataExport, exportFileName } from "@/components/store/account-logic";
 
 export const dynamic = "force-dynamic";
@@ -10,6 +11,9 @@ export const dynamic = "force-dynamic";
  * a JSON download and logs a completed EXPORT DataRequest. 401 when signed out.
  */
 export async function GET(req: Request) {
+  // R5-SEC-07: a GET that writes (an EXPORT DataRequest, the hourly quota) must not run from a
+  // link or navigation on another site (SameSite=Lax sends the session cookie on those).
+  if (isCrossSiteRequest(req.headers)) return crossSiteResponse();
   const session = await getSession();
   if (!session) return Response.json({ error: "UNAUTHORIZED" }, { status: 401 });
   const userId = session.user.id;
@@ -24,12 +28,15 @@ export async function GET(req: Request) {
       designs: { orderBy: { createdAt: "asc" } },
       orders: { orderBy: { placedAt: "asc" }, include: { items: true } },
       reviews: { orderBy: { createdAt: "asc" } },
+      quotes: { orderBy: { createdAt: "asc" }, select: { status: true, lines: true, totalPiasters: true, validUntil: true, createdAt: true } },
+      disputes: { orderBy: { createdAt: "asc" }, select: { reason: true, description: true, status: true, resolution: true, createdAt: true } },
+      sessions: { where: { expiresAt: { gt: new Date() } }, orderBy: { createdAt: "asc" }, select: { ip: true, userAgent: true, createdAt: true, expiresAt: true } },
     },
   });
   if (!user) return Response.json({ error: "UNAUTHORIZED" }, { status: 401 });
   const requests = await db.dataRequest.findMany({ where: { userId }, orderBy: { createdAt: "asc" } });
   const now = new Date();
-  const doc = buildDataExport({ user, organization: user.organization, consents: user.consents, designs: user.designs, orders: user.orders, reviews: user.reviews, requests }, now);
+  const doc = buildDataExport({ user, organization: user.organization, consents: user.consents, designs: user.designs, orders: user.orders, reviews: user.reviews, requests, quotes: user.quotes, disputes: user.disputes, sessions: user.sessions }, now);
   await db.dataRequest.create({ data: { userId, kind: "EXPORT", status: "COMPLETED", completedAt: now, ip: clientIp(req.headers) } });
 
   return new Response(JSON.stringify(doc, null, 2), {

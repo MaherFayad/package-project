@@ -23,67 +23,43 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import type { Locale } from "@/types";
-import {
-  ActionList,
-  AppProvider,
-  Avatar,
-  Badge,
-  Banner,
-  BlockStack,
-  Box,
-  Breadcrumbs,
-  Button,
-  ButtonGroup,
-  Card,
-  CardSection,
-  Checkbox,
-  ChoiceList,
-  CountBadge,
-  DataTable,
-  Divider,
-  DropZone,
-  EmptyBoxIllustration,
-  EmptyState,
-  Frame,
-  Icon,
-  IndexFilters,
-  IndexTable,
-  IndexTableCell,
-  IndexTableRow,
-  IndexTableRowLink,
-  InlineGrid,
-  InlineStack,
-  Inset,
-  Layout,
-  LayoutSection,
-  Link,
-  MetricsStrip,
-  Modal,
-  Navigation,
-  Page,
-  Pagination,
-  Popover,
-  PriceTag,
-  ProgressBar,
-  RadioButton,
-  RangeSlider,
-  Select,
-  SkeletonBodyText,
-  SkeletonDisplayText,
-  SkeletonThumbnail,
-  Spinner,
-  Stepper,
-  Tabs,
-  Text,
-  TextField,
-  Thumbnail,
-  Timeline,
-  Tooltip,
-  TopBar,
-  TopBarIconButton,
-  TopBarSearchField,
-  useToast,
-} from "@/components/ui";
+import { ActionList } from "@/components/ui/ActionList";
+import { AppProvider } from "@/components/ui/AppProvider";
+import { Avatar } from "@/components/ui/Avatar";
+import { Badge, CountBadge } from "@/components/ui/Badge";
+import { Banner } from "@/components/ui/Banner";
+import { BlockStack, Box, Divider, InlineGrid, InlineStack } from "@/components/ui/Stack";
+import { Breadcrumbs, Link } from "@/components/ui/Link";
+import { Button, ButtonGroup } from "@/components/ui/Button";
+import { Card, CardSection, Inset } from "@/components/ui/Card";
+import { Checkbox } from "@/components/ui/Checkbox";
+import { ChoiceList } from "@/components/ui/ChoiceList";
+import { DataTable, IndexFilters, IndexTable, IndexTableCell, IndexTableRow, IndexTableRowLink } from "@/components/ui/IndexTable";
+import { DropZone } from "@/components/ui/DropZone";
+import { EmptyBoxIllustration, EmptyState } from "@/components/ui/EmptyState";
+import { Frame, Navigation, TopBar, TopBarIconButton, TopBarSearchField } from "@/components/ui/Frame";
+import { Icon } from "@/components/ui/Icon";
+import { Layout, LayoutSection } from "@/components/ui/Layout";
+import { MetricsStrip } from "@/components/ui/MetricsStrip";
+import { Modal } from "@/components/ui/Modal";
+import { Page } from "@/components/ui/Page";
+import { Pagination } from "@/components/ui/Pagination";
+import { Popover } from "@/components/ui/Popover";
+import { PriceTag } from "@/components/ui/PriceTag";
+import { ProgressBar } from "@/components/ui/ProgressBar";
+import { RadioButton } from "@/components/ui/RadioButton";
+import { RangeSlider } from "@/components/ui/RangeSlider";
+import { Select } from "@/components/ui/Select";
+import { SkeletonBodyText, SkeletonDisplayText, SkeletonThumbnail } from "@/components/ui/Skeleton";
+import { Spinner } from "@/components/ui/Spinner";
+import { Stepper } from "@/components/ui/Stepper";
+import { Tabs } from "@/components/ui/Tabs";
+import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
+import { Thumbnail } from "@/components/ui/Thumbnail";
+import { Timeline } from "@/components/ui/Timeline";
+import { Tooltip } from "@/components/ui/Tooltip";
+import { useToast } from "@/components/ui/Toast";
 import styles from "./showcase.module.css";
 
 export function UiShowcase({ locale }: { locale: Locale }) {

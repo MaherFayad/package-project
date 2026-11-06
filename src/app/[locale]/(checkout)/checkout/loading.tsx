@@ -1,4 +1,6 @@
-import { BlockStack, Card, SkeletonBodyText, SkeletonDisplayText, SkeletonPage } from "@/components/ui";
+import { BlockStack } from "@/components/ui/Stack";
+import { Card } from "@/components/ui/Card";
+import { SkeletonBodyText, SkeletonDisplayText, SkeletonPage } from "@/components/ui/Skeleton";
 import styles from "./_components/checkout.module.css";
 
 /** Checkout loading state (prices are computed on the server). Mirrors the step + summary layout so nothing jumps. */

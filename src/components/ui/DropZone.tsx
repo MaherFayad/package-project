@@ -7,7 +7,7 @@ import { Button } from "./Button";
 import { Icon } from "./Icon";
 import { describedBy, InlineError, type FieldError } from "./Labelled";
 import { cx } from "./utils";
-import styles from "./Misc.module.css";
+import styles from "./DropZone.module.css";
 
 export interface DropZoneProps {
   label: ReactNode;

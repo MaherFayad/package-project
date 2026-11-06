@@ -408,7 +408,9 @@ export default async function HomePage({ params }: Props) {
               </Link>
             </div>
           </div>
-          <ul className={styles.ctaTiles} aria-hidden="true">
+          {/* a11y R5-AX-02: on phones this decorative strip scrolls, and Chromium makes a scroller with no
+              focusable child a Tab stop; tabIndex -1 keeps the aria-hidden strip out of the Tab order (2.4.3, 4.1.2). */}
+          <ul className={styles.ctaTiles} aria-hidden="true" tabIndex={-1}>
             <li className={styles.ctaTile}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={SAMPLES[2].src} srcSet={srcSetFor(SAMPLES[2].src)} sizes="(min-width: 1024px) 240px, 46vw" alt="" loading="lazy" decoding="async" width={320} height={400} />

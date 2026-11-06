@@ -9,24 +9,20 @@ import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { formatDateTime, formatMoney } from "@/lib/format";
 import type { PaymentView } from "@/lib/orders/service";
-import {
-  Badge,
-  Banner,
-  BlockStack,
-  Button,
-  Card,
-  ChoiceList,
-  Divider,
-  InlineStack,
-  Modal,
-  Page,
-  PriceTag,
-  Spinner,
-  Stepper,
-  Text,
-  TextField,
-  useToast,
-} from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { Banner } from "@/components/ui/Banner";
+import { BlockStack, Divider, InlineStack } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { ChoiceList } from "@/components/ui/ChoiceList";
+import { Modal } from "@/components/ui/Modal";
+import { Page } from "@/components/ui/Page";
+import { PriceTag } from "@/components/ui/PriceTag";
+import { Spinner } from "@/components/ui/Spinner";
+import { Stepper } from "@/components/ui/Stepper";
+import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
+import { useToast } from "@/components/ui/Toast";
 import { cancelOrderAction, instapaySentAction, startPaymentAction } from "../actions";
 import styles from "./checkout.module.css";
 
@@ -66,7 +62,8 @@ export function PaymentClient(props: {
   const [instapaySent, setInstapaySent] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [cancelling, setCancelling] = useState(false);
-  const amount = formatMoney(props.totalPiasters, locale);
+  // R6-02: the pay button shows the same two decimals as the summary beside it.
+  const amount = formatMoney(props.totalPiasters, locale, { alwaysDecimals: true });
   const steps = [
     { id: "offer", label: t("checkout.steps.offer") },
     { id: "delivery", label: t("checkout.steps.delivery") },
@@ -187,7 +184,8 @@ export function PaymentClient(props: {
             <TextField label={t("payment.card.expiry")} autoComplete="cc-exp" inputMode="numeric" dir="ltr" placeholder="MM/YY" value={card.expiry} onChange={(v) => setCard((c) => ({ ...c, expiry: formatExpiry(v, c.expiry) }))} maxLength={5} />
             <TextField label={t("payment.card.cvc")} autoComplete="cc-csc" inputMode="numeric" dir="ltr" value={card.cvc} onChange={(v) => setCard((c) => ({ ...c, cvc: v }))} maxLength={4} />
           </div>
-          <TextField label={t("payment.card.name")} autoComplete="cc-name" value={card.name} onChange={(v) => setCard((c) => ({ ...c, name: v }))} />
+          {/* R7-03: not required by the gateway; say so like every other optional field. */}
+          <TextField label={t("payment.card.name")} autoComplete="cc-name" value={card.name} onChange={(v) => setCard((c) => ({ ...c, name: v }))} optional />
           <Button variant="primary" size="large" fullWidth submit>
             <PayLabel busy={busy} label={t("payment.pay", { amount })} busyLabel={t("buyer.paying")} />
           </Button>
@@ -225,11 +223,13 @@ export function PaymentClient(props: {
           <Text as="p" variant="bodySm" tone="subdued">
             {t("payment.fawry.code")}
           </Text>
+          {/* R6-04: grouped in fours for reading out at the outlet; copy and screen readers get the raw digits. */}
           <p className={styles.code} data-testid="fawry-code">
-            {payment.fawry.referenceCode}
+            <span aria-hidden="true">{payment.fawry.referenceCode.replace(/(\d{4})(?=\d)/g, "$1 ")}</span>
+            <span className="visually-hidden">{payment.fawry.referenceCode}</span>
           </p>
           <Text as="p" fontWeight="semibold">
-            <PriceTag amount={props.totalPiasters} locale={locale} />
+            <PriceTag alwaysDecimals amount={props.totalPiasters} locale={locale} />
           </Text>
           <Text as="p" tone="caution">
             {t("payment.fawry.expires", { date: formatDateTime(payment.fawry.expiresAt, locale) })}
@@ -268,17 +268,20 @@ export function PaymentClient(props: {
           </span>
         </Text>
         <dl className={styles.specs}>
+          {/* R6-01: both values must be typed exactly into the bank app, so each gets a copy button. */}
           <dt>{t("payment.instapay.address")}</dt>
-          <dd>
+          <dd className={styles.copyRow}>
             <bdi className={styles.mono}>{payment.instapay.address}</bdi>
+            <CopyButton value={payment.instapay.address} label={t("buyer.copy.address")} done={t("buyer.copy.done")} />
           </dd>
           <dt>{t("payment.instapay.reference")}</dt>
-          <dd>
-            <bdi>{payment.instapay.reference}</bdi>
+          <dd className={styles.copyRow}>
+            <bdi className={styles.mono}>{payment.instapay.reference}</bdi>
+            <CopyButton value={payment.instapay.reference} label={t("buyer.copy.reference")} done={t("buyer.copy.done")} />
           </dd>
           <dt>{t("payment.instapay.amount")}</dt>
           <dd>
-            <PriceTag amount={props.totalPiasters} locale={locale} />
+            <PriceTag alwaysDecimals amount={props.totalPiasters} locale={locale} />
           </dd>
         </dl>
         <Text as="p">{t("payment.instapay.steps")}</Text>
@@ -361,7 +364,7 @@ export function PaymentClient(props: {
                         <Text as="span" fontWeight="semibold">
                           {t("buyer.amountDue")}
                         </Text>
-                        <PriceTag amount={props.totalPiasters} size="medium" locale={locale} />
+                        <PriceTag alwaysDecimals amount={props.totalPiasters} size="medium" locale={locale} />
                       </div>
                       <Text as="p" variant="bodySm" tone="subdued">
                         {t("payment.chooseHelp")}
@@ -406,26 +409,26 @@ export function PaymentClient(props: {
                     <div className={styles.line} key={i}>
                       <dt>{t((l.labelKey === "pricing.line.shipping" ? "checkout.summary.shipping" : l.labelKey) as DictKey)}</dt>
                       <dd>
-                        <PriceTag amount={l.totalPiasters} size="small" locale={locale} />
+                        <PriceTag alwaysDecimals amount={l.totalPiasters} size="small" locale={locale} tone={l.totalPiasters < 0 ? "success" : "base"} />
                       </dd>
                     </div>
                   ))}
                   <div className={`${styles.line} ${styles.lineSub}`}>
                     <dt>{t("buyer.subtotalExVat")}</dt>
                     <dd>
-                      <PriceTag amount={props.totalPiasters - props.vatPiasters} size="small" locale={locale} />
+                      <PriceTag alwaysDecimals amount={props.totalPiasters - props.vatPiasters} size="small" locale={locale} />
                     </dd>
                   </div>
                   <div className={styles.line}>
                     <dt>{t("checkout.summary.vat")}</dt>
                     <dd>
-                      <PriceTag amount={props.vatPiasters} size="small" locale={locale} />
+                      <PriceTag alwaysDecimals amount={props.vatPiasters} size="small" locale={locale} />
                     </dd>
                   </div>
                   <div className={`${styles.line} ${styles.lineTotal}`}>
                     <dt>{t("checkout.summary.total")}</dt>
                     <dd data-testid="pay-total">
-                      <PriceTag amount={props.totalPiasters} locale={locale} />
+                      <PriceTag alwaysDecimals amount={props.totalPiasters} locale={locale} />
                     </dd>
                   </div>
                 </dl>
@@ -482,4 +485,25 @@ function formatExpiry(v: string, prev: string): string {
 
 function toLatin(v: string): string {
   return v.replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)));
+}
+
+/** Small "Copy" action next to a value the buyer has to type elsewhere (InstaPay address, transfer note). */
+function CopyButton({ value, label, done }: { value: string; label: string; done: string }) {
+  const toast = useToast();
+  return (
+    <Button
+      size="slim"
+      icon={Copy}
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(value);
+          toast.show(done);
+        } catch {
+          /* clipboard blocked: the value is on screen */
+        }
+      }}
+    >
+      {label}
+    </Button>
+  );
 }

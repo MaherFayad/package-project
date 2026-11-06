@@ -1,6 +1,13 @@
 import type { Metadata } from "next";
 import { FileLock2 } from "lucide-react";
-import { Badge, BlockStack, Card, DataTable, EmptyBoxIllustration, EmptyState, Link, Page, Text } from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { BlockStack } from "@/components/ui/Stack";
+import { Card } from "@/components/ui/Card";
+import { DataTable } from "@/components/ui/IndexTable";
+import { EmptyBoxIllustration, EmptyState } from "@/components/ui/EmptyState";
+import { Link } from "@/components/ui/Link";
+import { Page } from "@/components/ui/Page";
+import { Text } from "@/components/ui/Text";
 import { DataRequestActions } from "@/components/admin/DataRequestActions";
 import { loadDataRequests } from "@/components/admin/server/queries";
 import { canDecideRequest, maskPhone } from "@/components/admin/lib/ops";
@@ -66,7 +73,7 @@ export default async function AdminPrivacyPage({ params }: { params: Promise<{ l
               <DataTable
                 caption={t("admin.privacy.title")}
                 columnContentTypes={["text", "text", "text", "text", "text", "text"]}
-                headings={[t("admin.privacy.columns.user"), t("admin.privacy.columns.kind"), t("admin.privacy.columns.status"), t("admin.privacy.columns.received"), t("admin.privacy.columns.due"), ""]}
+                headings={[t("admin.privacy.columns.user"), t("admin.privacy.columns.kind"), t("admin.privacy.columns.status"), t("admin.privacy.columns.received"), t("admin.privacy.columns.due"), <span key="h" className="visually-hidden">{t("admin.common.actionsColumn")}</span>]}
                 rows={rows.map((r) => [user(r), t(`admin.privacy.kinds.${r.kind}` as DictKey), status(r), formatDate(r.createdAt, locale, "medium"), dueCell(r), actions(r)])}
               />
             </div>

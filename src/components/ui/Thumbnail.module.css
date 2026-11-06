@@ -1,0 +1,19 @@
+/* Split out of Misc.module.css (R5-PL-05): with inlineCss each route segment inlines the CSS of
+   the components it renders, so one shared sheet was copied whole into every page, loading and
+   error segment that used any of these components. */
+/* ── Thumbnail ────────────────────────────────────────────── */
+.Thumbnail {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  overflow: hidden;
+  border-radius: var(--p-border-radius-200);
+  background: var(--p-color-bg-surface);
+  box-shadow: inset 0 0 0 1px var(--p-color-border);
+}
+.Thumbnail img { inline-size: 100%; block-size: 100%; }
+.thumbnail-extraSmall { inline-size: 1.5rem; block-size: 1.5rem; border-radius: var(--p-border-radius-150); }
+.thumbnail-small { inline-size: 2.5rem; block-size: 2.5rem; }
+.thumbnail-medium { inline-size: 3.75rem; block-size: 3.75rem; }
+.thumbnail-large { inline-size: 5rem; block-size: 5rem; }

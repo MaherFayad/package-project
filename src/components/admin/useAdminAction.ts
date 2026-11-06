@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
-import { useToast } from "@/components/ui";
+import { useToast } from "@/components/ui/Toast";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import type { AdminActionResponse } from "./server/context";

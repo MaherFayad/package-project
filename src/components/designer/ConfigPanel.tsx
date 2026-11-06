@@ -11,7 +11,14 @@ import { FINISHES } from "@/lib/configurator";
 import { formatDims, formatNumber } from "@/lib/format";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n/types";
-import { Badge, BlockStack, Button, Checkbox, InlineGrid, RangeSlider, Select, Text, TextField } from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { BlockStack, InlineGrid } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { Checkbox } from "@/components/ui/Checkbox";
+import { RangeSlider } from "@/components/ui/RangeSlider";
+import { Select } from "@/components/ui/Select";
+import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
 import { featureSupportOf, finishChoicesFor, materialChoices, printSidesChoices, type Choice } from "./lib/config";
 import { modelImage } from "./ModelPicker";
 import { FlexOptionsGroup } from "./FlexOptionsGroup";
@@ -129,11 +136,16 @@ function OptionGroup<T extends string>({
             value={c.value}
             checked={checked}
             disabled={disabled}
-            aria-describedby={c.reason || c.warning ? `${id}-note` : undefined}
+            // a11y R4-07 / R5: the whole row stays the click target, but the name is the short
+            // label only; the reason, warning and finish placement are the description (2.5.3, 2.4.6).
+            aria-labelledby={`${id}-name`}
+            aria-describedby={[c.reason || c.warning ? `${id}-note` : "", checked && extra ? `${id}-extra` : ""].filter(Boolean).join(" ") || undefined}
             onChange={(e) => onChange(c.value, e.currentTarget.checked)}
           />
           <span className={styles.optionText}>
-            <span className={styles.optionName}>{label(c)}</span>
+            <span id={`${id}-name`} className={styles.optionName}>
+              {label(c)}
+            </span>
             {c.reason && !c.enabled ? (
               <span id={`${id}-note`} className={styles.optionReason}>
                 {t("library.panel.notAvailable")}: {c.reason[locale]}
@@ -143,7 +155,7 @@ function OptionGroup<T extends string>({
                 {c.warning[locale]}
               </span>
             ) : null}
-            {checked && extra ? extra(c) : null}
+            {checked && extra ? <span id={`${id}-extra`}>{extra(c)}</span> : null}
           </span>
         </label>
       </li>

@@ -12,24 +12,21 @@ import { useLibraryModel } from "@/lib/library/useLibraryModel";
 import { defaultMaxDpr } from "@/components/three/dpr";
 import { docGeometry, docModel, docModelCode, facesForAreas, normaliseDocModel } from "@/lib/library/doc";
 import { FINISHES } from "@/lib/configurator";
-import { ViewControls, type PackagingSceneHandle } from "@/components/three";
+import { ViewControls, loadEngineStack, type PackagingSceneHandle } from "@/components/three";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n/types";
-import {
-  ActionList,
-  Badge,
-  Banner,
-  Button,
-  ButtonGroup,
-  Icon,
-  Popover,
-  RangeSlider,
-  Select,
-  Tabs,
-  Text,
-  TextField,
-  useToast,
-} from "@/components/ui";
+import { ActionList } from "@/components/ui/ActionList";
+import { Badge } from "@/components/ui/Badge";
+import { Banner } from "@/components/ui/Banner";
+import { Button, ButtonGroup } from "@/components/ui/Button";
+import { Icon } from "@/components/ui/Icon";
+import { Popover } from "@/components/ui/Popover";
+import { RangeSlider } from "@/components/ui/RangeSlider";
+import { Select } from "@/components/ui/Select";
+import { Tabs } from "@/components/ui/Tabs";
+import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
+import { useToast } from "@/components/ui/Toast";
 import type { OtpSuccess } from "@/components/auth";
 import {
   addLayer,
@@ -76,7 +73,8 @@ import { trackClient } from "@/lib/analytics/client";
 
 const StageSkeleton = () => <div className={lib.stageSkeleton} aria-hidden="true" />;
 // One persistent 3D canvas for boxes and containers (PERF-09).
-const Stage3D = dynamic(() => import("./Stage3D"), { ssr: false, loading: StageSkeleton });
+// R6-R1: three.js, the React renderer and the stage load in steps with yields between them
+const Stage3D = dynamic(() => loadEngineStack().then(() => import("./Stage3D")), { ssr: false, loading: StageSkeleton });
 // The picker (370 cards, search) loads only when it is opened (PERF-04).
 const ModelPicker = dynamic(() => import("@/components/catalogue/CataloguePicker").then((m) => m.ModelPicker), { ssr: false });
 

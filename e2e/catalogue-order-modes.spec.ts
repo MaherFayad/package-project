@@ -56,7 +56,7 @@ test("quote-only model: no 'Order this box' in designer, export, share, checkout
   await expect(link).toHaveValue(/\/en\/s\/[\w-]+$/, { timeout: 20_000 });
   const sharePath = new URL(await link.inputValue()).pathname;
 
-  // Another buyer opens the share page: model name, "Request a quote", "Design your own" opens the same model.
+  // Another buyer opens the share page: model name, "Request a price", "Design your own" opens the same model.
   const ctx = await browser.newContext({ baseURL });
   await signInAs(ctx, baseURL!, visitor.id);
   const v = await ctx.newPage();
@@ -90,14 +90,14 @@ test("quote-only model: no 'Order this box' in designer, export, share, checkout
   await ctx.close();
 });
 
-test("special-gluing model no printer lists: 'Request a quote' once the price says so (R6-05)", async ({ page, baseURL }, info) => {
+test("special-gluing model no printer lists: 'Request a price' once the price says so (R6-05)", async ({ page, baseURL }, info) => {
   test.skip(info.project.name !== "desktop", "one designer session is enough");
   test.setTimeout(90_000);
   const owner = track(await createUser({ name: "E2E R6-05 owner" }));
   await signInAs(page.context(), baseURL!, owner.id);
   await page.goto("/en/design/fefco-0711-auto-bottom-rsc");
   await dismissCookies(page);
-  await expect(page.getByTestId("price-badge")).toContainText(/on request/i, { timeout: 30_000 });
+  await expect(page.getByTestId("price-badge")).toContainText(/price on request/i, { timeout: 30_000 });
   await expect(page.getByRole("toolbar").getByRole("button", { name: "Request a price" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Order this box" })).toHaveCount(0);
   await toolbarAction(page, "Export");

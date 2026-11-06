@@ -28,6 +28,8 @@ const SPEED = 16;
 /** Longest bounded turn (R4-24): auto-moving content stops within 8 s (WCAG 2.2.2 allows 5 s for
  * blinking; the turntable also stops for good under reduced motion). */
 const TURN_MS = 8000;
+/** Turn step (R8-03): about 30 fps. */
+const FRAME_MS = 33;
 
 function sampleArtwork(model: DielineModel, locale: Locale, look: (typeof LOOK)[ProductPresetKey]): ArtworkSurface {
   const ar = locale === "ar";
@@ -79,6 +81,7 @@ export default function StartViewer({
   onTurnDone?: () => void;
 }) {
   const doneRef = useRef(onTurnDone);
+  const [coarse] = useState(() => typeof window !== "undefined" && !!window.matchMedia?.("(pointer: coarse)").matches);
   doneRef.current = onTurnDone;
   const handle = useRef<PackagingSceneHandle>(null);
   const preset = PRODUCT_PRESETS.find((p) => p.key === active)!;
@@ -123,6 +126,7 @@ export default function StartViewer({
     let visible = true;
     let turned = 0;
     let elapsed = 0;
+    let pending = 0;
     const bounded = turn !== null && turn !== undefined;
     const io = typeof IntersectionObserver !== "undefined" ? new IntersectionObserver(([e]) => (visible = e.isIntersecting)) : null;
     if (wrapRef.current) io?.observe(wrapRef.current);
@@ -132,9 +136,16 @@ export default function StartViewer({
       const dt = Math.min(real, 64);
       last = now;
       if (visible && document.visibilityState === "visible") {
-        handle.current?.rotate((SPEED * dt) / 1000);
-        turned += (SPEED * dt) / 1000;
         elapsed += real;
+        // R8-03: the viewer renders on demand, one frame per rotate(). About 30 fps is smooth for a
+        // 16°/s turn and halves the WebGL work (PERF R4-12: every frame was a long task on
+        // software GL), so taps during the turn wait less.
+        pending += dt;
+        if (pending >= FRAME_MS) {
+          handle.current?.rotate((SPEED * pending) / 1000);
+          turned += (SPEED * pending) / 1000;
+          pending = 0;
+        }
         if (bounded && (turned >= 360 || elapsed >= TURN_MS)) {
           doneRef.current?.();
           return;
@@ -152,6 +163,9 @@ export default function StartViewer({
   return (
     <PackagingSceneLazy
       key={active}
+      // R8-03: a decorative preview; on touch screens draw it at 1x (a quarter of the pixels of a
+      // DPR 2 phone), so each turning frame costs far less and taps during the turn stay quick.
+      maxDpr={coarse ? 1 : undefined}
       dieline={dieline}
       material={look.material}
       finish="MATTE_LAMINATION"

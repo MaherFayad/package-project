@@ -383,3 +383,78 @@ Still owned elsewhere: R4-R1 (MarketingShell boundary, platform/marketing), R4-R
 - Lint and typecheck are clean. `npm test`: **85 files, 8,419 passed**. `npm run build` OK.
 - Playwright `designer` + `smoke` + `journey` + `checkout` + `catalogue` (`--workers=2`): **41 passed, 5 skipped**, 0 failed.
 - Hydration e2e, 16 × 2 projects: **32 / 32 passed**.
+
+# Round 8 (performance reopened R4-15 and R4-12)
+
+Base: main 0cc1957 merged in. The performance branch (`r4-performance` b0ee870) is **not in main yet**. A trial merge conflicted only in files outside designer scope (`[locale]/layout.tsx`, `font-preload.ts`, `fonts.ts`), where marketing and performance each built the same English-only Inter preload. I aborted it, so those are left for the integrator. The designer code follows its conventions: direct UI-kit imports in the touched files, and `fetchPriority="high"` on the hero poster. `three/dpr.ts` arrives with that merge, and `DesignerApp` takes it from there.
+
+## Findings (round 8, new)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R8-01 | medium | `/design?structure=…`, `/design?design=…` (storefront deep links) | Since R4-01 these deep links answered **200 with a `<meta http-equiv="refresh">`** instead of a 307: the page's `redirect()` ran inside the Suspense boundary, after the shell had streamed. Browsers still arrived, but crawlers, link checkers and storefront tooling saw a 200 page. | HTTP semantics; SEO | `startPageRedirect()` (new `designer/startRedirect.ts`) runs in the picker **layout**, above the boundary, using the query that `src/middleware.ts` now forwards as `x-elba-search` (one additive line). The page keeps the same check for soft navigations. | fixed: `?structure=FEFCO_0201` → **307** `/en/design/shipping-box`, `?design=abc` → 307 `…/mailer-box?d=abc`, size params kept |
+| R8-02 (= PERF R4-15) | high | `/design` phone LCP (`(picker)/layout.tsx`, `page.tsx`) | The hero (headline, stage, poster: the LCP element) streamed after the page's 370-card RSC payload. The poster was at byte 794 K of a 1 MB document. | LCP < 2.5 s | The hero and the resume card render in the **layout, above the boundary**. The page holds only the catalogue section, inside the boundary. The R4-01 boundary still sits between `<main>` and the page's payload read. | fixed: the poster is at byte **15.5 K** of 359 K, and LCP is now **FCP + 0.06 to 0.12 s** (phone, ISOLATE=1, 5 runs: ar 3.83–3.90 s with FCP 3.73–3.79 s, en 3.42–3.49 s with FCP 3.36–3.40 s). This base doesn't include the performance branch's FCP work (inline CSS, font preloads), so the absolute LCP has to be re-checked after that merge. With the payload ordering fixed, LCP follows FCP |
+| R8-03 (= PERF R4-12) | high | `/design` phone TBT / INP (`DesignStart`, `StartViewer`) | TBT and INP over budget on the phone profile. | INP < 200 ms | Before tapping Play (R6-01), the page does no 3D work: the hand-replayed tool taps showed no long task over 200 ms during load in ar and one 213 ms task in en, and the chip and tab handlers take under 12 ms. Added this round: the hero turns at about 30 fps (one demand-rendered frame per 33 ms, not every display frame) and draws at 1x on touch screens. | **passive page within budget.** Runs where the 3D view hadn't loaded before the tool's last interaction (JS ≈ 440 KB): INP 104–136 ms, TBT 0.43–0.54 s. **Still over after Play**: perf-pages taps the hero's Play button, which loads the 3D view (two 450–550 ms startup tasks). The tool's next key press then waits: INP 264–760 ms, TBT 1.1–1.4 s, in both locales, with or without the frame cap and 1x canvas. That startup work is the engine's (R6-R1: yield between import, scene build and first render; `compileAsync`) |
+
+Hydration: 40 cold loads (a fresh browser per load: `/ar/design` + `/en/design`, desktop + Pixel 5, 10 rounds), **0 errors**. The e2e hydration test repeated 16 × 2: **32 / 32 passed**.
+
+Files touched outside scope: `src/middleware.ts` (one line, `x-elba-search`, R8-01).
+
+## Verification (round 8)
+
+- Lint and typecheck are clean. `npm test`: **89 files, 8,494 passed**. `npm run build` OK.
+- Playwright `designer` + `smoke` + `journey` + `checkout` + `catalogue` + `storefront` (`--workers=2`): **57 passed, 5 skipped**, 0 failed.
+
+## Counts (round 8, new findings before fixing)
+
+| severity | found | fixed | open |
+|---|---|---|---|
+| critical | 0 | 0 | 0 |
+| high | 2 (R8-02, R8-03; both reopened by performance) | 1 fully (R8-02), 1 for the passive page (R8-03) | R8-03 after Play → 3d-engine R6-R1 |
+| medium | 1 (R8-01) | 1 | 0 |
+| low | 0 | 0 | 0 |
+
+# Round 9
+
+Base: main d61f21f. It includes this branch's 0844838, perf bbc5100, marketing, catalogue and checkout R5, so it was a fast-forward. I checked that the R8 pieces are intact: the hero above the boundary, the redirect from the layout, `x-elba-search`, the 30 fps / 1x hero turn, and `three/dpr` in `DesignerApp`.
+
+## Absolute LCP on the merged code (integrator request)
+
+`perf-pages.mjs`, `ISOLATE=1`, phone profile, 5 runs:
+
+| page | LCP ar | LCP en | FCP | INP | CLS |
+|---|---|---|---|---|---|
+| `/design` (start page) | **1.26–1.61 s** | **1.22–1.25 s** | 1.02–1.58 s | 88–232 ms (19 of 20 runs < 200 ms) | ≤ 0.002 |
+| `/design/mailer-box` (editor) | **1.45–1.49 s** | **1.34–1.36 s** | 0.98–1.05 s | 96–176 ms | 0.002 |
+
+Both pages are **under the 2.5 s budget** in every run. TBT on this profile is 0.29–1.78 s on the start page and 1.33–1.55 s in the editor. That is software WebGL after the 3D loads (in the editor by design; on the start page only after Play), and the mount task is with 3d-engine (R6-R1, as assigned).
+
+## Fresh pass
+
+- axe-core: **0 violations** on every state in ar + en at 390 and 1440: start page, editors, artwork, text, gate, the phone view menu, and the start page after Play.
+- Keyboard: the view menu works fully (Enter, arrows, Escape returns focus), and Play / Pause is a real button with the right name.
+- Deep links answer 307 (`?structure=`, `?design=`). An unknown model answers 404.
+- WCAG 1.4.12 text spacing: no model name is cut (0 of 91 on the start page, 0 in the picker).
+- Export: no placeholder, mark present. The share modal states and the copy-failure message work.
+- Quote-only model: the badge, toolbar and modal agree.
+
+## Findings (round 9)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R9-01 | medium | price badge for a signed-in visitor (`Modals.tsx · PriceBadge`) | For the first 0.5 to 1 s of every editor load, a **signed-in** visitor saw the signed-out badge: "500 قطعة: اعرف السعر" / "500 pieces: see the price" with a lock icon. The `idle` state (before the debounced first request) fell through to the locked branch. Seen on the aerosol can in ar. | ISO 9241-110 (self-descriptiveness); WCAG 4.1.3 (a wrong status is announced through the live region) | `idle` renders as loading: "Getting the price" / "جار حساب السعر", the shimmer bar, `aria-busy`, and the tag icon. | fixed. Sampled every 100 ms on load: `idle → loading → quote`, all with the loading copy until the result. The lock never shows |
+
+## Verification (round 9)
+
+- Lint and typecheck are clean. `npm test`: **95 files, 8,508 passed**. `npm run build` OK.
+- Playwright `designer` + `smoke` + `journey` + `checkout` + `catalogue` + `storefront` (`--workers=2`): **57 passed, 5 skipped**, 0 failed.
+- Hydration: e2e repeat 16 × 2 **32 / 32 passed**; 20 cold loads (fresh browser each, `/ar/design` + `/en/design`, desktop + Pixel 5) **0 errors**.
+
+## Counts (round 9, new findings before fixing)
+
+| severity | found | fixed | open |
+|---|---|---|---|
+| critical | 0 | 0 | 0 |
+| high | 0 | 0 | 0 |
+| medium | 1 (R9-01) | 1 | 0 |
+| low | 0 | 0 | 0 |

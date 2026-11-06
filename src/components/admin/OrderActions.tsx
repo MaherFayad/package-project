@@ -1,7 +1,16 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Avatar, Banner, BlockStack, Button, ButtonGroup, Card, InlineStack, Modal, Select, Text, TextField } from "@/components/ui";
+import { Avatar } from "@/components/ui/Avatar";
+import { Banner } from "@/components/ui/Banner";
+import { BlockStack, InlineStack } from "@/components/ui/Stack";
+import { Button, ButtonGroup } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Modal } from "@/components/ui/Modal";
+import { Select } from "@/components/ui/Select";
+import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
+import { useInlineEditFocus } from "@/components/ui/useInlineEditFocus";
 import { useI18n } from "@/i18n/client";
 import { formatMoney, formatPercent } from "@/lib/format";
 import type { DictKey } from "@/i18n";
@@ -48,6 +57,7 @@ export function RoutingCard({
   const { run, busy } = useAdminAction();
   const errorText = useAdminErrorText();
   const [open, setOpen] = useState(false);
+  const { containerRef, openerRef } = useInlineEditFocus(open); // a11y R5-AX-06 (2.4.3)
   const [vendorId, setVendorId] = useState("");
   const [cost, setCost] = useState("");
   const [reason, setReason] = useState("");
@@ -83,10 +93,11 @@ export function RoutingCard({
             </Text>
           ) : !open ? (
             <InlineStack align="start">
-              <Button onClick={() => setOpen(true)}>{t("admin.order.routing.change")}</Button>
+              <Button ref={openerRef} onClick={() => setOpen(true)}>{t("admin.order.routing.change")}</Button>
             </InlineStack>
           ) : (
             <form
+              ref={containerRef}
               aria-label={t("admin.order.routing.title")}
               onSubmit={async (e) => {
                 e.preventDefault();
@@ -199,6 +210,7 @@ export function OverrideCard({
   const costValue = egpToPiastersInput(cost);
   const preview = canPrice && goodsValue !== null && !Number.isNaN(goodsValue) ? applyGoodsOverride(money, goodsValue) : null;
   const [open, setOpen] = useState(false);
+  const { containerRef, openerRef } = useInlineEditFocus(open); // a11y R5-AX-06 (2.4.3)
   const reset = () => {
     setOpen(false);
     setGoods("");
@@ -226,7 +238,7 @@ export function OverrideCard({
             {canPrice ? t("admin.order.override.help") : t("admin.order.override.priceLocked")}
           </Text>
           <InlineStack align="start">
-            <Button onClick={() => setOpen(true)}>{canPrice ? t("admin.order.override.edit") : t("admin.order.override.editCost")}</Button>
+            <Button ref={openerRef} onClick={() => setOpen(true)}>{canPrice ? t("admin.order.override.edit") : t("admin.order.override.editCost")}</Button>
           </InlineStack>
         </BlockStack>
       </Card>
@@ -236,6 +248,7 @@ export function OverrideCard({
   return (
     <Card title={t("admin.order.override.title")}>
       <form
+        ref={containerRef}
         aria-label={t("admin.order.override.title")}
         onSubmit={async (e) => {
           e.preventDefault();

@@ -263,3 +263,121 @@ Counts (round 4, new findings before fixing): **critical 0, high 1, medium 7, lo
 - `src/i18n/en.ts`, `src/i18n/ar.ts`: one key, `account.notGiven` (R4-07).
 - `docs/audit/tools/perf-pages.mjs`: an optional `ONLY=` page filter. `docs/audit/tools/checkout-walk.cjs` is new.
 - `e2e/checkout.spec.ts`: one new test. Existing tests are unchanged.
+
+## Round 5
+
+Base: main at `aa726b9` (round 4 of every area merged), fast-forwarded into this branch. Work list: the checkout row of `docs/audit/ROUND5.md`, plus three items the integrator added: a11y R4-04 (invoice table at 320 px), real 404s for unknown `/orders/<id>` and `/s/<token>` (the R4-MK-09 Suspense boundary made them answer 200), and the R4-B-03 data shape agreed with the admin session.
+
+### Work list
+
+| id | result |
+|---|---|
+| **R4-B-01** (critical) | The fork fix itself (`modelCode` and `config` copied, the duplicate check includes them) came in with catalogue round 4 (`13f12e7`), along with its deep-link e2e. This round adds the server-side guard: `instantOrderBlock()` (`src/lib/orders/order-guard.ts`) runs in `createOrderFromOffer`, the single place every order is written (checkout, sample, reorder). A model whose order mode is quote or preview, or a run above 2,000 boxes, throws `MANUAL_QUOTE` unless the order comes from a price the team sent (`quoteId`). Unit test: `order-guard.test.ts`. New e2e `checkout-share-guard.spec.ts`: a wrong token, another design's id with a real token, and no token all give "Design not found" and create no copy. The real deep link creates one copy that keeps `LIQUID_ASEPTIC_BRICK`, shows "Request a price", and shows no per-box prices, no sample and no Continue. Opening it again reuses the same copy. **fixed** |
+| **R4-B-03** (high, checkout half) | Shape agreed by `send_message` with the admin session. The lead's own `Quote` row goes `REQUESTED → PRICED → ACCEPTED`, using three new nullable columns: `pricedAt`, `deliveryDays` and `vendorCostPiasters` (the printer's agreed price, needed for payouts). There is no prepay discount on a sent price. The link is `quoteCheckoutPath()` → `/checkout/<design>?quote=<id>` (`src/lib/orders/quote-status.ts`). `loadPricedQuote()` accepts only the buyer's own quote, for this design, still `PRICED`, still valid, from an active printer, with a vendor cost. The checkout then shows one offer card and "Your price for 5,000 boxes … valid until …". The governorate is locked to the one in the request (with help text). Order creation claims the quote (`PRICED → ACCEPTED`, conditional update) in the same transaction, so it works once. It writes a `QUOTE_ACCEPTED` audit row and sets `order.quoteId`. The 2,000-box cap is lifted only through this path (action schema + guard). A used, expired or foreign link shows "This price is no longer available" above the normal checkout. The account's "Price requests" card shows "Price ready · EGP 105,678.00 for 5,000 boxes, valid until …" and "Review price and pay". New e2e `checkout-quote.spec.ts` covers: another account gets nothing → account card → checkout → paid order with 5,000 boxes and the sent total and vendor cost → quote `ACCEPTED` → link refused when reused. **fixed** (admin "Send price" form: admin session) |
+| **R4-B-05** (medium) | The sample card label now reads "Sample + delivery, incl. VAT" / "العينة والتوصيل، شامل الضريبة", which matches the figure it shows. **fixed** |
+| **R4-B-06** (medium) | Already fixed by catalogue round 4: the quote-only reason shows at every quantity, there is no "Order 2,000 now" and no sample, and the summary says "priced by quote". Re-verified by `catalogue-order-modes.spec.ts`. The two hard-coded ar/en ternaries left in `CheckoutClient` are now dictionary keys (`buyer.qty.byQuote`, `byQuoteSummary`, `byQuoteHelp`). **fixed** |
+| **R4-B-07 / R4-CR-12** (medium) | `sellerTaxReady()` (`src/lib/orders/tax-document.ts`) checks for a 9-digit `ELBA_TAX_ID`. Until one is set, the document is "Order receipt INV-… (not a tax invoice)" / "إيصال طلب … (ليس فاتورة ضريبية)". The ETA block and its "is submitted" sentence are replaced by a plain note, and the order page action says "View receipt". With the variable set, the tax invoice returns unchanged. The checkout e2e now asserts "(not a tax invoice)" and the absence of "Pending submission"; VAT 14% is still asserted. Blocking a live deployment while it is unset is a platform/env check (open). **fixed** |
+| **R4-B-09 / R4-CR-07** (low / medium) | One stated minimum: `minOrderQuantity()` (smallest `minOrderQty` among active printers) drives the placeholder ("{min} to 2,000"). Each case gets its own message: a non-integer gives "Enter a whole number of boxes. Above 2,000 boxes we price by hand."; below the minimum gives "Printers start at {min} boxes. To try a few first, choose the sample."; above 1,000,000 gives "A price request takes up to 1,000,000 boxes." **fixed** |
+| **R4-B-13** (low) | The tier help text adds "Prices per box include setup and delivery, after the 3% prepay discount." **fixed** |
+| **R4-CR-02** (high) | `IsolatedList` (`orders/_components`) wraps every typed address part (street, building, city, governorate, landmark, name, company name) in its own `<bdi>`, joined with "، " in Arabic. It is used on the invoice/receipt and in the order's delivery card. The vendor job and admin order pages are other owners' files (open for them). **fixed (checkout files)** |
+| **R4-CR-04** (medium) | `BUYER_TRACK` (`src/lib/orders/buyer-track.ts`) adds a "Printer acceptance" / "قبول المطبعة" step between Paid and In production. Right after payment (status `PAID`) that step is current, so the tracker agrees with the "Awaiting printer" badge. The shared `BUYER_STEPS` in `state.ts` is unchanged, as vendor and admin use it. Unit test added. The checkout e2e now expects "Printer acceptance" as the current step after payment (this was the bug, so the assertion changes with it). **fixed** |
+| **R4-CR-15** (low) | The minus sign was fixed in round 4 (R4-02). This round: discount and credit lines use the success tone on checkout, payment and the order page. **fixed** |
+| **R4-CR-16** (low) | Already "، " in `orders.invoice.lineDesc` and the spec lines (verified in the ar receipt). **fixed (no change)** |
+| **R4-CR-23** (low) | The orders view tabs at 390 px get an end fade mask (direction-aware) plus end padding, so "Delivered" scrolls fully clear of it. Below 640 px only. **fixed** |
+| **CR-35** (medium, reopened) | Every money column in checkout, payment, the order and the receipt uses two decimals (`alwaysDecimals` on every `PriceTag`, tier and per-box figures), with tabular figures from `PriceTag`. The vendor jobs list and the public price list are other owners'. **fixed (checkout files)** |
+| **vendor R4-13** (low) | "Photos appear here once our team has checked them." / "تظهر الصور هنا بعد أن يراجعها فريقنا." **fixed** |
+| **a11y R4-04** (medium) | The phone invoice rows wrap (flex-wrap) instead of using a fixed 3-column grid, so a long amount drops to its own line. Measured at 320 px (ar and en, receipt, order, orders list): no table wrapper scrolls (`scrollWidth − clientWidth = 0`), 0 px page overflow, axe 0. Nothing left to make keyboard-scrollable. **fixed** |
+| **404s** (integrator) | `orders/layout.tsx` and `s/layout.tsx` render the shell with `boundary={false}`. The new segment layouts `orders/[id]/layout.tsx` and `s/[id]/layout.tsx` validate first (same viewer rule as the page; same token rules as `loadSharedDesign`) and then add the Suspense boundary themselves. `orders/(list)/layout.tsx` gives the list its boundary back. They pair with `orders/not-found.tsx` and `s/not-found.tsx`. An unknown order, another buyer's order (by id or number) and its invoice all answer the same 404, never 403. An unknown token answers 404 for anonymous visitors in ar and en. New e2e in `checkout-share-guard.spec.ts`. **fixed** |
+
+### Findings (new this round)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R5-01 | low | receipt (`invoice/page.tsx`) | The new receipt still printed "Tax registration number: To be assigned" and "Commercial register: To be assigned" for the seller. | Egyptian VAT Law 67/2016 (do not present tax-invoice fields on a receipt) | The seller tax lines are shown only when `sellerTaxReady()`. | fixed |
+| R5-02 | low | step 1, sample tile | "EGP 750 + VAT" in a column where every other price has two decimals. | CR-35 consistency | "EGP 750.00 + VAT". | fixed |
+| R5-03 | medium | account, price requests, 390 (`account/page.tsx`, `account.module.css`) | A priced request's badge and "Review price and pay" button squeezed the text column to one word per line, and the request title disappeared. | WCAG 1.4.10 Reflow | The row uses the saved-design phone layout (actions on their own row), indented to the text edge because requests have no thumbnail. | fixed |
+| R5-04 | medium | order 404 (`orders/not-found.tsx`, order page, receipt) | An unknown order said "We could not find this design." | ISO 9241-110 (self-descriptiveness) | "We could not find this order" plus "Check the order number in our message, or open your orders…" and "My orders" (ar: «لم نجد هذا الطلب»، «طلباتي»). | fixed |
+
+Counts (round 5, new findings before fixing): **critical 0, high 0, medium 2, low 2** (4 total). All fixed and re-checked in the browser. R5-03 came from this round's own new feature, the priced-request row. The rounds should stop only when a round finds nothing of medium or worse, so this round does not close them. The re-check after these fixes, below, found nothing new.
+
+### Verification (round 5)
+
+- Browser, rebuilt `next start`. The full journey walk (`checkout-walk.cjs`, 22 screens × en/ar × 390/1440 = 88) had axe 0 and 0 px overflow. Twenty-six round-5 screens were checked: the quoted checkout, an invalid quote link, the account priced row, order 404 and share 404 (ar/en × 390/1440), plus the receipt, order and orders list at 320 px (ar/en). All had axe 0, 0 px overflow and no table scroll. Seen: the tracker shows "قبول المطبعة" as current after payment; the ar receipt reads "12 شارع التحرير، الدقي، الجيزة" with green "−621.53" discount lines and two decimals in every column; the quoted step shows one printer and EGP 105,678.00.
+- `npm run lint` and `npm run typecheck` are clean. `npm test` passed 92 files and 8,501 tests (new: `order-guard`, `buyer-track`, `tax-document`). Two Arabic copy rules in `platform-i18n.test.ts` caught my first `buyer.quoted.title` (tatweel and a bare count); I fixed the copy, not the test. `next build` is OK with no warnings. First-load JS: checkout 159 KB, pay 150 KB, orders 148 KB, order 149 KB, invoice 146 KB, account 152 KB, share 142 KB.
+- e2e (`--workers=2 --trace off`, desktop + mobile, on a freshly seeded DB): `checkout`, `checkout-quote` (new), `checkout-share-guard` (new), `catalogue-order-modes`, `journey`, `smoke`, `admin` and `vendor` gave 52 passed and 17 skipped by the specs themselves. `storefront` gave 16 passed. Two earlier `storefront` runs failed 7 tests (legal pages, the box page and the vendor directory answered 404). The cause was this environment, not the code: a server process left over from before the rebuild, on a dev DB that had not been reseeded after the merge. A build of main on the same fresh DB answered 200 on those pages. After restarting my build on that DB, all 16 passed.
+
+### Open / for other owners (round 5)
+
+- **Admin**: the "Send price" form that writes the agreed shape. Set `vendorId`, `lines`, the totals (`vatOn`), `validUntil` (from the quote-validity setting), `deliveryDays`, `vendorCostPiasters`, `pricedAt` and `status = "PRICED"`, plus a `QUOTE_PRICED` audit row. Send the buyer `quoteCheckoutPath()`. The checkout refuses a priced quote without `vendorCostPiasters`. No reply yet in this session.
+- **Platform**: the `quote_sent` / `quote_accepted` analytics events (the event list in `src/lib/analytics/events.ts` belongs to platform; checkout writes the `QUOTE_ACCEPTED` audit row today), and blocking a live deployment while `ELBA_TAX_ID` is unset (R4-B-07).
+- **Vendor / admin**: `dir`-isolated addresses on the vendor job "Delivery" card and the admin order page (R4-CR-02), and one money precision in the vendor jobs list (CR-35).
+- **Platform (R4-CR-09)**: signed-in order pages still show the promo bar and "New design" in the header.
+
+### Files touched outside scope (round 5)
+
+- `prisma/schema.prisma`: `Quote.pricedAt`, `Quote.deliveryDays`, `Quote.vendorCostPiasters` (nullable, additive; agreed with admin).
+- `src/lib/orders/`: `order-guard.ts`, `buyer-track.ts`, `tax-document.ts`, `quote-status.ts` (new); `service.ts` (guard call, `minOrderQuantity`, `loadPricedQuote`, quoted order path, `OrderOffer` type); `quote-requests.ts` (re-exports, `quoteGovernorate`); three new unit tests.
+- `e2e/checkout-quote.spec.ts`, `e2e/checkout-share-guard.spec.ts` (new). `e2e/checkout.spec.ts`: two assertions follow the intended changes (receipt title, "Printer acceptance"); nothing removed or weakened.
+
+## Round 6
+
+Base: main at `d61f21f` (my round 5 merged, plus designer R8, performance, marketing and catalogue R8; `boxes/[structure]` and `legal/[doc]` now sit in the `(detail)` group with guard layouts). Fresh audit of the whole scope on a freshly seeded DB under `next start`:
+- the full journey walk (88 screens, en/ar × 390/1440);
+- the round 5 screens (quoted checkout, account price row, 404s, 320 px receipt);
+- for the first time in these rounds, the three non-card payment methods (mobile wallet, Fawry, InstaPay) at ar/en × 390/1440, including the clipboard.
+
+### Re-verification of round 5
+
+All round 5 rows still hold after the merge. Every walk screen had axe 0 and 0 px overflow. The tracker shows "Printer acceptance" after payment. The receipt title applies while `ELBA_TAX_ID` is unset. Unknown or other buyers' orders and unknown share tokens answer 404 (e2e). The guard and the quoted path pass their e2e. The admin "Send price" form is not on main yet (see Open).
+
+### Findings (new this round)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R6-01 | medium | payment, InstaPay (`PaymentClient.tsx`) | The buyer must type the InstaPay address and the order number into the bank app exactly, but neither had a copy action (Fawry has one). A wrong note means a transfer ops cannot match. | ISO 9241-110 (error tolerance); WCAG 3.3.4 spirit (prevent errors on financial actions) | "Copy address" and "Copy note" buttons (`buyer.copy.*`, "تم النسخ" toast) next to each value, wrapping under the value on phones. Verified: the clipboard holds exactly the order number. | fixed |
+| R6-02 | low | payment, card and wallet | "Pay EGP 14,250" / "دفع 14,250 ج.م" next to a summary that says "EGP 14,250.00". | CR-35 consistency | The pay amount always has two decimals. | fixed |
+| R6-03 | low | account header hint | "Add your name in Profile so the courier knows who to ask for" was not true: the courier uses the name on each delivery address. | Copy accuracy | "Add your name in Profile. It appears on your account and on your receipts; the courier uses the name on each delivery address." (ar likewise). | fixed |
+| R6-04 | low | payment, Fawry | The 13-digit reference was one unbroken run of digits, hard to read out at an outlet. | Readability | Shown in groups of four; screen readers and Copy get the raw digits (visually hidden span). | fixed |
+
+Counts (round 6, new findings before fixing): **critical 0, high 0, medium 1, low 3** (4 total). All fixed and re-checked in the browser. R6-01 is medium, so the stop rule ("no medium or worse") is not met yet. The re-walk after these fixes (journey en-390 and ar-1440, plus the payment-method screens) found nothing new.
+
+### Verification (round 6)
+
+- `npm run lint` and `npm run typecheck` are clean. `npm test` passed 8,508 tests. `next build` is OK with no warnings.
+- e2e (`--workers=2 --trace off`, desktop + mobile, fresh DB): `checkout`, `checkout-quote`, `checkout-share-guard`, `catalogue-order-modes`, `journey`, `smoke`, `storefront`, `admin` and `vendor` gave 59 passed and 17 skipped by the specs themselves, with 0 failures.
+- Browser: the payment methods had axe 0 and 0 px overflow, with focus on the step heading after Continue (X-01 holds). The journey re-walk had axe 0 and 0 px overflow on every screen.
+
+### Open (round 6)
+
+- **Admin "Send price"** (R4-B-03 admin half) is not on main yet. Until it is, a price request can only be priced by writing the row directly.
+- Native date input ("Needed by") shows the browser's date format, e.g. "mm/dd/yyyy" in an Arabic page; it follows the browser locale and is not set by the page.
+
+## Round 7
+
+Base: this branch at `c9864b5` (round 6), on a freshly seeded DB under `next start`. This was a fresh pass, focused as the integrator asked on what earlier walks never reached:
+- every order-tracking state: awaiting payment, cancelled, refunded, QC pending (with a photo), ready to ship, and shipped (with a shipment and tracking), each with its orders list and receipt, in ar 390 and en 1440 (32 screens);
+- the Arabic phone payment screens (card, declined, wallet, Fawry, InstaPay);
+- receipts after a refund.
+All screens had axe 0 and 0 px overflow, so every finding below is visible content, not markup.
+
+### Findings (new this round)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R7-02 | high | order tracking, Activity (`orders/[id]/page.tsx` `eventText`) | Free-text notes on any event other than NOTE were shown to the buyer verbatim. Printers and staff write these notes through the status API (a decline reason, a QC remark). A printer's "Call me on 01001234567" on VENDOR_DECLINED reached the buyer, and an English staff note appeared as-is in the Arabic timeline ("إلغاء الطلب: Buyer cancelled"). Round 4 (vendor) closed this only for NOTE events. | Plan §0 / B-08 (managed marketplace: no direct printer contact); PDPL 151/2020 (staff notes are not for the buyer) | Buyers see an event's label only. The single exception is the courier's tracking number on SHIPPED. Staff and printers keep the full note (`internal`). e2e: the printer's phone number and the refund reason never render. | fixed |
+| R7-01 | medium | refunded order, receipt (`orders/[id]/page.tsx`, `invoice/page.tsx`) | A refunded order showed no refund anywhere. The payment card dropped the paid line and showed nothing returned. The timeline said "Order cancelled", because a refund writes a CANCELLED event. The receipt still read "This is a receipt for your payment … Paid by Card". An unknown event type would have printed its raw dictionary key. | Consumer Protection Law 181/2018 (the buyer must be able to see the refund); ISO 9241-110 (self-descriptiveness) | The payment card now has a line "Refunded · Card  EGP 14,250.00" (success tone). On a refunded order the closing event reads "Order cancelled and refunded" / «إلغاء الطلب واسترداد المبلغ». The receipt gets a banner: "This order was refunded: EGP 14,250.00 went back to your Card on November 5, 2026. Credit note CN-… cancels this receipt." Unknown event types read "Order updated". e2e added (`checkout-states.spec.ts`). | fixed |
+| R7-03 | low | payment, card form | "Name on card" is not required (payment succeeds without it), but it was the only optional field without "(Optional)". | WCAG 3.3.2 | Marked optional like every other optional field. | fixed |
+
+Counts (round 7, new findings before fixing): **critical 0, high 1, medium 1, low 1** (3 total). All fixed and re-checked in the browser. R7-02 and R7-01 are high and medium, so the stop rule is not met. The re-check after the fixes (refunded order and receipt, ar 390 and en 1440: axe 0, 0 px overflow, no printer phone in the HTML) found nothing new.
+
+Also checked and fine: awaiting payment shows "Pay now" and a "Due" line, with the "print file after payment" hint before payment only. Cancelled shows "Order this design" and no due amount. QC pending shows no unreviewed photo to the buyer ("appear once our team has checked them"). Shipped shows the carrier, tracking number, status badge and tracking link. Ready to ship is current on Shipped. A typed Latin street ("14 Abbas El Akkad St") stays in order in every Arabic address card. On the Arabic phone card form, the decline keeps the expiry and CVC and focuses the number.
+
+### Verification (round 7)
+
+- `npm run lint` and `npm run typecheck` are clean. `npm test` passed 8,508 tests. `next build` is OK with no warnings.
+- e2e (`--workers=2 --trace off`, fresh DB): `checkout`, `checkout-quote`, `checkout-share-guard`, `checkout-states` (new), `catalogue-order-modes`, `journey`, `smoke`, `storefront`, `admin` and `vendor` gave 60 passed and 18 skipped by the specs themselves, with 0 failures. A first run of the new spec signed in against `dev.db` because `ELBA_DATABASE_URL` was not set for the test process. With the variable set it passed; nothing in the spec was weakened.
+
+### Open (round 7)
+
+- **Vendor / admin:** the same rule for their own screens is theirs to decide. Staff and printers still see full notes, by design.
+- **Admin "Send price"** (R4-B-03 admin half): still not on main.

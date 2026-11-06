@@ -7,33 +7,29 @@ import { fromJson } from "@/lib/json";
 import { formatDate, formatDateTime, formatDims } from "@/lib/format";
 import { formatEgyptPhone } from "@/lib/phone";
 import { getOrderForViewer, moneyOf, syncShipments, type OrderDetail } from "@/lib/orders/service";
-import { BUYER_STEPS, buyerStepIndex, canBuyerCancel, canOpenDispute, canReview, isPaidStatus, stoppedStepIndex } from "@/lib/orders/state";
+import { canBuyerCancel, canOpenDispute, canReview, isPaidStatus } from "@/lib/orders/state";
+import { BUYER_TRACK, buyerTrackIndex, buyerTrackStopped } from "@/lib/orders/buyer-track";
 import { paymentTone, statusTone } from "@/lib/orders/status-tone";
 import { modelPoster } from "@/lib/orders/poster";
 import { governorateKey } from "@/lib/orders/governorates";
+import { sellerTaxReady } from "@/lib/orders/tax-document";
+import { IsolatedList } from "../_components/IsolatedList";
 import type { TrackingEvent } from "@/lib/shipping";
-import {
-  Badge,
-  Banner,
-  BlockStack,
-  Button,
-  Card,
-  EmptyState,
-  EmptyBoxIllustration,
-  Icon,
-  InlineStack,
-  Inset,
-  Layout,
-  LayoutSection,
-  Link,
-  Page,
-  PriceTag,
-  Stepper,
-  Text,
-  Thumbnail,
-  Timeline,
-  type TimelineGroup,
-} from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { Banner } from "@/components/ui/Banner";
+import { BlockStack, InlineStack } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { Card, Inset } from "@/components/ui/Card";
+import { EmptyState, EmptyBoxIllustration } from "@/components/ui/EmptyState";
+import { Icon } from "@/components/ui/Icon";
+import { Layout, LayoutSection } from "@/components/ui/Layout";
+import { Link } from "@/components/ui/Link";
+import { Page } from "@/components/ui/Page";
+import { PriceTag } from "@/components/ui/PriceTag";
+import { Stepper } from "@/components/ui/Stepper";
+import { Text } from "@/components/ui/Text";
+import { Thumbnail } from "@/components/ui/Thumbnail";
+import { Timeline, type TimelineGroup } from "@/components/ui/Timeline";
 import { PaidHeader } from "../_components/PaidHeader";
 import { CancelOrderButton, DisputeForm, ReorderButton, ReviewForm } from "../_components/OrderActions";
 import styles from "../_components/orders.module.css";
@@ -59,7 +55,7 @@ const NOTE_KEYS: Record<string, DictKey> = {
 };
 
 /** Timeline entry text for an event; internal codes are hidden from buyers. */
-function eventText(t: TFunction, type: ProductionEventType, note: string | null, internal: boolean): { content: string; detail?: string } | null {
+function eventText(t: TFunction, type: ProductionEventType, note: string | null, internal: boolean, refunded = false): { content: string; detail?: string } | null {
   const code = note?.match(/^([A-Z_]+)(?::(.*))?$/);
   if (type === "NOTE") {
     if (code && NOTE_KEYS[code[1]]) {
@@ -71,13 +67,19 @@ function eventText(t: TFunction, type: ProductionEventType, note: string | null,
     // Elba team can see notes"), so buyers never see them (they could also carry contact details).
     return note && internal ? { content: t("orders.detail.events.NOTE"), detail: note } : null;
   }
-  const content = t(`orders.detail.events.${type}` as DictKey);
+  // R7-01: a refund closes the order with a CANCELLED event; say "cancelled and refunded" there.
+  const key = (refunded && type === "CANCELLED" ? "buyer.refund.event" : `orders.detail.events.${type}`) as DictKey;
+  // Unknown event types (written by a newer service) show a neutral label, never the raw key.
+  const content = t(key) === key ? t("buyer.refund.unknownEvent") : t(key);
   if (!note) return { content };
   if (type === "PAYMENT_CONFIRMED") return { content, detail: t(`paymentMethods.${note as PaymentMethod}` as DictKey) };
   if (type === "ORDER_PLACED" && code?.[1] === "REORDER") return { content, detail: t("orders.detail.notes.REORDER", { number: code[2] ?? "" }) };
   // B-04: proof approved with red print-check issues ("PREFLIGHT:1E/0W:ACK", written by the service).
   if (type === "PROOF_APPROVED" && code?.[1] === "PREFLIGHT" && note!.endsWith(":ACK")) return { content, detail: t("orders.detail.notes.PREFLIGHT_OVERRIDE") };
-  if (code && !internal && type !== "SHIPPED") return { content };
+  // R7-02: buyers never see free text on an event. Vendors and staff write these notes through the
+  // status API (a decline reason, a QC remark) and they can carry contact details or internal
+  // wording (managed marketplace, B-08). Only the courier's tracking number on SHIPPED is shown.
+  if (!internal && type !== "SHIPPED") return { content };
   return { content, detail: note };
 }
 
@@ -85,7 +87,7 @@ function timelineGroups(order: OrderDetail, t: TFunction, locale: Locale, intern
   const groups = new Map<string, TimelineGroup>();
   const today = formatDate(new Date(), locale);
   for (const e of [...order.productionEvents].reverse()) {
-    const text = eventText(t, e.type as ProductionEventType, e.note, internal);
+    const text = eventText(t, e.type as ProductionEventType, e.note, internal, order.status === "REFUNDED");
     if (!text) continue;
     const day = formatDate(e.createdAt, locale);
     const g = groups.get(day) ?? { title: day === today ? t("orders.detail.today") : day, events: [] };
@@ -117,7 +119,9 @@ export default async function OrderPage({ params, searchParams }: { params: Para
     return (
       <Page title={t("orders.title")} narrowWidth backAction={{ content: t("orders.detail.back"), url: `/${locale}/orders` }}>
         <Card>
-          <EmptyState heading={t("checkout.errors.NOT_FOUND")} image={<EmptyBoxIllustration />} action={<Button url={`/${locale}/orders`}>{t("orders.title")}</Button>} />
+          <EmptyState heading={t("buyer.orderNotFound.title")} image={<EmptyBoxIllustration />} action={<Button url={`/${locale}/orders`}>{t("buyer.orderNotFound.action")}</Button>}>
+          {t("buyer.orderNotFound.body")}
+        </EmptyState>
         </Card>
       </Page>
     );
@@ -133,6 +137,9 @@ export default async function OrderPage({ params, searchParams }: { params: Para
   const vendorName = pick(locale, order.vendor.nameAr, order.vendor.nameEn);
   const paidSum = order.payments.filter((p) => p.status === "PAID").reduce((s, p) => s + p.amountPiasters, 0);
   const paidMethod = order.payments.find((p) => p.status === "PAID")?.method as PaymentMethod | undefined;
+  // R7-01: money returned on a refunded order is shown, with the method it went back to.
+  const refundedSum = order.payments.filter((p) => p.status === "REFUNDED").reduce((s, p) => s + p.amountPiasters, 0);
+  const refundedMethod = order.payments.find((p) => p.status === "REFUNDED")?.method as PaymentMethod | undefined;
   const invoice = order.invoices.find((i) => i.kind === "SALE");
   const proof = order.items[0]?.proof ?? null;
   const myReview = order.reviews.find((r) => r.authorId === user.id);
@@ -140,19 +147,20 @@ export default async function OrderPage({ params, searchParams }: { params: Para
   const terminal = status === "CANCELLED" || status === "REFUNDED";
   const eventTypes = order.productionEvents.map((e) => e.type as ProductionEventType);
   const firstOf = (type: ProductionEventType) => order!.productionEvents.find((e) => e.type === type)?.createdAt;
-  const stepDates: Partial<Record<(typeof BUYER_STEPS)[number], Date | null | undefined>> = {
+  const stepDates: Partial<Record<(typeof BUYER_TRACK)[number], Date | null | undefined>> = {
     PROOF_APPROVED: firstOf("PROOF_APPROVED") ?? proof?.approvedAt,
     PAID: order.paidAt,
+    PRINTER_ACCEPTED: firstOf("VENDOR_ACCEPTED"),
     IN_PRODUCTION: firstOf("PRODUCTION_STARTED"),
     QC_PASSED: firstOf("QC_APPROVED"),
     SHIPPED: firstOf("SHIPPED"),
     DELIVERED: order.deliveredAt,
   };
-  const current = terminal ? stoppedStepIndex(eventTypes) : buyerStepIndex(status);
-  const stepAt = (s: (typeof BUYER_STEPS)[number]) => BUYER_STEPS.indexOf(s);
+  const current = terminal ? buyerTrackStopped(eventTypes) : buyerTrackIndex(status);
+  const stepAt = (s: (typeof BUYER_TRACK)[number]) => BUYER_TRACK.indexOf(s);
   const shipmentAhead = !terminal && current <= stepAt("SHIPPED");
   const qcAhead = !terminal && current <= stepAt("QC_PASSED");
-  const steps = BUYER_STEPS.map((s, i) => ({
+  const steps = BUYER_TRACK.map((s, i) => ({
     id: s,
     label: t(`orders.detail.steps.${s}` as DictKey),
     description: stepDates[s] && i < current ? formatDate(stepDates[s]!, locale) : undefined,
@@ -188,7 +196,7 @@ export default async function OrderPage({ params, searchParams }: { params: Para
       subtitle={t("orders.detail.placed", { date: formatDateTime(order.placedAt, locale) })}
       backAction={{ content: t("orders.detail.back"), url: `/${locale}/orders` }}
       primaryAction={primary}
-      secondaryActions={invoice ? [{ content: t("orders.detail.invoice"), url: `/${locale}/orders/${order.id}/invoice`, icon: <Icon source={Receipt} /> }] : []}
+      secondaryActions={invoice ? [{ content: t(sellerTaxReady() ? "orders.detail.invoice" : "buyer.receipt.view"), url: `/${locale}/orders/${order.id}/invoice`, icon: <Icon source={Receipt} /> }] : []}
     >
       <BlockStack gap="400">
         {paid && isPaidStatus(status) ? (
@@ -238,14 +246,14 @@ export default async function OrderPage({ params, searchParams }: { params: Para
                               <Text as="h3" variant="headingSm">
                                 {t(`structures.${item.structureCode}` as DictKey)}
                               </Text>
-                              <PriceTag amount={item.lineTotalPiasters} locale={locale} />
+                              <PriceTag alwaysDecimals amount={item.lineTotalPiasters} locale={locale} />
                             </InlineStack>
                             <Text as="p" variant="bodySm" tone="subdued">
                               {formatDims(dims, locale)} · {t(`materials.${item.materialCode}` as DictKey)} · {t(`finishes.${item.finishCode}` as DictKey)} ·{" "}
                               {t(`checkout.proof.sides${item.printSides === "BOTH" ? "BOTH" : "OUTSIDE"}` as DictKey)}
                             </Text>
                             <Text as="p" variant="bodySm" numeric>
-                              <bdi>{item.quantity.toLocaleString("en-US")}</bdi> × <PriceTag amount={item.unitPiasters} size="small" locale={locale} />
+                              <bdi>{item.quantity.toLocaleString("en-US")}</bdi> × <PriceTag alwaysDecimals amount={item.unitPiasters} size="small" locale={locale} />
                             </Text>
                             <InlineStack gap="300">
                               {item.proof ? (
@@ -286,7 +294,7 @@ export default async function OrderPage({ params, searchParams }: { params: Para
                           <div className={styles.line} key={i}>
                             <dt>{t((l.labelKey === "pricing.line.shipping" ? "checkout.summary.shipping" : l.labelKey) as DictKey)}</dt>
                             <dd>
-                              <PriceTag amount={l.totalPiasters} size="small" locale={locale} />
+                              <PriceTag alwaysDecimals amount={l.totalPiasters} size="small" locale={locale} tone={l.totalPiasters < 0 ? "success" : "base"} />
                             </dd>
                           </div>
                         ))
@@ -295,13 +303,13 @@ export default async function OrderPage({ params, searchParams }: { params: Para
                           <div className={styles.line}>
                             <dt>{t("pricing.line.product")}</dt>
                             <dd>
-                              <PriceTag amount={money.goodsPiasters} size="small" locale={locale} />
+                              <PriceTag alwaysDecimals amount={money.goodsPiasters} size="small" locale={locale} />
                             </dd>
                           </div>
                           <div className={styles.line}>
                             <dt>{t("checkout.summary.shipping")}</dt>
                             <dd>
-                              <PriceTag amount={money.shippingPiasters} size="small" locale={locale} />
+                              <PriceTag alwaysDecimals amount={money.shippingPiasters} size="small" locale={locale} />
                             </dd>
                           </div>
                         </>
@@ -309,23 +317,34 @@ export default async function OrderPage({ params, searchParams }: { params: Para
                       <div className={`${styles.line} ${styles.lineSub}`}>
                         <dt>{t("buyer.subtotalExVat")}</dt>
                         <dd>
-                          <PriceTag amount={money.totalPiasters - money.vatPiasters} size="small" locale={locale} />
+                          <PriceTag alwaysDecimals amount={money.totalPiasters - money.vatPiasters} size="small" locale={locale} />
                         </dd>
                       </div>
                       <div className={styles.line}>
                         <dt>{t("checkout.summary.vat")}</dt>
                         <dd>
-                          <PriceTag amount={money.vatPiasters} size="small" locale={locale} />
+                          <PriceTag alwaysDecimals amount={money.vatPiasters} size="small" locale={locale} />
                         </dd>
                       </div>
                       <div className={`${styles.line} ${styles.total}`}>
                         <dt>{t("checkout.summary.total")}</dt>
                         <dd>
-                          <PriceTag amount={money.totalPiasters} locale={locale} />
+                          <PriceTag alwaysDecimals amount={money.totalPiasters} locale={locale} />
                         </dd>
                       </div>
                     </dl>
                   </Inset>
+                  {refundedSum > 0 ? (
+                    <Inset>
+                      <div className={styles.line}>
+                        <Text as="span">
+                          {t("buyer.refund.line")}
+                          {refundedMethod ? ` · ${t(`paymentMethods.${refundedMethod}` as DictKey)}` : ""}
+                        </Text>
+                        <PriceTag alwaysDecimals amount={refundedSum} locale={locale} tone="success" />
+                      </div>
+                    </Inset>
+                  ) : null}
                   {paidSum > 0 || !terminal ? (
                   <Inset>
                     <div className={styles.line}>
@@ -333,14 +352,14 @@ export default async function OrderPage({ params, searchParams }: { params: Para
                         {paidSum > 0 ? t("orders.detail.paid") : t("orders.detail.due")}
                         {paidMethod ? ` · ${t(`paymentMethods.${paidMethod}` as DictKey)}` : ""}
                       </Text>
-                      <PriceTag amount={paidSum > 0 ? paidSum : money.totalPiasters} locale={locale} />
+                      <PriceTag alwaysDecimals amount={paidSum > 0 ? paidSum : money.totalPiasters} locale={locale} />
                     </div>
                   </Inset>
                   ) : null}
                   {invoice ? (
                     <InlineStack>
                       <Button variant="plain" url={`/${locale}/orders/${order.id}/invoice`}>
-                        {t("orders.detail.invoice")}
+                        {t(sellerTaxReady() ? "orders.detail.invoice" : "buyer.receipt.view")}
                       </Button>
                     </InlineStack>
                   ) : null}
@@ -484,20 +503,23 @@ export default async function OrderPage({ params, searchParams }: { params: Para
 
               <Card title={t("orders.detail.address")}>
                 <BlockStack gap="050">
-                  <Text as="p">{address.name}</Text>
+                  {/* R4-CR-02: what the buyer typed (often Latin in an Arabic page) is isolated per part,
+                      so "14 Abbas El Akkad St" never reverses around the Arabic labels and commas. */}
                   <Text as="p">
-                    {[address.street, address.building, address.floor && `${t("checkout.address.floor")} ${address.floor}`, address.apartment && `${t("checkout.address.apartment")} ${address.apartment}`]
-                      .filter(Boolean)
-                      .join(locale === "ar" ? "، " : ", ")}
+                    <bdi>{address.name}</bdi>
                   </Text>
                   <Text as="p">
-                    {address.city}
-                    {locale === "ar" ? "، " : ", "}
-                    {govKey ? t(`governorates.${govKey}` as DictKey) : address.governorate}
+                    <IsolatedList
+                      sep={locale === "ar" ? "، " : ", "}
+                      parts={[address.street, address.building, address.floor && `${t("checkout.address.floor")} ${address.floor}`, address.apartment && `${t("checkout.address.apartment")} ${address.apartment}`]}
+                    />
+                  </Text>
+                  <Text as="p">
+                    <IsolatedList sep={locale === "ar" ? "، " : ", "} parts={[address.city, govKey ? t(`governorates.${govKey}` as DictKey) : address.governorate]} />
                   </Text>
                   {address.landmark ? (
                     <Text as="p" tone="subdued" variant="bodySm">
-                      {address.landmark}
+                      <bdi>{address.landmark}</bdi>
                     </Text>
                   ) : null}
                   <Text as="p">

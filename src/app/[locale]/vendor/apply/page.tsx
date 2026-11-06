@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
-import { Badge, BlockStack, Button, Card, InlineStack, Layout, LayoutSection, Text } from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { BlockStack, InlineStack } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Layout, LayoutSection } from "@/components/ui/Layout";
+import { Text } from "@/components/ui/Text";
 import { ApplyForm } from "@/components/vendor/ApplyForm";
 import styles from "@/components/vendor/vendor.module.css";
 import { db } from "@/lib/db";

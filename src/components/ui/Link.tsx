@@ -6,7 +6,7 @@ import type { MouseEvent, ReactNode } from "react";
 import { useUi } from "./AppProvider";
 import { Icon } from "./Icon";
 import { cx } from "./utils";
-import styles from "./Misc.module.css";
+import styles from "./Link.module.css";
 
 export interface LinkProps {
   url: string;

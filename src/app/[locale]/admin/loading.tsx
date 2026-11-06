@@ -1,4 +1,6 @@
-import { BlockStack, Card, SkeletonBodyText, SkeletonDisplayText, SkeletonPage } from "@/components/ui";
+import { BlockStack } from "@/components/ui/Stack";
+import { Card } from "@/components/ui/Card";
+import { SkeletonBodyText, SkeletonDisplayText, SkeletonPage } from "@/components/ui/Skeleton";
 
 /** Admin loading state: page-shaped skeleton inside the frame while data streams in. */
 export default function Loading() {

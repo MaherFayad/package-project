@@ -342,8 +342,12 @@ model Quote {
   totalPiasters    Int
   currency   String   @default("EGP")
   validUntil DateTime // createdAt + 72h
-  status     String   @default("OPEN") // QuoteStatus: OPEN | ACCEPTED | EXPIRED
+  status     String   @default("OPEN") // QuoteStatus: OPEN | ACCEPTED | EXPIRED; price requests: REQUESTED -> PRICED -> ACCEPTED
   createdAt  DateTime @default(now())
+  // Added by checkout R4-B-03 (agreed with admin): a price the team sends for a price request.
+  pricedAt           DateTime? // when the team sent the price (status PRICED)
+  deliveryDays       Int?      // production + transit days promised with that price
+  vendorCostPiasters Int?      // the printer's agreed price for the whole job, ex-VAT (payouts, margin)
 
   orders Order[]
   // Added by technical audit: foreign-key / filter indexes (no FK auto-index in SQLite or Postgres).

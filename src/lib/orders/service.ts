@@ -37,10 +37,12 @@ import { rateLimit } from "@/lib/rate-limit";
 import { isReprint } from "@/components/admin/lib/metrics";
 import { generatePrintPdf } from "./pdf/print";
 import { putFile, getFile } from "./storage";
-import { assertTransition, canBuyerCancel, canViewOrder, canOpenDispute, canReview, isPaidStatus, type Actor } from "./state";
+import { assertTransition, canBuyerCancel, canViewBuyerOrder, canViewOrder, canOpenDispute, canReview, isPaidStatus, type Actor } from "./state";
 import { isQuoteValid, nextSequence, orderTotals } from "./totals";
 import { decidePaymentOutcome, storedGatewayRef } from "./payment-rules";
 import { preflightBlocks, proofPreflight, type ProofPreflight } from "./preflight";
+import { instantOrderBlock } from "./order-guard";
+import { QUOTE_PRICED } from "./quote-status";
 
 /**
  * Order service (owner: checkout). Every order mutation in the app goes through here so the
@@ -93,6 +95,13 @@ const pricingInputs = cache(async () => {
   const [data, config] = await Promise.all([loadPricingData(), loadPricingConfig()]);
   return { data, config };
 });
+
+/** Smallest run any active printer takes (R4-CR-07: the one minimum checkout states and checks). */
+export async function minOrderQuantity(): Promise<number> {
+  const { data } = await pricingInputs();
+  const mins = data.vendors.map((v) => v.minOrderQty).filter((n) => Number.isFinite(n) && n > 0);
+  return mins.length ? Math.min(...mins) : 1;
+}
 
 /** Instant quote for a design (internal: includes vendor cost; never send to the browser). */
 export async function quoteDesign(doc: DesignDoc, opts: { quantity: number; governorate?: string; vendorId?: string }): Promise<QuoteOutcome> {
@@ -230,6 +239,8 @@ export interface PlaceOrderInput {
   sample?: boolean;
   /** The buyer saw the red preflight issues and approves anyway (recorded on the proof). */
   acknowledgePreflight?: boolean;
+  /** R4-B-03: order at the price the team sent for this price request (quantity and printer come from it). */
+  quoteId?: string;
 }
 
 /**
@@ -243,6 +254,20 @@ export async function placeOrder(user: SessionUser, input: PlaceOrderInput): Pro
   // B-04: production preflight on the exact snapshot being approved (same rules as the designer).
   const preflight = proofPreflight({ ...design.doc, id: input.designId }, input.acknowledgePreflight === true);
   if (preflightBlocks(preflight)) throw new OrderError("PREFLIGHT_BLOCKED");
+  if (input.quoteId) {
+    const priced = await loadPricedQuote(input.quoteId, user, input.designId);
+    if (!priced) throw new OrderError("QUOTE_EXPIRED");
+    return createOrderFromOffer(user, {
+      doc: { ...design.doc, id: input.designId },
+      offer: priced.offer,
+      quoteId: priced.id,
+      address: input.address,
+      approval: input.approval,
+      preview: input.preview ?? null,
+      locale: input.locale,
+      preflight,
+    });
+  }
   if (input.sample) {
     const samples = await sampleOffers(design.doc, input.address.governorate);
     const offer = samples?.offers.find((o) => o.vendorId === input.vendorId);
@@ -277,8 +302,10 @@ export async function placeOrder(user: SessionUser, input: PlaceOrderInput): Pro
 async function createOrderFromOffer(
   user: SessionUser,
   p: {
+    /** Set only when the order comes from a price the team sent for a price request (R4-B-03). */
+    quoteId?: string | null;
     doc: DesignDoc;
-    offer: VendorOffer;
+    offer: OrderOffer;
     address: ShippingAddress;
     approval?: { ip: string; userAgent?: string };
     existingProofId?: string;
@@ -290,13 +317,16 @@ async function createOrderFromOffer(
     preflight?: ProofPreflight;
   },
 ): Promise<{ orderId: string; number: string }> {
-  const totals = buyerTotals(p.offer.lines, (await loadCheckoutSettings()).prepayDiscountPct, { sample: p.sample, creditPiasters: p.credit?.piasters });
+  // B-16 / R4-B-01: the last check before any order is written (checkout, sample, reorder).
+  if (instantOrderBlock(p.doc, p.offer, p.quoteId)) throw new OrderError("MANUAL_QUOTE");
+  // A price the team sent is final: no prepay discount on top (R4-B-03, agreed with admin).
+  const totals = p.quoteId ? orderTotals(p.offer.lines, 0) : buyerTotals(p.offer.lines, (await loadCheckoutSettings()).prepayDiscountPct, { sample: p.sample, creditPiasters: p.credit?.piasters });
   const product = p.offer.lines.find((l) => l.kind === "PRODUCT");
   const now = new Date();
   // Admin's quote validity (clamped to 1 to 72 h in makeConfig), the same value the designer and
   // the public pages promise (B-14). The offer's own validUntil already used it; this is the cap.
   const validityHours = (await loadPricingConfig()).quoteValidityHours;
-  const validUntil = new Date(Math.min(new Date(p.offer.validUntil).getTime(), now.getTime() + validityHours * 3_600_000));
+  const validUntil = p.quoteId ? new Date(p.offer.validUntil) : new Date(Math.min(new Date(p.offer.validUntil).getTime(), now.getTime() + validityHours * 3_600_000));
   const designId = p.doc.id!;
 
   const result = await withRetry(() =>
@@ -321,7 +351,14 @@ async function createOrderFromOffer(
         });
         proofId = proof.id;
       }
-      const q = await tx.quote.create({
+      // A sent price is used once: PRICED -> ACCEPTED in the same transaction as the order.
+      const q = p.quoteId
+        ? await (async () => {
+            const claimed = await tx.quote.updateMany({ where: { id: p.quoteId!, userId: user.id, status: QUOTE_PRICED, validUntil: { gt: now } }, data: { status: "ACCEPTED" } });
+            if (claimed.count !== 1) throw new OrderError("QUOTE_EXPIRED");
+            return { id: p.quoteId! };
+          })()
+        : await tx.quote.create({
         data: {
           userId: user.id,
           designId,
@@ -418,8 +455,70 @@ async function createOrderFromOffer(
       { userId: user.id, designId, orderId: result.orderId },
     );
   }
+  if (p.quoteId) {
+    await db.auditLog
+      .create({ data: { actorId: user.id, action: "QUOTE_ACCEPTED", entityType: "QUOTE", entityId: p.quoteId, summary: `Price accepted: order ${result.number}`, after: toJson({ orderId: result.orderId, number: result.number }) } })
+      .catch((e) => console.warn("[orders] quote audit failed", e));
+  }
   await notify({ to: { phone: user.phone }, locale: p.locale, template: "ORDER_PLACED", params: { number: result.number } });
   return { orderId: result.orderId, number: result.number };
+}
+
+// ───────────────────────── team-priced quotes (R4-B-03) ─────────────────────────
+
+/** Fields of an offer that order creation reads; instant offers and team-priced quotes both fit. */
+export type OrderOffer = Pick<VendorOffer, "vendorId" | "quantity" | "lines" | "subtotalPiasters" | "unitPiasters" | "validUntil" | "deliveryDays"> & {
+  internal: Pick<VendorOffer["internal"], "vendorCostPiasters">;
+};
+
+export interface PricedQuote {
+  id: string;
+  quantity: number;
+  validUntil: Date;
+  /** Buyer-safe offer for the checkout page (no vendor cost). */
+  publicOffer: PublicVendorOffer;
+  offer: OrderOffer;
+}
+
+/**
+ * A price the team sent for this buyer's price request on this design, still valid, from an
+ * active printer, with the printer's agreed price recorded. Null otherwise (expired, used,
+ * someone else's, another design, or not priced yet).
+ */
+export async function loadPricedQuote(quoteId: string, user: SessionUser, designId: string, now = new Date()): Promise<PricedQuote | null> {
+  if (!/^[\w-]{1,64}$/.test(quoteId)) return null;
+  const q = await db.quote.findFirst({ where: { id: quoteId, userId: user.id, designId, status: QUOTE_PRICED, validUntil: { gt: now } } });
+  if (!q || !q.vendorId || q.vendorCostPiasters == null || q.totalPiasters <= 0) return null;
+  const lines = fromJson<QuoteLine[]>(q.lines);
+  const product = Array.isArray(lines) ? lines.find((l) => l.kind === "PRODUCT") : undefined;
+  if (!product || product.quantity < 1) return null;
+  const vendor = await db.vendor.findFirst({ where: { id: q.vendorId, status: "ACTIVE" } });
+  if (!vendor) return null;
+  const totals = orderTotals(lines, 0);
+  const deliveryDays = q.deliveryDays ?? 14;
+  const base = {
+    vendorId: vendor.id,
+    quantity: product.quantity,
+    lines,
+    subtotalPiasters: totals.subtotalPiasters,
+    vatPiasters: totals.vatPiasters,
+    totalPiasters: totals.totalPiasters,
+    unitPiasters: Math.round(totals.subtotalPiasters / product.quantity),
+    leadTimeDays: deliveryDays,
+    deliveryDays,
+    standardSize: false,
+    validUntil: q.validUntil.toISOString(),
+  };
+  const publicOffer = {
+    ...base,
+    vendor: { id: vendor.id, slug: vendor.slug, name: { ar: vendor.nameAr, en: vendor.nameEn }, city: vendor.city, rating: vendor.rating, ratingCount: vendor.ratingCount, onTimePct: vendor.onTimePct, verified: vendor.verified },
+    printMethod: "OFFSET",
+    shippingPiasters: totals.shippingPiasters,
+    shipping: null,
+    score: 1,
+    badges: [],
+  } as unknown as PublicVendorOffer;
+  return { id: q.id, quantity: product.quantity, validUntil: q.validUntil, publicOffer, offer: { ...base, internal: { vendorCostPiasters: q.vendorCostPiasters } } };
 }
 
 // ───────────────────────── reading orders ─────────────────────────
@@ -446,7 +545,8 @@ export { canViewOrder };
 export async function getOrderForViewer(idOrNumber: string, user: SessionUser): Promise<OrderDetail | null> {
   if (!/^[\w-]{1,64}$/.test(idOrNumber)) return null;
   const order = await db.order.findFirst({ where: { OR: [{ id: idOrNumber }, { number: idOrNumber }] }, include: orderInclude });
-  if (!order || !canViewOrder(order, user)) return null;
+  // Buyer-side pages: never vendor staff (R5-SEC-01); they use the vendor portal job page.
+  if (!order || !canViewBuyerOrder(order, user)) return null;
   return order;
 }
 
