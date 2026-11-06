@@ -53,8 +53,9 @@ export function DielineView({
     ctx.clearRect(0, 0, c.width, c.height);
     // Show only the die shape: board outside the cut line is waste.
     ctx.save();
-    const k = c.width / model.sheet.width;
-    ctx.setTransform(k, 0, 0, k, 0, 0);
+    // per-axis scale: the raster is rounded to whole pixels on each axis (a 17 mm stick pack panel
+    // is only ~100 px wide), so one factor would drift the clip off the print (R5-3Q-G-28)
+    ctx.setTransform(c.width / model.sheet.width, 0, 0, c.height / model.sheet.height, 0, 0);
     ctx.beginPath();
     for (const p of model.panels) {
       ctx.moveTo(p.polygon[0].x, p.polygon[0].y);
@@ -85,7 +86,7 @@ export function DielineView({
 
   return (
     <figure ref={figRef} className={styles.dieline} dir="ltr" aria-label={label}>
-      <div className={styles.dielineSheet} style={{ aspectRatio: `${model.sheet.width} / ${model.sheet.height}` }}>
+      <div className={styles.dielineSheet} style={{ ["--dl-ratio" as string]: `${model.sheet.width / model.sheet.height}` }}>
         <canvas ref={canvasRef} className={styles.dielineCanvas} aria-hidden="true" />
         <div className={styles.dielineSvg} aria-hidden="true" dangerouslySetInnerHTML={{ __html: haloed }} />
       </div>

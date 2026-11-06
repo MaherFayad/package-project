@@ -125,8 +125,13 @@ export function bandSpec(
     const h = Math.hypot(y1 - y0, r1 - r0);
     return finishSpec({ kind, placement, ...rest }, "rect", w, h, w * h, bleed, safe, { overlapMm: full ? overlap : undefined, cornerRadiusMm: full ? 0 : 2 });
   }
-  const { sector, trimW, trimH, areaMm2 } = sectorFor(r0, r1, y1 - y0, phiLength, bleed);
-  return finishSpec({ kind, placement, ...rest }, "sector", trimW, trimH, areaMm2, bleed, safe, { sector });
+  // R5-3Q-F-19: a full cone wrap overlaps at the back seam like a straight wrap (it got none, so
+  // the seam opened as a white V top and bottom): the flat sector runs WRAP_OVERLAP_MM further at
+  // the big end, and the wall maps only the first `wrapAngle` of it.
+  const extra = full ? WRAP_OVERLAP_MM / Math.max(r0, r1) : 0;
+  const { sector, trimW, trimH, areaMm2 } = sectorFor(r0, r1, y1 - y0, phiLength + extra, bleed);
+  if (full) sector.wrapAngle = (sector.angle * phiLength) / (phiLength + extra);
+  return finishSpec({ kind, placement, ...rest }, "sector", trimW, trimH, areaMm2, bleed, safe, { sector, ...(full ? { overlapMm: WRAP_OVERLAP_MM } : {}) });
 }
 
 /** Shrink sleeve that conforms to the profile between y0 and y1. */
@@ -276,7 +281,8 @@ export function flatPoint(spec: LabelSpec, s: number, t: number): { x: Mm; y: Mm
   const bleed = spec.bleedMm;
   if (spec.shape === "sector" && spec.sector) {
     const g = spec.sector;
-    const a = (s - 0.5) * g.angle;
+    // a full wrap starts at the sector's start edge and ends where the overlap begins
+    const a = g.wrapAngle !== undefined ? -g.angle / 2 + s * g.wrapAngle : (s - 0.5) * g.angle;
     const R = g.apexAbove ? g.outerRadiusMm - t * g.slantMm : g.innerRadiusMm + t * g.slantMm;
     return g.apexAbove ? { x: g.apexX + R * Math.sin(a), y: g.apexY + R * Math.cos(a) } : { x: g.apexX + R * Math.sin(a), y: g.apexY - R * Math.cos(a) };
   }

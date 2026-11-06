@@ -78,6 +78,43 @@ FOUNDATION kit used as-is (cdf37a4): `Sheet`, `Display`, `Pill`, `IconPill`, `Ma
 | Desktop perf (1440x900) | ar: LCP 0.49 s, CLS 0.006 · en: LCP 0.39 s, CLS 0.000. The harness clicks "Turn in 3D", so its JS and TBT include the on-demand three.js boot; one desktop-ar INP sample (288 ms) is a click on the prompt field landing while that boot runs. First load ships no three.js |
 | Sitemap | `/ar/designer`, `/en/designer` (priority 0.9, hreflang alternates) |
 
-Kit bug found (reported to FOUNDATION): under reduced motion the kit `Marquee` keeps looping in Arabic, because `.marqueeTrack:dir(rtl)` re-sets `animation-name` over the reduced-motion `animation: none` (also visible on `/ar/dev/kit`). This page carries a page-scoped override until the kit is fixed.
+Kit bug found (reported to FOUNDATION): under reduced motion the kit `Marquee` keeps looping in Arabic, because `.marqueeTrack:dir(rtl)` re-sets `animation-name` over the reduced-motion `animation: none` (also visible on `/ar/dev/kit`). Fixed in the kit (r6-foundation 6208abd); the page-scoped override is removed.
 
 Open: the R6 turntable loops are declared in the ASSETS kit but their files were not pushed yet; the page plays the mailer loop automatically once `public/marketing/r6/loops/mailer-*.{webm,mp4}` exist (server-side check), with no code change.
+
+## 7. Spacing pass (spec section 7, r6-foundation a7b9fc2)
+
+Every section is a kit `Sheet` with a `y` size; heads are `SectionHead`, card grids `Grid`, vertical rhythm `Stack`, columns kit `Container`. The page CSS has no section padding, margin or gap values left; the remaining px are inside the editor-UI drawings and cards.
+
+| Band | Kit | Measured 1440 (ar) | Spec |
+|---|---|---|---|
+| Hero | `Sheet hero` | 72 / 100 | header height / section-y-lg |
+| Prompt head | `Sheet` md, same tone as hero | 0 / 64 (collapsed, rule 2) | 0 / 64 |
+| Violet prompt band | `Sheet violet y="lg"` inside `MotionScope` | 100 / 100 | 100 / 100 |
+| Style wall | `Sheet` md | 64 / 64 | 64 / 64 |
+| Bento (white sheet) | `Sheet white y="lg"`, overlap 48 | 100 / 100 | 100 / 100 |
+| Trust trio | `Sheet y="lg"`, overlap 48 | 100 / 100 | 100 / 100 |
+| Materials, start | `Sheet` md, same tone | 0 / 64 each (collapsed) | 0 / 64 |
+| FAQ (closing) | `Sheet y="xl"` | 128 / 128 | 128 / 128 |
+
+Container 1260 at x=90 (phone 358 at x=16); title→sub 16; head→content 40 (phone 32); bento gap 32, card grids 24, h2 56 (FAQ 64), phone h2 36, sheet radius 32 on phone. The -44px heading overlap is gone: each head CTA pill now follows the head in the DOM (laid out at the head's top end from 768px, in flow under the head on phones). `e2e/marketing-spacing.spec.ts` runs `/designer` (entry removed from `NOT_YET`): ar + en pass at 1440, 1024, 768 and 390.
+
+Side-by-side with shopify.com/sa/website/builder re-captured at 1440 and 390 (ar); the reference frames stay out of git, our frames are in `docs/screenshots/audit/r6-designer-page/` (webp).
+
+R6-AX-15 (WCAG 2.2.2): the violet band's rotating backdrop and the prompt's typing examples now pause from one kit `MotionScope` button; e2e covers it.
+
+R6-AX-19 (low, WCAG 2.4.11): under 600px the floating structure-tiles card covered the focused Turn in 3D button (measured at 320, 360 and 390 px, ar and en). It now stacks under the box below 600px; an e2e test checks that no floating mockup intersects the hero controls at 320 to 1440 px in both locales.
+
+Layout stability (integrator follow-up, low): `.lazySection` (`content-visibility: auto; contain-intrinsic-size: auto 900px`) sat on the bento, trust, materials and FAQ sheets, which all hold links and controls. Their placeholder heights were far from the real ones, so the page grew as they rendered and content and focus targets moved. Chrome does not count this as CLS (layout-shift entries stayed at 0), so it was measured as page height before and after a full scroll plus 60 Tab presses:
+
+| Width | ar before | ar after | en before | en after |
+|---|---|---|---|---|
+| 320 | 8,042 → 12,211 (+4,169) | 12,211 → 12,211 | 8,183 → 12,779 (+4,596) | 12,779 → 12,779 |
+| 390 | 7,828 → 11,640 (+3,812) | 11,640 → 11,640 | 7,995 → 12,041 (+4,046) | 12,041 → 12,041 |
+| 768 | 7,542 → 9,282 (+1,740) | 9,282 → 9,282 | 7,705 → 9,617 (+1,912) | 9,617 → 9,617 |
+| 1024 | 7,686 → 8,676 (+990) | 8,676 → 8,676 | 7,861 → 8,923 (+1,062) | 8,923 → 8,923 |
+| 1440 | 7,786 → 9,090 (+1,304) | 9,090 → 9,090 | 7,924 → 9,311 (+1,387) | 9,311 → 9,311 |
+
+Fixes: `content-visibility` removed from those sections; the lazy dieline image now takes its width/height from the SVG viewBox (it reserved 121px and grew to 249px on load). A new e2e test asserts page height stays within 2px after scrolling and keyboard focus at 320, 390, 768 and 1440 in both locales.
+
+Phone perf after (perf-pages.mjs, Slow 4G, 4x CPU): ar LCP 1.66 s, CLS 0.009, INP 112 ms; en LCP 1.48 s, CLS 0.000, INP 120 ms (before this pass: ar 1.58 s / 0.011, en 1.46 s / 0.000). LCP stays under the 2.5 s budget; rendering every section up front costs about 0.1 s of LCP in Arabic.

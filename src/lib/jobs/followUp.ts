@@ -5,6 +5,8 @@ import { track } from "@/lib/analytics/track";
 import { unsubscribeUrl } from "@/lib/auth/unsubscribe";
 import { getT, type DictKey } from "@/i18n";
 import { modelByCode } from "@/lib/library";
+import { cleanDisplayName } from "@/lib/auth/display-name";
+import { findContactDetails } from "@/components/vendor/lib/contact";
 import type { Locale } from "@/types";
 
 /**
@@ -129,10 +131,16 @@ export function selectFollowUps(
   return { send, skipped };
 }
 
-/** The design's own name, else its model or box style ("Mailer box"), never an empty «». */
+/**
+ * The design's own name, else its model or box style ("Mailer box"), never an empty «».
+ * R6-SEC-04: the name is free text, and a copy made from someone else's share link keeps the name
+ * THEY chose, so it must not become a message line or a link in a WhatsApp sent from Elba's
+ * number: control characters and line breaks are removed, and a name carrying a link, phone
+ * number, email or handle is replaced by the model name (no link injection, no phishing text).
+ */
 export function designLabel(c: Pick<FollowUpCandidate, "designName" | "modelCode" | "structureCode">, locale: Locale): string {
-  const own = c.designName.trim().slice(0, 60);
-  if (own) return own;
+  const own = cleanDisplayName(c.designName.replace(/[\r\n\t\u2028\u2029]+/g, " ")).slice(0, 60).trim();
+  if (own && findContactDetails(own).length === 0) return own;
   const model = modelByCode(c.modelCode)?.name[locale];
   if (model) return model;
   const style = getT(locale)(`structures.${c.structureCode}` as DictKey);

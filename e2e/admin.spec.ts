@@ -36,7 +36,7 @@ test.describe("admin", () => {
 
     await page.goto("/en/admin");
     await expect(page.getByRole("heading", { level: 1, name: "Overview" })).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByRole("table", { name: "Free tool funnel by step" })).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole("table", { name: "Free tool activity by step" })).toBeVisible({ timeout: 30_000 });
     const nav = page.getByRole("navigation", { name: "Admin navigation" });
     await expect(nav).toBeVisible();
 

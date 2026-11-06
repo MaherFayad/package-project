@@ -1,0 +1,782 @@
+[
+ {
+  "role": "anon",
+  "locale": "ar",
+  "path": "",
+  "status": 200,
+  "opened": 7,
+  "submitted": 1,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "anon",
+  "locale": "ar",
+  "path": "/catalog",
+  "status": 200,
+  "opened": 1,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "anon",
+  "locale": "ar",
+  "path": "/boxes",
+  "status": 200,
+  "opened": 1,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "anon",
+  "locale": "ar",
+  "path": "/bottles",
+  "status": 200,
+  "opened": 1,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "anon",
+  "locale": "ar",
+  "path": "/vendors",
+  "status": 200,
+  "opened": 1,
+  "submitted": 1,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "anon",
+  "locale": "ar",
+  "path": "/login",
+  "status": 200,
+  "opened": 1,
+  "submitted": 1,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "anon",
+  "locale": "ar",
+  "path": "/design",
+  "status": 200,
+  "opened": 1,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "anon",
+  "locale": "ar",
+  "path": "/design/mailer-box",
+  "status": 200,
+  "opened": 5,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "anon",
+  "locale": "ar",
+  "path": "/design/round-bottle",
+  "status": 200,
+  "opened": 5,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "anon",
+  "locale": "ar",
+  "path": "/s/rf_CZMTsKqxP2TQH",
+  "status": 200,
+  "opened": 1,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "anon",
+  "locale": "ar",
+  "path": "/vendor/apply",
+  "status": 200,
+  "opened": 1,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "anon",
+  "locale": "ar",
+  "path": "/legal/privacy",
+  "status": 200,
+  "opened": 1,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "anon",
+  "locale": "ar",
+  "path": "/legal/cookies",
+  "status": 200,
+  "opened": 1,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "anon",
+  "locale": "en",
+  "path": "",
+  "status": 200,
+  "opened": 7,
+  "submitted": 1,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "anon",
+  "locale": "en",
+  "path": "/catalog",
+  "status": 200,
+  "opened": 1,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "anon",
+  "locale": "en",
+  "path": "/boxes",
+  "status": 200,
+  "opened": 1,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "anon",
+  "locale": "en",
+  "path": "/bottles",
+  "status": 200,
+  "opened": 1,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "anon",
+  "locale": "en",
+  "path": "/vendors",
+  "status": 200,
+  "opened": 1,
+  "submitted": 1,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "anon",
+  "locale": "en",
+  "path": "/login",
+  "status": 200,
+  "opened": 1,
+  "submitted": 1,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "anon",
+  "locale": "en",
+  "path": "/design",
+  "status": 200,
+  "opened": 1,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "anon",
+  "locale": "en",
+  "path": "/design/mailer-box",
+  "status": 200,
+  "opened": 5,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "anon",
+  "locale": "en",
+  "path": "/design/round-bottle",
+  "status": 200,
+  "opened": 5,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "anon",
+  "locale": "en",
+  "path": "/s/rf_CZMTsKqxP2TQH",
+  "status": 200,
+  "opened": 1,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "anon",
+  "locale": "en",
+  "path": "/vendor/apply",
+  "status": 200,
+  "opened": 1,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "anon",
+  "locale": "en",
+  "path": "/legal/privacy",
+  "status": 200,
+  "opened": 1,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "anon",
+  "locale": "en",
+  "path": "/legal/cookies",
+  "status": 200,
+  "opened": 1,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "buyer",
+  "locale": "ar",
+  "path": "/account",
+  "status": 200,
+  "opened": 1,
+  "submitted": 1,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "buyer",
+  "locale": "ar",
+  "path": "/orders",
+  "status": 200,
+  "opened": 4,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "buyer",
+  "locale": "ar",
+  "path": "/orders/ELB-26001",
+  "status": 200,
+  "opened": 2,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "buyer",
+  "locale": "ar",
+  "path": "/orders/ELB-26001/invoice",
+  "status": 200,
+  "opened": 1,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "buyer",
+  "locale": "ar",
+  "path": "/checkout/cmw5a7t5g00gq7d1n3lkcl6ol",
+  "status": 200,
+  "opened": 0,
+  "submitted": 1,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "buyer",
+  "locale": "ar",
+  "path": "/design/mailer-box",
+  "status": 200,
+  "opened": 5,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "buyer",
+  "locale": "ar",
+  "path": "/design",
+  "status": 200,
+  "opened": 1,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "buyer",
+  "locale": "en",
+  "path": "/account",
+  "status": 200,
+  "opened": 2,
+  "submitted": 1,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "buyer",
+  "locale": "en",
+  "path": "/orders",
+  "status": 200,
+  "opened": 4,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "buyer",
+  "locale": "en",
+  "path": "/orders/ELB-26001",
+  "status": 200,
+  "opened": 2,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "buyer",
+  "locale": "en",
+  "path": "/orders/ELB-26001/invoice",
+  "status": 200,
+  "opened": 1,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "buyer",
+  "locale": "en",
+  "path": "/checkout/cmw5a7t5g00gq7d1n3lkcl6ol",
+  "status": 200,
+  "opened": 0,
+  "submitted": 1,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "buyer",
+  "locale": "en",
+  "path": "/design/mailer-box",
+  "status": 200,
+  "opened": 5,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "buyer",
+  "locale": "en",
+  "path": "/design",
+  "status": 200,
+  "opened": 1,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "vendor",
+  "locale": "ar",
+  "path": "/vendor",
+  "status": 200,
+  "opened": 2,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "vendor",
+  "locale": "ar",
+  "path": "/vendor/jobs",
+  "status": 200,
+  "opened": 10,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "vendor",
+  "locale": "ar",
+  "path": "/vendor/profile",
+  "status": 200,
+  "opened": 2,
+  "submitted": 1,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "vendor",
+  "locale": "ar",
+  "path": "/vendor/rate-cards",
+  "status": 200,
+  "opened": 2,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "vendor",
+  "locale": "ar",
+  "path": "/vendor/payouts",
+  "status": 200,
+  "opened": 2,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "vendor",
+  "locale": "en",
+  "path": "/vendor",
+  "status": 200,
+  "opened": 2,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "vendor",
+  "locale": "en",
+  "path": "/vendor/jobs",
+  "status": 200,
+  "opened": 10,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "vendor",
+  "locale": "en",
+  "path": "/vendor/profile",
+  "status": 200,
+  "opened": 2,
+  "submitted": 1,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "vendor",
+  "locale": "en",
+  "path": "/vendor/rate-cards",
+  "status": 200,
+  "opened": 2,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "vendor",
+  "locale": "en",
+  "path": "/vendor/payouts",
+  "status": 200,
+  "opened": 2,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "admin",
+  "locale": "ar",
+  "path": "/admin",
+  "status": 200,
+  "opened": 3,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "admin",
+  "locale": "ar",
+  "path": "/admin/orders",
+  "status": 200,
+  "opened": 9,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "admin",
+  "locale": "ar",
+  "path": "/admin/quotes",
+  "status": 200,
+  "opened": 7,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "admin",
+  "locale": "ar",
+  "path": "/admin/vendors",
+  "status": 200,
+  "opened": 3,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "admin",
+  "locale": "ar",
+  "path": "/admin/vendors/applications",
+  "status": 404,
+  "opened": 2,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "admin",
+  "locale": "ar",
+  "path": "/admin/disputes",
+  "status": 200,
+  "opened": 4,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "admin",
+  "locale": "ar",
+  "path": "/admin/moderation",
+  "status": 200,
+  "opened": 5,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "admin",
+  "locale": "ar",
+  "path": "/admin/payouts",
+  "status": 200,
+  "opened": 5,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "admin",
+  "locale": "ar",
+  "path": "/admin/pricing",
+  "status": 200,
+  "opened": 2,
+  "submitted": 1,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "admin",
+  "locale": "ar",
+  "path": "/admin/catalog",
+  "status": 200,
+  "opened": 5,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "admin",
+  "locale": "ar",
+  "path": "/admin/users",
+  "status": 200,
+  "opened": 3,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "admin",
+  "locale": "ar",
+  "path": "/admin/privacy",
+  "status": 200,
+  "opened": 2,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "admin",
+  "locale": "ar",
+  "path": "/admin/audit",
+  "status": 200,
+  "opened": 3,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "admin",
+  "locale": "ar",
+  "path": "/admin/orders/ELB-26001",
+  "status": 200,
+  "opened": 2,
+  "submitted": 1,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "admin",
+  "locale": "en",
+  "path": "/admin",
+  "status": 200,
+  "opened": 3,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "admin",
+  "locale": "en",
+  "path": "/admin/orders",
+  "status": 200,
+  "opened": 9,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "admin",
+  "locale": "en",
+  "path": "/admin/quotes",
+  "status": 200,
+  "opened": 7,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "admin",
+  "locale": "en",
+  "path": "/admin/vendors",
+  "status": 200,
+  "opened": 3,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "admin",
+  "locale": "en",
+  "path": "/admin/vendors/applications",
+  "status": 404,
+  "opened": 2,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "admin",
+  "locale": "en",
+  "path": "/admin/disputes",
+  "status": 200,
+  "opened": 4,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "admin",
+  "locale": "en",
+  "path": "/admin/moderation",
+  "status": 200,
+  "opened": 5,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "admin",
+  "locale": "en",
+  "path": "/admin/payouts",
+  "status": 200,
+  "opened": 5,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "admin",
+  "locale": "en",
+  "path": "/admin/pricing",
+  "status": 200,
+  "opened": 2,
+  "submitted": 1,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "admin",
+  "locale": "en",
+  "path": "/admin/catalog",
+  "status": 200,
+  "opened": 5,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "admin",
+  "locale": "en",
+  "path": "/admin/users",
+  "status": 200,
+  "opened": 3,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "admin",
+  "locale": "en",
+  "path": "/admin/privacy",
+  "status": 200,
+  "opened": 2,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "admin",
+  "locale": "en",
+  "path": "/admin/audit",
+  "status": 200,
+  "opened": 3,
+  "submitted": 0,
+  "raw": [],
+  "errors": []
+ },
+ {
+  "role": "admin",
+  "locale": "en",
+  "path": "/admin/orders/ELB-26001",
+  "status": 200,
+  "opened": 2,
+  "submitted": 1,
+  "raw": [],
+  "errors": []
+ }
+]

@@ -12,6 +12,27 @@ const BOTTLE_CLOSURE_STYLE: Partial<Record<string, string>> = {
   CROWN_29: "CROWN",
   NATURAL_CORK: "CORK_CAPSULE",
   SPARKLING_CORK: "SPARKLING",
+  // R6: closures that used to collapse onto the plain screw / lug cap (R5-3Q-F-06 … F-11)
+  SWING_TOP: "SWING_TOP",
+  MEASURE_CAP: "MEASURE_CUP",
+  FLIP_TOP: "FLIP_TOP_CAP",
+  CHILD_RESISTANT_CAP: "CR_CAP",
+  BAR_TOP: "BAR_TOP",
+  SCREW_CAP_TE: "TE_CAP",
+  VENTED_SCREW_CAP: "TE_CAP",
+};
+
+/**
+ * Default closure colour of a styled option (R5-3Q-F-13): crowns and ROPP shells are bare
+ * tinplate / aluminium, wine and sparkling capsules gold foil. The buyer can still recolour them.
+ */
+const BOTTLE_CLOSURE_COLOR: Partial<Record<string, string>> = {
+  ROPP_CAP: "SILVER",
+  POURER_CAP: "SILVER",
+  CROWN_26: "GOLD",
+  CROWN_29: "GOLD",
+  NATURAL_CORK: "GOLD",
+  SPARKLING_CORK: "GOLD",
 };
 
 export const models: VesselModelDef[] = BTL.DEFINITIONS.map((def) => {
@@ -23,11 +44,13 @@ export const models: VesselModelDef[] = BTL.DEFINITIONS.map((def) => {
     return { code: m, name: mat.name, core: mat.coreMaterial, ...(mat.code !== mat.coreMaterial ? { tint: mat.hex } : {}) };
   });
   const closures: VesselOption[] = def.closures.map((c) => {
-    // A wine ROPP is a BVS 30H60 (Stelvin) shell 60 mm long; the engine ROPP style is a fixed 18 mm
-    // skirt, so wine bottles keep the smooth metal LUG_LID drawn over the whole finishH (R5-3Q-F-02).
-    if (c === "ROPP_CAP" && def.finishes.includes("BVS_30H60")) return { code: c, name: BTL.BOTTLE_CLOSURES[c].name, core: "LUG_LID" };
+    // A wine ROPP is a BVS 30H60 (Stelvin) shell 60 mm long: the engine ROPP style draws its skirt
+    // over the whole finishH now (R5-3Q-F-02), so wine bottles take the style too.
     const style = BOTTLE_CLOSURE_STYLE[c];
-    return { code: c, name: BTL.BOTTLE_CLOSURES[c].name, core: BTL.BOTTLE_CLOSURES[c].coreClosure, ...(style ? { closureStyle: style } : {}) };
+    const color = BOTTLE_CLOSURE_COLOR[c];
+    // a style replaces a screw-cap core (the engine refuses a style over LUG_LID: swing top)
+    const core = style ? "SCREW_CAP" : BTL.BOTTLE_CLOSURES[c].coreClosure;
+    return { code: c, name: BTL.BOTTLE_CLOSURES[c].name, core, ...(style ? { closureStyle: style } : {}), ...(color ? { defaultColor: color } : {}) };
   });
   return {
     kind: "vessel",
@@ -54,13 +77,16 @@ export const models: VesselModelDef[] = BTL.DEFINITIONS.map((def) => {
     fillable: def.fillable,
     defaultLiquid: LIQUID_OF_CONTENT[def.defaultContent] ?? "WATER",
     pricing: "LABEL",
-    describe(dims, surfaces, presetId) {
+    // `closure` (the design's chosen closure) picks the neck finish it fits (R6-3Q-F-01)
+    describe(dims, surfaces, presetId, _container?: string, _options?: unknown, closure?: string) {
       const p = BTL.bottlePreset(def, presetId);
       const v = BTL.validateBottleDims(def, dims);
       if (!v.ok) throw new Error(`Invalid dims for ${def.code}`);
-      const profile = BTL.profileFor(def, dims, BTL.finishForDims(def, dims, p.finish));
+      const finish = BTL.finishForConfig(def, dims, p.finish, closure);
+      const profile = BTL.profileFor(def, dims, finish);
       const labels = labelSpecsFor(coreKind, dims, profile, surfaces.filter(isSurface));
-      return { profile, areas: labels.map(labelArea), envelope: BTL.bottleEnvelope(def, profile, dims) };
+      const fitted = def.closures.find((c) => c === closure && BTL.closureFits(c, finish));
+      return { profile, areas: labels.map(labelArea), envelope: BTL.bottleEnvelope(def, profile, dims, fitted) };
     },
   } satisfies VesselModelDef;
 });

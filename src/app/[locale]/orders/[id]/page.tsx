@@ -479,10 +479,13 @@ export default async function OrderPage({ params, searchParams }: { params: Para
 
               {isBuyer && openDisputeRow ? (
                 <Card title={t("orders.dispute.title")}>
-                  <InlineStack gap="200" blockAlign="center">
-                    <Text as="p">{t("orders.dispute.open", { reason: t(`orders.dispute.reasons.${openDisputeRow.reason}` as DictKey) })}</Text>
-                    <Badge tone="attention">{t(`orders.dispute.status.${openDisputeRow.status as DisputeStatus}` as DictKey)}</Badge>
-                  </InlineStack>
+                  {/* Takes focus when the report form is replaced by this card after sending (a11y R6-AX-07). */}
+                  <div id="dispute-open" tabIndex={-1}>
+                    <InlineStack gap="200" blockAlign="center">
+                      <Text as="p">{t("orders.dispute.open", { reason: t(`orders.dispute.reasons.${openDisputeRow.reason}` as DictKey) })}</Text>
+                      <Badge tone="attention">{t(`orders.dispute.status.${openDisputeRow.status as DisputeStatus}` as DictKey)}</Badge>
+                    </InlineStack>
+                  </div>
                 </Card>
               ) : null}
               {isBuyer && closedDispute ? (

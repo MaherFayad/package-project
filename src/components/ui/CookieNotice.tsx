@@ -50,16 +50,46 @@ export function CookieNotice() {
     // Keyboard focus only: scrolling between pointerdown and pointerup would move the target
     // out from under the pointer and swallow the click (a pointer user can see what they hit).
     let pointerDown = false;
+    let padded = false;
     const onPointerDown = () => (pointerDown = true);
     const onPointerUp = () => (pointerDown = false);
     const onFocusIn = (e: FocusEvent) => {
       const target = e.target;
       if (pointerDown || !(target instanceof HTMLElement) || el.contains(target)) return;
       if (!target.matches(":focus-visible")) return;
+      reveal(target);
+      // R6-AX-17: a control below the viewport is scrolled in by the browser only after focusin
+      // (at a later rendering step), to the bottom edge and ignoring scroll padding (Chrome).
+      // Check again on the first scroll that follows, and after two frames as a fallback.
+      const again = () => {
+        window.removeEventListener("scroll", again);
+        if (document.activeElement === target) reveal(target);
+      };
+      window.addEventListener("scroll", again, { passive: true });
+      window.setTimeout(() => window.removeEventListener("scroll", again), 500);
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        if (document.activeElement === target) reveal(target);
+      }));
+      // A layout shift right after focus (a `content-visibility: auto` section taking its real
+      // height) can also carry the control under the notice without any scroll.
+      window.setTimeout(() => {
+        if (document.activeElement === target) reveal(target);
+      }, 300);
+    };
+    const reveal = (target: HTMLElement) => {
       const n = el.getBoundingClientRect();
       const r = target.getBoundingClientRect();
-      const covered = r.bottom > n.top && r.top < n.bottom && r.right > n.left && r.left < n.right;
-      if (covered) window.scrollBy({ top: r.bottom - n.top + 16, behavior: "instant" as ScrollBehavior });
+      const under = (b: DOMRect) => b.bottom > n.top && b.top < n.bottom && b.right > n.left && b.left < n.right;
+      if (!under(r)) return;
+      window.scrollBy({ top: r.bottom - n.top + 16, behavior: "instant" as ScrollBehavior });
+      // R6-AX-13: at the end of the page there is nothing left to scroll (a shell footer without
+      // the `--e-cookie-h` padding, e.g. the last footer links on a phone). Add the room here.
+      const r2 = target.getBoundingClientRect();
+      if (under(r2)) {
+        padded = true;
+        root.style.paddingBlockEnd = `${el.offsetHeight + 32}px`;
+        window.scrollBy({ top: r2.bottom - n.top + 16, behavior: "instant" as ScrollBehavior });
+      }
     };
     document.addEventListener("pointerdown", onPointerDown, true);
     document.addEventListener("pointerup", onPointerUp, true);
@@ -73,6 +103,7 @@ export function CookieNotice() {
       ro?.disconnect();
       root.style.removeProperty("--e-cookie-h");
       root.style.scrollPaddingBlockEnd = "";
+      if (padded) root.style.paddingBlockEnd = "";
     };
   }, [show, leaving]);
 
@@ -88,6 +119,8 @@ export function CookieNotice() {
       <div
         ref={ref}
         className={styles.notice}
+        // Stable hook for page layouts that keep their primary CTA clear of the notice (2.4.11).
+        data-cookie-notice=""
         data-leaving={leaving ? "true" : undefined}
         role="region"
         // Kit string, not store.cookie.label: that equals the /legal/cookies page title, and two

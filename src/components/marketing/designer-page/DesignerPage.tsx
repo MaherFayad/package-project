@@ -20,6 +20,9 @@ import { designHref, structureHref } from "@/components/store/catalog";
 import { HeroImage } from "../HeroImage";
 import { Sheet } from "../kit/Sheet";
 import { Display } from "../kit/Display";
+import { Container } from "../kit/Container";
+import { SectionHead, Stack } from "../kit/SectionHead";
+import { Grid } from "../kit/Grid";
 import { Pill } from "../kit/Pill";
 import { renderDims, renderSrc, srcSetFor } from "../assets";
 import {
@@ -34,6 +37,7 @@ import { PromptBar } from "./PromptBar";
 import { Marquee } from "../kit/Marquee";
 import { Faq } from "../kit/Faq";
 import { Glow } from "../kit/Glow";
+import { MotionScope } from "../kit/MotionScope";
 import { StartCarousel } from "./StartCarousel";
 import {
   ColourMock,
@@ -202,6 +206,21 @@ export function DesignerPage(d: DesignerPageData) {
     ? fill(c.hero.priceValue, { price: d.mailerUnit500 })
     : null;
 
+  // Head CTA pill (reference: top end of the head row). After the head in the DOM so a heading
+  // never overlaps the block after it (spec section 7 rule 4); laid out at the head's end from
+  // 768px, in flow under the head on phones.
+  const headPill = (label: string, variant: "dark" | "light") => (
+    <Pill
+      href={startHref}
+      variant={variant}
+      prefetch={false}
+      className={styles.headAction}
+    >
+      {label}
+      <ArrowRight size={18} className={styles.flip} aria-hidden />
+    </Pill>
+  );
+
   return (
     <div className={styles.page}>
       <JsonLd data={faqJsonLd(faq)} />
@@ -216,167 +235,181 @@ export function DesignerPage(d: DesignerPageData) {
       >
         <div className={styles.heroGrid} aria-hidden="true" />
         <Glow color="violet" y="62%" size="70vmax" blur={60} />
-        <div className={`${styles.container} ${styles.heroInner}`}>
-          <div className={styles.frame}>
-            <span className={styles.frameTag} aria-hidden="true">
-              {c.hero.frameTag}
-            </span>
-            <h1 id="dp-hero-title" className={styles.eyebrow}>
-              {c.hero.eyebrow}
-            </h1>
-            <Display as="p" size="96" align="center">
-              {c.hero.title}
-            </Display>
-            <p className={styles.lead}>{c.hero.body}</p>
-          </div>
-          <div className={styles.heroCtas}>
-            <Pill href={startHref} variant="light" prefetch={false}>
-              {c.hero.cta}
-              <ArrowRight size={18} className={styles.flip} aria-hidden />
-            </Pill>
-            <Pill href="#dp-styles" variant="outline">
-              {c.hero.secondary}
-            </Pill>
-          </div>
-          <p className={styles.small}>{c.hero.small}</p>
-
-          <LiveBox
-            poster={
-              <HeroImage
-                src={mailer}
-                sizes="(min-width: 768px) 720px, calc(100vw - 32px)"
-                alt={c.hero.viewer}
-                width={mailerDims.width}
-                height={mailerDims.height}
-                className={styles.boxPoster}
-              />
-            }
-            pieces={
-              <>
-                <div
-                  className={`${styles.float} ${styles.floatLayers}`}
-                  style={{ ["--i" as string]: 0 }}
-                  aria-hidden="true"
+        <Container>
+          <Stack gap="head-content" className={styles.heroInner}>
+            <div className={styles.frame}>
+              <span className={styles.frameTag} aria-hidden="true">
+                {c.hero.frameTag}
+              </span>
+              <Stack gap="title-sub">
+                <h1 id="dp-hero-title" className={styles.eyebrow}>
+                  {c.hero.eyebrow}
+                </h1>
+                <Display as="p" size="96" align="center">
+                  {c.hero.title}
+                </Display>
+                <p className={styles.lead}>{c.hero.body}</p>
+              </Stack>
+            </div>
+            <Stack gap="title-sub" className={styles.heroCtas}>
+              <div className={styles.pillLine}>
+                <Pill
+                  href={startHref}
+                  variant="light"
+                  size="lg"
+                  prefetch={false}
                 >
-                  <p className={styles.floatTitle}>{c.hero.layers}</p>
-                  <ul className={styles.layerList}>
-                    {c.hero.layerItems.map((l, i) => (
-                      <li key={l} data-active={i === 0 ? "" : undefined}>
-                        {l}
-                      </li>
-                    ))}
-                    <li className={styles.layerAdd}>+ {c.hero.addLayer}</li>
-                  </ul>
-                </div>
-                <div
-                  className={`${styles.float} ${styles.floatSwatches}`}
-                  style={{ ["--i" as string]: 1 }}
-                  aria-hidden="true"
-                >
-                  <p className={styles.floatTitle}>{c.hero.swatches}</p>
-                  <div className={styles.swatchRow}>
-                    {c.ui.colours.map((col) => (
-                      <span
-                        key={col.hex}
-                        className={styles.swatch}
-                        style={{ background: col.hex }}
-                      />
-                    ))}
-                  </div>
-                </div>
-                <div
-                  className={`${styles.float} ${styles.floatTiles}`}
-                  style={{ ["--i" as string]: 2 }}
-                  aria-hidden="true"
-                >
-                  {(
-                    ["tuck-carton-iso", "rigid-box-iso", "tube-iso"] as const
-                  ).map((k) => {
-                    const a = R6.cutouts[k];
-                    return (
-                      <span key={k} className={styles.tile}>
-                        <picture>
-                          <source
-                            type="image/avif"
-                            srcSet={r6SrcSet(a, "avif")}
-                          />
-                          <img
-                            src={r6Src(a)}
-                            srcSet={r6SrcSet(a, "webp")}
-                            alt=""
-                            width={64}
-                            height={64}
-                            loading="lazy"
-                            decoding="async"
-                            fetchPriority="low"
-                          />
-                        </picture>
-                      </span>
-                    );
-                  })}
-                </div>
-                <div
-                  className={`${styles.float} ${styles.floatFinish}`}
-                  style={{ ["--i" as string]: 3 }}
-                  aria-hidden="true"
-                >
-                  <span className={styles.finishDot} />
-                  {c.hero.finish}
-                </div>
-                {price ? (
+                  {c.hero.cta}
+                  <ArrowRight size={18} className={styles.flip} aria-hidden />
+                </Pill>
+                <Pill href="#dp-styles" variant="outline" size="lg">
+                  {c.hero.secondary}
+                </Pill>
+              </div>
+              <p className={styles.small}>{c.hero.small}</p>
+            </Stack>
+            <LiveBox
+              poster={
+                <HeroImage
+                  src={mailer}
+                  sizes="(min-width: 768px) 720px, calc(100vw - 32px)"
+                  alt={c.hero.viewer}
+                  width={mailerDims.width}
+                  height={mailerDims.height}
+                  className={styles.boxPoster}
+                />
+              }
+              pieces={
+                <>
                   <div
-                    className={`${styles.float} ${styles.floatPrice}`}
-                    style={{ ["--i" as string]: 4 }}
+                    className={`${styles.float} ${styles.floatLayers}`}
+                    style={{ ["--i" as string]: 0 }}
                     aria-hidden="true"
                   >
-                    <span className={styles.floatTitle}>
-                      {c.hero.priceTitle}
-                    </span>
-                    <span className={`${styles.priceValue} ${styles.num}`}>
-                      {price}
-                    </span>
-                    <span className={styles.priceNote}>
-                      {fill(c.hero.priceNote, { rate: d.vatPct })}
-                    </span>
+                    <p className={styles.floatTitle}>{c.hero.layers}</p>
+                    <ul className={styles.layerList}>
+                      {c.hero.layerItems.map((l, i) => (
+                        <li key={l} data-active={i === 0 ? "" : undefined}>
+                          {l}
+                        </li>
+                      ))}
+                      <li className={styles.layerAdd}>+ {c.hero.addLayer}</li>
+                    </ul>
                   </div>
-                ) : null}
-              </>
-            }
-            loop={d.loop}
-            labels={{
-              viewer: c.hero.viewer,
-              roleDescription: t("viewer.roleDescription"),
-              keyboardHint: t("viewer.keyboardHint"),
-              unsupported: t("viewer.unsupported"),
-              turn: c.hero.turn,
-              turnHint: c.hero.turnHint,
-              pause: c.hero.pause,
-              play: c.hero.play,
-            }}
-          />
-          <p className={`${styles.sampleNote} ${styles.heroSample}`}>
-            {SAMPLE_LABEL[locale]}
-          </p>
-        </div>
+                  <div
+                    className={`${styles.float} ${styles.floatSwatches}`}
+                    style={{ ["--i" as string]: 1 }}
+                    aria-hidden="true"
+                  >
+                    <p className={styles.floatTitle}>{c.hero.swatches}</p>
+                    <div className={styles.swatchRow}>
+                      {c.ui.colours.map((col) => (
+                        <span
+                          key={col.hex}
+                          className={styles.swatch}
+                          style={{ background: col.hex }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div
+                    className={`${styles.float} ${styles.floatTiles}`}
+                    style={{ ["--i" as string]: 2 }}
+                    aria-hidden="true"
+                  >
+                    {(
+                      ["tuck-carton-iso", "rigid-box-iso", "tube-iso"] as const
+                    ).map((k) => {
+                      const a = R6.cutouts[k];
+                      return (
+                        <span key={k} className={styles.tile}>
+                          <picture>
+                            <source
+                              type="image/avif"
+                              srcSet={r6SrcSet(a, "avif")}
+                            />
+                            <img
+                              src={r6Src(a)}
+                              srcSet={r6SrcSet(a, "webp")}
+                              alt=""
+                              width={64}
+                              height={64}
+                              loading="lazy"
+                              decoding="async"
+                              fetchPriority="low"
+                            />
+                          </picture>
+                        </span>
+                      );
+                    })}
+                  </div>
+                  <div
+                    className={`${styles.float} ${styles.floatFinish}`}
+                    style={{ ["--i" as string]: 3 }}
+                    aria-hidden="true"
+                  >
+                    <span className={styles.finishDot} />
+                    {c.hero.finish}
+                  </div>
+                  {price ? (
+                    <div
+                      className={`${styles.float} ${styles.floatPrice}`}
+                      style={{ ["--i" as string]: 4 }}
+                      aria-hidden="true"
+                    >
+                      <span className={styles.floatTitle}>
+                        {c.hero.priceTitle}
+                      </span>
+                      <span className={`${styles.priceValue} ${styles.num}`}>
+                        {price}
+                      </span>
+                      <span className={styles.priceNote}>
+                        {fill(c.hero.priceNote, { rate: d.vatPct })}
+                      </span>
+                    </div>
+                  ) : null}
+                </>
+              }
+              loop={d.loop}
+              labels={{
+                viewer: c.hero.viewer,
+                roleDescription: t("viewer.roleDescription"),
+                keyboardHint: t("viewer.keyboardHint"),
+                unsupported: t("viewer.unsupported"),
+                turn: c.hero.turn,
+                turnHint: c.hero.turnHint,
+                pause: c.hero.pause,
+                play: c.hero.play,
+              }}
+            />
+            <p className={styles.sampleNote}>{SAMPLE_LABEL[locale]}</p>
+          </Stack>
+        </Container>
       </Sheet>
 
-      {/* ───────── 2. Prompt bar ───────── */}
+      {/* ───────── 2. Prompt bar: head, then the violet band ───────── */}
       <Sheet
         tone="navy"
         overlap={false}
-        pad="none"
-        container={false}
-        className={`${styles.canvas} ${styles.prompt}`}
+        className={styles.canvas}
         aria-labelledby="dp-prompt-title"
       >
-        <div className={`${styles.container} ${styles.promptHead}`} data-reveal>
-          <Display id="dp-prompt-title" size="64" align="center">
-            {c.prompt.title}
-          </Display>
-          <p className={styles.lead}>{c.prompt.body}</p>
-        </div>
-        <div className={styles.violet}>
-          <div className={styles.container}>
+        <SectionHead
+          id="dp-prompt-title"
+          align="center"
+          title={c.prompt.title}
+          sub={c.prompt.body}
+        />
+      </Sheet>
+      <MotionScope pauseLabel={c.prompt.pause} playLabel={c.prompt.play}>
+        <Sheet
+          tone="violet"
+          y="lg"
+          overlap={false}
+          as="div"
+          className={styles.violet}
+        >
+          <Stack gap="grid" className={styles.promptStack}>
             <PromptBar
               action={pickerHref}
               label={c.prompt.label}
@@ -398,200 +431,204 @@ export function DesignerPage(d: DesignerPageData) {
             <p className={styles.promptNote}>
               {fill(c.prompt.note, { models: d.modelCount })}
             </p>
-          </div>
-        </div>
-      </Sheet>
+          </Stack>
+        </Sheet>
+      </MotionScope>
 
       {/* ───────── 3. Style wall ───────── */}
       <Sheet
         tone="navy"
         overlap={false}
-        pad="none"
         container={false}
         id="dp-styles"
-        className={`${styles.canvas} ${styles.wall}`}
+        className={styles.canvas}
         aria-labelledby="dp-wall-title"
       >
-        <div className={`${styles.container} ${styles.wallHead}`} data-reveal>
-          <Display id="dp-wall-title" size="64" align="center">
-            {c.wall.title}
-          </Display>
-          <p className={styles.lead}>
-            {c.wall.body}{" "}
-            <Link
-              href={`${base}/catalog`}
-              style={{ color: "#fff", textUnderlineOffset: 4 }}
-              prefetch={false}
-            >
-              {c.wall.all}
-            </Link>
-          </p>
-          <p className={styles.sampleNote}>{SAMPLE_LABEL[locale]}</p>
-        </div>
-        <Marquee
-          className={styles.wallRail}
-          label={c.wall.label}
-          pauseLabel={c.wall.pause}
-          playLabel={c.wall.play}
-          duration={70}
-          gap="16px"
-          items={wall.map((s, i) => styleCard(s, i))}
-        />
-        <div className={styles.wallEnd} />
+        <Stack gap="head-content">
+          <Container>
+            <SectionHead
+              id="dp-wall-title"
+              align="center"
+              title={c.wall.title}
+              sub={
+                <>
+                  {c.wall.body}{" "}
+                  <Link
+                    href={`${base}/catalog`}
+                    className={styles.inlineLink}
+                    prefetch={false}
+                  >
+                    {c.wall.all}
+                  </Link>
+                </>
+              }
+            />
+          </Container>
+          <Marquee
+            className={styles.wallRail}
+            label={c.wall.label}
+            pauseLabel={c.wall.pause}
+            playLabel={c.wall.play}
+            duration={70}
+            gap="var(--mk-grid-gap-tight)"
+            items={wall.map((s, i) => styleCard(s, i))}
+          />
+          <Container>
+            <p className={`${styles.sampleNote} ${styles.center}`}>
+              {SAMPLE_LABEL[locale]}
+            </p>
+          </Container>
+        </Stack>
       </Sheet>
 
       {/* ───────── 4-5. Light sheet: bento ───────── */}
-      <Sheet
-        tone="white"
-        as="div"
-        container={false}
-        className={`${styles.sheet} ${styles.lazySection}`}
-      >
-        <div className={styles.container}>
-          <section
-            className={styles.bentoGroup}
-            aria-labelledby="dp-make-title"
-          >
-            <div className={styles.bentoHead} data-reveal>
-              <Display id="dp-make-title" size="56">
-                {c.make.title}
-              </Display>
-              <Pill href={startHref} variant="dark" prefetch={false}>
-                {c.make.cta}
-                <ArrowRight size={18} className={styles.flip} aria-hidden />
-              </Pill>
-              <p className={styles.lead}>{c.make.body}</p>
-            </div>
-            <ul
-              className={`${styles.bento} ${styles.bentoWide}`}
-              style={{ listStyle: "none", margin: 0, padding: 0 }}
+      <Sheet tone="white" y="lg" as="div" className={`${styles.sheet}`}>
+        <Stack gap="head-content-lg">
+          <section aria-labelledby="dp-make-title">
+            <SectionHead
+              id="dp-make-title"
+              title={c.make.title}
+              sub={c.make.body}
+              className={styles.headRow}
             >
-              {c.make.cards.map((card, i) => (
-                <li
-                  key={card.key}
-                  className={styles.card}
-                  data-reveal
-                  style={{ ["--m-i" as string]: i % 2 }}
+              <Stack gap="head-content">
+                {headPill(c.make.cta, "dark")}
+                <Grid
+                  as="ul"
+                  cols={2}
+                  colsMd={2}
+                  colsSm={1}
+                  gap="bento"
+                  className={styles.plainList}
                 >
-                  {card.key === "artwork" ? (
-                    <CropMock
-                      render={renderSrc("ECMA_RTE")}
-                      labels={{
-                        upload: c.ui.upload,
-                        crop: c.ui.crop,
-                        rotate: c.ui.rotate,
-                        fit: c.ui.fit,
-                      }}
-                    />
-                  ) : card.key === "colours" ? (
-                    <ColourMock
-                      title={c.hero.swatches}
-                      colours={c.ui.colours}
-                      render={renderSrc("FEFCO_0201").replace(
-                        /\.webp$/,
-                        ".400w.webp",
+                  {c.make.cards.map((card, i) => (
+                    <li
+                      key={card.key}
+                      className={styles.card}
+                      data-reveal
+                      style={{ ["--m-i" as string]: i % 2 }}
+                    >
+                      {card.key === "artwork" ? (
+                        <CropMock
+                          render={renderSrc("ECMA_RTE")}
+                          labels={{
+                            upload: c.ui.upload,
+                            crop: c.ui.crop,
+                            rotate: c.ui.rotate,
+                            fit: c.ui.fit,
+                          }}
+                        />
+                      ) : card.key === "colours" ? (
+                        <ColourMock
+                          title={c.hero.swatches}
+                          colours={c.ui.colours}
+                          render={renderSrc("FEFCO_0201").replace(
+                            /\.webp$/,
+                            ".400w.webp",
+                          )}
+                        />
+                      ) : card.key === "text" ? (
+                        <TextMock
+                          ar={c.ui.textAr}
+                          en={c.ui.textEn}
+                          tool={c.ui.textTool}
+                        />
+                      ) : (
+                        <DielineMock svg={d.dielineSvg} legend={c.ui.legend} />
                       )}
-                    />
-                  ) : card.key === "text" ? (
-                    <TextMock
-                      ar={c.ui.textAr}
-                      en={c.ui.textEn}
-                      tool={c.ui.textTool}
-                    />
-                  ) : (
-                    <DielineMock svg={d.dielineSvg} legend={c.ui.legend} />
-                  )}
-                  <div className={styles.cardBody}>
-                    <h3 className={styles.cardTitle}>{card.title}</h3>
-                    <p className={styles.cardText}>{card.body}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
+                      <div className={styles.cardBody}>
+                        <h3 className={styles.cardTitle}>{card.title}</h3>
+                        <p className={styles.cardText}>{card.body}</p>
+                      </div>
+                    </li>
+                  ))}
+                </Grid>
+              </Stack>
+            </SectionHead>
           </section>
-
-          <section
-            className={styles.bentoGroup}
-            aria-labelledby="dp-share-title"
-          >
-            <div className={styles.bentoHead} data-reveal>
-              <Display id="dp-share-title" size="56">
-                {c.share.title}
-              </Display>
-              <Pill href={startHref} variant="dark" prefetch={false}>
-                {c.share.cta}
-                <ArrowRight size={18} className={styles.flip} aria-hidden />
-              </Pill>
-              <p className={styles.lead}>{c.share.body}</p>
-            </div>
-            <ul
-              className={styles.bento}
-              style={{ listStyle: "none", margin: 0, padding: 0 }}
+          <section aria-labelledby="dp-share-title">
+            <SectionHead
+              id="dp-share-title"
+              title={c.share.title}
+              sub={c.share.body}
+              className={styles.headRow}
             >
-              {c.share.cards.map((card, i) => (
-                <li
-                  key={card.key}
-                  className={styles.card}
-                  data-reveal
-                  style={{ ["--m-i" as string]: i % 2 }}
+              <Stack gap="head-content">
+                {headPill(c.share.cta, "dark")}
+                <Grid
+                  as="ul"
+                  cols={2}
+                  colsMd={2}
+                  colsSm={1}
+                  gap="bento"
+                  className={styles.plainList}
                 >
-                  {card.key === "link" ? (
-                    <LinkMock host={d.host} button={c.ui.shareButton} />
-                  ) : card.key === "export" ? (
-                    <ProofMock
-                      rows={[
-                        [c.ui.proofRows[0][0], c.ui.proofRows[0][1]],
-                        [
-                          c.ui.legend.bleed,
-                          `${d.bleedMm} ${locale === "ar" ? "مم" : "mm"}`,
-                        ],
-                        [
-                          c.ui.legend.safe,
-                          `${d.safeMm} ${locale === "ar" ? "مم" : "mm"}`,
-                        ],
-                      ]}
-                      ok={c.ui.proofOk}
-                    />
-                  ) : card.key === "views" ? (
-                    <MockupMock
-                      render={renderSrc("RIGID_BOX").replace(
-                        /\.webp$/,
-                        ".400w.webp",
+                  {c.share.cards.map((card, i) => (
+                    <li
+                      key={card.key}
+                      className={styles.card}
+                      data-reveal
+                      style={{ ["--m-i" as string]: i % 2 }}
+                    >
+                      {card.key === "link" ? (
+                        <LinkMock host={d.host} button={c.ui.shareButton} />
+                      ) : card.key === "export" ? (
+                        <ProofMock
+                          rows={[
+                            [c.ui.proofRows[0][0], c.ui.proofRows[0][1]],
+                            [
+                              c.ui.legend.bleed,
+                              `${d.bleedMm} ${locale === "ar" ? "مم" : "mm"}`,
+                            ],
+                            [
+                              c.ui.legend.safe,
+                              `${d.safeMm} ${locale === "ar" ? "مم" : "mm"}`,
+                            ],
+                          ]}
+                          ok={c.ui.proofOk}
+                        />
+                      ) : card.key === "views" ? (
+                        <MockupMock
+                          render={renderSrc("RIGID_BOX").replace(
+                            /\.webp$/,
+                            ".400w.webp",
+                          )}
+                          label={c.ui.download}
+                        />
+                      ) : (
+                        <OrderMock
+                          title={c.ui.orderTitle}
+                          qty={c.ui.qty}
+                          price={price ?? ""}
+                        />
                       )}
-                      label={c.ui.download}
-                    />
-                  ) : (
-                    <OrderMock
-                      title={c.ui.orderTitle}
-                      qty={c.ui.qty}
-                      price={price ?? ""}
-                    />
-                  )}
-                  <div className={styles.cardBody}>
-                    <h3 className={styles.cardTitle}>{card.title}</h3>
-                    <p className={styles.cardText}>{card.body}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
+                      <div className={styles.cardBody}>
+                        <h3 className={styles.cardTitle}>{card.title}</h3>
+                        <p className={styles.cardText}>{card.body}</p>
+                      </div>
+                    </li>
+                  ))}
+                </Grid>
+              </Stack>
+            </SectionHead>
           </section>
-        </div>
+        </Stack>
       </Sheet>
 
       {/* ───────── 6. Trust trio ───────── */}
       <Sheet
         tone="navy"
-        container={false}
-        className={`${styles.canvas} ${styles.trust} ${styles.lazySection}`}
+        y="lg"
+        className={`${styles.canvas}`}
         aria-labelledby="dp-trust-title"
       >
-        <div className={styles.container}>
-          <Display id="dp-trust-title" size="56">
-            {c.trust.title}
-          </Display>
-          <ul
-            className={styles.trustGrid}
-            style={{ listStyle: "none", padding: 0 }}
+        <SectionHead id="dp-trust-title" title={c.trust.title}>
+          <Grid
+            as="ul"
+            cols={3}
+            colsMd={1}
+            colsSm={1}
+            className={styles.plainList}
           >
             {c.trust.cards.map((card, i) => (
               <li
@@ -664,8 +701,8 @@ export function DesignerPage(d: DesignerPageData) {
                 </div>
               </li>
             ))}
-          </ul>
-        </div>
+          </Grid>
+        </SectionHead>
       </Sheet>
 
       {/* ───────── 7. Materials and finishes wall ───────── */}
@@ -673,88 +710,94 @@ export function DesignerPage(d: DesignerPageData) {
         tone="navy"
         overlap={false}
         container={false}
-        className={`${styles.canvas} ${styles.materials} ${styles.lazySection}`}
+        className={`${styles.canvas}`}
         aria-labelledby="dp-mat-title"
       >
-        <div className={styles.container}>
-          <Display id="dp-mat-title" size="56">
-            {fill(c.materials.title, { count: matCount })}
-          </Display>
-        </div>
-        <Marquee
-          className={styles.matRail}
-          label={c.materials.label}
-          pauseLabel={c.materials.pause}
-          playLabel={c.materials.play}
-          duration={50}
-          gap="12px"
-          items={matTiles}
-        />
-        <div className={styles.container}>
-          <p className={styles.matLead}>
-            {c.materials.body}{" "}
-            <Link href={`${base}/catalog`} prefetch={false}>
-              {c.materials.linkLabel}
-            </Link>
-          </p>
-          <ul className={styles.matGroups}>
-            {c.materials.groups.map((g) => (
-              <li key={g.key}>
-                <Link
-                  href={matGroupHref[g.key] ?? `${base}/catalog`}
-                  prefetch={false}
-                >
-                  {g.title}
+        <Stack gap="head-content">
+          <Container>
+            <SectionHead
+              id="dp-mat-title"
+              title={fill(c.materials.title, { count: matCount })}
+            />
+          </Container>
+          <Marquee
+            className={styles.matRail}
+            label={c.materials.label}
+            pauseLabel={c.materials.pause}
+            playLabel={c.materials.play}
+            duration={50}
+            gap="var(--mk-grid-gap-tight)"
+            items={matTiles}
+          />
+          <Container>
+            <Stack gap="head-content">
+              <p className={styles.matLead}>
+                {c.materials.body}{" "}
+                <Link href={`${base}/catalog`} prefetch={false}>
+                  {c.materials.linkLabel}
                 </Link>
-                <p>{g.body}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
+              </p>
+              <Grid
+                as="ul"
+                cols={3}
+                colsMd={2}
+                colsSm={1}
+                className={`${styles.plainList} ${styles.matGroups}`}
+              >
+                {c.materials.groups.map((g) => (
+                  <li key={g.key}>
+                    <Link
+                      href={matGroupHref[g.key] ?? `${base}/catalog`}
+                      prefetch={false}
+                    >
+                      {g.title}
+                    </Link>
+                    <p>{g.body}</p>
+                  </li>
+                ))}
+              </Grid>
+            </Stack>
+          </Container>
+        </Stack>
       </Sheet>
 
       {/* ───────── 8. Start carousel ───────── */}
       <Sheet
         tone="navy"
         overlap={false}
-        container={false}
-        className={`${styles.canvas} ${styles.start}`}
+        className={styles.canvas}
         aria-labelledby="dp-start-title"
       >
-        <div className={styles.container}>
-          <div className={styles.startHead} data-reveal>
-            <Display id="dp-start-title" size="56">
-              {c.start.title}
-            </Display>
-            <Pill href={startHref} variant="light" prefetch={false}>
-              {c.start.cta}
-            </Pill>
-            <p className={styles.small}>{c.start.body}</p>
-          </div>
-          <StartCarousel
-            steps={c.start.steps}
-            label={c.start.label}
-            prev={c.start.prev}
-            next={c.start.next}
-            locale={locale}
-          />
-        </div>
+        <SectionHead
+          id="dp-start-title"
+          title={c.start.title}
+          sub={c.start.body}
+          className={styles.headRow}
+        >
+          <Stack gap="head-content">
+            {headPill(c.start.cta, "light")}
+            <StartCarousel
+              steps={c.start.steps}
+              label={c.start.label}
+              prev={c.start.prev}
+              next={c.start.next}
+              locale={locale}
+            />
+          </Stack>
+        </SectionHead>
       </Sheet>
 
-      {/* ───────── 9. FAQ ───────── */}
+      {/* ───────── 9. FAQ (closing band) ───────── */}
       <Sheet
         tone="dark"
+        y="xl"
         overlap={false}
-        container={false}
-        className={`${styles.faq} ${styles.lazySection}`}
+        className={`${styles.faq}`}
         aria-labelledby="dp-faq-title"
       >
-        <div className={styles.container}>
-          <Display id="dp-faq-title" size="64">
-            {c.faq.title}
-          </Display>
+        <SectionHead id="dp-faq-title" size="64" title={c.faq.title}>
           <Faq className={styles.faqList} items={faq} />
-        </div>
+        </SectionHead>
       </Sheet>
     </div>
   );

@@ -78,7 +78,7 @@ export const JARS: BottleDefinition[] = [
     finishes: ["TO53", "TO63", "TO66", "TO70"],
     closures: ["LUG_LID"],
     defaultClosure: "LUG_LID",
-    limits: { D: { min: 55, max: 100 }, H: { min: 60, max: 150 } },
+    limits: { D: { min: 58, max: 100 }, H: { min: 60, max: 150 } }, // D >= 58: the TO 53 lid (Ø57.2 drawn) may not overhang the jar (R6-3Q-F-05)
     aspect: { min: 1.0, max: 1.9 },
     presets: [
       { id: "jam-212", name: { ar: "212 مل (280 جم)", en: "212 ml (280 g)" }, capacityMl: 212, dims: { D: 66, H: 85 }, finish: "TO63", egypt: true, source: "Typ. 212 ml jam jar, TO 63 (approx. Ø66 x 85 mm)" },
@@ -107,7 +107,7 @@ export const JARS: BottleDefinition[] = [
     finishes: ["MASON_70", "MASON_86"],
     closures: ["MASON_LID_BAND"],
     defaultClosure: "MASON_LID_BAND",
-    limits: { D: { min: 70, max: 110 }, H: { min: 80, max: 200 } }, // D >= 70: the 70 mm mason band may not overhang the jar (R5-3Q-F-16)
+    limits: { D: { min: 72, max: 110 }, H: { min: 80, max: 200 } }, // D >= 72 (the half-pint): the 70 mm mason band may not overhang the jar (R5-3Q-F-16, R6-3Q-F-05)
     aspect: { min: 1.1, max: 2.1 },
     presets: [
       { id: "mason-half-pint", name: { ar: "240 مل", en: "Half pint (240 ml)" }, capacityMl: 240, dims: { D: 72, H: 96 }, finish: "MASON_70", egypt: false, source: "Typ. half-pint regular mouth (approx. Ø72 x 96 mm)" },
@@ -136,7 +136,7 @@ export const JARS: BottleDefinition[] = [
     finishes: ["F70_400", "F89_400"],
     closures: ["SCREW_CAP", "SCREW_CAP_TE"],
     defaultClosure: "SCREW_CAP",
-    limits: { D: { min: 70, max: 120 }, H: { min: 70, max: 190 } }, // D >= 70: a 70-400 cap may not overhang the jar (R5-3Q-F-16)
+    limits: { D: { min: 74, max: 120 }, H: { min: 70, max: 190 } }, // D >= 74: the 70-400 cap (Ø72.6) may not overhang the jar (R5-3Q-F-16, R6-3Q-F-05)
     aspect: { min: 0.9, max: 1.8 },
     presets: [
       { id: "nut-340g", name: { ar: "340 جم", en: "340 g" }, capacityMl: 310, dims: { D: 76, H: 88 }, finish: "F70_400", egypt: true, source: "Typ. 12 oz peanut butter PET, 70-400 (approx. Ø76 x 88 mm; 1.1 g/ml)" },
@@ -165,7 +165,7 @@ export const JARS: BottleDefinition[] = [
     finishes: ["TO82"],
     closures: ["LUG_LID"],
     defaultClosure: "LUG_LID",
-    limits: { D: { min: 85, max: 160 }, H: { min: 110, max: 280 } },
+    limits: { D: { min: 87, max: 160 }, H: { min: 110, max: 280 } }, // D >= 87: the TO 82 lid (Ø86.2 drawn) may not overhang the jar (R6-3Q-F-05)
     aspect: { min: 1.2, max: 2.2 },
     presets: [
       { id: "pickle-720", name: { ar: "720 مل (750 جم)", en: "720 ml (750 g)" }, capacityMl: 720, dims: { D: 92, H: 150 }, finish: "TO82", egypt: true, source: "Typ. 720 ml pickle jar, TO 82 (approx. Ø92 x 150 mm)" },

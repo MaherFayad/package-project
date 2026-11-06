@@ -1,6 +1,6 @@
 import type { Mm } from "@/types";
 import { bottleBrimfulMl, buildBottleProfile, fillLevelFor } from "./builder";
-import { BOTTLE_CLOSURES } from "./closures";
+import { BOTTLE_CLOSURES, closureFits } from "./closures";
 import { finishById } from "./finishes";
 import { bottleLabelSpecs } from "./labels";
 import { CONTENTS } from "./materials";
@@ -40,10 +40,29 @@ export function profileFor(def: BottleDefinition, dims: VesselDims, finish: Bott
 export function finishForDims(def: BottleDefinition, dims: VesselDims, finishId: string): BottleFinish {
   const f = finishById(finishId);
   if (f.kind === "rim") return f;
-  const half = Math.min(dims.D, dims.G ?? dims.D) / 2;
-  if (f.outerDiameterMm / 2 <= half) return f;
+  const width = (d: VesselDims) => Math.min(d.D, d.G ?? d.D);
+  // the widest neck / body ratio the model's own presets ship (+3 %; a hex jar's D is across flats,
+  // so its 45 ml preset carries a TO 43 on a 42 mm body):
+  // a 43 mm lug on a 50 mm juice bottle (0.86) read as a jar; its presets stay at or under 0.67
+  // and a narrower bottle takes the narrower finish (R6-3Q-F-03)
+  const ratio = Math.max(...def.presets.map((p) => finishById(p.finish).outerDiameterMm / width(p.dims))) + 0.03;
+  const max = width(dims) * ratio;
+  if (f.outerDiameterMm <= max) return f;
   const same = def.finishes.map(finishById).filter((x) => x.kind === f.kind).sort((a, b) => b.outerDiameterMm - a.outerDiameterMm);
-  return same.find((x) => x.outerDiameterMm / 2 <= half) ?? same[same.length - 1] ?? f;
+  return same.find((x) => x.outerDiameterMm <= max) ?? same[same.length - 1] ?? f;
+}
+
+/**
+ * Finish for a configuration: the preset's (sized by `finishForDims`), unless the chosen closure
+ * does not fit it; then the model's first finish the closure fits (R6-3Q-F-01, reopens R5-3Q-F-12).
+ * A crown on a PP 28 thread or a swing top on a ROPP finish drew the closure over the wrong neck.
+ */
+export function finishForConfig(def: BottleDefinition, dims: VesselDims, presetFinish: string, closure?: string): BottleFinish {
+  const f = finishForDims(def, dims, presetFinish);
+  const c = closure as BottleClosureCode | undefined;
+  if (!c || !def.closures.includes(c) || closureFits(c, f)) return f;
+  const id = def.finishes.find((x) => closureFits(c, finishById(x)));
+  return id ? finishForDims(def, dims, id) : f;
 }
 
 /** Outer envelope incl. closure and handle (what a carton or shipper must hold), mm. */
@@ -95,7 +114,7 @@ export function describeBottle(cfg: BottleConfig): BottleDescription {
   const dims = cfg.dims ?? preset.dims;
   const v = validateBottleDims(def, dims);
   if (!v.ok) throw new Error(`Invalid dims for ${def.code}: ${v.errors.join("; ")}`);
-  const finish = cfg.finish && def.finishes.includes(cfg.finish) ? finishById(cfg.finish) : finishForDims(def, dims, preset.finish);
+  const finish = cfg.finish && def.finishes.includes(cfg.finish) ? finishById(cfg.finish) : finishForConfig(def, dims, preset.finish, cfg.closure);
   const closure = cfg.closure && def.closures.includes(cfg.closure) && BOTTLE_CLOSURES[cfg.closure].fits.includes(finish.kind) ? cfg.closure : (def.closures.find((c) => BOTTLE_CLOSURES[c].fits.includes(finish.kind)) ?? def.defaultClosure);
   const profile = profileFor(def, dims, finish);
   const surfaces = (cfg.surfaces ?? def.defaultSurfaces).filter((s) => def.surfaces.includes(s));

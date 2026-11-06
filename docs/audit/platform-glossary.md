@@ -84,3 +84,9 @@ One term per concept across buyer, vendor and admin. MSA that reads naturally in
 | Hashed (tokens, codes) | في صورة قيم تجزئة | مشفرة (that is encrypted) |
 | Vendor's public page | الصفحة العامة / ملف المطبعة | الملف العام |
 | Food-safe certificate | شهادة سلامة الغذاء | شهادة ملامسة الغذاء |
+| Bleed | هامش النزف | هامش القص، هامش القص الزائد |
+| 3D designer (the tool) | المصمم (ثلاثي الأبعاد) | المحرر |
+| Vetted (printer) | معتمدة | موثقة، موثوقة |
+| Mailer box (FEFCO 0427) | علبة بريدية | علبة شحن، صندوق شحن |
+| Sign in (en) | Sign in | Log in |
+| Receipt with VAT shown | إيصال يوضح الضريبة | إيصال ضريبي، فاتورة |

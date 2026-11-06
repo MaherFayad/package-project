@@ -7,6 +7,7 @@ import { bboxOf, clamp, pt, rectPolygon } from "../../geometry";
 import type { Rect } from "../../types";
 import {
   crashLockBottom,
+  cutWindowInBand,
   glueWidth,
   hangHoleHeight,
   hangHolePolygon,
@@ -118,14 +119,22 @@ export function sealEndCarton(tear: boolean) {
     const w = tube(b, Lp, Wp, Hp, glueWidth(dims.W, o.glueFlapMm));
     sealEnd(b, w, "top", t, Lp, Wp);
     sealEnd(b, w, "bottom", t, Lp, Wp);
-    if (f.window) cutWindow(b, f.window.face === "back" ? "back" : "front", f.window);
-    if (tear || f.tearStrip) {
-      const fromTop = clamp(dims.H * 0.15, 10, 30);
+    const torn = tear || !!f.tearStrip;
+    const fromTop = clamp(dims.H * 0.15, 10, 30);
+    const bandY = w.front.y + Math.min(fromTop, Hp * 0.6);
+    if (f.window) {
+      const id = f.window.face === "back" ? "back" : "front";
+      // With a tear strip the window stays below the perforated band (a short carton centred
+      // the hole across both perforations, so the strip could not tear and the film was
+      // glued over it); it is dropped if the rest of the panel cannot hold one.
+      if (torn) cutWindowInBand(b, id, f.window, bandY + 6, w.front.y + Hp);
+      else cutWindow(b, id, f.window);
+    }
+    if (torn) {
       tearBand(b, ["front", "right", "back", "left"], fromTop, 6);
       // The strip also runs over the glue flap so it tears through the seam.
       const g = b.byId("glue").bbox;
-      const y = w.front.y + Math.min(fromTop, Hp * 0.6);
-      for (const yy of [y, y + 6]) b.perfLines.push({ a: { x: g.x + 1, y: yy }, b: { x: g.x + g.width, y: yy } });
+      for (const yy of [bandY, bandY + 6]) b.perfLines.push({ a: { x: g.x + 1, y: yy }, b: { x: g.x + g.width, y: yy } });
     }
     return { builder: b, closedRotation: IDENTITY, inner: { ...dims } };
   };

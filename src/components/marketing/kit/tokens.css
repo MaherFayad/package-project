@@ -12,6 +12,8 @@
   --mk-bg: #02090a;                 /* page canvas (measured rgb(2,9,10)) */
   --mk-bg-2: #0a1314;               /* raised surface on dark (cards, menu panel) */
   --mk-bg-3: #141d1e;               /* hover on dark */
+  --mk-bg-raised: #141a1a;          /* raised dark band, tone="dark-2" (reference pricing rgb(20,26,26));
+                                       white 17.4:1, 70% white 8.8:1, #a1a1aa 6.9:1 on it */
   --mk-band-green: #041e18;         /* rgb(4,30,24) */
   --mk-band-green-deep: #000805;
   --mk-band-navy: #000a1e;          /* rgb(0,10,30) */
@@ -86,7 +88,7 @@
   /* Inter first in both locales: it has no Arabic glyphs, so Arabic falls through to Noto, while
      digits and Latin words reuse Inter (preloaded) instead of fetching Noto's Latin subset. */
   --mk-font: var(--font-inter), var(--font-noto-arabic), "Noto Sans Arabic", -apple-system, "Segoe UI", Tahoma, sans-serif;
-  --mk-fs-hero: clamp(3.5rem, 1rem + 10.4vw, 11.25rem);  /* start-page giant 180 */
+  --mk-fs-hero: clamp(3.5rem, 0.621rem + 11.81vw, 11.25rem);  /* start-page giant: 56px at 390, 180px from 1440 (spec section 7) */
   /* Section 7 type steps: phone / tablet / desktop (set per breakpoint below). */
   --mk-fs-96: 3.5rem;                 /* h1 hero: 56 / 72 / 96 */
   --mk-fs-64: 2.25rem;                /* h2 page-closing: 36 / 48 / 64 */

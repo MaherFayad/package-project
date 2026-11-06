@@ -257,7 +257,8 @@ export function printFlatPoint(spec: CataloguePrintSurface, s: number, t: number
   const bleed = spec.bleedMm;
   if (spec.shape === "sector" && spec.sector) {
     const g = spec.sector;
-    const a = (s - 0.5) * g.angle;
+    // full cone wraps carry a glued overlap past `wrapAngle` (R5-3Q-F-19; same as the core flatPoint)
+    const a = g.wrapAngle !== undefined ? -g.angle / 2 + s * g.wrapAngle : (s - 0.5) * g.angle;
     const R = g.apexAbove ? g.outerRadiusMm - t * g.slantMm : g.innerRadiusMm + t * g.slantMm;
     return g.apexAbove ? { x: g.apexX + R * Math.sin(a), y: g.apexY + R * Math.cos(a) } : { x: g.apexX + R * Math.sin(a), y: g.apexY - R * Math.cos(a) };
   }

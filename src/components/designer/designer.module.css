@@ -578,10 +578,20 @@
   padding: var(--p-space-300);
   overflow: auto;
 }
+/* R6 (R5-3Q-A-10 / G-28): the sheet box keeps the die's exact aspect ratio at every viewport.
+   It used to be width 100% + max-height 100%: on a tall sheet the height cap bound, the box lost
+   its ratio, the canvas stretched sideways to fill it while the SVG letterboxed, and print and die
+   no longer registered. Now the width is the smaller of the room across and the room down × the
+   ratio (container units of .dieline; 4rem keeps the legend), and both layers letterbox the same
+   way inside the box as a second guard. */
+.dieline {
+  container-type: size;
+}
 .dielineSheet {
   position: relative;
-  inline-size: 100%;
-  max-block-size: 100%;
+  flex: none;
+  inline-size: min(100%, calc((100cqb - 2 * var(--p-space-300) - 4rem) * var(--dl-ratio, 1)));
+  aspect-ratio: var(--dl-ratio, 1);
   margin: auto;
   background: var(--p-color-bg-surface);
 }
@@ -591,6 +601,9 @@
   inset: 0;
   inline-size: 100%;
   block-size: 100%;
+}
+.dielineCanvas {
+  object-fit: contain;
 }
 .dielineSvg svg {
   display: block;
@@ -845,6 +858,19 @@
   .editor[data-sheet="closed"][data-banner="true"] { grid-template-rows: auto auto auto minmax(12rem, 1fr) auto; }
   /* Sheet pulled up: leave room for the banner too (R4-08's 21rem + ~9rem banner). */
   .editor[data-sheet="open"][data-banner="true"] .panel { block-size: min(var(--sheet-open), calc(100dvh - var(--p-top-bar-height) - 30rem)); }
+}
+/* R13-01: short landscape (phones turned sideways) with a banner: the banner goes to the panel
+   column, above the panel, so the stage keeps its height (the canvas was 19 px at 844 × 390). */
+@media (max-height: 500px) and (min-width: 640px) and (max-width: 999px) {
+  .editor[data-banner="true"] {
+    grid-template-areas:
+      "toolbar toolbar"
+      "price banner"
+      "stage banner"
+      "stage panel";
+    grid-template-rows: auto auto auto minmax(0, 1fr);
+  }
+  .editor[data-banner="true"] .banner { align-self: start; }
 }
 /* R12-01: landscape screens from 768 to 999 px wide (small tablets, split views) take the side
    panel too: with the phone sheet their 3D view was ~200 px tall. */

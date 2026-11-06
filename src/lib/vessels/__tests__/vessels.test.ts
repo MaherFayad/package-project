@@ -129,8 +129,13 @@ describe("label specs", () => {
     expect(spec.shape).toBe("sector");
     const g = spec.sector!;
     expect(g.outerRadiusMm - g.innerRadiusMm).toBeCloseTo(Math.hypot(h, r0 - r1), 9);
-    // exact frustum lateral area
-    expect(spec.trimAreaM2 * 1e6).toBeCloseTo(Math.PI * (r0 + r1) * Math.hypot(h, r0 - r1), 3);
+    // exact frustum lateral area, plus the glued overlap a full wrap runs past the seam
+    // (WRAP_OVERLAP_MM at the big end, R5-3Q-F-19)
+    const k = (2 * Math.PI + WRAP_OVERLAP_MM / Math.max(r0, r1)) / (2 * Math.PI);
+    expect(spec.trimAreaM2 * 1e6).toBeCloseTo(Math.PI * (r0 + r1) * Math.hypot(h, r0 - r1) * k, 3);
+    // the overlap is WRAP_OVERLAP_MM of arc at the big (outer) edge, past s = 1
+    expect((g.angle - g.wrapAngle!) * g.outerRadiusMm).toBeCloseTo(WRAP_OVERLAP_MM, 6);
+    expect(spec.overlapMm).toBe(WRAP_OVERLAP_MM);
     // isometry: small steps on the cone have the same length on the flat label
     const ds = 1e-4;
     for (const t of [0.1, 0.5, 0.9]) {
@@ -243,5 +248,19 @@ describe("label runs (pricing inputs)", () => {
   it("reports labels that do not fit the web", () => {
     const wrap = describeVessel({ kind: "ROUND_BOTTLE", dims: { D: 100, H: 300 }, surfaces: ["WRAP"] }).labels[0];
     expect(labelRun(wrap, 100, { webWidthMm: 250 }).fits).toBe(false);
+  });
+});
+
+describe("core pack sizes (R6-3Q-F-02)", () => {
+  it("a can end / lug neck never stands proud of the body at the size limits", async () => {
+    const { models } = await import("@/lib/library/packs/vessel-core");
+    for (const m of models) {
+      if (m.code === "STAND_UP_POUCH" || m.code === "ROUND_TIN" || m.code === "SQUEEZE_TUBE") continue;
+      for (const D of [m.limits.D.min, m.limits.D.max]) {
+        const dims = { ...m.presets[0].dims, D };
+        const p = m.describe(dims, [], undefined).profile!;
+        expect(p.finishR, `${m.code} D${D}`).toBeLessThanOrEqual(D / 2 + 0.3);
+      }
+    }
   });
 });

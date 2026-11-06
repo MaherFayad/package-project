@@ -318,8 +318,13 @@ export function sandwichWedge(dims: Dims, t: number, f: StructureFeatures = {}):
     // wall and base printed nothing (R5-3Q-D-08).
     faceDepthTol: t,
     faces: (panels, computed) => {
+      // The sloped (window) lid is ONE face, "top". It was also copied as "front", so two
+      // faces mapped the same panel: the editor listed both, the front artwork was painted
+      // over the top artwork and a design on Top never showed (R6-3Q-D).
       const top = obliqueFace("top", panels, "base", t, TRAY_ROTATION, "top");
-      return top ? { ...computed, top, front: { ...top, face: "front" } } : computed;
+      const { front: _front, ...rest } = computed;
+      void _front;
+      return top ? { ...rest, top } : rest;
     },
   };
 }

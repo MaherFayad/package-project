@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useId, useState } from "react";
 import { Trash2 } from "lucide-react";
 import type { BrandColor } from "@/types";
 import { useI18n } from "@/i18n/client";
@@ -44,7 +44,8 @@ export function usedBrandColors(doc: { artwork: Record<"outside" | "inside", { b
 }
 
 const pctOk = (v: string) => v === "" || (/^\d{1,3}(\.\d+)?$/.test(v) && Number(v) <= 100);
-const toLatinDigits = (v: string) => v.replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660)).replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 0x06f0)).trim();
+// R6-AX-03: the Arabic decimal separator and a decimal comma ("٥٠٫٥", "50,5") read as a point.
+const toLatinDigits = (v: string) => v.replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660)).replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 0x06f0)).replace(/[٫,]/g, ".").trim();
 
 export function BrandColorsModal({
   open,
@@ -68,6 +69,9 @@ export function BrandColorsModal({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tried, setTried] = useState(false);
+  // a11y R6-AX-03: a polite confirmation after each save (the list changes silently otherwise).
+  const [status, setStatus] = useState("");
+  const cmykErrId = useId();
   useEffect(() => {
     if (!open) return;
     setList(colors);
@@ -77,10 +81,13 @@ export function BrandColorsModal({
     setSpot("");
     setError(null);
     setTried(false);
+    setStatus("");
   }, [open, colors, initialHex]);
 
   const latin = cmyk.map(toLatinDigits);
-  const cmykValid = latin.every(pctOk) && (latin.every((v) => v === "") || latin.every((v) => v !== ""));
+  const partial = !(latin.every((v) => v === "") || latin.every((v) => v !== ""));
+  const cmykValid = latin.every(pctOk) && !partial;
+  const cmykBad = (i: number) => !pctOk(latin[i]) || (partial && latin[i] === "");
   const hexValue = normalizeHex(hex);
   const nameValid = name.trim().length > 0;
   const full = list.length >= MAX_BRAND_COLORS;
@@ -90,14 +97,21 @@ export function BrandColorsModal({
     setError(null);
     const ok = await onSave(next);
     setBusy(false);
-    if (ok) setList(next);
-    else setError(t("designer.brand.failed"));
+    if (ok) {
+      setList(next);
+      setStatus(t("designer.brand.saved"));
+    } else setError(t("designer.brand.failed"));
     return ok;
   };
 
   const add = async () => {
     setTried(true);
-    if (!nameValid || !hexValue || !cmykValid || full) return;
+    setStatus("");
+    if (!nameValid || !hexValue || !cmykValid || full) {
+      // Focus the first field to fix once the errors render (WCAG 3.3.1).
+      requestAnimationFrame(() => document.querySelector<HTMLElement>("[role=dialog] [aria-invalid=true]")?.focus());
+      return;
+    }
     const entry: BrandColor = {
       name: name.trim().slice(0, 40),
       hex: hexValue,
@@ -121,10 +135,13 @@ export function BrandColorsModal({
           {t("designer.brand.intro")}
         </Text>
         {error ? (
-          <Banner tone="critical" inCard>
+          <Banner tone="critical" inCard announce>
             {error}
           </Banner>
         ) : null}
+        <span className="visually-hidden" role="status">
+          {status}
+        </span>
         {list.length ? (
           <ul className={styles.brandList} data-testid="brand-list">
             {list.map((c) => (
@@ -182,12 +199,14 @@ export function BrandColorsModal({
                     inputMode="decimal"
                     maxLength={5}
                     value={cmyk[i]}
+                    error={cmyk.some((v) => v !== "") && cmykBad(i) ? true : undefined}
+                    ariaDescribedBy={!cmykValid && cmyk.some((v) => v !== "") ? cmykErrId : undefined}
                     onChange={(v) => setCmyk((a) => a.map((x, j) => (j === i ? v : x)))}
                   />
                 ))}
               </div>
               {!cmykValid && cmyk.some((v) => v !== "") ? (
-                <Text as="p" variant="bodySm" tone="critical">
+                <Text as="p" variant="bodySm" tone="critical" id={cmykErrId}>
                   {t("designer.brand.cmykError")}
                 </Text>
               ) : null}

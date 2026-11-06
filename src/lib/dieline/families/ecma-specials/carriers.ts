@@ -4,7 +4,7 @@ import { DielineBuilder, insetSeg, rectEdges } from "../../builder";
 import { cutWindow, stadium } from "../../features";
 import { clamp, pt, rectPolygon } from "../../geometry";
 import { tuckEndCarton } from "../../structures";
-import { crashLockBottom, glueWidth, tube } from "../ecma-tuck/closures";
+import { crashLockBottom, cutWindowInBand, glueWidth, tube } from "../ecma-tuck/closures";
 import type { Polygon } from "../../types";
 import { IDENTITY, blockFace, circle, closedBounds, deg, maxStageOf, pieceMatrix, quat, rect, reshape, sheetBox, withDeepParts } from "./kit";
 import type { EcmaDraft } from "./types";
@@ -161,7 +161,10 @@ export function basketCarrier(dims: Dims, t: number, grid: BasketGrid): EcmaDraf
   // Centre handle partition: one blank folded double over its crest (two plies, each printed
   // side out), as on production baskets, so the handle carries artwork from front and back.
   const rise = basketHandleRise(dims);
-  const len = dims.L - 1;
+  // Partitions are cut 1.5 mm short of the inner wall each side (production clearance for
+  // erecting); 0.5 mm put their board edges inside the walls' edge-line depth bias, so a
+  // seam line showed through the printed front and sides (R6-3Q-D).
+  const len = dims.L - 3;
   const hD = dims.H + rise;
   const ch = Math.min(len * 0.22, rise * 0.9);
   const hy = sy + hD; // crest crease; ply A below it, ply B (mirrored) above
@@ -177,7 +180,7 @@ export function basketCarrier(dims: Dims, t: number, grid: BasketGrid): EcmaDraf
   sx += len + 10;
 
   // Cross partitions (cols − 1), along W.
-  const lenW = dims.W - 1;
+  const lenW = dims.W - 3;
   const hC = dims.H * 0.85;
   for (let i = 1; i < grid.cols; i++) {
     const x = cx - dims.L / 2 + (i * dims.L) / grid.cols;
@@ -209,11 +212,14 @@ export const displayFrontHeight = (dims: Dims) => clamp(dims.H * 0.45, 30, Math.
  * BOTH sides for the header art). L = width, W = depth, H = height.
  */
 export function counterDisplay(dims: Dims, t: number, f: StructureFeatures = {}): EcmaDraft {
-  const draft = tuckEndCarton(dims, t, false, { window: f.window ?? null });
+  const draft = tuckEndCarton(dims, t, false, { window: null });
   const b = draft.builder;
   const front = b.byId("front").bbox;
   const hD = displayFrontHeight(dims) + 2 * t;
   const yP = front.y + front.height - hD;
+  // The window sits in the display front that stays after tearing: centred on the panel it
+  // straddled the tear line (film glued across the perforation, half a window left behind).
+  if (f.window) cutWindowInBand(b, "front", f.window, yP + 1, front.y + front.height, 8);
   b.perfLines.push({ a: pt(front.x + 0.5, yP), b: pt(front.x + front.width - 0.5, yP) });
   const left = b.byId("left").bbox;
   const right = b.byId("right").bbox;

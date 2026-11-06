@@ -38,10 +38,6 @@ const PAGES = [
 
 /** Pages that do not use the section-7 tokens yet (page owners: delete your entry once it passes). */
 const NOT_YET = new Set<string>([
-  // why-elba: bands add their own bottom padding / zero it (rule 1), hero bottom 24 not section-y-lg.
-  "/why-elba",
-  // designer: three section heads overlap their CTA by -44px (rule 4); bands set pad="none" with page padding.
-  "/designer",
 ]);
 
 type Bp = "desktop" | "tablet" | "phone";

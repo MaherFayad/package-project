@@ -25,12 +25,11 @@
   --dp-card: linear-gradient(180deg, rgba(173, 149, 219, 0.2) 50%, rgba(229, 177, 175, 0.2) 50%);
   --dp-card-flat: #f4f0fa;
   --dp-radius-sheet: var(--mk-radius-sheet, 48px);
-  --dp-radius-card: 24px;
+  --dp-radius-card: var(--mk-radius-media, 20px);
   --dp-radius-tile: 16px;
   --dp-ease: var(--mk-ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
   --dp-ease-out: var(--mk-ease-out, cubic-bezier(0.215, 0.61, 0.355, 1));
   --dp-dur: 0.3s;
-  --dp-gutter: var(--mk-gutter, 16px);
   --dp-display: clamp(3rem, 1.6rem + 5.6vw, 6rem);
   --dp-h2: clamp(2.25rem, 1.4rem + 3.2vw, 4rem);
   --dp-h2-sheet: clamp(2rem, 1.3rem + 2.8vw, 3.5rem);
@@ -53,13 +52,6 @@
   --dp-display: clamp(2.75rem, 1.5rem + 5vw, 5.5rem);
 }
 
-
-.container {
-  inline-size: 100%;
-  max-inline-size: calc(1260px + 2 * var(--dp-gutter));
-  margin-inline: auto;
-  padding-inline: var(--dp-gutter);
-}
 
 /* ───────── Shared type + controls ───────── */
 .eyebrow { margin: 0; font-size: 1rem; font-weight: 550; letter-spacing: -0.01em; line-height: 1.5; color: var(--dp-lilac); }
@@ -106,11 +98,14 @@
   background-size: 48px 48px;
   mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 30%, transparent 75%);
 }
-.heroInner { display: grid; justify-items: center; text-align: center; gap: 28px; position: relative; }
+/* Section spacing comes from the kit (Sheet y, Container, SectionHead, Stack, Grid; spec
+   section 7). This file holds no section padding, margin or gap values: only component
+   internals (the editor-UI drawings, cards) and alignment. */
+.heroInner { align-items: center; text-align: center; position: relative; }
 .frame {
   position: relative;
-  display: grid; gap: 16px; justify-items: center;
-  padding: 28px clamp(16px, 3vw, 48px) 32px;
+  display: grid; justify-items: center;
+  padding: var(--mk-grid-gap) var(--mk-stack-head-content);
   border: 1px solid rgba(138, 108, 255, 0.9);
   background: rgba(40, 30, 110, 0.18);
   max-inline-size: 960px;
@@ -120,9 +115,10 @@
   padding: 2px 8px; font-size: 0.75rem; font-weight: 550; background: var(--dp-violet); color: #fff; border-radius: 4px 4px 0 0;
 }
 .frame .lead { margin-inline: auto; color: rgba(255, 255, 255, 0.82); }
-.heroCtas { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+.heroCtas { align-items: center; }
+.pillLine { display: flex; flex-wrap: wrap; gap: var(--mk-grid-gap-tight); justify-content: center; }
 
-.stage { position: relative; inline-size: 100%; max-inline-size: 1180px; margin-block-start: 8px; }
+.stage { position: relative; inline-size: 100%; max-inline-size: 1180px; }
 .float {
   position: absolute; z-index: 2;
   border-radius: 14px; border: 1px solid var(--dp-line);
@@ -169,7 +165,6 @@
 .box[data-video="true"] .boxVideo { opacity: 1; }
 .box[data-video="true"] .boxPoster { opacity: 0; transition: opacity 0.5s var(--dp-ease) 0.1s; }
 .sampleNote { margin: 0; font-size: 0.75rem; color: var(--dp-muted); }
-.heroSample { margin-block-start: 24px; }
 .boxCanvas[data-ready="true"] { opacity: 1; }
 .box[data-live="true"] .boxPoster { opacity: 0; transition: opacity 0.5s var(--dp-ease) 0.1s; }
 .boxControls { position: absolute; z-index: 3; inset-block-end: 0; inset-inline-start: 50%; translate: -50% 40%; display: flex; gap: 8px; align-items: center; }
@@ -190,16 +185,19 @@
   .floatPrice { inset-block-end: auto; inset-block-start: 4%; inset-inline-end: auto; inset-inline-start: 0; padding: 10px 12px; min-inline-size: 0; }
   .priceValue { font-size: 1.0625rem; }
   .floatSwatches .floatTitle, .floatTiles .floatTitle { display: none; }
-  .box { margin-block: 40px 24px; }
+  .box { margin-block: var(--mk-stack-head-content); }
+}
+
+/* Narrow phones (R6-AX-19, WCAG 2.4.11 focus not obscured): the structure tiles card leaves the
+   overlay and stacks under the box, clear of the Turn in 3D and pause controls that hang below it. */
+@media (max-width: 599px) {
+  .stage { display: flex; flex-direction: column; align-items: center; }
+  .floatTiles { position: static; order: 2; margin-block-start: var(--mk-stack-head-content); }
 }
 
 /* ───────── 2. Prompt ───────── */
-.prompt { text-align: center; }
-.promptHead { display: grid; gap: 16px; justify-items: center; padding-block-start: clamp(64px, 8vw, 120px); margin-block-end: 40px; }
-.promptHead .lead { margin-inline: auto; }
-.violet {
+.page .violet[data-tone] {
   position: relative; overflow: clip; isolation: isolate;
-  padding-block: clamp(56px, 8vw, 112px);
   background:
     radial-gradient(60% 90% at 50% 120%, rgba(160, 120, 255, 0.55), transparent 70%),
     radial-gradient(40% 60% at 15% 10%, rgba(120, 70, 255, 0.55), transparent 70%),
@@ -234,23 +232,22 @@
 }
 .promptSubmit:hover { background: #f3d6ff; }
 .promptSubmit:active { transform: scale(0.94); }
-.promptChips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-block-start: 20px; }
+.promptStack { text-align: center; }
+.promptChips { display: flex; flex-wrap: wrap; gap: var(--mk-grid-gap-tight); justify-content: center; }
 .promptChip {
   min-block-size: 36px; padding: 6px 14px; border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.5);
   background: rgba(255, 255, 255, 0.08); color: #fff; font: inherit; font-size: 0.9375rem; text-decoration: none;
   transition: background-color 0.15s var(--dp-ease);
 }
 .promptChip:hover { background: rgba(255, 255, 255, 0.2); }
-.promptNote { margin: 16px 0 0; font-size: 0.875rem; color: rgba(255, 255, 255, 0.85); }
+.promptNote { margin: 0; font-size: 0.875rem; color: rgba(255, 255, 255, 0.85); }
 .srOnly { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 /* ───────── 3. Style wall ───────── */
-.wall { text-align: center; }
-.wallHead { display: grid; gap: 16px; justify-items: center; padding-block-start: clamp(64px, 8vw, 120px); margin-block-end: 40px; }
-.wallEnd { block-size: clamp(96px, 10vw, 140px); }
+.center { text-align: center; }
+.inlineLink { color: inherit; text-underline-offset: 4px; }
 /* Kit Marquee: centre its pause button under the heading like the reference wall. */
 .wallRail > :first-child { justify-content: center; }
-.wallHead .lead { margin-inline: auto; }
 .styleCard {
   position: relative; display: grid; grid-template-rows: auto 1fr auto;
   inline-size: clamp(240px, 24vw, 320px); block-size: clamp(320px, 30vw, 420px);
@@ -271,25 +268,26 @@
 /* ───────── 4-5. Light sheet + bento ───────── */
 .sheet { color: var(--dp-ink); }
 .sheet .lead { color: var(--dp-ink-2); }
-.bentoGroup + .bentoGroup { margin-block-start: clamp(80px, 9vw, 140px); }
-.bentoHead { display: grid; gap: 12px; margin-block-end: 40px; grid-template-columns: minmax(0, 1fr); align-items: end; }
-@media (min-width: 768px) { .bentoHead { grid-template-columns: minmax(0, 1fr) auto; column-gap: 32px; } .bentoHead .pillDark { grid-row: 1; grid-column: 2; } }
-.bento { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+/* Head rows with a CTA pill at the end (reference layout). The pill follows the head in the DOM;
+   from 768px it is lifted to the head's top end (out of flow, so the kit gap stays head→grid). */
+.headRow { position: relative; }
+.headRow > :first-child { justify-self: start; }
+.headAction { align-self: flex-start; }
 @media (min-width: 768px) {
-  .bento { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .bentoWide { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); }
-  .bentoWide > :nth-child(3) { order: 4; }
-  .bentoWide > :nth-child(4) { order: 3; }
+  .headRow > :first-child { max-inline-size: 72%; }
+  .headAction { position: absolute; inset-block-start: 0; inset-inline-end: 0; }
 }
+.plainList { list-style: none; margin: 0; padding: 0; }
+
 .card {
-  display: grid; grid-template-rows: 1fr auto; gap: 24px;
+  display: grid; grid-template-rows: 1fr auto; gap: var(--mk-grid-gap);
   min-block-size: clamp(420px, 40vw, 560px);
-  padding: 16px 16px 28px; border-radius: var(--dp-radius-card);
+  padding: var(--mk-grid-gap-tight) var(--mk-grid-gap-tight) var(--mk-grid-gap); border-radius: var(--dp-radius-card);
   background: var(--dp-card), var(--dp-card-flat);
   overflow: hidden;
 }
 .cardMedia { position: relative; display: grid; place-items: center; min-block-size: 280px; border-radius: 16px; overflow: hidden; }
-.cardBody { display: grid; gap: 8px; padding-inline: 16px; }
+.cardBody { display: grid; gap: var(--mk-grid-gap-tight); padding-inline: var(--mk-grid-gap-tight); }
 .cardTitle { margin: 0; font-size: var(--dp-h3); font-weight: 360; line-height: 1.2; letter-spacing: -0.01em; }
 .page:lang(ar) .cardTitle { letter-spacing: 0; line-height: 1.4; }
 .cardText { margin: 0; font-size: 0.9375rem; line-height: 1.5; color: var(--dp-ink-2); max-inline-size: 52ch; }
@@ -352,12 +350,9 @@
 .qtyRow span[data-on] { background: #1f2124; color: #fff; border-color: #1f2124; }
 
 /* ───────── 6. Trust trio ───────── */
-.page .trust[data-tone] { padding-block-end: 0; }
-.trustGrid { display: grid; gap: 16px; margin-block-start: 48px; grid-template-columns: minmax(0, 1fr); }
-@media (min-width: 768px) { .trustGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-.trustCard { display: grid; gap: 20px; align-content: start; padding: 16px 16px 28px; border-radius: 12px; border: 1px solid var(--dp-line); background: var(--dp-bg); }
+.trustCard { display: grid; gap: var(--mk-grid-gap); align-content: start; padding: var(--mk-grid-gap-tight) var(--mk-grid-gap-tight) var(--mk-grid-gap); border-radius: 12px; border: 1px solid var(--dp-line); background: var(--dp-bg); }
 .trustMedia { position: relative; display: grid; place-items: center; block-size: 200px; border-radius: 12px; background: #242833; overflow: hidden; }
-.trustBody { display: grid; gap: 8px; padding-inline: 16px; }
+.trustBody { display: grid; gap: var(--mk-grid-gap-tight); padding-inline: var(--mk-grid-gap-tight); }
 .trustTitle { margin: 0; font-size: var(--dp-h3); font-weight: 360; line-height: 1.2; }
 .trustText { margin: 0; color: var(--dp-muted); font-size: 0.9375rem; }
 .stat { display: grid; place-items: center; inline-size: 132px; block-size: 132px; border-radius: 9999px; border: 10px solid #3a63ff; background: #1a1f2b; box-shadow: 0 0 40px rgba(58, 99, 255, 0.45); text-align: center; }
@@ -372,49 +367,38 @@
 .payGrid span { display: flex; align-items: center; justify-content: center; gap: 6px; min-block-size: 52px; border-radius: 10px; background: #fff; color: #1f2124; font-weight: 600; font-size: 0.875rem; }
 
 /* ───────── 7. Materials wall ───────── */
-.page .materials[data-tone] { padding-block-end: 0; }
-.matRail { margin-block: 40px; }
 .matTile { inline-size: 88px; display: grid; gap: 8px; justify-items: center; }
 .matSwatch { inline-size: 88px; block-size: 88px; border-radius: 16px; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12); }
 .matName { font-size: 0.75rem; line-height: 1.3; text-align: center; color: var(--dp-muted); }
-.matHead { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .matLead { margin: 0; font-size: clamp(1.25rem, 1rem + 0.9vw, 1.75rem); font-weight: 330; line-height: 1.35; color: var(--dp-muted); max-inline-size: 46ch; }
 .matLead a { color: #fff; text-underline-offset: 4px; }
-.matGroups { list-style: none; margin: 48px 0 0; padding: 0; display: grid; gap: 28px 32px; grid-template-columns: minmax(0, 1fr); }
-@media (min-width: 640px) { .matGroups { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (min-width: 1024px) { .matGroups { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-.matGroups li { padding-inline-start: 16px; border-inline-start: 1px solid var(--dp-line-2); display: grid; gap: 6px; }
+.matGroups li { padding-inline-start: var(--mk-grid-gap-tight); border-inline-start: 1px solid var(--dp-line-2); display: grid; align-content: start; gap: var(--mk-stack-title-sub); }
 .matGroups a { color: #fff; font-size: 1.125rem; font-weight: 550; text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
 .matGroups a:hover { text-decoration-thickness: 2px; color: var(--dp-lilac); }
 .matGroups p { margin: 0; font-size: 0.875rem; color: var(--dp-muted); }
 
 /* ───────── 8. Start carousel ───────── */
 
-.startHead { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); align-items: end; }
-@media (min-width: 768px) { .startHead { grid-template-columns: minmax(0, 1fr) auto; } .startHead .pillLight { grid-row: 1; grid-column: 2; } }
-.stepsViewport { margin-block-start: 40px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; scroll-behavior: smooth; }
+.stepsViewport { overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; scroll-behavior: smooth; }
 .stepsViewport::-webkit-scrollbar { display: none; }
-.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(280px, 82%); gap: 16px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(280px, 82%); gap: var(--mk-grid-gap-tight); }
 @media (min-width: 768px) { .steps { grid-auto-columns: calc((100% - 32px) / 2.5); } }
 .step { scroll-snap-align: start; display: flex; gap: 16px; min-block-size: 178px; padding: 24px; border-radius: 12px; border: 2px solid rgba(255, 255, 255, 0.2); font-size: 1.25rem; line-height: 1.4; }
 .step span { color: var(--dp-muted); font-size: 1rem; padding-block-start: 4px; }
 .step p { margin: 0; }
-.stepNav { display: flex; gap: 12px; margin-block-start: 24px; }
+.stepNav { display: flex; gap: var(--mk-grid-gap-tight); margin-block-start: var(--mk-grid-gap); }
 
 /* ───────── 9. FAQ ───────── */
 
-.faqList { margin: 48px auto 0; max-inline-size: 1080px; }
+.faqList { max-inline-size: 1080px; }
 
-/* Below-the-fold sections skip layout and paint until near the viewport. */
-.lazySection { content-visibility: auto; contain-intrinsic-size: auto 900px; }
+/* No content-visibility on these sections: they hold links and controls, and a placeholder
+   height that differs from the real one made the page grow by up to 4,169px (320px wide) as they
+   rendered, moving content and focus targets (WCAG 2.4.11, layout stability). */
 
 /* Calm page under reduced motion: same content, nothing moves (WCAG 2.3.3). */
 @media (prefers-reduced-motion: reduce) {
   .float, .violet::before { animation: none !important; }
-  /* Kit Marquee in RTL: `.marqueeTrack:dir(rtl)` re-sets animation-name over the kit's own
-     reduced-motion `animation: none`, so Arabic strips kept looping. Reported to FOUNDATION;
-     remove once kit.module.css fixes it. */
-  .wallRail ul, .matRail ul { animation: none !important; }
   .stepsViewport { scroll-behavior: auto; }
   .styleCard, .styleCard img, .pill { transition: none; }
   .styleCard:hover, .styleCard:hover img { transform: none; }

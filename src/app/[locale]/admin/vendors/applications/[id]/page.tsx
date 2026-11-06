@@ -1,3 +1,4 @@
+import { isAdminSession, requireAdminPage } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -24,8 +25,10 @@ type Params = Promise<{ locale: string; id: string }>;
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { locale, id } = await params;
   const t = getT(toLocale(locale));
-  const a = /^[\w-]{1,40}$/.test(id) ? await db.vendorApplication.findUnique({ where: { id }, select: { legalName: true } }) : null;
-  return { title: `${a ? `${a.legalName} · ` : ""}${t("admin.vendors.tabs.applications")} · ${t("admin.title")}` };
+  const isAdmin = await isAdminSession();
+  const a = isAdmin && /^[\w-]{1,40}$/.test(id) ? await db.vendorApplication.findUnique({ where: { id }, select: { legalName: true } }) : null;
+  // a11y R6-AX-11 (WCAG 2.4.2): a missing record says so in the tab title too.
+  return { title: `${a ? `${a.legalName} · ` : isAdmin ? `${t("admin.common.notFoundTitle")} · ` : ""}${t("admin.vendors.tabs.applications")} · ${t("admin.title")}` };
 }
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
@@ -40,6 +43,7 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 }
 
 export default async function AdminApplicationPage({ params }: { params: Params }) {
+  await requireAdminPage(); // R6-SEC-09: the layout redirect does not stop this page rendering
   const { locale: raw, id } = await params;
   const locale = toLocale(raw);
   const t = getT(locale);

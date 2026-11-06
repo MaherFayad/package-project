@@ -19,12 +19,25 @@ import { RangeSlider } from "@/components/ui/RangeSlider";
 import { Select } from "@/components/ui/Select";
 import { Text } from "@/components/ui/Text";
 import { TextField } from "@/components/ui/TextField";
+import { useUi } from "@/components/ui/AppProvider";
+import { fill } from "@/components/ui/strings";
 import { featureSupportOf, finishChoicesFor, materialChoices, printSidesChoices, type Choice } from "./lib/config";
 import { modelImage } from "./ModelPicker";
 import { FlexOptionsGroup } from "./FlexOptionsGroup";
 import { EGYPT_BADGE, egyptOf, orderModeOf } from "@/data/catalogue/order-mode";
 import { parseMmInput } from "./lib/mm";
 import styles from "./library.module.css";
+
+/** a11y R6-AX-09 (WCAG 3.3.1): name the size field that is wrong, not only "this size cannot be made". */
+function useSizeError() {
+  const { s } = useUi();
+  return (text: string, min: number, max: number) => {
+    if (text.trim() === "") return s.numberInvalid;
+    const n = parseMmInput(text);
+    if (!Number.isFinite(n)) return s.numberInvalid;
+    return n < min || n > max ? fill(s.numberRange, { min, max }) : undefined;
+  };
+}
 
 export interface ViewOptions {
   dimensions: boolean;
@@ -252,6 +265,7 @@ function BoxSection({ doc, model, geo, view, onView, onGeometry, onFinish, onPri
   const cylinder = model.shape === "cylinder";
   const [draft, setDraft] = useState({ L: String(doc.dims.L), W: String(doc.dims.W), H: String(doc.dims.H) });
   const [invalid, setInvalid] = useState(false);
+  const sizeError = useSizeError();
   useEffect(() => {
     setDraft({ L: String(doc.dims.L), W: String(doc.dims.W), H: String(doc.dims.H) });
     setInvalid(false);
@@ -332,6 +346,7 @@ function BoxSection({ doc, model, geo, view, onView, onGeometry, onFinish, onPri
               value={draft[axis]}
               onChange={(v) => tryDims({ ...draft, [axis]: v })}
               helpText={<bdi dir="ltr">{`${lims[axis].min}–${lims[axis].max}`}</bdi>}
+              error={sizeError(draft[axis], lims[axis].min, lims[axis].max)}
               suffix={t("common.mm")}
             />
           ))}
@@ -431,6 +446,7 @@ function VesselSection({ doc, model, geo, view, onView, onGeometry, onFinish }: 
   const v = doc.vessel!;
   const [draft, setDraft] = useState({ D: String(v.dims.D), H: String(v.dims.H), G: v.dims.G !== undefined ? String(v.dims.G) : "" });
   const [invalid, setInvalid] = useState(false);
+  const sizeError = useSizeError();
   useEffect(() => {
     setDraft({ D: String(v.dims.D), H: String(v.dims.H), G: v.dims.G !== undefined ? String(v.dims.G) : "" });
     setInvalid(false);
@@ -444,7 +460,7 @@ function VesselSection({ doc, model, geo, view, onView, onGeometry, onFinish }: 
     const inRange = (n: number | undefined, r?: { min: number; max: number }) => n === undefined || !r || (Number.isFinite(n) && n >= r.min && n <= r.max);
     if (!inRange(dims.D, model.limits.D) || !inRange(dims.H, model.limits.H) || !inRange(dims.G, model.limits.G)) return setInvalid(true);
     try {
-      const d = describeVesselModel(model, dims, v.surfaces, undefined, v.container);
+      const d = describeVesselModel(model, dims, v.surfaces, undefined, v.container, v.options, v.closure);
       if (!d.areas.length) throw new Error("no print area");
       setInvalid(false);
       setVessel({ dims, presetId: undefined });
@@ -508,6 +524,7 @@ function VesselSection({ doc, model, geo, view, onView, onGeometry, onFinish }: 
                 value={draft[a]}
                 onChange={(val) => tryDims({ ...draft, [a]: val })}
                 helpText={<bdi dir="ltr">{`${r.min}–${r.max}`}</bdi>}
+                error={a === "G" && draft[a] === "" ? undefined : sizeError(draft[a], r.min, r.max)}
                 suffix={t("common.mm")}
               />
             );
@@ -535,11 +552,29 @@ function VesselSection({ doc, model, geo, view, onView, onGeometry, onFinish }: 
             label={t("library.panel.closure")}
             value={v.closure}
             options={model.closures.map((c) => ({ value: c.code, label: c.name[locale] }))}
-            onChange={(val) => setVessel({ closure: val })}
+            onChange={(val) => {
+              // a colour the buyer has not changed follows the closure's own default (bare metal
+              // crowns, a clear lid on a clear tray): R5-3Q-F-13 / G-25
+              const before = model.closures.find((c) => c.code === v.closure)?.defaultColor ?? "WHITE";
+              const next = model.closures.find((c) => c.code === val)?.defaultColor ?? "WHITE";
+              setVessel(v.closureColor === before ? { closure: val, closureColor: next } : { closure: val });
+            }}
           />
           <fieldset className={styles.group}>
             <legend className={styles.groupTitle}>{t("library.panel.closureColor")}</legend>
             <div className={styles.swatches}>
+              {model.closures.find((c) => c.code === v.closure)?.defaultColor === "MATCH" || v.closureColor === "MATCH" ? (
+                <button
+                  type="button"
+                  className={styles.swatch}
+                  data-match=""
+                  style={{ background: model.containers.find((c) => c.code === v.container)?.tint ?? "linear-gradient(135deg, #f3f3f1 0 45%, #c9ced3 55% 100%)" }}
+                  aria-pressed={v.closureColor === "MATCH"}
+                  aria-label={t("library.colors.MATCH" as DictKey)}
+                  title={t("library.colors.MATCH" as DictKey)}
+                  onClick={() => setVessel({ closureColor: "MATCH" })}
+                />
+              ) : null}
               {(Object.keys(CLOSURE_COLORS) as ClosureColorCode[]).map((c) => (
                 <button
                   key={c}

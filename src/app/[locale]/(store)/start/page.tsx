@@ -14,7 +14,8 @@ import { getPriceFrom, listStructures, listVendors } from "@/components/store/da
 import { preload } from "react-dom";
 import { R6_CARDS, SAMPLE_LABEL } from "@/components/marketing/kit/assets";
 import { Sheet } from "@/components/marketing/kit/Sheet";
-import { Display, Lead } from "@/components/marketing/kit/Display";
+import { SectionHead, Stack } from "@/components/marketing/kit/SectionHead";
+import { Grid } from "@/components/marketing/kit/Grid";
 import { Pill } from "@/components/marketing/kit/Pill";
 import { Reveal } from "@/components/marketing/kit/Reveal";
 import { HeroTitle } from "@/components/marketing/kit/HeroTitle";
@@ -170,7 +171,8 @@ export default async function StartPage({ params }: Props) {
   return (
     <div className={s.page} data-locale={locale}>
       {/* ───────── 1 · Hero: giant split headline around the box collage ───────── */}
-      <Sheet tone="dark" hero pad="none" container={false} className={s.hero} aria-labelledby="start-title">
+      <Sheet tone="dark" hero aria-labelledby="start-title">
+        <Stack gap="head-content">
         <div className={s.heroStage}>
           <Collage items={collage} height="min(64svh, 640px)" travel={120} className={s.collage}>
             <div className={s.heroCenter}>
@@ -183,14 +185,13 @@ export default async function StartPage({ params }: Props) {
           <p className={s.heroSub}>{c.hero.sub}</p>
           <Pill href={design}>{c.hero.cta}</Pill>
         </div>
+        </Stack>
       </Sheet>
 
       {/* ───────── 2 · Choose your box: pinned card that grows into the designer ───────── */}
-      <section className={s.choose} aria-labelledby="choose-title">
-        <Reveal as="header" className={s.head}>
-          <Display id="choose-title" size="56" align="center">{c.choose.title}</Display>
-          <Lead align="center">{c.choose.sub}</Lead>
-        </Reveal>
+      <Sheet tone="dark" y="lg" aria-labelledby="choose-title">
+        <SectionHead id="choose-title" title={c.choose.title} sub={c.choose.sub} align="center">
+          <Stack gap="head-content">
         <PinnedScale
           from={0.5}
           length="190vh"
@@ -217,7 +218,7 @@ export default async function StartPage({ params }: Props) {
           </Pill>
           <span className={s.muted}>{fill(c.choose.count, { count: formatNumber(MODELS.length) })}</span>
         </div>
-        <ul className={s.styles} aria-label={c.choose.stylesLabel}>
+        <Grid as="ul" cols={4} colsMd={4} colsSm={2} className={s.styles}>
           {SIDE_STYLES.map((code) => {
             const src = renderSrc(code);
             const d = renderDims(src);
@@ -228,15 +229,15 @@ export default async function StartPage({ params }: Props) {
               </li>
             );
           })}
-        </ul>
-      </section>
+        </Grid>
+          </Stack>
+        </SectionHead>
+      </Sheet>
 
       {/* ───────── 3 · Make your packaging shine: finishes and 3D ───────── */}
-      <section className={s.band} aria-labelledby="shine-title">
-        <Reveal as="header" className={s.head}>
-          <Display id="shine-title" size="56" align="center">{c.shine.title}</Display>
-          <Lead align="center">{c.shine.sub}</Lead>
-        </Reveal>
+      <Sheet tone="dark" y="lg" aria-labelledby="shine-title">
+        <SectionHead id="shine-title" title={c.shine.title} sub={c.shine.sub} align="center">
+          <Stack gap="head-content">
         <Reveal variant="scale" className={s.stage}>
           <Glow color="violet" size="min(640px, 90vw)" />
           <figure className={s.shineCard}>
@@ -255,14 +256,13 @@ export default async function StartPage({ params }: Props) {
             </li>
           ))}
         </ul>
-      </section>
+        </Stack>
+        </SectionHead>
+      </Sheet>
 
       {/* ───────── 4 · Get paid: real engine prices in a checkout preview ───────── */}
-      <section className={s.band} aria-labelledby="paid-title">
-        <Reveal as="header" className={s.head}>
-          <Display id="paid-title" size="56" align="center">{c.paid.title}</Display>
-          <Lead align="center">{c.paid.sub}</Lead>
-        </Reveal>
+      <Sheet tone="dark" y="lg" aria-labelledby="paid-title">
+        <SectionHead id="paid-title" title={c.paid.title} sub={c.paid.sub} align="center">
         <Reveal className={s.stage}>
           <Glow color="navy" size="min(620px, 90vw)" />
           <article className={s.checkout} aria-labelledby="paid-card-title">
@@ -324,14 +324,12 @@ export default async function StartPage({ params }: Props) {
             </span>
           </div>
         </Reveal>
-      </section>
+        </SectionHead>
+      </Sheet>
 
       {/* ───────── 5 · Card fan of SAMPLE brand boxes (each card says so) ───────── */}
-      <section className={s.fanBand} aria-labelledby="fan-title">
-        <Reveal as="header" className={s.head}>
-          <Display id="fan-title" size="64" align="center">{c.fan.title}</Display>
-          <Lead align="center">{c.fan.sub}</Lead>
-        </Reveal>
+      <Sheet tone="dark" y="lg" aria-labelledby="fan-title">
+        <SectionHead id="fan-title" title={c.fan.title} sub={c.fan.sub} size="64" align="center">
         <CardFan
           aria-label={c.fan.listLabel}
           width={220}
@@ -361,13 +359,12 @@ export default async function StartPage({ params }: Props) {
             },
           ]}
         />
-      </section>
+        </SectionHead>
+      </Sheet>
 
       {/* ───────── 6 · Light bento: start, then grow ───────── */}
-      <Sheet tone="white" aria-labelledby="bento-title">
-        <Reveal as="header" className={s.head}>
-          <Display id="bento-title" size="64" align="center">{c.bento.title}</Display>
-        </Reveal>
+      <Sheet tone="white" y="lg" aria-labelledby="bento-title">
+        <SectionHead id="bento-title" title={c.bento.title} size="64" align="center">
         <Bento cols={2} row={360} className={s.bento}>
           <BentoCard
             tone="grey"
@@ -440,33 +437,38 @@ export default async function StartPage({ params }: Props) {
             </dl>
           </BentoCard>
         </Bento>
+        </SectionHead>
       </Sheet>
 
       {/* ───────── 7 · Closing CTA with phone sign-up (kit PhoneSignup = HeroPhoneForm logic) ───────── */}
-      <Sheet tone="dark" container="narrow" aria-labelledby="closing-title">
-        <Reveal className={s.closingInner}>
-          <span className={s.mark} aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="40" height="40" focusable="false">
+      <Sheet tone="dark" y="xl" aria-labelledby="closing-title">
+        <SectionHead
+          id="closing-title"
+          title={c.closing.title}
+          align="center"
+          eyebrow={
+            <svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true" focusable="false" className={s.mark}>
               <path d="M12 2.5 21 7v10l-9 4.5L3 17V7z" fill="#fff" />
               <path d="M3 7l9 4.5L21 7M12 11.5V21.5" fill="none" stroke="#02090a" strokeWidth="1.4" strokeLinejoin="round" />
             </svg>
-          </span>
-          <Display id="closing-title" size="56" align="center">{c.closing.title}</Display>
-          <ol className={s.steps}>
-            {c.closing.steps.map((step, i) => (
-              <li key={step}>
-                {i > 0 ? <ArrowRight size={18} aria-hidden="true" className={s.flip} /> : null}
-                <span>{step}</span>
-              </li>
-            ))}
-          </ol>
-          <PhoneSignup
-            designPath={design}
-            align="center"
-            className={s.signup}
-            labels={{ label: c.closing.label, placeholder: c.closing.placeholder, submit: c.closing.submit, error: c.closing.error, fine: c.closing.fine }}
-          />
-        </Reveal>
+          }
+        >
+          <Stack gap="head-content" className={s.closingBody}>
+            <ol className={s.steps}>
+              {c.closing.steps.map((step, i) => (
+                <li key={step}>
+                  {i > 0 ? <ArrowRight size={18} aria-hidden="true" className={s.flip} /> : null}
+                  <span>{step}</span>
+                </li>
+              ))}
+            </ol>
+            <PhoneSignup
+              designPath={design}
+              align="center"
+              labels={{ label: c.closing.label, placeholder: c.closing.placeholder, submit: c.closing.submit, error: c.closing.error, fine: c.closing.fine }}
+            />
+          </Stack>
+        </SectionHead>
       </Sheet>
     </div>
   );

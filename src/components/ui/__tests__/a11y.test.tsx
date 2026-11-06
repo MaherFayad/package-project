@@ -224,6 +224,8 @@ describe("UI kit accessibility contracts", () => {
     window.scrollBy = scrollBy as unknown as typeof window.scrollBy;
     field.focus();
     expect(scrollBy).toHaveBeenCalledWith(expect.objectContaining({ top: 688 - 655 + 16 }));
+    // R6-AX-13: the page could not scroll (end of the page): the notice adds the room itself.
+    expect(document.documentElement.style.paddingBlockEnd).toMatch(/px$/);
     // A pointer press never scrolls mid-click (it would move the target away from the pointer).
     field.blur();
     scrollBy.mockClear();
@@ -231,6 +233,30 @@ describe("UI kit accessibility contracts", () => {
     field.focus();
     fireEvent.pointerUp(field);
     expect(scrollBy).not.toHaveBeenCalled();
+  });
+  it("a control the browser scrolls under the cookie banner after focus is moved clear one frame later (2.4.11, R6-AX-17)", async () => {
+    const dict = getDictionary("en");
+    render(
+      <I18nProvider locale="en" dict={dict}>
+        <button type="button">Pause the strip</button>
+        <CookieNotice />
+      </I18nProvider>,
+    );
+    const banner = screen.getByRole("region");
+    const btn = screen.getByRole("button", { name: "Pause the strip" });
+    const rect = (top: number, bottom: number) => ({ top, bottom, left: 0, right: 320, width: 320, height: bottom - top, x: 0, y: top, toJSON: () => ({}) }) as DOMRect;
+    banner.getBoundingClientRect = () => rect(688, 830);
+    // At focusin the control is still below the viewport (nothing covered yet)...
+    let where = rect(900, 944);
+    btn.getBoundingClientRect = () => where;
+    const scrollBy = vi.fn();
+    window.scrollBy = scrollBy as unknown as typeof window.scrollBy;
+    btn.focus();
+    expect(scrollBy).not.toHaveBeenCalled();
+    // ...then the browser's own focus scroll puts it at the bottom edge, under the banner.
+    where = rect(755, 799);
+    await new Promise((r) => setTimeout(r, 40));
+    expect(scrollBy).toHaveBeenCalledWith(expect.objectContaining({ top: 799 - 688 + 16 }));
   });
   it("keyboard focus on a clipped chip in a horizontal scroller scrolls it fully into view, pointer focus does not (2.4.7, 2.4.11)", () => {
     render(
@@ -309,5 +335,66 @@ describe("UI kit accessibility contracts", () => {
     cancel.focus();
     fireEvent.click(cancel);
     expect(document.activeElement).toBe(screen.getByRole("button", { name: "Edit" }));
+  });
+});
+
+describe("Round 6 kit contracts", () => {
+  it("spinbutton fields speak the unit with the value, and accept extra describedby ids (1.3.1, 3.3.1)", () => {
+    render(
+      <AppProvider locale="en">
+        <p id="grp-err">Each value is a number from 0 to 100.</p>
+        <TextField label="Length" autoComplete="off" value="250" suffix="mm" spinbutton={{ now: 250, min: 80, max: 600, onStep: () => {} }} />
+        <TextField label="C" autoComplete="off" value="150" error ariaDescribedBy="grp-err" />
+      </AppProvider>,
+    );
+    expect(screen.getByRole("spinbutton", { name: "Length" }).getAttribute("aria-valuetext")).toBe("250 mm");
+    const c = screen.getByRole("textbox", { name: "C" });
+    expect(c.getAttribute("aria-invalid")).toBe("true");
+    expect(c.getAttribute("aria-describedby")).toContain("grp-err");
+  });
+
+  it("contextual save bar keeps focus while saving and returns it to the edited field when it closes (2.4.3)", async () => {
+    const rects = Element.prototype.getClientRects;
+    Element.prototype.getClientRects = () => [{}] as unknown as DOMRectList;
+    const { ContextualSaveBar } = await import("../Frame");
+    function Form() {
+      const [dirty, setDirty] = useState(true);
+      const [saving, setSaving] = useState(false);
+      return (
+        <>
+          <input aria-label="Bio" />
+          {dirty ? (
+            <ContextualSaveBar
+              saveAction={{
+                onAction: () => {
+                  setSaving(true);
+                  setTimeout(() => setDirty(false), 0);
+                },
+                loading: saving,
+              }}
+            />
+          ) : null}
+          <button type="button">After</button>
+        </>
+      );
+    }
+    render(
+      <AppProvider locale="en">
+        <Form />
+      </AppProvider>,
+    );
+    screen.getByLabelText("Bio").focus();
+    const save = screen.getByRole("button", { name: "Save" });
+    save.focus();
+    fireEvent.click(save);
+    expect(save.getAttribute("aria-disabled")).toBe("true");
+    expect((save as HTMLButtonElement).disabled).toBe(false);
+    expect(document.activeElement).toBe(save);
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 5));
+    });
+    await new Promise((r) => setTimeout(r, 60));
+    expect(document.activeElement).toBe(screen.getByLabelText("Bio"));
+    Element.prototype.getClientRects = rects;
   });
 });

@@ -79,6 +79,7 @@ export const libraryAr: typeof libraryEn = {
     RED: "أحمر",
     GREEN: "أخضر",
     NATURAL: "طبيعي",
+    MATCH: "مثل العبوة",
   },
   catalog: {
     heading: "كل النماذج التي نطبعها",

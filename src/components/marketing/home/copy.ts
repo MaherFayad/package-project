@@ -11,7 +11,7 @@ import type { Locale } from "@/types";
  */
 const en = {
   hero: {
-    titles: ["Packaging worthy of your brand", "Design it in 3D. Print it in Egypt."],
+    titles: ["Packaging worthy of your brand", "Design it. Watch it turn."],
     lead: "Design your printed box free on a live 3D model, see the price instantly and order from vetted Egyptian printers.",
     primary: "Start designing free",
     secondary: "Browse box styles",
@@ -43,7 +43,7 @@ const en = {
     cards: [
       { title: "Design on a live model", body: "Real cuts, glue flaps and folds for every model, sized to the millimetre.", link: "Open the designer" },
       { title: "Run the whole order", body: "Design, price, payment and delivery in one account.", link: "Your orders" },
-      { title: "Print at a vetted printer", body: "{printers} {printersWord} in Egypt check every file and send a proof before printing.", link: "Meet the printers" },
+      { title: "Print at a vetted printer", body: "{printers} {printersWord} in Egypt check every file before printing, after you approve the proof.", link: "Meet the printers" },
     ],
     nodes: ["Design", "Price", "Payment", "Printer", "Delivery"],
     hub: "Elba",
@@ -79,7 +79,7 @@ const en = {
   },
   wall: {
     title: "{models} models in one library",
-    body: "Shipping boxes, cartons, rigid boxes, trays, tubes, bottles, pouches and cans, in {groups} groups, each with its real dieline.",
+    body: "Mailer and shipping boxes, folding cartons, rigid boxes, trays, tubes, bottles, pouches and cans, in {groups} groups, each with its real dieline.",
     link: "Browse the catalogue",
     pause: "Pause the wall",
     play: "Play the wall",
@@ -101,9 +101,9 @@ const en = {
       { label: "Boxes minimum order" },
     ],
     note: "Numbers come from our model library, our printers and the pricing engine, and refresh every hour.",
-    secureTitle: "Secure payment, clear invoice",
+    secureTitle: "Secure payment, clear receipt",
     payChips: ["Meeza or Visa card", "Mobile wallet", "Fawry", "InstaPay"],
-    secureBody: "Pay by card, mobile wallet, Fawry or InstaPay. Every order comes with an invoice showing VAT 14%.",
+    secureBody: "Pay by card, mobile wallet, Fawry or InstaPay. Every order comes with a receipt showing VAT 14%.",
     receipt: {
       title: "Order summary",
       line: "Mailer box × 500",
@@ -122,6 +122,7 @@ const en = {
     finishes: ["Pause the finishes", "Play the finishes"],
     price: ["Pause the order summary", "Play the order summary"],
     pay: ["Pause the payment methods", "Play the payment methods"],
+    designer: ["Pause the designer preview animation", "Play the designer preview animation"],
   },
   steps: {
     title: "Start your box today",
@@ -137,13 +138,13 @@ export type HomeCopy = Widen<typeof en>;
 
 const ar: HomeCopy = {
   hero: {
-    titles: ["علبة تليق بعلامتك", "صمم في ثلاثة أبعاد، واطبع في مصر"],
+    titles: ["علبة تليق بعلامتك", "صممها وشاهدها تدور"],
     lead: "صمم علبتك المطبوعة مجانا على نموذج حي ثلاثي الأبعاد، واعرف السعر فورا، واطلب من مطابع مصرية معتمدة.",
-    primary: "ابدأ التصميم مجانا",
-    secondary: "تصفح النماذج",
+    primary: "بدء التصميم مجانا",
+    secondary: "عرض النماذج",
     pause: "إيقاف الدوران",
     play: "تدوير العلبة",
-    mediaAlt: "علبة شحن مطبوعة تدور على نموذجنا ثلاثي الأبعاد",
+    mediaAlt: "علبة بريدية مطبوعة تدور على نموذجنا ثلاثي الأبعاد",
   },
   statement: {
     lead: "علبة لكل ما تبيعه.",
@@ -159,9 +160,9 @@ const ar: HomeCopy = {
     body: "ارفع شعارك واختر الألوان والخطوط العربية أو اللاتينية، وشاهد التصميم على نموذج ثلاثي الأبعاد قبل الطباعة. دون برامج ودون مصمم ودون رسوم.",
     link: "فتح المصمم",
     prompt: "اسم علامتك",
-    chipTitle: "500 علبة شحن",
+    chipTitle: "500 علبة بريدية",
     chipValue: "{price} للعلبة",
-    chipNote: "شامل الإعداد والتوصيل، قبل الضريبة",
+    chipNote: "شامل التجهيز والتوصيل، قبل الضريبة",
   },
   everywhere: {
     title: "كل خطوة في مكان واحد.",
@@ -169,7 +170,7 @@ const ar: HomeCopy = {
     cards: [
       { title: "تصميم على نموذج حي", body: "قص وطي ولسان لصق حقيقي لكل نموذج، بمقاسك بالمليمتر.", link: "فتح المصمم" },
       { title: "إدارة الطلب كله", body: "التصميم والسعر والدفع والتوصيل في حساب واحد.", link: "طلباتي" },
-      { title: "طباعة عند مطبعة معتمدة", body: "{printers} {printersWord} في مصر تراجع كل ملف وترسل بروفة قبل الطباعة.", link: "تعرف على المطابع" },
+      { title: "طباعة عند مطبعة معتمدة", body: "{printers} {printersWord} في مصر تراجع كل ملف قبل الطباعة، بعد أن تعتمد أنت البروفة.", link: "التعرف على المطابع" },
     ],
     nodes: ["التصميم", "السعر", "الدفع", "المطبعة", "التوصيل"],
     hub: "علبة",
@@ -177,8 +178,8 @@ const ar: HomeCopy = {
   delivery: {
     title: "توصيل إلى كل محافظات مصر",
     cardTitle: "التوصيل إلى 27 محافظة",
-    cardBody: "تشحن العلب مسطحة لتقل تكلفة الشحن، وتعرف مدة التسليم قبل الدفع: {days} {daysWord} إلى القاهرة الكبرى لطلب 500 علبة شحن.",
-    orderTitle: "علبة شحن",
+    cardBody: "تشحن العلب مسطحة لتقل تكلفة الشحن، وتعرف مدة التسليم قبل الدفع: {days} {daysWord} إلى القاهرة الكبرى لطلب 500 علبة بريدية.",
+    orderTitle: "علبة بريدية",
     orderQty: "500 علبة",
     orderPrice: "{price} للعلبة",
     orderDays: "التسليم خلال {days} {daysWord}",
@@ -188,11 +189,11 @@ const ar: HomeCopy = {
   anyone: {
     title: "لكل نشاط، من أول طلب إلى آلاف العلب",
     cards: [
-      { title: "المتاجر الإلكترونية", body: "علب شحن تحمي المنتج وتفتح كأنها هدية." },
+      { title: "المتاجر الإلكترونية", body: "علب بريدية تحمي المنتج وتفتح كأنها هدية." },
       { title: "المطاعم والمقاهي", body: "علب بيتزا وعلب تيك أواي مطبوعة باسمك." },
-      { title: "مستحضرات التجميل والعناية", body: "علب كرتون رقيقة بتشطيب لامع أو مخملي." },
+      { title: "مستحضرات التجميل والعناية", body: "علب دوبلكس بتشطيب لامع أو مخملي." },
     ],
-    cta: "تصفح النماذج",
+    cta: "عرض النماذج",
   },
   designer: {
     title: "تعرف على مصممك ثلاثي الأبعاد",
@@ -205,8 +206,8 @@ const ar: HomeCopy = {
   },
   wall: {
     title: "{models} نموذجا في مكتبة واحدة",
-    body: "علب شحن وكرتون وعلب فاخرة وصوان وأنابيب وزجاجات وأكياس وعلب معدنية، في {groups} مجموعات، ولكل نموذج فرد حقيقي.",
-    link: "تصفح الكتالوج",
+    body: "علب بريدية وكراتين شحن وعلب دوبلكس وعلب صلبة وصوان وأنابيب وزجاجات وأكياس وعلب معدنية، في {groups} مجموعات، ولكل نموذج قالب حقيقي.",
+    link: "عرض الكتالوج",
     pause: "إيقاف الحركة",
     play: "تشغيل الحركة",
   },
@@ -219,19 +220,19 @@ const ar: HomeCopy = {
   stats: {
     title: "كل ما تحتاجه لتطبع علبتك",
     checkoutTitle: "سعر واضح قبل أن تطلب",
-    rule: "{price} للعلبة لطلب 500 علبة شحن، شامل الإعداد والتوصيل إلى القاهرة الكبرى، وتظهر ضريبة القيمة المضافة 14% بشكل منفصل.",
-    items: [{ label: "نموذج في المكتبة" }, { label: "{printersWord}" }, { label: "{daysWord} للتسليم في القاهرة الكبرى" }, { label: "علبة حد أدنى للطلب" }],
+    rule: "{price} للعلبة لطلب 500 علبة بريدية، شامل التجهيز والتوصيل إلى القاهرة الكبرى، وتظهر ضريبة القيمة المضافة 14% بشكل منفصل.",
+    items: [{ label: "نموذج في المكتبة" }, { label: "{printersWord}" }, { label: "{daysWord} للتسليم في القاهرة الكبرى" }, { label: "علبة كحد أدنى للطلب" }],
     note: "الأرقام من مكتبة النماذج والمطابع ومحرك الأسعار، وتتحدث كل ساعة.",
-    secureTitle: "دفع آمن وفاتورة واضحة",
+    secureTitle: "دفع آمن وإيصال واضح",
     payChips: ["بطاقة ميزة أو فيزا", "محفظة إلكترونية", "فوري", "إنستاباي"],
-    secureBody: "ادفع بالبطاقة أو المحفظة الإلكترونية أو فوري أو إنستاباي، ومع كل طلب فاتورة توضح ضريبة القيمة المضافة 14%.",
+    secureBody: "ادفع بالبطاقة أو المحفظة الإلكترونية أو فوري أو إنستاباي، ومع كل طلب إيصال يوضح ضريبة القيمة المضافة 14%.",
     receipt: {
       title: "ملخص الطلب",
-      line: "علبة شحن × 500",
-      setup: "الإعداد والفورمة",
+      line: "علبة بريدية × 500",
+      setup: "التجهيز وفورمة التكسير",
       delivery: "التوصيل، القاهرة الكبرى",
       included: "مشمول",
-      subtotal: "الإجمالي الفرعي",
+      subtotal: "المجموع الفرعي",
       vat: "ضريبة القيمة المضافة 14%",
       total: "الإجمالي",
       pay: "الدفع",
@@ -243,11 +244,12 @@ const ar: HomeCopy = {
     finishes: ["إيقاف حركة التشطيبات", "تشغيل حركة التشطيبات"],
     price: ["إيقاف حركة ملخص الطلب", "تشغيل حركة ملخص الطلب"],
     pay: ["إيقاف حركة وسائل الدفع", "تشغيل حركة وسائل الدفع"],
+    designer: ["إيقاف حركة معاينة المصمم", "تشغيل حركة معاينة المصمم"],
   },
   steps: {
     title: "ابدأ علبتك اليوم",
     items: ["اختيار النموذج والمقاس", "التصميم والمعاينة", "الطلب والتوصيل"],
-    cta: "ابدأ التصميم مجانا",
+    cta: "بدء التصميم مجانا",
     pause: "إيقاف الخطوات",
     play: "تشغيل الخطوات",
   },

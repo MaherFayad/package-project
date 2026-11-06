@@ -1,6 +1,6 @@
 import "server-only";
 import { cookies, headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
 import { db } from "@/lib/db";
 import { isProd } from "@/lib/env";
@@ -69,6 +69,28 @@ export async function requireUser(locale: Locale, nextPath?: string): Promise<Se
     redirect(`/${locale}/login?next=${encodeURIComponent(next)}`);
   }
   return s.user;
+}
+
+/**
+ * R6-SEC-09: first line of EVERY admin page. Next renders a page alongside its layouts, so the
+ * admin layout's redirect does not stop the page: its data was streamed in the body of the 307
+ * (every user's phone number on /admin/users). A non-admin gets the not-found branch instead,
+ * while the layout's redirect still decides the response.
+ */
+export async function requireAdminPage(): Promise<SessionUser> {
+  const s = await getSession();
+  if (!s || s.user.role !== "ADMIN") notFound();
+  return s.user;
+}
+
+/**
+ * R6-SEC-02/03: true only for a signed-in ADMIN. Next renders nested layouts, pages and
+ * `generateMetadata` alongside the admin layout's redirect, so an admin detail layout or title
+ * that looks a record up must check this itself, or a signed-out request learns whether the
+ * record exists (and its name, through the title).
+ */
+export async function isAdminSession(): Promise<boolean> {
+  return (await getSession())?.user.role === "ADMIN";
 }
 
 /**

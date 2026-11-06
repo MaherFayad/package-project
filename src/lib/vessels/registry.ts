@@ -189,7 +189,7 @@ export const VESSELS: Record<VesselKind, VesselDefinition> = {
     closures: ["CAN_END"],
     defaultClosure: "CAN_END",
     neck: P.END_202,
-    limits: { D: { min: 50, max: 70 }, H: { min: 80, max: 170 } },
+    limits: { D: { min: 53, max: 70 }, H: { min: 80, max: 170 } }, // D >= 53: the smallest end (200, seam Ø53.2) may not stand proud of the body (R6-3Q-F-02)
     presets: [
       { id: "can-250-slim", name: { ar: "250 مل رفيعة", en: "250 ml slim" }, capacityMl: 250, dims: { D: 53.4, H: 134 }, neck: P.END_200, source: "Ardagh 250 ml slim: Ø53.4 x 134.0 mm, 200 end" },
       { id: "can-330", name: { ar: "330 مل عادية", en: "330 ml standard" }, capacityMl: 330, dims: { D: 66.2, H: 115.2 }, neck: P.END_202, source: "Crown 330 ml standard: Ø66 x 115.2 mm, 202 end" },
@@ -297,6 +297,10 @@ export const LIQUIDS = {
   PERFUME: { hex: "#f4e3b8", clarity: 0.95, name: { ar: "عطر", en: "Perfume" } },
   CREAM: { hex: "#f6f0e7", clarity: 0, name: { ar: "كريم", en: "Cream" } },
   COLA: { hex: "#3b1a0c", clarity: 0.3, name: { ar: "كولا", en: "Cola" } },
+  // R5-3Q-F-20: hot sauce is an opaque red-orange purée, jam a dense dark fruit gel (they read as
+  // pink translucent hibiscus)
+  HOT_SAUCE: { hex: "#b8361a", clarity: 0, name: { ar: "صوص حار", en: "Hot sauce" } },
+  JAM: { hex: "#6e1424", clarity: 0.12, name: { ar: "مربى", en: "Jam" } },
 } as const satisfies Record<string, { hex: string; clarity: number; name: LocalizedText }>;
 export type LiquidCode = keyof typeof LIQUIDS;
 

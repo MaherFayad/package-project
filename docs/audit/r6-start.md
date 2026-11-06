@@ -64,3 +64,27 @@ CLS note: the Arabic display face swaps in late on Slow 4G; the hero lines are f
 - The home hero phone form keeps its designer target: it is a sign-up action, and sending a just-signed-in person back to a landing page adds a step.
 - No social proof: the fan cards say "Sample" on each card and in the section copy; numbers are counted from the DB/engine at build time (ISR hourly).
 - Motion is enhancement only: content is visible without JS; `prefers-reduced-motion` stops parallax, pinned scale (card shown at full size) and fan drift.
+
+## Spacing system (spec section 7, R6 spacing pass)
+
+Merged foundation a7b9fc22 (tokens, `Sheet y`, `SectionHead`, `Stack`, `Grid`, `e2e/marketing-spacing.spec.ts`). Every section is now a kit `Sheet` band; every heading block is a `SectionHead`; vertical rhythm uses `Stack`; the style tiles use `Grid`. All page-local section padding, margins, negative offsets and layout gaps were removed from `start.module.css` (layout gaps that remain are token references; only the inside of the page's own mockups, such as chip and checkout-card padding, keeps component values).
+
+| Measure (1440, ar) | Before | After | Token |
+|---|---|---|---|
+| Container | 1320 at x=60, one band 1360 at x=40, intros 760 | 1260 at x=90, intros max 760 | `--mk-container`, `--mk-gutter`, `--mk-intro-max` |
+| Hero padding top / bottom | 144 / 0 | 72 / 100 | `--mk-hero-top`, `--mk-section-y-lg` |
+| Feature bands (choose, shine, paid, fan) | 112 to 173 | 100 bottom; top collapses to 0 between same-tone dark bands (rule 2) | `y="lg"` |
+| Bento sheet (overlaps) | 144 / 144 | 100 / 100 | `y="lg"` + overlap |
+| Closing CTA | 144 / 144 | 128 / 128 | `y="xl"` |
+| Title → subtitle | 12 to 16 | 16 | `--mk-stack-title-sub` |
+| Head → content | −72 (pinned card overlapped the heading), 24, 48, 56, 64 | 40 everywhere, no negative gaps (rule 4) | `--mk-stack-head-content` |
+| Grid / bento gap | 12, 16 | 24 / 32 | `--mk-grid-gap`, `--mk-grid-gap-bento` |
+| Phone (390) | mixed 64 to 112 | hero 64 / 64, lg 64, xl 80, gutter 16 | phone tokens |
+
+`e2e/marketing-spacing.spec.ts`: `/ar/start` and `/en/start` pass at 1440, 1024, 768 and 390 (the page was never in `NOT_YET`, so the test is on).
+
+Side-by-side with shopify.com/sa/start and shopify.com/start at 1440 and 390 was re-captured section by section (hero, choose, shine, paid, lineup, bento, closing). The composites contain Shopify imagery, so they are kept out of git; our own frames are in `docs/screenshots/audit/r6-start/`.
+
+Hero headline: `--mk-fs-hero` (kit `tokens.css`, the start-page token) was `clamp(3.5rem, 1rem + 10.4vw, 11.25rem)`, which gave 165.8px at 1440 and only reached 180px at about 1575. It is now `clamp(3.5rem, 0.621rem + 11.81vw, 11.25rem)`: 56px at 390, 131px at 1024, 180px from 1440. This one-line change is in a foundation file and also applies to `/why-elba` and `/dev/kit`, the only other users of the token; the spacing spec (all pages), `why-pricing.spec` and the kit gallery spec pass with it.
+
+Re-checked after the pass: lint clean, typecheck, 8791 unit tests, build, spacing spec (all pages) + `start` + `journey` + `why-pricing` 44 passed, phone LCP ar 1.80 s / en 1.65 s, CLS 0.011 / 0.000.

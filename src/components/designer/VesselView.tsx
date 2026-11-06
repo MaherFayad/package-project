@@ -89,6 +89,9 @@ export default function VesselView({
   // Added by 3D engine (X-01): real colour and closure style when the core renderer code is only the nearest match.
   const containerTint = model.containers.find((c) => c.code === v.container)?.tint ?? null;
   const closureStyle = (model.closures.find((c) => c.code === v.closure)?.closureStyle ?? null) as ClosureStyle | null;
+  // "MATCH": the lid is the container's own material and colour (clear clamshell, tinplate tin lid)
+  const closureMatch = v.closureColor === "MATCH";
+  const closureColor = (closureMatch || !v.closureColor ? "WHITE" : v.closureColor) as ClosureColorCode;
 
   // Flexible packs: their own film model, textured per panel.
   const flexTextures = useMemo(() => {
@@ -158,7 +161,8 @@ export default function VesselView({
         closure={closureCore}
         tint={containerTint}
         closureStyle={closureStyle}
-        closureColor={(v.closureColor as ClosureColorCode) ?? "WHITE"}
+        closureColor={closureColor}
+        closureMatch={closureMatch}
         liquid={(v.content as LiquidCode) ?? model.defaultLiquid}
         fill={v.fill}
         labels={labels}
@@ -180,7 +184,8 @@ export default function VesselView({
       closure={closureCore}
       tint={containerTint}
       closureStyle={closureStyle}
-      closureColor={(v.closureColor as ClosureColorCode) ?? "WHITE"}
+      closureColor={closureColor}
+      closureMatch={closureMatch}
       liquid={(v.content as LiquidCode) ?? model.defaultLiquid}
       fill={v.fill}
       labels={labels}
