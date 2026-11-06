@@ -283,6 +283,10 @@ export const designerEn = {
     retry: "Try again",
     suggestion: "Standard size {dims} fits your product: save {pct}% and get it {days:day} sooner.",
     useSuggestion: "Use this size",
+    quoteBadge: "Priced by quote: see why",
+    quoteHeading: "Request a quote",
+    quoteTitle: "This model is priced by quote",
+    quoteAction: "Request a quote",
   },
   gate: {
     title: "Create your free account",
@@ -318,6 +322,7 @@ export const designerEn = {
     copied: "Link copied",
     creating: "Creating link",
     failed: "Could not create the link. Try again.",
+    copyFailed: "Could not copy. Select the link and copy it.",
     open: "Open",
   },
   flex: {
@@ -343,6 +348,7 @@ export const designerEn = {
     unavailable: "Price not available for this design yet",
     perPiece: "Per piece",
     collapse: "Show the model larger",
+    shareBody: "Anyone with this link can view the design in 3D. They cannot edit it.",
   },
   order: {
     button: "Order this box",

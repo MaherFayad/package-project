@@ -5,7 +5,7 @@ import type { Locale } from "@/types";
 import { getT } from "@/i18n";
 import { getSession } from "@/lib/auth/session";
 import { ElbaWordmark } from "@/components/ui";
-import { TopBarLanguage } from "./TopBarLanguage";
+import { TopBarLanguage, TopBarSignIn } from "./TopBarLanguage";
 import styles from "./designer.module.css";
 
 /** Near-black 56 px bar (Polaris frame style) for the full-screen designer. */
@@ -30,9 +30,17 @@ export async function DesignerTopBar({ locale }: { locale: Locale }) {
           <span className={styles.collapseText}>{session.user.name || t("nav.account")}</span>
         </Link>
       ) : (
-        <Link href={`/${locale}/login?next=${encodeURIComponent(`/${locale}/design`)}`} className={styles.topBarLink}>
-          {t("nav.signIn")}
-        </Link>
+        // Client island: the link carries the live editor URL (R4-02). The fallback is the same
+        // link to the start page, so the server HTML never lacks it.
+        <Suspense
+          fallback={
+            <Link href={`/${locale}/login?next=${encodeURIComponent(`/${locale}/design`)}`} className={styles.topBarLink}>
+              {t("nav.signIn")}
+            </Link>
+          }
+        >
+          <TopBarSignIn />
+        </Suspense>
       )}
     </header>
   );

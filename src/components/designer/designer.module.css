@@ -267,7 +267,11 @@
   block-size: 100%;
   object-fit: contain;
   padding: var(--p-space-1200, 3rem);
+  pointer-events: none;
+  transition: opacity var(--p-motion-duration-200, 200ms) var(--p-motion-ease-out, ease-out);
 }
+.startPoster[data-hidden="true"] { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .startPoster { transition: none; } }
 .startToggle { position: absolute; inset-block-end: var(--p-space-300); inset-inline-end: var(--p-space-300); }
 .startCta {
   display: flex;
@@ -298,6 +302,8 @@
   .startCtaLink { flex: 1 1 100%; }
 }
 .startCatalog { scroll-margin-block-start: var(--p-space-400); }
+/* Start page streaming fallback (R4-01): holds the footer below the fold until the page arrives. */
+.startFallback { min-block-size: 100dvh; }
 
 /* ── editor grid ─────────────────────────────────────────────────────── */
 .editor {
@@ -608,7 +614,10 @@
   box-shadow: 0 -1px 0 0 var(--p-color-border-secondary), var(--p-shadow-300);
   transition: block-size var(--p-motion-duration-200, 200ms) var(--p-motion-ease-out, ease-out);
 }
-.editor[data-sheet="open"] .panel { block-size: var(--sheet-open); }
+/* R4-08: 72dvh plus the toolbar, price row and the stage's 12rem floor overflowed a 844 px phone by
+   ~124 px, so the page scrolled and the sticky top bar covered the view switch and face select.
+   The open sheet takes what is left after those (21rem = 12rem stage + toolbar + price + gaps). */
+.editor[data-sheet="open"] .panel { block-size: min(var(--sheet-open), calc(100dvh - var(--p-top-bar-height) - 21rem)); }
 @media (min-width: 1040px) {
   .panel,
   .editor[data-sheet="open"] .panel {

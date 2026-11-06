@@ -39,3 +39,31 @@ export function TopBarLanguage() {
     </Link>
   );
 }
+
+/**
+ * "Sign in" for the designer's top bar (R4-02): returns to the editor the visitor is on, with its
+ * design id (?d=, written by history.replaceState after the first autosave), not to the start page.
+ */
+export function TopBarSignIn() {
+  const { locale, t } = useI18n();
+  const pathname = usePathname() || `/${locale}/design`;
+  const search = useSearchParams();
+  const qs = search?.toString();
+  const toLogin = (path: string) => `/${locale}/login?next=${encodeURIComponent(path)}`;
+  const href = toLogin(pathname + (qs ? `?${qs}` : ""));
+  return (
+    <Link
+      href={href}
+      className={styles.topBarLink}
+      onClick={(e) => {
+        const live = toLogin(window.location.pathname + window.location.search);
+        if (live !== href) {
+          e.preventDefault();
+          window.location.assign(live);
+        }
+      }}
+    >
+      {t("nav.signIn")}
+    </Link>
+  );
+}

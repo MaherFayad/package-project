@@ -99,6 +99,8 @@ export interface DesignerAppProps {
   loadError: "notFound" | null;
   /** Restore this device's autosaved draft on mount (?resume=1). */
   resumeLocal?: boolean;
+  /** Library slug of the model (its /models/<slug>.svg poster), known on the server (R4-12). */
+  posterSlug?: string;
 }
 
 const reducer = (s: History<DesignDoc>, a: HistoryAction<DesignDoc>) => historyReducer(s, a);
@@ -129,7 +131,7 @@ function slugify(name: string) {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "")
-      .slice(0, 40) || "box"
+      .slice(0, 40)
   );
 }
 
@@ -141,8 +143,14 @@ export function DesignerApp(props: DesignerAppProps) {
   const ready = useLibraryModel(docModelCode(props.initialDoc));
   if (!ready)
     return (
-      <div className={lib.stageSkeleton} style={{ minBlockSize: "70vh" }} aria-busy="true" data-testid="designer-loading">
+      <div className={lib.stageSkeleton} style={{ minBlockSize: "70vh", position: "relative" }} aria-busy="true" data-testid="designer-loading">
         <span className="visually-hidden">{props.locale === "ar" ? "جار تحميل المصمم" : "Loading the designer"}</span>
+        {/* R4-12: the model's poster is in the server HTML, so the first large paint (LCP) is the
+            box itself at first paint, not seconds later once the family pack and 3D chunk load. */}
+        {props.posterSlug ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={`/models/${props.posterSlug}.svg`} alt="" aria-hidden="true" className={styles.stagePoster} />
+        ) : null}
       </div>
     );
   return <DesignerEditor {...props} />;
@@ -181,7 +189,10 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
   const libModel = useMemo<ModelDef | null>(() => docModel(doc), [doc.modelCode, doc.structureCode]);
   const model: DielineModel | null = geo?.dieline ?? null;
   const isVessel = !!geo?.vessel;
-  const orderLabel = t(isVessel ? "designer.container.order" : "designer.order.button");
+  // B-16: models no Egyptian SME printer makes go to checkout's quote request, not an order. One
+  // label for the toolbar, the export modal and the export toast (R4-03).
+  const byQuote = ["quote", "preview"].includes(orderModeOf(docModelCode(doc)).mode);
+  const orderLabel = byQuote ? t("designer.price.quoteAction") : t(isVessel ? "designer.container.order" : "designer.order.button");
   const modelRef = useRef(model);
   modelRef.current = model;
   // Faces of the latest committed geometry (ahead of `model` while typing) for artwork rescaling.
@@ -286,11 +297,35 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
   const [sheetPx] = useState(() => (typeof window !== "undefined" && defaultMaxDpr() < 2 ? 1024 : 2048));
   // CR-15: a new, empty design previews a "Your logo" hint on the lid (3D and dieline only; the
   // document, the face editor, preflight and the print file never contain it).
+  // R4-10: exports and saved thumbnails are taken without the hint (it is not part of the design).
+  const [cleanShot, setCleanShot] = useState(false);
   const placeholder = useMemo(
-    () => ({ text: t("designer.artwork.placeholderLogo"), fontFamily: locale === "ar" ? ("IBM Plex Sans Arabic" as const) : ("Inter" as const), direction: locale === "ar" ? ("rtl" as const) : ("ltr" as const), color: "#616161" }),
-    [t, locale],
+    () => cleanShot ? null : ({ text: t("designer.artwork.placeholderLogo"), fontFamily: locale === "ar" ? ("IBM Plex Sans Arabic" as const) : ("Inter" as const), direction: locale === "ar" ? ("rtl" as const) : ("ltr" as const), color: "#616161" }),
+    [t, locale, cleanShot],
   );
   const { canvases, version, images, imgVersion, fonts } = useArtworkCanvases(model, doc.artwork, doc.materialCode, bothSides, sheetPx, placeholder);
+  const versionRef = useRef(version);
+  versionRef.current = version;
+  /**
+   * Screenshot of the 3D view as the design really is: when the outside is still empty, repaint
+   * the artwork sheet without the "Your logo" hint first, then put it back (R4-10).
+   */
+  const shoot = useCallback(async (opts: Parameters<PackagingSceneHandle["screenshot"]>[0]) => {
+    const scene = sceneRef.current;
+    if (!scene) throw new Error("3D view not ready");
+    const outside = docRef.current.artwork.outside;
+    if (outside.layers.length > 0 || outside.background) return scene.screenshot(opts);
+    const before = versionRef.current;
+    setCleanShot(true);
+    try {
+      for (let i = 0; i < 40 && versionRef.current === before; i++) await new Promise((r) => setTimeout(r, 25));
+      // Let the texture upload and one frame render with the repainted sheet.
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      return await scene.screenshot(opts);
+    } finally {
+      setCleanShot(false);
+    }
+  }, []);
 
   // ── preflight ────────────────────────────────────────────────────
   const issues = useMemo(() => (model ? runPreflight(doc, model) : []), [doc, model]);
@@ -332,7 +367,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
         let thumbnail: string | undefined;
         if (opts.thumbnail && sceneRef.current) {
           try {
-            const blob = await sceneRef.current.screenshot({ width: 320, height: 320, mimeType: "image/jpeg", quality: 0.8, background: "#f1f1f1" });
+            const blob = await shoot({ width: 320, height: 320, mimeType: "image/jpeg", quality: 0.8, background: "#f1f1f1" });
             const url = await blobToDataUrl(blob);
             if (url.length < 400_000) thumbnail = url;
           } catch {
@@ -375,7 +410,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
         if (inflight.current === run) inflight.current = null;
       }
     },
-    [setUrl],
+    [setUrl, shoot],
   );
 
   saveRef.current = () => saveToServer();
@@ -476,7 +511,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
       geoFacesRef.current = nextGeo.dieline.faces;
       commit(rescaled, coalesce);
       if (removed) toast.show(t("designer.box.removedLayers", { count: removed }));
-      if (pruned.removed.length) toast.show(t("library.panel.removedFinishes", { list: pruned.removed.map((c) => FINISHES[c].name[locale]).join("، ") }));
+      if (pruned.removed.length) toast.show(t("library.panel.removedFinishes", { list: pruned.removed.map((c) => FINISHES[c].name[locale]).join(locale === "ar" ? "، " : ", ") }));
       return true;
     },
     [commit, t, toast, locale],
@@ -616,10 +651,11 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
       // Wait for the lazily loaded 3D view to be ready.
       for (let i = 0; i < 40 && !sceneRef.current?.getCanvas(); i++) await new Promise((r) => setTimeout(r, 100));
       const px = size === "hd" ? 2160 : 1080;
-      const shot = await sceneRef.current!.screenshot({ width: px, height: px, background: "#ffffff" });
+      const shot = await shoot({ width: px, height: px, background: "#ffffff" });
       // B-22: the standard PNG carries the small Elba mark (social loop); HD stays clean.
       const blob = size === "hd" ? shot : await stampExportMark(shot, { locale }).catch(() => shot);
-      downloadBlob(blob, `elba-${slugify(doc.name || libModel?.slug || doc.structureCode)}-${px}.png`);
+      // Arabic names have no Latin letters: fall back to the model slug, not "box" (R4-07).
+      downloadBlob(blob, `elba-${slugify(doc.name) || libModel?.slug || slugify(doc.structureCode) || "design"}-${px}.png`);
       trackClient("export_png", { size, structure_code: doc.structureCode, locale });
       setModal(null);
       toast.show(t("designer.export.done"), { action: { content: orderLabel, onAction: doOrder } });
@@ -731,8 +767,6 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
   // Open-top styles (FEFCO 0700…) never close: fold 100 % reads "Assembled". The catalogue adds
   // `openTop` to the library; read it defensively until then.
   const openTop = !!(libModel as { openTop?: boolean } | null)?.openTop;
-  // B-16: models no Egyptian SME printer makes go to checkout's quote request, not an order.
-  const byQuote = ["quote", "preview"].includes(orderModeOf(docModelCode(doc)).mode);
   const structureName = libModel?.name[locale] ?? t(`structures.${doc.structureCode}` as DictKey);
 
   return (
@@ -815,7 +849,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
           </Popover>
         </div>
         <Button variant="primary" onClick={doOrder} loading={ordering}>
-          {byQuote ? (locale === "ar" ? "اطلب عرض سعر" : "Request a quote") : orderLabel}
+          {orderLabel}
         </Button>
       </div>
 
@@ -866,7 +900,6 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
                   roleDescription={t("viewer.roleDescription")}
                   keyboardHint={t("viewer.keyboardHint")}
                   fallback={t("viewer.unsupported")}
-                  poster={libModel ? `/models/${libModel.slug}.svg` : undefined}
                   onReady={onSceneReady}
                   {...(geo?.vessel && libModel?.kind === "vessel"
                     ? {
@@ -1125,7 +1158,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
           doOrder();
         }}
       />
-      <ShareModal open={modal === "share"} onClose={() => setModal(null)} url={shareUrl} error={shareError} />
+      <ShareModal open={modal === "share"} onClose={() => setModal(null)} url={shareUrl} error={shareError} vessel={isVessel} />
     </div>
   );
 }

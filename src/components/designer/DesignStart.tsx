@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowRight, Footprints, Pause, Pizza, Play, Shirt, SprayCan } from "lucide-react";
 import type { Locale } from "@/types";
 import { useI18n } from "@/i18n/client";
@@ -11,11 +11,8 @@ import { Button, Icon } from "@/components/ui";
 import { PRODUCT_PRESETS, designerPathLite, type ProductPresetKey } from "./lib/paths";
 import styles from "./designer.module.css";
 
-const StartViewer = dynamic(() => import("./StartViewer"), {
-  ssr: false,
-  // eslint-disable-next-line @next/next/no-img-element
-  loading: () => <img src="/models/mailer-box.svg" alt="" className={styles.startPoster} />,
-});
+// No loading poster here: DesignStart keeps one poster <img> until the first frame (R4-11).
+const StartViewer = dynamic(() => import("./StartViewer"), { ssr: false, loading: () => null });
 
 const ICONS = { tshirt: Shirt, shoe: Footprints, perfume50: SprayCan, pizza30: Pizza } as const;
 /** Poster (the model's thumbnail) shown until the 3D chunk is ready. */
@@ -35,6 +32,10 @@ export function DesignStart({ locale }: { locale: Locale }) {
   const [playing, setPlaying] = useState(true);
   const wrapRef = useRef<HTMLDivElement>(null);
   const preset = PRODUCT_PRESETS.find((p) => p.key === active)!;
+  // The viewer remounts per product (key={active}); the poster covers it until its first frame.
+  const [viewerReady, setViewerReady] = useState(false);
+  const onViewerReady = useCallback(() => setViewerReady(true), []);
+  useEffect(() => setViewerReady(false), [active]);
 
   // three.js loads once the browser is idle, so the page paints fast on mid-range phones.
   useEffect(() => {
@@ -85,8 +86,6 @@ export function DesignStart({ locale }: { locale: Locale }) {
 
       <div className={styles.startStageCol}>
         <div className={styles.startStage} ref={wrapRef} onPointerDown={() => setPlaying(false)}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          {!mounted ? <img src={`/models/${POSTER[active]}.svg`} alt="" className={styles.startPoster} /> : null}
           {mounted ? (
             <div className={styles.startViewer} onFocusCapture={() => setPlaying(false)}>
               <StartViewer
@@ -94,7 +93,7 @@ export function DesignStart({ locale }: { locale: Locale }) {
                 locale={locale}
                 playing={playing}
                 wrapRef={wrapRef}
-                poster={`/models/${POSTER[active]}.svg`}
+                onReady={onViewerReady}
                 labels={{
                   viewer: t("designer.start.viewerLabel", { product: productName }),
                   roleDescription: t("viewer.roleDescription"),
@@ -104,6 +103,14 @@ export function DesignStart({ locale }: { locale: Locale }) {
               />
             </div>
           ) : null}
+          {/*
+            R4-11: one poster element from the first paint until the 3D view has drawn a frame,
+            then it fades out. The engine's own poster (passed before) was a second, larger
+            element painted seconds later, so it became the page's LCP (about 6 s on a throttled
+            phone instead of about 2 s).
+          */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={`/models/${POSTER[active]}.svg`} alt="" className={styles.startPoster} data-hidden={mounted && viewerReady ? "true" : undefined} />
           <div className={styles.startToggle}>
             <Button
               size="slim"
