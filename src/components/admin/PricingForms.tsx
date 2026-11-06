@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { parseNumberInput } from "./lib/moneyInput";
+import { parseNumberInput } from "@/lib/money/input";
 import { Banner } from "@/components/ui/Banner";
 import { BlockStack, InlineGrid, InlineStack } from "@/components/ui/Stack";
 import { Button, ButtonGroup } from "@/components/ui/Button";

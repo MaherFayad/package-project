@@ -13,7 +13,7 @@ import type { DictKey } from "@/i18n";
 import { formatDate, formatMoney } from "@/lib/format";
 import { MarginLine } from "./OrderActions";
 import { priceLines } from "./lib/quotePricing";
-import { parseWholeInput } from "./lib/moneyInput";
+import { parseWholeInput } from "@/lib/money/input";
 import { sendQuotePriceAction } from "./server/actions";
 import { egpToPiastersInput, fieldError, piastersToInput, useAdminAction, useAdminErrorText } from "./useAdminAction";
 import type { AdminActionResponse } from "./server/context";

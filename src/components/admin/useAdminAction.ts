@@ -1,6 +1,6 @@
 "use client";
 
-import { parseEgpInput } from "./lib/moneyInput";
+import { parseEgpInput } from "@/lib/money/input";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { useToast } from "@/components/ui/Toast";

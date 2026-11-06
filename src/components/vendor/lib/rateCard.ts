@@ -4,6 +4,7 @@
  * Error codes map to i18n keys `vendorPortal.rateCards.errors.<CODE>`.
  */
 import { z } from "zod";
+import { parseDecimalInput } from "@/lib/money/input";
 import { FINISH_CODES, QTY_TIERS, type Dims, type FinishCode, type RateTier, type StructureCode } from "@/types";
 import { validateDims } from "@/lib/dieline/limits";
 
@@ -63,19 +64,12 @@ export type RateCardErrors = Partial<Record<string, RateCardErrorCode>>;
 
 export type RateCardResult = { ok: true; value: RateCardUpdate } | { ok: false; errors: RateCardErrors };
 
-/** Accept Arabic-Indic digits, Arabic decimal separator and thousands commas. */
+/**
+ * Accept Arabic-Indic digits, the Arabic decimal separator and thousands commas. Shared reader
+ * (`@/lib/money/input`, admin R6-AD-01): a decimal comma ("18,50") is invalid, never 1850.
+ */
 export function parseNumber(raw: string | number | null | undefined): number | null {
-  if (raw === null || raw === undefined) return null;
-  if (typeof raw === "number") return Number.isFinite(raw) ? raw : null;
-  const s = raw
-    .replace(/[٠-٩]/g, (c) => String(c.charCodeAt(0) - 0x0660))
-    .replace(/[۰-۹]/g, (c) => String(c.charCodeAt(0) - 0x06f0))
-    .replace(/٫/g, ".")
-    .replace(/[,،\s]/g, "")
-    .trim();
-  if (!s) return null;
-  if (!/^-?\d+(\.\d+)?$/.test(s)) return NaN;
-  return Number(s);
+  return parseDecimalInput(raw, { allowNegative: true });
 }
 
 export const egpToPiasters = (egp: number) => Math.round(egp * 100);
