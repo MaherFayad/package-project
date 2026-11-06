@@ -158,7 +158,23 @@ interface Spec {
   limits?: Partial<StructureParamLimits>;
 }
 
-const kit = (o: TrayKitOpts): FamilyGenerator => (d, t, f: StructureFeatures) => trayKit(d, t, o, f);
+type KitGenerator = FamilyGenerator & { kitOpts?: TrayKitOpts };
+const kit = (o: TrayKitOpts): FamilyGenerator => Object.assign((d: Dims, t: number, f: StructureFeatures) => trayKit(d, t, o, f), { kitOpts: o });
+
+/**
+ * Offer only the options the style's geometry actually shows: a handle toggle is pointless when
+ * hand holes are built in (0422.1, 0430…) and impossible under a lid; a thumb notch needs an
+ * open, full-height front wall (no cover flaps, no display cut-down).
+ */
+function featuresFor(meta: FeatureSupport, gen: KitGenerator): FeatureSupport {
+  const o = gen.kitOpts;
+  if (!o) return meta;
+  return {
+    ...meta,
+    handle: meta.handle && !o.handHoles && o.top.kind !== "lid",
+    thumbNotch: meta.thumbNotch && o.top.kind === "none" && !o.displayFront,
+  };
+}
 const wrap = (o: WrapOpts): FamilyGenerator => (d, t, f) => wrapFolder(d, t, o, f);
 
 function entry(s: Spec): Fefco04Definition {
@@ -179,7 +195,7 @@ function entry(s: Spec): Fefco04Definition {
     defaultDims: meta.defaultDims,
     presets,
     materials: meta.materials,
-    features: meta.features,
+    features: featuresFor(meta.features, s.gen),
     shape: "box",
     pieces: s.kind === "bliss" ? 3 : 1,
     glued: s.glued ?? false,

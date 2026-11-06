@@ -1,0 +1,120 @@
+import { describe, expect, it } from "vitest";
+import { Matrix4, Vector3 } from "three";
+import { computePoses, panelLocalPoint, panelPivot, type DielineModel, type DielinePanel } from "../../..";
+import { DEFINITIONS, generateFamilyDieline, type Fefco04Definition } from "..";
+
+/**
+ * 3D behaviour of every FEFCO 04 model in the live designer (PackagingModel renders the
+ * computePoses output 1:1): the closed box has no board inside board (z-fighting / clipping),
+ * and no panel sweeps through another while the blank folds.
+ */
+
+type P = { x: number; y: number };
+function inPoly(x: number, y: number, poly: P[]) {
+  let c = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const a = poly[i];
+    const b = poly[j];
+    if (a.y > y !== b.y > y && x < ((b.x - a.x) * (y - a.y)) / (b.y - a.y) + a.x) c = !c;
+  }
+  return c;
+}
+
+const asModel = (def: Fefco04Definition, t: number, dims = def.defaultDims) => generateFamilyDieline(def, dims, { thicknessMm: t }) as unknown as DielineModel;
+
+/** Grid samples inside each panel outline (sheet mm). */
+function samples(p: DielinePanel, n: number): P[] {
+  const out: P[] = [];
+  const b = p.bbox;
+  for (let i = 0; i < n; i++)
+    for (let j = 0; j < n; j++) {
+      const x = b.x + ((i + 0.5) / n) * b.width;
+      const y = b.y + ((j + 0.5) / n) * b.height;
+      if (inPoly(x, y, p.polygon)) out.push({ x, y });
+    }
+  return out;
+}
+
+/**
+ * `parallelOnly` keeps stacked (parallel) pairs: where perpendicular panels meet, each board's cut edge
+ * ends inside the other's caliper by construction (as at every hinge) and nothing shows.
+ *
+ * Pairs (a, b) where at least `min` mid-surface samples of panel a lie inside the board of panel b
+ * (within 0.45 t of b's mid-plane and inside b's outline). Parent/child pairs share a hinge and are skipped.
+ */
+function clashes(d: DielineModel, progress: number, n = 12, min = 3, parallelOnly = false): string[] {
+  const t = d.thicknessMm;
+  const poses = computePoses(d, progress);
+  const frame = new Map(d.panels.map((p) => [p.id, { world: poses.get(p.id)!.world, inv: new Matrix4().copy(poses.get(p.id)!.world).invert(), pv: panelPivot(p, t) }]));
+  const pts = new Map(d.panels.map((p) => [p.id, samples(p, n)]));
+  const out: string[] = [];
+  const v = new Vector3();
+  for (const a of d.panels)
+    for (const b of d.panels) {
+      if (a === b || a.parentId === b.id || b.parentId === a.id) continue;
+      const A = frame.get(a.id)!;
+      const B = frame.get(b.id)!;
+      if (parallelOnly && Math.abs(new Vector3(0, 0, 1).transformDirection(A.world).dot(new Vector3(0, 0, 1).transformDirection(B.world))) < 0.999) continue;
+      const zc = (-0.5 + b.stackOffset) * t;
+      let hits = 0;
+      for (const s of pts.get(a.id)!) {
+        panelLocalPoint(a, s, 0.5, A.pv, t, v).applyMatrix4(A.world).applyMatrix4(B.inv);
+        if (Math.abs(v.z + B.pv.z - zc) < 0.45 * t && inPoly(v.x + B.pv.x, -(v.y + B.pv.y), b.polygon)) hits++;
+      }
+      if (hits >= min) out.push(`${a.id}→${b.id}@${progress}`);
+    }
+  return out;
+}
+
+describe("FEFCO 04 in 3D: closed boxes", () => {
+  for (const def of DEFINITIONS)
+    it(`${def.fefco}: no stacked board inside board (z-fighting), every preset, E and B flute`, () => {
+      for (const t of [1.5, 3])
+        for (const dims of [def.defaultDims, ...def.presets.map((p) => p.dims)]) expect(clashes(asModel(def, t, dims), 1, 16, 2, true), `${def.fefco} t=${t}`).toEqual([]);
+    });
+});
+
+describe("FEFCO 04 in 3D: fold animation", () => {
+  /** Transient contact while a tuck enters behind the front wall (0429 wrap-over lid). */
+  const ALLOWED = new Set(["0429:lidTuck", "0429:front"]);
+  /** The fifth panel lands on the base at the end of the wrap: one frame of contact inside the tube. */
+  const LANDING = /^(base→fifth|fifth→base)/;
+  for (const def of DEFINITIONS)
+    it(`${def.fefco}: no panel sweeps through another`, () => {
+      const d = asModel(def, 1.5);
+      const bad: string[] = [];
+      for (let k = 1; k < 20; k++)
+        for (const c of clashes(d, k / 20))
+          if (!LANDING.test(c) && !ALLOWED.has(`${def.fefco}:${c.split("→")[0]}`)) bad.push(c);
+      expect(bad).toEqual([]);
+    });
+
+  it("ears fold before the wall that traps them rises", () => {
+    for (const def of DEFINITIONS) {
+      const d = asModel(def, 1.5);
+      const ears = d.panels.filter((p) => p.role === "ear");
+      const owners = new Set(ears.map((e) => e.parentId));
+      const receivers = d.panels.filter((p) => p.parentId === d.rootId && !owners.has(p.id));
+      for (const ear of ears) {
+        const owner = d.panels.find((p) => p.id === ear.parentId)!;
+        expect(ear.foldStage, `${def.fefco} ${ear.id}`).toBeLessThanOrEqual(owner.foldStage);
+        for (const r of receivers) expect(ear.foldStage, `${def.fefco} ${ear.id} before ${r.id}`).toBeLessThan(r.foldStage);
+      }
+    }
+  });
+
+  it("interior bottom flaps rest on the base, one caliper above it", () => {
+    for (const def of DEFINITIONS)
+      for (const t of [1.5, 3]) {
+        const d = asModel(def, t);
+        const poses = computePoses(d, 1);
+        for (const flap of d.panels.filter((p) => /BottomFlap$/.test(p.id))) {
+          const lowest = Math.min(...flap.polygon.flatMap((q) => [0, 1].map((dep) => panelLocalPoint(flap, q, dep, panelPivot(flap, t), t).applyMatrix4(poses.get(flap.id)!.world).y)));
+          const base = d.panels.find((p) => p.id === d.rootId)!;
+          const baseTop = Math.max(...base.polygon.flatMap((q) => [0, 1].map((dep) => panelLocalPoint(base, q, dep, panelPivot(base, t), t).applyMatrix4(poses.get(base.id)!.world).y)));
+          expect(lowest, `${def.fefco} ${flap.id} t=${t}`).toBeGreaterThanOrEqual(baseTop - 0.01);
+          expect(lowest - baseTop, `${def.fefco} ${flap.id} t=${t}`).toBeLessThan(0.5);
+        }
+      }
+  });
+});
