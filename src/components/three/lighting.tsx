@@ -1,8 +1,9 @@
 "use client";
 
-import { Environment, Lightformer } from "@react-three/drei";
-import { memo, useEffect, useMemo } from "react";
-import { BackSide, Color, ShaderMaterial, SphereGeometry } from "three";
+import { Lightformer } from "@react-three/drei";
+import { memo, useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from "react";
+import { createPortal, useThree } from "@react-three/fiber";
+import { BackSide, Color, CubeCamera, HalfFloatType, PMREMGenerator, Scene, ShaderMaterial, SphereGeometry, WebGLCubeRenderTarget, type WebGLRenderer } from "three";
 
 /**
  * Studio lighting for packaging product shots (owner: 3D engine).
@@ -43,6 +44,52 @@ function Cyclorama({ top, horizon, bottom }: { top: string; horizon: string; bot
   return <mesh geometry={geo} material={mat} />;
 }
 
+/**
+ * Environment map from a small in-scene light set (owner: 3D engine). Same idea as drei's
+ * <Environment> with children (render a virtual scene into a cube once, prefilter it for PBR), but
+ * it owns the prefiltered (PMREM) target. With drei, three prefilters the cube render target
+ * internally and never frees that copy (its cache only listens for disposal of non-render-target
+ * textures): +2 textures / framebuffers (~7 MB) on every mount. Harmless while the canvas dies
+ * with its scene, a leak once contents swap inside one shared EngineCanvas. Here both the cube
+ * target and the PMREM target are disposed on unmount.
+ */
+/** One prefilter generator per renderer: its blur shaders compile once, not on every content swap. */
+const PMREMS = new WeakMap<WebGLRenderer, PMREMGenerator>();
+function pmremFor(gl: WebGLRenderer): PMREMGenerator {
+  let g = PMREMS.get(gl);
+  if (!g) PMREMS.set(gl, (g = new PMREMGenerator(gl)));
+  return g;
+}
+
+export function EnvironmentScene({ resolution = 256, intensity = 1, children }: { resolution?: number; intensity?: number; children: ReactNode }) {
+  const gl = useThree((s) => s.gl);
+  const scene = useThree((s) => s.scene);
+  const invalidate = useThree((s) => s.invalidate);
+  const [virtual] = useState(() => new Scene());
+  const fbo = useMemo(() => new WebGLCubeRenderTarget(resolution, { type: HalfFloatType }), [resolution]);
+  const cubeCam = useMemo(() => new CubeCamera(0.1, 1000, fbo), [fbo]);
+  useEffect(() => () => fbo.dispose(), [fbo]);
+  // children are committed into the virtual scene before this layout effect runs
+  useLayoutEffect(() => {
+    const autoClear = gl.autoClear;
+    gl.autoClear = true;
+    cubeCam.update(gl, virtual);
+    gl.autoClear = autoClear;
+    const target = pmremFor(gl).fromCubemap(fbo.texture);
+    const prev = scene.environment;
+    const prevIntensity = scene.environmentIntensity;
+    scene.environment = target.texture;
+    scene.environmentIntensity = intensity;
+    invalidate();
+    return () => {
+      if (scene.environment === target.texture) scene.environment = prev;
+      scene.environmentIntensity = prevIntensity;
+      target.dispose();
+    };
+  }, [gl, scene, virtual, fbo, cubeCam, intensity, invalidate]);
+  return createPortal(<>{children}</>, virtual);
+}
+
 export interface StudioEnvironmentProps {
   /** Overall strength of reflections (default 1). */
   intensity?: number;
@@ -53,7 +100,7 @@ export interface StudioEnvironmentProps {
 /** Softbox environment for reflections (foil, gloss, spot UV). Rendered once. */
 export const StudioEnvironment = memo(function StudioEnvironment({ intensity = 1, resolution = 256 }: StudioEnvironmentProps) {
   return (
-    <Environment resolution={resolution} frames={1} environmentIntensity={0.7 * intensity}>
+    <EnvironmentScene resolution={resolution} intensity={0.7 * intensity}>
       <Cyclorama top="#a8a8a8" horizon="#8a8a8a" bottom="#77716a" />
       {/* overhead softbox */}
       <Lightformer form="rect" intensity={2.6} position={[0, 5, 0.5]} rotation-x={Math.PI / 2} scale={[7, 5, 1]} />
@@ -65,7 +112,7 @@ export const StudioEnvironment = memo(function StudioEnvironment({ intensity = 1
       <Lightformer form="rect" intensity={0.9} position={[0, 1, 5]} scale={[10, 3, 1]} />
       {/* small round kicker: a crisp specular dot on metals */}
       <Lightformer form="circle" intensity={3} position={[2.6, 3, 3]} scale={0.8} />
-    </Environment>
+    </EnvironmentScene>
   );
 });
 
