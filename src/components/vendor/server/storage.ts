@@ -2,7 +2,7 @@ import "server-only";
 import { randomBytes } from "node:crypto";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { buildKey, checkUpload, parseKey, type UploadCheck, type UploadScope } from "../lib/files";
+import { buildKey, checkUpload, parseKey, stripImageMetadata, type UploadCheck, type UploadScope } from "../lib/files";
 
 /**
  * Local disk storage for vendor uploads (dev and single-server deployments).
@@ -29,11 +29,14 @@ export type SaveResult = { ok: true; key: string; type: string; size: number } |
 export async function saveUpload(scope: UploadScope, ownerId: string, bytes: Uint8Array): Promise<SaveResult> {
   const check = checkUpload(scope, bytes);
   if (!check.ok) return { ok: false, error: check.error };
+  // R4: no EXIF / XMP / text chunks (GPS, hidden contact details) in stored images.
+  const clean = check.type === "application/pdf" ? bytes : stripImageMetadata(bytes, check.type);
+  if (!clean) return { ok: false, error: "TYPE" };
   const key = buildKey(scope, ownerId, randomBytes(12).toString("base64url"), check.ext);
   const full = pathFor(key);
   await mkdir(path.dirname(full), { recursive: true });
-  await writeFile(full, bytes, { flag: "wx" });
-  return { ok: true, key, type: check.type, size: bytes.length };
+  await writeFile(full, clean, { flag: "wx" });
+  return { ok: true, key, type: check.type, size: clean.length };
 }
 
 export async function readUpload(key: string): Promise<Buffer | null> {

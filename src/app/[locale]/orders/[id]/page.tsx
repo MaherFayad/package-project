@@ -67,7 +67,9 @@ function eventText(t: TFunction, type: ProductionEventType, note: string | null,
       return { content: t(key, { number: code[2] ?? "" }), detail: code[1] === "DISPUTE_OPENED" && code[2] ? t(`orders.dispute.reasons.${code[2]}` as DictKey) : undefined };
     }
     if (code) return internal ? { content: note! } : null;
-    return note ? { content: t("orders.detail.events.NOTE"), detail: note } : null;
+    // R4 (vendor audit): free-text notes are written by the vendor to the Elba team ("Only you and the
+    // Elba team can see notes"), so buyers never see them (they could also carry contact details).
+    return note && internal ? { content: t("orders.detail.events.NOTE"), detail: note } : null;
   }
   const content = t(`orders.detail.events.${type}` as DictKey);
   if (!note) return { content };
@@ -394,13 +396,14 @@ export default async function OrderPage({ params, searchParams }: { params: Para
                   <Text as="p" variant="bodySm" tone="subdued">
                     {t("orders.detail.qcHelp")}
                   </Text>
-                  {order.qcPhotos.length === 0 ? (
+                  {/* R4 (vendor audit): buyers see QC photos once Elba ops approved them (the file route enforces it too). */}
+                  {order.qcPhotos.filter((p) => internal || p.status === "APPROVED").length === 0 ? (
                     <Text as="p" tone="subdued">
                       {t("orders.detail.noQc")}
                     </Text>
                   ) : (
                     <ul className={styles.qcGrid}>
-                      {order.qcPhotos.map((p) => {
+                      {order.qcPhotos.filter((p) => internal || p.status === "APPROVED").map((p) => {
                         const kind = ["FIRST_SHEET", "PACKED_BUNDLE"].includes(p.kind) ? p.kind : "OTHER";
                         const st = ["APPROVED", "REJECTED"].includes(p.status) ? p.status : "PENDING";
                         return (

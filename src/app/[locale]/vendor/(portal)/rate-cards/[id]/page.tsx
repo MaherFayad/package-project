@@ -42,5 +42,5 @@ export default async function RateCardPage({ params }: { params: Promise<{ local
     );
   }
   const caps = fromJson<VendorCapabilities>(vendor.capabilities);
-  return <RateCardForm key={card.updatedAt} card={card} offeredFinishes={caps?.finishes ?? []} models={modelsForCard(card.structureCode, card.materialCode)} />;
+  return <RateCardForm key={card.updatedAt} card={card} offeredFinishes={caps?.finishes ?? []} models={modelsForCard(card.structureCode, card.materialCode)} listed={caps?.models ?? []} />;
 }
