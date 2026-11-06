@@ -131,30 +131,30 @@ export default async function VendorProfilePage({ params }: Props) {
             </PillRow>
             <p className={`${rs.small} ${rs.afterPills} m-enter`}>{t("store.vendor.designHint")}</p>
           </div>
-          <dl className={`${rs.stats} ${rs.stats2} m-enter`} aria-label={t("store.vendor.statsTitle")}>
-            <div className={rs.stat}>
-              <dt className={`${rs.statLabel} ${rs.inlineIcon}`}>
+          <ul className={`${rs.stats} ${rs.stats2} m-enter`} aria-label={t("store.vendor.statsTitle")}>
+            <li className={rs.stat}>
+              <span className={`${rs.statLabel} ${rs.inlineIcon}`}>
                 {v.ratingCount > 0 ? <RatingStars rating={v.rating} label={t("store.vendor.stars", { rating: v.rating.toFixed(1) })} /> : null}
                 {t("store.vendor.rating")}
-              </dt>
+              </span>
               {/* R5-JR-05: no reviews yet reads "New", not a 0.0 rating with empty stars. */}
-              <dd className={rs.statNum}>{v.ratingCount > 0 ? <bdi>{v.rating.toFixed(1)}</bdi> : t("store.vendor.newBadge")}</dd>
-            </div>
-            <div className={rs.stat}>
-              <dt className={rs.statLabel}>{t("store.vendor.onTime")}</dt>
-              <dd className={rs.statNum}>{v.onTimeShown === false ? t("store.vendors.onTimeNew") : <bdi>{formatNumber(v.onTimePct)}%</bdi>}</dd>
-            </div>
-            <div className={rs.stat}>
-              <dt className={rs.statLabel}>{t("store.vendor.leadTime")}</dt>
-              <dd className={rs.statNum}>{t("store.structure.deliveryDays", { days: v.leadTimeDays })}</dd>
-            </div>
-            <div className={rs.stat}>
-              <dt className={rs.statLabel}>{t("store.vendor.minOrder")}</dt>
-              <dd className={rs.statNum}>
+              <span className={rs.statNum}>{v.ratingCount > 0 ? <bdi>{v.rating.toFixed(1)}</bdi> : t("store.vendor.newBadge")}</span>
+            </li>
+            <li className={rs.stat}>
+              <span className={rs.statLabel}>{t("store.vendor.onTime")}</span>
+              <span className={rs.statNum}>{v.onTimeShown === false ? t("store.vendors.onTimeNew") : <bdi>{formatNumber(v.onTimePct)}%</bdi>}</span>
+            </li>
+            <li className={rs.stat}>
+              <span className={rs.statLabel}>{t("store.vendor.leadTime")}</span>
+              <span className={rs.statNum}>{t("store.structure.deliveryDays", { days: v.leadTimeDays })}</span>
+            </li>
+            <li className={rs.stat}>
+              <span className={rs.statLabel}>{t("store.vendor.minOrder")}</span>
+              <span className={rs.statNum}>
                 <bdi>{formatNumber(v.minOrderQty)}</bdi>
-              </dd>
-            </div>
-          </dl>
+              </span>
+            </li>
+          </ul>
         </div>
       </Sheet>
 

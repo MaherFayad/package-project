@@ -170,8 +170,9 @@
   display: grid;
   gap: 20px;
   justify-items: start;
-  content-visibility: auto;
-  contain-intrinsic-block-size: auto 1400px;
+  /* R6: no content-visibility. With a fixed 1400px placeholder the page grew by up to 11,500px
+     after a scroll and 60 Tabs (cards are links: focused cards jumped); the 12 sections render
+     without it inside the LCP budget (docs/audit/r6-restyle.md, section 9). */
 }
 .section > .gridWrap { justify-self: stretch; }
 .sectionTitle { margin: 0; font-size: clamp(1.5rem, 1.2rem + 1vw, 2.125rem); font-weight: var(--mk-fw-heading, 330); line-height: 1.2; letter-spacing: -0.01em; }
