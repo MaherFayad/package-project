@@ -137,7 +137,9 @@
   block-size: 8px;
   border-radius: 50%;
   background: var(--mk-accent);
-  animation: m-pulse-dot 2.4s var(--m-ease-standard) infinite;
+  /* a11y R5-AX-04 (WCAG 2.2.2 Pause, stop, hide): two pulses (4.8 s) and it rests, so it never
+     blinks for more than five seconds without a pause control. */
+  animation: m-pulse-dot 2.4s var(--m-ease-standard) 2;
 }
 .h1 {
   font-size: var(--mk-h1);
@@ -561,7 +563,7 @@
   inline-size: 100%;
   min-block-size: 56px;
   padding: 14px 22px;
-  border: 1.5px solid var(--mk-line-strong);
+  border: 1.5px solid #8a8a8a; /* a11y R5-AX-10 (1.4.11) */
   border-radius: 999px;
   background: #fff;
   color: var(--mk-ink);
@@ -570,7 +572,7 @@
   transition: border-color var(--m-dur-fast) var(--m-ease-standard), box-shadow var(--m-dur-fast) var(--m-ease-standard);
 }
 .heroInput::placeholder { color: #707070; }
-.heroInput:hover { border-color: #8a8a8a; }
+.heroInput:hover { border-color: var(--mk-text-2); }
 .heroInput:focus-visible { outline: none; border-color: var(--mk-ink); box-shadow: 0 0 0 3px rgba(0, 91, 211, 0.35); }
 .heroInput[aria-invalid="true"] { border-color: #c70a24; }
 .heroField .pill { inline-size: 100%; min-block-size: 56px; }
@@ -579,12 +581,12 @@
     flex-direction: row;
     align-items: center;
     padding: 6px;
-    border: 1.5px solid var(--mk-line-strong);
+    border: 1.5px solid #8a8a8a; /* a11y R5-AX-10: field edge 3.4:1 (1.4.11), was #c9c9c9 1.66:1 */
     border-radius: 999px;
     background: #fff;
     transition: border-color var(--m-dur-fast) var(--m-ease-standard), box-shadow var(--m-dur-fast) var(--m-ease-standard);
   }
-  .heroField:hover { border-color: #8a8a8a; }
+  .heroField:hover { border-color: var(--mk-text-2); }
   .heroField:focus-within { border-color: var(--mk-ink); box-shadow: 0 0 0 3px rgba(0, 91, 211, 0.3); }
   .heroField .heroInput { border: 0; min-block-size: 48px; padding-inline: 18px; box-shadow: none; background: transparent; }
   .heroField .heroInput:focus-visible { box-shadow: none; }
@@ -1227,7 +1229,7 @@
 .productCard:hover .productMedia img { transform: scale(1.06) rotate(-1.5deg); }
 .productBody { display: flex; flex-direction: column; gap: 8px; padding: 20px 24px 24px; flex: 1; }
 /* CR-31: descriptions clamp to 2 lines and the action row sits at the bottom, so rows line up. */
-.productDesc { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.productDesc { min-block-size: 3em; } /* a11y R4-09 (WCAG 1.4.12): reserve two lines instead of clamping, so spacing never cuts the text */
 .productBody .h3 { font-size: 1.125rem; }
 .productCode { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; color: var(--mk-muted); }
 .productPrice { font-weight: 650; color: var(--mk-ink); margin-block-start: 4px; }
@@ -1489,7 +1491,7 @@
   min-block-size: 48px;
   padding-block: 10px;
   padding-inline: 16px 40px;
-  border: 1.5px solid var(--mk-line-strong);
+  border: 1.5px solid #8a8a8a; /* a11y R5-AX-10: field edge 3.4:1 (1.4.11), was #c9c9c9 1.66:1 */
   border-radius: 999px;
   background: #fff;
   color: var(--mk-ink);

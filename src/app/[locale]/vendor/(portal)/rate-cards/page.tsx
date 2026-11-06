@@ -1,15 +1,9 @@
 import { Table2 } from "lucide-react";
-import {
-  Badge,
-  EmptyBoxIllustration,
-  EmptyState,
-  IndexTable,
-  IndexTableCell,
-  IndexTableRow,
-  IndexTableRowLink,
-  Page,
-  Text,
-} from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { EmptyBoxIllustration, EmptyState } from "@/components/ui/EmptyState";
+import { IndexTable, IndexTableCell, IndexTableRow, IndexTableRowLink } from "@/components/ui/IndexTable";
+import { Page } from "@/components/ui/Page";
+import { Text } from "@/components/ui/Text";
 import { requireVendorContext } from "@/components/vendor/server/context";
 import { listRateCards } from "@/components/vendor/server/queries";
 import { getT, toLocale, type DictKey } from "@/i18n";

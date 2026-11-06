@@ -161,7 +161,7 @@ test("J5 · offline mid-design: work kept, saved when back online, survives a re
   await db.design.delete({ where: { id: designId } }).catch(() => undefined);
 });
 
-test("J5 · two tabs on one design: the stale tab is stopped, nothing is overwritten (R5-JR-04)", async ({ context, baseURL }, info) => {
+test("J5 · two tabs on one design: the stale tab is stopped, nothing is overwritten (R5-JR-04, R10 on main)", async ({ context, baseURL }, info) => {
   test.setTimeout(150_000);
   const locale = localeOf(info);
   const t = tFor(locale);
@@ -191,13 +191,14 @@ test("J5 · two tabs on one design: the stale tab is stopped, nothing is overwri
   const panelB = b.getByRole("complementary", { name: tr(locale, "Designer panels") });
   await panelB.getByRole("tab", { name: tr(locale, "Artwork") }).click();
   await panelB.getByRole("button", { name: /#f2c14e/ }).first().click();
-  await expect(b.getByTestId("save-status")).toHaveAttribute("data-state", "conflict", { timeout: 30_000 });
-  await expect(b.getByTestId("save-status")).toContainText(t("designer.save.conflict"));
+  // Main's R10 handling: tab B is told (BroadcastChannel or a 409 on its save) and autosave pauses.
+  await expect(b.getByText(t("designer.save.staleTitle"))).toBeVisible({ timeout: 30_000 });
+  await b.waitForTimeout(6000); // past the 4 s autosave pause: nothing may be written
   const stored = JSON.stringify((await db.design.findUniqueOrThrow({ where: { id: designId } })).artwork);
   expect(stored).toContain("#c70a24");
   expect(stored).not.toContain("#f2c14e");
-  // Reload brings B to the latest copy, and it saves again.
-  await b.getByRole("button", { name: t("designer.save.reload") }).click();
+  // "Load the latest" brings B to A's copy, which it then saves normally.
+  await b.getByRole("button", { name: t("designer.save.staleReload") }).click();
   await expect(b.getByRole("application", { name: tr(locale, "3D preview of your box") })).toBeVisible({ timeout: 30_000 });
   await expect(b.getByTestId("save-status")).toHaveAttribute("data-state", "saved", { timeout: 30_000 });
   await db.design.delete({ where: { id: designId } }).catch(() => undefined);

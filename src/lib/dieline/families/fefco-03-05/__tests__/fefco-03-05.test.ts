@@ -83,7 +83,10 @@ describe.each(DEFINITIONS.map((d) => [d.code, d] as const))("%s dieline", (_code
         // Outside gussets (0303 against the long walls, 0304 against the end walls) of a tray
         // deeper than half that wall overlap: the second pair lies two boards further out on
         // base and lid (4 extra layers on that axis) instead of sharing the first pair's plane.
-        const against = def.code === "FEFCO_0304" ? "W" : def.code === "FEFCO_0303" ? "L" : null;
+        // Inside gussets (0308 long walls, 0309 end walls) do the same inward, and the blank is
+        // compensated for those 2 layers a side on base and lid (R5-3Q-B: the lid's second pair
+        // went into the base walls), so the same 8 t allowance applies.
+        const against = def.code === "FEFCO_0304" || def.code === "FEFCO_0309" ? "W" : def.code === "FEFCO_0303" || def.code === "FEFCO_0308" ? "L" : null;
         const overlapAxis = against && 2 * (dims.H + t) > dims[against] ? (against === "W" ? "L" : "W") : null;
         for (const k of ["L", "W", "H"] as const) {
           expect(o[k], `${k} outer`).toBeGreaterThanOrEqual(dims[k] - 0.01);

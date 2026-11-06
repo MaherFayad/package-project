@@ -340,7 +340,9 @@ function slotted(b: DielineBuilder, dims: { Lp: number; Wp: number; Hp: number }
     front: rect(xF, y0, Lp, Hp),
     right: rect(xF + Lp, y0, Wp, Hp),
     back: rect(xF + Lp + Wp, y0, Lp, Hp),
-    left: rect(xF + 2 * Lp + Wp, y0, Wp, Hp),
+    // The left wall's free end stops 0.1 mm short of the front's printed face: flush, its cut
+    // edge z-fought down the glued-joint corner of the FRONT (R5-3Q-A).
+    left: rect(xF + 2 * Lp + Wp, y0, Wp - 0.1, Hp),
   };
   const id = (s: string) => pre + s;
   return {
@@ -351,10 +353,12 @@ function slotted(b: DielineBuilder, dims: { Lp: number; Wp: number; Hp: number }
       else b.root(id("front"), "front", poly, "Front");
       b.attach(id("right"), "right", id("front"), rectEdges(walls.front).right, Wp, { kind: "rect" }, { stage: 0, label: "Right side" });
       b.attach(id("back"), "back", id("right"), rectEdges(walls.right).right, Lp, { kind: "rect" }, { stage: 0, label: "Back" });
-      b.attach(id("left"), "left", id("back"), rectEdges(walls.back).right, Wp, { kind: "rect" }, { stage: 0, label: "Left side" });
+      b.attach(id("left"), "left", id("back"), rectEdges(walls.back).right, walls.left.width, { kind: "rect" }, { stage: 0, label: "Left side" });
       b.attach(id("glue"), "glue", id("front"), rectEdges(walls.front).left, j, { kind: "trapezoid", taperA: j * 0.25, taperB: j * 0.25 }, {
         stage: 0,
-        stack: -1,
+        // hinged 0.08 mm inside the FRONT print: on the face its hinge edge flickered by the joint corner
+        stack: -1 - 0.08 / t,
+        pivotDepth: 0.08 / t,
         label: "Manufacturer's joint",
       });
       for (const where of ["top", "bottom"] as const) {
@@ -413,7 +417,10 @@ export function telescope(dims: Dims, t: number, f: StructureFeatures = {}): Str
   const base = slotted(b, { Lp: dims.L + 2 * t, Wp: dims.W + 2 * t, Hp: dims.H + 2 * t }, t, { top: false, bottom: true });
   base.build();
   const lidH = clamp(f.lidHeightMm ?? dims.H, Math.min(30, dims.H), dims.H);
-  const lidDims = { Lp: dims.L + 2 * t + 2 * clear + 2 * t, Wp: dims.W + 2 * t + 2 * clear + 2 * t, Hp: lidH + 2 * t };
+  // The lid's manufacturer's joint lies inside its left wall: one more caliper of length (and the
+  // lid shifted half of it to the left) keeps `clear` on both sides of the base. Without it the
+  // joint ran 0.5–1.5 mm into the base's left wall (R5-3Q-A).
+  const lidDims = { Lp: dims.L + 2 * t + 2 * clear + 2 * t + t, Wp: dims.W + 2 * t + 2 * clear + 2 * t, Hp: lidH + 2 * t };
   const y0 = sheetBottom(b) + lidDims.Wp / 2 + 15;
   const lid = slotted(b, lidDims, t, { top: true, bottom: false, prefix: "lid_", label: "Lid" }, pt(sheetLeft(b), y0));
   // Closed: lid front sits clear + t in front of the base front, centred, its top flaps
@@ -421,7 +428,7 @@ export function telescope(dims: Dims, t: number, f: StructureFeatures = {}): Str
   const baseFront = base.walls.front;
   const lidFront = lid.walls.front;
   const cb = panelPivot(b.byId("front"), t);
-  const delta = new Vector3(baseFront.x + baseFront.width / 2 - (lidFront.x + lidFront.width / 2), -baseFront.y + 2 * t + lidFront.y, clear + t);
+  const delta = new Vector3(baseFront.x + baseFront.width / 2 - (lidFront.x + lidFront.width / 2) - t / 2, -baseFront.y + 2 * t + lidFront.y, clear + t);
   const matrix = new Matrix4().makeTranslation(delta.x - cb.x, delta.y - cb.y, delta.z - cb.z).toArray();
   lid.build({ matrix, stage: 3, lift: dims.H * 1.4 });
 
@@ -444,6 +451,21 @@ interface TrayOpts {
   lidDust: boolean;
   tuckRatio: number;
   displayFront?: boolean;
+  /**
+   * The lid closes ON the front and side walls (FEFCO 0427 / 0426): those walls stop one
+   * caliper below the back wall (H + t, not H + 2t) and the lid's tuck and side flaps hinge
+   * from the lid's underside. Without it every wall, ear, inner wall, tuck and flap ran up
+   * into the lid board and their top edges lay in the lid's printed face (raw-board lines
+   * across the TOP artwork, R5-3Q-A).
+   */
+  lidOnWalls?: boolean;
+  /**
+   * Corner clearance (mm): the front wall stops this short of each corner and the side walls
+   * this short of the front and one caliper + this short of the back, so no wall's end face
+   * lies in a neighbouring wall's printed face (the full-length walls z-fought down every
+   * vertical corner of the tray, R5-3Q-A). The back wall keeps its full length (lid hinge).
+   */
+  cornerGap?: number;
 }
 
 /**
@@ -460,53 +482,63 @@ export function trayWithLid(dims: Dims, t: number, o: TrayOpts, f: StructureFeat
   const Lp = dims.L + 2 * sideLayers * t;
   const Wp = dims.W + (frontLayers + 1) * t;
   const Hp = dims.H + (o.lid ? 2 : 1) * t;
+  // Front and side walls: under the lid when it closes on them.
+  const Hw = o.lid && o.lidOnWalls ? Hp - t : Hp;
   const b = new DielineBuilder();
 
   const base = rect(0, 0, Lp, Wp);
   const back = rect(0, -Hp, Lp, Hp);
   const lid = rect(0, -Hp - Wp, Lp, Wp);
-  const front = rect(0, Wp, Lp, Hp);
-  const sideL = rect(-Hp, 0, Hp, Wp);
-  const sideR = rect(Lp, 0, Hp, Wp);
+  const g = o.cornerGap ?? 0;
+  const front = rect(g, Wp, Lp - 2 * g, Hw);
+  const sideL = rect(-Hw, 0, Hw, Wp);
+  const sideR = rect(Lp, 0, Hw, Wp);
+  // Side-wall hinges: a-end of the base's left/right edges is the back.
+  const sideEdge = (e: [Pt, Pt]) => (g > 0 ? insetSeg(e, t + g, g) : e);
 
   b.root("base", "bottom", rectPolygon(base.x, base.y, base.width, base.height), "Base");
   b.attach("back", "back", "base", rectEdges(base).top, Hp, { kind: "rect" }, { stage: 0, label: "Back wall" });
   if (o.displayFront) {
-    const fr = b.frame("base", rectEdges(base).bottom);
+    const fr = b.frame("base", insetSeg(rectEdges(base).bottom, g));
+    const Lf = Lp - 2 * g;
     const corner = Math.min(25, Lp * 0.15);
-    const drop = Hp * 0.5;
+    const drop = Hw * 0.5;
     const slope = Math.min(drop, (Lp - 2 * corner) * 0.2);
-    const poly: Polygon = [fr.at(fr.a, 0, 0), fr.at(fr.a, Lp, 0), fr.at(fr.a, Lp, Hp), fr.at(fr.a, Lp - corner, Hp), fr.at(fr.a, Lp - corner - slope, Hp - drop), fr.at(fr.a, corner + slope, Hp - drop), fr.at(fr.a, corner, Hp), fr.at(fr.a, 0, Hp)];
+    const poly: Polygon = [fr.at(fr.a, 0, 0), fr.at(fr.a, Lf, 0), fr.at(fr.a, Lf, Hw), fr.at(fr.a, Lf - corner, Hw), fr.at(fr.a, Lf - corner - slope, Hw - drop), fr.at(fr.a, corner + slope, Hw - drop), fr.at(fr.a, corner, Hw), fr.at(fr.a, 0, Hw)];
     b.attachPoly("front", "front", "base", [fr.a, fr.b], poly, { stage: 0, label: "Display front" });
   } else {
-    b.attach("front", "front", "base", rectEdges(base).bottom, Hp, { kind: "rect" }, { stage: 0, label: "Front wall" });
+    b.attach("front", "front", "base", insetSeg(rectEdges(base).bottom, g), Hw, { kind: "rect" }, { stage: 0, label: "Front wall" });
   }
   // The closed tray is turned 180° so its front faces the viewer: the panel on the
   // dieline's right becomes the box's left side.
-  b.attach("right", "right", "base", rectEdges(base).left, Hp, { kind: "rect" }, { stage: 0, label: "Right wall" });
-  b.attach("left", "left", "base", rectEdges(base).right, Hp, { kind: "rect" }, { stage: 0, label: "Left wall" });
+  b.attach("right", "right", "base", sideEdge(rectEdges(base).left), Hw, { kind: "rect" }, { stage: 0, label: "Right wall" });
+  b.attach("left", "left", "base", sideEdge(rectEdges(base).right), Hw, { kind: "rect" }, { stage: 0, label: "Left wall" });
 
   if (o.ears) {
     const earD = Wp * 0.4;
-    const taper = Math.min(earD * 0.5, Hp * 0.3);
-    // Back wall: box top is its top edge (a-end of left/right edges).
-    b.attach("earBackL", "ear", "back", rectEdges(back).left, earD, { kind: "trapezoid", taperA: taper, taperB: 1 }, { stage: 1, stack: -1, label: "Ear" });
-    b.attach("earBackR", "ear", "back", rectEdges(back).right, earD, { kind: "trapezoid", taperA: taper, taperB: 1 }, { stage: 1, stack: -1, label: "Ear" });
+    const taper = Math.min(earD * 0.5, Hw * 0.3);
+    // Hinged a hair inside the wall's printed face: on the face itself the ear's hinge edge lay
+    // in the front / back print and flickered as a board-coloured line down each corner.
+    const earPivot = g > 0 ? (0.8 * g) / t : 0;
+    // Back wall: box top is its top edge (a-end of left/right edges); its ears stop under the lid.
+    const under = Hp - Hw;
+    b.attach("earBackL", "ear", "back", insetSeg(rectEdges(back).left, under, 0), earD, { kind: "trapezoid", taperA: taper, taperB: 1 }, { stage: 1, stack: -1 - earPivot, pivotDepth: earPivot, label: "Ear" });
+    b.attach("earBackR", "ear", "back", insetSeg(rectEdges(back).right, under, 0), earD, { kind: "trapezoid", taperA: taper, taperB: 1 }, { stage: 1, stack: -1 - earPivot, pivotDepth: earPivot, label: "Ear" });
     // Front wall: box top is its bottom edge (b-end).
-    b.attach("earFrontL", "ear", "front", rectEdges(front).left, earD, { kind: "trapezoid", taperA: 1, taperB: taper }, { stage: 1, stack: -1, label: "Ear" });
-    b.attach("earFrontR", "ear", "front", rectEdges(front).right, earD, { kind: "trapezoid", taperA: 1, taperB: taper }, { stage: 1, stack: -1, label: "Ear" });
+    b.attach("earFrontL", "ear", "front", rectEdges(front).left, earD, { kind: "trapezoid", taperA: 1, taperB: taper }, { stage: 1, stack: -1 + (g - earPivot * t) / t, pivotDepth: earPivot, label: "Ear" });
+    b.attach("earFrontR", "ear", "front", rectEdges(front).right, earD, { kind: "trapezoid", taperA: 1, taperB: taper }, { stage: 1, stack: -1 + (g - earPivot * t) / t, pivotDepth: earPivot, label: "Ear" });
   }
 
   if (o.doubleSides) {
     const inset = (frontLayers + 1) * t + 0.5;
-    const depth = Hp - 2 * t - 0.5;
+    const depth = Hw - 2 * t - 0.5;
     const pivotDepth = o.ears ? 1.5 : 1;
     b.attach("rightInner", "inner", "right", insetSeg(rectEdges(sideL).left, inset), depth, { kind: "rect" }, { fold: 180, pivotDepth, stage: 2, label: "Inner wall" });
     b.attach("leftInner", "inner", "left", insetSeg(rectEdges(sideR).right, inset), depth, { kind: "rect" }, { fold: 180, pivotDepth, stage: 2, label: "Inner wall" });
   }
   if (o.doubleFront) {
     const inset = sideLayers * t + 0.5;
-    b.attach("frontInner", "inner", "front", insetSeg(rectEdges(front).bottom, inset), Hp - 2 * t - 0.5, { kind: "rect" }, {
+    b.attach("frontInner", "inner", "front", insetSeg(rectEdges(front).bottom, inset), Hw - 2 * t - 0.5, { kind: "rect" }, {
       fold: 180,
       pivotDepth: 1,
       stage: 2,
@@ -520,7 +552,8 @@ export function trayWithLid(dims: Dims, t: number, o: TrayOpts, f: StructureFeat
     const tuckD = Math.max(8, (Hp - 2 * t - 2) * o.tuckRatio);
     b.attach("lidTuck", "tuck", "top", insetSeg(rectEdges(lid).top, tuckInset), tuckD, { kind: "tuck", shoulder: 2 }, {
       stage: 3,
-      stack: -frontLayers,
+      // hinged at the lid's underside (pivot one caliper in), so one more layer of stack keeps it behind the front wall
+      ...(o.lidOnWalls ? { pivotDepth: 1, stack: -frontLayers - 1 } : { stack: -frontLayers }),
       label: "Lid tuck",
     });
     if (o.lidDust) {
@@ -530,12 +563,12 @@ export function trayWithLid(dims: Dims, t: number, o: TrayOpts, f: StructureFeat
       // Lid left edge runs from its far (front) end at the top to the back hinge at the bottom.
       b.attach("lidDustL", "dust", "top", insetSeg(rectEdges(lid).left, inset), d, { kind: "trapezoid", taperA: taper, taperB: 2 }, {
         stage: 3,
-        stack: -sideLayers,
+        ...(o.lidOnWalls ? { pivotDepth: 1, stack: -sideLayers - 1 } : { stack: -sideLayers }),
         label: "Lid side flap",
       });
       b.attach("lidDustR", "dust", "top", insetSeg(rectEdges(lid).right, inset), d, { kind: "trapezoid", taperA: taper, taperB: 2 }, {
         stage: 3,
-        stack: -sideLayers,
+        ...(o.lidOnWalls ? { pivotDepth: 1, stack: -sideLayers - 1 } : { stack: -sideLayers }),
         label: "Lid side flap",
       });
     }
@@ -611,17 +644,17 @@ function farEdge(p: DielinePanel): [Pt, Pt] | null {
 }
 
 export function mailer(dims: Dims, t: number, f: StructureFeatures = {}): StructureDraft {
-  return trayWithLid(dims, t, { doubleFront: true, doubleSides: true, ears: true, lid: true, lidDust: true, tuckRatio: 0.75 }, f);
+  return trayWithLid(dims, t, { doubleFront: true, doubleSides: true, ears: true, lid: true, lidDust: true, tuckRatio: 0.75, lidOnWalls: true, cornerGap: 0.1 }, f);
 }
 
 /** FEFCO 0426 pizza box: single front, rolled double side walls trapping ears, lid with tuck and side flaps. */
 export function pizza(dims: Dims, t: number, f: StructureFeatures = {}): StructureDraft {
-  return trayWithLid(dims, t, { doubleFront: false, doubleSides: true, ears: true, lid: true, lidDust: true, tuckRatio: 0.7 }, f);
+  return trayWithLid(dims, t, { doubleFront: false, doubleSides: true, ears: true, lid: true, lidDust: true, tuckRatio: 0.7, lidOnWalls: true, cornerGap: 0.1 }, f);
 }
 
 /** FEFCO 0422 self-locking tray: rolled double end walls lock the corner ears; no glue. */
 export function displayTray(dims: Dims, t: number, f: StructureFeatures = {}): StructureDraft {
-  return trayWithLid(dims, t, { doubleFront: false, doubleSides: true, ears: true, lid: false, lidDust: false, tuckRatio: 0, displayFront: !!f.displayFront }, f);
+  return trayWithLid(dims, t, { doubleFront: false, doubleSides: true, ears: true, lid: false, lidDust: false, tuckRatio: 0, displayFront: !!f.displayFront, cornerGap: 0.1 }, f);
 }
 
 /* ───────────────────────── Partitions (divider grid) ───────────────────────── */
@@ -794,7 +827,12 @@ export function paperTube(dims: Dims, t: number, f: StructureFeatures = {}): Str
   const lidRootRect = rect(xl0, y0, sl, Hl);
   const cb = panelPivot(b.byId("body0"), t);
   const delta = new Vector3(x0 + s / 2 - (xl0 + sl / 2), -0 + t + y0, Rl - R);
-  const matrix = new Matrix4().makeTranslation(delta.x - cb.x, delta.y - cb.y, delta.z - cb.z).toArray();
+  // Closed pose: half a strip about +Y (see the return below); the lid piece turns with the body.
+  const closedRotation = quat(0, Math.PI / N, 0);
+  const matrix = new Matrix4()
+    .makeRotationFromQuaternion(new Quaternion(...closedRotation))
+    .multiply(new Matrix4().makeTranslation(delta.x - cb.x, delta.y - cb.y, delta.z - cb.z))
+    .toArray();
   b.piece("lid0", "front", rectPolygon(lidRootRect.x, lidRootRect.y, sl, Hl), "Lid", { matrix, stage: 2, lift: dims.H * 0.6 }, { label: "Lid label" });
   for (let i = 1; i <= nR; i++) {
     const r = rect(xl0 + (i - 1) * sl, y0, sl, Hl);
@@ -838,7 +876,11 @@ export function paperTube(dims: Dims, t: number, f: StructureFeatures = {}): Str
 
   return {
     builder: b,
-    closedRotation: IDENTITY,
+    // The FRONT half is strips 3N/4…N/4-1, so its centre is the LEFT edge of the root strip, half
+    // a strip (180/N °) left of +Z: the front label sat off-centre and the back colour showed
+    // early on the right silhouette (R5-3Q-A). Turn the closed tube by half a strip so the
+    // centre of the FRONT face looks straight down +Z.
+    closedRotation,
     faces: (panels, computed) => ({ front: halfFace("front", panels), back: halfFace("back", panels), ...(computed.top ? { top: computed.top } : {}) }),
     safeZones: (panels, safe) =>
       panels
@@ -866,8 +908,13 @@ export function rigidBox(dims: Dims, t: number, f: StructureFeatures = {}): Stru
   // At a full caliper the lid's turn-ins pierced the base walls by 1.65 mm and the tabs z-fought
   // the end turn-ins (3d-visual C-01, R4-14).
   const PAPER = 0.3;
+  const CORNER_GAP = 0.1;
   const turnInStack = -Math.max(0, t - PAPER) / t;
   const tabStack = -(PAPER / 2) / t;
+  // Corner tabs hinge a hair (0.08 mm) inside the long wall's printed face: hinged on the face
+  // itself, the tab's unprinted hinge edge lay in that face and flickered as a pale strip
+  // down each corner of the lid and the base (R5-3Q-A).
+  const tabPivot = (0.8 * CORNER_GAP) / t;
   const b = new DielineBuilder();
   const turnIn = (H: number) => clamp(H * 0.45, 8, 15);
   const tabD = (W: number) => clamp(W * 0.08, 6, 12);
@@ -882,11 +929,16 @@ export function rigidBox(dims: Dims, t: number, f: StructureFeatures = {}): Stru
     // lid: it becomes the BACK (the lid is turned the other way up).
     const upper = lidMode ? "back" : "front";
     const lower = lidMode ? "front" : "back";
+    // Walls stop CORNER_GAP short of each corner (as families/rigid-tubes RF-06): a full-length
+    // wall's end face lies in the neighbouring wall's printed face and z-fights down every corner
+    // (raw-board / wrong-colour slivers at the lid and base corners, R5-3Q-A).
+    const g = CORNER_GAP;
+    const E = rectEdges(base);
     const walls: Record<string, { r: Rect; edge: [Pt, Pt]; role: "front" | "back" | "left" | "right" }> = {
-      [upper]: { r: rect(base.x, base.y - Hp, Lp, Hp), edge: rectEdges(base).top, role: upper },
-      [lower]: { r: rect(base.x, base.y + Wp, Lp, Hp), edge: rectEdges(base).bottom, role: lower },
-      left: { r: rect(base.x - Hp, base.y, Hp, Wp), edge: rectEdges(base).left, role: "left" },
-      right: { r: rect(base.x + Lp, base.y, Hp, Wp), edge: rectEdges(base).right, role: "right" },
+      [upper]: { r: rect(base.x + g, base.y - Hp, Lp - 2 * g, Hp), edge: insetSeg(E.top, g), role: upper },
+      [lower]: { r: rect(base.x + g, base.y + Wp, Lp - 2 * g, Hp), edge: insetSeg(E.bottom, g), role: lower },
+      left: { r: rect(base.x - Hp, base.y + g, Hp, Wp - 2 * g), edge: insetSeg(E.left, g), role: "left" },
+      right: { r: rect(base.x + Lp, base.y + g, Hp, Wp - 2 * g), edge: insetSeg(E.right, g), role: "right" },
     };
     return {
       base,
@@ -908,7 +960,7 @@ export function rigidBox(dims: Dims, t: number, f: StructureFeatures = {}): Stru
           const e = rectEdges(r);
           const d = tabD(W);
           for (const [k, edge] of [["L", e.left], ["R", e.right]] as const) {
-            b.attach(id(`${name}Tab${k}`), "ear", id(name), insetSeg(edge, 1, 1), d, { kind: "trapezoid", taperA: d * 0.5, taperB: d * 0.5 }, { stage: 0, stack: tabStack, label: "Corner tab" });
+            b.attach(id(`${name}Tab${k}`), "ear", id(name), insetSeg(edge, 1, 1), d, { kind: "trapezoid", taperA: d * 0.5, taperB: d * 0.5 }, { stage: 0, stack: tabStack, pivotDepth: tabPivot, label: "Corner tab" });
           }
         }
       },

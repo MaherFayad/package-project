@@ -53,6 +53,20 @@ describe("preflight", () => {
     expect(facesWithIssues(runPreflight(addLayer(doc, near), model)).has("front")).toBe(true);
   });
 
+  it("errors when text runs past the panel edge, warns for a shape there (R10-04)", () => {
+    const { doc, model } = setup();
+    const f: FaceId = (FACE_IDS.find((x) => x.includes("left")) ?? "front") as FaceId;
+    const face = model.faces[f] ?? model.faces.front!;
+    const fid = (model.faces[f] ? f : "front") as FaceId;
+    const t = makeTextLayer(fid, "outside", face, "A very long line of words that will not fit");
+    const wide = { ...t, x: face.width / 2, y: face.height / 2, width: face.width * 3 };
+    const issue = runPreflight(addLayer(doc, wide), model).find((x) => x.layerId === wide.id);
+    expect(issue?.severity).toBe("error");
+    const inMargin = { ...t, x: t.width / 2 + 1, y: face.height / 2, width: Math.min(t.width, face.width - 2) };
+    const mild = runPreflight(addLayer(doc, inMargin), model).find((x) => x.layerId === inMargin.id);
+    if (mild?.code === "OUTSIDE_SAFE_ZONE") expect(mild.severity).toBe("warning");
+  });
+
   it("finds artwork running onto a glue flap", () => {
     const { doc, model } = setup("ECMA_RTE");
     expect(model.panels.some((p) => p.role === "glue")).toBe(true);

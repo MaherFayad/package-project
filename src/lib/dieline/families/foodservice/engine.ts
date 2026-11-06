@@ -1,10 +1,10 @@
 import { Mat4 as Matrix4, Vec3 as Vector3 } from "@/lib/dieline/math";
 import { z } from "zod";
 import type { Dims, FaceId, StructureFeatures, StructureParamLimits } from "@/types";
-import { panelCreases } from "../../builder";
+import { edgeBleed, panelCreases } from "../../builder";
 import type { FeatureSupport } from "../../features";
 import { FACE_FRAMES, computeFaces, computePoses, panelLocalPoint, panelPivot } from "../../fold";
-import { bboxOf, coveredFraction, edgesOf, insetRect, offsetConvex, polygonArea, segLength, subtractSegments } from "../../geometry";
+import { bboxOf, edgesOf, insetRect, offsetConvex, polygonArea, segLength, subtractSegments } from "../../geometry";
 import type { StructureDraft } from "../../structures";
 import type { Affine, DielinePanel, DielinePiece, FaceInfo, FilmPatch, Polygon, Pt, Segment } from "../../types";
 import type { DielineDefinition, FamilyDielineModel, FoodserviceCode, HandleSpec } from "./types";
@@ -148,7 +148,7 @@ export function finalizeDraft(code: FoodserviceCode, dims: Dims, draft: Structur
     .filter((p) => p.printable)
     .map((p) => {
       const creases = panelCreases(p, panels);
-      const distances = edgesOf(p.polygon).map((e) => (coveredFraction(e, creases) > 0.98 ? 0 : bleed));
+      const distances = edgesOf(p.polygon).map((e) => edgeBleed(e, creases, panels, bleed));
       return { panelId: p.id, polygon: offsetConvex(p.polygon, distances) as Polygon };
     });
 

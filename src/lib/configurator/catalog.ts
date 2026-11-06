@@ -85,7 +85,7 @@ export const BOX_BOARDS: Record<BoxBoardCode, BoxBoard> = {
   BC_FLUTE_WHITE: b({ code: "BC_FLUTE_WHITE", family: "CORRUGATED", surface: "WHITE_TOP_LINER", flute: "BC", color: "WHITE", thicknessMm: 6.5, gsm: 820, name: { ar: "كرتون مضلع مزدوج BC أبيض", en: "BC double wall white" }, pricingMaterial: null, foodSafe: false }),
   SBS_300: b({ code: "SBS_300", family: "FOLDING_CARTON", surface: "COATED_BOARD", flute: null, color: "WHITE", thicknessMm: 0.4, gsm: 300, name: { ar: "كرتون دوبلكس أبيض 300 جم", en: "SBS 300 gsm" }, pricingMaterial: "SBS_300", foodSafe: true }),
   SBS_350: b({ code: "SBS_350", family: "FOLDING_CARTON", surface: "COATED_BOARD", flute: null, color: "WHITE", thicknessMm: 0.48, gsm: 350, name: { ar: "كرتون دوبلكس أبيض 350 جم", en: "SBS 350 gsm" }, pricingMaterial: "SBS_350", foodSafe: true }),
-  GREYBOARD_WRAP: b({ code: "GREYBOARD_WRAP", family: "RIGID", surface: "ART_PAPER_WRAP", flute: null, color: "WHITE", thicknessMm: 2.15, gsm: 1400, name: { ar: "كرتون مقوى 2 مم مغلف بورق مطبوع", en: "2 mm greyboard, printed wrap" }, pricingMaterial: "GREYBOARD_WRAP", foodSafe: false }),
+  GREYBOARD_WRAP: b({ code: "GREYBOARD_WRAP", family: "RIGID", surface: "ART_PAPER_WRAP", flute: null, color: "WHITE", thicknessMm: 2.15, gsm: 1400, name: { ar: "كرتون رمادي 2 مم بورق تغليف مطبوع", en: "2 mm greyboard, printed wrap" }, pricingMaterial: "GREYBOARD_WRAP", foodSafe: false }),
   KRAFT_TUBE: b({ code: "KRAFT_TUBE", family: "TUBE", surface: "ART_PAPER_WRAP", flute: null, color: "WHITE", thicknessMm: 1.5, gsm: 1000, name: { ar: "أنبوبة كرتون بملصق مطبوع", en: "Kraft tube, printed label" }, pricingMaterial: "KRAFT_TUBE", foodSafe: true }),
 };
 
@@ -159,10 +159,10 @@ export const FINISHES: Record<ConfigFinishCode, FinishDef> = {
   SOFT_TOUCH_LAMINATION: fd({ code: "SOFT_TOUCH_LAMINATION", group: "coating", masked: false, name: { ar: "سلوفان مخملي", en: "Soft-touch lamination" }, label: null }),
   GLOSS_VARNISH: fd({ code: "GLOSS_VARNISH", group: "coating", masked: false, name: { ar: "ورنيش لامع", en: "Gloss varnish" }, label: "GLOSS_VARNISH" }),
   MATTE_VARNISH: fd({ code: "MATTE_VARNISH", group: "coating", masked: false, name: { ar: "ورنيش مطفي", en: "Matte varnish" }, label: "MATTE_VARNISH" }),
-  SPOT_UV: fd({ code: "SPOT_UV", group: "spotUv", masked: true, name: { ar: "يو في موضعي", en: "Spot UV" }, label: "SPOT_UV" }),
-  FOIL_GOLD: fd({ code: "FOIL_GOLD", group: "foil", masked: true, name: { ar: "بصمة ذهبي", en: "Gold foil" }, label: "HOT_FOIL" }),
-  FOIL_SILVER: fd({ code: "FOIL_SILVER", group: "foil", masked: true, name: { ar: "بصمة فضي", en: "Silver foil" }, label: "HOT_FOIL" }),
-  FOIL_ROSE_GOLD: fd({ code: "FOIL_ROSE_GOLD", group: "foil", masked: true, name: { ar: "بصمة روز جولد", en: "Rose gold foil" }, label: "HOT_FOIL" }),
+  SPOT_UV: fd({ code: "SPOT_UV", group: "spotUv", masked: true, name: { ar: "طلاء UV موضعي", en: "Spot UV" }, label: "SPOT_UV" }),
+  FOIL_GOLD: fd({ code: "FOIL_GOLD", group: "foil", masked: true, name: { ar: "بصمة ذهبية", en: "Gold foil" }, label: "HOT_FOIL" }),
+  FOIL_SILVER: fd({ code: "FOIL_SILVER", group: "foil", masked: true, name: { ar: "بصمة فضية", en: "Silver foil" }, label: "HOT_FOIL" }),
+  FOIL_ROSE_GOLD: fd({ code: "FOIL_ROSE_GOLD", group: "foil", masked: true, name: { ar: "بصمة ذهبية وردية", en: "Rose gold foil" }, label: "HOT_FOIL" }),
   EMBOSS: fd({ code: "EMBOSS", group: "relief", masked: true, name: { ar: "طباعة بارزة", en: "Emboss" }, label: "EMBOSS" }),
   DEBOSS: fd({ code: "DEBOSS", group: "relief", masked: true, name: { ar: "طباعة غائرة", en: "Deboss" }, label: null }),
 };

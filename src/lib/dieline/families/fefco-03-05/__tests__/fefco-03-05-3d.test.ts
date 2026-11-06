@@ -68,6 +68,37 @@ describe("FEFCO 03 / 05 fold sequence and mapping", () => {
     expect(m.faces.top!.parts).toHaveLength(4);
   });
 
+  it("0350: every flap of the octagonal flap bottom carries the bottom artwork (R5-3Q-B)", () => {
+    // The side and corner minor flaps show round the two majors (most of the octagon).
+    const def = byCode("FEFCO_0350");
+    const m = generateFamilyDieline(def, def.defaultDims, { thicknessMm: 3 });
+    const ids = m.faces.bottom!.parts.map((p) => p.panelId);
+    for (let i = 0; i < 8; i++) expect(ids).toContain(`bottomFlap${i}`);
+  });
+
+  it.each([
+    // R5-3Q-B: the two gussets on one wall overlap when the tray is deeper than half that wall
+    // (0303 / 0308: the pair on a long wall differ in x, not y), and a deep lid's second inside
+    // pair must not enter the base walls (0308 / 0309). 0307: locking noses on a short wall.
+    ["FEFCO_0303", { L: 150, W: 120, H: 100 }, undefined],
+    ["FEFCO_0308", { L: 150, W: 120, H: 100 }, 100],
+    ["FEFCO_0309", { L: 700, W: 500, H: 300 }, 300],
+    ["FEFCO_0307", { L: 80, W: 60, H: 300 }, undefined],
+  ] as const)("%s %o lid %s: no shared board at size extremes", (code, dims, lid) => {
+    const def = byCode(code);
+    // Inside gussets: the web stays joined to the neighbouring wall of the same blank (a real
+    // bend, as WEB_BENDS above). A lid gusset touching a base wall is a clash.
+    const web = /^(lid_)?(end[LR]|long[TB]|gus[TB][LR][ab]) × (lid_)?(end[LR]|long[TB]|gus[TB][LR][ab])$/;
+    const sameBlank = (a: string, b: string) => a.startsWith("lid_") === b.startsWith("lid_");
+    for (const t of [1.5, 3]) {
+      const m = generateFamilyDieline(def, dims, { thicknessMm: t, features: lid ? { lidHeightMm: lid } : {} });
+      const found = clashes(m, 1)
+        .filter((c) => !(code.match(/030[89]/) && web.test(`${c.a} × ${c.b}`) && /gus/.test(c.a) !== /gus/.test(c.b) && sameBlank(c.a, c.b)))
+        .map((c) => `${t} ${c.a} × ${c.b}`);
+      expect(found).toEqual([]);
+    }
+  });
+
   it("octabin side faces wrap half of each corner panel, seamlessly (artwork runs round the chamfers)", () => {
     const def = byCode("FEFCO_0351");
     const m = generateFamilyDieline(def, def.defaultDims, { thicknessMm: 3 });

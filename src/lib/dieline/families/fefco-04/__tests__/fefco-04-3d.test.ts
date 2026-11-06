@@ -118,3 +118,65 @@ describe("FEFCO 04 in 3D: fold animation", () => {
       }
   });
 });
+
+/** Distance from a point to the nearest outline edge. */
+function edgeDist(x: number, y: number, poly: P[]) {
+  let best = Infinity;
+  for (let i = 0; i < poly.length; i++) {
+    const a = poly[i];
+    const b = poly[(i + 1) % poly.length];
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const k = Math.max(0, Math.min(1, ((x - a.x) * dx + (y - a.y) * dy) / (dx * dx + dy * dy || 1)));
+    best = Math.min(best, Math.hypot(x - a.x - k * dx, y - a.y - k * dy));
+  }
+  return best;
+}
+
+describe("FEFCO 04 in 3D: printed faces", () => {
+  /**
+   * R5-3Q-C-01: no other board reaches a printed outside surface away from its edges. A stacked
+   * ear / tuck / inner flap that pivoted on the parent's printed face ran through the parent's
+   * board and its cut edge showed as a z-fighting kraft strip 1–3 calipers in from the corner.
+   * (The shared corner strip of every hinge, within one caliper of the edge, is the engine's
+   * corner convention and stays out of the check.)
+   */
+  for (const def of DEFINITIONS)
+    it(`${def.fefco}: no cut edge shows on a printed face`, () => {
+      for (const t of [1.5, 3]) {
+        const d = asModel(def, t);
+        const poses = computePoses(d, 1);
+        const facePanels = new Set(Object.values(d.faces).flatMap((f) => f!.parts.map((x) => x.panelId)));
+        const bad: string[] = [];
+        for (const b of d.panels.filter((p) => facePanels.has(p.id))) {
+          const B = poses.get(b.id)!.world;
+          const inv = new Matrix4().copy(B).invert();
+          const bp = panelPivot(b, t);
+          const zPrinted = b.stackOffset * t - bp.z;
+          const m = t + 0.3;
+          const nb = new Vector3(0, 0, 1).transformDirection(B);
+          for (const a of d.panels) {
+            if (a === b) continue;
+            const ap = panelPivot(a, t);
+            const A = poses.get(a.id)!.world;
+            // Stacked (parallel) panels are the closed-box test's job; an outside wrap flap lies ON the face.
+            if (Math.abs(new Vector3(0, 0, 1).transformDirection(A).dot(nb)) > 0.999) continue;
+            // Sample along every outline edge (a cut edge lying in the printed plane shows even when
+            // its end points sit at the face border).
+            const along = a.polygon.flatMap((q, i) => {
+              const r = a.polygon[(i + 1) % a.polygon.length];
+              return Array.from({ length: 9 }, (_, k) => ({ x: q.x + ((r.x - q.x) * k) / 8, y: q.y + ((r.y - q.y) * k) / 8 }));
+            });
+            for (const q of along)
+              for (const dep of [0, 1]) {
+                const v = panelLocalPoint(a, q, dep, ap, t).applyMatrix4(A).applyMatrix4(inv);
+                const x = v.x + bp.x;
+                const y = -(v.y + bp.y);
+                if (Math.abs(v.z - zPrinted) < 0.05 && inPoly(x, y, b.polygon) && edgeDist(x, y, b.polygon) > m) bad.push(`${a.id}→${b.id} t=${t}`);
+              }
+          }
+        }
+        expect([...new Set(bad)]).toEqual([]);
+      }
+    });
+});

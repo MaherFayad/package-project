@@ -1,4 +1,4 @@
-import { Badge } from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
 import { formatNumber } from "@/lib/format";
 
 /** Delivered orders needed before the health score is judged (smaller samples swing 0 to 100). */

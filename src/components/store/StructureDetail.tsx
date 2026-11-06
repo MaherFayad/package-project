@@ -85,10 +85,12 @@ export function StructureDetail({
               {intro}
             </p>
             <ul className={`${mk.factRow} m-enter`} style={{ ["--m-i" as string]: 4 }}>
-              <li>
-                <Package size={20} aria-hidden />
-                <bdi>{structure.code.replace("_", " ")}</bdi>
-              </li>
+              {/^FEFCO_/.test(structure.code) ? (
+                <li>
+                  <Package size={20} aria-hidden />
+                  <bdi>{structure.code.replace("_", " ")}</bdi>
+                </li>
+              ) : null}
               <li>
                 <Ruler size={20} aria-hidden />
                 <span className={mk.num}>{formatDims(dims, locale)}</span>

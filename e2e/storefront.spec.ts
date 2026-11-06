@@ -107,7 +107,7 @@ test("account: sign in, withdraw marketing consent, request data deletion", asyn
   await page.waitForLoadState("networkidle"); // let the form hydrate before typing
   const code = await sendOtp(page, phone);
   await page.getByLabel("Verification code").fill(code);
-  await page.getByLabel(/I agree to the Terms/).check();
+  await page.getByLabel(/I agree to the terms/i).check();
   await page.getByLabel(/Send me offers/).check();
   await page.getByRole("button", { name: "Verify and continue" }).click();
   await expect(page).toHaveURL(/\/en\/account$/, { timeout: 30_000 });

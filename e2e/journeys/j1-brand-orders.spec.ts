@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { SEEDED, cleanup, db, signInAs, track, uniquePhone } from "../fixtures/factory";
 import { formatMoney } from "../../src/lib/format";
+import { FINISHES } from "../../src/lib/configurator/catalog";
 import { ONE_PX_PNG, ackCookies, ageShipments, localeOf, logoPng, noSideScroll, rx, sendOtpIn, tFor, tr, vatOf } from "./helpers";
 
 /**
@@ -44,7 +45,11 @@ test("J1 · coffee brand: design → share → OTP → company checkout → pay 
   await panel.getByRole("textbox", { name: t("designer.layer.textValue"), exact: true }).fill("Bunn Coffee · Zamalek");
   await panel.getByRole("tab", { name: t("designer.tabs.box") }).click();
   await panel.getByRole("radio", { name: t("materials.E_FLUTE_WHITE") }).check();
-  await panel.getByRole("checkbox", { name: rx(locale === "ar" ? "بصمة ذهبي" : "Gold foil") }).check();
+  // Anchored: the checkbox name carries a help line, and in Arabic "gold" is a prefix of "rose gold".
+  const gold = FINISHES.FOIL_GOLD.name[locale];
+  const rose = FINISHES.FOIL_ROSE_GOLD.name[locale];
+  const roseTail = rose.startsWith(gold) ? rose.slice(gold.length).trim() : null;
+  await panel.getByRole("checkbox", { name: new RegExp(`^${rx(gold).source}${roseTail ? `(?!\\s*${rx(roseTail).source})` : ""}`) }).check();
   // Anonymous autosave puts the design id in the URL.
   await expect(page).toHaveURL(/[?&]d=[\w-]+/, { timeout: 30_000 });
 
@@ -72,7 +77,7 @@ test("J1 · coffee brand: design → share → OTP → company checkout → pay 
   const viewer = await browser.newPage();
   await viewer.goto(shareUrl);
   if (named) await expect(viewer.getByRole("heading", { level: 1 })).toContainText("Bunn Coffee");
-  await expect(viewer.getByText(locale === "ar" ? "بصمة ذهبي" : "Gold foil").first()).toBeVisible();
+  await expect(viewer.getByText(FINISHES.FOIL_GOLD.name[locale]).first()).toBeVisible();
   await viewer.close();
 
   // 4. Instant price → "Order this box" → checkout.
@@ -133,7 +138,7 @@ test("J1 · coffee brand: design → share → OTP → company checkout → pay 
   const vp = await vctx.newPage();
   await vp.goto(`/${locale}/vendor/jobs/${order.number}`);
   await expect(vp.getByRole("heading", { level: 1, name: order.number })).toBeVisible({ timeout: 30_000 });
-  await expect(vp.getByRole("main")).toContainText(locale === "ar" ? "بصمة ذهبي" : "Gold foil");
+  await expect(vp.getByRole("main")).toContainText(FINISHES.FOIL_GOLD.name[locale]);
   await vp.getByRole("button", { name: t("vendorPortal.job.actions.accept") }).first().click();
   await vp.getByRole("dialog").getByRole("button", { name: t("vendorPortal.job.actions.accept") }).click();
   await vp.getByRole("button", { name: t("vendorPortal.job.actions.startProduction") }).first().click();
@@ -171,7 +176,7 @@ test("J1 · coffee brand: design → share → OTP → company checkout → pay 
   await page.goto(`/${locale}/orders/${orderId}`);
   await expect.poll(async () => (await db.order.findUniqueOrThrow({ where: { id: orderId } })).status, { timeout: 30_000 }).toBe("DELIVERED");
   await page.reload();
-  await expect(page.getByRole("main")).toContainText(locale === "ar" ? "بصمة ذهبي" : "Gold foil");
+  await expect(page.getByRole("main")).toContainText(FINISHES.FOIL_GOLD.name[locale]);
 
   // 11. Receipt: the company and tax number frozen on the order, the same totals and VAT.
   await page.goto(`/${locale}/orders/${orderId}/invoice`);

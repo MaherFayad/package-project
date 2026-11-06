@@ -44,7 +44,7 @@ test("home → design → gate → price → checkout → pay → vendor → QC 
   await expect(gate).toBeVisible();
   const phone = (await uniquePhone("12")).local;
   await gate.getByLabel("Verification code").fill(await sendOtp(gate, phone));
-  await gate.getByLabel(/I agree to the Terms/).check();
+  await gate.getByLabel(/I agree to the terms/i).check();
   await gate.getByRole("button", { name: "Verify and continue" }).click();
   const price = page.getByRole("dialog", { name: "Instant price" });
   await expect(price.getByText("Total with VAT")).toBeVisible({ timeout: 30_000 });

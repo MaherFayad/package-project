@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import { Download } from "lucide-react";
-import { BlockStack, Button, ButtonGroup, Modal, Text, TextField } from "@/components/ui";
+import { BlockStack } from "@/components/ui/Stack";
+import { Button, ButtonGroup } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
+import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
 import { useI18n } from "@/i18n/client";
 import { decideDataRequestAction } from "./server/actions";
 import { canDecideRequest } from "./lib/ops";

@@ -65,7 +65,7 @@ const FAMILIES: AvailabilityEntry[] = [
   },
   {
     slug: "folding-carton",
-    name: { ar: "علب كرتون مقوى", en: "Folding cartons" },
+    name: { ar: "علب دوبلكس", en: "Folding cartons" },
     standards: ["ECMA A/B/C/D/E series"],
     egypt: "local",
     egyptPrintMethods: ["offset-sheetfed", "digital-toner", "hot-foil"],
@@ -92,7 +92,7 @@ const FAMILIES: AvailabilityEntry[] = [
   },
   {
     slug: "rigid-box",
-    name: { ar: "علب مقواة فاخرة", en: "Rigid set-up boxes" },
+    name: { ar: "علب صلبة فاخرة", en: "Rigid set-up boxes" },
     standards: ["Lid and base, book, magnetic, drawer"],
     egypt: "local",
     egyptPrintMethods: ["offset-sheetfed", "digital-toner", "hot-foil", "screen"],
@@ -330,7 +330,7 @@ type Sub = Partial<Omit<AvailabilityEntry, "slug" | "family">> & { name: Availab
 const SUBS: Record<string, Record<string, Sub>> = {
   corrugated: {
     "fefco-02": {
-      name: { ar: "علب شحن مشقوقة", en: "Slotted boxes (FEFCO 02)" },
+      name: { ar: "كراتين شحن مشقوقة", en: "Slotted boxes (FEFCO 02)" },
       standards: ["FEFCO 0200", "FEFCO 0201", "FEFCO 0203", "FEFCO 0204"],
       sizes: ["200 x 150 x 100", "300 x 200 x 150", "400 x 300 x 250", "600 x 400 x 400 (moving)"],
       moq: moq(500, 1000),

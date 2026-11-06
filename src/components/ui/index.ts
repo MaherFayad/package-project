@@ -51,3 +51,4 @@ export { Timeline, type TimelineEvent, type TimelineGroup } from "./Timeline";
 export { MetricsStrip, type Metric } from "./MetricsStrip";
 export { CookieNotice, useCookieAck, COOKIE_ACK, COOKIE_HIDE_SCRIPT } from "./CookieNotice";
 export { cx, type SpaceScale, type Responsive } from "./utils";
+export { useInlineEditFocus } from "./useInlineEditFocus";

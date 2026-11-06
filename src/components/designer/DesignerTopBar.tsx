@@ -4,7 +4,7 @@ import { UserRound } from "lucide-react";
 import type { Locale } from "@/types";
 import { getT } from "@/i18n";
 import { getSession } from "@/lib/auth/session";
-import { ElbaWordmark } from "@/components/ui";
+import { ElbaWordmark } from "@/components/ui/Frame";
 import { TopBarLanguage, TopBarSignIn } from "./TopBarLanguage";
 import styles from "./designer.module.css";
 

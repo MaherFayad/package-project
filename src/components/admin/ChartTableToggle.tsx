@@ -1,7 +1,8 @@
 "use client";
 
 import { useId, useState, type ReactNode } from "react";
-import { BlockStack, Button } from "@/components/ui";
+import { BlockStack } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
 import { useI18n } from "@/i18n/client";
 
 /** Shows a chart with a button that reveals the same data as a table (keyboard and screen reader friendly). */

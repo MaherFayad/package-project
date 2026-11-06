@@ -2,7 +2,7 @@
 
 import { useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
-import type { Texture, ToneMapping, WebGLRenderer } from "three";
+import type { Object3D, Texture, ToneMapping, WebGLRenderer } from "three";
 
 /**
  * Rendering-cost helpers shared by the box and vessel viewers (owner: 3D engine).
@@ -60,34 +60,102 @@ export function InteractionDpr() {
 }
 
 /**
- * Compile every material in the scene (async where KHR_parallel_shader_compile exists) before the
- * viewer is revealed, so the first frame and the first drag do not stall on shader compilation.
+ * Give the main thread back (R6-R1): `scheduler.yield()` where the browser has it (continuation
+ * keeps its priority), else a MessageChannel task (no 4 ms clamp like setTimeout).
  */
-export function ShaderWarmup({ onDone }: { onDone?: () => void }) {
+export function yieldToMain(): Promise<void> {
+  const sched = (globalThis as { scheduler?: { yield?: () => Promise<void> } }).scheduler;
+  if (sched?.yield) return sched.yield();
+  return new Promise((resolve) => {
+    if (typeof MessageChannel === "undefined") return void setTimeout(resolve, 0);
+    const ch = new MessageChannel();
+    ch.port1.onmessage = () => {
+      ch.port1.close();
+      resolve();
+    };
+    ch.port2.postMessage(null);
+  });
+}
+
+/** Per-slice budget while warming shaders without KHR_parallel_shader_compile (ms). */
+const WARMUP_SLICE_MS = 40;
+
+/**
+ * Compile every material in the scene before the viewer is revealed, so the first frame and the
+ * first drag do not stall on shader compilation.
+ *  - With KHR_parallel_shader_compile: `compileAsync` (the driver links off the main thread).
+ *  - Without it (R6-R1): one object per distinct material, yielding to the browser about every
+ *    40 ms, so a tap during the mount is handled within one slice instead of after one ~400 ms
+ *    task. The canvas does not render until this is done (EngineCanvas `frameloop="never"`), so
+ *    the first render cannot link every program in one go either.
+ * `onCompiled` fires when the programs exist (the canvas may start rendering), `onDone` two frames
+ * after the first compiled frame was presented (reveal).
+ */
+export function ShaderWarmup({ onDone, onCompiled }: { onDone?: () => void; onCompiled?: () => void }) {
   const gl = useThree((s) => s.gl);
   const scene = useThree((s) => s.scene);
   const camera = useThree((s) => s.camera);
   const invalidate = useThree((s) => s.invalidate);
   const done = useRef(onDone);
   done.current = onDone;
+  const compiled = useRef(onCompiled);
+  compiled.current = onCompiled;
   useEffect(() => {
     let alive = true;
+    const sliced = async () => {
+      const seen = new Set<unknown>();
+      const objects: Object3D[] = [];
+      scene.traverseVisible((o) => {
+        const m = (o as Object3D & { material?: unknown }).material;
+        if (!m) return;
+        const key = Array.isArray(m) ? m.map((x) => (x as { uuid: string }).uuid).join() : (m as { uuid: string }).uuid;
+        if (seen.has(key)) return;
+        seen.add(key);
+        objects.push(o);
+      });
+      let t0 = performance.now();
+      for (const o of objects) {
+        if (!alive) return;
+        try {
+          gl.compile(o, camera, scene);
+          // three links lazily: the blocking wait for the driver (LINK_STATUS, info logs, uniform
+          // locations) happens on a program's first use, i.e. all of them inside the first render.
+          // Touch each new program here so that wait lands in this slice instead.
+          const mats = (o as Object3D & { material: unknown }).material;
+          for (const m of Array.isArray(mats) ? mats : [mats]) {
+            const programs = (gl.properties.get(m as object) as { programs?: Map<unknown, { getUniforms(): unknown }> }).programs;
+            programs?.forEach((pr) => pr.getUniforms());
+          }
+        } catch {
+          /* a failed program is reported by three at render time */
+        }
+        if (performance.now() - t0 > WARMUP_SLICE_MS) {
+          await yieldToMain();
+          t0 = performance.now();
+        }
+      }
+    };
     // wait one frame so lazily created children (materials, environment) exist
     const raf = requestAnimationFrame(() => {
       // compileAsync only pays off with KHR_parallel_shader_compile; without it three warns and
-      // polls programs on a timer (which can outlive an unmounted renderer), so compile in place.
+      // polls programs on a timer (which can outlive an unmounted renderer), so compile in slices.
       const parallel = gl.extensions.has("KHR_parallel_shader_compile") && typeof gl.compileAsync === "function";
       let p: Promise<unknown>;
       try {
-        p = parallel ? gl.compileAsync(scene, camera) : Promise.resolve(gl.compile(scene, camera));
+        p = parallel ? gl.compileAsync(scene, camera) : sliced();
       } catch {
         p = Promise.resolve();
       }
       p.catch(() => undefined).finally(() => {
         if (!alive) return;
-        invalidate();
-        // reveal after the compiled frame has been presented
-        requestAnimationFrame(() => requestAnimationFrame(() => alive && done.current?.()));
+        compiled.current?.();
+        // the canvas starts rendering now: let React apply the frameloop change, then draw
+        requestAnimationFrame(() => {
+          if (!alive) return;
+          invalidate();
+          // reveal after the compiled frame has been presented
+          requestAnimationFrame(() => requestAnimationFrame(() => alive && done.current?.()));
+        });
       });
     });
     return () => {

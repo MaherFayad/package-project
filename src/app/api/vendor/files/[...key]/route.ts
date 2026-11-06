@@ -26,6 +26,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ key: st
     const viewer = s ? { id: s.user.id, role: s.user.role, vendorId: s.user.vendorId } : null;
     let parties: { vendorId: string; buyerId: string } | null = null;
     let qcStatus: string | null = null;
+    if (parsed.scope === "dispute" && viewer) {
+      parties = await db.order.findUnique({ where: { id: parsed.ownerId }, select: { vendorId: true, buyerId: true } });
+    }
     if (parsed.scope === "qc" && viewer) {
       parties = await db.order.findUnique({ where: { id: parsed.ownerId }, select: { vendorId: true, buyerId: true } });
       // R4: buyers see a QC photo only after ops approved it (canReadFile).

@@ -1,4 +1,6 @@
-import { BlockStack, Card, SkeletonBodyText, SkeletonPage } from "@/components/ui";
+import { BlockStack } from "@/components/ui/Stack";
+import { Card } from "@/components/ui/Card";
+import { SkeletonBodyText, SkeletonPage } from "@/components/ui/Skeleton";
 
 export default function Loading() {
   return (

@@ -1,4 +1,5 @@
 import "server-only";
+import { isStaleBase } from "./lib/concurrency";
 import { cookies } from "next/headers";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
@@ -146,10 +147,17 @@ export async function loadDesign(id: string, actor: Actor): Promise<LoadedDesign
 
 export type SaveResult =
   | { ok: true; id: string; owned: boolean; updatedAt: string }
-  | { ok: false; status: 403 | 404; error: "FORBIDDEN" | "NOT_FOUND" };
+  | { ok: false; status: 403 | 404; error: "FORBIDDEN" | "NOT_FOUND" }
+  /** R10-R1: the design changed since `baseUpdatedAt`; the newer copy comes back. */
+  | { ok: false; status: 409; error: "CONFLICT"; updatedAt: string; doc: DesignDoc | null };
+
 
 /** Create or update a design for the current actor (anonymous designs expire in 30 days). */
-export async function saveDesign(doc: DesignDoc, actor: Actor, opts: { id?: string; thumbnail?: string | null } = {}): Promise<SaveResult> {
+export async function saveDesign(
+  doc: DesignDoc,
+  actor: Actor,
+  opts: { id?: string; thumbnail?: string | null; baseUpdatedAt?: string; force?: boolean } = {},
+): Promise<SaveResult> {
   const material = await db.material.findUnique({ where: { code: doc.materialCode } });
   const data = {
     name: doc.name.trim(),
@@ -166,22 +174,32 @@ export async function saveDesign(doc: DesignDoc, actor: Actor, opts: { id?: stri
   const now = new Date();
 
   if (opts.id) {
-    const row = await db.design.findUnique({ where: { id: opts.id }, select: { ownerId: true, anonId: true, expiresAt: true } });
+    const row = await db.design.findUnique({ where: { id: opts.id }, select: { ownerId: true, anonId: true, expiresAt: true, updatedAt: true } });
     if (!row) return { ok: false, status: 404, error: "NOT_FOUND" };
     if (!canWrite(row, actor, now)) {
       // A signed-in user editing their own earlier anonymous draft from another browser: forbid.
       return { ok: false, status: 403, error: "FORBIDDEN" };
     }
     const owned = !!row.ownerId;
-    const updated = await db.design.update({
-      where: { id: opts.id },
-      data: {
-        ...data,
-        // Signing in claims the draft (verify-otp also claims by cookie).
-        ...(!owned && actor.user ? { ownerId: actor.user.id, expiresAt: null } : {}),
-        ...(!owned && !actor.user ? { expiresAt: new Date(now.getTime() + ANON_TTL_MS) } : {}),
-      },
-    });
+    const patch = {
+      ...data,
+      // Signing in claims the draft (verify-otp also claims by cookie).
+      ...(!owned && actor.user ? { ownerId: actor.user.id, expiresAt: null } : {}),
+      ...(!owned && !actor.user ? { expiresAt: new Date(now.getTime() + ANON_TTL_MS) } : {}),
+    };
+    const conflict = async (): Promise<SaveResult> => {
+      const cur = await db.design.findUnique({ where: { id: opts.id }, include: { material: true } });
+      return { ok: false, status: 409, error: "CONFLICT", updatedAt: (cur?.updatedAt ?? row.updatedAt).toISOString(), doc: cur ? rowToDoc(cur) : null };
+    };
+    if (isStaleBase(opts.baseUpdatedAt, row.updatedAt, opts.force)) return conflict();
+    if (opts.baseUpdatedAt && !opts.force) {
+      // Compare-and-set: only write if nobody saved between the read above and this write.
+      const res = await db.design.updateMany({ where: { id: opts.id, updatedAt: row.updatedAt }, data: patch });
+      if (res.count === 0) return conflict();
+      const after = await db.design.findUnique({ where: { id: opts.id }, select: { id: true, ownerId: true, updatedAt: true } });
+      return { ok: true, id: opts.id, owned: !!after?.ownerId, updatedAt: (after?.updatedAt ?? now).toISOString() };
+    }
+    const updated = await db.design.update({ where: { id: opts.id }, data: patch });
     return { ok: true, id: updated.id, owned: !!updated.ownerId, updatedAt: updated.updatedAt.toISOString() };
   }
 
@@ -200,12 +218,14 @@ export async function saveDesign(doc: DesignDoc, actor: Actor, opts: { id?: stri
 
 /** Create (or return) the share token. Signed-in owners only. */
 export async function shareDesign(id: string, user: SessionUser): Promise<{ ok: true; token: string; created: boolean } | { ok: false; status: 403 | 404 }> {
-  const row = await db.design.findUnique({ where: { id }, select: { ownerId: true, shareToken: true } });
+  const row = await db.design.findUnique({ where: { id }, select: { ownerId: true, shareToken: true, updatedAt: true } });
   if (!row) return { ok: false, status: 404 };
   if (row.ownerId !== user.id) return { ok: false, status: 403 };
   if (row.shareToken) return { ok: true, token: row.shareToken, created: false };
   const token = randomToken(12);
-  await db.design.update({ where: { id }, data: { shareToken: token } });
+  // Not a content change: keep updatedAt, so an open editor's next save is not refused as stale
+  // (R10-R1 compares it).
+  await db.design.update({ where: { id }, data: { shareToken: token, updatedAt: row.updatedAt } });
   return { ok: true, token, created: true };
 }
 

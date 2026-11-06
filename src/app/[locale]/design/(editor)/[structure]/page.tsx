@@ -55,6 +55,7 @@ export default async function DesignEditorPage({ params, searchParams }: { param
 
   let doc: DesignDoc | null = null;
   let designId: string | null = null;
+  let updatedAt: string | null = null;
   let loadError: "notFound" | null = null;
   const d = one(sp.d);
   if (d) {
@@ -63,6 +64,7 @@ export default async function DesignEditorPage({ params, searchParams }: { param
       if (docModelCode(loaded.doc) !== libModel.code) redirect(designerPath(locale, docModelCode(loaded.doc), { d }));
       doc = loaded.doc;
       designId = loaded.doc.id ?? d;
+      updatedAt = loaded.updatedAt;
     } else loadError = "notFound";
   }
   if (!doc) {
@@ -92,6 +94,7 @@ export default async function DesignEditorPage({ params, searchParams }: { param
       locale={locale}
       initialDoc={doc}
       initialDesignId={designId}
+      initialUpdatedAt={updatedAt}
       initialUser={actor.user ? { id: actor.user.id, name: actor.user.name } : null}
       presetsByCode={presetsByCode}
       loadError={loadError}

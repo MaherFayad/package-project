@@ -41,7 +41,7 @@ export const DEFINITIONS: EcmaTuckDefinition[] = [
     standard: "ECMA A20.20.03.03",
     name: { ar: "علبة بلسان مستقيم", en: "Straight tuck end carton" },
     description: {
-      ar: "علبة كرتون مطوي بلسانين علوي وسفلي متصلين باللوح الخلفي، تبقى الواجهة الأمامية نظيفة للطباعة.",
+      ar: "علبة دوبلكس بلسانين علوي وسفلي متصلين باللوح الخلفي، تبقى الواجهة الأمامية نظيفة للطباعة.",
       en: "Folding carton with both closures hinged on the back panel, so the front stays clean for graphics.",
     },
     params: TUCK_LIMITS,
@@ -69,7 +69,7 @@ export const DEFINITIONS: EcmaTuckDefinition[] = [
     standard: "ECMA A20.20.03.01",
     name: { ar: "علبة بلسان عكسي", en: "Reverse tuck end carton" },
     description: {
-      ar: "علبة كرتون مطوي بلسان علوي على اللوح الخلفي ولسان سفلي على اللوح الأمامي، أوفر في الخامة وشائعة للعطور ومستحضرات التجميل.",
+      ar: "علبة دوبلكس بلسان علوي على اللوح الخلفي ولسان سفلي على اللوح الأمامي، أوفر في الخامة وشائعة للعطور ومستحضرات التجميل.",
       en: "Folding carton with the top closure on the back and the bottom closure on the front; board-efficient, classic for perfume and cosmetics.",
     },
     params: TUCK_LIMITS,

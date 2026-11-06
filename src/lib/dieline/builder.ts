@@ -1,5 +1,5 @@
 import type { DielinePanel, PanelRole, Polygon, Pt, Rect, Segment } from "./types";
-import { add, bboxOf, centroid, clamp, dot, edgesOf, norm, pt, scale, sub } from "./geometry";
+import { add, bboxOf, centroid, clamp, coveredFraction, dot, edgesOf, norm, pt, scale, sub } from "./geometry";
 
 export type FlapShape =
   | { kind: "rect" }
@@ -224,3 +224,16 @@ export function panelCreases(panel: DielinePanel, panels: DielinePanel[]): Segme
 }
 
 export { edgesOf };
+
+const ROLL_OVERLAP_MM = 0.25;
+
+/**
+ * Bleed of one printable panel edge (shared by every family assembler): `bleed` on cut edges, 0 on
+ * creases, and a 0.25 mm overlap on roll hinges (R5-3Q-A-05: the facets of a rolled tube / cup /
+ * cone are one continuous print; clipping both strips exactly at the hinge left a pale seam).
+ */
+export function edgeBleed(e: Segment, creases: Segment[], panels: readonly DielinePanel[], bleed: number): number {
+  if (coveredFraction(e, creases) <= 0.98) return bleed;
+  const rolls = panels.flatMap((p) => (p.hinge && p.hingeKind === "roll" ? [p.hinge] : []));
+  return rolls.length && coveredFraction(e, rolls) > 0.98 ? ROLL_OVERLAP_MM : 0;
+}
