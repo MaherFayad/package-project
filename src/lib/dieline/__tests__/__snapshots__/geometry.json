@@ -198,10 +198,10 @@
   "svg": "209aeecf884cc996563a0026"
  },
  "FEFCO_0228": {
-  "dieline": "90f0e65eb0fb42bd9a7ecd03",
-  "poses": "8b5f22ddd92663cff3dab65e",
+  "dieline": "cd77d2885a44e4a0b586dfb4",
+  "poses": "0fda41345c2c5536c66e510e",
   "bounds": "97dbde260cbb99440238c7c7",
-  "svg": "0c6e2f71cca7d26339181f1f"
+  "svg": "68de6ea9b97335d0ea178c5b"
  },
  "FEFCO_0229": {
   "dieline": "ca547307c956182086ebb4ac",
@@ -210,10 +210,10 @@
   "svg": "983cd400b9f7d15af8056cc3"
  },
  "FEFCO_0230": {
-  "dieline": "621b150a081f8ed3501b488e",
-  "poses": "6dff99b6dafdbf95a16471f0",
-  "bounds": "73f4a6498150e1d950328229",
-  "svg": "21ee775b42451a04ff9c7332"
+  "dieline": "20eaca6df7519b5cd6378211",
+  "poses": "a8d265cdd5c069f295f9f7a8",
+  "bounds": "e84c60b20d321381d88e8629",
+  "svg": "9af17e2b96a7ce3c75af5ed3"
  },
  "FEFCO_0231": {
   "dieline": "f009e20f695d6180ba8572e8",
@@ -1680,10 +1680,10 @@
   "svg": "14f1f7331dba1d71d1107cc2"
  },
  "FEFCO_0320+features": {
-  "dieline": "3b535ea293edb36c1b3063ab",
-  "poses": "3bd6c7261aa4bbd3c8ce60d6",
-  "bounds": "6305c3746395557d995eaabd",
-  "svg": "5e8e5fc24535dcdcccd84cd4"
+  "dieline": "6cb741a79cfed4bc6163fe88",
+  "poses": "15c0339635dd374d2ea4f097",
+  "bounds": "8a21aedea654a051f82c8a4c",
+  "svg": "975134813e63afe764ebda4b"
  },
  "ECMA_CLB+features": {
   "dieline": "3731319dc7afcad90fd83986",
@@ -1716,10 +1716,10 @@
   "svg": "2a124641f6e13bb8b348a8d3"
  },
  "RIGID_BOX+features": {
-  "dieline": "4db06ce3072451223c450bb0",
-  "poses": "b5baaaf1fb01247e0c234446",
-  "bounds": "d510358471bfb25144181e89",
-  "svg": "0b6911240c0c614fb5fdb0ac"
+  "dieline": "e553c448e8486620c3986c1b",
+  "poses": "d7552bfaf5faed66e025f799",
+  "bounds": "21de7f9b92b4fd71fa7d33fc",
+  "svg": "19941a4fda73ca7595b55e42"
  },
  "ROLL_LABEL+features": {
   "dieline": "37ee30bcc345c935fee4de21",
