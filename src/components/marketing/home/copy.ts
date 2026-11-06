@@ -116,6 +116,13 @@ const en = {
       pay: "Pay",
     },
   },
+  motion: {
+    feature: ["Pause the designer preview", "Play the designer preview"],
+    delivery: ["Pause the delivery map", "Play the delivery map"],
+    finishes: ["Pause the finishes", "Play the finishes"],
+    price: ["Pause the order summary", "Play the order summary"],
+    pay: ["Pause the payment methods", "Play the payment methods"],
+  },
   steps: {
     title: "Start your box today",
     items: ["Pick a model and size", "Design and preview", "Order and delivery"],
@@ -229,6 +236,13 @@ const ar: HomeCopy = {
       total: "الإجمالي",
       pay: "الدفع",
     },
+  },
+  motion: {
+    feature: ["إيقاف حركة معاينة التصميم", "تشغيل حركة معاينة التصميم"],
+    delivery: ["إيقاف حركة خريطة التوصيل", "تشغيل حركة خريطة التوصيل"],
+    finishes: ["إيقاف حركة التشطيبات", "تشغيل حركة التشطيبات"],
+    price: ["إيقاف حركة ملخص الطلب", "تشغيل حركة ملخص الطلب"],
+    pay: ["إيقاف حركة وسائل الدفع", "تشغيل حركة وسائل الدفع"],
   },
   steps: {
     title: "ابدأ علبتك اليوم",

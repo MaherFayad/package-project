@@ -147,8 +147,6 @@ export default async function HomePage({ params }: Props) {
   };
   const sample = SAMPLE_LABEL[locale];
   const ui = (k: string) => R6.ui[`${k}-${locale}`]!;
-  const pauseLabel = t("mk.motion.pause");
-  const playLabel = t("mk.motion.play");
 
   const stats = [
     { value: MODEL_COUNT, label: c.stats.items[0]!.label },
@@ -237,7 +235,7 @@ export default async function HomePage({ params }: Props) {
                 </Link>
               </p>
             </div>
-            <MotionScope className={s.featureVisual} pauseLabel={pauseLabel} playLabel={playLabel} buttonClassName={s.scopeBtn}>
+            <MotionScope className={s.featureVisual} pauseLabel={c.motion.feature[0]} playLabel={c.motion.feature[1]} buttonClassName={s.scopeBtn}>
               <div aria-hidden="true" className={s.fill}>
                 <R6Pic a={cut("tuck-carton")} sizes="(min-width: 1024px) 380px, 70vw" className={s.featureImg} />
                 <div className={s.prompt}>
@@ -334,7 +332,7 @@ export default async function HomePage({ params }: Props) {
             </Display>
           </Reveal>
           <Reveal as="article" className={s.mapCard}>
-            <MotionScope className={s.mapStage} pauseLabel={pauseLabel} playLabel={playLabel} buttonClassName={s.scopeBtn}>
+            <MotionScope className={s.mapStage} pauseLabel={c.motion.delivery[0]} playLabel={c.motion.delivery[1]} buttonClassName={s.scopeBtn}>
               <div aria-hidden="true" className={s.fill}>
                 <div className={s.mapGlow} style={{ inlineSize: 540, blockSize: 540, insetBlockStart: -120, insetInlineStart: -160 }} />
                 <div className={s.mapGlow} style={{ inlineSize: 480, blockSize: 420, insetBlockEnd: -140, insetInlineEnd: -80, opacity: 0.6 }} />
@@ -503,7 +501,7 @@ export default async function HomePage({ params }: Props) {
             </p>
           </Reveal>
           <Reveal variant="scale">
-            <MotionScope className={s.navyPanel} pauseLabel={pauseLabel} playLabel={playLabel} buttonClassName={s.scopeBtn}>
+            <MotionScope className={s.navyPanel} pauseLabel={c.motion.finishes[0]} playLabel={c.motion.finishes[1]} buttonClassName={s.scopeBtn}>
               <div className={s.navyGlow} aria-hidden="true" />
               <R6Pic a={cut("rigid-box")} sizes="(min-width: 1024px) 420px, 60vw" className={s.navyImg} />
               <ul className={s.finishList}>
@@ -540,7 +538,7 @@ export default async function HomePage({ params }: Props) {
             {row500 ? <p className={s.rule}>{fill(c.stats.rule, vars)}</p> : null}
             <p className={s.footnote}>{c.stats.note}</p>
           </Reveal>
-          <MotionScope className={s.splitVisual} pauseLabel={pauseLabel} playLabel={playLabel} buttonClassName={s.scopeBtn}>
+          <MotionScope className={s.splitVisual} pauseLabel={c.motion.price[0]} playLabel={c.motion.price[1]} buttonClassName={s.scopeBtn}>
             <div aria-hidden="true" className={s.fill}>
               {THUMBS.map((th) => (
                 <div key={th.id} className={s.thumb} style={{ ["--t" as string]: th.t, ["--s" as string]: th.s, ["--z" as string]: th.z, ["--dl" as string]: th.dl }}>
@@ -589,7 +587,7 @@ export default async function HomePage({ params }: Props) {
             </Display>
             <p className={s.body}>{c.stats.secureBody}</p>
           </Reveal>
-          <MotionScope className={s.splitVisual} pauseLabel={pauseLabel} playLabel={playLabel} buttonClassName={s.scopeBtn}>
+          <MotionScope className={s.splitVisual} pauseLabel={c.motion.pay[0]} playLabel={c.motion.pay[1]} buttonClassName={s.scopeBtn}>
             <div aria-hidden="true" className={s.fill}>
               <div className={s.globe} />
               {c.stats.payChips.map((m, i) => (
