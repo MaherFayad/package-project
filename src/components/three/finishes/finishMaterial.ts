@@ -279,7 +279,9 @@ export function createFinishedBoardMaterials(sheet: { width: number; height: num
       m.sheen = Math.max(0.001, s.look.sheen);
       m.sheenRoughness = s.look.sheenRoughness;
       m.envMapIntensity = s.look.envIntensity;
-      m.color.copy(s.color);
+      // the box keeps a "cavity" shade on the inside board of a closed windowed carton (TK-04)
+      (m.userData.baseColor ??= new Color()).copy(s.color);
+      m.color.copy(s.color).multiplyScalar(m.userData.cavity ?? 1);
       m.bumpScale = relief[side] ? s.bumpScale * RELIEF_BUMP_SCALE : fibreScale[side];
       u.elbaInkTone.value = s.look.inkTone;
       u.elbaMaskFade.value = s.maskFade;

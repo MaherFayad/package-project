@@ -79,7 +79,7 @@ export class DielineBuilder {
     role: PanelRole,
     polygon: Polygon,
     pieceLabel: string,
-    assembly: { matrix: number[]; stage: number; lift?: number },
+    assembly: NonNullable<DielinePanel["assembly"]>,
     opts: Pick<PanelOpts, "holes" | "label"> = {},
   ): DielinePanel {
     const panel = this.addRoot(id, role, polygon, opts.label ?? pieceLabel, opts);
