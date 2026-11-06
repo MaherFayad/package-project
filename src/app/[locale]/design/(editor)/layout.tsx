@@ -1,4 +1,5 @@
 import { Suspense, type ReactNode } from "react";
+import { preloadPlexArabic } from "@/app/font-preload";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { preload } from "react-dom";
@@ -15,6 +16,7 @@ import styles from "@/components/designer/designer.module.css";
  */
 export default async function DesignLayout({ children, params }: { children: ReactNode; params: Promise<{ locale: string }> }) {
   const locale = toLocale((await params).locale);
+  preloadPlexArabic(locale); // app frame font (Plex), Arabic only
   // Unknown model → real 404. This must run here, above the Suspense boundary below: a notFound()
   // inside it would be streamed with status 200 (x-elba-path is set by src/middleware.ts).
   const model = ((await headers()).get("x-elba-path") ?? "").split("/")[3];
