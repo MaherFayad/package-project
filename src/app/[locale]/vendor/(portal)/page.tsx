@@ -54,7 +54,7 @@ function JobList({ jobs, locale, empty }: { jobs: JobListItemDTO[]; locale: Loca
               <JobStatusBadge job={j} />
             </InlineStack>
             <Text as="span" tone="subdued" variant="bodySm">
-              {t(`structures.${j.structureCode}` as DictKey)} · {t("vendorPortal.common.pcs", { count: formatNumber(j.quantity) })} · <bdi>{j.buyerName}</bdi>
+              {j.model && j.model.code !== j.structureCode ? j.model.name[locale] : t(`structures.${j.structureCode}` as DictKey)} · {t("vendorPortal.common.pcs", { count: formatNumber(j.quantity) })} · <bdi>{j.buyerName}</bdi>
             </Text>
           </div>
           <div className={styles.ListMeta}>
@@ -92,22 +92,24 @@ export default async function VendorDashboard({ params }: { params: Promise<{ lo
   return (
     <Page fullWidth title={t("vendorPortal.dashboard.greeting", { name: pick(locale, vendor.nameAr, vendor.nameEn) })} subtitle={t("vendorPortal.dashboard.subtitle")}>
       <BlockStack gap="400">
-        <MetricsStrip
-          accessibilityLabel={t("vendorPortal.dashboard.metricsLabel")}
-          metrics={[
-            { label: t("vendorPortal.dashboard.metrics.awaiting"), value: <span data-testid="metric-awaiting">{formatNumber(d.awaitingCount)}</span> },
-            { label: t("vendorPortal.dashboard.metrics.inProduction"), value: formatNumber(d.inProductionCount) },
-            { label: t("vendorPortal.dashboard.metrics.dueSoon"), value: formatNumber(d.dueSoonCount) },
-            { label: t("vendorPortal.dashboard.metrics.onTime"), value: formatPercent(d.onTimePct, locale) },
-            {
-              label: t("vendorPortal.dashboard.metrics.rating"),
-              value: t("vendorPortal.dashboard.ratingValue", { rating: d.rating.toFixed(1) }),
-              trend: t("vendorPortal.dashboard.ratingCount", { count: formatNumber(d.ratingCount) }),
-            },
-            { label: t("vendorPortal.dashboard.metrics.paidOut"), value: formatMoney(d.payouts.paidPiasters, locale) },
-            { label: t("vendorPortal.dashboard.metrics.upcoming"), value: formatMoney(d.payouts.pendingPiasters + d.payouts.approvedPiasters + d.payouts.scheduledPiasters, locale) },
-          ]}
-        />
+        <div className={styles.MetricsWrap}>
+          <MetricsStrip
+            accessibilityLabel={t("vendorPortal.dashboard.metricsLabel")}
+            metrics={[
+              { label: t("vendorPortal.dashboard.metrics.awaiting"), value: <span data-testid="metric-awaiting">{formatNumber(d.awaitingCount)}</span> },
+              { label: t("vendorPortal.dashboard.metrics.inProduction"), value: formatNumber(d.inProductionCount) },
+              { label: t("vendorPortal.dashboard.metrics.dueSoon"), value: formatNumber(d.dueSoonCount) },
+              { label: t("vendorPortal.dashboard.metrics.onTime"), value: formatPercent(d.onTimePct, locale) },
+              {
+                label: t("vendorPortal.dashboard.metrics.rating"),
+                value: t("vendorPortal.dashboard.ratingValue", { rating: d.rating.toFixed(1) }),
+                trend: t("vendorPortal.dashboard.ratingCount", { count: formatNumber(d.ratingCount) }),
+              },
+              { label: t("vendorPortal.dashboard.metrics.paidOut"), value: formatMoney(d.payouts.paidPiasters, locale) },
+              { label: t("vendorPortal.dashboard.metrics.upcoming"), value: formatMoney(d.payouts.pendingPiasters + d.payouts.approvedPiasters + d.payouts.scheduledPiasters, locale) },
+            ]}
+          />
+        </div>
         <Layout>
           <LayoutSection>
             <BlockStack gap="400">
@@ -137,7 +139,7 @@ export default async function VendorDashboard({ params }: { params: Promise<{ lo
                   </Button>
                 }
               >
-                <JobList jobs={d.dueSoon} locale={locale} empty={t("vendorPortal.dashboard.dueEmpty")} />
+                <JobList jobs={d.dueSoon} locale={locale} empty={d.dueSoonCount > 0 ? t("vendorPortal.dashboard.dueOnlyAwaiting") : t("vendorPortal.dashboard.dueEmpty")} />
               </Card>
             </BlockStack>
           </LayoutSection>

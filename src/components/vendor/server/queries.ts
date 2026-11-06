@@ -17,13 +17,14 @@ import type {
 } from "@/types";
 import { VENDOR_VISIBLE_STATUSES, isAwaitingAcceptance, dueState, ACTIVE_STATUSES } from "../lib/jobs";
 import { payoutSchedule, payoutSummary } from "../lib/payouts";
+import { jobModel, modelsForCard } from "../lib/coverage";
 import type {
   JobDetailDTO,
   JobEventDTO,
   JobListItemDTO,
   PortfolioItemDTO,
   RateCardDetailDTO,
-  RateCardRowDTO,
+  RateCardRowWithCoverageDTO,
   VendorProfileDTO,
 } from "../types";
 
@@ -44,7 +45,7 @@ export async function listJobs(vendorId: string): Promise<JobListItemDTO[]> {
     take: MAX_JOBS,
     include: {
       buyer: { select: { name: true } },
-      items: { select: { structureCode: true, quantity: true }, take: 1 },
+      items: { select: { structureCode: true, modelCode: true, quantity: true }, take: 1 },
       productionEvents: { select: { type: true, createdAt: true }, orderBy: { createdAt: "asc" } },
       qcPhotos: { select: { kind: true, status: true } },
     },
@@ -58,6 +59,7 @@ export async function listJobs(vendorId: string): Promise<JobListItemDTO[]> {
     dueDate: iso(o.dueDate),
     buyerName: buyerFirstName(o.buyer.name),
     structureCode: (o.items[0]?.structureCode ?? "FEFCO_0427") as StructureCode,
+    model: jobModel(o.items[0]?.modelCode),
     quantity: o.items.reduce((s, i) => s + i.quantity, 0),
     vendorCostPiasters: o.vendorCostPiasters,
     events: o.productionEvents.map((e) => ({ type: e.type, createdAt: e.createdAt.toISOString() })),
@@ -104,11 +106,13 @@ export async function getJob(vendorId: string, number: string): Promise<JobDetai
     dueDate: iso(o.dueDate),
     buyerName: buyerFirstName(o.buyer.name),
     structureCode: (o.items[0]?.structureCode ?? "FEFCO_0427") as StructureCode,
+    model: jobModel(o.items[0]?.modelCode),
     quantity: o.items.reduce((s, i) => s + i.quantity, 0),
     vendorCostPiasters: o.vendorCostPiasters,
     items: o.items.map((i) => ({
       id: i.id,
       structureCode: i.structureCode as StructureCode,
+      model: jobModel(i.modelCode),
       dims: fromJson<Dims>(i.dims),
       materialCode: i.materialCode as MaterialCode,
       finishCode: i.finishCode as FinishCode,
@@ -160,7 +164,8 @@ export async function getDashboard(vendorId: string, now = new Date()) {
     awaiting: awaiting.slice(0, 5),
     awaitingCount: awaiting.length,
     inProductionCount: inProduction.length,
-    dueSoon: dueSoon.slice(0, 5),
+    // Awaiting jobs already have their own card: the due-soon card lists accepted work only (no duplicate rows).
+    dueSoon: dueSoon.filter((j) => !isAwaitingAcceptance(j)).slice(0, 5),
     dueSoonCount: dueSoon.length,
     payouts: payoutSummary(payoutRows),
     activeCards,
@@ -171,7 +176,7 @@ export async function getDashboard(vendorId: string, now = new Date()) {
   };
 }
 
-export async function listRateCards(vendorId: string): Promise<RateCardRowDTO[]> {
+export async function listRateCards(vendorId: string): Promise<RateCardRowWithCoverageDTO[]> {
   const cards = await db.rateCard.findMany({
     where: { vendorId },
     include: { structure: { select: { code: true, sortOrder: true } }, material: { select: { code: true, sortOrder: true } } },
@@ -187,6 +192,7 @@ export async function listRateCards(vendorId: string): Promise<RateCardRowDTO[]>
       dieCostPiasters: c.dieCostPiasters,
       leadTimeDays: c.leadTimeDays,
       active: c.active,
+      modelCount: modelsForCard(c.structure.code as StructureCode, c.material.code as MaterialCode).length,
     }));
 }
 

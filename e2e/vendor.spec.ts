@@ -89,10 +89,12 @@ test.describe("vendor portal", () => {
     const submit = qc.getByRole("button", { name: "Submit for quality check" });
     await expect(submit).toBeDisabled();
     await qc.locator('input[type="file"]').setInputFiles({ name: "sheet.png", mimeType: "image/png", buffer: PNG });
-    await expect(qc.getByRole("listitem").filter({ hasText: "First printed sheet" })).toBeVisible();
+    // Scope to the uploaded-photo list: the required-photos checklist also names both kinds.
+    const photos = qc.getByRole("list", { name: "Quality check photos" });
+    await expect(photos.getByRole("listitem").filter({ hasText: "First printed sheet" })).toBeVisible();
     await qc.getByLabel("Photo type").selectOption("PACKED_BUNDLE");
     await qc.locator('input[type="file"]').setInputFiles({ name: "bundle.png", mimeType: "image/png", buffer: PNG });
-    await expect(qc.getByRole("listitem").filter({ hasText: "Packed bundle" })).toBeVisible();
+    await expect(photos.getByRole("listitem").filter({ hasText: "Packed bundle" })).toBeVisible();
     await expect(submit).toBeEnabled();
     await submit.click();
     await expect(page.getByText("Quality check in progress")).toBeVisible();
