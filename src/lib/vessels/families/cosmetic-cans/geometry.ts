@@ -185,10 +185,16 @@ function caseShape(s: Extract<ShapeSpec, { type: "case" }>, d: CatalogueDims): B
     { r: R - 0.5, y: split - 0.3 },
     { r: R - 0.5, y: split + 0.3 },
     { r: R, y: split + 0.6 },
-    { r: R, y: H - ch, round: 0.4 },
-    { r: R - ch, y: H, round: 0.4 },
-    { r: 0, y: H },
   ];
+  if (s.cap === "bullet" || s.cap === "twist") {
+    // R5-3Q-G: the case above the groove is the inner sleeve hidden INSIDE the renderer's overcap.
+    // Flush with the cap (same R, same top) it poked through the cap top as a metal / black disc
+    // (lipstick) and z-fought it. Step it in 0.7 mm and stop it under the cap's top.
+    const innerTop = s.cap === "bullet" ? H - 1.6 : H - twistUp - 0.8;
+    ctrl.push({ r: R - 0.7, y: split + 1.4, round: 0.3 }, { r: R - 0.7, y: innerTop - 0.4, round: 0.3 }, { r: R - 1.1, y: innerTop, round: 0.3 }, { r: 0, y: innerTop });
+  } else {
+    ctrl.push({ r: R, y: H - ch, round: 0.4 }, { r: R - ch, y: H, round: 0.4 }, { r: 0, y: H });
+  }
   const lower = split > H / 2;
   const profile = finalize(ctrl, crossSection(s.section, d, 0.22), {
     wallMm: s.wallMm,
@@ -271,7 +277,8 @@ function jar(s: Extract<ShapeSpec, { type: "jar" }>, d: CatalogueDims, neck: Nec
 function bevcan(d: CatalogueDims, neck: NeckFinish): Built {
   const R = d.D / 2;
   const H = d.H;
-  const Rs = neck.outerDiameterMm / 2 + 1.2;
+  // R5-3Q-G: never wider than the body (a 202 end on a Ø50 body flared the top outwards)
+  const Rs = Math.min(neck.outerDiameterMm / 2 + 1.2, R - 0.3);
   const neckY = H - Math.max(9, (R - Rs) * 2.6 + 4);
   const ctrl: ControlPoint[] = [
     { r: 0, y: 10 },
@@ -352,6 +359,20 @@ function metalcan(s: Extract<ShapeSpec, { type: "metalcan" }>, d: CatalogueDims)
   // (a plain double-seam end keeps the generic core tab under the panel). Lever lids: the renderer's
   // LEVER_LID plugs into the chime from the seam top (default anchor H).
   const closureY = lid.type === "lever" ? undefined : H - s.endDepthMm;
+  if (s.bailFromD && d.D >= s.bailFromD && section.kind === "round") {
+    // R5-3Q-G: wire bail hooked in two side ears just under the top seam, resting folded down over
+    // the back of the tin (front print stays clear). Drawn by the renderer from profile.handle
+    // (VesselModel: kind "bail" = silver wire tube), same contract as the bottles family's pails.
+    const ear = H - sh - Math.min(14, H * 0.1);
+    const xr = R + seam + 2.5;
+    const drop = Math.min(0.45 * xr, ear - 10);
+    const path: { x: number; y: number; z: number }[] = [];
+    for (let k = 0; k <= 16; k++) {
+      const a = (k / 16) * Math.PI;
+      path.push({ x: xr * Math.cos(a), y: ear - drop * Math.sin(a), z: -xr * Math.sin(a) });
+    }
+    Object.assign(profile, { handle: { kind: "bail", tubeRadiusMm: 1.4, path } });
+  }
   return { profile, innerTopY: H - s.endDepthMm, sleeveY0: bodyY0 - 1, sleeveY1: bodyY1 + 1, lid, closedH: H, closureY };
 }
 
