@@ -451,6 +451,7 @@ export const checkoutEn = {
   buyer: {
     secureCheckout: "Secure checkout",
     nextStep: "Next: {step}",
+    awaitingPrinter: "Awaiting printer",
     paying: "Paying…",
     prepayNote: "Paying in full now takes {pct}% off the boxes.",
     sample: {

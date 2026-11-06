@@ -103,10 +103,11 @@ export async function POST(req: Request) {
       const vendor = await db.vendor.findUniqueOrThrow({ where: { id: vendorId! }, select: { nameAr: true, nameEn: true } });
       const last = await db.vendorPortfolioItem.aggregate({ where: { vendorId: vendorId! }, _max: { sortOrder: true } });
       const item = await db.vendorPortfolioItem.create({
-        data: { vendorId: vendorId!, imageUrl: url, captionAr: vendor.nameAr, captionEn: vendor.nameEn, sortOrder: (last._max.sortOrder ?? -1) + 1 },
+        // B-08: new photos wait for Elba's review before they appear on the public profile.
+        data: { vendorId: vendorId!, imageUrl: url, captionAr: vendor.nameAr, captionEn: vendor.nameEn, sortOrder: (last._max.sortOrder ?? -1) + 1, status: "PENDING" },
       });
       revalidatePath("/[locale]", "layout");
-      return Response.json({ ok: true, key: saved.key, url, item: { id: item.id, imageUrl: url, captionAr: item.captionAr, captionEn: item.captionEn, structureCode: null } });
+      return Response.json({ ok: true, key: saved.key, url, item: { id: item.id, imageUrl: url, captionAr: item.captionAr, captionEn: item.captionEn, structureCode: null, status: item.status, reviewNote: null } });
     }
     return Response.json({ ok: true, key: saved.key, url, name, size: saved.size, type: saved.type });
   } catch (e) {

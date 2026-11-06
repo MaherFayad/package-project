@@ -96,7 +96,7 @@ export function OrdersTable({ rows, locale }: { rows: OrderRow[]; locale: Locale
                       </Text>
                       <span className={styles.cardBadges}>
                         <Badge tone={b.tone} progress={b.progress}>
-                          {t(`orderStatus.${r.status}` as DictKey)}
+                          {r.status === "PAID" ? t("buyer.awaitingPrinter") : t(`orderStatus.${r.status}` as DictKey)}
                         </Badge>
                         {r.paymentStatus === "REFUNDED" ? payBadge(r) : null}
                       </span>
@@ -152,7 +152,7 @@ export function OrdersTable({ rows, locale }: { rows: OrderRow[]; locale: Locale
             <IndexTableCell>{payBadge(r)}</IndexTableCell>
             <IndexTableCell>
               <Badge tone={b.tone} progress={b.progress}>
-                {t(`orderStatus.${r.status}` as DictKey)}
+                {r.status === "PAID" ? t("buyer.awaitingPrinter") : t(`orderStatus.${r.status}` as DictKey)}
               </Badge>
             </IndexTableCell>
           </IndexTableRow>

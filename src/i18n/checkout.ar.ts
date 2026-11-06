@@ -453,6 +453,7 @@ export const checkoutAr: Pick<Dictionary, "checkout" | "payment" | "orders" | "s
   buyer: {
     secureCheckout: "دفع آمن",
     nextStep: "التالي: {step}",
+    awaitingPrinter: "بانتظار المطبعة",
     paying: "جار الدفع…",
     prepayNote: "الدفع الكامل الآن يخصم {pct}% من سعر العلب.",
     sample: {

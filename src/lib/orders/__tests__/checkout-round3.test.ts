@@ -13,9 +13,9 @@ describe("status tone map (CR-08)", () => {
   it("gives every status a tone, and statusBadge delegates to it", () => {
     for (const s of ORDER_STATUSES) expect(statusBadge(s)).toEqual(statusTone(s));
   });
-  it("Paid reads like a paid payment everywhere; Delivered is success", () => {
-    expect(statusTone("PAID")).toEqual({ tone: "neutral", progress: "complete" });
-    expect(paymentTone("PAID")).toEqual(statusTone("PAID"));
+  it("status PAID is 'awaiting printer' (attention); the payment badge Paid is neutral; Delivered is success", () => {
+    expect(statusTone("PAID")).toEqual({ tone: "attention", progress: "incomplete" });
+    expect(paymentTone("PAID")).toEqual({ tone: "neutral", progress: "complete" });
     expect(statusTone("DELIVERED")).toEqual({ tone: "success", progress: "complete" });
     expect(statusTone("PENDING_PAYMENT").tone).toBe("attention");
     expect(paymentTone("PENDING").tone).toBe("attention");

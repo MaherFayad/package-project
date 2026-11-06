@@ -151,7 +151,7 @@ export default async function AccountPage({ params }: Props) {
                           </Text>
                         </div>
                         <Badge tone={statusTone(o.status as OrderStatus).tone} progress={statusTone(o.status as OrderStatus).progress}>
-                          {t(`orderStatus.${o.status}` as DictKey)}
+                          {o.status === "PAID" ? t("buyer.awaitingPrinter") : t(`orderStatus.${o.status}` as DictKey)}
                         </Badge>
                       </li>
                     ))}

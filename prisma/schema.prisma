@@ -148,8 +148,13 @@ model VendorPortfolioItem {
   structureCode String?  // StructureCode
   sortOrder     Int      @default(0)
   createdAt     DateTime @default(now())
+  // Added by vendor portal (B-08): a photo goes public only after Elba reviews it (no phone numbers,
+  // logos with contact details or QR codes). PENDING | APPROVED | REJECTED; seed rows are APPROVED.
+  status        String   @default("APPROVED")
+  reviewNote    String?
 
   @@index([vendorId])
+  @@index([status])
 }
 
 // ───────────────────────────── Catalog ─────────────────────────────

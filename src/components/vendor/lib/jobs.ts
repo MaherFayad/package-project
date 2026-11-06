@@ -12,6 +12,7 @@
  * cancellation and refunds belong to ops / checkout.
  */
 import type { OrderStatus } from "@/types";
+import { PROBLEM_TONE, statusTone } from "@/lib/orders/status-tone";
 
 export const DUE_SOON_DAYS = 3;
 const DAY_MS = 86_400_000;
@@ -187,25 +188,10 @@ export type BadgeProgress = "incomplete" | "partiallyComplete" | "complete";
 
 /** Pill badge for a job's status (colour + progress pip; label comes from orderStatus.* or vendorPortal.views.*). */
 export function statusBadge(job: JobStateInput): { tone: BadgeToneLite; progress: BadgeProgress } {
-  const view = jobView(job);
-  if (view === "declined") return { tone: "critical", progress: "incomplete" };
-  if (view === "awaiting") return { tone: "attention", progress: "incomplete" };
-  switch (job.status as OrderStatus) {
-    case "ACCEPTED":
-      return { tone: "info", progress: "incomplete" };
-    case "QC_PENDING":
-      return { tone: "warning", progress: "partiallyComplete" };
-    case "IN_PRODUCTION":
-      return { tone: qcState(job) === "rejected" ? "critical" : "info", progress: "partiallyComplete" };
-    case "READY_TO_SHIP":
-      return { tone: "success", progress: "partiallyComplete" };
-    case "SHIPPED":
-      return { tone: "success", progress: "partiallyComplete" };
-    case "DELIVERED":
-      return { tone: "neutral", progress: "complete" };
-    default:
-      return { tone: "neutral", progress: "complete" };
-  }
+  // Vendor-only states (declined, QC sent back) are problems; everything else uses the shared map (CR-08).
+  if (jobView(job) === "declined") return PROBLEM_TONE;
+  if (job.status === "IN_PRODUCTION" && qcState(job) === "rejected") return { tone: "critical", progress: "partiallyComplete" };
+  return statusTone(job.status);
 }
 
 /* ───────────── Filtering / sorting for the jobs index ───────────── */
