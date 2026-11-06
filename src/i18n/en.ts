@@ -390,7 +390,7 @@ export const en = {
       materialSpec: "{gsm} gsm, {mm} mm thick",
       foodSafe: "Food safe",
       priceTitle: "Price from",
-      priceIntro: "Best price per box for {dims}: one-colour print outside, {material}, delivered to Greater Cairo.",
+      priceIntro: "Price per box from the best-match printer for {dims}: full-colour print outside, {material}, delivered to Greater Cairo. The designer and checkout start from this same price.",
       qty: "Quantity",
       perBox: "Per box",
       subtotal: "Total excl. VAT",

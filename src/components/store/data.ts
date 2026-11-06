@@ -17,7 +17,7 @@ import type {
 import { db } from "@/lib/db";
 import { fromJson } from "@/lib/json";
 import { defaultMaterialFor, materialFitsStructure } from "@/lib/dieline";
-import { priceTable, toPublicOffer, type PricingData, type VendorOffer } from "@/lib/pricing";
+import { headlineInput, priceTable, toPublicOffer, type PricingData, type VendorOffer } from "@/lib/pricing";
 import { loadPricingData } from "@/lib/pricing/server";
 import { loadPricingConfig } from "@/components/admin/server/settings";
 import type { VendorListItem } from "./vendor-filters";
@@ -172,8 +172,12 @@ const pricingData = cache(async (): Promise<PricingData> => loadPricingData());
 const pricingConfig = cache(() => loadPricingConfig());
 
 /**
- * Public "from" prices for the catalogue: best offer per quantity tier for the cheapest
- * configuration (1 colour, outside print, no finish, default board, Greater Cairo).
+ * Public prices for the catalogue, from the ONE journey price source (B-26,
+ * `@/lib/pricing/headline`): headline defaults (full colour, outside print, no finish, default
+ * board, Greater Cairo) and the best-match offer per quantity tier, which is the vendor checkout
+ * pre-selects. The designer badge and checkout use the same rule, so a 500-box mailer shows one
+ * price and one lead time from landing to payment. (Was: 1 colour here, the cheapest offer in
+ * the designer, best match in checkout: three different numbers.)
  * Only public numbers leave this function (vendor buy price and margin are stripped).
  * The buyer's exact instant price stays behind the free account in the designer (G2 gate).
  */
@@ -182,7 +186,7 @@ export async function getPriceFrom(code: StructureCode, dims: Dims, material?: M
   try {
     const data = await pricingData();
     const table = priceTable(
-      { structureCode: code, dims, materialId: mat, finishes: [], printSides: "OUTSIDE", colours: 1, zone: "GREATER_CAIRO" },
+      headlineInput(code, dims, mat),
       data,
       { config: await pricingConfig() },
     );
