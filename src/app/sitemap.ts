@@ -17,6 +17,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const paths: { path: string; priority: number; freq: Entry["changeFrequency"] }[] = [
     { path: "", priority: 1, freq: "weekly" },
     { path: "/start", priority: 0.9, freq: "weekly" },
+    { path: "/designer", priority: 0.9, freq: "weekly" },
     { path: "/catalog", priority: 0.9, freq: "weekly" },
     { path: "/vendors", priority: 0.8, freq: "weekly" },
     // r6-why: the 2026 marketing pages (prices on /pricing are live, so weekly).

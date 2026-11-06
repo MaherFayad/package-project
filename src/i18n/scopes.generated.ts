@@ -1202,8 +1202,6 @@ export const I18N_SCOPES = {
     "buyer.sample.credit",
     "buyer.sample.line",
     "checkout.summary.prepayDiscount",
-    "mk.motion.pauseMarquee",
-    "mk.motion.playMarquee",
     "pricing.badge.BEST_MATCH"
   ],
   "admin": [

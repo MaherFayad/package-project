@@ -64,6 +64,7 @@ export function ModelBrowser({
   linkLocale,
   searchRef: externalRef,
   inline = false,
+  initialQuery = "",
 }: {
   cards: ModelCard[];
   current?: string;
@@ -71,9 +72,11 @@ export function ModelBrowser({
   linkLocale?: string;
   searchRef?: RefObject<HTMLInputElement | null>;
   inline?: boolean;
+  /** Prefilled search, e.g. from /design?q= (the designer product page's prompt bar). */
+  initialQuery?: string;
 }) {
   const { t, locale } = useI18n();
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialQuery);
   const [group, setGroup] = useState<ModelGroup | "ALL">("ALL");
   // B-20: "Available in Egypt" (made locally or imported) by default; "Worldwide" adds rare formats.
   const [scope, setScope] = useState<"egypt" | "world">("egypt");
