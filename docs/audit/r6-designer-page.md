@@ -102,3 +102,5 @@ Container 1260 at x=90 (phone 358 at x=16); title→sub 16; head→content 40 (p
 Side-by-side with shopify.com/sa/website/builder re-captured at 1440 and 390 (ar); the reference frames stay out of git, our frames are in `docs/screenshots/audit/r6-designer-page/` (webp).
 
 R6-AX-15 (WCAG 2.2.2): the violet band's rotating backdrop and the prompt's typing examples now pause from one kit `MotionScope` button; e2e covers it.
+
+R6-AX-19 (low, WCAG 2.4.11): under 600px the floating structure-tiles card covered the focused Turn in 3D button (measured at 320, 360 and 390 px, ar and en). It now stacks under the box below 600px; an e2e test checks that no floating mockup intersects the hero controls at 320 to 1440 px in both locales.
