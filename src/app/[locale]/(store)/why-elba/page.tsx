@@ -6,14 +6,22 @@ import type { DictKey } from "@/i18n";
 import { formatDims, formatMoney, formatNumber } from "@/lib/format";
 import { siteUrl } from "@/lib/env";
 import { BOX_STRUCTURE_LIST } from "@/lib/dieline";
-import type { FinishCode } from "@/types";
-import { designHref } from "@/components/store/catalog";
-import { RENDER_ID, renderSrc, srcSetFor } from "@/components/marketing/assets";
+import type { FinishCode, StructureCode } from "@/types";
+import { designHref, structureHref } from "@/components/store/catalog";
+import { JsonLd } from "@/components/store/JsonLd";
+import { faqJsonLd } from "@/components/store/jsonld";
+import { renderSrc, srcSetFor } from "@/components/marketing/assets";
+import { startHref } from "@/components/marketing/MarketingHeader";
+import { Sheet } from "@/components/marketing/kit/Sheet";
+import { Display, Lead } from "@/components/marketing/kit/Display";
+import { Pill, PillRow } from "@/components/marketing/kit/Pill";
+import { Reveal } from "@/components/marketing/kit/Reveal";
 import { whyCopy } from "@/components/marketing/why/copy";
 import { loadWhyFacts } from "@/components/marketing/why/server";
 import { Ticker, type TickerItem } from "@/components/marketing/why/Ticker";
 import { StickyPoints } from "@/components/marketing/why/StickyPoints";
 import { CountUp } from "@/components/marketing/why/CountUp";
+import { Faq } from "@/components/marketing/why/Faq";
 import { MockCheckout, MockPrice, MockPrinters, MockTracking } from "@/components/marketing/why/Mockups";
 import s from "@/components/marketing/why/why.module.css";
 
@@ -34,31 +42,48 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 const TICKER_FINISHES: FinishCode[] = ["MATTE_LAMINATION", "GLOSS_LAMINATION", "SOFT_TOUCH_LAMINATION", "SPOT_UV", "HOT_FOIL", "EMBOSS", "DEBOSS", "VARNISH"];
+const SEGMENTS: { id: "cafes" | "beauty" | "ecommerce"; img: StructureCode; styles: StructureCode[] }[] = [
+  { id: "cafes", img: "PIZZA", styles: ["PIZZA", "GABLE_BOX", "SLEEVE"] },
+  { id: "beauty", img: "ECMA_RTE", styles: ["ECMA_RTE", "RIGID_BOX", "PAPER_TUBE"] },
+  { id: "ecommerce", img: "FEFCO_0427", styles: ["FEFCO_0427", "FEFCO_0201"] },
+];
+const small = (code: StructureCode) => renderSrc(code).replace(/\.webp$/, ".400w.webp");
 
 export default async function WhyElbaPage({ params }: Props) {
   const locale = toLocale((await params).locale);
   const t = getT(locale);
   const all = whyCopy(locale);
   const c = all.why;
+  const p = all.pricing;
   const u = all.units;
   const { pricing: f, designerModels } = await loadWhyFacts();
-  const money = (p: number, unit = false) => formatMoney(p, locale, { alwaysDecimals: unit });
-  const start = designHref(locale, f ? { structure: f.box.code, dims: f.box.dims, material: f.box.material } : { structure: "FEFCO_0427" });
+  const money = (v: number, unit = false) => formatMoney(v, locale, { alwaysDecimals: unit });
+  const start = startHref(locale);
+  const refStart = f ? designHref(locale, { structure: f.box.code, dims: f.box.dims, material: f.box.material }) : start;
   const pricingHref = `/${locale}/pricing`;
   const t500 = f?.tiers.find((x) => x.quantity === 500) ?? f?.tiers[0];
   const firstTier = f?.tiers[0];
   const lastTier = f?.tiers[f.tiers.length - 1];
+  const pct = `${formatNumber(f?.prepayDiscountPct ?? 0, 1)}%`;
+  const boxName = f ? `${t(`structures.${f.box.code}` as DictKey)} ${formatDims(f.box.dims, locale)}` : "";
+  const name = (code: StructureCode) => t(`structures.${code}` as DictKey);
 
-  // W2: our box styles (with their renders) interleaved with our finishes.
-  const styles = BOX_STRUCTURE_LIST.filter((st) => RENDER_ID[st.code]).slice(0, 12);
+  // W2: our box styles (each with its render) interleaved with our finishes.
   const items: TickerItem[] = [];
-  styles.forEach((st, i) => {
-    items.push({ label: t(`structures.${st.code}` as DictKey), kind: c.tickerStyle, img: renderSrc(st.code).replace(".webp", ".400w.webp") });
-    const fin = TICKER_FINISHES[i % TICKER_FINISHES.length]!;
-    if (i < TICKER_FINISHES.length) items.push({ label: t(`finishes.${fin}` as DictKey), kind: c.tickerFinish });
+  BOX_STRUCTURE_LIST.slice(0, 12).forEach((st, i) => {
+    items.push({ label: name(st.code), kind: c.tickerStyle, img: small(st.code) });
+    if (i < TICKER_FINISHES.length) items.push({ label: t(`finishes.${TICKER_FINISHES[i]!}` as DictKey), kind: c.tickerFinish });
   });
 
-  // W3 screens.
+  // W3: one screen per point (designer, printer match, order summary), all real UI / real numbers.
+  const summaryLines = t500
+    ? [
+        { label: p.boxes(formatNumber(t500.quantity)), value: money(t500.goodsPiasters) },
+        { label: p.compareRows.shipping, value: money(t500.shippingPiasters) },
+        { label: p.compareRows.vat, value: money(t500.vatPiasters) },
+      ]
+    : [];
+  const discount = t500 && t500.discountPiasters > 0 ? { label: c.prepayLine(pct), value: money(-t500.discountPiasters) } : null;
   const screens = [
     <div key="d" className={s.screen}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -74,288 +99,290 @@ export default async function WhyElbaPage({ params }: Props) {
       />
     </div>,
     <div key="s" className={s.screen}>
-      {t500 ? (
-        <MockCheckout
-          lines={[
-            { label: all.pricing.boxes(formatNumber(t500.quantity)), value: money(t500.subtotalPiasters - t500.shippingPiasters) },
-            { label: all.pricing.compareRows.shipping, value: money(t500.shippingPiasters) },
-          ]}
-          discount={null}
-          total={{ label: all.pricing.orderTotal, value: money(t500.totalPiasters) }}
-          cta={all.pricing.tierCta}
-        />
-      ) : null}
+      {t500 ? <MockCheckout lines={summaryLines} discount={discount} total={{ label: p.totalIncl, value: money(t500.totalPiasters) }} cta={p.tierCta} /> : null}
     </div>,
   ];
-
-  const points = c.points.map((p) => ({ title: typeof p.title === "function" ? p.title(formatNumber(f?.printerCount ?? 0)) : p.title, body: p.body }));
-  const boxName = f ? `${t(`structures.${f.box.code}` as DictKey)} ${formatDims(f.box.dims, locale)}` : "";
+  const points = c.points.map((x) => ({ title: typeof x.title === "function" ? x.title(formatNumber(f?.printerCount ?? 0)) : x.title, body: x.body }));
+  const faq = c.faq({ printers: formatNumber(f?.printerCount ?? 0), models: formatNumber(designerModels), max: formatNumber(f?.maxInstantQty ?? 2000) });
 
   return (
     <div className={s.page}>
-      {/* W1 hero */}
-      <section className={`${s.sheet} ${s.hero}`} aria-labelledby="why-h1">
-        <div className={s.container}>
-          <div className={s.heroInner}>
-            <div className={s.glow} aria-hidden="true" />
-            <div className={s.collage} aria-hidden="true">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img className={s.c1} src="/marketing/renders/fefco-0427.720w.webp" alt="" width={720} height={479} fetchPriority="high" decoding="async" />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img className={s.c2} src="/marketing/renders/rigid-box.720w.webp" alt="" width={720} height={481} decoding="async" />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img className={s.c3} src="/marketing/renders/paper-tube.400w.webp" alt="" width={400} height={691} decoding="async" />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img className={s.c4} src="/marketing/renders/ecma-rte.400w.webp" alt="" width={400} height={695} decoding="async" />
+      <JsonLd data={faqJsonLd(faq)} />
+
+      {/* W1 hero + W2 ticker */}
+      <Sheet tone="dark" hero className={s.heroBand} aria-labelledby="why-h1">
+        <div className={s.heroInner}>
+          <div className={s.glow} aria-hidden="true" />
+          <div className={s.collage} aria-hidden="true">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img className={s.c1} src="/marketing/renders/fefco-0427.720w.webp" alt="" width={720} height={479} fetchPriority="high" decoding="async" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img className={s.c2} src="/marketing/renders/rigid-box.720w.webp" alt="" width={720} height={481} decoding="async" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img className={s.c3} src="/marketing/renders/paper-tube.400w.webp" alt="" width={400} height={691} decoding="async" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img className={s.c4} src="/marketing/renders/ecma-rte.400w.webp" alt="" width={400} height={695} decoding="async" />
+          </div>
+          <div className={s.heroText}>
+            <Display as="h1" size="hero" align="center" id="why-h1" className={s.heroTitle}>
+              <span className={s.displayLine}>
+                <span className={s.displayLineInner}>{c.heroLine1}</span>
+              </span>
+              <span className={s.displayLine}>
+                <span className={s.displayLineInner}>{c.heroLine2}</span>
+              </span>
+            </Display>
+            <p className={s.heroSub}>{c.heroSub}</p>
+            <PillRow align="center" className={s.heroPills}>
+              <Pill href={start} size="lg">
+                {c.ctaStart}
+              </Pill>
+              <Pill href={pricingHref} size="lg" variant="outline">
+                {c.ctaPricing}
+              </Pill>
+            </PillRow>
+          </div>
+          {t500 ? (
+            <div className={s.heroBadge} aria-hidden="true">
+              <span>{c.heroBadgeLabel(formatNumber(t500.quantity))}</span>
+              <strong className={s.num}>{money(t500.totalPiasters)}</strong>
+              <span>{c.heroBadgeUnit(money(t500.unitPiasters, true))}</span>
             </div>
-            <div className={s.heroText}>
-              <h1 id="why-h1" className={s.display}>
-                <span className={s.displayLine}>
-                  <span className={s.displayLineInner}>{c.heroLine1}</span>
-                </span>
-                <span className={s.displayLine}>
-                  <span className={s.displayLineInner}>{c.heroLine2}</span>
-                </span>
-              </h1>
-              <p className={s.heroSub}>{c.heroSub}</p>
-              <div className={s.pills}>
-                <Link href={start} className={s.pill}>
-                  {c.ctaStart}
-                </Link>
-                <Link href={pricingHref} className={`${s.pill} ${s.pillOutline}`}>
-                  {c.ctaPricing}
-                </Link>
-              </div>
+          ) : null}
+        </div>
+        <Ticker items={items} label={c.tickerLabel} pause={c.tickerPause} play={c.tickerPlay} />
+      </Sheet>
+
+      {/* W3 light sheet: sticky device + three points */}
+      <Sheet tone="light" aria-labelledby="why-points">
+        <Reveal className={s.head}>
+          <Display size="56" align="center" id="why-points">
+            {c.pointsTitle}
+          </Display>
+          <Lead align="center">{c.pointsSub}</Lead>
+        </Reveal>
+        <StickyPoints points={points} screens={screens} deviceLabel={c.deviceLabels.join(", ")} />
+      </Sheet>
+
+      {/* W4 violet band: three UI mockup cards */}
+      <Sheet tone="violet" aria-labelledby="why-orders">
+        <Reveal className={s.head}>
+          <Display size="56" align="center" id="why-orders">
+            {c.ordersTitle}
+          </Display>
+          <Lead align="center">{c.ordersSub}</Lead>
+        </Reveal>
+        <ul className={s.cards3}>
+          <Reveal as="li" index={0} className={s.vCard}>
+            <div className={s.vMedia}>
+              {f && t500 ? (
+                <MockPrice
+                  title={boxName}
+                  rows={f.tiers.slice(0, 4).map((x) => ({ qty: p.boxes(formatNumber(x.quantity)), unit: money(x.unitPiasters, true), active: x.quantity === t500.quantity }))}
+                  totalLabel={p.totalIncl}
+                  total={money(t500.totalPiasters)}
+                />
+              ) : null}
             </div>
-            {t500 ? (
-              <div className={s.heroBadge} aria-hidden="true">
-                <span>{c.heroBadgeLabel(formatNumber(t500.quantity))}</span>
-                <strong className={s.num}>{money(t500.totalPiasters)}</strong>
-                <span>{c.heroBadgeUnit(money(t500.unitPiasters, true))}</span>
-              </div>
-            ) : null}
-          </div>
-        </div>
-        {/* W2 ticker */}
-        <div className={s.container}>
-          <Ticker items={items} label={c.tickerLabel} pause={c.tickerPause} play={c.tickerPlay} />
-        </div>
-      </section>
+            <div className={s.vBody}>
+              <h3 className={s.vTitle}>{c.ordersCards[0]!.title.replace("2,000", formatNumber(f?.maxInstantQty ?? 2000))}</h3>
+              <p className={s.vText}>{c.ordersCards[0]!.body(formatNumber(f?.maxInstantQty ?? 2000))}</p>
+            </div>
+          </Reveal>
+          <Reveal as="li" index={1} className={s.vCard}>
+            <div className={s.vMedia}>{t500 ? <MockCheckout lines={summaryLines.slice(0, 2)} discount={discount} total={{ label: p.totalIncl, value: money(t500.totalPiasters) }} cta={p.tierCta} /> : null}</div>
+            <div className={s.vBody}>
+              <h3 className={s.vTitle}>{c.ordersCards[1]!.title}</h3>
+              <p className={s.vText}>{c.ordersCards[1]!.body(pct)}</p>
+            </div>
+          </Reveal>
+          <Reveal as="li" index={2} className={s.vCard}>
+            <div className={s.vMedia}>
+              {t500 ? (
+                <MockTracking
+                  current={2}
+                  steps={[
+                    { label: c.track[0]!, meta: c.trackMeta.done },
+                    { label: c.track[1]!, meta: p.methods[t500.method] },
+                    { label: c.track[2]!, meta: c.trackMeta.eta(u.days(t500.deliveryDays)) },
+                    { label: c.track[3]!, meta: c.trackMeta.receipt },
+                  ]}
+                />
+              ) : null}
+            </div>
+            <div className={s.vBody}>
+              <h3 className={s.vTitle}>{c.ordersCards[2]!.title}</h3>
+              <p className={s.vText}>{c.ordersCards[2]!.body(u.days(f?.fastestDeliveryDays ?? 0))}</p>
+            </div>
+          </Reveal>
+        </ul>
+      </Sheet>
 
-      {/* W3 light sheet, sticky device + three points */}
-      <section className={`${s.sheet} ${s.light}`} aria-labelledby="why-points">
-        <div className={s.container}>
-          <div className={`${s.head} ${s.center}`} data-reveal>
-            <h2 id="why-points" className={s.h2}>
-              {c.pointsTitle}
-            </h2>
-            <p className={s.lead}>{c.pointsSub}</p>
-          </div>
-          <StickyPoints points={points} screens={screens} deviceLabel={c.deviceLabels.join(", ")} />
-        </div>
-      </section>
-
-      {/* W4 violet band */}
-      <section className={`${s.sheet} ${s.violet}`} aria-labelledby="why-orders">
-        <div className={s.container}>
-          <div className={`${s.head} ${s.center}`} data-reveal>
-            <h2 id="why-orders" className={s.h2}>
-              {c.ordersTitle}
-            </h2>
-            <p className={s.lead}>{c.ordersSub}</p>
-          </div>
-          <ul className={s.cards3} style={{ listStyle: "none", margin: 0, padding: 0 }}>
-            <li className={s.vCard} data-reveal style={{ ["--m-i" as string]: 0 }}>
-              <div className={s.vMedia}>
-                {f ? (
-                  <MockPrice
-                    title={boxName}
-                    rows={f.tiers.slice(0, 4).map((x) => ({ qty: all.pricing.boxes(formatNumber(x.quantity)), unit: money(x.unitPiasters, true), active: x.quantity === 500 }))}
-                    totalLabel={all.pricing.orderTotal}
-                    total={money(t500!.totalPiasters)}
-                  />
-                ) : null}
-              </div>
-              <div className={s.vBody}>
-                <h3 className={s.vTitle}>{c.ordersCards[0]!.title.replace("2,000", formatNumber(f?.maxInstantQty ?? 2000))}</h3>
-                <p className={s.vText}>{c.ordersCards[0]!.body(formatNumber(f?.maxInstantQty ?? 2000))}</p>
-              </div>
-            </li>
-            <li className={s.vCard} data-reveal style={{ ["--m-i" as string]: 1 }}>
-              <div className={s.vMedia}>
-                {t500 ? (
-                  <MockCheckout
-                    lines={[
-                      { label: all.pricing.boxes(formatNumber(t500.quantity)), value: money(t500.subtotalPiasters - t500.shippingPiasters) },
-                      { label: all.pricing.compareRows.shipping, value: money(t500.shippingPiasters) },
-                    ]}
-                    discount={f && f.prepayDiscountPct > 0 ? { label: c.prepayLine(`${formatNumber(f.prepayDiscountPct, 1)}%`), value: money(-t500.prepaidSavingPiasters) } : null}
-                    total={{ label: all.pricing.prepaidTotal, value: money(t500.prepaidTotalPiasters) }}
-                    cta={all.pricing.tierCta}
-                  />
-                ) : null}
-              </div>
-              <div className={s.vBody}>
-                <h3 className={s.vTitle}>{c.ordersCards[1]!.title}</h3>
-                <p className={s.vText}>{c.ordersCards[1]!.body(`${formatNumber(f?.prepayDiscountPct ?? 0, 1)}%`)}</p>
-              </div>
-            </li>
-            <li className={s.vCard} data-reveal style={{ ["--m-i" as string]: 2 }}>
-              <div className={s.vMedia}>
-                {t500 ? (
-                  <MockTracking
-                    current={2}
-                    steps={[
-                      { label: c.track[0]!, meta: c.trackMeta.done },
-                      { label: c.track[1]!, meta: all.pricing.methods[t500.method] },
-                      { label: c.track[2]!, meta: c.trackMeta.eta(u.days(t500.deliveryDays)) },
-                      { label: c.track[3]!, meta: c.trackMeta.receipt },
-                    ]}
-                  />
-                ) : null}
-              </div>
-              <div className={s.vBody}>
-                <h3 className={s.vTitle}>{c.ordersCards[2]!.title}</h3>
-                <p className={s.vText}>{c.ordersCards[2]!.body(u.days(f?.fastestDeliveryDays ?? 0))}</p>
-              </div>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      {/* W5 green stats */}
-      <section className={`${s.sheet} ${s.green}`} aria-labelledby="why-spend">
+      {/* W5 green band: real numbers, counting up once */}
+      <Sheet tone="green" aria-labelledby="why-spend" className={s.greenBand}>
         <div className={s.greenTexture} aria-hidden="true" />
-        <div className={s.container}>
-          <div className={`${s.head} ${s.center}`} data-reveal>
-            <h2 id="why-spend" className={s.h2}>
-              {c.spendTitle}
-            </h2>
-            <p className={s.lead}>{c.spendSub}</p>
-          </div>
-          <ul className={s.stats} style={{ listStyle: "none", margin: 0, padding: 0 }}>
-            {f?.unitDropPct != null && firstTier && lastTier ? (
-              <li className={s.stat} data-reveal style={{ ["--m-i" as string]: 0 }}>
-                <span className={s.statFig}>
-                  <CountUp value={f.unitDropPct} suffix="%" />
-                </span>
-                <h3 className={s.statLabel}>
-                  <TrendingDown size={20} aria-hidden />
-                  {c.stats.drop.label}
-                </h3>
-                <p className={s.statBody}>{c.stats.drop.body(formatNumber(firstTier.quantity), formatNumber(lastTier.quantity))}</p>
-              </li>
-            ) : null}
-            {f ? (
-              <li className={s.stat} data-reveal style={{ ["--m-i" as string]: 1 }}>
-                <span className={s.statFig}>
-                  <CountUp value={f.minOrderQty} />
-                  <span className={s.statUnit}>{c.stats.min.unit}</span>
-                </span>
-                <h3 className={s.statLabel}>
-                  <PackageCheck size={20} aria-hidden />
-                  {c.stats.min.label}
-                </h3>
-                <p className={s.statBody}>{c.stats.min.body}</p>
-              </li>
-            ) : null}
-            {f?.fastestDeliveryDays != null ? (
-              <li className={s.stat} data-reveal style={{ ["--m-i" as string]: 2 }}>
-                <span className={s.statFig}>
-                  <CountUp value={f.fastestDeliveryDays} />
-                  <span className={s.statUnit}>{c.stats.days.unit}</span>
-                </span>
-                <h3 className={s.statLabel}>
-                  <Truck size={20} aria-hidden />
-                  {c.stats.days.label}
-                </h3>
-                <p className={s.statBody}>{c.stats.days.body}</p>
-              </li>
-            ) : null}
-            <li className={s.stat} data-reveal style={{ ["--m-i" as string]: 3 }}>
+        <Reveal className={s.head}>
+          <Display size="56" align="center" id="why-spend">
+            {c.spendTitle}
+          </Display>
+          <Lead align="center">{c.spendSub}</Lead>
+        </Reveal>
+        <ul className={s.stats}>
+          {f?.unitDropPct != null && firstTier && lastTier ? (
+            <Reveal as="li" index={0} className={s.stat}>
               <span className={s.statFig}>
-                <CountUp value={designerModels} />
+                <CountUp value={f.unitDropPct} suffix="%" />
               </span>
               <h3 className={s.statLabel}>
-                <Boxes size={20} aria-hidden />
-                {c.stats.models.label}
+                <TrendingDown size={20} aria-hidden />
+                {c.stats.drop.label}
               </h3>
-              <p className={s.statBody}>{c.stats.models.body}</p>
-            </li>
-            {f?.digitalSetupPiasters != null ? (
-              <li className={s.stat} data-reveal style={{ ["--m-i" as string]: 4 }}>
-                <span className={s.statFig}>{money(f.digitalSetupPiasters)}</span>
-                <h3 className={s.statLabel}>
-                  <BadgeCheck size={20} aria-hidden />
-                  {c.stats.digital.label}
-                </h3>
-                <p className={s.statBody}>{c.stats.digital.body}</p>
-              </li>
-            ) : null}
-          </ul>
-        </div>
-      </section>
+              <p className={s.statBody}>{c.stats.drop.body(formatNumber(firstTier.quantity), formatNumber(lastTier.quantity))}</p>
+            </Reveal>
+          ) : null}
+          {f ? (
+            <Reveal as="li" index={1} className={s.stat}>
+              <span className={s.statFig}>
+                <CountUp value={f.minOrderQty} />
+                <span className={s.statUnit}>{c.stats.min.unit}</span>
+              </span>
+              <h3 className={s.statLabel}>
+                <PackageCheck size={20} aria-hidden />
+                {c.stats.min.label}
+              </h3>
+              <p className={s.statBody}>{c.stats.min.body}</p>
+            </Reveal>
+          ) : null}
+          {f?.fastestDeliveryDays != null ? (
+            <Reveal as="li" index={2} className={s.stat}>
+              <span className={s.statFig}>
+                <CountUp value={f.fastestDeliveryDays} />
+                <span className={s.statUnit}>{c.stats.days.unit}</span>
+              </span>
+              <h3 className={s.statLabel}>
+                <Truck size={20} aria-hidden />
+                {c.stats.days.label}
+              </h3>
+              <p className={s.statBody}>{c.stats.days.body}</p>
+            </Reveal>
+          ) : null}
+          <Reveal as="li" index={3} className={s.stat}>
+            <span className={s.statFig}>
+              <CountUp value={designerModels} />
+            </span>
+            <h3 className={s.statLabel}>
+              <Boxes size={20} aria-hidden />
+              {c.stats.models.label}
+            </h3>
+            <p className={s.statBody}>{c.stats.models.body}</p>
+          </Reveal>
+          {f?.digitalSetupPiasters != null ? (
+            <Reveal as="li" index={4} className={s.stat}>
+              <span className={s.statFig}>{money(f.digitalSetupPiasters)}</span>
+              <h3 className={s.statLabel}>
+                <BadgeCheck size={20} aria-hidden />
+                {c.stats.digital.label}
+              </h3>
+              <p className={s.statBody}>{c.stats.digital.body}</p>
+            </Reveal>
+          ) : null}
+        </ul>
+      </Sheet>
 
-      {/* W6 switch from your print shop */}
-      <section className={`${s.sheet} ${s.dark}`} aria-labelledby="why-switch">
-        <div className={s.container}>
-          <div className={s.switchGrid}>
-            <div data-reveal>
-              <h2 id="why-switch" className={`${s.h2} ${s.h2sm}`}>
-                {c.switchTitle1}
-                <br />
-                {c.switchTitle2}
-              </h2>
-              <ol className={s.steps}>
-                {c.switchSteps.map((st) => (
-                  <li key={st.title} className={s.step}>
-                    <h3 className={s.stepTitle}>{st.title}</h3>
-                    <p className={s.stepBody}>{st.body}</p>
+      {/* Segments (the header's "Why Elba" menu links here: #cafes, #beauty, #ecommerce) */}
+      <Sheet tone="white" aria-labelledby="why-segments">
+        <Reveal className={s.head}>
+          <Display size="56" align="center" id="why-segments">
+            {c.segmentsTitle}
+          </Display>
+          <Lead align="center">{c.segmentsSub}</Lead>
+        </Reveal>
+        <ul className={s.cards3}>
+          {SEGMENTS.map((seg, i) => (
+            <Reveal as="li" key={seg.id} index={i} className={s.segCard} id={seg.id}>
+              <div className={s.segMedia}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={small(seg.img)} alt="" width={400} height={300} loading="lazy" decoding="async" />
+              </div>
+              <h3 className={s.vTitle}>{c.segments[seg.id].title}</h3>
+              <p className={s.segText}>{c.segments[seg.id].body}</p>
+              <p className={s.segStylesLabel}>{c.segmentsStyles}</p>
+              <ul className={s.segLinks}>
+                {seg.styles.map((code) => (
+                  <li key={code}>
+                    <Link href={structureHref(locale, code)}>{name(code)}</Link>
                   </li>
                 ))}
-              </ol>
-            </div>
-            <div className={s.promiseWrap} data-reveal="fade">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img className={s.promiseArt} src="/marketing/renders/fefco-0201.720w.webp" alt="" width={720} height={480} loading="lazy" decoding="async" />
-              <figure className={s.promise} style={{ margin: 0 }}>
-                <p className={s.promiseEyebrow}>{c.promiseEyebrow}</p>
-                <blockquote className={s.promiseQuote} style={{ margin: 0 }}>
-                  {c.promiseQuote}
-                </blockquote>
-                <figcaption className={s.promiseSign}>{c.promiseSign}</figcaption>
-                {f ? (
-                  <ul className={s.promiseFacts}>
-                    {c.promiseFacts(u.hours(f.quoteValidityHours), u.days(f.sample?.creditDays ?? 0)).map((x) => (
-                      <li key={x}>{x}</li>
-                    ))}
-                  </ul>
-                ) : null}
-                <Link className={s.promiseLink} href={`/${locale}/legal/returns`}>
-                  {c.promisePolicy}
-                </Link>
-              </figure>
-            </div>
-          </div>
+              </ul>
+            </Reveal>
+          ))}
+        </ul>
+      </Sheet>
+
+      {/* W6 switch from your print shop + the Elba promise (our policy, not a testimonial) */}
+      <Sheet tone="dark" aria-labelledby="why-switch">
+        <div className={s.switchGrid}>
+          <Reveal>
+            <Display size="44" id="why-switch">
+              {c.switchTitle1}
+              <br />
+              {c.switchTitle2}
+            </Display>
+            <ol className={s.steps}>
+              {c.switchSteps.map((st) => (
+                <li key={st.title} className={s.step}>
+                  <h3 className={s.stepTitle}>{st.title}</h3>
+                  <p className={s.stepBody}>{st.body}</p>
+                </li>
+              ))}
+            </ol>
+          </Reveal>
+          <Reveal variant="fade" className={s.promiseWrap}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img className={s.promiseArt} src="/marketing/renders/fefco-0201.720w.webp" alt="" width={720} height={480} loading="lazy" decoding="async" />
+            <figure className={s.promise}>
+              <p className={s.promiseEyebrow}>{c.promiseEyebrow}</p>
+              <blockquote className={s.promiseQuote}>{c.promiseQuote}</blockquote>
+              <figcaption className={s.promiseSign}>{c.promiseSign}</figcaption>
+              {f ? (
+                <ul className={s.promiseFacts}>
+                  {c.promiseFacts(u.hours(f.quoteValidityHours), u.days(f.sample?.creditDays ?? 0)).map((x) => (
+                    <li key={x}>{x}</li>
+                  ))}
+                </ul>
+              ) : null}
+              <Link className={s.promiseLink} href={`/${locale}/legal/returns`}>
+                {c.promisePolicy}
+              </Link>
+            </figure>
+          </Reveal>
         </div>
-      </section>
+      </Sheet>
+
+      {/* FAQ (the header's help link points to #faq) */}
+      <Sheet tone="dark" overlap={false} id="faq" aria-labelledby="why-faq">
+        <Display size="44" id="why-faq" className={s.faqTitle}>
+          {c.faqTitle}
+        </Display>
+        <Faq items={faq} />
+      </Sheet>
 
       {/* W7 closing CTA */}
-      <section className={`${s.sheet} ${s.dark} ${s.close}`} aria-labelledby="why-close">
-        <div className={s.container} data-reveal>
-          <h2 id="why-close" className={s.h2}>
+      <Sheet tone="dark" overlap={false} aria-labelledby="why-close" className={s.close}>
+        <Reveal>
+          <Display size="56" align="center" id="why-close">
             {c.closeTitle}
-          </h2>
-          <div className={s.pills}>
-            <Link href={start} className={s.pill}>
+          </Display>
+          <PillRow align="center">
+            <Pill href={refStart} size="lg">
               {c.ctaStart}
-            </Link>
-            <Link href={pricingHref} className={`${s.pill} ${s.pillOutline}`}>
+            </Pill>
+            <Pill href={pricingHref} size="lg" variant="outline">
               {c.ctaPricing}
-            </Link>
-          </div>
-        </div>
-      </section>
+            </Pill>
+          </PillRow>
+        </Reveal>
+      </Sheet>
     </div>
   );
 }

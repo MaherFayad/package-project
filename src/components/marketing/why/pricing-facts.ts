@@ -12,8 +12,9 @@ import { applySampleCredit, sampleOffer, SAMPLE_PRODUCTION_DAYS } from "@/lib/or
  * price here goes through the same functions checkout uses:
  *
  *   quote(headlineInput(box) + quantity)  → headlineOffer (best match, pre-selected at checkout)
- *   orderTotals(lines, 0)                 → pay on delivery / pay later total
- *   orderTotals(lines, prepayDiscountPct) → prepaid total (the admin "checkout" setting)
+ *   orderTotals(lines, prepayDiscountPct) → what checkout charges (every order is paid online
+ *                                           before print, so the admin prepay discount applies)
+ *   orderTotals(lines, 0)                 → the list price that discount comes off
  *   sampleOffer(offer, pieces, price)     → sample pack, same printer, fixed price
  *
  * So a published price can never drift from what the buyer is charged for the same box
@@ -36,15 +37,25 @@ export interface CheckoutSettingsLike {
 
 export interface PriceTier {
   quantity: number;
-  /** Ex-VAT per box, goods only (what the store pages call "per box"). */
+  /**
+   * Per box exactly as checkout shows it on the offer card: round(pay.subtotal / quantity), i.e.
+   * ex-VAT, after the prepay discount, with setup and delivery spread over the boxes.
+   */
   unitPiasters: Piasters;
-  /** Ex-VAT subtotal incl. delivery, before any prepay discount. */
+  /** Same, incl. 14% VAT: round(pay.total / quantity). */
+  unitInclVatPiasters: Piasters;
+  /** What checkout charges, ex-VAT (pay.subtotal: goods − prepay discount + delivery). */
   subtotalPiasters: Piasters;
-  /** Total incl. 14% VAT, paying on delivery (no prepay discount). */
+  /** What checkout charges, incl. 14% VAT (pay.total). Every order is paid online, so this is the price. */
   totalPiasters: Piasters;
-  /** Total incl. VAT when prepaid online (admin prepay discount applied to goods). */
-  prepaidTotalPiasters: Piasters;
-  prepaidSavingPiasters: Piasters;
+  /** Total incl. VAT before the prepay discount (the list price the discount comes off). */
+  listTotalPiasters: Piasters;
+  /** listTotal − total. */
+  savingPiasters: Piasters;
+  /** Ex-VAT goods before the discount (product + setup + die + finishes). */
+  goodsPiasters: Piasters;
+  discountPiasters: Piasters;
+  vatPiasters: Piasters;
   setupPiasters: Piasters;
   diePiasters: Piasters;
   shippingPiasters: Piasters;
@@ -67,7 +78,7 @@ export interface PricingFacts {
   /** Digital presses are offered up to this quantity (pricing config). */
   digitalUpToQty: number;
   printerCount: number;
-  /** Top three ranked offers for 500 reference boxes (public fields only), as checkout lists them. */
+  /** Top three ranked offers for 500 reference boxes (public fields only, per box as checkout shows it). */
   matches: { name: { ar: string; en: string }; city: string; deliveryDays: number; unitPiasters: Piasters; badges: string[] }[];
   sample: null | {
     pieces: number;
@@ -112,7 +123,8 @@ export function computePricingFacts(
     if (quantity === 500) {
       matches = outcome.offers.slice(0, 3).map((o) => {
         const p = toPublicOffer(o);
-        return { name: p.vendor.name, city: p.vendor.city, deliveryDays: p.deliveryDays, unitPiasters: p.unitPiasters, badges: [...p.badges] };
+        const unit = Math.round(orderTotals(p.lines, settings.prepayDiscountPct).subtotalPiasters / quantity);
+        return { name: p.vendor.name, city: p.vendor.city, deliveryDays: p.deliveryDays, unitPiasters: unit, badges: [...p.badges] };
       });
     }
     // Digital setup (file prep, no plates) from any printer that runs the smallest tier digitally.
@@ -124,18 +136,23 @@ export function computePricingFacts(
       }
     }
     const pub = toPublicOffer(offer);
-    const cod = orderTotals(pub.lines, 0);
-    const pre = applySampleCredit(orderTotals(pub.lines, settings.prepayDiscountPct), 0);
+    // The two calls checkout makes (toCheckoutOffer → buyerTotals): list (no discount) and pay.
+    const list = orderTotals(pub.lines, 0);
+    const pay = applySampleCredit(orderTotals(pub.lines, settings.prepayDiscountPct), 0);
     tiers.push({
       quantity,
-      unitPiasters: pub.unitPiasters,
-      subtotalPiasters: cod.subtotalPiasters,
-      totalPiasters: cod.totalPiasters,
-      prepaidTotalPiasters: pre.totalPiasters,
-      prepaidSavingPiasters: cod.totalPiasters - pre.totalPiasters,
+      unitPiasters: Math.round(pay.subtotalPiasters / quantity),
+      unitInclVatPiasters: Math.round(pay.totalPiasters / quantity),
+      subtotalPiasters: pay.subtotalPiasters,
+      totalPiasters: pay.totalPiasters,
+      listTotalPiasters: list.totalPiasters,
+      savingPiasters: list.totalPiasters - pay.totalPiasters,
+      goodsPiasters: list.subtotalPiasters - list.shippingPiasters,
+      discountPiasters: pay.discountPiasters,
+      vatPiasters: pay.vatPiasters,
       setupPiasters: lineSum(offer, "SETUP"),
       diePiasters: lineSum(offer, "DIE"),
-      shippingPiasters: cod.shippingPiasters,
+      shippingPiasters: pay.shippingPiasters,
       deliveryDays: pub.deliveryDays,
       method: offer.printMethod,
     });
