@@ -317,7 +317,7 @@ export const checkoutEn = {
         SAMPLE_ORDER: "Printed sample order",
         SAMPLE_CREDIT: "Sample {number} credited on this order",
         SAMPLE_CREDITED: "Sample credit used on order {number}",
-        PREFLIGHT_OVERRIDE: "Proof approved with print-check problems",
+        PREFLIGHT_OVERRIDE: "print-check problems accepted as they are",
       },
       today: "Today",
     },

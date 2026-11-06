@@ -56,7 +56,6 @@ const NOTE_KEYS: Record<string, DictKey> = {
   SAMPLE_ORDER: "orders.detail.notes.SAMPLE_ORDER",
   SAMPLE_CREDIT: "orders.detail.notes.SAMPLE_CREDIT",
   SAMPLE_CREDITED: "orders.detail.notes.SAMPLE_CREDITED",
-  PREFLIGHT_OVERRIDE: "orders.detail.notes.PREFLIGHT_OVERRIDE",
 };
 
 /** Timeline entry text for an event; internal codes are hidden from buyers. */
@@ -74,6 +73,8 @@ function eventText(t: TFunction, type: ProductionEventType, note: string | null,
   if (!note) return { content };
   if (type === "PAYMENT_CONFIRMED") return { content, detail: t(`paymentMethods.${note as PaymentMethod}` as DictKey) };
   if (type === "ORDER_PLACED" && code?.[1] === "REORDER") return { content, detail: t("orders.detail.notes.REORDER", { number: code[2] ?? "" }) };
+  // B-04: proof approved with red print-check issues ("PREFLIGHT:1E/0W:ACK", written by the service).
+  if (type === "PROOF_APPROVED" && code?.[1] === "PREFLIGHT" && note!.endsWith(":ACK")) return { content, detail: t("orders.detail.notes.PREFLIGHT_OVERRIDE") };
   if (code && !internal && type !== "SHIPPED") return { content };
   return { content, detail: note };
 }

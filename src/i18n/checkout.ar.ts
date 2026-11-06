@@ -319,7 +319,7 @@ export const checkoutAr: Pick<Dictionary, "checkout" | "payment" | "orders" | "s
         SAMPLE_ORDER: "طلب عينة مطبوعة",
         SAMPLE_CREDIT: "تم خصم العينة {number} من هذا الطلب",
         SAMPLE_CREDITED: "تم استخدام رصيد العينة في الطلب {number}",
-        PREFLIGHT_OVERRIDE: "تمت الموافقة على البروفة مع مشكلات في فحص الطباعة",
+        PREFLIGHT_OVERRIDE: "مع قبول مشكلات فحص الطباعة كما هي",
       },
       today: "اليوم",
     },
