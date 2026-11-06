@@ -88,7 +88,7 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
   const isVessel = lib?.kind === "vessel";
   // R4-12: the visitor sees the price before being asked to sign in, the same figure checkout
   // shows for 500 boxes (best match, prepay discount, delivery to Greater Cairo, excl. VAT).
-  const [{ price, quoteReason }, { prepayDiscountPct }] = await Promise.all([sharePrice(doc), loadCheckoutSettings()]);
+  const { price, quoteReason } = await sharePrice(doc);
   // R6-05: also a special-gluing model that no printer lists yet (the engine says "by quote").
   const order = orderModeOf(doc.modelCode);
   const reason = order.mode === "quote" || order.mode === "preview" ? order.reason : quoteReason;
@@ -137,9 +137,6 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
                     : t("buyer.sharePrice", { qty: price.quantity, price: formatMoney(price.unitPiasters, locale), days: price.days })}
                 </p>
               ) : null}
-              {/* R5-JR-15: this unit is after the prepay discount (tierPrices), the designer's badge is
-                  before it; say which, so the two numbers read as one price. */}
-              {price && prepayDiscountPct > 0 ? <p className={styles.small}>{t("designer.shared.prepayNote", { pct: prepayDiscountPct })}</p> : null}
               <p className={styles.muted}>{reason ? ORDER_MODE_COPY[reason][locale] : t("designer.shared.ctaHelp")}</p>
               <Pill href={orderHref} size="lg" className={styles.full}>
                 {byQuote ? t("designer.price.quoteAction") : isVessel ? t("designer.container.order") : t("designer.shared.cta")}

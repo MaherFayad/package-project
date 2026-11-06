@@ -131,3 +131,46 @@ Phone TBT is over the 200 ms target but matches the home page on the same build 
 - i18n scopes (R5-PL-08): both pages live in the route group `src/app/[locale]/(store)/(why)/` (URLs unchanged) whose layout mounts `<I18nScope scope="why">`, and `scripts/generate-i18n-scopes.ts` gains one line `why: "(store)/(why)"`. Without it the shared price computation (checkout's `orders/sample` and `orders/totals`, whose line labels are dictionary keys) and the kit marquee controls added 1.6 KB to the root scope and broke its 40 KB budget (41.1 KB); now root is back at the foundation's size and the "why" scope holds 6 keys. `scopes.generated.ts` regenerated.
 - `docs/audit/tools/perf-pages.mjs`: two page entries.
 - Header and footer links were already in the foundation header (`/pricing`, `/why-elba`, `#cafes`, `#beauty`, `#ecommerce`, `#faq`); this branch adds the targets, not links.
+
+## 8. Spacing system (spec section 7, foundation a7b9fc22)
+
+Both pages now take every layout value from the kit: `Sheet y` (hero, `lg` for every sheet and colour band, `xl` for the closing CTA; same-tone neighbours collapse), `SectionHead` (title → subtitle 16, head → content 40/32/32), `Grid` (24/24/16) and `Stack`. Page-local spacing that was removed: heading margins (`clamp(40px, 5vw, 72px)`, 24, 32), band paddings (hero 24 bottom, green +48, pricing hero 48), grid gaps (12, 16, 20, 24, 40, 48, 80), the collage and ticker offsets. Spacing inside components (mockup cards, tier cards, the table) is on a 4px unit derived from the kit token (`--w-u: calc(var(--mk-stack-title-sub) / 4)`); no px spacing literal is left in `why.module.css`.
+
+| Change | Before | After |
+|---|---|---|
+| Container at 1440 | 1360 at x=40 | 1260 at x=90 (kit) |
+| Band padding at 1440 | 144 / 144 (one 192) | hero 72 top / 100 bottom; sheets 100 / 100; closing CTA 128; same-tone neighbour 0 top |
+| Phone band padding | 80 | 64 (sheets), 80 (closing CTA) |
+| Heading → subtitle | 24 | 16 |
+| Heading → content | 24 to 72 | 40 (32 phone) |
+| Grid gaps | 12 to 80 | 24 (16 phone) |
+| /why-elba hero headline | 165.8px (hero size) | 96px h1 token (56 phone), as on /sa/sell |
+| /why-elba "Better packaging" | kit StickyStory, ~1,900px tall | kit Steps (tabs, media swap, auto-advance with pause), ~850px as on /sa/sell |
+| /pricing "Always included" band | page-local `#141a1a` on a dark Sheet (collapsed into the hero by rule 2) | kit `navy` sheet. The reference's `rgb(20,26,26)` has no kit tone; asked the foundation for a raised-dark tone |
+| R6-AX-14 violet band text | muted alpha, 3.32 to 3.98:1 on `#6a4cff` | solid white on this band, 5.15:1 (WCAG 1.4.3) |
+
+`e2e/marketing-spacing.spec.ts`: `/why-elba` removed from `NOT_YET`; `/why-elba` and `/pricing` pass in ar and en at 1440, 1024, 768 and 390.
+
+Measured band paddings at 1440 / 390 after the change (top/bottom px), against the reference:
+
+| Page | Ours 1440 | shopify.com 1440 | Ours 390 | shopify.com 390 |
+|---|---|---|---|---|
+| why-elba / sell | 72/100, 100/100 ×5, 0/100, 0/128 | 0/80, 80/80, 80/80, 80/165, 80/128, 64/64 | 64/64, 64/64 ×5, 0/64, 0/80 | 0/64, 80/80, 64/64, 64/117, 64/80, 40/40 |
+| pricing | 72/100, 100/100 ×3, 0/128 | 128/104, 64/64 ×3, 32/128, 64/128, 0/128 | 64/64 ×4, 0/80 | 80/72, 40/40 ×3, 24/80, 40/80, 0/80 |
+
+The section-7 tokens standardise the reference's mixed values (80 on /sell sheets, 64 on /pricing bands) at 100 for sheets; the pages follow section 7. Side-by-side captures with shopify.com/sa/sell and /sa/pricing (1440 and 390, ar and en) were made with Playwright and stay out of git (they contain Shopify's pixels); our own captures are in `docs/screenshots/audit/r6-why/`.
+
+Perf after the change (phone, Slow 4G, 4x CPU): /ar/why-elba LCP 1.43 to 1.50 s, CLS 0.061 (Noto Arabic swap reflowing the 56px hero words, plus the shared cookie notice; under 0.1); /en/why-elba 1.30 s, CLS 0; /ar/pricing 1.29 to 1.37 s, CLS 0.011; /en/pricing 1.19 to 1.22 s, CLS 0. On phone the hero collage keeps two renders: the two small ones loaded late and became the LCP candidate (2.3 to 2.8 s).
+
+### 8.1 Merge of main a657116+ and foundation c13d51bc
+
+- `e2e/marketing-spacing.spec.ts`: `NOT_YET` is now empty (main had only `/why-elba` left); all public pages pass, ar + en, 1440/1024/768/390.
+- Arabic noun-form labels (`kit/__tests__/arabic-labels.test.ts`): «ابدأ التصميم مجانا» → «بدء التصميم مجانا», «ابدأ التصميم» → «بدء التصميم», «صمم واطلب عرض سعر» → «التصميم وطلب عرض سعر»; my three PENDING lines removed.
+- Band paddings re-measured on this build: unchanged from the table above. Phone LCP 1.18 to 1.49 s, CLS ≤ 0.061.
+
+### 8.2 Merge of main 263685c (foundation 1653751e)
+
+- /pricing "Always included" is on kit `tone="dark-2"` (rgb(20,26,26), as measured on /sa/pricing), overlapping the hero with 48px corners, 100/100 padding. Replaces the interim navy.
+- R6-AX-14 is now fixed in the kit (violet tone sets `--mk-muted` and `--mk-on-dark-muted` to #fff). The page override is removed, and page text reads the per-sheet `--mk-muted`, so it follows every tone. Verified: violet card text and lead computed `rgb(255,255,255)`.
+- arabic-labels.test.ts PENDING merged to empty (every owner fixed theirs); the test passes.
+- Open on the platform side: the metric-matched Arabic fallback font, after which ar /why-elba CLS (0.061) gets re-measured.

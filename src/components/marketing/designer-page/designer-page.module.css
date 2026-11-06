@@ -188,6 +188,13 @@
   .box { margin-block: var(--mk-stack-head-content); }
 }
 
+/* Narrow phones (R6-AX-19, WCAG 2.4.11 focus not obscured): the structure tiles card leaves the
+   overlay and stacks under the box, clear of the Turn in 3D and pause controls that hang below it. */
+@media (max-width: 599px) {
+  .stage { display: flex; flex-direction: column; align-items: center; }
+  .floatTiles { position: static; order: 2; margin-block-start: var(--mk-stack-head-content); }
+}
+
 /* ───────── 2. Prompt ───────── */
 .page .violet[data-tone] {
   position: relative; overflow: clip; isolation: isolate;
@@ -385,8 +392,9 @@
 
 .faqList { max-inline-size: 1080px; }
 
-/* Below-the-fold sections skip layout and paint until near the viewport. */
-.lazySection { content-visibility: auto; contain-intrinsic-size: auto 900px; }
+/* No content-visibility on these sections: they hold links and controls, and a placeholder
+   height that differs from the real one made the page grow by up to 4,169px (320px wide) as they
+   rendered, moving content and focus targets (WCAG 2.4.11, layout stability). */
 
 /* Calm page under reduced motion: same content, nothing moves (WCAG 2.3.3). */
 @media (prefers-reduced-motion: reduce) {

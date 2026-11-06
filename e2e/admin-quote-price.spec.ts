@@ -49,7 +49,7 @@ test("admin sends a price for a lead; the buyer pays it; the order has the quote
     await dialog.getByRole("combobox", { name: "Printer" }).selectOption(vendor.id);
     await dialog.getByLabel("Price per box ex-VAT (EGP)").fill("18");
     await dialog.getByLabel("Setup ex-VAT (EGP)").fill("1500");
-    await dialog.getByLabel("Delivery ex-VAT (EGP)").fill("1200");
+    await dialog.getByLabel("Shipping ex-VAT (EGP)").fill("1200");
     await dialog.getByLabel("Production and delivery (days)").fill("18");
     // The buy price is required: sending without it shows the reason on the field and saves nothing.
     await dialog.getByRole("button", { name: "Send price" }).click();
@@ -145,7 +145,7 @@ test("a catalogue request without a design gets one from the requested model whe
     await expect(dialog.getByText(/Catalogue request without a design/)).toBeVisible();
     await dialog.getByRole("combobox", { name: "Printer" }).selectOption(vendor.id);
     await dialog.getByLabel("Price per box ex-VAT (EGP)").fill("4.50");
-    await dialog.getByLabel("Delivery ex-VAT (EGP)").fill("2000");
+    await dialog.getByLabel("Shipping ex-VAT (EGP)").fill("2000");
     await dialog.getByLabel("Production and delivery (days)").fill("25");
     await dialog.getByLabel(/^Printer buy price/).fill("70000");
     await dialog.getByRole("button", { name: "Send price" }).click();

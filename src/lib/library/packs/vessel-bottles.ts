@@ -35,21 +35,6 @@ const BOTTLE_CLOSURE_COLOR: Partial<Record<string, string>> = {
   SPARKLING_CORK: "GOLD",
 };
 
-/**
- * R5-3Q-F-12: the neck finish follows the closure. The preset's finish when the closure fits it,
- * else the model's finish of the closure's kind nearest in diameter (crown on a crown bead, swing
- * top on its wire-lug bead, not both on the PP 28 ROPP thread).
- */
-function finishForClosure(def: BTL.BottleDefinition, finishId: string, closure?: string): string {
-  const code = closure as BTL.BottleClosureCode | undefined;
-  if (!code || !BTL.BOTTLE_CLOSURES[code]) return finishId;
-  const f = BTL.finishById(finishId);
-  if (BTL.closureFits(code, f)) return finishId;
-  const fits = def.finishes.map(BTL.finishById).filter((x) => BTL.closureFits(code, x));
-  fits.sort((a, b) => Math.abs(a.outerDiameterMm - f.outerDiameterMm) - Math.abs(b.outerDiameterMm - f.outerDiameterMm));
-  return fits[0]?.id ?? finishId;
-}
-
 export const models: VesselModelDef[] = BTL.DEFINITIONS.map((def) => {
   const preset = BTL.bottlePreset(def);
   const coreKind = def.coreKind;
@@ -92,13 +77,16 @@ export const models: VesselModelDef[] = BTL.DEFINITIONS.map((def) => {
     fillable: def.fillable,
     defaultLiquid: LIQUID_OF_CONTENT[def.defaultContent] ?? "WATER",
     pricing: "LABEL",
+    // `closure` (the design's chosen closure) picks the neck finish it fits (R6-3Q-F-01)
     describe(dims, surfaces, presetId, _container?: string, _options?: unknown, closure?: string) {
       const p = BTL.bottlePreset(def, presetId);
       const v = BTL.validateBottleDims(def, dims);
       if (!v.ok) throw new Error(`Invalid dims for ${def.code}`);
-      const profile = BTL.profileFor(def, dims, BTL.finishForDims(def, dims, finishForClosure(def, p.finish, closure)));
+      const finish = BTL.finishForConfig(def, dims, p.finish, closure);
+      const profile = BTL.profileFor(def, dims, finish);
       const labels = labelSpecsFor(coreKind, dims, profile, surfaces.filter(isSurface));
-      return { profile, areas: labels.map(labelArea), envelope: BTL.bottleEnvelope(def, profile, dims, closure && def.closures.includes(closure as BTL.BottleClosureCode) ? (closure as BTL.BottleClosureCode) : undefined) };
+      const fitted = def.closures.find((c) => c === closure && BTL.closureFits(c, finish));
+      return { profile, areas: labels.map(labelArea), envelope: BTL.bottleEnvelope(def, profile, dims, fitted) };
     },
   } satisfies VesselModelDef;
 });

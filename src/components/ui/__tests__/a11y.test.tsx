@@ -234,6 +234,30 @@ describe("UI kit accessibility contracts", () => {
     fireEvent.pointerUp(field);
     expect(scrollBy).not.toHaveBeenCalled();
   });
+  it("a control the browser scrolls under the cookie banner after focus is moved clear one frame later (2.4.11, R6-AX-17)", async () => {
+    const dict = getDictionary("en");
+    render(
+      <I18nProvider locale="en" dict={dict}>
+        <button type="button">Pause the strip</button>
+        <CookieNotice />
+      </I18nProvider>,
+    );
+    const banner = screen.getByRole("region");
+    const btn = screen.getByRole("button", { name: "Pause the strip" });
+    const rect = (top: number, bottom: number) => ({ top, bottom, left: 0, right: 320, width: 320, height: bottom - top, x: 0, y: top, toJSON: () => ({}) }) as DOMRect;
+    banner.getBoundingClientRect = () => rect(688, 830);
+    // At focusin the control is still below the viewport (nothing covered yet)...
+    let where = rect(900, 944);
+    btn.getBoundingClientRect = () => where;
+    const scrollBy = vi.fn();
+    window.scrollBy = scrollBy as unknown as typeof window.scrollBy;
+    btn.focus();
+    expect(scrollBy).not.toHaveBeenCalled();
+    // ...then the browser's own focus scroll puts it at the bottom edge, under the banner.
+    where = rect(755, 799);
+    await new Promise((r) => setTimeout(r, 40));
+    expect(scrollBy).toHaveBeenCalledWith(expect.objectContaining({ top: 799 - 688 + 16 }));
+  });
   it("keyboard focus on a clipped chip in a horizontal scroller scrolls it fully into view, pointer focus does not (2.4.7, 2.4.11)", () => {
     render(
       <AppProvider locale="en">

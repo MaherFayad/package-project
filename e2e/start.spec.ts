@@ -11,7 +11,7 @@ import { expect, test, type Page } from "@playwright/test";
 const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
 const COPY = {
-  ar: { h1: "ابدأ اليوم", h2s: ["اختر علبتك", "اجعل علبتك تلمع", "اعرف السعر، وادفع بطريقتك", "علامات تجارية بانتظار علبتها", "ابدأ، ثم توسع", "جاهز لتصميم علبتك؟"], sample: "نموذج", start: "بدء التصميم مجانا", header: "البدء مجانا" },
+  ar: { h1: "ابدأ اليوم", h2s: ["اختر علبتك", "اجعل علبتك تلمع", "اعرف السعر، وادفع بطريقتك", "علامات تجارية بانتظار علبتها", "ابدأ، ثم توسع", "هل تريد تصميم علبتك الآن؟"], sample: "نموذج", start: "بدء التصميم مجانا", header: "البدء مجانا" },
   en: { h1: "start today", h2s: ["Choose your box", "Make your packaging shine", "See the price, pay your way", "Brands waiting for their box", "Start, then grow", "Ready to design your box?"], sample: "Sample", start: "Start designing free", header: "Start free" },
 } as const;
 
@@ -92,7 +92,7 @@ for (const locale of ["ar", "en"] as const) {
     await page.goto(`/${locale}/start`);
     for (const h of c.h2s) await expect(page.getByRole("heading", { level: 2, name: h })).toBeVisible();
     // The pinned run collapses and the designer card shows at full size, with no scroll-driven transform.
-    const card = page.getByRole("img", { name: locale === "ar" ? /^محرر علبة:/ : /^The Elba designer/ });
+    const card = page.getByRole("img", { name: locale === "ar" ? /^مصمم علبة:/ : /^The Elba designer/ });
     await card.scrollIntoViewIfNeeded();
     const t = await card.evaluate((img) => getComputedStyle(img.parentElement!).transform);
     expect(["none", "matrix(1, 0, 0, 1, 0, 0)"]).toContain(t);

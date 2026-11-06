@@ -9,6 +9,46 @@ import type { FamilyDielineModel, FamilyDraft } from "./types";
 export const DEFAULT_BLEED_MM = 3;
 
 /**
+ * Keep a bleed region on its own side of every crease / roll hinge it borders (R6-3Q-E-01).
+ * `offsetConvex` meets the neighbours of a short zero-bleed edge far out along that edge's
+ * line when they turn by a small angle (a tube cap disc: 32 sides, 11° per side): the region
+ * folded back across the hinge and painted the TOP art 1.5 mm into the top of six cap strips,
+ * a red wedge down the cap side next to the lid. Each edge with less than the full bleed clips
+ * the region to the half-plane its own bleed allows, when the whole panel lies on one side.
+ */
+export function clipToCreases(region: Polygon, outline: Polygon, edges: Segment[], distances: number[], bleed: number): Polygon {
+  let out = region;
+  edges.forEach((e, i) => {
+    const d = distances[i];
+    if (d >= bleed - 1e-9 || out.length < 3) return;
+    const dx = e.b.x - e.a.x;
+    const dy = e.b.y - e.a.y;
+    const len = Math.hypot(dx, dy);
+    if (len < 1e-9) return;
+    // Signed distance from the edge line, positive on the panel side.
+    const raw = (q: Pt) => (dx * (q.y - e.a.y) - dy * (q.x - e.a.x)) / len;
+    const sides = outline.map(raw);
+    const sign = sides.reduce((s, v) => s + v, 0) >= 0 ? 1 : -1;
+    if (sides.some((v) => v * sign < -1e-6)) return; // panel on both sides: not a clean hinge line
+    const f = (q: Pt) => raw(q) * sign + d + 1e-7; // on the line counts as inside
+    const next: Pt[] = [];
+    for (let k = 0; k < out.length; k++) {
+      const a = out[k];
+      const b = out[(k + 1) % out.length];
+      const fa = f(a);
+      const fb = f(b);
+      if (fa >= 0) next.push(a);
+      if ((fa >= 0) !== (fb >= 0)) {
+        const u = fa / (fa - fb);
+        next.push({ x: a.x + (b.x - a.x) * u, y: a.y + (b.y - a.y) * u });
+      }
+    }
+    out = next;
+  });
+  return out;
+}
+
+/**
  * Turn a generator draft into a DielineModel. Mirrors the engine's private `buildDieline`
  * (src/lib/dieline/generate.ts) step for step so the fold engine, faces, texture painter and
  * pricing read these models exactly like the core ones. Differences:
@@ -64,8 +104,9 @@ export function assembleDieline(
     .filter((p) => p.printable)
     .map((p) => {
       const creases = [...panelCreases(p, panels), ...virtual];
-      const distances = edgesOf(p.polygon).map((e) => edgeBleed(e, creases, panels, bleed));
-      return { panelId: p.id, polygon: offsetConvex(p.polygon, distances) as Polygon };
+      const edges = edgesOf(p.polygon);
+      const distances = edges.map((e) => edgeBleed(e, creases, panels, bleed));
+      return { panelId: p.id, polygon: clipToCreases(offsetConvex(p.polygon, distances) as Polygon, p.polygon, edges, distances, bleed) };
     });
 
   const draftModel = { panels, rootId: draft.builder.rootId, thicknessMm: t, closedRotation: draft.closedRotation };

@@ -144,7 +144,7 @@ test("header: transparent over a hero, solid after scroll; mega-menu by hover, c
   await page.keyboard.press("Escape");
   await expect(products).toBeFocused();
   await expect(page.getByRole("link", { name: "Start free" }).first()).toBeVisible();
-  await expect(page.getByRole("link", { name: "Log in" })).toHaveAttribute("href", "/en/login");
+  await expect(page.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/en/login");
 });
 
 test("phone menu: full screen, drill-down, focus trapped, Escape returns focus", async ({ page }, info) => {
@@ -228,7 +228,7 @@ for (const who of [
       await page.setViewportSize({ width: 1280, height: 800 });
       await page.goto(`/${locale}/vendors`);
       await page.waitForLoadState("networkidle");
-      // Signed in for real (the account menu replaces "Log in"); desktop actions show from 1024 px.
+      // Signed in for real (the account menu replaces "Sign in"); desktop actions show from 1024 px.
       if (who.phone) await expect(page.locator("header").getByRole("button", { name: locale === "ar" ? "حسابي" : "My account" })).toBeVisible();
       for (let w = 1000; w <= 1280; w += 20) {
         await page.setViewportSize({ width: w, height: 800 });
@@ -300,4 +300,57 @@ for (const locale of ["ar", "en"] as const) {
     expect(dup(links.map((l) => l.href)), "duplicate footer hrefs").toEqual([]);
     expect(dup(links.map((l) => l.name)), "duplicate footer link names").toEqual([]);
   });
+}
+
+test('Sheet tone="dark-2": raised dark that overlaps a dark band instead of collapsing', async ({ page }) => {
+  await page.goto("/en/dev/kit");
+  await page.waitForLoadState("networkidle");
+  // Hydrated (RevealScope ran): nothing re-renders the bands after this point.
+  await page.waitForFunction(() => document.documentElement.dataset.motion === "on" || matchMedia("(prefers-reduced-motion: reduce)").matches);
+  // The one gallery band for this tone, by its accessible name (not the first CSS match).
+  const band = page.getByRole("region", { name: "Sheet tone dark-2", exact: true });
+  await expect(band).toHaveCount(1);
+  await expect(band).toHaveAttribute("data-tone", "dark-2");
+  // Web-first, retrying assertions instead of a single computed-style snapshot.
+  await expect(band).toHaveCSS("background-color", "rgb(20, 26, 26)");
+  await expect(band).toHaveCSS("color", "rgb(255, 255, 255)");
+  await expect(band.locator("xpath=preceding-sibling::*[1]")).toHaveAttribute("data-tone", "dark");
+  await expect.poll(() => band.evaluate((el) => parseFloat(getComputedStyle(el).marginTop))).toBeLessThan(0);
+  await expect.poll(() => band.evaluate((el) => parseFloat(getComputedStyle(el).borderTopLeftRadius))).toBeGreaterThan(0);
+});
+
+// R6-AX-18 (WCAG 2.4.11 Focus Not Obscured): tabbing through a moving Marquee at 320 px, every
+// focused item is fully inside the viewport (the loop stops on focus and the strip scrolls).
+for (const locale of ["ar", "en"] as const) {
+  for (const path of ["/dev/kit", "/designer"]) {
+    test(`marquee: every item is fully on screen when focused at 320 px (${locale}${path})`, async ({ page }, info) => {
+      test.skip(info.project.name !== "desktop", "viewport set explicitly");
+      await page.setViewportSize({ width: 320, height: 700 });
+      const res = await page.goto(`/${locale}${path}`);
+      test.skip(res?.status() !== 200, `${path} not on this branch`);
+      await page.waitForLoadState("networkidle");
+      const strips = page.locator('[class*="marqueeViewport"]');
+      const n = await strips.count();
+      test.skip(n === 0, "no marquee on the page");
+      let checked = 0;
+      for (let s = 0; s < n; s++) {
+        const items = strips.nth(s).locator("li:not([aria-hidden]) :is(a, button, [tabindex='0'])");
+        const count = await items.count();
+        if (!count) continue;
+        await page.waitForTimeout(1500); // let the loop carry items past the start first
+        await items.first().focus();
+        for (let i = 0; i < count; i++) {
+          if (i > 0) await page.keyboard.press("Tab");
+          const box = await page.evaluate(() => {
+            const r = document.activeElement!.getBoundingClientRect();
+            return { left: r.left, right: r.right, w: window.innerWidth, label: document.activeElement!.getAttribute("aria-label") ?? document.activeElement!.textContent?.trim() };
+          });
+          expect(box.left, `${box.label} left`).toBeGreaterThanOrEqual(-0.5);
+          expect(box.right, `${box.label} right`).toBeLessThanOrEqual(box.w + 0.5);
+          checked++;
+        }
+      }
+      expect(checked).toBeGreaterThan(0);
+    });
+  }
 }

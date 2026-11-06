@@ -2,6 +2,10 @@ import { describe, expect, it } from "vitest";
 import { ar } from "@/i18n/ar";
 import { en } from "@/i18n/en";
 import { STRUCTURE_CODES } from "@/types/structure";
+import { homeCopy } from "@/components/marketing/home/copy";
+import { startCopy } from "@/components/marketing/start/copy";
+import { whyCopy } from "@/components/marketing/why/copy";
+import { designerPageCopy } from "@/components/marketing/designer-page/copy";
 
 /** Copy rules for every user-facing string (docs/audit/platform-glossary.md, docs/audit/copy.md). */
 function flat(o: unknown, p = "", out: Record<string, string> = {}): Record<string, string> {
@@ -69,5 +73,37 @@ describe("ar/en dictionaries", () => {
     for (const dict of [AR, EN]) {
       expect(boxes.filter((c) => !dict[`store.seo.keyword.${c}`] || !dict[`store.seo.use.${c}`])).toEqual([]);
     }
+  });
+
+});
+
+/** Page-local marketing copy (each page's copy.ts) follows the same rules as the dictionaries. */
+describe("marketing page copy (copy.ts)", () => {
+  const pages: [string, unknown][] = [
+    ["home", homeCopy("ar")],
+    ["start", startCopy("ar")],
+    ["why", whyCopy("ar")],
+    ["designer-page", designerPageCopy("ar")],
+  ];
+  const strings = (o: unknown, p: string, out: [string, string][] = []): [string, string][] => {
+    if (typeof o === "string") out.push([p, o]);
+    else if (Array.isArray(o)) o.forEach((v, i) => strings(v, `${p}.${i}`, out));
+    else if (o && typeof o === "object") for (const [k, v] of Object.entries(o)) strings(v, `${p}.${k}`, out);
+    return out;
+  };
+  const all = pages.flatMap(([name, tree]) => strings(tree, name));
+  const bad = (re: RegExp) => all.filter(([, v]) => re.test(v)).map(([k, v]) => `${k}: ${v}`);
+
+  it("has no diacritics or tatweel, and uses Western digits", () => {
+    expect(bad(/[\u064B-\u065F\u0670\u06D6-\u06ED\u0640\u0660-\u0669]/)).toEqual([]);
+  });
+
+  it("keeps the glossary terms", () => {
+    const banned = /أونلاين|موبايل|كود|فاتورة|مقوى|موثق|موثوق|علبة شحن|علب شحن|صندوق شحن|صناديق|قالب قص|قالب القص|أنماط العلب|موديل|يرجى|الرجاء/;
+    expect(bad(banned)).toEqual([]);
+  });
+
+  it("writes a starting price as «ابتداء من»", () => {
+    expect(bad(/(^|[^ء-ي])من \{price\}/).filter((h) => !/ابتداء من \{price\}/.test(h))).toEqual([]);
   });
 });

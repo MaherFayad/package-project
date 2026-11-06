@@ -660,7 +660,6 @@ export const I18N_SCOPES = {
     "designer.shared.model",
     "designer.shared.notFoundBody",
     "designer.shared.notFoundTitle",
-    "designer.shared.prepayNote",
     "designer.shared.printMaterial",
     "designer.shared.printing",
     "designer.shared.size",

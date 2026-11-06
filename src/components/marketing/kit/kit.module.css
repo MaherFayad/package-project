@@ -40,6 +40,8 @@
 }
 .sheet[data-overlap="true"][data-y="xl"] { padding-block-start: var(--mk-section-y-xl); }
 .sheet[data-tone="dark"] { background: var(--mk-bg); }
+/* Raised dark: its own tone, so it overlaps a dark hero with corners instead of collapsing (rule 2). */
+.sheet[data-tone="dark-2"] { background: var(--mk-bg-raised); }
 .sheet[data-tone="green"] { background: radial-gradient(120% 90% at 85% 0%, #0a3d30 0%, var(--mk-band-green) 45%, var(--mk-band-green-deep) 100%); }
 .sheet[data-tone="navy"] { background: radial-gradient(120% 90% at 15% 0%, #0b1f4a 0%, var(--mk-band-navy) 50%, var(--mk-band-navy-2) 100%); }
 .sheet[data-tone="violet"] { background: var(--mk-violet); background-image: var(--mk-band-violet); }
@@ -48,6 +50,7 @@
 /* Rule 2: adjacent bands of the same tone collapse to ONE --mk-section-y between them (the first
    band's bottom padding): no overlap, no corner, no top padding on the second. */
 .sheet[data-tone="dark"] + .sheet[data-tone="dark"],
+.sheet[data-tone="dark-2"] + .sheet[data-tone="dark-2"],
 .sheet[data-tone="green"] + .sheet[data-tone="green"],
 .sheet[data-tone="navy"] + .sheet[data-tone="navy"],
 .sheet[data-tone="violet"] + .sheet[data-tone="violet"],
@@ -80,6 +83,7 @@
 .sheetCard[data-tone="light"] { background: var(--mk-sheet); color: var(--mk-on-light); }
 .sheetCard[data-tone="white"] { background: var(--mk-sheet-2); color: var(--mk-on-light); }
 .sheetCard[data-tone="dark"] { background: var(--mk-bg-2); }
+.sheetCard[data-tone="dark-2"] { background: var(--mk-bg-raised); }
 /* Muted text and lines follow the tone. */
 .sheet, .sheetCard { --mk-muted: var(--mk-on-dark-muted); --mk-line: var(--mk-line-dark); --mk-ring: var(--mk-focus); }
 .sheet[data-tone="light"], .sheet[data-tone="white"], .sheetCard[data-tone="light"], .sheetCard[data-tone="white"] { --mk-muted: var(--mk-on-light-muted); --mk-line: var(--mk-line-light); --mk-ring: var(--mk-focus-light); }
@@ -337,7 +341,15 @@
 .marqueeTrack > li { flex: none; }
 .marqueeTrack:dir(rtl), [dir="rtl"] .marqueeTrack { animation-name: mk-marquee-rtl; }
 .marquee[data-reverse="true"] .marqueeTrack { animation-direction: reverse; }
-.marquee:hover .marqueeTrack, .marquee:focus-within .marqueeTrack, .marquee[data-paused="true"] .marqueeTrack { animation-play-state: paused; }
+.marquee:hover .marqueeTrack, .marquee[data-paused="true"] .marqueeTrack { animation-play-state: paused; }
+/* Keyboard: pausing mid-translate left items carried past the strip's start unreachable and put
+   focus off screen (R6-AX-18, WCAG 2.4.11). While focus is inside, the loop stops and the track
+   goes back to its start, and the strip becomes a real scroller, so the browser scrolls every
+   focused item into view (both directions). */
+.marquee:focus-within .marqueeTrack,
+.marquee:focus-within .marqueeTrack:dir(rtl),
+.marquee:focus-within [dir="rtl"] .marqueeTrack { animation: none; transform: none; }
+.marquee:focus-within .marqueeViewport { overflow-x: auto; mask-image: none; scroll-padding-inline: 16px; }
 .marqueeHead { display: flex; justify-content: flex-end; margin-block-end: 16px; }
 @media (prefers-reduced-motion: reduce) {
   /* Match every selector that sets the animation (the RTL name rule outranks a bare class). */

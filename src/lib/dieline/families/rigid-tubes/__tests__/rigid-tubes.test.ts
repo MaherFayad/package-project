@@ -258,6 +258,20 @@ describe("family specifics", () => {
     }
   });
 
+  it("a cap's TOP print stays on the disc: its bleed never crosses the hinge onto the cap strips (R6-3Q-E-01)", () => {
+    for (const def of DEFINITIONS.filter((d) => d.shape === "cylinder")) {
+      for (const dims of [def.defaultDims, { L: def.params.L.min, W: def.params.L.min, H: def.params.H.min }, { L: def.params.L.max, W: def.params.L.max, H: def.params.H.max }]) {
+        const m = def.generate(dims as Dims);
+        const disc = m.panels.find((p) => p.id === "lidTop")!;
+        const region = m.bleedRegions.find((r) => r.panelId === "lidTop")!;
+        // the disc lies above its hinge on the sheet (strips below): no bleed vertex below it
+        const hingeY = disc.hinge!.a.y;
+        const below = Math.max(...region.polygon.map((q) => q.y - hingeY));
+        expect(below, `${def.code} ${JSON.stringify(dims)}`).toBeLessThanOrEqual(1e-6);
+      }
+    }
+  });
+
   it("rigid boxes show the board thickness and roll turn-ins inside", () => {
     const def = DEFINITION_BY_CODE.RIGID_LID_BASE;
     const m = def.generate({ L: 200, W: 150, H: 80 }, { material: "GREYBOARD_2500_WRAP" });

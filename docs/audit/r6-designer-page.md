@@ -102,3 +102,19 @@ Container 1260 at x=90 (phone 358 at x=16); title→sub 16; head→content 40 (p
 Side-by-side with shopify.com/sa/website/builder re-captured at 1440 and 390 (ar); the reference frames stay out of git, our frames are in `docs/screenshots/audit/r6-designer-page/` (webp).
 
 R6-AX-15 (WCAG 2.2.2): the violet band's rotating backdrop and the prompt's typing examples now pause from one kit `MotionScope` button; e2e covers it.
+
+R6-AX-19 (low, WCAG 2.4.11): under 600px the floating structure-tiles card covered the focused Turn in 3D button (measured at 320, 360 and 390 px, ar and en). It now stacks under the box below 600px; an e2e test checks that no floating mockup intersects the hero controls at 320 to 1440 px in both locales.
+
+Layout stability (integrator follow-up, low): `.lazySection` (`content-visibility: auto; contain-intrinsic-size: auto 900px`) sat on the bento, trust, materials and FAQ sheets, which all hold links and controls. Their placeholder heights were far from the real ones, so the page grew as they rendered and content and focus targets moved. Chrome does not count this as CLS (layout-shift entries stayed at 0), so it was measured as page height before and after a full scroll plus 60 Tab presses:
+
+| Width | ar before | ar after | en before | en after |
+|---|---|---|---|---|
+| 320 | 8,042 → 12,211 (+4,169) | 12,211 → 12,211 | 8,183 → 12,779 (+4,596) | 12,779 → 12,779 |
+| 390 | 7,828 → 11,640 (+3,812) | 11,640 → 11,640 | 7,995 → 12,041 (+4,046) | 12,041 → 12,041 |
+| 768 | 7,542 → 9,282 (+1,740) | 9,282 → 9,282 | 7,705 → 9,617 (+1,912) | 9,617 → 9,617 |
+| 1024 | 7,686 → 8,676 (+990) | 8,676 → 8,676 | 7,861 → 8,923 (+1,062) | 8,923 → 8,923 |
+| 1440 | 7,786 → 9,090 (+1,304) | 9,090 → 9,090 | 7,924 → 9,311 (+1,387) | 9,311 → 9,311 |
+
+Fixes: `content-visibility` removed from those sections; the lazy dieline image now takes its width/height from the SVG viewBox (it reserved 121px and grew to 249px on load). A new e2e test asserts page height stays within 2px after scrolling and keyboard focus at 320, 390, 768 and 1440 in both locales.
+
+Phone perf after (perf-pages.mjs, Slow 4G, 4x CPU): ar LCP 1.66 s, CLS 0.009, INP 112 ms; en LCP 1.48 s, CLS 0.000, INP 120 ms (before this pass: ar 1.58 s / 0.011, en 1.46 s / 0.000). LCP stays under the 2.5 s budget; rendering every section up front costs about 0.1 s of LCP in Arabic.
