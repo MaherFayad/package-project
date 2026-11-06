@@ -84,7 +84,7 @@ export function createModelDoc(m: ModelDef, input: { dims?: Dims; materialCode?:
       presetId: preset.id,
       container: m.defaultContainer,
       closure: m.defaultClosure,
-      closureColor: "WHITE",
+      closureColor: m.closures.find((c) => c.code === m.defaultClosure)?.defaultColor ?? "WHITE",
       content: m.defaultLiquid,
       fill: m.fillable ? 0.8 : 0,
       surfaces,

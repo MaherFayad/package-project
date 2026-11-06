@@ -611,7 +611,8 @@ function featureParts(shape: FlexShape, layout: FlexPrintLayout): FlexMeshPart[]
  */
 function productParts(shape: FlexShape): FlexMeshPart[] {
   const cfg = shape.config;
-  if (shape.model === "sleeve" || !FILM_MATERIALS[cfg.material].transparent || cfg.fill < 0.15) return [];
+  // R5-3Q-G-21: an opaque film with a clear window shows the product through the window
+  if (shape.model === "sleeve" || !(FILM_MATERIALS[cfg.material].transparent || cfg.options.window) || cfg.fill < 0.15) return [];
   const k = 0.92;
   // R5-3Q-G: the product settles below the zipper / header instead of running up to the top seal as
   // a flat full-width sheet (through clear film its top edge showed as a row of teeth under the seal

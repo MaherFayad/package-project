@@ -12,7 +12,43 @@ const BOTTLE_CLOSURE_STYLE: Partial<Record<string, string>> = {
   CROWN_29: "CROWN",
   NATURAL_CORK: "CORK_CAPSULE",
   SPARKLING_CORK: "SPARKLING",
+  // R6: closures that used to collapse onto the plain screw / lug cap (R5-3Q-F-06 … F-11)
+  SWING_TOP: "SWING_TOP",
+  MEASURE_CAP: "MEASURE_CUP",
+  FLIP_TOP: "FLIP_TOP_CAP",
+  CHILD_RESISTANT_CAP: "CR_CAP",
+  BAR_TOP: "BAR_TOP",
+  SCREW_CAP_TE: "TE_CAP",
+  VENTED_SCREW_CAP: "TE_CAP",
 };
+
+/**
+ * Default closure colour of a styled option (R5-3Q-F-13): crowns and ROPP shells are bare
+ * tinplate / aluminium, wine and sparkling capsules gold foil. The buyer can still recolour them.
+ */
+const BOTTLE_CLOSURE_COLOR: Partial<Record<string, string>> = {
+  ROPP_CAP: "SILVER",
+  POURER_CAP: "SILVER",
+  CROWN_26: "GOLD",
+  CROWN_29: "GOLD",
+  NATURAL_CORK: "GOLD",
+  SPARKLING_CORK: "GOLD",
+};
+
+/**
+ * R5-3Q-F-12: the neck finish follows the closure. The preset's finish when the closure fits it,
+ * else the model's finish of the closure's kind nearest in diameter (crown on a crown bead, swing
+ * top on its wire-lug bead, not both on the PP 28 ROPP thread).
+ */
+function finishForClosure(def: BTL.BottleDefinition, finishId: string, closure?: string): string {
+  const code = closure as BTL.BottleClosureCode | undefined;
+  if (!code || !BTL.BOTTLE_CLOSURES[code]) return finishId;
+  const f = BTL.finishById(finishId);
+  if (BTL.closureFits(code, f)) return finishId;
+  const fits = def.finishes.map(BTL.finishById).filter((x) => BTL.closureFits(code, x));
+  fits.sort((a, b) => Math.abs(a.outerDiameterMm - f.outerDiameterMm) - Math.abs(b.outerDiameterMm - f.outerDiameterMm));
+  return fits[0]?.id ?? finishId;
+}
 
 export const models: VesselModelDef[] = BTL.DEFINITIONS.map((def) => {
   const preset = BTL.bottlePreset(def);
@@ -23,11 +59,13 @@ export const models: VesselModelDef[] = BTL.DEFINITIONS.map((def) => {
     return { code: m, name: mat.name, core: mat.coreMaterial, ...(mat.code !== mat.coreMaterial ? { tint: mat.hex } : {}) };
   });
   const closures: VesselOption[] = def.closures.map((c) => {
-    // A wine ROPP is a BVS 30H60 (Stelvin) shell 60 mm long; the engine ROPP style is a fixed 18 mm
-    // skirt, so wine bottles keep the smooth metal LUG_LID drawn over the whole finishH (R5-3Q-F-02).
-    if (c === "ROPP_CAP" && def.finishes.includes("BVS_30H60")) return { code: c, name: BTL.BOTTLE_CLOSURES[c].name, core: "LUG_LID" };
+    // A wine ROPP is a BVS 30H60 (Stelvin) shell 60 mm long: the engine ROPP style draws its skirt
+    // over the whole finishH now (R5-3Q-F-02), so wine bottles take the style too.
     const style = BOTTLE_CLOSURE_STYLE[c];
-    return { code: c, name: BTL.BOTTLE_CLOSURES[c].name, core: BTL.BOTTLE_CLOSURES[c].coreClosure, ...(style ? { closureStyle: style } : {}) };
+    const color = BOTTLE_CLOSURE_COLOR[c];
+    // a style replaces a screw-cap core (the engine refuses a style over LUG_LID: swing top)
+    const core = style ? "SCREW_CAP" : BTL.BOTTLE_CLOSURES[c].coreClosure;
+    return { code: c, name: BTL.BOTTLE_CLOSURES[c].name, core, ...(style ? { closureStyle: style } : {}), ...(color ? { defaultColor: color } : {}) };
   });
   return {
     kind: "vessel",
@@ -54,13 +92,13 @@ export const models: VesselModelDef[] = BTL.DEFINITIONS.map((def) => {
     fillable: def.fillable,
     defaultLiquid: LIQUID_OF_CONTENT[def.defaultContent] ?? "WATER",
     pricing: "LABEL",
-    describe(dims, surfaces, presetId) {
+    describe(dims, surfaces, presetId, _container?: string, _options?: unknown, closure?: string) {
       const p = BTL.bottlePreset(def, presetId);
       const v = BTL.validateBottleDims(def, dims);
       if (!v.ok) throw new Error(`Invalid dims for ${def.code}`);
-      const profile = BTL.profileFor(def, dims, BTL.finishForDims(def, dims, p.finish));
+      const profile = BTL.profileFor(def, dims, BTL.finishForDims(def, dims, finishForClosure(def, p.finish, closure)));
       const labels = labelSpecsFor(coreKind, dims, profile, surfaces.filter(isSurface));
-      return { profile, areas: labels.map(labelArea), envelope: BTL.bottleEnvelope(def, profile, dims) };
+      return { profile, areas: labels.map(labelArea), envelope: BTL.bottleEnvelope(def, profile, dims, closure && def.closures.includes(closure as BTL.BottleClosureCode) ? (closure as BTL.BottleClosureCode) : undefined) };
     },
   } satisfies VesselModelDef;
 });
