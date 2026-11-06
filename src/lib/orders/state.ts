@@ -213,3 +213,18 @@ export function canDownloadPrintFile(
  * "paid" without a Payment row and an invoice.
  */
 export const MONEY_STATUSES: readonly OrderStatus[] = ["PAID", "REFUNDED"];
+
+/**
+ * Buyer owns it, ADMIN, or vendor staff of its vendor ONCE THE ORDER WAS PAID. Unpaid orders are
+ * never routed to a vendor (and one cancelled before payment never will be), so the vendor must
+ * not see the buyer's name, delivery address, proof or dieline (PDPL 151/2020 data minimisation,
+ * OWASP ASVS 4.0.3 V4.2.1). `paidAt` survives a later refund, so job history stays visible.
+ */
+export function canViewOrder(
+  order: { buyerId: string; vendorId: string; paidAt: Date | null },
+  user: { id: string; role: Role; vendorId: string | null },
+): boolean {
+  if (user.role === "ADMIN") return true;
+  if (order.buyerId === user.id) return true;
+  return user.role === "VENDOR" && !!user.vendorId && user.vendorId === order.vendorId && order.paidAt !== null;
+}

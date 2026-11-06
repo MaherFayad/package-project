@@ -13,6 +13,7 @@ import type { WebhookOutcome } from "@/lib/payments";
  */
 export type PaymentDecision =
   | { action: "IGNORE"; result: "DUPLICATE" | "ALREADY_PAID" | "REFUND_WITHOUT_PAYMENT" }
+  | { action: "PARTIAL_REFUND" }
   | { action: "REJECT"; result: "PROVIDER_MISMATCH" | "REFERENCE_MISMATCH" | "CURRENCY_MISMATCH" | "AMOUNT_MISMATCH" }
   | { action: "PENDING" | "FAILED" | "REFUNDED" | "PAID" | "PAID_LATE" };
 
@@ -50,6 +51,8 @@ export function decidePaymentOutcome(payment: StoredPayment, orderStatus: OrderS
   if (o.status === "REFUNDED") {
     // A refund can only follow money we actually captured.
     if (payment.status !== "PAID") return { action: "IGNORE", result: "REFUND_WITHOUT_PAYMENT" };
+    // Part of the money went back: ops handles the rest; the order and its invoice stay as they are.
+    if (o.partialRefund) return { action: "PARTIAL_REFUND" };
     return { action: "REFUNDED" };
   }
   // PAID

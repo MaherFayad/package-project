@@ -1,5 +1,7 @@
 import "server-only";
 import { createHash } from "node:crypto";
+import { cache } from "react";
+import { revalidateTag } from "next/cache";
 import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { canonicalJson, fromJson, toJson } from "@/lib/json";
@@ -22,6 +24,7 @@ import { rowToDoc } from "@/components/designer/server";
 import { designQuoteFields, priceTable, quote, toPublicOffer, zoneForGovernorate, type PublicVendorOffer, type QuoteOutcome, type VendorOffer } from "@/lib/pricing";
 import { loadPricingData } from "@/lib/pricing/server";
 import { loadPricingConfig } from "@/components/admin/server/settings";
+import { HEADLINE_DEFAULTS } from "@/lib/pricing/headline";
 import { loadCheckoutSettings } from "./checkout-settings";
 import { SAMPLE_LINE_LABEL, SAMPLE_ORDER_NOTE, applySampleCredit, sampleOffer } from "./sample";
 import { getPaymentProvider, mockPaymentsEnabled, paymentConfig, type Intention, type WebhookOutcome, type WebhookRequest } from "@/lib/payments";
@@ -29,9 +32,10 @@ import { getShippingProvider, type TrackingEvent } from "@/lib/shipping";
 import { notify } from "@/lib/notify";
 import { generatePrintPdf } from "./pdf/print";
 import { putFile, getFile } from "./storage";
-import { assertTransition, canBuyerCancel, canOpenDispute, canReview, isPaidStatus, type Actor } from "./state";
+import { assertTransition, canBuyerCancel, canViewOrder, canOpenDispute, canReview, isPaidStatus, type Actor } from "./state";
 import { isQuoteValid, nextSequence, orderTotals } from "./totals";
 import { decidePaymentOutcome, storedGatewayRef } from "./payment-rules";
+import { preflightBlocks, proofPreflight, type ProofPreflight } from "./preflight";
 
 /**
  * Order service (owner: checkout). Every order mutation in the app goes through here so the
@@ -51,6 +55,7 @@ export class OrderError extends Error {
       | "AMOUNT_MISMATCH"
       | "MANUAL_QUOTE"
       | "PAYMENT_UNAVAILABLE"
+      | "PREFLIGHT_BLOCKED"
       | "NOT_ALLOWED",
   ) {
     super(code);
@@ -58,7 +63,8 @@ export class OrderError extends Error {
   }
 }
 
-const DEFAULT_COLOURS = 4;
+// Same inputs as the public pages and the designer badge for anything the buyer has not chosen (B-26).
+const DEFAULT_COLOURS = HEADLINE_DEFAULTS.colours;
 
 // ───────────────────────── designs & quotes ─────────────────────────
 
@@ -72,9 +78,21 @@ export async function loadCheckoutDesign(designId: string, user: SessionUser): P
   return doc ? { doc, thumbnailUrl: row.thumbnailUrl } : null;
 }
 
+/**
+ * Rate cards, vendors, materials and pricing settings for this request, read in parallel and only
+ * once per request (`react.cache`: the checkout page prices the chosen quantity AND the tier table,
+ * which used to read everything twice, PERF-20). Deliberately NOT cached across requests: prices
+ * that become an order must come from the database as it is now.
+ */
+const pricingInputs = cache(async () => {
+  const [data, config] = await Promise.all([loadPricingData(), loadPricingConfig()]);
+  return { data, config };
+});
+
 /** Instant quote for a design (internal: includes vendor cost; never send to the browser). */
 export async function quoteDesign(doc: DesignDoc, opts: { quantity: number; governorate?: string; vendorId?: string }): Promise<QuoteOutcome> {
-  const zone = (opts.governorate && zoneForGovernorate(opts.governorate)) || "GREATER_CAIRO";
+  const zone = (opts.governorate && zoneForGovernorate(opts.governorate)) || HEADLINE_DEFAULTS.zone;
+  const { data, config } = await pricingInputs();
   return quote(
     {
       ...designQuoteFields(doc),
@@ -83,8 +101,8 @@ export async function quoteDesign(doc: DesignDoc, opts: { quantity: number; gove
       vendorId: opts.vendorId,
       zone,
     },
-    await loadPricingData(),
-    { config: await loadPricingConfig() },
+    data,
+    { config },
   );
 }
 
@@ -209,8 +227,8 @@ export interface PlaceOrderInput {
   locale: Locale;
   /** Paid sample (B-05): `quantity` is ignored, the sample pieces and price come from settings. */
   sample?: boolean;
-  /** Preflight error codes the buyer approved anyway (B-04); recorded on the order timeline. */
-  preflightOverride?: string[];
+  /** The buyer saw the red preflight issues and approves anyway (recorded on the proof). */
+  acknowledgePreflight?: boolean;
 }
 
 /**
@@ -221,6 +239,9 @@ export interface PlaceOrderInput {
 export async function placeOrder(user: SessionUser, input: PlaceOrderInput): Promise<{ orderId: string; number: string }> {
   const design = await loadCheckoutDesign(input.designId, user);
   if (!design) throw new OrderError("NOT_FOUND");
+  // B-04: production preflight on the exact snapshot being approved (same rules as the designer).
+  const preflight = proofPreflight({ ...design.doc, id: input.designId }, input.acknowledgePreflight === true);
+  if (preflightBlocks(preflight)) throw new OrderError("PREFLIGHT_BLOCKED");
   if (input.sample) {
     const samples = await sampleOffers(design.doc, input.address.governorate);
     const offer = samples?.offers.find((o) => o.vendorId === input.vendorId);
@@ -229,7 +250,7 @@ export async function placeOrder(user: SessionUser, input: PlaceOrderInput): Pro
       doc: { ...design.doc, id: input.designId },
       offer,
       sample: true,
-      preflightOverride: input.preflightOverride,
+      preflight,
       address: input.address,
       approval: input.approval,
       preview: input.preview ?? null,
@@ -244,11 +265,11 @@ export async function placeOrder(user: SessionUser, input: PlaceOrderInput): Pro
     doc: { ...design.doc, id: input.designId },
     offer,
     credit: await sampleCreditFor(user.id, input.designId),
-    preflightOverride: input.preflightOverride,
     address: input.address,
     approval: input.approval,
     preview: input.preview ?? null,
     locale: input.locale,
+    preflight,
   });
 }
 
@@ -265,7 +286,7 @@ async function createOrderFromOffer(
     note?: string;
     sample?: boolean;
     credit?: SampleCredit | null;
-    preflightOverride?: string[];
+    preflight?: ProofPreflight;
   },
 ): Promise<{ orderId: string; number: string }> {
   const totals = buyerTotals(p.offer.lines, (await loadCheckoutSettings()).prepayDiscountPct, { sample: p.sample, creditPiasters: p.credit?.piasters });
@@ -292,6 +313,7 @@ async function createOrderFromOffer(
             approvedAt: now,
             approvedIp: p.approval?.ip ?? null,
             approvedById: user.id,
+            ...(p.preflight ? { preflight: toJson(p.preflight) } : {}),
           },
         });
         proofId = proof.id;
@@ -350,10 +372,15 @@ async function createOrderFromOffer(
           productionEvents: {
             create: [
               { type: "ORDER_PLACED", actorId: user.id, note: p.note ?? null, createdAt: now },
-              { type: "PROOF_APPROVED", actorId: user.id, createdAt: now },
+              {
+                type: "PROOF_APPROVED",
+                actorId: user.id,
+                createdAt: now,
+                // Vendor and ops see what was approved: e.g. "PREFLIGHT:1E/2W:ACK".
+                note: p.preflight?.ran ? `PREFLIGHT:${p.preflight.errors}E/${p.preflight.warnings}W${p.preflight.acknowledged && p.preflight.errors ? ":ACK" : ""}` : null,
+              },
               ...(p.sample ? [{ type: "NOTE", actorId: user.id, note: SAMPLE_ORDER_NOTE, createdAt: now }] : []),
               ...(p.credit ? [{ type: "NOTE", actorId: user.id, note: `SAMPLE_CREDIT:${p.credit.sampleNumber}`, createdAt: now }] : []),
-              ...(p.preflightOverride?.length ? [{ type: "NOTE", actorId: user.id, note: `PREFLIGHT_OVERRIDE:${p.preflightOverride.join(",")}`, createdAt: now }] : []),
             ],
           },
         },
@@ -399,12 +426,8 @@ const orderInclude = {
 
 export type OrderDetail = Prisma.OrderGetPayload<{ include: typeof orderInclude }>;
 
-/** Buyer owns it, vendor staff of its vendor, or ADMIN. */
-export function canViewOrder(order: { buyerId: string; vendorId: string }, user: SessionUser): boolean {
-  if (user.role === "ADMIN") return true;
-  if (order.buyerId === user.id) return true;
-  return user.role === "VENDOR" && !!user.vendorId && user.vendorId === order.vendorId;
-}
+/** Buyer, ADMIN, or the order's vendor staff once it was paid (pure rule in ./state). */
+export { canViewOrder };
 
 export async function getOrderForViewer(idOrNumber: string, user: SessionUser): Promise<OrderDetail | null> {
   if (!/^[\w-]{1,64}$/.test(idOrNumber)) return null;
@@ -481,10 +504,36 @@ export async function transitionOrder(orderId: string, to: OrderStatus, actor: T
     });
     if (updated.count !== 1) return false;
     await tx.productionEvent.create({ data: { orderId, type: rule.event, note: note ?? null, actorId: actor.userId ?? null, createdAt: now } });
+    if (to === "REFUNDED") await issueCreditNote(tx, orderId, now);
     return true;
   });
   if (!changed) throw new OrderError("INVALID_STATE");
   await notifyStatus(order, to);
+}
+
+/**
+ * A refunded sale needs a credit note that reverses its tax invoice (Egyptian VAT Law 67/2016 and
+ * the ETA e-invoicing system: an issued invoice is never edited or deleted, it is cancelled by a
+ * credit note "C" document referencing it). Same amounts as the SALE invoice, positive, numbered
+ * CN-YYnnn. Idempotent; runs inside the REFUNDED transition so both commit together.
+ */
+async function issueCreditNote(tx: Prisma.TransactionClient, orderId: string, now: Date): Promise<void> {
+  const sale = await tx.invoice.findFirst({ where: { orderId, kind: "SALE" }, orderBy: { issuedAt: "asc" } });
+  if (!sale) return; // never invoiced (not paid): nothing to reverse
+  if (await tx.invoice.count({ where: { orderId, kind: "CREDIT_NOTE" } })) return;
+  const prefix = `CN-${String(now.getUTCFullYear()).slice(2)}`;
+  const rows = await tx.invoice.findMany({ where: { number: { startsWith: prefix } }, select: { number: true }, orderBy: { issuedAt: "desc" }, take: 200 });
+  await tx.invoice.create({
+    data: {
+      orderId,
+      number: nextSequence(prefix, rows.map((r) => r.number)),
+      kind: "CREDIT_NOTE",
+      subtotalPiasters: sale.subtotalPiasters,
+      vatPiasters: sale.vatPiasters,
+      totalPiasters: sale.totalPiasters,
+      issuedAt: now,
+    },
+  });
 }
 
 async function notifyStatus(order: { number: string; buyer: { locale: string; phone: string; email: string | null } }, to: OrderStatus): Promise<void> {
@@ -626,6 +675,12 @@ export async function applyPaymentOutcome(o: Extract<WebhookOutcome, { ok: true 
     return decision.result;
   }
 
+  if (decision.action === "PARTIAL_REFUND") {
+    await db.payment.update({ where: { id: payment.id }, data: { raw: lastRaw } });
+    await db.productionEvent.create({ data: { orderId: order.id, type: "NOTE", note: "PARTIAL_REFUND_REPORTED" } });
+    return "PARTIAL_REFUND";
+  }
+
   if (decision.action === "PENDING") {
     await db.payment.update({ where: { id: payment.id }, data: { raw: lastRaw } });
     return "PENDING";
@@ -654,9 +709,9 @@ export async function applyPaymentOutcome(o: Extract<WebhookOutcome, { ok: true 
 
   const now = new Date();
   const paidRaw = lastRaw;
-  if (decision.action === "PAID_LATE") {
-    // Paid after cancel/expiry (or a second attempt after another one won): keep the money on
-    // record and flag for a refund by ops.
+  // Paid after cancel/expiry, or a second attempt captured after another one won: keep the money
+  // on record and flag it for a refund by ops. Never drop a capture silently.
+  const recordLatePayment = async (): Promise<string> => {
     const upd = await db.payment.updateMany({
       where: { id: payment.id, status: { not: "PAID" } },
       data: { status: "PAID", providerRef: o.providerRef || payment.providerRef, raw: paidRaw },
@@ -664,7 +719,8 @@ export async function applyPaymentOutcome(o: Extract<WebhookOutcome, { ok: true 
     if (upd.count !== 1) return "ALREADY_PAID";
     await db.productionEvent.create({ data: { orderId: order.id, type: "NOTE", note: "PAID_AFTER_CANCEL_REFUND_NEEDED" } });
     return "NEEDS_REFUND";
-  }
+  };
+  if (decision.action === "PAID_LATE") return recordLatePayment();
   const leadMs = order.dueDate ? Math.max(0, order.dueDate.getTime() - order.placedAt.getTime()) : 7 * 86_400_000;
   const changed = await db
     .$transaction(async (tx) => {
@@ -702,7 +758,14 @@ export async function applyPaymentOutcome(o: Extract<WebhookOutcome, { ok: true 
       if (e instanceof OrderError) return false;
       throw e;
     });
-  if (!changed) return "ALREADY_PAID";
+  if (!changed) {
+    // Lost the race: another payment of this order (two tabs, two methods) was confirmed between
+    // our read and our write. If THIS payment was captured too, it is a double charge: record it
+    // and flag the refund instead of dropping it (money integrity; ASVS V11.1.6).
+    const fresh = await db.payment.findUnique({ where: { id: payment.id }, select: { status: true } });
+    if (fresh && fresh.status !== "PAID") return recordLatePayment();
+    return "ALREADY_PAID";
+  }
 
   // Side effects after commit: print files, then messages. Failures never undo the payment.
   try {
@@ -877,14 +940,24 @@ export async function submitReview(orderId: string, user: SessionUser, rating: n
   try {
     await db.$transaction(async (tx) => {
       await tx.review.create({ data: { orderId, vendorId: order.vendorId, authorId: user.id, rating: r, body: body?.slice(0, 2000) || null } });
-      const v = await tx.vendor.findUniqueOrThrow({ where: { id: order.vendorId }, select: { rating: true, ratingCount: true } });
-      const count = v.ratingCount + 1;
-      await tx.vendor.update({ where: { id: order.vendorId }, data: { ratingCount: count, rating: Math.round(((v.rating * v.ratingCount + r) / count) * 100) / 100 } });
+      // Recomputed from the review rows, not read-modify-write on the vendor: two buyers reviewing
+      // the same vendor at once cannot lose an update, and any earlier drift heals itself.
+      const agg = await tx.review.aggregate({ where: { vendorId: order.vendorId }, _avg: { rating: true }, _count: { _all: true } });
+      await tx.vendor.update({
+        where: { id: order.vendorId },
+        data: { ratingCount: agg._count._all, rating: Math.round((agg._avg.rating ?? r) * 100) / 100 },
+      });
     });
   } catch (e) {
     // @@unique([orderId, authorId]): a double submit loses the race instead of double-counting.
     if ((e as { code?: string }).code === "P2002") throw new OrderError("NOT_ALLOWED");
     throw e;
+  }
+  // The vendor's public rating and reviews are served from the catalogue cache (store/data.ts).
+  try {
+    revalidateTag("catalog");
+  } catch {
+    /* outside a request (scripts, tests): nothing cached to purge */
   }
   await notify({ to: { phone: user.phone }, locale: user.locale, template: "REVIEW_THANKS", params: { number: order.number } });
 }
@@ -894,8 +967,22 @@ export async function openDispute(orderId: string, user: SessionUser, reason: Di
   if (!order || order.buyerId !== user.id) throw new OrderError("NOT_FOUND");
   const hasOpen = order.disputes.some((d) => d.status === "OPEN" || d.status === "UNDER_REVIEW");
   if (!canOpenDispute(order.status as OrderStatus, order.deliveredAt, new Date(), hasOpen)) throw new OrderError("NOT_ALLOWED");
-  await db.dispute.create({ data: { orderId, openedById: user.id, reason, description } });
-  await db.productionEvent.create({ data: { orderId, type: "NOTE" as ProductionEventType, note: `DISPUTE_OPENED:${reason}`, actorId: user.id } });
+  // `seq` = how many disputes the order already had; @@unique([orderId, seq]) makes two
+  // simultaneous submits (double click, two tabs) collide instead of opening two disputes
+  // (portable to SQLite and Postgres, unlike a partial unique index on status). T-28.
+  try {
+    await db.$transaction(async (tx) => {
+      // Serialised writers (SQLite) see the first dispute here; concurrent ones (Postgres) both
+      // read the same seq and the unique index rejects the second.
+      if (await tx.dispute.count({ where: { orderId, status: { in: ["OPEN", "UNDER_REVIEW"] } } })) throw new OrderError("NOT_ALLOWED");
+      const seq = await tx.dispute.count({ where: { orderId } });
+      await tx.dispute.create({ data: { orderId, openedById: user.id, reason, description: description.slice(0, 4000), seq } });
+      await tx.productionEvent.create({ data: { orderId, type: "NOTE" as ProductionEventType, note: `DISPUTE_OPENED:${reason}`, actorId: user.id } });
+    });
+  } catch (e) {
+    if ((e as { code?: string }).code === "P2002") throw new OrderError("NOT_ALLOWED");
+    throw e;
+  }
   await notify({ to: { phone: user.phone }, locale: user.locale, template: "DISPUTE_OPENED", params: { number: order.number } });
 }
 
@@ -906,15 +993,16 @@ export function itemDims(item: { dims: Prisma.JsonValue }): Dims {
 
 /** Best price per quantity tier (buyer-safe numbers only) for the quantity picker. */
 export async function tierPrices(doc: DesignDoc, governorate?: string): Promise<{ quantity: number; unitPiasters: number | null; totalPiasters: number | null }[]> {
-  const zone = (governorate && zoneForGovernorate(governorate)) || "GREATER_CAIRO";
+  const zone = (governorate && zoneForGovernorate(governorate)) || HEADLINE_DEFAULTS.zone;
+  const { data, config } = await pricingInputs();
   const rows = priceTable(
     {
       ...designQuoteFields(doc),
       colours: DEFAULT_COLOURS,
       zone,
     },
-    await loadPricingData(),
-    { config: await loadPricingConfig() },
+    data,
+    { config },
   );
   const pct = (await loadCheckoutSettings()).prepayDiscountPct;
   return rows.map((r) => {

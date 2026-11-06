@@ -11,7 +11,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ proofId
   if (!/^[\w-]{1,64}$/.test(proofId)) return new Response(null, { status: 404 });
   const proof = await db.proof.findUnique({
     where: { id: proofId },
-    select: { approvedById: true, orderItems: { select: { order: { select: { buyerId: true, vendorId: true } } } } },
+    select: { approvedById: true, orderItems: { select: { order: { select: { buyerId: true, vendorId: true, paidAt: true } } } } },
   });
   const allowed =
     proof && (proof.approvedById === user.id || user.role === "ADMIN" || proof.orderItems.some((i) => canViewOrder(i.order, user)));
@@ -19,5 +19,5 @@ export async function GET(_req: Request, { params }: { params: Promise<{ proofId
   const bytes = await getFile(`proofs/${proofId}.img`);
   if (!bytes) return new Response(null, { status: 404 });
   const type = bytes[0] === 0x89 ? "image/png" : "image/jpeg";
-  return new Response(new Uint8Array(bytes), { headers: { "Content-Type": type, "Cache-Control": "private, max-age=86400", "X-Content-Type-Options": "nosniff" } });
+  return new Response(new Uint8Array(bytes), { headers: { "Content-Type": type, "Cache-Control": "private, no-cache", "X-Content-Type-Options": "nosniff" } });
 }

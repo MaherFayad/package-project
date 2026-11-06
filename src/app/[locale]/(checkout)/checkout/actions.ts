@@ -8,8 +8,6 @@ import { db } from "@/lib/db";
 import { toJson } from "@/lib/json";
 import { loadCheckoutSettings } from "@/lib/orders/checkout-settings";
 import { isValidTaxId, normalizeTaxId } from "@/lib/orders/company";
-import { docGeometry } from "@/lib/library/doc";
-import { runPreflight } from "@/components/designer/lib/preflight";
 import { QUOTE_NOTE_MAX, QUOTE_REQUESTED } from "./quote-request";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { addressSchema, idSchema, paymentMethodSchema } from "@/lib/orders/schemas";
@@ -98,8 +96,8 @@ const placeSchema = z.object({
   address: addressSchema,
   approved: z.literal(true),
   sample: z.boolean().optional(),
-  /** The buyer ticked "Print it as it is" for preflight errors (B-04). */
-  preflightOverride: z.boolean().optional(),
+  /** B-04: approve despite red preflight issues (the "Print it as it is" box; recorded on the proof). */
+  acknowledgePreflight: z.boolean().optional(),
   // Company invoice (B-13): stored on the buyer's Organization, printed on the invoice.
   company: z
     .object({
@@ -130,13 +128,6 @@ export async function placeOrderAction(input: unknown): Promise<{ ok: true; orde
   const rl = rateLimit("checkout:place", s.user.id, 10, 600_000);
   if (!rl.ok) return { ok: false, error: "RATE_LIMITED" };
   const preview = p.data.preview ? Buffer.from(p.data.preview.split(",")[1], "base64") : null;
-  // Same preflight as the designer and the proof step (B-04): errors block approval unless the
-  // buyer explicitly overrides; the override is recorded on the order.
-  const design = await loadCheckoutDesign(p.data.designId, s.user);
-  if (!design) return { ok: false, error: "NOT_FOUND" };
-  const geo = docGeometry(design.doc);
-  const errorCodes = geo ? runPreflight(design.doc, geo.dieline).filter((i) => i.severity === "error").map((i) => i.code) : [];
-  if (errorCodes.length && !p.data.preflightOverride) return { ok: false, error: "PREFLIGHT_BLOCKED" };
   try {
     if (p.data.company) await saveCompany(s.user.id, p.data.company);
     const r = await placeOrder(s.user, {
@@ -148,7 +139,7 @@ export async function placeOrderAction(input: unknown): Promise<{ ok: true; orde
       preview,
       locale: p.data.locale as Locale,
       sample: p.data.sample,
-      preflightOverride: errorCodes.length ? [...new Set(errorCodes)] : undefined,
+      acknowledgePreflight: p.data.acknowledgePreflight === true,
     });
     return { ok: true, orderId: r.orderId, number: r.number };
   } catch (e) {

@@ -35,6 +35,8 @@ import {
 import { getOffersAction, placeOrderAction, requestQuoteAction, type OffersResult } from "../actions";
 import { QUOTE_NOTE_MAX } from "../quote-request";
 import { formatTaxId, isValidTaxId } from "@/lib/orders/company";
+// Pre-select the best match, the offer the public page and designer badge quote (B-26).
+import { headlineOffer } from "@/lib/pricing/headline";
 import type { DocSpec } from "@/lib/library/spec";
 import styles from "./checkout.module.css";
 
@@ -109,7 +111,7 @@ export function CheckoutClient(props: {
   const [customQty, setCustomQty] = useState("");
   const [customErr, setCustomErr] = useState<string | undefined>();
   const [result, setResult] = useState<OffersResult>(props.initial);
-  const [vendorId, setVendorId] = useState<string | null>(props.initial.ok && props.initial.mode === "instant" ? (props.initial.offers[0]?.vendorId ?? null) : null);
+  const [vendorId, setVendorId] = useState<string | null>(props.initial.ok && props.initial.mode === "instant" ? (headlineOffer(props.initial.offers)?.vendorId ?? null) : null);
   const [showAll, setShowAll] = useState(false);
   const [loading, startLoading] = useTransition();
   const [address, setAddress] = useState<AddressState>(props.defaultAddress);
@@ -311,7 +313,7 @@ export function CheckoutClient(props: {
       locale,
       sample: sampleMode || undefined,
       company: wantCompany ? { name: company.name.trim(), taxId: company.taxId, commercialRegister: company.commercialRegister.trim() } : null,
-      preflightOverride: props.preflight.errors > 0 ? override : undefined,
+      acknowledgePreflight: props.preflight.errors > 0 ? override : undefined,
     });
     if (r.ok) {
       router.push(`/${locale}/checkout/pay/${r.orderId}`);

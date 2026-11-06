@@ -95,6 +95,33 @@ type FetchLike = (url: string, init: { method: string; headers: Record<string, s
 /** Outbound gateway calls never hang a request (OWASP ASVS 4.0.3 V12/V13 resource limits). */
 export const PAYMOB_TIMEOUT_MS = 15_000;
 
+/** Outcome flags of a transaction callback. All of these fields are covered by the HMAC. */
+export function paymobFlags(obj: unknown) {
+  const b = (path: string) => get(obj, path) === true;
+  return {
+    success: b("success"),
+    pending: b("pending"),
+    refunded: b("is_refunded"),
+    voided: b("is_voided"),
+    error: b("error_occured"),
+    // Authorised but not captured (auth/capture integrations): money is held, not taken.
+    authOnly: b("is_auth") && !b("is_capture"),
+  };
+}
+
+/**
+ * Map a signed Paymob transaction to our payment status. `success: true` alone is not "paid":
+ * a voided sale or an authorisation that was never captured also reports success
+ * (Paymob transaction callback flags; [VERIFY with Paymob] on a live sandbox payload).
+ */
+export function paymobStatus(f: ReturnType<typeof paymobFlags>): "PAID" | "FAILED" | "PENDING" | "REFUNDED" {
+  if (f.refunded || f.voided) return "REFUNDED";
+  if (f.pending) return "PENDING";
+  if (f.success && f.authOnly) return "PENDING";
+  if (f.success && !f.error) return "PAID";
+  return "FAILED";
+}
+
 export class PaymobProvider implements PaymentProvider {
   readonly name = "paymob" as const;
 
@@ -165,16 +192,17 @@ export class PaymobProvider implements PaymentProvider {
 
     const paymentId = String(get(obj, "order.merchant_order_id") ?? get(obj, "payment_key_claims.extra.paymentId") ?? "");
     if (!paymentId) return { ok: false, error: "INVALID_PAYLOAD" };
-    const success = get(obj, "success") === true;
-    const pending = get(obj, "pending") === true;
-    const refunded = get(obj, "is_refunded") === true;
-    const status = refunded ? "REFUNDED" : success && !pending ? "PAID" : pending ? "PENDING" : "FAILED";
+    const flags = paymobFlags(obj);
+    const { success, pending, refunded } = flags;
+    const status = paymobStatus(flags);
+    const amountCents = Number(get(obj, "amount_cents") ?? NaN);
+    const refundedCents = Number(get(obj, "refunded_amount_cents") ?? NaN);
     return {
       ok: true,
       paymentId,
       providerRef: String(get(obj, "id") ?? ""),
       status,
-      amountPiasters: Number(get(obj, "amount_cents") ?? NaN),
+      amountPiasters: amountCents,
       // Store only non-sensitive fields (masked PAN at most).
       raw: {
         provider: "paymob",
@@ -183,6 +211,8 @@ export class PaymobProvider implements PaymentProvider {
         success,
         pending,
         refunded,
+        voided: flags.voided,
+        authOnly: flags.authOnly,
         sourceType: get(obj, "source_data.type") ?? null,
         sourceSubType: get(obj, "source_data.sub_type") ?? null,
         maskedPan: get(obj, "source_data.pan") ?? null,
@@ -193,6 +223,11 @@ export class PaymobProvider implements PaymentProvider {
       gatewayRef: get(obj, "order.id") === undefined || get(obj, "order.id") === null ? undefined : String(get(obj, "order.id")),
       // Covered by the HMAC (field "currency").
       currency: typeof get(obj, "currency") === "string" ? (get(obj, "currency") as string) : undefined,
+      // refunded_amount_cents is NOT in the HMAC string, so it can only make us MORE careful: a
+      // value below the captured amount turns a refund into "partial" (recorded, order unchanged).
+      ...(status === "REFUNDED" && !flags.voided && Number.isFinite(refundedCents) && Number.isFinite(amountCents) && refundedCents < amountCents
+        ? { partialRefund: true }
+        : {}),
     };
   }
 
