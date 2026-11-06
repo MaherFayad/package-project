@@ -341,7 +341,8 @@ export async function sendQuotePriceAction(input: z.input<typeof sendPriceSchema
       if (!saved.ok) throw new AdminActionError("NOT_ALLOWED", "QUOTE_NO_MODEL");
       designId = saved.id;
       designCreated = true;
-      specDoc = doc;
+      // The stored copy (as checkout reads it back), not the in-memory one.
+      specDoc = (await loadDesign(saved.id, { user: admin, anonId: null }))?.doc ?? doc;
     }
 
     const now = new Date();

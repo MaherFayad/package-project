@@ -108,3 +108,57 @@ test("admin pages stream no data to a signed-out visitor (R6-SEC-09)", async ({ 
     }
   }
 });
+
+test("a sent price is for the governorate of the request; a tampered address is refused (R6-SEC-10)", async ({ page, baseURL }, info) => {
+  test.skip(info.project.name !== "desktop", "one checkout is enough");
+  test.setTimeout(150_000);
+  const buyer = track(await createUser({ name: "E2E r6 governorate" }));
+  const material = await db.material.findUniqueOrThrow({ where: { code: "E_FLUTE_KRAFT" } });
+  const design = await db.design.create({
+    data: { ownerId: buyer.id, name: "E2E r6 gov", structureCode: "FEFCO_0427", dims: { L: 250, W: 180, H: 80 }, materialId: material.id, finishCode: "NONE", printSides: "OUTSIDE", artwork: { outside: { background: "#f4e9d8", layers: [] }, inside: { background: null, layers: [] } } },
+  });
+  const vendor = await db.vendor.findFirstOrThrow({ where: { status: "ACTIVE" } });
+  // Before the fix: order ELB-26306 was created for Aswan at the delivery price sent for Giza.
+  const quote = await db.quote.create({
+    data: {
+      userId: buyer.id,
+      designId: design.id,
+      vendorId: vendor.id,
+      lines: [
+        { kind: "PRODUCT", labelKey: "pricing.line.product", quantity: 5000, unitPiasters: 1800, totalPiasters: 9_000_000 },
+        { kind: "SHIPPING", labelKey: "pricing.line.shipping", quantity: 1, unitPiasters: 120_000, totalPiasters: 120_000 },
+      ],
+      subtotalPiasters: 9_120_000,
+      vatPiasters: 1_276_800,
+      shippingPiasters: 120_000,
+      totalPiasters: 10_396_800,
+      validUntil: new Date(Date.now() + 48 * 3_600_000),
+      status: "PRICED",
+      pricedAt: new Date(Date.now() + 60_000),
+      deliveryDays: 18,
+      vendorCostPiasters: 7_500_000,
+    },
+  });
+  await db.auditLog.create({ data: { actorId: buyer.id, action: "QUOTE_REQUEST", entityType: "QUOTE", entityId: quote.id, summary: "e2e r6 gov", after: { governorate: "GIZA" } } });
+  await signInAs(page.context(), baseURL!, buyer.id);
+  await page.goto(`/en/checkout/${design.id}?quote=${quote.id}`);
+  const summary = page.getByRole("complementary").filter({ hasText: "Summary" });
+  await summary.getByRole("button", { name: "Continue" }).click();
+  await page.getByLabel("Full name").fill("Mona Adel");
+  await expect(page.getByLabel("Governorate")).toBeDisabled();
+  await page.getByLabel("Governorate").evaluate((el) => el.removeAttribute("disabled"));
+  await page.getByLabel("Governorate").selectOption({ label: "Aswan" });
+  await page.getByLabel("City or district").fill("Aswan");
+  await page.getByLabel("Street address").fill("12 Nile St");
+  await summary.getByRole("button", { name: "Continue" }).click();
+  await page.getByLabel("I approve this proof for printing").check();
+  const override = page.getByLabel(/Print it as it is/);
+  if (await override.count()) await override.check();
+  await summary.getByRole("button", { name: "Approve proof and pay" }).click();
+  await expect(page.getByText("This action is not available for this order.").first()).toBeVisible();
+  expect(page.url()).not.toContain("/checkout/pay/");
+  expect(await db.order.count({ where: { buyerId: buyer.id } })).toBe(0);
+  expect((await db.quote.findUniqueOrThrow({ where: { id: quote.id } })).status).toBe("PRICED");
+  await db.auditLog.deleteMany({ where: { entityId: quote.id } });
+  await db.quote.deleteMany({ where: { id: quote.id } });
+});

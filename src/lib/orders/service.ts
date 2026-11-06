@@ -47,6 +47,8 @@ import { formatDateTime, formatMoney } from "@/lib/format";
 import { parseKey as parseUploadKey } from "@/components/vendor/lib/files";
 import { QUOTE_PRICED } from "./quote-status";
 import { quoteMatchesDesign } from "./quote-spec";
+import { quoteGovernorate } from "./quote-requests";
+import { toGovernorateKey } from "./governorates";
 
 /**
  * Order service (owner: checkout). Every order mutation in the app goes through here so the
@@ -262,6 +264,10 @@ export async function placeOrder(user: SessionUser, input: PlaceOrderInput): Pro
     // The proof is made from `design.doc`, so that exact copy is the one checked against the price.
     const priced = await loadPricedQuote(input.quoteId, user, input.designId, new Date(), design.doc);
     if (!priced) throw new OrderError("QUOTE_EXPIRED");
+    // R6-SEC-10: the sent price includes delivery to the governorate of the request (the form locks
+    // it); a tampered request for another governorate is refused, not shipped at that price.
+    const leadGov = toGovernorateKey(await quoteGovernorate(priced.id));
+    if (leadGov && toGovernorateKey(input.address.governorate) !== leadGov) throw new OrderError("NOT_ALLOWED");
     return createOrderFromOffer(user, {
       doc: { ...design.doc, id: input.designId },
       offer: priced.offer,
