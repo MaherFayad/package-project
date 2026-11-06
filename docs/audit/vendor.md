@@ -1,0 +1,40 @@
+# Vendor side audit (key: vendor)
+
+Scope: `/vendor/apply` (applicant +201000000020 and a fresh applicant), the vendor portal as Nile Pack staff (+201000000010): dashboard, jobs index, job detail (awaiting, in production, delivered), accept / decline modals, QC upload, notes, production files, profile, rate cards, rate card editor, payouts. ar + en, 390x844 + 1440x900, keyboard, axe-core (wcag2a/aa, 21aa, 22aa).
+
+Method: Playwright scripts that sign in by session row, screenshot every page in both locales and viewports, run axe, then drive the interactive states (apply submit with errors, dirty profile and rate card with the contextual save bar, decline and accept modals, keyboard tab order on the jobs index). Screenshots: `docs/screenshots/audit/vendor/` (`before-*` / `after-*`).
+
+Security checks (no findings): every server action scopes by `vendor.id`; production-file routes 404 on another vendor's order; print PDF stays locked until acceptance; private uploads are access-checked; buyers are redirected away from the portal. Buyer data shown to vendors is first name + district/governorate only: no phone, email or street address (managed marketplace rule, PDPL 151/2020 data minimisation).
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| V-01 | high | Jobs index, `JobsIndex.tsx` | axe critical `aria-valid-attr-value`: view tabs have `aria-controls` pointing at a panel id that does not exist. | WCAG 4.1.2 | Tabs get a `panelID`; the table is wrapped in a matching `role="tabpanel"` region labelled with the current view. | fixed |
+| V-02 | high | Jobs index | Tabs and the search field shared one row: at 1440 px "Ready to ship" was cut to "Ready to shi" and the tabs ran into the search box (the overlap reported earlier). | Polaris IndexFilters anatomy; WCAG 1.4.10 | Tabs on their own row (scroll horizontally if needed), "Search and filter" + filter/sort buttons on the row below. | fixed |
+| V-03 | high | Jobs index, phone | The 7-column table scrolled sideways inside the card; status, due date and price were off-screen at 390 px. | WCAG 1.4.10 reflow; Polaris condensed index table | Below 48rem each job is one condensed row: number, status badge, product and quantity, due badge and price. Header and wide-only cells hidden. | fixed |
+| V-04 | high | Rate cards index, i18n | Column headers hard-coded "Up to (100 pcs)" / "From (2,000 pcs)" although tiers differ per card, so the table could state the wrong quantity. | Data correctness | Headers "Entry price (smallest tier)" / "Best price (largest tier)"; each cell shows its own tier quantity ("EGP 38 · from 100 pcs"). | fixed |
+| V-05 | high | Apply status, `apply/page.tsx` | In Arabic the phone number in "we will call {phone}" rendered reversed (`0020 0000 010`) because the LTR number was not isolated inside RTL text. | Unicode bidi; WCAG 1.3.2 | Number wrapped in LRI/PDI isolates. | fixed |
+| V-06 | medium | Job detail, production files copy | After acceptance the card still said "The print-ready PDF unlocks when you accept the job". | Copy correctness | New unlocked copy: "Print from these files only. Keep them inside your plant and do not share them." (ar + en). | fixed |
+| V-07 | medium | Job detail, delivery card | Governorate shown in English in the Arabic UI ("Dokki, Giza"). | Localization | Governorate mapped through `governorates.*` (code or English name); the buyer-typed district stays as entered. | fixed |
+| V-08 | medium | Job detail, phone | Due date, price and delivery came after the full notes timeline (very long scroll before the facts a vendor needs). | Polaris detail layout; ISO 9241-110 suitability for the task | Notes and activity moved to a row after the 2/3 + 1/3 layout, keeping main-column width on desktop; on phones the summary cards now come first. | fixed |
+| V-09 | medium | Job detail header | "Download dieline" and "Download print PDF" duplicated the Production files card and crowded the header (on phones they hid behind "⋯"). | Polaris page header: workflow actions only | Header keeps Accept / Decline / Start production / Submit for QC; downloads live in the files card. | fixed |
+| V-10 | medium | Apply form | After a failed submit focus stayed on the submit button at the bottom; the error summary was off-screen. | WCAG 3.3.1, 2.4.3 | Focus and scroll move to the first invalid field (or the focusable error summary when the problem is a missing upload); smooth scroll only without reduced motion (2.3.3). | fixed |
+| V-11 | medium | Rate cards index | Subtitle rendered as a loose paragraph under the title, unlike every other page. | Polaris page header | Moved into the `Page` subtitle. | fixed |
+| V-12 | medium | Dashboard payouts card | E-invoice reminder was a long sentence inside a status pill (badge used as a banner, wraps badly). | Polaris: badges for status, banners for messages | In-card warning banner. | fixed |
+| V-13 | low | Rate card editor | Every tier row repeated "From quantity / Price per box" labels. | Polaris nested table look | On ≥48rem labels show on the first row only and stay available to screen readers (3.3.2); phones keep visible labels. | fixed |
+| V-14 | low | Rate card editor | Lead time field had no unit while all others did. | Consistency | "days" / "يوم" suffix. | fixed |
+| V-15 | low | Payouts | Metric "Waiting" did not match the badge "Waiting for approval"; column "Released on" holds a condition, not a date. | Copy consistency | "Waiting for approval" / "بانتظار الاعتماد"; "Released after" / "تصرف بعد". | fixed |
+| V-16 | low | Rate cards index | Cutting die "EGP 0" read like a price. | Copy | "None" / "لا يوجد" in secondary text. | fixed |
+| V-17 | low | Profile, machines | "Make and model" was the same width as "Count" and truncated. | Layout | Columns 1fr / 2fr / 7rem on ≥48rem. | fixed |
+| V-18 | low | Job detail notes | Notes from ops were attributed to "Elba" in English in the Arabic UI. | Localization | Uses `meta.siteName` (علبة). | fixed |
+| V-19 | low | Decline modal | Reason select placeholder was "—". | WCAG 3.3.2 | "Choose a reason" / "اختر السبب". | fixed |
+| V-20 | low | Jobs index, dashboard | Arabic buyer first name inside English rows was not bidi-isolated. | Unicode bidi | `<bdi>`. | fixed |
+| V-21 | low | Dieline preview (`src/app/api/vendor/jobs/[id]/dieline`, dieline lib) | Panel labels in the SVG are English in the Arabic UI and very small. | Localization | Outside scope (technical session owns the API and the dieline generator). | open |
+| V-22 | low | `src/components/ui/TextField` | The character counter sits inside the textarea and overlaps the last line of long Arabic bios. | WCAG 1.4.8 / legibility | Shared UI component, outside scope. | open |
+| V-23 | low | `src/components/ui/TopBar` | In Arabic the English staff name truncates at the wrong end ("…rinting & Packaging staff"); needs `dir="auto"` on the name. | Unicode bidi | Shared UI component, outside scope. | open |
+| V-25 | high | Payouts, phone (pass 2) | Same sideways-scrolling table as V-03: status, date and amount off-screen at 390 px. | WCAG 1.4.10 reflow | Condensed rows below 48rem (part and trigger, status badge, amount, date). | fixed |
+| V-26 | medium | Job detail, finished jobs (pass 2) | A delivered job with no stored photos said "Photos can be added while the job is in production." | Copy correctness | The QC card shows only while photos are possible or exist; before production it explains when they become possible. | fixed |
+| V-24 | low | Apply page, phone | "Why print with Elba" and "How it works" sit under the long form. | Polaris layout | Kept main-first order on purpose: the subtitle already states the offer, and the aside order matches the desktop reading order. | won't fix |
+
+Counts: high 6, medium 8, low 12 (critical 0). Fixed 23, open 3 (outside scope), won't fix 1.
+
+Not findings: the floating "N" circle in screenshots is the Next.js dev-mode indicator (not in production builds). Seed events with timestamps a few hours apart from `placedAt` are seed data, not a UI bug.
