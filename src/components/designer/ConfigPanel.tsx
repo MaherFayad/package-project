@@ -19,12 +19,25 @@ import { RangeSlider } from "@/components/ui/RangeSlider";
 import { Select } from "@/components/ui/Select";
 import { Text } from "@/components/ui/Text";
 import { TextField } from "@/components/ui/TextField";
+import { useUi } from "@/components/ui/AppProvider";
+import { fill } from "@/components/ui/strings";
 import { featureSupportOf, finishChoicesFor, materialChoices, printSidesChoices, type Choice } from "./lib/config";
 import { modelImage } from "./ModelPicker";
 import { FlexOptionsGroup } from "./FlexOptionsGroup";
 import { EGYPT_BADGE, egyptOf, orderModeOf } from "@/data/catalogue/order-mode";
 import { parseMmInput } from "./lib/mm";
 import styles from "./library.module.css";
+
+/** a11y R6-AX-09 (WCAG 3.3.1): name the size field that is wrong, not only "this size cannot be made". */
+function useSizeError() {
+  const { s } = useUi();
+  return (text: string, min: number, max: number) => {
+    if (text.trim() === "") return s.numberInvalid;
+    const n = parseMmInput(text);
+    if (!Number.isFinite(n)) return s.numberInvalid;
+    return n < min || n > max ? fill(s.numberRange, { min, max }) : undefined;
+  };
+}
 
 export interface ViewOptions {
   dimensions: boolean;
@@ -252,6 +265,7 @@ function BoxSection({ doc, model, geo, view, onView, onGeometry, onFinish, onPri
   const cylinder = model.shape === "cylinder";
   const [draft, setDraft] = useState({ L: String(doc.dims.L), W: String(doc.dims.W), H: String(doc.dims.H) });
   const [invalid, setInvalid] = useState(false);
+  const sizeError = useSizeError();
   useEffect(() => {
     setDraft({ L: String(doc.dims.L), W: String(doc.dims.W), H: String(doc.dims.H) });
     setInvalid(false);
@@ -332,6 +346,7 @@ function BoxSection({ doc, model, geo, view, onView, onGeometry, onFinish, onPri
               value={draft[axis]}
               onChange={(v) => tryDims({ ...draft, [axis]: v })}
               helpText={<bdi dir="ltr">{`${lims[axis].min}–${lims[axis].max}`}</bdi>}
+              error={sizeError(draft[axis], lims[axis].min, lims[axis].max)}
               suffix={t("common.mm")}
             />
           ))}
@@ -431,6 +446,7 @@ function VesselSection({ doc, model, geo, view, onView, onGeometry, onFinish }: 
   const v = doc.vessel!;
   const [draft, setDraft] = useState({ D: String(v.dims.D), H: String(v.dims.H), G: v.dims.G !== undefined ? String(v.dims.G) : "" });
   const [invalid, setInvalid] = useState(false);
+  const sizeError = useSizeError();
   useEffect(() => {
     setDraft({ D: String(v.dims.D), H: String(v.dims.H), G: v.dims.G !== undefined ? String(v.dims.G) : "" });
     setInvalid(false);
@@ -508,6 +524,7 @@ function VesselSection({ doc, model, geo, view, onView, onGeometry, onFinish }: 
                 value={draft[a]}
                 onChange={(val) => tryDims({ ...draft, [a]: val })}
                 helpText={<bdi dir="ltr">{`${r.min}–${r.max}`}</bdi>}
+                error={a === "G" && draft[a] === "" ? undefined : sizeError(draft[a], r.min, r.max)}
                 suffix={t("common.mm")}
               />
             );

@@ -284,6 +284,7 @@ export const I18N_SCOPES = {
     "store.vendor.machinesTitle",
     "store.vendor.materials",
     "store.vendor.minOrder",
+    "store.vendor.newBadge",
     "store.vendor.next",
     "store.vendor.onTime",
     "store.vendor.openImage",
@@ -316,6 +317,7 @@ export const I18N_SCOPES = {
     "store.vendors.leadValue",
     "store.vendors.managedNote",
     "store.vendors.metaDescription",
+    "store.vendors.onTimeNew",
     "store.vendors.results",
     "store.vendors.sort",
     "store.vendors.sortOption.",
@@ -341,8 +343,15 @@ export const I18N_SCOPES = {
     "vendors.verified",
     "viewer.keyboardHint",
     "viewer.label",
+    "viewer.reset",
     "viewer.roleDescription",
-    "viewer.unsupported"
+    "viewer.rotateLeft",
+    "viewer.rotateRight",
+    "viewer.tiltDown",
+    "viewer.tiltUp",
+    "viewer.unsupported",
+    "viewer.zoomIn",
+    "viewer.zoomOut"
   ],
   "design": [
     "auth.gateReason",
@@ -655,14 +664,7 @@ export const I18N_SCOPES = {
     "preflight.",
     "pricing.subtotal",
     "pricing.vat",
-    "viewer.controls",
-    "viewer.reset",
-    "viewer.rotateLeft",
-    "viewer.rotateRight",
-    "viewer.tiltDown",
-    "viewer.tiltUp",
-    "viewer.zoomIn",
-    "viewer.zoomOut"
+    "viewer.controls"
   ],
   "share": [
     "account.openDesign",
@@ -706,14 +708,7 @@ export const I18N_SCOPES = {
     "payment.updated",
     "paymentMethods.",
     "preflight.",
-    "viewer.controls",
-    "viewer.reset",
-    "viewer.rotateLeft",
-    "viewer.rotateRight",
-    "viewer.tiltDown",
-    "viewer.tiltUp",
-    "viewer.zoomIn",
-    "viewer.zoomOut"
+    "viewer.controls"
   ],
   "checkout": [
     "buyer.amountDue",
@@ -957,14 +952,7 @@ export const I18N_SCOPES = {
     "pricing.line.discount",
     "pricing.printMethod.",
     "store.footer.legal",
-    "viewer.controls",
-    "viewer.reset",
-    "viewer.rotateLeft",
-    "viewer.rotateRight",
-    "viewer.tiltDown",
-    "viewer.tiltUp",
-    "viewer.zoomIn",
-    "viewer.zoomOut"
+    "viewer.controls"
   ],
   "orders": [
     "buyer.awaitingPrinter",
@@ -1077,9 +1065,12 @@ export const I18N_SCOPES = {
     "orders.dispute.description",
     "orders.dispute.descriptionHelp",
     "orders.dispute.help",
+    "orders.dispute.last",
     "orders.dispute.open",
+    "orders.dispute.outcomeTitle",
     "orders.dispute.reason",
     "orders.dispute.reasons.",
+    "orders.dispute.reprintLink",
     "orders.dispute.sent",
     "orders.dispute.status.",
     "orders.dispute.submit",
@@ -1235,6 +1226,7 @@ export const I18N_SCOPES = {
     "governorates.",
     "notify.",
     "orderStatus.",
+    "orders.dispute.status.",
     "payment.updated",
     "paymentMethods.",
     "preflight.",
@@ -1767,14 +1759,7 @@ export const I18N_SCOPES = {
     "library.picker.simplified",
     "library.picker.title",
     "library.picker.use",
-    "viewer.controls",
-    "viewer.reset",
-    "viewer.rotateLeft",
-    "viewer.rotateRight",
-    "viewer.tiltDown",
-    "viewer.tiltUp",
-    "viewer.zoomIn",
-    "viewer.zoomOut"
+    "viewer.controls"
   ]
 } as const;
 
