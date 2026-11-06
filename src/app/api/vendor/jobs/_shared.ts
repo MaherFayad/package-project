@@ -14,9 +14,9 @@ export async function loadJobItem(orderId: string, itemId: string | null) {
     where: { id: orderId },
     include: { items: { include: { proof: true } } },
   });
-  // Vendors only see their own, paid orders (unpaid ones are never routed to a vendor); a
-  // mismatch is a 404 so ids are not confirmed (OWASP ASVS 4.0.3 V4.2.1).
-  if (!order || (auth.role !== "ADMIN" && (!auth.vendorId || order.vendorId !== auth.vendorId || order.status === "PENDING_PAYMENT"))) {
+  // Vendors only see their own orders once paid (unpaid ones, and ones cancelled before payment,
+  // are never routed to a vendor); a mismatch is a 404 so ids are not confirmed (ASVS V4.2.1).
+  if (!order || (auth.role !== "ADMIN" && (!auth.vendorId || order.vendorId !== auth.vendorId || order.paidAt === null))) {
     return new Response("Not found", { status: 404 });
   }
   const item = itemId ? order.items.find((i) => i.id === itemId) : order.items[0];

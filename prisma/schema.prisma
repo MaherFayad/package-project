@@ -517,9 +517,13 @@ model Dispute {
   resolution String?
   createdAt  DateTime @default(now())
   resolvedAt DateTime?
+  /// Added by technical audit round 2: number of disputes the order had before this one. With the
+  /// unique below, two simultaneous submits cannot both open a dispute. Null on older rows.
+  seq        Int?
   // Added by technical audit: foreign-key / filter indexes (no FK auto-index in SQLite or Postgres).
   @@index([orderId])
   @@index([status])
+  @@unique([orderId, seq])
 }
 
 // ───────────────────────────── Privacy (PDPL 151/2020 data-subject requests) ─────────────────────────────

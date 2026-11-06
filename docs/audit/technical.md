@@ -68,3 +68,97 @@ Evidence: `docs/screenshots/audit/technical/live-probe-before-after.png`, `desig
 - `src/app/api/_lib/body.ts` (new, under `src/app/api`): shared capped body readers.
 - `src/lib/orders/payment-rules.ts`, `src/lib/orders/api-rules.ts` (new, in `src/lib/orders`). `api-rules.ts` imports the pure `can()` from `src/components/vendor/lib/jobs.ts` (read only, not modified).
 - No UI pages were changed.
+
+---
+
+# Round 2
+
+Base: the round 1 merges of every area. Method: re-verified every round 1 row live on `next start` (SQLite seed, every role: anonymous, applicant `…020`, buyer `…002`, vendor staff `…010` Nile Pack and `…011` Delta Cartons, admin `…001`), then a fresh audit of every route and service in scope: authz / IDOR per role, input validation and upload safety, webhook HMAC and idempotency under concurrency, money math and the state machine, security headers and CSP in Chromium, and PERF-20. Probe fixtures: an unpaid order (ELB-26901) and an order cancelled before payment (ELB-26902) for the Nile Pack vendor, two concurrent PENDING payments, a refund callback signed with a known `MOCK_PAYMENTS_SECRET`, four concurrent dispute submits replayed from a captured server-action request.
+
+## Round 1 re-verification
+
+| id | round 2 result | status |
+|---|---|---|
+| T-01 | Unit tests pass; `decidePaymentOutcome` still binds every callback to the stored gateway order. | fixed |
+| T-02 | Nile staff on paid ELB-26202 before accepting: print PDF 404. | fixed |
+| T-03 | Vendor move on a cancelled order: 409 NOT_ALLOWED. | fixed |
+| T-04 | Admin `to: PAID`: 409 FORBIDDEN_TRANSITION. | fixed |
+| T-05 | **Reopened (round 2).** `next.config.ts` sends the full CSP, but the platform session's middleware (P-15, merged after round 1) set its own `frame-ancestors 'none'; base-uri 'self'; object-src 'none'` on every page, and a header set in middleware replaces the config one. Live `curl -I /ar`: no `default-src`, no `script-src`. Fixed as R2-01. | fixed (round 2) |
+| T-06 | Unsigned or forged mock webhook: 401. | fixed |
+| T-07 | Unchanged (conditional claim). The e2e journey ships once. | fixed |
+| T-08 | Concurrent moves: correct on Postgres, but **on SQLite concurrent interactive transactions deadlocked** (R2-06). Fixed, and verified with 5 parallel payment callbacks. | fixed (round 2) |
+| T-09 | Unit tests pass. | fixed |
+| T-10 | Vendor `POST /api/payments/mock` on the buyer's payment: 404. | fixed |
+| T-11 | Chunked 13 MB upload with no Content-Length: 413. | fixed |
+| T-12 | Still capped; the quota is now only counted after authorisation (R2-12). | fixed |
+| T-13, T-14, T-16, T-18–T-21 | Unit tests pass. | fixed |
+| T-15 | Code unchanged (`AbortSignal.timeout(15s)`). | fixed |
+| T-17 | Indexes present after `db push`. | fixed |
+| T-22 | Another vendor's order: 404. | fixed |
+| T-23 | **Partly reopened (round 2)**: only `PENDING_PAYMENT` was blocked. An order cancelled before payment still gave the vendor its proof PDF and dieline (200). Fixed as R2-02. | fixed (round 2) |
+| T-24, T-25, T-26, T-27 | Unchanged; T-26 issues are still capped at 10. | fixed |
+| T-28 | Fixed in round 2 (R2-09). | fixed (round 2) |
+| T-29 | In-memory rate limiter; needs Redis or Upstash at deploy (foundation file, infra). | open |
+| T-30 | `script-src 'unsafe-inline'` kept: Next inline hydration plus the round 1 cookie-bar pre-paint script. Nonces would make every page dynamic. | open |
+
+## Round 2 findings
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R2-01 | critical | `src/middleware.ts`, `next.config.ts` | Every page was served without a real CSP: middleware replaced the full policy with `frame-ancestors 'none'; base-uri 'self'; object-src 'none'`. No `script-src`, `connect-src` or `default-src`, so any injected script could load and exfiltrate freely. Permissions-Policy was also narrowed differently. | ASVS V14.4.3, V14.4.7; Top 10 A05 | One source of truth, `src/lib/security-headers.ts`: `next.config.ts` and middleware both send the identical set. Added `frame-src 'none'`. Live: `/ar` now carries the full policy. Chromium on home, boxes, catalogue, designer (WebGL canvas 1008×582), vendor profile, checkout, orders, vendor portal, admin pricing and login: **0 violations**. Artwork upload (blob URL → canvas texture) and autosave work. | fixed |
+| R2-02 | high | `lib/orders/service.ts` `canViewOrder`, `/orders/[id]`, `/checkout/pay/[id]`, `/api/orders/:id/proof-pdf`, `/api/orders/proofs/:id/preview`, `/api/vendor/jobs/_shared.ts` | Vendor staff could open orders that were never paid: unpaid ones through the order page, the pay page and the proof preview; ones cancelled before payment through those plus the proof PDF and dieline. The order page showed the buyer's name and full street address (live: ELB-26901 and ELB-26902 as `…010` rendered "منى عادل … 5 Mesaha Sq, Dokki"). Unpaid orders are never routed to a vendor. | PDPL 151/2020 data minimisation; ASVS V4.2.1; Top 10 A01 | `canViewOrder` (now pure, in `orders/state.ts`) requires `paidAt` for vendor staff. `paidAt` survives a refund, so job history stays visible. Job files use `paidAt === null` instead of `status === PENDING_PAYMENT`. The proof preview is `private, no-cache` (it was cached for 24 h after access was revoked). Live after fix: page shows not-found, proof-pdf and dieline 404. The buyer still sees everything. | fixed |
+| R2-03 | high | `service.ts` `applyPaymentOutcome` | Double charge dropped silently. Two payments of the same order captured at once (two tabs, card and wallet): the losing callback read the order as PENDING_PAYMENT, lost the conditional update, and returned `ALREADY_PAID` with no record. Live: P1 charged, left `PENDING`/`FAILED`, no refund flag. | Money integrity; ASVS V11.1.6 | On a lost race, re-read the payment. If it is not PAID, record it as PAID and add the `PAID_AFTER_CANCEL_REFUND_NEEDED` note for ops (same path as late payments). Live, 5 parallel callbacks over 2 payments: 1 × PAID, 1 × NEEDS_REFUND, 3 × ALREADY_PAID; both payments PAID; 1 sale invoice; refund note written. | fixed |
+| R2-04 | high | `service.ts` `transitionOrder` | A refund (admin refund, dispute refund or gateway refund webhook) moved the order to REFUNDED but issued no credit note. The SALE invoice stayed as the only tax document, so output VAT stays over-declared and the e-invoice trail cannot be reversed. | Egyptian VAT Law 67/2016; ETA e-invoicing (an issued invoice is cancelled by a credit note, never edited) | Inside the REFUNDED transition transaction, a `CREDIT_NOTE` (`CN-YYnnn`) mirroring the SALE invoice amounts is written, idempotently. The schema already had the kind. Live: refund webhook ×3 → 1 REFUNDED + 2 DUPLICATE, `INV-26002` and `CN-26001` (21,120.00 + 2,956.80 VAT = 24,076.80 EGP). The buyer invoice page still selects `kind === "SALE"`. ETA submission of the CN is still the integration's job (`etaUuid` empty). | fixed |
+| R2-05 | medium | `lib/payments/paymob.ts`, `payment-rules.ts` | Paymob mapping read `success` only. A voided sale (`is_voided`) and an authorisation never captured (`is_auth && !is_capture`) both report `success: true` and were mapped to PAID. A partial refund (`refunded_amount_cents` < `amount_cents`) moved the whole order to REFUNDED. These flags are part of Paymob's HMAC string. | ASVS V11.1.1; money integrity | `paymobFlags()` / `paymobStatus()`: voided → REFUNDED, auth-only → PENDING, `error_occured` → FAILED. A partial refund sets `partialRefund`; the decision is `PARTIAL_REFUND`, which writes a note and changes nothing else. `refunded_amount_cents` is not HMAC-covered, so it can only make the handling more conservative. `[VERIFY with Paymob]` on a sandbox payload (the docs spell it `is_captured` in one place, `is_capture` in the HMAC list). | fixed |
+| R2-06 | medium | `src/lib/db.ts` | On SQLite (dev, e2e, local `next start`), concurrent interactive transactions deadlocked: Prisma `updateMany` reads then writes, so two transactions each hold a read lock and wait to upgrade. Live: 5 parallel payment callbacks → 5 × 500 (P1008 socket timeout / P2028), nothing applied. Postgres is unaffected. | ASVS V11.1.6; availability | `databaseUrl()` appends `connection_limit=1` to `file:` URLs only (an explicit value wins). Verified: the same 5 callbacks now resolve correctly (see R2-03). | fixed |
+| R2-07 | medium (perf) | `components/store/data.ts`, `lib/pricing/server.ts`, `service.ts` | PERF-20: catalogue reads uncached across requests. Checkout read rate cards, vendors, materials, finishes, structures and settings twice per request (19 queries). Whole rows were selected. | performance budget < 10 queries / request | **Store loaders** (`listMaterials/Structures/Vendors`, `getVendorBySlug`, pricing data and config for "from" prices): `unstable_cache`, tag `catalog`, 300 s TTL, `react.cache` on top. Existing `revalidatePath("/[locale]","layout")` in admin and vendor actions expires them through implicit tags. Live: suspending Delta Cartons in admin → profile 404 and gone from `/vendors` at once; reinstating → 200. The upload route and `submitReview` also call `revalidateTag("catalog")`. **Checkout/orders pricing** stays uncached across requests (money must come from the live DB), but is read once per request in parallel (`react.cache` + `Promise.all`). **Columns**: `select` only what is used (no vendor contact or payout fields), and rate-card structure codes come from the structures list instead of a second query. Checkout **19 → 11 queries**; `/vendors/[slug]` and size pages 0 when warm. | fixed |
+| R2-08 | medium | `next.config.ts` | The global `/:path*` header rule also replaced the route handlers' own CSP. User files (`/api/vendor/files/...`) and the dieline SVG were served under the page policy (`script-src 'unsafe-inline'`) instead of their `default-src 'none'; sandbox`. Live: a PNG/HTML polyglot upload (magic bytes pass) was served with the page CSP. `nosniff` still blocked HTML sniffing, so this was defence in depth lost, not direct XSS. | ASVS V12.5.2, V14.4.3 | Page headers apply to `/((?!api/).*)`. `/api/:path*` gets the same headers without CSP (`apiHeaders()`), so the per-route sandbox policy survives. Live: the polyglot is served with `default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; sandbox`. JSON and PDF are unaffected; a sandboxed PDF would be blocked by Chrome's viewer, so no CSP is added there. | fixed |
+| R2-09 | low | `service.ts` `openDispute`, `schema.prisma` | T-28: two simultaneous submits could open two disputes. | ASVS V11.1.6 | Additive `Dispute.seq Int?` + `@@unique([orderId, seq])`. Inside a transaction: re-check for an open dispute (catches serialised writers on SQLite), then `seq = count`, so concurrent writers on Postgres collide (P2002 → NOT_ALLOWED). Description capped at 4,000. Live: 4 concurrent replays of the real server action → exactly 1 OPEN dispute. | fixed |
+| R2-10 | low | `service.ts` `submitReview` | The vendor rating was read-modify-write on `Vendor`. Two buyers reviewing the same vendor at once lose one update, and drift never heals. | ASVS V11.1.6 | Recomputed from `review.aggregate` (avg, count) inside the transaction. | fixed |
+| R2-11 | low | `/api/vendor/jobs/:id/print-pdf` | ADMIN could generate a "print-ready" PDF for an unpaid order (200), unlike `/api/orders/:id/print-pdf` (404). | Consistency; ASVS V4.1.3 | Both routes require a paid status, for ADMIN too. Live: 409. | fixed |
+| R2-12 | low | `/api/vendor/uploads` | The daily quota for loose `cert`/`apply` files was counted before authorisation, so refused attempts (wrong role, vendor already set) used it up. | ASVS V11.1.4 | Counted after the scope checks. | fixed |
+| R2-13 | medium (perf) | `package.json`, `scripts/check-bundle-size.mjs` | No automated bundle budget. | Perf budget: non-3D JS < 200 KB gz | `npm run test:size` (after `npm run build`) computes first-load JS per App Router page (root main files + every layout/template/loading/error/not-found on the path + page, gzip -9). It fails when a non-3D page exceeds 200 KB or a non-3D page ships three.js/r3f. 3D pages are allow-listed (`/design*`, `/s/*`, `/dev/*`). Current: all 41 non-3D pages pass, largest `/vendor/profile` 172 KB; 3D: designer 526 KB. | fixed |
+| R2-14 | low (perf) | admin dashboard (14 queries), vendor overview (15), order detail (15) | Still above 10 queries. Admin already runs its reads in parallel. Vendor loads the vendor twice (layout + page). Order detail is one `findFirst` with `include`, which Prisma splits into 13 SELECTs in one engine round trip (all < 1 ms). | PERF-20 | Loaders are owned by the admin and vendor sessions (out of scope). Suggested: `react.cache` around the vendor lookup in `components/vendor/server`; on Postgres, enable `relationJoins` and `relationLoadStrategy: "join"` for the order include. | open |
+| R2-15 | low | `components/vendor/server/actions.ts` `saveRateCard`, `components/admin/server/actions.ts` `savePricingSettingsAction` | These edits only revalidate the portal and admin, so public "from" prices refresh within the 300 s TTL rather than at once. Before R2-07 the static pages were not refreshed at all. Checkout prices are always live. | Freshness | One line each, `revalidateTag("catalog")`, for the admin and vendor owners. | open |
+
+### Checked and found sound in round 2
+- Designs: owner or anonymous cookie only (vendor and anonymous 404; foreign share 403; foreign PUT is rejected before parsing).
+- Webhook: wrong provider 400, unsigned 401, replayed refund → DUPLICATE, `amountPiasters` mismatch → REJECT with a note.
+- Quote: dims below or above structure limits → INVALID_DIMS with bounds; a PENDING vendor's id returns no offers and leaks nothing; unknown keys stripped; `__proto__` in the JSON is inert (zod object parse).
+- Uploads: SVG renamed `.png` and HTML renamed `.pdf` → 415 (magic bytes); buyer → portfolio 403; vendor → `apply` 403; QC upload on a job that is not in production → 409; anonymous 401; private files 404 for anonymous users.
+- Money: `orderTotals` and `vatOf` stay integer and exact (unit tests unchanged); prepay discount only on goods; credit note equals the sale invoice.
+- State machine: PAID/REFUNDED never reachable from the status API; vendor moves on cancelled orders → 409.
+
+## Performance (PERF-20, measured)
+
+Warm queries per request (`docs/audit/tools/prisma-query-log.cjs`, 3 requests each, `next start`):
+
+| route | before | after |
+|---|---|---|
+| `/en/checkout/[designId]` (buyer) | 19 | **11** |
+| `/en/vendors/nile-pack` | 3 cold / 0 | 0 |
+| `/en/boxes/shipping-box/250x180x80` | n/a | 9 cold / 0 warm |
+| `/en/design/mailer-box` | n/a | 1 |
+| `/en/orders/[id]` | 15 | 15 (one include, see R2-14) |
+| `/en/vendor` | 15 | 15 (out of scope, R2-14) |
+| `/en/admin` | 14 | 14 (already parallel) |
+
+Bundle budget (`npm run test:size`): 41 / 41 non-3D pages ≤ 200 KB gz (max 172 KB).
+
+## Round 2 verification
+
+| check | result |
+|---|---|
+| `npm run typecheck`, `npm run lint` | pass |
+| `npm test` | 6,256 tests, all pass (11 new round 2 tests in `src/lib/__tests__/technical-audit-r2.test.ts`: middleware and config headers, API CSP exclusion, vendor visibility, Paymob flags and partial refunds, SQLite URL) |
+| `npm run build`, `npm run test:size` | pass |
+| e2e `checkout`, `vendor`, `admin`, `smoke`, `journey` (`--workers=2 --trace off`) | 24 passed, 4 skipped by design |
+| e2e `storefront`, `designer`, `models` | storefront + designer all pass (the vendor-list check first failed on a stale on-disk cache entry baked in at build time; fixed by bypassing the cross-request cache during `next build`). models: 386 passed, 2 failed under 2 workers (FEFCO_0421_1, FS_BURGER_CLAMSHELL), and both pass when re-run alone, so this is software-WebGL timing, not related to these changes |
+| Live probes | listed per row above |
+
+Evidence: `docs/screenshots/audit/technical-r2/` (designer, home and checkout under the full CSP; designer with an uploaded image).
+
+## Files touched outside the listed scope (round 2)
+- `src/middleware.ts` (platform): `secure()` now calls the shared `applySecurityHeaders()`; nothing else changed.
+- `src/lib/security-headers.ts` (new): shared header set used by `next.config.ts` and middleware.
+- `package.json`: `test:size` script. `scripts/check-bundle-size.mjs` (new).

@@ -67,6 +67,11 @@ export type WebhookOutcome =
       gatewayRef?: string;
       /** ISO currency from the signed payload (must be EGP). */
       currency?: string;
+      /**
+       * REFUNDED callbacks only: the gateway reported a refund of LESS than the captured amount.
+       * A partial refund must not move the whole order to REFUNDED (it is recorded for ops).
+       */
+      partialRefund?: boolean;
     }
   | { ok: false; error: "INVALID_SIGNATURE" | "INVALID_PAYLOAD" | "UNSUPPORTED_EVENT" };
 
