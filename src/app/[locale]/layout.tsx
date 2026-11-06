@@ -4,8 +4,8 @@ import { notFound } from "next/navigation";
 import { preload } from "react-dom";
 import { inter, plexArabic, PLEX_PRELOAD_WEIGHTS } from "@/app/fonts";
 import { interPreloadUrl, plexArabicPreloadUrls } from "@/app/font-preload";
-import { dirOf, getDictionary, getPublicDictionary, isLocale } from "@/i18n";
-import type { Dictionary } from "@/i18n/types";
+import { dirOf, getDictionary, isLocale } from "@/i18n";
+import { scopedDictionary } from "@/i18n/scope";
 import { I18nProvider } from "@/i18n/client";
 import { LOCALES } from "@/types";
 import { VisitBeacon } from "@/lib/analytics/VisitBeacon";
@@ -33,16 +33,11 @@ export async function generateMetadata({
 }
 
 /**
- * Dictionary sent to the browser on every page (it is serialised into the HTML's RSC payload).
- * `legal` (the long policy texts) and `notify` (email / SMS templates) are read only by server
- * code, so they stay out of the client copy: ~9 KB raw less in every page (PERF-R4-05).
+ * Dictionary sent to the browser on every page (serialised into the RSC payload): only the
+ * "root" scope, i.e. what the shell, marketing, store, sign-in and legal pages' client code can
+ * read (R5-PL-08: 38 KB raw in Arabic instead of 99.7 KB). Area layouts add theirs with
+ * <I18nScope>. `legal` and `notify` stay server-only (PERF-R4-05).
  */
-function clientDictionary(locale: "ar" | "en"): Dictionary {
-  const { legal: _legal, notify: _notify, ...rest } = getPublicDictionary(locale);
-  void _legal;
-  void _notify;
-  return rest as Dictionary;
-}
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -86,7 +81,7 @@ export default async function LocaleLayout({
         <a className="skip-link" href="#main">
           {dict.common.skipToContent}
         </a>
-        <I18nProvider locale={locale} dict={clientDictionary(locale)}>
+        <I18nProvider locale={locale} dict={scopedDictionary(locale, "root")}>
           {children}
         </I18nProvider>
         {/* First-party `visit` event (B-19): one beacon per browser session, no third-party pixel. */}

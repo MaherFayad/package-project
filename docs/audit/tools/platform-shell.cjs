@@ -44,6 +44,8 @@ async function login(ctx, phone) {
         mains: document.querySelectorAll("main").length, h1: document.querySelectorAll("h1").length,
         skip: !!skip, skipTarget: !!target, langLinks: lang.map((a) => a.getAttribute("href")),
         overflow: document.documentElement.scrollWidth > innerWidth + 1,
+        // R5-PL-08: a dictionary key missing from the scoped client dictionary renders as the raw key
+        rawKeys: [...new Set((document.body.innerText.match(/\b(?:auth|common|marketing|store|designer|library|checkout|buyer|orders|account|payment|pricing|viewer|preflight|nav|meta|admin|vendorPortal|catalog|materials|finishes|structures|cities|governorates|orderStatus|shipment|unsubscribe|home|vendors|paymentMethods)\.[a-zA-Z][\w.]*[a-zA-Z0-9]\b/g) || []))].slice(0, 5),
         loopsUnderReduce: running.map((a) => (a.animationName || a.constructor.name) + "@" + (a.effect.target?.className?.toString?.().slice(0, 40) || "")),
       };
     });
@@ -57,7 +59,7 @@ async function login(ctx, phone) {
     if (SHOTS && ((vp.width === 390 && locale === "ar") || (vp.width === 1440 && locale === "en"))) { fs.mkdirSync(SHOTS, { recursive: true }); await page.screenshot({ path: `${SHOTS}/shell-${pg.key}-${locale}-${vp.width}.png` }); }
     const row = { key: pg.key, locale, w: vp.width, status: r ? r.status() : -1, ...info, firstFocus, afterSkip, axe: v, errors };
     rows.push(row);
-    console.log([pg.key, locale, vp.width, row.status, `lang=${info.lang}/${info.dir}`, `main=${info.mains}`, `h1=${info.h1}`, `skip=${info.skip && info.skipTarget}`, `tab1=${firstFocus}`, `skipEnter=${afterSkip}`, info.overflow ? "OVERFLOW" : "", `langLinks=${info.langLinks.join(",")}`, `axe=${v.join(",") || 0}`, info.loopsUnderReduce.length ? "LOOPS:" + info.loopsUnderReduce.join(",") : "", errors.join(" | ")].join(" "));
+    console.log([pg.key, locale, vp.width, row.status, `lang=${info.lang}/${info.dir}`, `main=${info.mains}`, `h1=${info.h1}`, `skip=${info.skip && info.skipTarget}`, `tab1=${firstFocus}`, `skipEnter=${afterSkip}`, info.overflow ? "OVERFLOW" : "", `langLinks=${info.langLinks.join(",")}`, `axe=${v.join(",") || 0}`, info.rawKeys.length ? "RAWKEYS:" + info.rawKeys.join(",") : "", info.loopsUnderReduce.length ? "LOOPS:" + info.loopsUnderReduce.join(",") : "", errors.join(" | ")].join(" "));
     await ctx.close();
   }
   // locale switch keeps path and query (client navigation)
