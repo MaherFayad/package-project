@@ -345,7 +345,7 @@ function metalcan(s: Extract<ShapeSpec, { type: "metalcan" }>, d: CatalogueDims)
     y0: H - s.endDepthMm,
     y1: H,
     r: R + seam,
-    depthRatio: section.kind === "round" ? 1 : section.depthRatio,
+    depthRatio: section.kind === "roundedRect" ? section.depthRatio : 1,
     topR: R - endIn - 2,
   };
   // Ring-pull and foil ends: anchor on the end panel, where the renderer's EOE_RING / PEEL_FOIL sit
@@ -391,7 +391,7 @@ function tin(s: Extract<ShapeSpec, { type: "tin" }>, d: CatalogueDims): Built {
     y0: H - lidH,
     y1: H + 0.6,
     r: R + 0.6,
-    depthRatio: section.kind === "round" ? 1 : section.depthRatio,
+    depthRatio: section.kind === "roundedRect" ? section.depthRatio : 1,
     topR: R + 0.6 - 4,
   };
   return { profile, innerTopY: H - 1, sleeveY0: 1, sleeveY1: H - lidH - 0.5, lid, closedH: H + 0.6 };
@@ -472,7 +472,7 @@ function cup(s: Extract<ShapeSpec, { type: "cup" }>, d: CatalogueDims): Built {
       finishH: 0,
       fillMaxY: hb,
     });
-    const lid: LidGeometry = { type: "hinged", section: s.section, y0: hb, y1: H, r: Rm, depthRatio: section.kind === "round" ? 1 : section.depthRatio, topR: Rm - 4 };
+    const lid: LidGeometry = { type: "hinged", section: s.section, y0: hb, y1: H, r: Rm, depthRatio: section.kind === "roundedRect" ? section.depthRatio : 1, topR: Rm - 4 };
     return { profile, innerTopY: hb - s.wallMm, sleeveY0: 1, sleeveY1: hb - 1, lid, closedH: H };
   }
   // Tubs and cups: open rim with a flange; snap lids (SNAP_LID), film lids (PEEL_FOIL) and hinged
@@ -505,7 +505,7 @@ function cup(s: Extract<ShapeSpec, { type: "cup" }>, d: CatalogueDims): Built {
   });
   const lidT = s.lid === "snap" ? Math.max(6, Math.min(14, H * 0.12)) : s.lid === "foil" ? 0.1 : 0;
   const lid: LidGeometry | null =
-    s.lid === "none" ? null : { type: s.lid, section: s.section, y0: H - (s.lid === "snap" ? 2 : 0), y1: H + lidT, r: Rt + f + (s.lid === "snap" ? 1 : 0), depthRatio: section.kind === "round" ? 1 : section.depthRatio, topR: Rt - 3 };
+    s.lid === "none" ? null : { type: s.lid, section: s.section, y0: H - (s.lid === "snap" ? 2 : 0), y1: H + lidT, r: Rt + f + (s.lid === "snap" ? 1 : 0), depthRatio: section.kind === "roundedRect" ? section.depthRatio : 1, topR: Rt - 3 };
   return { profile, innerTopY: H - 0.5, sleeveY0: 2, sleeveY1: rimY - 1.5, lid, closedH: lid ? lid.y1 : H };
 }
 

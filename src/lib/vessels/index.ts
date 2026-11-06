@@ -11,6 +11,7 @@ export {
   squarenessAt,
   sectionArea,
   sectionPerimeter,
+  polygonParts,
   brimfulVolumeMl,
   volumeToHeightMl,
   silhouetteLength,

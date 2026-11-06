@@ -117,6 +117,7 @@ export function assembleDieline(
     faces,
     closedOuter: computed.closedOuter,
     closedRotation: draft.closedRotation,
+    ...(draft.accessories?.length ? { accessories: draft.accessories } : {}),
     metrics: {
       blankWidthMm: all.width,
       blankHeightMm: all.height,

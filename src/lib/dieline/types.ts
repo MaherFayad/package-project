@@ -201,6 +201,25 @@ export interface DielineModel {
    */
   closedRotation: [number, number, number, number];
   metrics: DielineMetrics;
+  /**
+   * Optional non-board parts drawn with the closed box (ribbon pull, wire bail, handle cord).
+   * Closed-pose frame, mm: origin at the bottom centre of the closed box, x right, y up, z toward
+   * the front. The renderer shows them only when the box is closed.
+   */
+  accessories?: DielineAccessory[];
+}
+
+export interface DielineAccessory {
+  kind: "ribbon" | "wire" | "cord";
+  /** Centre line, closed-pose frame (mm). */
+  path: [number, number, number][];
+  /** Ribbon width (mm); default 10. */
+  widthMm?: number;
+  /** Wire / cord radius (mm); default 1. */
+  radiusMm?: number;
+  /** sRGB hex; default satin black for ribbons, steel for wire. */
+  color?: string;
+  label?: string;
 }
 
 export interface DielineOptions {

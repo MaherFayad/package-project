@@ -1,7 +1,9 @@
 import { BufferAttribute, BufferGeometry } from "three";
 import {
+  polygonParts,
   pouchDims,
   radiusAt,
+  sectionPerimeter,
   squarenessAt,
   surfaceUv,
   tubeDims,
@@ -58,6 +60,45 @@ export function ringsFromPoints(points: { r: number; y: number; s?: number }[]):
   return rings;
 }
 
+/**
+ * Rounded regular polygon (apothem a, a flat face centred on +Z) walked by arc length from the
+ * front centre towards +X, so a flat print lands undistorted on the faces (hex honey jar).
+ */
+function polygonPoint(section: { sides: number; cornerRatio: number }, a: number, p: number, out: { x: number; z: number; nx: number; nz: number }) {
+  const { n, t, c } = polygonParts(section, a);
+  const step = (Math.PI * 2) / n;
+  if (a <= 1e-9) {
+    out.x = 0;
+    out.z = 0;
+    out.nx = Math.sin(p * Math.PI * 2);
+    out.nz = Math.cos(p * Math.PI * 2);
+    return out;
+  }
+  const flat = 2 * (a - c) * t;
+  const arc = c * step;
+  const unit = flat + arc;
+  let d = ((((p % 1) + 1) % 1) * n * unit + flat / 2) % (n * unit);
+  const k = Math.min(n - 1, Math.floor(d / unit));
+  d -= k * unit;
+  const th = k * step;
+  if (d < flat) {
+    const along = d - flat / 2;
+    out.nx = Math.sin(th);
+    out.nz = Math.cos(th);
+    out.x = a * out.nx + along * Math.cos(th);
+    out.z = a * out.nz - along * Math.sin(th);
+    return out;
+  }
+  const mid = th + step / 2;
+  const cr = (a - c) / Math.cos(step / 2);
+  const phi = th + (d - flat) / Math.max(c, 1e-9);
+  out.nx = Math.sin(phi);
+  out.nz = Math.cos(phi);
+  out.x = cr * Math.sin(mid) + c * out.nx;
+  out.z = cr * Math.cos(mid) + c * out.nz;
+  return out;
+}
+
 /** Point + normal of a cross-section at perimeter fraction p (0 = front centre, increasing to the right). */
 export function sectionPoint(section: CrossSection, a: number, s: number, p: number, out: { x: number; z: number; nx: number; nz: number }) {
   const phi = p * Math.PI * 2;
@@ -68,6 +109,18 @@ export function sectionPoint(section: CrossSection, a: number, s: number, p: num
     out.z = a * cz;
     out.nx = cx;
     out.nz = cz;
+    return out;
+  }
+  if (section.kind === "polygon") {
+    polygonPoint(section, a, p, out);
+    if (s >= 1) return out;
+    out.x = a * cx + (out.x - a * cx) * s;
+    out.z = a * cz + (out.z - a * cz) * s;
+    const bx = cx + (out.nx - cx) * s;
+    const bz = cz + (out.nz - cz) * s;
+    const l = Math.hypot(bx, bz) || 1;
+    out.nx = bx / l;
+    out.nz = bz / l;
     return out;
   }
   // rounded rectangle walked by arc length, starting front-centre (+z) towards +x
@@ -114,7 +167,8 @@ export function sectionPoint(section: CrossSection, a: number, s: number, p: num
     nz = 0;
   } else if ((d -= segs[7]) < 0) corner(-sx, sz, (3 * Math.PI) / 2, d + q);
   else {
-    rx = -sx + (sx + d);
+    // last half of the front face: d (>= 0) runs from the front-left corner to the centre (R4-12)
+    rx = -sx + d;
     rz = hd;
     nx = 0;
     nz = 1;
@@ -147,7 +201,7 @@ export interface RevolveOptions {
   /** Radius offset added to every ring (labels sit slightly proud). */
   offset?: number;
   /** Knurled ribs: count and depth (mm), applied to rings where ribbed(ring) is true. */
-  ribs?: { count: number; depth: number; where: (ring: Ring) => boolean };
+  ribs?: { count: number; depth: number | ((ring: Ring) => number); where: (ring: Ring) => boolean };
   /** UV per vertex: s = perimeter fraction 0..1 within the range, t = ring arc fraction 0..1. */
   uv?: (s: number, t: number, ring: Ring) => [number, number];
 }
@@ -175,9 +229,10 @@ export function revolve(rings: Ring[], opts: RevolveOptions = {}): BufferGeometr
       let a = ring.r + off;
       let tangentialSlope = 0;
       if (ribbed && opts.ribs) {
+        const depth = typeof opts.ribs.depth === "function" ? opts.ribs.depth(ring) : opts.ribs.depth;
         const w = opts.ribs.count * p * Math.PI * 2;
-        a += opts.ribs.depth * 0.5 * (1 + Math.cos(w));
-        tangentialSlope = (-opts.ribs.depth * 0.5 * opts.ribs.count * Math.sin(w)) / Math.max(a, 1e-3);
+        a += depth * 0.5 * (1 + Math.cos(w));
+        tangentialSlope = (-depth * 0.5 * opts.ribs.count * Math.sin(w)) / Math.max(a, 1e-3);
       }
       sectionPoint(section, Math.max(0, a), ring.s, p, sp);
       let snx = sp.nx;
@@ -236,7 +291,24 @@ export function revolve(rings: Ring[], opts: RevolveOptions = {}): BufferGeometr
 
 /** The container body. */
 export function bodyGeometry(profile: VesselProfile, segments = 96): BufferGeometry {
-  return revolve(ringsFromPoints(profile.outer as SectionPoint[]), { section: profile.section, segments });
+  return revolve(ringsFromPoints(profile.outer as SectionPoint[]), { section: profile.section, segments, ribs: petaloidRibs(profile) });
+}
+
+/**
+ * Five-foot petaloid base of a carbonated-drink PET bottle (ISBT / PCO 1881 CSD bottles): valleys
+ * between the feet run up from the centre and fade out into the round heel. Read from the bottle
+ * family's profile (`base.kind === "petaloid"`); every other base is untouched (3d-bottles E-06).
+ */
+export function petaloidRibs(profile: VesselProfile): RevolveOptions["ribs"] {
+  const base = (profile as VesselProfile & { base?: { kind: string; feet?: number } }).base;
+  if (!base || base.kind !== "petaloid") return undefined;
+  const top = Math.max(4, profile.body.y0);
+  return {
+    count: Math.max(3, base.feet ?? 5),
+    // negative: cut valleys; deepest at the bottom, gone at the heel
+    depth: (ring) => -ring.r * 0.34 * Math.pow(Math.max(0, 1 - ring.y / top), 1.2),
+    where: (ring) => ring.y < top && ring.r > 0.5,
+  };
 }
 
 /** Interior (product) solid up to the finish; clip it at the fill height with a plane. */
@@ -271,8 +343,11 @@ export function bandLabelGeometry(spec: LabelSpec, offset = 0.18, segments = 96)
     return { r: r0 + (r1 - r0) * t, y: y0 + (y1 - y0) * t };
   });
   const rings = ringsFromPoints(pts);
-  const cols = Math.max(8, Math.round((segments * phiLength) / (Math.PI * 2)));
+  const section = spec.placement.section;
+  const faceted = section && section.kind !== "round";
+  const cols = Math.max(8, Math.round((segments * phiLength) / (Math.PI * 2))) * (faceted ? 2 : 1);
   return revolve(rings, {
+    section,
     segments: cols,
     pStart: phiStart / (Math.PI * 2),
     pLength: phiLength / (Math.PI * 2),
@@ -316,9 +391,9 @@ export function sleeveRings(profile: VesselProfile, spec: LabelSpec, rows = 90) 
 export function sleeveGeometry(profile: VesselProfile, spec: LabelSpec, segments = 96) {
   const { conform, looseR } = sleeveRings(profile, spec);
   const uv = (s: number, t: number): [number, number] => surfaceUv(spec, s, t);
-  const fitted = revolve(conform, { segments, offset: 0.14, uv });
+  const fitted = revolve(conform, { section: profile.section, segments: profile.section.kind === "round" ? segments : segments * 2, offset: 0.14, uv });
   const looseRings = conform.map((r) => ({ ...r, r: looseR, nr: 1, ny: 0 }));
-  const loose = revolve(looseRings, { segments, uv });
+  const loose = revolve(looseRings, { segments: profile.section.kind === "round" ? segments : segments * 2, uv });
   const target = {
     position: (fitted.getAttribute("position").array as Float32Array).slice(),
     normal: (fitted.getAttribute("normal").array as Float32Array).slice(),
@@ -486,14 +561,40 @@ export function pouchLabelGeometry(dims: VesselDims, spec: LabelSpec): BufferGeo
 }
 
 /** Flat face label on a square bottle panel. */
-export function faceLabelGeometry(spec: LabelSpec, faceZ: number): BufferGeometry {
+export function faceLabelGeometry(spec: LabelSpec, faceZ: number, profile?: VesselProfile | null): BufferGeometry {
   if (spec.placement.type !== "face") throw new Error("not a face label");
   const { x0, x1, y0, y1, face } = spec.placement;
   const sign = face === "front" ? 1 : -1;
+  const section = profile?.section;
+  if (!profile || !section || section.kind === "round") {
+    return gridSurface(
+      2,
+      2,
+      (u, v) => [(x0 + (x1 - x0) * u) * sign, y0 + (y1 - y0) * v, sign * (faceZ + 0.18)],
+      (u, v) => surfaceUv(spec, u, v),
+    );
+  }
+  // Conform to the wall (3d-bottles E-04, R4-V02): x across the label is arc length round the
+  // section from the face centre, at the wall's own half width at each height, so a label wider
+  // than the flat front (flask, oval shampoo, deodorant stick) wraps the curved sides instead of
+  // standing off them as a flat card, and a tapered tub's label follows the taper.
+  const outer = profile.outer as SectionPoint[];
+  const sp = { x: 0, z: 0, nx: 0, nz: 1 };
+  // proud of the wall along the wall normal (a radius offset is only ~half that on the short axis
+  // of an oval and z-fights); enough to clear the body's chords at the corner radius
+  const off = 0.45;
   return gridSurface(
-    2,
-    2,
-    (u, v) => [(x0 + (x1 - x0) * u) * sign, y0 + (y1 - y0) * v, sign * (faceZ + 0.18)],
+    32,
+    6,
+    (u, v) => {
+      const y = y0 + (y1 - y0) * v;
+      const a = radiusAt(outer, y);
+      const sq = squarenessAt(outer, y);
+      const x = x0 + (x1 - x0) * u;
+      const per = sectionPerimeter(section, a, sq) || 1;
+      sectionPoint(section, a, sq, (face === "front" ? 0 : 0.5) + x / per, sp);
+      return [sp.x + sp.nx * off, y, sp.z + sp.nz * off];
+    },
     (u, v) => surfaceUv(spec, u, v),
   );
 }

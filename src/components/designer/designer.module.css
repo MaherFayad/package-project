@@ -885,7 +885,8 @@
   padding: 12%;
   pointer-events: none;
   opacity: 1;
-  transition: opacity var(--p-motion-duration-300, 300ms) var(--p-motion-ease-out, ease-out);
+  /* R4-CR-01: the engine reveals the canvas in one step at onReady; only this poster fades, fast */
+  transition: opacity var(--motion-fast, 150ms) var(--p-motion-ease-out, ease-out);
 }
 .stagePoster[data-hidden="true"] { opacity: 0; }
 @media (prefers-reduced-motion: reduce) {
