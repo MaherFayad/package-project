@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { sendOtp, uniquePhone } from "./fixtures/factory";
 
 /** Storefront main flows on seeded data (owner: storefront). */
 
@@ -96,15 +97,11 @@ test("legal pages are marked for lawyer review", async ({ page }) => {
 });
 
 test("account: sign in, withdraw marketing consent, request data deletion", async ({ page }) => {
-  const suffix = String(Date.now() % 100_000_000).padStart(8, "0");
+  const phone = (await uniquePhone("11")).local;
   await page.goto("/en/account");
   await expect(page).toHaveURL(/\/en\/login\?next=/, { timeout: 20_000 });
   await page.waitForLoadState("networkidle"); // let the form hydrate before typing
-  await page.getByLabel("Mobile number").fill(`011${suffix}`);
-  await page.getByRole("button", { name: "Send code" }).click();
-  const banner = page.getByTestId("otp-dev-code");
-  await expect(banner).toBeVisible();
-  const code = (await banner.textContent())!.match(/\d{6}/)![0];
+  const code = await sendOtp(page, phone);
   await page.getByLabel("Verification code").fill(code);
   await page.getByLabel(/I agree to the Terms/).check();
   await page.getByLabel(/Send me offers/).check();

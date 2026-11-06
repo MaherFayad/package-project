@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { sendOtp, uniquePhone } from "./fixtures/factory";
 
 /**
  * Checkout main flow (seeded vendors + rate cards):
@@ -7,22 +8,11 @@ import { expect, test, type Page } from "@playwright/test";
  */
 
 async function signIn(page: Page, lang: "en" | "ar" = "en") {
-  const suffix = String(Date.now() % 100_000_000).padStart(8, "0");
-  const prefix = test.info().project.name === "mobile" ? "015" : "011";
+  // Unique per test and worker (OTP limits are per phone): e2e/fixtures/factory.ts.
+  const phone = (await uniquePhone()).local;
   await page.goto(`/${lang}/orders`);
   await expect(page).toHaveURL(new RegExp(`/${lang}/login\\?next=`));
-  const send = page.getByRole("button", { name: "Send code" });
-  // Re-fill until the form has hydrated and enabled the button.
-  await expect(async () => {
-    // Clear first: React ignores an input event whose value equals the hydrated DOM value.
-    await page.getByLabel("Mobile number").fill("");
-    await page.getByLabel("Mobile number").fill(`${prefix}${suffix}`);
-    await expect(send).toBeEnabled({ timeout: 1000 });
-  }).toPass({ timeout: 60_000 });
-  await send.click();
-  const banner = page.getByTestId("otp-dev-code");
-  await expect(banner).toBeVisible();
-  const code = (await banner.textContent())!.match(/\d{6}/)![0];
+  const code = await sendOtp(page, phone);
   await page.getByLabel("Verification code").fill(code);
   await page.getByLabel(/I agree to the Terms/).check();
   await page.getByRole("button", { name: "Verify and continue" }).click();

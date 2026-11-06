@@ -1,34 +1,15 @@
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
-import { PrismaClient } from "@prisma/client";
-import { createHash, randomBytes } from "node:crypto";
-import path from "node:path";
+import { SEEDED, cleanup, cloneOrder, createUser, db, signInPhone, track } from "./fixtures/factory";
 
 /**
- * Admin main flow on seeded data (npm run db:seed): the admin (01000000001) opens the overview,
- * finds ELB-26301 in the "QC review" view, approves QC for dispatch, sees the action in the audit
- * log and previews a margin change on the pricing page without saving it. ELB-26301 is reset
- * first so the spec can run again without reseeding. Sign-in inserts a session row (same hashing
- * as src/lib/auth) to avoid the OTP rate limit on a shared seeded phone.
+ * Admin flows. Parallel-safe: the QC review and the payout test each clone ELB-26301 (QC pending,
+ * with its photos) into their own order, and the quote-lead test uses a fresh buyer, so no two
+ * tests or workers share a row (e2e/fixtures/factory.ts). The admin signs in through a session row.
  */
-const dbUrl = process.env.ELBA_DATABASE_URL ?? `file:${path.resolve(__dirname, "../prisma/dev.db")}`;
-const db = new PrismaClient({ datasources: { db: { url: dbUrl } } });
-const ORDER = "ELB-26301";
+const TEMPLATE_QC = "ELB-26301";
 
-async function signIn(context: BrowserContext, baseURL: string, phone = "+201000000001") {
-  const user = await db.user.findUniqueOrThrow({ where: { phone } });
-  const token = randomBytes(32).toString("base64url");
-  await db.session.create({ data: { tokenHash: createHash("sha256").update(token).digest("hex"), userId: user.id, expiresAt: new Date(Date.now() + 3600_000) } });
-  await context.addCookies([{ name: "elba_session", value: token, url: baseURL }]);
-}
-
-async function resetQcOrder() {
-  const order = await db.order.findUniqueOrThrow({ where: { number: ORDER } });
-  await db.$transaction([
-    db.productionEvent.deleteMany({ where: { orderId: order.id, type: { in: ["QC_APPROVED", "QC_REJECTED", "SHIPPED", "DELIVERED", "CANCELLED"] } } }),
-    db.qcPhoto.updateMany({ where: { orderId: order.id }, data: { status: "PENDING", reviewNote: null, reviewedAt: null } }),
-    db.auditLog.deleteMany({ where: { entityType: "ORDER", entityId: order.id } }),
-    db.order.update({ where: { id: order.id }, data: { status: "QC_PENDING" } }),
-  ]);
+async function signIn(context: BrowserContext, baseURL: string, phone: string = SEEDED.admin) {
+  await signInPhone(context, baseURL, phone);
 }
 
 async function noHorizontalScroll(page: Page) {
@@ -37,12 +18,12 @@ async function noHorizontalScroll(page: Page) {
 }
 
 test.afterAll(async () => {
-  await db.$disconnect();
+  await cleanup();
 });
 
 test.describe("admin", () => {
   test("non-admins are sent away from /admin", async ({ page, context, baseURL }) => {
-    await signIn(context, baseURL!, "+201000000002");
+    await signIn(context, baseURL!, SEEDED.buyer);
     await page.goto("/en/admin");
     await expect(page).not.toHaveURL(/\/admin/);
   });
@@ -50,7 +31,7 @@ test.describe("admin", () => {
   test("overview → QC review → approve for dispatch → audit log → pricing preview", async ({ page, context, baseURL }, info) => {
     test.skip(info.project.name !== "desktop", "mutating flow runs once (desktop)");
     test.setTimeout(120_000);
-    await resetQcOrder();
+    const ORDER = (await cloneOrder(TEMPLATE_QC, { status: "QC_PENDING", withQcPhotos: true, label: "Q" })).number;
     await signIn(context, baseURL!);
 
     await page.goto("/en/admin");
@@ -63,7 +44,12 @@ test.describe("admin", () => {
     await expect(page.getByRole("heading", { level: 1, name: "Orders" })).toBeVisible({ timeout: 30_000 });
     await page.getByRole("tab", { name: /QC review/ }).click();
     await expect(page).toHaveURL(/view=qc/, { timeout: 30_000 });
-    await page.getByRole("link", { name: ORDER }).click();
+    // The "QC review" tab is a client navigation that re-renders the table; a click that lands on
+    // the outgoing table is lost, so click until the order page opens (assertion unchanged).
+    await expect(async () => {
+      if (!page.url().includes(`/admin/orders/${ORDER}`)) await page.getByRole("link", { name: ORDER }).click({ timeout: 5_000 });
+      await expect(page).toHaveURL(new RegExp(`/en/admin/orders/${ORDER}$`), { timeout: 5_000 });
+    }).toPass({ timeout: 60_000 });
     await expect(page.getByRole("heading", { level: 1, name: ORDER })).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText("Quality check").first()).toBeVisible({ timeout: 30_000 });
 
@@ -104,9 +90,8 @@ test.describe("admin", () => {
 
   test("vendor payout: raise → approve → mark paid, audited", async ({ page, context, baseURL }, info) => {
     test.skip(info.project.name !== "desktop", "mutating flow runs once, on desktop");
-    const order = await db.order.findUniqueOrThrow({ where: { number: ORDER } });
-    await db.payout.deleteMany({ where: { orderId: order.id } });
-    await db.auditLog.deleteMany({ where: { entityType: "PAYOUT", summary: { startsWith: ORDER } } });
+    const order = await cloneOrder(TEMPLATE_QC, { status: "QC_PENDING", label: "P" });
+    const ORDER = order.number;
     await signIn(context, baseURL!);
     await page.goto("/en/admin/payouts");
     await expect(page.getByRole("heading", { level: 1, name: "Payouts" })).toBeVisible({ timeout: 30_000 });
@@ -151,7 +136,7 @@ test.describe("admin", () => {
 
   test("quote leads: an open request is marked contacted, audited", async ({ page, context, baseURL }, info) => {
     test.skip(info.project.name !== "desktop", "mutating flow runs once, on desktop");
-    const buyer = await db.user.findUniqueOrThrow({ where: { phone: "+201000000002" } });
+    const buyer = track(await createUser({ name: "E2E Lead" }));
     const q = await db.quote.create({
       data: { userId: buyer.id, lines: [{ kind: "PRODUCT", quantity: 6500 }], subtotalPiasters: 0, vatPiasters: 0, totalPiasters: 0, validUntil: new Date(Date.now() + 72 * 3_600_000), status: "REQUESTED" },
     });

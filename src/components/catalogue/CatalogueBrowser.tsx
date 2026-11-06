@@ -265,8 +265,21 @@ function VirtualGrid({ locale, items }: { locale: Locale; items: CatalogueCard[]
   };
 
   const slice = items.slice(range.from, Math.min(range.to, items.length));
+  // Until the grid is measured (the server HTML, shown until hydration) there is no width to place
+  // the absolutely positioned cells with: render a plain responsive CSS grid instead (same
+  // breakpoints as columnsFor(), via a container query). The old fallback laid out a 1200 px desktop
+  // grid, which on a phone widened the page to ~1184 px until the JS ran: horizontal overflow, a
+  // zoomed-out first paint and a large layout shift (WCAG 2.2 1.4.10 Reflow).
+  const measured = width > 0;
   return (
-    <ul ref={ref} className={styles.grid} style={{ blockSize: rows * rowH - gap }} onKeyDown={onKeyDown} data-testid="catalogue-grid" aria-label={fill(COPY.results[locale], { count: formatNumber(items.length) })}>
+    <ul
+      ref={ref}
+      className={measured ? styles.grid : `${styles.grid} ${styles.gridStatic}`}
+      style={measured ? { blockSize: rows * rowH - gap } : undefined}
+      onKeyDown={onKeyDown}
+      data-testid="catalogue-grid"
+      aria-label={fill(COPY.results[locale], { count: formatNumber(items.length) })}
+    >
       {slice.map((c, k) => {
         const i = range.from + k;
         const row = Math.floor(i / cols);
@@ -278,7 +291,7 @@ function VirtualGrid({ locale, items }: { locale: Locale; items: CatalogueCard[]
             aria-setsize={items.length}
             aria-posinset={i + 1}
             className={styles.cell}
-            style={{ insetBlockStart: row * rowH, insetInlineStart: col * (colW + gap), inlineSize: colW, blockSize: colW + TEXT_H }}
+            style={measured ? { insetBlockStart: row * rowH, insetInlineStart: col * (colW + gap), inlineSize: colW, blockSize: colW + TEXT_H } : undefined}
           >
             <ModelCard locale={locale} card={c} eager={i < cols * 2} />
           </li>

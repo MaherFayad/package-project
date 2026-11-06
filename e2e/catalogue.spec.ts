@@ -1,9 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
-import { createHash, randomBytes } from "node:crypto";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
-import { PrismaClient } from "@prisma/client";
+import { cleanup, createUser, db, signInAs, track } from "./fixtures/factory";
 
 /**
  * Public catalogue (/[locale]/catalog) and model pages: Egypt filter on by default, Worldwide
@@ -105,12 +104,10 @@ test("model page: quote path for a format no printer prices yet", async ({ page 
 
 test("quote request: signed-in buyer sends a request", async ({ page, baseURL }, info) => {
   test.skip(info.project.name !== "desktop", "once");
-  // Session row with the same hashing as src/lib/auth (as admin.spec does): no OTP rate limit.
-  const db = new PrismaClient({ datasources: { db: { url: process.env.ELBA_DATABASE_URL ?? `file:${path.resolve(__dirname, "../prisma/dev.db")}` } } });
-  const user = await db.user.findUniqueOrThrow({ where: { phone: "+201000000002" } });
-  const token = randomBytes(32).toString("base64url");
-  await db.session.create({ data: { tokenHash: createHash("sha256").update(token).digest("hex"), userId: user.id, expiresAt: new Date(Date.now() + 3600_000) } });
-  await page.context().addCookies([{ name: "elba_session", value: token, url: baseURL! }]);
+  // A fresh buyer (e2e/fixtures/factory.ts): the "latest REQUESTED quote" below can only be this
+  // test's, even while admin.spec creates quote leads in another worker.
+  const user = track(await createUser({ name: "E2E Catalogue buyer" }));
+  await signInAs(page.context(), baseURL!, user.id);
   await page.goto("/en/catalog/FS_PULP_EGG_6");
   await dismissCookies(page);
   await page.getByLabel("Quantity").fill("50");
@@ -121,7 +118,8 @@ test("quote request: signed-in buyer sends a request", async ({ page, baseURL },
   await expect(page.getByRole("status").filter({ hasText: "Request sent" })).toBeVisible();
   const saved = await db.quote.findFirst({ where: { userId: user.id, status: "REQUESTED" }, orderBy: { createdAt: "desc" } });
   expect((saved?.lines as { modelCode: string; quantity: number }[])[0]).toMatchObject({ modelCode: "FS_PULP_EGG_6", quantity: 5000 });
-  await db.$disconnect();
+  await db.quote.deleteMany({ where: { userId: user.id } });
+  await cleanup();
 });
 
 test("designer picker: families, Egypt filter, search, pick a model", async ({ page }, info) => {

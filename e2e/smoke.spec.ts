@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { sendOtp, uniquePhone } from "./fixtures/factory";
 
 test("root redirects to Arabic RTL", async ({ page }) => {
   await page.goto("/");
@@ -14,15 +15,11 @@ test("no horizontal scroll on home", async ({ page }) => {
 });
 
 test("phone + OTP sign-in (dev banner) reaches protected orders page", async ({ page }) => {
-  // Unique phone per run/project to avoid OTP rate limits.
-  const suffix = String(Date.now() % 100_000_000).padStart(8, "0");
+  // Unique per test and worker (OTP limits are per phone): e2e/fixtures/factory.ts.
+  const phone = (await uniquePhone("12")).local;
   await page.goto("/en/orders");
   await expect(page).toHaveURL(/\/en\/login\?next=/);
-  await page.getByLabel("Mobile number").fill(`012${suffix}`);
-  await page.getByRole("button", { name: "Send code" }).click();
-  const banner = page.getByTestId("otp-dev-code");
-  await expect(banner).toBeVisible();
-  const code = (await banner.textContent())!.match(/\d{6}/)![0];
+  const code = await sendOtp(page, phone);
   await page.getByLabel("Verification code").fill(code);
   await page.getByLabel(/I agree to the Terms/).check();
   await page.getByRole("button", { name: "Verify and continue" }).click();
