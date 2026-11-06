@@ -129,7 +129,7 @@ test("buyer checks out a saved design, pays by mock card and tracks the order", 
   // Invoice with VAT 14%.
   await page.goto(`${orderUrl}/invoice`);
   await expect(page.getByText("VAT 14%", { exact: true })).toBeVisible();
-  await expect(page.getByText("Pending submission")).toBeVisible();
+  await expect(page.getByText("Not submitted yet")).toBeVisible();
   await expect(page.getByTestId("invoice-total")).toContainText("EGP");
 
   // Orders list shows it.
