@@ -305,3 +305,66 @@ Results:
 - `npm run lint`, `npm run typecheck`, `npm test` (76 files, 8,273 tests) and `npm run build` pass.
 - The smoke, storefront, checkout, admin and vendor e2e specs (`--workers=2`) gave 41 passed, 8 skipped and 1 failed (smoke sign-in, desktop). The smoke spec passes 6/6 on its own.
 - The likely cause of that failure is the per-IP limit of 20 code requests per hour (P-02): a parallel run signs in more than 20 times from 127.0.0.1. The suite would need a test-only allowance or a higher IP limit under `OTP_DEV_ECHO`.
+
+## Round 4
+
+Base: main at 781d663 (rounds 1–3 merged). Method: production build (`next start`, `OTP_DEV_ECHO=1`), Playwright at 390×844 and 1440×900 in ar and en, axe-core (WCAG 2.0/2.1/2.2 A+AA), keyboard-only sign-in, DB checks of the Event, Consent and DataRequest rows after each flow, plus a scripted sweep of every Arabic dictionary value (diacritics, tatweel, ASCII punctuation and quotes, glossary terms, imperative labels, bare numbers before counted nouns, Latin left in Arabic).
+
+### Round 3 rows re-verified
+
+Every platform row marked fixed in round 3 was rechecked in the browser: 14 pages × 2 locales × 2 widths (home, login, three legal pages, 404, account, orders, admin overview and privacy, vendor home, vendor apply, catalogue, printers). Results: 0 axe violations, 0 horizontal overflow, correct `lang`/`dir`, and the 404s return HTTP 404 with "الصفحة غير موجودة · علبة". The single cookie notice, the 150/200ms motion tokens, the 28/32/44 button heights and the X-08/X-09 OTP focus fixes all behave as described. The sign-up flow writes TERMS, PRIVACY and MARKETING consent rows and one `account_created` event; reloading the page does not send a second `visit`. Account export downloads `elba-data-<last 4>-<date>.json`, and the deletion request creates `DELETE:OPEN`. No row reopened.
+
+Events (B-19), seam by seam: `payment_succeeded` fires only after the PAID transition commits (not on a lost race), `order_delivered` fires only on the won transition, `proof_approved` is skipped on reorders, and `order_started`/`price_viewed` are de-duplicated for 10 minutes per user and design or structure. `share_link_visit` skips the owner. `design_started` fires once per design (on the first POST). `design_completed` and `artwork_uploaded` fire once per designer session. Payloads hold only enums, codes, counts and pseudonymous ids; `sanitizeProps` drops phone, email and IP-shaped values. The one timing defect found is R4-06.
+
+### Round 4 findings
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R4-01 | high | `legal/cookies` (`legal.cookies.*`), cookie notice (`store.cookie.message`), `legal.privacy` | The cookie notice said "we only use essential cookies" and the policy said "we do not use analytics". Since round 3 the site records first-party funnel events (13-month retention), writes an `elba_gate` cookie for 30 minutes and keeps a visit flag in browser storage. The notice was untrue. | PDPL 151/2020 transparency (notice must match processing) | The notice, the cookie page ("القياس الداخلي") and the privacy policy (data, purposes, retention) now describe the in-house measurement: what is stored, that it uses only pseudonymous ids, that it is never shared, the 13-month deletion, and `elba_visit` / `elba_gate`. `LEGAL_UPDATED` is 2026-11-06. | fixed |
+| R4-02 | medium | `jobs/followUp.ts`, notify `DESIGN_FOLLOW_UP` | The WhatsApp follow-up's opt-out pointed to the account page, which needs an OTP sign-in, so stopping marketing took more effort than agreeing to it. | PDPL 151/2020 (withdrawal as easy as consent) | Signed one-click link `/{locale}/unsubscribe?u=<id>&t=<HMAC>` (`lib/auth/unsubscribe.ts`). Opening the link (GET) only shows a confirmation, so link scanners and chat previews change nothing. The button (POST server action) appends a MARKETING withdrawal row and sets `marketingConsent=false`; pressing it twice is harmless. Invalid and already-off states are handled. The page is noindex and sends no referrer, and the link carries no phone number. | fixed |
+| R4-03 | medium | `jobs/followUp.ts` | A user with an open erasure (DELETE) request still received the marketing follow-up. | PDPL 151/2020 (objection / erasure stops processing) | The store flags `erasurePending` from OPEN/IN_PROGRESS DELETE requests; `selectFollowUps` skips these users with reason `erasure_pending`, and a unit test covers it. | fixed |
+| R4-04 | medium | `auth.marketingConsent`, `account.marketingLabel` | The consent wording covered "offers and tips" only, but the processing it gates (B-23) is a reminder about a saved design. | PDPL 151/2020 (specific consent) | The wording now names the reminders ("والتذكير بتصميماتي المحفوظة"). `CONSENT_TEXT_VERSION` is bumped to 2026-11-06 so the log shows which wording each person agreed to. | fixed (see open: earlier grants) |
+| R4-05 | medium | 19 Arabic values (checkout, buyer quote and sample, admin quotes, vendor pcs, store vendor and structure, pricing, designer badge) | Bare `{max}` / `{qty}` / `{pieces}` / `{hours}` / `{count}` placeholders sat before a fixed noun, giving wrong forms such as "3 علبة", "1 علب" and "5 ساعة". | Glossary: counted nouns | Switched to counted placeholders (`{n:box}`, `{n:piece}`, `{n:hour}`) in ar and en. RateCardForm's unit suffix gets its own key (`vendorPortal.common.pcsUnit`). A dictionary test now blocks bare placeholders before counted nouns. | fixed |
+| R4-06 | medium | `analytics/client.ts`, `VisitBeacon.tsx` | `visit` used per-tab `sessionStorage`, so every new tab counted a new visit. That inflated the funnel's denominator. | launch-metrics.md §1 ("first page view in a session") | The last-seen time is kept in `localStorage` (timestamp only, no id), and a visit starts after 30 idle minutes. The beacon also refreshes on route changes. Verified: two tabs plus client-side navigation give 1 `visit`. A unit test covers `startsVisit`. | fixed |
+| R4-07 | medium | `marketing.announcement.text`, `library.catalog.finishesHelp`, `finishes.SPOT_UV`, `marketing.*.spotUv*`, `equipment.UV_COATER` | Spot UV was transliterated as "اليو في" ("واليو في الموضعي"), which reads as nonsense in the site-wide announcement bar. | Copy: MSA, no English written in Arabic letters | Now "طلاء UV الموضعي" everywhere, matching the vendor portal. The announcement is noun-form ("جديد: معاينة ثلاثية الأبعاد للبصمة الحرارية وطلاء UV الموضعي والسلوفان المخملي."). A test blocks "يو في". | fixed |
+| R4-08 | medium | `marketing.nav.start`, `hero.submit`, `cta.primary`, `boxes.primary`, `common.ctaDesign`, `designer.start.cta/title`, `store.*.designCta`, `designFree`, `catalog.design` | Buttons used imperatives ("ابدأ التصميم مجانا", "صمم مجانا", "صمم علبة مع هذه المطبعة"). | Glossary form rule: noun-form labels | "بدء التصميم مجانا", "التصميم مجانا", "تصميم علبة مع هذه المطبعة", "بدء التصميم", heading "تصميم علبتك ثلاثية الأبعاد مجانا". | fixed |
+| R4-09 | low | `auth/OtpForm.tsx` | The marketing checkbox's label wrapped its hint, so the accessible name ran together ("…النصيةاختياري. تصلك…"). | WCAG 2.5.3, 4.1.2 | Label is the sentence only. The hint is linked with `aria-describedby`, the same pattern as the terms box (X-09). | fixed |
+| R4-10 | low | 8 Arabic values | Tatweel used for prefixed particles ("بـ {days}", "لـ {qty}", "الـ27", "لـ{name}"). | Copy rules: no tatweel | Rephrased: "بفارق", "لكمية", "بالرقم 01", "(27 محافظة)", "بعد الطباعة: {name}". A test now blocks tatweel. | fixed |
+| R4-11 | low | `checkout.errors.PREFLIGHT_BLOCKED`, `buyer.preflight.overrideRequired`, `account.deleteDesignBody` | ASCII double quotes inside Arabic text. | Arabic punctuation | Changed to «». A test now blocks ASCII quotes in Arabic text. | fixed |
+| R4-12 | low | `vendor/apply/page.tsx` | Tab title read "… · علبة · علبة": the page added the brand and so did the layout template. | WCAG 2.4.2 | The page title drops its own suffix. | fixed |
+| R4-13 | low | `admin.nav.quotes`, `admin.quotes.title`, `metricsLabel`, `admin.privacy.actions.start` | "طلبات التسعير" (glossary: عرض سعر), and a bare "بدء" button. | Glossary; noun-form labels | "طلبات عروض الأسعار", "بدء المعالجة". | fixed |
+| R4-14 | low | `account.marketingHelp` | "يمكنك السحب في أي وقت" leaves out what is being withdrawn. | Copy clarity | "يمكنك سحب الموافقة في أي وقت من هنا أو من الرابط في أي رسالة." | fixed |
+
+Checked and kept:
+- ETA terms "كود النشاط" and "كود الصنف (EGS)": these are the Tax Authority portal's own labels, so they are a documented glossary exception.
+- "البائع" where Elba is the seller of record: correct.
+- "شكوى" only for the regulator: correct.
+- The "يرجى" sweep hits were false positives ("رقم بطاقة").
+- The bidi of the phone number in the OTP hint matches a `<bdi dir="ltr">` control.
+
+### Round 4: left open
+
+| id | owner | note |
+|---|---|---|
+| R4-04 (part) | counsel | Users who agreed to the older "offers and tips" wording are still messaged by B-23. Counsel should decide whether that consent covers design reminders, or whether the job should require `textVersion ≥ 2026-11-06`. That is a one-line filter in `marketingConsents`. |
+| B-23 (part) | ops | Unchanged: the WhatsApp Business transport, the cron schedule and a "STOP" reply handler. The signed link now covers opt-out without them. |
+| CR-43, R3-05 | counsel, performance | Unchanged from ROUND3.md. |
+
+### Round 4 counts (new findings, before fixing)
+
+critical 0 · high 1 · medium 7 · low 6. All 14 are fixed. No round 3 row reopened.
+
+### Round 4 verification
+
+- `npm run lint`, `npm run typecheck`, `npm test` (81 files, 8,307 tests, including new `unsubscribe.test.ts`, `visit.test.ts`, the erasure skip in `followUp.test.ts` and 5 copy-rule tests in `platform-i18n.test.ts`), `npm run build`: pass.
+- e2e (`--workers=2`, against `next start`): smoke, storefront, checkout, admin, vendor: 42 passed, 8 skipped by the specs. Designer and journey: 11 passed, 1 skipped.
+- Browser: the 56 page × locale × width combinations above have 0 axe violations and 0 overflow after the fixes. Unsubscribe page states (confirm, done, already off, invalid) in ar and en at 390 and 1440: 0 axe violations, noindex. The withdrawal row is written only on POST, and focus moves to the outcome heading.
+- Screenshots: `docs/screenshots/audit/platform/r4-*`.
+
+### Files touched outside the listed scope (round 4)
+
+- `src/app/[locale]/vendor/apply/page.tsx`: title suffix (R4-12).
+- `src/components/vendor/RateCardForm.tsx`: unit suffix key (R4-05).
+- `src/lib/jobs/followUp.ts` and its test: stop link and erasure skip (B-23 is a platform item).
+- `src/components/store/legal.ts`: `LEGAL_UPDATED`.
+- New route `src/app/[locale]/(auth)/unsubscribe/*` (PDPL consent).

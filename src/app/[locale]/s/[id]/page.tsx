@@ -3,9 +3,11 @@ import { cache } from "react";
 import { getT, toLocale } from "@/i18n";
 import { getSession } from "@/lib/auth/session";
 import type { DictKey } from "@/i18n/types";
-import { formatDims } from "@/lib/format";
+import { formatDims, formatMoney } from "@/lib/format";
+import { quoteDesign, tierPrices } from "@/lib/orders/service";
 import { Badge, BlockStack, Button, Card, EmptyState, EmptyBoxIllustration, InlineStack, Layout, LayoutSection, Page, Text } from "@/components/ui";
 import { SharedViewerLazy } from "./SharedViewerLazy";
+import styles from "./share.module.css";
 import { designerPath } from "@/components/designer/lib/catalog";
 import { loadSharedDesign } from "@/components/designer/server";
 import { modelByCode } from "@/lib/library";
@@ -85,6 +87,9 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
   // B-16: a model no Egyptian SME printer makes is requested by quote, never "Order this box".
   const order = orderModeOf(doc.modelCode);
   const byQuote = order.mode === "quote" || order.mode === "preview";
+  // R4-12: the visitor sees the price before being asked to sign in, the same figure checkout
+  // shows for 500 boxes (best match, prepay discount, delivery to Greater Cairo, excl. VAT).
+  const price = await sharePrice(doc);
   const specs: [string, string][] = [
     [t("designer.shared.style"), styleName],
     [t("designer.shared.size"), formatDims(doc.dims, locale)],
@@ -103,6 +108,11 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
           <BlockStack gap="400">
             <Card>
               <BlockStack gap="300">
+                {price ? (
+                  <p className={styles.price} data-testid="share-price">
+                    {t("buyer.sharePrice", { qty: price.quantity, price: formatMoney(price.unitPiasters, locale), days: price.days })}
+                  </p>
+                ) : null}
                 <Text as="p">{byQuote ? ORDER_MODE_COPY[order.reason][locale] : t("designer.shared.ctaHelp")}</Text>
                 <Button variant="primary" fullWidth url={`/${locale}/checkout/${encodeURIComponent(designId)}?share=${encodeURIComponent(id)}`}>
                   {byQuote ? (locale === "ar" ? "اطلب عرض سعر" : "Request a quote") : t("designer.shared.cta")}
@@ -134,4 +144,18 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
       </Layout>
     </Page>
   );
+}
+
+const SHARE_PRICE_QTY = 500;
+
+/** Headline price for the share page, or null when the box has no instant price (quote only). */
+async function sharePrice(doc: Parameters<typeof quoteDesign>[0]): Promise<{ quantity: number; unitPiasters: number; days: number } | null> {
+  try {
+    const [tiers, outcome] = await Promise.all([tierPrices(doc), quoteDesign(doc, { quantity: SHARE_PRICE_QTY })]);
+    const unit = tiers.find((x) => x.quantity === SHARE_PRICE_QTY)?.unitPiasters ?? null;
+    const best = outcome.mode === "instant" ? outcome.offers[0] : null;
+    return unit !== null && best ? { quantity: SHARE_PRICE_QTY, unitPiasters: unit, days: best.deliveryDays } : null;
+  } catch {
+    return null;
+  }
 }

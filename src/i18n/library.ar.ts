@@ -37,7 +37,7 @@ export const libraryAr: typeof libraryEn = {
     surfaces: "مناطق الطباعة",
     surfaceSize: "{w} × {h} مم",
     finishes: "التشطيبات",
-    finishesHelp: "تبدأ البصمة واليو في والطباعة البارزة على الشعار. اختر عنصرا لإضافته أو إزالته.",
+    finishesHelp: "تبدأ البصمة وطلاء UV الموضعي والطباعة البارزة على الشعار. اختر عنصرا لإضافته أو إزالته.",
     finishOnLogo: "على الشعار",
     finishOnImages: "على الصور: {count}",
     finishOnItems: "على العناصر: {count}",

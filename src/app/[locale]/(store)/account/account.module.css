@@ -10,3 +10,11 @@
     padding-inline-start: calc(40px + var(--p-space-300));
   }
 }
+
+/* Consent history (R4-07): every entry is the same two lines, state then date, instead of the
+   date jumping under the longer labels only. */
+.historyItem.historyItem {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: 0;
+}

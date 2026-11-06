@@ -161,7 +161,7 @@ export function PaymentClient(props: {
         }}
       >
         <BlockStack gap="300">
-          <Text as="h3" variant="headingSm">
+          <Text as="h2" variant="headingSm">
             {t("payment.card.title")}
           </Text>
           {props.testMode ? <Banner tone="info">{t("payment.card.testHint")}</Banner> : null}
@@ -199,7 +199,7 @@ export function PaymentClient(props: {
         }}
       >
         <BlockStack gap="300">
-          <Text as="h3" variant="headingSm">
+          <Text as="h2" variant="headingSm">
             <span id="payment-step-heading" tabIndex={-1} className={styles.stepHeading}>
               {t("payment.wallet.title")}
             </span>
@@ -213,7 +213,7 @@ export function PaymentClient(props: {
       </form>
     ) : payment.method === "FAWRY" && payment.fawry ? (
       <BlockStack gap="300">
-        <Text as="h3" variant="headingSm">
+        <Text as="h2" variant="headingSm">
           <span id="payment-step-heading" tabIndex={-1} className={styles.stepHeading}>
             {t("payment.fawry.title")}
           </span>
@@ -259,7 +259,7 @@ export function PaymentClient(props: {
       </BlockStack>
     ) : payment.method === "INSTAPAY" && payment.instapay ? (
       <BlockStack gap="300">
-        <Text as="h3" variant="headingSm">
+        <Text as="h2" variant="headingSm">
           <span id="payment-step-heading" tabIndex={-1} className={styles.stepHeading}>
             {t("payment.instapay.title")}
           </span>

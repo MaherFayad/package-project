@@ -18,7 +18,7 @@ import {
 import { payoutSchedule, payoutSummary, splitVendorCost } from "../payouts";
 import { parseNumber, rateCardToForm, unitAt, validateRateCard, type RateCardForm } from "../rateCard";
 import { isFoodSafe, isPermutation, issuesToErrors, mergeCertifications, moveItem, moveItemTo, profileSchema } from "../profile";
-import { buildKey, canReadFile, checkUpload, keyFromUrl, parseKey, sniffType, fileUrl } from "../files";
+import { buildKey, canReadFile, checkUpload, keyFromUrl, parseKey, sniffType, fileUrl, stripImageMetadata } from "../files";
 import { applicationSchema, digitsOnly, slugify, uniqueSlug } from "../application";
 import { canActorTransition } from "@/lib/orders/state";
 
@@ -92,6 +92,7 @@ describe("job state machine", () => {
   it("decline note round-trips", () => {
     expect(parseDeclineNote(declineNote("CAPACITY", "  full until Sunday "))).toEqual({ reason: "CAPACITY", detail: "full until Sunday" });
     expect(parseDeclineNote(declineNote("OTHER", ""))).toEqual({ reason: "OTHER", detail: "" });
+    expect(declineNote("OTHER", "line one\n\ncall me")).toBe("OTHER: line one call me");
     expect(parseDeclineNote("free text")).toEqual({ reason: null, detail: "free text" });
   });
 
@@ -329,7 +330,10 @@ describe("uploads", () => {
     expect(canReadFile(cert, other)).toBe(false);
     expect(canReadFile(apply, { id: "u1", role: "BUYER", vendorId: null })).toBe(true);
     expect(canReadFile(apply, buyer)).toBe(false);
-    expect(canReadFile(qc, buyer, { vendorId: "v1", buyerId: "b1" })).toBe(true);
+    // R4: the buyer sees QC photos only once ops approved them; the vendor and admins always.
+    expect(canReadFile(qc, buyer, { vendorId: "v1", buyerId: "b1" }, null, "APPROVED")).toBe(true);
+    for (const st of ["PENDING", "REJECTED", null, undefined]) expect(canReadFile(qc, buyer, { vendorId: "v1", buyerId: "b1" }, null, st)).toBe(false);
+    expect(canReadFile(qc, vendor, { vendorId: "v1", buyerId: "b1" }, null, "PENDING")).toBe(true);
     expect(canReadFile(qc, other, { vendorId: "v1", buyerId: "b1" })).toBe(false);
     expect(canReadFile(qc, admin)).toBe(true);
     expect(canReadFile(qc, null, { vendorId: "v1", buyerId: "b1" })).toBe(false);
@@ -379,5 +383,76 @@ describe("vendor application", () => {
     expect(slugify("Nile Pack & Co.")).toBe("nile-pack-and-co");
     expect(slugify("علبة")).toBe("vendor");
     expect(uniqueSlug("nile-pack", new Set(["nile-pack", "nile-pack-2"]))).toBe("nile-pack-3");
+  });
+});
+
+describe("R4 image metadata is stripped on upload", () => {
+  const text = (b: Uint8Array) => Buffer.from(b).toString("latin1");
+  const seg = (marker: number, payload: number[] | Uint8Array) => {
+    const p = Array.from(payload);
+    return [0xff, marker, ((p.length + 2) >> 8) & 0xff, (p.length + 2) & 0xff, ...p];
+  };
+  const str = (s: string) => Array.from(Buffer.from(s, "latin1"));
+
+  it("JPEG: drops EXIF text, GPS, XMP and comments; keeps JFIF, ICC and the orientation", () => {
+    // Little-endian EXIF: IFD0 with Orientation = 6 and an Artist string "WhatsApp 01001234567".
+    const artist = str("WhatsApp 01001234567\0");
+    const tiff = [0x49, 0x49, 0x2a, 0x00, 0x08, 0x00, 0x00, 0x00, 0x02, 0x00,
+      0x12, 0x01, 0x03, 0x00, 0x01, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00,
+      0x3b, 0x01, 0x02, 0x00, artist.length, 0x00, 0x00, 0x00, 0x26, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, ...artist];
+    const jpeg = new Uint8Array([
+      0xff, 0xd8,
+      ...seg(0xe0, str("JFIF\0\x01\x01\0\0\x01\0\x01\0\0")),
+      ...seg(0xe1, [...str("Exif\0\0"), ...tiff]),
+      ...seg(0xe1, str("http://ns.adobe.com/xap/1.0/\0<x:xmpmeta>Call 01001234567</x:xmpmeta>")),
+      ...seg(0xe2, str("ICC_PROFILE\0\x01\x01profile")),
+      ...seg(0xed, str("Photoshop 3.0\0IPTC nilepack.com")),
+      ...seg(0xfe, str("www.nilepack-direct.com")),
+      ...seg(0xdb, new Array(65).fill(1)),
+      0xff, 0xda, 0x00, 0x08, 1, 2, 3, 4, 5, 6, 0x11, 0x22, 0x33, 0xff, 0xd9,
+    ]);
+    const out = stripImageMetadata(jpeg, "image/jpeg")!;
+    const s = text(out);
+    for (const bad of ["WhatsApp", "01001234567", "xmpmeta", "IPTC", "nilepack"]) expect(s).not.toContain(bad);
+    expect(s).toContain("JFIF");
+    expect(s).toContain("ICC_PROFILE");
+    expect(s).toContain("Exif");
+    expect(text(out.subarray(out.length - 15))).toContain("\u0011\"3");
+    // The kept EXIF block holds only Orientation = 6.
+    const at = s.indexOf("Exif\0\0MM");
+    expect(at).toBeGreaterThan(0);
+    expect(out[at + 6 + 8 + 2 + 8 + 1]).toBe(6);
+    expect(stripImageMetadata(new Uint8Array([0xff, 0xd8, 0xff, 0xe1, 0xff, 0xff]), "image/jpeg")).toBeNull();
+  });
+
+  it("PNG: drops text, EXIF and time chunks, keeps image chunks", () => {
+    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
+    const chunk = (type: string, data: string) => {
+      const d = Buffer.from(data, "latin1");
+      const len = Buffer.alloc(4);
+      len.writeUInt32BE(d.length);
+      return Buffer.concat([len, Buffer.from(type, "latin1"), d, Buffer.alloc(4)]);
+    };
+    const withText = Buffer.concat([png.subarray(0, 33), chunk("tEXt", "Comment\0Call 01001234567"), chunk("iTXt", "Author\0\0\0\0\0nilepack.com"), png.subarray(33)]);
+    const out = stripImageMetadata(new Uint8Array(withText), "image/png")!;
+    expect(text(out)).not.toContain("01001234567");
+    expect(text(out)).not.toContain("nilepack");
+    expect(Buffer.from(out).equals(png)).toBe(true);
+  });
+
+  it("WebP: drops EXIF and XMP chunks and clears their VP8X flags", () => {
+    const ch = (type: string, data: number[]) => {
+      const pad = data.length & 1 ? [0] : [];
+      return [...str(type), data.length & 0xff, (data.length >> 8) & 0xff, 0, 0, ...data, ...pad];
+    };
+    const body = [...str("WEBP"), ...ch("VP8X", [0x0c, 0, 0, 0, 0, 0, 0, 0, 0, 0]), ...ch("VP8L", [1, 2, 3, 4, 5]), ...ch("EXIF", str("Call 01001234567")), ...ch("XMP ", str("nilepack.com"))];
+    const webp = new Uint8Array([...str("RIFF"), body.length & 0xff, (body.length >> 8) & 0xff, 0, 0, ...body]);
+    const out = stripImageMetadata(webp, "image/webp")!;
+    expect(text(out)).not.toContain("01001234567");
+    expect(text(out)).not.toContain("nilepack");
+    expect(out[20]! & 0x0c).toBe(0);
+    expect(out[4]! + (out[5]! << 8)).toBe(out.length - 8);
+    expect(text(out)).toContain("VP8L");
   });
 });

@@ -128,6 +128,10 @@ function PhotoCard({ p }: { p: ModerationPhoto }) {
               {formatDate(p.createdAt, locale, "medium")}
             </Text>
           </InlineStack>
+          {/* R4-08: the card shows the whole photo (no crop); full size to check small print and QR codes. */}
+          <Link url={p.imageUrl} external className={adminStyles.TapLink}>
+            {t("admin.moderation.fullSize")}
+          </Link>
           <Text as="p" variant="bodySm">
             <bdi>{p.captionAr}</bdi>
           </Text>
