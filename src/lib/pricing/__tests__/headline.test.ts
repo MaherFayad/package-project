@@ -27,7 +27,7 @@ describe("headline price (B-26: one price source for page, designer badge and ch
     if (r.mode !== "instant") throw new Error("expected instant quote");
     expect(row.best?.vendorId).toBe(headlineOffer(r.offers)?.vendorId);
     expect(row.best?.unitPiasters).toBe(headlineOffer(r.offers)?.unitPiasters);
-    expect(row.best?.deliveryDays).toBe(headlineOffer(r.offers)?.deliveryDays);
+    expect(row.best?.leadTimeDays).toBe(headlineOffer(r.offers)?.leadTimeDays);
   });
 
   it("returns null without offers", () => {

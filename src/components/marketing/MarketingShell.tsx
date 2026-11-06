@@ -1,5 +1,5 @@
 import "@/styles/motion.css";
-import { Suspense, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import type { Locale } from "@/types";
 import { MarketingProviders } from "./MarketingProviders";
 import { AnnouncementBar } from "./AnnouncementBar";
@@ -19,9 +19,10 @@ export function MarketingShell({ locale, children }: { locale: Locale; children:
     <MarketingProviders locale={locale}>
       <div className={styles.site}>
         <AnnouncementBar />
-        <Suspense fallback={<div style={{ blockSize: 64 }} aria-hidden="true" />}>
-          <MarketingHeader locale={locale} />
-        </Suspense>
+        {/* No Suspense here: the header reads no request data (session is a client island), so it
+            renders inline in the static HTML. Behind a 64 px fallback it streamed in late as a
+            73 px header and pushed the page down (CLS 0.0055, CR-45). */}
+        <MarketingHeader locale={locale} />
         <main id="main" className={styles.main} tabIndex={-1}>
           {children}
         </main>

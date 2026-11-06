@@ -351,6 +351,10 @@ export const en = {
       family: {
         CORRUGATED: "Corrugated boxes",
         FOLDING_CARTON: "Folding cartons",
+        RIGID: "Rigid boxes",
+        TUBE: "Paper tubes",
+        LABEL: "Labels",
+        FLEXIBLE: "Flexible packaging",
       },
       fromPrice: "From {price} per box",
       priceOnRequest: "Price on request",
@@ -408,7 +412,7 @@ export const en = {
     },
     seo: {
       title: "{keyword} {cm} cm",
-      h1: "{keyword} {cm} cm",
+      h1: "{keyword} {dims}",
       description: "{keyword} {cm} cm ({dims}): design it free in 3D, prices from {price} per box, orders from 100 boxes, delivered across Egypt.",
       descriptionNoPrice: "{keyword} {cm} cm ({dims}): design it free in 3D, orders from 100 boxes, delivered across Egypt.",
       intro: "A {name} with an inner size of {dims}. Print your logo on the outside or both sides, choose a finish, and order from vetted Egyptian printers.",

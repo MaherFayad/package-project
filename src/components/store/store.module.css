@@ -194,7 +194,7 @@
 }
 .specRow:last-child { border-block-end: 0; }
 .specRow dt { color: var(--p-color-text-secondary); }
-.specRow dd { margin: 0; }
+.specRow dd { margin: 0; overflow-wrap: anywhere; } /* X-02: no reflow break at 320 px */
 
 /* sizes chips */
 .chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--p-space-200); }
@@ -377,3 +377,36 @@
 /* Printer links on the public structure page: ink, not the admin link blue (R2-MK-09). */
 .makerList .designMain > a { color: var(--p-color-text, #1a1a1a); font-weight: 600; text-underline-offset: 3px; }
 .makerList .designMain > a:hover { text-decoration-thickness: 2px; }
+/* SpecTable stacked rows on phones (CR-10). */
+@media (max-width: 489.98px) {
+  .specScroll { overflow: visible; }
+  .specTable thead { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .specTable,
+  .specTable tbody { display: block; }
+  .specTable tbody tr {
+    display: grid;
+    gap: 4px;
+    padding-block: 12px;
+    border-block-end: 1px solid var(--p-color-border-secondary, #ebebeb);
+  }
+  .specTable tbody tr:last-child { border-block-end: 0; }
+  .specTable tbody tr:hover > * { background: none; }
+  .specTable tbody th,
+  .specTable tbody td {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 0;
+    border: 0;
+    white-space: normal;
+    text-align: start !important;
+  }
+  .specTable tbody th { font-size: 1rem; margin-block-end: 2px; }
+  .specTable tbody th::before { font-weight: 400; }
+  .specTable tbody th::before,
+  .specTable tbody td::before {
+    content: attr(data-label);
+    color: var(--p-color-text-secondary, #616161);
+    font-size: 0.875rem;
+  }
+}

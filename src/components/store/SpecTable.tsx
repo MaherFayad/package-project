@@ -9,6 +9,10 @@ import styles from "./store.module.css";
  * stylesheets on /boxes/[structure] and /vendors/[slug] (R2-MK-05). Same accessibility contract:
  * a focusable, named scroll region for wide tables on phones (WCAG 2.1.1), a caption, column
  * headers and row headers.
+ *
+ * Under 490 px each row becomes a small stacked card (row header as its title, then
+ * "label: value" lines from `data-label`), so no column is clipped at 390 px and nothing needs
+ * sideways scrolling (CR-10, WCAG 1.4.10 Reflow). The markup stays a real table for AT.
  */
 export function SpecTable({
   caption,
@@ -17,7 +21,7 @@ export function SpecTable({
   numeric = [],
 }: {
   caption: string;
-  headings: ReactNode[];
+  headings: string[];
   rows: ReactNode[][];
   /** Column indexes that hold numbers (tabular figures, end-aligned). */
   numeric?: number[];
@@ -41,11 +45,11 @@ export function SpecTable({
             <tr key={ri}>
               {r.map((c, ci) =>
                 ci === 0 ? (
-                  <th key={ci} scope="row" className={cls(ci)}>
+                  <th key={ci} scope="row" className={cls(ci)} data-label={headings[ci]}>
                     {c}
                   </th>
                 ) : (
-                  <td key={ci} className={cls(ci)}>
+                  <td key={ci} className={cls(ci)} data-label={headings[ci]}>
                     {c}
                   </td>
                 ),
