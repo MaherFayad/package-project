@@ -61,3 +61,12 @@ export function parseDecimalInput(raw: string | number | null | undefined, opts:
   const n = Number(s.replace(/,/g, ""));
   return neg ? -n : n;
 }
+
+/**
+ * Millimetres in the designer (R5-JR-20, for the designer's L × W × H fields): Arabic-Indic and
+ * Persian digits, «٫», and a lone decimal comma ("250,5" mm) are read; NaN otherwise.
+ */
+export function parseMmInput(v: string): number {
+  const s = normaliseNumberInput(v).replace(/,/, ".");
+  return /^\d+(\.\d+)?$/.test(s) ? Number(s) : NaN;
+}

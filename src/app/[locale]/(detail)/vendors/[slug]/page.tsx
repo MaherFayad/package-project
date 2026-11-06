@@ -124,17 +124,16 @@ export default async function VendorProfilePage({ params }: Props) {
             </div>
             <ul className={`${mk.statsList} ${mk.vendorStats}`} aria-label={t("store.vendor.statsTitle")}>
               <li className={`${mk.statItem} m-enter`} style={{ ["--m-i" as string]: 2 }}>
-                <span className={mk.statValue}>
-                  <bdi>{v.rating.toFixed(1)}</bdi>
-                </span>
+                {/* R5-JR-05: no reviews yet reads "New", not a 0.0 rating with empty stars. */}
+                <span className={mk.statValue}>{v.ratingCount > 0 ? <bdi>{v.rating.toFixed(1)}</bdi> : t("store.vendor.newBadge")}</span>
                 <span className={`${mk.statLabel} ${mk.inlineIcon}`}>
-                  <RatingStars rating={v.rating} label={t("store.vendor.stars", { rating: v.rating.toFixed(1) })} />
+                  {v.ratingCount > 0 ? <RatingStars rating={v.rating} label={t("store.vendor.stars", { rating: v.rating.toFixed(1) })} /> : null}
                   {t("store.vendor.rating")}
                 </span>
               </li>
               <li className={`${mk.statItem} m-enter`} style={{ ["--m-i" as string]: 3 }}>
                 <span className={mk.statValue}>
-                  <bdi>{formatNumber(v.onTimePct)}%</bdi>
+                  {v.onTimeShown === false ? t("store.vendors.onTimeNew") : <bdi>{formatNumber(v.onTimePct)}%</bdi>}
                 </span>
                 <span className={mk.statLabel}>{t("store.vendor.onTime")}</span>
               </li>

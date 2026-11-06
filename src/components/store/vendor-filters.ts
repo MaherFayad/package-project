@@ -35,6 +35,8 @@ export interface VendorListItem {
   rating: number;
   ratingCount: number;
   onTimePct: number;
+  /** R5-JR-05 (admin round 8): false = under the minimum deliveries, show "New on Elba". */
+  onTimeShown?: boolean;
   leadTimeDays: number;
   minOrderQty: number;
   verified: boolean;

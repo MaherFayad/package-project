@@ -10,6 +10,8 @@ export const kitEn = {
     start: "Start free",
     menu: "Menu",
     close: "Close menu",
+    account: "My account",
+    newDesign: "New design",
     back: "Back",
     groups: {
       packaging: "Packaging",

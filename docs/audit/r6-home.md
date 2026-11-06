@@ -96,3 +96,7 @@ Notes:
 - e2e failures seen before merging foundation `bdef78f` (kit gallery contrast at `/dev/kit`, footer "Returns for custom goods" listed twice) were in foundation files and are fixed on that branch.
 
 Screenshots (ours only): `docs/screenshots/r6/home/` (ar 1440 per section, ar 390 frames, en 1440 hero and stats, a reduced-motion frame). Side-by-side sheets with the reference were made locally and are not committed.
+
+### Re-verified after merging foundation `cdf37a4` (main `f8db398`, i18n scopes)
+
+Lint 0 errors · typecheck pass · unit 112 files / 8,771 tests · build pass · `generate-i18n-scopes --check` up to date · e2e (smoke, storefront, a11y, a11y-routes, marketing-kit, journey) 123 passed, 3 skipped · axe 0 in all 8 · phone LCP 1.96 s ar / 1.82 s en, CLS 0.006 / 0, INP 128 / 88 ms. Home conflict: kept the R6 page (main only touched the old page's on-time average, which the R6 page does not show).

@@ -12,6 +12,8 @@ import { Page } from "@/components/ui/Page";
 import { Text } from "@/components/ui/Text";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { readableSummary } from "@/components/admin/lib/audit";
+import { onTimeFromDeliveries } from "@/lib/vendors/on-time";
+import { loadOnTimeMinDeliveries } from "@/lib/vendors/on-time-settings";
 import { adminStyles } from "@/components/admin/charts";
 import { HealthBadge } from "@/components/admin/HealthBadge";
 import { OrderStatusBadge } from "@/components/admin/OrdersIndex";
@@ -39,7 +41,9 @@ export default async function AdminVendorPage({ params }: { params: Params }) {
   const data = await loadVendorDetail(slug);
   if (!data) notFound();
   const { vendor, orders, score, application, auditRows } = data;
-  const models = await vendorModelCoverage(vendor.id);
+  const [models, onTimeMin] = await Promise.all([vendorModelCoverage(vendor.id), loadOnTimeMinDeliveries()]);
+  // Admin round 8: buyers see the on-time figure only from onTimeMin judged deliveries.
+  const judged = onTimeFromDeliveries(orders).judged;
   const name = pick(locale, vendor.nameAr, vendor.nameEn);
   // Capabilities: active rate cards grouped by box style (one row per style, materials listed).
   const rateCardGroups = [
@@ -69,7 +73,7 @@ export default async function AdminVendorPage({ params }: { params: Params }) {
           accessibilityLabel={t("admin.vendors.scorecard.title")}
           metrics={[
             { label: t("admin.vendors.scorecard.orders"), value: <span className={adminStyles.MetricStack}><span className={adminStyles.MetricNum}>{formatNumber(score.orders)}</span><span className={adminStyles.MetricSub}>{formatMoney(score.gmvPiasters, locale, { alwaysDecimals: true })}</span></span> },
-            { label: t("admin.vendors.scorecard.onTime"), value: <span className={adminStyles.MetricStack}><span className={adminStyles.MetricNum}>{pct(score.onTimePct)}</span><span className={adminStyles.MetricSub}>{`${t("admin.vendors.scorecard.delivered")}: ${formatNumber(score.delivered)}`}</span>{score.onTimePct === null ? <span className={adminStyles.MetricSub}>{t("admin.vendors.scorecard.publicNoDeliveries")}</span> : null}</span> },
+            { label: t("admin.vendors.scorecard.onTime"), value: <span className={adminStyles.MetricStack}><span className={adminStyles.MetricNum}>{pct(score.onTimePct)}</span><span className={adminStyles.MetricSub}>{`${t("admin.vendors.scorecard.delivered")}: ${formatNumber(score.delivered)}`}</span>{judged < onTimeMin ? <span className={adminStyles.MetricSub}>{t("admin.vendors.scorecard.publicAfter", { n: formatNumber(judged), min: formatNumber(onTimeMin) })}</span> : null}</span> },
             { label: t("admin.vendors.scorecard.reprint"), value: pct(score.reprintPct) },
             { label: t("admin.vendors.scorecard.dispute"), value: pct(score.disputePct) },
             { label: t("admin.vendors.scorecard.qcPass"), value: pct(score.qcPassPct) },

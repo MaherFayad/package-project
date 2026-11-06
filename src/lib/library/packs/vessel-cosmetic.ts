@@ -1,5 +1,5 @@
 import type { LocalizedText } from "@/types";
-import { CLOSURE_NAMES, VESSELS, VESSEL_MATERIALS, buildProfile, clampDims, describeVessel, labelSpecsFor, type PrintSurfaceKind, type VesselKind, type VesselMaterialCode } from "@/lib/vessels";
+import { CLOSURE_NAMES, VESSELS, discSpec, VESSEL_MATERIALS, buildProfile, clampDims, describeVessel, labelSpecsFor, type PrintSurfaceKind, type VesselKind, type VesselMaterialCode } from "@/lib/vessels";
 import * as COS from "@/lib/vessels/families/cosmetic-cans";
 import type { VesselModelDef, VesselOption } from "../types";
 import { isCoreClosure, isCoreMaterial, isSurface, labelArea, search } from "./common-vessel";
@@ -38,6 +38,9 @@ const COS_CLOSURE_CORE: Partial<Record<string, string>> = {
   OPC_BREAK: "ZIP_SEAL",
   // aerosol: the profile's 1 inch valve cup, not a beverage-can pull tab inside it
   AEROSOL_VALVE: "ZIP_SEAL",
+  // plain double-seamed food can end: the profile's end panel; the hidden core pull tab swung up
+  // out of the seam in the open view (a seamed end does not open)
+  DOUBLE_SEAM_END: "ZIP_SEAL",
 };
 
 /** Cosmetic materials whose core look has the wrong colour (X-01, V-14). */
@@ -126,7 +129,7 @@ export const models: VesselModelDef[] = COS.DEFINITIONS.filter((d) => d.geometry
     pricing: def.geometry === "tube" ? "TUBE" : "LABEL",
     describe(dims, wanted, presetId) {
       const d = COS.clampCatalogueDims(def, dims);
-      const neck = def.presets.find((p) => p.id === presetId)?.neck ?? def.neck;
+      const neck = COS.neckFor(def, d, presetId);
       if (def.geometry === "tube") {
         const cd = clampDims("SQUEEZE_TUBE", d);
         let r = describeVessel({ kind: "SQUEEZE_TUBE", dims: cd, surfaces: wanted.filter(isSurface) });
@@ -139,6 +142,13 @@ export const models: VesselModelDef[] = COS.DEFINITIONS.filter((d) => d.geometry
       // Shapes the core label maths cannot wrap with the asked surface (oval sardine lids…): fall back
       // to a front label, then a wrap, so there is always something to print.
       for (const alt of [["FRONT"], ["WRAP"]] as PrintSurfaceKind[][]) if (!labels.length) labels = labelSpecsFor(coreKind, d, profile, alt);
+      // R5-3Q-G: a round cup whose only closure is the renderer's SNAP_LID (ice-cream pint, deli pot):
+      // the core lid disc (finish top + 1.6) sat UNDER the domed snap lid (top + 3), so only a ring of the
+      // lid print showed at the rim. Put it on the lid's crown (dome R × 0.7 → y top + 3).
+      if (def.shape.type === "cup" && def.shape.lid === "snap" && profile.section.kind === "round" && def.closures.every((c) => c === "SNAP_LID")) {
+        const R = profile.finishR + 0.8;
+        labels = labels.map((l) => (l.kind === "LID" ? discSpec(profile.finishTopY + 3.05, R * 0.72) : l));
+      }
       return { profile, areas: labels.map(labelArea), envelope: COS.catalogueEnvelope(def, d, g) };
     },
   } satisfies VesselModelDef;

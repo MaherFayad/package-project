@@ -62,7 +62,11 @@ test("Arabic SEO title and RTL", async ({ page }) => {
 test("vendor directory filters and vendor profile lightbox", async ({ page }) => {
   await page.goto("/en/vendors");
   await page.waitForLoadState("networkidle");
-  await expect(page.getByTestId("vendor-card")).toHaveCount(6);
+  // Every seeded active vendor is listed. Not an exact total: the printer-onboarding journey
+  // (e2e/journeys/j3) approves its own vendor while this runs in parallel (--workers=2).
+  for (const name of ["Nile Pack Printing & Packaging", "Delta Cartons", "Obour Box Works", "Alex Print House", "Damietta Modern Packaging", "Cairo Label & Flex"]) {
+    await expect(page.getByTestId("vendor-card").filter({ hasText: name })).toHaveCount(1);
+  }
   await page.getByLabel("City").selectOption("ALEXANDRIA");
   await page.getByRole("button", { name: "Apply filters" }).click();
   await expect(page).toHaveURL(/city=ALEXANDRIA/, { timeout: 20_000 });
