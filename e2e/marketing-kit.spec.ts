@@ -289,3 +289,15 @@ test("page-local loops register with data-mk-motion: a global MotionScope pauses
   await page.locator('[data-tone="violet"]').getByRole("button", { name: "Play animation" }).last().click();
   await expect.poll(state).toBe("running");
 });
+
+for (const locale of ["ar", "en"] as const) {
+  test(`footer: every link appears once (unique href and name, ${locale})`, async ({ page }) => {
+    await page.goto(`/${locale}/vendors`);
+    const links = await page.locator("footer a").evaluateAll((as) => as.map((a) => ({ href: (a as HTMLAnchorElement).getAttribute("href") ?? "", name: (a.getAttribute("aria-label") ?? a.textContent ?? "").trim() })));
+    expect(links.length).toBeGreaterThan(15);
+    const dup = (xs: string[]) => xs.filter((x, i) => xs.indexOf(x) !== i);
+    // The brand link (home) and the language switch are the only non-column links; both are unique too.
+    expect(dup(links.map((l) => l.href)), "duplicate footer hrefs").toEqual([]);
+    expect(dup(links.map((l) => l.name)), "duplicate footer link names").toEqual([]);
+  });
+}
