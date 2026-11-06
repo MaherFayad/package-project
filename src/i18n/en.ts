@@ -641,6 +641,7 @@ export const en = {
     },
     granted: "Given",
     withdrawn: "Withdrawn",
+    notGiven: "Not given",
     dataTitle: "Your data",
     dataIntro: "Under Egypt's Personal Data Protection Law (151/2020) you can get a copy of your data or ask us to delete it.",
     exportTitle: "Download a copy",

@@ -25,6 +25,11 @@ describe("format", () => {
     expect(formatMoney(200000, "en")).toBe("EGP 2,000");
     expect(formatDims({ L: 300, W: 200, H: 100 }, "en")).toContain("300 × 200 × 100");
   });
+  it("puts a true minus in front of negative amounts and isolates it in Arabic", () => {
+    expect(formatMoney(-62153, "en")).toBe("\u2212EGP 621.53");
+    expect(formatMoney(-62153, "ar")).toBe("\u2066\u2212621.53\u2069 ج.م");
+    expect(formatMoney(-0.4, "en")).toBe("EGP 0");
+  });
 });
 
 describe("rate limit", () => {

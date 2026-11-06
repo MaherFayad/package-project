@@ -640,6 +640,7 @@ export const ar: Dictionary = {
     },
     granted: "تمت الموافقة",
     withdrawn: "تم السحب",
+    notGiven: "دون موافقة",
     dataTitle: "بياناتك",
     dataIntro: "وفق قانون حماية البيانات الشخصية المصري (151 لسنة 2020) يمكنك الحصول على نسخة من بياناتك أو طلب حذفها.",
     exportTitle: "تنزيل نسخة",
