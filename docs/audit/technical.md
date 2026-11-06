@@ -266,7 +266,7 @@ Server actions (anonymous / unrelated buyer / Nile staff): every checkout, order
 
 ## Round 4 findings
 
-New findings before fixing: **critical 0, high 2, medium 3, low 3** (8).
+New findings before fixing, both passes: **critical 0, high 2, medium 5, low 5** (12). Pass 1: R4-01 to R4-08 (high 2, medium 3, low 3). Pass 2: R4-09 to R4-12 (medium 2, low 2).
 
 | id | severity | page / file | finding | standard | fix | status |
 |---|---|---|---|---|---|---|
@@ -279,6 +279,15 @@ New findings before fixing: **critical 0, high 2, medium 3, low 3** (8).
 | R4-07 | low | `lib/orders/service.ts` `sampleCreditFor` | One `count` query per candidate sample order (at most 10), for the "credit in use" check. | PERF-20 | Accepted: bounded at 10 and usually 1 row. Moved to the shared `sampleCreditInUse()`. | open (accepted) |
 | R4-08 | low | `components/admin/server/actions.ts` refund of a sample order | If a sample order is refunded after its credit was used, the buyer keeps both the refund and the credit already given on the next order. | money integrity | Ops decision (the refund is manual). Suggested for the admin owner: show "credit used by ELB-…" on the refund dialog of a sample order. | open (admin owner) |
 
+### Pass 2 (fresh read of the remaining routes and libs: designs, quote, auth/OTP, jobs, ETA, proof preview, mock gateway, cache invalidation of moderation)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R4-09 | low | `lib/jobs/followUp.ts` (B-23 job) | The follow-up claim (`updateMany` setting `followedUpAt`) also moved `Design.updatedAt` to the job time (Prisma `@updatedAt` applies to `updateMany`; measured: 2026-11-01 → the run time). The account page sorts and labels designs by it, so a buyer saw every nudged design as "edited today", and a failed send's release moved it again. | data integrity; PDPL 151/2020 accuracy | `claim()` and `release()` write the design's own last-save time back (`updatedAt: c.updatedAt`); the store interface keeps the argument optional for the in-memory test store. | fixed |
+| R4-10 | medium | `components/admin/server/actions.ts` `reviewPortfolioAction`, `cleanBioAction` (B-08); `(store)/account/actions.ts` | `revalidatePath("/[locale]/vendors/[slug]", "page")` names a route without its `(store)` group, so it matched nothing. Live: an admin REJECTED an approved portfolio photo and the public profile kept showing it (and its caption) on the next requests, for 5 minutes to 1 hour depending on the page's ISR state. The same mistake made the account actions' `"/[locale]/account"` a no-op (harmless there: the page is dynamic). The checkout settings path had it too. | B-08 moderation; PDPL 151/2020 (contact details on a public profile) | Moderation actions call `purgeCatalogCache()` (catalogue tag + locale layout). The checkout and account paths now include their groups. A new unit test walks `src/` and fails if any `revalidatePath(pattern, "page" | "layout")` does not name a real directory under `src/app`, so this cannot come back. | fixed |
+| R4-11 | low | `lib/orders/service.ts` (proof preview store), `api/orders/proofs/[proofId]/preview` | The approval preview was stored as whatever bytes the `data:image/png;base64,…` URL decoded to (the action checks the prefix, not the bytes) and served from an API route, which carries no page CSP. `nosniff` + an image Content-Type stopped HTML rendering, so defence in depth only. | ASVS V12.5.2, V14.4.3 | Stored only if the bytes are PNG or JPEG (magic bytes); served with `default-src 'none'; sandbox` and a filename, like served uploads. | fixed |
+| R4-12 | medium | `lib/orders/sample-credit.ts` | An order is created at proof approval, before payment. A buyer who approved with the sample credit and walked away kept a PENDING_PAYMENT order that held the credit for ever: its quote expires after at most 72 h and `startPayment` then refuses it, so it can never be paid, yet the next order got no credit unless the buyer found and cancelled the old one. | consumer fairness (Consumer Protection Law 181/2018); money integrity | "In use" now means: not cancelled, and not an unpaid order whose quote has expired. Paid, in-production, delivered and refunded orders still consume it. Verified the relation filter on the real database and in unit tests. | fixed |
+
 ### Checked and found sound in round 4
 - **Webhook HMAC and idempotency**: Paymob HMAC is SHA-512 over the documented field list, constant-time compare, hex-only; signed callbacks are bound to the gateway order id stored at intention time (T-01), plus provider, currency and exact amount. Replays → `DUPLICATE`; refund before capture → `REFUND_WITHOUT_PAYMENT`; partial refund → note only; voided / auth-only never PAID. 413 above 200 KB. Unchanged and covered by `payment-rules.test.ts`.
 - **Money math**: VAT 14% in integer piasters (`vatOf`), prepay discount in integer basis points on goods only, sample credit capped at net goods with VAT recomputed on the lower base, sample price never discounted; the credit note mirrors the sale invoice. Admin price override voids open PENDING payments so a stale amount cannot be captured.
@@ -287,5 +296,6 @@ New findings before fixing: **critical 0, high 2, medium 3, low 3** (8).
 - **CSP / headers**: full policy on all pages including the new catalogue model, admin quotes and moderation pages; API routes keep per-route sandbox CSP on served files; `/api/events` refuses cross-site requests; the cron route is disabled in production without `CRON_SECRET` and compares the bearer token in constant time.
 
 ## Files touched outside the listed scope (round 4)
-- `src/components/admin/server/actions.ts` (admin): R4-01 claim-before-refund in `refundOrderInternal`; R4-04 one `purgeCatalogCache()` call in `savePricingSettingsAction` and `applyIndexUpdateAction`.
+- `src/components/admin/server/actions.ts` (admin): R4-01 claim-before-refund in `refundOrderInternal`; R4-04 one `purgeCatalogCache()` call in `savePricingSettingsAction` and `applyIndexUpdateAction`; R4-10 `purgeCatalogCache()` in `reviewPortfolioAction` and `cleanBioAction`, route-group path in `saveCheckoutSettingsAction`.
 - `src/components/vendor/server/actions.ts` (vendor): R4-04 one `purgeCatalogCache()` call in `saveRateCard`.
+- `src/app/[locale]/(store)/account/actions.ts` (storefront): R4-10 the four `revalidatePath` calls name `/[locale]/(store)/account`.

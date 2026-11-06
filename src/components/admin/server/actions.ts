@@ -198,7 +198,7 @@ export async function saveCheckoutSettingsAction(input: z.input<typeof checkoutS
       await audit(admin, { action: "CHECKOUT_SETTINGS", entityType: "SETTINGS", entityId: CHECKOUT_SETTING_KEY, summary: `prepay ${d.prepayDiscountPct}%, sample ${d.sample.enabled ? "on" : "off"}`, before, after: d }, tx);
     });
     revalidateAdmin();
-    revalidatePath("/[locale]/checkout/[designId]", "page");
+    revalidatePath("/[locale]/(checkout)/checkout/[designId]", "page"); // route-group path (R4-10)
     return null;
   });
 }
@@ -242,7 +242,9 @@ export async function reviewPortfolioAction(input: z.input<typeof portfolioRevie
       );
     });
     revalidateAdmin();
-    revalidatePath("/[locale]/vendors/[slug]", "page");
+    // R4-10: the route lives under the (store) group, so this pattern without it matched nothing and
+    // the public profile kept a rejected photo or an uncleaned bio for up to the 1 h ISR window.
+    purgeCatalogCache();
     return null;
   });
 }
@@ -262,7 +264,9 @@ export async function cleanBioAction(input: z.input<typeof bioCleanSchema>): Pro
       await audit(admin, { action: "VENDOR_BIO_CLEAN", entityType: "VENDOR", entityId: v.id, summary: `${v.nameEn}: contact details removed from bio`, before: { bioAr: v.bioAr, bioEn: v.bioEn }, after }, tx);
     });
     revalidateAdmin();
-    revalidatePath("/[locale]/vendors/[slug]", "page");
+    // R4-10: the route lives under the (store) group, so this pattern without it matched nothing and
+    // the public profile kept a rejected photo or an uncleaned bio for up to the 1 h ISR window.
+    purgeCatalogCache();
     return null;
   });
 }

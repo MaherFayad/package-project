@@ -28,6 +28,7 @@ import { HEADLINE_DEFAULTS } from "@/lib/pricing/headline";
 import { loadCheckoutSettings } from "./checkout-settings";
 import { SAMPLE_LINE_LABEL, SAMPLE_ORDER_NOTE, applySampleCredit, sampleOffer } from "./sample";
 import { claimSampleCredit, sampleCreditInUse, type SampleCreditClient } from "./sample-credit";
+import { isPngOrJpeg } from "./image-magic";
 import { getPaymentProvider, mockPaymentsEnabled, paymentConfig, type Intention, type WebhookOutcome, type WebhookRequest } from "@/lib/payments";
 import { getShippingProvider, type TrackingEvent } from "@/lib/shipping";
 import { notify } from "@/lib/notify";
@@ -158,7 +159,7 @@ export async function sampleCreditFor(userId: string, designId: string, now = ne
     take: 10,
   });
   for (const r of rows) {
-    if (await sampleCreditInUse(db as unknown as SampleCreditClient, r.productionEvents)) continue;
+    if (await sampleCreditInUse(db as unknown as SampleCreditClient, r.productionEvents, now)) continue;
     const lines = r.quote ? fromJson<QuoteLine[]>(r.quote.lines) : null;
     const goods = (lines ?? []).filter((l) => l.labelKey === SAMPLE_LINE_LABEL).reduce((sum, l) => sum + l.totalPiasters, 0);
     if (goods <= 0 || !r.paidAt) continue;
@@ -393,7 +394,9 @@ async function createOrderFromOffer(
     }),
   );
 
-  if (p.preview && !p.existingProofId) {
+  // R4-11: only a real PNG or JPEG is kept (the data-URL prefix is checked by the action, the bytes
+  // were not): anything else is dropped, so the private preview route can only ever serve an image.
+  if (p.preview && !p.existingProofId && isPngOrJpeg(p.preview)) {
     try {
       await putFile(`proofs/${result.proofId}.img`, p.preview);
       await db.proof.update({ where: { id: result.proofId }, data: { previewUrl: `/api/orders/proofs/${result.proofId}/preview` } });

@@ -37,7 +37,7 @@ export async function updateProfileAction(_prev: ActionResult | null, form: Form
   const parsed = parseProfile({ name: form.get("name"), email: form.get("email") });
   if (!parsed.ok || !parsed.data) return parsed.ok ? { ok: false, error: "invalid" } : parsed;
   await db.user.update({ where: { id: user.id }, data: { name: parsed.data.name, email: parsed.data.email } });
-  revalidatePath("/[locale]/account", "page");
+  revalidatePath("/[locale]/(store)/account", "page");
   return { ok: true };
 }
 
@@ -64,7 +64,7 @@ export async function setMarketingConsentAction(input: { granted: boolean; local
       },
     }),
   ]);
-  revalidatePath("/[locale]/account", "page");
+  revalidatePath("/[locale]/(store)/account", "page");
   return { ok: true };
 }
 
@@ -85,7 +85,7 @@ export async function deleteDesignAction(designId: string): Promise<ActionResult
   } else {
     await db.design.delete({ where: { id: design.id } });
   }
-  revalidatePath("/[locale]/account", "page");
+  revalidatePath("/[locale]/(store)/account", "page");
   return { ok: true };
 }
 
@@ -101,6 +101,6 @@ export async function requestDeletionAction(): Promise<ActionResult<{ status: Da
   if (existing) return { ok: true, data: { status: existing.status as DataRequestStatus, createdAt: existing.createdAt.toISOString() } };
   const h = await headers();
   const row = await db.dataRequest.create({ data: { userId: user.id, kind: "DELETE", ip: clientIp(h) } });
-  revalidatePath("/[locale]/account", "page");
+  revalidatePath("/[locale]/(store)/account", "page");
   return { ok: true, data: { status: "OPEN", createdAt: row.createdAt.toISOString() } };
 }

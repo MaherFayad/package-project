@@ -4,9 +4,15 @@
  */
 
 /** The subset of the Prisma client these helpers use (a full client or a transaction client). */
+/** Orders that hold a credit: anything not cancelled, except unpaid orders whose quote has expired. */
+export type LiveOrderWhere = {
+  number: { in: string[] };
+  OR: [{ status: { notIn: string[] } }, { status: "PENDING_PAYMENT"; quote: { validUntil: { gt: Date } } }];
+};
+
 export interface SampleCreditClient {
   order: {
-    count(args: { where: { number: { in: string[] }; status: { notIn: string[] } } }): Promise<number>;
+    count(args: { where: LiveOrderWhere }): Promise<number>;
     findUnique(args: {
       where: { id: string };
       select: { status: true; updatedAt: true; productionEvents: { where: { type: "NOTE"; note: { startsWith: string } }; select: { note: true } } };
@@ -17,11 +23,20 @@ export interface SampleCreditClient {
 
 export const SAMPLE_CREDITED_PREFIX = "SAMPLE_CREDITED:";
 
-/** Is a sample's credit used by a live (not cancelled) order? Reads its `SAMPLE_CREDITED:<number>` notes. */
-export async function sampleCreditInUse(client: Pick<SampleCreditClient, "order">, notes: { note: string | null }[]): Promise<boolean> {
+/**
+ * Is a sample's credit used by a live order? Reads its `SAMPLE_CREDITED:<number>` notes.
+ * Live = not cancelled, and not an unpaid order whose quote has expired (R4-12): the order is
+ * created at proof approval, before payment, so a buyer who approved and walked away used to lose
+ * the credit for good (startPayment refuses an expired quote, so that order can never be paid).
+ */
+export async function sampleCreditInUse(client: Pick<SampleCreditClient, "order">, notes: { note: string | null }[], now = new Date()): Promise<boolean> {
   const usedBy = notes.map((e) => (e.note ?? "").slice(SAMPLE_CREDITED_PREFIX.length)).filter(Boolean);
   if (!usedBy.length) return false;
-  return (await client.order.count({ where: { number: { in: usedBy }, status: { notIn: ["CANCELLED"] } } })) > 0;
+  const where: LiveOrderWhere = {
+    number: { in: usedBy },
+    OR: [{ status: { notIn: ["CANCELLED", "PENDING_PAYMENT"] } }, { status: "PENDING_PAYMENT", quote: { validUntil: { gt: now } } }],
+  };
+  return (await client.order.count({ where })) > 0;
 }
 
 /**
@@ -40,7 +55,7 @@ export async function claimSampleCredit(tx: SampleCreditClient, sampleOrderId: s
     select: { status: true, updatedAt: true, productionEvents: { where: { type: "NOTE", note: { startsWith: SAMPLE_CREDITED_PREFIX } }, select: { note: true } } },
   });
   if (!sample || ["CANCELLED", "REFUNDED", "PENDING_PAYMENT"].includes(sample.status)) return false;
-  if (await sampleCreditInUse(tx, sample.productionEvents)) return false;
+  if (await sampleCreditInUse(tx, sample.productionEvents, now)) return false;
   const lock = await tx.order.updateMany({ where: { id: sampleOrderId, updatedAt: sample.updatedAt }, data: { updatedAt: now } });
   return lock.count === 1;
 }
