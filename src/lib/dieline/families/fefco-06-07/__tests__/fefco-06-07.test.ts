@@ -256,3 +256,17 @@ describe("construction details", () => {
     expect(m.closedOuter.H).toBeGreaterThan(d.defaultDims.H + 3);
   });
 });
+
+// R5-3Q-B: the crash-lock back and glue-assist flaps show beside the outer lock flap under the
+// case (and on top of the 0714 lid, which is a crash-lock tube turned over). They carry the
+// bottom (top) artwork too; only the front lock flap did, so half the underside was bare board.
+describe("FEFCO 07 crash-lock bottoms are printed on every visible flap", () => {
+  const CRASH = ["0700", "0701", "0703", "0711", "0712", "0713", "0714", "0715", "0716", "0717"];
+  it.each(CRASH)("FEFCO_%s", (code) => {
+    const def = definitionByCode(`FEFCO_${code}`)!;
+    const m = generateFamilyDieline(def, def.defaultDims, { thicknessMm: 1.5 });
+    const ids = (f: "top" | "bottom") => new Set(m.faces[f]?.parts.map((p) => p.panelId));
+    for (const flap of ["bottom_front", "bottom_back", "bottom_left", "bottom_right"]) expect(ids("bottom").has(flap), flap).toBe(true);
+    if (code === "0714") for (const flap of ["lid_bottom_front", "lid_bottom_back"]) expect(ids("top").has(flap), flap).toBe(true);
+  });
+});

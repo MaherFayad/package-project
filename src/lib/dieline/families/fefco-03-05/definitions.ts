@@ -19,6 +19,9 @@ const LID: FeatureSupport = { ...NO_FEATURES, lidHeight: true };
 
 const LIMITS = {
   trayLid: { L: { min: 80, max: 700 }, W: { min: 60, max: 500 }, H: { min: 20, max: 300 } },
+  // Web (gusset) corners: each gusset's leg along the wall is the wall height, so the walls must
+  // be at least as long as they are high, or a gusset runs past the far corner (R5-3Q-B).
+  gussetTray: { L: { min: 80, max: 700 }, W: { min: 60, max: 500 }, H: { min: 20, max: 300 }, rules: ["H <= W", "H <= L"] },
   slotted: { L: { min: 100, max: 800 }, W: { min: 80, max: 600 }, H: { min: 40, max: 600 } },
   caps: { L: { min: 150, max: 1200 }, W: { min: 100, max: 1000 }, H: { min: 100, max: 1200 } },
   octRegular: { L: { min: 600, max: 1200 }, W: { min: 600, max: 1200 }, H: { min: 400, max: 1200 }, rules: ["L == W"] },
@@ -154,7 +157,7 @@ export const DEFINITIONS: FamilyStructureDef[] = [
     en: "Telescope box, gusset corners folded outside",
     dar: "أركان متصلة بالجدارين تطوى قطريا وتثبت مسطحة على الجدار الطويل من الخارج، بدون قطع في الأركان.",
     den: "Web (gusset) corners joined to both walls, folded on the diagonal and laid flat outside the long walls.",
-    limits: LIMITS.trayLid,
+    limits: LIMITS.gussetTray,
     dims: { L: 300, W: 220, H: 80 },
     presets: TRAY_PRESETS,
     pieces: 2,
@@ -171,7 +174,7 @@ export const DEFINITIONS: FamilyStructureDef[] = [
     en: "Telescope box, gussets folded on end walls",
     dar: "مثل الطراز 0303 مع طي الأركان القطرية على الجدارين الجانبيين بدلا من الجدارين الطويلين.",
     den: "As 0303, with the diagonal gussets folded onto the end walls instead of the long walls.",
-    limits: LIMITS.trayLid,
+    limits: LIMITS.gussetTray,
     dims: { L: 300, W: 220, H: 80 },
     presets: TRAY_PRESETS,
     pieces: 2,
@@ -222,7 +225,7 @@ export const DEFINITIONS: FamilyStructureDef[] = [
     en: "Telescope box, inside gussets with relief slots",
     dar: "أركان قطرية تطوى للداخل على الجدار الطويل مع شقوق تخفيف عند الزوايا، لسطح خارجي أملس.",
     den: "Diagonal gussets folded inside against the long walls, with relief slots at the corners; smooth outside.",
-    limits: LIMITS.trayLid,
+    limits: LIMITS.gussetTray,
     dims: { L: 300, W: 220, H: 80 },
     presets: TRAY_PRESETS,
     pieces: 2,
@@ -239,7 +242,7 @@ export const DEFINITIONS: FamilyStructureDef[] = [
     en: "Telescope box, inside gussets without slots",
     dar: "أركان قطرية تطوى للداخل على الجدارين الجانبيين بدون شقوق، لأركان سفلية محكمة بلا فجوات.",
     den: "Diagonal gussets folded inside against the end walls, no slots, for gapless bottom corners.",
-    limits: LIMITS.trayLid,
+    limits: LIMITS.gussetTray,
     dims: { L: 300, W: 220, H: 80 },
     presets: TRAY_PRESETS,
     pieces: 2,
