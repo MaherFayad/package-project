@@ -95,6 +95,18 @@ export function generateFamilyDieline(def: Fefco04Definition, dims: Dims, option
   const features = familyFeatures(def, options.features);
   const draft = def.generate(v.dims, t, features);
   const raw = draft.builder.panels;
+  // Square (90°) folds that are stacked inward (ears, lid tucks and side flaps, inner end flaps,
+  // overlapped cover flaps, glue flaps) pivot on the parent's INSIDE face: with the default
+  // pivot on the printed face, the stacked panel's hinge end ran through the parent's board
+  // and its cut edge showed as a z-fighting kraft strip on the printed face, 1–3 calipers in
+  // from the corner (R5-3Q-C-01). Same closed position (stack − 1 + pivot 1 caliper deeper),
+  // but the panel now starts at the parent's inner face, like a real crease bending inward.
+  for (const p of raw) {
+    if (p.parentId && Math.abs(p.foldAngleClosed - 90) < 1e-6 && p.stackOffset < 0 && p.pivotDepth === 0) {
+      p.pivotDepth = 1;
+      p.stackOffset -= 1;
+    }
+  }
 
   const all = bboxOf(raw.flatMap((p) => p.polygon));
   const dx = bleed - all.x;
@@ -114,7 +126,16 @@ export function generateFamilyDieline(def: Fefco04Definition, dims: Dims, option
   for (const p of panels) p.pieceId = pieceOf(p);
 
   const hinges = panels.flatMap((p) => (p.hinge ? [p.hinge] : []));
-  const creaseLines: Segment[] = [...panels.flatMap((p) => (p.hinge && p.hingeKind !== "roll" ? [p.hinge] : [])), ...draft.builder.extraCreases.map(mvSeg)];
+  // A crease only runs where both panels have board: a thumb notch cut across a rolled double
+  // wall interrupts the roll crease (R5-3Q-C-02).
+  const creaseOf = (p: DielinePanel): Segment[] => {
+    if (!p.hinge) return [];
+    const parent = p.parentId ? byId.get(p.parentId) : undefined;
+    if (!parent) return [p.hinge];
+    const missing = [...subtractSegments(p.hinge, edgesOf(parent.polygon)), ...subtractSegments(p.hinge, edgesOf(p.polygon))];
+    return missing.length ? subtractSegments(p.hinge, missing) : [p.hinge];
+  };
+  const creaseLines: Segment[] = [...panels.flatMap((p) => (p.hinge && p.hingeKind !== "roll" ? creaseOf(p) : [])), ...draft.builder.extraCreases.map(mvSeg)];
   const cutLines: Segment[] = [];
   for (const p of panels) {
     for (const e of edgesOf(p.polygon)) for (const piece of subtractSegments(e, [...hinges, ...cutLines])) cutLines.push(piece);

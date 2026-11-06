@@ -71,9 +71,10 @@ export function wrapFolder(dims: Dims, t: number, o: WrapOpts, _f: StructureFeat
       const parent = chain[i - dir];
       const edge = dir > 0 ? rectEdges(parent.r).bottom : rectEdges(parent.r).top;
       const closing = c.id === "glue" || c.id === "fifth";
-      // The fifth (overlap) panel lies on the base inside the tube: keep it clear of the end flaps
-      // that stand at both ends (endLayers calipers + 0.5 mm each side).
-      const hinge = c.id === "fifth" ? insetSeg(edge, endLayers * t + 0.5) : edge;
+      // The closing panel (fifth / glue flap) lies on the base inside the tube: keep it clear of the
+      // end flaps that stand at both ends (endLayers calipers + 0.5 mm each side); a full-length
+      // glue flap showed its cut end on the printed outer end flaps (R5-3Q-C-01).
+      const hinge = closing ? insetSeg(edge, endLayers * t + 0.5) : edge;
       b.attach(c.id, c.role, parent.id, hinge, c.r.height, { kind: "rect" }, {
         // The closing panel (glue flap / fifth panel) is pre-folded square, then the tube wraps
         // around the product and the closing panel lands flat on the base.
@@ -103,11 +104,13 @@ export function wrapFolder(dims: Dims, t: number, o: WrapOpts, _f: StructureFeat
     const isOuter = c.across === outer;
     // Depth of an end flap: it spans the end across the other dimension.
     const span = c.across === "w" ? Hp : Wp;
-    const depth = kind === "full" ? span - 2 * t : span / 2 - 1;
     const order = counter[c.across]++;
     const stackBase = isOuter ? 0 : -(outer === "w" ? (wPanels === "full" ? 2 : 1) : hPanels === "full" ? 2 : 1);
     // Of a fully overlapping pair the first to fold lies deeper, so the second closes over it.
     const stack = stackBase - (kind === "full" ? 1 - (order % 2) : 0);
+    // A stacked flap pivots on the tube panel's inside face (build.ts), so it starts one caliper
+    // further in: one caliper shorter, so meeting flaps still stop short of each other.
+    const depth = (kind === "full" ? span - 2 * t : span / 2 - 1) - (stack < 0 ? t : 0);
     const e = rectEdges(c.r);
     const sides: [string, [Pt, Pt]][] = [
       ["R", e.left],
@@ -116,8 +119,10 @@ export function wrapFolder(dims: Dims, t: number, o: WrapOpts, _f: StructureFeat
     for (const [s, edge] of sides) {
       const taper = isOuter ? 0 : Math.min(depth * 0.3, c.r.height * 0.15);
       // Hinge stops one caliper short of each corner: the neighbouring tube panels run to the
-      // end, so a full-width flap would sit inside their board edge (z-fighting strip).
-      b.attach(`end_${c.id}_${s}`, "flap", c.id, insetSeg(edge, t + 0.2), depth, { kind: "trapezoid", taperA: taper, taperB: taper }, {
+      // end, so a full-width flap would sit inside their board edge (z-fighting strip). Stacked
+      // flaps lie one caliper deeper, so they stop two calipers short (clear of the outer flaps
+      // still standing open while they fold).
+      b.attach(`end_${c.id}_${s}`, "flap", c.id, insetSeg(edge, (stack < 0 ? 2 * t : t) + 0.2), depth, { kind: "trapezoid", taperA: taper, taperB: taper }, {
         // Inner end flaps, then outer ones; fully overlapping pairs fold one after the other.
         stage: stageOf(isOuter, order),
         stack,
