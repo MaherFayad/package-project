@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ChevronDown, ChevronUp, CloudCheck, CloudOff, CloudUpload, Download, MoreHorizontal, Redo2, Save, Share2, Undo2 } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ChevronDown, ChevronUp, CloudCheck, CloudOff, CloudUpload, Download, Move3d, MoreHorizontal, Redo2, RotateCcw, Save, Share2, Undo2, ZoomIn, ZoomOut } from "lucide-react";
 import { startTransition, useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { FACE_IDS, type ArtworkLayer, type DesignDoc, type DesignFinishCode, type DimsPreset, type FaceId, type Locale, type PrintSurface, type StructureCode } from "@/types";
 import { boardAppearance, type DielineModel } from "@/lib/dieline";
@@ -228,6 +228,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareError, setShareError] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [viewMenuOpen, setViewMenuOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   // Mounted on first open and kept (so closing animates and returns focus).
   const [pickerUsed, setPickerUsed] = useState(false);
@@ -755,6 +756,36 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
     />
   );
 
+  // Phones (R4-CR-11): the seven view buttons fold into one "Adjust view" menu in the fold row, so
+  // the canvas keeps its height. The menu stays open between taps (rotate, rotate…); Escape or a
+  // tap outside closes it. Dragging the model does the same (WCAG 2.5.7: the menu is the
+  // single-pointer alternative).
+  const viewMenu = (
+    <Popover
+      active={viewMenuOpen}
+      onClose={() => setViewMenuOpen(false)}
+      preferredAlignment="end"
+      activator={
+        <Button size="slim" icon={Move3d} ariaHaspopup="menu" ariaExpanded={viewMenuOpen} onClick={() => setViewMenuOpen((o) => !o)}>
+          {t("designer.view.adjust")}
+        </Button>
+      }
+    >
+      <ActionList
+        actionRole="menuitem"
+        items={[
+          { content: t("viewer.rotateLeft"), icon: ArrowLeft, onAction: () => sceneRef.current?.rotate(-20) },
+          { content: t("viewer.rotateRight"), icon: ArrowRight, onAction: () => sceneRef.current?.rotate(20) },
+          { content: t("viewer.tiltUp"), icon: ArrowUp, onAction: () => sceneRef.current?.rotate(0, 12) },
+          { content: t("viewer.tiltDown"), icon: ArrowDown, onAction: () => sceneRef.current?.rotate(0, -12) },
+          { content: t("viewer.zoomIn"), icon: ZoomIn, onAction: () => sceneRef.current?.zoom(0.8) },
+          { content: t("viewer.zoomOut"), icon: ZoomOut, onAction: () => sceneRef.current?.zoom(1.25) },
+          { content: t("viewer.reset"), icon: RotateCcw, onAction: () => sceneRef.current?.reset() },
+        ]}
+      />
+    </Popover>
+  );
+
   // Masked finishes the selected item can carry ("Spot UV on this item", FN-02).
   const layerFinishes = useMemo(
     () =>
@@ -988,7 +1019,6 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
           )}
         </div>
 
-        {view === "3d" && !wide ? <div className={styles.viewControlsRow}>{viewControls}</div> : null}
         {view === "3d" && isVessel ? (
           <div className={styles.foldRow}>
             <ButtonGroup variant="segmented" accessibilityLabel={t("library.panel.closure")}>
@@ -1002,6 +1032,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
             <Button size="slim" pressed={viewOpts.turntable} onClick={() => setViewOpts((o) => ({ ...o, turntable: !o.turntable }))}>
               {t("library.panel.turntable")}
             </Button>
+            {!wide ? <span className={styles.viewMenuSlot}>{viewMenu}</span> : null}
           </div>
         ) : null}
         {view === "3d" && !isVessel ? (
@@ -1029,6 +1060,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
                 {openTop ? t("designer.view.assembled") : t("designer.view.closed")}
               </Button>
             </ButtonGroup>
+            {!wide ? <span className={styles.viewMenuSlot}>{viewMenu}</span> : null}
           </div>
         ) : null}
       </section>

@@ -55,6 +55,7 @@ export const designerEn = {
     face: "Face",
     dieline: "Dieline",
     fold: "Fold",
+    adjust: "Adjust view",
     flat: "Flat",
     half: "Half",
     closed: "Closed",
@@ -378,5 +379,9 @@ export const designerEn = {
     printing: "Printing",
     notFoundTitle: "Link not found",
     notFoundBody: "This share link is not valid or was turned off by its owner.",
+    subtitleDesign: "Shared packaging design",
+    sizeVessel: "Size",
+    printMaterial: "Print material",
+    model: "Model",
   },
 } as const;

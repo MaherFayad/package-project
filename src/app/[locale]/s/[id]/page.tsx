@@ -11,6 +11,8 @@ import styles from "./share.module.css";
 import { designerPath } from "@/components/designer/lib/catalog";
 import { loadSharedDesign } from "@/components/designer/server";
 import { modelByCode } from "@/lib/library";
+import { docModelCode } from "@/lib/library/doc";
+import { orderModeOf } from "@/data/catalogue/order-mode";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { ANON_COOKIE } from "@/lib/auth/constants";
@@ -78,23 +80,36 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
       );
     }
   }
-  const name = doc.name.trim() || t(`structures.${doc.structureCode}` as DictKey);
+  // R4-B-01 (designer half): the page names and links the library model, not its base structure,
+  // so the visitor sees (and forks) the aseptic brick, crash-lock or bottle that was shared.
+  const modelCode = docModelCode(doc);
+  const libModel = modelByCode(modelCode);
+  const styleName = libModel?.name[locale] ?? t(`structures.${doc.structureCode}` as DictKey);
+  const isVessel = libModel?.kind === "vessel";
+  const byQuote = ["quote", "preview"].includes(orderModeOf(modelCode).mode);
+  const ctaLabel = byQuote ? t("designer.price.quoteAction") : isVessel ? t("designer.container.order") : t("designer.shared.cta");
+  const name = doc.name.trim() || styleName;
   // R4-12: the visitor sees the price before being asked to sign in, the same figure checkout
   // shows for 500 boxes (best match, prepay discount, delivery to Greater Cairo, excl. VAT).
   const price = await sharePrice(doc);
   const specs: [string, string][] = [
-    [t("designer.shared.style"), t(`structures.${doc.structureCode}` as DictKey)],
-    [t("designer.shared.size"), formatDims(doc.dims, locale)],
-    [t("designer.shared.board"), t(`materials.${doc.materialCode}` as DictKey)],
+    [t("designer.shared.style"), styleName],
+    [t("designer.shared.model"), modelCode.replace(/_/g, " ")],
+    // Containers: their own size (Ø × H, or W × G × H for pouches), not the box dims of the label
+    // sheet ("100 × 1 × 100 mm"), and "print material" rather than "board".
+    doc.vessel
+      ? [t("designer.shared.sizeVessel"), vesselSize(doc.vessel.dims, t("common.mm"))]
+      : [t("designer.shared.size"), formatDims(doc.dims, locale)],
+    [t(doc.vessel ? "designer.shared.printMaterial" : "designer.shared.board"), t(`materials.${doc.materialCode}` as DictKey)],
     [t("designer.shared.finish"), t(`finishes.${doc.finishCode}` as DictKey)],
     [t("designer.shared.printing"), doc.printSides === "BOTH" ? t("designer.box.printBoth") : t("designer.box.printOutside")],
   ];
 
   return (
-    <Page title={name} subtitle={t("designer.shared.subtitle")} titleMetadata={<Badge tone="info">{t(`structures.${doc.structureCode}` as DictKey)}</Badge>}>
+    <Page title={name} subtitle={t(isVessel ? "designer.shared.subtitleDesign" : "designer.shared.subtitle")} titleMetadata={<Badge tone="info">{styleName}</Badge>}>
       <Layout>
         <LayoutSection>
-          <SharedViewerLazy doc={doc} poster={`/models/${modelByCode(doc.modelCode ?? doc.structureCode)?.slug ?? "mailer-box"}.svg`} />
+          <SharedViewerLazy doc={doc} poster={`/models/${libModel?.slug ?? "mailer-box"}.svg`} />
         </LayoutSection>
         <LayoutSection variant="oneThird" as="aside">
           <BlockStack gap="400">
@@ -106,13 +121,17 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
                   </p>
                 ) : null}
                 <Text as="p">{t("designer.shared.ctaHelp")}</Text>
-                <Button variant="primary" fullWidth url={`/${locale}/checkout/${encodeURIComponent(designId)}?share=${encodeURIComponent(id)}`}>
-                  {t("designer.shared.cta")}
+                {/* The model travels with the fork request; checkout re-checks it against the saved design. */}
+                <Button
+                  variant="primary"
+                  fullWidth
+                  url={`/${locale}/checkout/${encodeURIComponent(designId)}?share=${encodeURIComponent(id)}&model=${encodeURIComponent(modelCode)}`}>
+                  {ctaLabel}
                 </Button>
                 <Text as="p" variant="bodySm" tone="subdued">
                   {isOwner ? t("buyer.shareOwner") : <>{t("buyer.shareOwnCopy")} {session ? null : t("buyer.shareSignIn")}</>}
                 </Text>
-                <Button fullWidth url={isOwner ? designerPath(locale, doc.structureCode, { d: designId }) : designerPath(locale, doc.structureCode)}>
+                <Button fullWidth url={isOwner ? designerPath(locale, modelCode, { d: designId }) : designerPath(locale, modelCode)}>
                   {isOwner ? t("account.openDesign") : t("designer.shared.copyDesign")}
                 </Button>
               </BlockStack>
@@ -139,6 +158,13 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
 }
 
 const SHARE_PRICE_QTY = 500;
+
+/** "Ø 66 × 210 mm" (round) or "120 × 60 × 200 mm" (with a gusset), isolated left to right. */
+function vesselSize(d: { D: number; H: number; G?: number }, mm: string): string {
+  const n = (v: number) => String(Math.round(v * 10) / 10);
+  const body = d.G ? `${n(d.D)} × ${n(d.G)} × ${n(d.H)}` : `Ø ${n(d.D)} × ${n(d.H)}`;
+  return `\u2066${body}\u2069 ${mm}`;
+}
 
 /** Headline price for the share page, or null when the box has no instant price (quote only). */
 async function sharePrice(doc: Parameters<typeof quoteDesign>[0]): Promise<{ quantity: number; unitPiasters: number; days: number } | null> {

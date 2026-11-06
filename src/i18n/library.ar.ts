@@ -65,7 +65,7 @@ export const libraryAr: typeof libraryEn = {
     sceneReference: "بجانب علبة مشروبات",
     turntable: "دوران تلقائي",
     openClosure: "فتح",
-    closeClosure: "إغلاق",
+    closeClosure: "غلق",
     removedFinishes: "حذفنا التشطيبات التي لا تناسب هذه الخامة: {list}",
   },
   colors: {

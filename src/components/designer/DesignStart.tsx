@@ -37,9 +37,28 @@ export function DesignStart({ locale }: { locale: Locale }) {
   const onViewerReady = useCallback(() => setViewerReady(true), []);
   useEffect(() => setViewerReady(false), [active]);
 
+  // R4-24: the hero turns for one bounded turn (≤ 8 s), then rests. Hovering or focusing the stage
+  // or a product shortcut starts another turn; Pause, a drag or focus inside the viewer stops it
+  // until Play. Under prefers-reduced-motion it never starts by itself (WCAG 2.2.2, 2.3.3).
+  const [turn, setTurn] = useState<number | null>(0);
+  const quietRef = useRef(false);
+  const kick = useCallback(() => {
+    if (quietRef.current) return;
+    setTurn((n) => (n ?? 0) + 1);
+    setPlaying(true);
+  }, []);
+  const stopForGood = useCallback(() => {
+    quietRef.current = true;
+    setPlaying(false);
+  }, []);
+  const onTurnDone = useCallback(() => setPlaying(false), []);
+
   // three.js loads once the browser is idle, so the page paints fast on mid-range phones.
   useEffect(() => {
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) setPlaying(false);
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      quietRef.current = true;
+      setPlaying(false);
+    }
     const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
     if (w.requestIdleCallback) {
       const id = w.requestIdleCallback(() => setMounted(true), { timeout: 1200 });
@@ -85,15 +104,17 @@ export function DesignStart({ locale }: { locale: Locale }) {
       </div>
 
       <div className={styles.startStageCol}>
-        <div className={styles.startStage} ref={wrapRef} onPointerDown={() => setPlaying(false)}>
+        <div className={styles.startStage} ref={wrapRef} onPointerDown={stopForGood} onPointerEnter={(e) => e.pointerType === "mouse" && kick()}>
           {mounted ? (
-            <div className={styles.startViewer} onFocusCapture={() => setPlaying(false)}>
+            <div className={styles.startViewer} onFocusCapture={stopForGood}>
               <StartViewer
                 active={active}
                 locale={locale}
                 playing={playing}
                 wrapRef={wrapRef}
                 onReady={onViewerReady}
+                turn={turn}
+                onTurnDone={onTurnDone}
                 labels={{
                   viewer: t("designer.start.viewerLabel", { product: productName }),
                   roleDescription: t("viewer.roleDescription"),
@@ -115,7 +136,15 @@ export function DesignStart({ locale }: { locale: Locale }) {
             <Button
               size="slim"
               icon={playing ? Pause : Play}
-              onClick={() => setPlaying((v) => !v)}
+              onClick={() => {
+                if (playing) stopForGood();
+                else {
+                  // An explicit Play turns until Pause.
+                  quietRef.current = false;
+                  setTurn(null);
+                  setPlaying(true);
+                }
+              }}
               accessibilityLabel={playing ? t("designer.start.pause") : t("designer.start.play")}
             />
           </div>
@@ -144,8 +173,14 @@ export function DesignStart({ locale }: { locale: Locale }) {
                   className={styles.productLink}
                   data-active={p.key === active ? "true" : undefined}
                   href={designerPathLite(locale, p.structureCode, { preset: p.presetId })}
-                  onPointerEnter={() => setActive(p.key)}
-                  onFocus={() => setActive(p.key)}
+                  onPointerEnter={() => {
+                    setActive(p.key);
+                    kick();
+                  }}
+                  onFocus={() => {
+                    setActive(p.key);
+                    kick();
+                  }}
                 >
                   <span className={styles.productIcon} aria-hidden="true">
                     <IconC size={20} />
