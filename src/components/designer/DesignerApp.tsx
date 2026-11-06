@@ -1,6 +1,5 @@
 "use client";
 
-import { preload } from "react-dom";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ChevronDown, ChevronUp, CloudCheck, CloudOff, CloudUpload, Download, MoreHorizontal, Redo2, Save, Share2, Undo2 } from "lucide-react";
@@ -100,6 +99,8 @@ export interface DesignerAppProps {
   loadError: "notFound" | null;
   /** Restore this device's autosaved draft on mount (?resume=1). */
   resumeLocal?: boolean;
+  /** Poster for the loading state: an inlined data: URL from the server when small (PERF-R4-02). */
+  posterSrc?: string;
 }
 
 const reducer = (s: History<DesignDoc>, a: HistoryAction<DesignDoc>) => historyReducer(s, a);
@@ -145,15 +146,12 @@ export function DesignerApp(props: DesignerAppProps) {
   // index, not the family pack), so the first paint already shows the model and the LCP image
   // starts downloading with the HTML instead of after hydration + pack load (PERF-R4-02).
   const posterSlug = modelSlugOf(code);
-  // Discovered in <head>, ahead of the 3D renderer script preloads that otherwise fill the six
-  // HTTP/1.1 sockets on a slow network and hold the poster back by ~3 s.
-  if (posterSlug) preload(`/models/${posterSlug}.svg`, { as: "image", fetchPriority: "high" });
   if (!ready)
     return (
       <div className={lib.stageSkeleton} style={{ minBlockSize: "70vh" }} aria-busy="true" data-testid="designer-loading">
-        {posterSlug ? (
+        {posterSlug || props.posterSrc ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={`/models/${posterSlug}.svg`} alt="" aria-hidden="true" className={styles.stagePoster} fetchPriority="high" decoding="async" />
+          <img src={props.posterSrc ?? `/models/${posterSlug}.svg`} alt="" aria-hidden="true" className={styles.stagePoster} fetchPriority="high" decoding="async" />
         ) : null}
         <span className="visually-hidden">{props.locale === "ar" ? "جار تحميل المصمم" : "Loading the designer"}</span>
       </div>
@@ -161,7 +159,7 @@ export function DesignerApp(props: DesignerAppProps) {
   return <DesignerEditor {...props} />;
 }
 
-function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, loadError, resumeLocal }: DesignerAppProps) {
+function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, loadError, resumeLocal, posterSrc }: DesignerAppProps) {
   const { t } = useI18n();
   const router = useRouter();
   const toast = useToast();
@@ -920,7 +918,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
                 {/* Large poster from the first paint until the 3D chunk renders a frame (PERF-10). */}
                 {libModel ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={`/models/${libModel.slug}.svg`} alt="" aria-hidden="true" className={styles.stagePoster} data-hidden={sceneReady ? "true" : undefined} />
+                  <img src={posterSrc && libModel.code === docModelCode(initialDoc) ? posterSrc : `/models/${libModel.slug}.svg`} alt="" aria-hidden="true" className={styles.stagePoster} data-hidden={sceneReady ? "true" : undefined} />
                 ) : null}
                 {wide ? <div className={styles.viewControls}>{viewControls}</div> : null}
               </div>

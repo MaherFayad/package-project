@@ -12,6 +12,7 @@ import { BOARD_SPECS } from "@/lib/dieline";
 import { FALLBACK_PRESETS, designerPath, presetDims, structureFromParam } from "@/components/designer/lib/catalog";
 import { currentActor, lazyChunkHrefs, loadDesign, loadPickerStructures } from "@/components/designer/server";
 import { preload } from "react-dom";
+import { modelPosterSrc } from "@/app/model-poster";
 
 export const dynamic = "force-dynamic";
 
@@ -80,9 +81,6 @@ export default async function DesignEditorPage({ params, searchParams }: { param
         : createModelDoc(libModel, { presetId: one(sp.preset), materialCode, ...(libModel.kind === "box" ? { dims: validBoxDims(libModel, [L, W, H]) } : {}) });
   }
 
-  // LCP: the model poster (server-rendered in the editor's loading state) is requested first,
-  // at high priority (PERF-R4-02).
-  preload(`/models/${libModel.slug}.svg`, { as: "image", fetchPriority: "high" });
   // Start fetching the 3D renderer while the page hydrates (PERF-10), at low priority so its
   // ~10 chunks do not hold the poster and the page's own scripts back on a slow network.
   for (const href of lazyChunkHrefs("./Stage3D")) preload(href, { as: "script", fetchPriority: "low" });
@@ -96,6 +94,7 @@ export default async function DesignEditorPage({ params, searchParams }: { param
       presetsByCode={presetsByCode}
       loadError={loadError}
       resumeLocal={!d && one(sp.resume) === "1"}
+      posterSrc={modelPosterSrc(libModel.slug)}
     />
   );
 }

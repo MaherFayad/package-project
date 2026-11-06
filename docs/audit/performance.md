@@ -551,3 +551,163 @@ node docs/audit/tools/report-tables.mjs   # regenerates the §5 tables from docs
 ```
 
 Screenshots of every measured state (phone ar and desktop en per page, plus the 3D stage after the run) are in `docs/screenshots/audit/performance/`.
+
+---
+
+# Round 4
+
+Key: `performance` · Branch: `claude/exciting-albattani-8kzgsu-r4-performance` · Base: `781d663` (rounds 1 to 3 merged) · Measured 2026-11-06 on production builds (`next build && next start`), before = base, after = this branch.
+
+Harnesses: `docs/audit/tools/perf-pages.mjs` (both profiles, ar + en, 17 routes; after-run with the new `ISOLATE=1`), `perf-3d.mjs` (phone), `bundle-report.mjs`, `lighthouse.sh` (Lighthouse 12 mobile), and two new ones: `compare-pages.mjs` (the tables below) and `lcp-trace.mjs` (every LCP entry, font-load events and the requests in flight before FCP). Raw data: `docs/audit/perf-data/r4/`. Screenshots (phone ar and desktop en of every route, after): `docs/screenshots/audit/performance/r4/`; the before state of the same routes is in `docs/screenshots/audit/performance/` (round 1, same layout as the base for these routes).
+
+Phone profile: 390x844, DPR 2, 4x CPU, Slow 4G (562.5 ms RTT, 1.47 Mbps). The brief quoted 3.2 to 5.9 s phone LCP; re-measured on the base it was **2.2 to 12.9 s** (the editor and the `/design` picker had regressed to 10.5 to 12.9 s), FCP 2.6 to 3.9 s on every route.
+
+## R4.1 Before / after, phone (LCP budget < 2.5 s)
+
+| Page | FCP ar (s) | LCP ar (s) | FCP en (s) | LCP en (s) | CLS ar | LCP element after (ar) | HTML+CSS KB ar | Fonts KB ar | JS KB ar | LCP < 2.5 s |
+|---|---|---|---|---|---|---|---|---|---|---|
+| home | 2.58 → **1.44** | 2.58 → **4.09** | 2.17 → **1.22** | 2.17 → **1.22** | 0.000 → 0.009 | `h1#hero-title.marketing_h1.m-enter-lcp size=30912` | 87 → **112** | 151 → **151** | 194 → **162** | **fail** |
+| boxes | 3.91 → **1.41** | 4.35 → **1.59** | 3.41 → **1.22** | 3.81 → **1.42** | 0.000 → 0.017 | `img [renders/fefco-0427.400w.webp] size=49000` | 111 → **130** | 151 → **151** | 214 → **211** | pass |
+| bottles | 2.76 → **1.22** | 2.76 → **1.90** | 1.63 → **1.08** | 2.51 → **1.89** | 0.000 → 0.006 | `img [renders/bottle.webp] size=45144` | 68 → **93** | 151 → **151** | 205 → **201** | pass |
+| catalog | 3.82 → **1.29** | 4.78 → **2.09** | 3.26 → **1.18** | 4.19 → **2.03** | 0.003 → 0.038 | `p.marketing_lead.m-enter size=29079` | 135 → **154** | 151 → **151** | 215 → **212** | pass |
+| vendors | 3.84 → **1.54** | 4.30 → **4.48** | 3.32 → **1.24** | 3.78 → **1.24** | 0.000 → 0.004 | `p.marketing_lead.m-enter-lcp size=26642` | 124 → **161** | 151 → **151** | 232 → **229** | **fail** |
+| design-picker | 3.88 → **1.84** | 12.85 → **1.88** | 3.60 → **1.36** | 12.02 → **1.39** | 0.001 → 0.002 | `img.designer_startPoster [models/mailer-box.svg] size=51614` | 150 → **210** | 167 → **167** | 579 → **580** | pass |
+| designer-box | 3.71 → **1.04** | 11.23 → **1.69** | 3.23 → **1.04** | 10.53 → **1.43** | 0.000 → 0.000 | `img.designer_stagePoster [2000/svg%22 width=%22480%22 height=%22360%22` | 119 → **134** | 167 → **167** | 652 → **649** | pass |
+| designer-bottle | 3.74 → **1.07** | 11.35 → **1.60** | 3.28 → **1.01** | 10.74 → **1.51** | 0.000 → 0.000 | `img.designer_stagePoster [2000/svg%22 width=%22480%22 height=%22360%22` | 119 → **136** | 203 → **203** | 652 → **648** | pass |
+| designer-pouch | 3.86 → **1.03** | 11.34 → **1.66** | 3.80 → **1.00** | 10.64 → **1.41** | 0.000 → 0.000 | `img.designer_stagePoster [2000/svg%22 width=%22480%22 height=%22360%22` | 119 → **134** | 203 → **203** | 652 → **648** | pass |
+| designer-fefco09 | 3.77 → **1.06** | 11.32 → **1.70** | 3.26 → **1.02** | 10.65 → **1.48** | 0.000 → 0.000 | `img.designer_stagePoster [2000/svg%22 width=%22480%22 height=%22360%22` | 119 → **134** | 151 → **151** | 668 → **664** | pass |
+| share | 3.76 → **1.18** | 4.14 → **2.36** | 3.17 → **1.08** | 3.57 → **2.06** | 0.000 → 0.001 | `img.share_viewerPoster [2000/svg%22 width=%22480%22 height=%22360%22 v` | 120 → **174** | 151 → **151** | 609 → **610** | pass |
+| checkout | 3.33 → **1.06** | 4.56 → **1.49** | 3.19 → **0.98** | 4.02 → **1.94** | 0.000 → 0.018 | `p#sample-help.Text_Text.Text_bodySm size=18792` | 111 → **118** | 151 → **151** | 225 → **222** | pass |
+| order-tracking | 3.89 → **1.34** | 4.67 → **1.34** | 3.24 → **1.18** | 4.10 → **2.12** | 0.000 → 0.037 | `p size=15276` | 118 → **169** | 151 → **151** | 221 → **218** | pass |
+| vendor-portal | 2.90 → **1.09** | 3.27 → **1.98** | 3.15 → **0.97** | 3.52 → **1.66** | 0.001 → 0.001 | `p.Text_Text.Text_bodyMd size=13818` | 142 → **146** | 151 → **151** | 226 → **223** | pass |
+| vendor-jobs | 3.23 → **1.16** | 3.59 → **2.19** | 3.16 → **0.98** | 3.49 → **0.98** | 0.013 → 0.013 | `null size=4872` | 137 → **140** | 151 → **151** | 230 → **227** | pass |
+| admin | 2.94 → **1.28** | 3.42 → **1.28** | 2.82 → **1.12** | 3.20 → **1.12** | 0.000 → 0.000 | `span.charts_TaskText size=4572` | 143 → **152** | 151 → **151** | 212 → **209** | pass |
+| admin-orders | 3.19 → **1.26** | 3.30 → **1.26** | 2.78 → **1.20** | 2.88 → **1.20** | 0.000 → 0.001 | `null size=4460` | 133 → **142** | 151 → **151** | 233 → **230** | pass |
+
+Columns: FCP and LCP in seconds; "HTML+CSS KB" and the other byte columns are bytes on the wire for phone ar (KB). JS transferred includes lazy chunks that load during the run (the editor and share pages load the 3D renderer after first paint by design).
+
+**Repeat runs for the two "fail" cells.** Both are the same intermittent effect (R4-10 below): the Arabic hero text is reported a second time, about 2.4 % larger, when IBM Plex Sans Arabic swaps in. Across repeated runs on this build: ar home **1.42 to 1.56 s in 11 of 12 runs** (one 4.09 s), ar vendors **1.40 to 1.54 s in 10 of 13 runs** (three 4.48 to 4.63 s). p75 is 1.49 s on both, so they pass the Core Web Vitals reading (75th percentile), but not every single run. See R4-10 for the fix options.
+
+**Every other route passes in every run: phone LCP 1.28 to 2.36 s (ar) and 0.98 to 2.12 s (en), FCP 0.97 to 1.84 s (was 2.6 to 3.9 s).**
+
+## R4.2 Before / after, desktop (1440x900, no throttling)
+
+| Page | LCP ar (s) | LCP en (s) |
+|---|---|---|
+| home | 0.37 → **0.45** | 0.25 → **0.36** |
+| boxes | 0.33 → **0.40** | 0.28 → **0.37** |
+| bottles | 0.30 → **0.42** | 0.34 → **0.37** |
+| catalog | 0.29 → **0.36** | 0.19 → **0.34** |
+| vendors | 0.34 → **0.63** | 0.29 → **0.58** |
+| design-picker | 0.44 → **0.51** | 0.43 → **0.40** |
+| designer-box | 0.69 → **0.65** | 0.72 → **0.64** |
+| designer-bottle | 0.62 → **0.71** | 0.64 → **0.22** |
+| designer-pouch | 0.58 → **0.80** | 0.59 → **0.67** |
+| designer-fefco09 | 0.78 → **0.61** | 0.62 → **0.64** |
+| share | 0.70 → **0.91** | 0.65 → **0.94** |
+| checkout | 0.26 → **0.50** | 0.55 → **0.28** |
+| order-tracking | 0.34 → **0.36** | 0.52 → **0.50** |
+| vendor-portal | 0.30 → **0.56** | 0.51 → **0.55** |
+| vendor-jobs | 0.23 → **0.28** | 0.20 → **0.22** |
+| admin | 0.24 → **0.61** | 0.52 → **0.53** |
+| admin-orders | 0.22 → **0.28** | 0.61 → **0.25** |
+
+Desktop stays far inside budget (0.22 to 0.94 s). It is 0.05 to 0.3 s slower than before on most routes: the HTML is larger (inline CSS, R4-08) and the after-run uses `ISOLATE=1` (a cold browser per page). Not worth trading back phone seconds for.
+
+## R4.3 Bundles (first-load JS, gzip, from `bundle-report.mjs`)
+
+| Route | Before | After | three.js core in first load |
+|---|---|---|---|
+| `/design/[structure]` (editor) | 366 KB | **271 KB** | yes → **no** (only the lazy renderer chunks: `b536a0f1` 79 KB, `e49654ac` 52 KB, plus `bd904a5c` 100 KB that the renderer imports) |
+| `/design` (picker) | 152 KB | 153 KB | no → no |
+| `/s/[id]` (share) | 138 KB | 138 KB | no → no |
+| `/checkout/[designId]` | 155 KB | 155 KB | no → no |
+| `/catalog`, `/boxes`, `/` | 117 / 107 / 114 KB | same | no → no |
+| `/dev/3d`, `/dev/finishes` (internal) | 539 / 272 KB | 543 / 276 KB | yes → yes (they are the 3D test benches) |
+
+three.js core is now in the first load of **no product route**. The remaining 271 KB on the editor is React/Next (100 KB shared), the dieline engine (40 KB, now three-free), the editor UI and the generated 370-model slug index; family packs stay lazy (PERF-04).
+
+## R4.4 Lighthouse 12 mobile (simulated Slow 4G + 4x CPU)
+
+| Route | Score | FCP | LCP | TBT |
+|---|---|---|---|---|
+| /ar | 88 → **89** | 1.8 s → **1.8 s** | 3.6 s → **3.5 s** | 150 ms → 70 ms |
+| /ar/boxes | 81 → **87** | 2.1 s → **1.8 s** | 4.7 s → **3.8 s** | 90 ms → 50 ms |
+| /ar/catalog | 80 → **84** | 2.3 s → **2.0 s** | 4.5 s → **4.3 s** | 130 ms → 90 ms |
+| /ar/design | 33 → **44** | 2.4 s → **2.3 s** | 8.1 s → **4.2 s** | 152,810 ms → 152,810 ms |
+| /ar/design/mailer-box | 39 → **44** | 3.2 s → **2.0 s** | 7.6 s → **7.7 s** | 3,340 ms → 3,470 ms |
+| /en | 88 → **89** | 1.8 s → **1.5 s** | 3.6 s → **3.2 s** | 130 ms → 190 ms |
+| /en/design/round-bottle | 38 → **45** | 3.2 s → **1.5 s** | 7.2 s → **6.7 s** | 11,420 ms → 12,080 ms |
+
+Lighthouse's simulated mode estimates LCP from an *unthrottled* observation run. There the family pack loads before the first paint, so the editor's own stage image (rendered by client JS) is the LCP and Lantern charges it the whole JS chain (render delay 6.5 s). On the real throttled phone run the server-rendered poster paints first (1.4 to 1.7 s, R4.1). The editor's stage image now uses the same inlined poster as the loading state, which helps the real path but not Lantern's model. The `/design` TBT of 152 s is R4-12 (open).
+
+## R4.5 3D on the phone profile (`perf-3d.mjs`, PROFILES=phone)
+
+| Model | Rotation fps (SwiftShader) | Frame p95 | Main-thread CPU per render | Draw calls | Triangles |
+|---|---|---|---|---|---|
+| Box (mailer 0427) | 23.2 (round 3: 14.5) | 50 ms | 2.8 ms | 50 | 212 |
+| Bottle (round) | 11.4 | 117 ms | 2.0 ms | 7 | 40,052 |
+| Pouch (stand-up) | 17.1 | 67 ms | 1.7 ms | 8 | 14,308 |
+| FEFCO 0920 | 42.2 | 33 ms | 2.0 ms | 20 | 76 |
+
+This container has no GPU (see §2, caveat 1): fps is bound by SwiftShader's software rasteriser, which CDP CPU throttling does not slow. The transferable number is the main-thread CPU per rendered frame at 4x throttling, **1.7 to 2.8 ms against a 20 ms budget for 50 fps**, so the phone stays GPU-bound and the 50 fps target holds on a real phone GPU as in round 3. Nothing in this round touched the render loop: the only renderer-side change is that `PackagingModel` copies pose matrices with `matrix.fromArray(pose.local.elements)` (same 16 numbers) and `panelGeometry` wraps engine vectors in three's `Vector3` once per vertex at geometry build time. Box fps is higher than round 3's 14.5 on the same harness. First 3D frame on the phone is 7.9 to 8.1 s (JS for three/r3f on Slow 4G); the poster covers that time and is the LCP. The 10-switch leak test could not run: the harness's `[data-testid="model-picker"]` selector no longer matches the picker (R4-13).
+
+## R4.6 Findings (round 4, fresh audit)
+
+Severity before fixing. IDs R4-01… are new this round.
+
+| ID | Severity | Page / file | Finding | Standard / budget | Fix | Status |
+|---|---|---|---|---|---|---|
+| R4-01 | critical | every route, `next.config.ts` | Phone FCP 2.6 to 3.9 s everywhere: with `cssChunking: "strict"` a store page links **20** render-blocking CSS files (43 KB gz), the editor **21**; on Slow 4G with 6 sockets that is 3 to 4 round trips (562 ms each) before the first paint. | LCP < 2.5 s, FCP < 1.8 s (Core Web Vitals) | `experimental.inlineCss: true`: every route's CSS is a `<style>` in `<head>`, no CSS requests. Phone FCP **0.97 to 1.84 s** on every route. | fixed |
+| R4-02 | critical | editor `/design/[model]`, `DesignerApp.tsx`, `(editor)/layout.tsx`, `[structure]/page.tsx` | Phone LCP **10.5 to 11.3 s**: the server rendered an empty skeleton until the family pack loaded in the browser; the LCP was then the 3D scene's own CSS-background poster, painted after three/r3f booted; the page's 10 renderer script preloads (high priority) also held every other request back. | LCP < 2.5 s | The model poster is server-rendered inside the loading state (needs only the generated slug index), inlined as a `data:` URL when ≤ 4 KB (`src/app/model-poster.ts`; 1 KB typical) and preloaded from the layout above the Suspense boundary; the scene no longer gets a poster of its own (the stage `<img>` is the poster); renderer preloads are `fetchPriority: "low"`. Phone LCP **1.41 to 1.70 s**. First paint: `docs/screenshots/audit/performance/r4/designer-box-first-paint-phone-ar.png` (before: an empty shimmer for 10+ s). | fixed |
+| R4-03 | critical | editor bundle, `src/lib/dieline` (PERF-03) | The editor's first load carried three.js core (100 KB gz): the dieline engine (fold, generate, structures, illustration) and every family imported `Vector3`/`Matrix4`/`Quaternion`/`Box3` from `three`, and `DesignerApp` imported `defaultMaxDpr` from `components/three/hooks` (which imports `three`). | non-3D first-load JS; route 366 KB | `src/lib/dieline/math.ts`: line-for-line ports of the three r180 operations the engine uses (`Vec3`, `Quat`, `Mat4`, `Box3`, `Euler`), same column-major `elements`. Core and families import it; `defaultMaxDpr` moved to the three-free `components/three/dpr.ts`. Editor **366 → 271 KB**; three only in the lazy renderer. Proof of identical output: `geometry-snapshot.test.ts` hashes the full dieline, the panel poses at 3 fold progresses, the bounds and the illustration SVG of **all 290 generator outputs** (274 library box models + 16 core structures with every feature on), recorded before the change; `math.test.ts` compares 300 random cases of every operation against three bit for bit and fails if any file under `src/lib/dieline` imports `three`. | fixed |
+| R4-04 | high | `/design` picker, `DesignStart.tsx`, `StartViewer.tsx` | Phone LCP **12.0 to 12.9 s**: the server-rendered poster `<img>` was unmounted when the 3D preview mounted, and the scene's own (larger) poster `div` became the LCP after three booted. Same pattern as PERF-02 on the home hero. | LCP < 2.5 s | The poster stays until the preview reports its first frame (`onReady`) and is shown again while a new product's scene remounts; the scene gets no poster. Phone LCP **1.39 to 1.88 s**. First paint: `r4/design-picker-first-paint-phone-ar.png`. | fixed |
+| R4-05 | high | `/boxes`, `BoxesLanding.tsx` (marketing) | Phone LCP bimodal, **1.5 or 4.4 to 4.9 s**: the LCP render in the hero showcase was found by the parser only and sometimes queued behind the 20+ card renders. | LCP < 2.5 s | Preload with `imageSrcSet`/`imageSizes`/`fetchPriority: "high"` from `<head>` (the pattern `StructureDetail` already uses). **1.42 to 1.59 s** in every run. | fixed (file owned by marketing, additive) |
+| R4-06 | high | share `/s/[id]`, `s/[id]/page.tsx` | Phone LCP **3.6 to 4.1 s** (2.9 s after R4-01): the poster `<img>` streams after `loading.tsx` with the page segment, then costs one more round trip. | LCP < 2.5 s | Poster inlined as a `data:` URL (`modelPosterSrc`). **2.06 to 2.36 s**. | fixed |
+| R4-07 | medium | `src/app/fonts.ts`, `[locale]/layout.tsx`, `font-preload.ts` | Inter (49 KB) was preloaded on Arabic pages too (next/font preloads per module graph, not per locale), where it only renders digits and brand names, competing with the Arabic text font and the LCP image. | WCAG-neutral; budget: fonts off the critical path | Inter `preload: false`; the layout preloads Inter's Latin file on `/en` only and Plex Arabic 400/700 on `/ar` only (`interLatinPreloadUrl()`, unit-tested). Bytes are unchanged (Inter still loads for digits on `/ar`), but it is no longer a high-priority request in the first round trip. | fixed |
+| R4-08 | medium | every route (Next.js `inlineCss` behaviour) | With `inlineCss`, Next also embeds each stylesheet in the RSC payload (for client navigation), so the HTML grows by about twice the CSS: phone ar HTML+CSS on the wire 68 to 150 KB → 93 to 210 KB. The duplicated copy is at the end of the document and does not block the first paint (R4.1), but it is bandwidth. The editor additionally inlines vendor, charts, dev3d, checkout and OTP-form CSS that strict chunking put in shared chunks. | – | Accepted trade-off (measured: FCP −1.5 to −2.7 s for +25 to +60 KB). To shrink it, owners should cut CSS imports from shared modules (`components/ui` barrel pulls every Polaris stylesheet; `Misc.module.css` is 25 KB raw). | open (owners: platform, designer) |
+| R4-09 | medium | non-store routes (admin, vendor, checkout, editor), `src/app/[locale]/not-found.tsx` | The locale-level 404 imports `marketing.module.css` (64 KB raw); Next pre-renders every layout's not-found element with its styles into each page's RSC payload, so all non-store pages carry the marketing stylesheet (~13 KB gz). A `next/dynamic` body does not avoid it (tried, reverted). | – | Give the locale 404 its own small CSS module (or inline styles as the root `app/not-found.tsx` does) instead of the marketing sheet. | open (owner: platform) |
+| R4-10 | medium | ar home, ar vendors (hero text) | In about 1 run in 4 the Arabic hero heading / lead is reported a second time as the LCP, 2.4 % larger, when IBM Plex Sans Arabic swaps in (~3.0 s, painted at 4.1 to 4.6 s). p75 1.49 s, but single runs exceed 2.5 s. | LCP < 2.5 s | Options in R4.7. Not shipped: it changes what Arabic visitors see on a first slow visit. | open (decision) |
+| R4-11 | low | client dictionary, `[locale]/layout.tsx` | The dictionary serialised into every page included `legal` (policy texts) and `notify` (email/SMS templates), read only on the server. | – | Dropped from the client copy (`clientDictionary()`); ~9 KB raw less per page. | fixed |
+| R4-12 | high | `/design` picker | Lighthouse TBT **152 s** (unchanged), phone harness TBT 7.1 to 8.5 s, INP 776 to 800 ms: the idle-mounted turntable preview renders continuously, on SwiftShader every frame is a long task. On a real GPU this is much lower, but the preview still keeps the main thread busy while the visitor reads the page. | INP < 200 ms | Render the turntable on demand at a capped rate (e.g. 30 fps) and pause it when the page is not interacting / off-screen, or start it on first interaction. Not in this scope (designer / 3D engine). | open (owners: designer, 3d-engine) |
+| R4-13 | low | `docs/audit/tools/perf-3d.mjs` | The 50-switch leak test waits for `[data-testid="model-picker"]`, which the current picker no longer renders. | – | Update the selector to the catalogue picker (left for the 3d-engine owner, who changed the picker). | open |
+| R4-14 | low | `docs/audit/tools/perf-pages.mjs` | The harness logged in all three roles on every run and died on the OTP limits (1 per 30 s, 5 per hour per phone); pages after a heavy WebGL page measured 2 to 3 s late FCP (shared GPU process teardown). | – | Waits and retries on `RATE_LIMITED`, logs in only the roles the selected pages need, `ISOLATE=1` launches a fresh browser per page. | fixed |
+
+Counts (new this round, before fixing): **critical 3, high 4, medium 4, low 3**. Fixed 10; open 4 (R4-08 accepted trade-off with follow-ups for other owners, R4-09 platform, R4-10 decision below, R4-12 designer/3D) plus R4-13 (tool).
+
+Round 1 to 3 rows re-verified in the browser this round: PERF-03 (now fixed for the editor too, R4-03), PERF-05 (fonts: still 151 KB on `/ar`, 84 KB on `/en`; preloads now per locale), PERF-10 (renderer preload kept, now low priority), PERF-17 (strict chunking kept; its request count is moot with R4-01), PERF-02 (home hero poster stays mounted: LCP is the h1 at 1.42 to 1.56 s, R4-10 aside).
+
+## R4.7 R4-10: options for the font-swap re-report
+
+| Option | What changes | LCP effect | Cost |
+|---|---|---|---|
+| A. `font-display: optional` for Plex Arabic (next/font `display: "optional"`) | On a first visit where Plex has not arrived ~100 ms after first use, the page keeps the system Arabic font for that page view; later pages use the cached Plex. | No swap, so no second LCP entry; ar home / vendors stable at ~1.5 s. Also removes the small swap shift (CLS 0.004 to 0.009 on ar). | Brand typography missing on a first slow visit (Android: Noto Sans/Naskh Arabic). What I would ship if the 2.5 s target is per run rather than p75: the typeface is a nicety on a first visit on 3G; a 4 s hero is not. |
+| B. Self-host Plex Arabic (Arabic block only, 400/700) via `next/font/local` with a tuned fallback (`size-adjust` / ascent overrides against Noto Sans Arabic) | Fallback box matches Plex closely, so the swapped paint is not larger. | Removes most re-reports; depends on the visitor's system Arabic font, so not guaranteed. | Commit the woff2 files (OFL), maintain the metrics. |
+| C. Keep as is | – | p75 1.49 s passes CWV; ~25 % of single runs on two Arabic marketing pages exceed 2.5 s. | None. |
+
+## R4.8 Files touched outside this scope (all minimal, listed for the integrator)
+
+- `src/lib/dieline/families/**` (31 files): one import line each, `from "three"` → `from "@/lib/dieline/math"` with the same names (`Mat4 as Matrix4`…). No logic change; outputs pinned by the snapshot test. Family test files likewise.
+- `src/components/three/dpr.ts` (new), `hooks.ts` (re-exports it), `PackagingModel.tsx` (`matrix.fromArray(pose.local.elements)`), `panelGeometry.ts` (`v3()` wrap of engine vectors): 3d-engine owner.
+- `src/components/designer/DesignerApp.tsx`, `DesignStart.tsx`, `StartViewer.tsx`, `library.module.css` (hide the placeholder square behind the poster), `src/app/[locale]/design/(editor)/layout.tsx`, `[structure]/page.tsx`: designer owner (R4-02, R4-04).
+- `src/app/[locale]/s/[id]/page.tsx` (R4-06), `src/components/marketing/BoxesLanding.tsx` (R4-05, one preload, not the hero layout; for the marketing session).
+- `src/app/model-poster.ts` (new, server-only helper) and its test.
+- `docs/audit/tools/3d-ecma/geometry.ts`, `geometry-check.ts`: use the engine's `Vec3` (they mixed three vectors with engine output).
+
+## R4.9 Reproduce (round 4)
+
+```bash
+npm ci && cp .env.example .env && npm run db:push && npm run db:seed && npm run build
+OTP_DEV_ECHO=1 ALLOW_MOCK_PAYMENTS=1 ELBA_E2E=1 E2E_INSECURE_COOKIES=1 npx next start -p 3000 &
+node docs/audit/tools/bundle-report.mjs .next > /tmp/bundle.json
+# share token: POST /api/designs/<id>/share as the buyer
+ISOLATE=1 OUT=/tmp/after.json DESIGN_ID=<id> SHARE=<token> SHOTS=docs/screenshots/audit/performance/r4 node docs/audit/tools/perf-pages.mjs
+node docs/audit/tools/compare-pages.mjs docs/audit/perf-data/r4/pages-before.json /tmp/after.json phone
+node docs/audit/tools/lcp-trace.mjs http://localhost:3000/ar/vendors     # every LCP entry + font load time
+PROFILES=phone SWITCHES=10 OUT=/tmp/3d.json node docs/audit/tools/perf-3d.mjs
+UPDATE_GEOMETRY_SNAPSHOT=1 npx vitest run src/lib/dieline/__tests__/geometry-snapshot.test.ts   # only for an intended geometry change
+```
+
+## R4.10 Verification
+
+`npm run lint` clean, `npm run typecheck` clean, `npm test` **8,301 passed** (81 files, incl. the new geometry snapshot, math parity, font-preload and model-poster tests), `npm run build` clean, Playwright `designer.spec.ts`, `smoke.spec.ts`, `storefront.spec.ts` **28 / 28 passed** (`--workers=2`, desktop + mobile); `models.spec.ts` (740 cases, ~2 h) was stopped after 124 cases, all passed.

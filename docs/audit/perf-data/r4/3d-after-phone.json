@@ -1,0 +1,736 @@
+[
+ {
+  "model": "box",
+  "profile": "phone",
+  "locale": "en",
+  "url": "http://localhost:3000/en/design/mailer-box",
+  "firstFrameMs": 8100,
+  "dcl": 1384,
+  "loaded": {
+   "t": 11442.5,
+   "frames": 4,
+   "draws": 302,
+   "tris": 7500,
+   "firstDraw": 8100.399999999441,
+   "gl": {
+    "contexts": 1,
+    "liveContexts": 1,
+    "tex": 16,
+    "buf": 113,
+    "prog": 9,
+    "residentTexMB": 12,
+    "texCreated": 16,
+    "bufCreated": 113,
+    "progCreated": 9
+   },
+   "uploadedMB": 17.1,
+   "uploads": 30,
+   "uploadMs": 46,
+   "uploadMaxMs": 36.9,
+   "compileMs": 0.5,
+   "linkMs": 0.4,
+   "paramMs": 7.1,
+   "renderers": [
+    {
+     "calls": 50,
+     "triangles": 212,
+     "geometries": 35,
+     "textures": 12,
+     "programs": 9,
+     "pixelRatio": 1.5,
+     "size": [
+      561,
+      255
+     ],
+     "disposed": false
+    }
+   ],
+   "rendererCount": 1,
+   "rendererAlive": 1,
+   "liveRenderers": 1,
+   "heapMB": 22.1,
+   "canvases": 1
+  },
+  "idle": {
+   "fps": 0,
+   "frameP50": 16.7,
+   "frameP95": 16.7,
+   "frameMax": 16.8,
+   "renderCpuP50": null,
+   "renderCpuP95": null,
+   "drawsPerFrame": null,
+   "longTasks": 0,
+   "longMax": 0,
+   "tbt": 0
+  },
+  "rotate": {
+   "fps": 23.2,
+   "frameP50": 49.9,
+   "frameP95": 50.1,
+   "frameMax": 100,
+   "renderCpuP50": 2.8,
+   "renderCpuP95": 6.9,
+   "drawsPerFrame": 50,
+   "longTasks": 68,
+   "longMax": 94,
+   "tbt": 341
+  },
+  "afterRotate": {
+   "t": 47392.59999999963,
+   "frames": 768,
+   "draws": 38552,
+   "tris": 169680,
+   "firstDraw": 8100.399999999441,
+   "gl": {
+    "contexts": 1,
+    "liveContexts": 1,
+    "tex": 16,
+    "buf": 113,
+    "prog": 9,
+    "residentTexMB": 12,
+    "texCreated": 16,
+    "bufCreated": 113,
+    "progCreated": 9
+   },
+   "uploadedMB": 17.1,
+   "uploads": 30,
+   "uploadMs": 46,
+   "uploadMaxMs": 36.9,
+   "compileMs": 0.5,
+   "linkMs": 0.4,
+   "paramMs": 7.1,
+   "renderers": [
+    {
+     "calls": 50,
+     "triangles": 212,
+     "geometries": 35,
+     "textures": 12,
+     "programs": 9,
+     "pixelRatio": 1,
+     "size": [
+      374,
+      170
+     ],
+     "disposed": false
+    }
+   ],
+   "rendererCount": 1,
+   "rendererAlive": 1,
+   "liveRenderers": 1,
+   "heapMB": 15.7,
+   "canvases": 1
+  },
+  "config": {
+   "changes": 12,
+   "latencyP50": 1496.9,
+   "latencyMax": 2685,
+   "fps": 7.5,
+   "frameP50": 16.8,
+   "frameP95": 216.7,
+   "frameMax": 733.4,
+   "renderCpuP50": 2.7,
+   "renderCpuP95": 41.1,
+   "drawsPerFrame": 51,
+   "longTasks": 127,
+   "longMax": 648,
+   "tbt": 10407
+  },
+  "afterConfig": {
+   "t": 72298.29999999981,
+   "frames": 955,
+   "draws": 49351,
+   "tris": 226412,
+   "firstDraw": 8100.399999999441,
+   "gl": {
+    "contexts": 1,
+    "liveContexts": 1,
+    "tex": 17,
+    "buf": 121,
+    "prog": 12,
+    "residentTexMB": 12.2,
+    "texCreated": 94,
+    "bufCreated": 621,
+    "progCreated": 26
+   },
+   "uploadedMB": 138.7,
+   "uploads": 196,
+   "uploadMs": 818,
+   "uploadMaxMs": 51.4,
+   "compileMs": 3,
+   "linkMs": 1.1,
+   "paramMs": 26.7,
+   "renderers": [
+    {
+     "calls": 52,
+     "triangles": 1076,
+     "geometries": 37,
+     "textures": 13,
+     "programs": 12,
+     "pixelRatio": 1.5,
+     "size": [
+      561,
+      255
+     ],
+     "disposed": false
+    }
+   ],
+   "rendererCount": 1,
+   "rendererAlive": 1,
+   "liveRenderers": 1,
+   "heapMB": 20.2,
+   "canvases": 1
+  },
+  "switching": {
+   "error": "TimeoutError: page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"model-picker\"]') to be visible\u001b[22m\n"
+  }
+ },
+ {
+  "model": "bottle",
+  "profile": "phone",
+  "locale": "en",
+  "url": "http://localhost:3000/en/design/round-bottle",
+  "firstFrameMs": 8127,
+  "dcl": 1521,
+  "loaded": {
+   "t": 12423.299999999814,
+   "frames": 17,
+   "draws": 405,
+   "tris": 1597606,
+   "firstDraw": 8126.799999999814,
+   "gl": {
+    "contexts": 1,
+    "liveContexts": 1,
+    "tex": 11,
+    "buf": 85,
+    "prog": 11,
+    "residentTexMB": 8.9,
+    "texCreated": 12,
+    "bufCreated": 85,
+    "progCreated": 12
+   },
+   "uploadedMB": 15,
+   "uploads": 22,
+   "uploadMs": 52,
+   "uploadMaxMs": 30.4,
+   "compileMs": 0.2,
+   "linkMs": 0,
+   "paramMs": 16.3,
+   "renderers": [
+    {
+     "calls": 7,
+     "triangles": 40052,
+     "geometries": 24,
+     "textures": 7,
+     "programs": 11,
+     "pixelRatio": 1.5,
+     "size": [
+      561,
+      255
+     ],
+     "disposed": false
+    }
+   ],
+   "rendererCount": 1,
+   "rendererAlive": 1,
+   "liveRenderers": 1,
+   "heapMB": 22.2,
+   "canvases": 1
+  },
+  "idle": {
+   "fps": 0,
+   "frameP50": 16.7,
+   "frameP95": 16.8,
+   "frameMax": 16.8,
+   "renderCpuP50": null,
+   "renderCpuP95": null,
+   "drawsPerFrame": null,
+   "longTasks": 0,
+   "longMax": 0,
+   "tbt": 0
+  },
+  "rotate": {
+   "fps": 11.4,
+   "frameP50": 83.4,
+   "frameP95": 116.6,
+   "frameMax": 133.4,
+   "renderCpuP50": 2,
+   "renderCpuP95": 5,
+   "drawsPerFrame": 7,
+   "longTasks": 751,
+   "longMax": 145,
+   "tbt": 26220
+  },
+  "afterRotate": {
+   "t": 81443.89999999944,
+   "frames": 769,
+   "draws": 5676,
+   "tris": 31756762,
+   "firstDraw": 8126.799999999814,
+   "gl": {
+    "contexts": 1,
+    "liveContexts": 1,
+    "tex": 11,
+    "buf": 85,
+    "prog": 11,
+    "residentTexMB": 8.9,
+    "texCreated": 12,
+    "bufCreated": 85,
+    "progCreated": 12
+   },
+   "uploadedMB": 15,
+   "uploads": 22,
+   "uploadMs": 52,
+   "uploadMaxMs": 30.4,
+   "compileMs": 0.2,
+   "linkMs": 0,
+   "paramMs": 16.3,
+   "renderers": [
+    {
+     "calls": 7,
+     "triangles": 40052,
+     "geometries": 24,
+     "textures": 7,
+     "programs": 11,
+     "pixelRatio": 1,
+     "size": [
+      374,
+      170
+     ],
+     "disposed": false
+    }
+   ],
+   "rendererCount": 1,
+   "rendererAlive": 1,
+   "liveRenderers": 1,
+   "heapMB": 16.4,
+   "canvases": 1
+  },
+  "config": {
+   "changes": 12,
+   "latencyP50": 2117.3,
+   "latencyMax": 4270,
+   "fps": 5.6,
+   "frameP50": 83.4,
+   "frameP95": 350,
+   "frameMax": 783.3,
+   "renderCpuP50": 0.1,
+   "renderCpuP95": 18,
+   "drawsPerFrame": 7,
+   "longTasks": 165,
+   "longMax": 700,
+   "tbt": 15635
+  },
+  "afterConfig": {
+   "t": 109264.5,
+   "frames": 925,
+   "draws": 7071,
+   "tris": 39849686,
+   "firstDraw": 8126.799999999814,
+   "gl": {
+    "contexts": 1,
+    "liveContexts": 1,
+    "tex": 11,
+    "buf": 85,
+    "prog": 11,
+    "residentTexMB": 8.6,
+    "texCreated": 36,
+    "bufCreated": 333,
+    "progCreated": 38
+   },
+   "uploadedMB": 80.8,
+   "uploads": 89,
+   "uploadMs": 507,
+   "uploadMaxMs": 30.4,
+   "compileMs": 5.2,
+   "linkMs": 1.9,
+   "paramMs": 43.1,
+   "renderers": [
+    {
+     "calls": 7,
+     "triangles": 38964,
+     "geometries": 24,
+     "textures": 7,
+     "programs": 11,
+     "pixelRatio": 1.5,
+     "size": [
+      561,
+      255
+     ],
+     "disposed": false
+    }
+   ],
+   "rendererCount": 1,
+   "rendererAlive": 1,
+   "liveRenderers": 1,
+   "heapMB": 26.7,
+   "canvases": 1
+  },
+  "switching": null
+ },
+ {
+  "model": "pouch",
+  "profile": "phone",
+  "locale": "en",
+  "url": "http://localhost:3000/en/design/stand-up-pouch",
+  "firstFrameMs": 7984,
+  "dcl": 1428,
+  "loaded": {
+   "t": 11498.399999999441,
+   "frames": 16,
+   "draws": 291,
+   "tris": 406818,
+   "firstDraw": 7984,
+   "gl": {
+    "contexts": 1,
+    "liveContexts": 1,
+    "tex": 12,
+    "buf": 85,
+    "prog": 8,
+    "residentTexMB": 10.2,
+    "texCreated": 13,
+    "bufCreated": 85,
+    "progCreated": 9
+   },
+   "uploadedMB": 17.2,
+   "uploads": 24,
+   "uploadMs": 62,
+   "uploadMaxMs": 25.8,
+   "compileMs": 0,
+   "linkMs": 0,
+   "paramMs": 7.9,
+   "renderers": [
+    {
+     "calls": 8,
+     "triangles": 14308,
+     "geometries": 24,
+     "textures": 8,
+     "programs": 8,
+     "pixelRatio": 1.5,
+     "size": [
+      561,
+      255
+     ],
+     "disposed": false
+    }
+   ],
+   "rendererCount": 1,
+   "rendererAlive": 1,
+   "liveRenderers": 1,
+   "heapMB": 17.9,
+   "canvases": 1
+  },
+  "idle": {
+   "fps": 0,
+   "frameP50": 16.7,
+   "frameP95": 16.7,
+   "frameMax": 16.8,
+   "renderCpuP50": null,
+   "renderCpuP95": null,
+   "drawsPerFrame": null,
+   "longTasks": 0,
+   "longMax": 0,
+   "tbt": 0
+  },
+  "rotate": {
+   "fps": 17.1,
+   "frameP50": 50.1,
+   "frameP95": 66.7,
+   "frameMax": 133.3,
+   "renderCpuP50": 1.7,
+   "renderCpuP95": 4.2,
+   "drawsPerFrame": 8,
+   "longTasks": 632,
+   "longMax": 120,
+   "tbt": 4657
+  },
+  "afterRotate": {
+   "t": 58597.59999999963,
+   "frames": 771,
+   "draws": 6339,
+   "tris": 11223666,
+   "firstDraw": 7984,
+   "gl": {
+    "contexts": 1,
+    "liveContexts": 1,
+    "tex": 12,
+    "buf": 85,
+    "prog": 8,
+    "residentTexMB": 10.2,
+    "texCreated": 13,
+    "bufCreated": 85,
+    "progCreated": 9
+   },
+   "uploadedMB": 17.2,
+   "uploads": 24,
+   "uploadMs": 62,
+   "uploadMaxMs": 25.8,
+   "compileMs": 0,
+   "linkMs": 0,
+   "paramMs": 7.9,
+   "renderers": [
+    {
+     "calls": 8,
+     "triangles": 14308,
+     "geometries": 24,
+     "textures": 8,
+     "programs": 8,
+     "pixelRatio": 1,
+     "size": [
+      374,
+      170
+     ],
+     "disposed": false
+    }
+   ],
+   "rendererCount": 1,
+   "rendererAlive": 1,
+   "liveRenderers": 1,
+   "heapMB": 15.4,
+   "canvases": 1
+  },
+  "config": {
+   "changes": 12,
+   "latencyP50": 1760.7,
+   "latencyMax": 2803,
+   "fps": 7,
+   "frameP50": 16.7,
+   "frameP95": 266.6,
+   "frameMax": 466.7,
+   "renderCpuP50": 1.1,
+   "renderCpuP95": 23.9,
+   "drawsPerFrame": 8,
+   "longTasks": 177,
+   "longMax": 464,
+   "tbt": 10407
+  },
+  "afterConfig": {
+   "t": 83936.69999999925,
+   "frames": 948,
+   "draws": 8024,
+   "tris": 14185650,
+   "firstDraw": 7984,
+   "gl": {
+    "contexts": 1,
+    "liveContexts": 1,
+    "tex": 11,
+    "buf": 85,
+    "prog": 8,
+    "residentTexMB": 8.6,
+    "texCreated": 41,
+    "bufCreated": 389,
+    "progCreated": 31
+   },
+   "uploadedMB": 96,
+   "uploads": 94,
+   "uploadMs": 549,
+   "uploadMaxMs": 25.8,
+   "compileMs": 1.1,
+   "linkMs": 0.3,
+   "paramMs": 29.4,
+   "renderers": [
+    {
+     "calls": 8,
+     "triangles": 14308,
+     "geometries": 24,
+     "textures": 7,
+     "programs": 8,
+     "pixelRatio": 1.5,
+     "size": [
+      561,
+      255
+     ],
+     "disposed": false
+    }
+   ],
+   "rendererCount": 1,
+   "rendererAlive": 1,
+   "liveRenderers": 1,
+   "heapMB": 22.7,
+   "canvases": 1
+  },
+  "switching": null
+ },
+ {
+  "model": "fefco09",
+  "profile": "phone",
+  "locale": "en",
+  "url": "http://localhost:3000/en/design/fefco-0920-compartment-liner-across",
+  "firstFrameMs": 7897,
+  "dcl": 1419,
+  "loaded": {
+   "t": 10959.299999999814,
+   "frames": 4,
+   "draws": 152,
+   "tris": 6820,
+   "firstDraw": 7896.899999999441,
+   "gl": {
+    "contexts": 1,
+    "liveContexts": 1,
+    "tex": 16,
+    "buf": 83,
+    "prog": 9,
+    "residentTexMB": 8.8,
+    "texCreated": 16,
+    "bufCreated": 83,
+    "progCreated": 9
+   },
+   "uploadedMB": 11.4,
+   "uploads": 30,
+   "uploadMs": 20,
+   "uploadMaxMs": 9.7,
+   "compileMs": 0.8,
+   "linkMs": 0.7,
+   "paramMs": 9.5,
+   "renderers": [
+    {
+     "calls": 20,
+     "triangles": 76,
+     "geometries": 25,
+     "textures": 12,
+     "programs": 9,
+     "pixelRatio": 1.5,
+     "size": [
+      561,
+      255
+     ],
+     "disposed": false
+    }
+   ],
+   "rendererCount": 1,
+   "rendererAlive": 1,
+   "liveRenderers": 1,
+   "heapMB": 17.1,
+   "canvases": 1
+  },
+  "idle": {
+   "fps": 0,
+   "frameP50": 16.7,
+   "frameP95": 16.8,
+   "frameMax": 16.8,
+   "renderCpuP50": null,
+   "renderCpuP95": null,
+   "drawsPerFrame": null,
+   "longTasks": 0,
+   "longMax": 0,
+   "tbt": 0
+  },
+  "rotate": {
+   "fps": 42.2,
+   "frameP50": 16.7,
+   "frameP95": 33.4,
+   "frameMax": 50,
+   "renderCpuP50": 2,
+   "renderCpuP95": 4.6,
+   "drawsPerFrame": 20,
+   "longTasks": 1,
+   "longMax": 55,
+   "tbt": 5
+  },
+  "afterRotate": {
+   "t": 34966.299999999814,
+   "frames": 885,
+   "draws": 17792,
+   "tris": 73852,
+   "firstDraw": 7896.899999999441,
+   "gl": {
+    "contexts": 1,
+    "liveContexts": 1,
+    "tex": 16,
+    "buf": 83,
+    "prog": 9,
+    "residentTexMB": 8.8,
+    "texCreated": 16,
+    "bufCreated": 83,
+    "progCreated": 9
+   },
+   "uploadedMB": 11.4,
+   "uploads": 30,
+   "uploadMs": 20,
+   "uploadMaxMs": 9.7,
+   "compileMs": 0.8,
+   "linkMs": 0.7,
+   "paramMs": 9.5,
+   "renderers": [
+    {
+     "calls": 20,
+     "triangles": 76,
+     "geometries": 25,
+     "textures": 12,
+     "programs": 9,
+     "pixelRatio": 1,
+     "size": [
+      374,
+      170
+     ],
+     "disposed": false
+    }
+   ],
+   "rendererCount": 1,
+   "rendererAlive": 1,
+   "liveRenderers": 1,
+   "heapMB": 19.1,
+   "canvases": 1
+  },
+  "config": {
+   "changes": 12,
+   "latencyP50": 1009.6,
+   "latencyMax": 1401,
+   "fps": 12.9,
+   "frameP50": 16.8,
+   "frameP95": 116.7,
+   "frameMax": 800,
+   "renderCpuP50": 2.2,
+   "renderCpuP95": 16.2,
+   "drawsPerFrame": 21,
+   "longTasks": 73,
+   "longMax": 619,
+   "tbt": 5422
+  },
+  "afterConfig": {
+   "t": 53813.39999999944,
+   "frames": 1128,
+   "draws": 23516,
+   "tris": 107166,
+   "firstDraw": 7896.899999999441,
+   "gl": {
+    "contexts": 1,
+    "liveContexts": 1,
+    "tex": 17,
+    "buf": 91,
+    "prog": 12,
+    "residentTexMB": 8.3,
+    "texCreated": 95,
+    "bufCreated": 325,
+    "progCreated": 26
+   },
+   "uploadedMB": 49.9,
+   "uploads": 197,
+   "uploadMs": 231,
+   "uploadMaxMs": 15.9,
+   "compileMs": 2.2,
+   "linkMs": 0.9,
+   "paramMs": 26.2,
+   "renderers": [
+    {
+     "calls": 22,
+     "triangles": 940,
+     "geometries": 27,
+     "textures": 13,
+     "programs": 12,
+     "pixelRatio": 1.5,
+     "size": [
+      561,
+      255
+     ],
+     "disposed": false
+    }
+   ],
+   "rendererCount": 1,
+   "rendererAlive": 1,
+   "liveRenderers": 1,
+   "heapMB": 34.8,
+   "canvases": 1
+  },
+  "switching": null
+ }
+]
