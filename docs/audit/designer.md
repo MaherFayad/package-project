@@ -351,3 +351,35 @@ The remaining gap to 2.5 s is FCP (3.2 to 4.0 s on this profile). FCP is platfor
 | low | 0 | 0 | 0 |
 
 This round still found a medium-or-worse issue (both are performance), so the stop rule calls for another pass.
+
+# Round 7
+
+Base: main dccbd36 (includes this branch's f6e220a, catalogue R7 and the integrator's resolution of the share page, the order label and the picker) merged in. In all three spots I took main's side, then confirmed every designer addition was still there (model row, vessel size, print material, vessel subtitle, `&model=`, the `quoteAction` / container labels, wrapping picker names, the R6 preloads, the phone hero gate).
+
+## Spots the integrator asked me to check in the browser
+
+| spot | check | result |
+|---|---|---|
+| share page, quote-only model | `/s/<token>` for the aerosol can, ar + en | h1 "Aerosol can" / "عبوة بخاخ إيروسول". Rows: Style, Model `CAN-AEROSOL`, Size "Ø 52 × 160 mm", Print material. CTA "Request a quote" / "طلب عرض سعر" → `/checkout/<id>?share=…&model=CAN-AEROSOL` |
+| editor order label | aerosol can, signed in | badge settles on `quote` in about 1.8 s: "Priced by quote: see why" / "التسعير بعرض سعر: عرض السبب". The toolbar, the price modal title and its action all say "Request a quote" / "طلب عرض سعر". Mailer: "500 boxes from EGP 40.06 each excl. VAT · delivered in 10 days" |
+| picker names | WCAG 1.4.12 text spacing, ar + en, 390 + 1440 | 0 of 91 cut on the start page, 0 in the editor picker |
+
+## Fresh pass
+
+- axe-core: **0 violations** on the start page (before and after Play), box and pouch editors, the artwork tab, text added, the gate, and the phone "Adjust view" menu open, in ar and en, at 390 and 1440.
+- Keyboard:
+  - The "Adjust view" menu opens with Enter and focuses its first item. Arrow keys move through the items. Escape closes it and returns focus to the button.
+  - Each menu item is 40 px tall (2.5.8).
+  - The focus ring is the kit's #005bd3 (focus-visible) on the menu button and the fold buttons.
+- Start page on a phone: the poster shows until Play (no canvas). Play loads the 3D view and starts turning, and the button label then says "Pause the turning box".
+- Export (standard PNG): no placeholder, mark present, file `elba-mailer-box-1080.png`. Share modal states and the copy-failure message work. No console errors.
+
+**No new findings this round.** Counts: critical 0, high 0, medium 0, low 0. Under the stop rule, the designer area is done.
+
+Still owned elsewhere: R4-R1 (MarketingShell boundary, platform/marketing), R4-R2 and R6-R1 (engine poster and mount task, 3d-engine), and the platform-wide first paint of 3.2 to 4.0 s on the phone profile (performance session).
+
+## Verification (round 7)
+
+- Lint and typecheck are clean. `npm test`: **85 files, 8,419 passed**. `npm run build` OK.
+- Playwright `designer` + `smoke` + `journey` + `checkout` + `catalogue` (`--workers=2`): **41 passed, 5 skipped**, 0 failed.
+- Hydration e2e, 16 × 2 projects: **32 / 32 passed**.
