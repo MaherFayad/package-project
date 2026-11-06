@@ -26,7 +26,9 @@ import {
   HelpCircle,
   X,
 } from "lucide-react";
+import { useI18n } from "@/i18n/client";
 import { useSessionRole } from "./useSessionRole";
+import { buildNav } from "./navModel";
 import styles from "./kit/chrome.module.css";
 
 const ICONS = {
@@ -60,18 +62,9 @@ export interface MegaMenu {
   featured?: { eyebrow: string; title: string; body: string; href: string; image: string; latestTitle?: string; latest?: string[] };
   foot?: { href: string; label: string; body: string }[];
 }
-export interface NavModel {
-  label: string;
-  homeHref: string;
+/** Server-rendered slots; the menus and links are built on the client from the dictionary (navModel.ts). */
+export interface NavSlots {
   brand: ReactNode;
-  brandLabel: string;
-  menuLabel: string;
-  closeLabel: string;
-  backLabel: string;
-  menus: MegaMenu[];
-  links: { href: string; label: string }[];
-  /** Extra links for signed-in visitors (resolved on the client, see useSessionRole). */
-  signedInLinks?: { orders: { href: string; label: string }; vendor: { href: string; label: string }; admin: { href: string; label: string } };
   /** Rendered at the foot of the mobile menu (log in, CTA, language). */
   sheetActions: ReactNode;
   /** Rendered next to the menu button on phones (the underlined CTA). */
@@ -154,8 +147,14 @@ function MegaPanel({ menu, id, open }: { menu: MegaMenu; id: string; open: boole
  * inside, Escape closes, scroll locked). Everything renders in the server HTML: without JS the
  * links in the mobile list and the top-level links still work.
  */
-export function HeaderNav({ model, children }: { model: NavModel; children: ReactNode }) {
+export function HeaderNav({ slots, children }: { slots: NavSlots; children: ReactNode }) {
+  const { locale, t } = useI18n();
+  const model = { ...buildNav(locale, t), ...slots };
   const [open, setOpen] = useState<string | null>(null);
+  // Panels mount after hydration: they are hidden until opened (and their links are in the phone
+  // menu and the footer too), so the static HTML stays small for the LCP (about 10 KB less).
+  const [panels, setPanels] = useState(false);
+  useEffect(() => setPanels(true), []);
   const [sheet, setSheet] = useState(false);
   const [level, setLevel] = useState<string | null>(null);
   const pathname = usePathname();
@@ -307,7 +306,7 @@ export function HeaderNav({ model, children }: { model: NavModel; children: Reac
                     type="button"
                     className={styles.navTrigger}
                     aria-expanded={isOpen}
-                    aria-controls={id}
+                    aria-controls={panels ? id : undefined}
                     data-menu-trigger={m.id}
                     onClick={() => {
                       clear();
@@ -331,7 +330,7 @@ export function HeaderNav({ model, children }: { model: NavModel; children: Reac
                     {m.label}
                     <ChevronDown size={14} strokeWidth={2} aria-hidden />
                   </button>
-                  <MegaPanel menu={m} id={id} open={isOpen} />
+                  {panels ? <MegaPanel menu={m} id={id} open={isOpen} /> : null}
                 </li>
               );
             })}

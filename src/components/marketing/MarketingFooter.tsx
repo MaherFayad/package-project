@@ -49,7 +49,6 @@ export function MarketingFooter({ locale }: { locale: Locale }) {
         { href: `${base}/why-elba#faq`, label: t("marketing.footer.faq") },
         { href: `${base}/orders`, label: t("marketing.footer.orders") },
         { href: `${base}/account`, label: t("marketing.footer.account") },
-        { href: `${base}/legal/returns`, label: t("store.footer.returns") },
       ],
     },
   ];
