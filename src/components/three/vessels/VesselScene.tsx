@@ -1,11 +1,13 @@
 "use client";
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { ContactShadows, Environment, Lightformer, OrbitControls } from "@react-three/drei";
-import { useEffect, useId, useImperativeHandle, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode, type Ref } from "react";
+import { Environment, Lightformer, OrbitControls } from "@react-three/drei";
+import { memo, useEffect, useId, useImperativeHandle, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode, type Ref } from "react";
 import { NeutralToneMapping, PerspectiveCamera, Spherical, Vector3, type Object3D } from "three";
 import { defaultMaxDpr, usePrefersReducedMotion } from "../hooks";
 import { captureScreenshot } from "../screenshot";
+import { SoftShadow } from "../SoftShadow";
+import { InteractionDpr, KEY_SHORTCUTS, registerDebugRenderer, useOnScreen } from "../perf";
 import type { PackagingSceneHandle, ViewName } from "../PackagingScene";
 import { VesselModel, type VesselModelProps } from "./VesselModel";
 import type { VesselQuality } from "./materials";
@@ -80,6 +82,9 @@ function Rig({
   sceneKey: string;
 }) {
   const { camera, gl, scene, invalidate, controls } = useThree();
+  const regress = useThree((s) => s.performance.regress);
+  const onScreen = useOnScreen(gl.domElement);
+  useEffect(() => onScreen.subscribe(() => invalidate()), [onScreen, invalidate]);
   const cam = camera as PerspectiveCamera;
   const orbit = controls as unknown as { target: Vector3; update(): void; minDistance: number; maxDistance: number } | null;
   const localTarget = useRef(new Vector3());
@@ -145,7 +150,7 @@ function Rig({
       );
       if (tw.t >= 1) tween.current = null;
       else busy = true;
-    } else if (turntable && !reduced && !interacted.current) {
+    } else if (turntable && !reduced && !interacted.current && onScreen.current) {
       const s = spherical();
       s.theta += delta * 0.35;
       place(s, getTarget().clone());
@@ -159,6 +164,7 @@ function Rig({
       canvas: gl.domElement,
       rotate(dAz, dPolar = 0) {
         interacted.current = true;
+        regress();
         tween.current = null;
         const s = spherical();
         s.theta += dAz * DEG;
@@ -167,6 +173,7 @@ function Rig({
       },
       zoom(factor) {
         interacted.current = true;
+        regress();
         tween.current = null;
         const s = spherical();
         s.radius = Math.min(f.distance * 3, Math.max(f.distance * 0.3, s.radius * factor));
@@ -190,22 +197,32 @@ function Rig({
   const extent = Math.max(f.size.x, f.size.z, 0.04);
   return (
     <>
+      <VesselLights />
+      <SoftShadow scale={extent * 5} far={Math.max(f.size.y, extent)} blur={2.6} opacity={0.45} contactOpacity={0.5} color="#2b2620" />
+      <OrbitControls makeDefault enablePan={false} enableDamping={!reduced} dampingFactor={0.1} rotateSpeed={0.75} onStart={() => (interacted.current = true)} regress />
+      <InteractionDpr />
+    </>
+  );
+}
+
+/** Studio softboxes tuned for glass and metal (two tall strips give glass its long highlights). Memoised: see lighting.tsx. */
+const VesselLights = memo(function VesselLights() {
+  return (
+    <>
       <ambientLight intensity={0.25} />
       <directionalLight position={[2.5, 4, 3]} intensity={1.4} />
       <directionalLight position={[-3, 2.2, -2]} intensity={0.45} color="#dfe8ff" />
-      {/* studio softboxes: two tall strips give glass its long highlights */}
       <Environment resolution={256} frames={1} environmentIntensity={0.9}>
+        <color attach="background" args={["#202020"]} />
         <Lightformer form="rect" intensity={3} position={[-2.2, 1.2, 1.6]} rotation-y={Math.PI / 4} scale={[0.6, 4, 1]} />
         <Lightformer form="rect" intensity={2.2} position={[2.4, 1.2, 1.2]} rotation-y={-Math.PI / 3} scale={[0.5, 4, 1]} />
         <Lightformer form="rect" intensity={1.6} position={[0, 4, 0]} rotation-x={Math.PI / 2} scale={[4, 4, 1]} />
         <Lightformer form="rect" intensity={0.8} position={[0, 0.6, -3]} scale={[6, 1.5, 1]} color="#ffeedd" />
         <Lightformer form="ring" intensity={1.2} position={[1.5, 2.5, 3]} scale={0.8} />
       </Environment>
-      <ContactShadows position={[0, -0.0004, 0]} scale={extent * 5} far={Math.max(f.size.y, extent)} blur={2.6} opacity={0.42} resolution={512} color="#2b2620" />
-      <OrbitControls makeDefault enablePan={false} enableDamping={!reduced} dampingFactor={0.1} rotateSpeed={0.75} onStart={() => (interacted.current = true)} />
     </>
   );
-}
+});
 
 /**
  * 3D viewer for bottles, jars, cans, tins, pouches and tubes: studio lighting, contact shadow,
@@ -266,6 +283,8 @@ export function VesselScene(props: VesselSceneProps) {
       "=": () => api.zoom(0.85),
       "-": () => api.zoom(1 / 0.85),
       _: () => api.zoom(1 / 0.85),
+      PageUp: () => api.zoom(0.85),
+      PageDown: () => api.zoom(1 / 0.85),
       "0": () => api.reset(),
       Home: () => api.reset(),
     };
@@ -286,6 +305,7 @@ export function VesselScene(props: VesselSceneProps) {
       aria-roledescription={roleDescription}
       aria-label={ariaLabel}
       aria-describedby={hintId}
+      aria-keyshortcuts={KEY_SHORTCUTS}
       onKeyDown={onKeyDown}
       onPointerDown={() => {
         interacted.current = true;
@@ -300,12 +320,14 @@ export function VesselScene(props: VesselSceneProps) {
         className={styles.canvas}
         frameloop="demand"
         dpr={[1, dprCap]}
+        performance={{ min: 0.66, max: 1, debounce: 300 }}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance", localClippingEnabled: true } as never}
         camera={{ fov: 28, near: 0.005, far: 40, position: [0.3, 0.25, 0.6] }}
         onCreated={({ gl }) => {
           gl.toneMapping = NeutralToneMapping;
           gl.localClippingEnabled = true;
           gl.setClearColor(0x000000, 0);
+          registerDebugRenderer(gl);
           onReady?.();
         }}
         fallback={fallback ?? <div className={styles.fallback}>3D preview is not available on this device.</div>}

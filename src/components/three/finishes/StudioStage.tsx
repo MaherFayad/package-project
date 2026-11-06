@@ -1,10 +1,12 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import { ContactShadows, Environment, Html, Lightformer, Line } from "@react-three/drei";
+import { Html, Line } from "@react-three/drei";
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { CanvasTexture, Color, DoubleSide, LatheGeometry, MeshPhysicalMaterial, MeshStandardMaterial, Vector2, type Texture } from "three";
 import { woodTexture } from "./textures";
+import { StudioLighting } from "../lighting";
+import { SoftShadow } from "../SoftShadow";
 
 /**
  * Studio set for packaging shots: a softbox environment generated in the scene (no HDRI files,
@@ -42,37 +44,18 @@ function radialFade(): Texture | null {
   const c = document.createElement("canvas");
   c.width = c.height = 256;
   const ctx = c.getContext("2d")!;
-  const g = ctx.createRadialGradient(128, 128, 30, 128, 128, 128);
-  g.addColorStop(0, "#fff");
-  g.addColorStop(0.6, "#fff");
-  g.addColorStop(1, "#000");
+  // long, eased falloff so the table melts into the background instead of ending in a visible rim
+  const g = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
+  const stops = 8;
+  for (let i = 0; i <= stops; i++) {
+    const t = i / stops;
+    const a = t < 0.3 ? 1 : 1 - (t - 0.3) / 0.7;
+    const v = Math.round(255 * a * a * (3 - 2 * a));
+    g.addColorStop(t, `rgb(${v},${v},${v})`);
+  }
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, 256, 256);
   return new CanvasTexture(c);
-}
-
-function StudioLights({ intensity = 1 }: { intensity?: number }) {
-  return (
-    <>
-      <hemisphereLight args={["#ffffff", "#e3ddd3", 0.55 * intensity]} />
-      <directionalLight position={[2.2, 4, 3]} intensity={1.35 * intensity} />
-      <directionalLight position={[-3, 1.8, -2.5]} intensity={0.35 * intensity} color="#dfe8ff" />
-      <Environment resolution={256} frames={1} environmentIntensity={0.85 * intensity}>
-        {/* overhead softbox */}
-        <Lightformer form="rect" intensity={2.4} position={[0, 5, 0.5]} rotation-x={Math.PI / 2} scale={[7, 5, 1]} />
-        {/* key strip front-left: the long highlight that sells foil and gloss */}
-        <Lightformer form="rect" intensity={3.2} position={[-3.2, 1.6, 2.8]} rotation-y={Math.PI / 4} scale={[1.2, 5, 1]} />
-        {/* rim strip back-right */}
-        <Lightformer form="rect" intensity={1.8} position={[3.4, 1.4, -2.2]} rotation-y={(-3 * Math.PI) / 4} scale={[1, 4, 1]} />
-        {/* broad front fill */}
-        <Lightformer form="rect" intensity={0.8} position={[0, 1, 5]} scale={[10, 3, 1]} />
-        {/* warm floor bounce */}
-        <Lightformer form="rect" intensity={0.35} color="#f2e6d6" position={[0, -2, 0]} rotation-x={-Math.PI / 2} scale={[10, 10, 1]} />
-        {/* soft cyclorama so reflections never go black */}
-        <Lightformer form="ring" intensity={0.25} position={[0, 0, -6]} scale={[12, 12, 1]} />
-      </Environment>
-    </>
-  );
 }
 
 function Table({ extent }: { extent: number }) {
@@ -82,7 +65,7 @@ function Table({ extent }: { extent: number }) {
   const s = Math.max(0.6, extent * 5);
   if (wood) wood.repeat.set(s / 0.6, s / 0.6);
   return (
-    <mesh rotation-x={-Math.PI / 2} position={[0, -0.0012, 0]} receiveShadow>
+    <mesh rotation-x={-Math.PI / 2} position={[0, -0.0012, 0]} receiveShadow userData={{ noContactShadow: true }}>
       <planeGeometry args={[s, s]} />
       <meshStandardMaterial map={wood} alphaMap={fade} transparent roughness={0.55} metalness={0} depthWrite={false} />
     </mesh>
@@ -96,7 +79,7 @@ function Shelf({ size }: { size: { x: number; y: number; z: number } }) {
   const wallH = Math.max(size.y * 2.4, 0.3);
   const back = -(size.z / 2 + 0.03);
   return (
-    <group>
+    <group userData={{ noContactShadow: true }}>
       <mesh position={[0, -t / 2 - 0.0012, back + depth / 2]} receiveShadow>
         <boxGeometry args={[width, t, depth]} />
         <meshStandardMaterial color="#ebe7df" roughness={0.6} />
@@ -201,16 +184,15 @@ export function StudioStage({ size, outerMm, shadows = true, context = "none", d
   const canX = size.x / 2 + CAN_R + Math.max(0.02, extent * 0.12);
   return (
     <>
-      <StudioLights intensity={intensity} />
+      <StudioLighting intensity={intensity} />
       {shadows ? (
-        <ContactShadows
-          position={[0, -0.0005, 0]}
+        <SoftShadow
           scale={extent * 4 + (context === "reference" ? 0.25 : 0)}
           far={Math.max(size.y, extent) * 1.5}
           blur={2.4}
-          opacity={context === "none" ? 0.45 : 0.55}
-          resolution={512}
-          color="#2e241a"
+          opacity={context === "none" ? 0.5 : 0.6}
+          contactOpacity={context === "table" ? 0.65 : 0.55}
+          color={context === "table" ? "#2a1a0e" : "#2e241a"}
         />
       ) : null}
       {context === "table" ? <Table extent={extent} /> : null}

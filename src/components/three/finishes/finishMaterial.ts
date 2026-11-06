@@ -28,6 +28,8 @@ export interface FinishUniforms {
   elbaFoilRough: { value: number };
   elbaUvRough: { value: number };
   elbaInkTone: { value: number };
+  /** Reflection strength inside foil, independent of the coating's envIntensity (soft-touch dims the print, not the foil). */
+  elbaFoilEnv: { value: number };
 }
 
 const DECL = /* glsl */ `
@@ -40,6 +42,7 @@ uniform float elbaMaskFade;
 uniform float elbaFoilRough;
 uniform float elbaUvRough;
 uniform float elbaInkTone;
+uniform float elbaFoilEnv;
 `;
 
 /**
@@ -69,6 +72,21 @@ export function patchFinishShader(mat: MeshPhysicalMaterial, uniforms: FinishUni
   metalnessFactor = mix( metalnessFactor, 1.0, elbaFoilA );`,
       )
       .replace(
+        "#include <normal_fragment_maps>",
+        /* glsl */ `#include <normal_fragment_maps>
+  // hot-foil is never optically flat: a faint crinkle (from the grain tile) breaks the reflection
+  // into the glints that make foil read as metal instead of flat ochre ink
+  vec2 elbaCrinkle = vec2( texture2D( elbaDetailMap, elbaUv * elbaDetailRepeat * 2.3 ).r, texture2D( elbaDetailMap, elbaUv * elbaDetailRepeat * 2.3 + 0.37 ).r ) - 0.5;
+  normal = normalize( normal + elbaFoilA * 0.22 * vec3( elbaCrinkle, 0.0 ) );`,
+      )
+      .replace(
+        "#include <lights_fragment_maps>",
+        /* glsl */ `#include <lights_fragment_maps>
+  #if defined( USE_ENVMAP ) && defined( RE_IndirectSpecular )
+    radiance *= mix( 1.0, elbaFoilEnv / max( envMapIntensity, 0.001 ), elbaFoilA );
+  #endif`,
+      )
+      .replace(
         "#include <lights_physical_fragment>",
         /* glsl */ `#include <lights_physical_fragment>
   #ifdef USE_CLEARCOAT
@@ -77,7 +95,7 @@ export function patchFinishShader(mat: MeshPhysicalMaterial, uniforms: FinishUni
   #endif`,
       );
   };
-  mat.customProgramCacheKey = () => "elba-finish-v1";
+  mat.customProgramCacheKey = () => "elba-finish-v3";
 }
 
 export interface FinishMapTextures {
@@ -148,6 +166,9 @@ export function createFinishedBoardMaterials(sheet: { width: number; height: num
     elbaFoilRough: { value: FOIL_LOOKS.FOIL_GOLD.roughness },
     elbaUvRough: { value: SPOT_UV_LOOK.clearcoatRoughness },
     elbaInkTone: { value: 1 },
+    // the studio sweep is mid-grey (~0.25 linear); a light tent around real foil is near white, so foil
+    // reflections get ~2.6× to read as polished metal next to diffuse paper
+    elbaFoilEnv: { value: 2.6 },
   });
 
   // clearcoat / sheen stay > 0 so their shader paths compile once and tweens never recompile
