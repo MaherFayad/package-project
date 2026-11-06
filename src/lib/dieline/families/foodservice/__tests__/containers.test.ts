@@ -34,14 +34,11 @@ function meshOk(m: MeshData) {
   expect(m.uvs.length / 2).toBe(m.positions.length / 3);
   expect(m.indices.length % 3).toBe(0);
   expect(m.indices.length).toBeGreaterThan(0);
-  for (const v of m.positions) expect(Number.isFinite(v)).toBe(true);
-  for (const v of m.uvs) {
-    expect(Number.isFinite(v)).toBe(true);
-    expect(v).toBeGreaterThanOrEqual(-1e-6);
-    expect(v).toBeLessThanOrEqual(1 + 1e-6);
-  }
+  // One assertion per array (an expect() per vertex made the large pulp trays time out).
+  expect(m.positions.every(Number.isFinite)).toBe(true);
+  expect(m.uvs.every((v) => Number.isFinite(v) && v >= -1e-6 && v <= 1 + 1e-6)).toBe(true);
   const n = m.positions.length / 3;
-  for (const i of m.indices) expect(i).toBeLessThan(n);
+  expect(m.indices.every((i) => i < n)).toBe(true);
 }
 
 describe("conical fan (frustum development)", () => {

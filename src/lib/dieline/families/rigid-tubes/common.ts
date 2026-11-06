@@ -4,6 +4,22 @@ import { boundsAt } from "../../fold";
 import { bboxOf } from "../../geometry";
 import type { Pt, Rect } from "../../types";
 
+/* ───────────── Wrap paper drawn thin ───────────── */
+
+/**
+ * Thickness the wrap paper is DRAWN with where it lies on the inside of a wall (turn-ins,
+ * corner tabs, glue flaps). The fold engine gives every panel the full caliper t, but these
+ * parts are paper: a turn-in drawn 2 mm thick eats the lid clearance and pierces the base
+ * walls (a tube cap's curl pierces the body). Turn-ins are pushed into their own wall
+ * (mesh-only `stackOffset`) so only this much stands proud of the board; tabs, glue flaps and
+ * label overlaps stand half as proud, under them.
+ */
+export const WRAP_VISUAL_MM = 0.3;
+/** stackOffset that leaves a turn-in `WRAP_VISUAL_MM` proud of its wall's inside face. */
+export const turnInStack = (t: number) => -Math.max(0, t - WRAP_VISUAL_MM) / t;
+/** stackOffset for corner tabs / glue flaps: inside the wall they lie on, half a paper proud. */
+export const tabStack = (t: number) => -(WRAP_VISUAL_MM / 2) / t;
+
 export const IDENTITY: [number, number, number, number] = [0, 0, 0, 1];
 
 export const quat = (x: number, y: number, z: number, order: "XYZ" | "YXZ" = "YXZ"): [number, number, number, number] => {
