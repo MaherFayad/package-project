@@ -693,9 +693,14 @@
   .chipValue { font-size: 1.0625rem; }
   .chipTitle { font-size: 0.8125rem; }
   .chipRating, .chipApproved { display: none; }
-  .chipDelivered { inset-inline-end: auto; inset-inline-start: 0; inset-block-end: 0; }
-  .chipPrice { inset-block-start: 0; }
-  .heroStage { inset: 14% 0 12%; }
+  /* R4-CR-08: at 390 the price card covered the box's top corner and the delivery chip its front
+     corner. On phones the render gets the full width and the two chips sit under it as a 2-up row
+     (no float: they are part of the layout, not over the product). */
+  .heroVisual { aspect-ratio: auto; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: stretch; }
+  .heroGlow { inset: 0 4% 72px; }
+  .heroStage { position: relative; inset: auto; grid-column: 1 / -1; aspect-ratio: 3 / 2; }
+  .chip { position: relative; inset: auto; max-inline-size: none; animation: none; align-content: center; }
+  .heroToggle { inset-block: 8px auto; inset-inline-end: 0; }
 }
 
 /* ───────────── Marquee ───────────── */
@@ -718,7 +723,9 @@
 }
 .marqueeTrack:dir(rtl) { animation-name: m-marquee-rtl; }
 .marquee[data-paused="true"] .marqueeTrack,
-.marqueeViewport:hover .marqueeTrack { animation-play-state: paused; }
+.marqueeViewport:hover .marqueeTrack,
+.marqueeViewport:focus-visible .marqueeTrack { animation-play-state: paused; }
+.marqueeViewport:focus-visible { outline: 2px solid var(--p-color-border-focus, #005bd3); outline-offset: 4px; border-radius: 12px; }
 .marqueeItem {
   inline-size: clamp(180px, 22vw, 240px);
   aspect-ratio: 4 / 5;
@@ -934,11 +941,16 @@
   aspect-ratio: 16 / 10;
   background: #fff;
 }
-.vendorMedia figure { margin: 0; overflow: hidden; background: var(--tile-bg, var(--mk-grey)); display: grid; place-items: center; }
+.vendorMedia figure { margin: 0; overflow: hidden; background: var(--tile-bg, var(--mk-grey)); position: relative; min-block-size: 0; }
 .vendorMedia figure:first-child { grid-row: span 2; }
+/* R4-CR-24: absolutely placed with 8% padding, so the 86% box resolves against the tile itself.
+   As a grid item the percentage height fell back to the image's own height and tall vessel renders
+   (pump, water bottle) were cropped at the top. */
 .vendorMedia img {
-  inline-size: 86%;
-  block-size: 86%;
+  position: absolute;
+  inset: 8%;
+  inline-size: 84%;
+  block-size: 84%;
   object-fit: contain;
   transition: transform var(--m-dur-reveal) var(--m-ease-out);
 }
@@ -1355,6 +1367,9 @@
   }
   .productRail::-webkit-scrollbar { display: none; }
   .productRail > li { scroll-snap-align: start; }
+  /* a11y R4-02: mandatory snap pulled the rail back to the first card when Tab focused a later
+     card, so its pill was ~10% visible (WCAG 2.4.11 / 2.4.12). No snapping while focus is inside. */
+  .productRail:focus-within { scroll-snap-type: none; }
 }
 
 /* ───────────── Round 2 phone layout (R2-MK-06 / R2-MK-07) ───────────── */
@@ -1375,6 +1390,7 @@
   }
   .useRail::-webkit-scrollbar { display: none; }
   .useRail > li { scroll-snap-align: start; }
+  .useRail:focus-within { scroll-snap-type: none; } /* same as .productRail (a11y R4-02) */
   .useRail .card { padding: 22px; }
 
   /* Finishes: two compact columns instead of six full-width rows. */

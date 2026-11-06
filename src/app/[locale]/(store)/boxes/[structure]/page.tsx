@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const low = price.rows.length ? Math.min(...price.rows.map((r) => r.unitPiasters)) : null;
   const description =
     `${pick(locale, s.description.ar, s.description.en)} ` +
-    (low != null ? t("store.catalog.fromPrice", { price: formatMoney(low, locale) }) + ". " : "") +
+    (low != null ? t("store.catalog.fromPrice", { price: formatMoney(low, locale, { alwaysDecimals: true }) }) + ". " : "") +
     t("store.structure.minimumValue") + ".";
   return {
     // R4-MK-08: "Custom printed mailer box | Mailer box · Elba" said the name twice; keep the

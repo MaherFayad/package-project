@@ -66,8 +66,9 @@ export function HeroVisual({
     <div className={styles.heroVisual} data-paused={playing ? "false" : "true"}>
       <div className={styles.heroGlow} aria-hidden="true" />
       <div className={styles.heroStage} data-live={ready3d ? "true" : "false"} onPointerEnter={intent} onPointerDown={intent}>
-        {/* AVIF + preload (R4-MK-06); sizes = the contained render's real width (stage 89% of the visual on phones). */}
-        <HeroImage src={poster} sizes="(min-width: 1024px) 600px, calc(89vw - 28px)" alt="" className={styles.heroPoster} width={914} height={608} />
+        {/* AVIF + preload (R4-MK-06); sizes = the contained render's real width: full container width
+            under 560 px (chips below it, R4-CR-08), else ~89% of the visual. */}
+        <HeroImage src={poster} sizes="(min-width: 1024px) 600px, (min-width: 560px) calc(89vw - 28px), calc(100vw - 32px)" alt="" className={styles.heroPoster} width={914} height={608} />
         {mount3d ? (
           <div className={styles.heroCanvas} data-ready={ready3d ? "true" : "false"}>
             <HeroScene3D playing={playing} labels={labels} onReady={() => setReady3d(true)} onInteract={() => setPlaying(false)} />

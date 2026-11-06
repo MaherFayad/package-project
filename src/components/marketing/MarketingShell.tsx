@@ -9,6 +9,7 @@ import { AnnouncementBar } from "./AnnouncementBar";
 import { MarketingFooter } from "./MarketingFooter";
 import { MarketingHeader } from "./MarketingHeader";
 import { RevealScope } from "./useReveal";
+import { RailFocus } from "./RailFocus";
 import styles from "./marketing.module.css";
 
 /**
@@ -42,6 +43,7 @@ export function MarketingShell({ locale, boundary = true, children }: { locale: 
         <MarketingFooter locale={locale} />
         <CookieNotice />
         <RevealScope />
+        <RailFocus />
       </div>
     </MarketingProviders>
   );

@@ -28,7 +28,7 @@ export function PriceFromTable({ locale, dims, price, title }: { locale: Locale;
                 <strong key="u">
                   <bdi>{formatMoney(r.unitPiasters, locale, { alwaysDecimals: true })}</bdi>
                 </strong>,
-                <bdi key="s">{formatMoney(r.subtotalPiasters, locale)}</bdi>,
+                <bdi key="s">{formatMoney(r.subtotalPiasters, locale, { alwaysDecimals: true })}</bdi>,
                 t("store.structure.deliveryDays", { days: r.deliveryDays }),
               ])}
             />
