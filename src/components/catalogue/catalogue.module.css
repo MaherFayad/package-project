@@ -90,6 +90,7 @@
   font-size: 0.9375rem;
   font-weight: 600;
   color: var(--mk-text-2);
+  white-space: nowrap;
   cursor: pointer;
   transition: background-color 150ms var(--m-ease-out, ease-out), color 150ms var(--m-ease-out, ease-out);
 }

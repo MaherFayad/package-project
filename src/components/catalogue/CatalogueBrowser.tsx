@@ -6,7 +6,7 @@ import { useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, use
 import type { Locale } from "@/types";
 import type { CatalogueCard } from "@/data/catalogue/types";
 import type { TaxonomyNode } from "@/data/catalogue/taxonomy";
-import { matchesQuery } from "@/lib/library/search";
+import { searchRanked } from "./rank";
 import { formatNumber } from "@/lib/format";
 import { COPY, fill } from "./copy";
 import styles from "./catalogue.module.css";
@@ -53,8 +53,17 @@ export function CatalogueBrowser({ locale, cards, taxonomy }: { locale: Locale; 
     window.history.replaceState(null, "", url.toString());
   }, [family, sub, q, scope]);
 
-  const scoped = useMemo(() => (scope === "egypt" ? cards.filter(inEgypt) : cards), [cards, scope]);
-  const searched = useMemo(() => scoped.filter((c) => matchesQuery(c, q)), [scoped, q]);
+  // Full haystack: the card's own text plus its family and sub-family names (both languages).
+  const indexed = useMemo(() => {
+    const names = new Map<string, string>();
+    for (const n of taxonomy) {
+      names.set(n.slug, `${n.name.ar} ${n.name.en}`);
+      for (const c of n.children) names.set(c.slug, `${c.name.ar} ${c.name.en}`);
+    }
+    return cards.map((c) => ({ ...c, search: `${c.search} ${names.get(c.family) ?? ""} ${names.get(c.subFamily) ?? ""}`.toLowerCase() }));
+  }, [cards, taxonomy]);
+  const scoped = useMemo(() => (scope === "egypt" ? indexed.filter(inEgypt) : indexed), [indexed, scope]);
+  const searched = useMemo(() => searchRanked(scoped, q), [scoped, q]);
   const familyCounts = useMemo(() => {
     const m = new Map<string, number>();
     for (const c of searched) {

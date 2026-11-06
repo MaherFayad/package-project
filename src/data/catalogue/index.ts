@@ -65,6 +65,22 @@ function regionsOf(slug: string): Region[] {
   return REGIONS.filter((r) => e.regions[r] && e.regions[r].level !== "niche");
 }
 
+/** Codes, names and standard (no family names: cards add those from the taxonomy). */
+function ownSearchText(e: Omit<CatalogueEntry, "search">): string {
+  return [
+    e.code,
+    e.code.replace(/[_-]/g, " "),
+    e.name.en,
+    e.name.ar,
+    e.standard.label,
+    e.standard.code ? `${e.standard.system} ${e.standard.code}` : null,
+    e.standard.code?.replace(/\./g, " "),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
 function searchText(e: Omit<CatalogueEntry, "search">): string {
   const parts = [
     e.code,
@@ -249,7 +265,7 @@ export function toCatalogueCard(e: CatalogueEntry, instantPrice: boolean): Catal
     regions: e.regions,
     designer: e.designer,
     quoteOnly: e.quoteOnly,
-    search: e.search,
+    search: ownSearchText(e),
     render: e.render,
     instantPrice,
   };

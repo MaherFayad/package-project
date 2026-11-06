@@ -96,6 +96,11 @@ export default async function Page({ params }: Props) {
                     <Link href={`/${locale}/design/${e.slug}`} className={`${mk.pill} ${mk.pillLarge}`} prefetch={false}>
                       {COPY.designCta[locale]}
                     </Link>
+                    {CORE_SLUGS.has(e.slug) ? (
+                      <Link href={`/${locale}/boxes/${e.slug}`} className={`${mk.pill} ${mk.pillOutline} ${mk.pillLarge}`}>
+                        {fill(COPY.sizesPrices[locale], { name: e.name[locale] })}
+                      </Link>
+                    ) : null}
                   </div>
                 ) : null}
                 {mode.mode === "quote" ? <QuoteRequestForm locale={locale} code={e.code} slug={e.slug} presets={presets} signedIn={!!session} /> : null}

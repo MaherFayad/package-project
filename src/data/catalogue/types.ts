@@ -74,7 +74,7 @@ export interface CatalogueEntry {
   search: string;
 }
 
-/** What the browser needs for a grid card. */
+/** What the browser needs for a grid card. `search` holds codes, names and standard only; add family names client-side. */
 export type CatalogueCard = Pick<
   CatalogueEntry,
   "code" | "slug" | "name" | "family" | "subFamily" | "standard" | "availableInEgypt" | "regions" | "designer" | "quoteOnly" | "search" | "render"

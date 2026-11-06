@@ -3,7 +3,7 @@
 import { Search } from "lucide-react";
 import { useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type RefObject } from "react";
 import { CATALOGUE, taxonomy as buildTaxonomy, type CatalogueEntry } from "@/data/catalogue";
-import { matchesQuery } from "@/lib/library/search";
+import { searchRanked } from "./rank";
 import { formatNumber } from "@/lib/format";
 import { useI18n } from "@/i18n/client";
 import { Badge, Modal, TextField } from "@/components/ui";
@@ -40,7 +40,7 @@ export function CataloguePickerBody({ current, onPick, searchRef }: { current?: 
   const [sub, setSub] = useState("");
   const q = useDeferredValue(query);
 
-  const searched = useMemo(() => ROWS.filter((e) => (scope === "world" || e.availableInEgypt !== "rare") && matchesQuery(e, q)), [scope, q]);
+  const searched = useMemo(() => searchRanked(ROWS.filter((e) => scope === "world" || e.availableInEgypt !== "rare"), q), [scope, q]);
   const counts = useMemo(() => {
     const m = new Map<string, number>();
     for (const e of searched) {

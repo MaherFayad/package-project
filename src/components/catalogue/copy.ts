@@ -61,6 +61,7 @@ export const COPY = {
   mm: t("mm", "مم"),
   ml: t("ml", "مل"),
   designCta: t("Design it free", "صممها مجانا"),
+  sizesPrices: t("Sizes and prices: {name}", "المقاسات والأسعار: {name}"),
   quoteCta: t("Request a quote", "اطلب عرض سعر"),
   instantTitle: t("Instant price from Egyptian printers", "سعر فوري من مطابع مصرية"),
   instantBody: t(

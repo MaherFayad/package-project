@@ -61,6 +61,11 @@ By commerce path with the seeded printers: instant price 274, labels / sleeves b
 | CAT-14 | medium | scope switch (page + picker) | "Egypt / Worldwide" used `role=radio` buttons without arrow-key roving focus. | WCAG 4.1.2, ARIA APG radio group | Toggle buttons with `aria-pressed` in a labelled group. | fixed |
 | CAT-15 | low | paper carrier bags | Handles (`HandleSpec`) were not drawn, so twisted / flat handle bags looked like SOS bags. | — | Tube handles on both faces in the catalogue viewer. | fixed |
 | CAT-16 | low | catalogue copy | Arabic search placeholder mixed a Latin code into RTL text, so the bidi order read backwards on phones. | Arabic UX | Arabic placeholder without Latin codes; codes still searchable. | fixed |
+| CAT-18 | medium | catalogue + picker search | Substring search listed "تلسكوبية" (telescope) boxes before cups for "كوب", and code searches had no priority. | ISO 9241-110 (suitability for the task) | Relevance ranking: code hits, then name-word prefix hits, then other matches; stable in catalogue order. | fixed |
+| CAT-19 | low | site-wide (`src/app`) | No favicon: every page requested `/favicon.ico` and logged a 404 console error (it also failed the per-model "no console errors" check). | — | `src/app/icon.svg` from the wordmark box glyph (outside scope, additive). | fixed |
+| CAT-20 | low | `/catalog` 1280 px | "Available in Egypt" wrapped to two lines inside the pill switch. | — | `white-space: nowrap`; full-width switch under 640 px. | fixed |
+| CAT-21 | low | `/catalog` | The page was statically prerendered at build, so instant-price badges would freeze at build-time printer data. | — | `revalidate = 300`, matching the 5-minute data cache. | fixed |
+| CAT-22 | low | designer config panel | The model card in the designer's Box panel still shows the old SVG drawing (`modelImage` in `ModelPicker.tsx`). | — | Left: designer owner's file; the webp is at `/models/<code>.webp`. | open (outside scope) |
 | CAT-17 | low | family chips | A family-level sub-family (e.g. `food-service` for fries scoop) was counted twice in the family chip (29 vs 27). | — | Count sub-family only when it differs from the family. | fixed |
 
 ## Left open (with reason)
@@ -68,3 +73,22 @@ By commerce path with the seeded printers: instant price 274, labels / sleeves b
 - **Shared unions not widened.** `StructureCode` / `VesselKind` / `MaterialCode` stay closed. Widening them by ~400 codes breaks the `Record<StructureCode, …>` maps in pricing, designer and store (other owners) and the main-branch wiring in progress. The merged registry is `src/lib/library` (designer, pricing, seed; main branch) plus `src/data/catalogue` (all 410, this branch); `STRUCTURES` / `VESSELS` remain the core sets the rate cards key on.
 - **Designer for the 40 quote-only models.** They render, size and route to a quote from the catalogue page, but artwork editing in the designer needs new renderer paths in `src/components/designer` (outside this scope).
 - **Instant price for containers.** Labels and sleeves are quote-only by the configurator's `orderability` rule (no label rate cards seeded); kept as is.
+
+## Verification (pass 2)
+
+- `npm run typecheck`: clean. `npm run lint`: clean.
+- `npm test` (vitest): 45 files, 6,703 tests passed (includes `src/data/catalogue/__tests__` 421 tests and `src/lib/configurator/__tests__/catalogue.test.ts` 377 tests; the fruit-tray pulp test now 0.6 s).
+- `npm run build`: passes.
+- Playwright against `next start` (`OTP_DEV_ECHO=1`, `--workers=2`, `--trace off`):
+  - `e2e/catalogue-models.spec.ts` (desktop): 18 batches, all 410 models rendered, non-blank WebGL, no console errors or failed requests (12.1 min). Contact sheets: `docs/screenshots/models/catalogue/batch-01.jpg` … `batch-18.jpg`.
+  - `e2e/catalogue.spec.ts` (desktop + mobile): 11 passed, 3 desktop-only skips on mobile; axe (wcag2a/aa, 21aa, 22aa) clean on `/ar/catalog` and the Arabic quote page.
+  - `e2e/designer.spec.ts`, `e2e/storefront.spec.ts`, `e2e/smoke.spec.ts` (touched by the picker swap and the new `/catalog`): all pass (35 passed in total with the catalogue spec).
+- Screenshots: `docs/screenshots/audit/catalogue/` (before: old `/catalog` en 1440 and ar 390, old picker; after: filtered catalogue, Arabic desktop and mobile, quote page, new picker).
+
+## Files touched outside scope
+
+- `src/components/designer/DesignerApp.tsx`: one import line (`ModelPicker` now from `@/components/catalogue/CataloguePicker`, same props).
+- `src/app/api/catalogue/quote-request/route.ts`: new route for quote requests (stores a `Quote` row, no schema change).
+- `src/app/icon.svg`: new favicon (CAT-19).
+- `e2e/storefront.spec.ts`: the "home → catalogue → structure" step now finds the mailer in the new catalogue and follows the model page's "Sizes and prices" link to `/boxes/mailer-box`; the rest of the journey is unchanged.
+- `package.json` / `package-lock.json`: `@axe-core/playwright` dev dependency (allowed by the brief).

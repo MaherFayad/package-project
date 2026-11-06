@@ -12,6 +12,9 @@ import styles from "@/components/catalogue/catalogue.module.css";
 
 type Props = { params: Promise<{ locale: string }> };
 
+/** Instant-price badges follow the live printer list (cached 5 minutes, as getCatalogueData). */
+export const revalidate = 300;
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const locale = toLocale((await params).locale);
   return {

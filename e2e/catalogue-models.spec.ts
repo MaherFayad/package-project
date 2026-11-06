@@ -79,6 +79,9 @@ for (const [b, list] of batches.entries()) {
       if (m.type() === "error" && !IGNORED.some((r) => r.test(m.text()))) errors.push(`${current}: ${m.text()}`);
     });
     page.on("pageerror", (e) => errors.push(`${current}: ${e.message}`));
+    page.on("response", (r) => {
+      if (r.status() >= 400) errors.push(`${current}: HTTP ${r.status()} ${r.url()}`);
+    });
     const tiles: { code: string; png: Buffer }[] = [];
     const blank: string[] = [];
     for (const m of list) {

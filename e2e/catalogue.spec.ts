@@ -1,7 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
+import { createHash, randomBytes } from "node:crypto";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+import { PrismaClient } from "@prisma/client";
 
 /**
  * Public catalogue (/[locale]/catalog) and model pages: Egypt filter on by default, Worldwide
@@ -42,10 +44,10 @@ test("catalogue: Egypt by default, Worldwide, search by code and name, families"
   await page.getByTestId("catalogue-search").fill("");
 
   await page.locator('[data-family="food-service"]').click();
-  await expect(page.locator('[data-model="FS_PULP_EGG_6"]')).toBeVisible();
   await expect(page.locator('[data-model="FEFCO_0201"]')).toHaveCount(0);
   await page.getByRole("button", { name: /Molded pulp/ }).click();
   await expect.poll(() => count(page)).toBe(6);
+  await expect(page.locator('[data-model="FS_PULP_EGG_6"]')).toBeVisible();
   expect(page.url()).toContain("family=food-service");
 
   // every thumbnail on screen is a real render (decoded, not broken)
@@ -101,15 +103,14 @@ test("model page: quote path for a format no printer prices yet", async ({ page 
   if (info.project.name === "desktop") await page.screenshot({ path: path.join(SHOTS, "after-ar-1440-quote.png") });
 });
 
-test("quote request: signed-in buyer sends a request", async ({ page, request }, info) => {
+test("quote request: signed-in buyer sends a request", async ({ page, baseURL }, info) => {
   test.skip(info.project.name !== "desktop", "once");
-  const phone = "+201000000002";
-  const otp = await request.post("/api/auth/request-otp", { data: { phone } });
-  const { devCode } = await otp.json();
-  const v = await request.post("/api/auth/verify-otp", { data: { phone, code: devCode, locale: "en", acceptTerms: true } });
-  expect(v.ok()).toBe(true);
-  const cookies = (await request.storageState()).cookies;
-  await page.context().addCookies(cookies);
+  // Session row with the same hashing as src/lib/auth (as admin.spec does): no OTP rate limit.
+  const db = new PrismaClient({ datasources: { db: { url: process.env.ELBA_DATABASE_URL ?? `file:${path.resolve(__dirname, "../prisma/dev.db")}` } } });
+  const user = await db.user.findUniqueOrThrow({ where: { phone: "+201000000002" } });
+  const token = randomBytes(32).toString("base64url");
+  await db.session.create({ data: { tokenHash: createHash("sha256").update(token).digest("hex"), userId: user.id, expiresAt: new Date(Date.now() + 3600_000) } });
+  await page.context().addCookies([{ name: "elba_session", value: token, url: baseURL! }]);
   await page.goto("/en/catalog/FS_PULP_EGG_6");
   await dismissCookies(page);
   await page.getByLabel("Quantity").fill("50");
@@ -118,4 +119,25 @@ test("quote request: signed-in buyer sends a request", async ({ page, request },
   await page.getByLabel("Quantity").fill("5000");
   await page.getByRole("button", { name: "Send request" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Request sent" })).toBeVisible();
+  const saved = await db.quote.findFirst({ where: { userId: user.id, status: "REQUESTED" }, orderBy: { createdAt: "desc" } });
+  expect((saved?.lines as { modelCode: string; quantity: number }[])[0]).toMatchObject({ modelCode: "FS_PULP_EGG_6", quantity: 5000 });
+  await db.$disconnect();
+});
+
+test("designer picker: families, Egypt filter, search, pick a model", async ({ page }, info) => {
+  test.skip(info.project.name !== "desktop", "desktop");
+  await page.route("**/api/designs**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ id: "e2e-picker", owned: false, updatedAt: new Date().toISOString() }) }));
+  await page.goto("/en/design/mailer-box");
+  await page.getByRole("button", { name: "Change model" }).first().click();
+  const picker = page.getByTestId("catalogue-picker");
+  await expect(picker).toBeVisible();
+  await expect(picker.getByRole("button", { name: "Available in Egypt" })).toHaveAttribute("aria-pressed", "true");
+  await picker.getByRole("button", { name: /^Folding cartons/ }).click();
+  await picker.getByRole("button", { name: /^Tuck end cartons/ }).click();
+  await expect(picker.locator('[data-model="ECMA_TUCK_RTE"]')).toBeVisible();
+  await picker.getByRole("searchbox").fill("FEFCO 0201");
+  await picker.getByRole("button", { name: /^All/ }).click();
+  await picker.locator('[data-model="FEFCO_0201"]').click();
+  await expect(page.getByTestId("stage-3d")).toHaveAttribute("data-model", "FEFCO_0201");
+  await page.screenshot({ path: path.join(SHOTS, "after-en-1440-designer.png") });
 });

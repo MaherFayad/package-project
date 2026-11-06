@@ -61,6 +61,10 @@ async function renderOne(page: Page, code: string): Promise<string | null> {
     const stage = page.getByTestId("catalogue-render");
     await page.waitForSelector('[data-testid="catalogue-render"][data-state="ready"], [data-testid="catalogue-render"][data-state="error"]', { timeout: 120_000 });
     if ((await stage.getAttribute("data-state")) === "error") return `render error: ${await stage.innerText()}`;
+    // A Next dev error overlay (compile / runtime error) must fail the model, never be captured.
+    const overlay = await page.evaluate(() => !!document.querySelector("nextjs-portal")?.shadowRoot?.querySelector("[data-nextjs-dialog], [data-nextjs-toast-errors]"));
+    if (overlay) return "Next.js error overlay on the page";
+    await page.addStyleTag({ content: "nextjs-portal{display:none!important}" });
     const png = await stage.screenshot({ omitBackground: true });
     const share = await coverage(png);
     if (share < 0.01) return `blank render (${(share * 100).toFixed(2)} % painted)`;
