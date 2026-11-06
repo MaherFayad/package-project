@@ -21,7 +21,10 @@ test("home → catalogue → structure → SEO size page with price table and JS
 
   await page.getByRole("link", { name: "Browse box styles" }).click();
   await expect(page).toHaveURL(/\/en\/catalog$/, { timeout: 20_000 });
-  await page.getByRole("link", { name: "Details and prices: Mailer box" }).click();
+  // Worldwide catalogue (e2e/catalogue.spec.ts): find the mailer by code, open its model page.
+  await page.getByTestId("catalogue-search").fill("FEFCO 0427");
+  await page.locator('[data-model="FEFCO_0427"]').click();
+  await page.getByRole("link", { name: "Sizes and prices: Mailer box" }).click();
   await expect(page).toHaveURL(/\/en\/boxes\/mailer-box$/, { timeout: 20_000 });
   await expect(page.getByRole("heading", { level: 1, name: "Mailer box" })).toBeVisible();
   await expect(page.getByRole("table")).toContainText("2,000");

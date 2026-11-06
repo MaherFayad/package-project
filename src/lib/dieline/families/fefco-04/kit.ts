@@ -154,7 +154,24 @@ export function trayKit(dims: Dims, t: number, o: TrayKitOpts, f: StructureFeatu
   ];
   const wall = (id: WallInfo["id"]) => walls.find((w) => w.id === id)!;
 
-  // ── walls (stage 0)
+  // ── fold order (stages), as the blank is erected by hand:
+  //   ear-owning walls with their ears folded in → receiving walls rise outside the ears →
+  //   rolled inner walls (end walls first, long walls tuck between them) with their
+  //   interior bottom flaps → lid side flaps that go inside → lid with its tuck → flaps that wrap outside.
+  // Without ears every wall rises together. Stage numbers are compact (no idle pauses).
+  const hasEars = o.ears !== "none";
+  const ownsEars = (key: WallKey) => (o.ears === "long" ? key !== "ends" : o.ears === "ends" ? key === "ends" : false);
+  // Ears fold in while their wall rises; the receiving walls then rise outside them.
+  const wallStage = (key: WallKey) => (!hasEars || ownsEars(key) ? 0 : 1);
+  const EAR_STAGE = 0;
+  const anyInner = walls.some((w) => d[w.key] && !(w.id === "front" && o.displayFront));
+  const innerEnds = !!d.ends;
+  const innerLong = !!(d.front && !o.displayFront) || !!d.back;
+  const innerBase = hasEars ? 2 : 1;
+  const innerStage = (key: WallKey) => innerBase + (key !== "ends" && innerEnds ? 1 : 0);
+  const topBase = anyInner ? innerBase + (innerEnds && innerLong ? 2 : 1) : hasEars ? 2 : 1;
+
+  // ── walls
   for (const w of walls) {
     if (w.id === "front" && o.displayFront) {
       const fr = b.frame("base", w.baseEdge);
@@ -162,13 +179,13 @@ export function trayKit(dims: Dims, t: number, o: TrayKitOpts, f: StructureFeatu
       const drop = Hf * 0.5;
       const slope = Math.min(drop, (Lp - 2 * corner) * 0.2);
       const poly: Polygon = [fr.at(fr.a, 0, 0), fr.at(fr.a, Lp, 0), fr.at(fr.a, Lp, Hf), fr.at(fr.a, Lp - corner, Hf), fr.at(fr.a, Lp - corner - slope, Hf - drop), fr.at(fr.a, corner + slope, Hf - drop), fr.at(fr.a, corner, Hf), fr.at(fr.a, 0, Hf)];
-      b.attachPoly("front", "front", "base", [fr.a, fr.b], poly, { stage: 0, label: "Display front" });
+      b.attachPoly("front", "front", "base", [fr.a, fr.b], poly, { stage: wallStage("front"), label: "Display front" });
       continue;
     }
-    b.attach(w.id, w.id, "base", w.baseEdge, w.height, { kind: "rect" }, { stage: 0, label: `${w.id[0].toUpperCase()}${w.id.slice(1)} wall` });
+    b.attach(w.id, w.id, "base", w.baseEdge, w.height, { kind: "rect" }, { stage: wallStage(w.key), label: `${w.id[0].toUpperCase()}${w.id.slice(1)} wall` });
   }
 
-  // ── corner ears (stage 1): fold onto the inside of the neighbouring wall
+  // ── corner ears: fold onto the inside of the neighbouring wall
   const earOwners = o.ears === "long" ? walls.filter((w) => w.key !== "ends") : o.ears === "ends" ? walls.filter((w) => w.key === "ends") : [];
   for (const w of earOwners) {
     const neighbourH = w.key === "ends" ? Math.min(Hf, Hb) : He;
@@ -181,40 +198,45 @@ export function trayKit(dims: Dims, t: number, o: TrayKitOpts, f: StructureFeatu
       const k = h / dist(rim, basePt);
       const rimPt = pt(basePt.x + (rim.x - basePt.x) * k, basePt.y + (rim.y - basePt.y) * k);
       const taper = Math.min(earD * 0.5, h * 0.3);
-      b.attach(`ear_${w.id}_${i}`, "ear", w.id, [rimPt, basePt], earD, { kind: "trapezoid", taperA: taper, taperB: 1 }, { stage: 1, stack: -1, label: o.gluedEars ? "Glue ear" : "Locking ear" });
+      b.attach(`ear_${w.id}_${i}`, "ear", w.id, [rimPt, basePt], earD, { kind: "trapezoid", taperA: taper, taperB: 1 }, { stage: EAR_STAGE, stack: -1, label: o.gluedEars ? "Glue ear" : "Locking ear" });
     });
   }
   const earsTrappedBy = (key: WallKey) => (key === "ends" ? o.ears === "long" : o.ears === "ends");
 
-  // ── rolled inner walls (stage 2) and interior bottom flaps (stage 3)
+  // ── rolled inner walls and interior bottom flaps
   for (const w of walls) {
     if (!d[w.key]) continue;
     if (w.id === "front" && o.displayFront) continue;
     const across = w.key === "ends" ? (lay.front + lay.back) / 2 : lay.ends;
     const inset = across * t + 0.5;
     const withFlap = !!bf[w.key];
-    const depth = w.height - (withFlap ? t + 1 : 2 * t + 0.5);
+    // With a bottom flap the inner wall stops one caliper (+0.1 mm) above the base's inner face so
+    // the flap, folded flat, rests ON the base instead of sinking into it.
+    const depth = w.height - (withFlap ? 2 * t + 0.1 : 2 * t + 0.5);
     const inner = b.attach(`${w.id}Inner`, "inner", w.id, insetSeg(w.farEdge, inset), Math.max(5, depth), { kind: "rect" }, {
       fold: 180,
       pivotDepth: earsTrappedBy(w.key) ? 1.5 : 1,
-      stage: 2,
+      stage: innerStage(w.key),
       label: "Inner wall",
     });
     if (withFlap) {
       const span = w.key === "ends" ? Lp : Wp;
       const fd = clamp(span * 0.25, 10, w.key === "ends" ? 80 : 60);
       const hingeLen = dist(inner.hinge!.a, inner.hinge!.b);
-      const taper = Math.min(fd * 0.8, hingeLen * 0.3);
+      // 45° mitred ends (+1 mm + 2 calipers clearance for the inset hinges): neighbouring interior flaps meet on the corner diagonal
+      // instead of overlapping in the same plane (z-fighting).
+      const taper = Math.min(fd + 1 + 2 * t, hingeLen * 0.45);
       b.attach(`${w.id}BottomFlap`, "flap", inner.id, farPoints(inner), fd, { kind: "trapezoid", taperA: taper, taperB: taper }, {
         fold: -90,
-        stage: 3,
+        // Folded square just before the inner wall rolls in, so it lands on the base instead of sweeping through it.
+        stage: innerStage(w.key) - 1,
         stack: 0,
         label: "Interior bottom flap",
       });
     }
   }
 
-  // ── top closure (stage 4)
+  // ── top closure
   let outsideFlaps = false;
   const top = o.top;
   if (top.kind === "flaps") {
@@ -223,7 +245,7 @@ export function trayKit(dims: Dims, t: number, o: TrayKitOpts, f: StructureFeatu
     owners.forEach((w, i) => {
       const depth = top.overlap === "full" ? span - 2 * t : top.overlap === "meet" ? span / 2 - 1 : span * 0.22;
       b.attach(`cover_${w.id}`, "flap", w.id, w.farEdge, depth, { kind: "rect" }, {
-        stage: 4 + (top.overlap === "full" ? 1 - i : 0),
+        stage: topBase + (top.overlap === "full" ? 1 - i : 0),
         stack: top.overlap === "full" ? -i : 0,
         label: top.overlap === "rim" ? "Rim flap" : "Cover flap",
       });
@@ -231,13 +253,13 @@ export function trayKit(dims: Dims, t: number, o: TrayKitOpts, f: StructureFeatu
   } else if (top.kind === "lid") {
     const back = wall("back");
     const lidR = rect(0, -Hb - Wp, Lp, Wp);
-    b.attach("top", "top", "back", back.farEdge, Wp, { kind: "rect" }, { stage: 4, label: "Lid" });
+    b.attach("top", "top", "back", back.farEdge, Wp, { kind: "rect" }, { stage: topBase + 1, label: "Lid" });
     if (top.front === "tuck") {
       const tuckD = Math.max(8, (Hf - 2 * t - 2) * (top.tuckRatio ?? 0.7));
-      b.attach("lidTuck", "tuck", "top", insetSeg(E(lidR).top, lay.ends * t + 1), tuckD, { kind: "tuck", shoulder: 2 }, { stage: 4, stack: -lay.front, label: "Lid tuck" });
+      b.attach("lidTuck", "tuck", "top", insetSeg(E(lidR).top, lay.ends * t + 1), tuckD, { kind: "tuck", shoulder: 2 }, { stage: topBase + 1, stack: -lay.front, label: "Lid tuck" });
     } else if (top.front === "flap") {
       outsideFlaps = true;
-      b.attach("lidFront", "flap", "top", E(lidR).top, Math.max(10, Hf * 0.45), { kind: "rect" }, { stage: 4, stack: 1, label: "Lid front flap" });
+      b.attach("lidFront", "flap", "top", E(lidR).top, Math.max(10, Hf * 0.45), { kind: "rect" }, { stage: topBase + 2, stack: 1, label: "Lid front flap" });
     }
     if (top.sides !== "none") {
       const outside = top.sides === "outside";
@@ -247,7 +269,8 @@ export function trayKit(dims: Dims, t: number, o: TrayKitOpts, f: StructureFeatu
       const taper = top.sides === "rounded" ? Math.min(dd * 0.9, Wp * 0.4) : outside ? 0 : Math.min(dd * 0.6, Wp * 0.3);
       for (const [id, edge] of [["lidSideR", E(lidR).left], ["lidSideL", E(lidR).right]] as const) {
         b.attach(id, "dust", "top", insetSeg(edge, inset), dd, { kind: "trapezoid", taperA: taper, taperB: outside ? 0 : 2 }, {
-          stage: 4,
+          // Inside flaps fold square first and slide inside the end walls; outside flaps wrap over after the lid.
+          stage: outside ? topBase + 2 : topBase,
           stack: outside ? 1 : -lay.ends,
           label: outside ? "Lid side flap (outside)" : "Lid side flap",
         });

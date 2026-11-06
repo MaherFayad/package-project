@@ -3,7 +3,7 @@ import { z } from "zod";
 import type { Dims, FaceId, StructureFeatures, StructureParamLimits } from "@/types";
 import { panelCreases } from "../../builder";
 import type { FeatureSupport } from "../../features";
-import { computeFaces, computePoses, panelLocalPoint, panelPivot } from "../../fold";
+import { FACE_FRAMES, computeFaces, computePoses, panelLocalPoint, panelPivot } from "../../fold";
 import { bboxOf, coveredFraction, edgesOf, insetRect, offsetConvex, polygonArea, segLength, subtractSegments } from "../../geometry";
 import type { StructureDraft } from "../../structures";
 import type { Affine, DielinePanel, DielinePiece, FaceInfo, FilmPatch, Polygon, Pt, Segment } from "../../types";
@@ -203,7 +203,10 @@ export function finalizeDraft(code: FoodserviceCode, dims: Dims, draft: Structur
 
 /**
  * Face for a panel whose closed normal is not axis aligned (wedge slope, pail wall).
- * Frame: n = closed outward normal, r = world +X, d = r × n (same handedness as FACE_FRAMES).
+ * Frame: n = closed outward normal, r = the face's FACE_FRAMES right vector projected into the
+ * panel plane, d = r × n (same handedness as FACE_FRAMES), so a sloped back wall reads
+ * unmirrored and a sloped side wall reads upright (world +X for every face mirrored the back
+ * and turned the sides 90°).
  */
 export function obliqueFace(face: FaceId, panels: DielinePanel[], rootId: string, t: number, closedRotation: [number, number, number, number], panelId: string): FaceInfo | null {
   const input = { panels, rootId, thicknessMm: t, closedRotation };
@@ -213,8 +216,9 @@ export function obliqueFace(face: FaceId, panels: DielinePanel[], rootId: string
   const pose = poses.get(panel.id)!;
   const pivot = panelPivot(panel, t);
   const n = new Vector3(0, 0, 1).transformDirection(pose.world).normalize();
-  let r = new Vector3(1, 0, 0).sub(n.clone().multiplyScalar(n.x));
-  if (r.lengthSq() < 1e-6) r = new Vector3(0, 0, -1);
+  const want = FACE_FRAMES[face].r;
+  let r = want.clone().sub(n.clone().multiplyScalar(n.dot(want)));
+  if (r.lengthSq() < 1e-6) r = new Vector3(1, 0, 0).sub(n.clone().multiplyScalar(n.x));
   r.normalize();
   const d = r.clone().cross(n).normalize();
   const world = (p: Pt) => panelLocalPoint(panel, p, 0, pivot, t).applyMatrix4(pose.world);
@@ -240,4 +244,25 @@ export function obliqueFace(face: FaceId, panels: DielinePanel[], rootId: string
   const i11 = m00 / det;
   const transform = [i00, i10, i01, i11, -(i00 * o.u + i01 * o.v), -(i10 * o.u + i11 * o.v)].map((x) => (Math.abs(x) < 1e-12 ? 0 : x)) as Affine;
   return { face, width: box.width, height: box.height, parts: [{ panelId, rect: { x: 0, y: 0, width: box.width, height: box.height }, transform }] };
+}
+
+/**
+ * One face made of several oblique panels stacked top to bottom (a clamshell's lid wall over
+ * its base wall): each panel keeps its own plane, the face is their development, centred.
+ */
+export function stackedObliqueFace(face: FaceId, panels: DielinePanel[], rootId: string, t: number, closedRotation: [number, number, number, number], panelIds: string[]): FaceInfo | null {
+  const each = panelIds.map((id) => obliqueFace(face, panels, rootId, t, closedRotation, id)).filter((f): f is FaceInfo => !!f);
+  if (!each.length) return null;
+  const width = Math.max(...each.map((f) => f.width));
+  let y = 0;
+  const parts = each.map((f) => {
+    const [a, b, c, d, e, g] = f.parts[0].transform;
+    const dx = (width - f.width) / 2;
+    const dy = y;
+    y += f.height;
+    // Face-local (u, v) → the panel's own frame (u − dx, v − dy) → sheet.
+    const transform: Affine = [a, b, c, d, e - a * dx - c * dy, g - b * dx - d * dy];
+    return { panelId: f.parts[0].panelId, rect: { x: dx, y: dy, width: f.width, height: f.height }, transform };
+  });
+  return { face, width, height: y, parts };
 }

@@ -6,6 +6,8 @@ import { DielineValidationError } from "@/lib/dieline/limits";
 import { BOARD_SPECS } from "@/lib/dieline/materials";
 import { AUTO_BOTTOM_SEQUENCE, DEFINITIONS, definitionByCode, generateFamilyDieline, printAreaM2, tryGenerateFamilyDieline, validateFamilyDims } from "..";
 import type { FamilyDielineModel } from "..";
+import type { DielineModel } from "@/lib/dieline/types";
+import { overlappingPanels } from "../../fefco-09/__tests__/overlap";
 
 const GROUP_06 = ["0601", "0602", "0605", "0606", "0607", "0608", "0610", "0615", "0616", "0620", "0621"];
 const GROUP_07 = ["0700", "0701", "0703", "0711", "0712", "0713", "0714", "0715", "0716", "0717", "0718", "0747", "0748", "0751", "0752", "0759", "0761", "0770", "0771", "0772", "0773", "0774"];
@@ -102,6 +104,19 @@ for (const def of DEFINITIONS) {
           expect(Math.abs(m.closedOuter.L - e.L) + Math.abs(m.closedOuter.W - e.W) + Math.abs(m.closedOuter.H - e.H), `${JSON.stringify(dims)} t=${t}`).toBeLessThan(0.1 + t * 0.1);
         }
       }
+    });
+
+    it("no two panels share board when closed or half folded (no z-fighting)", () => {
+      const { L, W, H } = def.params;
+      const corners = [{ L: L.min, W: W.min, H: H.min }, { L: L.max, W: W.max, H: H.max }, { L: L.max, W: W.min, H: H.min }].filter((d) => validateFamilyDims(def, d).ok);
+      for (const t of THICKNESSES) {
+        for (const dims of [...sizes, ...corners]) {
+          const m = generateFamilyDieline(def, dims, { thicknessMm: t }) as unknown as DielineModel;
+          expect(overlappingPanels(m, 1), `closed ${JSON.stringify(dims)} t=${t}`).toEqual([]);
+        }
+      }
+      const m = generateFamilyDieline(def, def.defaultDims, { thicknessMm: 1.5 }) as unknown as DielineModel;
+      expect(overlappingPanels(m, 0.5), "half folded").toEqual([]);
     });
 
     it("is flat at progress 0", () => {

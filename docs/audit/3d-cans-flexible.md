@@ -67,3 +67,46 @@ Live designer at iPhone 13 viewport, SwiftShader (software GL, so a floor, not a
 
 - New: `cosmetic-cans/__tests__/closures.test.ts` (ring-pull anchor, hidden closures, square lid skirt), `flexible/__tests__/realism.test.ts` (landscape flow-wrap panels and UVs, clear-film product, wrinkle bounds and fade, doypack base width).
 - `flexible.test.ts`: the per-component UV range loop (thousands of `expect()` calls, timed out at the finer mesh) now checks the same bound on the min / max in one assertion. Same predicate, nothing weakened.
+
+## Round 2
+
+Merged `origin/claude/exciting-albattani-8kzgsu` and `origin/claude/exciting-albattani-8kzgsu-3d-engine` (d9c2406). The engine now has real closure styles (`ROLL_ON_BALL`, `AIRLESS_PUMP`, `BULLET_CAP`, `PEEL_FOIL`, `EOE_RING`, mapped via `VesselOption.closureStyle`). Sheets: `round2-closures-before.jpg` / `round2-closures-after.jpg`.
+
+| ID | Sev | Model / file | Finding | Fix | Status |
+|---|---|---|---|---|---|
+| R2-01 | high | CAN-TUNA, CAN-SARDINE, CAN-OVAL-FISH, CAN-FOOD-3PC · `geometry.ts · metalcan` | Ring pull was the generic core can tab placed by an offset hack (`ringPullAnchor`); the EASY_OPEN_END option on the food can showed nothing. | Hack removed. Closure anchor = end panel, so the engine's `EOE_RING` (ring + rivet, follows the section) sits on the panel and a plain double-seam end keeps the core tab hidden under it. | fixed |
+| R2-02 | high | TRAY-PUNNET · `geometry.ts · cup` | Film lid drawn in the profile regardless of the closure option. | Profile is an open rim again; the engine's section-following `PEEL_FOIL` draws the film. The round fallback for the HINGED_LID option (no style yet) is shrunk to a speck (`closureR`). | fixed |
+| R2-03 | high | COS-LIPSTICK · `geometry.ts · caseShape`, `definitions/cosmetic.ts` | Round jar lid disc on top of the case (core `LUG_LID` blocks styles). | Core kind `ROUND_BOTTLE` so `BULLET_CAP` applies; new `cap: "bullet"` shape option anchors the cap so its top is the case top and puts the split groove under its edge. | fixed |
+| R2-04 | medium | COS-AIRLESS · `index.ts · catalogueEnvelope` | Overcap cropped by the camera: envelope ignored the renderer-drawn head because the case shape has a lid. | Airless head height (17 mm) added to the envelope. | fixed |
+| R2-05 | — | COS-ROLL-ON, CUP-YOGURT | Now render the engine's ball + dome cap and peel foil. Verified. | — | fixed (engine) |
+| R2-06 | medium | E-02, E-03 → `cosmetic-cans/display.ts` | Surface mapping and per-model liquid. | `displaySurfaces(def)` (DIRECT_PRINT / IML → WRAP on round, FRONT + BACK on square / oval; LID_TOP / LID_FOIL → LID on round) and `displayLiquid(def)` (perfume PERFUME, serums SERUM, vials / eye drops WATER, cans COLA, creams CREAM). Library hook below. | fixed in family, needs hook |
+| R2-07 | medium | E-06, E-07 → `flexible/display.ts` | Flex framing and default panels. | `flexDisplayEnvelope(cfg)` (filled, flow wrap lying down) and `defaultPrintPanels(code)` (all panels). Library hook below. | fixed in family, needs hook |
+
+Still open:
+- **E-09 oval tube (engine):** `src/components/three/vessels/geometry.ts · tubeBodyGeometry(dims)` builds round rings from `dims.D` and ignores `dims.G`. Fix: pass `G` and make each body ring an ellipse with `a = D/2`, `b = G/2`, morphing to the flat crimp as it does now. Also have the library route tubes through `describeVessel` with `dims.G`. The family profile already carries the stadium section.
+- **EOE ring on rect / oval tins (engine, new):** `closures.ts · styledClosure EOE_RING` places the ring at `z = R * 0.55` with R the half WIDTH, so on CAN-SARDINE and CAN-OVAL-FISH (depth 0.57× width) the ring hangs over the short edge. Fix: `z = R * depthRatio * 0.55` and `rr = min(…, R * depthRatio * 0.4)`.
+- **Hacks kept** (no engine style yet): square slip / plug lids (TIN-GIFT-SQUARE, TIN-TEA-CADDY), lever lid (CAN-PAINT), twist-up cap (COS-DEO-STICK), snap lid on TUB-ICE-RECT, clamshell hinge. Each needs a section-following style (`SLIP_LID_SECTION`, `LEVER_LID`, `SNAP_LID_SECTION`, `TWIST_UP`, `HINGED_TRAY`); then drop `closureY` / `closureR` in `geometry.ts`.
+- **E-08 flex options:** needs a designer field (`doc.vessel.options`) and ConfigPanel toggles from `def.allowedOptions`; the family already validates and renders every option.
+
+### Library hook (not applied: this session's brief says not to edit src/lib/library)
+In `src/lib/library/vessels.ts`:
+- `COSMETIC`: `const shown = COS.displaySurfaces(def);` then `surfaces: shown.surfaces, defaultSurfaces: shown.defaultSurfaces` (replaces the `isSurface` filter), and `defaultLiquid: COS.displayLiquid(def)`.
+- `FLEXIBLE`: `defaultSurfaces: FLEX.defaultPrintPanels(def.code)`, and in `describe`: `envelope: FLEX.flexDisplayEnvelope(cfg)`.
+
+## Round 3
+
+Merged `origin/claude/exciting-albattani-8kzgsu-3d-engine` 4d9d1e7: section-following `PLUG_LID`, `LEVER_LID`, `SNAP_LID`, `HINGED_LID`, `TWIST_UP` closure styles, a section-following core `SLIP_LID`, the oval tube body (E-09) and the EOE ring depth fix. Every remaining lid hack is gone; `geometry.ts` no longer hides or shrinks any renderer closure. Sheets: `round3-lids-before.jpg` / `round3-lids-after.jpg`.
+
+| ID | Sev | Model / file | Change | Status |
+|---|---|---|---|---|
+| R3-01 | high | TIN-GIFT-SQUARE, TIN-TEA-CADDY · `geometry.ts · tin`, `definitions/cans.ts` | Profile-built square lid removed: open rolled rim for every section, core `ROUND_TIN` again. The renderer's `SLIP_LID` (square / rect section) and `PLUG_LID` style draw the lid. | fixed |
+| R3-02 | high | CAN-PAINT · `geometry.ts · metalcan` | Hidden-closure anchor removed; the renderer's `LEVER_LID` plugs into the chime from the seam top. | fixed |
+| R3-03 | high | COS-DEO-STICK · `geometry.ts · caseShape`, `definitions/cosmetic.ts` | Core-hiding removed (core back to the family default). New `cap: "twist"`: the renderer's `TWIST_UP` oval dome cap is anchored so its top is the case top, with the split groove under its edge. | fixed |
+| R3-04 | high | TUB-ICE-RECT · `geometry.ts · cup` | Profile-built snap lid and shrunk fallback removed; the renderer's `SNAP_LID` follows the rectangle. | fixed |
+| R3-05 | high | TRAY-CLAMSHELL · `geometry.ts · cup` | Profile is now the base tray with its flange; the renderer's `HINGED_LID` draws the lid. Hinge line `hb` solves `hb + max(8, min(30, 0.35 hb)) = H`, so the closed height is still H. The catalogue test checks that sum instead of the profile top. | fixed |
+| R3-06 | medium | TRAY-PUNNET | Round fallback shrink removed; both options (`TOP_SEAL_FILM`, `HINGED_LID`) are now renderer styles. | fixed |
+| R3-07 | medium | CAN-SARDINE, CAN-OVAL-FISH (EOE ring), TUBE-OVAL (E-09) | Verified after the engine fixes: the ring sits on the panel and the oval tube is flattened. | fixed (engine) |
+
+What is left of `closureY`: anchors only. End panel for ring-pull and foil ends, and the anchor that puts `BULLET_CAP` / `TWIST_UP` flush with the case top. The overcap anchors mirror the renderer's cap formulas (noted at both places). If those formulas change, update `caseShape`.
+
+Still open: E-02 / E-03 / E-06 / E-07 library hook (Round 2) and E-08 (flex options UI).

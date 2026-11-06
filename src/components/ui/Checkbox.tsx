@@ -54,7 +54,6 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
             onChange={(e) => onChange?.(e.target.checked, id)}
             disabled={disabled}
             required={required}
-            aria-checked={indeterminate ? "mixed" : undefined}
             aria-invalid={error ? true : undefined}
             aria-describedby={[describedBy(id, error, helpText), ariaDescribedBy].filter(Boolean).join(" ") || undefined}
           />

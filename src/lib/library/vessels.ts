@@ -133,6 +133,22 @@ const BOTTLE_CLOSURE_STYLE: Partial<Record<string, string>> = {
   SPARKLING_CORK: "SPARKLING",
 };
 
+/** Cosmetic / can closures drawn with an engine closure style instead of the core default (E-04). */
+const COS_CLOSURE_STYLE: Partial<Record<string, string>> = {
+  ROLL_BALL_CAP: "ROLL_ON_BALL",
+  AIRLESS_PUMP: "AIRLESS_PUMP",
+  BULLET_CAP: "BULLET_CAP",
+  PEEL_FOIL: "PEEL_FOIL",
+  LIDDING_FOIL: "PEEL_FOIL",
+  TOP_SEAL_FILM: "PEEL_FOIL",
+  EASY_OPEN_END: "EOE_RING",
+  PLUG_LID: "PLUG_LID",
+  LEVER_LID: "LEVER_LID",
+  SNAP_LID: "SNAP_LID",
+  HINGED_LID: "HINGED_LID",
+  TWIST_UP: "TWIST_UP",
+};
+
 /** Cosmetic materials whose core look has the wrong colour (X-01, V-14). */
 const COS_TINT: Partial<Record<string, string>> = { ABS_BLACK: "#161616" };
 
@@ -227,8 +243,8 @@ const COSMETIC: VesselModelDef[] = COS.DEFINITIONS.filter((d) => d.geometry !== 
     code: c,
     name: isCoreClosure(c) ? CLOSURE_NAMES[c] : (COS.CLOSURE_NAMES[c as keyof typeof COS.CLOSURE_NAMES] ?? { ar: c, en: c }),
     core: isCoreClosure(c) && coreDef.closures.includes(c) ? c : coreDef.defaultClosure,
+    ...(COS_CLOSURE_STYLE[c] ? { closureStyle: COS_CLOSURE_STYLE[c] } : {}),
   }));
-  const surfaces = def.surfaces.filter(isSurface);
   const can = def.family === "CAN";
   return {
     kind: "vessel",
@@ -250,10 +266,11 @@ const COSMETIC: VesselModelDef[] = COS.DEFINITIONS.filter((d) => d.geometry !== 
     defaultContainer: def.defaultMaterial,
     closures,
     defaultClosure: def.defaultClosure,
-    surfaces: surfaces.length ? surfaces : ["WRAP"],
-    defaultSurfaces: def.defaultSurfaces.filter(isSurface).length ? def.defaultSurfaces.filter(isSurface) : [surfaces[0] ?? "WRAP"],
+    // E-02 / E-03: catalogue print surfaces mapped to renderable ones, and a per-model liquid.
+    surfaces: COS.displaySurfaces(def).surfaces,
+    defaultSurfaces: COS.displaySurfaces(def).defaultSurfaces,
     fillable: def.fillable,
-    defaultLiquid: can ? "COLA" : def.family === "PHARMA" ? "SERUM" : "CREAM",
+    defaultLiquid: COS.displayLiquid(def),
     pricing: def.geometry === "tube" ? "TUBE" : "LABEL",
     describe(dims, wanted, presetId) {
       const d = COS.clampCatalogueDims(def, dims);
@@ -300,7 +317,8 @@ const FLEXIBLE: VesselModelDef[] = FLEX.DEFINITIONS.map((def) => {
     closures: [],
     defaultClosure: "",
     surfaces: panels,
-    defaultSurfaces: panels.filter((p) => p === "front" || p === "back" || p === "sleeve").length ? panels.filter((p) => p === "front" || p === "back" || p === "sleeve") : panels.slice(0, 1),
+    // E-07: every printable panel is on by default.
+    defaultSurfaces: FLEX.defaultPrintPanels(def.code),
     fillable: false,
     defaultLiquid: "WATER",
     pricing: "POUCH",
@@ -321,8 +339,7 @@ const FLEXIBLE: VesselModelDef[] = FLEX.DEFINITIONS.map((def) => {
           trimAreaM2: p.trimAreaM2,
           panel: p.id,
         }));
-      const G = cfg.dims.G ?? 0;
-      return { profile: null, areas, envelope: { width: cfg.dims.W, depth: Math.max(G, 30), height: cfg.dims.H }, flex: cfg } satisfies VesselDescription;
+      return { profile: null, areas, envelope: FLEX.flexDisplayEnvelope(cfg), flex: cfg } satisfies VesselDescription;
     },
   } satisfies VesselModelDef;
 });

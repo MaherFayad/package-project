@@ -1,0 +1,274 @@
+[
+ {
+  "code": "ECMA_TUCK_STE",
+  "errors": [],
+  "shots": [
+   "0iso"
+  ],
+  "fps": 60.5
+ },
+ {
+  "code": "ECMA_TUCK_RTE",
+  "errors": [],
+  "shots": [
+   "0iso"
+  ],
+  "fps": 60.5
+ },
+ {
+  "code": "ECMA_TUCK_AIRPLANE",
+  "errors": [],
+  "shots": [
+   "0iso"
+  ],
+  "fps": 60.5
+ },
+ {
+  "code": "ECMA_TUCK_FRENCH_RTE",
+  "errors": [],
+  "shots": [
+   "0iso"
+  ],
+  "fps": 60.5
+ },
+ {
+  "code": "ECMA_TUCK_SNAP_LOCK",
+  "errors": [],
+  "shots": [
+   "0iso"
+  ],
+  "fps": 60.5
+ },
+ {
+  "code": "ECMA_TUCK_CRASH_LOCK",
+  "errors": [],
+  "shots": [
+   "0iso"
+  ],
+  "fps": 60.5
+ },
+ {
+  "code": "ECMA_SEAL_END",
+  "errors": [],
+  "shots": [
+   "0iso"
+  ],
+  "fps": 60.5
+ },
+ {
+  "code": "ECMA_SEAL_END_TEAR",
+  "errors": [],
+  "shots": [
+   "0iso"
+  ],
+  "fps": 60.5
+ },
+ {
+  "code": "ECMA_HANGER_EURO",
+  "errors": [],
+  "shots": [
+   "0iso"
+  ],
+  "fps": 60
+ },
+ {
+  "code": "ECMA_HANGER_ROUND",
+  "errors": [],
+  "shots": [
+   "0iso"
+  ],
+  "fps": 60.5
+ },
+ {
+  "code": "ECMA_WINDOW_RTE",
+  "errors": [],
+  "shots": [
+   "0iso"
+  ],
+  "fps": 60.5
+ },
+ {
+  "code": "ECMA_PHARMA_RTE",
+  "errors": [],
+  "shots": [
+   "0iso"
+  ],
+  "fps": 60
+ },
+ {
+  "code": "ECMA_FLIP_TOP",
+  "errors": [],
+  "shots": [
+   "0iso"
+  ],
+  "fps": 60.5
+ },
+ {
+  "code": "ECMA_DOUBLE_WALL_TUCK",
+  "errors": [],
+  "shots": [
+   "0iso"
+  ],
+  "fps": 60.5
+ },
+ {
+  "code": "ECMA_TRAY_4C",
+  "errors": [],
+  "shots": [
+   "0iso"
+  ],
+  "fps": 60
+ },
+ {
+  "code": "ECMA_TRAY_BEERS",
+  "errors": [],
+  "shots": [
+   "0iso"
+  ],
+  "fps": 60.5
+ },
+ {
+  "code": "ECMA_TRAY_BRIGHTWOOD",
+  "errors": [],
+  "shots": [
+   "0iso"
+  ],
+  "fps": 60.5
+ },
+ {
+  "code": "ECMA_TRAY_6C_LID",
+  "errors": [],
+  "shots": [
+   "0iso"
+  ],
+  "fps": 60.5
+ },
+ {
+  "code": "ECMA_TRAY_HINGED_TUCK",
+  "errors": [],
+  "shots": [
+   "0iso"
+  ],
+  "fps": 60.5
+ },
+ {
+  "code": "ECMA_SLEEVE_OPEN",
+  "errors": [],
+  "shots": [
+   "0iso"
+  ],
+  "fps": 60.5
+ },
+ {
+  "code": "ECMA_WRAP_LOCK",
+  "errors": [],
+  "shots": [
+   "0iso"
+  ],
+  "fps": 60
+ },
+ {
+  "code": "FOLDER_PRESENTATION",
+  "errors": [],
+  "shots": [
+   "0iso"
+  ],
+  "fps": 60.5
+ },
+ {
+  "code": "ECMA_WALLET_ENDFLAP",
+  "errors": [],
+  "shots": [
+   "0iso"
+  ],
+  "fps": 60
+ },
+ {
+  "code": "ECMA_PILLOW",
+  "errors": [],
+  "shots": [
+   "0iso"
+  ],
+  "fps": 60.5
+ },
+ {
+  "code": "CONE",
+  "errors": [],
+  "shots": [
+   "0iso"
+  ],
+  "fps": 60.5
+ },
+ {
+  "code": "ECMA_HEXAGON",
+  "errors": [],
+  "shots": [
+   "0iso"
+  ],
+  "fps": 60.5
+ },
+ {
+  "code": "ECMA_OCTAGON",
+  "errors": [],
+  "shots": [
+   "0iso"
+  ],
+  "fps": 60.5
+ },
+ {
+  "code": "GABLE_CARRY_CLB",
+  "errors": [],
+  "shots": [
+   "0iso"
+  ],
+  "fps": 60.5
+ },
+ {
+  "code": "CUP_CARRIER",
+  "errors": [],
+  "shots": [
+   "0iso"
+  ],
+  "fps": 60.5
+ },
+ {
+  "code": "BOTTLE_BASKET_4",
+  "errors": [],
+  "shots": [
+   "0iso"
+  ],
+  "fps": 60.5
+ },
+ {
+  "code": "BOTTLE_BASKET_6",
+  "errors": [],
+  "shots": [
+   "0iso"
+  ],
+  "fps": 60.5
+ },
+ {
+  "code": "ECMA_COUNTER_DISPLAY",
+  "errors": [],
+  "shots": [
+   "0iso"
+  ],
+  "fps": 60.5
+ },
+ {
+  "code": "LIQUID_GABLE_TOP",
+  "errors": [],
+  "shots": [
+   "0iso"
+  ],
+  "fps": 60.5
+ },
+ {
+  "code": "LIQUID_ASEPTIC_BRICK",
+  "errors": [],
+  "shots": [
+   "0iso"
+  ],
+  "fps": 60.5
+ }
+]

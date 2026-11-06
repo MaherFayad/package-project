@@ -199,9 +199,9 @@ export const COSMETIC_DEFINITIONS: CatalogueVesselDefinition[] = [
     family: "COSMETIC",
     subFamily: BODY,
     standard: null,
-    coreKind: "CAN", // cap is in the profile; core closure hidden (geometry.ts closureY)
+    coreKind: null,
     geometry: "extrusion",
-    shape: { type: "case", section: "stadium", capSplit: 0.78, wallMm: 1.8 },
+    shape: { type: "case", section: "stadium", capSplit: 0.78, wallMm: 1.8, cap: "twist" },
     materials: ["PP_WHITE", "PP_NATURAL"],
     defaultMaterial: "PP_WHITE",
     closures: ["TWIST_UP"],
@@ -227,9 +227,9 @@ export const COSMETIC_DEFINITIONS: CatalogueVesselDefinition[] = [
     family: "COSMETIC",
     subFamily: MAKEUP,
     standard: null,
-    coreKind: null,
+    coreKind: "ROUND_BOTTLE", // screw-cap core so the renderer draws its BULLET_CAP style
     geometry: "lathe",
-    shape: { type: "case", section: "round", capSplit: 0.42, wallMm: 0.8 },
+    shape: { type: "case", section: "round", capSplit: 0.42, wallMm: 0.8, cap: "bullet" },
     materials: ["ALUMINIUM", "ABS_BLACK"],
     defaultMaterial: "ALUMINIUM",
     closures: ["BULLET_CAP"],

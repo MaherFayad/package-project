@@ -133,6 +133,7 @@ export default async function CheckoutPage({ params, searchParams }: { params: P
       initial={initial}
       defaultAddress={defaultAddress}
       spec={docSpec(doc, locale)}
+      contactPhone={formatEgyptPhone(user.phone)}
     />
   );
 }

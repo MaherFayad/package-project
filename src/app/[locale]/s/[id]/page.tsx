@@ -9,6 +9,7 @@ import { SharedViewerLazy } from "./SharedViewerLazy";
 import { designerPath } from "@/components/designer/lib/catalog";
 import { loadSharedDesign } from "@/components/designer/server";
 import { modelByCode } from "@/lib/library";
+import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +54,10 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
   }
 
   const { doc, designId } = shared;
+  // The owner opening their own link orders the original; nobody else gets a copy notice wrong.
+  const isOwner = session
+    ? (await db.design.findUnique({ where: { id: designId }, select: { ownerId: true } }))?.ownerId === session.user.id
+    : false;
   const name = doc.name.trim() || t(`structures.${doc.structureCode}` as DictKey);
   const specs: [string, string][] = [
     [t("designer.shared.style"), t(`structures.${doc.structureCode}` as DictKey)],
@@ -77,10 +82,10 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
                   {t("designer.shared.cta")}
                 </Button>
                 <Text as="p" variant="bodySm" tone="subdued">
-                  {t("buyer.shareOwnCopy")} {session ? null : t("buyer.shareSignIn")}
+                  {isOwner ? t("buyer.shareOwner") : <>{t("buyer.shareOwnCopy")} {session ? null : t("buyer.shareSignIn")}</>}
                 </Text>
-                <Button fullWidth url={designerPath(locale, doc.structureCode)}>
-                  {t("designer.shared.copyDesign")}
+                <Button fullWidth url={isOwner ? designerPath(locale, doc.structureCode, { d: designId }) : designerPath(locale, doc.structureCode)}>
+                  {isOwner ? t("account.openDesign") : t("designer.shared.copyDesign")}
                 </Button>
               </BlockStack>
             </Card>

@@ -304,6 +304,12 @@ export default async function OrderPage({ params, searchParams }: { params: Para
                           </div>
                         </>
                       )}
+                      <div className={`${styles.line} ${styles.lineSub}`}>
+                        <dt>{t("buyer.subtotalExVat")}</dt>
+                        <dd>
+                          <PriceTag amount={money.totalPiasters - money.vatPiasters} size="small" locale={locale} />
+                        </dd>
+                      </div>
                       <div className={styles.line}>
                         <dt>{t("checkout.summary.vat")}</dt>
                         <dd>
