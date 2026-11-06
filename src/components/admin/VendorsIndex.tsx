@@ -3,20 +3,12 @@
 import { Factory } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
-import {
-  Badge,
-  Box,
-  EmptyBoxIllustration,
-  EmptyState,
-  IndexFilters,
-  IndexTable,
-  IndexTableCell,
-  IndexTableRow,
-  IndexTableRowLink,
-  InlineStack,
-  Page,
-  Text,
-} from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { Box, InlineStack } from "@/components/ui/Stack";
+import { EmptyBoxIllustration, EmptyState } from "@/components/ui/EmptyState";
+import { IndexFilters, IndexTable, IndexTableCell, IndexTableRow, IndexTableRowLink } from "@/components/ui/IndexTable";
+import { Page } from "@/components/ui/Page";
+import { Text } from "@/components/ui/Text";
 import { HealthBadge } from "./HealthBadge";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";

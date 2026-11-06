@@ -113,7 +113,7 @@ const warn = (code: string, en: string, ar: string): Verdict => ({ ok: true, cod
 const FAMILY_NAME = {
   CORRUGATED: t("corrugated board", "الكرتون المضلع"),
   FOLDING_CARTON: t("folding carton board (SBS)", "كرتون الدوبلكس"),
-  RIGID: t("rigid greyboard", "الكرتون المقوى"),
+  RIGID: t("rigid greyboard", "الكرتون الرمادي"),
   TUBE: t("a paper tube", "أنبوبة الكرتون"),
   LABEL: t("label stock", "خامة الملصقات"),
   FLEXIBLE: t("a flexible laminate", "رقائق مرنة"),
@@ -248,7 +248,7 @@ export function boxMaterialRule(code: StructureCode, board: BoxBoardCode, dims?:
     return deny("MATERIAL_FAMILY", `This style is made from ${f.en}.`, `يصنع هذا النوع من ${f.ar}.`);
   }
   if (b.flute === "BC" && !BC_STRUCTURES.includes(code))
-    return deny("MATERIAL_BC_STYLE", "Double wall board is too stiff for the tucks and locks of this style. It is for shipping boxes.", "الكرتون المزدوج أقوى من أن ينثني في ألسنة وأقفال هذا النوع، وهو مخصص لعلب الشحن.");
+    return deny("MATERIAL_BC_STYLE", "Double wall board is too stiff for the tucks and locks of this style. It is for shipping boxes.", "الكرتون المزدوج أقوى من أن ينثني في ألسنة وأقفال هذا النوع، وهو مخصص لكراتين الشحن.");
   if (code === "PIZZA" && !b.foodSafe) return deny("MATERIAL_FOOD", "Pizza boxes touch hot food: choose a food-safe board.", "علبة البيتزا تلامس طعاما ساخنا، لذا اختر كرتونا آمنا للطعام.");
   if (code === "PIZZA" && b.flute !== "E" && b.flute !== "B") return deny("MATERIAL_PIZZA_FLUTE", "Pizza boxes are made from E or B flute.", "تصنع علب البيتزا من الكرتون المضلع E أو B.");
   if (dims && isCorrugated(b)) {
@@ -357,9 +357,9 @@ function surfaceFinishRule(cfg: ModelConfig, code: ConfigFinishCode): Verdict {
       // white-top liners are printed flexo directly and cannot be laminated (FINISH_LAM_*), so the
       // remedy is another board, never "add lamination".
       if (surface === "KRAFT_LINER")
-        return deny("FINISH_UV_UNCOATED", "Spot UV soaks into uncoated kraft and loses its shine, and kraft cannot be laminated. Choose white E-flute (a printed, laminated sheet) for spot UV.", "اليو في الموضعي يتشربه الكرتون البني غير المطلي فيفقد لمعانه، ولا يمكن تغليف الكرتون البني بالسلوفان. اختر الكرتون الأبيض E لليو في الموضعي.");
+        return deny("FINISH_UV_UNCOATED", "Spot UV soaks into uncoated kraft and loses its shine, and kraft cannot be laminated. Choose white E-flute (a printed, laminated sheet) for spot UV.", "طلاء UV الموضعي يتشربه الكرتون البني غير المطلي فيفقد لمعانه، ولا يمكن تغليف الكرتون البني بالسلوفان. اختر الكرتون الأبيض E لطلاء UV الموضعي.");
       if (surface === "WHITE_TOP_LINER")
-        return deny("FINISH_UV_WHITE_TOP", "B and BC white board is printed directly and cannot be laminated, so spot UV has no sealed surface to sit on. Choose white E-flute for spot UV.", "الكرتون الأبيض B وBC يطبع مباشرة ولا يمكن تغليفه بالسلوفان، فلا يجد اليو في الموضعي سطحا مناسبا. اختر الكرتون الأبيض E لليو في الموضعي.");
+        return deny("FINISH_UV_WHITE_TOP", "B and BC white board is printed directly and cannot be laminated, so spot UV has no sealed surface to sit on. Choose white E-flute for spot UV.", "الكرتون الأبيض B وBC يطبع مباشرة ولا يمكن تغليفه بالسلوفان، فلا يجد طلاء UV الموضعي سطحا مناسبا. اختر الكرتون الأبيض E لطلاء UV الموضعي.");
       return OK;
     }
     case "foil": {
@@ -404,9 +404,9 @@ export function finishRule(cfg: ModelConfig, code: ConfigFinishCode, mask?: Fini
   if (def.group === "spotUv") {
     const coat = others.find((f) => FINISHES[f.code].group === "coating");
     if (coat && (coat.code === "GLOSS_LAMINATION" || coat.code === "GLOSS_VARNISH"))
-      return deny("FINISH_UV_ON_GLOSS", "Spot UV shows no contrast over a gloss finish. Choose matte or soft-touch lamination.", "اليو في الموضعي لا يظهر فوق تشطيب لامع، اختر سلوفان مطفي أو مخملي.");
+      return deny("FINISH_UV_ON_GLOSS", "Spot UV shows no contrast over a gloss finish. Choose matte or soft-touch lamination.", "طلاء UV الموضعي لا يظهر فوق تشطيب لامع، اختر سلوفان مطفي أو مخملي.");
     if (!coat && (surfaceOf(cfg) === "COATED_BOARD" || surfaceOf(cfg) === "ART_PAPER_WRAP" || surfaceOf(cfg) === "LITHO_LAM"))
-      return { ...OK, code: "FINISH_UV_NO_LAM", warning: t("Spot UV stands out most over matte or soft-touch lamination.", "يظهر اليو في الموضعي أوضح فوق السلوفان المطفي أو المخملي.") };
+      return { ...OK, code: "FINISH_UV_NO_LAM", warning: t("Spot UV stands out most over matte or soft-touch lamination.", "يظهر طلاء UV الموضعي أوضح فوق السلوفان المطفي أو المخملي.") };
   }
   if (def.group === "foil") {
     const colours = new Set(others.filter((f) => FINISHES[f.code].group === "foil").map((f) => f.code));

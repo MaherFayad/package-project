@@ -1,9 +1,9 @@
 import { Mat4 as Matrix4 } from "@/lib/dieline/math";
 import { z } from "zod";
 import type { Dims, StructureFeatures } from "@/types";
-import { panelCreases } from "../../builder";
+import { edgeBleed, panelCreases } from "../../builder";
 import { computeFaces } from "../../fold";
-import { bboxOf, coveredFraction, edgesOf, insetRect, offsetConvex, polygonArea, segLength, subtractSegments } from "../../geometry";
+import { bboxOf, edgesOf, insetRect, offsetConvex, polygonArea, segLength, subtractSegments } from "../../geometry";
 import { DielineValidationError, thicknessSchema, type DimsIssue } from "../../limits";
 import type { DielineOptions, DielinePanel, DielinePiece, FilmPatch, Polygon, Pt, Segment } from "../../types";
 import { trimFaces } from "../fefco-02/kit";
@@ -115,7 +115,7 @@ function buildFamilyDieline(def: FamilyStructureDef, dims: Dims, options: Dielin
     .filter((p) => p.printable)
     .map((p) => {
       const creases = [...panelCreases(p, panels), ...extra];
-      const distances = edgesOf(p.polygon).map((e) => (coveredFraction(e, creases) > 0.98 ? 0 : bleed));
+      const distances = edgesOf(p.polygon).map((e) => edgeBleed(e, creases, panels, bleed));
       return { panelId: p.id, polygon: offsetConvex(p.polygon, distances) as Polygon };
     });
 

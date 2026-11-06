@@ -1,7 +1,7 @@
 import { ImageOff } from "lucide-react";
 import { Icon } from "./Icon";
 import { cx } from "./utils";
-import styles from "./Misc.module.css";
+import styles from "./Thumbnail.module.css";
 
 export interface ThumbnailProps {
   source?: string;

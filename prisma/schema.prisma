@@ -546,6 +546,9 @@ model Dispute {
   description String
   status     String   @default("OPEN") // OPEN | UNDER_REVIEW | RESOLVED_REPRINT | RESOLVED_REFUND | REJECTED
   resolution String?
+  /// Added by checkout round 9: the buyer's photos with the report, a JSON list of private upload
+  /// keys (`dispute/<orderId>/<random>.<ext>`, served by /api/vendor/files to the buyer and admins).
+  photos     Json?
   createdAt  DateTime @default(now())
   resolvedAt DateTime?
   /// Added by technical audit round 2: number of disputes the order had before this one. With the

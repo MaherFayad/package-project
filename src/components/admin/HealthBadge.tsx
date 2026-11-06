@@ -1,4 +1,4 @@
-import { Badge } from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
 import { formatNumber } from "@/lib/format";
 import { adminStyles } from "./charts";
 

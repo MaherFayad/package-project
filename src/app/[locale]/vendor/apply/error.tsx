@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
-import { Button, Card, EmptyBoxIllustration, EmptyState, Page } from "@/components/ui";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { EmptyBoxIllustration, EmptyState } from "@/components/ui/EmptyState";
+import { Page } from "@/components/ui/Page";
 import { useI18n } from "@/i18n/client";
 
 export default function ApplyError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {

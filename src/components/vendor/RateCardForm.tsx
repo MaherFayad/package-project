@@ -3,22 +3,17 @@
 import { Plus, Table2, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
-import {
-  Banner,
-  BlockStack,
-  Button,
-  Card,
-  Checkbox,
-  DataTable,
-  InlineGrid,
-  InlineStack,
-  Layout,
-  LayoutSection,
-  Page,
-  Text,
-  TextField,
-  useToast,
-} from "@/components/ui";
+import { Banner } from "@/components/ui/Banner";
+import { BlockStack, InlineGrid, InlineStack } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Checkbox } from "@/components/ui/Checkbox";
+import { DataTable } from "@/components/ui/IndexTable";
+import { Layout, LayoutSection } from "@/components/ui/Layout";
+import { Page } from "@/components/ui/Page";
+import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
+import { useToast } from "@/components/ui/Toast";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { formatMoney, formatNumber } from "@/lib/format";

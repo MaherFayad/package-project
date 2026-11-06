@@ -7,10 +7,16 @@ import type { Dims, PaymentMethod, ShippingAddress } from "@/types";
 import { getT, toLocale, type DictKey } from "@/i18n";
 import { requireUser } from "@/lib/auth/session";
 import { fromJson } from "@/lib/json";
-import { formatDate, formatDims } from "@/lib/format";
+import { formatDate, formatDims, formatMoney } from "@/lib/format";
 import { getOrderForViewer, moneyOf } from "@/lib/orders/service";
 import { invoiceBreakdown } from "@/lib/orders/totals";
-import { Banner, BlockStack, Button, Card, InlineGrid, Inset, Page, PriceTag, Text } from "@/components/ui";
+import { Banner } from "@/components/ui/Banner";
+import { BlockStack, InlineGrid } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { Card, Inset } from "@/components/ui/Card";
+import { Page } from "@/components/ui/Page";
+import { PriceTag } from "@/components/ui/PriceTag";
+import { Text } from "@/components/ui/Text";
 import { PrintButton } from "../../_components/PrintButton";
 import styles from "../../_components/orders.module.css";
 
@@ -51,7 +57,10 @@ export default async function InvoicePage({ params }: { params: Params }) {
   const b = invoiceBreakdown({ subtotalPiasters: money.netPiasters, vatPiasters: money.vatPiasters, shippingPiasters: money.shippingPiasters });
   const addr = fromJson<ShippingAddress>(order.shippingAddress);
   const placeholder = t("orders.invoice.placeholder");
-  const paidMethod = order.payments.find((p) => p.status === "PAID")?.method as PaymentMethod | undefined;
+  const paidMethod = order.payments.find((p) => p.status === "PAID" || p.status === "REFUNDED")?.method as PaymentMethod | undefined;
+  // R7-01: after a refund the receipt says so (amount, method, credit note), instead of reading as paid.
+  const refund = order.payments.find((p) => p.status === "REFUNDED");
+  const creditNote = order.invoices.find((i) => i.kind === "CREDIT_NOTE");
   const buyerName = order.buyer.organization?.name ?? order.buyer.name ?? addr.name;
   // Addresses store the canonical English governorate; the invoice shows it in the page language.
   const govKey = governorateKey(addr.governorate);
@@ -60,6 +69,16 @@ export default async function InvoicePage({ params }: { params: Params }) {
   return (
     <Page title={docTitle} subtitle={t("orders.detail.title", { number: order.number })} backAction={back} primaryAction={<PrintButton label={t("orders.invoice.print")} />}>
       <BlockStack gap="400">
+        {refund ? (
+          <Banner tone="info" title={t("buyer.refund.receiptTitle")}>
+            {t(creditNote ? "buyer.refund.receiptBodyNote" : "buyer.refund.receiptBody", {
+              amount: formatMoney(refund.amountPiasters, locale, { alwaysDecimals: true }),
+              method: t(`paymentMethods.${refund.method as PaymentMethod}` as DictKey),
+              note: creditNote?.number ?? "",
+              date: formatDate(creditNote?.issuedAt ?? refund.updatedAt ?? new Date(), locale, "long"),
+            })}
+          </Banner>
+        ) : null}
         <Card>
           <div className={styles.invoice}>
             <BlockStack gap="400">

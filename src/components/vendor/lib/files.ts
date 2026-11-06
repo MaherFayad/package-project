@@ -8,9 +8,10 @@
  *   qc/<orderId>/…           private: the order's vendor, its buyer, admins
  *   cert/<vendorId>/…        private: that vendor's staff, admins
  *   apply/<userId>/…         private: the applicant, admins
+ *   dispute/<orderId>/…      private: the order's buyer (who reported the problem), admins
  */
 
-export const UPLOAD_SCOPES = ["portfolio", "qc", "cert", "apply"] as const;
+export const UPLOAD_SCOPES = ["portfolio", "qc", "cert", "apply", "dispute"] as const;
 export type UploadScope = (typeof UPLOAD_SCOPES)[number];
 
 export type SniffedType = "image/png" | "image/jpeg" | "image/webp" | "application/pdf";
@@ -32,6 +33,8 @@ export const UPLOAD_RULES: Record<UploadScope, { types: SniffedType[]; maxBytes:
   qc: { types: IMAGES, maxBytes: 10 * 1024 * 1024, accept: "image/png,image/jpeg,image/webp", public: false },
   cert: { types: IMAGES_AND_PDF, maxBytes: 10 * 1024 * 1024, accept: "image/png,image/jpeg,image/webp,application/pdf", public: false },
   apply: { types: IMAGES_AND_PDF, maxBytes: 10 * 1024 * 1024, accept: "image/png,image/jpeg,image/webp,application/pdf", public: false },
+  // Added by checkout round 9: photos a buyer adds to "Report a problem" (max 5 per report).
+  dispute: { types: IMAGES, maxBytes: 10 * 1024 * 1024, accept: "image/png,image/jpeg,image/webp", public: false },
 };
 
 /** Detect the real type from magic bytes. */
@@ -64,7 +67,7 @@ export function checkUpload(scope: UploadScope, bytes: Uint8Array): UploadCheck 
 }
 
 const OWNER_RE = /^[A-Za-z0-9_-]{1,40}$/;
-const KEY_RE = /^(portfolio|qc|cert|apply)\/([A-Za-z0-9_-]{1,40})\/([A-Za-z0-9_-]{8,64})\.(png|jpg|webp|pdf)$/;
+const KEY_RE = /^(portfolio|qc|cert|apply|dispute)\/([A-Za-z0-9_-]{1,40})\/([A-Za-z0-9_-]{8,64})\.(png|jpg|webp|pdf)$/;
 
 export function buildKey(scope: UploadScope, ownerId: string, randomId: string, ext: string): string {
   if (!OWNER_RE.test(ownerId)) throw new Error("bad owner id");
@@ -134,6 +137,9 @@ export function canReadFile(
       return viewer.vendorId === key.ownerId;
     case "apply":
       return viewer.id === key.ownerId;
+    case "dispute":
+      // The buyer's own report photos; the printer does not see them (ops shares what is needed).
+      return !!orderParties && orderParties.buyerId === viewer.id;
     case "qc":
       if (!orderParties) return false;
       if (viewer.vendorId && orderParties.vendorId === viewer.vendorId) return true;

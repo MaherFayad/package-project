@@ -37,11 +37,13 @@ import { rateLimit } from "@/lib/rate-limit";
 import { isReprint } from "@/components/admin/lib/metrics";
 import { generatePrintPdf } from "./pdf/print";
 import { putFile, getFile } from "./storage";
-import { assertTransition, canBuyerCancel, canViewOrder, canOpenDispute, canReview, isPaidStatus, type Actor } from "./state";
+import { assertTransition, canBuyerCancel, canViewBuyerOrder, canViewOrder, canOpenDispute, canReview, isPaidStatus, type Actor } from "./state";
 import { isQuoteValid, nextSequence, orderTotals } from "./totals";
 import { decidePaymentOutcome, storedGatewayRef } from "./payment-rules";
 import { preflightBlocks, proofPreflight, type ProofPreflight } from "./preflight";
 import { instantOrderBlock } from "./order-guard";
+import { formatDateTime, formatMoney } from "@/lib/format";
+import { parseKey as parseUploadKey } from "@/components/vendor/lib/files";
 import { QUOTE_PRICED } from "./quote-status";
 
 /**
@@ -460,7 +462,7 @@ async function createOrderFromOffer(
       .create({ data: { actorId: user.id, action: "QUOTE_ACCEPTED", entityType: "QUOTE", entityId: p.quoteId, summary: `Price accepted: order ${result.number}`, after: toJson({ orderId: result.orderId, number: result.number }) } })
       .catch((e) => console.warn("[orders] quote audit failed", e));
   }
-  await notify({ to: { phone: user.phone }, locale: p.locale, template: "ORDER_PLACED", params: { number: result.number } });
+  await notify({ to: { phone: user.phone }, locale: p.locale, template: "ORDER_PLACED", params: { number: result.number, url: buyerLink(p.locale, `/checkout/pay/${result.orderId}`) } });
   return { orderId: result.orderId, number: result.number };
 }
 
@@ -545,7 +547,8 @@ export { canViewOrder };
 export async function getOrderForViewer(idOrNumber: string, user: SessionUser): Promise<OrderDetail | null> {
   if (!/^[\w-]{1,64}$/.test(idOrNumber)) return null;
   const order = await db.order.findFirst({ where: { OR: [{ id: idOrNumber }, { number: idOrNumber }] }, include: orderInclude });
-  if (!order || !canViewOrder(order, user)) return null;
+  // Buyer-side pages: never vendor staff (R5-SEC-01); they use the vendor portal job page.
+  if (!order || !canViewBuyerOrder(order, user)) return null;
   return order;
 }
 
@@ -654,7 +657,12 @@ async function issueCreditNote(tx: Prisma.TransactionClient, orderId: string, no
   });
 }
 
-async function notifyStatus(order: { number: string; buyer: { locale: string; phone: string; email: string | null } }, to: OrderStatus): Promise<void> {
+/** R9: every buyer message links to the page it talks about. */
+function buyerLink(locale: Locale, path: string): string {
+  return `${siteUrl()}/${locale}${path}`;
+}
+
+async function notifyStatus(order: { id: string; number: string; buyer: { locale: string; phone: string; email: string | null } }, to: OrderStatus, tracking?: string): Promise<void> {
 
   const locale = (order.buyer.locale === "en" ? "en" : "ar") as Locale;
   const template = to === "SHIPPED" ? "SHIPPED" : to === "DELIVERED" ? "DELIVERED" : "STATUS_CHANGED";
@@ -663,7 +671,7 @@ async function notifyStatus(order: { number: string; buyer: { locale: string; ph
     to: { phone: order.buyer.phone, email: order.buyer.email },
     locale,
     template,
-    params: { number: order.number, status: getT(locale)(`orderStatus.${to}`) },
+    params: { number: order.number, status: getT(locale)(`orderStatus.${to}`), url: buyerLink(locale, `/orders/${order.id}`), tracking: tracking ?? "" },
   });
 }
 
@@ -750,7 +758,13 @@ export async function startPayment(orderId: string, user: SessionUser, method: P
       to: { phone: order.buyer.phone },
       locale,
       template: "FAWRY_CODE",
-      params: { number: order.number, code: intention.fawry.referenceCode },
+      // R9: the outlet needs the amount, and the buyer the deadline.
+      params: {
+        number: order.number,
+        code: intention.fawry.referenceCode,
+        amount: formatMoney(order.totalPiasters, locale, { alwaysDecimals: true }),
+        date: formatDateTime(intention.fawry.expiresAt, locale),
+      },
     });
   }
   return paymentView(saved);
@@ -808,7 +822,7 @@ export async function applyPaymentOutcome(o: Extract<WebhookOutcome, { ok: true 
     // Conditional: never downgrade a payment that turned PAID concurrently.
     const upd = await db.payment.updateMany({ where: { id: payment.id, status: payment.status }, data: { status: "FAILED", raw: lastRaw } });
     if (upd.count !== 1) return "DUPLICATE";
-    await notify({ to: { phone: order.buyer.phone }, locale, template: "PAYMENT_FAILED", params: { number: order.number } });
+    await notify({ to: { phone: order.buyer.phone }, locale, template: "PAYMENT_FAILED", params: { number: order.number, url: buyerLink(locale, `/checkout/pay/${order.id}`) } });
     return "FAILED";
   }
 
@@ -895,7 +909,7 @@ export async function applyPaymentOutcome(o: Extract<WebhookOutcome, { ok: true 
     console.error("[orders] print PDF generation failed", e);
     await db.productionEvent.create({ data: { orderId: order.id, type: "NOTE", note: "PRINT_PDF_FAILED" } });
   }
-  await notify({ to: { phone: order.buyer.phone, email: order.buyer.email }, locale, template: "PAYMENT_RECEIVED", params: { number: order.number } });
+  await notify({ to: { phone: order.buyer.phone, email: order.buyer.email }, locale, template: "PAYMENT_RECEIVED", params: { number: order.number, url: buyerLink(locale, `/orders/${order.id}`) } });
   const staff = await db.user.findMany({ where: { vendorId: order.vendorId, role: "VENDOR" }, select: { phone: true, locale: true } });
   for (const s of staff) {
     await notify({ to: { phone: s.phone }, locale: s.locale === "en" ? "en" : "ar", template: "VENDOR_NEW_JOB", params: { number: order.number } });
@@ -1019,7 +1033,7 @@ export async function shipOrder(orderId: string, actor: TransitionActor): Promis
     }),
     db.productionEvent.create({ data: { orderId, type: rule.event, note: created.trackingNumber, actorId: actor.userId ?? null, createdAt: now } }),
   ]);
-  await notifyStatus(order, "SHIPPED");
+  await notifyStatus(order, "SHIPPED", created.trackingNumber);
   return { trackingNumber: created.trackingNumber };
 }
 
@@ -1104,7 +1118,13 @@ export async function submitReview(orderId: string, user: SessionUser, rating: n
   await notify({ to: { phone: user.phone }, locale: user.locale, template: "REVIEW_THANKS", params: { number: order.number } });
 }
 
-export async function openDispute(orderId: string, user: SessionUser, reason: DisputeReason, description: string): Promise<void> {
+/** Photos a buyer may attach to one report (checkout round 9). */
+export const MAX_DISPUTE_PHOTOS = 5;
+
+export async function openDispute(orderId: string, user: SessionUser, reason: DisputeReason, description: string, photoKeys: string[] = []): Promise<void> {
+  // Only this order's own report uploads, each at most once (keys come from the upload route).
+  const photos = [...new Set(photoKeys)].filter((k) => parseUploadKey(k)?.scope === "dispute" && parseUploadKey(k)?.ownerId === orderId);
+  if (photos.length !== new Set(photoKeys).size || photos.length > MAX_DISPUTE_PHOTOS) throw new OrderError("NOT_ALLOWED");
   const order = await db.order.findUnique({ where: { id: orderId }, include: { disputes: true } });
   if (!order || order.buyerId !== user.id) throw new OrderError("NOT_FOUND");
   const hasOpen = order.disputes.some((d) => d.status === "OPEN" || d.status === "UNDER_REVIEW");
@@ -1118,7 +1138,7 @@ export async function openDispute(orderId: string, user: SessionUser, reason: Di
       // read the same seq and the unique index rejects the second.
       if (await tx.dispute.count({ where: { orderId, status: { in: ["OPEN", "UNDER_REVIEW"] } } })) throw new OrderError("NOT_ALLOWED");
       const seq = await tx.dispute.count({ where: { orderId } });
-      await tx.dispute.create({ data: { orderId, openedById: user.id, reason, description: description.slice(0, 4000), seq } });
+      await tx.dispute.create({ data: { orderId, openedById: user.id, reason, description: description.slice(0, 4000), seq, ...(photos.length ? { photos: toJson(photos) } : {}) } });
       await tx.productionEvent.create({ data: { orderId, type: "NOTE" as ProductionEventType, note: `DISPUTE_OPENED:${reason}`, actorId: user.id } });
     });
   } catch (e) {

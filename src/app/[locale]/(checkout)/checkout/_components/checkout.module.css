@@ -513,3 +513,11 @@
 .neededBy {
   max-inline-size: 16rem;
 }
+
+/* InstaPay values with their copy buttons (R6-01): value first, button after, wraps on phones. */
+.copyRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--p-space-200);
+}

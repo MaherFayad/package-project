@@ -12,6 +12,7 @@ import { revalidatePath } from "next/cache";
 import { purgeCatalogCache } from "@/lib/catalog-cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { scrubErasedUserTraces } from "@/lib/auth/erasure";
 import { track } from "@/lib/analytics/track";
 import { fromJson, toJson } from "@/lib/json";
 import { OrderError, shipOrder, transitionOrder } from "@/lib/orders/service";
@@ -951,6 +952,8 @@ export async function decideDataRequestAction(input: z.input<typeof dataRequestD
           // First-party analytics rows of this user (B-19): deleting them also drops the
           // account_created row that linked the anonymous browser id to the account.
           await tx.event.deleteMany({ where: { userId: user.id } });
+          // R5-SEC-02: phone, IP and free text in their audit rows, quote lines and privacy requests.
+          await scrubErasedUserTraces(tx, user.id);
           await tx.user.update({
             where: { id: user.id },
             data: { name: null, email: null, phone: anonymisedPhone(user.id), marketingConsent: false, organizationId: null, vendorId: null, role: "BUYER" },

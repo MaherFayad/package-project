@@ -3,7 +3,14 @@
 import { History } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Badge, BlockStack, EmptyBoxIllustration, EmptyState, IndexFilters, IndexTable, IndexTableCell, IndexTableRow, InlineGrid, Page, Select, Text, Tooltip, type AppliedFilter } from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { BlockStack, InlineGrid } from "@/components/ui/Stack";
+import { EmptyBoxIllustration, EmptyState } from "@/components/ui/EmptyState";
+import { IndexFilters, IndexTable, IndexTableCell, IndexTableRow, type AppliedFilter } from "@/components/ui/IndexTable";
+import { Page } from "@/components/ui/Page";
+import { Select } from "@/components/ui/Select";
+import { Text } from "@/components/ui/Text";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { formatDateTime, formatNumber } from "@/lib/format";

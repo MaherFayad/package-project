@@ -3,25 +3,18 @@
 import { MessageSquareQuote } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
-import {
-  Badge,
-  BlockStack,
-  Button,
-  EmptyBoxIllustration,
-  EmptyState,
-  IndexFilters,
-  IndexTable,
-  IndexTableCell,
-  IndexTableRow,
-  InlineStack,
-  Link,
-  MetricsStrip,
-  Modal,
-  Page,
-  Text,
-  TextField,
-  useToast,
-} from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { BlockStack, InlineStack } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { EmptyBoxIllustration, EmptyState } from "@/components/ui/EmptyState";
+import { IndexFilters, IndexTable, IndexTableCell, IndexTableRow } from "@/components/ui/IndexTable";
+import { Link } from "@/components/ui/Link";
+import { MetricsStrip } from "@/components/ui/MetricsStrip";
+import { Modal } from "@/components/ui/Modal";
+import { Page } from "@/components/ui/Page";
+import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
+import { useToast } from "@/components/ui/Toast";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { formatDate, formatDims, formatMoney, formatNumber } from "@/lib/format";

@@ -62,7 +62,7 @@ test("design a box, sign up at the price gate, share and export", async ({ page 
   await gate.getByLabel("Verification code").fill(code);
   const marketing = gate.getByRole("checkbox", { name: /offers|marketing|WhatsApp/i });
   if (await marketing.count()) await expect(marketing.first()).not.toBeChecked();
-  await gate.getByLabel(/I agree to the Terms/).check();
+  await gate.getByLabel(/I agree to the terms/i).check();
   await gate.getByRole("button", { name: "Verify and continue" }).click();
 
   const price = page.getByRole("dialog", { name: "Instant price" });
@@ -159,4 +159,49 @@ test("box and container switches keep one 3D canvas (PERF-09)", async ({ page })
   // Same <canvas> element (same WebGL context) after every switch.
   await expect(stage.locator("canvas")).toHaveCount(1);
   await expect(stage.locator("canvas").first()).toHaveAttribute("data-e2e-first", "1");
+});
+
+/**
+ * R10-R1: two devices on one design (two browser contexts sharing the anonymous cookie, so no
+ * BroadcastChannel between them). The second save is based on an older version: the server
+ * answers 409, the editor pauses autosave and asks; "Keep this version" overwrites on purpose.
+ */
+test("two devices on one design: the older save is refused and the visitor chooses", async ({ browser, baseURL }, testInfo) => {
+  // The design name field sits in the desktop toolbar; the server path is the same on phones.
+  test.skip(testInfo.project.name === "mobile", "name field is desktop-only");
+  test.setTimeout(150_000);
+  const a = await browser.newContext({ baseURL });
+  const pageA = await a.newPage();
+  await pageA.goto("/en/design/mailer-box");
+  await expect(pageA.getByTestId("stage-3d").locator("canvas").first()).toBeVisible({ timeout: 45_000 });
+  await pageA.getByRole("textbox", { name: "Design name" }).fill(`Two devices ${Date.now()}`);
+  await expect(pageA).toHaveURL(/[?&]d=[\w-]+/, { timeout: 20_000 });
+  await expect(pageA.getByTestId("save-status")).toHaveAttribute("data-state", "saved", { timeout: 20_000 });
+  const url = new URL(pageA.url()).pathname + new URL(pageA.url()).search;
+
+  // Device B: same anonymous owner (cookies), its own browser storage and channel.
+  const b = await browser.newContext({ baseURL, storageState: await a.storageState() });
+  const pageB = await b.newPage();
+  await pageB.goto(url);
+  await expect(pageB.getByTestId("stage-3d").locator("canvas").first()).toBeVisible({ timeout: 45_000 });
+
+  // A saves a newer version.
+  await pageA.getByRole("textbox", { name: "Design name" }).fill("Saved on device A");
+  await expect(pageA.getByTestId("save-status")).toHaveAttribute("data-state", "saved", { timeout: 20_000 });
+
+  // B edits from the older version: refused, banner, autosave paused.
+  await pageB.getByRole("textbox", { name: "Design name" }).fill("Typed on device B");
+  const banner = pageB.getByText("This design changed in another tab or on another device");
+  await expect(banner).toBeVisible({ timeout: 20_000 });
+  await expect(pageB.getByTestId("save-status")).toHaveText("Autosave paused");
+  const check = await b.request.get(`/api/designs/${new URL(pageA.url()).searchParams.get("d")}`);
+  expect((await check.json()).doc.name).toBe("Saved on device A");
+
+  // B keeps its version on purpose: stored, and A's next save would now be the stale one.
+  await pageB.getByRole("button", { name: "Keep this version" }).click();
+  await expect(pageB.getByTestId("save-status")).toHaveAttribute("data-state", "saved", { timeout: 20_000 });
+  const after = await b.request.get(`/api/designs/${new URL(pageA.url()).searchParams.get("d")}`);
+  expect((await after.json()).doc.name).toBe("Typed on device B");
+  await a.close();
+  await b.close();
 });

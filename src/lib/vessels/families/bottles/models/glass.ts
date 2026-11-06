@@ -127,7 +127,8 @@ export const GLASS_BOTTLES: BottleDefinition[] = [
       { id: "burgundy-375", name: { ar: "375 مل", en: "375 ml" }, capacityMl: 375, dims: { D: 66, H: 238 }, finish: "CORK_18_5", egypt: false, source: "Typ. Burgundy half bottle (approx. Ø66 x 238 mm)" },
     ],
     defaultPresetId: "burgundy-750",
-    surfaces: ["FRONT", "BACK", "NECK", "WRAP"],
+    // no NECK: the short neck is all under the 48 mm capsule
+    surfaces: ["FRONT", "BACK", "WRAP"],
     defaultSurfaces: ["FRONT"],
     typicalUses: [{ ar: "نبيذ أبيض وأحمر", en: "White and red wine" }, { ar: "زيت زيتون فاخر", en: "Premium olive oil" }],
     fillable: true,
@@ -155,7 +156,8 @@ export const GLASS_BOTTLES: BottleDefinition[] = [
       { id: "hock-375", name: { ar: "375 مل", en: "375 ml" }, capacityMl: 375, dims: { D: 57, H: 288 }, finish: "CORK_18_5", egypt: false, source: "Typ. hock 375 ml (approx. Ø57 x 288 mm)" },
     ],
     defaultPresetId: "hock-750",
-    surfaces: ["FRONT", "BACK", "NECK", "WRAP"],
+    // no NECK: no preset leaves 10 mm of straight neck under the capsule / Stelvin shell
+    surfaces: ["FRONT", "BACK", "WRAP"],
     defaultSurfaces: ["FRONT"],
     typicalUses: [{ ar: "نبيذ أبيض", en: "White wine" }, { ar: "شراب فاكهة", en: "Fruit cordial" }],
     fillable: true,
@@ -184,8 +186,9 @@ export const GLASS_BOTTLES: BottleDefinition[] = [
       { id: "sparkling-200", name: { ar: "200 مل", en: "200 ml" }, capacityMl: 200, dims: { D: 58, H: 192 }, finish: "CROWN_29", egypt: false, source: "Typ. sparkling piccolo (approx. Ø58 x 192 mm)" },
     ],
     defaultPresetId: "sparkling-750",
-    surfaces: ["FRONT", "BACK", "NECK"],
-    defaultSurfaces: ["FRONT", "NECK"],
+    // no NECK: the foil hood covers the whole neck (the hood itself is the printed neck part)
+    surfaces: ["FRONT", "BACK"],
+    defaultSurfaces: ["FRONT", "BACK"],
     typicalUses: [{ ar: "مشروبات فوارة", en: "Sparkling drinks" }, { ar: "عصير عنب فوار", en: "Sparkling grape juice" }, { ar: "هدايا المناسبات", en: "Celebration gifts" }],
     fillable: true,
     defaultContent: "SPARKLING",

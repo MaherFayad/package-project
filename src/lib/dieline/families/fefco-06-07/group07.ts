@@ -6,6 +6,7 @@ import { stadium } from "@/lib/dieline/features";
 import { clamp, pt, rectPolygon } from "@/lib/dieline/geometry";
 import type { StructureDraft } from "@/lib/dieline/structures";
 import type { Polygon } from "@/lib/dieline/types";
+import { deepEnds } from "../fefco-02/kit";
 import {
   CRASH_LAYERS,
   IDENTITY,
@@ -70,7 +71,9 @@ export function autoBottomCase(dims: Dims, t: number, o: CaseOpts): StructureDra
     b.perfLines.push({ a: pt(w.left.x + 1, highY), b: pt(w.left.x + Wp - 1, lowY) });
   }
   if (o.cells) partitions(b, t, IDENTITY, dims, { rows: o.cells.rows, cols: o.cells.cols }, CRASH_LAYERS * t);
-  return { builder: b, closedRotation: IDENTITY };
+  // The crash-lock back and side flaps show beside the outer (front) lock flap under the case:
+  // print them with the bottom face too (half the underside was bare board).
+  return { builder: b, closedRotation: IDENTITY, faces: deepEnds({ b, t }, ["bottom"], 0, IDENTITY) };
 }
 
 /* ───────────────────────── 0714: auto-bottom base + auto-bottom lid ───────────────────────── */
@@ -106,7 +109,7 @@ export function autoBottomTelescope(dims: Dims, t: number): StructureDraft {
   const target = new Vector3((baseBox.min.x + baseBox.max.x) / 2, baseBox.max.y + CRASH_LAYERS * t - lidOuterH / 2, (baseBox.min.z + baseBox.max.z) / 2);
   const m = new Matrix4().makeTranslation(target.x, target.y, target.z).multiply(new Matrix4().makeRotationZ(Math.PI)).multiply(new Matrix4().makeTranslation(-cl.x, -cl.y, -cl.z));
   b.byId("lid_front").assembly = { matrix: m.toArray(), stage: 3, lift: dims.H * 1.2 };
-  return { builder: b, closedRotation: IDENTITY, faceDepthTol: clr + t + 0.6 };
+  return { builder: b, closedRotation: IDENTITY, faceDepthTol: clr + t + 0.6, faces: deepEnds({ b, t }, ["bottom", "top"], 0, IDENTITY) };
 }
 
 /* ───────────────────────── 0752: glued tube with cells ───────────────────────── */

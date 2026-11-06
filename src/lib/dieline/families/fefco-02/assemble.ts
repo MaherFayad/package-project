@@ -1,9 +1,9 @@
 import { Mat4 as Matrix4 } from "@/lib/dieline/math";
 import { z } from "zod";
 import type { Dims, StructureFeatures, StructureParamLimits } from "@/types";
-import { panelCreases } from "../../builder";
+import { edgeBleed, panelCreases } from "../../builder";
 import { computeFaces } from "../../fold";
-import { bboxOf, coveredFraction, edgesOf, insetRect, offsetConvex, polygonArea, segLength, subtractSegments } from "../../geometry";
+import { bboxOf, edgesOf, insetRect, offsetConvex, polygonArea, segLength, subtractSegments } from "../../geometry";
 import { DielineValidationError, dimsSchema, thicknessSchema, type DimsIssue, type DimsIssueCode } from "../../limits";
 import type { FeatureSupport } from "../../features";
 import type { DielineOptions, DielinePanel, DielinePiece, FilmPatch, Polygon, Pt, Segment } from "../../types";
@@ -126,7 +126,7 @@ function assemble(
     .filter((p) => p.printable)
     .map((p) => {
       const creases = panelCreases(p, panels);
-      const distances = edgesOf(p.polygon).map((e) => (coveredFraction(e, creases) > 0.98 ? 0 : bleed));
+      const distances = edgesOf(p.polygon).map((e) => edgeBleed(e, creases, panels, bleed));
       return { panelId: p.id, polygon: offsetConvex(p.polygon, distances) as Polygon };
     });
 

@@ -4,7 +4,6 @@ import { STRUCTURE_FAMILY } from "./materials";
 import { computeFaces } from "./fold";
 import {
   bboxOf,
-  coveredFraction,
   edgesOf,
   insetRect,
   offsetConvex,
@@ -12,7 +11,7 @@ import {
   segLength,
   subtractSegments,
 } from "./geometry";
-import { panelCreases } from "./builder";
+import { edgeBleed, panelCreases } from "./builder";
 import { DielineValidationError, thicknessSchema, validateDims } from "./limits";
 import { GENERATORS } from "./structures";
 import { supportedFeatures } from "./features";
@@ -24,6 +23,7 @@ export const DEFAULT_BLEED_MM = 3;
  * Generate the dieline for a catalog structure.
  * Throws `DielineValidationError` when the dims are outside the structure limits.
  */
+
 export function generateDieline(
   code: StructureCode,
   dims: Dims,
@@ -110,7 +110,7 @@ function buildDieline(code: StructureCode, dims: Dims, options: DielineOptions):
     .filter((p) => p.printable)
     .map((p) => {
       const creases = panelCreases(p, panels);
-      const distances = edgesOf(p.polygon).map((e) => (coveredFraction(e, creases) > 0.98 ? 0 : bleed));
+      const distances = edgesOf(p.polygon).map((e) => edgeBleed(e, creases, panels, bleed));
       return { panelId: p.id, polygon: offsetConvex(p.polygon, distances) as Polygon };
     });
 

@@ -14,7 +14,7 @@ async function signIn(page: Page, lang: "en" | "ar" = "en") {
   await expect(page).toHaveURL(new RegExp(`/${lang}/login\\?next=`));
   const code = await sendOtp(page, phone);
   await page.getByLabel("Verification code").fill(code);
-  await page.getByLabel(/I agree to the Terms/).check();
+  await page.getByLabel(/I agree to the terms/i).check();
   await page.getByRole("button", { name: "Verify and continue" }).click();
   await expect(page).toHaveURL(new RegExp(`:\\d+/${lang}/orders$`));
 }
@@ -132,7 +132,7 @@ test("buyer checks out a saved design, pays by mock card and tracks the order", 
   await expect(page.getByText("VAT 14%", { exact: true })).toBeVisible();
   // Without the seller tax registration number it is a receipt, not a tax invoice (R4-B-07).
   await expect(page.getByRole("heading", { level: 1 })).toContainText("(not a tax invoice)");
-  await expect(page.getByText("Pending submission")).toHaveCount(0);
+  await expect(page.getByText("Not submitted yet")).toHaveCount(0);
   await expect(page.getByTestId("invoice-total")).toContainText("EGP");
 
   // Orders list shows it.

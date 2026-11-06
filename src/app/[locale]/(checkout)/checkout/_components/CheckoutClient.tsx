@@ -13,26 +13,21 @@ import { formatDateTime, formatDims, formatMoney } from "@/lib/format";
 import { normalizeEgyptPhone } from "@/lib/phone";
 import { GOVERNORATES } from "@/lib/orders/governorates";
 import type { CheckoutOffer } from "@/lib/orders/service";
-import {
-  Badge,
-  Banner,
-  BlockStack,
-  Box,
-  Button,
-  Card,
-  Checkbox,
-  Divider,
-  Icon,
-  InlineStack,
-  Link,
-  Page,
-  PriceTag,
-  Select,
-  SkeletonBodyText,
-  Stepper,
-  Text,
-  TextField,
-} from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { Banner } from "@/components/ui/Banner";
+import { BlockStack, Box, Divider, InlineStack } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Checkbox } from "@/components/ui/Checkbox";
+import { Icon } from "@/components/ui/Icon";
+import { Link } from "@/components/ui/Link";
+import { Page } from "@/components/ui/Page";
+import { PriceTag } from "@/components/ui/PriceTag";
+import { Select } from "@/components/ui/Select";
+import { SkeletonBodyText } from "@/components/ui/Skeleton";
+import { Stepper } from "@/components/ui/Stepper";
+import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
 import { getOffersAction, placeOrderAction, requestQuoteAction, type OffersResult } from "../actions";
 import { QUOTE_NOTE_MAX } from "../quote-request";
 import { formatTaxId, isValidTaxId } from "@/lib/orders/company";
@@ -244,7 +239,9 @@ export function CheckoutClient(props: {
     setQuoteErr(t(key) === key ? t("checkout.errors.generic") : t(key));
   };
 
-  const goTo = (s: Step) => {
+  // R8-05: each step is a history entry, so the browser's Back and Forward move between steps
+  // (on phones Back used to leave checkout from step 2 or 3 and drop the typed address).
+  const showStep = (s: Step) => {
     setStep(s);
     requestAnimationFrame(() => {
       const h = headingRefs[s].current;
@@ -252,6 +249,80 @@ export function CheckoutClient(props: {
       h?.scrollIntoView({ block: "start", behavior: scrollBehavior() });
     });
   };
+  const goTo = (s: Step) => {
+    if (typeof window !== "undefined") {
+      if (s > step) window.history.pushState({ ...window.history.state, checkoutStep: s }, "");
+      else if (s < step && window.history.state?.checkoutStep === step) {
+        // The in-page Back (and an error that sends the buyer to an earlier step) goes through
+        // history too, so the browser's Forward still works and no stale entries pile up.
+        window.history.go(s - step);
+        return;
+      }
+    }
+    showStep(s);
+  };
+  useEffect(() => {
+    const onPop = (e: PopStateEvent) => {
+      const target = (e.state?.checkoutStep ?? 0) as Step;
+      showStep(target);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+    // showStep only reads refs and setters.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // R9 (integrator decision, PDPL 151/2020 data minimisation): a reload keeps the checkout where
+  // it was without storing any personal data in the browser. The step comes from the history entry
+  // (browsers keep history.state across a reload); quantity, sample and printer choice come from
+  // sessionStorage. The address is never stored on the client: it is re-filled from the server
+  // (last order or account), and if that is incomplete the buyer lands on the delivery step.
+  const draftKey = `elba:checkout:${designId}`;
+  const restored = useRef(false);
+  useEffect(() => {
+    if (restored.current || props.quoted) return;
+    restored.current = true;
+    // Only a reload or a Back/Forward return restores; opening checkout again starts fresh.
+    const nav = (performance.getEntriesByType?.("navigation")[0] as PerformanceNavigationTiming | undefined)?.type;
+    if (nav !== "reload" && nav !== "back_forward") {
+      try {
+        window.sessionStorage.removeItem(draftKey);
+      } catch {
+        /* storage blocked */
+      }
+      return;
+    }
+    let draft: { qty?: number; sample?: boolean; vendorId?: string | null } = {};
+    try {
+      draft = JSON.parse(window.sessionStorage.getItem(draftKey) ?? "{}") as typeof draft;
+    } catch {
+      /* storage blocked or malformed: start fresh */
+    }
+    if (draft.sample && props.sample) pickSample();
+    else if (typeof draft.qty === "number" && Number.isInteger(draft.qty) && draft.qty >= 1 && draft.qty !== qty) {
+      setQty(draft.qty);
+      fetchOffers(draft.qty, address.governorate);
+    }
+    if (draft.vendorId) setVendorId(draft.vendorId);
+    const savedStep = window.history.state?.checkoutStep as Step | undefined;
+    if (savedStep && savedStep > 0) {
+      const addressComplete =
+        address.name.trim().length >= 2 && !!normalizeEgyptPhone(address.phone) && !!address.governorate && address.city.trim().length >= 2 && address.street.trim().length >= 3;
+      const target = (addressComplete ? savedStep : 1) as Step;
+      if (target !== savedStep) window.history.replaceState({ ...window.history.state, checkoutStep: target }, "");
+      showStep(target);
+    }
+    // Runs once on mount with the server-rendered state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (props.quoted) return;
+    try {
+      window.sessionStorage.setItem(draftKey, JSON.stringify({ qty, sample: sampleMode, vendorId }));
+    } catch {
+      /* storage blocked: the checkout still works, it just restarts on reload */
+    }
+  }, [draftKey, qty, sampleMode, vendorId, props.quoted]);
 
   const validateCompany = (): boolean => {
     if (!wantCompany) return true;
@@ -340,6 +411,11 @@ export function CheckoutClient(props: {
       quoteId: props.quoted?.id,
     });
     if (r.ok) {
+      try {
+        window.sessionStorage.removeItem(draftKey);
+      } catch {
+        /* storage blocked */
+      }
       router.push(`/${locale}/checkout/pay/${r.orderId}`);
       return;
     }
@@ -481,7 +557,8 @@ export function CheckoutClient(props: {
                   tone="success"
                   title={t("buyer.quote.sentTitle", { qty: qty.toLocaleString("en-US") })}
                   action={{ content: t("buyer.quote.viewRequests"), url: `/${locale}/account#quote-requests` }}
-                  announce
+                  // a11y R5-AX-11: no `announce` here; the polite offers region above already reads
+                  // it and focus moves onto it, so a nested status made screen readers say it twice.
                 >
                   {t("buyer.quote.sentBody", { phone: props.contactPhone })}
                 </Banner>

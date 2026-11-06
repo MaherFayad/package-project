@@ -83,7 +83,9 @@ function expectedOuter(code: StructureCode, d: Dims, t: number): Dims {
       return { L: d.L, W: d.W + 2 * t, H: d.H + 2 * t };
     case "FEFCO_0320": {
       const c = Math.max(1, t * 0.5);
-      return { L: d.L + 4 * t + 2 * c, W: d.W + 4 * t + 2 * c, H: d.H + 4 * t };
+      // + t in L (R5-3Q-A): the lid's manufacturer's joint lies inside its left wall, so the
+      // lid is one caliper longer to keep `c` clear of the base on both ends.
+      return { L: d.L + 5 * t + 2 * c, W: d.W + 4 * t + 2 * c, H: d.H + 4 * t };
     }
     case "RIGID_BOX":
       return { L: d.L + 4 * t + 1, W: d.W + 4 * t + 1, H: d.H + 2 * t };

@@ -1,7 +1,14 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { Banner, BlockStack, Button, ButtonGroup, Card, Checkbox, DataTable, InlineGrid, InlineStack, Text, TextField } from "@/components/ui";
+import { Banner } from "@/components/ui/Banner";
+import { BlockStack, InlineGrid, InlineStack } from "@/components/ui/Stack";
+import { Button, ButtonGroup } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Checkbox } from "@/components/ui/Checkbox";
+import { DataTable } from "@/components/ui/IndexTable";
+import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { formatMoney, formatNumber, formatPercent } from "@/lib/format";

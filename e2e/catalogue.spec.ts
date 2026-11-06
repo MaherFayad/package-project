@@ -117,8 +117,8 @@ test("model page: quote path for a format no printer prices yet", async ({ page 
   await page.goto("/ar/catalog/FS_CUP_DOUBLE");
   await dismissCookies(page);
   await expect(page.getByTestId("price-path")).toHaveAttribute("data-mode", "quote");
-  await expect(page.getByText("تصميم مجاني وتسعير بعرض سعر")).toBeVisible();
-  await expect(page.getByRole("link", { name: "سجل الدخول لطلب عرض سعر" })).toHaveAttribute("href", /login\?next=/);
+  await expect(page.getByText("تصميم مجاني والسعر عند الطلب")).toBeVisible();
+  await expect(page.getByRole("link", { name: "تسجيل الدخول لطلب عرض سعر" })).toHaveAttribute("href", /login\?next=/);
   await expect(page.getByTestId("catalogue-stage")).toHaveAttribute("data-ready", "true", { timeout: 60_000 });
   const axe = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).include("main").analyze();
   expect(axe.violations.map((v) => `${v.id}: ${v.nodes.length}`)).toEqual([]);

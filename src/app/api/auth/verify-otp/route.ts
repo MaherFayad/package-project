@@ -9,13 +9,15 @@ import { createSession } from "@/lib/auth/session";
 import { crossSiteResponse, isCrossSiteRequest } from "@/lib/auth/csrf";
 import { ANON_COOKIE, CONSENT_TEXT_VERSION } from "@/lib/auth/constants";
 import { consentRowsForSignIn } from "@/lib/auth/consent";
+import { cleanDisplayName } from "@/lib/auth/display-name";
 import { GATE_COOKIE, GATE_REASONS } from "@/lib/analytics/events";
 import { deviceOf, track } from "@/lib/analytics/track";
 
 const Body = z.object({
   phone: z.string().min(6).max(32),
   code: z.string().regex(/^\d{4,8}$/),
-  name: z.string().trim().max(120).optional(),
+  // R5-SEC-11: no control or bidi-override characters in a stored name.
+  name: z.string().max(120).transform(cleanDisplayName).optional(),
   locale: z.enum(["ar", "en"]).default("ar"),
   /** Must be true for new accounts (terms + privacy notice). */
   acceptTerms: z.boolean().optional(),

@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import { Tags } from "lucide-react";
-import { Banner, BlockStack, Card, DataTable, Page, Text } from "@/components/ui";
+import { Banner } from "@/components/ui/Banner";
+import { BlockStack } from "@/components/ui/Stack";
+import { Card } from "@/components/ui/Card";
+import { DataTable } from "@/components/ui/IndexTable";
+import { Page } from "@/components/ui/Page";
+import { Text } from "@/components/ui/Text";
 import { PriceIndexForm, PricingSettingsForm } from "@/components/admin/PricingForms";
 import { loadPricingSettings } from "@/components/admin/server/settings";
 import { CheckoutSettingsForm } from "@/components/admin/CheckoutSettingsForm";

@@ -5,7 +5,10 @@ import { requireUser } from "@/lib/auth/session";
 import { formatDate } from "@/lib/format";
 import { listBuyerOrders } from "@/lib/orders/service";
 import { isPaidStatus } from "@/lib/orders/state";
-import { Button, Card, EmptyState, EmptyBoxIllustration, Page } from "@/components/ui";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { EmptyState, EmptyBoxIllustration } from "@/components/ui/EmptyState";
+import { Page } from "@/components/ui/Page";
 import { OrdersTable, type OrderRow } from "../_components/OrdersTable";
 
 export const dynamic = "force-dynamic";

@@ -57,7 +57,8 @@ function expectedOuter(def: CatalogueDefinition, d: Dims, m: FamilyDielineModel)
       return { L: d.L + 2 * t, W: d.W + 2 * t, H: d.H + 4 * t };
     case "PALLET_BOX_LID": {
       const clr = Math.max(1, t * 0.5);
-      return { L: d.L + 4 * t + 2 * clr, W: d.W + 4 * t + 2 * clr, H: d.H + 4 * t };
+      // R5-3Q-A-08: the core telescope lid is one caliper longer so its manufacturer's joint clears the base wall.
+      return { L: d.L + 5 * t + 2 * clr, W: d.W + 4 * t + 2 * clr, H: d.H + 4 * t };
     }
     case "ENVELOPE_DOCUMENT":
     case "ENVELOPE_CARD":

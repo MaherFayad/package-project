@@ -1,0 +1,25 @@
+/* Split out of Misc.module.css (R5-PL-05): with inlineCss each route segment inlines the CSS of
+   the components it renders, so one shared sheet was copied whole into every page, loading and
+   error segment that used any of these components. */
+/* ── Tooltip ──────────────────────────────────────────────── */
+.TooltipWrapper { display: inline-flex; }
+.TooltipText { border-radius: var(--p-border-radius-100); }
+.Dotted {
+  text-decoration: underline dotted var(--p-color-text-secondary);
+  text-underline-offset: 0.25em;
+  border-radius: var(--p-border-radius-100);
+  cursor: help;
+}
+.Tooltip {
+  z-index: var(--p-z-index-7);
+  max-inline-size: min(20rem, calc(100vw - 2rem));
+  padding: var(--p-space-100) var(--p-space-200);
+  border-radius: var(--p-border-radius-200);
+  background: var(--p-color-bg-surface);
+  color: var(--p-color-text);
+  box-shadow: var(--p-shadow-300), 0 0 0 1px rgba(0, 0, 0, 0.06);
+  font-size: var(--p-text-body-sm-font-size);
+  line-height: var(--p-text-body-sm-font-line-height);
+  font-weight: var(--p-font-weight-medium);
+  white-space: normal;
+}

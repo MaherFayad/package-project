@@ -198,9 +198,17 @@ export function trayLayers(o: Pick<TrayOpts, "corners" | "rollover" | "ears">) {
 
 export function tray(b: DielineBuilder, t: number, o: TrayOpts): TrayBlank {
   const lay = trayLayers(o);
+  const Hp = o.H + t;
+  const g0 = o.corners;
+  // Inside gussets deeper than half their wall overlap there, and the second pair lies two
+  // boards further in (below): compensate for those two layers too, or a lid's second pair
+  // goes into the base walls under it (0308 / 0309 with a full-depth lid).
+  if (g0.kind === "gusset" && g0.side === "in") {
+    const run = g0.against === "end" ? o.W + 2 * lay.long * t : o.L + 2 * lay.end * t;
+    if (2 * Hp > run) lay[g0.against] += 2;
+  }
   const Lp = o.L + 2 * lay.end * t;
   const Wp = o.W + 2 * lay.long * t;
-  const Hp = o.H + t;
   const id = (s: string) => o.prefix + s;
   const rootId = id(o.mode === "base" ? "bottom" : "top");
   return laidOut(b, o.origin, () => {
@@ -243,7 +251,10 @@ export function tray(b: DielineBuilder, t: number, o: TrayOpts): TrayBlank {
         // edge there, and a flap reaching down to the crease would sit inside the floor board.
         const edge: [Pt, Pt] = insetSeg(c.on === "end" ? [cr.O, E] : [cr.O, G], t + 0.5, 0);
         const runLen = c.on === "end" ? Lp : Wp;
-        const d = clamp(Math.min(Hp, runLen * 0.4), 8, 80);
+        let d = clamp(Math.min(Hp, runLen * 0.4), 8, 80);
+        // A locking nose stands d + n off its wall: keep the two noses on one wall from meeting
+        // (they z-fought on short, tall 0307 sizes).
+        if (c.lock) d = Math.max(8, Math.min(d, Math.max((runLen * 0.48) / 1.35, runLen * 0.48 - 14)));
         const fid = id(`flap${cr.k}`);
         if (c.lock) {
           const f = b.frame(wallId, edge);
@@ -305,8 +316,10 @@ export function tray(b: DielineBuilder, t: number, o: TrayOpts): TrayBlank {
           stage: 1,
           fold: out ? -180 : 180,
           // When the two gussets on one wall are deeper than half its length they overlap: the
-          // second pair lies one more board pair out (or in) so the two never share a plane.
-          pivotDepth: (out ? 0 : 1) + (overlap && cr.sy > 0 ? (out ? -1 : 1) : 0),
+          // second gusset of each wall lies one more board pair out (or in) so the two never
+          // share a plane. The two gussets of one wall differ in sy on an end wall and in sx on
+          // a long wall (sy alone left 0303 / 0308 z-fighting on tall narrow sizes).
+          pivotDepth: (out ? 0 : 1) + (overlap && (againstEnd ? cr.sy : cr.sx) > 0 ? (out ? -1 : 1) : 0),
           label: "Corner gusset",
         });
         b.attachPoly(id(`gus${cr.k}b`), "ear", id(`gus${cr.k}a`), diag, otherTri, {

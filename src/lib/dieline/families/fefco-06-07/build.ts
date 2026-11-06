@@ -1,11 +1,10 @@
 import { Mat4 as Matrix4 } from "@/lib/dieline/math";
 import { z } from "zod";
 import type { Dims, StructureFeatures, StructureParamLimits } from "@/types";
-import { panelCreases } from "@/lib/dieline/builder";
+import { edgeBleed, panelCreases } from "@/lib/dieline/builder";
 import { computeFaces } from "@/lib/dieline/fold";
 import {
   bboxOf,
-  coveredFraction,
   edgesOf,
   insetRect,
   offsetConvex,
@@ -136,7 +135,7 @@ function buildFamilyModel(def: FamilyStructureDef, dims: Dims, options: DielineO
     .filter((p) => p.printable)
     .map((p) => {
       const creases = [...panelCreases(p, panels), ...extra];
-      const distances = edgesOf(p.polygon).map((e) => (coveredFraction(e, creases) > 0.98 ? 0 : bleed));
+      const distances = edgesOf(p.polygon).map((e) => edgeBleed(e, creases, panels, bleed));
       return { panelId: p.id, polygon: offsetConvex(p.polygon, distances) as Polygon };
     });
 

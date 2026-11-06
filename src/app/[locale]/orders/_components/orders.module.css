@@ -389,3 +389,64 @@
     padding-inline-end: 0;
   }
 }
+
+/* Report a problem: chosen photos (checkout round 9). */
+.photoList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--p-space-200);
+}
+.photoItem {
+  display: flex;
+  align-items: center;
+  gap: var(--p-space-300);
+  padding: var(--p-space-200);
+  border: var(--p-border-width-025, 1px) solid var(--p-color-border);
+  border-radius: var(--p-border-radius-200);
+}
+.photoItem[data-error] {
+  border-color: var(--p-color-border-critical);
+}
+.photoThumb {
+  inline-size: 48px;
+  block-size: 48px;
+  object-fit: cover;
+  border-radius: var(--p-border-radius-100);
+  background: var(--p-color-bg-surface-secondary);
+  flex: none;
+}
+.photoMeta {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+  flex: 1;
+  font-size: var(--p-font-size-325, 0.8125rem);
+  color: var(--p-color-text-secondary);
+}
+.photoName {
+  color: var(--p-color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.photoError {
+  color: var(--p-color-text-critical);
+}
+.photoPick {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--p-space-150);
+  align-self: flex-start;
+  min-block-size: 44px;
+  padding-inline: var(--p-space-300);
+  border: var(--p-border-width-025, 1px) dashed var(--p-color-border);
+  border-radius: var(--p-border-radius-200);
+  cursor: pointer;
+  font-weight: var(--p-font-weight-medium);
+}
+.photoPick:focus-within {
+  outline: 2px solid var(--p-color-border-focus, #005bd3);
+  outline-offset: 2px;
+}

@@ -3,7 +3,19 @@
 import { ShieldCheck } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { Badge, Banner, BlockStack, Button, Card, EmptyBoxIllustration, EmptyState, InlineStack, Link, Modal, Page, Tabs, Text, TextField } from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { Banner } from "@/components/ui/Banner";
+import { BlockStack, InlineStack } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { EmptyBoxIllustration, EmptyState } from "@/components/ui/EmptyState";
+import { Link } from "@/components/ui/Link";
+import { Modal } from "@/components/ui/Modal";
+import { Page } from "@/components/ui/Page";
+import { Tabs } from "@/components/ui/Tabs";
+import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
+import { useInlineEditFocus } from "@/components/ui/useInlineEditFocus";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { formatDate, formatNumber } from "@/lib/format";
@@ -125,6 +137,7 @@ function PhotoCard({ p }: { p: ModerationPhoto }) {
   const { run, busy } = useAdminAction();
   const errorText = useAdminErrorText();
   const [rejecting, setRejecting] = useState(false);
+  const { containerRef, openerRef } = useInlineEditFocus<HTMLDivElement>(rejecting); // a11y R5-AX-06 (2.4.3)
   const [note, setNote] = useState("");
   const [res, setRes] = useState<AdminActionResponse<unknown> | null>(null);
   const caption = locale === "ar" ? p.captionAr : p.captionEn;
@@ -166,7 +179,8 @@ function PhotoCard({ p }: { p: ModerationPhoto }) {
               ) : null}
             </BlockStack>
           ) : rejecting ? (
-            <BlockStack gap="200">
+            <div ref={containerRef}>
+              <BlockStack gap="200">
               <TextField label={t("admin.moderation.rejectNote")} helpText={t("admin.moderation.rejectNoteHelp")} autoComplete="off" dir="auto" value={note} onChange={setNote} multiline={2} maxLength={500} error={fieldError(res, "note", errorText)} />
               <InlineStack align="end" gap="200">
                 <Button onClick={() => setRejecting(false)}>{t("admin.common.cancel")}</Button>
@@ -180,7 +194,8 @@ function PhotoCard({ p }: { p: ModerationPhoto }) {
                   {t("admin.moderation.reject")}
                 </Button>
               </InlineStack>
-            </BlockStack>
+              </BlockStack>
+            </div>
           ) : (
             <BlockStack gap="150">
               {flagged ? (
@@ -189,7 +204,7 @@ function PhotoCard({ p }: { p: ModerationPhoto }) {
                 </Text>
               ) : null}
               <InlineStack align="end" gap="200">
-                <Button onClick={() => setRejecting(true)} accessibilityLabel={`${t("admin.moderation.reject")}: ${caption}`}>
+                <Button ref={openerRef} onClick={() => setRejecting(true)} accessibilityLabel={`${t("admin.moderation.reject")}: ${caption}`}>
                   {t("admin.moderation.reject")}
                 </Button>
                 <Button
