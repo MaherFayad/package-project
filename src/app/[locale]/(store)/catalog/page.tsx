@@ -3,6 +3,7 @@ import { getT, toLocale } from "@/i18n";
 import { JsonLd } from "@/components/store/JsonLd";
 import { breadcrumbJsonLd } from "@/components/store/jsonld";
 import { BoxesLanding } from "@/components/marketing/BoxesLanding";
+import { ModelLinks } from "@/components/designer/ModelLinks";
 import { siteUrl } from "@/lib/env";
 
 type Props = { params: Promise<{ locale: string }> };
@@ -30,7 +31,7 @@ export default async function CatalogPage({ params }: Props) {
           { name: t("nav.catalog"), url: `${base}/${locale}/catalog` },
         ])}
       />
-      <BoxesLanding locale={locale} />
+      <BoxesLanding locale={locale} library={<ModelLinks locale={locale} />} />
     </>
   );
 }

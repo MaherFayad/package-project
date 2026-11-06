@@ -1,6 +1,6 @@
 import { Suspense, type ReactNode } from "react";
 import type { Locale } from "@/types";
-import { AppProvider } from "@/components/ui";
+import { AppProvider } from "@/components/ui/AppProvider";
 import { CookieNotice } from "./CookieNotice";
 import { SiteFooter } from "./SiteFooter";
 import { SiteHeader } from "./SiteHeader";

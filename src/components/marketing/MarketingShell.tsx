@@ -1,7 +1,7 @@
 import "@/styles/motion.css";
 import { Suspense, type ReactNode } from "react";
 import type { Locale } from "@/types";
-import { AppProvider } from "@/components/ui";
+import { MarketingProviders } from "./MarketingProviders";
 import { AnnouncementBar } from "./AnnouncementBar";
 import { CookieBar } from "./CookieBar";
 import { MarketingFooter } from "./MarketingFooter";
@@ -16,7 +16,7 @@ import styles from "./marketing.module.css";
  */
 export function MarketingShell({ locale, children }: { locale: Locale; children: ReactNode }) {
   return (
-    <AppProvider locale={locale}>
+    <MarketingProviders locale={locale}>
       <div className={styles.site}>
         <AnnouncementBar />
         <Suspense fallback={<div style={{ blockSize: 64 }} aria-hidden="true" />}>
@@ -29,6 +29,6 @@ export function MarketingShell({ locale, children }: { locale: Locale; children:
         <CookieBar />
         <RevealScope />
       </div>
-    </AppProvider>
+    </MarketingProviders>
   );
 }

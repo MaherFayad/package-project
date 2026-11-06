@@ -83,6 +83,10 @@ const NATIVE_W: Record<string, number> = {
   "designer-ar.webp": 1440, "designer-en.webp": 1440,
 };
 const VARIANT_W: Record<string, number> = { renders: 400, samples: 320, designer: 720 };
+/** Extra mid-size steps (R2-MK-04): wide renders are the phone LCP image on home and structure pages. */
+const EXTRA_W: Record<string, number[]> = Object.fromEntries(
+  ["fefco-0201", "fefco-0320", "fefco-0422", "fefco-0427", "pizza", "rigid-box", "sleeve"].map((id) => [`renders/${id}.webp`, [720]]),
+);
 
 /** srcset for a /marketing image: its small variant plus the original at its native width. */
 export function srcSetFor(src: string): string | undefined {
@@ -94,7 +98,8 @@ export function srcSetFor(src: string): string | undefined {
   const native = NATIVE_W[rel] ?? (kind === "samples" ? 640 : undefined);
   const small = VARIANT_W[kind];
   if (!native || native <= small) return undefined;
-  return `/marketing/${m[1]}.${small}w.webp ${small}w, ${src} ${native}w`;
+  const steps = [small, ...(EXTRA_W[rel] ?? [])].filter((w) => w < native);
+  return [...steps.map((w) => `/marketing/${m[1]}.${w}w.webp ${w}w`), `${src} ${native}w`].join(", ");
 }
 
 /** Intrinsic size of each render, for width/height attributes where the image sizes itself (no CLS). */
