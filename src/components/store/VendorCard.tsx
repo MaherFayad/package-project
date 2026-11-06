@@ -47,13 +47,16 @@ export function VendorCard({ locale, vendor, headingLevel = "h3" }: { locale: Lo
         <ul className={styles.metaList}>
           <li>
             <Icon source={Star} size="small" />
+            {/* R5-JR-05: a vendor with no reviews is new, not rated 0.0 (and its on-time rate is unknown, not 0%). */}
             <span>
-              {t("store.vendors.ratingValue", { rating: vendor.rating.toFixed(1), count: formatNumber(vendor.ratingCount) })}
+              {vendor.ratingCount > 0
+                ? t("store.vendors.ratingValue", { rating: vendor.rating.toFixed(1), count: formatNumber(vendor.ratingCount) })
+                : t("store.vendors.newValue")}
             </span>
           </li>
           <li>
             <Icon source={Clock} size="small" />
-            <span>{t("store.vendors.onTimeValue", { pct: formatNumber(vendor.onTimePct) })}</span>
+            <span>{vendor.onTimeShown === false ? t("store.vendors.onTimeNew") : t("store.vendors.onTimeValue", { pct: formatNumber(vendor.onTimePct) })}</span>
           </li>
           <li>
             <Icon source={Timer} size="small" />

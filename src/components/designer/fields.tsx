@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { useI18n } from "@/i18n/client";
 import { luminance as luminanceOf, normalizeHex } from "./lib/color";
 import { useBrandColors } from "./BrandColors";
+import { parseMmInput } from "./lib/mm";
 import type { DictKey } from "@/i18n/types";
 import styles from "./designer.module.css";
 
@@ -51,13 +52,23 @@ export function NumberField({
   return (
     <TextField
       label={label}
-      type="number"
+      // R5-JR-20: text, so Arabic-Indic digits and a decimal comma work; spin-button semantics kept.
+      type="text"
       inputMode="decimal"
       autoComplete="off"
       value={text}
-      min={min}
-      max={max}
-      step={step}
+      spinbutton={{
+        now: value,
+        min,
+        max,
+        step,
+        onStep: (d) => {
+          const n = Math.round((value + d) * 10 ** decimals) / 10 ** decimals;
+          const c = Math.min(max ?? Infinity, Math.max(min ?? -Infinity, n));
+          setText(fmt(c));
+          onCommit(c);
+        },
+      }}
       suffix={suffix}
       helpText={helpText}
       disabled={disabled}
@@ -72,7 +83,7 @@ export function NumberField({
       }}
       onChange={(v) => {
         setText(v);
-        const n = Number(v.replace(",", "."));
+        const n = parseMmInput(v.trim().startsWith("-") ? v.trim().slice(1) : v) * (v.trim().startsWith("-") ? -1 : 1);
         if (v.trim() !== "" && Number.isFinite(n) && (min === undefined || n >= min) && (max === undefined || n <= max)) onCommit(n);
       }}
     />

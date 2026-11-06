@@ -589,3 +589,31 @@ Angles from the integrator: the 409 banner on a phone; the 1000 px breakpoint at
 | R12-02 | medium | 409 / "not found" banner on phones (`DesignerApp`, `designer.module.css`) | The ~130 px banner pushed the editor **94 to 106 px** past the viewport (sheet up), so the stage header scrolled under the sticky top bar: the same class of problem as R4-08. | WCAG 2.4.11, 1.4.10 | `data-banner` on the editor. While a banner shows, the phone stage's floor drops to 12rem (sheet down) and the pulled-up sheet leaves 9rem more. | fixed: overflow **0** in ar and en with the banner and the sheet up (`r12-409-banner-ar-390.png`) |
 
 Files touched outside scope (crop, brand colours): `src/types/design.ts` (two optional fields and two types), `src/lib/dieline/texture.ts` + `index.ts` (`imagePlacement`, crop in `drawLayer`), `src/lib/orders/pdf/print.ts` (the colour reference slug line), `prisma/schema.prisma` (`User.brandColors Json?`).
+
+## Journeys items folded into round 12 (`docs/audit/journeys.md`)
+
+| id | severity | where | finding | fix | status |
+|---|---|---|---|---|---|
+| R5-JR-14 | low | editor on phones (`DesignerApp`) | The phone toolbar has no design-name field, so phone designs stayed untitled. The share page and the WhatsApp follow-up fell back to the style name. | "Rename" / "إعادة التسمية" in More actions opens a small dialog with the name field (same history step as the toolbar field). e2e (mobile): rename → the saved doc has the new name. | fixed |
+| R5-JR-15 | low | share page vs designer price (`s/[id]/page.tsx`, `Modals.tsx`, `api/quote`) | The share page showed the unit price after the 3 % prepay discount (EGP 50.70); the designer's badge and dialog showed it before (52.24); neither said which. | Share page: "Price after the {pct}% discount for paying in advance." Designer price dialog: "Prices here are before the {pct}% discount for paying in advance at checkout." The percentage is the admin setting (`loadCheckoutSettings`, now also in the `/api/quote` response) and is hidden when it is 0. I didn't add a computed "after" price to the dialog: the share page discounts the product lines only, so a flat × 0.97 would show 50.67 against 50.70. The checkout half is with checkout. | fixed (designer half) |
+| R5-JR-20 | medium | size fields (`BoxPanel`, `ConfigPanel` box + vessel, `fields.tsx NumberField`) | Native `type="number"`: Chromium refuses Arabic-Indic digits, so «٢٥٠» left the size unchanged without a word. "250,5" failed the same way. | `type="text"` + `inputMode="decimal"`, read with `parseMmInput` (`designer/lib/mm.ts`, on top of the shared `normaliseNumberInput` / `parseDecimalInput` in `lib/money/input.ts`, plus a decimal comma before 1–2 digits for sizes). Spin-button semantics are kept through a new optional `spinbutton` prop on `TextField`: `role="spinbutton"`, `aria-valuenow/min/max`, ↑/↓ step (Shift ×10), PageUp/PageDown. Unit test `mm.test.ts`. | fixed: «٢٥٠» → 250 (pouch 230 → 250 applied); "250,5" → 250.5 and the outer size updates; ↑ / Shift+↓ step; "abc" shows the size error; axe 0, ar + en |
+
+Files touched outside scope (journeys items): `src/app/api/quote/route.ts` (`prepayDiscountPct` in the response), `src/components/ui/TextField.tsx` (optional `spinbutton` prop).
+
+## Verification (crop, brand colours, round 12 and journeys items; on main fd40cef + 69054fb)
+
+- Lint and typecheck are clean (including main's no-barrel rule). `npm test`: **108 files, 8,755 passed** (new: `crop.test.ts`, `mm.test.ts`). `npm run build` OK.
+- Playwright `designer` + `smoke` + `journey` + `checkout` + `storefront` + `catalogue` (`--workers=2`): **69 passed, 10 skipped**, 0 failed. The first run had 3 checkout / journey failures from a dev database that had not been `db push`ed after merging main (Prisma error on the pay page, new columns). After the push: checkout + journey 11 passed, 1 skipped. The full models run on the crop / brand colour build: 430 passed, 378 skipped, 0 failed.
+- Hydration e2e, 16 × 2: **32 / 32 passed**.
+- Re-run on the final build:
+  - JR-20 (ar box, en box, ar pouch): «٢٥٠» → 250, "250,5" → 250.5, ↑ → 251.5, Shift+↓ → 241.5, axe 0.
+  - R12: 409 banner overflow 0 (ar, en); 999 / 1000 / 1024 / 1180 px all side panel with a 398–450 px canvas; crop dialog axe 0; anonymous brand save opens the gate and «#١٢٣٤٥٦» → #123456.
+
+## Counts (round 12, new findings before fixing)
+
+| severity | found | fixed | open |
+|---|---|---|---|
+| critical | 0 | 0 | 0 |
+| high | 0 | 0 | 0 |
+| medium | 2 (R12-01, R12-02) + 1 from journeys (R5-JR-20) | 3 | 0 |
+| low | 0 + 2 from journeys (R5-JR-14, R5-JR-15 designer half) | 2 | 0 |

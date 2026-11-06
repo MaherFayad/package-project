@@ -180,7 +180,7 @@ Base: main at `781d663` (rounds 1 to 3 merged). Read `ROUND3.md`, this file, `cr
 |---|---|
 | A-01 … A-27, A-29 … A-33, R2-01 … R2-16, R2-18, CR-12, CR-25, CR-35, CR-36, CR-49, CR-50, CR-56, CR-65, X-12, R3-02, B-05/B-11, B-08, B-15, B-19, CR-08 | Still fixed. First sweep on the merged base: 80 page views with 0 axe violations, 0 horizontal overflow and 0 console errors. Checked by eye: awaiting-vendor banner and vendor card, quote-only banner, margin line, payouts steps and dispute hold (ELB-26203 balance shows no step), two-decimal money, label-colon counts, `dir="auto"` on user text, entity-first titles, checkout settings card, moderation contact flags (caption with "WhatsApp 0100 123 4567" cannot be approved), quote SLA badges. |
 | R3-01 | **Reopened, round 4, then fixed (R4-10).** `overflow-wrap: break-word` stopped the one-letter columns, but badges still broke inside words at 390 px ("Pai/d", "بانتظا/ر المطبع/ة") on orders, payouts, catalogue, audit, vendor and user pages. |
-| A-28 / R2-14 | Unchanged: 404 card renders with HTTP 200 because of the streaming admin skeleton (by choice). |
+| A-28 / R2-14 | Unchanged: 404 card renders with HTTP 200 because of the streaming admin skeleton (by choice). Fixed in round 9 (R5-PL-03). |
 | R2-17 | Unchanged: "Remove verified badge" has no confirmation (reversible, audited; by choice). |
 | CR-57 | Closed: the seed now names the admin "فريق تشغيل علبة" (seed owner). |
 
@@ -307,3 +307,115 @@ Counts (round 6, new, before fixing): **critical 0, high 1, medium 3, low 1 (5)*
 - e2e (`--workers=2 --trace off`): `admin`, `admin-quote-price`, `checkout-quote`, `vendor` gave 24 passed and 16 skipped (desktop-only mutating flows on the mobile project). One assertion in `admin-quote-price.spec.ts` changes with R6-AD-02: it expected a disabled button, and now checks the error message, the focus and that nothing is saved (stricter).
 
 Files outside admin: none this round (`e2e/admin-quote-price.spec.ts` as above).
+
+## Round 7
+
+Asked by the integrator: (1) make the round 6 amount reader a shared helper and use it in every admin and vendor money or decimal field; (2) fold in three items routed from the journeys session (`docs/audit/journeys.md` on the r5-journeys branch); (3) an audit of the result. Base: this branch at `fd4a3d3` with main `1ce3991` merged in (no conflicts). Method: the round 5 and 6 tools again (`admin-audit.cjs`: 80 views; `admin-r6-narrow.cjs`: 120 views; `admin-r6-flows.cjs`), the new `admin-r7-dispute.cjs` (the reprint form at 390 ar and 1440 en, read-only), and the e2e set run three times in a row.
+
+### Work list
+
+| id | result |
+|---|---|
+| Shared amount reader | `src/lib/money/input.ts` (`parseEgpInput`, `parseWholeInput`, `parseNumberInput`, `parseDecimalInput`): a comma counts only as a thousands separator in groups of three, Arabic-Indic and Persian digits and «٫ ٬ ،» are read, and anything ambiguous is invalid. Used by every admin amount field (`egpToPiastersInput`, Send price, checkout settings, pricing, catalogue editor, reprint charge-back) and the vendor portal's `rateCard.parseNumber` (rate card tiers, setup, die, finishes; profile numbers). Vendor payouts have no typed amounts. **fixed** |
+| **R5-JR-13** (low, journeys) | The overview visitor funnel is a cohort: an anonymous visit and the same person's signed-in steps are one person whenever an event row carries both ids; only people who visited in the period count; a step counts everyone who reached it or a later one. No step can exceed the one before and visitor to paid cannot pass 100%. Card description says so. `cohortFunnel`, unit-tested. **fixed** |
+| **R5-JR-09** (medium, journeys) | The reprint form takes **Boxes to reprint** (default the order quantity, at most it) and **Charge the reprint back to the original printer**: Full (default for PRINT_DEFECT), Partial (an amount, at most the reprint buy price) or None (default for other reasons, paid from the reprint reserve). The reprint buy price is the original buy price pro rata. Same printer: it reprints at its own cost for the charged part (full charge-back: Elba pays EGP 0.00). Another printer: it is paid in full, and the charge-back comes off the original order's buy price, so its balance shrinks; any part above what is still unpaid is shown as owed back off-platform. Live summary in the form, the plan in the `ORDER_REPRINT` and `DISPUTE_REPRINT` audit rows. `planReprint`, unit-tested; e2e reprints 40 boxes with a full charge-back. When to charge back, and caps, stay a founder decision. **fixed (mechanism)** |
+| **R5-JR-05** (high, journeys, recompute half) | One on-time rule, `src/lib/vendors/on-time.ts`: delivered by the end of the promised day; reprints and undelivered orders are not judged. The admin scorecard uses it, and `syncVendorOnTime` writes `Vendor.onTimePct` (the public figure) after every DELIVERED transition and in the daily job. A vendor with no judged delivery keeps its value, so no measurement is never published as 0%. The vendor detail metric says "Public on-time figure updates from the first delivery" until then. On the seed the daily job moved Nile Pack from the seeded 96% to 0% (one delivery, late), which matches the admin scorecard. **fixed** |
+
+### Findings (new this round)
+
+| id | sev | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R7-AD-01 | high | Vendor rate cards (`vendor/lib/rateCard.ts parseNumber`) | Same bug as R6-AD-01 on the vendor side: the reader dropped every comma, so a vendor typing "18,50" per box saved a rate of EGP 1,850.00, and that rate feeds every instant buyer price. | Data correctness | The shared reader: "18,50" is an error, "1,250" and «١٢٣٫٥» still read. Unit-tested. | fixed |
+| R7-AD-02 | medium | Dispute decision (`DisputeDecision.tsx`) | "Apply decision" stayed disabled until the note and the reprint fields were valid, with no reason given. | WCAG 3.3.1, 3.3.3 | Always active. Pressing it shows the field errors (note, boxes, charge-back amount) and focuses the first. | fixed |
+| R7-AD-03 | low | Dispute decision help | The help still said a reprint is "a free copy of the order … paid from the reprint reserve", wrong once the quantity and charge-back exist. | Accuracy | "A reprint sends the buyer the boxes you enter again, free, from the same or another printer; you choose who pays for it." | fixed |
+| R7-AD-04 | low | Dispute decision | The "Reprint … created" banner lived in the decision card, which leaves as soon as the dispute is resolved, so the confirmation flashed away. | ISO 9241-110 (feedback) | The reprint number goes in the toast; the Reprints card lists it. | fixed |
+| R7-AD-05 | low | `e2e/admin.spec.ts` (round 5 bio test) | The test made a temporary ACTIVE vendor. `checkout-quote.spec.ts` picks `findFirst({ status: "ACTIVE" })` and sometimes got it, then lost it when the bio test deleted it, so the priced quote looked unavailable (1 failure in 4 parallel runs). | Test isolation | The bio test edits a seeded vendor no other spec touches (Damietta) and restores it. 3 parallel runs in a row green. | fixed |
+
+Counts (round 7, new, before fixing): **critical 0, high 1, medium 1, low 3 (5)**. All fixed. Medium-or-worse issues were found (one from this round's own work), so the rounds continue for admin.
+
+For the founder list: (a) the charge-back policy (when to charge a printer back, partial caps, how an owed amount is recovered); (b) whether a printer's public on-time figure needs a minimum number of deliveries before it is shown (today one late first delivery reads 0%).
+
+### Verification (round 7)
+
+- `admin-audit.cjs` 80 views, `admin-r6-narrow.cjs` 120 views: 0 issues. `admin-r7-dispute.cjs`: 0 overflow and axe 0 at 390 ar and 1440 en; the live summary reads "Reprint buy price EGP 4,875.00; charged back EGP 250.00; Elba pays the printer EGP 4,625.00." for a partial charge-back.
+- `npm run lint`, `npm run typecheck`, `npm run build`: clean. `npm test`: 8,670 passed, 1 failed (the geometry snapshot, failing the same way on main, 3D owners).
+- e2e (`--workers=2 --trace off`): `admin`, `admin-quote-price`, `checkout-quote`, `vendor`: 25 passed, 17 skipped, three runs in a row. `checkout`, `checkout-dispute-photos`, `smoke`: 17 passed, 1 skipped.
+
+### Files outside admin (round 7)
+
+- `src/lib/money/input.ts` (moved from admin, shared), `src/components/vendor/lib/rateCard.ts` (`parseNumber` delegates to it).
+- `src/lib/vendors/on-time.ts`, `on-time-sync.ts` (new); `src/lib/orders/service.ts` (one call after DELIVERED); `src/lib/jobs/index.ts` (one step in the daily job).
+- `e2e/admin.spec.ts`: reprint test added; bio test uses a seeded vendor.
+
+## Round 8
+
+Asked by the integrator: ship a default for founder item (b) now, then an audit of the round 7 work: the reprint form at 390 ar, the funnel numbers against a hand count on the seed, and the charge-back maths with partial amounts and Arabic digits. Base: this branch at `7c35da0` with main merged (no conflicts). Method: a fresh seeded database (`prisma/ad8.db`), events produced through the real app (the `checkout` e2e journey for three buyers, one of whom paid, plus two anonymous browser visits), then three new tools: `admin-r8-funnel.cjs` (raw funnel events grouped by person, next to what the overview renders), `admin-r8-chargeback.cjs` (types quantities and amounts into the reprint form at 390 ar, prints the live summary or error, applies one partial decision and prints the stored plan), and a check of the public pages for the new on-time rule.
+
+### Default for founder item (b)
+
+A printer's on-time percentage is public only after **5 judged deliveries** (admin setting: Pricing › "Printer figures shown to buyers", 1 to 50, audited as `VENDOR_METRICS_SETTINGS`; saving re-syncs every printer and purges the public cache). Two additive `Vendor` columns, `onTimeJudged` and `onTimePublic`, are written by `syncVendorOnTime` (after each delivery, in the daily job, and on saving the setting). `onTimePct` is overwritten only once a printer is public, so seeded printers keep their seeded figure. Below the threshold the directory, profile, showcase cards, checkout offer cards and the order page show "New on Elba" / «جديد على علبة», and the store home average uses measured printers only. The admin vendor scorecard shows the raw figure with "n of 5 deliveries. Buyers see “New on Elba” until then." On the fresh seed every printer has 0 judged deliveries, so every public card reads «جديد على علبة» (checked at 390 ar: directory 6, profile 1, home 3, no "% on time" left). It stays on the founder list.
+
+### Routed item
+
+| id | result |
+|---|---|
+| **R5-JR-22** (low, journeys) | The FX and board index form (FX, per-board multipliers, "change all by %") read values with `Number()`, so «١٫٠٥» or "1,05" became NaN and the preview silently did nothing. It now uses `parseDecimalInput` from `src/lib/money/input.ts`: «١٫٠٥» previews like 1.05 (checked in the browser: "37 of 40 sample prices change. Average change +1.4%."), while "1,05", junk or a bad "change all by %" value shows "Enter a number with a dot for decimals, for example 1.05." on its field, and Preview / Apply move focus there instead of sending. The margin warning reads the same way. **fixed** |
+
+### Findings (new this round)
+
+| id | sev | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R8-AD-01 | high | Overview visitor funnel (`cohortFunnel`, my round 7 R5-JR-13 change) | The hand count showed that a `visit` usually carries neither id: the anon cookie exists only once an anonymous design is saved, and repeat visits from one browser within 30 minutes are dropped server-side. The round 7 rule kept only visitors with an id and required a visit for every later step, so on real events the funnel read **0 visitors** and hid itself ("no data yet"), and a paying buyer would never count. | Plan §6.3, §10 (the 2 to 4% gate); data correctness | Revised rule: anon and user ids joined into one person; a person counts at every step up to the furthest they reached (anyone who designed or paid counts as a visitor); an id-less visit is one visitor of its own. Steps never exceed the one before and visitor to paid stays at or under 100%; it can over-count visitors slightly, never under-count. Hand count on the seed run: raw events are 2 id-less visits and 3 buyers (all designed, signed in, saw a price and started checkout, one paid). Expected 5 · 3 · 3 · 3 · 3 · 3 · 1 and 20%; rendered **Visitors 5 · Design started 3 · … · Paid 1 · Visitor to paid 20%**. The hand-count rows are a unit test; the card description states the rule. | fixed |
+| R8-AD-02 | low | Reprint form, partial charge-back | A malformed amount ("١٢٣,٤٥" with a decimal comma, "-5") got the range message "Enter an amount from 0 to the reprint buy price", which does not say what is wrong. | WCAG 3.3.3 error suggestion | Malformed amounts get "Enter an amount in EGP, for example 1500 or 18.50"; only a clear number above the reprint cost gets the range message. | fixed |
+
+Checked and correct, no finding:
+- Charge-back maths at 390 ar on ELB-26203 (250 boxes, buy price EGP 4,875.00). Quantity «٤٠» and "40" both read as 40. "٠", "251" and "4,0" get the quantity error. Amounts «١٢٣٫٤٥» and "123.45" both read as EGP 123.45; "1,000.50" (above the EGP 780.00 reprint cost) and "99999" get the range error. Live summary: «سعر شراء إعادة الطباعة 780.00 ج.م، المحمل على المطبعة 123.45 ج.م، وتدفع علبة للمطبعة 656.55 ج.م.» Stored plan after Apply: `quantity 40, reprintCostPiasters 78000, chargeBackPiasters 12345, reprintVendorCostPiasters 65655, owedPiasters 0`, the same as the preview to the piaster.
+- The reprint form at 390 ar: no overflow, nothing cut, the summary wraps under the choices, and the Arabic numbers and «ج.م» isolate correctly.
+
+Counts (round 8, new, before fixing): **critical 0, high 1, medium 0, low 1 (2)**. Both fixed. The high finding was in round 7's own funnel change, caught by the hand count this round asked for, so the stop rule is not met yet.
+
+### Verification (round 8)
+
+- `npm run lint`, `npm run typecheck`, `npm run build`: clean. `npm test`: 8,754 passed (the geometry snapshot is green again on the merged main).
+- e2e (`--workers=2 --trace off`, fresh seed): `admin`, `admin-quote-price`, `checkout-quote`, `vendor` gave 25 passed and 17 skipped, twice in a row. `checkout`, `smoke`, `storefront` gave 32 passed (storefront covers the directory and profile with the new on-time rule).
+
+### Files outside admin (round 8)
+
+- `prisma/schema.prisma`: `Vendor.onTimeJudged`, `Vendor.onTimePublic` (additive, defaults 0 / false).
+- `src/lib/vendors/on-time.ts` (`onTimeWrite`), `on-time-sync.ts`, `on-time-settings.ts` (new).
+- Public display, one condition each: `src/components/store/VendorCard.tsx`, `src/components/marketing/VendorShowcaseCard.tsx`, `src/app/[locale]/(detail)/vendors/[slug]/page.tsx`, `src/app/[locale]/(checkout)/checkout/_components/CheckoutClient.tsx` (offer card), `src/app/[locale]/orders/[id]/page.tsx`, `src/app/[locale]/(store)/page.tsx` (average); data: `src/components/store/data.ts`, `src/components/store/vendor-filters.ts` (optional `onTimeShown`), `src/lib/pricing/server.ts`, `engine.ts`, `types.ts` (optional `onTimeShown` on the offer vendor); copy: `src/i18n/en.ts`, `ar.ts` (`store.vendors.onTimeNew`).
+
+## Round 9
+
+Asked by the integrator: audit only, no new features. Scope: R5-JR-22 (re-checked), the "Printer figures shown to buyers" setting at 1 and 50, and a full admin sweep at 320, 390 and 1440 px in ar and en. Base: this branch at `d014e02` with main merged (no conflicts), production build on a fresh seed plus audit fixtures (`prisma/ad8.db`). Tools: `admin-audit.cjs` with `VIEWPORTS=320,390,1440` (20 routes × 2 locales × 3 widths = 120 views), `admin-r6-narrow.cjs` (120 views, 320 to 489 px), `admin-r6-flows.cjs` with `FLOW_SIZES=ar:320,en:320` (Send price, buyer link, Priced view, Close, bio dialogs at 320), and the new `admin-r9-threshold.cjs` (saves 0, 51, "abc", «١», 50 and «٥» through the form; reads the vendor rows, the public directory and the admin scorecard caption after each save).
+
+### Checked and correct
+
+- R5-JR-22: «١٫٠٥» previews like 1.05; "1,05" shows the field error and nothing is sent (round 8 fix, re-checked on the merged build).
+- Threshold: 0, 51 and "abc" are refused with «أدخل عددا صحيحا من 1 إلى 50.» and nothing is stored; «١» saves 1. At 1, Nile Pack (one judged delivery, late) turns public with 0% on time and the other five directory cards read «جديد على علبة»; at 50, all six read «جديد على علبة» and the scorecard says 1 of 50; «٥» restores 5. Each save re-syncs the printers and the public directory changes at once (cache purged). Seeded figures are untouched for printers under the minimum.
+- Sweeps after the fixes: 120 views at 320/390/1440 with 0 axe violations, 0 page overflow, 0 console errors, 0 wrapped badges and 0 sideways table scrolls; 120 narrow views with nothing cut, no target under 24 px and no label/value overlap; all 18 dialog steps at 320 with no overflow, axe 0 and focus kept.
+
+### Findings (new this round)
+
+| id | sev | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R9-AD-01 | low | Overview metric captions at 320 ar | «المتوسط 14,324.79 / ج.م» and the net revenue amount broke between the number and the currency. | Readability (CR-35 money as one unit) | Amounts inside the captions use no-break spaces. | fixed |
+| R9-AD-02 | low | Admin top bar search at 320 | The placeholder was cut mid-word («البحث في الطل»). | Craft (same as vendor R4-CR-22) | Under 400 px it reads «الطلبات» / "Orders" next to the search icon. | fixed |
+| R9-AD-03 | low | Quote inbox search placeholder at 320 | "Search by buyer, mobile or model" / «البحث بالعميل أو رقم المحمول أو النموذج» was cut at the end. | Craft | "Buyer, mobile or model" / «العميل أو الرقم أو النموذج». | fixed |
+| R9-AD-04 | low | Bio and profile clean-up dialogs at 320 en | The confirm button was truncated to "Remove contact…". | WCAG 2.5.3 (visible label); craft | The confirm reads "Remove" / «حذف»; the dialog title already says what is removed. | fixed |
+| R9-AD-05 | low | Vendor scorecard caption (ar) | «1 من 50 عمليات تسليم»: a bare count before a plural noun, wrong agreement for 1 and for 11 or more. | Arabic copy rules (label-colon counts) | «عمليات التسليم: 1 من 50. …». | fixed |
+
+### Routed item (added to round 9)
+
+| id | result |
+|---|---|
+| **R5-PL-03** (medium, platform) | The admin detail routes (orders by number, vendors by slug, vendor applications, users and disputes by id) answered **200** for an unknown record: the page's `notFound()` ran inside the admin-wide `loading.tsx` Suspense boundary, so the 404 card streamed with a 200 status (A-28 / R2-14, kept "by choice" until now). The skeleton boundary moved below the detail routes: `admin/loading.tsx` is gone, every list or leaf route has its own `loading.tsx` (`(overview)`, `orders/(list)`, `users/(list)`, `disputes/(list)`, `vendors/(list)` route groups, plus audit, catalog, moderation, payouts, pricing, privacy, quotes), and each detail segment has a `layout.tsx` that checks the record above its own Suspense boundary (same pattern as the public printer profile). The not-found cards moved one level up so they catch the layout's 404. URLs are unchanged, and signed-out requests still get the 307 to sign-in before any lookup, so record existence never leaks. New e2e: an unknown order, vendor, application, user and dispute (ar and en) each answer **404** with the admin "Not found" card, a malformed escape answers 400, and known records and list pages still answer 200. **fixed** |
+
+Counts (round 9, new, before fixing): **critical 0, high 0, medium 0, low 5 (5)**. All fixed. **This round found nothing of medium severity or worse, so the admin area meets the stop rule.**
+
+### Verification (round 9)
+
+- `npm run lint`, `npm run typecheck`, `npm run build`: clean. `npm test`: 8,754 passed.
+- e2e (`--workers=2 --trace off`, fresh seed): `admin`, `admin-quote-price`, `checkout-quote`, `vendor` gave 25 passed and 17 skipped, twice in a row.
+- After R5-PL-03: the 320/390/1440 sweep again 120 views with 0 issues; e2e set 27 passed, twice (two new 404 tests).
+- Files outside admin: none (admin i18n, `AdminFrame.tsx`, `ModerationQueue.tsx`, admin route files, the audit tools and `e2e/admin.spec.ts`).

@@ -128,6 +128,10 @@ model Vendor {
   rating         Float    @default(0) // 0..5
   ratingCount    Int      @default(0)
   onTimePct      Float    @default(0) // 0..100
+  // Added by admin round 8 (R5-JR-05): judged deliveries behind onTimePct, and whether buyers see it
+  // (judged >= the admin's minimum, default 5; below that public pages say "New on Elba").
+  onTimeJudged   Int      @default(0)
+  onTimePublic   Boolean  @default(false)
   leadTimeDays   Int      @default(7) // typical lead time
   minOrderQty    Int      @default(100)
   serviceAreas   Json     // EgyptCity[]
@@ -375,6 +379,9 @@ model Order {
   vendorCostPiasters Int @default(0) // platform buy price from vendor (managed model)
   currency    String   @default("EGP")
   shippingAddress Json // ShippingAddress
+  // R5-JR-03: invoice details as chosen for THIS order: { company: { name, taxId, commercialRegister } | null }.
+  // Null on orders placed before the snapshot (their invoice falls back to the buyer's Organization).
+  billing     Json?
   notes       String?
   placedAt    DateTime @default(now())
   paidAt      DateTime?
