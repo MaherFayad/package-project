@@ -398,7 +398,8 @@ export function DataTable({ columnContentTypes, headings, rows, totals, totalsNa
   ) : null;
   return (
     <div className={styles.DataTable}>
-      <div className={styles.Scroll}>
+      {/* Focusable, named scroll region so keyboard users can scroll wide tables (WCAG 2.1.1). */}
+      <div className={styles.Scroll} tabIndex={0} role="region" aria-label={caption}>
         <table className={cx(styles.Table, increasedTableDensity && styles.dense)}>
           <caption className={hideCaption ? "visually-hidden" : styles.Caption}>{caption}</caption>
           <thead>

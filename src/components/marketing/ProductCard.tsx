@@ -5,7 +5,7 @@ import { getT, pick } from "@/i18n";
 import { formatMoney } from "@/lib/format";
 import { designHref, structureHref } from "@/components/store/catalog";
 import type { StructureView } from "@/components/store/data";
-import { TILE_BG, renderSrc } from "./assets";
+import { TILE_BG, renderSrc, srcSetFor } from "./assets";
 import styles from "./marketing.module.css";
 
 /** Marketing product card: real 3D render of the structure, name, size range, "from" price, CTAs. */
@@ -32,7 +32,7 @@ export function ProductCard({
       <article className={`${styles.card} ${styles.productCard}`}>
         <div className={styles.productMedia} style={{ ["--tile-bg" as string]: TILE_BG[structure.code] }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={renderSrc(structure.code)} alt={t("marketing.boxes.renderAlt", { name })} loading="lazy" decoding="async" width={480} height={360} />
+          <img src={renderSrc(structure.code)} srcSet={srcSetFor(renderSrc(structure.code))} sizes="(min-width: 1024px) 400px, (min-width: 560px) 46vw, 82vw" alt={t("marketing.boxes.renderAlt", { name })} loading="lazy" decoding="async" width={480} height={360} />
         </div>
         <div className={styles.productBody}>
           <span className={styles.productCode}>{structure.code.replace("_", " ")}</span>

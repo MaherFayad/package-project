@@ -13,7 +13,7 @@
   --m-dur-fast: 160ms;
   --m-dur-base: 240ms;
   --m-dur-slow: 480ms;
-  --m-dur-reveal: 720ms;
+  --m-dur-reveal: 480ms;   /* reveals: subtle, once */
   --m-dur-marquee: 60s;
   --m-dur-float: 6s;
 
@@ -23,7 +23,7 @@
   --m-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* small overshoot: chips, press release */
 
   --m-stagger: 70ms;
-  --m-rise: 24px;
+  --m-rise: 16px;
   --m-lift: -4px;          /* card hover */
   --m-press-scale: 0.97;   /* pill button press */
 }
@@ -31,6 +31,10 @@
 @keyframes m-rise-in {
   from { opacity: 0; transform: translate3d(0, var(--m-rise), 0); }
   to { opacity: 1; transform: none; }
+}
+@keyframes m-rise-only {
+  from { transform: translate3d(0, var(--m-rise), 0); }
+  to { transform: none; }
 }
 @keyframes m-fade-in {
   from { opacity: 0; }
@@ -80,8 +84,13 @@ html[data-motion="on"] [data-reveal="scale"]:not([data-revealed]) { transform: s
   animation: m-rise-in var(--m-dur-reveal) var(--m-ease-out) both;
   animation-delay: calc(80ms + var(--m-i, 0) * var(--m-stagger));
 }
+/* Display headlines (the LCP text): rise without fading, so they count as painted at once. */
+.m-enter-lcp {
+  animation: m-rise-only var(--m-dur-reveal) var(--m-ease-out) both;
+  animation-delay: calc(80ms + var(--m-i, 0) * var(--m-stagger));
+}
 .m-enter-scale {
-  animation: m-scale-in 900ms var(--m-ease-out) both;
+  animation: m-scale-in 600ms var(--m-ease-out) both;
   animation-delay: calc(120ms + var(--m-i, 0) * var(--m-stagger));
 }
 
@@ -92,5 +101,6 @@ html[data-motion="on"] [data-reveal="scale"]:not([data-revealed]) { transform: s
   }
   [data-reveal][data-revealed] { transition: none; }
   .m-enter,
+  .m-enter-lcp,
   .m-enter-scale { animation: none; }
 }

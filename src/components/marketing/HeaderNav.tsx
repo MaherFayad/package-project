@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { createPortal } from "react-dom";
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Boxes, ChevronDown, Menu, Milk, PackageOpen, Printer, Rotate3d, Store, X } from "lucide-react";
+import { useSessionRole } from "./useSessionRole";
 import styles from "./marketing.module.css";
 
 export interface MenuEntry {
@@ -17,6 +19,8 @@ export interface NavModel {
   products: { label: string; items: MenuEntry[] };
   printers: { label: string; items: MenuEntry[] };
   links: { href: string; label: string }[];
+  /** Extra links for signed-in visitors (resolved on the client, see useSessionRole). */
+  signedInLinks?: { orders: { href: string; label: string }; vendor: { href: string; label: string }; admin: { href: string; label: string } };
   menuLabel: string;
   closeLabel: string;
   /** Rendered inside the mobile sheet (login, CTA, language). */
@@ -97,6 +101,12 @@ export function HeaderNav({ model, children }: { model: NavModel; children: Reac
   const [menu, setMenu] = useState<"products" | "printers" | null>(null);
   const [sheet, setSheet] = useState(false);
   const pathname = usePathname();
+  const me = useSessionRole();
+  const extra = model.signedInLinks;
+  const links =
+    me && extra
+      ? [...model.links, extra.orders, ...(me.role === "VENDOR" ? [extra.vendor] : me.role === "ADMIN" ? [extra.admin] : [])]
+      : model.links;
   const header = useRef<HTMLElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
   const openBtn = useRef<HTMLButtonElement>(null);
@@ -165,7 +175,7 @@ export function HeaderNav({ model, children }: { model: NavModel; children: Reac
           <ul className={styles.navList}>
             <DropMenu label={model.products.label} items={model.products.items} open={menu === "products"} onToggle={() => setMenu((m) => (m === "products" ? null : "products"))} onClose={close} />
             <DropMenu label={model.printers.label} items={model.printers.items} open={menu === "printers"} onToggle={() => setMenu((m) => (m === "printers" ? null : "printers"))} onClose={close} />
-            {model.links.map((l) => (
+            {links.map((l) => (
               <li key={l.href}>
                 <Link href={l.href} className={styles.navLink} aria-current={isCurrent(l.href) ? "page" : undefined}>
                   {l.label}
@@ -181,38 +191,44 @@ export function HeaderNav({ model, children }: { model: NavModel; children: Reac
           </button>
         </div>
       </div>
-      {sheet ? (
-        <div className={styles.sheet} role="dialog" aria-modal="true" aria-label={model.menuLabel} ref={sheetRef}>
-          <div className={styles.sheetHead}>
-            <Link href={model.homeHref} className={styles.brand} aria-label={model.brandLabel} onClick={() => setSheet(false)}>
-              {model.brand}
-            </Link>
-            <button type="button" className={styles.menuButton} aria-label={model.closeLabel} onClick={() => setSheet(false)}>
-              <X size={24} aria-hidden />
-            </button>
-          </div>
-          <nav className={styles.sheetBody} aria-label={model.label}>
-            {[model.products, model.printers].map((g) => (
-              <div key={g.label} className={styles.sheetGroup}>
-                <h2 className={styles.sheetGroupTitle}>{g.label}</h2>
-                {g.items.map((it) => (
-                  <Link key={it.href} href={it.href} className={styles.sheetLink} onClick={() => setSheet(false)}>
-                    {it.title}
-                  </Link>
-                ))}
-              </div>
-            ))}
-            <div className={styles.sheetGroup}>
-              {model.links.map((l) => (
-                <Link key={l.href} href={l.href} className={styles.sheetLink} onClick={() => setSheet(false)}>
-                  {l.label}
+      {/* Portalled to the .site wrapper: the sticky header's backdrop-filter makes it the
+          containing block for fixed descendants, which clipped the sheet to the 64px bar.
+          .site still provides the --mk-* tokens. */}
+      {sheet && header.current
+        ? createPortal(
+            <div className={styles.sheet} role="dialog" aria-modal="true" aria-label={model.menuLabel} ref={sheetRef}>
+              <div className={styles.sheetHead}>
+                <Link href={model.homeHref} className={styles.brand} aria-label={model.brandLabel} onClick={() => setSheet(false)}>
+                  {model.brand}
                 </Link>
-              ))}
-            </div>
-            <div className={styles.sheetActions}>{model.sheetActions}</div>
-          </nav>
-        </div>
-      ) : null}
+                <button type="button" className={styles.menuButton} aria-label={model.closeLabel} onClick={() => setSheet(false)}>
+                  <X size={24} aria-hidden />
+                </button>
+              </div>
+              <nav className={styles.sheetBody} aria-label={model.label}>
+                {[model.products, model.printers].map((g) => (
+                  <div key={g.label} className={styles.sheetGroup}>
+                    <h2 className={styles.sheetGroupTitle}>{g.label}</h2>
+                    {g.items.map((it) => (
+                      <Link key={it.href} href={it.href} className={styles.sheetLink} onClick={() => setSheet(false)}>
+                        {it.title}
+                      </Link>
+                    ))}
+                  </div>
+                ))}
+                <div className={styles.sheetGroup}>
+                  {links.map((l) => (
+                    <Link key={l.href} href={l.href} className={styles.sheetLink} onClick={() => setSheet(false)}>
+                      {l.label}
+                    </Link>
+                  ))}
+                </div>
+                <div className={styles.sheetActions}>{model.sheetActions}</div>
+              </nav>
+            </div>,
+            header.current.parentElement ?? document.body,
+          )
+        : null}
     </header>
   );
 }
