@@ -110,6 +110,9 @@ export const StudioEnvironment = memo(function StudioEnvironment({ intensity = 1
       <Lightformer form="rect" intensity={2.2} position={[3.4, 1.4, -2.2]} rotation-y={(-3 * Math.PI) / 4} scale={[1, 4, 1]} />
       {/* front fill card */}
       <Lightformer form="rect" intensity={0.9} position={[0, 1, 5]} scale={[10, 3, 1]} />
+      {/* floor bounce (R4-L01): a white sweep under the product lights down-facing faces, so a
+          tilted underside reads as the same board one to two stops down, not near black */}
+      <Lightformer form="rect" intensity={1.6} color="#f3ede4" position={[0, -3.2, 0.6]} rotation-x={-Math.PI / 2} scale={[8, 6, 1]} />
       {/* small round kicker: a crisp specular dot on metals */}
       <Lightformer form="circle" intensity={3} position={[2.6, 3, 3]} scale={0.8} />
     </EnvironmentScene>

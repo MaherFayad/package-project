@@ -71,7 +71,13 @@ function tuckClosure(b: DielineBuilder, w: Walls, where: "top" | "bottom", owner
   const hinge = where === "top" ? rectEdges(ownerRect).top : rectEdges(ownerRect).bottom;
   b.attach(where, where, owner, hinge, Wp, { kind: "rect" }, { stage: 2, label: where === "top" ? "Top closure" : "Bottom closure" });
   const far = where === "top" ? rectEdges(lid).top : rectEdges(lid).bottom;
-  b.attach(`${where}Tuck`, "tuck", where, insetSeg(far, t + 0.5), tuckD, { kind: "tuck", shoulder: 1 }, { stage: 2, stack: -1, label: "Tuck flap" });
+  b.attach(`${where}Tuck`, "tuck", where, insetSeg(far, t + 0.5), tuckD, { kind: "tuck", shoulder: 1 }, {
+    stage: 2,
+    // a front-hinged closure tucks against the back wall, where the glue flap is already laminated
+    // inside: one more caliper in, or the two lie in one plane and z-fight (ECMA_RTE bottom, C-05)
+    stack: owner === "front" ? -2 : -1,
+    label: "Tuck flap",
+  });
   for (const [side, r] of [["L", w.left], ["R", w.right]] as const) {
     const edge = where === "top" ? rectEdges(r).top : rectEdges(r).bottom;
     const taper = Math.min(dustD * 0.4, Wp * 0.3);

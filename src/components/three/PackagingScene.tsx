@@ -120,7 +120,26 @@ const FLAT = 0.02;
 /** Hero view for a model: cylinders (rolled tubes) are shot nearer the front so centred copy is not on the silhouette. */
 export function heroView(dieline: DielineModel, progress: number): { theta: number; phi: number } {
   if (progress < FLAT) return VIEWS.front; // a die-cut blank is shown face-on, like a dieline proof
-  return dieline.panels.some((p) => p.hingeKind === "roll") ? { theta: 18 * DEG, phi: DEFAULT_VIEW.phi } : DEFAULT_VIEW;
+  const base = dieline.panels.some((p) => p.hingeKind === "roll") ? { theta: 18 * DEG, phi: DEFAULT_VIEW.phi } : DEFAULT_VIEW;
+  // Open on printed board (FF-15): when neither front nor right is a print face (FEFCO 09 liners,
+  // dividers and pads print the side that goes against the host wall), turn the 3/4 view to the
+  // largest printed side wall, so the first frame shows the artwork, not the blank side.
+  const f = dieline.faces;
+  if (!f || f.front || f.right) return base;
+  const sides: [keyof typeof f, number][] = [
+    ["back", 180 * DEG],
+    ["left", -90 * DEG],
+  ];
+  let best: number | null = null;
+  let area = 0;
+  for (const [k, az] of sides) {
+    const info = f[k];
+    if (info && info.width * info.height > area) {
+      area = info.width * info.height;
+      best = az;
+    }
+  }
+  return best === null ? base : { theta: best + base.theta, phi: base.phi };
 }
 
 /** Identity of a model for re-framing: library variants share a core structureCode, so add the panel set. */

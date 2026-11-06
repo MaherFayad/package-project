@@ -14,7 +14,8 @@ import { applyViewInsets, normInsets, visibleFraction, NO_INSETS, type FitInsets
 import type { PackagingSceneHandle } from "../PackagingScene";
 import { EngineCanvas, useRegisterViewApi, type EngineViewApi, type ViewName } from "../EngineCanvas";
 import { VesselModel, type VesselModelProps } from "./VesselModel";
-import type { VesselQuality } from "./materials";
+import { isTransparentVessel, type VesselQuality } from "./materials";
+import { LIQUIDS } from "@/lib/vessels";
 
 /** Same imperative API as the box viewer, so <ViewControls> works unchanged. */
 export type VesselSceneHandle = PackagingSceneHandle;
@@ -47,7 +48,9 @@ export interface VesselSceneProps extends Omit<VesselModelProps, "quality" | "an
 }
 
 const DEG = Math.PI / 180;
-const DEFAULT_VIEW = { theta: 26 * DEG, phi: 76 * DEG };
+// R4-V05: 14° off front (bottle packshot convention, 10 to 15°): at 26° centred front copy on a
+// Ø 30 to 70 mm bottle wrapped round the silhouette ("our logo").
+const DEFAULT_VIEW = { theta: 14 * DEG, phi: 76 * DEG };
 const VIEWS: Record<ViewName, { theta: number; phi: number }> = {
   iso: DEFAULT_VIEW,
   front: { theta: 0, phi: 86 * DEG },
@@ -81,7 +84,10 @@ function Rig({
   sceneKey,
   onKeyboard,
   fitInsets,
+  clear = false,
 }: {
+  /** Clear glass / PET: light passes, so the contact shadow is lighter (R4-V07). */
+  clear?: boolean;
   envelope: VesselSceneProps["envelope"];
   apiRef: { current: RigApi | null };
   turntable: boolean;
@@ -239,7 +245,7 @@ function Rig({
   return (
     <>
       <VesselLights />
-      <SoftShadow scale={extent * 5} far={Math.max(f.size.y, extent)} blur={2.6} opacity={0.45} contactOpacity={0.5} color="#2b2620" />
+      <SoftShadow scale={extent * 5} far={Math.max(f.size.y, extent)} blur={2.6} opacity={clear ? 0.22 : 0.45} contactOpacity={clear ? 0.3 : 0.5} color="#2b2620" />
       <OrbitControls makeDefault enablePan={false} enableDamping={!reduced} dampingFactor={0.1} rotateSpeed={0.75} onStart={() => (interacted.current = true)} regress />
       <InteractionDpr />
     </>
@@ -262,6 +268,12 @@ const VesselLights = memo(function VesselLights() {
         <Lightformer form="ring" intensity={1.2} position={[1.5, 2.5, 3]} scale={0.8} />
         {/* broad front fill: tinplate and aluminium need something bright to mirror (V-13) */}
         <Lightformer form="rect" intensity={0.8} position={[0, 1, 5]} scale={[10, 3, 1]} />
+        {/* R4-V06: white table sweep. A vertical tin / can wall seen from 10 to 25° above mirrors the
+            space just below the horizon in front of it; that was the #202020 void, so tinplate
+            sardine, oval-fish and caddy walls read black. Glass keeps its dark sides (they mirror
+            the left / right / back, which stay dark). */}
+        <Lightformer form="rect" intensity={1.1} color="#f2efe9" position={[0, -0.9, 4.2]} rotation-x={-Math.PI / 10} scale={[12, 2.4, 1]} />
+        <Lightformer form="rect" intensity={0.7} color="#ece8e1" position={[0, -2.5, 0.8]} rotation-x={-Math.PI / 2} scale={[10, 8, 1]} />
       </EnvironmentScene>
     </>
   );
@@ -322,7 +334,7 @@ export function VesselSceneContent(props: VesselSceneContentProps) {
   const sceneKey = `${model.kind}`;
   return (
     <>
-      <Rig envelope={envelope} apiRef={apiRef} turntable={turntable} reduced={reduced} interacted={interacted} sceneKey={sceneKey} onKeyboard={() => onInteractRef.current?.()} fitInsets={fitInsets} />
+      <Rig envelope={envelope} apiRef={apiRef} turntable={turntable} reduced={reduced} interacted={interacted} sceneKey={sceneKey} onKeyboard={() => onInteractRef.current?.()} fitInsets={fitInsets} clear={isTransparentVessel(model.material) && !(model.fill > 0.05 && model.liquid && LIQUIDS[model.liquid].clarity < 0.5)} />
       {customObject ? <primitive object={customObject} /> : <VesselModel {...model} quality={q} animate={animate && !reduced} />}
     </>
   );

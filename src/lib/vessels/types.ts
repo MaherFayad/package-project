@@ -107,7 +107,10 @@ export interface ProfilePoint {
 export type CrossSection =
   | { kind: "round" }
   /** Rounded square of half width r; corner radius = r * cornerRatio. depthRatio = depth / width. */
-  | { kind: "roundedRect"; cornerRatio: number; depthRatio: number };
+  | { kind: "roundedRect"; cornerRatio: number; depthRatio: number }
+  /** Rounded regular polygon (hex honey jar): r is the apothem (half across flats), a flat faces the
+   *  front (+Z); corner radius = r * cornerRatio. */
+  | { kind: "polygon"; sides: number; cornerRatio: number };
 
 /** Revolved (lathe) body shape. Pouch and tube are not revolved but still expose one for envelopes. */
 export interface VesselProfile {
@@ -139,7 +142,7 @@ export type PrintSurfaceKind = (typeof PRINT_SURFACE_KINDS)[number];
 /** Where a print surface sits on the container (all mm, angles in radians). */
 export type SurfacePlacement =
   /** On the revolved wall between y0 and y1 (cylindrical if r0 == r1, else a cone frustum). */
-  | { type: "band"; y0: Mm; y1: Mm; r0: Mm; r1: Mm; phiStart: number; phiLength: number }
+  | { type: "band"; y0: Mm; y1: Mm; r0: Mm; r1: Mm; phiStart: number; phiLength: number; section?: CrossSection }
   /** Shrink sleeve that conforms to the profile between y0 and y1 (full 360 degrees). */
   | { type: "sleeve"; y0: Mm; y1: Mm }
   /** Round label on top of a lid / cap at height y. */
