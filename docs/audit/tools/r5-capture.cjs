@@ -130,7 +130,7 @@ async function stable(page, loc, ms = 450, tries = 14) {
           await st.screenshot({ path: path.join(outDir, `${tag}__d_dieline.png`) }); rec.shots.push("d_dieline");
         }
       }
-      if (v.variant === "def" || v.variant === "min" || v.variant === "max") {
+      if (v.variant === "def" || (!process.env.PHONE_DEF_ONLY && (v.variant === "min" || v.variant === "max"))) {
         const ps = await open(phone, v);
         await stable(phone, ps);
         await ps.screenshot({ path: path.join(outDir, `${tag}__m_hero.png`) });
