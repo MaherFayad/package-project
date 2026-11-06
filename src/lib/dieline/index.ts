@@ -33,7 +33,7 @@ export {
   type BoardSpec,
   type BoardAppearance,
 } from "./materials";
-export { dielineToSvg, svg, type DielineSvgOptions } from "./svg";
+export { dielineToSvg, svg, PANEL_ROLE_LABELS, type DielineSvgOptions } from "./svg";
 export { STRUCTURES, STRUCTURE_LIST, BOX_STRUCTURE_LIST, structureBySlug, type StructureDef } from "./registry";
 export {
   FEATURE_SUPPORT,
