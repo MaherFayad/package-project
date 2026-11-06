@@ -22,7 +22,9 @@ export async function generateMetadata({
     title: { default: `${d.meta.siteName} · ${d.meta.tagline}`, template: `%s · ${d.meta.siteName}` },
     description: d.meta.description,
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
-    alternates: { languages: { ar: "/ar", en: "/en" } },
+    // No site-wide hreflang here: alternates must point at the SAME page in the other
+    // language, so each page sets its own (`alternates.languages`). A layout-level
+    // { ar: "/ar", en: "/en" } told search engines every page was a translation of home.
   };
 }
 

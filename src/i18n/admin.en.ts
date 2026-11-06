@@ -509,7 +509,7 @@ export const adminEn = {
     columns: { user: "User", kind: "Request", status: "Status", received: "Received", completed: "Completed", due: "Due" },
     kinds: { EXPORT: "Data copy", DELETE: "Deletion" },
     statuses: { OPEN: "Received", IN_PROGRESS: "In progress", COMPLETED: "Completed", REJECTED: "Rejected" },
-    dueIn: "{days} days left",
+    dueIn: "{days} left",
     overdue: "Overdue",
     empty: "No data requests",
     emptyBody: "Requests made from buyer accounts appear here.",

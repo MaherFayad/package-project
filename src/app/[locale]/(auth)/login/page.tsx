@@ -1,15 +1,19 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { LockKeyhole } from "lucide-react";
 import { getSession } from "@/lib/auth/session";
+import { safeNextPath } from "@/lib/auth/redirect";
 import { getT, toLocale } from "@/i18n";
 import { LoginClient } from "./LoginClient";
+import styles from "./login.module.css";
 
-export const metadata: Metadata = { robots: { index: false } };
-
-/** Only same-origin relative paths are allowed as ?next= targets. */
-function safeNext(next: string | undefined, locale: string): string {
-  if (next && next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\")) return next;
-  return `/${locale}`;
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const locale = toLocale((await params).locale);
+  return {
+    title: getT(locale)("nav.signIn"),
+    robots: { index: false, follow: false },
+    alternates: { languages: { ar: "/ar/login", en: "/en/login" } },
+  };
 }
 
 export default async function LoginPage({
@@ -17,32 +21,30 @@ export default async function LoginPage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string | string[] }>;
 }) {
   const locale = toLocale((await params).locale);
-  const next = safeNext((await searchParams).next, locale);
+  const raw = (await searchParams).next;
+  const requested = Array.isArray(raw) ? raw[0] : raw;
+  const next = safeNextPath(requested, locale);
+  // No usable ?next=: land each role on its own home after sign-in (see LoginClient).
+  const explicit = next !== `/${locale}` || requested === `/${locale}`;
   if (await getSession()) redirect(next);
   const t = getT(locale);
   return (
-    <div style={{ maxWidth: "28rem", margin: "0 auto", padding: "var(--p-space-800) var(--p-page-gutter)" }}>
-      <div
-        style={{
-          background: "var(--p-color-bg-surface)",
-          borderRadius: "var(--p-border-radius-300)",
-          boxShadow: "var(--p-shadow-bevel-100)",
-          padding: "var(--p-space-500) var(--p-space-400)",
-          display: "grid",
-          gap: "var(--p-space-400)",
-        }}
-      >
-        <div style={{ display: "grid", gap: "var(--p-space-100)" }}>
-          <h1 style={{ fontSize: "var(--p-font-size-500)", lineHeight: "var(--p-font-line-height-700)", fontWeight: "var(--p-font-weight-bold)" }}>
+    <div className={styles.page}>
+      <section className={styles.card} aria-labelledby="login-title">
+        <header className={styles.head}>
+          <span className={styles.badge} aria-hidden="true">
+            <LockKeyhole size={20} />
+          </span>
+          <h1 id="login-title" className={styles.title}>
             {t("auth.title")}
           </h1>
-          <p style={{ color: "var(--p-color-text-secondary)" }}>{t("auth.subtitle")}</p>
-        </div>
-        <LoginClient next={next} />
-      </div>
+          <p className={styles.subtitle}>{t("auth.subtitle")}</p>
+        </header>
+        <LoginClient next={next} explicit={explicit} />
+      </section>
     </div>
   );
 }

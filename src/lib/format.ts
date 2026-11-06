@@ -68,3 +68,45 @@ export function formatPercent(n: number, locale: Locale): string {
   void locale;
   return `${formatNumber(n, 1)}%`;
 }
+
+export type CountUnit = "second" | "minute" | "hour" | "day" | "box" | "order" | "item";
+
+/**
+ * Arabic forms per CLDR plural category (one, two, few = 3–10, many = 11–99, other = 0 / 100+).
+ * Dual and "one" carry the number in the word, so no digit is shown for them.
+ * No diacritics; accusative alif (يوما) only where MSA writes it.
+ */
+const AR_UNITS: Record<CountUnit, Record<"one" | "two" | "few" | "many" | "other", string>> = {
+  second: { one: "ثانية واحدة", two: "ثانيتين", few: "ثوان", many: "ثانية", other: "ثانية" },
+  minute: { one: "دقيقة واحدة", two: "دقيقتين", few: "دقائق", many: "دقيقة", other: "دقيقة" },
+  hour: { one: "ساعة واحدة", two: "ساعتين", few: "ساعات", many: "ساعة", other: "ساعة" },
+  day: { one: "يوم واحد", two: "يومين", few: "أيام", many: "يوما", other: "يوم" },
+  box: { one: "علبة واحدة", two: "علبتين", few: "علب", many: "علبة", other: "علبة" },
+  order: { one: "طلب واحد", two: "طلبين", few: "طلبات", many: "طلبا", other: "طلب" },
+  item: { one: "عنصر واحد", two: "عنصرين", few: "عناصر", many: "عنصرا", other: "عنصر" },
+};
+const EN_UNITS: Record<CountUnit, [string, string]> = {
+  second: ["second", "seconds"],
+  minute: ["minute", "minutes"],
+  hour: ["hour", "hours"],
+  day: ["day", "days"],
+  box: ["box", "boxes"],
+  order: ["order", "orders"],
+  item: ["item", "items"],
+};
+const arPlural = new Intl.PluralRules("ar");
+
+/**
+ * A counted noun with correct grammar: formatCount(5, "second", "ar") -> "5 ثوان",
+ * formatCount(2, "day", "ar") -> "يومين", formatCount(30, "second", "en") -> "30 seconds".
+ * Use it for the value of a {placeholder} instead of writing "{n} ثانية" in the dictionary.
+ */
+export function formatCount(n: number, unit: CountUnit, locale: Locale): string {
+  if (locale === "en") return `${formatNumber(n)} ${EN_UNITS[unit][n === 1 ? 0 : 1]}`;
+  const cat = arPlural.select(n) as "zero" | "one" | "two" | "few" | "many" | "other";
+  const forms = AR_UNITS[unit];
+  if (cat === "one") return forms.one;
+  if (cat === "two") return forms.two;
+  const word = cat === "few" ? forms.few : cat === "many" ? forms.many : forms.other;
+  return `${formatNumber(n)} ${word}`;
+}

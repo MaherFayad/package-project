@@ -43,8 +43,23 @@ export function __resetRateLimits() {
   stores.clear();
 }
 
+/**
+ * Client IP for rate limiting and audit logs.
+ *
+ * `X-Forwarded-For` is a list the CLIENT can pre-fill: each proxy APPENDS the address it saw.
+ * Taking the first entry (as before) let anyone send a fresh fake IP per request and skip every
+ * per-IP limit. We trust only the entries added by our own proxies: `TRUSTED_PROXY_HOPS`
+ * (default 1, e.g. one load balancer or Vercel's edge) counts from the right.
+ * `X-Real-IP`, set (not appended) by nginx and Vercel, wins when present.
+ */
 export function clientIp(headers: Headers): string {
-  return (
-    headers.get("x-forwarded-for")?.split(",")[0]?.trim() || headers.get("x-real-ip") || "unknown"
-  );
+  const real = headers.get("x-real-ip")?.trim();
+  if (real) return real;
+  const chain = (headers.get("x-forwarded-for") ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (!chain.length) return "unknown";
+  const hops = Math.max(1, Number.parseInt(process.env.TRUSTED_PROXY_HOPS ?? "1", 10) || 1);
+  return chain[Math.max(0, chain.length - hops)];
 }

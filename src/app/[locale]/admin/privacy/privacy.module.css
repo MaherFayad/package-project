@@ -1,0 +1,18 @@
+/* Desktop: the data table. Phones: one card per request (no sideways scrolling, no truncated status). */
+.list { display: none; margin: 0; padding: 0; list-style: none; }
+@media (max-width: 47.99rem) {
+  .table { display: none; }
+  .list { display: grid; }
+}
+.item {
+  display: grid;
+  gap: var(--p-space-200);
+  padding: var(--p-space-400);
+  border-block-end: var(--p-border-width-025) solid var(--p-color-border-secondary, var(--p-color-border));
+}
+.item:last-child { border-block-end: 0; }
+.itemHead { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--p-space-200); }
+.meta { display: grid; grid-template-columns: auto 1fr; gap: var(--p-space-100) var(--p-space-300); margin: 0; font-size: var(--p-font-size-325); }
+.meta dt { color: var(--p-color-text-secondary); }
+.meta dd { margin: 0; }
+.phone { unicode-bidi: isolate; direction: ltr; font-variant-numeric: tabular-nums; }
