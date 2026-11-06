@@ -520,6 +520,15 @@ export const checkoutAr: Pick<Dictionary, "checkout" | "payment" | "orders" | "s
       body: "تحقق من رقم الطلب في رسالتنا، أو افتح طلباتك لترى كل طلبات هذا الحساب.",
       action: "طلباتي",
     },
+    copy: { address: "نسخ العنوان", reference: "نسخ الملاحظة", done: "تم النسخ" },
+    refund: {
+      event: "إلغاء الطلب واسترداد المبلغ",
+      unknownEvent: "تحديث الطلب",
+      line: "المبلغ المسترد",
+      receiptTitle: "تم استرداد مبلغ هذا الطلب",
+      receiptBody: "أعدنا {amount} إلى {method} في {date}.",
+      receiptBodyNote: "أعدنا {amount} إلى {method} في {date}. يلغي إشعار الدائن {note} هذا الإيصال.",
+    },
     qtyRange: "من {min} إلى {max}",
     qty: {
       invalid: "أدخل عددا صحيحا من العلب. فوق {max:box} نحسب السعر يدويا.",
@@ -546,7 +555,7 @@ export const checkoutAr: Pick<Dictionary, "checkout" | "payment" | "orders" | "s
     sharePrice: "{qty:box} من {price} للعلبة دون الضريبة، والتوصيل خلال {days:day}",
     shareSignIn: "ستسجل الدخول برقم المحمول أولا، ولن يستغرق ذلك سوى دقيقة.",
     shareOwner: "هذا تصميمك. يرى كل من لديه الرابط هذه الصفحة للعرض فقط، ويمكنه طلب نسخة خاصة به.",
-    addName: "أضف اسمك في الملف الشخصي حتى يعرف المندوب من يسأل عنه.",
+    addName: "أضف اسمك في الملف الشخصي. يظهر في حسابك وعلى إيصالاتك، ويستخدم المندوب الاسم المكتوب في عنوان التوصيل.",
     quote: {
       title: "طلب عرض سعر لكمية {qty:box}",
       body: "الأسعار الفورية حتى {max:box}. للكميات الأكبر يتواصل فريقنا مع المطابع ويرسل لك سعرا ثابتا خلال يوم عمل واحد. الطلب مجاني ولا يلزمك بالشراء.",

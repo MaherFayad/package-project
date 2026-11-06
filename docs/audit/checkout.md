@@ -318,3 +318,66 @@ Counts (round 5, new findings before fixing): **critical 0, high 0, medium 2, lo
 - `prisma/schema.prisma`: `Quote.pricedAt`, `Quote.deliveryDays`, `Quote.vendorCostPiasters` (nullable, additive; agreed with admin).
 - `src/lib/orders/`: `order-guard.ts`, `buyer-track.ts`, `tax-document.ts`, `quote-status.ts` (new); `service.ts` (guard call, `minOrderQuantity`, `loadPricedQuote`, quoted order path, `OrderOffer` type); `quote-requests.ts` (re-exports, `quoteGovernorate`); three new unit tests.
 - `e2e/checkout-quote.spec.ts`, `e2e/checkout-share-guard.spec.ts` (new). `e2e/checkout.spec.ts`: two assertions follow the intended changes (receipt title, "Printer acceptance"); nothing removed or weakened.
+
+## Round 6
+
+Base: main at `d61f21f` (my round 5 merged, plus designer R8, performance, marketing and catalogue R8; `boxes/[structure]` and `legal/[doc]` now sit in the `(detail)` group with guard layouts). Fresh audit of the whole scope on a freshly seeded DB under `next start`:
+- the full journey walk (88 screens, en/ar × 390/1440);
+- the round 5 screens (quoted checkout, account price row, 404s, 320 px receipt);
+- for the first time in these rounds, the three non-card payment methods (mobile wallet, Fawry, InstaPay) at ar/en × 390/1440, including the clipboard.
+
+### Re-verification of round 5
+
+All round 5 rows still hold after the merge. Every walk screen had axe 0 and 0 px overflow. The tracker shows "Printer acceptance" after payment. The receipt title applies while `ELBA_TAX_ID` is unset. Unknown or other buyers' orders and unknown share tokens answer 404 (e2e). The guard and the quoted path pass their e2e. The admin "Send price" form is not on main yet (see Open).
+
+### Findings (new this round)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R6-01 | medium | payment, InstaPay (`PaymentClient.tsx`) | The buyer must type the InstaPay address and the order number into the bank app exactly, but neither had a copy action (Fawry has one). A wrong note means a transfer ops cannot match. | ISO 9241-110 (error tolerance); WCAG 3.3.4 spirit (prevent errors on financial actions) | "Copy address" and "Copy note" buttons (`buyer.copy.*`, "تم النسخ" toast) next to each value, wrapping under the value on phones. Verified: the clipboard holds exactly the order number. | fixed |
+| R6-02 | low | payment, card and wallet | "Pay EGP 14,250" / "دفع 14,250 ج.م" next to a summary that says "EGP 14,250.00". | CR-35 consistency | The pay amount always has two decimals. | fixed |
+| R6-03 | low | account header hint | "Add your name in Profile so the courier knows who to ask for" was not true: the courier uses the name on each delivery address. | Copy accuracy | "Add your name in Profile. It appears on your account and on your receipts; the courier uses the name on each delivery address." (ar likewise). | fixed |
+| R6-04 | low | payment, Fawry | The 13-digit reference was one unbroken run of digits, hard to read out at an outlet. | Readability | Shown in groups of four; screen readers and Copy get the raw digits (visually hidden span). | fixed |
+
+Counts (round 6, new findings before fixing): **critical 0, high 0, medium 1, low 3** (4 total). All fixed and re-checked in the browser. R6-01 is medium, so the stop rule ("no medium or worse") is not met yet. The re-walk after these fixes (journey en-390 and ar-1440, plus the payment-method screens) found nothing new.
+
+### Verification (round 6)
+
+- `npm run lint` and `npm run typecheck` are clean. `npm test` passed 8,508 tests. `next build` is OK with no warnings.
+- e2e (`--workers=2 --trace off`, desktop + mobile, fresh DB): `checkout`, `checkout-quote`, `checkout-share-guard`, `catalogue-order-modes`, `journey`, `smoke`, `storefront`, `admin` and `vendor` gave 59 passed and 17 skipped by the specs themselves, with 0 failures.
+- Browser: the payment methods had axe 0 and 0 px overflow, with focus on the step heading after Continue (X-01 holds). The journey re-walk had axe 0 and 0 px overflow on every screen.
+
+### Open (round 6)
+
+- **Admin "Send price"** (R4-B-03 admin half) is not on main yet. Until it is, a price request can only be priced by writing the row directly.
+- Native date input ("Needed by") shows the browser's date format, e.g. "mm/dd/yyyy" in an Arabic page; it follows the browser locale and is not set by the page.
+
+## Round 7
+
+Base: this branch at `c9864b5` (round 6), on a freshly seeded DB under `next start`. This was a fresh pass, focused as the integrator asked on what earlier walks never reached:
+- every order-tracking state: awaiting payment, cancelled, refunded, QC pending (with a photo), ready to ship, and shipped (with a shipment and tracking), each with its orders list and receipt, in ar 390 and en 1440 (32 screens);
+- the Arabic phone payment screens (card, declined, wallet, Fawry, InstaPay);
+- receipts after a refund.
+All screens had axe 0 and 0 px overflow, so every finding below is visible content, not markup.
+
+### Findings (new this round)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R7-02 | high | order tracking, Activity (`orders/[id]/page.tsx` `eventText`) | Free-text notes on any event other than NOTE were shown to the buyer verbatim. Printers and staff write these notes through the status API (a decline reason, a QC remark). A printer's "Call me on 01001234567" on VENDOR_DECLINED reached the buyer, and an English staff note appeared as-is in the Arabic timeline ("إلغاء الطلب: Buyer cancelled"). Round 4 (vendor) closed this only for NOTE events. | Plan §0 / B-08 (managed marketplace: no direct printer contact); PDPL 151/2020 (staff notes are not for the buyer) | Buyers see an event's label only. The single exception is the courier's tracking number on SHIPPED. Staff and printers keep the full note (`internal`). e2e: the printer's phone number and the refund reason never render. | fixed |
+| R7-01 | medium | refunded order, receipt (`orders/[id]/page.tsx`, `invoice/page.tsx`) | A refunded order showed no refund anywhere. The payment card dropped the paid line and showed nothing returned. The timeline said "Order cancelled", because a refund writes a CANCELLED event. The receipt still read "This is a receipt for your payment … Paid by Card". An unknown event type would have printed its raw dictionary key. | Consumer Protection Law 181/2018 (the buyer must be able to see the refund); ISO 9241-110 (self-descriptiveness) | The payment card now has a line "Refunded · Card  EGP 14,250.00" (success tone). On a refunded order the closing event reads "Order cancelled and refunded" / «إلغاء الطلب واسترداد المبلغ». The receipt gets a banner: "This order was refunded: EGP 14,250.00 went back to your Card on November 5, 2026. Credit note CN-… cancels this receipt." Unknown event types read "Order updated". e2e added (`checkout-states.spec.ts`). | fixed |
+| R7-03 | low | payment, card form | "Name on card" is not required (payment succeeds without it), but it was the only optional field without "(Optional)". | WCAG 3.3.2 | Marked optional like every other optional field. | fixed |
+
+Counts (round 7, new findings before fixing): **critical 0, high 1, medium 1, low 1** (3 total). All fixed and re-checked in the browser. R7-02 and R7-01 are high and medium, so the stop rule is not met. The re-check after the fixes (refunded order and receipt, ar 390 and en 1440: axe 0, 0 px overflow, no printer phone in the HTML) found nothing new.
+
+Also checked and fine: awaiting payment shows "Pay now" and a "Due" line, with the "print file after payment" hint before payment only. Cancelled shows "Order this design" and no due amount. QC pending shows no unreviewed photo to the buyer ("appear once our team has checked them"). Shipped shows the carrier, tracking number, status badge and tracking link. Ready to ship is current on Shipped. A typed Latin street ("14 Abbas El Akkad St") stays in order in every Arabic address card. On the Arabic phone card form, the decline keeps the expiry and CVC and focuses the number.
+
+### Verification (round 7)
+
+- `npm run lint` and `npm run typecheck` are clean. `npm test` passed 8,508 tests. `next build` is OK with no warnings.
+- e2e (`--workers=2 --trace off`, fresh DB): `checkout`, `checkout-quote`, `checkout-share-guard`, `checkout-states` (new), `catalogue-order-modes`, `journey`, `smoke`, `storefront`, `admin` and `vendor` gave 60 passed and 18 skipped by the specs themselves, with 0 failures. A first run of the new spec signed in against `dev.db` because `ELBA_DATABASE_URL` was not set for the test process. With the variable set it passed; nothing in the spec was weakened.
+
+### Open (round 7)
+
+- **Vendor / admin:** the same rule for their own screens is theirs to decide. Staff and printers still see full notes, by design.
+- **Admin "Send price"** (R4-B-03 admin half): still not on main.

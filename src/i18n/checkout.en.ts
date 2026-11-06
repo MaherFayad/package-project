@@ -518,6 +518,15 @@ export const checkoutEn = {
       body: "Check the order number in our message, or open your orders to see every order on this account.",
       action: "My orders",
     },
+    copy: { address: "Copy address", reference: "Copy note", done: "Copied" },
+    refund: {
+      event: "Order cancelled and refunded",
+      unknownEvent: "Order updated",
+      line: "Refunded",
+      receiptTitle: "This order was refunded",
+      receiptBody: "{amount} went back to your {method} on {date}.",
+      receiptBodyNote: "{amount} went back to your {method} on {date}. Credit note {note} cancels this receipt.",
+    },
     qtyRange: "{min} to {max}",
     qty: {
       invalid: "Enter a whole number of boxes. Above {max:box} we price by hand.",
@@ -544,7 +553,7 @@ export const checkoutEn = {
     sharePrice: "{qty:box} from {price} each excl. VAT, delivered in {days:day}",
     shareSignIn: "You will sign in with your mobile number first. It takes a minute.",
     shareOwner: "This is your design. Anyone with this link sees this read-only page and can order their own copy.",
-    addName: "Add your name in Profile so the courier knows who to ask for.",
+    addName: "Add your name in Profile. It appears on your account and on your receipts; the courier uses the name on each delivery address.",
     quote: {
       title: "Request a price for {qty:box}",
       body: "Instant prices go up to {max:box}. For larger runs our team asks the printers and sends you a fixed price within one working day. A request is free and does not commit you to order.",
