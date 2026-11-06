@@ -60,3 +60,25 @@ describe("governorates", () => {
     expect(governorateKey("cairo")).toBe("CAIRO");
   });
 });
+
+describe("money math is exact integer piasters (Egyptian VAT 14%)", () => {
+  it("order VAT equals the pricing engine's VAT for every subtotal", async () => {
+    const { vatOf } = await import("@/lib/pricing/money");
+    for (let sub = 0; sub < 20_000; sub++) expect(vatOn(sub)).toBe(vatOf(sub, 0.14));
+    for (const sub of [999_999_999, 1_234_567_891, 7_142_857_150]) expect(vatOn(sub)).toBe(vatOf(sub, 0.14));
+  });
+  it("rounds VAT half up on exact halves", () => {
+    expect(vatOn(25)).toBe(4); // 3.5
+    expect(vatOn(75)).toBe(11); // 10.5
+    expect(vatOn(175)).toBe(25); // 24.5
+  });
+  it("prepay discount is half-up on fractional percentages and stays integer", () => {
+    const l: QuoteLine[] = [{ kind: "PRODUCT", labelKey: "x", quantity: 1, unitPiasters: 1_000, totalPiasters: 1_000 }];
+    const t = orderTotals(l, 2.5); // 25.0 exactly
+    expect(t.discountPiasters).toBe(25);
+    const u = orderTotals([{ ...l[0]!, unitPiasters: 1_010, totalPiasters: 1_010 }], 2.5); // 25.25 -> 25
+    expect(u.discountPiasters).toBe(25);
+    for (const v of [t, u]) for (const n of [v.subtotalPiasters, v.vatPiasters, v.totalPiasters]) expect(Number.isInteger(n)).toBe(true);
+    expect(u.totalPiasters).toBe(u.subtotalPiasters + u.vatPiasters);
+  });
+});

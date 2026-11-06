@@ -5,6 +5,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { buildMockWebhook, mockCardOutcome, mockPaymentsEnabled, mockWalletOutcome, type MockWebhookBody } from "@/lib/payments";
 import { processPaymentWebhook } from "@/lib/orders/service";
 import { normalizeEgyptPhone } from "@/lib/phone";
+import { readJsonCapped } from "../../_lib/body";
 
 /**
  * POST /api/payments/mock — the mock gateway's "hosted page" (dev and e2e only).
@@ -30,12 +31,17 @@ export async function POST(req: Request) {
   if (!s) return Response.json({ error: "UNAUTHENTICATED" }, { status: 401 });
   const rl = rateLimit("payments:mock", s.user.id, 30, 60_000);
   if (!rl.ok) return Response.json({ error: "RATE_LIMITED" }, { status: 429 });
-  const p = Body.safeParse(await req.json().catch(() => null));
+  const json = await readJsonCapped(req, 4_096);
+  if (json instanceof Response) return json;
+  const p = Body.safeParse(json);
   if (!p.success) return Response.json({ error: "INVALID_BODY" }, { status: 400 });
   const { paymentId, action } = p.data;
 
   const payment = await db.payment.findUnique({ where: { id: paymentId }, include: { order: true } });
-  if (!payment || (payment.order.buyerId !== s.user.id && s.user.role !== "ADMIN")) return Response.json({ error: "NOT_FOUND" }, { status: 404 });
+  // Card / wallet / Fawry are paid by the order's buyer; only the InstaPay confirmation may also
+  // come from ADMIN (simulating ops matching the transfer).
+  const isBuyer = !!payment && payment.order.buyerId === s.user.id;
+  if (!payment || (!isBuyer && !(s.user.role === "ADMIN" && action === "instapay"))) return Response.json({ error: "NOT_FOUND" }, { status: 404 });
   if (payment.provider !== "mock" || payment.method !== ACTION_METHOD[action]) return Response.json({ error: "INVALID_BODY" }, { status: 400 });
   if (payment.status !== "PENDING") return Response.json({ error: "NOT_PENDING", status: payment.status }, { status: 409 });
 
@@ -69,5 +75,9 @@ export async function POST(req: Request) {
   });
   const outcome = await processPaymentWebhook("mock", { headers, rawBody, query: new URLSearchParams() });
   if (!outcome.ok) return Response.json({ error: outcome.error }, { status: 500 });
+  if (outcome.applied !== "PAID" && outcome.applied !== "FAILED" && outcome.applied !== "PENDING") {
+    // e.g. the order was cancelled meanwhile: report what really happened instead of "PAID".
+    return Response.json({ error: "NOT_PENDING", result: outcome.applied }, { status: 409, headers: { "Cache-Control": "no-store" } });
+  }
   return Response.json({ status, result: outcome.applied }, { headers: { "Cache-Control": "no-store" } });
 }

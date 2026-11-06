@@ -90,14 +90,17 @@ export function verifyPaymobHmac(txn: unknown, received: string, secret: string)
   return timingSafeEqual(Buffer.from(expected, "hex"), Buffer.from(received.toLowerCase(), "hex"));
 }
 
-type FetchLike = (url: string, init: { method: string; headers: Record<string, string>; body: string }) => Promise<{ ok: boolean; status: number; json(): Promise<unknown> }>;
+type FetchLike = (url: string, init: { method: string; headers: Record<string, string>; body: string; signal?: AbortSignal }) => Promise<{ ok: boolean; status: number; json(): Promise<unknown> }>;
+
+/** Outbound gateway calls never hang a request (OWASP ASVS 4.0.3 V12/V13 resource limits). */
+export const PAYMOB_TIMEOUT_MS = 15_000;
 
 export class PaymobProvider implements PaymentProvider {
   readonly name = "paymob" as const;
 
   constructor(
     private readonly cfg: PaymobConfig = paymobConfigFromEnv(),
-    private readonly fetcher: FetchLike = (url, init) => fetch(url, init),
+    private readonly fetcher: FetchLike = (url, init) => fetch(url, { ...init, signal: init.signal ?? AbortSignal.timeout(PAYMOB_TIMEOUT_MS) }),
   ) {}
 
   private requireKeys() {
@@ -131,10 +134,13 @@ export class PaymobProvider implements PaymentProvider {
       }),
     });
     if (!res.ok) throw new Error(`PAYMOB_INTENTION_FAILED:${res.status}`);
-    const body = (await res.json()) as { id?: string | number; client_secret?: string };
-    if (!body.client_secret) throw new Error("PAYMOB_INTENTION_INVALID");
+    const body = (await res.json()) as { id?: string | number; client_secret?: string; intention_order_id?: string | number };
+    // [VERIFY with Paymob] the intention response carries the gateway order id that transaction
+    // callbacks report as obj.order.id; without it we could not bind callbacks to this payment.
+    if (!body.client_secret || body.intention_order_id === undefined || body.intention_order_id === null) throw new Error("PAYMOB_INTENTION_INVALID");
     return {
       providerRef: String(body.id ?? ""),
+      gatewayOrderId: String(body.intention_order_id),
       method: input.method,
       status: "REQUIRES_ACTION",
       clientSecret: body.client_secret,
@@ -168,7 +174,7 @@ export class PaymobProvider implements PaymentProvider {
       paymentId,
       providerRef: String(get(obj, "id") ?? ""),
       status,
-      amountPiasters: Number(get(obj, "amount_cents") ?? 0),
+      amountPiasters: Number(get(obj, "amount_cents") ?? NaN),
       // Store only non-sensitive fields (masked PAN at most).
       raw: {
         provider: "paymob",
@@ -182,6 +188,11 @@ export class PaymobProvider implements PaymentProvider {
         maskedPan: get(obj, "source_data.pan") ?? null,
         message: get(obj, "data.message") ?? null,
       },
+      provider: "paymob",
+      // Covered by the HMAC (field "order.id"), unlike merchant_order_id.
+      gatewayRef: get(obj, "order.id") === undefined || get(obj, "order.id") === null ? undefined : String(get(obj, "order.id")),
+      // Covered by the HMAC (field "currency").
+      currency: typeof get(obj, "currency") === "string" ? (get(obj, "currency") as string) : undefined,
     };
   }
 
