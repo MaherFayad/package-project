@@ -108,7 +108,7 @@ export const vendorPortalAr: Widen<typeof vendorPortalEn> = {
     eInvoiceReminder: "دفعات متبقية بانتظار فاتورتك الإلكترونية: {count}",
     setupTitle: "إعداد الملف التعريفي",
     setupProgress: "الخطوات المكتملة: {done} من {total}",
-    setupDone: "مكتملة",
+    setupDone: "تم",
     setup: {
       bio: "كتابة النبذة بالعربية والإنجليزية",
       machines: "إضافة الماكينات",

@@ -106,6 +106,7 @@ html[data-motion="on"] [data-reveal="scale"]:not([data-revealed]) { transform: s
   animation-delay: calc(var(--motion-instant) + var(--m-i, 0) * var(--m-stagger));
 }
 .m-enter-scale {
+  /* Marketing R2: scale without a fade (LCP); platform: tokenised reveal duration. */
   animation: m-scale-only var(--m-dur-reveal) var(--m-ease-out) both;
   animation-delay: calc(120ms + var(--m-i, 0) * var(--m-stagger));
 }
