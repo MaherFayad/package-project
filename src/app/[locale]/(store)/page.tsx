@@ -420,6 +420,8 @@ export default async function HomePage({ params }: Props) {
       {/* 7 ───────── Violet sheet: the 3D designer ───────── */}
       <Sheet tone="violet" y="lg" aria-labelledby="designer-title">
         <SectionHead id="designer-title" title={c.designer.title}>
+          {/* The prompt caret and sparkles loop: one pause control for the band (WCAG 2.2.2, R6-AX-15). */}
+          <MotionScope pauseLabel={c.motion.designer[0]} playLabel={c.motion.designer[1]} buttonClassName={s.scopeBtn}>
           <Grid cols={3} colsMd={1}>
             <Reveal as="article" className={`${s.darkCard} ${s.span2}`} index={0}>
               <div className={s.darkCardMedia} aria-hidden="true">
@@ -459,6 +461,7 @@ export default async function HomePage({ params }: Props) {
               </div>
             </Reveal>
           </Grid>
+          </MotionScope>
         </SectionHead>
       </Sheet>
 
