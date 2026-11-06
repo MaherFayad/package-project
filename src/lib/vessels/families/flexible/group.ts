@@ -1,4 +1,4 @@
-import { Group, Mesh, type Texture } from "three";
+import { DataTexture, Group, LinearFilter, Mesh, RGBAFormat, type Texture } from "three";
 import { buildFlexibleModel, crimpNormalTexture, type FlexModel } from "./geometry";
 import { createFilmMaterial, createHardwareMaterial } from "./materials";
 import type { FlexConfig } from "./schema";
@@ -19,6 +19,9 @@ export function buildFlexibleGroup(cfg: FlexConfig, opts: FlexGroupOptions = {})
   const group = new Group();
   group.name = `flexible-${cfg.code}`;
   const crimp = crimpNormalTexture();
+  // R6-3Q-G: the renderer never passed a window mask, so the window option drew nothing. Build it
+  // from the model's window rectangle when the caller has none.
+  const windowMask = opts.windowMask ?? (model.windowUv ? windowMaskTexture(model.windowUv) : undefined);
   for (const part of model.parts) {
     let material;
     if (part.role === "face" || part.role === "seal" || part.role === "fin" || part.role === "base") {
@@ -26,7 +29,7 @@ export function buildFlexibleGroup(cfg: FlexConfig, opts: FlexGroupOptions = {})
       material = createFilmMaterial(cfg.material, {
         map,
         normalMap: part.role === "seal" && definitionCrimp(model) ? crimp : undefined,
-        alphaMap: part.id === "face-front" ? opts.windowMask : undefined,
+        alphaMap: part.id === "face-front" ? windowMask : undefined,
         doubleSided: part.doubleSided,
       });
     } else {
@@ -43,4 +46,33 @@ export function buildFlexibleGroup(cfg: FlexConfig, opts: FlexGroupOptions = {})
 
 function definitionCrimp(model: FlexModel) {
   return model.config.code !== "FLEX_MAILER_BAG" && model.config.code !== "FLEX_BAG_IN_BOX";
+}
+
+/** Clear film left in the window (alpha); the rest of the front is opaque printed film. */
+export const WINDOW_FILM_ALPHA = 0.16;
+
+/**
+ * Window alpha mask in the front panel's UV space (white = printed film, dark = clear window).
+ * DataTexture rows run bottom-up (flipY false), the same way as the panel UV's v.
+ */
+export function windowMaskTexture(w: { u0: number; v0: number; u1: number; v1: number }, size = 256): DataTexture {
+  const data = new Uint8Array(size * size * 4);
+  const clear = Math.round(WINDOW_FILM_ALPHA * 255);
+  for (let y = 0; y < size; y++)
+    for (let x = 0; x < size; x++) {
+      const u = (x + 0.5) / size;
+      const v = (y + 0.5) / size;
+      const inside = u >= w.u0 && u <= w.u1 && v >= w.v0 && v <= w.v1;
+      const a = inside ? clear : 255;
+      const k = (y * size + x) * 4;
+      data[k] = a;
+      data[k + 1] = a;
+      data[k + 2] = a;
+      data[k + 3] = 255;
+    }
+  const tex = new DataTexture(data, size, size, RGBAFormat);
+  tex.magFilter = LinearFilter;
+  tex.minFilter = LinearFilter;
+  tex.needsUpdate = true;
+  return tex;
 }
