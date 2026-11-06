@@ -211,11 +211,19 @@ export function tubeDraft(variant: TubeVariant, dims: Dims, t: number, f: Struct
   }
   const bodyIds = rolledLabel(b, body, { N, rootLabel: "Body label", window, curlTop: curl || undefined, disc: pushUp ? undefined : { where: "bottom", printable: false }, role: "front" }, virtualEdges, t);
   if (window) {
-    const mid = bodyIds.get(N / 2)!;
-    const x0 = body.x0 + window.k0 * sb;
-    const x1 = body.x0 + window.k1 * sb;
-    const g = 4;
-    b.films.push({ panelId: mid.top ?? mid.full!, polygon: rectPolygon(x0 - g, body.y0 + window.yTop - g, x1 - x0 + 2 * g, window.yBot - window.yTop + 2 * g) });
+    // One film patch per strip, each in its own strip's plane: a single flat patch on the
+    // middle strip stood off the curved wall as an opaque white card beside the window.
+    const x0 = body.x0 + window.k0 * sb - 4;
+    const x1 = body.x0 + window.k1 * sb + 4;
+    const yA = body.y0 + window.yTop - 4;
+    const yB = body.y0 + window.yBot + 4;
+    for (let k = Math.floor((x0 - body.x0) / sb); k * sb + body.x0 < x1; k++) {
+      const a = Math.max(x0, body.x0 + k * sb);
+      const z = Math.min(x1, body.x0 + (k + 1) * sb);
+      const ids = bodyIds.get(k);
+      if (!ids || z - a < 0.05) continue;
+      b.films.push({ panelId: ids.top ?? ids.full!, polygon: rectPolygon(a, yA, z - a, yB - yA) });
+    }
   }
 
   // Concentric pieces: pose in the body root's frame, then the closing rotation.
