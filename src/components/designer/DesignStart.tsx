@@ -42,8 +42,11 @@ export function DesignStart({ locale }: { locale: Locale }) {
   // until Play. Under prefers-reduced-motion it never starts by itself (WCAG 2.2.2, 2.3.3).
   const [turn, setTurn] = useState<number | null>(0);
   const quietRef = useRef(false);
+  const mountedRef = useRef(false);
+  mountedRef.current = mounted;
   const kick = useCallback(() => {
-    if (quietRef.current) return;
+    // Phones before Play: nothing is loaded, so there is nothing to turn (R6-01).
+    if (quietRef.current || !mountedRef.current) return;
     setTurn((n) => (n ?? 0) + 1);
     setPlaying(true);
   }, []);
@@ -54,10 +57,17 @@ export function DesignStart({ locale }: { locale: Locale }) {
   const onTurnDone = useCallback(() => setPlaying(false), []);
 
   // three.js loads once the browser is idle, so the page paints fast on mid-range phones.
+  // R6-01: phones and touch screens keep the poster until the visitor presses Play. Mounting the
+  // viewer was an ~800 ms main-thread task (4x CPU) that landed right when the visitor first
+  // tapped, so that tap waited ~450 ms (INP 640 ms, budget 200 ms); it also saves battery.
   useEffect(() => {
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
       quietRef.current = true;
       setPlaying(false);
+    }
+    if (window.matchMedia?.("(max-width: 767px), (pointer: coarse)").matches) {
+      setPlaying(false);
+      return;
     }
     const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
     if (w.requestIdleCallback) {
@@ -139,7 +149,8 @@ export function DesignStart({ locale }: { locale: Locale }) {
               onClick={() => {
                 if (playing) stopForGood();
                 else {
-                  // An explicit Play turns until Pause.
+                  // An explicit Play turns until Pause (and, on phones, loads the 3D view first).
+                  setMounted(true);
                   quietRef.current = false;
                   setTurn(null);
                   setPlaying(true);

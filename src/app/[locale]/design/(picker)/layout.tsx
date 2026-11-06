@@ -12,6 +12,10 @@ export default async function DesignPickerLayout({ children, params }: { childre
   const { locale } = await params;
   return (
     <MarketingShell locale={toLocale(locale)}>
+      {/* R6-02: the hero poster (first product, T-shirt mailer) is the phone LCP element. A real
+          <link> in the shell (React hoists it), because the page streams in after the shell
+          (R4-01 boundary) and preload() there only reached the RSC payload. */}
+      <link rel="preload" href="/models/mailer-box.svg" as="image" fetchPriority="high" />
       {/*
         R4-01: the same intermittent React #418 ("HTML") as R2-01 in the editor, here on the start
         page: a probe in React's hydration-mismatch path named the shell's <main> as the failing
