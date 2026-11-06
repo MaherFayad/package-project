@@ -103,9 +103,10 @@ Everything the kit ships is used from the kit (`Sheet`, `Display`, `Lead`, `Hero
 |---|---|
 | `npm run lint` (incl. direct UI-kit imports rule) | 0 problems |
 | `npm run typecheck` | pass |
-| `npm test` | 108 files, 8,763 tests pass (incl. 11 new pricing-facts tests) |
+| `npm test` | 113 files, 8,782 tests pass (incl. 11 new pricing-facts tests and the i18n scope size test) |
 | `npm run build` | pass; both pages prerendered, revalidate 1 min |
 | `e2e/why-pricing.spec.ts` (ar + en × desktop + phone) | 18 / 18 pass |
+| foundation `e2e/marketing-kit.spec.ts` on this branch | 16 / 16 pass |
 | axe (wcag2a/aa, 21a/aa, 22aa) on both pages, both locales, both viewports | 0 violations |
 | existing `storefront`, `a11y-routes`, `smoke` specs on the merged branch | 102 / 102 pass |
 | sitemap | `/ar|en/why-elba`, `/ar|en/pricing` with hreflang alternates |
@@ -114,10 +115,12 @@ Performance (`docs/audit/tools/perf-pages.mjs`, phone = 390x844 DPR 2, 4x CPU, S
 
 | Page | Phone LCP | Phone CLS | Phone TBT | Desktop LCP | Desktop CLS |
 |---|---|---|---|---|---|
-| /ar/why-elba | 1.38 s | 0.008 | 490 to 590 ms | 0.36 s | 0 |
-| /en/why-elba | 1.34 s | 0 | 370 ms | 0.35 s | 0 |
-| /ar/pricing | 1.27 s | 0.011 | 440 to 470 ms | 0.18 s | 0 |
-| /en/pricing | 1.14 s | 0 | 360 to 390 ms | 0.18 s | 0 |
+| /ar/why-elba | 1.36 s | 0.008 | 490 to 610 ms | 0.52 s | 0 |
+| /en/why-elba | 1.30 s | 0 | 370 to 390 ms | 0.40 s | 0 |
+| /ar/pricing | 1.34 s | 0.011 | 440 to 530 ms | 0.26 s | 0 |
+| /en/pricing | 1.10 s | 0 | 290 to 390 ms | 0.15 s | 0 |
+
+(Re-measured after merging foundation `cdf37a4`.)
 
 Phone TBT is over the 200 ms target but matches the home page on the same build (290 to 550 ms): it is the shell's hydration (header islands, dictionary flight data), not these pages. Logged for the foundation owner.
 
@@ -125,5 +128,6 @@ Phone TBT is over the 200 ms target but matches the home page on the same build 
 
 - `src/components/admin/server/actions.ts`: one line, `purgeCatalogCache()` after saving checkout settings, so the prepay % and sample price reach the public pages at once.
 - `src/app/sitemap.ts`: two entries.
+- i18n scopes (R5-PL-08): both pages live in the route group `src/app/[locale]/(store)/(why)/` (URLs unchanged) whose layout mounts `<I18nScope scope="why">`, and `scripts/generate-i18n-scopes.ts` gains one line `why: "(store)/(why)"`. Without it the shared price computation (checkout's `orders/sample` and `orders/totals`, whose line labels are dictionary keys) and the kit marquee controls added 1.6 KB to the root scope and broke its 40 KB budget (41.1 KB); now root is back at the foundation's size and the "why" scope holds 6 keys. `scopes.generated.ts` regenerated.
 - `docs/audit/tools/perf-pages.mjs`: two page entries.
 - Header and footer links were already in the foundation header (`/pricing`, `/why-elba`, `#cafes`, `#beauty`, `#ecommerce`, `#faq`); this branch adds the targets, not links.

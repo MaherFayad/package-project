@@ -6,20 +6,28 @@
   "url": "http://localhost:3100/ar/why-elba",
   "status": 200,
   "finalUrl": "http://localhost:3100/ar/why-elba",
-  "loadMs": 372,
-  "ttfb": 20,
-  "domContentLoaded": 177.79999999981374,
-  "loadEvent": 368.90000000037253,
-  "htmlTransfer": 129660,
-  "htmlDecoded": 611674,
-  "lcp": 356,
+  "loadMs": 511,
+  "ttfb": 30.5,
+  "domContentLoaded": 375,
+  "loadEvent": 505,
+  "htmlTransfer": 105361,
+  "htmlDecoded": 510655,
+  "lcp": 516,
   "lcpEl": "img.why_c1__3JFt_ [renders/fefco-0427.720w.avif] size=404511",
-  "fcp": 356,
+  "fcp": 516,
   "clsLoad": 0,
   "long": [
    {
-    "t": 238,
-    "d": 59
+    "t": 177,
+    "d": 80
+   },
+   {
+    "t": 286,
+    "d": 84
+   },
+   {
+    "t": 382,
+    "d": 65
    }
   ],
   "imgs": [
@@ -384,7 +392,7 @@
     "loading": "lazy",
     "fp": null,
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/fefco-0427.400w.webp",
@@ -409,52 +417,60 @@
     "complete": false
    }
   ],
-  "domNodes": 1096,
+  "domNodes": 1100,
   "canvases": 0,
-  "inlineCss": 177096,
+  "inlineCss": 158749,
   "inlineStyleTags": 1,
-  "rsc": 353463,
-  "rscCss": 177096,
+  "rsc": 275157,
+  "rscCss": 158749,
   "fontsLoaded": [
    "Inter 100 900",
    "Noto Sans Arabic 100 900"
   ],
   "cls": 0,
   "shifts": [],
-  "inp": 24,
+  "inp": 32,
   "inpDetail": [
    {
-    "id": 3453,
+    "id": 1169,
     "name": "pointerdown",
-    "d": 24,
-    "input": 6,
+    "d": 32,
+    "input": 4,
     "proc": 1,
     "target": "null"
    },
    {
-    "id": 3460,
+    "id": 1176,
     "name": "keydown",
-    "d": 24,
+    "d": 16,
+    "input": 1,
+    "proc": 1,
+    "target": "button.kit_iconPill__9Tuga"
+   },
+   {
+    "id": 1183,
+    "name": "keydown",
+    "d": 16,
     "input": 0,
-    "proc": 0,
+    "proc": 1,
     "target": "button.kit_iconPill__9Tuga"
    }
   ],
   "clicks": 1,
-  "longTasks": 1,
-  "longTaskMax": 59,
-  "tbt": 9,
-  "tbtLoad": 9,
+  "longTasks": 3,
+  "longTaskMax": 84,
+  "tbt": 79,
+  "tbtLoad": 79,
   "bytes": {
-   "total": 1431318,
-   "js": 308275,
+   "total": 1301669,
+   "js": 315838,
    "css": 0,
    "img": 218263,
    "font": 322105,
-   "doc": 130616,
-   "fetch": 451564
+   "doc": 106333,
+   "fetch": 338635
   },
-  "requests": 82,
+  "requests": 84,
   "js": [
    {
     "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
@@ -477,64 +493,64 @@
     "b": 11988
    },
    {
-    "f": "/_next/static/chunks/1440-19eb3e0d0613e815.js",
+    "f": "/_next/static/chunks/1440-11213785a9362d45.js",
     "b": 8432
    },
    {
-    "f": "/_next/static/chunks/4240-15f5f143528f3191.js",
-    "b": 7092
+    "f": "/_next/static/chunks/4240-53ec143248516299.js",
+    "b": 7175
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-cbcc2377d80a0f12.js",
-    "b": 7073
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-6d407c40703d0aca.js",
+    "b": 7079
    },
    {
-    "f": "/_next/static/chunks/4861-b210caaadd55a558.js",
-    "b": 6952
+    "f": "/_next/static/chunks/4861-568512b3697ec1d4.js",
+    "b": 7031
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/pricing/page-e0c49a2f2d8569a9.js",
-    "b": 6487
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/(why)/pricing/page-93292cd726c42c5e.js",
+    "b": 6576
    },
    {
-    "f": "/_next/static/chunks/8166-46721bcebd720413.js",
-    "b": 6419
+    "f": "/_next/static/chunks/8166-a92c6ad006c9ab55.js",
+    "b": 6503
    },
    {
-    "f": "/_next/static/chunks/302-eaf483ce0fb94047.js",
-    "b": 6409
+    "f": "/_next/static/chunks/302-bef3166f019ca821.js",
+    "b": 6494
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/boxes/(list)/loading-1e4266cd651a4592.js",
-    "b": 6373
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/boxes/(list)/loading-3a71a1416c6a36ab.js",
+    "b": 6461
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/orders/not-found-4ff518624c0c2188.js",
-    "b": 6042
+    "f": "/_next/static/chunks/app/%5Blocale%5D/orders/not-found-509fdf75d6b42fa1.js",
+    "b": 6047
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/vendor/apply/error-7538b5e2cdd53085.js",
-    "b": 6008
+    "f": "/_next/static/chunks/app/%5Blocale%5D/vendor/apply/error-61e778ea0267c5b3.js",
+    "b": 6012
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/orders/error-f5ee4d7b0ad731c7.js",
-    "b": 6007
+    "f": "/_next/static/chunks/app/%5Blocale%5D/orders/error-2e7e1c1554d189bc.js",
+    "b": 6010
    },
    {
-    "f": "/_next/static/chunks/1640-012c98289096522b.js",
+    "f": "/_next/static/chunks/1640-69e3811ea1693e9b.js",
     "b": 5845
    },
    {
-    "f": "/_next/static/chunks/9001-0fe9b97098b095cf.js",
-    "b": 5212
+    "f": "/_next/static/chunks/9001-195b0e0c37d0343d.js",
+    "b": 5215
    },
    {
     "f": "/_next/static/chunks/1207-d912c1bdb7547a2f.js",
     "b": 5210
    },
    {
-    "f": "/_next/static/chunks/webpack-8b2f975c7584fb8d.js",
-    "b": 4782
+    "f": "/_next/static/chunks/webpack-4adb6ddf1b3d5fdb.js",
+    "b": 4911
    },
    {
     "f": "/_next/static/chunks/8467-d020726048cb3218.js",
@@ -545,36 +561,44 @@
     "b": 4401
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/layout-6d132fdb3d0acbd8.js",
-    "b": 4307
+    "f": "/_next/static/chunks/app/%5Blocale%5D/layout-d075c945e6c27605.js",
+    "b": 4392
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/vendor/apply/loading-cdf79c9bfc7e5ce6.js",
-    "b": 3922
+    "f": "/_next/static/chunks/app/%5Blocale%5D/vendor/layout-564a33b3963addef.js",
+    "b": 4315
    },
    {
-    "f": "/_next/static/chunks/6882-df03a47c1ddc4056.js",
+    "f": "/_next/static/chunks/6882-0b5aef423e84e709.js",
     "b": 3906
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/error-598661b7c2ef9686.js",
-    "b": 3750
+    "f": "/_next/static/chunks/app/%5Blocale%5D/error-ef6b063c984f94d5.js",
+    "b": 3833
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/not-found-68ddfdf5e2d1fe2f.js",
-    "b": 3723
+    "f": "/_next/static/chunks/app/%5Blocale%5D/not-found-9ce1e96d51e539c9.js",
+    "b": 3805
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/vendor/layout-db49a76eb331f78b.js",
-    "b": 3242
+    "f": "/_next/static/chunks/app/%5Blocale%5D/vendor/apply/loading-32e5a186d22d9c0a.js",
+    "b": 3595
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/why-elba/page-85c540531c4f9754.js",
-    "b": 3107
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/(why)/layout-8f65ed548b6c3d79.js",
+    "b": 3325
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/page-5ba4330346d07f6b.js",
-    "b": 2980
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/(why)/why-elba/page-a419424c29c49606.js",
+    "b": 3105
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/page-2803a4e0723504c7.js",
+    "b": 2981
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/orders/layout-1b435b1e12562aac.js",
+    "b": 2587
    },
    {
     "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/boxes/(list)/page-bf99773c7d9150d5.js",
@@ -589,23 +613,23 @@
     "b": 2172
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-c836e77ea9089959.js",
-    "b": 1775
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-86eabd22b3ec6e33.js",
+    "b": 1765
    },
    {
     "f": "/_next/static/chunks/main-app-c659b7c05baec7d9.js",
     "b": 1473
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/loading-adb595924836462c.js",
-    "b": 1151
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/loading-b56e3f1aef8ebda4.js",
+    "b": 1155
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/orders/(list)/loading-8fe6013b4f238e3a.js",
-    "b": 1151
+    "f": "/_next/static/chunks/app/%5Blocale%5D/orders/(list)/loading-5bca3d00f3e120a7.js",
+    "b": 1155
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/error-c6b5d767d0aac5bc.js",
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/error-6c05dd993aa22ad7.js",
     "b": 1138
    },
    {
@@ -613,15 +637,15 @@
     "b": 1138
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/%5B...missing%5D/not-found-00969baee0c2d669.js",
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/not-found-895bbb84321dbd3d.js",
     "b": 1085
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/catalog/not-found-06aa1cda66d2c217.js",
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/catalog/not-found-759db7f93ad92fb4.js",
     "b": 1085
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/not-found-4ef0f291ff4f7f10.js",
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/not-found-11fad0872f5d25c7.js",
     "b": 1085
    }
   ],
@@ -732,12 +756,12 @@
     "b": 167053
    },
    {
-    "f": "9da48a48bf6500f8-s.woff2",
-    "b": 34411
-   },
-   {
     "f": "fb66eb17bf011c3b-s.woff2",
     "b": 34527
+   },
+   {
+    "f": "9da48a48bf6500f8-s.woff2",
+    "b": 34411
    },
    {
     "f": "e4efb0298547fad0-s.woff2",
@@ -752,22 +776,17 @@
   "url": "http://localhost:3100/ar/pricing",
   "status": 200,
   "finalUrl": "http://localhost:3100/ar/pricing",
-  "loadMs": 243,
-  "ttfb": 13.700000000186265,
-  "domContentLoaded": 98.29999999981374,
-  "loadEvent": 239.40000000037253,
-  "htmlTransfer": 124240,
-  "htmlDecoded": 584980,
-  "lcp": 184,
+  "loadMs": 260,
+  "ttfb": 12.300000000046566,
+  "domContentLoaded": 151.10000000009313,
+  "loadEvent": 257.10000000009313,
+  "htmlTransfer": 99830,
+  "htmlDecoded": 483925,
+  "lcp": 256,
   "lcpEl": "h1#pricing-h1.kit_display__KDIs_.kit_size-64__dqx7i size=42812",
-  "fcp": 184,
+  "fcp": 256,
   "clsLoad": 0,
-  "long": [
-   {
-    "t": 109,
-    "d": 52
-   }
-  ],
+  "long": [],
   "imgs": [
    {
     "src": "http://localhost:3100/marketing/renders/fefco-0427.webp",
@@ -781,12 +800,12 @@
     "complete": true
    }
   ],
-  "domNodes": 849,
+  "domNodes": 850,
   "canvases": 0,
-  "inlineCss": 177096,
+  "inlineCss": 158749,
   "inlineStyleTags": 1,
-  "rsc": 342223,
-  "rscCss": 177096,
+  "rsc": 263909,
+  "rscCss": 158749,
   "fontsLoaded": [
    "Inter 100 900",
    "Noto Sans Arabic 100 900"
@@ -796,7 +815,7 @@
   "inp": 16,
   "inpDetail": [
    {
-    "id": 9242,
+    "id": 9771,
     "name": "pointerdown",
     "d": 16,
     "input": 2,
@@ -805,20 +824,20 @@
    }
   ],
   "clicks": 1,
-  "longTasks": 1,
-  "longTaskMax": 52,
-  "tbt": 2,
-  "tbtLoad": 2,
+  "longTasks": 0,
+  "longTaskMax": 0,
+  "tbt": 0,
+  "tbtLoad": 0,
   "bytes": {
-   "total": 1261383,
-   "js": 308275,
+   "total": 1121878,
+   "js": 315838,
    "css": 0,
    "img": 57850,
    "font": 322105,
-   "doc": 125195,
-   "fetch": 447463
+   "doc": 100777,
+   "fetch": 324813
   },
-  "requests": 66,
+  "requests": 68,
   "js": [
    {
     "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
@@ -841,64 +860,64 @@
     "b": 11988
    },
    {
-    "f": "/_next/static/chunks/1440-19eb3e0d0613e815.js",
+    "f": "/_next/static/chunks/1440-11213785a9362d45.js",
     "b": 8432
    },
    {
-    "f": "/_next/static/chunks/4240-15f5f143528f3191.js",
-    "b": 7092
+    "f": "/_next/static/chunks/4240-53ec143248516299.js",
+    "b": 7175
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-cbcc2377d80a0f12.js",
-    "b": 7073
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-6d407c40703d0aca.js",
+    "b": 7079
    },
    {
-    "f": "/_next/static/chunks/4861-b210caaadd55a558.js",
-    "b": 6952
+    "f": "/_next/static/chunks/4861-568512b3697ec1d4.js",
+    "b": 7031
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/pricing/page-e0c49a2f2d8569a9.js",
-    "b": 6487
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/(why)/pricing/page-93292cd726c42c5e.js",
+    "b": 6576
    },
    {
-    "f": "/_next/static/chunks/8166-46721bcebd720413.js",
-    "b": 6419
+    "f": "/_next/static/chunks/8166-a92c6ad006c9ab55.js",
+    "b": 6503
    },
    {
-    "f": "/_next/static/chunks/302-eaf483ce0fb94047.js",
-    "b": 6409
+    "f": "/_next/static/chunks/302-bef3166f019ca821.js",
+    "b": 6494
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/boxes/(list)/loading-1e4266cd651a4592.js",
-    "b": 6373
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/boxes/(list)/loading-3a71a1416c6a36ab.js",
+    "b": 6461
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/orders/not-found-4ff518624c0c2188.js",
-    "b": 6042
+    "f": "/_next/static/chunks/app/%5Blocale%5D/orders/not-found-509fdf75d6b42fa1.js",
+    "b": 6047
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/vendor/apply/error-7538b5e2cdd53085.js",
-    "b": 6008
+    "f": "/_next/static/chunks/app/%5Blocale%5D/vendor/apply/error-61e778ea0267c5b3.js",
+    "b": 6012
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/orders/error-f5ee4d7b0ad731c7.js",
-    "b": 6007
+    "f": "/_next/static/chunks/app/%5Blocale%5D/orders/error-2e7e1c1554d189bc.js",
+    "b": 6010
    },
    {
-    "f": "/_next/static/chunks/1640-012c98289096522b.js",
+    "f": "/_next/static/chunks/1640-69e3811ea1693e9b.js",
     "b": 5845
    },
    {
-    "f": "/_next/static/chunks/9001-0fe9b97098b095cf.js",
-    "b": 5212
+    "f": "/_next/static/chunks/9001-195b0e0c37d0343d.js",
+    "b": 5215
    },
    {
     "f": "/_next/static/chunks/1207-d912c1bdb7547a2f.js",
     "b": 5210
    },
    {
-    "f": "/_next/static/chunks/webpack-8b2f975c7584fb8d.js",
-    "b": 4782
+    "f": "/_next/static/chunks/webpack-4adb6ddf1b3d5fdb.js",
+    "b": 4911
    },
    {
     "f": "/_next/static/chunks/8467-d020726048cb3218.js",
@@ -909,36 +928,44 @@
     "b": 4401
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/layout-6d132fdb3d0acbd8.js",
-    "b": 4307
+    "f": "/_next/static/chunks/app/%5Blocale%5D/layout-d075c945e6c27605.js",
+    "b": 4392
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/vendor/apply/loading-cdf79c9bfc7e5ce6.js",
-    "b": 3922
+    "f": "/_next/static/chunks/app/%5Blocale%5D/vendor/layout-564a33b3963addef.js",
+    "b": 4315
    },
    {
-    "f": "/_next/static/chunks/6882-df03a47c1ddc4056.js",
+    "f": "/_next/static/chunks/6882-0b5aef423e84e709.js",
     "b": 3906
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/error-598661b7c2ef9686.js",
-    "b": 3750
+    "f": "/_next/static/chunks/app/%5Blocale%5D/error-ef6b063c984f94d5.js",
+    "b": 3833
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/not-found-68ddfdf5e2d1fe2f.js",
-    "b": 3723
+    "f": "/_next/static/chunks/app/%5Blocale%5D/not-found-9ce1e96d51e539c9.js",
+    "b": 3805
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/vendor/layout-db49a76eb331f78b.js",
-    "b": 3242
+    "f": "/_next/static/chunks/app/%5Blocale%5D/vendor/apply/loading-32e5a186d22d9c0a.js",
+    "b": 3595
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/why-elba/page-85c540531c4f9754.js",
-    "b": 3107
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/(why)/layout-8f65ed548b6c3d79.js",
+    "b": 3325
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/page-5ba4330346d07f6b.js",
-    "b": 2980
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/(why)/why-elba/page-a419424c29c49606.js",
+    "b": 3105
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/page-2803a4e0723504c7.js",
+    "b": 2981
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/orders/layout-1b435b1e12562aac.js",
+    "b": 2587
    },
    {
     "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/boxes/(list)/page-bf99773c7d9150d5.js",
@@ -953,23 +980,23 @@
     "b": 2172
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-c836e77ea9089959.js",
-    "b": 1775
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-86eabd22b3ec6e33.js",
+    "b": 1765
    },
    {
     "f": "/_next/static/chunks/main-app-c659b7c05baec7d9.js",
     "b": 1473
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/loading-adb595924836462c.js",
-    "b": 1151
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/loading-b56e3f1aef8ebda4.js",
+    "b": 1155
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/orders/(list)/loading-8fe6013b4f238e3a.js",
-    "b": 1151
+    "f": "/_next/static/chunks/app/%5Blocale%5D/orders/(list)/loading-5bca3d00f3e120a7.js",
+    "b": 1155
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/error-c6b5d767d0aac5bc.js",
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/error-6c05dd993aa22ad7.js",
     "b": 1138
    },
    {
@@ -977,15 +1004,15 @@
     "b": 1138
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/%5B...missing%5D/not-found-00969baee0c2d669.js",
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/not-found-895bbb84321dbd3d.js",
     "b": 1085
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/not-found-4ef0f291ff4f7f10.js",
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/catalog/not-found-759db7f93ad92fb4.js",
     "b": 1085
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/catalog/not-found-06aa1cda66d2c217.js",
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/not-found-11fad0872f5d25c7.js",
     "b": 1085
    }
   ],
@@ -1016,16 +1043,16 @@
     "b": 167053
    },
    {
-    "f": "9da48a48bf6500f8-s.woff2",
-    "b": 34411
-   },
-   {
     "f": "e4efb0298547fad0-s.woff2",
     "b": 36783
    },
    {
     "f": "fb66eb17bf011c3b-s.woff2",
     "b": 34527
+   },
+   {
+    "f": "9da48a48bf6500f8-s.woff2",
+    "b": 34411
    }
   ]
  },
@@ -1036,20 +1063,20 @@
   "url": "http://localhost:3100/en/why-elba",
   "status": 200,
   "finalUrl": "http://localhost:3100/en/why-elba",
-  "loadMs": 413,
-  "ttfb": 22.300000000745058,
-  "domContentLoaded": 127.40000000037253,
-  "loadEvent": 409.90000000037253,
-  "htmlTransfer": 123352,
-  "htmlDecoded": 573331,
-  "lcp": 348,
+  "loadMs": 407,
+  "ttfb": 15.29999999993015,
+  "domContentLoaded": 173.5,
+  "loadEvent": 398.0999999999767,
+  "htmlTransfer": 101399,
+  "htmlDecoded": 488936,
+  "lcp": 396,
   "lcpEl": "img.why_c1__3JFt_ [renders/fefco-0427.720w.avif] size=408214",
-  "fcp": 348,
+  "fcp": 396,
   "clsLoad": 0,
   "long": [
    {
-    "t": 336,
-    "d": 67
+    "t": 265,
+    "d": 112
    }
   ],
   "imgs": [
@@ -1414,7 +1441,7 @@
     "loading": "lazy",
     "fp": null,
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/fefco-0427.400w.webp",
@@ -1439,21 +1466,29 @@
     "complete": false
    }
   ],
-  "domNodes": 1102,
+  "domNodes": 1099,
   "canvases": 0,
-  "inlineCss": 177096,
+  "inlineCss": 158749,
   "inlineStyleTags": 1,
-  "rsc": 319878,
-  "rscCss": 177096,
+  "rsc": 258196,
+  "rscCss": 158749,
   "fontsLoaded": [
    "Inter 100 900"
   ],
   "cls": 0,
   "shifts": [],
-  "inp": 24,
+  "inp": 40,
   "inpDetail": [
    {
-    "id": 3977,
+    "id": 4482,
+    "name": "keydown",
+    "d": 40,
+    "input": 0,
+    "proc": 0,
+    "target": "button.kit_iconPill__9Tuga"
+   },
+   {
+    "id": 4475,
     "name": "pointerdown",
     "d": 24,
     "input": 2,
@@ -1461,9 +1496,9 @@
     "target": "null"
    },
    {
-    "id": 3991,
+    "id": 4489,
     "name": "keydown",
-    "d": 16,
+    "d": 24,
     "input": 0,
     "proc": 1,
     "target": "button.kit_iconPill__9Tuga"
@@ -1471,19 +1506,19 @@
   ],
   "clicks": 1,
   "longTasks": 1,
-  "longTaskMax": 67,
-  "tbt": 17,
-  "tbtLoad": 17,
+  "longTaskMax": 112,
+  "tbt": 62,
+  "tbtLoad": 62,
   "bytes": {
-   "total": 1119203,
-   "js": 308275,
+   "total": 991915,
+   "js": 315838,
    "css": 0,
    "img": 218783,
    "font": 49331,
-   "doc": 124309,
-   "fetch": 418010
+   "doc": 102370,
+   "fetch": 305098
   },
-  "requests": 78,
+  "requests": 80,
   "js": [
    {
     "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
@@ -1506,64 +1541,64 @@
     "b": 11988
    },
    {
-    "f": "/_next/static/chunks/1440-19eb3e0d0613e815.js",
+    "f": "/_next/static/chunks/1440-11213785a9362d45.js",
     "b": 8432
    },
    {
-    "f": "/_next/static/chunks/4240-15f5f143528f3191.js",
-    "b": 7092
+    "f": "/_next/static/chunks/4240-53ec143248516299.js",
+    "b": 7175
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-cbcc2377d80a0f12.js",
-    "b": 7073
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-6d407c40703d0aca.js",
+    "b": 7079
    },
    {
-    "f": "/_next/static/chunks/4861-b210caaadd55a558.js",
-    "b": 6952
+    "f": "/_next/static/chunks/4861-568512b3697ec1d4.js",
+    "b": 7031
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/pricing/page-e0c49a2f2d8569a9.js",
-    "b": 6487
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/(why)/pricing/page-93292cd726c42c5e.js",
+    "b": 6576
    },
    {
-    "f": "/_next/static/chunks/8166-46721bcebd720413.js",
-    "b": 6419
+    "f": "/_next/static/chunks/8166-a92c6ad006c9ab55.js",
+    "b": 6503
    },
    {
-    "f": "/_next/static/chunks/302-eaf483ce0fb94047.js",
-    "b": 6409
+    "f": "/_next/static/chunks/302-bef3166f019ca821.js",
+    "b": 6494
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/boxes/(list)/loading-1e4266cd651a4592.js",
-    "b": 6373
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/boxes/(list)/loading-3a71a1416c6a36ab.js",
+    "b": 6461
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/orders/not-found-4ff518624c0c2188.js",
-    "b": 6042
+    "f": "/_next/static/chunks/app/%5Blocale%5D/orders/not-found-509fdf75d6b42fa1.js",
+    "b": 6047
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/vendor/apply/error-7538b5e2cdd53085.js",
-    "b": 6008
+    "f": "/_next/static/chunks/app/%5Blocale%5D/vendor/apply/error-61e778ea0267c5b3.js",
+    "b": 6012
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/orders/error-f5ee4d7b0ad731c7.js",
-    "b": 6007
+    "f": "/_next/static/chunks/app/%5Blocale%5D/orders/error-2e7e1c1554d189bc.js",
+    "b": 6010
    },
    {
-    "f": "/_next/static/chunks/1640-012c98289096522b.js",
+    "f": "/_next/static/chunks/1640-69e3811ea1693e9b.js",
     "b": 5845
    },
    {
-    "f": "/_next/static/chunks/9001-0fe9b97098b095cf.js",
-    "b": 5212
+    "f": "/_next/static/chunks/9001-195b0e0c37d0343d.js",
+    "b": 5215
    },
    {
     "f": "/_next/static/chunks/1207-d912c1bdb7547a2f.js",
     "b": 5210
    },
    {
-    "f": "/_next/static/chunks/webpack-8b2f975c7584fb8d.js",
-    "b": 4782
+    "f": "/_next/static/chunks/webpack-4adb6ddf1b3d5fdb.js",
+    "b": 4911
    },
    {
     "f": "/_next/static/chunks/8467-d020726048cb3218.js",
@@ -1574,36 +1609,44 @@
     "b": 4401
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/layout-6d132fdb3d0acbd8.js",
-    "b": 4307
+    "f": "/_next/static/chunks/app/%5Blocale%5D/layout-d075c945e6c27605.js",
+    "b": 4392
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/vendor/apply/loading-cdf79c9bfc7e5ce6.js",
-    "b": 3922
+    "f": "/_next/static/chunks/app/%5Blocale%5D/vendor/layout-564a33b3963addef.js",
+    "b": 4315
    },
    {
-    "f": "/_next/static/chunks/6882-df03a47c1ddc4056.js",
+    "f": "/_next/static/chunks/6882-0b5aef423e84e709.js",
     "b": 3906
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/error-598661b7c2ef9686.js",
-    "b": 3750
+    "f": "/_next/static/chunks/app/%5Blocale%5D/error-ef6b063c984f94d5.js",
+    "b": 3833
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/not-found-68ddfdf5e2d1fe2f.js",
-    "b": 3723
+    "f": "/_next/static/chunks/app/%5Blocale%5D/not-found-9ce1e96d51e539c9.js",
+    "b": 3805
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/vendor/layout-db49a76eb331f78b.js",
-    "b": 3242
+    "f": "/_next/static/chunks/app/%5Blocale%5D/vendor/apply/loading-32e5a186d22d9c0a.js",
+    "b": 3595
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/why-elba/page-85c540531c4f9754.js",
-    "b": 3107
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/(why)/layout-8f65ed548b6c3d79.js",
+    "b": 3325
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/page-5ba4330346d07f6b.js",
-    "b": 2980
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/(why)/why-elba/page-a419424c29c49606.js",
+    "b": 3105
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/page-2803a4e0723504c7.js",
+    "b": 2981
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/orders/layout-1b435b1e12562aac.js",
+    "b": 2587
    },
    {
     "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/boxes/(list)/page-bf99773c7d9150d5.js",
@@ -1618,23 +1661,23 @@
     "b": 2172
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-c836e77ea9089959.js",
-    "b": 1775
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-86eabd22b3ec6e33.js",
+    "b": 1765
    },
    {
     "f": "/_next/static/chunks/main-app-c659b7c05baec7d9.js",
     "b": 1473
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/loading-adb595924836462c.js",
-    "b": 1151
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/loading-b56e3f1aef8ebda4.js",
+    "b": 1155
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/orders/(list)/loading-8fe6013b4f238e3a.js",
-    "b": 1151
+    "f": "/_next/static/chunks/app/%5Blocale%5D/orders/(list)/loading-5bca3d00f3e120a7.js",
+    "b": 1155
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/error-c6b5d767d0aac5bc.js",
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/error-6c05dd993aa22ad7.js",
     "b": 1138
    },
    {
@@ -1642,15 +1685,15 @@
     "b": 1138
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/%5B...missing%5D/not-found-00969baee0c2d669.js",
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/not-found-895bbb84321dbd3d.js",
     "b": 1085
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/catalog/not-found-06aa1cda66d2c217.js",
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/catalog/not-found-759db7f93ad92fb4.js",
     "b": 1085
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/not-found-4ef0f291ff4f7f10.js",
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/not-found-11fad0872f5d25c7.js",
     "b": 1085
    }
   ],
@@ -1765,15 +1808,15 @@
   "url": "http://localhost:3100/en/pricing",
   "status": 200,
   "finalUrl": "http://localhost:3100/en/pricing",
-  "loadMs": 216,
-  "ttfb": 12.099999999627471,
-  "domContentLoaded": 128.79999999981374,
-  "loadEvent": 213.40000000037253,
-  "htmlTransfer": 118543,
-  "htmlDecoded": 547476,
-  "lcp": 180,
+  "loadMs": 203,
+  "ttfb": 12.70000000006985,
+  "domContentLoaded": 81,
+  "loadEvent": 200.20000000006985,
+  "htmlTransfer": 96442,
+  "htmlDecoded": 463023,
+  "lcp": 152,
   "lcpEl": "h1#pricing-h1.kit_display__KDIs_.kit_size-64__dqx7i size=43274",
-  "fcp": 180,
+  "fcp": 152,
   "clsLoad": 0,
   "long": [],
   "imgs": [
@@ -1791,10 +1834,10 @@
   ],
   "domNodes": 844,
   "canvases": 0,
-  "inlineCss": 177096,
+  "inlineCss": 158749,
   "inlineStyleTags": 1,
-  "rsc": 308878,
-  "rscCss": 177096,
+  "rsc": 247166,
+  "rscCss": 158749,
   "fontsLoaded": [
    "Inter 100 900"
   ],
@@ -1803,10 +1846,10 @@
   "inp": 16,
   "inpDetail": [
    {
-    "id": 8219,
+    "id": 6167,
     "name": "pointerdown",
     "d": 16,
-    "input": 2,
+    "input": 3,
     "proc": 1,
     "target": "span"
    }
@@ -1817,15 +1860,15 @@
   "tbt": 0,
   "tbtLoad": 0,
   "bytes": {
-   "total": 955538,
-   "js": 308275,
+   "total": 830434,
+   "js": 315838,
    "css": 0,
    "img": 57850,
    "font": 49331,
-   "doc": 119497,
-   "fetch": 420090
+   "doc": 97382,
+   "fetch": 309538
   },
-  "requests": 62,
+  "requests": 64,
   "js": [
    {
     "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
@@ -1848,64 +1891,64 @@
     "b": 11988
    },
    {
-    "f": "/_next/static/chunks/1440-19eb3e0d0613e815.js",
+    "f": "/_next/static/chunks/1440-11213785a9362d45.js",
     "b": 8432
    },
    {
-    "f": "/_next/static/chunks/4240-15f5f143528f3191.js",
-    "b": 7092
+    "f": "/_next/static/chunks/4240-53ec143248516299.js",
+    "b": 7175
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-cbcc2377d80a0f12.js",
-    "b": 7073
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-6d407c40703d0aca.js",
+    "b": 7079
    },
    {
-    "f": "/_next/static/chunks/4861-b210caaadd55a558.js",
-    "b": 6952
+    "f": "/_next/static/chunks/4861-568512b3697ec1d4.js",
+    "b": 7031
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/pricing/page-e0c49a2f2d8569a9.js",
-    "b": 6487
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/(why)/pricing/page-93292cd726c42c5e.js",
+    "b": 6576
    },
    {
-    "f": "/_next/static/chunks/8166-46721bcebd720413.js",
-    "b": 6419
+    "f": "/_next/static/chunks/8166-a92c6ad006c9ab55.js",
+    "b": 6503
    },
    {
-    "f": "/_next/static/chunks/302-eaf483ce0fb94047.js",
-    "b": 6409
+    "f": "/_next/static/chunks/302-bef3166f019ca821.js",
+    "b": 6494
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/boxes/(list)/loading-1e4266cd651a4592.js",
-    "b": 6373
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/boxes/(list)/loading-3a71a1416c6a36ab.js",
+    "b": 6461
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/orders/not-found-4ff518624c0c2188.js",
-    "b": 6042
+    "f": "/_next/static/chunks/app/%5Blocale%5D/orders/not-found-509fdf75d6b42fa1.js",
+    "b": 6047
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/vendor/apply/error-7538b5e2cdd53085.js",
-    "b": 6008
+    "f": "/_next/static/chunks/app/%5Blocale%5D/vendor/apply/error-61e778ea0267c5b3.js",
+    "b": 6012
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/orders/error-f5ee4d7b0ad731c7.js",
-    "b": 6007
+    "f": "/_next/static/chunks/app/%5Blocale%5D/orders/error-2e7e1c1554d189bc.js",
+    "b": 6010
    },
    {
-    "f": "/_next/static/chunks/1640-012c98289096522b.js",
+    "f": "/_next/static/chunks/1640-69e3811ea1693e9b.js",
     "b": 5845
    },
    {
-    "f": "/_next/static/chunks/9001-0fe9b97098b095cf.js",
-    "b": 5212
+    "f": "/_next/static/chunks/9001-195b0e0c37d0343d.js",
+    "b": 5215
    },
    {
     "f": "/_next/static/chunks/1207-d912c1bdb7547a2f.js",
     "b": 5210
    },
    {
-    "f": "/_next/static/chunks/webpack-8b2f975c7584fb8d.js",
-    "b": 4782
+    "f": "/_next/static/chunks/webpack-4adb6ddf1b3d5fdb.js",
+    "b": 4911
    },
    {
     "f": "/_next/static/chunks/8467-d020726048cb3218.js",
@@ -1916,36 +1959,44 @@
     "b": 4401
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/layout-6d132fdb3d0acbd8.js",
-    "b": 4307
+    "f": "/_next/static/chunks/app/%5Blocale%5D/layout-d075c945e6c27605.js",
+    "b": 4392
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/vendor/apply/loading-cdf79c9bfc7e5ce6.js",
-    "b": 3922
+    "f": "/_next/static/chunks/app/%5Blocale%5D/vendor/layout-564a33b3963addef.js",
+    "b": 4315
    },
    {
-    "f": "/_next/static/chunks/6882-df03a47c1ddc4056.js",
+    "f": "/_next/static/chunks/6882-0b5aef423e84e709.js",
     "b": 3906
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/error-598661b7c2ef9686.js",
-    "b": 3750
+    "f": "/_next/static/chunks/app/%5Blocale%5D/error-ef6b063c984f94d5.js",
+    "b": 3833
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/not-found-68ddfdf5e2d1fe2f.js",
-    "b": 3723
+    "f": "/_next/static/chunks/app/%5Blocale%5D/not-found-9ce1e96d51e539c9.js",
+    "b": 3805
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/vendor/layout-db49a76eb331f78b.js",
-    "b": 3242
+    "f": "/_next/static/chunks/app/%5Blocale%5D/vendor/apply/loading-32e5a186d22d9c0a.js",
+    "b": 3595
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/why-elba/page-85c540531c4f9754.js",
-    "b": 3107
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/(why)/layout-8f65ed548b6c3d79.js",
+    "b": 3325
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/page-5ba4330346d07f6b.js",
-    "b": 2980
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/(why)/why-elba/page-a419424c29c49606.js",
+    "b": 3105
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/page-2803a4e0723504c7.js",
+    "b": 2981
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/orders/layout-1b435b1e12562aac.js",
+    "b": 2587
    },
    {
     "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/boxes/(list)/page-bf99773c7d9150d5.js",
@@ -1960,23 +2011,23 @@
     "b": 2172
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-c836e77ea9089959.js",
-    "b": 1775
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-86eabd22b3ec6e33.js",
+    "b": 1765
    },
    {
     "f": "/_next/static/chunks/main-app-c659b7c05baec7d9.js",
     "b": 1473
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/loading-adb595924836462c.js",
-    "b": 1151
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/loading-b56e3f1aef8ebda4.js",
+    "b": 1155
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/orders/(list)/loading-8fe6013b4f238e3a.js",
-    "b": 1151
+    "f": "/_next/static/chunks/app/%5Blocale%5D/orders/(list)/loading-5bca3d00f3e120a7.js",
+    "b": 1155
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/error-c6b5d767d0aac5bc.js",
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/error-6c05dd993aa22ad7.js",
     "b": 1138
    },
    {
@@ -1984,15 +2035,15 @@
     "b": 1138
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/%5B...missing%5D/not-found-00969baee0c2d669.js",
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/not-found-895bbb84321dbd3d.js",
     "b": 1085
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/not-found-4ef0f291ff4f7f10.js",
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/not-found-11fad0872f5d25c7.js",
     "b": 1085
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/catalog/not-found-06aa1cda66d2c217.js",
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/catalog/not-found-759db7f93ad92fb4.js",
     "b": 1085
    }
   ],
@@ -2027,31 +2078,35 @@
   "url": "http://localhost:3100/ar/why-elba",
   "status": 200,
   "finalUrl": "http://localhost:3100/ar/why-elba",
-  "loadMs": 4947,
-  "ttfb": 13,
-  "domContentLoaded": 1521.2999999998137,
-  "loadEvent": 4943.5,
-  "htmlTransfer": 129660,
-  "htmlDecoded": 611674,
-  "lcp": 1376,
+  "loadMs": 5110,
+  "ttfb": 14.900000000023283,
+  "domContentLoaded": 1394.2000000000698,
+  "loadEvent": 5107.20000000007,
+  "htmlTransfer": 105335,
+  "htmlDecoded": 510627,
+  "lcp": 1360,
   "lcpEl": "img.why_c1__3JFt_ [renders/fefco-0427.400w.avif] size=136884",
-  "fcp": 1348,
+  "fcp": 1352,
   "clsLoad": 0.007645389335499409,
   "long": [
    {
-    "t": 913,
-    "d": 395
+    "t": 883,
+    "d": 424
    },
    {
-    "t": 3243,
-    "d": 185
+    "t": 3308,
+    "d": 236
    },
    {
-    "t": 3930,
-    "d": 61
+    "t": 3919,
+    "d": 60
    },
    {
-    "t": 4719,
+    "t": 4660,
+    "d": 86
+   },
+   {
+    "t": 4857,
     "d": 52
    }
   ],
@@ -2442,12 +2497,12 @@
     "complete": false
    }
   ],
-  "domNodes": 1091,
+  "domNodes": 1094,
   "canvases": 0,
-  "inlineCss": 177096,
+  "inlineCss": 158749,
   "inlineStyleTags": 1,
-  "rsc": 353463,
-  "rscCss": 177096,
+  "rsc": 275157,
+  "rscCss": 158749,
   "fontsLoaded": [
    "Inter 100 900",
    "Noto Sans Arabic 100 900"
@@ -2455,7 +2510,7 @@
   "cls": 0.007645389335499409,
   "shifts": [
    {
-    "t": 3579,
+    "t": 3638,
     "v": 0.0076,
     "nodes": [
      "div.CookieNotice_notice__Xr_DK",
@@ -2464,32 +2519,32 @@
     ]
    }
   ],
-  "inp": 56,
+  "inp": 96,
   "inpDetail": [
    {
-    "id": 7778,
+    "id": 6928,
     "name": "click",
-    "d": 56,
-    "input": 38,
-    "proc": 5,
+    "d": 96,
+    "input": 66,
+    "proc": 6,
     "target": "null"
    }
   ],
   "clicks": 1,
-  "longTasks": 4,
-  "longTaskMax": 395,
-  "tbt": 493,
-  "tbtLoad": 493,
+  "longTasks": 5,
+  "longTaskMax": 424,
+  "tbt": 608,
+  "tbtLoad": 608,
   "bytes": {
-   "total": 959236,
-   "js": 245583,
+   "total": 876800,
+   "js": 249704,
    "css": 0,
    "img": 149028,
    "font": 216384,
-   "doc": 130614,
-   "fetch": 217132
+   "doc": 106282,
+   "fetch": 154907
   },
-  "requests": 52,
+  "requests": 53,
   "js": [
    {
     "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
@@ -2508,44 +2563,44 @@
     "b": 14032
    },
    {
-    "f": "/_next/static/chunks/1440-19eb3e0d0613e815.js",
+    "f": "/_next/static/chunks/1440-11213785a9362d45.js",
     "b": 8432
    },
    {
-    "f": "/_next/static/chunks/4240-15f5f143528f3191.js",
-    "b": 7092
+    "f": "/_next/static/chunks/4240-53ec143248516299.js",
+    "b": 7175
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-cbcc2377d80a0f12.js",
-    "b": 7073
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-6d407c40703d0aca.js",
+    "b": 7079
    },
    {
-    "f": "/_next/static/chunks/4861-b210caaadd55a558.js",
-    "b": 6952
+    "f": "/_next/static/chunks/4861-568512b3697ec1d4.js",
+    "b": 7031
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/pricing/page-e0c49a2f2d8569a9.js",
-    "b": 6487
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/(why)/pricing/page-93292cd726c42c5e.js",
+    "b": 6576
    },
    {
-    "f": "/_next/static/chunks/8166-46721bcebd720413.js",
-    "b": 6419
+    "f": "/_next/static/chunks/8166-a92c6ad006c9ab55.js",
+    "b": 6503
    },
    {
-    "f": "/_next/static/chunks/302-eaf483ce0fb94047.js",
-    "b": 6409
+    "f": "/_next/static/chunks/302-bef3166f019ca821.js",
+    "b": 6494
    },
    {
-    "f": "/_next/static/chunks/1640-012c98289096522b.js",
+    "f": "/_next/static/chunks/1640-69e3811ea1693e9b.js",
     "b": 5845
    },
    {
-    "f": "/_next/static/chunks/9001-0fe9b97098b095cf.js",
-    "b": 5212
+    "f": "/_next/static/chunks/9001-195b0e0c37d0343d.js",
+    "b": 5215
    },
    {
-    "f": "/_next/static/chunks/webpack-8b2f975c7584fb8d.js",
-    "b": 4782
+    "f": "/_next/static/chunks/webpack-4adb6ddf1b3d5fdb.js",
+    "b": 4911
    },
    {
     "f": "/_next/static/chunks/8467-d020726048cb3218.js",
@@ -2556,20 +2611,24 @@
     "b": 4401
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/layout-6d132fdb3d0acbd8.js",
-    "b": 4307
+    "f": "/_next/static/chunks/app/%5Blocale%5D/layout-d075c945e6c27605.js",
+    "b": 4392
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/error-598661b7c2ef9686.js",
-    "b": 3750
+    "f": "/_next/static/chunks/app/%5Blocale%5D/error-ef6b063c984f94d5.js",
+    "b": 3833
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/not-found-68ddfdf5e2d1fe2f.js",
-    "b": 3723
+    "f": "/_next/static/chunks/app/%5Blocale%5D/not-found-9ce1e96d51e539c9.js",
+    "b": 3805
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/why-elba/page-85c540531c4f9754.js",
-    "b": 3107
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/(why)/layout-8f65ed548b6c3d79.js",
+    "b": 3325
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/(why)/why-elba/page-a419424c29c49606.js",
+    "b": 3105
    },
    {
     "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/%5Bdoc%5D/page-ec925f676a03ef01.js",
@@ -2580,23 +2639,23 @@
     "b": 2172
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-c836e77ea9089959.js",
-    "b": 1775
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-86eabd22b3ec6e33.js",
+    "b": 1765
    },
    {
     "f": "/_next/static/chunks/main-app-c659b7c05baec7d9.js",
     "b": 1473
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/error-c6b5d767d0aac5bc.js",
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/error-6c05dd993aa22ad7.js",
     "b": 1138
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/%5B...missing%5D/not-found-00969baee0c2d669.js",
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/not-found-895bbb84321dbd3d.js",
     "b": 1085
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/not-found-4ef0f291ff4f7f10.js",
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/not-found-11fad0872f5d25c7.js",
     "b": 1085
    }
   ],
@@ -2700,24 +2759,32 @@
   "url": "http://localhost:3100/ar/pricing",
   "status": 200,
   "finalUrl": "http://localhost:3100/ar/pricing",
-  "loadMs": 4409,
-  "ttfb": 13.5,
-  "domContentLoaded": 1380,
-  "loadEvent": 4406.0999999996275,
-  "htmlTransfer": 124240,
-  "htmlDecoded": 584980,
-  "lcp": 1268,
+  "loadMs": 4530,
+  "ttfb": 11.5,
+  "domContentLoaded": 1379,
+  "loadEvent": 4526.800000000047,
+  "htmlTransfer": 99830,
+  "htmlDecoded": 483925,
+  "lcp": 1336,
   "lcpEl": "p.kit_lead__XaoWg.kit_align-center__bjlvl size=26832",
-  "fcp": 1268,
+  "fcp": 1336,
   "clsLoad": 0.01060617896745572,
   "long": [
    {
-    "t": 908,
-    "d": 349
+    "t": 752,
+    "d": 54
+   },
+   {
+    "t": 909,
+    "d": 417
    },
    {
     "t": 2466,
-    "d": 191
+    "d": 202
+   },
+   {
+    "t": 3325,
+    "d": 54
    }
   ],
   "imgs": [
@@ -2733,12 +2800,12 @@
     "complete": false
    }
   ],
-  "domNodes": 840,
+  "domNodes": 842,
   "canvases": 0,
-  "inlineCss": 177096,
+  "inlineCss": 158749,
   "inlineStyleTags": 1,
-  "rsc": 342223,
-  "rscCss": 177096,
+  "rsc": 263909,
+  "rscCss": 158749,
   "fontsLoaded": [
    "Inter 100 900",
    "Noto Sans Arabic 100 900"
@@ -2746,7 +2813,7 @@
   "cls": 0.01060617896745572,
   "shifts": [
    {
-    "t": 3458,
+    "t": 3453,
     "v": 0.0106,
     "nodes": [
      "div.CookieNotice_notice__Xr_DK",
@@ -2755,32 +2822,40 @@
     ]
    }
   ],
-  "inp": 40,
+  "inp": 48,
   "inpDetail": [
    {
-    "id": 6869,
+    "id": 6146,
     "name": "click",
-    "d": 40,
-    "input": 21,
+    "d": 48,
+    "input": 23,
     "proc": 3,
     "target": "span"
+   },
+   {
+    "id": 6153,
+    "name": "keydown",
+    "d": 16,
+    "input": 5,
+    "proc": 1,
+    "target": "button.why_switch__2AT6v"
    }
   ],
   "clicks": 1,
-  "longTasks": 2,
-  "longTaskMax": 349,
-  "tbt": 440,
-  "tbtLoad": 440,
+  "longTasks": 4,
+  "longTaskMax": 417,
+  "tbt": 527,
+  "tbtLoad": 527,
   "bytes": {
-   "total": 716008,
-   "js": 235524,
+   "total": 654115,
+   "js": 239568,
    "css": 0,
    "img": 0,
    "font": 216384,
-   "doc": 125195,
-   "fetch": 138410
+   "doc": 100777,
+   "fetch": 96891
   },
-  "requests": 33,
+  "requests": 34,
   "js": [
    {
     "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
@@ -2799,40 +2874,40 @@
     "b": 14032
    },
    {
-    "f": "/_next/static/chunks/1440-19eb3e0d0613e815.js",
+    "f": "/_next/static/chunks/1440-11213785a9362d45.js",
     "b": 8432
    },
    {
-    "f": "/_next/static/chunks/4240-15f5f143528f3191.js",
-    "b": 7092
+    "f": "/_next/static/chunks/4240-53ec143248516299.js",
+    "b": 7175
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-cbcc2377d80a0f12.js",
-    "b": 7073
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-6d407c40703d0aca.js",
+    "b": 7079
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/pricing/page-e0c49a2f2d8569a9.js",
-    "b": 6487
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/(why)/pricing/page-93292cd726c42c5e.js",
+    "b": 6576
    },
    {
-    "f": "/_next/static/chunks/8166-46721bcebd720413.js",
-    "b": 6419
+    "f": "/_next/static/chunks/8166-a92c6ad006c9ab55.js",
+    "b": 6503
    },
    {
-    "f": "/_next/static/chunks/302-eaf483ce0fb94047.js",
-    "b": 6409
+    "f": "/_next/static/chunks/302-bef3166f019ca821.js",
+    "b": 6494
    },
    {
-    "f": "/_next/static/chunks/1640-012c98289096522b.js",
+    "f": "/_next/static/chunks/1640-69e3811ea1693e9b.js",
     "b": 5845
    },
    {
-    "f": "/_next/static/chunks/9001-0fe9b97098b095cf.js",
-    "b": 5212
+    "f": "/_next/static/chunks/9001-195b0e0c37d0343d.js",
+    "b": 5215
    },
    {
-    "f": "/_next/static/chunks/webpack-8b2f975c7584fb8d.js",
-    "b": 4782
+    "f": "/_next/static/chunks/webpack-4adb6ddf1b3d5fdb.js",
+    "b": 4911
    },
    {
     "f": "/_next/static/chunks/8467-d020726048cb3218.js",
@@ -2843,16 +2918,20 @@
     "b": 4401
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/layout-6d132fdb3d0acbd8.js",
-    "b": 4307
+    "f": "/_next/static/chunks/app/%5Blocale%5D/layout-d075c945e6c27605.js",
+    "b": 4392
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/error-598661b7c2ef9686.js",
-    "b": 3750
+    "f": "/_next/static/chunks/app/%5Blocale%5D/error-ef6b063c984f94d5.js",
+    "b": 3833
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/not-found-68ddfdf5e2d1fe2f.js",
-    "b": 3723
+    "f": "/_next/static/chunks/app/%5Blocale%5D/not-found-9ce1e96d51e539c9.js",
+    "b": 3805
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/(why)/layout-8f65ed548b6c3d79.js",
+    "b": 3325
    },
    {
     "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/%5Bdoc%5D/page-ec925f676a03ef01.js",
@@ -2863,23 +2942,23 @@
     "b": 2172
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-c836e77ea9089959.js",
-    "b": 1775
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-86eabd22b3ec6e33.js",
+    "b": 1765
    },
    {
     "f": "/_next/static/chunks/main-app-c659b7c05baec7d9.js",
     "b": 1473
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/error-c6b5d767d0aac5bc.js",
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/error-6c05dd993aa22ad7.js",
     "b": 1138
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/%5B...missing%5D/not-found-00969baee0c2d669.js",
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/not-found-895bbb84321dbd3d.js",
     "b": 1085
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/not-found-4ef0f291ff4f7f10.js",
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/not-found-11fad0872f5d25c7.js",
     "b": 1085
    }
   ],
@@ -2902,40 +2981,28 @@
   "url": "http://localhost:3100/en/why-elba",
   "status": 200,
   "finalUrl": "http://localhost:3100/en/why-elba",
-  "loadMs": 4236,
-  "ttfb": 11.900000000372529,
-  "domContentLoaded": 1315.7000000001863,
-  "loadEvent": 4233.4000000003725,
-  "htmlTransfer": 123352,
-  "htmlDecoded": 573331,
-  "lcp": 1336,
+  "loadMs": 4208,
+  "ttfb": 15.800000000046566,
+  "domContentLoaded": 1237.3000000000466,
+  "loadEvent": 4205.099999999977,
+  "htmlTransfer": 101373,
+  "htmlDecoded": 488908,
+  "lcp": 1300,
   "lcpEl": "img.why_c1__3JFt_ [renders/fefco-0427.400w.avif] size=139443",
-  "fcp": 1176,
+  "fcp": 1208,
   "clsLoad": 0,
   "long": [
    {
-    "t": 906,
-    "d": 232
+    "t": 880,
+    "d": 292
    },
    {
-    "t": 1754,
+    "t": 2342,
+    "d": 199
+   },
+   {
+    "t": 3067,
     "d": 52
-   },
-   {
-    "t": 2496,
-    "d": 229
-   },
-   {
-    "t": 3134,
-    "d": 52
-   },
-   {
-    "t": 3771,
-    "d": 51
-   },
-   {
-    "t": 4037,
-    "d": 53
    }
   ],
   "imgs": [
@@ -3327,49 +3394,41 @@
   ],
   "domNodes": 1092,
   "canvases": 0,
-  "inlineCss": 177096,
+  "inlineCss": 158749,
   "inlineStyleTags": 1,
-  "rsc": 319878,
-  "rscCss": 177096,
+  "rsc": 258196,
+  "rscCss": 158749,
   "fontsLoaded": [
    "Inter 100 900"
   ],
   "cls": 0,
   "shifts": [],
-  "inp": 80,
+  "inp": 72,
   "inpDetail": [
    {
-    "id": 2684,
+    "id": 195,
     "name": "click",
-    "d": 80,
+    "d": 72,
     "input": 44,
-    "proc": 8,
+    "proc": 6,
     "target": "null"
-   },
-   {
-    "id": 2698,
-    "name": "keydown",
-    "d": 16,
-    "input": 1,
-    "proc": 3,
-    "target": "button.kit_iconPill__9Tuga"
    }
   ],
   "clicks": 1,
-  "longTasks": 6,
-  "longTaskMax": 232,
-  "tbt": 369,
-  "tbtLoad": 369,
+  "longTasks": 3,
+  "longTaskMax": 292,
+  "tbt": 393,
+  "tbtLoad": 393,
   "bytes": {
-   "total": 771171,
-   "js": 245583,
+   "total": 698082,
+   "js": 249704,
    "css": 0,
    "img": 149548,
    "font": 49331,
-   "doc": 124307,
-   "fetch": 201907
+   "doc": 102319,
+   "fetch": 146685
   },
-  "requests": 51,
+  "requests": 52,
   "js": [
    {
     "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
@@ -3388,44 +3447,44 @@
     "b": 14032
    },
    {
-    "f": "/_next/static/chunks/1440-19eb3e0d0613e815.js",
+    "f": "/_next/static/chunks/1440-11213785a9362d45.js",
     "b": 8432
    },
    {
-    "f": "/_next/static/chunks/4240-15f5f143528f3191.js",
-    "b": 7092
+    "f": "/_next/static/chunks/4240-53ec143248516299.js",
+    "b": 7175
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-cbcc2377d80a0f12.js",
-    "b": 7073
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-6d407c40703d0aca.js",
+    "b": 7079
    },
    {
-    "f": "/_next/static/chunks/4861-b210caaadd55a558.js",
-    "b": 6952
+    "f": "/_next/static/chunks/4861-568512b3697ec1d4.js",
+    "b": 7031
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/pricing/page-e0c49a2f2d8569a9.js",
-    "b": 6487
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/(why)/pricing/page-93292cd726c42c5e.js",
+    "b": 6576
    },
    {
-    "f": "/_next/static/chunks/8166-46721bcebd720413.js",
-    "b": 6419
+    "f": "/_next/static/chunks/8166-a92c6ad006c9ab55.js",
+    "b": 6503
    },
    {
-    "f": "/_next/static/chunks/302-eaf483ce0fb94047.js",
-    "b": 6409
+    "f": "/_next/static/chunks/302-bef3166f019ca821.js",
+    "b": 6494
    },
    {
-    "f": "/_next/static/chunks/1640-012c98289096522b.js",
+    "f": "/_next/static/chunks/1640-69e3811ea1693e9b.js",
     "b": 5845
    },
    {
-    "f": "/_next/static/chunks/9001-0fe9b97098b095cf.js",
-    "b": 5212
+    "f": "/_next/static/chunks/9001-195b0e0c37d0343d.js",
+    "b": 5215
    },
    {
-    "f": "/_next/static/chunks/webpack-8b2f975c7584fb8d.js",
-    "b": 4782
+    "f": "/_next/static/chunks/webpack-4adb6ddf1b3d5fdb.js",
+    "b": 4911
    },
    {
     "f": "/_next/static/chunks/8467-d020726048cb3218.js",
@@ -3436,20 +3495,24 @@
     "b": 4401
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/layout-6d132fdb3d0acbd8.js",
-    "b": 4307
+    "f": "/_next/static/chunks/app/%5Blocale%5D/layout-d075c945e6c27605.js",
+    "b": 4392
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/error-598661b7c2ef9686.js",
-    "b": 3750
+    "f": "/_next/static/chunks/app/%5Blocale%5D/error-ef6b063c984f94d5.js",
+    "b": 3833
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/not-found-68ddfdf5e2d1fe2f.js",
-    "b": 3723
+    "f": "/_next/static/chunks/app/%5Blocale%5D/not-found-9ce1e96d51e539c9.js",
+    "b": 3805
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/why-elba/page-85c540531c4f9754.js",
-    "b": 3107
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/(why)/layout-8f65ed548b6c3d79.js",
+    "b": 3325
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/(why)/why-elba/page-a419424c29c49606.js",
+    "b": 3105
    },
    {
     "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/%5Bdoc%5D/page-ec925f676a03ef01.js",
@@ -3460,23 +3523,23 @@
     "b": 2172
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-c836e77ea9089959.js",
-    "b": 1775
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-86eabd22b3ec6e33.js",
+    "b": 1765
    },
    {
     "f": "/_next/static/chunks/main-app-c659b7c05baec7d9.js",
     "b": 1473
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/error-c6b5d767d0aac5bc.js",
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/error-6c05dd993aa22ad7.js",
     "b": 1138
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/%5B...missing%5D/not-found-00969baee0c2d669.js",
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/not-found-895bbb84321dbd3d.js",
     "b": 1085
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/not-found-4ef0f291ff4f7f10.js",
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/not-found-11fad0872f5d25c7.js",
     "b": 1085
    }
   ],
@@ -3576,28 +3639,28 @@
   "url": "http://localhost:3100/en/pricing",
   "status": 200,
   "finalUrl": "http://localhost:3100/en/pricing",
-  "loadMs": 3709,
-  "ttfb": 11,
-  "domContentLoaded": 1226.5999999996275,
-  "loadEvent": 3707.0999999996275,
-  "htmlTransfer": 118543,
-  "htmlDecoded": 547476,
-  "lcp": 1140,
+  "loadMs": 3818,
+  "ttfb": 21.20000000006985,
+  "domContentLoaded": 1148.9000000000233,
+  "loadEvent": 3814.3000000000466,
+  "htmlTransfer": 96442,
+  "htmlDecoded": 463023,
+  "lcp": 1104,
   "lcpEl": "p.kit_lead__XaoWg.kit_align-center__bjlvl size=26796",
-  "fcp": 1140,
+  "fcp": 1104,
   "clsLoad": 0,
   "long": [
    {
-    "t": 905,
-    "d": 227
+    "t": 882,
+    "d": 211
    },
    {
-    "t": 2132,
-    "d": 200
+    "t": 2140,
+    "d": 172
    },
    {
-    "t": 2679,
-    "d": 79
+    "t": 3376,
+    "d": 57
    }
   ],
   "imgs": [
@@ -3613,43 +3676,43 @@
     "complete": false
    }
   ],
-  "domNodes": 840,
+  "domNodes": 841,
   "canvases": 0,
-  "inlineCss": 177096,
+  "inlineCss": 158749,
   "inlineStyleTags": 1,
-  "rsc": 308878,
-  "rscCss": 177096,
+  "rsc": 247166,
+  "rscCss": 158749,
   "fontsLoaded": [
    "Inter 100 900"
   ],
   "cls": 0,
   "shifts": [],
-  "inp": 64,
+  "inp": 40,
   "inpDetail": [
    {
-    "id": 987,
+    "id": 3356,
     "name": "click",
-    "d": 64,
-    "input": 35,
-    "proc": 6,
+    "d": 40,
+    "input": 23,
+    "proc": 4,
     "target": "span"
    }
   ],
   "clicks": 1,
   "longTasks": 3,
-  "longTaskMax": 227,
-  "tbt": 356,
-  "tbtLoad": 356,
+  "longTaskMax": 211,
+  "tbt": 290,
+  "tbtLoad": 290,
   "bytes": {
-   "total": 532914,
-   "js": 235524,
+   "total": 477946,
+   "js": 239568,
    "css": 0,
    "img": 0,
    "font": 49331,
-   "doc": 119497,
-   "fetch": 128067
+   "doc": 97384,
+   "fetch": 91168
   },
-  "requests": 32,
+  "requests": 33,
   "js": [
    {
     "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
@@ -3668,40 +3731,40 @@
     "b": 14032
    },
    {
-    "f": "/_next/static/chunks/1440-19eb3e0d0613e815.js",
+    "f": "/_next/static/chunks/1440-11213785a9362d45.js",
     "b": 8432
    },
    {
-    "f": "/_next/static/chunks/4240-15f5f143528f3191.js",
-    "b": 7092
+    "f": "/_next/static/chunks/4240-53ec143248516299.js",
+    "b": 7175
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-cbcc2377d80a0f12.js",
-    "b": 7073
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-6d407c40703d0aca.js",
+    "b": 7079
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/pricing/page-e0c49a2f2d8569a9.js",
-    "b": 6487
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/(why)/pricing/page-93292cd726c42c5e.js",
+    "b": 6576
    },
    {
-    "f": "/_next/static/chunks/8166-46721bcebd720413.js",
-    "b": 6419
+    "f": "/_next/static/chunks/8166-a92c6ad006c9ab55.js",
+    "b": 6503
    },
    {
-    "f": "/_next/static/chunks/302-eaf483ce0fb94047.js",
-    "b": 6409
+    "f": "/_next/static/chunks/302-bef3166f019ca821.js",
+    "b": 6494
    },
    {
-    "f": "/_next/static/chunks/1640-012c98289096522b.js",
+    "f": "/_next/static/chunks/1640-69e3811ea1693e9b.js",
     "b": 5845
    },
    {
-    "f": "/_next/static/chunks/9001-0fe9b97098b095cf.js",
-    "b": 5212
+    "f": "/_next/static/chunks/9001-195b0e0c37d0343d.js",
+    "b": 5215
    },
    {
-    "f": "/_next/static/chunks/webpack-8b2f975c7584fb8d.js",
-    "b": 4782
+    "f": "/_next/static/chunks/webpack-4adb6ddf1b3d5fdb.js",
+    "b": 4911
    },
    {
     "f": "/_next/static/chunks/8467-d020726048cb3218.js",
@@ -3712,16 +3775,20 @@
     "b": 4401
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/layout-6d132fdb3d0acbd8.js",
-    "b": 4307
+    "f": "/_next/static/chunks/app/%5Blocale%5D/layout-d075c945e6c27605.js",
+    "b": 4392
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/error-598661b7c2ef9686.js",
-    "b": 3750
+    "f": "/_next/static/chunks/app/%5Blocale%5D/error-ef6b063c984f94d5.js",
+    "b": 3833
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/not-found-68ddfdf5e2d1fe2f.js",
-    "b": 3723
+    "f": "/_next/static/chunks/app/%5Blocale%5D/not-found-9ce1e96d51e539c9.js",
+    "b": 3805
+   },
+   {
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/(why)/layout-8f65ed548b6c3d79.js",
+    "b": 3325
    },
    {
     "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/%5Bdoc%5D/page-ec925f676a03ef01.js",
@@ -3732,23 +3799,23 @@
     "b": 2172
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-c836e77ea9089959.js",
-    "b": 1775
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-86eabd22b3ec6e33.js",
+    "b": 1765
    },
    {
     "f": "/_next/static/chunks/main-app-c659b7c05baec7d9.js",
     "b": 1473
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/error-c6b5d767d0aac5bc.js",
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/error-6c05dd993aa22ad7.js",
     "b": 1138
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/%5B...missing%5D/not-found-00969baee0c2d669.js",
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/not-found-895bbb84321dbd3d.js",
     "b": 1085
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/not-found-4ef0f291ff4f7f10.js",
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/not-found-11fad0872f5d25c7.js",
     "b": 1085
    }
   ],
