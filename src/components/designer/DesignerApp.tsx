@@ -54,7 +54,7 @@ import { designerPath } from "./lib/catalog";
 import { pruneFinishes, toggleFinish } from "./lib/config";
 import { createModelDoc } from "./lib/doc";
 import { ConfigPanel, surfaceName, type ViewOptions } from "./ConfigPanel";
-import { ModelPicker } from "./ModelPicker";
+import { ModelPicker } from "@/components/catalogue/CataloguePicker";
 import lib from "./library.module.css";
 import { loadLocalDraft, saveLocalDraft } from "./lib/storage";
 import { useArtworkCanvases } from "./useArtworkCanvases";
