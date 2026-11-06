@@ -37,11 +37,11 @@ Page-local code: `src/components/marketing/start/copy.ts` (ar/en copy, tested in
 |---|---|
 | `npm run lint` | 0 errors (1 warning in ASSETS' `scripts/marketing/render-ui.mjs`, not this page) |
 | `npm run typecheck` | pass |
-| `npm test` | 108 files, 8756 tests pass (adds `start/__tests__/copy.test.ts`: key/placeholder parity, no Arabic diacritics, sample labelling, no social-proof words) |
+| `npm test` | 108 files, 8757 tests pass (adds `start/__tests__/copy.test.ts`: key/placeholder parity, no Arabic diacritics, sample labelling, no social-proof words) |
 | `npm run build` | pass; `/[locale]/start` SSG, revalidate 1 h |
 | `e2e/start.spec.ts` (desktop + mobile, ar + en) | 18/18: sections and h1, engine prices in the table, every fan card says Sample, every body link goes to `/design`, header pill goes to `/start`, empty phone submit opens the designer, bad number shows the error and a good one goes to login without the number in the URL, axe 0 (WCAG 2.2 AA tags), no horizontal scroll, reduced motion static (pinned card not sticky, no transform), no console or hydration errors |
-| `e2e/journey.spec.ts` | pass (home → /start → designer → … → admin) |
-| Perf, phone (390, 4x CPU, Slow 4G) | ar LCP 1.82 s, CLS 0.009; en LCP 1.61 s, CLS 0.000 |
+| `e2e/journey.spec.ts`, `e2e/storefront.spec.ts` | pass (35/35 with start.spec; journey goes home → /start → designer → … → admin) |
+| Perf, phone (390, 4x CPU, Slow 4G) | ar LCP 1.79 s, CLS 0.009; en LCP 1.64 s, CLS 0.000 |
 | Perf, desktop | ar LCP 0.33 s, en 0.22 s, CLS 0.000 |
 | Sitemap | `/ar/start`, `/en/start` (priority 0.9) |
 
@@ -55,7 +55,6 @@ CLS note: the Arabic display face swaps in late on Slow 4G; the hero lines are f
 - `src/app/sitemap.ts`, `docs/audit/tools/perf-pages.mjs` list `/start`.
 
 ## Open
-- `e2e/storefront.spec.ts` "legal pages are marked for lawyer review" fails after the FOUNDATION footer merge (the footer no longer has a "Returns for custom goods" link in the expected place). Foundation scope.
 - ASSETS: `assets.generated.ts` has no sizes for `collage/*` and `cards/*`, and `cards/sahwa-can` is listed but not rendered; this page passes explicit 400x400 / 600x900 sizes and uses only the rendered cards.
 - The home hero phone form still opens the designer directly (sign-up action; a landing page in between adds a step).
 
