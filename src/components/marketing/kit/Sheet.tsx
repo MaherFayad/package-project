@@ -2,10 +2,10 @@ import type { CSSProperties, ElementType, ReactNode } from "react";
 import { Container, type ContainerProps } from "./Container";
 import styles from "./kit.module.css";
 
-export type SheetTone = "dark" | "green" | "navy" | "violet" | "light" | "white";
+export type SheetTone = "dark" | "dark-2" | "green" | "navy" | "violet" | "light" | "white";
 
 export interface SheetProps {
-  /** Background band. dark = page canvas #02090a; light = #f5f5f3; white = #fff. */
+  /** Background band. dark = page canvas #02090a; dark-2 = raised dark #141a1a (does not collapse with dark); light = #f5f5f3; white = #fff. */
   tone?: SheetTone;
   /** Slide over the previous section: -48px margin and 48px rounded top corners. Default true (false for the first section). */
   overlap?: boolean;

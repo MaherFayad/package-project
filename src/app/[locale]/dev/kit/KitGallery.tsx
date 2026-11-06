@@ -124,7 +124,7 @@ function Spec({ name, api }: { name: string; api: string }) {
 
 export function KitGallery({ locale }: { locale: Locale }) {
   const c = COPY[locale];
-  const tones = ["dark", "green", "navy", "violet", "light", "white"] as const;
+  const tones = ["dark", "dark-2", "green", "navy", "violet", "light", "white"] as const;
   const boxes = ["FEFCO_0427", "RIGID_BOX", "PIZZA", "ECMA_RTE", "GABLE_BOX", "FEFCO_0201"] as const;
   return (
     <>
