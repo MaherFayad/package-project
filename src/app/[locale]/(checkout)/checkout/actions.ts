@@ -6,6 +6,7 @@ import { MAX_INSTANT_QTY, type Locale, type PaymentMethod } from "@/types";
 import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { toJson } from "@/lib/json";
+import { toGovernorateKey } from "@/lib/orders/governorates";
 import { loadCheckoutSettings } from "@/lib/orders/checkout-settings";
 import { isValidTaxId, normalizeTaxId } from "@/lib/orders/company";
 import { QUOTE_NOTE_MAX, QUOTE_REQUESTED } from "./quote-request";
@@ -194,7 +195,12 @@ export async function cancelOrderAction(orderId: string): Promise<{ ok: true } |
 const quoteRequestSchema = z.object({
   designId: idSchema,
   quantity: z.number().int().min(MAX_INSTANT_QTY + 1).max(1_000_000),
-  governorate: z.string().max(40).optional(),
+  // Stored as the governorate code (CAIRO, GIZA…); the client sends the address name or a code.
+  governorate: z
+    .string()
+    .max(40)
+    .transform((g, ctx) => toGovernorateKey(g) ?? (ctx.addIssue({ code: z.ZodIssueCode.custom, message: "INVALID_GOVERNORATE" }), z.NEVER))
+    .optional(),
   note: z.string().trim().max(QUOTE_NOTE_MAX).optional(),
   /** Date the boxes are needed by (YYYY-MM-DD), optional. */
   neededBy: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),

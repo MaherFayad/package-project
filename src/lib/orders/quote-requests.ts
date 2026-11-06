@@ -1,6 +1,7 @@
 import "server-only";
 import { db } from "@/lib/db";
 import { fromJson } from "@/lib/json";
+import { toGovernorateKey, type GovernorateKey } from "./governorates";
 
 /**
  * Price requests above the instant cap (B-15, checkout half). Each is a `Quote` with status
@@ -22,7 +23,8 @@ export interface QuoteRequestLead {
   quantity: number;
   designId: string | null;
   buyer: { id: string | null; name: string | null; phone: string | null };
-  governorate: string | null;
+  /** Governorate code (CAIRO, GIZA…); label with `governorates.<code>`. */
+  governorate: GovernorateKey | null;
   neededBy: string | null;
   note: string | null;
   spec: Record<string, unknown> | null;
@@ -51,7 +53,8 @@ export async function listQuoteRequests(opts: { status?: string; take?: number }
       quantity: Array.isArray(lines) ? (lines[0]?.quantity ?? 0) : 0,
       designId: q.designId,
       buyer: { id: q.user?.id ?? null, name: q.user?.name ?? null, phone: q.user?.phone ?? str("phone") },
-      governorate: str("governorate"),
+      // Code, also for leads stored before codes were enforced (they held the English name).
+      governorate: toGovernorateKey(str("governorate")),
       neededBy: str("neededBy"),
       note: str("note"),
       spec: d.spec && typeof d.spec === "object" ? (d.spec as Record<string, unknown>) : null,

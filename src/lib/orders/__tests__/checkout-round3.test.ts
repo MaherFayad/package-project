@@ -5,9 +5,11 @@ import { statusBadge } from "../state";
 import { formatTaxId, isValidTaxId, normalizeTaxId } from "../company";
 import { applySampleCredit, isSampleLines, sampleOffer, SAMPLE_LINE_LABEL } from "../sample";
 import { orderTotals, vatOn } from "../totals";
+import { GOVERNORATE_KEYS, toGovernorateKey } from "../governorates";
 
 vi.mock("server-only", () => ({}));
-vi.mock("@/lib/db", () => ({ db: {} }));
+const dbMock = vi.hoisted(() => ({ quote: { findMany: vi.fn() }, auditLog: { findMany: vi.fn() } }));
+vi.mock("@/lib/db", () => ({ db: dbMock }));
 
 describe("status tone map (CR-08)", () => {
   it("gives every status a tone, and statusBadge delegates to it", () => {
@@ -85,5 +87,34 @@ describe("checkout settings (B-11)", () => {
     expect(mergeCheckoutSettings({ prepayDiscountPct: 5 }, base).prepayDiscountPct).toBe(5);
     expect(mergeCheckoutSettings({ prepayDiscountPct: 99 }, base)).toEqual(base);
     expect(mergeCheckoutSettings({ sample: { maxPieces: 3 } }, base).sample).toMatchObject({ maxPieces: 3, creditDays: 60 });
+  });
+});
+
+describe("quote leads store governorate codes (B-15)", () => {
+  it("maps names and codes to the code, rejects anything else", () => {
+    expect(toGovernorateKey("Cairo")).toBe("CAIRO");
+    expect(toGovernorateKey(" kafr el sheikh ")).toBe("KAFR_EL_SHEIKH");
+    expect(toGovernorateKey("GIZA")).toBe("GIZA");
+    expect(toGovernorateKey("giza")).toBe("GIZA");
+    expect(toGovernorateKey("Atlantis")).toBeNull();
+    expect(toGovernorateKey("")).toBeNull();
+    expect(GOVERNORATE_KEYS).toHaveLength(27);
+  });
+
+  it("listQuoteRequests returns codes, also for older leads stored with the English name", async () => {
+    const { listQuoteRequests } = await import("../quote-requests");
+    const now = new Date("2026-11-06T10:00:00Z");
+    dbMock.quote.findMany.mockResolvedValue([
+      { id: "q1", createdAt: now, validUntil: now, status: "REQUESTED", designId: "d1", lines: [{ quantity: 5000 }], user: { id: "u", name: null, phone: "+201" } },
+      { id: "q2", createdAt: now, validUntil: now, status: "REQUESTED", designId: "d2", lines: [{ quantity: 3000 }], user: null },
+    ]);
+    dbMock.auditLog.findMany.mockResolvedValue([
+      { entityId: "q1", after: { governorate: "Cairo" } },
+      { entityId: "q2", after: { governorate: "ALEXANDRIA" } },
+    ]);
+    const leads = await listQuoteRequests();
+    expect(leads.map((l) => l.governorate)).toEqual(["CAIRO", "ALEXANDRIA"]);
+    expect(leads[0].quantity).toBe(5000);
+    expect(leads[0].dueAt.getTime() - now.getTime()).toBe(24 * 3_600_000);
   });
 });
