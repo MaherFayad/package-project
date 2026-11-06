@@ -64,6 +64,9 @@ export function PriceBadge({ state, onClick, vessel = false }: { state: PriceSta
         days: state.best.deliveryDays,
       });
       break;
+    // R9-01: "idle" is a signed-in visitor before the first request (500 ms debounce). It fell
+    // through to the locked "see the price" copy with a lock icon; it is loading.
+    case "idle":
     case "loading":
       label = t("designer.price.loading");
       break;
@@ -80,7 +83,7 @@ export function PriceBadge({ state, onClick, vessel = false }: { state: PriceSta
       label = t(vessel ? "designer.container.badgeLocked" : "designer.price.badgeLocked", { qty: formatNumber(BADGE_QTY) });
   }
   const [before, after] = price !== null ? label.split(MARK) : [label, ""];
-  const loading = state.status === "loading";
+  const loading = state.status === "loading" || state.status === "idle";
   return (
     <button
       type="button"
