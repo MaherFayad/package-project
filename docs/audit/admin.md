@@ -384,3 +384,31 @@ Counts (round 8, new, before fixing): **critical 0, high 1, medium 0, low 1 (2)*
 - `prisma/schema.prisma`: `Vendor.onTimeJudged`, `Vendor.onTimePublic` (additive, defaults 0 / false).
 - `src/lib/vendors/on-time.ts` (`onTimeWrite`), `on-time-sync.ts`, `on-time-settings.ts` (new).
 - Public display, one condition each: `src/components/store/VendorCard.tsx`, `src/components/marketing/VendorShowcaseCard.tsx`, `src/app/[locale]/(detail)/vendors/[slug]/page.tsx`, `src/app/[locale]/(checkout)/checkout/_components/CheckoutClient.tsx` (offer card), `src/app/[locale]/orders/[id]/page.tsx`, `src/app/[locale]/(store)/page.tsx` (average); data: `src/components/store/data.ts`, `src/components/store/vendor-filters.ts` (optional `onTimeShown`), `src/lib/pricing/server.ts`, `engine.ts`, `types.ts` (optional `onTimeShown` on the offer vendor); copy: `src/i18n/en.ts`, `ar.ts` (`store.vendors.onTimeNew`).
+
+## Round 9
+
+Asked by the integrator: audit only, no new features. Scope: R5-JR-22 (re-checked), the "Printer figures shown to buyers" setting at 1 and 50, and a full admin sweep at 320, 390 and 1440 px in ar and en. Base: this branch at `d014e02` with main merged (no conflicts), production build on a fresh seed plus audit fixtures (`prisma/ad8.db`). Tools: `admin-audit.cjs` with `VIEWPORTS=320,390,1440` (20 routes × 2 locales × 3 widths = 120 views), `admin-r6-narrow.cjs` (120 views, 320 to 489 px), `admin-r6-flows.cjs` with `FLOW_SIZES=ar:320,en:320` (Send price, buyer link, Priced view, Close, bio dialogs at 320), and the new `admin-r9-threshold.cjs` (saves 0, 51, "abc", «١», 50 and «٥» through the form; reads the vendor rows, the public directory and the admin scorecard caption after each save).
+
+### Checked and correct
+
+- R5-JR-22: «١٫٠٥» previews like 1.05; "1,05" shows the field error and nothing is sent (round 8 fix, re-checked on the merged build).
+- Threshold: 0, 51 and "abc" are refused with «أدخل عددا صحيحا من 1 إلى 50.» and nothing is stored; «١» saves 1. At 1, Nile Pack (one judged delivery, late) turns public with 0% on time and the other five directory cards read «جديد على علبة»; at 50, all six read «جديد على علبة» and the scorecard says 1 of 50; «٥» restores 5. Each save re-syncs the printers and the public directory changes at once (cache purged). Seeded figures are untouched for printers under the minimum.
+- Sweeps after the fixes: 120 views at 320/390/1440 with 0 axe violations, 0 page overflow, 0 console errors, 0 wrapped badges and 0 sideways table scrolls; 120 narrow views with nothing cut, no target under 24 px and no label/value overlap; all 18 dialog steps at 320 with no overflow, axe 0 and focus kept.
+
+### Findings (new this round)
+
+| id | sev | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R9-AD-01 | low | Overview metric captions at 320 ar | «المتوسط 14,324.79 / ج.م» and the net revenue amount broke between the number and the currency. | Readability (CR-35 money as one unit) | Amounts inside the captions use no-break spaces. | fixed |
+| R9-AD-02 | low | Admin top bar search at 320 | The placeholder was cut mid-word («البحث في الطل»). | Craft (same as vendor R4-CR-22) | Under 400 px it reads «الطلبات» / "Orders" next to the search icon. | fixed |
+| R9-AD-03 | low | Quote inbox search placeholder at 320 | "Search by buyer, mobile or model" / «البحث بالعميل أو رقم المحمول أو النموذج» was cut at the end. | Craft | "Buyer, mobile or model" / «العميل أو الرقم أو النموذج». | fixed |
+| R9-AD-04 | low | Bio and profile clean-up dialogs at 320 en | The confirm button was truncated to "Remove contact…". | WCAG 2.5.3 (visible label); craft | The confirm reads "Remove" / «حذف»; the dialog title already says what is removed. | fixed |
+| R9-AD-05 | low | Vendor scorecard caption (ar) | «1 من 50 عمليات تسليم»: a bare count before a plural noun, wrong agreement for 1 and for 11 or more. | Arabic copy rules (label-colon counts) | «عمليات التسليم: 1 من 50. …». | fixed |
+
+Counts (round 9, new, before fixing): **critical 0, high 0, medium 0, low 5 (5)**. All fixed. **This round found nothing of medium severity or worse, so the admin area meets the stop rule.**
+
+### Verification (round 9)
+
+- `npm run lint`, `npm run typecheck`, `npm run build`: clean. `npm test`: 8,754 passed.
+- e2e (`--workers=2 --trace off`, fresh seed): `admin`, `admin-quote-price`, `checkout-quote`, `vendor` gave 25 passed and 17 skipped, twice in a row.
+- Files outside admin: none (admin i18n, `AdminFrame.tsx`, `ModerationQueue.tsx`, the overview page and the audit tools).

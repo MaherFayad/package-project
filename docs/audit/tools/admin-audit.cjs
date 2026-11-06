@@ -40,7 +40,9 @@ const db = new PrismaClient();
   for (const [name, route] of routes) {
     if (only && !only.test(name)) continue;
     for (const locale of ["ar", "en"]) {
-      for (const [vw, w, h] of [["phone", 390, 844], ["desk", 1440, 900]]) {
+      // VIEWPORTS=320,390,1440 (round 9) overrides the default phone + desktop pair.
+      const sizes = process.env.VIEWPORTS ? process.env.VIEWPORTS.split(",").map((w) => [`w${w}`, Number(w), Number(w) < 768 ? 844 : 900]) : [["phone", 390, 844], ["desk", 1440, 900]];
+      for (const [vw, w, h] of sizes) {
         const ctx = await browser.newContext({ viewport: { width: w, height: h } });
         await ctx.addCookies([{ name: "elba_session", value: tok, url: base }]);
         const page = await ctx.newPage();
