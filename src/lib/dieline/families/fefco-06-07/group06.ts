@@ -48,7 +48,8 @@ export function blissBox(dims: Dims, t: number, o: BlissOpts): StructureDraft {
       b.attach("top", "top", "back", rectEdges(back).bottom, Wp, { kind: "rect" }, { stage: 3, label: "Lid" });
       if (o.lid === "tuck") {
         const lid = rect(0, Wp + Hp, Lb, Wp);
-        b.attach("tuck", "tuck", "top", insetSeg(rectEdges(lid).bottom, t + 1), clamp(dims.H * 0.3, 20, 50), { kind: "tuck", shoulder: 2 }, { stage: 3, stack: -1, label: "Lid tuck" });
+        // With end flaps stitched inside the walls the tuck goes in behind them (second layer).
+        b.attach("tuck", "tuck", "top", insetSeg(rectEdges(lid).bottom, t + 1), clamp(dims.H * 0.3, 20, 50), { kind: "tuck", shoulder: 2 }, { stage: 3, stack: o.endFlaps === "none" ? -1 : -2, label: "Lid tuck" });
       }
       break;
     }
@@ -72,7 +73,9 @@ export function blissBox(dims: Dims, t: number, o: BlissOpts): StructureDraft {
     for (const [id, r] of [["front", front], ["bottom", base], ["back", back]] as const) {
       for (const side of ["left", "right"] as const) {
         const edge = rectEdges(r)[side];
-        const taper = Math.min(d * 0.9, (side === "left" ? r.height : r.height) * 0.3);
+        // 45° mitre (taper = depth + 0.5 mm): flaps of adjacent walls meet on the end's
+        // diagonal with a hairline gap instead of overlapping in one plane (z-fighting).
+        const taper = Math.min(d + 0.5, r.height / 2 - 1);
         b.attach(`${id}Flap_${side}`, "flap", id, edge, d, { kind: "trapezoid", taperA: taper, taperB: taper }, { stage: 2, label: "Body flap (stitched over the end)" });
       }
     }
@@ -98,7 +101,10 @@ export function blissBox(dims: Dims, t: number, o: BlissOpts): StructureDraft {
       for (const k of ["top", "right", "bottom", "left"] as const) {
         const len = k === "top" || k === "bottom" ? dims.W : dims.H;
         const taper = o.endFlaps === "taper" ? Math.min(e * 0.9, len * 0.3) : 1;
-        b.attach(`${id}_flap_${k}`, "flap", id, edges[k], e, { kind: "trapezoid", taperA: taper, taperB: taper }, { stage: 0, label: "End flap (stitched inside the body)", printable: false });
+        // Open top (0605): the end's top flap is the rim at the ends; it stops where the body's
+        // rim flanges start, so the four flanges frame the opening without overlapping.
+        const hinge = o.lid === "rim" && k === "top" ? insetSeg(edges[k], Math.min(rimDepth(dims.W) - t + 0.5, len / 2 - 5)) : edges[k];
+        b.attach(`${id}_flap_${k}`, "flap", id, hinge, e, { kind: "trapezoid", taperA: taper, taperB: taper }, { stage: 0, label: "End flap (stitched inside the body)", printable: false });
       }
     }
     x += dims.W + 2 * e + 15;
@@ -213,10 +219,12 @@ export function halfShells(dims: Dims, t: number): StructureDraft {
     const eo = rect(Lo, y0, endD, Hp);
     b.attach(id("spacer"), "flap", id("endOuter"), rectEdges(eo).right, v, { kind: "rect" }, { stage: 0, label: "Spacer (v)" });
     const sp = rect(Lo + endD, y0, v, Hp);
-    const innerD = Wp - 2 * t - 0.5;
+    // The inner end wall runs up to the long wall's inside face; its joint tab folds onto
+    // that face (pivot on the tab's outer face, so the tab lies behind the wall, not in it).
+    const innerD = Wp - 2 * t;
     b.attach(id("endInner"), "inner", id("spacer"), rectEdges(sp).right, innerD, { kind: "rect" }, { stage: 0, label: "End wall (inner)" });
     const ei = rect(Lo + endD + v, y0, innerD, Hp);
-    b.attach(id("tab"), "glue", id("endInner"), insetSeg(rectEdges(ei).right, 2), clamp(v * 1.5, 12, 25), { kind: "trapezoid", taperA: 3, taperB: 3 }, { fold: -90, stage: 0, label: "Joint tab (½v), glued to the long wall" });
+    b.attach(id("tab"), "glue", id("endInner"), insetSeg(rectEdges(ei).right, 2), clamp(v * 1.5, 12, 25), { kind: "trapezoid", taperA: 3, taperB: 3 }, { fold: -90, pivotDepth: 1, stage: 0, label: "Joint tab (½v), glued to the long wall" });
     // ½W flaps on the long wall; short flaps on the outer end wall.
     b.attach(id("flapTop"), "flap", id("front"), rectEdges(fr).top, Wp / 2, { kind: "rect" }, { stage: 3, label: "Top flap (½W)" });
     b.attach(id("flapBottom"), "flap", id("front"), rectEdges(fr).bottom, Wp / 2, { kind: "rect" }, { stage: 2, label: "Bottom flap (½W)" });

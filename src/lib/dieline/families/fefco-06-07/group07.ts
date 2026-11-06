@@ -75,7 +75,8 @@ export function autoBottomCase(dims: Dims, t: number, o: CaseOpts): StructureDra
 
 /* ───────────────────────── 0714: auto-bottom base + auto-bottom lid ───────────────────────── */
 
-export const telescopeClearance = (t: number) => Math.max(1, t * 0.5);
+/** Lid-to-base gap per side: room for the lid's joint tab (one caliper) plus 0.5 mm play. */
+export const telescopeClearance = (t: number) => t + 0.5;
 export const telescopeLidDepth = (H: number) => clamp(Math.round(H * 0.5), 40, H);
 
 /**
