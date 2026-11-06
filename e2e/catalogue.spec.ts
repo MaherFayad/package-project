@@ -57,7 +57,8 @@ test("catalogue: Egypt by default, Worldwide, search by code and name, families"
 
 test("catalogue: windowed grid renders a window, keyboard reaches every model", async ({ page }, info) => {
   test.skip(info.project.name !== "desktop", "keyboard walk on desktop");
-  await page.goto("/en/catalog?scope=world");
+  // A family (221 models) shows the full windowed list; the default view is 12 per family (CR-30).
+  await page.goto("/en/catalog?scope=world&family=corrugated");
   await dismissCookies(page);
   const total = await count(page);
   const rendered = await page.locator('[data-testid="catalogue-grid"] > li').count();
@@ -67,6 +68,26 @@ test("catalogue: windowed grid renders a window, keyboard reaches every model", 
   for (let i = 0; i < 60; i++) await page.keyboard.press("Tab");
   const pos = await page.evaluate(() => document.activeElement?.closest("li")?.getAttribute("aria-posinset"));
   expect(Number(pos)).toBe(61);
+});
+
+test("catalogue: 12 per family with Show all, sticky family chips, short page (CR-30, R4-CR-05)", async ({ page }, info) => {
+  await page.goto("/en/catalog");
+  await dismissCookies(page);
+  const sections = page.getByTestId("catalogue-sections").locator("section");
+  await expect(sections.first()).toBeVisible();
+  for (const n of await sections.locator("ul").evaluateAll((uls) => uls.map((u) => u.children.length))) expect(n).toBeLessThanOrEqual(12);
+  // Was 46,528 px at 1440 and 64,334 px at 390 with every model in one list.
+  expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThan(25_000);
+  await page.getByTestId("show-all-corrugated").click();
+  await expect(page.getByTestId("catalogue-sections")).toHaveCount(0);
+  await expect(page.locator('[data-family="corrugated"]')).toHaveAttribute("aria-pressed", "true");
+  expect(await count(page)).toBeGreaterThan(200);
+  if (info.project.name === "desktop") {
+    await page.evaluate(() => window.scrollTo(0, 4000));
+    const top = await page.locator('[data-family="corrugated"]').evaluate((el) => el.getBoundingClientRect().top);
+    expect(top).toBeGreaterThan(0);
+    expect(top).toBeLessThan(260);
+  }
 });
 
 test("catalogue: Arabic RTL, no horizontal scroll, axe clean", async ({ page }, info) => {

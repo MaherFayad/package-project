@@ -127,8 +127,12 @@
   scroll-padding-inline: var(--mk-gutter);
 }
 .chipRow::-webkit-scrollbar { display: none; }
-@media (min-width: 1024px) {
-  .chipRow { flex-wrap: wrap; overflow: visible; }
+/* R4-CR-05: one scrolling line at every width, so a late font swap (wider chips) can never
+   re-wrap the row and shift the grid (CLS). The fade sits in the gutter, so it only covers
+   chips when the row actually overflows. */
+.chipRow {
+  flex-wrap: nowrap;
+  mask-image: linear-gradient(to right, transparent 0, #000 var(--mk-gutter), #000 calc(100% - var(--mk-gutter)), transparent 100%);
 }
 .chip {
   flex: none;
@@ -154,6 +158,33 @@
 .chipSub { min-block-size: 36px; font-size: 0.875rem; padding-inline: 14px; }
 .chipCount { font-weight: 500; font-variant-numeric: tabular-nums; opacity: 0.72; }
 .subRow { padding-block-start: 0; }
+
+/* R4-CR-05 / CR-30: the family chips stick under the search row on tablets and desktops (phones
+   keep the screen for the grid; search and the Egypt switch still stick there). */
+@media (min-width: 720px) {
+  /* A sticky box only sticks inside its parent: lift the chips out of the toolbar box. */
+  .toolbar { display: contents; }
+  .familyRow {
+    position: sticky;
+    inset-block-start: var(--search-row-bottom, 136px);
+    z-index: 4;
+    padding-block: 8px;
+    background: color-mix(in srgb, var(--mk-white) 94%, transparent);
+    backdrop-filter: saturate(1.4) blur(10px);
+  }
+}
+
+/* CR-30: family sections (12 each) when no family or search is active. */
+.sections { display: grid; grid-template-columns: minmax(0, 1fr); gap: 56px; }
+.section {
+  display: grid;
+  gap: 20px;
+  justify-items: start;
+  content-visibility: auto;
+  contain-intrinsic-block-size: auto 1400px;
+}
+.section > .gridWrap { justify-self: stretch; }
+.sectionTitle { margin: 0; font-size: clamp(1.375rem, 1.1rem + 0.8vw, 1.75rem); font-weight: 700; letter-spacing: -0.01em; }
 
 .resultCount { font-size: 0.9375rem; color: var(--mk-text-2); }
 

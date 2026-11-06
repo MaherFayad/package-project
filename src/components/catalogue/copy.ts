@@ -23,6 +23,7 @@ export const COPY = {
   statEgypt: t("available in Egypt", "متاح في مصر"),
   statInstant: t("with an instant price", "بسعر فوري"),
   statFamilies: t("families", "عائلة"),
+  statDesigner: t("open in the 3D designer", "في المصمم ثلاثي الأبعاد"),
   search: t("Search the catalogue", "البحث في الكتالوج"),
   searchPlaceholder: t("Name or code, e.g. mailer, FEFCO 0427", "ابحث بالاسم أو الكود"),
   scopeLabel: t("Where it is available", "مكان التوفر"),
@@ -31,6 +32,8 @@ export const COPY = {
   familiesLabel: t("Families", "العائلات"),
   subFamiliesLabel: t("Sub-families", "الفئات الفرعية"),
   all: t("All", "الكل"),
+  /** CR-30: "Show all 210 Corrugated board". */
+  showAll: t("Show all {count} in {name}", "عرض الكل في {name} ({count})"),
   results: t("{count} models", "{count} نموذج"),
   resultsFor: t("{count} models for “{q}”", "{count} نموذج لـ «{q}»"),
   emptyTitle: t("No models match", "لا توجد نماذج مطابقة"),
