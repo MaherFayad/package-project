@@ -468,7 +468,7 @@ export const checkoutAr: Pick<Dictionary, "checkout" | "payment" | "orders" | "s
       creditBody: "من عينتك {number}. صالح حتى {date}.",
       line: "عينة مطبوعة",
       credit: "رصيد العينة",
-      incl: "العينة والشحن، دون الضريبة",
+      incl: "العينة والشحن، شامل الضريبة",
       digital: "طباعة رقمية بدون فورمة تكسير",
     },
     company: {

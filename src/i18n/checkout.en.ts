@@ -466,7 +466,7 @@ export const checkoutEn = {
       creditBody: "From your sample {number}. Valid until {date}.",
       line: "Printed sample",
       credit: "Sample credit",
-      incl: "Sample and shipping, excl. VAT",
+      incl: "Sample and shipping, incl. VAT",
       digital: "Digital print, no cutting die",
     },
     company: {

@@ -20,7 +20,7 @@ Standards cited: Egypt PDPL Law 151/2020 (consent scope and disclosure accuracy)
 
 ## Round 5 (first copy round)
 
-New findings this round, counted before fixing: **critical 0 · high 15 · medium 42 · low 32** (89 in total; several rows group a pattern that repeats across keys).
+New findings this round, counted before fixing: **critical 0 · high 15 · medium 43 · low 32** (90 in total; several rows group a pattern that repeats across keys).
 
 ### High
 
@@ -52,7 +52,7 @@ New findings this round, counted before fixing: **critical 0 · high 15 · mediu
 | R5-CP-18 | medium | designer, catalogue, checkout, legal (≈16 keys, en + ar) | One concept, five names: "Request a quote", "Request a price", "price request", "Priced by quote", "Price on request", plus "Quotes stay valid 72 hours" for the instant price. Arabic mixes «طلب سعر» / «طلب السعر» / «طلبات الأسعار». | ISO 9241-110; glossary | EN: action "Request a price", object "price request", state "Price on request", and "Prices are valid for 72 hours". AR: «طلب عرض سعر», «طلبات عروض الأسعار», «السعر عند الطلب», «السعر صالح لمدة 72 ساعة». Matches the existing e2e wording. | fixed |
 | R5-CP-19 | medium | order status chip · `orderStatus.QC_PENDING` | "Quality check / فحص الجودة" is a noun, not a status. | glossary (status chips) | "In quality check / قيد فحص الجودة" | fixed |
 | R5-CP-20 | medium | /orders tabs · `orders.views.done` (ar) | «تم التوصيل», while the status chip says «تم التسليم». | one term per concept | «تم التسليم» | fixed |
-| R5-CP-21 | medium | checkout summary, receipt line, address step · `checkout.summary.shipping`, `address.help`, `shippingChanged`, `buyer.sample.incl` | The cost line is "Delivery / التوصيل" in checkout but "Shipping / الشحن" in pricing lines. | glossary (shipping = cost line) | "Shipping / الشحن", "Shipping cost updated for {governorate}" / «تم تحديث تكلفة الشحن لمحافظة {governorate}». e2e/a11y.spec.ts selector updated. | fixed |
+| R5-CP-21 | medium | checkout summary, receipt line, address step · `checkout.summary.shipping`, `address.help`, `shippingChanged`, `buyer.sample.incl` | The cost line is "Delivery / التوصيل" in checkout but "Shipping / الشحن" in pricing lines. | glossary (shipping = cost line) | "Shipping / الشحن", "Shipping cost updated for {governorate}" / «تم تحديث تكلفة الشحن لمحافظة {governorate}». The sample line reads "Sample and shipping, incl. VAT" / «العينة والشحن، شامل الضريبة»; it labels offer.pay.totalPiasters, which includes VAT (integrator correction). e2e/a11y.spec.ts selector updated. | fixed |
 | R5-CP-22 | medium | `pricing.subtotal` vs `checkout.summary.subtotal` | «الإجمالي الفرعي» and «المجموع الفرعي» both used. | one term | «المجموع الفرعي» | fixed |
 | R5-CP-23 | medium | share page · `designer.shared.subtitleDesign` | «تصميم عبوة مشترك» means "a joint / common design". | meaning | «تصميم عبوة تمت مشاركته» | fixed |
 | R5-CP-24 | medium | export gate · `designer.gate.reason.export` | «حمل» is ambiguous (carry / load); the dialog itself says «تنزيل». | one term | «نزل صورة تصميمك» | fixed |
@@ -88,6 +88,7 @@ New findings this round, counted before fixing: **critical 0 · high 15 · mediu
 | R5-CP-54 | medium | legal pricing · `legal.terms.sections.pricing` | "An instant quote is valid for 72 hours" mixes quote and instant price. | one term | "An instant price…" / «السعر الفوري صالح لمدة 72 ساعة». The draft banner and the [LAWYER] flags are unchanged. | fixed |
 | R5-CP-55 | medium | catalogue quote form · `copy.ts formSent` vs `buyer.quote.sentBody` | Catalogue requests promise a reply in 2 working days, buyer quantity requests in 1. | consistency | Kept on purpose: catalogue requests go to importers and regional converters (`egyptLong.rare`). Wording aligned otherwise. Business to confirm. | won't fix (business decision) |
 | R5-CP-86 | medium | /ar/admin/orders/[number] address · `admin/orders/[number]/page.tsx:324` | The governorate shows the stored English value («Cairo», «Giza»), joined with a Latin comma, on Arabic pages. Found by the crawl. | WCAG 3.1.2 | Use `governorateKey()` + `governorates.*` and the locale separator «، », as on the receipt page. | open (admin owner) |
+| R5-CP-90 | medium | /catalog/[slug] instant-price card · `copy.ts instantBody` | EN said "Prices include 14% VAT at checkout", while AR says VAT is added at checkout (the card prices exclude VAT). Found by re-checking every VAT label against its amount. | Egyptian VAT 14% (clear price display) | EN: "VAT 14% is added at checkout." | fixed |
 
 ### Low
 
