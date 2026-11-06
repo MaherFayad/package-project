@@ -12,7 +12,7 @@ import { useLibraryModel } from "@/lib/library/useLibraryModel";
 import { defaultMaxDpr } from "@/components/three/hooks";
 import { docGeometry, docModel, docModelCode, facesForAreas, normaliseDocModel } from "@/lib/library/doc";
 import { FINISHES } from "@/lib/configurator";
-import { ViewControls, type PackagingSceneHandle } from "@/components/three";
+import { ViewControls, loadEngineStack, type PackagingSceneHandle } from "@/components/three";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n/types";
 import {
@@ -76,7 +76,8 @@ import { trackClient } from "@/lib/analytics/client";
 
 const StageSkeleton = () => <div className={lib.stageSkeleton} aria-hidden="true" />;
 // One persistent 3D canvas for boxes and containers (PERF-09).
-const Stage3D = dynamic(() => import("./Stage3D"), { ssr: false, loading: StageSkeleton });
+// R6-R1: three.js, the React renderer and the stage load in steps with yields between them
+const Stage3D = dynamic(() => loadEngineStack().then(() => import("./Stage3D")), { ssr: false, loading: StageSkeleton });
 // The picker (370 cards, search) loads only when it is opened (PERF-04).
 const ModelPicker = dynamic(() => import("@/components/catalogue/CataloguePicker").then((m) => m.ModelPicker), { ssr: false });
 
