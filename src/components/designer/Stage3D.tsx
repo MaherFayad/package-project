@@ -36,17 +36,17 @@ export default function Stage3D({
 }) {
   return (
     <EngineCanvas
-      // Box ↔ box switches keep the canvas (no leak measured). Container content still leaves
-      // 3 textures (~7.6 MB) behind per visit on a shared canvas (engine, reported), so a box ↔
-      // container switch remounts the canvas and frees them with the context. Drop this key
-      // once VesselSceneContent disposes everything on unmount.
+      // Box ↔ box switches keep the canvas. A container visit on a shared canvas still leaves one
+      // texture behind (1.6 MB bottle, 4 MB pouch per visit, measured after the engine's PMREM fix;
+      // reported), so a box ↔ container switch remounts and frees it with the context. Remove
+      // this key once the remaining vessel texture is disposed on unmount.
       key={vessel ? "vessel" : "box"}
       ariaLabel={ariaLabel}
       roleDescription={roleDescription}
       keyboardHint={keyboardHint}
       fallback={<p className={styles.sceneFallback}>{fallback}</p>}
       poster={poster}
-      onReady={onReady}
+      onContentReady={onReady}
     >
       {vessel ? (
         <VesselView {...vessel} embedded ariaLabel={ariaLabel} roleDescription={roleDescription} keyboardHint={keyboardHint} fallback={fallback} />

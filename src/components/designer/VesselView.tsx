@@ -125,7 +125,12 @@ export default function VesselView({
         const mesh = o as unknown as { geometry?: { dispose(): void }; material?: { dispose(): void } | { dispose(): void }[] };
         mesh.geometry?.dispose();
         const mats = Array.isArray(mesh.material) ? mesh.material : mesh.material ? [mesh.material] : [];
-        for (const m of mats) m.dispose();
+        for (const m of mats) {
+          // Maps the group made itself (the crimp normal map) are freed with it; artwork maps
+          // are freed by their own effect (a second dispose is a no-op).
+          for (const v of Object.values(m as unknown as Record<string, unknown>)) if (v && (v as { isTexture?: boolean }).isTexture) (v as { dispose(): void }).dispose();
+          m.dispose();
+        }
       });
     },
     [flexGroup],
