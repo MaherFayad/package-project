@@ -43,6 +43,8 @@ const en = {
     examples: ["mailer", "pizza", "gift", "coffee", "perfume", "rigid"],
     submit: "Find box styles",
     note: "Searches all {models} models by name and use.",
+    pause: "Pause the moving background and typing examples",
+    play: "Play the moving background and typing examples",
   },
   wall: {
     title: "Or start from one of our box styles",
@@ -197,6 +199,8 @@ const ar: Copy = {
     examples: ["بيتزا", "هدايا", "قهوة", "عطر", "حلويات", "تجميل"],
     submit: "بحث عن أنماط العلب",
     note: "البحث في كل النماذج ({models}) بالاسم والاستخدام.",
+    pause: "إيقاف حركة الخلفية وأمثلة الكتابة",
+    play: "تشغيل حركة الخلفية وأمثلة الكتابة",
   },
   wall: {
     title: "أو ابدأ من أحد أنماط العلب",

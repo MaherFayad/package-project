@@ -34,6 +34,7 @@ import { PromptBar } from "./PromptBar";
 import { Marquee } from "../kit/Marquee";
 import { Faq } from "../kit/Faq";
 import { Glow } from "../kit/Glow";
+import { MotionScope } from "../kit/MotionScope";
 import { StartCarousel } from "./StartCarousel";
 import {
   ColourMock,
@@ -375,31 +376,33 @@ export function DesignerPage(d: DesignerPageData) {
           </Display>
           <p className={styles.lead}>{c.prompt.body}</p>
         </div>
-        <div className={styles.violet}>
-          <div className={styles.container}>
-            <PromptBar
-              action={pickerHref}
-              label={c.prompt.label}
-              submit={c.prompt.submit}
-              examples={c.prompt.examples}
-            />
-            <div className={styles.promptChips}>
-              {c.prompt.examples.map((ex) => (
-                <Link
-                  key={ex}
-                  href={`${pickerHref}?q=${encodeURIComponent(ex)}`}
-                  className={styles.promptChip}
-                  prefetch={false}
-                >
-                  {ex}
-                </Link>
-              ))}
+        <MotionScope pauseLabel={c.prompt.pause} playLabel={c.prompt.play}>
+          <div className={styles.violet}>
+            <div className={styles.container}>
+              <PromptBar
+                action={pickerHref}
+                label={c.prompt.label}
+                submit={c.prompt.submit}
+                examples={c.prompt.examples}
+              />
+              <div className={styles.promptChips}>
+                {c.prompt.examples.map((ex) => (
+                  <Link
+                    key={ex}
+                    href={`${pickerHref}?q=${encodeURIComponent(ex)}`}
+                    className={styles.promptChip}
+                    prefetch={false}
+                  >
+                    {ex}
+                  </Link>
+                ))}
+              </div>
+              <p className={styles.promptNote}>
+                {fill(c.prompt.note, { models: d.modelCount })}
+              </p>
             </div>
-            <p className={styles.promptNote}>
-              {fill(c.prompt.note, { models: d.modelCount })}
-            </p>
           </div>
-        </div>
+        </MotionScope>
       </Sheet>
 
       {/* ───────── 3. Style wall ───────── */}

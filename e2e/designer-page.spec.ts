@@ -158,3 +158,20 @@ test("sitemap lists the designer page in both languages", async ({ request }) =>
   expect(xml).toMatch(/\/ar\/designer</);
   expect(xml).toMatch(/\/en\/designer</);
 });
+
+test("violet band: its pause button stops the spin and the typing examples (R6-AX-15, WCAG 2.2.2)", async ({ page }) => {
+  await page.goto("/en/designer");
+  await page.waitForLoadState("networkidle");
+  const pause = page.getByRole("button", { name: "Pause the moving background and typing examples" });
+  await pause.scrollIntoViewIfNeeded();
+  const band = page.locator('[class*="designer-page_violet"]').first();
+  const spin = () => band.evaluate((el) => getComputedStyle(el, "::before").animationPlayState);
+  expect(await spin()).toBe("running");
+  await pause.click();
+  await expect(page.getByRole("button", { name: "Play the moving background and typing examples" })).toBeVisible();
+  expect(await spin()).toBe("paused");
+  const input = page.getByRole("searchbox", { name: "What are you packing?" });
+  const before = await input.getAttribute("placeholder");
+  await page.waitForTimeout(1200);
+  expect(await input.getAttribute("placeholder")).toBe(before);
+});
