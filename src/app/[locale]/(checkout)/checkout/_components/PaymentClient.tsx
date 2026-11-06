@@ -188,7 +188,8 @@ export function PaymentClient(props: {
             <TextField label={t("payment.card.expiry")} autoComplete="cc-exp" inputMode="numeric" dir="ltr" placeholder="MM/YY" value={card.expiry} onChange={(v) => setCard((c) => ({ ...c, expiry: formatExpiry(v, c.expiry) }))} maxLength={5} />
             <TextField label={t("payment.card.cvc")} autoComplete="cc-csc" inputMode="numeric" dir="ltr" value={card.cvc} onChange={(v) => setCard((c) => ({ ...c, cvc: v }))} maxLength={4} />
           </div>
-          <TextField label={t("payment.card.name")} autoComplete="cc-name" value={card.name} onChange={(v) => setCard((c) => ({ ...c, name: v }))} />
+          {/* R7-03: not required by the gateway; say so like every other optional field. */}
+          <TextField label={t("payment.card.name")} autoComplete="cc-name" value={card.name} onChange={(v) => setCard((c) => ({ ...c, name: v }))} optional />
           <Button variant="primary" size="large" fullWidth submit>
             <PayLabel busy={busy} label={t("payment.pay", { amount })} busyLabel={t("buyer.paying")} />
           </Button>

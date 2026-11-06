@@ -521,6 +521,14 @@ export const checkoutAr: Pick<Dictionary, "checkout" | "payment" | "orders" | "s
       action: "طلباتي",
     },
     copy: { address: "نسخ العنوان", reference: "نسخ الملاحظة", done: "تم النسخ" },
+    refund: {
+      event: "إلغاء الطلب واسترداد المبلغ",
+      unknownEvent: "تحديث الطلب",
+      line: "المبلغ المسترد",
+      receiptTitle: "تم استرداد مبلغ هذا الطلب",
+      receiptBody: "أعدنا {amount} إلى {method} في {date}.",
+      receiptBodyNote: "أعدنا {amount} إلى {method} في {date}. يلغي إشعار الدائن {note} هذا الإيصال.",
+    },
     qtyRange: "من {min} إلى {max}",
     qty: {
       invalid: "أدخل عددا صحيحا من العلب. فوق {max:box} نحسب السعر يدويا.",

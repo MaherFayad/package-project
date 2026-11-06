@@ -519,6 +519,14 @@ export const checkoutEn = {
       action: "My orders",
     },
     copy: { address: "Copy address", reference: "Copy note", done: "Copied" },
+    refund: {
+      event: "Order cancelled and refunded",
+      unknownEvent: "Order updated",
+      line: "Refunded",
+      receiptTitle: "This order was refunded",
+      receiptBody: "{amount} went back to your {method} on {date}.",
+      receiptBodyNote: "{amount} went back to your {method} on {date}. Credit note {note} cancels this receipt.",
+    },
     qtyRange: "{min} to {max}",
     qty: {
       invalid: "Enter a whole number of boxes. Above {max:box} we price by hand.",

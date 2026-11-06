@@ -62,7 +62,7 @@ const NOTE_KEYS: Record<string, DictKey> = {
 };
 
 /** Timeline entry text for an event; internal codes are hidden from buyers. */
-function eventText(t: TFunction, type: ProductionEventType, note: string | null, internal: boolean): { content: string; detail?: string } | null {
+function eventText(t: TFunction, type: ProductionEventType, note: string | null, internal: boolean, refunded = false): { content: string; detail?: string } | null {
   const code = note?.match(/^([A-Z_]+)(?::(.*))?$/);
   if (type === "NOTE") {
     if (code && NOTE_KEYS[code[1]]) {
@@ -74,13 +74,19 @@ function eventText(t: TFunction, type: ProductionEventType, note: string | null,
     // Elba team can see notes"), so buyers never see them (they could also carry contact details).
     return note && internal ? { content: t("orders.detail.events.NOTE"), detail: note } : null;
   }
-  const content = t(`orders.detail.events.${type}` as DictKey);
+  // R7-01: a refund closes the order with a CANCELLED event; say "cancelled and refunded" there.
+  const key = (refunded && type === "CANCELLED" ? "buyer.refund.event" : `orders.detail.events.${type}`) as DictKey;
+  // Unknown event types (written by a newer service) show a neutral label, never the raw key.
+  const content = t(key) === key ? t("buyer.refund.unknownEvent") : t(key);
   if (!note) return { content };
   if (type === "PAYMENT_CONFIRMED") return { content, detail: t(`paymentMethods.${note as PaymentMethod}` as DictKey) };
   if (type === "ORDER_PLACED" && code?.[1] === "REORDER") return { content, detail: t("orders.detail.notes.REORDER", { number: code[2] ?? "" }) };
   // B-04: proof approved with red print-check issues ("PREFLIGHT:1E/0W:ACK", written by the service).
   if (type === "PROOF_APPROVED" && code?.[1] === "PREFLIGHT" && note!.endsWith(":ACK")) return { content, detail: t("orders.detail.notes.PREFLIGHT_OVERRIDE") };
-  if (code && !internal && type !== "SHIPPED") return { content };
+  // R7-02: buyers never see free text on an event. Vendors and staff write these notes through the
+  // status API (a decline reason, a QC remark) and they can carry contact details or internal
+  // wording (managed marketplace, B-08). Only the courier's tracking number on SHIPPED is shown.
+  if (!internal && type !== "SHIPPED") return { content };
   return { content, detail: note };
 }
 
@@ -88,7 +94,7 @@ function timelineGroups(order: OrderDetail, t: TFunction, locale: Locale, intern
   const groups = new Map<string, TimelineGroup>();
   const today = formatDate(new Date(), locale);
   for (const e of [...order.productionEvents].reverse()) {
-    const text = eventText(t, e.type as ProductionEventType, e.note, internal);
+    const text = eventText(t, e.type as ProductionEventType, e.note, internal, order.status === "REFUNDED");
     if (!text) continue;
     const day = formatDate(e.createdAt, locale);
     const g = groups.get(day) ?? { title: day === today ? t("orders.detail.today") : day, events: [] };
@@ -138,6 +144,9 @@ export default async function OrderPage({ params, searchParams }: { params: Para
   const vendorName = pick(locale, order.vendor.nameAr, order.vendor.nameEn);
   const paidSum = order.payments.filter((p) => p.status === "PAID").reduce((s, p) => s + p.amountPiasters, 0);
   const paidMethod = order.payments.find((p) => p.status === "PAID")?.method as PaymentMethod | undefined;
+  // R7-01: money returned on a refunded order is shown, with the method it went back to.
+  const refundedSum = order.payments.filter((p) => p.status === "REFUNDED").reduce((s, p) => s + p.amountPiasters, 0);
+  const refundedMethod = order.payments.find((p) => p.status === "REFUNDED")?.method as PaymentMethod | undefined;
   const invoice = order.invoices.find((i) => i.kind === "SALE");
   const proof = order.items[0]?.proof ?? null;
   const myReview = order.reviews.find((r) => r.authorId === user.id);
@@ -332,6 +341,17 @@ export default async function OrderPage({ params, searchParams }: { params: Para
                       </div>
                     </dl>
                   </Inset>
+                  {refundedSum > 0 ? (
+                    <Inset>
+                      <div className={styles.line}>
+                        <Text as="span">
+                          {t("buyer.refund.line")}
+                          {refundedMethod ? ` · ${t(`paymentMethods.${refundedMethod}` as DictKey)}` : ""}
+                        </Text>
+                        <PriceTag alwaysDecimals amount={refundedSum} locale={locale} tone="success" />
+                      </div>
+                    </Inset>
+                  ) : null}
                   {paidSum > 0 || !terminal ? (
                   <Inset>
                     <div className={styles.line}>
