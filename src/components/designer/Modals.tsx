@@ -24,6 +24,7 @@ import {
 } from "@/components/ui";
 import { BADGE_QTY, fetchQuote, quoteKey, type PriceState } from "./lib/quote";
 import styles from "./designer.module.css";
+import lib from "./library.module.css";
 
 export type GateReason = "price" | "save" | "export" | "share" | "order";
 
@@ -73,7 +74,10 @@ export function PriceBadge({ state, onClick }: { state: PriceState; onClick: () 
       <span className={styles.priceBadgeIcon} aria-hidden="true">
         {state.status === "loading" ? <Spinner size="small" /> : state.status === "ready" ? <Tag size={16} /> : <Lock size={16} />}
       </span>
-      <span className={styles.priceBadgeText}>{label}</span>
+      {/* Re-keyed on every new price so the number ticks in (CSS; off under reduced motion). */}
+      <span key={label} className={`${styles.priceBadgeText} ${state.status === "ready" ? lib.priceTick : ""}`}>
+        {label}
+      </span>
     </button>
   );
 }
