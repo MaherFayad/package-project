@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ar } from "@/i18n/ar";
 import { en } from "@/i18n/en";
+import { STRUCTURE_CODES } from "@/types/structure";
 
 /** Copy rules for every user-facing string (docs/audit/platform-glossary.md, docs/audit/copy.md). */
 function flat(o: unknown, p = "", out: Record<string, string> = {}): Record<string, string> {
@@ -61,5 +62,12 @@ describe("ar/en dictionaries", () => {
 
   it("English uses curly quotes, not ASCII double quotes", () => {
     expect(offenders(/"/, EN)).toEqual([]);
+  });
+
+  it("every box style has an SEO keyword and use line (page titles read them; a gap shows the raw key)", () => {
+    const boxes = STRUCTURE_CODES.filter((c) => !["ROLL_LABEL", "PRINTED_POUCH", "PRINTED_TUBE"].includes(c));
+    for (const dict of [AR, EN]) {
+      expect(boxes.filter((c) => !dict[`store.seo.keyword.${c}`] || !dict[`store.seo.use.${c}`])).toEqual([]);
+    }
   });
 });

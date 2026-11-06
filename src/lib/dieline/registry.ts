@@ -167,7 +167,7 @@ const ENTRIES: Record<StructureCode, Entry> = {
   ECMA_CLB: {
     slug: "crash-lock-carton",
     standard: "ECMA A60.20",
-    name: { ar: "علبة كرتون بقاع أوتوماتيكي", en: "Crash-lock bottom carton" },
+    name: { ar: "علبة دوبلكس بقاع أوتوماتيكي", en: "Crash-lock bottom carton" },
     description: {
       ar: "علبة دوبلكس بقاع ملصوق مسبقا ينفتح ويقفل بضغطة واحدة ولسان علوي، تتحمل الزجاجات والبرطمانات الثقيلة.",
       en: "SBS carton with a pre-glued crash-lock bottom that pops open in one move and a tuck top; holds heavier bottles and jars.",
@@ -186,7 +186,7 @@ const ENTRIES: Record<StructureCode, Entry> = {
   ECMA_SLB: {
     slug: "snap-lock-carton",
     standard: "ECMA A55.20",
-    name: { ar: "علبة كرتون بقاع مقفل 1-2-3", en: "Snap-lock bottom carton (1-2-3)" },
+    name: { ar: "علبة دوبلكس بقاع مقفل 1-2-3", en: "Snap-lock bottom carton (1-2-3)" },
     description: {
       ar: "علبة دوبلكس بقاع يقفل يدويا في ثلاث خطوات دون لصق ولسان علوي، أوفر من القاع الأوتوماتيكي للكميات الصغيرة.",
       en: "SBS carton with a 1-2-3 snap-lock bottom folded by hand (no glue) and a tuck top; cheaper than crash-lock for short runs.",

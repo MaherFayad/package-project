@@ -92,7 +92,7 @@ const FAMILIES: AvailabilityEntry[] = [
   },
   {
     slug: "rigid-box",
-    name: { ar: "علب مقواة فاخرة", en: "Rigid set-up boxes" },
+    name: { ar: "علب صلبة فاخرة", en: "Rigid set-up boxes" },
     standards: ["Lid and base, book, magnetic, drawer"],
     egypt: "local",
     egyptPrintMethods: ["offset-sheetfed", "digital-toner", "hot-foil", "screen"],
