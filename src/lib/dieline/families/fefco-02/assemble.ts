@@ -7,6 +7,7 @@ import { bboxOf, coveredFraction, edgesOf, insetRect, offsetConvex, polygonArea,
 import { DielineValidationError, dimsSchema, thicknessSchema, type DimsIssue, type DimsIssueCode } from "../../limits";
 import type { FeatureSupport } from "../../features";
 import type { DielineOptions, DielinePanel, DielinePiece, FilmPatch, Polygon, Pt, Segment } from "../../types";
+import { trimFaces } from "./kit";
 import type { Fefco02Code, Fefco02Definition, Fefco02Model, Fefco02Params } from "./types";
 
 export const DEFAULT_BLEED_MM = 3;
@@ -130,7 +131,9 @@ function assemble(
     });
 
   const computed = computeFaces({ panels, rootId: draft.builder.rootId, thicknessMm: t, closedRotation: draft.closedRotation }, draft.faceDepthTol);
-  const faces = draft.faces ? draft.faces(panels, computed.faces) : computed.faces;
+  // Faces cropped to the panels that carry them (a roof or handle above the walls would
+  // otherwise leave empty space at the top of the wall faces).
+  const faces = trimFaces(draft.faces ? draft.faces(panels, computed.faces) : computed.faces);
   const facePanelIds = new Set(Object.values(faces).flatMap((f) => f!.parts.map((x) => x.panelId)));
   const safeZones = draft.safeZones
     ? draft.safeZones(panels, safe)

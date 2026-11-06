@@ -6,6 +6,7 @@ import { computeFaces } from "../../fold";
 import { bboxOf, coveredFraction, edgesOf, insetRect, offsetConvex, polygonArea, segLength, subtractSegments } from "../../geometry";
 import { DielineValidationError, thicknessSchema, type DimsIssue } from "../../limits";
 import type { DielineOptions, DielinePanel, DielinePiece, FilmPatch, Polygon, Pt, Segment } from "../../types";
+import { trimFaces } from "../fefco-02/kit";
 import type { FamilyDielineModel, FamilyStructureDef } from "./types";
 
 /**
@@ -120,7 +121,9 @@ function buildFamilyDieline(def: FamilyStructureDef, dims: Dims, options: Dielin
 
   const draftModel = { panels, rootId: draft.builder.rootId, thicknessMm: t, closedRotation: draft.closedRotation };
   const computed = computeFaces(draftModel, draft.faceDepthTol);
-  const faces = draft.faces ? draft.faces(panels, computed.faces) : computed.faces;
+  // Faces cropped to the panels that carry them: an octagon's flat side, a tray floor smaller
+  // than the lid over it. Artwork centred on a face then lands on the panel.
+  const faces = trimFaces(draft.faces ? draft.faces(panels, computed.faces) : computed.faces);
   const facePanelIds = new Set(Object.values(faces).flatMap((f) => f!.parts.map((x) => x.panelId)));
   const safeZones = draft.safeZones
     ? draft.safeZones(panels, safe)

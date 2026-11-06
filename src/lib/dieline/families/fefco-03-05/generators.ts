@@ -1,8 +1,11 @@
 import { Box3, Vector3 } from "three";
-import type { Dims, StructureFeatures } from "@/types";
+import type { Dims, FaceId, StructureFeatures } from "@/types";
 import { DielineBuilder, rectEdges } from "../../builder";
 import { clamp, pt, rectPolygon } from "../../geometry";
+import { FACE_FRAMES, computePoses, panelLocalPoint, panelPivot } from "../../fold";
+import type { Affine, DielinePanel, FaceInfo, Pt } from "../../types";
 import { telescope, type StructureDraft } from "../../structures";
+import { deepEnds } from "../fefco-02/kit";
 import {
   IDENTITY_Q,
   ORIENT,
@@ -18,6 +21,7 @@ import {
   rectTube,
   subtreeBounds,
   tray,
+  trayLayers,
   tube,
   type Corners,
   type EndFlaps,
@@ -59,7 +63,9 @@ export function trayAndLid(dims: Dims, t: number, f: StructureFeatures, base: Tr
   const lidH = lidDepthOf(f, lidDefault, dims.H);
   const lt = tray(b, t, { prefix: "lid_", L: s.x + 2 * clear, W: s.z + 2 * clear, H: lidH, mode: "lid", ...lid, mount: { kind: "piece", label: "Lid" }, origin: nextOrigin(b, 20) });
   placePiece(b, lt.rootId, t, ORIENT.ceiling(), alignOn(box, { top: box.max.y + t }), maxStageOf(b) + 1, dims.H * 1.4);
-  return { builder: b, closedRotation, faceDepthTol: clear + 3 * t + 0.5 };
+  // Lid layers over the base: up to 3 wall layers, plus 2 for a second pair of outside
+  // gussets when the two on one wall overlap (0303 / 0304 with H > half the wall).
+  return { builder: b, closedRotation, faceDepthTol: clear + 5 * t + 0.5 };
 }
 
 const flapsEnd: Corners = { kind: "flaps", on: "end" };
@@ -148,7 +154,8 @@ export function fefco0321(dims: Dims, t: number, f: StructureFeatures): Structur
   const lidH = lidDepthOf(f, dims.H, dims.H);
   const lid = slottedBody(b, t, { prefix: "lid_", L: s.x + 2 * clear, W: s.z + 2 * clear, H: lidH, top: true, bottom: false, kind: "envelope", mount: { kind: "piece", label: "Lid" }, origin: nextOrigin(b, 20) });
   placePiece(b, lid.rootId, t, ORIENT.upright(), alignOn(box, { top: box.max.y + 2 * t }), maxStageOf(b) + 1, dims.H * 1.4);
-  return { builder: b, closedRotation: IDENTITY_Q, faceDepthTol: clear + t + 0.5 };
+  // The minor envelope flaps show in the corners between the tapered majors: print them too.
+  return { builder: b, closedRotation: IDENTITY_Q, faceDepthTol: clear + t + 0.5, faces: deepEnds({ b, t }, ["top", "bottom"], 0) };
 }
 
 /* ───────────────────────── Bodies with caps (0310, 0312, 0313, 0314, 0325) ───────────────────────── */
@@ -186,7 +193,10 @@ function addCaps(b: DielineBuilder, t: number, dims: Dims, f: StructureFeatures,
     const y = spec.internal ? (end === "top" ? { top: box.max.y } : { bottom: box.min.y }) : end === "top" ? { top: box.max.y + t } : { bottom: box.min.y - t };
     placePiece(b, cap.rootId, t, end === "top" ? ORIENT.ceiling() : ORIENT.floor(), alignOn(box, y), maxStageOf(b) + 1, dims.H * 1.3);
   }
-  return { faceDepthTol: clear + 2 * t + 0.5 };
+  // Cap walls stand clear of the body by the clearance plus their own layers (rolled walls
+  // and trapped ears on 0314): count them all so the body walls between the caps stay printed.
+  const lay = trayLayers(spec.style);
+  return { faceDepthTol: clear + (Math.max(2, Math.max(lay.end, lay.long) + 1)) * t + 0.5 };
 }
 
 /** 0310: open sleeve (0501) with a cap over each end (three blanks). */
@@ -247,7 +257,11 @@ function octBody(b: DielineBuilder, t: number, dims: Dims, regular: boolean, bot
   const w = Wp - 2 * k;
   const c = k * Math.SQRT2;
   const Hp = dims.H + (bottomFlaps ? 2 * t : 0);
-  const flaps: EndFlaps | undefined = bottomFlaps ? { kind: "slotted", depthMajor: Wp / 2, depthMinor: Math.min(Wp * 0.3, c), majors: [0, 4] } : undefined;
+  // Neighbouring minor flaps overlap toward the centre: the corner flaps go in first, one
+  // caliper inside the side flaps, so no two flaps share a plane (they z-fought before).
+  const flaps: EndFlaps | undefined = bottomFlaps
+    ? { kind: "slotted", depthMajor: Wp / 2, depthMinor: Math.min(Wp * 0.3, c), majors: [0, 4], minorStack: { 1: -2, 3: -2, 5: -2, 7: -2 }, stages: { 1: 1, 3: 1, 5: 1, 7: 1, 2: 2, 6: 2, 0: 3, 4: 3 } }
+    : undefined;
   tube(b, t, {
     prefix: "",
     widths: [a, c, w, c, a, c, w, c],
@@ -285,8 +299,89 @@ function octabin(dims: Dims, t: number, f: StructureFeatures, regular: boolean, 
     });
     placePiece(b, cap.rootId, t, end === "top" ? ORIENT.ceiling() : ORIENT.floor(), alignOn(box, end === "top" ? { top: box.max.y + t } : { bottom: box.min.y - t }), maxStageOf(b) + 1, dims.H * 0.8);
   }
-  return { builder: b, closedRotation: IDENTITY_Q, faceDepthTol: clear + 2 * t + 0.5 };
+  return { builder: b, closedRotation: IDENTITY_Q, faceDepthTol: clear + 2 * t + 0.5, faces: octFaces(t) };
 }
+
+/**
+ * Octabin side faces unrolled round the corners: each face is its flat side panel plus the
+ * near half of both corner panels, so artwork wraps the 45° chamfers continuously instead of
+ * leaving the corner panels bare. Body: drawn upright side by side on the sheet (p0 front …
+ * p7 corner, joint on p0's left), so each corner half is a translation of the side panel's
+ * own mapping (p(i+1) continues to its right on the sheet; p(i−1) is the previous panel in
+ * the chain, for the front p7 at the far end). Cap rims: the corner rim walls are cut apart
+ * from the straight ones on the sheet, so their halves are unrolled in 3D about the vertical
+ * edge they share with the straight rim wall.
+ */
+const octFaces = (t: number) => (panels: DielinePanel[], computed: Partial<Record<FaceId, FaceInfo>>) => {
+  const out = { ...computed };
+  const byId = new Map(panels.map((p) => [p.id, p]));
+  const poses = computePoses({ panels, rootId: "p0", thicknessMm: t, closedRotation: IDENTITY_Q }, 1);
+  const world = (panel: DielinePanel, q: Pt) => panelLocalPoint(panel, q, 0, panelPivot(panel, t), t).applyMatrix4(poses.get(panel.id)!.world);
+  const sides: [FaceId, number][] = [["front", 0], ["right", 2], ["back", 4], ["left", 6]];
+  for (const [id, i] of sides) {
+    const face = out[id];
+    if (!face) continue;
+    const parts = [...face.parts];
+    const side = byId.get(`p${i}`);
+    const own = face.parts.find((p) => p.panelId === side?.id);
+    const next = byId.get(`p${i + 1}`);
+    const prev = byId.get(`p${(i + 7) % 8}`);
+    if (side && own && next && prev) {
+      const [m0, m1, m2, m3, e, f] = own.transform;
+      const sx = m0 * own.rect.x + m2 * own.rect.y + e;
+      const half = next.bbox.width / 2;
+      parts.push({ panelId: next.id, rect: { x: own.rect.x + own.rect.width, y: own.rect.y, width: half, height: own.rect.height }, transform: own.transform });
+      const shift = prev.bbox.x + prev.bbox.width - sx;
+      parts.push({ panelId: prev.id, rect: { x: own.rect.x - half, y: own.rect.y, width: half, height: own.rect.height }, transform: [m0, m1, m2, m3, e + shift, f] });
+    }
+    // Cap rims: unroll each corner rim wall about its shared edge with the straight rim wall.
+    const { r, d } = FACE_FRAMES[id];
+    for (const part of face.parts) {
+      const m = /^(topCap_|bottomCap_)wall(\d)$/.exec(part.panelId);
+      if (!m) continue;
+      const wall = byId.get(part.panelId)!;
+      const k = Number(m[2]);
+      // Anchor: a face point and its world position on the straight rim wall.
+      const u0 = part.rect.x + part.rect.width / 2;
+      const v0 = part.rect.y + part.rect.height / 2;
+      const [a0, b0, c0, d0, e0, f0] = part.transform;
+      const w0 = world(wall, { x: a0 * u0 + c0 * v0 + e0, y: b0 * u0 + d0 * v0 + f0 });
+      const wallPts = wall.polygon.map((q) => world(wall, q));
+      for (const nb of [(k + 1) % 8, (k + 7) % 8]) {
+        const corner = byId.get(`${m[1]}wall${nb}`);
+        if (!corner) continue;
+        const pts = corner.polygon.map((q) => world(corner, q));
+        const cc = pts.reduce((acc, q) => acc.add(q), new Vector3()).multiplyScalar(1 / pts.length);
+        const s = Math.sign(cc.clone().sub(w0).dot(r)) || 1;
+        // Shared vertical edge: the straight wall's extreme toward the corner wall.
+        const edge = wallPts.reduce((best, q) => (s * q.dot(r) > s * best.dot(r) ? q : best));
+        const nrm = new Vector3(0, 0, 1).transformDirection(poses.get(corner.id)!.world);
+        const g = cc.clone().sub(edge).setY(0);
+        g.sub(nrm.clone().multiplyScalar(g.dot(nrm))).normalize();
+        const uE = u0 + edge.clone().sub(w0).dot(r);
+        const toFace = (q: Pt) => {
+          const w = world(corner, q);
+          return { u: uE + s * w.clone().sub(edge).dot(g), v: v0 + w.clone().sub(w0).dot(d) };
+        };
+        const o = toFace({ x: 0, y: 0 });
+        const ex = toFace({ x: 1, y: 0 });
+        const ey = toFace({ x: 0, y: 1 });
+        const [p00, p10, p01, p11] = [ex.u - o.u, ex.v - o.v, ey.u - o.u, ey.v - o.v];
+        const det = p00 * p11 - p01 * p10;
+        if (Math.abs(det) < 1e-9) continue;
+        const [i00, i01, i10, i11] = [p11 / det, -p01 / det, -p10 / det, p00 / det];
+        const transform: Affine = [i00, i10, i01, i11, -(i00 * o.u + i01 * o.v), -(i10 * o.u + i11 * o.v)];
+        const uv = corner.polygon.map(toFace);
+        const halfW = (Math.max(...uv.map((q) => q.u)) - Math.min(...uv.map((q) => q.u))) / 2;
+        const vMin = Math.min(...uv.map((q) => q.v));
+        const vMax = Math.max(...uv.map((q) => q.v));
+        parts.push({ panelId: corner.id, rect: { x: s > 0 ? uE : uE - halfW, y: vMin, width: halfW, height: vMax - vMin }, transform });
+      }
+    }
+    out[id] = { ...face, parts };
+  }
+  return out;
+};
 
 /** 0350: octagonal body with integral bottom flaps and a cap lid. */
 export const fefco0350 = (d: Dims, t: number, f: StructureFeatures) => octabin(d, t, f, true, true);

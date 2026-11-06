@@ -98,7 +98,9 @@ describe.each(DEFINITIONS.map((d) => [d.code, d] as const))("%s geometry", (_cod
     else expect(o.H).toBeCloseTo(dims.H + layers * t, 2);
 
     for (const face of ["front", "back", "left", "right"] as const) expect(m.faces[face], face).toBeDefined();
-    expect(m.faces.front!.width).toBeCloseTo(o.L, 1);
+    // The front face is exactly the front wall (faces are cropped to the panels that carry them).
+    expect(m.faces.front!.width).toBeCloseTo(byId(m, "front").bbox.width, 1);
+    expect(m.faces.front!.width).toBeLessThanOrEqual(o.L + tol);
     expect(m.metrics.blankAreaM2).toBeGreaterThan(m.metrics.netAreaM2);
     expect(m.metrics.cutLengthMm).toBeGreaterThan(0);
     expect(m.metrics.creaseLengthMm).toBeGreaterThan(0);
@@ -194,7 +196,12 @@ describe("FEFCO 02 flap geometry per the Code drawings", () => {
   it("0207 / 0208 / 0229: integral division panels", () => {
     expect(build("FEFCO_0207", { L: 255, W: 170, H: 300 }).panels.filter((p) => p.role === "inner")).toHaveLength(4);
     expect(build("FEFCO_0208", { L: 300, W: 200, H: 200 }).panels.filter((p) => p.role === "inner")).toHaveLength(12);
-    expect(build("FEFCO_0229", d).panels.filter((p) => p.role === "inner")).toHaveLength(8);
+    // 0229: the two L-panel bottom flaps fold in and stand up as lengthwise divisions; the
+    // B-panel bottom flaps meet under them, so the bottom is closed.
+    const m29 = build("FEFCO_0229", d);
+    expect(m29.panels.filter((p) => p.role === "inner")).toHaveLength(2);
+    expect(depth(m29, "bottomFlap_left")).toBeCloseTo(Lp / 2 - t, 6);
+    expect(m29.faces.bottom!.parts.reduce((s, p) => s + p.rect.width * p.rect.height, 0)).toBeGreaterThan(0.97 * m29.faces.bottom!.width * m29.faces.bottom!.height);
   });
 
   it("0209: top frame flaps of depth h", () => {

@@ -1,7 +1,9 @@
+import type { FaceId } from "@/types";
 import { DielineBuilder, insetSeg, rectEdges, type FlapShape, type PanelOpts } from "../../builder";
 import { stadium } from "../../features";
-import { clamp, pt, rectPolygon } from "../../geometry";
-import type { DielinePanel, PanelRole, Polygon, Pt, Rect } from "../../types";
+import { composeAffine, computeFaces } from "../../fold";
+import { bboxOf, clamp, pt, rectPolygon } from "../../geometry";
+import type { DielinePanel, FaceInfo, PanelRole, Polygon, Pt, Rect } from "../../types";
 
 /**
  * Construction kit for FEFCO group 02 slotted-type boxes.
@@ -57,7 +59,9 @@ export function standardTube(Lp: number, Wp: number, Hp: number, t: number, opts
   b.attach("back", "back", "right", rectEdges(walls.right).right, Lp, { kind: "rect" }, { stage: 0, label: "Back" });
   b.attach("left", "left", "back", rectEdges(walls.back).right, Wp, { kind: "rect" }, { stage: 0, label: "Left side" });
   if (opts.joint !== false) {
-    b.attach("glue", "glue", "front", rectEdges(walls.front).left, j, { kind: "trapezoid", taperA: j * 0.25, taperB: j * 0.25 }, {
+    // The joint stops 2t + 1 short of each end crease: overlapped minor flaps sit up to two
+    // calipers inside the wall top, and would otherwise fold down into the glued joint.
+    b.attach("glue", "glue", "front", insetSeg(rectEdges(walls.front).left, 2 * t + 1), j, { kind: "trapezoid", taperA: Math.max(j * 0.25, 3 * t), taperB: Math.max(j * 0.25, 3 * t) }, {
       stage: 0,
       stack: -1,
       label: "Manufacturer's joint",
@@ -238,3 +242,93 @@ export function slit(cx: number, cy: number, w: number, h = 3): Polygon {
 }
 
 export { pt };
+
+/* ───────────── face mapping helpers ───────────── */
+
+export type Faces = Partial<Record<FaceId, FaceInfo>>;
+export type FacesFn = (panels: DielinePanel[], computed: Faces) => Faces;
+
+const IDENTITY_Q: [number, number, number, number] = [0, 0, 0, 1];
+
+/**
+ * Re-detect the `ends` faces counting flaps that sit a few calipers under the outermost one:
+ * the inner major of an overlap closure, the inner flap round a tuck tongue, snap-lock flaps 2
+ * and 1, a frame's minor flaps, the corners between envelope flaps. The fold engine leaves
+ * every stacked (`stackOffset < 0`) panel out of the faces, so those visible strips showed
+ * bare board next to the printed flap. Stacking is mesh-only (it never changes the face↔sheet
+ * mapping), so the faces are re-detected with it zeroed. Glue flaps never join a face.
+ */
+export function deepEnds(
+  c: { b: Pick<DielineBuilder, "rootId">; t: number },
+  ends: FaceId[],
+  layers = 0,
+  closedRotation: [number, number, number, number] = IDENTITY_Q,
+): FacesFn {
+  return (panels, computed) => {
+    const flat = panels.filter((p) => p.role !== "glue").map((p) => (p.stackOffset < 0 ? { ...p, stackOffset: 0 } : p));
+    const deep = computeFaces({ panels: flat, rootId: c.b.rootId, thicknessMm: c.t, closedRotation }, layers * c.t + 0.5).faces;
+    const out = { ...computed };
+    for (const e of ends) if (deep[e]) out[e] = deep[e];
+    return out;
+  };
+}
+
+/**
+ * A wall face continued over the panels drawn above / below it on the sheet (a sloped roof,
+ * a carry handle, a bevelled flap). Group 02 sheets are drawn from the printed outside with
+ * every wall upright, so the face is a plain translation of the sheet: artwork flows from the
+ * wall over the fold onto the roof with no seam, the way the press sheet is designed.
+ */
+export function stripFace(face: FaceId, panels: DielinePanel[], ids: string[]): FaceInfo | undefined {
+  const list = ids.map((id) => panels.find((p) => p.id === id)).filter((p): p is DielinePanel => !!p);
+  if (!list.length) return undefined;
+  const box = bboxOf(list.flatMap((p) => p.polygon));
+  return {
+    face,
+    width: box.width,
+    height: box.height,
+    parts: list.map((p) => ({
+      panelId: p.id,
+      rect: { x: p.bbox.x - box.x, y: p.bbox.y - box.y, width: p.bbox.width, height: p.bbox.height },
+      transform: [1, 0, 0, 1, box.x, box.y],
+    })),
+  };
+}
+
+/** Chain face post-processors left to right. */
+export const composeFaces =
+  (...fns: FacesFn[]): FacesFn =>
+  (panels, computed) =>
+    fns.reduce((acc, fn) => fn(panels, acc), computed);
+
+/**
+ * Crop every face to the area its panels actually cover. The fold engine sizes faces to the
+ * closed bounding box; when a roof, handle or bevelled flap rises above the walls, the wall
+ * faces would otherwise reserve empty space on top, and artwork centred on the face would sit
+ * half off the wall.
+ */
+export function trimFaces(faces: Faces): Faces {
+  const out: Faces = {};
+  for (const [id, f] of Object.entries(faces) as [FaceId, FaceInfo | undefined][]) {
+    if (!f || !f.parts.length) continue;
+    const x0 = Math.min(...f.parts.map((p) => p.rect.x));
+    const y0 = Math.min(...f.parts.map((p) => p.rect.y));
+    const x1 = Math.max(...f.parts.map((p) => p.rect.x + p.rect.width));
+    const y1 = Math.max(...f.parts.map((p) => p.rect.y + p.rect.height));
+    if (x0 < 0.25 && y0 < 0.25 && f.width - x1 < 0.25 && f.height - y1 < 0.25) {
+      out[id] = f;
+      continue;
+    }
+    out[id] = {
+      face: f.face,
+      width: x1 - x0,
+      height: y1 - y0,
+      parts: f.parts.map((p) => ({
+        panelId: p.panelId,
+        rect: { ...p.rect, x: p.rect.x - x0, y: p.rect.y - y0 },
+        transform: composeAffine(p.transform, [1, 0, 0, 1, x0, y0]),
+      })),
+    };
+  }
+  return out;
+}
