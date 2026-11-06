@@ -4,7 +4,10 @@ import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } fr
 import type { ImageCrop } from "@/types";
 import { useI18n } from "@/i18n/client";
 import { formatNumber } from "@/lib/format";
-import { BlockStack, Button, ButtonGroup, InlineGrid, Modal, Text } from "@/components/ui";
+import { BlockStack, InlineGrid } from "@/components/ui/Stack";
+import { Button, ButtonGroup } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
+import { Text } from "@/components/ui/Text";
 import { NumberField } from "./fields";
 import styles from "./designer.module.css";
 
