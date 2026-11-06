@@ -301,3 +301,18 @@ for (const locale of ["ar", "en"] as const) {
     expect(dup(links.map((l) => l.name)), "duplicate footer link names").toEqual([]);
   });
 }
+
+test('Sheet tone="dark-2": raised dark that overlaps a dark band instead of collapsing', async ({ page }) => {
+  await page.goto("/en/dev/kit");
+  const band = page.locator('section[data-tone="dark-2"]').first();
+  const r = await band.evaluate((el) => {
+    const cs = getComputedStyle(el);
+    const prev = el.previousElementSibling as HTMLElement;
+    return { bg: cs.backgroundColor, mt: parseFloat(cs.marginTop), radius: parseFloat(cs.borderTopLeftRadius), prevTone: prev?.dataset.tone, color: cs.color };
+  });
+  expect(r.prevTone).toBe("dark");
+  expect(r.bg).toBe("rgb(20, 26, 26)");
+  expect(r.mt).toBeLessThan(0);
+  expect(r.radius).toBeGreaterThan(0);
+  expect(r.color).toBe("rgb(255, 255, 255)");
+});

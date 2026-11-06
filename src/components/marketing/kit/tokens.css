@@ -12,6 +12,8 @@
   --mk-bg: #02090a;                 /* page canvas (measured rgb(2,9,10)) */
   --mk-bg-2: #0a1314;               /* raised surface on dark (cards, menu panel) */
   --mk-bg-3: #141d1e;               /* hover on dark */
+  --mk-bg-raised: #141a1a;          /* raised dark band, tone="dark-2" (reference pricing rgb(20,26,26));
+                                       white 17.4:1, 70% white 8.8:1, #a1a1aa 6.9:1 on it */
   --mk-band-green: #041e18;         /* rgb(4,30,24) */
   --mk-band-green-deep: #000805;
   --mk-band-navy: #000a1e;          /* rgb(0,10,30) */
