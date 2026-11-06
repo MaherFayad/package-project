@@ -183,8 +183,10 @@ export async function saveDesign(
     const row = await db.design.findUnique({ where: { id: opts.id }, select: { ownerId: true, anonId: true, expiresAt: true, updatedAt: true } });
     if (!row) return { ok: false, status: 404, error: "NOT_FOUND" };
     if (!canWrite(row, actor, now)) {
-      // A signed-in user editing their own earlier anonymous draft from another browser: forbid.
-      return { ok: false, status: 403, error: "FORBIDDEN" };
+      // Someone else's design, or a signed-in user's own earlier anonymous draft from another
+      // browser. R6-SEC-07: answered like an unknown id (GET does the same), so ids cannot be
+      // probed; the designer saves a new copy on either answer.
+      return { ok: false, status: 404, error: "NOT_FOUND" };
     }
     const owned = !!row.ownerId;
     const patch = {
@@ -226,7 +228,7 @@ export async function saveDesign(
 export async function shareDesign(id: string, user: SessionUser): Promise<{ ok: true; token: string; created: boolean } | { ok: false; status: 403 | 404 }> {
   const row = await db.design.findUnique({ where: { id }, select: { ownerId: true, shareToken: true, updatedAt: true } });
   if (!row) return { ok: false, status: 404 };
-  if (row.ownerId !== user.id) return { ok: false, status: 403 };
+  if (row.ownerId !== user.id) return { ok: false, status: 404 }; // R6-SEC-07: like an unknown id
   if (row.shareToken) return { ok: true, token: row.shareToken, created: false };
   const token = randomToken(12);
   // Not a content change: keep updatedAt, so an open editor's next save is not refused as stale

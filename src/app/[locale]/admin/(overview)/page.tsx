@@ -1,3 +1,4 @@
+import { requireAdminPage } from "@/lib/auth/session";
 import type { Metadata } from "next";
 import NextLink from "next/link";
 import type { ReactNode } from "react";
@@ -27,6 +28,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 }
 
 export default async function AdminOverviewPage({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ range?: string }> }) {
+  await requireAdminPage(); // R6-SEC-09: the layout redirect does not stop this page rendering
   const locale = toLocale((await params).locale);
   const t = getT(locale);
   const range = asRange((await searchParams).range);

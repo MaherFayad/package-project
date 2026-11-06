@@ -108,3 +108,112 @@ Outside that scope (each change is a few lines and additive):
 - `src/app/[locale]/dev/layout.tsx`, `src/lib/env.ts` (`devPagesEnabled`): R5-SEC-04.
 - `src/components/marketing/HeroPhoneForm.tsx`: R5-SEC-05.
 - Tests: `src/lib/__tests__/security-r5.test.ts`, `src/components/marketing/__tests__/hero-phone-privacy.test.tsx`.
+
+# Round 6
+
+Scope (integrator brief): everything added since round 5 — dispute photo uploads and their DELETE, the private `dispute/` scope, magic bytes and metadata stripping; admin Send price, the bio review queue, reprint with charge-back amounts, the on-time threshold; `/api/designs/brand-colors`; compare-and-set design saves with `force`, crop data; checkout draft restore; the SMS/WhatsApp templates with links; the shared amount parser `src/lib/money/input.ts`; the admin detail 404 layouts; rate limits on every new endpoint. Plus a re-test of every round 5 row marked fixed. Ids `R6-SEC-nn` in discovery order.
+
+Method: as round 5. Production build (`next build && next start`) on a fresh SQLite file (`ELBA_DATABASE_URL=file:./sec6.db`, `db push` and seed), `OTP_DEV_ECHO=1`, `ALLOW_MOCK_PAYMENTS=1`, `E2E_INSECURE_COOKIES=1`, random `SESSION_SECRET`. Sessions through the real OTP API (admin `…001`, buyer `…002`, Nile staff `…010`, `…020` as an unrelated buyer) and the e2e factory. Every finding was proven with a concrete request first (curl, or Playwright where a server action or the UI was needed), then fixed, then checked again on a rebuilt server.
+
+## Re-test of round 5 fixes (live, rebuilt server)
+
+| id | request | result | status |
+|---|---|---|---|
+| R5-SEC-01 | Nile staff `GET /en/orders/<ELB-26001>` and `…/invoice`; buyer the same | vendor: redirected to `/en/vendor/jobs/ELB-26001`, invoice without the address; buyer: name, address and EGP 14,250 present; vendor proof PDF 200 | holds |
+| R5-SEC-02 | erasure scrub | unit tests in `security-r5.test.ts` pass; the call is still inside the anonymisation transaction | holds |
+| R5-SEC-03 | `GET /en/account/export` | keys include `priceRequests`, `disputes`, `signedInDevices`, `payments` | holds |
+| R5-SEC-04 | `/en/dev/3d`, `/dev/ui`, `/dev/finishes` | 404, 404, 404 | holds |
+| R5-SEC-05 | hero form | no phone in the URL (unit test passes) | holds |
+| R5-SEC-06 | WhatsApp webhook cap and constant-time token | unit test passes | holds |
+| R5-SEC-07 | export with `Sec-Fetch-Site: cross-site` | 403 | holds |
+| R5-SEC-08 | `DELETE /api/designs/<id>/share` | other buyer 404, owner `{ok:true,revoked:true}`, old `/en/s/<token>` "Link not found" | holds |
+| R5-SEC-11 | verify-otp with an RLO / NUL / BEL name | stored `"Ahmed FEDCBA Admin"` | holds |
+| R5-SEC-12 | admin session aged 3 days | 307 to `/en/login?next=%2Fen%2Fadmin`; a fresh admin sign-in 200 | holds |
+
+## Pass 1 findings
+
+| id | severity | page / file | finding (with proof) | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R6-SEC-09 | critical | every page under `src/app/[locale]/admin` except the order detail | **Signed-out visitors received admin page data in the body of the login redirect.** The admin layout calls `requireRole("ADMIN")`, but Next renders a page alongside its layouts, so a page that does not check the role itself still runs its queries and its output is streamed in the 307 response. Proof: `curl http://…/en/admin/users` with no cookie → `307`, 158,815 bytes, containing `+201000000001`, `+201000000002`, `+201000000010`, `+201000000011`, `+201000000012` (every user's full phone number). With `RSC: 1`: `/en/admin/privacy` returned «منى عادل» and `+2010****0002`, `/en/admin/orders` buyer names and phones, `/en/admin/audit` admin phones and amounts, `/en/admin/users/<id>` the user's name and order totals (EGP 14,250, 24,076…). 16 of 17 admin pages had no check of their own. | ASVS V4.1.1, V4.1.3, V4.2.1, V8.3.1; Top 10 A01:2021; PDPL 151/2020 (security of processing, unauthorised disclosure) | `requireAdminPage()` (`lib/auth/session.ts`) is the first line of every admin page: a non-admin gets the not-found branch, so nothing is queried, while the layout's redirect still decides the response. A unit test walks `src/app/[locale]/admin/**/page.tsx` and fails if any page lacks the call (it fails on the old tree). e2e checks 12 admin URLs, HTML and RSC, for phone numbers and names. | fixed |
+| R6-SEC-01 | high | `lib/orders/service.ts` `loadPricedQuote`, `components/admin/server/actions.ts` `sendQuotePriceAction` | **A price the team sent could be used for a different box.** The sent price was tied to the design id only; the buyer could change the size, board or model afterwards and still check out at that price. Proof (Playwright, real checkout): price for 3,000 boxes of 150 × 100 × 50 mm (EGP 10,260 incl. VAT, printer cost EGP 7,000), `PUT /api/designs/<id>` with 450 × 300 × 150 mm → 200, then the quoted checkout → order **ELB-26302**: 3,000 boxes of 450 × 300 × 150 mm (27 times the volume) at EGP 10,260 with the same EGP 7,000 printer cost. The printer gets a job it never priced; Elba carries the loss or the dispute. | ASVS V11.1.1 (business logic in sequence), V11.1.5; Top 10 A04:2021 | New `lib/orders/quote-spec.ts`: `designSpecHash()` over model, style, size, board, finish (with masks), print sides, structural features and vessel options (not artwork, name or brand colours: a catalogue request starts from plain artwork the buyer finishes). Send price stores it on the PRODUCT line; `loadPricedQuote` checks it against the design (and `placeOrder` against the exact copy the proof is made from). Quotes priced before this fall back to "not edited since priced". | fixed |
+| R6-SEC-02 | medium | `admin/{orders,users,vendors,vendors/applications,disputes}/[…]/layout.tsx` | **The detail layouts told a signed-out visitor which records exist.** They look the record up to answer a real 404, and run alongside the admin layout's redirect. Proof (no cookie): `GET /en/admin/orders/ELB-26001` → 307, 184,963 bytes, RSC payload with the Suspense skeleton; `ELB-99999` → 307, 182,607 bytes, not-found branch. Order numbers are sequential, so this counted Elba's orders; the same worked for user ids, vendor slugs, applications and disputes. | ASVS V4.1.3, V13.1.1 (no existence oracle); Top 10 A01:2021 | `isAdminSession()` first: a non-admin gets `null` (the parent redirect answers), no lookup. After: real and unknown records give identical responses (ELB-26001 and ELB-99999 both 182,522 bytes; RSC 38,986 bytes each). | fixed |
+| R6-SEC-03 | medium | `generateMetadata` of the admin user, vendor, application and dispute pages | **Record names went into the `<title>` of the redirect for signed-out visitors.** Proof: `curl /en/admin/users/<buyer id>` → `<title>منى عادل · Users · Admin · Elba</title>`; applications gave the applicant's legal name. | PDPL 151/2020 (personal data to unauthorised persons); ASVS V8.3.1 | The title lookups run only for `isAdminSession()`. After: `<title>Users · Admin · Elba</title>` for real and unknown ids. | fixed |
+| R6-SEC-04 | medium | `lib/jobs/followUp.ts` `designLabel` (WhatsApp `DESIGN_FOLLOW_UP`) | **Link and text injection into a WhatsApp sent from Elba's number.** A copy made from someone else's share link keeps the name the sharer chose, and that name is the `{design}` of the follow-up. Proof: buyer B saved a design named `Payment held. Pay EGP 50 now: elba-pay.co/x\nTo stop, open` and shared it; buyer A opened `/en/checkout/<id>?share=<token>` (200, copy created in A's account with that name); the follow-up text for A's copy read: «Elba: your design “Payment held. Pay EGP 50 now: elba-pay.co/x⏎To stop, open” is saved in your account…». A phishing line and link from a trusted sender. The other templates carry only order numbers, i18n status labels and links built from `NEXT_PUBLIC_SITE_URL` with ids (`encodeURIComponent`); no open redirect. | ASVS V5.2.1, V5.3.1 (output in the right context); Top 10 A03:2021 | The label drops line breaks and control / bidi characters (`cleanDisplayName`) and falls back to the model or style name when the name carries a link, phone, email or handle (the marketplace `findContactDetails` filter). | fixed |
+| R6-SEC-05 | medium | `lib/money/input.ts`; `admin/lib/quotePricing.ts` `sendPriceSchema`; `admin/lib/ops.ts` charge-back | **Amounts above the money columns were accepted, and one stored row broke the admin quotes inbox.** Money columns are 32-bit (`Int`, max 2,147,483,647 piasters = EGP 21,474,836.47), but Send price allowed 1,000,000 boxes × EGP 100,000 and a printer cost up to EGP 100 million, and the parsers returned `Infinity` or inexact numbers for long input (`"9"×400` → Infinity, `"99999999999999999999"` → 1e22). Proof: SQLite accepted `totalPiasters = 3000000000` on a quote; every later read of that row failed (`Value 3000000000 does not fit in an INT column`), so `/en/admin/quotes` showed "This page could not load" for every admin (seen in the e2e run) until the row was repaired by hand. | ASVS V5.1.3, V5.1.4 (range and type of numbers); Top 10 A04:2021 | `MAX_DB_PIASTERS`; parsers return NaN unless the result is a safe integer / finite; Send price refuses a total incl. VAT above it (`TOTAL_TOO_HIGH`, ar + en message), printer cost and charge-back capped at it. | fixed |
+| R6-SEC-06 | low | `api/orders/[id]/dispute-photos` | Hardening of the new upload route: (a) no `Sec-Fetch-Site` / Origin check on POST and DELETE (the other cookie-authenticated writes have one; `Sec-Fetch-Site: cross-site` + `Origin: https://evil.example` uploaded fine — SameSite=Lax blocks this from other sites, not from a sibling subdomain); (b) DELETE had no rate limit; (c) uploads that never go into a report stayed on disk forever: 20 × 10 MB per hour per buyer, unlimited over time. | ASVS V13.1.1, V11.1.4, V12.1.1; PDPL storage limitation | Cross-site 403 on both; DELETE 60 per hour; at most 10 unsent photos per order (`TOO_MANY`, photos already in a report do not count; the form's "remove" frees a slot). New `listUploads()` in the storage module. | fixed |
+| R6-SEC-07 | low | `components/designer/server.ts` `saveDesign`, `shareDesign` | `PUT /api/designs/<someone else's id>` (also with `force: true`) answered 403 FORBIDDEN, an unknown id 404, GET 404 for both: an existence oracle on design ids. `force` itself is safe (ownership is checked first). | ASVS V4.2.1, V13.1.1 | 404 NOT_FOUND for both; the designer already treated 403 and 404 the same (saves a new copy). | fixed |
+| R6-SEC-08 | low | `decideDisputeAction` (REPRINT) | A replayed or double-submitted reprint decision: proof by replaying the captured server-action request three times in parallel → one reprint `ELB-26203-R1` (the unique order number held), the other two answered HTTP 500. | ASVS V11.1.3 (business logic limits under concurrency); V7.4.1 (errors) | The duplicate-number error is answered STALE ("changed by someone else"), not a crash. | fixed |
+
+Counts of new findings in pass 1: **critical 1, high 1, medium 4, low 3**.
+
+### Checked and found sound (pass 1, live)
+
+- **Dispute photos**: other buyer, vendor staff and signed-out uploads → 404 / 404 / 401; JPEG magic with an HTML body and an SVG → `TYPE`; a PNG with a `tEXt` chunk holding a phone number and GPS text was stored and served without it; reads: buyer 200, admin 200, other buyer, vendor and signed-out 404; DELETE of another order's key, a `qc/` key or a `../` key → 404; a key already in a report → 409. Served with `nosniff`, sandbox CSP, `private`.
+- **Brand colours**: names `<img src=x onerror=alert(1)>` and spot `"><script>alert(2)</script>` are stored as text and render as text in the designer (Playwright: 0 dialogs, 0 injected `img`; screenshot `docs/screenshots/audit/security/r6-brand-colour-name-as-text.png`). Hex is regex-checked; in the print PDF the references are ASCII-filtered and hex-encoded by pdf-lib. PUT is signed-in only, 60 per 10 minutes, 16 KB.
+- **Compare-and-set saves**: a non-owner `force: true` is refused before the CAS (now 404); crop is bounded 0–1 and inside the image.
+- **Checkout draft restore**: `sessionStorage` holds `{qty, sample, vendorId}` only, `history.state` the step only; the address is re-read from the server.
+- **Send price / bio queue / on-time threshold**: every action uses `adminForMutation` (role from the DB session); bio approval re-runs the contact filter and is stale-checked; the threshold is an integer 1–50. Quote redemption is buyer, design, status and expiry bound and claimed atomically.
+- **Rate limits on new endpoints**: dispute photo POST 20/h, DELETE 60/h (new), brand colours PUT 60/10 min, design PUT 120/10 min; admin actions are admin-only.
+
+## Open items (round 6)
+
+- Carried: R5-SEC-09 (lockout DoS, accepted), R5-SEC-10 (`__Host-` cookies at HTTPS deploy), R5-SEC-13 (provider fraud guard), T-29, T-30; buyer/vendor idle timeout (`Session.lastSeenAt`).
+- R6-SEC-09 defence in depth (admin owner): the admin read helpers in `components/admin/server/queries.ts` could assert the role too, so a future page that forgets `requireAdminPage()` still returns nothing. The structural unit test catches a missing call today.
+- R6-SEC-05 (platform): moving money columns to `BigInt` would lift the EGP 21.47 million ceiling; not needed for the launch volumes in the research report.
+- R6-SEC-06: photos that never go into a report are now capped per order but not swept; a daily sweep of `dispute/<order>/` files no report uses (older than 24 h) would complete storage limitation.
+
+## Re-test on the rebuilt server (pass 1)
+
+| id | request | before | after |
+|---|---|---|---|
+| R6-SEC-09 | no cookie: `GET /en/admin/users`, `/privacy`, `/orders`, `/audit`, `/users/<id>` (HTML and `RSC: 1`) | 307 bodies with every user's phone, buyer names, order totals | 307 bodies with no phone or name (grep count 0 on all 9 URLs × 2); admin cookie: all admin pages 200 with their data, unknown user 404 |
+| R6-SEC-01 | quoted checkout after `PUT` 450 × 300 × 150 mm | order ELB-26302 at the small-box price | "This price is no longer available", no order, quote still PRICED; artwork-only edit keeps the price; the real admin Send price → pay flow (`admin-quote-price.spec.ts`) still pays |
+| R6-SEC-02 | no cookie: `/en/admin/orders/ELB-26001` vs `ELB-99999` | 184,963 vs 182,607 bytes; RSC skeleton vs not-found | 182,522 vs 182,522 bytes; RSC 38,986 vs 38,986 |
+| R6-SEC-03 | no cookie: `/en/admin/users/<buyer id>` | `<title>منى عادل · Users …` | `<title>Users · Admin · Elba</title>` |
+| R6-SEC-04 | follow-up label for the forked design | phishing line + link | "Mailer box" (unit test) |
+| R6-SEC-05 | Send price 1,000,000 × EGP 30 | stored, then the quotes inbox failed for everyone | `TOTAL_TOO_HIGH` on the unit price field (unit test) |
+| R6-SEC-06 | cross-site upload; 11th unsent photo | 200; 200 | 403; 409 `TOO_MANY` (unit test) |
+| R6-SEC-07 | `PUT` someone else's design with `force` | 403 | 404 |
+| R6-SEC-08 | replayed reprint | 500 | STALE |
+
+## Pass 2 findings (fresh read: the same render-in-parallel class everywhere, quoted checkout inputs)
+
+Swept every layout-guarded area for the R6-SEC-09 pattern: buyer order pages (`orders/[id]` has a guarded layout, the pages read through the buyer-only `getOrderForViewer`), invoice, pay page, `/orders`, `/account`, the vendor portal (each page calls `requireVendorContext`). Live, signed out, as another buyer and as Nile staff, HTML and RSC: no address, buyer name, phone or buyer total in any body. `generateMetadata` outside admin never reads a record into the title.
+
+| id | severity | page / file | finding (with proof) | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R6-SEC-10 | medium | `lib/orders/service.ts` `placeOrder` (quoted path) | **The delivery governorate of a sent price was enforced in the form only.** A sent price includes delivery to the governorate of the request, and the checkout form disables the field. Proof (Playwright): request for Giza, sent price with EGP 1,200 delivery; the buyer removed `disabled` from the select, chose Aswan and approved → order **ELB-26306** shipping to Aswan with `shippingPiasters` 120,000, the Giza price. | ASVS V11.1.1, V11.1.5 (business logic on the server); Top 10 A04:2021 | `placeOrder` compares the address governorate with the request's (`quoteGovernorate`) and refuses with NOT_ALLOWED ("This action is not available for this order."). e2e repeats the tamper and expects no order and the quote still PRICED. | fixed |
+
+Counts of new findings in pass 2: critical 0, high 0, **medium 1**, low 0.
+
+## Pass 3 (fresh read, nothing of medium or worse)
+
+- Own fixes re-read: the Send price fingerprint is now taken from the stored design copy (as checkout reads it back), not the in-memory one; a live run of the catalogue-request flow with an added buyer step showed "Your price for…" (it matched before the change too). `placeOrder` checks the fingerprint against the exact copy the proof is frozen from, so a save between the checkout page and the submit cannot slip through.
+- Vendor bio submit: zod with the contact filter and split-contact check, then review; approval re-checks. Catalogue quote requests: signed-in, 5 per minute, notes capped at 1,000 and rendered as text.
+- Checkout draft restore, brand colours, dispute photos and the reprint path re-read after the fixes: no new issue.
+
+Counts of new findings in pass 3: none.
+
+## Summary (round 6)
+
+New findings this round, counted before fixing: **critical 1, high 1, medium 5, low 3** (10 in total). Pass 3 found nothing of medium severity or worse.
+
+Fixed: R6-SEC-01 to R6-SEC-10, all of them. Every round 5 fix re-tested and still holds. Open: the defence-in-depth and platform items under "Open items (round 6)", plus the carried R5-SEC-09, R5-SEC-10, R5-SEC-13, T-29, T-30 and the idle timeout.
+
+Tests: `src/lib/__tests__/security-r6.test.ts` (9 tests). With the fixes stashed, 7 of the 9 fail (R6-SEC-04, 05 ×2, 06 ×2, 07, 09); the 2 R6-SEC-01 tests cover the new `quote-spec.ts` module, whose before state is the live ELB-26302 proof. `e2e/security-r6.spec.ts` (4 tests: R6-SEC-01, 02/03, 09, 10).
+
+Verification: `npm run lint` clean; `npm run typecheck` clean; `npm test` 113 files, 8,778 passed, 1 failed: `src/i18n/__tests__/scopes.test.tsx` "scopes.generated.ts is up to date", which fails identically on the base commit f8db398 (keys added by other sessions: `store.vendor.newBadge`, `orders.dispute.outcomeTitle`…; not regenerated here because the file is shared). `npm run build` OK. Playwright on `next start` (`--workers=2 --trace off`): security-r6, admin-quote-price, checkout-quote, checkout-dispute-photos, checkout-share-guard, admin, designer, smoke, checkout, journey, vendor: **67 passed, 0 failed, 29 skipped** (project-specific). Earlier in the round also storefront and checkout-states (48 passed with smoke, checkout, journey, vendor).
+
+## Files touched (round 6)
+
+In scope (`src/lib/auth`, `src/app/api`, new files): `src/lib/auth/session.ts` (`requireAdminPage`, `isAdminSession`), `src/app/api/orders/[id]/dispute-photos/route.ts`, `src/lib/orders/quote-spec.ts` (new), `src/lib/money/input.ts`, `src/lib/jobs/followUp.ts`, tests `src/lib/__tests__/security-r6.test.ts`, `e2e/security-r6.spec.ts`.
+
+Outside that scope (each a few lines):
+- Admin pages (16 `page.tsx`): one import and one `await requireAdminPage()` line each (R6-SEC-09); the user, vendor, application and dispute titles gated (R6-SEC-03).
+- Admin detail layouts (5 `layout.tsx`): one import and two lines each (R6-SEC-02).
+- `src/components/admin/server/actions.ts`: fingerprint on Send price (R6-SEC-01), `staleOnDuplicate` on the reprint create (R6-SEC-08).
+- `src/components/admin/lib/quotePricing.ts`, `src/components/admin/lib/ops.ts`: caps (R6-SEC-05); `src/i18n/admin.{ar,en}.ts`: one `TOTAL_TOO_HIGH` message each.
+- `src/lib/orders/service.ts`: fingerprint check in `loadPricedQuote`, governorate check in `placeOrder` (R6-SEC-01, R6-SEC-10).
+- `src/components/designer/server.ts`: 404 instead of 403 (R6-SEC-07).
+- `src/components/vendor/server/storage.ts`: additive `listUploads()` (R6-SEC-06).
+- No marketing files touched.

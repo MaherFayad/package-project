@@ -1,6 +1,7 @@
 import { Suspense, type ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { isAdminSession } from "@/lib/auth/session";
 import { AdminLoading } from "@/components/admin/AdminLoading";
 
 /**
@@ -9,6 +10,8 @@ import { AdminLoading } from "@/components/admin/AdminLoading";
  * page keeps its own check; the skeleton boundary starts below this layout.
  */
 export default async function Layout({ children, params }: { children: ReactNode; params: Promise<{ number: string }> }) {
+  // R6-SEC-02: no lookup for a non-admin (the admin layout redirects them): same answer either way.
+  if (!(await isAdminSession())) return null;
   const { number: raw } = await params;
   const key = (() => {
     try {

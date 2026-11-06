@@ -97,6 +97,7 @@ export const adminEn = {
     DAYS_RANGE: "Enter whole days from 1 to 120.",
     REPRINT_QTY_RANGE: "Enter whole boxes from 1 to the order quantity.",
     CHARGE_BACK_RANGE: "Enter an amount from 0 to the reprint buy price.",
+    TOTAL_TOO_HIGH: "The total is above EGP 21,474,836. Split the job into smaller orders.",
     NUMBER_INVALID: "Enter a number with a dot for decimals, for example 1.05.",
     ON_TIME_MIN_RANGE: "Enter a whole number from 1 to 50.",
     QUOTE_NO_BUYER: "This request has no buyer account, so a price cannot be sent here. Call the number on the request.",
