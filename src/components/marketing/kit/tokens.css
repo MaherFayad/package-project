@@ -122,3 +122,16 @@
   background: var(--mk-bg);
   color: var(--mk-on-dark);
 }
+
+/* Kit gallery "reduced motion" preview (html[data-mk-reduced], set by the gallery toggle; JS
+   components read it through useReducedMotion). Mirrors what prefers-reduced-motion does. */
+html[data-mk-reduced] [data-mk] *,
+html[data-mk-reduced] [data-mk] *::before,
+html[data-mk-reduced] [data-mk] *::after {
+  animation: none !important;
+  transition: none !important;
+}
+html[data-mk-reduced][data-motion="on"] [data-reveal]:not([data-revealed]) {
+  opacity: 1;
+  transform: none;
+}

@@ -24,6 +24,8 @@
   font-family: var(--mk-font);
   color: var(--mk-on-dark);
   background: var(--mk-bg);
+  /* Glows and fans bleed past the edges; clip (not hidden) keeps sticky children working. */
+  overflow-x: clip;
 }
 .sheet[data-overlap="true"] {
   margin-block-start: calc(-1 * var(--mk-sheet-overlap));
@@ -47,6 +49,7 @@
 }
 /* Inset card variant: a rounded band inside the container (the green card on the reference). */
 .sheetCard {
+  color: var(--mk-on-dark);
   border-radius: var(--mk-radius-card);
   overflow: hidden;
   padding: clamp(24px, 4vw, 64px);
@@ -376,17 +379,12 @@ html[data-motion="on"] .fan:not([data-revealed]) .fanCard { transform: translate
 /* ───────────── Orbit ───────────── */
 @keyframes mk-spin { to { rotate: 360deg; } }
 @keyframes mk-spin-rev { to { rotate: -360deg; } }
-.orbit { position: relative; inline-size: min(100%, var(--orbit-size, 560px)); aspect-ratio: 1; margin-inline: auto; }
+.orbit { position: relative; inline-size: min(100% - 112px, var(--orbit-size, 560px)); aspect-ratio: 1; margin-inline: auto; }
 .orbitRing { position: absolute; inset: 0; border-radius: 50%; border: 1px dashed var(--mk-line-dark-strong); }
 .orbitRing2 { inset: 18%; border-style: solid; border-color: var(--mk-line-dark); }
 .orbitTrack { position: absolute; inset: 0; margin: 0; padding: 0; list-style: none; animation: mk-spin-rev var(--orbit-dur, 80s) linear infinite; }
-.orbitNode {
-  position: absolute;
-  inset-block-start: 50%;
-  inset-inline-start: 50%;
-  translate: -50% -50%;
-  transform: rotate(var(--a)) translate(calc(var(--orbit-r, 50%) * 1)) rotate(calc(-1 * var(--a)));
-}
+/* Physical left/top: a circle has no reading direction, and translate(-50%) must match left. */
+.orbitNode { position: absolute; translate: -50% -50%; }
 .orbitNodeInner {
   display: grid;
   justify-items: center;
@@ -401,6 +399,7 @@ html[data-motion="on"] .fan:not([data-revealed]) .fanCard { transform: translate
   animation: mk-spin var(--orbit-dur, 80s) linear infinite;
 }
 .orbitHub { position: absolute; inset: 36%; display: grid; place-items: center; border-radius: 50%; background: radial-gradient(circle, #ffffff 0%, #e4e4e7 100%); color: #000; box-shadow: 0 0 80px rgba(54, 244, 164, 0.35); }
+@media (max-width: 599px) { .orbitNodeInner { min-inline-size: 0; padding: 8px 10px; font-size: 0.8125rem; } }
 @media (prefers-reduced-motion: reduce) { .orbitTrack, .orbitNodeInner { animation: none; } }
 
 /* ───────────── CountUp / stats ───────────── */
