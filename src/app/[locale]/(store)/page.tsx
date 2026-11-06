@@ -95,7 +95,7 @@ const RAIL: (
   { kind: "sample", i: 5 },
 ];
 
-const WALL_ITEMS: { src: string; tone: string }[] = [
+const WALL_SOURCES: { src: string; tone: string }[] = [
   ...(
     [
       "FEFCO_0427",
@@ -120,6 +120,10 @@ const WALL_ITEMS: { src: string; tone: string }[] = [
     }),
   ),
 ];
+
+/** Icon-wall tiles use the smallest render variant (64 to 72 px slots): no srcset, light HTML. */
+const smallest = (src: string) => srcSetFor(src)?.split(" ")[0] ?? src;
+const WALL_ITEMS = WALL_SOURCES.map((w) => ({ ...w, small: smallest(w.src) }));
 
 const ANYONE: { code: StructureCode; sample: number }[] = [
   { code: "FEFCO_0427", sample: 0 },
@@ -558,7 +562,7 @@ export default async function HomePage({ params }: Props) {
                   opacity: 0.6,
                 }}
               />
-              <EgyptDots className={s.mapDots} />
+              <EgyptDots />
               <div className={s.orderCard}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -737,10 +741,9 @@ export default async function HomePage({ params }: Props) {
           controlClassName={s.wallControl}
         >
           <div className={s.wallRows} aria-hidden="true">
-            {[0, 1, 2, 3, 4, 5].map((r) => {
+            {[0, 1, 2, 3, 4].map((r) => {
               const k = (r * 5) % WALL_ITEMS.length;
-              const once = [...WALL_ITEMS.slice(k), ...WALL_ITEMS.slice(0, k)];
-              const row = [...once, ...once];
+              const row = [...WALL_ITEMS.slice(k), ...WALL_ITEMS.slice(0, k)];
               return (
                 <ul
                   key={r}
@@ -755,9 +758,7 @@ export default async function HomePage({ params }: Props) {
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={it.src}
-                        srcSet={srcSetFor(it.src)}
-                        sizes="76px"
+                        src={it.small}
                         alt=""
                         width={64}
                         height={64}
