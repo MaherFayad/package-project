@@ -1,3 +1,4 @@
+import { isAdminSession, requireAdminPage } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -29,11 +30,12 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const locale = toLocale(raw);
   const t = getT(locale);
   // Entity first (WCAG 2.4.2, CR-49): "Nile Pack · Vendors · Admin".
-  const v = /^[\w-]{1,80}$/.test(slug) ? await db.vendor.findUnique({ where: { slug }, select: { nameAr: true, nameEn: true } }) : null;
+  const v = (await isAdminSession()) && /^[\w-]{1,80}$/.test(slug) ? await db.vendor.findUnique({ where: { slug }, select: { nameAr: true, nameEn: true } }) : null;
   return { title: `${v ? `${pick(locale, v.nameAr, v.nameEn)} · ` : ""}${t("admin.vendors.title")} · ${t("admin.title")}` };
 }
 
 export default async function AdminVendorPage({ params }: { params: Params }) {
+  await requireAdminPage(); // R6-SEC-09: the layout redirect does not stop this page rendering
   const { locale: raw, slug } = await params;
   const locale = toLocale(raw);
   const t = getT(locale);

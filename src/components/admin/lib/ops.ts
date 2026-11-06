@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MAX_DB_PIASTERS } from "@/lib/money/input";
 
 /**
  * Disputes, vendor applications, vendor status and PDPL requests: admin rules (pure).
@@ -37,7 +38,7 @@ export const disputeDecisionSchema = z
     /** Reprint only (R5-JR-09): boxes to redo and the charge-back to the original printer. */
     reprintQuantity: z.number().int().min(1).max(1_000_000).optional(),
     chargeBack: z.enum(["FULL", "PARTIAL", "NONE"]).optional(),
-    chargeBackPiasters: z.number().int().min(0).max(10_000_000_000).optional(),
+    chargeBackPiasters: z.number().int().min(0).max(MAX_DB_PIASTERS).optional(),
   })
   .refine((d) => d.decision === "REVIEW" || d.note.length >= 3, { message: "NOTE_REQUIRED", path: ["note"] });
 
@@ -193,7 +194,7 @@ export const reprintTermsSchema = z.object({
   quantity: z.number().int().min(1).max(1_000_000),
   chargeBack: z.enum(CHARGE_BACK_MODES),
   /** PARTIAL only: piasters charged back to the original printer. */
-  chargeBackPiasters: z.number().int().min(0).max(10_000_000_000).optional(),
+  chargeBackPiasters: z.number().int().min(0).max(MAX_DB_PIASTERS).optional(),
 });
 export type ReprintTerms = z.infer<typeof reprintTermsSchema>;
 

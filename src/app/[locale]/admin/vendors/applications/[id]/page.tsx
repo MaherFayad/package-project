@@ -1,3 +1,4 @@
+import { isAdminSession, requireAdminPage } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -24,7 +25,7 @@ type Params = Promise<{ locale: string; id: string }>;
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { locale, id } = await params;
   const t = getT(toLocale(locale));
-  const a = /^[\w-]{1,40}$/.test(id) ? await db.vendorApplication.findUnique({ where: { id }, select: { legalName: true } }) : null;
+  const a = (await isAdminSession()) && /^[\w-]{1,40}$/.test(id) ? await db.vendorApplication.findUnique({ where: { id }, select: { legalName: true } }) : null;
   return { title: `${a ? `${a.legalName} · ` : ""}${t("admin.vendors.tabs.applications")} · ${t("admin.title")}` };
 }
 
@@ -40,6 +41,7 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 }
 
 export default async function AdminApplicationPage({ params }: { params: Params }) {
+  await requireAdminPage(); // R6-SEC-09: the layout redirect does not stop this page rendering
   const { locale: raw, id } = await params;
   const locale = toLocale(raw);
   const t = getT(locale);

@@ -1,3 +1,4 @@
+import { isAdminSession, requireAdminPage } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -25,11 +26,12 @@ type Params = Promise<{ locale: string; id: string }>;
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { locale, id } = await params;
   const t = getT(toLocale(locale));
-  const u = /^[\w-]{1,40}$/.test(id) ? await db.user.findUnique({ where: { id }, select: { name: true } }) : null;
+  const u = (await isAdminSession()) && /^[\w-]{1,40}$/.test(id) ? await db.user.findUnique({ where: { id }, select: { name: true } }) : null;
   return { title: `${u?.name ? `${u.name} · ` : ""}${t("admin.users.title")} · ${t("admin.title")}` };
 }
 
 export default async function AdminUserPage({ params }: { params: Params }) {
+  await requireAdminPage(); // R6-SEC-09: the layout redirect does not stop this page rendering
   const { locale: raw, id } = await params;
   const locale = toLocale(raw);
   const t = getT(locale);

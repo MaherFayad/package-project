@@ -46,6 +46,7 @@ import { instantOrderBlock } from "./order-guard";
 import { formatDateTime, formatMoney } from "@/lib/format";
 import { parseKey as parseUploadKey } from "@/components/vendor/lib/files";
 import { QUOTE_PRICED } from "./quote-status";
+import { quoteMatchesDesign } from "./quote-spec";
 
 /**
  * Order service (owner: checkout). Every order mutation in the app goes through here so the
@@ -258,7 +259,8 @@ export async function placeOrder(user: SessionUser, input: PlaceOrderInput): Pro
   const preflight = proofPreflight({ ...design.doc, id: input.designId }, input.acknowledgePreflight === true);
   if (preflightBlocks(preflight)) throw new OrderError("PREFLIGHT_BLOCKED");
   if (input.quoteId) {
-    const priced = await loadPricedQuote(input.quoteId, user, input.designId);
+    // The proof is made from `design.doc`, so that exact copy is the one checked against the price.
+    const priced = await loadPricedQuote(input.quoteId, user, input.designId, new Date(), design.doc);
     if (!priced) throw new OrderError("QUOTE_EXPIRED");
     return createOrderFromOffer(user, {
       doc: { ...design.doc, id: input.designId },
@@ -488,13 +490,17 @@ export interface PricedQuote {
  * active printer, with the printer's agreed price recorded. Null otherwise (expired, used,
  * someone else's, another design, or not priced yet).
  */
-export async function loadPricedQuote(quoteId: string, user: SessionUser, designId: string, now = new Date()): Promise<PricedQuote | null> {
+export async function loadPricedQuote(quoteId: string, user: SessionUser, designId: string, now = new Date(), against?: DesignDoc): Promise<PricedQuote | null> {
   if (!/^[\w-]{1,64}$/.test(quoteId)) return null;
   const q = await db.quote.findFirst({ where: { id: quoteId, userId: user.id, designId, status: QUOTE_PRICED, validUntil: { gt: now } } });
   if (!q || !q.vendorId || q.vendorCostPiasters == null || q.totalPiasters <= 0) return null;
   const lines = fromJson<QuoteLine[]>(q.lines);
   const product = Array.isArray(lines) ? lines.find((l) => l.kind === "PRODUCT") : undefined;
   if (!product || product.quantity < 1) return null;
+  // R6-SEC-01: the price is for the box as priced; a changed size, board or model voids it.
+  const designRow = await db.design.findUnique({ where: { id: designId }, include: { material: true } });
+  const designDoc = designRow ? rowToDoc(designRow) : null;
+  if (!designRow || !designDoc || !quoteMatchesDesign((product as { specHash?: unknown }).specHash, against ?? designDoc, designRow, q.pricedAt)) return null;
   const vendor = await db.vendor.findFirst({ where: { id: q.vendorId, status: "ACTIVE" } });
   if (!vendor) return null;
   const totals = orderTotals(lines, 0);
