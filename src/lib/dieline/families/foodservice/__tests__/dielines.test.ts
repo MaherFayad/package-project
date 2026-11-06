@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Dims } from "@/types";
 import { polygonArea } from "../../../geometry";
-import { DEFINITIONS, FOOD_MATERIALS, FamilyValidationError, PAIL_FLARE_DEG, buildFoodservice, definitionByCode, generateFamilyDieline, type DielineDefinition, type FamilyDielineModel } from "..";
+import { CLAMSHELL_FLARE_DEG, DEFINITIONS, FOOD_MATERIALS, FamilyValidationError, PAIL_FLARE_DEG, buildFoodservice, definitionByCode, generateFamilyDieline, type DielineDefinition, type FamilyDielineModel } from "..";
 
 const DIELINES = DEFINITIONS.filter((d): d is DielineDefinition => d.kind === "dieline");
 
@@ -19,6 +19,11 @@ function expectedOuter(code: string, d: Dims, t: number): { L: number; W: number
     case "FS_NOODLE_PAIL": {
       const e = (d.H + t) * Math.tan((PAIL_FLARE_DEG * Math.PI) / 180);
       return { L: d.L + 2 * t + 2 * e, W: d.W + 2 * t + 2 * e, H: d.H + t, tol };
+    }
+    case "FS_BURGER_CLAMSHELL": {
+      // Flared trays: widest at the rim where lid and base meet (base walls = 45 % of H).
+      const e = (d.H + 2 * t) * 0.45 * Math.tan((CLAMSHELL_FLARE_DEG * Math.PI) / 180);
+      return { L: d.L + 4 * t + 2 * e, W: d.W + 2 * t + 2 * e, H: d.H + 2 * t, tol };
     }
     case "FS_BAG_MERCHANDISE":
     case "FS_HANG_TAG":

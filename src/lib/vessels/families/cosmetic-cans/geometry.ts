@@ -108,25 +108,12 @@ interface Built {
   lid: LidGeometry | null;
   closedH: Mm;
   /**
-   * Where the renderer anchors the nearest core closure (profile.finishTopY). The core closure
-   * models are round and generic; when the real closure is already part of this profile (square
-   * slip lids, lever lids, stick caps) the anchor is moved inside the closed body so the generic
-   * model stays hidden, and for ring-pull ends it is set so the core pull tab lies in the
-   * countersink (tab underside = finishTopY - 5.15 mm).
+   * Where the renderer anchors the closure (profile.finishTopY) when it is not the top of the
+   * profile: the end panel of ring-pull / foil ends, and the anchor that puts a renderer overcap
+   * (BULLET_CAP, TWIST_UP) flush with the case top.
    */
   closureY?: Mm;
-  /** Radius the core closure is built at (profile.finishR); a tiny radius shrinks it out of sight under a lid in the profile. */
-  closureR?: Mm;
 }
-
-/**
- * Closure anchor for clear-plastic tubs and trays whose lid is in the profile: the core closure is
- * shrunk (closureR) and parked just under the base, so it does not show through the clear lid.
- */
-const CLEAR_HIDE_Y: Mm = -2.5;
-
-/** finishTopY that puts the core CAN_END pull tab flat on an end panel at `panelY`. */
-export const ringPullAnchor = (panelY: Mm): Mm => panelY + 5.15;
 
 function bottle(s: Extract<ShapeSpec, { type: "bottle" }>, d: CatalogueDims, neck: NeckFinish): Built {
   const R = d.D / 2;
@@ -183,7 +170,12 @@ function radiusAtCtrl(R: Mm, neckR: Mm, t: number, shoulder: "round" | "flat" | 
 function caseShape(s: Extract<ShapeSpec, { type: "case" }>, d: CatalogueDims): Built {
   const R = d.D / 2;
   const H = d.H;
-  const split = H * s.capSplit;
+  // Overcaps drawn by the renderer; the split groove sits under the cap edge.
+  // BULLET_CAP (lipstick): h = max(24, 3.2 (R + 1)), top = anchor + 0.45 h.
+  // TWIST_UP (stick): from anchor - 18 to anchor + max(8, (R + 0.6) / 2).
+  const bulletH = Math.max(24, 3.2 * (R + 1));
+  const twistUp = Math.max(8, (R + 0.6) * 0.5);
+  const split = s.cap === "bullet" ? Math.max(H * 0.3, H - bulletH + 0.8) : s.cap === "twist" ? Math.max(H * 0.3, H - twistUp - 18 + 0.8) : H * s.capSplit;
   const ch = Math.min(1.2, R * 0.08);
   const ctrl: ControlPoint[] = [
     { r: 0, y: 0 },
@@ -208,9 +200,8 @@ function caseShape(s: Extract<ShapeSpec, { type: "case" }>, d: CatalogueDims): B
     fillMaxY: split,
   });
   const lid: LidGeometry = { type: s.capSplit > 0.5 && H < 35 ? "hinged" : "slip", section: s.section, y0: split, y1: H, r: R, depthRatio: (d.G ?? d.D) / d.D, topR: R - ch - 2 };
-  // Non-round cases (oval deodorant stick): the round core cap would overhang the oval; the cap is
-  // already in this profile, so hide the core closure inside it.
-  const closureY = isRound(s.section) ? undefined : H - 4;
+  // anchor the renderer's overcap so its top is the case top
+  const closureY = s.cap === "bullet" ? H - 0.45 * bulletH : s.cap === "twist" ? H - twistUp : undefined;
   return { profile, innerTopY: split, sleeveY0: 0.5, sleeveY1: H - 0.5, lid, closedH: H, closureY };
 }
 
@@ -357,9 +348,10 @@ function metalcan(s: Extract<ShapeSpec, { type: "metalcan" }>, d: CatalogueDims)
     depthRatio: section.kind === "round" ? 1 : section.depthRatio,
     topR: R - endIn - 2,
   };
-  // Lever lid (paint): the recessed lid panel and chime are in this profile; hide the core closure
-  // under the lid panel. Ring-pull ends (drawn tuna / fish tins): put the core pull tab on the panel.
-  const closureY = lid.type === "lever" ? H - s.endDepthMm - 1 : !s.bottomSeam ? ringPullAnchor(H - s.endDepthMm) : undefined;
+  // Ring-pull and foil ends: anchor on the end panel, where the renderer's EOE_RING / PEEL_FOIL sit
+  // (a plain double-seam end keeps the generic core tab under the panel). Lever lids: the renderer's
+  // LEVER_LID plugs into the chime from the seam top (default anchor H).
+  const closureY = lid.type === "lever" ? undefined : H - s.endDepthMm;
   return { profile, innerTopY: H - s.endDepthMm, sleeveY0: bodyY0 - 1, sleeveY1: bodyY1 + 1, lid, closedH: H, closureY };
 }
 
@@ -372,33 +364,17 @@ function tin(s: Extract<ShapeSpec, { type: "tin" }>, d: CatalogueDims): Built {
   const R = d.D / 2;
   const H = d.H;
   const lidH = tinLidH(d);
-  const round = isRound(s.section);
-  const ctrl: ControlPoint[] = round
-    ? [
-        // round tins: open body with a rolled rim; the core slip lid closes it
-        { r: 0, y: 0.6 },
-        { r: R - 1.5, y: 0, round: 0.8 },
-        { r: R, y: 1.6, round: 1 },
-        { r: R, y: H - 1.4, round: 0.5 },
-        { r: R - 0.8, y: H, round: 0.4 },
-        { r: R - 1.1, y: H - 0.5 },
-        { r: R - 1.1, y: H - 6 },
-      ]
-    : [
-        // square / rect tins: the core slip lid is round, so the lid is part of this profile:
-        // body, lid skirt stepping out 0.8 mm with a curled edge, rounded top edge, embossed panel
-        { r: 0, y: 0.6 },
-        { r: R - 1.5, y: 0, round: 0.8 },
-        { r: R, y: 1.6, round: 1 },
-        { r: R, y: H - lidH - 0.6, round: 0.3 },
-        { r: R + 0.5, y: H - lidH - 0.4, round: 0.25 },
-        { r: R + 0.8, y: H - lidH + 0.4, round: 0.3 },
-        { r: R + 0.8, y: H - 1.7, round: 1.4 },
-        { r: R - 0.6, y: H - 0.3, round: 0.9 },
-        { r: R - 5, y: H - 0.3, round: 0.6 },
-        { r: R - 6, y: H, round: 0.6 },
-        { r: 0, y: H },
-      ];
+  // open body with a rolled rim for every section: the renderer's slip lid (core SLIP_LID) and plug
+  // lid (PLUG_LID style) follow the section, square tins included
+  const ctrl: ControlPoint[] = [
+    { r: 0, y: 0.6 },
+    { r: R - 1.5, y: 0, round: 0.8 },
+    { r: R, y: 1.6, round: 1 },
+    { r: R, y: H - 1.4, round: 0.5 },
+    { r: R - 0.8, y: H, round: 0.4 },
+    { r: R - 1.1, y: H - 0.5 },
+    { r: R - 1.1, y: H - 6 },
+  ];
   const section = crossSection(s.section, d, 0.1);
   const profile = finalize(ctrl, section, {
     wallMm: 0.25,
@@ -418,7 +394,7 @@ function tin(s: Extract<ShapeSpec, { type: "tin" }>, d: CatalogueDims): Built {
     depthRatio: section.kind === "round" ? 1 : section.depthRatio,
     topR: R + 0.6 - 4,
   };
-  return { profile, innerTopY: H - 1, sleeveY0: 1, sleeveY1: H - lidH - 0.5, lid, closedH: round ? H + 0.6 : H, closureY: round ? undefined : H - 2 };
+  return { profile, innerTopY: H - 1, sleeveY0: 1, sleeveY1: H - lidH - 0.5, lid, closedH: H + 0.6 };
 }
 
 /** Aerosol can: domed/concave base, ogive shoulder, 1 inch valve-cup curl. */
@@ -473,61 +449,40 @@ function cup(s: Extract<ShapeSpec, { type: "cup" }>, d: CatalogueDims): Built {
   const f = s.flangeMm;
   const section = crossSection(s.section, d, s.section === "round" ? 0.2 : 0.18);
   if (s.lid === "hinged") {
-    // closed clamshell: base tray to the hinge line, lid tray above (mirrored taper)
-    const hb = H * 0.55;
+    // Clamshell base tray with its flange. The renderer's HINGED_LID draws the mirrored lid tray,
+    // max(8, min(30, 0.35 hb)) deep above the flange, so pick the hinge line hb for a closed height H.
+    const lidDepth = (y: Mm) => Math.max(8, Math.min(30, 0.35 * y));
+    const hb = lidDepth(H / 1.35) === 0.35 * (H / 1.35) ? H / 1.35 : lidDepth(H / 1.35) === 30 ? H - 30 : H - 8;
     const Rm = Rt; // flange line (widest)
-    const RtLid = Rb + (Rt - Rb) * 0.35;
     const ctrl: ControlPoint[] = [
       { r: 0, y: 0 },
       { r: Rb, y: 0, round: Math.min(4, Rb * 0.1) },
       { r: Rm - f, y: hb - 1, round: 1 },
       { r: Rm, y: hb - 0.4, round: 0.5 },
-      { r: Rm, y: hb + 0.4, round: 0.5 },
-      { r: Rm - f, y: hb + 1, round: 1 },
-      { r: RtLid, y: H, round: Math.min(5, RtLid * 0.12) },
-      { r: 0, y: H },
+      { r: Rm, y: hb, round: 0.3 },
+      { r: Rm - f, y: hb, round: 0.3 },
+      { r: Rm - f - 0.3, y: hb - 3 },
     ];
     const profile = finalize(ctrl, section, {
       wallMm: s.wallMm,
       baseMm: s.wallMm,
       body: { y0: 2, y1: hb - 2, r0: Rb + (Rm - f - Rb) * (2 / hb), r1: Rb + (Rm - f - Rb) * ((hb - 2) / hb) },
-      finishTopY: H,
+      finishTopY: hb,
       finishR: Rm,
       finishH: 0,
       fillMaxY: hb,
     });
-    const lid: LidGeometry = { type: "hinged", section: s.section, y0: hb, y1: H, r: Rm, depthRatio: section.kind === "round" ? 1 : section.depthRatio, topR: RtLid - 4 };
-    // the lid tray is in the profile: shrink the round core closure out of sight under it
-    return { profile, innerTopY: H - s.wallMm, sleeveY0: 1, sleeveY1: hb - 1, lid, closedH: H, closureY: CLEAR_HIDE_Y, closureR: 0.4 };
+    const lid: LidGeometry = { type: "hinged", section: s.section, y0: hb, y1: H, r: Rm, depthRatio: section.kind === "round" ? 1 : section.depthRatio, topR: Rm - 4 };
+    return { profile, innerTopY: hb - s.wallMm, sleeveY0: 1, sleeveY1: hb - 1, lid, closedH: H };
   }
-  // Non-round tubs and punnets: the round core lid cannot follow the footprint, so the lid is drawn
-  // here (snap lid: skirt over the flange with a recessed panel; film lid: flat film on the flange)
-  // and the core closure is shrunk out of sight under it. Round cups keep the core lid.
-  const ownLid = !isRound(s.section) && (s.lid === "snap" || s.lid === "foil");
-  const snapT = s.lid === "snap" ? Math.max(6, Math.min(10, H * 0.08)) : 0;
-  const rimY = ownLid && s.lid === "snap" ? H - snapT + 1 : H - 1.2;
-  const top: ControlPoint[] = !ownLid
-    ? [
-        { r: Rt + f, y: H, round: 0.4 },
-        { r: Rt - s.wallMm, y: H, round: 0.3 },
-        { r: Rt - s.wallMm - 0.2, y: H - 3 },
-      ]
-    : s.lid === "snap"
-      ? [
-          { r: Rt + f, y: rimY + 0.4, round: 0.3 },
-          { r: Rt + f + 1, y: rimY - 0.6, round: 0.3 },
-          { r: Rt + f + 1.4, y: rimY - 0.2, round: 0.4 },
-          { r: Rt + f + 1.4, y: H - 1.6, round: 1.6 },
-          { r: Rt + f - 1, y: H, round: 1 },
-          { r: Rt - 3, y: H, round: 0.8 },
-          { r: Rt - 4.5, y: H - 0.8, round: 0.8 },
-          { r: 0, y: H - 0.8 },
-        ]
-      : [
-          { r: Rt + f, y: H - 0.1, round: 0.4 },
-          { r: Rt + f - 0.6, y: H, round: 0.3 },
-          { r: 0, y: H },
-        ];
+  // Tubs and cups: open rim with a flange; snap lids (SNAP_LID), film lids (PEEL_FOIL) and hinged
+  // options are drawn by the renderer and follow the section.
+  const rimY = H - 1.2;
+  const top: ControlPoint[] = [
+    { r: Rt + f, y: H, round: 0.4 },
+    { r: Rt - s.wallMm, y: H, round: 0.3 },
+    { r: Rt - s.wallMm - 0.2, y: H - 3 },
+  ];
   const ctrl: ControlPoint[] = [
     { r: 0, y: 1.2 },
     { r: Rb - 2, y: 0, round: 1 },
@@ -551,7 +506,6 @@ function cup(s: Extract<ShapeSpec, { type: "cup" }>, d: CatalogueDims): Built {
   const lidT = s.lid === "snap" ? Math.max(6, Math.min(14, H * 0.12)) : s.lid === "foil" ? 0.1 : 0;
   const lid: LidGeometry | null =
     s.lid === "none" ? null : { type: s.lid, section: s.section, y0: H - (s.lid === "snap" ? 2 : 0), y1: H + lidT, r: Rt + f + (s.lid === "snap" ? 1 : 0), depthRatio: section.kind === "round" ? 1 : section.depthRatio, topR: Rt - 3 };
-  if (ownLid) return { profile, innerTopY: H - 0.5, sleeveY0: 2, sleeveY1: rimY - 1.5, lid, closedH: H, closureY: CLEAR_HIDE_Y, closureR: 0.4 };
   return { profile, innerTopY: H - 0.5, sleeveY0: 2, sleeveY1: rimY - 1.5, lid, closedH: lid ? lid.y1 : H };
 }
 
@@ -621,7 +575,6 @@ export function buildGeometry(shape: ShapeSpec, d: CatalogueDims, neck?: NeckFin
       break;
   }
   if (b.closureY !== undefined) b = { ...b, profile: { ...b.profile, finishTopY: b.closureY } };
-  if (b.closureR !== undefined) b = { ...b, profile: { ...b.profile, finishR: b.closureR } };
   if (kind === "lathe" && b.profile.section.kind === "roundedRect") kind = "extrusion";
   return {
     kind,

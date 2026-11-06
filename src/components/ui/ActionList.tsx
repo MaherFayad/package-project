@@ -1,7 +1,8 @@
 "use client";
 
 import NextLink from "next/link";
-import type { KeyboardEvent, ReactNode } from "react";
+import { useId, type KeyboardEvent, type ReactNode } from "react";
+import { useUi } from "./AppProvider";
 import { renderIcon, type IconSource } from "./Icon";
 import { cx } from "./utils";
 import styles from "./ActionList.module.css";
@@ -41,6 +42,8 @@ export interface ActionListProps {
 export function ActionList({ items, sections, actionRole, onActionAnyItem, ariaLabel }: ActionListProps) {
   const all: ActionListSection[] = sections ?? [{ items: items ?? [] }];
   const isMenu = actionRole === "menuitem";
+  const { s } = useUi();
+  const baseId = useId();
 
   function onKeyDown(e: KeyboardEvent<HTMLDivElement>) {
     const keys = ["ArrowDown", "ArrowUp", "Home", "End"];
@@ -59,8 +62,17 @@ export function ActionList({ items, sections, actionRole, onActionAnyItem, ariaL
   return (
     <div className={styles.ActionList} onKeyDown={onKeyDown} role={isMenu ? "menu" : undefined} aria-label={ariaLabel}>
       {all.map((section, si) => (
-        <div key={si} className={cx(styles.Section, si > 0 && styles.withDivider)} role={isMenu ? "group" : undefined}>
-          {section.title ? <p className={styles.SectionTitle}>{section.title}</p> : null}
+        <div
+          key={si}
+          className={cx(styles.Section, si > 0 && styles.withDivider)}
+          role={isMenu ? "group" : undefined}
+          aria-labelledby={isMenu && section.title ? `${baseId}-s${si}` : undefined}
+        >
+          {section.title ? (
+            <p id={`${baseId}-s${si}`} className={styles.SectionTitle}>
+              {section.title}
+            </p>
+          ) : null}
           <ul className={styles.List} role={isMenu ? "none" : undefined}>
             {section.items.map((item, ii) => {
               const cls = cx(styles.Item, item.destructive && styles.destructive, item.active && styles.active, item.disabled && styles.disabled);
@@ -86,6 +98,8 @@ export function ActionList({ items, sections, actionRole, onActionAnyItem, ariaL
                 "data-action-item": "",
                 "aria-disabled": item.disabled || undefined,
                 "aria-current": item.active && !isMenu ? ("true" as const) : undefined,
+                // APG menu: one Tab stop for the whole menu, arrows move between items.
+                tabIndex: isMenu ? -1 : undefined,
               };
               return (
                 <li key={ii} role={isMenu ? "none" : undefined}>
@@ -93,6 +107,7 @@ export function ActionList({ items, sections, actionRole, onActionAnyItem, ariaL
                     item.external ? (
                       <a {...common} href={item.url} target="_blank" rel="noopener noreferrer" onClick={fire}>
                         {inner}
+                        <span className="visually-hidden"> {s.opensInNewTab}</span>
                       </a>
                     ) : (
                       <NextLink {...common} href={item.url} onClick={fire}>

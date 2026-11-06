@@ -57,6 +57,11 @@ export default async function RateCardsPage({ params }: { params: Promise<{ loca
               <IndexTableRow key={c.id} id={c.id} tone={c.active ? undefined : "subdued"}>
                 <IndexTableCell>
                   <IndexTableRowLink url={`/${locale}/vendor/rate-cards/${c.id}`}>{t(`structures.${c.structureCode}` as DictKey)}</IndexTableRowLink>
+                  {/* How many designer models this card prices (a style covers many family models). */}
+                  <Text as="span" tone="subdued" variant="bodySm">
+                    {" · "}
+                    {t("vendorPortal.rateCards.modelCount", { count: formatNumber(c.modelCount) })}
+                  </Text>
                 </IndexTableCell>
                 <IndexTableCell>{t(`materials.${c.materialCode}` as DictKey)}</IndexTableCell>
                 <IndexTableCell alignment="end" numeric>

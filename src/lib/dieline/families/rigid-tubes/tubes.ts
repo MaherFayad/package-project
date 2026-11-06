@@ -4,7 +4,7 @@ import { DielineBuilder, rectEdges } from "../../builder";
 import { tubeSegments } from "../../structures";
 import { clamp, pt, rectPolygon } from "../../geometry";
 import type { DielinePanel, FaceInfo, FacePart, Polygon, Pt, Segment } from "../../types";
-import { quat, rect } from "./common";
+import { WRAP_VISUAL_MM, quat, rect, tabStack, turnInStack } from "./common";
 import type { ConstructionSpec, FamilyDraft } from "./types";
 
 /**
@@ -18,6 +18,8 @@ import type { ConstructionSpec, FamilyDraft } from "./types";
 
 export const TUBE_CLEARANCE_MM = 0.4;
 const LABEL_OVERLAP_MM = 10;
+/** End discs sit this far proud of / in from the rim (see rolledLabel). */
+export const DISC_SEAT_MM = 0.15;
 
 type TubeVariant = "lidBase" | "telescoping" | "rolledEdge" | "pushUp" | "window" | "shoulder";
 
@@ -55,7 +57,7 @@ const isFront = (k: number, N: number) => k >= N / 4 && k < (3 * N) / 4;
  * Lay one wrap label on the sheet and build its strip tree. Root = strip N/4 (the left side),
  * chains run right (to the overlap) and left (to the seam).
  */
-function rolledLabel(b: DielineBuilder, L: LabelPiece, o: LabelOpts, virtualEdges: Segment[]) {
+function rolledLabel(b: DielineBuilder, L: LabelPiece, o: LabelOpts, virtualEdges: Segment[], t: number) {
   const { N } = o;
   const { s, height: h, x0, y0, pre } = L;
   const roll = 360 / N;
@@ -103,8 +105,19 @@ function rolledLabel(b: DielineBuilder, L: LabelPiece, o: LabelOpts, virtualEdge
   };
   for (let k = kr + 1; k < N; k++) step(k - 1, k, 1);
   for (let k = kr - 1; k >= 0; k--) step(k + 1, k, -1);
-  // Glued overlap at the right end (under strip 0 when wrapped).
-  b.attach(`${pre}Glue`, "glue", ids.get(N - 1)!.full!, rectEdges(sr(N - 1)).right, LABEL_OVERLAP_MM, { kind: "rect" }, { ...opts({ stack: -1, printable: false }), label: "Label overlap" });
+  // Glued overlap at the right end (under strips 0, 1… when wrapped). It is wider than a strip
+  // on most tubes (10 mm vs 3.7 mm on a 25 mm push-up), so it bends on the same roll hinges:
+  // one flat panel cut a chord out through the curved wall (a grey stripe down the back).
+  let parent = ids.get(N - 1)!.full!;
+  let left = LABEL_OVERLAP_MM;
+  for (let k = 0; left > 1e-6; k++) {
+    const w = Math.min(s, left);
+    const x = x0 + N * s + k * s;
+    const id = k === 0 ? `${pre}Glue` : `${pre}Glue${k + 1}`;
+    b.attach(id, "glue", parent, [pt(x, y0), pt(x, y0 + h)], w, { kind: "rect" }, { ...opts({ stack: tabStack(t), printable: false }), label: "Label overlap" });
+    parent = id;
+    left -= w;
+  }
 
   // Curled / turned-in edges: one flap per strip, continuous paper (virtual seams).
   const curl = (where: "top" | "bottom", depth: number) => {
@@ -112,7 +125,7 @@ function rolledLabel(b: DielineBuilder, L: LabelPiece, o: LabelOpts, virtualEdge
       const P = ids.get(k)!;
       const parent = where === "top" ? (P.full ?? P.top!) : (P.full ?? P.bot!);
       const e = where === "top" ? rectEdges(sr(k)).top : rectEdges(sr(k)).bottom;
-      b.attach(`${pre}${k}C${where[0]}`, "inner", parent, e, depth, { kind: "rect" }, { fold: 180, pivotDepth: 1, stage: 1, printable: L.printable, label: "Curled edge" });
+      b.attach(`${pre}${k}C${where[0]}`, "inner", parent, e, depth, { kind: "rect" }, { fold: 180, pivotDepth: 1, stage: 1, stack: turnInStack(t), printable: L.printable, label: "Curled edge" });
       if (k < N - 1) {
         const x = x0 + (k + 1) * s;
         virtualEdges.push(where === "top" ? { a: pt(x, y0 - depth), b: pt(x, y0) } : { a: pt(x, y0 + h), b: pt(x, y0 + h + depth) });
@@ -135,7 +148,10 @@ function rolledLabel(b: DielineBuilder, L: LabelPiece, o: LabelOpts, virtualEdge
       ux += Math.cos(a) * s;
       uy += Math.sin(a) * s;
     }
-    b.attachPoly(`${pre}${o.disc.where === "top" ? "Top" : "Bottom"}`, o.disc.where, rootId, hinge, poly, { stage: 1, label: o.disc.where === "top" ? "Lid top" : "End disc", printable: o.disc.printable });
+    // Pivot DISC_SEAT_MM below the surface: the folded disc rises that much above the rim and
+    // steps in from the hinge side, so its face never lies in the plane of the strips' rim
+    // edges (pale flecks round the cap) and its side faces stay behind the label.
+    b.attachPoly(`${pre}${o.disc.where === "top" ? "Top" : "Bottom"}`, o.disc.where, rootId, hinge, poly, { stage: 1, pivotDepth: DISC_SEAT_MM / t, label: o.disc.where === "top" ? "Lid top" : "End disc", printable: o.disc.printable });
   }
   return ids;
 }
@@ -154,7 +170,9 @@ export function tubeDraft(variant: TubeVariant, dims: Dims, t: number, f: Struct
   const virtualEdges: Segment[] = [];
   const shoulder = variant === "shoulder";
   const Rin = D / 2 + t; // outer apothem of the innermost load-bearing tube
-  const Rbody = shoulder ? Rin + t : Rin;
+  // Shoulder: the body sleeve sits on the neck; its label overlap (half a paper proud inside)
+  // needs that much room.
+  const Rbody = shoulder ? Rin + t + WRAP_VISUAL_MM / 2 : Rin;
   const N = tubeSegments(2 * Rbody);
   const tan = Math.tan(Math.PI / N);
   const sOf = (R: number) => 2 * R * tan;
@@ -191,13 +209,21 @@ export function tubeDraft(variant: TubeVariant, dims: Dims, t: number, f: Struct
       window = { k0, k1: k0 + nw, yTop, yBot: yTop + wh };
     }
   }
-  const bodyIds = rolledLabel(b, body, { N, rootLabel: "Body label", window, curlTop: curl || undefined, disc: pushUp ? undefined : { where: "bottom", printable: false }, role: "front" }, virtualEdges);
+  const bodyIds = rolledLabel(b, body, { N, rootLabel: "Body label", window, curlTop: curl || undefined, disc: pushUp ? undefined : { where: "bottom", printable: false }, role: "front" }, virtualEdges, t);
   if (window) {
-    const mid = bodyIds.get(N / 2)!;
-    const x0 = body.x0 + window.k0 * sb;
-    const x1 = body.x0 + window.k1 * sb;
-    const g = 4;
-    b.films.push({ panelId: mid.top ?? mid.full!, polygon: rectPolygon(x0 - g, body.y0 + window.yTop - g, x1 - x0 + 2 * g, window.yBot - window.yTop + 2 * g) });
+    // One film patch per strip, each in its own strip's plane: a single flat patch on the
+    // middle strip stood off the curved wall as an opaque white card beside the window.
+    const x0 = body.x0 + window.k0 * sb - 4;
+    const x1 = body.x0 + window.k1 * sb + 4;
+    const yA = body.y0 + window.yTop - 4;
+    const yB = body.y0 + window.yBot + 4;
+    for (let k = Math.floor((x0 - body.x0) / sb); k * sb + body.x0 < x1; k++) {
+      const a = Math.max(x0, body.x0 + k * sb);
+      const z = Math.min(x1, body.x0 + (k + 1) * sb);
+      const ids = bodyIds.get(k);
+      if (!ids || z - a < 0.05) continue;
+      b.films.push({ panelId: ids.top ?? ids.full!, polygon: rectPolygon(a, yA, z - a, yB - yA) });
+    }
   }
 
   // Concentric pieces: pose in the body root's frame, then the closing rotation.
@@ -214,7 +240,7 @@ export function tubeDraft(variant: TubeVariant, dims: Dims, t: number, f: Struct
     const Rn = Rin;
     const neck: LabelPiece = { pre: "neck", R: Rn, s: sOf(Rn), height: H, x0: 0, y0: y, topY: floorY + H, printable: true, visible: false };
     neck.x0 = body.x0 + kr * sb + sb / 2 - (kr * neck.s + neck.s / 2);
-    rolledLabel(b, neck, { N, rootLabel: "Neck label", role: "inner", piece: { label: "Neck", matrix: pieceMatrix(neck), stage: 2, lift: H * 0.8 } }, virtualEdges);
+    rolledLabel(b, neck, { N, rootLabel: "Neck label", role: "inner", piece: { label: "Neck", matrix: pieceMatrix(neck), stage: 2, lift: H * 0.8 } }, virtualEdges, t);
     pieces.push(neck);
     y += H + 25;
   }
@@ -223,7 +249,7 @@ export function tubeDraft(variant: TubeVariant, dims: Dims, t: number, f: Struct
     const hp = clamp(Math.round(H * 0.25), 15, 40);
     const pusher: LabelPiece = { pre: "push", R: Rp, s: sOf(Rp), height: hp, x0: 0, y0: y + 2 * Rp, topY: floorY + hp, printable: false, visible: false };
     pusher.x0 = body.x0 + kr * sb + sb / 2 - (kr * pusher.s + pusher.s / 2);
-    rolledLabel(b, pusher, { N, rootLabel: "Push-up platform", role: "inner", disc: { where: "top", printable: false }, piece: { label: "Push-up platform", matrix: pieceMatrix(pusher), stage: 2, lift: H * 0.6 } }, virtualEdges);
+    rolledLabel(b, pusher, { N, rootLabel: "Push-up platform", role: "inner", disc: { where: "top", printable: false }, piece: { label: "Push-up platform", matrix: pieceMatrix(pusher), stage: 2, lift: H * 0.6 } }, virtualEdges, t);
     pieces.push(pusher);
     y += hp + 2 * Rp + 25;
   }
@@ -234,7 +260,7 @@ export function tubeDraft(variant: TubeVariant, dims: Dims, t: number, f: Struct
   const lidTop = shoulder ? floorY + H + t : Hb / 2 + t;
   const lid: LabelPiece = { pre: "lid", R: Rl, s: sOf(Rl), height: Hl, x0: 0, y0: y + 2 * Rl + 5, topY: lidTop, printable: true, visible: true };
   lid.x0 = body.x0 + kr * sb + sb / 2 - (kr * lid.s + lid.s / 2);
-  rolledLabel(b, lid, { N, rootLabel: "Lid label", role: "front", curlBottom: curl || undefined, disc: { where: "top", printable: true }, piece: { label: "Lid", matrix: pieceMatrix(lid), stage: 3, lift: H * 0.6 } }, virtualEdges);
+  rolledLabel(b, lid, { N, rootLabel: "Lid label", role: "front", curlBottom: curl || undefined, disc: { where: "top", printable: true }, piece: { label: "Lid", matrix: pieceMatrix(lid), stage: 3, lift: H * 0.6 } }, virtualEdges, t);
   pieces.splice(0, 0, lid);
 
   const faceTop = lidTop;

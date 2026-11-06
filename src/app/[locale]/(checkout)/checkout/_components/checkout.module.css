@@ -426,3 +426,25 @@
   border-radius: var(--p-border-radius-200);
   background: var(--p-color-bg-surface-secondary);
 }
+
+/* Manual quote request (above the instant cap, CO-06) */
+.quoteForm {
+  padding: var(--p-space-400);
+  border: 1px solid var(--p-color-border);
+  border-radius: var(--p-border-radius-300);
+  background: var(--p-color-bg-surface-secondary);
+}
+.quoteActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--p-space-300);
+}
+.quoteSent:focus {
+  outline: none;
+}
+.quoteSent:focus-visible {
+  outline: 2px solid var(--p-color-border-focus);
+  outline-offset: 2px;
+  border-radius: var(--p-border-radius-300);
+}

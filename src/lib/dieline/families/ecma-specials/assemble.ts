@@ -159,10 +159,13 @@ function assemble(def: EcmaSpecialDef, dims: Dims, options: DielineOptions): Die
   const perfLines = draft.builder.perfLines.map(mvSeg);
   const films: FilmPatch[] = draft.builder.films.map((f) => ({ panelId: f.panelId, polygon: f.polygon.map(mv) }));
 
+  const rollJoins = new Set(panels.flatMap((p) => (p.hinge && p.hingeKind === "roll" ? [p.hinge] : [])));
   const bleedRegions = panels
     .filter((p) => p.printable)
     .map((p) => {
-      const creases = [...panelCreases(p, panels), ...joins];
+      // Virtual `roll` joins (curved walls, lock tongues) are not creases: the print bleeds
+      // across them, so collinear outline edges keep one offset and strips never show a seam.
+      const creases = [...panelCreases(p, panels).filter((s) => !rollJoins.has(s)), ...joins];
       const distances = edgesOf(p.polygon).map((e) => (coveredFraction(e, creases) > 0.98 ? 0 : bleed));
       return { panelId: p.id, polygon: offsetConvex(p.polygon, distances) as Polygon };
     });

@@ -37,15 +37,17 @@ export default async function PayoutsPage({ params }: { params: Promise<{ locale
   return (
     <Page fullWidth title={t("vendorPortal.payouts.title")} titleIcon={<Banknote aria-hidden="true" />} subtitle={t("vendorPortal.payouts.subtitle")}>
       <BlockStack gap="400">
-        <MetricsStrip
-          accessibilityLabel={t("vendorPortal.payouts.metricsLabel")}
-          metrics={[
-            { label: t("vendorPortal.payouts.metrics.paid"), value: formatMoney(sum.paidPiasters, locale) },
-            { label: t("vendorPortal.payouts.metrics.approved"), value: formatMoney(sum.approvedPiasters, locale) },
-            { label: t("vendorPortal.payouts.metrics.pending"), value: formatMoney(sum.pendingPiasters, locale) },
-            { label: t("vendorPortal.payouts.metrics.scheduled"), value: formatMoney(sum.scheduledPiasters, locale) },
-          ]}
-        />
+        <div className={styles.MetricsWrap}>
+          <MetricsStrip
+            accessibilityLabel={t("vendorPortal.payouts.metricsLabel")}
+            metrics={[
+              { label: t("vendorPortal.payouts.metrics.paid"), value: formatMoney(sum.paidPiasters, locale) },
+              { label: t("vendorPortal.payouts.metrics.approved"), value: formatMoney(sum.approvedPiasters, locale) },
+              { label: t("vendorPortal.payouts.metrics.pending"), value: formatMoney(sum.pendingPiasters, locale) },
+              { label: t("vendorPortal.payouts.metrics.scheduled"), value: formatMoney(sum.scheduledPiasters, locale) },
+            ]}
+          />
+        </div>
         {sum.eInvoiceCount > 0 ? (
           <Banner tone="warning" title={t("vendorPortal.payouts.eInvoiceTitle")}>
             {t("vendorPortal.payouts.eInvoiceBody", { count: sum.eInvoiceCount })}

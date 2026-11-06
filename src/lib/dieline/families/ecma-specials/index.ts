@@ -10,6 +10,7 @@ export { familyDimsSchema, familyFeatures, generateFamilyDieline, tryGenerateFam
 export { beersTray, brightwoodTray, cornerGlueFlaps, fourCornerTray, hingedTuckTray, sixCornerTray, trayFrame } from "./trays";
 export { lockWrap, openSleeve } from "./sleeves";
 export { endFlapWallet, pivotForGap, presentationFolder } from "./folders";
-export { CONE_FACETS, cone, coneSectorDeg, ngonSide, pillowPack, polygonalCarton } from "./shapes";
+export { CONE_FACETS, PILLOW_STRIPS, cone, coneSectorDeg, ngonSide, pillowLens, pillowPack, polygonalCarton } from "./shapes";
+export { withDeepParts } from "./kit";
 export { basketCarrier, basketHandleRise, counterDisplay, cupCarrier, cupHoleDiameter, cupsPerSide, displayFrontHeight, gableCarry, type BasketGrid } from "./carriers";
 export { GABLE_FIN_MM, LS_STRIP_MM, asepticBrick, bodyVolumeMl, gableTopCarton } from "./liquid";

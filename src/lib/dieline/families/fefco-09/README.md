@@ -72,6 +72,9 @@ Every model also has: a slug (`fefco-<number>-<name>`), short ar/en descriptions
 - **Slotted partitions**: there are cols − 1 strips across W and rows − 1 strips along L, and cells are equal: `cell = (inner − (n − 1)·t) / n`. Strips along L are slotted from the bottom and strips across W from the top. Slots are t + 0.6 mm wide and half the low strip height deep, so the strips interlock flush. Each strip is its own blank, placed as an extra piece with an `assembly` matrix so it animates into place. The minimum cell opening is 25 mm.
 - **0900**: RSC (0201) inner flaps are W/2 deep and leave an (L − W) × W gap between them. The pad fills that gap with its top flush with the inner floor, so it sits 1 t below y = 0.
 - 180° roll-backs (cushions, compartment risers) use `pivotDepth` 1 when they fold to the inside and 0 when they fold to the printed side, so the layers stack without z-fighting.
+- **Triangular braces** (0946, 0947 rails; 0973–0976 braces and posts) share `triangleBrace` in `engine.ts`. The closed section is exactly s × s at any caliper: the hypotenuse face pivots (√2 − 1)·t below its printed face so its bevelled end stays inside the leg, the leg is (1 − 1/√2)·t shorter to absorb that, and the face stops one caliper short of the parent so the glue tab lies flat against the parent's back (no shared board, no z-fighting). The square rail (0948) has its inner wall one caliper short for the same reason.
+- **Walls folded up toward the printed face** (0949, 0949a) pivot on the unprinted face (`pivotDepth` 1, the outside of that bend), so the outer length stays L′. The 0949a return is one caliper shorter and rests on the pad.
+- Tests check every model at 0.5, 1.5, 3 and 4 mm for every preset: placed bounds inside the host with **no** slack, closed size equal to `outer()`, and no two parallel panels sharing board volume (`__tests__/overlap.ts`).
 
 ## Sources
 
