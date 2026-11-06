@@ -286,7 +286,7 @@
 .mobileLang { justify-self: center; }
 @media (prefers-reduced-motion: reduce) {
   .panel, .panel[data-open="true"], .scrim { transition: none; translate: none; }
-  .panel[data-open="true"] .groups, .mobile, .mobileLevel { animation: none; }
+  .panel[data-open="true"] .groups, .mobile, .mobileLevel, .mobileLevel:dir(rtl) { animation: none; }
 }
 
 /* ───────────── Account menu (AccountLink) ───────────── */

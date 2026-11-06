@@ -68,6 +68,48 @@ for (const locale of ["ar", "en"] as const) {
   });
 }
 
+/** Elements (with their pseudo-elements) whose computed animation-name is not "none". */
+const animated = (page: Page) =>
+  page.evaluate(() =>
+    Array.from(document.querySelectorAll("body *")).flatMap((el) =>
+      [null, "::before", "::after"].flatMap((pseudo) => {
+        const name = getComputedStyle(el, pseudo).animationName;
+        return name && name !== "none" ? [`${el.tagName.toLowerCase()}.${String((el as HTMLElement).className).split(" ")[0]}${pseudo ?? ""}: ${name}`] : [];
+      }),
+    ),
+  );
+
+for (const locale of ["ar", "en"] as const) {
+  // WCAG 2.3.3: under reduced motion no kit element runs any animation, in either direction.
+  // Computed animation-name (not getAnimations) also catches a direction-specific rule such as
+  // `.track:dir(rtl) { animation-name }` outranking the reduced-motion reset.
+  test(`reduced motion: computed animation-name is none everywhere (${locale})`, async ({ browser, baseURL }, info) => {
+    test.setTimeout(120_000);
+    const ctx = await browser.newContext({ ...info.project.use, reducedMotion: "reduce", baseURL });
+    await ctx.addCookies([{ name: "elba_cookie_ack", value: "1", url: baseURL! }]);
+    const page = await ctx.newPage();
+    await page.goto(`/${locale}/dev/kit`);
+    await page.waitForLoadState("networkidle");
+    await isGallery(page);
+    await revealAll(page);
+    expect(await animated(page)).toEqual([]);
+    if (info.project.name === "mobile") {
+      await page.getByRole("button", { name: locale === "ar" ? "القائمة" : "Menu" }).click();
+      const dialog = page.getByRole("dialog");
+      await expect(dialog).toBeVisible();
+      expect(await animated(page)).toEqual([]);
+      await dialog.getByRole("button", { name: locale === "ar" ? "المنتجات" : "Products" }).click();
+      await expect(dialog.getByRole("button", { name: locale === "ar" ? "رجوع" : "Back" })).toBeVisible();
+      expect(await animated(page)).toEqual([]);
+    } else {
+      await page.getByRole("button", { name: locale === "ar" ? "المنتجات" : "Products" }).click();
+      await expect(page.getByRole("button", { name: locale === "ar" ? "المنتجات" : "Products" })).toHaveAttribute("aria-expanded", "true");
+      expect(await animated(page)).toEqual([]);
+    }
+    await ctx.close();
+  });
+}
+
 test("header: transparent over a hero, solid after scroll; mega-menu by hover, click and keyboard", async ({ page }, info) => {
   test.skip(info.project.name !== "desktop", "desktop navigation");
   await page.goto("/en/dev/kit");

@@ -315,7 +315,8 @@
 .marquee:hover .marqueeTrack, .marquee:focus-within .marqueeTrack, .marquee[data-paused="true"] .marqueeTrack { animation-play-state: paused; }
 .marqueeHead { display: flex; justify-content: flex-end; margin-block-end: 16px; }
 @media (prefers-reduced-motion: reduce) {
-  .marqueeTrack { animation: none; inline-size: auto; flex-wrap: nowrap; }
+  /* Match every selector that sets the animation (the RTL name rule outranks a bare class). */
+  .marqueeTrack, .marqueeTrack:dir(rtl), [dir="rtl"] .marqueeTrack, .marquee[data-reverse="true"] .marqueeTrack { animation: none; inline-size: auto; flex-wrap: nowrap; }
   .marqueeViewport { overflow-x: auto; mask-image: none; }
   .marqueeTrack > li[aria-hidden="true"] { display: none; }
   .marqueeHead { display: none; }
