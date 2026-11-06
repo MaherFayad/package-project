@@ -58,6 +58,7 @@ export const designerEn = {
     flat: "Flat",
     half: "Half",
     closed: "Closed",
+    assembled: "Assembled",
     foldValue: "{pct}% folded",
     loading: "Loading the 3D view",
     faceEditorLabel: "Artwork editor for the {face} panel",

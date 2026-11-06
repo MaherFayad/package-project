@@ -51,7 +51,7 @@ export function SharedViewer({ doc }: { doc: DesignDoc }) {
             {t("designer.view.half")}
           </Button>
           <Button size="slim" pressed={fold === 1} onClick={() => setFold(1)}>
-            {t("designer.view.closed")}
+            {(geo?.model as { openTop?: boolean } | undefined)?.openTop ? t("designer.view.assembled") : t("designer.view.closed")}
           </Button>
         </ButtonGroup>
       </div>

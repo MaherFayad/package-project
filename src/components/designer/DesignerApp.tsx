@@ -640,6 +640,9 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
   );
 
   const faceOptions = FACE_IDS.filter((f) => faces[f]).map((f) => ({ value: f, label: faceLabel(f) }));
+  // Open-top styles (FEFCO 0700…) never close: fold 100 % reads "Assembled". The catalogue adds
+  // `openTop` to the library; read it defensively until then.
+  const openTop = !!(libModel as { openTop?: boolean } | null)?.openTop;
   const structureName = libModel?.name[locale] ?? t(`structures.${doc.structureCode}` as DictKey);
 
   return (
@@ -887,7 +890,7 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
                 {t("designer.view.half")}
               </Button>
               <Button size="slim" pressed={fold === 1} onClick={() => setFold(1)}>
-                {t("designer.view.closed")}
+                {openTop ? t("designer.view.assembled") : t("designer.view.closed")}
               </Button>
             </ButtonGroup>
           </div>
