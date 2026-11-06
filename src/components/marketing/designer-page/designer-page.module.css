@@ -188,6 +188,13 @@
   .box { margin-block: var(--mk-stack-head-content); }
 }
 
+/* Narrow phones (R6-AX-19, WCAG 2.4.11 focus not obscured): the structure tiles card leaves the
+   overlay and stacks under the box, clear of the Turn in 3D and pause controls that hang below it. */
+@media (max-width: 599px) {
+  .stage { display: flex; flex-direction: column; align-items: center; }
+  .floatTiles { position: static; order: 2; margin-block-start: var(--mk-stack-head-content); }
+}
+
 /* ───────── 2. Prompt ───────── */
 .page .violet[data-tone] {
   position: relative; overflow: clip; isolation: isolate;

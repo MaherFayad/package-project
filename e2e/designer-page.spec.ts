@@ -175,3 +175,27 @@ test("violet band: its pause button stops the spin and the typing examples (R6-A
   await page.waitForTimeout(1200);
   expect(await input.getAttribute("placeholder")).toBe(before);
 });
+
+test("hero: no floating mockup covers the Turn in 3D / pause controls at phone widths (R6-AX-19, WCAG 2.4.11)", async ({ page }, info) => {
+  test.skip(info.project.name !== "desktop", "widths are set per step");
+  for (const locale of LOCALES) {
+    await page.goto(`/${locale}/designer`);
+    await page.waitForLoadState("networkidle");
+    for (const w of [320, 360, 390, 480, 768, 1024, 1440]) {
+      await page.setViewportSize({ width: w, height: 800 });
+      await page.waitForTimeout(100);
+      const hits = await page.evaluate(() => {
+        const controls = Array.from(document.querySelectorAll('[class*="boxControls"] button')).map((e) => e.getBoundingClientRect());
+        const floats = Array.from(document.querySelectorAll<HTMLElement>('[class*="designer-page_float_"]')).filter((e) => getComputedStyle(e).display !== "none");
+        const out: string[] = [];
+        for (const c of controls)
+          for (const f of floats) {
+            const r = f.getBoundingClientRect();
+            if (c.left < r.right && c.right > r.left && c.top < r.bottom && c.bottom > r.top) out.push(f.className);
+          }
+        return out;
+      });
+      expect(hits, `${locale} ${w}px`).toEqual([]);
+    }
+  }
+});
