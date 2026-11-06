@@ -14,7 +14,8 @@ export interface FanCard {
  */
 export function CardFan({ cards, width = 240, tilt = 6, height = 520, className, "aria-label": label }: { cards: FanCard[]; width?: number; tilt?: number; height?: number; className?: string; "aria-label"?: string }) {
   return (
-    <ul className={[styles.fan, className].filter(Boolean).join(" ")} data-reveal="fade" aria-label={label} style={{ "--fan-w": `${width}px`, "--fan-tilt": `${tilt}deg`, "--fan-h": `${height}px`, margin: 0, listStyle: "none" } as CSSProperties}>
+    // tabIndex: on phones the fan is a horizontal scroller, which keyboard users must be able to scroll (WCAG 2.1.1).
+    <ul className={[styles.fan, className].filter(Boolean).join(" ")} data-reveal="fade" aria-label={label} tabIndex={0} style={{ "--fan-w": `${width}px`, "--fan-tilt": `${tilt}deg`, "--fan-h": `${height}px`, margin: 0, listStyle: "none" } as CSSProperties}>
       {cards.map((c, i) => (
         <li key={i} className={styles.fanCard} style={{ "--i": i, "--n": cards.length } as CSSProperties}>
           {c.media}

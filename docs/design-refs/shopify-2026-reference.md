@@ -134,3 +134,11 @@ Rules for page sessions:
 - Strings for header, footer and kit controls live in `src/i18n/kit.{en,ar}.ts` (`mk.*`). Put page copy in your own namespace.
 - Never wrap the LCP headline in `Reveal`; use `HeroTitle` (or a plain `Display`).
 - Header and footer link to `/start`, `/why-elba`, `/designer`, `/pricing` (the pages being built). `startHref(locale)` still points at the designer until `/start` ships; switch it in `MarketingHeader.tsx`.
+
+Foundation notes (measured on the reference, 6 Nov 2026, 1440x900 and 390x844):
+- Header: 72px, `position: sticky`, transparent over the hero and `rgb(2,9,10)` once scrolled or while a menu is open; menu panel full width `rgb(2,9,10)`, 40px top padding, slides in 300ms `cubic-bezier(0.215,0.61,0.355,1)` after a 200ms delay, link list fades in 250ms later; other top-level items dim while one is open. Phone: logo, underlined "Start free" text link, menu button.
+- Pills: 44px (16px/550, 8px 20px) in the header and 56px (18px/550, 12px 24px) in heroes, 2px border, 150ms `cubic-bezier(0.4,0,0.2,1)`.
+- Headings: h1 96/300 line 1.08 tracking -0.02em; h2 64/330 or 56/330 (tracking -0.03em); h3 44/330; card titles 20/450; footer headings 20/450, links 16px zinc-400 (`#a1a1aa`), 200ms colour transition, footer background `#000`.
+- Keyframes on the home page: `mc-glow-fade` / `mc-glow-fade-bloom` (8s), `mc-spin`, `mc-spin-rev`, `logo-group-marquee(-reverse)`, `scroll-x`, `shimmer`, `fade-in`, `pulse`.
+- Fonts in this build: Inter first in both locales, then Noto Sans Arabic (one 166 KB variable file, Arabic block, preloaded on Arabic marketing pages only). English pages render the one Arabic word (language switch) in the system face. Plex stays for the designer, checkout, vendor and admin frames (`preloadPlexArabic`).
+- Mega-menu panels mount after hydration (their links are also in the phone menu and footer), which keeps about 10 KB out of every marketing page's HTML.
