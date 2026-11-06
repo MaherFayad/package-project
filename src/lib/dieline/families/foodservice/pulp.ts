@@ -87,10 +87,16 @@ export function lidHeight(m: PulpModel, x: Mm, z: Mm): Mm {
   return m.baseHeightMm + m.lidHeightMm * Math.min(1, edge / ch);
 }
 
+/**
+ * Most grid cells per axis. A 600 × 400 mm fruit tray at 2.5 mm would be 240 × 160 cells
+ * (77 k triangles per part); capped, the step grows on large trays so a phone keeps 60 fps.
+ */
+export const PULP_GRID_MAX = 144;
+
 /** Grid mesh of a height field over the footprint (planar top UVs: u along x, v along -z). */
 export function heightFieldMesh(m: PulpModel, part: "base" | "lid" = "base", stepMm = 2.5): MeshData {
-  const nx = Math.max(8, Math.ceil(m.dims.L / stepMm));
-  const nz = Math.max(8, Math.ceil(m.dims.W / stepMm));
+  const nx = Math.min(PULP_GRID_MAX, Math.max(8, Math.ceil(m.dims.L / stepMm)));
+  const nz = Math.min(PULP_GRID_MAX, Math.max(8, Math.ceil(m.dims.W / stepMm)));
   const positions: number[] = [];
   const uvs: number[] = [];
   const indices: number[] = [];
