@@ -290,7 +290,7 @@ const s0226: Fefco02Generator = (d, t, f, p = {}) => {
     const fold = end === "top" ? bevel : 90;
     const lean = Math.sin((fold * Math.PI) / 180);
     // L flaps reach the ridge (centre line) at this lean; the hip triangles reach as far in.
-    const major = Math.min((meetMajor(c) - t) / lean, c.Hp);
+    const major = Math.min((meetMajor(c) - t) / lean, c.Wp);
     const dep = Math.min(major, meetMinor(c) / lean);
     for (const side of ["left", "right"] as const) {
       const hinge = endHinge(c, c.walls[side], end);

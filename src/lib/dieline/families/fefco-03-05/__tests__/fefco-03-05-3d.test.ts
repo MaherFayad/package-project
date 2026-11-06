@@ -68,13 +68,30 @@ describe("FEFCO 03 / 05 fold sequence and mapping", () => {
     expect(m.faces.top!.parts).toHaveLength(4);
   });
 
-  it("octabin faces are the flat side panels (artwork centred on a face lands on the board)", () => {
+  it("octabin side faces wrap half of each corner panel, seamlessly (artwork runs round the chamfers)", () => {
     const def = byCode("FEFCO_0351");
     const m = generateFamilyDieline(def, def.defaultDims, { thicknessMm: 3 });
     const front = m.faces.front!;
-    const widest = Math.max(...front.parts.map((p) => p.rect.width));
-    expect(front.parts.map((p) => p.panelId)).toContain("p0");
-    expect(front.width).toBeCloseTo(widest, 6);
-    expect(front.width).toBeLessThan(0.6 * m.closedOuter.L);
+    const part = (id: string) => front.parts.find((p) => p.panelId === id)!;
+    const side = m.panels.find((p) => p.id === "p0")!;
+    const corner = m.panels.find((p) => p.id === "p1")!;
+    expect(front.parts.map((p) => p.panelId)).toEqual(expect.arrayContaining(["p7", "p0", "p1"]));
+    // Side panel + two corner halves (the cap rims, a clearance further out, run a little wider).
+    expect(front.width).toBeGreaterThan(side.bbox.width + corner.bbox.width - 0.5);
+    expect(front.width).toBeLessThan(side.bbox.width + corner.bbox.width + 20);
+    expect(front.parts.filter((p) => /Cap_wall/.test(p.panelId))).toHaveLength(6);
+    // Face points either side of each corner crease land on the two panels' shared crease.
+    const sheetAt = (id: string, u: number, v: number) => {
+      const [a, b, c, d, e, f] = part(id).transform;
+      return { x: a * u + c * v + e, y: b * u + d * v + f };
+    };
+    const v = part("p0").rect.y + 10;
+    const right = part("p0").rect.x + part("p0").rect.width;
+    expect(sheetAt("p0", right, v).x).toBeCloseTo(sheetAt("p1", right, v).x, 6);
+    expect(sheetAt("p1", right, v).x).toBeCloseTo(corner.bbox.x, 6);
+    const left = part("p0").rect.x;
+    const p7 = m.panels.find((p) => p.id === "p7")!;
+    expect(sheetAt("p7", left, v).x).toBeCloseTo(p7.bbox.x + p7.bbox.width, 6);
+    expect(sheetAt("p0", left, v).x).toBeCloseTo(side.bbox.x, 6);
   });
 });
