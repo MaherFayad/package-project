@@ -179,3 +179,97 @@ Evidence: `finishes-ecma-ste.png` (none · gold foil · spot UV / emboss · soft
 | FN-07 | Print both sides | low | 0 % change in the closed view (correct: the inside is hidden) but the user gets no feedback. | — | When toggled on, animate fold to 0.6 for 1.5 s (respect reduced motion) or show the inside thumbnail. |
 | FN-08 | Board E-flute white / B-flute kraft | low | Only 0.8–2 % change: white-top vs kraft is hidden under full-bleed artwork (correct) and B-flute caliper (3 mm) barely reads at 1x. | B-flute edge is twice E's. | X-05 flute edge; keep. |
 | FN-09 | Kraft board under artwork | medium | Printed artwork on kraft renders as on white (no kraft show-through / ink absorption); designers expect kraft-tinted, slightly desaturated print. | CMYK on brown kraft without white underprint: multiply with kraft. | `boardMaterials.ts · createBoardMaterials`: when `appearance.outside === KRAFT` and no white underprint, `outside.color = #d9c2a3` (multiply) and `roughness 0.92`. |
+
+## 11. Containers — core (10) + bottles, jars, tubs (34) — `src/lib/vessels`, `src/lib/vessels/families/bottles`
+
+Contact sheets: `vessels-bottles-01..04.jpg` (iso · back · top-down). Numbers: `docs/audit/3d-visual-vessels.json`. Brim-full profile volume vs nominal capacity is within 0.97–1.19 for every round glass/PET bottle and jar (realistic headspace), so lathe proportions are sound; the defects are shape-class and option mapping.
+
+| ID | Model | Sev | Finding | Real-world reference | Fix |
+|---|---|---|---|---|---|
+| V-01 | BTL_GLASS_WINE_BORDEAUX, BURGUNDY, HOCK, OIL_MARASCA, OIL_DORICA, BEER_LONGNECK (green option), JUICE | high | Default / green glass renders **amber** (X-01); wine bottles look like beer. | Bordeaux 750 ml: "antique green" / "dead leaf" glass. | X-01 tint pass-through (`GLASS_GREEN` hex `#2f5a2c`). |
+| V-02 | JAR_GLASS_HONEY_HEX | high | "Hexagonal" honey jar renders as a **round** jar (core `WIDE_JAR`, section round). | Hex jar 190 ml (e.g. 45 mm TO lug): six flat facets, 62 mm across flats. | `families/bottles/models/jars.ts`: set `section: { kind: "polygon", sides: 6 }` and have `profileFor` emit it; `components/three/vessels/geometry.ts` already builds non-round sections for PERFUME_SQUARE — reuse with `sides`. |
+| V-03 | BTL_HDPE_SHAMPOO_OVAL | high | **No closure** rendered (bare thread finish; default `FLIP_TOP` is not drawn on this core kind) and the label band cuts a **white slice** through the lower body on the back (label placement on the oval section intersects the wall). | 400 ml oval HDPE with 24/410 flip-top cap. | `vessels/closures.ts`: support `FLIP_TOP` for `PUMP_BOTTLE`-core bodies (fall back to `SCREW_CAP` geometry + hinge lid); `vessels/labels.ts` oval band: follow the elliptical section (`section.rx/ry`) instead of the round radius. |
+| V-04 | BTL_HDPE_DETERGENT_HANDLE, JERRYCAN_HDPE, BTL_HDPE_GALLON_JUG | high | Rendered as plain square bottles: **no integral handle** (names promise one). | 2.5 L detergent / 20 L jerrycan / 1 gal jug: blow-moulded hollow handle. | Add a `handle` feature to the bottles family profile (swept tube or `TorusGeometry` segment joined at shoulder and upper body) in `components/three/vessels/geometry.ts`, driven by `def.handle: { side, gripMm }`. |
+| V-05 | BTL_GLASS_WATER, BEER_*, SPARKLING, WINE_*, OIL_*, SAUCE_WOOZY, SPIRITS_FLASK, PHARMA_SYRUP | high | Crown cork, ROPP, natural cork + capsule, sparkling cork + muselet, pourer, bar-top and child-resistant caps all render as the same **plastic screw cap** (X-01). | ISO 12821 crown (fluted steel, 6 mm), ROPP aluminium (knurled skirt), wine capsule (40–60 mm foil sleeve). | X-01 closure profiles. |
+| V-06 | all clear glass / PET with labels (BOSTON_ROUND, JAR_GLASS_*, JAR_PICKLE, BTL_GLASS_OIL_*, PET_WATER_*) | medium | The **back of the label** shows the artwork **mirrored through the glass** ("ABJƎ" in back views). A paper / white BOPP label's adhesive side is white (or the bottle colour for clear labels). | Self-adhesive label: printed face out, white liner side in. | `components/three/vessels/materials.ts · createLabelMaterial`: `side: FrontSide`, and add a second label mesh (back-face, `MeshStandardMaterial #f2f2ee`, offset −0.05 mm) unless stock is `CLEAR_BOPP` / `PETG_SHRINK`. |
+| V-07 | BTL_PET_WATER_COOLER_19L | low | Brim volume 22.6 L vs 18.9 L nominal (1.19): body too cylindrical, no grip ring / ribs. | 5-gal PC/PET: ribbed body, Ø270 × 490. | `models/plastic.ts` cooler profile: add 3 ribs (−6 mm) and reduce body radius 4 mm. |
+| V-08 | BTL_PET_CSD | low | Round base: no petaloid feet. | CSD PET bottles: 5-foot petaloid base. | Lathe cannot: add a 5-lobe base cap mesh. |
+| V-09 | SQUEEZE_TUBE, BTL_PET_JUICE, BTL_PET_SPORTS | low | Front copy cut by the silhouette at the default view (X-07). | — | X-07 (vessel `DEFAULT_VIEW.theta`). |
+| V-10 | WIDE_JAR, ROUND_TIN, TUB_PP_*, PAIL_PP_ROUND, CAN, ROUND_BOTTLE, PUMP_BOTTLE, DROPPER_BOTTLE, STAND_UP_POUCH | — | Read to life: 330 ml can necked end + tab, tubs' taper and rim, pump/dropper closures. | — | — |
+
+## 12. Containers — cosmetic, pharma, cans, tins, cups, tubes (37) — `src/lib/vessels/families/cosmetic-cans`
+
+Contact sheets: `vessels-cosmetic-cans-01..03.jpg`.
+
+| ID | Model | Sev | Finding | Real-world reference | Fix |
+|---|---|---|---|---|---|
+| V-11 | TIN-GIFT-SQUARE, TIN-TEA-CADDY | **critical** | Square tins get a **round lid**: a white disc floats inside the square body (top view: circle in a square). | Square tin: square slip/plug lid with rounded corners matching the body. | `families/cosmetic-cans/geometry.ts`: lid section must reuse the body `section` (square, corner radius); `components/three/vessels/closures.ts · SLIP_LID/PLUG_LID` build from `profile.section` instead of a lathe disc. |
+| V-12 | TRAY-PUNNET, TRAY-CLAMSHELL, TUB-ICE-RECT | **critical** | Rectangular trays (187 × 137, 150 × 150, 165 × 115) render with a **round** lid / film, and the punnet body reads round in iso. | PET punnet: rectangular with top-seal film; clamshell: hinged rectangular lid. | Same as V-11 for `LUG_LID`-core lids on non-round sections; `TOP_SEAL_FILM` should be a flat film on the rim polygon, `HINGED_LID` a mirrored tray on a hinge. |
+| V-13 | TIN-GIFT-ROUND, TIN-GIFT-SQUARE, TIN-TEA-CADDY, CAN-SARDINE, CAN-OVAL-FISH, CAN-FOOD-3PC (ends) | high | **Tinplate reads as black lacquer**: metalness 1 under the dim vessel environment (same cause as FN-01). | Tinplate: bright silvery, slightly warm. | `vessels/materials.ts · TINPLATE`: `roughness 0.18 → 0.28`, `envMapIntensity 1.25 → 1.8`; vessel `Environment` add a broad front fill `Lightformer` (intensity 0.8, scale 10 × 3) like `StudioLights`. |
+| V-14 | COS-COMPACT | high | Default `ABS_BLACK` compact renders **white/silver** (`ABS_BLACK → HDPE_WHITE`). | Black ABS compact. | `src/lib/library/vessels.ts · COS_MATERIAL` L181: map to a new core `ABS_BLACK` (`#151515`, roughness 0.35, clearcoat 0.6) or pass tint (X-01). Same for `PP_NATURAL`/`LDPE_NATURAL` (translucent milky, `transmission 0.3`), `ACRYLIC_CLEAR` (thick wall: `thickness 6`). |
+| V-15 | COS-DEO-STICK | high | Twist-up deodorant renders as a tapered **cup with a jar lid** (`TWIST_UP → LUG_LID`, core `WIDE_JAR`). | Oval twist-up stick: oval barrel, dome cap, twist wheel at the base. | New closure `TWIST_UP` (dome cap the full barrel width) + base wheel; body section oval (`G`), no taper. |
+| V-16 | CUP-ICE-PINT, CUP-YOGURT | medium | Paper ice-cream cup reads grey plastic (PE board mapped to `WHITE_POUCH`, dim). | SBS + PE pint: white, matte, rolled rim. | `COS_MATERIAL.PE_BOARD` → `HDPE_WHITE` look with `roughness 0.7`; brighter env (V-13). |
+| V-17 | COS-PERFUME-ROUND, COS-AIRLESS, PH-AMPOULE | medium | Glass/airless walls too thin: brim volume 1.34× / 1.47× / 2.0× nominal; perfume reads light and cheap, ampoule body too long (no constriction ring). | Perfume flacons: 4–8 mm walls, 8–15 mm base; 2 ml ampoule Ø10.75 × 75 with stem constriction. | `definitions/cosmetic.ts` perfume `wallMm 2 → 5`, `baseMm → 12`; `pharma.ts` ampoule: add constriction at 0.55 H (r × 0.45) and shorten body to 35 mm. |
+| V-18 | CAN-TUNA, CAN-FOOD-3PC | low | Easy-open end and double-seam end both render as `CAN_END` / `SLIP_LID`; peel-foil shows as a slip lid. | Peel-off foil is flat on the rim; EOE has a ring pull. | Closure variants `EOE_RING`, `PEEL_FOIL` in `closures.ts`. |
+| V-19 | TUBE-LAMINATE, TUBE-ALU, TUBE-OVAL, PH-TUBE | low | Lathe tubes overstate volume 1.2–1.9× (flattened crimp not modelled in volume) — visual is fine; `TUBE-OVAL` renders round (G 24 ignored). | Oval tube: elliptical shoulder. | `geometry.ts` tube: elliptical section from `G`. |
+| V-20 | COS-DROPPER, SERUM, ROLL-ON, LIPSTICK, LIP-GLOSS, MASCARA, NAIL-POLISH, JAR-DOUBLE, PH-VIAL, PH-PILL-CR, PH-EYE-DROP, CAN-BEVERAGE, CAN-PAINT, CAN-AEROSOL, CUP-DELI | — | Read to life (dropper bulb, aerosol valve cup, paint can lid ring, double-wall jar). | — | — |
+
+## 13. Containers — flexible packs (15) — `src/lib/vessels/families/flexible`
+
+Contact sheet: `vessels-flexible-01.jpg`. Pillow, three-side seal, quad seal, side gusset, flat-bottom (box) pouch, stick pack, sachet, flow wrap, mailer and bag-in-box render with believable seals, gussets and pillowing.
+
+| ID | Model | Sev | Finding | Real-world reference | Fix |
+|---|---|---|---|---|---|
+| V-21 | FLEX_* metallised / foil laminates | medium | Every pouch reads the same dull mustard-metal: film looks semi-metallic regardless of laminate (PET/PE vs kraft vs foil); no crinkle or seal-edge highlight. | PET/PE gloss film: sharp specular, no metal; foil laminate: metal only where unprinted. | `components/three/vessels` flexible material: per laminate `metalness 0` (PET/PE, kraft), `0.9` only for MET-PET/foil; add a normal-map wrinkle (`createKraftTexture`-style procedural) at 5 % strength. |
+| V-22 | FLEX_VACUUM_PACK | low | Clear film shows the artwork mirrored from the back: correct for a reverse-printed clear film, but the product inside is missing so it reads as a transparent sticker. | Vacuum pack: product visible through film. | Add a neutral product slab inside (like `fillable` liquids). |
+| V-23 | FLEX_STAND_UP_POUCH vs core STAND_UP_POUCH | low | Two different pouch renderers (core lathe-kind kraft vs flexible film model) for the same product; look differs (kraft fibre vs flat film). | — | Route core `STAND_UP_POUCH` through the flexible renderer. |
+
+### V-collapse: options that cannot change the 3D model (container → core · closure → core)
+
+| Model | Collapsed options |
+|---|---|
+| BTL_GLASS_WATER | GLASS_FLINT+GLASS_COBALT→GLASS_CLEAR; ROPP_CAP+CROWN_26→SCREW_CAP |
+| BTL_GLASS_JUICE | GLASS_AMBER+GLASS_GREEN→GLASS_AMBER |
+| BTL_GLASS_WINE_BORDEAUX | GLASS_GREEN+GLASS_AMBER→GLASS_AMBER; NATURAL_CORK+ROPP_CAP→SCREW_CAP |
+| BTL_GLASS_WINE_BURGUNDY | GLASS_GREEN+GLASS_AMBER→GLASS_AMBER; NATURAL_CORK+ROPP_CAP→SCREW_CAP |
+| BTL_GLASS_WINE_HOCK | GLASS_GREEN+GLASS_AMBER→GLASS_AMBER; GLASS_FLINT+GLASS_COBALT→GLASS_CLEAR; NATURAL_CORK+ROPP_CAP→SCREW_CAP |
+| BTL_GLASS_SPARKLING | SPARKLING_CORK+CROWN_29→SCREW_CAP |
+| BTL_GLASS_BEER_LONGNECK | GLASS_AMBER+GLASS_GREEN→GLASS_AMBER |
+| BTL_GLASS_BEER_STUBBY | GLASS_AMBER+GLASS_GREEN→GLASS_AMBER |
+| BTL_GLASS_OIL_MARASCA | GLASS_GREEN+GLASS_AMBER→GLASS_AMBER; POURER_CAP+ROPP_CAP→SCREW_CAP |
+| BTL_GLASS_OIL_DORICA | GLASS_GREEN+GLASS_AMBER→GLASS_AMBER; POURER_CAP+ROPP_CAP→SCREW_CAP |
+| BTL_GLASS_SAUCE_WOOZY | ORIFICE_REDUCER_CAP+SCREW_CAP→SCREW_CAP |
+| BTL_GLASS_SPIRITS_FLASK | ROPP_CAP+BAR_TOP→SCREW_CAP |
+| BTL_GLASS_PHARMA_SYRUP | ROPP_CAP+CHILD_RESISTANT_CAP→SCREW_CAP |
+| BTL_PET_WATER_EG | PET_CLEAR+PET_BLUE→PET_CLEAR |
+| BTL_PET_WATER_JUG_5L | PET_CLEAR+PET_BLUE→PET_CLEAR |
+| BTL_PET_WATER_COOLER_19L | PET_BLUE+PET_CLEAR→PET_CLEAR |
+| BTL_PET_CSD | PET_CLEAR+PET_BLUE→PET_CLEAR |
+| BTL_HDPE_SHAMPOO_OVAL | HDPE_WHITE+HDPE_COLOURED→HDPE_WHITE |
+| BTL_HDPE_DETERGENT_HANDLE | HDPE_WHITE+HDPE_COLOURED+HDPE_NATURAL→HDPE_WHITE; MEASURE_CAP+SCREW_CAP_TE→SCREW_CAP |
+| BTL_HDPE_MOTOR_OIL | HDPE_COLOURED+HDPE_WHITE+HDPE_NATURAL→HDPE_WHITE |
+| BTL_PET_PHARMA_SYRUP | CHILD_RESISTANT_CAP+SCREW_CAP_TE→SCREW_CAP |
+| BTL_PET_SPORTS | PET_CLEAR+PET_BLUE→PET_CLEAR |
+| BTL_HDPE_GALLON_JUG | HDPE_NATURAL+HDPE_WHITE→HDPE_WHITE |
+| JAR_GLASS_MASON | GLASS_FLINT+GLASS_COBALT→GLASS_CLEAR |
+| JAR_PET_NUT_BUTTER | PET_CLEAR+PP_NATURAL→PET_CLEAR; SCREW_CAP+SCREW_CAP_TE→SCREW_CAP |
+| PAIL_PP_ROUND | PP_WHITE+HDPE_WHITE→HDPE_WHITE |
+| JERRYCAN_HDPE | HDPE_NATURAL+HDPE_WHITE+HDPE_COLOURED→HDPE_WHITE; VENTED_SCREW_CAP+SCREW_CAP_TE→SCREW_CAP |
+| COS-DROPPER | DROPPER+TREATMENT_PUMP→DROPPER |
+| COS-SERUM | TREATMENT_PUMP+DROPPER→DROPPER |
+| COS-AIRLESS | PP_WHITE+PP_NATURAL→HDPE_WHITE |
+| COS-PERFUME-ROUND | MIST_PUMP_COLLAR+MIST_PUMP→MIST_PUMP |
+| COS-PERFUME-OVAL | MIST_PUMP_COLLAR+MIST_PUMP→MIST_PUMP |
+| COS-DEO-STICK | PP_WHITE+PP_NATURAL→HDPE_WHITE |
+| COS-COMPACT | ABS_BLACK+PP_WHITE→HDPE_WHITE |
+| PH-PILL-CR | HDPE_WHITE+HDPE_NATURAL→HDPE_WHITE; CHILD_RESISTANT_CAP+SCREW_CAP→SCREW_CAP |
+| PH-EYE-DROP | LDPE_NATURAL+LDPE_WHITE→HDPE_WHITE |
+| CAN-FOOD-3PC | DOUBLE_SEAM_END+EASY_OPEN_END→CAN_END |
+| CAN-TUNA | EASY_OPEN_END+PEEL_FOIL→SLIP_LID |
+| TIN-TEA-CADDY | PLUG_LID+SLIP_LID→SLIP_LID |
+| CUP-YOGURT | PP_WHITE+PS_WHITE→HDPE_WHITE; PEEL_FOIL+SNAP_LID→LUG_LID |
+| CUP-DELI | PP_CLEAR+RPET_CLEAR→PET_CLEAR |
+| TRAY-CLAMSHELL | APET_CLEAR+RPET_CLEAR→PET_CLEAR |
+| TRAY-PUNNET | RPET_CLEAR+APET_CLEAR→PET_CLEAR; TOP_SEAL_FILM+HINGED_LID→LUG_LID |
+| TUBE-LAMINATE | LAMINATE_PBL+LAMINATE_ABL→PE_TUBE_WHITE |
+| TUBE-OVAL | PE_TUBE_WHITE+LAMINATE_PBL→PE_TUBE_WHITE |
