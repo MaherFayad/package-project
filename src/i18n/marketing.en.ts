@@ -69,7 +69,7 @@ export const marketingEn = {
       designTitle: "Free 3D designer",
       designBody: "Put your logo on a real dieline and turn the box to check every side before you pay. No design software needed.",
       priceTitle: "Instant price in EGP",
-      priceBody: "See the price per box for 100 to 2,000 boxes, with VAT shown separately. Quotes stay valid for 72 hours.",
+      priceBody: "See the price per box for 100 to 2,000 boxes, with VAT shown separately. Prices stay valid for 72 hours.",
       vendorsTitle: "Vetted Egyptian printers",
       vendorsBody: "Every printer is visited and test-printed by our team. Compare portfolios, machines, ratings and lead times.",
       proofTitle: "3D and PDF proof",

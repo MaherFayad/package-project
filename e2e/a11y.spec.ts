@@ -72,7 +72,7 @@ test("keyboard-only checkout keeps focus on every step and reaches the card fiel
   await page.getByLabel("City or district").fill("Dokki");
   await page.getByLabel("Street address").fill("12 Tahrir St");
   // The governorate re-prices delivery; Continue is busy until that lands.
-  await expect(page.getByText("Delivery price updated for Giza.")).toBeVisible();
+  await expect(page.getByText("Shipping cost updated for Giza.")).toBeVisible();
   await press(page, summary.getByRole("button", { name: "Continue" }));
 
   // Step 3: proof approval, keyboard only.
