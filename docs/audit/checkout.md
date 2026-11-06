@@ -98,6 +98,8 @@ Counts (round 2): high 2 (+ CO-06 reopened), medium 4, low 2: 8 new findings, al
 
 Pass 2 checks (after the fixes, rebuilt with `next build`): walk of all 108 screens again, axe 0 violations and 0 px horizontal overflow on every one; new quote form / sent / account screens (ar/en x 390/1440) axe 0; focus moves to the sent banner; `٥٠٠٠` accepted as 5,000; the phone number renders `012 3352 1195` in the Arabic sentence (isolated).
 
+Pass 2 (round 2): `npm run lint`, `npm run typecheck` clean; `npm test` 54 files / 6,245 tests pass; `next build` ok; e2e `checkout`, `journey`, `smoke` (`--workers=2 --trace off`, desktop + mobile): 15 passed, 1 skipped by the journey spec itself on mobile. Keyboard only on the price request: quantity field → Enter → Tab order Apply, note, "Request a price", "Order 2,000 boxes now"; Enter on "Request a price" sends and moves focus to the sent banner (visible ring). Under `prefers-reduced-motion: reduce` only the focus-ring transition runs (no entrance or price motion). Share link as its owner: owner copy and "Open in designer", 0 px overflow (`round2/after/ar-390-share-owner.png`).
+
 ### Performance (round 2, `docs/audit/tools/perf-pages.mjs`, `next start`)
 
 Phone = 390x844, DPR 2, 4x CPU, Slow 4G (562 ms RTT); desktop = 1440x900, no throttling. First-load JS from `next build` (gzip): checkout 151 KB, pay 146 KB, orders 144 KB, order 145 KB, account 148 KB, share 137 KB (3D chunk lazy).
