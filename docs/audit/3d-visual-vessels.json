@@ -1,0 +1,3075 @@
+[
+ {
+  "code": "ROUND_BOTTLE",
+  "source": "vessel-core",
+  "coreKind": "ROUND_BOTTLE",
+  "render": "lathe",
+  "preset": "pet-500",
+  "dims": {
+   "D": 65,
+   "H": 197
+  },
+  "capacityMl": 500,
+  "profileVolMl": 489,
+  "ratio": 0.98,
+  "envelope": {
+   "width": 65,
+   "depth": 65,
+   "height": 200,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "PET_CLEAR→PET_CLEAR",
+   "HDPE_WHITE→HDPE_WHITE"
+  ],
+  "closures": [
+   "SCREW_CAP→SCREW_CAP",
+   "SPORTS_CAP→SPORTS_CAP"
+  ]
+ },
+ {
+  "code": "BOSTON_ROUND",
+  "source": "vessel-core",
+  "coreKind": "BOSTON_ROUND",
+  "render": "lathe",
+  "preset": "boston-100",
+  "dims": {
+   "D": 45,
+   "H": 105
+  },
+  "capacityMl": 100,
+  "profileVolMl": 112,
+  "ratio": 1.12,
+  "envelope": {
+   "width": 45,
+   "depth": 45,
+   "height": 108,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "GLASS_AMBER→GLASS_AMBER",
+   "GLASS_CLEAR→GLASS_CLEAR",
+   "GLASS_FROSTED→GLASS_FROSTED"
+  ],
+  "closures": [
+   "SCREW_CAP→SCREW_CAP",
+   "LOTION_PUMP→LOTION_PUMP"
+  ]
+ },
+ {
+  "code": "DROPPER_BOTTLE",
+  "source": "vessel-core",
+  "coreKind": "DROPPER_BOTTLE",
+  "render": "lathe",
+  "preset": "dropper-30",
+  "dims": {
+   "D": 32,
+   "H": 78
+  },
+  "capacityMl": 30,
+  "profileVolMl": 37,
+  "ratio": 1.23,
+  "envelope": {
+   "width": 32,
+   "depth": 32,
+   "height": 107,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "GLASS_AMBER→GLASS_AMBER",
+   "GLASS_CLEAR→GLASS_CLEAR",
+   "GLASS_FROSTED→GLASS_FROSTED"
+  ],
+  "closures": [
+   "DROPPER→DROPPER",
+   "SCREW_CAP→SCREW_CAP"
+  ]
+ },
+ {
+  "code": "PUMP_BOTTLE",
+  "source": "vessel-core",
+  "coreKind": "PUMP_BOTTLE",
+  "render": "lathe",
+  "preset": "pump-250",
+  "dims": {
+   "D": 58,
+   "H": 129
+  },
+  "capacityMl": 250,
+  "profileVolMl": 273,
+  "ratio": 1.09,
+  "envelope": {
+   "width": 58,
+   "depth": 58,
+   "height": 157,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "PET_CLEAR→PET_CLEAR",
+   "HDPE_WHITE→HDPE_WHITE"
+  ],
+  "closures": [
+   "LOTION_PUMP→LOTION_PUMP",
+   "SCREW_CAP→SCREW_CAP"
+  ]
+ },
+ {
+  "code": "PERFUME_SQUARE",
+  "source": "vessel-core",
+  "coreKind": "PERFUME_SQUARE",
+  "render": "lathe",
+  "preset": "perfume-50",
+  "dims": {
+   "D": 40,
+   "H": 76,
+   "G": 40
+  },
+  "capacityMl": 50,
+  "profileVolMl": 50,
+  "ratio": 1,
+  "envelope": {
+   "width": 40,
+   "depth": 40,
+   "height": 95,
+   "section": "non-round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "GLASS_CLEAR→GLASS_CLEAR",
+   "GLASS_FROSTED→GLASS_FROSTED"
+  ],
+  "closures": [
+   "MIST_PUMP→MIST_PUMP"
+  ]
+ },
+ {
+  "code": "WIDE_JAR",
+  "source": "vessel-core",
+  "coreKind": "WIDE_JAR",
+  "render": "lathe",
+  "preset": "jar-250g",
+  "dims": {
+   "D": 68,
+   "H": 76
+  },
+  "capacityMl": 180,
+  "profileVolMl": 189,
+  "ratio": 1.05,
+  "envelope": {
+   "width": 68,
+   "depth": 68,
+   "height": 77.8,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "GLASS_CLEAR→GLASS_CLEAR",
+   "GLASS_AMBER→GLASS_AMBER",
+   "GLASS_FROSTED→GLASS_FROSTED",
+   "PET_CLEAR→PET_CLEAR"
+  ],
+  "closures": [
+   "LUG_LID→LUG_LID"
+  ]
+ },
+ {
+  "code": "CAN",
+  "source": "vessel-core",
+  "coreKind": "CAN",
+  "render": "lathe",
+  "preset": "can-330",
+  "dims": {
+   "D": 66.2,
+   "H": 115.2
+  },
+  "capacityMl": 330,
+  "profileVolMl": 329,
+  "ratio": 1,
+  "envelope": {
+   "width": 66.2,
+   "depth": 66.2,
+   "height": 115.8,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "ALUMINIUM→ALUMINIUM"
+  ],
+  "closures": [
+   "CAN_END→CAN_END"
+  ]
+ },
+ {
+  "code": "ROUND_TIN",
+  "source": "vessel-core",
+  "coreKind": "ROUND_TIN",
+  "render": "lathe",
+  "preset": "tin-200",
+  "dims": {
+   "D": 75,
+   "H": 54
+  },
+  "capacityMl": 200,
+  "profileVolMl": 224,
+  "ratio": 1.12,
+  "envelope": {
+   "width": 76.2,
+   "depth": 76.2,
+   "height": 54.6,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "TINPLATE→TINPLATE"
+  ],
+  "closures": [
+   "SLIP_LID→SLIP_LID"
+  ]
+ },
+ {
+  "code": "STAND_UP_POUCH",
+  "source": "vessel-core",
+  "coreKind": "STAND_UP_POUCH",
+  "render": "lathe",
+  "preset": "pouch-250g",
+  "dims": {
+   "D": 160,
+   "H": 230,
+   "G": 80
+  },
+  "capacityMl": 700,
+  "profileVolMl": 3771,
+  "ratio": 5.39,
+  "envelope": {
+   "width": 160,
+   "depth": 80,
+   "height": 230,
+   "section": "non-round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "KRAFT_POUCH→KRAFT_POUCH",
+   "WHITE_POUCH→WHITE_POUCH"
+  ],
+  "closures": [
+   "ZIP_SEAL→ZIP_SEAL"
+  ]
+ },
+ {
+  "code": "SQUEEZE_TUBE",
+  "source": "vessel-core",
+  "coreKind": "SQUEEZE_TUBE",
+  "render": "lathe",
+  "preset": "tube-50",
+  "dims": {
+   "D": 30,
+   "H": 120
+  },
+  "capacityMl": 50,
+  "profileVolMl": 72,
+  "ratio": 1.44,
+  "envelope": {
+   "width": 47.12388980384689,
+   "depth": 30,
+   "height": 138.6,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "PE_TUBE_WHITE→PE_TUBE_WHITE"
+  ],
+  "closures": [
+   "FLIP_TOP→FLIP_TOP",
+   "SCREW_TUBE_CAP→SCREW_TUBE_CAP"
+  ]
+ },
+ {
+  "code": "BTL_GLASS_WATER",
+  "source": "vessel-bottles",
+  "coreKind": "ROUND_BOTTLE",
+  "render": "lathe",
+  "preset": "glass-water-330",
+  "dims": {
+   "D": 62,
+   "H": 210
+  },
+  "capacityMl": 330,
+  "profileVolMl": 365,
+  "ratio": 1.11,
+  "envelope": {
+   "width": 62,
+   "depth": 62,
+   "height": 211.5,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [
+   "GLASS_FLINT+GLASS_COBALT→GLASS_CLEAR"
+  ],
+  "closureCollapse": [
+   "ROPP_CAP+CROWN_26→SCREW_CAP"
+  ],
+  "containers": [
+   "GLASS_FLINT→GLASS_CLEAR",
+   "GLASS_GREEN→GLASS_AMBER",
+   "GLASS_COBALT→GLASS_CLEAR",
+   "GLASS_FROSTED→GLASS_FROSTED"
+  ],
+  "closures": [
+   "ROPP_CAP→SCREW_CAP",
+   "CROWN_26→SCREW_CAP",
+   "SWING_TOP→FLIP_TOP"
+  ]
+ },
+ {
+  "code": "BTL_GLASS_JUICE",
+  "source": "vessel-bottles",
+  "coreKind": "ROUND_BOTTLE",
+  "render": "lathe",
+  "preset": "glass-juice-330",
+  "dims": {
+   "D": 64,
+   "H": 168
+  },
+  "capacityMl": 330,
+  "profileVolMl": 378,
+  "ratio": 1.15,
+  "envelope": {
+   "width": 64,
+   "depth": 64,
+   "height": 169.8,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [
+   "GLASS_AMBER+GLASS_GREEN→GLASS_AMBER"
+  ],
+  "closureCollapse": [],
+  "containers": [
+   "GLASS_FLINT→GLASS_CLEAR",
+   "GLASS_AMBER→GLASS_AMBER",
+   "GLASS_GREEN→GLASS_AMBER"
+  ],
+  "closures": [
+   "LUG_LID→LUG_LID"
+  ]
+ },
+ {
+  "code": "BTL_GLASS_WINE_BORDEAUX",
+  "source": "vessel-bottles",
+  "coreKind": "BOSTON_ROUND",
+  "render": "lathe",
+  "preset": "bordeaux-750",
+  "dims": {
+   "D": 76,
+   "H": 300
+  },
+  "capacityMl": 750,
+  "profileVolMl": 764,
+  "ratio": 1.02,
+  "envelope": {
+   "width": 76,
+   "depth": 76,
+   "height": 300.5,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [
+   "GLASS_GREEN+GLASS_AMBER→GLASS_AMBER"
+  ],
+  "closureCollapse": [
+   "NATURAL_CORK+ROPP_CAP→SCREW_CAP"
+  ],
+  "containers": [
+   "GLASS_GREEN→GLASS_AMBER",
+   "GLASS_FLINT→GLASS_CLEAR",
+   "GLASS_AMBER→GLASS_AMBER"
+  ],
+  "closures": [
+   "NATURAL_CORK→SCREW_CAP",
+   "ROPP_CAP→SCREW_CAP"
+  ]
+ },
+ {
+  "code": "BTL_GLASS_WINE_BURGUNDY",
+  "source": "vessel-bottles",
+  "coreKind": "ROUND_BOTTLE",
+  "render": "lathe",
+  "preset": "burgundy-750",
+  "dims": {
+   "D": 82,
+   "H": 296
+  },
+  "capacityMl": 750,
+  "profileVolMl": 796,
+  "ratio": 1.06,
+  "envelope": {
+   "width": 82,
+   "depth": 82,
+   "height": 296.5,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [
+   "GLASS_GREEN+GLASS_AMBER→GLASS_AMBER"
+  ],
+  "closureCollapse": [
+   "NATURAL_CORK+ROPP_CAP→SCREW_CAP"
+  ],
+  "containers": [
+   "GLASS_GREEN→GLASS_AMBER",
+   "GLASS_FLINT→GLASS_CLEAR",
+   "GLASS_AMBER→GLASS_AMBER"
+  ],
+  "closures": [
+   "NATURAL_CORK→SCREW_CAP",
+   "ROPP_CAP→SCREW_CAP"
+  ]
+ },
+ {
+  "code": "BTL_GLASS_WINE_HOCK",
+  "source": "vessel-bottles",
+  "coreKind": "ROUND_BOTTLE",
+  "render": "lathe",
+  "preset": "hock-750",
+  "dims": {
+   "D": 75,
+   "H": 350
+  },
+  "capacityMl": 750,
+  "profileVolMl": 828,
+  "ratio": 1.1,
+  "envelope": {
+   "width": 75,
+   "depth": 75,
+   "height": 351.5,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [
+   "GLASS_GREEN+GLASS_AMBER→GLASS_AMBER",
+   "GLASS_FLINT+GLASS_COBALT→GLASS_CLEAR"
+  ],
+  "closureCollapse": [
+   "NATURAL_CORK+ROPP_CAP→SCREW_CAP"
+  ],
+  "containers": [
+   "GLASS_GREEN→GLASS_AMBER",
+   "GLASS_AMBER→GLASS_AMBER",
+   "GLASS_FLINT→GLASS_CLEAR",
+   "GLASS_COBALT→GLASS_CLEAR"
+  ],
+  "closures": [
+   "NATURAL_CORK→SCREW_CAP",
+   "ROPP_CAP→SCREW_CAP"
+  ]
+ },
+ {
+  "code": "BTL_GLASS_SPARKLING",
+  "source": "vessel-bottles",
+  "coreKind": "ROUND_BOTTLE",
+  "render": "lathe",
+  "preset": "sparkling-750",
+  "dims": {
+   "D": 89,
+   "H": 300
+  },
+  "capacityMl": 750,
+  "profileVolMl": 828,
+  "ratio": 1.1,
+  "envelope": {
+   "width": 89,
+   "depth": 89,
+   "height": 324,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [
+   "SPARKLING_CORK+CROWN_29→SCREW_CAP"
+  ],
+  "containers": [
+   "GLASS_GREEN→GLASS_AMBER",
+   "GLASS_FLINT→GLASS_CLEAR"
+  ],
+  "closures": [
+   "SPARKLING_CORK→SCREW_CAP",
+   "CROWN_29→SCREW_CAP"
+  ]
+ },
+ {
+  "code": "BTL_GLASS_BEER_LONGNECK",
+  "source": "vessel-bottles",
+  "coreKind": "ROUND_BOTTLE",
+  "render": "lathe",
+  "preset": "longneck-330",
+  "dims": {
+   "D": 60,
+   "H": 226.5
+  },
+  "capacityMl": 330,
+  "profileVolMl": 340,
+  "ratio": 1.03,
+  "envelope": {
+   "width": 60,
+   "depth": 60,
+   "height": 227.5,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [
+   "GLASS_AMBER+GLASS_GREEN→GLASS_AMBER"
+  ],
+  "closureCollapse": [],
+  "containers": [
+   "GLASS_AMBER→GLASS_AMBER",
+   "GLASS_GREEN→GLASS_AMBER",
+   "GLASS_FLINT→GLASS_CLEAR"
+  ],
+  "closures": [
+   "CROWN_26→SCREW_CAP"
+  ]
+ },
+ {
+  "code": "BTL_GLASS_BEER_STUBBY",
+  "source": "vessel-bottles",
+  "coreKind": "BOSTON_ROUND",
+  "render": "lathe",
+  "preset": "stubby-330",
+  "dims": {
+   "D": 70,
+   "H": 174
+  },
+  "capacityMl": 330,
+  "profileVolMl": 377,
+  "ratio": 1.14,
+  "envelope": {
+   "width": 70,
+   "depth": 70,
+   "height": 175,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [
+   "GLASS_AMBER+GLASS_GREEN→GLASS_AMBER"
+  ],
+  "closureCollapse": [],
+  "containers": [
+   "GLASS_AMBER→GLASS_AMBER",
+   "GLASS_GREEN→GLASS_AMBER",
+   "GLASS_FLINT→GLASS_CLEAR"
+  ],
+  "closures": [
+   "CROWN_26→SCREW_CAP",
+   "SWING_TOP→FLIP_TOP"
+  ]
+ },
+ {
+  "code": "BTL_GLASS_OIL_MARASCA",
+  "source": "vessel-bottles",
+  "coreKind": "PERFUME_SQUARE",
+  "render": "lathe",
+  "preset": "marasca-500",
+  "dims": {
+   "D": 56,
+   "G": 56,
+   "H": 262
+  },
+  "capacityMl": 500,
+  "profileVolMl": 400,
+  "ratio": 0.8,
+  "envelope": {
+   "width": 56,
+   "depth": 56,
+   "height": 268,
+   "section": "non-round"
+  },
+  "err": "",
+  "containerCollapse": [
+   "GLASS_GREEN+GLASS_AMBER→GLASS_AMBER"
+  ],
+  "closureCollapse": [
+   "POURER_CAP+ROPP_CAP→SCREW_CAP"
+  ],
+  "containers": [
+   "GLASS_GREEN→GLASS_AMBER",
+   "GLASS_FLINT→GLASS_CLEAR",
+   "GLASS_AMBER→GLASS_AMBER"
+  ],
+  "closures": [
+   "POURER_CAP→SCREW_CAP",
+   "ROPP_CAP→SCREW_CAP"
+  ]
+ },
+ {
+  "code": "BTL_GLASS_OIL_DORICA",
+  "source": "vessel-bottles",
+  "coreKind": "ROUND_BOTTLE",
+  "render": "lathe",
+  "preset": "dorica-500",
+  "dims": {
+   "D": 61.4,
+   "H": 265.9
+  },
+  "capacityMl": 500,
+  "profileVolMl": 497,
+  "ratio": 0.99,
+  "envelope": {
+   "width": 61.4,
+   "depth": 61.4,
+   "height": 271.9,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [
+   "GLASS_GREEN+GLASS_AMBER→GLASS_AMBER"
+  ],
+  "closureCollapse": [
+   "POURER_CAP+ROPP_CAP→SCREW_CAP"
+  ],
+  "containers": [
+   "GLASS_GREEN→GLASS_AMBER",
+   "GLASS_FLINT→GLASS_CLEAR",
+   "GLASS_AMBER→GLASS_AMBER"
+  ],
+  "closures": [
+   "POURER_CAP→SCREW_CAP",
+   "ROPP_CAP→SCREW_CAP"
+  ]
+ },
+ {
+  "code": "BTL_GLASS_SAUCE_WOOZY",
+  "source": "vessel-bottles",
+  "coreKind": "ROUND_BOTTLE",
+  "render": "lathe",
+  "preset": "woozy-148",
+  "dims": {
+   "D": 47.2,
+   "H": 168.3
+  },
+  "capacityMl": 148,
+  "profileVolMl": 144,
+  "ratio": 0.97,
+  "envelope": {
+   "width": 47.2,
+   "depth": 47.2,
+   "height": 171.3,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [
+   "ORIFICE_REDUCER_CAP+SCREW_CAP→SCREW_CAP"
+  ],
+  "containers": [
+   "GLASS_FLINT→GLASS_CLEAR",
+   "PET_CLEAR→PET_CLEAR"
+  ],
+  "closures": [
+   "ORIFICE_REDUCER_CAP→SCREW_CAP",
+   "SCREW_CAP→SCREW_CAP"
+  ]
+ },
+ {
+  "code": "BTL_GLASS_SPIRITS_FLASK",
+  "source": "vessel-bottles",
+  "coreKind": "PERFUME_SQUARE",
+  "render": "lathe",
+  "preset": "flask-375",
+  "dims": {
+   "D": 85,
+   "G": 42,
+   "H": 196
+  },
+  "capacityMl": 375,
+  "profileVolMl": 736,
+  "ratio": 1.96,
+  "envelope": {
+   "width": 85,
+   "depth": 42,
+   "height": 197.5,
+   "section": "non-round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [
+   "ROPP_CAP+BAR_TOP→SCREW_CAP"
+  ],
+  "containers": [
+   "GLASS_FLINT→GLASS_CLEAR",
+   "GLASS_FROSTED→GLASS_FROSTED",
+   "GLASS_AMBER→GLASS_AMBER"
+  ],
+  "closures": [
+   "ROPP_CAP→SCREW_CAP",
+   "BAR_TOP→SCREW_CAP"
+  ]
+ },
+ {
+  "code": "BTL_GLASS_MILK",
+  "source": "vessel-bottles",
+  "coreKind": "BOSTON_ROUND",
+  "render": "lathe",
+  "preset": "milk-1000",
+  "dims": {
+   "D": 90,
+   "H": 238
+  },
+  "capacityMl": 1000,
+  "profileVolMl": 1014,
+  "ratio": 1.01,
+  "envelope": {
+   "width": 90,
+   "depth": 90,
+   "height": 239.8,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "GLASS_FLINT→GLASS_CLEAR"
+  ],
+  "closures": [
+   "LUG_LID→LUG_LID"
+  ]
+ },
+ {
+  "code": "BTL_GLASS_PHARMA_SYRUP",
+  "source": "vessel-bottles",
+  "coreKind": "BOSTON_ROUND",
+  "render": "lathe",
+  "preset": "glass-syrup-125",
+  "dims": {
+   "D": 49,
+   "H": 118
+  },
+  "capacityMl": 125,
+  "profileVolMl": 136,
+  "ratio": 1.09,
+  "envelope": {
+   "width": 49,
+   "depth": 49,
+   "height": 119.5,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [
+   "ROPP_CAP+CHILD_RESISTANT_CAP→SCREW_CAP"
+  ],
+  "containers": [
+   "GLASS_AMBER→GLASS_AMBER"
+  ],
+  "closures": [
+   "ROPP_CAP→SCREW_CAP",
+   "CHILD_RESISTANT_CAP→SCREW_CAP"
+  ]
+ },
+ {
+  "code": "BTL_PET_WATER_EG",
+  "source": "vessel-bottles",
+  "coreKind": "ROUND_BOTTLE",
+  "render": "lathe",
+  "preset": "pet-water-1500",
+  "dims": {
+   "D": 94,
+   "H": 305.2
+  },
+  "capacityMl": 1500,
+  "profileVolMl": 1574,
+  "ratio": 1.05,
+  "envelope": {
+   "width": 94,
+   "depth": 94,
+   "height": 308.2,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [
+   "PET_CLEAR+PET_BLUE→PET_CLEAR"
+  ],
+  "closureCollapse": [],
+  "containers": [
+   "PET_CLEAR→PET_CLEAR",
+   "PET_BLUE→PET_CLEAR"
+  ],
+  "closures": [
+   "SCREW_CAP_TE→SCREW_CAP",
+   "SPORTS_CAP→SPORTS_CAP"
+  ]
+ },
+ {
+  "code": "BTL_PET_WATER_JUG_5L",
+  "source": "vessel-bottles",
+  "coreKind": "ROUND_BOTTLE",
+  "render": "lathe",
+  "preset": "jug-5l",
+  "dims": {
+   "D": 168,
+   "H": 315
+  },
+  "capacityMl": 5000,
+  "profileVolMl": 5467,
+  "ratio": 1.09,
+  "envelope": {
+   "width": 168,
+   "depth": 168,
+   "height": 318,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [
+   "PET_CLEAR+PET_BLUE→PET_CLEAR"
+  ],
+  "closureCollapse": [],
+  "containers": [
+   "PET_CLEAR→PET_CLEAR",
+   "PET_BLUE→PET_CLEAR"
+  ],
+  "closures": [
+   "SCREW_CAP_TE→SCREW_CAP"
+  ]
+ },
+ {
+  "code": "BTL_PET_WATER_COOLER_19L",
+  "source": "vessel-bottles",
+  "coreKind": "ROUND_BOTTLE",
+  "render": "lathe",
+  "preset": "cooler-19l",
+  "dims": {
+   "D": 270,
+   "H": 488
+  },
+  "capacityMl": 18900,
+  "profileVolMl": 22574,
+  "ratio": 1.19,
+  "envelope": {
+   "width": 270,
+   "depth": 270,
+   "height": 494,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [
+   "PET_BLUE+PET_CLEAR→PET_CLEAR"
+  ],
+  "closureCollapse": [],
+  "containers": [
+   "PET_BLUE→PET_CLEAR",
+   "PET_CLEAR→PET_CLEAR"
+  ],
+  "closures": [
+   "SNAP_CAP_NON_SPILL→SCREW_CAP"
+  ]
+ },
+ {
+  "code": "BTL_PET_CSD",
+  "source": "vessel-bottles",
+  "coreKind": "ROUND_BOTTLE",
+  "render": "lathe",
+  "preset": "csd-1000",
+  "dims": {
+   "D": 82,
+   "H": 272
+  },
+  "capacityMl": 1000,
+  "profileVolMl": 1056,
+  "ratio": 1.06,
+  "envelope": {
+   "width": 82,
+   "depth": 82,
+   "height": 275,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [
+   "PET_CLEAR+PET_BLUE→PET_CLEAR"
+  ],
+  "closureCollapse": [],
+  "containers": [
+   "PET_CLEAR→PET_CLEAR",
+   "PET_BLUE→PET_CLEAR"
+  ],
+  "closures": [
+   "SCREW_CAP_TE→SCREW_CAP"
+  ]
+ },
+ {
+  "code": "BTL_PET_JUICE",
+  "source": "vessel-bottles",
+  "coreKind": "ROUND_BOTTLE",
+  "render": "lathe",
+  "preset": "pet-juice-330",
+  "dims": {
+   "D": 58,
+   "H": 164.6
+  },
+  "capacityMl": 330,
+  "profileVolMl": 357,
+  "ratio": 1.08,
+  "envelope": {
+   "width": 58,
+   "depth": 58,
+   "height": 167.6,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "PET_CLEAR→PET_CLEAR"
+  ],
+  "closures": [
+   "SCREW_CAP_TE→SCREW_CAP"
+  ]
+ },
+ {
+  "code": "BTL_HDPE_SHAMPOO_OVAL",
+  "source": "vessel-bottles",
+  "coreKind": "PUMP_BOTTLE",
+  "render": "lathe",
+  "preset": "shampoo-400",
+  "dims": {
+   "D": 80,
+   "G": 45,
+   "H": 200
+  },
+  "capacityMl": 400,
+  "profileVolMl": 740,
+  "ratio": 1.85,
+  "envelope": {
+   "width": 80,
+   "depth": 45,
+   "height": 212,
+   "section": "non-round"
+  },
+  "err": "",
+  "containerCollapse": [
+   "HDPE_WHITE+HDPE_COLOURED→HDPE_WHITE"
+  ],
+  "closureCollapse": [],
+  "containers": [
+   "HDPE_WHITE→HDPE_WHITE",
+   "PET_CLEAR→PET_CLEAR",
+   "HDPE_COLOURED→HDPE_WHITE"
+  ],
+  "closures": [
+   "FLIP_TOP→FLIP_TOP",
+   "SCREW_CAP→SCREW_CAP"
+  ]
+ },
+ {
+  "code": "BTL_HDPE_DETERGENT_HANDLE",
+  "source": "vessel-bottles",
+  "coreKind": "PERFUME_SQUARE",
+  "render": "lathe",
+  "preset": "detergent-2_5l",
+  "dims": {
+   "D": 150,
+   "G": 90,
+   "H": 290
+  },
+  "capacityMl": 2500,
+  "profileVolMl": 4127,
+  "ratio": 1.65,
+  "envelope": {
+   "width": 150,
+   "depth": 152,
+   "height": 322,
+   "section": "non-round"
+  },
+  "err": "",
+  "containerCollapse": [
+   "HDPE_WHITE+HDPE_COLOURED+HDPE_NATURAL→HDPE_WHITE"
+  ],
+  "closureCollapse": [
+   "MEASURE_CAP+SCREW_CAP_TE→SCREW_CAP"
+  ],
+  "containers": [
+   "HDPE_WHITE→HDPE_WHITE",
+   "HDPE_COLOURED→HDPE_WHITE",
+   "HDPE_NATURAL→HDPE_WHITE"
+  ],
+  "closures": [
+   "MEASURE_CAP→SCREW_CAP",
+   "SCREW_CAP_TE→SCREW_CAP"
+  ]
+ },
+ {
+  "code": "BTL_HDPE_MOTOR_OIL",
+  "source": "vessel-bottles",
+  "coreKind": "PERFUME_SQUARE",
+  "render": "lathe",
+  "preset": "oil-1l",
+  "dims": {
+   "D": 106,
+   "G": 58,
+   "H": 232
+  },
+  "capacityMl": 1000,
+  "profileVolMl": 1691,
+  "ratio": 1.69,
+  "envelope": {
+   "width": 106,
+   "depth": 58,
+   "height": 235,
+   "section": "non-round"
+  },
+  "err": "",
+  "containerCollapse": [
+   "HDPE_COLOURED+HDPE_WHITE+HDPE_NATURAL→HDPE_WHITE"
+  ],
+  "closureCollapse": [],
+  "containers": [
+   "HDPE_COLOURED→HDPE_WHITE",
+   "HDPE_WHITE→HDPE_WHITE",
+   "HDPE_NATURAL→HDPE_WHITE"
+  ],
+  "closures": [
+   "SCREW_CAP_TE→SCREW_CAP"
+  ]
+ },
+ {
+  "code": "BTL_PET_PHARMA_SYRUP",
+  "source": "vessel-bottles",
+  "coreKind": "BOSTON_ROUND",
+  "render": "lathe",
+  "preset": "pet-syrup-120",
+  "dims": {
+   "D": 47,
+   "H": 115
+  },
+  "capacityMl": 120,
+  "profileVolMl": 146,
+  "ratio": 1.22,
+  "envelope": {
+   "width": 47,
+   "depth": 47,
+   "height": 118,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [
+   "CHILD_RESISTANT_CAP+SCREW_CAP_TE→SCREW_CAP"
+  ],
+  "containers": [
+   "PET_AMBER→PET_CLEAR"
+  ],
+  "closures": [
+   "CHILD_RESISTANT_CAP→SCREW_CAP",
+   "SCREW_CAP_TE→SCREW_CAP"
+  ]
+ },
+ {
+  "code": "BTL_PET_SPORTS",
+  "source": "vessel-bottles",
+  "coreKind": "ROUND_BOTTLE",
+  "render": "lathe",
+  "preset": "sports-500",
+  "dims": {
+   "D": 68,
+   "H": 205
+  },
+  "capacityMl": 500,
+  "profileVolMl": 567,
+  "ratio": 1.13,
+  "envelope": {
+   "width": 68,
+   "depth": 68,
+   "height": 222,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [
+   "PET_CLEAR+PET_BLUE→PET_CLEAR"
+  ],
+  "closureCollapse": [],
+  "containers": [
+   "PET_CLEAR→PET_CLEAR",
+   "PET_BLUE→PET_CLEAR",
+   "HDPE_WHITE→HDPE_WHITE"
+  ],
+  "closures": [
+   "SPORTS_CAP→SPORTS_CAP",
+   "SCREW_CAP_TE→SCREW_CAP"
+  ]
+ },
+ {
+  "code": "BTL_HDPE_GALLON_JUG",
+  "source": "vessel-bottles",
+  "coreKind": "PERFUME_SQUARE",
+  "render": "lathe",
+  "preset": "gallon-1",
+  "dims": {
+   "D": 146,
+   "G": 146,
+   "H": 248
+  },
+  "capacityMl": 3785,
+  "profileVolMl": 3095,
+  "ratio": 0.82,
+  "envelope": {
+   "width": 146,
+   "depth": 221.92000000000002,
+   "height": 251,
+   "section": "non-round"
+  },
+  "err": "",
+  "containerCollapse": [
+   "HDPE_NATURAL+HDPE_WHITE→HDPE_WHITE"
+  ],
+  "closureCollapse": [],
+  "containers": [
+   "HDPE_NATURAL→HDPE_WHITE",
+   "HDPE_WHITE→HDPE_WHITE"
+  ],
+  "closures": [
+   "SCREW_CAP_TE→SCREW_CAP"
+  ]
+ },
+ {
+  "code": "JAR_GLASS_HONEY_HEX",
+  "source": "vessel-bottles",
+  "coreKind": "WIDE_JAR",
+  "render": "lathe",
+  "preset": "hex-190",
+  "dims": {
+   "D": 62,
+   "H": 89.9
+  },
+  "capacityMl": 190,
+  "profileVolMl": 190,
+  "ratio": 1,
+  "envelope": {
+   "width": 62,
+   "depth": 62,
+   "height": 91.7,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "GLASS_FLINT→GLASS_CLEAR",
+   "GLASS_FROSTED→GLASS_FROSTED",
+   "GLASS_AMBER→GLASS_AMBER"
+  ],
+  "closures": [
+   "LUG_LID→LUG_LID"
+  ]
+ },
+ {
+  "code": "JAR_GLASS_JAM",
+  "source": "vessel-bottles",
+  "coreKind": "WIDE_JAR",
+  "render": "lathe",
+  "preset": "jam-314",
+  "dims": {
+   "D": 72,
+   "H": 107
+  },
+  "capacityMl": 314,
+  "profileVolMl": 323,
+  "ratio": 1.03,
+  "envelope": {
+   "width": 72,
+   "depth": 72,
+   "height": 108.8,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "GLASS_FLINT→GLASS_CLEAR"
+  ],
+  "closures": [
+   "LUG_LID→LUG_LID"
+  ]
+ },
+ {
+  "code": "JAR_GLASS_MASON",
+  "source": "vessel-bottles",
+  "coreKind": "WIDE_JAR",
+  "render": "lathe",
+  "preset": "mason-pint",
+  "dims": {
+   "D": 86,
+   "H": 133
+  },
+  "capacityMl": 470,
+  "profileVolMl": 542,
+  "ratio": 1.15,
+  "envelope": {
+   "width": 86,
+   "depth": 86,
+   "height": 134.5,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [
+   "GLASS_FLINT+GLASS_COBALT→GLASS_CLEAR"
+  ],
+  "closureCollapse": [],
+  "containers": [
+   "GLASS_FLINT→GLASS_CLEAR",
+   "GLASS_COBALT→GLASS_CLEAR",
+   "GLASS_GREEN→GLASS_AMBER"
+  ],
+  "closures": [
+   "MASON_LID_BAND→LUG_LID"
+  ]
+ },
+ {
+  "code": "JAR_PET_NUT_BUTTER",
+  "source": "vessel-bottles",
+  "coreKind": "WIDE_JAR",
+  "render": "lathe",
+  "preset": "nut-340g",
+  "dims": {
+   "D": 76,
+   "H": 88
+  },
+  "capacityMl": 310,
+  "profileVolMl": 327,
+  "ratio": 1.05,
+  "envelope": {
+   "width": 76,
+   "depth": 76,
+   "height": 91,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [
+   "PET_CLEAR+PP_NATURAL→PET_CLEAR"
+  ],
+  "closureCollapse": [
+   "SCREW_CAP+SCREW_CAP_TE→SCREW_CAP"
+  ],
+  "containers": [
+   "PET_CLEAR→PET_CLEAR",
+   "PP_NATURAL→PET_CLEAR"
+  ],
+  "closures": [
+   "SCREW_CAP→SCREW_CAP",
+   "SCREW_CAP_TE→SCREW_CAP"
+  ]
+ },
+ {
+  "code": "JAR_PICKLE",
+  "source": "vessel-bottles",
+  "coreKind": "WIDE_JAR",
+  "render": "lathe",
+  "preset": "pickle-720",
+  "dims": {
+   "D": 92,
+   "H": 150
+  },
+  "capacityMl": 720,
+  "profileVolMl": 775,
+  "ratio": 1.08,
+  "envelope": {
+   "width": 92,
+   "depth": 92,
+   "height": 151.8,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "GLASS_FLINT→GLASS_CLEAR",
+   "PET_CLEAR→PET_CLEAR"
+  ],
+  "closures": [
+   "LUG_LID→LUG_LID"
+  ]
+ },
+ {
+  "code": "TUB_PP_TAHINI",
+  "source": "vessel-bottles",
+  "coreKind": "ROUND_TIN",
+  "render": "lathe",
+  "preset": "tahini-500g",
+  "dims": {
+   "D": 101,
+   "H": 82,
+   "taper": 12
+  },
+  "capacityMl": 470,
+  "profileVolMl": 469,
+  "ratio": 1,
+  "envelope": {
+   "width": 109,
+   "depth": 109,
+   "height": 86,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "PP_WHITE→HDPE_WHITE",
+   "PP_NATURAL→PET_CLEAR"
+  ],
+  "closures": [
+   "TAMPER_LID→SLIP_LID"
+  ]
+ },
+ {
+  "code": "TUB_PP_HALAWA",
+  "source": "vessel-bottles",
+  "coreKind": "ROUND_TIN",
+  "render": "lathe",
+  "preset": "halawa-500g",
+  "dims": {
+   "D": 116,
+   "H": 58,
+   "taper": 10
+  },
+  "capacityMl": 410,
+  "profileVolMl": 418,
+  "ratio": 1.02,
+  "envelope": {
+   "width": 124,
+   "depth": 124,
+   "height": 62,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "PP_WHITE→HDPE_WHITE",
+   "PP_NATURAL→PET_CLEAR"
+  ],
+  "closures": [
+   "TAMPER_LID→SLIP_LID"
+  ]
+ },
+ {
+  "code": "PAIL_PP_ROUND",
+  "source": "vessel-bottles",
+  "coreKind": "ROUND_TIN",
+  "render": "lathe",
+  "preset": "pail-5l",
+  "dims": {
+   "D": 208,
+   "H": 190,
+   "taper": 26
+  },
+  "capacityMl": 5000,
+  "profileVolMl": 5096,
+  "ratio": 1.02,
+  "envelope": {
+   "width": 216,
+   "depth": 216,
+   "height": 194,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [
+   "PP_WHITE+HDPE_WHITE→HDPE_WHITE"
+  ],
+  "closureCollapse": [],
+  "containers": [
+   "PP_WHITE→HDPE_WHITE",
+   "PP_NATURAL→PET_CLEAR",
+   "HDPE_WHITE→HDPE_WHITE"
+  ],
+  "closures": [
+   "TAMPER_LID→SLIP_LID"
+  ]
+ },
+ {
+  "code": "JERRYCAN_HDPE",
+  "source": "vessel-bottles",
+  "coreKind": "PERFUME_SQUARE",
+  "render": "lathe",
+  "preset": "jerry-20l",
+  "dims": {
+   "D": 290,
+   "G": 248,
+   "H": 379
+  },
+  "capacityMl": 20000,
+  "profileVolMl": 21242,
+  "ratio": 1.06,
+  "envelope": {
+   "width": 290,
+   "depth": 248,
+   "height": 383.15,
+   "section": "non-round"
+  },
+  "err": "",
+  "containerCollapse": [
+   "HDPE_NATURAL+HDPE_WHITE+HDPE_COLOURED→HDPE_WHITE"
+  ],
+  "closureCollapse": [
+   "VENTED_SCREW_CAP+SCREW_CAP_TE→SCREW_CAP"
+  ],
+  "containers": [
+   "HDPE_NATURAL→HDPE_WHITE",
+   "HDPE_WHITE→HDPE_WHITE",
+   "HDPE_COLOURED→HDPE_WHITE"
+  ],
+  "closures": [
+   "VENTED_SCREW_CAP→SCREW_CAP",
+   "SCREW_CAP_TE→SCREW_CAP"
+  ]
+ },
+ {
+  "code": "COS-DROPPER",
+  "source": "vessel-cosmetic",
+  "coreKind": "DROPPER_BOTTLE",
+  "render": "lathe",
+  "preset": "dropper-30",
+  "dims": {
+   "D": 32,
+   "H": 78
+  },
+  "capacityMl": 30,
+  "profileVolMl": 38,
+  "ratio": 1.27,
+  "envelope": {
+   "width": 32,
+   "depth": 32,
+   "height": 107,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [
+   "DROPPER+TREATMENT_PUMP→DROPPER"
+  ],
+  "containers": [
+   "GLASS_AMBER→GLASS_AMBER",
+   "GLASS_CLEAR→GLASS_CLEAR",
+   "GLASS_FROSTED→GLASS_FROSTED"
+  ],
+  "closures": [
+   "DROPPER→DROPPER",
+   "SCREW_CAP→SCREW_CAP",
+   "TREATMENT_PUMP→DROPPER"
+  ]
+ },
+ {
+  "code": "COS-SERUM",
+  "source": "vessel-cosmetic",
+  "coreKind": "DROPPER_BOTTLE",
+  "render": "lathe",
+  "preset": "serum-30",
+  "dims": {
+   "D": 30,
+   "H": 85
+  },
+  "capacityMl": 30,
+  "profileVolMl": 36,
+  "ratio": 1.2,
+  "envelope": {
+   "width": 30,
+   "depth": 30,
+   "height": 109,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [
+   "TREATMENT_PUMP+DROPPER→DROPPER"
+  ],
+  "containers": [
+   "GLASS_FROSTED→GLASS_FROSTED",
+   "GLASS_CLEAR→GLASS_CLEAR",
+   "GLASS_AMBER→GLASS_AMBER",
+   "PETG_CLEAR→PET_CLEAR"
+  ],
+  "closures": [
+   "TREATMENT_PUMP→DROPPER",
+   "DROPPER→DROPPER",
+   "SCREW_CAP→SCREW_CAP"
+  ]
+ },
+ {
+  "code": "COS-AIRLESS",
+  "source": "vessel-cosmetic",
+  "coreKind": "PUMP_BOTTLE",
+  "render": "lathe",
+  "preset": "airless-30",
+  "dims": {
+   "D": 31.9,
+   "H": 85.5
+  },
+  "capacityMl": 30,
+  "profileVolMl": 44,
+  "ratio": 1.47,
+  "envelope": {
+   "width": 31.9,
+   "depth": 31.9,
+   "height": 85.5,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [
+   "PP_WHITE+PP_NATURAL→HDPE_WHITE"
+  ],
+  "closureCollapse": [],
+  "containers": [
+   "PP_WHITE→HDPE_WHITE",
+   "PP_NATURAL→HDPE_WHITE",
+   "ACRYLIC_CLEAR→PET_CLEAR"
+  ],
+  "closures": [
+   "AIRLESS_PUMP→LOTION_PUMP"
+  ]
+ },
+ {
+  "code": "COS-PERFUME-ROUND",
+  "source": "vessel-cosmetic",
+  "coreKind": "PERFUME_SQUARE",
+  "render": "lathe",
+  "preset": "perfume-round-50",
+  "dims": {
+   "D": 46,
+   "H": 82
+  },
+  "capacityMl": 50,
+  "profileVolMl": 67,
+  "ratio": 1.34,
+  "envelope": {
+   "width": 46,
+   "depth": 46,
+   "height": 101,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [
+   "MIST_PUMP_COLLAR+MIST_PUMP→MIST_PUMP"
+  ],
+  "containers": [
+   "GLASS_CLEAR→GLASS_CLEAR",
+   "GLASS_FROSTED→GLASS_FROSTED"
+  ],
+  "closures": [
+   "MIST_PUMP_COLLAR→MIST_PUMP",
+   "MIST_PUMP→MIST_PUMP"
+  ]
+ },
+ {
+  "code": "COS-PERFUME-OVAL",
+  "source": "vessel-cosmetic",
+  "coreKind": "PERFUME_SQUARE",
+  "render": "lathe",
+  "preset": "perfume-oval-50",
+  "dims": {
+   "D": 56,
+   "H": 85,
+   "G": 28
+  },
+  "capacityMl": 50,
+  "profileVolMl": 122,
+  "ratio": 2.44,
+  "envelope": {
+   "width": 56,
+   "depth": 28,
+   "height": 104,
+   "section": "non-round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [
+   "MIST_PUMP_COLLAR+MIST_PUMP→MIST_PUMP"
+  ],
+  "containers": [
+   "GLASS_CLEAR→GLASS_CLEAR",
+   "GLASS_FROSTED→GLASS_FROSTED"
+  ],
+  "closures": [
+   "MIST_PUMP_COLLAR→MIST_PUMP",
+   "MIST_PUMP→MIST_PUMP"
+  ]
+ },
+ {
+  "code": "COS-ROLL-ON",
+  "source": "vessel-cosmetic",
+  "coreKind": "BOSTON_ROUND",
+  "render": "lathe",
+  "preset": "roll-on-50",
+  "dims": {
+   "D": 38,
+   "H": 88
+  },
+  "capacityMl": 50,
+  "profileVolMl": 61,
+  "ratio": 1.22,
+  "envelope": {
+   "width": 38,
+   "depth": 38,
+   "height": 108.9,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "GLASS_CLEAR→GLASS_CLEAR",
+   "GLASS_FROSTED→GLASS_FROSTED",
+   "GLASS_AMBER→GLASS_AMBER",
+   "PP_WHITE→HDPE_WHITE"
+  ],
+  "closures": [
+   "ROLL_BALL_CAP→SCREW_CAP"
+  ]
+ },
+ {
+  "code": "COS-DEO-STICK",
+  "source": "vessel-cosmetic",
+  "coreKind": "WIDE_JAR",
+  "render": "lathe",
+  "preset": "deo-75",
+  "dims": {
+   "D": 70,
+   "H": 112,
+   "G": 38
+  },
+  "capacityMl": null,
+  "profileVolMl": 296,
+  "ratio": null,
+  "envelope": {
+   "width": 70,
+   "depth": 38,
+   "height": 112,
+   "section": "non-round"
+  },
+  "err": "",
+  "containerCollapse": [
+   "PP_WHITE+PP_NATURAL→HDPE_WHITE"
+  ],
+  "closureCollapse": [],
+  "containers": [
+   "PP_WHITE→HDPE_WHITE",
+   "PP_NATURAL→HDPE_WHITE"
+  ],
+  "closures": [
+   "TWIST_UP→LUG_LID"
+  ]
+ },
+ {
+  "code": "COS-LIPSTICK",
+  "source": "vessel-cosmetic",
+  "coreKind": "WIDE_JAR",
+  "render": "lathe",
+  "preset": "lipstick-12",
+  "dims": {
+   "D": 20.5,
+   "H": 77
+  },
+  "capacityMl": null,
+  "profileVolMl": 9,
+  "ratio": null,
+  "envelope": {
+   "width": 20.5,
+   "depth": 20.5,
+   "height": 77,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "ALUMINIUM→ALUMINIUM",
+   "ABS_BLACK→HDPE_WHITE"
+  ],
+  "closures": [
+   "BULLET_CAP→LUG_LID"
+  ]
+ },
+ {
+  "code": "COS-LIP-GLOSS",
+  "source": "vessel-cosmetic",
+  "coreKind": "WIDE_JAR",
+  "render": "lathe",
+  "preset": "gloss-5",
+  "dims": {
+   "D": 15,
+   "H": 66
+  },
+  "capacityMl": 5,
+  "profileVolMl": 5,
+  "ratio": 1,
+  "envelope": {
+   "width": 15,
+   "depth": 15,
+   "height": 95.7,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "PETG_CLEAR→PET_CLEAR",
+   "GLASS_CLEAR→GLASS_CLEAR"
+  ],
+  "closures": [
+   "WAND_CAP→LUG_LID"
+  ]
+ },
+ {
+  "code": "COS-MASCARA",
+  "source": "vessel-cosmetic",
+  "coreKind": "WIDE_JAR",
+  "render": "lathe",
+  "preset": "mascara-12",
+  "dims": {
+   "D": 21,
+   "H": 82
+  },
+  "capacityMl": 12,
+  "profileVolMl": 15,
+  "ratio": 1.25,
+  "envelope": {
+   "width": 21,
+   "depth": 21,
+   "height": 118.9,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "PP_NATURAL→HDPE_WHITE",
+   "PETG_CLEAR→PET_CLEAR",
+   "ALUMINIUM→ALUMINIUM"
+  ],
+  "closures": [
+   "WAND_CAP→LUG_LID"
+  ]
+ },
+ {
+  "code": "COS-COMPACT",
+  "source": "vessel-cosmetic",
+  "coreKind": "ROUND_TIN",
+  "render": "lathe",
+  "preset": "compact-59",
+  "dims": {
+   "D": 68,
+   "H": 15
+  },
+  "capacityMl": null,
+  "profileVolMl": 22,
+  "ratio": null,
+  "envelope": {
+   "width": 68,
+   "depth": 68,
+   "height": 15,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [
+   "ABS_BLACK+PP_WHITE→HDPE_WHITE"
+  ],
+  "closureCollapse": [],
+  "containers": [
+   "ABS_BLACK→HDPE_WHITE",
+   "ALUMINIUM→ALUMINIUM",
+   "PP_WHITE→HDPE_WHITE"
+  ],
+  "closures": [
+   "HINGED_COMPACT_LID→SLIP_LID"
+  ]
+ },
+ {
+  "code": "COS-JAR-DOUBLE",
+  "source": "vessel-cosmetic",
+  "coreKind": "WIDE_JAR",
+  "render": "lathe",
+  "preset": "jar-dw-50",
+  "dims": {
+   "D": 66,
+   "H": 42
+  },
+  "capacityMl": 50,
+  "profileVolMl": 50,
+  "ratio": 1,
+  "envelope": {
+   "width": 66,
+   "depth": 66,
+   "height": 49.9,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "ACRYLIC_CLEAR→PET_CLEAR",
+   "PP_WHITE→HDPE_WHITE",
+   "GLASS_FROSTED→GLASS_FROSTED"
+  ],
+  "closures": [
+   "DOUBLE_WALL_CAP→LUG_LID"
+  ]
+ },
+ {
+  "code": "COS-NAIL-POLISH",
+  "source": "vessel-cosmetic",
+  "coreKind": "PERFUME_SQUARE",
+  "render": "lathe",
+  "preset": "nail-10",
+  "dims": {
+   "D": 30,
+   "H": 40,
+   "G": 30
+  },
+  "capacityMl": 10,
+  "profileVolMl": 10,
+  "ratio": 1,
+  "envelope": {
+   "width": 30,
+   "depth": 30,
+   "height": 72,
+   "section": "non-round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "GLASS_CLEAR→GLASS_CLEAR",
+   "GLASS_FROSTED→GLASS_FROSTED"
+  ],
+  "closures": [
+   "BRUSH_CAP→MIST_PUMP"
+  ]
+ },
+ {
+  "code": "PH-VIAL",
+  "source": "vessel-cosmetic",
+  "coreKind": "BOSTON_ROUND",
+  "render": "lathe",
+  "preset": "vial-10r",
+  "dims": {
+   "D": 24,
+   "H": 45
+  },
+  "capacityMl": 10,
+  "profileVolMl": 14,
+  "ratio": 1.4,
+  "envelope": {
+   "width": 24,
+   "depth": 24,
+   "height": 48,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "GLASS_TYPE1_CLEAR→GLASS_CLEAR",
+   "GLASS_TYPE1_AMBER→GLASS_AMBER"
+  ],
+  "closures": [
+   "CRIMP_FLIP_OFF→SCREW_CAP"
+  ]
+ },
+ {
+  "code": "PH-AMPOULE",
+  "source": "vessel-cosmetic",
+  "coreKind": "BOSTON_ROUND",
+  "render": "lathe",
+  "preset": "ampoule-2",
+  "dims": {
+   "D": 11.5,
+   "H": 78
+  },
+  "capacityMl": 2,
+  "profileVolMl": 4,
+  "ratio": 2,
+  "envelope": {
+   "width": 11.5,
+   "depth": 11.5,
+   "height": 78,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "GLASS_TYPE1_CLEAR→GLASS_CLEAR",
+   "GLASS_TYPE1_AMBER→GLASS_AMBER"
+  ],
+  "closures": [
+   "OPC_BREAK→SCREW_CAP"
+  ]
+ },
+ {
+  "code": "PH-PILL-CR",
+  "source": "vessel-cosmetic",
+  "coreKind": "ROUND_BOTTLE",
+  "render": "lathe",
+  "preset": "pill-150",
+  "dims": {
+   "D": 55,
+   "H": 86
+  },
+  "capacityMl": 150,
+  "profileVolMl": 159,
+  "ratio": 1.06,
+  "envelope": {
+   "width": 55,
+   "depth": 55,
+   "height": 98,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [
+   "HDPE_WHITE+HDPE_NATURAL→HDPE_WHITE"
+  ],
+  "closureCollapse": [
+   "CHILD_RESISTANT_CAP+SCREW_CAP→SCREW_CAP"
+  ],
+  "containers": [
+   "HDPE_WHITE→HDPE_WHITE",
+   "HDPE_NATURAL→HDPE_WHITE",
+   "PET_CLEAR→PET_CLEAR",
+   "GLASS_AMBER→GLASS_AMBER"
+  ],
+  "closures": [
+   "CHILD_RESISTANT_CAP→SCREW_CAP",
+   "SCREW_CAP→SCREW_CAP"
+  ]
+ },
+ {
+  "code": "PH-EYE-DROP",
+  "source": "vessel-cosmetic",
+  "coreKind": "DROPPER_BOTTLE",
+  "render": "lathe",
+  "preset": "eye-10",
+  "dims": {
+   "D": 20,
+   "H": 58
+  },
+  "capacityMl": 10,
+  "profileVolMl": 12,
+  "ratio": 1.2,
+  "envelope": {
+   "width": 20,
+   "depth": 20,
+   "height": 80,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [
+   "LDPE_NATURAL+LDPE_WHITE→HDPE_WHITE"
+  ],
+  "closureCollapse": [],
+  "containers": [
+   "LDPE_NATURAL→HDPE_WHITE",
+   "LDPE_WHITE→HDPE_WHITE"
+  ],
+  "closures": [
+   "DROPPER_TIP_CAP→DROPPER"
+  ]
+ },
+ {
+  "code": "PH-TUBE",
+  "source": "vessel-cosmetic",
+  "coreKind": "SQUEEZE_TUBE",
+  "render": "lathe",
+  "preset": "ointment-15",
+  "dims": {
+   "D": 19,
+   "H": 100
+  },
+  "capacityMl": 15,
+  "profileVolMl": 24,
+  "ratio": 1.6,
+  "envelope": {
+   "width": 29.845130209103033,
+   "depth": 19,
+   "height": 114,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "ALU_TUBE→ALUMINIUM",
+   "LAMINATE_ABL→PE_TUBE_WHITE"
+  ],
+  "closures": [
+   "PIERCING_CAP→FLIP_TOP",
+   "SCREW_TUBE_CAP→SCREW_TUBE_CAP"
+  ]
+ },
+ {
+  "code": "CAN-BEVERAGE",
+  "source": "vessel-cosmetic",
+  "coreKind": "CAN",
+  "render": "lathe",
+  "preset": "bev-330",
+  "dims": {
+   "D": 66.2,
+   "H": 115.2
+  },
+  "capacityMl": 330,
+  "profileVolMl": 329,
+  "ratio": 1,
+  "envelope": {
+   "width": 66.2,
+   "depth": 66.2,
+   "height": 115.8,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "ALUMINIUM→ALUMINIUM"
+  ],
+  "closures": [
+   "CAN_END→CAN_END"
+  ]
+ },
+ {
+  "code": "CAN-FOOD-3PC",
+  "source": "vessel-cosmetic",
+  "coreKind": "CAN",
+  "render": "lathe",
+  "preset": "food-73x110",
+  "dims": {
+   "D": 73,
+   "H": 110
+  },
+  "capacityMl": 425,
+  "profileVolMl": 427,
+  "ratio": 1,
+  "envelope": {
+   "width": 75.8,
+   "depth": 75.8,
+   "height": 110,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [
+   "DOUBLE_SEAM_END+EASY_OPEN_END→CAN_END"
+  ],
+  "containers": [
+   "TINPLATE→TINPLATE"
+  ],
+  "closures": [
+   "DOUBLE_SEAM_END→CAN_END",
+   "EASY_OPEN_END→CAN_END"
+  ]
+ },
+ {
+  "code": "CAN-TUNA",
+  "source": "vessel-cosmetic",
+  "coreKind": "ROUND_TIN",
+  "render": "lathe",
+  "preset": "tuna-160",
+  "dims": {
+   "D": 83,
+   "H": 40
+  },
+  "capacityMl": 160,
+  "profileVolMl": 192,
+  "ratio": 1.2,
+  "envelope": {
+   "width": 85.8,
+   "depth": 85.8,
+   "height": 40,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [
+   "EASY_OPEN_END+PEEL_FOIL→SLIP_LID"
+  ],
+  "containers": [
+   "TINPLATE→TINPLATE",
+   "ALUMINIUM→ALUMINIUM"
+  ],
+  "closures": [
+   "EASY_OPEN_END→SLIP_LID",
+   "PEEL_FOIL→SLIP_LID"
+  ]
+ },
+ {
+  "code": "CAN-SARDINE",
+  "source": "vessel-cosmetic",
+  "coreKind": "CAN",
+  "render": "lathe",
+  "preset": "sardine-club",
+  "dims": {
+   "D": 105,
+   "H": 29,
+   "G": 60
+  },
+  "capacityMl": 115,
+  "profileVolMl": 218,
+  "ratio": 1.9,
+  "envelope": {
+   "width": 107.8,
+   "depth": 61.599999999999994,
+   "height": 29,
+   "section": "non-round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "TINPLATE→TINPLATE",
+   "ALUMINIUM→ALUMINIUM"
+  ],
+  "closures": [
+   "EASY_OPEN_END→CAN_END"
+  ]
+ },
+ {
+  "code": "CAN-OVAL-FISH",
+  "source": "vessel-cosmetic",
+  "coreKind": "CAN",
+  "render": "lathe",
+  "preset": "oval-half",
+  "dims": {
+   "D": 149,
+   "H": 25,
+   "G": 81
+  },
+  "capacityMl": 200,
+  "profileVolMl": 371,
+  "ratio": 1.85,
+  "envelope": {
+   "width": 151.8,
+   "depth": 82.52214765100672,
+   "height": 25,
+   "section": "non-round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "TINPLATE→TINPLATE",
+   "ALUMINIUM→ALUMINIUM"
+  ],
+  "closures": [
+   "EASY_OPEN_END→CAN_END"
+  ]
+ },
+ {
+  "code": "TIN-GIFT-ROUND",
+  "source": "vessel-cosmetic",
+  "coreKind": "ROUND_TIN",
+  "render": "lathe",
+  "preset": "gift-round-200",
+  "dims": {
+   "D": 200,
+   "H": 85
+  },
+  "capacityMl": 2550,
+  "profileVolMl": 2575,
+  "ratio": 1.01,
+  "envelope": {
+   "width": 201.2,
+   "depth": 201.2,
+   "height": 85.6,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "TINPLATE→TINPLATE"
+  ],
+  "closures": [
+   "SLIP_LID→SLIP_LID"
+  ]
+ },
+ {
+  "code": "TIN-GIFT-SQUARE",
+  "source": "vessel-cosmetic",
+  "coreKind": "ROUND_TIN",
+  "render": "lathe",
+  "preset": "gift-sq-150",
+  "dims": {
+   "D": 150,
+   "H": 60,
+   "G": 150
+  },
+  "capacityMl": 1300,
+  "profileVolMl": 1007,
+  "ratio": 0.77,
+  "envelope": {
+   "width": 151.2,
+   "depth": 151.2,
+   "height": 60.6,
+   "section": "non-round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "TINPLATE→TINPLATE"
+  ],
+  "closures": [
+   "SLIP_LID→SLIP_LID"
+  ]
+ },
+ {
+  "code": "TIN-TEA-CADDY",
+  "source": "vessel-cosmetic",
+  "coreKind": "ROUND_TIN",
+  "render": "lathe",
+  "preset": "caddy-100",
+  "dims": {
+   "D": 75,
+   "H": 110,
+   "G": 75
+  },
+  "capacityMl": 580,
+  "profileVolMl": 468,
+  "ratio": 0.81,
+  "envelope": {
+   "width": 76.2,
+   "depth": 76.2,
+   "height": 110.6,
+   "section": "non-round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [
+   "PLUG_LID+SLIP_LID→SLIP_LID"
+  ],
+  "containers": [
+   "TINPLATE→TINPLATE"
+  ],
+  "closures": [
+   "PLUG_LID→SLIP_LID",
+   "SLIP_LID→SLIP_LID"
+  ]
+ },
+ {
+  "code": "CAN-PAINT",
+  "source": "vessel-cosmetic",
+  "coreKind": "ROUND_TIN",
+  "render": "lathe",
+  "preset": "paint-1000",
+  "dims": {
+   "D": 108,
+   "H": 125
+  },
+  "capacityMl": 1000,
+  "profileVolMl": 1043,
+  "ratio": 1.04,
+  "envelope": {
+   "width": 110.8,
+   "depth": 110.8,
+   "height": 125,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "TINPLATE→TINPLATE"
+  ],
+  "closures": [
+   "LEVER_LID→SLIP_LID"
+  ]
+ },
+ {
+  "code": "CAN-AEROSOL",
+  "source": "vessel-cosmetic",
+  "coreKind": "CAN",
+  "render": "lathe",
+  "preset": "aerosol-250",
+  "dims": {
+   "D": 52,
+   "H": 160
+  },
+  "capacityMl": 250,
+  "profileVolMl": 294,
+  "ratio": 1.18,
+  "envelope": {
+   "width": 52,
+   "depth": 52,
+   "height": 198,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "ALUMINIUM→ALUMINIUM",
+   "TINPLATE→TINPLATE"
+  ],
+  "closures": [
+   "AEROSOL_VALVE→CAN_END"
+  ]
+ },
+ {
+  "code": "CUP-YOGURT",
+  "source": "vessel-cosmetic",
+  "coreKind": "WIDE_JAR",
+  "render": "lathe",
+  "preset": "yogurt-95-150",
+  "dims": {
+   "D": 95,
+   "H": 33,
+   "taper": 22
+  },
+  "capacityMl": 150,
+  "profileVolMl": 163,
+  "ratio": 1.09,
+  "envelope": {
+   "width": 100,
+   "depth": 100,
+   "height": 33.1,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [
+   "PP_WHITE+PS_WHITE→HDPE_WHITE"
+  ],
+  "closureCollapse": [
+   "PEEL_FOIL+SNAP_LID→LUG_LID"
+  ],
+  "containers": [
+   "PP_WHITE→HDPE_WHITE",
+   "PS_WHITE→HDPE_WHITE",
+   "PP_CLEAR→PET_CLEAR"
+  ],
+  "closures": [
+   "PEEL_FOIL→LUG_LID",
+   "SNAP_LID→LUG_LID"
+  ]
+ },
+ {
+  "code": "CUP-ICE-PINT",
+  "source": "vessel-cosmetic",
+  "coreKind": "WIDE_JAR",
+  "render": "lathe",
+  "preset": "pint-16oz",
+  "dims": {
+   "D": 97.6,
+   "H": 98.5,
+   "taper": 22.6
+  },
+  "capacityMl": 473,
+  "profileVolMl": 542,
+  "ratio": 1.15,
+  "envelope": {
+   "width": 103.6,
+   "depth": 103.6,
+   "height": 110.32,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "PE_BOARD→WHITE_POUCH",
+   "PP_WHITE→HDPE_WHITE"
+  ],
+  "closures": [
+   "SNAP_LID→LUG_LID"
+  ]
+ },
+ {
+  "code": "TUB-ICE-RECT",
+  "source": "vessel-cosmetic",
+  "coreKind": "WIDE_JAR",
+  "render": "lathe",
+  "preset": "tub-1l",
+  "dims": {
+   "D": 165,
+   "H": 74,
+   "G": 115,
+   "taper": 16
+  },
+  "capacityMl": 1000,
+  "profileVolMl": 1344,
+  "ratio": 1.34,
+  "envelope": {
+   "width": 173,
+   "depth": 120.57575757575758,
+   "height": 82.88,
+   "section": "non-round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "PP_WHITE→HDPE_WHITE",
+   "PP_CLEAR→PET_CLEAR"
+  ],
+  "closures": [
+   "SNAP_LID→LUG_LID"
+  ]
+ },
+ {
+  "code": "CUP-DELI",
+  "source": "vessel-cosmetic",
+  "coreKind": "WIDE_JAR",
+  "render": "lathe",
+  "preset": "deli-16oz",
+  "dims": {
+   "D": 114,
+   "H": 72,
+   "taper": 22
+  },
+  "capacityMl": 473,
+  "profileVolMl": 561,
+  "ratio": 1.19,
+  "envelope": {
+   "width": 119,
+   "depth": 119,
+   "height": 80.64,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [
+   "PP_CLEAR+RPET_CLEAR→PET_CLEAR"
+  ],
+  "closureCollapse": [],
+  "containers": [
+   "PP_CLEAR→PET_CLEAR",
+   "RPET_CLEAR→PET_CLEAR"
+  ],
+  "closures": [
+   "SNAP_LID→LUG_LID"
+  ]
+ },
+ {
+  "code": "TRAY-CLAMSHELL",
+  "source": "vessel-cosmetic",
+  "coreKind": "WIDE_JAR",
+  "render": "lathe",
+  "preset": "clam-150",
+  "dims": {
+   "D": 150,
+   "H": 80,
+   "G": 150,
+   "taper": 26
+  },
+  "capacityMl": null,
+  "profileVolMl": 606,
+  "ratio": null,
+  "envelope": {
+   "width": 150,
+   "depth": 150,
+   "height": 80,
+   "section": "non-round"
+  },
+  "err": "",
+  "containerCollapse": [
+   "APET_CLEAR+RPET_CLEAR→PET_CLEAR"
+  ],
+  "closureCollapse": [],
+  "containers": [
+   "APET_CLEAR→PET_CLEAR",
+   "RPET_CLEAR→PET_CLEAR"
+  ],
+  "closures": [
+   "HINGED_LID→LUG_LID"
+  ]
+ },
+ {
+  "code": "TRAY-PUNNET",
+  "source": "vessel-cosmetic",
+  "coreKind": "WIDE_JAR",
+  "render": "lathe",
+  "preset": "punnet-500",
+  "dims": {
+   "D": 187,
+   "H": 55,
+   "G": 137,
+   "taper": 20
+  },
+  "capacityMl": 1000,
+  "profileVolMl": 1280,
+  "ratio": 1.28,
+  "envelope": {
+   "width": 195,
+   "depth": 142.86096256684493,
+   "height": 55.1,
+   "section": "non-round"
+  },
+  "err": "",
+  "containerCollapse": [
+   "RPET_CLEAR+APET_CLEAR→PET_CLEAR"
+  ],
+  "closureCollapse": [
+   "TOP_SEAL_FILM+HINGED_LID→LUG_LID"
+  ],
+  "containers": [
+   "RPET_CLEAR→PET_CLEAR",
+   "APET_CLEAR→PET_CLEAR"
+  ],
+  "closures": [
+   "TOP_SEAL_FILM→LUG_LID",
+   "HINGED_LID→LUG_LID"
+  ]
+ },
+ {
+  "code": "TUBE-LAMINATE",
+  "source": "vessel-cosmetic",
+  "coreKind": "SQUEEZE_TUBE",
+  "render": "lathe",
+  "preset": "lami-35",
+  "dims": {
+   "D": 35,
+   "H": 150
+  },
+  "capacityMl": 75,
+  "profileVolMl": 125,
+  "ratio": 1.67,
+  "envelope": {
+   "width": 54.97787143782138,
+   "depth": 35,
+   "height": 171.7,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [
+   "LAMINATE_PBL+LAMINATE_ABL→PE_TUBE_WHITE"
+  ],
+  "closureCollapse": [],
+  "containers": [
+   "LAMINATE_PBL→PE_TUBE_WHITE",
+   "LAMINATE_ABL→PE_TUBE_WHITE"
+  ],
+  "closures": [
+   "FLIP_TOP→FLIP_TOP",
+   "SCREW_TUBE_CAP→SCREW_TUBE_CAP"
+  ]
+ },
+ {
+  "code": "TUBE-ALU",
+  "source": "vessel-cosmetic",
+  "coreKind": "SQUEEZE_TUBE",
+  "render": "lathe",
+  "preset": "alu-28",
+  "dims": {
+   "D": 28,
+   "H": 140
+  },
+  "capacityMl": 60,
+  "profileVolMl": 74,
+  "ratio": 1.23,
+  "envelope": {
+   "width": 43.982297150257104,
+   "depth": 28,
+   "height": 157.36,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "ALU_TUBE→ALUMINIUM"
+  ],
+  "closures": [
+   "SCREW_TUBE_CAP→SCREW_TUBE_CAP",
+   "PIERCING_CAP→FLIP_TOP"
+  ]
+ },
+ {
+  "code": "TUBE-OVAL",
+  "source": "vessel-cosmetic",
+  "coreKind": "SQUEEZE_TUBE",
+  "render": "lathe",
+  "preset": "oval-40",
+  "dims": {
+   "D": 40,
+   "H": 170,
+   "G": 24
+  },
+  "capacityMl": 100,
+  "profileVolMl": 188,
+  "ratio": 1.88,
+  "envelope": {
+   "width": 62.83185307179586,
+   "depth": 40,
+   "height": 194.8,
+   "section": "round"
+  },
+  "err": "",
+  "containerCollapse": [
+   "PE_TUBE_WHITE+LAMINATE_PBL→PE_TUBE_WHITE"
+  ],
+  "closureCollapse": [],
+  "containers": [
+   "PE_TUBE_WHITE→PE_TUBE_WHITE",
+   "LAMINATE_PBL→PE_TUBE_WHITE"
+  ],
+  "closures": [
+   "FLIP_TOP→FLIP_TOP",
+   "SCREW_TUBE_CAP→SCREW_TUBE_CAP"
+  ]
+ },
+ {
+  "code": "FLEX_STAND_UP_POUCH",
+  "source": "vessel-flexible",
+  "coreKind": "STAND_UP_POUCH",
+  "render": "flexible",
+  "preset": "sup-100g",
+  "dims": {
+   "D": 120,
+   "H": 200,
+   "G": 80
+  },
+  "capacityMl": null,
+  "profileVolMl": null,
+  "ratio": null,
+  "envelope": {
+   "width": 120,
+   "depth": 80,
+   "height": 200
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "FILM_KRAFT_LAMINATE→FILM_KRAFT_LAMINATE",
+   "FILM_MATTE→FILM_MATTE",
+   "FILM_GLOSS→FILM_GLOSS",
+   "FILM_METALLISED→FILM_METALLISED",
+   "FILM_CLEAR→FILM_CLEAR"
+  ],
+  "closures": []
+ },
+ {
+  "code": "FLEX_FLAT_POUCH",
+  "source": "vessel-flexible",
+  "coreKind": "STAND_UP_POUCH",
+  "render": "flexible",
+  "preset": "flat-100x150",
+  "dims": {
+   "D": 100,
+   "H": 150
+  },
+  "capacityMl": null,
+  "profileVolMl": null,
+  "ratio": null,
+  "envelope": {
+   "width": 100,
+   "depth": 30,
+   "height": 150
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "FILM_MATTE→FILM_MATTE",
+   "FILM_GLOSS→FILM_GLOSS",
+   "FILM_METALLISED→FILM_METALLISED",
+   "FILM_KRAFT_LAMINATE→FILM_KRAFT_LAMINATE",
+   "FILM_CLEAR→FILM_CLEAR"
+  ],
+  "closures": []
+ },
+ {
+  "code": "FLEX_THREE_SIDE_SEAL",
+  "source": "vessel-flexible",
+  "coreKind": "STAND_UP_POUCH",
+  "render": "flexible",
+  "preset": "3ss-90x140",
+  "dims": {
+   "D": 90,
+   "H": 140
+  },
+  "capacityMl": null,
+  "profileVolMl": null,
+  "ratio": null,
+  "envelope": {
+   "width": 90,
+   "depth": 30,
+   "height": 140
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "FILM_MATTE→FILM_MATTE",
+   "FILM_GLOSS→FILM_GLOSS",
+   "FILM_METALLISED→FILM_METALLISED",
+   "FILM_KRAFT_LAMINATE→FILM_KRAFT_LAMINATE",
+   "FILM_CLEAR→FILM_CLEAR"
+  ],
+  "closures": []
+ },
+ {
+  "code": "FLEX_PILLOW_BAG",
+  "source": "vessel-flexible",
+  "coreKind": "STAND_UP_POUCH",
+  "render": "flexible",
+  "preset": "pillow-small",
+  "dims": {
+   "D": 130,
+   "H": 190
+  },
+  "capacityMl": null,
+  "profileVolMl": null,
+  "ratio": null,
+  "envelope": {
+   "width": 130,
+   "depth": 30,
+   "height": 190
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "FILM_METALLISED→FILM_METALLISED",
+   "FILM_GLOSS→FILM_GLOSS",
+   "FILM_MATTE→FILM_MATTE",
+   "FILM_CLEAR→FILM_CLEAR"
+  ],
+  "closures": []
+ },
+ {
+  "code": "FLEX_QUAD_SEAL_BAG",
+  "source": "vessel-flexible",
+  "coreKind": "STAND_UP_POUCH",
+  "render": "flexible",
+  "preset": "quad-250g",
+  "dims": {
+   "D": 90,
+   "H": 230,
+   "G": 60
+  },
+  "capacityMl": null,
+  "profileVolMl": null,
+  "ratio": null,
+  "envelope": {
+   "width": 90,
+   "depth": 60,
+   "height": 230
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "FILM_METALLISED→FILM_METALLISED",
+   "FILM_MATTE→FILM_MATTE",
+   "FILM_GLOSS→FILM_GLOSS",
+   "FILM_KRAFT_LAMINATE→FILM_KRAFT_LAMINATE"
+  ],
+  "closures": []
+ },
+ {
+  "code": "FLEX_SIDE_GUSSET_BAG",
+  "source": "vessel-flexible",
+  "coreKind": "STAND_UP_POUCH",
+  "render": "flexible",
+  "preset": "sgb-250g",
+  "dims": {
+   "D": 90,
+   "H": 270,
+   "G": 60
+  },
+  "capacityMl": null,
+  "profileVolMl": null,
+  "ratio": null,
+  "envelope": {
+   "width": 90,
+   "depth": 60,
+   "height": 270
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "FILM_METALLISED→FILM_METALLISED",
+   "FILM_KRAFT_LAMINATE→FILM_KRAFT_LAMINATE",
+   "FILM_MATTE→FILM_MATTE",
+   "FILM_GLOSS→FILM_GLOSS"
+  ],
+  "closures": []
+ },
+ {
+  "code": "FLEX_FLAT_BOTTOM_POUCH",
+  "source": "vessel-flexible",
+  "coreKind": "STAND_UP_POUCH",
+  "render": "flexible",
+  "preset": "fbp-250g",
+  "dims": {
+   "D": 125,
+   "H": 195,
+   "G": 65
+  },
+  "capacityMl": null,
+  "profileVolMl": null,
+  "ratio": null,
+  "envelope": {
+   "width": 125,
+   "depth": 65,
+   "height": 195
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "FILM_MATTE→FILM_MATTE",
+   "FILM_KRAFT_LAMINATE→FILM_KRAFT_LAMINATE",
+   "FILM_METALLISED→FILM_METALLISED",
+   "FILM_GLOSS→FILM_GLOSS"
+  ],
+  "closures": []
+ },
+ {
+  "code": "FLEX_SACHET",
+  "source": "vessel-flexible",
+  "coreKind": "STAND_UP_POUCH",
+  "render": "flexible",
+  "preset": "sachet-5ml",
+  "dims": {
+   "D": 50,
+   "H": 70
+  },
+  "capacityMl": null,
+  "profileVolMl": null,
+  "ratio": null,
+  "envelope": {
+   "width": 50,
+   "depth": 30,
+   "height": 70
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "FILM_METALLISED→FILM_METALLISED",
+   "FILM_GLOSS→FILM_GLOSS",
+   "FILM_MATTE→FILM_MATTE",
+   "FILM_CLEAR→FILM_CLEAR"
+  ],
+  "closures": []
+ },
+ {
+  "code": "FLEX_STICK_PACK",
+  "source": "vessel-flexible",
+  "coreKind": "STAND_UP_POUCH",
+  "render": "flexible",
+  "preset": "stick-17",
+  "dims": {
+   "D": 17,
+   "H": 100
+  },
+  "capacityMl": null,
+  "profileVolMl": null,
+  "ratio": null,
+  "envelope": {
+   "width": 17,
+   "depth": 30,
+   "height": 100
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "FILM_METALLISED→FILM_METALLISED",
+   "FILM_GLOSS→FILM_GLOSS",
+   "FILM_MATTE→FILM_MATTE",
+   "FILM_KRAFT_LAMINATE→FILM_KRAFT_LAMINATE"
+  ],
+  "closures": []
+ },
+ {
+  "code": "FLEX_RETORT_POUCH",
+  "source": "vessel-flexible",
+  "coreKind": "STAND_UP_POUCH",
+  "render": "flexible",
+  "preset": "retort-90x140",
+  "dims": {
+   "D": 90,
+   "H": 140
+  },
+  "capacityMl": null,
+  "profileVolMl": null,
+  "ratio": null,
+  "envelope": {
+   "width": 90,
+   "depth": 30,
+   "height": 140
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "FILM_METALLISED→FILM_METALLISED",
+   "FILM_GLOSS→FILM_GLOSS",
+   "FILM_MATTE→FILM_MATTE",
+   "FILM_CLEAR→FILM_CLEAR"
+  ],
+  "closures": []
+ },
+ {
+  "code": "FLEX_VACUUM_PACK",
+  "source": "vessel-flexible",
+  "coreKind": "STAND_UP_POUCH",
+  "render": "flexible",
+  "preset": "vac-150x200",
+  "dims": {
+   "D": 150,
+   "H": 200
+  },
+  "capacityMl": null,
+  "profileVolMl": null,
+  "ratio": null,
+  "envelope": {
+   "width": 150,
+   "depth": 30,
+   "height": 200
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "FILM_CLEAR→FILM_CLEAR",
+   "FILM_GLOSS→FILM_GLOSS",
+   "FILM_METALLISED→FILM_METALLISED"
+  ],
+  "closures": []
+ },
+ {
+  "code": "FLEX_FLOW_WRAP",
+  "source": "vessel-flexible",
+  "coreKind": "STAND_UP_POUCH",
+  "render": "flexible",
+  "preset": "fw-bar",
+  "dims": {
+   "D": 45,
+   "H": 130
+  },
+  "capacityMl": null,
+  "profileVolMl": null,
+  "ratio": null,
+  "envelope": {
+   "width": 45,
+   "depth": 30,
+   "height": 130
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "FILM_METALLISED→FILM_METALLISED",
+   "FILM_GLOSS→FILM_GLOSS",
+   "FILM_MATTE→FILM_MATTE",
+   "FILM_CLEAR→FILM_CLEAR"
+  ],
+  "closures": []
+ },
+ {
+  "code": "FLEX_SHRINK_SLEEVE",
+  "source": "vessel-flexible",
+  "coreKind": "STAND_UP_POUCH",
+  "render": "flexible",
+  "preset": "sleeve-30ml",
+  "dims": {
+   "D": 52,
+   "H": 60
+  },
+  "capacityMl": null,
+  "profileVolMl": null,
+  "ratio": null,
+  "envelope": {
+   "width": 52,
+   "depth": 30,
+   "height": 60
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "FILM_GLOSS→FILM_GLOSS",
+   "FILM_MATTE→FILM_MATTE",
+   "FILM_METALLISED→FILM_METALLISED",
+   "FILM_CLEAR→FILM_CLEAR"
+  ],
+  "closures": []
+ },
+ {
+  "code": "FLEX_MAILER_BAG",
+  "source": "vessel-flexible",
+  "coreKind": "STAND_UP_POUCH",
+  "render": "flexible",
+  "preset": "mailer-25x35",
+  "dims": {
+   "D": 250,
+   "H": 350
+  },
+  "capacityMl": null,
+  "profileVolMl": null,
+  "ratio": null,
+  "envelope": {
+   "width": 250,
+   "depth": 30,
+   "height": 350
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "FILM_MATTE→FILM_MATTE",
+   "FILM_GLOSS→FILM_GLOSS",
+   "FILM_METALLISED→FILM_METALLISED"
+  ],
+  "closures": []
+ },
+ {
+  "code": "FLEX_BAG_IN_BOX",
+  "source": "vessel-flexible",
+  "coreKind": "STAND_UP_POUCH",
+  "render": "flexible",
+  "preset": "bib-3l",
+  "dims": {
+   "D": 270,
+   "H": 330
+  },
+  "capacityMl": null,
+  "profileVolMl": null,
+  "ratio": null,
+  "envelope": {
+   "width": 270,
+   "depth": 30,
+   "height": 330
+  },
+  "err": "",
+  "containerCollapse": [],
+  "closureCollapse": [],
+  "containers": [
+   "FILM_CLEAR→FILM_CLEAR",
+   "FILM_METALLISED→FILM_METALLISED"
+  ],
+  "closures": []
+ }
+]
