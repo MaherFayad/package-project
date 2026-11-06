@@ -16,11 +16,8 @@ export const revalidate = 3600;
 
 type Props = { params: Promise<{ locale: string; structure: string }> };
 
-/**
- * Only the listed slugs exist: unknown ones 404 at routing time, before the marketing shell and its
- * hydration Suspense boundary render (a notFound() inside that boundary would answer 200; R4-MK-09).
- */
-export const dynamicParams = false;
+/** Unknown slugs 404 in the segment layout, above the hydration boundary (R4-MK-09, R8-01). */
+export const dynamicParams = true;
 
 export function generateStaticParams() {
   return STRUCTURE_CODES.map((c) => ({ structure: STRUCTURE_SLUGS[c] }));
