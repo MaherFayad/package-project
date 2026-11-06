@@ -11,7 +11,10 @@ import { renderDims, renderSrc, srcSetFor } from "./assets";
 import rs from "./restyle/restyle.module.css";
 import dt from "./restyle/detail.module.css";
 import { Sheet } from "./kit/Sheet";
+import { SAMPLE_LABEL } from "./kit/assets";
+import { Glow } from "./kit/Glow";
 import { Display, Eyebrow, Lead } from "./kit/Display";
+import { HeroTitle } from "./kit/HeroTitle";
 import { Pill, PillRow } from "./kit/Pill";
 import { Reveal } from "./kit/Reveal";
 import { MODELS } from "@/lib/library";
@@ -40,7 +43,6 @@ export async function BoxesLanding({
   library?: ReactNode;
 }) {
   const t = getT(locale);
-  const H = titleAs;
   // The 0427 render in the hero showcase is the phone LCP. HeroImage preloads its AVIF from <head>
   // (R4-MK-06); a second webp preload here made the render download twice (PERF-R4-06 merge).
   const structures = await listStructures();
@@ -50,9 +52,7 @@ export async function BoxesLanding({
     <div className={rs.page}>
       <Sheet tone="dark" hero className={rs.heroLanding} aria-labelledby="boxes-title">
         <Eyebrow className="m-enter">{t("marketing.boxes.eyebrow")}</Eyebrow>
-        <Display as={H} size="96" align="center" id="boxes-title" className="m-enter-lcp">
-          {t("marketing.boxes.title")}
-        </Display>
+        <HeroTitle as={titleAs} size="96" align="center" id="boxes-title" text={t("marketing.boxes.title")} />
         <Lead align="center" className="m-enter-lcp">
           {t("marketing.boxes.body")}
         </Lead>
@@ -91,6 +91,7 @@ export async function BoxesLanding({
             </div>
           ))}
         </div>
+        <p className={`${rs.small} ${rs.sampleNote} ${rs.heroLandingNote}`}>{SAMPLE_LABEL[locale]}</p>
       </Sheet>
 
       <Sheet tone="white" className={rs.sheetTop} aria-label={t("marketing.boxes.eyebrow")}>
@@ -133,7 +134,9 @@ export async function BoxesLanding({
               </Pill>
             </Reveal>
           </Sheet>
-          <Sheet tone="dark" className={rs.glow} container="narrow" aria-labelledby="boxes-cta-title">
+          <Sheet tone="dark" className={rs.clip} container="narrow" aria-labelledby="boxes-cta-title">
+            <Glow color="violet" x="85%" y="0%" size="70vmax" />
+            <Glow color="green" x="5%" y="110%" size="45vmax" />
             <Reveal className={rs.heroCenter}>
               <Display size="64" align="center" id="boxes-cta-title">
                 {t("marketing.boxes.closingTitle")}

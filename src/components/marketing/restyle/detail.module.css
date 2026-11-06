@@ -37,7 +37,7 @@
   align-items: flex-end;
   gap: clamp(8px, 2vw, 24px);
   padding-inline: clamp(0px, 2vw, 32px);
-  padding-block-end: calc(var(--mk-sheet-overlap) + 24px);
+  padding-block-end: 8px;
 }
 .showcase::before {
   content: "";

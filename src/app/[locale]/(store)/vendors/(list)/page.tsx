@@ -14,6 +14,7 @@ import rs from "@/components/marketing/restyle/restyle.module.css";
 import dt from "@/components/marketing/restyle/detail.module.css";
 import { Sheet } from "@/components/marketing/kit/Sheet";
 import { Display, Eyebrow, Lead } from "@/components/marketing/kit/Display";
+import { HeroTitle } from "@/components/marketing/kit/HeroTitle";
 import { Pill } from "@/components/marketing/kit/Pill";
 import { Reveal } from "@/components/marketing/kit/Reveal";
 
@@ -52,9 +53,7 @@ export default async function VendorsPage({ params, searchParams }: Props) {
       />
       <Sheet tone="dark" hero container="narrow" className={`${rs.heroCompact} ${rs.heroCenter}`} aria-labelledby="vendors-title">
         <Eyebrow className="m-enter">{t("marketing.vendors.eyebrow")}</Eyebrow>
-        <Display as="h1" size="64" align="center" id="vendors-title" className="m-enter-lcp">
-          {t("marketing.vendors.title")}
-        </Display>
+        <HeroTitle size="64" align="center" id="vendors-title" text={t("marketing.vendors.title")} />
         <Lead align="center" className="m-enter-lcp">
           {t("marketing.vendors.body")}
         </Lead>

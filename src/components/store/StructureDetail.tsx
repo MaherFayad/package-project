@@ -16,10 +16,13 @@ const HERO_SIZES = "(min-width: 1024px) 600px, 74vw";
 import rs from "@/components/marketing/restyle/restyle.module.css";
 import dt from "@/components/marketing/restyle/detail.module.css";
 import { Sheet } from "@/components/marketing/kit/Sheet";
+import { Glow } from "@/components/marketing/kit/Glow";
 import { Display, Eyebrow, Lead } from "@/components/marketing/kit/Display";
+import { HeroTitle } from "@/components/marketing/kit/HeroTitle";
 import { Pill, PillRow } from "@/components/marketing/kit/Pill";
 import { renderSrc } from "@/components/marketing/assets";
 import { HeroImage } from "@/components/marketing/HeroImage";
+import { SAMPLE_LABEL } from "@/components/marketing/kit/assets";
 
 const RULE_KEYS: Record<string, DictKey> = {
   "H <= W": "store.structure.rule.HW",
@@ -82,7 +85,9 @@ export function StructureDetail({
 
   return (
     <div className={rs.page}>
-      <Sheet tone="dark" hero className={`${rs.heroCompact} ${rs.glow}`} aria-labelledby="structure-title">
+      <Sheet tone="dark" hero className={`${rs.heroCompact} ${rs.clip}`} aria-labelledby="structure-title">
+        <Glow color="violet" x="85%" y="0%" size="70vmax" />
+        <Glow color="green" x="5%" y="110%" size="45vmax" />
         <div className={rs.split}>
           <div>
             <nav aria-label={t("store.breadcrumb")} className={`${rs.crumbs} m-enter`}>
@@ -93,9 +98,15 @@ export function StructureDetail({
               </ol>
             </nav>
             <Eyebrow className="m-enter">{t(`marketing.boxes.family.${structure.family}` as DictKey)}</Eyebrow>
-            <Display as="h1" size="64" id="structure-title" className="m-enter-lcp">
-              {title}
-            </Display>
+            {/* The size-page title holds a bidi-isolated "250 × 180 × 80 mm" (CR-62); HeroTitle splits on
+                spaces into inline blocks, which would break the isolate and reorder the numbers in RTL. */}
+            {currentSize ? (
+              <Display as="h1" size="64" id="structure-title" className="m-enter-lcp">
+                {title}
+              </Display>
+            ) : (
+              <HeroTitle size="64" id="structure-title" text={title} />
+            )}
             <Lead className="m-enter-lcp">{intro}</Lead>
             <ul className={`${rs.chips} m-enter`} style={{ ["--m-i" as string]: 4 }}>
               {/^FEFCO_/.test(structure.code) ? (
@@ -122,10 +133,13 @@ export function StructureDetail({
               </Pill>
             </PillRow>
           </div>
-          <div className={`${rs.mediaCard} m-enter-scale`} style={{ ["--m-i" as string]: 2 }}>
-            {/* The hero render is the LCP on phones: AVIF, preloaded from <head> (R4-MK-06). */}
-            <HeroImage src={renderSrc(structure.code)} sizes={HERO_SIZES} alt={t("marketing.boxes.renderAlt", { name })} width={960} height={720} />
-          </div>
+          <figure className={rs.figure}>
+            <div className={`${rs.mediaCard} m-enter-scale`} style={{ ["--m-i" as string]: 2 }}>
+              {/* The hero render is the LCP on phones: AVIF, preloaded from <head> (R4-MK-06). */}
+              <HeroImage src={renderSrc(structure.code)} sizes={HERO_SIZES} alt={t("marketing.boxes.renderAlt", { name })} width={960} height={720} />
+            </div>
+            <figcaption className={`${rs.small} ${rs.sampleNote}`}>{SAMPLE_LABEL[locale]}</figcaption>
+          </figure>
         </div>
       </Sheet>
       <Sheet tone="white" className={rs.sheetTop}>

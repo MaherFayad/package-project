@@ -6,7 +6,9 @@ import { safeNextPath } from "@/lib/auth/redirect";
 import { getT, toLocale } from "@/i18n";
 import { LoginClient } from "./LoginClient";
 import { Sheet } from "@/components/marketing/kit/Sheet";
-import { Display, Lead } from "@/components/marketing/kit/Display";
+import { Glow } from "@/components/marketing/kit/Glow";
+import { Lead } from "@/components/marketing/kit/Display";
+import { HeroTitle } from "@/components/marketing/kit/HeroTitle";
 import rs from "@/components/marketing/restyle/restyle.module.css";
 import au from "@/components/marketing/restyle/auth.module.css";
 
@@ -36,15 +38,15 @@ export default async function LoginPage({
   const t = getT(locale);
   return (
     <div className={rs.page}>
-      <Sheet tone="dark" hero className={`${au.auth} ${rs.glow}`} aria-labelledby="login-title">
+      <Sheet tone="dark" hero className={`${au.auth} ${rs.clip}`} aria-labelledby="login-title">
+        <Glow color="violet" x="85%" y="0%" size="70vmax" />
+        <Glow color="green" x="5%" y="110%" size="45vmax" />
         <div className={au.authGrid}>
           <div>
             <span className={au.badge} aria-hidden="true">
               <LockKeyhole size={20} />
             </span>
-            <Display as="h1" size="56" id="login-title">
-              {t("auth.title")}
-            </Display>
+            <HeroTitle size="64" id="login-title" text={t("auth.title")} />
             <Lead>{t("auth.subtitle")}</Lead>
           </div>
           <section className={au.authCard} aria-labelledby="login-title">

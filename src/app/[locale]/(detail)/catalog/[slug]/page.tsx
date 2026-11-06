@@ -14,7 +14,9 @@ import { ModelCard } from "@/components/catalogue/CatalogueBrowser";
 import { getCatalogueData } from "@/components/catalogue/server";
 import { STRUCTURE_LIST } from "@/lib/dieline";
 import { Sheet } from "@/components/marketing/kit/Sheet";
+import { Glow } from "@/components/marketing/kit/Glow";
 import { Display, Eyebrow, Lead } from "@/components/marketing/kit/Display";
+import { HeroTitle } from "@/components/marketing/kit/HeroTitle";
 import { Pill } from "@/components/marketing/kit/Pill";
 import styles from "@/components/catalogue/catalogue.module.css";
 
@@ -60,7 +62,9 @@ export default async function Page({ params }: Props) {
 
   return (
     <div>
-      <Sheet tone="dark" hero className={`${styles.heroCompact} ${styles.heroGlow}`} aria-labelledby="model-title">
+      <Sheet tone="dark" hero className={`${styles.heroCompact} ${styles.heroClip}`} aria-labelledby="model-title">
+        <Glow color="violet" x="85%" y="0%" size="70vmax" />
+        <Glow color="green" x="5%" y="110%" size="45vmax" />
         <nav aria-label={COPY.back[locale]} className={`${styles.crumbs} m-enter`}>
           <ol>
             <li>
@@ -81,15 +85,9 @@ export default async function Page({ params }: Props) {
             <bdi dir="ltr">{e.standard.code ? `${e.standard.system} ${e.standard.code}` : e.standard.label}</bdi>
           </Eyebrow>
         ) : null}
-        <Display as="h1" size="64" id="model-title" className="m-enter-lcp">
-          {e.name[locale]}
-        </Display>
+        <HeroTitle size="64" id="model-title" text={e.name[locale]} />
         <Lead className="m-enter-lcp">{e.description[locale]}</Lead>
-        {e.source === "fefco-09" ? (
-          <p className={styles.heroNote}>
-            {COPY.hostNote[locale]}
-          </p>
-        ) : null}
+        {e.source === "fefco-09" ? <p className={styles.heroNote}>{COPY.hostNote[locale]}</p> : null}
       </Sheet>
       <Sheet tone="white" className={styles.sheetTop}>
         <div className={styles.detail}>
@@ -155,9 +153,7 @@ export default async function Page({ params }: Props) {
 
             {e.presets.length ? (
               <div>
-                <h2 className={styles.cardHeading}>
-                  {COPY.sizes[locale]}
-                </h2>
+                <h2 className={styles.cardHeading}>{COPY.sizes[locale]}</h2>
                 <ul className={styles.sizes}>
                   {e.presets.slice(0, 8).map((p) => (
                     <li key={p.id}>

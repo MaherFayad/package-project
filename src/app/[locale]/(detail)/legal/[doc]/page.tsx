@@ -7,7 +7,8 @@ import { formatDate } from "@/lib/format";
 import { TriangleAlert } from "lucide-react";
 import { LEGAL_DOCS, LEGAL_DOC_IDS, LEGAL_UPDATED, isLegalDoc, paragraphs } from "@/components/store/legal";
 import { Sheet } from "@/components/marketing/kit/Sheet";
-import { Display, Eyebrow, Lead } from "@/components/marketing/kit/Display";
+import { Eyebrow, Lead } from "@/components/marketing/kit/Display";
+import { HeroTitle } from "@/components/marketing/kit/HeroTitle";
 import { TocSpy } from "@/components/marketing/restyle/TocSpy";
 import rs from "@/components/marketing/restyle/restyle.module.css";
 import lg from "@/components/marketing/restyle/legal.module.css";
@@ -52,9 +53,7 @@ export default async function LegalPage({ params }: Props) {
     <div className={rs.page}>
       <Sheet tone="dark" hero container="narrow" className={`${rs.heroCompact} ${rs.heroCenter}`} aria-labelledby="legal-title">
         <Eyebrow className="m-enter">{t("legal.updated", { date: formatDate(LEGAL_UPDATED, locale, "long") })}</Eyebrow>
-        <Display as="h1" size="64" align="center" id="legal-title" className="m-enter-lcp">
-          {title}
-        </Display>
+        <HeroTitle size="64" align="center" id="legal-title" text={title} />
         <Lead align="center" className="m-enter-lcp">
           {t(`legal.${doc}.metaDescription` as DictKey)}
         </Lead>

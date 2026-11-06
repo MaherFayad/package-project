@@ -27,24 +27,8 @@
 .heroCenter :where(p) { margin-inline: auto; }
 .sheetTop.sheetTop[data-overlap="true"] { padding-block-start: clamp(48px, 4vw + 24px, 96px); }
 
-/* Glows behind hero media (CSS only, static). */
-.glow::before,
-.glow::after { content: ""; position: absolute; z-index: -1; pointer-events: none; border-radius: 50%; }
-.glow::before {
-  inset-block-start: -20%;
-  inset-inline-end: -10%;
-  inline-size: min(900px, 90vw);
-  aspect-ratio: 1;
-  background: radial-gradient(closest-side, rgba(77, 33, 255, 0.42), transparent 70%);
-}
-.glow::after {
-  inset-block-end: -40%;
-  inset-inline-start: -15%;
-  inline-size: min(760px, 80vw);
-  aspect-ratio: 1;
-  background: radial-gradient(closest-side, rgba(0, 120, 110, 0.34), transparent 70%);
-}
-.glow { overflow: clip; }
+/* Clips the kit <Glow> orbs to the sheet (no sideways scroll, WCAG 1.4.10). */
+.clip { overflow: clip; }
 
 /* ---------- Small type helpers ---------- */
 .small { margin: 0; font-size: var(--mk-fs-14); line-height: 1.4; color: var(--rs-muted); }
@@ -116,3 +100,7 @@
   .mediaCard img { transition: none; }
   .mediaCard:hover img { transform: none; }
 }
+/* "Sample design · fictional brand" under renders that show our made-up brands (assets kit rule). */
+.figure { margin: 0; display: grid; gap: 12px; }
+.sampleNote { text-align: center; }
+.heroLandingNote { margin: 0; padding-block: 16px calc(var(--mk-sheet-overlap) + 24px); }

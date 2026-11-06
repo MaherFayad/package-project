@@ -10,7 +10,9 @@ import { SharedViewerLazy } from "./SharedViewerLazy";
 import { inlinePublicImage } from "@/app/model-poster";
 import styles from "./share.module.css";
 import { Sheet } from "@/components/marketing/kit/Sheet";
-import { Display, Eyebrow, Lead } from "@/components/marketing/kit/Display";
+import { Glow } from "@/components/marketing/kit/Glow";
+import { Eyebrow, Lead } from "@/components/marketing/kit/Display";
+import { HeroTitle } from "@/components/marketing/kit/HeroTitle";
 import { Pill } from "@/components/marketing/kit/Pill";
 import { LostState } from "@/components/marketing/restyle/LostState";
 import rs from "@/components/marketing/restyle/restyle.module.css";
@@ -107,11 +109,11 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
   const orderHref = `/${locale}/checkout/${encodeURIComponent(designId)}?share=${encodeURIComponent(id)}&model=${encodeURIComponent(modelCode)}`;
   return (
     <div className={rs.page}>
-      <Sheet tone="dark" hero className={`${rs.heroCompact} ${rs.glow}`} aria-labelledby="share-title">
+      <Sheet tone="dark" hero className={`${rs.heroCompact} ${rs.clip}`} aria-labelledby="share-title">
+        <Glow color="violet" x="85%" y="0%" size="70vmax" />
+        <Glow color="green" x="5%" y="110%" size="45vmax" />
         <Eyebrow>{styleName}</Eyebrow>
-        <Display as="h1" size="64" id="share-title">
-          {name}
-        </Display>
+        <HeroTitle size="64" id="share-title" text={name} />
         <Lead>{t(isVessel ? "designer.shared.subtitleDesign" : "designer.shared.subtitle")}</Lead>
       </Sheet>
       <Sheet tone="white" className={rs.sheetTop}>

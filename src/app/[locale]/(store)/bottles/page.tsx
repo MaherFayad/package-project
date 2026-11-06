@@ -7,7 +7,9 @@ import { HeroImage } from "@/components/marketing/HeroImage";
 import rs from "@/components/marketing/restyle/restyle.module.css";
 import dt from "@/components/marketing/restyle/detail.module.css";
 import { Sheet } from "@/components/marketing/kit/Sheet";
-import { Display, Eyebrow, Lead } from "@/components/marketing/kit/Display";
+import { SAMPLE_LABEL } from "@/components/marketing/kit/assets";
+import { Eyebrow, Lead } from "@/components/marketing/kit/Display";
+import { HeroTitle } from "@/components/marketing/kit/HeroTitle";
 import { Pill, PillRow } from "@/components/marketing/kit/Pill";
 import { Stagger } from "@/components/marketing/kit/Reveal";
 
@@ -41,9 +43,7 @@ export default async function BottlesPage({ params }: Props) {
     <div className={rs.page}>
       <Sheet tone="dark" hero className={rs.heroLanding} aria-labelledby="bottles-title">
         <Eyebrow className="m-enter">{t("marketing.bottles.eyebrow")}</Eyebrow>
-        <Display as="h1" size="96" align="center" id="bottles-title" className="m-enter-lcp">
-          {t("marketing.bottles.title")}
-        </Display>
+        <HeroTitle size="96" align="center" id="bottles-title" text={t("marketing.bottles.title")} />
         <Lead align="center" className="m-enter-lcp">
           {t("marketing.bottles.body")}
         </Lead>
@@ -76,6 +76,7 @@ export default async function BottlesPage({ params }: Props) {
             </div>
           ))}
         </div>
+        <p className={`${rs.small} ${rs.sampleNote} ${rs.heroLandingNote}`}>{SAMPLE_LABEL[locale]}</p>
       </Sheet>
       <Sheet tone="white" className={rs.sheetTop} aria-labelledby="vessels-title">
         <h2 id="vessels-title" className="visually-hidden">

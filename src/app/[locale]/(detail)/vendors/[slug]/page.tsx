@@ -19,7 +19,9 @@ import styles from "@/components/store/store.module.css";
 import rs from "@/components/marketing/restyle/restyle.module.css";
 import dt from "@/components/marketing/restyle/detail.module.css";
 import { Sheet } from "@/components/marketing/kit/Sheet";
-import { Display, Eyebrow, Lead } from "@/components/marketing/kit/Display";
+import { Glow } from "@/components/marketing/kit/Glow";
+import { Eyebrow, Lead } from "@/components/marketing/kit/Display";
+import { HeroTitle } from "@/components/marketing/kit/HeroTitle";
 import { Pill, PillRow } from "@/components/marketing/kit/Pill";
 
 /** Prerendered; prices and printer data refresh hourly (ISR). */
@@ -80,7 +82,9 @@ export default async function VendorProfilePage({ params }: Props) {
           ]),
         ]}
       />
-      <Sheet tone="dark" hero className={`${rs.heroCompact} ${rs.glow}`} aria-labelledby="vendor-title">
+      <Sheet tone="dark" hero className={`${rs.heroCompact} ${rs.clip}`} aria-labelledby="vendor-title">
+        <Glow color="violet" x="85%" y="0%" size="70vmax" />
+        <Glow color="green" x="5%" y="110%" size="45vmax" />
         <nav aria-label={t("store.breadcrumb")} className={`${rs.crumbs} m-enter`}>
           <ol>
             <li>
@@ -106,9 +110,7 @@ export default async function VendorProfilePage({ params }: Props) {
                 {city}
               </Eyebrow>
             </div>
-            <Display as="h1" size="64" id="vendor-title" className="m-enter-lcp">
-              {name}
-            </Display>
+            <HeroTitle size="64" id="vendor-title" text={name} />
             <Lead className="m-enter-lcp">{pick(locale, v.bio.ar, v.bio.en)}</Lead>
             <div className={`${dt.badges} m-enter`}>
               {v.verified ? (

@@ -9,7 +9,9 @@ import { COPY, fill } from "@/components/catalogue/copy";
 import { getCatalogueData } from "@/components/catalogue/server";
 import styles from "@/components/catalogue/catalogue.module.css";
 import { Sheet } from "@/components/marketing/kit/Sheet";
-import { Display, Eyebrow, Lead } from "@/components/marketing/kit/Display";
+import { Glow } from "@/components/marketing/kit/Glow";
+import { Eyebrow, Lead } from "@/components/marketing/kit/Display";
+import { HeroTitle } from "@/components/marketing/kit/HeroTitle";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -43,11 +45,11 @@ export default async function CatalogPage({ params }: Props) {
           { name: t("nav.catalog"), url: `${base}/${locale}/catalog` },
         ])}
       />
-      <Sheet tone="dark" hero className={`${styles.heroCompact} ${styles.heroGlow}`} aria-labelledby="catalogue-title">
+      <Sheet tone="dark" hero className={`${styles.heroCompact} ${styles.heroClip}`} aria-labelledby="catalogue-title">
+        <Glow color="violet" x="85%" y="0%" size="70vmax" />
+        <Glow color="green" x="5%" y="110%" size="45vmax" />
         <Eyebrow className="m-enter">{COPY.eyebrow[locale]}</Eyebrow>
-        <Display as="h1" size="64" id="catalogue-title" className="m-enter-lcp">
-          {COPY.title[locale]}
-        </Display>
+        <HeroTitle size="64" id="catalogue-title" text={COPY.title[locale]} />
         <Lead className="m-enter-lcp">{fill(COPY.lead[locale], { count: formatNumber(data.counts.total) })}</Lead>
         <dl className={`${styles.stats} m-enter`}>
           {[

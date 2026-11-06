@@ -352,11 +352,7 @@
    that import pulled a merged chunk (restyle + detail + store + account, about 30 KB) into the
    370-model page. Same values as restyle.module.css; the two never load on one page. */
 .heroCompact.heroCompact[data-hero="true"] { min-block-size: 0; padding-block-end: calc(var(--mk-sheet-overlap) + clamp(48px, 5vw, 96px)); }
-.heroGlow { overflow: clip; }
-.heroGlow::before,
-.heroGlow::after { content: ""; position: absolute; z-index: -1; pointer-events: none; border-radius: 50%; aspect-ratio: 1; }
-.heroGlow::before { inset-block-start: -20%; inset-inline-end: -10%; inline-size: min(900px, 90vw); background: radial-gradient(closest-side, rgba(77, 33, 255, 0.42), transparent 70%); }
-.heroGlow::after { inset-block-end: -40%; inset-inline-start: -15%; inline-size: min(760px, 80vw); background: radial-gradient(closest-side, rgba(0, 120, 110, 0.34), transparent 70%); }
+.heroClip { overflow: clip; } /* clips the kit <Glow> orbs (no sideways scroll) */
 .sheetTop.sheetTop[data-overlap="true"] { padding-block-start: clamp(48px, 4vw + 24px, 96px); }
 @media (max-width: 767px) { .sheetTop.sheetTop[data-overlap="true"] { border-start-start-radius: 20px; border-start-end-radius: 20px; } }
 .stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 40px 0 0; padding: 0; border: 1px solid var(--mk-line); border-radius: var(--mk-radius-tile); }
