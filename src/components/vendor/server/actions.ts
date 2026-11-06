@@ -26,6 +26,7 @@ import { isFoodSafe, isPermutation, issuesToErrors, mergeCertifications, portfol
 import { applicationSchema, slugify, uniqueSlug } from "../lib/application";
 import { keyFromUrl, parseKey } from "../lib/files";
 import { listedBases } from "../lib/coverage";
+import { bioSaveData } from "../lib/bio-review";
 import { FieldErrors, VendorActionError, runAction, vendorForMutation, type ActionResponse } from "./context";
 import { deleteUpload, uploadRoot } from "./storage";
 import path from "node:path";
@@ -182,8 +183,8 @@ export async function saveProfile(input: unknown, expectedUpdatedAt?: string): P
     const updated = await db.vendor.update({
       where: { id: vendor.id },
       data: {
-        bioAr: v.bioAr,
-        bioEn: v.bioEn,
+        // B-08 / R5: a changed bio waits for Elba's review; the live bio stays public meanwhile.
+        ...bioSaveData(vendor, { bioAr: v.bioAr, bioEn: v.bioEn }),
         machines: toJson(v.machines),
         capabilities: toJson(capabilities),
         certifications: toJson(certifications),
