@@ -481,6 +481,7 @@ export const ar: Dictionary = {
       onTimeValue: "{pct}% في الموعد",
       newValue: "جديد على علبة، لا توجد تقييمات بعد",
       onTimeNone: "نسبة الالتزام بالموعد بعد أول طلبات مسلمة",
+      onTimeNew: "جديد على علبة",
       leadValue: "التنفيذ خلال {days:day}",
       minQty: "ابتداء من {qty:box}",
       viewProfile: "عرض ملف المطبعة",

@@ -482,6 +482,7 @@ export const en = {
       onTimeValue: "{pct}% on time",
       newValue: "New on Elba, no reviews yet",
       onTimeNone: "On-time rate after first deliveries",
+      onTimeNew: "New on Elba",
       leadValue: "Lead time {days:day}",
       minQty: "From {qty:box}",
       viewProfile: "View profile",

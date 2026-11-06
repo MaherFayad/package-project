@@ -128,6 +128,10 @@ model Vendor {
   rating         Float    @default(0) // 0..5
   ratingCount    Int      @default(0)
   onTimePct      Float    @default(0) // 0..100
+  // Added by admin round 8 (R5-JR-05): judged deliveries behind onTimePct, and whether buyers see it
+  // (judged >= the admin's minimum, default 5; below that public pages say "New on Elba").
+  onTimeJudged   Int      @default(0)
+  onTimePublic   Boolean  @default(false)
   leadTimeDays   Int      @default(7) // typical lead time
   minOrderQty    Int      @default(100)
   serviceAreas   Json     // EgyptCity[]
