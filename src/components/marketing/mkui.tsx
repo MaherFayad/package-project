@@ -1,7 +1,8 @@
 import type { ComponentType, ReactNode } from "react";
-import styles from "./marketing.module.css";
+import styles from "./restyle/restyle.module.css";
 
 /**
+ * R6: styled from restyle/restyle.module.css (grey 24 px tiles, light display weights).
  * Marketing-native stand-ins for the few admin-kit primitives the public structure, size and
  * printer pages used below their hero (Card, Text, Badge, Icon, Layout). Same props subset, so
  * the page code reads the same, but styled from marketing.module.css only (R4-MK-03): no Polaris
@@ -11,11 +12,11 @@ import styles from "./marketing.module.css";
 
 type Tone = "subdued" | "success" | "info" | "critical" | undefined;
 
-export function Card({ title, as = "div", children }: { title?: ReactNode; as?: "div" | "section"; children: ReactNode }) {
+export function Card({ title, as = "div", tone, children }: { title?: ReactNode; as?: "div" | "section"; tone?: "dark"; children: ReactNode }) {
   const Tag = as;
   return (
-    <Tag className={styles.panel}>
-      {title ? <h2 className={styles.panelTitle}>{title}</h2> : null}
+    <Tag className={tone === "dark" ? `${styles.tile} ${styles.tileDark}` : styles.tile}>
+      {title ? <h2 className={styles.tileTitle}>{title}</h2> : null}
       {children}
     </Tag>
   );
@@ -40,12 +41,12 @@ export function Text({
 }) {
   const Tag = as;
   const cls = [
-    styles.mkText,
-    variant === "bodySm" ? styles.mkTextSm : "",
-    variant === "headingSm" ? styles.mkHeadingSm : "",
-    variant === "headingMd" ? styles.mkHeadingMd : "",
-    tone === "subdued" ? styles.mkMuted : "",
-    fontWeight ? styles.mkStrong : "",
+    styles.text,
+    variant === "bodySm" ? styles.textSm : "",
+    variant === "headingSm" ? styles.headingSm : "",
+    variant === "headingMd" ? styles.headingMd : "",
+    tone === "subdued" ? styles.muted : "",
+    fontWeight ? styles.strong : "",
     numeric ? styles.num : "",
   ]
     .filter(Boolean)
@@ -72,7 +73,7 @@ export function Icon({ source: I, size }: { source: ComponentType<{ size?: numbe
 }
 
 export function Layout({ children }: { children: ReactNode }) {
-  return <div className={styles.detailLayout}>{children}</div>;
+  return <div className={styles.withAside}>{children}</div>;
 }
 
 export function LayoutSection({
@@ -88,7 +89,7 @@ export function LayoutSection({
 }) {
   const Tag = as;
   return (
-    <Tag className={variant === "oneThird" ? styles.detailSide : styles.detailMain} {...rest}>
+    <Tag className={variant === "oneThird" ? `${styles.stack} ${styles.aside}` : styles.stack} {...rest}>
       {children}
     </Tag>
   );
