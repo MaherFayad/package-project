@@ -24,6 +24,7 @@ import { rowToDoc } from "@/components/designer/server";
 import { designQuoteFields, priceTable, quote, toPublicOffer, zoneForGovernorate, type PublicVendorOffer, type QuoteOutcome, type VendorOffer } from "@/lib/pricing";
 import { loadPricingData } from "@/lib/pricing/server";
 import { loadPricingConfig } from "@/components/admin/server/settings";
+import { syncVendorOnTime } from "@/lib/vendors/on-time-sync";
 import { HEADLINE_DEFAULTS } from "@/lib/pricing/headline";
 import { loadCheckoutSettings } from "./checkout-settings";
 import { SAMPLE_LINE_LABEL, SAMPLE_ORDER_NOTE, applySampleCredit, sampleOffer } from "./sample";
@@ -628,6 +629,8 @@ export async function transitionOrder(orderId: string, to: OrderStatus, actor: T
   if (to === "DELIVERED") {
     const onTime = order.dueDate ? now.getTime() <= order.dueDate.getTime() : null;
     void track("order_delivered", { by: actor.role, on_time: onTime, reprint: isReprint(order) }, { userId: order.buyerId, orderId });
+    // R5-JR-05 (admin): the public on-time figure follows real deliveries.
+    void syncVendorOnTime([order.vendorId]).catch(() => undefined);
   }
   await notifyStatus(order, to);
 }

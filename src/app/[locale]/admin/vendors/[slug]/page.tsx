@@ -69,7 +69,7 @@ export default async function AdminVendorPage({ params }: { params: Params }) {
           accessibilityLabel={t("admin.vendors.scorecard.title")}
           metrics={[
             { label: t("admin.vendors.scorecard.orders"), value: <span className={adminStyles.MetricStack}><span className={adminStyles.MetricNum}>{formatNumber(score.orders)}</span><span className={adminStyles.MetricSub}>{formatMoney(score.gmvPiasters, locale, { alwaysDecimals: true })}</span></span> },
-            { label: t("admin.vendors.scorecard.onTime"), value: <span className={adminStyles.MetricStack}><span className={adminStyles.MetricNum}>{pct(score.onTimePct)}</span><span className={adminStyles.MetricSub}>{`${t("admin.vendors.scorecard.delivered")}: ${formatNumber(score.delivered)}`}</span></span> },
+            { label: t("admin.vendors.scorecard.onTime"), value: <span className={adminStyles.MetricStack}><span className={adminStyles.MetricNum}>{pct(score.onTimePct)}</span><span className={adminStyles.MetricSub}>{`${t("admin.vendors.scorecard.delivered")}: ${formatNumber(score.delivered)}`}</span>{score.onTimePct === null ? <span className={adminStyles.MetricSub}>{t("admin.vendors.scorecard.publicNoDeliveries")}</span> : null}</span> },
             { label: t("admin.vendors.scorecard.reprint"), value: pct(score.reprintPct) },
             { label: t("admin.vendors.scorecard.dispute"), value: pct(score.disputePct) },
             { label: t("admin.vendors.scorecard.qcPass"), value: pct(score.qcPassPct) },

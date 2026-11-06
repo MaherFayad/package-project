@@ -33,3 +33,19 @@ describe("visitor-cohort funnel (R5-JR-13)", () => {
     for (let i = 1; i < v.length; i++) expect(v[i]).toBeLessThanOrEqual(v[i - 1]!);
   });
 });
+
+describe("on-time from real deliveries (R5-JR-05)", () => {
+  it("counts deliveries by the end of the promised day; skips reprints and undelivered orders", async () => {
+    const { onTimeFromDeliveries } = await import("@/lib/vendors/on-time");
+    const d = (s: string) => new Date(s);
+    const r = onTimeFromDeliveries([
+      { dueDate: d("2026-11-01T00:00:00Z"), deliveredAt: d("2026-11-01T22:00:00Z"), notes: null }, // same day: on time
+      { dueDate: d("2026-11-01T00:00:00Z"), deliveredAt: d("2026-11-02T08:00:00Z"), notes: null }, // late
+      { dueDate: d("2026-11-01T00:00:00Z"), deliveredAt: d("2026-11-05T08:00:00Z"), notes: "REPRINT_OF:ELB-1" }, // reprint: skipped
+      { dueDate: d("2026-11-01T00:00:00Z"), deliveredAt: null, notes: null },
+      { dueDate: null, deliveredAt: d("2026-11-01T08:00:00Z"), notes: null },
+    ]);
+    expect(r).toEqual({ judged: 2, onTime: 1, pct: 50 });
+    expect(onTimeFromDeliveries([]).pct).toBeNull();
+  });
+});

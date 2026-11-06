@@ -362,6 +362,7 @@ export const adminEn = {
       rating: "Rating",
       qcPass: "QC pass rate",
       health: "Health score",
+      publicNoDeliveries: "Public on-time figure updates from the first delivery",
       healthHelp: "40% on time, 40% quality (reprints and disputes), 20% rating. Early data until 5 delivered orders.",
       early: "early data",
     },

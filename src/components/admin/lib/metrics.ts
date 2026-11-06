@@ -1,4 +1,5 @@
 import type { OrderStatus } from "@/types";
+import { deliveredOnTime } from "@/lib/vendors/on-time";
 
 /**
  * Admin overview metrics (pure, DB-free so they can be unit-tested). The server loads plain rows
@@ -72,12 +73,9 @@ export function marginOf(o: MetricOrder): number {
   return goodsNet(o) - o.vendorCostPiasters;
 }
 
+/** Due "day": delivered by the end of the promised date. Same rule as the public figure (R5-JR-05). */
 export function isOnTime(o: Pick<MetricOrder, "dueDate" | "deliveredAt">): boolean | null {
-  if (!o.deliveredAt || !o.dueDate) return null;
-  // Due "day": anything delivered before the end of the due date counts as on time.
-  const endOfDue = new Date(o.dueDate);
-  endOfDue.setUTCHours(23, 59, 59, 999);
-  return o.deliveredAt.getTime() <= endOfDue.getTime();
+  return deliveredOnTime(o);
 }
 
 function within(d: Date | null | undefined, from: Date, to: Date): boolean {
