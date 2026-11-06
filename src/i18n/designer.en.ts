@@ -55,6 +55,8 @@ export const designerEn = {
     face: "Face",
     dieline: "Dieline",
     fold: "Fold",
+    // R14-03: the 3D preview's open / closed toggle, named apart from the Closure option (WCAG 2.4.6)
+    closurePreview: "Closure in the preview",
     adjust: "Adjust view",
     flat: "Flat",
     half: "Half",
@@ -254,6 +256,8 @@ export const designerEn = {
   history: {
     undo: "Undo",
     redo: "Redo",
+    // R15-03: the undo / redo pair; the group had the name of its first button
+    group: "Undo and redo",
   },
   save: {
     save: "Save",
@@ -360,6 +364,9 @@ export const designerEn = {
     order: "Order this design",
     badgeLocked: "{qty:piece}: see the price",
     badge: "{qty:piece} from {price} each excl. VAT · delivered in {days:day}",
+    // R14-01: the share page's price line for a container counts pieces, not boxes
+    sharePrice: "{qty:piece} from {price} each excl. VAT, delivered in {days:day}",
+    sharePricePrepay: "{qty:piece} from {price} each after the {pct}% prepay discount, excl. VAT, delivered in {days:day}",
     unavailable: "Price not available for this design yet",
     perPiece: "Per piece",
     collapse: "Show the model larger",

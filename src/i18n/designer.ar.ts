@@ -56,6 +56,7 @@ export const designerAr: Dictionary["designer"] = {
     face: "الوجه",
     dieline: "القالب",
     fold: "الطي",
+    closurePreview: "الغطاء في المعاينة",
     adjust: "ضبط العرض",
     flat: "فرد",
     half: "نصف طي",
@@ -112,7 +113,8 @@ export const designerAr: Dictionary["designer"] = {
   },
   artwork: {
     heading: "التصميم",
-    face: "الوجه",
+    // R15-03: «الوجه» is also the Face view button; English keeps them apart (Panel / Face)
+    face: "الجزء",
     surface: "الجهة",
     background: "لون الخلفية",
     backgroundHelp: "يغطي كل الأوجه المطبوعة في هذه الجهة.",
@@ -255,6 +257,7 @@ export const designerAr: Dictionary["designer"] = {
   history: {
     undo: "تراجع",
     redo: "إعادة",
+    group: "التراجع والإعادة",
   },
   save: {
     save: "حفظ",
@@ -361,6 +364,8 @@ export const designerAr: Dictionary["designer"] = {
     order: "طلب هذا التصميم",
     badgeLocked: "{qty:piece}: اعرف السعر",
     badge: "{qty:piece} ابتداء من {price} للقطعة دون الضريبة · التوصيل خلال {days:day}",
+    sharePrice: "{qty:piece} ابتداء من {price} للقطعة دون الضريبة، والتوصيل خلال {days:day}",
+    sharePricePrepay: "{qty:piece} ابتداء من {price} للقطعة بعد خصم الدفع المقدم {pct}%، دون الضريبة، والتوصيل خلال {days:day}",
     unavailable: "السعر غير متاح لهذا التصميم بعد",
     perPiece: "سعر القطعة",
     collapse: "تكبير عرض النموذج",

@@ -128,13 +128,13 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
               {price ? (
                 <p className={styles.price} data-testid="share-price">
                   {price.prepayPct > 0
-                    ? t("buyer.sharePricePrepay", {
+                    ? t(isVessel ? "designer.container.sharePricePrepay" : "buyer.sharePricePrepay", {
                         qty: price.quantity,
                         price: formatMoney(price.unitPiasters, locale),
                         days: price.days,
                         pct: price.prepayPct,
                       })
-                    : t("buyer.sharePrice", { qty: price.quantity, price: formatMoney(price.unitPiasters, locale), days: price.days })}
+                    : t(isVessel ? "designer.container.sharePrice" : "buyer.sharePrice", { qty: price.quantity, price: formatMoney(price.unitPiasters, locale), days: price.days })}
                 </p>
               ) : null}
               <p className={styles.muted}>{reason ? ORDER_MODE_COPY[reason][locale] : t("designer.shared.ctaHelp")}</p>
