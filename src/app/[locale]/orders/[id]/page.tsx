@@ -149,6 +149,9 @@ export default async function OrderPage({ params, searchParams }: { params: Para
     DELIVERED: order.deliveredAt,
   };
   const current = terminal ? stoppedStepIndex(eventTypes) : buyerStepIndex(status);
+  const stepAt = (s: (typeof BUYER_STEPS)[number]) => BUYER_STEPS.indexOf(s);
+  const shipmentAhead = !terminal && current <= stepAt("SHIPPED");
+  const qcAhead = !terminal && current <= stepAt("QC_PASSED");
   const steps = BUYER_STEPS.map((s, i) => ({
     id: s,
     label: t(`orders.detail.steps.${s}` as DictKey),
@@ -260,7 +263,7 @@ export default async function OrderPage({ params, searchParams }: { params: Para
                                     {t("orders.detail.downloadPrint")}
                                   </InlineStack>
                                 </Link>
-                              ) : terminal ? null : (
+                              ) : terminal || isPaidStatus(status) ? null : (
                                 <Text as="span" variant="bodySm" tone="subdued">
                                   {t("orders.detail.printOnlyPaid")}
                                 </Text>
@@ -344,6 +347,9 @@ export default async function OrderPage({ params, searchParams }: { params: Para
                 </BlockStack>
               </Card>
 
+              {/* R4-13: the "appears here later" empty states only while that stage is still ahead;
+                  a delivered or cancelled order without a record does not promise one. */}
+              {order.shipments.length === 0 && !shipmentAhead ? null : (
               <Card title={t("orders.detail.shipment")}>
                 {order.shipments.length === 0 ? (
                   <Text as="p" tone="subdued">
@@ -390,7 +396,9 @@ export default async function OrderPage({ params, searchParams }: { params: Para
                   </BlockStack>
                 )}
               </Card>
+              )}
 
+              {order.qcPhotos.length === 0 && !qcAhead ? null : (
               <Card title={t("orders.detail.qc")}>
                 <BlockStack gap="300">
                   <Text as="p" variant="bodySm" tone="subdued">
@@ -427,6 +435,7 @@ export default async function OrderPage({ params, searchParams }: { params: Para
                   )}
                 </BlockStack>
               </Card>
+              )}
 
               {isBuyer && myReview ? (
                 <Card title={t("orders.review.title")}>

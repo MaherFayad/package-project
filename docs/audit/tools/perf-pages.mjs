@@ -256,7 +256,7 @@ for (const role of Object.keys(PHONES)) {
 const results = fs.existsSync(OUT) && process.env.APPEND ? JSON.parse(fs.readFileSync(OUT, "utf8")) : [];
 for (const profile of PROFILES)
   for (const locale of LOCALES)
-    for (const pg of PAGES) {
+    for (const pg of PAGES.filter((p) => !process.env.ONLY || process.env.ONLY.split(",").includes(p.key))) {
       if (filter && !filter.test(pg.key)) continue;
       const r = await runOne(browser, profile, locale, pg, pg.role ? storages[pg.role] : undefined).catch((e) => ({ page: pg.key, profile, locale, error: String(e) }));
       results.push(r);

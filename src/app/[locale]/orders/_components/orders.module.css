@@ -8,7 +8,10 @@
 .legend {
   padding: 0;
   margin-block-end: var(--p-space-100);
-  font-weight: var(--p-font-weight-medium);
+  /* R4-14: same size and weight as the form labels below it (it rendered larger than the card title). */
+  font-size: var(--p-font-size-350, 0.875rem);
+  line-height: var(--p-font-line-height-500, 1.25rem);
+  font-weight: var(--p-font-weight-semibold, 600);
 }
 .starRow {
   display: flex;
@@ -152,6 +155,49 @@
 }
 .tableWrap {
   overflow-x: auto;
+}
+/* R4-01: on phones the 4-column invoice table clipped the Amount column. Below 640px each line
+   becomes a block: the description on its own line, then "500 × EGP 33.04" and the amount at the
+   end. Roles on the table elements keep the table semantics when the display changes. */
+@media screen and (max-width: 639.98px) {
+  .invTable,
+  .invTable tbody {
+    display: block;
+  }
+  .invTable thead {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .invTable tbody tr {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr);
+    align-items: baseline;
+    column-gap: var(--p-space-100);
+    padding-block: var(--p-space-300);
+    border-block-end: var(--p-border-width-025, 1px) solid var(--p-color-border);
+  }
+  .invTable tbody td {
+    padding: 0;
+    border: 0;
+  }
+  .invTable tbody td:first-child {
+    grid-column: 1 / -1;
+    margin-block-end: var(--p-space-100);
+  }
+  .invTable tbody td:nth-child(2),
+  .invTable tbody td:nth-child(3) {
+    color: var(--p-color-text-secondary);
+  }
+  .invQty::after {
+    content: " ×";
+  }
+  .invTable tbody td:last-child {
+    font-weight: var(--p-font-weight-semibold);
+  }
 }
 @media print {
   .noPrint {

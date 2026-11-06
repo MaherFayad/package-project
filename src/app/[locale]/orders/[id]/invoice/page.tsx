@@ -1,4 +1,5 @@
 import { formatTaxId } from "@/lib/orders/company";
+import { governorateKey } from "@/lib/orders/governorates";
 import type { Metadata } from "next";
 import type { Dims, PaymentMethod, ShippingAddress } from "@/types";
 import { getT, toLocale, type DictKey } from "@/i18n";
@@ -47,6 +48,9 @@ export default async function InvoicePage({ params }: { params: Params }) {
   const placeholder = t("orders.invoice.placeholder");
   const paidMethod = order.payments.find((p) => p.status === "PAID")?.method as PaymentMethod | undefined;
   const buyerName = order.buyer.organization?.name ?? order.buyer.name ?? addr.name;
+  // Addresses store the canonical English governorate; the invoice shows it in the page language.
+  const govKey = governorateKey(addr.governorate);
+  const governorateLabel = govKey ? t(`governorates.${govKey}` as DictKey) : addr.governorate;
 
   return (
     <Page title={t("orders.invoice.title", { number: invoice.number })} subtitle={t("orders.detail.title", { number: order.number })} backAction={back} primaryAction={<PrintButton label={t("orders.invoice.print")} />}>
@@ -76,7 +80,7 @@ export default async function InvoicePage({ params }: { params: Params }) {
                   </Text>
                   <Text as="p">{buyerName}</Text>
                   <Text as="p" tone="subdued">
-                    {addr.street}, {addr.city}, {addr.governorate}
+                    {[addr.street, addr.city, governorateLabel].filter(Boolean).join(locale === "ar" ? "، " : ", ")}
                   </Text>
                   <Text as="p" variant="bodySm">
                     {t("orders.invoice.buyerTaxId")}: <bdi>{order.buyer.organization?.taxId ? formatTaxId(order.buyer.organization.taxId) : "-"}</bdi>
@@ -91,26 +95,26 @@ export default async function InvoicePage({ params }: { params: Params }) {
               </InlineGrid>
 
               <div className={styles.tableWrap}>
-                <table className={styles.invTable}>
+                <table className={styles.invTable} role="table">
                   <caption className="visually-hidden">{t("orders.invoice.title", { number: invoice.number })}</caption>
-                  <thead>
-                    <tr>
-                      <th scope="col">{t("orders.invoice.description")}</th>
-                      <th scope="col" className={styles.num}>
+                  <thead role="rowgroup">
+                    <tr role="row">
+                      <th role="columnheader" scope="col">{t("orders.invoice.description")}</th>
+                      <th role="columnheader" scope="col" className={styles.num}>
                         {t("orders.invoice.qty")}
                       </th>
-                      <th scope="col" className={styles.num}>
+                      <th role="columnheader" scope="col" className={styles.num}>
                         {t("orders.invoice.unitPrice")}
                       </th>
-                      <th scope="col" className={styles.num}>
+                      <th role="columnheader" scope="col" className={styles.num}>
                         {t("orders.invoice.amount")}
                       </th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody role="rowgroup">
                     {order.items.map((it) => (
-                      <tr key={it.id}>
-                        <td>
+                      <tr key={it.id} role="row">
+                        <td role="cell">
                           {t("orders.invoice.goods")}:{" "}
                           {t("orders.invoice.lineDesc", {
                             structure: t(`structures.${it.structureCode}` as DictKey),
@@ -118,35 +122,35 @@ export default async function InvoicePage({ params }: { params: Params }) {
                             material: t(`materials.${it.materialCode}` as DictKey),
                           })}
                         </td>
-                        <td className={styles.num}>{it.quantity.toLocaleString("en-US")}</td>
-                        <td className={styles.num}>
+                        <td role="cell" className={`${styles.num} ${styles.invQty}`}>{it.quantity.toLocaleString("en-US")}</td>
+                        <td role="cell" className={styles.num}>
                           <PriceTag amount={it.unitPiasters} size="small" locale={locale} />
                         </td>
-                        <td className={styles.num}>
+                        <td role="cell" className={styles.num}>
                           <PriceTag amount={it.lineTotalPiasters} size="small" locale={locale} />
                         </td>
                       </tr>
                     ))}
                     {(money.lines ?? []).filter((l) => l.kind !== "PRODUCT").map((l, i) => (
-                      <tr key={`l${i}`}>
-                        <td>{t((l.labelKey === "pricing.line.shipping" ? "checkout.summary.shipping" : l.labelKey) as DictKey)}</td>
-                        <td className={styles.num}>{l.quantity.toLocaleString("en-US")}</td>
-                        <td className={styles.num}>
+                      <tr key={`l${i}`} role="row">
+                        <td role="cell">{t((l.labelKey === "pricing.line.shipping" ? "checkout.summary.shipping" : l.labelKey) as DictKey)}</td>
+                        <td role="cell" className={`${styles.num} ${styles.invQty}`}>{l.quantity.toLocaleString("en-US")}</td>
+                        <td role="cell" className={styles.num}>
                           <PriceTag amount={l.unitPiasters} size="small" locale={locale} />
                         </td>
-                        <td className={styles.num}>
+                        <td role="cell" className={styles.num}>
                           <PriceTag amount={l.totalPiasters} size="small" locale={locale} />
                         </td>
                       </tr>
                     ))}
                     {!money.lines ? (
-                      <tr>
-                        <td>{t("checkout.summary.shipping")}</td>
-                        <td className={styles.num}>1</td>
-                        <td className={styles.num}>
+                      <tr role="row">
+                        <td role="cell">{t("checkout.summary.shipping")}</td>
+                        <td role="cell" className={`${styles.num} ${styles.invQty}`}>1</td>
+                        <td role="cell" className={styles.num}>
                           <PriceTag amount={b.shippingPiasters} size="small" locale={locale} />
                         </td>
-                        <td className={styles.num}>
+                        <td role="cell" className={styles.num}>
                           <PriceTag amount={b.shippingPiasters} size="small" locale={locale} />
                         </td>
                       </tr>
@@ -191,7 +195,7 @@ export default async function InvoicePage({ params }: { params: Params }) {
             <dl className={styles.dl}>
               <dt>{t("orders.invoice.etaUuid")}</dt>
               <dd>
-                <bdi className={styles.hash}>{invoice.etaUuid ?? placeholder}</bdi>
+                {invoice.etaUuid ? <bdi className={styles.hash}>{invoice.etaUuid}</bdi> : placeholder}
               </dd>
               <dt>{t("orders.invoice.etaStatus")}</dt>
               <dd>{invoice.etaStatus ?? t("orders.invoice.etaPending")}</dd>

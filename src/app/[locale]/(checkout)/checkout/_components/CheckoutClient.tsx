@@ -181,13 +181,15 @@ export function CheckoutClient(props: {
   };
 
   const applyCustom = () => {
-    const n = Number(customQty.trim().replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))).replace(/[,\s]/g, ""));
+    const n = Number(customQty.trim().replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))).replace(/[,\s٬،]/g, ""));
     if (!Number.isInteger(n) || n < 1) {
       setCustomErr(t("checkout.quantity.invalid", { max: MAX_INSTANT_QTY }));
       return;
     }
     setCustomErr(undefined);
     setSampleMode(false);
+    // Echo the applied quantity grouped ("5000" -> "5,000"), as every other figure on the page.
+    setCustomQty(n.toLocaleString("en-US"));
     setQty(n);
     fetchOffers(n, address.governorate);
   };
@@ -227,7 +229,7 @@ export function CheckoutClient(props: {
     requestAnimationFrame(() => {
       const h = headingRefs[s].current;
       h?.focus({ preventScroll: true });
-      h?.scrollIntoView({ block: "start", behavior: "smooth" });
+      h?.scrollIntoView({ block: "start", behavior: scrollBehavior() });
     });
   };
 
@@ -647,7 +649,6 @@ export function CheckoutClient(props: {
               inputMode="numeric"
               autoComplete="off"
               dir="ltr"
-              placeholder="123-456-789"
               value={company.taxId}
               onChange={(v) => {
                 setCompany((c) => ({ ...c, taxId: v }));
@@ -925,7 +926,7 @@ export function CheckoutClient(props: {
                       <button
                         type="button"
                         className={styles.actionBarLink}
-                        onClick={() => document.getElementById("summary-title")?.scrollIntoView({ block: "start", behavior: "smooth" })}
+                        onClick={() => document.getElementById("summary-title")?.scrollIntoView({ block: "start", behavior: scrollBehavior() })}
                       >
                         {t("buyer.viewSummary")}
                       </button>
@@ -946,7 +947,7 @@ export function CheckoutClient(props: {
                 </span>
                 <Banner tone="info" inCard>
                   {t("checkout.summary.prepaidNote")}
-                  {props.prepayDiscountPct > 0 && !sampleMode ? ` ${t("buyer.prepayNote", { pct: props.prepayDiscountPct })}` : ""}
+                  {props.prepayDiscountPct > 0 && !sampleMode && !manual ? ` ${t("buyer.prepayNote", { pct: props.prepayDiscountPct })}` : ""}
                 </Banner>
               </BlockStack>
             </Card>
@@ -1053,3 +1054,8 @@ function OfferCard({ offer, checked, onSelect, locale, sample }: { offer: Checko
   );
 }
 
+
+/** Smooth scrolling only when the buyer has not asked for reduced motion (WCAG 2.3.3, R4-10). */
+function scrollBehavior(): ScrollBehavior {
+  return typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+}

@@ -179,3 +179,25 @@ test("print PDF is not available without an account", async ({ request }) => {
   const res = await request.get("/api/orders/anything/print-pdf");
   expect(res.status()).toBe(401);
 });
+
+test("a share link shows the checkout price to a signed-out visitor", async ({ page, browser, baseURL }) => {
+  test.setTimeout(120_000);
+  await signIn(page);
+  const res = await page.request.post("/api/designs", { data: { doc } });
+  const { id: designId } = (await res.json()) as { id: string };
+  const share = await page.request.post(`/api/designs/${designId}/share`);
+  const { path } = (await share.json()) as { path: string };
+
+  // Same figure as the 500-box tier on checkout step 1.
+  await page.goto(`/en/checkout/${designId}`);
+  const tier = page.getByRole("radio", { name: /^500 boxes/ });
+  const tierText = (await page.locator("label").filter({ has: tier }).first().textContent()) ?? "";
+  const unit = /EGP [\d,.]+/.exec(tierText)?.[0];
+  expect(unit).toBeTruthy();
+
+  const visitor = await browser.newContext({ baseURL });
+  const anon = await visitor.newPage();
+  await anon.goto(`/en${path}`);
+  await expect(anon.getByTestId("share-price")).toContainText(`500 boxes from ${unit} each excl. VAT`);
+  await visitor.close();
+});

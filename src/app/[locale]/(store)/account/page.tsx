@@ -15,6 +15,7 @@ import { statusTone } from "@/lib/orders/status-tone";
 import { AccountSignOut, DataRights, DeleteDesignButton, MarketingConsent, ProfileForm } from "./AccountClient";
 import styles from "@/components/store/store.module.css";
 import accountStyles from "./account.module.css";
+import { formatEgyptPhone } from "@/lib/phone";
 import { QUOTE_REQUESTED } from "../../(checkout)/checkout/quote-request";
 
 type Props = { params: Promise<{ locale: string }> };
@@ -207,17 +208,22 @@ export default async function AccountPage({ params }: Props) {
                         {t("account.consentHistory")}
                       </Text>
                       <ul className={styles.historyList}>
-                        {consents.map((c) => (
-                          <li key={c.id}>
-                            <span>
-                              {t(`account.consentKind.${c.kind}` as DictKey)}:{" "}
-                              <strong>{c.granted ? t("account.granted") : t("account.withdrawn")}</strong>
-                            </span>
-                            <Text as="span" variant="bodySm" tone="subdued">
-                              {formatDateTime(c.createdAt, locale)}
-                            </Text>
-                          </li>
-                        ))}
+                        {consents.map((c, i) => {
+                          // R4-07: a refusal that never followed a "yes" (the unticked marketing box at
+                          // sign-up) is "Not given", not "Withdrawn" (PDPL: an accurate record).
+                          const wasGiven = consents.slice(i + 1).some((o) => o.kind === c.kind && o.granted);
+                          const state = c.granted ? t("account.granted") : wasGiven ? t("account.withdrawn") : t("account.notGiven");
+                          return (
+                            <li key={c.id} className={accountStyles.historyItem}>
+                              <span>
+                                {t(`account.consentKind.${c.kind}` as DictKey)}: <strong>{state}</strong>
+                              </span>
+                              <Text as="span" variant="bodySm" tone="subdued">
+                                {formatDateTime(c.createdAt, locale)}
+                              </Text>
+                            </li>
+                          );
+                        })}
                       </ul>
                     </>
                   ) : null}
@@ -239,7 +245,7 @@ export default async function AccountPage({ params }: Props) {
 
           <LayoutSection variant="oneThird" as="aside" aria-label={t("account.profileTitle")}>
             <Card title={t("account.profileTitle")} as="section">
-              <ProfileForm name={user?.name ?? ""} email={user?.email ?? ""} phone={user?.phone ?? session.phone} />
+              <ProfileForm name={user?.name ?? ""} email={user?.email ?? ""} phone={formatEgyptPhone(user?.phone ?? session.phone)} />
             </Card>
           </LayoutSection>
         </Layout>

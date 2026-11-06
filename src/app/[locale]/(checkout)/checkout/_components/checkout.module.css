@@ -129,6 +129,9 @@
   display: grid;
   gap: var(--p-space-300);
   grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* R4-04: on phones "Building (Optional)" wraps to two lines while "Floor (Optional)" does not;
+     aligning to the end keeps the three inputs on one line. The fields never show errors. */
+  align-items: end;
 }
 
 /* Proof viewer */
