@@ -1,0 +1,12 @@
+/* Saved design rows on phones (R2-04): the name and meta keep the full width and the actions
+   move to their own row, aligned with the text, instead of squeezing the name to a few letters. */
+@media (max-width: 639px) {
+  .designRow.designRow {
+    flex-wrap: wrap;
+  }
+  .designActions.designActions {
+    flex-basis: 100%;
+    justify-content: flex-start;
+    padding-inline-start: calc(40px + var(--p-space-300));
+  }
+}
