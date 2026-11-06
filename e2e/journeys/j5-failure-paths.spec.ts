@@ -203,3 +203,34 @@ test("J5 · two tabs on one design: the stale tab is stopped, nothing is overwri
   await expect(b.getByTestId("save-status")).toHaveAttribute("data-state", "saved", { timeout: 30_000 });
   await db.design.delete({ where: { id: designId } }).catch(() => undefined);
 });
+
+test("J5 · typed numbers: Arabic digits and separators, no decimal comma read as thousands (R5-JR-21)", async ({ page, baseURL }, info) => {
+  test.setTimeout(150_000);
+  const locale = localeOf(info);
+  const t = tFor(locale);
+  await ackCookies(page.context(), baseURL!);
+  const buyer = track(await createUser());
+  await signInAs(page.context(), baseURL!, buyer.id);
+  await page.goto(`/${locale}/design/mailer-box`);
+  await expect(page.getByRole("application", { name: tr(locale, "3D preview of your box") })).toBeVisible({ timeout: 30_000 });
+  // Designer size. Western digits, as a numeric keypad sends them: the L × W × H fields are native
+  // number inputs, which refuse Arabic-Indic digits outright (R5-JR-20, open, designer).
+  const panel = page.getByRole("complementary", { name: tr(locale, "Designer panels") });
+  await panel.getByRole("spinbutton", { name: t("designer.box.length") }).fill("300");
+  await panel.getByRole("spinbutton", { name: t("designer.box.length") }).blur();
+  await expect(page).toHaveURL(/[?&]d=[\w-]+/, { timeout: 30_000 });
+  const designId = new URL(page.url()).searchParams.get("d")!;
+  await expect.poll(async () => ((await db.design.findUniqueOrThrow({ where: { id: designId } })).dims as { L: number }).L, { timeout: 30_000 }).toBe(300);
+
+  // Checkout quantity: "5.000" is not five boxes; five thousand in the buyer's own digits is.
+  await page.goto(`/${locale}/checkout/${designId}`);
+  await expect(page.getByTestId("vendor-offer").first()).toBeVisible({ timeout: 30_000 });
+  const qty = page.getByLabel(t("checkout.quantity.custom"));
+  await qty.fill("5.000");
+  await page.getByRole("button", { name: t("checkout.quantity.apply") }).click();
+  await expect(page.getByText(t("buyer.qty.invalid", { max: 2000 })).first()).toBeVisible();
+  await qty.fill(locale === "ar" ? "٥٬٠٠٠" : "5,000");
+  await page.getByRole("button", { name: t("checkout.quantity.apply") }).click();
+  await expect(page.getByText(t("buyer.quote.title", { qty: 5000 })).first()).toBeVisible({ timeout: 30_000 });
+  await db.design.delete({ where: { id: designId } }).catch(() => undefined);
+});

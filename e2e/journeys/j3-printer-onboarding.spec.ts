@@ -84,9 +84,18 @@ test("J3 · printer: apply → approved → rate card on → job → QC → ship
   // 3. The printer reviews a starter card and switches on instant orders.
   const card = cards.find((c) => c.material.code === "E_FLUTE_WHITE") ?? cards[0]!;
   await page.goto(`/${locale}/vendor/rate-cards/${card.id}`);
+  // R5-JR-18: a decimal comma is refused, not read as thousands ("600,50" was EGP 60,050).
+  const setup = page.locator("#main").getByLabel(t("vendorPortal.rateCards.setup"));
+  await setup.fill("600,50");
+  await page.locator("#main").getByRole("button", { name: t("vendorPortal.common.save") }).click();
+  await expect(page.getByText(t("vendorPortal.rateCards.errors.NOT_A_NUMBER")).first()).toBeVisible({ timeout: 30_000 });
+  expect((await db.rateCard.findUniqueOrThrow({ where: { id: card.id } })).setupPiasters).toBe(card.setupPiasters);
+  // The same amount the way each market types it: Arabic-Indic digits with «٫», or a dot.
+  await setup.fill(locale === "ar" ? "٦٠٠٫٥٠" : "600.50");
   await page.getByRole("checkbox", { name: t("vendorPortal.rateCards.activeLabel") }).filter({ visible: true }).first().check();
   await page.locator("#main").getByRole("button", { name: t("vendorPortal.common.save") }).click();
   await expect.poll(async () => (await db.rateCard.findUniqueOrThrow({ where: { id: card.id } })).active, { timeout: 30_000 }).toBe(true);
+  expect((await db.rateCard.findUniqueOrThrow({ where: { id: card.id } })).setupPiasters).toBe(60_050);
 
   // 4. A paid job for that style and board is routed to the new printer.
   const job = await cloneOrder("ELB-26202", { status: "PAID", label: "N" });

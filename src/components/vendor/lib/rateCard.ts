@@ -1,3 +1,4 @@
+import { parseTypedNumber } from "@/lib/number-input";
 /**
  * Rate card editor validation (pure; used by the client form and re-run by the server action).
  * Vendors type prices in EGP; we store integer piasters (1 EGP = 100).
@@ -67,15 +68,8 @@ export type RateCardResult = { ok: true; value: RateCardUpdate } | { ok: false; 
 export function parseNumber(raw: string | number | null | undefined): number | null {
   if (raw === null || raw === undefined) return null;
   if (typeof raw === "number") return Number.isFinite(raw) ? raw : null;
-  const s = raw
-    .replace(/[٠-٩]/g, (c) => String(c.charCodeAt(0) - 0x0660))
-    .replace(/[۰-۹]/g, (c) => String(c.charCodeAt(0) - 0x06f0))
-    .replace(/٫/g, ".")
-    .replace(/[,،\s]/g, "")
-    .trim();
-  if (!s) return null;
-  if (!/^-?\d+(\.\d+)?$/.test(s)) return NaN;
-  return Number(s);
+  // R5-JR-18: commas used to be dropped, so "18,50" (a decimal comma) became EGP 1,850 per piece.
+  return parseTypedNumber(raw, { allowNegative: true });
 }
 
 export const egpToPiasters = (egp: number) => Math.round(egp * 100);

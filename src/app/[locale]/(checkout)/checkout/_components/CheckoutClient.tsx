@@ -1,5 +1,6 @@
 "use client";
 
+import { parseTypedWhole } from "@/lib/number-input";
 import { ORDER_MODE_COPY } from "@/data/catalogue/order-mode";
 import { BadgeCheck, Check, Clock, Star, Truck } from "lucide-react";
 import dynamic from "next/dynamic";
@@ -182,7 +183,8 @@ export function CheckoutClient(props: {
   };
 
   const applyCustom = () => {
-    const n = Number(customQty.trim().replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))).replace(/[,\s٬،]/g, ""));
+    // R5-JR-21: "5.000" used to be read as 5 boxes, and Persian digits were refused.
+    const n = parseTypedWhole(customQty) ?? NaN;
     // R4-B-09 / R4-CR-07: one honest message per case; above 2,000 is a price request, not an error.
     if (!Number.isInteger(n) || n < 1) {
       setCustomErr(t("buyer.qty.invalid", { max: MAX_INSTANT_QTY }));
