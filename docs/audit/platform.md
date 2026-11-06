@@ -540,3 +540,67 @@ critical 0 · high 1 (R5-PL-01) · medium 5 (R5-PL-04 to R5-PL-08) · low 4 (R5-
 - **Import lines only** (codemod): 89 files under `src/components/{admin,vendor,designer,store}` and `src/app/[locale]/{admin,vendor,(checkout),orders,(store)/account,design,dev}`. Nothing else changed in them.
 - `src/components/ui/*`: the `Misc.module.css` split (11 new sheets, one import line in each component).
 - `eslint.config.mjs`; `docs/audit/tools/perf-pages.mjs` (new metrics, plus an `account` route).
+
+### Round 5 (d): fresh pass after merging main `fd40cef`
+
+Base: main `fd40cef`, which includes 530c6af plus the designer crop and brand-colour dialogs, admin Send price, checkout dispute photos and the copy round. The merge was clean, and `debarrel-ui.mjs --check` reports **no barrel imports** (the designer's new dialogs already use direct imports).
+
+**Bytes, 530c6af → merged** (`perf-pages.mjs`, phone, `ISOLATE=1`; data: `perf-data/r5-platform/pages-merged-fd40cef-phone.json`):
+
+| Route | Inline CSS ar (KB) | RSC payload ar (KB) | HTML gz ar (KB) | Inline CSS en (KB) | RSC en (KB) | Phone LCP ar (s) |
+|---|---|---|---|---|---|---|
+| home | 111 → **111** (-0) | 282 → **292** (+9) | 103 → **105** | 111 → **111** | 251 → **258** | 1.52 → 1.61 |
+| boxes | 111 → **111** (-0) | 266 → **275** (+9) | 91 → **93** | 111 → **111** | 236 → **243** | 1.47 → 1.40 |
+| bottles | 111 → **111** (-0) | 233 → **243** (+9) | 84 → **86** | 111 → **111** | 207 → **213** | 1.56 → 1.54 |
+| catalog | 134 → **137** (+2) | 481 → **493** (+12) | 129 → **132** | 134 → **137** | 454 → **463** | 2.18 → 2.12 |
+| vendors | 111 → **111** (-0) | 263 → **272** (+9) | 103 → **108** | 111 → **111** | 235 → **241** | 1.41 → 1.45 |
+| design-picker | 194 → **200** (+5) | 472 → **476** (+4) | 160 → **162** | 194 → **200** | 445 → **447** | 2.81 → 1.29 |
+| designer-box | 159 → **161** (+2) | 289 → **300** (+11) | 113 → **115** | 159 → **161** | 263 → **272** | 1.36 → 1.32 |
+| designer-bottle | 159 → **161** (+2) | 292 → **303** (+11) | 115 → **117** | 159 → **161** | 267 → **275** | 1.34 → 1.36 |
+| designer-pouch | 159 → **161** (+2) | 289 → **300** (+11) | 113 → **115** | 159 → **161** | 263 → **272** | 1.34 → 1.32 |
+| designer-fefco09 | 159 → **161** (+2) | 289 → **300** (+11) | 113 → **115** | 159 → **161** | 263 → **272** | 1.31 → 1.31 |
+| share | 175 → **177** (+3) | 315 → **359** (+44) | 146 → **158** | 175 → **177** | 288 → **329** | 2.35 → 2.35 |
+| checkout | 116 → **119** (+3) | 302 → **317** (+15) | 114 → **118** | 116 → **119** | 277 → **289** | 2.04 → 2.06 |
+| order-tracking | 210 → **216** (+5) | 380 → **427** (+47) | 150 → **164** | 210 → **216** | 353 → **397** | 2.21 → 2.08 |
+| account | 214 → **218** (+3) | 380 → **394** (+14) | 148 → **152** | 214 → **218** | 353 → **364** | 2.12 → 2.12 |
+| vendor-portal | 130 → **133** (+3) | 352 → **373** (+21) | 129 → **135** | 130 → **133** | 297 → **313** | 1.18 → 1.12 |
+| vendor-jobs | 146 → **152** (+6) | 353 → **376** (+23) | 130 → **136** | 146 → **152** | 299 → **317** | 1.10 → 1.10 |
+| admin | 124 → **141** (+17) | 386 → **418** (+32) | 141 → **150** | 124 → **141** | 330 → **356** | 2.14 → 1.20 |
+| admin-orders | 132 → **137** (+5) | 361 → **383** (+22) | 132 → **138** | 132 → **137** | 307 → **323** | 1.13 → 1.05 |
+
+Where the growth comes from (the RSC rows broken down per route):
+- **+9 KB on every route** is the client dictionary: 90 → **99.7 KB** raw (ar) after the copy round (R5-PL-08, still open).
+- **share** (+44 KB) and **order tracking** (+47 KB): the new `s/not-found.tsx` and `orders/not-found.tsx` use `Page`/`Card`/`EmptyState`. That adds one more segment, which inlines its chunks again: share duplicates 30 KB, order tracking 61 KB, checkout 64 KB (R5-PL-07, plus R5-PL-11).
+- **admin** (+17 KB CSS): the dashboard's new chart styles, which are admin-owned growth.
+
+Phone LCP stays within budget on every route. The design picker is now **1.29 s**, down from 2.81 s.
+
+**Not-found pages:** 58 / 58 OK, styled and with no console errors. **Share and order 404s now answer HTTP 404**: the owners moved the guard into `s/[id]/layout.tsx` and `orders/[id]/layout.tsx`, closing that half of R5-PL-03. The five admin detail 404s still answer 200.
+
+**App shell:** 16 routes × ar/en × 320/390/1440, 96 runs. The routes now include admin quotes, admin disputes, checkout and share. Results: 0 axe violations, no overflow, skip link and `lang`/`dir` correct, no infinite animations under reduced motion, no console errors. The language switch keeps path and query.
+
+The cookie notice is about 140 px tall at 320 × 568. A Tab walk on share, home, catalogue and privacy found **no focused element fully hidden** behind it (WCAG 2.4.11 pass).
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R5-PL-11 | medium | `next.config.ts` (`cssChunking: "strict"`) | Strict chunking merged `ui/EmptyState.module.css` into the same chunk as `checkout.module.css` (12.4 KB, `dcff75ac…`). Every page that renders an empty state (orders, both new 404s, admin empty lists) inlines the checkout stylesheet, once per segment. The same mechanism puts `CheckoutShell` CSS on marketing pages (R5-PL-10). | Performance budget | **Measured** `cssChunking: false` on a separate build (not shipped), RSC change per route: `/ar` −17 KB, share −57 KB, catalogue −23 KB, editor +10 KB, vendor apply +116 KB. It is mixed, and cross-module order guarantees are lost. **Left for the performance owner:** either find what pins `EmptyState` next to `checkout.module.css` in import order, or try `cssChunking: true`. | open (performance) |
+| R5-PL-12 | low | `ui/Frame.module.css` (`.SearchInput`) | At 320 px the admin and vendor top-bar search placeholder was cut mid-word ("البحث في الطل"). | Craft; WCAG 1.4.10 (reflow, content not lost) | `text-overflow: ellipsis` on the input and its placeholder. It now reads "البحث في ال…" (screenshot `r5d/shell320-admin-quotes-ar-after.png`). | fixed |
+| R5-PL-13 | medium | `components/admin/DisputeDecision.tsx` (found by `e2e/admin.spec.ts:239`) | After applying a reprint decision, the "Reprint ELB-… created" success banner never appears: it sits inside the decision form, which is gone once the dispute resolves. The page shows only the "Reprinted" status, so the admin never sees the new order number. The test fails 2 of 2 times on `fd40cef`; my diff against it is one CSS rule. | WCAG 4.1.3 (status messages); ISO 9241-110 (feedback) | Admin owner: render the reprint banner outside the decision form (or from the resolved state with the reprint number). | open (admin) |
+
+Re-reported, not new: R5-PL-08 grew (dictionary 99.7 KB). R5-PL-07 now also covers share and order tracking. R5-PL-03 is down to the admin detail pages.
+
+### Round 5 (d) counts (new findings, before fixing)
+
+critical 0 · high 0 · medium 2 (R5-PL-11, R5-PL-13) · low 1 (R5-PL-12). Fixed: R5-PL-12. Open: R5-PL-11 (performance) and R5-PL-13 (admin). Medium findings were found, so the rounds continue.
+
+### Round 5 (d) verification (merged code + R5-PL-12)
+
+- `npm run lint` clean and `npm run typecheck` clean.
+- `debarrel-ui.mjs --check`: no barrel imports.
+- `npm test`: 107 files, 8,752 passed.
+- `npm run build` clean.
+- e2e (`--workers=2`):
+  - smoke + storefront + designer: **36 passed, 4 skipped**;
+  - checkout + admin + vendor: **31 passed, 14 skipped, 1 failed** (`admin.spec.ts:239`, R5-PL-13, admin-owned).
+- `notfound-check.mjs`: 58 / 58. `platform-shell.cjs`: 96 / 96.
+- Screenshots: `docs/screenshots/audit/platform/r5d/`.
