@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ChevronDown, ChevronUp, CloudCheck, CloudOff, CloudUpload, Download, Move3d, MoreHorizontal, Redo2, RotateCcw, Save, Share2, Undo2, ZoomIn, ZoomOut } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ChevronDown, ChevronUp, CloudCheck, CloudOff, CloudUpload, Download, Move3d, MoreHorizontal, Pencil, Redo2, RotateCcw, Save, Share2, Undo2, ZoomIn, ZoomOut } from "lucide-react";
 import { startTransition, useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { FACE_IDS, type ArtworkLayer, type DesignDoc, type DesignFinishCode, type DimsPreset, type FaceId, type Locale, type PrintSurface, type StructureCode } from "@/types";
 import { boardAppearance, type DielineModel } from "@/lib/dieline";
@@ -27,6 +27,7 @@ import { Tabs } from "@/components/ui/Tabs";
 import { Text } from "@/components/ui/Text";
 import { TextField } from "@/components/ui/TextField";
 import { useToast } from "@/components/ui/Toast";
+import { Modal } from "@/components/ui/Modal";
 import type { OtpSuccess } from "@/components/auth";
 import {
   addLayer,
@@ -68,6 +69,8 @@ import { LayersPanel } from "./LayersPanel";
 import { PreflightBadge, PreflightPanel } from "./PreflightPanel";
 import { orderModeOf } from "@/data/catalogue/order-mode";
 import { ExportModal, GateModal, PriceBadge, PriceModal, ShareModal, type ExportSize, type GateReason } from "./Modals";
+import { BrandColorsModal, BrandColorsProvider, usedBrandColors, type BrandColorsApi } from "./BrandColors";
+import type { BrandColor } from "@/types";
 import styles from "./designer.module.css";
 import { trackClient } from "@/lib/analytics/client";
 
@@ -238,6 +241,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
   const [shareError, setShareError] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [viewMenuOpen, setViewMenuOpen] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   // Mounted on first open and kept (so closing animates and returns focus).
   const [pickerUsed, setPickerUsed] = useState(false);
@@ -360,6 +364,11 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
   const saveRef = useRef<() => Promise<string | null>>(async () => null);
   const tooLargeToldRef = useRef(false);
   const baseRef = useRef<string | null>(initialUpdatedAt ?? null);
+  // Brand colours of the signed-in buyer (integrator decision: no Pantone library).
+  const [brandColors, setBrandColors] = useState<BrandColor[]>(initialDoc.brandColors ?? []);
+  const brandRef = useRef<BrandColor[]>(brandColors);
+  brandRef.current = brandColors;
+  const [brandModal, setBrandModal] = useState<{ hex: string | null } | null>(null);
   // R10-03: two tabs on the same design. Each tab announces its saves on a BroadcastChannel; a tab
   // that hears another tab save the design it has open pauses its autosave and asks, instead of
   // silently overwriting the newer version (last writer won before).
@@ -416,7 +425,8 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
             method: id ? "PUT" : "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              doc: { ...current, id: undefined },
+              // The brand colours this design uses travel with it to the printer's proof.
+              doc: { ...current, id: undefined, ...(brandRef.current.length ? { brandColors: usedBrandColors(current, brandRef.current) } : {}) },
               ...(thumbnail ? { thumbnail } : {}),
               ...(id && baseRef.current ? { baseUpdatedAt: baseRef.current } : {}),
               ...(id && opts.force ? { force: true } : {}),
@@ -528,6 +538,43 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
       }
     },
     [user, locale],
+  );
+
+  useEffect(() => {
+    if (!user) return;
+    let alive = true;
+    fetch("/api/designs/brand-colors", { cache: "no-store" })
+      .then((r) => (r.ok ? (r.json() as Promise<{ colors: BrandColor[] }>) : null))
+      .then((j) => {
+        if (alive && j) setBrandColors((prev) => (j.colors.length ? j.colors : prev));
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [user]);
+  const saveBrandColors = useCallback(async (next: BrandColor[]) => {
+    try {
+      const r = await fetch("/api/designs/brand-colors", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ colors: next }) });
+      if (!r.ok) return false;
+      const j = (await r.json()) as { colors: BrandColor[] };
+      setBrandColors(j.colors);
+      // The printer's colour references follow the account: re-save a touched design now (its
+      // saved snapshot lists the brand colours it uses).
+      brandRef.current = j.colors;
+      if (touchedRef.current && !staleRef.current) void saveRef.current();
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+  const brandApi = useMemo<BrandColorsApi>(
+    () => ({
+      colors: brandColors,
+      saveCurrent: (hex) => requireAccount("save", () => setBrandModal({ hex })),
+      manage: () => requireAccount("save", () => setBrandModal({ hex: null })),
+    }),
+    [brandColors, requireAccount],
   );
 
   const onSignedIn = (u: OtpSuccess) => {
@@ -895,7 +942,8 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
   const structureName = libModel?.name[locale] ?? t(`structures.${doc.structureCode}` as DictKey);
 
   return (
-    <div className={styles.editor} data-sheet={sheetOpen ? "open" : "closed"}>
+    <BrandColorsProvider value={brandApi}>
+    <div className={styles.editor} data-sheet={sheetOpen ? "open" : "closed"} data-banner={stale || notFound ? "true" : undefined}>
       <h1 className="visually-hidden">{t("designer.editorTitle", { structure: structureName })}</h1>
 
       {/* ── toolbar ── */}
@@ -969,6 +1017,9 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
                 { content: t("designer.export.button"), icon: Download, onAction: doExport },
                 { content: t("designer.share.button"), icon: Share2, onAction: doShare },
                 { content: t("designer.save.save"), icon: Save, onAction: doSave },
+                // R5-JR-14: phones have no name field in the toolbar; the share page and follow-ups
+                // used the style name for every phone design.
+                { content: t("designer.save.rename"), icon: Pencil, onAction: () => setRenameOpen(true) },
               ]}
             />
           </Popover>
@@ -1313,6 +1364,33 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
         }}
       />
       <ShareModal open={modal === "share"} onClose={() => setModal(null)} url={shareUrl} error={shareError} vessel={isVessel} />
+      <Modal
+        open={renameOpen}
+        onClose={() => {
+          seal();
+          setRenameOpen(false);
+        }}
+        title={t("designer.save.renameHeading")}
+        size="small"
+        primaryAction={{
+          content: t("designer.save.renameDone"),
+          onAction: () => {
+            seal();
+            setRenameOpen(false);
+          },
+        }}
+      >
+        <TextField
+          label={t("designer.save.name")}
+          autoComplete="off"
+          maxLength={120}
+          placeholder={t(isVessel ? "designer.container.untitled" : "designer.untitled")}
+          value={doc.name}
+          onChange={(v) => commit({ ...docRef.current, name: v }, "name")}
+        />
+      </Modal>
+      <BrandColorsModal open={brandModal !== null} colors={brandColors} initialHex={brandModal?.hex ?? null} onClose={() => setBrandModal(null)} onSave={saveBrandColors} />
     </div>
+    </BrandColorsProvider>
   );
 }

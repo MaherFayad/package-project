@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   ArrowDown,
   ArrowLeft,
@@ -8,6 +9,7 @@ import {
   BringToFront,
   Circle,
   Copy,
+  Crop,
   Eye,
   EyeOff,
   Minus,
@@ -19,7 +21,7 @@ import {
   Trash2,
   Type,
 } from "lucide-react";
-import type { ArtworkLayer, DesignFinishCode, FaceId, PrintSurface, TextLayer } from "@/types";
+import type { ArtworkLayer, DesignFinishCode, FaceId, ImageCrop, ImageLayer, PrintSurface, TextLayer } from "@/types";
 import { FACE_IDS } from "@/types";
 import type { FaceInfo } from "@/lib/dieline";
 import { useI18n } from "@/i18n/client";
@@ -37,6 +39,7 @@ import { normAngle, round1, scaleLayer, type Placement } from "./lib/geometry";
 import { layerName } from "./lib/describe";
 import { IMAGE_ACCEPT, IMAGE_MAX_BYTES } from "./uploadImage";
 import { ColorField, NumberField } from "./fields";
+import { CropDialog } from "./CropDialog";
 import styles from "./designer.module.css";
 import lib from "./library.module.css";
 
@@ -145,8 +148,34 @@ export function ArtworkPanel(p: ArtworkPanelProps) {
   );
 }
 
-function LayerInspector({ layer, onLayer, onSeal, onPlace, onReorder, onDuplicate, onDelete, layerFinishes, onLayerFinish }: ArtworkPanelProps & { layer: ArtworkLayer }) {
+/**
+ * Apply (or remove) a crop: the layer box takes the visible part's shape, keeping its centre and
+ * width, and stays inside the panel (crop, integrator decision).
+ */
+export function withCrop(layer: ImageLayer, crop: ImageCrop | undefined, face: FaceInfo | undefined): ImageLayer {
+  const vw = layer.pxWidth * (crop?.width ?? 1);
+  const vh = layer.pxHeight * (crop?.height ?? 1);
+  const aspect = vw / Math.max(1, vh);
+  let width = layer.width;
+  let height = width / aspect;
+  if (face && height > face.height * 0.9) {
+    height = face.height * 0.9;
+    width = height * aspect;
+  }
+  if (face && width > face.width * 0.95) {
+    width = face.width * 0.95;
+    height = width / aspect;
+  }
+  const next: ImageLayer = { ...layer, width: round1(width), height: round1(height) };
+  if (crop) next.crop = crop;
+  else delete next.crop;
+  return next;
+}
+
+function LayerInspector({ layer, onLayer, onSeal, onPlace, onReorder, onDuplicate, onDelete, layerFinishes, onLayerFinish, faces }: ArtworkPanelProps & { layer: ArtworkLayer }) {
   const { t } = useI18n();
+  const [cropping, setCropping] = useState(false);
+  const face = faces[layer.face];
   const set = (patch: Partial<ArtworkLayer>, key?: string) => onLayer({ ...layer, ...patch } as ArtworkLayer, key);
   const nudge = (dx: number, dy: number) => set({ x: round1(layer.x + dx), y: round1(layer.y + dy) }, `nudge:${layer.id}`);
 
@@ -160,6 +189,32 @@ function LayerInspector({ layer, onLayer, onSeal, onPlace, onReorder, onDuplicat
         </InlineStack>
 
         {layer.kind === "text" ? <TextControls layer={layer} set={set} /> : null}
+        {layer.kind === "image" ? (
+          <InlineStack gap="200" wrap>
+            <Button icon={Crop} onClick={() => setCropping(true)}>
+              {t("designer.crop.button")}
+            </Button>
+            {layer.crop ? (
+              <Button variant="tertiary" onClick={() => onLayer(withCrop(layer, undefined, face), `crop:${layer.id}`)}>
+                {t("designer.crop.reset")}
+              </Button>
+            ) : null}
+            <CropDialog
+              open={cropping}
+              src={layer.src}
+              pxWidth={layer.pxWidth}
+              pxHeight={layer.pxHeight}
+              crop={layer.crop}
+              faceAspect={face ? face.width / face.height : null}
+              onClose={() => setCropping(false)}
+              onApply={(c) => {
+                onLayer(withCrop(layer, c, face));
+                onSeal();
+                setCropping(false);
+              }}
+            />
+          </InlineStack>
+        ) : null}
         {layer.kind === "shape" ? (
           <ColorField label={t("designer.layer.fill")} value={layer.fill} onChange={(c) => set({ fill: c } as Partial<ArtworkLayer>)} />
         ) : null}
