@@ -114,7 +114,7 @@ test("buyer checks out a saved design, pays by mock card and tracks the order", 
   await expect(page).toHaveURL(/\/en\/orders\/[^/?]+\?paid=1/, { timeout: 30_000 });
   await expect(page.getByText("Payment received. Your order is going to the printer.")).toBeVisible();
   await expect(page.getByRole("heading", { level: 1 })).toContainText(/Order ELB-\d+/);
-  const progress = page.getByRole("navigation", { name: "Progress" });
+  const progress = page.getByRole("group", { name: "Progress" });
   await expect(progress.locator('[aria-current="step"]')).toContainText("In production");
   await expect(page.getByText("Payment confirmed: Card (Meeza, Visa, Mastercard)")).toBeVisible();
   const orderUrl = page.url().split("?")[0];

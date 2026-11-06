@@ -3,6 +3,7 @@
 import { Copy } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { flushSync } from "react-dom";
 import type { Locale, PaymentMethod, QuoteLine } from "@/types";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
@@ -91,9 +92,11 @@ export function PaymentClient(props: {
       window.location.assign(r.payment.redirectUrl);
       return;
     }
-    setPayment(r.payment);
     // The method list (and its Continue button) unmounts: move focus into the next step (X-01).
-    requestAnimationFrame(() => document.getElementById(r.payment.method === "CARD" ? "card-number" : "payment-step-heading")?.focus());
+    // flushSync: after an await React renders in a scheduler task, which can land after a
+    // requestAnimationFrame, so the target did not exist yet and focus fell to <body> (R4 a11y).
+    flushSync(() => setPayment(r.payment));
+    document.getElementById(r.payment.method === "CARD" ? "card-number" : "payment-step-heading")?.focus();
   };
 
   const simulate = async (action: "card" | "wallet" | "fawry" | "instapay", extra: Record<string, string> = {}) => {

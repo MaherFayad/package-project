@@ -130,7 +130,7 @@ test("home → design → gate → price → checkout → pay → vendor → QC 
 
   // 8. Buyer sees the shipment with a tracking number.
   await page.goto(orderUrl);
-  const progress = page.getByRole("navigation", { name: "Progress" });
+  const progress = page.getByRole("group", { name: "Progress" });
   await expect(progress).toBeVisible();
   const shipment = await db.shipment.findFirstOrThrow({ where: { orderId } });
   await expect(page.getByText(shipment.trackingNumber!).first()).toBeVisible({ timeout: 30_000 });
