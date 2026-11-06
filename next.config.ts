@@ -34,6 +34,11 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ["lucide-react", "@react-three/drei"],
     // PERF-17: per-route CSS so admin/vendor pages stop loading designer and marketing CSS.
     cssChunking: "strict",
+    // PERF-R4-01: inline every route's CSS into the HTML <head>. With strict chunking a store
+    // page linked 20 render-blocking CSS files (43 KB gzip); on Slow 4G (562 ms RTT, 6
+    // connections) that was 3-4 round trips before the first paint. Inline, the CSS arrives
+    // with the HTML and FCP/LCP no longer wait on it. Production only (dev keeps <link>s).
+    inlineCss: true,
   },
   async headers() {
     return [
