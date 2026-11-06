@@ -157,3 +157,31 @@ test.describe("admin", () => {
     }
   });
 });
+
+test.describe("admin routing (round 4)", () => {
+  test.afterAll(async () => {
+    await cleanup();
+  });
+
+  test("reassigning an accepted job cancels the old vendor's unpaid advance (R4-01)", async ({ page, context, baseURL }, info) => {
+    test.skip(info.project.name !== "desktop", "mutating flow runs once (desktop)");
+    test.setTimeout(120_000);
+    const order = await cloneOrder("ELB-26201", { status: "ACCEPTED", label: "R" });
+    const oldAdvance = await db.payout.create({ data: { vendorId: order.vendorId, orderId: order.id, kind: "ADVANCE", amountPiasters: 180_000, status: "PENDING" } });
+    await signIn(context, baseURL!);
+    await page.goto(`/en/admin/orders/${order.number}`);
+    await page.getByRole("button", { name: "Change vendor" }).last().click();
+    const select = page.getByLabel("New vendor");
+    const target = await select.locator("option").evaluateAll((os) => (os as HTMLOptionElement[]).find((o) => o.value && !o.textContent!.includes("No rate card"))?.value ?? "");
+    expect(target).not.toBe("");
+    await select.selectOption(target);
+    await page.getByLabel("Reason").fill("Vendor out of B-flute stock this week");
+    await page.getByRole("button", { name: "Reassign" }).click();
+    await expect.poll(async () => (await db.order.findUnique({ where: { id: order.id } }))?.vendorId, { timeout: 30_000 }).toBe(target);
+    const after = await db.order.findUniqueOrThrow({ where: { id: order.id }, include: { payouts: true } });
+    expect(after.status).toBe("PAID");
+    expect(after.payouts.find((p) => p.id === oldAdvance.id)).toBeUndefined();
+    const audit = await db.auditLog.findFirstOrThrow({ where: { action: "ORDER_REASSIGN", entityId: order.id } });
+    expect(JSON.stringify(audit.before)).toContain(oldAdvance.id);
+  });
+});

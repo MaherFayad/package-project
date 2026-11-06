@@ -5,6 +5,7 @@ import { Download } from "lucide-react";
 import { Badge, Banner, BlockStack, Button, Card, DataTable, InlineStack, Layout, LayoutSection, Link, Page, Text } from "@/components/ui";
 import { DataRequestActions } from "@/components/admin/DataRequestActions";
 import { OrderStatusBadge } from "@/components/admin/OrdersIndex";
+import { adminStyles } from "@/components/admin/charts";
 import { loadUser } from "@/components/admin/server/queries";
 import { getT, pick, toLocale, type DictKey } from "@/i18n";
 import { formatDate, formatDateTime, formatMoney, formatNumber } from "@/lib/format";
@@ -86,6 +87,24 @@ export default async function AdminUserPage({ params }: { params: Params }) {
 
               <Card title={t("admin.users.detail.requests")}>
                 {requests.length ? (
+                  <>
+                  {/* R4-11: phones get a stacked list so the request's actions are not off-screen in a sideways-scrolling table. */}
+                  <div className={adminStyles.PhoneOnly}>
+                    <BlockStack gap="300">
+                      {requests.map((r) => (
+                        <BlockStack key={r.id} gap="100">
+                          <Text as="p" fontWeight="semibold">
+                            {t(`admin.privacy.kinds.${r.kind}` as DictKey)}
+                          </Text>
+                          <Text as="p" variant="bodySm" tone="subdued">
+                            {t(`admin.privacy.statuses.${r.status}` as DictKey)} · {formatDate(r.createdAt, locale, "medium")}
+                          </Text>
+                          <DataRequestActions requestId={r.id} userId={user.id} kind={r.kind} status={r.status} />
+                        </BlockStack>
+                      ))}
+                    </BlockStack>
+                  </div>
+                  <div className={adminStyles.DesktopOnly}>
                   <DataTable
                     caption={t("admin.users.detail.requests")}
                     columnContentTypes={["text", "text", "text", "text"]}
@@ -97,6 +116,8 @@ export default async function AdminUserPage({ params }: { params: Params }) {
                       <DataRequestActions key="a" requestId={r.id} userId={user.id} kind={r.kind} status={r.status} />,
                     ])}
                   />
+                  </div>
+                  </>
                 ) : (
                   <Text as="p" tone="subdued">
                     {t("admin.users.detail.noRequests")}

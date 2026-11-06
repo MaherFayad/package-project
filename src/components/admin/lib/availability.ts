@@ -56,6 +56,18 @@ export function modelAvailability(model: ModelRouteInput, pairs: Map<string, Set
   return { code: model.code, vendorIds: [...vendors].sort(), boardsPriced: priced.size, boardsTotal: boards.size, instant: vendors.size > 0 };
 }
 
+/**
+ * B-16 order mode on top of rate-card coverage (R4-02), the same rule buyers get
+ * (`src/data/catalogue/order-mode.ts`): "preview" and "quote" models are never instant; "listed"
+ * models (special gluing) are instant only from vendors that list the model code in
+ * `capabilities.models`. `listers` = vendor ids whose capabilities list this model.
+ */
+export function withOrderMode(a: ModelAvailability, mode: "instant" | "listed" | "quote" | "preview", listers: ReadonlySet<string>): ModelAvailability {
+  if (mode === "instant") return a;
+  const vendorIds = mode === "listed" ? a.vendorIds.filter((id) => listers.has(id)) : [];
+  return { ...a, vendorIds, boardsPriced: vendorIds.length ? a.boardsPriced : 0, instant: vendorIds.length > 0 };
+}
+
 export const AVAILABILITY_VIEWS = ["all", "instant", "quoteOnly"] as const;
 export type AvailabilityView = (typeof AVAILABILITY_VIEWS)[number];
 
