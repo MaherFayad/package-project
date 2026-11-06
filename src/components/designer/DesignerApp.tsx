@@ -266,7 +266,13 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
   // ── textures ─────────────────────────────────────────────────────
   // Phones and 1x screens: a 1024 px artwork sheet (≈ 4x less texture memory and upload; PERF-22).
   const [sheetPx] = useState(() => (typeof window !== "undefined" && defaultMaxDpr() < 2 ? 1024 : 2048));
-  const { canvases, version, images, imgVersion, fonts } = useArtworkCanvases(model, doc.artwork, doc.materialCode, bothSides, sheetPx);
+  // CR-15: a new, empty design previews a "Your logo" hint on the lid (3D and dieline only; the
+  // document, the face editor, preflight and the print file never contain it).
+  const placeholder = useMemo(
+    () => ({ text: t("designer.artwork.placeholderLogo"), fontFamily: locale === "ar" ? ("IBM Plex Sans Arabic" as const) : ("Inter" as const), direction: locale === "ar" ? ("rtl" as const) : ("ltr" as const), color: "#616161" }),
+    [t, locale],
+  );
+  const { canvases, version, images, imgVersion, fonts } = useArtworkCanvases(model, doc.artwork, doc.materialCode, bothSides, sheetPx, placeholder);
 
   // ── preflight ────────────────────────────────────────────────────
   const issues = useMemo(() => (model ? runPreflight(doc, model) : []), [doc, model]);

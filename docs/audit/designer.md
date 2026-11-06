@@ -36,6 +36,7 @@ Screenshots: `docs/screenshots/audit/designer/` (`before-*`, `after-*`).
 | D-23 | low | stage header, 390 px | The face select was squeezed to about 9rem and cut container names ("الوجه ملصق دائري…"). | | The select takes the remaining width on phones. | fixed |
 | D-24 | low | `Scene3D.tsx`, `DesignScene.tsx` (from 3d-visual X-11) | The editor, share and proof 3D views showed a blank skeleton for 1 to 3 s on first load; the model's thumbnail already exists. | perceived performance | `poster` = `/models/<slug>.svg` passed to `PackagingScene` (cross-fades to the canvas on the first frame). Vessels: `VesselScene` has no `poster` prop (engine). | fixed |
 | D-25 | low | fold control (`DesignerApp.tsx`, `SharedViewer.tsx`) (from 3d-visual F67-06) | Open-top styles (FEFCO 0700…) never close, but the 100 % fold button said "Closed". | ISO 9241-110 (self-descriptiveness) | Shows "Assembled" / "مجمعة" when the model has `openTop`. The field is read defensively until the catalogue adds it to the library. The checkout `ProofViewer` has the same label (checkout owner). | fixed (needs the `openTop` flag to take effect) |
+| D-26 | medium | editor, new design (CR-15, designer half) | A new design opened as a blank board: nothing told a first-time owner where their logo would go. | onboarding / ISO 9241-110 (self-descriptiveness) | Preview-only hint "Your logo" / "شعارك هنا" on the lid (front if there is no lid) in `#616161` at 75 % opacity, in the 3D and dieline textures only while the outside has no layers and no background. It is never in the document, so the face editor, preflight, saved designs and the print PDF never contain it (`previewSurface` in `useArtworkCanvases.ts`, unit-tested). It disappears with the first item or background colour. | fixed |
 
 ## Reported to other owners (not edited)
 
@@ -67,7 +68,7 @@ Screenshots: `docs/screenshots/audit/designer/` (`before-*`, `after-*`).
 |---|---|---|---|
 | critical | 0 | 0 | 0 |
 | high | 7 | 7 | 0 |
-| medium | 10 | 10 | 0 |
+| medium | 11 | 11 | 0 |
 | low | 8 | 8 | 0 |
 
 Plus 6 items reported to other owners (R-01 to R-06), not edited.
