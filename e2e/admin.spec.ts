@@ -145,6 +145,68 @@ test.describe("admin", () => {
     }
   });
 
+  test("moderation: a vendor bio edit is approved and goes public; a second edit is sent back with a reason (R6-05)", async ({ page, context, baseURL }, info) => {
+    test.skip(info.project.name !== "desktop", "mutating flow runs once, on desktop");
+    test.setTimeout(120_000);
+    const tag = Math.random().toString(36).replace(/[^a-z]/g, "").slice(0, 8);
+    const base = await db.vendor.findUniqueOrThrow({ where: { slug: "nile-pack" } });
+    // Own vendor row (parallel-safe: the vendor spec edits nile-pack's bio).
+    const vendor = await db.vendor.create({
+      data: {
+        slug: `e2e-bio-${tag}`,
+        nameAr: `مطبعة اختبار ${tag}`,
+        nameEn: `E2E Bio Print ${tag}`,
+        city: base.city,
+        cityAr: base.cityAr,
+        cityEn: base.cityEn,
+        bioAr: "نبذة قديمة",
+        bioEn: `Old public bio ${tag}`,
+        bioArPending: "نطبع علب الهدايا والكرتون المضلع",
+        bioEnPending: `New reviewed bio ${tag}: gift boxes and corrugated mailers`,
+        bioReviewStatus: "PENDING",
+        bioSubmittedAt: new Date(),
+        machines: base.machines ?? [],
+        capabilities: base.capabilities ?? {},
+        certifications: base.certifications ?? [],
+        serviceAreas: base.serviceAreas ?? [],
+        status: "ACTIVE",
+      },
+    });
+    try {
+      await signIn(context, baseURL!);
+      await page.goto("/en/admin/moderation?tab=bios");
+      await expect(page.getByRole("heading", { level: 1, name: "Moderation" })).toBeVisible({ timeout: 30_000 });
+      await expect(page.getByRole("tab", { name: /Bio edits/ })).toHaveAttribute("aria-selected", "true");
+      await expect(page.getByText(`Old public bio ${tag}`)).toBeVisible();
+      await page.getByRole("button", { name: `Approve and publish: ${vendor.nameEn}` }).click();
+      await expect.poll(async () => (await db.vendor.findUnique({ where: { id: vendor.id } }))?.bioEn, { timeout: 15_000 }).toBe(`New reviewed bio ${tag}: gift boxes and corrugated mailers`);
+      const after = await db.vendor.findUniqueOrThrow({ where: { id: vendor.id } });
+      expect(after).toMatchObject({ bioReviewStatus: null, bioArPending: null, bioEnPending: null, bioAr: "نطبع علب الهدايا والكرتون المضلع" });
+      expect(await db.auditLog.count({ where: { entityId: vendor.id, action: "VENDOR_BIO_APPROVE" } })).toBe(1);
+      // The public profile shows the approved bio right away (catalogue cache purged).
+      await page.goto(`/en/vendors/${vendor.slug}`);
+      await expect(page.getByText(`New reviewed bio ${tag}`)).toBeVisible({ timeout: 30_000 });
+
+      // A second edit with a phone number cannot be approved; it is sent back with a reason.
+      await db.vendor.update({ where: { id: vendor.id }, data: { bioEnPending: `Call 0100 123 4567 ${tag}`, bioArPending: after.bioAr, bioReviewStatus: "PENDING", bioSubmittedAt: new Date() } });
+      await page.goto("/en/admin/moderation?tab=bios");
+      await expect(page.getByRole("button", { name: `Approve and publish: ${vendor.nameEn}` })).toBeDisabled({ timeout: 30_000 });
+      await expect(page.getByText("The edit has contact details.")).toBeVisible();
+      await page.getByRole("button", { name: `Send back: ${vendor.nameEn}` }).click();
+      const dialog = page.getByRole("dialog");
+      await dialog.getByLabel("Reason for the vendor").fill("Please remove the phone number");
+      await dialog.getByRole("button", { name: "Send back" }).click();
+      await expect.poll(async () => (await db.vendor.findUnique({ where: { id: vendor.id } }))?.bioReviewStatus, { timeout: 15_000 }).toBe("REJECTED");
+      const rejected = await db.vendor.findUniqueOrThrow({ where: { id: vendor.id } });
+      expect(rejected.bioReviewNote).toBe("Please remove the phone number");
+      expect(rejected.bioEn).toBe(`New reviewed bio ${tag}: gift boxes and corrugated mailers`);
+      expect(await db.auditLog.count({ where: { entityId: vendor.id, action: "VENDOR_BIO_REJECT" } })).toBe(1);
+    } finally {
+      await db.auditLog.deleteMany({ where: { entityId: vendor.id } });
+      await db.vendor.delete({ where: { id: vendor.id } }).catch(() => {});
+    }
+  });
+
   test("quote leads: an open request is marked contacted, audited", async ({ page, context, baseURL }, info) => {
     test.skip(info.project.name !== "desktop", "mutating flow runs once, on desktop");
     const buyer = track(await createUser({ name: "E2E Lead" }));

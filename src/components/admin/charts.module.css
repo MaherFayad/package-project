@@ -227,3 +227,9 @@
 
 /* Stacked links in a table cell: 24 px targets with no overlap (WCAG 2.5.8). */
 .TapLink { display: inline-block; min-block-size: 1.5rem; padding-block: 0.125rem; }
+
+/* R6-05: bio edit next to the live bio (two columns from 768 px, stacked on phones). */
+.BioCompare { display: grid; gap: var(--p-space-300); grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 768px) { .BioCompare { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.BioPane { padding: var(--p-space-300); border: var(--p-border-width-025) solid var(--p-color-border-secondary); border-radius: var(--p-border-radius-200); background: var(--p-color-bg-surface-secondary); min-inline-size: 0; overflow-wrap: anywhere; }
+.BioPane[data-tone="edit"] { background: var(--p-color-bg-surface); border-color: var(--p-color-border-caution, var(--p-color-border)); }

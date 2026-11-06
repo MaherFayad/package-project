@@ -617,7 +617,23 @@ export interface ModerationBio {
   flags: string[];
 }
 
-export async function loadModeration(locale: Locale): Promise<{ photos: ModerationPhoto[]; bios: ModerationBio[] }> {
+/** R6-05 / R4-B-02: a bio edit waiting for review (the live bio stays public until it is approved). */
+export interface ModerationBioEdit {
+  vendorId: string;
+  vendorSlug: string;
+  vendorName: string;
+  liveAr: string;
+  liveEn: string;
+  pendingAr: string;
+  pendingEn: string;
+  submittedAt: string | null;
+  /** Contact kinds in the waiting text: it cannot be approved until cleaned or rejected. */
+  flags: string[];
+}
+
+const BIO_EDIT_SELECT = { id: true, slug: true, nameAr: true, nameEn: true, bioAr: true, bioEn: true, bioArPending: true, bioEnPending: true, bioSubmittedAt: true } as const;
+
+export async function loadModeration(locale: Locale): Promise<{ photos: ModerationPhoto[]; bios: ModerationBio[]; bioEdits: ModerationBioEdit[] }> {
   const [items, vendors] = await Promise.all([
     db.vendorPortfolioItem.findMany({
       where: { OR: [{ status: "PENDING" }, { status: "REJECTED" }, { createdAt: { gte: new Date(Date.now() - 30 * 86_400_000) } }] },
@@ -627,7 +643,23 @@ export async function loadModeration(locale: Locale): Promise<{ photos: Moderati
     }),
     db.vendor.findMany({ select: { id: true, slug: true, nameAr: true, nameEn: true, bioAr: true, bioEn: true } }),
   ]);
+  const edits = await db.vendor.findMany({ where: { bioReviewStatus: "PENDING" }, orderBy: { bioSubmittedAt: "asc" }, select: BIO_EDIT_SELECT });
   return {
+    bioEdits: edits.map((v) => {
+      const pendingAr = v.bioArPending ?? v.bioAr;
+      const pendingEn = v.bioEnPending ?? v.bioEn;
+      return {
+        vendorId: v.id,
+        vendorSlug: v.slug,
+        vendorName: pick(locale, v.nameAr, v.nameEn),
+        liveAr: v.bioAr,
+        liveEn: v.bioEn,
+        pendingAr,
+        pendingEn,
+        submittedAt: v.bioSubmittedAt?.toISOString() ?? null,
+        flags: contactFlags(pendingAr, pendingEn),
+      };
+    }),
     photos: items.map((i) => ({
       id: i.id,
       vendorId: i.vendorId,
@@ -647,13 +679,14 @@ export async function loadModeration(locale: Locale): Promise<{ photos: Moderati
   };
 }
 
-/** Pending photos plus bios with contact details (nav badge, overview to-do). */
+/** Pending photos, bio edits waiting for review and live bios with contact details (nav badge, overview to-do). */
 export async function countModeration(): Promise<number> {
-  const [pending, vendors] = await Promise.all([
+  const [pending, edits, vendors] = await Promise.all([
     db.vendorPortfolioItem.count({ where: { status: "PENDING" } }),
+    db.vendor.count({ where: { bioReviewStatus: "PENDING" } }),
     db.vendor.findMany({ select: { bioAr: true, bioEn: true } }),
   ]);
-  return pending + vendors.filter((v) => contactFlags(v.bioAr, v.bioEn).length > 0).length;
+  return pending + edits + vendors.filter((v) => contactFlags(v.bioAr, v.bioEn).length > 0).length;
 }
 
 /* ───────────────────────── Quote leads (B-15) ───────────────────────── */

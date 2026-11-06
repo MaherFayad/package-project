@@ -13,7 +13,7 @@ export default async function AdminModerationPage({ params }: { params: Promise<
   const data = await loadModeration(toLocale((await params).locale));
   return (
     <Suspense>
-      <ModerationQueue photos={data.photos} bios={data.bios} />
+      <ModerationQueue photos={data.photos} bios={data.bios} bioEdits={data.bioEdits} />
     </Suspense>
   );
 }

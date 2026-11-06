@@ -69,7 +69,9 @@ import { leadState, leadStepSchema } from "../lib/quoteLeads";
 import { checkoutSettingsFormSchema } from "../lib/checkoutSettings";
 import { CHECKOUT_SETTING_KEY, loadCheckoutSettings } from "@/lib/orders/checkout-settings";
 import { QUOTE_REQUESTED } from "@/lib/orders/quote-requests";
-import { bioCleanSchema, canApprovePortfolio, portfolioReviewSchema, reviewNoteRequired } from "../lib/moderation";
+import { bioCleanSchema, bioEditDecisionSchema, canApprovePortfolio, portfolioReviewSchema, reviewNoteRequired } from "../lib/moderation";
+import { bioReviewData, canApproveBio } from "@/components/vendor/lib/bio-review";
+import type { AuditAction } from "../lib/audit";
 import { stripContactDetails } from "@/components/vendor/lib/contact";
 import { orderModeOf, vendorListsModel } from "@/data/catalogue/order-mode";
 import { canRaisePayout, payoutAmount, payoutStepSchema, STEP_FROM, STEP_TO } from "../lib/payouts";
@@ -277,6 +279,64 @@ export async function cleanBioAction(input: z.input<typeof bioCleanSchema>): Pro
     // R4-10: the route lives under the (store) group, so this pattern without it matched nothing and
     // the public profile kept a rejected photo or an uncleaned bio for up to the 1 h ISR window.
     purgeCatalogCache();
+    return null;
+  });
+}
+
+/**
+ * R6-05 / R4-B-02 (admin half): decide a vendor's bio edit. Approve copies the edit live (only if
+ * the contact filter passes) and purges the public catalogue cache; reject keeps the edit with a
+ * reason the vendor sees; clean removes the sentences with contact details from the waiting text,
+ * which stays in review so a person still approves it. Every decision is audited with both texts.
+ */
+export async function reviewBioEditAction(input: z.input<typeof bioEditDecisionSchema>): Promise<AdminActionResponse> {
+  return runAdminAction(async () => {
+    const admin = await adminForMutation();
+    const d = parse(bioEditDecisionSchema, input);
+    if (d.decision === "REJECT" && reviewNoteRequired("REJECT", d.note)) throw new AdminFieldErrors({ note: "NOTE_REQUIRED" });
+    const v = await db.vendor.findUnique({
+      where: { id: d.vendorId },
+      select: { id: true, nameEn: true, bioAr: true, bioEn: true, bioArPending: true, bioEnPending: true, bioReviewStatus: true, bioReviewNote: true, bioSubmittedAt: true },
+    });
+    if (!v) throw new AdminActionError("NOT_FOUND");
+    // The reviewer decides on the edit they saw: a newer save (or a decision by someone else) is stale.
+    if (v.bioReviewStatus !== "PENDING" || (v.bioSubmittedAt?.toISOString() ?? null) !== d.submittedAt) throw new AdminActionError("STALE");
+    let data: Record<string, unknown>;
+    let action: AuditAction;
+    if (d.decision === "APPROVE") {
+      if (!canApproveBio(v)) throw new AdminActionError("NOT_ALLOWED", "CONTACT_IN_BIO");
+      data = bioReviewData("APPROVE", v);
+      action = "VENDOR_BIO_APPROVE";
+    } else if (d.decision === "REJECT") {
+      data = bioReviewData("REJECT", v, d.note);
+      action = "VENDOR_BIO_REJECT";
+    } else {
+      const cleaned = { bioArPending: stripContactDetails(v.bioArPending ?? v.bioAr), bioEnPending: stripContactDetails(v.bioEnPending ?? v.bioEn) };
+      if (cleaned.bioArPending === (v.bioArPending ?? v.bioAr) && cleaned.bioEnPending === (v.bioEnPending ?? v.bioEn)) throw new AdminActionError("STALE");
+      data = cleaned;
+      action = "VENDOR_BIO_CLEAN";
+    }
+    await db.$transaction(async (tx) => {
+      const u = await tx.vendor.updateMany({ where: { id: v.id, bioReviewStatus: "PENDING", bioSubmittedAt: v.bioSubmittedAt, bioArPending: v.bioArPending, bioEnPending: v.bioEnPending }, data });
+      if (u.count !== 1) throw new AdminActionError("STALE");
+      const summary =
+        d.decision === "APPROVE" ? `${v.nameEn}: bio edit approved and public` : d.decision === "REJECT" ? `${v.nameEn}: bio edit not approved. ${d.note ?? ""}`.trim() : `${v.nameEn}: contact details removed from the bio edit`;
+      await audit(
+        admin,
+        {
+          action,
+          entityType: "VENDOR",
+          entityId: v.id,
+          summary,
+          before: { bioAr: v.bioAr, bioEn: v.bioEn, bioArPending: v.bioArPending, bioEnPending: v.bioEnPending, bioReviewStatus: v.bioReviewStatus },
+          after: data,
+        },
+        tx,
+      );
+    });
+    revalidateAdmin();
+    revalidatePath("/[locale]/vendor", "layout"); // the vendor's "waiting for review" banner
+    if (d.decision === "APPROVE") purgeCatalogCache(); // the public profile is cached (catalog tag)
     return null;
   });
 }

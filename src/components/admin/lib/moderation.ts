@@ -33,3 +33,16 @@ export function contactFlags(...texts: (string | null | undefined)[]): ContactKi
 export function canApprovePortfolio(item: { status: string; captionAr: string; captionEn: string }): boolean {
   return item.status === "PENDING" && contactFlags(item.captionAr, item.captionEn).length === 0;
 }
+
+/**
+ * Bio edits (R6-05 / R4-B-02): ops approves, rejects (with a reason the vendor sees) or cleans a
+ * waiting edit. `submittedAt` is the edit the reviewer saw; a newer save by the vendor makes the
+ * decision stale instead of approving text nobody read.
+ */
+export const bioEditDecisionSchema = z.object({
+  vendorId: z.string().min(1).max(40),
+  decision: z.enum(["APPROVE", "REJECT", "CLEAN"]),
+  submittedAt: z.string().max(40).nullable(),
+  note: z.string().trim().max(500).optional(),
+});
+export type BioEditDecision = z.infer<typeof bioEditDecisionSchema>;
