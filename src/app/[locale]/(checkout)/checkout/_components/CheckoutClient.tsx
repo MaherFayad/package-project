@@ -101,6 +101,10 @@ export function CheckoutClient(props: {
   prepayDiscountPct: number;
   /** Smallest run any printer takes (R4-CR-07). */
   minQty: number;
+  /** R4-B-03: a price the team sent for this buyer's request (fixed quantity, printer and total). */
+  quoted?: { id: string; quantity: number; validUntil: string } | null;
+  /** The `?quote=` link is expired, used or not this buyer's: say so above the normal checkout. */
+  quoteInvalid?: boolean;
   /** Saved company invoice details (B-13). */
   defaultCompany: { name: string; taxId: string; commercialRegister: string } | null;
   /** Production preflight run on the server with the designer's rules (B-04). */
@@ -206,7 +210,9 @@ export function CheckoutClient(props: {
   };
 
   // Delivery price depends on the governorate: re-price when it changes.
+  const isQuoted = !!props.quoted;
   useEffect(() => {
+    if (isQuoted) return; // the sent price includes delivery to the governorate it was asked for
     if (address.governorate === lastGov.current) return;
     lastGov.current = address.governorate;
     if (!address.governorate) return;
@@ -217,7 +223,7 @@ export function CheckoutClient(props: {
       () => setShippingNote(g ? t("checkout.address.shippingChanged", { governorate: t(`governorates.${g.key}` as DictKey) }) : null),
       sampleMode,
     );
-  }, [address.governorate, qty, fetchOffers, t, sampleMode]);
+  }, [address.governorate, qty, fetchOffers, t, sampleMode, isQuoted]);
 
   const manual = result.ok && result.mode === "manual_quote";
   // B-16: the model itself is priced by quote (any quantity), not only runs above the cap.
@@ -331,6 +337,7 @@ export function CheckoutClient(props: {
       sample: sampleMode || undefined,
       company: wantCompany ? { name: company.name.trim(), taxId: company.taxId, commercialRegister: company.commercialRegister.trim() } : null,
       acknowledgePreflight: props.preflight.errors > 0 ? override : undefined,
+      quoteId: props.quoted?.id,
     });
     if (r.ok) {
       router.push(`/${locale}/checkout/pay/${r.orderId}`);
@@ -400,7 +407,7 @@ export function CheckoutClient(props: {
                 {t("buyer.sample.tier", { pieces: props.sample.pieces })}
               </Text>
               <Text as="span" variant="bodySm" tone="subdued">
-                {t("buyer.sample.price", { price: formatMoney(props.sample.pricePiasters, locale) })}
+                {t("buyer.sample.price", { price: formatMoney(props.sample.pricePiasters, locale, { alwaysDecimals: true }) })}
               </Text>
             </label>
           ) : null}
@@ -589,6 +596,22 @@ export function CheckoutClient(props: {
     </BlockStack>
   );
 
+  // R4-B-03: ordering at the price the team sent. One offer, nothing to choose; the request's
+  // quantity and governorate are fixed by that price.
+  const quotedOfferStep = props.quoted ? (
+    <BlockStack gap="400">
+      <Banner tone="info" title={t("buyer.quoted.title", { qty: props.quoted.quantity })}>
+        {t("buyer.quoted.body", { date: formatDateTime(props.quoted.validUntil, locale) })}
+      </Banner>
+      <fieldset className={styles.offers}>
+        <legend className="visually-hidden">{t("checkout.offers.title")}</legend>
+        {offers.map((o) => (
+          <OfferCard key={o.vendorId} offer={o} checked onSelect={() => setVendorId(o.vendorId)} locale={locale} />
+        ))}
+      </fieldset>
+    </BlockStack>
+  ) : null;
+
   const deliveryStep = (
     <BlockStack gap="300">
       <Text as="p" tone="subdued">
@@ -618,6 +641,8 @@ export function CheckoutClient(props: {
           placeholder={t("checkout.address.governoratePlaceholder")}
           value={address.governorate}
           onChange={set("governorate")}
+          disabled={!!props.quoted}
+          helpText={props.quoted ? t("buyer.quoted.governorate") : undefined}
           error={addrErrors.governorate}
           requiredIndicator
         />
@@ -822,7 +847,7 @@ export function CheckoutClient(props: {
   );
 
   const stepTitles = [t("checkout.steps.offer"), t("checkout.address.title"), t("checkout.proof.title")];
-  const bodies = [offerStep, deliveryStep, proofStep];
+  const bodies = [quotedOfferStep ?? offerStep, deliveryStep, proofStep];
 
   return (
     <Page
@@ -831,6 +856,11 @@ export function CheckoutClient(props: {
       backAction={step > 0 ? { content: stepTitles[step - 1], onAction: () => goTo((step - 1) as Step) } : { content: props.designName, url: editUrl }}
     >
       <BlockStack gap="400">
+        {props.quoteInvalid ? (
+          <Banner tone="warning" title={t("buyer.quoted.invalidTitle")}>
+            {t("buyer.quoted.invalidBody")}
+          </Banner>
+        ) : null}
         <div className={styles.stepperWide}>
           <Card>
             <Stepper steps={steps} current={step} accessibilityLabel={t("checkout.steps.label")} />
@@ -967,7 +997,7 @@ export function CheckoutClient(props: {
                 </span>
                 <Banner tone="info" inCard>
                   {t("checkout.summary.prepaidNote")}
-                  {props.prepayDiscountPct > 0 && !sampleMode && !manual ? ` ${t("buyer.prepayNote", { pct: props.prepayDiscountPct })}` : ""}
+                  {props.prepayDiscountPct > 0 && !sampleMode && !manual && !props.quoted ? ` ${t("buyer.prepayNote", { pct: props.prepayDiscountPct })}` : ""}
                 </Banner>
               </BlockStack>
             </Card>

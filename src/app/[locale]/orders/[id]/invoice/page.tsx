@@ -40,7 +40,7 @@ export default async function InvoicePage({ params }: { params: Params }) {
   if (!order || !invoice) {
     return (
       <Page title={t("orders.title")} narrowWidth backAction={back}>
-        <Banner tone="info">{order ? t("orders.invoice.notIssued") : t("checkout.errors.NOT_FOUND")}</Banner>
+        <Banner tone="info">{order ? t("orders.invoice.notIssued") : t("buyer.orderNotFound.title")}</Banner>
       </Page>
     );
   }
@@ -72,12 +72,17 @@ export default async function InvoicePage({ params }: { params: Params }) {
                   <Text as="p" tone="subdued">
                     {t("orders.invoice.sellerAddress")}
                   </Text>
+                  {/* R5-01: on a receipt (no seller TRN yet) the empty tax fields are left out. */}
+                  {taxReady ? (
+                    <>
                   <Text as="p" variant="bodySm">
                     {t("orders.invoice.taxId")}: <bdi>{process.env.ELBA_TAX_ID || placeholder}</bdi>
                   </Text>
                   <Text as="p" variant="bodySm">
                     {t("orders.invoice.commercialRegister")}: <bdi>{process.env.ELBA_COMMERCIAL_REGISTER || placeholder}</bdi>
                   </Text>
+                    </>
+                  ) : null}
                 </BlockStack>
                 <BlockStack gap="100">
                   <Text as="h2" variant="headingSm">

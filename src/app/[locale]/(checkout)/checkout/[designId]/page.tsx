@@ -9,9 +9,11 @@ import { requireUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { fromJson } from "@/lib/json";
 import { formatEgyptPhone } from "@/lib/phone";
-import { loadCheckoutDesign, minOrderQuantity, quoteDesign, sampleCreditFor, tierPrices, toCheckoutOffer } from "@/lib/orders/service";
+import { loadCheckoutDesign, loadPricedQuote, minOrderQuantity, quoteDesign, sampleCreditFor, tierPrices, toCheckoutOffer } from "@/lib/orders/service";
 import { designerPath } from "@/components/designer/lib/catalog";
 import { loadCheckoutSettings } from "@/lib/orders/checkout-settings";
+import { quoteGovernorate } from "@/lib/orders/quote-requests";
+import { orderTotals } from "@/lib/orders/totals";
 import { orderModeOf } from "@/data/catalogue/order-mode";
 import { docGeometry } from "@/lib/library/doc";
 import { runPreflight, summarizePreflight } from "@/components/designer/lib/preflight";
@@ -36,13 +38,15 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
  * Signed-in owners only (soft gate G2). Prices are computed on the server; the browser only
  * ever sees buyer prices (no vendor cost or margin).
  */
-export default async function CheckoutPage({ params, searchParams }: { params: Params; searchParams: Promise<{ share?: string | string[] }> }) {
+export default async function CheckoutPage({ params, searchParams }: { params: Params; searchParams: Promise<{ share?: string | string[]; quote?: string | string[] }> }) {
   const { locale: raw, designId } = await params;
   const locale = toLocale(raw);
   const t = getT(locale);
-  const shareRaw = (await searchParams).share;
+  const sp = await searchParams;
+  const shareRaw = sp.share;
   const share = Array.isArray(shareRaw) ? shareRaw[0] : shareRaw;
-  const self = `/${locale}/checkout/${encodeURIComponent(designId)}${share ? `?share=${encodeURIComponent(share)}` : ""}`;
+  const quoteParam = Array.isArray(sp.quote) ? sp.quote[0] : sp.quote;
+  const self = `/${locale}/checkout/${encodeURIComponent(designId)}${share ? `?share=${encodeURIComponent(share)}` : quoteParam ? `?quote=${encodeURIComponent(quoteParam)}` : ""}`;
   const user = await requireUser(locale, self);
   const design = await loadCheckoutDesign(designId, user);
 
@@ -120,6 +124,13 @@ export default async function CheckoutPage({ params, searchParams }: { params: P
     notes: "",
   };
 
+  // R4-B-03: a price the team sent for this buyer's request on this design (link from the
+  // WhatsApp/SMS or the account). It fixes quantity, printer, total and delivery governorate.
+  const priced = quoteParam ? await loadPricedQuote(quoteParam, user, designId) : null;
+  if (priced) {
+    const leadGov = await quoteGovernorate(priced.id);
+    if (leadGov) defaultAddress.governorate = leadGov;
+  }
   const tiers = await tierPrices(doc, defaultAddress.governorate);
   // B-16: a model no Egyptian SME printer makes is never ordered here, not even as a paid sample.
   const byQuote = ["quote", "preview"].includes(orderModeOf(doc.modelCode).mode);
@@ -154,6 +165,16 @@ export default async function CheckoutPage({ params, searchParams }: { params: P
   } catch {
     initial = { ok: false, error: "generic" };
   }
+  if (priced) {
+    initial = {
+      ok: true,
+      mode: "instant",
+      quantity: priced.quantity,
+      offers: [{ ...priced.publicOffer, pay: orderTotals(priced.publicOffer.lines, 0) }],
+      suggestion: null,
+      validUntil: priced.validUntil.toISOString(),
+    };
+  }
 
   // launch-metrics.md §1 `order_started` ("Order this exact box" / checkout opened) and the
   // checkout half of `price_viewed` (the tier table above is an instant price). A reload within
@@ -172,12 +193,14 @@ export default async function CheckoutPage({ params, searchParams }: { params: P
       designName={doc.name || t("checkout.untitled")}
       editUrl={designerPath(locale, doc.modelCode ?? doc.structureCode, { d: designId })}
       tiers={tiers}
-      initialQty={initialQty}
+      initialQty={priced ? priced.quantity : initialQty}
       initial={initial}
       defaultAddress={defaultAddress}
       spec={docSpec(doc, locale)}
       contactPhone={formatEgyptPhone(user.phone)}
-      sample={settings.sample.enabled && !byQuote && !(initial.ok && initial.mode === "manual_quote" && initial.reason === "MODEL_BY_QUOTE") ? { pieces: settings.sample.maxPieces, pricePiasters: settings.sample.pricePiasters, creditDays: settings.sample.creditDays } : null}
+      quoted={priced ? { id: priced.id, quantity: priced.quantity, validUntil: priced.validUntil.toISOString() } : null}
+      quoteInvalid={!!quoteParam && !priced}
+      sample={!priced && settings.sample.enabled && !byQuote && !(initial.ok && initial.mode === "manual_quote" && initial.reason === "MODEL_BY_QUOTE") ? { pieces: settings.sample.maxPieces, pricePiasters: settings.sample.pricePiasters, creditDays: settings.sample.creditDays } : null}
       prepayDiscountPct={settings.prepayDiscountPct}
       minQty={minQty}
       preflight={preflight}

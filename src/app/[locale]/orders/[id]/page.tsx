@@ -120,7 +120,9 @@ export default async function OrderPage({ params, searchParams }: { params: Para
     return (
       <Page title={t("orders.title")} narrowWidth backAction={{ content: t("orders.detail.back"), url: `/${locale}/orders` }}>
         <Card>
-          <EmptyState heading={t("checkout.errors.NOT_FOUND")} image={<EmptyBoxIllustration />} action={<Button url={`/${locale}/orders`}>{t("orders.title")}</Button>} />
+          <EmptyState heading={t("buyer.orderNotFound.title")} image={<EmptyBoxIllustration />} action={<Button url={`/${locale}/orders`}>{t("buyer.orderNotFound.action")}</Button>}>
+          {t("buyer.orderNotFound.body")}
+        </EmptyState>
         </Card>
       </Page>
     );

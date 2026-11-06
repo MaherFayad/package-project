@@ -7,14 +7,16 @@ import { Button, Card, EmptyState, EmptyBoxIllustration, Page } from "@/componen
 /** 404 for /orders/<id> (unknown or not the viewer's), inside the store chrome. */
 export default function OrderNotFound() {
   const { t, locale } = useI18n();
-  const title = `${t("checkout.errors.NOT_FOUND")} · ${t("meta.siteName")}`;
+  const title = `${t("buyer.orderNotFound.title")} · ${t("meta.siteName")}`;
   useEffect(() => {
     document.title = title;
   }, [title]);
   return (
     <Page title={t("orders.title")} narrowWidth backAction={{ content: t("orders.detail.back"), url: `/${locale}/orders` }}>
       <Card>
-        <EmptyState heading={t("checkout.errors.NOT_FOUND")} image={<EmptyBoxIllustration />} action={<Button url={`/${locale}/orders`}>{t("orders.title")}</Button>} />
+        <EmptyState heading={t("buyer.orderNotFound.title")} image={<EmptyBoxIllustration />} action={<Button url={`/${locale}/orders`}>{t("buyer.orderNotFound.action")}</Button>}>
+          {t("buyer.orderNotFound.body")}
+        </EmptyState>
       </Card>
     </Page>
   );

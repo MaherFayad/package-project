@@ -503,6 +503,21 @@ export const checkoutEn = {
       view: "View receipt",
       note: "This is a receipt for your payment, with VAT 14% shown separately. It is not a tax invoice: we issue the e-invoice through the Egyptian Tax Authority once our registration is complete, and it will appear here.",
     },
+    quoted: {
+      title: "Your price for {qty:box}",
+      body: "Our team priced this with the printer below. The total includes setup and delivery; VAT is shown in the summary. The price is valid until {date}.",
+      governorate: "The price includes delivery to this governorate. To change it, reply to our message and we will re-price.",
+      invalidTitle: "This price is no longer available",
+      invalidBody: "It has expired, was already used for an order, or belongs to another account. You can order at today's prices below or send a new price request.",
+      action: "Review price and pay",
+      statusPriced: "Price ready",
+      priced: "{total} for {qty:box}, valid until {date}",
+    },
+    orderNotFound: {
+      title: "We could not find this order",
+      body: "Check the order number in our message, or open your orders to see every order on this account.",
+      action: "My orders",
+    },
     qtyRange: "{min} to {max}",
     qty: {
       invalid: "Enter a whole number of boxes. Above {max:box} we price by hand.",
