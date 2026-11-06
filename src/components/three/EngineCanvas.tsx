@@ -130,13 +130,20 @@ export function EngineCanvas({
   exposure = 1,
   wrapperProps,
 }: EngineCanvasProps) {
-  const [ready, setReady] = useState(false);
+  // R4-CR-01: the canvas is revealed in one step once its shaders are compiled AND the content has
+  // drawn its first frame, never cross-faded. Until then the page's poster (or ours) is the only
+  // image: no half-built frame shows through it, so there is no double image. Our own poster then
+  // fades out over --motion-fast; a page that owns its poster fades it on onContentReady, which
+  // fires at the reveal.
+  const [warm, setWarm] = useState(false);
+  const [contentSeen, setContentSeen] = useState(false);
+  const [timedOut, setTimedOut] = useState(false);
   useEffect(() => {
-    if (!poster) return;
     // never hide the viewer for long if the first frame is slow or WebGL fails
-    const t = setTimeout(() => setReady(true), 4000);
+    const t = setTimeout(() => setTimedOut(true), 4000);
     return () => clearTimeout(t);
-  }, [poster]);
+  }, []);
+  const ready = (warm && contentSeen) || timedOut;
   const hintId = useId();
   const [dprCap] = useState(() => maxDpr ?? defaultMaxDpr());
   const api = useRef<EngineViewApi | null>(null);
@@ -145,10 +152,26 @@ export function EngineCanvas({
   }, []);
   const contentReadyRef = useRef(onContentReady);
   contentReadyRef.current = onContentReady;
-  const contentReady = useCallback(() => contentReadyRef.current?.(), []);
+  // the first content-ready waits for the reveal (so a page poster fades exactly as the canvas
+  // appears); later ones (model / kind switches) are reported at once
+  const revealed = useRef(false);
+  const pendingReady = useRef(false);
+  const contentReady = useCallback(() => {
+    setContentSeen(true);
+    if (revealed.current) contentReadyRef.current?.();
+    else pendingReady.current = true;
+  }, []);
+  useEffect(() => {
+    if (!ready || revealed.current) return;
+    revealed.current = true;
+    if (pendingReady.current) {
+      pendingReady.current = false;
+      contentReadyRef.current?.();
+    }
+  }, [ready]);
   const ctx = useMemo(() => ({ register, contentReady }), [register, contentReady]);
   const tm = TONE_MAPPING[toneMapping] ?? NeutralToneMapping;
-  const onWarm = useCallback(() => setReady(true), []);
+  const onWarm = useCallback(() => setWarm(true), []);
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (!enableKeyboard || e.altKey || e.ctrlKey || e.metaKey) return;
@@ -209,7 +232,7 @@ export function EngineCanvas({
       {poster ? <div aria-hidden="true" className={styles.poster} data-hidden={ready ? "true" : undefined} style={{ backgroundImage: `url(${JSON.stringify(poster)})` }} /> : null}
       <Canvas
         className={styles.canvas}
-        data-fade={poster ? (ready ? "in" : "out") : undefined}
+        data-reveal={ready ? "shown" : "hidden"}
         frameloop="demand"
         dpr={[1, dprCap]}
         // drag / keyboard input drops the pixel ratio to 2/3 (never below 1) until 300 ms after it ends

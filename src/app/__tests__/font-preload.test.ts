@@ -15,15 +15,31 @@ describe("plexArabicPreloadUrls", () => {
         "@font-face{font-family:IBM Plex Sans Arabic;font-weight:400;src:url(/_next/static/media/ar400-s.woff2) format(\"woff2\");unicode-range:u+06??,u+0750-077f}",
         "@font-face{font-family:IBM Plex Sans Arabic;font-weight:400;src:url(/_next/static/media/lat400-s.woff2) format(\"woff2\");unicode-range:u+00??}",
         "@font-face{font-family:IBM Plex Sans Arabic;font-weight:700;src:url(/_next/static/media/ar700-s.woff2) format(\"woff2\");unicode-range:u+06??}",
-        "@font-face{font-family:Inter;font-weight:100 900;src:url(/_next/static/media/inter-cyr.woff2);unicode-range:u+0460-052f}",
-        "@font-face{font-family:Inter;font-weight:100 900;src:url(/_next/static/media/inter.woff2);unicode-range:u+00??,u+0131}",
+        "@font-face{font-family:Inter;font-weight:100 900;src:url(/_next/static/media/inter.woff2);unicode-range:u+00??}",
       ].join("\n"),
     );
     vi.spyOn(process, "cwd").mockReturnValue(dir);
     const { plexArabicPreloadUrls } = await import("@/app/font-preload");
     expect(plexArabicPreloadUrls([400, 700])).toEqual(["/_next/static/media/ar400-s.woff2", "/_next/static/media/ar700-s.woff2"]);
     expect(plexArabicPreloadUrls([600])).toEqual([]);
-    const { interLatinPreloadUrl } = await import("@/app/font-preload");
-    expect(interLatinPreloadUrl()).toBe("/_next/static/media/inter.woff2");
+  });
+});
+
+describe("interPreloadUrl", () => {
+  it("picks the Basic Latin Inter file, not the other subsets", async () => {
+    vi.resetModules();
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "elba-fonts-"));
+    fs.mkdirSync(path.join(dir, ".next/static/css"), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, ".next/static/css/b.css"),
+      [
+        "@font-face{font-family:Inter;font-weight:100 900;src:url(/_next/static/media/cyr-s.woff2) format(\"woff2\");unicode-range:u+0460-052f}",
+        "@font-face{font-family:Inter;font-weight:100 900;src:url(/_next/static/media/latin-s.woff2) format(\"woff2\");unicode-range:u+00??,u+0131}",
+        "@font-face{font-family:IBM Plex Sans Arabic;font-weight:400;src:url(/_next/static/media/plat-s.woff2) format(\"woff2\");unicode-range:u+00??}",
+      ].join("\n"),
+    );
+    vi.spyOn(process, "cwd").mockReturnValue(dir);
+    const { interPreloadUrl } = await import("@/app/font-preload");
+    expect(interPreloadUrl()).toBe("/_next/static/media/latin-s.woff2");
   });
 });

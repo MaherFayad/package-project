@@ -3,7 +3,7 @@ import type { Dims, FaceId, StructureFeatures } from "@/types";
 import { DielineBuilder, insetSeg, rectEdges } from "../../builder";
 import { cutWindow, notchPanel, stadium } from "../../features";
 import { clamp, pt, rectPolygon } from "../../geometry";
-import type { DielinePanel, FaceInfo, Polygon, Pt, Rect } from "../../types";
+import type { DielineAccessory, DielinePanel, FaceInfo, Polygon, Pt, Rect } from "../../types";
 import { WRAP_VISUAL_MM, mainClosedBounds, poseMatrix, quat, rect, sheetBottom, tabStack, turnInStack } from "./common";
 
 export { WRAP_VISUAL_MM, tabStack, turnInStack };
@@ -334,7 +334,28 @@ export function drawerBox(dims: Dims, t: number, f: StructureFeatures = {}): Fam
     x += col.w;
   });
   b.attach("sleeve_glue", "glue", "sleeve_left", rectEdges(rect(x - Hs, ys, Hs, Wt)).right, Math.min(15, Ls * 0.3), { kind: "trapezoid", taperA: 3, taperB: 3 }, { stage: 0, stack: tabStack(t), label: "Glue flap" });
-  return { builder: b, closedRotation: closedBase };
+  // Ribbon pull (rigid-food E-02): out of the front slot and hanging as a short loop. Closed frame:
+  // bottom centre origin; the drawer front is flush with the sleeve's front opening.
+  const accessories: DielineAccessory[] = [];
+  if (!f.thumbNotch && fromRim + 4 < tray.Hp - t) {
+    const zf = Wt / 2 + 0.2;
+    const ySlot = c + t + Ht - fromRim;
+    const drop = Math.min(22, ySlot - 2);
+    accessories.push({
+      kind: "ribbon",
+      widthMm: 10,
+      color: "#2b2b2b",
+      label: "Ribbon pull",
+      path: [
+        [0, ySlot, zf - 3],
+        [0, ySlot, zf + 0.6],
+        [0, ySlot - drop * 0.35, zf + 3.2],
+        [0, ySlot - drop, zf + 2.2],
+        [0, ySlot - drop - 1.5, zf + 0.7],
+      ],
+    });
+  }
+  return { builder: b, closedRotation: closedBase, accessories };
 }
 
 /* ───────────── Hinged lid ───────────── */

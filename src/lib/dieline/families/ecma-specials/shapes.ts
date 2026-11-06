@@ -234,8 +234,16 @@ export function cone(dims: Dims, t: number, f: StructureFeatures = {}): EcmaDraf
   b.root("front", "front", facet(root), "Cone wall");
   for (let k = root + 1; k < N; k++) b.attachPoly(fid(k), "front", fid(k - 1), [apex, ray(k)], facet(k), { fold, stage: 0, hingeKind: "roll", label: "Cone wall" });
   for (let k = root - 1; k >= 0; k--) b.attachPoly(fid(k), "front", fid(k + 1), [apex, ray(k + 1)], facet(k), { fold, stage: 0, hingeKind: "roll", label: "Cone wall" });
-  const g = clamp(R * 0.18, 10, 15);
-  b.attach("glue", "glue", fid(N - 1), [apex, ray(N)], g, { kind: "trapezoid", taperA: Math.min(g * 0.9, sl * 0.2), taperB: 1 }, { fold, stage: 0, stack: -1, label: "Glue flap" });
+  // Glue flap: a strip tapering to the tip, never wider than the facet it is glued under. A
+  // constant-width flap stood out of the cone near the apex, where the facets are narrower than
+  // the flap (R4-07). The flap is the facet-N triangle cut at width g at the mouth.
+  const g = Math.min(clamp(R * 0.18, 10, 15), chord * 0.9);
+  const mouth = ray(N);
+  const next = ray(N + 1);
+  const len = Math.hypot(next.x - mouth.x, next.y - mouth.y) || 1;
+  const s = g / len;
+  const flap: Polygon = [apex, mouth, pt(mouth.x + (next.x - mouth.x) * s, mouth.y + (next.y - mouth.y) * s)];
+  b.attachPoly("glue", "glue", fid(N - 1), [apex, mouth], flap, { fold, stage: 0, stack: -1, label: "Glue flap" });
   for (const p of b.panels) if (p.id.startsWith("facet")) p.role = "inner";
 
   const closedRotation = orientClosed(b, t, (world) => {

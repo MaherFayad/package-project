@@ -50,10 +50,13 @@ export function __resetRateLimits() {
  * Taking the first entry (as before) let anyone send a fresh fake IP per request and skip every
  * per-IP limit. We trust only the entries added by our own proxies: `TRUSTED_PROXY_HOPS`
  * (default 1, e.g. one load balancer or Vercel's edge) counts from the right.
- * `X-Real-IP`, set (not appended) by nginx and Vercel, wins when present.
+ * `X-Real-IP`, set (not appended) by nginx and Vercel, wins when present. Behind an edge that
+ * passes a client's own `X-Real-IP` through unchanged (a bare cloud load balancer), set
+ * `TRUST_X_REAL_IP=0`: otherwise a client could send a fresh value per request and skip the per-IP
+ * OTP limits (SMS pumping). Technical R4-13; OWASP ASVS 4.0.3 V11.1.4 (anti-automation).
  */
 export function clientIp(headers: Headers): string {
-  const real = headers.get("x-real-ip")?.trim();
+  const real = process.env.TRUST_X_REAL_IP === "0" ? undefined : headers.get("x-real-ip")?.trim();
   if (real) return real;
   const chain = (headers.get("x-forwarded-for") ?? "")
     .split(",")

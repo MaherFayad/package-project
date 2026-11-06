@@ -3,7 +3,7 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type Ref } from "react";
-import { PerspectiveCamera, Spherical, Vector3, type Group } from "three";
+import { PerspectiveCamera, Spherical, Vector3, type DirectionalLight, type Group } from "three";
 import { boundsAt, maxStage, type DielineModel } from "@/lib/dieline";
 import { BOX_BOARD_CODES, type BoxBoardCode, type ConfigFinishCode } from "@/lib/configurator";
 import { usePrefersReducedMotion } from "./hooks";
@@ -120,7 +120,26 @@ const FLAT = 0.02;
 /** Hero view for a model: cylinders (rolled tubes) are shot nearer the front so centred copy is not on the silhouette. */
 export function heroView(dieline: DielineModel, progress: number): { theta: number; phi: number } {
   if (progress < FLAT) return VIEWS.front; // a die-cut blank is shown face-on, like a dieline proof
-  return dieline.panels.some((p) => p.hingeKind === "roll") ? { theta: 18 * DEG, phi: DEFAULT_VIEW.phi } : DEFAULT_VIEW;
+  const base = dieline.panels.some((p) => p.hingeKind === "roll") ? { theta: 18 * DEG, phi: DEFAULT_VIEW.phi } : DEFAULT_VIEW;
+  // Open on printed board (FF-15): when neither front nor right is a print face (FEFCO 09 liners,
+  // dividers and pads print the side that goes against the host wall), turn the 3/4 view to the
+  // largest printed side wall, so the first frame shows the artwork, not the blank side.
+  const f = dieline.faces;
+  if (!f || f.front || f.right) return base;
+  const sides: [keyof typeof f, number][] = [
+    ["back", 180 * DEG],
+    ["left", -90 * DEG],
+  ];
+  let best: number | null = null;
+  let area = 0;
+  for (const [k, az] of sides) {
+    const info = f[k];
+    if (info && info.width * info.height > area) {
+      area = info.width * info.height;
+      best = az;
+    }
+  }
+  return best === null ? base : { theta: best + base.theta, phi: base.phi };
 }
 
 /** Identity of a model for re-framing: library variants share a core structureCode, so add the panel set. */
@@ -593,9 +612,56 @@ export function PackagingSceneContent(props: PackagingSceneContentProps) {
           />
         )}
       </SwapIn>
+      <FoilSweep active={!!effectiveFinish?.finishes.some((f) => f.code.startsWith("FOIL_"))} sweepKey={`${modelKey(dieline)}|${effectiveFinish?.finishes.map((f) => f.code).join(",") ?? ""}`} />
       {children}
     </>
   );
+}
+
+/**
+ * R4-CR-10: one soft light sweep across the model when it carries hot foil, so the foil reads as
+ * metal (a highlight travels over it) instead of flat ochre ink. Runs once, 1.5 s, after the model
+ * or its finishes change and the view has been still for 0.6 s; never loops (WCAG 2.2.2) and is
+ * skipped under prefers-reduced-motion (WCAG 2.3.3). The light stays mounted at zero intensity so
+ * toggling it never recompiles the board shaders.
+ */
+function FoilSweep({ active, sweepKey }: { active: boolean; sweepKey: string }) {
+  const light = useRef<DirectionalLight>(null);
+  const reduced = usePrefersReducedMotion();
+  const invalidate = useThree((s) => s.invalidate);
+  const state = useRef<{ key: string; t: number } | null>(null);
+  useEffect(() => {
+    if (!active || reduced) {
+      state.current = null;
+      if (light.current) light.current.intensity = 0;
+      invalidate();
+      return;
+    }
+    // start after a short settle (fold / camera tweens land first)
+    state.current = { key: sweepKey, t: -0.6 };
+    invalidate();
+  }, [active, reduced, sweepKey, invalidate]);
+  useFrame((_, dt) => {
+    const s = state.current;
+    const l = light.current;
+    if (!s || !l) return;
+    s.t += Math.min(dt, 0.05);
+    const p = s.t / 1.5;
+    if (p >= 1) {
+      l.intensity = 0;
+      state.current = null;
+      invalidate();
+      return;
+    }
+    if (p > 0) {
+      // a front-left to front-right arc above the model; intensity eases in and out
+      const a = (-0.9 + 1.8 * p) * Math.PI * 0.5;
+      l.position.set(Math.sin(a) * 3, 2.6, Math.cos(a) * 3);
+      l.intensity = 1.6 * Math.sin(Math.PI * p);
+    }
+    invalidate();
+  });
+  return <directionalLight ref={light} intensity={0} position={[0, 2.6, 3]} color="#fffaf0" />;
 }
 
 /**

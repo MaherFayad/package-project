@@ -12,9 +12,9 @@
   "svg": "e51683c209b58a815893802d"
  },
  "ECMA_RTE": {
-  "dieline": "a2e5e9acd891b5fb0f3e2014",
+  "dieline": "3638461773d8dd3ee6a5b467",
   "poses": "330614198c39c305d908782a",
-  "bounds": "d3a4e69fbf3e9668ae2e02ff",
+  "bounds": "4a9d31c722dbd6defd8d1060",
   "svg": "b1cc528dd47e3ca40872aafe"
  },
  "ECMA_STE": {
@@ -66,16 +66,16 @@
   "svg": "6f5bcdbde3884957319a8314"
  },
  "PAPER_TUBE": {
-  "dieline": "cba3745b0697670fb9a99fdd",
+  "dieline": "47d993c052b1fe4c36fb803e",
   "poses": "6b3a966de53a9d94de88657f",
-  "bounds": "b9d6fc4f14e5bf4740a6c1aa",
+  "bounds": "695042d2c8e899e2afcfa534",
   "svg": "2c1fcf9c677880ff9447d081"
  },
  "RIGID_BOX": {
-  "dieline": "123dd544ca85f35bf374258b",
+  "dieline": "cb3cfb416e2ac326d3e54abe",
   "poses": "18e93f8bd0570af80e7db01c",
-  "bounds": "829d460e58d2b42f6fd46ebf",
-  "svg": "e44fc4ea5063389d4f4ff4d5"
+  "bounds": "03011a1ea62b892a2d20831c",
+  "svg": "62922ce7e4f8820474c9cf9d"
  },
  "FEFCO_0200": {
   "dieline": "3c9f2606dc94c68986ee153e",
@@ -1236,9 +1236,9 @@
   "svg": "9fd33c89b4edbebed5f4d523"
  },
  "CONE": {
-  "dieline": "5e74ccc750d9ff9fcfcb8029",
-  "poses": "65c89ae84fbc2c1576f43cca",
-  "bounds": "811f3a58acb7d5a369cd85a0",
+  "dieline": "03e0c39cf3879c4fcdf4125a",
+  "poses": "82749a291d8031f0941f98aa",
+  "bounds": "ccdf0ed5878dc06223c4be89",
   "svg": "b9cb6b11046c9597109c692d"
  },
  "ECMA_HEXAGON": {
@@ -1362,7 +1362,7 @@
   "svg": "014c3dd78c4615ca40d27aaa"
  },
  "RIGID_DRAWER": {
-  "dieline": "95dedae457c4fc12fe1069fe",
+  "dieline": "19ea7a4589e509d22e9520fc",
   "poses": "b698a740e453277191074b8a",
   "bounds": "efe4911d96f7f1a1bc7f10c1",
   "svg": "5cacb5ded5d89cda7287395e"
@@ -1656,9 +1656,9 @@
   "svg": "f7b1de158310fc521edbfbf7"
  },
  "ECMA_RTE+features": {
-  "dieline": "3b06b710abf4078b7ad2609d",
+  "dieline": "4723f4266cf211affcab3833",
   "poses": "445f598c68508c9b79eab896",
-  "bounds": "6d3666daf826f27d8d7f8d2f",
+  "bounds": "c68df237469346ca818d926e",
   "svg": "328984b20b52c206e201a1c4"
  },
  "ECMA_STE+features": {
@@ -1710,16 +1710,16 @@
   "svg": "5e7540bd3e39de5c1d78f525"
  },
  "PAPER_TUBE+features": {
-  "dieline": "cba3745b0697670fb9a99fdd",
+  "dieline": "47d993c052b1fe4c36fb803e",
   "poses": "6b3a966de53a9d94de88657f",
-  "bounds": "b9d6fc4f14e5bf4740a6c1aa",
+  "bounds": "695042d2c8e899e2afcfa534",
   "svg": "2c1fcf9c677880ff9447d081"
  },
  "RIGID_BOX+features": {
-  "dieline": "cab9ba49d73fb5440a175c89",
+  "dieline": "d1f63efb46e9f951924f2fbc",
   "poses": "7c63ed338ff9ee645f4a4f4e",
-  "bounds": "8b25b30b229464ff457af734",
-  "svg": "b154775e18a144049b3fe2d4"
+  "bounds": "1d3282aacf330327e635b53e",
+  "svg": "8f450ff7f81c5be4c724fab8"
  },
  "ROLL_LABEL+features": {
   "dieline": "37ee30bcc345c935fee4de21",

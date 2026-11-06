@@ -170,7 +170,7 @@ export default async function HomePage({ params }: Props) {
               }}
               chips={{
                 priceTitle: t("marketing.hero.chips.price"),
-                priceValue: row500 ? t("marketing.hero.chips.priceValue", { price: formatMoney(row500.unitPiasters, locale) }) : "—",
+                priceValue: row500 ? t("marketing.hero.chips.priceValue", { price: formatMoney(row500.unitPiasters, locale, { alwaysDecimals: true }) }) : "—",
                 priceNote: t("marketing.hero.chips.priceNote"),
                 approved: t("marketing.hero.chips.approved"),
                 approvedBy: t("marketing.hero.chips.approvedBy", { vendor: lead ? pick(locale, lead.name.ar, lead.name.en) : t("meta.siteName") }),
@@ -255,7 +255,7 @@ export default async function HomePage({ params }: Props) {
               {t("marketing.useCases.title")}
             </h2>
           </div>
-          <ul className={`${styles.cardGrid} ${styles.useRail}`}>
+          <ul className={`${styles.cardGrid} ${styles.useRail}`} data-rail="">
             {USE_CASES.map((u, i) => {
               const title = t(`marketing.useCases.items.${u.key}Title` as DictKey);
               const I = u.icon;
@@ -362,7 +362,7 @@ export default async function HomePage({ params }: Props) {
                 </h2>
                 <p className={styles.lead}>{t("marketing.printers.body")}</p>
               </div>
-              <Link href={`${base}/vendors`} className={`${styles.pill} ${styles.pillOutline}`}>
+              <Link href={`${base}/vendors`} className={`${styles.pill} ${styles.pillOutline} ${styles.pillLarge}`}>
                 {t("marketing.printers.all")}
               </Link>
             </div>

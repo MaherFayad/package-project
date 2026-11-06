@@ -71,7 +71,13 @@ function tuckClosure(b: DielineBuilder, w: Walls, where: "top" | "bottom", owner
   const hinge = where === "top" ? rectEdges(ownerRect).top : rectEdges(ownerRect).bottom;
   b.attach(where, where, owner, hinge, Wp, { kind: "rect" }, { stage: 2, label: where === "top" ? "Top closure" : "Bottom closure" });
   const far = where === "top" ? rectEdges(lid).top : rectEdges(lid).bottom;
-  b.attach(`${where}Tuck`, "tuck", where, insetSeg(far, t + 0.5), tuckD, { kind: "tuck", shoulder: 1 }, { stage: 2, stack: -1, label: "Tuck flap" });
+  b.attach(`${where}Tuck`, "tuck", where, insetSeg(far, t + 0.5), tuckD, { kind: "tuck", shoulder: 1 }, {
+    stage: 2,
+    // a front-hinged closure tucks against the back wall, where the glue flap is already laminated
+    // inside: one more caliper in, or the two lie in one plane and z-fight (ECMA_RTE bottom, C-05)
+    stack: owner === "front" ? -2 : -1,
+    label: "Tuck flap",
+  });
   for (const [side, r] of [["L", w.left], ["R", w.right]] as const) {
     const edge = where === "top" ? rectEdges(r).top : rectEdges(r).bottom;
     const taper = Math.min(dustD * 0.4, Wp * 0.3);
@@ -778,7 +784,7 @@ export function paperTube(dims: Dims, t: number, f: StructureFeatures = {}): Str
   // Label overlap (glued under the other end).
   {
     const r = rect(x0 + nR * s, 0, s, Hb);
-    b.attach("bodyGlue", "glue", `body${nR}`, rectEdges(r).right, overlap, { kind: "rect" }, { fold: roll, stage: 0, stack: -1, hingeKind: "roll", label: "Label overlap" });
+    b.attach("bodyGlue", "glue", `body${nR}`, rectEdges(r).right, overlap, { kind: "rect" }, { fold: roll, stage: 0, stack: -(0.15 / t), hingeKind: "roll", label: "Label overlap" });
   }
   disc("body0", "bodyBottom", rectEdges(rect(x0, 0, s, Hb)).bottom, s, "bottom", "Bottom end");
 
@@ -801,7 +807,7 @@ export function paperTube(dims: Dims, t: number, f: StructureFeatures = {}): Str
   }
   {
     const r = rect(xl0 + nR * sl, y0, sl, Hl);
-    b.attach("lidGlue", "glue", `lid${nR}`, rectEdges(r).right, overlap, { kind: "rect" }, { fold: roll, stage: 0, stack: -1, hingeKind: "roll", label: "Label overlap" });
+    b.attach("lidGlue", "glue", `lid${nR}`, rectEdges(r).right, overlap, { kind: "rect" }, { fold: roll, stage: 0, stack: -(0.15 / t), hingeKind: "roll", label: "Label overlap" });
   }
   disc("lid0", "lidTop", rectEdges(lidRootRect).top, sl, "top", "Lid top");
 
@@ -855,6 +861,13 @@ export function paperTube(dims: Dims, t: number, f: StructureFeatures = {}): Str
  */
 export function rigidBox(dims: Dims, t: number, f: StructureFeatures = {}): StructureDraft {
   const clear = 0.5;
+  // Turn-ins and corner tabs are wrap PAPER (~0.15 mm), not greyboard: drawn 0.3 mm proud of their
+  // wall instead of a full caliper inside it (same convention as families/rigid-tubes RF-01 / RF-05).
+  // At a full caliper the lid's turn-ins pierced the base walls by 1.65 mm and the tabs z-fought
+  // the end turn-ins (3d-visual C-01, R4-14).
+  const PAPER = 0.3;
+  const turnInStack = -Math.max(0, t - PAPER) / t;
+  const tabStack = -(PAPER / 2) / t;
   const b = new DielineBuilder();
   const turnIn = (H: number) => clamp(H * 0.45, 8, 15);
   const tabD = (W: number) => clamp(W * 0.08, 6, 12);
@@ -886,7 +899,7 @@ export function rigidBox(dims: Dims, t: number, f: StructureFeatures = {}): Stru
           b.attach(id(name), wdef.role, id(lidMode ? "top" : "bottom"), wdef.edge, Hp, { kind: "rect" }, { stage: 0, label: `${name[0].toUpperCase()}${name.slice(1)} wall` });
           const far = farEdge(b.byId(id(name)))!;
           const ti = turnIn(H);
-          b.attach(id(`${name}Turn`), "inner", id(name), insetSeg(far, t + 0.3), ti, { kind: "trapezoid", taperA: 1, taperB: 1 }, { fold: 180, pivotDepth: 1, stage: 1, label: "Turn-in" });
+          b.attach(id(`${name}Turn`), "inner", id(name), insetSeg(far, t + 0.3), ti, { kind: "trapezoid", taperA: 1, taperB: 1 }, { fold: 180, pivotDepth: 1, stage: 1, stack: turnInStack, label: "Turn-in" });
         }
         // Corner tabs on the long walls wrap round the corners under the end walls.
         for (const name of ["front", "back"]) {
@@ -895,7 +908,7 @@ export function rigidBox(dims: Dims, t: number, f: StructureFeatures = {}): Stru
           const e = rectEdges(r);
           const d = tabD(W);
           for (const [k, edge] of [["L", e.left], ["R", e.right]] as const) {
-            b.attach(id(`${name}Tab${k}`), "ear", id(name), insetSeg(edge, 1, 1), d, { kind: "trapezoid", taperA: d * 0.5, taperB: d * 0.5 }, { stage: 0, stack: -1, label: "Corner tab" });
+            b.attach(id(`${name}Tab${k}`), "ear", id(name), insetSeg(edge, 1, 1), d, { kind: "trapezoid", taperA: d * 0.5, taperB: d * 0.5 }, { stage: 0, stack: tabStack, label: "Corner tab" });
           }
         }
       },

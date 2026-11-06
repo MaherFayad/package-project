@@ -83,6 +83,8 @@ export default async function DesignEditorPage({ params, searchParams }: { param
 
   // Start fetching the 3D renderer while the page hydrates (PERF-10), at low priority so its
   // ~10 chunks do not hold the poster and the page's own scripts back on a slow network.
+  // The poster itself (R6-02, the phone LCP) is preloaded from the editor layout, above the
+  // Suspense boundary, so the hint is in <head> rather than in this streamed segment.
   for (const href of lazyChunkHrefs("./Stage3D")) preload(href, { as: "script", fetchPriority: "low" });
 
   return (

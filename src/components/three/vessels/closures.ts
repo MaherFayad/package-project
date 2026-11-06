@@ -333,7 +333,9 @@ function styledClosure(style: ClosureStyle, p: VesselProfile): ClosureModel {
 }
 
 /** Closure (and its open motion) for a container. Geometry in mm, container coordinates. */
-export function buildClosure(kind: VesselKind, closure: ClosureKind, dims: VesselDims, p: VesselProfile, style?: ClosureStyle | null): ClosureModel {
+export function buildClosure(kind: VesselKind, closure: ClosureKind, dims: VesselDims, profile: VesselProfile, style?: ClosureStyle | null): ClosureModel {
+  // A faceted (hex) glass jar still has a round thread finish: its lug lid / cap is round (R4-V01).
+  const p: VesselProfile = profile.section.kind === "polygon" ? { ...profile, section: { kind: "round" } } : profile;
   // bottle-neck styles replace a screw-cap core (the core the library collapses them to)
   if (style && (CLOSURE_STYLES as readonly string[]).includes(style)) {
     if (MOUTH_STYLES.includes(style)) return styledClosure(style, p);

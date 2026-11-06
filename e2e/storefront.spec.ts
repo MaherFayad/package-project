@@ -135,3 +135,46 @@ test("sitemap and robots", async ({ request }) => {
   expect(robots).toContain("Sitemap:");
   expect(robots).toContain("Disallow: /*/account");
 });
+
+/** React hydration failures (#418 text/HTML mismatch, #419, #423 recoverable root error, #425 text) and their dev wording. */
+const HYDRATION = /Minified React error #(418|419|423|425)|Hydration failed|hydrat(ed|ion) .*(mismatch|didn't match)|server rendered (HTML|text) didn't match/i;
+
+test("marketing pages hydrate without errors on a slow phone (R4-MK-09, ar + en)", async ({ page, browserName }) => {
+  test.setTimeout(300_000);
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(`${page.url()}: ${String(e)}`));
+  page.on("console", (m) => {
+    if (m.type() === "error" && HYDRATION.test(m.text())) errors.push(`${page.url()}: ${m.text()}`);
+  });
+  // The race showed on 2 to 4 of 12 loads at 4x CPU before the <main> Suspense boundary; a slow
+  // CPU and network make hydration start while segment payloads are still pending.
+  if (browserName === "chromium") {
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
+    // Slow 4G as in perf-pages.mjs: hydration then starts while segment chunks are still loading.
+    await cdp.send("Network.enable");
+    await cdp.send("Network.setCacheDisabled", { cacheDisabled: true }); // every load is a first visit
+    await cdp.send("Network.emulateNetworkConditions", { offline: false, latency: 562.5, downloadThroughput: (1.47 * 1024 * 1024) / 8, uploadThroughput: (0.68 * 1024 * 1024) / 8 });
+  }
+  const paths = ["", "/boxes", "/bottles", "/vendors", "/vendors/obour-box-works", "/boxes/mailer-box", "/boxes/mailer-box/250x180x80", "/legal/privacy"];
+  for (const locale of ["ar", "en"]) {
+    for (const p of paths) {
+      await page.goto(`/${locale}${p}`);
+      await expect(page.locator("main#main h1").first()).toBeVisible();
+      // Hydrated: RevealScope's effect runs only after the shell has hydrated and committed.
+      await page.waitForFunction(() => document.documentElement.dataset.motion === "on" || matchMedia("(prefers-reduced-motion: reduce)").matches, null, { timeout: 30_000 });
+      await page.waitForTimeout(300); // late boundaries
+    }
+  }
+  expect(errors, errors.join("\n")).toEqual([]);
+});
+
+test("unknown marketing URLs answer a real 404 with the marketing chrome (R4-MK-09)", async ({ page }) => {
+  for (const url of ["/en/vendors/no-such-printer", "/ar/boxes/no-such-box", "/en/boxes/mailer-box/1x1x1", "/ar/legal/no-such-doc", "/en/no/such/page"]) {
+    const res = await page.goto(url);
+    expect(res?.status(), url).toBe(404);
+    await expect(page.locator("header").first()).toBeVisible();
+    await expect(page.locator("#not-found-title")).toBeVisible();
+    await expect(page).toHaveTitle(/Page not found|الصفحة غير موجودة/);
+  }
+});

@@ -2,7 +2,7 @@
 
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
-import { BufferAttribute, CanvasTexture, CylinderGeometry, Plane, Vector3, type BufferGeometry, type Group, type Material, type Mesh, type Texture } from "three";
+import { BufferAttribute, CanvasTexture, CatmullRomCurve3, CylinderGeometry, Plane, SphereGeometry, TubeGeometry, Vector3, type BufferGeometry, type Group, type Material, type Mesh, type Texture } from "three";
 import {
   LIQUIDS,
   VESSELS,
@@ -99,6 +99,35 @@ function useDisposable<T extends { dispose(): void } | null>(factory: () => T, d
   return value;
 }
 
+/** Merge non-indexed / indexed geometries with position, normal and uv into one indexed geometry. */
+function mergeSimple(list: BufferGeometry[]): BufferGeometry {
+  const pos: number[] = [];
+  const nor: number[] = [];
+  const uv: number[] = [];
+  const idx: number[] = [];
+  for (const g of list) {
+    const base = pos.length / 3;
+    const p = g.getAttribute("position");
+    const n = g.getAttribute("normal");
+    const u = g.getAttribute("uv");
+    for (let i = 0; i < p.count; i++) {
+      pos.push(p.getX(i), p.getY(i), p.getZ(i));
+      nor.push(n.getX(i), n.getY(i), n.getZ(i));
+      uv.push(u ? u.getX(i) : 0, u ? u.getY(i) : 0);
+    }
+    const index = g.getIndex();
+    if (index) for (let i = 0; i < index.count; i++) idx.push(base + index.getX(i));
+    else for (let i = 0; i < p.count; i++) idx.push(base + i);
+  }
+  const out = new (list[0].constructor as new () => BufferGeometry)();
+  out.setAttribute("position", new BufferAttribute(new Float32Array(pos), 3));
+  out.setAttribute("normal", new BufferAttribute(new Float32Array(nor), 3));
+  out.setAttribute("uv", new BufferAttribute(new Float32Array(uv), 2));
+  out.setIndex(idx);
+  out.computeBoundingSphere();
+  return out;
+}
+
 /**
  * A container with its closure, product and print surfaces. Standing on y = 0, centred on its
  * axis, front facing +Z. Everything is built from @/lib/vessels so the 3D matches the print specs.
@@ -155,6 +184,24 @@ export function VesselModel(props: VesselModelProps) {
     [pouchGeo],
   );
 
+  // Carry handle (jerrycan, jug, detergent, clip) or wire bail (pail): the bottle family puts the
+  // centre line + tube radius on its profile; the core profile has none (3d-bottles E-02).
+  const handleSpec = (profile as VesselProfile & { handle?: { kind: string; path: { x: number; y: number; z: number }[]; tubeRadiusMm: number } }).handle;
+  const handleKey = handleSpec ? JSON.stringify(handleSpec) : "";
+  const handleGeo = useDisposable(() => {
+    if (!handleSpec || handleSpec.path.length < 2) return null;
+    const pts = handleSpec.path.map((q) => new Vector3(q.x, q.y, q.z));
+    const curve = new CatmullRomCurve3(pts, false, "centripetal");
+    const r = handleSpec.tubeRadiusMm;
+    const tube = new TubeGeometry(curve, radial === 48 ? 32 : 64, r, radial === 48 ? 10 : 16, false);
+    // round the open ends into the wall / lugs
+    const caps = [pts[0], pts[pts.length - 1]].map((q) => new SphereGeometry(r, 16, 12).translate(q.x, q.y, q.z));
+    const merged = mergeSimple([tube, ...caps]);
+    for (const g of [tube, ...caps]) g.dispose();
+    return merged;
+  }, [handleKey, radial]);
+  const handleMat = useDisposable(() => (handleSpec?.kind === "bail" ? createClosureMaterial("capMetal", "SILVER") : null), [handleSpec?.kind]);
+
   const liquidGeo = useDisposable(() => (revolved && def.fillable ? liquidGeometry(profile, radial === 48 ? 32 : 72) : null), [profileKey, radial]);
   const surfaceGeo = useDisposable(() => {
     if (!revolved || !def.fillable) return null;
@@ -177,7 +224,7 @@ export function VesselModel(props: VesselModelProps) {
           g.translate(0, 0.18, 0);
           return { label: l, geometry: g as BufferGeometry, onLid: true };
         }
-        if (s.placement.type === "face") return { label: l, geometry: isPouch ? pouchLabelGeometry(dims, s) : faceLabelGeometry(s, faceZ) };
+        if (s.placement.type === "face") return { label: l, geometry: isPouch ? pouchLabelGeometry(dims, s) : faceLabelGeometry(s, faceZ, profile) };
         const sl = sleeveGeometry(profile, s, 128);
         return { label: l, geometry: sl.geometry as BufferGeometry, sleeve: sl };
       });
@@ -357,6 +404,7 @@ export function VesselModel(props: VesselModelProps) {
     <group ref={root} scale={MM}>
       <group ref={inner}>
         {body ? <mesh geometry={body} material={bodyMat} renderOrder={2} /> : null}
+        {handleGeo ? <mesh geometry={handleGeo} material={handleMat ?? bodyMat} renderOrder={2} /> : null}
         {tubeGeo ? <mesh geometry={tubeGeo} material={bodyMat} /> : null}
         {pouchGeo && pouchZipMat ? (
           <>

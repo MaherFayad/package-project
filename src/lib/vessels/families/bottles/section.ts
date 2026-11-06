@@ -144,8 +144,9 @@ export function frontFlatWidth(sec: BottleSection, a: Mm): Mm {
   return pieces(e)[0].len * 2;
 }
 
-/** Nearest core CrossSection (core has no polygon yet: drawn round until the merge). */
+/** The core CrossSection the renderer draws (rounded rect, rounded polygon or round). */
 export function coreSectionFor(sec: BottleSection): CrossSection {
   if (sec.kind === "rect") return { kind: "roundedRect", cornerRatio: sec.cornerRatio, depthRatio: sec.depthRatio };
+  if (sec.kind === "polygon") return { kind: "polygon", sides: sec.sides, cornerRatio: sec.cornerRatio };
   return { kind: "round" };
 }

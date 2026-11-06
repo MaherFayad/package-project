@@ -416,3 +416,21 @@ critical 0 · high 0 · medium 0 · low 1 (R5-01). The four ROUND5.md rows (4 me
 - New `src/app/api/webhooks/whatsapp/route.ts`.
 - `src/lib/notify/whatsapp-inbound.ts`.
 - `.env.example`.
+
+### Round 5 (b): performance follow-ups (R4-08, R4-09 from `performance.md` round 4)
+
+Base: main at aa2c78f, fast-forwarded. **The performance branch (`…-r4-performance`, 699a954) was not merged.** It conflicts with main in five designer and share files (`StartViewer.tsx`, `DesignStart.tsx`, `DesignerApp.tsx`, `design/(editor)/[structure]/page.tsx`, `s/[id]/page.tsx`). Both sides rewrote the LCP poster: main's round 5 `/models/<code>.webp` poster layer, and the branch's inline `modelPosterSrc()` posters. Picking a side decides another owner's design, so the integrator should merge it with the designer and performance owners. Neither fix below depends on `experimental.inlineCss`.
+
+Measurement: a production build (`next start`), signed in as admin where needed. For each route I summed the stylesheets the HTML links (raw / gzip) and searched the HTML for references to the marketing CSS chunk (the one that contains `.bandMint`). The script was `css.cjs`, kept out of the repo.
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R4-09 | medium | `src/app/[locale]/not-found.tsx` | The locale-level 404 imported `marketing.module.css` (64 KB raw). Next embeds every layout's not-found element in each page's RSC payload, so every admin, vendor, checkout and editor page referenced the marketing chunk (1 reference each; with `inlineCss` the whole sheet is inlined). | Performance budget (non-3D CSS/JS) | The locale 404 has its own 2 KB `not-found.module.css` and a small `NotFoundBody` client component: same look, copy, `<main id="main">` and title. The marketing `NotFoundState` stays for the marketing 404s. Before/after: references from `/ar/admin`, `/ar/admin/orders` and `/ar/vendor` to the marketing chunk went from 1 to 0, and the linked CSS is unchanged. The page still answers 404 with "الصفحة غير موجودة · علبة". axe shows 0 violations and there is no overflow at 390 ar and 1440 en. | fixed |
+| R4-08 | medium | `components/ui` barrel, `next.config.ts` | Every route that imports one kit component gets every kit stylesheet, because the barrel re-exports 45 modules and their CSS imports count as side effects. | Performance budget | **Tried:** marking `src/components/ui/*.tsx` side-effect free (a webpack rule) so unused re-exports and their CSS are dropped. **Measured (gzip CSS linked per route, before → after):** catalogue 42.7 → 30.7 (−12.0), home and legal 21.9 → 24.6 (+2.7), admin and vendor 33.3 → 38.9 / 37.3 (+5.6 / +4.0), editor 49.7 → 56.4 (+6.7), account 50.5 → 50.9, orders 44.9 → 51.0. Under `cssChunking: "strict"` the pruned graph splits into more chunks that repeat the same rules, so 7 of 9 routes got heavier. **Reverted.** Splitting `Misc.module.css` alone changes nothing while the barrel imports every module. The fix that works is per-area: route-level code (admin `*Index.tsx`, vendor portal, designer panels) imports kit components from their files (`@/components/ui/Button`), as MarketingShell already does for `CookieNotice` (R2-MK-01). That touches about 100 files across admin, vendor and designer. | open: per-area import migration (owners admin, vendor, designer); the RSC duplication itself is Next's `inlineCss` behaviour |
+| R5-02 | low | `common.notFoundBody` | The 404 body repeated the heading ("الصفحة التي تبحث عنها غير موجودة."). | Copy | "ربما تغير الرابط أو لم تعد الصفحة متاحة. ابدأ من الصفحة الرئيسية أو تصفح أنواع العلب." (en to match). | fixed |
+
+Counts (new findings this pass, before fixing): critical 0 · high 0 · medium 0 · low 1 (R5-02). Of the two assigned rows, R4-09 is fixed and R4-08 is measured and handed to the area owners.
+
+Verification: `npm run lint`, `npm run typecheck`, `npm test` (85 files, 8,419 tests) and `npm run build` pass. e2e (`--workers=2`) for smoke, storefront, admin, vendor, designer and checkout: 58 passed, 12 skipped by the specs. Screenshots: `docs/screenshots/audit/platform/r5b-*`.
+
+Files outside the listed scope: none. `next.config.ts` was changed for the experiment and restored.

@@ -1,0 +1,71 @@
+/*
+ * Locale-level 404 (areas with their own chrome: designer, vendor portal, admin, checkout, dev).
+ * Its own small sheet on purpose (R4-09): Next pre-renders every layout's not-found element with its
+ * styles into each page's RSC payload, so importing marketing.module.css here put 64 KB of marketing
+ * CSS into every admin, vendor, checkout and editor page. Looks like the marketing 404 state.
+ */
+.site {
+  --ink: #0b0b0b;
+  --gutter: 16px;
+  min-block-size: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  color: #303030;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+@media (min-width: 768px) {
+  .site { --gutter: 32px; }
+}
+.main { flex: 1; outline: none; }
+.hero {
+  min-block-size: 60dvh;
+  padding: clamp(72px, 10vw, 140px) var(--gutter);
+  text-align: center;
+  background:
+    radial-gradient(900px 480px at 85% 0%, rgba(201, 240, 218, 0.7), rgba(201, 240, 218, 0) 70%),
+    linear-gradient(180deg, #e6f7ee 0%, #ffffff 100%);
+}
+.inner { max-inline-size: 880px; margin-inline: auto; }
+.title {
+  font-size: clamp(2rem, 1.3rem + 2.8vw, 3.25rem);
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+  font-weight: 680;
+  color: var(--ink);
+  text-wrap: balance;
+}
+.title:lang(ar) { line-height: 1.35; font-weight: 700; letter-spacing: 0; }
+.lead {
+  max-inline-size: 38em;
+  margin: 20px auto 0;
+  font-size: clamp(1.125rem, 1rem + 0.4vw, 1.3125rem);
+  color: #4a4a4a;
+  text-wrap: pretty;
+}
+.actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-block-start: 32px; }
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 52px; /* WCAG 2.5.8 */
+  padding: 12px 28px;
+  border-radius: 999px;
+  border: 1.5px solid var(--ink);
+  background: var(--ink);
+  color: #ffffff;
+  font-size: 1.0625rem;
+  font-weight: 650;
+  line-height: 1.2;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color var(--p-motion-duration-150, 150ms) var(--p-motion-ease-out, ease-out);
+}
+.pill:hover, .pill:focus-visible { background: #2b2b2b; border-color: #2b2b2b; color: #ffffff; }
+.outline { background: transparent; color: var(--ink); }
+.outline:hover, .outline:focus-visible { background: var(--ink); border-color: var(--ink); color: #ffffff; }
+.pill:focus-visible { outline: 2px solid var(--p-color-border-focus, #005bd3); outline-offset: 2px; }
+@media (max-width: 559px) {
+  .actions { flex-direction: column; align-items: stretch; }
+}

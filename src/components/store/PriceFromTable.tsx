@@ -1,10 +1,9 @@
 import type { Dims, Locale } from "@/types";
+import { Card, Text } from "@/components/marketing/mkui";
 import { MAX_INSTANT_QTY } from "@/types";
 import { getT } from "@/i18n";
 import type { DictKey } from "@/i18n";
 import { formatDims, formatMoney, formatNumber } from "@/lib/format";
-import { Card } from "@/components/ui/Card";
-import { Text } from "@/components/ui/Text";
 import type { PriceFrom } from "./data";
 import { SpecTable } from "./SpecTable";
 import styles from "./store.module.css";
@@ -29,7 +28,7 @@ export function PriceFromTable({ locale, dims, price, title }: { locale: Locale;
                 <strong key="u">
                   <bdi>{formatMoney(r.unitPiasters, locale, { alwaysDecimals: true })}</bdi>
                 </strong>,
-                <bdi key="s">{formatMoney(r.subtotalPiasters, locale)}</bdi>,
+                <bdi key="s">{formatMoney(r.subtotalPiasters, locale, { alwaysDecimals: true })}</bdi>,
                 t("store.structure.deliveryDays", { days: r.deliveryDays }),
               ])}
             />

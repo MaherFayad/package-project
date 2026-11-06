@@ -162,6 +162,8 @@ export async function getDashboard(vendorId: string, now = new Date()) {
     rateCards: activeCards > 0,
   };
   return {
+    // R7: a bio edit waiting for (or sent back by) Elba's review, shown on the home page too.
+    bioReview: vendor.bioReviewStatus === "PENDING" || vendor.bioReviewStatus === "REJECTED" ? (vendor.bioReviewStatus as "PENDING" | "REJECTED") : null,
     awaiting: awaiting.slice(0, 5),
     awaitingCount: awaiting.length,
     inProductionCount: inProduction.length,

@@ -8,6 +8,7 @@ import { boardAppearance, boundsAt, computePoses, rootIds, type BoardAppearance,
 import { createBoardMaterials, type BoardMaterialSet } from "./boardMaterials";
 import { buildFilmGeometry, buildPanelGeometry, buildPerfGeometry, pointInPolygon } from "./panelGeometry";
 import { useTextureQuality } from "./perf";
+import { buildAccessoryGeometry, createAccessoryMaterial } from "./accessories";
 
 /** World units are metres; dieline geometry is in millimetres. */
 export const MM = 0.001;
@@ -122,6 +123,21 @@ export function PackagingModel({
     return m;
   }, [dieline]);
 
+  // Ribbon pulls / bails (closed pose only): drawn in the resting frame, hidden while folding.
+  const accessories = useMemo(
+    () => (dieline.accessories ?? []).map((a) => ({ geometry: buildAccessoryGeometry(a), material: createAccessoryMaterial(a) })),
+    [dieline],
+  );
+  useEffect(
+    () => () =>
+      accessories.forEach((a) => {
+        a.geometry.dispose();
+        a.material.dispose();
+      }),
+    [accessories],
+  );
+  const accessoryGroup = useRef<Group>(null);
+
   const groups = useRef(new Map<string, Group>());
   const centre = useRef<Group>(null);
   const applied = useRef<{ model: DielineModel | null; p: number }>({ model: null, p: NaN });
@@ -140,6 +156,7 @@ export function PackagingModel({
     const box = boundsAt(dieline, progress, poses);
     const c = box.getCenter(new Vector3());
     centre.current?.position.set(-c.x, -box.min.y, -c.z);
+    if (accessoryGroup.current) accessoryGroup.current.visible = progress > 0.995;
     applied.current = { model: dieline, p };
   };
 
@@ -179,6 +196,13 @@ export function PackagingModel({
   return (
     <group scale={MM}>
       <group ref={centre}>{roots.map(renderPanel)}</group>
+      {accessories.length ? (
+        <group ref={accessoryGroup}>
+          {accessories.map((a, i) => (
+            <mesh key={i} geometry={a.geometry} material={a.material} castShadow={castShadow} />
+          ))}
+        </group>
+      ) : null}
     </group>
   );
 }

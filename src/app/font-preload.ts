@@ -12,12 +12,9 @@ import path from "node:path";
  * load on demand with `font-display: swap`.
  */
 let cache: Map<number, string> | null = null;
-/** Inter's basic-Latin file (unicode-range u+00??), found by the same scan. */
-let interLatin: string | null = null;
+let interCache: string | null | undefined;
 
-function scan(): Map<number, string> {
-  const found = new Map<number, string>();
-  interLatin = null;
+function cssFiles(): string[] {
   const dist = process.env.NEXT_DIST_DIR || ".next";
   const root = path.join(process.cwd(), dist, "static", "css");
   const files: string[] = [];
@@ -31,8 +28,14 @@ function scan(): Map<number, string> {
   try {
     walk(root);
   } catch {
-    return found;
+    return [];
   }
+  return files;
+}
+
+function scan(): Map<number, string> {
+  const found = new Map<number, string>();
+  const files = cssFiles();
   const rule = /@font-face\s*{([^}]*)}/g;
   for (const f of files) {
     let css: string;
@@ -41,14 +44,9 @@ function scan(): Map<number, string> {
     } catch {
       continue;
     }
-    if (!css.includes("IBM Plex Sans Arabic") && !css.includes("Inter")) continue;
+    if (!css.includes("IBM Plex Sans Arabic")) continue;
     for (const m of css.matchAll(rule)) {
       const body = m[1];
-      if (/font-family:\s*['"]?Inter['"]?\s*;/.test(body) && /unicode-range:\s*u\+00\?\?/i.test(body)) {
-        const u = /url\(([^)]+\.woff2)\)/.exec(body);
-        if (u) interLatin = u[1].replace(/^['"]|['"]$/g, "");
-        continue;
-      }
       if (!/font-family:\s*['"]?IBM Plex Sans Arabic['"]?\s*;/.test(body)) continue;
       if (!/unicode-range:[^;]*u\+06/i.test(body)) continue; // the Arabic-block file
       const w = /font-weight:\s*(\d{3})\s*;/.exec(body);
@@ -65,11 +63,31 @@ export function plexArabicPreloadUrls(weights: readonly number[]): string[] {
 }
 
 /**
- * URL of the built Inter basic-Latin woff2. Preloaded on English pages only: on Arabic pages
- * Inter carries just digits and Latin brand names, so it loads on demand (`swap`) instead of
- * competing with the Arabic text font and the LCP image on slow networks (PERF-R4-03).
+ * URL of the built Inter (Latin, variable) woff2. Inter is `preload: false` in ./fonts.ts and
+ * preloaded here on English pages only: on Arabic pages it carries just digits and the odd Latin
+ * word, and a 47 KB high-priority preload competed with the render-blocking CSS on Slow 4G
+ * (Arabic phone LCP 2.69 -> 2.22 s on /ar/vendors without it; R4-MK-05).
  */
-export function interLatinPreloadUrl(): string | null {
-  if (!cache || (cache.size === 0 && process.env.NODE_ENV !== "production")) cache = scan();
-  return interLatin && interLatin.startsWith("/_next/") ? interLatin : null;
+export function interPreloadUrl(): string | null {
+  if (interCache === undefined || (interCache === null && process.env.NODE_ENV !== "production")) {
+    interCache = null;
+    for (const f of cssFiles()) {
+      let css: string;
+      try {
+        css = fs.readFileSync(f, "utf8");
+      } catch {
+        continue;
+      }
+      if (!css.includes("Inter")) continue;
+      for (const m of css.matchAll(/@font-face\s*{([^}]*)}/g)) {
+        const body = m[1];
+        if (!/font-family:\s*['"]?Inter['"]?\s*;/.test(body)) continue;
+        if (!/unicode-range:[^;]*u\+00(\?\?|00-00ff)/i.test(body)) continue; // Basic Latin file
+        const u = /url\(([^)]+\.woff2)\)/.exec(body);
+        if (u) interCache = u[1].replace(/^['"]|['"]$/g, "");
+      }
+      if (interCache) break;
+    }
+  }
+  return interCache && interCache.startsWith("/_next/") ? interCache : null;
 }
