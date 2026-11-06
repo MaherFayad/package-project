@@ -36,5 +36,11 @@ export function useCookieAck(): [boolean, () => void] {
   return [ack || dismissed, dismiss];
 }
 
-/** Inline, runs during HTML parse right after the notice: hides it if the ack cookie exists. */
-export const COOKIE_HIDE_SCRIPT = `(function(s){try{if(document.cookie.split("; ").indexOf("${COOKIE_ACK}=1")>-1){s.previousElementSibling.style.display="none"}}catch(e){}})(document.currentScript)`;
+/**
+ * Inline, runs during HTML parse right after the notice: hides it if the ack cookie exists.
+ * Otherwise, while the web fonts are still loading, it reserves the notice's first-paint height
+ * (R5-PL-16): the notice is anchored to the bottom, so a font swap that shortened its text moved
+ * its top edge (a layout shift). The reservation is released on the first tap or key press (shifts
+ * right after input do not count) or on a resize.
+ */
+export const COOKIE_HIDE_SCRIPT = `(function(s){try{var n=s.previousElementSibling;if(document.cookie.split("; ").indexOf("${COOKIE_ACK}=1")>-1){n.style.display="none";return}if(document.fonts&&document.fonts.status!=="loaded"){n.style.minBlockSize=n.offsetHeight+"px";var u=function(){n.style.minBlockSize="";removeEventListener("pointerdown",u,true);removeEventListener("keydown",u,true);removeEventListener("resize",u)};addEventListener("pointerdown",u,true);addEventListener("keydown",u,true);addEventListener("resize",u)}}catch(e){}})(document.currentScript)`;
