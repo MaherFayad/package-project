@@ -7,6 +7,7 @@ import { loadPricingData } from "@/lib/pricing/server";
 import type { QuoteModel } from "@/lib/pricing";
 import { designConfigSchema } from "@/components/designer/lib/doc";
 import { loadPricingConfig } from "@/components/admin/server/settings";
+import { readJsonCapped } from "../_lib/body";
 
 const Mm = z.number().finite().positive().max(5000);
 
@@ -61,9 +62,11 @@ export async function POST(req: Request) {
     );
   }
 
-  const parsed = Body.safeParse(await req.json().catch(() => null));
+  const json = await readJsonCapped(req, 16_384);
+  if (json instanceof Response) return json;
+  const parsed = Body.safeParse(json);
   if (!parsed.success) {
-    return Response.json({ error: "INVALID_BODY", issues: parsed.error.issues }, { status: 400 });
+    return Response.json({ error: "INVALID_BODY", issues: parsed.error.issues.slice(0, 10) }, { status: 400 });
   }
   const b = parsed.data;
   const zone = b.zone ?? (b.governorate ? zoneForGovernorate(b.governorate) : "GREATER_CAIRO");

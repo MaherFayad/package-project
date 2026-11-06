@@ -29,6 +29,7 @@ import { generatePrintPdf } from "./pdf/print";
 import { putFile, getFile } from "./storage";
 import { assertTransition, canBuyerCancel, canOpenDispute, canReview, isPaidStatus, type Actor } from "./state";
 import { isQuoteValid, nextSequence, orderTotals } from "./totals";
+import { decidePaymentOutcome, storedGatewayRef } from "./payment-rules";
 
 /**
  * Order service (owner: checkout). Every order mutation in the app goes through here so the
@@ -369,12 +370,22 @@ export async function transitionOrder(orderId: string, to: OrderStatus, actor: T
   const rule = assertTransition(order.status as OrderStatus, to, actor.role);
   const stamp = EVENT_TIMESTAMPS[to];
   const now = new Date();
-  const updated = await db.order.updateMany({
-    where: { id: orderId, status: order.status }, // optimistic: lose the race, not the data
-    data: { status: to, ...(stamp ? { [stamp]: now } : {}) },
+  // Status + timeline event commit together; the conditional update makes concurrent moves
+  // (double "accept", two tabs) lose the race instead of writing two events.
+  const changed = await db.$transaction(async (tx) => {
+    const updated = await tx.order.updateMany({
+      where: { id: orderId, status: order.status },
+      data: { status: to, ...(stamp ? { [stamp]: now } : {}) },
+    });
+    if (updated.count !== 1) return false;
+    await tx.productionEvent.create({ data: { orderId, type: rule.event, note: note ?? null, actorId: actor.userId ?? null, createdAt: now } });
+    return true;
   });
-  if (updated.count !== 1) throw new OrderError("INVALID_STATE");
-  await db.productionEvent.create({ data: { orderId, type: rule.event, note: note ?? null, actorId: actor.userId ?? null } });
+  if (!changed) throw new OrderError("INVALID_STATE");
+  await notifyStatus(order, to);
+}
+
+async function notifyStatus(order: { number: string; buyer: { locale: string; phone: string; email: string | null } }, to: OrderStatus): Promise<void> {
 
   const locale = (order.buyer.locale === "en" ? "en" : "ar") as Locale;
   const template = to === "SHIPPED" ? "SHIPPED" : to === "DELIVERED" ? "DELIVERED" : "STATUS_CHANGED";
@@ -460,7 +471,7 @@ export async function startPayment(orderId: string, user: SessionUser, method: P
     await db.payment.update({ where: { id: payment.id }, data: { status: "FAILED", raw: toJson({ error: String((e as Error).message) }) } });
     throw new OrderError("PAYMENT_UNAVAILABLE");
   }
-  const stored = { intention: { redirectUrl: intention.redirectUrl, fawry: intention.fawry, instapay: intention.instapay } };
+  const stored = { intention: { redirectUrl: intention.redirectUrl, fawry: intention.fawry, instapay: intention.instapay, gatewayOrderId: intention.gatewayOrderId ?? null } };
   const saved = await db.payment.update({
     where: { id: payment.id },
     data: { providerRef: intention.providerRef, fawryRef: intention.fawry?.referenceCode ?? null, raw: toJson(stored) },
@@ -493,26 +504,42 @@ export async function processPaymentWebhook(providerName: "mock" | "paymob", req
 }
 
 export async function applyPaymentOutcome(o: Extract<WebhookOutcome, { ok: true }>): Promise<string> {
+  if (!/^[\w-]{1,64}$/.test(o.paymentId)) return "UNKNOWN_PAYMENT";
   const payment = await db.payment.findUnique({ where: { id: o.paymentId }, include: { order: { include: { buyer: true, vendor: true } } } });
   if (!payment) return "UNKNOWN_PAYMENT";
-  if (payment.status === o.status) return "DUPLICATE";
-  if (payment.status === "PAID" && o.status !== "REFUNDED") return "ALREADY_PAID";
   const order = payment.order;
   const locale = (order.buyer.locale === "en" ? "en" : "ar") as Locale;
+  const decision = decidePaymentOutcome(
+    { provider: payment.provider, status: payment.status, amountPiasters: payment.amountPiasters, gatewayRef: storedGatewayRef(payment) },
+    order.status as OrderStatus,
+    o,
+  );
+  const lastRaw = toJson({ ...((payment.raw as object) ?? {}), last: o.raw });
 
-  if (o.status === "PENDING") {
-    await db.payment.update({ where: { id: payment.id }, data: { raw: toJson({ ...((payment.raw as object) ?? {}), last: o.raw }) } });
+  if (decision.action === "IGNORE") return decision.result;
+  if (decision.action === "REJECT") {
+    // Signed but not about this payment / not this amount: record for ops, change nothing.
+    console.warn(`[payments] webhook rejected for payment ${payment.id}: ${decision.result}`);
+    await db.productionEvent.create({ data: { orderId: order.id, type: "NOTE", note: `${decision.result}:${o.amountPiasters}` } });
+    return decision.result;
+  }
+
+  if (decision.action === "PENDING") {
+    await db.payment.update({ where: { id: payment.id }, data: { raw: lastRaw } });
     return "PENDING";
   }
 
-  if (o.status === "FAILED") {
-    await db.payment.update({ where: { id: payment.id }, data: { status: "FAILED", raw: toJson({ ...((payment.raw as object) ?? {}), last: o.raw }) } });
+  if (decision.action === "FAILED") {
+    // Conditional: never downgrade a payment that turned PAID concurrently.
+    const upd = await db.payment.updateMany({ where: { id: payment.id, status: payment.status }, data: { status: "FAILED", raw: lastRaw } });
+    if (upd.count !== 1) return "DUPLICATE";
     await notify({ to: { phone: order.buyer.phone }, locale, template: "PAYMENT_FAILED", params: { number: order.number } });
     return "FAILED";
   }
 
-  if (o.status === "REFUNDED") {
-    await db.payment.update({ where: { id: payment.id }, data: { status: "REFUNDED" } });
+  if (decision.action === "REFUNDED") {
+    const upd = await db.payment.updateMany({ where: { id: payment.id, status: "PAID" }, data: { status: "REFUNDED", raw: lastRaw } });
+    if (upd.count !== 1) return "DUPLICATE";
     if (order.status !== "REFUNDED" && order.status !== "CANCELLED") {
       try {
         await transitionOrder(order.id, "REFUNDED", { role: "SYSTEM" }, "REFUND_CONFIRMED");
@@ -523,31 +550,36 @@ export async function applyPaymentOutcome(o: Extract<WebhookOutcome, { ok: true 
     return "REFUNDED";
   }
 
-  // PAID
-  if (o.amountPiasters !== payment.amountPiasters) {
-    await db.productionEvent.create({ data: { orderId: order.id, type: "NOTE", note: `AMOUNT_MISMATCH:${o.amountPiasters}` } });
-    return "AMOUNT_MISMATCH";
-  }
   const now = new Date();
-  const paidRaw = toJson({ ...((payment.raw as object) ?? {}), last: o.raw });
-  if (order.status !== "PENDING_PAYMENT") {
-    // Paid after cancel/expiry: keep the money on record and flag for a refund by ops.
-    await db.payment.update({ where: { id: payment.id }, data: { status: "PAID", providerRef: o.providerRef || payment.providerRef, raw: paidRaw } });
+  const paidRaw = lastRaw;
+  if (decision.action === "PAID_LATE") {
+    // Paid after cancel/expiry (or a second attempt after another one won): keep the money on
+    // record and flag for a refund by ops.
+    const upd = await db.payment.updateMany({
+      where: { id: payment.id, status: { not: "PAID" } },
+      data: { status: "PAID", providerRef: o.providerRef || payment.providerRef, raw: paidRaw },
+    });
+    if (upd.count !== 1) return "ALREADY_PAID";
     await db.productionEvent.create({ data: { orderId: order.id, type: "NOTE", note: "PAID_AFTER_CANCEL_REFUND_NEEDED" } });
     return "NEEDS_REFUND";
   }
   const leadMs = order.dueDate ? Math.max(0, order.dueDate.getTime() - order.placedAt.getTime()) : 7 * 86_400_000;
-  const changed = await db.$transaction(async (tx) => {
+  const changed = await db
+    .$transaction(async (tx) => {
     const upd = await tx.order.updateMany({
       where: { id: order.id, status: "PENDING_PAYMENT" },
       data: { status: "PAID", paidAt: now, dueDate: new Date(now.getTime() + leadMs) },
     });
     if (upd.count !== 1) return false;
     assertTransition("PENDING_PAYMENT", "PAID", "SYSTEM");
-    await tx.payment.update({ where: { id: payment.id }, data: { status: "PAID", providerRef: o.providerRef || payment.providerRef, raw: paidRaw } });
+    const pay = await tx.payment.updateMany({
+      where: { id: payment.id, status: { not: "PAID" } },
+      data: { status: "PAID", providerRef: o.providerRef || payment.providerRef, raw: paidRaw },
+    });
+    if (pay.count !== 1) throw new OrderError("INVALID_STATE"); // rolls the order back too
     // Other open attempts for this order are void now.
     await tx.payment.updateMany({ where: { orderId: order.id, status: "PENDING", id: { not: payment.id } }, data: { status: "FAILED" } });
-    await tx.productionEvent.create({ data: { orderId: order.id, type: "PAYMENT_CONFIRMED", note: payment.method } });
+    await tx.productionEvent.create({ data: { orderId: order.id, type: "PAYMENT_CONFIRMED", note: payment.method, createdAt: now } });
     if (order.quoteId) await tx.quote.update({ where: { id: order.quoteId }, data: { status: "ACCEPTED" } });
     const existing = await tx.invoice.count({ where: { orderId: order.id, kind: "SALE" } });
     if (!existing) {
@@ -563,7 +595,11 @@ export async function applyPaymentOutcome(o: Extract<WebhookOutcome, { ok: true 
       });
     }
     return true;
-  });
+  })
+    .catch((e) => {
+      if (e instanceof OrderError) return false;
+      throw e;
+    });
   if (!changed) return "ALREADY_PAID";
 
   // Side effects after commit: print files, then messages. Failures never undo the payment.
@@ -636,33 +672,51 @@ export async function proofPdfBytes(orderId: string, watermark: string): Promise
 
 // ───────────────────────── shipping ─────────────────────────
 
-/** Vendor/ops hand the bundles to the courier: create the shipment and mark the order shipped. */
+/**
+ * Vendor/ops hand the bundles to the courier: claim the order (READY_TO_SHIP -> SHIPPED with a
+ * conditional update, so a double click or two staff members cannot book two couriers), book the
+ * courier, then record the shipment. If the booking fails the claim is released.
+ */
 export async function shipOrder(orderId: string, actor: TransitionActor): Promise<{ trackingNumber: string }> {
-  const order = await db.order.findUnique({ where: { id: orderId }, include: { vendor: true, items: true } });
+  const order = await db.order.findUnique({ where: { id: orderId }, include: { vendor: true, items: true, buyer: true } });
   if (!order) throw new OrderError("NOT_FOUND");
   if (actor.role === "VENDOR" && actor.vendorId !== order.vendorId) throw new OrderError("FORBIDDEN");
-  assertTransition(order.status as OrderStatus, "SHIPPED", actor.role);
+  const rule = assertTransition(order.status as OrderStatus, "SHIPPED", actor.role);
+  const claimed = await db.order.updateMany({ where: { id: orderId, status: order.status }, data: { status: "SHIPPED" } });
+  if (claimed.count !== 1) throw new OrderError("INVALID_STATE");
+
   const provider = getShippingProvider();
   const qty = order.items.reduce((s, i) => s + i.quantity, 0);
-  const created = await provider.createShipment({
-    orderNumber: order.number,
-    pickupCity: order.vendor.city,
-    dropOff: fromJson<ShippingAddress>(order.shippingAddress),
-    bundles: Math.max(1, Math.ceil(qty / 100)),
-    weightKg: Math.max(1, Math.round(qty * 0.08)),
-    description: `${qty} flat-packed printed boxes`,
-  });
-  await db.shipment.create({
-    data: {
-      orderId,
-      provider: provider.name,
-      trackingNumber: created.trackingNumber,
-      status: created.status,
-      labelUrl: created.labelUrl ?? null,
-      events: toJson([{ status: created.status, at: new Date().toISOString() }]),
-    },
-  });
-  await transitionOrder(orderId, "SHIPPED", actor, created.trackingNumber);
+  let created: Awaited<ReturnType<typeof provider.createShipment>>;
+  try {
+    created = await provider.createShipment({
+      orderNumber: order.number,
+      pickupCity: order.vendor.city,
+      dropOff: fromJson<ShippingAddress>(order.shippingAddress),
+      bundles: Math.max(1, Math.ceil(qty / 100)),
+      weightKg: Math.max(1, Math.round(qty * 0.08)),
+      description: `${qty} flat-packed printed boxes`,
+    });
+  } catch (e) {
+    await db.order.updateMany({ where: { id: orderId, status: "SHIPPED" }, data: { status: order.status } });
+    console.error("[orders] courier booking failed", e);
+    throw new OrderError("NOT_ALLOWED");
+  }
+  const now = new Date();
+  await db.$transaction([
+    db.shipment.create({
+      data: {
+        orderId,
+        provider: provider.name,
+        trackingNumber: created.trackingNumber,
+        status: created.status,
+        labelUrl: created.labelUrl ?? null,
+        events: toJson([{ status: created.status, at: now.toISOString() }]),
+      },
+    }),
+    db.productionEvent.create({ data: { orderId, type: rule.event, note: created.trackingNumber, actorId: actor.userId ?? null, createdAt: now } }),
+  ]);
+  await notifyStatus(order, "SHIPPED");
   return { trackingNumber: created.trackingNumber };
 }
 
@@ -716,13 +770,20 @@ export async function submitReview(orderId: string, user: SessionUser, rating: n
   const order = await db.order.findUnique({ where: { id: orderId }, include: { reviews: true } });
   if (!order || order.buyerId !== user.id) throw new OrderError("NOT_FOUND");
   if (!canReview(order.status as OrderStatus, order.reviews.some((r) => r.authorId === user.id))) throw new OrderError("NOT_ALLOWED");
+  if (!Number.isFinite(rating)) throw new OrderError("NOT_ALLOWED");
   const r = Math.round(Math.min(5, Math.max(1, rating)));
-  await db.$transaction(async (tx) => {
-    await tx.review.create({ data: { orderId, vendorId: order.vendorId, authorId: user.id, rating: r, body: body || null } });
-    const v = await tx.vendor.findUniqueOrThrow({ where: { id: order.vendorId }, select: { rating: true, ratingCount: true } });
-    const count = v.ratingCount + 1;
-    await tx.vendor.update({ where: { id: order.vendorId }, data: { ratingCount: count, rating: Math.round(((v.rating * v.ratingCount + r) / count) * 100) / 100 } });
-  });
+  try {
+    await db.$transaction(async (tx) => {
+      await tx.review.create({ data: { orderId, vendorId: order.vendorId, authorId: user.id, rating: r, body: body?.slice(0, 2000) || null } });
+      const v = await tx.vendor.findUniqueOrThrow({ where: { id: order.vendorId }, select: { rating: true, ratingCount: true } });
+      const count = v.ratingCount + 1;
+      await tx.vendor.update({ where: { id: order.vendorId }, data: { ratingCount: count, rating: Math.round(((v.rating * v.ratingCount + r) / count) * 100) / 100 } });
+    });
+  } catch (e) {
+    // @@unique([orderId, authorId]): a double submit loses the race instead of double-counting.
+    if ((e as { code?: string }).code === "P2002") throw new OrderError("NOT_ALLOWED");
+    throw e;
+  }
   await notify({ to: { phone: user.phone }, locale: user.locale, template: "REVIEW_THANKS", params: { number: order.number } });
 }
 

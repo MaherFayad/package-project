@@ -1,10 +1,11 @@
 import { fromJson } from "@/lib/json";
 import { generatePrintPdf } from "@/lib/orders/pdf/print";
 import type { DesignDoc, OrderStatus } from "@/types";
+import { PRINT_FILES_UNLOCKED } from "@/lib/orders/state";
 import { loadJobItem, safeFilename } from "../../_shared";
 
 /** The print-ready PDF (buyer artwork) unlocks only once the vendor has accepted the job. */
-const UNLOCKED: OrderStatus[] = ["ACCEPTED", "IN_PRODUCTION", "QC_PENDING", "READY_TO_SHIP", "SHIPPED", "DELIVERED"];
+const UNLOCKED = PRINT_FILES_UNLOCKED;
 
 /**
  * GET /api/vendor/jobs/<orderId>/print-pdf[?item=<itemId>]
@@ -19,7 +20,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   if (user.role !== "ADMIN" && !UNLOCKED.includes(order.status as OrderStatus)) {
     return Response.json({ error: "NOT_ALLOWED" }, { status: 409 });
   }
-  if (item.printPdfUrl && item.printPdfUrl.startsWith("/")) {
+  // Only our own stored route; never follow a stored value off-site ("//host" is protocol-relative).
+  if (item.printPdfUrl && item.printPdfUrl.startsWith("/api/orders/")) {
     return Response.redirect(new URL(item.printPdfUrl, url.origin), 302);
   }
   if (!item.proof) return Response.json({ error: "NO_PROOF" }, { status: 404 });

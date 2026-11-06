@@ -60,11 +60,24 @@ export interface SentNotification {
 const OUTBOX_MAX = 100;
 export const notifyOutbox: SentNotification[] = [];
 
+/**
+ * Mask a phone/email for logs: "+2010****5678", "m***@example.com". Logs are not a place for
+ * personal data (Egypt PDPL Law 151/2020 data minimisation; OWASP ASVS 4.0.3 V7.1.1).
+ */
+export function maskAddress(address: string): string {
+  const at = address.indexOf("@");
+  if (at > 0) return `${address[0]}***${address.slice(at)}`;
+  if (address.length <= 6) return "***";
+  return `${address.slice(0, 5)}****${address.slice(-2)}`;
+}
+
 class ConsoleTransport implements NotifyTransport {
   constructor(readonly channel: NotifyChannel) {}
   async send(address: string, text: string, meta: { template: NotifyTemplate }) {
     if (process.env.NODE_ENV !== "test" && !process.env.NOTIFY_SILENT) {
-      console.info(`[notify:${this.channel}] → ${address} (${meta.template}): ${text}`);
+      // Full text only in development (the dev workflow reads codes from the console).
+      const dev = process.env.NODE_ENV === "development";
+      console.info(`[notify:${this.channel}] → ${maskAddress(address)} (${meta.template})${dev ? `: ${text}` : ""}`);
     }
     return { ok: true, id: `dev_${Date.now().toString(36)}` };
   }
@@ -86,14 +99,24 @@ export function renderNotification(template: NotifyTemplate, locale: Locale, par
 }
 
 export async function notify(msg: NotifyMessage): Promise<SentNotification[]> {
-  const text = renderNotification(msg.template, msg.locale, msg.params);
+  let text: string;
+  try {
+    text = renderNotification(msg.template, msg.locale, msg.params);
+  } catch (e) {
+    // "A failing channel never throws into the order flow" also covers a broken template.
+    console.error("[notify] render failed", msg.template, e);
+    return [];
+  }
   const sent: SentNotification[] = [];
   const channels = msg.channels ?? (["whatsapp", "email"] as NotifyChannel[]);
   const record = (channel: NotifyChannel, address: string) => {
     const s = { channel, address, template: msg.template, text, at: new Date().toISOString() };
     sent.push(s);
-    notifyOutbox.push(s);
-    if (notifyOutbox.length > OUTBOX_MAX) notifyOutbox.splice(0, notifyOutbox.length - OUTBOX_MAX);
+    // The in-memory outbox (personal data) exists for dev/tests only, never in production.
+    if (process.env.NODE_ENV !== "production") {
+      notifyOutbox.push(s);
+      if (notifyOutbox.length > OUTBOX_MAX) notifyOutbox.splice(0, notifyOutbox.length - OUTBOX_MAX);
+    }
   };
   const trySend = async (channel: NotifyChannel, address: string) => {
     try {

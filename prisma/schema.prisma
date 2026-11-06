@@ -42,6 +42,8 @@ model User {
   disputes  Dispute[]
 
   @@index([role])
+  // Added by technical audit: foreign-key / filter indexes (no FK auto-index in SQLite or Postgres).
+  @@index([vendorId])
 }
 
 model Organization {
@@ -303,6 +305,8 @@ model Proof {
   orderItems OrderItem[]
 
   @@index([designId])
+  // Added by technical audit: foreign-key / filter indexes (no FK auto-index in SQLite or Postgres).
+  @@index([approvedById])
 }
 
 // ───────────────────────────── Commerce ─────────────────────────────
@@ -324,6 +328,8 @@ model Quote {
   createdAt  DateTime @default(now())
 
   orders Order[]
+  // Added by technical audit: foreign-key / filter indexes (no FK auto-index in SQLite or Postgres).
+  @@index([userId])
 }
 
 model Order {
@@ -363,6 +369,8 @@ model Order {
 
   @@index([buyerId])
   @@index([vendorId, status])
+  // Added by technical audit: foreign-key / filter indexes (no FK auto-index in SQLite or Postgres).
+  @@index([status, placedAt])
 }
 
 model OrderItem {
@@ -383,6 +391,9 @@ model OrderItem {
   unitPiasters  Int
   lineTotalPiasters Int
   printPdfUrl   String? // print-ready dieline PDF, generated only for orders
+  // Added by technical audit: foreign-key / filter indexes (no FK auto-index in SQLite or Postgres).
+  @@index([orderId])
+  @@index([proofId])
 }
 
 model ProductionEvent {
@@ -407,6 +418,8 @@ model QcPhoto {
   reviewNote String?
   uploadedAt DateTime @default(now())
   reviewedAt DateTime?
+  // Added by technical audit: foreign-key / filter indexes (no FK auto-index in SQLite or Postgres).
+  @@index([orderId])
 }
 
 model Shipment {
@@ -420,6 +433,8 @@ model Shipment {
   events       Json     @default("[]")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  // Added by technical audit: foreign-key / filter indexes (no FK auto-index in SQLite or Postgres).
+  @@index([orderId])
 }
 
 model Payment {
@@ -437,6 +452,8 @@ model Payment {
   updatedAt   DateTime @updatedAt
 
   @@index([providerRef])
+  // Added by technical audit: foreign-key / filter indexes (no FK auto-index in SQLite or Postgres).
+  @@index([orderId, status])
 }
 
 model Payout {
@@ -451,6 +468,9 @@ model Payout {
   approvedAt  DateTime?
   paidAt      DateTime?
   createdAt   DateTime @default(now())
+  // Added by technical audit: foreign-key / filter indexes (no FK auto-index in SQLite or Postgres).
+  @@index([vendorId])
+  @@index([orderId])
 }
 
 model Invoice {
@@ -465,6 +485,8 @@ model Invoice {
   etaUuid   String?  // Egyptian Tax Authority e-invoice UUID once submitted
   etaStatus String?  // null | SUBMITTED | VALID | INVALID
   issuedAt  DateTime @default(now())
+  // Added by technical audit: foreign-key / filter indexes (no FK auto-index in SQLite or Postgres).
+  @@index([orderId])
 }
 
 model Review {
@@ -495,6 +517,9 @@ model Dispute {
   resolution String?
   createdAt  DateTime @default(now())
   resolvedAt DateTime?
+  // Added by technical audit: foreign-key / filter indexes (no FK auto-index in SQLite or Postgres).
+  @@index([orderId])
+  @@index([status])
 }
 
 // ───────────────────────────── Privacy (PDPL 151/2020 data-subject requests) ─────────────────────────────
