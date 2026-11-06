@@ -21,7 +21,7 @@ Severity follows the brief: critical = broken flow, data or security; high = cle
 | FF-05 | medium | FEFCO_0948 · `cushions.ts` (3d-visual F09-03) | The square rail's inner wall was a full s long, so its glue tab lay in the pad's plane (coplanar, 2 070 to 6 782 mm²). | FEFCO 0948. | Inner wall s − t: the glue tab sits flat under the pad. | fixed |
 | FF-06 | medium | FEFCO_0973, 0976 · `cells.ts` | The edge brace and triangular corner post had the FF-01 defect: the glue tab was coplanar with the first leg (2 054 to 9 182 mm²), and the face end stood proud of the second leg. | FEFCO 0973 / 0976. | `triangleBrace`. | fixed |
 | FF-07 | high | FEFCO_0601, 0602, 0606 · `fefco-06-07/group06.ts` (3d-visual F67-01) | Body flaps stitched over the end pieces overlapped in one plane at all **8 end corners** (about 360 mm² each), so the end faces z-fought in the default ¾ view. The tapers were 0.9 × depth, short of a 45° mitre. | FEFCO 0601: body flaps meet on the end panel. | Taper = depth + 0.5 mm (a 45° mitre with a hairline gap), capped at half the edge. | fixed |
-| FF-08 | medium | FEFCO_0605 · `group06.ts` (F67-02) | On the open top, the end pieces' top flaps ran the full W under the body's rim flanges (661 mm² × 4 coplanar). | FEFCO 0605: flanged ends and rim frame the opening. | The end top flap is inset by rim depth − t + 0.5 when the lid is `rim`, so the four flanges meet edge to edge. | fixed |
+| FF-08 | medium | FEFCO_0605 · `group06.ts` (F67-02) | On the open top, the end pieces' top flaps ran the full W under the body's rim flanges (661 mm² × 4 coplanar). On the first fix pass they were also tapered and 4 mm deeper than the rim, which left notches in the frame (seen in the render and re-fixed). | FEFCO 0605: flanged ends and rim frame the opening. | When the lid is `rim`, the end top flap is square-cut, as deep as the rim (v), inset by v − t + 0.5 and printable like the body rims, so the four flanges make one even frame. | fixed |
 | FF-09 | medium | FEFCO_0608 · `group06.ts` (F67-03) | The tuck went into the same layer as the end flaps stitched inside the front wall (912 mm² × 2). | — | When the ends have flaps, the tuck goes in behind them (`stack: -2`). | fixed |
 | FF-10 | medium | FEFCO_0621 · `group06.ts` (F67-04) | The joint tab (−90° fold) pivoted on its printed face, so it sat 0.67 t inside the long wall on both shells (4 788 mm² each). The inner end wall also stopped 0.5 mm short of the wall it glues to. | Manufacturer's joint glued on the inside face. | The tab pivots on its outer face (`pivotDepth: 1`). The inner end wall is Wp − 2t long, so the tab lies flat against the wall's inside. | fixed |
 | FF-11 | medium | FEFCO_0714 · `group07.ts` (F67-05) | The lid-to-base clearance was max(1, t/2), less than one caliper, but the lid's joint tab sits in that gap, so it went 0.33 t into the base back wall. The same gap problem is noted for FEFCO_0320 in 3d-visual C-06. | Telescope lid: inner = base outer + 2t (ECMA / FEFCO practice). | `telescopeClearance = t + 0.5`. `outerSize` uses the same function, so pricing area and closed size stay consistent: the lid grows by 2 mm (E) or 4 mm (B) on L and W. | fixed |
@@ -33,6 +33,7 @@ Severity follows the brief: critical = broken flow, data or security; high = cle
 | FF-17 | low | **Engine / UI (outside scope)** (3d-visual F67-06) | Deep open-top styles (0700, 0906, 0913) read as closed in the ¾ view. The far inner walls fill the opening, and the inside material has almost no shading contrast. The button says "Closed". | — | Some ambient-occlusion or inside-face darkening in `boardMaterials.ts`, and the label "Assembled" for open-top styles. | open (outside scope) |
 | FF-18 | low | FEFCO_0902 (3d-visual F09-04) | "Pad standing on edge": this is **correct**. FEFCO 0902 is the full end-wall pad (slot `end-wall`), and it stands against the host's W wall. | FEFCO 0902 title "W-side pad". | None. | no change needed |
 | FF-19 | low | **Outside scope** · `/en/design/fefco-0967-cross-scored-sheet` | One load logged React hydration error #418 (server/client HTML mismatch) on the first pass. It did not repeat after the fixes, and the geometry is not involved. | — | For the designer page owner: check for locale or time-dependent text that is rendered on the server. | open (outside scope, not reproduced) |
+| FF-21 | medium | **Designer UI (outside scope)** · `src/components/three/ViewControls.tsx` + `PackagingScene.tsx · frameFor` | At 390 × 844 the 3D stage is about 375 × 247 px, and the view-control toolbar, drawn over the canvas, hides the lower quarter of the model (see `mobile-390-closed.png`). The 44 px buttons meet target size, but the frame does not reserve room for them. | WCAG 2.2 2.4.11 (focus not obscured) for the canvas focus ring; packshot framing. | Reserve the toolbar height in `frameFor` (shift the target up by toolbar height / 2 in world units), or place the toolbar under the canvas below 600 px. | open (outside scope) |
 | FF-20 | low | all 69 | Mobile cost: at most 23 panels (0615), which is about 69 draw calls plus a shadow pass and under 1 k triangles per model. No family model is a frame-rate risk. | — | None. | verified |
 
 ### Checked and correct (no finding)
@@ -43,12 +44,19 @@ Severity follows the brief: critical = broken flow, data or security; high = cle
 - **Fit.** All 48 fittings sit inside the host at 0.5 to 4 mm with no slack, after FF-01 to FF-03.
 - **Flute edge.** The board caliper comes from `BOARD_SPECS` (1.5 mm E, 3 mm B). The cut-edge flute texture is shared (3d-visual X-05).
 
+## Screenshots (`docs/screenshots/audit/3d-fefco-06-09/`)
+
+- `fixes-before-after.png`: each fixed defect in the live designer, before and after (0945, 0605, 0948, 0601, 0714, 0606).
+- `before-{06,07,09}-{closed,half}.png` and `after-…`: every library model from these families, at Closed and at Half fold.
+- `mobile-390-closed.png`: 390 × 844 check (FF-21).
+- The fittings not in the designer (0930, 0933, 0934, 0935, 0946, 0947, 0949, 0949A, 0973 to 0976; `UNPRINTED_FITTINGS` in `boxes.ts`) cannot be opened at `/design`. They were checked by the geometry sweep and the new tests.
+
 ## Files touched
 
 - `src/lib/dieline/families/fefco-09/engine.ts`: `triangleBrace`.
 - `src/lib/dieline/families/fefco-09/cushions.ts`: 0945, 0946, 0947, 0948, 0949, 0949a.
 - `src/lib/dieline/families/fefco-09/cells.ts`: 0973, 0974, 0975, 0976.
-- `src/lib/dieline/families/fefco-06-07/group06.ts`: 0601, 0602, 0606 mitres; 0605 end top flap; 0608 tuck; 0621 tab.
+- `src/lib/dieline/families/fefco-06-07/group06.ts`: 0601, 0602, 0606 mitres; 0605 end rim flanges; 0608 tuck; 0621 tab.
 - `src/lib/dieline/families/fefco-06-07/group07.ts`: 0714 clearance.
 - Tests: `fefco-09/__tests__/overlap.ts` (new), `fefco-09.test.ts` (+48 strict tests), `fefco-06-07.test.ts` (+33 shared-board tests). Against the base sources, the new tests fail on exactly the 17 models fixed here.
 - READMEs of both families.

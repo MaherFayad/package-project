@@ -100,11 +100,14 @@ export function blissBox(dims: Dims, t: number, o: BlissOpts): StructureDraft {
       const edges = rectEdges(r);
       for (const k of ["top", "right", "bottom", "left"] as const) {
         const len = k === "top" || k === "bottom" ? dims.W : dims.H;
-        const taper = o.endFlaps === "taper" ? Math.min(e * 0.9, len * 0.3) : 1;
-        // Open top (0605): the end's top flap is the rim at the ends; it stops where the body's
-        // rim flanges start, so the four flanges frame the opening without overlapping.
-        const hinge = o.lid === "rim" && k === "top" ? insetSeg(edges[k], Math.min(rimDepth(dims.W) - t + 0.5, len / 2 - 5)) : edges[k];
-        b.attach(`${id}_flap_${k}`, "flap", id, hinge, e, { kind: "trapezoid", taperA: taper, taperB: taper }, { stage: 0, label: "End flap (stitched inside the body)", printable: false });
+        // Open top (0605): the end's top flap is the rim at the ends. It is square-cut, as deep
+        // as the body's rim flanges and stops where they start, so the four flanges make one
+        // even frame round the opening without overlapping.
+        const rimEnd = o.lid === "rim" && k === "top";
+        const v = rimDepth(dims.W);
+        const taper = rimEnd ? 0 : o.endFlaps === "taper" ? Math.min(e * 0.9, len * 0.3) : 1;
+        const hinge = rimEnd ? insetSeg(edges[k], Math.min(v - t + 0.5, len / 2 - 5)) : edges[k];
+        b.attach(`${id}_flap_${k}`, "flap", id, hinge, rimEnd ? v : e, { kind: "trapezoid", taperA: taper, taperB: taper }, { stage: 0, label: rimEnd ? "End rim flange (v)" : "End flap (stitched inside the body)", printable: rimEnd });
       }
     }
     x += dims.W + 2 * e + 15;
