@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { createPortal } from "react-dom";
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Boxes, ChevronDown, Menu, Milk, PackageOpen, Printer, Rotate3d, Store, X } from "lucide-react";
 import styles from "./marketing.module.css";
@@ -181,38 +182,44 @@ export function HeaderNav({ model, children }: { model: NavModel; children: Reac
           </button>
         </div>
       </div>
-      {sheet ? (
-        <div className={styles.sheet} role="dialog" aria-modal="true" aria-label={model.menuLabel} ref={sheetRef}>
-          <div className={styles.sheetHead}>
-            <Link href={model.homeHref} className={styles.brand} aria-label={model.brandLabel} onClick={() => setSheet(false)}>
-              {model.brand}
-            </Link>
-            <button type="button" className={styles.menuButton} aria-label={model.closeLabel} onClick={() => setSheet(false)}>
-              <X size={24} aria-hidden />
-            </button>
-          </div>
-          <nav className={styles.sheetBody} aria-label={model.label}>
-            {[model.products, model.printers].map((g) => (
-              <div key={g.label} className={styles.sheetGroup}>
-                <h2 className={styles.sheetGroupTitle}>{g.label}</h2>
-                {g.items.map((it) => (
-                  <Link key={it.href} href={it.href} className={styles.sheetLink} onClick={() => setSheet(false)}>
-                    {it.title}
-                  </Link>
-                ))}
-              </div>
-            ))}
-            <div className={styles.sheetGroup}>
-              {model.links.map((l) => (
-                <Link key={l.href} href={l.href} className={styles.sheetLink} onClick={() => setSheet(false)}>
-                  {l.label}
+      {/* Portalled to the .site wrapper: the sticky header's backdrop-filter makes it the
+          containing block for fixed descendants, which clipped the sheet to the 64px bar.
+          .site still provides the --mk-* tokens. */}
+      {sheet && header.current
+        ? createPortal(
+            <div className={styles.sheet} role="dialog" aria-modal="true" aria-label={model.menuLabel} ref={sheetRef}>
+              <div className={styles.sheetHead}>
+                <Link href={model.homeHref} className={styles.brand} aria-label={model.brandLabel} onClick={() => setSheet(false)}>
+                  {model.brand}
                 </Link>
-              ))}
-            </div>
-            <div className={styles.sheetActions}>{model.sheetActions}</div>
-          </nav>
-        </div>
-      ) : null}
+                <button type="button" className={styles.menuButton} aria-label={model.closeLabel} onClick={() => setSheet(false)}>
+                  <X size={24} aria-hidden />
+                </button>
+              </div>
+              <nav className={styles.sheetBody} aria-label={model.label}>
+                {[model.products, model.printers].map((g) => (
+                  <div key={g.label} className={styles.sheetGroup}>
+                    <h2 className={styles.sheetGroupTitle}>{g.label}</h2>
+                    {g.items.map((it) => (
+                      <Link key={it.href} href={it.href} className={styles.sheetLink} onClick={() => setSheet(false)}>
+                        {it.title}
+                      </Link>
+                    ))}
+                  </div>
+                ))}
+                <div className={styles.sheetGroup}>
+                  {model.links.map((l) => (
+                    <Link key={l.href} href={l.href} className={styles.sheetLink} onClick={() => setSheet(false)}>
+                      {l.label}
+                    </Link>
+                  ))}
+                </div>
+                <div className={styles.sheetActions}>{model.sheetActions}</div>
+              </nav>
+            </div>,
+            header.current.parentElement ?? document.body,
+          )
+        : null}
     </header>
   );
 }

@@ -1089,7 +1089,7 @@
 
 /* Phones: primary and secondary CTAs go full width (thumb reach, WCAG 2.5.8 target size). */
 @media (max-width: 559px) {
-  .actions { flex-direction: column; align-items: stretch; }
+  .actions { flex-direction: column; align-items: stretch; justify-self: stretch; inline-size: 100%; }
   .actions .pill,
   .tilesCta .pill,
   .sectionHeadRow > .pill { inline-size: 100%; }
@@ -1299,3 +1299,24 @@
 .vendorStats { gap: 32px 24px; }
 .vendorStats .statValue { font-size: clamp(1.875rem, 1.3rem + 1.8vw, 2.75rem); }
 .profileBody { padding-block-start: clamp(40px, 5vw, 64px); }
+
+/* Phones: each box family becomes a swipe rail (reference: "collage becomes a horizontal
+   scroll strip"), so /boxes is ~4x shorter. Cards snap; the next card peeks to signal scroll.
+   The rail scrolls inside the container's full bleed, never the page. */
+@media (max-width: 559px) {
+  .productRail {
+    grid-auto-flow: column;
+    grid-auto-columns: 82%;
+    gap: 12px;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: var(--mk-gutter);
+    margin-inline: calc(-1 * var(--mk-gutter));
+    padding-inline: var(--mk-gutter);
+    padding-block-end: 8px;
+    scrollbar-width: none;
+  }
+  .productRail::-webkit-scrollbar { display: none; }
+  .productRail > li { scroll-snap-align: start; }
+}

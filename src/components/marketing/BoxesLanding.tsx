@@ -85,7 +85,7 @@ export async function BoxesLanding({
                   </div>
                   <span className={styles.small}>{t("marketing.boxes.count", { count: list.length })}</span>
                 </div>
-                <ul className={styles.productGrid}>
+                <ul className={`${styles.productGrid} ${styles.productRail}`}>
                   {list.map((s, i) => (
                     <ProductCard key={s.code} locale={locale} structure={s} fromPiasters={prices.get(s.code) ?? null} index={i} />
                   ))}

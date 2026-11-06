@@ -37,6 +37,9 @@ Reference: `docs/design-refs/shopify-marketing-reference.md`.
 | MK-14 | low | `page.tsx` closing CTA | The closing headline size was an inline `style`, so it could not be reused. | Maintainability | Moved it to a `.ctaTitle` class, which the /boxes closing band also uses. | fixed |
 | MK-15 | low | `marketing.module.css` | A class-name collision, found in the pass 1 re-audit: the new printer-profile body class reused `.vendorBody`, which `VendorShowcaseCard` already uses. That made the band a grid and caused 41px of horizontal scroll at 390px in Arabic. | No horizontal scroll (reference, mobile) | Renamed it to `.profileBody`. The overflow check now returns no elements in either locale. | fixed |
 | MK-16 | low | Display H1s (`m-enter`) on home, /boxes, /bottles, /vendors, /vendors/[slug], /boxes/[structure], legal | Page headlines faded in from opacity 0. Chrome skips text that paints at opacity 0 as an LCP candidate, so the true visual LCP (the headline, once visible) was never measured, and the headline appeared about 0.8s late. | Core Web Vitals (LCP) | Added `.m-enter-lcp` in motion.css: a rise without the fade, switched off under reduced motion. All page H1s use it now, and the eyebrow, lead and CTA keep the fade. Note: the earlier "6.6s LCP" in the scroll-through script was an artifact of programmatic scrolling; without scrolling, LCP is 0.7 to 0.9s. | fixed |
+| MK-17 | high | Mobile menu sheet (`HeaderNav.tsx`) | Found in pass 2. The full-screen menu (`position: fixed; inset: 0`) was rendered inside the sticky header, and the header's `backdrop-filter` makes it the containing block for fixed descendants. The sheet was clipped to the 64px bar. Focus moved into invisible links, and the page stayed visible underneath. Every phone user who opened the menu saw nothing. | WCAG 2.4.7 / 2.4.11 (focus on invisible controls); broken navigation | The sheet is portalled into the `.site` wrapper, which has no filter and still provides the tokens. Checked at 390px: the menu fills the screen, Shift+Tab stays trapped inside, and Escape closes it and returns focus to the menu button. | fixed |
+| MK-18 | medium | `/boxes` at < 560px | Found in pass 2. Each family stacked full-width 4:3 product cards, 13 cards over about 11.7k px of scrolling. | Reference mobile: "collage becomes a horizontal scroll strip" | On phones each family is now a scroll-snap rail (82% cards, the next card peeking, full bleed inside the container; it never scrolls the page). Added a separate `.productRail` class so `/design` (out of scope), which shares `.productGrid`, is unchanged. I tried the rail on `/bottles` too and reverted it, because those "coming soon" cards contain nothing focusable, so the rail would not be keyboard scrollable (axe `scrollable-region-focusable`). | fixed |
+| MK-19 | medium | Hero CTAs on `/boxes/[structure]`, `/vendors/[slug]` and the home design band at < 560px | Pass 2 reopened MK-08. Parents with `justify-items: start` shrink-wrapped the stacked `.actions`, so these CTAs were still not full width. | Reference: CTA full width on mobile | On phones `.actions` now sets `justify-self: stretch; inline-size: 100%` itself. Checked on `/en/boxes/mailer-box` at 390px: both pills span the full width. | fixed |
 
 ## Checked and clean (no change needed)
 
@@ -67,4 +70,19 @@ Reference: `docs/design-refs/shopify-marketing-reference.md`.
 
 ## Screenshots
 
-`docs/screenshots/audit/marketing/`: before and after for the fold at both viewports, the printer profile, /boxes, and the mobile closing CTA.
+`docs/screenshots/audit/marketing/` (indexed PNG, 1x DPR, 1.7 MB total):
+
+- `before-` / `after-home-en-1440-fold.png`, `before-` / `after-home-ar-390-fold.png`: the hero, header pill and compact cookie bar
+- `before-` / `after-printer-profile-ar-1440.png`, `after-printer-profile-ar-390.png`: the printer profile hero
+- `before-` / `after-boxes-en-1440-full.png`, `before-` / `after-boxes-en-390-full.png`, `after-boxes-en-390-rail.png`: the /boxes landing, library teaser, closing CTA and mobile rails
+- `before-` / `after-structure-en-390-fold.png`: full-width hero CTAs
+- `before-` / `after-home-ar-390-closing-cta.png`: the closing CTA band on mobile
+- `after-mobile-menu-sheet-en-390.png`: the mobile menu sheet, now full screen (the clipped "before" state is described in MK-17)
+
+Motion was checked with Playwright videos (desktop en, mobile ar, reduced-motion en; kept out of git) and with computed-style probes: the marquee transform changes over time, chips run `m-float`, card hover gives `translateY(-4px)`, and under reduced motion no animations run and hover leaves no transform.
+
+## Verification (final build)
+
+- `npm run lint`: clean. `npm run typecheck`: clean. `npm test`: 43 files, 5905 tests passed. `npm run build`: OK.
+- Playwright e2e `smoke`, `storefront` and `journey` (desktop + mobile, `--workers=2 --trace off`): 19 passed, 1 skipped (skipped in the suite itself). One run had a transient failure in `smoke` (OTP "Send code" stayed disabled on /login, outside scope); it passed on re-run.
+- Audit script over 13 routes x 2 viewports: 0 axe violations, CLS 0.000 everywhere, no horizontal scroll, no console errors.
