@@ -35,8 +35,11 @@ export default async function DesignPickerPage({
 }) {
   const locale = toLocale((await params).locale);
   // Deep links: the layout already redirected on a full load; this covers soft navigations.
-  const to = startPageRedirect(locale, await searchParams);
+  const search = await searchParams;
+  const to = startPageRedirect(locale, search);
   if (to) redirect(to);
+  // ?q= prefills the model search (the prompt bar on /[locale]/designer).
+  const q = (Array.isArray(search.q) ? search.q[0] : search.q)?.trim().slice(0, 80) ?? "";
   const t = getT(locale);
   const structures = await loadPickerStructures();
 
@@ -62,7 +65,7 @@ export default async function DesignPickerPage({
                 </EmptyState>
               </Box>
             ) : (
-              <ModelLinks locale={locale} />
+              <ModelLinks locale={locale} query={q} />
             )}
           </BlockStack>
         </section>

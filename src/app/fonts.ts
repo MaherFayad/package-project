@@ -1,4 +1,4 @@
-import { IBM_Plex_Sans_Arabic, Inter } from "next/font/google";
+import { IBM_Plex_Sans_Arabic, Inter, Noto_Sans_Arabic } from "next/font/google";
 
 /**
  * Inter (variable, Latin) carries every Latin run and all digits, in both locales. It is
@@ -35,3 +35,19 @@ export const plexArabic = IBM_Plex_Sans_Arabic({
  * chips (CLS 0.075 on /ar/catalog, R4-CR-05).
  */
 export const PLEX_PRELOAD_WEIGHTS = [400, 600, 700] as const;
+
+/**
+ * Noto Sans Arabic (variable, wght 100 to 900, SIL OFL): the public marketing site's Arabic face
+ * (docs/design-refs/shopify-2026-reference.md, light display weights 300/330). One variable file
+ * carries every weight, so the light display cut and the 550 buttons cost a single request.
+ * Not preloaded by next/font: MarketingShell preloads it on Arabic marketing pages only (see
+ * ./font-preload.ts `notoArabicPreloadUrl`). `adjustFontFallback` (default) emits a size-adjusted
+ * local fallback, so the swap does not shift the layout (CLS).
+ */
+export const notoArabic = Noto_Sans_Arabic({
+  subsets: ["arabic"],
+  display: "swap",
+  preload: false,
+  adjustFontFallback: true,
+  variable: "--font-noto-arabic",
+});

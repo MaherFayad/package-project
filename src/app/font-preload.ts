@@ -1,6 +1,7 @@
 import "server-only";
 import fs from "node:fs";
 import path from "node:path";
+import { preload } from "react-dom";
 
 /**
  * URLs of the built IBM Plex Sans Arabic woff2 files (Arabic block) for the given weights.
@@ -90,4 +91,46 @@ export function interPreloadUrl(): string | null {
     }
   }
   return interCache && interCache.startsWith("/_next/") ? interCache : null;
+}
+
+let notoCache: string | null | undefined;
+
+/**
+ * URL of the built Noto Sans Arabic (variable) woff2, Arabic block. Preloaded by MarketingShell on
+ * Arabic marketing pages, where it carries the LCP headline (it replaces Plex there).
+ */
+export function notoArabicPreloadUrl(): string | null {
+  if (notoCache === undefined || (notoCache === null && process.env.NODE_ENV !== "production")) {
+    notoCache = null;
+    for (const f of cssFiles()) {
+      let css: string;
+      try {
+        css = fs.readFileSync(f, "utf8");
+      } catch {
+        continue;
+      }
+      if (!css.includes("Noto Sans Arabic")) continue;
+      for (const m of css.matchAll(/@font-face\s*{([^}]*)}/g)) {
+        const body = m[1];
+        if (!/font-family:\s*['"]?Noto Sans Arabic['"]?\s*;/.test(body)) continue;
+        if (!/unicode-range:[^;]*u\+06/i.test(body)) continue; // the Arabic-block file
+        const u = /url\(([^)]+\.woff2)\)/.exec(body);
+        if (u) notoCache = u[1].replace(/^['"]|['"]$/g, "");
+      }
+      if (notoCache) break;
+    }
+  }
+  return notoCache && notoCache.startsWith("/_next/") ? notoCache : null;
+}
+
+/**
+ * Preloads the Plex Arabic cuts used above the fold of the app frames (designer, checkout, vendor
+ * and admin), Arabic pages only. Was in `[locale]/layout.tsx` for every page; the marketing pages
+ * now use Noto Sans Arabic, so each app frame calls this itself (R6 foundation).
+ */
+export function preloadPlexArabic(locale: string, weights: readonly number[] = [400, 600, 700]): void {
+  if (locale !== "ar") return;
+  for (const href of plexArabicPreloadUrls(weights)) {
+    preload(href, { as: "font", type: "font/woff2", crossOrigin: "anonymous" });
+  }
 }

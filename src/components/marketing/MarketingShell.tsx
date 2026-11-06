@@ -1,11 +1,13 @@
 import "@/styles/motion.css";
+import "./kit/tokens.css";
+import { preload } from "react-dom";
+import { notoArabicPreloadUrl } from "@/app/font-preload";
 import { Suspense, type ReactNode } from "react";
 import type { Locale } from "@/types";
 // Direct imports, not the "@/components/ui" barrel: keeps the Polaris kit CSS out of the
 // marketing pages' render-blocking stylesheets (R2-MK-01).
 import { CookieNotice } from "@/components/ui/CookieNotice";
 import { MarketingProviders } from "./MarketingProviders";
-import { AnnouncementBar } from "./AnnouncementBar";
 import { MarketingFooter } from "./MarketingFooter";
 import { MarketingHeader } from "./MarketingHeader";
 import { RevealScope } from "./useReveal";
@@ -13,17 +15,23 @@ import { RailFocus } from "./RailFocus";
 import styles from "./marketing.module.css";
 
 /**
- * The one buyer-facing chrome (CR-05): announcement bar, white header with menus (account menu
+ * The one buyer-facing chrome (CR-05): dark header with mega-menus (transparent over a
+ * <Sheet hero>), no announcement bar (R6), (account menu
  * once signed in), <main id="main">, black footer and the shared cookie notice. Used by the
  * public pages, sign-in, account, orders, share links and the vendor application. Checkout has
  * its own minimal white header (CheckoutShell); the designer and the vendor and admin apps keep
  * their own frames.
  */
 export function MarketingShell({ locale, boundary = true, children }: { locale: Locale; boundary?: boolean; children: ReactNode }) {
+  // The marketing face (Noto Sans Arabic) carries the Arabic LCP headline: preload it here, on
+  // marketing pages only (the app frames preload Plex instead, see preloadPlexArabic).
+  if (locale === "ar") {
+    const noto = notoArabicPreloadUrl();
+    if (noto) preload(noto, { as: "font", type: "font/woff2", crossOrigin: "anonymous" });
+  }
   return (
     <MarketingProviders locale={locale}>
-      <div className={styles.site}>
-        <AnnouncementBar />
+      <div className={`${styles.site} mk-site`} data-mk="">
         {/* No Suspense here: the header reads no request data (session is a client island), so it
             renders inline in the static HTML. Behind a 64 px fallback it streamed in late as a
             73 px header and pushed the page down (CLS 0.0055, CR-45). */}

@@ -53,7 +53,7 @@ describe("i18n scopes", () => {
   it("nested providers merge the area dictionary into the root one", () => {
     function Probe() {
       const { t } = useI18n();
-      return <p>{t("marketing.announce.dismiss")} | {t("designer.untitled")}</p>;
+      return <p>{t("mk.nav.menu")} | {t("designer.untitled")}</p>;
     }
     render(
       <I18nProvider locale="en" dict={scopedDictionary("en", "root")}>
@@ -63,6 +63,6 @@ describe("i18n scopes", () => {
       </I18nProvider>,
     );
     const full = getDictionary("en");
-    expect(screen.getByText(`${lookup(full, "marketing.announce.dismiss")} | ${lookup(full, "designer.untitled")}`)).toBeTruthy();
+    expect(screen.getByText(`${lookup(full, "mk.nav.menu")} | ${lookup(full, "designer.untitled")}`)).toBeTruthy();
   });
 });
