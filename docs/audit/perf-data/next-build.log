@@ -1,0 +1,180 @@
+
+> elba@0.1.0 build
+> next build
+
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+   ▲ Next.js 15.5.29
+   - Environments: .env
+   - Experiments (use with caution):
+     · optimizePackageImports
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 43s
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/209) ...
+   Generating static pages (52/209) 
+   Generating static pages (104/209) 
+   Generating static pages (156/209) 
+ ✓ Generating static pages (209/209)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                       Size  First Load JS  Revalidate  Expire
+┌ ○ /_not-found                                  201 B         104 kB
+├ ● /[locale]                                  8.28 kB         115 kB
+├   ├ /ar
+├   └ /en
+├ ● /[locale]/account                          5.45 kB         146 kB
+├   ├ /ar/account
+├   └ /en/account
+├ ƒ /[locale]/account/export                     201 B         104 kB
+├ ● /[locale]/admin                            1.38 kB         142 kB
+├   ├ /ar/admin
+├   └ /en/admin
+├ ● /[locale]/admin/audit                      2.43 kB         143 kB
+├   ├ /ar/admin/audit
+├   └ /en/admin/audit
+├ ● /[locale]/admin/catalog                    3.84 kB         144 kB
+├   ├ /ar/admin/catalog
+├   └ /en/admin/catalog
+├ ● /[locale]/admin/disputes                   2.46 kB         156 kB
+├   ├ /ar/admin/disputes
+├   └ /en/admin/disputes
+├ ƒ /[locale]/admin/disputes/[id]              4.25 kB         161 kB
+├ ● /[locale]/admin/orders                       193 B         157 kB
+├   ├ /ar/admin/orders
+├   └ /en/admin/orders
+├ ƒ /[locale]/admin/orders/[number]            3.82 kB         161 kB
+├ ● /[locale]/admin/pricing                     4.1 kB         473 kB
+├   ├ /ar/admin/pricing
+├   └ /en/admin/pricing
+├ ● /[locale]/admin/privacy                    3.06 kB         156 kB
+├   ├ /ar/admin/privacy
+├   └ /en/admin/privacy
+├ ● /[locale]/admin/users                      2.35 kB         156 kB
+├   ├ /ar/admin/users
+├   └ /en/admin/users
+├ ƒ /[locale]/admin/users/[id]                 2.88 kB         160 kB
+├ ● /[locale]/admin/vendors                     2.1 kB         142 kB
+├   ├ /ar/admin/vendors
+├   └ /en/admin/vendors
+├ ƒ /[locale]/admin/vendors/[slug]               314 B         157 kB
+├ ƒ /[locale]/admin/vendors/applications/[id]  2.36 kB         159 kB
+├ ● /[locale]/bottles                            168 B         107 kB
+├   ├ /ar/bottles
+├   └ /en/bottles
+├ ● /[locale]/boxes                            2.98 kB         143 kB
+├   ├ /ar/boxes
+├   └ /en/boxes
+├ ● /[locale]/boxes/[structure]                1.35 kB         137 kB
+├   ├ /ar/boxes/mailer-box
+├   ├ /ar/boxes/shipping-box
+├   ├ /ar/boxes/reverse-tuck-end
+├   └ [+29 more paths]
+├ ● /[locale]/boxes/[structure]/[size]         1.35 kB         137 kB
+├   ├ /ar/boxes/mailer-box/180x120x50
+├   ├ /ar/boxes/mailer-box/200x150x50
+├   ├ /ar/boxes/mailer-box/250x180x80
+├   └ [+97 more paths]
+├ ● /[locale]/catalog                          2.98 kB         143 kB
+├   ├ /ar/catalog
+├   └ /en/catalog
+├ ƒ /[locale]/catalog/[slug]                     201 B         104 kB
+├ ● /[locale]/checkout                           329 B         136 kB
+├   ├ /ar/checkout
+├   └ /en/checkout
+├ ƒ /[locale]/checkout/[designId]                15 kB         483 kB
+├ ƒ /[locale]/checkout/pay/[orderId]           3.95 kB         144 kB
+├ ● /[locale]/design                           1.89 kB         472 kB
+├   ├ /ar/design
+├   └ /en/design
+├ ƒ /[locale]/design/[structure]               23.1 kB         517 kB
+├ ● /[locale]/dev/3d                           16.1 kB         510 kB
+├   ├ /ar/dev/3d
+├   └ /en/dev/3d
+├ ● /[locale]/dev/finishes                     8.32 kB         277 kB
+├   ├ /ar/dev/finishes
+├   └ /en/dev/finishes
+├ ● /[locale]/dev/ui                             14 kB         154 kB
+├   ├ /ar/dev/ui
+├   └ /en/dev/ui
+├ ● /[locale]/legal/[doc]                      1.49 kB         108 kB
+├   ├ /ar/legal/privacy
+├   ├ /ar/legal/terms
+├   ├ /ar/legal/returns
+├   └ [+5 more paths]
+├ ● /[locale]/login                            2.22 kB         106 kB
+├   ├ /ar/login
+├   └ /en/login
+├ ● /[locale]/orders                           1.73 kB         142 kB
+├   ├ /ar/orders
+├   └ /en/orders
+├ ƒ /[locale]/orders/[id]                      3.64 kB         144 kB
+├ ƒ /[locale]/orders/[id]/invoice              1.18 kB         141 kB
+├ ƒ /[locale]/s/[id]                           5.71 kB         474 kB
+├ ● /[locale]/vendor                           3.15 kB         143 kB
+├   ├ /ar/vendor
+├   └ /en/vendor
+├ ● /[locale]/vendor/apply                     7.73 kB         161 kB
+├   ├ /ar/vendor/apply
+├   └ /en/vendor/apply
+├ ● /[locale]/vendor/jobs                      4.78 kB         145 kB
+├   ├ /ar/vendor/jobs
+├   └ /en/vendor/jobs
+├ ƒ /[locale]/vendor/jobs/[number]             8.63 kB         149 kB
+├ ● /[locale]/vendor/payouts                     755 B         137 kB
+├   ├ /ar/vendor/payouts
+├   └ /en/vendor/payouts
+├ ● /[locale]/vendor/profile                   8.32 kB         170 kB
+├   ├ /ar/vendor/profile
+├   └ /en/vendor/profile
+├ ● /[locale]/vendor/rate-cards                  329 B         136 kB
+├   ├ /ar/vendor/rate-cards
+├   └ /en/vendor/rate-cards
+├ ƒ /[locale]/vendor/rate-cards/[id]           2.85 kB         165 kB
+├ ● /[locale]/vendors                          2.95 kB         156 kB
+├   ├ /ar/vendors
+├   └ /en/vendors
+├ ƒ /[locale]/vendors/[slug]                   2.41 kB         143 kB
+├ ƒ /api/admin/users/[id]/export                 201 B         104 kB
+├ ƒ /api/auth/logout                             201 B         104 kB
+├ ƒ /api/auth/me                                 201 B         104 kB
+├ ƒ /api/auth/request-otp                        201 B         104 kB
+├ ƒ /api/auth/verify-otp                         201 B         104 kB
+├ ƒ /api/designs                                 201 B         104 kB
+├ ƒ /api/designs/[id]                            201 B         104 kB
+├ ƒ /api/designs/[id]/share                      201 B         104 kB
+├ ƒ /api/orders/[id]/print-pdf                   201 B         104 kB
+├ ƒ /api/orders/[id]/proof-pdf                   201 B         104 kB
+├ ƒ /api/orders/[id]/status                      201 B         104 kB
+├ ƒ /api/orders/proofs/[proofId]/preview         201 B         104 kB
+├ ƒ /api/payments/mock                           201 B         104 kB
+├ ƒ /api/payments/webhook                        201 B         104 kB
+├ ƒ /api/quote                                   201 B         104 kB
+├ ƒ /api/vendor/files/[...key]                   201 B         104 kB
+├ ƒ /api/vendor/jobs/[id]/dieline                201 B         104 kB
+├ ƒ /api/vendor/jobs/[id]/print-pdf              201 B         104 kB
+├ ƒ /api/vendor/uploads                          201 B         104 kB
+├ ○ /robots.txt                                  201 B         104 kB
+└ ○ /sitemap.xml                                 201 B         104 kB          1h      1y
++ First Load JS shared by all                   103 kB
+  ├ chunks/1255-d8a1861c775d9bcc.js            46.3 kB
+  ├ chunks/4bd1b696-100b9d70ed4e49c1.js        54.2 kB
+  └ other shared chunks (total)                2.87 kB
+
+
+ƒ Middleware                                   34.4 kB
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ƒ  (Dynamic)  server-rendered on demand
+
+
+real	1m30.625s
+user	2m40.189s
+sys	0m20.352s
