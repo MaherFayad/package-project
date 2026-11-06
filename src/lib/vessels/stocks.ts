@@ -67,8 +67,8 @@ export const LABEL_FINISHES: Record<LabelFinishCode, LabelFinish> = {
   MATTE_VARNISH: { code: "MATTE_VARNISH", name: { ar: "ورنيش مطفي", en: "Matte varnish" } },
   GLOSS_LAMINATION: { code: "GLOSS_LAMINATION", name: { ar: "سلوفان لامع", en: "Gloss lamination" }, stocks: ["PAPER_SEMIGLOSS", "WHITE_BOPP", "CLEAR_BOPP", "METALLIC_BOPP"] },
   MATTE_LAMINATION: { code: "MATTE_LAMINATION", name: { ar: "سلوفان مطفي", en: "Matte lamination" }, stocks: ["PAPER_SEMIGLOSS", "WHITE_BOPP", "CLEAR_BOPP", "METALLIC_BOPP"] },
-  HOT_FOIL: { code: "HOT_FOIL", name: { ar: "بصمة ذهبي", en: "Hot foil" }, stocks: ["PAPER_SEMIGLOSS", "WHITE_BOPP", "CLEAR_BOPP"] },
-  SPOT_UV: { code: "SPOT_UV", name: { ar: "يو في موضعي", en: "Spot UV" }, stocks: ["PAPER_SEMIGLOSS", "WHITE_BOPP", "METALLIC_BOPP"] },
+  HOT_FOIL: { code: "HOT_FOIL", name: { ar: "بصمة حرارية", en: "Hot foil" }, stocks: ["PAPER_SEMIGLOSS", "WHITE_BOPP", "CLEAR_BOPP"] },
+  SPOT_UV: { code: "SPOT_UV", name: { ar: "طلاء UV موضعي", en: "Spot UV" }, stocks: ["PAPER_SEMIGLOSS", "WHITE_BOPP", "METALLIC_BOPP"] },
   EMBOSS: { code: "EMBOSS", name: { ar: "بارز", en: "Emboss" }, stocks: ["PAPER_SEMIGLOSS"] },
 };
 

@@ -442,13 +442,13 @@ export const checkoutEn = {
     FAWRY_CODE: "Elba: pay order {number} at any Fawry outlet with reference number {code}.",
     INSTAPAY_PENDING: "Elba: thanks, we are checking your InstaPay transfer for order {number}.",
     VENDOR_NEW_JOB: "Elba: new paid order {number} is waiting on your orders page.",
-    STATUS_CHANGED: "Elba: order {number} is now: {status}.",
+    STATUS_CHANGED: "Elba: order {number} status: {status}.",
     SHIPPED: "Elba: order {number} is on its way.",
-    DELIVERED: "Elba: order {number} was delivered. Tell us how it went.",
+    DELIVERED: "Elba: order {number} was delivered. You can rate it from your orders page.",
     DISPUTE_OPENED: "Elba: we received your report about order {number} and will reply within one working day.",
     REVIEW_THANKS: "Elba: thanks for rating order {number}.",
     DESIGN_FOLLOW_UP:
-      "Elba: your design “{design}” is saved in your account. See the price and order printing here: {url} and reply here with any question. To stop these messages, reply STOP or open: {stop}",
+      "Elba: your design “{design}” is saved in your account. See the price and order printing:\n{url}\nQuestions? Reply to this message.\nTo stop these messages, reply STOP or open:\n{stop}",
   },
   buyer: {
     secureCheckout: "Secure checkout",

@@ -76,9 +76,9 @@ const structures: StructureSeed[] = [
     code: "FEFCO_0201",
     slug: "shipping-box",
     family: "CORRUGATED",
-    nameAr: "علبة شحن",
+    nameAr: "كرتونة شحن",
     nameEn: "Shipping box",
-    descriptionAr: "علبة شحن كرتون مضلع قياسية بأربعة ألسنة علوية وسفلية، قوية وموفرة.",
+    descriptionAr: "كرتونة شحن كرتون مضلع قياسية بأربعة ألسنة علوية وسفلية، قوية وموفرة.",
     descriptionEn: "Regular slotted container (RSC): the standard, economical corrugated shipping carton.",
     params: { L: { min: 100, max: 800 }, W: { min: 80, max: 600 }, H: { min: 60, max: 800 } },
     defaultDims: { L: 300, W: 200, H: 150 },
@@ -95,9 +95,9 @@ const structures: StructureSeed[] = [
     code: "ECMA_RTE",
     slug: "reverse-tuck-end",
     family: "FOLDING_CARTON",
-    nameAr: "علبة كرتون بلسان عكسي",
+    nameAr: "علبة دوبلكس بلسان عكسي",
     nameEn: "Reverse tuck end carton",
-    descriptionAr: "علبة كرتون دوبلكس خفيفة بلسانين في اتجاهين متعاكسين، شائعة لمستحضرات التجميل والعطور.",
+    descriptionAr: "علبة دوبلكس خفيفة بلسانين في اتجاهين متعاكسين، شائعة لمستحضرات التجميل والعطور.",
     descriptionEn: "Lightweight SBS folding carton with tucks on opposite panels; classic for cosmetics and perfume.",
     params: { L: { min: 30, max: 200 }, W: { min: 20, max: 150 }, H: { min: 40, max: 300 } },
     defaultDims: { L: 60, W: 60, H: 140 },
@@ -114,9 +114,9 @@ const structures: StructureSeed[] = [
     code: "ECMA_STE",
     slug: "straight-tuck-end",
     family: "FOLDING_CARTON",
-    nameAr: "علبة كرتون بلسان مستقيم",
+    nameAr: "علبة دوبلكس بلسان مستقيم",
     nameEn: "Straight tuck end carton",
-    descriptionAr: "علبة كرتون دوبلكس بلسانين في نفس الاتجاه لواجهة أمامية نظيفة، مناسبة للأغذية الجافة والهدايا.",
+    descriptionAr: "علبة دوبلكس بلسانين في نفس الاتجاه لواجهة أمامية نظيفة، مناسبة للأغذية الجافة والهدايا.",
     descriptionEn: "SBS folding carton with both tucks on the same side for a clean front; good for dry food and gifts.",
     params: { L: { min: 30, max: 220 }, W: { min: 20, max: 160 }, H: { min: 40, max: 300 } },
     defaultDims: { L: 90, W: 50, H: 150 },
@@ -225,7 +225,7 @@ const finishes = [
   { code: "NONE", nameAr: "بدون تشطيب", nameEn: "No finish", unit: 0, setup: 0 },
   { code: "MATTE_LAMINATION", nameAr: "سلوفان مطفي", nameEn: "Matte lamination", unit: 0.9, setup: 250 },
   { code: "GLOSS_LAMINATION", nameAr: "سلوفان لامع", nameEn: "Gloss lamination", unit: 0.8, setup: 250 },
-  { code: "SPOT_UV", nameAr: "يو في موضعي", nameEn: "Spot UV", unit: 1.6, setup: 900 },
+  { code: "SPOT_UV", nameAr: "طلاء UV موضعي", nameEn: "Spot UV", unit: 1.6, setup: 900 },
   // Added by 3D integration: premium finishes priced from rate cards (unit at the reference area).
   { code: "SOFT_TOUCH_LAMINATION", nameAr: "سلوفان مخملي", nameEn: "Soft-touch lamination", unit: 1.5, setup: 350 },
   { code: "VARNISH", nameAr: "ورنيش", nameEn: "Varnish", unit: 0.35, setup: 150 },
@@ -284,7 +284,7 @@ const vendors: VendorSeed[] = [
     priceMult: 1.0,
     portfolio: [
       { captionAr: "علب بريدية لعلامة ملابس محلية، طباعة لونين", captionEn: "Mailer boxes for a local fashion label, 2-colour print", structureCode: "FEFCO_0427" },
-      { captionAr: "علب شحن كرافت بشعار بلون واحد", captionEn: "Kraft shipping boxes with a one-colour logo", structureCode: "FEFCO_0201" },
+      { captionAr: "كراتين شحن كرافت بشعار بلون واحد", captionEn: "Kraft shipping boxes with a one-colour logo", structureCode: "FEFCO_0201" },
       { captionAr: "علب هدايا رمضان لشركة اتصالات", captionEn: "Ramadan gift boxes for a telecom company", structureCode: "FEFCO_0427" },
     ],
   },
@@ -311,7 +311,7 @@ const vendors: VendorSeed[] = [
     serviceAreas: ["CAIRO", "GIZA", "TENTH_OF_RAMADAN", "OBOUR"],
     priceMult: 1.06,
     portfolio: [
-      { captionAr: "علب عطور بسلوفان مطفي ويو في موضعي", captionEn: "Perfume cartons with matte lamination and spot UV", structureCode: "ECMA_RTE" },
+      { captionAr: "علب عطور بسلوفان مطفي وطلاء UV موضعي", captionEn: "Perfume cartons with matte lamination and spot UV", structureCode: "ECMA_RTE" },
       { captionAr: "علب شاي بطباعة أربعة ألوان", captionEn: "Tea cartons, 4-colour print", structureCode: "ECMA_STE" },
       { captionAr: "أغلفة منزلقة لعلب حلويات", captionEn: "Sleeves for dessert trays", structureCode: "SLEEVE" },
     ],
@@ -321,7 +321,7 @@ const vendors: VendorSeed[] = [
     nameAr: "العبور لصناعة العلب",
     nameEn: "Obour Box Works",
     city: "OBOUR", cityAr: "العبور", cityEn: "Obour",
-    bioAr: "ورشة رقمية سريعة للكميات الصغيرة والعينات، مع طباعة رقمية عالية الجودة على الكرتون المضلع والدوبلكس.",
+    bioAr: "ورشة طباعة رقمية سريعة للكميات الصغيرة والعينات، تطبع على الكرتون المضلع والدوبلكس بجودة عالية.",
     bioEn: "Fast digital shop for short runs and samples, printing on both corrugated and SBS board.",
     machines: [
       { kind: "DIGITAL", model: "HP Indigo-class digital press", count: 1 },
@@ -360,7 +360,7 @@ const vendors: VendorSeed[] = [
     portfolio: [
       { captionAr: "علب بيتزا لسلسلة مطاعم في الإسكندرية", captionEn: "Pizza boxes for an Alexandria restaurant chain", structureCode: "PIZZA" },
       { captionAr: "علب حلويات بطباعة لونين", captionEn: "Pastry boxes, 2-colour print", structureCode: "ECMA_STE" },
-      { captionAr: "علب شحن لمصنع ملابس", captionEn: "Shipping cartons for a garment factory", structureCode: "FEFCO_0201" },
+      { captionAr: "كراتين شحن لمصنع ملابس", captionEn: "Shipping cartons for a garment factory", structureCode: "FEFCO_0201" },
     ],
   },
   {
@@ -368,7 +368,7 @@ const vendors: VendorSeed[] = [
     nameAr: "دمياط للتغليف الحديث",
     nameEn: "Damietta Modern Packaging",
     city: "NEW_DAMIETTA", cityAr: "دمياط الجديدة", cityEn: "New Damietta",
-    bioAr: "متخصصون في علب الشحن الكبيرة وعلب الأثاث والتصدير من الكرتون المضلع B، بأسعار تنافسية للكميات الكبيرة.",
+    bioAr: "متخصصون في كراتين الشحن الكبيرة وعلب الأثاث والتصدير من الكرتون المضلع B، بأسعار تنافسية للكميات الكبيرة.",
     bioEn: "Specialists in large B-flute shipping and export cartons for furniture makers, competitive on volume.",
     machines: [
       { kind: "FLEXO", model: "3-colour flexo folder-gluer inline", count: 1 },
@@ -383,7 +383,7 @@ const vendors: VendorSeed[] = [
     portfolio: [
       { captionAr: "علب تصدير أثاث بكرتون B", captionEn: "B-flute furniture export cartons", structureCode: "FEFCO_0201" },
       { captionAr: "علب بريدية كرافت بلون واحد", captionEn: "One-colour kraft mailers", structureCode: "FEFCO_0427" },
-      { captionAr: "علب شحن مطبوعة لمصنع أحذية", captionEn: "Printed shipping boxes for a shoe factory", structureCode: "FEFCO_0201" },
+      { captionAr: "كراتين شحن مطبوعة لمصنع أحذية", captionEn: "Printed shipping boxes for a shoe factory", structureCode: "FEFCO_0201" },
     ],
   },
   {
@@ -586,7 +586,7 @@ async function main() {
   for (const [i, vid] of vendorIds.entries()) {
     await db.user.create({
       data: {
-        phone: `+2010000000${10 + i}`, name: `${vendors[i].nameEn} staff`, role: "VENDOR",
+        phone: `+2010000000${10 + i}`, name: `فريق ${vendors[i].nameAr}`, role: "VENDOR",
         locale: "ar", vendorId: vid, consentAt: now,
       },
     });
@@ -609,7 +609,7 @@ async function main() {
   };
   const design = await db.design.create({
     data: {
-      ownerId: buyer.id, name: "Bloom mailer", structureCode: "FEFCO_0427", dims: mailer.seed.defaultDims as object,
+      ownerId: buyer.id, name: "علبة بريدية بلوم", structureCode: "FEFCO_0427", dims: mailer.seed.defaultDims as object,
       materialId: materialRows.get("E_FLUTE_KRAFT")!.id, finishCode: "MATTE_LAMINATION", printSides: "OUTSIDE",
       artwork: artwork as object, thumbnailUrl: "/seed/portfolio/nile-pack-1.svg",
     },
@@ -638,7 +638,7 @@ async function main() {
       number: "ELB-26001", buyerId: buyer.id, vendorId: vendorIds[0], status: "IN_PRODUCTION",
       subtotalPiasters: subtotal, vatPiasters: vat, shippingPiasters: shipping, totalPiasters: subtotal + vat,
       vendorCostPiasters: egp(19) * qty + egp(600),
-      shippingAddress: { name: "منى عادل", phone: "+201000000002", governorate: "Cairo", city: "Nasr City", street: "14 Abbas El Akkad St", building: "14", floor: "3", apartment: "7" },
+      shippingAddress: { name: "منى عادل", phone: "+201000000002", governorate: "Cairo", city: "مدينة نصر", street: "14 شارع عباس العقاد", building: "14", floor: "3", apartment: "7" },
       paidAt: now, dueDate: new Date(now.getTime() + 6 * 86_400_000),
       items: {
         create: [{
@@ -677,7 +677,7 @@ async function main() {
       const st = j.structure === "FEFCO_0201" ? shippingBox : mailer;
       const placed = new Date(now.getTime() + j.placedH * 3600_000);
       const doc = {
-        v: 1, name: `${j.number} box`, structureCode: j.structure, dims: st.seed.defaultDims,
+        v: 1, name: `علبة الطلب ${j.number}`, structureCode: j.structure, dims: st.seed.defaultDims,
         materialCode: j.material, finishCode: j.finish, printSides: "OUTSIDE", artwork,
       };
       const d = await db.design.create({
@@ -701,7 +701,7 @@ async function main() {
         data: {
           number: j.number, buyerId: buyer.id, vendorId: vendorIds[j.vendor], status: j.status,
           subtotalPiasters: sub + ship, vatPiasters: vat, shippingPiasters: ship, totalPiasters: sub + ship + vat, vendorCostPiasters: cost,
-          shippingAddress: { name: "منى عادل", phone: "+201000000002", governorate: "Giza", city: "Dokki", street: "5 Mesaha Sq" },
+          shippingAddress: { name: "منى عادل", phone: "+201000000002", governorate: "Giza", city: "الدقي", street: "5 ميدان المساحة" },
           placedAt: placed, paidAt: new Date(placed.getTime() + 600_000),
           dueDate: new Date(now.getTime() + j.dueDays * 86_400_000),
           deliveredAt: j.status === "DELIVERED" ? new Date(now.getTime() - 10 * 86_400_000) : null,
@@ -751,7 +751,7 @@ async function main() {
     const vat = Math.round((sub + ship) * 0.14);
     const qcDesign = await db.design.create({
       data: {
-        ownerId: buyer.id, name: "ELB-26301 box", structureCode: "FEFCO_0427", dims: mailer.seed.defaultDims as object,
+        ownerId: buyer.id, name: "علبة الطلب ELB-26301", structureCode: "FEFCO_0427", dims: mailer.seed.defaultDims as object,
         materialId: materialRows.get("E_FLUTE_KRAFT")!.id, finishCode: "NONE", printSides: "OUTSIDE", artwork: artwork as object,
       },
     });
@@ -763,7 +763,7 @@ async function main() {
       data: {
         number: "ELB-26301", buyerId: buyer.id, vendorId: vendorIds[2], status: "QC_PENDING",
         subtotalPiasters: sub + ship, vatPiasters: vat, shippingPiasters: ship, totalPiasters: sub + ship + vat, vendorCostPiasters: egp(12.5) * qty,
-        shippingAddress: { name: "منى عادل", phone: "+201000000002", governorate: "Cairo", city: "Nasr City", street: "12 Makram Ebeid" },
+        shippingAddress: { name: "منى عادل", phone: "+201000000002", governorate: "Cairo", city: "مدينة نصر", street: "12 شارع مكرم عبيد" },
         placedAt: placed, paidAt: new Date(placed.getTime() + 600_000), dueDate: new Date(now.getTime() + 2 * 86_400_000),
         items: { create: [{ proofId: qcProof.id, structureCode: "FEFCO_0427", dims: mailer.seed.defaultDims as object, materialCode: "E_FLUTE_KRAFT", finishCode: "NONE", printSides: "OUTSIDE", quantity: qty, unitPiasters: egp(17), lineTotalPiasters: sub }] },
         productionEvents: {
@@ -790,13 +790,13 @@ async function main() {
       await db.dispute.create({
         data: {
           orderId: delivered.id, openedById: buyer.id, reason: "PRINT_DEFECT", status: "OPEN",
-          description: "The logo on the lid is shifted about 4 mm to the left on most boxes.",
+          description: "الشعار على الغطاء مزاح نحو 4 مم إلى اليسار في أغلب العلب.",
           createdAt: new Date(now.getTime() - 2 * 86_400_000),
         },
       });
     }
 
-    const applicant = await db.user.create({ data: { phone: "+201000000020", name: "Karim Fathy", role: "BUYER", locale: "ar", consentAt: now } });
+    const applicant = await db.user.create({ data: { phone: "+201000000020", name: "كريم فتحي", role: "BUYER", locale: "ar", consentAt: now } });
     const pendingVendor = await db.vendor.create({
       data: {
         slug: "giza-carton-lab", nameAr: "معمل الجيزة للكرتون", nameEn: "Giza Carton Lab", city: "GIZA", cityAr: "الجيزة", cityEn: "Giza",
@@ -809,8 +809,8 @@ async function main() {
     await db.vendorApplication.create({
       data: {
         applicantId: applicant.id, vendorId: pendingVendor.id, legalName: "Giza Carton Lab LLC", commercialRegisterNo: "CR-118204",
-        taxCardNo: "512-339-870", factoryAddress: "Industrial zone, Abu Rawash", factoryCity: "GIZA", contactName: "Karim Fathy",
-        contactPhone: "+201000000020", documents: [], message: "We print shipping boxes for furniture and appliance makers.",
+        taxCardNo: "512-339-870", factoryAddress: "المنطقة الصناعية، أبو رواش", factoryCity: "GIZA", contactName: "كريم فتحي",
+        contactPhone: "+201000000020", documents: [], message: "نطبع كراتين شحن لمصانع الأثاث والأجهزة المنزلية.",
         createdAt: new Date(now.getTime() - 86_400_000),
       },
     });
