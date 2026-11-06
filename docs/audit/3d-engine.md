@@ -131,3 +131,13 @@ The face test pattern draws a white stroke round each face, so with it the wrapp
 | Browser console on `/en/dev/3d` (all structures, fold 0 ↔ 1) and `/en/dev/finishes` | no page errors; remaining "unmount a root while rendering" message is React StrictMode in `next dev` only |
 
 Re-measured after the last commit (final build): 50 draw calls, 0 idle frames, 14.7 fps drag / 15.5 fps keyboard at 4× in SwiftShader, 13 live textures and 14 framebuffers at both 0 and 50 switches.
+
+### Pass 2 verification (after the EngineCanvas split, closures and tint)
+
+| Check | Result |
+|---|---|
+| lint, typecheck, `npm test` (5 905), `npm run build` | pass |
+| `e2e/models.spec.ts` desktop (every library model through the designer viewers) | 371 passed, 1 failed once on a React #418 hydration mismatch (CAN-TUNA; not 3D: the viewer is client-only), passed 3/3 on re-run |
+| Production console on `/en/dev/3d` (all structures, fold 0 ↔ 1) and `/en/dev/finishes` | no errors |
+| Probe after the refactor | 50 draw calls, 0 idle frames, 13 textures / 14 framebuffers at 0 and 50 switches (unchanged) |
+| Browser check | Bordeaux bottle renders green glass with a cork capsule; beer longneck renders a fluted crown (were amber glass / screw caps) |
