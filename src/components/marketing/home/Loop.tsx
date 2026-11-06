@@ -15,12 +15,14 @@ export function Loop({
   labels,
   controlClassName,
   head,
+  foot,
 }: {
   className?: string;
   children: ReactNode;
   labels: { pause: string; play: string };
   controlClassName?: string;
   head?: ReactNode;
+  foot?: ReactNode;
 }) {
   const [paused, setPaused] = useState(false);
   const [offscreen, setOffscreen] = useState(false);
@@ -47,7 +49,13 @@ export function Loop({
         </div>
       ) : null}
       {children}
-      {head ? null : button}
+      {foot ? (
+        <div className={s.railFoot}>
+          {foot}
+          {button}
+        </div>
+      ) : null}
+      {head || foot ? null : button}
     </div>
   );
 }

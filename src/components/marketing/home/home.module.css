@@ -329,7 +329,9 @@
 @keyframes h-fill-rtl { to { background-position: 100% 0; } }
 
 .railHead { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-block: 56px 16px; }
+.railFoot { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-block-start: 16px; }
 .railViewport {
+  margin-block-start: 56px;
   overflow: hidden;
   mask-image: linear-gradient(to right, transparent, #000 4%, #000 96%, transparent);
 }
@@ -354,12 +356,13 @@
   position: relative;
   display: grid;
   place-items: center;
-  block-size: 220px;
+  block-size: 240px;
   border-radius: 12px;
   overflow: hidden;
   background: linear-gradient(160deg, #0d2427, #061214);
 }
-@media (min-width: 1024px) { .railCard { block-size: 340px; } }
+@media (min-width: 1024px) { .railCard { block-size: 380px; } }
+@media (max-width: 1023px) { .railItem { inline-size: calc(var(--rw) * 0.62) !important; } }
 .railCard img { inline-size: 100%; block-size: 100%; object-fit: cover; }
 .railCard[data-kind="render"] img { object-fit: contain; padding: 12% 10%; }
 .railCaption { font-size: 0.875rem; color: #fff; opacity: 0.8; }
@@ -403,6 +406,7 @@
   box-shadow: 0 0 60px rgba(160, 255, 230, 0.45), 0 10px 30px rgba(0, 0, 0, 0.35);
 }
 :global([dir="rtl"]) .prompt { --h-dirx: -1; }
+.promptSmall { inline-size: auto; max-inline-size: 84%; inset-block-end: 8%; font-size: 0.875rem; padding-block: 6px; direction: ltr; }
 .promptText { flex: 1; min-inline-size: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .promptText::after {
   content: "";
@@ -576,7 +580,7 @@
 
 /* Violet designer band */
 .duo { display: grid; gap: 24px; }
-@media (min-width: 1024px) { .duo { grid-template-columns: 1fr 2fr; } }
+@media (min-width: 1024px) { .duo { grid-template-columns: 2fr 1fr; } }
 .darkCard {
   position: relative;
   display: grid;
@@ -624,23 +628,23 @@
   position: relative;
   overflow: hidden;
   padding-block: 64px;
-  min-block-size: 560px;
+  min-block-size: 625px;
   display: grid;
-  align-items: center;
+  align-items: start;
 }
 .wallRows {
   position: absolute;
   inset: 0;
   display: grid;
-  align-content: center;
-  gap: 14px;
-  transform: rotate(-8deg) scale(1.15);
-  mask-image: linear-gradient(to var(--h-end-side, left), transparent 8%, #000 55%);
-  opacity: 0.85;
+  align-content: end;
+  padding-block-end: 24px;
+  gap: 10px;
+  mask-image: radial-gradient(70% 90% at var(--wall-at, 85%) 0%, transparent 25%, #000 75%);
+  opacity: 0.9;
 }
 .wallRow {
   display: flex;
-  gap: 14px;
+  gap: 10px;
   inline-size: max-content;
   margin: 0;
   padding: 0;
@@ -648,17 +652,18 @@
   animation: h-scroll-x var(--dur, 90s) linear infinite;
 }
 .wallRow:nth-child(even) { animation-direction: reverse; }
+:global([dir="rtl"]) .wallRow { animation-name: h-scroll-x-rtl; }
 .wall[data-paused="true"] .wallRow { animation-play-state: paused; }
 .tile {
-  inline-size: 64px;
-  block-size: 64px;
-  border-radius: 16px;
+  inline-size: 56px;
+  block-size: 56px;
+  border-radius: 14px;
   display: grid;
   place-items: center;
   background: var(--tone, #e6e6e3);
   box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.12);
 }
-@media (min-width: 1024px) { .tile { inline-size: 76px; block-size: 76px; border-radius: 18px; } }
+@media (min-width: 1024px) { .tile { inline-size: 64px; block-size: 64px; border-radius: 16px; } }
 .tile img { inline-size: 80%; block-size: 80%; object-fit: contain; }
 .wallCopy {
   position: relative;
@@ -666,10 +671,7 @@
   display: grid;
   gap: 16px;
   max-inline-size: 38rem;
-  padding: 32px;
-  margin-inline-start: -32px;
-  border-radius: 24px;
-  background: radial-gradient(closest-side, rgba(0, 10, 30, 0.96), rgba(0, 10, 30, 0.75) 70%, transparent);
+  padding-block: 0 24px;
 }
 .wallCopy .body { color: var(--h-muted-soft); }
 .wallControl { position: absolute; inset-block-end: 16px; inset-inline-end: var(--h-gutter); z-index: 2; }
@@ -834,8 +836,7 @@
   transform-origin: var(--h-origin, left);
 }
 :global([dir="rtl"]) .stepLabel::after { --h-origin: right; }
-:global([dir="rtl"]) .wallRows { --h-end-side: left; }
-:global([dir="ltr"]) .wallRows { --h-end-side: right; }
+:global([dir="ltr"]) .wallRows { --wall-at: 15%; }
 .stepBtn[aria-current="step"] .stepLabel::after { animation: h-progress var(--step-dur, 5s) linear forwards; }
 .stepsRoot[data-paused="true"] .stepBtn[aria-current="step"] .stepLabel::after { animation: none; transform: none; }
 @keyframes h-progress { to { transform: scaleX(1); } }

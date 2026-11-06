@@ -148,8 +148,8 @@ export default async function HomePage({ params }: Props) {
 
   const railItems = RAIL.map((it) =>
     it.kind === "render"
-      ? { src: renderSrc(it.code), kind: "render" as const, name: structureName(it.code), w: 300 }
-      : { src: SAMPLES[it.i]!.src, kind: "sample" as const, name: sampleName(it.i), w: 272 },
+      ? { src: renderSrc(it.code), kind: "render" as const, name: structureName(it.code), w: 500 }
+      : { src: SAMPLES[it.i]!.src, kind: "sample" as const, name: sampleName(it.i), w: 300 },
   );
 
   return (
@@ -188,17 +188,17 @@ export default async function HomePage({ params }: Props) {
         <Loop
           className={s.wrap}
           labels={c.rail}
-          head={<p className={s.caption}>{c.rail.label}</p>}
+          foot={<p className={s.caption}>{c.rail.label}</p>}
         >
           <div className={s.railViewport} role="region" aria-label={c.rail.label} tabIndex={0}>
             <ul className={s.railTrack}>
               {[...railItems, ...railItems].map((it, i) => {
                 const clone = i >= railItems.length;
                 return (
-                  <li key={i} className={s.railItem} aria-hidden={clone || undefined} style={{ inlineSize: it.w }}>
+                  <li key={i} className={s.railItem} aria-hidden={clone || undefined} style={{ inlineSize: it.w, ["--rw" as string]: `${it.w}px` }}>
                     <div className={s.railCard} data-kind={it.kind}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={it.src} srcSet={srcSetFor(it.src)} sizes={`${it.w}px`} alt={clone ? "" : it.name} width={it.w} height={340} loading="lazy" decoding="async" />
+                      <img src={it.src} srcSet={srcSetFor(it.src)} sizes={`${it.w}px`} alt={clone ? "" : it.name} width={it.w} height={380} loading="lazy" decoding="async" />
                     </div>
                     <span className={s.railCaption}>{it.name}</span>
                   </li>
@@ -257,9 +257,16 @@ export default async function HomePage({ params }: Props) {
           </div>
           <ul className={s.trio} style={{ listStyle: "none", margin: 0, padding: 0 }}>
             <li className={s.mediaCard} data-reveal="" suppressHydrationWarning style={{ ["--m-i" as string]: 0 }}>
-              <div className={s.mediaFrame}>
+              <div className={s.mediaFrame} data-fit="contain">
+                <div className={s.ringGlow} style={{ inset: "auto", insetBlockStart: "10%", insetInlineStart: "-20%", inlineSize: "140%" }} aria-hidden="true" />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`/marketing/designer-${locale}.webp`} srcSet={srcSetFor(`/marketing/designer-${locale}.webp`)} sizes="(min-width: 1024px) 320px, 92vw" alt="" loading="lazy" decoding="async" style={{ objectPosition: locale === "ar" ? "70% 50%" : "30% 50%" }} />
+                <img src={renderSrc("FEFCO_0201")} srcSet={srcSetFor(renderSrc("FEFCO_0201"))} sizes="(min-width: 1024px) 320px, 92vw" alt="" loading="lazy" decoding="async" style={{ position: "relative" }} />
+                <div className={`${s.prompt} ${s.promptSmall}`} aria-hidden="true">
+                  <span className={s.promptText}>{fill("{L} × {W} × {H}", { L: 300, W: 200, H: 100 })}</span>
+                  <span className={s.promptGo} style={{ background: "#5b3fff" }}>
+                    <ArrowUp size={14} />
+                  </span>
+                </div>
               </div>
               <div className={s.mediaCaption}>
                 <h3 className={s.cardTitle}>
@@ -346,7 +353,7 @@ export default async function HomePage({ params }: Props) {
                 </div>
               ) : null}
               {c.delivery.zones.slice(1).map((z, i) => (
-                <div key={z} className={`${s.chip} ${s.chipDark} ${s.zoneChip}`} style={{ ["--t" as string]: ["12%", "36%", "70%", "20%"][i], ["--s" as string]: ["10%", "6%", "14%", "78%"][i], animationDelay: `${-1.5 * (i + 1)}s` }}>
+                <div key={z} className={`${s.chip} ${s.chipDark} ${s.zoneChip}`} style={{ ["--t" as string]: ["12%", "36%", "70%", "84%"][i], ["--s" as string]: ["10%", "4%", "12%", "44%"][i], animationDelay: `${-1.5 * (i + 1)}s` }}>
                   {z}
                 </div>
               ))}
@@ -403,17 +410,6 @@ export default async function HomePage({ params }: Props) {
           </div>
           <div className={s.duo}>
             <article className={s.darkCard} data-reveal="" suppressHydrationWarning style={{ ["--m-i" as string]: 0 }}>
-              <div className={s.darkCardMedia} data-fit="contain" aria-hidden="true">
-                <div className={s.violetGlow} />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={renderSrc("RIGID_BOX")} srcSet={srcSetFor(renderSrc("RIGID_BOX"))} sizes="(min-width: 1024px) 400px, 92vw" alt="" loading="lazy" decoding="async" />
-              </div>
-              <div className={s.darkCardBody}>
-                <h3 className={s.cardTitle}>{c.designer.narrowTitle}</h3>
-                <p className={s.body}>{c.designer.narrowBody}</p>
-              </div>
-            </article>
-            <article className={s.darkCard} data-reveal="" suppressHydrationWarning style={{ ["--m-i" as string]: 1 }}>
               <div className={s.darkCardMedia} aria-hidden="true">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={`/marketing/designer-${locale}.webp`} srcSet={srcSetFor(`/marketing/designer-${locale}.webp`)} sizes="(min-width: 1024px) 820px, 92vw" alt="" loading="lazy" decoding="async" style={{ opacity: 0.72 }} />
@@ -435,6 +431,17 @@ export default async function HomePage({ params }: Props) {
                 <p className={s.body}>{c.designer.wideBody}</p>
               </div>
             </article>
+            <article className={s.darkCard} data-reveal="" suppressHydrationWarning style={{ ["--m-i" as string]: 1 }}>
+              <div className={s.darkCardMedia} data-fit="contain" aria-hidden="true">
+                <div className={s.violetGlow} />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={renderSrc("RIGID_BOX")} srcSet={srcSetFor(renderSrc("RIGID_BOX"))} sizes="(min-width: 1024px) 400px, 92vw" alt="" loading="lazy" decoding="async" />
+              </div>
+              <div className={s.darkCardBody}>
+                <h3 className={s.cardTitle}>{c.designer.narrowTitle}</h3>
+                <p className={s.body}>{c.designer.narrowBody}</p>
+              </div>
+            </article>
           </div>
         </div>
       </section>
@@ -443,8 +450,10 @@ export default async function HomePage({ params }: Props) {
       <section className={s.bandNavy} aria-labelledby="wall-title">
         <Loop className={s.wall} labels={c.wall} controlClassName={s.wallControl}>
           <div className={s.wallRows} aria-hidden="true">
-            {[0, 1, 2, 3, 4, 5, 6].map((r) => {
-              const row = [...WALL_ITEMS.slice((r * 5) % WALL_ITEMS.length), ...WALL_ITEMS.slice(0, (r * 5) % WALL_ITEMS.length)];
+            {[0, 1, 2, 3, 4, 5].map((r) => {
+              const k = (r * 5) % WALL_ITEMS.length;
+              const once = [...WALL_ITEMS.slice(k), ...WALL_ITEMS.slice(0, k)];
+              const row = [...once, ...once];
               return (
                 <ul key={r} className={s.wallRow} style={{ ["--dur" as string]: `${80 + r * 9}s` }}>
                   {[...row, ...row].map((it, i) => (
@@ -511,6 +520,19 @@ export default async function HomePage({ params }: Props) {
             </h2>
           </div>
           <div className={s.split}>
+            <div data-reveal="" suppressHydrationWarning>
+              <h3 className={s.h3Big}>{c.stats.checkoutTitle}</h3>
+              <ul className={s.stats}>
+                {stats.map((st) => (
+                  <li key={st.label} className={s.stat}>
+                    <CountUp value={st.value} locale={locale} className={s.statValue} />
+                    <span className={s.statLabel}>{st.label}</span>
+                  </li>
+                ))}
+              </ul>
+              {row500 ? <p className={s.rule}>{fill(c.stats.rule, vars)}</p> : null}
+              <p className={s.footnote}>{c.stats.note}</p>
+            </div>
             <div className={s.splitVisual} aria-hidden="true">
               {THUMBS.map((th, i) => {
                 const src = th.code ? renderSrc(th.code) : vesselSrc(th.vessel!);
@@ -552,19 +574,6 @@ export default async function HomePage({ params }: Props) {
                 </div>
                 <div className={s.receiptPay}>{c.stats.receipt.pay}</div>
               </div>
-            </div>
-            <div data-reveal="" suppressHydrationWarning>
-              <h3 className={s.h3Big}>{c.stats.checkoutTitle}</h3>
-              <ul className={s.stats}>
-                {stats.map((st) => (
-                  <li key={st.label} className={s.stat}>
-                    <CountUp value={st.value} locale={locale} className={s.statValue} />
-                    <span className={s.statLabel}>{st.label}</span>
-                  </li>
-                ))}
-              </ul>
-              {row500 ? <p className={s.rule}>{fill(c.stats.rule, vars)}</p> : null}
-              <p className={s.footnote}>{c.stats.note}</p>
             </div>
           </div>
           <div className={`${s.split} ${s.secure}`}>
