@@ -1,0 +1,7838 @@
+{
+ "issues": [
+  {
+   "code": "ECMA_RTE",
+   "source": "core",
+   "kind": "overlap",
+   "detail": "z-fight glue↔bottomTuck d=0.00mm (t=0.4) ~229mm²"
+  },
+  {
+   "code": "FEFCO_0320",
+   "source": "core",
+   "kind": "overlap",
+   "detail": "interpenetrate left↔lid_glue d=1.00mm (t=1.5) ~2986mm²"
+  },
+  {
+   "code": "GABLE_BOX",
+   "source": "core",
+   "kind": "outer>>inner",
+   "detail": "H: outer 199.5 vs inner 120 (+79.5 mm, t=0.4)"
+  },
+  {
+   "code": "PAPER_TUBE",
+   "source": "core",
+   "kind": "overlap",
+   "detail": "interpenetrate body17↔lidGlue d=0.40mm (t=1.5) ~339mm²"
+  },
+  {
+   "code": "RIGID_BOX",
+   "source": "core",
+   "kind": "overlap",
+   "detail": "interpenetrate front↔lid_frontTurn d=0.50mm (t=2.15) ~3482mm²; interpenetrate back↔lid_backTurn d=0.50mm (t=2.15) ~3482mm²; interpenetrate left↔lid_leftTurn d=0.50mm (t=2.15) ~2523mm²; interpenetrate left↔lid_frontTabL d=0.50mm (t=2.15) ~184mm²; interpenetrate left↔lid_backTabL d=0.50mm (t=2.15) ~184mm²; z-fight leftTurn↔frontTabL d=0.00mm (t=2.15) ~79mm² (+10 more)"
+  },
+  {
+   "code": "FEFCO_0217",
+   "source": "fefco-02",
+   "kind": "outer>>inner",
+   "detail": "H: outer 253.9 vs inner 150 (+103.9 mm, t=1.5)"
+  },
+  {
+   "code": "FEFCO_0225",
+   "source": "fefco-02",
+   "kind": "overlap",
+   "detail": "z-fight glue↔wingL d=0.00mm (t=1.5) ~2338mm²"
+  },
+  {
+   "code": "FEFCO_0226",
+   "source": "fefco-02",
+   "kind": "outer>>inner",
+   "detail": "H: outer 295.4 vs inner 200 (+95.4 mm, t=1.5)"
+  },
+  {
+   "code": "FEFCO_0226",
+   "source": "fefco-02",
+   "kind": "overlap",
+   "detail": "z-fight topFlap_left↔topFlap_left_ga d=0.00mm (t=1.5) ~8279mm²; z-fight topFlap_left↔topFlap_left_gb d=0.00mm (t=1.5) ~7843mm²; z-fight topFlap_left_ga↔topFlap_left_gb d=0.00mm (t=1.5) ~300mm²; z-fight topFlap_right↔topFlap_right_ga d=0.00mm (t=1.5) ~8279mm²; z-fight topFlap_right↔topFlap_right_gb d=0.00mm (t=1.5) ~7843mm²; z-fight topFlap_right_ga↔topFlap_right_gb d=0.00mm (t=1.5) ~300mm² (+6 more)"
+  },
+  {
+   "code": "FEFCO_0303",
+   "source": "fefco-03-05",
+   "kind": "outer>>inner",
+   "detail": "W: outer 240.0 vs inner 220 (+20.0 mm, t=1.5)"
+  },
+  {
+   "code": "FEFCO_0304",
+   "source": "fefco-03-05",
+   "kind": "outer>>inner",
+   "detail": "L: outer 320.0 vs inner 300 (+20.0 mm, t=1.5)"
+  },
+  {
+   "code": "FEFCO_0308",
+   "source": "fefco-03-05",
+   "kind": "outer>>inner",
+   "detail": "W: outer 240.0 vs inner 220 (+20.0 mm, t=1.5)"
+  },
+  {
+   "code": "FEFCO_0309",
+   "source": "fefco-03-05",
+   "kind": "outer>>inner",
+   "detail": "L: outer 320.0 vs inner 300 (+20.0 mm, t=1.5)"
+  },
+  {
+   "code": "FEFCO_0321",
+   "source": "fefco-03-05",
+   "kind": "overlap",
+   "detail": "interpenetrate p3↔lid_joint d=1.00mm (t=1.5) ~9183mm²"
+  },
+  {
+   "code": "FEFCO_0322",
+   "source": "fefco-03-05",
+   "kind": "outer>>inner",
+   "detail": "L: outer 320.0 vs inner 300 (+20.0 mm, t=1.5)"
+  },
+  {
+   "code": "FEFCO_0323",
+   "source": "fefco-03-05",
+   "kind": "outer>>inner",
+   "detail": "W: outer 240.0 vs inner 220 (+20.0 mm, t=1.5)"
+  },
+  {
+   "code": "FEFCO_0325",
+   "source": "fefco-03-05",
+   "kind": "overlap",
+   "detail": "interpenetrate joint↔bottomCap_endL d=1.00mm (t=1.5) ~3224mm²; interpenetrate joint↔topCap_endL d=1.00mm (t=1.5) ~3224mm²"
+  },
+  {
+   "code": "FEFCO_0330",
+   "source": "fefco-03-05",
+   "kind": "outer>>inner",
+   "detail": "L: outer 320.0 vs inner 300 (+20.0 mm, t=1.5)"
+  },
+  {
+   "code": "FEFCO_0331",
+   "source": "fefco-03-05",
+   "kind": "outer>>inner",
+   "detail": "W: outer 240.0 vs inner 220 (+20.0 mm, t=1.5)"
+  },
+  {
+   "code": "FEFCO_0350",
+   "source": "fefco-03-05",
+   "kind": "overlap",
+   "detail": "z-fight bottomFlap1↔bottomFlap2 d=0.00mm (t=3) ~35119mm²; z-fight bottomFlap2↔bottomFlap3 d=0.00mm (t=3) ~35119mm²; z-fight bottomFlap5↔bottomFlap6 d=0.00mm (t=3) ~35119mm²; z-fight bottomFlap6↔bottomFlap7 d=0.00mm (t=3) ~35119mm²"
+  },
+  {
+   "code": "FEFCO_0504",
+   "source": "fefco-03-05",
+   "kind": "overlap",
+   "detail": "interpenetrate joint↔in_p3 d=1.00mm (t=1.5) ~4690mm²"
+  },
+  {
+   "code": "FEFCO_0422_2",
+   "source": "fefco-04",
+   "kind": "overlap",
+   "detail": "interpenetrate base↔rightBottomFlap d=1.00mm (t=1.5) ~17583mm²; interpenetrate base↔leftBottomFlap d=1.00mm (t=1.5) ~17583mm²"
+  },
+  {
+   "code": "FEFCO_0424",
+   "source": "fefco-04",
+   "kind": "overlap",
+   "detail": "interpenetrate base↔rightBottomFlap d=1.00mm (t=1.5) ~17068mm²; interpenetrate base↔leftBottomFlap d=1.00mm (t=1.5) ~17068mm²"
+  },
+  {
+   "code": "FEFCO_0424a",
+   "source": "fefco-04",
+   "kind": "overlap",
+   "detail": "interpenetrate base↔rightBottomFlap d=1.00mm (t=1.5) ~11000mm²; interpenetrate base↔leftBottomFlap d=1.00mm (t=1.5) ~11000mm²"
+  },
+  {
+   "code": "FEFCO_0425a",
+   "source": "fefco-04",
+   "kind": "overlap",
+   "detail": "interpenetrate base↔backBottomFlap d=1.00mm (t=1.5) ~20088mm²; interpenetrate base↔frontBottomFlap d=1.00mm (t=1.5) ~20088mm²; interpenetrate base↔rightBottomFlap d=1.00mm (t=1.5) ~17383mm²; interpenetrate base↔leftBottomFlap d=1.00mm (t=1.5) ~17383mm²; z-fight backBottomFlap↔rightBottomFlap d=0.00mm (t=1.5) ~750mm²; z-fight backBottomFlap↔leftBottomFlap d=0.00mm (t=1.5) ~750mm² (+2 more)"
+  },
+  {
+   "code": "FEFCO_0428",
+   "source": "fefco-04",
+   "kind": "overlap",
+   "detail": "interpenetrate base↔rightBottomFlap d=1.00mm (t=1.5) ~8296mm²; interpenetrate base↔leftBottomFlap d=1.00mm (t=1.5) ~8296mm²"
+  },
+  {
+   "code": "FEFCO_0428a",
+   "source": "fefco-04",
+   "kind": "overlap",
+   "detail": "interpenetrate base↔rightBottomFlap d=1.00mm (t=1.5) ~8296mm²; interpenetrate base↔leftBottomFlap d=1.00mm (t=1.5) ~8296mm²"
+  },
+  {
+   "code": "FEFCO_0432",
+   "source": "fefco-04",
+   "kind": "overlap",
+   "detail": "interpenetrate base↔backBottomFlap d=1.00mm (t=1.5) ~20369mm²; interpenetrate base↔frontBottomFlap d=1.00mm (t=1.5) ~20369mm²"
+  },
+  {
+   "code": "FEFCO_0432a",
+   "source": "fefco-04",
+   "kind": "overlap",
+   "detail": "interpenetrate base↔backBottomFlap d=1.00mm (t=1.5) ~20369mm²; interpenetrate base↔frontBottomFlap d=1.00mm (t=1.5) ~20369mm²"
+  },
+  {
+   "code": "FEFCO_0434",
+   "source": "fefco-04",
+   "kind": "outer>>inner",
+   "detail": "H: outer 136.5 vs inner 100 (+36.5 mm, t=1.5)"
+  },
+  {
+   "code": "FEFCO_0435",
+   "source": "fefco-04",
+   "kind": "outer>>inner",
+   "detail": "H: outer 131.5 vs inner 100 (+31.5 mm, t=1.5)"
+  },
+  {
+   "code": "FEFCO_0435a",
+   "source": "fefco-04",
+   "kind": "outer>>inner",
+   "detail": "H: outer 161.5 vs inner 100 (+61.5 mm, t=1.5)"
+  },
+  {
+   "code": "FEFCO_0435a",
+   "source": "fefco-04",
+   "kind": "overlap",
+   "detail": "interpenetrate base↔rightBottomFlap d=1.00mm (t=1.5) ~11326mm²; interpenetrate base↔leftBottomFlap d=1.00mm (t=1.5) ~11326mm²"
+  },
+  {
+   "code": "FEFCO_0436",
+   "source": "fefco-04",
+   "kind": "overlap",
+   "detail": "interpenetrate base↔backBottomFlap d=1.00mm (t=1.5) ~19933mm²; interpenetrate base↔frontBottomFlap d=1.00mm (t=1.5) ~19933mm²; interpenetrate base↔rightBottomFlap d=1.00mm (t=1.5) ~17249mm²; interpenetrate base↔leftBottomFlap d=1.00mm (t=1.5) ~17249mm²; z-fight backBottomFlap↔rightBottomFlap d=0.00mm (t=1.5) ~750mm²; z-fight backBottomFlap↔leftBottomFlap d=0.00mm (t=1.5) ~750mm² (+2 more)"
+  },
+  {
+   "code": "FEFCO_0439",
+   "source": "fefco-04",
+   "kind": "overlap",
+   "detail": "interpenetrate base↔frontBottomFlap d=1.00mm (t=1.5) ~19828mm²; interpenetrate base↔rightBottomFlap d=1.00mm (t=1.5) ~17159mm²; interpenetrate base↔leftBottomFlap d=1.00mm (t=1.5) ~17159mm²; z-fight frontBottomFlap↔rightBottomFlap d=0.00mm (t=1.5) ~750mm²; z-fight frontBottomFlap↔leftBottomFlap d=0.00mm (t=1.5) ~750mm²"
+  },
+  {
+   "code": "FEFCO_0439a",
+   "source": "fefco-04",
+   "kind": "overlap",
+   "detail": "interpenetrate base↔frontBottomFlap d=1.00mm (t=1.5) ~19828mm²; interpenetrate base↔rightBottomFlap d=1.00mm (t=1.5) ~17159mm²; interpenetrate base↔leftBottomFlap d=1.00mm (t=1.5) ~17159mm²; z-fight frontBottomFlap↔rightBottomFlap d=0.00mm (t=1.5) ~750mm²; z-fight frontBottomFlap↔leftBottomFlap d=0.00mm (t=1.5) ~750mm²"
+  },
+  {
+   "code": "FEFCO_0449",
+   "source": "fefco-04",
+   "kind": "outer>>inner",
+   "detail": "H: outer 181.5 vs inner 100 (+81.5 mm, t=1.5)"
+  },
+  {
+   "code": "FEFCO_0454_1",
+   "source": "fefco-04",
+   "kind": "overlap",
+   "detail": "interpenetrate base↔backBottomFlap d=1.00mm (t=1.5) ~20369mm²; interpenetrate base↔frontBottomFlap d=1.00mm (t=1.5) ~20369mm²"
+  },
+  {
+   "code": "FEFCO_0455_1",
+   "source": "fefco-04",
+   "kind": "overlap",
+   "detail": "interpenetrate base↔rightBottomFlap d=1.00mm (t=1.5) ~17583mm²; interpenetrate base↔leftBottomFlap d=1.00mm (t=1.5) ~17583mm²"
+  },
+  {
+   "code": "FEFCO_0459",
+   "source": "fefco-04",
+   "kind": "overlap",
+   "detail": "z-fight ear_back_a↔ear_right_b d=0.00mm (t=1.5) ~183mm²; z-fight ear_back_b↔ear_left_a d=0.00mm (t=1.5) ~214mm²; z-fight ear_left_b↔ear_front_a d=0.00mm (t=1.5) ~214mm²; z-fight ear_front_b↔ear_right_a d=0.00mm (t=1.5) ~214mm²"
+  },
+  {
+   "code": "FEFCO_0460",
+   "source": "fefco-04",
+   "kind": "outer>>inner",
+   "detail": "H: outer 151.5 vs inner 100 (+51.5 mm, t=1.5)"
+  },
+  {
+   "code": "FEFCO_0470",
+   "source": "fefco-04",
+   "kind": "overlap",
+   "detail": "interpenetrate base↔rightBottomFlap d=1.00mm (t=1.5) ~8296mm²; interpenetrate base↔leftBottomFlap d=1.00mm (t=1.5) ~8296mm²"
+  },
+  {
+   "code": "FEFCO_0471",
+   "source": "fefco-04",
+   "kind": "overlap",
+   "detail": "interpenetrate base↔frontBottomFlap d=1.00mm (t=1.5) ~10004mm²; interpenetrate base↔rightBottomFlap d=1.00mm (t=1.5) ~8364mm²; interpenetrate base↔leftBottomFlap d=1.00mm (t=1.5) ~8364mm²; z-fight frontBottomFlap↔rightBottomFlap d=0.00mm (t=1.5) ~459mm²; z-fight frontBottomFlap↔leftBottomFlap d=0.00mm (t=1.5) ~459mm²"
+  },
+  {
+   "code": "FEFCO_0471a",
+   "source": "fefco-04",
+   "kind": "overlap",
+   "detail": "interpenetrate base↔frontBottomFlap d=1.00mm (t=1.5) ~19828mm²; interpenetrate base↔rightBottomFlap d=1.00mm (t=1.5) ~17159mm²; interpenetrate base↔leftBottomFlap d=1.00mm (t=1.5) ~17159mm²; z-fight frontBottomFlap↔rightBottomFlap d=0.00mm (t=1.5) ~750mm²; z-fight frontBottomFlap↔leftBottomFlap d=0.00mm (t=1.5) ~750mm²"
+  },
+  {
+   "code": "FEFCO_0472",
+   "source": "fefco-04",
+   "kind": "overlap",
+   "detail": "interpenetrate base↔backBottomFlap d=1.00mm (t=1.5) ~13689mm²; interpenetrate base↔rightBottomFlap d=1.00mm (t=1.5) ~11081mm²; interpenetrate base↔leftBottomFlap d=1.00mm (t=1.5) ~11081mm²; z-fight backBottomFlap↔rightBottomFlap d=0.00mm (t=1.5) ~637mm²; z-fight backBottomFlap↔leftBottomFlap d=0.00mm (t=1.5) ~637mm²"
+  },
+  {
+   "code": "FEFCO_0601",
+   "source": "fefco-06-07",
+   "kind": "overlap",
+   "detail": "z-fight frontFlap_left↔bottomFlap_left d=0.00mm (t=1.5) ~369mm²; z-fight frontFlap_right↔bottomFlap_right d=0.00mm (t=1.5) ~369mm²; z-fight bottomFlap_left↔backFlap_left d=0.00mm (t=1.5) ~410mm²; z-fight bottomFlap_right↔backFlap_right d=0.00mm (t=1.5) ~410mm²"
+  },
+  {
+   "code": "FEFCO_0602",
+   "source": "fefco-06-07",
+   "kind": "overlap",
+   "detail": "z-fight frontFlap_left↔bottomFlap_left d=0.00mm (t=1.5) ~369mm²; z-fight frontFlap_right↔bottomFlap_right d=0.00mm (t=1.5) ~369mm²; z-fight bottomFlap_left↔backFlap_left d=0.00mm (t=1.5) ~410mm²; z-fight bottomFlap_right↔backFlap_right d=0.00mm (t=1.5) ~410mm²"
+  },
+  {
+   "code": "FEFCO_0605",
+   "source": "fefco-06-07",
+   "kind": "overlap",
+   "detail": "z-fight rimFront↔endL_flap_top d=0.00mm (t=1.5) ~655mm²; z-fight rimFront↔endR_flap_top d=0.00mm (t=1.5) ~655mm²; z-fight rimBack↔endL_flap_top d=0.00mm (t=1.5) ~655mm²; z-fight rimBack↔endR_flap_top d=0.00mm (t=1.5) ~655mm²"
+  },
+  {
+   "code": "FEFCO_0606",
+   "source": "fefco-06-07",
+   "kind": "overlap",
+   "detail": "z-fight frontFlap_left↔bottomFlap_left d=0.00mm (t=1.5) ~369mm²; z-fight frontFlap_right↔bottomFlap_right d=0.00mm (t=1.5) ~369mm²; z-fight bottomFlap_left↔backFlap_left d=0.00mm (t=1.5) ~410mm²; z-fight bottomFlap_right↔backFlap_right d=0.00mm (t=1.5) ~410mm²"
+  },
+  {
+   "code": "FEFCO_0608",
+   "source": "fefco-06-07",
+   "kind": "overlap",
+   "detail": "z-fight tuck↔endL_flap_right d=0.00mm (t=1.5) ~1002mm²; z-fight tuck↔endR_flap_left d=0.00mm (t=1.5) ~1002mm²"
+  },
+  {
+   "code": "FEFCO_0621",
+   "source": "fefco-06-07",
+   "kind": "overlap",
+   "detail": "interpenetrate front↔tab d=0.50mm (t=1.5) ~10421mm²; interpenetrate b_front↔b_tab d=0.50mm (t=1.5) ~10421mm²"
+  },
+  {
+   "code": "FEFCO_0714",
+   "source": "fefco-06-07",
+   "kind": "overlap",
+   "detail": "interpenetrate back↔lid_joint d=1.00mm (t=1.5) ~1512mm²"
+  },
+  {
+   "code": "FEFCO_0717",
+   "source": "fefco-06-07",
+   "kind": "outer>>inner",
+   "detail": "H: outer 285.0 vs inner 210 (+75.0 mm, t=1.5)"
+  },
+  {
+   "code": "ECMA_TUCK_RTE",
+   "source": "ecma-tuck",
+   "kind": "overlap",
+   "detail": "z-fight glue↔bottomTuck d=0.00mm (t=0.4) ~266mm²"
+  },
+  {
+   "code": "ECMA_TUCK_AIRPLANE",
+   "source": "ecma-tuck",
+   "kind": "overlap",
+   "detail": "z-fight glue↔topTuck d=0.00mm (t=0.4) ~97mm²; z-fight glue↔bottomTuck d=0.00mm (t=0.4) ~97mm²"
+  },
+  {
+   "code": "ECMA_TUCK_FRENCH_RTE",
+   "source": "ecma-tuck",
+   "kind": "overlap",
+   "detail": "z-fight glue↔topTuck d=0.00mm (t=0.4) ~106mm²"
+  },
+  {
+   "code": "ECMA_HANGER_EURO",
+   "source": "ecma-tuck",
+   "kind": "outer>>inner",
+   "detail": "H: outer 181.6 vs inner 150 (+31.6 mm, t=0.4)"
+  },
+  {
+   "code": "ECMA_HANGER_EURO",
+   "source": "ecma-tuck",
+   "kind": "overlap",
+   "detail": "z-fight glue↔topTuck d=0.00mm (t=0.4) ~59mm²"
+  },
+  {
+   "code": "ECMA_HANGER_ROUND",
+   "source": "ecma-tuck",
+   "kind": "outer>>inner",
+   "detail": "H: outer 146.6 vs inner 120 (+26.6 mm, t=0.4)"
+  },
+  {
+   "code": "ECMA_HANGER_ROUND",
+   "source": "ecma-tuck",
+   "kind": "overlap",
+   "detail": "z-fight glue↔topTuck d=0.00mm (t=0.4) ~46mm²"
+  },
+  {
+   "code": "ECMA_WINDOW_RTE",
+   "source": "ecma-tuck",
+   "kind": "overlap",
+   "detail": "z-fight glue↔bottomTuck d=0.00mm (t=0.4) ~200mm²"
+  },
+  {
+   "code": "ECMA_PHARMA_RTE",
+   "source": "ecma-tuck",
+   "kind": "overlap",
+   "detail": "z-fight glue↔bottomTuck d=0.00mm (t=0.4) ~62mm²"
+  },
+  {
+   "code": "ECMA_FLIP_TOP",
+   "source": "ecma-tuck",
+   "kind": "overlap",
+   "detail": "z-fight topLip↔collar d=0.00mm (t=0.4) ~417mm²"
+  },
+  {
+   "code": "ECMA_DOUBLE_WALL_TUCK",
+   "source": "ecma-tuck",
+   "kind": "overlap",
+   "detail": "z-fight glue↔bottomTuck d=0.00mm (t=0.4) ~250mm²; z-fight glue↔backInner d=0.00mm (t=0.4) ~2467mm²; z-fight topTuck↔frontInner d=0.00mm (t=0.4) ~1457mm²; z-fight bottomTuck↔backInner d=0.00mm (t=0.4) ~1467mm²"
+  },
+  {
+   "code": "ECMA_TRAY_BEERS",
+   "source": "ecma-specials",
+   "kind": "overlap",
+   "detail": "z-fight webFLA↔webFLB d=0.00mm (t=0.4) ~1837mm²; z-fight webFRA↔webFRB d=0.00mm (t=0.4) ~1767mm²; z-fight webBLA↔webBLB d=0.00mm (t=0.4) ~1748mm²; z-fight webBRA↔webBRB d=0.00mm (t=0.4) ~1748mm²"
+  },
+  {
+   "code": "ECMA_PILLOW",
+   "source": "ecma-specials",
+   "kind": "outer>>inner",
+   "detail": "H: outer 207.5 vs inner 160 (+47.5 mm, t=0.4)"
+  },
+  {
+   "code": "ECMA_HEXAGON",
+   "source": "ecma-specials",
+   "kind": "outer>>inner",
+   "detail": "L: outer 93.3 vs inner 80 (+13.3 mm, t=0.4)"
+  },
+  {
+   "code": "GABLE_CARRY_CLB",
+   "source": "ecma-specials",
+   "kind": "outer>>inner",
+   "detail": "H: outer 200.3 vs inner 120 (+80.3 mm, t=0.4)"
+  },
+  {
+   "code": "CUP_CARRIER",
+   "source": "ecma-specials",
+   "kind": "outer>>inner",
+   "detail": "H: outer 110.0 vs inner 60 (+50.0 mm, t=0.4)"
+  },
+  {
+   "code": "BOTTLE_BASKET_4",
+   "source": "ecma-specials",
+   "kind": "outer>>inner",
+   "detail": "H: outer 218.7 vs inner 150 (+68.7 mm, t=0.4)"
+  },
+  {
+   "code": "BOTTLE_BASKET_6",
+   "source": "ecma-specials",
+   "kind": "outer>>inner",
+   "detail": "H: outer 218.7 vs inner 150 (+68.7 mm, t=0.4)"
+  },
+  {
+   "code": "LIQUID_GABLE_TOP",
+   "source": "ecma-specials",
+   "kind": "outer>>inner",
+   "detail": "H: outer 255.4 vs inner 210 (+45.4 mm, t=0.48)"
+  },
+  {
+   "code": "FS_NOODLE_PAIL",
+   "source": "foodservice",
+   "kind": "outer>>inner",
+   "detail": "L: outer 101.2 vs inner 70 (+31.2 mm, t=0.48)"
+  },
+  {
+   "code": "FS_NOODLE_PAIL",
+   "source": "foodservice",
+   "kind": "outer>>inner",
+   "detail": "W: outer 91.2 vs inner 60 (+31.2 mm, t=0.48)"
+  },
+  {
+   "code": "FS_FRIES_SCOOP",
+   "source": "foodservice",
+   "kind": "overlap",
+   "detail": "z-fight glue↔bottomTuck d=0.00mm (t=0.4) ~94mm²"
+  },
+  {
+   "code": "FS_PIZZA_SLICE",
+   "source": "foodservice",
+   "kind": "overlap",
+   "detail": "interpenetrate sideR↔earL d=0.56mm (t=1.5) ~766mm²; interpenetrate sideL↔earR d=0.56mm (t=1.5) ~766mm²"
+  },
+  {
+   "code": "RIGID_LID_BASE",
+   "source": "rigid-tubes",
+   "kind": "overlap",
+   "detail": "interpenetrate front↔lid_frontTurn d=0.50mm (t=2.15) ~2797mm²; interpenetrate back↔lid_backTurn d=0.50mm (t=2.15) ~2797mm²; interpenetrate left↔lid_leftTurn d=0.50mm (t=2.15) ~2113mm²; interpenetrate left↔lid_frontTabL d=0.50mm (t=2.15) ~154mm²; interpenetrate left↔lid_backTabL d=0.50mm (t=2.15) ~154mm²; z-fight leftTurn↔frontTabL d=0.00mm (t=2.15) ~121mm² (+10 more)"
+  },
+  {
+   "code": "RIGID_SHOULDER",
+   "source": "rigid-tubes",
+   "kind": "overlap",
+   "detail": "z-fight frontTurn↔neck_front d=0.00mm (t=2.15) ~1406mm²; z-fight backTurn↔neck_back d=0.00mm (t=2.15) ~1406mm²; z-fight leftTurn↔frontTabL d=0.00mm (t=2.15) ~46mm²; z-fight leftTurn↔backTabL d=0.00mm (t=2.15) ~46mm²; z-fight leftTurn↔neck_left d=0.00mm (t=2.15) ~1406mm²; z-fight rightTurn↔frontTabR d=0.00mm (t=2.15) ~46mm² (+19 more)"
+  },
+  {
+   "code": "RIGID_BOOK_MAGNETIC",
+   "source": "rigid-tubes",
+   "kind": "overlap",
+   "detail": "z-fight bottom↔cover_bottomTurnL d=0.00mm (t=2.15) ~1536mm²; z-fight bottom↔cover_bottomTurnR d=0.00mm (t=2.15) ~1536mm²; z-fight bottom↔cover_bottomTurnF d=0.00mm (t=2.15) ~3071mm²; interpenetrate front↔cover_flapTurnL d=0.50mm (t=2.15) ~646mm²; interpenetrate front↔cover_flapTurnR d=0.50mm (t=2.15) ~646mm²; interpenetrate front↔cover_flapTurnF d=0.50mm (t=2.15) ~3372mm² (+10 more)"
+  },
+  {
+   "code": "RIGID_DRAWER",
+   "source": "rigid-tubes",
+   "kind": "overlap",
+   "detail": "interpenetrate bottom↔sleeve_bottomTurnB d=0.75mm (t=2.15) ~2116mm²; interpenetrate bottom↔sleeve_bottomTurnF d=0.75mm (t=2.15) ~2116mm²; interpenetrate left↔sleeve_leftTurnB d=0.75mm (t=2.15) ~437mm²; interpenetrate left↔sleeve_leftTurnF d=0.75mm (t=2.15) ~437mm²; z-fight leftTurn↔frontTabL d=0.00mm (t=2.15) ~56mm²; z-fight leftTurn↔backTabL d=0.00mm (t=2.15) ~56mm² (+6 more)"
+  },
+  {
+   "code": "RIGID_HINGED_LID",
+   "source": "rigid-tubes",
+   "kind": "overlap",
+   "detail": "z-fight leftTurn↔frontTabL d=0.00mm (t=2.15) ~61mm²; z-fight leftTurn↔backTabL d=0.00mm (t=2.15) ~61mm²; z-fight rightTurn↔frontTabR d=0.00mm (t=2.15) ~61mm²; z-fight rightTurn↔backTabR d=0.00mm (t=2.15) ~61mm²; z-fight lid_leftTurn↔lid_frontTabL d=0.00mm (t=2.15) ~24mm²; z-fight lid_leftTurn↔lid_backTabL d=0.00mm (t=2.15) ~24mm² (+2 more)"
+  },
+  {
+   "code": "RIGID_WINDOW",
+   "source": "rigid-tubes",
+   "kind": "overlap",
+   "detail": "interpenetrate front↔lid_frontTurn d=0.50mm (t=2.15) ~2116mm²; interpenetrate back↔lid_backTurn d=0.50mm (t=2.15) ~2116mm²; interpenetrate left↔lid_leftTurn d=0.50mm (t=2.15) ~2116mm²; interpenetrate left↔lid_frontTabL d=0.50mm (t=2.15) ~154mm²; interpenetrate left↔lid_backTabL d=0.50mm (t=2.15) ~154mm²; z-fight leftTurn↔frontTabL d=0.00mm (t=2.15) ~88mm² (+10 more)"
+  },
+  {
+   "code": "TUBE_LID_BASE",
+   "source": "rigid-tubes",
+   "kind": "overlap",
+   "detail": "interpenetrate body0↔lidGlue d=0.40mm (t=1.5) ~339mm²"
+  },
+  {
+   "code": "TUBE_ROLLED_EDGE",
+   "source": "rigid-tubes",
+   "kind": "overlap",
+   "detail": "interpenetrate body8↔lid8Cb d=0.40mm (t=1.5) ~48mm²; interpenetrate body9↔lid9Cb d=0.40mm (t=1.5) ~48mm²; interpenetrate body10↔lid10Cb d=0.40mm (t=1.5) ~48mm²; interpenetrate body11↔lid11Cb d=0.40mm (t=1.5) ~48mm²; interpenetrate body12↔lid12Cb d=0.40mm (t=1.5) ~48mm²; interpenetrate body13↔lid13Cb d=0.40mm (t=1.5) ~48mm² (+29 more)"
+  },
+  {
+   "code": "TUBE_TELESCOPING",
+   "source": "rigid-tubes",
+   "kind": "overlap",
+   "detail": "interpenetrate body0↔lidGlue d=0.40mm (t=1.5) ~1962mm²"
+  },
+  {
+   "code": "TUBE_PUSH_UP",
+   "source": "rigid-tubes",
+   "kind": "overlap",
+   "detail": "interpenetrate body0↔lidGlue d=0.40mm (t=1.5) ~75mm²; interpenetrate bodyGlue↔push0 d=0.30mm (t=1.5) ~51mm²"
+  },
+  {
+   "code": "TUBE_WINDOW",
+   "source": "rigid-tubes",
+   "kind": "overlap",
+   "detail": "interpenetrate body0↔lidGlue d=0.40mm (t=1.5) ~339mm²"
+  },
+  {
+   "code": "TUBE_SHOULDER",
+   "source": "rigid-tubes",
+   "kind": "overlap",
+   "detail": "z-fight bodyGlue↔neck0 d=0.00mm (t=1.5) ~899mm²; interpenetrate neck0↔lidGlue d=0.40mm (t=1.5) ~288mm²"
+  },
+  {
+   "code": "FEFCO_0900",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 97.0 < inner 300 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0900",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 197.0 < inner 200 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0900",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "H: outer 1.5 < inner 150 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0901",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 297.0 < inner 300 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0901",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 197.0 < inner 200 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0901",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "H: outer 1.5 < inner 150 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0902",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 1.5 < inner 300 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0902",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 197.0 < inner 200 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0902",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "H: outer 147.0 < inner 150 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0902",
+   "source": "fefco-09",
+   "kind": "no-print-face",
+   "detail": "faces: right"
+  },
+  {
+   "code": "FEFCO_0903",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 297.0 < inner 300 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0903",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 1.5 < inner 200 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0903",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "H: outer 147.0 < inner 150 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0904",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 297.0 < inner 300 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0904",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 197.0 < inner 200 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0904",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "H: outer 147.0 < inner 150 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0904",
+   "source": "fefco-09",
+   "kind": "no-print-face",
+   "detail": "faces: left,right,bottom"
+  },
+  {
+   "code": "FEFCO_0905",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 297.0 < inner 300 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0905",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 197.0 < inner 200 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0905",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "H: outer 147.0 < inner 150 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0906",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 297.0 < inner 300 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0906",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 197.0 < inner 200 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0906",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "H: outer 147.0 < inner 150 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0907",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 297.0 < inner 300 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0907",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 197.0 < inner 200 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0907",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "H: outer 147.0 < inner 150 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0907",
+   "source": "fefco-09",
+   "kind": "no-print-face",
+   "detail": "faces: back,bottom"
+  },
+  {
+   "code": "FEFCO_0908",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 297.0 < inner 300 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0908",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 197.0 < inner 200 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0908",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "H: outer 147.0 < inner 150 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0908",
+   "source": "fefco-09",
+   "kind": "no-print-face",
+   "detail": "faces: left,bottom"
+  },
+  {
+   "code": "FEFCO_0909",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 297.0 < inner 300 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0909",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 197.0 < inner 200 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0909",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "H: outer 147.0 < inner 150 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0910",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 297.0 < inner 300 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0910",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 197.0 < inner 200 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0910",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "H: outer 147.0 < inner 150 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0911",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 297.0 < inner 300 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0911",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 197.0 < inner 200 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0911",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "H: outer 147.0 < inner 150 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0913",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 297.0 < inner 300 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0913",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 197.0 < inner 200 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0913",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "H: outer 147.0 < inner 150 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0914",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 297.0 < inner 300 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0914",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 197.0 < inner 200 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0914",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "H: outer 147.0 < inner 150 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0920",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 297.0 < inner 300 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0920",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 197.0 < inner 200 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0920",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "H: outer 147.0 < inner 150 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0920",
+   "source": "fefco-09",
+   "kind": "no-print-face",
+   "detail": "faces: left,right,bottom"
+  },
+  {
+   "code": "FEFCO_0921",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 297.0 < inner 300 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0921",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 197.0 < inner 200 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0921",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "H: outer 147.0 < inner 150 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0929",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 357.0 < inner 360 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0929",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 134.3 < inner 270 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0929",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "H: outer 127.0 < inner 130 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0931",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 357.0 < inner 360 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0931",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 267.0 < inner 270 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0931",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "H: outer 127.0 < inner 130 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0932",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 357.0 < inner 360 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0932",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 267.0 < inner 270 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0932",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "H: outer 127.0 < inner 130 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0940",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 297.0 < inner 300 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0940",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 197.0 < inner 200 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0940",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "H: outer 3.0 < inner 150 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0941",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 297.0 < inner 300 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0941",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 197.0 < inner 200 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0941",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "H: outer 3.0 < inner 150 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0942",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 297.0 < inner 300 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0942",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 197.0 < inner 200 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0942",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "H: outer 4.5 < inner 150 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0943",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 297.0 < inner 300 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0943",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 197.0 < inner 200 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0943",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "H: outer 38.0 < inner 150 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0944",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 297.0 < inner 300 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0944",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 197.0 < inner 200 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0944",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "H: outer 38.0 < inner 150 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0945",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 297.0 < inner 300 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0945",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 197.0 < inner 200 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0945",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "H: outer 3.0 < inner 150 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0945",
+   "source": "fefco-09",
+   "kind": "overlap",
+   "detail": "z-fight pad↔edgeLeft d=0.00mm (t=1.5) ~4876mm²; z-fight pad↔edgeRight d=0.00mm (t=1.5) ~4876mm²"
+  },
+  {
+   "code": "FEFCO_0948",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 297.0 < inner 300 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0948",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 197.0 < inner 200 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0948",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "H: outer 38.0 < inner 150 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0948",
+   "source": "fefco-09",
+   "kind": "overlap",
+   "detail": "z-fight p4↔p8 d=0.00mm (t=1.5) ~4469mm²; z-fight p4↔p0 d=0.00mm (t=1.5) ~4469mm²"
+  },
+  {
+   "code": "FEFCO_0950",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 297.0 < inner 300 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0950",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 197.0 < inner 200 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0950",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "H: outer 6.0 < inner 150 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0950A",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 297.0 < inner 300 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0950A",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 197.0 < inner 200 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0950A",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "H: outer 7.5 < inner 150 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0951",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 297.0 < inner 300 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0951",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 197.0 < inner 200 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0951",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "H: outer 1.5 < inner 150 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0967",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 297.0 < inner 300 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0967",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 197.0 < inner 200 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0967",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "H: outer 1.5 < inner 150 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0970",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 40.0 < inner 300 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0970",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 40.0 < inner 200 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0970",
+   "source": "fefco-09",
+   "kind": "no-print-face",
+   "detail": "faces: back,left"
+  },
+  {
+   "code": "FEFCO_0971",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 40.0 < inner 300 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0971",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 40.0 < inner 200 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0971",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "H: outer 40.0 < inner 150 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0971",
+   "source": "fefco-09",
+   "kind": "no-print-face",
+   "detail": "faces: back,left,bottom"
+  },
+  {
+   "code": "FEFCO_0971A",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 40.0 < inner 300 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0971A",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 40.0 < inner 200 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0971A",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "H: outer 40.0 < inner 150 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0971A",
+   "source": "fefco-09",
+   "kind": "no-print-face",
+   "detail": "faces: back,left,bottom"
+  },
+  {
+   "code": "FEFCO_0972",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 297.0 < inner 300 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0972",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 25.0 < inner 200 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0972",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "H: outer 40.0 < inner 150 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0972A",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 297.0 < inner 300 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0972A",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 40.0 < inner 200 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0972A",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "H: outer 40.0 < inner 150 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0976A",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "L: outer 40.0 < inner 300 (t=1.5)"
+  },
+  {
+   "code": "FEFCO_0976A",
+   "source": "fefco-09",
+   "kind": "outer<inner",
+   "detail": "W: outer 40.0 < inner 200 (t=1.5)"
+  }
+ ],
+ "summary": [
+  {
+   "code": "FEFCO_0427",
+   "source": "core",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 250,
+    "W": 180,
+    "H": 80
+   },
+   "outer": {
+    "L": 259,
+    "W": 184.5,
+    "H": 83
+   },
+   "panels": 16,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0201",
+   "source": "core",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 303,
+    "W": 203,
+    "H": 156
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "ECMA_RTE",
+   "source": "core",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 60,
+    "W": 60,
+    "H": 140
+   },
+   "outer": {
+    "L": 60.8,
+    "W": 60.8,
+    "H": 141.6
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "ECMA_STE",
+   "source": "core",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 90,
+    "W": 50,
+    "H": 150
+   },
+   "outer": {
+    "L": 90.8,
+    "W": 50.8,
+    "H": 151.6
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "PIZZA",
+   "source": "core",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 300,
+    "H": 40
+   },
+   "outer": {
+    "L": 309,
+    "W": 303,
+    "H": 43
+   },
+   "panels": 15,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "SLEEVE",
+   "source": "core",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 220,
+    "W": 150,
+    "H": 60
+   },
+   "outer": {
+    "L": 220,
+    "W": 150.8,
+    "H": 60.8
+   },
+   "panels": 5,
+   "faces": [
+    "front",
+    "back",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0320",
+   "source": "core",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 330,
+    "W": 250,
+    "H": 100
+   },
+   "outer": {
+    "L": 338,
+    "W": 258,
+    "H": 106
+   },
+   "panels": 18,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "ECMA_CLB",
+   "source": "core",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 80,
+    "W": 80,
+    "H": 200
+   },
+   "outer": {
+    "L": 80.8,
+    "W": 80.8,
+    "H": 202
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "ECMA_SLB",
+   "source": "core",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 70,
+    "W": 70,
+    "H": 120
+   },
+   "outer": {
+    "L": 70.8,
+    "W": 70.8,
+    "H": 122
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0422",
+   "source": "core",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 389,
+    "W": 283,
+    "H": 101.5
+   },
+   "panels": 11,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "GABLE_BOX",
+   "source": "core",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 160,
+    "W": 100,
+    "H": 120
+   },
+   "outer": {
+    "L": 160.8,
+    "W": 100.8,
+    "H": 199.5
+   },
+   "panels": 17,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "PAPER_TUBE",
+   "source": "core",
+   "material": "KRAFT_TUBE",
+   "t": 1.5,
+   "inner": {
+    "L": 75,
+    "W": 75,
+    "H": 150
+   },
+   "outer": {
+    "L": 81.8,
+    "W": 81.8,
+    "H": 153
+   },
+   "panels": 68,
+   "faces": [
+    "front",
+    "back",
+    "top"
+   ]
+  },
+  {
+   "code": "RIGID_BOX",
+   "source": "core",
+   "material": "GREYBOARD_WRAP",
+   "t": 2.15,
+   "inner": {
+    "L": 250,
+    "W": 180,
+    "H": 80
+   },
+   "outer": {
+    "L": 259.6,
+    "W": 189.6,
+    "H": 84.3
+   },
+   "panels": 26,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0200",
+   "source": "fefco-02",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 303,
+    "W": 203,
+    "H": 153
+   },
+   "panels": 9,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0202",
+   "source": "fefco-02",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 400,
+    "W": 300,
+    "H": 250
+   },
+   "outer": {
+    "L": 403,
+    "W": 303,
+    "H": 259
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0203",
+   "source": "fefco-02",
+   "material": "B_FLUTE_KRAFT",
+   "t": 3,
+   "inner": {
+    "L": 400,
+    "W": 300,
+    "H": 300
+   },
+   "outer": {
+    "L": 406,
+    "W": 306,
+    "H": 318
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0204",
+   "source": "fefco-02",
+   "material": "B_FLUTE_KRAFT",
+   "t": 3,
+   "inner": {
+    "L": 400,
+    "W": 250,
+    "H": 250
+   },
+   "outer": {
+    "L": 406,
+    "W": 256,
+    "H": 262
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0205",
+   "source": "fefco-02",
+   "material": "B_FLUTE_KRAFT",
+   "t": 3,
+   "inner": {
+    "L": 400,
+    "W": 300,
+    "H": 250
+   },
+   "outer": {
+    "L": 406,
+    "W": 306,
+    "H": 268
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0206",
+   "source": "fefco-02",
+   "material": "B_FLUTE_KRAFT",
+   "t": 3,
+   "inner": {
+    "L": 400,
+    "W": 300,
+    "H": 300
+   },
+   "outer": {
+    "L": 406,
+    "W": 306,
+    "H": 318
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0207",
+   "source": "fefco-02",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 255,
+    "W": 170,
+    "H": 300
+   },
+   "outer": {
+    "L": 258,
+    "W": 173,
+    "H": 306
+   },
+   "panels": 17,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0208",
+   "source": "fefco-02",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 200
+   },
+   "outer": {
+    "L": 303,
+    "W": 203,
+    "H": 206
+   },
+   "panels": 29,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0209",
+   "source": "fefco-02",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 150
+   },
+   "outer": {
+    "L": 383,
+    "W": 283,
+    "H": 156
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0210",
+   "source": "fefco-02",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 220,
+    "H": 100
+   },
+   "outer": {
+    "L": 303,
+    "W": 223,
+    "H": 106
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0211",
+   "source": "fefco-02",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 220,
+    "H": 100
+   },
+   "outer": {
+    "L": 303,
+    "W": 223,
+    "H": 106
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0212",
+   "source": "fefco-02",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 220,
+    "H": 150
+   },
+   "outer": {
+    "L": 303,
+    "W": 223,
+    "H": 156
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0214",
+   "source": "fefco-02",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 200
+   },
+   "outer": {
+    "L": 383,
+    "W": 283,
+    "H": 206
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0215",
+   "source": "fefco-02",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 250,
+    "W": 180,
+    "H": 120
+   },
+   "outer": {
+    "L": 253,
+    "W": 183,
+    "H": 127.5
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0216",
+   "source": "fefco-02",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 303,
+    "W": 203,
+    "H": 157.5
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0217",
+   "source": "fefco-02",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 250,
+    "W": 150,
+    "H": 150
+   },
+   "outer": {
+    "L": 253,
+    "W": 153,
+    "H": 253.9
+   },
+   "panels": 15,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0218",
+   "source": "fefco-02",
+   "material": "B_FLUTE_KRAFT",
+   "t": 3,
+   "inner": {
+    "L": 350,
+    "W": 250,
+    "H": 150
+   },
+   "outer": {
+    "L": 356,
+    "W": 256,
+    "H": 168
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0225",
+   "source": "fefco-02",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 306,
+    "W": 204.5,
+    "H": 154.5
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0226",
+   "source": "fefco-02",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 400,
+    "W": 250,
+    "H": 200
+   },
+   "outer": {
+    "L": 403,
+    "W": 253,
+    "H": 295.4
+   },
+   "panels": 21,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0227",
+   "source": "fefco-02",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 100,
+    "W": 100,
+    "H": 320
+   },
+   "outer": {
+    "L": 103,
+    "W": 103,
+    "H": 329
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0228",
+   "source": "fefco-02",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 400,
+    "W": 200,
+    "H": 200
+   },
+   "outer": {
+    "L": 403,
+    "W": 204.5,
+    "H": 206
+   },
+   "panels": 16,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0229",
+   "source": "fefco-02",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 400,
+    "W": 300,
+    "H": 250
+   },
+   "outer": {
+    "L": 403,
+    "W": 303,
+    "H": 256
+   },
+   "panels": 21,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0230",
+   "source": "fefco-02",
+   "material": "B_FLUTE_KRAFT",
+   "t": 3,
+   "inner": {
+    "L": 600,
+    "W": 400,
+    "H": 400
+   },
+   "outer": {
+    "L": 606,
+    "W": 409,
+    "H": 412
+   },
+   "panels": 15,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0231",
+   "source": "fefco-02",
+   "material": "B_FLUTE_KRAFT",
+   "t": 3,
+   "inner": {
+    "L": 500,
+    "W": 400,
+    "H": 400
+   },
+   "outer": {
+    "L": 509,
+    "W": 406,
+    "H": 412
+   },
+   "panels": 15,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0300",
+   "source": "fefco-03-05",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 330,
+    "W": 250,
+    "H": 100
+   },
+   "outer": {
+    "L": 338,
+    "W": 264,
+    "H": 103
+   },
+   "panels": 18,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0301",
+   "source": "fefco-03-05",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 330,
+    "W": 250,
+    "H": 100
+   },
+   "outer": {
+    "L": 341,
+    "W": 261,
+    "H": 103
+   },
+   "panels": 18,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0302",
+   "source": "fefco-03-05",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 330,
+    "W": 250,
+    "H": 100
+   },
+   "outer": {
+    "L": 338,
+    "W": 258,
+    "H": 103
+   },
+   "panels": 10,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0303",
+   "source": "fefco-03-05",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 220,
+    "H": 80
+   },
+   "outer": {
+    "L": 308,
+    "W": 240,
+    "H": 83
+   },
+   "panels": 26,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0304",
+   "source": "fefco-03-05",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 220,
+    "H": 80
+   },
+   "outer": {
+    "L": 320,
+    "W": 228,
+    "H": 83
+   },
+   "panels": 26,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0306",
+   "source": "fefco-03-05",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 330,
+    "W": 210,
+    "H": 120
+   },
+   "outer": {
+    "L": 338,
+    "W": 224,
+    "H": 123
+   },
+   "panels": 18,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0307",
+   "source": "fefco-03-05",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 220,
+    "H": 80
+   },
+   "outer": {
+    "L": 308,
+    "W": 234,
+    "H": 83
+   },
+   "panels": 18,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0308",
+   "source": "fefco-03-05",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 220,
+    "H": 80
+   },
+   "outer": {
+    "L": 308,
+    "W": 240,
+    "H": 83
+   },
+   "panels": 26,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0309",
+   "source": "fefco-03-05",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 220,
+    "H": 80
+   },
+   "outer": {
+    "L": 320,
+    "W": 228,
+    "H": 83
+   },
+   "panels": 26,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0310",
+   "source": "fefco-03-05",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 450,
+    "W": 350,
+    "H": 400
+   },
+   "outer": {
+    "L": 458,
+    "W": 361,
+    "H": 403
+   },
+   "panels": 23,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0312",
+   "source": "fefco-03-05",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 400,
+    "W": 300,
+    "H": 300
+   },
+   "outer": {
+    "L": 408,
+    "W": 311,
+    "H": 304.5
+   },
+   "panels": 18,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0313",
+   "source": "fefco-03-05",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 450,
+    "W": 350,
+    "H": 400
+   },
+   "outer": {
+    "L": 458,
+    "W": 361,
+    "H": 409
+   },
+   "panels": 31,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0314",
+   "source": "fefco-03-05",
+   "material": "B_FLUTE_KRAFT",
+   "t": 3,
+   "inner": {
+    "L": 800,
+    "W": 600,
+    "H": 600
+   },
+   "outer": {
+    "L": 827,
+    "W": 615,
+    "H": 606
+   },
+   "panels": 27,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0321",
+   "source": "fefco-03-05",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 400,
+    "W": 300,
+    "H": 250
+   },
+   "outer": {
+    "L": 408,
+    "W": 308,
+    "H": 256
+   },
+   "panels": 18,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0322",
+   "source": "fefco-03-05",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 220,
+    "H": 80
+   },
+   "outer": {
+    "L": 320,
+    "W": 228,
+    "H": 83
+   },
+   "panels": 22,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0323",
+   "source": "fefco-03-05",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 220,
+    "H": 80
+   },
+   "outer": {
+    "L": 314,
+    "W": 240,
+    "H": 83
+   },
+   "panels": 26,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0325",
+   "source": "fefco-03-05",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 400,
+    "W": 300,
+    "H": 600
+   },
+   "outer": {
+    "L": 408,
+    "W": 311,
+    "H": 603
+   },
+   "panels": 23,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0330",
+   "source": "fefco-03-05",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 220,
+    "H": 80
+   },
+   "outer": {
+    "L": 320,
+    "W": 228,
+    "H": 83.5
+   },
+   "panels": 22,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0331",
+   "source": "fefco-03-05",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 220,
+    "H": 80
+   },
+   "outer": {
+    "L": 308,
+    "W": 240,
+    "H": 83
+   },
+   "panels": 22,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0350",
+   "source": "fefco-03-05",
+   "material": "B_FLUTE_KRAFT",
+   "t": 3,
+   "inner": {
+    "L": 1000,
+    "W": 1000,
+    "H": 900
+   },
+   "outer": {
+    "L": 1015,
+    "W": 1015,
+    "H": 909
+   },
+   "panels": 26,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0351",
+   "source": "fefco-03-05",
+   "material": "B_FLUTE_KRAFT",
+   "t": 3,
+   "inner": {
+    "L": 1000,
+    "W": 1000,
+    "H": 900
+   },
+   "outer": {
+    "L": 1015,
+    "W": 1015,
+    "H": 906
+   },
+   "panels": 27,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0352",
+   "source": "fefco-03-05",
+   "material": "B_FLUTE_KRAFT",
+   "t": 3,
+   "inner": {
+    "L": 1150,
+    "W": 750,
+    "H": 900
+   },
+   "outer": {
+    "L": 1165,
+    "W": 765,
+    "H": 906
+   },
+   "panels": 27,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0501",
+   "source": "fefco-03-05",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 200
+   },
+   "outer": {
+    "L": 303,
+    "W": 203,
+    "H": 200
+   },
+   "panels": 5,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right"
+   ]
+  },
+  {
+   "code": "FEFCO_0502",
+   "source": "fefco-03-05",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 100
+   },
+   "outer": {
+    "L": 303,
+    "W": 200,
+    "H": 103
+   },
+   "panels": 5,
+   "faces": [
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0503",
+   "source": "fefco-03-05",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 220,
+    "W": 150,
+    "H": 60
+   },
+   "outer": {
+    "L": 220,
+    "W": 153,
+    "H": 63
+   },
+   "panels": 5,
+   "faces": [
+    "front",
+    "back",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0504",
+   "source": "fefco-03-05",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 308,
+    "W": 205,
+    "H": 155
+   },
+   "panels": 10,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0505",
+   "source": "fefco-03-05",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 305,
+    "W": 205,
+    "H": 158
+   },
+   "panels": 10,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0507",
+   "source": "fefco-03-05",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 305,
+    "W": 208,
+    "H": 155
+   },
+   "panels": 10,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0509",
+   "source": "fefco-03-05",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 250,
+    "W": 180,
+    "H": 60
+   },
+   "outer": {
+    "L": 255,
+    "W": 185,
+    "H": 66.5
+   },
+   "panels": 8,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0510",
+   "source": "fefco-03-05",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 100
+   },
+   "outer": {
+    "L": 305,
+    "W": 208,
+    "H": 103
+   },
+   "panels": 10,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0511",
+   "source": "fefco-03-05",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 100
+   },
+   "outer": {
+    "L": 305,
+    "W": 208,
+    "H": 103
+   },
+   "panels": 12,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0512",
+   "source": "fefco-03-05",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 100
+   },
+   "outer": {
+    "L": 305,
+    "W": 205.5,
+    "H": 104
+   },
+   "panels": 8,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0400",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 310,
+    "W": 225,
+    "H": 40
+   },
+   "outer": {
+    "L": 313,
+    "W": 228,
+    "H": 43
+   },
+   "panels": 7,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0401",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 310,
+    "W": 225,
+    "H": 40
+   },
+   "outer": {
+    "L": 313,
+    "W": 228,
+    "H": 44.5
+   },
+   "panels": 7,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0402",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 310,
+    "W": 225,
+    "H": 40
+   },
+   "outer": {
+    "L": 313,
+    "W": 228,
+    "H": 44.5
+   },
+   "panels": 7,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0403",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 310,
+    "W": 225,
+    "H": 40
+   },
+   "outer": {
+    "L": 316,
+    "W": 228,
+    "H": 44.5
+   },
+   "panels": 9,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0412",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 310,
+    "W": 225,
+    "H": 40
+   },
+   "outer": {
+    "L": 316,
+    "W": 228,
+    "H": 43
+   },
+   "panels": 11,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0413",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 310,
+    "W": 225,
+    "H": 40
+   },
+   "outer": {
+    "L": 316,
+    "W": 228,
+    "H": 44.5
+   },
+   "panels": 11,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0415",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 310,
+    "W": 225,
+    "H": 40
+   },
+   "outer": {
+    "L": 316,
+    "W": 229.5,
+    "H": 43
+   },
+   "panels": 11,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0415a",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 310,
+    "W": 225,
+    "H": 40
+   },
+   "outer": {
+    "L": 319,
+    "W": 229.5,
+    "H": 43
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0416",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 310,
+    "W": 225,
+    "H": 40
+   },
+   "outer": {
+    "L": 316,
+    "W": 228,
+    "H": 43
+   },
+   "panels": 11,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0416a",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 310,
+    "W": 225,
+    "H": 40
+   },
+   "outer": {
+    "L": 316,
+    "W": 228,
+    "H": 43
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0420",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 310,
+    "W": 225,
+    "H": 40
+   },
+   "outer": {
+    "L": 313,
+    "W": 231,
+    "H": 43
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0404",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 300,
+    "W": 203,
+    "H": 153
+   },
+   "panels": 5,
+   "faces": [
+    "front",
+    "back",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0406",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 306,
+    "W": 203,
+    "H": 153
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0409",
+   "source": "fefco-04",
+   "material": "B_FLUTE_KRAFT",
+   "t": 3,
+   "inner": {
+    "L": 700,
+    "W": 100,
+    "H": 100
+   },
+   "outer": {
+    "L": 718,
+    "W": 106,
+    "H": 109
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0409a",
+   "source": "fefco-04",
+   "material": "B_FLUTE_KRAFT",
+   "t": 3,
+   "inner": {
+    "L": 700,
+    "W": 100,
+    "H": 100
+   },
+   "outer": {
+    "L": 718,
+    "W": 106,
+    "H": 109
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0410",
+   "source": "fefco-04",
+   "material": "B_FLUTE_KRAFT",
+   "t": 3,
+   "inner": {
+    "L": 700,
+    "W": 100,
+    "H": 100
+   },
+   "outer": {
+    "L": 718,
+    "W": 106,
+    "H": 109
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0410a",
+   "source": "fefco-04",
+   "material": "B_FLUTE_KRAFT",
+   "t": 3,
+   "inner": {
+    "L": 700,
+    "W": 100,
+    "H": 100
+   },
+   "outer": {
+    "L": 718,
+    "W": 106,
+    "H": 109
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0411",
+   "source": "fefco-04",
+   "material": "B_FLUTE_KRAFT",
+   "t": 3,
+   "inner": {
+    "L": 700,
+    "W": 100,
+    "H": 100
+   },
+   "outer": {
+    "L": 718,
+    "W": 106,
+    "H": 106
+   },
+   "panels": 15,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0411a",
+   "source": "fefco-04",
+   "material": "B_FLUTE_KRAFT",
+   "t": 3,
+   "inner": {
+    "L": 700,
+    "W": 100,
+    "H": 100
+   },
+   "outer": {
+    "L": 718,
+    "W": 106,
+    "H": 106
+   },
+   "panels": 15,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0405",
+   "source": "fefco-04",
+   "material": "B_FLUTE_KRAFT",
+   "t": 3,
+   "inner": {
+    "L": 400,
+    "W": 300,
+    "H": 250
+   },
+   "outer": {
+    "L": 406,
+    "W": 306,
+    "H": 256
+   },
+   "panels": 15,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0421",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 250,
+    "W": 180,
+    "H": 80
+   },
+   "outer": {
+    "L": 259,
+    "W": 183,
+    "H": 83
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0421_1",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 250,
+    "W": 180,
+    "H": 80
+   },
+   "outer": {
+    "L": 259,
+    "W": 183,
+    "H": 83
+   },
+   "panels": 15,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0421a",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 250,
+    "W": 180,
+    "H": 80
+   },
+   "outer": {
+    "L": 259,
+    "W": 184.5,
+    "H": 83
+   },
+   "panels": 14,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0422_1",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 389,
+    "W": 283,
+    "H": 101.5
+   },
+   "panels": 11,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0422_2",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 389,
+    "W": 283,
+    "H": 101.5
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0422a",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 100
+   },
+   "outer": {
+    "L": 309,
+    "W": 203,
+    "H": 101.5
+   },
+   "panels": 11,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0423",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 383,
+    "W": 289,
+    "H": 101.5
+   },
+   "panels": 11,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0423_1",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 383,
+    "W": 289,
+    "H": 101.5
+   },
+   "panels": 11,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0423a",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 100
+   },
+   "outer": {
+    "L": 303,
+    "W": 207.5,
+    "H": 101.5
+   },
+   "panels": 10,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0423_1a",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 100
+   },
+   "outer": {
+    "L": 303,
+    "W": 207.5,
+    "H": 101.5
+   },
+   "panels": 10,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0424",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 386,
+    "W": 283,
+    "H": 101.5
+   },
+   "panels": 9,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0424a",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 100
+   },
+   "outer": {
+    "L": 306,
+    "W": 203,
+    "H": 101.5
+   },
+   "panels": 9,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0425",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 389,
+    "W": 286,
+    "H": 101.5
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0425a",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 389,
+    "W": 286,
+    "H": 101.5
+   },
+   "panels": 17,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0426a",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 250,
+    "W": 180,
+    "H": 80
+   },
+   "outer": {
+    "L": 259,
+    "W": 183,
+    "H": 83
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0427_1",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 250,
+    "W": 180,
+    "H": 80
+   },
+   "outer": {
+    "L": 259,
+    "W": 184.5,
+    "H": 83
+   },
+   "panels": 14,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0428",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 250,
+    "W": 180,
+    "H": 80
+   },
+   "outer": {
+    "L": 256,
+    "W": 183,
+    "H": 83
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0428a",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 250,
+    "W": 180,
+    "H": 80
+   },
+   "outer": {
+    "L": 256,
+    "W": 183,
+    "H": 83
+   },
+   "panels": 11,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0429",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 250,
+    "W": 180,
+    "H": 80
+   },
+   "outer": {
+    "L": 262,
+    "W": 183,
+    "H": 83
+   },
+   "panels": 15,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0429a",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 250,
+    "W": 180,
+    "H": 80
+   },
+   "outer": {
+    "L": 262,
+    "W": 184.5,
+    "H": 83
+   },
+   "panels": 16,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0430",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 389,
+    "W": 283,
+    "H": 101.5
+   },
+   "panels": 11,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0431",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 389,
+    "W": 284.5,
+    "H": 101.5
+   },
+   "panels": 12,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0432",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 383,
+    "W": 289,
+    "H": 101.5
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0432a",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 383,
+    "W": 289,
+    "H": 101.5
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0433",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 386,
+    "W": 289,
+    "H": 101.5
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0434",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 389,
+    "W": 283,
+    "H": 136.5
+   },
+   "panels": 11,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0435",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 100
+   },
+   "outer": {
+    "L": 309,
+    "W": 203,
+    "H": 131.5
+   },
+   "panels": 11,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0435a",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 100
+   },
+   "outer": {
+    "L": 309,
+    "W": 203,
+    "H": 161.5
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0436",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 386,
+    "W": 286,
+    "H": 101.5
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0437",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 389,
+    "W": 284.5,
+    "H": 101.5
+   },
+   "panels": 12,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0437_1",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 389,
+    "W": 284.5,
+    "H": 101.5
+   },
+   "panels": 12,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0439",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 386,
+    "W": 284.5,
+    "H": 101.5
+   },
+   "panels": 11,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0439a",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 386,
+    "W": 284.5,
+    "H": 101.5
+   },
+   "panels": 11,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0447",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 250,
+    "W": 180,
+    "H": 80
+   },
+   "outer": {
+    "L": 256,
+    "W": 183,
+    "H": 83
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0449",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 100
+   },
+   "outer": {
+    "L": 309,
+    "W": 203,
+    "H": 181.5
+   },
+   "panels": 11,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0457",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 383,
+    "W": 286,
+    "H": 101.5
+   },
+   "panels": 9,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0440",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 250,
+    "W": 180,
+    "H": 80
+   },
+   "outer": {
+    "L": 256,
+    "W": 184.5,
+    "H": 83
+   },
+   "panels": 11,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0441",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 250,
+    "W": 180,
+    "H": 80
+   },
+   "outer": {
+    "L": 256,
+    "W": 183,
+    "H": 83
+   },
+   "panels": 11,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0442",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 250,
+    "W": 180,
+    "H": 80
+   },
+   "outer": {
+    "L": 256,
+    "W": 187.5,
+    "H": 83
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0443",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 386,
+    "W": 283,
+    "H": 103
+   },
+   "panels": 11,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0444",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 383,
+    "W": 286,
+    "H": 103
+   },
+   "panels": 11,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0445",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 386,
+    "W": 283,
+    "H": 101.5
+   },
+   "panels": 9,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0448",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 383,
+    "W": 283,
+    "H": 103
+   },
+   "panels": 7,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0450",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 383,
+    "W": 287.5,
+    "H": 101.5
+   },
+   "panels": 10,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0451",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 386,
+    "W": 284.5,
+    "H": 101.5
+   },
+   "panels": 10,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0451_1",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 386,
+    "W": 284.5,
+    "H": 101.5
+   },
+   "panels": 10,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0451_2",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 386,
+    "W": 286,
+    "H": 101.5
+   },
+   "panels": 11,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0452",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 386,
+    "W": 283,
+    "H": 101.5
+   },
+   "panels": 9,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0453",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 383,
+    "W": 286,
+    "H": 101.5
+   },
+   "panels": 9,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0454",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 383,
+    "W": 289,
+    "H": 101.5
+   },
+   "panels": 11,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0454_1",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 383,
+    "W": 289,
+    "H": 101.5
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0455",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 389,
+    "W": 283,
+    "H": 101.5
+   },
+   "panels": 11,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0455_1",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 389,
+    "W": 283,
+    "H": 101.5
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0458",
+   "source": "fefco-04",
+   "material": "B_FLUTE_KRAFT",
+   "t": 3,
+   "inner": {
+    "L": 400,
+    "W": 300,
+    "H": 250
+   },
+   "outer": {
+    "L": 418,
+    "W": 309,
+    "H": 256
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0459",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 300,
+    "H": 80
+   },
+   "outer": {
+    "L": 303,
+    "W": 303,
+    "H": 81.5
+   },
+   "panels": 17,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0460",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 100
+   },
+   "outer": {
+    "L": 309,
+    "W": 203,
+    "H": 151.5
+   },
+   "panels": 11,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0470",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 250,
+    "W": 180,
+    "H": 80
+   },
+   "outer": {
+    "L": 256,
+    "W": 183,
+    "H": 83
+   },
+   "panels": 11,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0471",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 250,
+    "W": 180,
+    "H": 80
+   },
+   "outer": {
+    "L": 256,
+    "W": 184.5,
+    "H": 83
+   },
+   "panels": 15,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0471a",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 380,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 386,
+    "W": 284.5,
+    "H": 101.5
+   },
+   "panels": 11,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0472",
+   "source": "fefco-04",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 100
+   },
+   "outer": {
+    "L": 306,
+    "W": 204.5,
+    "H": 101.5
+   },
+   "panels": 11,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0601",
+   "source": "fefco-06-07",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 400,
+    "W": 300,
+    "H": 250
+   },
+   "outer": {
+    "L": 406,
+    "W": 303,
+    "H": 253
+   },
+   "panels": 12,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0602",
+   "source": "fefco-06-07",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 400,
+    "W": 300,
+    "H": 250
+   },
+   "outer": {
+    "L": 406,
+    "W": 303,
+    "H": 253
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0605",
+   "source": "fefco-06-07",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 400,
+    "W": 300,
+    "H": 200
+   },
+   "outer": {
+    "L": 403,
+    "W": 303,
+    "H": 201.5
+   },
+   "panels": 15,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0606",
+   "source": "fefco-06-07",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 400,
+    "W": 300,
+    "H": 250
+   },
+   "outer": {
+    "L": 406,
+    "W": 303,
+    "H": 253
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0607",
+   "source": "fefco-06-07",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 400,
+    "W": 300,
+    "H": 250
+   },
+   "outer": {
+    "L": 403,
+    "W": 303,
+    "H": 253
+   },
+   "panels": 14,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0608",
+   "source": "fefco-06-07",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 400,
+    "W": 300,
+    "H": 250
+   },
+   "outer": {
+    "L": 403,
+    "W": 303,
+    "H": 253
+   },
+   "panels": 15,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0610",
+   "source": "fefco-06-07",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 400,
+    "W": 300,
+    "H": 250
+   },
+   "outer": {
+    "L": 403,
+    "W": 303,
+    "H": 253
+   },
+   "panels": 14,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0615",
+   "source": "fefco-06-07",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 600,
+    "W": 150,
+    "H": 150
+   },
+   "outer": {
+    "L": 603,
+    "W": 160,
+    "H": 160
+   },
+   "panels": 23,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0616",
+   "source": "fefco-06-07",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 600,
+    "W": 150,
+    "H": 150
+   },
+   "outer": {
+    "L": 603,
+    "W": 157,
+    "H": 157
+   },
+   "panels": 15,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0620",
+   "source": "fefco-06-07",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 700,
+    "W": 300,
+    "H": 300
+   },
+   "outer": {
+    "L": 703,
+    "W": 303,
+    "H": 303
+   },
+   "panels": 15,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0621",
+   "source": "fefco-06-07",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 600,
+    "W": 400,
+    "H": 400
+   },
+   "outer": {
+    "L": 616,
+    "W": 403,
+    "H": 406
+   },
+   "panels": 18,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0700",
+   "source": "fefco-06-07",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 350,
+    "W": 250,
+    "H": 200
+   },
+   "outer": {
+    "L": 353,
+    "W": 253,
+    "H": 204.5
+   },
+   "panels": 9,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0701",
+   "source": "fefco-06-07",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 350,
+    "W": 250,
+    "H": 200
+   },
+   "outer": {
+    "L": 353,
+    "W": 253,
+    "H": 207.5
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0703",
+   "source": "fefco-06-07",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 350,
+    "W": 250,
+    "H": 200
+   },
+   "outer": {
+    "L": 353,
+    "W": 253,
+    "H": 209
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0711",
+   "source": "fefco-06-07",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 350,
+    "W": 250,
+    "H": 200
+   },
+   "outer": {
+    "L": 353,
+    "W": 253,
+    "H": 207.5
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0712",
+   "source": "fefco-06-07",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 350,
+    "W": 250,
+    "H": 200
+   },
+   "outer": {
+    "L": 353,
+    "W": 253,
+    "H": 207.5
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0713",
+   "source": "fefco-06-07",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 350,
+    "W": 250,
+    "H": 200
+   },
+   "outer": {
+    "L": 353,
+    "W": 253,
+    "H": 207.5
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0714",
+   "source": "fefco-06-07",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 330,
+    "W": 220,
+    "H": 120
+   },
+   "outer": {
+    "L": 338,
+    "W": 228,
+    "H": 129
+   },
+   "panels": 18,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0715",
+   "source": "fefco-06-07",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 270,
+    "W": 180,
+    "H": 300
+   },
+   "outer": {
+    "L": 273,
+    "W": 183,
+    "H": 307.5
+   },
+   "panels": 16,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0716",
+   "source": "fefco-06-07",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 350,
+    "W": 250,
+    "H": 200
+   },
+   "outer": {
+    "L": 353,
+    "W": 253,
+    "H": 207.5
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0717",
+   "source": "fefco-06-07",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 200,
+    "W": 135,
+    "H": 210
+   },
+   "outer": {
+    "L": 203,
+    "W": 138,
+    "H": 285
+   },
+   "panels": 16,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0718",
+   "source": "fefco-06-07",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 480,
+    "W": 280,
+    "H": 100
+   },
+   "outer": {
+    "L": 483,
+    "W": 286,
+    "H": 101.5
+   },
+   "panels": 15,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0747",
+   "source": "fefco-06-07",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 350,
+    "W": 250,
+    "H": 100
+   },
+   "outer": {
+    "L": 353,
+    "W": 253,
+    "H": 103
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0748",
+   "source": "fefco-06-07",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 350,
+    "W": 250,
+    "H": 100
+   },
+   "outer": {
+    "L": 353,
+    "W": 253,
+    "H": 103
+   },
+   "panels": 15,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0751",
+   "source": "fefco-06-07",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 350,
+    "W": 250,
+    "H": 100
+   },
+   "outer": {
+    "L": 353,
+    "W": 253,
+    "H": 103
+   },
+   "panels": 15,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0752",
+   "source": "fefco-06-07",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 480,
+    "W": 90,
+    "H": 110
+   },
+   "outer": {
+    "L": 480,
+    "W": 93,
+    "H": 113
+   },
+   "panels": 9,
+   "faces": [
+    "front",
+    "back",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0759",
+   "source": "fefco-06-07",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 350,
+    "W": 250,
+    "H": 100
+   },
+   "outer": {
+    "L": 353,
+    "W": 254.5,
+    "H": 103
+   },
+   "panels": 17,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0761",
+   "source": "fefco-06-07",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 350,
+    "W": 250,
+    "H": 100
+   },
+   "outer": {
+    "L": 353,
+    "W": 253,
+    "H": 103
+   },
+   "panels": 17,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0770",
+   "source": "fefco-06-07",
+   "material": "B_FLUTE_KRAFT",
+   "t": 3,
+   "inner": {
+    "L": 580,
+    "W": 380,
+    "H": 150
+   },
+   "outer": {
+    "L": 586,
+    "W": 386,
+    "H": 165
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0771",
+   "source": "fefco-06-07",
+   "material": "B_FLUTE_KRAFT",
+   "t": 3,
+   "inner": {
+    "L": 580,
+    "W": 380,
+    "H": 150
+   },
+   "outer": {
+    "L": 586,
+    "W": 386,
+    "H": 153
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0772",
+   "source": "fefco-06-07",
+   "material": "B_FLUTE_KRAFT",
+   "t": 3,
+   "inner": {
+    "L": 580,
+    "W": 380,
+    "H": 150
+   },
+   "outer": {
+    "L": 592,
+    "W": 386,
+    "H": 153
+   },
+   "panels": 15,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0773",
+   "source": "fefco-06-07",
+   "material": "B_FLUTE_KRAFT",
+   "t": 3,
+   "inner": {
+    "L": 580,
+    "W": 380,
+    "H": 150
+   },
+   "outer": {
+    "L": 586,
+    "W": 392,
+    "H": 153
+   },
+   "panels": 15,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0774",
+   "source": "fefco-06-07",
+   "material": "B_FLUTE_KRAFT",
+   "t": 3,
+   "inner": {
+    "L": 580,
+    "W": 380,
+    "H": 150
+   },
+   "outer": {
+    "L": 586,
+    "W": 392,
+    "H": 153
+   },
+   "panels": 15,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "ECMA_TUCK_STE",
+   "source": "ecma-tuck",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 90,
+    "W": 50,
+    "H": 150
+   },
+   "outer": {
+    "L": 90.8,
+    "W": 50.8,
+    "H": 151.6
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "ECMA_TUCK_RTE",
+   "source": "ecma-tuck",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 60,
+    "W": 60,
+    "H": 140
+   },
+   "outer": {
+    "L": 60.8,
+    "W": 60.8,
+    "H": 141.6
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "ECMA_TUCK_AIRPLANE",
+   "source": "ecma-tuck",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 45,
+    "W": 35,
+    "H": 160
+   },
+   "outer": {
+    "L": 45.8,
+    "W": 35.8,
+    "H": 161.6
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "ECMA_TUCK_FRENCH_RTE",
+   "source": "ecma-tuck",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 35,
+    "W": 35,
+    "H": 110
+   },
+   "outer": {
+    "L": 35.8,
+    "W": 35.8,
+    "H": 111.6
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "ECMA_TUCK_SNAP_LOCK",
+   "source": "ecma-tuck",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 70,
+    "W": 70,
+    "H": 120
+   },
+   "outer": {
+    "L": 70.8,
+    "W": 70.8,
+    "H": 122
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "ECMA_TUCK_CRASH_LOCK",
+   "source": "ecma-tuck",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 80,
+    "W": 80,
+    "H": 200
+   },
+   "outer": {
+    "L": 80.8,
+    "W": 80.8,
+    "H": 202
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "ECMA_SEAL_END",
+   "source": "ecma-tuck",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 190,
+    "W": 65,
+    "H": 280
+   },
+   "outer": {
+    "L": 190.8,
+    "W": 65.8,
+    "H": 282.4
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "ECMA_SEAL_END_TEAR",
+   "source": "ecma-tuck",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 160,
+    "W": 80,
+    "H": 110
+   },
+   "outer": {
+    "L": 160.8,
+    "W": 80.8,
+    "H": 112.4
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "ECMA_HANGER_EURO",
+   "source": "ecma-tuck",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 80,
+    "W": 25,
+    "H": 150
+   },
+   "outer": {
+    "L": 80.8,
+    "W": 25.8,
+    "H": 181.6
+   },
+   "panels": 15,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom",
+    "top"
+   ]
+  },
+  {
+   "code": "ECMA_HANGER_ROUND",
+   "source": "ecma-tuck",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 60,
+    "W": 20,
+    "H": 120
+   },
+   "outer": {
+    "L": 60.8,
+    "W": 20.8,
+    "H": 146.6
+   },
+   "panels": 15,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom",
+    "top"
+   ]
+  },
+  {
+   "code": "ECMA_WINDOW_RTE",
+   "source": "ecma-tuck",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 120,
+    "W": 50,
+    "H": 200
+   },
+   "outer": {
+    "L": 120.8,
+    "W": 50.8,
+    "H": 201.6
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "ECMA_PHARMA_RTE",
+   "source": "ecma-tuck",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 60,
+    "W": 22,
+    "H": 105
+   },
+   "outer": {
+    "L": 60.8,
+    "W": 25.8,
+    "H": 106.6
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "ECMA_FLIP_TOP",
+   "source": "ecma-tuck",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 55,
+    "W": 22,
+    "H": 85
+   },
+   "outer": {
+    "L": 55.8,
+    "W": 22.8,
+    "H": 86.6
+   },
+   "panels": 21,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "ECMA_DOUBLE_WALL_TUCK",
+   "source": "ecma-tuck",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 65,
+    "W": 55,
+    "H": 160
+   },
+   "outer": {
+    "L": 65.8,
+    "W": 56.6,
+    "H": 161.6
+   },
+   "panels": 15,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "ECMA_TRAY_4C",
+   "source": "ecma-specials",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 220,
+    "W": 150,
+    "H": 50
+   },
+   "outer": {
+    "L": 221.6,
+    "W": 150.8,
+    "H": 50.4
+   },
+   "panels": 9,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "ECMA_TRAY_BEERS",
+   "source": "ecma-specials",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 230,
+    "W": 160,
+    "H": 60
+   },
+   "outer": {
+    "L": 232.4,
+    "W": 160.8,
+    "H": 60.4
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "ECMA_TRAY_BRIGHTWOOD",
+   "source": "ecma-specials",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 250,
+    "W": 180,
+    "H": 60
+   },
+   "outer": {
+    "L": 252.4,
+    "W": 180.8,
+    "H": 60.4
+   },
+   "panels": 11,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "ECMA_TRAY_6C_LID",
+   "source": "ecma-specials",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 170,
+    "W": 170,
+    "H": 85
+   },
+   "outer": {
+    "L": 173.4,
+    "W": 171.7,
+    "H": 85.8
+   },
+   "panels": 16,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "ECMA_TRAY_HINGED_TUCK",
+   "source": "ecma-specials",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 200,
+    "W": 200,
+    "H": 50
+   },
+   "outer": {
+    "L": 201.6,
+    "W": 200.8,
+    "H": 50.8
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "ECMA_SLEEVE_OPEN",
+   "source": "ecma-specials",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 85,
+    "W": 85,
+    "H": 100
+   },
+   "outer": {
+    "L": 85.8,
+    "W": 85.8,
+    "H": 100
+   },
+   "panels": 5,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right"
+   ]
+  },
+  {
+   "code": "ECMA_WRAP_LOCK",
+   "source": "ecma-specials",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 95,
+    "W": 60,
+    "H": 30
+   },
+   "outer": {
+    "L": 95,
+    "W": 60.8,
+    "H": 30.8
+   },
+   "panels": 7,
+   "faces": [
+    "front",
+    "back",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FOLDER_PRESENTATION",
+   "source": "ecma-specials",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 220,
+    "W": 0,
+    "H": 310
+   },
+   "outer": {
+    "L": 220,
+    "W": 2,
+    "H": 310
+   },
+   "panels": 4,
+   "faces": [
+    "front",
+    "back"
+   ]
+  },
+  {
+   "code": "ECMA_WALLET_ENDFLAP",
+   "source": "ecma-specials",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 125,
+    "W": 2,
+    "H": 125
+   },
+   "outer": {
+    "L": 127,
+    "W": 3.2,
+    "H": 127.8
+   },
+   "panels": 5,
+   "faces": [
+    "front",
+    "back"
+   ]
+  },
+  {
+   "code": "ECMA_PILLOW",
+   "source": "ecma-specials",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 100,
+    "W": 35,
+    "H": 160
+   },
+   "outer": {
+    "L": 100.8,
+    "W": 36.6,
+    "H": 207.5
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back"
+   ]
+  },
+  {
+   "code": "CONE",
+   "source": "ecma-specials",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 75,
+    "W": 75,
+    "H": 160
+   },
+   "outer": {
+    "L": 75.2,
+    "W": 75.2,
+    "H": 160.2
+   },
+   "panels": 25,
+   "faces": [
+    "front"
+   ]
+  },
+  {
+   "code": "ECMA_HEXAGON",
+   "source": "ecma-specials",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 80,
+    "W": 80,
+    "H": 80
+   },
+   "outer": {
+    "L": 93.3,
+    "W": 80.8,
+    "H": 81.6
+   },
+   "panels": 19,
+   "faces": [
+    "front",
+    "back",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "ECMA_OCTAGON",
+   "source": "ecma-specials",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 100,
+    "W": 100,
+    "H": 100
+   },
+   "outer": {
+    "L": 100.8,
+    "W": 100.8,
+    "H": 101.6
+   },
+   "panels": 25,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "GABLE_CARRY_CLB",
+   "source": "ecma-specials",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 160,
+    "W": 100,
+    "H": 120
+   },
+   "outer": {
+    "L": 160.8,
+    "W": 100.8,
+    "H": 200.3
+   },
+   "panels": 17,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "CUP_CARRIER",
+   "source": "ecma-specials",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 200,
+    "W": 200,
+    "H": 60
+   },
+   "outer": {
+    "L": 200,
+    "W": 200.8,
+    "H": 110
+   },
+   "panels": 8,
+   "faces": [
+    "front",
+    "back",
+    "bottom"
+   ]
+  },
+  {
+   "code": "BOTTLE_BASKET_4",
+   "source": "ecma-specials",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 132,
+    "W": 132,
+    "H": 150
+   },
+   "outer": {
+    "L": 132.8,
+    "W": 132.8,
+    "H": 218.7
+   },
+   "panels": 11,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "BOTTLE_BASKET_6",
+   "source": "ecma-specials",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 198,
+    "W": 132,
+    "H": 150
+   },
+   "outer": {
+    "L": 198.8,
+    "W": 132.8,
+    "H": 218.7
+   },
+   "panels": 12,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "ECMA_COUNTER_DISPLAY",
+   "source": "ecma-specials",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 200,
+    "W": 120,
+    "H": 100
+   },
+   "outer": {
+    "L": 200.8,
+    "W": 120.8,
+    "H": 101.6
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "LIQUID_GABLE_TOP",
+   "source": "ecma-specials",
+   "material": "SBS_350",
+   "t": 0.48,
+   "inner": {
+    "L": 70,
+    "W": 70,
+    "H": 210
+   },
+   "outer": {
+    "L": 71,
+    "W": 71,
+    "H": 255.4
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "LIQUID_ASEPTIC_BRICK",
+   "source": "ecma-specials",
+   "material": "SBS_350",
+   "t": 0.48,
+   "inner": {
+    "L": 55,
+    "W": 37,
+    "H": 123
+   },
+   "outer": {
+    "L": 56.9,
+    "W": 38,
+    "H": 125.4
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FS_CAKE_BOX_WINDOW",
+   "source": "foodservice",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 260,
+    "W": 260,
+    "H": 110
+   },
+   "outer": {
+    "L": 261.6,
+    "W": 260.8,
+    "H": 110.8
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FS_BAKERY_BOX",
+   "source": "foodservice",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 200,
+    "W": 150,
+    "H": 60
+   },
+   "outer": {
+    "L": 202.4,
+    "W": 150.8,
+    "H": 60.8
+   },
+   "panels": 15,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FS_BURGER_CLAMSHELL",
+   "source": "foodservice",
+   "material": "SBS_350",
+   "t": 0.48,
+   "inner": {
+    "L": 120,
+    "W": 120,
+    "H": 80
+   },
+   "outer": {
+    "L": 121.9,
+    "W": 121,
+    "H": 81
+   },
+   "panels": 19,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FS_NOODLE_PAIL",
+   "source": "foodservice",
+   "material": "SBS_350",
+   "t": 0.48,
+   "inner": {
+    "L": 70,
+    "W": 60,
+    "H": 95
+   },
+   "outer": {
+    "L": 101.2,
+    "W": 91.2,
+    "H": 95.6
+   },
+   "panels": 10,
+   "faces": [
+    "top",
+    "bottom",
+    "front",
+    "back",
+    "left",
+    "right"
+   ]
+  },
+  {
+   "code": "FS_FRIES_SCOOP",
+   "source": "foodservice",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 90,
+    "W": 35,
+    "H": 120
+   },
+   "outer": {
+    "L": 90.8,
+    "W": 35.8,
+    "H": 120.4
+   },
+   "panels": 9,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FS_SANDWICH_WEDGE",
+   "source": "foodservice",
+   "material": "SBS_300",
+   "t": 0.4,
+   "inner": {
+    "L": 70,
+    "W": 125,
+    "H": 125
+   },
+   "outer": {
+    "L": 70.8,
+    "W": 126.1,
+    "H": 126.1
+   },
+   "panels": 8,
+   "faces": [
+    "left",
+    "right",
+    "top",
+    "front"
+   ]
+  },
+  {
+   "code": "FS_PIZZA_SLICE",
+   "source": "foodservice",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 145,
+    "W": 185,
+    "H": 30
+   },
+   "outer": {
+    "L": 151,
+    "W": 188.6,
+    "H": 33
+   },
+   "panels": 9,
+   "faces": [
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FS_PIZZA_ROUND",
+   "source": "foodservice",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 310,
+    "W": 310,
+    "H": 40
+   },
+   "outer": {
+    "L": 319,
+    "W": 313,
+    "H": 43
+   },
+   "panels": 15,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "RIGID_LID_BASE",
+   "source": "rigid-tubes",
+   "material": "GREYBOARD_WRAP",
+   "t": 2.15,
+   "inner": {
+    "L": 200,
+    "W": 150,
+    "H": 80
+   },
+   "outer": {
+    "L": 209.6,
+    "W": 159.6,
+    "H": 84.3
+   },
+   "panels": 26,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "RIGID_SHOULDER",
+   "source": "rigid-tubes",
+   "material": "GREYBOARD_WRAP",
+   "t": 2.15,
+   "inner": {
+    "L": 90,
+    "W": 90,
+    "H": 150
+   },
+   "outer": {
+    "L": 99.6,
+    "W": 99.6,
+    "H": 154.3
+   },
+   "panels": 35,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "RIGID_BOOK_MAGNETIC",
+   "source": "rigid-tubes",
+   "material": "GREYBOARD_WRAP",
+   "t": 2.15,
+   "inner": {
+    "L": 220,
+    "W": 160,
+    "H": 70
+   },
+   "outer": {
+    "L": 228.3,
+    "W": 169.1,
+    "H": 76.5
+   },
+   "panels": 27,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "RIGID_DRAWER",
+   "source": "rigid-tubes",
+   "material": "GREYBOARD_WRAP",
+   "t": 2.15,
+   "inner": {
+    "L": 200,
+    "W": 120,
+    "H": 40
+   },
+   "outer": {
+    "L": 210.1,
+    "W": 124.3,
+    "H": 48
+   },
+   "panels": 26,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "RIGID_HINGED_LID",
+   "source": "rigid-tubes",
+   "material": "GREYBOARD_WRAP",
+   "t": 2.15,
+   "inner": {
+    "L": 180,
+    "W": 130,
+    "H": 60
+   },
+   "outer": {
+    "L": 184.3,
+    "W": 134.3,
+    "H": 64.3
+   },
+   "panels": 26,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "RIGID_COLLAPSIBLE",
+   "source": "rigid-tubes",
+   "material": "GREYBOARD_WRAP",
+   "t": 2.15,
+   "inner": {
+    "L": 300,
+    "W": 220,
+    "H": 100
+   },
+   "outer": {
+    "L": 312.9,
+    "W": 226.5,
+    "H": 104.3
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "RIGID_WINDOW",
+   "source": "rigid-tubes",
+   "material": "GREYBOARD_WRAP",
+   "t": 2.15,
+   "inner": {
+    "L": 200,
+    "W": 200,
+    "H": 60
+   },
+   "outer": {
+    "L": 209.6,
+    "W": 209.6,
+    "H": 64.3
+   },
+   "panels": 26,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "TUBE_LID_BASE",
+   "source": "rigid-tubes",
+   "material": "KRAFT_TUBE",
+   "t": 1.5,
+   "inner": {
+    "L": 75,
+    "W": 75,
+    "H": 150
+   },
+   "outer": {
+    "L": 82.2,
+    "W": 82.2,
+    "H": 153
+   },
+   "panels": 68,
+   "faces": [
+    "front",
+    "back",
+    "top"
+   ]
+  },
+  {
+   "code": "TUBE_ROLLED_EDGE",
+   "source": "rigid-tubes",
+   "material": "KRAFT_TUBE",
+   "t": 1.5,
+   "inner": {
+    "L": 75,
+    "W": 75,
+    "H": 150
+   },
+   "outer": {
+    "L": 82.2,
+    "W": 82.2,
+    "H": 153
+   },
+   "panels": 132,
+   "faces": [
+    "front",
+    "back",
+    "top"
+   ]
+  },
+  {
+   "code": "TUBE_TELESCOPING",
+   "source": "rigid-tubes",
+   "material": "KRAFT_TUBE",
+   "t": 1.5,
+   "inner": {
+    "L": 90,
+    "W": 90,
+    "H": 320
+   },
+   "outer": {
+    "L": 97.2,
+    "W": 97.2,
+    "H": 323
+   },
+   "panels": 76,
+   "faces": [
+    "front",
+    "back",
+    "top"
+   ]
+  },
+  {
+   "code": "TUBE_PUSH_UP",
+   "source": "rigid-tubes",
+   "material": "KRAFT_TUBE",
+   "t": 1.5,
+   "inner": {
+    "L": 25,
+    "W": 25,
+    "H": 70
+   },
+   "outer": {
+    "L": 32.1,
+    "W": 32.1,
+    "H": 71.5
+   },
+   "panels": 77,
+   "faces": [
+    "front",
+    "back",
+    "top"
+   ]
+  },
+  {
+   "code": "TUBE_WINDOW",
+   "source": "rigid-tubes",
+   "material": "KRAFT_TUBE",
+   "t": 1.5,
+   "inner": {
+    "L": 75,
+    "W": 75,
+    "H": 150
+   },
+   "outer": {
+    "L": 82.2,
+    "W": 82.2,
+    "H": 153
+   },
+   "panels": 74,
+   "faces": [
+    "front",
+    "back",
+    "top"
+   ]
+  },
+  {
+   "code": "TUBE_SHOULDER",
+   "source": "rigid-tubes",
+   "material": "KRAFT_TUBE",
+   "t": 1.5,
+   "inner": {
+    "L": 75,
+    "W": 75,
+    "H": 150
+   },
+   "outer": {
+    "L": 82.2,
+    "W": 82.2,
+    "H": 153
+   },
+   "panels": 101,
+   "faces": [
+    "front",
+    "back",
+    "top"
+   ]
+  },
+  {
+   "code": "PALLET_BOX",
+   "source": "rigid-tubes",
+   "material": "B_FLUTE_KRAFT",
+   "t": 3,
+   "inner": {
+    "L": 1160,
+    "W": 960,
+    "H": 800
+   },
+   "outer": {
+    "L": 1166,
+    "W": 966,
+    "H": 812
+   },
+   "panels": 13,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0900",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 97,
+    "W": 197,
+    "H": 1.5
+   },
+   "panels": 1,
+   "faces": [
+    "top"
+   ]
+  },
+  {
+   "code": "FEFCO_0901",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 297,
+    "W": 197,
+    "H": 1.5
+   },
+   "panels": 1,
+   "faces": [
+    "top"
+   ]
+  },
+  {
+   "code": "FEFCO_0902",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 1.5,
+    "W": 197,
+    "H": 147
+   },
+   "panels": 1,
+   "faces": [
+    "right"
+   ]
+  },
+  {
+   "code": "FEFCO_0903",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 297,
+    "W": 1.5,
+    "H": 147
+   },
+   "panels": 1,
+   "faces": [
+    "front"
+   ]
+  },
+  {
+   "code": "FEFCO_0904",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 297,
+    "W": 197,
+    "H": 147
+   },
+   "panels": 3,
+   "faces": [
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0905",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 297,
+    "W": 197,
+    "H": 147
+   },
+   "panels": 3,
+   "faces": [
+    "front",
+    "back",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0906",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 297,
+    "W": 197,
+    "H": 147
+   },
+   "panels": 4,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right"
+   ]
+  },
+  {
+   "code": "FEFCO_0907",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 297,
+    "W": 197,
+    "H": 147
+   },
+   "panels": 2,
+   "faces": [
+    "back",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0908",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 297,
+    "W": 197,
+    "H": 147
+   },
+   "panels": 2,
+   "faces": [
+    "left",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0909",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 297,
+    "W": 197,
+    "H": 147
+   },
+   "panels": 4,
+   "faces": [
+    "front",
+    "back",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0910",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 297,
+    "W": 197,
+    "H": 147
+   },
+   "panels": 4,
+   "faces": [
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0911",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 297,
+    "W": 197,
+    "H": 147
+   },
+   "panels": 5,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0913",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 297,
+    "W": 197,
+    "H": 147
+   },
+   "panels": 5,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0914",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 297,
+    "W": 197,
+    "H": 147
+   },
+   "panels": 5,
+   "faces": [
+    "front",
+    "back",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0920",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 297,
+    "W": 197,
+    "H": 147
+   },
+   "panels": 6,
+   "faces": [
+    "left",
+    "right",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0921",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 297,
+    "W": 197,
+    "H": 147
+   },
+   "panels": 6,
+   "faces": [
+    "front",
+    "back",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0929",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 360,
+    "W": 270,
+    "H": 130
+   },
+   "outer": {
+    "L": 357,
+    "W": 134.3,
+    "H": 127
+   },
+   "panels": 3,
+   "faces": [
+    "front",
+    "left",
+    "right"
+   ]
+  },
+  {
+   "code": "FEFCO_0931",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 360,
+    "W": 270,
+    "H": 130
+   },
+   "outer": {
+    "L": 357,
+    "W": 267,
+    "H": 127
+   },
+   "panels": 5,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right"
+   ]
+  },
+  {
+   "code": "FEFCO_0932",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 360,
+    "W": 270,
+    "H": 130
+   },
+   "outer": {
+    "L": 357,
+    "W": 267,
+    "H": 127
+   },
+   "panels": 9,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top"
+   ]
+  },
+  {
+   "code": "FEFCO_0940",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 297,
+    "W": 197,
+    "H": 3
+   },
+   "panels": 3,
+   "faces": [
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0941",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 297,
+    "W": 197,
+    "H": 3
+   },
+   "panels": 2,
+   "faces": [
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0942",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 297,
+    "W": 197,
+    "H": 4.5
+   },
+   "panels": 3,
+   "faces": [
+    "top"
+   ]
+  },
+  {
+   "code": "FEFCO_0943",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 297,
+    "W": 197,
+    "H": 38
+   },
+   "panels": 3,
+   "faces": [
+    "left",
+    "right",
+    "top"
+   ]
+  },
+  {
+   "code": "FEFCO_0944",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 297,
+    "W": 197,
+    "H": 38
+   },
+   "panels": 5,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top"
+   ]
+  },
+  {
+   "code": "FEFCO_0945",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 297,
+    "W": 197,
+    "H": 3
+   },
+   "panels": 5,
+   "faces": [
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0948",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 297,
+    "W": 197,
+    "H": 38
+   },
+   "panels": 9,
+   "faces": [
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0950",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 297,
+    "W": 197,
+    "H": 6
+   },
+   "panels": 4,
+   "faces": [
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0950A",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 297,
+    "W": 197,
+    "H": 7.5
+   },
+   "panels": 5,
+   "faces": [
+    "top"
+   ]
+  },
+  {
+   "code": "FEFCO_0951",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 297,
+    "W": 197,
+    "H": 1.5
+   },
+   "panels": 4,
+   "faces": [
+    "top"
+   ]
+  },
+  {
+   "code": "FEFCO_0967",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 297,
+    "W": 197,
+    "H": 1.5
+   },
+   "panels": 1,
+   "faces": [
+    "top"
+   ]
+  },
+  {
+   "code": "FEFCO_0970",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 40,
+    "W": 40,
+    "H": 150
+   },
+   "panels": 2,
+   "faces": [
+    "back",
+    "left"
+   ]
+  },
+  {
+   "code": "FEFCO_0971",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 40,
+    "W": 40,
+    "H": 40
+   },
+   "panels": 3,
+   "faces": [
+    "back",
+    "left",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0971A",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 40,
+    "W": 40,
+    "H": 40
+   },
+   "panels": 4,
+   "faces": [
+    "back",
+    "left",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0972",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 297,
+    "W": 25,
+    "H": 40
+   },
+   "panels": 3,
+   "faces": [
+    "front",
+    "back",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0972A",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 297,
+    "W": 40,
+    "H": 40
+   },
+   "panels": 5,
+   "faces": [
+    "front",
+    "back",
+    "top",
+    "bottom"
+   ]
+  },
+  {
+   "code": "FEFCO_0976A",
+   "source": "fefco-09",
+   "material": "E_FLUTE_KRAFT",
+   "t": 1.5,
+   "inner": {
+    "L": 300,
+    "W": 200,
+    "H": 150
+   },
+   "outer": {
+    "L": 40,
+    "W": 40,
+    "H": 150
+   },
+   "panels": 5,
+   "faces": [
+    "front",
+    "back",
+    "left",
+    "right"
+   ]
+  }
+ ]
+}

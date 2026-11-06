@@ -29,8 +29,12 @@ test("home → catalogue → structure → SEO size page with price table and JS
   await expect(page.getByRole("heading", { level: 1, name: "Mailer box" })).toBeVisible();
   await expect(page.getByRole("table")).toContainText("2,000");
 
-  await page.getByRole("link", { name: /Shoe box/ }).click();
-  await expect(page).toHaveURL(/\/en\/boxes\/mailer-box\/330x200x120$/, { timeout: 20_000 });
+  // A click that lands while the page is still hydrating can be lost: retry it.
+  await page.waitForLoadState("networkidle");
+  await expect(async () => {
+    if (!/330x200x120$/.test(page.url())) await page.getByRole("link", { name: /Shoe box/ }).first().click();
+    await expect(page).toHaveURL(/\/en\/boxes\/mailer-box\/330x200x120$/, { timeout: 5_000 });
+  }).toPass({ timeout: 30_000 });
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Custom printed mailer box 33×20×12 cm");
   const ld = await page.locator('script[type="application/ld+json"]').first().textContent();
   expect(JSON.parse(ld!)[0]).toMatchObject({ "@type": "Product", offers: { priceCurrency: "EGP" } });
