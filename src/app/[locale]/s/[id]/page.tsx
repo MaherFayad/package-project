@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { cache } from "react";
 import { getT, toLocale } from "@/i18n";
+import { getSession } from "@/lib/auth/session";
 import type { DictKey } from "@/i18n/types";
 import { formatDims } from "@/lib/format";
 import { Badge, BlockStack, Button, Card, EmptyState, EmptyBoxIllustration, InlineStack, Layout, LayoutSection, Page, Text } from "@/components/ui";
-import { SharedViewer } from "@/components/designer/SharedViewer";
+import { SharedViewerLazy } from "./SharedViewerLazy";
 import { designerPath } from "@/components/designer/lib/catalog";
 import { loadSharedDesign } from "@/components/designer/server";
 
@@ -28,7 +29,7 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
   const { locale: l, id } = await params;
   const locale = toLocale(l);
   const t = getT(locale);
-  const shared = await getShared(id);
+  const [shared, session] = await Promise.all([getShared(id), getSession()]);
 
   if (!shared) {
     return (
@@ -64,7 +65,7 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
     <Page title={name} subtitle={t("designer.shared.subtitle")} titleMetadata={<Badge tone="info">{t(`structures.${doc.structureCode}` as DictKey)}</Badge>}>
       <Layout>
         <LayoutSection>
-          <SharedViewer doc={doc} />
+          <SharedViewerLazy doc={doc} />
         </LayoutSection>
         <LayoutSection variant="oneThird" as="aside">
           <BlockStack gap="400">
@@ -74,6 +75,9 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
                 <Button variant="primary" fullWidth url={`/${locale}/checkout/${encodeURIComponent(designId)}?share=${encodeURIComponent(id)}`}>
                   {t("designer.shared.cta")}
                 </Button>
+                <Text as="p" variant="bodySm" tone="subdued">
+                  {t("buyer.shareOwnCopy")} {session ? null : t("buyer.shareSignIn")}
+                </Text>
                 <Button fullWidth url={designerPath(locale, doc.structureCode)}>
                   {t("designer.shared.copyDesign")}
                 </Button>

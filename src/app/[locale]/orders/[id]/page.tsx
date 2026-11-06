@@ -151,7 +151,8 @@ export default async function OrderPage({ params, searchParams }: { params: Para
         {t("orders.detail.payNow")}
       </Button>
     ) : isBuyer && isPaidStatus(status) && proof ? (
-      <ReorderButton orderId={order.id} locale={locale} primary />
+      // Reorder leads once the boxes have arrived; before that it stays a quiet secondary action.
+      <ReorderButton orderId={order.id} locale={locale} primary={status === "DELIVERED"} />
     ) : undefined;
 
   return (
@@ -159,9 +160,11 @@ export default async function OrderPage({ params, searchParams }: { params: Para
       title={t("orders.detail.title", { number: order.number })}
       titleMetadata={
         <InlineStack gap="100">
-          <Badge tone={paidSum > 0 ? "neutral" : "warning"} progress={paidSum > 0 ? "complete" : "incomplete"}>
-            {paidSum > 0 ? t("payment.status.PAID") : t("payment.status.PENDING")}
-          </Badge>
+          {paidSum > 0 || !terminal ? (
+            <Badge tone={paidSum > 0 ? "neutral" : "warning"} progress={paidSum > 0 ? "complete" : "incomplete"}>
+              {paidSum > 0 ? t("payment.status.PAID") : t("payment.status.PENDING")}
+            </Badge>
+          ) : null}
           {status !== "PAID" && status !== "PENDING_PAYMENT" ? (
             <Badge tone={badge.tone} progress={badge.progress}>
               {t(`orderStatus.${status}` as DictKey)}
@@ -176,14 +179,35 @@ export default async function OrderPage({ params, searchParams }: { params: Para
     >
       <BlockStack gap="400">
         {paid && isPaidStatus(status) ? (
-          <Banner tone="success" title={t("payment.paid")} announce>
-            {t("orders.detail.paidBanner", { vendor: vendorName })}
-          </Banner>
+          <div className={styles.success}>
+            <Banner tone="success" title={t("payment.paid")} announce>
+              <BlockStack gap="200">
+                <span>
+                  {order.dueDate
+                    ? t("buyer.successBody", { vendor: vendorName, date: formatDate(order.dueDate, locale) })
+                    : t("buyer.successBodyNoDate", { vendor: vendorName })}
+                </span>
+                <span className={styles.nextTitle}>{t("buyer.whatNext")}</span>
+                <ol className={styles.nextList}>
+                  <li>{t("buyer.next1")}</li>
+                  <li>{t("buyer.next2")}</li>
+                  <li>{t("buyer.next3")}</li>
+                </ol>
+              </BlockStack>
+            </Banner>
+          </div>
         ) : null}
         {status === "PENDING_PAYMENT" && isBuyer ? (
           <Banner tone="warning" title={t("payment.pending")} action={{ content: t("orders.detail.payNow"), url: `/${locale}/checkout/pay/${order.id}` }} />
         ) : null}
-        {terminal ? <Banner tone={status === "REFUNDED" ? "critical" : "info"}>{t(status === "REFUNDED" ? "orders.detail.refundedNote" : "orders.detail.cancelledNote")}</Banner> : null}
+        {terminal ? (
+          <Banner
+            tone={status === "REFUNDED" ? "critical" : "info"}
+            action={isBuyer && proof?.designId ? { content: t("checkout.start.orderThis"), url: `/${locale}/checkout/${encodeURIComponent(proof.designId)}` } : undefined}
+          >
+            {t(status === "REFUNDED" ? "orders.detail.refundedNote" : "orders.detail.cancelledNote")}
+          </Banner>
+        ) : null}
 
         <Layout>
           <LayoutSection>
@@ -237,7 +261,7 @@ export default async function OrderPage({ params, searchParams }: { params: Para
                                     {t("orders.detail.downloadPrint")}
                                   </InlineStack>
                                 </Link>
-                              ) : (
+                              ) : terminal ? null : (
                                 <Text as="span" variant="bodySm" tone="subdued">
                                   {t("orders.detail.printOnlyPaid")}
                                 </Text>
@@ -294,6 +318,7 @@ export default async function OrderPage({ params, searchParams }: { params: Para
                       </div>
                     </dl>
                   </Inset>
+                  {paidSum > 0 || !terminal ? (
                   <Inset>
                     <div className={styles.line}>
                       <Text as="span">
@@ -303,6 +328,7 @@ export default async function OrderPage({ params, searchParams }: { params: Para
                       <PriceTag amount={paidSum > 0 ? paidSum : money.totalPiasters} locale={locale} />
                     </div>
                   </Inset>
+                  ) : null}
                   {invoice ? (
                     <InlineStack>
                       <Button variant="plain" url={`/${locale}/orders/${order.id}/invoice`}>

@@ -106,7 +106,7 @@ export function Tabs({ tabs, selected, onSelect, fitted, children, accessibility
                 type="button"
                 role="tab"
                 aria-selected={isSel}
-                aria-controls={panelId(i)}
+                aria-controls={children !== undefined && isSel ? panelId(i) : undefined}
                 aria-label={t.accessibilityLabel}
                 tabIndex={isSel ? 0 : -1}
                 disabled={t.disabled}

@@ -17,6 +17,7 @@ import {
   ChoiceList,
   Divider,
   InlineStack,
+  Modal,
   Page,
   PriceTag,
   Text,
@@ -60,6 +61,8 @@ export function PaymentClient(props: {
   const [cardErr, setCardErr] = useState<string | undefined>();
   const [wallet, setWallet] = useState("");
   const [instapaySent, setInstapaySent] = useState(false);
+  const [confirmCancel, setConfirmCancel] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const amount = formatMoney(props.totalPiasters, locale);
 
   const errText = (code: string) => {
@@ -88,20 +91,33 @@ export function PaymentClient(props: {
     setBusy(true);
     setError(null);
     const r = await mockGateway({ paymentId: payment.paymentId, action, ...extra });
-    setBusy(false);
     if (r.status === "PAID") return done();
+    if (r.status !== "FAILED") setBusy(false);
     if (r.error === "INVALID_CARD") return setCardErr(t("payment.card.invalid"));
     if (r.error === "INVALID_WALLET") return setError(t("checkout.address.invalidPhone"));
     if (r.status === "FAILED") {
-      setPayment(null); // a declined attempt is closed; start a new one
+      // A declined attempt is closed on the server. Open a fresh attempt with the same method so the
+      // buyer fixes the card in place instead of starting over from the method list.
+      const again = await startPaymentAction({ orderId, method: payment.method, locale });
+      setBusy(false);
+      if (again.ok && !again.payment.redirectUrl) setPayment(again.payment);
+      else setPayment(null);
+      if (action === "card" && again.ok) {
+        setCard((c) => ({ ...c, number: "" }));
+        setCardErr(t("buyer.declinedNewAttempt"));
+        requestAnimationFrame(() => document.getElementById("card-number")?.focus());
+        return;
+      }
       return setError(action === "wallet" ? t("payment.wallet.declined") : t("payment.card.declined"));
     }
     setError(errText(r.error ?? "generic"));
   };
 
   const cancel = async () => {
-    if (!window.confirm(t("payment.cancelConfirm"))) return;
+    setCancelling(true);
     const r = await cancelOrderAction(orderId);
+    setCancelling(false);
+    setConfirmCancel(false);
     if (r.ok) {
       toast.show(t("payment.cancelled"));
       router.push(`/${locale}/orders/${orderId}`);
@@ -139,17 +155,22 @@ export function PaymentClient(props: {
           </Text>
           {props.testMode ? <Banner tone="info">{t("payment.card.testHint")}</Banner> : null}
           <TextField
+            id="card-number"
             label={t("payment.card.number")}
             autoComplete="cc-number"
             inputMode="numeric"
             dir="ltr"
+            placeholder="0000 0000 0000 0000"
             value={card.number}
-            onChange={(v) => setCard((c) => ({ ...c, number: v }))}
+            onChange={(v) => {
+              setCard((c) => ({ ...c, number: groupCard(v) }));
+              if (cardErr) setCardErr(undefined);
+            }}
             error={cardErr}
             maxLength={23}
           />
           <div className={styles.grid2}>
-            <TextField label={t("payment.card.expiry")} autoComplete="cc-exp" dir="ltr" placeholder="12/30" value={card.expiry} onChange={(v) => setCard((c) => ({ ...c, expiry: v }))} maxLength={5} />
+            <TextField label={t("payment.card.expiry")} autoComplete="cc-exp" inputMode="numeric" dir="ltr" placeholder="MM/YY" value={card.expiry} onChange={(v) => setCard((c) => ({ ...c, expiry: formatExpiry(v, c.expiry) }))} maxLength={5} />
             <TextField label={t("payment.card.cvc")} autoComplete="cc-csc" inputMode="numeric" dir="ltr" value={card.cvc} onChange={(v) => setCard((c) => ({ ...c, cvc: v }))} maxLength={4} />
           </div>
           <TextField label={t("payment.card.name")} autoComplete="cc-name" value={card.name} onChange={(v) => setCard((c) => ({ ...c, name: v }))} />
@@ -274,7 +295,7 @@ export function PaymentClient(props: {
       title={t("payment.title")}
       subtitle={t("payment.subtitle", { number: props.number })}
       backAction={{ content: t("orders.title"), url: `/${locale}/orders/${orderId}` }}
-      secondaryActions={[{ content: t("payment.cancelOrder"), onAction: cancel, destructive: true }]}
+      secondaryActions={[{ content: t("payment.cancelOrder"), onAction: () => setConfirmCancel(true), destructive: true }]}
     >
       <BlockStack gap="400">
         <div className={styles.layout}>
@@ -298,6 +319,12 @@ export function PaymentClient(props: {
                         selected={[method]}
                         onChange={(v) => setMethod(v[0] as PaymentMethod)}
                       />
+                      <div className={styles.due}>
+                        <Text as="span" fontWeight="semibold">
+                          {t("buyer.amountDue")}
+                        </Text>
+                        <PriceTag amount={props.totalPiasters} size="medium" locale={locale} />
+                      </div>
                       <Text as="p" variant="bodySm" tone="subdued">
                         {t("payment.chooseHelp")}
                       </Text>
@@ -345,6 +372,12 @@ export function PaymentClient(props: {
                       </dd>
                     </div>
                   ))}
+                  <div className={`${styles.line} ${styles.lineSub}`}>
+                    <dt>{t("buyer.subtotalExVat")}</dt>
+                    <dd>
+                      <PriceTag amount={props.totalPiasters - props.vatPiasters} size="small" locale={locale} />
+                    </dd>
+                  </div>
                   <div className={styles.line}>
                     <dt>{t("checkout.summary.vat")}</dt>
                     <dd>
@@ -368,6 +401,33 @@ export function PaymentClient(props: {
           </aside>
         </div>
       </BlockStack>
+      <Modal
+        open={confirmCancel}
+        onClose={() => setConfirmCancel(false)}
+        title={t("buyer.cancelTitle")}
+        preventClose={cancelling}
+        primaryAction={{ content: t("payment.cancelOrder"), destructive: true, onAction: cancel, loading: cancelling }}
+        secondaryActions={[{ content: t("buyer.keepOrder"), onAction: () => setConfirmCancel(false), disabled: cancelling }]}
+      >
+        <Text as="p">{t("buyer.cancelBody")}</Text>
+      </Modal>
     </Page>
   );
+}
+
+/** "4242424242424242" -> "4242 4242 4242 4242" (Arabic-Indic digits accepted). */
+function groupCard(v: string): string {
+  const digits = toLatin(v).replace(/\D/g, "").slice(0, 19);
+  return digits.replace(/(.{4})(?=.)/g, "$1 ");
+}
+
+/** Inserts the slash after the month; deleting it works as expected. */
+function formatExpiry(v: string, prev: string): string {
+  const digits = toLatin(v).replace(/\D/g, "").slice(0, 4);
+  if (v.length < prev.length) return v;
+  return digits.length >= 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
+}
+
+function toLatin(v: string): string {
+  return v.replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)));
 }
