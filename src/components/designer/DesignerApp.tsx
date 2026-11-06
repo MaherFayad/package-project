@@ -799,6 +799,7 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
                     scene={viewOpts.scene}
                     turntable={viewOpts.turntable}
                     locale={locale}
+                    poster={libModel ? `/models/${libModel.slug}.svg` : undefined}
                     ariaLabel={t("viewer.label")}
                     roleDescription={t("viewer.roleDescription")}
                     keyboardHint={t("viewer.keyboardHint")}

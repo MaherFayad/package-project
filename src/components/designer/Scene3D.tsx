@@ -34,6 +34,7 @@ export default function Scene3D({
   roleDescription,
   keyboardHint,
   fallback,
+  poster,
 }: {
   model: DielineModel;
   material: MaterialCode;
@@ -54,6 +55,8 @@ export default function Scene3D({
   roleDescription: string;
   keyboardHint: string;
   fallback: string;
+  /** Shown until the first 3D frame (the model's picker thumbnail). */
+  poster?: string;
 }) {
   const outside = useArtworkTexture(canvases?.outside, version);
   const inside = useArtworkTexture(printInside ? canvases?.inside : null, version);
@@ -82,6 +85,7 @@ export default function Scene3D({
       surfaceFinish={surfaceFinish}
       stage={stage}
       autoRotate={turntable}
+      poster={poster}
       ariaLabel={ariaLabel}
       roleDescription={roleDescription}
       keyboardHint={keyboardHint}

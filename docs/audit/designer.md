@@ -34,6 +34,7 @@ Screenshots: `docs/screenshots/audit/designer/` (`before-*`, `after-*`).
 | D-21 | medium | editor, 390 px, sheet open | With the sheet pulled up (72dvh), the 3D control and fold rows ate the remaining stage, leaving about 40 px of model. | visual | While the sheet is open on phones, those rows are hidden and the stage keeps the box. They come back when it closes. | fixed |
 | D-22 | low | bottom sheet handle | The sheet looked draggable (grab handle) but only a tap worked. | ISO 9241-110 (conformity with expectations) | Swiping the handle up or down opens or closes it (pointer capture, 24 px threshold). A tap still toggles it (WCAG 2.5.7), and `aria-controls` points at the panel. | fixed |
 | D-23 | low | stage header, 390 px | The face select was squeezed to about 9rem and cut container names ("الوجه ملصق دائري…"). | | The select takes the remaining width on phones. | fixed |
+| D-24 | low | `Scene3D.tsx`, `DesignScene.tsx` (from 3d-visual X-11) | The editor, share and proof 3D views showed a blank skeleton for 1 to 3 s on first load; the model's thumbnail already exists. | perceived performance | `poster` = `/models/<slug>.svg` passed to `PackagingScene` (cross-fades to the canvas on the first frame). Vessels: `VesselScene` has no `poster` prop (engine). | fixed |
 
 ## Reported to other owners (not edited)
 
@@ -43,6 +44,7 @@ Screenshots: `docs/screenshots/audit/designer/` (`before-*`, `after-*`).
 | R-02 | catalogue (`ModelPicker.tsx`) | All 370 models render as one list (14,000 px at 1440 px). There is no "show more" per group, so a phone user scrolls through 128 boxes to reach Pouches. Card heights vary with title length, so rows do not line up. | Show the first 8 per group with "Show all 128", or make the group chips a filter; clamp titles to 2 lines. |
 | R-03 | 3D engine (`PackagingScene`) | `touch-action: none` and wheel zoom are always on. That is right in the editor, but it traps scrolling wherever a viewer sits in a scrolling page (start page, share page, proof). | A `scrollFriendly` prop: `touch-action: pan-y` and `enableZoom` only with a modifier key or on focus. |
 | R-04 | 3D engine (`dielineToSvg`) | Panel labels use `font-family="Inter"` only, so Arabic panel names fall back to a system font. | Add the Plex Arabic variable to the label font stack. |
+| R-06 | 3D engine + catalogue (from 3d-visual X-01) | Container tint and closure style are dropped: `VesselOption` has only `core`, and neither `VesselSceneProps` nor `createVesselMaterial` take a tint or closure style, so green glass renders amber and crown / cork / ROPP render as screw caps. The designer cannot pass what the engine does not accept. | Catalogue: add `tint?` and `closureStyle?` to `VesselOption` and fill them in `library/vessels.ts`. Engine: accept `tint` and `closureStyle` on `VesselScene` / `VesselModel` and add the closure profiles. Designer (2 lines in `VesselView.tsx` L81-82): pass the selected option's `tint` and `closureStyle` through, ready as soon as the props exist. |
 | R-05 | foundation + checkout (`src/types/design.ts`, `src/lib/orders/pdf/print.ts`) | Only two text fonts (IBM Plex Sans Arabic, Inter). An Egyptian brand owner expects a few Arabic display faces (Kufi, Naskh, rounded). This needs the `fontFamily` union widened and the print PDF to embed each font, outside designer scope. | Add 3 to 4 OFL Arabic faces (for example Noto Kufi Arabic, Noto Naskh Arabic, Tajawal) to `fonts.ts`, the type and the PDF renderer together. |
 
 ## Verification (pass 1)
@@ -65,6 +67,6 @@ Screenshots: `docs/screenshots/audit/designer/` (`before-*`, `after-*`).
 | critical | 0 | 0 | 0 |
 | high | 7 | 7 | 0 |
 | medium | 10 | 10 | 0 |
-| low | 6 | 6 | 0 |
+| low | 7 | 7 | 0 |
 
-Plus 5 items reported to other owners (R-01 to R-05), not edited.
+Plus 6 items reported to other owners (R-01 to R-06), not edited.
