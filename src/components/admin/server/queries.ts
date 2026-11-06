@@ -22,15 +22,16 @@ import {
   type Scorecard,
 } from "../lib/metrics";
 import { isOpenDispute } from "../lib/ops";
-import { modelAvailability, vendorsByPair } from "../lib/availability";
+import { modelAvailability, vendorsByPair, withOrderMode } from "../lib/availability";
+import { orderModeOf, vendorListsModel } from "@/data/catalogue/order-mode";
 import { MODELS, modelByCode } from "@/lib/library";
 import { baseOf, vesselPrintMaterials } from "@/lib/library/doc";
 import type { AdminOrderRow } from "../lib/orders";
 import { adminPayoutStatus, needsAction } from "../lib/payouts";
 import { contactFlags } from "../lib/moderation";
-import { loadEventFunnel, loadShareLoop } from "@/lib/analytics/funnel";
+import { FUNNEL_STEPS as EVENT_FUNNEL_STEPS, loadShareLoop } from "@/lib/analytics/funnel";
 import { eventFunnel, visitorToPaid } from "../lib/events";
-import { isOverdue, leadState, type LeadState } from "../lib/quoteLeads";
+import { isOverdue, leadState, replyDueAt, type LeadState } from "../lib/quoteLeads";
 import { listQuoteRequests, QUOTE_REQUESTED } from "@/lib/orders/quote-requests";
 import { payoutSchedule, type ScheduleRow } from "@/components/vendor/lib/payouts";
 
@@ -52,13 +53,33 @@ const metricSelect = {
   vendorCostPiasters: true,
   notes: true,
   vendorId: true,
+  buyerId: true,
 } as const;
 
 /* ───────────────────────── Overview ───────────────────────── */
 
+/**
+ * launch-metrics.md funnel (unique actors per step) without Elba staff and vendor staff (R4-04):
+ * the visit beacon runs on every page, so ops opening /admin counted as a "visitor" and skewed
+ * visitor-to-paid. Signed-in staff are excluded by user id; anonymous rows always count.
+ */
+async function loadCustomerEventFunnel(w: { from: Date; to: Date }): Promise<Record<(typeof EVENT_FUNNEL_STEPS)[number], number>> {
+  const staff = (await db.user.findMany({ where: { role: { in: ["ADMIN", "VENDOR"] } }, select: { id: true } })).map((u) => u.id);
+  const counts = await Promise.all(
+    EVENT_FUNNEL_STEPS.map(async (name) => {
+      const rows = await db.event.findMany({
+        where: { name, at: { gte: w.from, lt: w.to }, OR: [{ userId: null }, { userId: { notIn: staff } }] },
+        select: { userId: true, anonId: true, id: true },
+      });
+      return new Set(rows.map((r) => r.userId ?? (r.anonId ? `a:${r.anonId}` : `e:${r.id}`))).size;
+    }),
+  );
+  return Object.fromEntries(EVENT_FUNNEL_STEPS.map((s, i) => [s, counts[i]])) as Record<(typeof EVENT_FUNNEL_STEPS)[number], number>;
+}
+
 export async function loadOverview(range: RangeKey, now = new Date()) {
   const { from, to, prevFrom } = rangeWindow(range, now);
-  const [orders, disputes, designs, accounts, priceViewers, orderUsers, qcPending, applications, dataRequests, payouts, buyerOrders, vendorEvents, moderation, quoteLeads, eventSteps, shareLoop] = await Promise.all([
+  const [orders, disputes, designs, accounts, priceViewers, orderUsers, qcPending, awaitingVendor, applications, dataRequests, payouts, buyerOrders, vendorEvents, moderation, quoteLeads, eventSteps, shareLoop] = await Promise.all([
     db.order.findMany({ where: { OR: [{ placedAt: { gte: prevFrom } }, { deliveredAt: { gte: prevFrom } }] }, select: metricSelect }),
     db.dispute.findMany({ select: { createdAt: true, status: true } }),
     db.design.count({ where: { createdAt: { gte: from, lt: to } } }),
@@ -69,6 +90,8 @@ export async function loadOverview(range: RangeKey, now = new Date()) {
     db.event.findMany({ where: { name: "price_viewed", at: { gte: from, lt: to }, userId: { not: null } }, select: { userId: true }, distinct: ["userId"] }),
     db.order.findMany({ where: { placedAt: { gte: from, lt: to } }, select: { buyerId: true }, distinct: ["buyerId"] }),
     db.order.count({ where: { status: "QC_PENDING" } }),
+    // R4-06: paid jobs no vendor has accepted yet (the nav badge counts them too).
+    db.order.count({ where: { status: "PAID" } }),
     db.vendorApplication.count({ where: { status: { in: ["SUBMITTED", "UNDER_REVIEW"] } } }),
     db.dataRequest.count({ where: { status: { in: ["OPEN", "IN_PROGRESS"] } } }),
     countPayoutsToAct(),
@@ -78,12 +101,14 @@ export async function loadOverview(range: RangeKey, now = new Date()) {
     countModeration(),
     countOpenQuoteLeads(),
     // B-19: launch-metrics.md funnel from the first-party Event table (unique actors per step).
-    loadEventFunnel({ from, to }),
+    loadCustomerEventFunnel({ from, to }),
     loadShareLoop({ from, to }),
   ]);
   const priceViewed = new Set([...priceViewers.map((e) => e.userId!), ...orderUsers.map((o) => o.buyerId)]).size;
   const rows = orders as MetricOrder[];
-  const paidOrders = rows.filter((o) => !isReprint(o) && countsForGmv(o) && o.placedAt >= from && o.placedAt < to).length;
+  // R4-03: the funnel counts people at every step, so its last step is paying buyers (distinct),
+  // not paid orders; one buyer with five orders read as "500% of price viewed".
+  const payingBuyers = new Set(rows.filter((o) => !isReprint(o) && countsForGmv(o) && o.placedAt >= from && o.placedAt < to).map((o) => o.buyerId)).size;
   const money = moneyKpis(rows, from, to);
   const prevMoney = moneyKpis(rows, prevFrom, from);
   const ops = opsKpis(rows, disputes, from, to);
@@ -109,7 +134,7 @@ export async function loadOverview(range: RangeKey, now = new Date()) {
     from: from.toISOString(),
     to: to.toISOString(),
     bucketDays,
-    funnel: funnel({ designs, accounts, priceViewed, orders: paidOrders }),
+    funnel: funnel({ designs, accounts, priceViewed, orders: payingBuyers }),
     money,
     gmvChangePct: changePct(money.gmvPiasters, prevMoney.gmvPiasters),
     marginChangePct: changePct(money.marginPiasters, prevMoney.marginPiasters),
@@ -119,7 +144,7 @@ export async function loadOverview(range: RangeKey, now = new Date()) {
     repeat: repeatRate90(buyerOrders, now),
     acceptance: acceptanceRate(vendorEvents),
     events: { funnel: eventFunnel(eventSteps), visitorToPaidPct: visitorToPaid(eventSteps), share: shareLoop },
-    tasks: { qcPending, applications, openDisputes: ops.openDisputes, dataRequests, payouts, moderation, quoteLeads },
+    tasks: { qcPending, awaitingVendor, applications, openDisputes: ops.openDisputes, dataRequests, payouts, moderation, quoteLeads },
   };
 }
 
@@ -177,6 +202,7 @@ export async function loadOrderDetail(number: string) {
   if (!order) return null;
   const structureCode = order.items[0]?.structureCode;
   const materialCode = order.items[0]?.materialCode;
+  const modelCode = order.items[0]?.modelCode ?? null;
   const [vendors, actors, reprints, auditRows] = await Promise.all([
     db.vendor.findMany({
       where: { status: "ACTIVE" },
@@ -205,7 +231,12 @@ export async function loadOrderDetail(number: string) {
       onTimePct: v.onTimePct,
       rating: v.rating,
       leadTimeDays: v.leadTimeDays,
-      capable: v.rateCards.length > 0 && (fromJson<VendorCapabilities>(v.capabilities).structures ?? []).includes((structureCode ?? "") as never),
+      // Rate card for the style and board, and (B-16, R4-02) for special-gluing library models the
+      // vendor must list the model; preview / quote-only models have no capable vendor.
+      capable:
+        v.rateCards.length > 0 &&
+        (fromJson<VendorCapabilities>(v.capabilities).structures ?? []).includes((structureCode ?? "") as never) &&
+        vendorListsModel(orderModeOf(modelCode).mode, modelCode ?? "", fromJson<VendorCapabilities>(v.capabilities).models),
     })),
     actors: Object.fromEntries(actors.map((a) => [a.id, a])),
     reprints,
@@ -318,13 +349,15 @@ async function loadModelAvailability(): Promise<{ models: CatalogModelRow[]; ven
       where: { active: true, vendor: { status: "ACTIVE" }, structure: { active: true }, material: { active: true } },
       select: { vendorId: true, structure: { select: { code: true } }, material: { select: { code: true } } },
     }),
-    db.vendor.findMany({ where: { status: "ACTIVE" }, select: { id: true, slug: true, nameAr: true, nameEn: true }, orderBy: { nameEn: "asc" } }),
+    db.vendor.findMany({ where: { status: "ACTIVE" }, select: { id: true, slug: true, nameAr: true, nameEn: true, capabilities: true }, orderBy: { nameEn: "asc" } }),
   ]);
+  // Vendors that confirmed special-gluing models (capabilities.models, B-16), per model code.
+  const listersOf = (code: string) => new Set(vendors.filter((v) => (fromJson<VendorCapabilities>(v.capabilities)?.models ?? []).includes(code)).map((v) => v.id));
   const pairs = vendorsByPair(cards.map((c) => ({ vendorId: c.vendorId, structureCode: c.structure.code, materialCode: c.material.code })));
   const models = MODELS.map((m) => {
     const boards: MaterialCode[] = m.kind === "box" ? m.materials : [...new Set([...vesselPrintMaterials(m), ...(m.surfaces.includes("SHRINK_SLEEVE") ? vesselPrintMaterials(m, ["SHRINK_SLEEVE"]) : [])])];
     const routes = boards.map((b) => ({ structureCode: baseOf(m, b), materialCode: b }));
-    const a = modelAvailability({ code: m.code, routes }, pairs);
+    const a = withOrderMode(modelAvailability({ code: m.code, routes }, pairs), orderModeOf(m.code).mode, listersOf(m.code));
     return {
       code: m.code,
       slug: m.slug,
@@ -339,7 +372,7 @@ async function loadModelAvailability(): Promise<{ models: CatalogModelRow[]; ven
       instant: a.instant,
     };
   });
-  return { models, vendors };
+  return { models, vendors: vendors.map((v) => ({ id: v.id, slug: v.slug, nameAr: v.nameAr, nameEn: v.nameEn })) };
 }
 
 /** How many library models this vendor can price instantly (its rate cards × model routes). */
@@ -661,6 +694,7 @@ export async function loadQuoteLeads(locale: Locale, now = new Date()): Promise<
   const linesById = new Map(quotes.map((q) => [q.id, fromJson<Record<string, unknown>[]>(q.lines)?.[0] ?? {}]));
   return leads.map((l) => {
     const ev = events.filter((e) => e.entityId === l.quoteId);
+    const dueAt = replyDueAt(l.createdAt);
     const state = leadState(ev);
     const line = linesById.get(l.quoteId) ?? {};
     const spec = l.spec ?? {};
@@ -670,7 +704,7 @@ export async function loadQuoteLeads(locale: Locale, now = new Date()): Promise<
     return {
       quoteId: l.quoteId,
       createdAt: l.createdAt.toISOString(),
-      dueAt: l.dueAt.toISOString(),
+      dueAt: dueAt.toISOString(),
       validUntil: l.validUntil.toISOString(),
       quantity: l.quantity,
       designId: l.designId,
@@ -686,7 +720,7 @@ export async function loadQuoteLeads(locale: Locale, now = new Date()): Promise<
       materialCode: (spec.materialCode as string | undefined) ?? null,
       source: line.type === "CATALOGUE_REQUEST" ? "catalogue" : "checkout",
       state,
-      overdue: isOverdue(state, l.dueAt, now),
+      overdue: isOverdue(state, dueAt, now),
       lastNote: ev[0]?.summary ?? null,
     };
   });

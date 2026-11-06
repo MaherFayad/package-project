@@ -33,13 +33,30 @@ function rememberGateReason(reason: unknown) {
 }
 
 const VISIT_KEY = "elba_visit";
+/** A visit ends after 30 minutes without a page view (the common web-analytics session rule). */
+export const VISIT_IDLE_MS = 30 * 60_000;
 
-/** `visit` = first page view in a browser session (sessionStorage flag). */
+/**
+ * Pure: whether this page view starts a new visit, given the stored last-seen time. Exported for
+ * tests. A missing, unreadable or future value starts a visit.
+ */
+export function startsVisit(lastSeen: string | null, now: number): boolean {
+  const t = lastSeen === null ? NaN : Number(lastSeen);
+  return !Number.isFinite(t) || t > now || now - t >= VISIT_IDLE_MS;
+}
+
+/**
+ * `visit` = first page view of a browsing session (launch-metrics.md §1). The last-seen time lives
+ * in localStorage (shared by every tab, holds a timestamp only, no identifier), so opening links
+ * in new tabs does not count new visits; sessionStorage did, because it is per tab.
+ */
 export function trackVisitOnce(props: EventProps = {}): void {
   try {
     if (typeof window === "undefined") return;
-    if (window.sessionStorage.getItem(VISIT_KEY)) return;
-    window.sessionStorage.setItem(VISIT_KEY, "1");
+    const now = Date.now();
+    const isNew = startsVisit(window.localStorage.getItem(VISIT_KEY), now);
+    window.localStorage.setItem(VISIT_KEY, String(now));
+    if (!isNew) return;
   } catch {
     return; // storage blocked: skip rather than count every page
   }

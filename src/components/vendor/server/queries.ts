@@ -17,7 +17,7 @@ import type {
 } from "@/types";
 import { VENDOR_VISIBLE_STATUSES, isAwaitingAcceptance, dueState, ACTIVE_STATUSES } from "../lib/jobs";
 import { payoutSchedule, payoutSummary } from "../lib/payouts";
-import { jobModel, modelsForCard } from "../lib/coverage";
+import { instantModelsForCard, jobModel } from "../lib/coverage";
 import type {
   JobDetailDTO,
   JobEventDTO,
@@ -177,10 +177,14 @@ export async function getDashboard(vendorId: string, now = new Date()) {
 }
 
 export async function listRateCards(vendorId: string): Promise<RateCardRowWithCoverageDTO[]> {
-  const cards = await db.rateCard.findMany({
-    where: { vendorId },
-    include: { structure: { select: { code: true, sortOrder: true } }, material: { select: { code: true, sortOrder: true } } },
-  });
+  const [cards, vendor] = await Promise.all([
+    db.rateCard.findMany({
+      where: { vendorId },
+      include: { structure: { select: { code: true, sortOrder: true } }, material: { select: { code: true, sortOrder: true } } },
+    }),
+    db.vendor.findUnique({ where: { id: vendorId }, select: { capabilities: true } }),
+  ]);
+  const listed = fromJson<VendorCapabilities>(vendor?.capabilities ?? null)?.models ?? [];
   return cards
     .sort((a, b) => a.structure.sortOrder - b.structure.sortOrder || a.material.sortOrder - b.material.sortOrder)
     .map((c) => ({
@@ -192,7 +196,8 @@ export async function listRateCards(vendorId: string): Promise<RateCardRowWithCo
       dieCostPiasters: c.dieCostPiasters,
       leadTimeDays: c.leadTimeDays,
       active: c.active,
-      modelCount: modelsForCard(c.structure.code as StructureCode, c.material.code as MaterialCode).length,
+      // R4: only models this card gives an instant price for (special gluing once listed).
+      modelCount: instantModelsForCard(c.structure.code as StructureCode, c.material.code as MaterialCode, listed).length,
     }));
 }
 
@@ -249,6 +254,7 @@ export async function getProfile(vendorId: string): Promise<{ profile: VendorPro
       minOrderQty: v.minOrderQty,
       serviceAreas: fromJson<EgyptCity[]>(v.serviceAreas) ?? [],
       certifications: fromJson<VendorCertification[]>(v.certifications) ?? [],
+      models: caps?.models ?? [],
       updatedAt: v.updatedAt.toISOString(),
     },
     portfolio: v.portfolio.map((p) => ({

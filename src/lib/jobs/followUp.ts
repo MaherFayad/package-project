@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { notify } from "@/lib/notify";
 import { currentConsentGranted } from "@/lib/auth/consent";
 import { track } from "@/lib/analytics/track";
+import { unsubscribeUrl } from "@/lib/auth/unsubscribe";
 import type { Locale } from "@/types";
 
 /**
@@ -14,8 +15,9 @@ import type { Locale } from "@/types";
  * recorded on Design.followedUpAt with a conditional claim, so a design is never nudged twice,
  * even if two job runs overlap. At most one message per user per FOLLOW_UP_USER_COOLDOWN_DAYS.
  *
- * The message (notify template DESIGN_FOLLOW_UP, ar + en) ends with an opt-out hint (PDPL Law
- * 151/2020: direct marketing needs consent and an easy way to withdraw it). The sender goes through the notify seam with WhatsApp only
+ * The message (notify template DESIGN_FOLLOW_UP, ar + en) ends with a one-click opt-out link
+ * (src/lib/auth/unsubscribe.ts; PDPL Law 151/2020: direct marketing needs consent and an easy way
+ * to withdraw it, so no sign-in is needed). A user with an open erasure request is never messaged. The sender goes through the notify seam with WhatsApp only
  * (no SMS fallback); in this codebase the WhatsApp transport is the console mock (logs a masked
  * number, no network) until production wires WhatsApp Business.
  *
@@ -33,6 +35,8 @@ export interface FollowUpCandidate {
   updatedAt: Date;
   followedUpAt: Date | null;
   hasOrder: boolean;
+  /** The owner has an open or in-progress DELETE data request (PDPL erasure): never market to them. */
+  erasurePending?: boolean;
   owner: { id: string; phone: string; locale: string };
 }
 
@@ -59,11 +63,11 @@ export interface FollowUpStore {
 export interface FollowUpMessage {
   phone: string;
   locale: Locale;
-  params: { design: string; url: string; account: string };
+  params: { design: string; url: string; stop: string };
 }
 export type FollowUpSender = (m: FollowUpMessage) => Promise<boolean>;
 
-export type SkipReason = "already_followed_up" | "has_order" | "too_recent" | "too_old" | "no_consent" | "user_cooldown" | "no_phone" | "send_failed";
+export type SkipReason = "already_followed_up" | "has_order" | "too_recent" | "too_old" | "no_consent" | "user_cooldown" | "no_phone" | "erasure_pending" | "send_failed";
 
 export interface FollowUpReport {
   now: string;
@@ -101,6 +105,7 @@ export function selectFollowUps(
     else if (age < FOLLOW_UP_MIN_AGE_HOURS * HOUR) reason = "too_recent";
     else if (age > FOLLOW_UP_MAX_AGE_DAYS * DAY) reason = "too_old";
     else if (!c.owner.phone) reason = "no_phone";
+    else if (c.erasurePending) reason = "erasure_pending";
     else if (!currentConsentGranted(byUser.get(c.owner.id) ?? [], "MARKETING")) reason = "no_consent";
     else if (recentUsers.has(c.owner.id) || picked.has(c.owner.id)) reason = "user_cooldown";
     if (reason) {
@@ -145,6 +150,17 @@ export const prismaFollowUpStore: FollowUpStore = {
       take: BATCH,
       select: { id: true, name: true, structureCode: true, updatedAt: true, followedUpAt: true, owner: { select: { id: true, phone: true, locale: true } } },
     });
+    const ownerIds = [...new Set(rows.map((r) => r.owner?.id).filter((x): x is string => !!x))];
+    const erasing = ownerIds.length
+      ? new Set(
+          (
+            await db.dataRequest.findMany({
+              where: { userId: { in: ownerIds }, kind: "DELETE", status: { in: ["OPEN", "IN_PROGRESS"] } },
+              select: { userId: true },
+            })
+          ).map((r) => r.userId),
+        )
+      : new Set<string>();
     return rows
       .filter((r) => r.owner)
       .map((r) => ({
@@ -154,6 +170,7 @@ export const prismaFollowUpStore: FollowUpStore = {
         updatedAt: r.updatedAt,
         followedUpAt: r.followedUpAt,
         hasOrder: false,
+        erasurePending: erasing.has(r.owner!.id),
         owner: r.owner!,
       }));
   },
@@ -197,7 +214,7 @@ export async function runFollowUps(opts: {
   const trackFn = opts.trackFn ?? track;
   const base = (opts.baseUrl ?? siteUrl()).replace(/\/+$/, "");
   const skipped = Object.fromEntries(
-    (["already_followed_up", "has_order", "too_recent", "too_old", "no_consent", "user_cooldown", "no_phone", "send_failed"] as SkipReason[]).map((r) => [r, 0]),
+    (["already_followed_up", "has_order", "too_recent", "too_old", "no_consent", "user_cooldown", "no_phone", "erasure_pending", "send_failed"] as SkipReason[]).map((r) => [r, 0]),
   ) as Record<SkipReason, number>;
 
   const candidates = await store.candidates({
@@ -228,7 +245,7 @@ export async function runFollowUps(opts: {
         params: {
           design: c.designName.trim().slice(0, 60) || (locale === "ar" ? "بدون اسم" : "Untitled"),
           url: `${base}/${locale}/checkout/${encodeURIComponent(c.designId)}`,
-          account: `${base}/${locale}/account`,
+          stop: unsubscribeUrl(base, locale, c.owner.id),
         },
       });
     } catch (e) {

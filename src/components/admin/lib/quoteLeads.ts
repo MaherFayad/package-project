@@ -23,6 +23,38 @@ export function leadState(events: { action: string; createdAt: Date }[]): LeadSt
   return last ? (last.action === "QUOTE_CLOSED" ? "CLOSED" : "CONTACTED") : "OPEN";
 }
 
+/**
+ * Reply due for a request (R4-07): one working day = 24 hours counted on Egyptian working days
+ * (Sunday to Thursday, Africa/Cairo); Friday and Saturday do not run the clock. A Thursday 17:00
+ * request is due Sunday 17:00, a Friday request Monday 00:00, instead of turning red on the weekend.
+ */
+export function replyDueAt(createdAt: Date, hours = 24): Date {
+  let t = createdAt.getTime();
+  let left = hours * 3_600_000;
+  for (let guard = 0; left > 0 && guard < 60; guard++) {
+    const { weekday, msIntoDay } = cairoClock(new Date(t));
+    const toMidnight = 86_400_000 - msIntoDay;
+    if (weekday === 5 || weekday === 6) {
+      t += toMidnight; // Friday / Saturday: jump to the next Cairo midnight
+      continue;
+    }
+    const step = Math.min(left, toMidnight);
+    t += step;
+    left -= step;
+  }
+  return new Date(t);
+}
+
+const CAIRO = new Intl.DateTimeFormat("en-US", { timeZone: "Africa/Cairo", weekday: "short", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" });
+const WEEKDAYS: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+
+/** Weekday (0 = Sunday) and time since local midnight in Cairo (DST-aware). */
+export function cairoClock(d: Date): { weekday: number; msIntoDay: number } {
+  const parts = Object.fromEntries(CAIRO.formatToParts(d).map((p) => [p.type, p.value]));
+  const ms = ((Number(parts.hour) * 60 + Number(parts.minute)) * 60 + Number(parts.second)) * 1000 + d.getUTCMilliseconds();
+  return { weekday: WEEKDAYS[parts.weekday!] ?? 0, msIntoDay: ms };
+}
+
 /** Hours left to the 24 h reply target (negative = overdue). Only open leads run the clock. */
 export function slaHoursLeft(dueAt: Date, now: Date): number {
   return Math.round(((dueAt.getTime() - now.getTime()) / 3_600_000) * 10) / 10;

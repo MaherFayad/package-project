@@ -281,7 +281,9 @@ export function countByView(rows: JobStateInput[]): Record<JobView, number> {
 
 /** Build the note stored on a VENDOR_DECLINED event: "REASON: free text". */
 export function declineNote(reason: DeclineReason, detail: string): string {
-  const d = detail.trim();
+  // One line: buyer timelines show only the reason code of a "REASON: detail" note, and a line
+  // break would make the note read as free text there (R4).
+  const d = detail.replace(/\s+/g, " ").trim();
   return d ? `${reason}: ${d}` : reason;
 }
 

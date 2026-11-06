@@ -46,6 +46,7 @@ export interface MetricOrder {
   vendorCostPiasters: number;
   notes: string | null;
   vendorId?: string;
+  buyerId?: string;
 }
 
 export function isReprint(o: { notes: string | null }): boolean {

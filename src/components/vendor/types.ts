@@ -33,6 +33,8 @@ export interface JobModelDTO {
   code: string;
   standard: string;
   name: LocalizedText;
+  /** R4: instant | listed (special gluing) | quote | preview (src/data/catalogue/order-mode.ts). */
+  mode?: "instant" | "listed" | "quote" | "preview";
 }
 
 export interface JobItemDTO {
@@ -124,6 +126,8 @@ export interface VendorProfileDTO {
   minOrderQty: number;
   serviceAreas: EgyptCity[];
   certifications: VendorCertification[];
+  /** R4: special-gluing model codes the plant lists (capabilities.models). */
+  models: string[];
   updatedAt: string;
 }
 
