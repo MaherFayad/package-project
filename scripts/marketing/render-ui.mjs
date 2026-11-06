@@ -14,8 +14,12 @@ const PHONES = { admin: "+201000000001", buyer: "+201000000002", vendor: "+20100
 
 async function login(ctx, base, who, locale) {
   const phone = PHONES[who];
-  const r = await ctx.request.post(`${base}/api/auth/request-otp`, { data: { phone } });
-  const { devCode } = await r.json();
+  let devCode;
+  for (let i = 0; i < 8 && !devCode; i++) {
+    const j = await (await ctx.request.post(`${base}/api/auth/request-otp`, { data: { phone } })).json();
+    devCode = j.devCode;
+    if (!devCode) await new Promise((r) => setTimeout(r, ((j.retryAfterSec ?? 20) + 1) * 1000)); // OTP rate limit
+  }
   const v = await ctx.request.post(`${base}/api/auth/verify-otp`, { data: { phone, code: devCode, locale, acceptTerms: true } });
   if (!v.ok()) throw new Error(`login ${who}: ${v.status()}`);
 }
@@ -62,14 +66,19 @@ async function grab(page, finder, pad = 0) {
   return page.screenshot({ clip: { x: Math.max(0, box.x - pad), y: Math.max(0, box.y - pad), width: box.width + pad * 2, height: box.height + pad * 2 }, animations: "disabled" });
 }
 
+// the Card root (CSS-module class "...Card..." but not its Title/Header/Section/... parts)
 const closestCard = (sel) => `(() => {
   const n = document.querySelector(${JSON.stringify(sel)});
-  const c = n && (n.closest('[class*="Card"]') || n);
+  const isCard = (el) => [...el.classList].some((c) => /Card/.test(c) && !/Title|Header|Section|Inset|Footer|Actions|Body/.test(c));
+  let c = n;
+  while (c && !isCard(c)) c = c.parentElement;
+  c = c || n;
   if (c) c.setAttribute("data-r6-grab", "");
   return !!c;
 })()`;
 
-export async function renderUi({ base, browser, out, emit, record }) {
+export async function renderUi({ base, browser, out, emit, only = null }) {
+  const want = (k) => !only || only.includes(k);
   process.env.ELBA_DATABASE_URL ??= "file:./as.db";
   const db = new PrismaClient();
   const buyer = await db.user.findFirst({ where: { phone: PHONES.buyer } });
@@ -90,6 +99,7 @@ export async function renderUi({ base, browser, out, emit, record }) {
   for (const locale of ["en", "ar"]) {
     // ---- buyer: designer, price badge, checkout summary, order timeline
     const DPR = 2;
+    if (want("buyer")) {
     const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: DPR, locale: locale === "ar" ? "ar-EG" : "en-US", reducedMotion: "reduce" });
     await ctx.addCookies([{ name: "elba_cookie_ack", value: "1", url: base }]);
     await login(ctx, base, "buyer", locale);
@@ -138,8 +148,10 @@ export async function renderUi({ base, browser, out, emit, record }) {
     await save(`phone-designer-${locale}`, phone, pw, ph);
     await pctx.close();
     await ctx.close();
+    }
 
     // ---- vendor job card
+    if (want("vendor")) {
     const vctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, deviceScaleFactor: DPR, reducedMotion: "reduce" });
     await vctx.addCookies([{ name: "elba_cookie_ack", value: "1", url: base }]);
     await login(vctx, base, "vendor", locale);
@@ -157,22 +169,26 @@ export async function renderUi({ base, browser, out, emit, record }) {
       }
     }
     await vctx.close();
+    }
 
     // ---- admin KPI tile
+    if (want("admin")) {
     const actx = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: DPR, reducedMotion: "reduce" });
     await actx.addCookies([{ name: "elba_cookie_ack", value: "1", url: base }]);
     await login(actx, base, "admin", locale);
     const ap = await actx.newPage();
     await ap.goto(`${base}/${locale}/admin`, { waitUntil: "networkidle", timeout: 180000 });
     await ap.waitForTimeout(2000);
-    const kpi = await grab(ap, `(() => { const m = document.querySelector('section[class*="Metrics"] [class*="Metric"]:not([class*="Leading"])'); if (m) m.setAttribute("data-r6-grab", ""); return !!m; })()`, 0);
+    const kpi = await grab(ap, `(() => { const m = [...document.querySelectorAll('section[class*="Metrics"] *')].find((el) => [...el.classList].some((c) => /(^|_)Metric(_|$)/.test(c))); if (m) m.setAttribute("data-r6-grab", ""); return !!m; })()`, 0);
     if (kpi) {
       const [w, h] = await size(kpi, DPR);
       const bg = await sharp(kpi).flatten({ background: "#ffffff" }).extend({ top: 24 * DPR, bottom: 24 * DPR, left: 28 * DPR, right: 28 * DPR, background: "#ffffff" }).png().toBuffer();
       await save(`admin-kpi-${locale}`, await frame(bg, { radius: 24, margin: 40 }), w + 56 + 40, h + 48 + 40);
     }
     await actx.close();
+    }
   }
+  if (!want("swatch")) return results;
 
   // ---- colour swatch card (process piece): the brand palette a buyer saves in the designer
   const sctx = await browser.newContext({ viewport: { width: 520, height: 360 }, deviceScaleFactor: 2 });

@@ -256,7 +256,7 @@ async function collage() {
   // process piece 1: the flat dieline with artwork, straight from the engine (fold = 0, top view)
   const flat = await cached("process-dieline", async () => {
     const s = await stage("mailer", { fold: 0 });
-    await s.view("top");
+    await s.view(String(args.flatView ?? "front")); // the flat sheet lies in the front plane
     await s.page.waitForTimeout(800);
     const b = await s.shot(1600, 1200);
     await s.close();
@@ -338,7 +338,7 @@ async function loops() {
 
 async function ui() {
   const { renderUi } = await import("./render-ui.mjs");
-  await renderUi({ base: BASE, browser, out: path.join(OUT, "ui"), raw: RAW, emit, record });
+  await renderUi({ base: BASE, browser, out: path.join(OUT, "ui"), emit, only: args.ui ? String(args.ui).split(",") : null });
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -354,6 +354,14 @@ async function ui() {
   } finally {
     await browser.close();
     fs.mkdirSync(path.dirname(MANIFEST_FILE), { recursive: true });
+    // merge with what other runs wrote meanwhile (stages can run in parallel processes)
+    if (fs.existsSync(MANIFEST_FILE)) {
+      const now = JSON.parse(fs.readFileSync(MANIFEST_FILE, "utf8"));
+      manifest.files = { ...now.files, ...manifest.files };
+      manifest.bases = { ...now.bases, ...manifest.bases };
+    }
+    for (const k of Object.keys(manifest.files)) if (!fs.existsSync(path.join(ROOT, "public", k))) delete manifest.files[k];
+    for (const k of Object.keys(manifest.files)) manifest.files[k].bytes = fs.statSync(path.join(ROOT, "public", k)).size;
     const sorted = Object.fromEntries(Object.entries(manifest.files).sort(([a], [b]) => a.localeCompare(b)));
     const bases = Object.fromEntries(Object.entries(manifest.bases).sort(([a], [b]) => a.localeCompare(b)));
     fs.writeFileSync(MANIFEST_FILE, JSON.stringify({ generatedAt: manifest.generatedAt, files: sorted, bases }, null, 1) + "\n");

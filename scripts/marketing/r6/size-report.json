@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-06T16:39:37.864Z",
+ "generatedAt": "2026-11-06T17:01:59.311Z",
  "files": {
   "/marketing/r6/cutouts/bottle-front.avif": {
    "w": 480,
@@ -44,42 +44,42 @@
   "/marketing/r6/cutouts/can-front.avif": {
    "w": 480,
    "h": 480,
-   "bytes": 12387
+   "bytes": 12417
   },
   "/marketing/r6/cutouts/can-front.webp": {
    "w": 480,
    "h": 480,
-   "bytes": 18060
+   "bytes": 17882
   },
   "/marketing/r6/cutouts/can-front@2x.avif": {
    "w": 960,
    "h": 960,
-   "bytes": 25168
+   "bytes": 25091
   },
   "/marketing/r6/cutouts/can-front@2x.webp": {
    "w": 960,
    "h": 960,
-   "bytes": 37436
+   "bytes": 37462
   },
   "/marketing/r6/cutouts/can-iso.avif": {
    "w": 480,
    "h": 480,
-   "bytes": 12877
+   "bytes": 12856
   },
   "/marketing/r6/cutouts/can-iso.webp": {
    "w": 480,
    "h": 480,
-   "bytes": 18904
+   "bytes": 18870
   },
   "/marketing/r6/cutouts/can-iso@2x.avif": {
    "w": 960,
    "h": 960,
-   "bytes": 26066
+   "bytes": 26065
   },
   "/marketing/r6/cutouts/can-iso@2x.webp": {
    "w": 960,
    "h": 960,
-   "bytes": 39706
+   "bytes": 39674
   },
   "/marketing/r6/cutouts/coffee-bag-front.avif": {
    "w": 480,
@@ -484,42 +484,42 @@
   "/marketing/r6/cutouts/tube-front.avif": {
    "w": 480,
    "h": 480,
-   "bytes": 6867
+   "bytes": 6822
   },
   "/marketing/r6/cutouts/tube-front.webp": {
    "w": 480,
    "h": 480,
-   "bytes": 8958
+   "bytes": 8918
   },
   "/marketing/r6/cutouts/tube-front@2x.avif": {
    "w": 960,
    "h": 960,
-   "bytes": 13707
+   "bytes": 13651
   },
   "/marketing/r6/cutouts/tube-front@2x.webp": {
    "w": 960,
    "h": 960,
-   "bytes": 20116
+   "bytes": 20054
   },
   "/marketing/r6/cutouts/tube-iso.avif": {
    "w": 480,
    "h": 480,
-   "bytes": 7198
+   "bytes": 7159
   },
   "/marketing/r6/cutouts/tube-iso.webp": {
    "w": 480,
    "h": 480,
-   "bytes": 9578
+   "bytes": 9496
   },
   "/marketing/r6/cutouts/tube-iso@2x.avif": {
    "w": 960,
    "h": 960,
-   "bytes": 14195
+   "bytes": 13999
   },
   "/marketing/r6/cutouts/tube-iso@2x.webp": {
    "w": 960,
    "h": 960,
-   "bytes": 21050
+   "bytes": 20888
   },
   "/marketing/r6/cutouts/tuck-carton-front.avif": {
    "w": 480,
@@ -624,62 +624,62 @@
   "/marketing/r6/hero/can-front-dark.avif": {
    "w": 640,
    "h": 800,
-   "bytes": 13003
+   "bytes": 12955
   },
   "/marketing/r6/hero/can-front-dark.webp": {
    "w": 640,
    "h": 800,
-   "bytes": 14168
+   "bytes": 14610
   },
   "/marketing/r6/hero/can-front-dark@2x.avif": {
    "w": 1280,
    "h": 1600,
-   "bytes": 27405
+   "bytes": 27458
   },
   "/marketing/r6/hero/can-front-dark@2x.webp": {
    "w": 1280,
    "h": 1600,
-   "bytes": 31166
+   "bytes": 31130
   },
   "/marketing/r6/hero/can-iso-dark.avif": {
    "w": 640,
    "h": 800,
-   "bytes": 13035
+   "bytes": 13077
   },
   "/marketing/r6/hero/can-iso-dark.webp": {
    "w": 640,
    "h": 800,
-   "bytes": 14470
+   "bytes": 14506
   },
   "/marketing/r6/hero/can-iso-dark@2x.avif": {
    "w": 1280,
    "h": 1600,
-   "bytes": 27503
+   "bytes": 27638
   },
   "/marketing/r6/hero/can-iso-dark@2x.webp": {
    "w": 1280,
    "h": 1600,
-   "bytes": 32194
+   "bytes": 32206
   },
   "/marketing/r6/hero/can-iso-light.avif": {
    "w": 640,
    "h": 800,
-   "bytes": 12730
+   "bytes": 12650
   },
   "/marketing/r6/hero/can-iso-light.webp": {
    "w": 640,
    "h": 800,
-   "bytes": 14080
+   "bytes": 14070
   },
   "/marketing/r6/hero/can-iso-light@2x.avif": {
    "w": 1280,
    "h": 1600,
-   "bytes": 27933
+   "bytes": 27966
   },
   "/marketing/r6/hero/can-iso-light@2x.webp": {
    "w": 1280,
    "h": 1600,
-   "bytes": 31842
+   "bytes": 31840
   },
   "/marketing/r6/hero/coffee-bag-front-dark.avif": {
    "w": 640,
@@ -1284,62 +1284,62 @@
   "/marketing/r6/hero/tube-front-dark.avif": {
    "w": 640,
    "h": 800,
-   "bytes": 6298
+   "bytes": 6275
   },
   "/marketing/r6/hero/tube-front-dark.webp": {
    "w": 640,
    "h": 800,
-   "bytes": 6980
+   "bytes": 6904
   },
   "/marketing/r6/hero/tube-front-dark@2x.avif": {
    "w": 1280,
    "h": 1600,
-   "bytes": 14215
+   "bytes": 14147
   },
   "/marketing/r6/hero/tube-front-dark@2x.webp": {
    "w": 1280,
    "h": 1600,
-   "bytes": 16844
+   "bytes": 16750
   },
   "/marketing/r6/hero/tube-iso-dark.avif": {
    "w": 640,
    "h": 800,
-   "bytes": 6443
+   "bytes": 6368
   },
   "/marketing/r6/hero/tube-iso-dark.webp": {
    "w": 640,
    "h": 800,
-   "bytes": 7188
+   "bytes": 7140
   },
   "/marketing/r6/hero/tube-iso-dark@2x.avif": {
    "w": 1280,
    "h": 1600,
-   "bytes": 14506
+   "bytes": 14430
   },
   "/marketing/r6/hero/tube-iso-dark@2x.webp": {
    "w": 1280,
    "h": 1600,
-   "bytes": 17220
+   "bytes": 17116
   },
   "/marketing/r6/hero/tube-iso-light.avif": {
    "w": 640,
    "h": 800,
-   "bytes": 5918
+   "bytes": 5868
   },
   "/marketing/r6/hero/tube-iso-light.webp": {
    "w": 640,
    "h": 800,
-   "bytes": 6578
+   "bytes": 6402
   },
   "/marketing/r6/hero/tube-iso-light@2x.avif": {
    "w": 1280,
    "h": 1600,
-   "bytes": 14342
+   "bytes": 14265
   },
   "/marketing/r6/hero/tube-iso-light@2x.webp": {
    "w": 1280,
    "h": 1600,
-   "bytes": 16270
+   "bytes": 16188
   },
   "/marketing/r6/hero/tuck-carton-front-dark.avif": {
    "w": 640,
@@ -1400,6 +1400,306 @@
    "w": 1280,
    "h": 1600,
    "bytes": 62304
+  },
+  "/marketing/r6/ui/admin-kpi-ar.avif": {
+   "w": 288,
+   "h": 214,
+   "bytes": 2543
+  },
+  "/marketing/r6/ui/admin-kpi-ar.webp": {
+   "w": 288,
+   "h": 214,
+   "bytes": 3278
+  },
+  "/marketing/r6/ui/admin-kpi-ar@2x.avif": {
+   "w": 576,
+   "h": 428,
+   "bytes": 3753
+  },
+  "/marketing/r6/ui/admin-kpi-ar@2x.webp": {
+   "w": 576,
+   "h": 428,
+   "bytes": 6510
+  },
+  "/marketing/r6/ui/admin-kpi-en.avif": {
+   "w": 288,
+   "h": 198,
+   "bytes": 2359
+  },
+  "/marketing/r6/ui/admin-kpi-en.webp": {
+   "w": 288,
+   "h": 198,
+   "bytes": 2700
+  },
+  "/marketing/r6/ui/admin-kpi-en@2x.avif": {
+   "w": 576,
+   "h": 396,
+   "bytes": 3401
+  },
+  "/marketing/r6/ui/admin-kpi-en@2x.webp": {
+   "w": 576,
+   "h": 396,
+   "bytes": 5680
+  },
+  "/marketing/r6/ui/checkout-summary-ar.avif": {
+   "w": 375,
+   "h": 689,
+   "bytes": 16736
+  },
+  "/marketing/r6/ui/checkout-summary-ar.webp": {
+   "w": 375,
+   "h": 689,
+   "bytes": 21262
+  },
+  "/marketing/r6/ui/checkout-summary-ar@2x.avif": {
+   "w": 750,
+   "h": 1378,
+   "bytes": 31956
+  },
+  "/marketing/r6/ui/checkout-summary-ar@2x.webp": {
+   "w": 750,
+   "h": 1378,
+   "bytes": 48468
+  },
+  "/marketing/r6/ui/checkout-summary-en.avif": {
+   "w": 375,
+   "h": 628,
+   "bytes": 16949
+  },
+  "/marketing/r6/ui/checkout-summary-en.webp": {
+   "w": 375,
+   "h": 628,
+   "bytes": 21322
+  },
+  "/marketing/r6/ui/checkout-summary-en@2x.avif": {
+   "w": 750,
+   "h": 1256,
+   "bytes": 30348
+  },
+  "/marketing/r6/ui/checkout-summary-en@2x.webp": {
+   "w": 750,
+   "h": 1256,
+   "bytes": 49512
+  },
+  "/marketing/r6/ui/designer-ar.avif": {
+   "w": 760,
+   "h": 490,
+   "bytes": 12909
+  },
+  "/marketing/r6/ui/designer-ar.webp": {
+   "w": 760,
+   "h": 490,
+   "bytes": 14686
+  },
+  "/marketing/r6/ui/designer-ar@2x.avif": {
+   "w": 1520,
+   "h": 980,
+   "bytes": 29188
+  },
+  "/marketing/r6/ui/designer-ar@2x.webp": {
+   "w": 1520,
+   "h": 980,
+   "bytes": 36592
+  },
+  "/marketing/r6/ui/designer-en.avif": {
+   "w": 760,
+   "h": 490,
+   "bytes": 12649
+  },
+  "/marketing/r6/ui/designer-en.webp": {
+   "w": 760,
+   "h": 490,
+   "bytes": 15136
+  },
+  "/marketing/r6/ui/designer-en@2x.avif": {
+   "w": 1520,
+   "h": 980,
+   "bytes": 29006
+  },
+  "/marketing/r6/ui/designer-en@2x.webp": {
+   "w": 1520,
+   "h": 980,
+   "bytes": 35920
+  },
+  "/marketing/r6/ui/order-timeline-ar.avif": {
+   "w": 702,
+   "h": 329,
+   "bytes": 5840
+  },
+  "/marketing/r6/ui/order-timeline-ar.webp": {
+   "w": 702,
+   "h": 329,
+   "bytes": 7144
+  },
+  "/marketing/r6/ui/order-timeline-ar@2x.avif": {
+   "w": 1404,
+   "h": 658,
+   "bytes": 10195
+  },
+  "/marketing/r6/ui/order-timeline-ar@2x.webp": {
+   "w": 1404,
+   "h": 658,
+   "bytes": 15660
+  },
+  "/marketing/r6/ui/order-timeline-en.avif": {
+   "w": 702,
+   "h": 327,
+   "bytes": 7469
+  },
+  "/marketing/r6/ui/order-timeline-en.webp": {
+   "w": 702,
+   "h": 327,
+   "bytes": 9062
+  },
+  "/marketing/r6/ui/order-timeline-en@2x.avif": {
+   "w": 1404,
+   "h": 654,
+   "bytes": 12113
+  },
+  "/marketing/r6/ui/order-timeline-en@2x.webp": {
+   "w": 1404,
+   "h": 654,
+   "bytes": 19316
+  },
+  "/marketing/r6/ui/phone-designer-ar.avif": {
+   "w": 498,
+   "h": 952,
+   "bytes": 15152
+  },
+  "/marketing/r6/ui/phone-designer-ar.webp": {
+   "w": 498,
+   "h": 952,
+   "bytes": 19234
+  },
+  "/marketing/r6/ui/phone-designer-ar@2x.avif": {
+   "w": 996,
+   "h": 1904,
+   "bytes": 31045
+  },
+  "/marketing/r6/ui/phone-designer-ar@2x.webp": {
+   "w": 996,
+   "h": 1904,
+   "bytes": 42486
+  },
+  "/marketing/r6/ui/phone-designer-en.avif": {
+   "w": 498,
+   "h": 952,
+   "bytes": 15257
+  },
+  "/marketing/r6/ui/phone-designer-en.webp": {
+   "w": 498,
+   "h": 952,
+   "bytes": 18812
+  },
+  "/marketing/r6/ui/phone-designer-en@2x.avif": {
+   "w": 996,
+   "h": 1904,
+   "bytes": 31046
+  },
+  "/marketing/r6/ui/phone-designer-en@2x.webp": {
+   "w": 996,
+   "h": 1904,
+   "bytes": 43448
+  },
+  "/marketing/r6/ui/price-badge-ar.avif": {
+   "w": 486,
+   "h": 88,
+   "bytes": 3656
+  },
+  "/marketing/r6/ui/price-badge-ar.webp": {
+   "w": 486,
+   "h": 88,
+   "bytes": 4878
+  },
+  "/marketing/r6/ui/price-badge-ar@2x.avif": {
+   "w": 972,
+   "h": 176,
+   "bytes": 5862
+  },
+  "/marketing/r6/ui/price-badge-ar@2x.webp": {
+   "w": 972,
+   "h": 176,
+   "bytes": 9278
+  },
+  "/marketing/r6/ui/price-badge-en.avif": {
+   "w": 503,
+   "h": 88,
+   "bytes": 3809
+  },
+  "/marketing/r6/ui/price-badge-en.webp": {
+   "w": 503,
+   "h": 88,
+   "bytes": 4922
+  },
+  "/marketing/r6/ui/price-badge-en@2x.avif": {
+   "w": 1006,
+   "h": 176,
+   "bytes": 6061
+  },
+  "/marketing/r6/ui/price-badge-en@2x.webp": {
+   "w": 1006,
+   "h": 176,
+   "bytes": 9624
+  },
+  "/marketing/r6/ui/swatch-card.avif": {
+   "w": 488,
+   "h": 256,
+   "bytes": 5247
+  },
+  "/marketing/r6/ui/swatch-card.webp": {
+   "w": 488,
+   "h": 256,
+   "bytes": 6444
+  },
+  "/marketing/r6/ui/swatch-card@2x.avif": {
+   "w": 976,
+   "h": 512,
+   "bytes": 8301
+  },
+  "/marketing/r6/ui/swatch-card@2x.webp": {
+   "w": 976,
+   "h": 512,
+   "bytes": 13088
+  },
+  "/marketing/r6/ui/vendor-job-ar.avif": {
+   "w": 698,
+   "h": 608,
+   "bytes": 11481
+  },
+  "/marketing/r6/ui/vendor-job-ar.webp": {
+   "w": 698,
+   "h": 608,
+   "bytes": 13694
+  },
+  "/marketing/r6/ui/vendor-job-ar@2x.avif": {
+   "w": 1396,
+   "h": 1216,
+   "bytes": 22202
+  },
+  "/marketing/r6/ui/vendor-job-ar@2x.webp": {
+   "w": 1396,
+   "h": 1216,
+   "bytes": 38550
+  },
+  "/marketing/r6/ui/vendor-job-en.avif": {
+   "w": 698,
+   "h": 608,
+   "bytes": 12036
+  },
+  "/marketing/r6/ui/vendor-job-en.webp": {
+   "w": 698,
+   "h": 608,
+   "bytes": 14230
+  },
+  "/marketing/r6/ui/vendor-job-en@2x.avif": {
+   "w": 1396,
+   "h": 1216,
+   "bytes": 22967
+  },
+  "/marketing/r6/ui/vendor-job-en@2x.webp": {
+   "w": 1396,
+   "h": 1216,
+   "bytes": 40380
   }
  },
  "bases": {
@@ -1682,6 +1982,66 @@
   "hero/tuck-carton-iso-light": [
    640,
    800
+  ],
+  "ui/admin-kpi-ar": [
+   288,
+   214
+  ],
+  "ui/admin-kpi-en": [
+   288,
+   198
+  ],
+  "ui/checkout-summary-ar": [
+   375,
+   689
+  ],
+  "ui/checkout-summary-en": [
+   375,
+   628
+  ],
+  "ui/designer-ar": [
+   760,
+   490
+  ],
+  "ui/designer-en": [
+   760,
+   490
+  ],
+  "ui/order-timeline-ar": [
+   702,
+   329
+  ],
+  "ui/order-timeline-en": [
+   702,
+   327
+  ],
+  "ui/phone-designer-ar": [
+   498,
+   952
+  ],
+  "ui/phone-designer-en": [
+   498,
+   952
+  ],
+  "ui/price-badge-ar": [
+   486,
+   88
+  ],
+  "ui/price-badge-en": [
+   503,
+   88
+  ],
+  "ui/swatch-card": [
+   488,
+   256
+  ],
+  "ui/vendor-job-ar": [
+   698,
+   608
+  ],
+  "ui/vendor-job-en": [
+   698,
+   608
   ]
  }
 }
