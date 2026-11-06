@@ -3,14 +3,27 @@ import type { Dims, StructureFeatures } from "@/types";
 import { DielineBuilder, insetSeg, rectEdges } from "../../builder";
 import { cutWindow, stadium } from "../../features";
 import { clamp, pt, rectPolygon } from "../../geometry";
-import { crashLockCarton, tuckEndCarton } from "../../structures";
+import { tuckEndCarton } from "../../structures";
+import { crashLockBottom, glueWidth, tube } from "../ecma-tuck/closures";
 import type { Polygon } from "../../types";
-import { IDENTITY, blockFace, circle, closedBounds, deg, maxStageOf, pieceMatrix, quat, rect, removePanels, reshape, sheetBox, withDeepParts } from "./kit";
+import { IDENTITY, blockFace, circle, closedBounds, deg, maxStageOf, pieceMatrix, quat, rect, reshape, sheetBox, withDeepParts } from "./kit";
 import type { EcmaDraft } from "./types";
 
-/** Drop the tuck top (lid, tuck, two dust flaps) that crashLockCarton puts on the back panel. */
-function openTop(b: DielineBuilder) {
-  removePanels(b, ["top", "topDustL", "topDustR"]);
+/**
+ * Open-top glued tube with an automatic crash-lock bottom (ECMA A60). Uses the ECMA tuck
+ * family's crash-lock (both main flaps flush on the bottom plane, small chamfers at opposite
+ * corners, tongues hooked one caliper in): the core `crashLockCarton` put both main-flap
+ * chamfers at the same corner, leaving a triangular hole in the printed bottom that showed
+ * the unprinted glue flap (R5-3Q-D-05, was 3d-ecma O-03).
+ */
+function crashLockTube(dims: Dims, t: number): DielineBuilder {
+  const Lp = dims.L + 2 * t;
+  const Wp = dims.W + 2 * t;
+  const Hp = dims.H + 5 * t; // up to three flap layers under the product
+  const b = new DielineBuilder();
+  const w = tube(b, Lp, Wp, Hp, glueWidth(dims.W));
+  crashLockBottom(b, w, t, Wp, Lp);
+  return b;
 }
 
 /* ───────────────────────── Gable carry box (crash-lock bottom, X81 handle) ───────────────────────── */
@@ -22,9 +35,7 @@ function openTop(b: DielineBuilder) {
  * tuck inside them. Differs from the catalogue GABLE_BOX by its pre-glued automatic bottom.
  */
 export function gableCarry(dims: Dims, t: number, f: StructureFeatures = {}): EcmaDraft {
-  const draft = crashLockCarton(dims, t, {});
-  const b = draft.builder;
-  openTop(b);
+  const b = crashLockTube(dims, t);
   const Lp = dims.L + 2 * t;
   const Wp = dims.W + 2 * t;
   const run = Wp / 2 - t;
@@ -137,9 +148,7 @@ export const basketHandleRise = (dims: Dims) => clamp(dims.H * 0.45, 50, 90);
  * them; see README). L = basket length along the handle, W = depth, H = wall height.
  */
 export function basketCarrier(dims: Dims, t: number, grid: BasketGrid): EcmaDraft {
-  const draft = crashLockCarton(dims, t, {});
-  const b = draft.builder;
-  openTop(b);
+  const b = crashLockTube(dims, t);
   const box = closedBounds(b, t, IDENTITY);
   const cx = (box.min.x + box.max.x) / 2;
   const cz = (box.min.z + box.max.z) / 2;

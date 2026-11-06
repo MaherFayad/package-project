@@ -72,7 +72,21 @@ export function snapLockTuck(dims: Dims, t: number, f: StructureFeatures, o: Ecm
   tuckClosure(b, w, "top", "back", t, Lp, Wp, Hp, { tuckDepthMm: o.tuckDepthMm, lock: o.tuckLock });
   snapLockBottom(b, w, t, Wp, Lp);
   applyFeatures(b, w, f, "front");
-  return { builder: b, closedRotation: IDENTITY, inner: { ...dims } };
+  return {
+    builder: b,
+    closedRotation: IDENTITY,
+    inner: { ...dims },
+    // The slot flap (2) lies one caliper inside the lock flap (3) but most of it shows on the
+    // underside around the lock flap; the automatic face skips inner-stacked panels, which
+    // left half the bottom unprinted (R5-3Q-D-03). Map it with the same face frame: the
+    // stack offset only moves it along the face normal, so its u / v mapping is unchanged.
+    faces: (panels, computed) => {
+      const lifted = panels.map((p) => (p.id === "bottom_front" ? { ...p, stackOffset: 0 } : p));
+      const part = computeFaces({ panels: lifted, rootId: b.rootId, thicknessMm: t, closedRotation: IDENTITY }).faces.bottom?.parts.find((x) => x.panelId === "bottom_front");
+      if (!computed.bottom || !part) return computed;
+      return { ...computed, bottom: { ...computed.bottom, parts: [part, ...computed.bottom.parts] } };
+    },
+  };
 }
 
 /** Tuck top on the back + crash-lock (auto) bottom (ECMA A60.20.00.03). 2 + 3 layers. */

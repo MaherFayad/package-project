@@ -4,7 +4,7 @@ import { DielineBuilder, insetSeg, rectEdges } from "../../builder";
 import { cutWindow, notchPanel, stadium } from "../../features";
 import { clamp, pt, rectPolygon } from "../../geometry";
 import type { DielineAccessory, DielinePanel, FaceInfo, Polygon, Pt, Rect } from "../../types";
-import { WRAP_VISUAL_MM, mainClosedBounds, poseMatrix, quat, rect, sheetBottom, tabStack, turnInStack } from "./common";
+import { WRAP_VISUAL_MM, mainClosedBounds, poseMatrix, quat, rect, sheetBottom, tabPivot, tabStack, turnInStack, WALL_PIVOT_MM, wallPivot } from "./common";
 
 export { WRAP_VISUAL_MM, tabStack, turnInStack };
 import type { ConstructionSpec, FamilyDraft } from "./types";
@@ -55,9 +55,12 @@ export function wrapTray(
   t: number,
   o: { pre: string; L: number; W: number; H: number; origin: Pt; mode: "base" | "lid"; tabs?: boolean; turnIn?: number },
 ): TrayLayout {
-  const Lp = o.L + 2 * t;
-  const Wp = o.W + 2 * t;
-  const Hp = o.H + t;
+  // Walls hinge WALL_PIVOT_MM inside the base board (R5-3Q-E-03), which sets each wall that much
+  // further out and up: the base and walls are cut that much smaller so inner and outer sizes stay.
+  const pw = WALL_PIVOT_MM;
+  const Lp = o.L + 2 * t - 2 * pw;
+  const Wp = o.W + 2 * t - 2 * pw;
+  const Hp = o.H + t - pw;
   const base = rect(o.origin.x, o.origin.y, Lp, Wp);
   const id = (s: string) => o.pre + s;
   const upper: WallName = o.mode === "lid" ? "back" : "front";
@@ -90,7 +93,7 @@ export function wrapTray(
       root(rootId, rectPolygon(base.x, base.y, Lp, Wp));
       for (const name of ["front", "back", "left", "right"] as const) {
         const w = walls[name];
-        b.attach(w.id, name, rootId, w.edge, Hp, { kind: "rect" }, { stage: 0, label: `${name[0].toUpperCase()}${name.slice(1)} wall` });
+        b.attach(w.id, name, rootId, w.edge, Hp, { kind: "rect" }, { stage: 0, pivotDepth: wallPivot(t), label: `${name[0].toUpperCase()}${name.slice(1)} wall` });
         b.attach(`${w.id}Turn`, "inner", w.id, insetSeg(w.far, t + 0.3), ti, { kind: "trapezoid", taperA: 1, taperB: 1 }, { fold: 180, pivotDepth: 1, stage: 1, stack: turnInStack(t), label: "Turn-in" });
       }
       if (o.tabs !== false) {
@@ -98,7 +101,7 @@ export function wrapTray(
           const e = rectEdges(walls[name].r);
           const d = tabDepth(o.W);
           for (const [k, edge] of [["L", e.left], ["R", e.right]] as const) {
-            b.attach(id(`${name}Tab${k}`), "ear", walls[name].id, insetSeg(edge, 1, 1), d, { kind: "trapezoid", taperA: d * 0.5, taperB: d * 0.5 }, { stage: 0, stack: tabStack(t), label: "Corner tab" });
+            b.attach(id(`${name}Tab${k}`), "ear", walls[name].id, insetSeg(edge, 1, 1), d, { kind: "trapezoid", taperA: d * 0.5, taperB: d * 0.5 }, { stage: 0, stack: tabStack(t), pivotDepth: tabPivot(t), label: "Corner tab" });
           }
         }
       }
@@ -213,7 +216,7 @@ export function shoulderBox(dims: Dims, t: number, f: StructureFeatures = {}): F
     b.attach(`${names[i]}Turn`, "inner", names[i], insetSeg(rectEdges(r).top, t + 0.3), ti, { kind: "trapezoid", taperA: 1, taperB: 1 }, { fold: 180, pivotDepth: 1, stage: 1, stack: turnInStack(t), label: "Turn-in" });
     x += widths[i];
   }
-  b.attach("neck_glue", "glue", "neck_left", rectEdges(rect(x - Wn, yN, Wn, Hn)).right, Math.min(15, Ln * 0.3), { kind: "trapezoid", taperA: 3, taperB: 3 }, { stage: 0, stack: tabStack(t), label: "Glue flap" });
+  b.attach("neck_glue", "glue", "neck_left", rectEdges(rect(x - Wn, yN, Wn, Hn)).right, Math.min(15, Ln * 0.3), { kind: "trapezoid", taperA: 3, taperB: 3 }, { stage: 0, stack: tabStack(t), pivotDepth: tabPivot(t), label: "Glue flap" });
 
   // Lid over the neck (clearance + its own turn-in paper), resting on the base rim.
   const lidL = Ln + 2 * (c + p);
@@ -256,18 +259,21 @@ export function bookBox(dims: Dims, t: number, f: StructureFeatures = {}): Famil
   const flapH = Ht + t + 2 * p - 0.5;
   const ti = 15;
   const yc = sheetBottom(b) + 15 + ti;
+  // Cover boards hinge WALL_PIVOT_MM inside their neighbour (R5-3Q-E-03): the bottom and lid
+  // boards lose it at both ends and the spine top and bottom, so the closed cover keeps its size.
+  const pw = WALL_PIVOT_MM;
   const rows: { id: string; role: "bottom" | "back" | "top" | "front"; h: number; label: string }[] = [
-    { id: "cover_bottom", role: "bottom", h: Wc, label: "Cover bottom" },
-    { id: "cover_spine", role: "back", h: spine, label: "Spine" },
-    { id: "cover_lid", role: "top", h: Wc, label: "Lid board" },
-    { id: "cover_flap", role: "front", h: flapH, label: "Magnetic flap" },
+    { id: "cover_bottom", role: "bottom", h: Wc - 2 * pw, label: "Cover bottom" },
+    { id: "cover_spine", role: "back", h: spine - 2 * pw, label: "Spine" },
+    { id: "cover_lid", role: "top", h: Wc - 2 * pw, label: "Lid board" },
+    { id: "cover_flap", role: "front", h: flapH - pw, label: "Magnetic flap" },
   ];
   const target = new Vector3((box.min.x + box.max.x) / 2, box.min.y - t - p, (box.min.z - t - p + box.max.z + t + clr) / 2);
   let y = yc;
   rows.forEach((row, i) => {
     const r = rect(0, y, Lc, row.h);
     if (i === 0) b.piece(row.id, row.role, rectPolygon(r.x, r.y, r.width, r.height), "Cover", { matrix: poseMatrix(r, target, Math.PI / 2), stage: 2, lift: dims.H * 1.5 }, { label: row.label });
-    else b.attach(row.id, row.role, rows[i - 1].id, rectEdges(rect(0, y - rows[i - 1].h, Lc, rows[i - 1].h)).bottom, row.h, { kind: "rect" }, { stage: 2 + i, label: row.label });
+    else b.attach(row.id, row.role, rows[i - 1].id, rectEdges(rect(0, y - rows[i - 1].h, Lc, rows[i - 1].h)).bottom, row.h, { kind: "rect" }, { stage: 2 + i, pivotDepth: wallPivot(t), label: row.label });
     const E = rectEdges(r);
     for (const [k, edge] of [["L", E.left], ["R", E.right]] as const) {
       b.attach(`${row.id}Turn${k}`, "inner", row.id, insetSeg(edge, t + 0.3), ti, { kind: "trapezoid", taperA: 1, taperB: 1 }, { fold: 180, pivotDepth: 1, stage: 1, stack: turnInStack(t), label: "Turn-in" });
@@ -314,26 +320,32 @@ export function drawerBox(dims: Dims, t: number, f: StructureFeatures = {}): Fam
   const Hs = Ht + 2 * c + 2 * t;
   const tiS = 12;
   const ys = sheetBottom(b) + 15 + tiS;
+  // Sleeve boards hinge WALL_PIVOT_MM inside their neighbour (R5-3Q-E-03): each loses 2 × that
+  // so the closed sleeve keeps its size.
+  const pw = WALL_PIVOT_MM;
   const cols: { id: string; role: "top" | "right" | "bottom" | "left"; w: number }[] = [
-    { id: "sleeve_top", role: "top", w: Ls },
-    { id: "sleeve_right", role: "right", w: Hs },
-    { id: "sleeve_bottom", role: "bottom", w: Ls },
-    { id: "sleeve_left", role: "left", w: Hs },
+    { id: "sleeve_top", role: "top", w: Ls - 2 * pw },
+    { id: "sleeve_right", role: "right", w: Hs - 2 * pw },
+    { id: "sleeve_bottom", role: "bottom", w: Ls - 2 * pw },
+    { id: "sleeve_left", role: "left", w: Hs - 2 * pw },
   ];
   const target = new Vector3((box.min.x + box.max.x) / 2, box.max.y + c + t, (box.min.z + box.max.z) / 2);
   let x = 0;
   cols.forEach((col, i) => {
     const r = rect(x, ys, col.w, Wt);
-    const poly = rectPolygon(r.x, r.y, r.width, r.height);
+    // The sleeve top's free (glued) end stops CORNER_GAP_MM short of the outer corner: full
+    // length, its cut end face lay in the LEFT wall's printed face and z-fought there as a
+    // TOP-coloured line down the sleeve's top-left edge (R5-3Q-E-02). Posed from the full rect.
+    const poly = i === 0 ? rectPolygon(r.x + CORNER_GAP_MM, r.y, r.width - CORNER_GAP_MM, r.height) : rectPolygon(r.x, r.y, r.width, r.height);
     if (i === 0) b.piece(col.id, col.role, poly, "Sleeve", { matrix: poseMatrix(r, target, -Math.PI / 2), stage: 2, lift: dims.H * 1.5 }, { label: "Sleeve top" });
-    else b.attach(col.id, col.role, cols[i - 1].id, rectEdges(rect(x - cols[i - 1].w, ys, cols[i - 1].w, Wt)).right, col.w, { kind: "rect" }, { stage: 0, label: `Sleeve ${col.role}` });
+    else b.attach(col.id, col.role, cols[i - 1].id, rectEdges(rect(x - cols[i - 1].w, ys, cols[i - 1].w, Wt)).right, col.w, { kind: "rect" }, { stage: 0, pivotDepth: wallPivot(t), label: `Sleeve ${col.role}` });
     const E = rectEdges(r);
     for (const [k, edge] of [["B", E.top], ["F", E.bottom]] as const) {
       b.attach(`${col.id}Turn${k}`, "inner", col.id, insetSeg(edge, t + 0.3), tiS, { kind: "trapezoid", taperA: 1, taperB: 1 }, { fold: 180, pivotDepth: 1, stage: 1, stack: turnInStack(t), label: "Turn-in" });
     }
     x += col.w;
   });
-  b.attach("sleeve_glue", "glue", "sleeve_left", rectEdges(rect(x - Hs, ys, Hs, Wt)).right, Math.min(15, Ls * 0.3), { kind: "trapezoid", taperA: 3, taperB: 3 }, { stage: 0, stack: tabStack(t), label: "Glue flap" });
+  b.attach("sleeve_glue", "glue", "sleeve_left", rectEdges(rect(x - Hs, ys, Hs, Wt)).right, Math.min(15, Ls * 0.3), { kind: "trapezoid", taperA: 3, taperB: 3 }, { stage: 0, stack: tabStack(t), pivotDepth: tabPivot(t), label: "Glue flap" });
   // Ribbon pull (rigid-food E-02): out of the front slot and hanging as a short loop. Closed frame:
   // bottom centre origin; the drawer front is flush with the sleeve's front opening.
   const accessories: DielineAccessory[] = [];

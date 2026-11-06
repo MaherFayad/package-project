@@ -16,6 +16,7 @@ export {
   bottleDefinition,
   bottlePreset,
   profileFor,
+  finishForDims,
   bottleEnvelope,
   describeBottle,
   type BottleConfig,

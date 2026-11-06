@@ -2,7 +2,7 @@ import type { Dims, StructureFeatures } from "@/types";
 import { DielineBuilder, insetSeg, rectEdges } from "../../builder";
 import { clamp, pt } from "../../geometry";
 import type { Polygon } from "../../types";
-import { IDENTITY, blockFace, deg, rect, tube4, withDeepParts, type Walls } from "./kit";
+import { IDENTITY, blockFace, deg, rect, tube4, withDeepParts, withLiftedParts, type Walls } from "./kit";
 import type { EcmaDraft } from "./types";
 
 /**
@@ -70,7 +70,9 @@ export function gableTopCarton(dims: Dims, t: number, f: StructureFeatures = {})
     faces: (panels, computed) => {
       const { top: _top, ...rest } = computed;
       void _top;
-      return { ...rest, front: blockFace("front", panels, ["fin_front", "roof_front", "front"])!, back: blockFace("back", panels, ["fin_back", "roof_back", "back"])! };
+      // The back seal flap shows on the underside beside the front one (R5-3Q-D-06).
+      const bottom = withLiftedParts(rest, { panels, rootId: b.rootId, thicknessMm: t, closedRotation: IDENTITY }, "bottom", ["bottom_back"]);
+      return { ...bottom, front: blockFace("front", panels, ["fin_front", "roof_front", "front"])!, back: blockFace("back", panels, ["fin_back", "roof_back", "back"])! };
     },
   };
 }
@@ -126,6 +128,10 @@ export function asepticBrick(dims: Dims, t: number, f: StructureFeatures = {}): 
     closedRotation: IDENTITY,
     faceDepthTol: t + 0.2,
     // From above both seal flaps show (the front one overlaps the back one by the fin): print both.
-    faces: (panels, computed) => withDeepParts(computed, { panels, rootId: b.rootId, thicknessMm: t, closedRotation: IDENTITY }, "top", ["top", "top_back"], 2 * t + 0.2),
+    // Underneath, the back seal flap shows beside the front one and the ears (R5-3Q-D-06).
+    faces: (panels, computed) => {
+      const input = { panels, rootId: b.rootId, thicknessMm: t, closedRotation: IDENTITY };
+      return withLiftedParts(withDeepParts(computed, input, "top", ["top", "top_back"], 2 * t + 0.2), input, "bottom", ["bottom_back"], t + 0.2);
+    },
   };
 }
