@@ -18,6 +18,7 @@ import type {
 import { VENDOR_VISIBLE_STATUSES, isAwaitingAcceptance, dueState, ACTIVE_STATUSES } from "../lib/jobs";
 import { payoutSchedule, payoutSummary } from "../lib/payouts";
 import { instantModelsForCard, jobModel } from "../lib/coverage";
+import { bioForEditing } from "../lib/bio-review";
 import type {
   JobDetailDTO,
   JobEventDTO,
@@ -241,8 +242,9 @@ export async function getProfile(vendorId: string): Promise<{ profile: VendorPro
       rating: v.rating,
       ratingCount: v.ratingCount,
       onTimePct: v.onTimePct,
-      bioAr: v.bioAr,
-      bioEn: v.bioEn,
+      // R5: the form edits the waiting (or rejected) bio when there is one.
+      ...bioForEditing(v),
+      bioReview: v.bioReviewStatus === "PENDING" || v.bioReviewStatus === "REJECTED" ? { status: v.bioReviewStatus, note: v.bioReviewNote } : null,
       machines: fromJson<VendorMachine[]>(v.machines) ?? [],
       structures: caps?.structures ?? [],
       materials: caps?.materials ?? [],

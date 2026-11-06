@@ -115,6 +115,8 @@ export interface VendorProfileDTO {
   onTimePct: number;
   bioAr: string;
   bioEn: string;
+  /** R5: a bio edit waiting for Elba's review (or sent back), null when the live bio is current. */
+  bioReview: { status: "PENDING" | "REJECTED"; note: string | null } | null;
   machines: VendorMachine[];
   structures: StructureCode[];
   materials: MaterialCode[];

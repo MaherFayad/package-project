@@ -48,7 +48,9 @@ const PATTERNS: [ContactKind, RegExp][] = [
   ["URL", /google\s*maps?|maps\.app|خرائط\s*جوجل|جوجل\s*ماب/giu],
   ["HANDLE", /(?:^|[\s(،,:])@\s*[a-z0-9_.]{3,}/giu],
   // "IG: nilepack", "fb - nilepack", "X @nilepack", "tw: …", "yt: …"
-  ["HANDLE", /(?:^|[\s(،,])(?:ig|fb|tw|yt|tt|x)\s*[:\-–@/]\s*[a-z0-9_.]{3,}/giu],
+  ["HANDLE", /(?:^|[\s(،,])(?:ig|fb|tw|yt|tt|x)(?:\s*[:@/]\s*|\s+[-–]\s*|\s*[-–]\s+)[a-z0-9_.]{3,}/giu],
+  // R5: "ig nilepack", "fb nilepack" (no separator; "ig" / "fb" are not words in either language).
+  ["HANDLE", /(?:^|[\s(،,:])(?:ig|fb)\s+[a-z0-9_.]{3,}/giu],
   // 8+ digits joined only by spaces, dashes, dots, underscores, brackets or a leading +. Commas and
   // slashes are left to hasSplitPhone (lists like "100, 500, 1000, 2000" are not phone numbers).
   ["PHONE", /\+?\d(?:[\s\-.()_~*]{0,4}\d){7,}/gu],
@@ -56,7 +58,7 @@ const PATTERNS: [ContactKind, RegExp][] = [
   ["PHONE", /(?:hotline|call|ring|الخط\s*الساخن|خط\s*ساخن|اتصل|كلمنا|رقم)\D{0,12}\b1[569]\d{3}\b/giu],
   [
     "MESSENGER",
-    /(?:\bw\s*h?\s*a\s*t+\s*s+\s*-?\s*a?\s*p{1,2}|\bwhats\b|wtsp|wats\s*app|wa\.me|tele\s*g\s*r?a?m|tel[ie]?gr[ae]?m|telgram|t\.me|inst[a@4]\s*g\s*r\s*[a@4]\s*m|insta\b|face\s*-?\s*book|fb\.com|\bf\.\s*b\b|messenger|tik\s*tok|snap\s*chat|linked\s*in|viber|signal\s+(?:me|us)|\bimo\b|botim|skype|we\s*chat|twitter|tweet\s+us|youtube|you\s*tube|واتس\s*[اآ]ب|واتساب|واتس|وتساب|وتس|تليجرام|تلجرام|تيليجرام|تيلجرام|تلغرام|تيليغرام|انستجرام|انستغرام|إنستجرام|إنستغرام|انستا|فيسبوك|فيس\s*بوك|ماسنجر|مسنجر|تيك\s*توك|سناب\s*شات|لينكد\s*إن|لينكدإن|لينكدان|فايبر|سيجنال|سكايب|ايمو|إيمو|بوتيم|تويتر|يوتيوب)/giu,
+    /(?:\bw\s*h?\s*a\s*t+\s*s+\s*-?\s*a?\s*p{1,2}|\bwhats\b|wtsp|wats\s*app|wa\.me|tele\s*g\s*r?a?m|tel[ie]?gr[ae]?m|telgram|t\.me|inst[a@4]\s*g\s*r\s*[a@4]\s*m|insta\b|face\s*-?\s*book|fb\.com|\bf\.\s*b\b|messenger|tik\s*tok|snap\s*chat|linked\s*in|viber|signal\s+(?:me|us)|\bimo\b|botim|skype|we\s*chat|twitter|tweet\s+us|youtube|you\s*tube|واتس\s*[اآ]ب|واتساب|واتس|وتساب|وتس|تليجرام|تلجرام|تيليجرام|تيلجرام|تلغرام|تيليغرام|انستجرام|انستغرام|إنستجرام|إنستغرام|انستقرام|إنستقرام|انستقرم|انستا|إنستا|تلقرام|تليقرام|فيسبوك|فيس\s*بوك|(?<![\u0600-\u06ff])فيس(?![\u0600-\u06ff])|ماسنجر|مسنجر|تيك\s*توك|سناب\s*شات|لينكد\s*إن|لينكدإن|لينكدان|فايبر|سيجنال|سكايب|ايمو|إيمو|بوتيم|تويتر|يوتيوب)/giu,
   ],
 ];
 
@@ -105,6 +107,8 @@ export function canonicalText(text: string): string {
   s = s.replace(/(?<![\p{L}\p{N}])\p{L}(?:[\s.\-_*]{1,2}\p{L}(?![\p{L}\p{N}])){3,}/gu, (run) => run.replace(/[\s.\-_*]/g, ""));
   // Letter O / l / I standing for 0 / 1 inside a run that is mostly digits ("O1OO1234567").
   s = s.replace(/[0-9oil|]{7,}/g, (run) => ((run.match(/\d/g)?.length ?? 0) >= 5 ? run.replace(/o/g, "0").replace(/[il|]/g, "1") : run));
+  // R5: bracketed dots "nilepack[.]com", "(.)", "{.}", "<.>".
+  s = s.replace(/\s*[[({<]\s*\.\s*[\])}>]\s*/g, ".");
   // Spelled-out dots before a domain ending: "nilepack dot com", "nilepack (dot) com", "nilepack دوت كوم",
   // and a spaced dot "nilepack . com". A sentence end ("boxes. Co-packing") has no space before the dot.
   for (const [re, tld] of AR_TLDS) s = s.replace(new RegExp(`(دوت|نقطة|نقطه)\\s*(?:${re.source})`, "gu"), ` dot ${tld}`);

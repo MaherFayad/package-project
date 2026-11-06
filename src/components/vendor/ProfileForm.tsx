@@ -160,7 +160,8 @@ export function ProfileForm({ profile, portfolio, coverage, gluing }: { profile:
         setErrors({});
         setInitial(form);
         setUpdatedAt(res.data.updatedAt);
-        toast.show(t("vendorPortal.common.saved"));
+        const bioChanged = form.bioAr !== initial.bioAr || form.bioEn !== initial.bioEn;
+        toast.show(t(bioChanged ? "vendorPortal.profile.bioSentForReview" : "vendorPortal.common.saved"));
         router.refresh();
       } else if (res.fieldErrors) {
         setErrors(res.fieldErrors);
@@ -174,7 +175,7 @@ export function ProfileForm({ profile, portfolio, coverage, gluing }: { profile:
     } finally {
       setSaving(false);
     }
-  }, [form, gluing, updatedAt, toast, t, router, errorText]);
+  }, [form, initial, gluing, updatedAt, toast, t, router, errorText]);
 
   const onDiscard = useCallback(() => {
     setForm(initial);
@@ -232,8 +233,22 @@ export function ProfileForm({ profile, portfolio, coverage, gluing }: { profile:
                 <Banner tone="critical" title={t("vendorPortal.profile.errors.summary", { count: errorCount })} />
               ) : null}
 
-              <Card title={t("vendorPortal.profile.aboutTitle")}>
+              <Card
+                title={t("vendorPortal.profile.aboutTitle")}
+                headerActions={
+                  profile.bioReview ? (
+                    <Badge tone={profile.bioReview.status === "PENDING" ? "attention" : "critical"}>{t(`vendorPortal.portfolio.status.${profile.bioReview.status}` as DictKey)}</Badge>
+                  ) : undefined
+                }
+              >
                 <BlockStack gap="400">
+                  {profile.bioReview?.status === "PENDING" ? <Banner tone="info" title={t("vendorPortal.profile.bioReviewPending")} /> : null}
+                  {profile.bioReview?.status === "REJECTED" ? (
+                    <Banner
+                      tone="warning"
+                      title={profile.bioReview.note ? t("vendorPortal.profile.bioReviewRejected", { note: profile.bioReview.note }) : t("vendorPortal.profile.bioReviewRejectedNoNote")}
+                    />
+                  ) : null}
                   <TextField
                     label={t("vendorPortal.profile.bioAr")}
                     autoComplete="off"

@@ -132,3 +132,29 @@ Round 4 counts, new findings before fixing: **critical 2, high 5, medium 3, low 
 Files outside vendor scope (smallest changes): `src/app/[locale]/orders/[id]/page.tsx` (buyer timeline hides free-text notes; buyer sees approved QC photos only), `e2e/vendor.spec.ts` (two new tests). `src/i18n/vendorPortal.*.ts` is vendor i18n.
 
 Verification: `npm run lint` and `npm run typecheck` clean. `npm test`: 79 files / 8,358 tests passed. New tests: contact bypass corpus (42 cases) and false-positive corpus (16), metadata stripping (JPEG/PNG/WebP), QC access by status, listed-model coverage, one-line decline note. `npm run build` OK. e2e on `next start` with `--workers=2 --trace off`: vendor, smoke, storefront, journey, checkout and admin specs gave 43 passed and 9 skipped (desktop-only mutating flows), and the new round 4 vendor tests gave 2 passed and 2 skipped (mobile). Re-sweep of every vendor route after the fixes: 40 loads, 0 axe violations, 0 console errors, 0 overflow.
+
+## Round 5
+
+Work list: `docs/audit/ROUND5.md`, vendor row: R4-B-02 (re-test the contact filter after R4-02; bios reviewed before they go public) and the vendor rows of craft.md round 4 (R4-CR-22). Base: main at `553e407` (round 4 merged). Method as round 4: production build, `vendor-audit.cjs` sweep (52 loads, ar/en, 390/1440: 0 axe violations, 0 console errors, 0 overflow), a browser run of the bio flow, and the business session's strings run against the merged filter. Screenshots: `docs/screenshots/audit/vendor/r5/`.
+
+### Assigned rows
+
+| id | severity | finding | fix | status |
+|---|---|---|---|---|
+| R4-B-02 (filter half) | high | The business session tested before R4-02 landed. On the merged code its full bio is blocked (the phone number is caught) and most variants are too (spaced, full-width and mathematical digits, letter O, zero-width space, `nilepack . com`, `sales＠nilepack．com`). Six pieces still passed on their own; they are R5-01 below. | See R5-01. Its 22 strings are now unit tests. | fixed |
+| R4-B-02 (review half) | high | Bio text went public the moment it was saved; only photos were reviewed. | Bio edits wait for review. New `Vendor` fields: `bioArPending`, `bioEnPending`, `bioReviewStatus` (PENDING / REJECTED), `bioReviewNote`, `bioSubmittedAt`. `saveProfile` writes a changed bio to the pending fields; the live `bioAr`/`bioEn` (what the public profile reads) change only on approval, and saving the live text withdraws a waiting edit. The portal shows an "In review" badge and an info banner ("Buyers see your current bio until Elba approves them"), or "Not approved" with the ops note; the form edits the waiting text, and saving a rejected edit sends it back to review. The profile subtitle and save toast say so. Shared pure helpers for the admin queue are in `lib/bio-review.ts`: `bioReviewData` (approve copies the edit live and clears it; reject keeps it with the note) and `canApproveBio` (no approval if the contact filter trips). The contract was sent to the admin session, which builds the queue rows; its approve action must call `revalidateTag("catalog")`, because the public profile is cached. Verified in the browser: the business string is blocked with `aria-invalid`; a clean edit is PENDING with the live bio unchanged and absent from `/en/vendors/nile-pack`; approval through the helper moves it live. Rejected state checked in Arabic at 390 px. Unit and e2e tests. | fixed (vendor half; admin queue: admin session) |
+| R4-CR-22 | low | The vendor top bar search placeholder was cut at 390 px ("Search jobs by nu…"). | Under 490 px VendorFrame uses "Search jobs" / "بحث في الطلبات" (media query in the vendor frame; the shared `ui/Frame` is untouched). | fixed |
+
+### New findings
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R5-01 | high | `lib/contact.ts` | Gaps left after R4-02: the Egyptian and Gulf spelling انستقرام / إنستقرام (with ق), bracketed dots `nilepack[.]com` / `(.)` / `{.}` / ` [.] `, `ig nilepack` without a colon, Egyptian «فيس» alone for Facebook, and تلقرام. | B-08; Business plan §0 | Bracketed dots are folded to "." before matching, the Arabic spellings are added (فيس only as a whole word), and a bare `ig` or `fb` before a handle is caught. Still 0 of the 57 round 4 bypasses get through, and the false-positive corpus is clean. | fixed |
+| R5-02 | medium | Payouts (metrics and schedule), jobs index price column, job price card, rate card preview | Money precision changed inside one column ("EGP 2,925" above "EGP 6,245.82"), so the numbers do not line up and read as different kinds of figure. | CR-35 (one money precision per column) | Each column or card picks two decimals for all its amounts when any amount has piasters (`formatMoney(..., { alwaysDecimals })`). | fixed |
+| R5-03 | low | `lib/contact.ts` handle pattern | The round 4 "IG-" pattern also matched "ig-free" (a dash with no space). | Precision | A dash counts only with a space beside it ("IG - name"). Unit test. | fixed |
+
+Round 5 counts, new findings before fixing: **critical 0, high 1, medium 1, low 1**. All fixed. A medium issue was found, so the rounds continue.
+
+Files outside vendor scope: `prisma/schema.prisma` (five optional bio review fields on `Vendor`) and `e2e/vendor.spec.ts` (round 5 test).
+
+Verification: `npm run lint` and `npm run typecheck` clean. `npm test`: 83 files / 8,404 tests passed (new `bio-review.test.ts`). `npm run build` OK. e2e on `next start` (`--workers=2 --trace off`): vendor, smoke, storefront, journey, checkout and admin specs gave 49 passed and 13 skipped (desktop-only mutating flows on the mobile project).

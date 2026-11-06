@@ -85,6 +85,8 @@ export function JobsIndex({ jobs }: { jobs: JobListItemDTO[] }) {
   const selectView = (i: number) => setParam({ view: JOB_VIEWS[i] === "all" ? null : JOB_VIEWS[i]! });
 
   const filtered = Boolean(query || structure || dueSoonOnly || view !== "all");
+  // R5 (CR-35): one money precision for the whole price column.
+  const moneyDec = { alwaysDecimals: jobs.some((j) => Math.round(j.vendorCostPiasters) % 100 !== 0) };
 
   return (
     <Page fullWidth title={t("vendorPortal.jobs.title")} titleIcon={ClipboardList}>
@@ -169,7 +171,7 @@ export function JobsIndex({ jobs }: { jobs: JobListItemDTO[] }) {
                   <span className={styles.CondensedMeta}>
                     <DueLabel dueDate={j.dueDate} status={j.status} compact />
                     <Text as="span" numeric fontWeight="semibold">
-                      {formatMoney(j.vendorCostPiasters, locale)}
+                      {formatMoney(j.vendorCostPiasters, locale, moneyDec)}
                     </Text>
                   </span>
                 </div>
@@ -195,7 +197,7 @@ export function JobsIndex({ jobs }: { jobs: JobListItemDTO[] }) {
                 <JobStatusBadge job={j} />
               </IndexTableCell>
               <IndexTableCell className={styles.WideOnly} alignment="end" numeric>
-                {formatMoney(j.vendorCostPiasters, locale)}
+                {formatMoney(j.vendorCostPiasters, locale, moneyDec)}
               </IndexTableCell>
             </IndexTableRow>
           ))}

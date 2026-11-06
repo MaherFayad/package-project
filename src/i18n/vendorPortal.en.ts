@@ -16,6 +16,7 @@ export const vendorPortalEn = {
   },
   topBar: {
     search: "Search jobs by number or buyer",
+    searchShort: "Search jobs",
     account: "Vendor account",
     switchLanguage: "العربية",
     signOut: "Sign out",
@@ -283,8 +284,12 @@ export const vendorPortalEn = {
   },
   profile: {
     title: "Profile",
-    subtitle: "What buyers see on your public profile. Changes go live when you save.",
+    subtitle: "What buyers see on your public profile. Bio changes and new photos go live after Elba reviews them; everything else when you save.",
     aboutTitle: "About",
+    bioReviewPending: "Your bio changes are in review. Buyers see your current bio until Elba approves them.",
+    bioReviewRejected: "Your bio changes were not approved: {note}. Edit them and save to send them again.",
+    bioReviewRejectedNoNote: "Your bio changes were not approved. Edit them and save to send them again.",
+    bioSentForReview: "Saved. Your bio changes were sent for review.",
     bioAr: "Bio in Arabic",
     bioEn: "Bio in English",
     bioHelp: "40 to 1,200 characters. Mention your specialities, machines and typical customers. No phone numbers, emails, websites or social handles.",

@@ -59,6 +59,8 @@ export function JobDetail({ job, vendorName }: { job: JobDetailDTO; vendorName: 
   const declined = isDeclined(state);
   const item = job.items[0];
   const { advance, balance } = splitVendorCost(job.vendorCostPiasters);
+  // R5 (CR-35): the price card is one column of money, so one precision for all four amounts.
+  const priceDec = { alwaysDecimals: [job.vendorCostPiasters, Math.round(job.vendorCostPiasters / job.quantity), advance, balance].some((v) => Math.round(v) % 100 !== 0) };
   const base = `/${locale}/vendor`;
   const pdfUnlocked = ["ACCEPTED", "IN_PRODUCTION", "QC_PENDING", "READY_TO_SHIP", "SHIPPED", "DELIVERED"].includes(job.status);
   const pdfUrl = `/api/vendor/jobs/${job.id}/print-pdf${item ? `?item=${item.id}` : ""}`;
@@ -419,7 +421,7 @@ export function JobDetail({ job, vendorName }: { job: JobDetailDTO; vendorName: 
                   <div className={styles.SummaryRow}>
                     <Text as="span">{t("vendorPortal.job.buyPrice")}</Text>
                     <Text as="span" numeric fontWeight="semibold">
-                      {formatMoney(job.vendorCostPiasters, locale)}
+                      {formatMoney(job.vendorCostPiasters, locale, priceDec)}
                     </Text>
                   </div>
                   {job.quantity > 0 ? (
@@ -428,7 +430,7 @@ export function JobDetail({ job, vendorName }: { job: JobDetailDTO; vendorName: 
                         {t("vendorPortal.job.unitPrice")}
                       </Text>
                       <Text as="span" numeric tone="subdued">
-                        {formatMoney(Math.round(job.vendorCostPiasters / job.quantity), locale)}
+                        {formatMoney(Math.round(job.vendorCostPiasters / job.quantity), locale, priceDec)}
                       </Text>
                     </div>
                   ) : null}
@@ -438,7 +440,7 @@ export function JobDetail({ job, vendorName }: { job: JobDetailDTO; vendorName: 
                       {t("vendorPortal.job.advance")}
                     </Text>
                     <Text as="span" numeric>
-                      {formatMoney(advance, locale)}
+                      {formatMoney(advance, locale, priceDec)}
                     </Text>
                   </div>
                   <div className={styles.SummaryRow}>
@@ -446,7 +448,7 @@ export function JobDetail({ job, vendorName }: { job: JobDetailDTO; vendorName: 
                       {t("vendorPortal.job.balance")}
                     </Text>
                     <Text as="span" numeric>
-                      {formatMoney(balance, locale)}
+                      {formatMoney(balance, locale, priceDec)}
                     </Text>
                   </div>
                 </BlockStack>
