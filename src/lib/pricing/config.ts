@@ -141,6 +141,10 @@ export const DEFAULT_PRICING_CONFIG: PricingConfig = {
       // Tubes and rigid boxes ship made up (not flat); stacking is by nesting height.
       PAPER_TUBE: { glued: true, maxStackMm: 400 },
       RIGID_BOX: { glued: true, maxStackMm: 400 },
+      // Labels ship wound on rolls, pouches and tubes flat in cartons.
+      ROLL_LABEL: { glued: false, maxStackMm: 400 },
+      PRINTED_POUCH: { glued: false, maxStackMm: 400 },
+      PRINTED_TUBE: { glued: true, maxStackMm: 400 },
     },
   },
   ranking: { price: 0.5, speed: 0.25, quality: 0.25 },

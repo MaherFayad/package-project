@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360" viewBox="0 0 480 360" role="img" aria-label="Fries scoop">
+
+<ellipse cx="240" cy="307.8" rx="80.9" ry="19.8" fill="rgba(0,0,0,.07)"/>
+<g stroke="rgba(0,0,0,.18)" stroke-width="1" stroke-linejoin="round"><path d="M154.8 257.9L288.3 301.8L325.2 277.1L191.7 233.2Z" fill-rule="evenodd" fill="#e6e4de"/><path d="M155.4 125.1L155.4 258.7L192.3 234L192.3 43.2Z" fill-rule="evenodd" fill="#adaba7"/><path d="M324.8 87.2L191.3 43.3L191.3 234.1L324.8 278Z" fill-rule="evenodd" fill="#c9c8c2"/><path d="M154.8 125L165.9 133.1L177.1 140.9L188.2 148.1L199.3 154.5L210.4 159.9L221.6 164.2L232.7 167.2L243.8 169.2L254.9 170.1L266.1 170.2L277.2 169.7L288.3 168.8L288.3 302.4L154.8 258.5Z" fill-rule="evenodd" fill="#d2d2d0"/><path d="M325.2 86.9L325.2 277.7L288.3 302.4L288.3 168.8Z" fill-rule="evenodd" fill="#b5b5b3"/></g>
+</svg>

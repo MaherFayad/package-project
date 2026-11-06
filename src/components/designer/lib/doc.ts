@@ -19,6 +19,9 @@ import {
   type TextLayer,
 } from "@/types";
 import { DEFAULT_DIMS, defaultMaterialFor, materialFitsStructure } from "@/lib/dieline";
+import { DESIGN_FINISH_CODES } from "@/types";
+import { modelByCode, type ModelDef } from "@/lib/library";
+import { baseOf, vesselPrintMaterials } from "@/lib/library/doc";
 
 /** Max items per design (both sides together). Keeps saves and textures small. */
 export const MAX_LAYERS = 60;
@@ -36,6 +39,56 @@ export function newId(prefix = "l"): string {
       ? crypto.randomUUID().replace(/-/g, "").slice(0, 12)
       : Math.random().toString(36).slice(2, 14);
   return `${prefix}_${rnd}`;
+}
+
+/**
+ * Added by 3D integration: a new design for ANY library model (core structure, family box
+ * style or container). Boxes start at the model's default (or given) size and first board;
+ * containers at their default preset with their default print surfaces.
+ */
+export function createModelDoc(m: ModelDef, input: { dims?: Dims; materialCode?: MaterialCode; presetId?: string; name?: string } = {}): DesignDoc {
+  if (m.kind === "box") {
+    const materialCode = input.materialCode && m.materials.includes(input.materialCode) ? input.materialCode : m.materials[0];
+    const preset = input.presetId ? m.presets.find((p) => p.id === input.presetId) : undefined;
+    const dims = input.dims ?? preset?.dims ?? m.presets.find((p) => p.standard)?.dims ?? m.defaultDims;
+    return {
+      v: 1,
+      name: input.name ?? "",
+      structureCode: m.baseFor(materialCode),
+      ...(m.source === "core" ? {} : { modelCode: m.code }),
+      dims: { ...dims },
+      materialCode,
+      finishCode: "NONE",
+      printSides: "OUTSIDE",
+      artwork: emptyArtwork(),
+      ...(m.code === "GABLE_BOX" ? { features: { handle: true } } : {}),
+    };
+  }
+  const preset = m.presets.find((p) => p.id === (input.presetId ?? m.defaultPresetId)) ?? m.presets[0];
+  const surfaces = [...m.defaultSurfaces];
+  const allowed = vesselPrintMaterials(m, surfaces);
+  const materialCode = input.materialCode && allowed.includes(input.materialCode) ? input.materialCode : allowed[0];
+  return {
+    v: 1,
+    name: input.name ?? "",
+    structureCode: baseOf(m, materialCode),
+    modelCode: m.code,
+    dims: { L: 100, W: 1, H: 100 },
+    materialCode,
+    finishCode: "NONE",
+    printSides: "OUTSIDE",
+    artwork: emptyArtwork(),
+    vessel: {
+      dims: { ...preset.dims },
+      presetId: preset.id,
+      container: m.defaultContainer,
+      closure: m.defaultClosure,
+      closureColor: "WHITE",
+      content: m.defaultLiquid,
+      fill: m.fillable ? 0.8 : 0,
+      surfaces,
+    },
+  };
 }
 
 export function createDesignDoc(input: {
@@ -127,6 +180,46 @@ const surfaceSchema = z.object({
   layers: z.array(layerSchema).max(MAX_LAYERS),
 });
 
+const featuresSchema = z
+  .object({
+    window: z
+      .object({ face: z.enum(FACE_IDS), widthRatio: z.number().min(0.1).max(0.9).optional(), heightRatio: z.number().min(0.1).max(0.9).optional(), film: z.boolean().optional() })
+      .nullable()
+      .optional(),
+    thumbNotch: z.boolean().optional(),
+    handle: z.boolean().optional(),
+    tearStrip: z.boolean().optional(),
+    partitions: z.object({ rows: z.number().int().min(1).max(8), cols: z.number().int().min(1).max(8) }).nullable().optional(),
+    lidHeightMm: z.number().finite().positive().max(1000).optional(),
+    displayFront: z.boolean().optional(),
+  })
+  .strip();
+
+const designFinishSchema = z.object({
+  code: z.enum(DESIGN_FINISH_CODES),
+  mask: z.object({ surface: z.enum(["outside", "inside"]), layerIds: z.array(z.string().max(128)).max(200) }).optional(),
+});
+
+const vMm = z.number().finite().min(0).max(2000);
+const vesselSchema = z.object({
+  dims: z.object({ D: vMm, H: vMm, G: vMm.optional(), taper: vMm.optional() }),
+  presetId: z.string().max(64).optional(),
+  container: z.string().max(64),
+  closure: z.string().max(64),
+  closureColor: z.string().max(32),
+  content: z.string().max(32),
+  fill: z.number().min(0).max(1),
+  surfaces: z.array(z.string().max(32)).min(1).max(8),
+});
+
+/** Design.config (+ modelCode column): the DesignDoc fields added by the model library. */
+export const designConfigSchema = z.object({
+  modelCode: z.string().max(64).optional(),
+  features: featuresSchema.optional(),
+  finishes: z.array(designFinishSchema).max(12).optional(),
+  vessel: vesselSchema.optional(),
+});
+
 export const designDocSchema = z
   .object({
     v: z.literal(1),
@@ -138,11 +231,26 @@ export const designDocSchema = z
     finishCode: z.enum(FINISH_CODES),
     printSides: z.enum(["OUTSIDE", "BOTH"]),
     artwork: z.object({ outside: surfaceSchema, inside: surfaceSchema }),
+    // Added by 3D integration.
+    modelCode: z.string().max(64).optional(),
+    features: featuresSchema.optional(),
+    finishes: z.array(designFinishSchema).max(12).optional(),
+    vessel: vesselSchema.optional(),
   })
   .refine((d) => d.artwork.outside.layers.length + d.artwork.inside.layers.length <= MAX_LAYERS, {
     message: "TOO_MANY_LAYERS",
   })
-  .refine((d) => materialFitsStructure(d.materialCode, d.structureCode), { message: "MATERIAL_MISMATCH", path: ["materialCode"] });
+  .refine((d) => materialFitsStructure(d.materialCode, d.structureCode), { message: "MATERIAL_MISMATCH", path: ["materialCode"] })
+  .refine((d) => modelFits(d), { message: "MODEL_MISMATCH", path: ["modelCode"] });
+
+/** A library model, its board / print material and its base structure agree. */
+function modelFits(d: { modelCode?: string; structureCode: StructureCode; materialCode: MaterialCode; vessel?: unknown }): boolean {
+  if (!d.modelCode) return true;
+  const m = modelByCode(d.modelCode);
+  if (!m) return false;
+  if (m.kind === "box") return m.materials.includes(d.materialCode) && m.baseFor(d.materialCode) === d.structureCode;
+  return !!d.vessel && vesselPrintMaterials(m).concat(vesselPrintMaterials(m, ["SHRINK_SLEEVE"])).includes(d.materialCode) && baseOf(m, d.materialCode) === d.structureCode;
+}
 
 /** Parse untrusted JSON into a DesignDoc, or null. */
 export function parseDesignDoc(value: unknown): DesignDoc | null {

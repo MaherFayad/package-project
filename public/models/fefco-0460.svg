@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360" viewBox="0 0 480 360" role="img" aria-label="Tray with raised end panels">
+
+<ellipse cx="240" cy="307.8" rx="154.4" ry="19.8" fill="rgba(0,0,0,.07)"/>
+<g stroke="rgba(0,0,0,.18)" stroke-width="1" stroke-linejoin="round"><path d="M401.8 155.4L179.1 82.2L179.1 161L401.8 234.2Z" fill-rule="evenodd" fill="#8d6943"/><path d="M181 43.2L78.5 111.9L78.5 229.6L181 160.9Z" fill-rule="evenodd" fill="#795a3a"/><path d="M182.1 159.5L81.7 226.9L81.7 111.9L182.1 44.6Z" fill-rule="evenodd" fill="#856644"/><path d="M402.6 232.6L179.9 159.4L77.4 228L300.1 301.2Z" fill-rule="evenodd" fill="#a1784d"/><path d="M300.1 302.4L77.4 229.2L77.4 150.4L300.1 223.6Z" fill-rule="evenodd" fill="#9b764f"/><path d="M399.4 116L299 183.3L299 298.3L399.4 231Z" fill-rule="evenodd" fill="#795a3a"/><path d="M402.6 233.7L300.1 302.4L300.1 184.7L402.6 116Z" fill-rule="evenodd" fill="#856644"/></g>
+</svg>

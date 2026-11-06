@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360" viewBox="0 0 480 360" role="img" aria-label="Tray with self-locking back wall and display front">
+
+<ellipse cx="240" cy="296.1" rx="164.2" ry="19.8" fill="rgba(0,0,0,.07)"/>
+<g stroke="rgba(0,0,0,.18)" stroke-width="1" stroke-linejoin="round"><path d="M180.4 54.9L68.4 130L68.4 214.3L180.4 139.2Z" fill-rule="evenodd" fill="#795a3a"/><path d="M412 131.8L178.4 55L178.4 139.4L412 216.2Z" fill-rule="evenodd" fill="#8d6943"/><path d="M408.8 213.8L178.3 138.1L178.3 56.6L408.8 132.4Z" fill-rule="evenodd" fill="#9b764f"/><path d="M412.8 214.4L179.2 137.6L67.2 212.7L300.8 289.5Z" fill-rule="evenodd" fill="#a1784d"/><path d="M412.8 215.6L300.8 290.7L300.8 206.4L412.8 131.3Z" fill-rule="evenodd" fill="#856644"/><path d="M300.8 290.7L67.2 213.9L67.2 129.6L86.5 135.9L125.5 190.9L242.5 229.4L281.5 200L300.8 206.4Z" fill-rule="evenodd" fill="#9b764f"/></g>
+</svg>

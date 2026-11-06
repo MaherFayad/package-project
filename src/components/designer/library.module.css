@@ -1,0 +1,390 @@
+/* Model picker + configuration panel (owner: 3D integration). Polaris-style tokens only. */
+
+.picker {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: min(78vh, 760px);
+}
+
+.browser {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--p-border-radius-300);
+  background: var(--p-color-bg-surface);
+  box-shadow: var(--p-shadow-100);
+  overflow: clip;
+}
+.browser .pickerBody {
+  overflow: visible;
+}
+a.modelCard {
+  text-decoration: none;
+}
+
+.pickerHead {
+  display: grid;
+  gap: var(--p-space-300);
+  padding: var(--p-space-400);
+  border-block-end: 1px solid var(--p-color-border-secondary);
+  background: var(--p-color-bg-surface);
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+}
+
+.groupChips {
+  display: flex;
+  gap: var(--p-space-200);
+  overflow-x: auto;
+  scrollbar-width: thin;
+  padding-block-end: var(--p-space-050);
+}
+
+.chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--p-space-150);
+  min-height: 32px;
+  padding-inline: var(--p-space-300);
+  border-radius: var(--p-border-radius-full);
+  border: 1px solid var(--p-color-border);
+  background: var(--p-color-bg-surface);
+  color: var(--p-color-text);
+  font: inherit;
+  font-size: var(--p-font-size-325);
+  font-weight: var(--p-font-weight-medium);
+  cursor: pointer;
+  transition: background-color var(--p-motion-duration-150) var(--p-motion-ease), border-color var(--p-motion-duration-150) var(--p-motion-ease);
+}
+.chip:hover:not(:disabled) {
+  background: var(--p-color-bg-surface-hover);
+}
+.chip[aria-pressed="true"] {
+  background: var(--p-color-bg-fill-brand, #303030);
+  border-color: var(--p-color-bg-fill-brand, #303030);
+  color: var(--p-color-text-brand-on-bg-fill, #fff);
+}
+.chip:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.chip:focus-visible,
+.modelCard:focus-visible,
+.optionRow:focus-within,
+.swatch:focus-visible {
+  outline: var(--p-focus-ring-width, 2px) solid var(--p-color-border-focus);
+  outline-offset: var(--p-focus-ring-offset, 1px);
+}
+.chipCount {
+  font-variant-numeric: tabular-nums;
+  color: inherit;
+  opacity: 0.7;
+  font-weight: var(--p-font-weight-regular);
+}
+
+.pickerBody {
+  overflow-y: auto;
+  padding: var(--p-space-400);
+  display: grid;
+  gap: var(--p-space-600);
+  overscroll-behavior: contain;
+}
+
+.empty {
+  margin: 0;
+  color: var(--p-color-text-secondary);
+  padding-block: var(--p-space-800);
+  text-align: center;
+}
+
+.section {
+  display: grid;
+  gap: var(--p-space-300);
+}
+.sectionTitle {
+  margin: 0;
+  font-size: var(--p-font-size-350);
+  font-weight: var(--p-font-weight-semibold);
+  display: flex;
+  gap: var(--p-space-200);
+  align-items: baseline;
+}
+
+.modelGrid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--p-space-300);
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+}
+
+.modelCard {
+  position: relative;
+  display: grid;
+  gap: var(--p-space-100);
+  width: 100%;
+  height: 100%;
+  text-align: start;
+  padding: var(--p-space-200);
+  border-radius: var(--p-border-radius-300);
+  border: 1px solid var(--p-color-border-secondary);
+  background: var(--p-color-bg-surface);
+  color: var(--p-color-text);
+  font: inherit;
+  cursor: pointer;
+  transition: box-shadow var(--p-motion-duration-150) var(--p-motion-ease), transform var(--p-motion-duration-150) var(--p-motion-ease), border-color var(--p-motion-duration-150) var(--p-motion-ease);
+}
+.modelCard:hover {
+  border-color: var(--p-color-border-hover);
+  box-shadow: var(--p-shadow-200);
+}
+.modelCard:active {
+  transform: translateY(1px);
+}
+.modelCard[aria-current="true"] {
+  border-color: var(--p-color-border-focus);
+  box-shadow: 0 0 0 1px var(--p-color-border-focus);
+}
+.modelThumb {
+  display: block;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--p-border-radius-200);
+  background: var(--p-color-bg-surface-secondary);
+  overflow: hidden;
+}
+.modelThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.modelName {
+  font-size: var(--p-font-size-325);
+  font-weight: var(--p-font-weight-semibold);
+  line-height: 1.3;
+}
+.modelMeta {
+  font-size: var(--p-font-size-300);
+  color: var(--p-color-text-secondary);
+  unicode-bidi: isolate;
+}
+.modelBadge {
+  position: absolute;
+  inset-block-start: var(--p-space-300);
+  inset-inline-end: var(--p-space-300);
+}
+
+/* ── configuration panel ───────────────────────────────────────── */
+
+.config {
+  display: grid;
+  gap: var(--p-space-500);
+}
+
+.modelCurrent {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: var(--p-space-300);
+  align-items: center;
+  padding: var(--p-space-300);
+  border-radius: var(--p-border-radius-300);
+  border: 1px solid var(--p-color-border-secondary);
+  background: var(--p-color-bg-surface-secondary);
+}
+.modelCurrent img {
+  width: 72px;
+  height: 54px;
+  object-fit: contain;
+  background: var(--p-color-bg-surface);
+  border-radius: var(--p-border-radius-150);
+}
+.modelCurrentText {
+  display: grid;
+  gap: var(--p-space-050);
+  min-width: 0;
+}
+.modelCurrentActions {
+  grid-column: 1 / -1;
+}
+
+.group {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--p-space-200);
+  min-width: 0;
+}
+.groupTitle {
+  padding: 0;
+  margin: 0 0 var(--p-space-100);
+  font-size: var(--p-font-size-325);
+  font-weight: var(--p-font-weight-semibold);
+}
+
+.optionList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--p-space-100);
+}
+.optionRow {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: var(--p-space-200);
+  align-items: start;
+  min-height: 36px;
+  padding: var(--p-space-150) var(--p-space-200);
+  border-radius: var(--p-border-radius-200);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color var(--p-motion-duration-100) var(--p-motion-ease);
+}
+.optionRow:hover {
+  background: var(--p-color-bg-surface-hover);
+}
+.optionRow[data-checked="true"] {
+  background: var(--p-color-bg-surface-selected);
+  border-color: var(--p-color-border-secondary);
+}
+.optionRow[data-disabled="true"] {
+  cursor: not-allowed;
+}
+.optionRow[data-disabled="true"] .optionName {
+  color: var(--p-color-text-disabled);
+}
+.optionRow input {
+  margin: 2px 0 0;
+  width: 16px;
+  height: 16px;
+  accent-color: #303030;
+}
+.optionText {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.optionName {
+  font-size: var(--p-font-size-325);
+  font-weight: var(--p-font-weight-medium);
+}
+.optionReason {
+  font-size: var(--p-font-size-300);
+  color: var(--p-color-text-secondary);
+}
+.optionWarning {
+  font-size: var(--p-font-size-300);
+  color: var(--p-color-text-caution);
+}
+
+.sizeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
+  gap: var(--p-space-200);
+}
+
+.presetRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--p-space-150);
+}
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--p-space-200);
+}
+.swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--p-border-radius-full);
+  border: 1px solid var(--p-color-border);
+  box-shadow: inset 0 0 0 2px var(--p-color-bg-surface);
+  cursor: pointer;
+  padding: 0;
+}
+.swatch[aria-pressed="true"] {
+  outline: 2px solid var(--p-color-border-focus);
+  outline-offset: 2px;
+}
+
+.areaList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--p-space-100);
+  font-size: var(--p-font-size-300);
+  color: var(--p-color-text-secondary);
+}
+
+.priceTick {
+  animation: tick var(--p-motion-duration-300) var(--p-motion-ease-out);
+}
+@keyframes tick {
+  0% {
+    transform: translateY(4px);
+    opacity: 0.4;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.stageSkeleton {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(closest-side, rgba(0, 0, 0, 0.06), transparent 70%) center 78% / 60% 12% no-repeat,
+    linear-gradient(90deg, var(--p-color-bg) 0%, var(--p-color-bg-surface-secondary) 50%, var(--p-color-bg) 100%);
+  background-size: auto, 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+.stageSkeleton::after {
+  content: "";
+  width: min(38%, 220px);
+  aspect-ratio: 1;
+  border-radius: var(--p-border-radius-400);
+  background: var(--p-color-bg-surface-tertiary);
+  opacity: 0.7;
+}
+@keyframes shimmer {
+  to {
+    background-position: center 78%, -200% 0;
+  }
+}
+
+.vesselControls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--p-space-200);
+  align-items: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .priceTick,
+  .stageSkeleton {
+    animation: none;
+  }
+  .modelCard,
+  .chip,
+  .optionRow {
+    transition: none;
+  }
+}
+
+@media (max-width: 47.99em) {
+  .picker {
+    max-height: none;
+  }
+  .modelGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

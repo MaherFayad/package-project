@@ -33,6 +33,7 @@ import {
 } from "@/components/ui";
 import { getOffersAction, placeOrderAction, type OffersResult } from "../actions";
 import { ProofViewer } from "./ProofViewer";
+import { docSpec } from "@/lib/library/spec";
 import styles from "./checkout.module.css";
 
 export interface TierPrice {
@@ -415,6 +416,7 @@ export function CheckoutClient(props: {
     </BlockStack>
   );
 
+  const spec = docSpec(doc, locale);
   const proofStep = (
     <BlockStack gap="400">
       <Text as="p" tone="subdued">
@@ -427,13 +429,25 @@ export function CheckoutClient(props: {
         </Text>
         <dl className={styles.specs}>
           <dt>{t("checkout.proof.structure")}</dt>
-          <dd>{t(`structures.${doc.structureCode}` as DictKey)}</dd>
+          <dd data-testid="spec-model">
+            {spec.model ?? t(`structures.${doc.structureCode}` as DictKey)}
+            {spec.standard ? <bdi> ({spec.standard})</bdi> : null}
+          </dd>
           <dt>{t("checkout.proof.size")}</dt>
-          <dd>{formatDims(doc.dims, locale)}</dd>
+          <dd>{spec.vesselSize ?? formatDims(doc.dims, locale)}</dd>
+          {spec.container ? (
+            <>
+              <dt>{t("library.panel.container")}</dt>
+              <dd>
+                {spec.container}
+                {spec.closure ? ` · ${spec.closure}` : ""}
+              </dd>
+            </>
+          ) : null}
           <dt>{t("checkout.proof.material")}</dt>
           <dd>{t(`materials.${doc.materialCode}` as DictKey)}</dd>
           <dt>{t("checkout.proof.finish")}</dt>
-          <dd>{t(`finishes.${doc.finishCode}` as DictKey)}</dd>
+          <dd data-testid="spec-finishes">{spec.finishes.length ? spec.finishes.join(locale === "ar" ? "، " : ", ") : t(`finishes.${doc.finishCode}` as DictKey)}</dd>
           <dt>{t("checkout.proof.sides")}</dt>
           <dd>{t(`checkout.proof.sides${doc.printSides}` as DictKey)}</dd>
           <dt>{t("checkout.proof.quantity")}</dt>
@@ -646,3 +660,4 @@ function OfferCard({ offer, checked, onSelect, locale }: { offer: CheckoutOffer;
     </label>
   );
 }
+

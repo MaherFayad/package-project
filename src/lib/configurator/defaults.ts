@@ -9,7 +9,7 @@ export function defaultBoxConfig(code: StructureCode, quantity = 250): BoxConfig
     v: 1,
     model: { type: "box", code },
     size: { mode: "custom", dims: { ...DEFAULT_DIMS[code] } },
-    material: defaultMaterialFor(code),
+    material: defaultMaterialFor(code) as BoxConfig["material"],
     printSides: "OUTSIDE",
     colour: { mode: "CMYK", spots: [] },
     finishes: [],

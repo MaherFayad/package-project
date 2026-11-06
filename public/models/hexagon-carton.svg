@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360" viewBox="0 0 480 360" role="img" aria-label="Hexagonal carton">
+
+<ellipse cx="240" cy="307.8" rx="90" ry="19.8" fill="rgba(0,0,0,.07)"/>
+<g stroke="rgba(0,0,0,.18)" stroke-width="1" stroke-linejoin="round"><path d="M154.8 64.3L154.8 225.8L249.5 205L249.5 43.6Z" fill-rule="evenodd" fill="#adaba7"/><path d="M248.6 43.5L248.6 205L334.2 233.1L334.2 71.7Z" fill-rule="evenodd" fill="#c9c8c2"/><path d="M145.3 273.5L230.9 301.6L324.3 280.4L333.3 232.3L249 204.6L155.7 225Z" fill-rule="evenodd" fill="#e6e4de"/><path d="M146.2 112.9L146.2 274.3L155.3 225.4L155.3 64Z" fill-rule="evenodd" fill="#adaba7"/><path d="M334.7 71.3L334.7 232.8L325.6 281.7L325.6 120.2Z" fill-rule="evenodd" fill="#b5b5b3"/><path d="M324.3 119.8L231 140.2L146.7 112.5L155.7 64.4L249.1 43.2L334.7 71.3Z" fill-rule="evenodd" fill="#f0f0ed"/><path d="M145.3 112.8L230.9 141L230.9 302.4L145.3 274.3Z" fill-rule="evenodd" fill="#d2d2d0"/><path d="M325.6 120.2L325.6 281.7L230.9 302.4L230.9 141Z" fill-rule="evenodd" fill="#b5b5b3"/></g>
+</svg>

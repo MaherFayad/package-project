@@ -3,7 +3,7 @@
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { ContactShadows, Environment, Lightformer, OrbitControls } from "@react-three/drei";
 import { useEffect, useId, useImperativeHandle, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode, type Ref } from "react";
-import { NeutralToneMapping, PerspectiveCamera, Spherical, Vector3 } from "three";
+import { NeutralToneMapping, PerspectiveCamera, Spherical, Vector3, type Object3D } from "three";
 import { defaultMaxDpr, usePrefersReducedMotion } from "../hooks";
 import { captureScreenshot } from "../screenshot";
 import type { PackagingSceneHandle, ViewName } from "../PackagingScene";
@@ -33,6 +33,8 @@ export interface VesselSceneProps extends Omit<VesselModelProps, "quality" | "an
   style?: CSSProperties;
   onReady?: () => void;
   onInteract?: () => void;
+  /** Added by 3D integration: draw this object (metres, standing on y = 0) instead of the container model (flexible packs). */
+  customObject?: Object3D | null;
 }
 
 const DEG = Math.PI / 180;
@@ -226,6 +228,7 @@ export function VesselScene(props: VesselSceneProps) {
     style,
     onReady,
     onInteract,
+    customObject,
     ...model
   } = props;
   const reduced = usePrefersReducedMotion();
@@ -308,7 +311,7 @@ export function VesselScene(props: VesselSceneProps) {
         fallback={fallback ?? <div className={styles.fallback}>3D preview is not available on this device.</div>}
       >
         <Rig envelope={envelope} apiRef={apiRef} turntable={turntable} reduced={reduced} interacted={interacted} sceneKey={sceneKey} />
-        <VesselModel {...model} quality={q} animate={animate && !reduced} />
+        {customObject ? <primitive object={customObject} /> : <VesselModel {...model} quality={q} animate={animate && !reduced} />}
       </Canvas>
     </div>
   );

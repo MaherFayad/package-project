@@ -4,8 +4,11 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ChevronDown, ChevronUp, CloudCheck, CloudOff, Download, MoreHorizontal, Redo2, Save, Share2, Undo2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
-import { FACE_IDS, type ArtworkLayer, type DesignDoc, type Dims, type DimsPreset, type FaceId, type Locale, type PrintSurface, type StructureCode } from "@/types";
-import { BOARD_SPECS, boardAppearance, defaultMaterialFor, materialFitsStructure, tryGenerateDieline, type DielineModel } from "@/lib/dieline";
+import { FACE_IDS, type ArtworkLayer, type DesignDoc, type DesignFinishCode, type DimsPreset, type FaceId, type Locale, type PrintSurface, type StructureCode } from "@/types";
+import { boardAppearance, type DielineModel } from "@/lib/dieline";
+import { MODELS, modelByCode, toCard, type ModelDef } from "@/lib/library";
+import { docGeometry, docModel, docModelCode, facesForAreas, normaliseDocModel } from "@/lib/library/doc";
+import { FINISHES } from "@/lib/configurator";
 import { ViewControls, type PackagingSceneHandle } from "@/components/three";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n/types";
@@ -47,28 +50,27 @@ import { canRedo, canUndo, historyReducer, initHistory, type History, type Histo
 import { runPreflight, summarizePreflight } from "./lib/preflight";
 import { placeLayer, type Placement } from "./lib/geometry";
 import { BADGE_QTY, fetchQuote, quoteKey, type PriceState } from "./lib/quote";
-import { FALLBACK_PRESETS, STRUCTURE_SLUGS, designerPath } from "./lib/catalog";
+import { designerPath } from "./lib/catalog";
+import { pruneFinishes, toggleFinish } from "./lib/config";
+import { createModelDoc } from "./lib/doc";
+import { ConfigPanel, surfaceName, type ViewOptions } from "./ConfigPanel";
+import { ModelPicker } from "./ModelPicker";
+import lib from "./library.module.css";
 import { loadLocalDraft, saveLocalDraft } from "./lib/storage";
 import { useArtworkCanvases } from "./useArtworkCanvases";
 import { prepareImage } from "./uploadImage";
 import { fitTextBox, measureText } from "./fonts";
 import { FaceEditor } from "./FaceEditor";
 import { DielineView } from "./DielineView";
-import { BoxPanel } from "./BoxPanel";
 import { ArtworkPanel } from "./ArtworkPanel";
 import { LayersPanel } from "./LayersPanel";
 import { PreflightBadge, PreflightPanel } from "./PreflightPanel";
 import { ExportModal, GateModal, PriceBadge, PriceModal, ShareModal, type ExportSize, type GateReason } from "./Modals";
 import styles from "./designer.module.css";
 
-const Scene3D = dynamic(() => import("./Scene3D"), {
-  ssr: false,
-  loading: () => (
-    <div className={styles.sceneLoading}>
-      <Spinner size="large" decorative />
-    </div>
-  ),
-});
+const StageSkeleton = () => <div className={lib.stageSkeleton} aria-hidden="true" />;
+const Scene3D = dynamic(() => import("./Scene3D"), { ssr: false, loading: StageSkeleton });
+const VesselView = dynamic(() => import("./VesselView"), { ssr: false, loading: StageSkeleton });
 
 type View = "3d" | "face" | "dieline";
 type SaveState = "idle" | "dirty" | "saving" | "saved" | "error";
@@ -90,6 +92,8 @@ export interface DesignerAppProps {
   /** Restore this device's autosaved draft on mount (?resume=1). */
   resumeLocal?: boolean;
 }
+
+const PICKER_CARDS = MODELS.map(toCard);
 
 const reducer = (s: History<DesignDoc>, a: HistoryAction<DesignDoc>) => historyReducer(s, a);
 
@@ -123,7 +127,7 @@ function slugify(name: string) {
   );
 }
 
-export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, presetsByCode, loadError, resumeLocal }: DesignerAppProps) {
+export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, loadError, resumeLocal }: DesignerAppProps) {
   const { t } = useI18n();
   const router = useRouter();
   const toast = useToast();
@@ -136,10 +140,16 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
   const commit = useCallback((next: DesignDoc, coalesce?: string) => dispatch({ type: "set", value: next, coalesce }), []);
   const seal = useCallback(() => dispatch({ type: "seal" }), []);
 
-  const model = useMemo<DielineModel | null>(
-    () => tryGenerateDieline(doc.structureCode, doc.dims, { thicknessMm: BOARD_SPECS[doc.materialCode].thicknessMm }),
-    [doc.structureCode, doc.dims, doc.materialCode],
+  // Box dieline, or the print-area sheet of a container (src/lib/library/doc).
+  const geo = useMemo(
+    () => docGeometry(doc),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [doc.modelCode, doc.structureCode, doc.dims, doc.materialCode, doc.features, doc.vessel],
   );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const libModel = useMemo<ModelDef | null>(() => docModel(doc), [doc.modelCode, doc.structureCode]);
+  const model: DielineModel | null = geo?.dieline ?? null;
+  const isVessel = !!geo?.vessel;
   const modelRef = useRef(model);
   modelRef.current = model;
   const faces = useMemo(() => model?.faces ?? {}, [model]);
@@ -168,6 +178,8 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareError, setShareError] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [viewOpts, setViewOpts] = useState<ViewOptions>({ dimensions: false, scene: "none", turntable: false, open: false });
   const [notFound, setNotFound] = useState(loadError === "notFound");
   const sceneRef = useRef<PackagingSceneHandle | null>(null);
   const savedDocRef = useRef<DesignDoc | null>(initialDesignId ? initialDoc : null);
@@ -195,7 +207,7 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
   useEffect(() => {
     if (!resumeLocal) return;
     const draft = loadLocalDraft();
-    if (draft && draft.doc.structureCode === initialDoc.structureCode) {
+    if (draft && docModelCode(draft.doc) === docModelCode(initialDoc)) {
       dispatch({ type: "reset", value: draft.doc });
       if (draft.designId) {
         setDesignId(draft.designId);
@@ -224,7 +236,7 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
   const inflight = useRef<Promise<string | null> | null>(null);
 
   const setUrl = useCallback(
-    (id: string | null, code: StructureCode) => {
+    (id: string | null, code: StructureCode | string) => {
       const url = designerPath(locale, code, { d: id ?? undefined });
       if (typeof window !== "undefined" && window.location.pathname + window.location.search !== url) window.history.replaceState(null, "", url);
     },
@@ -259,7 +271,7 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
           savedDocRef.current = current;
           setDesignId(json.id);
           designIdRef.current = json.id;
-          setUrl(json.id, current.structureCode);
+          setUrl(json.id, docModelCode(current));
           saveLocalDraft({ doc: current, designId: json.id, savedAt: Date.now() });
           setSaveState(docRef.current === current ? "saved" : "dirty");
           return json.id;
@@ -336,25 +348,39 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
   }, [qKey, user]);
 
   // ── document operations ───────────────────────────────────────────
-  const changeGeometry = useCallback(
-    (patch: Partial<Pick<DesignDoc, "structureCode" | "dims" | "materialCode">>) => {
-      const cur = docRef.current;
-      const next: DesignDoc = { ...cur, ...patch };
-      if (!materialFitsStructure(next.materialCode, next.structureCode)) next.materialCode = defaultMaterialFor(next.structureCode);
-      const nextModel = tryGenerateDieline(next.structureCode, next.dims, { thicknessMm: BOARD_SPECS[next.materialCode].thicknessMm });
-      if (!nextModel) return;
-      const { doc: rescaled, removed } = rescaleArtwork(next, faceSizesOf(modelRef.current?.faces), faceSizesOf(nextModel.faces));
-      commit(rescaled);
+  /** Apply a geometry change (size, board, features, container), keeping artwork in place. */
+  const applyGeometry = useCallback(
+    (next: DesignDoc, coalesce?: string) => {
+      const normal = normaliseDocModel(next);
+      const nextGeo = docGeometry(normal);
+      if (!nextGeo) return false;
+      const m = docModel(normal);
+      const pruned = m ? pruneFinishes(normal, m) : { doc: normal, removed: [] as DesignFinishCode[] };
+      const { doc: rescaled, removed } = rescaleArtwork(pruned.doc, faceSizesOf(modelRef.current?.faces), faceSizesOf(nextGeo.dieline.faces));
+      commit(rescaled, coalesce);
       if (removed) toast.show(t("designer.box.removedLayers", { count: removed }));
-      if (patch.structureCode && patch.structureCode !== cur.structureCode) setUrl(designIdRef.current, patch.structureCode);
+      if (pruned.removed.length) toast.show(t("library.panel.removedFinishes", { list: pruned.removed.map((c) => FINISHES[c].name[locale]).join("، ") }));
+      return true;
     },
-    [commit, setUrl, t, toast],
+    [commit, t, toast, locale],
   );
 
-  const onStructure = (code: StructureCode) => {
-    const presets = presetsByCode[code] ?? FALLBACK_PRESETS[code];
-    const dims = presets.find((p) => p.standard)?.dims ?? presets[0]?.dims;
-    changeGeometry({ structureCode: code, dims: dims ? { ...dims } : undefined });
+  const changeGeometry = useCallback(
+    (patch: Partial<Pick<DesignDoc, "dims" | "materialCode" | "features" | "vessel">>) => {
+      applyGeometry({ ...docRef.current, ...patch }, patch.vessel ? "vessel" : patch.dims ? "dims" : undefined);
+    },
+    [applyGeometry],
+  );
+
+  /** Switch to another library model: its default size, the closest board, same artwork. */
+  const onModel = (code: string) => {
+    const m = modelByCode(code);
+    setPickerOpen(false);
+    if (!m) return;
+    const cur = docRef.current;
+    const fresh = createModelDoc(m, { name: cur.name, materialCode: cur.materialCode });
+    const next: DesignDoc = { ...fresh, artwork: cur.artwork, printSides: m.kind === "box" ? cur.printSides : "OUTSIDE", finishes: cur.finishes, finishCode: cur.finishCode };
+    if (applyGeometry(next)) setUrl(designIdRef.current, code);
   };
 
   const onLayerChange = useCallback(
@@ -460,7 +486,7 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
       for (let i = 0; i < 40 && !sceneRef.current?.getCanvas(); i++) await new Promise((r) => setTimeout(r, 100));
       const px = size === "hd" ? 2160 : 1080;
       const blob = await sceneRef.current!.screenshot({ width: px, height: px, background: "#ffffff" });
-      downloadBlob(blob, `elba-${slugify(doc.name || STRUCTURE_SLUGS[doc.structureCode])}-${px}.png`);
+      downloadBlob(blob, `elba-${slugify(doc.name || libModel?.slug || doc.structureCode)}-${px}.png`);
       setModal(null);
       toast.show(t("designer.export.done"));
     } catch {
@@ -514,21 +540,35 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
             ? t("designer.save.unsaved")
             : "";
 
+  // Containers: faces are print areas (wrap label, back label, pouch panels…).
+  const faceNames = useMemo(() => {
+    const out: Partial<Record<FaceId, string>> = {};
+    if (geo?.vessel) {
+      const map = facesForAreas(geo.vessel.areas);
+      for (const a of geo.vessel.areas) {
+        const f = map.get(a.id);
+        if (f) out[f] = a.name[locale] || surfaceName(a.kind, locale);
+      }
+    }
+    return out;
+  }, [geo, locale]);
+  const faceLabel = useCallback((f: FaceId) => faceNames[f] ?? t(`designer.faces.${f}` as DictKey), [faceNames, t]);
+
   const panelLabels = useMemo(() => {
     const out: Record<string, string> = { glue: t("designer.view.glue") };
-    for (const f of FACE_IDS) out[f] = t(`designer.faces.${f}` as DictKey);
+    for (const f of FACE_IDS) out[f] = faceLabel(f);
     return out;
-  }, [t]);
+  }, [t, faceLabel]);
 
   const tabs = [
-    { id: "box", content: t("designer.tabs.box") },
+    { id: "box", content: libModel?.kind === "vessel" ? t("library.panel.model") : t("designer.tabs.box") },
     { id: "artwork", content: t("designer.tabs.artwork") },
     { id: "layers", content: t("designer.tabs.layers") },
     { id: "check", content: t("designer.tabs.check"), badge: summary.errors + summary.warnings || undefined },
   ];
 
-  const faceOptions = FACE_IDS.filter((f) => faces[f]).map((f) => ({ value: f, label: t(`designer.faces.${f}` as DictKey) }));
-  const structureName = t(`structures.${doc.structureCode}` as DictKey);
+  const faceOptions = FACE_IDS.filter((f) => faces[f]).map((f) => ({ value: f, label: faceLabel(f) }));
+  const structureName = libModel?.name[locale] ?? t(`structures.${doc.structureCode}` as DictKey);
 
   return (
     <div className={styles.editor} data-sheet={sheetOpen ? "open" : "closed"}>
@@ -643,21 +683,45 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
         <div className={styles.stageBody}>
           {model ? (
             <>
-              <div className={styles.sceneWrap} data-active={view === "3d"} aria-hidden={view !== "3d"}>
-                <Scene3D
-                  model={model}
-                  material={doc.materialCode}
-                  finish={doc.finishCode}
-                  foldProgress={fold}
-                  canvases={canvases}
-                  version={version}
-                  printInside={bothSides}
-                  handleRef={sceneRef}
-                  ariaLabel={t("viewer.label")}
-                  roleDescription={t("viewer.roleDescription")}
-                  keyboardHint={t("viewer.keyboardHint")}
-                  fallback={t("viewer.unsupported")}
-                />
+              <div className={styles.sceneWrap} data-active={view === "3d"} aria-hidden={view !== "3d"} data-testid="stage-3d" data-model={docModelCode(doc)}>
+                {geo?.vessel && libModel?.kind === "vessel" ? (
+                  <VesselView
+                    model={libModel}
+                    doc={doc}
+                    geo={geo}
+                    sheet={canvases?.outside ?? null}
+                    version={version}
+                    handleRef={sceneRef}
+                    turntable={viewOpts.turntable}
+                    open={viewOpts.open}
+                    ariaLabel={t("viewer.label")}
+                    roleDescription={t("viewer.roleDescription")}
+                    keyboardHint={t("viewer.keyboardHint")}
+                    fallback={t("viewer.unsupported")}
+                  />
+                ) : (
+                  <Scene3D
+                    model={model}
+                    material={doc.materialCode}
+                    finish={doc.finishCode}
+                    finishes={doc.finishes}
+                    artwork={doc.artwork}
+                    images={images}
+                    foldProgress={fold}
+                    canvases={canvases}
+                    version={version}
+                    printInside={bothSides}
+                    handleRef={sceneRef}
+                    dimensions={viewOpts.dimensions}
+                    scene={viewOpts.scene}
+                    turntable={viewOpts.turntable}
+                    locale={locale}
+                    ariaLabel={t("viewer.label")}
+                    roleDescription={t("viewer.roleDescription")}
+                    keyboardHint={t("viewer.keyboardHint")}
+                    fallback={t("viewer.unsupported")}
+                  />
+                )}
                 <div className={styles.viewControls}>
                   <ViewControls
                     handle={sceneRef}
@@ -714,7 +778,22 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
           )}
         </div>
 
-        {view === "3d" ? (
+        {view === "3d" && isVessel ? (
+          <div className={styles.foldRow}>
+            <ButtonGroup variant="segmented" accessibilityLabel={t("library.panel.closure")}>
+              <Button size="slim" pressed={!viewOpts.open} onClick={() => setViewOpts((o) => ({ ...o, open: false }))}>
+                {t("library.panel.closeClosure")}
+              </Button>
+              <Button size="slim" pressed={viewOpts.open} onClick={() => setViewOpts((o) => ({ ...o, open: true }))}>
+                {t("library.panel.openClosure")}
+              </Button>
+            </ButtonGroup>
+            <Button size="slim" pressed={viewOpts.turntable} onClick={() => setViewOpts((o) => ({ ...o, turntable: !o.turntable }))}>
+              {t("library.panel.turntable")}
+            </Button>
+          </div>
+        ) : null}
+        {view === "3d" && !isVessel ? (
           <div className={styles.foldRow}>
             <div className={styles.foldSlider}>
               <RangeSlider
@@ -753,16 +832,19 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
           <Tabs tabs={tabs} selected={tab} onSelect={setTab} fitted accessibilityLabel={t("designer.tabs.label")}>
             <div className={styles.panelBody} data-tab={TAB_IDS[tab]}>
               {tab === 0 ? (
-                <BoxPanel
-                  doc={doc}
-                  presets={presetsByCode[doc.structureCode] ?? FALLBACK_PRESETS[doc.structureCode]}
-                  closedOuter={model?.closedOuter ?? null}
-                  onStructure={onStructure}
-                  onDims={(dims: Dims) => changeGeometry({ dims })}
-                  onMaterial={(m) => changeGeometry({ materialCode: m })}
-                  onFinish={(f) => commit({ ...docRef.current, finishCode: f })}
-                  onPrintSides={(p) => commit({ ...docRef.current, printSides: p })}
-                />
+                libModel ? (
+                  <ConfigPanel
+                    doc={doc}
+                    model={libModel}
+                    geo={geo}
+                    view={viewOpts}
+                    onView={setViewOpts}
+                    onOpenPicker={() => setPickerOpen(true)}
+                    onGeometry={changeGeometry}
+                    onFinish={(code, on) => commit(toggleFinish(docRef.current, code, on))}
+                    onPrintSides={(p) => commit({ ...docRef.current, printSides: p })}
+                  />
+                ) : null
               ) : tab === 1 ? (
                 <ArtworkPanel
                   faces={faces}
@@ -808,6 +890,7 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
         </div>
       </aside>
 
+      <ModelPicker open={pickerOpen} cards={PICKER_CARDS} current={docModelCode(doc)} onClose={() => setPickerOpen(false)} onPick={onModel} />
       <GateModal reason={gate?.reason ?? null} onClose={() => setGate(null)} onSuccess={onSignedIn} />
       <PriceModal
         open={modal === "price"}

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { toLocale } from "@/i18n";
 import { Dev3DClient } from "./Dev3DClient";
 import { VesselsDevSection } from "./VesselsDevSection";
+import { LibraryDevSection } from "./LibraryDevSection";
 
 export const metadata: Metadata = {
   title: "3D engine dev view",
@@ -14,6 +15,7 @@ export default async function Dev3DPage({ params }: { params: Promise<{ locale: 
   return (
     <>
       <Dev3DClient locale={locale} />
+      <LibraryDevSection />
       <div lang="en" dir="ltr">
         <VesselsDevSection />
       </div>

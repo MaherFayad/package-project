@@ -21,6 +21,9 @@ export const STRUCTURE_SLUGS: Record<StructureCode, string> = {
   GABLE_BOX: STRUCTURES.GABLE_BOX.slug,
   PAPER_TUBE: STRUCTURES.PAPER_TUBE.slug,
   RIGID_BOX: STRUCTURES.RIGID_BOX.slug,
+  ROLL_LABEL: STRUCTURES.ROLL_LABEL.slug,
+  PRINTED_POUCH: STRUCTURES.PRINTED_POUCH.slug,
+  PRINTED_TUBE: STRUCTURES.PRINTED_TUBE.slug,
 };
 
 export function structureFromSlug(slug: string): StructureCode | null {
@@ -85,6 +88,10 @@ export const SEO_SIZES: Record<StructureCode, Dims[]> = {
   GABLE_BOX: STRUCTURES.GABLE_BOX.presets.map((p) => p.dims),
   PAPER_TUBE: STRUCTURES.PAPER_TUBE.presets.map((p) => p.dims),
   RIGID_BOX: STRUCTURES.RIGID_BOX.presets.map((p) => p.dims),
+  // Container print parts are sized from the container (designer), not SEO sizes.
+  ROLL_LABEL: [],
+  PRINTED_POUCH: [],
+  PRINTED_TUBE: [],
 };
 
 /** "300x200x150" (mm, ASCII x so the URL is stable). */

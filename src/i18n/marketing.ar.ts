@@ -42,7 +42,7 @@ export const marketingAr: Widen<typeof marketingEn> = {
     title: "علب بعلامتك. شاهدها ثلاثية الأبعاد أولا.",
     body: "صمم علبتك المطبوعة مجانا، واعرف السعر فورا بالجنيه، واطلب من مطابع مصرية معتمدة. الطلب من 100 علبة.",
     phoneLabel: "رقم الموبايل (اختياري)",
-    phonePlaceholder: "رقم الموبايل، مثل 010 1234 5678",
+    phonePlaceholder: "010 1234 5678",
     phoneError: "أدخل رقم موبايل مصري من 11 رقما يبدأ بـ 01، أو اترك الحقل فارغا.",
     submit: "ابدأ التصميم مجانا",
     fine: "لا يلزم حساب للتصميم. أضف رقم الموبايل لحفظ التصميمات ومعرفة السعر الدقيق: نرسل رمزا لمرة واحدة. لا رسائل تسويقية إلا بموافقتك.",
@@ -62,6 +62,8 @@ export const marketingAr: Widen<typeof marketingEn> = {
   marquee: {
     label: "تصميمات نموذجية من مصمم علبة",
     caption: "تصميم نموذجي: {name}",
+    pause: "إيقاف شريط النماذج",
+    play: "تشغيل شريط النماذج",
   },
   values: {
     title: "كل ما تحتاجه لتصنيع علبتك",
@@ -161,6 +163,12 @@ export const marketingAr: Widen<typeof marketingEn> = {
     body: "ابدأ بعلبة بريدية أو اختر نوعا آخر. يمكنك تغيير كل شيء لاحقا.",
     primary: "ابدأ التصميم مجانا",
     secondary: "دليل المطابع",
+    tileOrder: "طلب EL-1042",
+    tileOrderStatus: "خرج للتوصيل",
+    tileOrderMeta: "الإسكندرية · تتبع",
+    tilePay: "ادفع بطريقتك",
+    tileProof: "اعتماد البروفة",
+    tileProofMeta: "بروفة ثلاثية الأبعاد وملف PDF",
   },
   footer: {
     label: "تذييل الصفحة",
@@ -196,7 +204,7 @@ export const marketingAr: Widen<typeof marketingEn> = {
     onRequest: "السعر عند الطلب",
     sizes: "{L}–{Lmax} × {W}–{Wmax} × {H}–{Hmax} مم",
     design: "صمم مجانا",
-    count: "{count} أنواع",
+    count: "عدد الأنواع: {count}",
     family: {
       CORRUGATED: "علب الكرتون المضلع",
       FOLDING_CARTON: "علب الكرتون المطوية",

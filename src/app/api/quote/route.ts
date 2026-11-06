@@ -4,6 +4,8 @@ import { apiRequireRole } from "@/lib/auth";
 import { rateLimit } from "@/lib/rate-limit";
 import { DEFAULT_PRICING_CONFIG, DELIVERY_ZONES, QuoteInputError, quote, toPublicOutcome, zoneForGovernorate } from "@/lib/pricing";
 import { loadPricingData } from "@/lib/pricing/server";
+import type { QuoteModel } from "@/lib/pricing";
+import { designConfigSchema } from "@/components/designer/lib/doc";
 import { loadPricingConfig } from "@/components/admin/server/settings";
 
 const Mm = z.number().finite().positive().max(5000);
@@ -25,6 +27,14 @@ const Body = z
     zone: z.enum(DELIVERY_ZONES).optional(),
     /** Alternative to `zone`: governorate name (English or Arabic). */
     governorate: z.string().min(2).max(64).optional(),
+    /** Added by 3D integration: library model priced through `structureCode` (its base). */
+    model: z
+      .object({
+        code: z.string().min(1).max(64),
+        features: designConfigSchema.shape.features,
+        vessel: designConfigSchema.shape.vessel,
+      })
+      .optional(),
   })
   .refine((b) => b.materialId || b.materialCode, { message: "MATERIAL_REQUIRED", path: ["materialId"] });
 
@@ -72,6 +82,7 @@ export async function POST(req: Request) {
         quantity: b.quantity,
         vendorId: b.vendorId,
         zone,
+        ...(b.model ? { model: b.model as QuoteModel } : {}),
       },
       data,
       { config },

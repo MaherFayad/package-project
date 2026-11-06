@@ -17,3 +17,7 @@ coverage
 
 # Vendor portal local uploads (QC photos, certificates, portfolio, applications)
 var/
+
+# Shopify reference screenshots (reference only, never committed)
+docs/design-refs/shopify/
+docs/design-refs/shopify-web/

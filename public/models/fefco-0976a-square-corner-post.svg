@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360" viewBox="0 0 480 360" role="img" aria-label="Square corner post">
+
+<ellipse cx="240" cy="307.8" rx="43.4" ry="19.8" fill="rgba(0,0,0,.07)"/>
+<g stroke="rgba(0,0,0,.18)" stroke-width="1" stroke-linejoin="round"><path d="M284.2 61.1L230.5 43.5L230.5 260.5L284.2 278.1Z" fill-rule="evenodd" fill="#8d6943"/><path d="M196.4 68.4L196.4 285.4L234 260.2L234 43.2Z" fill-rule="evenodd" fill="#795a3a"/><path d="M285.6 60.2L285.6 277.2L248 302.4L248 85.4Z" fill-rule="evenodd" fill="#856644"/><path d="M248 85.4L248 302.4L194.4 284.8L194.4 67.7Z" fill-rule="evenodd" fill="#9b764f"/></g>
+</svg>

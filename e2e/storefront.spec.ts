@@ -45,7 +45,7 @@ test("Arabic SEO title and RTL", async ({ page }) => {
 test("vendor directory filters and vendor profile lightbox", async ({ page }) => {
   await page.goto("/en/vendors");
   await page.waitForLoadState("networkidle");
-  await expect(page.getByTestId("vendor-card")).toHaveCount(5);
+  await expect(page.getByTestId("vendor-card")).toHaveCount(6);
   await page.getByLabel("City").selectOption("ALEXANDRIA");
   await page.getByRole("button", { name: "Apply filters" }).click();
   await expect(page).toHaveURL(/city=ALEXANDRIA/, { timeout: 20_000 });

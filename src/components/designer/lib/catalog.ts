@@ -1,5 +1,6 @@
 import { STRUCTURE_CODES, type Dims, type DimsPreset, type StructureCode } from "@/types";
 import { DEFAULT_DIMS, STRUCTURES } from "@/lib/dieline";
+import { modelByCode } from "@/lib/library";
 
 /**
  * Static catalog facts the designer needs on the client (mirrors prisma/seed.ts). Server pages
@@ -19,6 +20,9 @@ export const STRUCTURE_SLUGS: Record<StructureCode, string> = {
   GABLE_BOX: STRUCTURES.GABLE_BOX.slug,
   PAPER_TUBE: STRUCTURES.PAPER_TUBE.slug,
   RIGID_BOX: STRUCTURES.RIGID_BOX.slug,
+  ROLL_LABEL: STRUCTURES.ROLL_LABEL.slug,
+  PRINTED_POUCH: STRUCTURES.PRINTED_POUCH.slug,
+  PRINTED_TUBE: STRUCTURES.PRINTED_TUBE.slug,
 };
 
 /** Accepts a slug ("mailer-box") or a code in any case ("fefco_0427"). */
@@ -30,11 +34,13 @@ export function structureFromParam(param: string): StructureCode | null {
   return (STRUCTURE_CODES as readonly string[]).includes(upper) ? (upper as StructureCode) : null;
 }
 
-export function designerPath(locale: string, code: StructureCode, query?: Record<string, string | undefined>): string {
+/** Editor URL for a core structure or ANY library model code (family style, container). */
+export function designerPath(locale: string, code: StructureCode | string, query?: Record<string, string | undefined>): string {
   const q = new URLSearchParams();
   for (const [k, v] of Object.entries(query ?? {})) if (v) q.set(k, v);
   const qs = q.toString();
-  return `/${locale}/design/${STRUCTURE_SLUGS[code]}${qs ? `?${qs}` : ""}`;
+  const slug = STRUCTURE_SLUGS[code as StructureCode] ?? modelByCode(code)?.slug ?? STRUCTURE_SLUGS.FEFCO_0427;
+  return `/${locale}/design/${slug}${qs ? `?${qs}` : ""}`;
 }
 
 /** Catalog presets (copied from the seed; the DB copy wins when present). */
@@ -75,6 +81,9 @@ export const FALLBACK_PRESETS: Record<StructureCode, DimsPreset[]> = {
   GABLE_BOX: STRUCTURES.GABLE_BOX.presets,
   PAPER_TUBE: STRUCTURES.PAPER_TUBE.presets,
   RIGID_BOX: STRUCTURES.RIGID_BOX.presets,
+  ROLL_LABEL: STRUCTURES.ROLL_LABEL.presets,
+  PRINTED_POUCH: STRUCTURES.PRINTED_POUCH.presets,
+  PRINTED_TUBE: STRUCTURES.PRINTED_TUBE.presets,
 };
 
 /** Product shortcuts shown on the picker ("shoe box", "perfume 50 ml", ...). */

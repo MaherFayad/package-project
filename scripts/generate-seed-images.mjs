@@ -14,6 +14,7 @@ const vendors = [
   { slug: "obour-box-works", mono: "OB", color: "#6b4226", accent: "#f4a261" },
   { slug: "alex-print-house", mono: "AP", color: "#005f73", accent: "#94d2bd" },
   { slug: "damietta-packaging", mono: "DP", color: "#7b2cbf", accent: "#ffd166" },
+  { slug: "cairo-label-flex", mono: "CL", color: "#9d0208", accent: "#ffba08" },
 ];
 
 const KRAFT = "#c49a6c";

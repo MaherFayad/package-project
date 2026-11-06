@@ -1,4 +1,5 @@
 import type { DesignDoc, Dims, Piasters } from "@/types";
+import { designPricedFinishes } from "@/types";
 
 /** The live price badge quantity ("500 of these: from EGP X"). */
 export const BADGE_QTY = 500;
@@ -33,16 +34,32 @@ export function quoteBody(doc: DesignDoc, quantity: number) {
     structureCode: doc.structureCode,
     dims: doc.dims,
     materialCode: doc.materialCode,
-    finishes: doc.finishCode === "NONE" ? [] : [doc.finishCode],
+    finishes: designPricedFinishes(doc),
     printSides: doc.printSides,
     quantity,
+    // Added by 3D integration: library model (family style / container) priced with its own area.
+    ...(doc.modelCode && doc.modelCode !== doc.structureCode
+      ? { model: { code: doc.modelCode, ...(doc.features ? { features: doc.features } : {}), ...(doc.vessel ? { vessel: doc.vessel } : {}) } }
+      : {}),
   };
 }
 
 /** Stable key for "has the priced spec changed?" (artwork does not change the price). */
 export function quoteKey(doc: DesignDoc, quantity: number): string {
   const d = doc.dims;
-  return [doc.structureCode, d.L, d.W, d.H, doc.materialCode, doc.finishCode, doc.printSides, quantity].join("|");
+  return [
+    doc.modelCode ?? doc.structureCode,
+    doc.structureCode,
+    d.L,
+    d.W,
+    d.H,
+    doc.materialCode,
+    designPricedFinishes(doc).join(","),
+    doc.printSides,
+    quantity,
+    JSON.stringify(doc.features ?? null),
+    doc.vessel ? JSON.stringify([doc.vessel.dims, doc.vessel.surfaces, doc.vessel.presetId, doc.vessel.container]) : "",
+  ].join("|");
 }
 
 /** Reduce an /api/quote response to what the badge shows: the cheapest offer. */

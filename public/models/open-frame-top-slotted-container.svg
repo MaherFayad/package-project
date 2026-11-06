@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360" viewBox="0 0 480 360" role="img" aria-label="Slotted container with short top frame flaps">
+
+<ellipse cx="240" cy="305" rx="164.2" ry="19.8" fill="rgba(0,0,0,.07)"/>
+<g stroke="rgba(0,0,0,.18)" stroke-width="1" stroke-linejoin="round"><path d="M184.4 46.1L184.4 146.1L412.2 221L412.2 121Z" fill-rule="evenodd" fill="#8d6943"/><path d="M68.1 125L68.1 225L185.9 146L185.9 46Z" fill-rule="evenodd" fill="#795a3a"/><path d="M411.3 219.1L186.5 145.2L127.6 184.7L352.4 258.6Z" fill-rule="evenodd" fill="#a1784d"/><path d="M388 135.7L163.2 61.8L186.5 46.2L411.3 120.1Z" fill-rule="evenodd" fill="#b1875a"/><path d="M68.7 224.2L293.5 298.1L352.4 258.6L127.6 184.7Z" fill-rule="evenodd" fill="#a1784d"/><path d="M412.8 120.6L412.8 220.6L295 299.6L295 199.6Z" fill-rule="evenodd" fill="#856644"/><path d="M67.2 124.7L295 199.6L295 299.6L67.2 224.7Z" fill-rule="evenodd" fill="#9b764f"/><path d="M92 109.6L316.8 183.5L293.5 199.1L68.7 125.2Z" fill-rule="evenodd" fill="#b1875a"/></g>
+</svg>

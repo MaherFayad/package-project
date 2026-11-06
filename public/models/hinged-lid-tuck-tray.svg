@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360" viewBox="0 0 480 360" role="img" aria-label="Tray with hinged tuck lid">
+
+<ellipse cx="240" cy="286.9" rx="164.2" ry="19.8" fill="rgba(0,0,0,.07)"/>
+<g stroke="rgba(0,0,0,.18)" stroke-width="1" stroke-linejoin="round"><path d="M208.9 119.6L412.5 186.5L412.5 131.2L208.9 64.3Z" fill-rule="evenodd" fill="#c9c8c2"/><path d="M67.6 214.7L209.6 119.5L209.6 64.2L67.6 159.4Z" fill-rule="evenodd" fill="#adaba7"/><path d="M67.2 214.2L270.8 281.1L412.8 185.9L209.2 118.9Z" fill-rule="evenodd" fill="#e6e4de"/><path d="M209.2 64.1L412.8 131L270.8 226.2L67.2 159.3Z" fill-rule="evenodd" fill="#f0f0ed"/><path d="M270.8 226.2L412.8 131L412.8 186.3L270.8 281.5Z" fill-rule="evenodd" fill="#b5b5b3"/><path d="M67.2 159.3L270.8 226.2L270.8 281.5L67.2 214.6Z" fill-rule="evenodd" fill="#d2d2d0"/></g>
+</svg>

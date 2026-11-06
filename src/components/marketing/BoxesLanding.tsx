@@ -1,0 +1,107 @@
+import Link from "next/link";
+import type { Locale, StructureFamily } from "@/types";
+import { getT } from "@/i18n";
+import type { DictKey } from "@/i18n";
+import { designHref } from "@/components/store/catalog";
+import { getLowestUnit, listStructures } from "@/components/store/data";
+import { ProductCard } from "./ProductCard";
+import { renderSrc } from "./assets";
+import styles from "./marketing.module.css";
+import { ModelLinks } from "@/components/designer/ModelLinks";
+import { MODELS } from "@/lib/library";
+import { formatNumber } from "@/lib/format";
+
+const FAMILIES: StructureFamily[] = ["CORRUGATED", "FOLDING_CARTON", "RIGID", "TUBE"];
+const SHOWCASE = ["ECMA_RTE", "PIZZA", "FEFCO_0427", "GABLE_BOX", "RIGID_BOX"] as const;
+
+/**
+ * Category landing for boxes and cartons (/boxes and /catalog): centred hero with a row of
+ * real 3D renders, then every structure grouped by family with its "from" price.
+ */
+export async function BoxesLanding({ locale, titleAs = "h1" }: { locale: Locale; titleAs?: "h1" }) {
+  const t = getT(locale);
+  const H = titleAs;
+  const structures = await listStructures();
+  const prices = new Map(await Promise.all(structures.map(async (s) => [s.code, await getLowestUnit(s.code, s.defaultDims)] as const)));
+  const base = `/${locale}`;
+  return (
+    <>
+      <section className={`${styles.centerHero} ${styles.bandMint}`} aria-labelledby="boxes-title">
+        <div className={styles.container}>
+          <span className={`${styles.eyebrow} m-enter`}>{t("marketing.boxes.eyebrow")}</span>
+          <H id="boxes-title" className={`${styles.h1} m-enter`} style={{ ["--m-i" as string]: 1 }}>
+            {t("marketing.boxes.title")}
+          </H>
+          <p className={`${styles.lead} m-enter`} style={{ ["--m-i" as string]: 2 }}>
+            {t("marketing.boxes.body")}
+          </p>
+          <div className={`${styles.actions} m-enter`} style={{ ["--m-i" as string]: 3 }}>
+            <Link href={designHref(locale, { structure: "FEFCO_0427" })} className={`${styles.pill} ${styles.pillLarge}`}>
+              {t("marketing.boxes.primary")}
+            </Link>
+            <Link href={`${base}/vendors`} className={`${styles.pill} ${styles.pillOutline} ${styles.pillLarge}`}>
+              {t("marketing.boxes.secondary")}
+            </Link>
+          </div>
+          <p className={`${styles.already} m-enter`} style={{ ["--m-i" as string]: 4 }}>
+            {t("marketing.boxes.already")}{" "}
+            <Link href={`${base}/account`} className={styles.textLink}>
+              {t("marketing.boxes.alreadyLink")}
+            </Link>
+          </p>
+          <div className={`${styles.heroShowcase} m-enter-scale`} style={{ ["--m-i" as string]: 4 }} aria-hidden="true">
+            {SHOWCASE.map((c) => (
+              <div key={c} className={styles.showcaseItem}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={renderSrc(c)} alt="" width={480} height={360} fetchPriority={c === "FEFCO_0427" ? "high" : "auto"} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className={styles.band} aria-label={t("marketing.boxes.eyebrow")}>
+        <div className={styles.container}>
+          {FAMILIES.map((family) => {
+            const list = structures.filter((s) => s.family === family);
+            if (!list.length) return null;
+            return (
+              <section key={family} id={family} className={styles.familyBlock} aria-labelledby={`fam-${family}`} style={{ scrollMarginBlockStart: 96 }}>
+                <div className={styles.sectionHeadRow} data-reveal="" suppressHydrationWarning>
+                  <div>
+                    <h2 id={`fam-${family}`} className={styles.h2}>
+                      {t(`marketing.boxes.family.${family}` as DictKey)}
+                    </h2>
+                    <p className={styles.lead}>{t(`marketing.boxes.familyBody.${family}` as DictKey)}</p>
+                  </div>
+                  <span className={styles.small}>{t("marketing.boxes.count", { count: list.length })}</span>
+                </div>
+                <ul className={styles.productGrid}>
+                  {list.map((s, i) => (
+                    <ProductCard key={s.code} locale={locale} structure={s} fromPiasters={prices.get(s.code) ?? null} index={i} />
+                  ))}
+                </ul>
+              </section>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Added by 3D integration: the whole model library (every FEFCO / ECMA style, rigid box,
+          tube, bottle, jar, can and pouch), each with a thumbnail drawn from its 3D model. */}
+      <section className={styles.band} id="all-models" aria-labelledby="all-models-title" style={{ scrollMarginBlockStart: 96 }}>
+        <div className={styles.container}>
+          <div className={styles.sectionHeadRow}>
+            <div>
+              <h2 id="all-models-title" className={styles.h2}>
+                {t("library.catalog.heading")}
+              </h2>
+              <p className={styles.lead}>{t("library.catalog.subtitle", { count: formatNumber(MODELS.length) })}</p>
+            </div>
+          </div>
+          <ModelLinks locale={locale} />
+        </div>
+      </section>
+    </>
+  );
+}

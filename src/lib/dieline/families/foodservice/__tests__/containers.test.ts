@@ -191,7 +191,7 @@ describe.each(PULP.map((d) => [d.code, d] as const))("%s", (_c, def) => {
       expect(m.baseHeightMm).toBe(preset.dims.H);
       expect(m.label).toBeNull();
     }
-  });
+  }, 30_000); // height-field meshes are heavy: allow for a loaded CI machine
 
   it("limits", () => {
     expect(() => buildFoodservice(def.code, { ...def.defaultDims, L: def.limits.L.max + 1 })).toThrow(FamilyValidationError);

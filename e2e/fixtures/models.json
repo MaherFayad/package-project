@@ -1,0 +1,1852 @@
+[
+ {
+  "code": "FEFCO_0427",
+  "slug": "mailer-box",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0201",
+  "slug": "shipping-box",
+  "kind": "box"
+ },
+ {
+  "code": "ECMA_RTE",
+  "slug": "reverse-tuck-end",
+  "kind": "box"
+ },
+ {
+  "code": "ECMA_STE",
+  "slug": "straight-tuck-end",
+  "kind": "box"
+ },
+ {
+  "code": "PIZZA",
+  "slug": "pizza-box",
+  "kind": "box"
+ },
+ {
+  "code": "SLEEVE",
+  "slug": "sleeve",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0320",
+  "slug": "telescope-box",
+  "kind": "box"
+ },
+ {
+  "code": "ECMA_CLB",
+  "slug": "crash-lock-carton",
+  "kind": "box"
+ },
+ {
+  "code": "ECMA_SLB",
+  "slug": "snap-lock-carton",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0422",
+  "slug": "display-tray",
+  "kind": "box"
+ },
+ {
+  "code": "GABLE_BOX",
+  "slug": "gable-box",
+  "kind": "box"
+ },
+ {
+  "code": "PAPER_TUBE",
+  "slug": "paper-tube",
+  "kind": "box"
+ },
+ {
+  "code": "RIGID_BOX",
+  "slug": "rigid-box",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0200",
+  "slug": "half-slotted-container",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0202",
+  "slug": "overlap-slotted-container",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0203",
+  "slug": "full-overlap-slotted-container",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0204",
+  "slug": "centre-special-slotted-container",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0205",
+  "slug": "centre-special-overlap-slotted-container",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0206",
+  "slug": "centre-special-full-overlap-slotted-container",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0207",
+  "slug": "slotted-box-integral-bottom-divisions",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0208",
+  "slug": "slotted-box-integral-flap-divisions",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0209",
+  "slug": "open-frame-top-slotted-container",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0210",
+  "slug": "slotted-box-tuck-lids-same-panel",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0211",
+  "slug": "slotted-box-reverse-tuck-lids",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0212",
+  "slug": "tuck-lid-top-slotted-bottom",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0214",
+  "slug": "slotted-container-tear-off-top",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0215",
+  "slug": "tuck-lid-top-snap-lock-bottom",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0216",
+  "slug": "slotted-top-snap-lock-bottom",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0217",
+  "slug": "gable-carry-box-snap-lock",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0218",
+  "slug": "full-overlap-box-locking-tongue",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0225",
+  "slug": "slotted-box-integral-base-liner",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0226",
+  "slug": "slotted-box-bevelled-flaps",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0227",
+  "slug": "tall-slotted-box-lid-flaps",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0228",
+  "slug": "slotted-box-integral-centre-partition",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0229",
+  "slug": "slotted-box-double-folded-flaps",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0230",
+  "slug": "slotted-container-length-panel-joint",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0231",
+  "slug": "slotted-container-breadth-panel-joint",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0300",
+  "slug": "fefco-0300-telescope-tray-lid",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0301",
+  "slug": "fefco-0301-telescope-alternate-flaps",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0302",
+  "slug": "fefco-0302-telescope-taped-corners",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0303",
+  "slug": "fefco-0303-telescope-gusset-corners",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0304",
+  "slug": "fefco-0304-telescope-gusset-end",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0306",
+  "slug": "fefco-0306-tray-shallow-cap",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0307",
+  "slug": "fefco-0307-telescope-locking-tabs",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0308",
+  "slug": "fefco-0308-telescope-inner-gussets-slotted",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0309",
+  "slug": "fefco-0309-telescope-inner-gussets",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0310",
+  "slug": "fefco-0310-sleeve-two-caps",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0312",
+  "slug": "fefco-0312-hsc-with-cap",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0313",
+  "slug": "fefco-0313-rsc-two-caps",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0314",
+  "slug": "fefco-0314-sleeve-self-locking-caps",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0321",
+  "slug": "fefco-0321-envelope-telescope",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0322",
+  "slug": "fefco-0322-friction-lock-set",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0323",
+  "slug": "fefco-0323-double-wall-slip-lid",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0325",
+  "slug": "fefco-0325-sleeve-internal-caps",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0330",
+  "slug": "fefco-0330-self-erecting-tray-cap",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0331",
+  "slug": "fefco-0331-rolled-edge-tray-cap",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0350",
+  "slug": "fefco-0350-octabin-flap-bottom",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0351",
+  "slug": "fefco-0351-octabin-symmetric",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0352",
+  "slug": "fefco-0352-octabin-long-sides",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0501",
+  "slug": "fefco-0501-sleeve-open-top-bottom",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0502",
+  "slug": "fefco-0502-sleeve-open-front-back",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0503",
+  "slug": "fefco-0503-slip-sleeve",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0504",
+  "slug": "fefco-0504-sleeve-set-0501-0502",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0505",
+  "slug": "fefco-0505-sleeve-set-0502-0503",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0507",
+  "slug": "fefco-0507-sleeve-set-0501-0503",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0509",
+  "slug": "fefco-0509-slide-closure-set",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0510",
+  "slug": "fefco-0510-wrap-sleeve-top-flap",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0511",
+  "slug": "fefco-0511-wrap-sleeve-dust-flaps",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0512",
+  "slug": "fefco-0512-wrap-internal-liner",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0400",
+  "slug": "fefco-0400",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0401",
+  "slug": "fefco-0401",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0402",
+  "slug": "fefco-0402",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0403",
+  "slug": "fefco-0403",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0412",
+  "slug": "fefco-0412",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0413",
+  "slug": "fefco-0413",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0415",
+  "slug": "fefco-0415",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0415a",
+  "slug": "fefco-0415a",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0416",
+  "slug": "fefco-0416",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0416a",
+  "slug": "fefco-0416a",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0420",
+  "slug": "fefco-0420",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0404",
+  "slug": "fefco-0404",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0406",
+  "slug": "fefco-0406",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0409",
+  "slug": "fefco-0409",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0409a",
+  "slug": "fefco-0409a",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0410",
+  "slug": "fefco-0410",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0410a",
+  "slug": "fefco-0410a",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0411",
+  "slug": "fefco-0411",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0411a",
+  "slug": "fefco-0411a",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0405",
+  "slug": "fefco-0405",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0421",
+  "slug": "fefco-0421",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0421_1",
+  "slug": "fefco-0421-1",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0421a",
+  "slug": "fefco-0421a",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0422_1",
+  "slug": "fefco-0422-1",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0422_2",
+  "slug": "fefco-0422-2",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0422a",
+  "slug": "fefco-0422a",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0423",
+  "slug": "fefco-0423",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0423_1",
+  "slug": "fefco-0423-1",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0423a",
+  "slug": "fefco-0423a",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0423_1a",
+  "slug": "fefco-0423-1a",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0424",
+  "slug": "fefco-0424",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0424a",
+  "slug": "fefco-0424a",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0425",
+  "slug": "fefco-0425",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0425a",
+  "slug": "fefco-0425a",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0426a",
+  "slug": "fefco-0426a",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0427_1",
+  "slug": "fefco-0427-1",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0428",
+  "slug": "fefco-0428",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0428a",
+  "slug": "fefco-0428a",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0429",
+  "slug": "fefco-0429",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0429a",
+  "slug": "fefco-0429a",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0430",
+  "slug": "fefco-0430",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0431",
+  "slug": "fefco-0431",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0432",
+  "slug": "fefco-0432",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0432a",
+  "slug": "fefco-0432a",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0433",
+  "slug": "fefco-0433",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0434",
+  "slug": "fefco-0434",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0435",
+  "slug": "fefco-0435",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0435a",
+  "slug": "fefco-0435a",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0436",
+  "slug": "fefco-0436",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0437",
+  "slug": "fefco-0437",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0437_1",
+  "slug": "fefco-0437-1",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0439",
+  "slug": "fefco-0439",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0439a",
+  "slug": "fefco-0439a",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0447",
+  "slug": "fefco-0447",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0449",
+  "slug": "fefco-0449",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0457",
+  "slug": "fefco-0457",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0440",
+  "slug": "fefco-0440",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0441",
+  "slug": "fefco-0441",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0442",
+  "slug": "fefco-0442",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0443",
+  "slug": "fefco-0443",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0444",
+  "slug": "fefco-0444",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0445",
+  "slug": "fefco-0445",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0448",
+  "slug": "fefco-0448",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0450",
+  "slug": "fefco-0450",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0451",
+  "slug": "fefco-0451",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0451_1",
+  "slug": "fefco-0451-1",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0451_2",
+  "slug": "fefco-0451-2",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0452",
+  "slug": "fefco-0452",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0453",
+  "slug": "fefco-0453",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0454",
+  "slug": "fefco-0454",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0454_1",
+  "slug": "fefco-0454-1",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0455",
+  "slug": "fefco-0455",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0455_1",
+  "slug": "fefco-0455-1",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0458",
+  "slug": "fefco-0458",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0459",
+  "slug": "fefco-0459",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0460",
+  "slug": "fefco-0460",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0470",
+  "slug": "fefco-0470",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0471",
+  "slug": "fefco-0471",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0471a",
+  "slug": "fefco-0471a",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0472",
+  "slug": "fefco-0472",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0601",
+  "slug": "fefco-0601-bliss-box",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0602",
+  "slug": "fefco-0602-bliss-box-tuck",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0605",
+  "slug": "fefco-0605-open-bliss-tray",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0606",
+  "slug": "fefco-0606-bliss-box-split-lid",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0607",
+  "slug": "fefco-0607-bliss-box-flapped-ends",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0608",
+  "slug": "fefco-0608-bliss-box-flapped-ends-tuck",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0610",
+  "slug": "fefco-0610-bliss-box-square-flaps",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0615",
+  "slug": "fefco-0615-tube-double-rim-caps",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0616",
+  "slug": "fefco-0616-tube-end-caps",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0620",
+  "slug": "fefco-0620-long-bliss-split-lid",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0621",
+  "slug": "fefco-0621-half-shell-case",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0700",
+  "slug": "fefco-0700-auto-bottom-open",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0701",
+  "slug": "fefco-0701-auto-bottom-full-flap",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0703",
+  "slug": "fefco-0703-auto-bottom-full-overlap",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0711",
+  "slug": "fefco-0711-auto-bottom-rsc",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0712",
+  "slug": "fefco-0712-auto-bottom-centre-meet",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0713",
+  "slug": "fefco-0713-auto-bottom-tuck-lid",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0714",
+  "slug": "fefco-0714-auto-bottom-telescope",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0715",
+  "slug": "fefco-0715-auto-bottom-six-cells",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0716",
+  "slug": "fefco-0716-auto-bottom-tear-off-display",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0717",
+  "slug": "fefco-0717-auto-bottom-carrier",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0718",
+  "slug": "fefco-0718-glued-tray-double-long",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0747",
+  "slug": "fefco-0747-glued-tray-tuck-lid",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0748",
+  "slug": "fefco-0748-glued-tray-webs-tuck-lid",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0751",
+  "slug": "fefco-0751-glued-tray-perforated-lid",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0752",
+  "slug": "fefco-0752-glued-cell-tube",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0759",
+  "slug": "fefco-0759-glued-tray-skirt-lid",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0761",
+  "slug": "fefco-0761-glued-tray-lid-side-flaps",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0770",
+  "slug": "fefco-0770-produce-tray-lugs",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0771",
+  "slug": "fefco-0771-produce-tray-cut-down",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0772",
+  "slug": "fefco-0772-produce-tray-double-ends",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0773",
+  "slug": "fefco-0773-produce-tray-double-long",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0774",
+  "slug": "fefco-0774-produce-tray-double-walls-handles",
+  "kind": "box"
+ },
+ {
+  "code": "ECMA_TUCK_STE",
+  "slug": "ecma-straight-tuck-end",
+  "kind": "box"
+ },
+ {
+  "code": "ECMA_TUCK_RTE",
+  "slug": "ecma-reverse-tuck-end",
+  "kind": "box"
+ },
+ {
+  "code": "ECMA_TUCK_AIRPLANE",
+  "slug": "ecma-airplane-tuck",
+  "kind": "box"
+ },
+ {
+  "code": "ECMA_TUCK_FRENCH_RTE",
+  "slug": "ecma-french-reverse-tuck",
+  "kind": "box"
+ },
+ {
+  "code": "ECMA_TUCK_SNAP_LOCK",
+  "slug": "ecma-tuck-top-snap-lock",
+  "kind": "box"
+ },
+ {
+  "code": "ECMA_TUCK_CRASH_LOCK",
+  "slug": "ecma-tuck-top-crash-lock",
+  "kind": "box"
+ },
+ {
+  "code": "ECMA_SEAL_END",
+  "slug": "ecma-seal-end",
+  "kind": "box"
+ },
+ {
+  "code": "ECMA_SEAL_END_TEAR",
+  "slug": "ecma-seal-end-tear-strip",
+  "kind": "box"
+ },
+ {
+  "code": "ECMA_HANGER_EURO",
+  "slug": "ecma-hanger-euro-slot",
+  "kind": "box"
+ },
+ {
+  "code": "ECMA_HANGER_ROUND",
+  "slug": "ecma-hanger-round-hole",
+  "kind": "box"
+ },
+ {
+  "code": "ECMA_WINDOW_RTE",
+  "slug": "ecma-window-carton",
+  "kind": "box"
+ },
+ {
+  "code": "ECMA_PHARMA_RTE",
+  "slug": "ecma-pharma-carton",
+  "kind": "box"
+ },
+ {
+  "code": "ECMA_FLIP_TOP",
+  "slug": "hinged-lid-flip-top",
+  "kind": "box"
+ },
+ {
+  "code": "ECMA_DOUBLE_WALL_TUCK",
+  "slug": "double-wall-tuck",
+  "kind": "box"
+ },
+ {
+  "code": "ECMA_TRAY_4C",
+  "slug": "four-corner-glued-tray",
+  "kind": "box"
+ },
+ {
+  "code": "ECMA_TRAY_BEERS",
+  "slug": "beers-tray",
+  "kind": "box"
+ },
+ {
+  "code": "ECMA_TRAY_BRIGHTWOOD",
+  "slug": "brightwood-tray",
+  "kind": "box"
+ },
+ {
+  "code": "ECMA_TRAY_6C_LID",
+  "slug": "six-corner-hinged-lid-tray",
+  "kind": "box"
+ },
+ {
+  "code": "ECMA_TRAY_HINGED_TUCK",
+  "slug": "hinged-lid-tuck-tray",
+  "kind": "box"
+ },
+ {
+  "code": "ECMA_SLEEVE_OPEN",
+  "slug": "open-end-sleeve",
+  "kind": "box"
+ },
+ {
+  "code": "ECMA_WRAP_LOCK",
+  "slug": "self-locking-wrap",
+  "kind": "box"
+ },
+ {
+  "code": "FOLDER_PRESENTATION",
+  "slug": "presentation-folder",
+  "kind": "box"
+ },
+ {
+  "code": "ECMA_WALLET_ENDFLAP",
+  "slug": "end-flap-wallet",
+  "kind": "box"
+ },
+ {
+  "code": "ECMA_PILLOW",
+  "slug": "pillow-box",
+  "kind": "box"
+ },
+ {
+  "code": "CONE",
+  "slug": "paperboard-cone",
+  "kind": "box"
+ },
+ {
+  "code": "ECMA_HEXAGON",
+  "slug": "hexagon-carton",
+  "kind": "box"
+ },
+ {
+  "code": "ECMA_OCTAGON",
+  "slug": "octagon-carton",
+  "kind": "box"
+ },
+ {
+  "code": "GABLE_CARRY_CLB",
+  "slug": "gable-carry-box",
+  "kind": "box"
+ },
+ {
+  "code": "CUP_CARRIER",
+  "slug": "cup-carrier",
+  "kind": "box"
+ },
+ {
+  "code": "BOTTLE_BASKET_4",
+  "slug": "bottle-basket-4",
+  "kind": "box"
+ },
+ {
+  "code": "BOTTLE_BASKET_6",
+  "slug": "bottle-basket-6",
+  "kind": "box"
+ },
+ {
+  "code": "ECMA_COUNTER_DISPLAY",
+  "slug": "counter-display-tear-off",
+  "kind": "box"
+ },
+ {
+  "code": "LIQUID_GABLE_TOP",
+  "slug": "gable-top-liquid-carton",
+  "kind": "box"
+ },
+ {
+  "code": "LIQUID_ASEPTIC_BRICK",
+  "slug": "aseptic-brick-carton",
+  "kind": "box"
+ },
+ {
+  "code": "FS_CAKE_BOX_WINDOW",
+  "slug": "cake-box-window",
+  "kind": "box"
+ },
+ {
+  "code": "FS_BAKERY_BOX",
+  "slug": "bakery-box",
+  "kind": "box"
+ },
+ {
+  "code": "FS_BURGER_CLAMSHELL",
+  "slug": "burger-clamshell",
+  "kind": "box"
+ },
+ {
+  "code": "FS_NOODLE_PAIL",
+  "slug": "noodle-pail",
+  "kind": "box"
+ },
+ {
+  "code": "FS_FRIES_SCOOP",
+  "slug": "fries-scoop",
+  "kind": "box"
+ },
+ {
+  "code": "FS_SANDWICH_WEDGE",
+  "slug": "sandwich-wedge",
+  "kind": "box"
+ },
+ {
+  "code": "FS_PIZZA_SLICE",
+  "slug": "pizza-slice-box",
+  "kind": "box"
+ },
+ {
+  "code": "FS_PIZZA_ROUND",
+  "slug": "pizza-box-inch-sizes",
+  "kind": "box"
+ },
+ {
+  "code": "RIGID_LID_BASE",
+  "slug": "rigid-lid-and-base-box",
+  "kind": "box"
+ },
+ {
+  "code": "RIGID_SHOULDER",
+  "slug": "rigid-shoulder-neck-box",
+  "kind": "box"
+ },
+ {
+  "code": "RIGID_BOOK_MAGNETIC",
+  "slug": "rigid-book-box-magnetic",
+  "kind": "box"
+ },
+ {
+  "code": "RIGID_DRAWER",
+  "slug": "rigid-drawer-box",
+  "kind": "box"
+ },
+ {
+  "code": "RIGID_HINGED_LID",
+  "slug": "rigid-hinged-lid-box",
+  "kind": "box"
+ },
+ {
+  "code": "RIGID_COLLAPSIBLE",
+  "slug": "rigid-collapsible-magnetic-box",
+  "kind": "box"
+ },
+ {
+  "code": "RIGID_WINDOW",
+  "slug": "rigid-window-box",
+  "kind": "box"
+ },
+ {
+  "code": "TUBE_LID_BASE",
+  "slug": "paper-tube-lid-and-base",
+  "kind": "box"
+ },
+ {
+  "code": "TUBE_ROLLED_EDGE",
+  "slug": "paper-tube-rolled-edge",
+  "kind": "box"
+ },
+ {
+  "code": "TUBE_TELESCOPING",
+  "slug": "paper-tube-telescoping",
+  "kind": "box"
+ },
+ {
+  "code": "TUBE_PUSH_UP",
+  "slug": "paper-tube-push-up",
+  "kind": "box"
+ },
+ {
+  "code": "TUBE_WINDOW",
+  "slug": "paper-tube-window",
+  "kind": "box"
+ },
+ {
+  "code": "TUBE_SHOULDER",
+  "slug": "paper-tube-shoulder",
+  "kind": "box"
+ },
+ {
+  "code": "PALLET_BOX",
+  "slug": "pallet-box",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0900",
+  "slug": "fefco-0900-inner-flap-fill-pad",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0901",
+  "slug": "fefco-0901-bottom-pad",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0902",
+  "slug": "fefco-0902-end-wall-pad",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0903",
+  "slug": "fefco-0903-side-wall-pad",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0904",
+  "slug": "fefco-0904-u-liner-end-walls",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0905",
+  "slug": "fefco-0905-u-liner-side-walls",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0906",
+  "slug": "fefco-0906-four-wall-liner",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0907",
+  "slug": "fefco-0907-l-liner-side-wall",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0908",
+  "slug": "fefco-0908-l-liner-end-wall",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0909",
+  "slug": "fefco-0909-wrap-liner-long",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0910",
+  "slug": "fefco-0910-wrap-liner-wide",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0911",
+  "slug": "fefco-0911-side-slotted-tray",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0913",
+  "slug": "fefco-0913-five-panel-liner",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0914",
+  "slug": "fefco-0914-full-overlap-liner",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0920",
+  "slug": "fefco-0920-compartment-liner-across",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0921",
+  "slug": "fefco-0921-compartment-liner-along",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0929",
+  "slug": "fefco-0929-c-partition",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0931",
+  "slug": "fefco-0931-single-cell-extension",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0932",
+  "slug": "fefco-0932-single-cell-support",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0940",
+  "slug": "fefco-0940-cushion-pad-ends-under",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0941",
+  "slug": "fefco-0941-cushion-pad-double",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0942",
+  "slug": "fefco-0942-cushion-pad-z-fold",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0943",
+  "slug": "fefco-0943-clearance-pad-two-legs",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0944",
+  "slug": "fefco-0944-clearance-pad-four-legs",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0945",
+  "slug": "fefco-0945-cushion-pad-edges-under",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0948",
+  "slug": "fefco-0948-cushion-pad-box-rails",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0950",
+  "slug": "fefco-0950-accordion-cushion-four",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0950A",
+  "slug": "fefco-0950a-accordion-cushion-five",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0951",
+  "slug": "fefco-0951-scored-sheet",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0967",
+  "slug": "fefco-0967-cross-scored-sheet",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0970",
+  "slug": "fefco-0970-angle-edge-protector",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0971",
+  "slug": "fefco-0971-corner-cap",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0971A",
+  "slug": "fefco-0971a-corner-cap-locked",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0972",
+  "slug": "fefco-0972-u-edge-protector",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0972A",
+  "slug": "fefco-0972a-u-edge-protector-lipped",
+  "kind": "box"
+ },
+ {
+  "code": "FEFCO_0976A",
+  "slug": "fefco-0976a-square-corner-post",
+  "kind": "box"
+ },
+ {
+  "code": "ROUND_BOTTLE",
+  "slug": "round-bottle",
+  "kind": "vessel"
+ },
+ {
+  "code": "BOSTON_ROUND",
+  "slug": "boston-round",
+  "kind": "vessel"
+ },
+ {
+  "code": "DROPPER_BOTTLE",
+  "slug": "dropper-bottle",
+  "kind": "vessel"
+ },
+ {
+  "code": "PUMP_BOTTLE",
+  "slug": "pump-bottle",
+  "kind": "vessel"
+ },
+ {
+  "code": "PERFUME_SQUARE",
+  "slug": "perfume-square",
+  "kind": "vessel"
+ },
+ {
+  "code": "WIDE_JAR",
+  "slug": "wide-jar",
+  "kind": "vessel"
+ },
+ {
+  "code": "CAN",
+  "slug": "can",
+  "kind": "vessel"
+ },
+ {
+  "code": "ROUND_TIN",
+  "slug": "round-tin",
+  "kind": "vessel"
+ },
+ {
+  "code": "STAND_UP_POUCH",
+  "slug": "stand-up-pouch",
+  "kind": "vessel"
+ },
+ {
+  "code": "SQUEEZE_TUBE",
+  "slug": "squeeze-tube",
+  "kind": "vessel"
+ },
+ {
+  "code": "BTL_GLASS_WATER",
+  "slug": "glass-water-bottle",
+  "kind": "vessel"
+ },
+ {
+  "code": "BTL_GLASS_JUICE",
+  "slug": "glass-juice-bottle",
+  "kind": "vessel"
+ },
+ {
+  "code": "BTL_GLASS_WINE_BORDEAUX",
+  "slug": "glass-wine-bottle-bordeaux",
+  "kind": "vessel"
+ },
+ {
+  "code": "BTL_GLASS_WINE_BURGUNDY",
+  "slug": "glass-wine-bottle-burgundy",
+  "kind": "vessel"
+ },
+ {
+  "code": "BTL_GLASS_WINE_HOCK",
+  "slug": "glass-wine-bottle-hock",
+  "kind": "vessel"
+ },
+ {
+  "code": "BTL_GLASS_SPARKLING",
+  "slug": "glass-sparkling-wine-bottle",
+  "kind": "vessel"
+ },
+ {
+  "code": "BTL_GLASS_BEER_LONGNECK",
+  "slug": "glass-beer-bottle-longneck",
+  "kind": "vessel"
+ },
+ {
+  "code": "BTL_GLASS_BEER_STUBBY",
+  "slug": "glass-beer-bottle-stubby",
+  "kind": "vessel"
+ },
+ {
+  "code": "BTL_GLASS_OIL_MARASCA",
+  "slug": "glass-olive-oil-bottle-marasca",
+  "kind": "vessel"
+ },
+ {
+  "code": "BTL_GLASS_OIL_DORICA",
+  "slug": "glass-olive-oil-bottle-dorica",
+  "kind": "vessel"
+ },
+ {
+  "code": "BTL_GLASS_SAUCE_WOOZY",
+  "slug": "glass-hot-sauce-bottle-woozy",
+  "kind": "vessel"
+ },
+ {
+  "code": "BTL_GLASS_SPIRITS_FLASK",
+  "slug": "glass-spirits-flask",
+  "kind": "vessel"
+ },
+ {
+  "code": "BTL_GLASS_MILK",
+  "slug": "glass-milk-bottle",
+  "kind": "vessel"
+ },
+ {
+  "code": "BTL_GLASS_PHARMA_SYRUP",
+  "slug": "glass-syrup-bottle-amber",
+  "kind": "vessel"
+ },
+ {
+  "code": "BTL_PET_WATER_EG",
+  "slug": "pet-water-bottle-600-1500",
+  "kind": "vessel"
+ },
+ {
+  "code": "BTL_PET_WATER_JUG_5L",
+  "slug": "pet-water-jug-5l",
+  "kind": "vessel"
+ },
+ {
+  "code": "BTL_PET_WATER_COOLER_19L",
+  "slug": "pet-water-cooler-bottle-19l",
+  "kind": "vessel"
+ },
+ {
+  "code": "BTL_PET_CSD",
+  "slug": "pet-soft-drink-bottle-petaloid",
+  "kind": "vessel"
+ },
+ {
+  "code": "BTL_PET_JUICE",
+  "slug": "pet-juice-bottle-38mm",
+  "kind": "vessel"
+ },
+ {
+  "code": "BTL_HDPE_SHAMPOO_OVAL",
+  "slug": "shampoo-bottle-oval",
+  "kind": "vessel"
+ },
+ {
+  "code": "BTL_HDPE_DETERGENT_HANDLE",
+  "slug": "detergent-bottle-with-handle",
+  "kind": "vessel"
+ },
+ {
+  "code": "BTL_HDPE_MOTOR_OIL",
+  "slug": "motor-oil-bottle",
+  "kind": "vessel"
+ },
+ {
+  "code": "BTL_PET_PHARMA_SYRUP",
+  "slug": "pet-syrup-bottle-amber",
+  "kind": "vessel"
+ },
+ {
+  "code": "BTL_PET_SPORTS",
+  "slug": "pet-sports-bottle",
+  "kind": "vessel"
+ },
+ {
+  "code": "BTL_HDPE_GALLON_JUG",
+  "slug": "hdpe-gallon-jug",
+  "kind": "vessel"
+ },
+ {
+  "code": "JAR_GLASS_HONEY_HEX",
+  "slug": "glass-honey-jar-hexagonal",
+  "kind": "vessel"
+ },
+ {
+  "code": "JAR_GLASS_JAM",
+  "slug": "glass-jam-jar",
+  "kind": "vessel"
+ },
+ {
+  "code": "JAR_GLASS_MASON",
+  "slug": "glass-mason-jar",
+  "kind": "vessel"
+ },
+ {
+  "code": "JAR_PET_NUT_BUTTER",
+  "slug": "pet-nut-butter-jar",
+  "kind": "vessel"
+ },
+ {
+  "code": "JAR_PICKLE",
+  "slug": "pickle-jar",
+  "kind": "vessel"
+ },
+ {
+  "code": "TUB_PP_TAHINI",
+  "slug": "pp-tahini-tub",
+  "kind": "vessel"
+ },
+ {
+  "code": "TUB_PP_HALAWA",
+  "slug": "pp-halawa-tub",
+  "kind": "vessel"
+ },
+ {
+  "code": "PAIL_PP_ROUND",
+  "slug": "pp-round-pail",
+  "kind": "vessel"
+ },
+ {
+  "code": "JERRYCAN_HDPE",
+  "slug": "hdpe-jerrycan",
+  "kind": "vessel"
+ },
+ {
+  "code": "COS-DROPPER",
+  "slug": "dropper-bottle-5-100",
+  "kind": "vessel"
+ },
+ {
+  "code": "COS-SERUM",
+  "slug": "serum-bottle-flat-shoulder",
+  "kind": "vessel"
+ },
+ {
+  "code": "COS-AIRLESS",
+  "slug": "airless-pump-bottle",
+  "kind": "vessel"
+ },
+ {
+  "code": "COS-PERFUME-ROUND",
+  "slug": "perfume-round-collar",
+  "kind": "vessel"
+ },
+ {
+  "code": "COS-PERFUME-OVAL",
+  "slug": "perfume-oval-collar",
+  "kind": "vessel"
+ },
+ {
+  "code": "COS-ROLL-ON",
+  "slug": "roll-on-bottle",
+  "kind": "vessel"
+ },
+ {
+  "code": "COS-DEO-STICK",
+  "slug": "deodorant-stick-oval",
+  "kind": "vessel"
+ },
+ {
+  "code": "COS-LIPSTICK",
+  "slug": "lipstick-case",
+  "kind": "vessel"
+ },
+ {
+  "code": "COS-LIP-GLOSS",
+  "slug": "lip-gloss-bottle",
+  "kind": "vessel"
+ },
+ {
+  "code": "COS-MASCARA",
+  "slug": "mascara-bottle",
+  "kind": "vessel"
+ },
+ {
+  "code": "COS-COMPACT",
+  "slug": "powder-compact",
+  "kind": "vessel"
+ },
+ {
+  "code": "COS-JAR-DOUBLE",
+  "slug": "cream-jar-double-wall",
+  "kind": "vessel"
+ },
+ {
+  "code": "COS-NAIL-POLISH",
+  "slug": "nail-polish-bottle",
+  "kind": "vessel"
+ },
+ {
+  "code": "PH-VIAL",
+  "slug": "injection-vial-crimp",
+  "kind": "vessel"
+ },
+ {
+  "code": "PH-AMPOULE",
+  "slug": "glass-ampoule",
+  "kind": "vessel"
+ },
+ {
+  "code": "PH-PILL-CR",
+  "slug": "pill-bottle-child-resistant",
+  "kind": "vessel"
+ },
+ {
+  "code": "PH-EYE-DROP",
+  "slug": "eye-drop-bottle",
+  "kind": "vessel"
+ },
+ {
+  "code": "PH-TUBE",
+  "slug": "ointment-tube-aluminium",
+  "kind": "vessel"
+ },
+ {
+  "code": "CAN-BEVERAGE",
+  "slug": "beverage-can-two-piece",
+  "kind": "vessel"
+ },
+ {
+  "code": "CAN-FOOD-3PC",
+  "slug": "food-can-three-piece",
+  "kind": "vessel"
+ },
+ {
+  "code": "CAN-TUNA",
+  "slug": "tuna-can-ring-pull",
+  "kind": "vessel"
+ },
+ {
+  "code": "CAN-SARDINE",
+  "slug": "sardine-tin-rectangular",
+  "kind": "vessel"
+ },
+ {
+  "code": "CAN-OVAL-FISH",
+  "slug": "oval-fish-tin",
+  "kind": "vessel"
+ },
+ {
+  "code": "TIN-GIFT-ROUND",
+  "slug": "biscuit-gift-tin-round",
+  "kind": "vessel"
+ },
+ {
+  "code": "TIN-GIFT-SQUARE",
+  "slug": "gift-tin-square",
+  "kind": "vessel"
+ },
+ {
+  "code": "TIN-TEA-CADDY",
+  "slug": "tea-caddy-square",
+  "kind": "vessel"
+ },
+ {
+  "code": "CAN-PAINT",
+  "slug": "paint-tin-lever-lid",
+  "kind": "vessel"
+ },
+ {
+  "code": "CAN-AEROSOL",
+  "slug": "aerosol-can",
+  "kind": "vessel"
+ },
+ {
+  "code": "CUP-YOGURT",
+  "slug": "yogurt-cup",
+  "kind": "vessel"
+ },
+ {
+  "code": "CUP-ICE-PINT",
+  "slug": "ice-cream-pint",
+  "kind": "vessel"
+ },
+ {
+  "code": "TUB-ICE-RECT",
+  "slug": "ice-cream-tub-rectangular",
+  "kind": "vessel"
+ },
+ {
+  "code": "CUP-DELI",
+  "slug": "deli-container-round",
+  "kind": "vessel"
+ },
+ {
+  "code": "TRAY-CLAMSHELL",
+  "slug": "clamshell-hinged",
+  "kind": "vessel"
+ },
+ {
+  "code": "TRAY-PUNNET",
+  "slug": "fruit-punnet",
+  "kind": "vessel"
+ },
+ {
+  "code": "TUBE-LAMINATE",
+  "slug": "laminate-tube",
+  "kind": "vessel"
+ },
+ {
+  "code": "TUBE-ALU",
+  "slug": "aluminium-tube",
+  "kind": "vessel"
+ },
+ {
+  "code": "TUBE-OVAL",
+  "slug": "oval-tube",
+  "kind": "vessel"
+ },
+ {
+  "code": "FLEX_STAND_UP_POUCH",
+  "slug": "stand-up-pouch-flex-stand-up-pouch",
+  "kind": "vessel"
+ },
+ {
+  "code": "FLEX_FLAT_POUCH",
+  "slug": "flat-pouch",
+  "kind": "vessel"
+ },
+ {
+  "code": "FLEX_THREE_SIDE_SEAL",
+  "slug": "three-side-seal-pouch",
+  "kind": "vessel"
+ },
+ {
+  "code": "FLEX_PILLOW_BAG",
+  "slug": "pillow-bag",
+  "kind": "vessel"
+ },
+ {
+  "code": "FLEX_QUAD_SEAL_BAG",
+  "slug": "quad-seal-bag",
+  "kind": "vessel"
+ },
+ {
+  "code": "FLEX_SIDE_GUSSET_BAG",
+  "slug": "side-gusset-coffee-bag",
+  "kind": "vessel"
+ },
+ {
+  "code": "FLEX_FLAT_BOTTOM_POUCH",
+  "slug": "flat-bottom-pouch",
+  "kind": "vessel"
+ },
+ {
+  "code": "FLEX_SACHET",
+  "slug": "sachet",
+  "kind": "vessel"
+ },
+ {
+  "code": "FLEX_STICK_PACK",
+  "slug": "stick-pack",
+  "kind": "vessel"
+ },
+ {
+  "code": "FLEX_RETORT_POUCH",
+  "slug": "retort-pouch",
+  "kind": "vessel"
+ },
+ {
+  "code": "FLEX_VACUUM_PACK",
+  "slug": "vacuum-pack",
+  "kind": "vessel"
+ },
+ {
+  "code": "FLEX_FLOW_WRAP",
+  "slug": "flow-wrap",
+  "kind": "vessel"
+ },
+ {
+  "code": "FLEX_SHRINK_SLEEVE",
+  "slug": "shrink-sleeve-film",
+  "kind": "vessel"
+ },
+ {
+  "code": "FLEX_MAILER_BAG",
+  "slug": "poly-mailer-bag",
+  "kind": "vessel"
+ },
+ {
+  "code": "FLEX_BAG_IN_BOX",
+  "slug": "bag-in-box-bladder",
+  "kind": "vessel"
+ }
+]

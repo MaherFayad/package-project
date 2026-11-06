@@ -9,15 +9,35 @@ export const MATERIAL_CODES = [
   "SBS_350",
   "GREYBOARD_WRAP", // 2 mm greyboard wrapped in 157 gsm printed art paper (rigid boxes)
   "KRAFT_TUBE", //     spiral-wound kraft tube, 1.5 mm wall, printed paper label (tubes)
+  // Added by 3D integration: label stocks and flexible laminates (containers).
+  "LABEL_PAPER", //        semi-gloss label paper, permanent acrylic adhesive
+  "LABEL_WHITE_BOPP", //   white BOPP film label (wet / chilled)
+  "LABEL_CLEAR_BOPP", //   clear BOPP film label ("no label" look)
+  "LABEL_METALLIC_BOPP", // metallised BOPP label
+  "SHRINK_PETG", //        PETG shrink sleeve film, 50 micron
+  "POUCH_PET_PE", //       PET 12 / PE 80 laminate (printed reverse on the PET)
+  "POUCH_KRAFT_PE", //     kraft paper / PE laminate
+  "TUBE_PE", //            co-extruded PE tube body (offset or silkscreen printed)
 ] as const;
 export type MaterialCode = (typeof MATERIAL_CODES)[number];
 
-export type BoardType = "CORRUGATED" | "SBS" | "GREYBOARD" | "TUBE";
+export type BoardType = "CORRUGATED" | "SBS" | "GREYBOARD" | "TUBE" | "LABEL" | "FILM";
 export type Flute = "E" | "B";
 export type BoardColor = "KRAFT" | "WHITE";
 
 /** Must match Finish.code in the DB. */
-export const FINISH_CODES = ["NONE", "MATTE_LAMINATION", "GLOSS_LAMINATION", "SPOT_UV"] as const;
+export const FINISH_CODES = [
+  "NONE",
+  "MATTE_LAMINATION",
+  "GLOSS_LAMINATION",
+  "SPOT_UV",
+  // Added by 3D integration: priced from rate-card surcharges like the others.
+  "SOFT_TOUCH_LAMINATION",
+  "VARNISH",
+  "HOT_FOIL",
+  "EMBOSS",
+  "DEBOSS",
+] as const;
 export type FinishCode = (typeof FINISH_CODES)[number];
 
 /**

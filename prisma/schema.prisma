@@ -170,6 +170,31 @@ model Structure {
   rateCards RateCard[]
 }
 
+// Added by 3D integration: every model of the library (src/lib/library) the designer and the
+// catalogue show: family box styles and containers. Each is produced and priced as one of its
+// BASE structures (Structure rows + their rate cards), per board.
+model CatalogModel {
+  id            String  @id @default(cuid())
+  code          String  @unique // library model code, e.g. FEFCO_0203, ECMA_TUCK_STE, ROUND_BOTTLE
+  slug          String  @unique
+  kind          String  // "box" | "vessel"
+  group         String  // ModelGroup: BOXES | CARTONS | RIGID | TRAYS | TUBES | BOTTLES_JARS | POUCHES | CANS
+  source        String  // generator family
+  standard      String  @default("")
+  nameAr        String
+  nameEn        String
+  descriptionAr String
+  descriptionEn String
+  baseCodes     Json    // StructureCode[]: base structures (rate cards) per board / print material
+  materials     Json    // MaterialCode[]
+  presets       Json    // size presets (box: DimsPreset[], vessel: { id, name, dims }[])
+  imageUrl      String
+  sortOrder     Int     @default(0)
+  active        Boolean @default(true)
+
+  @@index([group, sortOrder])
+}
+
 model Material {
   id         String  @id @default(cuid())
   code       String  @unique // e.g. E_FLUTE_KRAFT
@@ -238,7 +263,11 @@ model Design {
   owner         User?     @relation(fields: [ownerId], references: [id], onDelete: SetNull)
   anonId        String?   // anonymous browser id (cookie "elba_anon") before sign-up
   name          String    @default("")
-  structureCode String    // StructureCode
+  structureCode String    // StructureCode (the BASE structure a library model is priced as)
+  // Added by 3D integration: library model (family box style or container), null = the core structure.
+  modelCode     String?
+  // Added by 3D integration: { features?, finishes?, vessel? } (DesignDoc fields beyond the columns).
+  config        Json?
   dims          Json      // Dims (mm)
   materialId    String?
   material      Material? @relation(fields: [materialId], references: [id])
@@ -343,6 +372,9 @@ model OrderItem {
   proofId       String?
   proof         Proof?  @relation(fields: [proofId], references: [id])
   structureCode String
+  // Added by 3D integration: library model and its config ({ features?, finishes?, vessel? }).
+  modelCode     String?
+  config        Json?
   dims          Json    // Dims
   materialCode  String
   finishCode    String

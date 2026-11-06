@@ -10,6 +10,8 @@ import type {
   RateTier,
   StructureCode,
   StructureFamily,
+  StructureFeatures,
+  DesignVessel,
   VendorCapabilities,
 } from "@/types";
 
@@ -35,6 +37,20 @@ export interface QuoteInput {
   vendorId?: string;
   /** Buyer's delivery zone. */
   zone: DeliveryZone;
+  /**
+   * Added by 3D integration: the library model actually made (family box style or container).
+   * `structureCode` is then its BASE structure (rate card, vendors); the board area comes from
+   * the model's own dieline / print areas and `dims` are the model's dims.
+   */
+  model?: QuoteModel;
+}
+
+/** A library model (src/lib/library) to price through its base structure's rate cards. */
+export interface QuoteModel {
+  code: string;
+  features?: StructureFeatures;
+  /** Containers: size, surfaces etc. (DesignDoc.vessel). */
+  vessel?: DesignVessel;
 }
 
 // ───────────────────────── Data the engine prices from (DB-free) ─────────────────────────

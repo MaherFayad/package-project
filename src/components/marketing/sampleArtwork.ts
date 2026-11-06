@@ -39,9 +39,13 @@ export const STRUCTURE_THEME: Record<StructureCode, SampleTheme> = {
   GABLE_BOX: T.nile,
   PAPER_TUBE: T.khan,
   RIGID_BOX: T.khan,
+  ROLL_LABEL: T.sabra,
+  PRINTED_POUCH: T.souq,
+  PRINTED_TUBE: T.lamsa,
 };
 
-export function sampleArtwork(model: DielineModel, th: SampleTheme, font = "Inter"): ArtworkSurface {
+export function sampleArtwork(model: DielineModel, th: SampleTheme): ArtworkSurface {
+  const font = "Inter" as const;
   const layers: ArtworkSurface["layers"] = [];
   for (const [id, f] of Object.entries(model.faces) as [FaceId, { width: number; height: number }][]) {
     const big = id === "top" || id === "front";
@@ -49,7 +53,7 @@ export function sampleArtwork(model: DielineModel, th: SampleTheme, font = "Inte
     layers.push({
       id: `t-${id}`, kind: "text", face: id, surface: "outside", x: f.width / 2, y: f.height * (big && th.tag ? 0.46 : 0.5),
       width: f.width * 0.9, height: f.height * 0.5, rotation: 0, text: th.brand, fontFamily: font,
-      fontSizePt: size * 2.2, fontWeight: 800, color: th.ink, align: "center", direction: "ltr",
+      fontSizePt: size * 2.2, fontWeight: 700, color: th.ink, align: "center", direction: "ltr",
     });
     if (big && th.tag) {
       layers.push({

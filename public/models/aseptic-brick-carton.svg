@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360" viewBox="0 0 480 360" role="img" aria-label="Aseptic brick carton">
+
+<ellipse cx="240" cy="307.8" rx="59.8" ry="19.8" fill="rgba(0,0,0,.07)"/>
+<g stroke="rgba(0,0,0,.18)" stroke-width="1" stroke-linejoin="round"><path d="M217.4 247.5L177 274.5L226 270.4Z" fill-rule="evenodd" fill="#e6e4de"/><path d="M177 273.7L261.9 301.6L286.9 284.9L202 256.9Z" fill-rule="evenodd" fill="#e6e4de"/><path d="M261.9 302.4L302.2 275.4L253.3 279.4Z" fill-rule="evenodd" fill="#e6e4de"/><path d="M177.8 70.5L177.8 274.7L218.1 247.7L218.1 43.4Z" fill-rule="evenodd" fill="#adaba7"/><path d="M216.8 43.5L216.8 247.8L301.7 275.7L301.7 71.4Z" fill-rule="evenodd" fill="#c9c8c2"/><path d="M197.2 87.8L177 70.2L217.4 43.2Z" fill-rule="evenodd" fill="#b5b5b3"/><path d="M177 70.2L261.9 98.1L261.9 302.4L177 274.5Z" fill-rule="evenodd" fill="#d2d2d0"/><path d="M302.2 71.1L302.2 275.4L261.9 302.4L261.9 98.1Z" fill-rule="evenodd" fill="#b5b5b3"/><path d="M202 53.5L286.9 81.4L261.9 98.1L177 70.2Z" fill-rule="evenodd" fill="#f0f0ed"/><path d="M282.8 115.9L303 71.3L262.6 98.4Z" fill-rule="evenodd" fill="#adaba7"/></g>
+</svg>

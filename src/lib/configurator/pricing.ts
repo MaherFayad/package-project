@@ -26,12 +26,37 @@ import { isBoxConfig, type BoxConfig, type ModelConfig, type VesselConfigInput }
 
 const t = (en: string, ar: string): LocalizedText => ({ ar, en });
 
-/** Finishes the rate cards price today (DB Finish rows). */
+/** Finishes the rate cards price (DB Finish rows + RateCard.finishSurcharges). */
 const PRICED: Partial<Record<ConfigFinishCode, FinishCode>> = {
   MATTE_LAMINATION: "MATTE_LAMINATION",
   GLOSS_LAMINATION: "GLOSS_LAMINATION",
   SPOT_UV: "SPOT_UV",
+  SOFT_TOUCH_LAMINATION: "SOFT_TOUCH_LAMINATION",
+  GLOSS_VARNISH: "VARNISH",
+  MATTE_VARNISH: "VARNISH",
+  FOIL_GOLD: "HOT_FOIL",
+  FOIL_SILVER: "HOT_FOIL",
+  FOIL_ROSE_GOLD: "HOT_FOIL",
+  EMBOSS: "EMBOSS",
+  DEBOSS: "DEBOSS",
 };
+
+/** Pricing finish code → the configurator finish it stands for (DesignDoc.finishCode → config). */
+export const FINISH_FROM_PRICED: Record<Exclude<FinishCode, "NONE">, ConfigFinishCode> = {
+  MATTE_LAMINATION: "MATTE_LAMINATION",
+  GLOSS_LAMINATION: "GLOSS_LAMINATION",
+  SPOT_UV: "SPOT_UV",
+  SOFT_TOUCH_LAMINATION: "SOFT_TOUCH_LAMINATION",
+  VARNISH: "GLOSS_VARNISH",
+  HOT_FOIL: "FOIL_GOLD",
+  EMBOSS: "EMBOSS",
+  DEBOSS: "DEBOSS",
+};
+
+/** The pricing finish a configurator finish is charged as (null = manual quote). */
+export function pricedFinish(code: ConfigFinishCode): FinishCode | null {
+  return PRICED[code] ?? null;
+}
 
 /** Finishes a vendor lists in VendorCapabilities.extraFinishes (quoted manually). */
 const EXTRA: Partial<Record<ConfigFinishCode, ExtraFinishCode>> = {
@@ -193,8 +218,9 @@ export function requiredCapabilities(cfg: ModelConfig): PrintRequirements {
   for (const f of cfg.finishes) {
     const p = PRICED[f.code];
     if (p) finishes.add(p);
+    // Extra (machine-inferred) finishes only matter for finishes rate cards do not price.
     const e = EXTRA[f.code];
-    if (e) extra.add(e);
+    if (e && !p) extra.add(e);
   }
   if (!isBoxConfig(cfg)) return { structure: null, material: null, board: null, finishes: [...finishes], extraFinishes: [...extra], colours: colourCount(cfg) };
   return {
@@ -366,7 +392,8 @@ export function toDesignDocPatch(cfg: BoxConfig): Pick<DesignDoc, "structureCode
 
 /** A BoxConfig for an existing DesignDoc (spot UV masks start empty: the buyer picks layers). */
 export function fromDesignDoc(doc: DesignDoc, quantity = 250): BoxConfig {
-  const finishes: BoxConfig["finishes"] = doc.finishCode === "NONE" ? [] : [{ code: doc.finishCode, mask: doc.finishCode === "SPOT_UV" ? { surface: "outside", layerIds: [] } : undefined }];
+  const fromDoc = doc.finishes?.length ? doc.finishes : doc.finishCode === "NONE" ? [] : [{ code: FINISH_FROM_PRICED[doc.finishCode] }];
+  const finishes: BoxConfig["finishes"] = fromDoc.map((f) => ({ code: f.code, mask: FINISHES[f.code].masked ? (f.mask ?? { surface: "outside", layerIds: [] }) : undefined }));
   const f = doc.features ?? {};
   const board = (BOX_BOARD_CODES as readonly string[]).includes(doc.materialCode) ? (doc.materialCode as BoxBoardCode) : "E_FLUTE_KRAFT";
   return {

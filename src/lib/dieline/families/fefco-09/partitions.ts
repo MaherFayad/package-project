@@ -1,6 +1,6 @@
 import { Matrix4 } from "three";
 import { DielineBuilder } from "../../builder";
-import { centroid, pt } from "../../geometry";
+import { bboxOf, pt } from "../../geometry";
 import type { Polygon } from "../../types";
 import { IDENTITY, type Quat } from "./engine";
 import type { FittingDraft } from "./types";
@@ -106,7 +106,9 @@ export function slottedGrid(g: SlottedGridInput): FittingDraft {
   rootPanel.printable = true;
   b.pieceLabels.set(first.id, "Divider");
   // Root model frame: model = flat − c (identity closed rotation). host = M0 · flat.
-  const c0 = centroid(rootPanel.polygon);
+  // Same pivot as the fold engine's root panel (panelPivot): the bounding-box centre.
+  const bb = bboxOf(rootPanel.polygon);
+  const c0 = { x: bb.x + bb.width / 2, y: bb.y + bb.height / 2 };
   const toModel = new Matrix4().makeTranslation(-c0.x, c0.y, 0).multiply(first.host.clone().invert());
   for (const s of rest) {
     const m = toModel.clone().multiply(s.host);

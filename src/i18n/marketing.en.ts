@@ -38,7 +38,7 @@ export const marketingEn = {
     title: "Custom boxes. See them in 3D first.",
     body: "Design your printed box for free, get an instant price in EGP and order from vetted Egyptian printers. From 100 boxes.",
     phoneLabel: "Mobile number (optional)",
-    phonePlaceholder: "Mobile number, e.g. 010 1234 5678",
+    phonePlaceholder: "010 1234 5678",
     phoneError: "Enter an Egyptian mobile number of 11 digits starting with 01, or leave it empty.",
     submit: "Start designing free",
     fine: "No account needed to design. Add your mobile to save designs and see your exact price: we send a one-time code. No marketing messages unless you opt in.",
@@ -58,6 +58,8 @@ export const marketingEn = {
   marquee: {
     label: "Sample designs made in the Elba designer",
     caption: "Sample design: {name}",
+    pause: "Pause the samples strip",
+    play: "Play the samples strip",
   },
   values: {
     title: "Everything you need to get your box made",
@@ -157,6 +159,12 @@ export const marketingEn = {
     body: "Start with a mailer box or pick another style. You can change everything later.",
     primary: "Start designing free",
     secondary: "Find a printer",
+    tileOrder: "Order EL-1042",
+    tileOrderStatus: "Out for delivery",
+    tileOrderMeta: "Alexandria · tracked",
+    tilePay: "Pay your way",
+    tileProof: "Proof approved",
+    tileProofMeta: "3D and PDF proof",
   },
   footer: {
     label: "Footer",
@@ -192,7 +200,7 @@ export const marketingEn = {
     onRequest: "Price on request",
     sizes: "{L}–{Lmax} × {W}–{Wmax} × {H}–{Hmax} mm",
     design: "Design free",
-    count: "{count} styles",
+    count: "Styles: {count}",
     family: {
       CORRUGATED: "Corrugated boxes",
       FOLDING_CARTON: "Folding cartons",

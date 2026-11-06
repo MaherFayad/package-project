@@ -107,6 +107,6 @@ test("Arabic editor is RTL, keeps the 3D view unmirrored and gates saving", asyn
 });
 
 test("unknown structure is a 404", async ({ page }) => {
-  const res = await page.goto("/en/design/rigid-box");
+  const res = await page.goto("/en/design/no-such-box");
   expect(res?.status()).toBe(404);
 });

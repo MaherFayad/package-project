@@ -22,7 +22,7 @@ import {
   Text,
   TextField,
 } from "@/components/ui";
-import { BADGE_QTY, fetchQuote, type PriceState } from "./lib/quote";
+import { BADGE_QTY, fetchQuote, quoteKey, type PriceState } from "./lib/quote";
 import styles from "./designer.module.css";
 
 export type GateReason = "price" | "save" | "export" | "share" | "order";
@@ -109,7 +109,7 @@ export function PriceModal({
     return () => ctrl.abort();
     // Re-price when the priced spec changes (not on artwork edits).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, qty, attempt, doc.structureCode, doc.dims.L, doc.dims.W, doc.dims.H, doc.materialCode, doc.finishCode, doc.printSides]);
+  }, [open, qty, attempt, quoteKey(doc, qty)]);
 
   return (
     <Modal

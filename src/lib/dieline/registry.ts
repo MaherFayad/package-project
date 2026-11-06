@@ -24,8 +24,8 @@ export interface StructureDef {
   /** Boards the structure can be made from (same family). */
   materials: MaterialCode[];
   features: FeatureSupport;
-  /** "cylinder": L = W = diameter, H = height (show one "diameter" field). */
-  shape: "box" | "cylinder";
+  /** "cylinder": L = W = diameter, H = height (show one "diameter" field). "flat": a container print part (label, pouch web, tube body). */
+  shape: "box" | "cylinder" | "flat";
   /** Separately cut blanks before optional dividers (2 = lid + base). */
   pieces: 1 | 2;
   /** Delivered glued flat (needs a gluer) vs. flat unglued (folded by the buyer). */
@@ -275,6 +275,50 @@ const ENTRIES: Record<StructureCode, Entry> = {
     glued: true,
     uses: ["gift", "cosmetics", "apparel"],
   },
+  // Added by 3D integration: printed parts for containers. Designed on the container model
+  // (src/lib/library); L × H here is the flat part the printer cuts per unit.
+  ROLL_LABEL: {
+    slug: "roll-labels",
+    standard: "Die-cut roll labels / shrink sleeves",
+    name: { ar: "ملصقات رول", en: "Roll labels" },
+    description: {
+      ar: "ملصقات مطبوعة على رول من الورق أو البولي بروبيلين أو أكمام حرارية، بمقاس العبوة.",
+      en: "Printed roll labels on paper or BOPP, or PETG shrink sleeves, sized to the container.",
+    },
+    presets: [p("wrap-500ml", "زجاجة 500 مل", "500 ml bottle wrap", { L: 215, W: 1, H: 70 }, true), p("jar-front", "برطمان", "Jar front", { L: 90, W: 1, H: 60 }, true)],
+    shape: "flat",
+    pieces: 1,
+    glued: false,
+    uses: ["food", "cosmetics", "retail"],
+  },
+  PRINTED_POUCH: {
+    slug: "printed-pouches",
+    standard: "Laminated flexible pouch",
+    name: { ar: "أكياس مطبوعة", en: "Printed pouches" },
+    description: {
+      ar: "أكياس مرنة مطبوعة من رقائق PET/PE أو كرافت/PE بسحاب وقاع قائم.",
+      en: "Printed flexible pouches in PET/PE or kraft/PE laminate, with zipper and stand-up base.",
+    },
+    presets: [p("pouch-250g", "250 جم", "250 g", { L: 320, W: 1, H: 230 }, true), p("pouch-500g", "500 جم", "500 g", { L: 400, W: 1, H: 280 }, true)],
+    shape: "flat",
+    pieces: 1,
+    glued: false,
+    uses: ["food", "retail"],
+  },
+  PRINTED_TUBE: {
+    slug: "printed-tubes",
+    standard: "PE / laminate squeeze tube",
+    name: { ar: "أنابيب مطبوعة", en: "Printed squeeze tubes" },
+    description: {
+      ar: "أنابيب بلاستيكية مرنة مطبوعة للكريمات ومعجون الأسنان.",
+      en: "Printed PE squeeze tubes for creams, gels and toothpaste.",
+    },
+    presets: [p("tube-50ml", "50 مل", "50 ml", { L: 100, W: 1, H: 100 }, true), p("tube-100ml", "100 مل", "100 ml", { L: 120, W: 1, H: 120 }, true)],
+    shape: "flat",
+    pieces: 1,
+    glued: false,
+    uses: ["cosmetics"],
+  },
 };
 
 export const STRUCTURES: Record<StructureCode, StructureDef> = Object.fromEntries(
@@ -293,6 +337,9 @@ export const STRUCTURES: Record<StructureCode, StructureDef> = Object.fromEntrie
 ) as Record<StructureCode, StructureDef>;
 
 export const STRUCTURE_LIST: StructureDef[] = STRUCTURE_CODES.map((c) => STRUCTURES[c]);
+
+/** Box structures only (no container print parts): what box catalogues list. */
+export const BOX_STRUCTURE_LIST: StructureDef[] = STRUCTURE_LIST.filter((s) => s.shape !== "flat");
 
 export function structureBySlug(slug: string): StructureDef | null {
   return STRUCTURE_LIST.find((s) => s.slug === slug) ?? null;

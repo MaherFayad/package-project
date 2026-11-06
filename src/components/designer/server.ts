@@ -1,6 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { fromJson, toJson } from "@/lib/json";
 import { ANON_COOKIE } from "@/lib/auth/constants";
@@ -27,7 +27,7 @@ import {
 } from "@/types";
 import { DEFAULT_DIMS, STRUCTURE_FAMILY, STRUCTURE_LIMITS, defaultMaterialFor, materialFitsStructure } from "@/lib/dieline";
 import { FALLBACK_PRESETS, STRUCTURE_SLUGS } from "./lib/catalog";
-import { layerSchema } from "./lib/doc";
+import { designConfigSchema as configSchema, designDocSchema, layerSchema } from "./lib/doc";
 import { canRead, canWrite, type Actor as AccessActor } from "./lib/access";
 
 export { canRead, canWrite };
@@ -96,7 +96,7 @@ export function rowToDoc(row: DesignRow): DesignDoc | null {
       .map((r) => r.data as ArtworkLayer)
       .filter((l) => l.surface === side);
   }
-  return {
+  const doc: DesignDoc = {
     v: 1,
     id: row.id,
     name: row.name,
@@ -107,6 +107,21 @@ export function rowToDoc(row: DesignRow): DesignDoc | null {
     printSides: row.printSides === "BOTH" ? "BOTH" : ("OUTSIDE" as PrintSides),
     artwork: art,
   };
+  // Added by 3D integration: library model + config (features, finishes, container).
+  const extra = configSchema.safeParse({ modelCode: row.modelCode ?? undefined, ...(fromJson<object | null>(row.config ?? null) ?? {}) });
+  if (extra.success) {
+    const e = extra.data;
+    const withModel = { ...doc, ...(e.modelCode ? { modelCode: e.modelCode } : {}), ...(e.features ? { features: e.features } : {}), ...(e.finishes ? { finishes: e.finishes } : {}), ...(e.vessel ? { vessel: e.vessel } : {}) } as DesignDoc;
+    // A model whose material was changed underneath (admin edits): keep the base design.
+    if (designDocSchema.safeParse(withModel).success) return withModel;
+  }
+  return doc;
+}
+
+/** The DesignDoc fields stored in Design.config / OrderItem.config. */
+export function docConfig(doc: DesignDoc): { features?: DesignDoc["features"]; finishes?: DesignDoc["finishes"]; vessel?: DesignDoc["vessel"] } | null {
+  const c = { ...(doc.features ? { features: doc.features } : {}), ...(doc.finishes?.length ? { finishes: doc.finishes } : {}), ...(doc.vessel ? { vessel: doc.vessel } : {}) };
+  return Object.keys(c).length ? c : null;
 }
 
 export interface LoadedDesign {
@@ -135,6 +150,8 @@ export async function saveDesign(doc: DesignDoc, actor: Actor, opts: { id?: stri
   const data = {
     name: doc.name.trim(),
     structureCode: doc.structureCode,
+    modelCode: doc.modelCode ?? null,
+    config: docConfig(doc) ? toJson(docConfig(doc)) : Prisma.JsonNull,
     dims: toJson(doc.dims),
     materialId: material?.id ?? null,
     finishCode: doc.finishCode,

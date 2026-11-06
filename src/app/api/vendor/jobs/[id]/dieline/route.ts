@@ -1,6 +1,7 @@
 import { fromJson } from "@/lib/json";
 import { dielineToSvg, generateDielineForMaterial, DielineValidationError } from "@/lib/dieline";
-import type { Dims, MaterialCode, StructureCode } from "@/types";
+import { emptyArtwork, type Dims, type MaterialCode, type StructureCode } from "@/types";
+import { docGeometry } from "@/lib/library/doc";
 import { loadJobItem, safeFilename } from "../../_shared";
 
 /**
@@ -15,8 +16,23 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const { order, item } = r;
   let svg: string;
   try {
-    const model = generateDielineForMaterial(item.structureCode as StructureCode, fromJson<Dims>(item.dims), item.materialCode as MaterialCode);
-    svg = dielineToSvg(model, { title: `${order.number} ${item.structureCode}` });
+    const libItem = item as typeof item & { modelCode?: string | null; config?: unknown };
+    const lib = libItem.modelCode
+      ? docGeometry({
+          v: 1,
+          name: "",
+          structureCode: item.structureCode as StructureCode,
+          modelCode: libItem.modelCode,
+          dims: fromJson<Dims>(item.dims),
+          materialCode: item.materialCode as MaterialCode,
+          finishCode: "NONE",
+          printSides: "OUTSIDE",
+          artwork: emptyArtwork(),
+          ...(fromJson<object | null>((libItem.config ?? null) as never) ?? {}),
+        })
+      : null;
+    const model = lib?.dieline ?? generateDielineForMaterial(item.structureCode as StructureCode, fromJson<Dims>(item.dims), item.materialCode as MaterialCode);
+    svg = dielineToSvg(model, { title: `${order.number} ${libItem.modelCode ?? item.structureCode}` });
   } catch (e) {
     if (e instanceof DielineValidationError) return new Response("Invalid size", { status: 422 });
     throw e;

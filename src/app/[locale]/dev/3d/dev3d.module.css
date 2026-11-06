@@ -189,3 +189,16 @@
   block-size: auto;
   max-block-size: 70vh;
 }
+
+/* Added by 3D integration: model library section. */
+.libraryGrid {
+  display: grid;
+  gap: var(--p-space-400);
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 64em) {
+  .libraryGrid {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}

@@ -1,15 +1,17 @@
 import Link from "next/link";
-import { Ruler } from "lucide-react";
+import { BadgeCheck, Package, Ruler } from "lucide-react";
 import type { Dims, Locale } from "@/types";
 import { getT, pick } from "@/i18n";
 import type { DictKey } from "@/i18n";
 import { formatDims, formatNumber } from "@/lib/format";
-import { Badge, Breadcrumbs, Button, Card, Icon, Layout, LayoutSection, Text } from "@/components/ui";
-import { designHref, formatCm, sizeHref, sizeSlug, SEO_SIZES, structureHref, structureImage } from "./catalog";
+import { Badge, Button, Card, Icon, Layout, LayoutSection, Text } from "@/components/ui";
+import { designHref, formatCm, sizeHref, sizeSlug, SEO_SIZES, structureHref } from "./catalog";
 import { materialsFor, type MaterialView, type PriceFrom, type StructureView } from "./data";
 import { PriceFromTable } from "./PriceFromTable";
 import type { VendorListItem } from "./vendor-filters";
 import styles from "./store.module.css";
+import mk from "@/components/marketing/marketing.module.css";
+import { renderSrc } from "@/components/marketing/assets";
 
 const RULE_KEYS: Record<string, DictKey> = {
   "H <= W": "store.structure.rule.HW",
@@ -58,29 +60,61 @@ export function StructureDetail({
   const cta = designHref(locale, { structure: structure.code, dims, material: price.material });
 
   return (
-    <div className={styles.page}>
-      <div className={styles.stack}>
-        <div className={styles.headerBlock}>
-          <Breadcrumbs items={crumbs} />
-          <h1 className={styles.pageTitle}>{title}</h1>
-          <p className={styles.lead}>{intro}</p>
-          <div className={styles.badges}>
-            <Badge tone={structure.family === "CORRUGATED" ? "neutral" : "info"}>{t(`store.catalog.family.${structure.family}` as DictKey)}</Badge>
-            <Badge>{structure.code.replace("_", " ")}</Badge>
-            <Badge tone="success">{t("store.structure.minimumValue")}</Badge>
+    <>
+      <section className={`${mk.detailHero} ${mk.bandMint}`} aria-labelledby="structure-title">
+        <div className={`${mk.container} ${mk.detailGrid}`}>
+          <div className={mk.detailCopy}>
+            <nav aria-label={t("store.breadcrumb")} className={`${mk.crumbs} m-enter`}>
+              <ol>
+                {crumbs.map((c, i) => (
+                  <li key={i}>{c.url ? <Link href={c.url}>{c.content}</Link> : <span aria-current="page">{c.content}</span>}</li>
+                ))}
+              </ol>
+            </nav>
+            <span className={`${mk.eyebrow} m-enter`} style={{ ["--m-i" as string]: 1, marginBlockEnd: 0 }}>
+              {t(`marketing.boxes.family.${structure.family}` as DictKey)}
+            </span>
+            <h1 id="structure-title" className={`${mk.h1} m-enter`} style={{ ["--m-i" as string]: 2 }}>
+              {title}
+            </h1>
+            <p className={`${mk.lead} m-enter`} style={{ ["--m-i" as string]: 3 }}>
+              {intro}
+            </p>
+            <ul className={`${mk.factRow} m-enter`} style={{ ["--m-i" as string]: 4 }}>
+              <li>
+                <Package size={18} aria-hidden />
+                <bdi>{structure.code.replace("_", " ")}</bdi>
+              </li>
+              <li>
+                <Ruler size={18} aria-hidden />
+                <span className={mk.num}>{formatDims(dims, locale)}</span>
+              </li>
+              <li>
+                <BadgeCheck size={18} aria-hidden />
+                {t("store.structure.minimumValue")}
+              </li>
+            </ul>
+            <div className={`${mk.actions} m-enter`} style={{ ["--m-i" as string]: 5 }}>
+              <Link href={cta} className={`${mk.pill} ${mk.pillLarge}`}>
+                {t("store.structure.designCta")}
+              </Link>
+              <a href="#prices" className={`${mk.pill} ${mk.pillOutline} ${mk.pillLarge}`}>
+                {t("marketing.nav.pricing")}
+              </a>
+            </div>
+          </div>
+          <div className={`${mk.detailMedia} m-enter-scale`} style={{ ["--m-i" as string]: 2 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={renderSrc(structure.code)} alt={t("marketing.boxes.renderAlt", { name })} width={960} height={720} fetchPriority="high" />
           </div>
         </div>
-
+      </section>
+    <div className={styles.page}>
+      <div className={styles.stack}>
         <Layout>
           <LayoutSection>
             <div className={styles.stack}>
-              <Card>
-                <div className={styles.productMedia}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={structureImage(structure.code)} alt={name} width={640} height={480} />
-                </div>
-              </Card>
-
+              <div id="prices" style={{ scrollMarginBlockStart: 96 }} />
               <PriceFromTable locale={locale} dims={dims} price={price} />
 
               <Card title={t("store.structure.specsTitle")} as="section">
@@ -217,6 +251,7 @@ export function StructureDetail({
         </Layout>
       </div>
     </div>
+    </>
   );
 }
 

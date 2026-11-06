@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360" viewBox="0 0 480 360" role="img" aria-label="Pizza box">
+
+<ellipse cx="240" cy="274.4" rx="164.2" ry="19.8" fill="rgba(0,0,0,.07)"/>
+<g stroke="rgba(0,0,0,.18)" stroke-width="1" stroke-linejoin="round"><path d="M412.1 144.4L207.2 77.1L207.2 107.8L412.1 175.1Z" fill-rule="evenodd" fill="#8d6943"/><path d="M208.9 76.9L68.2 171.2L68.2 202L208.9 107.7Z" fill-rule="evenodd" fill="#795a3a"/><path d="M209.3 106.9L71.8 199L71.8 170.8L209.3 78.7Z" fill-rule="evenodd" fill="#856644"/><path d="M412.8 173.6L207.9 106.3L67.2 200.6L272.1 267.9Z" fill-rule="evenodd" fill="#a1784d"/><path d="M272.1 238.3L67.2 170.9L207.9 76.6L412.8 143.9Z" fill-rule="evenodd" fill="#b1875a"/><path d="M409.2 144.4L271.7 236.5L271.7 264.8L409.2 172.6Z" fill-rule="evenodd" fill="#795a3a"/><path d="M412.8 174.7L272.1 269L272.1 238.3L412.8 143.9Z" fill-rule="evenodd" fill="#856644"/><path d="M272.1 269L67.2 201.7L67.2 170.9L272.1 238.3Z" fill-rule="evenodd" fill="#9b764f"/></g>
+</svg>

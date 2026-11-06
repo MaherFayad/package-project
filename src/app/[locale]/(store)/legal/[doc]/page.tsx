@@ -4,9 +4,9 @@ import { notFound } from "next/navigation";
 import { getT, toLocale } from "@/i18n";
 import type { DictKey } from "@/i18n";
 import { formatDate } from "@/lib/format";
-import { Banner, Breadcrumbs, Card, Layout, LayoutSection, Text } from "@/components/ui";
+import { TriangleAlert } from "lucide-react";
 import { LEGAL_DOCS, LEGAL_DOC_IDS, LEGAL_UPDATED, isLegalDoc, paragraphs } from "@/components/store/legal";
-import styles from "@/components/store/store.module.css";
+import mk from "@/components/marketing/marketing.module.css";
 
 type Props = { params: Promise<{ locale: string; doc: string }> };
 
@@ -39,60 +39,63 @@ export default async function LegalPage({ params }: Props) {
   const sections = LEGAL_DOCS[doc];
 
   return (
-    <div className={styles.page}>
-      <div className={styles.stack}>
-        <div className={styles.headerBlock}>
-          <Breadcrumbs items={[{ content: t("nav.home"), url: `/${locale}` }, { content: title }]} />
-          <h1 className={styles.pageTitle}>{title}</h1>
-          <Text as="p" tone="subdued">
+    <>
+      <section className={`${mk.centerHero} ${mk.bandMint}`} style={{ paddingBlockEnd: "clamp(40px, 5vw, 72px)" }} aria-labelledby="legal-title">
+        <div className={`${mk.container} ${mk.narrow}`}>
+          <span className={`${mk.eyebrow} m-enter`}>{t("marketing.legal.eyebrow")}</span>
+          <h1 id="legal-title" className={`${mk.h1} m-enter`} style={{ ["--m-i" as string]: 1 }}>
+            {title}
+          </h1>
+          <p className={`${mk.lead} m-enter`} style={{ ["--m-i" as string]: 2 }}>
             {t("legal.updated", { date: formatDate(LEGAL_UPDATED, locale, "long") })}
-          </Text>
+          </p>
+          <p className="m-enter" style={{ ["--m-i" as string]: 3, marginBlockStart: 16 }}>
+            <span className={mk.draft} role="note">
+              <TriangleAlert size={16} aria-hidden />
+              {t("legal.draftBanner")}
+            </span>
+          </p>
         </div>
-        <Banner tone="warning" title={t("legal.draftBanner")} />
-        <Layout>
-          <LayoutSection>
-            <Card>
-              <article className={styles.stack} data-testid="legal-body">
-                <Text as="p" variant="bodyLg">
-                  {t(`legal.${doc}.intro` as DictKey)}
-                </Text>
+      </section>
+      <section className={mk.band} style={{ paddingBlockStart: 56 }}>
+        <div className={`${mk.container} ${mk.legalGrid}`}>
+          <aside className={mk.legalToc} aria-label={t("legal.contents")}>
+            <nav aria-labelledby="toc-title">
+              <h2 id="toc-title">{t("legal.contents")}</h2>
+              <ul>
                 {sections.map((id) => (
-                  <section key={id} id={id} className={styles.legalSection} aria-labelledby={`h-${id}`}>
-                    <h2 id={`h-${id}`}>{t(`legal.${doc}.sections.${id}.title` as DictKey)}</h2>
-                    {paragraphs(t(`legal.${doc}.sections.${id}.body` as DictKey)).map((p, i) => (
-                      <p key={i}>{p}</p>
-                    ))}
-                  </section>
+                  <li key={id}>
+                    <a href={`#${id}`}>{t(`legal.${doc}.sections.${id}.title` as DictKey)}</a>
+                  </li>
                 ))}
-              </article>
-            </Card>
-          </LayoutSection>
-          <LayoutSection variant="oneThird" as="aside" aria-label={t("legal.contents")}>
-            <div className={`${styles.stack} ${styles.sticky}`}>
-              <Card title={t("legal.contents")}>
-                <nav aria-label={t("legal.contents")}>
-                  <ul className={styles.toc}>
-                    {sections.map((id) => (
-                      <li key={id}>
-                        <a href={`#${id}`}>{t(`legal.${doc}.sections.${id}.title` as DictKey)}</a>
-                      </li>
-                    ))}
-                  </ul>
-                </nav>
-              </Card>
-              <Card title={t("legal.otherDocs")}>
-                <ul className={styles.toc}>
-                  {LEGAL_DOC_IDS.filter((d) => d !== doc).map((d) => (
-                    <li key={d}>
-                      <Link href={`/${locale}/legal/${d}`}>{t(`legal.${d}.title` as DictKey)}</Link>
-                    </li>
-                  ))}
-                </ul>
-              </Card>
-            </div>
-          </LayoutSection>
-        </Layout>
-      </div>
-    </div>
+              </ul>
+            </nav>
+            <nav aria-labelledby="other-title">
+              <h2 id="other-title">{t("legal.otherDocs")}</h2>
+              <ul>
+                {LEGAL_DOC_IDS.map((d) => (
+                  <li key={d}>
+                    <Link href={`/${locale}/legal/${d}`} aria-current={d === doc ? "page" : undefined}>
+                      {t(`legal.${d}.title` as DictKey)}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          </aside>
+          <article className={mk.prose} data-testid="legal-body">
+            <p style={{ fontSize: "1.1875rem", color: "var(--mk-ink)" }}>{t(`legal.${doc}.intro` as DictKey)}</p>
+            {sections.map((id) => (
+              <section key={id} id={id} aria-labelledby={`h-${id}`}>
+                <h2 id={`h-${id}`}>{t(`legal.${doc}.sections.${id}.title` as DictKey)}</h2>
+                {paragraphs(t(`legal.${doc}.sections.${id}.body` as DictKey)).map((p, i) => (
+                  <p key={i}>{p}</p>
+                ))}
+              </section>
+            ))}
+          </article>
+        </div>
+      </section>
+    </>
   );
 }

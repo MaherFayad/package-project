@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360" viewBox="0 0 480 360" role="img" aria-label="Four-corner glued tray">
+
+<ellipse cx="240" cy="282.7" rx="164.2" ry="19.8" fill="rgba(0,0,0,.07)"/>
+<g stroke="rgba(0,0,0,.18)" stroke-width="1" stroke-linejoin="round"><path d="M67.6 200.5L179.2 125.7L179.2 68.3L67.6 143.1Z" fill-rule="evenodd" fill="#adaba7"/><path d="M178.4 125.8L412.5 202.7L412.5 145.3L178.4 68.4Z" fill-rule="evenodd" fill="#c9c8c2"/><path d="M67.2 199.9L301.3 276.8L412.8 202L178.7 125.1Z" fill-rule="evenodd" fill="#e6e4de"/><path d="M67.2 143L301.3 219.9L301.3 277.3L67.2 200.3Z" fill-rule="evenodd" fill="#d2d2d0"/><path d="M301.3 219.9L412.8 145.1L412.8 202.5L301.3 277.3Z" fill-rule="evenodd" fill="#b5b5b3"/></g>
+</svg>

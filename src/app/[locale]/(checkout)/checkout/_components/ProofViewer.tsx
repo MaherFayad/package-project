@@ -1,25 +1,17 @@
 "use client";
 
-import dynamic from "next/dynamic";
+import { DesignScene } from "@/components/designer/DesignScene";
 import { useMemo, useState, type RefObject } from "react";
 import { FACE_IDS, type DesignDoc } from "@/types";
-import { BOARD_SPECS, tryGenerateDieline } from "@/lib/dieline";
+import { docGeometry } from "@/lib/library/doc";
 import { ViewControls, type PackagingSceneHandle } from "@/components/three";
 import { useArtworkCanvases } from "@/components/designer/useArtworkCanvases";
 import { DielineView } from "@/components/designer/DielineView";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
-import { Button, ButtonGroup, Spinner, Tabs } from "@/components/ui";
+import { Button, ButtonGroup, Tabs } from "@/components/ui";
 import styles from "./checkout.module.css";
 
-const Scene3D = dynamic(() => import("@/components/designer/Scene3D"), {
-  ssr: false,
-  loading: () => (
-    <div className={styles.sceneLoading}>
-      <Spinner size="large" decorative />
-    </div>
-  ),
-});
 
 /**
  * Proof review: the 3D render and the flat dieline proof of the exact design snapshot that will
@@ -29,10 +21,9 @@ export function ProofViewer({ doc, handleRef }: { doc: DesignDoc; handleRef: Ref
   const { t } = useI18n();
   const [tab, setTab] = useState(0);
   const [fold, setFold] = useState(1);
-  const model = useMemo(
-    () => tryGenerateDieline(doc.structureCode, doc.dims, { thicknessMm: BOARD_SPECS[doc.materialCode].thicknessMm }),
-    [doc.structureCode, doc.dims, doc.materialCode],
-  );
+  // Box dieline or container print sheet (src/lib/library/doc).
+  const geo = useMemo(() => docGeometry(doc), [doc]);
+  const model = geo?.dieline ?? null;
   const both = doc.printSides === "BOTH";
   const { canvases, version } = useArtworkCanvases(model, doc.artwork, doc.materialCode, both);
   const panelLabels = useMemo(() => {
@@ -57,20 +48,7 @@ export function ProofViewer({ doc, handleRef }: { doc: DesignDoc; handleRef: Ref
         <div className={styles.stage} dir="ltr">
           {/* The 3D scene stays mounted (hidden on the flat tab) so the approval screenshot works. */}
           <div className={styles.scene} hidden={tab !== 0}>
-            <Scene3D
-              model={model}
-              material={doc.materialCode}
-              finish={doc.finishCode}
-              foldProgress={fold}
-              canvases={canvases}
-              version={version}
-              printInside={both}
-              handleRef={handleRef}
-              ariaLabel={t("viewer.label")}
-              roleDescription={t("viewer.roleDescription")}
-              keyboardHint={t("viewer.keyboardHint")}
-              fallback={t("viewer.unsupported")}
-            />
+            {geo ? <DesignScene doc={doc} geo={geo} canvases={canvases} version={version} fold={fold} handleRef={handleRef} /> : null}
             <div className={styles.viewControls}>
               <ViewControls
                 handle={handleRef}

@@ -9,6 +9,7 @@
  * Money is integer piasters everywhere. Prices are ex-VAT on lines; VAT 14% is a separate amount.
  */
 export * from "./types";
+export { designQuoteFields } from "./design";
 export {
   DEFAULT_PRICING_CONFIG,
   PRICE_INDEX_TABLE,
@@ -22,7 +23,7 @@ export {
 } from "./config";
 export { toPiasters, vatOf, withMargin, sumPiasters, formatPrice } from "./money";
 export { interpolateUnit } from "./tiers";
-export { dielineBoardArea, estimateBoardArea, type BoardArea, type BoardAreaProvider } from "./area";
+export { dielineBoardArea, estimateBoardArea, modelBoardArea, type BoardArea, type BoardAreaProvider } from "./area";
 export { CITY_ZONE, zoneForGovernorate, isDeliveryZone, flatPackBundles, deliveryEstimate, type FlatPackBundle } from "./delivery";
 export { sameSize, standardPresets, vendorHasDie, nearbyStandardSizes } from "./standard";
 export {

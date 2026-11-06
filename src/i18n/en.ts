@@ -3,6 +3,7 @@ import { vendorPortalEn } from "./vendorPortal.en";
 import { checkoutEn } from "./checkout.en";
 import { adminEn } from "./admin.en";
 import { marketingEn } from "./marketing.en";
+import { libraryEn } from "./library.en";
 
 /**
  * English dictionary. This file DEFINES the dictionary shape (type `Dictionary`);
@@ -107,6 +108,9 @@ export const en = {
     GABLE_BOX: "Gable box with handle",
     PAPER_TUBE: "Paper tube",
     RIGID_BOX: "Rigid box (lid and base)",
+    ROLL_LABEL: "Roll labels",
+    PRINTED_POUCH: "Printed pouches",
+    PRINTED_TUBE: "Printed squeeze tubes",
   },
   materials: {
     E_FLUTE_KRAFT: "E-flute kraft",
@@ -116,12 +120,25 @@ export const en = {
     SBS_350: "SBS board 350 gsm",
     GREYBOARD_WRAP: "Greyboard 2 mm, printed wrap",
     KRAFT_TUBE: "Kraft tube 1.5 mm, printed label",
+    LABEL_PAPER: "Semi-gloss label paper",
+    LABEL_WHITE_BOPP: "White BOPP film label",
+    LABEL_CLEAR_BOPP: "Clear BOPP film label",
+    LABEL_METALLIC_BOPP: "Metallic BOPP film label",
+    SHRINK_PETG: "PETG shrink sleeve film",
+    POUCH_PET_PE: "PET/PE pouch laminate",
+    POUCH_KRAFT_PE: "Kraft/PE pouch laminate",
+    TUBE_PE: "PE tube body",
   },
   finishes: {
     NONE: "No finish",
     MATTE_LAMINATION: "Matte lamination",
     GLOSS_LAMINATION: "Gloss lamination",
     SPOT_UV: "Spot UV",
+    SOFT_TOUCH_LAMINATION: "Soft-touch lamination",
+    VARNISH: "Varnish",
+    HOT_FOIL: "Hot foil",
+    EMBOSS: "Emboss",
+    DEBOSS: "Deboss",
   },
   cities: {
     CAIRO: "Cairo",
@@ -208,6 +225,7 @@ export const en = {
   vendorPortal: vendorPortalEn,
   admin: adminEn,
   marketing: marketingEn,
+  library: libraryEn,
   viewer: {
     label: "3D preview of your box",
     roleDescription: "3D viewer",

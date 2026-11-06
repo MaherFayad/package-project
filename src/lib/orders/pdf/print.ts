@@ -24,6 +24,7 @@ import {
   type PDFPage,
   type PDFRef,
 } from "pdf-lib";
+import { docGeometry } from "@/lib/library/doc";
 import type { DesignDoc, PrintSurface, TextLayer } from "@/types";
 import { BOARD_SPECS, generateDieline, paintArtworkSurface, type DielineModel, type Ctx2D } from "@/lib/dieline";
 import {
@@ -190,7 +191,8 @@ function trimRect(model: DielineModel, mirrored: boolean) {
 
 /** Generate the print-ready (or watermarked proof) PDF for a design snapshot. */
 export async function generatePrintPdf(doc: DesignDoc, opts: PrintPdfOptions = {}): Promise<PrintPdfResult> {
-  const model = generateDieline(doc.structureCode, doc.dims, { thicknessMm: BOARD_SPECS[doc.materialCode].thicknessMm });
+  // Library models (family styles, containers) print from their own dieline / label sheet.
+  const model = docGeometry(doc)?.dieline ?? generateDieline(doc.structureCode, doc.dims, { thicknessMm: BOARD_SPECS[doc.materialCode].thicknessMm });
   const surfaces: PrintSurface[] = doc.printSides === "BOTH" ? ["outside", "inside"] : ["outside"];
   const warnings: string[] = [];
   const now = opts.now ?? new Date();

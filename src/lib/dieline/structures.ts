@@ -949,6 +949,17 @@ function nearEdgeTo(p: DielinePanel, edge: [Pt, Pt]): [Pt, Pt] | null {
   return null;
 }
 
+/**
+ * Flat printed part of a container (roll label, pouch web, tube body): one rectangle L × H,
+ * printed on the outside, no folds. The container's own print areas (src/lib/library) carry
+ * the exact label shapes; this is what the printer cuts per unit.
+ */
+function flatPart(dims: Dims): StructureDraft {
+  const b = new DielineBuilder();
+  b.root("front", "front", rectPolygon(0, 0, dims.L, dims.H), "Print area");
+  return { builder: b, closedRotation: IDENTITY };
+}
+
 export const GENERATORS: Record<StructureCode, Generator> = {
   FEFCO_0427: mailer,
   FEFCO_0201: rsc,
@@ -963,4 +974,7 @@ export const GENERATORS: Record<StructureCode, Generator> = {
   GABLE_BOX: gableBox,
   PAPER_TUBE: paperTube,
   RIGID_BOX: rigidBox,
+  ROLL_LABEL: flatPart,
+  PRINTED_POUCH: flatPart,
+  PRINTED_TUBE: flatPart,
 };

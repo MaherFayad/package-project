@@ -115,6 +115,8 @@ const FAMILY_NAME = {
   FOLDING_CARTON: t("folding carton board (SBS)", "كرتون الدوبلكس"),
   RIGID: t("rigid greyboard", "الكرتون المقوى"),
   TUBE: t("a paper tube", "أنبوبة الكرتون"),
+  LABEL: t("label stock", "خامة الملصقات"),
+  FLEXIBLE: t("a flexible laminate", "رقائق مرنة"),
 } as const;
 
 const AXIS_NAME: Record<string, LocalizedText> = {

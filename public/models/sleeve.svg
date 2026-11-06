@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360" viewBox="0 0 480 360" role="img" aria-label="Sleeve">
+
+<ellipse cx="240" cy="288.9" rx="164.2" ry="19.8" fill="rgba(0,0,0,.07)"/>
+<g stroke="rgba(0,0,0,.18)" stroke-width="1" stroke-linejoin="round"><path d="M179 131.8L412.5 208.6L412.5 139L179 62.3Z" fill-rule="evenodd" fill="#c9c8c2"/><path d="M67.2 206.3L300.7 283.1L412.8 207.9L179.3 131.2Z" fill-rule="evenodd" fill="#e6e4de"/><path d="M179.3 62.1L412.8 138.8L300.7 214L67.2 137.2Z" fill-rule="evenodd" fill="#f0f0ed"/><path d="M67.2 137.2L300.7 214L300.7 283.5L67.2 206.8Z" fill-rule="evenodd" fill="#d2d2d0"/></g>
+</svg>

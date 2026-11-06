@@ -219,7 +219,7 @@ describe("fold animation", () => {
 });
 
 describe("illustration", () => {
-  it.each(STRUCTURE_CODES)("%s renders a clean SVG thumbnail from the fold model", async (code) => {
+  it.each(STRUCTURE_CODES.filter((c) => STRUCTURES[c].shape !== "flat"))("%s renders a clean SVG thumbnail from the fold model", async (code) => {
     const { structureIllustrationSvg } = await import("..");
     const out = structureIllustrationSvg(model(code), { outside: "#c49a6c", inside: "#b58a5c", title: STRUCTURES[code].name.en });
     expect(out.startsWith("<svg")).toBe(true);

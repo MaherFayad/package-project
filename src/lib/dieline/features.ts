@@ -45,6 +45,9 @@ export const FEATURE_SUPPORT: Record<StructureCode, FeatureSupport> = {
   GABLE_BOX: { ...NONE, windowFaces: ["front", "back"], handle: true },
   PAPER_TUBE: { ...NONE, lidHeight: true },
   RIGID_BOX: { ...NONE, windowFaces: ["top"], thumbNotch: true, partitions: true, lidHeight: true },
+  ROLL_LABEL: NONE,
+  PRINTED_POUCH: NONE,
+  PRINTED_TUBE: NONE,
 };
 
 /** Features on by default (the structure is not itself without them). */

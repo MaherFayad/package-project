@@ -1,5 +1,6 @@
 import type { Dims, FaceId, PrintSurface, StructureCode, StructureFeatures } from "./structure";
 import type { FinishCode, MaterialCode, PrintSides } from "./material";
+import type { Mm } from "./common";
 
 /**
  * Artwork layer placed on ONE face of the box.
@@ -84,6 +85,80 @@ export interface DesignDoc {
   artwork: Artwork;
   /** Optional structure features (window, handle, partitions…). Absent = none. */
   features?: StructureFeatures;
+  /**
+   * Added by 3D integration. Model from the library (src/lib/library): a family box style
+   * ("FEFCO_0203", "ECMA_TUCK_STE"…) or a container ("ROUND_BOTTLE", "BTL_GLASS_…"). Absent =
+   * the core structure itself. `structureCode` stays the BASE structure the model is priced and
+   * produced as (its rate card), so orders, vendors and invoices keep working unchanged.
+   */
+  modelCode?: string;
+  /** Added by 3D integration: every finish (foil, emboss, soft touch…) with its artwork mask. `finishCode` = the main one. */
+  finishes?: DesignFinish[];
+  /** Added by 3D integration: container settings when `modelCode` is a vessel. */
+  vessel?: DesignVessel;
+}
+
+/** Finishes a buyer can pick in the designer (mirrors CONFIG_FINISH_CODES in src/lib/configurator). */
+export const DESIGN_FINISH_CODES = [
+  "MATTE_LAMINATION",
+  "GLOSS_LAMINATION",
+  "SOFT_TOUCH_LAMINATION",
+  "GLOSS_VARNISH",
+  "MATTE_VARNISH",
+  "SPOT_UV",
+  "FOIL_GOLD",
+  "FOIL_SILVER",
+  "FOIL_ROSE_GOLD",
+  "EMBOSS",
+  "DEBOSS",
+] as const;
+export type DesignFinishCode = (typeof DESIGN_FINISH_CODES)[number];
+
+/** How each designer finish is charged on rate cards (FinishCode surcharges). */
+export const PRICED_FINISH_OF: Record<DesignFinishCode, FinishCode> = {
+  MATTE_LAMINATION: "MATTE_LAMINATION",
+  GLOSS_LAMINATION: "GLOSS_LAMINATION",
+  SOFT_TOUCH_LAMINATION: "SOFT_TOUCH_LAMINATION",
+  GLOSS_VARNISH: "VARNISH",
+  MATTE_VARNISH: "VARNISH",
+  SPOT_UV: "SPOT_UV",
+  FOIL_GOLD: "HOT_FOIL",
+  FOIL_SILVER: "HOT_FOIL",
+  FOIL_ROSE_GOLD: "HOT_FOIL",
+  EMBOSS: "EMBOSS",
+  DEBOSS: "DEBOSS",
+};
+
+/** Every priced finish of a design (main finish + the designer's finish list), no duplicates, no NONE. */
+export function designPricedFinishes(doc: Pick<DesignDoc, "finishCode" | "finishes">): FinishCode[] {
+  const out = new Set<FinishCode>();
+  if (doc.finishCode !== "NONE") out.add(doc.finishCode);
+  for (const f of doc.finishes ?? []) out.add(PRICED_FINISH_OF[f.code]);
+  return [...out].sort();
+}
+
+export interface DesignFinish {
+  code: DesignFinishCode;
+  /** Masked finishes (foil, spot UV, emboss): the artwork layers that carry it. Empty = the whole main face. */
+  mask?: { surface: PrintSurface; layerIds: string[] };
+}
+
+/** A container design: size, what it is made of, what it holds and which surfaces carry print. */
+export interface DesignVessel {
+  /** D diameter/width, H height, G gusset/depth, taper (mm). */
+  dims: { D: Mm; H: Mm; G?: Mm; taper?: Mm };
+  presetId?: string;
+  /** Container material code of the model (glass, PET, aluminium…). */
+  container: string;
+  /** Closure code of the model. */
+  closure: string;
+  closureColor: string;
+  /** Product shown inside (transparent containers). */
+  content: string;
+  /** 0..1 */
+  fill: number;
+  /** Print surfaces (WRAP, FRONT, BACK, SHRINK_SLEEVE, NECK, LID, flexible panels). */
+  surfaces: string[];
 }
 
 export function emptyArtwork(): Artwork {

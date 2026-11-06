@@ -1,4 +1,6 @@
-import type { Dims, MaterialCode, StructureCode } from "@/types";
+import type { DesignDoc, Dims, MaterialCode, StructureCode } from "@/types";
+import { emptyArtwork } from "@/types";
+import { docBoardArea } from "@/lib/library/doc";
 import { tryGenerateDieline, BOARD_SPECS } from "@/lib/dieline";
 
 /** Board consumption of ONE box, as pricing needs it. */
@@ -37,6 +39,10 @@ const ESTIMATE_FACTOR: Record<StructureCode, { blank: number; net: number }> = {
   GABLE_BOX: { blank: 1.7, net: 1.36 },
   PAPER_TUBE: { blank: 1.58, net: 1.08 },
   RIGID_BOX: { blank: 1.71, net: 1.44 },
+  // Flat parts (W = 1): surface ≈ 2·L·H, the part itself is L·H.
+  ROLL_LABEL: { blank: 0.5, net: 0.5 },
+  PRINTED_POUCH: { blank: 0.5, net: 0.5 },
+  PRINTED_TUBE: { blank: 0.5, net: 0.5 },
 };
 
 export function estimateBoardArea(code: StructureCode, dims: Dims): BoardArea {
@@ -62,3 +68,28 @@ export const dielineBoardArea: BoardAreaProvider = (code, dims, material, thickn
     source: "dieline",
   };
 };
+
+/**
+ * Added by 3D integration: board / stock use of a LIBRARY model (family box style or container
+ * labels), from its own dieline or print areas. null when the size is invalid for the model.
+ */
+export function modelBoardArea(
+  input: { structureCode: StructureCode; dims: Dims; model?: { code: string; features?: DesignDoc["features"]; vessel?: DesignDoc["vessel"] } },
+  material: MaterialCode,
+): BoardArea | null {
+  if (!input.model) return null;
+  const doc: DesignDoc = {
+    v: 1,
+    name: "",
+    structureCode: input.structureCode,
+    modelCode: input.model.code,
+    dims: input.dims,
+    materialCode: material,
+    finishCode: "NONE",
+    printSides: "OUTSIDE",
+    artwork: emptyArtwork(),
+    ...(input.model.features ? { features: input.model.features } : {}),
+    ...(input.model.vessel ? { vessel: input.model.vessel } : {}),
+  };
+  return docBoardArea(doc);
+}

@@ -22,6 +22,10 @@ export const STRUCTURE_LIMITS: Record<StructureCode, StructureParamLimits> = {
   // L = W = inner diameter of the tube.
   PAPER_TUBE: { L: { min: 40, max: 150 }, W: { min: 40, max: 150 }, H: { min: 60, max: 350 }, rules: ["L == W"] },
   RIGID_BOX: { L: { min: 60, max: 450 }, W: { min: 50, max: 350 }, H: { min: 20, max: 200 } },
+  // Container print parts: L = label / web width, H = label / web height, W = 1 (flat).
+  ROLL_LABEL: { L: { min: 10, max: 700 }, W: { min: 1, max: 1 }, H: { min: 10, max: 400 } },
+  PRINTED_POUCH: { L: { min: 60, max: 900 }, W: { min: 1, max: 1 }, H: { min: 80, max: 600 } },
+  PRINTED_TUBE: { L: { min: 40, max: 200 }, W: { min: 1, max: 1 }, H: { min: 50, max: 250 } },
 };
 
 /** Default inner dims per structure (mirrors Structure.defaultDims in the seed). */
@@ -39,6 +43,9 @@ export const DEFAULT_DIMS: Record<StructureCode, Dims> = {
   GABLE_BOX: { L: 160, W: 100, H: 120 },
   PAPER_TUBE: { L: 75, W: 75, H: 150 },
   RIGID_BOX: { L: 250, W: 180, H: 80 },
+  ROLL_LABEL: { L: 220, W: 1, H: 80 },
+  PRINTED_POUCH: { L: 320, W: 1, H: 230 },
+  PRINTED_TUBE: { L: 120, W: 1, H: 120 },
 };
 
 export type DimsIssueCode = "TOO_SMALL" | "TOO_LARGE" | "RULE" | "INVALID";

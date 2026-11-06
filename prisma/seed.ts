@@ -16,6 +16,7 @@ import type {
   MaterialCode,
   RateTier,
   StructureCode,
+  StructureFamily,
   StructureParamLimits,
   VendorCapabilities,
   VendorCertification,
@@ -24,6 +25,9 @@ import type {
 } from "../src/types";
 import { canonicalJson, toJson } from "../src/lib/json";
 import { STRUCTURES } from "../src/lib/dieline/registry";
+import { materialFitsStructure } from "../src/lib/dieline/materials";
+import { MODELS } from "../src/lib/library";
+import { baseOf, vesselPrintMaterials } from "../src/lib/library/doc";
 
 const db = new PrismaClient();
 const egp = (n: number) => Math.round(n * 100);
@@ -32,7 +36,7 @@ const egp = (n: number) => Math.round(n * 100);
 interface StructureSeed {
   code: StructureCode;
   slug: string;
-  family: "CORRUGATED" | "FOLDING_CARTON" | "RIGID" | "TUBE";
+  family: StructureFamily;
   nameAr: string;
   nameEn: string;
   descriptionAr: string;
@@ -172,6 +176,11 @@ const LIBRARY_PRICING: { code: StructureCode; slug: string; refArea: number; bas
   { code: "GABLE_BOX", slug: "gable-box", refArea: 0.16, baseTiers: [24, 15, 10, 7, 5.5], dieCost: 1300 },
   { code: "PAPER_TUBE", slug: "paper-tube", refArea: 0.09, baseTiers: [60, 42, 30, 24, 20], dieCost: 0 },
   { code: "RIGID_BOX", slug: "rigid-box", refArea: 0.27, baseTiers: [140, 105, 80, 65, 55], dieCost: 700 },
+  // Added by 3D integration: container print parts. Reference = one 215 × 70 mm wrap label
+  // (0.015 m²), one 250 g stand-up pouch web (0.15 m²) and one 100 ml tube body (0.016 m²).
+  { code: "ROLL_LABEL", slug: "roll-labels", refArea: 0.015, baseTiers: [1.6, 1.05, 0.72, 0.52, 0.42], dieCost: 900 },
+  { code: "PRINTED_POUCH", slug: "printed-pouches", refArea: 0.15, baseTiers: [16, 10.5, 7.5, 5.6, 4.6], dieCost: 0 },
+  { code: "PRINTED_TUBE", slug: "printed-tubes", refArea: 0.016, baseTiers: [11, 7.4, 5.2, 4, 3.3], dieCost: 0 },
 ];
 for (const { code, slug, ...money } of LIBRARY_PRICING) {
   const def = STRUCTURES[code];
@@ -200,6 +209,15 @@ const materials = [
   { code: "SBS_350", family: "FOLDING_CARTON", boardType: "SBS", flute: null, color: "WHITE", gsm: 350, thicknessMm: 0.48, nameAr: "كرتون دوبلكس SBS 350 جم", nameEn: "SBS board 350 gsm", foodSafe: true, mult: 1.12 },
   { code: "GREYBOARD_WRAP", family: "RIGID", boardType: "GREYBOARD", flute: null, color: "WHITE", gsm: 1360, thicknessMm: 2.15, nameAr: "كرتون رمادي 2 مم بورق تغليف مطبوع", nameEn: "Greyboard 2 mm, printed wrap", foodSafe: false, mult: 1 },
   { code: "KRAFT_TUBE", family: "TUBE", boardType: "TUBE", flute: null, color: "WHITE", gsm: 950, thicknessMm: 1.5, nameAr: "أنبوب كرافت 1.5 مم بملصق مطبوع", nameEn: "Kraft tube 1.5 mm, printed label", foodSafe: true, mult: 1 },
+  // Added by 3D integration: label stocks (roll labels, shrink sleeves) and flexible laminates.
+  { code: "LABEL_PAPER", family: "LABEL", boardType: "LABEL", flute: null, color: "WHITE", gsm: 80, thicknessMm: 0.08, nameAr: "ورق ملصقات نصف لامع", nameEn: "Semi-gloss label paper", foodSafe: true, mult: 0.85 },
+  { code: "LABEL_WHITE_BOPP", family: "LABEL", boardType: "LABEL", flute: null, color: "WHITE", gsm: 60, thicknessMm: 0.06, nameAr: "ملصق بولي بروبيلين أبيض", nameEn: "White BOPP film label", foodSafe: true, mult: 1 },
+  { code: "LABEL_CLEAR_BOPP", family: "LABEL", boardType: "LABEL", flute: null, color: "WHITE", gsm: 55, thicknessMm: 0.05, nameAr: "ملصق بولي بروبيلين شفاف", nameEn: "Clear BOPP film label", foodSafe: true, mult: 1.05 },
+  { code: "LABEL_METALLIC_BOPP", family: "LABEL", boardType: "LABEL", flute: null, color: "WHITE", gsm: 60, thicknessMm: 0.06, nameAr: "ملصق بولي بروبيلين معدني", nameEn: "Metallic BOPP film label", foodSafe: true, mult: 1.3 },
+  { code: "SHRINK_PETG", family: "LABEL", boardType: "FILM", flute: null, color: "WHITE", gsm: 65, thicknessMm: 0.05, nameAr: "فيلم انكماش PETG", nameEn: "PETG shrink sleeve film", foodSafe: true, mult: 1.25 },
+  { code: "POUCH_PET_PE", family: "FLEXIBLE", boardType: "FILM", flute: null, color: "WHITE", gsm: 95, thicknessMm: 0.1, nameAr: "رقائق أكياس PET/PE", nameEn: "PET/PE pouch laminate", foodSafe: true, mult: 1 },
+  { code: "POUCH_KRAFT_PE", family: "FLEXIBLE", boardType: "FILM", flute: null, color: "KRAFT", gsm: 140, thicknessMm: 0.15, nameAr: "رقائق أكياس كرافت/PE", nameEn: "Kraft/PE pouch laminate", foodSafe: true, mult: 1.15 },
+  { code: "TUBE_PE", family: "FLEXIBLE", boardType: "FILM", flute: null, color: "WHITE", gsm: 380, thicknessMm: 0.4, nameAr: "جسم أنبوب بولي إيثيلين", nameEn: "PE tube body", foodSafe: true, mult: 1 },
 ] as const;
 
 const finishes = [
@@ -207,6 +225,12 @@ const finishes = [
   { code: "MATTE_LAMINATION", nameAr: "سلوفان مطفي", nameEn: "Matte lamination", unit: 0.9, setup: 250 },
   { code: "GLOSS_LAMINATION", nameAr: "سلوفان لامع", nameEn: "Gloss lamination", unit: 0.8, setup: 250 },
   { code: "SPOT_UV", nameAr: "يو في موضعي", nameEn: "Spot UV", unit: 1.6, setup: 900 },
+  // Added by 3D integration: premium finishes priced from rate cards (unit at the reference area).
+  { code: "SOFT_TOUCH_LAMINATION", nameAr: "سلوفان مخملي", nameEn: "Soft-touch lamination", unit: 1.5, setup: 350 },
+  { code: "VARNISH", nameAr: "ورنيش", nameEn: "Varnish", unit: 0.35, setup: 150 },
+  { code: "HOT_FOIL", nameAr: "بصمة حرارية", nameEn: "Hot foil", unit: 1.9, setup: 1400 },
+  { code: "EMBOSS", nameAr: "طباعة بارزة", nameEn: "Emboss", unit: 1.2, setup: 1100 },
+  { code: "DEBOSS", nameAr: "طباعة غائرة", nameEn: "Deboss", unit: 1.2, setup: 1100 },
 ] as const;
 
 // ───────────────────────── Vendors ─────────────────────────
@@ -232,7 +256,9 @@ interface VendorSeed {
   portfolio: { captionAr: string; captionEn: string; structureCode: StructureCode }[];
 }
 
-const allFinishes: FinishCode[] = ["NONE", "MATTE_LAMINATION", "GLOSS_LAMINATION", "SPOT_UV"];
+const allFinishes: FinishCode[] = ["NONE", "MATTE_LAMINATION", "GLOSS_LAMINATION", "SPOT_UV", "SOFT_TOUCH_LAMINATION", "VARNISH", "HOT_FOIL", "EMBOSS", "DEBOSS"];
+const labelStocks: MaterialCode[] = ["LABEL_PAPER", "LABEL_WHITE_BOPP", "LABEL_CLEAR_BOPP", "LABEL_METALLIC_BOPP", "SHRINK_PETG"];
+const flexStocks: MaterialCode[] = ["POUCH_PET_PE", "POUCH_KRAFT_PE", "TUBE_PE"];
 const corr: MaterialCode[] = ["E_FLUTE_KRAFT", "E_FLUTE_WHITE", "B_FLUTE_KRAFT"];
 const fc: MaterialCode[] = ["SBS_300", "SBS_350"];
 
@@ -250,7 +276,7 @@ const vendors: VendorSeed[] = [
       { kind: "DIE_CUTTER", model: "Bobst SP 102 die-cutter", count: 1 },
       { kind: "FOLDER_GLUER", model: "Automatic folder-gluer", count: 1 },
     ],
-    capabilities: { structures: ["FEFCO_0427", "FEFCO_0201", "PIZZA", "FEFCO_0320", "FEFCO_0422"], materials: corr, finishes: ["NONE", "MATTE_LAMINATION", "GLOSS_LAMINATION"], maxColors: 4, digitalShortRun: true, monthlyCapacityUnits: 400_000 },
+    capabilities: { structures: ["FEFCO_0427", "FEFCO_0201", "PIZZA", "FEFCO_0320", "FEFCO_0422"], materials: corr, finishes: ["NONE", "MATTE_LAMINATION", "GLOSS_LAMINATION", "SOFT_TOUCH_LAMINATION", "VARNISH", "SPOT_UV", "HOT_FOIL"], maxColors: 4, digitalShortRun: true, monthlyCapacityUnits: 400_000 },
     certifications: [{ code: "ISO_9001", issuer: "Bureau Veritas", validUntil: "2027-06-30" }],
     rating: 4.7, ratingCount: 128, onTimePct: 96, leadTimeDays: 6, minOrderQty: 100,
     serviceAreas: ["CAIRO", "GIZA", "SIXTH_OF_OCTOBER", "ALEXANDRIA"],
@@ -275,7 +301,7 @@ const vendors: VendorSeed[] = [
       { kind: "UV_COATER", model: "Spot UV screen coater", count: 1 },
       { kind: "LAMINATOR", model: "Thermal laminator", count: 1 },
     ],
-    capabilities: { structures: ["ECMA_RTE", "ECMA_STE", "SLEEVE", "ECMA_CLB", "ECMA_SLB", "GABLE_BOX"], materials: fc, finishes: allFinishes, maxColors: 5, digitalShortRun: false, monthlyCapacityUnits: 1_500_000 },
+    capabilities: { structures: ["ECMA_RTE", "ECMA_STE", "SLEEVE", "ECMA_CLB", "ECMA_SLB", "GABLE_BOX", "RIGID_BOX", "PAPER_TUBE"], materials: [...fc, "GREYBOARD_WRAP", "KRAFT_TUBE"], finishes: allFinishes, maxColors: 5, digitalShortRun: false, monthlyCapacityUnits: 1_500_000 },
     certifications: [
       { code: "FOOD_SAFE", issuer: "NFSA", validUntil: "2027-03-31" },
       { code: "ISO_22000", issuer: "TÜV", validUntil: "2027-09-30" },
@@ -301,7 +327,7 @@ const vendors: VendorSeed[] = [
       { kind: "DIGITAL", model: "Flatbed UV printer", count: 2 },
       { kind: "DIE_CUTTER", model: "Digital cutting table", count: 2 },
     ],
-    capabilities: { structures: ["FEFCO_0427", "ECMA_RTE", "ECMA_STE", "SLEEVE", "ECMA_SLB", "GABLE_BOX", "RIGID_BOX", "PAPER_TUBE"], materials: ["E_FLUTE_KRAFT", "E_FLUTE_WHITE", "SBS_300", "SBS_350", "GREYBOARD_WRAP", "KRAFT_TUBE"], finishes: ["NONE", "MATTE_LAMINATION", "GLOSS_LAMINATION"], maxColors: 4, digitalShortRun: true, monthlyCapacityUnits: 60_000 },
+    capabilities: { structures: ["FEFCO_0427", "ECMA_RTE", "ECMA_STE", "SLEEVE", "ECMA_SLB", "GABLE_BOX", "RIGID_BOX", "PAPER_TUBE", "ROLL_LABEL"], materials: ["E_FLUTE_KRAFT", "E_FLUTE_WHITE", "SBS_300", "SBS_350", "GREYBOARD_WRAP", "KRAFT_TUBE", "LABEL_PAPER", "LABEL_WHITE_BOPP", "LABEL_CLEAR_BOPP"], finishes: ["NONE", "MATTE_LAMINATION", "GLOSS_LAMINATION", "VARNISH"], maxColors: 4, digitalShortRun: true, monthlyCapacityUnits: 60_000 },
     certifications: [],
     rating: 4.5, ratingCount: 61, onTimePct: 98, leadTimeDays: 4, minOrderQty: 50,
     serviceAreas: ["CAIRO", "GIZA", "OBOUR"],
@@ -359,6 +385,31 @@ const vendors: VendorSeed[] = [
       { captionAr: "علب شحن مطبوعة لمصنع أحذية", captionEn: "Printed shipping boxes for a shoe factory", structureCode: "FEFCO_0201" },
     ],
   },
+  {
+    // Added by 3D integration: labels, shrink sleeves, pouches and tubes.
+    slug: "cairo-label-flex",
+    nameAr: "القاهرة للملصقات والتغليف المرن",
+    nameEn: "Cairo Label & Flex",
+    city: "OBOUR", cityAr: "العبور", cityEn: "Obour",
+    bioAr: "مطبعة ملصقات رول وأكياس مرنة وأنابيب، بماكينات فلكسو ضيقة وطباعة رقمية للكميات الصغيرة، لمصانع الأغذية ومستحضرات التجميل.",
+    bioEn: "Roll labels, shrink sleeves, flexible pouches and tubes, on narrow-web flexo and digital presses, for food and cosmetics makers.",
+    machines: [
+      { kind: "FLEXO", model: "8-colour narrow-web flexo label press with hot foil and screen units", count: 1 },
+      { kind: "DIGITAL", model: "Digital label press (CMYK + white)", count: 1 },
+      { kind: "LAMINATOR", model: "Solventless laminator", count: 1 },
+      { kind: "DIE_CUTTER", model: "Rotary die-cutting and slitting line", count: 1 },
+    ],
+    capabilities: { structures: ["ROLL_LABEL", "PRINTED_POUCH", "PRINTED_TUBE"], materials: [...labelStocks, ...flexStocks], finishes: ["NONE", "MATTE_LAMINATION", "GLOSS_LAMINATION", "SOFT_TOUCH_LAMINATION", "VARNISH", "SPOT_UV", "HOT_FOIL", "EMBOSS"], maxColors: 8, digitalShortRun: true, monthlyCapacityUnits: 5_000_000 },
+    certifications: [{ code: "ISO_22000", issuer: "TÜV", validUntil: "2027-08-31" }],
+    rating: 4.6, ratingCount: 52, onTimePct: 94, leadTimeDays: 7, minOrderQty: 500,
+    serviceAreas: ["CAIRO", "GIZA", "OBOUR", "TENTH_OF_RAMADAN", "ALEXANDRIA"],
+    priceMult: 1.0,
+    portfolio: [
+      { captionAr: "ملصقات زجاجات عصير على بولي بروبيلين أبيض", captionEn: "Juice bottle labels on white BOPP", structureCode: "ROLL_LABEL" },
+      { captionAr: "أكياس قائمة بسحاب لعلامة قهوة", captionEn: "Zipper stand-up pouches for a coffee brand", structureCode: "PRINTED_POUCH" },
+      { captionAr: "أنابيب كريم مطبوعة بستة ألوان", captionEn: "Cream tubes printed in six colours", structureCode: "PRINTED_TUBE" },
+    ],
+  },
 ];
 
 const QTY = [100, 250, 500, 1000, 2000];
@@ -393,6 +444,7 @@ async function wipe() {
   await db.finish.deleteMany();
   await db.material.deleteMany();
   await db.structure.deleteMany();
+  await db.catalogModel.deleteMany();
 }
 
 async function main() {
@@ -447,7 +499,7 @@ async function main() {
       const st = structureRows.get(sc)!;
       for (const mc of v.capabilities.materials) {
         const mat = materialRows.get(mc)!;
-        if (mat.family !== st.seed.family) continue;
+        if (mat.family !== st.seed.family || !materialFitsStructure(mc, sc)) continue;
         const tiers: RateTier[] = QTY.map((q, i) => ({
           minQty: q,
           unitPiasters: egp(st.seed.baseTiers[i] * mat.mult * v.priceMult),
@@ -455,7 +507,9 @@ async function main() {
         const finishSurcharges: Partial<Record<FinishCode, number>> = {};
         for (const f of v.capabilities.finishes) {
           const base = finishes.find((x) => x.code === f)!;
-          finishSurcharges[f] = egp(base.unit * v.priceMult);
+          // Labels and films are small: finish surcharges scale with their reference area.
+          const small = st.seed.family === "LABEL" || st.seed.family === "FLEXIBLE" ? Math.min(1, st.seed.refArea / 0.12) : 1;
+          finishSurcharges[f] = egp(base.unit * v.priceMult * small);
         }
         await db.rateCard.create({
           data: {
@@ -470,6 +524,38 @@ async function main() {
       }
     }
   }
+
+  // ── Model library (src/lib/library): every box style and container the designer offers, with
+  // the base structures it is produced and priced as. Each must have a vendor with a rate card.
+  const cardKeys = new Set(
+    (await db.rateCard.findMany({ select: { structure: { select: { code: true } }, material: { select: { code: true } } } })).map((c) => `${c.structure.code}|${c.material.code}`),
+  );
+  const uncovered: string[] = [];
+  for (const [i, m] of MODELS.entries()) {
+    const mats: MaterialCode[] = m.kind === "box" ? m.materials : [...new Set([...vesselPrintMaterials(m), ...(m.surfaces.includes("SHRINK_SLEEVE") ? vesselPrintMaterials(m, ["SHRINK_SLEEVE"]) : [])])];
+    const pairs = mats.map((mat) => ({ mat, base: baseOf(m, mat) }));
+    if (!pairs.some((p) => cardKeys.has(`${p.base}|${p.mat}`))) uncovered.push(m.code);
+    await db.catalogModel.create({
+      data: {
+        code: m.code,
+        slug: m.slug,
+        kind: m.kind,
+        group: m.group,
+        source: m.source,
+        standard: m.standard,
+        nameAr: m.name.ar,
+        nameEn: m.name.en,
+        descriptionAr: m.description.ar,
+        descriptionEn: m.description.en,
+        baseCodes: [...new Set(pairs.map((p) => p.base))],
+        materials: mats,
+        presets: (m.kind === "box" ? m.presets : m.presets) as object[],
+        imageUrl: `/models/${m.slug}.svg`,
+        sortOrder: i,
+      },
+    });
+  }
+  if (uncovered.length) throw new Error(`No vendor rate card for library models: ${uncovered.join(", ")}`);
 
   // ── Users
   const now = new Date();

@@ -34,7 +34,7 @@ export {
   type BoardAppearance,
 } from "./materials";
 export { dielineToSvg, svg, type DielineSvgOptions } from "./svg";
-export { STRUCTURES, STRUCTURE_LIST, structureBySlug, type StructureDef } from "./registry";
+export { STRUCTURES, STRUCTURE_LIST, BOX_STRUCTURE_LIST, structureBySlug, type StructureDef } from "./registry";
 export {
   FEATURE_SUPPORT,
   DEFAULT_FEATURES,

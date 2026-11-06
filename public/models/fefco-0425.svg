@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360" viewBox="0 0 480 360" role="img" aria-label="Tray with four self-locking walls">
+
+<ellipse cx="240" cy="287" rx="164.2" ry="19.8" fill="rgba(0,0,0,.07)"/>
+<g stroke="rgba(0,0,0,.18)" stroke-width="1" stroke-linejoin="round"><path d="M412.2 139.1L184 64.1L184 128.3L412.2 203.3Z" fill-rule="evenodd" fill="#8d6943"/><path d="M408.6 200.5L186.4 127.4L186.4 65.5L408.6 138.6Z" fill-rule="evenodd" fill="#9b764f"/><path d="M185.5 64L68.1 142.7L68.1 206.9L185.5 128.2Z" fill-rule="evenodd" fill="#795a3a"/><path d="M185.9 127.5L71.3 204.3L71.3 142.4L185.9 65.5Z" fill-rule="evenodd" fill="#856644"/><path d="M412.8 201.9L184.7 126.9L67.2 205.7L295.3 280.7Z" fill-rule="evenodd" fill="#a1784d"/><path d="M409.6 139.1L295 215.9L295 277.9L409.6 201Z" fill-rule="evenodd" fill="#795a3a"/><path d="M412.8 202.9L295.3 281.6L295.3 217.4L412.8 138.7Z" fill-rule="evenodd" fill="#856644"/><path d="M293 216.1L70.7 143L70.7 205L293 278Z" fill-rule="evenodd" fill="#8d6943"/><path d="M295.3 281.6L67.2 206.6L67.2 142.4L295.3 217.4Z" fill-rule="evenodd" fill="#9b764f"/></g>
+</svg>

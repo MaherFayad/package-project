@@ -4,10 +4,13 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getT, toLocale } from "@/i18n";
 import type { DictKey } from "@/i18n/types";
-import { Badge, BlockStack, Box, Button, EmptyState, EmptyBoxIllustration, InlineStack, Page, Text } from "@/components/ui";
+import { Badge, BlockStack, Box, EmptyState, EmptyBoxIllustration, Page, Text } from "@/components/ui";
 import { PRODUCT_PRESETS, designerPath, structureFromParam } from "@/components/designer/lib/catalog";
 import { loadPickerStructures } from "@/components/designer/server";
 import { ResumeCard } from "@/components/designer/ResumeCard";
+import { ModelLinks } from "@/components/designer/ModelLinks";
+import { MODELS } from "@/lib/library";
+import { formatNumber } from "@/lib/format";
 import styles from "@/components/designer/designer.module.css";
 
 export const dynamic = "force-dynamic";
@@ -96,59 +99,22 @@ export default async function DesignPickerPage({
 
         <section aria-labelledby="styles-heading">
           <BlockStack gap="300">
-            <Text as="h2" variant="headingMd" id="styles-heading">
-              {t("designer.backToStyles")}
-            </Text>
-            {structures.length === 0 ? (
+            <BlockStack gap="100">
+              <Text as="h2" variant="headingMd" id="styles-heading">
+                {t("library.picker.title")}
+              </Text>
+              <Text as="p" tone="subdued">
+                {t("library.catalog.subtitle", { count: formatNumber(MODELS.length) })}
+              </Text>
+            </BlockStack>
+            {structures.length === 0 && MODELS.length === 0 ? (
               <Box background="bg-surface" borderRadius="300" padding="400">
                 <EmptyState headingAs="h3" heading={t("designer.picker.emptyTitle")} image={<EmptyBoxIllustration />}>
                   <p>{t("designer.picker.emptyBody")}</p>
                 </EmptyState>
               </Box>
             ) : (
-              <ul className={styles.structureGrid}>
-                {structures.map((s) => (
-                  <li key={s.code}>
-                    <article className={styles.structureCard} aria-labelledby={`st-${s.code}`}>
-                      <div className={styles.structureArt}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={s.imageUrl} alt="" width={240} height={180} loading="lazy" />
-                      </div>
-                      <div className={styles.structureBody}>
-                        <InlineStack gap="200" blockAlign="center" wrap>
-                          <Text as="h3" variant="headingSm" id={`st-${s.code}`}>
-                            {s.name[locale]}
-                          </Text>
-                          <Badge>{t(`designer.picker.family.${s.family}` as DictKey)}</Badge>
-                        </InlineStack>
-                        <Text as="p" tone="subdued">
-                          {s.description[locale]}
-                        </Text>
-                        <Text as="p" variant="bodySm" tone="subdued">
-                          {t("designer.picker.sizeRange", {
-                            min: Math.min(s.params.L.min, s.params.W.min, s.params.H.min),
-                            max: Math.max(s.params.L.max, s.params.W.max, s.params.H.max),
-                          })}
-                        </Text>
-                        {s.presets.length > 0 && (
-                          <div className={styles.presetRow}>
-                            {s.presets.slice(0, 3).map((p) => (
-                              <Button key={p.id} size="slim" variant="tertiary" url={designerPath(locale, s.code, { preset: p.id })}>
-                                {p.name[locale]}
-                              </Button>
-                            ))}
-                          </div>
-                        )}
-                        <div className={styles.structureFoot}>
-                          <Button url={designerPath(locale, s.code)} fullWidth>
-                            {t("designer.picker.start")}
-                          </Button>
-                        </div>
-                      </div>
-                    </article>
-                  </li>
-                ))}
-              </ul>
+              <ModelLinks locale={locale} />
             )}
           </BlockStack>
         </section>

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360" viewBox="0 0 480 360" role="img" aria-label="Beers-style webbed corner tray">
+
+<ellipse cx="240" cy="286.8" rx="164.2" ry="19.8" fill="rgba(0,0,0,.07)"/>
+<g stroke="rgba(0,0,0,.18)" stroke-width="1" stroke-linejoin="round"><path d="M180.8 129.5L138.4 92.7L180.8 64.3Z" fill-rule="evenodd" fill="#b5b5b3"/><path d="M67.6 205L180.4 129.4L180.4 64.2L67.6 139.8Z" fill-rule="evenodd" fill="#adaba7"/><path d="M179.7 129.5L412.5 206L412.5 140.8L179.7 64.2Z" fill-rule="evenodd" fill="#c9c8c2"/><path d="M67.2 204.5L300 281L412.8 205.4L180 128.8Z" fill-rule="evenodd" fill="#e6e4de"/><path d="M68 139.9L110.4 111.5L68 205.2Z" fill-rule="evenodd" fill="#b5b5b3"/><path d="M412.4 140.4L370 168.9L412.4 205.7Z" fill-rule="evenodd" fill="#adaba7"/><path d="M67.2 139.7L300 216.2L300 281.4L67.2 204.9Z" fill-rule="evenodd" fill="#d2d2d0"/><path d="M300 216.2L412.8 140.6L412.8 205.8L300 281.4Z" fill-rule="evenodd" fill="#b5b5b3"/><path d="M299.6 281.3L342 187.7L299.6 216.1Z" fill-rule="evenodd" fill="#adaba7"/></g>
+</svg>

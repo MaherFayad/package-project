@@ -5,7 +5,10 @@ import { validateDims } from "@/lib/dieline";
 import { getT, toLocale } from "@/i18n";
 import type { DictKey } from "@/i18n/types";
 import { DesignerApp } from "@/components/designer/DesignerApp";
-import { createDesignDoc } from "@/components/designer/lib/doc";
+import { createDesignDoc, createModelDoc } from "@/components/designer/lib/doc";
+import { modelFromParam, type BoxModelDef } from "@/lib/library";
+import { baseOf, docModelCode } from "@/lib/library/doc";
+import { BOARD_SPECS } from "@/lib/dieline";
 import { FALLBACK_PRESETS, designerPath, presetDims, structureFromParam } from "@/components/designer/lib/catalog";
 import { currentActor, loadDesign, loadPickerStructures } from "@/components/designer/server";
 
@@ -20,10 +23,11 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const { locale: l, structure } = await params;
   const locale = toLocale(l);
   const code = structureFromParam(structure);
+  const m = modelFromParam(structure);
   const t = getT(locale);
-  if (!code) return { title: t("designer.title") };
+  if (!code && !m) return { title: t("designer.title") };
   return {
-    title: t("designer.editorTitle", { structure: t(`structures.${code}` as DictKey) }),
+    title: t("designer.editorTitle", { structure: m ? m.name[locale] : t(`structures.${code}` as DictKey) }),
     description: t("designer.metaDescription"),
     robots: { index: false, follow: true },
   };
@@ -38,8 +42,10 @@ export default async function DesignEditorPage({ params, searchParams }: { param
   const { locale: l, structure } = await params;
   const sp = await searchParams;
   const locale = toLocale(l);
-  const code = structureFromParam(structure);
-  if (!code) notFound();
+  // Any library model: core structure slug, family style or container (src/lib/library).
+  const libModel = modelFromParam(structure);
+  const code = structureFromParam(structure) ?? (libModel?.kind === "box" ? libModel.baseFor(libModel.materials[0]) : libModel ? baseOf(libModel, "LABEL_WHITE_BOPP") : null);
+  if (!code || !libModel) notFound();
 
   const [actor, structures] = await Promise.all([currentActor(), loadPickerStructures()]);
   const presetsByCode: Partial<Record<StructureCode, DimsPreset[]>> = { ...FALLBACK_PRESETS };
@@ -52,7 +58,7 @@ export default async function DesignEditorPage({ params, searchParams }: { param
   if (d) {
     const loaded = await loadDesign(d, actor);
     if (loaded) {
-      if (loaded.doc.structureCode !== code) redirect(designerPath(locale, loaded.doc.structureCode, { d }));
+      if (docModelCode(loaded.doc) !== libModel.code) redirect(designerPath(locale, docModelCode(loaded.doc), { d }));
       doc = loaded.doc;
       designId = loaded.doc.id ?? d;
     } else loadError = "notFound";
@@ -67,7 +73,10 @@ export default async function DesignEditorPage({ params, searchParams }: { param
     }
     const m = one(sp.material);
     const materialCode = m && (MATERIAL_CODES as readonly string[]).includes(m) ? (m as MaterialCode) : undefined;
-    doc = createDesignDoc({ structureCode: code, dims, materialCode });
+    doc =
+      libModel.kind === "box" && libModel.source === "core"
+        ? createDesignDoc({ structureCode: code, dims, materialCode })
+        : createModelDoc(libModel, { presetId: one(sp.preset), materialCode, ...(libModel.kind === "box" ? { dims: validBoxDims(libModel, [L, W, H]) } : {}) });
   }
 
   return (
@@ -81,4 +90,15 @@ export default async function DesignEditorPage({ params, searchParams }: { param
       resumeLocal={!d && one(sp.resume) === "1"}
     />
   );
+}
+
+/** Storefront deep-link size for a family style, when it builds. */
+function validBoxDims(m: BoxModelDef, [L, W, H]: number[]): Dims | undefined {
+  if (![L, W, H].every((n) => Number.isFinite(n) && n > 0)) return undefined;
+  try {
+    m.build({ L, W, H }, { thicknessMm: BOARD_SPECS[m.materials[0]].thicknessMm });
+    return { L, W, H };
+  } catch {
+    return undefined;
+  }
 }

@@ -1,53 +1,31 @@
 "use client";
 
-import dynamic from "next/dynamic";
+import { DesignScene } from "@/components/designer/DesignScene";
 import { useMemo, useRef, useState } from "react";
 import type { DesignDoc } from "@/types";
-import { BOARD_SPECS, tryGenerateDieline } from "@/lib/dieline";
+import { docGeometry } from "@/lib/library/doc";
 import { ViewControls, type PackagingSceneHandle } from "@/components/three";
 import { useI18n } from "@/i18n/client";
-import { Button, ButtonGroup, Spinner } from "@/components/ui";
+import { Button, ButtonGroup } from "@/components/ui";
 import { useArtworkCanvases } from "./useArtworkCanvases";
 import styles from "./designer.module.css";
 
-const Scene3D = dynamic(() => import("./Scene3D"), {
-  ssr: false,
-  loading: () => (
-    <div className={styles.sceneLoading}>
-      <Spinner size="large" decorative />
-    </div>
-  ),
-});
 
 /** Read-only 3D view of a shared design (rotate, zoom, fold; no editing). */
 export function SharedViewer({ doc }: { doc: DesignDoc }) {
   const { t } = useI18n();
   const ref = useRef<PackagingSceneHandle | null>(null);
   const [fold, setFold] = useState(1);
-  const model = useMemo(
-    () => tryGenerateDieline(doc.structureCode, doc.dims, { thicknessMm: BOARD_SPECS[doc.materialCode].thicknessMm }),
-    [doc.structureCode, doc.dims, doc.materialCode],
-  );
+  // Box dieline or container print sheet (src/lib/library/doc).
+  const geo = useMemo(() => docGeometry(doc), [doc]);
+  const model = geo?.dieline ?? null;
   const both = doc.printSides === "BOTH";
   const { canvases, version } = useArtworkCanvases(model, doc.artwork, doc.materialCode, both);
   if (!model) return null;
   return (
     <div className={styles.stage}>
       <div className={styles.sharedViewer}>
-        <Scene3D
-          model={model}
-          material={doc.materialCode}
-          finish={doc.finishCode}
-          foldProgress={fold}
-          canvases={canvases}
-          version={version}
-          printInside={both}
-          handleRef={ref}
-          ariaLabel={t("viewer.label")}
-          roleDescription={t("viewer.roleDescription")}
-          keyboardHint={t("viewer.keyboardHint")}
-          fallback={t("viewer.unsupported")}
-        />
+        {geo ? <DesignScene doc={doc} geo={geo} canvases={canvases} version={version} fold={fold} handleRef={ref} /> : null}
         <div className={styles.viewControls}>
           <ViewControls
             handle={ref}

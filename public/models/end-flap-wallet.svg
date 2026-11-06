@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360" viewBox="0 0 480 360" role="img" aria-label="Wallet with end flap">
+
+<ellipse cx="240" cy="307.8" rx="87.9" ry="19.8" fill="rgba(0,0,0,.07)"/>
+<g stroke="rgba(0,0,0,.18)" stroke-width="1" stroke-linejoin="round"><path d="M148.3 237.6L148.3 49.2L162.9 61.8L162.9 234.5Z" fill-rule="evenodd" fill="#d2d2d0"/><path d="M150.3 240.9L332.5 300.8L332.5 103.1L150.3 43.2Z" fill-rule="evenodd" fill="#c9c8c2"/><path d="M147.9 46.1L330.1 106L330.1 302.4L147.9 242.5Z" fill-rule="evenodd" fill="#d2d2d0"/><path d="M147.5 45.1L329.7 105L328.3 121.8L322.9 139.2L310.2 141.8L166.9 94.7L154.3 83.7L148.9 62.8Z" fill-rule="evenodd" fill="#d2d2d0"/><path d="M315.9 284.8L315.9 112.2L330.5 109.1L330.5 297.5Z" fill-rule="evenodd" fill="#d2d2d0"/></g>
+</svg>

@@ -18,11 +18,15 @@ export const STRUCTURE_CODES = [
   "GABLE_BOX", //  Gable carry box with handle, snap-lock bottom, folding carton
   "PAPER_TUBE", // Cylindrical paper tube (composite can) with telescoping lid
   "RIGID_BOX", //  Rigid set-up box, lid and base (greyboard wrapped in printed paper)
+  // Added by 3D integration: printed parts for containers (bottles, jars, cans, tins, pouches, tubes).
+  "ROLL_LABEL", //    Die-cut roll labels and shrink sleeves (sized from the container's print areas)
+  "PRINTED_POUCH", // Printed flexible laminate pouch (stand-up, flat, gusset bags)
+  "PRINTED_TUBE", //  Printed laminate / PE squeeze tube body
 ] as const;
 export type StructureCode = (typeof STRUCTURE_CODES)[number];
 
 /** RIGID = wrapped greyboard set-up boxes; TUBE = spiral-wound paper tubes (composite cans). */
-export type StructureFamily = "CORRUGATED" | "FOLDING_CARTON" | "RIGID" | "TUBE";
+export type StructureFamily = "CORRUGATED" | "FOLDING_CARTON" | "RIGID" | "TUBE" | "LABEL" | "FLEXIBLE";
 
 /** Inner dimensions in millimetres. L = length (front width), W = width (depth), H = height. */
 export interface Dims {

@@ -2,7 +2,9 @@ import type { FinishCode, PriceTableRow, QuoteLine, QuoteRequest } from "@/types
 import { QTY_TIERS } from "@/types";
 import { STRUCTURE_FAMILY, validateDims } from "@/lib/dieline";
 import { boardMultiplier, DEFAULT_PRICING_CONFIG, resolvePriceIndex, type PricingConfig, type PriceIndexRow } from "./config";
-import { dielineBoardArea, type BoardArea, type BoardAreaProvider } from "./area";
+import { modelByCode } from "@/lib/library";
+import { baseOf } from "@/lib/library/doc";
+import { dielineBoardArea, modelBoardArea, type BoardArea, type BoardAreaProvider } from "./area";
 import { CITY_ZONE, deliveryEstimate, flatPackBundles } from "./delivery";
 import { sumPiasters, toPiasters, vatOf, withMargin } from "./money";
 import { nearbyStandardSizes, vendorHasDie } from "./standard";
@@ -172,7 +174,8 @@ function priceVendor(
     return { f, buyUnit, setup };
   });
 
-  const standardSize = vendorHasDie(data, vendor, input.structureCode, input.dims, cfg.standardToleranceMm);
+  // A library style has its own die: the base structure's standard dies do not apply.
+  const standardSize = input.model ? false : vendorHasDie(data, vendor, input.structureCode, input.dims, cfg.standardToleranceMm);
   const needsDie = card.dieCostPiasters > 0;
   const dieBuy = needsDie && !standardSize ? card.dieCostPiasters : 0;
 
@@ -284,11 +287,19 @@ function validateInput(input: QuoteInput, data: PricingData, cfg: PricingConfig)
   if (!Number.isInteger(input.colours) || input.colours < 1 || input.colours > cfg.maxColours) {
     throw new QuoteInputError("INVALID_COLOURS");
   }
-  const v = validateDims(input.structureCode, input.dims);
+  // Library models are validated by their own generator (modelBoardArea), not the base limits.
+  const v = input.model ? ({ ok: true } as const) : validateDims(input.structureCode, input.dims);
   if (!v.ok) throw new QuoteInputError("INVALID_DIMS", v.issues);
   const material = findMaterial(data, input.materialId);
   if (!material) throw new QuoteInputError("UNKNOWN_MATERIAL");
   if (material.family !== STRUCTURE_FAMILY[input.structureCode]) throw new QuoteInputError("MATERIAL_STRUCTURE_MISMATCH");
+  if (input.model) {
+    // The model must exist and be made as this base structure from this board (no cheaper base).
+    const m = modelByCode(input.model.code);
+    if (!m) throw new QuoteInputError("INVALID_DIMS", [{ path: "model", code: "UNKNOWN_MODEL" }]);
+    if (m.kind === "box" && !m.materials.includes(material.code)) throw new QuoteInputError("MATERIAL_STRUCTURE_MISMATCH");
+    if (baseOf(m, material.code) !== input.structureCode) throw new QuoteInputError("MATERIAL_STRUCTURE_MISMATCH");
+  }
   return material;
 }
 
@@ -306,7 +317,12 @@ export function quote(input: QuoteInput, data: PricingData, opts: QuoteOptions =
     return { mode: "manual_quote", reason: "QUANTITY_ABOVE_INSTANT_MAX", quantity: input.quantity, maxInstantQty: cfg.maxInstantQty };
   }
 
-  const area = (opts.area ?? dielineBoardArea)(input.structureCode, input.dims, material.code, material.thicknessMm);
+  let area: BoardArea;
+  if (input.model && !opts.area) {
+    const a = modelBoardArea(input, material.code);
+    if (!a) throw new QuoteInputError("INVALID_DIMS", [{ path: "model", code: "INVALID" }]);
+    area = a;
+  } else area = (opts.area ?? dielineBoardArea)(input.structureCode, input.dims, material.code, material.thicknessMm);
   const index = resolvePriceIndex(cfg.priceIndex, now);
   const validUntil = new Date(now.getTime() + cfg.quoteValidityHours * 3_600_000).toISOString();
   const finishes = normaliseFinishes(input.finishes);
@@ -325,7 +341,7 @@ export function quote(input: QuoteInput, data: PricingData, opts: QuoteOptions =
   const ranked = rankOffers(offers, cfg);
 
   let suggestion: StandardSizeSuggestion | null = null;
-  if (!opts.skipSuggestion && ranked.length > 0) {
+  if (!opts.skipSuggestion && !input.model && ranked.length > 0) {
     suggestion = standardSizeSuggestion(input, data, ranked, { ...opts, config: cfg, now });
   }
 

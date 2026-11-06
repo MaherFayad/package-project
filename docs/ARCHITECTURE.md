@@ -270,3 +270,18 @@ interface SessionUser { id; phone; name; role: Role; locale: Locale; vendorId: s
 | `@/lib/rate-limit` | `rateLimit(ns, key, limit, windowMs)`, `clientIp(headers)` |
 | `@/lib/env` | `isProd`, `sessionSecret()`, `otpDevEcho()`, `siteUrl()` |
 | `@/lib/format`, `@/lib/phone` | see §7 |
+
+## 10. Model library (3D integration)
+
+`src/lib/library` is the one catalogue of everything the designer shows and pricing prices:
+
+- **Boxes** (`boxes.ts`): the 13 core structures plus every family generator under `src/lib/dieline/families` whose output folds in the shared engine and whose boards printers quote (286 styles). Each `BoxModelDef` has `build(dims, { thicknessMm, features })` → `DielineModel` and `baseFor(material)` → the core `StructureCode` it is produced and priced as (slotted case, mailer, tray, telescope, tuck carton, crash/snap lock, sleeve, gable, rigid, tube). `EXCLUDED_FAMILY_MODELS` lists what is left out and why (cups, lids, moulded pulp, paper bags and envelopes without a quoting printer, unprinted FEFCO 09 partitions).
+- **Containers** (`vessels.ts`): the 10 core vessels, the bottles / jars / tubs catalogue, the cosmetic / pharma / can / tube catalogue (exact family silhouettes rendered by the core lathe renderer) and the 15 flexible packs (film model). `describe(dims, surfaces)` gives the profile, print areas (`PrintArea`, mm with bleed / safe zone) and envelope.
+- **Groups** for the picker: Boxes, Cartons, Rigid boxes, Trays, Tubes, Bottles and jars, Pouches, Cans; `matchesQuery` searches codes, both names and standards (Arabic letters normalised).
+- **DesignDoc** (additive): `modelCode` (absent = core structure), `finishes` (every finish with its artwork mask; `finishCode` = the main one), `vessel` (size, container, closure, colour, product, fill, surfaces). Stored in `Design.modelCode` / `Design.config` and `OrderItem.modelCode` / `OrderItem.config`. `structureCode` is always the BASE structure, so vendors, rate cards, orders and invoices work unchanged.
+- `doc.ts`: `docGeometry(doc)` = the box dieline, or for containers the print areas laid side by side as a flat `DielineModel` (so the face editor, layers, preflight, dieline view and print PDF work for labels too). `normaliseDocModel`, `baseOf`, `vesselPrintMaterials`, `docBoardArea`.
+- **Pricing**: `QuoteInput.model` prices a library model through its base structure's rate card with the model's OWN board / label area (`modelBoardArea`); the engine rejects a model sent with the wrong base. Containers price as `ROLL_LABEL` (label stocks + PETG sleeves), `PRINTED_POUCH` or `PRINTED_TUBE`. Foil, emboss, deboss, soft touch and varnish are priced `FinishCode`s now. `designQuoteFields(doc)` builds the priced spec for the quote API, checkout and tier tables.
+- **Seed**: `CatalogModel` rows for every model with their base codes; the seed fails if any model has no vendor rate card. The new vendor `cairo-label-flex` (phone `01000000015`) prints labels, sleeves, pouches and tubes.
+- **Thumbnails**: `npx tsx scripts/generate-model-thumbnails.ts` writes `public/models/<slug>.svg` (drawn from the fold model / lathe profile) and `e2e/fixtures/models.json` (a unit test keeps the manifest in sync).
+- **Designer**: `ModelPicker` / `ModelBrowser` (grouped + search), `ConfigPanel` (driven by the configurator rules engine; disabled options show the reason), `VesselView` (labels cropped from the painted sheet onto the container), `DesignScene` (read-only, share page and proof). Dev page: `/[locale]/dev/3d?model=<code>`.
+- **e2e**: `e2e/models.spec.ts` opens every model, changes size + board + one finish, checks no console errors and a painted WebGL canvas, and writes `docs/screenshots/models/<code>.png` (desktop project only).

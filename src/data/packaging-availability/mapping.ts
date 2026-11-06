@@ -24,6 +24,10 @@ export const STRUCTURE_TO_AVAILABILITY: Partial<Record<StructureCode, string>> =
   GABLE_BOX: "folding-carton/ecma-special",
   PAPER_TUBE: "paper-tube/retail-tube",
   RIGID_BOX: "rigid-box/lid-base",
+  // Added by 3D integration: container print parts.
+  ROLL_LABEL: "labels/self-adhesive",
+  PRINTED_POUCH: "flexible/stand-up-pouch",
+  PRINTED_TUBE: "cosmetic-pharma/squeeze-tube",
 };
 
 /** Current vessel kinds (src/lib/vessels/types.ts). */

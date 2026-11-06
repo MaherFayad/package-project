@@ -62,7 +62,7 @@ describe("schema", () => {
 });
 
 describe("defaults are valid for every model", () => {
-  it.each(STRUCTURE_LIST.map((s) => s.code))("box %s", (code) => {
+  it.each(STRUCTURE_LIST.filter((s) => s.shape !== "flat").map((s) => s.code))("box %s", (code) => {
     const ev = evaluateConfig(defaultBoxConfig(code));
     expect(ev.issues.filter((i) => i.severity === "error")).toEqual([]);
   });
@@ -271,14 +271,14 @@ describe("pricing mapping", () => {
     if (r.mode === "instant") expect(r.offers.length).toBeGreaterThan(0);
   });
 
-  it("priced finishes go to the engine; unpriced ones make it a manual quote", () => {
+  it("every finish is priced by rate cards (foil, emboss and soft touch included)", () => {
     const cfg = box({ material: "E_FLUTE_WHITE", finishes: [{ code: "MATTE_LAMINATION" }, { code: "SPOT_UV", mask: mask() }, { code: "FOIL_GOLD", mask: mask() }] });
     const req = toPricingRequest(cfg);
     if (req.kind !== "box") throw new Error("box");
-    expect(req.input?.finishes).toEqual(["MATTE_LAMINATION", "SPOT_UV"]);
-    expect(req.unpricedFinishes).toEqual(["FOIL_GOLD"]);
-    expect(req.instant).toBe(false);
-    expect(req.manual.map((m) => m.code)).toEqual(["FINISH_NOT_PRICED"]);
+    expect(req.input?.finishes).toEqual(["MATTE_LAMINATION", "SPOT_UV", "HOT_FOIL"]);
+    expect(req.unpricedFinishes).toEqual([]);
+    expect(req.instant).toBe(true);
+    expect(req.manual).toEqual([]);
   });
 
   it("invalid, unpriced boards and big runs are not instant", () => {
@@ -332,18 +332,19 @@ describe("vendor capabilities", () => {
     const cfg = box({ material: "E_FLUTE_WHITE", finishes: [{ code: "MATTE_LAMINATION" }] });
     expect(vendorCanMake(cfg, caps).ok).toBe(true);
     const foil = { ...cfg, finishes: [...cfg.finishes, { code: "FOIL_GOLD" as const, mask: mask() }] };
-    expect(requiredCapabilities(foil).extraFinishes).toEqual(["HOT_FOIL"]);
+    expect(requiredCapabilities(foil).finishes).toContain("HOT_FOIL");
+    expect(requiredCapabilities(foil).extraFinishes).toEqual([]);
     expect(vendorCanMake(foil, caps).missing.map((m) => m.code)).toEqual(["FINISH_HOT_FOIL"]);
-    expect(vendorCanMake(foil, { ...caps, extraFinishes: ["HOT_FOIL"] }).ok).toBe(true);
+    expect(vendorCanMake(foil, { ...caps, finishes: [...caps.finishes, "HOT_FOIL"] }).ok).toBe(true);
     const six = { ...cfg, colour: { mode: "CMYK" as const, spots: ["PMS 186 C", "877 C"] } };
     expect(vendorCanMake(six, caps).missing.map((m) => m.code)).toEqual(["COLOURS"]);
     expect(vendorCanMake({ ...cfg, material: "E_FLUTE_KRAFT" }, caps).missing.map((m) => m.code)).toEqual(["MATERIAL"]);
   });
 
-  it("infers soft-touch from a laminator when not listed", () => {
+  it("soft touch is a priced finish the printer must list", () => {
     const cfg = box({ material: "E_FLUTE_WHITE", finishes: [{ code: "SOFT_TOUCH_LAMINATION" }] });
     expect(vendorCanMake(cfg, caps).ok).toBe(false);
-    expect(vendorCanMake(cfg, caps, [{ kind: "LAMINATOR", model: "x", count: 1 }]).ok).toBe(true);
+    expect(vendorCanMake(cfg, { ...caps, finishes: [...caps.finishes, "SOFT_TOUCH_LAMINATION"] }).ok).toBe(true);
   });
 
   const vendor = (id: string, patch: Partial<VendorForMatch> = {}): VendorForMatch => ({
@@ -378,12 +379,17 @@ describe("vendor capabilities", () => {
     expect(ok.vendorIds).toEqual(["v", "u"]); // verified first
     expect(orderability(cfg, [vendor("v")], { vendorId: "nope" }).reasons.map((r) => r.code)).toEqual(["VENDOR_CANNOT_MAKE"]);
 
-    // a foil job needs a printer with hot foil; then it is orderable but priced manually
+    // a foil job needs a printer with hot foil on its rate card; then it is priced instantly
     const foil = box({ material: "E_FLUTE_WHITE", finishes: [{ code: "FOIL_GOLD", mask: mask() }] });
     expect(orderability(foil, [vendor("v")]).reasons.map((r) => r.code)).toEqual(["NO_VENDOR"]);
-    const foiler = orderability(foil, [vendor("f", { capabilities: { ...caps, extraFinishes: ["HOT_FOIL"] } })]);
+    const foiler = orderability(foil, [
+      vendor("f", {
+        capabilities: { ...caps, finishes: [...caps.finishes, "HOT_FOIL"] },
+        rateCards: [{ structureCode: "FEFCO_0427", materialCode: "E_FLUTE_WHITE", finishes: ["NONE", "MATTE_LAMINATION", "HOT_FOIL"] }],
+      }),
+    ]);
     expect(foiler.ok).toBe(true);
-    expect(foiler.manual.map((m) => m.code)).toEqual(["FINISH_NOT_PRICED"]);
+    expect(foiler.manual).toEqual([]);
 
     // invalid configs carry the rules engine's reasons
     const bad = orderability(box({ material: "E_FLUTE_KRAFT", finishes: [{ code: "SPOT_UV", mask: mask() }] }), [vendor("v")]);

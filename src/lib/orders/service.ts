@@ -19,7 +19,7 @@ import {
   type ShippingAddress,
 } from "@/types";
 import { rowToDoc } from "@/components/designer/server";
-import { priceTable, quote, toPublicOffer, zoneForGovernorate, type PublicVendorOffer, type QuoteOutcome, type VendorOffer } from "@/lib/pricing";
+import { designQuoteFields, priceTable, quote, toPublicOffer, zoneForGovernorate, type PublicVendorOffer, type QuoteOutcome, type VendorOffer } from "@/lib/pricing";
 import { loadPricingData } from "@/lib/pricing/server";
 import { loadPricingConfig } from "@/components/admin/server/settings";
 import { getPaymentProvider, mockPaymentsEnabled, paymentConfig, type Intention, type WebhookOutcome, type WebhookRequest } from "@/lib/payments";
@@ -74,11 +74,7 @@ export async function quoteDesign(doc: DesignDoc, opts: { quantity: number; gove
   const zone = (opts.governorate && zoneForGovernorate(opts.governorate)) || "GREATER_CAIRO";
   return quote(
     {
-      structureCode: doc.structureCode,
-      dims: doc.dims,
-      materialId: doc.materialCode,
-      finishes: doc.finishCode === "NONE" ? [] : [doc.finishCode],
-      printSides: doc.printSides,
+      ...designQuoteFields(doc),
       colours: DEFAULT_COLOURS,
       quantity: opts.quantity,
       vendorId: opts.vendorId,
@@ -240,6 +236,10 @@ async function createOrderFromOffer(
               {
                 proofId,
                 structureCode: p.doc.structureCode,
+                modelCode: p.doc.modelCode ?? null,
+                ...(p.doc.features || p.doc.finishes?.length || p.doc.vessel
+                  ? { config: toJson({ ...(p.doc.features ? { features: p.doc.features } : {}), ...(p.doc.finishes?.length ? { finishes: p.doc.finishes } : {}), ...(p.doc.vessel ? { vessel: p.doc.vessel } : {}) }) }
+                  : {}),
                 dims: toJson(p.doc.dims),
                 materialCode: p.doc.materialCode,
                 finishCode: p.doc.finishCode,
@@ -746,11 +746,7 @@ export async function tierPrices(doc: DesignDoc, governorate?: string): Promise<
   const zone = (governorate && zoneForGovernorate(governorate)) || "GREATER_CAIRO";
   const rows = priceTable(
     {
-      structureCode: doc.structureCode,
-      dims: doc.dims,
-      materialId: doc.materialCode,
-      finishes: doc.finishCode === "NONE" ? [] : [doc.finishCode],
-      printSides: doc.printSides,
+      ...designQuoteFields(doc),
       colours: DEFAULT_COLOURS,
       zone,
     },

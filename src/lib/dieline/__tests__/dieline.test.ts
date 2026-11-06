@@ -27,7 +27,7 @@ import {
 } from "..";
 import { bboxOf } from "../geometry";
 
-const EXPECTED_PANELS: Record<StructureCode, number> = {
+const EXPECTED_PANELS: Partial<Record<StructureCode, number>> = {
   FEFCO_0427: 16,
   FEFCO_0201: 13,
   ECMA_RTE: 13,
@@ -44,7 +44,7 @@ const EXPECTED_PANELS: Record<StructureCode, number> = {
 };
 
 const ALL: FaceId[] = ["front", "back", "left", "right", "top", "bottom"];
-const EXPECTED_FACES: Record<StructureCode, FaceId[]> = {
+const EXPECTED_FACES: Partial<Record<StructureCode, FaceId[]>> = {
   FEFCO_0427: ALL,
   FEFCO_0201: ALL,
   ECMA_RTE: ALL,
@@ -91,6 +91,8 @@ function expectedOuter(code: StructureCode, d: Dims, t: number): Dims {
       return { L: d.L + 4 * t + 0.8, W: d.L + 4 * t + 0.8, H: d.H + 2 * t };
     case "GABLE_BOX":
       return { L: d.L + 2 * t, W: d.W + 2 * t, H: NaN };
+    default:
+      return d;
   }
 }
 
@@ -124,7 +126,21 @@ function sizeCases(code: StructureCode): Dims[] {
   return cases.filter((d) => validateDims(code, d).ok);
 }
 
-describe.each(STRUCTURE_CODES)("dieline %s", (code) => {
+// Container print parts (ROLL_LABEL, PRINTED_POUCH, PRINTED_TUBE) are flat: tested below.
+const BOX_CODES = STRUCTURE_CODES.filter((c) => STRUCTURES[c].shape !== "flat");
+
+describe("flat container parts", () => {
+  for (const code of STRUCTURE_CODES.filter((c) => STRUCTURES[c].shape === "flat")) {
+    it(`${code} is one printable L × H panel with its area`, () => {
+      const m = generateDieline(code, DEFAULT_DIMS[code], { thicknessMm: 0.1 });
+      expect(m.panels).toHaveLength(1);
+      expect(m.faces.front).toBeTruthy();
+      expect(m.metrics.blankAreaM2).toBeCloseTo((DEFAULT_DIMS[code].L * DEFAULT_DIMS[code].H) / 1e6, 6);
+    });
+  }
+});
+
+describe.each(BOX_CODES)("dieline %s", (code) => {
   const materials = MATERIALS.filter((m) => materialFitsStructure(m, code));
 
   it("has at least one compatible material", () => {
@@ -141,7 +157,7 @@ describe.each(STRUCTURE_CODES)("dieline %s", (code) => {
           if (code === "PAPER_TUBE") {
             const n = tubeSegments(dims.L + 2 * t);
             expect(model.panels).toHaveLength(2 * (n + 2));
-          } else expect(model.panels).toHaveLength(EXPECTED_PANELS[code]);
+          } else expect(model.panels).toHaveLength(EXPECTED_PANELS[code]!);
           const ids = new Set(model.panels.map((p) => p.id));
           expect(ids.size).toBe(model.panels.length);
           const roots = model.panels.filter((p) => p.parentId === null);
@@ -196,7 +212,7 @@ describe.each(STRUCTURE_CODES)("dieline %s", (code) => {
         });
 
         it("maps every face to the panels that form it", () => {
-          expect(Object.keys(model.faces).sort()).toEqual([...EXPECTED_FACES[code]].sort());
+          expect(Object.keys(model.faces).sort()).toEqual([...EXPECTED_FACES[code]!].sort());
           for (const face of Object.values(model.faces)) {
             if (!face) continue;
             expect(face.width).toBeGreaterThan(0);

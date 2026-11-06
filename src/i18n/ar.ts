@@ -4,6 +4,7 @@ import { vendorPortalAr } from "./vendorPortal.ar";
 import { checkoutAr } from "./checkout.ar";
 import { adminAr } from "./admin.ar";
 import { marketingAr } from "./marketing.ar";
+import { libraryAr } from "./library.ar";
 
 /**
  * Arabic dictionary (default locale). MSA, noun-form labels, no diacritics,
@@ -106,6 +107,9 @@ export const ar: Dictionary = {
     GABLE_BOX: "علبة حمل بمقبض",
     PAPER_TUBE: "علبة أسطوانية ورقية",
     RIGID_BOX: "علبة صلبة بغطاء وقاعدة",
+    ROLL_LABEL: "ملصقات رول",
+    PRINTED_POUCH: "أكياس مطبوعة",
+    PRINTED_TUBE: "أنابيب مطبوعة",
   },
   materials: {
     E_FLUTE_KRAFT: "كرتون مضلع E كرافت",
@@ -115,12 +119,25 @@ export const ar: Dictionary = {
     SBS_350: "كرتون دوبلكس SBS 350 جم",
     GREYBOARD_WRAP: "كرتون رمادي 2 مم بورق تغليف مطبوع",
     KRAFT_TUBE: "أنبوب كرافت 1.5 مم بملصق مطبوع",
+    LABEL_PAPER: "ورق ملصقات نصف لامع",
+    LABEL_WHITE_BOPP: "ملصق بولي بروبيلين أبيض",
+    LABEL_CLEAR_BOPP: "ملصق بولي بروبيلين شفاف",
+    LABEL_METALLIC_BOPP: "ملصق بولي بروبيلين معدني",
+    SHRINK_PETG: "فيلم انكماش PETG",
+    POUCH_PET_PE: "رقائق أكياس PET/PE",
+    POUCH_KRAFT_PE: "رقائق أكياس كرافت/PE",
+    TUBE_PE: "جسم أنبوب بولي إيثيلين",
   },
   finishes: {
     NONE: "بدون تشطيب",
     MATTE_LAMINATION: "سلوفان مطفي",
     GLOSS_LAMINATION: "سلوفان لامع",
     SPOT_UV: "يو في موضعي",
+    SOFT_TOUCH_LAMINATION: "سلوفان مخملي",
+    VARNISH: "ورنيش",
+    HOT_FOIL: "بصمة حرارية",
+    EMBOSS: "طباعة بارزة",
+    DEBOSS: "طباعة غائرة",
   },
   cities: {
     CAIRO: "القاهرة",
@@ -206,6 +223,7 @@ export const ar: Dictionary = {
   ...checkoutAr,
   vendorPortal: vendorPortalAr,
   admin: adminAr,
+  library: libraryAr,
   marketing: marketingAr,
   viewer: {
     label: "معاينة ثلاثية الأبعاد للعلبة",
