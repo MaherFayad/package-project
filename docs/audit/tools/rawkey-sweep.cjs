@@ -13,7 +13,7 @@ const ROUTES = {
   anon: ["", "/catalog", "/boxes", "/bottles", "/vendors", "/login", "/design", "/design/mailer-box", "/design/round-bottle", `/s/${S}`, "/vendor/apply", "/legal/privacy", "/legal/cookies"],
   buyer: ["/account", "/orders", "/orders/ELB-26001", "/orders/ELB-26001/invoice", `/checkout/${D}`, "/design/mailer-box", "/design"],
   vendor: ["/vendor", "/vendor/jobs", "/vendor/profile", "/vendor/rate-cards", "/vendor/payouts"],
-  admin: ["/admin", "/admin/orders", "/admin/quotes", "/admin/vendors", "/admin/vendors/applications", "/admin/disputes", "/admin/moderation", "/admin/payouts", "/admin/pricing", "/admin/catalog", "/admin/users", "/admin/privacy", "/admin/audit", "/admin/orders/ELB-26001"],
+  admin: ["/admin", "/admin/orders", "/admin/quotes", "/admin/vendors", "/admin/disputes", "/admin/moderation", "/admin/payouts", "/admin/pricing", "/admin/catalog", "/admin/users", "/admin/privacy", "/admin/audit", "/admin/orders/ELB-26001"],
 };
 const SKIP_CLICK = /delete|remove|sign out|log out|cancel order|حذف|إزالة|تسجيل الخروج|إلغاء الطلب/i;
 async function login(ctx, phone) {

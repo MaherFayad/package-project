@@ -686,3 +686,70 @@ critical 0 · high 0 · medium 1 (R5-PL-14) · low 0. The assigned rows R5-PL-07
 - **Area layouts**, one `<I18nScope>` wrapper plus kit CSS imports each: `(checkout)/layout.tsx`, `orders/layout.tsx`, `s/layout.tsx`, `admin/layout.tsx`, `vendor/layout.tsx`, `dev/layout.tsx`.
 - **New files:** `design/layout.tsx` and `(store)/account/layout.tsx`.
 - **Build config:** `next.config.ts` (webpack hook) and `scripts/next/css-chunking-plugin.cjs`.
+
+### Round 5 (f): audit-only pass on main `a935f6f` (contains 176b4e0)
+
+No new features. The checks:
+- bytes and phone LCP/CLS/INP on every route;
+- the raw-key sweep per role;
+- the not-found pages and the app shell;
+- `next dev` with the vendored chunking plugin.
+
+`debarrel-ui.mjs --check`: no barrel imports.
+
+**Bytes and Web Vitals, R5e → main** (phone, `ISOLATE=1`, `perf-data/r5-platform/pages-r5f-phone.json`):
+
+| Route | Inline CSS ar (KB) | RSC ar (KB) | HTML gz ar (KB) | LCP ar (s) | LCP en (s) | CLS ar | INP ar (ms) |
+|---|---|---|---|---|---|---|---|
+| home | 95 → **95** | 216 → **217** (+0) | 82 → **82** | 1.54 → **1.50** | 0.96 → **0.98** | 0.010 | 96 |
+| boxes | 95 → **95** | 200 → **200** (+0) | 70 → **70** | 1.42 → **1.42** | 1.32 → **1.38** | 0.013 | 40 |
+| bottles | 95 → **95** | 167 → **168** (+0) | 63 → **64** | 1.54 → **1.52** | 1.41 → **1.40** | 0.005 | 40 |
+| catalog | 111 → **111** | 408 → **408** (+0) | 106 → **106** | 2.13 → **2.07** | 1.92 → **1.88** | 0.007 | 72 |
+| vendors | 95 → **95** | 197 → **197** (+0) | 85 → **85** | 1.49 → **1.47** | 1.08 → **1.05** | 0.003 | 32 |
+| design-picker | 172 → **172** | 410 → **411** (+0) | 143 → **143** | 1.34 → **1.27** | 1.25 → **1.23** | 0.002 | 128 |
+| designer-box | 141 → **141** | 231 → **231** (+0) | 96 → **96** | 1.31 → **1.28** | 1.23 → **1.28** | 0.002 | 112 |
+| designer-bottle | 141 → **141** | 234 → **234** (+0) | 98 → **98** | 1.29 → **1.29** | 1.25 → **1.27** | 0.002 | 168 |
+| designer-pouch | 141 → **141** | 231 → **231** (+0) | 96 → **96** | 1.28 → **1.28** | 1.24 → **1.25** | 0.002 | 160 |
+| designer-fefco09 | 141 → **141** | 230 → **231** (+0) | 96 → **96** | 1.28 → **1.28** | 1.22 → **1.24** | 0.002 | 128 |
+| share | 125 → **125** | 228 → **228** (+0) | 118 → **118** | 1.40 → **1.39** | 1.29 → **1.30** | 0.001 | 160 |
+| checkout | 98 → **98** | 190 → **191** (+0) | 85 → **85** | 2.06 → **2.05** | 1.94 → **2.02** | 0.121 | 128 |
+| order-tracking | 156 → **156** | 268 → **268** (+0) | 116 → **116** | 1.99 → **2.03** | 1.76 → **1.80** | 0.019 | 104 |
+| account | 161 → **161** | 254 → **254** (-0) | 110 → **110** | 2.00 → **1.99** | 1.74 → **1.72** | 0.010 | 96 |
+| vendor-portal | 97 → **97** | 216 → **209** (-7) | 91 → **89** | 1.32 → **1.32** | 1.30 → **1.24** | 0.001 | 16 |
+| vendor-jobs | 115 → **115** | 212 → **211** (-2) | 90 → **89** | 1.34 → **1.31** | 1.24 → **1.21** | 0.014 | 64 |
+| admin | 115 → **115** | 268 → **270** (+2) | 109 → **109** | 1.41 → **1.42** | 0.99 → **1.32** | 0.000 | 16 |
+| admin-orders | 104 → **104** | 226 → **228** (+3) | 91 → **92** | 1.05 → **4.97** | 0.98 → **0.94** | 0.001 | 72 |
+
+Bytes are unchanged (±3 KB per route). Phone LCP is within budget on every route except **admin orders ar: 4.97 s in this run, 5.0 / 5.3 / 1.1 s in three re-runs** (R5-PL-17). CLS is within budget except **checkout ar: 0.121** (R5-PL-16). INP is ≤ 168 ms everywhere.
+
+**Raw dictionary keys** (`docs/audit/tools/rawkey-sweep.cjs`, data `rawkeys-r5f.json`):
+- **Coverage:** 78 screens across visitor (26), buyer (14), vendor (10) and admin (28), in ar and en at 390 px.
+- **Interactions:** 229 dialogs, menus, popovers and tabs opened, and 16 forms submitted. Every non-GET request (API and server actions) was answered with a 500, so the error toasts and banners rendered and nothing was written.
+- **What it reads:** visible text, `aria-label`, `title`, `placeholder`, `alt` and the document title.
+- **Result: no raw key on any screen.** The detector was checked by injecting keys into a page.
+
+**Dev server.** `next dev` was started with a module-load probe on `scripts/next/css-chunking-plugin.cjs`.
+- **Dev:** the probe never fired. Next only adds `CssChunkingPlugin` for `!dev && isClient`, so the `next.config.ts` hook finds nothing and leaves dev alone. Home, catalogue, editor, sign-in and vendor apply render styled (linked CSS, tokens loaded), with no console errors and no raw keys.
+- **Production:** the same probe fired once during `npm run build`, and `EmptyState` is its own 1 KB chunk, so the plugin is active.
+
+**Not-found pages:** 58 / 58. **App shell:** 96 / 96 (16 routes × ar/en × 320/390/1440): no raw keys, axe 0, no overflow, skip link OK, and the language switch keeps the query.
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R5-PL-15 | low | `src/i18n/scopes.generated.ts` on main | Main's later merges added 6 key references (`store.vendor.newBadge`, `store.vendors.onTimeNew`, `orders.dispute.*`) without regenerating. `scopes.test.tsx` fails on main. Nothing broke on screen: all six sit in subtrees that already ship (the reason for subtree granularity). A key in a brand-new subtree would have rendered raw. | Robustness | Regenerated. `package.json` gets `"prebuild": "tsx scripts/generate-i18n-scopes.ts"`, so every production build ships fresh scopes even when a merge forgets. The test still flags an uncommitted stale file. | fixed |
+| R5-PL-16 | medium | checkout ar, phone (`ui/CookieNotice`, `CheckoutShell`) | CLS **0.121** (budget 0.1), the same 0.1204 on `fd40cef`, R5e and this run. At 2.04 s IBM Plex Sans Arabic swaps in for the fallback. The notice shrinks 159 → 140 px and the sticky action bar's text reflows 64 → 84 px (rects in `perf-pages.mjs`, which now records them). It is an Arabic first visit with a cold cache only: en is 0.005, and a warm cache gives 0. The notice text is also checkout's LCP element. | WCAG-neutral; CWV CLS < 0.1 | This is the open R4-10 font decision (performance R4.7). Option A is `display: "optional"` for Plex Arabic. Option B is a self-hosted Plex Arabic with a metric-matched fallback. A shorter notice does not fix the cause. Decision for the integrator/founder; not changed in an audit-only pass. | open (decision) |
+| R5-PL-17 | medium | admin and vendor frame pages, phone | An intermittent **React #418 hydration mismatch** ("server rendered HTML didn't match the client") under 4× CPU / Slow 4G. It appeared in 1 of 4 admin-orders runs and 2 of 6 and 2 of 8 vendor-jobs runs (on `fd40cef` too, so it predates R5e). React then client-renders the tree, and the replaced text becomes a second LCP entry at about 5 s (admin orders ar 4.97 / 5.02 / 5.26 s; 1.1 s when it hydrates cleanly). Not reproduced on `next dev`, and a MutationObserver probe hides it (0 of 10). | WCAG 4.1.2 (robust); CWV LCP | Ruled out: the frames' `matchMedia`, `navigator.platform` and dates all run in effects or are deterministic (`formatDate` with a fixed time zone). Next step: a production build with React's non-minified errors (`react-dom/profiling` alias, or `next build --debug-prerender`) to read the diff. | open (platform, next round) |
+
+### Round 5 (f) counts (new findings, before fixing)
+
+critical 0 · high 0 · medium 2 (R5-PL-16, R5-PL-17) · low 1 (R5-PL-15). Fixed: R5-PL-15. Open: R5-PL-16 (font decision, R4-10) and R5-PL-17 (needs a debug build). Medium findings were found, so the rounds continue.
+
+### Round 5 (f) verification
+
+- `npm run lint` clean and `npm run typecheck` clean.
+- `npm test`: 112 files, 8,770 passed.
+- `npm run build` clean (the `prebuild` scope generation ran).
+- e2e (`--workers=2`):
+  - smoke + storefront + designer: **36 passed, 4 skipped**;
+  - checkout + admin + vendor + journey + catalogue + a11y: **53 passed, 19 skipped**.
+- `notfound-check.mjs`: 58 / 58. `platform-shell.cjs`: 96 / 96. `rawkey-sweep.cjs`: 78 screens, no raw keys.

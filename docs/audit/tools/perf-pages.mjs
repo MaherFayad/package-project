@@ -81,7 +81,7 @@ const INIT = () => {
       for (const e of l.getEntries()) {
         if (e.hadRecentInput) continue;
         P.cls += e.value;
-        P.shifts.push({ t: Math.round(e.startTime), v: +e.value.toFixed(4), nodes: (e.sources || []).map((s) => sel(s.node)).slice(0, 3) });
+        P.shifts.push({ t: Math.round(e.startTime), v: +e.value.toFixed(4), nodes: (e.sources || []).map((s) => sel(s.node)).slice(0, 3), rects: (e.sources || []).slice(0, 3).map((s) => `${Math.round(s.previousRect.x)},${Math.round(s.previousRect.y)} ${Math.round(s.previousRect.width)}x${Math.round(s.previousRect.height)} -> ${Math.round(s.currentRect.x)},${Math.round(s.currentRect.y)} ${Math.round(s.currentRect.width)}x${Math.round(s.currentRect.height)}`) });
       }
     }).observe({ type: "layout-shift", buffered: true });
     new PerformanceObserver((l) => {
