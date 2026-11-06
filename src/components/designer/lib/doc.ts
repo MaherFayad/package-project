@@ -119,6 +119,15 @@ export function createDesignDoc(input: {
 // ───────────────────────── validation (API boundary + localStorage) ─────────────────────────
 
 const hex = z.string().regex(/^#[0-9a-fA-F]{6}$/);
+const pct = z.number().finite().min(0).max(100);
+/** A saved brand colour (designer: brand colours). The spot reference is free text for the printer. */
+export const brandColorSchema = z.object({
+  name: z.string().trim().min(1).max(40),
+  hex,
+  cmyk: z.tuple([pct, pct, pct, pct]).optional(),
+  spot: z.string().trim().max(60).optional(),
+});
+export const MAX_BRAND_COLORS = 12;
 const mm = z.number().finite().min(-5000).max(5000);
 const size = z.number().finite().min(0.5).max(5000);
 
@@ -151,6 +160,10 @@ export const imageLayerSchema = z.object({
   pxWidth: z.number().int().min(1).max(20000),
   pxHeight: z.number().int().min(1).max(20000),
   fit: z.enum(["contain", "cover", "stretch"]).optional(),
+  crop: z
+    .object({ x: z.number().min(0).max(1), y: z.number().min(0).max(1), width: z.number().min(0.01).max(1), height: z.number().min(0.01).max(1) })
+    .refine((c) => c.x + c.width <= 1.0001 && c.y + c.height <= 1.0001, { message: "CROP_OUTSIDE" })
+    .optional(),
 });
 
 export const textLayerSchema = z.object({
@@ -220,6 +233,7 @@ export const designConfigSchema = z.object({
   features: featuresSchema.optional(),
   finishes: z.array(designFinishSchema).max(12).optional(),
   vessel: vesselSchema.optional(),
+  brandColors: z.array(brandColorSchema).max(MAX_BRAND_COLORS).optional(),
 });
 
 export const designDocSchema = z
@@ -238,6 +252,7 @@ export const designDocSchema = z
     features: featuresSchema.optional(),
     finishes: z.array(designFinishSchema).max(12).optional(),
     vessel: vesselSchema.optional(),
+    brandColors: z.array(brandColorSchema).max(MAX_BRAND_COLORS).optional(),
   })
   .refine((d) => d.artwork.outside.layers.length + d.artwork.inside.layers.length <= MAX_LAYERS, {
     message: "TOO_MANY_LAYERS",

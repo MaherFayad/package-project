@@ -839,6 +839,36 @@
 @media (max-width: 489px) {
   .stageHeader .faceSelect { display: none; }
 }
+/* R12-02: a banner (changed elsewhere, design not found) on a phone takes ~130 px; the stage gives
+   up its 46dvh floor while it shows, so the editor still fits the screen (no scroll under the bar). */
+@media (max-width: 999px) and (min-height: 501px) {
+  .editor[data-sheet="closed"][data-banner="true"] { grid-template-rows: auto auto auto minmax(12rem, 1fr) auto; }
+  /* Sheet pulled up: leave room for the banner too (R4-08's 21rem + ~9rem banner). */
+  .editor[data-sheet="open"][data-banner="true"] .panel { block-size: min(var(--sheet-open), calc(100dvh - var(--p-top-bar-height) - 30rem)); }
+}
+/* R12-01: landscape screens from 768 to 999 px wide (small tablets, split views) take the side
+   panel too: with the phone sheet their 3D view was ~200 px tall. */
+@media (orientation: landscape) and (min-width: 768px) and (max-width: 999px) and (min-height: 501px) {
+  .editor,
+  .editor[data-sheet="closed"],
+  .editor[data-sheet="closed"][data-banner="true"] {
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 38%);
+    grid-template-areas:
+      "toolbar toolbar"
+      "banner banner"
+      "price panel"
+      "stage panel";
+    grid-template-rows: auto auto auto minmax(0, 1fr);
+    padding-block-end: var(--p-space-300);
+  }
+  .panel,
+  .editor[data-sheet="open"] .panel {
+    block-size: auto;
+    margin-inline: 0;
+    border-radius: var(--p-border-radius-300);
+  }
+  .sheetToggle { display: none; }
+}
 .viewMenuSlot { display: inline-flex; }
 
 /* Phones with the sheet pulled up: the short stage keeps only the 3D view (controls return when it closes). */
@@ -915,3 +945,38 @@
 /* CR-63: the price chip shares the toolbar's 32 px size scale (still a pill; target ≥ 24 px). */
 .priceBadge { min-block-size: 2rem; padding-block: var(--p-space-050); padding-inline: var(--p-space-100) var(--p-space-300); font-size: var(--p-font-size-325, 0.8125rem); }
 .priceBadgeIcon { inline-size: 1.5rem; block-size: 1.5rem; }
+
+/* ── brand colours (integrator decision: own colours, no Pantone library) ── */
+.brandList { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--p-space-200); }
+.brandRow { display: flex; align-items: center; gap: var(--p-space-300); min-block-size: 2.75rem; }
+.brandChip { flex: none; inline-size: 2rem; block-size: 2rem; border-radius: var(--p-border-radius-200); box-shadow: inset 0 0 0 1px var(--p-color-border-secondary); }
+.brandText { flex: 1 1 auto; min-inline-size: 0; display: grid; }
+.brandName { font-weight: var(--p-font-weight-semibold); overflow-wrap: anywhere; }
+.brandMeta { font-size: var(--p-font-size-300); color: var(--p-color-text-secondary); text-align: start; unicode-bidi: isolate; overflow-wrap: anywhere; }
+.cmykFields { border: 0; margin: 0; padding: 0; min-inline-size: 0; }
+.cmykGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--p-space-200); }
+
+/* ── crop dialog (integrator decision) ─────────────────────────────── */
+.cropStage { display: grid; place-items: center; padding: var(--p-space-200); background: var(--p-color-bg-surface-secondary); border-radius: var(--p-border-radius-200); touch-action: none; }
+.cropImage { position: relative; inline-size: min(100%, 28rem); max-block-size: 50dvh; user-select: none; }
+.cropImage img { display: block; inline-size: 100%; block-size: 100%; object-fit: fill; opacity: 0.45; pointer-events: none; }
+.cropFrame {
+  position: absolute;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.35);
+  outline: 2px solid #ffffff;
+  cursor: move;
+  touch-action: none;
+}
+.cropFrame:focus-visible { outline: 3px solid var(--p-color-border-focus); outline-offset: 2px; }
+.cropCorner {
+  position: absolute;
+  inset-block-end: -12px;
+  inset-inline-end: -12px;
+  inline-size: 24px;
+  block-size: 24px;
+  border-radius: var(--p-border-radius-full);
+  background: #ffffff;
+  box-shadow: 0 0 0 2px var(--p-color-border-focus);
+  cursor: nwse-resize;
+}
+.cropStage { overflow: hidden; }

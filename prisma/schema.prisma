@@ -32,6 +32,8 @@ model User {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   lastLoginAt      DateTime?
+  /// Added by designer: saved brand colours (up to 12 of { name, hex, cmyk?, spot? }).
+  brandColors      Json?
 
   sessions  Session[]
   designs   Design[]
