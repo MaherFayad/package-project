@@ -63,7 +63,9 @@ export function trayAndLid(dims: Dims, t: number, f: StructureFeatures, base: Tr
   const lidH = lidDepthOf(f, lidDefault, dims.H);
   const lt = tray(b, t, { prefix: "lid_", L: s.x + 2 * clear, W: s.z + 2 * clear, H: lidH, mode: "lid", ...lid, mount: { kind: "piece", label: "Lid" }, origin: nextOrigin(b, 20) });
   placePiece(b, lt.rootId, t, ORIENT.ceiling(), alignOn(box, { top: box.max.y + t }), maxStageOf(b) + 1, dims.H * 1.4);
-  return { builder: b, closedRotation, faceDepthTol: clear + 3 * t + 0.5 };
+  // Lid layers over the base: up to 3 wall layers, plus 2 for a second pair of outside
+  // gussets when the two on one wall overlap (0303 / 0304 with H > half the wall).
+  return { builder: b, closedRotation, faceDepthTol: clear + 5 * t + 0.5 };
 }
 
 const flapsEnd: Corners = { kind: "flaps", on: "end" };

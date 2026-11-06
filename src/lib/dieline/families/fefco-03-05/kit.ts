@@ -283,6 +283,8 @@ export function tray(b: DielineBuilder, t: number, o: TrayOpts): TrayBlank {
     }
     if (c.kind === "gusset") {
       const s = c.slot ? clamp(t * 2, 2, 6) : 0;
+      // Both gussets of a wall fold onto it from its two corners; each covers Hp along it.
+      const overlap = 2 * Hp > (c.against === "end" ? Wp : Lp);
       for (const cr of corners) {
         const O = cr.O;
         const uE = pt(cr.sx, 0);
@@ -302,7 +304,9 @@ export function tray(b: DielineBuilder, t: number, o: TrayOpts): TrayBlank {
         b.attachPoly(id(`gus${cr.k}a`), "ear", wallId, againstEnd ? endHinge : longHinge, hingedTri, {
           stage: 1,
           fold: out ? -180 : 180,
-          pivotDepth: out ? 0 : 1,
+          // When the two gussets on one wall are deeper than half its length they overlap: the
+          // second pair lies one more board pair out (or in) so the two never share a plane.
+          pivotDepth: (out ? 0 : 1) + (overlap && cr.sy > 0 ? (out ? -1 : 1) : 0),
           label: "Corner gusset",
         });
         b.attachPoly(id(`gus${cr.k}b`), "ear", id(`gus${cr.k}a`), diag, otherTri, {
@@ -430,7 +434,8 @@ export function tube(b: DielineBuilder, t: number, o: TubeOpts): { rootId: strin
     });
     const j = o.joint ?? Math.min(35, o.height * 0.4, o.widths[o.widths.length - 1] * 0.45);
     if (j > 0) {
-      b.attach(id("joint"), "glue", ids[0], rectEdges({ x: 0, y: 0, width: o.widths[0], height: o.height }).left, j, { kind: "trapezoid", taperA: j * 0.25, taperB: j * 0.25 }, {
+      // The joint stops 2t + 1 short of each end crease, clear of end flaps stacked inside it.
+      b.attach(id("joint"), "glue", ids[0], insetSeg(rectEdges({ x: 0, y: 0, width: o.widths[0], height: o.height }).left, o.top || o.bottom ? 2 * t + 1 : 0), j, { kind: "trapezoid", taperA: j * 0.25, taperB: j * 0.25 }, {
         stage: 0,
         fold,
         stack: -1,

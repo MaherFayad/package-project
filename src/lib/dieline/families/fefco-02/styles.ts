@@ -201,8 +201,18 @@ const s0207: Fefco02Generator = (d, t, f) => {
   // folded together or left flat they would cross each other or a wall on the way in.
   shelfAndDrop(c, "left", "bottom", cross, dh, { stage: 1, stack: -1, dropStage: 1 });
   shelfAndDrop(c, "right", "bottom", cross, dh, { stage: 2, stack: -1, dropStage: 2 });
-  shelfAndDrop(c, "front", "bottom", meetMajor(c) - t, dh, { stage: 3, stack: 0, dropStage: 3 });
-  shelfAndDrop(c, "back", "bottom", meetMajor(c) - t, dh, { stage: 3, stack: 0, dropStage: 3 });
+  // Shelves meet on the centre line; each division board stands on its own side of it.
+  shelfAndDrop(c, "front", "bottom", meetMajor(c), dh, { stage: 3, stack: 0, dropStage: 3 });
+  shelfAndDrop(c, "back", "bottom", meetMajor(c), dh, { stage: 3, stack: 0, dropStage: 3 });
+  // The back-to-back lengthwise division rises from the outer (L) flaps through the end
+  // shelves: the die slots each end shelf along the box centre line for it.
+  const sw = 2 * t + 1;
+  for (const side of ["left", "right"] as const) {
+    const shelf = c.b.byId(`bottomFlap_${side}`);
+    const bb = shelf.bbox;
+    const cx = bb.x + bb.width / 2;
+    shelf.holes = [...(shelf.holes ?? []), rectPolygon(cx - sw / 2, bb.y + t + 2, sw, bb.height - t - 3)];
+  }
   slottedFeatures(c, d, { ...f, tearStrip: false });
   return draft(c);
 };
