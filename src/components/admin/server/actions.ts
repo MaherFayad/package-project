@@ -259,6 +259,7 @@ export async function saveCheckoutSettingsAction(input: z.input<typeof checkoutS
     });
     revalidateAdmin();
     revalidatePath("/[locale]/(checkout)/checkout/[designId]", "page"); // route-group path (R4-10)
+    purgeCatalogCache(); // r6-why: /pricing and /why-elba show the prepay discount and the sample price
     return null;
   });
 }

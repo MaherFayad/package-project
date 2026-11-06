@@ -1198,6 +1198,14 @@ export const I18N_SCOPES = {
     "buyer.quoted.statusPriced",
     "orderStatus."
   ],
+  "why": [
+    "buyer.sample.credit",
+    "buyer.sample.line",
+    "checkout.summary.prepayDiscount",
+    "mk.motion.pauseMarquee",
+    "mk.motion.playMarquee",
+    "pricing.badge.BEST_MATCH"
+  ],
   "admin": [
     "account.consentKind.",
     "account.granted",
