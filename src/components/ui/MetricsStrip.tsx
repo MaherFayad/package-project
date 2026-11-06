@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import styles from "./Misc.module.css";
+import styles from "./MetricsStrip.module.css";
 
 export interface Metric {
   /** Label (wrap in <Tooltip dotted> for a definition). */

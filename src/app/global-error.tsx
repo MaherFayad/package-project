@@ -1,53 +1,53 @@
 "use client";
 
-import "@/styles/globals.css";
-import { inter, plexArabic } from "@/app/fonts";
-
 /**
  * Last-resort boundary for errors thrown by the root or locale layout (R5-PL-01). It replaces the
  * whole document, so it renders its own <html>/<body>, has no i18n context and stays bilingual
- * like the root 404 (each part carries its own lang/dir, WCAG 3.1.2), with a title (2.4.2) and
- * the tokens and brand fonts (CR-04). Plain <a> links: a full reload rebuilds the broken layout.
+ * like the root 404 (each part carries its own lang/dir, WCAG 3.1.2), with a title (2.4.2).
+ *
+ * Self-contained on purpose: no globals.css, no next/font, literal values instead of tokens.
+ * Next keeps this boundary in every page's tree and embeds its CSS in each RSC payload, so
+ * importing the global sheet here added a second copy of the tokens and @font-face rules
+ * (~30 KB raw) to every page (R5-PL-04). Plain <a> links: a full reload rebuilds the layout.
  */
+const FONT = 'system-ui, -apple-system, "Segoe UI", "Noto Sans Arabic", Tahoma, sans-serif';
+const INK = "#303030";
+const button = {
+  minBlockSize: 44, // WCAG 2.5.8
+  padding: "0 20px",
+  borderRadius: 999,
+  border: `1.5px solid ${INK}`,
+  background: INK,
+  color: "#ffffff",
+  font: "inherit",
+  fontWeight: 600,
+  cursor: "pointer",
+} as const;
+const link = { color: INK, fontWeight: 600 } as const;
+const part = { display: "grid", gap: 12, justifyItems: "center" } as const;
+const row = { margin: 0, display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap", justifyContent: "center" } as const;
+const muted = { margin: 0, color: "#616161" } as const;
+
 export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   console.error(error);
-  const button = {
-    minBlockSize: 44, // WCAG 2.5.8
-    padding: "0 var(--p-space-500)",
-    borderRadius: 999,
-    border: "1.5px solid var(--p-color-text)",
-    background: "var(--p-color-text)",
-    color: "#ffffff",
-    font: "inherit",
-    fontWeight: "var(--p-font-weight-semibold)",
-    cursor: "pointer",
-  } as const;
-  const link = { color: "var(--p-color-text)", fontWeight: "var(--p-font-weight-semibold)" } as const;
   return (
-    <html lang="ar" dir="rtl" className={`${inter.variable} ${plexArabic.variable}`}>
+    <html lang="ar" dir="rtl">
       <head>
         <title>تعذر تحميل الصفحة · Page failed to load</title>
         <meta name="robots" content="noindex" />
       </head>
-      <body>
+      <body style={{ margin: 0, background: "#f1f1f1", color: INK, fontFamily: FONT, lineHeight: 1.5 }}>
         <main
           id="main"
           role="alert"
-          style={{
-            minBlockSize: "100dvh",
-            display: "grid",
-            placeContent: "center",
-            gap: "var(--p-space-800)",
-            padding: "var(--p-space-1600) var(--p-page-gutter)",
-            textAlign: "center",
-          }}
+          style={{ minBlockSize: "100dvh", boxSizing: "border-box", display: "grid", placeContent: "center", gap: 32, padding: "64px 16px", textAlign: "center" }}
         >
-          <section aria-labelledby="ge-ar" style={{ display: "grid", gap: "var(--p-space-300)", justifyItems: "center" }}>
-            <h1 id="ge-ar" style={{ margin: 0, fontSize: "var(--p-font-size-750, 2rem)", fontWeight: "var(--p-font-weight-bold)", lineHeight: 1.3 }}>
+          <section aria-labelledby="ge-ar" style={part}>
+            <h1 id="ge-ar" style={{ margin: 0, fontSize: "2rem", fontWeight: 700, lineHeight: 1.3 }}>
               تعذر تحميل هذه الصفحة
             </h1>
-            <p style={{ margin: 0, color: "var(--p-color-text-secondary)" }}>حاول مرة أخرى. إذا تكررت المشكلة، عد بعد بضع دقائق.</p>
-            <p style={{ margin: 0, display: "flex", gap: "var(--p-space-400)", alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}>
+            <p style={muted}>حاول مرة أخرى. إذا تكررت المشكلة، عد بعد بضع دقائق.</p>
+            <p style={row}>
               <button type="button" onClick={() => reset()} style={button}>
                 إعادة المحاولة
               </button>
@@ -57,12 +57,12 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
               </a>
             </p>
           </section>
-          <section lang="en" dir="ltr" aria-labelledby="ge-en" style={{ display: "grid", gap: "var(--p-space-300)", justifyItems: "center" }}>
-            <h2 id="ge-en" style={{ margin: 0, fontSize: "var(--p-font-size-600, 1.5rem)", fontWeight: "var(--p-font-weight-bold)", lineHeight: 1.3 }}>
+          <section lang="en" dir="ltr" aria-labelledby="ge-en" style={part}>
+            <h2 id="ge-en" style={{ margin: 0, fontSize: "1.5rem", fontWeight: 700, lineHeight: 1.3 }}>
               We couldn&apos;t load this page
             </h2>
-            <p style={{ margin: 0, color: "var(--p-color-text-secondary)" }}>Please try again. If it keeps happening, come back in a few minutes.</p>
-            <p style={{ margin: 0, display: "flex", gap: "var(--p-space-400)", alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}>
+            <p style={muted}>Please try again. If it keeps happening, come back in a few minutes.</p>
+            <p style={row}>
               <button type="button" onClick={() => reset()} style={button}>
                 Try again
               </button>

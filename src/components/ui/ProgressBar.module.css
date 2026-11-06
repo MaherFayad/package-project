@@ -1,0 +1,14 @@
+/* Split out of Misc.module.css (R5-PL-05): with inlineCss each route segment inlines the CSS of
+   the components it renders, so one shared sheet was copied whole into every page, loading and
+   error segment that used any of these components. */
+/* ── ProgressBar ──────────────────────────────────────────── */
+.Progress { inline-size: 100%; overflow: hidden; border-radius: var(--p-border-radius-full); background: var(--p-color-bg-fill-tertiary); }
+.progress-small { block-size: 0.25rem; }
+.progress-medium { block-size: 0.5rem; }
+.progress-large { block-size: 0.75rem; }
+.ProgressIndicator { block-size: 100%; border-radius: inherit; }
+.progressAnimated { transition: inline-size var(--p-motion-duration-500) var(--p-motion-ease-out); }
+.progressTone-highlight { background: var(--p-color-bg-fill-emphasis); }
+.progressTone-primary { background: var(--p-color-bg-fill-brand); }
+.progressTone-success { background: var(--p-color-bg-fill-success); }
+.progressTone-critical { background: var(--p-color-bg-fill-critical); }

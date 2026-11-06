@@ -6,7 +6,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { I18nProvider } from "@/i18n/client";
 import { getDictionary } from "@/i18n";
 
-vi.mock("@/app/fonts", () => ({ inter: { variable: "inter" }, plexArabic: { variable: "plex" } }));
 vi.mock("next/navigation", () => ({ usePathname: () => "/ar/login", useRouter: () => ({ push: vi.fn() }) }));
 
 import LocaleError from "../[locale]/error";
@@ -47,5 +46,14 @@ describe("global error boundary", () => {
     expect(html).toContain('href="/en"');
     expect((html.match(/<button/g) || []).length).toBe(2);
     expect(html).not.toContain("secret stack");
+  });
+});
+
+describe("global error boundary stays self-contained (R5-PL-04)", () => {
+  it("imports no stylesheet or font module, so no second CSS copy lands in every RSC payload", async () => {
+    const fs = await import("node:fs");
+    const src = fs.readFileSync(`${process.cwd()}/src/app/global-error.tsx`, "utf8");
+    expect(src).not.toMatch(/import\s+["'][^"']+\.css["']/);
+    expect(src).not.toMatch(/from\s+["']@\/app\/fonts["']/);
   });
 });

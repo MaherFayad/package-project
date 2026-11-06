@@ -3,7 +3,7 @@
 import { isValidElement, useEffect, useId, useRef, useState, type ReactElement, type ReactNode } from "react";
 import { useAnchoredPosition } from "./useAnchor";
 import { getFocusable } from "./utils";
-import styles from "./Misc.module.css";
+import styles from "./Tooltip.module.css";
 
 export interface TooltipProps {
   content: ReactNode;
