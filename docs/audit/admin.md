@@ -180,7 +180,7 @@ Base: main at `781d663` (rounds 1 to 3 merged). Read `ROUND3.md`, this file, `cr
 |---|---|
 | A-01 … A-27, A-29 … A-33, R2-01 … R2-16, R2-18, CR-12, CR-25, CR-35, CR-36, CR-49, CR-50, CR-56, CR-65, X-12, R3-02, B-05/B-11, B-08, B-15, B-19, CR-08 | Still fixed. First sweep on the merged base: 80 page views with 0 axe violations, 0 horizontal overflow and 0 console errors. Checked by eye: awaiting-vendor banner and vendor card, quote-only banner, margin line, payouts steps and dispute hold (ELB-26203 balance shows no step), two-decimal money, label-colon counts, `dir="auto"` on user text, entity-first titles, checkout settings card, moderation contact flags (caption with "WhatsApp 0100 123 4567" cannot be approved), quote SLA badges. |
 | R3-01 | **Reopened, round 4, then fixed (R4-10).** `overflow-wrap: break-word` stopped the one-letter columns, but badges still broke inside words at 390 px ("Pai/d", "بانتظا/ر المطبع/ة") on orders, payouts, catalogue, audit, vendor and user pages. |
-| A-28 / R2-14 | Unchanged: 404 card renders with HTTP 200 because of the streaming admin skeleton (by choice). |
+| A-28 / R2-14 | Unchanged: 404 card renders with HTTP 200 because of the streaming admin skeleton (by choice). Fixed in round 9 (R5-PL-03). |
 | R2-17 | Unchanged: "Remove verified badge" has no confirmation (reversible, audited; by choice). |
 | CR-57 | Closed: the seed now names the admin "فريق تشغيل علبة" (seed owner). |
 
@@ -405,10 +405,17 @@ Asked by the integrator: audit only, no new features. Scope: R5-JR-22 (re-checke
 | R9-AD-04 | low | Bio and profile clean-up dialogs at 320 en | The confirm button was truncated to "Remove contact…". | WCAG 2.5.3 (visible label); craft | The confirm reads "Remove" / «حذف»; the dialog title already says what is removed. | fixed |
 | R9-AD-05 | low | Vendor scorecard caption (ar) | «1 من 50 عمليات تسليم»: a bare count before a plural noun, wrong agreement for 1 and for 11 or more. | Arabic copy rules (label-colon counts) | «عمليات التسليم: 1 من 50. …». | fixed |
 
+### Routed item (added to round 9)
+
+| id | result |
+|---|---|
+| **R5-PL-03** (medium, platform) | The admin detail routes (orders by number, vendors by slug, vendor applications, users and disputes by id) answered **200** for an unknown record: the page's `notFound()` ran inside the admin-wide `loading.tsx` Suspense boundary, so the 404 card streamed with a 200 status (A-28 / R2-14, kept "by choice" until now). The skeleton boundary moved below the detail routes: `admin/loading.tsx` is gone, every list or leaf route has its own `loading.tsx` (`(overview)`, `orders/(list)`, `users/(list)`, `disputes/(list)`, `vendors/(list)` route groups, plus audit, catalog, moderation, payouts, pricing, privacy, quotes), and each detail segment has a `layout.tsx` that checks the record above its own Suspense boundary (same pattern as the public printer profile). The not-found cards moved one level up so they catch the layout's 404. URLs are unchanged, and signed-out requests still get the 307 to sign-in before any lookup, so record existence never leaks. New e2e: an unknown order, vendor, application, user and dispute (ar and en) each answer **404** with the admin "Not found" card, a malformed escape answers 400, and known records and list pages still answer 200. **fixed** |
+
 Counts (round 9, new, before fixing): **critical 0, high 0, medium 0, low 5 (5)**. All fixed. **This round found nothing of medium severity or worse, so the admin area meets the stop rule.**
 
 ### Verification (round 9)
 
 - `npm run lint`, `npm run typecheck`, `npm run build`: clean. `npm test`: 8,754 passed.
 - e2e (`--workers=2 --trace off`, fresh seed): `admin`, `admin-quote-price`, `checkout-quote`, `vendor` gave 25 passed and 17 skipped, twice in a row.
-- Files outside admin: none (admin i18n, `AdminFrame.tsx`, `ModerationQueue.tsx`, the overview page and the audit tools).
+- After R5-PL-03: the 320/390/1440 sweep again 120 views with 0 issues; e2e set 27 passed, twice (two new 404 tests).
+- Files outside admin: none (admin i18n, `AdminFrame.tsx`, `ModerationQueue.tsx`, admin route files, the audit tools and `e2e/admin.spec.ts`).
