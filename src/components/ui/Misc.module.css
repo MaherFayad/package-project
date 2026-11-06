@@ -292,3 +292,5 @@
 .MetricLabel { font-size: var(--p-text-body-sm-font-size); font-weight: var(--p-font-weight-semibold); color: var(--p-color-text); }
 .MetricValue { display: flex; align-items: baseline; gap: var(--p-space-200); margin: 0; font-size: var(--p-font-size-350); font-weight: var(--p-font-weight-semibold); font-variant-numeric: tabular-nums; }
 .MetricTrend { font-size: var(--p-text-body-sm-font-size); font-weight: var(--p-font-weight-regular); color: var(--p-color-text-secondary); }
+
+.Metrics:focus-visible { outline: var(--p-focus-ring-width) solid var(--p-color-border-focus); outline-offset: 2px; }

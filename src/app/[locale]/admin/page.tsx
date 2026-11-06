@@ -58,8 +58,31 @@ export default async function AdminOverviewPage({ params, searchParams }: { para
     { n: o.tasks.qcPending, text: t("admin.overview.tasks.qc"), url: `${base}/orders?view=qc` },
     { n: o.tasks.applications, text: t("admin.overview.tasks.applications"), url: `${base}/vendors?tab=applications` },
     { n: o.tasks.openDisputes, text: t("admin.overview.tasks.disputes"), url: `${base}/disputes` },
+    { n: o.tasks.payouts, text: t("admin.overview.tasks.payouts"), url: `${base}/payouts` },
     { n: o.tasks.dataRequests, text: t("admin.overview.tasks.dataRequests"), url: `${base}/privacy` },
   ].filter((x) => x.n > 0);
+
+  const todo = (
+    <Card title={t("admin.overview.tasks.title")}>
+      {tasks.length ? (
+        <ul className={adminStyles.TaskList}>
+          {tasks.map((x) => (
+            <li key={x.url}>
+              <NextLink href={x.url} className={adminStyles.TaskLink}>
+                <CountBadge>{formatNumber(x.n)}</CountBadge>
+                <span className={adminStyles.TaskText}>{x.text}</span>
+                <Icon source={ChevronRight} tone="subdued" flipInRtl />
+              </NextLink>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <Text as="p" tone="subdued">
+          {t("admin.overview.tasks.allClear")}
+        </Text>
+      )}
+    </Card>
+  );
 
   return (
     <Page
@@ -81,6 +104,9 @@ export default async function AdminOverviewPage({ params, searchParams }: { para
             { label: label("admin.overview.metrics.disputes", "admin.overview.help.disputes"), value: cell(pct(o.ops.disputePct), t("admin.overview.openDisputes", { count: formatNumber(o.ops.openDisputes) })) },
           ]}
         />
+
+        {/* Phones: the to-do list is the next action, so it comes before the funnel and charts. */}
+        <div className={adminStyles.PhoneOnly}>{todo}</div>
 
         <Layout>
           <LayoutSection>
@@ -153,25 +179,7 @@ export default async function AdminOverviewPage({ params, searchParams }: { para
 
           <LayoutSection variant="oneThird" as="aside">
             <BlockStack gap="400">
-              <Card title={t("admin.overview.tasks.title")}>
-                {tasks.length ? (
-                  <ul className={adminStyles.TaskList}>
-                    {tasks.map((x) => (
-                      <li key={x.url}>
-                        <NextLink href={x.url} className={adminStyles.TaskLink}>
-                          <CountBadge>{formatNumber(x.n)}</CountBadge>
-                          <span className={adminStyles.TaskText}>{x.text}</span>
-                          <Icon source={ChevronRight} tone="subdued" flipInRtl />
-                        </NextLink>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <Text as="p" tone="subdued">
-                    {t("admin.overview.tasks.allClear")}
-                  </Text>
-                )}
-              </Card>
+              <div className={adminStyles.DesktopOnly}>{todo}</div>
               <Card title={t("admin.overview.ops.definitions")}>
                 <BlockStack gap="200">
                   {(["gmv", "margin", "onTime", "reprint", "disputes"] as const).map((k) => (

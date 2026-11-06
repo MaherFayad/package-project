@@ -212,3 +212,10 @@
 .AnchorTarget {
   scroll-margin-block-start: calc(56px + var(--p-space-400));
 }
+
+/* Same content placed twice for phone / wider layouts; display:none keeps only one in the a11y tree. */
+.PhoneOnly { display: none; }
+@media (max-width: 47.99rem) {
+  .PhoneOnly { display: block; }
+  .DesktopOnly { display: none; }
+}

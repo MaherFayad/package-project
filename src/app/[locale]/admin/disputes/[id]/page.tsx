@@ -1,9 +1,9 @@
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { BlockStack, Card, InlineStack, Layout, LayoutSection, Link, Page, Text } from "@/components/ui";
 import { DisputeDecision } from "@/components/admin/DisputeDecision";
 import { DisputeStatusBadge } from "@/components/admin/DisputesIndex";
 import { OrderStatusBadge } from "@/components/admin/OrdersIndex";
-import { NotFoundCard } from "@/components/admin/NotFoundCard";
 import { adminStyles } from "@/components/admin/charts";
 import { loadDispute } from "@/components/admin/server/queries";
 import { canRefund } from "@/components/admin/lib/orders";
@@ -23,7 +23,7 @@ export default async function AdminDisputePage({ params }: { params: Params }) {
   const t = getT(locale);
   const base = `/${locale}/admin`;
   const data = await loadDispute(id);
-  if (!data) return <NotFoundCard locale={locale} backUrl={`${base}/disputes`} backLabel={t("admin.disputes.detail.back")} />;
+  if (!data) notFound();
   const { dispute: d, vendors, reprints, auditRows } = data;
   const order = d.order;
 

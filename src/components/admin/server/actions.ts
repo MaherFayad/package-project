@@ -27,6 +27,7 @@ import {
   canReassign,
   canRefund,
   canReviewQc,
+  needsManualCost,
   noteSchema,
   overrideSchema,
   qcSchema,
@@ -46,6 +47,7 @@ import {
   deletionBlockers,
   disputeDecisionSchema,
   encodeReviewNote,
+  isOpenDispute,
   statusForDecision,
   vendorStatusAfter,
   vendorStatusSchema,
@@ -61,6 +63,7 @@ import {
   type PreviewRow,
   type PreviewSample,
 } from "../lib/pricingSettings";
+import { canRaisePayout, payoutAmount, payoutStepSchema, STEP_FROM, STEP_TO } from "../lib/payouts";
 import { defaultFits, finishUpdateSchema, materialUpdateSchema, mergeLimits, outsideHardBounds, structureUpdateSchema } from "../lib/catalog";
 
 function revalidateAdmin() {
@@ -85,6 +88,12 @@ export async function reassignOrderAction(input: z.input<typeof reassignSchema>)
     if (order.vendorId === d.vendorId) throw new AdminActionError("INVALID");
     const vendor = await db.vendor.findUnique({ where: { id: d.vendorId } });
     if (!vendor || vendor.status !== "ACTIVE") throw new AdminActionError("NOT_ALLOWED", "VENDOR_INACTIVE");
+    // Quote-only for this vendor (no active rate card for the job): the buy price must be entered.
+    const item = await db.orderItem.findFirst({ where: { orderId: order.id }, select: { structureCode: true, materialCode: true } });
+    const card = item
+      ? await db.rateCard.findFirst({ where: { vendorId: vendor.id, active: true, structure: { code: item.structureCode }, material: { code: item.materialCode } }, select: { id: true } })
+      : null;
+    if (needsManualCost(!!card, d.vendorCostPiasters)) throw new AdminFieldErrors({ vendorCostPiasters: "COST_REQUIRED" });
     const nextStatus = statusAfterReassign(order.status as OrderStatus);
     const cost = d.vendorCostPiasters ?? order.vendorCostPiasters;
     await db.$transaction(async (tx) => {
@@ -104,6 +113,58 @@ export async function reassignOrderAction(input: z.input<typeof reassignSchema>)
           summary: `${order.number}: ${order.vendor.nameEn} → ${vendor.nameEn}. ${d.reason}`,
           before: { vendorId: order.vendorId, status: order.status, vendorCostPiasters: order.vendorCostPiasters },
           after: { vendorId: vendor.id, status: nextStatus, vendorCostPiasters: cost },
+        },
+        tx,
+      );
+    });
+    revalidateAdmin();
+    return null;
+  });
+}
+
+/**
+ * Vendor payout step (research report §4.1 payout approvals). RAISE creates the PENDING row for a
+ * part that is earned (advance: vendor accepted; balance: delivered after QC), APPROVE and PAY move
+ * it on. Paying the balance needs ops to confirm the vendor's ETA e-invoice is on file.
+ */
+export async function payoutStepAction(input: z.input<typeof payoutStepSchema>): Promise<AdminActionResponse> {
+  return runAdminAction(async () => {
+    const admin = await adminForMutation();
+    const d = parse(payoutStepSchema, input);
+    const order = await db.order.findUnique({ where: { id: d.orderId }, include: { vendor: { select: { nameEn: true } }, payouts: true, disputes: { select: { status: true } } } });
+    if (!order) throw new AdminActionError("NOT_FOUND");
+    if (d.kind === "BALANCE" && order.disputes.some((x) => isOpenDispute(x.status))) throw new AdminActionError("NOT_ALLOWED", "PAYOUT_DISPUTE_HOLD");
+    const existing = order.payouts.find((p) => (p.kind === "BALANCE" ? "BALANCE" : "ADVANCE") === d.kind) ?? null;
+    if (d.step === "PAY" && d.kind === "BALANCE" && !d.eInvoice) throw new AdminFieldErrors({ eInvoice: "REQUIRED" });
+    const label = `${order.number} ${d.kind.toLowerCase()} (${order.vendor.nameEn})`;
+    await db.$transaction(async (tx) => {
+      if (d.step === "RAISE") {
+        if (existing) throw new AdminActionError("STALE");
+        if (!canRaisePayout(d.kind, order.status)) throw new AdminActionError("NOT_ALLOWED", "PAYOUT_NOT_EARNED");
+        const amount = payoutAmount(d.kind, order.vendorCostPiasters);
+        if (amount <= 0) throw new AdminActionError("NOT_ALLOWED", "PAYOUT_ZERO");
+        const row = await tx.payout.create({ data: { vendorId: order.vendorId, orderId: order.id, kind: d.kind, amountPiasters: amount, status: "PENDING" } });
+        await audit(admin, { action: "PAYOUT_RAISE", entityType: "PAYOUT", entityId: row.id, summary: `${label}: ${amount / 100} EGP`, after: { status: "PENDING", amountPiasters: amount } }, tx);
+        return;
+      }
+      if (!existing) throw new AdminActionError("NOT_FOUND");
+      // Refunded or cancelled jobs: nothing more is owed (unpaid rows are removed by the refund).
+      if (["REFUNDED", "CANCELLED"].includes(order.status)) throw new AdminActionError("NOT_ALLOWED", "PAYOUT_ORDER_CLOSED");
+      const now = new Date();
+      const u = await tx.payout.updateMany({
+        where: { id: existing.id, status: STEP_FROM[d.step] },
+        data: d.step === "APPROVE" ? { status: STEP_TO.APPROVE, approvedAt: now } : { status: STEP_TO.PAY, paidAt: now },
+      });
+      if (u.count !== 1) throw new AdminActionError("STALE");
+      await audit(
+        admin,
+        {
+          action: d.step === "APPROVE" ? "PAYOUT_APPROVE" : "PAYOUT_PAY",
+          entityType: "PAYOUT",
+          entityId: existing.id,
+          summary: `${label}: ${existing.amountPiasters / 100} EGP${d.step === "PAY" && d.kind === "BALANCE" ? ", e-invoice on file" : ""}`,
+          before: { status: existing.status },
+          after: { status: STEP_TO[d.step] },
         },
         tx,
       );

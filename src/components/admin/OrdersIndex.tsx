@@ -82,6 +82,7 @@ export function OrdersIndex({ rows, vendors, openDisputes }: { rows: AdminOrderR
     <Page fullWidth title={t("admin.orders.title")} titleIcon={ClipboardList}>
       <BlockStack gap="400">
         <MetricsStrip
+          accessibilityLabel={t("admin.orders.metricsLabel")}
           metrics={[
             { label: t("admin.orders.metrics.total"), value: formatNumber(counts.all) },
             { label: t("admin.orders.metrics.attention"), value: formatNumber(counts.attention) },

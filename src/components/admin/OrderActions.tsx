@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Avatar, BlockStack, Button, ButtonGroup, Card, InlineStack, Modal, Select, Text, TextField } from "@/components/ui";
+import { Avatar, Banner, BlockStack, Button, ButtonGroup, Card, InlineStack, Modal, Select, Text, TextField } from "@/components/ui";
 import { useI18n } from "@/i18n/client";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, formatPercent } from "@/lib/format";
+import type { DictKey } from "@/i18n";
 import { addOrderNoteAction, overrideOrderAction, reassignOrderAction, refundOrderAction, reviewQcAction, shipOrderAction } from "./server/actions";
 import { adminStyles } from "./charts";
-import { applyGoodsOverride } from "./lib/orders";
+import { applyGoodsOverride, isQuoteOnly, marginPreview } from "./lib/orders";
 import { egpToPiastersInput, fieldError, piastersToInput, useAdminAction, useAdminErrorText } from "./useAdminAction";
 import type { AdminActionResponse } from "./server/context";
 
@@ -26,6 +27,8 @@ export function RoutingCard({
   vendors,
   canReassign,
   vendorCostPiasters,
+  goodsPiasters,
+  jobLabel,
   vendor,
 }: {
   orderId: string;
@@ -33,10 +36,15 @@ export function RoutingCard({
   vendors: VendorOption[];
   canReassign: boolean;
   vendorCostPiasters: number;
+  /** Goods ex-VAT the buyer pays (for the margin preview). */
+  goodsPiasters: number;
+  /** "Shipping box · B-flute kraft": the style and board a vendor needs a rate card for. */
+  jobLabel: string;
   /** Current vendor summary shown at the top of the card. */
   vendor: ReactNode;
 }) {
   const { t } = useI18n();
+  const quoteOnly = isQuoteOnly(vendors);
   const { run, busy } = useAdminAction();
   const errorText = useAdminErrorText();
   const [open, setOpen] = useState(false);
@@ -48,6 +56,8 @@ export function RoutingCard({
   const others = vendors.filter((v) => v.id !== currentVendorId).sort((a, b) => Number(b.capable) - Number(a.capable));
   const selected = others.find((v) => v.id === vendorId);
   const costValue = egpToPiastersInput(cost);
+  const costRequired = !!selected && !selected.capable;
+  const effectiveCost = costValue === null || Number.isNaN(costValue) ? vendorCostPiasters : costValue;
   const reset = () => {
     setOpen(false);
     setVendorId("");
@@ -62,6 +72,11 @@ export function RoutingCard({
       <Card title={t("admin.order.vendorCard.title")}>
         <BlockStack gap="300">
           {vendor}
+          {quoteOnly ? (
+            <Banner tone="info" title={t("admin.order.routing.quoteOnlyTitle")}>
+              {t("admin.order.routing.quoteOnlyBody", { job: jobLabel })}
+            </Banner>
+          ) : null}
           {!canReassign ? (
             <Text as="p" variant="bodySm" tone="subdued">
               {t("admin.order.routing.locked")}
@@ -90,19 +105,25 @@ export function RoutingCard({
                   value={vendorId}
                   onChange={setVendorId}
                   placeholder={t("admin.order.routing.choose")}
-                  options={others.map((v) => ({ value: v.id, label: `${v.name}${v.capable ? "" : ` (${t("admin.order.routing.notCapable")})`}` }))}
-                  helpText={selected ? (selected.capable ? t("admin.order.routing.capable") : t("admin.order.routing.notCapable")) : undefined}
+                  // Quote-only jobs: every vendor lacks a rate card, so the banner says it once instead of on every option.
+                  options={others.map((v) => ({ value: v.id, label: `${v.name}${v.capable || quoteOnly ? "" : ` (${t("admin.order.routing.notCapable")})`}` }))}
+                  helpText={selected ? (selected.capable ? t("admin.order.routing.capable") : t("admin.order.routing.notCapableHelp")) : undefined}
                   error={fieldError(res, "vendorId", errorText)}
                 />
                 <TextField
-                  label={t("admin.order.routing.newCost")}
+                  label={costRequired ? t("admin.order.routing.newCostRequired") : t("admin.order.routing.newCost")}
                   autoComplete="off"
                   inputMode="decimal"
                   dir="ltr"
                   value={cost}
                   onChange={setCost}
-                  placeholder={piastersToInput(vendorCostPiasters)}
-                  helpText={t("admin.order.routing.newCostHelp")}
+                  requiredIndicator={costRequired}
+                  placeholder={costRequired ? undefined : piastersToInput(vendorCostPiasters)}
+                  helpText={
+                    <>
+                      {costRequired ? t("admin.order.routing.newCostManualHelp") : t("admin.order.routing.newCostHelp")} <MarginLine goodsPiasters={goodsPiasters} vendorCostPiasters={effectiveCost} />
+                    </>
+                  }
                   error={Number.isNaN(costValue) ? t("admin.errors.INVALID") : fieldError(res, "vendorCostPiasters", errorText)}
                 />
                 <TextField
@@ -117,7 +138,7 @@ export function RoutingCard({
                 />
                 <InlineStack align="end" gap="200">
                   <Button onClick={reset}>{t("admin.common.cancel")}</Button>
-                  <Button variant="primary" submit disabled={!vendorId || reason.trim().length < 3} loading={busy === "route"}>
+                  <Button variant="primary" submit disabled={!vendorId || reason.trim().length < 3 || (costRequired && costValue === null)} loading={busy === "route"}>
                     {t("admin.order.routing.submit")}
                   </Button>
                 </InlineStack>
@@ -127,6 +148,23 @@ export function RoutingCard({
         </BlockStack>
       </Card>
     </div>
+  );
+}
+
+/** "Margin: EGP 1,500 (25%)", with a warning outside the 20 to 30% business-plan band or at a loss. */
+export function MarginLine({ goodsPiasters, vendorCostPiasters }: { goodsPiasters: number; vendorCostPiasters: number }) {
+  const { t, locale } = useI18n();
+  const m = marginPreview(goodsPiasters, vendorCostPiasters);
+  const text = t("admin.order.margin.line", { amount: formatMoney(m.marginPiasters, locale), pct: m.pct === null ? t("admin.common.none") : formatPercent(m.pct, locale) });
+  return (
+    <span aria-live="polite">
+      <bdi>{text}</bdi>
+      {m.band !== "in" ? (
+        <Text as="span" variant="bodySm" tone={m.band === "loss" ? "critical" : "caution"} fontWeight="semibold">
+          {` ${t(`admin.order.margin.${m.band}` as DictKey)}`}
+        </Text>
+      ) : null}
+    </span>
   );
 }
 
@@ -233,6 +271,7 @@ export function OverrideCard({
               value={cost}
               onChange={setCost}
               placeholder={piastersToInput(vendorCostPiasters)}
+              helpText={<MarginLine goodsPiasters={canPrice && goodsValue !== null && !Number.isNaN(goodsValue) ? goodsValue : goodsPiasters} vendorCostPiasters={costValue === null || Number.isNaN(costValue) ? vendorCostPiasters : costValue} />}
               error={Number.isNaN(costValue) ? t("admin.errors.INVALID") : fieldError(res, "vendorCostPiasters", errorText)}
             />
           ) : null}

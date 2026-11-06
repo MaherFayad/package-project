@@ -1,9 +1,9 @@
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Download } from "lucide-react";
 import { Badge, Banner, BlockStack, Button, Card, DataTable, InlineStack, Layout, LayoutSection, Link, Page, Text } from "@/components/ui";
 import { DataRequestActions } from "@/components/admin/DataRequestActions";
 import { OrderStatusBadge } from "@/components/admin/OrdersIndex";
-import { NotFoundCard } from "@/components/admin/NotFoundCard";
 import { loadUser } from "@/components/admin/server/queries";
 import { getT, pick, toLocale, type DictKey } from "@/i18n";
 import { formatDate, formatDateTime, formatMoney, formatNumber } from "@/lib/format";
@@ -21,7 +21,7 @@ export default async function AdminUserPage({ params }: { params: Params }) {
   const t = getT(locale);
   const base = `/${locale}/admin`;
   const data = await loadUser(id);
-  if (!data) return <NotFoundCard locale={locale} backUrl={`${base}/users`} backLabel={t("admin.users.detail.back")} />;
+  if (!data) notFound();
   const { user, requests } = data;
   const anonymised = user.phone.startsWith("deleted:");
 

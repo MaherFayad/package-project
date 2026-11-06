@@ -2,7 +2,7 @@ import "server-only";
 import { db } from "@/lib/db";
 import { fromJson } from "@/lib/json";
 import { pick } from "@/i18n";
-import type { Dims, Locale, OrderStatus, StructureParamLimits, VendorCapabilities } from "@/types";
+import type { Dims, Locale, MaterialCode, OrderStatus, StructureParamLimits, VendorCapabilities } from "@/types";
 import {
   bucketDaysFor,
   bucketSeries,
@@ -20,7 +20,15 @@ import {
   type Scorecard,
 } from "../lib/metrics";
 import { isOpenDispute } from "../lib/ops";
+import { modelAvailability, vendorsByPair } from "../lib/availability";
+import { MODELS } from "@/lib/library";
+import { baseOf, vesselPrintMaterials } from "@/lib/library/doc";
 import type { AdminOrderRow } from "../lib/orders";
+import { adminPayoutStatus, needsAction } from "../lib/payouts";
+import { payoutSchedule, type ScheduleRow } from "@/components/vendor/lib/payouts";
+
+/** Orders whose vendor has earned at least the advance (accepted or later). */
+const PAYOUT_EARNING_STATUSES = ["ACCEPTED", "IN_PRODUCTION", "QC_PENDING", "READY_TO_SHIP", "SHIPPED", "DELIVERED"] as const;
 
 const metricSelect = {
   id: true,
@@ -43,16 +51,20 @@ const metricSelect = {
 
 export async function loadOverview(range: RangeKey, now = new Date()) {
   const { from, to, prevFrom } = rangeWindow(range, now);
-  const [orders, disputes, designs, accounts, quoteUsers, qcPending, applications, dataRequests] = await Promise.all([
+  const [orders, disputes, designs, accounts, quoteUsers, orderUsers, qcPending, applications, dataRequests, payouts] = await Promise.all([
     db.order.findMany({ where: { OR: [{ placedAt: { gte: prevFrom } }, { deliveredAt: { gte: prevFrom } }] }, select: metricSelect }),
     db.dispute.findMany({ select: { createdAt: true, status: true } }),
     db.design.count({ where: { createdAt: { gte: from, lt: to } } }),
     db.user.count({ where: { role: "BUYER", createdAt: { gte: from, lt: to } } }),
     db.quote.findMany({ where: { createdAt: { gte: from, lt: to }, userId: { not: null } }, select: { userId: true }, distinct: ["userId"] }),
+    // Everyone who placed an order saw a price (checkout shows it), even without a saved quote.
+    db.order.findMany({ where: { placedAt: { gte: from, lt: to } }, select: { buyerId: true }, distinct: ["buyerId"] }),
     db.order.count({ where: { status: "QC_PENDING" } }),
     db.vendorApplication.count({ where: { status: { in: ["SUBMITTED", "UNDER_REVIEW"] } } }),
     db.dataRequest.count({ where: { status: { in: ["OPEN", "IN_PROGRESS"] } } }),
+    countPayoutsToAct(),
   ]);
+  const priceViewed = new Set([...quoteUsers.map((q) => q.userId), ...orderUsers.map((o) => o.buyerId)]).size;
   const rows = orders as MetricOrder[];
   const paidOrders = rows.filter((o) => !isReprint(o) && countsForGmv(o) && o.placedAt >= from && o.placedAt < to).length;
   const money = moneyKpis(rows, from, to);
@@ -80,14 +92,14 @@ export async function loadOverview(range: RangeKey, now = new Date()) {
     from: from.toISOString(),
     to: to.toISOString(),
     bucketDays,
-    funnel: funnel({ designs, accounts, priceViewed: quoteUsers.length, orders: paidOrders }),
+    funnel: funnel({ designs, accounts, priceViewed, orders: paidOrders }),
     money,
     gmvChangePct: changePct(money.gmvPiasters, prevMoney.gmvPiasters),
     marginChangePct: changePct(money.marginPiasters, prevMoney.marginPiasters),
     ops,
     gmvSeries,
     marginSeries,
-    tasks: { qcPending, applications, openDisputes: ops.openDisputes, dataRequests },
+    tasks: { qcPending, applications, openDisputes: ops.openDisputes, dataRequests, payouts },
   };
 }
 
@@ -264,14 +276,72 @@ export async function loadApplication(id: string) {
 
 /* ───────────────────────── Catalogue ───────────────────────── */
 
+export interface CatalogModelRow {
+  code: string;
+  slug: string;
+  group: string;
+  standard: string;
+  nameAr: string;
+  nameEn: string;
+  /** Styles it is made as (distinct), e.g. ["FEFCO_0201"]. */
+  styles: string[];
+  boardsPriced: number;
+  boardsTotal: number;
+  vendorIds: string[];
+  instant: boolean;
+}
+
+/** The library models (≈370) with whether any active vendor can price them in Egypt today. */
+async function loadModelAvailability(): Promise<{ models: CatalogModelRow[]; vendors: { id: string; slug: string; nameAr: string; nameEn: string }[] }> {
+  const [cards, vendors] = await Promise.all([
+    db.rateCard.findMany({
+      where: { active: true, vendor: { status: "ACTIVE" }, structure: { active: true }, material: { active: true } },
+      select: { vendorId: true, structure: { select: { code: true } }, material: { select: { code: true } } },
+    }),
+    db.vendor.findMany({ where: { status: "ACTIVE" }, select: { id: true, slug: true, nameAr: true, nameEn: true }, orderBy: { nameEn: "asc" } }),
+  ]);
+  const pairs = vendorsByPair(cards.map((c) => ({ vendorId: c.vendorId, structureCode: c.structure.code, materialCode: c.material.code })));
+  const models = MODELS.map((m) => {
+    const boards: MaterialCode[] = m.kind === "box" ? m.materials : [...new Set([...vesselPrintMaterials(m), ...(m.surfaces.includes("SHRINK_SLEEVE") ? vesselPrintMaterials(m, ["SHRINK_SLEEVE"]) : [])])];
+    const routes = boards.map((b) => ({ structureCode: baseOf(m, b), materialCode: b }));
+    const a = modelAvailability({ code: m.code, routes }, pairs);
+    return {
+      code: m.code,
+      slug: m.slug,
+      group: m.group,
+      standard: m.standard,
+      nameAr: m.name.ar,
+      nameEn: m.name.en,
+      styles: [...new Set(routes.map((r) => r.structureCode))],
+      boardsPriced: a.boardsPriced,
+      boardsTotal: a.boardsTotal,
+      vendorIds: a.vendorIds,
+      instant: a.instant,
+    };
+  });
+  return { models, vendors };
+}
+
+/** How many library models this vendor can price instantly (its rate cards × model routes). */
+export async function vendorModelCoverage(vendorId: string): Promise<{ priced: number; total: number }> {
+  const { models } = await loadModelAvailability();
+  return { priced: models.filter((m) => m.vendorIds.includes(vendorId)).length, total: models.length };
+}
+
 export async function loadCatalog() {
-  const [structures, materials, finishes] = await Promise.all([
+  const [structures, materials, finishes, availability, styleVendors] = await Promise.all([
     db.structure.findMany({ orderBy: { sortOrder: "asc" } }),
     db.material.findMany({ orderBy: { sortOrder: "asc" } }),
     db.finish.findMany({ orderBy: { sortOrder: "asc" } }),
+    loadModelAvailability(),
+    db.rateCard.findMany({ where: { active: true, vendor: { status: "ACTIVE" } }, select: { structureId: true, vendorId: true }, distinct: ["structureId", "vendorId"] }),
   ]);
+  const vendorsPerStyle = new Map<string, number>();
+  for (const r of styleVendors) vendorsPerStyle.set(r.structureId, (vendorsPerStyle.get(r.structureId) ?? 0) + 1);
   return {
-    structures: structures.map((s) => ({ id: s.id, code: s.code, nameAr: s.nameAr, nameEn: s.nameEn, family: s.family, active: s.active, params: fromJson<StructureParamLimits>(s.params), defaultDims: fromJson<Dims>(s.defaultDims) })),
+    models: availability.models,
+    vendors: availability.vendors,
+    structures: structures.map((s) => ({ id: s.id, code: s.code, nameAr: s.nameAr, nameEn: s.nameEn, family: s.family, active: s.active, vendorCount: vendorsPerStyle.get(s.id) ?? 0, params: fromJson<StructureParamLimits>(s.params), defaultDims: fromJson<Dims>(s.defaultDims) })),
     materials: materials.map((m) => ({ id: m.id, code: m.code, nameAr: m.nameAr, nameEn: m.nameEn, family: m.family, gsm: m.gsm, thicknessMm: m.thicknessMm, foodSafe: m.foodSafe, active: m.active })),
     finishes: finishes.map((f) => ({ id: f.id, code: f.code, nameAr: f.nameAr, nameEn: f.nameEn, unitSurchargePiasters: f.unitSurchargePiasters, setupPiasters: f.setupPiasters, active: f.active })),
   };
@@ -416,4 +486,55 @@ export async function loadAudit(filter: { entityType?: string | null; action?: s
     before: r.before,
     after: r.after,
   }));
+}
+
+/* ───────────────────────── Payouts ───────────────────────── */
+
+export interface AdminPayoutRow extends ScheduleRow {
+  orderStatus: string;
+  vendorId: string;
+  vendorName: string;
+  vendorSlug: string;
+  /** An open dispute holds the balance. */
+  openDispute: boolean;
+}
+
+/** Every earned or raised vendor payout part (advance / balance), newest jobs first. */
+export async function loadPayoutRows(locale: Locale): Promise<AdminPayoutRow[]> {
+  const orders = await db.order.findMany({
+    where: { OR: [{ status: { in: [...PAYOUT_EARNING_STATUSES] } }, { payouts: { some: {} } }] },
+    orderBy: { placedAt: "desc" },
+    take: 1000,
+    select: {
+      id: true,
+      number: true,
+      status: true,
+      vendorCostPiasters: true,
+      deliveredAt: true,
+      vendor: { select: { id: true, slug: true, nameAr: true, nameEn: true } },
+      payouts: true,
+      disputes: { select: { status: true } },
+    },
+  });
+  const out: AdminPayoutRow[] = [];
+  for (const o of orders) {
+    for (const r of payoutSchedule([o], o.payouts)) {
+      out.push({ ...r, status: adminPayoutStatus(r, o.status), orderStatus: o.status, openDispute: o.disputes.some((d) => isOpenDispute(d.status)), vendorId: o.vendor.id, vendorSlug: o.vendor.slug, vendorName: pick(locale, o.vendor.nameAr, o.vendor.nameEn) });
+    }
+  }
+  return out;
+}
+
+/** Payout parts ops has to raise, approve or pay (nav badge, overview to-do). */
+export async function countPayoutsToAct(): Promise<number> {
+  const orders = await db.order.findMany({
+    where: { OR: [{ status: { in: [...PAYOUT_EARNING_STATUSES] } }, { payouts: { some: { status: { not: "PAID" } } } }] },
+    select: { id: true, number: true, status: true, vendorCostPiasters: true, payouts: true, disputes: { select: { status: true } } },
+  });
+  let n = 0;
+  for (const o of orders) {
+    const held = o.disputes.some((d) => isOpenDispute(d.status));
+    for (const r of payoutSchedule([o], o.payouts)) if (needsAction(r.status, r.kind, o.status, held)) n++;
+  }
+  return n;
 }

@@ -51,3 +51,75 @@ Re-ran every route (plus empty search, pending vendor, catalogue tabs) in both l
 | A-33 | high | pricing / `PricingForms.tsx`, `lib/pricingSettings.ts` | `/admin/pricing` shipped 474 KB of first-load JS: both client modules imported the `@/lib/pricing` barrel, which pulls in the quote engine, model library and dieline (reported by the performance session as PERF-03c). | performance (bundle) | Import from the leaf modules `@/lib/pricing/types` and `@/lib/pricing/config`. First load is now 163 KB; every admin route is 142–163 KB. Remaining barrel imports in admin are server-only. | fixed |
 
 Checked and fine: role gate (buyer sent away from `/admin`, e2e), server actions re-check ADMIN, phones masked in the users index (PDPL), consent log with text version on user detail (PDPL Law 151/2020), VAT 14% line and totals, 72h quote validity default, money right-aligned with tabular figures, RTL frame mirroring, keyboard tabs (arrow keys follow reading direction), contextual save bar on pricing, no horizontal page scroll at 390px on any admin page, no console errors.
+
+## Round 2
+
+Base: round-1 fixes of every area merged (`b240eba`). Method as round 1: production build (`next start`), Playwright as admin `+201000000001`, every admin route (overview, orders index + 3 order states, vendors, active and pending vendor, application, users, user, catalogue 4 tabs, payouts 2 views, pricing, disputes, dispute, audit, unknown id) in `ar` and `en` at 1440×900 and 390×844 (88 page views), axe-core (WCAG 2.0/2.1/2.2 A+AA tags), console errors, horizontal-overflow check; then scripted flows (reassign with margin preview, quote-only routing with rate cards switched off, payout raise → approve → mark paid, balance on a disputed order, pricing validation, dispute refund confirmation, vendor → catalogue filter, keyboard name of the account button, unknown order id). Business rules checked against `docs/research-report.md` §4.1 (admin: routing, quote override, payout approvals, analytics), §4.2 (instant vs manual price), §6.2 (20 to 30% take rate, 3% reprint reserve), §6.3 (KPIs). Screenshots: `docs/screenshots/audit/admin/r2-before-*.png`, `r2-after-*.png`.
+
+### Re-verification of round 1
+
+| id | result (round 2) |
+|---|---|
+| A-01 … A-27, A-29 … A-33 | Re-checked in the browser on the merged base: still fixed (status badges, tabs and `aria-controls`, catalogue width, `dl` markup, refund confirmations A-08 (scripted), metrics strip and tooltips, to-do rows, chart `bdi`, vendor card + banner + anchor offset A-29 (card top 144 px, below the 56 px bar), capable-first vendor list, shipment labels, nav badge, vendor cards, health tooltip, zone table, margin hint, FX `bdi`, flat sizes, address `bdi`, label-colon counts, pending vendor without public link A-30, pricing first load 166 KB). |
+| A-28 | **reopened, round 2, then partially fixed.** Detail pages now call `notFound()` and each dynamic segment has a `not-found.tsx` (frame, `noindex`, back link). The status code is still 200: `admin/loading.tsx` wraps every admin page in a Suspense boundary, so headers are sent before the page runs (Next.js streaming). A real 404 would mean dropping the admin skeleton. Kept the skeleton. |
+| A-32 | Not reproduced (warm reassign refreshes in < 100 ms; every admin route answers in 40–80 ms on `next start`). Closed. |
+
+### Round 2 findings
+
+| id | sev | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R2-01 | critical | payouts (new) / `server/actions.ts`, `lib/payouts.ts` | No way to approve or pay vendor payouts. Vendors get an ADVANCE row (PENDING) when they accept and nothing else ever moves it; the 60% BALANCE after delivery was never created, so the vendor portal showed it "on hold" forever. The plan lists "payout approvals" as an admin job and the framework agreement pays 40/60. | Research report §4.1, §7.2 (managed model); ETA e-invoicing | New **Payouts** page (nav item with a to-do count, metrics strip: to raise or approve / approved / scheduled / paid, views To do · Scheduled · Paid · All, search). Each part has one next step: **Raise** (balance only once delivered), **Approve**, **Mark paid** (confirmation; for the balance a required "vendor's e-invoice is on file" checkbox). Server action re-checks state with a conditional update (no double pay), writes an audit row per step (`PAYOUT_RAISE/APPROVE/PAY`, record type "Payout"). Order page gets a **Vendor payouts** card; overview to-do gets "Vendor payouts to raise, approve or pay". An earned part with no row yet reads "To raise", not "Scheduled". | fixed |
+| R2-02 | high | payouts / `lib/payouts.ts` | The balance could be approved and paid while the order had an open print-defect dispute that may end in a reprint or refund. | Research report §6.2 reprint reserve; risk control | Open dispute holds the balance: no step offered ("On hold until the open dispute is resolved."), server refuses with `PAYOUT_DISPUTE_HOLD`, not counted in the to-do badge. The advance is never held. | fixed |
+| R2-03 | high | catalogue / `CatalogManager.tsx`, `CatalogModels.tsx`, `lib/availability.ts` | The catalogue showed only the 16 production styles. The 370 models buyers can design, and whether any vendor in Egypt can price each one, were invisible, so quote-only models could not be found. | Research report §4.2 (instant price from rate cards vs manual) | New default **Models** tab: metrics (models, instant price, quote only, active vendors), views All · Instant price · Quote only with counts, search (name, code, standard; Arabic-normalised), filters by group and vendor (`?vendor=slug`), 50 per page with a pager. Each row: model + standard, group, style it is made as, boards priced "2 of 3", badge "Instant · vendors: 3" or "Quote only". Availability = an ACTIVE vendor with an ACTIVE rate card for the model's base style × board (pure, unit-tested). "Box styles" renamed **Production styles** (it also holds labels, pouches, tubes) with a Vendors column ("Quote only" when none). | fixed |
+| R2-04 | high | order detail routing / `OrderActions.tsx`, `reassignOrderAction` | Quote-only jobs (no active vendor has a rate card for the job's style + board): every vendor option was tagged "(No rate card for this box)" with no explanation, and reassigning kept the old buy price, which came from another vendor's card. | Research report §4.1 routing, §4.2 manual price | Info banner **Quote-only job** naming the style and board; per-option tags dropped in that case. Choosing a vendor without a rate card makes the buy price required ("Agreed vendor buy price", required marker, Reassign disabled until entered); the server returns `COST_REQUIRED` too. Verified with the rate cards switched off: banner, disabled submit, reassign at EGP 4,400 saved. | fixed |
+| R2-05 | medium | order detail / `OrderActions.tsx` | Changing the vendor or the buy price showed no margin, so a job could be routed at a loss without notice. | Research report §6.2: 20 to 30% take rate | Live line under the buy-price field: "Margin: EGP 1,500 (25% of goods)." plus "Sold at a loss." (critical), "Below the 20 to 30% target." or "Above the 30% target." (caution); `aria-live="polite"`. | fixed |
+| R2-06 | medium | order detail items | Items showed only the core style ("Shipping box") even when the buyer designed a library model (`OrderItem.modelCode`), so ops could not see what was ordered. | data correctness | Library model name first, then "FEFCO 0203, made and priced as Shipping box". | fixed |
+| R2-07 | medium | overview funnel / `loadOverview` | "Price viewed" (0) was below "Paid orders" (5): it counted only saved quotes, but every buyer who pays saw a price at checkout. | Research report §6.3 funnel | Price viewed = distinct signed-in buyers with a saved quote **or** an order in the period. Note explains steps count people (paid orders count orders) and are not one cohort. | fixed |
+| R2-08 | medium | overview (phone) | The to-do list (the next action) sat under the funnel and two charts, about 1,500 px down. | Polaris home: tasks first on small screens | Below 48 rem the to-do card renders right under the metrics; the desktop sidebar copy is `display:none` there (one copy in the a11y tree). | fixed |
+| R2-09 | medium | vendors index, vendor detail / `HealthBadge.tsx` | Health score judged a vendor on a sample of 1 delivered order: Nile Pack showed a red "20/100" from one disputed job. | fairness / data presentation | Under 5 delivered orders the badge is neutral "20/100 · early data"; tooltip says so. | fixed |
+| R2-10 | medium | vendor detail | No link from a vendor to what it can make. | ops workflow | "Library models it can price: 225 of 370" links to the catalogue filtered by that vendor. | fixed |
+| R2-11 | medium | pricing / `lib/pricingSettings.ts` | Quote validity accepted up to 336 h while the pricing engine clamps to 72 h, so a saved "96" silently became 72; field errors fell back to "Something went wrong". | business rule (72 h quotes); WCAG 3.3.1 | Schema 1–72 h with codes `VALIDITY_RANGE` / `MARGIN_RANGE` → "Enter whole hours from 1 to 72." Help text: "1 to 72 hours. Buyers see when their price expires." | fixed |
+| R2-12 | high | every admin page / `ui/Frame.tsx` (shared) | axe serious `label-content-name-mismatch`: the account button's `aria-label` ("Account menu: Elba Ops Admin") did not contain the visible text, which includes the avatar initials. | WCAG 2.5.3 Label in Name | Name from content: visible name + visually hidden ", Account menu"; under 1040 px the name is visually hidden instead of `display:none`. | fixed |
+| R2-13 | high | orders, payouts, catalogue models (phone) / `ui/IndexTable.tsx`, `ui/MetricsStrip.tsx` (shared) | axe serious `scrollable-region-focusable`: the metrics strip and the index table scroll sideways on phones but could not be focused. | WCAG 2.1.1 | Both scroll containers get `tabIndex=0` (table: `role="region"` named by its caption; strip: named by `accessibilityLabel`, set on orders, payouts, models) and a focus ring. | fixed |
+| R2-14 | high | admin detail pages | A-28 reopened (see above). | HTTP semantics | `notFound()` + `not-found.tsx` per dynamic segment; `NotFoundCard` removed. 200 status remains because of streaming. | partially fixed |
+| R2-15 | low | order detail (ar) | Size and "250 × EGP 24" read in mixed order in RTL. | WCAG 1.3.2 | Dims in an LTR `bdi` (L × W × H left to right, as on the job sheet); quantity × price in a `bdi`. | fixed |
+| R2-16 | low | audit log | New payout actions and record type needed labels and a filter option. | i18n completeness | `PAYOUT` record type and three actions in EN/AR; filter list updated. | fixed |
+| R2-17 | low | vendor detail | "Remove verified badge" acts on one click (no confirmation). Found because the perf harness clicked it. Reversible from the same page and audited. | WCAG 3.3.4 (not financial/legal) | Not changed: reversible, logged. | open |
+
+Counts (round 2): critical 1, high 6, medium 7, low 3. Fixed 15, partially fixed 1 (R2-14), open 1 (R2-17, by choice).
+
+### Performance (round 2)
+
+`docs/audit/tools/perf-pages.mjs`, `next start`, desktop and phone (Slow 4G + 4× CPU), 7 admin pages × 2 locales (copy of the harness with the extra admin pages; the tool itself is unchanged):
+
+| page | desktop LCP | phone LCP | CLS (load) | INP max | first-load JS (Next build) |
+|---|---|---|---|---|---|
+| overview | 0.19–0.33 s | 3.5–3.6 s | 0.000 | 72 ms | 143 KB |
+| orders | 0.20 s | 3.5–5.7 s | 0.001 | 96 ms | 158 KB |
+| catalogue (370 models) | 0.28–0.51 s | 3.5–4.1 s | 0.002 | 96 ms | 148 KB |
+| payouts | 0.17–0.22 s | 3.2–3.3 s | 0.003 | 96 ms | 158 KB |
+| order detail | 0.20–0.25 s | 3.5–3.8 s | 0.000 | 152 ms | 164 KB |
+| pricing | 0.20–0.51 s | 3.5–3.7 s | 0.001 | 56 ms | 166 KB |
+| vendor detail | 0.20–0.24 s | 3.5–3.6 s | 0.007 | 96 ms | 162 KB |
+
+Desktop meets every budget. Phone LCP is over 2.5 s on every page because FCP alone is ~3.1 s on Slow 4G (HTML + fonts + shared JS); it is the same on pages this round did not touch and belongs to the platform/performance owners (fonts 151 KB in Arabic). One phone run reported CLS 0.19 on the Arabic vendor page: the harness's simulated click hit "Remove verified badge", and the badge disappeared > 500 ms after input on the throttled network; load CLS was 0.0005. Server time per admin route 40–80 ms; the catalogue builds the 370-model availability in the request (one rate-card query).
+
+### Verification
+
+- `npm run lint`, `npm run typecheck`: clean. `npm test`: 55 files, 6,257 tests passed (new `admin-round2.test.ts`: availability, quote-only routing, margin band, payout steps, dispute hold, admin payout status, validity cap).
+- `npm run build`: passes; admin routes 143–166 KB first load.
+- e2e (`--workers=2 --trace off`): `admin.spec.ts` 6 passed / 4 skipped by design (two new tests: payout raise → approve → mark paid with 3 audit rows; catalogue models tab with search; the 360 px check now includes `/ar/admin/payouts` and `/en/admin/catalog`). `vendor`, `smoke`, `journey`, `checkout` (shared components touched): 20 passed, 2 skipped by design.
+- Browser re-audit after fixes: 88 page views (22 routes × 2 locales × 2 viewports): 0 axe violations, 0 horizontal overflow, 0 console errors. Flows above all pass.
+
+### Files outside scope (minimal, additive)
+
+- `src/components/ui/Frame.tsx`, `Frame.module.css`: account button named from content (R2-12).
+- `src/components/ui/IndexTable.tsx`: table scroll region focusable and named (R2-13).
+- `src/components/ui/MetricsStrip.tsx`, `Misc.module.css`: strip focusable with a focus ring (R2-13).
+- `e2e/admin.spec.ts`: two tests added, two routes added to the 360 px check.
+- Read-only imports from `src/components/vendor/lib/payouts.ts` (`payoutSchedule`, `splitVendorCost`, `payoutBadge`) so admin and the vendor portal show the same split and statuses.
+
+### Notes for other owners
+
+- Seed: no order carries a library `modelCode`, and every one of the 370 models is instant-priced with the seeded rate cards, so the "Quote only" view is empty on seed data (verified by switching rate cards off). Seeding one quote-only model and one `modelCode` order would exercise both paths.
+- Seed: ELB-26201's card payment is created at 04:38 the day after the order was paid (21:48), so the payment row and the timeline disagree.

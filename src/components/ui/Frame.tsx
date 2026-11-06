@@ -306,9 +306,11 @@ function UserMenu({ name, detail, initials, avatarSource, actions }: UserMenuPro
       preferredAlignment="end"
       ariaHaspopup="menu"
       activator={
-        <button type="button" className={styles.UserButton} onClick={() => setOpen((o) => !o)} aria-label={`${s.accountMenu}: ${name}`}>
+        // Name from content (no aria-label), so it always contains the visible text (WCAG 2.5.3 label in name).
+        <button type="button" className={styles.UserButton} onClick={() => setOpen((o) => !o)}>
           <Avatar name={name} initials={initials} source={avatarSource} size="md" decorative />
           <span className={styles.UserName}>{name}</span>
+          <span className="visually-hidden">{`, ${s.accountMenu}`}</span>
         </button>
       }
     >

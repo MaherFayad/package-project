@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import {
@@ -19,7 +20,6 @@ import {
 } from "@/components/ui";
 import { NoteComposer, OverrideCard, QcActions, RefundCard, RoutingCard, ShipCard } from "@/components/admin/OrderActions";
 import { OrderStatusBadge } from "@/components/admin/OrdersIndex";
-import { NotFoundCard } from "@/components/admin/NotFoundCard";
 import { adminStyles } from "@/components/admin/charts";
 import { loadOrderDetail } from "@/components/admin/server/queries";
 import { goodsNet, marginOf, type MetricOrder } from "@/components/admin/lib/metrics";
@@ -28,6 +28,10 @@ import { isOpenDispute } from "@/components/admin/lib/ops";
 import { requireRole } from "@/lib/auth/session";
 import { getT, pick, toLocale, type DictKey, type TFunction } from "@/i18n";
 import { fromJson } from "@/lib/json";
+import { PayoutsCard } from "@/components/admin/PayoutActions";
+import { adminPayoutStatus, nextPayoutStep } from "@/components/admin/lib/payouts";
+import { payoutSchedule } from "@/components/vendor/lib/payouts";
+import { modelByCode } from "@/lib/library";
 import { formatDate, formatDateTime, formatDims, formatMoney, formatNumber } from "@/lib/format";
 import type { Dims, Locale, ShippingAddress } from "@/types";
 
@@ -70,7 +74,7 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
   const admin = await requireRole("ADMIN", locale, `/${locale}/admin/orders/${number}`);
   const data = await loadOrderDetail(decodeURIComponent(number));
   const base = `/${locale}/admin`;
-  if (!data) return <NotFoundCard locale={locale} backUrl={`${base}/orders`} backLabel={t("admin.order.back")} />;
+  if (!data) notFound();
   const { order, vendorOptions, actors, reprints, auditRows } = data;
   const m = order as unknown as MetricOrder;
   const goods = goodsNet(m);
@@ -121,6 +125,11 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
   });
 
   const vendorName = pick(locale, order.vendor.nameAr, order.vendor.nameEn);
+  /** Library model name when the buyer designed one (Design.modelCode), else the core style name. */
+  const libraryName = (modelCode: string | null, structureCode: string) => {
+    const lib = modelByCode(modelCode);
+    return lib ? pick(locale, lib.name.ar, lib.name.en) : t(`structures.${structureCode}` as DictKey);
+  };
 
   return (
     <Page
@@ -202,11 +211,17 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
                     <InlineStack align="space-between" gap="300" blockAlign="start">
                       <BlockStack gap="100">
                         <Text as="p" fontWeight="semibold">
-                          {t(`structures.${it.structureCode}` as DictKey)}{" "}
+                          {libraryName(it.modelCode, it.structureCode)}{" "}
                           <Text as="span" tone="subdued">
-                            {formatDims(fromJson<Dims>(it.dims), locale)}
+                            <bdi dir="ltr">{formatDims(fromJson<Dims>(it.dims), locale)}</bdi>
                           </Text>
                         </Text>
+                        {modelByCode(it.modelCode) ? (
+                          // The buyer designed a library model; the vendor produces and prices it as its base style.
+                          <Text as="p" variant="bodySm" tone="subdued">
+                            {t("admin.order.madeAs", { standard: modelByCode(it.modelCode)!.standard, style: t(`structures.${it.structureCode}` as DictKey) })}
+                          </Text>
+                        ) : null}
                         <Text as="p" variant="bodySm" tone="subdued">
                           {t("admin.order.spec", {
                             material: t(`materials.${it.materialCode}` as DictKey),
@@ -222,7 +237,9 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
                       </BlockStack>
                       <BlockStack gap="100" align="end">
                         <Text as="p" numeric alignment="end">
-                          {formatNumber(it.quantity)} × {formatMoney(it.unitPiasters, locale)}
+                          <bdi>
+                            {formatNumber(it.quantity)} × {formatMoney(it.unitPiasters, locale)}
+                          </bdi>
                         </Text>
                         <Text as="p" numeric fontWeight="semibold" alignment="end">
                           {formatMoney(it.lineTotalPiasters, locale)}
@@ -316,6 +333,8 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
               currentVendorId={order.vendorId}
               canReassign={canReassign(order.status)}
               vendorCostPiasters={order.vendorCostPiasters}
+              goodsPiasters={goods}
+              jobLabel={order.items[0] ? `${t(`structures.${order.items[0].structureCode}` as DictKey)} · ${t(`materials.${order.items[0].materialCode}` as DictKey)}` : ""}
               vendors={vendorOptions.map((v) => ({ id: v.id, name: pick(locale, v.nameAr, v.nameEn), capable: v.capable }))}
               vendor={
                 <BlockStack gap="100">
@@ -326,6 +345,13 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
                   </Text>
                 </BlockStack>
               }
+            />
+
+            <PayoutsCard
+              orderId={order.id}
+              orderNumber={order.number}
+              vendorName={vendorName}
+              parts={payoutSchedule([order], order.payouts).map((r) => ({ kind: r.kind, amountPiasters: r.amountPiasters, status: adminPayoutStatus(r, order.status), date: r.date, step: nextPayoutStep(r, order.status, order.disputes.some((d) => isOpenDispute(d.status))), held: r.kind === "BALANCE" && r.status !== "PAID" && order.disputes.some((d) => isOpenDispute(d.status)) }))}
             />
 
             <OverrideCard

@@ -219,8 +219,9 @@
   font-weight: var(--p-font-weight-semibold);
 }
 .UserButton:hover { background: var(--e-color-topbar-search-bg); }
-.UserName { display: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-@media (min-width: 1040px) { .UserName { display: inline; } }
+/* Hidden visually (not display:none) on narrow screens so it still names the account button. */
+.UserName { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (min-width: 1040px) { .UserName { position: static; inline-size: auto; block-size: auto; clip-path: none; text-overflow: ellipsis; } }
 .UserHeader { display: flex; flex-direction: column; padding: var(--p-space-300) var(--p-space-300) var(--p-space-100); }
 .UserHeaderName { font-weight: var(--p-font-weight-semibold); }
 .UserHeaderDetail { color: var(--p-color-text-secondary); font-size: var(--p-text-body-sm-font-size); }

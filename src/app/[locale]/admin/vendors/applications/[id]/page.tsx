@@ -1,9 +1,9 @@
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { BlockStack, Card, InlineStack, Layout, LayoutSection, Link, Page, Text } from "@/components/ui";
 import { ApplicationReview } from "@/components/admin/VendorActions";
 import { ApplicationStatusBadge } from "@/components/admin/VendorsIndex";
-import { NotFoundCard } from "@/components/admin/NotFoundCard";
 import { adminStyles } from "@/components/admin/charts";
 import { loadApplication } from "@/components/admin/server/queries";
 import { decodeReviewNote } from "@/components/admin/lib/ops";
@@ -36,7 +36,7 @@ export default async function AdminApplicationPage({ params }: { params: Params 
   const t = getT(locale);
   const base = `/${locale}/admin`;
   const data = await loadApplication(id);
-  if (!data) return <NotFoundCard locale={locale} backUrl={`${base}/vendors?tab=applications`} backLabel={t("admin.application.back")} />;
+  if (!data) notFound();
   const { app, vendor, applicant } = data;
   const docs = fromJson<VendorApplicationDocument[]>(app.documents) ?? [];
   const review = decodeReviewNote(app.reviewNote);
