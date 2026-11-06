@@ -34,7 +34,7 @@
 .collage { pointer-events: none; }
 .heroCenter { inline-size: clamp(240px, 34vw, 480px); }
 .heroImg { display: block; inline-size: 100%; block-size: auto; filter: drop-shadow(0 40px 60px rgba(0, 0, 0, 0.55)); }
-.tileImg { aspect-ratio: 4 / 5; object-fit: cover; box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5); }
+.cutout { display: block; inline-size: 100%; block-size: auto; border-radius: 0 !important; filter: drop-shadow(0 24px 32px rgba(0, 0, 0, 0.55)); }
 /* The two giant words sit over the collage: split around the box in Latin, stacked above and
    below it in Arabic (as on the reference's Arabic page). The h1 is the LCP text: no fade. */
 .heroTitle {
@@ -221,6 +221,8 @@
 /* ───────── 5 · Card fan ───────── */
 .fanBand { padding-block: clamp(72px, 9vw, 120px) clamp(112px, 12vw, 176px); display: grid; gap: clamp(40px, 5vw, 64px); }
 .fan { padding-block-start: 40px; }
+/* r6 cards come as <picture style="display: contents">, so size the img itself to fill the card. */
+.fan li > picture > img { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; object-fit: cover; }
 .fanBadge {
   position: absolute;
   inset-block-start: 14px;
@@ -232,8 +234,6 @@
   font-size: 0.75rem;
   font-weight: 600;
 }
-.fanName { display: grid; gap: 2px; font-size: 1.75rem; font-weight: 600; line-height: 1.05; }
-.fanStyle { font-size: 0.8125rem; font-weight: 400; color: rgba(255, 255, 255, 0.85); }
 .fanYours {
   display: grid !important;
   align-content: center;
@@ -304,13 +304,11 @@
   .heroTitle:dir(rtl) { flex-direction: column; justify-content: space-between; padding-block: 0; }
   .heroTitle:dir(rtl) > :is(:first-child, :last-child) { margin: 0; }
   .heroCenter { inline-size: 74vw; }
-  /* Phone: the designer screenshot is landscape, so the pinned card grows to the full width at its
-     own 16:10 ratio instead of covering a portrait viewport (kit PinnedScale media box). */
-  .pin > * > :last-child { block-size: auto; aspect-ratio: 16 / 10; inline-size: calc(100% - 2 * var(--s-gutter)); }
+  /* Phone: the pinned card shows the portrait phone frame of the designer, whole. */
+  .pinImg { object-fit: contain !important; }
   .styles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .stats { grid-template-columns: 1fr; }
   .notify { inset-block-start: -28px; inset-inline-end: 24px; }
-  .fanName { font-size: 1.5rem; }
 }
 @media (max-width: 559px) {
   .steps { flex-direction: column; align-items: center; gap: 6px; }

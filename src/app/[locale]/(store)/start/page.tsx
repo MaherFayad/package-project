@@ -11,7 +11,8 @@ import { MODELS } from "@/lib/library";
 import { DESIGN_FINISH_CODES, type StructureCode } from "@/types";
 import { designHref } from "@/components/store/catalog";
 import { getPriceFrom, listStructures, listVendors } from "@/components/store/data";
-import { HeroImage } from "@/components/marketing/HeroImage";
+import { preload } from "react-dom";
+import { R6_CARDS, SAMPLE_LABEL } from "@/components/marketing/kit/assets";
 import { Sheet } from "@/components/marketing/kit/Sheet";
 import { Display, Lead } from "@/components/marketing/kit/Display";
 import { Pill } from "@/components/marketing/kit/Pill";
@@ -53,26 +54,44 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 /**
- * Hero collage around the centre render: sample tiles at different parallax depths (kit Collage,
- * logical x so it mirrors in Arabic). Decorative (alt=""): the headline and chips carry the meaning.
+ * Hero collage: transparent cutouts rendered from our own 3D engine (ASSETS session, public/marketing/r6),
+ * at different parallax depths (kit Collage, logical x so it mirrors in Arabic). Decorative (alt=""):
+ * the headline and chips carry the meaning. Sizes are the 1x files (400x400 cutouts, 600x900 cards).
  */
-const PIECES: { src: string; x: string; y: string; w: string; depth: number; rotate: number; hideOnPhone?: boolean }[] = [
-  { src: "/marketing/samples/sample-05.webp", x: "68%", y: "6%", w: "12%", depth: 0.8, rotate: -6 },
-  { src: "/marketing/samples/sample-02.webp", x: "18%", y: "4%", w: "11%", depth: 0.4, rotate: 5 },
-  { src: "/marketing/samples/sample-04.webp", x: "30%", y: "66%", w: "9%", depth: 0.6, rotate: 4, hideOnPhone: true },
-  { src: "/marketing/samples/sample-09.webp", x: "72%", y: "64%", w: "8%", depth: 1, rotate: -4 },
-  { src: "/marketing/samples/sample-07.webp", x: "4%", y: "62%", w: "9%", depth: 0.3, rotate: -3, hideOnPhone: true },
+const R6 = "/marketing/r6";
+const PIECES: { key: string; x: string; y: string; w: string; depth: number; rotate: number; hideOnPhone?: boolean }[] = [
+  { key: "collage/rigid-box-high", x: "66%", y: "2%", w: "15%", depth: 0.8, rotate: -6 },
+  { key: "collage/perfume-turn", x: "17%", y: "0%", w: "11%", depth: 0.4, rotate: 5 },
+  { key: "collage/drawer-box-side", x: "28%", y: "64%", w: "13%", depth: 0.6, rotate: 4, hideOnPhone: true },
+  { key: "collage/cup-turn", x: "74%", y: "62%", w: "11%", depth: 1, rotate: -4 },
+  { key: "collage/pouch-turn", x: "2%", y: "58%", w: "11%", depth: 0.3, rotate: -3, hideOnPhone: true },
+  { key: "collage/jar-high", x: "86%", y: "26%", w: "10%", depth: 0.5, rotate: 3, hideOnPhone: true },
 ];
+const HERO_KEY = "collage/mailer-tilt";
+/** Sample brand cards rendered so far (public/marketing/r6/cards). All fictional; each card is labelled as a sample. */
+const FAN_IDS = new Set<string>(["nour", "attar", "halawa", "waraqa", "sahwa", "nada", "attar-perfume"]);
 
-/** Card fan: sample designs for made-up brands (each card says so). Same order as copy.fan.brands. */
-const FAN = [
-  { src: "/marketing/samples/sample-01.webp", structure: "FEFCO_0427" },
-  { src: "/marketing/samples/sample-03.webp", structure: "PIZZA" },
-  { src: "/marketing/samples/sample-04.webp", structure: "ECMA_RTE" },
-  { src: "/marketing/samples/sample-05.webp", structure: "RIGID_BOX" },
-  { src: "/marketing/samples/sample-07.webp", structure: "GABLE_BOX" },
-  { src: "/marketing/samples/sample-10.webp", structure: "ECMA_STE" },
-] as const satisfies readonly { src: string; structure: StructureCode }[];
+/** <picture> for an r6 still: AVIF then WebP, 1x / 2x. */
+function R6Pic({ k, w, h, alt, sizes, className, priority = false }: { k: string; w: number; h: number; alt: string; sizes: string; className?: string; priority?: boolean }) {
+  const set = (fmt: string) => `${R6}/${k}.${fmt} ${w}w, ${R6}/${k}@2x.${fmt} ${w * 2}w`;
+  return (
+    <picture style={{ display: "contents" }}>
+      <source type="image/avif" srcSet={set("avif")} sizes={sizes} />
+      <img
+        src={`${R6}/${k}.webp`}
+        srcSet={set("webp")}
+        sizes={sizes}
+        width={w}
+        height={h}
+        alt={alt}
+        className={className}
+        loading={priority ? undefined : "lazy"}
+        decoding={priority ? undefined : "async"}
+        fetchPriority={priority ? "high" : "low"}
+      />
+    </picture>
+  );
+}
 
 const SIDE_STYLES: StructureCode[] = ["RIGID_BOX", "PIZZA", "FEFCO_0201", "GABLE_BOX"];
 
@@ -102,15 +121,13 @@ export default async function StartPage({ params }: Props) {
     { n: DESIGN_FINISH_CODES.length, label: c.bento.stats.finishes },
     { n: vendors.length, label: c.bento.stats.printers },
   ];
-  const heroSrc = renderSrc("FEFCO_0427");
-  const heroDims = renderDims(heroSrc);
+  // The centre cutout is the LCP image: preload its AVIF from <head> with the same srcset.
+  const heroSizes = "(max-width: 767px) 74vw, 480px";
+  preload(`${R6}/${HERO_KEY}.avif`, { as: "image", type: "image/avif", imageSrcSet: `${R6}/${HERO_KEY}.avif 400w, ${R6}/${HERO_KEY}@2x.avif 800w`, imageSizes: heroSizes, fetchPriority: "high" });
   const designerSrc = `/marketing/designer-${locale}.webp`;
 
-  const tile = (src: string, sizes: string) => (
-    <img src={src} srcSet={srcSetFor(src)} sizes={sizes} width={640} height={800} loading="lazy" decoding="async" fetchPriority="low" alt="" className={s.tileImg} />
-  );
   const collage: CollageItem[] = [
-    ...PIECES.map((p) => ({ media: tile(p.src, "180px"), x: p.x, y: p.y, w: p.w, depth: p.depth, rotate: p.rotate, hideOnPhone: p.hideOnPhone })),
+    ...PIECES.map((p) => ({ media: <R6Pic k={p.key} w={400} h={400} alt="" sizes="(max-width: 767px) 30vw, 200px" className={s.cutout} />, x: p.x, y: p.y, w: p.w, depth: p.depth, rotate: p.rotate, hideOnPhone: p.hideOnPhone })),
     ...(row500
       ? [
           {
@@ -141,8 +158,8 @@ export default async function StartPage({ params }: Props) {
           </span>
         </div>
       ),
-      x: "62%",
-      y: "80%",
+      x: "6%",
+      y: "82%",
       w: "auto",
       depth: 0.7,
       front: true,
@@ -157,7 +174,7 @@ export default async function StartPage({ params }: Props) {
         <div className={s.heroStage}>
           <Collage items={collage} height="min(64svh, 640px)" travel={120} className={s.collage}>
             <div className={s.heroCenter}>
-              <HeroImage src={heroSrc} sizes="(max-width: 720px) 72vw, 480px" alt={c.hero.heroAlt} width={heroDims.width} height={heroDims.height} className={s.heroImg} />
+              <R6Pic k={HERO_KEY} w={400} h={400} alt={c.hero.heroAlt} sizes={heroSizes} className={s.heroImg} priority />
             </div>
           </Collage>
           <HeroTitle id="start-title" size="hero" lines={[c.hero.word1, c.hero.word2]} className={s.heroTitle} />
@@ -184,7 +201,12 @@ export default async function StartPage({ params }: Props) {
                 <span className={s.liveDot} aria-hidden="true" />
                 {c.choose.live}
               </span>
-              <img src={designerSrc} srcSet={srcSetFor(designerSrc)} sizes="100vw" width={1440} height={900} loading="lazy" decoding="async" alt={c.choose.previewAlt} className={s.pinImg} />
+              <picture style={{ display: "contents" }}>
+                {/* Phones get the portrait phone frame of the designer (ASSETS ui/phone-designer). */}
+                <source media="(max-width: 767px)" type="image/avif" srcSet={`${R6}/ui/phone-designer-${locale}.avif 498w, ${R6}/ui/phone-designer-${locale}@2x.avif 996w`} sizes="90vw" />
+                <source media="(max-width: 767px)" type="image/webp" srcSet={`${R6}/ui/phone-designer-${locale}.webp 498w, ${R6}/ui/phone-designer-${locale}@2x.webp 996w`} sizes="90vw" />
+                <img src={designerSrc} srcSet={srcSetFor(designerSrc)} sizes="100vw" width={1440} height={900} loading="lazy" decoding="async" alt={c.choose.previewAlt} className={s.pinImg} />
+              </picture>
             </>
           }
         />
@@ -317,18 +339,12 @@ export default async function StartPage({ params }: Props) {
           height={520}
           className={s.fan}
           cards={[
-            ...FAN.map((f, i) => ({
+            ...R6_CARDS.filter((card) => FAN_IDS.has(card.id)).map((card) => ({
               media: (
                 <>
-                  <img src={f.src} srcSet={srcSetFor(f.src)} sizes="240px" width={640} height={800} loading="lazy" decoding="async" alt={fill(c.hero.pieceAlt, { name: structureName(f.structure) })} />
+                  <R6Pic k={`cards/${card.id}`} w={600} h={900} sizes="240px" alt={locale === "ar" ? `${card.nameAr}: ${card.ar} (${SAMPLE_LABEL.ar})` : `${card.name}: ${card.en} (${SAMPLE_LABEL.en})`} />
                   <span className={s.fanBadge}>{c.fan.badge}</span>
                 </>
-              ),
-              label: (
-                <span className={s.fanName}>
-                  {c.fan.brands[i]}
-                  <span className={s.fanStyle}>{structureName(f.structure)}</span>
-                </span>
               ),
             })),
             {

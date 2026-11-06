@@ -17,21 +17,50 @@ Reference: `https://www.shopify.com/sa/start` (ar) and `https://www.shopify.com/
 
 ## Section table
 
-| # | Shopify section | What it does | Elba section | Elba content | Kit / local pieces | Status |
-|---|---|---|---|---|---|---|
-| 1 | Hero "start today" | Giant 2-word light headline split around a central product photo; collage pieces (photos, sketch paper, product chips) at different depths, parallax on scroll; subline + white pill | `StartHero` | «ابدأ اليوم» / "Start today"; centre = our FEFCO 0427 render (LCP, AVIF preload), around it rigid box, carton, tube, jar, can, a price chip from the engine and a "3D proof" chip; subline "Design your box free today, print it this week" + pill to `/design` | local `Collage` (`data-depth` parallax, CSS-var transform, rAF, off under reduced motion) | done |
-| 2 | "Choose your design" | Centred h2 + sub; a template card starts small with siblings, scales to near full width while pinned; inside, the template scrolls | `ChooseBox` | "Choose your box"; pinned card grows from 62% to 100% into a poster of the live designer (real screenshot `designer-<locale>.webp`), side cards are style renders; button "Open the designer" to the real editor (`/design?structure=FEFCO_0427`). Poster only: no three.js | local `PinnedScale` (sticky + scroll progress var, CSS fallback) | done |
-| 3 | "Make your products shine" | h2 + sub; one product image with a glow halo and an AI tool chip | `Shine` | "Make your packaging shine": render in a violet/green glow, finish chips (foil, spot UV, emboss, soft touch, window) from the finish list, "Preview in 3D" chip | CSS glow | done |
-| 4 | "Get ready to get paid" | h2 + sub; a small checkout card with item, price, "Pay now"; phone with notification | `GetPaid` | "Price it, then pay your way": checkout preview card with real engine prices for a 250x180x80 mailer (100 / 500 / 1,000 rows, unit + subtotal, VAT 14% line, delivery days) and payment methods (card, wallet, Fawry, InstaPay); a status chip "Printer confirmed" | server data from `getPriceFrom` | done |
-| 5 | "Join an all-star lineup" | Tall tilted cards in an arc, drifting; brand stories with "since" tags; last card is the CTA | `SampleFan` | "Sample brand boxes": 6 tilted cards from our sample tiles, each labelled «نموذج» / "Sample" with the box style name, explicit note that brands are fictional samples; last card "Your brand here" CTA. No fake logos, no "since" years | local `CardFan` (CSS transforms, scroll drift, horizontal scroll on phone) | done |
-| 6 | "Get going, then get growing" | White 48px sheet over dark; 2x2 light bento with UI mockups; dark inset banner | `Bento` | "Start, then grow": share link for review, export print-ready PDF, order a sample first, reorder in one tap; dark inset with real counts (models in library, finishes, active printers) | local `Bento` grid | done |
-| 7 | "Need more muscle?" (help rows) | Icon + linked help lines | folded into 6 | not mirrored separately: would need Elba support content that does not exist yet | — | skipped (no content) |
-| 8 | "See for yourself" videos | How-to video cards | not built | no Elba tutorial videos yet; no fakes | — | skipped (no content) |
-| 9 | Closing "Ready to start selling?" | Mark, h2, 3-step incentive line, email field with arrow button, consent fine print | `ClosingCta` | "Ready to design your box?"; steps "Design free → Approve the proof → Printed and delivered"; phone field reusing `HeroPhoneForm` (Egyptian mobile, no number in URL, PDPL 151/2020 fine print) | `HeroPhoneForm` (reused) | done |
+| # | Shopify section | Elba section (`src/app/[locale]/(store)/start/page.tsx`) | Built with | Content | Status |
+|---|---|---|---|---|---|
+| 1 | Hero "start today": 200px light split headline around a central photo, collage at parallax depths, subline + pill | «ابدأ اليوم» / "start today": Latin split left/right of the box, Arabic stacked above/below (as on the reference's Arabic page); centre = NOUR mailer cutout (LCP, AVIF preload); 6 cutouts at depths 0.3 to 1; live price chip and "3D proof" chip | kit `Sheet hero`, `HeroTitle`, `Collage`, `Pill`; ASSETS `r6/collage/*` | price chip = engine price for 500 mailers 250x180x80 | done |
+| 2 | "Choose your design": pinned card scales to full bleed | "Choose your box": designer screenshot pinned, grows 0.5 → full bleed over 190vh; phones get the portrait phone frame of the designer; "Open the designer" + model count + 4 ready styles | kit `PinnedScale`, `Display`, `Lead`, `Reveal`; ASSETS `r6/ui/phone-designer-*` | real editor link `/design?structure=FEFCO_0427`, 3D only after the click (poster first) | done |
+| 3 | "Make your products shine": glowing product card + tool chip | "Make your packaging shine": rigid box in a violet glow card, "3D preview" chip, 5 finish chips | kit `Glow`, `Reveal` | finish count from `DESIGN_FINISH_CODES` | done |
+| 4 | "Get ready to get paid": small checkout card | "See the price, pay your way": checkout preview with 100 / 500 / 1,000 rows from `getPriceFrom`, VAT 14%, total, delivery days, payment methods; "Printer confirms before you are charged" chip | kit `Glow`, `Pill dark` | live engine prices (ISR 1 h) | done |
+| 5 | "Join an all-star lineup": tilted card arc, last card is the CTA | "Brands waiting for their box": 7 fictional brand cards, each with a «نموذج» / "Sample" badge and SAMPLE_LABEL in its alt, section copy says the brands are made up; last card "Your brand here" CTA | kit `CardFan`; ASSETS `r6/cards/*` | no logos, no "since" years, no counts | done |
+| 6 | "Get going, then get growing": white 48px sheet, light bento with UI mockups | "Start, then grow": share link, print-ready PDF, sample first, one-tap reorder; dark stats card (models in library, finishes, active printers) | kit `Sheet white`, `Bento`, `BentoCard` | numbers counted from `MODELS`, finishes and the DB | done |
+| 7 | "Need more muscle?" help rows | not built | — | needs Elba help content that does not exist yet | skipped (no content) |
+| 8 | "See for yourself" videos | not built | — | no Elba tutorial videos yet; no fakes | skipped (no content) |
+| 9 | Closing "Ready to start selling?": mark, h2, 3-step line, email field | "Ready to design your box?": mark, steps "Design free → Approve the proof → Printed and delivered", phone field | kit `Sheet`, `PhoneSignup` (HeroPhoneForm logic: Egyptian mobile, number never in the URL, PDPL 151/2020 fine print) | — | done |
+
+Page-local code: `src/components/marketing/start/copy.ts` (ar/en copy, tested in `__tests__/copy.test.ts`) and `start.module.css` (layout and the page's own mockups: chips, checkout card, bento mocks). No kit component is forked; the early page-local motion island (`StartMotion`) was removed once the foundation kit landed.
+
+## Checks (prod build, `next start`)
+
+| Check | Result |
+|---|---|
+| `npm run lint` | 0 errors (1 warning in ASSETS' `scripts/marketing/render-ui.mjs`, not this page) |
+| `npm run typecheck` | pass |
+| `npm test` | 108 files, 8756 tests pass (adds `start/__tests__/copy.test.ts`: key/placeholder parity, no Arabic diacritics, sample labelling, no social-proof words) |
+| `npm run build` | pass; `/[locale]/start` SSG, revalidate 1 h |
+| `e2e/start.spec.ts` (desktop + mobile, ar + en) | 18/18: sections and h1, engine prices in the table, every fan card says Sample, every body link goes to `/design`, header pill goes to `/start`, empty phone submit opens the designer, bad number shows the error and a good one goes to login without the number in the URL, axe 0 (WCAG 2.2 AA tags), no horizontal scroll, reduced motion static (pinned card not sticky, no transform), no console or hydration errors |
+| `e2e/journey.spec.ts` | pass (home → /start → designer → … → admin) |
+| Perf, phone (390, 4x CPU, Slow 4G) | ar LCP 1.82 s, CLS 0.009; en LCP 1.61 s, CLS 0.000 |
+| Perf, desktop | ar LCP 0.33 s, en 0.22 s, CLS 0.000 |
+| Sitemap | `/ar/start`, `/en/start` (priority 0.9) |
+
+CLS note: the Arabic display face swaps in late on Slow 4G; the hero lines are fixed 1.25em boxes and the phone subline reserves two lines, which took phone-ar CLS from 0.055 to 0.009 (the remainder is the shared cookie notice).
+
+## Outside this page (small, additive)
+- `src/components/marketing/navModel.ts`: `startHref()` now returns `/${locale}/start`; new `newDesignHref()`.
+- `src/components/marketing/MarketingHeader.tsx` + `StartLink.tsx`: `signedInHref`, so signed-in "New design" still opens the designer.
+- Home `cta.primary` and `/boxes` "Start designing free" links → `/start`.
+- `e2e/journey.spec.ts` step 1 follows home → `/start` → designer.
+- `src/app/sitemap.ts`, `docs/audit/tools/perf-pages.mjs` list `/start`.
+
+## Open
+- `e2e/storefront.spec.ts` "legal pages are marked for lawyer review" fails after the FOUNDATION footer merge (the footer no longer has a "Returns for custom goods" link in the expected place). Foundation scope.
+- ASSETS: `assets.generated.ts` has no sizes for `collage/*` and `cards/*`, and `cards/sahwa-can` is listed but not rendered; this page passes explicit 400x400 / 600x900 sizes and uses only the rendered cards.
+- The home hero phone form still opens the designer directly (sign-up action; a landing page in between adds a step).
 
 ## Decisions
 - All CTAs on `/start` go to `/[locale]/design` (with the mailer preset); the site's "Start designing free" link CTAs now go to `/[locale]/start`. Signed-in users' header CTA ("New design") still goes straight to the designer (task label, not a pitch: R4-CR-09).
 - The home hero phone form keeps its designer target: it is a sign-up action, and sending a just-signed-in person back to a landing page adds a step.
 - No social proof: the fan cards say "Sample" on each card and in the section copy; numbers are counted from the DB/engine at build time (ISR hourly).
 - Motion is enhancement only: content is visible without JS; `prefers-reduced-motion` stops parallax, pinned scale (card shown at full size) and fan drift.
-- Foundation kit (`PinnedScale`, `Collage`, `CardFan`, `Bento`, `Reveal`, `HeroTitle`) was not on the remote when this page was built; page-local pieces live in `src/components/marketing/start/` and should be swapped for the kit versions once merged (see "Kit swap" below).

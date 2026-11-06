@@ -65,7 +65,6 @@ const ar = {
     yoursBody: "صمم علبتك الأولى مجانا، بلا حساب.",
     yoursCta: "بدء التصميم",
     listLabel: "تصميمات نموذجية",
-    brands: ["نور", "فطيرة", "لمسة", "خان", "نايل", "صبرة"],
   },
   bento: {
     title: "ابدأ، ثم توسع",
@@ -153,7 +152,6 @@ const en: Copy = {
     yoursBody: "Design your first box free, no account needed.",
     yoursCta: "Start designing",
     listLabel: "Sample designs",
-    brands: ["Nour", "Fatira", "Lamsa", "Khan", "Nile", "Sabra"],
   },
   bento: {
     title: "Start, then grow",
