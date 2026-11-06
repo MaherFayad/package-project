@@ -51,6 +51,7 @@ export default async function PayoutsPage({ params }: { params: Promise<{ locale
             {t("vendorPortal.payouts.eInvoiceBody", { count: sum.eInvoiceCount })}
           </Banner>
         ) : null}
+        <div className={styles.CondensedTable}>
         <IndexTable
           resourceName={{ singular: t("vendorPortal.payouts.resourceSingular"), plural: t("vendorPortal.payouts.resourcePlural") }}
           caption={t("vendorPortal.payouts.scheduleTitle")}
@@ -82,26 +83,46 @@ export default async function PayoutsPage({ params }: { params: Promise<{ locale
                   ) : (
                     "—"
                   )}
+                  {/* Phones: condensed row (part, status, date and amount under the job number). */}
+                  <div className={styles.Condensed}>
+                    <Text as="span" tone="subdued" variant="bodySm">
+                      {t(`vendorPortal.payouts.kinds.${r.kind}` as DictKey)} · {t(`vendorPortal.payouts.triggers.${r.trigger}` as DictKey)}
+                    </Text>
+                    <span className={styles.CondensedMeta}>
+                      <Badge tone={b.tone} progress={b.progress}>
+                        {t(`vendorPortal.payouts.statuses.${r.status}` as DictKey)}
+                      </Badge>
+                      <Text as="span" numeric fontWeight="semibold">
+                        {formatMoney(r.amountPiasters, locale)}
+                      </Text>
+                    </span>
+                    {r.date ? (
+                      <Text as="span" tone="subdued" variant="bodySm">
+                        <time dateTime={r.date}>{formatDate(r.date, locale)}</time>
+                      </Text>
+                    ) : null}
+                  </div>
                 </IndexTableCell>
-                <IndexTableCell>{t(`vendorPortal.payouts.kinds.${r.kind}` as DictKey)}</IndexTableCell>
-                <IndexTableCell>
+                <IndexTableCell className={styles.WideOnly}>{t(`vendorPortal.payouts.kinds.${r.kind}` as DictKey)}</IndexTableCell>
+                <IndexTableCell className={styles.WideOnly}>
                   <Text as="span" tone="subdued">
                     {t(`vendorPortal.payouts.triggers.${r.trigger}` as DictKey)}
                   </Text>
                 </IndexTableCell>
-                <IndexTableCell>
+                <IndexTableCell className={styles.WideOnly}>
                   <Badge tone={b.tone} progress={b.progress}>
                     {t(`vendorPortal.payouts.statuses.${r.status}` as DictKey)}
                   </Badge>
                 </IndexTableCell>
-                <IndexTableCell>{r.date ? <time dateTime={r.date}>{formatDate(r.date, locale)}</time> : "—"}</IndexTableCell>
-                <IndexTableCell alignment="end" numeric>
+                <IndexTableCell className={styles.WideOnly}>{r.date ? <time dateTime={r.date}>{formatDate(r.date, locale)}</time> : "—"}</IndexTableCell>
+                <IndexTableCell className={styles.WideOnly} alignment="end" numeric>
                   {formatMoney(r.amountPiasters, locale)}
                 </IndexTableCell>
               </IndexTableRow>
             );
           })}
         </IndexTable>
+        </div>
         <Card title={t("vendorPortal.payouts.termsTitle")}>
           <ul className={styles.Steps}>
             <li>{t("vendorPortal.payouts.termsAdvance")}</li>

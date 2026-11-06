@@ -164,6 +164,9 @@ export function JobDetail({ job, vendorName }: { job: JobDetailDTO; vendorName: 
   }
 
   const canUploadQc = actions.includes("uploadQc");
+  // Before production the card explains when photos are possible; after QC it only shows real photos
+  // (a finished job with none would otherwise say "can be added while in production").
+  const showQcCard = canUploadQc || job.qcPhotos.length > 0 || (!declined && ["PAID", "PROOF_APPROVED", "ACCEPTED"].includes(job.status));
   /** Addresses store the governorate as a code or an English name; show it in the UI language. */
   const governorateName = (g: string) => {
     const code = g.trim().toUpperCase().replace(/[\s-]+/g, "_");
@@ -262,96 +265,98 @@ export function JobDetail({ job, vendorName }: { job: JobDetailDTO; vendorName: 
               </BlockStack>
             </Card>
 
-            <Card
-              title={t("vendorPortal.job.qcTitle")}
-              id="qc"
-              footer={
-                canUploadQc ? (
-                  <Button
-                    variant="primary"
-                    disabled={!actions.includes("submitQc")}
-                    loading={busy === "submitQc"}
-                    onClick={() => run("submitQc", () => submitQc(job.id), t("vendorPortal.job.qcSubmitted"))}
-                  >
-                    {t("vendorPortal.job.actions.submitQc")}
-                  </Button>
-                ) : undefined
-              }
-            >
-              <BlockStack gap="400">
-                <Text as="p" tone="subdued">
-                  {canUploadQc ? t("vendorPortal.job.qcHelp") : job.qcPhotos.length ? t("vendorPortal.job.qcHelp") : t("vendorPortal.job.qcLocked")}
-                </Text>
-                {job.qcPhotos.length ? (
-                  <ul className={styles.Photos} aria-label={t("vendorPortal.job.qcTitle")}>
-                    {job.qcPhotos.map((p) => (
-                      <li key={p.id} className={styles.Photo}>
-                        <a href={p.url} target="_blank" rel="noreferrer">
-                          {/* eslint-disable-next-line @next/next/no-img-element -- private, access-checked upload */}
-                          <img className={styles.PhotoImg} src={p.url} alt={t("vendorPortal.job.qcPhotoAlt", { kind: kindLabel(p.kind), date: formatDate(p.uploadedAt, locale) })} loading="lazy" />
-                        </a>
-                        <InlineStack gap="100" blockAlign="center" align="space-between">
-                          <BlockStack gap="050">
-                            <Text as="span" variant="bodySm" fontWeight="medium">
-                              {kindLabel(p.kind)}
-                            </Text>
-                            <Badge tone={p.status === "APPROVED" ? "success" : p.status === "REJECTED" ? "critical" : "attention"} progress={p.status === "APPROVED" ? "complete" : "incomplete"} size="small">
-                              {t(`vendorPortal.job.qcStatus.${p.status}` as DictKey)}
-                            </Badge>
-                          </BlockStack>
-                          {canUploadQc && p.status === "PENDING" ? (
-                            <Button
-                              variant="tertiary"
-                              size="slim"
-                              icon={Trash2}
-                              accessibilityLabel={t("vendorPortal.job.qcRemove", { name: kindLabel(p.kind) })}
-                              loading={busy === `del-${p.id}`}
-                              onClick={() => run(`del-${p.id}`, () => deleteQcPhoto(p.id), t("vendorPortal.job.qcRemoved"))}
-                            />
-                          ) : null}
-                        </InlineStack>
-                        {p.status === "REJECTED" && p.reviewNote ? (
-                          <Text as="p" tone="critical" variant="bodySm">
-                            {p.reviewNote}
-                          </Text>
-                        ) : null}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
+            {showQcCard ? (
+              <Card
+                title={t("vendorPortal.job.qcTitle")}
+                id="qc"
+                footer={
+                  canUploadQc ? (
+                    <Button
+                      variant="primary"
+                      disabled={!actions.includes("submitQc")}
+                      loading={busy === "submitQc"}
+                      onClick={() => run("submitQc", () => submitQc(job.id), t("vendorPortal.job.qcSubmitted"))}
+                    >
+                      {t("vendorPortal.job.actions.submitQc")}
+                    </Button>
+                  ) : undefined
+                }
+              >
+                <BlockStack gap="400">
                   <Text as="p" tone="subdued">
-                    {t("vendorPortal.job.qcEmpty")}
+                    {canUploadQc ? t("vendorPortal.job.qcHelp") : job.qcPhotos.length ? t("vendorPortal.job.qcHelp") : t("vendorPortal.job.qcLocked")}
                   </Text>
-                )}
-                {canUploadQc ? (
-                  <BlockStack gap="300">
-                    <Divider />
-                    <Select
-                      label={t("vendorPortal.job.qcKind")}
-                      value={qcKind}
-                      onChange={(v) => setQcKind(v as QcPhotoKind)}
-                      options={QC_PHOTO_KINDS.map((k) => ({ label: kindLabel(k), value: k }))}
-                    />
-                    <DropZone
-                      label={t("vendorPortal.job.qcUpload")}
-                      labelHidden
-                      accept={UPLOAD_RULES.qc.accept}
-                      maxSize={UPLOAD_RULES.qc.maxBytes}
-                      onDrop={onQcDrop}
-                      disabled={uploading}
-                      error={uploadError}
-                      actionTitle={uploading ? t("vendorPortal.common.loading") : t("vendorPortal.job.qcUpload")}
-                      actionHint={t("vendorPortal.job.qcUploadHint", { size: formatBytes(UPLOAD_RULES.qc.maxBytes) })}
-                    />
-                    {!hasRequiredQcPhotos(job.qcPhotos) ? (
-                      <Text as="p" tone="subdued" variant="bodySm">
-                        {t("vendorPortal.job.qcRequired")}
-                      </Text>
-                    ) : null}
-                  </BlockStack>
-                ) : null}
-              </BlockStack>
-            </Card>
+                  {job.qcPhotos.length ? (
+                    <ul className={styles.Photos} aria-label={t("vendorPortal.job.qcTitle")}>
+                      {job.qcPhotos.map((p) => (
+                        <li key={p.id} className={styles.Photo}>
+                          <a href={p.url} target="_blank" rel="noreferrer">
+                            {/* eslint-disable-next-line @next/next/no-img-element -- private, access-checked upload */}
+                            <img className={styles.PhotoImg} src={p.url} alt={t("vendorPortal.job.qcPhotoAlt", { kind: kindLabel(p.kind), date: formatDate(p.uploadedAt, locale) })} loading="lazy" />
+                          </a>
+                          <InlineStack gap="100" blockAlign="center" align="space-between">
+                            <BlockStack gap="050">
+                              <Text as="span" variant="bodySm" fontWeight="medium">
+                                {kindLabel(p.kind)}
+                              </Text>
+                              <Badge tone={p.status === "APPROVED" ? "success" : p.status === "REJECTED" ? "critical" : "attention"} progress={p.status === "APPROVED" ? "complete" : "incomplete"} size="small">
+                                {t(`vendorPortal.job.qcStatus.${p.status}` as DictKey)}
+                              </Badge>
+                            </BlockStack>
+                            {canUploadQc && p.status === "PENDING" ? (
+                              <Button
+                                variant="tertiary"
+                                size="slim"
+                                icon={Trash2}
+                                accessibilityLabel={t("vendorPortal.job.qcRemove", { name: kindLabel(p.kind) })}
+                                loading={busy === `del-${p.id}`}
+                                onClick={() => run(`del-${p.id}`, () => deleteQcPhoto(p.id), t("vendorPortal.job.qcRemoved"))}
+                              />
+                            ) : null}
+                          </InlineStack>
+                          {p.status === "REJECTED" && p.reviewNote ? (
+                            <Text as="p" tone="critical" variant="bodySm">
+                              {p.reviewNote}
+                            </Text>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <Text as="p" tone="subdued">
+                      {t("vendorPortal.job.qcEmpty")}
+                    </Text>
+                  )}
+                  {canUploadQc ? (
+                    <BlockStack gap="300">
+                      <Divider />
+                      <Select
+                        label={t("vendorPortal.job.qcKind")}
+                        value={qcKind}
+                        onChange={(v) => setQcKind(v as QcPhotoKind)}
+                        options={QC_PHOTO_KINDS.map((k) => ({ label: kindLabel(k), value: k }))}
+                      />
+                      <DropZone
+                        label={t("vendorPortal.job.qcUpload")}
+                        labelHidden
+                        accept={UPLOAD_RULES.qc.accept}
+                        maxSize={UPLOAD_RULES.qc.maxBytes}
+                        onDrop={onQcDrop}
+                        disabled={uploading}
+                        error={uploadError}
+                        actionTitle={uploading ? t("vendorPortal.common.loading") : t("vendorPortal.job.qcUpload")}
+                        actionHint={t("vendorPortal.job.qcUploadHint", { size: formatBytes(UPLOAD_RULES.qc.maxBytes) })}
+                      />
+                      {!hasRequiredQcPhotos(job.qcPhotos) ? (
+                        <Text as="p" tone="subdued" variant="bodySm">
+                          {t("vendorPortal.job.qcRequired")}
+                        </Text>
+                      ) : null}
+                    </BlockStack>
+                  ) : null}
+                </BlockStack>
+              </Card>
+            ) : null}
 
           </BlockStack>
         </LayoutSection>

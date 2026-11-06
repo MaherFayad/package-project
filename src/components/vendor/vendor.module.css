@@ -189,11 +189,12 @@
 .ViewTabs {
   padding: var(--p-space-150) var(--p-space-200) 0;
 }
-.JobsTable { min-width: 0; }
+.JobsTable, .CondensedTable { min-width: 0; }
 .Condensed { display: none; }
 @media (max-width: 47.99rem) {
   /* Condensed rows on phones: one cell per job, no sideways scrolling to reach status or price. */
-  .JobsTable :global(thead) { display: none; }
+  .JobsTable :global(thead),
+  .CondensedTable :global(thead) { display: none; }
   .WideOnly { display: none; }
   .Condensed {
     display: flex;

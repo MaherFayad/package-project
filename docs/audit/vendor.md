@@ -31,8 +31,10 @@ Security checks (no findings): every server action scopes by `vendor.id`; produc
 | V-21 | low | Dieline preview (`src/app/api/vendor/jobs/[id]/dieline`, dieline lib) | Panel labels in the SVG are English in the Arabic UI and very small. | Localization | Outside scope (technical session owns the API and the dieline generator). | open |
 | V-22 | low | `src/components/ui/TextField` | The character counter sits inside the textarea and overlaps the last line of long Arabic bios. | WCAG 1.4.8 / legibility | Shared UI component, outside scope. | open |
 | V-23 | low | `src/components/ui/TopBar` | In Arabic the English staff name truncates at the wrong end ("…rinting & Packaging staff"); needs `dir="auto"` on the name. | Unicode bidi | Shared UI component, outside scope. | open |
+| V-25 | high | Payouts, phone (pass 2) | Same sideways-scrolling table as V-03: status, date and amount off-screen at 390 px. | WCAG 1.4.10 reflow | Condensed rows below 48rem (part and trigger, status badge, amount, date). | fixed |
+| V-26 | medium | Job detail, finished jobs (pass 2) | A delivered job with no stored photos said "Photos can be added while the job is in production." | Copy correctness | The QC card shows only while photos are possible or exist; before production it explains when they become possible. | fixed |
 | V-24 | low | Apply page, phone | "Why print with Elba" and "How it works" sit under the long form. | Polaris layout | Kept main-first order on purpose: the subtitle already states the offer, and the aside order matches the desktop reading order. | won't fix |
 
-Counts: high 5, medium 7, low 12 (critical 0). Fixed 21, open 3 (outside scope), won't fix 1.
+Counts: high 6, medium 8, low 12 (critical 0). Fixed 23, open 3 (outside scope), won't fix 1.
 
 Not findings: the floating "N" circle in screenshots is the Next.js dev-mode indicator (not in production builds). Seed events with timestamps a few hours apart from `placedAt` are seed data, not a UI bug.
