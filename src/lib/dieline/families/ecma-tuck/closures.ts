@@ -140,7 +140,8 @@ export function crashLockBottom(b: DielineBuilder, w: Walls, t: number, Wp: numb
     const L = f.length;
     const x1 = L * 0.28;
     const x2 = L * 0.62;
-    const ch = Math.min(h - t, L * 0.3);
+    // Small clearance chamfer at the leading corner (a large one leaves a hole in the bottom).
+    const ch = Math.min(6, h - t, L * 0.1);
     const poly: Polygon = [f.at(f.a, 0, 0), f.at(f.a, L, 0), f.at(f.a, L, h - ch), f.at(f.a, L - ch, h), f.at(f.a, x2, h), f.at(f.a, x1, h), f.at(f.a, 0, h)];
     b.attachPoly(`bottom_${id}`, id === "front" ? "bottom" : "flap", id, [f.a, f.b], poly, { stage: 2, label: "Crash-lock flap" });
     const tongue: Polygon = [f.at(f.a, x2, h), f.at(f.a, x2 - e * 0.6, h + e), f.at(f.a, x1 + e * 0.6, h + e), f.at(f.a, x1, h)];

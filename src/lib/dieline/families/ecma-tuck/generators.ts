@@ -229,7 +229,7 @@ export function doubleWallTuck(dims: Dims, t: number, f: StructureFeatures, o: E
     const fr = b.frame(id, edge);
     const poly = [fr.at(fr.a, 0, 0), fr.at(fr.a, fr.length, 0), fr.at(fr.a, fr.length - inset, innerH), fr.at(fr.a, inset, innerH)];
     // 180° roll about a pivot p·t deep leaves a (2p − 2)·t gap: the back's inner wall clears the glue flap.
-    b.attachPoly(`${id}Inner`, "inner", id, [fr.a, fr.b], poly, { fold: 180, pivotDepth: id === "back" ? 1.5 : 1, stage: 1, label: "Inner wall" });
+    b.attachPoly(`${id}Inner`, "inner", id, [fr.a, fr.b], poly, { fold: 180, pivotDepth: id === "back" ? 1.5 : 1, stage: 0, label: "Inner wall" });
   }
   return { builder: b, closedRotation: IDENTITY, inner: { ...dims } };
 }

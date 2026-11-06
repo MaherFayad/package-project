@@ -14,6 +14,7 @@ import {
   familyFeatures,
   generateFamilyDieline,
   ngonSide,
+  PILLOW_STRIPS,
   pivotForGap,
   tryGenerateFamilyDieline,
   validateFamilyDims,
@@ -283,6 +284,22 @@ describe("closed dimensions match the inputs", () => {
     near(m.closedOuter.W, 35, 3 * t + 0.5);
     expect(m.closedOuter.H).toBeGreaterThanOrEqual(160);
     expect(m.faces.front && m.faces.back).toBeTruthy();
+  });
+
+  it("pillow: bowed faces on smooth roll hinges and curved end creases", () => {
+    const m = gen(def("ECMA_PILLOW"), { L: 100, W: 35, H: 160 });
+    const strips = m.panels.filter((p) => /^(front|back)\d$/.test(p.id));
+    expect(strips).toHaveLength(2 * PILLOW_STRIPS);
+    // Inside each face the strips meet on smooth (roll) hinges; only the side folds crease.
+    expect(strips.filter((p) => p.hingeKind === "roll")).toHaveLength(2 * (PILLOW_STRIPS - 1));
+    // Top end crease: the lobe hinges trace an arc (centre higher than the folds), drawn as creases.
+    const top = m.panels.filter((p) => /^front\dTop$/.test(p.id)).sort((a, b) => a.hinge!.a.x - b.hinge!.a.x);
+    const ys = top.map((p) => Math.min(p.hinge!.a.y, p.hinge!.b.y));
+    const edge = Math.max(top[0].hinge!.a.y, top[top.length - 1].hinge!.b.y);
+    expect(edge - Math.min(...ys)).toBeGreaterThan(4);
+    for (const p of top) expect(m.creaseLines.some((c) => c.a.x === p.hinge!.a.x && c.a.y === p.hinge!.a.y)).toBe(true);
+    // The lobes close the ends: closed height stays within body + both crease arcs + lobes.
+    expect(m.closedOuter.H).toBeLessThan(160 + 2 * (35 * 0.55 + 35 * 1.3));
   });
 
   it("cone: mouth diameter and height match, developed sector < 360°", () => {
