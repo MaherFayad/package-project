@@ -27,6 +27,7 @@ const LOCALES = (process.env.LOCALES || "ar,en").split(",");
 
 const PAGES = [
   { key: "home", path: "" },
+  { key: "designer-page", path: "/designer" },
   { key: "boxes", path: "/boxes" },
   { key: "bottles", path: "/bottles" },
   { key: "catalog", path: "/catalog" },
