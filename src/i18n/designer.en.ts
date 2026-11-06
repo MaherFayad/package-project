@@ -144,6 +144,7 @@ export const designerEn = {
     selected: "Selected item",
   },
   layer: {
+    finishes: "Finishes on this item",
     image: "Image",
     text: "Text",
     shape: "Shape",

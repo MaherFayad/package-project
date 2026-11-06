@@ -53,7 +53,7 @@ import { runPreflight, summarizePreflight } from "./lib/preflight";
 import { placeLayer, type Placement } from "./lib/geometry";
 import { BADGE_QTY, fetchQuote, quoteKey, type PriceState } from "./lib/quote";
 import { designerPath } from "./lib/catalog";
-import { pruneFinishes, toggleFinish } from "./lib/config";
+import { fillEmptyFinishMasks, pruneFinishes, setLayerFinish, toggleFinish } from "./lib/config";
 import { createModelDoc } from "./lib/doc";
 import { layerName } from "./lib/describe";
 import { ConfigPanel, surfaceName, type ViewOptions } from "./ConfigPanel";
@@ -71,10 +71,10 @@ import { ExportModal, GateModal, PriceBadge, PriceModal, ShareModal, type Export
 import styles from "./designer.module.css";
 
 const StageSkeleton = () => <div className={lib.stageSkeleton} aria-hidden="true" />;
-const Scene3D = dynamic(() => import("./Scene3D"), { ssr: false, loading: StageSkeleton });
+// One canvas for boxes and containers (PERF-09): model switches keep the WebGL context.
+const DesignStage = dynamic(() => import("./DesignStage"), { ssr: false, loading: StageSkeleton });
 // The picker (370 cards, search) loads only when it is opened (PERF-04).
 const ModelPicker = dynamic(() => import("./ModelPicker").then((m) => m.ModelPicker), { ssr: false });
-const VesselView = dynamic(() => import("./VesselView"), { ssr: false, loading: StageSkeleton });
 
 type View = "3d" | "face" | "dieline";
 type SaveState = "idle" | "dirty" | "saving" | "saved" | "error";
@@ -131,7 +131,7 @@ function slugify(name: string) {
   );
 }
 
-export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, loadError, resumeLocal, pickerCards = [] }: DesignerAppProps) {
+export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, loadError, resumeLocal, pickerCards: pickerCardsProp }: DesignerAppProps) {
   const { t } = useI18n();
   const router = useRouter();
   const toast = useToast();
@@ -464,7 +464,32 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
     if (applyGeometry(next)) setUrl(designIdRef.current, code);
   };
 
-  const openPicker = useCallback(() => setPickerOpen(true), []);
+  // Picker cards (370 models) are fetched after hydration instead of riding in the HTML (R2-01).
+  const [pickerCards, setPickerCards] = useState<ModelCard[]>(pickerCardsProp ?? []);
+  const cardsReq = useRef<Promise<void> | null>(null);
+  const loadCards = useCallback(() => {
+    if (pickerCardsProp?.length) return Promise.resolve();
+    cardsReq.current ??= fetch(`/${locale}/design/picker-cards`)
+      .then((r) => (r.ok ? (r.json() as Promise<ModelCard[]>) : Promise.reject(new Error(String(r.status)))))
+      .then(setPickerCards)
+      .catch(() => {
+        cardsReq.current = null;
+      });
+    return cardsReq.current;
+  }, [locale, pickerCardsProp]);
+  useEffect(() => {
+    const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
+    if (w.requestIdleCallback) {
+      const id = w.requestIdleCallback(() => void loadCards(), { timeout: 4000 });
+      return () => w.cancelIdleCallback?.(id);
+    }
+    const id = setTimeout(() => void loadCards(), 2000);
+    return () => clearTimeout(id);
+  }, [loadCards]);
+  const openPicker = useCallback(() => {
+    void loadCards();
+    setPickerOpen(true);
+  }, [loadCards]);
   const onFinish = useCallback((code: DesignFinishCode, on: boolean) => commit(toggleFinish(docRef.current, code, on)), [commit]);
   const onPrintSides = useCallback((p: DesignDoc["printSides"]) => commit({ ...docRef.current, printSides: p }), [commit]);
 
@@ -475,7 +500,8 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
 
   const add = (layer: ArtworkLayer) => {
     if (layerCount(docRef.current) >= 60) return;
-    commit(addLayer(docRef.current, layer));
+    // A masked finish switched on before any artwork existed starts on the first item (FN-02).
+    commit(fillEmptyFinishMasks(addLayer(docRef.current, layer)));
     setSelectedId(layer.id);
     setView("face");
   };
@@ -505,7 +531,7 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
   };
   const onAddShape = (shape: "rect" | "ellipse") => faceInfo && add(makeShapeLayer(face, surface, faceInfo, shape));
   const onDelete = (id: string) => {
-    commit(removeLayer(docRef.current, id));
+    commit(fillEmptyFinishMasks(removeLayer(docRef.current, id)));
     if (selectedId === id) setSelectedId(null);
     toast.show(t("designer.artwork.deleted"), { action: { content: t("designer.history.undo"), onAction: () => dispatch({ type: "undo" }) } });
   };
@@ -671,6 +697,45 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
     />
   );
 
+  // Scene props for the shared 3D stage, memoised so panel / price updates do not re-render it (PERF-18).
+  const vesselScene = useMemo(
+    () =>
+      geo?.vessel && libModel?.kind === "vessel"
+        ? { model: libModel, doc, geo, sheet: canvases?.outside ?? null, version, handleRef: sceneRef, turntable: viewOpts.turntable, open: viewOpts.open }
+        : null,
+    [geo, libModel, doc, canvases, version, viewOpts.turntable, viewOpts.open],
+  );
+  const boxScene = useMemo(
+    () =>
+      !vesselScene && model
+        ? {
+            model,
+            material: doc.materialCode,
+            finish: doc.finishCode,
+            finishes: doc.finishes,
+            artwork: doc.artwork,
+            images,
+            foldProgress: fold,
+            canvases,
+            version,
+            printInside: bothSides,
+            handleRef: sceneRef,
+            dimensions: viewOpts.dimensions,
+            scene: viewOpts.scene,
+            turntable: viewOpts.turntable,
+            locale,
+          }
+        : null,
+    [vesselScene, model, doc.materialCode, doc.finishCode, doc.finishes, doc.artwork, images, fold, canvases, version, bothSides, viewOpts.dimensions, viewOpts.scene, viewOpts.turntable, locale],
+  );
+  // Masked finishes the selected item can carry ("Spot UV on this item", FN-02).
+  const layerFinishes = useMemo(
+    () =>
+      !isVessel && selected
+        ? (doc.finishes ?? []).filter((f) => FINISHES[f.code].masked).map((f) => ({ code: f.code, name: FINISHES[f.code].name[locale], on: !!f.mask?.layerIds.includes(selected.id) }))
+        : [],
+    [doc.finishes, selected, isVessel, locale],
+  );
   const faceOptions = FACE_IDS.filter((f) => faces[f]).map((f) => ({ value: f, label: faceLabel(f) }));
   // Open-top styles (FEFCO 0700…) never close: fold 100 % reads "Assembled". The catalogue adds
   // `openTop` to the library; read it defensively until then.
@@ -802,47 +867,17 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
           {model ? (
             <>
               <div className={styles.sceneWrap} data-active={view === "3d"} aria-hidden={view !== "3d"} data-testid="stage-3d" data-model={docModelCode(doc)}>
-                {geo?.vessel && libModel?.kind === "vessel" ? (
-                  <VesselView
-                    model={libModel}
-                    doc={doc}
-                    geo={geo}
-                    sheet={canvases?.outside ?? null}
-                    version={version}
-                    handleRef={sceneRef}
-                    turntable={viewOpts.turntable}
-                    open={viewOpts.open}
-                    ariaLabel={t("viewer.label")}
-                    roleDescription={t("viewer.roleDescription")}
-                    keyboardHint={t("viewer.keyboardHint")}
-                    fallback={t("viewer.unsupported")}
-                    onReady={onSceneReady}
-                  />
-                ) : (
-                  <Scene3D
-                    model={model}
-                    material={doc.materialCode}
-                    finish={doc.finishCode}
-                    finishes={doc.finishes}
-                    artwork={doc.artwork}
-                    images={images}
-                    foldProgress={fold}
-                    canvases={canvases}
-                    version={version}
-                    printInside={bothSides}
-                    handleRef={sceneRef}
-                    dimensions={viewOpts.dimensions}
-                    scene={viewOpts.scene}
-                    turntable={viewOpts.turntable}
-                    locale={locale}
-                    poster={libModel ? `/models/${libModel.slug}.svg` : undefined}
-                    onReady={onSceneReady}
-                    ariaLabel={t("viewer.label")}
-                    roleDescription={t("viewer.roleDescription")}
-                    keyboardHint={t("viewer.keyboardHint")}
-                    fallback={t("viewer.unsupported")}
-                  />
-                )}
+                <DesignStage
+                  box={boxScene}
+                  vessel={vesselScene}
+                  modelCode={docModelCode(doc)}
+                  poster={libModel ? `/models/${libModel.slug}.svg` : undefined}
+                  onReady={onSceneReady}
+                  ariaLabel={t("viewer.label")}
+                  roleDescription={t("viewer.roleDescription")}
+                  keyboardHint={t("viewer.keyboardHint")}
+                  fallback={t("viewer.unsupported")}
+                />
                 {/* Large poster from the first paint until the 3D chunk renders a frame (PERF-10). */}
                 {libModel ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -1016,6 +1051,8 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
                     if (r.id) setSelectedId(r.id);
                   }}
                   onDelete={() => selected && onDelete(selected.id)}
+                  layerFinishes={layerFinishes}
+                  onLayerFinish={(code, on) => selected && commit(setLayerFinish(docRef.current, code, selected.id, on))}
                 />
               ) : tab === 2 ? (
                 <LayersPanel doc={doc} faces={faces} faceLabel={faceLabel} issues={issues} selectedId={selectedId} onSelect={(id, f, s) => goToLayer(id, f, s)} />
@@ -1032,7 +1069,8 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
         </div>
       </aside>
 
-      {pickerUsed ? <ModelPicker open={pickerOpen} cards={pickerCards} current={docModelCode(doc)} onClose={() => setPickerOpen(false)} onPick={onModel} /> : null}
+      {/* Mounted once the cards have arrived (they are prefetched on idle, so normally before the first open). */}
+      {pickerUsed && pickerCards.length ? <ModelPicker open={pickerOpen} cards={pickerCards} current={docModelCode(doc)} onClose={() => setPickerOpen(false)} onPick={onModel} /> : null}
       <GateModal reason={gate?.reason ?? null} onClose={() => setGate(null)} onSuccess={onSignedIn} />
       <PriceModal
         open={modal === "price"}

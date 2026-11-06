@@ -110,3 +110,28 @@ test("unknown structure is a 404", async ({ page }) => {
   const res = await page.goto("/en/design/no-such-box");
   expect(res?.status()).toBe(404);
 });
+
+/** React hydration failures (#418 text/HTML mismatch, #423 recoverable root error, #425 text) and their dev wording. */
+const HYDRATION = /Minified React error #(418|419|423|425)|Hydration failed|hydrat(ed|ion) .*(mismatch|didn't match)|server rendered (HTML|text) didn't match/i;
+
+test("designer pages hydrate without errors (box, container, start page, ar + en)", async ({ page }) => {
+  test.setTimeout(120_000);
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(`${page.url()}: ${String(e)}`));
+  page.on("console", (m) => {
+    if (m.type() === "error" && HYDRATION.test(m.text())) errors.push(`${page.url()}: ${m.text()}`);
+  });
+  // Saves are stubbed: this test is about the first render only.
+  await page.route("**/api/designs**", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ id: "e2e-hydration", owned: false, updatedAt: new Date().toISOString() }) }));
+  const urls = ["/en/design", "/ar/design", "/en/design/fefco-0436", "/en/design/aerosol-can", "/ar/design/mailer-box?preset=tshirt", "/ar/design/stand-up-pouch"];
+  for (let round = 0; round < 2; round++) {
+    for (const url of urls) {
+      await page.goto(url);
+      await expect(page.locator("main")).toBeVisible();
+      if (url.split("/").length > 3) await expect(page.getByTestId("stage-3d").locator("canvas").first()).toBeVisible({ timeout: 45_000 });
+      // let late Suspense boundaries hydrate
+      await page.waitForLoadState("networkidle");
+    }
+  }
+  expect(errors, errors.join("\n")).toEqual([]);
+});

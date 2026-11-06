@@ -145,6 +145,7 @@ export const designerAr: Dictionary["designer"] = {
     selected: "العنصر المحدد",
   },
   layer: {
+    finishes: "تشطيبات هذا العنصر",
     image: "صورة",
     text: "نص",
     shape: "شكل",

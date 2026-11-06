@@ -157,14 +157,18 @@ function FinishesGroup({ doc, model, onFinish }: Pick<ConfigPanelProps, "doc" | 
         label={(c) => c.name[locale]}
         onChange={(v, on) => onFinish(v, on)}
         extra={(c) => {
-          if (!FINISHES[c.value].masked) return null;
+          // Containers: the finish covers the whole label, so there is nothing to choose.
+          if (!FINISHES[c.value].masked || model.kind !== "box") return null;
           const f = doc.finishes?.find((x) => x.code === c.value);
-          const n = f?.mask?.layerIds.length ?? 0;
-          return (
-            <span className={styles.optionReason}>
-              {n > 0 ? `${t("library.panel.finishOn")}: ${t("library.panel.finishAllArtwork")}` : t("library.panel.finishNeedsArt")}
-            </span>
-          );
+          if (!f) return null;
+          const live = doc.artwork.outside.layers.filter((l) => !l.hidden && f.mask?.layerIds.includes(l.id));
+          const text =
+            live.length === 0
+              ? t("library.panel.finishWholeFace")
+              : live.every((l) => l.kind === "image")
+                ? t(live.length === 1 ? "library.panel.finishOnLogo" : "library.panel.finishOnImages", { count: formatNumber(live.length) })
+                : t("library.panel.finishOnItems", { count: formatNumber(live.length) });
+          return <span className={styles.optionReason}>{text}</span>;
         }}
       />
       <Text as="p" variant="bodySm" tone="subdued">
@@ -354,7 +358,7 @@ function BoxSection({ doc, model, geo, view, onView, onGeometry, onFinish, onPri
               step={5}
               value={Math.min(Math.round(doc.dims.H), f.lidHeightMm ?? Math.round(doc.dims.H))}
               output
-              formatValue={(v) => `${formatNumber(v)} mm`}
+              formatValue={(v) => `${formatNumber(v)} ${t("common.mm")}`}
               onChange={(v) => setFeature({ lidHeightMm: v })}
             />
           ) : null}

@@ -259,18 +259,18 @@ export async function loadPresets(code: StructureCode): Promise<DimsPreset[]> {
 let loadable: Record<string, { files?: string[] }> | null | undefined;
 
 /**
- * JS files of a `next/dynamic` import in DesignerApp ("./Scene3D" or "./VesselView"), read from
+ * JS files of a `next/dynamic` import in DesignerApp ("./DesignStage": the one 3D canvas), read from
  * the build's react-loadable manifest, so the page can ask the browser to fetch three.js while it
  * hydrates instead of after. Empty under `next dev` or when the manifest is missing.
  */
-export function lazyChunkHrefs(entry: "./Scene3D" | "./VesselView"): string[] {
+export function lazyChunkHrefs(entry: "./DesignStage"): string[] {
   if (loadable === undefined) {
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const fs = require("node:fs") as typeof import("node:fs");
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const path = require("node:path") as typeof import("node:path");
-      loadable = JSON.parse(fs.readFileSync(path.join(process.cwd(), ".next", "react-loadable-manifest.json"), "utf8"));
+      loadable = JSON.parse(fs.readFileSync(path.join(process.cwd(), process.env.NEXT_DIST_DIR || ".next", "react-loadable-manifest.json"), "utf8"));
     } catch {
       loadable = null;
     }
