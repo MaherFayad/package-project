@@ -52,8 +52,7 @@ export default async function AdminApplicationPage({ params }: { params: Params 
         <LayoutSection>
           <BlockStack gap="400">
             <Card title={t("admin.application.company")}>
-              <dl style={{ margin: 0 }}>
-                <BlockStack gap="300">
+              <BlockStack as="dl" gap="300" className={adminStyles.PlainList}>
                   <Field label={t("admin.application.fields.legalName")}>{app.legalName}</Field>
                   <Field label={t("admin.application.fields.commercialRegister")}>
                     <bdi dir="ltr">{app.commercialRegisterNo}</bdi>
@@ -63,8 +62,7 @@ export default async function AdminApplicationPage({ params }: { params: Params 
                   </Field>
                   <Field label={t("admin.application.fields.address")}>{app.factoryAddress}</Field>
                   <Field label={t("admin.application.fields.city")}>{t(`cities.${app.factoryCity}` as DictKey)}</Field>
-                </BlockStack>
-              </dl>
+              </BlockStack>
             </Card>
             <Card title={t("admin.application.documents")}>
               {docs.length ? (
@@ -101,8 +99,7 @@ export default async function AdminApplicationPage({ params }: { params: Params 
         <LayoutSection variant="oneThird" as="aside">
           <BlockStack gap="400">
             <Card title={t("admin.application.contact")}>
-              <dl style={{ margin: 0 }}>
-                <BlockStack gap="300">
+              <BlockStack as="dl" gap="300" className={adminStyles.PlainList}>
                   <Field label={t("admin.application.fields.contactName")}>{app.contactName}</Field>
                   <Field label={t("admin.application.fields.contactPhone")}>
                     <bdi dir="ltr">{app.contactPhone}</bdi>
@@ -112,8 +109,7 @@ export default async function AdminApplicationPage({ params }: { params: Params 
                       <Link url={`${base}/users/${applicant.id}`}>{applicant.name ?? applicant.phone}</Link>
                     </Field>
                   ) : null}
-                </BlockStack>
-              </dl>
+              </BlockStack>
             </Card>
             {vendor ? (
               <Card title={t("admin.order.vendorCard.title")}>

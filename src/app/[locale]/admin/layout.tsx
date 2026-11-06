@@ -16,8 +16,9 @@ export const dynamic = "force-dynamic";
 export default async function AdminLayout({ children, params }: { children: ReactNode; params: Promise<{ locale: string }> }) {
   const locale = toLocale((await params).locale);
   const user = await requireRole("ADMIN", locale, `/${locale}/admin`);
+  // Orders badge = jobs ops must act on: QC review plus paid orders still waiting for a vendor.
   const [qc, applications, disputes, dataRequests] = await Promise.all([
-    db.order.count({ where: { status: "QC_PENDING" } }),
+    db.order.count({ where: { status: { in: ["QC_PENDING", "PAID"] } } }),
     db.vendorApplication.count({ where: { status: { in: ["SUBMITTED", "UNDER_REVIEW"] } } }),
     db.dispute.count({ where: { status: { in: ["OPEN", "UNDER_REVIEW"] } } }),
     db.dataRequest.count({ where: { status: { in: ["OPEN", "IN_PROGRESS"] } } }),

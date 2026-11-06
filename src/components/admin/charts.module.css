@@ -116,3 +116,95 @@
   padding: 0;
   margin-block-end: var(--p-space-200);
 }
+/* Metric cell content: value on its own line (never wraps mid-amount), trend underneath. */
+.MetricStack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--p-space-050);
+  min-inline-size: 0;
+}
+.MetricNum {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.MetricSub {
+  font-size: var(--p-text-body-sm-font-size);
+  font-weight: var(--p-font-weight-regular);
+  color: var(--p-color-text-secondary);
+}
+.Nowrap {
+  white-space: nowrap;
+}
+/* Task list rows: whole row is the link target (WCAG 2.5.8), count right-aligned. */
+.TaskList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--p-space-050);
+}
+.TaskLink {
+  display: flex;
+  align-items: center;
+  gap: var(--p-space-200);
+  min-block-size: 2.25rem;
+  padding-inline: var(--p-space-200);
+  margin-inline: calc(-1 * var(--p-space-200));
+  border-radius: var(--p-border-radius-200);
+  color: var(--p-color-text);
+  text-decoration: none;
+  transition: background-color var(--p-motion-duration-100, 100ms) var(--p-motion-ease-out, ease-out);
+}
+.TaskLink:hover {
+  background: var(--p-color-bg-surface-hover);
+}
+.TaskLink:focus-visible {
+  outline: var(--p-focus-ring-width, 2px) solid var(--p-color-border-focus);
+  outline-offset: 0;
+}
+.TaskText {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .TaskLink {
+    transition: none;
+  }
+}
+.PlainList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ZoneScroll {
+  /* positioned so visually-hidden input labels stay inside the scroll box */
+  position: relative;
+  overflow-x: auto;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+.ZoneTable {
+  inline-size: 100%;
+  min-inline-size: 40rem;
+  border-collapse: collapse;
+}
+.ZoneTable th,
+.ZoneTable td {
+  padding: var(--p-space-150) var(--p-space-100);
+  text-align: start;
+  vertical-align: top;
+}
+.ZoneTable thead th {
+  font-size: var(--p-text-body-sm-font-size);
+  font-weight: var(--p-font-weight-semibold);
+  color: var(--p-color-text-secondary);
+  border-block-end: 1px solid var(--p-color-border-secondary);
+}
+.ZoneTable tbody th {
+  font-weight: var(--p-font-weight-semibold);
+  white-space: nowrap;
+  padding-block-start: var(--p-space-300);
+}
+.ZoneTable tbody tr + tr > * {
+  border-block-start: 1px solid var(--p-color-border-secondary);
+}

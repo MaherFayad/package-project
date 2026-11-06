@@ -107,7 +107,8 @@
   padding: var(--p-space-150) var(--p-space-200);
   min-block-size: 2.75rem;
 }
-.Views { min-width: 0; flex: 0 1 auto; max-inline-size: 50%; }
+/* Views may take all but room for a usable search field (+ filter/sort buttons); they scroll beyond that. */
+.Views { min-width: 0; flex: 0 1 auto; max-inline-size: calc(100% - 18rem); }
 .Query {
   position: relative;
   display: flex;

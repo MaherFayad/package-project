@@ -19,8 +19,9 @@ export function ColumnChart({ points, startLabel, endLabel }: { points: { key: s
         ))}
       </div>
       <div className={styles.Axis}>
-        <span>{startLabel}</span>
-        <span>{endLabel}</span>
+        {/* The axis is forced LTR (time runs left to right); isolate localized dates so RTL text inside them is not reordered. */}
+        <bdi>{startLabel}</bdi>
+        <bdi>{endLabel}</bdi>
       </div>
     </div>
   );

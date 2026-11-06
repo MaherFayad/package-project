@@ -32,12 +32,15 @@ function asSort(v: string | null): OrderSort {
   return (ORDER_SORTS as readonly string[]).includes(v ?? "") ? (v as OrderSort) : "newest";
 }
 
+/** Admin wording first (PAID reads "Awaiting vendor": the money is in, the next step is the vendor). */
+const ADMIN_STATUS_LABELS = new Set(["PAID"]);
+
 export function OrderStatusBadge({ status }: { status: string }) {
   const { t } = useI18n();
   const b = statusBadge(status as OrderStatus);
   return (
     <Badge tone={b.tone} progress={b.progress}>
-      {t(`orderStatus.${status}` as DictKey)}
+      {t((ADMIN_STATUS_LABELS.has(status) ? `admin.orders.statusLabel.${status}` : `orderStatus.${status}`) as DictKey)}
     </Badge>
   );
 }
@@ -86,110 +89,112 @@ export function OrdersIndex({ rows, vendors, openDisputes }: { rows: AdminOrderR
             { label: t("admin.orders.metrics.disputes"), value: formatNumber(openDisputes) },
           ]}
         />
-        <IndexTable
-          resourceName={{ singular: t("admin.orders.resourceSingular"), plural: t("admin.orders.resourcePlural") }}
-          caption={t("admin.orders.title")}
-          rowIds={shown.map((r) => r.id)}
-          headings={[
-            { title: t("admin.orders.columns.order") },
-            { title: t("admin.orders.columns.date") },
-            { title: t("admin.orders.columns.buyer") },
-            { title: t("admin.orders.columns.vendor") },
-            { title: t("admin.orders.columns.total"), alignment: "end" },
-            { title: t("admin.orders.columns.margin"), alignment: "end" },
-            { title: t("admin.orders.columns.payment") },
-            { title: t("admin.orders.columns.status") },
-          ]}
-          toolbar={
-            <IndexFilters
-              views={ORDER_VIEWS.map((v) => ({ id: `orders-view-${v}`, content: t(`admin.orders.views.${v}` as DictKey), badge: counts[v] > 0 ? formatNumber(counts[v]) : undefined }))}
-              selectedView={ORDER_VIEWS.indexOf(view)}
-              onSelectView={(i) => setParam({ view: ORDER_VIEWS[i] === "all" ? null : ORDER_VIEWS[i]! })}
-              queryValue={query}
-              onQueryChange={(v) => {
-                setQuery(v);
-                setParam({ q: v.trim() || null });
-              }}
-              queryPlaceholder={t("admin.orders.search")}
-              filterLabel={t("admin.common.filters")}
-              filters={
-                <Select
-                  label={t("admin.orders.vendor")}
-                  value={vendorId ?? ""}
-                  onChange={(v) => setParam({ vendor: v || null })}
-                  options={[{ label: t("admin.orders.anyVendor"), value: "" }, ...vendors.map((v) => ({ label: v.name, value: v.id }))]}
-                />
-              }
-              appliedFilters={applied}
-              sortLabel={t("admin.common.sortLabel")}
-              sortOptions={ORDER_SORTS.map((s) => ({ label: t(`admin.orders.sort.${s}` as DictKey), value: s }))}
-              sortSelected={sort}
-              onSort={(v) => setParam({ sort: v === "newest" ? null : v })}
-            />
-          }
-          emptyState={
-            <EmptyState
-              heading={filtered ? t("admin.orders.emptyFilteredTitle") : t("admin.orders.emptyTitle")}
-              image={<EmptyBoxIllustration size={96} />}
-              compact
-              action={filtered ? <Button onClick={clearAll}>{t("admin.common.clearFilters")}</Button> : undefined}
-            >
-              {filtered ? t("admin.orders.emptyFilteredBody") : t("admin.orders.emptyBody")}
-            </EmptyState>
-          }
-          footer={
-            shown.length ? (
-              <Text as="p" tone="subdued" alignment="center" variant="bodySm">
-                {t("admin.common.count", { count: formatNumber(shown.length) })}
-              </Text>
-            ) : undefined
-          }
-        >
-          {shown.map((r) => (
-            <IndexTableRow key={r.id} id={r.id} tone={r.status === "CANCELLED" || r.status === "REFUNDED" ? "subdued" : undefined}>
-              <IndexTableCell>
-                <InlineStack gap="150" blockAlign="center" wrap={false}>
-                  <IndexTableRowLink url={`/${locale}/admin/orders/${r.number}`}>
-                    <bdi>{r.number}</bdi>
-                  </IndexTableRowLink>
-                  {r.openDispute ? (
-                    <Badge tone="critical" size="small">
-                      {t("admin.orders.dispute")}
+        <div id="admin-orders-table">
+          <IndexTable
+            resourceName={{ singular: t("admin.orders.resourceSingular"), plural: t("admin.orders.resourcePlural") }}
+            caption={t("admin.orders.title")}
+            rowIds={shown.map((r) => r.id)}
+            headings={[
+              { title: t("admin.orders.columns.order") },
+              { title: t("admin.orders.columns.date") },
+              { title: t("admin.orders.columns.buyer") },
+              { title: t("admin.orders.columns.vendor") },
+              { title: t("admin.orders.columns.total"), alignment: "end" },
+              { title: t("admin.orders.columns.margin"), alignment: "end" },
+              { title: t("admin.orders.columns.payment") },
+              { title: t("admin.orders.columns.status") },
+            ]}
+            toolbar={
+              <IndexFilters
+                views={ORDER_VIEWS.map((v) => ({ id: `orders-view-${v}`, panelID: "admin-orders-table", content: t(`admin.orders.views.${v}` as DictKey), badge: counts[v] > 0 ? formatNumber(counts[v]) : undefined }))}
+                selectedView={ORDER_VIEWS.indexOf(view)}
+                onSelectView={(i) => setParam({ view: ORDER_VIEWS[i] === "all" ? null : ORDER_VIEWS[i]! })}
+                queryValue={query}
+                onQueryChange={(v) => {
+                  setQuery(v);
+                  setParam({ q: v.trim() || null });
+                }}
+                queryPlaceholder={t("admin.orders.search")}
+                filterLabel={t("admin.common.filters")}
+                filters={
+                  <Select
+                    label={t("admin.orders.vendor")}
+                    value={vendorId ?? ""}
+                    onChange={(v) => setParam({ vendor: v || null })}
+                    options={[{ label: t("admin.orders.anyVendor"), value: "" }, ...vendors.map((v) => ({ label: v.name, value: v.id }))]}
+                  />
+                }
+                appliedFilters={applied}
+                sortLabel={t("admin.common.sortLabel")}
+                sortOptions={ORDER_SORTS.map((s) => ({ label: t(`admin.orders.sort.${s}` as DictKey), value: s }))}
+                sortSelected={sort}
+                onSort={(v) => setParam({ sort: v === "newest" ? null : v })}
+              />
+            }
+            emptyState={
+              <EmptyState
+                heading={filtered ? t("admin.orders.emptyFilteredTitle") : t("admin.orders.emptyTitle")}
+                image={<EmptyBoxIllustration size={96} />}
+                compact
+                action={filtered ? <Button onClick={clearAll}>{t("admin.common.clearFilters")}</Button> : undefined}
+              >
+                {filtered ? t("admin.orders.emptyFilteredBody") : t("admin.orders.emptyBody")}
+              </EmptyState>
+            }
+            footer={
+              shown.length ? (
+                <Text as="p" tone="subdued" alignment="center" variant="bodySm">
+                  {t("admin.common.count", { count: formatNumber(shown.length) })}
+                </Text>
+              ) : undefined
+            }
+          >
+            {shown.map((r) => (
+              <IndexTableRow key={r.id} id={r.id} tone={r.status === "CANCELLED" || r.status === "REFUNDED" ? "subdued" : undefined}>
+                <IndexTableCell>
+                  <InlineStack gap="150" blockAlign="center" wrap={false}>
+                    <IndexTableRowLink url={`/${locale}/admin/orders/${r.number}`}>
+                      <bdi>{r.number}</bdi>
+                    </IndexTableRowLink>
+                    {r.openDispute ? (
+                      <Badge tone="critical" size="small">
+                        {t("admin.orders.dispute")}
+                      </Badge>
+                    ) : null}
+                    {r.reprint ? (
+                      <Badge tone="info" size="small">
+                        {t("admin.orders.reprint")}
+                      </Badge>
+                    ) : null}
+                  </InlineStack>
+                </IndexTableCell>
+                <IndexTableCell>
+                  <time dateTime={r.placedAt}>{formatDate(r.placedAt, locale, "medium")}</time>
+                </IndexTableCell>
+                <IndexTableCell>{r.buyerName || <bdi dir="ltr">{r.buyerPhone}</bdi>}</IndexTableCell>
+                <IndexTableCell>{r.vendorName}</IndexTableCell>
+                <IndexTableCell alignment="end" numeric>
+                  {formatMoney(r.totalPiasters, locale)}
+                </IndexTableCell>
+                <IndexTableCell alignment="end" numeric>
+                  {formatMoney(r.marginPiasters, locale)}
+                </IndexTableCell>
+                <IndexTableCell>
+                  {r.paymentStatus ? (
+                    <Badge tone={r.paymentStatus === "PAID" ? "neutral" : r.paymentStatus === "REFUNDED" ? "critical" : "warning"} progress={r.paymentStatus === "PAID" ? "complete" : "incomplete"}>
+                      {t(`admin.orders.paymentStatus.${r.paymentStatus}` as DictKey)}
                     </Badge>
-                  ) : null}
-                  {r.reprint ? (
-                    <Badge tone="info" size="small">
-                      {t("admin.orders.reprint")}
-                    </Badge>
-                  ) : null}
-                </InlineStack>
-              </IndexTableCell>
-              <IndexTableCell>
-                <time dateTime={r.placedAt}>{formatDate(r.placedAt, locale, "medium")}</time>
-              </IndexTableCell>
-              <IndexTableCell>{r.buyerName || <bdi dir="ltr">{r.buyerPhone}</bdi>}</IndexTableCell>
-              <IndexTableCell>{r.vendorName}</IndexTableCell>
-              <IndexTableCell alignment="end" numeric>
-                {formatMoney(r.totalPiasters, locale)}
-              </IndexTableCell>
-              <IndexTableCell alignment="end" numeric>
-                {formatMoney(r.marginPiasters, locale)}
-              </IndexTableCell>
-              <IndexTableCell>
-                {r.paymentStatus ? (
-                  <Badge tone={r.paymentStatus === "PAID" ? "neutral" : r.paymentStatus === "REFUNDED" ? "critical" : "warning"} progress={r.paymentStatus === "PAID" ? "complete" : "incomplete"}>
-                    {t(`admin.orders.paymentStatus.${r.paymentStatus}` as DictKey)}
-                  </Badge>
-                ) : (
-                  t("admin.common.none")
-                )}
-              </IndexTableCell>
-              <IndexTableCell>
-                <OrderStatusBadge status={r.status} />
-              </IndexTableCell>
-            </IndexTableRow>
-          ))}
-        </IndexTable>
+                  ) : (
+                    t("admin.common.none")
+                  )}
+                </IndexTableCell>
+                <IndexTableCell>
+                  <OrderStatusBadge status={r.status} />
+                </IndexTableCell>
+              </IndexTableRow>
+            ))}
+          </IndexTable>
+        </div>
       </BlockStack>
     </Page>
   );

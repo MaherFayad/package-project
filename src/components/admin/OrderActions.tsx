@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Avatar, BlockStack, Button, ButtonGroup, Card, InlineStack, Modal, Select, Text, TextField } from "@/components/ui";
 import { useI18n } from "@/i18n/client";
 import { formatMoney } from "@/lib/format";
@@ -19,85 +19,113 @@ export interface VendorOption {
   capable: boolean;
 }
 
-export function RoutingCard({ orderId, currentVendorId, vendors, canReassign, vendorCostPiasters }: { orderId: string; currentVendorId: string; vendors: VendorOption[]; canReassign: boolean; vendorCostPiasters: number }) {
+export function RoutingCard({
+  orderId,
+  currentVendorId,
+  vendors,
+  canReassign,
+  vendorCostPiasters,
+  vendor,
+}: {
+  orderId: string;
+  currentVendorId: string;
+  vendors: VendorOption[];
+  canReassign: boolean;
+  vendorCostPiasters: number;
+  /** Current vendor summary shown at the top of the card. */
+  vendor: ReactNode;
+}) {
   const { t } = useI18n();
   const { run, busy } = useAdminAction();
   const errorText = useAdminErrorText();
+  const [open, setOpen] = useState(false);
   const [vendorId, setVendorId] = useState("");
   const [cost, setCost] = useState("");
   const [reason, setReason] = useState("");
   const [res, setRes] = useState<Res>(null);
-  const others = vendors.filter((v) => v.id !== currentVendorId);
+  // Vendors with a rate card for this box come first; the rest stay selectable for manual quotes.
+  const others = vendors.filter((v) => v.id !== currentVendorId).sort((a, b) => Number(b.capable) - Number(a.capable));
   const selected = others.find((v) => v.id === vendorId);
   const costValue = egpToPiastersInput(cost);
-
-  if (!canReassign) {
-    return (
-      <Card title={t("admin.order.routing.title")}>
-        <Text as="p" tone="subdued">
-          {t("admin.order.routing.locked")}
-        </Text>
-      </Card>
-    );
-  }
+  const reset = () => {
+    setOpen(false);
+    setVendorId("");
+    setCost("");
+    setReason("");
+    setRes(null);
+  };
 
   return (
-    <Card title={t("admin.order.routing.title")}>
-      <form
-        onSubmit={async (e) => {
-          e.preventDefault();
-          if (Number.isNaN(costValue)) return;
-          const r = await run("route", () => reassignOrderAction({ orderId, vendorId, vendorCostPiasters: costValue, reason }), t("admin.order.routing.success"));
-          setRes(r);
-          if (r?.ok) {
-            setVendorId("");
-            setCost("");
-            setReason("");
-          }
-        }}
-      >
+    // id: target of the "Change vendor" link in the awaiting-vendor banner at the top of the page.
+    <div id="order-vendor">
+      <Card title={t("admin.order.vendorCard.title")}>
         <BlockStack gap="300">
-          <Text as="p" tone="subdued" variant="bodySm">
-            {t("admin.order.routing.help")}
-          </Text>
-          <Select
-            label={t("admin.order.routing.newVendor")}
-            value={vendorId}
-            onChange={setVendorId}
-            placeholder={t("admin.order.routing.choose")}
-            options={others.map((v) => ({ value: v.id, label: `${v.name}${v.capable ? "" : ` (${t("admin.order.routing.notCapable")})`}` }))}
-            helpText={selected ? (selected.capable ? t("admin.order.routing.capable") : t("admin.order.routing.notCapable")) : undefined}
-            error={fieldError(res, "vendorId", errorText)}
-          />
-          <TextField
-            label={t("admin.order.routing.newCost")}
-            autoComplete="off"
-            inputMode="decimal"
-            dir="ltr"
-            value={cost}
-            onChange={setCost}
-            placeholder={piastersToInput(vendorCostPiasters)}
-            helpText={t("admin.order.routing.newCostHelp")}
-            error={Number.isNaN(costValue) ? t("admin.errors.INVALID") : fieldError(res, "vendorCostPiasters", errorText)}
-          />
-          <TextField
-            label={t("admin.common.reason")}
-            autoComplete="off"
-            value={reason}
-            onChange={setReason}
-            multiline={2}
-            maxLength={500}
-            helpText={t("admin.common.reasonHelp")}
-            error={fieldError(res, "reason", errorText)}
-          />
-          <InlineStack align="end">
-            <Button submit disabled={!vendorId || reason.trim().length < 3} loading={busy === "route"}>
-              {t("admin.order.routing.submit")}
-            </Button>
-          </InlineStack>
+          {vendor}
+          {!canReassign ? (
+            <Text as="p" variant="bodySm" tone="subdued">
+              {t("admin.order.routing.locked")}
+            </Text>
+          ) : !open ? (
+            <InlineStack align="start">
+              <Button onClick={() => setOpen(true)}>{t("admin.order.routing.change")}</Button>
+            </InlineStack>
+          ) : (
+            <form
+              aria-label={t("admin.order.routing.title")}
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (Number.isNaN(costValue)) return;
+                const r = await run("route", () => reassignOrderAction({ orderId, vendorId, vendorCostPiasters: costValue, reason }), t("admin.order.routing.success"));
+                setRes(r);
+                if (r?.ok) reset();
+              }}
+            >
+              <BlockStack gap="300">
+                <Text as="p" tone="subdued" variant="bodySm">
+                  {t("admin.order.routing.help")}
+                </Text>
+                <Select
+                  label={t("admin.order.routing.newVendor")}
+                  value={vendorId}
+                  onChange={setVendorId}
+                  placeholder={t("admin.order.routing.choose")}
+                  options={others.map((v) => ({ value: v.id, label: `${v.name}${v.capable ? "" : ` (${t("admin.order.routing.notCapable")})`}` }))}
+                  helpText={selected ? (selected.capable ? t("admin.order.routing.capable") : t("admin.order.routing.notCapable")) : undefined}
+                  error={fieldError(res, "vendorId", errorText)}
+                />
+                <TextField
+                  label={t("admin.order.routing.newCost")}
+                  autoComplete="off"
+                  inputMode="decimal"
+                  dir="ltr"
+                  value={cost}
+                  onChange={setCost}
+                  placeholder={piastersToInput(vendorCostPiasters)}
+                  helpText={t("admin.order.routing.newCostHelp")}
+                  error={Number.isNaN(costValue) ? t("admin.errors.INVALID") : fieldError(res, "vendorCostPiasters", errorText)}
+                />
+                <TextField
+                  label={t("admin.common.reason")}
+                  autoComplete="off"
+                  value={reason}
+                  onChange={setReason}
+                  multiline={2}
+                  maxLength={500}
+                  helpText={t("admin.common.reasonHelp")}
+                  error={fieldError(res, "reason", errorText)}
+                />
+                <InlineStack align="end" gap="200">
+                  <Button onClick={reset}>{t("admin.common.cancel")}</Button>
+                  <Button variant="primary" submit disabled={!vendorId || reason.trim().length < 3} loading={busy === "route"}>
+                    {t("admin.order.routing.submit")}
+                  </Button>
+                </InlineStack>
+              </BlockStack>
+            </form>
+          )}
         </BlockStack>
-      </form>
-    </Card>
+      </Card>
+    </div>
   );
 }
 
@@ -130,6 +158,14 @@ export function OverrideCard({
   const goodsValue = egpToPiastersInput(goods);
   const costValue = egpToPiastersInput(cost);
   const preview = canPrice && goodsValue !== null && !Number.isNaN(goodsValue) ? applyGoodsOverride(money, goodsValue) : null;
+  const [open, setOpen] = useState(false);
+  const reset = () => {
+    setOpen(false);
+    setGoods("");
+    setCost("");
+    setReason("");
+    setRes(null);
+  };
   void status;
 
   if (!canPrice && !canCost) {
@@ -142,25 +178,34 @@ export function OverrideCard({
     );
   }
 
+  if (!open) {
+    return (
+      <Card title={t("admin.order.override.title")}>
+        <BlockStack gap="300">
+          <Text as="p" tone="subdued" variant="bodySm">
+            {canPrice ? t("admin.order.override.help") : t("admin.order.override.priceLocked")}
+          </Text>
+          <InlineStack align="start">
+            <Button onClick={() => setOpen(true)}>{canPrice ? t("admin.order.override.edit") : t("admin.order.override.editCost")}</Button>
+          </InlineStack>
+        </BlockStack>
+      </Card>
+    );
+  }
+
   return (
     <Card title={t("admin.order.override.title")}>
       <form
+        aria-label={t("admin.order.override.title")}
         onSubmit={async (e) => {
           e.preventDefault();
           if (Number.isNaN(goodsValue) || Number.isNaN(costValue)) return;
           const r = await run("override", () => overrideOrderAction({ orderId, goodsPiasters: canPrice ? goodsValue : null, vendorCostPiasters: costValue, reason }), t("admin.order.override.success"));
           setRes(r);
-          if (r?.ok) {
-            setGoods("");
-            setCost("");
-            setReason("");
-          }
+          if (r?.ok) reset();
         }}
       >
         <BlockStack gap="300">
-          <Text as="p" tone="subdued" variant="bodySm">
-            {t("admin.order.override.help")}
-          </Text>
           {canPrice ? (
             <TextField
               label={t("admin.order.override.goods")}
@@ -191,8 +236,9 @@ export function OverrideCard({
             />
           ) : null}
           <TextField label={t("admin.common.reason")} autoComplete="off" value={reason} onChange={setReason} multiline={2} maxLength={500} error={fieldError(res, "reason", errorText)} />
-          <InlineStack align="end">
-            <Button submit disabled={(goodsValue === null && costValue === null) || reason.trim().length < 3} loading={busy === "override"}>
+          <InlineStack align="end" gap="200">
+            <Button onClick={reset}>{t("admin.common.cancel")}</Button>
+            <Button variant="primary" submit disabled={(goodsValue === null && costValue === null) || reason.trim().length < 3} loading={busy === "override"}>
               {t("admin.order.override.submit")}
             </Button>
           </InlineStack>

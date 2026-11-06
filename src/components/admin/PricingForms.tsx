@@ -96,6 +96,9 @@ export function PricingSettingsForm({ initial }: { initial: SettingsForm }) {
 
   const setZone = (z: DeliveryZone, f: keyof ZoneRate, v: string) => setDraft((d) => ({ ...d, zones: { ...d.zones, [z]: { ...d.zones[z], [f]: v } } }));
   const err = (k: string) => fieldError(res, k, errorText);
+  // Business plan target: 20–30% on top of the vendor buy price. Allowed, but called out.
+  const marginNum = Number(draft.margin);
+  const marginOutside = draft.margin.trim() !== "" && Number.isFinite(marginNum) && (marginNum < 20 || marginNum > 30);
 
   return (
     <BlockStack gap="400">
@@ -110,7 +113,7 @@ export function PricingSettingsForm({ initial }: { initial: SettingsForm }) {
               suffix="%"
               value={draft.margin}
               onChange={(v) => setDraft((d) => ({ ...d, margin: v }))}
-              helpText={t("admin.pricing.settings.marginHelp")}
+              helpText={marginOutside ? t("admin.pricing.settings.marginOutside") : t("admin.pricing.settings.marginHelp")}
               error={err("marginPct")}
             />
             <TextField
@@ -133,31 +136,42 @@ export function PricingSettingsForm({ initial }: { initial: SettingsForm }) {
           <Text as="p" variant="bodySm" tone="subdued">
             {t("admin.pricing.zones.help")}
           </Text>
-          <BlockStack gap="400">
-            {DELIVERY_ZONES.map((z) => (
-              <fieldset key={z} className={adminStyles.Fieldset}>
-                <legend>
-                  <Text as="span" variant="headingSm">
-                    {t(`pricing.zones.${z}` as DictKey)}
-                  </Text>
-                </legend>
-                <InlineGrid columns={{ xs: 2, md: 5 }} gap="300">
+          {/* One row per zone, labels once in the header (Polaris nested table in a card). Each input keeps a full hidden label. */}
+          <div className={adminStyles.ZoneScroll}>
+            <table className={adminStyles.ZoneTable} aria-label={t("admin.pricing.zones.caption")}>
+              <thead>
+                <tr>
+                  <th scope="col">{t("admin.pricing.zones.columns.zone")}</th>
                   {ZONE_FIELDS.map((f) => (
-                    <TextField
-                      key={f}
-                      label={t(`admin.pricing.zones.columns.${ZONE_LABEL[f]}` as DictKey)}
-                      autoComplete="off"
-                      inputMode="decimal"
-                      dir="ltr"
-                      value={draft.zones[z][f]}
-                      onChange={(v) => setZone(z, f, v)}
-                      error={err(`zones.${z}.${f}`)}
-                    />
+                    <th key={f} scope="col">
+                      {t(`admin.pricing.zones.columns.${ZONE_LABEL[f]}` as DictKey)}
+                    </th>
                   ))}
-                </InlineGrid>
-              </fieldset>
-            ))}
-          </BlockStack>
+                </tr>
+              </thead>
+              <tbody>
+                {DELIVERY_ZONES.map((z) => (
+                  <tr key={z}>
+                    <th scope="row">{t(`pricing.zones.${z}` as DictKey)}</th>
+                    {ZONE_FIELDS.map((f) => (
+                      <td key={f}>
+                        <TextField
+                          label={`${t(`pricing.zones.${z}` as DictKey)}: ${t(`admin.pricing.zones.columns.${ZONE_LABEL[f]}` as DictKey)}`}
+                          labelHidden
+                          autoComplete="off"
+                          inputMode="decimal"
+                          dir="ltr"
+                          value={draft.zones[z][f]}
+                          onChange={(v) => setZone(z, f, v)}
+                          error={err(`zones.${z}.${f}`)}
+                        />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </BlockStack>
       </Card>
 
