@@ -252,3 +252,17 @@ Counts before fixing: **critical 0, high 1, medium 1, low 3** (5).
 | R6-04 | low | `/catalog` hero stats | "In the 3D designer" (added in round 5) sat after the instant-price total. | Hierarchy | Order: models, in the 3D designer, available in Egypt, instant price. | fixed |
 
 Verification: typecheck and lint clean; vitest 82 files, 8,381 passed; build passes; e2e `catalogue-order-modes` (now 2 tests), `catalogue`, `designer`, `checkout`, `storefront`, `smoke`, `journey`, `admin` (desktop + mobile): 64 passed, 14 skipped, 0 failed. Keyboard walk: 0 focused elements obscured by the sticky bars (en / ar, 1440 / 390).
+
+## Round 7 (fresh pass on main at 7936acb, which includes this branch at 99e80ab)
+
+Checks: 320 px reflow sweep of every catalogue page (`/catalog`, `/design` and all 410 model pages, ar + en, signed out **and** signed in: 824 + 824 loads), axe WCAG 2.2 AA at 320 px on the quote form, the designer (aseptic brick) and the picker, quantity-error announcement, 90 reloads of `/catalog` and a model page (signed in and out) for console errors, and the e2e set below.
+
+Counts before fixing: **critical 0, high 0, medium 1, low 1** (2). The a11y report's R4-01 (below) is counted by a11y.
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| a11y R4-01 | medium | `/catalog/:slug` at 320 px | 324 to 503 px wide: the nowrap "Sizes and prices: …" pill widened the implicit `auto` column of `.detail`. | WCAG 1.4.10 | `.detail { grid-template-columns: minmax(0, 1fr) }`; CTA pills in `.ctaRow` wrap and are capped at 100 %. Sweep: 0 of 824 pages wider than 320 px. | fixed |
+| R7-01 | medium | `/catalog/:slug` quote form, signed in, 320 px | The form widened the page to 566 px (ar) and 642 px (en): the size select's long preset labels set its min-content width through `auto` grid tracks (`.facts`, `.form`, `.field`). Signed-out visitors see a sign-in link, so the earlier signed-out sweep missed it. | WCAG 1.4.10 | `minmax(0, 1fr)` tracks on `.facts`, `.form`, `.field`; the select is `inline-size: 100%; min-inline-size: 0`; fact rows `minmax(96px, 0.6fr) minmax(0, 1fr)`. Signed-in sweep: 0 of 824 pages wider than 320 px; axe 0. | fixed |
+| R7-02 | low | `/ar/design`, `/en/catalog` (production build) | Intermittent React #418 hydration mismatch: 1 in 8 repeats of `designer.spec` "hydrate without errors" under two workers, once in the 824-page sweep. Not reproduced in 90 production reloads nor in 60 `next dev` loads (no readable diff). It is the same intermittent #418 recorded since round 3 on designer pages; it now also shows on `/catalog`, so the common cause is likely in the shared layout (header / announcement / footer), not catalogue code. | React hydration | Left for the platform owner with this evidence; next step is a production build with `NODE_ENV=development` React or `reactStrictMode` logging to capture the differing node. | open |
+
+Verification: typecheck and lint clean; vitest 84 files, 8,417 passed; build passes; e2e `catalogue-order-modes`, `catalogue`, `designer`, `checkout`, `storefront`, `smoke`, `journey`, `admin` (desktop + mobile): 63 passed, 14 skipped, 1 failed (R7-02, the intermittent #418 in `designer.spec` "hydrate without errors"; it passed 7 of 8 times on repeat).

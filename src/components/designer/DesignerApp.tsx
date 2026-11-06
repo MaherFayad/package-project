@@ -189,8 +189,8 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
   const libModel = useMemo<ModelDef | null>(() => docModel(doc), [doc.modelCode, doc.structureCode]);
   const model: DielineModel | null = geo?.dieline ?? null;
   const isVessel = !!geo?.vessel;
-  // B-16: models no Egyptian SME printer makes go to checkout's quote request, not an order. The
-  // same label on the top bar, the export modal and the export toast (R4-02).
+  // B-16: models no Egyptian SME printer makes go to checkout's quote request, not an order. One
+  // label for the toolbar, the export modal and the export toast (R4-03).
   const staticQuote = ["quote", "preview"].includes(orderModeOf(docModelCode(doc)).mode);
   const modelRef = useRef(model);
   modelRef.current = model;

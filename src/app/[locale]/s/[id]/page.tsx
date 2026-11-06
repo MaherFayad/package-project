@@ -84,8 +84,8 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
   const modelCode = lib?.code ?? doc.structureCode;
   const styleName = lib?.name[locale] ?? t(`structures.${doc.structureCode}` as DictKey);
   const name = doc.name.trim() || styleName;
-  const isVessel = lib?.kind === "vessel";
   // B-16: a model no Egyptian SME printer makes is requested by quote, never "Order this box".
+  const isVessel = lib?.kind === "vessel";
   // R4-12: the visitor sees the price before being asked to sign in, the same figure checkout
   // shows for 500 boxes (best match, prepay discount, delivery to Greater Cairo, excl. VAT).
   const { price, quoteReason } = await sharePrice(doc);
@@ -97,7 +97,7 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
     [t("designer.shared.style"), styleName],
     [t("designer.shared.model"), modelCode.replace(/_/g, " ")],
     // Containers: their own size (Ø × H, or W × G × H for pouches), not the box dims of the label
-    // sheet ("100 × 1 × 100 mm"), and "print material" rather than "board" (designer R4-B-01).
+    // sheet ("100 × 1 × 100 mm"), and "print material" rather than "board".
     doc.vessel
       ? [t("designer.shared.sizeVessel"), vesselSize(doc.vessel.dims, t("common.mm"))]
       : [t("designer.shared.size"), formatDims(doc.dims, locale)],
@@ -122,12 +122,7 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
                   </p>
                 ) : null}
                 <Text as="p">{reason ? ORDER_MODE_COPY[reason][locale] : t("designer.shared.ctaHelp")}</Text>
-                {/* The model travels with the fork request; checkout re-checks it against the saved design. */}
-                <Button
-                  variant="primary"
-                  fullWidth
-                  url={`/${locale}/checkout/${encodeURIComponent(designId)}?share=${encodeURIComponent(id)}&model=${encodeURIComponent(modelCode)}`}
-                >
+                <Button variant="primary" fullWidth url={`/${locale}/checkout/${encodeURIComponent(designId)}?share=${encodeURIComponent(id)}&model=${encodeURIComponent(modelCode)}`}>
                   {byQuote ? t("designer.price.quoteAction") : isVessel ? t("designer.container.order") : t("designer.shared.cta")}
                 </Button>
                 <Text as="p" variant="bodySm" tone="subdued">
