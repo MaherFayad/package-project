@@ -1,48 +1,30 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Suspense } from "react";
-import {
-  AppWindow,
-  ArrowRight,
-  BadgeCheck,
-  Calculator,
-  CreditCard,
-  Droplet,
-  Feather,
-  FileCheck2,
-  Gift,
-  Pill,
-  Rotate3d,
-  Shirt,
-  ShoppingBag,
-  Sparkles,
-  Stamp,
-  Tag,
-  Truck,
-  UtensilsCrossed,
-} from "lucide-react";
+import { Suspense, type CSSProperties } from "react";
+import { ArrowUp, Sparkles } from "lucide-react";
 import { getT, pick, toLocale } from "@/i18n";
 import type { DictKey } from "@/i18n";
-import { formatMoney, formatNumber } from "@/lib/format";
+import { formatMoney } from "@/lib/format";
 import { siteUrl } from "@/lib/env";
-import type { StructureCode } from "@/types";
-import { JsonLd } from "@/components/store/JsonLd";
-import { faqJsonLd } from "@/components/store/jsonld";
+import { MODEL_INDEX } from "@/lib/library/model-index.generated";
+import { MODEL_GROUPS } from "@/lib/library/types";
+import { FINISH_CODES, type StructureCode } from "@/types";
 import { designHref, structureHref } from "@/components/store/catalog";
 import { getPriceFrom, listStructures, listVendors } from "@/components/store/data";
-import { filterVendors } from "@/components/store/vendor-filters";
 import { DeniedBanner } from "@/components/marketing/DeniedBanner";
-import { HeroVisual } from "@/components/marketing/HeroVisual";
-import { HeroPhoneForm } from "@/components/marketing/HeroPhoneForm";
-import { Marquee } from "@/components/marketing/Marquee";
-import { MarketingFaq } from "@/components/marketing/Faq";
-import { VendorShowcaseCard } from "@/components/marketing/VendorShowcaseCard";
-import { SAMPLES, renderSrc, srcSetFor } from "@/components/marketing/assets";
-import styles from "@/components/marketing/marketing.module.css";
+import { HeroImage } from "@/components/marketing/HeroImage";
+import { SAMPLES, TILE_BG, renderDims, renderSrc, srcSetFor, vesselSrc, type VesselRender } from "@/components/marketing/assets";
+import { HomeHero } from "@/components/marketing/home/HomeHero";
+import { Loop } from "@/components/marketing/home/Loop";
+import { CountUp } from "@/components/marketing/home/CountUp";
+import { HomeSteps } from "@/components/marketing/home/HomeSteps";
+import { EgyptDots } from "@/components/marketing/home/EgyptDots";
+import { daysWord, fill, homeCopy, printersWord } from "@/components/marketing/home/copy";
+import s from "@/components/marketing/home/home.module.css";
 
 type Props = { params: Promise<{ locale: string }> };
 
-/** Prerendered; prices, printers and ratings refresh hourly. */
+/** Prerendered; prices, printers and delivery days refresh hourly. */
 export const revalidate = 3600;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -64,383 +46,567 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-const VALUES = [
-  { key: "design", icon: Rotate3d },
-  { key: "price", icon: Calculator },
-  { key: "vendors", icon: BadgeCheck },
-  { key: "proof", icon: FileCheck2 },
-  { key: "pay", icon: CreditCard },
-  { key: "delivery", icon: Truck },
-] as const;
+/** Real counts (no invented social proof): the library index, the finish list and the DB. */
+const MODEL_COUNT = Object.keys(MODEL_INDEX).length;
+const GROUP_COUNT = MODEL_GROUPS.length;
+const FINISH_COUNT = FINISH_CODES.filter((f) => f !== "NONE").length;
 
-const USE_CASES: { key: string; icon: typeof ShoppingBag; structure: StructureCode; bg: string; fg: string; ring: string }[] = [
-  { key: "ecommerce", icon: ShoppingBag, structure: "FEFCO_0427", bg: "#e6f7ee", fg: "#047b5d", ring: "rgba(230,247,238,.6)" },
-  { key: "food", icon: UtensilsCrossed, structure: "PIZZA", bg: "#fff1e3", fg: "#8a4b00", ring: "rgba(255,241,227,.6)" },
-  { key: "cosmetics", icon: Sparkles, structure: "ECMA_RTE", bg: "#fde8ef", fg: "#a1214f", ring: "rgba(253,232,239,.6)" },
-  { key: "apparel", icon: Shirt, structure: "FEFCO_0201", bg: "#e8f1ff", fg: "#1f4fbf", ring: "rgba(232,241,255,.6)" },
-  { key: "gifts", icon: Gift, structure: "RIGID_BOX", bg: "#f0eaff", fg: "#5b3fc4", ring: "rgba(240,234,255,.6)" },
-  { key: "pharma", icon: Pill, structure: "ECMA_CLB", bg: "#e3f6f6", fg: "#0b6b6b", ring: "rgba(227,246,246,.6)" },
+const RAIL: ({ kind: "render"; code: StructureCode } | { kind: "sample"; i: number })[] = [
+  { kind: "render", code: "FEFCO_0427" },
+  { kind: "sample", i: 0 },
+  { kind: "render", code: "ECMA_RTE" },
+  { kind: "sample", i: 2 },
+  { kind: "render", code: "RIGID_BOX" },
+  { kind: "sample", i: 4 },
+  { kind: "render", code: "GABLE_BOX" },
+  { kind: "sample", i: 7 },
+  { kind: "render", code: "PIZZA" },
+  { kind: "sample", i: 10 },
+  { kind: "render", code: "PAPER_TUBE" },
+  { kind: "sample", i: 5 },
 ];
 
-const FINISHES = [
-  { key: "foil", icon: Sparkles },
-  { key: "spotUv", icon: Droplet },
-  { key: "emboss", icon: Stamp },
-  { key: "softTouch", icon: Feather },
-  { key: "window", icon: AppWindow },
-  { key: "labels", icon: Tag },
-] as const;
-
-const STAT_TAGS = [
-  { label: { ar: "القاهرة", en: "Cairo" }, top: "22%", start: "12%" },
-  { label: { ar: "الإسكندرية", en: "Alexandria" }, top: "10%", start: "52%" },
-  { label: { ar: "المنصورة", en: "Mansoura" }, top: "40%", start: "62%" },
-  { label: { ar: "أسيوط", en: "Asyut" }, top: "62%", start: "8%" },
-  { label: { ar: "الأقصر", en: "Luxor" }, top: "78%", start: "44%" },
-  { label: { ar: "بورسعيد", en: "Port Said" }, top: "54%", start: "70%" },
+const WALL_ITEMS: { src: string; tone: string }[] = [
+  ...(["FEFCO_0427", "FEFCO_0201", "ECMA_RTE", "ECMA_STE", "PIZZA", "SLEEVE", "FEFCO_0320", "ECMA_CLB", "ECMA_SLB", "FEFCO_0422", "GABLE_BOX", "PAPER_TUBE", "RIGID_BOX"] as StructureCode[]).map((c) => ({ src: renderSrc(c), tone: TILE_BG[c] })),
+  ...(["jar", "bottle", "dropper", "pump", "can"] as VesselRender[]).map((v, i) => ({ src: vesselSrc(v), tone: ["#f6ecd2", "#e2efec", "#ece6f3", "#f3e3d9", "#dfe7f1"][i]! })),
 ];
+
+const ANYONE: { code: StructureCode; sample: number }[] = [
+  { code: "FEFCO_0427", sample: 0 },
+  { code: "PIZZA", sample: 2 },
+  { code: "ECMA_RTE", sample: 3 },
+];
+
+const FINISH_SPOTS: { t: string; s: string; dl: string }[] = [
+  { t: "12%", s: "8%", dl: "0s" },
+  { t: "24%", s: "70%", dl: "-1.5s" },
+  { t: "64%", s: "6%", dl: "-3s" },
+  { t: "72%", s: "72%", dl: "-4.5s" },
+  { t: "40%", s: "80%", dl: "-2s" },
+  { t: "8%", s: "40%", dl: "-5s" },
+  { t: "82%", s: "38%", dl: "-1s" },
+  { t: "44%", s: "2%", dl: "-3.5s" },
+];
+
+const THUMBS: { code?: StructureCode; vessel?: VesselRender; t: string; s: string; z: string; dl: string }[] = [
+  { code: "ECMA_STE", t: "4%", s: "6%", z: "64px", dl: "0s" },
+  { vessel: "jar", t: "0%", s: "62%", z: "72px", dl: "-2s" },
+  { code: "GABLE_BOX", t: "38%", s: "-2%", z: "56px", dl: "-4s" },
+  { vessel: "dropper", t: "70%", s: "4%", z: "60px", dl: "-1s" },
+  { code: "PAPER_TUBE", t: "78%", s: "70%", z: "64px", dl: "-3s" },
+  { vessel: "can", t: "30%", s: "84%", z: "56px", dl: "-5s" },
+];
+
+const ORBIT_ANGLES = [-90, -18, 54, 126, 198];
 
 export default async function HomePage({ params }: Props) {
   const locale = toLocale((await params).locale);
   const t = getT(locale);
+  const c = homeCopy(locale);
   const base = `/${locale}`;
-  const [structures, vendors, mailerPrice] = await Promise.all([
+  const [structures, vendors, mailer] = await Promise.all([
     listStructures(),
     listVendors(),
     getPriceFrom("FEFCO_0427", { L: 250, W: 180, H: 80 }),
   ]);
-  const featured = filterVendors(vendors, { sort: "recommended" }).slice(0, 3);
-  const lead = featured[0];
-  const row500 = mailerPrice.rows.find((r) => r.quantity === 500) ?? mailerPrice.rows[0];
-  const onTime = vendors.length ? Math.round(vendors.reduce((s, v) => s + v.onTimePct, 0) / vendors.length) : null;
-  const faq = [1, 2, 3, 4, 5, 6].map((n) => ({ q: t(`store.home.faq.q${n}` as DictKey), a: t(`store.home.faq.a${n}` as DictKey) }));
-  const startHref = designHref(locale, { structure: "FEFCO_0427" });
-  const structureName = (code: StructureCode) => {
-    const s = structures.find((x) => x.code === code);
-    return s ? pick(locale, s.name.ar, s.name.en) : t(`structures.${code}` as DictKey);
+  const row500 = mailer.rows.find((r) => r.quantity === 500) ?? mailer.rows[0] ?? null;
+  const price = row500 ? formatMoney(row500.unitPiasters, locale, { alwaysDecimals: true }) : "—";
+  const subtotal = row500 ? formatMoney(row500.subtotalPiasters, locale, { alwaysDecimals: true }) : "—";
+  const vat = row500 ? formatMoney(Math.round(row500.subtotalPiasters * 0.14), locale, { alwaysDecimals: true }) : "—";
+  const total = row500 ? formatMoney(row500.subtotalPiasters + Math.round(row500.subtotalPiasters * 0.14), locale, { alwaysDecimals: true }) : "—";
+  const days = row500?.deliveryDays ?? null;
+  const printers = vendors.length;
+  const minOrder = vendors.length ? Math.min(...vendors.map((v) => v.minOrderQty)) : null;
+  const vars = {
+    price,
+    days: days ?? "—",
+    daysWord: daysWord(locale, days ?? 0),
+    printers,
+    printersWord: printersWord(locale, printers),
+    models: MODEL_COUNT,
+    groups: GROUP_COUNT,
+    finishes: FINISH_COUNT,
   };
-  const sampleAlt = (s: (typeof SAMPLES)[number]) =>
-    t("marketing.marquee.caption", { name: s.structure ? structureName(s.structure) : t(`marketing.bottles.items.${s.vessel}` as DictKey) });
+  const startHref = designHref(locale, { structure: "FEFCO_0427" });
+  const catalogHref = `${base}/catalog`;
+  const structureName = (code: StructureCode) => {
+    const x = structures.find((y) => y.code === code);
+    return x ? pick(locale, x.name.ar, x.name.en) : t(`structures.${code}` as DictKey);
+  };
+  const sampleName = (i: number) => {
+    const sm = SAMPLES[i]!;
+    return sm.structure ? structureName(sm.structure) : t(`marketing.bottles.items.${sm.vessel}` as DictKey);
+  };
+  const heroPoster = "/marketing/renders/fefco-0427.webp";
+
+  const stats = [
+    { value: MODEL_COUNT, label: c.stats.items[0]!.label },
+    { value: printers, label: fill(c.stats.items[1]!.label, vars) },
+    ...(days != null ? [{ value: days, label: fill(c.stats.items[2]!.label, vars) }] : []),
+    ...(minOrder != null ? [{ value: minOrder, label: c.stats.items[3]!.label }] : []),
+  ];
+
+  const railItems = RAIL.map((it) =>
+    it.kind === "render"
+      ? { src: renderSrc(it.code), kind: "render" as const, name: structureName(it.code), w: 300 }
+      : { src: SAMPLES[it.i]!.src, kind: "sample" as const, name: sampleName(it.i), w: 272 },
+  );
 
   return (
-    <>
-      <JsonLd data={faqJsonLd(faq)} />
+    <div className={s.page} dir={locale === "ar" ? "rtl" : "ltr"}>
       <Suspense fallback={null}>
         <DeniedBanner message={t("store.deniedBanner")} />
       </Suspense>
 
-      {/* ───────── Hero (split, live 3D) ───────── */}
-      <section className={styles.hero} aria-labelledby="hero-title">
-        <div className={`${styles.container} ${styles.heroGrid}`}>
-          <div className={styles.heroCopy}>
-            <span className={`${styles.eyebrow} m-enter`} style={{ ["--m-i" as string]: 0 }}>
-              <span className={styles.eyebrowDot} aria-hidden="true" />
-              {t("marketing.hero.eyebrow")}
-            </span>
-            <h1 id="hero-title" className={`${styles.h1} m-enter-lcp`} style={{ ["--m-i" as string]: 1 }}>
-              {t("marketing.hero.title")}
-            </h1>
-            <p className={`${styles.lead} m-enter-lcp`} style={{ ["--m-i" as string]: 2 }}>
-              {t("marketing.hero.body")}
-            </p>
-            <div className="m-enter" style={{ ["--m-i" as string]: 3, inlineSize: "100%" }}>
-              <HeroPhoneForm
-                locale={locale}
-                designPath={startHref}
-                labels={{
-                  label: t("marketing.hero.phoneLabel"),
-                  placeholder: t("marketing.hero.phonePlaceholder"),
-                  submit: t("marketing.hero.submit"),
-                  error: t("marketing.hero.phoneError"),
-                  fine: t("marketing.hero.fine"),
-                }}
-              />
-            </div>
+      {/* 1 ───────── Hero ───────── */}
+      <HomeHero
+        titles={c.hero.titles}
+        lead={c.hero.lead}
+        labels={{ pause: c.hero.pause, play: c.hero.play, mediaAlt: c.hero.mediaAlt }}
+        video={null}
+        poster={<HeroImage src={heroPoster} sizes="(min-width: 768px) 60vw, 92vw" alt="" className={s.heroPoster} width={914} height={608} />}
+        actions={
+          <div className={s.pills}>
+            <Link href={startHref} className={`${s.pill} ${s.pillLight}`}>
+              {c.hero.primary}
+            </Link>
+            <Link href={catalogHref} className={`${s.pill} ${s.pillOutline}`}>
+              {c.hero.secondary}
+            </Link>
           </div>
-          <div className="m-enter-scale" style={{ ["--m-i" as string]: 2 }}>
-            <HeroVisual
-              poster="/marketing/renders/fefco-0427.webp"
-              labels={{
-                viewer: t("store.home.viewerLabel"),
-                roleDescription: t("viewer.roleDescription"),
-                keyboardHint: t("viewer.keyboardHint"),
-                unsupported: t("viewer.unsupported"),
-                pause: t("store.home.pause"),
-                play: t("store.home.play"),
-              }}
-              chips={{
-                priceTitle: t("marketing.hero.chips.price"),
-                priceValue: row500 ? t("marketing.hero.chips.priceValue", { price: formatMoney(row500.unitPiasters, locale, { alwaysDecimals: true }) }) : "—",
-                priceNote: t("marketing.hero.chips.priceNote"),
-                approved: t("marketing.hero.chips.approved"),
-                approvedBy: t("marketing.hero.chips.approvedBy", { vendor: lead ? pick(locale, lead.name.ar, lead.name.en) : t("meta.siteName") }),
-                rating: t("marketing.hero.chips.rating", { rating: (lead?.rating ?? 4.8).toFixed(1) }),
-                ratingCount: t("marketing.hero.chips.ratingCount", { count: formatNumber(lead?.ratingCount ?? 0) }),
-                delivered: t("marketing.hero.chips.delivered", { place: t("marketing.hero.chips.deliveredPlace") }),
-                deliveredMeta: t("marketing.hero.chips.deliveredMeta"),
-              }}
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* ───────── Printed samples marquee ───────── */}
-      <Marquee
-        label={t("marketing.marquee.label")}
-        pause={t("marketing.marquee.pause")}
-        play={t("marketing.marquee.play")}
-        items={SAMPLES.map((s) => ({ src: s.src, alt: sampleAlt(s) }))}
+        }
       />
 
-      {/* ───────── Value grid ───────── */}
-      <section className={`${styles.band} ${styles.bandTint}`} aria-labelledby="values-title">
-        <div className={styles.container}>
-          <div className={`${styles.sectionHead} ${styles.center}`} data-reveal="" suppressHydrationWarning>
-            <h2 id="values-title" className={`${styles.h2} ${styles.center}`}>
-              {t("marketing.values.title")}
+      {/* 2 ───────── Statement + model rail (sheet over the hero) ───────── */}
+      <section className={`${s.section} ${s.sheet}`} aria-labelledby="statement-title" style={{ paddingBlockStart: 96 }}>
+        <div className={s.wrap}>
+          <h2 id="statement-title" className={s.statement}>
+            {c.statement.lead}
+            <span className={s.statementRest}>{c.statement.rest}</span>
+          </h2>
+        </div>
+        <Loop
+          className={s.wrap}
+          labels={c.rail}
+          head={<p className={s.caption}>{c.rail.label}</p>}
+        >
+          <div className={s.railViewport} role="region" aria-label={c.rail.label} tabIndex={0}>
+            <ul className={s.railTrack}>
+              {[...railItems, ...railItems].map((it, i) => {
+                const clone = i >= railItems.length;
+                return (
+                  <li key={i} className={s.railItem} aria-hidden={clone || undefined} style={{ inlineSize: it.w }}>
+                    <div className={s.railCard} data-kind={it.kind}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={it.src} srcSet={srcSetFor(it.src)} sizes={`${it.w}px`} alt={clone ? "" : it.name} width={it.w} height={340} loading="lazy" decoding="async" />
+                    </div>
+                    <span className={s.railCaption}>{it.name}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </Loop>
+      </section>
+
+      {/* 3 ───────── Feature card: design in the browser ───────── */}
+      <section className={s.section} aria-labelledby="feature-title">
+        <div className={s.wrap}>
+          <article className={s.featureCard} data-reveal="" suppressHydrationWarning>
+            <div className={s.featureCopy}>
+              <h2 id="feature-title" className={s.h2}>
+                {c.feature.title}
+              </h2>
+              <p className={s.body}>
+                {c.feature.body}{" "}
+                <Link href={startHref} className={s.textLink}>
+                  {c.feature.link}
+                </Link>
+              </p>
+            </div>
+            <div className={s.featureVisual} aria-hidden="true">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={renderSrc("ECMA_STE")} srcSet={srcSetFor(renderSrc("ECMA_STE"))} sizes="(min-width: 1024px) 460px, 70vw" alt="" {...renderDims(renderSrc("ECMA_STE"))} loading="lazy" decoding="async" style={{ inlineSize: "min(42%, 260px)" }} />
+              <div className={s.prompt}>
+                <span className={s.promptText}>{c.feature.prompt}</span>
+                <span className={s.promptGo}>
+                  <ArrowUp size={16} />
+                </span>
+              </div>
+              {row500 ? (
+                <div className={`${s.chip} ${s.chipDark}`} style={{ insetBlockStart: "14%", insetInlineEnd: "8%" }}>
+                  <span className={s.chipMuted}>{c.feature.chipTitle}</span>
+                  <strong>{fill(c.feature.chipValue, vars)}</strong>
+                  <span className={s.chipMuted}>{c.feature.chipNote}</span>
+                </div>
+              ) : null}
+            </div>
+          </article>
+        </div>
+      </section>
+
+      {/* 4 ───────── Every step in one place (1:2:1 cards + orbit) ───────── */}
+      <section className={s.section} aria-labelledby="everywhere-title">
+        <div className={s.wrap}>
+          <div className={s.sectionHead} data-reveal="" suppressHydrationWarning>
+            <h2 id="everywhere-title" className={s.h2} style={{ fontWeight: 300 }}>
+              {c.everywhere.title}
+              <br />
+              {c.everywhere.titleRest}
             </h2>
           </div>
-          <ul className={styles.valueGrid}>
-            {VALUES.map(({ key, icon: I }, i) => (
-              <li key={key} className={styles.valueItem} data-reveal="" suppressHydrationWarning style={{ ["--m-i" as string]: i % 3 }}>
-                <I className={styles.valueIcon} aria-hidden />
-                <h3 className={styles.h3}>{t(`marketing.values.items.${key}Title` as DictKey)}</h3>
-                <p className={styles.body}>{t(`marketing.values.items.${key}Body` as DictKey)}</p>
-              </li>
-            ))}
+          <ul className={s.trio} style={{ listStyle: "none", margin: 0, padding: 0 }}>
+            <li className={s.mediaCard} data-reveal="" suppressHydrationWarning style={{ ["--m-i" as string]: 0 }}>
+              <div className={s.mediaFrame}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={`/marketing/designer-${locale}.webp`} srcSet={srcSetFor(`/marketing/designer-${locale}.webp`)} sizes="(min-width: 1024px) 320px, 92vw" alt="" loading="lazy" decoding="async" style={{ objectPosition: locale === "ar" ? "70% 50%" : "30% 50%" }} />
+              </div>
+              <div className={s.mediaCaption}>
+                <h3 className={s.cardTitle}>
+                  <Link href={startHref} className={s.cardLink}>
+                    {c.everywhere.cards[0]!.title}
+                  </Link>
+                </h3>
+                <p className={s.caption}>{c.everywhere.cards[0]!.body}</p>
+              </div>
+            </li>
+            <li className={s.mediaCard} data-reveal="" suppressHydrationWarning style={{ ["--m-i" as string]: 1 }}>
+              <div className={s.mediaFrame} aria-hidden="true">
+                <div className={s.orbit}>
+                  <div className={s.ringGlow} />
+                  <div className={`${s.ring} ${s.ringSpin}`} style={{ ["--k" as string]: 0.55 } as CSSProperties} />
+                  <div className={`${s.ring} ${s.ringSpin}`} style={{ borderStyle: "dashed" }} />
+                  <div className={s.ring} style={{ ["--k" as string]: 1.5 } as CSSProperties} />
+                  <div className={s.orbitNodes}>
+                    {c.everywhere.nodes.map((n, i) => (
+                      <div key={n} className={s.orbitNode} style={{ ["--a" as string]: `${ORBIT_ANGLES[i]}deg` }}>
+                        <span>{n}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className={s.hub}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={renderSrc("FEFCO_0427")} srcSet={srcSetFor(renderSrc("FEFCO_0427"))} sizes="168px" alt="" {...renderDims(renderSrc("FEFCO_0427"))} loading="lazy" decoding="async" />
+                    {c.everywhere.hub}
+                  </div>
+                </div>
+              </div>
+              <div className={s.mediaCaption}>
+                <h3 className={s.cardTitle}>
+                  <Link href={`${base}/orders`} className={s.cardLink}>
+                    {c.everywhere.cards[1]!.title}
+                  </Link>
+                </h3>
+                <p className={s.caption}>{c.everywhere.cards[1]!.body}</p>
+              </div>
+            </li>
+            <li className={s.mediaCard} data-reveal="" suppressHydrationWarning style={{ ["--m-i" as string]: 2 }}>
+              <div className={s.mediaFrame}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={SAMPLES[7]!.src} srcSet={srcSetFor(SAMPLES[7]!.src)} sizes="(min-width: 1024px) 320px, 92vw" alt="" loading="lazy" decoding="async" />
+              </div>
+              <div className={s.mediaCaption}>
+                <h3 className={s.cardTitle}>
+                  <Link href={`${base}/vendors`} className={s.cardLink}>
+                    {c.everywhere.cards[2]!.title}
+                  </Link>
+                </h3>
+                <p className={s.caption}>{fill(c.everywhere.cards[2]!.body, vars)}</p>
+              </div>
+            </li>
           </ul>
         </div>
       </section>
 
-      {/* ───────── Stats ───────── */}
-      <section className={`${styles.band} ${styles.bandGrey}`} aria-labelledby="stats-title">
-        <div className={`${styles.container} ${styles.statsGrid}`}>
-          <div className={styles.statsVisual} aria-hidden="true" data-reveal="scale" suppressHydrationWarning>
-            <div className={styles.statsOrb} />
-            {STAT_TAGS.map((s) => (
-              <span key={s.label.en} className={styles.statsTag} style={{ insetBlockStart: s.top, insetInlineStart: s.start }}>
-                {s.label[locale]}
-              </span>
-            ))}
-          </div>
-          <div>
-            <h2 id="stats-title" className={`${styles.h2} ${styles.statsTitle}`} data-reveal="" suppressHydrationWarning>
-              {t("marketing.stats.titleStart")} <span className={styles.highlight}>{t("marketing.stats.titleHighlight")}</span>
+      {/* 5 ───────── Delivered across Egypt ───────── */}
+      <section className={s.section} aria-labelledby="delivery-title">
+        <div className={s.wrap}>
+          <div className={s.sectionHead} data-reveal="" suppressHydrationWarning>
+            <h2 id="delivery-title" className={s.h2}>
+              {c.delivery.title}
             </h2>
-            <ul className={styles.statsList}>
-              {[
-                { v: formatNumber(vendors.length), l: t("marketing.stats.printers") },
-                { v: "27", l: t("marketing.stats.governorates") },
-                { v: onTime != null ? `${formatNumber(onTime)}%` : "—", l: t("marketing.stats.onTime") },
-                { v: "100", l: t("marketing.stats.minOrder") },
-              ].map((s, i) => (
-                <li key={s.l} className={styles.statItem} data-reveal="" suppressHydrationWarning style={{ ["--m-i" as string]: i }}>
-                  <span className={styles.statValue} dir="ltr">
-                    {s.v}
-                  </span>
-                  <span className={styles.statLabel}>{s.l}</span>
-                </li>
+          </div>
+          <article className={s.mapCard} data-reveal="" suppressHydrationWarning>
+            <div className={s.mapStage} aria-hidden="true">
+              <div className={s.mapGlow} style={{ inlineSize: 540, blockSize: 540, insetBlockStart: -120, insetInlineStart: -160 }} />
+              <div className={s.mapGlow} style={{ inlineSize: 480, blockSize: 420, insetBlockEnd: -140, insetInlineEnd: -80, opacity: 0.6 }} />
+              <EgyptDots className={s.mapDots} />
+              <div className={s.orderCard}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={renderSrc("FEFCO_0427")} srcSet={srcSetFor(renderSrc("FEFCO_0427"))} sizes="240px" alt="" loading="lazy" decoding="async" />
+                <strong>{c.delivery.orderTitle}</strong>
+                <span className={s.chipMuted}>{c.delivery.orderQty}</span>
+                {row500 ? <span>{fill(c.delivery.orderPrice, vars)}</span> : null}
+                <span className={s.orderBtn}>{c.delivery.orderCta}</span>
+              </div>
+              {days != null ? (
+                <div className={`${s.chip} ${s.zoneChip}`} style={{ ["--t" as string]: "58%", ["--s" as string]: "64%" }}>
+                  <strong>{fill(c.delivery.orderDays, vars)}</strong>
+                  <span className={s.chipMuted}>{c.delivery.zones[0]}</span>
+                </div>
+              ) : null}
+              {c.delivery.zones.slice(1).map((z, i) => (
+                <div key={z} className={`${s.chip} ${s.chipDark} ${s.zoneChip}`} style={{ ["--t" as string]: ["12%", "36%", "70%", "20%"][i], ["--s" as string]: ["10%", "6%", "14%", "78%"][i], animationDelay: `${-1.5 * (i + 1)}s` }}>
+                  {z}
+                </div>
               ))}
-            </ul>
+            </div>
+            <div className={s.mapCaption}>
+              <h3 className={s.cardTitle}>{c.delivery.cardTitle}</h3>
+              <p className={s.body}>{fill(c.delivery.cardBody, vars)}</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      {/* 6 ───────── For every business ───────── */}
+      <section className={`${s.section} ${s.sectionTail}`} aria-labelledby="anyone-title">
+        <div className={s.wrap}>
+          <div className={s.sectionHead} data-reveal="" suppressHydrationWarning style={{ maxInlineSize: "46rem" }}>
+            <h2 id="anyone-title" className={s.h2}>
+              {c.anyone.title}
+            </h2>
+          </div>
+          <ul className={s.anyone}>
+            {ANYONE.map((a, i) => (
+              <li key={a.code} className={s.mediaCard} data-reveal="" suppressHydrationWarning style={{ ["--m-i" as string]: i }}>
+                <div className={s.mediaFrame}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={SAMPLES[a.sample]!.src} srcSet={srcSetFor(SAMPLES[a.sample]!.src)} sizes="(min-width: 768px) 420px, 82vw" alt="" loading="lazy" decoding="async" />
+                </div>
+                <div className={s.mediaCaption}>
+                  <h3 className={s.cardTitle}>
+                    <Link href={structureHref(locale, a.code)} className={s.cardLink}>
+                      {c.anyone.cards[i]!.title}
+                    </Link>
+                  </h3>
+                  <p className={s.body}>{c.anyone.cards[i]!.body}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div className={s.centerRow}>
+            <Link href={catalogHref} className={`${s.pill} ${s.pillOutline}`}>
+              {c.anyone.cta}
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* ───────── Use cases ───────── */}
-      <section className={styles.band} aria-labelledby="uses-title">
-        <div className={styles.container}>
-          <div className={styles.sectionHead} data-reveal="" suppressHydrationWarning>
-            <span className={styles.eyebrow}>{t("marketing.useCases.eyebrow")}</span>
-            <h2 id="uses-title" className={styles.h2}>
-              {t("marketing.useCases.title")}
+      {/* 7 ───────── Violet sheet: the 3D designer ───────── */}
+      <section className={`${s.sheet} ${s.sheetViolet}`} aria-labelledby="designer-title">
+        <div className={s.wrap}>
+          <div className={s.sectionHead} data-reveal="" suppressHydrationWarning>
+            <h2 id="designer-title" className={s.h2}>
+              {c.designer.title}
             </h2>
           </div>
-          <ul className={`${styles.cardGrid} ${styles.useRail}`} data-rail="">
-            {USE_CASES.map((u, i) => {
-              const title = t(`marketing.useCases.items.${u.key}Title` as DictKey);
-              const I = u.icon;
+          <div className={s.duo}>
+            <article className={s.darkCard} data-reveal="" suppressHydrationWarning style={{ ["--m-i" as string]: 0 }}>
+              <div className={s.darkCardMedia} data-fit="contain" aria-hidden="true">
+                <div className={s.violetGlow} />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={renderSrc("RIGID_BOX")} srcSet={srcSetFor(renderSrc("RIGID_BOX"))} sizes="(min-width: 1024px) 400px, 92vw" alt="" loading="lazy" decoding="async" />
+              </div>
+              <div className={s.darkCardBody}>
+                <h3 className={s.cardTitle}>{c.designer.narrowTitle}</h3>
+                <p className={s.body}>{c.designer.narrowBody}</p>
+              </div>
+            </article>
+            <article className={s.darkCard} data-reveal="" suppressHydrationWarning style={{ ["--m-i" as string]: 1 }}>
+              <div className={s.darkCardMedia} aria-hidden="true">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={`/marketing/designer-${locale}.webp`} srcSet={srcSetFor(`/marketing/designer-${locale}.webp`)} sizes="(min-width: 1024px) 820px, 92vw" alt="" loading="lazy" decoding="async" style={{ opacity: 0.72 }} />
+                <div className={s.promptDark}>
+                  <Sparkles size={18} className={s.sparkle} />
+                  <span className={s.promptText}>{c.designer.prompt}</span>
+                  <span className={s.promptGo}>
+                    <ArrowUp size={16} />
+                  </span>
+                </div>
+              </div>
+              <div className={s.darkCardBody}>
+                <h3 className={s.cardTitle}>
+                  <Sparkles size={18} className={s.sparkle} aria-hidden />
+                  <Link href={startHref} className={s.cardLink}>
+                    {c.designer.wideTitle}
+                  </Link>
+                </h3>
+                <p className={s.body}>{c.designer.wideBody}</p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      {/* 8 ───────── Catalogue wall (app-grid equivalent) ───────── */}
+      <section className={s.bandNavy} aria-labelledby="wall-title">
+        <Loop className={s.wall} labels={c.wall} controlClassName={s.wallControl}>
+          <div className={s.wallRows} aria-hidden="true">
+            {[0, 1, 2, 3, 4, 5, 6].map((r) => {
+              const row = [...WALL_ITEMS.slice((r * 5) % WALL_ITEMS.length), ...WALL_ITEMS.slice(0, (r * 5) % WALL_ITEMS.length)];
               return (
-                <li key={u.key} data-reveal="" suppressHydrationWarning style={{ ["--m-i" as string]: i % 3 }}>
-                  <article className={styles.card}>
-                    <span className={styles.circleIcon} style={{ ["--tint-bg" as string]: u.bg, ["--tint-fg" as string]: u.fg, ["--tint-ring" as string]: u.ring }} aria-hidden="true">
-                      <I size={24} />
-                    </span>
-                    <h3 className={styles.h3}>
-                      <Link href={structureHref(locale, u.structure)} className={styles.cardLink}>
-                        {title}
-                      </Link>
-                    </h3>
-                    <p className={styles.body}>{t(`marketing.useCases.items.${u.key}Body` as DictKey)}</p>
-                    <span className={styles.cardArrow} aria-hidden="true">
-                      {structureName(u.structure)}
-                      <ArrowRight size={16} />
-                    </span>
-                  </article>
-                </li>
+                <ul key={r} className={s.wallRow} style={{ ["--dur" as string]: `${80 + r * 9}s` }}>
+                  {[...row, ...row].map((it, i) => (
+                    <li key={i} className={s.tile} style={{ ["--tone" as string]: it.tone }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={it.src} srcSet={srcSetFor(it.src)} sizes="76px" alt="" width={64} height={64} loading="lazy" decoding="async" />
+                    </li>
+                  ))}
+                </ul>
               );
             })}
-          </ul>
-        </div>
-      </section>
-
-      {/* ───────── Design in 3D (grey band) ───────── */}
-      <section id="how" className={`${styles.band} ${styles.bandGrey}`} aria-labelledby="how-title">
-        <div className={styles.container}>
-          <div className={styles.designHead} data-reveal="" suppressHydrationWarning>
-            <span className={styles.eyebrow}>{t("marketing.design.eyebrow")}</span>
-            <h2 id="how-title" className={styles.h2}>
-              {t("marketing.design.title")}
-            </h2>
-            <p className={styles.lead}>{t("marketing.design.body")}</p>
           </div>
-          <div className={styles.browser} data-reveal="scale" suppressHydrationWarning>
-            <div className={styles.browserBar} aria-hidden="true">
-              <span />
-              <span />
-              <span />
-              <span className={styles.browserUrl}>elba.eg/design</span>
+          <div className={s.wrap}>
+            <div className={s.wallCopy} data-reveal="fade" suppressHydrationWarning>
+              <h2 id="wall-title" className={s.h2}>
+                {fill(c.wall.title, vars)}
+              </h2>
+              <p className={s.body}>
+                {fill(c.wall.body, vars)}{" "}
+                <Link href={catalogHref} className={s.textLink}>
+                  {c.wall.link}
+                </Link>
+              </p>
             </div>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`/marketing/designer-${locale}.webp`} srcSet={srcSetFor(`/marketing/designer-${locale}.webp`)} sizes="(min-width: 1344px) 1280px, 94vw" alt={t("marketing.design.imageAlt")} width={1440} height={900} loading="lazy" decoding="async" />
           </div>
-          <ol className={styles.steps}>
-            {[1, 2, 3].map((n) => (
-              <li key={n} className={styles.step} data-reveal="" suppressHydrationWarning style={{ ["--m-i" as string]: n - 1 }}>
-                <span className={styles.stepNum} aria-hidden="true">
-                  0{n}
-                </span>
-                <h3 className={styles.h3}>{t(`marketing.design.steps.s${n}Title` as DictKey)}</h3>
-                <p className={styles.body}>{t(`marketing.design.steps.s${n}Body` as DictKey)}</p>
-              </li>
-            ))}
-          </ol>
-          <div className={`${styles.actions} ${styles.designCta}`}>
-            <Link href={startHref} className={`${styles.pill} ${styles.pillLarge}`}>
-              {t("marketing.design.cta")}
-            </Link>
-          </div>
-        </div>
+        </Loop>
       </section>
 
-      {/* ───────── Finishes (mint tiles) ───────── */}
-      <section id="finishes" className={styles.band} aria-labelledby="finishes-title">
-        <div className={styles.container}>
-          <div className={styles.sectionHead} data-reveal="" suppressHydrationWarning>
-            <h2 id="finishes-title" className={styles.h2}>
-              {t("marketing.finishes.title")}
+      {/* 9 ───────── Finishes (navy) ───────── */}
+      <section className={`${s.section} ${s.sectionTail} ${s.bandNavy}`} aria-labelledby="finishes-title">
+        <div className={s.wrap}>
+          <div className={`${s.sectionHead} ${s.navyHead}`} data-reveal="" suppressHydrationWarning>
+            <h2 id="finishes-title" className={s.h2}>
+              {c.finishes.title}
             </h2>
-            <p className={styles.lead}>{t("marketing.finishes.body")}</p>
-          </div>
-          <ul className={styles.tileGrid}>
-            {FINISHES.map(({ key, icon: I }, i) => (
-              <li key={key} className={styles.tile} data-reveal="" suppressHydrationWarning style={{ ["--m-i" as string]: i % 3 }}>
-                <span className={styles.mintTile} aria-hidden="true">
-                  <I size={24} />
-                </span>
-                <h3 className={styles.h3}>{t(`marketing.finishes.items.${key}Title` as DictKey)}</h3>
-                <p className={styles.body}>{t(`marketing.finishes.items.${key}Body` as DictKey)}</p>
-              </li>
-            ))}
-          </ul>
-          <div className={styles.tilesCta}>
-            <Link href={`${base}/catalog`} className={`${styles.pill} ${styles.pillOutline} ${styles.pillLarge}`}>
-              {t("home.ctaCatalog")}
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ───────── Featured printers ───────── */}
-      {featured.length ? (
-        <section className={`${styles.band} ${styles.bandGrey}`} aria-labelledby="printers-title">
-          <div className={styles.container}>
-            <div className={styles.sectionHeadRow} data-reveal="" suppressHydrationWarning>
-              <div>
-                <span className={styles.eyebrow}>{t("marketing.printers.eyebrow")}</span>
-                <h2 id="printers-title" className={styles.h2}>
-                  {t("marketing.printers.title")}
-                </h2>
-                <p className={styles.lead}>{t("marketing.printers.body")}</p>
-              </div>
-              <Link href={`${base}/vendors`} className={`${styles.pill} ${styles.pillOutline} ${styles.pillLarge}`}>
-                {t("marketing.printers.all")}
+            <p className={s.body}>
+              {fill(c.finishes.body, vars)}{" "}
+              <Link href={structureHref(locale, "RIGID_BOX")} className={s.textLink}>
+                {c.finishes.link}
               </Link>
-            </div>
-            <ul className={styles.cardGrid}>
-              {featured.map((v, i) => (
-                <VendorShowcaseCard key={v.id} locale={locale} vendor={v} index={i} />
+            </p>
+          </div>
+          <div className={s.navyPanel} data-reveal="scale" suppressHydrationWarning>
+            <div className={s.navyGlow} style={{ inlineSize: 900, blockSize: 500, insetBlockStart: -80, insetInlineStart: "10%" }} aria-hidden="true" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={renderSrc("RIGID_BOX")} srcSet={srcSetFor(renderSrc("RIGID_BOX"))} sizes="(min-width: 1024px) 520px, 56vw" alt="" {...renderDims(renderSrc("RIGID_BOX"))} loading="lazy" decoding="async" />
+            <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+              {c.finishes.names.map((n, i) => (
+                <li key={n} className={s.finishChip} style={{ ["--t" as string]: FINISH_SPOTS[i]!.t, ["--s" as string]: FINISH_SPOTS[i]!.s, ["--dl" as string]: FINISH_SPOTS[i]!.dl }}>
+                  {n}
+                </li>
               ))}
             </ul>
           </div>
-        </section>
-      ) : null}
-
-      {/* ───────── FAQ ───────── */}
-      <section id="faq" className={styles.band} aria-labelledby="faq-title">
-        <div className={`${styles.container} ${styles.faqGrid}`}>
-          <div data-reveal="" suppressHydrationWarning>
-            <h2 id="faq-title" className={styles.h2}>
-              {t("marketing.faq.title")}
-            </h2>
-          </div>
-          <div data-reveal="" suppressHydrationWarning>
-            <MarketingFaq items={faq} />
-          </div>
         </div>
       </section>
 
-      {/* ───────── Closing dark CTA ───────── */}
-      <section className={`${styles.band} ${styles.dark} ${styles.ctaBand}`} aria-labelledby="cta-title">
-        <div className={styles.ctaGridLines} aria-hidden="true" />
-        <div className={styles.ctaGlow} aria-hidden="true" />
-        <div className={styles.container}>
-          <div className={styles.ctaInner} data-reveal="" suppressHydrationWarning>
-            <h2 id="cta-title" className={`${styles.h2} ${styles.ctaTitle}`}>
-              {t("marketing.cta.title")}
+      {/* 10 ───────── Green sheet: price, real numbers, secure payment ───────── */}
+      <section className={`${s.sheet} ${s.sheetGreen}`} aria-labelledby="stats-title">
+        <div className={s.wrap}>
+          <div className={s.greenHead} data-reveal="" suppressHydrationWarning>
+            <h2 id="stats-title" className={s.h2Big} style={{ maxInlineSize: "52rem" }}>
+              {c.stats.title}
             </h2>
-            <p className={styles.lead}>{t("marketing.cta.body")}</p>
-            <div className={`${styles.actions} ${styles.center}`}>
-              <Link href={startHref} className={`${styles.pill} ${styles.pillLime} ${styles.pillLarge}`}>
-                {t("marketing.cta.primary")}
-              </Link>
-              <Link href={`${base}/vendors`} className={`${styles.pill} ${styles.pillGhostDark} ${styles.pillLarge}`}>
-                {t("marketing.cta.secondary")}
-              </Link>
+          </div>
+          <div className={s.split}>
+            <div className={s.splitVisual} aria-hidden="true">
+              {THUMBS.map((th, i) => {
+                const src = th.code ? renderSrc(th.code) : vesselSrc(th.vessel!);
+                return (
+                  <div key={i} className={s.thumb} style={{ ["--t" as string]: th.t, ["--s" as string]: th.s, ["--z" as string]: th.z, ["--dl" as string]: th.dl, ["--tone" as string]: th.code ? TILE_BG[th.code] : "#f6ecd2" }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={src} srcSet={srcSetFor(src)} sizes="72px" alt="" loading="lazy" decoding="async" />
+                  </div>
+                );
+              })}
+              <div className={s.receipt}>
+                <div className={s.receiptHead}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={renderSrc("FEFCO_0427")} srcSet={srcSetFor(renderSrc("FEFCO_0427"))} sizes="56px" alt="" loading="lazy" decoding="async" />
+                  <div>
+                    <strong>{c.stats.receipt.title}</strong>
+                    <div className={s.chipMuted}>{c.stats.receipt.line}</div>
+                  </div>
+                </div>
+                <div className={s.receiptRow}>
+                  <span>{c.stats.receipt.setup}</span>
+                  <span>{c.stats.receipt.included}</span>
+                </div>
+                <div className={s.receiptRow}>
+                  <span>{c.stats.receipt.delivery}</span>
+                  <span>{c.stats.receipt.included}</span>
+                </div>
+                <div className={s.receiptRow}>
+                  <span>{c.stats.receipt.subtotal}</span>
+                  <span>{subtotal}</span>
+                </div>
+                <div className={s.receiptRow}>
+                  <span>{c.stats.receipt.vat}</span>
+                  <span>{vat}</span>
+                </div>
+                <div className={s.receiptTotal}>
+                  <span>{c.stats.receipt.total}</span>
+                  <span>{total}</span>
+                </div>
+                <div className={s.receiptPay}>{c.stats.receipt.pay}</div>
+              </div>
+            </div>
+            <div data-reveal="" suppressHydrationWarning>
+              <h3 className={s.h3Big}>{c.stats.checkoutTitle}</h3>
+              <ul className={s.stats}>
+                {stats.map((st) => (
+                  <li key={st.label} className={s.stat}>
+                    <CountUp value={st.value} locale={locale} className={s.statValue} />
+                    <span className={s.statLabel}>{st.label}</span>
+                  </li>
+                ))}
+              </ul>
+              {row500 ? <p className={s.rule}>{fill(c.stats.rule, vars)}</p> : null}
+              <p className={s.footnote}>{c.stats.note}</p>
             </div>
           </div>
-          {/* a11y R5-AX-02: on phones this decorative strip scrolls, and Chromium makes a scroller with no
-              focusable child a Tab stop; tabIndex -1 keeps the aria-hidden strip out of the Tab order (2.4.3, 4.1.2). */}
-          <ul className={styles.ctaTiles} aria-hidden="true" tabIndex={-1}>
-            <li className={styles.ctaTile}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={SAMPLES[2].src} srcSet={srcSetFor(SAMPLES[2].src)} sizes="(min-width: 1024px) 240px, 46vw" alt="" loading="lazy" decoding="async" width={320} height={400} />
-            </li>
-            <li className={styles.ctaCardUi}>
-              <span className={styles.chipMeta}>{t("marketing.cta.tileOrder")}</span>
-              <strong>{t("marketing.cta.tileOrderStatus")}</strong>
-              <span className={styles.chipUp}>{t("marketing.cta.tileOrderMeta")}</span>
-              <svg className={styles.spark} viewBox="0 0 200 60" fill="none">
-                <path d="M2 52 C40 50 60 40 90 36 S150 18 198 6" stroke="#d4f36b" strokeWidth="3" strokeLinecap="round" />
-                <circle cx="198" cy="6" r="4" fill="#d4f36b" />
-              </svg>
-            </li>
-            <li className={styles.ctaTile}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={SAMPLES[0].src} srcSet={srcSetFor(SAMPLES[0].src)} sizes="(min-width: 1024px) 240px, 46vw" alt="" loading="lazy" decoding="async" width={320} height={400} />
-            </li>
-            <li className={styles.ctaCardUi}>
-              <span className={styles.chipMeta}>{t("marketing.cta.tileProofMeta")}</span>
-              <strong>{t("marketing.cta.tileProof")}</strong>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={renderSrc("ECMA_RTE")} srcSet={srcSetFor(renderSrc("ECMA_RTE"))} sizes="(min-width: 1024px) 240px, 46vw" alt="" loading="lazy" decoding="async" width={200} height={150} style={{ inlineSize: "100%", blockSize: "auto", marginBlockStart: "auto" }} />
-            </li>
-            <li className={styles.ctaTile}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={SAMPLES[6].src} srcSet={srcSetFor(SAMPLES[6].src)} sizes="(min-width: 1024px) 240px, 46vw" alt="" loading="lazy" decoding="async" width={320} height={400} />
-            </li>
-          </ul>
+          <div className={`${s.split} ${s.secure}`}>
+            <div data-reveal="" suppressHydrationWarning>
+              <h3 className={s.h3Big}>{c.stats.secureTitle}</h3>
+              <p className={s.body}>{c.stats.secureBody}</p>
+            </div>
+            <div className={s.splitVisual} aria-hidden="true">
+              <div className={s.globe} />
+              {c.stats.payChips.map((m, i) => (
+                <div key={i} className={`${s.chip} ${s.chipDark} ${s.payChip}`} style={{ insetBlockStart: ["14%", "40%", "64%", "84%"][i], insetInlineStart: ["6%", "70%", "2%", "58%"][i], animationDelay: `${-1.5 * i}s` }}>
+                  {m}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
-    </>
+
+      {/* 11 ───────── Steps sheet ───────── */}
+      <section className={`${s.section} ${s.sheet} ${s.sheetSteps} ${s.sectionTail}`} aria-labelledby="steps-title" style={{ paddingBlockStart: 120 }}>
+        <div className={s.wrap}>
+          <div className={s.sectionHead} data-reveal="" suppressHydrationWarning>
+            <h2 id="steps-title" className={s.h2Big}>
+              {c.steps.title}
+            </h2>
+          </div>
+          <HomeSteps
+            items={c.steps.items}
+            labels={c.steps}
+            media={[
+              [{ src: SAMPLES[0]!.src, srcSet: srcSetFor(SAMPLES[0]!.src) }, { src: `/marketing/designer-${locale}.webp`, srcSet: srcSetFor(`/marketing/designer-${locale}.webp`) }, { src: SAMPLES[7]!.src, srcSet: srcSetFor(SAMPLES[7]!.src) }],
+              [{ src: renderSrc("FEFCO_0201"), srcSet: srcSetFor(renderSrc("FEFCO_0201")), fit: "contain" }, { src: SAMPLES[4]!.src, srcSet: srcSetFor(SAMPLES[4]!.src) }, { src: renderSrc("FEFCO_0427"), srcSet: srcSetFor(renderSrc("FEFCO_0427")), fit: "contain" }],
+            ]}
+            cta={
+              <Link href={startHref} className={`${s.pill} ${s.pillLight}`}>
+                {c.steps.cta}
+              </Link>
+            }
+          />
+        </div>
+      </section>
+    </div>
   );
 }
