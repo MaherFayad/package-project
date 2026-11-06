@@ -20,7 +20,7 @@ Standards cited: Egypt PDPL Law 151/2020 (consent scope and disclosure accuracy)
 
 ## Round 5 (first copy round)
 
-New findings this round, counted before fixing: **critical 0 · high 15 · medium 41 · low 29** (85 in total; several rows group a pattern that repeats across keys).
+New findings this round, counted before fixing: **critical 0 · high 15 · medium 42 · low 32** (89 in total; several rows group a pattern that repeats across keys).
 
 ### High
 
@@ -87,6 +87,7 @@ New findings this round, counted before fixing: **critical 0 · high 15 · mediu
 | R5-CP-53 | medium | account delete · `account.deleteBody` (en + ar) | "Invoices are kept" now that the document is a receipt. | ETA wording | "Order receipts and records are kept…" / «نحتفظ بإيصالات الطلبات وسجلاتها…» | fixed |
 | R5-CP-54 | medium | legal pricing · `legal.terms.sections.pricing` | "An instant quote is valid for 72 hours" mixes quote and instant price. | one term | "An instant price…" / «السعر الفوري صالح لمدة 72 ساعة». The draft banner and the [LAWYER] flags are unchanged. | fixed |
 | R5-CP-55 | medium | catalogue quote form · `copy.ts formSent` vs `buyer.quote.sentBody` | Catalogue requests promise a reply in 2 working days, buyer quantity requests in 1. | consistency | Kept on purpose: catalogue requests go to importers and regional converters (`egyptLong.rare`). Wording aligned otherwise. Business to confirm. | won't fix (business decision) |
+| R5-CP-86 | medium | /ar/admin/orders/[number] address · `admin/orders/[number]/page.tsx:324` | The governorate shows the stored English value («Cairo», «Giza»), joined with a Latin comma, on Arabic pages. Found by the crawl. | WCAG 3.1.2 | Use `governorateKey()` + `governorates.*` and the locale separator «، », as on the receipt page. | open (admin owner) |
 
 ### Low
 
@@ -121,6 +122,9 @@ New findings this round, counted before fixing: **critical 0 · high 15 · mediu
 | R5-CP-82 | low | `designer/lib/catalog.ts:26,41` | product preset ar «حذاء» vs en "Shoe box" | «علبة حذاء» | open (designer owner) |
 | R5-CP-84 | low | /boxes/* fact row | After R5-CP-13, ECMA styles would still show pseudo codes («ECMA RTE»). Real ECMA codes (A20.20…) appear on the catalogue pages. | the chip shows FEFCO codes only | fixed |
 | R5-CP-85 | low | /vendors/[slug] machines (seed) | Machine model strings are English descriptions ("Flexo 4-colour printer-slotter", "HP Indigo-class digital press") on Arabic profiles. | Vendor-entered manufacturer designations stay Latin. Seed descriptions could become brand + model only. | won't fix (vendor content) |
+| R5-CP-87 | low | /orders/[id] `<title>` | The order page title is «الطلب · علبة» with no number when the URL uses the internal id (metadata skips the DB read). | Read the order number in generateMetadata, or fall back to «طلبك». | open (checkout owner) |
+| R5-CP-88 | low | /ar/admin/pricing price index | Notes are English ("Rate card baseline", "Kraft liner up after Q3 mill price rise") from src/lib/pricing/config.ts. | These are internal ops notes typed by staff and stay as typed. | won't fix (staff content) |
+| R5-CP-89 | low | /orders/[id]/invoice | The receipt still numbers itself «INV-26001» and lists the ETA document type «I (فاتورة)», next to the «ليس فاتورة ضريبية» title. Seen in the browser at 390. | Use a receipt prefix (e.g. «RCT-») and hide the ETA card until `ELBA_TAX_ID` is set (R4-B-07 component half). | open (checkout owner) |
 
 ### Checked and clean
 
