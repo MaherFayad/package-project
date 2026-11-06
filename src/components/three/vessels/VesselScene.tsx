@@ -1,14 +1,16 @@
 "use client";
 
 import { useFrame, useThree } from "@react-three/fiber";
-import { Environment, Lightformer, OrbitControls } from "@react-three/drei";
+import { Lightformer, OrbitControls } from "@react-three/drei";
 import { memo, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type Ref } from "react";
 import { PerspectiveCamera, Spherical, Vector3, type Object3D } from "three";
 import { defaultMaxDpr, usePrefersReducedMotion } from "../hooks";
 import { AUTO_ROTATE, easeInOutCubic } from "../finishes/motion";
 import { captureScreenshot } from "../screenshot";
 import { SoftShadow } from "../SoftShadow";
+import { EnvironmentScene } from "../lighting";
 import { InteractionDpr, useOnScreen } from "../perf";
+import { applyViewInsets, normInsets, visibleFraction, NO_INSETS, type FitInsets } from "../fit";
 import type { PackagingSceneHandle } from "../PackagingScene";
 import { EngineCanvas, useRegisterViewApi, type EngineViewApi, type ViewName } from "../EngineCanvas";
 import { VesselModel, type VesselModelProps } from "./VesselModel";
@@ -40,6 +42,8 @@ export interface VesselSceneProps extends Omit<VesselModelProps, "quality" | "an
   customObject?: Object3D | null;
   /** Image (e.g. the model thumbnail) shown until the first compiled frame, then cross-faded (X-11). */
   poster?: string;
+  /** Canvas area (px) covered by overlays on top: the fit frames the container in the rest (CR-13). */
+  fitInsets?: FitInsets;
 }
 
 const DEG = Math.PI / 180;
@@ -59,9 +63,10 @@ const MAX_PHI = 178 * DEG;
 function frame(env: { width: number; depth: number; height: number }, camera: PerspectiveCamera) {
   const size = new Vector3(env.width, env.height, env.depth).multiplyScalar(0.001);
   const radius = Math.max(size.length() / 2, 0.01);
-  const vfov = camera.fov * DEG;
-  const hfov = 2 * Math.atan(Math.tan(vfov / 2) * camera.aspect);
-  const fov = Math.min(vfov, hfov);
+  // fit inside the part of the canvas no overlay covers (CR-13)
+  const fr = (camera.userData.elbaFit as { fx: number; fy: number } | undefined) ?? { fx: 1, fy: 1 };
+  const t = Math.tan((camera.fov * DEG) / 2);
+  const fov = 2 * Math.atan(Math.min(t * fr.fy, t * camera.aspect * fr.fx));
   return { distance: (radius / Math.sin(fov / 2)) * 1.08, target: new Vector3(0, size.y * 0.47, 0), size };
 }
 
@@ -75,6 +80,7 @@ function Rig({
   interacted,
   sceneKey,
   onKeyboard,
+  fitInsets,
 }: {
   envelope: VesselSceneProps["envelope"];
   apiRef: { current: RigApi | null };
@@ -83,6 +89,7 @@ function Rig({
   interacted: { current: boolean };
   sceneKey: string;
   onKeyboard?: () => void;
+  fitInsets?: FitInsets;
 }) {
   const { camera, gl, scene, invalidate, controls } = useThree();
   const regress = useThree((s) => s.performance.regress);
@@ -116,7 +123,21 @@ function Rig({
     invalidate();
   };
 
-  const f = useMemo(() => frame(envelope, cam), [envelope.width, envelope.height, envelope.depth, cam]); // eslint-disable-line react-hooks/exhaustive-deps
+  const size = useThree((s) => s.size);
+  const [apiInsets, setApiInsets] = useState<Required<FitInsets>>(NO_INSETS);
+  const insets = useMemo(() => normInsets(fitInsets, apiInsets), [fitInsets, apiInsets]);
+  const insetKey = `${insets.top}:${insets.right}:${insets.bottom}:${insets.left}:${size.width}x${size.height}`;
+  useLayoutEffect(() => {
+    applyViewInsets(cam, size, insets);
+    cam.userData.elbaFit = visibleFraction(size, insets);
+    cam.updateProjectionMatrix();
+    invalidate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cam, insetKey]);
+  const f = useMemo(() => {
+    cam.userData.elbaFit = visibleFraction(size, insets);
+    return frame(envelope, cam);
+  }, [envelope.width, envelope.height, envelope.depth, cam, insetKey]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!orbit) return;
     orbit.minDistance = f.distance * 0.3;
@@ -207,6 +228,7 @@ function Rig({
         goTo(new Spherical(f.distance, v.phi, v.theta), f.target, true);
       },
       screenshot: (opts) => captureScreenshot(gl, scene, cam, opts),
+      setFitInsets: (i) => setApiInsets(i ? normInsets(i) : NO_INSETS),
     };
     return () => {
       apiRef.current = null;
@@ -231,7 +253,7 @@ const VesselLights = memo(function VesselLights() {
       <ambientLight intensity={0.25} />
       <directionalLight position={[2.5, 4, 3]} intensity={1.4} />
       <directionalLight position={[-3, 2.2, -2]} intensity={0.45} color="#dfe8ff" />
-      <Environment resolution={256} frames={1} environmentIntensity={0.9}>
+      <EnvironmentScene resolution={256} intensity={0.9}>
         <color attach="background" args={["#202020"]} />
         <Lightformer form="rect" intensity={3} position={[-2.2, 1.2, 1.6]} rotation-y={Math.PI / 4} scale={[0.6, 4, 1]} />
         <Lightformer form="rect" intensity={2.2} position={[2.4, 1.2, 1.2]} rotation-y={-Math.PI / 3} scale={[0.5, 4, 1]} />
@@ -240,7 +262,7 @@ const VesselLights = memo(function VesselLights() {
         <Lightformer form="ring" intensity={1.2} position={[1.5, 2.5, 3]} scale={0.8} />
         {/* broad front fill: tinplate and aluminium need something bright to mirror (V-13) */}
         <Lightformer form="rect" intensity={0.8} position={[0, 1, 5]} scale={[10, 3, 1]} />
-      </Environment>
+      </EnvironmentScene>
     </>
   );
 });
@@ -253,7 +275,7 @@ export type VesselSceneContentProps = Omit<VesselSceneProps, "ariaLabel" | "role
  * `VesselScene` does). `handleRef` and the canvas keyboard both reach it.
  */
 export function VesselSceneContent(props: VesselSceneContentProps) {
-  const { envelope, quality = "auto", animate = true, turntable = false, handleRef, onInteract, customObject, ...model } = props;
+  const { envelope, quality = "auto", animate = true, turntable = false, handleRef, onInteract, customObject, fitInsets, ...model } = props;
   const reduced = usePrefersReducedMotion();
   const apiRef = useRef<RigApi | null>(null);
   const [autoQuality] = useState<VesselQuality>(() => (defaultMaxDpr() < 2 ? "low" : "high"));
@@ -292,6 +314,7 @@ export function VesselSceneContent(props: VesselSceneContentProps) {
       setView: (v) => apiRef.current?.setView(v),
       screenshot: (o) => (apiRef.current ? apiRef.current.screenshot(o) : Promise.reject(new Error("3D view not ready"))),
       getCanvas: () => apiRef.current?.canvas ?? null,
+      setFitInsets: (i) => apiRef.current?.setFitInsets?.(i),
     }),
     [],
   );
@@ -299,7 +322,7 @@ export function VesselSceneContent(props: VesselSceneContentProps) {
   const sceneKey = `${model.kind}`;
   return (
     <>
-      <Rig envelope={envelope} apiRef={apiRef} turntable={turntable} reduced={reduced} interacted={interacted} sceneKey={sceneKey} onKeyboard={() => onInteractRef.current?.()} />
+      <Rig envelope={envelope} apiRef={apiRef} turntable={turntable} reduced={reduced} interacted={interacted} sceneKey={sceneKey} onKeyboard={() => onInteractRef.current?.()} fitInsets={fitInsets} />
       {customObject ? <primitive object={customObject} /> : <VesselModel {...model} quality={q} animate={animate && !reduced} />}
     </>
   );

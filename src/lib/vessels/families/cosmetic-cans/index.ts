@@ -20,6 +20,7 @@ import type {
 } from "./types";
 
 export * from "./types";
+export { displayLiquid, displaySurfaces, displaySurfacesFor } from "./display";
 export { EXTRA_NECKS, buildGeometry, blisterLayout, crossSection, tinLidH } from "./geometry";
 export { DIRECT_BLEED_MM, DIRECT_SAFE_MM, FOIL_TAB_MM, directPrint, girthAt, lidDisc, lidRect, printFlatPoint, printUv, surfacesFor } from "./surfaces";
 
@@ -213,8 +214,10 @@ export function catalogueEnvelope(def: CatalogueVesselDefinition, d: CatalogueDi
   }
   const w = 2 * maxR;
   const depth = p.section.kind === "roundedRect" ? w * p.section.depthRatio : w;
-  // lids drawn by the geometry are already inside overallHeightMm
-  return { width: w, depth, height: geometry.overallHeightMm + (geometry.lid ? 0 : catalogueClosureHeight(def, d)) };
+  // lids drawn by the geometry are already inside overallHeightMm; the airless pump head and overcap
+  // are drawn by the renderer above H (H is the body under the head), so they add their height
+  const above = !geometry.lid || def.defaultClosure === "AIRLESS_PUMP" ? catalogueClosureHeight(def, d) : 0;
+  return { width: w, depth, height: geometry.overallHeightMm + above };
 }
 
 /** Definitions grouped by family (for catalogue pages). */

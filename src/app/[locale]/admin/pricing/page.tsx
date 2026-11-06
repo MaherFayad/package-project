@@ -3,6 +3,8 @@ import { Tags } from "lucide-react";
 import { Banner, BlockStack, Card, DataTable, Page, Text } from "@/components/ui";
 import { PriceIndexForm, PricingSettingsForm } from "@/components/admin/PricingForms";
 import { loadPricingSettings } from "@/components/admin/server/settings";
+import { CheckoutSettingsForm } from "@/components/admin/CheckoutSettingsForm";
+import { loadCheckoutSettings } from "@/lib/orders/checkout-settings";
 import { currentMultipliers } from "@/components/admin/lib/pricingSettings";
 import { getT, toLocale } from "@/i18n";
 import { formatDate, formatDateTime, formatNumber } from "@/lib/format";
@@ -15,7 +17,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 export default async function AdminPricingPage({ params }: { params: Promise<{ locale: string }> }) {
   const locale = toLocale((await params).locale);
   const t = getT(locale);
-  const { settings, updatedAt } = await loadPricingSettings();
+  const [{ settings, updatedAt }, checkout] = await Promise.all([loadPricingSettings(), loadCheckoutSettings()]);
   const { row } = currentMultipliers(settings.priceIndex, new Date());
   const range = (b: Record<string, number | undefined>) => {
     const vals = Object.values(b).filter((v): v is number => typeof v === "number");
@@ -30,6 +32,7 @@ export default async function AdminPricingPage({ params }: { params: Promise<{ l
       <BlockStack gap="400">
         <Banner tone="info">{t("admin.pricing.notWired")}</Banner>
         <PricingSettingsForm initial={{ marginPct: settings.marginPct, marginOnShipping: settings.marginOnShipping, quoteValidityHours: settings.quoteValidityHours, zones: settings.zones }} />
+        <CheckoutSettingsForm initial={checkout} />
         <Card title={t("admin.pricing.index.title")}>
           <BlockStack gap="400">
             <Text as="p" variant="bodySm" tone="subdued">

@@ -1,7 +1,7 @@
 import { DielineBuilder } from "../../builder";
 import type { DimsIssue } from "../../limits";
 import { CLEARANCE, CORRUGATED_OR_SBS, FULL_HEIGHT, PARTITION_PRESETS, RSC_PRESETS, clr, fitL, fitW, fitting, hgt, notAbove } from "./common";
-import { FLAT_PRINT_DOWN, FLAT_PRINT_DOWN_ALONG_W, IDENTITY, chain, flapOn, quatDeg, type ChainPanel, type Quat } from "./engine";
+import { FLAT_PRINT_DOWN, FLAT_PRINT_DOWN_ALONG_W, IDENTITY, chain, flapOn, quatDeg, triangleBrace, type ChainPanel, type Quat } from "./engine";
 import { cellLayout, slottedGrid } from "./partitions";
 import type { FittingDefinition, FittingDraft, OptionSpec, ResolvedFittingParams } from "./types";
 
@@ -200,7 +200,7 @@ function standing(width: number, panels: ChainPanel[], rotation: Quat, anchor: {
   return { builder: b, closedRotation: rotation, anchor };
 }
 
-const triangle = (a: number, g: number): ChainPanel[] => [{ len: a, label: "Leg" }, { len: a, fold: 90, label: "Leg" }, { len: a * Math.SQRT2, fold: 135, label: "Brace face" }, { len: g, fold: 135, glue: true }];
+const triangle = (a: number, g: number, t: number): ChainPanel[] => [{ len: a, label: "Leg" }, ...triangleBrace(a, g, t)];
 
 export const CORNERS: FittingDefinition[] = [
   fitting({
@@ -286,7 +286,7 @@ export const CORNERS: FittingDefinition[] = [
     options: { clearanceMm: CLEARANCE, sizeMm: LEG },
     check: (p) => notAbove("sizeMm", p.sizeMm!, Math.min(p.host.W / 2, p.host.H)),
     outer: (p) => ({ L: fitL(p), W: p.sizeMm!, H: p.sizeMm! }),
-    build: (p) => edgeStrip(p, triangle(p.sizeMm!, Math.min(25, p.sizeMm! * 0.6)), 0),
+    build: (p, t) => edgeStrip(p, triangle(p.sizeMm!, Math.min(25, p.sizeMm! * 0.6), t), 0),
   }),
   fitting({
     ...corner,
@@ -300,10 +300,10 @@ export const CORNERS: FittingDefinition[] = [
     options: { clearanceMm: CLEARANCE, sizeMm: LEG },
     check: (p) => notAbove("sizeMm", p.sizeMm!, Math.min(fitW(p) / 3, p.host.H)),
     outer: (p) => ({ L: fitL(p), W: fitW(p), H: p.sizeMm! }),
-    build: (p) => {
+    build: (p, t) => {
       const s = p.sizeMm!;
       const g = Math.min(25, s * 0.6);
-      return edgeStrip(p, [{ len: fitW(p), label: "Pad" }, { len: s, fold: 90, label: "Brace leg" }, { len: s * Math.SQRT2, fold: 135, label: "Brace face" }, { len: g, fold: 135, glue: true }], 0, { z: clr(p) / 2 });
+      return edgeStrip(p, [{ len: fitW(p), label: "Pad" }, ...triangleBrace(s, g, t, { leg: "Brace leg" })], 0, { z: clr(p) / 2 });
     },
   }),
   fitting({
@@ -318,10 +318,10 @@ export const CORNERS: FittingDefinition[] = [
     options: { clearanceMm: CLEARANCE, sizeMm: LEG },
     check: (p) => notAbove("sizeMm", p.sizeMm!, Math.min(fitW(p) / 3, p.host.H)),
     outer: (p) => ({ L: fitL(p), W: fitW(p), H: p.sizeMm! }),
-    build: (p) => {
+    build: (p, t) => {
       const s = p.sizeMm!;
       const g = Math.min(25, s * 0.6);
-      const brace: ChainPanel[] = [{ len: s, fold: 90, label: "Brace leg" }, { len: s * Math.SQRT2, fold: 135, label: "Brace face" }, { len: g, fold: 135, glue: true }];
+      const brace = triangleBrace(s, g, t, { leg: "Brace leg" });
       return edgeStrip(p, [...[...brace].reverse(), { len: fitW(p), label: "Pad" }, ...brace], 3, { z: clr(p) / 2 });
     },
   }),
@@ -337,7 +337,7 @@ export const CORNERS: FittingDefinition[] = [
     options: { sizeMm: LEG, heightMm: { min: 20, max: 800, default: (h) => h.H } },
     check: legCheck,
     outer: (p) => ({ L: p.sizeMm!, W: p.sizeMm!, H: p.heightMm! }),
-    build: (p) => standing(p.heightMm!, triangle(p.sizeMm!, Math.min(25, p.sizeMm! * 0.6)), INTO_CORNER, atCorner),
+    build: (p, t) => standing(p.heightMm!, triangle(p.sizeMm!, Math.min(25, p.sizeMm! * 0.6), t), INTO_CORNER, atCorner),
   }),
   fitting({
     ...corner,

@@ -7,8 +7,7 @@ import { buildProfile, type ClosureColorCode, type ClosureKind, type LiquidCode,
 import type { VesselModelDef } from "@/lib/library";
 import type { DocGeometry } from "@/lib/library/doc";
 import { buildFlexibleGroup, type FlexConfig, type FlexPanelId } from "@/lib/vessels/families/flexible";
-import { VesselSceneContent } from "@/components/three/vessels/VesselScene";
-import { EngineCanvas } from "@/components/three/EngineCanvas";
+import { VesselScene, VesselSceneContent } from "@/components/three/vessels/VesselScene";
 import type { ClosureStyle, VesselLabel } from "@/components/three/vessels";
 import type { PackagingSceneHandle } from "@/components/three";
 import { labelFinishOf, labelStockOf } from "./lib/config";
@@ -19,7 +18,22 @@ import styles from "./designer.module.css";
  * canvas per label / panel and wrapped on the real container (lathe) or film pack (flexible).
  * Loaded lazily (three.js), like Scene3D.
  */
-export interface VesselContentProps {
+export default function VesselView({
+  model,
+  doc,
+  geo,
+  sheet,
+  version,
+  handleRef,
+  turntable,
+  open,
+  ariaLabel,
+  roleDescription,
+  keyboardHint,
+  fallback,
+  onReady,
+  embedded = false,
+}: {
   model: VesselModelDef;
   doc: DesignDoc;
   geo: DocGeometry;
@@ -28,38 +42,15 @@ export interface VesselContentProps {
   handleRef: Ref<PackagingSceneHandle | null>;
   turntable: boolean;
   open: boolean;
-}
-
-/** Container viewer with its own canvas (share page, proof). */
-export default function VesselView({
-  ariaLabel,
-  roleDescription,
-  keyboardHint,
-  fallback,
-  onReady,
-  poster,
-  ...content
-}: VesselContentProps & {
   ariaLabel: string;
   roleDescription: string;
   keyboardHint: string;
   fallback: string;
   /** First frame rendered (the stage fades its poster out). */
   onReady?: () => void;
-  poster?: string;
+  /** Render only the scene content, inside a parent `<EngineCanvas>` (PERF-09). */
+  embedded?: boolean;
 }) {
-  return (
-    <EngineCanvas ariaLabel={ariaLabel} roleDescription={roleDescription} keyboardHint={keyboardHint} fallback={<p className={styles.sceneFallback}>{fallback}</p>} onReady={onReady} poster={poster}>
-      <VesselContent {...content} />
-    </EngineCanvas>
-  );
-}
-
-/**
- * The container scene without a canvas: render it inside `<EngineCanvas>` (the designer's
- * `DesignStage` keeps one canvas for boxes and containers, PERF-09).
- */
-export function VesselContent({ model, doc, geo, sheet, version, handleRef, turntable, open }: VesselContentProps) {
   const v = doc.vessel!;
   const desc = geo.vessel!;
 
@@ -134,7 +125,12 @@ export function VesselContent({ model, doc, geo, sheet, version, handleRef, turn
         const mesh = o as unknown as { geometry?: { dispose(): void }; material?: { dispose(): void } | { dispose(): void }[] };
         mesh.geometry?.dispose();
         const mats = Array.isArray(mesh.material) ? mesh.material : mesh.material ? [mesh.material] : [];
-        for (const m of mats) m.dispose();
+        for (const m of mats) {
+          // Maps the group made itself (the crimp normal map) are freed with it; artwork maps
+          // are freed by their own effect (a second dispose is a no-op).
+          for (const v of Object.values(m as unknown as Record<string, unknown>)) if (v && (v as { isTexture?: boolean }).isTexture) (v as { dispose(): void }).dispose();
+          m.dispose();
+        }
       });
     },
     [flexGroup],
@@ -150,8 +146,31 @@ export function VesselContent({ model, doc, geo, sheet, version, handleRef, turn
   );
 
   const profile = desc.profile ?? buildProfile(model.coreKind, v.dims);
+  if (embedded)
+    return (
+      <VesselSceneContent
+        key={model.render === "flexible" ? `flex-${model.code}` : model.code}
+        kind={model.coreKind}
+        dims={v.dims}
+        profile={profile}
+        envelope={desc.envelope}
+        material={containerCore}
+        closure={closureCore}
+        tint={containerTint}
+        closureStyle={closureStyle}
+        closureColor={(v.closureColor as ClosureColorCode) ?? "WHITE"}
+        liquid={(v.content as LiquidCode) ?? model.defaultLiquid}
+        fill={v.fill}
+        labels={labels}
+        artworkVersion={`${version}:${sheet ? 1 : 0}`}
+        open={open}
+        turntable={turntable}
+        customObject={flexGroup}
+        handleRef={handleRef as Ref<never>}
+      />
+    );
   return (
-    <VesselSceneContent
+    <VesselScene
       key={model.render === "flexible" ? `flex-${model.code}` : model.code}
       kind={model.coreKind}
       dims={v.dims}
@@ -170,6 +189,11 @@ export function VesselContent({ model, doc, geo, sheet, version, handleRef, turn
       turntable={turntable}
       customObject={flexGroup}
       handleRef={handleRef as Ref<never>}
+      ariaLabel={ariaLabel}
+      roleDescription={roleDescription}
+      keyboardHint={keyboardHint}
+      fallback={<p className={styles.sceneFallback}>{fallback}</p>}
+      onReady={onReady}
     />
   );
 }

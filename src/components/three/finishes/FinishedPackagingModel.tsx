@@ -78,8 +78,10 @@ export function FinishedPackagingModel({ surfaceFinish, ...model }: FinishedPack
   useEffect(() => {
     mats.setArtwork("outside", outsideMap);
     mats.setArtwork("inside", insideMap);
+    mats.setInkOnBoard("outside", !!outsideMap && inkOnBoard.outside, appearance.outside);
+    mats.setInkOnBoard("inside", !!insideMap && inkOnBoard.inside, appearance.inside);
     invalidate();
-  }, [mats, outsideMap, insideMap, invalidate]);
+  }, [mats, outsideMap, insideMap, inkOnBoard, appearance, invalidate]);
 
   // Finish masks per printed surface.
   const keyOut = finishMaskKey(finishes, "outside", artwork);
@@ -103,14 +105,14 @@ export function FinishedPackagingModel({ surfaceFinish, ...model }: FinishedPack
   const targets = useMemo(() => {
     const out: FinishedSurfaceState = {
       look: coatingLook(coating, appearance),
-      color: new Color(outsideMap && !inkOnBoard.outside ? "#ffffff" : appearance.outside),
+      color: new Color(outsideMap ? "#ffffff" : appearance.outside),
       maskFade: 1,
       bumpScale: masks.outside.relief ? 1 : 0,
     };
     const inLook: SurfaceLook = insideMap ? { ...coatingLook(null, appearance) } : { ...coatingLook(null, appearance), roughness: 0.95, envIntensity: 0.4 };
-    const inn: FinishedSurfaceState = { look: inLook, color: new Color(insideMap && !inkOnBoard.inside ? "#ffffff" : appearance.inside), maskFade: 1, bumpScale: masks.inside.relief ? 1 : 0 };
+    const inn: FinishedSurfaceState = { look: inLook, color: new Color(insideMap ? "#ffffff" : appearance.inside), maskFade: 1, bumpScale: masks.inside.relief ? 1 : 0 };
     return { outside: out, inside: inn };
-  }, [coating, appearance, outsideMap, insideMap, masks, inkOnBoard]);
+  }, [coating, appearance, outsideMap, insideMap, masks]);
 
   useEffect(() => {
     mats.setMasks("outside", masks.outside);

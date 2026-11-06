@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { useI18n } from "@/i18n/client";
-import { COOKIE_HIDE_SCRIPT, useCookieAck } from "@/components/store/CookieNotice";
+import { COOKIE_HIDE_SCRIPT, useCookieAck } from "@/components/store/cookieAck";
 import styles from "./marketing.module.css";
 
 /**

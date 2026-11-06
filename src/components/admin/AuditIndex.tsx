@@ -23,11 +23,16 @@ export interface AuditRow {
   after: string | null;
 }
 
-const ENTITIES = ["ORDER", "VENDOR", "VENDOR_APPLICATION", "DISPUTE", "USER", "DATA_REQUEST", "STRUCTURE", "MATERIAL", "FINISH", "SETTINGS"] as const;
+const ENTITIES = ["ORDER", "VENDOR", "VENDOR_APPLICATION", "DISPUTE", "USER", "DATA_REQUEST", "STRUCTURE", "MATERIAL", "FINISH", "SETTINGS", "PAYOUT", "QUOTE"] as const;
 
 /** Append-only admin audit log with record-type and action filters (state in the URL). */
 export function AuditIndex({ rows }: { rows: AuditRow[] }) {
   const { t, locale } = useI18n();
+  /** Actions and record types written by other areas (e.g. checkout QUOTE_REQUEST) fall back to the code, never a raw key. */
+  const label = (key: string, code: string) => {
+    const s = t(key as DictKey);
+    return s === key ? code : s;
+  };
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -97,14 +102,14 @@ export function AuditIndex({ rows }: { rows: AuditRow[] }) {
             </IndexTableCell>
             <IndexTableCell>
               <Badge tone={r.action.includes("REFUND") || r.action.includes("REJECT") || r.action.includes("SUSPEND") || r.action.includes("ANONYMISE") ? "critical" : "neutral"}>
-                {t(`admin.audit.actions.${r.action}` as DictKey)}
+                {label(`admin.audit.actions.${r.action}`, r.action)}
               </Badge>
             </IndexTableCell>
-            <IndexTableCell>{t(`admin.audit.entities.${r.entityType}` as DictKey)}</IndexTableCell>
+            <IndexTableCell>{label(`admin.audit.entities.${r.entityType}`, r.entityType)}</IndexTableCell>
             <IndexTableCell>
               <BlockStack gap="100">
                 <Text as="span">
-                  <span className={adminStyles.PreWrap}>{r.summary ?? t("admin.common.none")}</span>
+                  <span className={adminStyles.PreWrap} dir="auto">{r.summary ?? t("admin.common.none")}</span>
                 </Text>
                 {r.before || r.after ? (
                   <details>

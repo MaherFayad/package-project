@@ -1,7 +1,7 @@
 import { Box3, Euler, Matrix4, Quaternion, Vector3 } from "three";
 import type { FaceId } from "@/types";
 import { DielineBuilder, rectEdges } from "../../builder";
-import { boundsAt, computePoses, panelLocalPoint, panelPivot } from "../../fold";
+import { boundsAt, computeFaces, computePoses, panelLocalPoint, panelPivot } from "../../fold";
 import { bboxOf, pt, rectPolygon } from "../../geometry";
 import type { DielinePanel, FaceInfo, FacePart, Polygon, Pt, Rect } from "../../types";
 
@@ -146,3 +146,24 @@ export function pieceMatrix(sheetRect: Rect, target: Vector3, alongZ: boolean): 
 }
 
 export const maxStageOf = (b: DielineBuilder) => b.panels.reduce((m, p) => Math.max(m, p.foldStage, p.assembly?.stage ?? 0), 0);
+
+/**
+ * Add panels that are visible from a face direction but sit behind its outermost plane
+ * (carrier decks below the handle, a handle partition behind the front wall's rim) to that
+ * face. Same face frame and origin as the automatic face, so the artwork lines up; only the
+ * listed panels are taken from a search `depthTolMm` deep.
+ */
+export function withDeepParts(
+  faces: Partial<Record<FaceId, FaceInfo>>,
+  input: { panels: DielinePanel[]; rootId: string; thicknessMm: number; closedRotation: Quat },
+  face: FaceId,
+  ids: string[],
+  depthTolMm: number,
+): Partial<Record<FaceId, FaceInfo>> {
+  const deep = computeFaces(input, depthTolMm).faces[face];
+  const extra = deep?.parts.filter((p) => ids.includes(p.panelId)) ?? [];
+  if (!deep || !extra.length) return faces;
+  const base = faces[face];
+  const parts = [...(base?.parts ?? []).filter((p) => !ids.includes(p.panelId)), ...extra];
+  return { ...faces, [face]: { face, width: deep.width, height: deep.height, parts } };
+}

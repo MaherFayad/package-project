@@ -504,6 +504,8 @@ export function faceLabelGeometry(spec: LabelSpec, faceZ: number): BufferGeometr
 
 export function tubeBodyGeometry(dims: VesselDims, spec?: LabelSpec, segments = 96): BufferGeometry {
   const t = tubeDims(dims);
+  // oval tubes (G < D): the body is elliptical (b = G/2) and still flattens into the crimp
+  const ov = dims.G && dims.D ? Math.min(1, Math.max(0.2, dims.G / dims.D)) : 1;
   const rows = 70;
   const morphStart = t.bodyY0 + (t.sealY0 - t.bodyY0) * 0.32;
   const ringAt = (i: number) => {
@@ -515,12 +517,13 @@ export function tubeBodyGeometry(dims: VesselDims, spec?: LabelSpec, segments = 
       // conical shoulder from the nozzle to the body
       const k = (y - t.capH) / (t.bodyY0 - t.capH);
       const e = Math.sin((k * Math.PI) / 2);
-      a = b = t.nozzleR + (t.R - t.nozzleR) * e;
+      a = t.nozzleR + (t.R - t.nozzleR) * e;
+      b = a * (1 + (ov - 1) * e); // round at the nozzle, oval at the body
     } else {
       const m = Math.min(1, Math.max(0, (y - morphStart) / (t.sealY0 - morphStart)));
       const sm = m * m * (3 - 2 * m);
       a = t.R * (1 + (Math.PI / 2 - 1) * sm);
-      b = Math.max(0.5, t.R * (1 - sm));
+      b = Math.max(0.5, t.R * ov * (1 - sm));
     }
     return { y, a, b };
   };

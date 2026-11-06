@@ -115,6 +115,7 @@ The face test pattern draws a white stroke round each face, so with it the wrapp
 ## Files outside scope
 
 - `scripts/perf/measure-3d.cjs`, `scripts/perf/shots-3d.cjs` (new, measurement only).
+- `src/app/api/vendor/jobs/[id]/dieline/route.ts` (reads `?lang=`), `src/components/vendor/JobDetail.tsx` (passes the locale): CR-27, additive.
 - `src/lib/library/types.ts` (optional `tint`, `closureStyle` on `VesselOption`), `src/lib/library/vessels.ts` (fills them), `src/components/designer/VesselView.tsx` (passes them, 5 lines): additive, at the integrator's request for X-01.
 - `docs/audit/perf-3d/*.json`, this report, screenshots.
 
@@ -131,3 +132,53 @@ The face test pattern draws a white stroke round each face, so with it the wrapp
 | Browser console on `/en/dev/3d` (all structures, fold 0 ↔ 1) and `/en/dev/finishes` | no page errors; remaining "unmount a root while rendering" message is React StrictMode in `next dev` only |
 
 Re-measured after the last commit (final build): 50 draw calls, 0 idle frames, 14.7 fps drag / 15.5 fps keyboard at 4× in SwiftShader, 13 live textures and 14 framebuffers at both 0 and 50 switches.
+
+### Pass 3 (cans / flexible session, section B of `docs/audit/3d-cans-flexible.md`)
+
+| id | sev | file | finding | fix | status |
+|---|---|---|---|---|---|
+| E-46 / CF E-01 | high | `vessels/materials.ts` | Tinplate black. | Done in pass 1 (E-28). | fixed |
+| E-47 / CF E-04 | high | `vessels/closures.ts`, `lib/library/vessels.ts` | Cosmetic / can closures collapsed to the core default. | New styles `ROLL_ON_BALL`, `AIRLESS_PUMP`, `BULLET_CAP`, `PEEL_FOIL` (follows the mouth section: rectangular film on trays), `EOE_RING` (ring-pull end); catalogue codes mapped through `closureStyle`. Hiding closures in the family geometry (`closureY`) is the family's to remove. | fixed (engine + mapping) |
+| E-48 / CF E-05 | medium | `vessels/closures.ts · CAN_END` | Pull tab took the cap colour; fixed 22 mm tab. | Aluminium tab; tab, rivet and opening scale with the end (`finishR / 27`). | fixed |
+| E-49 / CF E-10 | low | vessel shadow | Underside black from below. | `SoftShadow` plane is front-face only, so it is culled from below. | fixed |
+| E-50 / CF E-12 | low | `VesselScene.tsx` | Turntable 20°/s, stops for good. | Done in pass 1 (E-23). | fixed |
+| — / CF E-02, E-03, E-06..E-09, E-11 | — | `lib/library/vessels.ts`, designer | Surfaces, default liquid, flexible envelope / surfaces / options, oval tube, container copy. | Library and designer data, not engine: left to those sessions. | not engine |
+
+| E-51 | critical | `lighting.tsx`, `vessels/VesselScene.tsx` | Reported by the designer session after wiring the shared canvas: +2 textures / +2 framebuffers (~7.6 MB) per box ↔ container visit. Traced (WebGL create/delete hooks with stacks) to three's PMREM cache: drei `<Environment>` hands it a render-target texture, and for those `WebGLCubeUVMaps` never registers a dispose listener, so the prefiltered cube-UV target outlives every unmount. | New `EnvironmentScene`: renders the light set into a cube once, prefilters with one cached `PMREMGenerator` per renderer into a target it owns, disposes both on unmount. Same look. Repro: 6 box ↔ bottle round trips in one `EngineCanvas`: textures 13 → 25 before, 13 → 13 after (`scripts/perf/leak-shared-canvas.cjs`). | fixed |
+
+| E-52 / CF R2 E-09 | medium | `vessels/geometry.ts · tubeBodyGeometry` | Oval tubes rendered round (G ignored). | Elliptical rings b = G/2 on the body, blending from round at the nozzle; still flattens into the crimp. | fixed |
+| E-53 / CF R2 | low | `vessels/closures.ts · EOE_RING` | Ring placed at 0.55 × half width: hung over the short edge of rectangular / oval tins. | Placed at 0.55 × half depth (`R × depthRatio`). | fixed |
+| E-54 / CF R2 | high | `vessels/closures.ts`, `lib/library/vessels.ts` | Square / oval / rectangular lids still faked in the family geometry. | Section-following styles `PLUG_LID`, `LEVER_LID` (pry groove), `SNAP_LID`, `HINGED_LID` (clamshell), `TWIST_UP` (dome cap the full barrel width); mapped from the catalogue codes. Core `SLIP_LID` / `LUG_LID` already follow the section (E-29). The family can drop its own lid hacks. | fixed |
+
+| E-55 | critical | `vessels/VesselModel.tsx · labelMats` | Designer report after E-51: still +1 texture per container visit (sized like the label). Traced with per-texture size + allocation stacks: label materials were rebuilt when the label texture changed but built from `labelGeos[i].label.texture`, a copy memoised with the geometry, i.e. the texture `ownTextures` had just disposed. three re-uploads a disposed texture that a material still references, so one orphan per mount (and on every label-canvas resize). | Materials are built from the current label inputs (matched by spec id). Box ↔ ROUND_BOTTLE / STAND_UP_POUCH / SQUEEZE_TUBE with 1200×800 label canvases resized after mount, 6 round trips: 13 → 19 textures before, 13 → 13 after. | fixed |
+
+Also for the designer (PERF-09): `EngineCanvas` gains `onContentReady`, fired after each content component's first frame (every box ↔ container switch).
+
+### Pass 4 (round 3: `docs/audit/craft.md` 3d-engine rows)
+
+| id | sev | page / file | finding | fix | status |
+|---|---|---|---|---|---|
+| E-56 / CR-13 | high | `fit.ts`, `PackagingScene.tsx`, `vessels/VesselScene.tsx`, `ViewControls.tsx`, `screenshot.ts` | Camera fit framed the model to the whole canvas; the floating view toolbar (~64 px) hid its base on phones. | Fit insets: the camera fits the model inside the visible rectangle and shifts the projection centre to it (`setViewOffset`). `ViewControls` measures its own overlap with the canvas (ResizeObserver) and reports it through the handle (`setFitInsets`), so every viewer with the toolbar re-frames without consumer changes; a `fitInsets` prop covers other overlays. Screenshots drop the shift (exports stay centred). | fixed |
+| E-57 / CR-14 | medium | share viewer | Box sat low with ~35 % headroom. | Same fit as the designer (projected-box fit, centred target, insets): at 1440 the box is centred above the toolbar; at 390 it fills the width of the portrait canvas. | fixed |
+| E-58 / CR-15 | high | `PackagingScene.tsx`, `finishes/finishMaterial.ts`, `FinishedPackagingModel.tsx`, `boardMaterials.ts` | A new design opened as a flat, unprinted orange block. | Every configurator board now renders through the finished-board materials even before a finish is chosen (legacy coating codes map to coatings): kraft grain, a low-strength fibre bump (the grain tile, strongest on kraft, faint under laminates), real flute / liner edges and the lid seam, studio lighting and soft contact shadow. Ink-on-kraft fixed: only printed pixels multiply with the liner (the artwork canvas is pre-filled with the liner colour, so the previous rule darkened the whole board twice; this also reverts my pass-1 legacy multiply). The "Your logo" sample artwork is a designer default and is left to that session. | fixed (engine) |
+| E-59 / CR-27 | medium | `lib/dieline/svg.ts`, `api/vendor/jobs/[id]/dieline/route.ts`, `vendor/JobDetail.tsx` | Vendor dieline labels in English on Arabic pages and ~7 px. | `PANEL_ROLE_LABELS` (ar / en, MSA noun forms) used when no labels are passed; `locale` option; label size from the sheet's long side (10–16 px at a typical fit); a label is drawn only where its panel can hold it. The route reads `?lang=` and the job page passes its locale. | fixed |
+
+### Pass 2 verification (after the EngineCanvas split, closures and tint)
+
+| Check | Result |
+|---|---|
+| lint, typecheck, `npm test` (5 905), `npm run build` | pass |
+| `e2e/models.spec.ts` desktop (every library model through the designer viewers) | 371 passed, 1 failed once on a React #418 hydration mismatch (CAN-TUNA; not 3D: the viewer is client-only), passed 3/3 on re-run |
+| Production console on `/en/dev/3d` (all structures, fold 0 ↔ 1) and `/en/dev/finishes` | no errors |
+| Probe after the refactor | 50 draw calls, 0 idle frames, 13 textures / 14 framebuffers at 0 and 50 switches (unchanged) |
+| Browser check | Bordeaux bottle renders green glass with a cork capsule; beer longneck renders a fluted crown (were amber glass / screw caps) |
+
+### Pass 4 verification (round 3, merged with the main branch)
+
+| Check | Result |
+|---|---|
+| `npm run lint`, `npm run typecheck` | clean |
+| `npm test` | 64 files, 8 157 tests passed |
+| `npm run build` | passes |
+| `e2e/models.spec.ts --workers=2` (every library model) | 366 passed, 4 failed on React #418 hydration mismatches in server-rendered HTML (FEFCO_0203, FEFCO_0206, COS-DROPPER, TUBE-OVAL; the viewer is client-only), all 4 passed on `--last-failed`; 370 mobile cases skipped by the spec |
+| Browser | designer first render (kraft grain, flute edges, lid seam) and share viewer framing at 390 / 1440: `after-r3-*.png` |

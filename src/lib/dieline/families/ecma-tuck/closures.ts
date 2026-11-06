@@ -73,6 +73,13 @@ function slitLocks(b: DielineBuilder, lidId: string, far: [Pt, Pt], inset: numbe
 }
 
 /**
+ * Board layer a tuck sits on. A closure hinged on the front tucks into the back wall, where
+ * the glue flap is already laminated (glue | left | front | right | back: the glue flap folds
+ * onto the inside of the back), so that tuck sits one caliper further in (no z-fighting).
+ */
+export const tuckStackFor = (owner: "front" | "back") => (owner === "front" ? -2 : -1);
+
+/**
  * Tuck closure: closure panel (lid) hinged on `owner`, tuck flap on the far edge, dust flaps
  * on the side panels. Closure + dust = two board layers at that end.
  */
@@ -85,7 +92,7 @@ export function tuckClosure(
   Lp: number,
   Wp: number,
   Hp: number,
-  o: { tuckDepthMm?: number; lock?: TuckLock; dust?: boolean } = {},
+  o: { tuckDepthMm?: number; lock?: TuckLock; dust?: boolean; tuckStack?: number } = {},
 ) {
   const tuckD = tuckDepth(Wp, Hp, o.tuckDepthMm);
   const ownerRect = w[owner];
@@ -94,7 +101,7 @@ export function tuckClosure(
   b.attach(where, where, owner, endEdge(ownerRect, where), Wp, { kind: "rect" }, { stage: 2, label: where === "top" ? "Top closure" : "Bottom closure" });
   const far = where === "top" ? rectEdges(lid).top : rectEdges(lid).bottom;
   const inset = t + 0.5;
-  b.attach(`${where}Tuck`, "tuck", where, insetSeg(far, inset), tuckD, { kind: "tuck", shoulder: 1 }, { stage: 2, stack: -1, label: "Tuck flap" });
+  b.attach(`${where}Tuck`, "tuck", where, insetSeg(far, inset), tuckD, { kind: "tuck", shoulder: 1 }, { stage: 2, stack: o.tuckStack ?? tuckStackFor(owner), label: "Tuck flap" });
   if (o.lock === "slit") slitLocks(b, where, far, inset, Lp);
   if (o.dust !== false) dustFlaps(b, w, where, Lp, Wp);
 }
@@ -124,18 +131,25 @@ export function sealEnd(b: DielineBuilder, w: Walls, where: End, t: number, Lp: 
 export function crashLockBottom(b: DielineBuilder, w: Walls, t: number, Wp: number, Lp: number) {
   const h = Wp / 2;
   const e = Math.min(12, Wp * 0.22);
-  const long = (id: "front" | "back", stack: number) => {
+  // Both long flaps close flush on the outer bottom plane, meeting on the centre line; only
+  // their locking tongues pass the centre and hook in ABOVE the opposite flap. The tongue is a
+  // child on a virtual (`roll`: no crease, no cut) hinge one caliper further in, so the two
+  // halves never share a plane (no z-fighting) and the whole bottom carries artwork.
+  const long = (id: "front" | "back") => {
     const f = b.frame(id, rectEdges(w[id]).bottom);
     const L = f.length;
     const x1 = L * 0.28;
     const x2 = L * 0.62;
-    const ch = Math.min(h - t, L * 0.3);
-    const poly: Polygon = [f.at(f.a, 0, 0), f.at(f.a, L, 0), f.at(f.a, L, h - ch), f.at(f.a, L - ch, h), f.at(f.a, x2, h), f.at(f.a, x2 - e * 0.6, h + e), f.at(f.a, x1 + e * 0.6, h + e), f.at(f.a, x1, h), f.at(f.a, 0, h)];
-    b.attachPoly(`bottom_${id}`, id === "front" ? "bottom" : "flap", id, [f.a, f.b], poly, { stage: 2, stack, label: "Crash-lock flap" });
+    // Small clearance chamfer at the leading corner (a large one leaves a hole in the bottom).
+    const ch = Math.min(6, h - t, L * 0.1);
+    const poly: Polygon = [f.at(f.a, 0, 0), f.at(f.a, L, 0), f.at(f.a, L, h - ch), f.at(f.a, L - ch, h), f.at(f.a, x2, h), f.at(f.a, x1, h), f.at(f.a, 0, h)];
+    b.attachPoly(`bottom_${id}`, id === "front" ? "bottom" : "flap", id, [f.a, f.b], poly, { stage: 2, label: "Crash-lock flap" });
+    const tongue: Polygon = [f.at(f.a, x2, h), f.at(f.a, x2 - e * 0.6, h + e), f.at(f.a, x1 + e * 0.6, h + e), f.at(f.a, x1, h)];
+    b.attachPoly(`bottom_${id}Lock`, "tuck", `bottom_${id}`, [f.at(f.a, x1, h), f.at(f.a, x2, h)], tongue, { fold: 0, stage: 2, stack: -1, hingeKind: "roll", label: "Crash-lock tongue" });
     b.extraCreases.push({ a: f.at(f.a, 0, 0), b: f.at(f.a, Math.min(h, L * 0.45), Math.min(h, L * 0.45)) });
   };
-  long("front", 0);
-  long("back", -1);
+  long("front");
+  long("back");
   for (const side of ["left", "right"] as const) {
     const f = b.frame(side, rectEdges(w[side]).bottom);
     // Never reaches past the middle of the bottom, even when W > L.

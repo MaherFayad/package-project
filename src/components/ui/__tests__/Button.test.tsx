@@ -39,18 +39,25 @@ describe("Button", () => {
     expect(onClick).not.toHaveBeenCalled();
   });
 
-  it("loading is busy, disabled and keeps its accessible name", () => {
+  it("loading is busy, aria-disabled, ignores clicks, keeps focus and its accessible name", () => {
     const onClick = vi.fn();
+    const onSubmit = vi.fn((e: { preventDefault: () => void }) => e.preventDefault());
     wrap(
-      <Button variant="primary" loading onClick={onClick}>
-        Pay now
-      </Button>,
+      <form onSubmit={onSubmit}>
+        <Button variant="primary" loading submit onClick={onClick}>
+          Pay now
+        </Button>
+      </form>,
     );
     const btn = screen.getByRole("button", { name: /Pay now/ }) as HTMLButtonElement;
     expect(btn.getAttribute("aria-busy")).toBe("true");
-    expect(btn.disabled).toBe(true);
+    expect(btn.getAttribute("aria-disabled")).toBe("true");
+    // Not natively disabled, so focus is not dropped to <body> while the action runs (WCAG 2.4.3).
+    btn.focus();
+    expect(document.activeElement).toBe(btn);
     fireEvent.click(btn);
     expect(onClick).not.toHaveBeenCalled();
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 
   it("icon-only buttons take their name from accessibilityLabel", () => {
@@ -77,7 +84,8 @@ describe("Button", () => {
         Docs
       </Button>,
     );
-    const link = screen.getByRole("link", { name: "Docs" });
+    // The new-tab hint is part of the name (WCAG 3.2.5 advisory, G201).
+    const link = screen.getByRole("link", { name: /^Docs\s*\(opens in a new tab\)$/ });
     expect(link.getAttribute("target")).toBe("_blank");
     expect(link.getAttribute("rel")).toContain("noopener");
     cleanup();

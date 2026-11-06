@@ -1,3 +1,4 @@
+import { Vector3 } from "three";
 import { describe, expect, it } from "vitest";
 import type { Dims } from "@/types";
 import { BOARD_SPECS, boundsAt, computePoses, type DielineModel } from "../../..";
@@ -13,6 +14,7 @@ import {
   familyFeatures,
   generateFamilyDieline,
   ngonSide,
+  PILLOW_STRIPS,
   pivotForGap,
   tryGenerateFamilyDieline,
   validateFamilyDims,
@@ -251,7 +253,7 @@ describe("closed dimensions match the inputs", () => {
 
   it("presentation folder: cover size, pocket inside, spine sets the thickness", () => {
     const d = def("FOLDER_PRESENTATION");
-    const flat = gen(d, { L: 220, W: 0, H: 310 });
+    const flat = gen(d, { L: 220, W: 1, H: 310 });
     near(flat.closedOuter.L, 220, 0.01);
     near(flat.closedOuter.H, 310, 0.01);
     expect(flat.closedOuter.W).toBeLessThan(6 * flat.thicknessMm + 1);
@@ -282,6 +284,22 @@ describe("closed dimensions match the inputs", () => {
     near(m.closedOuter.W, 35, 3 * t + 0.5);
     expect(m.closedOuter.H).toBeGreaterThanOrEqual(160);
     expect(m.faces.front && m.faces.back).toBeTruthy();
+  });
+
+  it("pillow: bowed faces on smooth roll hinges and curved end creases", () => {
+    const m = gen(def("ECMA_PILLOW"), { L: 100, W: 35, H: 160 });
+    const strips = m.panels.filter((p) => /^(front|back)\d$/.test(p.id));
+    expect(strips).toHaveLength(2 * PILLOW_STRIPS);
+    // Inside each face the strips meet on smooth (roll) hinges; only the side folds crease.
+    expect(strips.filter((p) => p.hingeKind === "roll")).toHaveLength(2 * (PILLOW_STRIPS - 1));
+    // Top end crease: the lobe hinges trace an arc (centre higher than the folds), drawn as creases.
+    const top = m.panels.filter((p) => /^front\dTop$/.test(p.id)).sort((a, b) => a.hinge!.a.x - b.hinge!.a.x);
+    const ys = top.map((p) => Math.min(p.hinge!.a.y, p.hinge!.b.y));
+    const edge = Math.max(top[0].hinge!.a.y, top[top.length - 1].hinge!.b.y);
+    expect(edge - Math.min(...ys)).toBeGreaterThan(4);
+    for (const p of top) expect(m.creaseLines.some((c) => c.a.x === p.hinge!.a.x && c.a.y === p.hinge!.a.y)).toBe(true);
+    // The lobes close the ends: closed height stays within body + both crease arcs + lobes.
+    expect(m.closedOuter.H).toBeLessThan(160 + 2 * (35 * 0.55 + 35 * 1.3));
   });
 
   it("cone: mouth diameter and height match, developed sector < 360°", () => {
@@ -369,9 +387,24 @@ describe("closed dimensions match the inputs", () => {
 
   it("aseptic brick: top ears folded down flat onto the sides", () => {
     const m = gen(def("LIQUID_ASEPTIC_BRICK"), { L: 55, W: 37, H: 123 });
+    const t = m.thicknessMm;
     const ears = m.panels.filter((p) => p.role === "ear");
-    expect(ears).toHaveLength(4);
-    expect(ears.filter((p) => p.foldAngleClosed === -180)).toHaveLength(2);
-    near(m.closedOuter.H, 123 + 5 * m.thicknessMm, 0.2); // + bottom ears under the base
+    // Two half-ears per side on the top seal flaps + one ear under the base per side.
+    expect(ears).toHaveLength(6);
+    const top = ears.filter((p) => p.id.startsWith("ear_top"));
+    expect(top).toHaveLength(4);
+    // Closed: each top half-ear hangs flat on the outside of its side panel, printed side out
+    // (outward normal along ±X), one caliper proud of the panel.
+    const poses = computePoses(m, 1);
+    for (const e of top) {
+      const n = new Vector3(0, 0, 1).transformDirection(poses.get(e.id)!.world);
+      expect(Math.abs(n.x)).toBeGreaterThan(0.999);
+      expect(m.faces[n.x > 0 ? "right" : "left"]!.parts.some((p) => p.panelId === e.id)).toBe(true);
+    }
+    near(m.closedOuter.L, 55 + 4 * t, 0.05); // + ears on both sides
+    // Top: back seal flap on the crease plane, front flap lapped over it (+t); bottom ears under the base.
+    near(m.closedOuter.H, 123 + 6 * t, 0.2);
+    // Both top seal flaps show from above and carry the top artwork.
+    expect(m.faces.top!.parts.map((p) => p.panelId).sort()).toEqual(["top", "top_back"]);
   });
 });

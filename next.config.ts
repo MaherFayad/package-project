@@ -1,47 +1,23 @@
 import type { NextConfig } from "next";
+import { contentSecurityPolicy as csp, securityHeaders as headersFor } from "./src/lib/security-headers";
 
 const isDev = process.env.NODE_ENV !== "production";
-
-/**
- * Content-Security-Policy for every page (OWASP ASVS 4.0.3 V14.4.3 / V14.4.7, Top 10 A05:2021).
- * - Everything is first-party: fonts are self-hosted by next/font, 3D environments are generated
- *   in-browser, payments redirect via window.location (not restricted by CSP).
- * - 'unsafe-inline' scripts are required by Next's inline hydration data unless every page opts
- *   into per-request nonces (which would disable static rendering); 'unsafe-eval' only in dev
- *   (React Refresh). blob:/data: cover canvas captures, thumbnails and three.js texture loads.
- * - frame-ancestors 'none' + X-Frame-Options DENY: no clickjacking of the proof approval /
- *   payment steps.
- */
-export function contentSecurityPolicy(dev = isDev): string {
-  return [
-    "default-src 'self'",
-    `script-src 'self' 'unsafe-inline'${dev ? " 'unsafe-eval'" : ""}`,
-    "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob:",
-    "font-src 'self' data:",
-    `connect-src 'self' blob: data:${dev ? " ws: wss:" : ""}`,
-    "media-src 'self' blob: data:",
-    "worker-src 'self' blob:",
-    "object-src 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    "frame-ancestors 'none'",
-  ].join("; ");
-}
 
 /** HSTS only when the site is really served over HTTPS (never on http://localhost e2e runs). */
 const httpsSite = (process.env.NEXT_PUBLIC_SITE_URL ?? "").startsWith("https://");
 
+/** Full CSP (see src/lib/security-headers.ts; middleware sends the same policy on pages). */
+export function contentSecurityPolicy(dev = isDev): string {
+  return csp(dev);
+}
+
 export function securityHeaders(dev = isDev, https = httpsSite): { key: string; value: string }[] {
-  return [
-    { key: "Content-Security-Policy", value: contentSecurityPolicy(dev) },
-    { key: "X-Frame-Options", value: "DENY" },
-    { key: "X-Content-Type-Options", value: "nosniff" },
-    { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-    { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()" },
-    { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
-    ...(!dev && https ? [{ key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" }] : []),
-  ];
+  return headersFor(dev, https);
+}
+
+/** Security headers for /api responses: everything except the page CSP (routes set their own). */
+export function apiHeaders(dev = isDev, https = httpsSite): { key: string; value: string }[] {
+  return headersFor(dev, https).filter((h) => h.key !== "Content-Security-Policy");
 }
 
 const nextConfig: NextConfig = {
@@ -61,9 +37,13 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
-      { source: "/:path*", headers: securityHeaders() },
-      // API responses are data, never cached by shared caches unless a route says otherwise.
-      { source: "/api/:path*", headers: [{ key: "X-Robots-Tag", value: "noindex" }] },
+      // Pages, static files and everything else: the full set (middleware repeats it on pages).
+      { source: "/((?!api/).*)", headers: securityHeaders() },
+      // API: the same headers WITHOUT the page CSP. A header set here replaces the one a route
+      // handler sets, and the routes that serve user files (/api/vendor/files, the dieline SVG)
+      // send their own `sandbox` CSP, which the page policy (inline scripts allowed) used to
+      // overwrite. JSON and PDFs are served with nosniff and need no document CSP.
+      { source: "/api/:path*", headers: [...apiHeaders(), { key: "X-Robots-Tag", value: "noindex" }] },
     ];
   },
 };

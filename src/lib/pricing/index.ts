@@ -10,6 +10,7 @@
  */
 export * from "./types";
 export { designQuoteFields } from "./design";
+export { HEADLINE_DEFAULTS, headlineInput, headlineOffer } from "./headline";
 export {
   DEFAULT_PRICING_CONFIG,
   PRICE_INDEX_TABLE,

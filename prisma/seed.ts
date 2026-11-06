@@ -28,6 +28,7 @@ import { STRUCTURES } from "../src/lib/dieline/registry";
 import { materialFitsStructure } from "../src/lib/dieline/materials";
 import { MODELS } from "../src/lib/library";
 import { baseOf, vesselPrintMaterials } from "../src/lib/library/doc";
+import { extendCatalogueCapabilities } from "./seed-catalogue";
 
 const db = new PrismaClient();
 const egp = (n: number) => Math.round(n * 100);
@@ -477,19 +478,25 @@ async function main() {
   }
 
   const vendorIds: string[] = [];
+  // CR-42: portfolio tiles use the rendered printed-sample images (same set as the home strip),
+  // rotated so no two neighbouring vendors repeat; the old geometric SVGs read as placeholders.
+  const SAMPLE_COUNT = 12;
+  let sampleIdx = 0;
+  const nextSample = () => `/marketing/samples/sample-${String((sampleIdx++ % SAMPLE_COUNT) + 1).padStart(2, "0")}.webp`;
   for (const v of vendors) {
+    const portfolioImages = v.portfolio.map(() => nextSample());
     const row = await db.vendor.create({
       data: {
         slug: v.slug, nameAr: v.nameAr, nameEn: v.nameEn, city: v.city, cityAr: v.cityAr, cityEn: v.cityEn,
         bioAr: v.bioAr, bioEn: v.bioEn,
         logoUrl: `/seed/vendors/${v.slug}.svg`,
-        coverUrl: `/seed/portfolio/${v.slug}-1.svg`,
+        coverUrl: portfolioImages[0] ?? `/seed/portfolio/${v.slug}-1.svg`,
         machines: v.machines as object[], capabilities: v.capabilities as object, certifications: v.certifications as object[],
         foodSafe: v.certifications.some((c) => c.code === "FOOD_SAFE"),
         rating: v.rating, ratingCount: v.ratingCount, onTimePct: v.onTimePct, leadTimeDays: v.leadTimeDays,
         minOrderQty: v.minOrderQty, serviceAreas: v.serviceAreas, verified: true, status: "ACTIVE",
         portfolio: {
-          create: v.portfolio.map((p, i) => ({ ...p, imageUrl: `/seed/portfolio/${v.slug}-${i + 1}.svg`, sortOrder: i })),
+          create: v.portfolio.map((p, i) => ({ ...p, imageUrl: portfolioImages[i], sortOrder: i })),
         },
       },
     });
@@ -560,7 +567,7 @@ async function main() {
   // ── Users
   const now = new Date();
   await db.user.create({
-    data: { phone: "+201000000001", name: "Elba Ops Admin", role: "ADMIN", locale: "ar", consentAt: now },
+    data: { phone: "+201000000001", name: "فريق تشغيل علبة", role: "ADMIN", locale: "ar", consentAt: now },
   });
   const org = await db.organization.create({ data: { name: "Bloom Candles", city: "CAIRO" } });
   const buyer = await db.user.create({
@@ -621,13 +628,15 @@ async function main() {
 
   const qty = 500;
   const unit = egp(19 * 1.0 * 1.3); // sell price incl. margin, ex-VAT
-  const subtotal = unit * qty + egp(600);
-  const vat = Math.round(subtotal * 0.14);
+  // Lines must reconcile (CR-59, ETA e-invoice): goods = the line total; VAT 14% on goods + delivery,
+  // as placeOrder() stores it (subtotal includes shipping, total = subtotal + VAT).
   const shipping = egp(150);
+  const subtotal = unit * qty + shipping;
+  const vat = Math.round(subtotal * 0.14);
   const order = await db.order.create({
     data: {
       number: "ELB-26001", buyerId: buyer.id, vendorId: vendorIds[0], status: "IN_PRODUCTION",
-      subtotalPiasters: subtotal, vatPiasters: vat, shippingPiasters: shipping, totalPiasters: subtotal + vat + shipping,
+      subtotalPiasters: subtotal, vatPiasters: vat, shippingPiasters: shipping, totalPiasters: subtotal + vat,
       vendorCostPiasters: egp(19) * qty + egp(600),
       shippingAddress: { name: "منى عادل", phone: "+201000000002", governorate: "Cairo", city: "Nasr City", street: "14 Abbas El Akkad St", building: "14", floor: "3", apartment: "7" },
       paidAt: now, dueDate: new Date(now.getTime() + 6 * 86_400_000),
@@ -646,7 +655,7 @@ async function main() {
           { type: "PRODUCTION_STARTED" },
         ],
       },
-      payments: { create: [{ provider: "mock", method: "CARD", status: "PAID", amountPiasters: subtotal + vat + shipping, providerRef: "mock_txn_0001" }] },
+      payments: { create: [{ provider: "mock", method: "CARD", status: "PAID", amountPiasters: subtotal + vat, providerRef: "mock_txn_0001" }] },
       invoices: { create: [{ number: "INV-26001", subtotalPiasters: subtotal, vatPiasters: vat, totalPiasters: subtotal + vat }] },
     },
   });
@@ -808,6 +817,9 @@ async function main() {
 
     await db.dataRequest.create({ data: { userId: buyer.id, kind: "EXPORT", status: "OPEN", createdAt: new Date(now.getTime() - 3 * 86_400_000) } });
   }
+
+  // ── Catalogue: families seeded printers also make (additive; prisma/seed-catalogue.ts).
+  console.log("Catalogue capability extension:", await extendCatalogueCapabilities(db));
 
   const counts = {
     structures: await db.structure.count(), materials: await db.material.count(), finishes: await db.finish.count(),

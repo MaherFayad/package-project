@@ -164,6 +164,27 @@ function handleFor(kind: ShapeRecipe["handle"], dims: VesselDims, depth: Mm, bod
   }
 }
 
+/**
+ * Height of the finish the closure covers, from the top down (mm). The core closures are drawn
+ * from `finishTopY - finishH` up, so this is what makes a crown a 6 mm crimp and a cork capsule
+ * a foil sleeve down the neck instead of a cap the full 18 mm finish height.
+ * Crown: ISO 12821 crown skirt ~6 mm. Swing top: the stopper sits on the head bead only.
+ * Cork: the capsule (EN 12726 / typical 50 to 60 mm on a 750 ml) covers the finish and part of
+ * the neck. Others: the whole finish (ROPP shells, screw caps, lug lids).
+ */
+export function closureCoverMm(finish: BottleFinish, H: Mm, neckBaseY: Mm): Mm {
+  switch (finish.kind) {
+    case "crown":
+      return 6.5;
+    case "swing":
+      return 7.5;
+    case "cork":
+      return Math.max(finish.heightMm, Math.min(52, (H - neckBaseY) * 0.7));
+    default:
+      return finish.heightMm;
+  }
+}
+
 /** Build the profile. Throws if the proportions collapse (validated dims never do). */
 export function buildBottleProfile(recipe: ShapeRecipe, dims: VesselDims, finish: BottleFinish): BottleProfile {
   const H = dims.H;
@@ -320,7 +341,7 @@ export function buildBottleProfile(recipe: ShapeRecipe, dims: VesselDims, finish
     neckZone: neckZone ? shift(neckZone) : undefined,
     finishTopY: H,
     finishR: T,
-    finishH: finish.heightMm,
+    finishH: closureCoverMm(finish, H, neckBaseY),
     fillMaxY: Y(isRim ? H - finish.heightMm - 2 : finishBaseY),
     handle: handleFor(recipe.handle, dims, depthAt, bodyTopY, finishBaseY, Rt, T),
   };

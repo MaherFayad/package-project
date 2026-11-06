@@ -69,7 +69,7 @@ export function UsersIndex({ rows }: { rows: UserRow[] }) {
         {shown.map((r) => (
           <IndexTableRow key={r.id} id={r.id} tone={r.phone.startsWith("deleted:") ? "subdued" : undefined}>
             <IndexTableCell>
-              <IndexTableRowLink url={`/${locale}/admin/users/${r.id}`}>{r.name || t("admin.users.noName")}</IndexTableRowLink>
+              <IndexTableRowLink url={`/${locale}/admin/users/${r.id}`}><bdi>{r.name || t("admin.users.noName")}</bdi></IndexTableRowLink>
             </IndexTableCell>
             <IndexTableCell>
               <bdi dir="ltr">{maskPhone(r.phone)}</bdi>

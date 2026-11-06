@@ -7,7 +7,6 @@ import { startTransition, useCallback, useEffect, useMemo, useReducer, useRef, u
 import { FACE_IDS, type ArtworkLayer, type DesignDoc, type DesignFinishCode, type DimsPreset, type FaceId, type Locale, type PrintSurface, type StructureCode } from "@/types";
 import { boardAppearance, type DielineModel } from "@/lib/dieline";
 import { modelByCode, type ModelDef } from "@/lib/library";
-import type { ModelCard } from "@/lib/library/search";
 import { defaultMaxDpr } from "@/components/three/hooks";
 import { docGeometry, docModel, docModelCode, facesForAreas, normaliseDocModel } from "@/lib/library/doc";
 import { FINISHES } from "@/lib/configurator";
@@ -71,10 +70,10 @@ import { ExportModal, GateModal, PriceBadge, PriceModal, ShareModal, type Export
 import styles from "./designer.module.css";
 
 const StageSkeleton = () => <div className={lib.stageSkeleton} aria-hidden="true" />;
-// One canvas for boxes and containers (PERF-09): model switches keep the WebGL context.
-const DesignStage = dynamic(() => import("./DesignStage"), { ssr: false, loading: StageSkeleton });
+// One persistent 3D canvas for boxes and containers (PERF-09).
+const Stage3D = dynamic(() => import("./Stage3D"), { ssr: false, loading: StageSkeleton });
 // The picker (370 cards, search) loads only when it is opened (PERF-04).
-const ModelPicker = dynamic(() => import("./ModelPicker").then((m) => m.ModelPicker), { ssr: false });
+const ModelPicker = dynamic(() => import("@/components/catalogue/CataloguePicker").then((m) => m.ModelPicker), { ssr: false });
 
 type View = "3d" | "face" | "dieline";
 type SaveState = "idle" | "dirty" | "saving" | "saved" | "error";
@@ -95,8 +94,6 @@ export interface DesignerAppProps {
   loadError: "notFound" | null;
   /** Restore this device's autosaved draft on mount (?resume=1). */
   resumeLocal?: boolean;
-  /** Light picker cards, built on the server (no generators shipped for them; PERF-04). */
-  pickerCards?: ModelCard[];
 }
 
 const reducer = (s: History<DesignDoc>, a: HistoryAction<DesignDoc>) => historyReducer(s, a);
@@ -131,7 +128,7 @@ function slugify(name: string) {
   );
 }
 
-export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, loadError, resumeLocal, pickerCards: pickerCardsProp }: DesignerAppProps) {
+export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, loadError, resumeLocal }: DesignerAppProps) {
   const { t } = useI18n();
   const router = useRouter();
   const toast = useToast();
@@ -266,7 +263,13 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
   // ── textures ─────────────────────────────────────────────────────
   // Phones and 1x screens: a 1024 px artwork sheet (≈ 4x less texture memory and upload; PERF-22).
   const [sheetPx] = useState(() => (typeof window !== "undefined" && defaultMaxDpr() < 2 ? 1024 : 2048));
-  const { canvases, version, images, imgVersion, fonts } = useArtworkCanvases(model, doc.artwork, doc.materialCode, bothSides, sheetPx);
+  // CR-15: a new, empty design previews a "Your logo" hint on the lid (3D and dieline only; the
+  // document, the face editor, preflight and the print file never contain it).
+  const placeholder = useMemo(
+    () => ({ text: t("designer.artwork.placeholderLogo"), fontFamily: locale === "ar" ? ("IBM Plex Sans Arabic" as const) : ("Inter" as const), direction: locale === "ar" ? ("rtl" as const) : ("ltr" as const), color: "#616161" }),
+    [t, locale],
+  );
+  const { canvases, version, images, imgVersion, fonts } = useArtworkCanvases(model, doc.artwork, doc.materialCode, bothSides, sheetPx, placeholder);
 
   // ── preflight ────────────────────────────────────────────────────
   const issues = useMemo(() => (model ? runPreflight(doc, model) : []), [doc, model]);
@@ -464,32 +467,7 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
     if (applyGeometry(next)) setUrl(designIdRef.current, code);
   };
 
-  // Picker cards (370 models) are fetched after hydration instead of riding in the HTML (R2-01).
-  const [pickerCards, setPickerCards] = useState<ModelCard[]>(pickerCardsProp ?? []);
-  const cardsReq = useRef<Promise<void> | null>(null);
-  const loadCards = useCallback(() => {
-    if (pickerCardsProp?.length) return Promise.resolve();
-    cardsReq.current ??= fetch(`/${locale}/design/picker-cards`)
-      .then((r) => (r.ok ? (r.json() as Promise<ModelCard[]>) : Promise.reject(new Error(String(r.status)))))
-      .then(setPickerCards)
-      .catch(() => {
-        cardsReq.current = null;
-      });
-    return cardsReq.current;
-  }, [locale, pickerCardsProp]);
-  useEffect(() => {
-    const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
-    if (w.requestIdleCallback) {
-      const id = w.requestIdleCallback(() => void loadCards(), { timeout: 4000 });
-      return () => w.cancelIdleCallback?.(id);
-    }
-    const id = setTimeout(() => void loadCards(), 2000);
-    return () => clearTimeout(id);
-  }, [loadCards]);
-  const openPicker = useCallback(() => {
-    void loadCards();
-    setPickerOpen(true);
-  }, [loadCards]);
+  const openPicker = useCallback(() => setPickerOpen(true), []);
   const onFinish = useCallback((code: DesignFinishCode, on: boolean) => commit(toggleFinish(docRef.current, code, on)), [commit]);
   const onPrintSides = useCallback((p: DesignDoc["printSides"]) => commit({ ...docRef.current, printSides: p }), [commit]);
 
@@ -697,37 +675,6 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
     />
   );
 
-  // Scene props for the shared 3D stage, memoised so panel / price updates do not re-render it (PERF-18).
-  const vesselScene = useMemo(
-    () =>
-      geo?.vessel && libModel?.kind === "vessel"
-        ? { model: libModel, doc, geo, sheet: canvases?.outside ?? null, version, handleRef: sceneRef, turntable: viewOpts.turntable, open: viewOpts.open }
-        : null,
-    [geo, libModel, doc, canvases, version, viewOpts.turntable, viewOpts.open],
-  );
-  const boxScene = useMemo(
-    () =>
-      !vesselScene && model
-        ? {
-            model,
-            material: doc.materialCode,
-            finish: doc.finishCode,
-            finishes: doc.finishes,
-            artwork: doc.artwork,
-            images,
-            foldProgress: fold,
-            canvases,
-            version,
-            printInside: bothSides,
-            handleRef: sceneRef,
-            dimensions: viewOpts.dimensions,
-            scene: viewOpts.scene,
-            turntable: viewOpts.turntable,
-            locale,
-          }
-        : null,
-    [vesselScene, model, doc.materialCode, doc.finishCode, doc.finishes, doc.artwork, images, fold, canvases, version, bothSides, viewOpts.dimensions, viewOpts.scene, viewOpts.turntable, locale],
-  );
   // Masked finishes the selected item can carry ("Spot UV on this item", FN-02).
   const layerFinishes = useMemo(
     () =>
@@ -867,16 +814,45 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
           {model ? (
             <>
               <div className={styles.sceneWrap} data-active={view === "3d"} aria-hidden={view !== "3d"} data-testid="stage-3d" data-model={docModelCode(doc)}>
-                <DesignStage
-                  box={boxScene}
-                  vessel={vesselScene}
-                  modelCode={docModelCode(doc)}
-                  poster={libModel ? `/models/${libModel.slug}.svg` : undefined}
-                  onReady={onSceneReady}
+                <Stage3D
                   ariaLabel={t("viewer.label")}
                   roleDescription={t("viewer.roleDescription")}
                   keyboardHint={t("viewer.keyboardHint")}
                   fallback={t("viewer.unsupported")}
+                  poster={libModel ? `/models/${libModel.slug}.svg` : undefined}
+                  onReady={onSceneReady}
+                  {...(geo?.vessel && libModel?.kind === "vessel"
+                    ? {
+                        vessel: {
+                          model: libModel,
+                          doc,
+                          geo,
+                          sheet: canvases?.outside ?? null,
+                          version,
+                          handleRef: sceneRef,
+                          turntable: viewOpts.turntable,
+                          open: viewOpts.open,
+                        },
+                      }
+                    : {
+                        box: {
+                          model,
+                          material: doc.materialCode,
+                          finish: doc.finishCode,
+                          finishes: doc.finishes,
+                          artwork: doc.artwork,
+                          images,
+                          foldProgress: fold,
+                          canvases,
+                          version,
+                          printInside: bothSides,
+                          handleRef: sceneRef,
+                          dimensions: viewOpts.dimensions,
+                          scene: viewOpts.scene,
+                          turntable: viewOpts.turntable,
+                          locale,
+                        },
+                      })}
                 />
                 {/* Large poster from the first paint until the 3D chunk renders a frame (PERF-10). */}
                 {libModel ? (
@@ -916,6 +892,7 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
                   label={t("designer.view.dielineLabel")}
                   legend={t("designer.view.dielineLegend")}
                   panelLabels={panelLabels}
+                  locale={locale}
                 />
               ) : null}
             </>
@@ -1069,8 +1046,7 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
         </div>
       </aside>
 
-      {/* Mounted once the cards have arrived (they are prefetched on idle, so normally before the first open). */}
-      {pickerUsed && pickerCards.length ? <ModelPicker open={pickerOpen} cards={pickerCards} current={docModelCode(doc)} onClose={() => setPickerOpen(false)} onPick={onModel} /> : null}
+      {pickerUsed ? <ModelPicker open={pickerOpen} current={docModelCode(doc)} onClose={() => setPickerOpen(false)} onPick={onModel} /> : null}
       <GateModal reason={gate?.reason ?? null} onClose={() => setGate(null)} onSuccess={onSignedIn} />
       <PriceModal
         open={modal === "price"}

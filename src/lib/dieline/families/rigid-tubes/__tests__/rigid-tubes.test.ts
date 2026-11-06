@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import type { Dims, FaceId } from "@/types";
 import { applyAffine, boundsAt, computePoses } from "../../../fold";
 import { polygonArea } from "../../../geometry";
+import { WRAP_VISUAL_MM } from "../common";
+import { DISC_SEAT_MM } from "../tubes";
 import { DEFINITIONS, DEFINITION_BY_CODE, FAMILY_MATERIALS, FamilyValidationError, octabinChamfer, printAreas, type CatalogueDefinition, type FamilyDielineModel } from "..";
 
 const DIACRITICS = /[ً-ْٰ]/;
@@ -33,14 +35,17 @@ function sizeCases(def: CatalogueDefinition): Dims[] {
 function expectedOuter(def: CatalogueDefinition, d: Dims, m: FamilyDielineModel): Dims | null {
   const t = m.thicknessMm;
   const c = 0.5;
+  // Wrap paper on the inside of a lid / cover is drawn WRAP_VISUAL_MM thick: lids and covers
+  // clear it (one paper per side).
+  const p = WRAP_VISUAL_MM;
   switch (def.code) {
     case "RIGID_LID_BASE":
     case "RIGID_WINDOW":
-      return { L: d.L + 4 * t + 2 * c, W: d.W + 4 * t + 2 * c, H: d.H + 2 * t };
+      return { L: d.L + 4 * t + 2 * (c + p), W: d.W + 4 * t + 2 * (c + p), H: d.H + 2 * t };
     case "RIGID_SHOULDER":
-      return { L: d.L + 4 * t + 2 * c, W: d.W + 4 * t + 2 * c, H: d.H + 2 * t };
+      return { L: d.L + 4 * t + 2 * (c + p), W: d.W + 4 * t + 2 * (c + p), H: d.H + 2 * t };
     case "RIGID_BOOK_MAGNETIC":
-      return { L: d.L + 2 * t + 4, W: d.W + 4 * t + c, H: d.H + 3 * t };
+      return { L: d.L + 2 * t + 4, W: d.W + 4 * t + c + p, H: d.H + 3 * t + 2 * p };
     case "RIGID_DRAWER":
       return { L: d.L + 4 * t + 1.5, W: d.W + 2 * t, H: d.H + 3 * t + 1.5 };
     case "RIGID_HINGED_LID":
@@ -135,7 +140,8 @@ describe.each(DEFINITIONS.map((d) => [d.code, d] as const))("%s", (_code, def) =
         // Polygon section: width between the outer apothem diameter and the circumdiameter.
         expect(m.closedOuter.L).toBeGreaterThan(d.L + 2 * m.thicknessMm);
         expect(m.closedOuter.L).toBeLessThan((d.L + 6 * m.thicknessMm + 1) / Math.cos(Math.PI / 24) + 0.5);
-        const h = d.H + (def.code === "TUBE_PUSH_UP" ? m.thicknessMm : 2 * m.thicknessMm);
+        // End discs are seated DISC_SEAT_MM proud of the rims (no z-fight with the rim edges).
+        const h = d.H + (def.code === "TUBE_PUSH_UP" ? m.thicknessMm + DISC_SEAT_MM : 2 * (m.thicknessMm + DISC_SEAT_MM));
         expect(m.closedOuter.H).toBeCloseTo(h, 1);
         continue;
       }

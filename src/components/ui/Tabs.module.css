@@ -1,5 +1,6 @@
 .Root { display: flex; flex-direction: column; min-width: 0; }
 .Wrapper {
+  position: relative; /* keeps absolutely positioned (visually hidden) descendants inside the scroller */
   overflow-x: auto;
   scrollbar-width: none;
   margin-block: calc(-1 * var(--p-space-050));
@@ -40,7 +41,12 @@
 .Tab:hover { background: var(--p-color-bg-fill-transparent-hover); color: var(--p-color-text); }
 .Tab:active { background: var(--p-color-bg-fill-transparent-active); }
 .Tab:focus-visible { outline: var(--p-focus-ring-width) solid var(--p-color-border-focus); outline-offset: 0; }
-.selected, .selected:hover { background: var(--p-color-bg-fill-transparent-selected); color: var(--p-color-text); }
+/* Selected state is not colour-tint only (1.2:1): a 2px bar at the block end, 12.6:1 (WCAG 1.4.11, 1.4.1). */
+.selected, .selected:hover {
+  background: var(--p-color-bg-fill-transparent-selected);
+  color: var(--p-color-text);
+  box-shadow: inset 0 -2px 0 0 var(--p-color-text);
+}
 .Tab:disabled { color: var(--p-color-text-disabled); cursor: default; background: transparent; }
 .Panel { padding-block-start: var(--p-space-400); outline: none; }
 .Panel:focus-visible { outline: var(--p-focus-ring-width) solid var(--p-color-border-focus); outline-offset: 2px; border-radius: var(--p-border-radius-100); }

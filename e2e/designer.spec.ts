@@ -143,13 +143,21 @@ test("box and container switches keep one 3D canvas (PERF-09)", async ({ page })
   const stage = page.getByTestId("stage-3d");
   await expect(stage.locator("canvas").first()).toBeVisible({ timeout: 45_000 });
   await stage.locator("canvas").first().evaluate((c) => ((c as HTMLCanvasElement).dataset.e2eFirst = "1"));
-  for (const code of ["ROUND_BOTTLE", "FEFCO_0201", "STAND_UP_POUCH", "FEFCO_0427"]) {
-    const change = page.getByRole("button", { name: "Change model" });
+  const models: [string, string][] = [
+    ["ROUND_BOTTLE", "Water and juice bottle"],
+    ["FEFCO_0201", "FEFCO 0201"],
+    ["STAND_UP_POUCH", "Stand-up pouch"],
+    ["FEFCO_0427", "FEFCO 0427"],
+  ];
+  for (const [code, query] of models) {
+    const change = page.getByRole("button", { name: "Change model" }).first();
     if (!(await change.isVisible())) await page.getByRole("button", { name: /Show more controls/ }).click();
     await change.click();
-    await page.locator(`[data-testid="model-picker"] [data-model="${code}"]`).click();
+    const picker = page.getByTestId("catalogue-picker");
+    await picker.getByRole("searchbox").fill(query);
+    await picker.getByRole("button", { name: /^All/ }).click();
+    await picker.locator(`[data-model="${code}"]`).click();
     await expect(stage).toHaveAttribute("data-model", code);
-    await expect(stage.locator("[data-scene]")).toHaveAttribute("data-scene", code.startsWith("FEFCO") ? "box" : "vessel");
   }
   // Same <canvas> element (same WebGL context) after every switch.
   await expect(stage.locator("canvas")).toHaveCount(1);

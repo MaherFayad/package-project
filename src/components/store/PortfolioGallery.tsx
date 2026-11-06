@@ -1,8 +1,9 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState, type KeyboardEvent } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Button, Modal, Text } from "@/components/ui";
+import { Text } from "@/components/ui/Text";
 import styles from "./store.module.css";
 
 export interface GalleryItem {
@@ -18,6 +19,10 @@ export interface GalleryLabels {
   next: string;
   counter: string; // "Image {n} of {total}"
 }
+
+// The lightbox loads on first open: a static import put the Modal (and Button/Spinner) stylesheets
+// in front of first paint on every printer profile (R2-MK-05).
+const Modal = dynamic(() => import("@/components/ui/Modal").then((m) => m.Modal), { ssr: false });
 
 const fill = (s: string, v: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (m, k: string) => (k in v ? String(v[k]) : m));
 
@@ -63,7 +68,9 @@ export function PortfolioGallery({ items, labels, dir }: { items: GalleryItem[];
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={current.src} alt={current.caption} className={styles.lightboxImage} />
             <div className={styles.lightboxBar}>
-              <Button icon={dir === "rtl" ? ChevronRight : ChevronLeft} accessibilityLabel={labels.prev} onClick={() => go(-1)} disabled={total < 2} />
+              <button type="button" className={styles.galleryNav} aria-label={labels.prev} onClick={() => go(-1)} disabled={total < 2}>
+                {dir === "rtl" ? <ChevronRight size={20} aria-hidden /> : <ChevronLeft size={20} aria-hidden />}
+              </button>
               <div aria-live="polite">
                 <Text as="p" alignment="center">
                   {current.caption}
@@ -72,7 +79,9 @@ export function PortfolioGallery({ items, labels, dir }: { items: GalleryItem[];
                   {fill(labels.counter, { n: (index ?? 0) + 1, total })}
                 </Text>
               </div>
-              <Button icon={dir === "rtl" ? ChevronLeft : ChevronRight} accessibilityLabel={labels.next} onClick={() => go(1)} disabled={total < 2} />
+              <button type="button" className={styles.galleryNav} aria-label={labels.next} onClick={() => go(1)} disabled={total < 2}>
+                {dir === "rtl" ? <ChevronLeft size={20} aria-hidden /> : <ChevronRight size={20} aria-hidden />}
+              </button>
             </div>
           </div>
         ) : null}

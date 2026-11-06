@@ -56,6 +56,10 @@
   margin: 0;
   text-align: end;
 }
+.lineSub {
+  border-block-start: var(--p-border-width-025, 1px) solid var(--p-color-border-secondary, var(--p-color-border));
+  padding-block-start: var(--p-space-150);
+}
 .total {
   font-weight: var(--p-font-weight-semibold);
 }
@@ -155,33 +159,91 @@
   }
 }
 
-/* Paid: success moment (one subtle entrance, none under reduced motion) */
-.success {
-  animation: order-success var(--p-motion-duration-300) var(--p-motion-ease-out);
+/* Paid: success header card (CR-23). White surface, success tint only on the icon disc,
+   check drawn once in 300 ms; nothing moves under reduced motion. */
+.paid {
+  display: grid;
+  gap: var(--p-space-400);
+  padding: var(--p-space-400);
+  border-radius: var(--p-border-radius-300);
+  background: var(--p-color-bg-surface);
+  box-shadow: var(--p-shadow-100, 0 1px 0 rgba(26, 26, 26, 0.07)), inset 0 0 0 1px var(--p-color-border-secondary);
 }
-@keyframes order-success {
+.paidHead {
+  display: flex;
+  gap: var(--p-space-300);
+  align-items: flex-start;
+}
+.paidIcon {
+  flex: none;
+  inline-size: 32px;
+  block-size: 32px;
+}
+.paidDisc {
+  fill: var(--p-color-bg-surface-success);
+}
+.paidCheck {
+  fill: none;
+  stroke: var(--p-color-icon-success);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 22;
+  stroke-dashoffset: 0;
+  animation: paid-check var(--p-motion-duration-300) var(--p-motion-ease-out) 120ms both;
+}
+@keyframes paid-check {
   from {
-    opacity: 0;
-    transform: translateY(6px);
+    stroke-dashoffset: 22;
   }
   to {
-    opacity: 1;
-    transform: none;
+    stroke-dashoffset: 0;
   }
 }
+.paidText {
+  display: grid;
+  gap: var(--p-space-100);
+  min-inline-size: 0;
+}
+.paidTitle {
+  margin: 0;
+  font-size: var(--p-font-size-450, 1.125rem);
+  line-height: 1.35;
+  font-weight: var(--p-font-weight-semibold);
+}
+.paidTitle:focus {
+  outline: none;
+}
+.paidTitle:focus-visible {
+  outline: 2px solid var(--p-color-border-focus);
+  outline-offset: 2px;
+  border-radius: var(--p-border-radius-100);
+}
+.paidBody {
+  margin: 0;
+  color: var(--p-color-text-secondary);
+}
+.paidNext {
+  display: grid;
+  gap: var(--p-space-150);
+  padding-block-start: var(--p-space-300);
+  border-block-start: 1px solid var(--p-color-border-secondary);
+}
 @media (prefers-reduced-motion: reduce) {
-  .success {
+  .paidCheck {
     animation: none;
   }
 }
 .nextTitle {
+  margin: 0;
+  font-size: var(--p-font-size-325, 0.8125rem);
   font-weight: var(--p-font-weight-semibold);
 }
 .nextList {
   margin: 0;
   padding-inline-start: var(--p-space-500);
   display: grid;
-  gap: var(--p-space-050);
+  gap: var(--p-space-100);
 }
 
 /* Buyer orders: cards on phones, index table from 640px */
@@ -251,4 +313,10 @@
   .cardRow {
     transition: none;
   }
+}
+
+/* Money columns line up: tabular figures, two decimals everywhere in lists (CR-35). */
+.phoneOnly,
+.wideOnly {
+  font-variant-numeric: tabular-nums;
 }

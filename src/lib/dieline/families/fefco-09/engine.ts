@@ -138,6 +138,24 @@ export function flapOn(
   return p.bbox;
 }
 
+/**
+ * Right-triangle brace hinged on a panel (cushion rails, corner braces, corner posts): leg
+ * folded 90°, hypotenuse face folded 135°, glue tab folded 135° back onto the parent's
+ * unprinted face. Compensated for the board so the closed section is exactly `s` × `s`:
+ * - the face pivots (√2 − 1)·t below its printed surface, so its bevelled end stays inside
+ *   the leg instead of sticking out past it,
+ * - the leg is shortened by (1 − 1/√2)·t, the depth that pivot adds below the leg,
+ * - the face ends one caliper short of the parent, so the glue tab lies flat against the
+ *   parent's back instead of inside it (no z-fighting with the parent).
+ */
+export function triangleBrace(s: number, glue: number, t: number, labels: { leg?: string; face?: string } = {}): ChainPanel[] {
+  return [
+    { len: s - (1 - Math.SQRT1_2) * t, fold: 90, label: labels.leg ?? "Leg" },
+    { len: Math.SQRT2 * (s - t), fold: 135, pivotDepth: Math.SQRT2 - 1, label: labels.face ?? "Brace face" },
+    { len: glue, fold: 135, glue: true },
+  ];
+}
+
 /* ───────────────────────── params ───────────────────────── */
 
 /** zod schema for one fitting's params (host dims within limits + declared options). */

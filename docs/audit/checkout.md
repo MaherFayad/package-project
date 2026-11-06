@@ -15,7 +15,7 @@ Step count (phone, design saved to paid): before 9 taps + full re-entry of the c
 | CO-03 | high | checkout, all steps (phone) | The only primary action sits under three offer cards and the full price breakdown: about 1,700px of scroll on 390px before "Continue". | ISO 9241-110 (efficiency), Polaris checkout pattern | Sticky bottom action bar below 1040px with the live total, "View price breakdown" and the primary button (same button element as desktop, so tests and focus order are unchanged). Hidden when there is no offer. | fixed |
 | CO-04 | high | checkout stepper (phone) | Vertical 4-step stepper takes ~300px above the fold on every step. | ISO 9241-110 | Compact progress on phones: "Step 1 of 4", "Next: Delivery", 4-segment bar; full stepper from 640px. | fixed |
 | CO-05 | high | checkout, custom quantity | "Apply" truncated to "A…" / "تط…" at every width; Enter in the field did nothing; `type=number` rejected Arabic-Indic digits and commas. | WCAG 1.4.10, 3.3.2 | Real `<form>` (Enter submits), button keeps its width, text input with numeric keypad, accepts `٢٠٠٠` and `2,000`, range hint "1 to 2,000". | fixed |
-| CO-06 | high | checkout, >2,000 boxes | Dead end: banner says "we reply within one working day" but there is no quote request behind it and no action; the primary button is disabled. | ISO 9241-110 (error tolerance) | Honest copy ("Instant prices go up to 2,000 …") plus a banner action "Order 2,000 boxes now". A real manual-quote request needs an API (see Open). | fixed (partial, see Open) |
+| CO-06 | high | checkout, >2,000 boxes | Dead end: banner says "we reply within one working day" but there is no quote request behind it and no action; the primary button is disabled. | ISO 9241-110 (error tolerance) | Round 1: honest copy plus "Order 2,000 boxes now". Round 2: real price request (see R2-01). | reopened (round 2), fixed |
 | CO-07 | high | payment, declined card | A decline threw the buyer back to the method list: tap Continue again and retype every field. | ISO 9241-110 (error tolerance), WCAG 3.3.1 | Open a fresh attempt with the same method automatically, keep expiry / CVC / name, clear only the number, show the error on the number field and focus it ("Nothing was charged"). The form stays busy until the new attempt exists (no race). e2e updated to the shorter path; assertions kept. | fixed |
 | CO-08 | high | `/orders` (phone) | Index table clips on 390px: total, payment and status are scrolled off-screen, so the list shows only number, date, printer. | WCAG 1.4.10 | Phone layout: one tappable card per order (number, total, date · printer · boxes, status badge, chevron); table from 640px. Shared filters. | fixed |
 | CO-09 | high | order page after payment | The success moment led with "Reorder" as the primary action and a one-line banner; no "what happens next". | ISO 9241-110 (self-descriptiveness) | Success banner (one 300ms entrance, off under reduced motion) with printer, estimated delivery date and 3 next steps. Reorder becomes primary only once delivered; before that a quiet tertiary action. | fixed |
@@ -61,3 +61,131 @@ Pass 2 checks: axe 0 violations on all 21 screens x 4 (390/1440 x ar/en), no hor
 - `src/components/ui/Button.module.css` (one line, CO-02)
 - `src/i18n/designer.{en,ar}.ts`: `view.assembled` (identical to the designer branch, CO-29)
 - `e2e/checkout.spec.ts` (decline step follows the shorter flow; all assertions kept, one added)
+
+
+## Round 2
+
+Base: round 1 fixes of every area merged (`b240eba`). Walked again as a first-time Egyptian D2C brand owner on a phone, then on desktop: share link (anonymous, signed-in non-owner, owner, unknown token), soft gate (checkout while signed out → login with `next`), checkout start (empty and with a design), steps 1 to 3 (tiers, custom quantity incl. Arabic-Indic digits, >2,000, empty and invalid address, proof), payment (methods, card, declined, paid), success, invoice, orders list (empty, seeded), order tracking (5 seeded statuses, unknown id), account (empty, seeded). Script: 27 screens x ar/en x 390/1440 = 108 captures, plus the new quote screens (16). axe-core (WCAG 2.0/2.1/2.2 A + AA) and horizontal-overflow check on every capture.
+
+### Round 1 re-verification
+
+| id | result |
+|---|---|
+| CO-01, CO-02 | axe 0 violations on all 108 captures (both were axe criticals). Still fixed. |
+| CO-03, CO-26, CO-27 | 390px viewport: sticky bar with total + "Continue" on every step; on a first visit the cookie notice sits above the bar, not on it (`round2/after/vp-ar-390-step1-cookie.png`). Still fixed. |
+| CO-04, CO-05, CO-14, CO-15, CO-17, CO-18, CO-22, CO-23 | Seen in captures; custom quantity accepts `٥٠٠٠` and `5,000`; Enter submits. Still fixed. |
+| CO-06 | Reopened: the "Order 2,000 boxes now" action avoided the dead end, but a brand that needs 5,000 boxes still had no way to ask for a price, and the copy "Above 2,000 boxes we price by hand" promised a service with nothing behind it. Fixed in R2-01. |
+| CO-07 | e2e decline → retry on the same form passes (desktop + mobile). Still fixed. |
+| CO-08, CO-19, CO-25 | Orders cards on 390, shared status badges. Still fixed. |
+| CO-09, CO-10 | Success banner with date and 3 next steps; cancelled order hides due/pending. Still fixed. |
+| CO-11, CO-12, CO-13, CO-16, CO-20, CO-21, CO-24, CO-28, CO-29 | Checked in captures / code. Still fixed. |
+| CO-30, CO-31 | Build: checkout 151 KB, pay 146 KB, orders 144 KB, order 145 KB, account 148 KB, share 138 KB first-load JS (all < 200 KB). Perf numbers below. Still fixed. |
+
+### Findings
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R2-01 | high | checkout step 1, >2,000 boxes (`CheckoutClient.tsx`, `checkout/actions.ts`) | Completes CO-06. Above the instant cap the buyer could only drop to 2,000; no way to ask for the larger run, and the summary showed a disabled "Continue" with "Choose a quantity and printer". | ISO 9241-110 (task suitability, error tolerance) | **Price request**: in place of the offers, a panel "Request a price for 5,000 boxes" explains the 2,000 instant cap, that a request is free and does not commit, takes an optional note (500 chars: batches, target date, budget) and says where we reply (WhatsApp/SMS on the account phone, LTR-isolated in Arabic). "Order 2,000 boxes now" stays as the plain alternative. On send: success banner (announced, focused) "Price request sent for 5,000 boxes" with "View my requests". The summary says large orders are priced by the team; the disabled Continue and sticky bar are gone in this mode. Server: `requestQuoteAction` (session, zod, owner check through `loadCheckoutDesign`, quantity 2,001 to 1,000,000, 5 per hour per user) stores a `Quote` with status `REQUESTED`, zero totals and one product line carrying the quantity, open for 72 h, and writes a `QUOTE_REQUEST` / `QUOTE` audit row (quantity, governorate, note) so operations see it in `/admin/audit`. Re-sending the same quantity for the same design within 72 h returns the open request (no duplicates). No schema change. e2e added. | fixed |
+| R2-02 | medium | account (`account/page.tsx`) | After a price request there was nowhere to see it. | ISO 9241-110 (self-descriptiveness) | "Price requests" card (anchor `#quote-requests`): "5,000 boxes · design name", sent date, badge "Waiting for price" (attention) or "Closed" after 72 h, and "We reply to each request within one working day". Only shown when the buyer has requests. | fixed |
+| R2-03 | medium | payment (`PaymentClient.tsx`) | Steps 1 to 3 show "Step n of 4" (phone) or the stepper (desktop); the payment page, step 4, showed neither, so the buyer lost the sense of being on the last step. | ISO 9241-110 (self-descriptiveness), Polaris checkout | Same stepper on desktop (current: Payment) and the compact "Step 4 of 4 · Next: printing" bar on phones. | fixed |
+| R2-04 | medium | account saved designs, 390px | The name was truncated to "E2E m…" and the meta wrapped to five lines because three actions shared the row. | WCAG 1.4.10 (reflow), visual hierarchy | Below 640px the actions move to their own row aligned with the text (local `account.module.css`, the shared store stylesheet is untouched). | fixed |
+| R2-05 | medium | order tracking, payment card (`orders/[id]/page.tsx`) | CO-12 added "Subtotal (excl. VAT)" to checkout and payment, but the order page went straight from lines to VAT 14%: no visible base for the tax, unlike the invoice. | Egyptian VAT 14%, ETA e-invoice (net, tax, total) | "Subtotal (excl. VAT)" line with the same top rule as checkout. | fixed |
+| R2-06 | low | share link, owner (`s/[id]/page.tsx`) | The owner opening their own link read "Ordering gives you your own copy…" (they order the original) and got "Design your own" (a blank design) as the second action. | UX copy accuracy | For the owner: "This is your design. Anyone with this link sees this read-only page and can order their own copy." and "Open in designer" on this design. Visitors unchanged. | fixed |
+| R2-08 | high | share link `/s/[id]`, phone (`SharedViewerLazy.tsx`, `share.module.css`) | Phone LCP 11.4 to 11.8 s: the placeholder shown while the 3D chunk loads was an empty grey box, so the LCP became the 3D scene's poster after ~775 KB of 3D JS. | Core Web Vitals LCP < 2.5 s | The server-rendered placeholder now shows the model poster (`fetchpriority=high`, same footprint, `lazy` + `Suspense` so the poster comes from props, not shared module state). It is a hair wider than the 3D poster so the first paint of the box stays the LCP. Phone LCP **3.46 s (en) / 4.02 s (ar)**, CLS 0.001; the rest is FCP (see Open). | fixed |
+| R2-07 | low | Arabic copy (`buyer.shareSignIn`) | "برقم الموبايل" while every form label says "رقم المحمول" (platform P-25). | Terminology consistency | "ستسجل الدخول برقم المحمول أولا، ويستغرق ذلك دقيقة." | fixed |
+
+Counts (round 2): high 2 (+ CO-06 reopened), medium 4, low 2: 8 new findings, all fixed; CO-06 now fully fixed.
+
+Pass 2 checks (after the fixes, rebuilt with `next build`): walk of all 108 screens again, axe 0 violations and 0 px horizontal overflow on every one; new quote form / sent / account screens (ar/en x 390/1440) axe 0; focus moves to the sent banner; `٥٠٠٠` accepted as 5,000; the phone number renders `012 3352 1195` in the Arabic sentence (isolated).
+
+Pass 2 (round 2): `npm run lint`, `npm run typecheck` clean; `npm test` 54 files / 6,245 tests pass; `next build` ok; e2e `checkout`, `journey`, `smoke` (`--workers=2 --trace off`, desktop + mobile): 15 passed, 1 skipped by the journey spec itself on mobile. Keyboard only on the price request: quantity field → Enter → Tab order Apply, note, "Request a price", "Order 2,000 boxes now"; Enter on "Request a price" sends and moves focus to the sent banner (visible ring). Under `prefers-reduced-motion: reduce` only the focus-ring transition runs (no entrance or price motion). Share link as its owner: owner copy and "Open in designer", 0 px overflow (`round2/after/ar-390-share-owner.png`).
+
+### Performance (round 2, `docs/audit/tools/perf-pages.mjs`, `next start`)
+
+Phone = 390x844, DPR 2, 4x CPU, Slow 4G (562 ms RTT); desktop = 1440x900, no throttling. First-load JS from `next build` (gzip): checkout 151 KB, pay 146 KB, orders 144 KB, order 145 KB, account 148 KB, share 137 KB (3D chunk lazy).
+
+| page | profile | LCP (en / ar) | CLS | INP | LCP element |
+|---|---|---|---|---|---|
+| checkout | desktop | 180 / 232 ms | 0.000 | 32 / 24 ms | first text |
+| checkout | phone | 3.14 / 3.71 s | 0.024 / 0.000 | 128 / 96 ms | cookie notice text (= FCP) |
+| order tracking | desktop | 164 / 196 ms | 0.000 | n/a / 24 ms | first text |
+| order tracking | phone | 3.15 / 3.24 s | 0.000 | 48 ms | cookie notice text (= FCP) |
+| share | desktop | 616 / 676 ms | 0.008 | 160 ms | model poster |
+| share | phone | 3.46 / 4.02 s (was 11.4 / 11.8 s) | 0.001 | 104 / 128 ms | model poster (placeholder) |
+
+All CLS and INP within budget. Phone LCP equals FCP on checkout and tracking: it is bound by Slow-4G round trips for the HTML, render-blocking CSS (65 to 73 KB) and the Arabic/Latin fonts (118 to 151 KB), and the LCP element is the shared cookie notice (PERF-07, storefront owner). Nothing in these pages' own code delays it; see Open.
+
+### Open / outside scope (round 2)
+
+- **Admin queue for price requests**: requests are stored (`Quote.status = REQUESTED`) and logged (`/admin/audit`, entity `QUOTE`, action `QUOTE_REQUEST`), but there is no admin screen to price one and send it back, and no outbound WhatsApp/SMS. Needs the admin owner (list `REQUESTED` quotes, enter price, mark priced) and the notifications owner. Until then the account badge stays "Waiting for price" and turns "Closed" after 72 h.
+- **Soft gate copy**: the login page reached from checkout says "Sign in or create a free account" with no mention of the box being ordered or that the design is kept (auth owner, `components/auth`).
+- **Two store headers**: the share page and orders use the dark store header, the account page the marketing header (storefront / marketing owners).
+- **Phone LCP 3.1 to 3.7 s on checkout / tracking** (budget 2.5 s): LCP = FCP = the shared cookie notice text after fonts and CSS on Slow 4G. Needs the shell owners: SSR the notice decision (PERF-07), `font-display`/subset the Arabic font, inline critical CSS.
+- `statusBadge(PAID)` renders yellow (attention) in the account and orders lists although payment is done (shared `lib/orders/state`).
+
+### Files touched outside scope (round 2)
+
+- `e2e/checkout.spec.ts`: one new test (price request → account); existing tests unchanged.
+- None in `src` outside the checkout scope (account styles live in a new local `account.module.css`; the share placeholder is in `s/[id]`).
+
+## Round 3
+
+Base: main branch with every round 2 branch merged and `docs/audit/ROUND3.md` (`d1ea599`), merged into this branch. Work list for checkout: CR-08, CR-09, CR-19, CR-22, CR-23, CR-34, CR-35, CR-48, CR-51, CR-59 (`craft.md`), X-01 (`a11y.md`), B-04, B-05, B-11, B-13, B-14, B-15 (`business.md`). X-06 (`a11y.md`, filed under designer) is in `s/[id]/page.tsx`, a checkout-scope file, so it is fixed here too.
+
+### Findings
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| CR-08 | high | `lib/orders/status-tone.ts`, `lib/orders/state.ts`, orders list/detail, account | Same status, different badge tone per area (Paid yellow in the buyer list, grey elsewhere; Delivered green in admin, grey in vendor). | Consistency; WCAG 1.4.1 | One map in `src/lib/orders/status-tone.ts`. After merging the vendor branch this is the vendor session's file (`STATUS_TONE`, `statusTone()`, `PROBLEM_TONE`), extended here with `paymentTone()` (Paid = neutral, complete; Pending = attention; Failed/Refunded = critical), `ToneSpec` and `DISPUTED_TONE`. Status PAID is "awaiting printer" (attention) in that map, so buyer screens label it "Awaiting printer" / "بانتظار المطبعة", and "Paid" appears only as the neutral payment badge: "Paid" is never yellow. `statusBadge()` in `state.ts` delegates, so admin `OrdersIndex` matches; vendor jobs use the map. Unit tests in both sessions. | fixed |
+| CR-09 | high | order line, account designs, checkout start list | Missing renders showed the broken-image glyph. | Polish, trust | `modelPoster(modelCode, structureCode)` (`lib/orders/poster.ts`, server only) gives the model's catalogue drawing as the fallback. Seeded `ELB-26001` now shows the mailer drawing. | fixed |
+| CR-19 | medium | checkout summary, offer cards | Totals swapped with no tick, unlike the designer badge. | Motion consistency | `Tick` keyed on the value with the designer's motion (300 ms, 4 px rise from 40% opacity, ease-out), so the new figure animates in the frame it appears; on the summary subtotal, VAT, total, the sticky total, each offer price and the per-box figure. Only the number ticks, not the words around it (the CR-20 lesson). Off under reduced motion. | fixed |
+| CR-22 | medium | pay button (`PaymentClient.tsx`) | Busy Pay button went flat grey with only a spinner. | WCAG 4.1.3; craft | Keeps the brand fill (not disabled; repeat submits ignored), leading 16 px spinner + "Paying…" / "جار الدفع…", `aria-busy` on the form. Verified: label "Paying…", `aria-busy=true`, button enabled. The shared `Button loading` style is unchanged (UI-kit owner). | fixed |
+| CR-23 | medium | `/orders/[id]?paid=1` (`PaidHeader.tsx`, new) | Saturated green banner, focus left at the top. | Craft; WCAG 2.4.3 | White success header card: 32 px check drawn with `stroke-dashoffset` (300 ms ease-out, 120 ms delay, static under reduced motion) on a `bg-surface-success` disc (the tint is on the icon only, so the card stays calm), title "Payment received…", delivery promise, "What happens next" list. Focus moves to the heading once (verified: `activeElement = paid-title`, ar and en). | fixed |
+| CR-34 | medium | order timeline | Timeline outside the card system; 24 h times. | Consistency | Card titled "Activity" / "سجل النشاط"; times use the same locale as `formatDateTime` (`en-EG` → "6:01 AM", `ar-EG` → "6:01 ص"). | fixed |
+| CR-35 | medium | orders list (phone cards + table), account recent orders | "14,913" next to "6,976.80". | Polaris numeric columns | Always two decimals in lists (`alwaysDecimals`), tabular figures on the list containers. Two decimals rather than none so list totals match the invoice to the piaster (ETA). | fixed |
+| CR-48 | low | checkout back button | Accessible name "Back: Back". | WCAG 2.5.3, 4.1.2 | `Page` prefixes "Back:", so the content is now the previous step: "Back: Quantity and printer" / "رجوع: الكمية والمطبعة". | fixed |
+| CR-51 | low | offer card per-box price | "(excl. / VAT)" broke inside the parenthesis. | Typography | No-break space inside "(excl. VAT)" / "(دون الضريبة)". | fixed |
+| CR-59 | medium | `prisma/seed.ts` `ELB-26001` | Line "500 × 24.70 = 12,350" vs "Printed boxes 12,950" (setup folded into the subtotal, VAT not on delivery). | Trust; ETA lines must reconcile | Seed stores it like `placeOrder()`: subtotal = goods + delivery, VAT 14% on that, total = subtotal + VAT; payment and invoice follow. Now 12,350 + 150 = 12,500, VAT 1,750, total 14,250. | fixed |
+| X-01 | high | payment method step | After "Continue" focus fell to `<body>`. | WCAG 2.4.3, 4.1.3 | Focus moves to the card number (card) or to the method heading `#payment-step-heading` (wallet, Fawry, InstaPay). Verified with keyboard Enter: `activeElement = card-number`. | fixed |
+| X-06 | medium | share link not found | No `h1`. | WCAG 1.3.1, 2.4.6 | `Page title` set to the not-found title. | fixed |
+| B-15 | high | checkout + lead data | Round 2 added the request; ROUND3 asks for a lead the admin can work from. | Plan §4.1 step 4 | The request now also captures a "Needed by" date, and its audit row stores the buyer phone and a spec snapshot (structure, model, dims, board, finish, sides). `listQuoteRequests()` in `src/lib/orders/quote-requests.ts` (server only) returns each lead with buyer, quantity, governorate, deadline, note, spec, `dueAt` (24 h SLA) and `validUntil` for the admin inbox. | fixed (checkout half); admin inbox: admin owner |
+| B-13 | high | delivery step, invoice, `lib/eta` (new) | No place for a company name or tax number; no ETA seam. | Egyptian e-invoicing (ETA), VAT Law 67/2016 | "I need a company tax invoice" in the delivery step: company name, tax registration number (9 digits; dashes, spaces and Arabic-Indic digits accepted, shown as 123-456-789), commercial register (optional). Validated on the client and in `placeOrderAction` (zod), saved on the buyer's `Organization` (created or updated), prefilled next time, printed on the invoice (verified: "Nour Candles LLC", "123-456-789"). `src/lib/eta/index.ts` is the documented adapter seam (`EtaAdapter`, `pendingEtaAdapter`, receiver type B/P); nothing is sent yet. | fixed (seam only; live ETA submission: platform/technical) |
+| B-05 | high | checkout step 1, `lib/orders/sample.ts` (new), service | No paid physical sample. | Plan §1.3 bridge 4, §6.1 | A "Sample · 5 boxes" option under the tiers: fixed price (default EGP 750 + VAT) plus the chosen printer's delivery, digital print, 3 production days, no prepay discount. It runs the normal flow (address, proof, payment). The goods price is credited once, as a "Sample credit" discount line with VAT recomputed on the lower base, on the buyer's next order of the same design within 60 days of paying for the sample (banner "Sample credit EGP 750 applied, valid until …"; capped at the goods, never delivery). Markers in the order timeline: `SAMPLE_ORDER`, `SAMPLE_CREDIT:<n>`, `SAMPLE_CREDITED:<n>`; a cancelled order releases the credit. Monthly platform cap (default 100). Verified end to end: sample EGP 998.64 paid, next order shows the credit and pays less. | fixed (admin cap/cost screen: admin owner) |
+| B-11 | medium | `lib/orders/checkout-settings.ts` (new), checkout, `.env.example` | Prepay discount defaulted to 0%. | Plan §7.3 | Default 3%, overridable by `PREPAY_DISCOUNT_PCT` and by an admin `PlatformSetting` row `"checkout"` (`{ prepayDiscountPct, sample: { enabled, pricePiasters, maxPieces, creditDays, monthlyCap } }`, validated, 0 to 20%). Used by offers, tier prices and `placeOrder`. Summary note "Paying in full now takes 3% off the boxes." `.env.example` now leaves it empty (= 3%). | fixed (admin form: admin owner) |
+| B-14 | medium | `placeOrder` | Order quotes capped at the constant 72 h, ignoring the admin setting. | Plan §5.5 | `placeOrder` uses `loadPricingConfig().quoteValidityHours` (already clamped to 1 to 72 h in `makeConfig`), the same value the designer and offers use. The admin field still accepts up to 336 h (admin owner: cap and label it at 72). | fixed (checkout half) |
+| B-04 | medium | proof step | Preflight only ran in the designer. | Plan §1.3 bridge 3; WCAG 3.3.1, 3.3.2 | Checkout half: the page runs the designer's `runPreflight` and shows "Print check" on the proof step: "Ready to print", or each problem with its panel and a "Fix in the designer" link. Red issues need the labelled "Print it as it is" checkbox (help text, inline error, focus moves to it). Server half (technical branch, merged): `placeOrder` runs `proofPreflight` on the approved snapshot, refuses with `PREFLIGHT_BLOCKED` unless `acknowledgePreflight`, and stores the result on `Proof.preflight` and the "Proof approved" event (`PREFLIGHT:1E/0W:ACK`). Checkout sends `acknowledgePreflight` from the checkbox, and the check also covers sample orders. The buyer timeline reads "Proof approved: print-check problems accepted as they are". Verified: blocked without the box; with it the order is placed and recorded. | fixed |
+
+Counts (round 3 work list): high 7 (CR-08, CR-09, X-01, B-15, B-13, B-05; plus X-06 picked up), medium 9, low 2. All fixed on the checkout side; the remaining halves are listed below.
+
+Round 2 open item closed: "`statusBadge(PAID)` renders yellow" (CR-08).
+
+### Verification (round 3)
+
+- Browser walk (`next start`, seeded DB), ar 1440 and en 390: sample order → company invoice (invalid tax number focuses the field) → proof print check → keyboard Continue (focus to card number) → paying state → success header (focus on heading) → second order with the sample credit → invoice with company and tax number → orders list → preflight error blocks approval until override. axe 0 violations and 0 px overflow on every screen; no page errors. Seeded `ELB-26001` (en 1440, ar 390): model drawing, lines reconcile, Activity card, axe 0. Screenshots: `docs/screenshots/audit/checkout/round3/`.
+- `npm run lint`, `npm run typecheck` clean; `npm test` 65 files / 8,165 tests pass (new: `src/lib/orders/__tests__/checkout-round3.test.ts`, 8 tests: tone map, tax number, sample pricing and credit, settings defaults); `next build` ok (checkout 153 KB, pay 147 KB, orders 144 KB, order 146 KB, account 149 KB, share 138 KB first-load JS).
+- e2e `checkout`, `journey`, `smoke`, `admin`, `vendor` (`--workers=2 --trace off`, desktop + mobile): 26 passed, 4 skipped by the specs themselves. (One earlier run had `journey` time out under parallel load; it passed alone and in the full re-run.)
+
+### Open / for other owners (round 3)
+
+- **Admin**: quote-leads inbox reading `listQuoteRequests()` (B-15); a form for the `"checkout"` setting (prepay %, sample price, pieces, credit days, monthly cap) and sample cost per order sourced (B-05, B-11); cap the quote-validity field at 72 h (B-14).
+- **Platform / technical**: a live `EtaAdapter` (accredited provider or ETA API with signing), EGS item codes per structure, e-receipts for B2C (B-13).
+- **UI kit**: the shared `Button loading` still hides the label behind a grey fill elsewhere; checkout no longer uses it for Pay.
+- Tier prices on step 1 do not subtract a sample credit (the credit shows on the offer totals and summary).
+
+### Files touched outside scope (round 3)
+
+- `src/lib/orders/`: `status-tone.ts`, `poster.ts`, `sample.ts`, `company.ts`, `checkout-settings.ts`, `quote-requests.ts` (new); `service.ts` (offers take the prepay %, samples, sample credit, preflight override note, admin quote validity); `state.ts` (`statusBadge` delegates); `__tests__/checkout-round3.test.ts` (new).
+- `src/lib/eta/index.ts` (new, documented stub).
+- `prisma/seed.ts` (`ELB-26001` totals only, CR-59).
+- `.env.example` (`PREPAY_DISCOUNT_PCT` empty = 3%).
+- Read-only imports of `components/designer/lib/preflight` and `lib/library/doc` (server side).
+
+### Round 3, integration pass
+
+Merged the marketing (B-26 `lib/pricing/headline.ts`), vendor (shared `status-tone.ts`) and technical (B-04 server preflight) branches as the integrator asked.
+- **B-26**: checkout pre-selects `headlineOffer(offers)` (the best match), and the order service takes its defaults from `HEADLINE_DEFAULTS` (4 colours, Greater Cairo), so the public page, the designer badge and checkout quote the same price.
+- **B-04**: my action-level check was replaced by the service's `proofPreflight` + `acknowledgePreflight` (one mechanism, stored on the proof).
+- **CR-08**: adopted the vendor's map; see the row above.
+- **Conflicts outside scope**: in `components/store/data.ts` and `api/vendor/uploads/route.ts`, vendor and technical conflicted with each other. Kept both sides: technical's cached select plus vendor's approved-only portfolio; vendor's review status plus technical's `revalidateTag("catalog")`.
+- **Re-verified** after the merges: lint and typecheck clean; `npm test` 69 files / 8,206 tests pass; `next build` ok. e2e `checkout`, `journey`, `smoke`, `admin`, `vendor`, `storefront`: 38 passed, 4 skipped by the specs. The round 3 browser walk (en 390, ar 1440) is all axe 0 with 0 px overflow, no page errors. The preflight override places the order and shows on the timeline.
+- **B-15 follow-up (reported by admin via the integrator)**: price-request leads stored whatever string the client sent for the governorate, which was the English address name ("Cairo"); nothing validated it. `requestQuoteAction` now accepts a name or a code, stores the governorate code (`CAIRO`) and rejects unknown values (`toGovernorateKey()` and `GOVERNORATE_KEYS` in `lib/orders/governorates.ts`). `listQuoteRequests()` returns codes, also for leads written before the fix. Addresses keep the English name, which is the canonical form in `ShippingAddress`. Tests: name/code mapping, and a legacy row read back as a code. Checked: new e2e leads store `CAIRO`. The checkout e2e specs never wrote a governorate into leads; fixtures that seed leads on the admin branch should write codes.

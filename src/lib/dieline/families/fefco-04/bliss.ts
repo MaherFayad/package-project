@@ -43,8 +43,10 @@ export function blissContainer(dims: Dims, t: number, _f: StructureFeatures = {}
 
   const sheet = bboxOf(b.panels.flatMap((p) => p.polygon));
   const gap = 10;
-  let x0 = sheet.x + sheet.width + gap + glue;
   for (const side of ["R", "L"] as const) {
+    // One end panel on each side of the body, on the side it ends up on: it then slides in
+    // from outside along the box axis instead of travelling through the body.
+    const x0 = side === "R" ? sheet.x + sheet.width + gap + glue : sheet.x - gap - glue - ew;
     const id = `end${side}`;
     const y0 = sheet.y + glue;
     const poly: Polygon = rectPolygon(x0, y0, ew, eh);
@@ -57,14 +59,13 @@ export function blissContainer(dims: Dims, t: number, _f: StructureFeatures = {}
       .makeTranslation(target, cy, cz)
       .multiply(new Matrix4().makeRotationY(rotY))
       .multiply(new Matrix4().makeTranslation(-c.x, c.y, 0));
-    b.piece(id, side === "R" ? "right" : "left", poly, side === "R" ? "Right end" : "Left end", { matrix: m.toArray(), stage: 1, lift: dims.H * 0.6 }, { label: "End panel" });
+    b.piece(id, side === "R" ? "right" : "left", poly, side === "R" ? "Right end" : "Left end", { matrix: m.toArray(), stage: 1, lift: dims.H * 0.7 }, { label: "End panel" });
     const e = rectEdges({ x: x0, y: y0, width: ew, height: eh });
     for (const [k, edge] of Object.entries(e)) {
       const len = Math.hypot(edge[1].x - edge[0].x, edge[1].y - edge[0].y);
       const taper = Math.min(glue * 0.8, len * 0.2);
       b.attach(`${id}_glue_${k}`, "glue", id, edge, glue, { kind: "trapezoid", taperA: taper, taperB: taper }, { stage: 0, stack: 0, printable: false, label: "Glue flap" });
     }
-    x0 += ew + 2 * glue + gap;
   }
   return { builder: b, closedRotation: TILT_UP };
 }

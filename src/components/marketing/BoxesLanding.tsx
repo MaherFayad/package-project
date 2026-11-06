@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import type { Locale, StructureFamily } from "@/types";
 import { getT } from "@/i18n";
 import type { DictKey } from "@/i18n";
@@ -7,7 +8,6 @@ import { getLowestUnit, listStructures } from "@/components/store/data";
 import { ProductCard } from "./ProductCard";
 import { renderDims, renderSrc, srcSetFor } from "./assets";
 import styles from "./marketing.module.css";
-import { ModelLinks } from "@/components/designer/ModelLinks";
 import { MODELS } from "@/lib/library";
 import { formatNumber } from "@/lib/format";
 
@@ -21,12 +21,17 @@ const SHOWCASE = ["ECMA_RTE", "PIZZA", "FEFCO_0427", "GABLE_BOX", "RIGID_BOX"] a
 export async function BoxesLanding({
   locale,
   titleAs = "h1",
-  library = "full",
+  library,
 }: {
   locale: Locale;
   titleAs?: "h1";
-  /** "full": the whole model library inline (/catalog). "teaser": a link band + closing CTA (/boxes). */
-  library?: "full" | "teaser";
+  /**
+   * The whole model library, rendered inline (/catalog passes `<ModelLinks />`). Omitted: a link
+   * band + closing CTA (/boxes). A slot, not an import: importing ModelLinks here put the model
+   * picker's client chunk and 15 Polaris stylesheets in front of first paint on /boxes, which
+   * never shows the library (R2-MK-02).
+   */
+  library?: ReactNode;
 }) {
   const t = getT(locale);
   const H = titleAs;
@@ -41,7 +46,7 @@ export async function BoxesLanding({
           <H id="boxes-title" className={`${styles.h1} m-enter-lcp`} style={{ ["--m-i" as string]: 1 }}>
             {t("marketing.boxes.title")}
           </H>
-          <p className={`${styles.lead} m-enter`} style={{ ["--m-i" as string]: 2 }}>
+          <p className={`${styles.lead} m-enter-lcp`} style={{ ["--m-i" as string]: 2 }}>
             {t("marketing.boxes.body")}
           </p>
           <div className={`${styles.actions} m-enter`} style={{ ["--m-i" as string]: 3 }}>
@@ -96,7 +101,7 @@ export async function BoxesLanding({
         </div>
       </section>
 
-      {library === "teaser" ? (
+      {!library ? (
         <>
           <section className={`${styles.band} ${styles.bandGrey}`} aria-labelledby="all-models-title">
             <div className={styles.container}>
@@ -147,7 +152,7 @@ export async function BoxesLanding({
                 <p className={styles.lead}>{t("library.catalog.subtitle", { count: formatNumber(MODELS.length) })}</p>
               </div>
             </div>
-            <ModelLinks locale={locale} />
+            {library}
           </div>
         </section>
       )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { ClipboardList, Download, FileText, Trash2 } from "lucide-react";
+import { Circle, CircleCheck, ClipboardList, Download, FileText, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
   Avatar,
@@ -12,6 +12,7 @@ import {
   Card,
   Divider,
   DropZone,
+  Icon,
   InlineStack,
   Inset,
   Layout,
@@ -30,7 +31,7 @@ import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { formatDate, formatDateTime, formatDims, formatMoney, formatNumber } from "@/lib/format";
 import { acceptJob, addJobNote, declineJob, deleteQcPhoto, startProduction, submitQc } from "./server/actions";
-import { allowedActions, dueState, DECLINE_REASONS, hasRequiredQcPhotos, isDeclined, latestEvent, parseDeclineNote, qcState, QC_PHOTO_KINDS, type DeclineReason, type QcPhotoKind } from "./lib/jobs";
+import { allowedActions, dueState, DECLINE_REASONS, isDeclined, latestEvent, parseDeclineNote, qcState, QC_PHOTO_KINDS, type DeclineReason, type QcPhotoKind } from "./lib/jobs";
 import { splitVendorCost } from "./lib/payouts";
 import { formatBytes, UPLOAD_RULES } from "./lib/files";
 import { DueLabel, JobStatusBadge } from "./JobBits";
@@ -61,8 +62,12 @@ export function JobDetail({ job, vendorName }: { job: JobDetailDTO; vendorName: 
   const base = `/${locale}/vendor`;
   const pdfUnlocked = ["ACCEPTED", "IN_PRODUCTION", "QC_PENDING", "READY_TO_SHIP", "SHIPPED", "DELIVERED"].includes(job.status);
   const pdfUrl = `/api/vendor/jobs/${job.id}/print-pdf${item ? `?item=${item.id}` : ""}`;
-  const dielineUrl = `/api/vendor/jobs/${job.id}/dieline${item ? `?item=${item.id}` : ""}`;
+  // Added by 3D engine (CR-27): localized panel labels
+  const dielineUrl = `/api/vendor/jobs/${job.id}/dieline?lang=${locale}${item ? `&item=${item.id}` : ""}`;
   const structureName = t(`structures.${job.structureCode}` as DictKey);
+  // The exact model the buyer designed on; the rate card structure is only how it is priced.
+  const model = item?.model && item.model.code !== item.structureCode ? item.model : null;
+  const productName = model ? model.name[locale] : structureName;
   const dueText = job.dueDate ? formatDate(job.dueDate, locale, "long") : "—";
 
   /* ── Header actions ── */
@@ -74,13 +79,9 @@ export function JobDetail({ job, vendorName }: { job: JobDetailDTO; vendorName: 
       loading: busy === "start",
       onAction: () => run("start", () => startProduction(job.id), t("vendorPortal.job.productionStarted")),
     };
-  else if (actions.includes("uploadQc"))
-    primaryAction = {
-      content: t("vendorPortal.job.actions.submitQc"),
-      disabled: !actions.includes("submitQc"),
-      loading: busy === "submitQc",
-      onAction: () => run("submitQc", () => submitQc(job.id), t("vendorPortal.job.qcSubmitted")),
-    };
+  // CR-52: "Submit for quality check" lives once, at the bottom of the QC card, next to the
+  // checklist that explains why it is disabled. The header links there instead.
+  else if (actions.includes("uploadQc")) primaryAction = { content: t("vendorPortal.job.actions.goToQc"), url: "#qc" };
 
   // Downloads live in the "Production files" card; the header keeps only the workflow actions.
   const secondaryActions: PageAction[] = [
@@ -125,7 +126,7 @@ export function JobDetail({ job, vendorName }: { job: JobDetailDTO; vendorName: 
               {e.by === "you" ? vendorName : t("meta.siteName")}
             </Text>
             {": "}
-            <span className={styles.PreWrap}>{e.note}</span>
+            <span className={styles.PreWrap} dir="auto">{e.note}</span>
           </span>
         );
       } else if (e.type === "VENDOR_DECLINED") {
@@ -204,7 +205,22 @@ export function JobDetail({ job, vendorName }: { job: JobDetailDTO; vendorName: 
                 {item ? (
                   <dl className={styles.Defs}>
                     <dt>{t("vendorPortal.job.structure")}</dt>
-                    <dd>{t(`structures.${item.structureCode}` as DictKey)}</dd>
+                    <dd>
+                      {model ? (
+                        <BlockStack gap="050">
+                          <Text as="span" fontWeight="semibold">
+                            {model.name[locale]}
+                          </Text>
+                          <Text as="span" tone="subdued" variant="bodySm">
+                            <bdi dir="ltr">{model.standard}</bdi>
+                            {" · "}
+                            {t("vendorPortal.job.pricedOn", { structure: t(`structures.${item.structureCode}` as DictKey) })}
+                          </Text>
+                        </BlockStack>
+                      ) : (
+                        t(`structures.${item.structureCode}` as DictKey)
+                      )}
+                    </dd>
                     <dt>{t("vendorPortal.job.size")}</dt>
                     <dd>
                       <Text as="span" numeric>
@@ -245,7 +261,7 @@ export function JobDetail({ job, vendorName }: { job: JobDetailDTO; vendorName: 
                   </dl>
                 ) : null}
                 {/* eslint-disable-next-line @next/next/no-img-element -- generated SVG from our API, sized by CSS */}
-                <img className={styles.Dieline} src={`${dielineUrl}${item ? "&" : "?"}inline=1`} alt={t("vendorPortal.job.dielinePreview", { name: structureName })} loading="lazy" />
+                <img className={styles.Dieline} src={`${dielineUrl}&inline=1`} alt={t("vendorPortal.job.dielinePreview", { name: productName })} loading="lazy" />
               </BlockStack>
             </Card>
 
@@ -266,9 +282,9 @@ export function JobDetail({ job, vendorName }: { job: JobDetailDTO; vendorName: 
             </Card>
 
             {showQcCard ? (
+              <div id="qc" className={styles.Anchor}>
               <Card
                 title={t("vendorPortal.job.qcTitle")}
-                id="qc"
                 footer={
                   canUploadQc ? (
                     <Button
@@ -347,15 +363,31 @@ export function JobDetail({ job, vendorName }: { job: JobDetailDTO; vendorName: 
                         actionTitle={uploading ? t("vendorPortal.common.loading") : t("vendorPortal.job.qcUpload")}
                         actionHint={t("vendorPortal.job.qcUploadHint", { size: formatBytes(UPLOAD_RULES.qc.maxBytes) })}
                       />
-                      {!hasRequiredQcPhotos(job.qcPhotos) ? (
-                        <Text as="p" tone="subdued" variant="bodySm">
-                          {t("vendorPortal.job.qcRequired")}
+                      {/* Which required photos are in (ops needs both before the job can be submitted). */}
+                      <BlockStack gap="100">
+                        <Text as="p" variant="bodySm" fontWeight="semibold" id="qc-required-label">
+                          {t("vendorPortal.job.qcChecklistLabel")}
                         </Text>
-                      ) : null}
+                        <ul className={styles.Checklist} aria-labelledby="qc-required-label">
+                          {(["FIRST_SHEET", "PACKED_BUNDLE"] as const).map((k) => {
+                            const have = job.qcPhotos.some((p) => p.kind === k && p.status !== "REJECTED");
+                            return (
+                              <li key={k} className={styles.ChecklistItem}>
+                                <Icon source={have ? <CircleCheck aria-hidden="true" /> : <Circle aria-hidden="true" />} tone={have ? "success" : "subdued"} />
+                                <Text as="span" variant="bodySm">
+                                  {kindLabel(k)}
+                                  <span className="visually-hidden">{`: ${have ? t("vendorPortal.job.qcChecklistDone") : t("vendorPortal.job.qcChecklistMissing")}`}</span>
+                                </Text>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </BlockStack>
                     </BlockStack>
                   ) : null}
                 </BlockStack>
               </Card>
+              </div>
             ) : null}
 
           </BlockStack>
@@ -512,6 +544,7 @@ export function JobDetail({ job, vendorName }: { job: JobDetailDTO; vendorName: 
           <Text as="p">
             {t("vendorPortal.job.acceptBody", {
               quantity: formatNumber(job.quantity),
+              product: productName,
               price: formatMoney(job.vendorCostPiasters, locale),
               date: dueText,
             })}

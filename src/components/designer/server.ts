@@ -259,11 +259,11 @@ export async function loadPresets(code: StructureCode): Promise<DimsPreset[]> {
 let loadable: Record<string, { files?: string[] }> | null | undefined;
 
 /**
- * JS files of a `next/dynamic` import in DesignerApp ("./DesignStage": the one 3D canvas), read from
+ * JS files of a `next/dynamic` import in DesignerApp ("./Stage3D", the one 3D canvas), read from
  * the build's react-loadable manifest, so the page can ask the browser to fetch three.js while it
  * hydrates instead of after. Empty under `next dev` or when the manifest is missing.
  */
-export function lazyChunkHrefs(entry: "./DesignStage"): string[] {
+export function lazyChunkHrefs(entry: "./Stage3D"): string[] {
   if (loadable === undefined) {
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports

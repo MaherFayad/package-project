@@ -32,7 +32,11 @@ import {
   Text,
   TextField,
 } from "@/components/ui";
-import { getOffersAction, placeOrderAction, type OffersResult } from "../actions";
+import { getOffersAction, placeOrderAction, requestQuoteAction, type OffersResult } from "../actions";
+import { QUOTE_NOTE_MAX } from "../quote-request";
+import { formatTaxId, isValidTaxId } from "@/lib/orders/company";
+// Pre-select the best match, the offer the public page and designer badge quote (B-26).
+import { headlineOffer } from "@/lib/pricing/headline";
 import type { DocSpec } from "@/lib/library/spec";
 import styles from "./checkout.module.css";
 
@@ -88,6 +92,16 @@ export function CheckoutClient(props: {
   initial: OffersResult;
   defaultAddress: AddressState;
   spec: DocSpec;
+  /** Buyer's mobile number, formatted, for the "we will reply on …" line of a quote request. */
+  contactPhone: string;
+  /** Paid sample offer (B-05), or null when samples are off or the monthly cap is reached. */
+  sample: { pieces: number; pricePiasters: number; creditDays: number } | null;
+  /** Prepayment discount in percent (B-11). */
+  prepayDiscountPct: number;
+  /** Saved company invoice details (B-13). */
+  defaultCompany: { name: string; taxId: string; commercialRegister: string } | null;
+  /** Production preflight run on the server with the designer's rules (B-04). */
+  preflight: { ready: boolean; errors: number; warnings: number; issues: { code: string; severity: "error" | "warning" | "info"; face?: string }[] };
 }) {
   const { locale, designId, doc, editUrl } = props;
   const { t } = useI18n();
@@ -97,7 +111,7 @@ export function CheckoutClient(props: {
   const [customQty, setCustomQty] = useState("");
   const [customErr, setCustomErr] = useState<string | undefined>();
   const [result, setResult] = useState<OffersResult>(props.initial);
-  const [vendorId, setVendorId] = useState<string | null>(props.initial.ok && props.initial.mode === "instant" ? (props.initial.offers[0]?.vendorId ?? null) : null);
+  const [vendorId, setVendorId] = useState<string | null>(props.initial.ok && props.initial.mode === "instant" ? (headlineOffer(props.initial.offers)?.vendorId ?? null) : null);
   const [showAll, setShowAll] = useState(false);
   const [loading, startLoading] = useTransition();
   const [address, setAddress] = useState<AddressState>(props.defaultAddress);
@@ -107,6 +121,18 @@ export function CheckoutClient(props: {
   const [placing, setPlacing] = useState(false);
   const [placeErr, setPlaceErr] = useState<string | null>(null);
   const [shippingNote, setShippingNote] = useState<string | null>(null);
+  const [sampleMode, setSampleMode] = useState(false);
+  const [company, setCompany] = useState(props.defaultCompany ?? { name: "", taxId: "", commercialRegister: "" });
+  const [wantCompany, setWantCompany] = useState(!!props.defaultCompany);
+  const [companyErr, setCompanyErr] = useState<{ name?: string; taxId?: string }>({});
+  const [override, setOverride] = useState(false);
+  const [overrideErr, setOverrideErr] = useState<string | undefined>();
+  const [quoteNote, setQuoteNote] = useState("");
+  const [neededBy, setNeededBy] = useState("");
+  const [quoteBusy, setQuoteBusy] = useState(false);
+  const [quoteErr, setQuoteErr] = useState<string | null>(null);
+  /** Quantities a quote request was sent for in this visit (re-sending the same one is a no-op on the server). */
+  const [quoteSent, setQuoteSent] = useState<number | null>(null);
   const headingRefs = [useRef<HTMLHeadingElement>(null), useRef<HTMLHeadingElement>(null), useRef<HTMLHeadingElement>(null)];
   const sceneRef = useRef<PackagingSceneHandle | null>(null);
   const lastGov = useRef(props.defaultAddress.governorate);
@@ -123,9 +149,9 @@ export function CheckoutClient(props: {
   }, [total, locale, t]);
 
   const fetchOffers = useCallback(
-    (quantity: number, governorate: string, after?: () => void) => {
+    (quantity: number, governorate: string, after?: () => void, sample = false) => {
       startLoading(async () => {
-        const r = await getOffersAction({ designId, quantity, governorate: governorate || undefined });
+        const r = await getOffersAction({ designId, quantity, governorate: governorate || undefined, sample });
         setResult(r);
         if (r.ok && r.mode === "instant") {
           setVendorId((cur) => (cur && r.offers.some((o) => o.vendorId === cur) ? cur : (r.offers[0]?.vendorId ?? null)));
@@ -136,7 +162,17 @@ export function CheckoutClient(props: {
     [designId],
   );
 
+  const pickSample = () => {
+    if (!props.sample) return;
+    setSampleMode(true);
+    setQty(props.sample.pieces);
+    setCustomQty("");
+    setCustomErr(undefined);
+    fetchOffers(props.sample.pieces, address.governorate, undefined, true);
+  };
+
   const pickQty = (q: number) => {
+    setSampleMode(false);
     setQty(q);
     setCustomQty("");
     setCustomErr(undefined);
@@ -150,6 +186,7 @@ export function CheckoutClient(props: {
       return;
     }
     setCustomErr(undefined);
+    setSampleMode(false);
     setQty(n);
     fetchOffers(n, address.governorate);
   };
@@ -160,10 +197,29 @@ export function CheckoutClient(props: {
     lastGov.current = address.governorate;
     if (!address.governorate) return;
     const g = GOVERNORATES.find((x) => x.name === address.governorate);
-    fetchOffers(qty, address.governorate, () =>
-      setShippingNote(g ? t("checkout.address.shippingChanged", { governorate: t(`governorates.${g.key}` as DictKey) }) : null),
+    fetchOffers(
+      qty,
+      address.governorate,
+      () => setShippingNote(g ? t("checkout.address.shippingChanged", { governorate: t(`governorates.${g.key}` as DictKey) }) : null),
+      sampleMode,
     );
-  }, [address.governorate, qty, fetchOffers, t]);
+  }, [address.governorate, qty, fetchOffers, t, sampleMode]);
+
+  const manual = result.ok && result.mode === "manual_quote";
+
+  const requestQuote = async () => {
+    setQuoteErr(null);
+    setQuoteBusy(true);
+    const r = await requestQuoteAction({ designId, quantity: qty, governorate: address.governorate || undefined, note: quoteNote.trim() || undefined, neededBy: neededBy || undefined });
+    setQuoteBusy(false);
+    if (r.ok) {
+      setQuoteSent(qty);
+      requestAnimationFrame(() => document.getElementById("quote-sent")?.focus());
+      return;
+    }
+    const key = `checkout.errors.${r.error}` as DictKey;
+    setQuoteErr(t(key) === key ? t("checkout.errors.generic") : t(key));
+  };
 
   const goTo = (s: Step) => {
     setStep(s);
@@ -172,6 +228,15 @@ export function CheckoutClient(props: {
       h?.focus({ preventScroll: true });
       h?.scrollIntoView({ block: "start", behavior: "smooth" });
     });
+  };
+
+  const validateCompany = (): boolean => {
+    if (!wantCompany) return true;
+    const e: { name?: string; taxId?: string } = {};
+    if (company.name.trim().length < 2) e.name = t("checkout.address.required");
+    if (!isValidTaxId(company.taxId)) e.taxId = t("buyer.company.taxIdInvalid");
+    setCompanyErr(e);
+    return !e.name && !e.taxId;
   };
 
   const validateAddress = (): boolean => {
@@ -184,8 +249,15 @@ export function CheckoutClient(props: {
     if (address.street.trim().length < 3) e.street = req;
     setAddrErrors(e);
     const first = Object.keys(e)[0];
-    if (first) requestAnimationFrame(() => document.getElementById(`addr-${first}`)?.focus());
-    return !first;
+    if (first) {
+      requestAnimationFrame(() => document.getElementById(`addr-${first}`)?.focus());
+      return false;
+    }
+    if (!validateCompany()) {
+      requestAnimationFrame(() => document.getElementById(company.name.trim().length < 2 ? "company-name" : "company-tax")?.focus());
+      return false;
+    }
+    return true;
   };
 
   const captureProof = async (): Promise<string | null> => {
@@ -218,6 +290,11 @@ export function CheckoutClient(props: {
       if (validateAddress() && selected) goTo(2);
       return;
     }
+    if (props.preflight.errors > 0 && !override) {
+      setOverrideErr(t("buyer.preflight.overrideRequired"));
+      requestAnimationFrame(() => document.getElementById("preflight-override")?.focus());
+      return;
+    }
     if (!approved) {
       setApproveErr(t("checkout.proof.approveRequired"));
       requestAnimationFrame(() => document.getElementById("proof-approve")?.focus());
@@ -234,6 +311,9 @@ export function CheckoutClient(props: {
       approved: true,
       preview,
       locale,
+      sample: sampleMode || undefined,
+      company: wantCompany ? { name: company.name.trim(), taxId: company.taxId, commercialRegister: company.commercialRegister.trim() } : null,
+      acknowledgePreflight: props.preflight.errors > 0 ? override : undefined,
     });
     if (r.ok) {
       router.push(`/${locale}/checkout/pay/${r.orderId}`);
@@ -244,7 +324,8 @@ export function CheckoutClient(props: {
       fetchOffers(qty, address.governorate);
       goTo(0);
     }
-    if (r.error === "INVALID" && r.fields?.some((f) => f.startsWith("address"))) {
+    if (r.error === "PREFLIGHT_BLOCKED") setOverrideErr(t("buyer.preflight.overrideRequired"));
+    if (r.error === "INVALID" && r.fields?.some((f) => f.startsWith("address") || f.startsWith("company"))) {
       validateAddress();
       goTo(1);
     }
@@ -283,7 +364,7 @@ export function CheckoutClient(props: {
                 type="radio"
                 name="qty"
                 value={tier.quantity}
-                checked={qty === tier.quantity}
+                checked={!sampleMode && qty === tier.quantity}
                 disabled={tier.unitPiasters === null}
                 onChange={() => pickQty(tier.quantity)}
               />
@@ -295,7 +376,23 @@ export function CheckoutClient(props: {
               </Text>
             </label>
           ))}
+          {props.sample ? (
+            <label className={`${styles.tier} ${styles.sampleTier}`}>
+              <input className={styles.radio} type="radio" name="qty" value="sample" checked={sampleMode} onChange={pickSample} aria-describedby="sample-help" />
+              <Text as="span" variant="headingSm">
+                {t("buyer.sample.tier", { pieces: props.sample.pieces })}
+              </Text>
+              <Text as="span" variant="bodySm" tone="subdued">
+                {t("buyer.sample.price", { price: formatMoney(props.sample.pricePiasters, locale) })}
+              </Text>
+            </label>
+          ) : null}
         </fieldset>
+        {props.sample ? (
+          <Text as="p" variant="bodySm" tone="subdued" id="sample-help">
+            {t("buyer.sample.help", { days: props.sample.creditDays })}
+          </Text>
+        ) : null}
         <Text as="p" variant="bodySm" tone="subdued" id="qty-help">
           {t("checkout.quantity.help", { max: MAX_INSTANT_QTY.toLocaleString("en-US") })}
         </Text>
@@ -350,21 +447,93 @@ export function CheckoutClient(props: {
               {t("checkout.offers.error")}
             </Banner>
           ) : result.mode === "manual_quote" ? (
-            <Banner
-              tone="info"
-              title={t("checkout.quantity.manualTitle")}
-              action={{ content: t("buyer.manualOrderMax", { max: MAX_INSTANT_QTY.toLocaleString("en-US") }), onAction: () => pickQty(MAX_INSTANT_QTY) }}
-            >
-              {t("buyer.manualHelp", { max: MAX_INSTANT_QTY.toLocaleString("en-US") })}
-            </Banner>
+            quoteSent === qty ? (
+              <div id="quote-sent" tabIndex={-1} className={styles.quoteSent}>
+                <Banner
+                  tone="success"
+                  title={t("buyer.quote.sentTitle", { qty: qty.toLocaleString("en-US") })}
+                  action={{ content: t("buyer.quote.viewRequests"), url: `/${locale}/account#quote-requests` }}
+                  announce
+                >
+                  {t("buyer.quote.sentBody", { phone: props.contactPhone })}
+                </Banner>
+              </div>
+            ) : (
+              <form
+                className={styles.quoteForm}
+                noValidate
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void requestQuote();
+                }}
+              >
+                <BlockStack gap="300">
+                  <BlockStack gap="100">
+                    <Text as="h4" variant="headingSm">
+                      {t("buyer.quote.title", { qty: qty.toLocaleString("en-US") })}
+                    </Text>
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      {t("buyer.quote.body", { max: MAX_INSTANT_QTY.toLocaleString("en-US") })}
+                    </Text>
+                  </BlockStack>
+                  <div className={styles.neededBy}>
+                    <TextField
+                      label={t("buyer.quote.neededBy")}
+                      type="date"
+                      autoComplete="off"
+                      dir="ltr"
+                      value={neededBy}
+                      onChange={setNeededBy}
+                      optional
+                    />
+                  </div>
+                  <TextField
+                    label={t("buyer.quote.note")}
+                    helpText={t("buyer.quote.noteHelp")}
+                    autoComplete="off"
+                    multiline={3}
+                    maxLength={QUOTE_NOTE_MAX}
+                    value={quoteNote}
+                    onChange={setQuoteNote}
+                    optional
+                  />
+                  {quoteErr ? (
+                    <Banner tone="critical" announce>
+                      {quoteErr}
+                    </Banner>
+                  ) : null}
+                  <div className={styles.quoteActions}>
+                    <Button variant="primary" submit loading={quoteBusy}>
+                      {t("buyer.quote.send")}
+                    </Button>
+                    <Button variant="plain" onClick={() => pickQty(MAX_INSTANT_QTY)} disabled={quoteBusy}>
+                      {t("buyer.manualOrderMax", { max: MAX_INSTANT_QTY.toLocaleString("en-US") })}
+                    </Button>
+                  </div>
+                  <Text as="p" variant="bodySm" tone="subdued">
+                    {t("buyer.quote.contact", { phone: props.contactPhone })}
+                  </Text>
+                </BlockStack>
+              </form>
+            )
           ) : offers.length === 0 ? (
             <Banner tone="warning">{t("checkout.offers.none")}</Banner>
           ) : (
             <BlockStack gap="200">
+              {result.credit ? (
+                <Banner tone="success" title={t("buyer.sample.creditTitle", { amount: formatMoney(result.credit.piasters, locale) })}>
+                  {t("buyer.sample.creditBody", { number: result.credit.sampleNumber, date: formatDateTime(result.credit.expiresAt, locale) })}
+                </Banner>
+              ) : null}
+              {result.sample ? (
+                <Banner tone="info" title={t("buyer.sample.modeTitle", { pieces: qty })}>
+                  {t("buyer.sample.modeBody")}
+                </Banner>
+              ) : null}
               <fieldset className={styles.offers}>
                 <legend className="visually-hidden">{t("checkout.offers.title")}</legend>
                 {visibleOffers.map((o) => (
-                  <OfferCard key={o.vendorId} offer={o} checked={o.vendorId === vendorId} onSelect={() => setVendorId(o.vendorId)} locale={locale} />
+                  <OfferCard key={o.vendorId} offer={o} checked={o.vendorId === vendorId} onSelect={() => setVendorId(o.vendorId)} locale={locale} sample={!!result.sample} />
                 ))}
               </fieldset>
               {offers.length > 3 ? (
@@ -442,6 +611,60 @@ export function CheckoutClient(props: {
           <span role="status">{shippingNote}</span>
         </Text>
       ) : null}
+      <Divider />
+      <Checkbox
+        id="company-toggle"
+        label={t("buyer.company.toggle")}
+        helpText={t("buyer.company.toggleHelp")}
+        checked={wantCompany}
+        onChange={(c) => {
+          setWantCompany(c);
+          if (!c) setCompanyErr({});
+        }}
+      />
+      {wantCompany ? (
+        <div className={styles.companyFields}>
+          <TextField
+            id="company-name"
+            label={t("buyer.company.name")}
+            autoComplete="organization"
+            value={company.name}
+            onChange={(v) => {
+              setCompany((c) => ({ ...c, name: v }));
+              if (companyErr.name) setCompanyErr((e) => ({ ...e, name: undefined }));
+            }}
+            error={companyErr.name}
+            requiredIndicator
+          />
+          <div className={styles.grid2}>
+            <TextField
+              id="company-tax"
+              label={t("buyer.company.taxId")}
+              helpText={t("buyer.company.taxIdHelp")}
+              inputMode="numeric"
+              autoComplete="off"
+              dir="ltr"
+              placeholder="123-456-789"
+              value={company.taxId}
+              onChange={(v) => {
+                setCompany((c) => ({ ...c, taxId: v }));
+                if (companyErr.taxId) setCompanyErr((e) => ({ ...e, taxId: undefined }));
+              }}
+              onBlur={() => setCompany((c) => ({ ...c, taxId: formatTaxId(c.taxId) }))}
+              error={companyErr.taxId}
+              requiredIndicator
+            />
+            <TextField
+              label={t("buyer.company.cr")}
+              autoComplete="off"
+              dir="ltr"
+              value={company.commercialRegister}
+              onChange={(v) => setCompany((c) => ({ ...c, commercialRegister: v }))}
+              optional
+            />
+          </div>
+        </div>
+      ) : null}
     </BlockStack>
   );
 
@@ -490,6 +713,61 @@ export function CheckoutClient(props: {
           </Button>
         </InlineStack>
       </BlockStack>
+      <section className={styles.preflight} aria-labelledby="preflight-title" data-state={props.preflight.errors ? "error" : props.preflight.ready ? "ready" : "warning"}>
+        <Text as="h3" variant="headingSm" id="preflight-title">
+          {t("buyer.preflight.title")}
+        </Text>
+        {props.preflight.ready ? (
+          <p className={styles.preflightLine}>
+            <Icon source={BadgeCheck} size="small" tone="success" />
+            {t("preflight.ready")}
+          </p>
+        ) : (
+          <>
+            <p className={styles.preflightLine}>
+              {props.preflight.errors
+                ? props.preflight.warnings
+                  ? t("buyer.preflight.errors", { errors: props.preflight.errors, warnings: props.preflight.warnings })
+                  : t("buyer.preflight.errorsOnly", { errors: props.preflight.errors })
+                : t("buyer.preflight.warnings", { warnings: props.preflight.warnings })}
+            </p>
+            <ul className={styles.preflightList}>
+              {props.preflight.issues
+                .filter((i) => i.severity !== "info" || i.code === "EMPTY_DESIGN")
+                .slice(0, 6)
+                .map((i, n) => (
+                  <li key={n}>
+                    <Badge tone={i.severity === "error" ? "critical" : i.severity === "warning" ? "attention" : "info"} size="small">
+                      {t(`buyer.preflight.severity.${i.severity}` as DictKey)}
+                    </Badge>
+                    <span>
+                      {t(`preflight.${i.code}` as DictKey)}
+                      {i.face && t(`designer.faces.${i.face}` as DictKey) !== `designer.faces.${i.face}` ? ` (${t(`designer.faces.${i.face}` as DictKey)})` : ""}
+                    </span>
+                  </li>
+                ))}
+            </ul>
+            <InlineStack>
+              <Button variant="plain" url={editUrl}>
+                {t("buyer.preflight.fix")}
+              </Button>
+            </InlineStack>
+            {props.preflight.errors ? (
+              <Checkbox
+                id="preflight-override"
+                label={t("buyer.preflight.override")}
+                helpText={t("buyer.preflight.overrideHelp")}
+                checked={override}
+                onChange={(c) => {
+                  setOverride(c);
+                  if (c) setOverrideErr(undefined);
+                }}
+                error={overrideErr}
+              />
+            ) : null}
+          </>
+        )}
+      </section>
       <Box padding="300" borderRadius="200" background="bg-surface-secondary">
         <BlockStack gap="200">
           <Text as="h3" variant="headingSm">
@@ -526,7 +804,7 @@ export function CheckoutClient(props: {
     <Page
       title={t("checkout.title")}
       subtitle={props.designName}
-      backAction={step > 0 ? { content: t("checkout.actions.back"), onAction: () => goTo((step - 1) as Step) } : { content: props.designName, url: editUrl }}
+      backAction={step > 0 ? { content: stepTitles[step - 1], onAction: () => goTo((step - 1) as Step) } : { content: props.designName, url: editUrl }}
     >
       <BlockStack gap="400">
         <div className={styles.stepperWide}>
@@ -629,7 +907,7 @@ export function CheckoutClient(props: {
                   </>
                 ) : (
                   <Text as="p" tone="subdued">
-                    {t("checkout.summary.noOffer")}
+                    {manual ? t("buyer.quote.summary") : t("checkout.summary.noOffer")}
                   </Text>
                 )}
                 {placeErr ? (
@@ -637,6 +915,7 @@ export function CheckoutClient(props: {
                     {placeErr}
                   </Banner>
                 ) : null}
+                {manual ? null : (
                 <div className={selected ? styles.actionBar : undefined} data-sticky-action={selected ? "" : undefined}>
                   {selected ? (
                     <div className={styles.actionBarTotal}>
@@ -658,11 +937,13 @@ export function CheckoutClient(props: {
                     </Button>
                   </div>
                 </div>
+                )}
                 <span className="visually-hidden" role="status">
                   {announce}
                 </span>
                 <Banner tone="info" inCard>
                   {t("checkout.summary.prepaidNote")}
+                  {props.prepayDiscountPct > 0 && !sampleMode ? ` ${t("buyer.prepayNote", { pct: props.prepayDiscountPct })}` : ""}
                 </Banner>
               </BlockStack>
             </Card>
@@ -673,25 +954,25 @@ export function CheckoutClient(props: {
   );
 }
 
-/** Re-runs a short "tick" on the price when the value changes (not on first paint). */
+/**
+ * Price tick when an amount changes (CR-19): same motion as the designer's price badge
+ * (300 ms, 4 px rise from 40% opacity, ease-out), keyed on the value so the new figure animates
+ * in the same frame it appears. Not on first paint; off under reduced motion (CSS).
+ */
 function Tick({ value, children }: { value: number; children: ReactNode }) {
-  const prev = useRef(value);
-  const [n, setN] = useState(0);
-  useEffect(() => {
-    if (prev.current === value) return;
-    prev.current = value;
-    setN((x) => x + 1);
-  }, [value]);
+  const first = useRef(value);
   return (
-    <span key={n} className={n ? styles.tick : undefined}>
+    <span key={value} className={value === first.current ? styles.tickHost : `${styles.tickHost} ${styles.tick}`}>
       {children}
     </span>
   );
 }
 
-function OfferCard({ offer, checked, onSelect, locale }: { offer: CheckoutOffer; checked: boolean; onSelect: () => void; locale: Locale }) {
+function OfferCard({ offer, checked, onSelect, locale, sample }: { offer: CheckoutOffer; checked: boolean; onSelect: () => void; locale: Locale; sample?: boolean }) {
   const { t } = useI18n();
   const name = locale === "ar" ? offer.vendor.name.ar : offer.vendor.name.en;
+  const unit = Math.round(offer.pay.subtotalPiasters / offer.quantity);
+  const unitParts = t("checkout.offers.unit", { price: "\u0000" }).split("\u0000");
   return (
     <label className={styles.offer} data-testid="vendor-offer">
       <input className={styles.radio} type="radio" name="vendor" value={offer.vendorId} checked={checked} onChange={onSelect} aria-label={t("checkout.offers.select", { vendor: name })} />
@@ -714,10 +995,21 @@ function OfferCard({ offer, checked, onSelect, locale }: { offer: CheckoutOffer;
           </BlockStack>
         </InlineStack>
         <BlockStack gap="050" inlineAlign="end">
-          <PriceTag amount={offer.pay.totalPiasters} size="medium" locale={locale} />
-          <Text as="span" variant="bodySm" tone="subdued">
-            {t("checkout.offers.unit", { price: formatMoney(Math.round(offer.pay.subtotalPiasters / offer.quantity), locale) })}
-          </Text>
+          <Tick value={offer.pay.totalPiasters}>
+            <PriceTag amount={offer.pay.totalPiasters} size="medium" locale={locale} />
+          </Tick>
+          {sample ? (
+            <Text as="span" variant="bodySm" tone="subdued">
+              {t("buyer.sample.incl")}
+            </Text>
+          ) : (
+            <Text as="span" variant="bodySm" tone="subdued">
+              {/* Only the figure ticks, the words around it stay still (CR-19, same lesson as CR-20). */}
+              {unitParts[0]}
+              <Tick value={unit}>{formatMoney(unit, locale)}</Tick>
+              {unitParts[1]}
+            </Text>
+          )}
         </BlockStack>
       </div>
       <div className={styles.offerFacts}>
@@ -740,8 +1032,14 @@ function OfferCard({ offer, checked, onSelect, locale }: { offer: CheckoutOffer;
             {t("checkout.offers.verified")}
           </span>
         ) : null}
-        <span>{t(`pricing.printMethod.${offer.printMethod}` as DictKey)}</span>
-        <span>{offer.standardSize ? t("checkout.offers.standardSize") : t("checkout.offers.customDie")}</span>
+        {sample ? (
+          <span>{t("buyer.sample.digital")}</span>
+        ) : (
+          <>
+            <span>{t(`pricing.printMethod.${offer.printMethod}` as DictKey)}</span>
+            <span>{offer.standardSize ? t("checkout.offers.standardSize") : t("checkout.offers.customDie")}</span>
+          </>
+        )}
       </div>
       <div>
         <Link url={`/${locale}/vendors/${offer.vendor.slug}`} external>

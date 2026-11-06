@@ -149,7 +149,8 @@ function IndexTableRoot({
                 </div>
               </div>
             ) : null}
-            <div className={styles.Scroll}>
+            {/* Focusable so keyboard users can scroll a wide table on phones (WCAG 2.1.1; axe scrollable-region-focusable). */}
+            <div className={styles.Scroll} tabIndex={0} role="region" aria-label={caption ?? resourceName.plural}>
               <table className={styles.Table}>
                 <caption className="visually-hidden">{caption ?? resourceName.plural}</caption>
                 <thead>
@@ -161,7 +162,14 @@ function IndexTableRoot({
                     ) : null}
                     {headings.map((h, i) => (
                       <th key={i} scope="col" className={cx(styles.Th, h.alignment && styles[`align-${h.alignment}`])}>
-                        {h.hidden ? <span className="visually-hidden">{h.title}</span> : h.title}
+                        {/* An empty <th> has no name for screen readers (WCAG 1.3.1): fall back to "Actions". */}
+                        {h.title === "" || h.title == null || h.title === false ? (
+                          <span className="visually-hidden">{s.actions}</span>
+                        ) : h.hidden ? (
+                          <span className="visually-hidden">{h.title}</span>
+                        ) : (
+                          h.title
+                        )}
                       </th>
                     ))}
                   </tr>
@@ -296,7 +304,7 @@ export function IndexFilters({
             <Tabs tabs={views} selected={selectedView} onSelect={onSelectView} />
           </div>
         ) : null}
-        <div className={styles.Query} role="search">
+        <div className={styles.Query} role="search" aria-label={queryPlaceholder ?? s.searchAndFilter}>
           <label htmlFor={id} className="visually-hidden">
             {queryPlaceholder ?? s.searchAndFilter}
           </label>
@@ -390,6 +398,7 @@ export interface DataTableProps {
 
 /** Static data table for reports (price tiers, payouts). Numeric columns align to the end and use tabular digits. */
 export function DataTable({ columnContentTypes, headings, rows, totals, totalsName = "Totals", showTotalsInFooter, footerContent, caption, hideCaption = true, rowHeaders = true, increasedTableDensity }: DataTableProps) {
+  const { s } = useUi();
   const align = (i: number) => (columnContentTypes[i] === "numeric" ? styles.numeric : undefined);
   const totalsRow = totals ? (
     <tr className={styles.TotalsRow}>
@@ -406,7 +415,7 @@ export function DataTable({ columnContentTypes, headings, rows, totals, totalsNa
             <tr className={styles.HeadRow}>
               {headings.map((h, i) => (
                 <th key={i} scope="col" className={cx(styles.Th, align(i))}>
-                  {h}
+                  {h === "" || h == null || h === false ? <span className="visually-hidden">{s.actions}</span> : h}
                 </th>
               ))}
             </tr>

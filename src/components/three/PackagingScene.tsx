@@ -2,9 +2,10 @@
 
 import { useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
-import { useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, type CSSProperties, type ReactNode, type Ref } from "react";
+import { useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type Ref } from "react";
 import { PerspectiveCamera, Spherical, Vector3, type Group } from "three";
 import { boundsAt, maxStage, type DielineModel } from "@/lib/dieline";
+import { BOX_BOARD_CODES, type BoxBoardCode, type ConfigFinishCode } from "@/lib/configurator";
 import { usePrefersReducedMotion } from "./hooks";
 import { MM, PackagingModel, type PackagingModelProps } from "./PackagingModel";
 import { captureScreenshot, type ScreenshotOptions } from "./screenshot";
@@ -14,9 +15,11 @@ import { AUTO_ROTATE, easeInOutCubic, easeOutQuint } from "./finishes/motion";
 import { StudioLighting } from "./lighting";
 import { SoftShadow } from "./SoftShadow";
 import { InteractionDpr, useOnScreen } from "./perf";
+import { applyViewInsets, normInsets, sameInsets, visibleFraction, NO_INSETS, type FitInsets } from "./fit";
 import { EngineCanvas, useRegisterViewApi, type EngineToneMapping, type EngineViewApi, type ViewName } from "./EngineCanvas";
 
 export type { ViewName } from "./EngineCanvas";
+export type { FitInsets } from "./fit";
 
 /** Imperative API (keyboard/button controls, export). Angles in degrees. */
 export interface PackagingSceneHandle {
@@ -30,6 +33,8 @@ export interface PackagingSceneHandle {
   /** Render a PNG/JPEG/WebP at any resolution (default: 2× the canvas). */
   screenshot(opts?: ScreenshotOptions): Promise<Blob>;
   getCanvas(): HTMLCanvasElement | null;
+  /** Report an overlay covering part of the canvas (px); the fit frames the model in the rest. ViewControls calls this itself. */
+  setFitInsets?(insets: FitInsets | null): void;
 }
 
 export interface PackagingSceneProps extends Omit<PackagingModelProps, "foldProgress"> {
@@ -71,6 +76,8 @@ export interface PackagingSceneProps extends Omit<PackagingModelProps, "foldProg
   autoRotate?: boolean;
   /** Added by finishes: image shown until the first 3D frame renders, then cross-faded to the canvas. */
   poster?: string;
+  /** Canvas area (px) covered by overlays you render on top (a toolbar, a badge): the camera fits the model in the rest. */
+  fitInsets?: FitInsets;
   /**
    * Tone mapping. Default "neutral" (Khronos PBR Neutral): keeps printed colours close to their
    * sRGB values (what a brand approves), unlike ACES / AgX which shift hue and saturation.
@@ -98,6 +105,14 @@ const VIEWS: Record<ViewName, { theta: number; phi: number }> = {
 const MIN_PHI = 0.5 * DEG;
 const MAX_PHI = 179.5 * DEG;
 
+/** Legacy whole-surface finish codes → configurator coatings (masked ones need artwork masks). */
+const LEGACY_COATING: Partial<Record<string, ConfigFinishCode>> = {
+  MATTE_LAMINATION: "MATTE_LAMINATION",
+  GLOSS_LAMINATION: "GLOSS_LAMINATION",
+  SOFT_TOUCH_LAMINATION: "SOFT_TOUCH_LAMINATION",
+  VARNISH: "GLOSS_VARNISH",
+};
+
 /** Frame margin: the subject fills ~75 % of the frame (leaves room for the view toolbar) (product-shot convention). */
 const FRAME_MARGIN = 1.3;
 const FLAT = 0.02;
@@ -123,8 +138,10 @@ export function modelKey(dieline: DielineModel): string {
 function frameFor(dieline: DielineModel, progress: number, camera: PerspectiveCamera, view: { theta: number; phi: number } = heroView(dieline, progress)) {
   const size = boundsAt(dieline, progress).getSize(new Vector3()).multiplyScalar(MM);
   const target = new Vector3(0, size.y / 2, 0);
-  const tanV = Math.tan((camera.fov * DEG) / 2);
-  const tanH = tanV * camera.aspect;
+  // overlays (toolbar) shrink the usable frame: fit inside the visible rectangle (CR-13)
+  const fr = (camera.userData.elbaFit as { fx: number; fy: number } | undefined) ?? { fx: 1, fy: 1 };
+  const tanV = Math.tan((camera.fov * DEG) / 2) * fr.fy;
+  const tanH = Math.tan((camera.fov * DEG) / 2) * camera.aspect * fr.fx;
   const dir = new Vector3().setFromSphericalCoords(1, view.phi, view.theta);
   const right = new Vector3().crossVectors(new Vector3(0, 1, 0), dir);
   if (right.lengthSq() < 1e-8) right.set(1, 0, 0);
@@ -164,6 +181,7 @@ function Rig({
   shadows,
   stage,
   autoRotate = false,
+  fitInsets,
 }: {
   dieline: DielineModel;
   foldTarget: number;
@@ -176,8 +194,10 @@ function Rig({
   shadows: boolean;
   stage?: StageOptions;
   autoRotate?: boolean;
+  fitInsets?: FitInsets;
 }) {
   const { camera, gl, scene, invalidate, controls } = useThree();
+  const size = useThree((s) => s.size);
   const regress = useThree((s) => s.performance.regress);
   const reduced = usePrefersReducedMotion();
   const cam = camera as PerspectiveCamera;
@@ -218,6 +238,27 @@ function Rig({
     tween.current = { from, to, fromT: getTarget().clone(), toT: target.clone(), t: 0, dur };
     invalidate();
   };
+
+  // Visible rectangle: insets from props (fitInsets) and from overlays that report themselves
+  // (ViewControls → handle.setFitInsets). Shift the projection centre and re-fit the distance.
+  const [apiInsets, setApiInsets] = useState<Required<FitInsets>>(NO_INSETS);
+  const insets = useMemo(() => normInsets(fitInsets, apiInsets), [fitInsets, apiInsets]);
+  const appliedInsets = useRef<Required<FitInsets> | null>(null);
+  useLayoutEffect(() => {
+    applyViewInsets(cam, size, insets);
+    cam.userData.elbaFit = visibleFraction(size, insets);
+    cam.updateProjectionMatrix();
+    const prev = appliedInsets.current;
+    appliedInsets.current = insets;
+    if (prev && !sameInsets(prev, insets) && autoFit) {
+      const s = spherical();
+      const f = frameFor(dieline, targetRef.current, cam, { theta: s.theta, phi: s.phi });
+      s.radius = f.distance;
+      goTo(s, f.target, true, 300);
+    }
+    invalidate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cam, size.width, size.height, insets]);
 
   // Distance limits from the flat and closed frames.
   const limits = useMemo(() => {
@@ -385,6 +426,9 @@ function Rig({
       async screenshot(opts) {
         return captureScreenshot(gl, scene, cam, opts);
       },
+      setFitInsets(i) {
+        setApiInsets(i ? normInsets(i) : NO_INSETS);
+      },
     };
     return () => {
       apiRef.current = null;
@@ -474,10 +518,21 @@ export function PackagingSceneContent(props: PackagingSceneContentProps) {
     surfaceFinish,
     stage,
     autoRotate,
+    fitInsets,
   } = props;
   const progressRef = useRef(Math.min(1, Math.max(0, foldProgress)));
   const apiRef = useRef<RigApi | null>(null);
   useRegisterViewApi(apiRef);
+  // Every configurator board renders through the finished-board materials (kraft grain and
+  // fibre relief, ink on kraft, real flute / liner edges) even before a finish is chosen, so the
+  // very first render already reads as printed board, not a flat-coloured block (CR-15).
+  const finish0 = finish && finish !== "NONE" ? LEGACY_COATING[finish] : null;
+  const boardFinish = useMemo<SurfaceFinishProps | undefined>(() => {
+    if (surfaceFinish || typeof material !== "string" || !(BOX_BOARD_CODES as readonly string[]).includes(material)) return undefined;
+    if (finish && finish !== "NONE" && !finish0) return undefined; // masked legacy finish: keep the legacy look
+    return { board: material as BoxBoardCode, finishes: finish0 ? [{ code: finish0 }] : [] };
+  }, [surfaceFinish, material, finish, finish0]);
+  const effectiveFinish = surfaceFinish ?? boardFinish;
   const camera = useThree((s) => s.camera) as PerspectiveCamera;
   useLayoutEffect(() => {
     if (camera.fov !== 30) {
@@ -495,6 +550,7 @@ export function PackagingSceneContent(props: PackagingSceneContentProps) {
       setView: (v) => apiRef.current?.setView(v),
       screenshot: (o) => (apiRef.current ? apiRef.current.screenshot(o) : Promise.reject(new Error("3D view not ready"))),
       getCanvas: () => apiRef.current?.canvas ?? null,
+      setFitInsets: (i) => apiRef.current?.setFitInsets?.(i),
     }),
     [],
   );
@@ -513,16 +569,17 @@ export function PackagingSceneContent(props: PackagingSceneContentProps) {
         shadows={shadows}
         stage={stage}
         autoRotate={autoRotate}
+        fitInsets={fitInsets}
       />
       <SwapIn swapKey={modelKey(dieline)}>
-        {surfaceFinish ? (
+        {effectiveFinish ? (
           <FinishedPackagingModel
             dieline={dieline}
             artworkTextures={artworkTextures}
             printInside={printInside}
             castShadow={castShadow}
             foldProgress={progressRef}
-            surfaceFinish={surfaceFinish}
+            surfaceFinish={effectiveFinish}
           />
         ) : (
           <PackagingModel

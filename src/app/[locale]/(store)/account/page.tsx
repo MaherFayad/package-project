@@ -10,9 +10,12 @@ import type { Dims, OrderStatus } from "@/types";
 import { Badge, Button, Card, EmptyBoxIllustration, EmptyState, Layout, LayoutSection, Text, Thumbnail } from "@/components/ui";
 import { designHref } from "@/components/store/catalog";
 import type { DataRequestStatus } from "@/components/store/account-logic";
-import { statusBadge } from "@/lib/orders/state";
+import { modelPoster } from "@/lib/orders/poster";
+import { statusTone } from "@/lib/orders/status-tone";
 import { AccountSignOut, DataRights, DeleteDesignButton, MarketingConsent, ProfileForm } from "./AccountClient";
 import styles from "@/components/store/store.module.css";
+import accountStyles from "./account.module.css";
+import { QUOTE_REQUESTED } from "../../(checkout)/checkout/quote-request";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -27,14 +30,28 @@ export default async function AccountPage({ params }: Props) {
   const session = await requireUser(locale, `/${locale}/account`);
   const t = getT(locale);
 
-  const [user, designs, orderCount, orders, consents, pendingDelete] = await Promise.all([
+  const [user, designs, orderCount, orders, consents, pendingDelete, quoteRows] = await Promise.all([
     db.user.findUnique({ where: { id: session.id }, select: { name: true, email: true, phone: true, marketingConsent: true } }),
     db.design.findMany({ where: { ownerId: session.id }, orderBy: { updatedAt: "desc" }, take: 50 }),
     db.order.count({ where: { buyerId: session.id } }),
     db.order.findMany({ where: { buyerId: session.id }, orderBy: { placedAt: "desc" }, take: 3, select: { id: true, number: true, status: true, totalPiasters: true, placedAt: true } }),
     db.consent.findMany({ where: { userId: session.id }, orderBy: { createdAt: "desc" }, take: 10 }),
     db.dataRequest.findFirst({ where: { userId: session.id, kind: "DELETE", status: { in: ["OPEN", "IN_PROGRESS"] } }, orderBy: { createdAt: "desc" } }),
+    db.quote.findMany({ where: { userId: session.id, status: QUOTE_REQUESTED }, orderBy: { createdAt: "desc" }, take: 10, select: { id: true, designId: true, lines: true, createdAt: true, validUntil: true } }),
   ]);
+  // Price requests above the instant cap (CO-06). The quantity is the single line's quantity.
+  const now = new Date();
+  const quoteRequests = quoteRows.map((q) => {
+    const lines = fromJson<{ quantity?: number }[]>(q.lines);
+    const design = designs.find((d) => d.id === q.designId);
+    return {
+      id: q.id,
+      quantity: Array.isArray(lines) ? (lines[0]?.quantity ?? 0) : 0,
+      design: design ? design.name || t("account.untitled") : t("account.untitled"),
+      createdAt: q.createdAt,
+      open: q.validUntil > now,
+    };
+  });
   const name = user?.name ?? session.name;
 
   return (
@@ -73,8 +90,8 @@ export default async function AccountPage({ params }: Props) {
                       const dims = fromJson<Dims>(d.dims);
                       const label = d.name || t("account.untitled");
                       return (
-                        <li key={d.id} className={styles.designRow}>
-                          <Thumbnail source={d.thumbnailUrl ?? undefined} alt="" size="small" />
+                        <li key={d.id} className={`${styles.designRow} ${accountStyles.designRow}`}>
+                          <Thumbnail source={d.thumbnailUrl ?? modelPoster(d.modelCode, d.structureCode)} alt="" size="small" />
                           <div className={styles.designMain}>
                             <Text as="span" fontWeight="semibold" truncate>
                               {label}
@@ -86,7 +103,7 @@ export default async function AccountPage({ params }: Props) {
                               {t("account.edited", { date: formatDate(d.updatedAt, locale) })}
                             </Text>
                           </div>
-                          <div className={styles.designActions}>
+                          <div className={`${styles.designActions} ${accountStyles.designActions}`}>
                             <Button url={designHref(locale, { design: d.id })} size="slim" variant="plain" accessibilityLabel={`${t("account.openDesign")}: ${label}`}>
                               {t("account.openDesign")}
                             </Button>
@@ -130,11 +147,11 @@ export default async function AccountPage({ params }: Props) {
                             <bdi>{o.number}</bdi>
                           </Link>
                           <Text as="span" variant="bodySm" tone="subdued">
-                            {formatDate(o.placedAt, locale)} · <bdi>{formatMoney(o.totalPiasters, locale)}</bdi>
+                            {formatDate(o.placedAt, locale)} · <bdi>{formatMoney(o.totalPiasters, locale, { alwaysDecimals: true })}</bdi>
                           </Text>
                         </div>
-                        <Badge tone={statusBadge(o.status as OrderStatus).tone} progress={statusBadge(o.status as OrderStatus).progress}>
-                          {t(`orderStatus.${o.status}` as DictKey)}
+                        <Badge tone={statusTone(o.status as OrderStatus).tone} progress={statusTone(o.status as OrderStatus).progress}>
+                          {o.status === "PAID" ? t("buyer.awaitingPrinter") : t(`orderStatus.${o.status}` as DictKey)}
                         </Badge>
                       </li>
                     ))}
@@ -150,6 +167,33 @@ export default async function AccountPage({ params }: Props) {
                   </Text>
                 ) : null}
               </Card>
+
+              {quoteRequests.length ? (
+                <section id="quote-requests" aria-labelledby="quote-requests-title" style={{ scrollMarginBlockStart: "calc(var(--p-top-bar-height) + var(--p-space-400))" }}>
+                  <Card title={<span id="quote-requests-title">{t("buyer.quote.listTitle")}</span>}>
+                    <ul className={styles.plainList}>
+                      {quoteRequests.map((q) => (
+                        <li key={q.id} className={styles.designRow}>
+                          <div className={styles.designMain}>
+                            <Text as="span" fontWeight="semibold" truncate>
+                              {t("buyer.quote.listItem", { qty: q.quantity.toLocaleString("en-US"), design: q.design })}
+                            </Text>
+                            <Text as="span" variant="bodySm" tone="subdued">
+                              {t("buyer.quote.listSent", { date: formatDateTime(q.createdAt, locale) })}
+                            </Text>
+                          </div>
+                          <Badge tone={q.open ? "attention" : undefined} progress={q.open ? "incomplete" : "complete"}>
+                            {q.open ? t("buyer.quote.statusOpen") : t("buyer.quote.statusExpired")}
+                          </Badge>
+                        </li>
+                      ))}
+                    </ul>
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      {t("buyer.quote.listHelp")}
+                    </Text>
+                  </Card>
+                </section>
+              ) : null}
 
               <Card title={t("account.consentTitle")} as="section">
                 <div className={styles.prose}>

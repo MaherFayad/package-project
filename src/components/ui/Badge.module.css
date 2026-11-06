@@ -17,8 +17,13 @@
   white-space: nowrap;
   vertical-align: middle;
 }
+/* Text spacing overrides (WCAG 1.4.12) must not clip the label: let it wrap inside the pill
+   rather than cut it with an ellipsis. Normal spacing still fits on one line. */
+.Badge { white-space: normal; overflow-wrap: break-word; }
+/* break-word, not anywhere: "anywhere" shrinks min-content to one character, so auto-layout tables
+   squeezed badge columns to a letter per line (admin orders at 390 px). */
 :global(:lang(ar)) .Badge { font-size: var(--p-font-size-325); }
-.Label { overflow: hidden; text-overflow: ellipsis; }
+.Label { min-width: 0; }
 .Pip, .Icon { display: inline-flex; flex: none; }
 .Badge:has(.Pip) { padding-inline-start: var(--p-space-150); }
 .size-small { min-block-size: 1rem; padding-block: 0; padding-inline: var(--p-space-150); font-size: var(--p-font-size-275); }
@@ -36,6 +41,9 @@
 .tone-magic { --badge-bg: #e4deff; --badge-fg: #5700d1; }
 
 .Count {
+  /* Containing block for the visually hidden " (" ")" so they stay inside scrolling tab bars
+     instead of widening the page at 320px (WCAG 1.4.10). */
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;

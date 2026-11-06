@@ -87,10 +87,14 @@ export function lidHeight(m: PulpModel, x: Mm, z: Mm): Mm {
   return m.baseHeightMm + m.lidHeightMm * Math.min(1, edge / ch);
 }
 
+/** Grid budget: large export trays coarsen the step so the mesh stays light (cells are ≥ 25 mm). */
+export const PULP_MAX_GRID_VERTICES = 6000;
+
 /** Grid mesh of a height field over the footprint (planar top UVs: u along x, v along -z). */
 export function heightFieldMesh(m: PulpModel, part: "base" | "lid" = "base", stepMm = 2.5): MeshData {
-  const nx = Math.max(8, Math.ceil(m.dims.L / stepMm));
-  const nz = Math.max(8, Math.ceil(m.dims.W / stepMm));
+  const step = Math.max(stepMm, Math.sqrt((m.dims.L * m.dims.W) / PULP_MAX_GRID_VERTICES));
+  const nx = Math.max(8, Math.ceil(m.dims.L / step));
+  const nz = Math.max(8, Math.ceil(m.dims.W / step));
   const positions: number[] = [];
   const uvs: number[] = [];
   const indices: number[] = [];

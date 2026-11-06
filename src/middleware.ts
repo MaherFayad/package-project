@@ -1,28 +1,19 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { LOCALE_COOKIE } from "@/lib/auth/constants";
+import { applySecurityHeaders } from "@/lib/security-headers";
 
 const LOCALES = ["ar", "en"];
 const DEFAULT_LOCALE = "ar";
 const YEAR = 60 * 60 * 24 * 365;
 
 /**
- * Baseline security headers for every page.
- * - frame-ancestors / X-Frame-Options: no clickjacking of the login and checkout forms.
- * - nosniff, strict Referrer-Policy: ?next= and order ids do not leak to third parties.
- * - Permissions-Policy: the app needs none of these features (payment is left to the gateway).
- * - HSTS only for production HTTPS requests (local builds and e2e run over plain HTTP).
- * A full script CSP is left to the deploy config (three.js workers and Next inline runtime).
+ * Security headers for every page: the SAME full set as next.config.ts (a header set here replaces
+ * the config one, so a shorter policy here would drop the CSP). HSTS only for production HTTPS
+ * requests (local builds and e2e run over plain HTTP).
  */
 function secure(req: NextRequest, res: NextResponse): NextResponse {
-  res.headers.set("Content-Security-Policy", "frame-ancestors 'none'; base-uri 'self'; object-src 'none'");
-  res.headers.set("X-Frame-Options", "DENY");
-  res.headers.set("X-Content-Type-Options", "nosniff");
-  res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  res.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), usb=()");
   const https = req.nextUrl.protocol === "https:" || req.headers.get("x-forwarded-proto") === "https";
-  if (process.env.NODE_ENV === "production" && https) {
-    res.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
-  }
+  applySecurityHeaders(res.headers, { dev: process.env.NODE_ENV !== "production", https });
   return res;
 }
 

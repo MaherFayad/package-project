@@ -1,3 +1,4 @@
+import { formatTaxId } from "@/lib/orders/company";
 import type { Metadata } from "next";
 import type { Dims, PaymentMethod, ShippingAddress } from "@/types";
 import { getT, toLocale, type DictKey } from "@/i18n";
@@ -78,7 +79,7 @@ export default async function InvoicePage({ params }: { params: Params }) {
                     {addr.street}, {addr.city}, {addr.governorate}
                   </Text>
                   <Text as="p" variant="bodySm">
-                    {t("orders.invoice.buyerTaxId")}: <bdi>{order.buyer.organization?.taxId || "-"}</bdi>
+                    {t("orders.invoice.buyerTaxId")}: <bdi>{order.buyer.organization?.taxId ? formatTaxId(order.buyer.organization.taxId) : "-"}</bdi>
                   </Text>
                   <Text as="p" variant="bodySm">
                     {t("orders.invoice.issued")}: {formatDate(invoice.issuedAt, locale, "long")}

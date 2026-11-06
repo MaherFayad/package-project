@@ -2,7 +2,7 @@ import "server-only";
 import { db } from "@/lib/db";
 import { fromJson } from "@/lib/json";
 import { pick } from "@/i18n";
-import type { Dims, Locale, OrderStatus, StructureParamLimits, VendorCapabilities } from "@/types";
+import type { Dims, Locale, MaterialCode, OrderStatus, StructureParamLimits, VendorCapabilities } from "@/types";
 import {
   bucketDaysFor,
   bucketSeries,
@@ -15,12 +15,25 @@ import {
   opsKpis,
   rangeWindow,
   scorecard,
+  repeatRate90,
+  acceptanceRate,
   type MetricOrder,
   type RangeKey,
   type Scorecard,
 } from "../lib/metrics";
 import { isOpenDispute } from "../lib/ops";
+import { modelAvailability, vendorsByPair } from "../lib/availability";
+import { MODELS, modelByCode } from "@/lib/library";
+import { baseOf, vesselPrintMaterials } from "@/lib/library/doc";
 import type { AdminOrderRow } from "../lib/orders";
+import { adminPayoutStatus, needsAction } from "../lib/payouts";
+import { contactFlags } from "../lib/moderation";
+import { isOverdue, leadState, type LeadState } from "../lib/quoteLeads";
+import { listQuoteRequests, QUOTE_REQUESTED } from "@/lib/orders/quote-requests";
+import { payoutSchedule, type ScheduleRow } from "@/components/vendor/lib/payouts";
+
+/** Orders whose vendor has earned at least the advance (accepted or later). */
+const PAYOUT_EARNING_STATUSES = ["ACCEPTED", "IN_PRODUCTION", "QC_PENDING", "READY_TO_SHIP", "SHIPPED", "DELIVERED"] as const;
 
 const metricSelect = {
   id: true,
@@ -43,16 +56,25 @@ const metricSelect = {
 
 export async function loadOverview(range: RangeKey, now = new Date()) {
   const { from, to, prevFrom } = rangeWindow(range, now);
-  const [orders, disputes, designs, accounts, quoteUsers, qcPending, applications, dataRequests] = await Promise.all([
+  const [orders, disputes, designs, accounts, quoteUsers, orderUsers, qcPending, applications, dataRequests, payouts, buyerOrders, vendorEvents, moderation, quoteLeads] = await Promise.all([
     db.order.findMany({ where: { OR: [{ placedAt: { gte: prevFrom } }, { deliveredAt: { gte: prevFrom } }] }, select: metricSelect }),
     db.dispute.findMany({ select: { createdAt: true, status: true } }),
     db.design.count({ where: { createdAt: { gte: from, lt: to } } }),
     db.user.count({ where: { role: "BUYER", createdAt: { gte: from, lt: to } } }),
     db.quote.findMany({ where: { createdAt: { gte: from, lt: to }, userId: { not: null } }, select: { userId: true }, distinct: ["userId"] }),
+    // Everyone who placed an order saw a price (checkout shows it), even without a saved quote.
+    db.order.findMany({ where: { placedAt: { gte: from, lt: to } }, select: { buyerId: true }, distinct: ["buyerId"] }),
     db.order.count({ where: { status: "QC_PENDING" } }),
     db.vendorApplication.count({ where: { status: { in: ["SUBMITTED", "UNDER_REVIEW"] } } }),
     db.dataRequest.count({ where: { status: { in: ["OPEN", "IN_PROGRESS"] } } }),
+    countPayoutsToAct(),
+    // Kept orders (not reprints) for the 90-day repeat rate; all time, the cohort rule picks who counts.
+    db.order.findMany({ where: { status: { notIn: ["PENDING_PAYMENT", "CANCELLED", "REFUNDED"] }, NOT: { notes: { startsWith: "REPRINT_OF:" } } }, select: { buyerId: true, placedAt: true } }),
+    db.productionEvent.findMany({ where: { type: { in: ["VENDOR_ACCEPTED", "VENDOR_DECLINED"] }, createdAt: { gte: from, lt: to } }, select: { type: true } }),
+    countModeration(),
+    countOpenQuoteLeads(),
   ]);
+  const priceViewed = new Set([...quoteUsers.map((q) => q.userId), ...orderUsers.map((o) => o.buyerId)]).size;
   const rows = orders as MetricOrder[];
   const paidOrders = rows.filter((o) => !isReprint(o) && countsForGmv(o) && o.placedAt >= from && o.placedAt < to).length;
   const money = moneyKpis(rows, from, to);
@@ -80,14 +102,16 @@ export async function loadOverview(range: RangeKey, now = new Date()) {
     from: from.toISOString(),
     to: to.toISOString(),
     bucketDays,
-    funnel: funnel({ designs, accounts, priceViewed: quoteUsers.length, orders: paidOrders }),
+    funnel: funnel({ designs, accounts, priceViewed, orders: paidOrders }),
     money,
     gmvChangePct: changePct(money.gmvPiasters, prevMoney.gmvPiasters),
     marginChangePct: changePct(money.marginPiasters, prevMoney.marginPiasters),
     ops,
     gmvSeries,
     marginSeries,
-    tasks: { qcPending, applications, openDisputes: ops.openDisputes, dataRequests },
+    repeat: repeatRate90(buyerOrders, now),
+    acceptance: acceptanceRate(vendorEvents),
+    tasks: { qcPending, applications, openDisputes: ops.openDisputes, dataRequests, payouts, moderation, quoteLeads },
   };
 }
 
@@ -264,14 +288,72 @@ export async function loadApplication(id: string) {
 
 /* ───────────────────────── Catalogue ───────────────────────── */
 
+export interface CatalogModelRow {
+  code: string;
+  slug: string;
+  group: string;
+  standard: string;
+  nameAr: string;
+  nameEn: string;
+  /** Styles it is made as (distinct), e.g. ["FEFCO_0201"]. */
+  styles: string[];
+  boardsPriced: number;
+  boardsTotal: number;
+  vendorIds: string[];
+  instant: boolean;
+}
+
+/** The library models (≈370) with whether any active vendor can price them in Egypt today. */
+async function loadModelAvailability(): Promise<{ models: CatalogModelRow[]; vendors: { id: string; slug: string; nameAr: string; nameEn: string }[] }> {
+  const [cards, vendors] = await Promise.all([
+    db.rateCard.findMany({
+      where: { active: true, vendor: { status: "ACTIVE" }, structure: { active: true }, material: { active: true } },
+      select: { vendorId: true, structure: { select: { code: true } }, material: { select: { code: true } } },
+    }),
+    db.vendor.findMany({ where: { status: "ACTIVE" }, select: { id: true, slug: true, nameAr: true, nameEn: true }, orderBy: { nameEn: "asc" } }),
+  ]);
+  const pairs = vendorsByPair(cards.map((c) => ({ vendorId: c.vendorId, structureCode: c.structure.code, materialCode: c.material.code })));
+  const models = MODELS.map((m) => {
+    const boards: MaterialCode[] = m.kind === "box" ? m.materials : [...new Set([...vesselPrintMaterials(m), ...(m.surfaces.includes("SHRINK_SLEEVE") ? vesselPrintMaterials(m, ["SHRINK_SLEEVE"]) : [])])];
+    const routes = boards.map((b) => ({ structureCode: baseOf(m, b), materialCode: b }));
+    const a = modelAvailability({ code: m.code, routes }, pairs);
+    return {
+      code: m.code,
+      slug: m.slug,
+      group: m.group,
+      standard: m.standard,
+      nameAr: m.name.ar,
+      nameEn: m.name.en,
+      styles: [...new Set(routes.map((r) => r.structureCode))],
+      boardsPriced: a.boardsPriced,
+      boardsTotal: a.boardsTotal,
+      vendorIds: a.vendorIds,
+      instant: a.instant,
+    };
+  });
+  return { models, vendors };
+}
+
+/** How many library models this vendor can price instantly (its rate cards × model routes). */
+export async function vendorModelCoverage(vendorId: string): Promise<{ priced: number; total: number }> {
+  const { models } = await loadModelAvailability();
+  return { priced: models.filter((m) => m.vendorIds.includes(vendorId)).length, total: models.length };
+}
+
 export async function loadCatalog() {
-  const [structures, materials, finishes] = await Promise.all([
+  const [structures, materials, finishes, availability, styleVendors] = await Promise.all([
     db.structure.findMany({ orderBy: { sortOrder: "asc" } }),
     db.material.findMany({ orderBy: { sortOrder: "asc" } }),
     db.finish.findMany({ orderBy: { sortOrder: "asc" } }),
+    loadModelAvailability(),
+    db.rateCard.findMany({ where: { active: true, vendor: { status: "ACTIVE" } }, select: { structureId: true, vendorId: true }, distinct: ["structureId", "vendorId"] }),
   ]);
+  const vendorsPerStyle = new Map<string, number>();
+  for (const r of styleVendors) vendorsPerStyle.set(r.structureId, (vendorsPerStyle.get(r.structureId) ?? 0) + 1);
   return {
-    structures: structures.map((s) => ({ id: s.id, code: s.code, nameAr: s.nameAr, nameEn: s.nameEn, family: s.family, active: s.active, params: fromJson<StructureParamLimits>(s.params), defaultDims: fromJson<Dims>(s.defaultDims) })),
+    models: availability.models,
+    vendors: availability.vendors,
+    structures: structures.map((s) => ({ id: s.id, code: s.code, nameAr: s.nameAr, nameEn: s.nameEn, family: s.family, active: s.active, vendorCount: vendorsPerStyle.get(s.id) ?? 0, params: fromJson<StructureParamLimits>(s.params), defaultDims: fromJson<Dims>(s.defaultDims) })),
     materials: materials.map((m) => ({ id: m.id, code: m.code, nameAr: m.nameAr, nameEn: m.nameEn, family: m.family, gsm: m.gsm, thicknessMm: m.thicknessMm, foodSafe: m.foodSafe, active: m.active })),
     finishes: finishes.map((f) => ({ id: f.id, code: f.code, nameAr: f.nameAr, nameEn: f.nameEn, unitSurchargePiasters: f.unitSurchargePiasters, setupPiasters: f.setupPiasters, active: f.active })),
   };
@@ -416,4 +498,196 @@ export async function loadAudit(filter: { entityType?: string | null; action?: s
     before: r.before,
     after: r.after,
   }));
+}
+
+/* ───────────────────────── Payouts ───────────────────────── */
+
+export interface AdminPayoutRow extends ScheduleRow {
+  orderStatus: string;
+  vendorId: string;
+  vendorName: string;
+  vendorSlug: string;
+  /** An open dispute holds the balance. */
+  openDispute: boolean;
+}
+
+/** Every earned or raised vendor payout part (advance / balance), newest jobs first. */
+export async function loadPayoutRows(locale: Locale): Promise<AdminPayoutRow[]> {
+  const orders = await db.order.findMany({
+    where: { OR: [{ status: { in: [...PAYOUT_EARNING_STATUSES] } }, { payouts: { some: {} } }] },
+    orderBy: { placedAt: "desc" },
+    take: 1000,
+    select: {
+      id: true,
+      number: true,
+      status: true,
+      vendorCostPiasters: true,
+      deliveredAt: true,
+      vendor: { select: { id: true, slug: true, nameAr: true, nameEn: true } },
+      payouts: true,
+      disputes: { select: { status: true } },
+    },
+  });
+  const out: AdminPayoutRow[] = [];
+  for (const o of orders) {
+    for (const r of payoutSchedule([o], o.payouts)) {
+      out.push({ ...r, status: adminPayoutStatus(r, o.status), orderStatus: o.status, openDispute: o.disputes.some((d) => isOpenDispute(d.status)), vendorId: o.vendor.id, vendorSlug: o.vendor.slug, vendorName: pick(locale, o.vendor.nameAr, o.vendor.nameEn) });
+    }
+  }
+  return out;
+}
+
+/** Payout parts ops has to raise, approve or pay (nav badge, overview to-do). */
+export async function countPayoutsToAct(): Promise<number> {
+  const orders = await db.order.findMany({
+    where: { OR: [{ status: { in: [...PAYOUT_EARNING_STATUSES] } }, { payouts: { some: { status: { not: "PAID" } } } }] },
+    select: { id: true, number: true, status: true, vendorCostPiasters: true, payouts: true, disputes: { select: { status: true } } },
+  });
+  let n = 0;
+  for (const o of orders) {
+    const held = o.disputes.some((d) => isOpenDispute(d.status));
+    for (const r of payoutSchedule([o], o.payouts)) if (needsAction(r.status, r.kind, o.status, held)) n++;
+  }
+  return n;
+}
+
+/* ───────────────────────── Moderation (B-08) ───────────────────────── */
+
+export interface ModerationPhoto {
+  id: string;
+  vendorId: string;
+  vendorSlug: string;
+  vendorName: string;
+  imageUrl: string;
+  captionAr: string;
+  captionEn: string;
+  status: string;
+  reviewNote: string | null;
+  createdAt: string;
+  flags: string[];
+}
+
+export interface ModerationBio {
+  vendorId: string;
+  vendorSlug: string;
+  vendorName: string;
+  bioAr: string;
+  bioEn: string;
+  flags: string[];
+}
+
+export async function loadModeration(locale: Locale): Promise<{ photos: ModerationPhoto[]; bios: ModerationBio[] }> {
+  const [items, vendors] = await Promise.all([
+    db.vendorPortfolioItem.findMany({
+      where: { OR: [{ status: "PENDING" }, { status: "REJECTED" }, { createdAt: { gte: new Date(Date.now() - 30 * 86_400_000) } }] },
+      orderBy: { createdAt: "asc" },
+      take: 500,
+      include: { vendor: { select: { slug: true, nameAr: true, nameEn: true } } },
+    }),
+    db.vendor.findMany({ select: { id: true, slug: true, nameAr: true, nameEn: true, bioAr: true, bioEn: true } }),
+  ]);
+  return {
+    photos: items.map((i) => ({
+      id: i.id,
+      vendorId: i.vendorId,
+      vendorSlug: i.vendor.slug,
+      vendorName: pick(locale, i.vendor.nameAr, i.vendor.nameEn),
+      imageUrl: i.imageUrl,
+      captionAr: i.captionAr,
+      captionEn: i.captionEn,
+      status: i.status,
+      reviewNote: i.reviewNote,
+      createdAt: i.createdAt.toISOString(),
+      flags: contactFlags(i.captionAr, i.captionEn),
+    })),
+    bios: vendors
+      .map((v) => ({ vendorId: v.id, vendorSlug: v.slug, vendorName: pick(locale, v.nameAr, v.nameEn), bioAr: v.bioAr, bioEn: v.bioEn, flags: contactFlags(v.bioAr, v.bioEn) }))
+      .filter((v) => v.flags.length > 0),
+  };
+}
+
+/** Pending photos plus bios with contact details (nav badge, overview to-do). */
+export async function countModeration(): Promise<number> {
+  const [pending, vendors] = await Promise.all([
+    db.vendorPortfolioItem.count({ where: { status: "PENDING" } }),
+    db.vendor.findMany({ select: { bioAr: true, bioEn: true } }),
+  ]);
+  return pending + vendors.filter((v) => contactFlags(v.bioAr, v.bioEn).length > 0).length;
+}
+
+/* ───────────────────────── Quote leads (B-15) ───────────────────────── */
+
+export interface AdminQuoteLead {
+  quoteId: string;
+  createdAt: string;
+  dueAt: string;
+  validUntil: string;
+  quantity: number;
+  designId: string | null;
+  buyerId: string | null;
+  buyerName: string | null;
+  buyerPhone: string | null;
+  governorate: string | null;
+  neededBy: string | null;
+  note: string | null;
+  /** Model or style name, standard and size, for the row. */
+  modelName: string | null;
+  standard: string | null;
+  dims: { L: number; W: number; H: number } | null;
+  materialCode: string | null;
+  source: "checkout" | "catalogue";
+  state: LeadState;
+  overdue: boolean;
+  lastNote: string | null;
+}
+
+/** Quote requests with the ops outcome from the audit log (checkout leads and catalogue requests). */
+export async function loadQuoteLeads(locale: Locale, now = new Date()): Promise<AdminQuoteLead[]> {
+  const leads = await listQuoteRequests({ take: 300 });
+  if (!leads.length) return [];
+  const ids = leads.map((l) => l.quoteId);
+  const [events, quotes] = await Promise.all([
+    db.auditLog.findMany({ where: { entityType: "QUOTE", entityId: { in: ids }, action: { in: ["QUOTE_CONTACTED", "QUOTE_CLOSED"] } }, orderBy: { createdAt: "desc" }, select: { entityId: true, action: true, createdAt: true, summary: true } }),
+    db.quote.findMany({ where: { id: { in: ids } }, select: { id: true, lines: true } }),
+  ]);
+  const linesById = new Map(quotes.map((q) => [q.id, fromJson<Record<string, unknown>[]>(q.lines)?.[0] ?? {}]));
+  return leads.map((l) => {
+    const ev = events.filter((e) => e.entityId === l.quoteId);
+    const state = leadState(ev);
+    const line = linesById.get(l.quoteId) ?? {};
+    const spec = l.spec ?? {};
+    const code = (spec.modelCode as string | null) ?? (line.modelCode as string | undefined) ?? (spec.structureCode as string | undefined) ?? null;
+    const lib = modelByCode(code);
+    const dims = (spec.dims ?? line.dims ?? null) as AdminQuoteLead["dims"];
+    return {
+      quoteId: l.quoteId,
+      createdAt: l.createdAt.toISOString(),
+      dueAt: l.dueAt.toISOString(),
+      validUntil: l.validUntil.toISOString(),
+      quantity: l.quantity,
+      designId: l.designId,
+      buyerId: l.buyer.id,
+      buyerName: l.buyer.name,
+      buyerPhone: l.buyer.phone,
+      governorate: l.governorate,
+      neededBy: l.neededBy,
+      note: l.note ?? ((line.notes as string | undefined) || null),
+      modelName: lib ? pick(locale, lib.name.ar, lib.name.en) : ((spec.name as string | undefined) ?? code),
+      standard: lib?.standard ?? ((line.standard as string | undefined) ?? null),
+      dims,
+      materialCode: (spec.materialCode as string | undefined) ?? null,
+      source: line.type === "CATALOGUE_REQUEST" ? "catalogue" : "checkout",
+      state,
+      overdue: isOverdue(state, l.dueAt, now),
+      lastNote: ev[0]?.summary ?? null,
+    };
+  });
+}
+
+/** Open quote requests (nav badge, overview to-do). */
+export async function countOpenQuoteLeads(): Promise<number> {
+  const leads = await db.quote.findMany({ where: { status: QUOTE_REQUESTED }, select: { id: true } });
+  if (!leads.length) return 0;
+  const done = await db.auditLog.findMany({ where: { entityType: "QUOTE", entityId: { in: leads.map((l) => l.id) }, action: { in: ["QUOTE_CONTACTED", "QUOTE_CLOSED"] } }, select: { entityId: true }, distinct: ["entityId"] });
+  return leads.length - done.length;
 }
