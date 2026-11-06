@@ -49,8 +49,17 @@ a {
   text-decoration: underline;
   text-underline-offset: 0.15em;
 }
-a:hover {
+/* :where() keeps this at (0,0,1) so any class that colours a link (pills, buttons, nav items)
+   wins on hover too; at (0,1,1) it turned dark CTA pills blue on hover (1.51:1, CR-01). */
+a:where(:hover) {
   color: var(--p-color-text-link-hover);
+}
+
+/* Icon stroke (CR-38): every lucide icon draws at 1.75, the weight <Icon> uses, including the
+   ones rendered directly. CSS beats lucide's stroke-width presentation attribute even at zero
+   specificity, and :where() lets a component opt out with a plain class (e.g. checkbox tick). */
+:where(svg.lucide) {
+  stroke-width: 1.75;
 }
 
 /* Visible focus for every interactive element (WCAG 2.4.7); inputs get the Polaris ring. */

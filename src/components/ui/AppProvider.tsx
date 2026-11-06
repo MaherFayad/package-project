@@ -15,7 +15,7 @@ const UiContext = createContext<UiContextValue | null>(null);
 
 /**
  * Root provider for the UI kit: locale/direction for built-in strings and the toast queue.
- * Mount once per area layout (Frame-based layouts, StoreShell, designer). If omitted, the
+ * Mount once per area layout (Frame-based layouts, MarketingShell, CheckoutShell, designer). If omitted, the
  * kit falls back to the app's <I18nProvider> locale, then English.
  */
 export function AppProvider({ locale, children }: { locale?: UiLocale; children: ReactNode }) {

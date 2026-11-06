@@ -69,30 +69,85 @@ export function formatPercent(n: number, locale: Locale): string {
   return `${formatNumber(n, 1)}%`;
 }
 
-export type CountUnit = "second" | "minute" | "hour" | "day" | "box" | "order" | "item";
+export type CountUnit =
+  | "second"
+  | "minute"
+  | "hour"
+  | "day"
+  | "week"
+  | "month"
+  | "box"
+  | "order"
+  | "item"
+  | "vendor"
+  | "printer"
+  | "review"
+  | "unit"
+  | "colour"
+  | "piece"
+  | "model"
+  | "photo"
+  | "error"
+  | "priceList"
+  | "design"
+  | "file";
+
+export const COUNT_UNITS: readonly CountUnit[] = [
+  "second", "minute", "hour", "day", "week", "month", "box", "order", "item", "vendor", "printer",
+  "review", "unit", "colour", "piece", "model", "photo", "error", "priceList", "design", "file",
+];
 
 /**
  * Arabic forms per CLDR plural category (one, two, few = 3–10, many = 11–99, other = 0 / 100+).
  * Dual and "one" carry the number in the word, so no digit is shown for them.
- * No diacritics; accusative alif (يوما) only where MSA writes it.
+ * No diacritics; accusative alif (يوما) only where MSA writes it (masculine tamyiz, 11–99).
+ * Duals are in the oblique case (يومين), which is what follows a preposition or a verb in UI copy.
  */
 const AR_UNITS: Record<CountUnit, Record<"one" | "two" | "few" | "many" | "other", string>> = {
   second: { one: "ثانية واحدة", two: "ثانيتين", few: "ثوان", many: "ثانية", other: "ثانية" },
   minute: { one: "دقيقة واحدة", two: "دقيقتين", few: "دقائق", many: "دقيقة", other: "دقيقة" },
   hour: { one: "ساعة واحدة", two: "ساعتين", few: "ساعات", many: "ساعة", other: "ساعة" },
   day: { one: "يوم واحد", two: "يومين", few: "أيام", many: "يوما", other: "يوم" },
+  week: { one: "أسبوع واحد", two: "أسبوعين", few: "أسابيع", many: "أسبوعا", other: "أسبوع" },
+  month: { one: "شهر واحد", two: "شهرين", few: "أشهر", many: "شهرا", other: "شهر" },
   box: { one: "علبة واحدة", two: "علبتين", few: "علب", many: "علبة", other: "علبة" },
   order: { one: "طلب واحد", two: "طلبين", few: "طلبات", many: "طلبا", other: "طلب" },
   item: { one: "عنصر واحد", two: "عنصرين", few: "عناصر", many: "عنصرا", other: "عنصر" },
+  vendor: { one: "مطبعة واحدة", two: "مطبعتين", few: "مطابع", many: "مطبعة", other: "مطبعة" },
+  printer: { one: "مطبعة واحدة", two: "مطبعتين", few: "مطابع", many: "مطبعة", other: "مطبعة" },
+  review: { one: "تقييم واحد", two: "تقييمين", few: "تقييمات", many: "تقييما", other: "تقييم" },
+  unit: { one: "وحدة واحدة", two: "وحدتين", few: "وحدات", many: "وحدة", other: "وحدة" },
+  colour: { one: "لون واحد", two: "لونين", few: "ألوان", many: "لونا", other: "لون" },
+  piece: { one: "قطعة واحدة", two: "قطعتين", few: "قطع", many: "قطعة", other: "قطعة" },
+  model: { one: "نموذج واحد", two: "نموذجين", few: "نماذج", many: "نموذجا", other: "نموذج" },
+  photo: { one: "صورة واحدة", two: "صورتين", few: "صور", many: "صورة", other: "صورة" },
+  error: { one: "خطأ واحد", two: "خطأين", few: "أخطاء", many: "خطأ", other: "خطأ" },
+  priceList: { one: "قائمة أسعار واحدة", two: "قائمتي أسعار", few: "قوائم أسعار", many: "قائمة أسعار", other: "قائمة أسعار" },
+  design: { one: "تصميم واحد", two: "تصميمين", few: "تصميمات", many: "تصميما", other: "تصميم" },
+  file: { one: "ملف واحد", two: "ملفين", few: "ملفات", many: "ملفا", other: "ملف" },
 };
 const EN_UNITS: Record<CountUnit, [string, string]> = {
   second: ["second", "seconds"],
   minute: ["minute", "minutes"],
   hour: ["hour", "hours"],
   day: ["day", "days"],
+  week: ["week", "weeks"],
+  month: ["month", "months"],
   box: ["box", "boxes"],
   order: ["order", "orders"],
   item: ["item", "items"],
+  vendor: ["vendor", "vendors"],
+  printer: ["printer", "printers"],
+  review: ["review", "reviews"],
+  unit: ["unit", "units"],
+  colour: ["colour", "colours"],
+  piece: ["piece", "pieces"],
+  model: ["model", "models"],
+  photo: ["photo", "photos"],
+  error: ["error", "errors"],
+  priceList: ["price list", "price lists"],
+  design: ["design", "designs"],
+  file: ["file", "files"],
 };
 const arPlural = new Intl.PluralRules("ar");
 

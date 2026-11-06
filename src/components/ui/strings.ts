@@ -59,7 +59,7 @@ export const uiStrings = {
     actions: "الإجراءات",
     selectAll: "تحديد الكل",
     selectRow: "تحديد الصف",
-    selected: "{count} محدد",
+    selected: "المحدد: {count}",
     openNavigation: "فتح القائمة",
     closeNavigation: "إغلاق القائمة",
     mainNavigation: "التنقل الرئيسي",
@@ -92,7 +92,7 @@ export const uiStrings = {
     view: "عرض",
     noResults: "لا توجد نتائج",
     progress: "التقدم",
-    characterCount: "تم استخدام {count} من {max} حرف",
+    characterCount: "الأحرف المستخدمة: {count} من {max}",
   },
 } as const;
 

@@ -3,9 +3,9 @@
 import { useState, useSyncExternalStore } from "react";
 
 /**
- * Cookie-notice acknowledgement, shared by the marketing CookieBar and the store CookieNotice.
+ * Cookie-notice acknowledgement, used by the one cookie notice (src/components/ui/CookieNotice.tsx).
  * Kept in its own module (no CSS, no UI kit) so importing it from the marketing chrome does not
- * pull SiteChrome.module.css and the whole Polaris kit into every marketing page's
+ * pull the whole Polaris kit into every marketing page's
  * render-blocking CSS (R2-MK-01).
  */
 export const COOKIE_ACK = "elba_cookie_ack";

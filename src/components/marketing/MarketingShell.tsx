@@ -1,18 +1,22 @@
 import "@/styles/motion.css";
 import type { ReactNode } from "react";
 import type { Locale } from "@/types";
+// Direct imports, not the "@/components/ui" barrel: keeps the Polaris kit CSS out of the
+// marketing pages' render-blocking stylesheets (R2-MK-01).
+import { CookieNotice } from "@/components/ui/CookieNotice";
 import { MarketingProviders } from "./MarketingProviders";
 import { AnnouncementBar } from "./AnnouncementBar";
-import { CookieBar } from "./CookieBar";
 import { MarketingFooter } from "./MarketingFooter";
 import { MarketingHeader } from "./MarketingHeader";
 import { RevealScope } from "./useReveal";
 import styles from "./marketing.module.css";
 
 /**
- * Public marketing chrome (home, product and category pages, printers, legal): announcement
- * bar, white header with menus, <main id="main">, black footer and the cookie bottom bar.
- * Checkout, orders and sign-in keep the compact StoreShell.
+ * The one buyer-facing chrome (CR-05): announcement bar, white header with menus (account menu
+ * once signed in), <main id="main">, black footer and the shared cookie notice. Used by the
+ * public pages, sign-in, account, orders, share links and the vendor application. Checkout has
+ * its own minimal white header (CheckoutShell); the designer and the vendor and admin apps keep
+ * their own frames.
  */
 export function MarketingShell({ locale, children }: { locale: Locale; children: ReactNode }) {
   return (
@@ -27,7 +31,7 @@ export function MarketingShell({ locale, children }: { locale: Locale; children:
           {children}
         </main>
         <MarketingFooter locale={locale} />
-        <CookieBar />
+        <CookieNotice />
         <RevealScope />
       </div>
     </MarketingProviders>

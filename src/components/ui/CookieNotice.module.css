@@ -1,0 +1,97 @@
+/* Cookie notice (CR-06). Tokens only; logical properties so RTL mirrors to bottom-right. */
+.notice {
+  position: fixed;
+  inset-block-end: var(--p-space-400);
+  inset-inline-start: var(--p-space-400);
+  z-index: 50; /* above page chrome (marketing header 40), below menus, sheets and modals */
+  box-sizing: border-box;
+  inline-size: calc(100% - 2 * var(--p-space-400));
+  max-inline-size: 440px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--p-space-300) var(--p-space-400);
+  padding: var(--p-space-400);
+  border-radius: var(--p-border-radius-300);
+  background: var(--p-color-bg-surface);
+  color: var(--p-color-text);
+  border: var(--p-border-width-025, 1px) solid var(--p-color-border);
+  box-shadow: var(--p-shadow-400);
+  font-family: var(--p-font-family-sans);
+  animation: cookie-rise var(--p-motion-duration-200) var(--p-motion-ease-out) both;
+}
+.notice[data-leaving="true"] {
+  pointer-events: none;
+  animation: cookie-fade var(--p-motion-duration-150) var(--p-motion-ease-in) both;
+}
+.text {
+  flex: 1 1 16rem;
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--p-color-text);
+}
+.more {
+  color: var(--p-color-text);
+  font-weight: var(--p-font-weight-semibold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.more:hover { text-decoration-thickness: 2px; }
+.ok {
+  flex: none;
+  min-block-size: 36px;
+  min-inline-size: 64px;
+  padding: var(--p-space-150) var(--p-space-400);
+  border: 0;
+  border-radius: var(--p-border-radius-200);
+  background: var(--p-color-bg-fill-brand);
+  color: var(--p-color-text-brand-on-bg-fill);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: var(--p-font-weight-semibold);
+  cursor: pointer;
+  transition: background-color var(--p-motion-duration-100) var(--p-motion-ease);
+}
+.ok:hover { background: var(--p-color-bg-fill-brand-hover); }
+.ok:active { background: var(--p-color-bg-fill-brand-active); }
+.more:focus-visible,
+.ok:focus-visible {
+  outline: var(--p-focus-ring-width, 2px) solid var(--p-color-border-focus);
+  outline-offset: var(--p-focus-ring-offset, 2px);
+}
+
+/* Phones: a full-width card on the bottom edge, text beside the button. */
+@media (max-width: 489px) {
+  .notice {
+    inset-inline: 0;
+    inset-block-end: 0;
+    inline-size: 100%;
+    max-inline-size: none;
+    flex-wrap: nowrap;
+    padding: var(--p-space-300) var(--p-space-400) calc(var(--p-space-300) + env(safe-area-inset-bottom, 0px));
+    border-radius: var(--p-border-radius-300) var(--p-border-radius-300) 0 0;
+    border-inline: 0;
+    border-block-end: 0;
+  }
+  .text { flex: 1 1 auto; font-size: 0.8125rem; line-height: 1.45; }
+}
+
+@keyframes cookie-rise {
+  from { opacity: 0; transform: translate3d(0, 16px, 0); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes cookie-fade {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* The motion tokens already collapse to 0 ms here; this also drops the movement. */
+@media (prefers-reduced-motion: reduce) {
+  .notice { animation-name: cookie-fade-in; }
+  .notice[data-leaving="true"] { animation-name: cookie-fade; }
+}
+@keyframes cookie-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

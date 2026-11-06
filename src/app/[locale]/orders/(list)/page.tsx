@@ -6,7 +6,7 @@ import { formatDate } from "@/lib/format";
 import { listBuyerOrders } from "@/lib/orders/service";
 import { isPaidStatus } from "@/lib/orders/state";
 import { Button, Card, EmptyState, EmptyBoxIllustration, Page } from "@/components/ui";
-import { OrdersTable, type OrderRow } from "./_components/OrdersTable";
+import { OrdersTable, type OrderRow } from "../_components/OrdersTable";
 
 export const dynamic = "force-dynamic";
 

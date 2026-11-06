@@ -13,6 +13,8 @@ import { loadCheckoutSettings } from "@/lib/orders/checkout-settings";
 import { docGeometry } from "@/lib/library/doc";
 import { runPreflight, summarizePreflight } from "@/components/designer/lib/preflight";
 import { docSpec } from "@/lib/library/spec";
+import { track } from "@/lib/analytics/track";
+import { rateLimit } from "@/lib/rate-limit";
 import { Button, Card, EmptyState, EmptyBoxIllustration, Page } from "@/components/ui";
 import { CheckoutClient, type AddressState } from "../_components/CheckoutClient";
 import type { OffersResult } from "../actions";
@@ -141,6 +143,15 @@ export default async function CheckoutPage({ params, searchParams }: { params: P
         : { ok: true, mode: "manual_quote", quantity: initialQty, max: MAX_INSTANT_QTY };
   } catch {
     initial = { ok: false, error: "generic" };
+  }
+
+  // launch-metrics.md §1 `order_started` ("Order this exact box" / checkout opened) and the
+  // checkout half of `price_viewed` (the tier table above is an instant price). A reload within
+  // 10 minutes is the same visit.
+  if (rateLimit("analytics:checkout", `${user.id}:${designId}`, 1, 600_000).ok) {
+    const props = { locale, structure_code: doc.structureCode, model_code: doc.modelCode ?? null };
+    void track("order_started", props, { userId: user.id, designId });
+    if (initial.ok && initial.mode === "instant") void track("price_viewed", { ...props, source: "checkout", quantity: initialQty }, { userId: user.id, designId });
   }
 
   return (

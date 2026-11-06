@@ -9,8 +9,8 @@ import { Wordmark } from "./Wordmark";
 import styles from "./marketing.module.css";
 
 /**
- * White marketing header: wordmark, Products / Printers menus, Box styles, How it works, Log in +
- * black pill. It reads no cookies: the signed-in parts (account link, orders, portal links) are
+ * White marketing header: wordmark, Products / Printers menus, Box styles, How it works, Log in (an
+ * account menu with sign-out once signed in) + black pill. It reads no cookies: the signed-in parts (account link, orders, portal links) are
  * client islands, so every page under the marketing layout can be prerendered.
  */
 export function MarketingHeader({ locale }: { locale: Locale }) {
@@ -19,6 +19,7 @@ export function MarketingHeader({ locale }: { locale: Locale }) {
   const start = designHref(locale, { structure: "FEFCO_0427" });
   const login = { href: `${base}/login`, label: t("marketing.nav.login") };
   const account = { href: `${base}/account`, label: t("marketing.nav.account") };
+  const signOut = t("nav.signOut");
 
   const model: NavModel = {
     label: t("marketing.nav.label"),
@@ -58,7 +59,7 @@ export function MarketingHeader({ locale }: { locale: Locale }) {
         <Link href={start} className={`${styles.pill} ${styles.pillLarge}`}>
           {t("marketing.nav.start")}
         </Link>
-        <AccountLink login={login} account={account} className={`${styles.pill} ${styles.pillOutline} ${styles.pillLarge}`} />
+        <AccountLink variant="sheet" login={login} account={account} signOutLabel={signOut} home={base} className={`${styles.pill} ${styles.pillOutline} ${styles.pillLarge}`} />
         <LangLink className={styles.langLink} />
       </>
     ),
@@ -67,7 +68,7 @@ export function MarketingHeader({ locale }: { locale: Locale }) {
   return (
     <HeaderNav model={model}>
       <LangLink className={`${styles.langLink} ${styles.langDesktop}`} />
-      <AccountLink login={login} account={account} className={`${styles.navLink} ${styles.loginLink}`} />
+      <AccountLink login={login} account={account} signOutLabel={signOut} home={base} className={`${styles.navLink} ${styles.loginLink}`} />
       <Link href={start} className={`${styles.pill} ${styles.pillSmall} ${styles.headerCta}`}>
         {t("marketing.nav.start")}
       </Link>

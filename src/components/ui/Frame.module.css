@@ -181,8 +181,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  inline-size: 2.25rem;
-  block-size: 2.25rem;
+  inline-size: var(--p-control-height);  /* medium button: 32, 40 on touch (CR-37) */
+  block-size: var(--p-control-height);
   padding: 0;
   border: 0;
   border-radius: var(--p-border-radius-200);
@@ -210,7 +210,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--p-space-200);
-  min-block-size: 2.25rem;
+  min-block-size: var(--p-control-height);
   max-inline-size: 14rem;
   padding: var(--p-space-050) var(--p-space-150);
   border: 0;
@@ -220,6 +220,10 @@
   font-weight: var(--p-font-weight-semibold);
 }
 .UserButton:hover { background: var(--e-color-topbar-search-bg); }
+@media (pointer: coarse) {
+  .TopBarIconButton { inline-size: var(--e-control-height-touch); block-size: var(--e-control-height-touch); }
+  .UserButton { min-block-size: var(--e-control-height-touch); }
+}
 /* Below 1040px the name is visually hidden (not display:none) so it stays the button's name. */
 .UserName {
   position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap;
@@ -318,7 +322,7 @@
 .SaveBarSave:hover { background: #f1f1f1; }
 .SaveBarSave:disabled { background: #616161; color: #cccccc; box-shadow: none; cursor: default; }
 .SaveBarDiscard:focus-visible, .SaveBarSave:focus-visible { outline: var(--p-focus-ring-width) solid var(--e-color-border-focus-inverse); outline-offset: var(--p-focus-ring-offset); }
-@media (pointer: coarse) { .SaveBarDiscard, .SaveBarSave { min-block-size: 2.25rem; } }
+@media (pointer: coarse) { .SaveBarDiscard, .SaveBarSave { min-block-size: var(--e-control-height-touch); } }
 @media (max-width: 489.98px) {
   .SaveBarMessage > span:last-child { display: none; }
 }

@@ -193,7 +193,7 @@
   color: var(--p-color-text-brand-on-bg-fill);
   pointer-events: none;
 }
-.CheckboxMark svg { inline-size: 0.75rem; block-size: 0.75rem; opacity: 0; transform: scale(0.6); transition: transform var(--p-motion-duration-100) var(--p-motion-ease-out), opacity var(--p-motion-duration-100); }
+.CheckboxMark svg { inline-size: 0.75rem; block-size: 0.75rem; stroke-width: 3; /* heavy tick at 12px; opts out of the global 1.75 icon stroke */ opacity: 0; transform: scale(0.6); transition: transform var(--p-motion-duration-100) var(--p-motion-ease-out), opacity var(--p-motion-duration-100); }
 .CheckboxInput:hover + .CheckboxMark { border-color: var(--p-color-input-border-hover); }
 .CheckboxInput:checked + .CheckboxMark,
 .CheckboxInput:indeterminate + .CheckboxMark { background: var(--p-color-bg-fill-brand); border-color: var(--p-color-bg-fill-brand); }

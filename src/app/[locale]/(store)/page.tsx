@@ -203,7 +203,7 @@ export default async function HomePage({ params }: Props) {
           <ul className={styles.valueGrid}>
             {VALUES.map(({ key, icon: I }, i) => (
               <li key={key} className={styles.valueItem} data-reveal="" suppressHydrationWarning style={{ ["--m-i" as string]: i % 3 }}>
-                <I className={styles.valueIcon} strokeWidth={1.5} aria-hidden />
+                <I className={styles.valueIcon} aria-hidden />
                 <h3 className={styles.h3}>{t(`marketing.values.items.${key}Title` as DictKey)}</h3>
                 <p className={styles.body}>{t(`marketing.values.items.${key}Body` as DictKey)}</p>
               </li>
@@ -335,7 +335,7 @@ export default async function HomePage({ params }: Props) {
             {FINISHES.map(({ key, icon: I }, i) => (
               <li key={key} className={styles.tile} data-reveal="" suppressHydrationWarning style={{ ["--m-i" as string]: i % 3 }}>
                 <span className={styles.mintTile} aria-hidden="true">
-                  <I size={28} strokeWidth={1.75} />
+                  <I size={24} />
                 </span>
                 <h3 className={styles.h3}>{t(`marketing.finishes.items.${key}Title` as DictKey)}</h3>
                 <p className={styles.body}>{t(`marketing.finishes.items.${key}Body` as DictKey)}</p>

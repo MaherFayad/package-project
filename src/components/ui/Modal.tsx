@@ -42,6 +42,10 @@ export interface ModalProps {
   id?: string;
 }
 
+/** Exit is --motion-fast (150ms); the fallback unmounts if animationend never fires
+ *  (background tab, reduced motion edge cases, test environments). */
+const EXIT_FALLBACK_MS = 250;
+
 /**
  * Modal dialog (Polaris anatomy): header (title + × close) / divider / body / divider / footer
  * with secondary then primary on the inline end. Focus is trapped while open and returned
@@ -70,7 +74,23 @@ export function Modal({
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  // Open: remember opener, focus inside, lock scroll, make siblings inert.
+  // Exit (CR-17): when `open` turns false the dialog stays mounted for its 150ms exit. Derived
+  // during render (not in an effect) so there is no frame where it unmounts and remounts.
+  const [shownOpen, setShownOpen] = useState(open);
+  const [closing, setClosing] = useState(false);
+  if (open !== shownOpen) {
+    setShownOpen(open);
+    setClosing(!open);
+  }
+  useEffect(() => {
+    if (!closing) return;
+    const t = window.setTimeout(() => setClosing(false), EXIT_FALLBACK_MS);
+    return () => window.clearTimeout(t);
+  }, [closing]);
+
+  // Open: remember opener, focus inside, lock scroll, make siblings inert. The cleanup runs as
+  // soon as `open` turns false, so focus is back on the opener and the page is interactive
+  // while the exit plays; the leaving dialog is aria-hidden and ignores the pointer meanwhile.
   useEffect(() => {
     if (!open || !mounted) return;
     restoreRef.current = document.activeElement as HTMLElement | null;
@@ -93,6 +113,7 @@ export function Modal({
   }, [open, mounted, initialFocusRef]);
 
   function onKeyDown(e: KeyboardEvent<HTMLDivElement>) {
+    if (closing) return;
     if (e.key === "Escape") {
       e.stopPropagation();
       if (!preventClose) onClose();
@@ -117,13 +138,21 @@ export function Modal({
     }
   }
 
-  if (!open || !mounted) return null;
+  if (!mounted || (!open && !closing)) return null;
 
   const hasFooter = primaryAction || (secondaryActions && secondaryActions.length) || footer;
 
   return createPortal(
-    <div data-modal-root="" className={styles.Root}>
-      <div className={styles.Backdrop} aria-hidden="true" onClick={() => !preventClose && onClose()} />
+    <div
+      data-modal-root=""
+      data-state={open ? "open" : "closing"}
+      className={styles.Root}
+      aria-hidden={open ? undefined : true}
+      onAnimationEnd={(e) => {
+        if (!open && e.target === dialogRef.current) setClosing(false);
+      }}
+    >
+      <div className={styles.Backdrop} aria-hidden="true" onClick={() => open && !preventClose && onClose()} />
       <div className={styles.Container}>
         <div
           ref={dialogRef}

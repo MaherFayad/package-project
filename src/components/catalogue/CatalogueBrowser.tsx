@@ -101,7 +101,7 @@ export function CatalogueBrowser({ locale, cards, taxonomy }: { locale: Locale; 
             />
             {query ? (
               <button type="button" className={styles.searchClear} onClick={() => setQuery("")} aria-label={COPY.emptyReset[locale]}>
-                <X size={18} aria-hidden />
+                <X size={16} aria-hidden />
               </button>
             ) : null}
           </label>

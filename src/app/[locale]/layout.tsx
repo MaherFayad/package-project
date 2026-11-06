@@ -4,9 +4,10 @@ import { notFound } from "next/navigation";
 import { preload } from "react-dom";
 import { inter, plexArabic, PLEX_PRELOAD_WEIGHTS } from "@/app/fonts";
 import { plexArabicPreloadUrls } from "@/app/font-preload";
-import { dirOf, getDictionary, isLocale } from "@/i18n";
+import { dirOf, getDictionary, getPublicDictionary, isLocale } from "@/i18n";
 import { I18nProvider } from "@/i18n/client";
 import { LOCALES } from "@/types";
+import { VisitBeacon } from "@/lib/analytics/VisitBeacon";
 
 export function generateStaticParams() {
   return LOCALES.map((locale) => ({ locale }));
@@ -39,7 +40,8 @@ export const viewport: Viewport = {
 /**
  * Locale shell: <html lang dir>, fonts, i18n provider. Deliberately chrome-free:
  * each area adds its own chrome in its route-group layout —
- *   (store)/layout.tsx, (checkout)/layout.tsx, orders/layout.tsx, (auth)/layout.tsx -> store header/footer
+ *   (store), (auth), orders, s, vendor/apply layouts -> marketing chrome (MarketingShell)
+ *   (checkout)/layout.tsx -> minimal white checkout header (CheckoutShell)
  *   design/layout.tsx -> full-screen designer chrome
  *   vendor/layout.tsx, admin/layout.tsx -> admin frame (top bar + side navigation)
  */
@@ -65,9 +67,11 @@ export default async function LocaleLayout({
         <a className="skip-link" href="#main">
           {dict.common.skipToContent}
         </a>
-        <I18nProvider locale={locale} dict={dict}>
+        <I18nProvider locale={locale} dict={getPublicDictionary(locale)}>
           {children}
         </I18nProvider>
+        {/* First-party `visit` event (B-19): one beacon per browser session, no third-party pixel. */}
+        <VisitBeacon locale={locale} />
       </body>
     </html>
   );

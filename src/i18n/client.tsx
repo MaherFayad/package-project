@@ -29,7 +29,7 @@ export function I18nProvider({
       locale,
       dir: locale === "ar" ? "rtl" : "ltr",
       dict,
-      t: (key: DictKey, vars) => interpolate(lookup(dict, key), vars),
+      t: (key: DictKey, vars) => interpolate(lookup(dict, key), vars, locale),
     }),
     [locale, dict],
   );

@@ -49,3 +49,17 @@ export function consentRowsForSignIn(i: SignInConsentInput): SignInConsentPlan {
   }
   return { rows, marketing };
 }
+
+/**
+ * Whether a user's CURRENT consent of one kind is a grant: the latest row of that kind decides
+ * (the PDPL log is append-only, so a later withdrawal row overrides an earlier grant). No row at
+ * all means no consent. Used by the B-23 WhatsApp follow-up job for MARKETING.
+ */
+export function currentConsentGranted(rows: readonly { kind: string; granted: boolean; createdAt: Date }[], kind: ConsentKind): boolean {
+  let latest: { granted: boolean; createdAt: Date } | null = null;
+  for (const r of rows) {
+    if (r.kind !== kind) continue;
+    if (!latest || r.createdAt.getTime() >= latest.createdAt.getTime()) latest = r;
+  }
+  return latest?.granted === true;
+}

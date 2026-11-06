@@ -54,7 +54,7 @@
   background-size: contain;
   pointer-events: none;
   opacity: 1;
-  transition: opacity 480ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity var(--motion-reveal) var(--ease-enter);
 }
 
 .poster[data-hidden="true"] {
@@ -62,7 +62,7 @@
 }
 
 .canvas[data-fade] {
-  transition: opacity 480ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity var(--motion-reveal) var(--ease-enter);
 }
 
 .canvas[data-fade="out"] {

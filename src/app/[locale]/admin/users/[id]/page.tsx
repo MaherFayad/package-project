@@ -11,6 +11,7 @@ import { formatDate, formatDateTime, formatMoney, formatNumber } from "@/lib/for
 
 type Params = Promise<{ locale: string; id: string }>;
 
+/** Entity first (WCAG 2.4.2). The name only, never the phone number: titles end up in history and tab lists. */
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { locale, id } = await params;
   const t = getT(toLocale(locale));

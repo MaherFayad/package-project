@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { formatCount } from "@/lib/format";
+import { COUNT_UNITS, formatCount } from "@/lib/format";
+import { interpolate } from "@/i18n/core";
 import { normalizeEgyptPhone, toWesternDigits } from "@/lib/phone";
 import { ar } from "@/i18n/ar";
 import { en } from "@/i18n/en";
@@ -40,13 +41,13 @@ describe("dictionaries", () => {
   const E = flat(en);
   it("ar and en use the same {placeholders} for every key", () => {
     const bad = Object.keys(E).filter((k) => {
-      const ph = (s = "") => (s.match(/\{\w+\}/g) ?? []).sort().join();
+      const ph = (s = "") => (s.match(/\{\w+(?::\w+)?\}/g) ?? []).map((x) => x.replace(/:\w+\}$/, "}")).sort().join();
       return ph(A[k]) !== ph(E[k]);
     });
     expect(bad).toEqual([]);
   });
   it("Arabic values are not left in English", () => {
-    const allowed = /^(English|\{[\w]+\}.*|[A-Z0-9 \-:]+|.*\{\w+\}.*)$/; // language name, codes, pure placeholders
+    const allowed = /^(English|\{[\w:]+\}.*|[A-Z0-9 \-:]+|.*\{\w+(?::\w+)?\}.*)$/; // language name, codes, pure placeholders
     // Keys ending in "En" hold deliberately English content (e.g. a default Latin text layer).
     const bad = Object.entries(A).filter(([k, v]) => !/En$/.test(k) && v === E[k] && /[a-z]{3}/.test(v) && !allowed.test(v));
     expect(bad).toEqual([]);
@@ -59,6 +60,38 @@ describe("dictionaries", () => {
   });
   it("Arabic uses Arabic punctuation (، ؟ ؛) next to Arabic letters", () => {
     const bad = Object.entries(A).filter(([, v]) => /[؀-ۿ]\s?[,;?]/.test(v));
+    expect(bad).toEqual([]);
+  });
+});
+
+describe("counted placeholders {n:unit}", () => {
+  it("render the right Arabic form for 1, 2, 3–10, 11–99 and 100+", () => {
+    const tpl = "التسليم خلال {days:day}";
+    expect(interpolate(tpl, { days: 1 })).toBe("التسليم خلال يوم واحد");
+    expect(interpolate(tpl, { days: 2 })).toBe("التسليم خلال يومين");
+    expect(interpolate(tpl, { days: 5 })).toBe("التسليم خلال 5 أيام");
+    expect(interpolate(tpl, { days: 14 })).toBe("التسليم خلال 14 يوما");
+    expect(interpolate("{n:box}", { n: "1,200" }, "ar")).toBe("1,200 علبة");
+  });
+  it("render English singular and plural", () => {
+    expect(interpolate("Ready in {days:day}", { days: 1 })).toBe("Ready in 1 day");
+    expect(interpolate("{count:printer}", { count: 3 })).toBe("3 printers");
+  });
+  it("fall back to the raw value when it is not numeric, and leave unknown vars alone", () => {
+    expect(interpolate("{days:day}", { days: "—" })).toBe("—");
+    expect(interpolate("{days:day}", {})).toBe("{days:day}");
+  });
+  it("every unit used in the dictionaries exists", () => {
+    const used = [...Object.values(flat(ar)), ...Object.values(flat(en))].flatMap((v) =>
+      [...v.matchAll(/\{\w+:(\w+)\}/g)].map((m) => m[1]),
+    );
+    expect(used.filter((u) => !(COUNT_UNITS as readonly string[]).includes(u))).toEqual([]);
+  });
+  it("no Arabic value puts a bare number placeholder before a counted noun", () => {
+    const nouns = /^(يوم|أيام|طلبات|مطابع|تقييم|وحدات|ألوان|أخطاء|ثوان|دقائق|ساعات)/;
+    const bad = Object.entries(flat(ar)).filter(([, v]) =>
+      [...v.matchAll(/\{\w+\} ?([\u0600-\u06ff]+)/g)].some((m) => nouns.test(m[1])),
+    );
     expect(bad).toEqual([]);
   });
 });
