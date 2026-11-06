@@ -58,8 +58,7 @@ const SOURCES: [string, unknown][] = [
  * the entry when they fix the string; the test fails if an entry no longer matches, so the list
  * cannot go stale). Key: `${source}:${key}`.
  */
-const PENDING = new Set<string>([
-]);
+const PENDING = new Set<string>([]);
 
 const all = SOURCES.flatMap(([source, tree]) => labels(source, tree));
 const offenders = all.filter((h) => IMPERATIVE.test(firstWord(h.value)));

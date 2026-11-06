@@ -144,7 +144,7 @@ test("header: transparent over a hero, solid after scroll; mega-menu by hover, c
   await page.keyboard.press("Escape");
   await expect(products).toBeFocused();
   await expect(page.getByRole("link", { name: "Start free" }).first()).toBeVisible();
-  await expect(page.getByRole("link", { name: "Log in" })).toHaveAttribute("href", "/en/login");
+  await expect(page.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/en/login");
 });
 
 test("phone menu: full screen, drill-down, focus trapped, Escape returns focus", async ({ page }, info) => {
@@ -228,7 +228,7 @@ for (const who of [
       await page.setViewportSize({ width: 1280, height: 800 });
       await page.goto(`/${locale}/vendors`);
       await page.waitForLoadState("networkidle");
-      // Signed in for real (the account menu replaces "Log in"); desktop actions show from 1024 px.
+      // Signed in for real (the account menu replaces "Sign in"); desktop actions show from 1024 px.
       if (who.phone) await expect(page.locator("header").getByRole("button", { name: locale === "ar" ? "حسابي" : "My account" })).toBeVisible();
       for (let w = 1000; w <= 1280; w += 20) {
         await page.setViewportSize({ width: w, height: 800 });

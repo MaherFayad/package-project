@@ -71,7 +71,7 @@ for (const locale of LOCALES) {
       const cta = page.getByRole("link", { name: CTA[locale] }).first();
       await expect(cta).toHaveAttribute("href", `/${locale}/design?structure=FEFCO_0427`);
       // Stop the drifting strip first (its own pause button): a moving card never settles for a click.
-      await page.getByRole("button", { name: locale === "ar" ? "إيقاف شريط أنماط العلب" : "Pause the box styles strip" }).click();
+      await page.getByRole("button", { name: locale === "ar" ? "إيقاف شريط أنواع العلب" : "Pause the box styles strip" }).click();
       // A style card (the first real one, not the loop copy).
       const card = page.locator(`#dp-styles li:not([aria-hidden]) a[href*="/${locale}/design?structure="]`).first();
       const href = await card.getAttribute("href");
@@ -126,8 +126,8 @@ test("reduced motion: content visible, loops stopped, no pause buttons for still
   expect(state.floats.every((a) => a === "none")).toBe(true);
   expect(state.hidden).toBe(0);
   // The strips are still, so their pause buttons are gone; the strip stays keyboard-scrollable.
-  await expect(page.getByRole("button", { name: "إيقاف شريط أنماط العلب" })).toHaveCount(0);
-  await expect(page.getByRole("region", { name: "أنماط العلب", exact: true })).toHaveAttribute("tabindex", "0");
+  await expect(page.getByRole("button", { name: "إيقاف شريط أنواع العلب" })).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "أنواع العلب", exact: true })).toHaveAttribute("tabindex", "0");
   expect(errors).toEqual([]);
   await context.close();
 });
