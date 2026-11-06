@@ -1,0 +1,124 @@
+/*
+ * Marketing kit tokens (public site, shopify.com 2026 design language; values measured on the
+ * reference, see docs/design-refs/shopify-2026-reference.md). Global, scoped to [data-mk]: the
+ * MarketingShell root carries it, the dev gallery too. Page CSS reads these, never literals.
+ *
+ * Dark-first: --mk-bg is the page canvas of rebuilt pages. The shell itself stays neutral so
+ * not-yet-rebuilt light pages (account, orders, sign-in) keep working; a page opts into the dark
+ * canvas with <Sheet tone="dark"> sections.
+ */
+[data-mk][data-mk] {
+  /* ── Colour: canvas and bands ─────────────────────────────── */
+  --mk-bg: #02090a;                 /* page canvas (measured rgb(2,9,10)) */
+  --mk-bg-2: #0a1314;               /* raised surface on dark (cards, menu panel) */
+  --mk-bg-3: #141d1e;               /* hover on dark */
+  --mk-band-green: #041e18;         /* rgb(4,30,24) */
+  --mk-band-green-deep: #000805;
+  --mk-band-navy: #000a1e;          /* rgb(0,10,30) */
+  --mk-band-navy-2: #050917;        /* builder canvas rgb(5,9,23) */
+  --mk-band-violet: linear-gradient(160deg, #3b1fd9 0%, #5434f0 55%, #6a4cff 100%);
+  --mk-violet: #4b2ee6;             /* solid fallback / focus on violet */
+  --mk-violet-tint: #d9d0ff;        /* lilac pill on violet */
+  --mk-sheet: #f5f5f3;              /* light sheet rgb(245,245,243) */
+  --mk-sheet-2: #ffffff;
+  --mk-footer-bg: #000000;
+
+  /* ── Colour: text ─────────────────────────────────────────── */
+  --mk-on-dark: #ffffff;
+  --mk-on-dark-muted: rgba(255, 255, 255, 0.7);   /* 12.6:1 on --mk-bg */
+  --mk-on-dark-subtle: #a1a1aa;                   /* footer links (measured), 7.6:1 on black */
+  --mk-on-light: #000000;
+  --mk-on-light-muted: #52525b;                   /* 7.1:1 on --mk-sheet */
+  --mk-line-dark: rgba(255, 255, 255, 0.16);
+  --mk-line-dark-strong: rgba(255, 255, 255, 0.3);
+  --mk-line-light: rgba(0, 0, 0, 0.12);
+  --mk-green: #36f4a4;             /* green accent on dark (progress bars, dots) */
+  --mk-accent-ink: #047b5d;         /* accent on light (5.3:1 on white) */
+  --mk-focus: #36f4a4;              /* focus ring on dark (WCAG 2.4.7: 3:1+ vs every band) */
+  --mk-focus-light: #005bd3;
+
+  /* ── Radii ─────────────────────────────────────────────────── */
+  --mk-radius-sheet: 48px;          /* section sheet top corners */
+  --mk-radius-card: 32px;           /* inner cards */
+  --mk-radius-media: 20px;          /* media 16 to 24 */
+  --mk-radius-tile: 16px;
+  --mk-radius-pill: 9999px;
+
+  /* ── Shadows ───────────────────────────────────────────────── */
+  --mk-shadow-float: 0 2px 6px rgba(0, 0, 0, 0.18), 0 24px 64px rgba(0, 0, 0, 0.35);
+  --mk-shadow-light: 0 1px 2px rgba(0, 0, 0, 0.06), 0 12px 32px rgba(0, 0, 0, 0.08);
+
+  /* ── Motion (measured) ─────────────────────────────────────── */
+  --mk-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);   /* most transitions, reveals */
+  --mk-ease-out: cubic-bezier(0.215, 0.61, 0.355, 1); /* reveal variant */
+  --mk-ease-media: cubic-bezier(0.5, 0, 0.5, 1);      /* media hover 0.45s */
+  --mk-ease-enter: cubic-bezier(0, 0, 0.2, 1);
+  --mk-dur-1: 150ms;                /* hover colour, press */
+  --mk-dur-2: 200ms;                /* menu, footer links */
+  --mk-dur-3: 300ms;                /* reveal */
+  --mk-dur-4: 450ms;                /* media */
+  --mk-dur-title: 400ms;            /* hero-title-slide-in */
+  --mk-stagger: 60ms;
+  --mk-rise: 24px;
+  --mk-press: 0.97;
+
+  /* ── Layout ────────────────────────────────────────────────── */
+  --mk-container: 1280px;
+  --mk-gutter: 16px;
+  --mk-header-h: 64px;
+  --mk-section-y: 80px;
+  --mk-sheet-overlap: 48px;
+
+  /* ── Type (fluid). Measured desktop: 96/300, 64/330, 56/330, 44/330, 20/450, 16-18 ── */
+  --mk-font: var(--font-inter), var(--font-noto-arabic), "Noto Sans Arabic", -apple-system, "Segoe UI", Tahoma, sans-serif;
+  --mk-fs-hero: clamp(3.5rem, 1rem + 10.4vw, 11.25rem);  /* start-page giant 180 */
+  --mk-fs-96: clamp(3rem, 1.6rem + 5.6vw, 6rem);          /* h1: 48 phone -> 96 */
+  --mk-fs-64: clamp(2.25rem, 1.5rem + 3.2vw, 4rem);       /* h2 */
+  --mk-fs-56: clamp(2rem, 1.35rem + 2.8vw, 3.5rem);       /* h2 alt / h3 large */
+  --mk-fs-44: clamp(1.75rem, 1.3rem + 1.9vw, 2.75rem);    /* h3 */
+  --mk-fs-20: 1.25rem;                                    /* card title */
+  --mk-fs-18: 1.125rem;                                   /* lead */
+  --mk-fs-16: 1rem;
+  --mk-fs-14: 0.875rem;
+  --mk-fw-display: 300;
+  --mk-fw-heading: 330;
+  --mk-fw-title: 450;
+  --mk-fw-button: 550;
+  --mk-lh-display: 1.08;
+  --mk-lh-heading: 1.08;
+  --mk-track-display: -0.02em;
+  --mk-track-heading: -0.03em;
+}
+/* Arabic: no negative tracking (it breaks joins), taller line height for ascenders and dots. */
+[data-mk][data-mk]:lang(ar) {
+  --mk-font: var(--font-noto-arabic), "Noto Sans Arabic", var(--font-inter), "Segoe UI", Tahoma, sans-serif;
+  --mk-track-display: 0;
+  --mk-track-heading: 0;
+  --mk-lh-display: 1.25;
+  --mk-lh-heading: 1.25;
+}
+/* The marketing face for everything inside the shell (kit components and the admin-kit fields on
+   sign-in and account pages, which read --p-font-family-sans). */
+[data-mk][data-mk] {
+  --p-font-family-sans: var(--mk-font);
+  font-family: var(--mk-font);
+}
+@media (min-width: 768px) {
+  [data-mk][data-mk] { --mk-gutter: 32px; --mk-section-y: 112px; }
+}
+@media (min-width: 1024px) {
+  [data-mk][data-mk] { --mk-header-h: 72px; }
+}
+@media (min-width: 1200px) {
+  [data-mk][data-mk] { --mk-gutter: 40px; --mk-section-y: 144px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-mk][data-mk] { --mk-rise: 0px; --mk-press: 1; }
+}
+
+/* A page built from kit sheets gets the dark canvas behind and between them (no white gaps under
+   the overlapping 48px corners, or before the footer). Legacy light pages keep the white shell. */
+.mk-site:has(main [data-tone]) {
+  background: var(--mk-bg);
+  color: var(--mk-on-dark);
+}
