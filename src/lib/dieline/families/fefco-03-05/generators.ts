@@ -2,7 +2,7 @@ import { Box3, Vec3 as Vector3 } from "@/lib/dieline/math";
 import type { Dims, FaceId, StructureFeatures } from "@/types";
 import { DielineBuilder, rectEdges } from "../../builder";
 import { clamp, pt, rectPolygon } from "../../geometry";
-import { FACE_FRAMES, computePoses, panelLocalPoint, panelPivot } from "../../fold";
+import { FACE_FRAMES, boundsAt, computePoses, panelLocalPoint, panelPivot } from "../../fold";
 import type { Affine, DielinePanel, FaceInfo, Pt } from "../../types";
 import { telescope, type StructureDraft } from "../../structures";
 import { composeFaces, deepEnds } from "../fefco-02/kit";
@@ -64,8 +64,14 @@ export function trayAndLid(dims: Dims, t: number, f: StructureFeatures, base: Tr
   const lt = tray(b, t, { prefix: "lid_", L: s.x + 2 * clear, W: s.z + 2 * clear, H: lidH, mode: "lid", ...lid, mount: { kind: "piece", label: "Lid" }, origin: nextOrigin(b, 20) });
   placePiece(b, lt.rootId, t, ORIENT.ceiling(), alignOn(box, { top: box.max.y + t }), maxStageOf(b) + 1, dims.H * 1.4);
   // Lid layers over the base: up to 3 wall layers, plus 2 for a second pair of outside
-  // gussets when the two on one wall overlap (0303 / 0304 with H > half the wall).
-  return { builder: b, closedRotation, faceDepthTol: clear + 5 * t + 0.5 };
+  // gussets when the two on one wall overlap (0303 / 0304 with H > half the wall). Below a
+  // partial lid the base walls show: they lie as deep as the lid's own outside layers + the
+  // clearance + the base's outside gussets (0304: 11.5 mm at t 1.5, so the base end walls
+  // between the gusset triangles went unprinted). Measure that depth from the closed set.
+  const all = boundsAt({ panels: b.panels, rootId: b.rootId, thicknessMm: t, closedRotation }, 1);
+  const outer = size(all);
+  const baseWallDepth = Math.max(outer.x - bt.Lp, outer.z - bt.Wp) / 2;
+  return { builder: b, closedRotation, faceDepthTol: Math.max(clear + 5 * t, baseWallDepth) + 0.5 };
 }
 
 const flapsEnd: Corners = { kind: "flaps", on: "end" };
@@ -157,7 +163,9 @@ export function fefco0321(dims: Dims, t: number, f: StructureFeatures): Structur
   const lid = slottedBody(b, t, { prefix: "lid_", L: s.x + 2 * clear + 2 * t, W: s.z + 2 * clear, H: lidH, top: true, bottom: false, kind: "envelope", mount: { kind: "piece", label: "Lid" }, origin: nextOrigin(b, 20) });
   placePiece(b, lid.rootId, t, ORIENT.upright(), alignOn(box, { top: box.max.y + 2 * t }), maxStageOf(b) + 1, dims.H * 1.4);
   // The minor envelope flaps show in the corners between the tapered majors: print them too.
-  return { builder: b, closedRotation: IDENTITY_Q, faceDepthTol: clear + t + 0.5, faces: deepEnds({ b, t }, ["top", "bottom"], 0) };
+  // Below a partial lid the base walls lie the lid wall + clearance + the extra caliper on L
+  // deep: at clear + t + 0.5 the base end walls went unprinted (bare board under the lid).
+  return { builder: b, closedRotation: IDENTITY_Q, faceDepthTol: clear + 2 * t + 0.5, faces: deepEnds({ b, t }, ["top", "bottom"], 0) };
 }
 
 /* ───────────────────────── Bodies with caps (0310, 0312, 0313, 0314, 0325) ───────────────────────── */
