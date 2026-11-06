@@ -195,14 +195,14 @@ export async function saveDesign(doc: DesignDoc, actor: Actor, opts: { id?: stri
 }
 
 /** Create (or return) the share token. Signed-in owners only. */
-export async function shareDesign(id: string, user: SessionUser): Promise<{ ok: true; token: string } | { ok: false; status: 403 | 404 }> {
+export async function shareDesign(id: string, user: SessionUser): Promise<{ ok: true; token: string; created: boolean } | { ok: false; status: 403 | 404 }> {
   const row = await db.design.findUnique({ where: { id }, select: { ownerId: true, shareToken: true } });
   if (!row) return { ok: false, status: 404 };
   if (row.ownerId !== user.id) return { ok: false, status: 403 };
-  if (row.shareToken) return { ok: true, token: row.shareToken };
+  if (row.shareToken) return { ok: true, token: row.shareToken, created: false };
   const token = randomToken(12);
   await db.design.update({ where: { id }, data: { shareToken: token } });
-  return { ok: true, token };
+  return { ok: true, token, created: true };
 }
 
 export async function loadSharedDesign(token: string): Promise<{ doc: DesignDoc; designId: string } | null> {
@@ -259,11 +259,11 @@ export async function loadPresets(code: StructureCode): Promise<DimsPreset[]> {
 let loadable: Record<string, { files?: string[] }> | null | undefined;
 
 /**
- * JS files of a `next/dynamic` import in DesignerApp ("./Scene3D" or "./VesselView"), read from
+ * JS files of a `next/dynamic` import in DesignerApp ("./Stage3D", the one 3D canvas), read from
  * the build's react-loadable manifest, so the page can ask the browser to fetch three.js while it
  * hydrates instead of after. Empty under `next dev` or when the manifest is missing.
  */
-export function lazyChunkHrefs(entry: "./Scene3D" | "./VesselView"): string[] {
+export function lazyChunkHrefs(entry: "./Stage3D"): string[] {
   if (loadable === undefined) {
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports

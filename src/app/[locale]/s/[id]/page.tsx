@@ -10,6 +10,10 @@ import { designerPath } from "@/components/designer/lib/catalog";
 import { loadSharedDesign } from "@/components/designer/server";
 import { modelByCode } from "@/lib/library";
 import { db } from "@/lib/db";
+import { cookies } from "next/headers";
+import { ANON_COOKIE } from "@/lib/auth/constants";
+import { track } from "@/lib/analytics/track";
+import { rateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +39,7 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
 
   if (!shared) {
     return (
-      <Page narrowWidth>
+      <Page narrowWidth title={t("designer.shared.notFoundTitle")}>
         <Card>
           <EmptyState
             heading={t("designer.shared.notFoundTitle")}
@@ -58,6 +62,20 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
   const isOwner = session
     ? (await db.design.findUnique({ where: { id: designId }, select: { ownerId: true } }))?.ownerId === session.user.id
     : false;
+  // launch-metrics.md §1 `share_link_visit` (the owner opening their own link is not a visit).
+  // "returning" = the browser already had an Elba id (account session or anonymous designer cookie).
+  if (!isOwner) {
+    const rawAnon = (await cookies()).get(ANON_COOKIE)?.value ?? null;
+    const anonId = rawAnon && /^[\w-]{16,64}$/.test(rawAnon) ? rawAnon : null;
+    const who = session?.user.id ?? anonId;
+    if (!who || rateLimit("analytics:share_visit", `${who}:${designId}`, 1, 1_800_000).ok) {
+      void track(
+        "share_link_visit",
+        { locale, returning: !!(session || anonId), structure_code: doc.structureCode, referrer_type: "share_link" },
+        { userId: session?.user.id ?? null, anonId, designId },
+      );
+    }
+  }
   const name = doc.name.trim() || t(`structures.${doc.structureCode}` as DictKey);
   const specs: [string, string][] = [
     [t("designer.shared.style"), t(`structures.${doc.structureCode}` as DictKey)],

@@ -39,6 +39,8 @@ export function captureScreenshot(gl: WebGLRenderer, scene: Scene, camera: Camer
 
   const persp = camera instanceof PerspectiveCamera ? camera : null;
   const prevAspect = persp?.aspect ?? 1;
+  // exports are framed on the whole image: drop the on-screen overlay shift (fit insets) meanwhile
+  const prevView = persp?.view?.enabled ? { ...persp.view } : null;
 
   let blobPromise: Promise<Blob>;
   try {
@@ -46,6 +48,7 @@ export function captureScreenshot(gl: WebGLRenderer, scene: Scene, camera: Camer
     gl.setSize(w, h, false);
     if (persp) {
       persp.aspect = w / h;
+      if (prevView) persp.clearViewOffset();
       persp.updateProjectionMatrix();
     }
     const bg = opts.background ?? (mime === "image/jpeg" ? "#ffffff" : null);
@@ -61,6 +64,7 @@ export function captureScreenshot(gl: WebGLRenderer, scene: Scene, camera: Camer
     gl.setSize(prevSize.x, prevSize.y, false);
     if (persp) {
       persp.aspect = prevAspect;
+      if (prevView) persp.setViewOffset(prevView.fullWidth, prevView.fullHeight, prevView.offsetX, prevView.offsetY, prevView.width, prevView.height);
       persp.updateProjectionMatrix();
     }
     gl.render(scene, camera);

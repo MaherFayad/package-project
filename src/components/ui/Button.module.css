@@ -1,7 +1,8 @@
 /*
  * Button anatomy (Polaris): 13px semibold label, radius 8, bevel via inset shadows.
- * Heights: micro 24 · slim 28 · medium 28 (Polaris default) · large 32; on coarse
- * pointers every size except micro grows to 40px for touch.
+ * Heights (CR-37), one scale for every app: slim 28 · medium 32 · large 44. On coarse
+ * pointers slim and medium grow to 40px for touch; large is already above that.
+ * "micro" is kept for API compatibility and renders as slim (the old 24px size is gone).
  */
 .Button {
   --btn-bg: var(--p-color-bg-fill);
@@ -16,8 +17,8 @@
   align-items: center;
   justify-content: center;
   gap: var(--p-space-100);
-  min-block-size: var(--p-control-height-slim);
-  min-inline-size: var(--p-control-height-slim);
+  min-block-size: var(--p-control-height);
+  min-inline-size: var(--p-control-height);
   padding-block: var(--p-space-150);
   padding-inline: var(--p-space-300);
   margin: 0;
@@ -36,8 +37,8 @@
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-  transition: background-color var(--p-motion-duration-100) var(--p-motion-ease),
-    box-shadow var(--p-motion-duration-100) var(--p-motion-ease);
+  transition: background-color var(--motion-instant) var(--ease-standard),
+    box-shadow var(--motion-instant) var(--ease-standard);
 }
 :global(:lang(ar)) .Button { font-size: var(--p-font-size-350); }
 .Button:hover {
@@ -117,26 +118,31 @@
 .monochromePlain:hover { text-decoration: none; }
 
 /* sizes */
-.size-micro {
-  min-block-size: var(--p-control-height-micro);
-  min-inline-size: var(--p-control-height-micro);
-  padding-block: var(--p-space-050);
-  padding-inline: var(--p-space-200);
-  font-size: var(--p-font-size-300);
-  border-radius: var(--p-border-radius-150);
+.size-micro,
+.size-slim {
+  min-block-size: var(--p-control-height-slim);
+  min-inline-size: var(--p-control-height-slim);
+  padding-block: var(--p-space-100);
 }
-.size-slim { padding-block: var(--p-space-100); }
+.size-micro { padding-inline: var(--p-space-200); }
 .size-medium {}
 .size-large {
-  min-block-size: var(--p-control-height);
+  min-block-size: var(--p-control-height-lg);
+  min-inline-size: var(--p-control-height-lg);
   padding-inline: var(--p-space-400);
   font-size: var(--p-font-size-350);
+}
+/* Plain buttons read as text links: one 28px box at every size, not the 32/44 control heights. */
+.plain.size-micro, .plain.size-slim, .plain.size-medium, .plain.size-large,
+.monochromePlain.size-micro, .monochromePlain.size-slim, .monochromePlain.size-medium, .monochromePlain.size-large {
+  min-block-size: var(--p-control-height-slim);
+  min-inline-size: 0;
 }
 .plain.size-micro, .plain.size-slim, .plain.size-medium, .plain.size-large { padding-inline: var(--p-space-050); }
 
 @media (pointer: coarse) {
-  .size-slim, .size-medium, .size-large { min-block-size: var(--e-control-height-touch); }
-  .iconOnly.size-slim, .iconOnly.size-medium, .iconOnly.size-large { min-inline-size: var(--e-control-height-touch); }
+  .size-micro, .size-slim, .size-medium { min-block-size: var(--e-control-height-touch); }
+  .iconOnly.size-micro, .iconOnly.size-slim, .iconOnly.size-medium { min-inline-size: var(--e-control-height-touch); }
   .plain, .monochromePlain { min-block-size: var(--p-control-height-micro); }
 }
 

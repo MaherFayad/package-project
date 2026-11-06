@@ -140,6 +140,7 @@
   --p-color-text-inverse: #e3e3e3;
   --p-color-text-inverse-secondary: #b5b5b5;
   --p-color-text-on-fill: #ffffff;
+  --e-color-text-on-surface-inverse: #ffffff;  /* text on --p-color-bg-surface-inverse (toast) */
 
   /* ── Colour: icons ─────────────────────────────────────────────────── */
   --p-color-icon: #4a4a4a;
@@ -393,22 +394,43 @@
     0 0 0 calc(var(--p-focus-ring-offset) + var(--p-focus-ring-width)) var(--p-color-border-focus);
 
   /* ── Motion ───────────────────────────────────────────────────────── */
+  /* One scale (CR-18). Every other motion token (--p-motion-*, motion.css --m-*) aliases these,
+     and src/components/three/finishes/motion.ts mirrors them as JS constants.
+       instant  80   press feedback, tiny state flips
+       fast    150   hovers, colour/border changes, exits (toast, modal)
+       base    200   enters of small surfaces (popover, toast, modal)
+       slow    300   larger surfaces, drawers, accordions
+       reveal  480   one-off scroll/first-paint reveals, crossfades
+     Curves: enter = decelerate (things arriving), exit = accelerate (things leaving),
+     standard = state changes in place, spring = small overshoot, transform only (never opacity
+     or colour). Loops (marquee, float, shimmer) and the spinner keep their own periods. */
+  --motion-instant: 80ms;
+  --motion-fast: 150ms;
+  --motion-base: 200ms;
+  --motion-slow: 300ms;
+  --motion-reveal: 480ms;
+  --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* transform only */
+
+  /* Polaris-named aliases (kept so existing modules keep working); values snap to the scale. */
   --p-motion-duration-0: 0ms;
-  --p-motion-duration-50: 50ms;
-  --p-motion-duration-100: 100ms;
-  --p-motion-duration-150: 150ms;
-  --p-motion-duration-200: 200ms;
-  --p-motion-duration-250: 250ms;
-  --p-motion-duration-300: 300ms;
-  --p-motion-duration-350: 350ms;
-  --p-motion-duration-400: 400ms;
-  --p-motion-duration-450: 450ms;
-  --p-motion-duration-500: 500ms;
-  --p-motion-duration-5000: 5000ms; /* toast default */
-  --p-motion-ease: cubic-bezier(0.25, 0.1, 0.25, 1);
-  --p-motion-ease-in: cubic-bezier(0.42, 0, 1, 1);
-  --p-motion-ease-out: cubic-bezier(0.19, 0.91, 0.38, 1);
-  --p-motion-ease-in-out: cubic-bezier(0.42, 0, 0.58, 1);
+  --p-motion-duration-50: var(--motion-instant);
+  --p-motion-duration-100: var(--motion-instant);
+  --p-motion-duration-150: var(--motion-fast);
+  --p-motion-duration-200: var(--motion-base);
+  --p-motion-duration-250: var(--motion-base);
+  --p-motion-duration-300: var(--motion-slow);
+  --p-motion-duration-350: var(--motion-slow);
+  --p-motion-duration-400: var(--motion-reveal);
+  --p-motion-duration-450: var(--motion-reveal);
+  --p-motion-duration-500: var(--motion-reveal);
+  --p-motion-duration-5000: 5000ms; /* toast default (a timeout, not an animation) */
+  --p-motion-ease: var(--ease-standard);
+  --p-motion-ease-in: var(--ease-exit);
+  --p-motion-ease-out: var(--ease-enter);
+  --p-motion-ease-in-out: var(--ease-standard);
   --p-motion-linear: cubic-bezier(0, 0, 1, 1);
   /* Distance for enter animations (rise/slide). Zeroed under reduced motion below. */
   --e-motion-distance: 12px;
@@ -476,16 +498,12 @@
    Opacity-only fades stay instant rather than removed so state changes remain visible. */
 @media (prefers-reduced-motion: reduce) {
   :root {
-    --p-motion-duration-50: 0ms;
-    --p-motion-duration-100: 0ms;
-    --p-motion-duration-150: 0ms;
-    --p-motion-duration-200: 0ms;
-    --p-motion-duration-250: 0ms;
-    --p-motion-duration-300: 0ms;
-    --p-motion-duration-350: 0ms;
-    --p-motion-duration-400: 0ms;
-    --p-motion-duration-450: 0ms;
-    --p-motion-duration-500: 0ms;
+    /* The --p-motion-* aliases follow these automatically. */
+    --motion-instant: 0ms;
+    --motion-fast: 0ms;
+    --motion-base: 0ms;
+    --motion-slow: 0ms;
+    --motion-reveal: 0ms;
     --e-motion-distance: 0px;
   }
 }
@@ -506,6 +524,7 @@
   --p-color-bg-surface-secondary-hover: #333333;
   --p-color-bg-surface-tertiary: #3a3a3a;
   --p-color-bg-surface-inverse: #e3e3e3;
+  --e-color-text-on-surface-inverse: #1a1a1a;
   --p-color-bg-fill: #3a3a3a;
   --p-color-bg-fill-hover: #424242;
   --p-color-bg-fill-active: #4a4a4a;

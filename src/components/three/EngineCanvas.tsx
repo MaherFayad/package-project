@@ -6,6 +6,7 @@ import { ACESFilmicToneMapping, AgXToneMapping, NeutralToneMapping, type ToneMap
 import { defaultMaxDpr } from "./hooks";
 import { KEY_SHORTCUTS, RendererSettings, ShaderWarmup, registerDebugRenderer } from "./perf";
 import type { ScreenshotOptions } from "./screenshot";
+import type { FitInsets } from "./fit";
 import styles from "./PackagingScene.module.css";
 
 /**
@@ -32,6 +33,8 @@ export interface EngineViewApi {
   screenshot(opts?: ScreenshotOptions): Promise<Blob>;
   /** Called after a keyboard action (e.g. to stop a turntable). */
   onKeyboard?(): void;
+  /** Overlay insets in px (see fit.ts). */
+  setFitInsets?(insets: FitInsets | null): void;
 }
 
 interface EngineCanvasContextValue {
@@ -58,6 +61,7 @@ export function useRegisterViewApi(apiRef: { current: EngineViewApi | null }) {
       setView: (v) => apiRef.current?.setView(v),
       screenshot: (o) => (apiRef.current ? apiRef.current.screenshot(o) : Promise.reject(new Error("3D view not ready"))),
       onKeyboard: () => apiRef.current?.onKeyboard?.(),
+      setFitInsets: (i) => apiRef.current?.setFitInsets?.(i),
     };
     ctx.register(proxy);
     // report the first frame of this content (after a model / kind switch too)

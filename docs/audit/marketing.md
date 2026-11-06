@@ -115,3 +115,102 @@ Motion was checked with Playwright videos (desktop en, mobile ar, reduced-motion
 - `npm run lint`: clean. `npm run typecheck`: clean. `npm test`: 43 files, 5905 tests passed. `npm run build`: OK.
 - Playwright e2e `smoke`, `storefront` and `journey` (desktop + mobile, `--workers=2 --trace off`): 19 passed, 1 skipped (skipped in the suite itself). One run had a transient failure in `smoke` (OTP "Send code" stayed disabled on /login, outside scope); it passed on re-run.
 - Audit script over 13 routes x 2 viewports: 0 axe violations, CLS 0.000 everywhere, no horizontal scroll, no console errors.
+
+## Round 2
+
+Base: `b240eba` (round 1 of every area merged). Method as in round 1: production build, Playwright at 390x844 and 1440x900, ar and en, axe-core (WCAG 2.0/2.1/2.2 A + AA), overflow probe, keyboard tab walk, reduced-motion probe, plus `docs/audit/tools/perf-pages.mjs` (phone = 390x844 DPR 2, 4x CPU, Slow 4G) and a per-route LCP/resource-timing script for the pages the harness does not cover (`/boxes/[structure]`, `/vendors/[slug]`, legal).
+
+### Round 1 re-verification
+
+Every round 1 row marked fixed was re-checked in the browser on this base: 0 axe violations on all 10 marketing routes x 2 locales x 2 viewports, no horizontal page scroll, CLS 0.000 to 0.006, no animation running under `prefers-reduced-motion` (MK-11, WCAG 2.3.3), marquee and chip keyframes running otherwise (MK-01), mobile menu sheet 390x844 full screen (MK-17), unknown printer / structure / legal slugs answer 404 (PERF-01), price table scroll region focusable and named (MK-06), visible focus ring on every tab stop (WCAG 2.4.7). **Nothing reopened.**
+
+### Performance: phone LCP
+
+Phone LCP was 3.3 to 5.2 s on this base (FCP 3.3 to 4.2 s), not the 2.7 to 4.0 s quoted at the end of round 1: the PERF-17 switch to strict CSS chunking (last commit before round 2) exposed R2-MK-01 and R2-MK-02 below.
+
+`perf-pages.mjs`, phone profile (first number before, second after):
+
+| Page | ar FCP | ar LCP | en FCP | en LCP | render-blocking CSS files |
+|---|---|---|---|---|---|
+| home | 4,228 → 2,748 | **5,164 → 2,840** | 3,348 → 2,136 | **3,348 → 2,136** | 21 → 6 |
+| /boxes | 3,904 → 2,556 | **3,952 → 2,616** | 3,844 → 2,072 | **3,844 → 2,156** | 22 → 6 |
+| /bottles | 4,032 → 2,208 | **4,032 → 2,356** | 3,688 → 1,940 | **3,688 → 2,204** | 21 → 6 |
+| /vendors | 3,856 → 2,280 | **4,768 → 2,280** | 3,440 → 2,168 | **4,704 → 2,168** | 22 → 9 |
+| /boxes/[structure] (own script, median of 3) | ~3,400 → 2,700 | ~3,400 → 2,900 | ~2,800 → 2,350 | ~2,800 → 2,850 | 22 → 11 |
+| /vendors/[slug] (own script, median of 3) | ~3,870 → 2,480 | ~3,870 → 2,480 | – | ~2,100 | 22 → 11 |
+
+Desktop after: LCP 204 to 356 ms everywhere, CLS ≤ 0.006, TBT ≤ 73 ms. Phone INP 16 to 128 ms. JS on store pages 146 to 196 KB gz (budget 200).
+
+**Result:** every page is under 2.5 s in English and /bottles, /vendors and /vendors/[slug] are under it in Arabic. Arabic home, /boxes and the structure pages are at 2.6 to 2.9 s; run-to-run spread on this profile is ±300 ms. What separates them from the budget is outside this scope (see "Open" below): 117 KB of preloaded fonts on `/ar` versus 49 KB on `/en`, and the whole i18n dictionary (155 KB raw, ~35 KB gz) serialized into every page by the root layout. I measured removing the Plex 400 preload: it made LCP worse (late font swap produced 4.5 s LCP entries), so I left the fonts alone.
+
+### Findings
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R2-MK-01 | critical | every marketing page (`MarketingShell.tsx`) | 21 render-blocking stylesheets on home, /boxes, /bottles, /vendors (17 of them the (auth) layout's admin kit CSS: Popover, Modal, Tabs, Form, Spinner…). `AppProvider` is a client reference rendered by the (store), (auth) and (checkout) layouts; Next resolves a shared client reference to one entry's chunk group, so the marketing pages linked the (auth) layout's CSS. On Slow 4G that is 3 to 4 extra round trips before first paint. | Core Web Vitals LCP < 2.5 s | New `MarketingProviders.tsx`: a marketing-only `"use client"` boundary that wraps `AppProvider`, so the reference resolves to the store layout's own chunk. Home and category pages: 21 → 6 stylesheets. The cookie-ack hook moved out of `CookieNotice.tsx` into a CSS-free `store/cookieAck.ts` (re-exported, API unchanged). | fixed |
+| R2-MK-02 | high | /boxes (`BoxesLanding.tsx`) | /boxes only shows the library teaser, but `BoxesLanding` statically imported `ModelLinks` → the client `ModelBrowser` with the UI kit barrel, so /boxes still linked 16 extra stylesheets and the picker chunk. | LCP | `library` is now a `ReactNode` slot: /catalog passes `<ModelLinks />`, /boxes passes nothing. 22 → 6 stylesheets. | fixed |
+| R2-MK-03 | high | hero leads on /vendors, /boxes, /bottles, structure, printer profile, legal, home (`motion.css`) | The hero lead was often the LCP element (/vendors: LCP 4.7 s, FCP 3.4 s). It entered with a delayed `both` fade from opacity 0; Chrome does not count an opacity-0 paint, and on a throttled phone the animation does not start until the main thread is free after hydration. The home hero visual (which holds the poster, the ar LCP image) also faded in (`m-scale-in`). | LCP; motion "subtle, ease-out" | Leads use the transform-only `m-enter-lcp` rise. `.m-enter-scale` now settles from `scale(0.96)` without a fade (new `m-scale-only` keyframes). Reduced motion still disables both. /vendors phone LCP 4.7 → 2.2 to 2.3 s. | fixed |
+| R2-MK-04 | high | home hero poster, `/boxes/[structure]` hero (`assets.ts`, `responsive-variants.cjs`, `StructureDetail.tsx`) | A 390 px DPR 2 phone picked the 914 px original (38 KB) for a 358 px poster; the structure hero declared `sizes="92vw"` for a 286 px image and was discovered only when the parser reached it. | LCP; image budget | 720w variants (quality 78) for the seven wide box renders (19 to 27 KB instead of 25 to 39 KB), `srcSetFor()` emits the extra step. Structure hero: correct `sizes` (74vw) and a React `preload()` with `imageSrcSet` + `fetchPriority: high` so it starts from `<head>`. | fixed |
+| R2-MK-05 | high | /boxes/[structure], /vendors/[slug] (`PriceFromTable.tsx`, printer page, `PortfolioGallery.tsx`, `StructureDetail.tsx`) | The price and machines tables used the kit `DataTable`, which lives in `IndexTable.tsx` with the admin filters (Popover, TextField, Tabs); with Button, Banner, EmptyState, Breadcrumbs and an eagerly imported Modal the pages linked 19 to 22 stylesheets. They also read as admin screens inside the marketing chrome (round 1 open item). | LCP; reference "no admin look on marketing pages" | New server `SpecTable` (store): caption, column + row headers, tabular figures, focusable named scroll region (WCAG 2.1.1), marketing styling (grey rounded head row, row rules). Design CTA is a marketing pill, "See all printers" a text link, breadcrumbs reuse the marketing crumbs, reviews empty state and contact note are plain markup, the lightbox `Modal` loads on demand (`next/dynamic`) with 44 px plain nav buttons. 22 → 11 stylesheets; the lightbox e2e still passes. | fixed |
+| R2-MK-06 | medium | home "Packaging for every kind of brand" at < 560 px | Six audience cards stacked to about 1,400 px of scrolling. | Reference mobile: "collage becomes a horizontal scroll strip" | Phone-only snap rail (`.useRail`): 78% cards, next card peeking, full bleed, never scrolls the page. Each card has a link, so the rail is keyboard reachable (axe clean). | fixed |
+| R2-MK-07 | medium | home "Finishes" at < 560 px | Six finishes, each a full-width row with a 64 px icon tile: about 1,300 px for six one-line facts. | Reference rhythm; mobile density | Two compact columns on phones (48 px tiles, 17 px titles, 14 px body). Section went from about 1,300 to about 560 px. | fixed |
+| R2-MK-08 | medium | home stats band (`statsOrb`) | The "Egypt" visual was a plain green ball with floating city labels; it read as a placeholder next to the reference's globe. | Reference w05 (stats with visual) | A faint dot-matrix texture masked to the sphere, and a green pin in each city tag that pulses three times when the band is revealed, then rests (finite, so no pause control is needed under WCAG 2.2.2; off under reduced motion). | fixed |
+| R2-MK-09 | low | /boxes/[structure] "Printers that make this box" | Printer names rendered in the admin link blue (#005bd3) inside the marketing page. | Colour restraint (reference: black, white, greys, one accent) | Ink, semibold, underlined links scoped to that list (`.makerList`). | fixed |
+| R2-MK-10 | low | 404 page (`src/app/[locale]/not-found.tsx`, outside scope) | axe `document-title` (serious): the not-found page renders without a `<title>`. | WCAG 2.4.2 Page Titled | Not changed: the file is outside this scope. Fix: `export const metadata = { title: … }` is not allowed in not-found; render `<title>` in the component (React 19 hoists it). | open (outside scope) |
+
+Totals round 2: 1 critical, 4 high, 3 medium, 2 low. Fixed: 9. Open: 1 (outside scope).
+
+### Open / outside scope (for the integrator)
+
+- **Whole dictionary in every page (performance, high).** `src/app/[locale]/layout.tsx` passes the full `getDictionary(locale)` to `I18nProvider`: 155 KB raw on `/ar` (admin 32 KB, vendorPortal 32 KB, store 16 KB, designer 14 KB, marketing 13 KB, legal 13 KB…), about 35 KB gz of the 55 to 73 KB gz HTML, on every route. Recommended: provide `common`/`nav`/`meta` at the root and let each area layout add only the namespaces its client components use (nested provider that merges), or move client strings to props.
+- **Arabic font weight in the critical window (performance, medium).** `/ar` preloads Inter (49 KB) plus Plex Arabic 400 and 700 (68 KB) ahead of the CSS. Inter only renders digits and a few Latin words on Arabic pages; preloading it only on `/en` (same trick as `font-preload.ts`) would free about 0.3 s on Slow 4G. Dropping a Plex preload instead was measured and is worse.
+- **R2-MK-10** above.
+- Remaining 11 stylesheets on `/boxes/[structure]` and `/vendors/[slug]` come from the Polaris Card / Text / Layout / Badge used for the dense lower body. Moving those to marketing markup would bring them to 6 like the other pages; left as is because the dense data is fine in cards and the files are small (0.5 to 1.3 KB gz each).
+
+### Files touched outside scope
+
+- `src/app/[locale]/(store)/catalog/page.tsx` (catalog area): one line, passes `<ModelLinks />` into the new `BoxesLanding` `library` slot (R2-MK-02). Behaviour unchanged.
+
+### Screenshots (round 2)
+
+`docs/screenshots/audit/marketing/r2/` (indexed PNG, 1x DPR, 0.7 MB): `before-`/`after-home-ar-390-stats-audience.png` (R2-MK-06/08), `before-`/`after-home-ar-390-finishes.png` (R2-MK-07), `before-`/`after-structure-en-390-body.png` (R2-MK-05/09), `after-structure-en-1440-full.png`, `after-printer-profile-ar-1440-full.png`, `after-home-ar-390-fold.png`.
+
+### Verification (round 2)
+
+- `npm run lint` clean, `npm run typecheck` clean, `npm test`: 54 files, 6,245 tests passed, `npm run build` OK.
+- Playwright `smoke`, `storefront`, `journey` (desktop + mobile, `--workers=2 --trace off`): 19 passed, 1 skipped (skipped in the suite itself).
+- Audit script, 10 routes x 2 locales x 2 viewports: 0 axe violations except R2-MK-10 (404, outside scope), no horizontal page scroll, no console errors.
+
+## Round 3
+
+Base: this branch merged with `origin/claude/exciting-albattani-8kzgsu` at `0e30478` (every round 2 branch). Work list: the marketing rows of `docs/audit/ROUND3.md` (sources `craft.md`, `a11y.md`, `business.md`). One merge conflict: `(store)/catalog/page.tsx`, which the catalogue area rewrote; I took theirs (it no longer uses `BoxesLanding`, so the round 2 slot change needs nothing there).
+
+| id | severity | page / file | finding | fix | status |
+|---|---|---|---|---|---|
+| B-26 | medium (business priority) | public structure page, home hero chip, designer badge, checkout | Three prices for one 500-box mailer: public page EGP 34.20 / 10 days (1 colour, best match), designer badge 37.95 / 13 days (4 colours, cheapest), checkout 40.06 (4 colours, best match). | **One price source**, `src/lib/pricing/headline.ts` (pure, re-exported from `@/lib/pricing`): `HEADLINE_DEFAULTS` (4 colours, outside, no finish, Greater Cairo: the same defaults as `/api/quote` and the order service), `headlineInput()`, and `headlineOffer()` = the best-match offer, which checkout pre-selects. `store/data.ts getPriceFrom()` (structure table, size pages, home chip, /boxes cards) now prices through it. The table intro says so: "Price per box from the best-match printer … full-colour print … The designer and checkout start from this same price." Unit tests: `src/lib/pricing/__tests__/headline.test.ts`. Designer half (badge: `headlineOffer` instead of cheapest) and checkout half were handed to those owners through the integrator. | fixed (marketing half) |
+| B-22 / B-03 | medium | PNG export | Exported mockups carry no attribution, so the social loop gets nothing back. | `src/components/marketing/exportMark.ts`: `stampExportMark(blob, { locale })` stamps a white pill in the bottom end corner (right in English, left in Arabic) with the kraft box glyph and "Design your box on Elba · elba.eg" / "صمم علبتك على علبة · elba.eg". It is about 2.2% of the width and capped at 46%, and the host comes from `NEXT_PUBLIC_SITE_URL`. For standard exports only; HD stays clean (G2). Geometry is unit tested; rendered output in `r2/after-r3-export-mark-en-ar.png`. The designer calls it in `exportPng` for `size === "standard"` (designer half). | fixed (marketing half) |
+| CR-02 | high | footer social icons | The icon turned white on its white disc on hover. | `.social a:hover/:focus-visible { color: #000 }` with the lift kept. Verified: black on white on hover. | fixed |
+| CR-01 (marketing belt and braces) | high | every pill and ink link on marketing pages | The global `a:hover` link colour out-ranked `.pill`, so the hovered header CTA was #004299 on #2b2b2b (1.51:1, WCAG 1.4.3). Brand, nav, language, card and announcement links also turned blue. | Pinned hover colours in `marketing.module.css` (`.pill:hover { color: var(--pill-fg) }`, ink for brand, nav and language links, inherit for card, text and crumb links). Verified every variant: CTA white on #2b2b2b, outline white on ink, lime ink on lime, ghost ink on white. The global rule stays the platform owner's. | fixed |
+| CR-10 | high | `/boxes/[structure]/[size]` price table at 390 px | The last column was clipped, and Arabic showed "0." for "10 أيام". | `SpecTable` reflows under 490 px: each row becomes a stacked card, with the quantity (row header) as its title and "label … value" lines from `data-label`. It stays a real `<table>` for assistive tech, with no sideways scroll. WCAG 1.4.10. Before and after: `r2/before-r3-…-price-table.png`, `r2/after-r3-…-price-stacked.png`. | fixed |
+| CR-45 | low | home on load (CLS 0.0063) | The page shifted down 9 px after hydration. Root cause: (1) `MarketingShell` wrapped the header in Suspense with a 64 px fallback, so the 73 px header streamed in late; (2) `LangLink` used `useSearchParams()`, which bails the language links out of the static HTML. | Removed the header Suspense (the header reads no request data since PERF-06). `LangLink` renders from the pathname and adds the query string at click time. Home CLS is now 0.0000 (en) and 0.0001 (ar, font swap only), on desktop and phone. Bonus: the header is now in the static HTML, so it paints with the first frame instead of after streaming. | fixed |
+| CR-29 | medium | home "Everything you need" | Heading alignment differed by locale. | Re-checked on the merged base: centred in both ar and en at 1440 and 390 (no `:lang(ar)` override left). | fixed (verified) |
+| CR-39 | low | Arabic display type | Arabic H1 line height 1.25 was tight for Plex Arabic on two-line heads. | `--mk-lh-display: 1.3` under `:lang(ar)`, and H2 1.35. | fixed |
+| CR-55 | low | top nav | "Pricing / الأسعار" opened `/catalog`, the box catalogue. | The item is now "Box styles / أنواع العلب" (`nav.catalog`), and it shows active on `/catalog`. Prices stay on each style page ("Prices" anchor on the structure hero). | fixed |
+| CR-62 | low | box size H1 | The H1 said "25×18×8 سم" while the body said "250 × 180 × 80 مم". | The visible H1 uses `formatDims` (mm, spaced ×, bidi-isolated): "Custom printed mailer box 330 × 200 × 120 mm". `<title>`, meta and keywords keep the cm form people search for. JSON-LD uses the plain-text H1. The e2e assertion was updated to the new copy and now also checks the title. | fixed |
+| X-02 | medium | `/boxes/rigid-box`, `/boxes/paper-tube` | Raw key `store.catalog.family.RIGID` / `.TUBE` was shown, and the page was 336 px wide at 320 px. | Added RIGID, TUBE, LABEL and FLEXIBLE family names in en and ar ("علب مقواة فاخرة", "أسطوانات ورقية", "ملصقات", "تغليف مرن"). `.specRow dd { overflow-wrap: anywhere }`. Verified: 320 px wide, no raw keys. WCAG 1.4.10, 3.1. | fixed |
+| CR-43 | medium | `/legal/privacy` | Visible placeholder "[اسم الكيان القانوني، سجل تجاري رقم ___]". | Not changed: the legal entity name, commercial register number and DPO contact are business facts I must not invent (PDPL 151/2020 requires the real controller identity). The "draft for lawyer review" banner stays until legal provides them. | open (needs business / legal input) |
+| CR-53, CR-54 | low | `/catalog` hero and family header | Dead space under the CTA row; detached family count. | Superseded: the catalogue area rewrote `/catalog` (no shelf illustration, no family header row; checked at 1440 ar). `/catalog` is outside this scope. | n/a (superseded) |
+| CR-61 | medium | `/login`, `/vendor/apply` shells | Acquisition pages sit in the dark app chrome. | Covered by platform CR-05 (one buyer-facing chrome). `MarketingShell` is ready to be reused: it needs only `locale`. | handed to platform (CR-05) |
+
+### Files touched outside scope (round 3)
+
+- `src/lib/pricing/headline.ts` (new), `src/lib/pricing/index.ts` (one re-export line), `src/lib/pricing/__tests__/headline.test.ts` (new): the B-26 shared source, as assigned by the integrator.
+- `src/i18n/en.ts`, `src/i18n/ar.ts`: `store.catalog.family.*` (X-02), `store.structure.priceIntro` (B-26), `store.seo.h1` (CR-62).
+- `src/app/[locale]/(store)/boxes/[structure]/[size]/page.tsx` (size H1; this is my scope, but listed because it is a store SEO page).
+- `e2e/storefront.spec.ts`: the H1 assertion now expects the mm form and also asserts the cm `<title>` (the spec changed; the test is not weakened).
+
+### Verification (round 3)
+
+- `npm run lint` and `tsc --noEmit` clean. `npm test`: 66 files, 8,164 tests passed. `npm run build` OK.
+- Playwright `smoke`, `storefront`, `journey` (desktop + mobile, `--workers=2 --trace off`): 19 passed, 1 skipped (in the suite).
+- Audit script on home, structure, size, rigid-box, paper-tube, printer profile and privacy (ar/en, 390/1440): 0 axe violations, no horizontal scroll, no console errors. CLS probe: home 0.0000 to 0.0001.

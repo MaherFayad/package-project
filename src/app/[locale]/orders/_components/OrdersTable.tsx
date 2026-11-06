@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 import type { Locale, OrderStatus } from "@/types";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
-import { statusBadge } from "@/lib/orders/state";
+import { paymentTone, statusTone } from "@/lib/orders/status-tone";
 import {
   Badge,
   Card,
@@ -64,7 +64,7 @@ export function OrdersTable({ rows, locale }: { rows: OrderRow[]; locale: Locale
     />
   );
   const payBadge = (r: OrderRow) => (
-    <Badge tone={r.paymentStatus === "PAID" ? "neutral" : r.paymentStatus === "REFUNDED" ? "critical" : "warning"} progress={r.paymentStatus === "PAID" ? "complete" : "incomplete"}>
+    <Badge tone={paymentTone(r.paymentStatus).tone} progress={paymentTone(r.paymentStatus).progress}>
       {t(`payment.status.${r.paymentStatus}` as DictKey)}
     </Badge>
   );
@@ -80,7 +80,7 @@ export function OrdersTable({ rows, locale }: { rows: OrderRow[]; locale: Locale
         ) : (
           <ul className={styles.cards} aria-label={t("orders.title")}>
             {visible.map((r) => {
-              const b = statusBadge(r.status);
+              const b = statusTone(r.status);
               return (
                 <li key={r.id}>
                   <Link href={`/${locale}/orders/${r.id}`} className={styles.cardRow} data-cancelled={r.status === "CANCELLED" || undefined}>
@@ -89,14 +89,14 @@ export function OrdersTable({ rows, locale }: { rows: OrderRow[]; locale: Locale
                         <Text as="span" fontWeight="semibold">
                           <bdi>{r.number}</bdi>
                         </Text>
-                        <PriceTag amount={r.totalPiasters} locale={locale} />
+                        <PriceTag amount={r.totalPiasters} locale={locale} alwaysDecimals />
                       </span>
                       <Text as="span" variant="bodySm" tone="subdued">
                         {r.placedLabel} · {r.vendor} · {t("orders.boxes", { qty: r.quantity.toLocaleString("en-US") })}
                       </Text>
                       <span className={styles.cardBadges}>
                         <Badge tone={b.tone} progress={b.progress}>
-                          {t(`orderStatus.${r.status}` as DictKey)}
+                          {r.status === "PAID" ? t("buyer.awaitingPrinter") : t(`orderStatus.${r.status}` as DictKey)}
                         </Badge>
                         {r.paymentStatus === "REFUNDED" ? payBadge(r) : null}
                       </span>
@@ -131,7 +131,7 @@ export function OrdersTable({ rows, locale }: { rows: OrderRow[]; locale: Locale
       }
     >
       {visible.map((r) => {
-        const b = statusBadge(r.status);
+        const b = statusTone(r.status);
         return (
           <IndexTableRow key={r.id} id={r.id} strikethrough={r.status === "CANCELLED"}>
             <IndexTableCell>
@@ -147,12 +147,12 @@ export function OrdersTable({ rows, locale }: { rows: OrderRow[]; locale: Locale
               {r.quantity.toLocaleString("en-US")}
             </IndexTableCell>
             <IndexTableCell alignment="end" numeric>
-              <PriceTag amount={r.totalPiasters} locale={locale} />
+              <PriceTag amount={r.totalPiasters} locale={locale} alwaysDecimals />
             </IndexTableCell>
             <IndexTableCell>{payBadge(r)}</IndexTableCell>
             <IndexTableCell>
               <Badge tone={b.tone} progress={b.progress}>
-                {t(`orderStatus.${r.status}` as DictKey)}
+                {r.status === "PAID" ? t("buyer.awaitingPrinter") : t(`orderStatus.${r.status}` as DictKey)}
               </Badge>
             </IndexTableCell>
           </IndexTableRow>

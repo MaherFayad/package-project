@@ -11,6 +11,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { track } from "@/lib/analytics/track";
 import { fromJson, toJson } from "@/lib/json";
 import { OrderError, shipOrder, transitionOrder } from "@/lib/orders/service";
 import { getPaymentProvider } from "@/lib/payments";
@@ -27,6 +28,7 @@ import {
   canReassign,
   canRefund,
   canReviewQc,
+  needsManualCost,
   noteSchema,
   overrideSchema,
   qcSchema,
@@ -46,6 +48,7 @@ import {
   deletionBlockers,
   disputeDecisionSchema,
   encodeReviewNote,
+  isOpenDispute,
   statusForDecision,
   vendorStatusAfter,
   vendorStatusSchema,
@@ -61,6 +64,13 @@ import {
   type PreviewRow,
   type PreviewSample,
 } from "../lib/pricingSettings";
+import { leadState, leadStepSchema } from "../lib/quoteLeads";
+import { checkoutSettingsFormSchema } from "../lib/checkoutSettings";
+import { CHECKOUT_SETTING_KEY, loadCheckoutSettings } from "@/lib/orders/checkout-settings";
+import { QUOTE_REQUESTED } from "@/lib/orders/quote-requests";
+import { bioCleanSchema, canApprovePortfolio, portfolioReviewSchema, reviewNoteRequired } from "../lib/moderation";
+import { stripContactDetails } from "@/components/vendor/lib/contact";
+import { canRaisePayout, payoutAmount, payoutStepSchema, STEP_FROM, STEP_TO } from "../lib/payouts";
 import { defaultFits, finishUpdateSchema, materialUpdateSchema, mergeLimits, outsideHardBounds, structureUpdateSchema } from "../lib/catalog";
 
 function revalidateAdmin() {
@@ -85,6 +95,12 @@ export async function reassignOrderAction(input: z.input<typeof reassignSchema>)
     if (order.vendorId === d.vendorId) throw new AdminActionError("INVALID");
     const vendor = await db.vendor.findUnique({ where: { id: d.vendorId } });
     if (!vendor || vendor.status !== "ACTIVE") throw new AdminActionError("NOT_ALLOWED", "VENDOR_INACTIVE");
+    // Quote-only for this vendor (no active rate card for the job): the buy price must be entered.
+    const item = await db.orderItem.findFirst({ where: { orderId: order.id }, select: { structureCode: true, materialCode: true } });
+    const card = item
+      ? await db.rateCard.findFirst({ where: { vendorId: vendor.id, active: true, structure: { code: item.structureCode }, material: { code: item.materialCode } }, select: { id: true } })
+      : null;
+    if (needsManualCost(!!card, d.vendorCostPiasters)) throw new AdminFieldErrors({ vendorCostPiasters: "COST_REQUIRED" });
     const nextStatus = statusAfterReassign(order.status as OrderStatus);
     const cost = d.vendorCostPiasters ?? order.vendorCostPiasters;
     await db.$transaction(async (tx) => {
@@ -109,6 +125,143 @@ export async function reassignOrderAction(input: z.input<typeof reassignSchema>)
       );
     });
     revalidateAdmin();
+    return null;
+  });
+}
+
+/**
+ * Vendor payout step (research report §4.1 payout approvals). RAISE creates the PENDING row for a
+ * part that is earned (advance: vendor accepted; balance: delivered after QC), APPROVE and PAY move
+ * it on. Paying the balance needs ops to confirm the vendor's ETA e-invoice is on file.
+ */
+export async function payoutStepAction(input: z.input<typeof payoutStepSchema>): Promise<AdminActionResponse> {
+  return runAdminAction(async () => {
+    const admin = await adminForMutation();
+    const d = parse(payoutStepSchema, input);
+    const order = await db.order.findUnique({ where: { id: d.orderId }, include: { vendor: { select: { nameEn: true } }, payouts: true, disputes: { select: { status: true } } } });
+    if (!order) throw new AdminActionError("NOT_FOUND");
+    if (d.kind === "BALANCE" && order.disputes.some((x) => isOpenDispute(x.status))) throw new AdminActionError("NOT_ALLOWED", "PAYOUT_DISPUTE_HOLD");
+    const existing = order.payouts.find((p) => (p.kind === "BALANCE" ? "BALANCE" : "ADVANCE") === d.kind) ?? null;
+    if (d.step === "PAY" && d.kind === "BALANCE" && !d.eInvoice) throw new AdminFieldErrors({ eInvoice: "REQUIRED" });
+    const label = `${order.number} ${d.kind.toLowerCase()} (${order.vendor.nameEn})`;
+    await db.$transaction(async (tx) => {
+      if (d.step === "RAISE") {
+        if (existing) throw new AdminActionError("STALE");
+        if (!canRaisePayout(d.kind, order.status)) throw new AdminActionError("NOT_ALLOWED", "PAYOUT_NOT_EARNED");
+        const amount = payoutAmount(d.kind, order.vendorCostPiasters);
+        if (amount <= 0) throw new AdminActionError("NOT_ALLOWED", "PAYOUT_ZERO");
+        const row = await tx.payout.create({ data: { vendorId: order.vendorId, orderId: order.id, kind: d.kind, amountPiasters: amount, status: "PENDING" } });
+        await audit(admin, { action: "PAYOUT_RAISE", entityType: "PAYOUT", entityId: row.id, summary: `${label}: ${amount / 100} EGP`, after: { status: "PENDING", amountPiasters: amount } }, tx);
+        return;
+      }
+      if (!existing) throw new AdminActionError("NOT_FOUND");
+      // Refunded or cancelled jobs: nothing more is owed (unpaid rows are removed by the refund).
+      if (["REFUNDED", "CANCELLED"].includes(order.status)) throw new AdminActionError("NOT_ALLOWED", "PAYOUT_ORDER_CLOSED");
+      const now = new Date();
+      const u = await tx.payout.updateMany({
+        where: { id: existing.id, status: STEP_FROM[d.step] },
+        data: d.step === "APPROVE" ? { status: STEP_TO.APPROVE, approvedAt: now } : { status: STEP_TO.PAY, paidAt: now },
+      });
+      if (u.count !== 1) throw new AdminActionError("STALE");
+      await audit(
+        admin,
+        {
+          action: d.step === "APPROVE" ? "PAYOUT_APPROVE" : "PAYOUT_PAY",
+          entityType: "PAYOUT",
+          entityId: existing.id,
+          summary: `${label}: ${existing.amountPiasters / 100} EGP${d.step === "PAY" && d.kind === "BALANCE" ? ", e-invoice on file" : ""}`,
+          before: { status: existing.status },
+          after: { status: STEP_TO[d.step] },
+        },
+        tx,
+      );
+    });
+    revalidateAdmin();
+    return null;
+  });
+}
+
+/* ───────────────────────── Checkout settings (B-05, B-11) ───────────────────────── */
+
+export async function saveCheckoutSettingsAction(input: z.input<typeof checkoutSettingsFormSchema>): Promise<AdminActionResponse> {
+  return runAdminAction(async () => {
+    const admin = await adminForMutation();
+    const d = parse(checkoutSettingsFormSchema, input);
+    const before = await loadCheckoutSettings();
+    await db.$transaction(async (tx) => {
+      await tx.platformSetting.upsert({
+        where: { key: CHECKOUT_SETTING_KEY },
+        create: { key: CHECKOUT_SETTING_KEY, value: toJson(d), updatedById: admin.id },
+        update: { value: toJson(d), updatedById: admin.id },
+      });
+      await audit(admin, { action: "CHECKOUT_SETTINGS", entityType: "SETTINGS", entityId: CHECKOUT_SETTING_KEY, summary: `prepay ${d.prepayDiscountPct}%, sample ${d.sample.enabled ? "on" : "off"}`, before, after: d }, tx);
+    });
+    revalidateAdmin();
+    revalidatePath("/[locale]/checkout/[designId]", "page");
+    return null;
+  });
+}
+
+/* ───────────────────────── Quote leads (B-15) ───────────────────────── */
+
+/** Record the ops follow-up on a quote request (contacted / closed) in the audit log. */
+export async function quoteLeadStepAction(input: z.input<typeof leadStepSchema>): Promise<AdminActionResponse> {
+  return runAdminAction(async () => {
+    const admin = await adminForMutation();
+    const d = parse(leadStepSchema, input);
+    const q = await db.quote.findUnique({ where: { id: d.quoteId }, select: { id: true, status: true } });
+    if (!q || q.status !== QUOTE_REQUESTED) throw new AdminActionError("NOT_FOUND");
+    const events = await db.auditLog.findMany({ where: { entityType: "QUOTE", entityId: q.id, action: { in: ["QUOTE_CONTACTED", "QUOTE_CLOSED"] } }, select: { action: true, createdAt: true } });
+    if (leadState(events) === "CLOSED") throw new AdminActionError("NOT_ALLOWED");
+    await audit(admin, { action: d.step === "CONTACTED" ? "QUOTE_CONTACTED" : "QUOTE_CLOSED", entityType: "QUOTE", entityId: q.id, summary: d.note });
+    revalidateAdmin();
+    return null;
+  });
+}
+
+/* ───────────────────────── Moderation (B-08) ───────────────────────── */
+
+/** Approve or reject a vendor portfolio photo. Captions with contact details cannot be approved. */
+export async function reviewPortfolioAction(input: z.input<typeof portfolioReviewSchema>): Promise<AdminActionResponse> {
+  return runAdminAction(async () => {
+    const admin = await adminForMutation();
+    const d = parse(portfolioReviewSchema, input);
+    if (reviewNoteRequired(d.decision, d.note)) throw new AdminFieldErrors({ note: "NOTE_REQUIRED" });
+    const item = await db.vendorPortfolioItem.findUnique({ where: { id: d.itemId }, include: { vendor: { select: { nameEn: true } } } });
+    if (!item) throw new AdminActionError("NOT_FOUND");
+    if (d.decision === "APPROVE" && !canApprovePortfolio(item)) throw new AdminActionError("NOT_ALLOWED", item.status === "PENDING" ? "CONTACT_IN_CAPTION" : "");
+    const status = d.decision === "APPROVE" ? "APPROVED" : "REJECTED";
+    await db.$transaction(async (tx) => {
+      const u = await tx.vendorPortfolioItem.updateMany({ where: { id: item.id, status: item.status }, data: { status, reviewNote: d.note?.trim() || null } });
+      if (u.count !== 1) throw new AdminActionError("STALE");
+      await audit(
+        admin,
+        { action: d.decision === "APPROVE" ? "PORTFOLIO_APPROVE" : "PORTFOLIO_REJECT", entityType: "VENDOR", entityId: item.vendorId, summary: `${item.vendor.nameEn} photo ${item.id}${d.note ? `: ${d.note}` : ""}`, before: { status: item.status }, after: { status } },
+        tx,
+      );
+    });
+    revalidateAdmin();
+    revalidatePath("/[locale]/vendors/[slug]", "page");
+    return null;
+  });
+}
+
+/** Remove contact details from a vendor bio (sentences holding them go), audited with the old text. */
+export async function cleanBioAction(input: z.input<typeof bioCleanSchema>): Promise<AdminActionResponse> {
+  return runAdminAction(async () => {
+    const admin = await adminForMutation();
+    const d = parse(bioCleanSchema, input);
+    const v = await db.vendor.findUnique({ where: { id: d.vendorId }, select: { id: true, nameEn: true, bioAr: true, bioEn: true, updatedAt: true } });
+    if (!v) throw new AdminActionError("NOT_FOUND");
+    const after = { bioAr: stripContactDetails(v.bioAr), bioEn: stripContactDetails(v.bioEn) };
+    if (after.bioAr === v.bioAr && after.bioEn === v.bioEn) throw new AdminActionError("STALE");
+    await db.$transaction(async (tx) => {
+      const u = await tx.vendor.updateMany({ where: { id: v.id, bioAr: v.bioAr, bioEn: v.bioEn }, data: after });
+      if (u.count !== 1) throw new AdminActionError("STALE");
+      await audit(admin, { action: "VENDOR_BIO_CLEAN", entityType: "VENDOR", entityId: v.id, summary: `${v.nameEn}: contact details removed from bio`, before: { bioAr: v.bioAr, bioEn: v.bioEn }, after }, tx);
+    });
+    revalidateAdmin();
+    revalidatePath("/[locale]/vendors/[slug]", "page");
     return null;
   });
 }
@@ -331,6 +484,8 @@ export async function decideDisputeAction(input: z.input<typeof disputeDecisionS
           },
         },
       });
+      // launch-metrics.md §1 `reprint_opened` (reprint rate = these / delivered orders).
+      void track("reprint_opened", { reason: dispute.reason, same_vendor: vendorId === original.vendorId }, { userId: original.buyerId, orderId: created.id });
       await audit(admin, { action: "ORDER_REPRINT", entityType: "ORDER", entityId: created.id, summary: `${reprint} ← ${original.number}: ${d.note}`, after: { vendorId, vendorCostPiasters: original.vendorCostPiasters } });
     }
 
@@ -597,6 +752,9 @@ export async function decideDataRequestAction(input: z.input<typeof dataRequestD
             await tx.order.update({ where: { id: o.id }, data: { shippingAddress: toJson({ name: "—", phone: "—", governorate: addr?.governorate ?? "", city: addr?.city ?? "", street: "—" }), notes: null } });
           }
           await tx.consent.updateMany({ where: { userId: user.id }, data: { phone: null, ip: null, userAgent: null } });
+          // First-party analytics rows of this user (B-19): deleting them also drops the
+          // account_created row that linked the anonymous browser id to the account.
+          await tx.event.deleteMany({ where: { userId: user.id } });
           await tx.user.update({
             where: { id: user.id },
             data: { name: null, email: null, phone: anonymisedPhone(user.id), marketingConsent: false, organizationId: null, vendorId: null, role: "BUYER" },

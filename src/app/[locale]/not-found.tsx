@@ -1,21 +1,17 @@
-"use client";
+import { NotFoundState } from "@/components/marketing/NotFoundState";
+import styles from "@/components/marketing/marketing.module.css";
 
-import Link from "next/link";
-import { useI18n } from "@/i18n/client";
-
+/**
+ * Fallback 404 for areas that bring their own chrome (designer, vendor portal, admin, dev):
+ * their layout is not rendered here, so this provides the one <main id="main">. Unknown URLs and
+ * store pages use the not-found boundaries inside MarketingShell ([...missing], (store)).
+ */
 export default function LocaleNotFound() {
-  const { t, locale } = useI18n();
   return (
-    <main id="main" style={{ padding: "var(--p-space-1600) var(--p-page-gutter)", textAlign: "center" }}>
-      <h1 style={{ fontSize: "var(--p-font-size-600)", fontWeight: "var(--p-font-weight-bold)" }}>
-        {t("common.notFoundTitle")}
-      </h1>
-      <p style={{ marginTop: "var(--p-space-300)", color: "var(--p-color-text-secondary)" }}>
-        {t("common.notFoundBody")}
-      </p>
-      <p style={{ marginTop: "var(--p-space-600)" }}>
-        <Link href={`/${locale}`}>{t("common.goHome")}</Link>
-      </p>
-    </main>
+    <div className={styles.site}>
+      <main id="main" className={styles.main} tabIndex={-1}>
+        <NotFoundState />
+      </main>
+    </div>
   );
 }

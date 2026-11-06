@@ -22,3 +22,18 @@ export function damp(dt: number, tau: number): number {
 
 /** Auto-rotate defaults: start after 4 s idle, one turn per ~60 s (calm, not a carousel). */
 export const AUTO_ROTATE = { idleMs: 4000, degPerSec: 6, rampMs: 1200 } as const;
+
+/**
+ * The app's one motion scale (CR-18), mirrored from src/styles/tokens.css (--motion-*, --ease-*)
+ * for JS-driven animation. Keep the two in sync. Durations in ms; curves as cubic-bezier control
+ * points [x1, y1, x2, y2]. Under prefers-reduced-motion the CSS durations are 0; JS callers
+ * must check the media query themselves and jump to the end state.
+ */
+export const MOTION_MS = { instant: 80, fast: 150, base: 200, slow: 300, reveal: 480 } as const;
+export const EASE = {
+  enter: [0.16, 1, 0.3, 1],
+  exit: [0.4, 0, 1, 1],
+  standard: [0.2, 0, 0, 1],
+  /** Small overshoot; transform only. */
+  spring: [0.34, 1.56, 0.64, 1],
+} as const;

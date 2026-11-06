@@ -7,20 +7,29 @@
  *   [data-reveal="fade"|"scale"|"left"]   variants
  *   style="--m-i: 2"            stagger index (multiplies --m-stagger)
  *   .m-enter                    plays on first paint (hero), honours --m-i too
+ *
+ * Reduced-motion exceptions (WCAG 2.3.3, CR-46). The global kill switch in globals.css
+ * collapses every animation and transition to 0.01ms. One component opts out on purpose:
+ *   ui/Spinner  keeps a slow 2 s opacity pulse (no rotation) with !important. A loading
+ *               indicator is essential: if it froze, a busy state would look like a hang.
+ *               It is opacity only (no movement), so it does not trigger vestibular issues.
+ * Do not add other exceptions without the same justification.
  */
 :root {
-  --m-dur-instant: 80ms;
-  --m-dur-fast: 160ms;
-  --m-dur-base: 240ms;
-  --m-dur-slow: 480ms;
-  --m-dur-reveal: 480ms;   /* reveals: subtle, once */
+  /* Aliases of the one motion scale in tokens.css (CR-18); keep no literal values here except
+     loop periods, which are not UI transitions. */
+  --m-dur-instant: var(--motion-instant);
+  --m-dur-fast: var(--motion-fast);
+  --m-dur-base: var(--motion-base);
+  --m-dur-slow: var(--motion-slow);
+  --m-dur-reveal: var(--motion-reveal);   /* reveals: subtle, once */
   --m-dur-marquee: 60s;
   --m-dur-float: 6s;
 
-  --m-ease-standard: cubic-bezier(0.2, 0, 0, 1);
-  --m-ease-out: cubic-bezier(0.16, 1, 0.3, 1);       /* expo-ish: reveals, drawers */
-  --m-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
-  --m-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* small overshoot: chips, press release */
+  --m-ease-standard: var(--ease-standard);
+  --m-ease-out: var(--ease-enter);        /* expo-ish: reveals, drawers */
+  --m-ease-in-out: var(--ease-standard);
+  --m-ease-spring: var(--ease-spring);    /* small overshoot, transform only: chips, press release */
 
   --m-stagger: 70ms;
   --m-rise: 16px;
@@ -43,6 +52,10 @@
 @keyframes m-scale-in {
   from { opacity: 0; transform: scale(0.94); }
   to { opacity: 1; transform: none; }
+}
+@keyframes m-scale-only {
+  from { transform: scale(0.96); }
+  to { transform: none; }
 }
 @keyframes m-float {
   0%, 100% { transform: translate3d(0, 0, 0); }
@@ -82,15 +95,19 @@ html[data-motion="on"] [data-reveal="scale"]:not([data-revealed]) { transform: s
 /* First-paint entrance (hero). */
 .m-enter {
   animation: m-rise-in var(--m-dur-reveal) var(--m-ease-out) both;
-  animation-delay: calc(80ms + var(--m-i, 0) * var(--m-stagger));
+  animation-delay: calc(var(--motion-instant) + var(--m-i, 0) * var(--m-stagger));
 }
-/* Display headlines (the LCP text): rise without fading, so they count as painted at once. */
+/* LCP candidates (display headlines, hero leads, hero media): rise or settle WITHOUT fading.
+   Chrome does not count a paint at opacity 0 as the LCP, and a delayed `both` fade keeps the
+   element at opacity 0 until the main thread is free to start the animation; on a 4x-throttled
+   phone that is after hydration, up to 1.2 s after first paint (R2-MK-03). */
 .m-enter-lcp {
   animation: m-rise-only var(--m-dur-reveal) var(--m-ease-out) both;
-  animation-delay: calc(80ms + var(--m-i, 0) * var(--m-stagger));
+  animation-delay: calc(var(--motion-instant) + var(--m-i, 0) * var(--m-stagger));
 }
 .m-enter-scale {
-  animation: m-scale-in 600ms var(--m-ease-out) both;
+  /* Marketing R2: scale without a fade (LCP); platform: tokenised reveal duration. */
+  animation: m-scale-only var(--m-dur-reveal) var(--m-ease-out) both;
   animation-delay: calc(120ms + var(--m-i, 0) * var(--m-stagger));
 }
 

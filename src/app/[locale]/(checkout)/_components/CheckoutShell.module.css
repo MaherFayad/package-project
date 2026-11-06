@@ -1,4 +1,56 @@
 /* Focused checkout chrome (owner: checkout). Tokens only; logical properties for RTL. */
+.shell {
+  min-block-size: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--p-color-bg);
+}
+.main {
+  flex: 1;
+  outline: none;
+}
+
+/* White bar like the marketing header: wordmark, "Secure checkout", language. */
+.header {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: var(--p-z-index-2);
+  background: var(--p-color-bg-surface);
+  color: var(--p-color-text);
+  border-block-end: var(--p-border-width-025, 1px) solid var(--p-color-border);
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--p-space-200);
+  min-block-size: 2.75rem;
+  padding-inline: var(--p-space-100);
+  border-radius: var(--p-border-radius-200);
+  color: var(--p-color-text);
+  text-decoration: none;
+  font-weight: var(--p-font-weight-bold);
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+}
+.brand:lang(ar) { letter-spacing: 0; font-size: 1.375rem; }
+.lang {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--p-space-150);
+  min-block-size: 2.75rem;
+  padding-inline: var(--p-space-300);
+  border-radius: 999px;
+  color: var(--p-color-text);
+  text-decoration: none;
+  font-weight: var(--p-font-weight-medium);
+  white-space: nowrap;
+}
+.lang:hover { background: var(--p-color-bg-surface-hover); }
+.brand:focus-visible,
+.lang:focus-visible {
+  outline: var(--p-focus-ring-width) solid var(--p-color-border-focus);
+  outline-offset: var(--p-focus-ring-offset);
+}
 .bar {
   max-inline-size: var(--p-page-max-width-wide);
   margin-inline: auto;
@@ -12,7 +64,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--p-space-100);
-  color: var(--e-color-topbar-text);
+  color: var(--p-color-text-secondary);
   font-size: var(--p-text-body-sm-font-size, 0.75rem);
   font-weight: var(--p-font-weight-medium);
   white-space: nowrap;
@@ -24,7 +76,7 @@
 }
 .footer {
   margin-block-start: var(--p-space-800);
-  padding: var(--p-space-400) var(--p-page-gutter) var(--p-space-600);
+  padding: var(--p-space-400) var(--p-page-gutter) calc(var(--p-space-600) + var(--e-cookie-h, 0px));
   border-block-start: var(--p-border-width-025, 1px) solid var(--p-color-border-secondary, var(--p-color-border));
   display: flex;
   flex-wrap: wrap;
@@ -53,7 +105,7 @@
 @media (max-width: 1039px) {
   /* room for the sticky mobile action bar */
   .footer {
-    padding-block-end: calc(var(--p-space-600) + 88px);
+    padding-block-end: calc(var(--p-space-600) + 88px + var(--e-cookie-h, 0px));
   }
 }
 
@@ -61,5 +113,6 @@
 @media (max-width: 1039px) {
   .shell:has([data-sticky-action]) .cookieSlot > [role="region"] {
     inset-block-end: calc(var(--p-space-400) + 76px + env(safe-area-inset-bottom, 0px));
+    border-radius: var(--p-border-radius-300);
   }
 }

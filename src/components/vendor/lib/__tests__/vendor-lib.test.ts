@@ -315,7 +315,16 @@ describe("uploads", () => {
     const other = { id: "u8", role: "VENDOR" as const, vendorId: "v2" };
     const buyer = { id: "b1", role: "BUYER" as const, vendorId: null };
     const admin = { id: "a", role: "ADMIN" as const, vendorId: null };
-    expect(canReadFile(port, null)).toBe(true);
+    // B-08: portfolio photos are public only once approved; under review = owner vendor + admins.
+    expect(canReadFile(port, null, null, "APPROVED")).toBe(true);
+    expect(canReadFile(port, buyer, null, "APPROVED")).toBe(true);
+    for (const status of ["PENDING", "REJECTED", null]) {
+      expect(canReadFile(port, null, null, status)).toBe(false);
+      expect(canReadFile(port, buyer, null, status)).toBe(false);
+      expect(canReadFile(port, other, null, status)).toBe(false);
+      expect(canReadFile(port, vendor, null, status)).toBe(true);
+      expect(canReadFile(port, admin, null, status)).toBe(true);
+    }
     expect(canReadFile(cert, vendor)).toBe(true);
     expect(canReadFile(cert, other)).toBe(false);
     expect(canReadFile(apply, { id: "u1", role: "BUYER", vendorId: null })).toBe(true);

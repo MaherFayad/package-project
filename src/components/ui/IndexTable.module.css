@@ -67,7 +67,8 @@
 .flush { padding: 0; }
 .CheckCell { inline-size: 2.5rem; padding-inline-end: 0; }
 .CheckCell > div { display: inline-flex; }
-.RowLink { color: var(--p-color-text); font-weight: var(--p-font-weight-semibold); text-decoration: none; }
+/* CR-50: inline-block with 2px block padding gives a 24px target (WCAG 2.5.8). */
+.RowLink { display: inline-block; padding-block: 2px; color: var(--p-color-text); font-weight: var(--p-font-weight-semibold); text-decoration: none; }
 .RowLink:hover { color: var(--p-color-text); text-decoration: underline; }
 .RowHeader { font-weight: var(--p-font-weight-medium); color: var(--p-color-text); }
 .TotalsRow > * { font-weight: var(--p-font-weight-semibold); background: var(--p-color-bg-surface-secondary); }

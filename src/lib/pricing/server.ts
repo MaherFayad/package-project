@@ -17,13 +17,55 @@ import type { OwnedDie, PricingData, PricingVendor, QuoteInput, QuoteOutcome } f
 
 /** Load everything the pricing engine needs from the database (active rows only). */
 export async function loadPricingData(): Promise<PricingData> {
-  const [vendors, cards, materials, finishes, structures] = await Promise.all([
-    db.vendor.findMany({ where: { status: "ACTIVE" } }),
-    db.rateCard.findMany({ where: { active: true }, include: { structure: { select: { code: true } } } }),
-    db.material.findMany({ where: { active: true } }),
-    db.finish.findMany({ where: { active: true } }),
-    db.structure.findMany({ where: { active: true }, select: { code: true, presets: true } }),
+  // Only the columns the engine reads (PERF-20); the rate card's structure code is resolved from
+  // the structures already loaded instead of a second query per findMany (`include`).
+  const [vendors, rawCards, materials, finishes, allStructures] = await Promise.all([
+    db.vendor.findMany({
+      where: { status: "ACTIVE" },
+      select: {
+        id: true,
+        slug: true,
+        nameAr: true,
+        nameEn: true,
+        city: true,
+        rating: true,
+        ratingCount: true,
+        onTimePct: true,
+        leadTimeDays: true,
+        minOrderQty: true,
+        capabilities: true,
+        verified: true,
+        status: true,
+      },
+    }),
+    db.rateCard.findMany({
+      where: { active: true },
+      select: {
+        vendorId: true,
+        structureId: true,
+        materialId: true,
+        qtyTiers: true,
+        referenceAreaM2: true,
+        setupPiasters: true,
+        dieCostPiasters: true,
+        printSidesSurchargePct: true,
+        finishSurcharges: true,
+        leadTimeDays: true,
+        active: true,
+        standardDies: true,
+      },
+    }),
+    db.material.findMany({ where: { active: true }, select: { id: true, code: true, family: true, gsm: true, thicknessMm: true } }),
+    db.finish.findMany({ where: { active: true }, select: { code: true, setupPiasters: true, unitSurchargePiasters: true } }),
+    // Inactive structures too: an active rate card may still point at one (the engine skips it by code).
+    db.structure.findMany({ select: { id: true, code: true, presets: true, active: true } }),
   ]);
+  const codeOf = new Map(allStructures.map((st) => [st.id, st.code]));
+  const structures = allStructures.filter((st) => st.active);
+  const cards = rawCards.flatMap((c) => {
+    const code = codeOf.get(c.structureId);
+    return code ? [{ ...c, structure: { code } }] : [];
+  });
 
   // Standard dies a vendor entered on its rate cards (vendor portal) waive the die cost.
   const diesByVendor = new Map<string, OwnedDie[]>();

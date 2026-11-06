@@ -49,9 +49,10 @@ export const priceIndexRowSchema = z.object({
 
 /** Settings form (margin, validity, delivery zones). Margin is a fraction: 0.25 = 25%. */
 export const settingsFormSchema = z.object({
-  marginPct: z.number().min(0).max(0.8),
+  marginPct: z.number({ invalid_type_error: "MARGIN_RANGE" }).min(0, "MARGIN_RANGE").max(0.8, "MARGIN_RANGE"),
   marginOnShipping: z.boolean(),
-  quoteValidityHours: z.number().int().min(1).max(24 * 14),
+  // Business rule: quotes hold for at most 72 h (the pricing config clamps to 1–72 as well).
+  quoteValidityHours: z.number({ invalid_type_error: "VALIDITY_RANGE" }).int("VALIDITY_RANGE").min(1, "VALIDITY_RANGE").max(72, "VALIDITY_RANGE"),
   zones: z.object(Object.fromEntries(DELIVERY_ZONES.map((zn) => [zn, zoneRateSchema])) as Record<DeliveryZone, typeof zoneRateSchema>),
 });
 export type SettingsForm = z.infer<typeof settingsFormSchema>;

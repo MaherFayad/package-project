@@ -34,7 +34,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         })
       : null;
     const model = lib?.dieline ?? generateDielineForMaterial(item.structureCode as StructureCode, fromJson<Dims>(item.dims), item.materialCode as MaterialCode);
-    svg = dielineToSvg(model, { title: `${order.number} ${libItem.modelCode ?? item.structureCode}` });
+    // Added by 3D engine (CR-27): panel labels in the page language (?lang=ar|en)
+    const lang = url.searchParams.get("lang") === "ar" ? "ar" : "en";
+    svg = dielineToSvg(model, { title: `${order.number} ${libItem.modelCode ?? item.structureCode}`, locale: lang });
   } catch (e) {
     if (e instanceof DielineValidationError) return new Response("Invalid size", { status: 422 });
     throw e;

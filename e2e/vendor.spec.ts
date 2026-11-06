@@ -119,6 +119,45 @@ test.describe("vendor portal", () => {
     expect((await page.request.get(`/api/vendor/jobs/${other.id}/print-pdf`)).status()).toBe(404);
   });
 
+  test("portfolio photos under review are private until Elba approves them (B-08)", async ({ browser, baseURL }, info) => {
+    test.skip(info.project.name !== "desktop", "mutating flow runs once (desktop)");
+    const ctx = async (phone?: string) => {
+      const c = await browser.newContext({ baseURL });
+      if (phone) await signIn(c, baseURL!, phone);
+      return c;
+    };
+    const owner = await ctx("+201000000010"); // Nile Pack staff
+    const up = await owner.request.post("/api/vendor/uploads", { multipart: { scope: "portfolio", file: { name: "job.png", mimeType: "image/png", buffer: PNG } } });
+    expect(up.ok()).toBe(true);
+    const { url, item } = (await up.json()) as { url: string; item: { id: string; status: string } };
+    expect(item.status).toBe("PENDING");
+    try {
+      const anon = await ctx();
+      const otherVendor = await ctx("+201000000011");
+      const buyer = await ctx("+201000000002");
+      const admin = await ctx("+201000000001");
+      for (const c of [anon, otherVendor, buyer]) expect((await c.request.get(url)).status()).toBe(404);
+      const own = await owner.request.get(url);
+      expect(own.status()).toBe(200);
+      expect(own.headers()["cache-control"]).toContain("no-store");
+      expect((await admin.request.get(url)).status()).toBe(200);
+      // Not on the public profile while pending.
+      expect(await (await anon.request.get("/en/vendors/nile-pack")).text()).not.toContain(url);
+
+      await db.vendorPortfolioItem.update({ where: { id: item.id }, data: { status: "APPROVED" } });
+      const pub = await anon.request.get(url);
+      expect(pub.status()).toBe(200);
+      expect(pub.headers()["cache-control"]).toBe("public, max-age=3600");
+
+      await db.vendorPortfolioItem.update({ where: { id: item.id }, data: { status: "REJECTED" } });
+      expect((await anon.request.get(url)).status()).toBe(404);
+      for (const c of [anon, otherVendor, buyer, admin]) await c.close();
+    } finally {
+      await db.vendorPortfolioItem.delete({ where: { id: item.id } }).catch(() => null);
+      await owner.close();
+    }
+  });
+
   test("buyers are kept out of the portal", async ({ page, context, baseURL }) => {
     await signIn(context, baseURL!, "+201000000002");
     await page.goto("/en/vendor");

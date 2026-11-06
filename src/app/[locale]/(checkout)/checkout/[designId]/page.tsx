@@ -9,9 +9,14 @@ import { requireUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { fromJson } from "@/lib/json";
 import { formatEgyptPhone } from "@/lib/phone";
-import { loadCheckoutDesign, quoteDesign, tierPrices, toCheckoutOffer } from "@/lib/orders/service";
+import { loadCheckoutDesign, quoteDesign, sampleCreditFor, tierPrices, toCheckoutOffer } from "@/lib/orders/service";
 import { designerPath } from "@/components/designer/lib/catalog";
+import { loadCheckoutSettings } from "@/lib/orders/checkout-settings";
+import { docGeometry } from "@/lib/library/doc";
+import { runPreflight, summarizePreflight } from "@/components/designer/lib/preflight";
 import { docSpec } from "@/lib/library/spec";
+import { track } from "@/lib/analytics/track";
+import { rateLimit } from "@/lib/rate-limit";
 import { Button, Card, EmptyState, EmptyBoxIllustration, Page } from "@/components/ui";
 import { CheckoutClient, type AddressState } from "../_components/CheckoutClient";
 import type { OffersResult } from "../actions";
@@ -112,15 +117,43 @@ export default async function CheckoutPage({ params, searchParams }: { params: P
 
   const tiers = await tierPrices(doc, defaultAddress.governorate);
   const initialQty = tiers.find((x) => x.quantity === 500 && x.unitPiasters !== null)?.quantity ?? tiers.find((x) => x.unitPiasters !== null)?.quantity ?? QTY_TIERS[0];
+  const [settings, credit, org] = await Promise.all([
+    loadCheckoutSettings(),
+    sampleCreditFor(user.id, designId),
+    db.user.findUnique({ where: { id: user.id }, select: { organization: { select: { name: true, taxId: true, commercialRegister: true } } } }),
+  ]);
+  // Same production preflight as the designer (B-04), run on the server.
+  const geo = docGeometry(doc);
+  const issues = geo ? runPreflight(doc, geo.dieline) : [];
+  const sum = summarizePreflight(issues);
+  const preflight = { ready: sum.ready, errors: sum.errors, warnings: sum.warnings, issues: issues.map((i) => ({ code: i.code, severity: i.severity, face: i.face })) };
   let initial: OffersResult;
   try {
     const outcome = await quoteDesign(doc, { quantity: initialQty, governorate: defaultAddress.governorate });
+    const prepay = settings.prepayDiscountPct;
     initial =
       outcome.mode === "instant"
-        ? { ok: true, mode: "instant", quantity: initialQty, offers: outcome.offers.map(toCheckoutOffer), suggestion: outcome.suggestion, validUntil: outcome.validUntil }
+        ? {
+            ok: true,
+            mode: "instant",
+            quantity: initialQty,
+            offers: outcome.offers.map((o) => toCheckoutOffer(o, prepay, { creditPiasters: credit?.piasters })),
+            suggestion: outcome.suggestion,
+            validUntil: outcome.validUntil,
+            credit: credit ? { piasters: credit.piasters, sampleNumber: credit.sampleNumber, expiresAt: credit.expiresAt.toISOString() } : null,
+          }
         : { ok: true, mode: "manual_quote", quantity: initialQty, max: MAX_INSTANT_QTY };
   } catch {
     initial = { ok: false, error: "generic" };
+  }
+
+  // launch-metrics.md §1 `order_started` ("Order this exact box" / checkout opened) and the
+  // checkout half of `price_viewed` (the tier table above is an instant price). A reload within
+  // 10 minutes is the same visit.
+  if (rateLimit("analytics:checkout", `${user.id}:${designId}`, 1, 600_000).ok) {
+    const props = { locale, structure_code: doc.structureCode, model_code: doc.modelCode ?? null };
+    void track("order_started", props, { userId: user.id, designId });
+    if (initial.ok && initial.mode === "instant") void track("price_viewed", { ...props, source: "checkout", quantity: initialQty }, { userId: user.id, designId });
   }
 
   return (
@@ -136,6 +169,10 @@ export default async function CheckoutPage({ params, searchParams }: { params: P
       defaultAddress={defaultAddress}
       spec={docSpec(doc, locale)}
       contactPhone={formatEgyptPhone(user.phone)}
+      sample={settings.sample.enabled ? { pieces: settings.sample.maxPieces, pricePiasters: settings.sample.pricePiasters, creditDays: settings.sample.creditDays } : null}
+      prepayDiscountPct={settings.prepayDiscountPct}
+      preflight={preflight}
+      defaultCompany={org?.organization ? { name: org.organization.name, taxId: org.organization.taxId ?? "", commercialRegister: org.organization.commercialRegister ?? "" } : null}
     />
   );
 }

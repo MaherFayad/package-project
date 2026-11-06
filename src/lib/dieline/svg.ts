@@ -1,12 +1,14 @@
-import type { DielineModel, Polygon, Segment } from "./types";
+import type { DielineModel, PanelRole, Polygon, Segment } from "./types";
 import { centroid, round } from "./geometry";
 
 export interface DielineSvgOptions {
   showBleed?: boolean;
   showSafeZones?: boolean;
   showLabels?: boolean;
-  /** Label per panel id or per role (panel id wins). Defaults to the panel's English label. */
+  /** Label per panel id or per role (panel id wins). Defaults to the role name in `locale`. */
   labels?: Record<string, string>;
+  /** Language of the default panel labels (role names). Default "en". */
+  locale?: "ar" | "en";
   /** Accessible title. */
   title?: string;
   /** Stroke width in mm (default 0.35). */
@@ -15,6 +17,16 @@ export interface DielineSvgOptions {
   panelFill?: string;
   colors?: Partial<{ cut: string; crease: string; perf: string; bleed: string; safe: string; glue: string; label: string; film: string }>;
 }
+
+/**
+ * Panel role names for dieline labels (MSA noun forms in Arabic, the same face names as the
+ * designer). Used when the caller passes no `labels`, so every dieline (vendor job, proof,
+ * download) reads in the page language.
+ */
+export const PANEL_ROLE_LABELS: Record<"ar" | "en", Record<PanelRole, string>> = {
+  en: { front: "Front", back: "Back", left: "Left side", right: "Right side", top: "Top", bottom: "Bottom", tuck: "Tuck flap", dust: "Dust flap", flap: "Flap", glue: "Glue flap", inner: "Inner wall", ear: "Locking ear" },
+  ar: { front: "الأمام", back: "الخلف", left: "الجانب الأيسر", right: "الجانب الأيمن", top: "الأعلى", bottom: "الأسفل", tuck: "لسان إدخال", dust: "لسان جانبي", flap: "جناح", glue: "لسان اللصق", inner: "جدار داخلي", ear: "أذن قفل" },
+};
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const n = (v: number) => String(round(v, 2));
@@ -70,13 +82,17 @@ export function dielineToSvg(model: DielineModel, opts: DielineSvgOptions = {}):
   }
   parts.push(`<path data-layer="cut" d="${segPath(model.cutLines)}" fill="none" stroke="${c.cut}" stroke-width="${n(sw)}" stroke-linecap="round"/>`);
   if (opts.showLabels !== false) {
-    const fs = Math.max(2.5, Math.min(10, Math.min(width, height) / 30));
+    // Size from the sheet's long side: fitted to a 600–1000 px viewer that is 10–16 px (WCAG 1.4.4
+    // readable); a label is drawn only where its panel can hold it (≈ 40 px at the same fit).
+    const locale = opts.locale ?? "en";
+    const fs = Math.max(3, Math.min(18, Math.max(width, height) / 62));
+    const roleLabels = PANEL_ROLE_LABELS[locale];
     parts.push(
-      `<g data-layer="labels" fill="${c.label}" font-family="Inter, system-ui, sans-serif" font-size="${n(fs)}" text-anchor="middle" dominant-baseline="middle">${model.panels
-        .filter((p) => p.bbox.width > fs * 4 && p.bbox.height > fs * 2)
-        .map((p) => {
+      `<g data-layer="labels" fill="${c.label}" font-family="Inter, 'IBM Plex Sans Arabic', system-ui, sans-serif" font-size="${n(fs)}" font-weight="500" text-anchor="middle" dominant-baseline="middle"${locale === "ar" ? ' direction="rtl"' : ""}>${model.panels
+        .map((p) => ({ p, text: opts.labels?.[p.id] ?? opts.labels?.[p.role] ?? roleLabels[p.role] ?? p.label }))
+        .filter(({ p, text }) => p.bbox.width > Math.max(fs * 4, text.length * fs * 0.62) && p.bbox.height > fs * 2)
+        .map(({ p, text }) => {
           const cc = centroid(p.polygon);
-          const text = opts.labels?.[p.id] ?? opts.labels?.[p.role] ?? p.label;
           return `<text x="${n(cc.x)}" y="${n(cc.y)}">${esc(text)}</text>`;
         })
         .join("")}</g>`,

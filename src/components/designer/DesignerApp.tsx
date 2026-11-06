@@ -9,7 +9,6 @@ import { boardAppearance, type DielineModel } from "@/lib/dieline";
 import type { ModelDef } from "@/lib/library";
 import { loadModel, modelByCode } from "@/lib/library/registry";
 import { useLibraryModel } from "@/lib/library/useLibraryModel";
-import type { ModelCard } from "@/lib/library/search";
 import { defaultMaxDpr } from "@/components/three/hooks";
 import { docGeometry, docModel, docModelCode, facesForAreas, normaliseDocModel } from "@/lib/library/doc";
 import { FINISHES } from "@/lib/configurator";
@@ -72,12 +71,13 @@ import { PreflightBadge, PreflightPanel } from "./PreflightPanel";
 import { orderModeOf } from "@/data/catalogue/order-mode";
 import { ExportModal, GateModal, PriceBadge, PriceModal, ShareModal, type ExportSize, type GateReason } from "./Modals";
 import styles from "./designer.module.css";
+import { trackClient } from "@/lib/analytics/client";
 
 const StageSkeleton = () => <div className={lib.stageSkeleton} aria-hidden="true" />;
-const Scene3D = dynamic(() => import("./Scene3D"), { ssr: false, loading: StageSkeleton });
+// One persistent 3D canvas for boxes and containers (PERF-09).
+const Stage3D = dynamic(() => import("./Stage3D"), { ssr: false, loading: StageSkeleton });
 // The picker (370 cards, search) loads only when it is opened (PERF-04).
 const ModelPicker = dynamic(() => import("@/components/catalogue/CataloguePicker").then((m) => m.ModelPicker), { ssr: false });
-const VesselView = dynamic(() => import("./VesselView"), { ssr: false, loading: StageSkeleton });
 
 type View = "3d" | "face" | "dieline";
 type SaveState = "idle" | "dirty" | "saving" | "saved" | "error";
@@ -98,8 +98,6 @@ export interface DesignerAppProps {
   loadError: "notFound" | null;
   /** Restore this device's autosaved draft on mount (?resume=1). */
   resumeLocal?: boolean;
-  /** Light picker cards, built on the server (no generators shipped for them; PERF-04). */
-  pickerCards?: ModelCard[];
 }
 
 const reducer = (s: History<DesignDoc>, a: HistoryAction<DesignDoc>) => historyReducer(s, a);
@@ -149,7 +147,7 @@ export function DesignerApp(props: DesignerAppProps) {
   return <DesignerEditor {...props} />;
 }
 
-function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, loadError, resumeLocal, pickerCards = [] }: DesignerAppProps) {
+function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, loadError, resumeLocal }: DesignerAppProps) {
   const { t } = useI18n();
   const router = useRouter();
   const toast = useToast();
@@ -284,11 +282,26 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
   // ── textures ─────────────────────────────────────────────────────
   // Phones and 1x screens: a 1024 px artwork sheet (≈ 4x less texture memory and upload; PERF-22).
   const [sheetPx] = useState(() => (typeof window !== "undefined" && defaultMaxDpr() < 2 ? 1024 : 2048));
-  const { canvases, version, images, imgVersion, fonts } = useArtworkCanvases(model, doc.artwork, doc.materialCode, bothSides, sheetPx);
+  // CR-15: a new, empty design previews a "Your logo" hint on the lid (3D and dieline only; the
+  // document, the face editor, preflight and the print file never contain it).
+  const placeholder = useMemo(
+    () => ({ text: t("designer.artwork.placeholderLogo"), fontFamily: locale === "ar" ? ("IBM Plex Sans Arabic" as const) : ("Inter" as const), direction: locale === "ar" ? ("rtl" as const) : ("ltr" as const), color: "#616161" }),
+    [t, locale],
+  );
+  const { canvases, version, images, imgVersion, fonts } = useArtworkCanvases(model, doc.artwork, doc.materialCode, bothSides, sheetPx, placeholder);
 
   // ── preflight ────────────────────────────────────────────────────
   const issues = useMemo(() => (model ? runPreflight(doc, model) : []), [doc, model]);
   const summary = useMemo(() => summarizePreflight(issues), [issues]);
+  // Analytics (launch-metrics.md §1): `design_completed` the first time preflight turns green
+  // after an edit, `artwork_uploaded` on the first image placed. Once per designer session.
+  const sentRef = useRef<{ completed?: boolean; uploaded?: boolean }>({});
+  const edited = hist.past.length > 0;
+  useEffect(() => {
+    if (!summary.ready || !edited || sentRef.current.completed) return;
+    sentRef.current.completed = true;
+    trackClient("design_completed", { structure_code: doc.structureCode, model_code: doc.modelCode ?? null, locale });
+  }, [summary.ready, edited, doc.structureCode, doc.modelCode, locale]);
 
   // ── saving ───────────────────────────────────────────────────────
   const inflight = useRef<Promise<string | null> | null>(null);
@@ -407,9 +420,12 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
   const requireAccount = useCallback(
     (reason: GateReason, then: () => void) => {
       if (user) then();
-      else setGate({ reason, then });
+      else {
+        trackClient("gate_shown", { gate_reason: reason, structure_code: docRef.current.structureCode, locale });
+        setGate({ reason, then });
+      }
     },
-    [user],
+    [user, locale],
   );
 
   const onSignedIn = (u: OtpSuccess) => {
@@ -506,6 +522,10 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
     try {
       const img = await prepareImage(file);
       add(makeImageLayer(face, surface, faceInfo, img));
+      if (!sentRef.current.uploaded) {
+        sentRef.current.uploaded = true;
+        trackClient("artwork_uploaded", { structure_code: docRef.current.structureCode, surface, locale });
+      }
     } catch {
       setUploadError(t("designer.artwork.uploadError"));
     } finally {
@@ -577,7 +597,10 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
   const doSave = () =>
     requireAccount("save", async () => {
       const id = await saveToServer({ thumbnail: true });
-      if (id) toast.show(t("designer.save.savedToast"));
+      if (id) {
+        trackClient("design_saved", { structure_code: docRef.current.structureCode, locale });
+        toast.show(t("designer.save.savedToast"));
+      }
       else toast.show(t("designer.save.failed"), { tone: "critical" });
     });
 
@@ -592,6 +615,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
       const px = size === "hd" ? 2160 : 1080;
       const blob = await sceneRef.current!.screenshot({ width: px, height: px, background: "#ffffff" });
       downloadBlob(blob, `elba-${slugify(doc.name || libModel?.slug || doc.structureCode)}-${px}.png`);
+      trackClient("export_png", { size, structure_code: doc.structureCode, locale });
       setModal(null);
       toast.show(t("designer.export.done"));
     } catch {
@@ -823,47 +847,46 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
           {model ? (
             <>
               <div className={styles.sceneWrap} data-active={view === "3d"} aria-hidden={view !== "3d"} data-testid="stage-3d" data-model={docModelCode(doc)}>
-                {geo?.vessel && libModel?.kind === "vessel" ? (
-                  <VesselView
-                    model={libModel}
-                    doc={doc}
-                    geo={geo}
-                    sheet={canvases?.outside ?? null}
-                    version={version}
-                    handleRef={sceneRef}
-                    turntable={viewOpts.turntable}
-                    open={viewOpts.open}
-                    ariaLabel={t("viewer.label")}
-                    roleDescription={t("viewer.roleDescription")}
-                    keyboardHint={t("viewer.keyboardHint")}
-                    fallback={t("viewer.unsupported")}
-                    onReady={onSceneReady}
-                  />
-                ) : (
-                  <Scene3D
-                    model={model}
-                    material={doc.materialCode}
-                    finish={doc.finishCode}
-                    finishes={doc.finishes}
-                    artwork={doc.artwork}
-                    images={images}
-                    foldProgress={fold}
-                    canvases={canvases}
-                    version={version}
-                    printInside={bothSides}
-                    handleRef={sceneRef}
-                    dimensions={viewOpts.dimensions}
-                    scene={viewOpts.scene}
-                    turntable={viewOpts.turntable}
-                    locale={locale}
-                    poster={libModel ? `/models/${libModel.slug}.svg` : undefined}
-                    onReady={onSceneReady}
-                    ariaLabel={t("viewer.label")}
-                    roleDescription={t("viewer.roleDescription")}
-                    keyboardHint={t("viewer.keyboardHint")}
-                    fallback={t("viewer.unsupported")}
-                  />
-                )}
+                <Stage3D
+                  ariaLabel={t("viewer.label")}
+                  roleDescription={t("viewer.roleDescription")}
+                  keyboardHint={t("viewer.keyboardHint")}
+                  fallback={t("viewer.unsupported")}
+                  poster={libModel ? `/models/${libModel.slug}.svg` : undefined}
+                  onReady={onSceneReady}
+                  {...(geo?.vessel && libModel?.kind === "vessel"
+                    ? {
+                        vessel: {
+                          model: libModel,
+                          doc,
+                          geo,
+                          sheet: canvases?.outside ?? null,
+                          version,
+                          handleRef: sceneRef,
+                          turntable: viewOpts.turntable,
+                          open: viewOpts.open,
+                        },
+                      }
+                    : {
+                        box: {
+                          model,
+                          material: doc.materialCode,
+                          finish: doc.finishCode,
+                          finishes: doc.finishes,
+                          artwork: doc.artwork,
+                          images,
+                          foldProgress: fold,
+                          canvases,
+                          version,
+                          printInside: bothSides,
+                          handleRef: sceneRef,
+                          dimensions: viewOpts.dimensions,
+                          scene: viewOpts.scene,
+                          turntable: viewOpts.turntable,
+                          locale,
+                        },
+                      })}
+                />
                 {/* Large poster from the first paint until the 3D chunk renders a frame (PERF-10). */}
                 {libModel ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -902,6 +925,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
                   label={t("designer.view.dielineLabel")}
                   legend={t("designer.view.dielineLegend")}
                   panelLabels={panelLabels}
+                  locale={locale}
                 />
               ) : null}
             </>
@@ -1053,7 +1077,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
         </div>
       </aside>
 
-      {pickerUsed ? <ModelPicker open={pickerOpen} cards={pickerCards} current={docModelCode(doc)} onClose={() => setPickerOpen(false)} onPick={onModel} /> : null}
+      {pickerUsed ? <ModelPicker open={pickerOpen} current={docModelCode(doc)} onClose={() => setPickerOpen(false)} onPick={onModel} /> : null}
       <GateModal reason={gate?.reason ?? null} onClose={() => setGate(null)} onSuccess={onSignedIn} />
       <PriceModal
         open={modal === "price"}

@@ -6,19 +6,13 @@ import type { DictKey } from "@/i18n";
 import { dirOf } from "@/i18n";
 import { formatDate, formatNumber } from "@/lib/format";
 import { siteUrl } from "@/lib/env";
-import {
-  Badge,
-  Banner,
-  Breadcrumbs,
-  Card,
-  DataTable,
-  EmptyState,
-  Icon,
-  Layout,
-  LayoutSection,
-  Text,
-} from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { Card } from "@/components/ui/Card";
+import { Icon } from "@/components/ui/Icon";
+import { Layout, LayoutSection } from "@/components/ui/Layout";
+import { Text } from "@/components/ui/Text";
 import { PortfolioGallery } from "@/components/store/PortfolioGallery";
+import { SpecTable } from "@/components/store/SpecTable";
 import { RatingStars } from "@/components/store/RatingStars";
 import { JsonLd } from "@/components/store/JsonLd";
 import { breadcrumbJsonLd, vendorJsonLd } from "@/components/store/jsonld";
@@ -80,7 +74,19 @@ export default async function VendorProfilePage({ params }: Props) {
       />
       <section className={`${mk.hero} ${mk.vendorHero}`} aria-labelledby="vendor-title">
         <div className={`${mk.container} ${mk.vendorHeroInner}`}>
-          <Breadcrumbs items={[{ content: t("nav.home"), url: `/${locale}` }, { content: t("vendors.title"), url: `/${locale}/vendors` }, { content: name }]} />
+          <nav aria-label={t("store.breadcrumb")} className={mk.crumbs}>
+            <ol>
+              <li>
+                <Link href={`/${locale}`}>{t("nav.home")}</Link>
+              </li>
+              <li>
+                <Link href={`/${locale}/vendors`}>{t("vendors.title")}</Link>
+              </li>
+              <li>
+                <span aria-current="page">{name}</span>
+              </li>
+            </ol>
+          </nav>
           <div className={mk.vendorHeroGrid}>
             <div className={mk.vendorHeroCopy}>
               <div className={`${mk.vendorIdentity} m-enter`}>
@@ -96,7 +102,7 @@ export default async function VendorProfilePage({ params }: Props) {
               <h1 id="vendor-title" className={`${mk.h1} ${mk.vendorTitle} m-enter-lcp`} style={{ ["--m-i" as string]: 1 }}>
                 {name}
               </h1>
-              <p className={`${mk.lead} m-enter`} style={{ ["--m-i" as string]: 2 }}>
+              <p className={`${mk.lead} m-enter-lcp`} style={{ ["--m-i" as string]: 2 }}>
                 {pick(locale, v.bio.ar, v.bio.en)}
               </p>
               <div className={`${styles.badges} m-enter`} style={{ ["--m-i" as string]: 2 }}>
@@ -209,9 +215,9 @@ export default async function VendorProfilePage({ params }: Props) {
               <Card title={t("store.vendor.machinesTitle")} as="section">
                 {v.machines.length ? (
                   <div className={styles.tableWrap}>
-                    <DataTable
+                    <SpecTable
                       caption={t("store.vendor.machinesTitle")}
-                      columnContentTypes={["text", "text", "numeric"]}
+                      numeric={[2]}
                       headings={[t("store.vendor.machineType"), t("store.vendor.machineModel"), t("store.vendor.machineQty")]}
                       rows={v.machines.map((m) => [
                         t(`store.vendor.machineKind.${m.kind}` as DictKey),
@@ -264,9 +270,14 @@ export default async function VendorProfilePage({ params }: Props) {
                     ))}
                   </ul>
                 ) : (
-                  <EmptyState heading={t("store.vendor.reviewsEmpty")} headingAs="h3" compact>
-                    {t("store.vendor.reviewsEmptyBody")}
-                  </EmptyState>
+                  <div className={styles.reviewsEmpty}>
+                    <Text as="h3" variant="headingSm">
+                      {t("store.vendor.reviewsEmpty")}
+                    </Text>
+                    <Text as="p" tone="subdued">
+                      {t("store.vendor.reviewsEmptyBody")}
+                    </Text>
+                  </div>
                 )}
               </Card>
             </div>
@@ -285,7 +296,7 @@ export default async function VendorProfilePage({ params }: Props) {
                   {t("store.vendor.joined", { date: formatDate(v.joinedAt, locale) })}
                 </Text>
               </Card>
-              <Banner tone="info">{t("store.vendor.contactNote")}</Banner>
+              <p className={styles.infoNote}>{t("store.vendor.contactNote")}</p>
             </div>
           </LayoutSection>
         </Layout>

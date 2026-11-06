@@ -42,7 +42,7 @@ export function AnnouncementBar() {
             setHidden(true);
           }}
         >
-          <X size={18} aria-hidden />
+          <X size={16} aria-hidden />
         </button>
       </div>
     </div>

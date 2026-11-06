@@ -5,6 +5,10 @@ import { z } from "zod";
 import { MAX_INSTANT_QTY, type Locale, type PaymentMethod } from "@/types";
 import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
+import { toJson } from "@/lib/json";
+import { toGovernorateKey } from "@/lib/orders/governorates";
+import { loadCheckoutSettings } from "@/lib/orders/checkout-settings";
+import { isValidTaxId, normalizeTaxId } from "@/lib/orders/company";
 import { QUOTE_NOTE_MAX, QUOTE_REQUESTED } from "./quote-request";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { addressSchema, idSchema, paymentMethodSchema } from "@/lib/orders/schemas";
@@ -15,6 +19,8 @@ import {
   markInstapaySent,
   placeOrder,
   quoteDesign,
+  sampleCreditFor,
+  sampleOffers,
   startPayment,
   toCheckoutOffer,
   type CheckoutOffer,
@@ -32,15 +38,26 @@ export type ActionError = { ok: false; error: string; fields?: string[] };
 const locale = z.enum(["ar", "en"]);
 
 export type OffersResult =
-  | { ok: true; mode: "instant"; quantity: number; offers: CheckoutOffer[]; suggestion: StandardSizeSuggestion | null; validUntil: string }
+  | {
+      ok: true;
+      mode: "instant";
+      quantity: number;
+      offers: CheckoutOffer[];
+      suggestion: StandardSizeSuggestion | null;
+      validUntil: string;
+      /** Paid sample offers (B-05). */
+      sample?: boolean;
+      /** Unused sample credit applied to these totals (B-05). */
+      credit?: { piasters: number; sampleNumber: string; expiresAt: string } | null;
+    }
   | { ok: true; mode: "manual_quote"; quantity: number; max: number; reason?: "QUANTITY_ABOVE_INSTANT_MAX" | "MODEL_BY_QUOTE"; orderReason?: "SPECIAL_GLUING" | "QUOTE_ONLY_STOCK" | "RARE_IN_EGYPT" | "FILLING_LINE" }
   | ActionError;
 
-export async function getOffersAction(input: { designId: string; quantity: number; governorate?: string }): Promise<OffersResult> {
+export async function getOffersAction(input: { designId: string; quantity: number; governorate?: string; sample?: boolean }): Promise<OffersResult> {
   const s = await getSession();
   if (!s) return { ok: false, error: "FORBIDDEN" };
   const p = z
-    .object({ designId: idSchema, quantity: z.number().int().min(1).max(1_000_000), governorate: z.string().max(40).optional() })
+    .object({ designId: idSchema, quantity: z.number().int().min(1).max(1_000_000), governorate: z.string().max(40).optional(), sample: z.boolean().optional() })
     .safeParse(input);
   if (!p.success) return { ok: false, error: "INVALID" };
   const rl = rateLimit("checkout:offers", s.user.id, 120, 60_000);
@@ -48,16 +65,25 @@ export async function getOffersAction(input: { designId: string; quantity: numbe
   const design = await loadCheckoutDesign(p.data.designId, s.user);
   if (!design) return { ok: false, error: "NOT_FOUND" };
   try {
+    const prepay = (await loadCheckoutSettings()).prepayDiscountPct;
+    if (p.data.sample) {
+      const samples = await sampleOffers(design.doc, p.data.governorate);
+      if (!samples) return { ok: false, error: "SAMPLE_UNAVAILABLE" };
+      const offers = samples.offers.map((o) => toCheckoutOffer(o, prepay, { sample: true }));
+      return { ok: true, mode: "instant", quantity: samples.pieces, offers, suggestion: null, validUntil: offers[0]?.validUntil ?? new Date().toISOString(), sample: true };
+    }
     const outcome = await quoteDesign(design.doc, { quantity: p.data.quantity, governorate: p.data.governorate });
     if (outcome.mode === "manual_quote")
       return { ok: true, mode: "manual_quote", quantity: outcome.quantity, max: MAX_INSTANT_QTY, reason: outcome.reason, ...(outcome.orderReason ? { orderReason: outcome.orderReason } : {}) };
+    const credit = await sampleCreditFor(s.user.id, p.data.designId);
     return {
       ok: true,
       mode: "instant",
       quantity: outcome.quantity,
-      offers: outcome.offers.map(toCheckoutOffer),
+      offers: outcome.offers.map((o) => toCheckoutOffer(o, prepay, { creditPiasters: credit?.piasters })),
       suggestion: outcome.suggestion,
       validUntil: outcome.validUntil,
+      credit: credit ? { piasters: credit.piasters, sampleNumber: credit.sampleNumber, expiresAt: credit.expiresAt.toISOString() } : null,
     };
   } catch (e) {
     console.error("[checkout] offers failed", e);
@@ -71,6 +97,18 @@ const placeSchema = z.object({
   vendorId: idSchema,
   address: addressSchema,
   approved: z.literal(true),
+  sample: z.boolean().optional(),
+  /** B-04: approve despite red preflight issues (the "Print it as it is" box; recorded on the proof). */
+  acknowledgePreflight: z.boolean().optional(),
+  // Company invoice (B-13): stored on the buyer's Organization, printed on the invoice.
+  company: z
+    .object({
+      name: z.string().trim().min(2).max(120),
+      taxId: z.string().max(20).refine(isValidTaxId),
+      commercialRegister: z.string().trim().max(40).optional().default(""),
+    })
+    .nullable()
+    .optional(),
   preview: z
     .string()
     .max(3_000_000)
@@ -93,6 +131,7 @@ export async function placeOrderAction(input: unknown): Promise<{ ok: true; orde
   if (!rl.ok) return { ok: false, error: "RATE_LIMITED" };
   const preview = p.data.preview ? Buffer.from(p.data.preview.split(",")[1], "base64") : null;
   try {
+    if (p.data.company) await saveCompany(s.user.id, p.data.company);
     const r = await placeOrder(s.user, {
       designId: p.data.designId,
       quantity: p.data.quantity,
@@ -101,6 +140,8 @@ export async function placeOrderAction(input: unknown): Promise<{ ok: true; orde
       approval: { ip: clientIp(h), userAgent: h.get("user-agent") ?? undefined },
       preview,
       locale: p.data.locale as Locale,
+      sample: p.data.sample,
+      acknowledgePreflight: p.data.acknowledgePreflight === true,
     });
     return { ok: true, orderId: r.orderId, number: r.number };
   } catch (e) {
@@ -155,8 +196,15 @@ export async function cancelOrderAction(orderId: string): Promise<{ ok: true } |
 const quoteRequestSchema = z.object({
   designId: idSchema,
   quantity: z.number().int().min(MAX_INSTANT_QTY + 1).max(1_000_000),
-  governorate: z.string().max(40).optional(),
+  // Stored as the governorate code (CAIRO, GIZA…); the client sends the address name or a code.
+  governorate: z
+    .string()
+    .max(40)
+    .transform((g, ctx) => toGovernorateKey(g) ?? (ctx.addIssue({ code: z.ZodIssueCode.custom, message: "INVALID_GOVERNORATE" }), z.NEVER))
+    .optional(),
   note: z.string().trim().max(QUOTE_NOTE_MAX).optional(),
+  /** Date the boxes are needed by (YYYY-MM-DD), optional. */
+  neededBy: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
 
 /**
@@ -210,7 +258,25 @@ export async function requestQuoteAction(input: unknown): Promise<{ ok: true; qu
           entityType: "QUOTE",
           entityId: row.id,
           summary: `${quantity.toLocaleString("en-US")} x ${design.doc.structureCode} · ${design.doc.name.slice(0, 80)}`,
-          after: { designId, quantity, governorate: p.data.governorate ?? null, note: p.data.note || null },
+          after: toJson({
+            designId,
+            quantity,
+            governorate: p.data.governorate ?? null,
+            neededBy: p.data.neededBy ?? null,
+            note: p.data.note || null,
+            phone: s.user.phone,
+            // Spec snapshot: the lead stays readable if the design changes later.
+            spec: {
+              name: design.doc.name,
+              structureCode: design.doc.structureCode,
+              modelCode: design.doc.modelCode ?? null,
+              dims: design.doc.dims,
+              materialCode: design.doc.materialCode,
+              finishCode: design.doc.finishCode,
+              finishes: design.doc.finishes ?? [],
+              printSides: design.doc.printSides,
+            },
+          }),
           ip: clientIp(h),
         },
       });
@@ -221,4 +287,11 @@ export async function requestQuoteAction(input: unknown): Promise<{ ok: true; qu
     console.error("[checkout] quote request failed", e);
     return { ok: false, error: "generic" };
   }
+}
+
+async function saveCompany(userId: string, c: { name: string; taxId: string; commercialRegister: string }) {
+  const data = { name: c.name, taxId: normalizeTaxId(c.taxId), commercialRegister: c.commercialRegister || null };
+  const u = await db.user.findUnique({ where: { id: userId }, select: { organizationId: true } });
+  if (u?.organizationId) await db.organization.update({ where: { id: u.organizationId }, data });
+  else await db.user.update({ where: { id: userId }, data: { organization: { create: data } } });
 }

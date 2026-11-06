@@ -20,6 +20,7 @@ import {
   Modal,
   Page,
   PriceTag,
+  Spinner,
   Stepper,
   Text,
   TextField,
@@ -91,10 +92,12 @@ export function PaymentClient(props: {
       return;
     }
     setPayment(r.payment);
+    // The method list (and its Continue button) unmounts: move focus into the next step (X-01).
+    requestAnimationFrame(() => document.getElementById(r.payment.method === "CARD" ? "card-number" : "payment-step-heading")?.focus());
   };
 
   const simulate = async (action: "card" | "wallet" | "fawry" | "instapay", extra: Record<string, string> = {}) => {
-    if (!payment) return;
+    if (!payment || busy) return;
     setBusy(true);
     setError(null);
     const r = await mockGateway({ paymentId: payment.paymentId, action, ...extra });
@@ -150,6 +153,7 @@ export function PaymentClient(props: {
   const detail = payment ? (
     payment.method === "CARD" ? (
       <form
+        aria-busy={busy}
         onSubmit={(e) => {
           e.preventDefault();
           setCardErr(undefined);
@@ -181,13 +185,14 @@ export function PaymentClient(props: {
             <TextField label={t("payment.card.cvc")} autoComplete="cc-csc" inputMode="numeric" dir="ltr" value={card.cvc} onChange={(v) => setCard((c) => ({ ...c, cvc: v }))} maxLength={4} />
           </div>
           <TextField label={t("payment.card.name")} autoComplete="cc-name" value={card.name} onChange={(v) => setCard((c) => ({ ...c, name: v }))} />
-          <Button variant="primary" size="large" fullWidth submit loading={busy}>
-            {t("payment.pay", { amount })}
+          <Button variant="primary" size="large" fullWidth submit>
+            <PayLabel busy={busy} label={t("payment.pay", { amount })} busyLabel={t("buyer.paying")} />
           </Button>
         </BlockStack>
       </form>
     ) : payment.method === "WALLET" ? (
       <form
+        aria-busy={busy}
         onSubmit={(e) => {
           e.preventDefault();
           void simulate("wallet", { walletPhone: wallet });
@@ -195,19 +200,23 @@ export function PaymentClient(props: {
       >
         <BlockStack gap="300">
           <Text as="h3" variant="headingSm">
-            {t("payment.wallet.title")}
+            <span id="payment-step-heading" tabIndex={-1} className={styles.stepHeading}>
+              {t("payment.wallet.title")}
+            </span>
           </Text>
           {props.testMode ? <Banner tone="info">{t("payment.wallet.testHint")}</Banner> : null}
           <TextField label={t("payment.wallet.number")} autoComplete="tel-national" type="tel" inputMode="tel" dir="ltr" value={wallet} onChange={setWallet} helpText={t("payment.wallet.help")} />
-          <Button variant="primary" size="large" fullWidth submit loading={busy}>
-            {t("payment.pay", { amount })}
+          <Button variant="primary" size="large" fullWidth submit>
+            <PayLabel busy={busy} label={t("payment.pay", { amount })} busyLabel={t("buyer.paying")} />
           </Button>
         </BlockStack>
       </form>
     ) : payment.method === "FAWRY" && payment.fawry ? (
       <BlockStack gap="300">
         <Text as="h3" variant="headingSm">
-          {t("payment.fawry.title")}
+          <span id="payment-step-heading" tabIndex={-1} className={styles.stepHeading}>
+            {t("payment.fawry.title")}
+          </span>
         </Text>
         <BlockStack gap="100">
           <Text as="p" variant="bodySm" tone="subdued">
@@ -251,7 +260,9 @@ export function PaymentClient(props: {
     ) : payment.method === "INSTAPAY" && payment.instapay ? (
       <BlockStack gap="300">
         <Text as="h3" variant="headingSm">
-          {t("payment.instapay.title")}
+          <span id="payment-step-heading" tabIndex={-1} className={styles.stepHeading}>
+            {t("payment.instapay.title")}
+          </span>
         </Text>
         <dl className={styles.specs}>
           <dt>{t("payment.instapay.address")}</dt>
@@ -440,6 +451,20 @@ export function PaymentClient(props: {
 }
 
 /** "4242424242424242" -> "4242 4242 4242 4242" (Arabic-Indic digits accepted). */
+/**
+ * Label of a "Pay" button. While paying it keeps the brand fill (the button is not disabled,
+ * repeat submits are ignored in `simulate`) and shows a leading spinner + "Paying…" (CR-22).
+ */
+function PayLabel({ busy, label, busyLabel }: { busy: boolean; label: string; busyLabel: string }) {
+  if (!busy) return <>{label}</>;
+  return (
+    <span className={styles.payBusy}>
+      <Spinner size="small" decorative />
+      {busyLabel}
+    </span>
+  );
+}
+
 function groupCard(v: string): string {
   const digits = toLatin(v).replace(/\D/g, "").slice(0, 19);
   return digits.replace(/(.{4})(?=.)/g, "$1 ");

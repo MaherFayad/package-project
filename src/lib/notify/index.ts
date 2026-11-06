@@ -9,7 +9,8 @@ import { getT, type DictKey, type TVars } from "@/i18n";
  * Texts live in the dictionaries under `notify.<TEMPLATE>` (ar + en). Transports are pluggable:
  * production wires WhatsApp Business (template messages), an SMS gateway and email; in dev every
  * channel logs to the console and keeps the last messages in memory (`notifyOutbox`) for tests.
- * Transactional messages only: marketing needs the separate PDPL consent (User.marketingConsent).
+ * Transactional messages, plus the one marketing template DESIGN_FOLLOW_UP, which only the follow-up
+ * job sends and only with a current MARKETING consent (PDPL; src/lib/jobs/followUp.ts).
  * A failing channel never throws into the order flow.
  */
 export type NotifyChannel = "whatsapp" | "sms" | "email";
@@ -26,6 +27,9 @@ export const NOTIFY_TEMPLATES = [
   "DELIVERED",
   "DISPUTE_OPENED",
   "REVIEW_THANKS",
+  // Marketing (B-23): only sent by src/lib/jobs/followUp.ts to users whose CURRENT MARKETING
+  // consent is a grant. Carries an opt-out hint (PDPL Law 151/2020).
+  "DESIGN_FOLLOW_UP",
 ] as const;
 export type NotifyTemplate = (typeof NOTIFY_TEMPLATES)[number];
 
@@ -42,6 +46,8 @@ export interface NotifyMessage {
   params?: TVars;
   /** Default: WhatsApp, falling back to SMS; plus email when an address is known. */
   channels?: NotifyChannel[];
+  /** false: a failed WhatsApp send does NOT fall back to SMS (marketing follow-ups are WhatsApp only). */
+  smsFallback?: boolean;
 }
 
 export interface NotifyTransport {
@@ -130,7 +136,7 @@ export async function notify(msg: NotifyMessage): Promise<SentNotification[]> {
 
   if (msg.to.phone && (channels.includes("whatsapp") || channels.includes("sms"))) {
     const ok = channels.includes("whatsapp") ? await trySend("whatsapp", msg.to.phone) : false;
-    if (!ok && (channels.includes("sms") || channels.includes("whatsapp"))) await trySend("sms", msg.to.phone);
+    if (!ok && (channels.includes("sms") || (channels.includes("whatsapp") && msg.smsFallback !== false))) await trySend("sms", msg.to.phone);
   }
   if (msg.to.email && channels.includes("email")) await trySend("email", msg.to.email);
   return sent;

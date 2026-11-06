@@ -6,7 +6,7 @@ export const libraryEn = {
     search: "Search models",
     searchPlaceholder: "Mailer, FEFCO 0203, honey jar…",
     all: "All",
-    count: "{count} models",
+    count: "{count:model}",
     empty: "No model matches “{q}”. Try a code like 0201 or a product like jar.",
     groupsLabel: "Model groups",
     current: "Current model",
@@ -76,8 +76,8 @@ export const libraryEn = {
   },
   catalog: {
     heading: "Every model we print",
-    subtitle: "{count} boxes, cartons, trays, tubes, labels and pouches. Each opens in the free 3D designer.",
-    design: "Design this",
-    groupCount: "{count} models",
+    subtitle: "{count:model} across boxes, cartons, trays, tubes, labels and pouches. Each opens in the free 3D designer.",
+    design: "Design this model",
+    groupCount: "Models: {count}",
   },
 };

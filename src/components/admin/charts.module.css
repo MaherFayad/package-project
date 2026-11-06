@@ -212,3 +212,18 @@
 .AnchorTarget {
   scroll-margin-block-start: calc(56px + var(--p-space-400));
 }
+
+/* Same content placed twice for phone / wider layouts; display:none keeps only one in the a11y tree. */
+.PhoneOnly { display: none; }
+@media (max-width: 47.99rem) {
+  .PhoneOnly { display: block; }
+  .DesktopOnly { display: none; }
+}
+
+/* Moderation queue: photo cards in a responsive grid (B-08). */
+.ModGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: var(--p-space-400); }
+.ModImage { display: block; inline-size: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: var(--p-color-bg-surface-secondary); border-start-start-radius: inherit; border-start-end-radius: inherit; }
+.ModBody { padding: var(--p-space-400); }
+
+/* Stacked links in a table cell: 24 px targets with no overlap (WCAG 2.5.8). */
+.TapLink { display: inline-block; min-block-size: 1.5rem; padding-block: 0.125rem; }

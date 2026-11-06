@@ -7,7 +7,9 @@ import { fromJson } from "@/lib/json";
 import { formatDate, formatDateTime, formatDims } from "@/lib/format";
 import { formatEgyptPhone } from "@/lib/phone";
 import { getOrderForViewer, moneyOf, syncShipments, type OrderDetail } from "@/lib/orders/service";
-import { BUYER_STEPS, buyerStepIndex, canBuyerCancel, canOpenDispute, canReview, isPaidStatus, statusBadge, stoppedStepIndex } from "@/lib/orders/state";
+import { BUYER_STEPS, buyerStepIndex, canBuyerCancel, canOpenDispute, canReview, isPaidStatus, stoppedStepIndex } from "@/lib/orders/state";
+import { paymentTone, statusTone } from "@/lib/orders/status-tone";
+import { modelPoster } from "@/lib/orders/poster";
 import { governorateKey } from "@/lib/orders/governorates";
 import type { TrackingEvent } from "@/lib/shipping";
 import {
@@ -32,6 +34,7 @@ import {
   Timeline,
   type TimelineGroup,
 } from "@/components/ui";
+import { PaidHeader } from "../_components/PaidHeader";
 import { CancelOrderButton, DisputeForm, ReorderButton, ReviewForm } from "../_components/OrderActions";
 import styles from "../_components/orders.module.css";
 
@@ -50,6 +53,9 @@ const NOTE_KEYS: Record<string, DictKey> = {
   DISPUTE_OPENED: "orders.detail.notes.DISPUTE_OPENED",
   PREPRESS_CHECK: "orders.detail.notes.PREPRESS_CHECK",
   PRINT_PDF_FAILED: "orders.detail.notes.PRINT_PDF_FAILED",
+  SAMPLE_ORDER: "orders.detail.notes.SAMPLE_ORDER",
+  SAMPLE_CREDIT: "orders.detail.notes.SAMPLE_CREDIT",
+  SAMPLE_CREDITED: "orders.detail.notes.SAMPLE_CREDITED",
 };
 
 /** Timeline entry text for an event; internal codes are hidden from buyers. */
@@ -67,6 +73,8 @@ function eventText(t: TFunction, type: ProductionEventType, note: string | null,
   if (!note) return { content };
   if (type === "PAYMENT_CONFIRMED") return { content, detail: t(`paymentMethods.${note as PaymentMethod}` as DictKey) };
   if (type === "ORDER_PLACED" && code?.[1] === "REORDER") return { content, detail: t("orders.detail.notes.REORDER", { number: code[2] ?? "" }) };
+  // B-04: proof approved with red print-check issues ("PREFLIGHT:1E/0W:ACK", written by the service).
+  if (type === "PROOF_APPROVED" && code?.[1] === "PREFLIGHT" && note!.endsWith(":ACK")) return { content, detail: t("orders.detail.notes.PREFLIGHT_OVERRIDE") };
   if (code && !internal && type !== "SHIPPED") return { content };
   return { content, detail: note };
 }
@@ -82,7 +90,7 @@ function timelineGroups(order: OrderDetail, t: TFunction, locale: Locale, intern
     g.events.push({
       id: e.id,
       content: text.detail ? `${text.content}: ${text.detail}` : text.content,
-      time: <time dateTime={e.createdAt.toISOString()}>{new Intl.DateTimeFormat(locale === "ar" ? "ar-EG-u-nu-latn" : "en-GB", { timeStyle: "short", timeZone: "Africa/Cairo" }).format(e.createdAt)}</time>,
+      time: <time dateTime={e.createdAt.toISOString()}>{new Intl.DateTimeFormat(locale === "ar" ? "ar-EG-u-nu-latn" : "en-EG", { timeStyle: "short", timeZone: "Africa/Cairo" }).format(e.createdAt)}</time>,
       tone: e.type === "CANCELLED" || e.type === "QC_REJECTED" ? "critical" : e.type === "DELIVERED" || e.type === "PAYMENT_CONFIRMED" ? "success" : "default",
     });
     groups.set(day, g);
@@ -116,7 +124,7 @@ export default async function OrderPage({ params, searchParams }: { params: Para
   const status = order.status as OrderStatus;
   const isBuyer = order.buyerId === user.id;
   const internal = user.role !== "BUYER";
-  const badge = statusBadge(status);
+  const badge = statusTone(status);
   const money = moneyOf(order);
   const address = fromJson<ShippingAddress>(order.shippingAddress);
   const govKey = governorateKey(address.governorate);
@@ -161,7 +169,7 @@ export default async function OrderPage({ params, searchParams }: { params: Para
       titleMetadata={
         <InlineStack gap="100">
           {paidSum > 0 || !terminal ? (
-            <Badge tone={paidSum > 0 ? "neutral" : "warning"} progress={paidSum > 0 ? "complete" : "incomplete"}>
+            <Badge tone={paymentTone(paidSum > 0 ? "PAID" : "PENDING").tone} progress={paymentTone(paidSum > 0 ? "PAID" : "PENDING").progress}>
               {paidSum > 0 ? t("payment.status.PAID") : t("payment.status.PENDING")}
             </Badge>
           ) : null}
@@ -179,23 +187,12 @@ export default async function OrderPage({ params, searchParams }: { params: Para
     >
       <BlockStack gap="400">
         {paid && isPaidStatus(status) ? (
-          <div className={styles.success}>
-            <Banner tone="success" title={t("payment.paid")} announce>
-              <BlockStack gap="200">
-                <span>
-                  {order.dueDate
-                    ? t("buyer.successBody", { vendor: vendorName, date: formatDate(order.dueDate, locale) })
-                    : t("buyer.successBodyNoDate", { vendor: vendorName })}
-                </span>
-                <span className={styles.nextTitle}>{t("buyer.whatNext")}</span>
-                <ol className={styles.nextList}>
-                  <li>{t("buyer.next1")}</li>
-                  <li>{t("buyer.next2")}</li>
-                  <li>{t("buyer.next3")}</li>
-                </ol>
-              </BlockStack>
-            </Banner>
-          </div>
+          <PaidHeader
+            title={t("payment.paid")}
+            body={order.dueDate ? t("buyer.successBody", { vendor: vendorName, date: formatDate(order.dueDate, locale) }) : t("buyer.successBodyNoDate", { vendor: vendorName })}
+            nextTitle={t("buyer.whatNext")}
+            steps={[t("buyer.next1"), t("buyer.next2"), t("buyer.next3")]}
+          />
         ) : null}
         {status === "PENDING_PAYMENT" && isBuyer ? (
           <Banner tone="warning" title={t("payment.pending")} action={{ content: t("orders.detail.payNow"), url: `/${locale}/checkout/pay/${order.id}` }} />
@@ -229,7 +226,7 @@ export default async function OrderPage({ params, searchParams }: { params: Para
                     const dims = fromJson<Dims>(item.dims);
                     return (
                       <div className={styles.item} key={item.id}>
-                        <Thumbnail source={item.proof?.previewUrl ?? undefined} alt={t(`structures.${item.structureCode}` as DictKey)} size="large" />
+                        <Thumbnail source={item.proof?.previewUrl ?? modelPoster(item.modelCode, item.structureCode)} alt={t(`structures.${item.structureCode}` as DictKey)} size="large" />
                         <div className={styles.itemBody}>
                           <BlockStack gap="100">
                             <InlineStack align="space-between" gap="200">
@@ -452,12 +449,9 @@ export default async function OrderPage({ params, searchParams }: { params: Para
                 <DisputeForm orderId={order.id} />
               ) : null}
 
-              <BlockStack gap="200">
-                <Text as="h2" variant="headingSm">
-                  {t("orders.detail.timeline")}
-                </Text>
+              <Card title={t("orders.detail.timeline")}>
                 <Timeline groups={timelineGroups(order, t, locale, internal)} />
-              </BlockStack>
+              </Card>
             </BlockStack>
           </LayoutSection>
 

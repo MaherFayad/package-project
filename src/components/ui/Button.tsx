@@ -18,6 +18,7 @@ export interface ButtonProps {
   variant?: ButtonVariant;
   /** critical turns primary red, and secondary/plain text red. success is for confirmations. */
   tone?: "critical" | "success";
+  /** slim 28px · medium 32px (40 on touch) · large 44px. "micro" is deprecated and renders as slim. */
   size?: "micro" | "slim" | "medium" | "large";
   fullWidth?: boolean;
   textAlign?: "start" | "center" | "end";

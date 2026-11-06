@@ -8,6 +8,8 @@ import { createSession } from "@/lib/auth/session";
 import { crossSiteResponse, isCrossSiteRequest } from "@/lib/auth/csrf";
 import { ANON_COOKIE, CONSENT_TEXT_VERSION } from "@/lib/auth/constants";
 import { consentRowsForSignIn } from "@/lib/auth/consent";
+import { GATE_COOKIE, GATE_REASONS } from "@/lib/analytics/events";
+import { deviceOf, track } from "@/lib/analytics/track";
 
 const Body = z.object({
   phone: z.string().min(6).max(32),
@@ -22,6 +24,8 @@ const Body = z.object({
    * leaving the box unticked at login.
    */
   marketingConsent: z.boolean().optional(),
+  /** Analytics only (B-19): which soft gate opened the form. Falls back to the elba_gate cookie. */
+  gateReason: z.enum(GATE_REASONS).optional(),
 });
 
 /**
@@ -134,6 +138,18 @@ export async function POST(req: Request) {
   }
 
   await createSession(user.id);
+  if (!existing) {
+    // launch-metrics.md §1 `account_created`: OTP verified for a new phone, with the gate that
+    // converted and the marketing choice. Pseudonymous ids only (never the phone).
+    const cookieReason = jar.get(GATE_COOKIE)?.value;
+    const gateReason = b.gateReason ?? (GATE_REASONS as readonly string[]).find((r) => r === cookieReason) ?? null;
+    void track(
+      "account_created",
+      { gate_reason: gateReason, marketing_consent: plan.marketing === true, locale: b.locale, device: deviceOf(req.headers) },
+      { userId: user.id, anonId: anonId && /^[\w-]{16,64}$/.test(anonId) ? anonId : null },
+    );
+  }
+  if (jar.get(GATE_COOKIE)) jar.set(GATE_COOKIE, "", { path: "/api/auth", maxAge: 0 });
   return Response.json({
     ok: true,
     user: { id: user.id, role: user.role, name: user.name, isNew: !existing },

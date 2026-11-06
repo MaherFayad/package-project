@@ -1,18 +1,22 @@
+import { db } from "@/lib/db";
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Download } from "lucide-react";
 import { Badge, Banner, BlockStack, Button, Card, DataTable, InlineStack, Layout, LayoutSection, Link, Page, Text } from "@/components/ui";
 import { DataRequestActions } from "@/components/admin/DataRequestActions";
 import { OrderStatusBadge } from "@/components/admin/OrdersIndex";
-import { NotFoundCard } from "@/components/admin/NotFoundCard";
 import { loadUser } from "@/components/admin/server/queries";
 import { getT, pick, toLocale, type DictKey } from "@/i18n";
 import { formatDate, formatDateTime, formatMoney, formatNumber } from "@/lib/format";
 
 type Params = Promise<{ locale: string; id: string }>;
 
+/** Entity first (WCAG 2.4.2). The name only, never the phone number: titles end up in history and tab lists. */
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
-  const t = getT(toLocale((await params).locale));
-  return { title: `${t("admin.users.title")} · ${t("admin.title")}` };
+  const { locale, id } = await params;
+  const t = getT(toLocale(locale));
+  const u = /^[\w-]{1,40}$/.test(id) ? await db.user.findUnique({ where: { id }, select: { name: true } }) : null;
+  return { title: `${u?.name ? `${u.name} · ` : ""}${t("admin.users.title")} · ${t("admin.title")}` };
 }
 
 export default async function AdminUserPage({ params }: { params: Params }) {
@@ -21,13 +25,13 @@ export default async function AdminUserPage({ params }: { params: Params }) {
   const t = getT(locale);
   const base = `/${locale}/admin`;
   const data = await loadUser(id);
-  if (!data) return <NotFoundCard locale={locale} backUrl={`${base}/users`} backLabel={t("admin.users.detail.back")} />;
+  if (!data) notFound();
   const { user, requests } = data;
   const anonymised = user.phone.startsWith("deleted:");
 
   return (
     <Page
-      title={user.name ?? t("admin.users.noName")}
+      title={<bdi>{user.name ?? t("admin.users.noName")}</bdi>}
       titleMetadata={<Badge tone={user.role === "ADMIN" ? "magic" : user.role === "VENDOR" ? "info" : "neutral"}>{t(`admin.users.roles.${user.role}` as DictKey)}</Badge>}
       subtitle={t("admin.users.detail.joined", { date: formatDate(user.createdAt, locale, "medium") })}
       backAction={{ content: t("admin.users.detail.back"), url: `${base}/users` }}
@@ -85,7 +89,7 @@ export default async function AdminUserPage({ params }: { params: Params }) {
                   <DataTable
                     caption={t("admin.users.detail.requests")}
                     columnContentTypes={["text", "text", "text", "text"]}
-                    headings={[t("admin.privacy.columns.kind"), t("admin.privacy.columns.status"), t("admin.privacy.columns.received"), ""]}
+                    headings={[t("admin.privacy.columns.kind"), t("admin.privacy.columns.status"), t("admin.privacy.columns.received"), <span key="h" className="visually-hidden">{t("admin.common.actionsColumn")}</span>]}
                     rows={requests.map((r) => [
                       t(`admin.privacy.kinds.${r.kind}` as DictKey),
                       t(`admin.privacy.statuses.${r.status}` as DictKey),
@@ -112,7 +116,7 @@ export default async function AdminUserPage({ params }: { params: Params }) {
                       </Link>,
                       formatDate(o.placedAt, locale, "medium"),
                       <OrderStatusBadge key="s" status={o.status} />,
-                      formatMoney(o.totalPiasters, locale),
+                      formatMoney(o.totalPiasters, locale, { alwaysDecimals: true }),
                     ])}
                   />
                 ) : (

@@ -149,7 +149,8 @@ function IndexTableRoot({
                 </div>
               </div>
             ) : null}
-            <div className={styles.Scroll}>
+            {/* Focusable so keyboard users can scroll a wide table on phones (WCAG 2.1.1; axe scrollable-region-focusable). */}
+            <div className={styles.Scroll} tabIndex={0} role="region" aria-label={caption ?? resourceName.plural}>
               <table className={styles.Table}>
                 <caption className="visually-hidden">{caption ?? resourceName.plural}</caption>
                 <thead>
