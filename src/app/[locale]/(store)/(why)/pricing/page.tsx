@@ -10,7 +10,8 @@ import { JsonLd } from "@/components/store/JsonLd";
 import { faqJsonLd } from "@/components/store/jsonld";
 import { startHref } from "@/components/marketing/MarketingHeader";
 import { Sheet } from "@/components/marketing/kit/Sheet";
-import { Display, Lead } from "@/components/marketing/kit/Display";
+import { SectionHead, Stack } from "@/components/marketing/kit/SectionHead";
+import { Grid } from "@/components/marketing/kit/Grid";
 import { Pill, PillRow } from "@/components/marketing/kit/Pill";
 import { Reveal } from "@/components/marketing/kit/Reveal";
 import { whyCopy } from "@/components/marketing/why/copy";
@@ -81,218 +82,213 @@ export default async function PricingPage({ params }: Props) {
 
       {/* P1 hero, P2 VAT toggle, P3 tier cards */}
       <Sheet tone="dark" hero className={s.pricingHero} aria-labelledby="pricing-h1">
-        <div className={s.pHero}>
-          <Display as="h1" size="64" align="center" id="pricing-h1">
-            {c.title}
-          </Display>
-          {f ? <Lead align="center">{c.sub(boxName, pct)}</Lead> : null}
-        </div>
-        {f ? (
-          <VatToggle
-            label={c.vatToggle}
-            aside={
-              <a href="#compare" className={s.compareLink}>
-                {c.compareLink}
-              </a>
-            }
-          >
-            <ul className={s.tiers}>
-              {cards.map((tier, i) => (
-                <li key={tier.quantity} className={s.tier} style={{ ["--m-i" as string]: i }} data-testid={`tier-${tier.quantity}`}>
+        <SectionHead as="h1" size="64" align="center" id="pricing-h1" title={c.title} sub={f ? c.sub(boxName, pct) : undefined}>
+          {f ? (
+            <VatToggle
+              label={c.vatToggle}
+              aside={
+                <a href="#compare" className={s.compareLink}>
+                  {c.compareLink}
+                </a>
+              }
+            >
+              <Grid as="ul" cols={4} colsMd={2} className={s.list}>
+                {cards.map((tier, i) => (
+                  <li key={tier.quantity} className={s.tier} style={{ ["--m-i" as string]: i }} data-testid={`tier-${tier.quantity}`}>
+                    <div className={s.tierTop}>
+                      <div>
+                        <h2 className={s.tierName}>{c.tierNames[tier.quantity]}</h2>
+                        <p className={s.tierFor}>{c.tierFor[tier.quantity]}</p>
+                      </div>
+                      <p className={s.tierQty}>{c.boxes(formatNumber(tier.quantity))}</p>
+                    </div>
+                    <p className={`${s.tierPrice} ${s.showIncl}`}>
+                      <strong>{money(tier.unitInclVatPiasters, true)}</strong>
+                      <span>{c.perBoxIncl}</span>
+                    </p>
+                    <p className={`${s.tierPrice} ${s.showExcl}`}>
+                      <strong>{money(tier.unitPiasters, true)}</strong>
+                      <span>{c.perBoxExcl}</span>
+                    </p>
+                    <div className={s.tierTotals}>
+                      <p className={s.showIncl}>
+                        {c.totalIncl} <strong data-testid="tier-total">{money(tier.totalPiasters)}</strong>
+                      </p>
+                      <p className={s.showExcl}>
+                        {c.totalExcl} <strong data-testid="tier-subtotal">{money(tier.subtotalPiasters)}</strong>
+                      </p>
+                      {tier.savingPiasters > 0 ? <p className={s.save}>{c.youSave(money(tier.savingPiasters), pct)}</p> : null}
+                    </div>
+                    <Pill href={refStart} variant="outline" className={s.tierCta}>
+                      {c.tierCta}
+                      <span className={s.srOnly}> {c.tierNames[tier.quantity]}</span>
+                    </Pill>
+                    <ul className={s.feat}>
+                      <li>
+                        <Truck size={16} aria-hidden />
+                        {c.deliveryIn(u.days(tier.deliveryDays))}
+                      </li>
+                      {tier.diePiasters === 0 ? (
+                        <li>
+                          <Check size={16} aria-hidden />
+                          {c.tierFeatures.noDie}
+                        </li>
+                      ) : null}
+                      {tier.setupPiasters > 0 ? (
+                        <li>
+                          <Check size={16} aria-hidden />
+                          {c.tierFeatures.setup(money(tier.setupPiasters))}
+                        </li>
+                      ) : null}
+                      <li>
+                        <Check size={16} aria-hidden />
+                        {c.tierFeatures.proof}
+                      </li>
+                      <li>
+                        <Check size={16} aria-hidden />
+                        {c.tierFeatures.vat}
+                      </li>
+                    </ul>
+                  </li>
+                ))}
+                <li className={s.tier} style={{ ["--m-i" as string]: cards.length }} data-testid="tier-wholesale">
                   <div className={s.tierTop}>
                     <div>
-                      <h2 className={s.tierName}>{c.tierNames[tier.quantity]}</h2>
-                      <p className={s.tierFor}>{c.tierFor[tier.quantity]}</p>
+                      <h2 className={s.tierName}>{c.wholesale}</h2>
+                      <p className={s.tierFor}>{c.wholesaleFor}</p>
                     </div>
-                    <p className={s.tierQty}>{c.boxes(formatNumber(tier.quantity))}</p>
+                    <p className={s.tierQty}>{c.wholesaleQty(formatNumber(f.maxInstantQty))}</p>
                   </div>
-                  <p className={`${s.tierPrice} ${s.showIncl}`}>
-                    <strong>{money(tier.unitInclVatPiasters, true)}</strong>
-                    <span>{c.perBoxIncl}</span>
-                  </p>
-                  <p className={`${s.tierPrice} ${s.showExcl}`}>
-                    <strong>{money(tier.unitPiasters, true)}</strong>
-                    <span>{c.perBoxExcl}</span>
+                  <p className={s.tierPrice}>
+                    <strong>{c.wholesalePrice}</strong>
                   </p>
                   <div className={s.tierTotals}>
-                    <p className={s.showIncl}>
-                      {c.totalIncl} <strong data-testid="tier-total">{money(tier.totalPiasters)}</strong>
-                    </p>
-                    <p className={s.showExcl}>
-                      {c.totalExcl} <strong data-testid="tier-subtotal">{money(tier.subtotalPiasters)}</strong>
-                    </p>
-                    {tier.savingPiasters > 0 ? <p className={s.save}>{c.youSave(money(tier.savingPiasters), pct)}</p> : null}
+                    <p>{c.wholesaleBody}</p>
                   </div>
                   <Pill href={refStart} variant="outline" className={s.tierCta}>
-                    {c.tierCta}
-                    <span className={s.srOnly}> {c.tierNames[tier.quantity]}</span>
+                    {c.wholesaleCta}
                   </Pill>
                   <ul className={s.feat}>
-                    <li>
-                      <Truck size={16} aria-hidden />
-                      {c.deliveryIn(u.days(tier.deliveryDays))}
-                    </li>
-                    {tier.diePiasters === 0 ? (
-                      <li>
+                    {c.wholesaleFeatures.map((x) => (
+                      <li key={x}>
                         <Check size={16} aria-hidden />
-                        {c.tierFeatures.noDie}
+                        {x}
                       </li>
-                    ) : null}
-                    {tier.setupPiasters > 0 ? (
-                      <li>
-                        <Check size={16} aria-hidden />
-                        {c.tierFeatures.setup(money(tier.setupPiasters))}
-                      </li>
-                    ) : null}
-                    <li>
-                      <Check size={16} aria-hidden />
-                      {c.tierFeatures.proof}
-                    </li>
-                    <li>
-                      <Check size={16} aria-hidden />
-                      {c.tierFeatures.vat}
-                    </li>
+                    ))}
                   </ul>
                 </li>
-              ))}
-              <li className={s.tier} style={{ ["--m-i" as string]: cards.length }} data-testid="tier-wholesale">
-                <div className={s.tierTop}>
-                  <div>
-                    <h2 className={s.tierName}>{c.wholesale}</h2>
-                    <p className={s.tierFor}>{c.wholesaleFor}</p>
-                  </div>
-                  <p className={s.tierQty}>{c.wholesaleQty(formatNumber(f.maxInstantQty))}</p>
-                </div>
-                <p className={s.tierPrice}>
-                  <strong>{c.wholesalePrice}</strong>
-                </p>
-                <div className={s.tierTotals}>
-                  <p>{c.wholesaleBody}</p>
-                </div>
-                <Pill href={refStart} variant="outline" className={s.tierCta}>
-                  {c.wholesaleCta}
-                </Pill>
-                <ul className={s.feat}>
-                  {c.wholesaleFeatures.map((x) => (
-                    <li key={x}>
-                      <Check size={16} aria-hidden />
-                      {x}
-                    </li>
-                  ))}
-                </ul>
-              </li>
-            </ul>
-          </VatToggle>
-        ) : (
-          <p className={s.unavailable} role="status">
-            {c.unavailable}
-          </p>
-        )}
+              </Grid>
+            </VatToggle>
+          ) : (
+            <p className={s.unavailable} role="status">
+              {c.unavailable}
+            </p>
+          )}
+        </SectionHead>
       </Sheet>
 
       {/* P4 always included + P5 sample order */}
-      <Sheet tone="dark" className={s.cardBand} aria-labelledby="pricing-included">
-        <Display size="20" id="pricing-included" className={s.bandTitle}>
-          {c.includedTitle}
-        </Display>
-        <ul className={s.incGrid}>
-          {c.included.map((it, i) => {
-            const I = INCLUDED_ICONS[i]!;
-            return (
-              <Reveal as="li" key={it.title} index={i} className={s.inc}>
-                <I size={24} aria-hidden />
-                <h3 className={s.incTitle}>{it.title}</h3>
-                <p className={s.incBody}>{it.body}</p>
+      <Sheet tone="navy" y="lg" aria-labelledby="pricing-included">
+        <SectionHead size="44" id="pricing-included" title={c.includedTitle}>
+          <Stack gap="head-content">
+            <Grid as="ul" cols={5} colsMd={2} className={s.list}>
+              {c.included.map((it, i) => {
+                const I = INCLUDED_ICONS[i]!;
+                return (
+                  <Reveal as="li" key={it.title} index={i} className={s.inc}>
+                    <I size={24} aria-hidden />
+                    <h3 className={s.incTitle}>{it.title}</h3>
+                    <p className={s.incBody}>{it.body}</p>
+                  </Reveal>
+                );
+              })}
+            </Grid>
+            {f?.sample ? (
+              <Reveal className={s.sample}>
+                <div>
+                  <span className={s.sampleBadge}>{c.sampleBadge}</span>
+                  <h2 className={s.sampleTitle}>{c.sampleTitle}</h2>
+                  <p className={s.sampleBody}>{c.sampleBody(formatNumber(f.sample.pieces), u.days(f.sample.creditDays))}</p>
+                </div>
+                <div>
+                  <p className={s.sampleFig}>{money(f.sample.totalPiasters)}</p>
+                  <p className={s.sampleMeta}>{c.sampleTotal}</p>
+                  <p className={s.sampleMeta}>{c.sampleDelivery(u.days(f.sample.deliveryDays))}</p>
+                  <PillRow className={s.sampleCta}>
+                    <Pill href={refStart} variant="dark">
+                      {c.tierCta}
+                    </Pill>
+                  </PillRow>
+                </div>
               </Reveal>
-            );
-          })}
-        </ul>
-        {f?.sample ? (
-          <Reveal className={s.sample}>
-            <div>
-              <span className={s.sampleBadge}>{c.sampleBadge}</span>
-              <h2 className={s.sampleTitle}>{c.sampleTitle}</h2>
-              <p className={s.sampleBody}>{c.sampleBody(formatNumber(f.sample.pieces), u.days(f.sample.creditDays))}</p>
-            </div>
-            <div>
-              <p className={s.sampleFig}>{money(f.sample.totalPiasters)}</p>
-              <p className={s.sampleMeta}>{c.sampleTotal}</p>
-              <p className={s.sampleMeta}>{c.sampleDelivery(u.days(f.sample.deliveryDays))}</p>
-              <PillRow className={s.sampleCta}>
-                <Pill href={refStart} variant="dark">
-                  {c.tierCta}
-                </Pill>
-              </PillRow>
-            </div>
-          </Reveal>
-        ) : null}
+            ) : null}
+          </Stack>
+        </SectionHead>
       </Sheet>
 
       {/* P7 comparison table */}
       {f ? (
-        <Sheet tone="white" id="compare" aria-labelledby="pricing-compare">
-          <Display size="44" id="pricing-compare" className={s.bandTitle}>
-            {c.compareTitle}
-          </Display>
-          <p className={s.tableNote} aria-hidden="true">
-            {c.compareCaption(boxName)}
-          </p>
-          <div className={s.tableWrap} role="region" aria-label={c.tableScroll} tabIndex={0}>
-            <table className={s.table}>
-              <caption className={s.srOnly}>{c.compareCaption(boxName)}</caption>
-              <thead>
-                <tr>
-                  <td />
-                  {f.tiers.map((x) => (
-                    <th key={x.quantity} scope="col">
-                      {c.tierNames[x.quantity]}
-                      <span className={s.thQty}>{c.boxes(formatNumber(x.quantity))}</span>
+        <Sheet tone="white" y="lg" id="compare" aria-labelledby="pricing-compare">
+          <SectionHead size="44" id="pricing-compare" title={c.compareTitle} sub={<span aria-hidden="true">{c.compareCaption(boxName)}</span>}>
+            <div className={s.tableWrap} role="region" aria-label={c.tableScroll} tabIndex={0}>
+              <table className={s.table}>
+                <caption className={s.srOnly}>{c.compareCaption(boxName)}</caption>
+                <thead>
+                  <tr>
+                    <td />
+                    {f.tiers.map((x) => (
+                      <th key={x.quantity} scope="col">
+                        {c.tierNames[x.quantity]}
+                        <span className={s.thQty}>{c.boxes(formatNumber(x.quantity))}</span>
+                      </th>
+                    ))}
+                    <th scope="col">
+                      {c.wholesale}
+                      <span className={s.thQty}>{c.wholesaleQty(formatNumber(f.maxInstantQty))}</span>
                     </th>
-                  ))}
-                  <th scope="col">
-                    {c.wholesale}
-                    <span className={s.thQty}>{c.wholesaleQty(formatNumber(f.maxInstantQty))}</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <Group label={c.compareRows.group1} span={span} />
-                <Row label={c.compareRows.unit} cells={f.tiers.map((x) => money(x.unitPiasters, true))} tail={c.onRequest} />
-                <Row label={c.compareRows.list} cells={f.tiers.map((x) => money(x.listTotalPiasters))} tail={c.onRequest} />
-                <Row label={c.compareRows.discount(pct)} cells={f.tiers.map((x) => money(-x.discountPiasters))} tail={c.onRequest} />
-                <Row label={c.compareRows.subtotal} cells={f.tiers.map((x) => money(x.subtotalPiasters))} tail={c.onRequest} />
-                <Row label={c.compareRows.vat} cells={f.tiers.map((x) => money(x.vatPiasters))} tail={c.onRequest} />
-                <Row label={c.compareRows.total} cells={f.tiers.map((x) => <strong key={x.quantity}>{money(x.totalPiasters)}</strong>)} tail={c.onRequest} />
-                <Group label={c.compareRows.group2} span={span} />
-                <Row label={c.compareRows.setup} cells={f.tiers.map((x) => (x.setupPiasters ? money(x.setupPiasters) : c.none))} tail={c.onRequest} />
-                <Row label={c.compareRows.die} cells={f.tiers.map((x) => (x.diePiasters ? money(x.diePiasters) : c.none))} tail={c.onRequest} />
-                <Row label={c.compareRows.shipping} cells={f.tiers.map((x) => money(x.shippingPiasters))} tail={c.onRequest} />
-                <Group label={c.compareRows.group3} span={span} />
-                <Row label={c.compareRows.method} cells={f.tiers.map((x) => c.methods[x.method])} tail={c.onRequest} />
-                <Row label={c.compareRows.days} cells={f.tiers.map((x) => u.days(x.deliveryDays))} tail={c.onRequest} />
-                <Row label={c.compareRows.proof} cells={f.tiers.map(() => yes)} tail={yes} />
-                <Row label={c.compareRows.receipt} cells={f.tiers.map(() => yes)} tail={yes} />
-              </tbody>
-            </table>
-          </div>
+                  </tr>
+                </thead>
+                <tbody>
+                  <Group label={c.compareRows.group1} span={span} />
+                  <Row label={c.compareRows.unit} cells={f.tiers.map((x) => money(x.unitPiasters, true))} tail={c.onRequest} />
+                  <Row label={c.compareRows.list} cells={f.tiers.map((x) => money(x.listTotalPiasters))} tail={c.onRequest} />
+                  <Row label={c.compareRows.discount(pct)} cells={f.tiers.map((x) => money(-x.discountPiasters))} tail={c.onRequest} />
+                  <Row label={c.compareRows.subtotal} cells={f.tiers.map((x) => money(x.subtotalPiasters))} tail={c.onRequest} />
+                  <Row label={c.compareRows.vat} cells={f.tiers.map((x) => money(x.vatPiasters))} tail={c.onRequest} />
+                  <Row
+                    label={c.compareRows.total}
+                    cells={f.tiers.map((x) => (
+                      <strong key={x.quantity}>{money(x.totalPiasters)}</strong>
+                    ))}
+                    tail={c.onRequest}
+                  />
+                  <Group label={c.compareRows.group2} span={span} />
+                  <Row label={c.compareRows.setup} cells={f.tiers.map((x) => (x.setupPiasters ? money(x.setupPiasters) : c.none))} tail={c.onRequest} />
+                  <Row label={c.compareRows.die} cells={f.tiers.map((x) => (x.diePiasters ? money(x.diePiasters) : c.none))} tail={c.onRequest} />
+                  <Row label={c.compareRows.shipping} cells={f.tiers.map((x) => money(x.shippingPiasters))} tail={c.onRequest} />
+                  <Group label={c.compareRows.group3} span={span} />
+                  <Row label={c.compareRows.method} cells={f.tiers.map((x) => c.methods[x.method])} tail={c.onRequest} />
+                  <Row label={c.compareRows.days} cells={f.tiers.map((x) => u.days(x.deliveryDays))} tail={c.onRequest} />
+                  <Row label={c.compareRows.proof} cells={f.tiers.map(() => yes)} tail={yes} />
+                  <Row label={c.compareRows.receipt} cells={f.tiers.map(() => yes)} tail={yes} />
+                </tbody>
+              </table>
+            </div>
+          </SectionHead>
         </Sheet>
       ) : null}
 
       {/* P8 FAQ */}
-      <Sheet tone="dark" overlap={false} id="faq" aria-labelledby="pricing-faq">
-        <Display size="44" id="pricing-faq" className={s.faqTitle}>
-          {c.faqTitle}
-        </Display>
-        <Faq items={faq} name="pricing-faq" />
+      <Sheet tone="dark" y="lg" id="faq" aria-labelledby="pricing-faq">
+        <SectionHead size="44" id="pricing-faq" title={c.faqTitle}>
+          <Faq items={faq} name="pricing-faq" />
+        </SectionHead>
       </Sheet>
 
       {/* P9 closing CTA */}
-      <Sheet tone="dark" overlap={false} aria-labelledby="pricing-close" className={s.close}>
+      <Sheet tone="dark" y="xl" aria-labelledby="pricing-close">
         <Reveal>
-          <Display size="56" align="center" id="pricing-close">
-            {c.closeTitle}
-          </Display>
-          <Lead align="center">{c.closeSub}</Lead>
+          <SectionHead size="64" align="center" id="pricing-close" title={c.closeTitle} sub={c.closeSub} />
           <PillRow align="center">
             <Pill href={startHref(locale)} size="lg">
               {all.why.ctaStart}
