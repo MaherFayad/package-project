@@ -1386,37 +1386,37 @@
   "svg": "3a6f3e86c9f89dde2fece1f6"
  },
  "TUBE_LID_BASE": {
-  "dieline": "cb9737105c783f30c651a089",
+  "dieline": "e5f1cd48c6725fd7aa13a773",
   "poses": "3b6489963934990cb7c24c20",
   "bounds": "4f70c62fcfbe526e3a0fa523",
   "svg": "8213652c6ee3a0c64427307e"
  },
  "TUBE_ROLLED_EDGE": {
-  "dieline": "44832dae2324bd1bb6e8dfc3",
+  "dieline": "73a31cfd012bad404fbd5ae4",
   "poses": "bd4effc5d6b943f52e3767fb",
   "bounds": "bf8637deceb763e80b985740",
   "svg": "8213652c6ee3a0c64427307e"
  },
  "TUBE_TELESCOPING": {
-  "dieline": "fc8865cea5bb7c195c19a0f5",
+  "dieline": "123c394d93abbbb0dea9065d",
   "poses": "c5e8c01e6b04906a08d75d09",
   "bounds": "cd9d2b1760f4d3b4bb3c8530",
   "svg": "a40664d707ef09cbc290a178"
  },
  "TUBE_PUSH_UP": {
-  "dieline": "6f5092c821ef1d8e69242b58",
+  "dieline": "e65b962fcd6a5412cc18252d",
   "poses": "ea0a02f5b000021274bc2f57",
   "bounds": "e82434cba78a5cd42d3f56f9",
   "svg": "ab69082439d34f489fa674c1"
  },
  "TUBE_WINDOW": {
-  "dieline": "6a7001bc6ce924a78d6c9509",
+  "dieline": "74a7de4e7b0a4ff7a27402c6",
   "poses": "51dfe1563ba1c8f5bac4fa68",
   "bounds": "4f70c62fcfbe526e3a0fa523",
   "svg": "8e6667b35bdbf48359044cf1"
  },
  "TUBE_SHOULDER": {
-  "dieline": "fefb6b6a16303aae581ec905",
+  "dieline": "e5a2daba72b9ed2cd133a8e0",
   "poses": "4f5434256d91ddf2a95d990e",
   "bounds": "4a8dc96fe996c24c5c681b4f",
   "svg": "2c0c5fa5d8342103f5d7908d"
