@@ -18,8 +18,11 @@ export interface OtpSuccess {
 const RESEND_SECONDS = 30;
 const CODE_LENGTH = 6;
 
-/** Left-to-right isolate so "+20…" and digits never reorder inside Arabic sentences. */
-const ltr = (s: string) => `\u2066${s}\u2069`;
+/**
+ * Left-to-right isolate so "+20…" and digits never reorder inside Arabic sentences, with
+ * no-break spaces so a number never wraps across two lines (WCAG 1.3.2).
+ */
+const ltr = (s: string) => `\u2066${s.replace(/ /g, "\u00a0")}\u2069`;
 
 /**
  * Render a dictionary string that contains {placeholders} as rich content:
@@ -116,7 +119,9 @@ export function OtpForm({ onSuccess, reason }: { onSuccess: (u: OtpSuccess) => v
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        fail(data.error ?? "INVALID_INPUT", data.retryAfterSec);
+        // A server fault is not the user's input: say "something went wrong", not "check your details".
+        if (res.status >= 500 || !data.error) setError({ text: t("common.error"), field: null });
+        else fail(data.error, data.retryAfterSec);
         return;
       }
       const resent = step === "code";
@@ -160,7 +165,9 @@ export function OtpForm({ onSuccess, reason }: { onSuccess: (u: OtpSuccess) => v
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        fail(data.error ?? "INVALID_INPUT", data.retryAfterSec);
+        // A server fault is not the user's input: say "something went wrong", not "check your details".
+        if (res.status >= 500 || !data.error) setError({ text: t("common.error"), field: null });
+        else fail(data.error, data.retryAfterSec);
         return;
       }
       onSuccess(data.user as OtpSuccess);

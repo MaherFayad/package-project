@@ -2,7 +2,8 @@ import type { ReactNode } from "react";
 import type { Metadata } from "next";
 import { requireRole } from "@/lib/auth/session";
 import { db } from "@/lib/db";
-import { toLocale } from "@/i18n";
+import { getDictionary, toLocale } from "@/i18n";
+import { I18nProvider } from "@/i18n/client";
 import { AppProvider } from "@/components/ui";
 import { AdminFrame } from "@/components/admin/AdminFrame";
 
@@ -24,10 +25,13 @@ export default async function AdminLayout({ children, params }: { children: Reac
     db.dataRequest.count({ where: { status: { in: ["OPEN", "IN_PROGRESS"] } } }),
   ]);
   return (
+    // Full dictionary: the root layout leaves the admin namespace out of public pages.
+    <I18nProvider locale={locale} dict={getDictionary(locale)}>
     <AppProvider locale={locale}>
       <AdminFrame locale={locale} userName={user.name ?? user.phone} counts={{ qc, applications, disputes, dataRequests }}>
         {children}
       </AdminFrame>
     </AppProvider>
+    </I18nProvider>
   );
 }

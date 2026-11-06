@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { preload } from "react-dom";
 import { inter, plexArabic, PLEX_PRELOAD_WEIGHTS } from "@/app/fonts";
 import { plexArabicPreloadUrls } from "@/app/font-preload";
-import { dirOf, getDictionary, isLocale } from "@/i18n";
+import { dirOf, getDictionary, getPublicDictionary, isLocale } from "@/i18n";
 import { I18nProvider } from "@/i18n/client";
 import { LOCALES } from "@/types";
 
@@ -65,7 +65,7 @@ export default async function LocaleLayout({
         <a className="skip-link" href="#main">
           {dict.common.skipToContent}
         </a>
-        <I18nProvider locale={locale} dict={dict}>
+        <I18nProvider locale={locale} dict={getPublicDictionary(locale)}>
           {children}
         </I18nProvider>
       </body>

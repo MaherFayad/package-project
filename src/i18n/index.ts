@@ -28,15 +28,28 @@ export function dirOf(locale: Locale): "rtl" | "ltr" {
   return locale === "ar" ? "rtl" : "ltr";
 }
 
+/**
+ * The dictionary handed to client components by the root layout. The admin console and the
+ * vendor portal namespaces (about 40% of the Arabic dictionary) are left out: public pages never
+ * read them, and serialising them made every storefront page ~19 KB gzip heavier. The admin and
+ * vendor area layouts mount a nested <I18nProvider> with the full dictionary.
+ */
+export function getPublicDictionary(locale: Locale): Dictionary {
+  const { admin: _admin, vendorPortal: _vendorPortal, ...rest } = getDictionary(locale);
+  void _admin;
+  void _vendorPortal;
+  return rest as Dictionary;
+}
+
 /** t(dict, "auth.codeHint", { phone }) */
-export function t(dict: Dictionary, key: DictKey, vars?: TVars): string {
-  return interpolate(lookup(dict, key), vars);
+export function t(dict: Dictionary, key: DictKey, vars?: TVars, locale?: Locale): string {
+  return interpolate(lookup(dict, key), vars, locale);
 }
 
 /** Bound translator for server components: const t = getT(locale); t("nav.home") */
 export function getT(locale: Locale): TFunction {
   const dict = getDictionary(locale);
-  return (key, vars) => t(dict, key, vars);
+  return (key, vars) => t(dict, key, vars, locale);
 }
 
 /** Pick the right half of a bilingual DB pair: pick(locale, row.nameAr, row.nameEn). */
