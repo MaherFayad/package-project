@@ -41,6 +41,9 @@ export function middleware(req: NextRequest) {
     // Forward the locale to Server Components (request header), and echo it for debugging.
     const reqHeaders = new Headers(req.headers);
     reqHeaders.set("x-elba-locale", first);
+    // Added by designer (R2-01): the design layout validates the model segment above its
+    // hydration Suspense boundary, so an unknown model still answers a real 404.
+    reqHeaders.set("x-elba-path", pathname);
     const res = NextResponse.next({ request: { headers: reqHeaders } });
     res.headers.set("x-elba-locale", first);
     if (cookieLocale !== first) {

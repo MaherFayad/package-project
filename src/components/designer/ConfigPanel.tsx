@@ -98,46 +98,56 @@ function OptionGroup<T extends string>({
   extra?: (c: Choice<T>) => ReactNode;
 }) {
   const { t, locale } = useI18n();
+  const row = (c: Choice<T>) => {
+    const checked = selected.includes(c.value);
+    // A selected option the rules no longer allow stays editable (so it can be removed).
+    const disabled = !c.enabled && !checked;
+    const id = `${name}-${c.value}`;
+    return (
+      <li key={c.value}>
+        <label className={styles.optionRow} htmlFor={id} data-checked={checked} data-disabled={disabled}>
+          <input
+            id={id}
+            type={type}
+            name={name}
+            value={c.value}
+            checked={checked}
+            disabled={disabled}
+            aria-describedby={c.reason || c.warning ? `${id}-note` : undefined}
+            onChange={(e) => onChange(c.value, e.currentTarget.checked)}
+          />
+          <span className={styles.optionText}>
+            <span className={styles.optionName}>{label(c)}</span>
+            {c.reason && !c.enabled ? (
+              <span id={`${id}-note`} className={styles.optionReason}>
+                {t("library.panel.notAvailable")}: {c.reason[locale]}
+              </span>
+            ) : c.warning ? (
+              <span id={`${id}-note`} className={styles.optionWarning}>
+                {c.warning[locale]}
+              </span>
+            ) : null}
+            {checked && extra ? extra(c) : null}
+          </span>
+        </label>
+      </li>
+    );
+  };
+  // Usable options first; two or more the rules rule out fold into one disclosure, so their
+  // reasons do not bury the choices that work (R2-05). Each reason stays tied to its input.
+  const off = choices.filter((c) => !c.enabled && !selected.includes(c.value));
+  const fold = off.length >= 2;
+  const on = fold ? choices.filter((c) => !off.includes(c)) : choices;
   return (
     <fieldset className={styles.group} data-testid={`group-${name}`}>
       <legend className={styles.groupTitle}>{legend}</legend>
-      <ul className={styles.optionList}>
-        {choices.map((c) => {
-          const checked = selected.includes(c.value);
-          // A selected option the rules no longer allow stays editable (so it can be removed).
-          const disabled = !c.enabled && !checked;
-          const id = `${name}-${c.value}`;
-          return (
-            <li key={c.value}>
-              <label className={styles.optionRow} htmlFor={id} data-checked={checked} data-disabled={disabled}>
-                <input
-                  id={id}
-                  type={type}
-                  name={name}
-                  value={c.value}
-                  checked={checked}
-                  disabled={disabled}
-                  aria-describedby={c.reason || c.warning ? `${id}-note` : undefined}
-                  onChange={(e) => onChange(c.value, e.currentTarget.checked)}
-                />
-                <span className={styles.optionText}>
-                  <span className={styles.optionName}>{label(c)}</span>
-                  {c.reason && !c.enabled ? (
-                    <span id={`${id}-note`} className={styles.optionReason}>
-                      {t("library.panel.notAvailable")}: {c.reason[locale]}
-                    </span>
-                  ) : c.warning ? (
-                    <span id={`${id}-note`} className={styles.optionWarning}>
-                      {c.warning[locale]}
-                    </span>
-                  ) : null}
-                  {checked && extra ? extra(c) : null}
-                </span>
-              </label>
-            </li>
-          );
-        })}
-      </ul>
+      <ul className={styles.optionList}>{on.map(row)}</ul>
+      {fold ? (
+        <details className={styles.unavailable}>
+          <summary>{t("library.panel.unavailableCount", { count: formatNumber(off.length) })}</summary>
+          <ul className={styles.optionList}>{off.map(row)}</ul>
+        </details>
+      ) : null}
     </fieldset>
   );
 }

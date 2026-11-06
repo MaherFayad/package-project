@@ -43,6 +43,7 @@ export const libraryAr: typeof libraryEn = {
     finishOnItems: "على العناصر: {count}",
     finishWholeFace: "لا توجد عناصر بعد، لذلك يغطي الوجه الأمامي كله. أضف شعارا لتحديد مكانه.",
     notAvailable: "غير متاح",
+    unavailableCount: "خيارات غير متاحة: {count}",
     addOns: "الخيارات",
     window: "نافذة بفيلم شفاف",
     windowFace: "مكان النافذة",

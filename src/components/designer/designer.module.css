@@ -847,7 +847,8 @@
 }
 /* The viewer's own 240 px floor must not push it under the rows below a short stage. */
 .stageBody { overflow: hidden; }
-.sceneWrap > * { min-block-size: 0; }
+/* (0,2,0): beats the engine's .viewport floor whatever order the CSS chunks load in (R2-02). */
+.sceneWrap > [role="application"] { min-block-size: 0; }
 /* Model thumbnail in the stage until the first 3D frame, then fades (PERF-10). */
 .stagePoster {
   position: absolute;

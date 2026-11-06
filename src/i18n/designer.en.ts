@@ -285,11 +285,11 @@ export const designerEn = {
   gate: {
     title: "Create your free account",
     reason: {
-      price: "Get the instant price for your box with your mobile number. It is free and takes a minute.",
+      price: "Get the instant price for your design with your mobile number. It is free and takes a minute.",
       save: "Save your design to your free account so you can come back to it.",
       export: "Download your mockup with a free account.",
       share: "Create a share link with a free account.",
-      order: "Order this box with your free account.",
+      order: "Order this design with your free account.",
     },
     note: "We send a code by SMS. Marketing messages only if you tick the box.",
   },
@@ -317,6 +317,16 @@ export const designerEn = {
     creating: "Creating link",
     failed: "Could not create the link. Try again.",
     open: "Open",
+  },
+  /** Containers (bottles, jars, cans, pouches, tubes): the same strings without "box" (R2-04). */
+  container: {
+    untitled: "Untitled design",
+    order: "Order this design",
+    badgeLocked: "{qty} pieces: see the price",
+    badge: "{qty} pieces from {price} each, delivered in {days} days",
+    unavailable: "Price not available for this design yet",
+    perPiece: "Per piece",
+    collapse: "Show the model larger",
   },
   order: {
     button: "Order this box",

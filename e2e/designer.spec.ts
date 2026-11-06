@@ -135,3 +135,23 @@ test("designer pages hydrate without errors (box, container, start page, ar + en
   }
   expect(errors, errors.join("\n")).toEqual([]);
 });
+
+test("box and container switches keep one 3D canvas (PERF-09)", async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.route("**/api/designs**", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ id: "e2e-perf09", owned: false, updatedAt: new Date().toISOString() }) }));
+  await page.goto("/en/design/mailer-box");
+  const stage = page.getByTestId("stage-3d");
+  await expect(stage.locator("canvas").first()).toBeVisible({ timeout: 45_000 });
+  await stage.locator("canvas").first().evaluate((c) => ((c as HTMLCanvasElement).dataset.e2eFirst = "1"));
+  for (const code of ["ROUND_BOTTLE", "FEFCO_0201", "STAND_UP_POUCH", "FEFCO_0427"]) {
+    const change = page.getByRole("button", { name: "Change model" });
+    if (!(await change.isVisible())) await page.getByRole("button", { name: /Show more controls/ }).click();
+    await change.click();
+    await page.locator(`[data-testid="model-picker"] [data-model="${code}"]`).click();
+    await expect(stage).toHaveAttribute("data-model", code);
+    await expect(stage.locator("[data-scene]")).toHaveAttribute("data-scene", code.startsWith("FEFCO") ? "box" : "vessel");
+  }
+  // Same <canvas> element (same WebGL context) after every switch.
+  await expect(stage.locator("canvas")).toHaveCount(1);
+  await expect(stage.locator("canvas").first()).toHaveAttribute("data-e2e-first", "1");
+});

@@ -87,3 +87,85 @@ Measured with the report's own harness (`docs/audit/tools/bundle-report.mjs`, `p
 | PERF-18 | Quote results and tab switches are applied in `startTransition`; `ConfigPanel` and `Scene3D` are `memo`, with stable `onOpenPicker` / `onFinish` / `onPrintSides`. | INP 168-336 ms | Not re-measured (needs the page harness's INP run). |
 | PERF-19 | Undo stack capped at 50 (was 100). Snapshots are `DesignDoc`s only, with no geometry and images shared by reference. | heap 16.6 → 41.3 MB after 50 switches | 17.1 → 28.1 MB after 20 switches (same harness, `SWITCHES=20`). The rest scales with WebGL context churn (PERF-09). |
 | PERF-09 | One persistent `<Canvas>` needs engine API (`PackagingSceneContent` / `VesselSceneContent` without their own Canvas). Requested from the engine session; not changed yet. | 16 contexts over 20 switches | unchanged |
+
+---
+
+# Round 2
+
+Scope as round 1 (`src/app/[locale]/design`, `src/components/designer`, designer i18n keys), plus the three items the integrator assigned: the intermittent hydration error #418 on `/en/design/<slug>`, PERF-09 (one WebGL context for box and container switches) and FN-02 (spot UV invisible without a mask). Method: `next build && next start` (seeded SQLite), Playwright ar + en, 390x844 (touch) and 1440x900, keyboard only, axe-core (wcag2a/aa, 21aa, 22aa), `docs/audit/tools/perf-3d.mjs`, plus purpose-built probes (WebGL texture census, CPU profile, trace, hydration timeline).
+
+Screenshots: `docs/screenshots/audit/designer/r2/` (`before-*`, `after-*`, 1x and device DPR).
+
+## Round 1 items re-verified in the browser
+
+| id | check (round 2) | result |
+|---|---|---|
+| D-01 / D-02 | Start page hero; wheel over the 3D preview scrolls the page (scrollY 0 → 500). | still fixed |
+| D-05 | Phone: no view-control overlay on the stage; controls in their own row. | still fixed |
+| D-09 | Tabs stay visible after scrolling a long panel (390, ar). | still fixed |
+| D-18 | Landscape phone (844x390): no page scroll, viewer fits the stage. | **reopened, round 2** → fixed as R2-02 (the clip that D-18 added hid the bottom of the model in portrait) |
+| D-21 / D-22 | Sheet opens with a real touch swipe on the handle; tap still toggles. | still fixed |
+| D-24 | Poster until the first frame (box). Containers now get it too (R2-03). | still fixed |
+| other D-xx | Spot-checked in the `after-*` screenshots (copy, plural forms, mm unit, model card, face names). | still fixed |
+
+axe-core round 2: **0 violations** on start page, box editor, container editor, picker and finish states, ar + en, 390 + 1440, before and after. No console errors, no horizontal scroll.
+
+## Findings (round 2)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R2-01 | high | `/design/<model>` (`design/layout.tsx`) | **Intermittent React #418 ("HTML")**: in roughly 3 % of loads with warm JS (0 in a cold run, 7 of 216 in parallel runs) React threw away the server HTML of the **whole document** and client-rendered it (flash, lost scroll and focus, e2e failures on FEFCO_0436 / CAN-AEROSOL). Root cause, found with a temporary probe in React's `throwOnHydrationMismatch`: the failing fiber was the layout's `<main>` while the hydration cursor was already inside it (`<!--$-->`). The model segment's router reads its RSC payload with `use()`; there was no Suspense boundary between `<main>` and that read (`loading.tsx` only wraps the page), so a payload that resolved a tick late suspended up to the root, and the retry tried to claim `<main>` again. Not the cause, ruled out with measurements: streaming-hydration vs parser race (react#37321: hydration was gated after DOMContentLoaded and still failed), batched `$RV` reveals (all done before hydrateRoot), streaming metadata (`htmlLimitedBots: /./` still failed), time / storage / random render values (a development React build shows no attribute or text diff at all). | WCAG 4.1.2 (robust), 2.4.3 (focus lost on re-render) | `<Suspense>` directly inside `<main>` in `design/layout.tsx` (server output only gains `<!--$-->` markers). Because a `notFound()` inside that boundary would stream with status 200, the unknown-model check moved above it: the middleware forwards the path (`x-elba-path`, one additive line) and the layout calls `notFound()` (404 kept, start page stays static). Also: the 370 picker cards (144 KB of the 330 KB editor document) are no longer inlined; they come from a static, cached `/{locale}/design/picker-cards` route on idle or on first open (editor HTML 330 → 187 KB). New e2e `designer pages hydrate without errors` (12 loads, ar + en, box + container + start page) fails on any #418 / #419 / #423 / #425 or "Hydration failed". | fixed: **0 of 576 loads** after (288 with the probe build, 288 with stock React); the new e2e passes on desktop + mobile |
+| R2-02 | high | editor, 390 px portrait (`designer.module.css`) | The bottom of the 3D model was cut off: the engine's 240 px viewer floor beat the designer's `.sceneWrap > * { min-block-size: 0 }` (equal specificity, CSS chunk order decides), so a 240 px canvas sat in a 186 px stage that clips it. | WCAG 1.4.10 (reflow), visual | Selector `.sceneWrap > [role="application"]` (0,2,0) wins whatever the load order. Verified: viewer 186 px = stage 186 px, model centred (`after-editor-ar-390.png` vs `before-stage-clipped-ar-390.png`). | fixed |
+| R2-03 | high | PERF-09 (`DesignStage.tsx`, `Scene3D.tsx`, `VesselView.tsx`) | Box ↔ container switches created a new WebGL context, environment and programs each time (16 contexts over 20 switches; phone max 8.7 s). | budget: switch < 1 s | `DesignStage` renders **one** `EngineCanvas` and swaps `BoxContent` / `VesselContent` (new canvas-less exports; `Scene3D` / `VesselView` keep their own canvas for share and proof). Sharing the canvas exposed two GPU leaks that a fresh context used to hide, fixed in the stage's switch janitor: the PMREM target three builds from each content's drei `<Environment>` is freed only on a texture "dispose" event that `RenderTarget.dispose()` never fires (one 768x1024 half-float target, ~6 MB, per switch); and label / pouch-panel textures (clones sharing a canvas source) outlived their content. On a model switch the stage pauses the frame loop and warms shaders with `compileAsync` where `KHR_parallel_shader_compile` exists. Containers now get the model poster too. New e2e `box and container switches keep one 3D canvas`. | fixed (see the measurements below; < 1 s is not reachable in SwiftShader, see the note) |
+| R2-04 | high | container editor copy (`DesignerApp`, `Modals`, i18n) | Bottles, jars, cans and pouches said "box": "اطلب هذه العلبة" / "Order this box", "500 علبة: اعرف السعر" / "500 boxes: see the price", "علبة بدون اسم", "سعر العلبة", "تكبير عرض العلبة". | content accuracy; ISO 9241-110 (self-descriptiveness) | `designer.container.*` keys: "اطلب هذا التصميم" / "Order this design", "{qty} قطعة: اعرف السعر" / "{qty} pieces: see the price", "تصميم بدون اسم", "سعر القطعة", "تكبير عرض النموذج". Gate reasons ("price", "export", "order") now say "تصميمك" / "your design" for every model. | fixed (`after-pouch-ar-1440.png`) |
+| R2-05 | medium | finishes / materials (`ConfigPanel.tsx` `OptionGroup`) | On kraft board, 7 of 11 finishes were disabled and each printed a full "Not available: …" paragraph, so the 4 usable finishes were buried in a wall of grey text. | ISO 9241-110 (suitability for the task), Hick's law | Usable options first; 2 or more ruled-out options fold into a disclosure "Unavailable options (7)" / "خيارات غير متاحة: 7" (32 px target, focus ring, 150 ms ease-out chevron, mirrored in RTL, reduced-motion safe). Each reason is still the input's `aria-describedby`. | fixed (`before-finishes-wall-en-1440.png` → `after-finishes-*`) |
+| R2-06 | high | FN-02 (`lib/config.ts`, `Scene3D.tsx`) | Spot UV / foil / emboss changed 0 % of pixels when the design had no artwork: masks started on "every layer of the outside" (none), and the panel said "Add text or a logo to see this finish". | printer convention: spot UV is a defined area | `defaultFinishLayerIds`: masked finishes start on the **logo** (image layers), else the text, else every visible item. With no artwork yet the 3D preview covers the whole front panel (the `DesignFinish` contract: empty mask = main face) through a stand-in layer that never enters the document, and the panel says so ("No artwork yet, so it covers the whole front. Add a logo to limit it."). The first item added fills an empty mask; deleting the masked item falls back to the default. Unit tests: `finish-masks.test.ts`. | fixed (`before-fn02-foil-empty.png` → `after-fn02-foil-empty.png`) |
+| R2-07 | medium | artwork inspector (`ArtworkPanel.tsx`) | The finishes help said "Foil, spot UV and emboss go on the artwork you choose", but nothing let you choose. | WCAG 3.3.2 (instructions), ISO 9241-110 (controllability) | "Finishes on this item" / "تشطيبات هذا العنصر" checkboxes in the selected item's inspector (outside surface, boxes) add or remove that item from each masked finish. Help text: "…start on your logo. Select an item to add it or take it off." | fixed |
+| R2-08 | medium | editor document (`[structure]/page.tsx`) | 330 KB HTML, 144 KB of it the picker cards of all 370 models, parsed on every editor load. | perf budget (LCP, TBT) | See R2-01: static cached JSON on idle / first open; the picker mounts when the cards are there. | fixed (330 → 187 KB) |
+| R2-09 | low | lid height slider (`ConfigPanel.tsx`) | Value read "40 mm" in the Arabic UI. | MSA localisation | `common.mm` ("مم"). | fixed |
+| R2-10 | low | start page body (ar) | "برقم موبايلك عندما تكون جاهزا": colloquial "موبايل" and masculine-only "جاهزا". | MSA, gender-neutral copy | "واعرف سعرها برقم هاتفك المحمول في أي وقت." | fixed |
+| R2-11 | low | `server.ts · lazyChunkHrefs` | Read the loadable manifest from `.next` only, so a build in `NEXT_DIST_DIR` preloaded 404 chunks. | — | Honours `NEXT_DIST_DIR`. | fixed |
+
+### PERF-09 measurements
+
+`docs/audit/tools/perf-3d.mjs`, `SWITCHES=20`, box model, cycle FEFCO_0201 → ECMA_RTE → STAND_UP_POUCH → FEFCO_0427 → ROUND_BOTTLE (same build, same SwiftShader host):
+
+| | WebGL contexts created | live textures / resident after 20 switches | programs compiled | heap before → after | switch p50 / max (desktop) | switch max (phone) |
+|---|---|---|---|---|---|---|
+| base | 16 | 11 / 8.9 MB | 155 | 17.4 → 28.0 MB | 2,675 / 3,652 ms | 8,705 ms |
+| shared canvas, before the janitor | 1 | 34 / **70.3 MB** (PMREM + label leak) | 110 | 17.4 → 27.7 MB | 3,146 / 4,359 ms | — |
+| **after** | **1** | **12 / 11.9 MB** | **110** | 17.4 → 27.5 MB | 3,033 / 4,042 ms | **4,652 ms** |
+
+Texture census over 20 mixed switches (WebGL `createTexture`/`deleteTexture` wrapper): 13 → 12–13 (flat) after; before the janitor 13 → 21 and growing by one PMREM target per container mount plus one label per vessel mount.
+
+Switch time note: the harness's p50 includes opening the picker. Click → first frame of the new model is 0.85–1.0 s (box) and 1.2–1.6 s (container) in this environment. A trace of the container switch shows the time is SwiftShader, not the app: one 1.06 s task = 684 ms GPU-process `Commit` (software rasterisation) + 361 ms first render (synchronous shader link, `getProgramInfoLog`); React and geometry work are under 60 ms. This Chromium build has no `KHR_parallel_shader_compile`, so the `compileAsync` warm-up is a no-op here. On hardware WebGL both parts are an order of magnitude smaller, so it is expected to land under the 1 s budget, but that could not be measured in this sandbox.
+
+## Reported to other owners (round 2, not edited)
+
+| id | owner | finding | suggested fix |
+|---|---|---|---|
+| R2-R1 | configurator (`lib/configurator/rules.ts`) | Spot UV is refused on white-top corrugated even with matte lamination, while its own message says "needs a coated or laminated surface". | Allow spot UV on `WHITE_TOP_LINER` when a matte / soft-touch lamination is selected. |
+| R2-R2 | catalogue (`ModelPicker.tsx`) | On phones the picker focuses the search field on open, so the keyboard covers half the sheet before the user has seen a model. | Focus the dialog (or the close button) on touch devices; keep search autofocus on fine pointers. |
+| R2-R3 | 3D engine | The PMREM of a render-target environment is never released by three (`WebGLCubeUVMaps` adds no dispose listener for render-target textures), and vessel label textures are cloned per material. The designer frees both on switches; any other page that swaps environments inside one canvas would leak the same way. | Dispose the PMREM target with the environment in `StudioEnvironment`, dispose material maps in `VesselModel` cleanup. |
+| R2-R4 | checkout / payments | `e2e/journey.spec.ts` stops at the card step (`Card number` never appears on `/checkout/pay/…`). The designer part of the journey passes. | Checkout session. |
+
+## Files touched outside scope
+
+- `src/middleware.ts`: one line, forwards `x-elba-path` to Server Components (R2-01, keeps the 404 status).
+
+## Verification (round 2)
+
+- `npm run lint` clean, `npm run typecheck` clean, `npm test` **55 files, 6,251 tests passed** (new: `finish-masks.test.ts`), `npm run build` OK.
+- Playwright (`--workers=2 --trace off`, `next start` with `OTP_DEV_ECHO=1` and a local `SESSION_SECRET`): `designer.spec.ts` all passed on desktop + mobile (incl. the two new tests), `smoke.spec.ts` passed, `journey.spec.ts` 1 failed at the checkout card step (R2-R4, outside scope), 1 skipped (its own desktop-only skip). `models.spec.ts` subset (FEFCO 04xx, cans, bottles, pouches, jars, tubes, ECMA RTE): **119 / 119 passed**.
+- Hydration: 0 #418 in 576 instrumented loads after the fix, against 7 of 216 before (same harness: 3 parallel browsers, warm JS, the e2e's page sequence). Before the fix the new e2e failed 1 of 6 and 3 of 12 repeats; it passes after.
+
+## Counts (round 2)
+
+| severity | found | fixed | open |
+|---|---|---|---|
+| critical | 0 | 0 | 0 |
+| high | 5 (R2-01, -02, -03, -04, -06) + 1 reopened (D-18) | 6 | 0 |
+| medium | 3 | 3 | 0 |
+| low | 3 | 3 | 0 |
+
+Plus 4 items reported to other owners (R2-R1 to R2-R4).

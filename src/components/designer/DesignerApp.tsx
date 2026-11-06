@@ -761,7 +761,7 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
             autoComplete="off"
             size="slim"
             maxLength={120}
-            placeholder={t("designer.untitled")}
+            placeholder={t(isVessel ? "designer.container.untitled" : "designer.untitled")}
             value={doc.name}
             onChange={(v) => commit({ ...docRef.current, name: v }, "name")}
             onBlur={seal}
@@ -822,12 +822,12 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
           </Popover>
         </div>
         <Button variant="primary" onClick={doOrder} loading={ordering}>
-          {t("designer.order.button")}
+          {t(isVessel ? "designer.container.order" : "designer.order.button")}
         </Button>
       </div>
 
       <div className={styles.priceRow}>
-        <PriceBadge state={price} onClick={openPrice} />
+        <PriceBadge state={price} onClick={openPrice} vessel={isVessel} />
       </div>
 
       {notFound ? (
@@ -1002,7 +1002,7 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
           }}
         >
           {sheetOpen ? <ChevronDown size={20} aria-hidden /> : <ChevronUp size={20} aria-hidden />}
-          <span>{sheetOpen ? t("designer.sheet.collapse") : t("designer.sheet.expand")}</span>
+          <span>{sheetOpen ? t(isVessel ? "designer.container.collapse" : "designer.sheet.collapse") : t("designer.sheet.expand")}</span>
         </button>
         <div className={styles.panelInner} id="designer-panel">
           <Tabs tabs={tabs} selected={tab} onSelect={(i) => startTransition(() => setTab(i))} fitted accessibilityLabel={t("designer.tabs.label")}>

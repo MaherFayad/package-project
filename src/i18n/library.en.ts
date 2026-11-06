@@ -41,6 +41,7 @@ export const libraryEn = {
     finishOnItems: "On {count} items",
     finishWholeFace: "No artwork yet, so it covers the whole front. Add a logo to limit it.",
     notAvailable: "Not available",
+    unavailableCount: "Unavailable options ({count})",
     addOns: "Options",
     window: "Window with clear film",
     windowFace: "Window on",
