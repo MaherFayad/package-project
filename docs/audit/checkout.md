@@ -501,3 +501,37 @@ Counts of NEW findings: critical 0, high 0, medium 1, low 3.
 - `src/lib/notify/index.ts`: `REFUNDED` added to `NOTIFY_TEMPLATES` (additive).
 
 Medium finding present, so by the stop rule one more round is due.
+
+## Round 11 (audit-only pass on the merged code)
+
+Main (`eda6d57`) merged into this branch with no conflicts. Walked the whole buyer path again in ar 390 and en 1440 on the merged build: soft gate, step 1 with the quote request, delivery with errors and company invoice, proof with print check, mock payment with decline and success, order, receipt, orders list, account, share links (owner and signed out). I also checked the printer's view of the order event rules.
+
+### Findings
+
+| ID | Severity | Where | Finding | Fix |
+|---|---|---|---|---|
+| R11-01 | Low | `/orders/[id]` and its receipt, opened by printer staff | Security R5-SEC-01 (on main) keeps printer staff off buyer order pages through `getOrderForViewer`, but the order layout still gated on `canViewOrder`. So the order's printer got the buyer "We could not find this order" card with status 200, not a real 404 and not a way to its job. A printer following a link from a message or the admin to `/orders/<id>` hit a dead end. | The layout now gates on `canViewBuyerOrder`. The order's own printer staff are redirected to `/vendor/jobs/<number>` while the order is in a status the portal shows, where their notes are. Everyone else gets the same 404 as an unknown id. No buyer address or phone reaches printers (B-08, PDPL 151/2020). |
+
+Checked and not a finding:
+- **Printer notes.** The vendor job page shows every note the portal lets a printer write: free notes, decline reason and QC rejection. A note sent through the status API on accept or start-production is not shown in the portal, but that path is API-only and owned by the vendor portal; noted for that owner. The buyer sees none of these notes in ar or en (B-08).
+- **axe `target-size` on ar-390 step 1 after opening the quote form.** Opening the form scrolls the page 84 px, and the page back link (28×28 px) is then partly under the sticky checkout header. That is content scrolled under a sticky bar, not an undersized target: at the top of the page it is 28×28 with 65 px to the nearest target (WCAG 2.2 SC 2.5.8 passes).
+- **Pre-existing, out of scope.** `src/lib/dieline/__tests__/geometry-snapshot.test.ts` fails on main itself (all 127 generators differ from the recorded snapshot after the dieline merges). Left for the designer and dieline owner.
+
+Counts of NEW findings: critical 0, high 0, medium 0, low 1.
+
+### Verification
+
+- **Static checks.** Lint clean, typecheck clean, build clean.
+- **Unit tests.** 8647 passed and 1 failed: the dieline snapshot above, which fails on main too.
+- **e2e.** The run covered checkout*, journey, smoke, storefront, admin, vendor, catalogue-order-modes and security, with `--workers=2 --trace off`. Result: 66 passed, 24 skipped (single-project tests), 0 failed.
+- **e2e changes.**
+  - New `checkout-vendor-view.spec.ts`: the printer is redirected to its job page and sees its note, the receipt redirects too, another buyer gets 404, and the buyer never sees the note.
+  - `checkout-states.spec.ts`: the Fawry radio selector now follows main's copy change ("reference code" to "reference number").
+- **Walker** (ar-390, en-1440, full page): 44 screens, 0 overflow, 0 page errors. axe is clean except the scrolled `target-size` case above.
+- **Screenshots.** `r11-vendor-job-en-1440.png`, `r11-vendor-job-ar-390.png`, `r11-buyer-order-en-1440.png`, `r11-buyer-order-ar-390.png`.
+
+### Files touched outside scope
+
+None. `orders/[id]/layout.tsx` is in scope; it imports `VENDOR_VISIBLE_STATUSES` read-only.
+
+No medium or worse finding this round, so by the BRIEF stop rule the checkout rounds stop here.
