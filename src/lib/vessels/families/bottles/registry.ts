@@ -40,17 +40,6 @@ export function profileFor(def: BottleDefinition, dims: VesselDims, finish: Bott
 export function finishForDims(def: BottleDefinition, dims: VesselDims, finishId: string): BottleFinish {
   const f = finishById(finishId);
   if (f.kind === "rim") return f;
-<<<<<<< HEAD
-  const half = Math.min(dims.D, dims.G ?? dims.D) / 2;
-  // R5-3Q-F-21: a bottle neck stays under ~72 % of the body (a cap 0.8–0.9 × the body reads as a
-  // jar); jars (lug / mason) keep their wide mouths and only switch when they would overhang
-  const jar = def.coreKind === "WIDE_JAR" || def.coreKind === "ROUND_TIN" || f.kind === "lug" || f.kind === "mason" || f.kind === "snap";
-  const k = jar ? 1 : 0.72;
-  if (f.outerDiameterMm / 2 <= half * k) return f;
-  const same = def.finishes.map(finishById).filter((x) => x.kind === f.kind).sort((a, b) => b.outerDiameterMm - a.outerDiameterMm);
-  // nothing under the ratio: the narrowest that still fits the body
-  return same.find((x) => x.outerDiameterMm / 2 <= half * k) ?? same.filter((x) => x.outerDiameterMm / 2 <= half).pop() ?? same[same.length - 1] ?? f;
-=======
   const width = (d: VesselDims) => Math.min(d.D, d.G ?? d.D);
   // the widest neck / body ratio the model's own presets ship (+3 %; a hex jar's D is across flats,
   // so its 45 ml preset carries a TO 43 on a 42 mm body):
@@ -74,7 +63,6 @@ export function finishForConfig(def: BottleDefinition, dims: VesselDims, presetF
   if (!c || !def.closures.includes(c) || closureFits(c, f)) return f;
   const id = def.finishes.find((x) => closureFits(c, finishById(x)));
   return id ? finishForDims(def, dims, id) : f;
->>>>>>> origin/claude/exciting-albattani-8kzgsu-r6-3dqa
 }
 
 /** Outer envelope incl. closure and handle (what a carton or shipper must hold), mm. */

@@ -57,9 +57,5 @@ export const LIQUID_OF_CONTENT: Record<string, LiquidCode> = {
 
 /** Flexible film material for a design (the "container" of a flexible model). */
 export function describeVesselModel(m: VesselModelDef, dims: VesselDims, surfaces: string[], presetId?: string, container?: string, options?: Record<string, boolean | string>, closure?: string): VesselDescription {
-<<<<<<< HEAD
-  return (m.describe as (d: VesselDims, s: string[], p?: string, c?: string, o?: Record<string, boolean | string>, cl?: string) => VesselDescription)(dims, surfaces, presetId, container, options, closure);
-=======
   return (m.describe as (d: VesselDims, s: string[], p?: string, c?: string, o?: Record<string, boolean | string>, k?: string) => VesselDescription)(dims, surfaces, presetId, container, options, closure);
->>>>>>> origin/claude/exciting-albattani-8kzgsu-r6-3dqa
 }
