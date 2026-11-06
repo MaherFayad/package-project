@@ -55,6 +55,12 @@ export interface TextFieldProps {
   autoFocus?: boolean;
   /** Visual variant: "borderless" for search inside toolbars. */
   variant?: "inherit" | "borderless";
+  /**
+   * Added by designer (R5-JR-20): a number field typed as text (so Arabic-Indic digits and a
+   * decimal comma work) that keeps spin-button semantics: role="spinbutton", aria-valuenow/min/
+   * max, and ArrowUp/ArrowDown (Shift: ×10) / PageUp/PageDown call `onStep`.
+   */
+  spinbutton?: { now?: number; min?: number; max?: number; onStep: (delta: number) => void; step?: number };
 }
 
 /** Text input / textarea with label, help text, inline error, prefix/suffix and character count. */
@@ -100,6 +106,7 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
     size = "medium",
     autoFocus,
     variant = "inherit",
+    spinbutton,
   } = props;
   const { s } = useUi();
   const autoId = useId();
@@ -133,6 +140,21 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
     "aria-invalid": error ? true : undefined,
     "aria-describedby": describedBy(id, error, helpText, showCharacterCount ? countId : undefined),
     className: cx(styles.Input, align && styles[`align-${align}`], monospaced && styles.mono),
+    ...(spinbutton
+      ? {
+          role: "spinbutton",
+          "aria-valuenow": spinbutton.now !== undefined && Number.isFinite(spinbutton.now) ? spinbutton.now : undefined,
+          "aria-valuemin": spinbutton.min,
+          "aria-valuemax": spinbutton.max,
+          onKeyDown: (e: React.KeyboardEvent) => {
+            const st = spinbutton.step ?? 1;
+            const d = e.key === "ArrowUp" ? st : e.key === "ArrowDown" ? -st : e.key === "PageUp" ? st * 10 : e.key === "PageDown" ? -st * 10 : 0;
+            if (!d) return;
+            e.preventDefault();
+            spinbutton.onStep(e.shiftKey && Math.abs(d) === st ? d * 10 : d);
+          },
+        }
+      : {}),
   };
 
   const rows = typeof multiline === "number" ? multiline : 3;
