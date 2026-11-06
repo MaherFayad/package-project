@@ -649,3 +649,5 @@ Files touched outside scope: none new (the share page and the scopes file regene
 | high | 0 | 0 | 0 |
 | medium | 1 (R13-01) | 1 | 0 |
 | low | 2 (R13-02, R13-03) | 2 | 0 |
+
+Verification (round 13, on fd799af6): lint and typecheck are clean; unit tests 8,938 passed; build OK; e2e (designer, smoke, journey, checkout, storefront, catalogue; `--workers=2 --trace off`, `OTP_DEV_ECHO=1 ALLOW_MOCK_PAYMENTS=1`) **61 passed, 9 skipped, 0 failed**; "designer pages hydrate without errors" with `--repeat-each=16` **32 / 32 passed**.
