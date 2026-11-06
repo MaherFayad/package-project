@@ -199,3 +199,20 @@ test("hero: no floating mockup covers the Turn in 3D / pause controls at phone w
     }
   }
 });
+
+test("page height is stable: nothing grows after scrolling or keyboard focus (layout stability, WCAG 2.4.11)", async ({ page }, info) => {
+  test.skip(info.project.name !== "desktop", "widths are set per step");
+  test.setTimeout(180_000);
+  for (const locale of LOCALES) {
+    for (const w of [320, 390, 768, 1440]) {
+      await page.setViewportSize({ width: w, height: w < 800 ? 844 : 900 });
+      await page.goto(`/${locale}/designer`);
+      await page.waitForLoadState("networkidle");
+      const before = await page.evaluate(() => document.documentElement.scrollHeight);
+      await scrollThrough(page);
+      for (let i = 0; i < 40; i++) await page.keyboard.press("Tab");
+      const after = await page.evaluate(() => document.documentElement.scrollHeight);
+      expect(Math.abs(after - before), `${locale} ${w}px: ${before} -> ${after}`).toBeLessThanOrEqual(2);
+    }
+  }
+});
