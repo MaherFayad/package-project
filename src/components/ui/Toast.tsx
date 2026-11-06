@@ -88,14 +88,16 @@ function Toast({ item, onDismiss, closeLabel }: { item: ToastItem; onDismiss: (i
   const [paused, setPaused] = useState(false);
   const remaining = useRef(item.duration ?? (item.action ? 10000 : 5000));
   useEffect(() => {
-    if (paused) return;
+    // A toast with an action stays until dismissed: an auto-hiding action is a time limit the
+    // user cannot extend (WCAG 2.2.1) and is hard to reach by keyboard in time.
+    if (paused || item.action) return;
     const started = Date.now();
     const t = window.setTimeout(() => onDismiss(item.id), remaining.current);
     return () => {
       window.clearTimeout(t);
       remaining.current -= Date.now() - started;
     };
-  }, [paused, item.id, onDismiss]);
+  }, [paused, item.id, item.action, onDismiss]);
   return (
     <div
       className={cx(styles.Toast, item.tone === "critical" && styles.critical)}

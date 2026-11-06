@@ -124,6 +124,8 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
     disabled,
     readOnly,
     required,
+    // The visual "*" is aria-hidden, so say it programmatically too (WCAG 3.3.2 / 1.3.1).
+    "aria-required": requiredIndicator && !required ? true : undefined,
     maxLength,
     autoComplete,
     autoFocus,

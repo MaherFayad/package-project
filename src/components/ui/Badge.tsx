@@ -54,5 +54,12 @@ export function Badge({ children, tone = "neutral", progress, icon, size = "medi
 
 /** Small numeric pill (nav counts, tab counts). */
 export function CountBadge({ children, tone = "neutral" }: { children: ReactNode; tone?: "neutral" | "critical" | "inverse" }) {
-  return <span className={cx(styles.Count, styles[`count-${tone}`])}>{children}</span>;
+  // Hidden separators so a nav item or tab reads "Vendors (1)", not "Vendors1" (WCAG 1.3.1, 4.1.2).
+  return (
+    <span className={cx(styles.Count, styles[`count-${tone}`])}>
+      <span className="visually-hidden"> (</span>
+      {children}
+      <span className="visually-hidden">)</span>
+    </span>
+  );
 }

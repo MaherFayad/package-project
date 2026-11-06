@@ -5,7 +5,9 @@
 .Track { stroke: currentColor; opacity: 0.18; }
 .Arc { stroke: currentColor; }
 @keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse { 50% { opacity: 0.45; } }
 @media (prefers-reduced-motion: reduce) {
-  /* Keep a slow rotation so "busy" is still perceivable, but calmer. */
-  .Svg { animation-duration: 1.5s !important; animation-iteration-count: infinite !important; }
+  /* No rotation (WCAG 2.3.3): a slow opacity pulse keeps "busy" perceivable without movement.
+     !important beats the global reduced-motion override in globals.css, on purpose. */
+  .Svg { animation: pulse 2s var(--p-motion-ease-in-out) infinite !important; }
 }
