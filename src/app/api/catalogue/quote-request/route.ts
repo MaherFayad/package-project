@@ -20,10 +20,12 @@ const Body = z.object({
  * Egypt PDPL 151/2020). Stored as a Quote row with status REQUESTED and zero totals until a
  * converter prices it.
  *
- * 201 { id } | 400 { error: "INVALID_BODY" | "UNKNOWN_MODEL" } | 401 | 429 { retryAfterSec }
+ * 201 { id } | 200 { id, repeat: true } (same open request) | 400 { error: "INVALID_BODY" | "UNKNOWN_MODEL" } | 401 | 403 | 429 { retryAfterSec }
  */
 export async function POST(req: Request) {
-  const auth = await apiRequireRole();
+  // Buyers (and ops testing the flow). Vendor staff accounts are portal accounts: their requests
+  // would only add noise to the admin quote-leads inbox (R4-06).
+  const auth = await apiRequireRole(["BUYER", "ADMIN"]);
   if (auth instanceof Response) return auth;
   const rl = rateLimit("catalogue-quote", auth.id, 5, 60_000);
   if (!rl.ok) return Response.json({ error: "RATE_LIMITED", retryAfterSec: rl.retryAfterSec }, { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } });
@@ -37,6 +39,21 @@ export async function POST(req: Request) {
   const e = catalogueEntry(b.code);
   if (!e) return Response.json({ error: "UNKNOWN_MODEL" }, { status: 400 });
   const preset = b.presetId ? e.presets.find((p) => p.id === b.presetId) : undefined;
+
+  // A double submit or a re-send of the same request returns the open lead instead of a duplicate
+  // (same rule as the checkout quote request; ASVS V11.1.6).
+  const now = new Date();
+  const open = await db.quote.findMany({
+    where: { userId: auth.id, designId: null, status: "REQUESTED", validUntil: { gt: now }, createdAt: { gt: new Date(now.getTime() - 72 * 3_600_000) } },
+    select: { id: true, lines: true },
+    orderBy: { createdAt: "desc" },
+    take: 20,
+  });
+  const same = open.find((q) => {
+    const l = Array.isArray(q.lines) ? (q.lines[0] as { type?: string; modelCode?: string; presetId?: string | null; quantity?: number } | undefined) : undefined;
+    return l?.type === "CATALOGUE_REQUEST" && l.modelCode === e.code && (l.presetId ?? null) === (preset?.id ?? null) && l.quantity === b.quantity;
+  });
+  if (same) return Response.json({ id: same.id, repeat: true }, { status: 200 });
 
   const row = await db.quote.create({
     data: {

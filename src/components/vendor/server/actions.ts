@@ -9,6 +9,7 @@
  */
 import { access } from "node:fs/promises";
 import { revalidatePath } from "next/cache";
+import { purgeCatalogCache } from "@/lib/catalog-cache";
 import { headers } from "next/headers";
 import { z } from "zod";
 import { db } from "@/lib/db";
@@ -267,6 +268,7 @@ export async function saveRateCard(cardId: string, form: unknown, expectedUpdate
       },
     });
     revalidatePortal();
+    purgeCatalogCache(); // public "from" prices are built from rate cards (R4-04)
     return { updatedAt: updated.updatedAt.toISOString() };
   });
 }

@@ -342,6 +342,8 @@ model Quote {
   orders Order[]
   // Added by technical audit: foreign-key / filter indexes (no FK auto-index in SQLite or Postgres).
   @@index([userId])
+  // Added by technical R4-05: the admin quote-leads inbox lists REQUESTED quotes newest first.
+  @@index([status, createdAt])
 }
 
 model Order {
@@ -422,6 +424,9 @@ model ProductionEvent {
   createdAt DateTime @default(now())
 
   @@index([orderId, createdAt])
+  // Added by technical R4-05: platform-wide marker lookups (monthly sample cap counts
+  // NOTE "SAMPLE_ORDER" since the 1st of the month on every sample offer) scanned the whole table.
+  @@index([note, createdAt])
 }
 
 model QcPhoto {

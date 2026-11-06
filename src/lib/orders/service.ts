@@ -27,6 +27,7 @@ import { loadPricingConfig } from "@/components/admin/server/settings";
 import { HEADLINE_DEFAULTS } from "@/lib/pricing/headline";
 import { loadCheckoutSettings } from "./checkout-settings";
 import { SAMPLE_LINE_LABEL, SAMPLE_ORDER_NOTE, applySampleCredit, sampleOffer } from "./sample";
+import { claimSampleCredit, sampleCreditInUse, type SampleCreditClient } from "./sample-credit";
 import { getPaymentProvider, mockPaymentsEnabled, paymentConfig, type Intention, type WebhookOutcome, type WebhookRequest } from "@/lib/payments";
 import { getShippingProvider, type TrackingEvent } from "@/lib/shipping";
 import { notify } from "@/lib/notify";
@@ -157,11 +158,7 @@ export async function sampleCreditFor(userId: string, designId: string, now = ne
     take: 10,
   });
   for (const r of rows) {
-    const usedBy = r.productionEvents.map((e) => e.note!.slice("SAMPLE_CREDITED:".length));
-    if (usedBy.length) {
-      const live = await db.order.count({ where: { number: { in: usedBy }, status: { notIn: ["CANCELLED"] } } });
-      if (live > 0) continue;
-    }
+    if (await sampleCreditInUse(db as unknown as SampleCreditClient, r.productionEvents)) continue;
     const lines = r.quote ? fromJson<QuoteLine[]>(r.quote.lines) : null;
     const goods = (lines ?? []).filter((l) => l.labelKey === SAMPLE_LINE_LABEL).reduce((sum, l) => sum + l.totalPiasters, 0);
     if (goods <= 0 || !r.paidAt) continue;
@@ -302,6 +299,8 @@ async function createOrderFromOffer(
 
   const result = await withRetry(() =>
     db.$transaction(async (tx) => {
+      // R4-02: claim the credit atomically (see ./sample-credit); a lost claim means re-price.
+      if (p.credit && !(await claimSampleCredit(tx as unknown as SampleCreditClient, p.credit.sampleOrderId, now))) throw new OrderError("QUOTE_EXPIRED");
       let proofId = p.existingProofId;
       if (!proofId) {
         const version = (await tx.proof.count({ where: { designId } })) + 1;

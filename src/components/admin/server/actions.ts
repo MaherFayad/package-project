@@ -9,6 +9,7 @@
  *  4. writes an AuditLog row with before/after.
  */
 import { revalidatePath } from "next/cache";
+import { purgeCatalogCache } from "@/lib/catalog-cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { track } from "@/lib/analytics/track";
@@ -320,13 +321,30 @@ async function refundOrderInternal(admin: Awaited<ReturnType<typeof adminForMuta
   const paid = order.payments.filter((p) => p.status === "PAID");
   const refs: string[] = [];
   for (const p of paid) {
+    // Added by technical R4-01: claim the payment (PAID → REFUNDED, conditional) BEFORE asking the
+    // gateway, so a double click, a second tab or two admins cannot send the same refund twice
+    // (OWASP ASVS 4.0.3 V11.1.6). A declined refund releases the claim; an unknown outcome (timeout,
+    // network error) keeps it and leaves a note, because retrying could refund twice.
+    const claim = await db.payment.updateMany({ where: { id: p.id, status: "PAID" }, data: { status: "REFUNDED" } });
+    if (claim.count !== 1) continue;
     const provider = getPaymentProvider(p.provider === "paymob" ? "paymob" : "mock");
-    const r = await provider.refund({ providerRef: p.providerRef ?? "", amountPiasters: p.amountPiasters, reason });
-    if (!r.ok) throw new AdminActionError("PAYMENT_FAILED", r.error);
+    let r: Awaited<ReturnType<typeof provider.refund>>;
+    try {
+      r = await provider.refund({ providerRef: p.providerRef ?? "", amountPiasters: p.amountPiasters, reason });
+    } catch (e) {
+      await db.productionEvent.create({ data: { orderId: order.id, type: "NOTE", note: `REFUND_UNCONFIRMED:${p.id}`, actorId: admin.id } });
+      throw new AdminActionError("PAYMENT_FAILED", String((e as Error)?.message ?? e).slice(0, 120));
+    }
+    if (!r.ok) {
+      await db.payment.updateMany({ where: { id: p.id, status: "REFUNDED" }, data: { status: "PAID" } });
+      throw new AdminActionError("PAYMENT_FAILED", r.error);
+    }
     refs.push(r.refundRef ?? "");
     const raw = (p.raw && typeof p.raw === "object" && !Array.isArray(p.raw) ? p.raw : {}) as Record<string, unknown>;
     await db.payment.update({ where: { id: p.id }, data: { status: "REFUNDED", raw: toJson({ ...raw, refund: { ref: r.refundRef, at: new Date().toISOString(), by: admin.id } }) } });
   }
+  // Every PAID payment was claimed by a concurrent refund of the same order: nothing left to do here.
+  if (paid.length && !refs.length) throw new AdminActionError("STALE");
   await transitionOrder(order.id, "REFUNDED", { role: "ADMIN", userId: admin.id }, `REFUNDED:${reason.replace(/\s+/g, " ").slice(0, 200)}`);
   // Unpaid vendor payouts for a refunded job are not owed any more.
   await db.payout.deleteMany({ where: { orderId: order.id, status: "PENDING" } });
@@ -601,6 +619,7 @@ export async function savePricingSettingsAction(input: z.input<typeof settingsFo
       after: d,
     });
     revalidateAdmin();
+    purgeCatalogCache(); // public "from" prices use this config (R4-04)
     return null;
   });
 }
@@ -614,6 +633,7 @@ export async function applyIndexUpdateAction(input: z.input<typeof indexUpdateSc
     await saveSettings(admin, { ...settings, priceIndex });
     await audit(admin, { action: "PRICING_INDEX", entityType: "SETTINGS", entityId: PRICING_SETTING_KEY, summary: `${d.effectiveFrom} fx ${d.fx}${d.note ? `: ${d.note}` : ""}`, after: d });
     revalidateAdmin();
+    purgeCatalogCache(); // public "from" prices use this config (R4-04)
     return null;
   });
 }
