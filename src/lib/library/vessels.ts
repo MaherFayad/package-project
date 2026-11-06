@@ -133,6 +133,17 @@ const BOTTLE_CLOSURE_STYLE: Partial<Record<string, string>> = {
   SPARKLING_CORK: "SPARKLING",
 };
 
+/** Cosmetic / can closures drawn with an engine closure style instead of the core default (E-04). */
+const COS_CLOSURE_STYLE: Partial<Record<string, string>> = {
+  ROLL_BALL_CAP: "ROLL_ON_BALL",
+  AIRLESS_PUMP: "AIRLESS_PUMP",
+  BULLET_CAP: "BULLET_CAP",
+  PEEL_FOIL: "PEEL_FOIL",
+  LIDDING_FOIL: "PEEL_FOIL",
+  TOP_SEAL_FILM: "PEEL_FOIL",
+  EASY_OPEN_END: "EOE_RING",
+};
+
 /** Cosmetic materials whose core look has the wrong colour (X-01, V-14). */
 const COS_TINT: Partial<Record<string, string>> = { ABS_BLACK: "#161616" };
 
@@ -227,6 +238,7 @@ const COSMETIC: VesselModelDef[] = COS.DEFINITIONS.filter((d) => d.geometry !== 
     code: c,
     name: isCoreClosure(c) ? CLOSURE_NAMES[c] : (COS.CLOSURE_NAMES[c as keyof typeof COS.CLOSURE_NAMES] ?? { ar: c, en: c }),
     core: isCoreClosure(c) && coreDef.closures.includes(c) ? c : coreDef.defaultClosure,
+    ...(COS_CLOSURE_STYLE[c] ? { closureStyle: COS_CLOSURE_STYLE[c] } : {}),
   }));
   const surfaces = def.surfaces.filter(isSurface);
   const can = def.family === "CAN";
