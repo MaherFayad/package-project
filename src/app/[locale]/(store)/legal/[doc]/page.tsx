@@ -10,6 +10,12 @@ import mk from "@/components/marketing/marketing.module.css";
 
 type Props = { params: Promise<{ locale: string; doc: string }> };
 
+/**
+ * Only the listed slugs exist: unknown ones 404 at routing time, before the marketing shell and its
+ * hydration Suspense boundary render (a notFound() inside that boundary would answer 200; R4-MK-09).
+ */
+export const dynamicParams = false;
+
 export function generateStaticParams() {
   return LEGAL_DOC_IDS.map((doc) => ({ doc }));
 }

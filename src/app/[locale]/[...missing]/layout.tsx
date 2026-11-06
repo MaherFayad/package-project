@@ -15,5 +15,11 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 /** Unknown paths under a locale get the buyer-facing chrome around the 404 (CR-04). */
 export default async function MissingLayout({ children, params }: { children: ReactNode; params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  return <MarketingShell locale={toLocale(locale)}>{children}</MarketingShell>;
+  // boundary={false}: this route only ever renders the 404, which must keep its 404 status (a
+  // notFound() inside the shell's Suspense boundary would stream as 200; R4-MK-09).
+  return (
+    <MarketingShell locale={toLocale(locale)} boundary={false}>
+      {children}
+    </MarketingShell>
+  );
 }

@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { preload } from "react-dom";
 import { inter, plexArabic, PLEX_PRELOAD_WEIGHTS } from "@/app/fonts";
-import { plexArabicPreloadUrls } from "@/app/font-preload";
+import { interPreloadUrl, plexArabicPreloadUrls } from "@/app/font-preload";
 import { dirOf, getDictionary, getPublicDictionary, isLocale } from "@/i18n";
 import { I18nProvider } from "@/i18n/client";
 import { LOCALES } from "@/types";
@@ -56,11 +56,17 @@ export default async function LocaleLayout({
   if (!isLocale(locale)) notFound();
   const dict = getDictionary(locale);
   // Arabic pages only: preload the two Plex Arabic cuts used above the fold (PERF-05).
+  // Inter (Latin) carries spaces, punctuation and digits in Arabic text too, so it is preloaded on
+  // both locales, but at LOW priority on Arabic pages: there it must not compete with the
+  // render-blocking CSS and the Plex cuts (R4-MK-05). Not preloading it at all deferred it to
+  // ~5 s on Slow 4G and the swap re-reported the Arabic H1 as a later LCP.
   if (locale === "ar") {
     for (const href of plexArabicPreloadUrls(PLEX_PRELOAD_WEIGHTS)) {
       preload(href, { as: "font", type: "font/woff2", crossOrigin: "anonymous" });
     }
   }
+  const interHref = interPreloadUrl();
+  if (interHref) preload(interHref, { as: "font", type: "font/woff2", crossOrigin: "anonymous", fetchPriority: locale === "ar" ? "low" : "high" });
   return (
     <html lang={locale} dir={dirOf(locale)} className={`${inter.variable} ${plexArabic.variable}`}>
       <body>

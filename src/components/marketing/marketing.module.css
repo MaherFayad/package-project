@@ -189,6 +189,18 @@
 
 /* ───────────── Bands ───────────── */
 .band { padding-block: var(--mk-section); position: relative; }
+/*
+ * R4-MK-01 (phone LCP): bands below the hero skip style, layout and paint until they near the
+ * viewport. The first layout of the Arabic home took ~400 ms at 4x CPU (Arabic shaping of every
+ * band before first paint); now it lays out the hero only. `auto` remembers the real size once
+ * rendered, so scrolling back never jumps. The first band of a page (a page hero) is excluded.
+ */
+.main > section.band:not(:first-of-type),
+.main > .marquee,
+.footer {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 900px;
+}
 .bandGrey { background: var(--mk-grey); }
 .bandMint {
   background:
@@ -681,9 +693,14 @@
   .chipValue { font-size: 1.0625rem; }
   .chipTitle { font-size: 0.8125rem; }
   .chipRating, .chipApproved { display: none; }
-  .chipDelivered { inset-inline-end: auto; inset-inline-start: 0; inset-block-end: 0; }
-  .chipPrice { inset-block-start: 0; }
-  .heroStage { inset: 14% 0 12%; }
+  /* R4-CR-08: at 390 the price card covered the box's top corner and the delivery chip its front
+     corner. On phones the render gets the full width and the two chips sit under it as a 2-up row
+     (no float: they are part of the layout, not over the product). */
+  .heroVisual { aspect-ratio: auto; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: stretch; }
+  .heroGlow { inset: 0 4% 72px; }
+  .heroStage { position: relative; inset: auto; grid-column: 1 / -1; aspect-ratio: 3 / 2; }
+  .chip { position: relative; inset: auto; max-inline-size: none; animation: none; align-content: center; }
+  .heroToggle { inset-block: 8px auto; inset-inline-end: 0; }
 }
 
 /* ───────────── Marquee ───────────── */
@@ -706,7 +723,9 @@
 }
 .marqueeTrack:dir(rtl) { animation-name: m-marquee-rtl; }
 .marquee[data-paused="true"] .marqueeTrack,
-.marqueeViewport:hover .marqueeTrack { animation-play-state: paused; }
+.marqueeViewport:hover .marqueeTrack,
+.marqueeViewport:focus-visible .marqueeTrack { animation-play-state: paused; }
+.marqueeViewport:focus-visible { outline: 2px solid var(--p-color-border-focus, #005bd3); outline-offset: 4px; border-radius: 12px; }
 .marqueeItem {
   inline-size: clamp(180px, 22vw, 240px);
   aspect-ratio: 4 / 5;
@@ -922,11 +941,16 @@
   aspect-ratio: 16 / 10;
   background: #fff;
 }
-.vendorMedia figure { margin: 0; overflow: hidden; background: var(--tile-bg, var(--mk-grey)); display: grid; place-items: center; }
+.vendorMedia figure { margin: 0; overflow: hidden; background: var(--tile-bg, var(--mk-grey)); position: relative; min-block-size: 0; }
 .vendorMedia figure:first-child { grid-row: span 2; }
+/* R4-CR-24: absolutely placed with 8% padding, so the 86% box resolves against the tile itself.
+   As a grid item the percentage height fell back to the image's own height and tall vessel renders
+   (pump, water bottle) were cropped at the top. */
 .vendorMedia img {
-  inline-size: 86%;
-  block-size: 86%;
+  position: absolute;
+  inset: 8%;
+  inline-size: 84%;
+  block-size: 84%;
   object-fit: contain;
   transition: transform var(--m-dur-reveal) var(--m-ease-out);
 }
@@ -949,6 +973,7 @@
   color: #303030;
 }
 .tagGreen { background: var(--mk-mint); color: var(--mk-accent-ink); }
+.tagSuccess { background: var(--mk-mint); color: var(--mk-accent-ink); }
 .tagSoon { background: #fff2c2; color: #5e4200; }
 
 /* ───────────── FAQ (accordion with height transition) ───────────── */
@@ -1342,6 +1367,9 @@
   }
   .productRail::-webkit-scrollbar { display: none; }
   .productRail > li { scroll-snap-align: start; }
+  /* a11y R4-02: mandatory snap pulled the rail back to the first card when Tab focused a later
+     card, so its pill was ~10% visible (WCAG 2.4.11 / 2.4.12). No snapping while focus is inside. */
+  .productRail:focus-within { scroll-snap-type: none; }
 }
 
 /* ───────────── Round 2 phone layout (R2-MK-06 / R2-MK-07) ───────────── */
@@ -1362,6 +1390,7 @@
   }
   .useRail::-webkit-scrollbar { display: none; }
   .useRail > li { scroll-snap-align: start; }
+  .useRail:focus-within { scroll-snap-type: none; } /* same as .productRail (a11y R4-02) */
   .useRail .card { padding: 22px; }
 
   /* Finishes: two compact columns instead of six full-width rows. */
@@ -1418,3 +1447,102 @@
 .cardLink:hover,
 .textLink:hover,
 .crumbs a:hover { color: inherit; }
+
+/* ───────────── Route skeleton (R4-MK-02) ───────────── */
+.skeleton { display: grid; gap: clamp(32px, 5vw, 56px); padding-block-end: var(--mk-section); }
+.skelHero { background: linear-gradient(180deg, #f2fbf6 0%, #ffffff 100%); }
+.skelHeroInner { display: grid; gap: 20px; justify-items: center; padding-block: clamp(48px, 8vw, 112px) clamp(32px, 4vw, 56px); }
+.skelBar {
+  display: block;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ececea 0%, #f6f6f4 40%, #ececea 80%) 0 0 / 300% 100%;
+  animation: m-skel-shimmer 1.4s var(--m-ease-in-out) infinite;
+}
+.skelEyebrow { inline-size: 120px; block-size: 14px; }
+.skelTitle { inline-size: min(640px, 90%); block-size: clamp(40px, 6vw, 72px); border-radius: 16px; }
+.skelLead { inline-size: min(480px, 80%); block-size: 18px; }
+.skelPill { inline-size: 200px; block-size: 52px; }
+.skelGrid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); }
+.skelCard { display: grid; gap: 12px; padding: 16px; border-radius: var(--mk-radius-card); background: var(--mk-grey); }
+.skelMedia { display: block; aspect-ratio: 4 / 3; border-radius: var(--mk-radius-tile); background: #ecece9; }
+.skelLine { inline-size: 70%; block-size: 16px; }
+.skelLineShort { inline-size: 45%; block-size: 14px; }
+@keyframes m-skel-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: 0 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skelBar { animation: none; }
+}
+
+/* ───────────── Vendor filters (R4-MK-04) ───────────── */
+.vf { display: grid; gap: 20px; }
+.vfGrid { display: grid; gap: 16px 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 768px) { .vfGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1200px) { .vfGrid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+.vfField { display: grid; gap: 6px; min-inline-size: 0; }
+.vfField label { font-size: 0.875rem; font-weight: 600; color: var(--mk-ink); }
+.vfSelectWrap { position: relative; display: block; }
+.vfSelect {
+  appearance: none;
+  inline-size: 100%;
+  min-block-size: 48px;
+  padding-block: 10px;
+  padding-inline: 16px 40px;
+  border: 1.5px solid var(--mk-line-strong);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--mk-ink);
+  font: inherit;
+  font-size: 0.9375rem;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: border-color var(--m-dur-fast) var(--m-ease-standard);
+}
+.vfSelect:hover { border-color: #8a8a8a; }
+.vfChevron { position: absolute; inset-inline-end: 16px; inset-block-start: 50%; translate: 0 -50%; pointer-events: none; color: var(--mk-text-2); }
+.vfFoot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 24px; padding-block-start: 4px; }
+.vfChecks { display: flex; flex-wrap: wrap; gap: 8px 24px; }
+.vfCheck { display: inline-flex; align-items: center; gap: 10px; min-block-size: 44px; font-size: 0.9375rem; color: var(--mk-text); cursor: pointer; }
+.vfCheck input { inline-size: 20px; block-size: 20px; margin: 0; accent-color: var(--mk-ink); cursor: pointer; }
+.vfActions { display: flex; align-items: center; gap: 20px; margin-inline-start: auto; }
+@media (max-width: 559px) {
+  .vfActions { inline-size: 100%; justify-content: space-between; }
+  .vfActions .pill { flex: 1; }
+}
+
+/* ───────────── Detail body: structure, size and printer pages (R4-MK-03) ───────────── */
+.detailBody { padding-block: clamp(40px, 6vw, 80px) var(--mk-section); }
+.detailLayout { display: grid; gap: 24px; align-items: start; }
+@media (min-width: 1024px) { .detailLayout { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 32px; } }
+.detailMain, .detailSide { display: grid; gap: 24px; min-inline-size: 0; }
+@media (min-width: 1024px) { .detailSide > .detailStack { position: sticky; inset-block-start: calc(var(--mk-header-h) + 24px); } }
+.panel {
+  display: grid;
+  gap: 16px;
+  padding: clamp(20px, 3vw, 32px);
+  border-radius: var(--mk-radius-card);
+  background: #fff;
+  border: 1px solid #ececec;
+  box-shadow: var(--mk-shadow-card);
+  min-inline-size: 0;
+  font-size: 1rem;
+}
+.panelTitle { font-size: clamp(1.25rem, 1.1rem + 0.5vw, 1.5rem); font-weight: 700; line-height: 1.25; letter-spacing: -0.01em; color: var(--mk-ink); }
+.panelTitle:lang(ar) { letter-spacing: 0; line-height: 1.4; }
+.mkText { margin: 0; color: var(--mk-text); line-height: 1.6; }
+.mkTextSm { font-size: 0.875rem; line-height: 1.55; }
+.mkHeadingSm { font-size: 1.0625rem; font-weight: 650; color: var(--mk-ink); line-height: 1.35; }
+.mkHeadingMd { font-size: 1.375rem; font-weight: 700; color: var(--mk-ink); line-height: 1.3; }
+.mkMuted { color: var(--mk-muted); }
+.mkStrong { font-weight: 650; color: var(--mk-ink); }
+.tagInfo { background: #e8f1ff; color: #1f4fbf; }
+/* Store-module tables and lists inside a marketing panel: marketing type size and ink. */
+.panel :where(dl, table) { font-size: 0.9375rem; }
+.panel :where(a:not(.pill)) { color: var(--mk-ink); }
+.detailStack { display: grid; gap: 24px; min-inline-size: 0; }
+@media (max-width: 767px) { .vfField:last-child:nth-child(odd) { grid-column: 1 / -1; } }
+
+/* R4-MK-07: the one Arabic word on English pages (the language switch, header and footer) uses the
+   system Arabic face, so English pages do not download a 36 KB Plex Arabic cut for it. */
+.site:lang(en) [lang="ar"] { font-family: system-ui, -apple-system, "Segoe UI", "Noto Sans Arabic", "Geeza Pro", sans-serif; }

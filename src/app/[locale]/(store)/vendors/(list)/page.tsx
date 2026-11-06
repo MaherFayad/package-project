@@ -65,7 +65,7 @@ export default async function VendorsPage({ params, searchParams }: Props) {
           </p>
           <section className={styles.filtersPanel} aria-labelledby="filters-title">
             <h2 id="filters-title">{t("marketing.vendors.filters")}</h2>
-            <VendorFiltersForm filters={filters} action={action} />
+            <VendorFiltersForm locale={locale} filters={filters} action={action} />
           </section>
           <h2 id="results-title" className={styles.results}>
             <span aria-live="polite">{t("store.vendors.results", { count: list.length })}</span>
@@ -82,7 +82,7 @@ export default async function VendorsPage({ params, searchParams }: Props) {
               <img src={renderSrc("FEFCO_0201")} srcSet={srcSetFor(renderSrc("FEFCO_0201"))} sizes="160px" loading="lazy" decoding="async" alt="" width={160} height={120} style={{ inlineSize: 160, blockSize: "auto" }} />
               <h3 className={styles.h3}>{t("store.vendors.emptyTitle")}</h3>
               <p className={styles.body}>{t("store.vendors.emptyBody")}</p>
-              <Link href={action} className={`${styles.pill} ${styles.pillOutline}`}>
+              <Link href={action} className={`${styles.pill} ${styles.pillOutline} ${styles.pillLarge}`}>
                 {t("store.vendors.clear")}
               </Link>
             </div>

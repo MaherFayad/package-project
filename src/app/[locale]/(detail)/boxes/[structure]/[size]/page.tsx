@@ -49,7 +49,7 @@ function copy(locale: Locale, d: NonNullable<Awaited<ReturnType<typeof load>>>) 
     h1Text: t("store.seo.h1", { keyword, dims: dimsText }),
     description:
       low != null
-        ? t("store.seo.description", { keyword, cm, dims: dimsText, price: formatMoney(low, locale) })
+        ? t("store.seo.description", { keyword, cm, dims: dimsText, price: formatMoney(low, locale, { alwaysDecimals: true }) })
         : t("store.seo.descriptionNoPrice", { keyword, cm, dims: dimsText }),
     intro: `${t("store.seo.intro", { name: pick(locale, d.s.name.ar, d.s.name.en), dims: dimsText })} ${t("store.seo.useTitle")} ${t(`store.seo.use.${d.s.code}` as DictKey)}`,
   };

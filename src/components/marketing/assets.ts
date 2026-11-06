@@ -128,3 +128,14 @@ export function renderDims(src: string): { width: number; height: number } {
   const d = (id && RENDER_DIMS[id]) || [480, 360];
   return { width: d[0], height: d[1] };
 }
+
+/**
+ * AVIF srcset for a render (public/marketing/renders/*.avif, written by
+ * scripts/marketing/avif-heroes.cjs next to every WebP and WebP variant). Used as the
+ * `<source type="image/avif">` of the LCP hero images and their preloads (R4-MK-06).
+ */
+export function avifSrcSetFor(src: string): string | undefined {
+  if (!/^\/marketing\/renders\/[a-z0-9-]+\.webp$/.test(src)) return undefined;
+  const set = srcSetFor(src);
+  return (set ?? src).replace(/\.webp(?=\s|,|$)/g, ".avif");
+}

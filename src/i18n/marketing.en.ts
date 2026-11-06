@@ -161,7 +161,7 @@ export const marketingEn = {
     body: "Start with a mailer box or pick another style. You can change everything later.",
     primary: "Start designing free",
     secondary: "Find a printer",
-    tileOrder: "Order EL-1042",
+    tileOrder: "Order ELB-26014",
     tileOrderStatus: "Out for delivery",
     tileOrderMeta: "Alexandria · tracked",
     tilePay: "Pay your way",

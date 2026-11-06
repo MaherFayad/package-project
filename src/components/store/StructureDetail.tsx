@@ -1,15 +1,10 @@
 import Link from "next/link";
-import { preload } from "react-dom";
+import { Badge, Card, Icon, Layout, LayoutSection, Text } from "@/components/marketing/mkui";
 import { BadgeCheck, Package, Ruler } from "lucide-react";
 import type { Dims, Locale } from "@/types";
 import { getT, pick } from "@/i18n";
 import type { DictKey } from "@/i18n";
 import { formatDims, formatNumber } from "@/lib/format";
-import { Badge } from "@/components/ui/Badge";
-import { Card } from "@/components/ui/Card";
-import { Icon } from "@/components/ui/Icon";
-import { Layout, LayoutSection } from "@/components/ui/Layout";
-import { Text } from "@/components/ui/Text";
 import { designHref, formatCm, sizeHref, sizeSlug, SEO_SIZES, structureHref } from "./catalog";
 import { materialsFor, type MaterialView, type PriceFrom, type StructureView } from "./data";
 import { PriceFromTable } from "./PriceFromTable";
@@ -19,7 +14,8 @@ import styles from "./store.module.css";
 /** The hero render is about 74% of a phone viewport (was declared 92vw, which picked the full file). */
 const HERO_SIZES = "(min-width: 1024px) 600px, 74vw";
 import mk from "@/components/marketing/marketing.module.css";
-import { renderSrc, srcSetFor } from "@/components/marketing/assets";
+import { renderSrc } from "@/components/marketing/assets";
+import { HeroImage } from "@/components/marketing/HeroImage";
 
 const RULE_KEYS: Record<string, DictKey> = {
   "H <= W": "store.structure.rule.HW",
@@ -55,9 +51,6 @@ export function StructureDetail({
 }) {
   const t = getT(locale);
   const name = pick(locale, structure.name.ar, structure.name.en);
-  // The hero render is the LCP on phones: start it from <head>, not when the parser reaches it.
-  const hero = renderSrc(structure.code);
-  preload(hero, { as: "image", imageSrcSet: srcSetFor(hero), imageSizes: HERO_SIZES, fetchPriority: "high" });
   const p = structure.params;
   const mats = materialsFor(structure.code, materials);
   const sizes = mergeSizes(structure, SEO_SIZES[structure.code] ?? [], locale);
@@ -115,16 +108,16 @@ export function StructureDetail({
             </div>
           </div>
           <div className={`${mk.detailMedia} m-enter-scale`} style={{ ["--m-i" as string]: 2 }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={renderSrc(structure.code)} srcSet={srcSetFor(renderSrc(structure.code))} sizes={HERO_SIZES} alt={t("marketing.boxes.renderAlt", { name })} width={960} height={720} fetchPriority="high" />
+            {/* The hero render is the LCP on phones: AVIF, preloaded from <head> (R4-MK-06). */}
+            <HeroImage src={renderSrc(structure.code)} sizes={HERO_SIZES} alt={t("marketing.boxes.renderAlt", { name })} width={960} height={720} />
           </div>
         </div>
       </section>
-    <div className={styles.page}>
-      <div className={styles.stack}>
+    <div className={mk.detailBody}>
+      <div className={mk.container}>
         <Layout>
           <LayoutSection>
-            <div className={styles.stack}>
+            <div className={mk.detailStack}>
               <div id="prices" style={{ scrollMarginBlockStart: 96 }} />
               <PriceFromTable locale={locale} dims={dims} price={price} />
 
@@ -216,7 +209,7 @@ export function StructureDetail({
           </LayoutSection>
 
           <LayoutSection variant="oneThird" as="aside" aria-label={t("store.structure.designCta")}>
-            <div className={`${styles.stack} ${styles.sticky}`}>
+            <div className={mk.detailStack}>
               <Card>
                 <div className={styles.ctaCard}>
                   <Text as="h2" variant="headingMd">

@@ -56,7 +56,7 @@ export function ProductCard({
             <bdi dir="ltr" className={styles.num}>{`${p.L.min}–${p.L.max} × ${p.W.min}–${p.W.max} × ${p.H.min}–${p.H.max}`}</bdi> {t("common.mm")}
           </p>
           <p className={styles.productPrice}>
-            {fromPiasters != null ? t("marketing.boxes.from", { price: formatMoney(fromPiasters, locale) }) : t("marketing.boxes.onRequest")}
+            {fromPiasters != null ? t("marketing.boxes.from", { price: formatMoney(fromPiasters, locale, { alwaysDecimals: true }) }) : t("marketing.boxes.onRequest")}
           </p>
           <div className={styles.productActions}>
             <Link href={designHref(locale, { structure: structure.code })} className={`${styles.pill} ${styles.pillSmall}`}>
