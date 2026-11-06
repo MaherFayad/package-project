@@ -104,7 +104,7 @@ export function AuditIndex({ rows }: { rows: AuditRow[] }) {
             <IndexTableCell>
               <BlockStack gap="100">
                 <Text as="span">
-                  <span className={adminStyles.PreWrap}>{r.summary ?? t("admin.common.none")}</span>
+                  <span className={adminStyles.PreWrap} dir="auto">{r.summary ?? t("admin.common.none")}</span>
                 </Text>
                 {r.before || r.after ? (
                   <details>

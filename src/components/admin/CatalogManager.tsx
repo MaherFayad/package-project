@@ -187,7 +187,7 @@ export function CatalogManager({ data }: { data: CatalogData }) {
                   t("admin.catalog.structures.columns.default"),
                   t("admin.catalog.structures.columns.vendors"),
                   t("admin.catalog.structures.columns.status"),
-                  "",
+                  <span key="h" className="visually-hidden">{t("admin.common.edit")}</span>,
                 ]}
                 rows={data.structures.map((s) => [
                   name(s),
@@ -228,7 +228,7 @@ export function CatalogManager({ data }: { data: CatalogData }) {
                   t("admin.catalog.materials.columns.thickness"),
                   t("admin.catalog.materials.columns.foodSafe"),
                   t("admin.catalog.materials.columns.status"),
-                  "",
+                  <span key="h" className="visually-hidden">{t("admin.common.edit")}</span>,
                 ]}
                 rows={data.materials.map((m) => [
                   name(m),
@@ -259,12 +259,12 @@ export function CatalogManager({ data }: { data: CatalogData }) {
                   t("admin.catalog.finishes.columns.unit"),
                   t("admin.catalog.finishes.columns.setup"),
                   t("admin.catalog.finishes.columns.status"),
-                  "",
+                  <span key="h" className="visually-hidden">{t("admin.common.edit")}</span>,
                 ]}
                 rows={data.finishes.map((f) => [
                   name(f),
-                  formatMoney(f.unitSurchargePiasters, locale),
-                  formatMoney(f.setupPiasters, locale),
+                  formatMoney(f.unitSurchargePiasters, locale, { alwaysDecimals: true }),
+                  formatMoney(f.setupPiasters, locale, { alwaysDecimals: true }),
                   <ActiveBadge key="a" active={f.active} />,
                   editBtn(
                     t("admin.catalog.finishes.editTitle", { name: name(f) }),

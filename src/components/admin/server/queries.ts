@@ -15,6 +15,8 @@ import {
   opsKpis,
   rangeWindow,
   scorecard,
+  repeatRate90,
+  acceptanceRate,
   type MetricOrder,
   type RangeKey,
   type Scorecard,
@@ -51,7 +53,7 @@ const metricSelect = {
 
 export async function loadOverview(range: RangeKey, now = new Date()) {
   const { from, to, prevFrom } = rangeWindow(range, now);
-  const [orders, disputes, designs, accounts, quoteUsers, orderUsers, qcPending, applications, dataRequests, payouts] = await Promise.all([
+  const [orders, disputes, designs, accounts, quoteUsers, orderUsers, qcPending, applications, dataRequests, payouts, buyerOrders, vendorEvents] = await Promise.all([
     db.order.findMany({ where: { OR: [{ placedAt: { gte: prevFrom } }, { deliveredAt: { gte: prevFrom } }] }, select: metricSelect }),
     db.dispute.findMany({ select: { createdAt: true, status: true } }),
     db.design.count({ where: { createdAt: { gte: from, lt: to } } }),
@@ -63,6 +65,9 @@ export async function loadOverview(range: RangeKey, now = new Date()) {
     db.vendorApplication.count({ where: { status: { in: ["SUBMITTED", "UNDER_REVIEW"] } } }),
     db.dataRequest.count({ where: { status: { in: ["OPEN", "IN_PROGRESS"] } } }),
     countPayoutsToAct(),
+    // Kept orders (not reprints) for the 90-day repeat rate; all time, the cohort rule picks who counts.
+    db.order.findMany({ where: { status: { notIn: ["PENDING_PAYMENT", "CANCELLED", "REFUNDED"] }, NOT: { notes: { startsWith: "REPRINT_OF:" } } }, select: { buyerId: true, placedAt: true } }),
+    db.productionEvent.findMany({ where: { type: { in: ["VENDOR_ACCEPTED", "VENDOR_DECLINED"] }, createdAt: { gte: from, lt: to } }, select: { type: true } }),
   ]);
   const priceViewed = new Set([...quoteUsers.map((q) => q.userId), ...orderUsers.map((o) => o.buyerId)]).size;
   const rows = orders as MetricOrder[];
@@ -99,6 +104,8 @@ export async function loadOverview(range: RangeKey, now = new Date()) {
     ops,
     gmvSeries,
     marginSeries,
+    repeat: repeatRate90(buyerOrders, now),
+    acceptance: acceptanceRate(vendorEvents),
     tasks: { qcPending, applications, openDisputes: ops.openDisputes, dataRequests, payouts },
   };
 }

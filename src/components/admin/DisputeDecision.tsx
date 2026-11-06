@@ -82,6 +82,7 @@ export function DisputeDecision({
           <TextField
             label={t("admin.disputes.detail.note")}
             autoComplete="off"
+            dir="auto"
             value={note}
             onChange={setNote}
             multiline={3}

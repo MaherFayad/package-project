@@ -129,6 +129,7 @@ export function RoutingCard({
                 <TextField
                   label={t("admin.common.reason")}
                   autoComplete="off"
+                  dir="auto"
                   value={reason}
                   onChange={setReason}
                   multiline={2}
@@ -155,7 +156,7 @@ export function RoutingCard({
 export function MarginLine({ goodsPiasters, vendorCostPiasters }: { goodsPiasters: number; vendorCostPiasters: number }) {
   const { t, locale } = useI18n();
   const m = marginPreview(goodsPiasters, vendorCostPiasters);
-  const text = t("admin.order.margin.line", { amount: formatMoney(m.marginPiasters, locale), pct: m.pct === null ? t("admin.common.none") : formatPercent(m.pct, locale) });
+  const text = t("admin.order.margin.line", { amount: formatMoney(m.marginPiasters, locale, { alwaysDecimals: true }), pct: m.pct === null ? t("admin.common.none") : formatPercent(m.pct, locale) });
   return (
     <span aria-live="polite">
       <bdi>{text}</bdi>
@@ -254,7 +255,7 @@ export function OverrideCard({
               value={goods}
               onChange={setGoods}
               placeholder={piastersToInput(goodsPiasters)}
-              helpText={preview ? t("admin.order.override.newTotal", { total: formatMoney(preview.totalPiasters, locale) }) : t("admin.order.override.goodsHelp")}
+              helpText={preview ? t("admin.order.override.newTotal", { total: formatMoney(preview.totalPiasters, locale, { alwaysDecimals: true }) }) : t("admin.order.override.goodsHelp")}
               error={Number.isNaN(goodsValue) ? t("admin.errors.INVALID") : fieldError(res, "goodsPiasters", errorText)}
             />
           ) : (
@@ -275,7 +276,7 @@ export function OverrideCard({
               error={Number.isNaN(costValue) ? t("admin.errors.INVALID") : fieldError(res, "vendorCostPiasters", errorText)}
             />
           ) : null}
-          <TextField label={t("admin.common.reason")} autoComplete="off" value={reason} onChange={setReason} multiline={2} maxLength={500} error={fieldError(res, "reason", errorText)} />
+          <TextField label={t("admin.common.reason")} autoComplete="off" dir="auto" value={reason} onChange={setReason} multiline={2} maxLength={500} error={fieldError(res, "reason", errorText)} />
           <InlineStack align="end" gap="200">
             <Button onClick={reset}>{t("admin.common.cancel")}</Button>
             <Button variant="primary" submit disabled={(goodsValue === null && costValue === null) || reason.trim().length < 3} loading={busy === "override"}>
@@ -329,8 +330,8 @@ export function RefundCard({ orderId, number, totalPiasters, canRefund }: { orde
         secondaryActions={[{ content: t("admin.common.cancel"), onAction: () => setOpen(false) }]}
       >
         <BlockStack gap="300">
-          <Text as="p">{t("admin.order.refund.confirmBody", { amount: formatMoney(totalPiasters, locale) })}</Text>
-          <TextField label={t("admin.common.reason")} autoComplete="off" value={reason} onChange={setReason} multiline={2} maxLength={500} helpText={t("admin.common.reasonHelp")} />
+          <Text as="p">{t("admin.order.refund.confirmBody", { amount: formatMoney(totalPiasters, locale, { alwaysDecimals: true }) })}</Text>
+          <TextField label={t("admin.common.reason")} autoComplete="off" dir="auto" value={reason} onChange={setReason} multiline={2} maxLength={500} helpText={t("admin.common.reasonHelp")} />
         </BlockStack>
       </Modal>
     </Card>
@@ -349,7 +350,7 @@ export function QcActions({ orderId }: { orderId: string }) {
   return (
     <BlockStack gap="300">
       {rejecting ? (
-        <TextField label={t("admin.order.qc.rejectNote")} autoComplete="off" value={note} onChange={setNote} multiline={3} maxLength={500} error={fieldError(res, "note", errorText)} />
+        <TextField label={t("admin.order.qc.rejectNote")} autoComplete="off" dir="auto" value={note} onChange={setNote} multiline={3} maxLength={500} error={fieldError(res, "note", errorText)} />
       ) : null}
       <InlineStack align="end" gap="200">
         {rejecting ? (
@@ -418,7 +419,7 @@ export function NoteComposer({ orderId, userName }: { orderId: string; userName:
         <InlineStack gap="300" blockAlign="start" wrap={false}>
           <Avatar name={userName} size="md" />
           <div style={{ flex: 1, minInlineSize: 0 }}>
-            <TextField label={t("admin.order.timeline.noteLabel")} labelHidden autoComplete="off" value={note} onChange={setNote} placeholder={t("admin.order.timeline.placeholder")} multiline={2} maxLength={1000} />
+            <TextField label={t("admin.order.timeline.noteLabel")} labelHidden autoComplete="off" dir="auto" value={note} onChange={setNote} placeholder={t("admin.order.timeline.placeholder")} multiline={2} maxLength={1000} />
           </div>
         </InlineStack>
         <InlineStack align="space-between" blockAlign="center">

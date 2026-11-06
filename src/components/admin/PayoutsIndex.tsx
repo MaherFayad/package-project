@@ -40,10 +40,10 @@ export function PayoutsIndex({ rows }: { rows: AdminPayoutRow[] }) {
         <MetricsStrip
           accessibilityLabel={t("admin.payouts.metricsLabel")}
           metrics={[
-            { label: t("admin.payouts.metrics.toApprove"), value: formatMoney(sum((r) => r.status === "PENDING" || r.status === "ON_HOLD"), locale) },
-            { label: t("admin.payouts.metrics.toPay"), value: formatMoney(sum((r) => r.status === "APPROVED"), locale) },
-            { label: t("admin.payouts.metrics.scheduled"), value: formatMoney(sum((r) => r.status === "SCHEDULED"), locale) },
-            { label: t("admin.payouts.metrics.paid"), value: formatMoney(sum((r) => r.status === "PAID"), locale) },
+            { label: t("admin.payouts.metrics.toApprove"), value: formatMoney(sum((r) => r.status === "PENDING" || r.status === "ON_HOLD"), locale, { alwaysDecimals: true }) },
+            { label: t("admin.payouts.metrics.toPay"), value: formatMoney(sum((r) => r.status === "APPROVED"), locale, { alwaysDecimals: true }) },
+            { label: t("admin.payouts.metrics.scheduled"), value: formatMoney(sum((r) => r.status === "SCHEDULED"), locale, { alwaysDecimals: true }) },
+            { label: t("admin.payouts.metrics.paid"), value: formatMoney(sum((r) => r.status === "PAID"), locale, { alwaysDecimals: true }) },
           ]}
         />
         <div id="admin-payouts-table">
@@ -102,7 +102,7 @@ export function PayoutsIndex({ rows }: { rows: AdminPayoutRow[] }) {
                       <div className={adminStyles.PhoneOnly}>
                         <BlockStack gap="150">
                           <Text as="span" variant="bodySm" tone="subdued">
-                            {t(`admin.payouts.kinds.${r.kind}` as DictKey)} · <bdi>{formatMoney(r.amountPiasters, locale)}</bdi>
+                            {t(`admin.payouts.kinds.${r.kind}` as DictKey)} · <bdi>{formatMoney(r.amountPiasters, locale, { alwaysDecimals: true })}</bdi>
                           </Text>
                           <InlineStack gap="200" blockAlign="center">
                             <PayoutStatusBadge status={r.status} />
@@ -122,7 +122,7 @@ export function PayoutsIndex({ rows }: { rows: AdminPayoutRow[] }) {
                     </BlockStack>
                   </IndexTableCell>
                   <IndexTableCell alignment="end" numeric>
-                    {formatMoney(r.amountPiasters, locale)}
+                    {formatMoney(r.amountPiasters, locale, { alwaysDecimals: true })}
                   </IndexTableCell>
                   <IndexTableCell>
                     <PayoutStatusBadge status={r.status} />

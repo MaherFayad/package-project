@@ -40,7 +40,7 @@ type Params = Promise<{ locale: string; number: string }>;
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { locale, number } = await params;
   const t = getT(toLocale(locale));
-  return { title: `${number} · ${t("admin.orders.title")}` };
+  return { title: `${decodeURIComponent(number)} · ${t("admin.orders.title")} · ${t("admin.title")}` };
 }
 
 function Row({ label, value, strong }: { label: ReactNode; value: ReactNode; strong?: boolean }) {
@@ -105,7 +105,7 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
             <Text as="span" fontWeight="semibold">
               {t(`admin.audit.actions.${e.type}` as DictKey)}
             </Text>
-            {e.note ? <span className={adminStyles.PreWrap}>{`: ${e.note.replace(/^[\w-]+:\s?/, "")}`}</span> : null}
+            {e.note ? <span className={adminStyles.PreWrap} dir="auto">{`: ${e.note.replace(/^[\w-]+:\s?/, "")}`}</span> : null}
           </span>
         ),
         details: e.actor ? <bdi dir="ltr">{e.actor}</bdi> : undefined,
@@ -118,7 +118,7 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
       content: (
         <span>
           {t(`admin.order.events.${e.type}` as DictKey)}
-          {e.note ? <Text as="span" tone="subdued">{` · ${e.note}`}</Text> : null}
+          {e.note ? <Text as="span" tone="subdued">{" · "}<bdi>{e.note}</bdi></Text> : null}
         </span>
       ),
     };
@@ -184,7 +184,7 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
                               </InlineStack>
                               {p.reviewNote ? (
                                 <Text as="p" variant="bodySm" tone="subdued">
-                                  {p.reviewNote}
+                                  <bdi>{p.reviewNote}</bdi>
                                 </Text>
                               ) : null}
                             </figcaption>
@@ -238,11 +238,11 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
                       <BlockStack gap="100" align="end">
                         <Text as="p" numeric alignment="end">
                           <bdi>
-                            {formatNumber(it.quantity)} × {formatMoney(it.unitPiasters, locale)}
+                            {formatNumber(it.quantity)} × {formatMoney(it.unitPiasters, locale, { alwaysDecimals: true })}
                           </bdi>
                         </Text>
                         <Text as="p" numeric fontWeight="semibold" alignment="end">
-                          {formatMoney(it.lineTotalPiasters, locale)}
+                          {formatMoney(it.lineTotalPiasters, locale, { alwaysDecimals: true })}
                         </Text>
                       </BlockStack>
                     </InlineStack>
@@ -255,17 +255,17 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
               <BlockStack gap="300">
                 <Inset>
                   <BlockStack gap="200">
-                    <Row label={t("admin.order.money.goods")} value={formatMoney(goods, locale)} />
-                    <Row label={t("admin.order.money.delivery")} value={formatMoney(order.shippingPiasters, locale)} />
-                    <Row label={t("admin.order.money.vat")} value={formatMoney(order.vatPiasters, locale)} />
+                    <Row label={t("admin.order.money.goods")} value={formatMoney(goods, locale, { alwaysDecimals: true })} />
+                    <Row label={t("admin.order.money.delivery")} value={formatMoney(order.shippingPiasters, locale, { alwaysDecimals: true })} />
+                    <Row label={t("admin.order.money.vat")} value={formatMoney(order.vatPiasters, locale, { alwaysDecimals: true })} />
                     <Divider />
-                    <Row label={t("admin.order.money.total")} value={formatMoney(order.totalPiasters, locale)} strong />
+                    <Row label={t("admin.order.money.total")} value={formatMoney(order.totalPiasters, locale, { alwaysDecimals: true })} strong />
                   </BlockStack>
                 </Inset>
                 <Inset>
                   <BlockStack gap="200">
-                    <Row label={t("admin.order.money.vendorCost")} value={formatMoney(order.vendorCostPiasters, locale)} />
-                    <Row label={t("admin.order.money.margin")} value={formatMoney(margin, locale)} strong />
+                    <Row label={t("admin.order.money.vendorCost")} value={formatMoney(order.vendorCostPiasters, locale, { alwaysDecimals: true })} />
+                    <Row label={t("admin.order.money.margin")} value={formatMoney(margin, locale, { alwaysDecimals: true })} strong />
                   </BlockStack>
                 </Inset>
                 {order.payments.length ? (
@@ -280,7 +280,7 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
                         </Text>
                         <InlineStack gap="150" blockAlign="center">
                           <Text as="span" numeric variant="bodySm">
-                            {formatMoney(p.amountPiasters, locale)}
+                            {formatMoney(p.amountPiasters, locale, { alwaysDecimals: true })}
                           </Text>
                           <Badge size="small" tone={p.status === "PAID" ? "neutral" : p.status === "REFUNDED" ? "critical" : "warning"} progress={p.status === "PAID" ? "complete" : "incomplete"}>
                             {t(`admin.orders.paymentStatus.${p.status}` as DictKey)}
@@ -308,7 +308,7 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
           <BlockStack gap="400">
             <Card title={t("admin.order.buyer.title")}>
               <BlockStack gap="200">
-                <Link url={`${base}/users/${order.buyer.id}`}>{order.buyer.name ?? t("admin.users.noName")}</Link>
+                <Link url={`${base}/users/${order.buyer.id}`}><bdi>{order.buyer.name ?? t("admin.users.noName")}</bdi></Link>
                 <Text as="p">
                   <bdi dir="ltr">{order.buyer.phone}</bdi>
                 </Text>
@@ -319,7 +319,7 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
                       {t("admin.order.buyer.address")}
                     </Text>
                     <Text as="p" variant="bodySm">
-                      {addr.name}
+                      <bdi>{addr.name}</bdi>
                       <br />
                       <bdi>{[addr.street, addr.building, addr.city, addr.governorate].filter(Boolean).join(", ")}</bdi>
                     </Text>

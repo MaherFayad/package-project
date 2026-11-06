@@ -82,7 +82,7 @@ export function PayoutStepButton({
           secondaryActions={[{ content: t("admin.common.cancel"), onAction: () => setOpen(false) }]}
         >
           <BlockStack gap="300">
-            <Text as="p">{t("admin.payouts.payBody", { amount: formatMoney(amountPiasters, locale), vendor: vendorName })}</Text>
+            <Text as="p">{t("admin.payouts.payBody", { amount: formatMoney(amountPiasters, locale, { alwaysDecimals: true }), vendor: vendorName })}</Text>
             {kind === "BALANCE" ? (
               <Checkbox
                 label={t("admin.payouts.eInvoiceConfirm")}
@@ -127,7 +127,7 @@ export function PayoutsCard({ orderId, orderNumber, vendorName, parts }: { order
                   {t(`admin.payouts.kinds.${p.kind}` as DictKey)}
                 </Text>
                 <Text as="p" numeric fontWeight="semibold">
-                  {formatMoney(p.amountPiasters, locale)}
+                  {formatMoney(p.amountPiasters, locale, { alwaysDecimals: true })}
                 </Text>
               </InlineStack>
               <InlineStack align="space-between" blockAlign="center" gap="200">

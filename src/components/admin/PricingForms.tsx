@@ -35,8 +35,8 @@ function PreviewResult({ preview }: { preview: PricingPreview }) {
         rows={preview.rows.map((r) => [
           t(`structures.${r.structureCode}` as DictKey),
           t(`materials.${r.materialCode}` as DictKey),
-          r.currentUnitPiasters === null ? t("admin.pricing.preview.notPriced") : formatMoney(r.currentUnitPiasters, locale),
-          r.proposedUnitPiasters === null ? t("admin.pricing.preview.notPriced") : formatMoney(r.proposedUnitPiasters, locale),
+          r.currentUnitPiasters === null ? t("admin.pricing.preview.notPriced") : formatMoney(r.currentUnitPiasters, locale, { alwaysDecimals: true }),
+          r.proposedUnitPiasters === null ? t("admin.pricing.preview.notPriced") : formatMoney(r.proposedUnitPiasters, locale, { alwaysDecimals: true }),
           signed(r.changePct),
         ])}
       />
@@ -226,12 +226,18 @@ export function PriceIndexForm({ current }: { current: { fx: number; board: Part
   return (
     <BlockStack gap="300">
       <InlineGrid columns={{ xs: 1, md: 2 }} gap="300">
-        <TextField label={t("admin.pricing.index.fx")} autoComplete="off" inputMode="decimal" dir="ltr" prefix="×" value={fx} onChange={setFx} error={err("fx")} />
+        <TextField label={t("admin.pricing.index.fx")} autoComplete="off" inputMode="decimal" dir="ltr" value={fx} helpText={t("admin.pricing.index.multiplierHelp")} onChange={setFx} error={err("fx")} />
         <TextField label={t("admin.pricing.index.effectiveFrom")} type="date" autoComplete="off" dir="ltr" value={from} onChange={setFrom} error={err("effectiveFrom")} />
       </InlineGrid>
-      <Text as="h3" variant="headingSm">
-        {t("admin.pricing.index.board")}
-      </Text>
+      <BlockStack gap="050">
+        <Text as="h3" variant="headingSm">
+          {t("admin.pricing.index.board")}
+        </Text>
+        {/* CR-56: one explanation for the section instead of a "×" prefix in 16 fields (read as clear buttons). */}
+        <Text as="p" variant="bodySm" tone="subdued">
+          {t("admin.pricing.index.multiplierHelp")}
+        </Text>
+      </BlockStack>
       <InlineGrid columns={{ xs: 1, sm: 2, md: 3 }} gap="300">
         {MATERIAL_CODES.map((m) => (
           <TextField
@@ -240,7 +246,6 @@ export function PriceIndexForm({ current }: { current: { fx: number; board: Part
             autoComplete="off"
             inputMode="decimal"
             dir="ltr"
-            prefix="×"
             value={board[m]}
             onChange={(v) => setBoard((b) => ({ ...b, [m]: v }))}
             error={err(`board.${m}`)}
@@ -260,7 +265,7 @@ export function PriceIndexForm({ current }: { current: { fx: number; board: Part
           {t("admin.pricing.index.bumpApply")}
         </Button>
       </InlineStack>
-      <TextField label={t("admin.pricing.index.note")} autoComplete="off" value={note} onChange={setNote} maxLength={200} />
+      <TextField label={t("admin.pricing.index.note")} autoComplete="off" dir="auto" value={note} onChange={setNote} maxLength={200} />
       <InlineStack align="end">
         <ButtonGroup>
           <Button

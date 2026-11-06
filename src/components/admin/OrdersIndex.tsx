@@ -174,7 +174,7 @@ export function OrdersIndex({ rows, vendors, openDisputes }: { rows: AdminOrderR
                     <InlineStack gap="200" blockAlign="center">
                       <OrderStatusBadge status={r.status} />
                       <Text as="span" variant="bodySm" numeric>
-                        <bdi>{formatMoney(r.totalPiasters, locale)}</bdi>
+                        <bdi>{formatMoney(r.totalPiasters, locale, { alwaysDecimals: true })}</bdi>
                       </Text>
                     </InlineStack>
                   </div>
@@ -182,13 +182,13 @@ export function OrdersIndex({ rows, vendors, openDisputes }: { rows: AdminOrderR
                 <IndexTableCell>
                   <time dateTime={r.placedAt}>{formatDate(r.placedAt, locale, "medium")}</time>
                 </IndexTableCell>
-                <IndexTableCell>{r.buyerName || <bdi dir="ltr">{r.buyerPhone}</bdi>}</IndexTableCell>
+                <IndexTableCell>{r.buyerName ? <bdi>{r.buyerName}</bdi> : <bdi dir="ltr">{r.buyerPhone}</bdi>}</IndexTableCell>
                 <IndexTableCell>{r.vendorName}</IndexTableCell>
                 <IndexTableCell alignment="end" numeric>
-                  {formatMoney(r.totalPiasters, locale)}
+                  {formatMoney(r.totalPiasters, locale, { alwaysDecimals: true })}
                 </IndexTableCell>
                 <IndexTableCell alignment="end" numeric>
-                  {formatMoney(r.marginPiasters, locale)}
+                  {formatMoney(r.marginPiasters, locale, { alwaysDecimals: true })}
                 </IndexTableCell>
                 <IndexTableCell>
                   {r.paymentStatus ? (

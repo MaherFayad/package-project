@@ -126,3 +126,40 @@ Desktop meets every budget. Phone LCP is over 2.5 s on every page because FCP al
 
 - Seed: no order carries a library `modelCode`, and every one of the 370 models is instant-priced with the seeded rate cards, so the "Quote only" view is empty on seed data (verified by switching rate cards off). Seeding one quote-only model and one `modelCode` order would exercise both paths.
 - Seed: ELB-26201's card payment is created at 04:38 the day after the order was paid (21:48), so the payment row and the timeline disagree.
+
+## Round 3
+
+Source: `docs/audit/ROUND3.md` (admin row) with details in `craft.md`, `a11y.md` and `business.md`. Base: `origin/claude/exciting-albattani-8kzgsu` merged into this branch (the only conflict was `ui/Frame.tsx` / `.module.css`, where both sides had the same label-in-name fix; I took the integration version, which adds `dir="auto"`). Verified on a production build: 60 page views (15 routes × ar/en × 1440/390), with 0 axe violations, 0 horizontal overflow and 0 console errors, plus targeted checks below. Screenshots: `docs/screenshots/audit/admin/r3-after-*.png`.
+
+| id | sev | page / file | finding (source) | standard | fix | status |
+|---|---|---|---|---|---|---|
+| CR-12 | high | application, dispute, order, user, vendor pages and indexes | Text users typed in English showed its punctuation at the wrong end in RTL (".We print…"). | WCAG 1.3.2; Unicode bidi | Every `PreWrap` block of user text (application message, dispute description and resolution, audit summaries) gets `dir="auto"`. Names, legal names, notes, QC review notes and the address name sit in `<bdi>`. Names inside translated sentences (page titles and subtitles) use a new `isolate()` (FSI…PDI). Free-text inputs (reasons, notes, decisions) are `dir="auto"`. Verified: in `/ar` the applicant's English message ends with its full stop on the right. | fixed |
+| CR-25 | medium | `/admin/orders`, overview, payouts, catalogue (phone) / `ui/Misc.module.css` | KPI cards were clipped mid-word ("مراجعة الج") at 390 px. | WCAG 1.4.10 | Under 490 px `MetricsStrip` is a 2-column grid with dividers; an odd last cell spans both columns; nothing scrolls or clips. Shared, so the vendor portal gets it too. | fixed |
+| CR-26 | medium | admin side nav | "Nav background stops at the first viewport height." | craft | Checked in a real scrolled viewport (`r3-after-nav-scrolled-en.png`): `.NavContainer` is already `position: sticky` with `block-size: calc(100dvh - top bar)`, so the grey column always fills the screen. The gap only shows in full-page screenshots, which render sticky elements once. No change. | verified (no defect) |
+| CR-35 | medium | all admin money | One column mixed "14,913" and "6,976.80", so digits did not line up. | Polaris numeric columns | Admin money always shows two decimals (`formatMoney(…, { alwaysDecimals: true })`) in tables, cards, metrics and sentences; tabular figures were already on. | fixed |
+| CR-36 | medium | admin index tables | Numeric columns start-aligned. | Polaris | Re-checked: every admin money and count column already passes `alignment="end" numeric` or `columnContentTypes="numeric"` (fixed in round 1). | verified |
+| CR-49 | low | admin detail pages | Detail pages reused the list `<title>`. | WCAG 2.4.2 | Entity first: "Nile Pack Printing & Packaging · Vendors · Admin · Elba", "ELB-26201 · Orders · Admin · Elba", "Giza Carton Lab LLC · طلبات الانضمام · الإدارة · علبة"; same for users and disputes. | fixed |
+| CR-50 | low | `ui/IndexTable.module.css` | Row links were 20 px tall. | WCAG 2.5.8 | `.RowLink` is inline-block with 2 px block padding (24 px). The clear-search button was already 24 × 24. | fixed |
+| CR-56 | low | `/admin/pricing` | A "×" in each of the 16 multiplier inputs read as a clear button. | clarity | It was the multiplier prefix, not a clear button, but it read as one. Removed; the section says once "Multiplier: 1 = no change, 1.05 = 5% more." (also as FX help). | fixed |
+| CR-57 | low | admin top bar (ar) | Seeded admin name is English. | localization | Seed data (`prisma/seed.ts`), outside admin scope; passed to the seed owner. The name now sits in `dir="auto"`, so it renders correctly in RTL. | open (seed owner) |
+| CR-65 | medium | application decision bar | Approve disabled with no reason given. | clarity; WCAG 3.3.2 | Order kept (Start review → Reject → Approve, primary at the end). Under the bar: "Approve unlocks after the required checks. Left: N." | fixed |
+| X-12 | low | catalogue, user detail tables | Action columns had empty headers. | WCAG 1.3.1 | Visually hidden "Edit" (catalogue) and "Actions" (user data requests) headers. | fixed |
+| R3-01 | high | admin orders at 390 / `ui/Badge.module.css` (shared) | Found in this round: the a11y session's badge change (`overflow-wrap: anywhere`) shrank badge min-content to one character, so auto-layout tables squeezed the status and payment columns to a letter per line (rows 160 px tall). | WCAG 1.4.10; craft | `overflow-wrap: break-word` keeps the 1.4.12 wrapping without changing min-content. Rows back to 84 px. | fixed |
+| B-19 (admin, part) | high | overview / `lib/metrics.ts` | The plan's retention and supply gates were not shown. | Research report §6.3, §10 | New "Retention and supply" card: **Repeat buyers in 90 days** (buyers whose first kept order is 90+ days old who ordered again within 90 days; target ≥ 40%, "—" until anyone qualifies) and **Vendor acceptance** (accepted out of accepted plus declined in the period). Pure and unit-tested. Price viewed was already fixed in round 2 (R2-07). | fixed (existing data) |
+| B-19 (admin, rest) | high | overview funnel | Funnel from the new first-party `Event` table (visits, design completed, share visits, gate). | §6.3 | Blocked: the platform's `Event` table and `track()` helper have not landed on any branch yet. | blocked |
+| B-15 (admin) | high | quote leads inbox | Admin queue for quote requests above 2,000 units with a 24 h SLA. | §4.1 | Blocked: the checkout's `QuoteRequest` model has not landed yet. | blocked |
+| B-08 (admin) | critical | profile moderation queue | Review queue for vendor bio, caption and photo changes. | §0, §9 | Blocked: the vendor's moderation status fields have not landed yet. | blocked |
+| CR-08 (adopt) | high | admin status badges | Use the shared `statusTone()` map. | consistency | Blocked: `src/lib/orders/status-tone.ts` does not exist yet. | blocked |
+
+The integrator has been told which blocked items wait on which branches. Each one will be built against the real schema once it lands, not guessed, to avoid merge conflicts.
+
+### Verification (round 3)
+
+- `npm run lint` and `npm run typecheck`: clean. `npm test`: 8,173 passed (new `admin-round3.test.ts`: 90-day repeat cohort rule, acceptance rate, bidi isolate).
+- `npm run build`: passes.
+- e2e `admin`, `vendor`, `smoke` (`--workers=2 --trace off`): 19 passed, 5 skipped by design.
+- Browser: 60 page views with 0 axe violations, 0 overflow and 0 console errors.
+
+### Files outside scope (round 3)
+
+- `src/components/ui/Misc.module.css` (CR-25, phone grid for `MetricsStrip`), `ui/IndexTable.module.css` (CR-50), `ui/Badge.module.css` (R3-01, one word).

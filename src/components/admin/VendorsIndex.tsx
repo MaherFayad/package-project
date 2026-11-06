@@ -164,7 +164,7 @@ export function VendorsIndex({
             {appRows.map((a) => (
               <IndexTableRow key={a.id} id={a.id}>
                 <IndexTableCell>
-                  <IndexTableRowLink url={`/${locale}/admin/vendors/applications/${a.id}`}>{a.legalName}</IndexTableRowLink>
+                  <IndexTableRowLink url={`/${locale}/admin/vendors/applications/${a.id}`}><bdi>{a.legalName}</bdi></IndexTableRowLink>
                 </IndexTableCell>
                 <IndexTableCell>{t(`cities.${a.factoryCity}` as DictKey)}</IndexTableCell>
                 <IndexTableCell>

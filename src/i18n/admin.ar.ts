@@ -26,6 +26,7 @@ export const adminAr: Widen<typeof adminEn> = {
     signOut: "تسجيل الخروج",
   },
   common: {
+    actionsColumn: "الإجراءات",
     save: "حفظ",
     saving: "جار الحفظ…",
     discard: "تجاهل",
@@ -127,6 +128,16 @@ export const adminAr: Widen<typeof adminEn> = {
     gmvChart: { title: "إجمالي المبيعات عبر الوقت", caption: "إجمالي المبيعات لكل فترة", period: "بداية الفترة", value: "إجمالي المبيعات" },
     marginChart: { title: "الهامش عبر الوقت", caption: "الهامش لكل فترة", value: "الهامش" },
     ops: { title: "التشغيل", metric: "المؤشر", value: "القيمة", definitions: "التعريفات" },
+    health: {
+      title: "الاحتفاظ والتوريد",
+      repeat: "المشترون المتكررون خلال 90 يوما",
+      repeatHelp: "من المشترين الذين مضى على أول طلب لهم 90 يوما على الأقل، نسبة من طلبوا مرة أخرى خلال 90 يوما. المستهدف في الخطة: 40% أو أكثر.",
+      repeatSub: "المشترون المتكررون: {repeaters} من {cohort}",
+      repeatEmpty: "لم يمض على أول طلب لأي مشتر 90 يوما بعد.",
+      acceptance: "قبول المطابع",
+      acceptanceHelp: "الطلبات التي قبلتها المطابع من الطلبات التي قبلتها أو رفضتها خلال الفترة المحددة.",
+      acceptanceSub: "المقبولة: {accepted} · المرفوضة: {declined}",
+    },
     tasks: {
       title: "المهام",
       qc: "طلبات بانتظار مراجعة الجودة",
@@ -384,6 +395,7 @@ export const adminAr: Widen<typeof adminEn> = {
       },
     },
     decision: {
+      approveBlocked: "يتاح الاعتماد بعد إتمام الفحوص المطلوبة. المتبقي: {count}.",
       title: "القرار",
       startReview: "بدء المراجعة",
       approve: "اعتماد المطبعة",
@@ -454,6 +466,7 @@ export const adminAr: Widen<typeof adminEn> = {
       current: "ساري منذ {date}: معامل الصرف × {fx}",
       fx: "معامل الصرف",
       board: "معامل الكرتون لكل خامة",
+      multiplierHelp: "معامل الضرب: 1 بلا تغيير، و1.05 تعني زيادة 5%.",
       effectiveFrom: "يسري من",
       note: "ملاحظة",
       bump: "تغيير كل الخامات بنسبة (%)",

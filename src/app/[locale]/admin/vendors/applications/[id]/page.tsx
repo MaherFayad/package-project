@@ -1,3 +1,4 @@
+import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
@@ -7,6 +8,7 @@ import { ApplicationStatusBadge } from "@/components/admin/VendorsIndex";
 import { adminStyles } from "@/components/admin/charts";
 import { loadApplication } from "@/components/admin/server/queries";
 import { decodeReviewNote } from "@/components/admin/lib/ops";
+import { isolate } from "@/components/admin/lib/bidi";
 import { getT, toLocale, type DictKey } from "@/i18n";
 import { fromJson } from "@/lib/json";
 import { formatDate, formatDateTime } from "@/lib/format";
@@ -15,8 +17,10 @@ import type { VendorApplicationDocument } from "@/types";
 type Params = Promise<{ locale: string; id: string }>;
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
-  const t = getT(toLocale((await params).locale));
-  return { title: `${t("admin.vendors.tabs.applications")} · ${t("admin.title")}` };
+  const { locale, id } = await params;
+  const t = getT(toLocale(locale));
+  const a = /^[\w-]{1,40}$/.test(id) ? await db.vendorApplication.findUnique({ where: { id }, select: { legalName: true } }) : null;
+  return { title: `${a ? `${a.legalName} · ` : ""}${t("admin.vendors.tabs.applications")} · ${t("admin.title")}` };
 }
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
@@ -43,7 +47,7 @@ export default async function AdminApplicationPage({ params }: { params: Params 
 
   return (
     <Page
-      title={t("admin.application.title", { name: app.legalName })}
+      title={t("admin.application.title", { name: isolate(app.legalName) })}
       titleMetadata={<ApplicationStatusBadge status={app.status} />}
       subtitle={`${t("admin.application.submitted", { date: formatDateTime(app.createdAt, locale) })}${app.reviewedAt ? ` · ${t("admin.application.decision.decided", { date: formatDate(app.reviewedAt, locale, "medium") })}` : ""}`}
       backAction={{ content: t("admin.application.back"), url: `${base}/vendors?tab=applications` }}
@@ -53,7 +57,7 @@ export default async function AdminApplicationPage({ params }: { params: Params 
           <BlockStack gap="400">
             <Card title={t("admin.application.company")}>
               <BlockStack as="dl" gap="300" className={adminStyles.PlainList}>
-                  <Field label={t("admin.application.fields.legalName")}>{app.legalName}</Field>
+                  <Field label={t("admin.application.fields.legalName")}><bdi>{app.legalName}</bdi></Field>
                   <Field label={t("admin.application.fields.commercialRegister")}>
                     <bdi dir="ltr">{app.commercialRegisterNo}</bdi>
                   </Field>
@@ -89,7 +93,7 @@ export default async function AdminApplicationPage({ params }: { params: Params 
             {app.message ? (
               <Card title={t("admin.application.message")}>
                 <Text as="p">
-                  <span className={adminStyles.PreWrap}>{app.message}</span>
+                  <span className={adminStyles.PreWrap} dir="auto">{app.message}</span>
                 </Text>
               </Card>
             ) : null}
@@ -106,7 +110,7 @@ export default async function AdminApplicationPage({ params }: { params: Params 
                   </Field>
                   {applicant ? (
                     <Field label={t("admin.application.fields.applicant")}>
-                      <Link url={`${base}/users/${applicant.id}`}>{applicant.name ?? applicant.phone}</Link>
+                      <Link url={`${base}/users/${applicant.id}`}><bdi>{applicant.name ?? applicant.phone}</bdi></Link>
                     </Field>
                   ) : null}
               </BlockStack>
