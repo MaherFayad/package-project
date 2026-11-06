@@ -107,12 +107,17 @@ test("home → design → gate → price → checkout → pay → vendor → QC 
   await vp.getByRole("button", { name: "Start production" }).first().click();
   await expect(vp.getByText("In production").first()).toBeVisible({ timeout: 30_000 });
   const qc = vp.locator("#qc");
+  // Scope to the uploaded-photo list: the required-photos checklist in the same card names both kinds
+  // too, so an unscoped list-item match passed before the upload finished (race under load).
+  const photos = qc.getByRole("list", { name: "Quality check photos" });
   await qc.locator('input[type="file"]').setInputFiles({ name: "sheet.png", mimeType: "image/png", buffer: PNG });
-  await expect(qc.getByRole("listitem").filter({ hasText: "First printed sheet" })).toBeVisible({ timeout: 30_000 });
+  await expect(photos.getByRole("listitem").filter({ hasText: "First printed sheet" })).toBeVisible({ timeout: 30_000 });
   await qc.getByLabel("Photo type").selectOption("PACKED_BUNDLE");
   await qc.locator('input[type="file"]').setInputFiles({ name: "bundle.png", mimeType: "image/png", buffer: PNG });
-  await expect(qc.getByRole("listitem").filter({ hasText: "Packed bundle" })).toBeVisible({ timeout: 30_000 });
-  await qc.getByRole("button", { name: "Submit for quality check" }).click();
+  await expect(photos.getByRole("listitem").filter({ hasText: "Packed bundle" })).toBeVisible({ timeout: 30_000 });
+  const submitQc = qc.getByRole("button", { name: "Submit for quality check" });
+  await expect(submitQc).toBeEnabled({ timeout: 30_000 });
+  await submitQc.click();
   await expect(vp.getByText("Quality check in progress")).toBeVisible({ timeout: 30_000 });
   await vendorCtx.close();
 
