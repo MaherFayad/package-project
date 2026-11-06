@@ -245,7 +245,6 @@ const COSMETIC: VesselModelDef[] = COS.DEFINITIONS.filter((d) => d.geometry !== 
     core: isCoreClosure(c) && coreDef.closures.includes(c) ? c : coreDef.defaultClosure,
     ...(COS_CLOSURE_STYLE[c] ? { closureStyle: COS_CLOSURE_STYLE[c] } : {}),
   }));
-  const surfaces = def.surfaces.filter(isSurface);
   const can = def.family === "CAN";
   return {
     kind: "vessel",
@@ -267,10 +266,11 @@ const COSMETIC: VesselModelDef[] = COS.DEFINITIONS.filter((d) => d.geometry !== 
     defaultContainer: def.defaultMaterial,
     closures,
     defaultClosure: def.defaultClosure,
-    surfaces: surfaces.length ? surfaces : ["WRAP"],
-    defaultSurfaces: def.defaultSurfaces.filter(isSurface).length ? def.defaultSurfaces.filter(isSurface) : [surfaces[0] ?? "WRAP"],
+    // E-02 / E-03: catalogue print surfaces mapped to renderable ones, and a per-model liquid.
+    surfaces: COS.displaySurfaces(def).surfaces,
+    defaultSurfaces: COS.displaySurfaces(def).defaultSurfaces,
     fillable: def.fillable,
-    defaultLiquid: can ? "COLA" : def.family === "PHARMA" ? "SERUM" : "CREAM",
+    defaultLiquid: COS.displayLiquid(def),
     pricing: def.geometry === "tube" ? "TUBE" : "LABEL",
     describe(dims, wanted, presetId) {
       const d = COS.clampCatalogueDims(def, dims);
@@ -317,7 +317,8 @@ const FLEXIBLE: VesselModelDef[] = FLEX.DEFINITIONS.map((def) => {
     closures: [],
     defaultClosure: "",
     surfaces: panels,
-    defaultSurfaces: panels.filter((p) => p === "front" || p === "back" || p === "sleeve").length ? panels.filter((p) => p === "front" || p === "back" || p === "sleeve") : panels.slice(0, 1),
+    // E-07: every printable panel is on by default.
+    defaultSurfaces: FLEX.defaultPrintPanels(def.code),
     fillable: false,
     defaultLiquid: "WATER",
     pricing: "POUCH",
@@ -338,8 +339,7 @@ const FLEXIBLE: VesselModelDef[] = FLEX.DEFINITIONS.map((def) => {
           trimAreaM2: p.trimAreaM2,
           panel: p.id,
         }));
-      const G = cfg.dims.G ?? 0;
-      return { profile: null, areas, envelope: { width: cfg.dims.W, depth: Math.max(G, 30), height: cfg.dims.H }, flex: cfg } satisfies VesselDescription;
+      return { profile: null, areas, envelope: FLEX.flexDisplayEnvelope(cfg), flex: cfg } satisfies VesselDescription;
     },
   } satisfies VesselModelDef;
 });
