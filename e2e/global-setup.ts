@@ -47,9 +47,28 @@ async function waitForServer(base: string, timeoutMs = 120_000) {
   }
 }
 
+/**
+ * Fail fast when the server cannot sign anyone in (E-11). A server started without SESSION_SECRET,
+ * or without OTP_DEV_ECHO=1 under `next start`, used to surface as 30 s timeouts in every OTP spec
+ * (checkout, designer, journey) with no hint of the cause. One request for a throwaway phone; its
+ * OTP row is deleted again.
+ */
+async function assertCanSignIn(base: string) {
+  const phone = `+2015${String(Math.floor(Math.random() * 1e8)).padStart(8, "0")}`;
+  try {
+    const r = await fetch(`${base}/api/auth/request-otp`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ phone }) });
+    const body = (await r.json().catch(() => ({}))) as { devCode?: string; error?: string };
+    if (r.status >= 500) throw new Error(`[e2e] the server cannot sign in (request-otp ${r.status}). Is SESSION_SECRET set for the server under test?`);
+    if (r.ok && !body.devCode) throw new Error("[e2e] request-otp returned no devCode: start the server with OTP_DEV_ECHO=1 (and ALLOW_MOCK_PAYMENTS=1).");
+  } finally {
+    await db.otpCode.deleteMany({ where: { phone } }).catch(() => undefined);
+  }
+}
+
 export default async function globalSetup(config: FullConfig) {
   const base = config.projects[0]?.use.baseURL ?? `http://localhost:${process.env.E2E_PORT ?? 3100}`;
   await waitForServer(base);
+  await assertCanSignIn(base);
   const started = Date.now();
   const tokens: string[] = [];
   try {
