@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CatmullRomCurve3, Matrix4, MeshStandardMaterial, TubeGeometry, Vector3 } from "three";
 import type { Dims, MaterialCode } from "@/types";
-import { BOARD_SPECS, boundsAt, type BoardAppearance, type DielineModel } from "@/lib/dieline";
+import { BOARD_SPECS, boundsAt, computePoses, type BoardAppearance, type DielineModel } from "@/lib/dieline";
 import { modelByCode } from "@/lib/library/registry";
 import { useLibraryModel } from "@/lib/library/useLibraryModel";
 import { docGeometry } from "@/lib/library/doc";
@@ -129,7 +129,9 @@ function FittingView({ code, host: hostDims, onReady }: { code: string; host?: D
     // placement (closed fitting -> host inner space), then move to the host's inner corner.
     const fb = boundsAt(fitting, 1);
     const fc = fb.getCenter(new Vector3());
-    const innerMin = { x: -host.L / 2, y: t, z: -host.W / 2 };
+    // R5-3Q-E-06: the floor is the top of the host's bottom flaps (inner flaps of a 0200 reach 2t),
+    // not t: pads seated at t z-fought the inner flap layer in stripes.
+    const innerMin = { x: -host.L / 2, y: hostFloorY(hostModel, t), z: -host.W / 2 };
     const mm = new Matrix4()
       .makeTranslation(innerMin.x, innerMin.y, innerMin.z)
       .multiply(new Matrix4().fromArray(fitting.placement.matrix))
@@ -146,6 +148,23 @@ function FittingView({ code, host: hostDims, onReady }: { code: string; host?: D
       </PackagingScene>
     </div>
   );
+}
+
+/**
+ * Inner floor height of a closed host above its resting plane: the highest top of its horizontal
+ * panels in the lower half (the bottom flaps), at least one board thickness.
+ */
+function hostFloorY(host: DielineModel, t: number): number {
+  const poses = computePoses(host, 1);
+  const all = boundsAt(host, 1, poses);
+  const mid = (all.min.y + all.max.y) / 2;
+  let floor = all.min.y + t;
+  for (const panel of host.panels) {
+    const b = boundsAt({ ...host, panels: [panel] }, 1, poses);
+    if (b.isEmpty() || b.max.y - b.min.y > 3 * t || b.max.y > mid) continue;
+    floor = Math.max(floor, b.max.y);
+  }
+  return floor - all.min.y;
 }
 
 /** Fittings read against the kraft host in a lighter liner. */

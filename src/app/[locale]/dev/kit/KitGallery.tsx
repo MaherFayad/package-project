@@ -300,7 +300,7 @@ export function KitGallery({ locale }: { locale: Locale }) {
 
       <Sheet tone="violet" aria-label="Glow and Orbit">
         <Spec name="Glow / Orbit / MotionScope" api='<Glow color="violet|green|navy|white" x y size breathe /> · <Orbit hub nodes={[{ label, icon }]} label="…" />' />
-        <MotionScope>
+        <MotionScope global>
           <Glow color="white" x="30%" y="40%" size="40vmax" breathe />
           <Orbit
             label={c.orbit}
@@ -311,6 +311,9 @@ export function KitGallery({ locale }: { locale: Locale }) {
       </Sheet>
 
       <Sheet tone="green" aria-label="CountUp">
+        {/* A page-local decorative loop (gallery CSS, not kit): registers with data-mk-motion, so the
+            violet section's <MotionScope global> pauses it and reduced motion stops it. */}
+        <span className={g.pulseDot} data-mk-motion="" data-testid="page-loop" aria-hidden="true" />
         <Spec name="CountUp / Stat" api='<Stat value={370} suffix="+" label="…" /> · <CountUp value prefix suffix decimals />' />
         <div className={g.stats}>
           {c.stats.map(([label, value, suffix]) => (

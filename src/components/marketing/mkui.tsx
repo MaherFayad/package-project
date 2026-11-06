@@ -1,7 +1,9 @@
 import type { ComponentType, ReactNode } from "react";
-import styles from "./marketing.module.css";
+import styles from "./restyle/restyle.module.css";
+import dt from "./restyle/detail.module.css";
 
 /**
+ * R6: styled from restyle/restyle.module.css (grey 24 px tiles, light display weights).
  * Marketing-native stand-ins for the few admin-kit primitives the public structure, size and
  * printer pages used below their hero (Card, Text, Badge, Icon, Layout). Same props subset, so
  * the page code reads the same, but styled from marketing.module.css only (R4-MK-03): no Polaris
@@ -11,11 +13,11 @@ import styles from "./marketing.module.css";
 
 type Tone = "subdued" | "success" | "info" | "critical" | undefined;
 
-export function Card({ title, as = "div", children }: { title?: ReactNode; as?: "div" | "section"; children: ReactNode }) {
+export function Card({ title, as = "div", tone, children }: { title?: ReactNode; as?: "div" | "section"; tone?: "dark"; children: ReactNode }) {
   const Tag = as;
   return (
-    <Tag className={styles.panel}>
-      {title ? <h2 className={styles.panelTitle}>{title}</h2> : null}
+    <Tag className={tone === "dark" ? `${dt.tile} ${dt.tileDark}` : dt.tile}>
+      {title ? <h2 className={dt.tileTitle}>{title}</h2> : null}
       {children}
     </Tag>
   );
@@ -40,12 +42,12 @@ export function Text({
 }) {
   const Tag = as;
   const cls = [
-    styles.mkText,
-    variant === "bodySm" ? styles.mkTextSm : "",
-    variant === "headingSm" ? styles.mkHeadingSm : "",
-    variant === "headingMd" ? styles.mkHeadingMd : "",
-    tone === "subdued" ? styles.mkMuted : "",
-    fontWeight ? styles.mkStrong : "",
+    dt.text,
+    variant === "bodySm" ? dt.textSm : "",
+    variant === "headingSm" ? dt.headingSm : "",
+    variant === "headingMd" ? dt.headingMd : "",
+    tone === "subdued" ? styles.muted : "",
+    fontWeight ? dt.strong : "",
     numeric ? styles.num : "",
   ]
     .filter(Boolean)
@@ -58,9 +60,9 @@ export function Text({
 }
 
 export function Badge({ tone, icon, children }: { tone?: "success" | "info"; icon?: ReactNode; progress?: string; children: ReactNode }) {
-  const t = tone === "success" ? styles.tagSuccess : tone === "info" ? styles.tagInfo : "";
+  const t = tone === "success" ? dt.tagSuccess : tone === "info" ? dt.tagInfo : "";
   return (
-    <span className={`${styles.tag} ${t}`}>
+    <span className={`${dt.tag} ${t}`}>
       {icon}
       {children}
     </span>
@@ -72,7 +74,7 @@ export function Icon({ source: I, size }: { source: ComponentType<{ size?: numbe
 }
 
 export function Layout({ children }: { children: ReactNode }) {
-  return <div className={styles.detailLayout}>{children}</div>;
+  return <div className={dt.withAside}>{children}</div>;
 }
 
 export function LayoutSection({
@@ -88,7 +90,7 @@ export function LayoutSection({
 }) {
   const Tag = as;
   return (
-    <Tag className={variant === "oneThird" ? styles.detailSide : styles.detailMain} {...rest}>
+    <Tag className={variant === "oneThird" ? `${dt.stack} ${dt.aside}` : dt.stack} {...rest}>
       {children}
     </Tag>
   );

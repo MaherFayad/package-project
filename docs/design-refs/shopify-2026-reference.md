@@ -104,7 +104,7 @@ Page skeleton:
 | `SheetCard` | `tone = "green"`, `as`, `className` | Rounded 32px band inside the container (the reference's green feature card). |
 | `Container` | `size = "default"` (1260 content box), `"narrow"` (880), `"wide"` (1440), `"full"`; `as` | Gutter 16 phone, 32 tablet, `max(24px, (100vw - 1260px) / 2)` desktop (90 at 1440). |
 | `Display` (alias `Heading`) | `as = "h2"`, `size: "hero" \| "96" \| "64" \| "56" \| "44" \| "20"` (default 64), `align: "start" \| "center"`, `id` | Weights 300 (hero, 96), 330 (64/56/44), 450 (20). Arabic: no tracking, line height 1.25. |
-| `Eyebrow`, `Lead`, `Body` | `children`, `align` (Lead) | Eyebrow is green on dark, deep green on light, lilac on violet. |
+| `Eyebrow`, `Lead`, `Body` | `children`, `align` (Lead) | Eyebrow is green on dark, deep green on light, white on violet. Inside a violet Sheet all text, muted text included, is solid white (5.15:1 on #6a4cff; 70% white was 3.32:1, R6-AX-14). |
 | `Pill` | `href?` (Link) or button props; `variant = "light" \| "outline" \| "tint" \| "dark" \| "outline-dark" \| "ghost"`; `size = "md"` (44px) `\| "sm"` (40) `\| "lg"` (56) | light/outline on dark, tint on violet, dark/outline-dark on light sheets. |
 | `PillRow` | `align = "start" \| "center"` | 40px top margin, 12px gap. |
 | `IconPill` | button props + required `aria-label` | 44px round (pause/play, arrows). |
@@ -118,7 +118,7 @@ Page skeleton:
 | `Ticker` (client) | `words: string[]`, `label`, `duration = 30`, `reverse` | Big 64px words with green dot separators, on Marquee (pause button included). |
 | `CardFan` | `cards: { media, label? }[]`, `width = 240`, `tilt = 6`, `height = 520`, `aria-label` | Arc that rises into place once; straightens on hover/focus; phones: snap row. Label sample brands as samples. |
 | `Glow` | `color = "violet" \| "green" \| "navy" \| "white"`, `x`, `y`, `size = "60vmax"`, `blur = 40`, `breathe = false` | CSS only, aria-hidden, inside any Sheet. `breathe` (8s loop) needs a `MotionScope` around the section. |
-| `MotionScope` (client) | `children`, `pauseLabel?`, `playLabel?`, `buttonClassName?` | Pause/play button for every CSS animation inside (WCAG 2.2.2); hidden under reduced motion. |
+| `MotionScope` (client) | `children`, `global = false`, `pauseLabel?`, `playLabel?`, `buttonClassName?` | Pause/play button for every CSS animation inside (WCAG 2.2.2); hidden under reduced motion. **Page-local loops** (your own keyframes) must carry `data-mk-motion` on the animated element or an ancestor: inside a scope they pause with it; anywhere else they pause when a `<MotionScope global>` on the page is paused (`html[data-mk-motion-paused]`); under reduced motion the kit sets `animation: none` on them. A page with loops outside every scope renders one `<MotionScope global>`. |
 | `Orbit` | `hub`, `nodes: { label, icon? }[]`, `label`, `duration = 80`, `size = 560` | Ring turns, nodes stay upright; list semantics; pause button built in. |
 | `CountUp` / `Stat` (client) | `value`, `prefix`, `suffix`, `decimals = 0`, `duration = 1400`; `Stat` adds `label` | Server HTML holds the final value; counts once on enter; screen readers get the final value; Western digits. Real Elba numbers only. |
 | `Steps` (client) | `items: { title, body?, media }[]`, `interval = 6000` (0 = manual), `label` | 01/02/03 ARIA tabs with progress underline and media swap; auto-advance with pause button; holds on hover/focus; manual under reduced motion. |

@@ -17,16 +17,27 @@ import { expect, test, type Page } from "@playwright/test";
  */
 
 const WIDTHS = [1440, 1024, 768, 390] as const;
-const PAGES = ["", "/start", "/why-elba", "/pricing", "/designer", "/boxes", "/catalog", "/vendors"] as const;
-
-/** Pages that do not use the section-7 tokens yet (page owners: delete your entry once it passes). */
-const NOT_YET = new Set<string>([
-  // designer: three section heads overlap their CTA by -44px (rule 4); bands set pad="none" with page padding.
+const PAGES = [
+  "",
+  "/start",
+  "/why-elba",
+  "/pricing",
   "/designer",
-  // Legacy pages, not built from kit Sheets and Containers yet.
   "/boxes",
   "/catalog",
   "/vendors",
+  // R6 restyle pages (owner: restyle session).
+  "/boxes/mailer-box",
+  "/boxes/mailer-box/250x180x80",
+  "/catalog/bakery-box",
+  "/bottles",
+  "/vendors/nile-pack",
+  "/legal/privacy",
+  "/login",
+] as const;
+
+/** Pages that do not use the section-7 tokens yet (page owners: delete your entry once it passes). */
+const NOT_YET = new Set<string>([
 ]);
 
 type Bp = "desktop" | "tablet" | "phone";

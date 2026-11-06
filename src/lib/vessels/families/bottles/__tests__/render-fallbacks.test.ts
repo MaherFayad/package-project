@@ -28,10 +28,13 @@ describe("3D render fallbacks", () => {
       for (const opt of model.closures) {
         if (!(styled as readonly string[]).includes(opt.code)) continue;
         if (opt.code === "ROPP_CAP" && (DEFINITIONS.find((d) => d.code === model.code)!.finishes as string[]).includes("BVS_30H60")) {
-          // wine Stelvin (BVS 30H60): the tall metal shell over finishH, not the 18 mm ROPP style
-          expect(opt.core, `${model.code}/${opt.code}`).toBe("LUG_LID");
-          expect(opt.closureStyle, `${model.code}/${opt.code}`).toBeUndefined();
-          continue;
+          // wine Stelvin (BVS 30H60): the ROPP style now draws its shell over the whole finishH
+          // (R5-3Q-F-02), so wine bottles take the style like any ROPP
+          const built = buildClosure(model.coreKind as VesselKind, opt.core as ClosureKind, preset.dims, profile, opt.closureStyle as ClosureStyle);
+          const ys = built.parts[0].geometry.getAttribute("position");
+          let minY = Infinity;
+          for (let i = 0; i < ys.count; i++) minY = Math.min(minY, ys.getY(i));
+          expect(profile.finishTopY - minY, `${model.code} Stelvin skirt`).toBeGreaterThanOrEqual(profile.finishH - 0.5);
         }
         expect(opt.closureStyle, `${model.code}/${opt.code}`).toBeTruthy();
         const withStyle = buildClosure(model.coreKind as VesselKind, opt.core as ClosureKind, preset.dims, profile, opt.closureStyle as ClosureStyle);
@@ -42,6 +45,40 @@ describe("3D render fallbacks", () => {
       }
     }
     expect(checked).toBeGreaterThanOrEqual(14);
+  });
+
+  it("draws every R6 closure style (swing top, measuring cup, flip-top, CR, TE, bar top) as its own part, not the plain screw cap", () => {
+    // R5-3Q-F-06 … F-11: these all collapsed onto the core screw / lug cap
+    const styled = ["SWING_TOP", "MEASURE_CAP", "FLIP_TOP", "CHILD_RESISTANT_CAP", "BAR_TOP", "SCREW_CAP_TE", "VENTED_SCREW_CAP"];
+    const count = (m: ReturnType<typeof buildClosure>) => m.parts.reduce((n, p) => n + p.geometry.getAttribute("position").count, 0);
+    const seen = new Set<string>();
+    for (const model of PACK) {
+      const preset = model.presets.find((p) => p.id === model.defaultPresetId)!;
+      for (const opt of model.closures) {
+        if (!styled.includes(opt.code)) continue;
+        const profile = (model.describe as (...a: unknown[]) => ReturnType<typeof model.describe>)(preset.dims, [], preset.id, undefined, undefined, opt.code).profile!;
+        expect(opt.core, `${model.code}/${opt.code}`).toBe("SCREW_CAP");
+        expect(opt.closureStyle, `${model.code}/${opt.code}`).toBeTruthy();
+        const withStyle = buildClosure(model.coreKind as VesselKind, "SCREW_CAP", preset.dims, profile, opt.closureStyle as ClosureStyle);
+        const plain = buildClosure(model.coreKind as VesselKind, "SCREW_CAP", preset.dims, profile, null);
+        expect(count(withStyle), `${model.code}/${opt.code} draws its style`).not.toBe(count(plain));
+        for (const p of withStyle.parts) expect(Array.from(p.geometry.getAttribute("position").array as Float32Array).every(Number.isFinite), `${model.code}/${opt.code}`).toBe(true);
+        seen.add(opt.code);
+      }
+    }
+    expect([...seen].sort()).toEqual([...styled].sort());
+  });
+
+  it("puts the neck finish the closure needs on the bottle (crown bead for a crown, swing bead for a swing top)", () => {
+    // R5-3Q-F-12
+    const water = PACK.find((m) => m.code === "BTL_GLASS_WATER")!;
+    const preset = water.presets.find((p) => p.id === water.defaultPresetId)!;
+    const fin = (closure: string) => (water.describe as (...a: unknown[]) => { profile: { finish?: { id?: string }; finishH: number; finishR: number } })(preset.dims, [], preset.id, undefined, undefined, closure).profile;
+    const ropp = fin("ROPP_CAP");
+    const crown = fin("CROWN_26");
+    const swing = fin("SWING_TOP");
+    expect(crown.finishR).not.toBe(ropp.finishR);
+    expect(swing.finishH).not.toBe(ropp.finishH);
   });
 
   it("never renders a container in a different colour family", () => {

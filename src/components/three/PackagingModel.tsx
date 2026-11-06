@@ -2,7 +2,7 @@
 
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useLayoutEffect, useMemo, useRef, type ReactElement } from "react";
-import { Color, DoubleSide, MeshBasicMaterial, MeshPhysicalMaterial, Vector3, type BufferGeometry, type Group, type Texture } from "three";
+import { Color, DoubleSide, MeshBasicMaterial, MeshPhysicalMaterial, Vector3, type BufferGeometry, type Group, type Material, type Texture } from "three";
 import type { FinishCode, MaterialCode } from "@/types";
 import { boardAppearance, boundsAt, computePoses, rootIds, type BoardAppearance, type DielineModel, type DielinePanel, type Segment } from "@/lib/dieline";
 import { createBoardMaterials, type BoardMaterialSet } from "./boardMaterials";
@@ -157,6 +157,18 @@ export function PackagingModel({
     const c = box.getCenter(new Vector3());
     centre.current?.position.set(-c.x, -box.min.y, -c.z);
     if (accessoryGroup.current) accessoryGroup.current.visible = progress > 0.995;
+    // TK-04: through a window the closed carton's cavity is in its own shade. The renderer lights
+    // the inside like the outside (no occlusion), so the window read as an opaque light patch:
+    // dim the inside board as a windowed box closes (open / flat it is lit as before).
+    if (dieline.films?.length) {
+      const inside = materials.list[1] as Material & { color?: Color; userData: { baseColor?: Color; cavity?: number } };
+      if (inside.color) {
+        inside.userData.baseColor ??= inside.color.clone();
+        const k = Math.min(1, Math.max(0, (progress - 0.8) / 0.2));
+        inside.userData.cavity = 1 - 0.42 * k * k * (3 - 2 * k);
+        inside.color.copy(inside.userData.baseColor).multiplyScalar(inside.userData.cavity);
+      }
+    }
     applied.current = { model: dieline, p };
   };
 

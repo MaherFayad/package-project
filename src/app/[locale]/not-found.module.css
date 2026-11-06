@@ -1,73 +1,146 @@
 /*
- * Locale-level 404 (areas with their own chrome: designer, vendor portal, admin, checkout, dev).
- * Its own small sheet on purpose (R4-09): Next pre-renders every layout's not-found element with its
- * styles into each page's RSC payload, so importing marketing.module.css here put 64 KB of marketing
- * CSS into every admin, vendor, checkout and editor page. Looks like the marketing 404 state.
+ * Locale-level 404 and error (areas with their own chrome: designer, vendor portal, admin,
+ * checkout, dev, sign-in errors). Its own small sheet on purpose (R4-09): Next pre-renders every
+ * layout's not-found element with its styles into each page's RSC payload, so importing the
+ * marketing sheets here would put them into every admin, vendor, checkout and editor page.
+ * Same look as the marketing 404 (R6 restyle, restyle/LostState): dark page, teal and navy glow,
+ * code and title at the start, three large links with round arrow buttons at the end.
  */
 .site {
-  --ink: #0b0b0b;
   --gutter: 16px;
   min-block-size: 100dvh;
   display: flex;
   flex-direction: column;
-  background: #ffffff;
-  color: #303030;
+  background: #02090a;
+  color: #ffffff;
   font-size: 1rem;
   line-height: 1.5;
 }
 @media (min-width: 768px) {
-  .site { --gutter: 32px; }
+  .site {
+    --gutter: 32px;
+  }
 }
-.main { flex: 1; outline: none; }
+@media (min-width: 1200px) {
+  .site {
+    --gutter: 40px;
+  }
+}
+.main {
+  flex: 1;
+  outline: none;
+  display: flex;
+}
 .hero {
-  min-block-size: 60dvh;
-  padding: clamp(72px, 10vw, 140px) var(--gutter);
-  text-align: center;
+  flex: 1;
+  display: grid;
+  align-items: center;
+  padding: clamp(48px, 6vw, 112px) var(--gutter);
   background:
-    radial-gradient(900px 480px at 85% 0%, rgba(201, 240, 218, 0.7), rgba(201, 240, 218, 0) 70%),
-    linear-gradient(180deg, #e6f7ee 0%, #ffffff 100%);
+    radial-gradient(
+      70% 80% at 85% 100%,
+      rgba(0, 120, 120, 0.42),
+      transparent 70%
+    ),
+    radial-gradient(
+      60% 70% at 10% 110%,
+      rgba(30, 50, 160, 0.4),
+      transparent 70%
+    ),
+    #02090a;
 }
-.inner { max-inline-size: 880px; margin-inline: auto; }
+.inner {
+  inline-size: 100%;
+  max-inline-size: 1280px;
+  margin-inline: auto;
+  display: grid;
+  gap: 48px;
+  align-items: start;
+}
+@media (min-width: 1024px) {
+  .inner {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 96px;
+  }
+}
+.code {
+  display: block;
+  margin-block-end: 8px;
+  font-size: clamp(2rem, 1.6rem + 1.4vw, 2.75rem);
+  font-weight: 330;
+  line-height: 1.1;
+}
 .title {
-  font-size: clamp(2rem, 1.3rem + 2.8vw, 3.25rem);
+  margin: 0;
+  font-size: clamp(2.5rem, 1.6rem + 3.2vw, 4rem);
   line-height: 1.08;
-  letter-spacing: -0.025em;
-  font-weight: 680;
-  color: var(--ink);
+  letter-spacing: -0.02em;
+  font-weight: 330;
   text-wrap: balance;
 }
-.title:lang(ar) { line-height: 1.35; font-weight: 700; letter-spacing: 0; }
+.title:lang(ar) {
+  line-height: 1.28;
+  font-weight: 400;
+  letter-spacing: 0;
+}
 .lead {
   max-inline-size: 38em;
-  margin: 20px auto 0;
-  font-size: clamp(1.125rem, 1rem + 0.4vw, 1.3125rem);
-  color: #4a4a4a;
+  margin: 20px 0 0;
+  font-size: 1.25rem; /* 20px, as the reference 404 */
+  line-height: 1.45;
+  color: #bbc7d8;
   text-wrap: pretty;
 }
-.actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-block-start: 32px; }
-.pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-block-size: 52px; /* WCAG 2.5.8 */
-  padding: 12px 28px;
-  border-radius: 999px;
-  border: 1.5px solid var(--ink);
-  background: var(--ink);
-  color: #ffffff;
-  font-size: 1.0625rem;
-  font-weight: 650;
-  line-height: 1.2;
-  text-decoration: none;
-  white-space: nowrap;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background-color var(--p-motion-duration-150, 150ms) var(--p-motion-ease-out, ease-out);
+.links {
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
-.pill:hover, .pill:focus-visible { background: #2b2b2b; border-color: #2b2b2b; color: #ffffff; }
-.outline { background: transparent; color: var(--ink); }
-.outline:hover, .outline:focus-visible { background: var(--ink); border-color: var(--ink); color: #ffffff; }
-.pill:focus-visible { outline: 2px solid var(--p-color-border-focus, #005bd3); outline-offset: 2px; }
-@media (max-width: 559px) {
-  .actions { flex-direction: column; align-items: stretch; }
+.links li + li {
+  border-block-start: 1px solid rgba(255, 255, 255, 0.16);
+}
+.link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  inline-size: 100%;
+  padding-block: 24px;
+  border: 0;
+  background: none;
+  color: #ffffff;
+  font: inherit;
+  font-size: clamp(1.5rem, 1.2rem + 1vw, 2rem);
+  font-weight: 330;
+  line-height: 1.25;
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+}
+.link:lang(ar) {
+  font-weight: 400;
+}
+.link:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+.arrow {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  inline-size: 44px; /* WCAG 2.5.8 */
+  block-size: 44px;
+  border: 1px solid #ffffff;
+  border-radius: 50%;
+  transition:
+    background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+:global([dir="rtl"]) .arrow svg {
+  transform: scaleX(-1);
+}
+.link:hover .arrow {
+  background: #ffffff;
+  color: #000000;
 }

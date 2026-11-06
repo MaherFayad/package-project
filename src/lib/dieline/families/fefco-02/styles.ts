@@ -560,10 +560,12 @@ function splitLength(code: "FEFCO_0228" | "FEFCO_0230", d: Dims, t: number, o: n
     flap(c, "left", end, minor);
     flap(c, "right", end, minor);
     flap(c, "front", end, major);
+    // The two half flaps butt at the seam (one knife cut, no slot): with a half slot on each the
+    // closed top showed a slot-wide kraft stripe from the back edge to the centre (R6-3Q-A).
     // Inner half: seam at its left edge (a-end of top/bottom edges).
-    flap(c, "back", end, major, { id: `${end}Flap_backA`, parentId: "backA", wallRect: walls.back });
+    flap(c, "back", end, major, { id: `${end}Flap_backA`, parentId: "backA", wallRect: walls.back, insetA: 0, insetB: c.slot / 2 });
     // Outer half: seam at its right edge (b-end); flap shortened by o there.
-    flap(c, "back", end, major, { id: `${end}Flap_backB`, parentId: "backB", wallRect: outer, insetA: c.slot / 2, insetB: o + c.slot / 2 });
+    flap(c, "back", end, major, { id: `${end}Flap_backB`, parentId: "backB", wallRect: outer, insetA: c.slot / 2, insetB: o });
   }
   return { c, outerId: "backB", innerId: "backA" };
 }

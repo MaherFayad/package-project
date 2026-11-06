@@ -86,7 +86,7 @@
   /* Inter first in both locales: it has no Arabic glyphs, so Arabic falls through to Noto, while
      digits and Latin words reuse Inter (preloaded) instead of fetching Noto's Latin subset. */
   --mk-font: var(--font-inter), var(--font-noto-arabic), "Noto Sans Arabic", -apple-system, "Segoe UI", Tahoma, sans-serif;
-  --mk-fs-hero: clamp(3.5rem, 1rem + 10.4vw, 11.25rem);  /* start-page giant 180 */
+  --mk-fs-hero: clamp(3.5rem, 0.621rem + 11.81vw, 11.25rem);  /* start-page giant: 56px at 390, 180px from 1440 (spec section 7) */
   /* Section 7 type steps: phone / tablet / desktop (set per breakpoint below). */
   --mk-fs-96: 3.5rem;                 /* h1 hero: 56 / 72 / 96 */
   --mk-fs-64: 2.25rem;                /* h2 page-closing: 36 / 48 / 64 */
@@ -189,4 +189,16 @@ html[data-mk-reduced][data-motion="on"] [data-reveal]:not([data-revealed]) {
 body:has([data-mk]) {
   --p-font-family-sans: var(--font-inter), var(--font-noto-arabic), "Segoe UI", Tahoma, sans-serif;
   font-family: var(--p-font-family-sans);
+}
+
+/* Page-local decorative loops register with data-mk-motion (on the element or an ancestor). A
+   MotionScope with `global` pauses every one of them on the page, wherever it sits (R6-AX-15). */
+html[data-mk-motion-paused] [data-mk-motion],
+html[data-mk-motion-paused] [data-mk-motion] *,
+html[data-mk-motion-paused] [data-mk-motion]::before,
+html[data-mk-motion-paused] [data-mk-motion]::after,
+html[data-mk-motion-paused] [data-mk-motion] *::before,
+html[data-mk-motion-paused] [data-mk-motion] *::after { animation-play-state: paused !important; }
+@media (prefers-reduced-motion: reduce) {
+  [data-mk-motion], [data-mk-motion] *, [data-mk-motion]::before, [data-mk-motion]::after, [data-mk-motion] *::before, [data-mk-motion] *::after { animation: none !important; }
 }

@@ -7,7 +7,17 @@ import { getLowestUnit, listStructures } from "@/components/store/data";
 import { HeroImage } from "./HeroImage";
 import { ProductCard } from "./ProductCard";
 import { renderDims, renderSrc, srcSetFor } from "./assets";
-import styles from "./marketing.module.css";
+import rs from "./restyle/restyle.module.css";
+import dt from "./restyle/detail.module.css";
+import { Sheet } from "./kit/Sheet";
+import { SAMPLE_LABEL } from "./kit/assets";
+import { Glow } from "./kit/Glow";
+import { Display, Eyebrow, Lead } from "./kit/Display";
+import { HeroTitle } from "./kit/HeroTitle";
+import { Pill, PillRow } from "./kit/Pill";
+import { Reveal } from "./kit/Reveal";
+import { SectionHead } from "./kit/SectionHead";
+import { Grid } from "./kit/Grid";
 import { MODELS } from "@/lib/library";
 import { formatNumber } from "@/lib/format";
 
@@ -34,135 +44,117 @@ export async function BoxesLanding({
   library?: ReactNode;
 }) {
   const t = getT(locale);
-  const H = titleAs;
   // The 0427 render in the hero showcase is the phone LCP. HeroImage preloads its AVIF from <head>
   // (R4-MK-06); a second webp preload here made the render download twice (PERF-R4-06 merge).
   const structures = await listStructures();
   const prices = new Map(await Promise.all(structures.map(async (s) => [s.code, await getLowestUnit(s.code, s.defaultDims)] as const)));
   const base = `/${locale}`;
   return (
-    <>
-      <section className={`${styles.centerHero} ${styles.bandMint}`} aria-labelledby="boxes-title">
-        <div className={styles.container}>
-          <span className={`${styles.eyebrow} m-enter`}>{t("marketing.boxes.eyebrow")}</span>
-          <H id="boxes-title" className={`${styles.h1} m-enter-lcp`} style={{ ["--m-i" as string]: 1 }}>
-            {t("marketing.boxes.title")}
-          </H>
-          <p className={`${styles.lead} m-enter-lcp`} style={{ ["--m-i" as string]: 2 }}>
-            {t("marketing.boxes.body")}
-          </p>
-          <div className={`${styles.actions} m-enter`} style={{ ["--m-i" as string]: 3 }}>
-            <Link href={`${base}/start`} className={`${styles.pill} ${styles.pillLarge}`}>
-              {t("marketing.boxes.primary")}
-            </Link>
-            <Link href={`${base}/vendors`} className={`${styles.pill} ${styles.pillOutline} ${styles.pillLarge}`}>
-              {t("marketing.boxes.secondary")}
-            </Link>
-          </div>
-          <p className={`${styles.already} m-enter`} style={{ ["--m-i" as string]: 4 }}>
-            {t("marketing.boxes.already")}{" "}
-            <Link href={`${base}/account`} className={styles.textLink}>
-              {t("marketing.boxes.alreadyLink")}
-            </Link>
-          </p>
-          <div className={`${styles.heroShowcase} m-enter-lcp`} style={{ ["--m-i" as string]: 4 }} aria-hidden="true">
-            {SHOWCASE.map((c) => (
-              <div key={c} className={styles.showcaseItem}>
-                {c === "FEFCO_0427" ? (
-                  <HeroImage src={renderSrc(c)} sizes="(min-width: 1024px) 260px, 34vw" alt="" {...renderDims(renderSrc(c))} />
-                ) : (
-                  // Side renders: low priority and no preload, so only the LCP render competes with the CSS (R4-MK-06).
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={renderSrc(c)} srcSet={srcSetFor(renderSrc(c))} sizes="(min-width: 1024px) 260px, 34vw" alt="" {...renderDims(renderSrc(c))} fetchPriority="low" decoding="async" />
-                )}
-              </div>
-            ))}
-          </div>
+    <div className={rs.page}>
+      <Sheet tone="dark" hero className={rs.heroLanding} aria-labelledby="boxes-title">
+        <Eyebrow className="m-enter">{t("marketing.boxes.eyebrow")}</Eyebrow>
+        <HeroTitle as={titleAs} size="96" align="center" id="boxes-title" text={t("marketing.boxes.title")} />
+        <Lead align="center" className="m-enter-lcp">
+          {t("marketing.boxes.body")}
+        </Lead>
+        <PillRow align="center" className="m-enter">
+          <Pill href={`${base}/start`} size="lg">
+            {t("marketing.boxes.primary")}
+          </Pill>
+          <Pill href={`${base}/vendors`} variant="outline" size="lg">
+            {t("marketing.boxes.secondary")}
+          </Pill>
+        </PillRow>
+        <p className={`${rs.small} ${rs.afterPills} m-enter`}>
+          {t("marketing.boxes.already")}{" "}
+          <Link href={`${base}/account`} className={rs.textLink}>
+            {t("marketing.boxes.alreadyLink")}
+          </Link>
+        </p>
+        <div className={`${dt.showcase} m-enter-lcp`} aria-hidden="true">
+          {SHOWCASE.map((c) => (
+            <div key={c} className={dt.showcaseItem}>
+              {c === "FEFCO_0427" ? (
+                <HeroImage src={renderSrc(c)} sizes="(min-width: 1024px) 260px, 34vw" alt="" {...renderDims(renderSrc(c))} />
+              ) : (
+                // Side renders: low priority and no preload, so only the LCP render competes with the CSS (R4-MK-06).
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={renderSrc(c)}
+                  srcSet={srcSetFor(renderSrc(c))}
+                  sizes="(min-width: 1024px) 260px, 34vw"
+                  alt=""
+                  {...renderDims(renderSrc(c))}
+                  fetchPriority="low"
+                  decoding="async"
+                />
+              )}
+            </div>
+          ))}
         </div>
-      </section>
+        <p className={`${rs.small} ${rs.sampleNote} ${rs.heroLandingNote}`}>{SAMPLE_LABEL[locale]}</p>
+      </Sheet>
 
-      <section className={styles.band} aria-label={t("marketing.boxes.eyebrow")}>
-        <div className={styles.container}>
-          {FAMILIES.map((family) => {
-            const list = structures.filter((s) => s.family === family);
-            if (!list.length) return null;
-            return (
-              <section key={family} id={family} className={styles.familyBlock} aria-labelledby={`fam-${family}`} style={{ scrollMarginBlockStart: 96 }}>
-                <div className={styles.sectionHeadRow} data-reveal="" suppressHydrationWarning>
-                  <div>
-                    <h2 id={`fam-${family}`} className={styles.h2}>
-                      {t(`marketing.boxes.family.${family}` as DictKey)}
-                    </h2>
-                    <p className={styles.lead}>{t(`marketing.boxes.familyBody.${family}` as DictKey)}</p>
-                  </div>
-                  <span className={styles.small}>{t("marketing.boxes.count", { count: list.length })}</span>
-                </div>
-                <ul className={`${styles.productGrid} ${styles.productRail}`} data-rail="">
+      {/* One white sheet per family: the first overlaps the hero, the next ones collapse onto it
+          to one --mk-section-y (spec section 7, rule 2). */}
+      {FAMILIES.map((family) => {
+        const list = structures.filter((s) => s.family === family);
+        if (!list.length) return null;
+        return (
+          <Sheet key={family} tone="white" id={family} className={rs.anchor} aria-labelledby={`fam-${family}`}>
+            <SectionHead
+              id={`fam-${family}`}
+              eyebrow={t("marketing.boxes.count", { count: list.length })}
+              title={t(`marketing.boxes.family.${family}` as DictKey)}
+              sub={t(`marketing.boxes.familyBody.${family}` as DictKey)}
+            >
+              <div data-rail="">
+                <Grid as="ul" cols={3} colsMd={2} colsSm={1} className={`${dt.cards} ${dt.rail}`}>
                   {list.map((s, i) => (
                     <ProductCard key={s.code} locale={locale} structure={s} fromPiasters={prices.get(s.code) ?? null} index={i} />
                   ))}
-                </ul>
-              </section>
-            );
-          })}
-        </div>
-      </section>
+                </Grid>
+              </div>
+            </SectionHead>
+          </Sheet>
+        );
+      })}
 
       {!library ? (
         <>
-          <section className={`${styles.band} ${styles.bandGrey}`} aria-labelledby="all-models-title">
-            <div className={styles.container}>
-              <div className={`${styles.sectionHeadRow} ${styles.flushHead}`} data-reveal="" suppressHydrationWarning>
-                <div>
-                  <h2 id="all-models-title" className={styles.h2}>
-                    {t("library.catalog.heading")}
-                  </h2>
-                  <p className={styles.lead}>{t("library.catalog.subtitle", { count: formatNumber(MODELS.length) })}</p>
-                </div>
-                <Link href={`${base}/catalog#all-models`} className={`${styles.pill} ${styles.pillOutline} ${styles.pillLarge}`}>
-                  {t("marketing.boxes.libraryCta", { count: formatNumber(MODELS.length) })}
-                </Link>
-              </div>
-            </div>
-          </section>
-          <section className={`${styles.band} ${styles.dark} ${styles.ctaBand} ${styles.ctaBandCompact}`} aria-labelledby="boxes-cta-title">
-            <div className={styles.ctaGridLines} aria-hidden="true" />
-            <div className={styles.ctaGlow} aria-hidden="true" />
-            <div className={styles.container}>
-              <div className={styles.ctaInner} data-reveal="" suppressHydrationWarning>
-                <h2 id="boxes-cta-title" className={`${styles.h2} ${styles.ctaTitle}`}>
-                  {t("marketing.boxes.closingTitle")}
-                </h2>
-                <p className={styles.lead}>{t("marketing.boxes.closingBody")}</p>
-                <div className={`${styles.actions} ${styles.center}`}>
-                  <Link href={`${base}/start`} className={`${styles.pill} ${styles.pillLime} ${styles.pillLarge}`}>
-                    {t("marketing.boxes.primary")}
-                  </Link>
-                  <Link href={`${base}/vendors`} className={`${styles.pill} ${styles.pillGhostDark} ${styles.pillLarge}`}>
-                    {t("marketing.boxes.secondary")}
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </section>
+          <Sheet tone="light" aria-labelledby="all-models-title">
+            <SectionHead id="all-models-title" title={t("library.catalog.heading")} sub={t("library.catalog.subtitle", { count: formatNumber(MODELS.length) })}>
+              <Pill href={`${base}/catalog#all-models`} variant="outline-dark" size="lg">
+                {t("marketing.boxes.libraryCta", { count: formatNumber(MODELS.length) })}
+              </Pill>
+            </SectionHead>
+          </Sheet>
+          <Sheet tone="dark" y="xl" className={rs.clip} container="narrow" aria-labelledby="boxes-cta-title">
+            <Glow color="violet" x="85%" y="0%" size="70vmax" />
+            <Glow color="green" x="5%" y="110%" size="45vmax" />
+            <Reveal className={rs.heroCenter}>
+              <Display size="64" align="center" id="boxes-cta-title">
+                {t("marketing.boxes.closingTitle")}
+              </Display>
+              <Lead align="center">{t("marketing.boxes.closingBody")}</Lead>
+              <PillRow align="center">
+                <Pill href={`${base}/start`} size="lg">
+                  {t("marketing.boxes.primary")}
+                </Pill>
+                <Pill href={`${base}/vendors`} variant="outline" size="lg">
+                  {t("marketing.boxes.secondary")}
+                </Pill>
+              </PillRow>
+            </Reveal>
+          </Sheet>
         </>
       ) : (
-        /* Added by 3D integration: the whole model library (every FEFCO / ECMA style, rigid box,
-           tube, bottle, jar, can and pouch), each with a thumbnail drawn from its 3D model. */
-        <section className={styles.band} id="all-models" aria-labelledby="all-models-title" style={{ scrollMarginBlockStart: 96 }}>
-          <div className={styles.container}>
-            <div className={styles.sectionHeadRow}>
-              <div>
-                <h2 id="all-models-title" className={styles.h2}>
-                  {t("library.catalog.heading")}
-                </h2>
-                <p className={styles.lead}>{t("library.catalog.subtitle", { count: formatNumber(MODELS.length) })}</p>
-              </div>
-            </div>
+        <Sheet tone="white" id="all-models" className={rs.anchor} aria-labelledby="all-models-title">
+          <SectionHead id="all-models-title" title={t("library.catalog.heading")} sub={t("library.catalog.subtitle", { count: formatNumber(MODELS.length) })}>
             {library}
-          </div>
-        </section>
+          </SectionHead>
+        </Sheet>
       )}
-    </>
+    </div>
   );
 }

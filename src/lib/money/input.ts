@@ -11,6 +11,13 @@
  */
 const AR_DIGITS = /[٠-٩۰-۹]/g;
 
+/**
+ * R6-SEC-05: money columns are 32-bit integers (piasters), so EGP 21,474,836.47 is the most one
+ * field can hold; schemas cap amounts and totals at this. The readers below also refuse a
+ * number too long to be exact ("999…9" read as Infinity or 1e22), so it can never reach a total.
+ */
+export const MAX_DB_PIASTERS = 2_147_483_647;
+
 export function normaliseNumberInput(v: string): string {
   return v
     .replace(AR_DIGITS, (c) => String(c.charCodeAt(0) - (c.charCodeAt(0) >= 0x06f0 ? 0x06f0 : 0x0660)))
@@ -25,7 +32,8 @@ export function parseEgpInput(v: string): number | null {
   const s = normaliseNumberInput(v);
   if (!s) return null;
   if (!/^(\d{1,3}(,\d{3})+|\d+)(\.\d{1,2})?$/.test(s)) return NaN;
-  return Math.round(Number(s.replace(/,/g, "")) * 100);
+  const p = Math.round(Number(s.replace(/,/g, "")) * 100);
+  return Number.isSafeInteger(p) ? p : NaN;
 }
 
 /** Whole number text ("5000", "5,000", "٥٠٠٠") → number; null when empty, NaN when invalid. */
@@ -33,14 +41,16 @@ export function parseWholeInput(v: string): number | null {
   const s = normaliseNumberInput(v);
   if (!s) return null;
   if (!/^(\d{1,3}(,\d{3})+|\d+)$/.test(s)) return NaN;
-  return Number(s.replace(/,/g, ""));
+  const n = Number(s.replace(/,/g, ""));
+  return Number.isSafeInteger(n) ? n : NaN;
 }
 
 /** Any decimal number (rates, percentages, FX); NaN when empty or not a clear number. */
 export function parseNumberInput(v: string): number {
   const s = normaliseNumberInput(v);
   if (!s || !/^(\d{1,3}(,\d{3})+|\d+)(\.\d+)?$/.test(s)) return NaN;
-  return Number(s.replace(/,/g, ""));
+  const n = Number(s.replace(/,/g, ""));
+  return Number.isFinite(n) && Math.abs(n) <= Number.MAX_SAFE_INTEGER ? n : NaN;
 }
 
 /**
@@ -59,6 +69,7 @@ export function parseDecimalInput(raw: string | number | null | undefined, opts:
   }
   if (!/^(\d{1,3}(,\d{3})+|\d+)(\.\d+)?$/.test(s)) return NaN;
   const n = Number(s.replace(/,/g, ""));
+  if (!Number.isFinite(n) || n > Number.MAX_SAFE_INTEGER) return NaN;
   return neg ? -n : n;
 }
 

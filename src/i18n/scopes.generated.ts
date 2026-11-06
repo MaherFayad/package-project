@@ -73,7 +73,6 @@ export const I18N_SCOPES = {
     "marketing.footer.pricing",
     "marketing.footer.social",
     "marketing.footer.styles",
-    "marketing.legal.eyebrow",
     "marketing.printers.all",
     "marketing.printers.from",
     "marketing.printers.lead",
@@ -157,6 +156,7 @@ export const I18N_SCOPES = {
     "mk.phone.submit",
     "nav.admin",
     "nav.catalog",
+    "nav.design",
     "nav.home",
     "nav.orders",
     "nav.signIn",
@@ -314,8 +314,15 @@ export const I18N_SCOPES = {
     "vendors.verified",
     "viewer.keyboardHint",
     "viewer.label",
+    "viewer.reset",
     "viewer.roleDescription",
-    "viewer.unsupported"
+    "viewer.rotateLeft",
+    "viewer.rotateRight",
+    "viewer.tiltDown",
+    "viewer.tiltUp",
+    "viewer.unsupported",
+    "viewer.zoomIn",
+    "viewer.zoomOut"
   ],
   "design": [
     "auth.gateReason",
@@ -628,14 +635,7 @@ export const I18N_SCOPES = {
     "preflight.",
     "pricing.subtotal",
     "pricing.vat",
-    "viewer.controls",
-    "viewer.reset",
-    "viewer.rotateLeft",
-    "viewer.rotateRight",
-    "viewer.tiltDown",
-    "viewer.tiltUp",
-    "viewer.zoomIn",
-    "viewer.zoomOut"
+    "viewer.controls"
   ],
   "share": [
     "account.openDesign",
@@ -679,14 +679,7 @@ export const I18N_SCOPES = {
     "payment.updated",
     "paymentMethods.",
     "preflight.",
-    "viewer.controls",
-    "viewer.reset",
-    "viewer.rotateLeft",
-    "viewer.rotateRight",
-    "viewer.tiltDown",
-    "viewer.tiltUp",
-    "viewer.zoomIn",
-    "viewer.zoomOut"
+    "viewer.controls"
   ],
   "checkout": [
     "buyer.amountDue",
@@ -930,14 +923,7 @@ export const I18N_SCOPES = {
     "pricing.line.discount",
     "pricing.printMethod.",
     "store.footer.legal",
-    "viewer.controls",
-    "viewer.reset",
-    "viewer.rotateLeft",
-    "viewer.rotateRight",
-    "viewer.tiltDown",
-    "viewer.tiltUp",
-    "viewer.zoomIn",
-    "viewer.zoomOut"
+    "viewer.controls"
   ],
   "orders": [
     "buyer.awaitingPrinter",
@@ -1750,14 +1736,7 @@ export const I18N_SCOPES = {
     "library.picker.simplified",
     "library.picker.title",
     "library.picker.use",
-    "viewer.controls",
-    "viewer.reset",
-    "viewer.rotateLeft",
-    "viewer.rotateRight",
-    "viewer.tiltDown",
-    "viewer.tiltUp",
-    "viewer.zoomIn",
-    "viewer.zoomOut"
+    "viewer.controls"
   ]
 } as const;
 

@@ -22,7 +22,7 @@ import { getPaymentProvider } from "@/lib/payments";
 import { QuoteInputError, quote, type PricingConfig } from "@/lib/pricing";
 import { loadPricingData } from "@/lib/pricing/server";
 import { STRUCTURE_LIMITS } from "@/lib/dieline";
-import type { Dims, OrderStatus, ShippingAddress, StructureCode, StructureParamLimits, VendorCapabilities } from "@/types";
+import type { DesignDoc, Dims, OrderStatus, ShippingAddress, StructureCode, StructureParamLimits, VendorCapabilities } from "@/types";
 import { AdminActionError, AdminFieldErrors, adminForMutation, audit, issuesToFields, runAdminAction, type AdminActionResponse } from "./context";
 import { loadPricingConfig, loadPricingSettings } from "./settings";
 import { seedStarterRateCards } from "./starter-rate-cards";
@@ -80,7 +80,8 @@ import { CHECKOUT_SETTING_KEY, loadCheckoutSettings } from "@/lib/orders/checkou
 import { QUOTE_PRICED, QUOTE_REQUESTED, quoteCheckoutPath } from "@/lib/orders/quote-status";
 import { priceLines, sendPriceSchema } from "../lib/quotePricing";
 import { createModelDoc } from "@/components/designer/lib/doc";
-import { saveDesign } from "@/components/designer/server";
+import { loadDesign, saveDesign } from "@/components/designer/server";
+import { designSpecHash } from "@/lib/orders/quote-spec";
 import { modelByCode } from "@/lib/library";
 import { bioCleanSchema, bioEditDecisionSchema, canApprovePortfolio, portfolioReviewSchema, reviewNoteRequired } from "../lib/moderation";
 import { bioReviewData, canApproveBio } from "@/components/vendor/lib/bio-review";
@@ -323,6 +324,9 @@ export async function sendQuotePriceAction(input: z.input<typeof sendPriceSchema
     // A catalogue request has no design yet: make one for the buyer from the requested model.
     let designId = q.designId;
     let designCreated = false;
+    // R6-SEC-01: fingerprint of the box being priced (checkout refuses the price once it changes).
+    let specDoc: DesignDoc | null = designId ? ((await loadDesign(designId, { user: admin, anonId: null }))?.doc ?? null) : null;
+    if (designId && !specDoc) throw new AdminActionError("NOT_ALLOWED", "QUOTE_NO_MODEL");
     if (!designId) {
       const line = (fromJson<Record<string, unknown>[]>(q.lines) ?? [])[0] ?? {};
       const model = modelByCode(typeof line.modelCode === "string" ? line.modelCode : null);
@@ -338,6 +342,8 @@ export async function sendQuotePriceAction(input: z.input<typeof sendPriceSchema
       if (!saved.ok) throw new AdminActionError("NOT_ALLOWED", "QUOTE_NO_MODEL");
       designId = saved.id;
       designCreated = true;
+      // The stored copy (as checkout reads it back), not the in-memory one.
+      specDoc = (await loadDesign(saved.id, { user: admin, anonId: null }))?.doc ?? doc;
     }
 
     const now = new Date();
@@ -345,7 +351,7 @@ export async function sendQuotePriceAction(input: z.input<typeof sendPriceSchema
     const data = {
       vendorId: vendor.id,
       designId,
-      lines: toJson(priced.lines),
+      lines: toJson(priced.lines.map((l) => (l.kind === "PRODUCT" ? { ...l, specHash: designSpecHash(specDoc!) } : l))),
       subtotalPiasters: priced.subtotalPiasters,
       vatPiasters: priced.vatPiasters,
       shippingPiasters: priced.shippingPiasters,
@@ -662,6 +668,11 @@ export async function addOrderNoteAction(input: z.input<typeof noteSchema>): Pro
 
 /* ───────────────────────── Disputes & reprints ───────────────────────── */
 
+function staleOnDuplicate(e: unknown): never {
+  if ((e as { code?: string }).code === "P2002") throw new AdminActionError("STALE");
+  throw e;
+}
+
 export async function decideDisputeAction(input: z.input<typeof disputeDecisionSchema>): Promise<AdminActionResponse<{ reprintNumber?: string }>> {
   return runAdminAction(async () => {
     const admin = await adminForMutation();
@@ -698,6 +709,8 @@ export async function decideDisputeAction(input: z.input<typeof disputeDecisionS
       reprint = reprintNumber(original.number, existing.map((e) => e.number));
       const now = new Date();
       const lead = Math.max(2, vendor.leadTimeDays);
+      // R6-SEC-08: a replayed or double-clicked decision computes the same reprint number; the
+      // unique index refuses the second order, which is answered as STALE instead of a crash.
       const created = await db.order.create({
         data: {
           number: reprint,
@@ -741,7 +754,7 @@ export async function decideDisputeAction(input: z.input<typeof disputeDecisionS
             ],
           },
         },
-      });
+      }).catch(staleOnDuplicate);
       // launch-metrics.md §1 `reprint_opened` (reprint rate = these / delivered orders).
       void track("reprint_opened", { reason: dispute.reason, same_vendor: vendorId === original.vendorId }, { userId: original.buyerId, orderId: created.id });
       // Charge-back on another printer: the original buy price goes down (its balance shrinks).
