@@ -53,6 +53,7 @@ const COLLAGE = [
   { id: "tube-turn", shot: "tube", az: 35, polar: 8 },
 ];
 const LOOPS = ["mailer", "perfume", "can", "pouch", "rigid-box"];
+const LOOP_ZOOM = { mailer: 0.7, "rigid-box": 0.74, perfume: 0.84, can: 0.84, pouch: 0.84 };
 export const CARDS = [
   { id: "nour", shot: "mailer", latin: "NOUR", arabic: "نور", bg: "#c9572f", ink: "#fff3e4", en: "Atelier mailer", ar: "علبة شحن أتيليه" },
   { id: "attar", shot: "rigid-box", latin: "ATTAR", arabic: "عطار", bg: "#14161c", ink: "#e9cf8f", en: "Perfume gift box", ar: "علبة هدايا عطور" },
@@ -302,6 +303,8 @@ async function loops() {
       const halves = [missing.filter((i) => i % 2 === 0), missing.filter((i) => i % 2 === 1)];
       await Promise.all(halves.map(async (frames) => {
         const s = await stage(id, { w: 840, h: 840 });
+        await s.zoom(LOOP_ZOOM[id] ?? 0.8); // fill the frame: the studio is 1920x1080, the product sits in the middle 840 px
+        await s.page.waitForTimeout(300);
         let at = 0;
         for (const i of frames) {
           const deg = (360 * i) / N;

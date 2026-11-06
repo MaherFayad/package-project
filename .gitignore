@@ -22,3 +22,6 @@ var/
 docs/design-refs/shopify/
 docs/design-refs/shopify-web/
 prisma/merge-check.db*
+
+# scratch route created by scripts/marketing/render-assets.mjs while rendering
+/src/app/[[]locale[]]/dev/r6-capture/
