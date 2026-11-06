@@ -5,7 +5,6 @@
  * Also builds the "process" pieces that come from our UI: price badge, phone showing the designer,
  * colour swatch card.
  */
-import fs from "node:fs";
 import path from "node:path";
 import sharp from "sharp";
 import { PrismaClient } from "@prisma/client";
@@ -196,7 +195,9 @@ export async function renderUi({ base, browser, out, emit, only = null }) {
     const kpi = await grab(ap, `(() => { const m = [...document.querySelectorAll('section[class*="Metrics"] *')].find((el) => [...el.classList].some((c) => /(^|_)Metric(_|$)/.test(c))); if (m) { m.setAttribute("data-r6-grab", ""); Object.assign(m.style, { border: "0", boxShadow: "none", borderRadius: "0", background: "#fff" }); } return !!m; })()`, 0);
     if (kpi) {
       const [w, h] = await size(kpi, DPR);
-      const bg = await sharp(kpi).flatten({ background: "#ffffff" }).extend({ top: 24 * DPR, bottom: 24 * DPR, left: 28 * DPR, right: 28 * DPR, background: "#ffffff" }).png().toBuffer();
+      const trimX = 8 * DPR; // drop the strip dividers at the tile edges
+      const kpiIn = await sharp(kpi).extract({ left: trimX, top: 0, width: w * DPR - trimX * 2, height: h * DPR }).png().toBuffer();
+      const bg = await sharp(kpiIn).flatten({ background: "#ffffff" }).extend({ top: 24 * DPR, bottom: 24 * DPR, left: 28 * DPR, right: 28 * DPR, background: "#ffffff" }).png().toBuffer();
       await save(`admin-kpi-${locale}`, await frame(bg, { radius: 24, margin: 40 }), w + 56 + 40, h + 48 + 40);
     }
     await actx.close();
