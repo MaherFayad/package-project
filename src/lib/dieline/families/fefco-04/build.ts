@@ -148,7 +148,26 @@ export function generateFamilyDieline(def: Fefco04Definition, dims: Dims, option
     .filter((p) => p.printable)
     .map((p) => {
       const creases = panelCreases(p, panels);
-      const distances = edgesOf(p.polygon).map((e) => edgeBleed(e, creases, panels, bleed));
+      const edges = edgesOf(p.polygon);
+      const distances = edges.map((e) => edgeBleed(e, creases, panels, bleed));
+      // A tiny edge collinear with its neighbour (the tray base's corner-gap stubs, kit.ts) takes the
+      // neighbour's bleed: collinear edges with different offsets have no intersection, and the
+      // convex offset then ran a slanted bleed edge along the whole neighbouring crease.
+      const dir = (e: Segment) => {
+        const l = segLength(e) || 1;
+        return { x: (e.b.x - e.a.x) / l, y: (e.b.y - e.a.y) / l };
+      };
+      edges.forEach((e, i) => {
+        if (segLength(e) > 1) return;
+        for (const j of [i - 1, i + 1].map((k) => (k + edges.length) % edges.length)) {
+          const u = dir(e);
+          const v = dir(edges[j]);
+          if (segLength(edges[j]) > 1 && Math.abs(u.x * v.y - u.y * v.x) < 1e-6 && u.x * v.x + u.y * v.y > 0) {
+            distances[i] = distances[j];
+            break;
+          }
+        }
+      });
       return { panelId: p.id, polygon: offsetConvex(p.polygon, distances) as Polygon };
     });
 
