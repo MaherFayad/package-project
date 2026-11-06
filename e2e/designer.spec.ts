@@ -72,7 +72,7 @@ test("design a box, sign up at the price gate, share and export", async ({ page 
   await expect(price).toBeVisible({ timeout: 20_000 });
   await expect(price.getByText("Total with VAT")).toBeVisible({ timeout: 20_000 });
   await price.getByRole("button", { name: "Close" }).first().click();
-  await expect(page.getByTestId("price-badge")).toHaveText(/500 boxes from .+ each, delivered in \d+ days/, { timeout: 20_000 });
+  await expect(page.getByTestId("price-badge")).toHaveText(/500 boxes from .+ each excl\. VAT · delivered in \d+ days?/, { timeout: 20_000 });
 
   // 7. Share link → read-only page with "Order this box".
   await toolbarAction(page, "Share");

@@ -171,3 +171,38 @@ Switch time note: the harness's p50 includes opening the picker. Click → first
 | low | 3 | 3 | 0 |
 
 Plus 4 items reported to other owners (R2-R1 to R2-R4).
+
+# Round 3
+
+Base: `main` (platform, admin, checkout, catalogue, engine) merged with the round 2 designer branch (`…-r2-designer` 3aeb6a8: #418 Suspense under `<main>` + 404 check above it, FN-02, phone stage clip). Rows from `docs/audit/ROUND3.md` (designer), `craft.md` (CR-*), `a11y.md` (X-*), `business.md` (B-*) and the integrator's E-08. Method as before: `next build && next start`, Playwright ar + en, 390 and 1440, axe-core, keyboard.
+
+| id | severity | where | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| B-26 / B-02 | medium | price badge (`lib/quote.ts`, `Modals.tsx`, i18n) | The badge showed the cheapest offer and its lead time, so the public page, badge and checkout disagreed. It did not say the price excludes VAT, and the Arabic counted forms were wrong ("13 أيام"). | business plan §1.3, §5.7 | `toPriceState` uses `headlineOffer()` (best match, the offer checkout pre-selects). Copy: "{qty:box} from {price} each excl. VAT · delivered in {days:day}" / "{qty:box} من {price} للعلبة دون الضريبة · التوصيل خلال {days:day}"; containers use `{qty:piece}`. The counted placeholders give "13 يوما", "يومين", "500 علبة". The unit test now expects the headline offer, not the cheapest. | fixed |
+| CR-20 | medium | `Modals.tsx · PriceBadge` | The tick re-keyed the whole sentence. | motion craft | Only the amount span is keyed and ticks (300 ms, off under reduced motion). | fixed |
+| CR-21 / CR-24 | medium | stage loading, price chip, price modal | Spinners: a large one on the stage, plus "Loading Getting the price" as the chip's name. | skeletons over spinners; WCAG 4.1.2 | Stage: the `.stageSkeleton` used by the route loader (`role="status"`, `aria-busy`). Chip: a 64 × 12 px shimmer bar, `aria-busy`, name = "Getting the price" only. Price modal: `SkeletonBodyText`. The face and dieline views mount synchronously, so the only flash left was this loader. | fixed |
+| B-22 / B-03 | medium | export (`DesignerApp.exportPng`, `ExportModal`) | Exports carried no mark, and the export modal and its toast had no way back to ordering. | business plan §1.3 growth loop / bridge 2 | Standard PNG → `stampExportMark(blob, { locale })` (marketing's mark, bottom end corner); HD stays clean, and the choice help text says so. "Order this box" / "Order this design" is a secondary action in the export modal and the action on the "Image downloaded" toast. | fixed |
+| E-08 | medium | flexible packs (`FlexOptionsGroup.tsx`, `ConfigPanel`) | Zipper, spout, window, tear notch, hang hole and the other options could not be edited; they always resolved to the defaults. | — | `DesignVessel.options` (additive, validated in the doc schema); a "Pack options" group lists only `def.allowedOptions`. Spout and hang hole are selects, the rest checkboxes. An option the size or film rules out stays visible, disabled, with "Not available at this size or with this film." The library `describe` passes the options to `parseFlexConfig` and falls back to the defaults if they don't validate. The quote key includes the options. Unit tests: `flex-options.test.ts`. | fixed |
+| CR-11 | high | size helpers (ar) | Ranges rendered reversed ("330–130"). | WCAG 1.3.2 | `<bdi dir="ltr">{min}–{max}</bdi>` in `ConfigPanel` (box + vessel) and `BoxPanel`. Verified: "80–600", "25–250". | fixed |
+| CR-47 / CR-58 | low | stage face select | The inline label ran into the value ("الوجه الأمام") and mixed type sizes. | MSA; type scale | Label above, value only inside; stage header aligned to the end. | fixed |
+| CR-63 | medium | price chip vs toolbar | 40 px pill next to 32 px buttons. | component consistency | Chip at 32 px (still a pill, target ≥ 24 px). | fixed |
+| X-04 | medium | `DesignerTopBar` | `aria-label="Home"` hid the visible wordmark. | 2.5.3 | No aria-label; a visually hidden "Home" follows the wordmark, so the name is "Elba Home". | fixed |
+| X-05 | low | panel headings | `h3` directly under the page `h1`. | 1.3.1 | `as="h2"` in BoxPanel, ConfigPanel, LayersPanel, PreflightPanel and ArtworkPanel's inspector; LayersPanel's surface sub-heading stays `h3`. | fixed |
+| X-06 | medium | `/s/<token>` not found | No `h1`. | 1.3.1 | Already fixed on `main` (`<Page title={notFoundTitle}>`); re-verified. | verified |
+| X-07 | low | `FaceEditor` | The live region announced only the selection, never the new position. | 4.1.3 | After a keyboard move, resize or rotate (debounced 300 ms): "X 159.5 mm, Y 41.5 mm, 103 × 26 mm, 15°" / "س 159.5 مم، ص 41.5 مم، 103 × 26 مم، 15°". It resets on a new selection. | fixed |
+| X-11 | info | Board / Printing radios | Native 16 px radios. | 2.5.8 (passes) | No change: each option is a full-width `<label>` row about 40 px tall, so the whole row is the target (larger than the kit control's 24 px). | no change needed |
+| B-17 | low | sign-up gate step 1 | "Marketing messages only if you opt in" appeared before any box existed. | PDPL 151/2020 clarity | "We send a verification code by SMS. You choose whether to get offers on the next step." / "…يمكنك اختيار تلقي العروض أو رفضها في الخطوة التالية." | fixed |
+| Route split | — | `design/(picker)`, `design/(editor)` | The start page used the dark designer bar (CR-05: three chromes). | ISO 9241-110 conformity | `(picker)/layout.tsx` = `MarketingShell`; `(editor)/layout.tsx` keeps the dark bar, **the `<Suspense>` directly under `<main>` (R2-01)** and **the `x-elba-path` 404 check above it**. Each group has its own `error.tsx`. Verified: `/en/design` 200 with the white header, `/en/design/mailer-box` 200 with the dark bar, `/en/design/no-such-model` **404**. | fixed |
+
+### Files touched outside scope (round 3, additive)
+
+- `src/types/design.ts`: `DesignVessel.options?` (E-08).
+- `src/lib/library/vessels.ts`: `describeVesselModel` forwards `options`; flexible `describe` passes them to `parseFlexConfig`, falling back to the defaults (E-08).
+- `src/lib/library/doc.ts`: passes `doc.vessel.options` (E-08).
+- `e2e/designer.spec.ts`: badge regex updated to the B-02 copy.
+
+### Verification (round 3)
+
+- `npm run lint` and `npm run typecheck` are clean. `npm test`: 8,282 passed (new: `flex-options.test.ts`; `storage-quote-catalog.test.ts` now expects the headline offer). `npm run build` OK.
+- axe-core: 0 violations on the start page (en 1440, ar 390), the box editor (ar 1440) and the pouch editor (en 390). No console errors, no horizontal scroll. Screenshots: `docs/screenshots/audit/designer/r3/`.
+- Playwright `designer` + `smoke` + `journey` (`--workers=2 --trace off`): 16 passed, 1 skipped, 1 failed. All 5 designer tests pass on desktop and mobile, including **"designer pages hydrate without errors"** and the PERF-09 canvas test. The failure is `journey` on desktop at the vendor step "Submit for quality check" (button stays disabled after the QC photo upload), outside designer scope; the design, gate, price and checkout steps before it pass.

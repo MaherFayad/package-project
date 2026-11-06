@@ -8,7 +8,8 @@ import { DesignerTopBar } from "@/components/designer/DesignerTopBar";
 import styles from "@/components/designer/designer.module.css";
 
 /**
- * Designer area (owner: designer): full-screen editor chrome — dark top bar, no store footer.
+ * Designer editor (owner: designer): full-screen editor chrome — dark top bar, no store footer.
+ * The start page lives in `(picker)` with the marketing chrome.
  * Renders the single <main id="main"> for the skip link.
  */
 export default async function DesignLayout({ children, params }: { children: ReactNode; params: Promise<{ locale: string }> }) {
