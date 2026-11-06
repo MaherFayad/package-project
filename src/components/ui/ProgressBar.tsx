@@ -1,5 +1,5 @@
 import { cx } from "./utils";
-import styles from "./Misc.module.css";
+import styles from "./ProgressBar.module.css";
 
 export interface ProgressBarProps {
   /** 0–100 */

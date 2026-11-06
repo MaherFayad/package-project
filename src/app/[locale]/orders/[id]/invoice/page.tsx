@@ -10,7 +10,13 @@ import { fromJson } from "@/lib/json";
 import { formatDate, formatDims, formatMoney } from "@/lib/format";
 import { getOrderForViewer, moneyOf } from "@/lib/orders/service";
 import { invoiceBreakdown } from "@/lib/orders/totals";
-import { Banner, BlockStack, Button, Card, InlineGrid, Inset, Page, PriceTag, Text } from "@/components/ui";
+import { Banner } from "@/components/ui/Banner";
+import { BlockStack, InlineGrid } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { Card, Inset } from "@/components/ui/Card";
+import { Page } from "@/components/ui/Page";
+import { PriceTag } from "@/components/ui/PriceTag";
+import { Text } from "@/components/ui/Text";
 import { PrintButton } from "../../_components/PrintButton";
 import styles from "../../_components/orders.module.css";
 

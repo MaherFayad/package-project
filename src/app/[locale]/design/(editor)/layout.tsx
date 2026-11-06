@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { preload } from "react-dom";
 import { modelFromParam } from "@/lib/library";
 import { toLocale } from "@/i18n";
-import { AppProvider } from "@/components/ui";
+import { AppProvider } from "@/components/ui/AppProvider";
 import { DesignerTopBar } from "@/components/designer/DesignerTopBar";
 import styles from "@/components/designer/designer.module.css";
 

@@ -1,0 +1,37 @@
+/* Split out of Misc.module.css (R5-PL-05): with inlineCss each route segment inlines the CSS of
+   the components it renders, so one shared sheet was copied whole into every page, loading and
+   error segment that used any of these components. */
+/* ── MetricsStrip ─────────────────────────────────────────── */
+.Metrics {
+  /* Contain absolutely-positioned visually-hidden text so it cannot widen the page. */
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  overflow-x: auto;
+  background: var(--p-color-bg-surface);
+  border-radius: var(--p-border-radius-300);
+  box-shadow: var(--e-shadow-card);
+}
+.MetricLeading { display: flex; align-items: center; padding: var(--p-space-300); border-inline-end: 1px solid var(--p-color-border-secondary); flex: none; }
+.MetricList { display: flex; flex: 1 1 auto; margin: 0; }
+.Metric { flex: 1 0 9rem; display: flex; flex-direction: column; gap: var(--p-space-100); padding: var(--p-space-300) var(--p-space-400); }
+.Metric + .Metric { border-inline-start: 1px solid var(--p-color-border-secondary); }
+.MetricLabel { font-size: var(--p-text-body-sm-font-size); font-weight: var(--p-font-weight-semibold); color: var(--p-color-text); }
+.MetricValue { display: flex; align-items: baseline; gap: var(--p-space-200); margin: 0; font-size: var(--p-font-size-350); font-weight: var(--p-font-weight-semibold); font-variant-numeric: tabular-nums; }
+.MetricTrend { font-size: var(--p-text-body-sm-font-size); font-weight: var(--p-font-weight-regular); color: var(--p-color-text-secondary); }
+
+.Metrics:focus-visible { outline: var(--p-focus-ring-width) solid var(--p-color-border-focus); outline-offset: 2px; }
+
+/* CR-25: on phones the strip is a 2-column grid (nothing clipped mid-word, no hidden scroll).
+   Cells in the second column get the divider; rows after the first get a top border. */
+@media (max-width: 30.6rem) {
+  .Metrics { overflow-x: visible; flex-direction: column; }
+  .MetricLeading { border-inline-end: 0; border-block-end: 1px solid var(--p-color-border-secondary); }
+  .MetricList { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .Metric { padding: var(--p-space-300); min-inline-size: 0; overflow-wrap: anywhere; }
+  .Metric + .Metric { border-inline-start: 0; }
+  .Metric:nth-child(2n) { border-inline-start: 1px solid var(--p-color-border-secondary); }
+  .Metric:nth-child(n + 3) { border-block-start: 1px solid var(--p-color-border-secondary); }
+  /* An odd last cell spans both columns instead of leaving a hole. */
+  .Metric:last-child:nth-child(odd) { grid-column: 1 / -1; }
+}

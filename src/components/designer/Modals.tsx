@@ -6,22 +6,18 @@ import { QTY_TIERS, type DesignDoc, type Dims } from "@/types";
 import { formatDate, formatDims, formatMoney, formatNumber } from "@/lib/format";
 import { useI18n } from "@/i18n/client";
 import { OtpForm, type OtpSuccess } from "@/components/auth";
-import {
-  Badge,
-  Banner,
-  BlockStack,
-  Button,
-  ChoiceList,
-  Divider,
-  InlineStack,
-  Inset,
-  Modal,
-  PriceTag,
-  Select,
-  SkeletonBodyText,
-  Text,
-  TextField,
-} from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { Banner } from "@/components/ui/Banner";
+import { BlockStack, Divider, InlineStack } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { ChoiceList } from "@/components/ui/ChoiceList";
+import { Inset } from "@/components/ui/Card";
+import { Modal } from "@/components/ui/Modal";
+import { PriceTag } from "@/components/ui/PriceTag";
+import { Select } from "@/components/ui/Select";
+import { SkeletonBodyText } from "@/components/ui/Skeleton";
+import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
 import { BADGE_QTY, fetchQuote, quoteKey, type PriceState } from "./lib/quote";
 import { ORDER_MODE_COPY } from "@/data/catalogue/order-mode";
 

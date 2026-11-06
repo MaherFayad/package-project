@@ -3,25 +3,20 @@
 import { Plus, Trash2, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
-import {
-  Badge,
-  Banner,
-  BlockStack,
-  Button,
-  Card,
-  Checkbox,
-  DropZone,
-  InlineGrid,
-  InlineStack,
-  Layout,
-  LayoutSection,
-  Link,
-  Page,
-  Select,
-  Text,
-  TextField,
-  useToast,
-} from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { Banner } from "@/components/ui/Banner";
+import { BlockStack, InlineGrid, InlineStack } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Checkbox } from "@/components/ui/Checkbox";
+import { DropZone } from "@/components/ui/DropZone";
+import { Layout, LayoutSection } from "@/components/ui/Layout";
+import { Link } from "@/components/ui/Link";
+import { Page } from "@/components/ui/Page";
+import { Select } from "@/components/ui/Select";
+import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
+import { useToast } from "@/components/ui/Toast";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { formatNumber, formatPercent } from "@/lib/format";

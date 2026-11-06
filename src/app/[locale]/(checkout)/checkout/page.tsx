@@ -7,7 +7,13 @@ import { formatDate, formatDims } from "@/lib/format";
 import type { Dims, StructureCode } from "@/types";
 import { designerPath } from "@/components/designer/lib/catalog";
 import { modelPoster } from "@/lib/orders/poster";
-import { BlockStack, Button, Card, EmptyState, EmptyBoxIllustration, InlineStack, Page, Text, Thumbnail } from "@/components/ui";
+import { BlockStack, InlineStack } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { EmptyState, EmptyBoxIllustration } from "@/components/ui/EmptyState";
+import { Page } from "@/components/ui/Page";
+import { Text } from "@/components/ui/Text";
+import { Thumbnail } from "@/components/ui/Thumbnail";
 
 export const dynamic = "force-dynamic";
 

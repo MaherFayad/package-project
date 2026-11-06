@@ -1,6 +1,12 @@
 import type { ReactNode } from "react";
 import type { Metadata } from "next";
-import { AppProvider, Banner, BlockStack, Box, Button, Card, EmptyState, EmptyBoxIllustration, Page } from "@/components/ui";
+import { AppProvider } from "@/components/ui/AppProvider";
+import { Banner } from "@/components/ui/Banner";
+import { BlockStack, Box } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { EmptyState, EmptyBoxIllustration } from "@/components/ui/EmptyState";
+import { Page } from "@/components/ui/Page";
 import { VendorFrame } from "@/components/vendor/VendorFrame";
 import { requireVendorContext } from "@/components/vendor/server/context";
 import { countAwaiting } from "@/components/vendor/server/queries";

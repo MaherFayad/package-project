@@ -6,7 +6,7 @@ import { useUi } from "./AppProvider";
 import { Icon } from "./Icon";
 import { fill } from "./strings";
 import { cx } from "./utils";
-import styles from "./Misc.module.css";
+import styles from "./Stepper.module.css";
 
 export interface StepperStep {
   id: string;
