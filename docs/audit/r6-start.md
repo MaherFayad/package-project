@@ -85,6 +85,6 @@ Merged foundation a7b9fc22 (tokens, `Sheet y`, `SectionHead`, `Stack`, `Grid`, `
 
 Side-by-side with shopify.com/sa/start and shopify.com/start at 1440 and 390 was re-captured section by section (hero, choose, shine, paid, lineup, bento, closing). The composites contain Shopify imagery, so they are kept out of git; our own frames are in `docs/screenshots/audit/r6-start/`.
 
-Open (foundation): the hero headline renders 165.8px at 1440, not 180. The kit token `--mk-fs-hero: clamp(3.5rem, 1rem + 10.4vw, 11.25rem)` only reaches 180px at about 1575px wide; the page does not override kit type.
+Hero headline: `--mk-fs-hero` (kit `tokens.css`, the start-page token) was `clamp(3.5rem, 1rem + 10.4vw, 11.25rem)`, which gave 165.8px at 1440 and only reached 180px at about 1575. It is now `clamp(3.5rem, 0.621rem + 11.81vw, 11.25rem)`: 56px at 390, 131px at 1024, 180px from 1440. This one-line change is in a foundation file and also applies to `/why-elba` and `/dev/kit`, the only other users of the token; the spacing spec (all pages), `why-pricing.spec` and the kit gallery spec pass with it.
 
-Re-checked after the pass: lint clean, typecheck, 8791 unit tests, build, `start.spec` + `journey.spec` + spacing spec 26 passed, phone LCP ar 1.80 s / en 1.65 s, CLS 0.011 / 0.000.
+Re-checked after the pass: lint clean, typecheck, 8791 unit tests, build, spacing spec (all pages) + `start` + `journey` + `why-pricing` 44 passed, phone LCP ar 1.80 s / en 1.65 s, CLS 0.011 / 0.000.
