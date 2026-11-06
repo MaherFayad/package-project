@@ -103,8 +103,7 @@ test("legal pages are marked for lawyer review", async ({ page }) => {
     await page.goto(`/en/legal/${doc}`);
     await expect(page.getByText(/Draft for lawyer review/)).toBeVisible();
   }
-  // R6 footer lists it twice (link column and the legal row); either copy must be a visible link.
-  await expect(page.locator("footer").getByRole("link", { name: "Returns for custom goods" }).first()).toBeVisible();
+  await expect(page.locator("footer").getByRole("link", { name: "Returns for custom goods" })).toBeVisible();
 });
 
 test("account: sign in, withdraw marketing consent, request data deletion", async ({ page }) => {

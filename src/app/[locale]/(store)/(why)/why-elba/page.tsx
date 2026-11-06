@@ -208,7 +208,7 @@ export default async function WhyElbaPage({ params }: Props) {
       </Sheet>
 
       {/* W4 violet band: three UI mockup cards */}
-      <Sheet tone="violet" y="lg" className={s.violetBand} aria-labelledby="why-orders">
+      <Sheet tone="violet" y="lg" aria-labelledby="why-orders">
         <SectionHead size="56" align="center" id="why-orders" title={c.ordersTitle} sub={c.ordersSub}>
           <Grid as="ul" cols={3} colsMd={1} className={s.list}>
             <Reveal as="li" index={0} className={s.vCard}>

@@ -293,3 +293,21 @@ describe("print area math", () => {
     expect([owner("ECMA_TUCK_FRENCH_RTE", "top"), owner("ECMA_TUCK_FRENCH_RTE", "bottom")]).toEqual(["front", "back"]);
   });
 });
+
+describe("R6-3Q-D: seal-end window stays clear of the tear strip", () => {
+  const win = { face: "front" as const, widthRatio: 0.55, heightRatio: 0.45, film: true };
+  for (const code of ["ECMA_SEAL_END", "ECMA_SEAL_END_TEAR"] as const) {
+    const def = DEFINITION_BY_CODE[code];
+    for (const H of [def.params.H.min, 80, def.defaultDims.H]) {
+      it(`${code} H ${H}: hole and film below both perforations`, () => {
+        const m = generateEcmaDieline(def, { ...def.defaultDims, H }, { thicknessMm: 0.4, features: { window: win, tearStrip: true } });
+        const front = m.panels.find((p) => p.id === "front")!;
+        const perfs = m.perfLines.filter((l) => l.a.x >= front.bbox.x - 0.01 && l.b.x <= front.bbox.x + front.bbox.width + 0.01 && Math.abs(l.a.y - l.b.y) < 1e-6);
+        expect(perfs.length).toBe(2);
+        const bandBottom = Math.max(...perfs.map((l) => l.a.y));
+        const shapes = [...(front.holes ?? []), ...m.films.filter((f) => f.panelId === "front").map((f) => f.polygon)];
+        for (const s of shapes) expect(Math.min(...s.map((q) => q.y))).toBeGreaterThan(bandBottom);
+      });
+    }
+  }
+});

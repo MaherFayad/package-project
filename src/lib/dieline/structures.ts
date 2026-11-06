@@ -463,7 +463,10 @@ export function telescope(dims: Dims, t: number, f: StructureFeatures = {}): Str
     defer(b, (p) => p.id === "lid_front", 1); // dividers (3) before the lid (4)
     addPartitions(b, t, IDENTITY, dims, f.partitions, 2 * t, 3);
   }
-  return { builder: b, closedRotation: IDENTITY, faceDepthTol: clear + t + 0.5 };
+  // The lid's left wall stands clear + 2t outside the base's (the lid is one caliper longer for
+  // its joint and shifted t/2): at clear + t + 0.5 a partial lid left the base LEFT wall below
+  // it out of the face, unprinted (R6-3Q-A, as B-01 on FEFCO 0321).
+  return { builder: b, closedRotation: IDENTITY, faceDepthTol: clear + 2 * t + 0.5 };
 }
 
 /* ───────────────────────── Trays (mailer 0427, pizza 0426, display tray 0422) ───────────────────────── */

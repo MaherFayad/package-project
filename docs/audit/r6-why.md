@@ -167,3 +167,10 @@ Perf after the change (phone, Slow 4G, 4x CPU): /ar/why-elba LCP 1.43 to 1.50 s,
 - `e2e/marketing-spacing.spec.ts`: `NOT_YET` is now empty (main had only `/why-elba` left); all public pages pass, ar + en, 1440/1024/768/390.
 - Arabic noun-form labels (`kit/__tests__/arabic-labels.test.ts`): «ابدأ التصميم مجانا» → «بدء التصميم مجانا», «ابدأ التصميم» → «بدء التصميم», «صمم واطلب عرض سعر» → «التصميم وطلب عرض سعر»; my three PENDING lines removed.
 - Band paddings re-measured on this build: unchanged from the table above. Phone LCP 1.18 to 1.49 s, CLS ≤ 0.061.
+
+### 8.2 Merge of main 263685c (foundation 1653751e)
+
+- /pricing "Always included" is on kit `tone="dark-2"` (rgb(20,26,26), as measured on /sa/pricing), overlapping the hero with 48px corners, 100/100 padding. Replaces the interim navy.
+- R6-AX-14 is now fixed in the kit (violet tone sets `--mk-muted` and `--mk-on-dark-muted` to #fff). The page override is removed, and page text reads the per-sheet `--mk-muted`, so it follows every tone. Verified: violet card text and lead computed `rgb(255,255,255)`.
+- arabic-labels.test.ts PENDING merged to empty (every owner fixed theirs); the test passes.
+- Open on the platform side: the metric-matched Arabic fallback font, after which ar /why-elba CLS (0.061) gets re-measured.

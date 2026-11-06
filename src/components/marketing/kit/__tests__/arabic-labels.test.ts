@@ -59,12 +59,6 @@ const SOURCES: [string, unknown][] = [
  * cannot go stale). Key: `${source}:${key}`.
  */
 const PENDING = new Set<string>([
-  // home page owner: «بدء التصميم مجانا»
-  "home/copy.ts:hero.primary",
-  "home/copy.ts:steps.cta",
-  // designer page owner: «بدء التصميم مجانا», «تجربة المصمم الآن»
-  "designer-page/copy.ts:hero.cta",
-  "designer-page/copy.ts:make.cta",
 ]);
 
 const all = SOURCES.flatMap(([source, tree]) => labels(source, tree));

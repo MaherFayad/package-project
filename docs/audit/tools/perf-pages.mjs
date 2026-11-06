@@ -44,6 +44,14 @@ const PAGES = [
   { key: "checkout", path: `/checkout/${DESIGN_ID}`, role: "buyer" },
   { key: "order-tracking", path: `/orders/${ORDER}`, role: "buyer" },
   { key: "account", path: "/account", role: "buyer" },
+  // 404 renders (R6-RS-11): the first four are answered by the middleware's static 404, the last
+  // two still go through notFound() (client-rendered in Next 15.5, see src/lib/routing/static-404.ts).
+  { key: "404-missing", path: "/no-such-page" },
+  { key: "404-share", path: "/s/no-such-token-123" },
+  { key: "404-legal", path: "/legal/no-such-policy" },
+  { key: "404-design", path: "/design/no-such-model" },
+  { key: "404-catalog", path: "/catalog/no-such-model" },
+  { key: "404-share-wellformed", path: "/s/aaaaaaaaaaaaaaaa" },
   { key: "vendor-portal", path: "/vendor", role: "vendor" },
   { key: "vendor-jobs", path: "/vendor/jobs", role: "vendor" },
   { key: "admin", path: "/admin", role: "admin" },

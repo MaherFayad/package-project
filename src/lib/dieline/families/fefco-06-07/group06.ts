@@ -225,8 +225,12 @@ export function halfShells(dims: Dims, t: number): StructureDraft {
     // The inner end wall runs up to the long wall's inside face; its joint tab folds onto
     // that face (pivot on the tab's outer face, so the tab lies behind the wall, not in it).
     const innerD = Wp - 2 * t;
-    b.attach(id("endInner"), "inner", id("spacer"), rectEdges(sp).right, innerD, { kind: "rect" }, { stage: 0, label: "End wall (inner)" });
-    const ei = rect(Lo + endD + v, y0, innerD, Hp);
+    // The inner wall stands between the closed flaps: the end flap (one layer) and the long
+    // wall's ½W flap (one layer) close over it at the top and the bottom. Full height Hp it
+    // ran through both, its cut edge a z-fighting line across TOP and BOTTOM.
+    const innerInset = 2 * t;
+    b.attach(id("endInner"), "inner", id("spacer"), insetSeg(rectEdges(sp).right, innerInset), innerD, { kind: "rect" }, { stage: 0, label: "End wall (inner)" });
+    const ei = rect(Lo + endD + v, y0 + innerInset, innerD, Hp - 2 * innerInset);
     b.attach(id("tab"), "glue", id("endInner"), insetSeg(rectEdges(ei).right, 2), clamp(v * 1.5, 12, 25), { kind: "trapezoid", taperA: 3, taperB: 3 }, { fold: -90, pivotDepth: 1, stage: 0, label: "Joint tab (½v), glued to the long wall" });
     // ½W flaps on the long wall; short flaps on the outer end wall.
     b.attach(id("flapTop"), "flap", id("front"), rectEdges(fr).top, Wp / 2, { kind: "rect" }, { stage: 3, label: "Top flap (½W)" });
