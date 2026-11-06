@@ -1,5 +1,5 @@
 import { BufferGeometry, Float32BufferAttribute, ShapeUtils, Vector2, Vector3 } from "three";
-import { panelAxis, panelLocalPoint, panelPivot, type DielineModel, type DielinePanel, type Polygon, type Pt, type Segment } from "@/lib/dieline";
+import { STRUCTURE_FAMILY, panelAxis, panelLocalPoint, panelPivot, type DielineModel, type DielinePanel, type Polygon, type Pt, type Segment } from "@/lib/dieline";
 import { MAT_EDGE, MAT_INSIDE, MAT_OUTSIDE } from "./boardMaterials";
 
 const DEG = Math.PI / 180;
@@ -62,14 +62,22 @@ export function buildPanelGeometry(model: DielineModel, panel: DielinePanel): Bu
   const uvAll = flat.map((p) => [p.x / sw, 1 - p.y / sh] as const);
   const normalsAll = vertexNormals(model, panel, flat);
 
-  const pos: number[] = [];
-  const nor: number[] = [];
-  const uvs: number[] = [];
+  // Two buffers: faces + fold edges (printed), then inside + cut edges. Fold edges are the
+  // board's end faces along a crease: on a real carton the liner wraps around the fold, so they
+  // carry the outside print (sheet UV of the crease line) instead of the raw cut edge texture,
+  // which would read as a pale seam along every fold.
+  type Buf = { pos: number[]; nor: number[]; uvs: number[] };
+  const mk = (): Buf => ({ pos: [], nor: [], uvs: [] });
+  const outsideBuf = mk();
+  const foldBuf = mk();
+  const insideBuf = mk();
+  const edgeBuf = mk();
+  let cur = outsideBuf;
   const geo = new BufferGeometry();
   const push = (v: Vector3, nn: Vector3, u: number, w: number) => {
-    pos.push(v.x, v.y, v.z);
-    nor.push(nn.x, nn.y, nn.z);
-    uvs.push(u, w);
+    cur.pos.push(v.x, v.y, v.z);
+    cur.nor.push(nn.x, nn.y, nn.z);
+    cur.uvs.push(u, w);
   };
 
   // Triangulate in the local XY plane (Y = -sheet y).
@@ -88,21 +96,18 @@ export function buildPanelGeometry(model: DielineModel, panel: DielinePanel): Bu
   };
 
   // Outside face (+Z, counter-clockwise).
-  let start = 0;
+  cur = outsideBuf;
   for (const tri of tris) {
     const order = ccwTri(tri) ? tri : [tri[0], tri[2], tri[1]];
     for (const k of order) push(outerAll[k], normalsAll[k], uvAll[k][0], uvAll[k][1]);
   }
-  geo.addGroup(start, pos.length / 3 - start, MAT_OUTSIDE);
-  start = pos.length / 3;
 
   // Inside face (-Z), reversed winding.
+  cur = insideBuf;
   for (const tri of tris) {
     const order = ccwTri(tri) ? [tri[0], tri[2], tri[1]] : tri;
     for (const k of order) push(innerAll[k], normalsAll[k].clone().negate(), uvAll[k][0], uvAll[k][1]);
   }
-  geo.addGroup(start, pos.length / 3 - start, MAT_INSIDE);
-  start = pos.length / 3;
 
   // Cut edges: outline (normals outward) and apertures (normals into the hole). Edges on a
   // roll hinge are inside the curved wall: no side face there (it would show as a seam).
@@ -111,6 +116,19 @@ export function buildPanelGeometry(model: DielineModel, panel: DielinePanel): Bu
     ...model.panels.filter((c) => c.parentId === panel.id && c.hinge && c.hingeKind === "roll").map((c) => c.hinge!),
   ];
   const onRoll = (a: Pt, b: Pt) => rollHinges.some((h) => onSegment(a, h) && onSegment(b, h));
+  const creases: Segment[] = [
+    ...(panel.hinge && panel.hingeKind !== "roll" ? [panel.hinge] : []),
+    ...model.panels.filter((c) => c.parentId === panel.id && c.hinge && c.hingeKind !== "roll").map((c) => c.hinge!),
+  ];
+  const onCrease = (a: Pt, b: Pt) => creases.some((h) => onSegment(a, h) && onSegment(b, h));
+  // Rigid set-up boxes and composite tubes: the wrap / label turns over every rim, so no raw
+  // board edge is visible anywhere; all outline edges take the printed outside (sheet UV).
+  const family = STRUCTURE_FAMILY[model.structureCode];
+  const wrapped = family === "RIGID" || family === "TUBE";
+  // Corrugated: flutes run along the sheet's y axis (corrugator direction). A cut ALONG a flute
+  // shows the flat liner stack, a cut ACROSS flutes shows the wave: parallel edges sample one
+  // column of the flute tile (constant u) so they read as straight layers.
+  const corrugated = model.thicknessMm >= 1 && !wrapped;
   const pitch = model.thicknessMm >= 1 ? (model.thicknessMm >= 2.5 ? 6.5 : 3.3) : 10;
   let base = 0;
   loops.forEach((loop, li) => {
@@ -133,8 +151,14 @@ export function buildPanelGeometry(model: DielineModel, panel: DielinePanel): Bu
       }
       const normal = new Vector3(e.y, -e.x, 0).normalize();
       if (flip) normal.negate();
-      const u0 = run / pitch;
-      const u1 = (run + l) / pitch;
+      const fold = (li === 0 && onCrease(loop[i], loop[j])) || (wrapped && li === 0);
+      const alongFlute = corrugated && Math.abs(loop[j].y - loop[i].y) > 2.5 * Math.abs(loop[j].x - loop[i].x);
+      cur = fold ? foldBuf : edgeBuf;
+      // fold edges: sheet UV of the crease (print continues round the fold); cut edges: flute pitch
+      const sa = uvAll[base - n + i];
+      const sb = uvAll[base - n + j];
+      const u0 = fold ? 0 : alongFlute ? 0.02 : run / pitch;
+      const u1 = fold ? 0 : alongFlute ? 0.02 : (run + l) / pitch;
       run += l;
       const tri = (a: Vector3, b: Vector3, c: Vector3, ua: [number, number], ub: [number, number], uc: [number, number]) => {
         const cr = new Vector3().subVectors(b, a).cross(new Vector3().subVectors(c, a));
@@ -148,11 +172,24 @@ export function buildPanelGeometry(model: DielineModel, panel: DielinePanel): Bu
           push(b, normal, ...ub);
         }
       };
-      tri(o[i], inn[i], inn[j], [u0, 1], [u0, 0], [u1, 0]);
-      tri(o[i], inn[j], o[j], [u0, 1], [u1, 0], [u1, 1]);
+      if (fold) {
+        tri(o[i], inn[i], inn[j], [sa[0], sa[1]], [sa[0], sa[1]], [sb[0], sb[1]]);
+        tri(o[i], inn[j], o[j], [sa[0], sa[1]], [sb[0], sb[1]], [sb[0], sb[1]]);
+      } else {
+        tri(o[i], inn[i], inn[j], [u0, 1], [u0, 0], [u1, 0]);
+        tri(o[i], inn[j], o[j], [u0, 1], [u1, 0], [u1, 1]);
+      }
     }
   });
-  geo.addGroup(start, pos.length / 3 - start, MAT_EDGE);
+
+  const pos = [...outsideBuf.pos, ...foldBuf.pos, ...insideBuf.pos, ...edgeBuf.pos];
+  const nor = [...outsideBuf.nor, ...foldBuf.nor, ...insideBuf.nor, ...edgeBuf.nor];
+  const uvs = [...outsideBuf.uvs, ...foldBuf.uvs, ...insideBuf.uvs, ...edgeBuf.uvs];
+  const nOut = (outsideBuf.pos.length + foldBuf.pos.length) / 3;
+  const nIn = insideBuf.pos.length / 3;
+  geo.addGroup(0, nOut, MAT_OUTSIDE);
+  geo.addGroup(nOut, nIn, MAT_INSIDE);
+  geo.addGroup(nOut + nIn, edgeBuf.pos.length / 3, MAT_EDGE);
 
   geo.setAttribute("position", new Float32BufferAttribute(pos, 3));
   geo.setAttribute("normal", new Float32BufferAttribute(nor, 3));

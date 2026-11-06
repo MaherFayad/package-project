@@ -44,7 +44,7 @@ export const SPOT_UV_LOOK = { clearcoat: 1, clearcoatRoughness: 0.03 } as const;
 /** Relief height in the bump map: emboss up, deboss down (0..1 around 0.5 = flat). */
 export const RELIEF_LEVEL = { EMBOSS: 1, DEBOSS: 0 } as const;
 /** Bump strength in three.js units for a 2048 px sheet. */
-export const RELIEF_BUMP_SCALE = 2.2;
+export const RELIEF_BUMP_SCALE = 4;
 
 export type CoatingCode = Extract<ConfigFinishCode, "MATTE_LAMINATION" | "GLOSS_LAMINATION" | "SOFT_TOUCH_LAMINATION" | "GLOSS_VARNISH" | "MATTE_VARNISH">;
 
@@ -60,15 +60,17 @@ export function coatingLook(coating: CoatingCode | null, app: BoardAppearance): 
   const base = baseLook(app);
   switch (coating) {
     case "GLOSS_LAMINATION":
-      return { ...base, roughness: 0.32, clearcoat: 1, clearcoatRoughness: 0.05, envIntensity: 1 };
+      return { ...base, roughness: 0.32, clearcoat: 1, clearcoatRoughness: 0.03, envIntensity: 1 };
     case "MATTE_LAMINATION":
-      return { ...base, roughness: 0.66, clearcoat: 0, envIntensity: 0.7 };
+      // matte film: kills the paper sheen and lifts blacks a touch
+      return { ...base, roughness: 0.85, clearcoat: 0, inkTone: 0.97, envIntensity: 0.45 };
     case "SOFT_TOUCH_LAMINATION":
-      return { ...base, roughness: 0.93, clearcoat: 0, sheen: 0.45, sheenRoughness: 0.85, inkTone: 0.95, envIntensity: 0.55 };
+      // deep and velvety; sheen only at grazing angles (a strong sheen reads as dusty haze face-on)
+      return { ...base, roughness: 0.93, clearcoat: 0, sheen: 0.18, sheenRoughness: 0.5, inkTone: 0.92, envIntensity: 0.55 };
     case "GLOSS_VARNISH":
-      return { ...base, roughness: clamp01(app.roughness * 0.7), clearcoat: 0.45, clearcoatRoughness: 0.2, envIntensity: 0.85 };
+      return { ...base, roughness: clamp01(app.roughness * 0.7), clearcoat: 0.6, clearcoatRoughness: 0.12, envIntensity: 0.85 };
     case "MATTE_VARNISH":
-      return { ...base, roughness: clamp01(app.roughness + 0.08) };
+      return { ...base, roughness: clamp01(app.roughness + 0.15) };
     default:
       return base;
   }

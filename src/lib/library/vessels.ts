@@ -123,11 +123,31 @@ const CORE: VesselModelDef[] = VESSEL_KINDS.map((kind) => {
 
 /* ───────────────────────────── bottles, jars, tubs ───────────────────────────── */
 
+/** Bottle closures drawn with an engine closure style instead of their core screw cap (X-01). */
+const BOTTLE_CLOSURE_STYLE: Partial<Record<string, string>> = {
+  ROPP_CAP: "ROPP",
+  POURER_CAP: "POURER",
+  CROWN_26: "CROWN",
+  CROWN_29: "CROWN",
+  NATURAL_CORK: "CORK_CAPSULE",
+  SPARKLING_CORK: "SPARKLING",
+};
+
+/** Cosmetic materials whose core look has the wrong colour (X-01, V-14). */
+const COS_TINT: Partial<Record<string, string>> = { ABS_BLACK: "#161616" };
+
 const BOTTLES: VesselModelDef[] = BTL.DEFINITIONS.map((def) => {
   const preset = BTL.bottlePreset(def);
   const coreKind = def.coreKind;
-  const containers: VesselOption[] = def.materials.map((m) => ({ code: m, name: BTL.BOTTLE_MATERIALS[m].name, core: BTL.BOTTLE_MATERIALS[m].coreMaterial }));
-  const closures: VesselOption[] = def.closures.map((c) => ({ code: c, name: BTL.BOTTLE_CLOSURES[c].name, core: BTL.BOTTLE_CLOSURES[c].coreClosure }));
+  const containers: VesselOption[] = def.materials.map((m) => {
+    const mat = BTL.BOTTLE_MATERIALS[m];
+    // the core material is only the nearest look: carry the real colour when it differs (X-01)
+    return { code: m, name: mat.name, core: mat.coreMaterial, ...(mat.code !== mat.coreMaterial ? { tint: mat.hex } : {}) };
+  });
+  const closures: VesselOption[] = def.closures.map((c) => {
+    const style = BOTTLE_CLOSURE_STYLE[c];
+    return { code: c, name: BTL.BOTTLE_CLOSURES[c].name, core: BTL.BOTTLE_CLOSURES[c].coreClosure, ...(style ? { closureStyle: style } : {}) };
+  });
   return {
     kind: "vessel",
     code: def.code,
@@ -197,7 +217,12 @@ const COSMETIC: VesselModelDef[] = COS.DEFINITIONS.filter((d) => d.geometry !== 
     const n = COS.MATERIAL_NAMES[m as keyof typeof COS.MATERIAL_NAMES];
     return n ? { ar: n.ar, en: n.en } : isCoreMaterial(m) ? VESSEL_MATERIALS[m].name : { ar: m, en: m };
   };
-  const containers: VesselOption[] = def.materials.map((m) => ({ code: m, name: materialName(m), core: isCoreMaterial(m) ? m : (COS_MATERIAL[m] ?? coreDef.defaultMaterial) }));
+  const containers: VesselOption[] = def.materials.map((m) => ({
+    code: m,
+    name: materialName(m),
+    core: isCoreMaterial(m) ? m : (COS_MATERIAL[m] ?? coreDef.defaultMaterial),
+    ...(COS_TINT[m] ? { tint: COS_TINT[m] } : {}),
+  }));
   const closures: VesselOption[] = def.closures.map((c) => ({
     code: c,
     name: isCoreClosure(c) ? CLOSURE_NAMES[c] : (COS.CLOSURE_NAMES[c as keyof typeof COS.CLOSURE_NAMES] ?? { ar: c, en: c }),

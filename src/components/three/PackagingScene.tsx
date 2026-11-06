@@ -1,30 +1,22 @@
 "use client";
 
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { ContactShadows, Environment, Lightformer, OrbitControls } from "@react-three/drei";
-import {
-  useEffect,
-  useId,
-  useImperativeHandle,
-  useMemo,
-  useRef,
-  useState,
-  type CSSProperties,
-  type KeyboardEvent,
-  type ReactNode,
-  type Ref,
-} from "react";
-import { NeutralToneMapping, PerspectiveCamera, Spherical, Vector3 } from "three";
+import { useFrame, useThree } from "@react-three/fiber";
+import { OrbitControls } from "@react-three/drei";
+import { useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, type CSSProperties, type ReactNode, type Ref } from "react";
+import { PerspectiveCamera, Spherical, Vector3, type Group } from "three";
 import { boundsAt, maxStage, type DielineModel } from "@/lib/dieline";
-import { defaultMaxDpr, usePrefersReducedMotion } from "./hooks";
+import { usePrefersReducedMotion } from "./hooks";
 import { MM, PackagingModel, type PackagingModelProps } from "./PackagingModel";
 import { captureScreenshot, type ScreenshotOptions } from "./screenshot";
 import { FinishedPackagingModel, type SurfaceFinishProps } from "./finishes/FinishedPackagingModel";
 import { StudioStage, type StageOptions } from "./finishes/StudioStage";
-import { AUTO_ROTATE, easeInOutCubic } from "./finishes/motion";
-import styles from "./PackagingScene.module.css";
+import { AUTO_ROTATE, easeInOutCubic, easeOutQuint } from "./finishes/motion";
+import { StudioLighting } from "./lighting";
+import { SoftShadow } from "./SoftShadow";
+import { InteractionDpr, useOnScreen } from "./perf";
+import { EngineCanvas, useRegisterViewApi, type EngineToneMapping, type EngineViewApi, type ViewName } from "./EngineCanvas";
 
-export type ViewName = "iso" | "front" | "back" | "left" | "right" | "top" | "bottom";
+export type { ViewName } from "./EngineCanvas";
 
 /** Imperative API (keyboard/button controls, export). Angles in degrees. */
 export interface PackagingSceneHandle {
@@ -79,11 +71,18 @@ export interface PackagingSceneProps extends Omit<PackagingModelProps, "foldProg
   autoRotate?: boolean;
   /** Added by finishes: image shown until the first 3D frame renders, then cross-faded to the canvas. */
   poster?: string;
+  /**
+   * Tone mapping. Default "neutral" (Khronos PBR Neutral): keeps printed colours close to their
+   * sRGB values (what a brand approves), unlike ACES / AgX which shift hue and saturation.
+   */
+  toneMapping?: EngineToneMapping;
+  /** Tone-mapping exposure. Default 1. */
+  exposure?: number;
 }
 
-interface RigApi extends Omit<PackagingSceneHandle, "getCanvas"> {
-  canvas: HTMLCanvasElement;
-}
+
+
+type RigApi = EngineViewApi;
 
 const DEG = Math.PI / 180;
 const DEFAULT_VIEW = { theta: 32 * DEG, phi: 62 * DEG };
@@ -99,14 +98,49 @@ const VIEWS: Record<ViewName, { theta: number; phi: number }> = {
 const MIN_PHI = 0.5 * DEG;
 const MAX_PHI = 179.5 * DEG;
 
-/** Distance + look-at target that frame the box at a fold progress. */
-function frameFor(dieline: DielineModel, progress: number, camera: PerspectiveCamera) {
+/** Frame margin: the subject fills ~75 % of the frame (leaves room for the view toolbar) (product-shot convention). */
+const FRAME_MARGIN = 1.3;
+const FLAT = 0.02;
+
+/** Hero view for a model: cylinders (rolled tubes) are shot nearer the front so centred copy is not on the silhouette. */
+export function heroView(dieline: DielineModel, progress: number): { theta: number; phi: number } {
+  if (progress < FLAT) return VIEWS.front; // a die-cut blank is shown face-on, like a dieline proof
+  return dieline.panels.some((p) => p.hingeKind === "roll") ? { theta: 18 * DEG, phi: DEFAULT_VIEW.phi } : DEFAULT_VIEW;
+}
+
+/** Identity of a model for re-framing: library variants share a core structureCode, so add the panel set. */
+export function modelKey(dieline: DielineModel): string {
+  let h = 0;
+  for (const p of dieline.panels) for (let i = 0; i < p.id.length; i++) h = (Math.imul(h, 31) + p.id.charCodeAt(i)) | 0;
+  return `${dieline.structureCode}:${dieline.panels.length}:${h}`;
+}
+
+/**
+ * Distance + look-at target that frame the box at a fold progress, seen from `view`. Fits the
+ * projected bounding box (8 corners) rather than its bounding sphere, which left long or flat
+ * models at a third of the frame.
+ */
+function frameFor(dieline: DielineModel, progress: number, camera: PerspectiveCamera, view: { theta: number; phi: number } = heroView(dieline, progress)) {
   const size = boundsAt(dieline, progress).getSize(new Vector3()).multiplyScalar(MM);
-  const radius = Math.max(size.length() / 2, 0.01);
-  const vfov = camera.fov * DEG;
-  const hfov = 2 * Math.atan(Math.tan(vfov / 2) * camera.aspect);
-  const fov = Math.min(vfov, hfov);
-  return { distance: (radius / Math.sin(fov / 2)) * 1.2, target: new Vector3(0, size.y / 2, 0), size };
+  const target = new Vector3(0, size.y / 2, 0);
+  const tanV = Math.tan((camera.fov * DEG) / 2);
+  const tanH = tanV * camera.aspect;
+  const dir = new Vector3().setFromSphericalCoords(1, view.phi, view.theta);
+  const right = new Vector3().crossVectors(new Vector3(0, 1, 0), dir);
+  if (right.lengthSq() < 1e-8) right.set(1, 0, 0);
+  right.normalize();
+  const up = new Vector3().crossVectors(dir, right).normalize();
+  let distance = 0.02;
+  const c = new Vector3();
+  for (const sx of [-0.5, 0.5])
+    for (const sy of [-0.5, 0.5])
+      for (const sz of [-0.5, 0.5]) {
+        c.set(sx * size.x, sy * size.y, sz * size.z);
+        const z = c.dot(dir);
+        const need = z + Math.max(Math.abs(c.dot(right)) / tanH, Math.abs(c.dot(up)) / tanV) * FRAME_MARGIN;
+        distance = Math.max(distance, need);
+      }
+  return { distance, target, size };
 }
 
 interface Tween {
@@ -144,12 +178,16 @@ function Rig({
   autoRotate?: boolean;
 }) {
   const { camera, gl, scene, invalidate, controls } = useThree();
+  const regress = useThree((s) => s.performance.regress);
   const reduced = usePrefersReducedMotion();
   const cam = camera as PerspectiveCamera;
   const orbit = controls as unknown as { target: Vector3; update(): void; minDistance: number; maxDistance: number } | null;
   const localTarget = useRef(new Vector3());
   const tween = useRef<Tween | null>(null);
   const targetRef = useRef(foldTarget);
+  /** Eased fold: from → to over `dur` ms (easeInOutCubic), so a fold starts and lands softly. */
+  const foldTween = useRef<{ from: number; to: number; t: number; dur: number } | null>(null);
+  const onScreen = useOnScreen(gl.domElement);
   const motion = animateFold && !reduced;
   // Structures with more fold stages (lock bottoms, lids, dividers) get a little more time
   // so every step stays readable; capped so it never drags.
@@ -194,30 +232,49 @@ function Rig({
     orbit.maxDistance = limits.max;
   }, [orbit, limits]);
 
-  // Initial framing per structure.
-  const framedFor = useRef<string | null>(null);
-  useEffect(() => {
-    const key = `${dieline.structureCode}:${orbit ? 1 : 0}`;
-    const f = frameFor(dieline, progressRef.current, cam);
-    if (framedFor.current !== key) {
-      framedFor.current = key;
-      place(new Spherical(f.distance, DEFAULT_VIEW.phi, DEFAULT_VIEW.theta), f.target);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dieline, orbit]);
-
-  // New fold target (or new size): animate the fold and re-frame.
+  // Framing. First mount (and when the orbit controls attach): place the camera. Another
+  // structure: glide (eased) back to the 3/4 hero view framed for it. Same structure with a new
+  // fold target or size: keep the user's angle, ease the distance.
+  const framedFor = useRef<{ code: string; orbit: boolean } | null>(null);
   useEffect(() => {
     targetRef.current = foldTarget;
-    if (autoFit) {
-      const f = frameFor(dieline, foldTarget, cam);
-      const s = spherical();
-      s.radius = f.distance;
-      goTo(s, f.target, motion, foldMs * Math.min(1, Math.abs(foldTarget - progressRef.current)) || 300);
+    const from = progressRef.current;
+    if (from !== foldTarget) {
+      foldTween.current = motion ? { from, to: foldTarget, t: 0, dur: Math.max(250, foldMs * Math.abs(foldTarget - from)) } : null;
+      if (!motion) progressRef.current = foldTarget;
+    }
+    const prev = framedFor.current;
+    const key = modelKey(dieline);
+    framedFor.current = { code: key, orbit: !!orbit };
+    const hero = heroView(dieline, foldTarget);
+    if (!prev || prev.orbit !== !!orbit) {
+      const start = motion ? from : foldTarget;
+      const v0 = heroView(dieline, start);
+      const f = frameFor(dieline, start, cam, v0);
+      place(new Spherical(f.distance, v0.phi, v0.theta), f.target);
+      if (autoFit && motion && from !== foldTarget) {
+        const g = frameFor(dieline, foldTarget, cam, hero);
+        goTo(new Spherical(g.distance, hero.phi, hero.theta), g.target, true, foldMs * Math.abs(foldTarget - from));
+      }
+    } else if (prev.code !== key) {
+      const f = frameFor(dieline, foldTarget, cam, hero);
+      goTo(new Spherical(f.distance, hero.phi, hero.theta), f.target, motion, 700);
+    } else if (autoFit) {
+      const dur = Math.max(350, foldMs * Math.min(1, Math.abs(foldTarget - from)));
+      if (from < FLAT !== foldTarget < FLAT) {
+        // flat ↔ folded: swing between the face-on proof view and the 3/4 hero view
+        const f = frameFor(dieline, foldTarget, cam, hero);
+        goTo(new Spherical(f.distance, hero.phi, hero.theta), f.target, motion, dur);
+      } else {
+        const s = spherical();
+        const f = frameFor(dieline, foldTarget, cam, { theta: s.theta, phi: s.phi });
+        s.radius = f.distance;
+        goTo(s, f.target, motion, dur);
+      }
     }
     invalidate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [foldTarget, dieline, autoFit]);
+  }, [foldTarget, dieline, autoFit, orbit]);
 
   useEffect(() => {
     invalidate();
@@ -226,15 +283,16 @@ function Rig({
   useFrame((_, rawDelta) => {
     const delta = Math.min(rawDelta, 1 / 20);
     let busy = false;
-    const cur = progressRef.current;
-    const tgt = targetRef.current;
-    if (cur !== tgt) {
-      if (!motion) progressRef.current = tgt;
-      else {
-        const step = (delta * 1000) / Math.max(1, foldMs);
-        progressRef.current = cur < tgt ? Math.min(tgt, cur + step) : Math.max(tgt, cur - step);
-      }
-      busy = progressRef.current !== tgt;
+    const ft = foldTween.current;
+    if (ft) {
+      ft.t = Math.min(1, ft.t + (delta * 1000) / ft.dur);
+      progressRef.current = ft.from + (ft.to - ft.from) * easeInOutCubic(ft.t);
+      if (ft.t >= 1) {
+        progressRef.current = ft.to;
+        foldTween.current = null;
+      } else busy = true;
+    } else if (progressRef.current !== targetRef.current) {
+      progressRef.current = targetRef.current;
     }
     const tw = tween.current;
     if (tw) {
@@ -250,7 +308,8 @@ function Rig({
       else busy = true;
     }
     // Idle turntable: eases in after AUTO_ROTATE.idleMs without input; any input pauses it.
-    if (autoRotate && !reduced && !busy && !tween.current) {
+    // Off-screen or hidden viewers do not spin (no frames, no battery).
+    if (autoRotate && !reduced && !busy && !tween.current && onScreen.current) {
       const idle = performance.now() - lastInput.current;
       if (idle > AUTO_ROTATE.idleMs) {
         const ramp = easeInOutCubic((idle - AUTO_ROTATE.idleMs) / AUTO_ROTATE.rampMs);
@@ -287,6 +346,8 @@ function Rig({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gl, autoRotate, reduced]);
+  // resume the turntable when the viewer scrolls back into view
+  useEffect(() => onScreen.subscribe(() => invalidate()), [onScreen, invalidate]);
 
   // Imperative API for the outer component.
   useEffect(() => {
@@ -294,6 +355,7 @@ function Rig({
       canvas: gl.domElement,
       rotate(dAz, dPolar = 0) {
         poke();
+        regress();
         tween.current = null;
         const s = spherical();
         s.theta += dAz * DEG;
@@ -302,6 +364,7 @@ function Rig({
       },
       zoom(factor) {
         poke();
+        regress();
         tween.current = null;
         const s = spherical();
         s.radius = Math.min(limits.max, Math.max(limits.min, s.radius * factor));
@@ -309,17 +372,17 @@ function Rig({
       },
       reset() {
         poke();
-        const f = frameFor(dieline, targetRef.current, cam);
-        goTo(new Spherical(f.distance, DEFAULT_VIEW.phi, DEFAULT_VIEW.theta), f.target, true);
+        const v = heroView(dieline, targetRef.current);
+        const f = frameFor(dieline, targetRef.current, cam, v);
+        goTo(new Spherical(f.distance, v.phi, v.theta), f.target, true, 600);
       },
       setView(view) {
         poke();
         const v = VIEWS[view];
-        const f = frameFor(dieline, targetRef.current, cam);
-        goTo(new Spherical(f.distance, v.phi, v.theta), f.target, true);
+        const f = frameFor(dieline, targetRef.current, cam, v);
+        goTo(new Spherical(f.distance, v.phi, v.theta), f.target, true, 600);
       },
       async screenshot(opts) {
-        // make sure the fold state is final before capturing
         return captureScreenshot(gl, scene, cam, opts);
       },
     };
@@ -329,7 +392,9 @@ function Rig({
   });
 
   const closedSize = useMemo(() => boundsAt(dieline, 1).getSize(new Vector3()).multiplyScalar(MM), [dieline]);
-  const extent = Math.max(closedSize.x, closedSize.z, 0.05);
+  const flatSize = useMemo(() => boundsAt(dieline, 0).getSize(new Vector3()).multiplyScalar(MM), [dieline]);
+  // the shadow area covers the flat sheet too, so unfolding never clips it
+  const extent = Math.max(closedSize.x, closedSize.z, flatSize.x * 0.6, flatSize.z * 0.6, 0.05);
 
   return (
     <>
@@ -343,38 +408,54 @@ function Rig({
         />
       ) : (
         <>
-        <hemisphereLight args={["#ffffff", "#d9d4cc", 0.9]} />
-        <directionalLight position={[2.5, 4, 3]} intensity={1.6} />
-        <directionalLight position={[-3, 2, -2]} intensity={0.35} />
-        <Environment resolution={64} frames={1} environmentIntensity={0.55}>
-          <Lightformer form="rect" intensity={2} position={[0, 5, 2]} scale={[8, 4, 1]} />
-          <Lightformer form="rect" intensity={1} position={[-5, 1, -1]} rotation-y={Math.PI / 2} scale={[6, 2, 1]} />
-          <Lightformer form="rect" intensity={1} position={[5, 1, 1]} rotation-y={-Math.PI / 2} scale={[6, 2, 1]} />
-        </Environment>
-        {shadows ? (
-          <ContactShadows
-            position={[0, -0.0005, 0]}
-            scale={extent * 4}
-            far={Math.max(closedSize.y, extent) * 1.5}
-            blur={2.2}
-            opacity={0.45}
-            resolution={512}
-            color="#3a2e22"
-          />
-        ) : null}
+          <StudioLighting />
+          {shadows ? <SoftShadow scale={extent * 4} far={Math.max(closedSize.y, extent) * 1.5} blur={2.4} opacity={0.5} contactOpacity={0.55} /> : null}
         </>
       )}
-      <OrbitControls makeDefault enablePan={false} enableDamping={!reduced} dampingFactor={0.12} rotateSpeed={0.8} />
+      <OrbitControls makeDefault enablePan={false} enableDamping={!reduced} dampingFactor={0.12} rotateSpeed={0.8} regress />
+      <InteractionDpr />
     </>
   );
 }
 
 /**
- * Full 3D viewer: lighting, soft contact shadow, orbit controls, camera framing,
- * fold animation (prefers-reduced-motion aware), keyboard control and screenshot export.
- * Client-only: load it with `PackagingSceneLazy` (next/dynamic, ssr: false).
+ * Eased swap-in when the structure changes: the new model grows from 94 % with a soft landing
+ * (280 ms) instead of popping. Skipped under reduced motion and on first mount.
  */
-export function PackagingScene(props: PackagingSceneProps) {
+function SwapIn({ swapKey, children }: { swapKey: string; children: ReactNode }) {
+  const ref = useRef<Group>(null);
+  const reduced = usePrefersReducedMotion();
+  const invalidate = useThree((s) => s.invalidate);
+  const anim = useRef<{ key: string; t: number } | null>(null);
+  useEffect(() => {
+    const first = anim.current === null;
+    anim.current = { key: swapKey, t: first || reduced ? 1 : 0 };
+    invalidate();
+  }, [swapKey, reduced, invalidate]);
+  useFrame((_, dt) => {
+    const a = anim.current;
+    const g = ref.current;
+    if (!a || !g || a.t >= 1) return;
+    a.t = Math.min(1, a.t + Math.min(dt, 1 / 20) / 0.28);
+    const s = 0.94 + 0.06 * easeOutQuint(a.t);
+    g.scale.setScalar(s);
+    if (a.t < 1) invalidate();
+  });
+  return <group ref={ref}>{children}</group>;
+}
+
+/** Props of the scene content (everything except the canvas / wrapper props). */
+export type PackagingSceneContentProps = Omit<
+  PackagingSceneProps,
+  "ariaLabel" | "roleDescription" | "keyboardHint" | "fallback" | "enableKeyboard" | "maxDpr" | "className" | "style" | "onReady" | "poster" | "toneMapping" | "exposure"
+>;
+
+/**
+ * The box scene without its own canvas: rig, lights, contact shadow, orbit controls, fold and
+ * framing, the model. Render it inside `<EngineCanvas>` (that is what `PackagingScene` does);
+ * `handleRef` and the canvas keyboard both reach it.
+ */
+export function PackagingSceneContent(props: PackagingSceneContentProps) {
   const {
     dieline,
     artworkTextures,
@@ -388,33 +469,22 @@ export function PackagingScene(props: PackagingSceneProps) {
     autoFit = true,
     artworkVersion,
     handleRef,
-    ariaLabel = "3D preview of the box",
-    roleDescription = "3D viewer",
-    keyboardHint = "Arrow keys rotate, plus and minus zoom, 0 resets the view.",
-    fallback,
-    enableKeyboard = true,
     shadows = true,
-    maxDpr,
-    className,
-    style,
-    onReady,
     children,
     surfaceFinish,
     stage,
     autoRotate,
-    poster,
   } = props;
-  const [ready, setReady] = useState(false);
-  useEffect(() => {
-    if (!poster) return;
-    // never hide the viewer for long if the first frame is slow or WebGL fails
-    const t = setTimeout(() => setReady(true), 4000);
-    return () => clearTimeout(t);
-  }, [poster]);
   const progressRef = useRef(Math.min(1, Math.max(0, foldProgress)));
   const apiRef = useRef<RigApi | null>(null);
-  const hintId = useId();
-  const [dprCap] = useState(() => maxDpr ?? defaultMaxDpr());
+  useRegisterViewApi(apiRef);
+  const camera = useThree((s) => s.camera) as PerspectiveCamera;
+  useLayoutEffect(() => {
+    if (camera.fov !== 30) {
+      camera.fov = 30;
+      camera.updateProjectionMatrix();
+    }
+  }, [camera]);
 
   useImperativeHandle(
     handleRef,
@@ -429,87 +499,22 @@ export function PackagingScene(props: PackagingSceneProps) {
     [],
   );
 
-  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (!enableKeyboard || e.altKey || e.ctrlKey || e.metaKey) return;
-    const api = apiRef.current;
-    if (!api) return;
-    const step = e.shiftKey ? 5 : 15;
-    switch (e.key) {
-      case "ArrowLeft":
-        api.rotate(-step);
-        break;
-      case "ArrowRight":
-        api.rotate(step);
-        break;
-      case "ArrowUp":
-        api.rotate(0, step * 0.66);
-        break;
-      case "ArrowDown":
-        api.rotate(0, -step * 0.66);
-        break;
-      case "+":
-      case "=":
-        api.zoom(0.85);
-        break;
-      case "-":
-      case "_":
-        api.zoom(1 / 0.85);
-        break;
-      case "0":
-      case "Home":
-        api.reset();
-        break;
-      default:
-        return;
-    }
-    e.preventDefault();
-  };
-
   return (
-    <div
-      className={[styles.viewport, className].filter(Boolean).join(" ")}
-      style={style}
-      tabIndex={enableKeyboard ? 0 : undefined}
-      role="application"
-      aria-roledescription={roleDescription}
-      aria-label={ariaLabel}
-      aria-describedby={hintId}
-      onKeyDown={onKeyDown}
-      dir="ltr"
-    >
-      <span id={hintId} className={styles.hint}>
-        {keyboardHint}
-      </span>
-      {poster ? <div aria-hidden="true" className={styles.poster} data-hidden={ready ? "true" : undefined} style={{ backgroundImage: `url(${JSON.stringify(poster)})` }} /> : null}
-      <Canvas
-        className={styles.canvas}
-        data-fade={poster ? (ready ? "in" : "out") : undefined}
-        frameloop="demand"
-        dpr={[1, dprCap]}
-        gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
-        camera={{ fov: 30, near: 0.005, far: 60, position: [0.4, 0.35, 0.7] }}
-        onCreated={({ gl }) => {
-          gl.toneMapping = NeutralToneMapping;
-          gl.setClearColor(0x000000, 0);
-          onReady?.();
-          // reveal after the first frame has been drawn (poster cross-fade)
-          requestAnimationFrame(() => requestAnimationFrame(() => setReady(true)));
-        }}
-        fallback={fallback ?? <div className={styles.fallback}>3D preview is not available on this device.</div>}
-      >
-        <Rig
-          dieline={dieline}
-          foldTarget={Math.min(1, Math.max(0, foldProgress))}
-          animateFold={animateFold}
-          foldDurationMs={foldDurationMs}
-          autoFit={autoFit}
-          progressRef={progressRef}
-          apiRef={apiRef}
-          artworkVersion={artworkVersion}
-          shadows={shadows}
-          stage={stage}
-          autoRotate={autoRotate}
-        />
+    <>
+      <Rig
+        dieline={dieline}
+        foldTarget={Math.min(1, Math.max(0, foldProgress))}
+        animateFold={animateFold}
+        foldDurationMs={foldDurationMs}
+        autoFit={autoFit}
+        progressRef={progressRef}
+        apiRef={apiRef}
+        artworkVersion={artworkVersion}
+        shadows={shadows}
+        stage={stage}
+        autoRotate={autoRotate}
+      />
+      <SwapIn swapKey={modelKey(dieline)}>
         {surfaceFinish ? (
           <FinishedPackagingModel
             dieline={dieline}
@@ -530,8 +535,50 @@ export function PackagingScene(props: PackagingSceneProps) {
             foldProgress={progressRef}
           />
         )}
-        {children}
-      </Canvas>
-    </div>
+      </SwapIn>
+      {children}
+    </>
+  );
+}
+
+/**
+ * Full 3D viewer: lighting, soft contact shadow, orbit controls, camera framing,
+ * fold animation (prefers-reduced-motion aware), keyboard control and screenshot export.
+ * Client-only: load it with `PackagingSceneLazy` (next/dynamic, ssr: false).
+ * Equivalent to `<EngineCanvas …><PackagingSceneContent …/></EngineCanvas>`.
+ */
+export function PackagingScene(props: PackagingSceneProps) {
+  const {
+    ariaLabel = "3D preview of the box",
+    roleDescription,
+    keyboardHint,
+    fallback,
+    enableKeyboard,
+    maxDpr,
+    className,
+    style,
+    onReady,
+    poster,
+    toneMapping,
+    exposure,
+    ...content
+  } = props;
+  return (
+    <EngineCanvas
+      ariaLabel={ariaLabel}
+      roleDescription={roleDescription}
+      keyboardHint={keyboardHint}
+      fallback={fallback}
+      enableKeyboard={enableKeyboard}
+      maxDpr={maxDpr}
+      className={className}
+      style={style}
+      onReady={onReady}
+      poster={poster}
+      toneMapping={toneMapping}
+      exposure={exposure}
+    >
+      <PackagingSceneContent {...content} />
+    </EngineCanvas>
   );
 }

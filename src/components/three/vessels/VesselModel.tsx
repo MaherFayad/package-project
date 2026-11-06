@@ -19,7 +19,7 @@ import {
   type VesselProfile,
 } from "@/lib/vessels";
 import { configureArtworkTexture } from "../boardMaterials";
-import { buildClosure } from "./closures";
+import { buildClosure, type ClosureStyle } from "./closures";
 import {
   bandLabelGeometry,
   bodyGeometry,
@@ -70,6 +70,10 @@ export interface VesselModelProps {
   replayKey?: string | number;
   /** Bump after repainting a label canvas. */
   artworkVersion?: number | string;
+  /** Optional body colour (sRGB hex) over the material's default: green / cobalt glass, coloured HDPE, black ABS. */
+  tint?: string | null;
+  /** Optional bottle-neck closure style (crown, ROPP, cork + capsule, sparkling, pourer) over the core closure kind. */
+  closureStyle?: ClosureStyle | null;
 }
 
 const easeOutBack = (t: number) => {
@@ -100,7 +104,7 @@ function useDisposable<T extends { dispose(): void } | null>(factory: () => T, d
  * axis, front facing +Z. Everything is built from @/lib/vessels so the 3D matches the print specs.
  */
 export function VesselModel(props: VesselModelProps) {
-  const { kind, dims, profile, material, closure, closureColor, liquid, fill, labels: labelInputs, quality, open = false, animate = true, replayKey, artworkVersion } = props;
+  const { kind, dims, profile, material, closure, closureColor, liquid, fill, labels: labelInputs, quality, open = false, animate = true, replayKey, artworkVersion, tint, closureStyle } = props;
   const invalidate = useThree((s) => s.invalidate);
 
   // textures for labels given as canvases (one per canvas; a resized canvas gets a new one)
@@ -127,7 +131,10 @@ export function VesselModel(props: VesselModelProps) {
   const profileKey = JSON.stringify([kind, dims, profile.finishTopY, profile.finishR]);
 
   // ---------------------------------------------------------------- geometry
-  const body = useDisposable(() => (revolved ? bodyGeometry(profile, 128) : null), [profileKey]);
+  // Phones ("low") get half the radial segments: silhouettes stay smooth at phone sizes and the
+  // vertex / triangle load halves (PERF-12).
+  const radial = quality === "low" ? 48 : 128;
+  const body = useDisposable(() => (revolved ? bodyGeometry(profile, radial) : null), [profileKey, radial]);
   const tubeLabel = isTube ? labels.find((l) => l.spec.kind === "WRAP") : undefined;
   const tubeGeo = useDisposable(() => (isTube ? tubeBodyGeometry(dims, tubeLabel?.spec) : null), [profileKey, isTube, tubeLabel ? JSON.stringify(tubeLabel.spec.placement) + tubeLabel.spec.printWidthMm : ""]);
   const pouchGeo = useMemo(() => {
@@ -148,14 +155,14 @@ export function VesselModel(props: VesselModelProps) {
     [pouchGeo],
   );
 
-  const liquidGeo = useDisposable(() => (revolved && def.fillable ? liquidGeometry(profile, 72) : null), [profileKey]);
+  const liquidGeo = useDisposable(() => (revolved && def.fillable ? liquidGeometry(profile, radial === 48 ? 32 : 72) : null), [profileKey, radial]);
   const surfaceGeo = useDisposable(() => {
     if (!revolved || !def.fillable) return null;
     // unit disc in the section shape, scaled to the inner radius at the fill height every frame
-    return revolve(ringsFromPoints([{ r: 1, y: 0 }, { r: 0, y: 0 }]), { section: profile.section, segments: 64 });
-  }, [profileKey]);
+    return revolve(ringsFromPoints([{ r: 1, y: 0 }, { r: 0, y: 0 }]), { section: profile.section, segments: radial / 2 });
+  }, [profileKey, radial]);
 
-  const closureModel = useMemo(() => buildClosure(kind, closure, dims, profile), [kind, closure, dims, profile]);
+  const closureModel = useMemo(() => buildClosure(kind, closure, dims, profile, closureStyle), [kind, closure, dims, profile, closureStyle]);
   useEffect(() => () => closureModel.parts.forEach((p) => p.geometry.dispose()), [closureModel]);
 
   const labelGeos = useMemo(() => {
@@ -164,7 +171,7 @@ export function VesselModel(props: VesselModelProps) {
       .filter((l) => !(isTube && l.spec.kind === "WRAP"))
       .map((l) => {
         const s = l.spec;
-        if (s.placement.type === "band") return { label: l, geometry: bandLabelGeometry(s, 0.18, 128) as BufferGeometry };
+        if (s.placement.type === "band") return { label: l, geometry: bandLabelGeometry(s, 0.18, radial) as BufferGeometry };
         if (s.placement.type === "disc") {
           const g = discLabelGeometry(s);
           g.translate(0, 0.18, 0);
@@ -175,15 +182,15 @@ export function VesselModel(props: VesselModelProps) {
         return { label: l, geometry: sl.geometry as BufferGeometry, sleeve: sl };
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profileKey, labels.map((l) => `${l.spec.id}:${l.spec.trimWidthMm}x${l.spec.trimHeightMm}`).join("|")]);
+  }, [profileKey, radial, labels.map((l) => `${l.spec.id}:${l.spec.trimWidthMm}x${l.spec.trimHeightMm}`).join("|")]);
   useEffect(() => () => labelGeos.forEach((g) => g.geometry.dispose()), [labelGeos]);
 
   // ---------------------------------------------------------------- materials
   const kraft = useDisposable(() => (material === "KRAFT_POUCH" ? createKraftTexture() : null), [material]);
   const bodyMat = useDisposable(() => {
     if (isTube && tubeLabel?.texture) return createLabelMaterial(tubeLabel.stock === "CLEAR_BOPP" ? "WHITE_BOPP" : tubeLabel.stock, tubeLabel.finish, tubeLabel.texture);
-    return createVesselMaterial(material, quality, { thinMode, kraftMap: kraft });
-  }, [material, quality, thinMode, kraft, isTube, tubeLabel?.texture, tubeLabel?.stock, tubeLabel?.finish]);
+    return createVesselMaterial(material, quality, { thinMode, kraftMap: kraft, tint });
+  }, [material, quality, thinMode, kraft, isTube, tubeLabel?.texture, tubeLabel?.stock, tubeLabel?.finish, tint]);
   const clipPlane = useMemo(() => new Plane(new Vector3(0, -1, 0), 0), []);
   const liquidMat = useDisposable(() => createLiquidMaterial(liquid, quality, [clipPlane]), [liquid, quality, clipPlane]);
   const surfaceMat = useDisposable(() => createLiquidMaterial(liquid, quality, []), [liquid, quality]);
@@ -295,10 +302,14 @@ export function VesselModel(props: VesselModelProps) {
     }
     if (tab.current) tab.current.rotation.x = o * 1.15;
     // shrink sleeves: drop on, then shrink from the bottom up
+    const shrinkBefore = a.shrink;
     a.shrink = step(a.shrink, 1, 1.5);
     labelGeos.forEach((g, i) => {
       const mesh = sleeveMeshes.current[i];
       if (!g.sleeve || !mesh) return;
+      // settled sleeves keep their last pose: no per-frame vertex rewrite / re-upload (PERF-21)
+      if (mesh.userData.shrink === a.shrink && shrinkBefore === a.shrink) return;
+      mesh.userData.shrink = a.shrink;
       const pos = mesh.geometry.getAttribute("position") as BufferAttribute;
       const nor = mesh.geometry.getAttribute("normal") as BufferAttribute;
       const { start, target } = g.sleeve;

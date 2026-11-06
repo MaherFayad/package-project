@@ -11,7 +11,8 @@
  * eager pieces (PackagingModel, useArtworkTexture, captureScreenshot…) import
  * "@/components/three/engine" from a lazily loaded module.
  */
-export type { PackagingSceneHandle, PackagingSceneProps, ViewName } from "./PackagingScene";
+export type { PackagingSceneHandle, PackagingSceneProps, PackagingSceneContentProps, ViewName } from "./PackagingScene";
+export type { EngineCanvasProps } from "./EngineCanvas";
 export type { ArtworkTextures, PackagingModelProps } from "./PackagingModel";
 export type { ScreenshotOptions } from "./screenshot";
 export { PackagingSceneLazy } from "./LazyPackagingScene";
