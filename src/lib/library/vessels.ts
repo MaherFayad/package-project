@@ -142,6 +142,11 @@ const COS_CLOSURE_STYLE: Partial<Record<string, string>> = {
   LIDDING_FOIL: "PEEL_FOIL",
   TOP_SEAL_FILM: "PEEL_FOIL",
   EASY_OPEN_END: "EOE_RING",
+  PLUG_LID: "PLUG_LID",
+  LEVER_LID: "LEVER_LID",
+  SNAP_LID: "SNAP_LID",
+  HINGED_LID: "HINGED_LID",
+  TWIST_UP: "TWIST_UP",
 };
 
 /** Cosmetic materials whose core look has the wrong colour (X-01, V-14). */

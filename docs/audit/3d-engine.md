@@ -143,6 +143,12 @@ Re-measured after the last commit (final build): 50 draw calls, 0 idle frames, 1
 | E-50 / CF E-12 | low | `VesselScene.tsx` | Turntable 20°/s, stops for good. | Done in pass 1 (E-23). | fixed |
 | — / CF E-02, E-03, E-06..E-09, E-11 | — | `lib/library/vessels.ts`, designer | Surfaces, default liquid, flexible envelope / surfaces / options, oval tube, container copy. | Library and designer data, not engine: left to those sessions. | not engine |
 
+| E-51 | critical | `lighting.tsx`, `vessels/VesselScene.tsx` | Reported by the designer session after wiring the shared canvas: +2 textures / +2 framebuffers (~7.6 MB) per box ↔ container visit. Traced (WebGL create/delete hooks with stacks) to three's PMREM cache: drei `<Environment>` hands it a render-target texture, and for those `WebGLCubeUVMaps` never registers a dispose listener, so the prefiltered cube-UV target outlives every unmount. | New `EnvironmentScene`: renders the light set into a cube once, prefilters with one cached `PMREMGenerator` per renderer into a target it owns, disposes both on unmount. Same look. Repro: 6 box ↔ bottle round trips in one `EngineCanvas`: textures 13 → 25 before, 13 → 13 after (`scripts/perf/leak-shared-canvas.cjs`). | fixed |
+
+| E-52 / CF R2 E-09 | medium | `vessels/geometry.ts · tubeBodyGeometry` | Oval tubes rendered round (G ignored). | Elliptical rings b = G/2 on the body, blending from round at the nozzle; still flattens into the crimp. | fixed |
+| E-53 / CF R2 | low | `vessels/closures.ts · EOE_RING` | Ring placed at 0.55 × half width: hung over the short edge of rectangular / oval tins. | Placed at 0.55 × half depth (`R × depthRatio`). | fixed |
+| E-54 / CF R2 | high | `vessels/closures.ts`, `lib/library/vessels.ts` | Square / oval / rectangular lids still faked in the family geometry. | Section-following styles `PLUG_LID`, `LEVER_LID` (pry groove), `SNAP_LID`, `HINGED_LID` (clamshell), `TWIST_UP` (dome cap the full barrel width); mapped from the catalogue codes. Core `SLIP_LID` / `LUG_LID` already follow the section (E-29). The family can drop its own lid hacks. | fixed |
+
 Also for the designer (PERF-09): `EngineCanvas` gains `onContentReady`, fired after each content component's first frame (every box ↔ container switch).
 
 ### Pass 2 verification (after the EngineCanvas split, closures and tint)

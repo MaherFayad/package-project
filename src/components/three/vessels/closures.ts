@@ -60,9 +60,9 @@ function screwCap(p: VesselProfile, extraTop: ControlPoint[] = []): { geometry: 
  * aluminium (knurled top band, long plain skirt with a perforated pilfer ring), wine cork under a
  * 40–60 mm foil capsule, sparkling mushroom cork under foil + wire hood, ROPP pourer with spout.
  */
-export const CLOSURE_STYLES = ["CROWN", "ROPP", "CORK_CAPSULE", "SPARKLING", "POURER", "ROLL_ON_BALL", "AIRLESS_PUMP", "BULLET_CAP", "PEEL_FOIL", "EOE_RING"] as const;
+export const CLOSURE_STYLES = ["CROWN", "ROPP", "CORK_CAPSULE", "SPARKLING", "POURER", "ROLL_ON_BALL", "AIRLESS_PUMP", "BULLET_CAP", "PEEL_FOIL", "EOE_RING", "PLUG_LID", "LEVER_LID", "SNAP_LID", "HINGED_LID", "TWIST_UP"] as const;
 /** Styles that close the whole mouth of a can / tub / tray (allowed over lid and can-end cores). */
-const MOUTH_STYLES: readonly string[] = ["PEEL_FOIL", "EOE_RING"];
+const MOUTH_STYLES: readonly string[] = ["PEEL_FOIL", "EOE_RING", "PLUG_LID", "LEVER_LID", "SNAP_LID", "HINGED_LID", "TWIST_UP"];
 export type ClosureStyle = (typeof CLOSURE_STYLES)[number];
 
 /** Capsule / sleeve hugging the neck from `top` down `depth` mm (follows the glass, +gap). */
@@ -218,13 +218,86 @@ function styledClosure(style: ClosureStyle, p: VesselProfile): ClosureModel {
         const rr = Math.max(6, Math.min(14, R * 0.22));
         const ring = new TorusGeometry(rr, 1, 10, 40);
         ring.rotateX(-Math.PI / 2);
-        ring.translate(0, y + 1.2, R * 0.55);
+        // ring towards the front edge, inside the end on rectangular / oval tins (half depth = R × depthRatio)
+        const half = p.section.kind === "roundedRect" ? R * p.section.depthRatio : R;
+        const z = Math.max(rr + 2, half * 0.55);
+        ring.translate(0, y + 1.2, z);
         const rivet = new CylinderGeometry(1.6, 1.8, 0.8, 20);
-        rivet.translate(0, y + 0.4, R * 0.55 - rr);
+        rivet.translate(0, y + 0.4, z - rr);
         parts.push({ geometry: ring, role: "body", group: "tab" }, { geometry: rivet, role: "body", group: "static" });
-        return { parts, motion: "tab", turns: 0, rise: 0, lift: 0, pivot: [0, y + 1, R * 0.55 - rr], topY: y + 2.2 };
+        return { parts, motion: "tab", turns: 0, rise: 0, lift: 0, pivot: [0, y + 1, z - rr], topY: y + 2.2 };
       }
       return { parts, motion: "lift", turns: 0, rise: 0, lift: 20, topY: y };
+    }
+    case "PLUG_LID":
+    case "LEVER_LID": {
+      // plug sits inside the rim with a flange on top; lever lid adds the pry groove ring
+      const R = Math.max(r, radiusAt(p.outer as never, top - 0.5));
+      const y = top + 0.8;
+      const pts: ControlPoint[] = [
+        { r: R - 2.2, y: top - 6 },
+        { r: R - 1.6, y: top - 6, round: 0.6 },
+        { r: R - 1.6, y: top - 0.6 },
+        { r: R + 0.6, y: top - 0.2, round: 0.4 },
+        { r: R + 0.6, y, round: 0.5 },
+      ];
+      if (style === "LEVER_LID") pts.push({ r: R - 3, y }, { r: R - 4, y: y - 1.6, round: 0.5 }, { r: R - 5.4, y: y - 1.6, round: 0.5 }, { r: R - 6.4, y });
+      pts.push({ r: 0, y });
+      const lid = lathe(pts, { section: p.section });
+      return { parts: [{ geometry: lid, role: "capMetal", group: "moving" }], motion: "lift", turns: 0, rise: 0, lift: 22, topY: y };
+    }
+    case "SNAP_LID": {
+      // thermoformed / moulded snap lid over the rim: short skirt, slightly domed top
+      const R = Math.max(r, radiusAt(p.outer as never, top - 0.5)) + 0.8;
+      const yb = top - 4;
+      const yt = top + 3;
+      const lid = lathe(
+        [
+          { r: R - 0.5, y: yb + 2 },
+          { r: R - 0.5, y: yb, round: 0.2 },
+          { r: R, y: yb + 0.4, round: 0.4 },
+          { r: R, y: top + 1.2, round: 1 },
+          { r: R * 0.7, y: yt, round: R * 0.2 },
+          { r: 0, y: yt },
+        ],
+        { section: p.section },
+      );
+      return { parts: [{ geometry: lid, role: "cap", group: "moving" }], motion: "lift", turns: 0, rise: 0, lift: 24, topY: yt };
+    }
+    case "HINGED_LID": {
+      // clamshell: the lid is the tray's mirror, hinged at the back edge (opens with the lift motion's tilt)
+      const R = Math.max(r, radiusAt(p.outer as never, top - 0.5)) + 0.6;
+      const depth = Math.max(8, Math.min(30, top * 0.35));
+      const yt = top + depth;
+      const lid = lathe(
+        [
+          { r: R + 1.5, y: top },
+          { r: R + 1.5, y: top + 1, round: 0.5 },
+          { r: R, y: top + 1.5 },
+          { r: R * 0.92, y: yt, round: 4 },
+          { r: 0, y: yt },
+        ],
+        { section: p.section },
+      );
+      return { parts: [{ geometry: lid, role: "cap", group: "moving" }], motion: "lift", turns: 0, rise: 0, lift: depth * 0.8, topY: yt };
+    }
+    case "TWIST_UP": {
+      // deodorant / balm stick: dome cap the full barrel width (follows an oval or rounded section)
+      const R = Math.max(r, radiusAt(p.outer as never, top - 2)) + 0.6;
+      const yb = top - 18;
+      const yt = top + Math.max(8, R * 0.5);
+      const lid = lathe(
+        [
+          { r: R - 0.5, y: yb + 2 },
+          { r: R - 0.5, y: yb, round: 0.2 },
+          { r: R, y: yb + 0.4, round: 0.4 },
+          { r: R, y: top, round: 2 },
+          { r: R * 0.6, y: yt, round: R * 0.4 },
+          { r: 0, y: yt },
+        ],
+        { section: p.section },
+      );
+      return { parts: [{ geometry: lid, role: "cap", group: "moving" }], motion: "lift", turns: 0, rise: 0, lift: 30, topY: yt };
     }
     case "SPARKLING": {
       const foil = neckSleeve(p, 85, 0.4, top);
