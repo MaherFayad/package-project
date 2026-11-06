@@ -442,7 +442,7 @@ export const adminEn = {
       title: "Preview of affected prices",
       help: "Best offer per unit for {qty:unit} at the default size, Greater Cairo, ex-VAT.",
       run: "Preview changes",
-      affected: "Sample prices changed: {count} of {total}. Average change {pct}.",
+      affected: "{count} of {total} sample prices change. Average change {pct}.",
       none: "No sample prices change.",
       caption: "Current and proposed unit prices",
       columns: { structure: "Box", material: "Material", current: "Current", proposed: "Proposed", change: "Change" },

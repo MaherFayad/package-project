@@ -79,12 +79,12 @@ Method: fresh production build (`next start`, `OTP_DEV_ECHO=1`, mock payments), 
 
 | id | re-check (round 2, real browser / API) | status |
 |---|---|---|
-| P-01, P-07 | 40 parallel wrong guesses: 5 compared, 35 `TOO_MANY_ATTEMPTS`; two parallel correct codes: one session | fixed (re-verified) |
-| P-02 | spoofed `X-Forwarded-For` per request still hits the per-IP and per-phone limits | fixed (re-verified) |
-| P-03 | `?next=/%09/evil.com`, `//evil.com`, `/\evil.com` all land on the locale home | fixed (re-verified) |
+| P-01, P-07 | 40 parallel wrong guesses: 5 compared (`INVALID_CODE`), the rest `TOO_MANY_ATTEMPTS` / `RATE_LIMITED`; two parallel correct codes: one 200, one 400 | fixed (re-verified) |
+| P-02 | 8 request-otp calls for one phone, each with a different spoofed `X-Forwarded-For`: 200 then 429 ×7 | fixed (re-verified) |
+| P-03 | signed in, `/en/login?next=` `/%09/evil.com`, `//evil.com`, `/\evil.com`, `https://evil.com`: all 307 -> `/en` | fixed (re-verified) |
 | P-04 | unknown phone + wrong code -> `INVALID_CODE` (same as a known phone) | fixed (re-verified) |
 | P-05 | cross-site `text/plain` POST to request-otp -> 403 | fixed (re-verified) |
-| P-06, P-18 | sign-in without ticking marketing leaves the earlier MARKETING consent in place; new terms version recorded once | fixed (re-verified) |
+| P-06, P-18 | browser sign-in of the seeded buyer without ticking marketing: account still shows "مشترك", no new MARKETING row in the history | fixed (re-verified) |
 | P-08 | phone typed in Arabic-Indic digits (٠١١…) and code pasted work end to end in `ar` at 390 px | fixed (re-verified) |
 | P-09, P-37 | phone digits in Arabic hint, status and error read in LTR order (measured glyph x-positions) | fixed (re-verified); see R2-03 for wrapping |
 | P-10, P-35 | terms and privacy links open in a new tab and are announced; label says "سياسة الخصوصية" | fixed (re-verified) |
@@ -97,7 +97,7 @@ Method: fresh production build (`next start`, `OTP_DEV_ECHO=1`, mock payments), 
 | P-24 | remainder (other namespaces) closed by R2-01 | fixed (round 2) |
 | P-26 | cookie notice button "حسنا" | fixed (re-verified) |
 | P-28, P-29 | `/en/...` remembered; admin without `?next=` lands on `/admin` | fixed (re-verified) |
-| P-36 | `/ar` preloads 2 Plex files, `/en` preloads none | fixed (re-verified) |
+| P-36 | `Link` preload header: `/ar/login` 3 fonts (Inter + Plex 400/700), `/en/login` 1 (Inter) | fixed (re-verified) |
 | P-31 | LogOut icon still not mirrored in RTL (owners: storefront, admin, vendor) | open |
 | P-16, P-17, P-19, P-27, P-30, P-32, P-33, P-34 | unchanged code paths; behaviour as recorded in round 1 | as round 1 |
 
@@ -198,3 +198,20 @@ Method: fresh production build (`next start`, `OTP_DEV_ECHO=1`, mock payments), 
 | R2-I-B26 | medium | checkout.en, designer.en, marketing.en: payment.fawry.later, orders.detail.steps.QC_PASSED, notes.DISPUTE_OPENED, notes.PRINT_PDF_FAILED, notify.VENDOR_NEW_JOB, picker.presetsSubtitle, price.vendorsCount, shared.ctaHelp, nav.login, hero.fine, stats.governorates | English inconsistencies: "Log in" vs "Sign in" in en.ts; "vendors" / "print vendor" vs "printer"; "QC passed" vs "Quality check"; "opened a claim" vs "report"; "job inbox"; "{count} vendors can make it" wrong for 1; passive phrasing | One term per concept (EN mirrors the glossary) | "Sign in", "printers", "Quality check passed", "You reported a problem", "Our team is preparing the print file", "new paid order … on your orders page", "Printers available: {count}", "Add your mobile number", "governorates served", "Lead time: {days:day}" | fixed |
 | R2-I-B27 | low | designer.ar: describe.rotated; designer.en: price.total | "مدور {deg}°" is ambiguous (it can also mean rounded); "Total with VAT" vs "Total incl. VAT" in checkout | Consistency | Not changed: describe.test.ts asserts "مدور 15°", and e2e designer.spec.ts and journey.spec.ts assert getByText("Total with VAT"). Suggest "مدار بزاوية {deg}°" and "Total incl. VAT" when those tests are updated | open (designer owner: test-locked text) |
 | R2-I-B28 | low | src/lib/__tests__/platform-i18n.test.ts ("Arabic values are not left in English") | The allow-list regex `\{[\w]+\}.*` does not accept counted placeholders, so an Arabic value that is just "{qty:box}" (the same as the English) fails, even though it renders Arabic | Test gap | Worked around with label forms ("الكمية: {qty:box}", "عدد النماذج: {count}", "من {count:review}", "التنفيذ خلال {days:day}"). Allow-list widened to accept `{name:unit}` (the test is not weakened: identical *English* text in an Arabic value is still caught); the four values went back to the bare counted form | fixed |
+
+### Round 2 counts
+
+Round 2 rows: 88 (critical 0, high 30, medium 33, low 25). R2-01–R2-15 are platform-level; R2-I-A/V/B are the per-dictionary copy rows (admin 21, vendor portal 24, buyer-facing 28). Fixed 83; open 5 (R2-13, R2-14, R2-15 belong to other owners; R2-I-V24 `vendorPortal.common.pcs` needs a suffix key at its call site; R2-I-B27 is text pinned by designer tests). Round 1: P-31 still open, everything else re-verified.
+
+### Round 2 verification
+
+- `npm run lint`, `npm run typecheck`, `npm test` (54 files, 6,250 tests, including 5 new counted-placeholder tests), `npm run build`: pass.
+- Full Playwright suite (`--workers=2 --trace off`, mock payments, `OTP_DEV_ECHO=1`): 409 passed, 374 skipped (by the specs themselves), 3 failed. `admin.spec.ts:50` failed on English copy changed in this round (`pricing.preview.affected`); the original wording is restored and the spec passes (4 passed, 2 skipped). `models.spec.ts` FEFCO_0309 and FEFCO_0439 (desktop) logged React #418 hydration errors under full-suite load; both pass when re-run on their own. They are 3D model pages outside this scope.
+- Note for whoever runs e2e from a fresh clone: there is no `.env`, so payments are "not available" and checkout specs fail unless the `.env.example` values (`PAYMENTS_PROVIDER=mock`, …) and a `SESSION_SECRET` are exported.
+- Browser: axe has no violations on login (phone, code, error and terms states), account, the privacy and cookies pages, in ar/en at 390 and 1440. The only remaining violation is R2-13 on the admin frame. No horizontal overflow and CLS 0. Every admin and vendor page loads without raw dictionary keys after the dictionary split.
+
+### Files touched outside the listed scope (round 2)
+
+- `src/app/[locale]/admin/layout.tsx`, `src/app/[locale]/vendor/layout.tsx`: a nested `<I18nProvider>` with the full dictionary (R2-02).
+- `src/components/ui/strings.ts`: two Arabic values (R2-11).
+- `src/lib/__tests__/platform-i18n.test.ts`: new tests, and placeholder parity that understands counted placeholders (R2-12).
