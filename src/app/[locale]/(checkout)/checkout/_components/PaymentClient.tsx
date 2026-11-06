@@ -20,6 +20,7 @@ import {
   Modal,
   Page,
   PriceTag,
+  Stepper,
   Text,
   TextField,
   useToast,
@@ -64,6 +65,12 @@ export function PaymentClient(props: {
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const amount = formatMoney(props.totalPiasters, locale);
+  const steps = [
+    { id: "offer", label: t("checkout.steps.offer") },
+    { id: "delivery", label: t("checkout.steps.delivery") },
+    { id: "proof", label: t("checkout.steps.proof") },
+    { id: "payment", label: t("checkout.steps.payment") },
+  ];
 
   const errText = (code: string) => {
     const key = `checkout.errors.${code}` as DictKey;
@@ -298,6 +305,23 @@ export function PaymentClient(props: {
       secondaryActions={[{ content: t("payment.cancelOrder"), onAction: () => setConfirmCancel(true), destructive: true }]}
     >
       <BlockStack gap="400">
+        {/* Same progress as steps 1 to 3 so the buyer knows this is the last step (R2-03). */}
+        <div className={styles.stepperWide}>
+          <Card>
+            <Stepper steps={steps} current={3} accessibilityLabel={t("checkout.steps.label")} />
+          </Card>
+        </div>
+        <div className={styles.stepperCompact} aria-hidden="true">
+          <div className={styles.compactHead}>
+            <span className={styles.compactCount}>{t("checkout.stepOf", { current: 4, total: 4 })}</span>
+            <span className={styles.compactNext}>{t("buyer.nextStep", { step: t("buyer.stepPrinting") })}</span>
+          </div>
+          <div className={styles.segments}>
+            {steps.map((s, i) => (
+              <span key={s.id} className={styles.segment} data-state={i < 3 ? "done" : "current"} />
+            ))}
+          </div>
+        </div>
         <div className={styles.layout}>
           <BlockStack gap="400">
             {props.expired ? (
