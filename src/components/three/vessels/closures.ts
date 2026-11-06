@@ -28,8 +28,8 @@ export interface ClosureModel {
   topY: number;
 }
 
-const lathe = (pts: ControlPoint[], opts: { segments?: number; ribs?: { count: number; depth: number; where: (r: Ring) => boolean } } = {}) =>
-  revolve(ringsFromPoints(roundCorners(pts, 5)), { segments: opts.segments ?? 96, ribs: opts.ribs });
+const lathe = (pts: ControlPoint[], opts: { segments?: number; ribs?: { count: number; depth: number; where: (r: Ring) => boolean }; section?: VesselProfile["section"] } = {}) =>
+  revolve(ringsFromPoints(roundCorners(pts, 5)), { segments: opts.segments ?? 96, ribs: opts.ribs, section: opts.section });
 
 /** Ribbed screw cap over a finish. */
 function screwCap(p: VesselProfile, extraTop: ControlPoint[] = []): { geometry: BufferGeometry; yt: number } {
@@ -225,8 +225,10 @@ export function buildClosure(kind: VesselKind, closure: ClosureKind, dims: Vesse
         { r, y: yt - 1.4, round: 1.4 },
         { r: r - 1.6, y: yt, round: 1 },
         { r: 0, y: yt },
-      ]);
-      return { parts: [{ geometry: lid, role: "capMetal", group: "moving" }], motion: "unscrew", turns: 0.3, rise: 2.5, lift: 24, topY: yt };
+      ], { section: p.section });
+      // a square / rectangular rim cannot be unscrewed: its lid lifts straight off
+      const round = p.section.kind === "round";
+      return { parts: [{ geometry: lid, role: "capMetal", group: "moving" }], motion: round ? "unscrew" : "lift", turns: round ? 0.3 : 0, rise: round ? 2.5 : 0, lift: 24, topY: yt };
     }
     case "SLIP_LID": {
       const R = dims.D / 2;
@@ -241,7 +243,7 @@ export function buildClosure(kind: VesselKind, closure: ClosureKind, dims: Vesse
         { r: rl, y: yt - 1.2, round: 1.2 },
         { r: rl - 1.4, y: yt, round: 0.8 },
         { r: 0, y: yt },
-      ]);
+      ], { section: p.section });
       return { parts: [{ geometry: lid, role: "capMetal", group: "moving" }], motion: "lift", turns: 0, rise: 0, lift: Math.max(24, tinLidHeight(dims) + 14), topY: yt };
     }
     case "CAN_END": {

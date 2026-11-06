@@ -74,7 +74,15 @@ export function ShaderWarmup({ onDone }: { onDone?: () => void }) {
     let alive = true;
     // wait one frame so lazily created children (materials, environment) exist
     const raf = requestAnimationFrame(() => {
-      const p = typeof gl.compileAsync === "function" ? gl.compileAsync(scene, camera) : Promise.resolve(gl.compile(scene, camera));
+      // compileAsync only pays off with KHR_parallel_shader_compile; without it three warns and
+      // polls programs on a timer (which can outlive an unmounted renderer), so compile in place.
+      const parallel = gl.extensions.has("KHR_parallel_shader_compile") && typeof gl.compileAsync === "function";
+      let p: Promise<unknown>;
+      try {
+        p = parallel ? gl.compileAsync(scene, camera) : Promise.resolve(gl.compile(scene, camera));
+      } catch {
+        p = Promise.resolve();
+      }
       p.catch(() => undefined).finally(() => {
         if (!alive) return;
         invalidate();

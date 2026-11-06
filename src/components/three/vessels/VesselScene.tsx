@@ -5,6 +5,7 @@ import { Environment, Lightformer, OrbitControls } from "@react-three/drei";
 import { memo, useEffect, useId, useImperativeHandle, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode, type Ref } from "react";
 import { NeutralToneMapping, PerspectiveCamera, Spherical, Vector3, type Object3D } from "three";
 import { defaultMaxDpr, usePrefersReducedMotion } from "../hooks";
+import { AUTO_ROTATE, easeInOutCubic } from "../finishes/motion";
 import { captureScreenshot } from "../screenshot";
 import { SoftShadow } from "../SoftShadow";
 import { InteractionDpr, KEY_SHORTCUTS, registerDebugRenderer, useOnScreen } from "../perf";
@@ -137,9 +138,18 @@ function Rig({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sceneKey, f, orbit]);
 
+  const lastInput = useRef(typeof performance !== "undefined" ? performance.now() : 0);
+  const wake = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => void (wake.current && clearTimeout(wake.current)), []);
   useFrame((_, raw) => {
     const delta = Math.min(raw, 1 / 20);
     let busy = false;
+    if (interacted.current) {
+      interacted.current = false;
+      lastInput.current = performance.now();
+      if (wake.current) clearTimeout(wake.current);
+      if (turntable && !reduced) wake.current = setTimeout(() => invalidate(), AUTO_ROTATE.idleMs + 30);
+    }
     const tw = tween.current;
     if (tw) {
       tw.t = Math.min(1, tw.t + (delta * 1000) / tw.dur);
@@ -150,11 +160,17 @@ function Rig({
       );
       if (tw.t >= 1) tween.current = null;
       else busy = true;
-    } else if (turntable && !reduced && !interacted.current && onScreen.current) {
-      const s = spherical();
-      s.theta += delta * 0.35;
-      place(s, getTarget().clone());
-      busy = true;
+    } else if (turntable && !reduced && onScreen.current) {
+      // Same idle turntable as the box viewer: starts after AUTO_ROTATE.idleMs without input,
+      // eases in, pauses on any input and resumes once idle again (WCAG 2.2.2).
+      const idle = performance.now() - lastInput.current;
+      if (idle > AUTO_ROTATE.idleMs) {
+        const ramp = easeInOutCubic((idle - AUTO_ROTATE.idleMs) / AUTO_ROTATE.rampMs);
+        const s = spherical();
+        s.theta += AUTO_ROTATE.degPerSec * DEG * delta * ramp;
+        place(s, getTarget().clone());
+        busy = true;
+      }
     }
     if (busy) invalidate();
   });
@@ -219,6 +235,8 @@ const VesselLights = memo(function VesselLights() {
         <Lightformer form="rect" intensity={1.6} position={[0, 4, 0]} rotation-x={Math.PI / 2} scale={[4, 4, 1]} />
         <Lightformer form="rect" intensity={0.8} position={[0, 0.6, -3]} scale={[6, 1.5, 1]} color="#ffeedd" />
         <Lightformer form="ring" intensity={1.2} position={[1.5, 2.5, 3]} scale={0.8} />
+        {/* broad front fill: tinplate and aluminium need something bright to mirror (V-13) */}
+        <Lightformer form="rect" intensity={0.8} position={[0, 1, 5]} scale={[10, 3, 1]} />
       </Environment>
     </>
   );

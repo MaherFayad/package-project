@@ -34,18 +34,21 @@ const SHOTS = [
     await viewer.screenshot({ path: path.join(dir, `${prefix}-${s.name}.png`) });
     console.log("shot", s.name);
   }
-  if (only) return void (await browser.close());
-  // Vessel viewer (first one in the vessels section)
+  if (only && !only.includes("vessel")) return void (await browser.close());
+  // Vessel viewer (vessels section mounts its viewer when scrolled into view)
   await page.goto(base + "/en/dev/3d", { waitUntil: "load" });
+  await page.waitForTimeout(2000);
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await page.waitForTimeout(3000);
   const vessels = page.locator("[role=application]");
   const n = await vessels.count();
   if (n > 2) {
-    const v = vessels.nth(2);
+    const v = vessels.nth(n - 1);
     await v.scrollIntoViewIfNeeded();
-    await page.waitForTimeout(4000);
+    await page.waitForTimeout(5000);
     await v.screenshot({ path: path.join(dir, `${prefix}-vessel.png`) });
     console.log("shot vessel");
-  }
+  } else console.log("no vessel viewer", n);
   // Keyboard focus ring on the viewer
   await page.goto(base + "/en/dev/3d?code=ECMA_RTE", { waitUntil: "load" });
   await page.waitForTimeout(2500);

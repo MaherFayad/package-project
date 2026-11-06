@@ -1,5 +1,5 @@
 import { BufferGeometry, Float32BufferAttribute, ShapeUtils, Vector2, Vector3 } from "three";
-import { panelAxis, panelLocalPoint, panelPivot, type DielineModel, type DielinePanel, type Polygon, type Pt, type Segment } from "@/lib/dieline";
+import { STRUCTURE_FAMILY, panelAxis, panelLocalPoint, panelPivot, type DielineModel, type DielinePanel, type Polygon, type Pt, type Segment } from "@/lib/dieline";
 import { MAT_EDGE, MAT_INSIDE, MAT_OUTSIDE } from "./boardMaterials";
 
 const DEG = Math.PI / 180;
@@ -121,6 +121,14 @@ export function buildPanelGeometry(model: DielineModel, panel: DielinePanel): Bu
     ...model.panels.filter((c) => c.parentId === panel.id && c.hinge && c.hingeKind !== "roll").map((c) => c.hinge!),
   ];
   const onCrease = (a: Pt, b: Pt) => creases.some((h) => onSegment(a, h) && onSegment(b, h));
+  // Rigid set-up boxes and composite tubes: the wrap / label turns over every rim, so no raw
+  // board edge is visible anywhere; all outline edges take the printed outside (sheet UV).
+  const family = STRUCTURE_FAMILY[model.structureCode];
+  const wrapped = family === "RIGID" || family === "TUBE";
+  // Corrugated: flutes run along the sheet's y axis (corrugator direction). A cut ALONG a flute
+  // shows the flat liner stack, a cut ACROSS flutes shows the wave: parallel edges sample one
+  // column of the flute tile (constant u) so they read as straight layers.
+  const corrugated = model.thicknessMm >= 1 && !wrapped;
   const pitch = model.thicknessMm >= 1 ? (model.thicknessMm >= 2.5 ? 6.5 : 3.3) : 10;
   let base = 0;
   loops.forEach((loop, li) => {
@@ -143,13 +151,14 @@ export function buildPanelGeometry(model: DielineModel, panel: DielinePanel): Bu
       }
       const normal = new Vector3(e.y, -e.x, 0).normalize();
       if (flip) normal.negate();
-      const fold = li === 0 && onCrease(loop[i], loop[j]);
+      const fold = (li === 0 && onCrease(loop[i], loop[j])) || (wrapped && li === 0);
+      const alongFlute = corrugated && Math.abs(loop[j].y - loop[i].y) > 2.5 * Math.abs(loop[j].x - loop[i].x);
       cur = fold ? foldBuf : edgeBuf;
       // fold edges: sheet UV of the crease (print continues round the fold); cut edges: flute pitch
       const sa = uvAll[base - n + i];
       const sb = uvAll[base - n + j];
-      const u0 = fold ? 0 : run / pitch;
-      const u1 = fold ? 0 : (run + l) / pitch;
+      const u0 = fold ? 0 : alongFlute ? 0.02 : run / pitch;
+      const u1 = fold ? 0 : alongFlute ? 0.02 : (run + l) / pitch;
       run += l;
       const tri = (a: Vector3, b: Vector3, c: Vector3, ua: [number, number], ub: [number, number], uc: [number, number]) => {
         const cr = new Vector3().subVectors(b, a).cross(new Vector3().subVectors(c, a));

@@ -1,0 +1,51 @@
+{
+  "label": "after",
+  "base": "http://localhost:3000",
+  "at": "2026-11-06T01:23:38.866Z",
+  "firstFrameMs": 893,
+  "wallToFirstFrameMs": 2501,
+  "idleFramesPer3s": 0,
+  "drawCallsPerFrame": 50,
+  "trianglesPerFrame": 212,
+  "dpr": 1.5,
+  "dragFpsCpu4x": 14.5,
+  "keyRotateFpsCpu4x": 14.7,
+  "keyRotateLongestFrameMs": 100,
+  "liveAt0": {
+    "textures": 13,
+    "buffers": 113,
+    "programs": 8,
+    "framebuffers": 14,
+    "rendererInfo": {
+      "geometries": 35,
+      "textures": 9,
+      "programs": 8
+    }
+  },
+  "liveAt10": {
+    "textures": 12,
+    "buffers": 116,
+    "programs": 9,
+    "framebuffers": 14,
+    "rendererInfo": {
+      "geometries": 36,
+      "textures": 8,
+      "programs": 9
+    }
+  },
+  "liveAt50": {
+    "textures": 13,
+    "buffers": 113,
+    "programs": 8,
+    "framebuffers": 14,
+    "rendererInfo": {
+      "geometries": 35,
+      "textures": 9,
+      "programs": 8
+    }
+  },
+  "jsHeapMB": 34.2,
+  "switchMsMedian": 986,
+  "homeJsKB": 1790,
+  "homeLoadsThree": false
+}

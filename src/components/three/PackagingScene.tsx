@@ -115,14 +115,49 @@ const VIEWS: Record<ViewName, { theta: number; phi: number }> = {
 const MIN_PHI = 0.5 * DEG;
 const MAX_PHI = 179.5 * DEG;
 
-/** Distance + look-at target that frame the box at a fold progress. */
-function frameFor(dieline: DielineModel, progress: number, camera: PerspectiveCamera) {
+/** Frame margin: the subject fills ~75 % of the frame (leaves room for the view toolbar) (product-shot convention). */
+const FRAME_MARGIN = 1.3;
+const FLAT = 0.02;
+
+/** Hero view for a model: cylinders (rolled tubes) are shot nearer the front so centred copy is not on the silhouette. */
+export function heroView(dieline: DielineModel, progress: number): { theta: number; phi: number } {
+  if (progress < FLAT) return VIEWS.front; // a die-cut blank is shown face-on, like a dieline proof
+  return dieline.panels.some((p) => p.hingeKind === "roll") ? { theta: 18 * DEG, phi: DEFAULT_VIEW.phi } : DEFAULT_VIEW;
+}
+
+/** Identity of a model for re-framing: library variants share a core structureCode, so add the panel set. */
+export function modelKey(dieline: DielineModel): string {
+  let h = 0;
+  for (const p of dieline.panels) for (let i = 0; i < p.id.length; i++) h = (Math.imul(h, 31) + p.id.charCodeAt(i)) | 0;
+  return `${dieline.structureCode}:${dieline.panels.length}:${h}`;
+}
+
+/**
+ * Distance + look-at target that frame the box at a fold progress, seen from `view`. Fits the
+ * projected bounding box (8 corners) rather than its bounding sphere, which left long or flat
+ * models at a third of the frame.
+ */
+function frameFor(dieline: DielineModel, progress: number, camera: PerspectiveCamera, view: { theta: number; phi: number } = heroView(dieline, progress)) {
   const size = boundsAt(dieline, progress).getSize(new Vector3()).multiplyScalar(MM);
-  const radius = Math.max(size.length() / 2, 0.01);
-  const vfov = camera.fov * DEG;
-  const hfov = 2 * Math.atan(Math.tan(vfov / 2) * camera.aspect);
-  const fov = Math.min(vfov, hfov);
-  return { distance: (radius / Math.sin(fov / 2)) * 1.2, target: new Vector3(0, size.y / 2, 0), size };
+  const target = new Vector3(0, size.y / 2, 0);
+  const tanV = Math.tan((camera.fov * DEG) / 2);
+  const tanH = tanV * camera.aspect;
+  const dir = new Vector3().setFromSphericalCoords(1, view.phi, view.theta);
+  const right = new Vector3().crossVectors(new Vector3(0, 1, 0), dir);
+  if (right.lengthSq() < 1e-8) right.set(1, 0, 0);
+  right.normalize();
+  const up = new Vector3().crossVectors(dir, right).normalize();
+  let distance = 0.02;
+  const c = new Vector3();
+  for (const sx of [-0.5, 0.5])
+    for (const sy of [-0.5, 0.5])
+      for (const sz of [-0.5, 0.5]) {
+        c.set(sx * size.x, sy * size.y, sz * size.z);
+        const z = c.dot(dir);
+        const need = z + Math.max(Math.abs(c.dot(right)) / tanH, Math.abs(c.dot(up)) / tanV) * FRAME_MARGIN;
+        distance = Math.max(distance, need);
+      }
+  return { distance, target, size };
 }
 
 interface Tween {
@@ -226,22 +261,33 @@ function Rig({
       if (!motion) progressRef.current = foldTarget;
     }
     const prev = framedFor.current;
-    framedFor.current = { code: dieline.structureCode, orbit: !!orbit };
+    const key = modelKey(dieline);
+    framedFor.current = { code: key, orbit: !!orbit };
+    const hero = heroView(dieline, foldTarget);
     if (!prev || prev.orbit !== !!orbit) {
-      const f = frameFor(dieline, motion ? from : foldTarget, cam);
-      place(new Spherical(f.distance, DEFAULT_VIEW.phi, DEFAULT_VIEW.theta), f.target);
+      const start = motion ? from : foldTarget;
+      const v0 = heroView(dieline, start);
+      const f = frameFor(dieline, start, cam, v0);
+      place(new Spherical(f.distance, v0.phi, v0.theta), f.target);
       if (autoFit && motion && from !== foldTarget) {
-        const g = frameFor(dieline, foldTarget, cam);
-        goTo(new Spherical(g.distance, DEFAULT_VIEW.phi, DEFAULT_VIEW.theta), g.target, true, foldMs * Math.abs(foldTarget - from));
+        const g = frameFor(dieline, foldTarget, cam, hero);
+        goTo(new Spherical(g.distance, hero.phi, hero.theta), g.target, true, foldMs * Math.abs(foldTarget - from));
       }
-    } else if (prev.code !== dieline.structureCode) {
-      const f = frameFor(dieline, foldTarget, cam);
-      goTo(new Spherical(f.distance, DEFAULT_VIEW.phi, DEFAULT_VIEW.theta), f.target, motion, 700);
+    } else if (prev.code !== key) {
+      const f = frameFor(dieline, foldTarget, cam, hero);
+      goTo(new Spherical(f.distance, hero.phi, hero.theta), f.target, motion, 700);
     } else if (autoFit) {
-      const f = frameFor(dieline, foldTarget, cam);
-      const s = spherical();
-      s.radius = f.distance;
-      goTo(s, f.target, motion, Math.max(350, foldMs * Math.min(1, Math.abs(foldTarget - from))));
+      const dur = Math.max(350, foldMs * Math.min(1, Math.abs(foldTarget - from)));
+      if (from < FLAT !== foldTarget < FLAT) {
+        // flat ↔ folded: swing between the face-on proof view and the 3/4 hero view
+        const f = frameFor(dieline, foldTarget, cam, hero);
+        goTo(new Spherical(f.distance, hero.phi, hero.theta), f.target, motion, dur);
+      } else {
+        const s = spherical();
+        const f = frameFor(dieline, foldTarget, cam, { theta: s.theta, phi: s.phi });
+        s.radius = f.distance;
+        goTo(s, f.target, motion, dur);
+      }
     }
     invalidate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -343,13 +389,14 @@ function Rig({
       },
       reset() {
         poke();
-        const f = frameFor(dieline, targetRef.current, cam);
-        goTo(new Spherical(f.distance, DEFAULT_VIEW.phi, DEFAULT_VIEW.theta), f.target, true, 600);
+        const v = heroView(dieline, targetRef.current);
+        const f = frameFor(dieline, targetRef.current, cam, v);
+        goTo(new Spherical(f.distance, v.phi, v.theta), f.target, true, 600);
       },
       setView(view) {
         poke();
         const v = VIEWS[view];
-        const f = frameFor(dieline, targetRef.current, cam);
+        const f = frameFor(dieline, targetRef.current, cam, v);
         goTo(new Spherical(f.distance, v.phi, v.theta), f.target, true, 600);
       },
       async screenshot(opts) {
@@ -569,7 +616,7 @@ export function PackagingScene(props: PackagingSceneProps) {
           stage={stage}
           autoRotate={autoRotate}
         />
-        <SwapIn swapKey={dieline.structureCode}>
+        <SwapIn swapKey={modelKey(dieline)}>
         {surfaceFinish ? (
           <FinishedPackagingModel
             dieline={dieline}

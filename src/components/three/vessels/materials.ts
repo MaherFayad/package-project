@@ -51,7 +51,21 @@ export function isTransparentVessel(code: VesselMaterialCode): boolean {
  * itself is water-clear, so the liquid can take the transmission pass instead (three.js does not
  * render transmissive objects inside other transmissive objects).
  */
-export function createVesselMaterial(code: VesselMaterialCode, quality: VesselQuality, opts: { thinMode?: boolean; kraftMap?: Texture | null } = {}): Material {
+export function createVesselMaterial(code: VesselMaterialCode, quality: VesselQuality, opts: { thinMode?: boolean; kraftMap?: Texture | null; tint?: string | null } = {}): Material {
+  const mat = baseVesselMaterial(code, quality, opts);
+  if (opts.tint && "color" in mat) {
+    const m = mat as MeshPhysicalMaterial;
+    m.color.set(opts.tint);
+    // tinted glass: the colour comes from absorption through the wall, not only the surface
+    if (m.transmission > 0) {
+      m.attenuationColor.set(opts.tint);
+      m.attenuationDistance = Math.min(m.attenuationDistance || 0.01, 0.01);
+    }
+  }
+  return mat;
+}
+
+function baseVesselMaterial(code: VesselMaterialCode, quality: VesselQuality, opts: { thinMode?: boolean; kraftMap?: Texture | null }): Material {
   const glass = GLASS[code];
   if (glass) {
     const transmit = quality === "high" && !opts.thinMode;
@@ -91,7 +105,7 @@ export function createVesselMaterial(code: VesselMaterialCode, quality: VesselQu
     case "ALUMINIUM":
       return new MeshPhysicalMaterial({ color: "#dfe2e6", roughness: 0.24, metalness: 1, anisotropy: 0.55, anisotropyRotation: Math.PI / 2, envMapIntensity: 1.2 });
     case "TINPLATE":
-      return new MeshPhysicalMaterial({ color: "#d4d8dc", roughness: 0.18, metalness: 1, envMapIntensity: 1.25 });
+      return new MeshPhysicalMaterial({ color: "#dfe1e3", roughness: 0.28, metalness: 1, envMapIntensity: 1.8 });
     case "KRAFT_POUCH":
       return new MeshStandardMaterial({ color: opts.kraftMap ? "#ffffff" : "#c39a6b", roughness: 0.92, metalness: 0, map: opts.kraftMap ?? null, side: DoubleSide });
     case "WHITE_POUCH":
@@ -172,6 +186,23 @@ export function createLabelMaterial(stock: LabelStockCode, finish: LabelFinishCo
     polygonOffsetFactor: -2,
     polygonOffsetUnits: -2,
   } as const;
+  const mat = labelFace(stock, matte, glossy, base);
+  // Opaque self-adhesive stocks: the inside of the wrap is the white face stock / adhesive, not
+  // the artwork mirrored (it shows through clear glass and PET). Clear stocks keep the reversed
+  // print, which is what you really see through a clear label.
+  if (!clear) {
+    mat.onBeforeCompile = (shader) => {
+      shader.fragmentShader = shader.fragmentShader.replace(
+        "#include <map_fragment>",
+        "#include <map_fragment>\n  if ( !gl_FrontFacing ) diffuseColor.rgb = vec3( 0.93, 0.93, 0.91 );",
+      );
+    };
+    mat.customProgramCacheKey = () => "elba-label-liner";
+  }
+  return mat;
+}
+
+function labelFace(stock: LabelStockCode, matte: boolean, glossy: boolean, base: Record<string, unknown>): MeshPhysicalMaterial {
   switch (stock) {
     case "PAPER_SEMIGLOSS":
       return new MeshPhysicalMaterial({ ...base, roughness: matte ? 0.86 : glossy ? 0.3 : 0.6, clearcoat: glossy ? 1 : 0, clearcoatRoughness: 0.08, sheen: matte ? 0.3 : 0, sheenRoughness: 0.8 });

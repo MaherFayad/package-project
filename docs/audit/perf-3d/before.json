@@ -1,36 +1,39 @@
 {
   "label": "before",
-  "base": "http://localhost:3000",
-  "at": "2026-11-06T00:40:39.516Z",
-  "firstFrameMs": 1051,
-  "wallToFirstFrameMs": 2874,
+  "base": "http://localhost:3002",
+  "at": "2026-11-06T01:21:52.056Z",
+  "firstFrameMs": 1001,
+  "wallToFirstFrameMs": 2800,
   "idleFramesPer3s": 0,
   "drawCallsPerFrame": 101,
   "trianglesPerFrame": 426,
   "dpr": 1.5,
   "dragFpsCpu4x": 5.2,
-  "keyRotateFpsCpu4x": 5.6,
-  "keyRotateLongestFrameMs": 233,
+  "keyRotateFpsCpu4x": 5.8,
+  "keyRotateLongestFrameMs": 200,
   "liveAt0": {
     "textures": 12,
     "buffers": 91,
     "programs": 8,
-    "framebuffers": 13
+    "framebuffers": 13,
+    "rendererInfo": null
   },
   "liveAt10": {
     "textures": 31,
     "buffers": 134,
     "programs": 9,
-    "framebuffers": 33
+    "framebuffers": 33,
+    "rendererInfo": null
   },
   "liveAt50": {
     "textures": 114,
     "buffers": 295,
     "programs": 8,
-    "framebuffers": 115
+    "framebuffers": 115,
+    "rendererInfo": null
   },
-  "jsHeapMB": 16.6,
-  "switchMsMedian": 1102,
+  "jsHeapMB": 32.7,
+  "switchMsMedian": 1121,
   "homeJsKB": 1783,
   "homeLoadsThree": false
 }

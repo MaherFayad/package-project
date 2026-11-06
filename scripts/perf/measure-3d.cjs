@@ -95,7 +95,7 @@ async function main() {
   const cdp = await ctx.newCDPSession(page);
   await cdp.send("Performance.enable");
   const t0 = Date.now();
-  await page.goto(`${base}/en/dev/3d`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${base}/en/dev/3d?debug3d`, { waitUntil: "domcontentloaded" });
   await page.waitForFunction(() => {
     const c = document.querySelector("[role=application] canvas");
     return c && window.__gl3d(c).firstDraw > 0;
@@ -163,7 +163,12 @@ async function main() {
   const codes = await select.locator("option").evaluateAll((os) => os.map((o) => o.value));
   const live = async () => {
     const s = await viewerStats(page);
-    return { textures: s.tex, buffers: s.buf, programs: s.prog, framebuffers: s.fbo };
+    // renderer.info where the engine exposes it (?debug3d); null on revisions without the hook
+    const info = await page.evaluate(() => {
+      const r = window.__elba3d && window.__elba3d[0];
+      return r ? { geometries: r.info.memory.geometries, textures: r.info.memory.textures, programs: r.info.programs ? r.info.programs.length : null } : null;
+    });
+    return { textures: s.tex, buffers: s.buf, programs: s.prog, framebuffers: s.fbo, rendererInfo: info };
   };
   await page.waitForTimeout(500);
   result.liveAt0 = await live();
