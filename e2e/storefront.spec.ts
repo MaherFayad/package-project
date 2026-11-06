@@ -16,11 +16,17 @@ async function noHorizontalScroll(page: Page) {
 test("home → catalogue → structure → SEO size page with price table and JSON-LD", async ({ page }) => {
   await page.goto("/en");
   await page.waitForLoadState("networkidle");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("See them in 3D");
+  // R6 home: one real h1 (the rotating alternates are aria-hidden), the hero motion control
+  // (WCAG 2.2.2), real numbers from the library and the pricing engine, no FAQ (the home mirrors
+  // the marketing reference, which has none).
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Packaging worthy of your brand");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
   await expect(page.getByRole("button", { name: /Pause rotation|Rotate the box/ })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: /^\d+ models in one library$/ })).toBeVisible();
+  await expect(page.getByText(/^EGP [\d,.]+ per box for 500 mailer boxes/)).toBeVisible();
   await noHorizontalScroll(page);
 
-  await page.getByRole("link", { name: "Browse box styles" }).click();
+  await page.getByRole("link", { name: "Browse box styles" }).first().click();
   await expect(page).toHaveURL(/\/en\/catalog$/, { timeout: 20_000 });
   // Worldwide catalogue (e2e/catalogue.spec.ts): find the mailer by code, open its model page.
   await page.getByTestId("catalogue-search").fill("FEFCO 0427");

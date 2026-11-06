@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import type { Locale, StructureFamily } from "@/types";
 import { getT } from "@/i18n";
 import type { DictKey } from "@/i18n";
-import { designHref } from "@/components/store/catalog";
 import { getLowestUnit, listStructures } from "@/components/store/data";
 import { HeroImage } from "./HeroImage";
 import { ProductCard } from "./ProductCard";
@@ -57,7 +56,7 @@ export async function BoxesLanding({
           {t("marketing.boxes.body")}
         </Lead>
         <PillRow align="center" className="m-enter">
-          <Pill href={designHref(locale, { structure: "FEFCO_0427" })} size="lg">
+          <Pill href={`${base}/start`} size="lg">
             {t("marketing.boxes.primary")}
           </Pill>
           <Pill href={`${base}/vendors`} variant="outline" size="lg">
@@ -143,7 +142,7 @@ export async function BoxesLanding({
               </Display>
               <Lead align="center">{t("marketing.boxes.closingBody")}</Lead>
               <PillRow align="center">
-                <Pill href={designHref(locale, { structure: "FEFCO_0427" })} size="lg">
+                <Pill href={`${base}/start`} size="lg">
                   {t("marketing.boxes.primary")}
                 </Pill>
                 <Pill href={`${base}/vendors`} variant="outline" size="lg">

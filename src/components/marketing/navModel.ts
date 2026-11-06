@@ -5,10 +5,13 @@ import { renderSrc } from "./assets";
 import type { MegaMenu } from "./HeaderNav";
 
 /**
- * Where every "Start free" CTA points. One place to switch it to `/${locale}/start` once that
- * page ships (docs/design-refs/shopify-2026-reference.md, section 3).
+ * Where every visitor "Start free" CTA points: the /start landing (R6), whose own CTAs open the
+ * designer. Signed-in people's "New design" opens the designer directly (newDesignHref).
  */
 export function startHref(locale: Locale): string {
+  return `/${locale}/start`;
+}
+export function newDesignHref(locale: Locale): string {
   return designHref(locale, { structure: "FEFCO_0427" });
 }
 

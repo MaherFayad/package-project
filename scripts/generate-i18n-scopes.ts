@@ -27,6 +27,7 @@ export const SCOPES: Record<string, string> = {
   checkout: "(checkout)",
   orders: "orders",
   account: "(store)/account",
+  why: "(store)/(why)", // r6-why: /why-elba and /pricing
   admin: "admin",
   vendor: "vendor",
   dev: "dev",
