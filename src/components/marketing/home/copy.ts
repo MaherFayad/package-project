@@ -78,15 +78,15 @@ const en = {
     link: "Open the designer",
   },
   wall: {
-    title: "{models} models in one library",
-    body: "Mailer and shipping boxes, folding cartons, rigid boxes, trays, tubes, bottles, pouches and cans, in {groups} groups, each with its real dieline.",
+    title: "{models} {modelsWord} in one library",
+    body: "Mailer and shipping boxes, folding cartons, rigid boxes, trays, tubes, bottles, pouches and cans, in {groups} {groupsWord}, each with its real dieline.",
     link: "Browse the catalogue",
     pause: "Pause the wall",
     play: "Play the wall",
   },
   finishes: {
     title: "Finishes you see before you print",
-    body: "{finishes} finishes previewed on the model the way they will print: lamination, spot UV, varnish, hot foil, emboss and deboss.",
+    body: "{finishes} {finishesWord} previewed on the model the way they will print: lamination, spot UV, varnish, hot foil, emboss and deboss.",
     link: "See the finishes",
     names: ["Matte lamination", "Gloss lamination", "Spot UV", "Soft-touch lamination", "Varnish", "Hot foil", "Emboss", "Deboss"],
   },
@@ -205,15 +205,15 @@ const ar: HomeCopy = {
     link: "فتح المصمم",
   },
   wall: {
-    title: "{models} نموذجا في مكتبة واحدة",
-    body: "علب بريدية وكراتين شحن وعلب دوبلكس وعلب صلبة وصوان وأنابيب وزجاجات وأكياس وعلب معدنية، في {groups} مجموعات، ولكل نموذج قالب حقيقي.",
+    title: "{models} {modelsWord} في مكتبة واحدة",
+    body: "علب بريدية وكراتين شحن وعلب دوبلكس وعلب صلبة وصوان وأنابيب وزجاجات وأكياس وعلب معدنية، في {groups} {groupsWord}، ولكل نموذج قالب حقيقي.",
     link: "عرض الكتالوج",
     pause: "إيقاف الحركة",
     play: "تشغيل الحركة",
   },
   finishes: {
     title: "تشطيبات تراها قبل أن تطبعها",
-    body: "{finishes} تشطيبات تظهر على النموذج كما ستطبع: سلوفان وطلاء UV موضعي وورنيش وبصمة حرارية وطباعة بارزة وغائرة.",
+    body: "{finishes} {finishesWord} تظهر على النموذج كما ستطبع: سلوفان وطلاء UV موضعي وورنيش وبصمة حرارية وطباعة بارزة وغائرة.",
     link: "عرض التشطيبات",
     names: ["سلوفان مطفي", "سلوفان لامع", "طلاء UV موضعي", "سلوفان مخملي", "ورنيش", "بصمة حرارية", "طباعة بارزة", "طباعة غائرة"],
   },
@@ -279,6 +279,18 @@ export function counted(locale: Locale, n: number, ar: { one: string; few: strin
 
 export function daysWord(locale: Locale, n: number): string {
   return counted(locale, n, { one: "يوم", few: "أيام", many: "يوما" }, { one: "day", other: "days" });
+}
+
+export function groupsWord(locale: Locale, n: number): string {
+  return counted(locale, n, { one: "مجموعة", few: "مجموعات", many: "مجموعة" }, { one: "group", other: "groups" });
+}
+
+export function finishesWord(locale: Locale, n: number): string {
+  return counted(locale, n, { one: "تشطيب", few: "تشطيبات", many: "تشطيبا" }, { one: "finish", other: "finishes" });
+}
+
+export function modelsWord(locale: Locale, n: number): string {
+  return counted(locale, n, { one: "نموذج", few: "نماذج", many: "نموذجا" }, { one: "model", other: "models" });
 }
 
 export function printersWord(locale: Locale, n: number): string {
