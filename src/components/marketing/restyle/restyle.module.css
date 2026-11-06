@@ -83,6 +83,7 @@
 .stats2 .stat:nth-child(n + 3) { border-block-start: 1px solid var(--mk-line, var(--mk-line-light)); }
 .stats2 .statNum { font-size: var(--mk-fs-44); font-weight: var(--mk-fw-heading); }
 .stats dd { margin: 0; }
+ul.stats { list-style: none; }
 
 /* ---------- Section heads ---------- */
 .head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--mk-stack-title-sub) var(--mk-grid-gap-bento); margin-block-end: var(--mk-stack-head-content); }
