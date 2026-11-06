@@ -18,6 +18,7 @@ import {
   type FittingModel,
   type ResolvedFittingParams,
 } from "..";
+import { overlappingPanels } from "./overlap";
 
 const T = BOARD_SPECS.E_FLUTE_KRAFT.thicknessMm; // 1.5 mm
 const ARABIC = /^[؀-ۿ0-9\s×\-]+$/;
@@ -261,6 +262,32 @@ describe("liners, cushions, corners", () => {
       expect(b.min.z).toBeCloseTo(0, 3);
       expect(b.max.x).toBeLessThanOrEqual(40 + 2 * T);
       expect(b.max.z).toBeLessThanOrEqual(40 + 2 * T);
+    }
+  });
+});
+
+describe("closed fittings are exact at every caliper", () => {
+  // Every caliper the family is made from, plus a thin and a thick extreme.
+  const CALIPERS = [0.5, BOARD_SPECS.E_FLUTE_KRAFT.thicknessMm, BOARD_SPECS.B_FLUTE_KRAFT.thicknessMm, 4];
+  it.each(DEFINITIONS.map((d) => [d.code, d] as const))("%s: fits the host with no slack, outer as declared, no panels sharing board", (_, d) => {
+    for (const t of CALIPERS) {
+      for (const preset of [{ dims: d.defaultHost, options: undefined }, ...d.presets]) {
+        const m = generateFitting(d.code, { host: preset.dims, ...("options" in preset ? preset.options : {}) }, { thicknessMm: t });
+        const at = `${d.code} t=${t} ${JSON.stringify(preset.dims)}`;
+        const b = placedBounds(m);
+        const e = 1e-6;
+        expect(b.min.x, at).toBeGreaterThanOrEqual(-e);
+        expect(b.min.z, at).toBeGreaterThanOrEqual(-e);
+        expect(b.min.y, at).toBeGreaterThanOrEqual(d.slot === "floor-gap" ? -t - e : -e);
+        expect(b.max.x, at).toBeLessThanOrEqual(preset.dims.L + e);
+        expect(b.max.y, at).toBeLessThanOrEqual(preset.dims.H + e);
+        expect(b.max.z, at).toBeLessThanOrEqual(preset.dims.W + e);
+        const want = d.outer(m.params, t);
+        expect(m.closedOuter.L, at).toBeCloseTo(want.L, 6);
+        expect(m.closedOuter.W, at).toBeCloseTo(want.W, 6);
+        expect(m.closedOuter.H, at).toBeCloseTo(want.H, 6);
+        expect(overlappingPanels(m as unknown as DielineModel), at).toEqual([]);
+      }
     }
   });
 });

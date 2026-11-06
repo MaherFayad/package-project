@@ -2,7 +2,7 @@ import { DielineBuilder } from "../../builder";
 import { rectPolygon } from "../../geometry";
 import type { Rect } from "../../types";
 import { CLEARANCE, CORRUGATED, clr, fitL, fitW, fitting, notAbove } from "./common";
-import { FLAT_PRINT_UP, FLAT_PRINT_UP_ALONG_W, chain, flapOn, type ChainPanel, type Quat } from "./engine";
+import { FLAT_PRINT_UP, FLAT_PRINT_UP_ALONG_W, chain, flapOn, triangleBrace, type ChainPanel, type Quat } from "./engine";
 import type { FittingDefinition, FittingDraft, OptionSpec, ResolvedFittingParams } from "./types";
 
 /**
@@ -27,10 +27,14 @@ export function accordion(len: number, n: number): ChainPanel[] {
   );
 }
 
-/** Rail under one end of the pad: triangle (legs s, s, hyp s√2) or square (s × s). */
-function rail(s: number, kind: "triangle" | "square", glue: number): ChainPanel[] {
-  if (kind === "triangle") return [{ len: s, fold: 90, label: "Rail leg" }, { len: s * Math.SQRT2, fold: 135, label: "Rail face" }, { len: glue, fold: 135, glue: true }];
-  return [{ len: s, fold: 90, label: "Rail outer" }, { len: s, fold: 90, label: "Rail bottom" }, { len: s, fold: 90, label: "Rail inner" }, { len: glue, fold: 90, glue: true }];
+/**
+ * Rail under one end of the pad: triangle (legs s, s, hyp s√2) or square (s × s), outer size
+ * exactly s. The square rail's inner wall stops one caliper short so its glue tab lies flat
+ * under the pad (not inside it).
+ */
+function rail(s: number, kind: "triangle" | "square", glue: number, t: number): ChainPanel[] {
+  if (kind === "triangle") return triangleBrace(s, glue, t, { leg: "Rail leg", face: "Rail face" });
+  return [{ len: s, fold: 90, label: "Rail outer" }, { len: s, fold: 90, label: "Rail bottom" }, { len: s - t, fold: 90, label: "Rail inner" }, { len: glue, fold: 90, glue: true }];
 }
 /** The same rail on the left side of the root (chain order reversed). */
 const leftRail = (r: ChainPanel[]) => [...r].reverse();
@@ -128,8 +132,8 @@ export const CUSHIONS: FittingDefinition[] = [
     options: { clearanceMm: CLEARANCE, sizeMm: SIZE((h) => Math.round(Math.min(40, h.H / 4))) },
     check: (p) => notAbove("sizeMm", p.sizeMm!, Math.min(fitL(p) / 3, p.host.H - 1)),
     outer: (p) => ({ L: fitL(p), W: fitW(p), H: p.sizeMm! }),
-    build: (p) => {
-      const r = rail(p.sizeMm!, "triangle", glueOf(p.sizeMm!));
+    build: (p, t) => {
+      const r = rail(p.sizeMm!, "triangle", glueOf(p.sizeMm!), t);
       return folded(fitW(p), [...leftRail(r), { len: fitL(p), label: "Pad" }, ...r], 3, p);
     },
   }),
@@ -143,8 +147,8 @@ export const CUSHIONS: FittingDefinition[] = [
     options: { clearanceMm: CLEARANCE, sizeMm: SIZE((h) => Math.round(Math.min(40, h.H / 4))) },
     check: (p) => notAbove("sizeMm", p.sizeMm!, Math.min(fitW(p) / 3, p.host.H - 1)),
     outer: (p) => ({ L: fitL(p), W: fitW(p), H: p.sizeMm! }),
-    build: (p) => {
-      const r = rail(p.sizeMm!, "triangle", glueOf(p.sizeMm!));
+    build: (p, t) => {
+      const r = rail(p.sizeMm!, "triangle", glueOf(p.sizeMm!), t);
       return folded(fitL(p), [...leftRail(r), { len: fitW(p), label: "Pad" }, ...r], 3, p, FLAT_PRINT_UP_ALONG_W);
     },
   }),
@@ -158,8 +162,8 @@ export const CUSHIONS: FittingDefinition[] = [
     options: { clearanceMm: CLEARANCE, sizeMm: SIZE((h) => Math.round(Math.min(40, h.H / 4))) },
     check: (p) => notAbove("sizeMm", p.sizeMm!, Math.min(fitL(p) / 3, p.host.H - 1)),
     outer: (p) => ({ L: fitL(p), W: fitW(p), H: p.sizeMm! }),
-    build: (p) => {
-      const r = rail(p.sizeMm!, "square", glueOf(p.sizeMm!));
+    build: (p, t) => {
+      const r = rail(p.sizeMm!, "square", glueOf(p.sizeMm!), t);
       return folded(fitW(p), [...leftRail(r), { len: fitL(p), label: "Pad" }, ...r], 4, p);
     },
   }),
@@ -172,7 +176,9 @@ export const CUSHIONS: FittingDefinition[] = [
     interpretation: "Panels h | L | h, end panels folded 90° up.",
     options: { clearanceMm: CLEARANCE, heightMm: { min: 10, max: 300, default: (h) => Math.round(h.H / 3) } },
     outer: (p) => ({ L: fitL(p), W: fitW(p), H: p.heightMm! }),
-    build: (p) => folded(fitW(p), [{ len: p.heightMm!, fold: -90, pivotDepth: 0, label: "End wall" }, { len: fitL(p), label: "Pad" }, { len: p.heightMm!, fold: -90, pivotDepth: 0, label: "End wall" }], 1, p),
+    // Walls fold up (toward the printed face): the pivot is on the unprinted face, the outside
+    // of the bend, so the wall stands on the pad's end and the outer length stays L'.
+    build: (p) => folded(fitW(p), [{ len: p.heightMm!, fold: -90, pivotDepth: 1, label: "End wall" }, { len: fitL(p), label: "Pad" }, { len: p.heightMm!, fold: -90, pivotDepth: 1, label: "End wall" }], 1, p),
   }),
   fitting({
     ...base,
@@ -184,10 +190,11 @@ export const CUSHIONS: FittingDefinition[] = [
     options: { clearanceMm: CLEARANCE, heightMm: { min: 10, max: 300, default: (h) => Math.round(h.H / 3) } },
     check: (p) => notAbove("heightMm", p.heightMm!, fitL(p) / 2 - 1),
     outer: (p) => ({ L: fitL(p), W: fitW(p), H: p.heightMm! }),
-    build: (p) => {
+    build: (p, t) => {
       const h = p.heightMm!;
-      const wall: ChainPanel = { len: h, fold: -90, pivotDepth: 0, label: "End wall" };
-      const ret: ChainPanel = { len: h, fold: -180, pivotDepth: 0, label: "Wall return" };
+      const wall: ChainPanel = { len: h, fold: -90, pivotDepth: 1, label: "End wall" };
+      // The return drops inside the wall and rests on the pad (one caliper shorter).
+      const ret: ChainPanel = { len: h - t, fold: -180, pivotDepth: 0, label: "Wall return" };
       return folded(fitW(p), [ret, wall, { len: fitL(p), label: "Pad" }, wall, ret], 2, p);
     },
   }),
@@ -228,8 +235,10 @@ function perimeter(p: ResolvedFittingParams, depth: number, fold: number, t: num
   flapOn(b, "edgeFront", "pad", root, "bottom", depth, { ...o, label: "Front edge" });
   // End flaps clear the corners: inset by the side flap depth (180°) or the board (90°).
   const inset = fold > 135 ? depth : t;
-  flapOn(b, "edgeLeft", "pad", root, "left", depth, { ...o, inset, label: "Left edge", stack: fold > 135 ? -1 : 0 });
-  flapOn(b, "edgeRight", "pad", root, "right", depth, { ...o, inset, label: "Right edge", stack: fold > 135 ? -1 : 0 });
+  // The inset already keeps them clear of the side flaps: same layer, no stack offset (an
+  // offset on a panel rolled 180° would push it up into the pad).
+  flapOn(b, "edgeLeft", "pad", root, "left", depth, { ...o, inset, label: "Left edge" });
+  flapOn(b, "edgeRight", "pad", root, "right", depth, { ...o, inset, label: "Right edge" });
   return { builder: b, closedRotation: FLAT_PRINT_UP, anchor: onFloor(p) };
 }
 
