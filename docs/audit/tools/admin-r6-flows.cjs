@@ -23,7 +23,9 @@ const db = new PrismaClient();
   const vendor = await db.vendor.findFirst({ where: { status: "ACTIVE" }, orderBy: { nameEn: "asc" } });
   const b = await chromium.launch();
   const log = [];
-  for (const [loc, w, h] of [["ar", 390, 844], ["en", 1440, 900]]) {
+  // FLOW_SIZES=ar:320,en:320 (round 9) overrides the default ar 390 + en 1440.
+  const sizes = process.env.FLOW_SIZES ? process.env.FLOW_SIZES.split(",").map((x) => { const [l, w] = x.split(":"); return [l, Number(w), Number(w) < 768 ? 844 : 900]; }) : [["ar", 390, 844], ["en", 1440, 900]];
+  for (const [loc, w, h] of sizes) {
     const ctx = await b.newContext({ viewport: { width: w, height: h } });
     await ctx.grantPermissions(["clipboard-read", "clipboard-write"], { origin: base });
     await ctx.addCookies([{ name: "elba_session", value: tok, url: base }]);

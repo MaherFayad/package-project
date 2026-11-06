@@ -48,6 +48,15 @@ export function AdminFrame({ locale, userName, counts, children }: AdminFramePro
   const router = useRouter();
   const pathname = usePathname() ?? `/${locale}/admin`;
   const [query, setQuery] = useState("");
+  // R9-AD: at 320 px the search placeholder was cut mid-word; under 400 px use the short one.
+  const [narrow, setNarrow] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 24.99rem)");
+    const on = () => setNarrow(mq.matches);
+    on();
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
   const [saveBar, setSaveBar] = useState<SaveBarState | null>(null);
   const register = useCallback((s: SaveBarState | null) => setSaveBar(s), []);
   const base = `/${locale}/admin`;
@@ -93,7 +102,7 @@ export function AdminFrame({ locale, userName, counts, children }: AdminFramePro
         <TopBarSearchField
           value={query}
           onChange={setQuery}
-          placeholder={t("admin.topBar.search")}
+          placeholder={narrow ? t("admin.topBar.searchShort") : t("admin.topBar.search")}
           onSubmit={(q) => router.push(`${base}/orders${q.trim() ? `?q=${encodeURIComponent(q.trim())}` : ""}`)}
         />
       }
