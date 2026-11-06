@@ -22,8 +22,7 @@ export const adminAr: Widen<typeof adminEn> = {
     backToStore: "العودة إلى المتجر",
   },
   topBar: {
-    search: "البحث في الطلبات",
-    searchShort: "الطلبات",
+    search: "بحث الطلبات",
     account: "مدير",
     switchLanguage: "English",
     signOut: "تسجيل الخروج",

@@ -19,7 +19,6 @@ export const adminEn = {
   },
   topBar: {
     search: "Search orders",
-    searchShort: "Orders",
     account: "Admin",
     switchLanguage: "العربية",
     signOut: "Sign out",
