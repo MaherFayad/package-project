@@ -1,6 +1,5 @@
 import "server-only";
 import { db } from "@/lib/db";
-import { priceViewedUserIds } from "@/lib/analytics/funnel";
 import { fromJson } from "@/lib/json";
 import { pick } from "@/i18n";
 import type { Dims, Locale, MaterialCode, OrderStatus, StructureParamLimits, VendorCapabilities } from "@/types";
@@ -29,6 +28,8 @@ import { baseOf, vesselPrintMaterials } from "@/lib/library/doc";
 import type { AdminOrderRow } from "../lib/orders";
 import { adminPayoutStatus, needsAction } from "../lib/payouts";
 import { contactFlags } from "../lib/moderation";
+import { loadEventFunnel, loadShareLoop } from "@/lib/analytics/funnel";
+import { eventFunnel, visitorToPaid } from "../lib/events";
 import { isOverdue, leadState, type LeadState } from "../lib/quoteLeads";
 import { listQuoteRequests, QUOTE_REQUESTED } from "@/lib/orders/quote-requests";
 import { payoutSchedule, type ScheduleRow } from "@/components/vendor/lib/payouts";
@@ -57,13 +58,15 @@ const metricSelect = {
 
 export async function loadOverview(range: RangeKey, now = new Date()) {
   const { from, to, prevFrom } = rangeWindow(range, now);
-  const [orders, disputes, designs, accounts, quoteUsers, orderUsers, qcPending, applications, dataRequests, payouts, buyerOrders, vendorEvents, moderation, quoteLeads, eventUsers] = await Promise.all([
+  const [orders, disputes, designs, accounts, priceViewers, orderUsers, qcPending, applications, dataRequests, payouts, buyerOrders, vendorEvents, moderation, quoteLeads, eventSteps, shareLoop] = await Promise.all([
     db.order.findMany({ where: { OR: [{ placedAt: { gte: prevFrom } }, { deliveredAt: { gte: prevFrom } }] }, select: metricSelect }),
     db.dispute.findMany({ select: { createdAt: true, status: true } }),
     db.design.count({ where: { createdAt: { gte: from, lt: to } } }),
     db.user.count({ where: { role: "BUYER", createdAt: { gte: from, lt: to } } }),
-    db.quote.findMany({ where: { createdAt: { gte: from, lt: to }, userId: { not: null } }, select: { userId: true }, distinct: ["userId"] }),
-    // Everyone who placed an order saw a price (checkout shows it), even without a saved quote.
+    // B-19: price views come from the first-party Event table (price_viewed, written by /api/quote
+    // and the checkout price seams). Everyone who placed an order also saw a price, which covers
+    // orders from before events were recorded, so the funnel never shows paid above price viewed.
+    db.event.findMany({ where: { name: "price_viewed", at: { gte: from, lt: to }, userId: { not: null } }, select: { userId: true }, distinct: ["userId"] }),
     db.order.findMany({ where: { placedAt: { gte: from, lt: to } }, select: { buyerId: true }, distinct: ["buyerId"] }),
     db.order.count({ where: { status: "QC_PENDING" } }),
     db.vendorApplication.count({ where: { status: { in: ["SUBMITTED", "UNDER_REVIEW"] } } }),
@@ -74,12 +77,11 @@ export async function loadOverview(range: RangeKey, now = new Date()) {
     db.productionEvent.findMany({ where: { type: { in: ["VENDOR_ACCEPTED", "VENDOR_DECLINED"] }, createdAt: { gte: from, lt: to } }, select: { type: true } }),
     countModeration(),
     countOpenQuoteLeads(),
-    // B-19: first-party price_viewed events (designer quote and checkout seams).
-    priceViewedUserIds({ from, to }),
+    // B-19: launch-metrics.md funnel from the first-party Event table (unique actors per step).
+    loadEventFunnel({ from, to }),
+    loadShareLoop({ from, to }),
   ]);
-  // Distinct users who saw a price: event log, saved quotes and orders (events only exist from
-  // round 3 on, so the other two keep history right).
-  const priceViewed = new Set([...eventUsers, ...quoteUsers.map((q) => q.userId), ...orderUsers.map((o) => o.buyerId)]).size;
+  const priceViewed = new Set([...priceViewers.map((e) => e.userId!), ...orderUsers.map((o) => o.buyerId)]).size;
   const rows = orders as MetricOrder[];
   const paidOrders = rows.filter((o) => !isReprint(o) && countsForGmv(o) && o.placedAt >= from && o.placedAt < to).length;
   const money = moneyKpis(rows, from, to);
@@ -116,6 +118,7 @@ export async function loadOverview(range: RangeKey, now = new Date()) {
     marginSeries,
     repeat: repeatRate90(buyerOrders, now),
     acceptance: acceptanceRate(vendorEvents),
+    events: { funnel: eventFunnel(eventSteps), visitorToPaidPct: visitorToPaid(eventSteps), share: shareLoop },
     tasks: { qcPending, applications, openDisputes: ops.openDisputes, dataRequests, payouts, moderation, quoteLeads },
   };
 }
