@@ -35,5 +35,9 @@ export const AUDIT_ACTIONS = [
   "PORTFOLIO_APPROVE",
   "PORTFOLIO_REJECT",
   "VENDOR_BIO_CLEAN",
+  "CHECKOUT_SETTINGS",
+  "QUOTE_REQUEST",
+  "QUOTE_CONTACTED",
+  "QUOTE_CLOSED",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

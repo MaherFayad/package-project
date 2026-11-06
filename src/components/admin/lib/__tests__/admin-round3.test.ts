@@ -56,3 +56,37 @@ describe("profile moderation (B-08)", async () => {
     expect(portfolioReviewSchema.safeParse({ itemId: "x", decision: "MAYBE" }).success).toBe(false);
   });
 });
+
+describe("quote leads (B-15)", async () => {
+  const { leadState, isOverdue, slaHoursLeft, inLeadView, leadStepSchema } = await import("../quoteLeads");
+  const at = (h: number) => new Date(now.getTime() + h * 3_600_000);
+  it("takes the latest ops outcome", () => {
+    expect(leadState([])).toBe("OPEN");
+    expect(leadState([{ action: "QUOTE_CONTACTED", createdAt: at(-5) }])).toBe("CONTACTED");
+    expect(leadState([{ action: "QUOTE_CONTACTED", createdAt: at(-5) }, { action: "QUOTE_CLOSED", createdAt: at(-1) }])).toBe("CLOSED");
+    expect(leadState([{ action: "QUOTE_REQUEST", createdAt: at(-9) }])).toBe("OPEN");
+  });
+  it("runs the 24 h clock on open leads only", () => {
+    expect(slaHoursLeft(at(6), now)).toBe(6);
+    expect(isOverdue("OPEN", at(-1), now)).toBe(true);
+    expect(isOverdue("CONTACTED", at(-1), now)).toBe(false);
+    expect(inLeadView({ state: "OPEN", overdue: true }, "overdue")).toBe(true);
+    expect(inLeadView({ state: "CLOSED", overdue: false }, "open")).toBe(false);
+  });
+  it("needs a note", () => {
+    expect(leadStepSchema.safeParse({ quoteId: "q", step: "CLOSED", note: "" }).success).toBe(false);
+    expect(leadStepSchema.safeParse({ quoteId: "q", step: "CONTACTED", note: "Price sent on WhatsApp" }).success).toBe(true);
+  });
+});
+
+describe("checkout settings form (B-05, B-11)", async () => {
+  const { checkoutSettingsFormSchema } = await import("../checkoutSettings");
+  const ok = { prepayDiscountPct: 3, sample: { enabled: true, pricePiasters: 75_000, maxPieces: 5, creditDays: 60, monthlyCap: 100 } };
+  it("accepts the plan defaults and keeps the reader's bounds", () => {
+    expect(checkoutSettingsFormSchema.safeParse(ok).success).toBe(true);
+    const bad = checkoutSettingsFormSchema.safeParse({ ...ok, prepayDiscountPct: 25 });
+    expect(bad.error?.issues[0]?.message).toBe("PREPAY_RANGE");
+    expect(checkoutSettingsFormSchema.safeParse({ ...ok, sample: { ...ok.sample, maxPieces: 6 } }).error?.issues[0]?.message).toBe("SAMPLE_PIECES_RANGE");
+    expect(checkoutSettingsFormSchema.safeParse({ ...ok, sample: { ...ok.sample, creditDays: Number.NaN } }).success).toBe(false);
+  });
+});

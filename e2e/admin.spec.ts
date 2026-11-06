@@ -84,14 +84,15 @@ test.describe("admin", () => {
     await expect(page.getByText(/sample prices change/)).toBeVisible({ timeout: 30_000 });
     await expect(page.getByRole("table", { name: "Current and proposed unit prices" })).toBeVisible({ timeout: 30_000 });
     // Contextual save bar appears while dirty; discard leaves settings untouched.
-    await page.getByRole("button", { name: "Discard" }).click();
+    // exact: the checkout settings card has its own "Discard checkout settings changes" button.
+    await page.getByRole("button", { name: "Discard", exact: true }).click();
     await expect(margin).toHaveValue("25");
   });
 
   test("admin pages work at 360px and in Arabic", async ({ page, context, baseURL }, info) => {
     test.skip(info.project.name !== "mobile", "layout check runs on the 360px project");
     await signIn(context, baseURL!);
-    for (const p of ["/ar/admin", "/ar/admin/orders", "/en/admin/vendors", "/en/admin/pricing", "/en/admin/disputes", "/ar/admin/payouts", "/en/admin/catalog", "/ar/admin/moderation"]) {
+    for (const p of ["/ar/admin", "/ar/admin/orders", "/en/admin/vendors", "/en/admin/pricing", "/en/admin/disputes", "/ar/admin/payouts", "/en/admin/catalog", "/ar/admin/moderation", "/ar/admin/quotes"]) {
       await page.goto(p);
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 30_000 });
       await noHorizontalScroll(page);
@@ -145,6 +146,29 @@ test.describe("admin", () => {
     } finally {
       await db.vendorPortfolioItem.delete({ where: { id: item.id } }).catch(() => {});
       await db.auditLog.deleteMany({ where: { summary: { contains: item.id } } });
+    }
+  });
+
+  test("quote leads: an open request is marked contacted, audited", async ({ page, context, baseURL }, info) => {
+    test.skip(info.project.name !== "desktop", "mutating flow runs once, on desktop");
+    const buyer = await db.user.findUniqueOrThrow({ where: { phone: "+201000000002" } });
+    const q = await db.quote.create({
+      data: { userId: buyer.id, lines: [{ kind: "PRODUCT", quantity: 6500 }], subtotalPiasters: 0, vatPiasters: 0, totalPiasters: 0, validUntil: new Date(Date.now() + 72 * 3_600_000), status: "REQUESTED" },
+    });
+    await db.auditLog.create({ data: { actorId: buyer.id, actorPhone: buyer.phone, action: "QUOTE_REQUEST", entityType: "QUOTE", entityId: q.id, after: { quantity: 6500, governorate: "GIZA", phone: buyer.phone, spec: { name: "E2E mailer", structureCode: "FEFCO_0427", dims: { L: 250, W: 180, H: 80 }, materialCode: "E_FLUTE_KRAFT" } } } });
+    try {
+      await signIn(context, baseURL!);
+      await page.goto("/en/admin/quotes");
+      await expect(page.getByRole("heading", { level: 1, name: "Quote requests" })).toBeVisible({ timeout: 30_000 });
+      const row = page.getByRole("row").filter({ hasText: "6,500" });
+      await expect(row.getByText(/Reply in \d+ h/).filter({ visible: true })).toBeVisible();
+      await row.getByRole("button", { name: /^Mark contacted:/ }).click();
+      await page.getByRole("dialog").getByLabel("What you told the buyer").fill("Price and lead time sent on WhatsApp");
+      await page.getByRole("dialog").getByRole("button", { name: "Mark contacted" }).click();
+      await expect.poll(async () => db.auditLog.count({ where: { entityId: q.id, action: "QUOTE_CONTACTED" } }), { timeout: 15_000 }).toBe(1);
+    } finally {
+      await db.auditLog.deleteMany({ where: { entityId: q.id } });
+      await db.quote.delete({ where: { id: q.id } }).catch(() => {});
     }
   });
 });

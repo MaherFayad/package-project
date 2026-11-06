@@ -23,11 +23,13 @@ import {
 } from "../lib/metrics";
 import { isOpenDispute } from "../lib/ops";
 import { modelAvailability, vendorsByPair } from "../lib/availability";
-import { MODELS } from "@/lib/library";
+import { MODELS, modelByCode } from "@/lib/library";
 import { baseOf, vesselPrintMaterials } from "@/lib/library/doc";
 import type { AdminOrderRow } from "../lib/orders";
 import { adminPayoutStatus, needsAction } from "../lib/payouts";
 import { contactFlags } from "../lib/moderation";
+import { isOverdue, leadState, type LeadState } from "../lib/quoteLeads";
+import { listQuoteRequests, QUOTE_REQUESTED } from "@/lib/orders/quote-requests";
 import { payoutSchedule, type ScheduleRow } from "@/components/vendor/lib/payouts";
 
 /** Orders whose vendor has earned at least the advance (accepted or later). */
@@ -54,7 +56,7 @@ const metricSelect = {
 
 export async function loadOverview(range: RangeKey, now = new Date()) {
   const { from, to, prevFrom } = rangeWindow(range, now);
-  const [orders, disputes, designs, accounts, quoteUsers, orderUsers, qcPending, applications, dataRequests, payouts, buyerOrders, vendorEvents, moderation] = await Promise.all([
+  const [orders, disputes, designs, accounts, quoteUsers, orderUsers, qcPending, applications, dataRequests, payouts, buyerOrders, vendorEvents, moderation, quoteLeads] = await Promise.all([
     db.order.findMany({ where: { OR: [{ placedAt: { gte: prevFrom } }, { deliveredAt: { gte: prevFrom } }] }, select: metricSelect }),
     db.dispute.findMany({ select: { createdAt: true, status: true } }),
     db.design.count({ where: { createdAt: { gte: from, lt: to } } }),
@@ -70,6 +72,7 @@ export async function loadOverview(range: RangeKey, now = new Date()) {
     db.order.findMany({ where: { status: { notIn: ["PENDING_PAYMENT", "CANCELLED", "REFUNDED"] }, NOT: { notes: { startsWith: "REPRINT_OF:" } } }, select: { buyerId: true, placedAt: true } }),
     db.productionEvent.findMany({ where: { type: { in: ["VENDOR_ACCEPTED", "VENDOR_DECLINED"] }, createdAt: { gte: from, lt: to } }, select: { type: true } }),
     countModeration(),
+    countOpenQuoteLeads(),
   ]);
   const priceViewed = new Set([...quoteUsers.map((q) => q.userId), ...orderUsers.map((o) => o.buyerId)]).size;
   const rows = orders as MetricOrder[];
@@ -108,7 +111,7 @@ export async function loadOverview(range: RangeKey, now = new Date()) {
     marginSeries,
     repeat: repeatRate90(buyerOrders, now),
     acceptance: acceptanceRate(vendorEvents),
-    tasks: { qcPending, applications, openDisputes: ops.openDisputes, dataRequests, payouts, moderation },
+    tasks: { qcPending, applications, openDisputes: ops.openDisputes, dataRequests, payouts, moderation, quoteLeads },
   };
 }
 
@@ -610,4 +613,81 @@ export async function countModeration(): Promise<number> {
     db.vendor.findMany({ select: { bioAr: true, bioEn: true } }),
   ]);
   return pending + vendors.filter((v) => contactFlags(v.bioAr, v.bioEn).length > 0).length;
+}
+
+/* ───────────────────────── Quote leads (B-15) ───────────────────────── */
+
+export interface AdminQuoteLead {
+  quoteId: string;
+  createdAt: string;
+  dueAt: string;
+  validUntil: string;
+  quantity: number;
+  designId: string | null;
+  buyerId: string | null;
+  buyerName: string | null;
+  buyerPhone: string | null;
+  governorate: string | null;
+  neededBy: string | null;
+  note: string | null;
+  /** Model or style name, standard and size, for the row. */
+  modelName: string | null;
+  standard: string | null;
+  dims: { L: number; W: number; H: number } | null;
+  materialCode: string | null;
+  source: "checkout" | "catalogue";
+  state: LeadState;
+  overdue: boolean;
+  lastNote: string | null;
+}
+
+/** Quote requests with the ops outcome from the audit log (checkout leads and catalogue requests). */
+export async function loadQuoteLeads(locale: Locale, now = new Date()): Promise<AdminQuoteLead[]> {
+  const leads = await listQuoteRequests({ take: 300 });
+  if (!leads.length) return [];
+  const ids = leads.map((l) => l.quoteId);
+  const [events, quotes] = await Promise.all([
+    db.auditLog.findMany({ where: { entityType: "QUOTE", entityId: { in: ids }, action: { in: ["QUOTE_CONTACTED", "QUOTE_CLOSED"] } }, orderBy: { createdAt: "desc" }, select: { entityId: true, action: true, createdAt: true, summary: true } }),
+    db.quote.findMany({ where: { id: { in: ids } }, select: { id: true, lines: true } }),
+  ]);
+  const linesById = new Map(quotes.map((q) => [q.id, fromJson<Record<string, unknown>[]>(q.lines)?.[0] ?? {}]));
+  return leads.map((l) => {
+    const ev = events.filter((e) => e.entityId === l.quoteId);
+    const state = leadState(ev);
+    const line = linesById.get(l.quoteId) ?? {};
+    const spec = l.spec ?? {};
+    const code = (spec.modelCode as string | null) ?? (line.modelCode as string | undefined) ?? (spec.structureCode as string | undefined) ?? null;
+    const lib = modelByCode(code);
+    const dims = (spec.dims ?? line.dims ?? null) as AdminQuoteLead["dims"];
+    return {
+      quoteId: l.quoteId,
+      createdAt: l.createdAt.toISOString(),
+      dueAt: l.dueAt.toISOString(),
+      validUntil: l.validUntil.toISOString(),
+      quantity: l.quantity,
+      designId: l.designId,
+      buyerId: l.buyer.id,
+      buyerName: l.buyer.name,
+      buyerPhone: l.buyer.phone,
+      governorate: l.governorate,
+      neededBy: l.neededBy,
+      note: l.note ?? ((line.notes as string | undefined) || null),
+      modelName: lib ? pick(locale, lib.name.ar, lib.name.en) : ((spec.name as string | undefined) ?? code),
+      standard: lib?.standard ?? ((line.standard as string | undefined) ?? null),
+      dims,
+      materialCode: (spec.materialCode as string | undefined) ?? null,
+      source: line.type === "CATALOGUE_REQUEST" ? "catalogue" : "checkout",
+      state,
+      overdue: isOverdue(state, l.dueAt, now),
+      lastNote: ev[0]?.summary ?? null,
+    };
+  });
+}
+
+/** Open quote requests (nav badge, overview to-do). */
+export async function countOpenQuoteLeads(): Promise<number> {
+  const leads = await db.quote.findMany({ where: { status: QUOTE_REQUESTED }, select: { id: true } });
+  if (!leads.length) return 0;
+  const done = await db.auditLog.findMany({ where: { entityType: "QUOTE", entityId: { in: leads.map((l) => l.id) }, action: { in: ["QUOTE_CONTACTED", "QUOTE_CLOSED"] } }, select: { entityId: true }, distinct: ["entityId"] });
+  return leads.length - done.length;
 }

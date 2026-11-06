@@ -55,6 +55,7 @@ export default async function AdminOverviewPage({ params, searchParams }: { para
   const seriesRows = o.gmvSeries.map((p, i) => [formatDate(p.start, locale, "medium"), formatMoney(p.value, locale, { alwaysDecimals: true }), formatMoney(o.marginSeries[i]?.value ?? 0, locale, { alwaysDecimals: true })]);
 
   const tasks = [
+    { n: o.tasks.quoteLeads, text: t("admin.overview.tasks.quoteLeads"), url: `${base}/quotes` },
     { n: o.tasks.qcPending, text: t("admin.overview.tasks.qc"), url: `${base}/orders?view=qc` },
     { n: o.tasks.applications, text: t("admin.overview.tasks.applications"), url: `${base}/vendors?tab=applications` },
     { n: o.tasks.openDisputes, text: t("admin.overview.tasks.disputes"), url: `${base}/disputes` },
