@@ -27,10 +27,11 @@ import { RATE_LIMITS, rateCardToForm, unitAt, validateRateCard, type RateCardErr
 import { saveRateCard } from "./server/actions";
 import { useVendorErrorText } from "./useVendorAction";
 import { useContextualSaveBar } from "./VendorFrame";
-import type { RateCardDetailDTO } from "./types";
+import type { JobModelDTO, RateCardDetailDTO } from "./types";
+import { ModelCoverage } from "./ModelCoverage";
 import styles from "./vendor.module.css";
 
-export function RateCardForm({ card, offeredFinishes }: { card: RateCardDetailDTO; offeredFinishes: FinishCode[] }) {
+export function RateCardForm({ card, offeredFinishes, models }: { card: RateCardDetailDTO; offeredFinishes: FinishCode[]; models: JobModelDTO[] }) {
   const { t, locale } = useI18n();
   const router = useRouter();
   const toast = useToast();
@@ -266,6 +267,7 @@ export function RateCardForm({ card, offeredFinishes }: { card: RateCardDetailDT
                 increasedTableDensity
                 footerContent={t("vendorPortal.rateCards.previewNote")}
               />
+              <ModelCoverage models={models} material={t(`materials.${card.materialCode}` as DictKey)} />
               <Card title={t("vendorPortal.rateCards.referenceTitle")}>
                 <Text as="p" tone="subdued">
                   {t("vendorPortal.rateCards.referenceBody", { area: card.referenceAreaM2.toFixed(3) })}
