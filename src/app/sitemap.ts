@@ -16,6 +16,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
   const paths: { path: string; priority: number; freq: Entry["changeFrequency"] }[] = [
     { path: "", priority: 1, freq: "weekly" },
+    { path: "/designer", priority: 0.9, freq: "weekly" },
     { path: "/catalog", priority: 0.9, freq: "weekly" },
     { path: "/vendors", priority: 0.8, freq: "weekly" },
     ...STRUCTURE_CODES.map((c) => ({ path: `/boxes/${STRUCTURE_SLUGS[c]}`, priority: 0.9, freq: "weekly" as const })),
