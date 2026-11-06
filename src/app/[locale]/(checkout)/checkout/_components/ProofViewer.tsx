@@ -25,6 +25,9 @@ export function ProofViewer({ doc, handleRef }: { doc: DesignDoc; handleRef: Ref
   const geo = useMemo(() => docGeometry(doc), [doc]);
   const model = geo?.dieline ?? null;
   const both = doc.printSides === "BOTH";
+  // Open-top models (trays, open styles) are "assembled", not "closed"; the flag is read
+  // defensively until the library types it.
+  const openTop = !!(geo?.model as { openTop?: boolean } | undefined)?.openTop;
   const { canvases, version } = useArtworkCanvases(model, doc.artwork, doc.materialCode, both);
   const panelLabels = useMemo(() => {
     const out: Record<string, string> = { glue: t("designer.view.glue") };
@@ -90,7 +93,7 @@ export function ProofViewer({ doc, handleRef }: { doc: DesignDoc; handleRef: Ref
               {t("designer.view.half")}
             </Button>
             <Button size="slim" pressed={fold === 1} onClick={() => setFold(1)}>
-              {t("designer.view.closed")}
+              {openTop ? t("designer.view.assembled") : t("designer.view.closed")}
             </Button>
           </ButtonGroup>
         </div>

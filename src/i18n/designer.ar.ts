@@ -47,6 +47,7 @@ export const designerAr: Dictionary["designer"] = {
     flat: "مفرودة",
     half: "نصف طي",
     closed: "مغلقة",
+    assembled: "مجمعة",
     foldValue: "الطي {pct}%",
     loading: "جار تحميل العرض ثلاثي الأبعاد",
     faceEditorLabel: "محرر التصميم للوجه {face}",

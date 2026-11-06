@@ -38,8 +38,9 @@ Step count (phone, design saved to paid): before 9 taps + full re-entry of the c
 | CO-26 | high | checkout (phone), pass 2 | Found by the mobile e2e: on a first visit the cookie notice sat on top of the new sticky action bar and swallowed the tap on "Continue". | WCAG 2.4.11 | Inside the checkout shell the notice is lifted above the bar whenever a sticky action is present (`:has([data-sticky-action])`); store pages unchanged. | fixed (reopened, then fixed) |
 | CO-27 | medium | checkout (phone), pass 2 | Tabbing to fields near the bottom could scroll them under the fixed bar. | WCAG 2.4.11 | `scroll-padding-block-end` on the document while the bar exists. Keyboard walk: 18 stops on step 1, none under the bar, radios one tab stop per group. | fixed |
 | CO-28 | low | `checkout/loading.tsx`, pass 2 | Skeleton was a single column, so the 2/3 + 1/3 layout jumped in when prices arrived (CLS). | CLS < 0.1 | Skeleton mirrors the step card + summary grid. | fixed |
+| CO-29 | low | proof viewer fold control | The 100% fold state said "Closed" for open-top models (trays, open styles), which never close. Raised by the integrator to match the designer. | UX copy consistency | "Assembled" / "مجمعة" when the model is open-top (flag read defensively); `designer.view.assembled` added with the same key and values as the designer branch. | fixed |
 
-Counts: critical 2, high 9, medium 13, low 4 (28 total). Fixed 28 (CO-06 partially, see below).
+Counts: critical 2, high 9, medium 13, low 5 (29 total). Fixed 29 (CO-06 partially, see below).
 
 Pass 2 checks: axe 0 violations on all 21 screens x 4 (390/1440 x ar/en), no horizontal overflow; keyboard-only walk of step 1; `prefers-reduced-motion: reduce` runs zero animations (price tick, success entrance, segments off); live total announced ("Total updated: EGP 17,969.25").
 
@@ -56,4 +57,5 @@ Pass 2 checks: axe 0 violations on all 21 screens x 4 (390/1440 x ar/en), no hor
 
 - `src/components/ui/Tabs.tsx` (one line, CO-01)
 - `src/components/ui/Button.module.css` (one line, CO-02)
+- `src/i18n/designer.{en,ar}.ts`: `view.assembled` (identical to the designer branch, CO-29)
 - `e2e/checkout.spec.ts` (decline step follows the shorter flow; all assertions kept, one added)
