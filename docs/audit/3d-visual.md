@@ -83,3 +83,15 @@ Contact sheets: `fefco-03-05-01..04.jpg`. (0321 flat frame missing: harness clic
 | F35-05 | FEFCO_0504, 0507, 0510–0512 | medium | 50 % fold: sleeve and liner pieces pass through each other (X-09). | — | `assembly.lift = H * 0.8` on the sleeve piece; liner `foldStage` before sleeve. |
 | F35-06 | FEFCO_0307 | low | Locking-tab corners show small dark smudges on the front face (tab slits cut through the printed face). | Locking slits sit on the crease, not the face. | Move slit polygons 0.5 t onto the crease line. |
 | F35-07 | FEFCO_0300–0302, 0306, 0309–0314, 0350–0352, 0501–0503, 0505, 0509 | — | Assembled correctly: tray + lid proportions, caps on 0310/0313/0314, octagon 0350–0352, open sleeves 0501–0503 read to life. | FEFCO code book 03/05. | — |
+
+## 4. FEFCO 04 folder / tray family (80) — `src/lib/dieline/families/fefco-04`
+
+Contact sheets: `fefco-04-01..08.jpg`. Overall the strongest family: every folder, tray and display style assembles; handholds, display headers (0434/0435/0449/0460), octagonal 0459, long document folders 0409–0411 and 0404 open-ended folder tube (correct: "no end flaps") read to life.
+
+| ID | Model | Sev | Finding | Real-world reference | Fix |
+|---|---|---|---|---|---|
+| F04-01 | FEFCO_0422_2, 0424, 0424a, 0425a, 0428, 0428a, 0432, 0432a, 0435a, 0436, 0439, 0439a, 0454_1, 0455_1, 0470, 0471, 0471a, 0472 (18) | medium | Bottom flaps folded onto the base sit **0.5 mm inside the base slab** (mid-plane distance 1.0 mm on 1.5 mm E-flute, 8 000–20 000 mm² each): the flap's outside print shimmers through the base inside the tray and the cut edges clip into the floor. | Flaps folded 180° onto the base lie one full caliper above it. | `families/fefco-04/build.ts`: bottom-flap `stack` uses 2/3 of a caliper — set `stackOffset = parent.stackOffset - 1` (full `t`); double-wall corners `-2`. |
+| F04-02 | FEFCO_0439, 0439a, 0471, 0471a, 0472, 0425a, 0436 | medium | Adjacent bottom flaps overlap at the corners while **coplanar** (`frontBottomFlap↔rightBottomFlap` d = 0, 460–750 mm²): z-fight triangles in the tray corners. | Corner flaps overlap in fold order. | Same builder: increment `stack` per flap in fold order (front −1, sides −2, back −3). |
+| F04-03 | FEFCO_0459 | medium | Octagonal tray corner ears coplanar with the neighbouring ear (`ear_back_a↔ear_right_b` etc., d = 0, ~200 mm² × 4). | — | `catalog.ts` 0459 ears: alternate `stack` −1/−2. |
+| F04-04 | FEFCO_0409–0411a | low | Long folders (aspect ≥ 6:1) occupy ~10 % of the frame height at the default 3/4 view (X-02 sphere fit is worst for long thin shapes). | — | X-02 projected-box fit. |
+| F04-05 | all | low | 50 % fold: lids rotate through the opposite wall on 0402, 0422_2, 0424, 0435, 0455_1, 0472 (X-09). | — | Wall panels `foldStage` before lid flaps (already true for most). |
