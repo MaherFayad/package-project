@@ -341,7 +341,15 @@
 .marqueeTrack > li { flex: none; }
 .marqueeTrack:dir(rtl), [dir="rtl"] .marqueeTrack { animation-name: mk-marquee-rtl; }
 .marquee[data-reverse="true"] .marqueeTrack { animation-direction: reverse; }
-.marquee:hover .marqueeTrack, .marquee:focus-within .marqueeTrack, .marquee[data-paused="true"] .marqueeTrack { animation-play-state: paused; }
+.marquee:hover .marqueeTrack, .marquee[data-paused="true"] .marqueeTrack { animation-play-state: paused; }
+/* Keyboard: pausing mid-translate left items carried past the strip's start unreachable and put
+   focus off screen (R6-AX-18, WCAG 2.4.11). While focus is inside, the loop stops and the track
+   goes back to its start, and the strip becomes a real scroller, so the browser scrolls every
+   focused item into view (both directions). */
+.marquee:focus-within .marqueeTrack,
+.marquee:focus-within .marqueeTrack:dir(rtl),
+.marquee:focus-within [dir="rtl"] .marqueeTrack { animation: none; transform: none; }
+.marquee:focus-within .marqueeViewport { overflow-x: auto; mask-image: none; scroll-padding-inline: 16px; }
 .marqueeHead { display: flex; justify-content: flex-end; margin-block-end: 16px; }
 @media (prefers-reduced-motion: reduce) {
   /* Match every selector that sets the animation (the RTL name rule outranks a bare class). */
