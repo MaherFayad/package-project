@@ -184,7 +184,8 @@ export default function VesselView({
       closure={closureCore}
       tint={containerTint}
       closureStyle={closureStyle}
-      closureColor={(v.closureColor as ClosureColorCode) ?? "WHITE"}
+      closureColor={closureColor}
+      closureMatch={closureMatch}
       liquid={(v.content as LiquidCode) ?? model.defaultLiquid}
       fill={v.fill}
       labels={labels}

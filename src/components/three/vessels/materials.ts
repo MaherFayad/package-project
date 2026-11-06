@@ -157,7 +157,8 @@ export function createLiquidMaterial(code: LiquidCode, quality: VesselQuality, c
 
 /** Closure part materials. */
 export function createClosureMaterial(role: PartRole, color: ClosureColorCode): Material {
-  const c = CLOSURE_COLORS[color];
+  // an unknown code ("MATCH" handled upstream, an old saved doc) draws white, never throws
+  const c = CLOSURE_COLORS[color] ?? CLOSURE_COLORS.WHITE;
   switch (role) {
     case "gasket":
       // swing-top seal: natural red rubber whatever the stopper colour
