@@ -10,3 +10,9 @@ export { useArtworkTexture, usePrefersReducedMotion, defaultMaxDpr } from "./hoo
 export { captureScreenshot, downloadBlob, type ScreenshotOptions } from "./screenshot";
 export { createBoardMaterials, configureArtworkTexture, type BoardMaterialSet } from "./boardMaterials";
 export { buildPanelGeometry } from "./panelGeometry";
+// One canvas, swappable content (PERF-09): <EngineCanvas><PackagingSceneContent/> | <VesselSceneContent/></EngineCanvas>
+export { EngineCanvas, type EngineCanvasProps, type EngineViewApi, type EngineToneMapping } from "./EngineCanvas";
+export { PackagingSceneContent, heroView, modelKey, type PackagingSceneContentProps } from "./PackagingScene";
+export { VesselScene, VesselSceneContent, type VesselSceneProps, type VesselSceneContentProps, type VesselSceneHandle } from "./vessels/VesselScene";
+export { SoftShadow, type SoftShadowProps } from "./SoftShadow";
+export { StudioLighting, StudioLights, StudioEnvironment } from "./lighting";

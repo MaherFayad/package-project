@@ -1,5 +1,5 @@
 import { CylinderGeometry, ExtrudeGeometry, Shape, ShapeGeometry, type BufferGeometry } from "three";
-import { roundCorners, tubeDims, tinLidHeight, type ClosureKind, type ControlPoint, type VesselDims, type VesselKind, type VesselProfile } from "@/lib/vessels";
+import { radiusAt, roundCorners, tubeDims, tinLidHeight, type ClosureKind, type ControlPoint, type VesselDims, type VesselKind, type VesselProfile } from "@/lib/vessels";
 import { revolve, ringsFromPoints, type Ring } from "./geometry";
 
 /** What a part is made of (the model maps roles to materials). */
@@ -54,8 +54,123 @@ function screwCap(p: VesselProfile, extraTop: ControlPoint[] = []): { geometry: 
   return { geometry, yt };
 }
 
+/**
+ * Closure styles the core kinds cannot express (X-01): a bottle can carry them instead of its
+ * core closure. Real references: 26 mm crown (ISO 12821, fluted steel, ~6 mm tall), ROPP
+ * aluminium (knurled top band, long plain skirt with a perforated pilfer ring), wine cork under a
+ * 40–60 mm foil capsule, sparkling mushroom cork under foil + wire hood, ROPP pourer with spout.
+ */
+export const CLOSURE_STYLES = ["CROWN", "ROPP", "CORK_CAPSULE", "SPARKLING", "POURER"] as const;
+export type ClosureStyle = (typeof CLOSURE_STYLES)[number];
+
+/** Capsule / sleeve hugging the neck from `top` down `depth` mm (follows the glass, +gap). */
+function neckSleeve(p: VesselProfile, depth: number, gap: number, top: number): ControlPoint[] {
+  const pts: ControlPoint[] = [];
+  const steps = 14;
+  for (let i = 0; i <= steps; i++) {
+    const y = top - depth + (depth * i) / steps;
+    pts.push({ r: Math.max(p.finishR, radiusAt(p.outer as never, y)) + gap, y });
+  }
+  return pts;
+}
+
+function styledClosure(style: ClosureStyle, p: VesselProfile): ClosureModel {
+  const top = p.finishTopY;
+  const r = p.finishR;
+  switch (style) {
+    case "CROWN": {
+      const yb = top - 6;
+      const yt = top + 0.8;
+      const g = lathe(
+        [
+          { r: r + 1.6, y: yb, s: 1 },
+          { r: r + 2.2, y: yb + 0.6, round: 0.4 },
+          { r: r + 1.4, y: yt - 1.2, round: 0.8 },
+          { r: r + 0.6, y: yt, round: 0.6 },
+          { r: 0, y: yt },
+        ],
+        // 21 flutes crimped round the bead
+        { segments: 168, ribs: { count: 21, depth: 0.9, where: (ring) => ring.y < yt - 1.4 } },
+      );
+      return { parts: [{ geometry: g, role: "capMetal", group: "moving" }], motion: "lift", turns: 0, rise: 0, lift: 22, topY: yt };
+    }
+    case "ROPP":
+    case "POURER": {
+      const yb = top - 18;
+      const yt = top + 1.5;
+      const skirt = lathe(
+        [
+          { r: r + 0.3, y: yb + 3 },
+          { r: r + 0.3, y: yb, round: 0.2 },
+          { r: r + 0.8, y: yb + 0.3, round: 0.3 },
+          { r: r + 0.8, y: yb + 3.2 },
+          { r: r + 0.55, y: yb + 3.6 }, // pilfer-proof perforation line
+          { r: r + 0.8, y: yb + 4 },
+          { r: r + 0.8, y: yt - 1, round: 0.8 },
+          { r: r - 0.6, y: yt, round: 0.6 },
+          { r: 0, y: yt },
+        ],
+        { segments: 192, ribs: { count: 96, depth: 0.18, where: (ring) => ring.y > yt - 6 && ring.y < yt - 1.2 } },
+      );
+      const parts: ClosurePart[] = [{ geometry: skirt, role: "capMetal", group: "moving" }];
+      let topY = yt;
+      if (style === "POURER") {
+        const sr = Math.max(2.5, r * 0.32);
+        const spout = lathe([
+          { r: sr * 0.7, y: yt + 6 },
+          { r: sr, y: yt + 6, round: 0.3 },
+          { r: sr * 0.85, y: yt + 1.5 },
+          { r: sr * 1.8, y: yt, round: 0.6 },
+          { r: 0, y: yt },
+        ]);
+        parts.push({ geometry: spout, role: "cap", group: "moving" });
+        topY = yt + 6;
+      }
+      return { parts, motion: "unscrew", turns: 1.5, rise: 3, lift: 26, topY };
+    }
+    case "CORK_CAPSULE": {
+      const yt = top + 0.5;
+      const sleeve = neckSleeve(p, 48, 0.35, top);
+      const g = lathe([...sleeve, { r: r + 0.35, y: yt, round: 0.6 }, { r: 0, y: yt }]);
+      return { parts: [{ geometry: g, role: "capMetal", group: "moving" }], motion: "lift", turns: 0, rise: 0, lift: 30, topY: yt };
+    }
+    case "SPARKLING": {
+      const foil = neckSleeve(p, 85, 0.4, top);
+      const mr = r + 2;
+      const yt = top + 24;
+      const g = lathe([
+        ...foil,
+        { r: r + 0.6, y: top + 6 },
+        { r: mr, y: top + 10, round: 2 },
+        { r: mr, y: yt - 5, round: 3 },
+        { r: mr * 0.55, y: yt, round: 2 },
+        { r: 0, y: yt },
+      ]);
+      // wire cage ring at the lip
+      const cage = lathe([
+        { r: r + 1.1, y: top - 2 },
+        { r: r + 1.5, y: top - 1.4, round: 0.3 },
+        { r: r + 1.1, y: top - 0.8 },
+      ]);
+      return {
+        parts: [
+          { geometry: g, role: "capMetal", group: "moving" },
+          { geometry: cage, role: "dark", group: "moving" },
+        ],
+        motion: "lift",
+        turns: 0,
+        rise: 0,
+        lift: 34,
+        topY: yt,
+      };
+    }
+  }
+}
+
 /** Closure (and its open motion) for a container. Geometry in mm, container coordinates. */
-export function buildClosure(kind: VesselKind, closure: ClosureKind, dims: VesselDims, p: VesselProfile): ClosureModel {
+export function buildClosure(kind: VesselKind, closure: ClosureKind, dims: VesselDims, p: VesselProfile, style?: ClosureStyle | null): ClosureModel {
+  // bottle-neck styles replace a screw-cap core (the core the library collapses them to)
+  if (style && (CLOSURE_STYLES as readonly string[]).includes(style) && p.finishR > 0 && closure !== "CAN_END" && closure !== "SLIP_LID" && closure !== "LUG_LID") return styledClosure(style, p);
   const top = p.finishTopY;
   switch (closure) {
     case "SCREW_CAP": {

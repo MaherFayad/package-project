@@ -1,18 +1,18 @@
 "use client";
 
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import { Environment, Lightformer, OrbitControls } from "@react-three/drei";
-import { memo, useEffect, useId, useImperativeHandle, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode, type Ref } from "react";
-import { NeutralToneMapping, PerspectiveCamera, Spherical, Vector3, type Object3D } from "three";
+import { memo, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type Ref } from "react";
+import { PerspectiveCamera, Spherical, Vector3, type Object3D } from "three";
 import { defaultMaxDpr, usePrefersReducedMotion } from "../hooks";
 import { AUTO_ROTATE, easeInOutCubic } from "../finishes/motion";
 import { captureScreenshot } from "../screenshot";
 import { SoftShadow } from "../SoftShadow";
-import { InteractionDpr, KEY_SHORTCUTS, registerDebugRenderer, useOnScreen } from "../perf";
-import type { PackagingSceneHandle, ViewName } from "../PackagingScene";
+import { InteractionDpr, useOnScreen } from "../perf";
+import type { PackagingSceneHandle } from "../PackagingScene";
+import { EngineCanvas, useRegisterViewApi, type EngineViewApi, type ViewName } from "../EngineCanvas";
 import { VesselModel, type VesselModelProps } from "./VesselModel";
 import type { VesselQuality } from "./materials";
-import styles from "../PackagingScene.module.css";
 
 /** Same imperative API as the box viewer, so <ViewControls> works unchanged. */
 export type VesselSceneHandle = PackagingSceneHandle;
@@ -38,6 +38,8 @@ export interface VesselSceneProps extends Omit<VesselModelProps, "quality" | "an
   onInteract?: () => void;
   /** Added by 3D integration: draw this object (metres, standing on y = 0) instead of the container model (flexible packs). */
   customObject?: Object3D | null;
+  /** Image (e.g. the model thumbnail) shown until the first compiled frame, then cross-faded (X-11). */
+  poster?: string;
 }
 
 const DEG = Math.PI / 180;
@@ -63,9 +65,7 @@ function frame(env: { width: number; depth: number; height: number }, camera: Pe
   return { distance: (radius / Math.sin(fov / 2)) * 1.08, target: new Vector3(0, size.y * 0.47, 0), size };
 }
 
-interface RigApi extends Omit<PackagingSceneHandle, "getCanvas"> {
-  canvas: HTMLCanvasElement;
-}
+type RigApi = EngineViewApi;
 
 function Rig({
   envelope,
@@ -74,6 +74,7 @@ function Rig({
   reduced,
   interacted,
   sceneKey,
+  onKeyboard,
 }: {
   envelope: VesselSceneProps["envelope"];
   apiRef: { current: RigApi | null };
@@ -81,6 +82,7 @@ function Rig({
   reduced: boolean;
   interacted: { current: boolean };
   sceneKey: string;
+  onKeyboard?: () => void;
 }) {
   const { camera, gl, scene, invalidate, controls } = useThree();
   const regress = useThree((s) => s.performance.regress);
@@ -178,6 +180,7 @@ function Rig({
   useEffect(() => {
     apiRef.current = {
       canvas: gl.domElement,
+      onKeyboard,
       rotate(dAz, dPolar = 0) {
         interacted.current = true;
         regress();
@@ -242,38 +245,44 @@ const VesselLights = memo(function VesselLights() {
   );
 });
 
+/** Props of the vessel scene content (everything except the canvas / wrapper props). */
+export type VesselSceneContentProps = Omit<VesselSceneProps, "ariaLabel" | "roleDescription" | "keyboardHint" | "fallback" | "maxDpr" | "className" | "style" | "onReady" | "poster">;
+
 /**
- * 3D viewer for bottles, jars, cans, tins, pouches and tubes: studio lighting, contact shadow,
- * orbit + keyboard controls, framing, animations (prefers-reduced-motion aware), screenshots.
- * Client-only: load with `VesselSceneLazy`.
+ * The container scene without its own canvas (render it inside `<EngineCanvas>`, as
+ * `VesselScene` does). `handleRef` and the canvas keyboard both reach it.
  */
-export function VesselScene(props: VesselSceneProps) {
-  const {
-    envelope,
-    quality = "auto",
-    animate = true,
-    turntable = false,
-    handleRef,
-    ariaLabel = "3D preview of the container",
-    roleDescription = "3D viewer",
-    keyboardHint = "Arrow keys rotate, plus and minus zoom, 0 resets the view.",
-    fallback,
-    maxDpr,
-    className,
-    style,
-    onReady,
-    onInteract,
-    customObject,
-    ...model
-  } = props;
+export function VesselSceneContent(props: VesselSceneContentProps) {
+  const { envelope, quality = "auto", animate = true, turntable = false, handleRef, onInteract, customObject, ...model } = props;
   const reduced = usePrefersReducedMotion();
   const apiRef = useRef<RigApi | null>(null);
-  const hintId = useId();
-  const [dprCap] = useState(() => maxDpr ?? defaultMaxDpr());
   const [autoQuality] = useState<VesselQuality>(() => (defaultMaxDpr() < 2 ? "low" : "high"));
   const q: VesselQuality = quality === "auto" ? autoQuality : quality;
   const interacted = useRef(false);
+  const camera = useThree((s) => s.camera) as PerspectiveCamera;
+  const gl = useThree((s) => s.gl);
+  const invalidate = useThree((s) => s.invalidate);
+  useLayoutEffect(() => {
+    if (camera.fov !== 28) {
+      camera.fov = 28;
+      camera.updateProjectionMatrix();
+    }
+  }, [camera]);
+  // pointer input on the viewer pauses the turntable
+  const onInteractRef = useRef(onInteract);
+  onInteractRef.current = onInteract;
+  useEffect(() => {
+    const root = gl.domElement.closest("[role=application]") ?? gl.domElement;
+    const on = () => {
+      interacted.current = true;
+      onInteractRef.current?.();
+      invalidate();
+    };
+    root.addEventListener("pointerdown", on);
+    return () => root.removeEventListener("pointerdown", on);
+  }, [gl, invalidate]);
 
+  useRegisterViewApi(apiRef);
   useImperativeHandle(
     handleRef,
     (): VesselSceneHandle => ({
@@ -287,72 +296,35 @@ export function VesselScene(props: VesselSceneProps) {
     [],
   );
 
-  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.altKey || e.ctrlKey || e.metaKey) return;
-    const api = apiRef.current;
-    if (!api) return;
-    const step = e.shiftKey ? 5 : 15;
-    const map: Record<string, () => void> = {
-      ArrowLeft: () => api.rotate(-step),
-      ArrowRight: () => api.rotate(step),
-      ArrowUp: () => api.rotate(0, step * 0.66),
-      ArrowDown: () => api.rotate(0, -step * 0.66),
-      "+": () => api.zoom(0.85),
-      "=": () => api.zoom(0.85),
-      "-": () => api.zoom(1 / 0.85),
-      _: () => api.zoom(1 / 0.85),
-      PageUp: () => api.zoom(0.85),
-      PageDown: () => api.zoom(1 / 0.85),
-      "0": () => api.reset(),
-      Home: () => api.reset(),
-    };
-    const fn = map[e.key];
-    if (!fn) return;
-    fn();
-    onInteract?.();
-    e.preventDefault();
-  };
-
   const sceneKey = `${model.kind}`;
   return (
-    <div
-      className={[styles.viewport, className].filter(Boolean).join(" ")}
+    <>
+      <Rig envelope={envelope} apiRef={apiRef} turntable={turntable} reduced={reduced} interacted={interacted} sceneKey={sceneKey} onKeyboard={() => onInteractRef.current?.()} />
+      {customObject ? <primitive object={customObject} /> : <VesselModel {...model} quality={q} animate={animate && !reduced} />}
+    </>
+  );
+}
+
+/**
+ * 3D viewer for bottles, jars, cans, tins, pouches and tubes: studio lighting, contact shadow,
+ * orbit + keyboard controls, framing, animations (prefers-reduced-motion aware), screenshots.
+ * Client-only: load with `VesselSceneLazy`. Equivalent to `<EngineCanvas><VesselSceneContent/></EngineCanvas>`.
+ */
+export function VesselScene(props: VesselSceneProps) {
+  const { ariaLabel = "3D preview of the container", roleDescription, keyboardHint, fallback, maxDpr, className, style, onReady, poster, ...content } = props;
+  return (
+    <EngineCanvas
+      ariaLabel={ariaLabel}
+      roleDescription={roleDescription}
+      keyboardHint={keyboardHint}
+      fallback={fallback}
+      maxDpr={maxDpr}
+      className={className}
       style={style}
-      tabIndex={0}
-      role="application"
-      aria-roledescription={roleDescription}
-      aria-label={ariaLabel}
-      aria-describedby={hintId}
-      aria-keyshortcuts={KEY_SHORTCUTS}
-      onKeyDown={onKeyDown}
-      onPointerDown={() => {
-        interacted.current = true;
-        onInteract?.();
-      }}
-      dir="ltr"
+      onReady={onReady}
+      poster={poster}
     >
-      <span id={hintId} className={styles.hint}>
-        {keyboardHint}
-      </span>
-      <Canvas
-        className={styles.canvas}
-        frameloop="demand"
-        dpr={[1, dprCap]}
-        performance={{ min: 0.66, max: 1, debounce: 300 }}
-        gl={{ antialias: true, alpha: true, powerPreference: "high-performance", localClippingEnabled: true } as never}
-        camera={{ fov: 28, near: 0.005, far: 40, position: [0.3, 0.25, 0.6] }}
-        onCreated={({ gl }) => {
-          gl.toneMapping = NeutralToneMapping;
-          gl.localClippingEnabled = true;
-          gl.setClearColor(0x000000, 0);
-          registerDebugRenderer(gl);
-          onReady?.();
-        }}
-        fallback={fallback ?? <div className={styles.fallback}>3D preview is not available on this device.</div>}
-      >
-        <Rig envelope={envelope} apiRef={apiRef} turntable={turntable} reduced={reduced} interacted={interacted} sceneKey={sceneKey} />
-        {customObject ? <primitive object={customObject} /> : <VesselModel {...model} quality={q} animate={animate && !reduced} />}
-      </Canvas>
-    </div>
+      <VesselSceneContent {...content} />
+    </EngineCanvas>
   );
 }

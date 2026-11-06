@@ -19,7 +19,7 @@ import {
   type VesselProfile,
 } from "@/lib/vessels";
 import { configureArtworkTexture } from "../boardMaterials";
-import { buildClosure } from "./closures";
+import { buildClosure, type ClosureStyle } from "./closures";
 import {
   bandLabelGeometry,
   bodyGeometry,
@@ -72,6 +72,8 @@ export interface VesselModelProps {
   artworkVersion?: number | string;
   /** Optional body colour (sRGB hex) over the material's default: green / cobalt glass, coloured HDPE, black ABS. */
   tint?: string | null;
+  /** Optional bottle-neck closure style (crown, ROPP, cork + capsule, sparkling, pourer) over the core closure kind. */
+  closureStyle?: ClosureStyle | null;
 }
 
 const easeOutBack = (t: number) => {
@@ -102,7 +104,7 @@ function useDisposable<T extends { dispose(): void } | null>(factory: () => T, d
  * axis, front facing +Z. Everything is built from @/lib/vessels so the 3D matches the print specs.
  */
 export function VesselModel(props: VesselModelProps) {
-  const { kind, dims, profile, material, closure, closureColor, liquid, fill, labels: labelInputs, quality, open = false, animate = true, replayKey, artworkVersion, tint } = props;
+  const { kind, dims, profile, material, closure, closureColor, liquid, fill, labels: labelInputs, quality, open = false, animate = true, replayKey, artworkVersion, tint, closureStyle } = props;
   const invalidate = useThree((s) => s.invalidate);
 
   // textures for labels given as canvases (one per canvas; a resized canvas gets a new one)
@@ -131,7 +133,7 @@ export function VesselModel(props: VesselModelProps) {
   // ---------------------------------------------------------------- geometry
   // Phones ("low") get half the radial segments: silhouettes stay smooth at phone sizes and the
   // vertex / triangle load halves (PERF-12).
-  const radial = quality === "low" ? 64 : 128;
+  const radial = quality === "low" ? 48 : 128;
   const body = useDisposable(() => (revolved ? bodyGeometry(profile, radial) : null), [profileKey, radial]);
   const tubeLabel = isTube ? labels.find((l) => l.spec.kind === "WRAP") : undefined;
   const tubeGeo = useDisposable(() => (isTube ? tubeBodyGeometry(dims, tubeLabel?.spec) : null), [profileKey, isTube, tubeLabel ? JSON.stringify(tubeLabel.spec.placement) + tubeLabel.spec.printWidthMm : ""]);
@@ -153,14 +155,14 @@ export function VesselModel(props: VesselModelProps) {
     [pouchGeo],
   );
 
-  const liquidGeo = useDisposable(() => (revolved && def.fillable ? liquidGeometry(profile, radial === 64 ? 40 : 72) : null), [profileKey, radial]);
+  const liquidGeo = useDisposable(() => (revolved && def.fillable ? liquidGeometry(profile, radial === 48 ? 32 : 72) : null), [profileKey, radial]);
   const surfaceGeo = useDisposable(() => {
     if (!revolved || !def.fillable) return null;
     // unit disc in the section shape, scaled to the inner radius at the fill height every frame
     return revolve(ringsFromPoints([{ r: 1, y: 0 }, { r: 0, y: 0 }]), { section: profile.section, segments: radial / 2 });
   }, [profileKey, radial]);
 
-  const closureModel = useMemo(() => buildClosure(kind, closure, dims, profile), [kind, closure, dims, profile]);
+  const closureModel = useMemo(() => buildClosure(kind, closure, dims, profile, closureStyle), [kind, closure, dims, profile, closureStyle]);
   useEffect(() => () => closureModel.parts.forEach((p) => p.geometry.dispose()), [closureModel]);
 
   const labelGeos = useMemo(() => {
@@ -300,10 +302,14 @@ export function VesselModel(props: VesselModelProps) {
     }
     if (tab.current) tab.current.rotation.x = o * 1.15;
     // shrink sleeves: drop on, then shrink from the bottom up
+    const shrinkBefore = a.shrink;
     a.shrink = step(a.shrink, 1, 1.5);
     labelGeos.forEach((g, i) => {
       const mesh = sleeveMeshes.current[i];
       if (!g.sleeve || !mesh) return;
+      // settled sleeves keep their last pose: no per-frame vertex rewrite / re-upload (PERF-21)
+      if (mesh.userData.shrink === a.shrink && shrinkBefore === a.shrink) return;
+      mesh.userData.shrink = a.shrink;
       const pos = mesh.geometry.getAttribute("position") as BufferAttribute;
       const nor = mesh.geometry.getAttribute("normal") as BufferAttribute;
       const { start, target } = g.sleeve;

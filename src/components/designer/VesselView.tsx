@@ -8,7 +8,7 @@ import type { VesselModelDef } from "@/lib/library";
 import type { DocGeometry } from "@/lib/library/doc";
 import { buildFlexibleGroup, type FlexConfig, type FlexPanelId } from "@/lib/vessels/families/flexible";
 import { VesselScene } from "@/components/three/vessels/VesselScene";
-import type { VesselLabel } from "@/components/three/vessels";
+import type { ClosureStyle, VesselLabel } from "@/components/three/vessels";
 import type { PackagingSceneHandle } from "@/components/three";
 import { labelFinishOf, labelStockOf } from "./lib/config";
 import styles from "./designer.module.css";
@@ -80,6 +80,9 @@ export default function VesselView({
 
   const containerCore = (model.containers.find((c) => c.code === v.container)?.core ?? model.containers[0]?.core ?? "HDPE_WHITE") as VesselMaterialCode;
   const closureCore = (model.closures.find((c) => c.code === v.closure)?.core ?? model.closures[0]?.core ?? "SCREW_CAP") as ClosureKind;
+  // Added by 3D engine (X-01): real colour and closure style when the core renderer code is only the nearest match.
+  const containerTint = model.containers.find((c) => c.code === v.container)?.tint ?? null;
+  const closureStyle = (model.closures.find((c) => c.code === v.closure)?.closureStyle ?? null) as ClosureStyle | null;
 
   // Flexible packs: their own film model, textured per panel.
   const flexTextures = useMemo(() => {
@@ -141,6 +144,8 @@ export default function VesselView({
       envelope={desc.envelope}
       material={containerCore}
       closure={closureCore}
+      tint={containerTint}
+      closureStyle={closureStyle}
       closureColor={(v.closureColor as ClosureColorCode) ?? "WHITE"}
       liquid={(v.content as LiquidCode) ?? model.defaultLiquid}
       fill={v.fill}

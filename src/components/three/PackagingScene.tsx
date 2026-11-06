@@ -1,22 +1,11 @@
 "use client";
 
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
-import {
-  useEffect,
-  useId,
-  useImperativeHandle,
-  useMemo,
-  useRef,
-  useState,
-  type CSSProperties,
-  type KeyboardEvent,
-  type ReactNode,
-  type Ref,
-} from "react";
-import { ACESFilmicToneMapping, AgXToneMapping, NeutralToneMapping, PerspectiveCamera, Spherical, Vector3, type Group, type ToneMapping } from "three";
+import { useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, type CSSProperties, type ReactNode, type Ref } from "react";
+import { PerspectiveCamera, Spherical, Vector3, type Group } from "three";
 import { boundsAt, maxStage, type DielineModel } from "@/lib/dieline";
-import { defaultMaxDpr, usePrefersReducedMotion } from "./hooks";
+import { usePrefersReducedMotion } from "./hooks";
 import { MM, PackagingModel, type PackagingModelProps } from "./PackagingModel";
 import { captureScreenshot, type ScreenshotOptions } from "./screenshot";
 import { FinishedPackagingModel, type SurfaceFinishProps } from "./finishes/FinishedPackagingModel";
@@ -24,10 +13,10 @@ import { StudioStage, type StageOptions } from "./finishes/StudioStage";
 import { AUTO_ROTATE, easeInOutCubic, easeOutQuint } from "./finishes/motion";
 import { StudioLighting } from "./lighting";
 import { SoftShadow } from "./SoftShadow";
-import { InteractionDpr, KEY_SHORTCUTS, RendererSettings, ShaderWarmup, registerDebugRenderer, useOnScreen } from "./perf";
-import styles from "./PackagingScene.module.css";
+import { InteractionDpr, useOnScreen } from "./perf";
+import { EngineCanvas, useRegisterViewApi, type EngineToneMapping, type EngineViewApi, type ViewName } from "./EngineCanvas";
 
-export type ViewName = "iso" | "front" | "back" | "left" | "right" | "top" | "bottom";
+export type { ViewName } from "./EngineCanvas";
 
 /** Imperative API (keyboard/button controls, export). Angles in degrees. */
 export interface PackagingSceneHandle {
@@ -86,20 +75,14 @@ export interface PackagingSceneProps extends Omit<PackagingModelProps, "foldProg
    * Tone mapping. Default "neutral" (Khronos PBR Neutral): keeps printed colours close to their
    * sRGB values (what a brand approves), unlike ACES / AgX which shift hue and saturation.
    */
-  toneMapping?: "neutral" | "aces" | "agx";
+  toneMapping?: EngineToneMapping;
   /** Tone-mapping exposure. Default 1. */
   exposure?: number;
 }
 
-const TONE_MAPPING: Record<NonNullable<PackagingSceneProps["toneMapping"]>, ToneMapping> = {
-  neutral: NeutralToneMapping,
-  aces: ACESFilmicToneMapping,
-  agx: AgXToneMapping,
-};
 
-interface RigApi extends Omit<PackagingSceneHandle, "getCanvas"> {
-  canvas: HTMLCanvasElement;
-}
+
+type RigApi = EngineViewApi;
 
 const DEG = Math.PI / 180;
 const DEFAULT_VIEW = { theta: 32 * DEG, phi: 62 * DEG };
@@ -461,12 +444,18 @@ function SwapIn({ swapKey, children }: { swapKey: string; children: ReactNode })
   return <group ref={ref}>{children}</group>;
 }
 
+/** Props of the scene content (everything except the canvas / wrapper props). */
+export type PackagingSceneContentProps = Omit<
+  PackagingSceneProps,
+  "ariaLabel" | "roleDescription" | "keyboardHint" | "fallback" | "enableKeyboard" | "maxDpr" | "className" | "style" | "onReady" | "poster" | "toneMapping" | "exposure"
+>;
+
 /**
- * Full 3D viewer: lighting, soft contact shadow, orbit controls, camera framing,
- * fold animation (prefers-reduced-motion aware), keyboard control and screenshot export.
- * Client-only: load it with `PackagingSceneLazy` (next/dynamic, ssr: false).
+ * The box scene without its own canvas: rig, lights, contact shadow, orbit controls, fold and
+ * framing, the model. Render it inside `<EngineCanvas>` (that is what `PackagingScene` does);
+ * `handleRef` and the canvas keyboard both reach it.
  */
-export function PackagingScene(props: PackagingSceneProps) {
+export function PackagingSceneContent(props: PackagingSceneContentProps) {
   const {
     dieline,
     artworkTextures,
@@ -480,35 +469,22 @@ export function PackagingScene(props: PackagingSceneProps) {
     autoFit = true,
     artworkVersion,
     handleRef,
-    ariaLabel = "3D preview of the box",
-    roleDescription = "3D viewer",
-    keyboardHint = "Arrow keys rotate, plus and minus zoom, 0 resets the view.",
-    fallback,
-    enableKeyboard = true,
     shadows = true,
-    maxDpr,
-    className,
-    style,
-    onReady,
     children,
     surfaceFinish,
     stage,
     autoRotate,
-    poster,
-    toneMapping = "neutral",
-    exposure = 1,
   } = props;
-  const [ready, setReady] = useState(false);
-  useEffect(() => {
-    if (!poster) return;
-    // never hide the viewer for long if the first frame is slow or WebGL fails
-    const t = setTimeout(() => setReady(true), 4000);
-    return () => clearTimeout(t);
-  }, [poster]);
   const progressRef = useRef(Math.min(1, Math.max(0, foldProgress)));
   const apiRef = useRef<RigApi | null>(null);
-  const hintId = useId();
-  const [dprCap] = useState(() => maxDpr ?? defaultMaxDpr());
+  useRegisterViewApi(apiRef);
+  const camera = useThree((s) => s.camera) as PerspectiveCamera;
+  useLayoutEffect(() => {
+    if (camera.fov !== 30) {
+      camera.fov = 30;
+      camera.updateProjectionMatrix();
+    }
+  }, [camera]);
 
   useImperativeHandle(
     handleRef,
@@ -523,100 +499,22 @@ export function PackagingScene(props: PackagingSceneProps) {
     [],
   );
 
-  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (!enableKeyboard || e.altKey || e.ctrlKey || e.metaKey) return;
-    const api = apiRef.current;
-    if (!api) return;
-    const step = e.shiftKey ? 5 : 15;
-    switch (e.key) {
-      case "PageUp":
-        api.zoom(0.85);
-        break;
-      case "PageDown":
-        api.zoom(1 / 0.85);
-        break;
-      case "ArrowLeft":
-        api.rotate(-step);
-        break;
-      case "ArrowRight":
-        api.rotate(step);
-        break;
-      case "ArrowUp":
-        api.rotate(0, step * 0.66);
-        break;
-      case "ArrowDown":
-        api.rotate(0, -step * 0.66);
-        break;
-      case "+":
-      case "=":
-        api.zoom(0.85);
-        break;
-      case "-":
-      case "_":
-        api.zoom(1 / 0.85);
-        break;
-      case "0":
-      case "Home":
-        api.reset();
-        break;
-      default:
-        return;
-    }
-    e.preventDefault();
-  };
-
   return (
-    <div
-      className={[styles.viewport, className].filter(Boolean).join(" ")}
-      style={style}
-      tabIndex={enableKeyboard ? 0 : undefined}
-      role="application"
-      aria-roledescription={roleDescription}
-      aria-label={ariaLabel}
-      aria-describedby={hintId}
-      aria-keyshortcuts={enableKeyboard ? KEY_SHORTCUTS : undefined}
-      onKeyDown={onKeyDown}
-      dir="ltr"
-    >
-      <span id={hintId} className={styles.hint}>
-        {keyboardHint}
-      </span>
-      {poster ? <div aria-hidden="true" className={styles.poster} data-hidden={ready ? "true" : undefined} style={{ backgroundImage: `url(${JSON.stringify(poster)})` }} /> : null}
-      <Canvas
-        className={styles.canvas}
-        data-fade={poster ? (ready ? "in" : "out") : undefined}
-        frameloop="demand"
-        dpr={[1, dprCap]}
-        // drag / keyboard input drops the pixel ratio to 2/3 (never below 1) until 300 ms after it ends
-        performance={{ min: 0.66, max: 1, debounce: 300 }}
-        gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
-        camera={{ fov: 30, near: 0.005, far: 60, position: [0.4, 0.35, 0.7] }}
-        onCreated={({ gl }) => {
-          gl.toneMapping = TONE_MAPPING[toneMapping] ?? NeutralToneMapping;
-          gl.toneMappingExposure = exposure;
-          gl.setClearColor(0x000000, 0);
-          registerDebugRenderer(gl);
-          onReady?.();
-        }}
-        fallback={fallback ?? <div className={styles.fallback}>3D preview is not available on this device.</div>}
-      >
-        {/* compile every shader before the canvas fades in (no first-interaction hitch), then reveal */}
-        <ShaderWarmup onDone={() => setReady(true)} />
-        <RendererSettings toneMapping={TONE_MAPPING[toneMapping] ?? NeutralToneMapping} exposure={exposure} />
-        <Rig
-          dieline={dieline}
-          foldTarget={Math.min(1, Math.max(0, foldProgress))}
-          animateFold={animateFold}
-          foldDurationMs={foldDurationMs}
-          autoFit={autoFit}
-          progressRef={progressRef}
-          apiRef={apiRef}
-          artworkVersion={artworkVersion}
-          shadows={shadows}
-          stage={stage}
-          autoRotate={autoRotate}
-        />
-        <SwapIn swapKey={modelKey(dieline)}>
+    <>
+      <Rig
+        dieline={dieline}
+        foldTarget={Math.min(1, Math.max(0, foldProgress))}
+        animateFold={animateFold}
+        foldDurationMs={foldDurationMs}
+        autoFit={autoFit}
+        progressRef={progressRef}
+        apiRef={apiRef}
+        artworkVersion={artworkVersion}
+        shadows={shadows}
+        stage={stage}
+        autoRotate={autoRotate}
+      />
+      <SwapIn swapKey={modelKey(dieline)}>
         {surfaceFinish ? (
           <FinishedPackagingModel
             dieline={dieline}
@@ -637,9 +535,50 @@ export function PackagingScene(props: PackagingSceneProps) {
             foldProgress={progressRef}
           />
         )}
-        </SwapIn>
-        {children}
-      </Canvas>
-    </div>
+      </SwapIn>
+      {children}
+    </>
+  );
+}
+
+/**
+ * Full 3D viewer: lighting, soft contact shadow, orbit controls, camera framing,
+ * fold animation (prefers-reduced-motion aware), keyboard control and screenshot export.
+ * Client-only: load it with `PackagingSceneLazy` (next/dynamic, ssr: false).
+ * Equivalent to `<EngineCanvas …><PackagingSceneContent …/></EngineCanvas>`.
+ */
+export function PackagingScene(props: PackagingSceneProps) {
+  const {
+    ariaLabel = "3D preview of the box",
+    roleDescription,
+    keyboardHint,
+    fallback,
+    enableKeyboard,
+    maxDpr,
+    className,
+    style,
+    onReady,
+    poster,
+    toneMapping,
+    exposure,
+    ...content
+  } = props;
+  return (
+    <EngineCanvas
+      ariaLabel={ariaLabel}
+      roleDescription={roleDescription}
+      keyboardHint={keyboardHint}
+      fallback={fallback}
+      enableKeyboard={enableKeyboard}
+      maxDpr={maxDpr}
+      className={className}
+      style={style}
+      onReady={onReady}
+      poster={poster}
+      toneMapping={toneMapping}
+      exposure={exposure}
+    >
+      <PackagingSceneContent {...content} />
+    </EngineCanvas>
   );
 }

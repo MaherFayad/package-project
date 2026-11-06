@@ -74,7 +74,20 @@ Severity: critical = broken / data / leak; high = clearly wrong, ugly or inacces
 | E-36 / PERF-09 | high | `components/designer/DesignerApp.tsx` | Box ↔ vessel switch creates a new WebGL context each time. | — | Designer renders two different canvases; a shared canvas is an API change, left for the designer session. | open (designer scope) |
 | E-37 / PERF-02, PERF-13 | critical | `components/marketing/HeroScene3D.tsx` | Hero replaces its poster `<img>` and rotates with its own endless rAF loop. | — | Marketing scope: keep the `<img>` mounted under the canvas and use `autoRotate` (engine turntable: demand-driven, off-screen pause, reduced-motion aware) instead of the rAF loop. | open (marketing scope) |
 
-Counts (engine-owned rows E-01 … E-31 that were fixed, plus deferred E-32 … E-37): **critical 4 (2 fixed, 2 open), high 8 (6 fixed, 2 open), medium 18 (16 fixed, 2 open), low 7 (all fixed)**.
+### Pass 2 (requests from the integrator, the designer session and the performance report)
+
+| id | sev | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| E-38 / PERF-09 | high | `EngineCanvas.tsx`, `PackagingScene.tsx`, `vessels/VesselScene.tsx` | Box ↔ container switches in the designer create a new WebGL context, environment and programs each time, because each viewer owns its `<Canvas>`. | — | New `EngineCanvas` (the accessible wrapper + one canvas, keyboard routed to the mounted content) and `PackagingSceneContent` / `VesselSceneContent` (scene without a canvas; `handleRef` works). `PackagingScene` / `VesselScene` are now thin wrappers with unchanged props. The designer session wires `DesignerApp` to one `EngineCanvas`. | fixed (engine API); designer wiring pending |
+| E-39 / X-01 | high | `vessels/closures.ts`, `VesselModel.tsx`, `lib/library/{types,vessels}.ts`, `designer/VesselView.tsx` | Green / cobalt glass rendered amber or clear; crown, ROPP, cork + capsule, sparkling cork and pourer all rendered as a plastic screw cap. | ISO 12821 crown; ROPP; wine capsule 40–60 mm | Closure styles `CROWN`, `ROPP`, `CORK_CAPSULE`, `SPARKLING`, `POURER` (geometry follows the neck). Optional `tint` / `closureStyle` on `VesselOption`, filled for bottles (tint when the core material is only the nearest look) and cosmetic `ABS_BLACK`; passed through `VesselView`. | fixed |
+| E-40 / X-11 (engine half) | low | `vessels/VesselScene.tsx` | Container viewer had no poster. | — | Optional `poster` prop with the same cross-fade as boxes. Passing a thumbnail is the designer's call (`Scene3D` passes none today). | fixed (engine) |
+| E-41 / PERF-12 | high | `vessels/VesselModel.tsx` | Phones drew the same dense meshes. | — | Quality "low": 48 radial segments (liquid 32, surface 24) instead of 128 / 72 / 64. | fixed |
+| E-42 / PERF-21 | medium | `vessels/VesselModel.tsx`, `VesselScene.tsx` | Vessel scenes kept working while idle: the turntable spun from load, and settled shrink sleeves rewrote and re-uploaded their vertices every frame. | — | Turntable waits for 4 s idle, pauses off-screen (E-23, E-17); settled sleeves are skipped. | fixed |
+| E-43 / PERF-08 (engine half) | high | `hooks.ts · useArtworkTexture` | A resized artwork canvas allocates a new texture. | — | Not changed: a fixed-capacity texture with `texSubImage2D` + UV scale would change the UV contract of every board, finish and label material. The cost driver is the designer repainting and resizing the full sheet on every config change (E-35), which is the fix to make first. | open (reason given) |
+| E-44 / PERF-03d | critical | `lib/dieline/fold.ts`, `generate.ts` | three.js core reaches non-3D pages through the dieline engine. | — | Not changed in this pass: `fold.ts` returns three `Box3` / `Matrix4` that the renderer and 30+ family generators consume. A local math layer has to land together with the families and the route split (E-34), or both copies of three's math ship. | open (reason given) |
+| E-45 / FN-02 | high | `components/designer/lib/config.ts` | Spot UV invisible without a mask. | — | Designer scope (default the mask to the logo layer). The engine renders spot UV wherever a mask exists, now with a visible softbox streak. | open (designer scope) |
+
+Counts over both passes (45 rows): **critical 5 (2 fixed, 3 open), high 13 (9 fixed, 4 open), medium 19 (17 fixed, 2 open), low 8 (all fixed)**. Open rows are outside this scope or deferred with the reason given.
 
 ## Screenshots
 
@@ -102,6 +115,7 @@ The face test pattern draws a white stroke round each face, so with it the wrapp
 ## Files outside scope
 
 - `scripts/perf/measure-3d.cjs`, `scripts/perf/shots-3d.cjs` (new, measurement only).
+- `src/lib/library/types.ts` (optional `tint`, `closureStyle` on `VesselOption`), `src/lib/library/vessels.ts` (fills them), `src/components/designer/VesselView.tsx` (passes them, 5 lines): additive, at the integrator's request for X-01.
 - `docs/audit/perf-3d/*.json`, this report, screenshots.
 
 ## Verification

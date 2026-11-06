@@ -13,5 +13,6 @@
 export type { VesselSceneHandle, VesselSceneProps } from "./VesselScene";
 export type { VesselLabel, VesselModelProps } from "./VesselModel";
 export type { VesselQuality } from "./materials";
+export type { ClosureStyle } from "./closures";
 export { VesselSceneLazy } from "./LazyVesselScene";
 export { paintLabel, labelCanvasSize, type LabelArtStyle, type PaintLabelOptions } from "./labelArt";

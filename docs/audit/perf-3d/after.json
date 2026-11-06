@@ -1,16 +1,16 @@
 {
   "label": "after",
   "base": "http://localhost:3000",
-  "at": "2026-11-06T01:56:15.867Z",
-  "firstFrameMs": 956,
-  "wallToFirstFrameMs": 2481,
+  "at": "2026-11-06T02:07:18.456Z",
+  "firstFrameMs": 1102,
+  "wallToFirstFrameMs": 2670,
   "idleFramesPer3s": 0,
   "drawCallsPerFrame": 50,
   "trianglesPerFrame": 212,
   "dpr": 1.5,
-  "dragFpsCpu4x": 14.7,
-  "keyRotateFpsCpu4x": 15.5,
-  "keyRotateLongestFrameMs": 84,
+  "dragFpsCpu4x": 14,
+  "keyRotateFpsCpu4x": 15.2,
+  "keyRotateLongestFrameMs": 83,
   "liveAt0": {
     "textures": 13,
     "buffers": 113,
@@ -44,8 +44,8 @@
       "programs": 8
     }
   },
-  "jsHeapMB": 32.7,
-  "switchMsMedian": 996,
-  "homeJsKB": 1790,
+  "jsHeapMB": 32.5,
+  "switchMsMedian": 1005,
+  "homeJsKB": 1792,
   "homeLoadsThree": false
 }
