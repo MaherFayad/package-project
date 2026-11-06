@@ -49,6 +49,12 @@ export interface FrameProps {
   navigationLabel?: string;
   /** Render the content area as a <div> when an outer layout already owns <main id="main">. */
   contentElement?: "main" | "div";
+  /**
+   * Wrap the content in a Suspense boundary (R5-PL-17, default true). Pass false when the routes
+   * under this frame own their boundaries below their own checks: a notFound() inside a boundary
+   * streams with a 200 status (admin detail routes, R5-PL-03), same as MarketingShell boundary={false}.
+   */
+  boundary?: boolean;
 }
 
 /**
@@ -56,7 +62,7 @@ export interface FrameProps {
  * the #f1f1f1 canvas in a rounded sheet. Renders the page's single <main id="main">.
  * Side nav sits on the inline start (right in RTL).
  */
-export function Frame({ topBar, navigation, children, navigationLabel, contentElement = "main" }: FrameProps) {
+export function Frame({ topBar, navigation, children, navigationLabel, contentElement = "main", boundary = true }: FrameProps) {
   const { s } = useUi();
   const navId = useId();
   const [navOpen, setNavOpen] = useState(false);
@@ -141,11 +147,11 @@ export function Frame({ topBar, navigation, children, navigationLabel, contentEl
               client (LCP ~5 s). With it, React keeps the server HTML and hydrates it when ready. */}
           {contentElement === "main" ? (
             <main id="main" tabIndex={-1} className={styles.Main}>
-              <Suspense fallback={null}>{children}</Suspense>
+              {boundary ? <Suspense fallback={null}>{children}</Suspense> : children}
             </main>
           ) : (
             <div className={styles.Main}>
-              <Suspense fallback={null}>{children}</Suspense>
+              {boundary ? <Suspense fallback={null}>{children}</Suspense> : children}
             </div>
           )}
         </div>

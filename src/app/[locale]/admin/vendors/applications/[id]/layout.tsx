@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { isAdminSession } from "@/lib/auth/session";
@@ -8,9 +8,10 @@ import { isAdminSession } from "@/lib/auth/session";
  * unknown application answers a real 404 (a notFound() inside the streaming boundary answered 200). The
  * page keeps its own check.
  *
- * No Suspense boundary here on purpose: under load the page streamed into a hidden segment while
- * React also client-rendered the boundary, so the admin order page showed two copies of its banner
- * (journeys J5 on mobile). The detail page renders in one pass; list pages keep their skeleton.
+ * The shared Frame's boundary is off for admin (boundary={false}), so this layout adds the R5-PL-17
+ * boundary itself, BELOW the check (fallback null: React keeps the server HTML and hydrates it when
+ * ready). The duplicate-copy race seen in journeys J5 came from a frame state update after
+ * hydration (fixed in AdminFrame), not from this boundary.
  */
 export default async function Layout({ children, params }: { children: ReactNode; params: Promise<{ id: string }> }) {
   // R6-SEC-02: no lookup for a non-admin (the admin layout redirects them): same answer either way.
@@ -24,5 +25,5 @@ export default async function Layout({ children, params }: { children: ReactNode
     }
   })();
   if (!(/^[\w-]{1,40}$/.test(key) && (await db.vendorApplication.findUnique({ where: { id: key }, select: { id: true } })))) notFound();
-  return children;
+  return <Suspense fallback={null}>{children}</Suspense>;
 }
