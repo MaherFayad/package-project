@@ -47,6 +47,9 @@ export default defineConfig({
     command: `npm run start -- -p ${PORT}`,
     url: `http://localhost:${PORT}/ar`,
     reuseExistingServer: true,
+    // Test-only marker: with the OTP dev echo it relaxes the PER-IP OTP limits for this local
+    // server (src/lib/env.ts otpIpLimits); per-phone limits still apply. Never set in a deployment.
+    env: { ELBA_E2E: "1" },
     timeout: 120_000,
   },
 });
