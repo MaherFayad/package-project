@@ -228,3 +228,15 @@ export function canViewOrder(
   if (order.buyerId === user.id) return true;
   return user.role === "VENDOR" && !!user.vendorId && user.vendorId === order.vendorId && order.paidAt !== null;
 }
+
+/**
+ * Buyer-side order pages (`/orders/:id`, its receipt, `/checkout/pay/:id`): the buyer and ADMIN
+ * only (security R5-SEC-01). Those pages show the buyer's full name, street address and phone,
+ * the price Elba charged (so Elba's margin over the vendor price) and the payment method. Vendor
+ * staff work from the vendor portal job page, which shows a first name and the city only ("Elba
+ * handles all buyer contact"); the production files (proof, dieline, print PDF) stay on
+ * `canViewOrder`. OWASP ASVS 4.0.3 V4.2.1, Top 10 A01:2021; PDPL 151/2020 purpose limitation.
+ */
+export function canViewBuyerOrder(order: { buyerId: string }, user: { id: string; role: Role }): boolean {
+  return user.role === "ADMIN" || order.buyerId === user.id;
+}

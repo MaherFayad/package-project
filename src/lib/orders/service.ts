@@ -37,7 +37,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { isReprint } from "@/components/admin/lib/metrics";
 import { generatePrintPdf } from "./pdf/print";
 import { putFile, getFile } from "./storage";
-import { assertTransition, canBuyerCancel, canViewOrder, canOpenDispute, canReview, isPaidStatus, type Actor } from "./state";
+import { assertTransition, canBuyerCancel, canViewBuyerOrder, canViewOrder, canOpenDispute, canReview, isPaidStatus, type Actor } from "./state";
 import { isQuoteValid, nextSequence, orderTotals } from "./totals";
 import { decidePaymentOutcome, storedGatewayRef } from "./payment-rules";
 import { preflightBlocks, proofPreflight, type ProofPreflight } from "./preflight";
@@ -446,7 +446,8 @@ export { canViewOrder };
 export async function getOrderForViewer(idOrNumber: string, user: SessionUser): Promise<OrderDetail | null> {
   if (!/^[\w-]{1,64}$/.test(idOrNumber)) return null;
   const order = await db.order.findFirst({ where: { OR: [{ id: idOrNumber }, { number: idOrNumber }] }, include: orderInclude });
-  if (!order || !canViewOrder(order, user)) return null;
+  // Buyer-side pages: never vendor staff (R5-SEC-01); they use the vendor portal job page.
+  if (!order || !canViewBuyerOrder(order, user)) return null;
   return order;
 }
 
