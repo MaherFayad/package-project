@@ -1,0 +1,186 @@
+import type { Locale } from "@/types";
+
+/**
+ * Copy for /[locale]/start (R6). Page-local so this landing can ship without touching the shared
+ * marketing dictionaries other sessions edit. Arabic first: MSA natural for Egypt, noun-form
+ * labels, no diacritics. Placeholders: {price}, {count}, {days}.
+ */
+const ar = {
+  metaTitle: "ابدأ تصميم علبتك مجانا",
+  metaDescription: "صمم علبتك على نموذج ثلاثي الأبعاد مجانا، واعرف سعرها فورا، واطبعها لدى مطبعة موثوقة في مصر.",
+  hero: {
+    word1: "ابدأ",
+    word2: "اليوم",
+    title: "ابدأ اليوم",
+    sub: "صمم علبتك مجانا اليوم، واطبعها هذا الأسبوع",
+    cta: "ابدأ التصميم مجانا",
+    heroAlt: "علبة شحن مطبوعة بتصميم نموذجي، معروضة من محرر علبة ثلاثي الأبعاد",
+    chipPrice: "من {price} للعلبة",
+    chipPriceNote: "سعر فوري لـ 500 علبة",
+    chipProof: "بروفة ثلاثية الأبعاد",
+    chipProofNote: "وملف PDF جاهز للطباعة",
+    pieceAlt: "نموذج تصميم: {name}",
+  },
+  choose: {
+    title: "اختر علبتك",
+    sub: "ابدأ من طراز جاهز بمقاسك، ثم غير الألوان والشعار والنصوص على النموذج مباشرة.",
+    previewAlt: "محرر علبة: نموذج علبة شحن ثلاثي الأبعاد مع لوحة الألوان والطبقات",
+    cta: "افتح المحرر",
+    live: "معاينة المحرر",
+    styleAlt: "طراز {name}",
+    count: "{count} نموذجا في المكتبة",
+  },
+  shine: {
+    title: "اجعل علبتك تلمع",
+    sub: "جرب الرقائق المعدنية والورنيش الموضعي والتغليف الناعم، وشاهد أثرها على النموذج قبل الطباعة.",
+    alt: "علبة صلبة بتشطيب رقائق ذهبية، معروضة في المحرر",
+    chip: "معاينة ثلاثية الأبعاد",
+    finishes: { foil: "رقائق ذهبية", spotUv: "ورنيش موضعي", emboss: "بصمة بارزة", softTouch: "ملمس ناعم", window: "نافذة شفافة" },
+    count: "{count} تشطيبا متاحا",
+  },
+  paid: {
+    title: "اعرف السعر، وادفع بطريقتك",
+    sub: "أسعار فورية من المطابع حتى 2000 علبة، مع ضريبة القيمة المضافة 14% موضحة في كل طلب.",
+    cardTitle: "ملخص الطلب",
+    item: "علبة شحن 250 × 180 × 80 مم",
+    qty: "الكمية",
+    unit: "سعر العلبة",
+    subtotal: "المجموع قبل الضريبة",
+    vat: "ضريبة القيمة المضافة 14%",
+    total: "الإجمالي",
+    delivery: "التسليم خلال {days} أيام عمل",
+    pay: "الدفع",
+    methods: "بطاقة · محفظة · فوري · إنستاباي",
+    status: "تأكيد المطبعة",
+    statusNote: "قبل تحصيل المبلغ",
+    noPrice: "تظهر الأسعار في المحرر حسب المقاس",
+    pieces: "{count} علبة",
+  },
+  fan: {
+    title: "علامات تجارية بانتظار علبتها",
+    sub: "تصميمات نموذجية لعلامات تجارية غير حقيقية، صنعناها بالمحرر لتعرض ما يمكن فعله.",
+    badge: "نموذج",
+    yours: "علامتك هنا",
+    yoursBody: "صمم علبتك الأولى مجانا، بلا حساب.",
+    yoursCta: "ابدأ التصميم",
+    listLabel: "تصميمات نموذجية",
+    brands: ["نور", "فطيرة", "لمسة", "خان", "نايل", "صبرة"],
+  },
+  bento: {
+    title: "ابدأ، ثم توسع",
+    share: { title: "رابط للمراجعة", body: "شارك التصميم مع فريقك أو عميلك ليراجعه على النموذج، دون حساب." },
+    export: { title: "ملف جاهز للطباعة", body: "حمل ملف PDF بخطوط القص والطي، بالمقاس الذي اخترته." },
+    sample: { title: "عينة أولا", body: "اطلب علبة واحدة للتجربة قبل الكمية الكاملة." },
+    reorder: { title: "إعادة الطلب بنقرة", body: "التصميم والمقاس والمطبعة محفوظة لطلبك التالي." },
+    statsTitle: "كل ما تحتاجه لعلبتك الأولى",
+    stats: { models: "نموذج علبة وعبوة", finishes: "تشطيب للطباعة", printers: "مطبعة موثوقة" },
+    linkLabel: "elba.eg/s/…",
+    pdfName: "dieline.pdf",
+    sampleQty: "1 علبة",
+    reorderCta: "إعادة الطلب",
+  },
+  closing: {
+    title: "جاهز لتصميم علبتك؟",
+    steps: ["صمم مجانا", "وافق على البروفة", "اطبع واستلم"],
+    label: "رقم الموبايل (اختياري)",
+    placeholder: "01xxxxxxxxx",
+    submit: "ابدأ التصميم مجانا",
+    error: "أدخل رقم موبايل مصريا صحيحا، مثل 01012345678",
+    fine: "نرسل رمز الدخول برسالة نصية فقط. يمكنك ترك الحقل فارغا والبدء دون حساب. نحفظ رقمك وفق سياسة الخصوصية.",
+  },
+};
+
+type Copy = typeof ar;
+
+const en: Copy = {
+  metaTitle: "Start designing your box free",
+  metaDescription: "Design your box on a live 3D model for free, see the price at once and print it with a vetted printer in Egypt.",
+  hero: {
+    word1: "start",
+    word2: "today",
+    title: "Start today",
+    sub: "Design your box free today, print it this week",
+    cta: "Start designing free",
+    heroAlt: "A printed mailer box with sample artwork, shown from the Elba 3D designer",
+    chipPrice: "From {price} a box",
+    chipPriceNote: "Instant price for 500",
+    chipProof: "3D proof",
+    chipProofNote: "plus a print-ready PDF",
+    pieceAlt: "Sample design: {name}",
+  },
+  choose: {
+    title: "Choose your box",
+    sub: "Start from a ready style in your size, then change colours, logo and text right on the 3D model.",
+    previewAlt: "The Elba designer: a 3D mailer box with the colour panel and layers",
+    cta: "Open the designer",
+    live: "Designer preview",
+    styleAlt: "{name} style",
+    count: "{count} models in the library",
+  },
+  shine: {
+    title: "Make your packaging shine",
+    sub: "Try foil, spot UV and soft-touch, and see what each does on the model before you print.",
+    alt: "A rigid box with a gold foil finish, shown in the designer",
+    chip: "3D preview",
+    finishes: { foil: "Gold foil", spotUv: "Spot UV", emboss: "Emboss", softTouch: "Soft touch", window: "Clear window" },
+    count: "{count} finishes available",
+  },
+  paid: {
+    title: "See the price, pay your way",
+    sub: "Instant prices from printers up to 2,000 boxes, with 14% VAT shown on every order.",
+    cardTitle: "Order summary",
+    item: "Mailer box 250 × 180 × 80 mm",
+    qty: "Quantity",
+    unit: "Per box",
+    subtotal: "Subtotal",
+    vat: "VAT 14%",
+    total: "Total",
+    delivery: "Delivered in {days} working days",
+    pay: "Payment",
+    methods: "Card · Wallet · Fawry · InstaPay",
+    status: "Printer confirms",
+    statusNote: "before you are charged",
+    noPrice: "Prices show in the designer for your size",
+    pieces: "{count} boxes",
+  },
+  fan: {
+    title: "Brands waiting for their box",
+    sub: "Sample designs for made-up brands, built in the designer to show what you can do.",
+    badge: "Sample",
+    yours: "Your brand here",
+    yoursBody: "Design your first box free, no account needed.",
+    yoursCta: "Start designing",
+    listLabel: "Sample designs",
+    brands: ["Nour", "Fatira", "Lamsa", "Khan", "Nile", "Sabra"],
+  },
+  bento: {
+    title: "Start, then grow",
+    share: { title: "A link for review", body: "Share the design with your team or client to review on the model, no account needed." },
+    export: { title: "Print-ready file", body: "Download a PDF with cut and fold lines, in the size you chose." },
+    sample: { title: "Sample first", body: "Order one box to test before the full run." },
+    reorder: { title: "Reorder in one tap", body: "Design, size and printer are saved for your next order." },
+    statsTitle: "Everything for your first box",
+    stats: { models: "box and pack models", finishes: "print finishes", printers: "vetted printers" },
+    linkLabel: "elba.eg/s/…",
+    pdfName: "dieline.pdf",
+    sampleQty: "1 box",
+    reorderCta: "Reorder",
+  },
+  closing: {
+    title: "Ready to design your box?",
+    steps: ["Design free", "Approve the proof", "Printed and delivered"],
+    label: "Mobile number (optional)",
+    placeholder: "01xxxxxxxxx",
+    submit: "Start designing free",
+    error: "Enter a valid Egyptian mobile number, like 01012345678",
+    fine: "We only text you a sign-in code. Leave it empty to start without an account. We keep your number under our privacy policy.",
+  },
+};
+
+export function startCopy(locale: Locale): Copy {
+  return locale === "ar" ? ar : en;
+}
+
+export function fill(s: string, vars: Record<string, string | number>): string {
+  return s.replace(/\{(\w+)\}/g, (_, k: string) => String(vars[k] ?? ""));
+}

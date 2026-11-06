@@ -16,7 +16,9 @@ import styles from "./marketing.module.css";
 export function MarketingHeader({ locale }: { locale: Locale }) {
   const t = getT(locale);
   const base = `/${locale}`;
-  const start = designHref(locale, { structure: "FEFCO_0427" });
+  // R6: visitors' "Start designing free" opens the /start landing; signed-in "New design" opens the designer.
+  const start = `${base}/start`;
+  const newDesign = designHref(locale, { structure: "FEFCO_0427" });
   const login = { href: `${base}/login`, label: t("marketing.nav.login") };
   const account = { href: `${base}/account`, label: t("marketing.nav.account") };
   const signOut = t("nav.signOut");
@@ -56,7 +58,7 @@ export function MarketingHeader({ locale }: { locale: Locale }) {
     },
     sheetActions: (
       <>
-        <StartLink href={start} label={t("marketing.nav.start")} signedInLabel={t("marketing.nav.newDesign")} className={`${styles.pill} ${styles.pillLarge}`} />
+        <StartLink href={start} signedInHref={newDesign} label={t("marketing.nav.start")} signedInLabel={t("marketing.nav.newDesign")} className={`${styles.pill} ${styles.pillLarge}`} />
         <AccountLink variant="sheet" login={login} account={account} signOutLabel={signOut} home={base} className={`${styles.pill} ${styles.pillOutline} ${styles.pillLarge}`} />
         <LangLink className={styles.langLink} />
       </>
@@ -67,7 +69,7 @@ export function MarketingHeader({ locale }: { locale: Locale }) {
     <HeaderNav model={model}>
       <LangLink className={`${styles.langLink} ${styles.langDesktop}`} />
       <AccountLink login={login} account={account} signOutLabel={signOut} home={base} className={`${styles.navLink} ${styles.loginLink}`} />
-      <StartLink href={start} label={t("marketing.nav.start")} signedInLabel={t("marketing.nav.newDesign")} className={`${styles.pill} ${styles.pillSmall} ${styles.headerCta}`} />
+      <StartLink href={start} signedInHref={newDesign} label={t("marketing.nav.start")} signedInLabel={t("marketing.nav.newDesign")} className={`${styles.pill} ${styles.pillSmall} ${styles.headerCta}`} />
     </HeaderNav>
   );
 }

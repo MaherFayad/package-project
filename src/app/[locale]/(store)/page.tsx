@@ -400,7 +400,7 @@ export default async function HomePage({ params }: Props) {
             </h2>
             <p className={styles.lead}>{t("marketing.cta.body")}</p>
             <div className={`${styles.actions} ${styles.center}`}>
-              <Link href={startHref} className={`${styles.pill} ${styles.pillLime} ${styles.pillLarge}`}>
+              <Link href={`${base}/start`} className={`${styles.pill} ${styles.pillLime} ${styles.pillLarge}`}>
                 {t("marketing.cta.primary")}
               </Link>
               <Link href={`${base}/vendors`} className={`${styles.pill} ${styles.pillGhostDark} ${styles.pillLarge}`}>
