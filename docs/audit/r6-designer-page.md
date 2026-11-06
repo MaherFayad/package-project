@@ -29,28 +29,53 @@ The captures stay out of git (Shopify assets). Only the measurements below are k
 
 | # | Shopify section (reference) | Elba section | Data source (real, no fabricated proof) | Component (page-local unless noted) | Status |
 |---|---|---|---|---|---|
-| 1 | Hero: navy-black canvas with a faint grid, floating editor UI pieces (layers panel, colour swatches, product tiles), a selected "Heading" frame around the headline, white pill + small print, glow | Hero: "Design your box in 3D, free" inside a selected text frame; floating pieces are our own editor UI (faces list, colour swatches, structure tiles, finish chip, price chip); the live 3D box | Prices from the pricing engine (`getPriceFrom`), model count from `MODELS` | `Hero.tsx` + `LiveBox.tsx` (poster first; three.js only after hover, tap or the "Turn in 3D" button; the kit's `HeroScene3D`) | built |
-| 2 | "Create a custom website with AI" + violet glow band with a typing prompt bar | "Describe your box" + violet glow band with a typing prompt bar. Submitting goes to the model picker with the words as a search (`/design?q=`); no AI claim | Picker search (`ModelBrowser` match) | `PromptBar.tsx` | built |
-| 3 | "Or start with a customizable template": wall of theme cards, drifting, "Using X theme" pills | "Or start from one of our box styles": wall of our renders, each card a link to `/[locale]/design?structure=CODE`, pill with the style name | `listStructures()` + renders in `public/marketing/renders` | `StyleWall.tsx` (pause button, WCAG 2.2.2) | built |
-| 4 | Light sheet "Make your mark, no code needed": bento, 4 cards with product UI | Light sheet "Make it yours, no design software needed": artwork upload and crop, brand colours, text on every face with Arabic shaping, flat dieline with bleed and safe zone | Designer features in `src/components/designer` | `Bento.tsx` + CSS mockups in `mockups.tsx` | built |
-| 5 | Light sheet "Get noticed with marketing and SEO tools": bento, 4 cards | "Share it, then print it": share links, print-ready PDF export, 3D views for your shop, order from the same design | Share route `/s/[id]`, export | `Bento.tsx` (second group) | built |
-| 6 | "Every site is business-ready from day one": 3 dark cards | "Ready to order from day one": vetted Egyptian printers, 14% VAT receipts, pay by card, wallet, Fawry or InstaPay | `listVendors()` count, `VAT_RATE`, `paymentConfig().methods` | `TrustTrio.tsx` | built |
-| 7 | "There's 13,000+ apps for that": app icon marquee + 9 linked categories | "N materials and finishes": a tile wall of boards and finishes (marquee with pause) + 9 linked groups into the catalogue | `MATERIAL_CODES`, `FINISH_CODES` names from the dictionary; real counts | `MaterialsWall.tsx` | built |
-| 8 | "Start building for free": 3-step carousel, arrows | "Start designing free": 3-step carousel (pick a style, add your artwork, order from a printer), arrow buttons, scroll-snap | — | `StartCarousel.tsx` | built |
-| 9 | "Frequently asked questions": 10+ rows | FAQ in MSA (10 questions) + FAQPage JSON-LD | — | kit `MarketingFaq` restyled page-locally | built |
+| 1 | Hero: navy-black canvas with a faint grid, floating editor UI pieces (layers panel, colour swatches, product tiles), a selected "Heading" frame around the headline, white pill + small print, glow | Hero: "Your brand on every face" inside a selected text frame; floating pieces are our own editor UI (faces list, colour swatches, R6 cutout tiles, finish chip, price chip); the live 3D box; sample-brand note | Unit price at 500 from the pricing engine (`getPriceFrom`, ex-VAT, labelled so) | `DesignerPage.tsx` + `LiveBox.tsx` (poster = LCP; R6 mailer loop in view once deployed; three.js only on "Turn in 3D", a press on the box, or mouse hover when there is no loop; kit `HeroScene3D`) | done |
+| 2 | "Create a custom website with AI" + violet glow band with a typing prompt bar | "Describe your box" + violet glow band with a typing prompt bar. Submitting goes to the model picker with the words as a search (`/design?q=`, GET form, works without JS); example chips; no AI claim | Picker search (`matchesQuery`) | `PromptBar.tsx` | done |
+| 3 | "Or start with a customizable template": wall of theme cards, drifting, "Using X theme" pills | "Or start from one of our box styles": wall of our renders, each card a link to `/[locale]/design?structure=CODE`, pill with the style name | `listStructures()` + renders in `public/marketing/renders` | `Rail.tsx` (drift, pause button, hover/focus pause, WCAG 2.2.2) | done |
+| 4 | Light sheet "Make your mark, no code needed": bento, 4 cards with product UI | Light sheet "Make it yours, no design software needed": artwork upload and crop, brand colours, text on every face with Arabic shaping, flat dieline with bleed and safe zone | Designer features in `src/components/designer` | `DesignerPage.tsx` + CSS mockups in `mockups.tsx` (the dieline is the real `dielineToSvg` output) | done |
+| 5 | Light sheet "Get noticed with marketing and SEO tools": bento, 4 cards | "Share it, then print it": share links, a 3D + PDF proof before printing (the print PDF is prepared by our team, the designer has no self-serve PDF), mockup download, order from the same design | Share route `/s/[id]`, mockup export, real bleed and safe-zone values | `mockups.tsx` | done |
+| 6 | "Every site is business-ready from day one": 3 dark cards | "Ready to order from day one": vetted Egyptian printers, 14% VAT receipts, pay by card, wallet, Fawry or InstaPay | `listVendors()` count, `VAT_RATE`, `paymentConfig().methods` | `DesignerPage.tsx` | done |
+| 7 | "There's 13,000+ apps for that": app icon marquee + 9 linked categories | "N materials and finishes": a tile wall of boards and finishes (marquee with pause) + 9 linked groups into the catalogue | `MATERIAL_CODES`, `FINISH_CODES` (minus NONE) names from the dictionary; real count | `Rail.tsx` + swatch tiles | done |
+| 8 | "Start building for free": 3-step carousel, arrows | "Start designing free": 3-step carousel (pick a style, add your artwork, order from a printer), arrow buttons, scroll-snap | — | `StartCarousel.tsx` (scroll-snap, RTL-aware arrows, no auto-advance) | done |
+| 9 | "Frequently asked questions": 10+ rows | FAQ in MSA (10 questions) + FAQPage JSON-LD | — | page-local `<details>` list (big white plus, `::details-content` height transition) | done |
 
-## 3. Page-local components (no kit forks)
+## 3. Components
 
-All under `src/components/marketing/designer-page/`: `copy.ts` (ar + en strings, kept out of the client dictionary), `designer-page.module.css`, `Hero.tsx`, `LiveBox.tsx` (client), `PromptBar.tsx` (client), `StyleWall.tsx` (client, pause), `Bento.tsx`, `mockups.tsx`, `TrustTrio.tsx`, `MaterialsWall.tsx` (client, pause), `StartCarousel.tsx` (client), `Faq` from the kit.
-Kit components used as-is: `HeroImage`, `HeroScene3D` (lazy), `MarketingFaq`, `JsonLd`, `faqJsonLd`, `RevealScope` (already in the shell).
+Page-local, under `src/components/marketing/designer-page/`: `copy.ts` (ar + en strings, kept out of the client dictionary), `designer-page.module.css`, `DesignerPage.tsx` (server, all nine sections), `LiveBox.tsx` (client: poster, loop, on-demand 3D, pause), `PromptBar.tsx` (client: GET search form with a typing placeholder), `Rail.tsx` (client: drifting strip with pause), `StartCarousel.tsx` (client), `mockups.tsx` (server: CSS product-UI drawings), `__tests__/copy.test.ts`.
+FOUNDATION kit used as-is: `Sheet`, `Display`, `Pill`, `IconPill`, tokens (`--mk-*`). ASSETS kit used as-is: `R6.cutouts`, `R6.loops.mailer` (when deployed), `SAMPLE_LABEL`. Older kit pieces used as-is: `HeroImage`, `HeroScene3D` (lazy), `JsonLd`, `faqJsonLd`, the shell's reveal observer.
 
 ## 4. Files outside scope (smallest additive change)
 
 | File | Change | Why |
 |---|---|---|
 | `src/app/sitemap.ts` | `/designer` entry | sitemap entry (asked) |
-| `src/components/designer/ModelPicker.tsx`, `ModelLinks.tsx`, `src/app/[locale]/design/(picker)/page.tsx` | optional `initialQuery` prop, fed from `?q=` | the prompt bar routes to the picker with a search |
+| `src/components/designer/ModelPicker.tsx`, `ModelLinks.tsx`, `src/app/[locale]/design/(picker)/page.tsx` | optional `initialQuery` prop, fed from `?q=` (trimmed, max 80 chars) | the prompt bar routes to the picker with a search |
+| `docs/audit/tools/perf-pages.mjs` | `designer-page` entry | measure the page |
 
-## 5. Checks
+## 5. Copy decisions (fact-checked against the product)
 
-Filled in at the end of the session (section 6).
+- No AI claim anywhere: the prompt bar is a keyword search over the model library, and the copy says "Searches all N models by name and use".
+- No self-serve print PDF: the designer says "The print-ready dieline PDF is prepared by our team when you order", so the card is "A proof before printing", and the FAQ says the same.
+- Prices are ex-VAT in the pricing engine, so the hero price chip says "Before 14% VAT"; the trust card says VAT shows on its own line, and company name + tax registration number can be added at checkout (`CompanyInvoice`).
+- Share links and mockup downloads need a free account (designer gate copy); the copy says so.
+- Uploads: PNG, JPG, WebP, SVG (`IMAGE_ACCEPT`).
+- Every render shows a fictional brand: `SAMPLE_LABEL` sits under the hero box and the style wall.
+- Arabic: MSA, noun-form labels, no diacritics or tatweel (unit test), number-agreement-safe phrasing ("المطابع النشطة اليوم" under the count rather than "N مطابع").
+
+## 6. Checks (final)
+
+| Check | Result |
+|---|---|
+| `npm run lint` (incl. direct UI-kit imports rule) | 0 errors, 0 warnings |
+| `npm run typecheck` | clean |
+| `npm test` | 108 files, 8,757 tests passed (5 new in `designer-page/__tests__/copy.test.ts`) |
+| `npm run build` | passes; `/[locale]/designer` SSG, revalidate 1h, 9.25 kB route JS, 117 kB first load (gz) |
+| `e2e/designer-page.spec.ts` (ar + en, desktop 1280 + phone 360) | 23 passed, 1 skipped by design (Turn in 3D on the emulated phone: software WebGL) |
+| e2e coverage | hydration with no console errors; no `window.__THREE__` and no canvas on first paint; CTA `href` and a style card click land in the editor; prompt bar → `/design?q=` with the search prefilled and results listed; reduced motion (loops and floats `animation: none`, every reveal visible, strip pause buttons gone, strips still keyboard-scrollable); pause button pauses the strip; Turn in 3D loads three.js; sitemap has both locales |
+| Existing specs touched by the picker change | `e2e/designer.spec.ts` + `e2e/smoke.spec.ts`: 20 passed, 4 skipped (pre-existing skips) |
+| axe (WCAG 2.0/2.1/2.2 A + AA tags), ar + en, desktop + phone, whole page scrolled | 0 violations |
+| Phone perf (`perf-pages.mjs`, 390x844 DPR 2, 4x CPU, Slow 4G) | ar: LCP 1.58 s, CLS 0.011, INP 104 ms · en: LCP 1.46 s, CLS 0.000, INP 168 ms. LCP element: the hero poster (AVIF 720w, preloaded) |
+| Desktop perf (1440x900) | ar: LCP 0.49 s, CLS 0.006 · en: LCP 0.39 s, CLS 0.000. The harness clicks "Turn in 3D", so its JS and TBT include the on-demand three.js boot; one desktop-ar INP sample (288 ms) is a click on the prompt field landing while that boot runs. First load ships no three.js |
+| Sitemap | `/ar/designer`, `/en/designer` (priority 0.9, hreflang alternates) |
+
+Open: the R6 turntable loops are declared in the ASSETS kit but their files were not pushed yet; the page plays the mailer loop automatically once `public/marketing/r6/loops/mailer-*.{webm,mp4}` exist (server-side check), with no code change.
