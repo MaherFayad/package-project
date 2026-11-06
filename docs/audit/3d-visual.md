@@ -5,6 +5,8 @@ This round changes **no source**. Every finding below carries a precise fix for 
 
 ## Method
 
+Re-verified on the merged base `36ab41f` (designer model picker): its 3D code (`src/components/three`, `src/lib/dieline`, `src/lib/vessels`, `src/lib/library`) is byte-identical to the audited snapshot, and spot-checks in the real designer `/en/design/<slug>` reproduce F02-01 (FEFCO 0226 not closed) and V-11 (square tin, round lid); see `designer-spotcheck.png`.
+
 | Step | Tool (all under `docs/audit/tools/`) | What it gives |
 |---|---|---|
 | Model list | `models-json.ts` | All **370** library models: 274 boxes (core 13, FEFCO 02 24, 03/05 32, 04 80, 06/07 33, 09 36, ECMA tuck 14, ECMA specials 20, food service 8, rigid + tubes 14) and 96 containers (core 10, bottles/jars/tubs 34, cosmetic/pharma/cans/tubes 37, flexible 15). |
@@ -47,7 +49,7 @@ No console errors or WebGL failures on any of the 370 models (harness log); 1 fr
 ### Top 20 fixes (in order)
 
 1. **F02-01** FEFCO_0226 closed state not closed + gusset z-fight → `fefco-02/styles.ts` gusset `foldAngleClosed ±180`, `stack −1/−2`.
-2. **F35-01** FEFCO_0322 tray + lid never assemble → `fefco-03-05/generators.ts` end-wall folds + lid `assembly.matrix`.
+2. **F35-01** FEFCO_0322 tray + lid fail to assemble at shallow sizes (default 300×220×80) → `fefco-03-05/generators.ts` end-wall folds + lid `assembly.matrix`.
 3. **V-11** Square tins get a round lid → lid built from `profile.section` (`cosmetic-cans/geometry.ts`, `vessels/closures.ts`).
 4. **V-12** Rectangular punnet / clamshell / ice tub get round lids → same section-driven lid + `TOP_SEAL_FILM`/`HINGED_LID`.
 5. **X-01** Pass container tint + closure style through `VesselOption` (green glass, cobalt, PET blue, coloured HDPE, ABS black, crown, ROPP, cork) → `library/vessels.ts`, `VesselView.tsx` L81–82, `vessels/materials.ts`.
@@ -125,7 +127,7 @@ Contact sheets: `fefco-03-05-01..04.jpg`. (0321 flat frame missing: harness clic
 
 | ID | Model | Sev | Finding | Real-world reference | Fix |
 |---|---|---|---|---|---|
-| F35-01 | FEFCO_0322 | **critical** | "Closed" shows the friction-lock tray and lid **not assembled**: lid floats above the tray, both double end walls stay open/unfolded, the tray is a three-sided U. Same at every view. | FEFCO 0322: tray + lid, each with rolled double end walls that friction-lock into the side walls. | `families/fefco-03-05/generators.ts` 0322: end-wall panels lack `foldAngleClosed` (or have `foldStage` beyond `maxStage`); lid `assembly.matrix` must translate the lid to `y = H − lidDepth` over the tray. Add a unit test `computePoses(d,1)` bbox ≈ outer dims. |
+| F35-01 | FEFCO_0322 | **critical** | "Closed" shows the friction-lock tray and lid **not assembled** at the model's default size (300 × 220 × 80): lid floats above the tray, both double end walls stay open/unfolded, the tray is a three-sided U. Re-checked in the real designer (`/en/design/fefco-0322-friction-lock-set`, merged base 36ab41f): it assembles at the "Shoe box" preset 330 × 210 × 120, so the failure is **size-dependent** (shallow H, likely the rolled end wall depth > H). | FEFCO 0322: tray + lid, each with rolled double end walls that friction-lock into the side walls. | `families/fefco-03-05/generators.ts` 0322: end-wall panels lack `foldAngleClosed` (or have `foldStage` beyond `maxStage`); lid `assembly.matrix` must translate the lid to `y = H − lidDepth` over the tray. Add a unit test `computePoses(d,1)` bbox ≈ outer dims. |
 | F35-02 | FEFCO_0350 | high | Octabin bottom flaps are **coplanar** (`bottomFlap1↔2`, `2↔3`, `5↔6`, `6↔7`, d = 0, ~35 000 mm² each): z-fighting on the visible underside. | FEFCO 0350 flap bottom: flaps overlap in sequence, each one caliper higher. | `generators.ts` octabin bottom: `stack` = −1, −2, −3 … per flap in fold order (B-flute t = 3 mm). |
 | F35-03 | FEFCO_0303, 0304, 0308, 0309, 0322, 0323, 0330, 0331 | medium | Closed outer exceeds inner + board by **20 mm** on one axis (e.g. 0303 W 240 vs 220): gusset / double-wall panels stand 10 mm proud of the walls instead of lying on them; 0303 shows the diagonal gusset creases on the outside face as raised folds. | Gussets folded outside add 2 t (3 mm on E-flute), not 20 mm. | Gusset panels: `foldAngleClosed 180` (lie flat) not 90; double wall `stack +1`. Test: outer ≤ inner + 4 t + 2. |
 | F35-04 | FEFCO_0321, 0325, 0504 | medium | Lid / cap joints interpenetrate the body by 0.5 mm (d = 1.0 on 1.5 mm board) over 3 000–9 000 mm²: thin flicker at the joint edge. | Joint glued on the inside: one caliper. | Joint `stack: -1` (full caliper). |
