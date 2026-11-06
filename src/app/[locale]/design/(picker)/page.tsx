@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getT, toLocale } from "@/i18n";
-import { BlockStack, Box, EmptyState, EmptyBoxIllustration, Text } from "@/components/ui";
+import { BlockStack, Box } from "@/components/ui/Stack";
+import { EmptyState, EmptyBoxIllustration } from "@/components/ui/EmptyState";
+import { Text } from "@/components/ui/Text";
 import { designerPath, structureFromParam } from "@/components/designer/lib/catalog";
 import { loadPickerStructures } from "@/components/designer/server";
 import { ResumeCard } from "@/components/designer/ResumeCard";
@@ -9,6 +11,7 @@ import { DesignStart } from "@/components/designer/DesignStart";
 import { ModelLinks } from "@/components/designer/ModelLinks";
 import { MODELS } from "@/lib/library";
 import Link from "next/link";
+import { preload } from "react-dom";
 import { CATALOGUE } from "@/data/catalogue";
 import { formatNumber } from "@/lib/format";
 import styles from "@/components/designer/designer.module.css";
@@ -34,6 +37,9 @@ export default async function DesignPickerPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const locale = toLocale((await params).locale);
+  // The start stage's poster is the phone LCP: request it from <head> at high priority, ahead of
+  // the page's ~25 script chunks (PERF R4-04; LCP 3.9 s without it after the R4-11 rework).
+  preload("/models/mailer-box.svg", { as: "image", fetchPriority: "high" });
   // Storefront deep links (designHref in src/components/store/catalog.ts):
   // ?structure=CODE&L=&W=&H=&material=&vendor= opens the editor; ?design=<id> opens a saved design.
   const sp = await searchParams;

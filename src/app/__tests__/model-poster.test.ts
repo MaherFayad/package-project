@@ -18,3 +18,13 @@ describe("modelPosterSrc", () => {
     expect(modelPosterSrc("../etc/passwd")).toBe("/models/../etc/passwd.svg");
   });
 });
+
+describe("inlinePublicImage", () => {
+  it("inlines a small model render as base64 and leaves other paths alone", async () => {
+    const { inlinePublicImage } = await import("@/app/model-poster");
+    expect(inlinePublicImage("/models/FEFCO_0427.webp").startsWith("data:image/webp;base64,")).toBe(true);
+    expect(inlinePublicImage("/models/FEFCO_0427.webp", 100)).toBe("/models/FEFCO_0427.webp");
+    expect(inlinePublicImage("/models/../secret.webp")).toBe("/models/../secret.webp");
+    expect(inlinePublicImage("/models/NO_SUCH.webp")).toBe("/models/NO_SUCH.webp");
+  });
+});

@@ -1,4 +1,4 @@
-import { SkeletonPage } from "@/components/ui";
+import { SkeletonPage } from "@/components/ui/Skeleton";
 
 /** Fills the first viewport so the footer never jumps when the 3D share view streams in (CLS, PERF-01). */
 export default function SharedLoading() {

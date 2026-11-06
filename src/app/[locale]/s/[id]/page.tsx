@@ -5,8 +5,16 @@ import { getSession } from "@/lib/auth/session";
 import type { DictKey } from "@/i18n/types";
 import { formatDims, formatMoney } from "@/lib/format";
 import { quoteDesign, tierPrices } from "@/lib/orders/service";
-import { Badge, BlockStack, Button, Card, EmptyState, EmptyBoxIllustration, InlineStack, Layout, LayoutSection, Page, Text } from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { BlockStack, InlineStack } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { EmptyState, EmptyBoxIllustration } from "@/components/ui/EmptyState";
+import { Layout, LayoutSection } from "@/components/ui/Layout";
+import { Page } from "@/components/ui/Page";
+import { Text } from "@/components/ui/Text";
 import { SharedViewerLazy } from "./SharedViewerLazy";
+import { inlinePublicImage } from "@/app/model-poster";
 import styles from "./share.module.css";
 import { designerPath } from "@/components/designer/lib/catalog";
 import { loadSharedDesign } from "@/components/designer/server";
@@ -110,7 +118,7 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
     <Page title={name} subtitle={t(isVessel ? "designer.shared.subtitleDesign" : "designer.shared.subtitle")} titleMetadata={<Badge tone="info">{styleName}</Badge>}>
       <Layout>
         <LayoutSection>
-          <SharedViewerLazy doc={doc} poster={`/models/${encodeURIComponent(modelCode)}.webp`} />
+          <SharedViewerLazy doc={doc} poster={inlinePublicImage(`/models/${encodeURIComponent(modelCode)}.webp`)} />
         </LayoutSection>
         <LayoutSection variant="oneThird" as="aside">
           <BlockStack gap="400">

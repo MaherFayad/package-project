@@ -564,53 +564,58 @@ Phone profile: 390x844, DPR 2, 4x CPU, Slow 4G (562.5 ms RTT, 1.47 Mbps). The br
 
 ## R4.1 Before / after, phone (LCP budget < 2.5 s)
 
+After = this branch **merged with main `aa2c78f`** (includes `dccbd36` and the designer's `a69acf0` / `283d8d0`), measured with `ISOLATE=1`.
+
 | Page | FCP ar (s) | LCP ar (s) | FCP en (s) | LCP en (s) | CLS ar | LCP element after (ar) | HTML+CSS KB ar | Fonts KB ar | JS KB ar | LCP < 2.5 s |
 |---|---|---|---|---|---|---|---|---|---|---|
-| home | 2.58 → **1.44** | 2.58 → **4.09** | 2.17 → **1.22** | 2.17 → **1.22** | 0.000 → 0.009 | `h1#hero-title.marketing_h1.m-enter-lcp size=30912` | 87 → **112** | 151 → **151** | 194 → **162** | **fail** |
-| boxes | 3.91 → **1.41** | 4.35 → **1.59** | 3.41 → **1.22** | 3.81 → **1.42** | 0.000 → 0.017 | `img [renders/fefco-0427.400w.webp] size=49000` | 111 → **130** | 151 → **151** | 214 → **211** | pass |
-| bottles | 2.76 → **1.22** | 2.76 → **1.90** | 1.63 → **1.08** | 2.51 → **1.89** | 0.000 → 0.006 | `img [renders/bottle.webp] size=45144` | 68 → **93** | 151 → **151** | 205 → **201** | pass |
-| catalog | 3.82 → **1.29** | 4.78 → **2.09** | 3.26 → **1.18** | 4.19 → **2.03** | 0.003 → 0.038 | `p.marketing_lead.m-enter size=29079` | 135 → **154** | 151 → **151** | 215 → **212** | pass |
-| vendors | 3.84 → **1.54** | 4.30 → **4.48** | 3.32 → **1.24** | 3.78 → **1.24** | 0.000 → 0.004 | `p.marketing_lead.m-enter-lcp size=26642` | 124 → **161** | 151 → **151** | 232 → **229** | **fail** |
-| design-picker | 3.88 → **1.84** | 12.85 → **1.88** | 3.60 → **1.36** | 12.02 → **1.39** | 0.001 → 0.002 | `img.designer_startPoster [models/mailer-box.svg] size=51614` | 150 → **210** | 167 → **167** | 579 → **580** | pass |
-| designer-box | 3.71 → **1.04** | 11.23 → **1.69** | 3.23 → **1.04** | 10.53 → **1.43** | 0.000 → 0.000 | `img.designer_stagePoster [2000/svg%22 width=%22480%22 height=%22360%22` | 119 → **134** | 167 → **167** | 652 → **649** | pass |
-| designer-bottle | 3.74 → **1.07** | 11.35 → **1.60** | 3.28 → **1.01** | 10.74 → **1.51** | 0.000 → 0.000 | `img.designer_stagePoster [2000/svg%22 width=%22480%22 height=%22360%22` | 119 → **136** | 203 → **203** | 652 → **648** | pass |
-| designer-pouch | 3.86 → **1.03** | 11.34 → **1.66** | 3.80 → **1.00** | 10.64 → **1.41** | 0.000 → 0.000 | `img.designer_stagePoster [2000/svg%22 width=%22480%22 height=%22360%22` | 119 → **134** | 203 → **203** | 652 → **648** | pass |
-| designer-fefco09 | 3.77 → **1.06** | 11.32 → **1.70** | 3.26 → **1.02** | 10.65 → **1.48** | 0.000 → 0.000 | `img.designer_stagePoster [2000/svg%22 width=%22480%22 height=%22360%22` | 119 → **134** | 151 → **151** | 668 → **664** | pass |
-| share | 3.76 → **1.18** | 4.14 → **2.36** | 3.17 → **1.08** | 3.57 → **2.06** | 0.000 → 0.001 | `img.share_viewerPoster [2000/svg%22 width=%22480%22 height=%22360%22 v` | 120 → **174** | 151 → **151** | 609 → **610** | pass |
-| checkout | 3.33 → **1.06** | 4.56 → **1.49** | 3.19 → **0.98** | 4.02 → **1.94** | 0.000 → 0.018 | `p#sample-help.Text_Text.Text_bodySm size=18792` | 111 → **118** | 151 → **151** | 225 → **222** | pass |
-| order-tracking | 3.89 → **1.34** | 4.67 → **1.34** | 3.24 → **1.18** | 4.10 → **2.12** | 0.000 → 0.037 | `p size=15276` | 118 → **169** | 151 → **151** | 221 → **218** | pass |
-| vendor-portal | 2.90 → **1.09** | 3.27 → **1.98** | 3.15 → **0.97** | 3.52 → **1.66** | 0.001 → 0.001 | `p.Text_Text.Text_bodyMd size=13818` | 142 → **146** | 151 → **151** | 226 → **223** | pass |
-| vendor-jobs | 3.23 → **1.16** | 3.59 → **2.19** | 3.16 → **0.98** | 3.49 → **0.98** | 0.013 → 0.013 | `null size=4872` | 137 → **140** | 151 → **151** | 230 → **227** | pass |
-| admin | 2.94 → **1.28** | 3.42 → **1.28** | 2.82 → **1.12** | 3.20 → **1.12** | 0.000 → 0.000 | `span.charts_TaskText size=4572` | 143 → **152** | 151 → **151** | 212 → **209** | pass |
-| admin-orders | 3.19 → **1.26** | 3.30 → **1.26** | 2.78 → **1.20** | 2.88 → **1.20** | 0.000 → 0.001 | `null size=4460` | 133 → **142** | 151 → **151** | 233 → **230** | pass |
+| home | 2.58 → **1.44** | 2.58 → **1.44** | 2.17 → **1.16** | 2.17 → **1.16** | 0.000 → 0.010 | `h1#hero-title.marketing_h1.m-enter-lcp size=29348` | 87 → **113** | 151 → **151** | 194 → **196** | pass |
+| boxes | 3.91 → **1.30** | 4.35 → **1.56** | 3.41 → **1.08** | 3.81 → **4.24** | 0.000 → 0.014 | `img [renders/fefco-0427.400w.webp] size=54600` | 111 → **108** | 151 → **151** | 214 → **218** | **fail** |
+| bottles | 2.76 → **1.14** | 2.76 → **1.91** | 1.63 → **1.03** | 2.51 → **1.84** | 0.000 → 0.005 | `img [renders/bottle.webp] size=49324` | 68 → **93** | 151 → **151** | 205 → **206** | pass |
+| catalog | 3.82 → **1.34** | 4.78 → **2.08** | 3.26 → **1.09** | 4.19 → **1.94** | 0.003 → 0.022 | `p.marketing_lead.m-enter size=29079` | 135 → **138** | 151 → **151** | 215 → **217** | pass |
+| vendors | 3.84 → **1.31** | 4.30 → **1.31** | 3.32 → **1.18** | 3.78 → **1.18** | 0.000 → 0.004 | `p.marketing_lead.m-enter-lcp size=26026` | 124 → **135** | 151 → **151** | 232 → **234** | pass |
+| design-picker | 3.88 → **1.14** | 12.85 → **2.70** | 3.60 → **1.09** | 12.02 → **2.63** | 0.001 → 0.001 | `img.designer_startPoster [models/mailer-box.svg] size=51352` | 150 → **175** | 167 → **167** | 579 → **623** | **fail** |
+| designer-box | 3.71 → **1.02** | 11.23 → **1.75** | 3.23 → **1.05** | 10.53 → **1.50** | 0.000 → 0.002 | `img.designer_stagePoster [2000/svg%22 width=%22480%22 height=%22360%22` | 119 → **137** | 167 → **167** | 652 → **662** | pass |
+| designer-bottle | 3.74 → **1.06** | 11.35 → **1.75** | 3.28 → **1.00** | 10.74 → **1.56** | 0.000 → 0.002 | `img.designer_stagePoster [2000/svg%22 width=%22480%22 height=%22360%22` | 119 → **138** | 203 → **167** | 652 → **661** | pass |
+| designer-pouch | 3.86 → **1.01** | 11.34 → **1.74** | 3.80 → **0.99** | 10.64 → **1.50** | 0.000 → 0.002 | `img.designer_stagePoster [2000/svg%22 width=%22480%22 height=%22360%22` | 119 → **137** | 203 → **167** | 652 → **661** | pass |
+| designer-fefco09 | 3.77 → **1.05** | 11.32 → **1.71** | 3.26 → **0.98** | 10.65 → **1.50** | 0.000 → 0.002 | `img.designer_stagePoster [2000/svg%22 width=%22480%22 height=%22360%22` | 119 → **137** | 151 → **151** | 668 → **677** | pass |
+| share | 3.76 → **1.17** | 4.14 → **2.38** | 3.17 → **1.03** | 3.57 → **1.91** | 0.000 → 0.001 | `img.share_viewerPoster [webp;base64,UklGRvQwAABXRUJQVlA4WAoAAAAQAAAA3w` | 120 → **168** | 151 → **151** | 609 → **631** | pass |
+| checkout | 3.33 → **1.05** | 4.56 → **2.00** | 3.19 → **0.95** | 4.02 → **1.88** | 0.000 → 0.019 | `p.CookieNotice_text size=20325` | 111 → **120** | 151 → **151** | 225 → **229** | pass |
+| order-tracking | 3.89 → **1.35** | 4.67 → **2.16** | 3.24 → **1.13** | 4.10 → **2.15** | 0.000 → 0.019 | `p.CookieNotice_text size=20325` | 118 → **173** | 151 → **151** | 221 → **226** | pass |
+| vendor-portal | 2.90 → **1.03** | 3.27 → **2.38** | 3.15 → **0.94** | 3.52 → **1.77** | 0.001 → 0.000 | `p.Text_Text.Text_bodyMd size=13590` | 142 → **149** | 151 → **151** | 226 → **227** | pass |
+| vendor-jobs | 3.23 → **1.07** | 3.59 → **1.07** | 3.16 → **0.97** | 3.49 → **1.85** | 0.013 → 0.014 | `null size=4440` | 137 → **142** | 151 → **151** | 230 → **231** | pass |
+| admin | 2.94 → **1.12** | 3.42 → **2.41** | 2.82 → **0.98** | 3.20 → **1.96** | 0.000 → 0.000 | `span.charts_TaskText size=4935` | 143 → **157** | 151 → **151** | 212 → **214** | pass |
+| admin-orders | 3.19 → **1.12** | 3.30 → **1.12** | 2.78 → **1.11** | 2.88 → **1.11** | 0.000 → 0.001 | `null size=4460` | 133 → **145** | 151 → **151** | 233 → **235** | pass |
 
 Columns: FCP and LCP in seconds; "HTML+CSS KB" and the other byte columns are bytes on the wire for phone ar (KB). JS transferred includes lazy chunks that load during the run (the editor and share pages load the 3D renderer after first paint by design).
 
-**Repeat runs for the two "fail" cells.** Both are the same intermittent effect (R4-10 below): the Arabic hero text is reported a second time, about 2.4 % larger, when IBM Plex Sans Arabic swaps in. Across repeated runs on this build: ar home **1.42 to 1.56 s in 11 of 12 runs** (one 4.09 s), ar vendors **1.40 to 1.54 s in 10 of 13 runs** (three 4.48 to 4.63 s). p75 is 1.49 s on both, so they pass the Core Web Vitals reading (75th percentile), but not every single run. See R4-10 for the fix options.
+**Repeat runs.** Three effects are intermittent, so single cells can differ from run to run:
+- ar home / ar vendors (R4-10, Plex Arabic swap re-report): 1.31 to 1.56 s in most runs, 4.1 to 4.6 s in about 1 run in 4 before the merge; both passed in the final run (1.44 s / 1.31 s). p75 1.49 s.
+- `/boxes` (R4-05): 1.43 to 1.59 s in 9 of 10 runs since the preload; the final run's en cell is the one 4.24 s outlier (same image, it arrived late).
+- `/design` picker (R4-15): 2.59 to 2.76 s in every run after the merge, **over budget**: see R4-15.
 
-**Every other route passes in every run: phone LCP 1.28 to 2.36 s (ar) and 0.98 to 2.12 s (en), FCP 0.97 to 1.84 s (was 2.6 to 3.9 s).**
+**Every other route passes in every run: phone LCP 1.07 to 2.41 s (ar) and 1.11 to 2.15 s (en); FCP 0.94 to 1.44 s on every route (was 2.6 to 3.9 s).**
 
 ## R4.2 Before / after, desktop (1440x900, no throttling)
 
 | Page | LCP ar (s) | LCP en (s) |
 |---|---|---|
-| home | 0.37 → **0.45** | 0.25 → **0.36** |
-| boxes | 0.33 → **0.40** | 0.28 → **0.37** |
-| bottles | 0.30 → **0.42** | 0.34 → **0.37** |
-| catalog | 0.29 → **0.36** | 0.19 → **0.34** |
-| vendors | 0.34 → **0.63** | 0.29 → **0.58** |
-| design-picker | 0.44 → **0.51** | 0.43 → **0.40** |
-| designer-box | 0.69 → **0.65** | 0.72 → **0.64** |
-| designer-bottle | 0.62 → **0.71** | 0.64 → **0.22** |
-| designer-pouch | 0.58 → **0.80** | 0.59 → **0.67** |
-| designer-fefco09 | 0.78 → **0.61** | 0.62 → **0.64** |
-| share | 0.70 → **0.91** | 0.65 → **0.94** |
-| checkout | 0.26 → **0.50** | 0.55 → **0.28** |
-| order-tracking | 0.34 → **0.36** | 0.52 → **0.50** |
-| vendor-portal | 0.30 → **0.56** | 0.51 → **0.55** |
-| vendor-jobs | 0.23 → **0.28** | 0.20 → **0.22** |
-| admin | 0.24 → **0.61** | 0.52 → **0.53** |
-| admin-orders | 0.22 → **0.28** | 0.61 → **0.25** |
+| home | 0.37 → **0.35** | 0.25 → **0.34** |
+| boxes | 0.33 → **0.32** | 0.28 → **0.30** |
+| bottles | 0.30 → **0.38** | 0.34 → **0.39** |
+| catalog | 0.29 → **0.32** | 0.19 → **0.27** |
+| vendors | 0.34 → **0.29** | 0.29 → **0.27** |
+| design-picker | 0.44 → **0.59** | 0.43 → **0.53** |
+| designer-box | 0.69 → **0.62** | 0.72 → **0.64** |
+| designer-bottle | 0.62 → **0.56** | 0.64 → **0.56** |
+| designer-pouch | 0.58 → **0.23** | 0.59 → **0.58** |
+| designer-fefco09 | 0.78 → **0.53** | 0.62 → **0.58** |
+| share | 0.70 → **0.30** | 0.65 → **0.48** |
+| checkout | 0.26 → **0.26** | 0.55 → **0.26** |
+| order-tracking | 0.34 → **0.39** | 0.52 → **0.50** |
+| vendor-portal | 0.30 → **0.22** | 0.51 → **0.28** |
+| vendor-jobs | 0.23 → **0.28** | 0.20 → **0.21** |
+| admin | 0.24 → **0.51** | 0.52 → **0.54** |
+| admin-orders | 0.22 → **0.34** | 0.61 → **0.24** |
 
 Desktop stays far inside budget (0.22 to 0.94 s). It is 0.05 to 0.3 s slower than before on most routes: the HTML is larger (inline CSS, R4-08) and the after-run uses `ISOLATE=1` (a cold browser per page). Not worth trading back phone seconds for.
 
@@ -618,14 +623,16 @@ Desktop stays far inside budget (0.22 to 0.94 s). It is 0.05 to 0.3 s slower tha
 
 | Route | Before | After | three.js core in first load |
 |---|---|---|---|
-| `/design/[structure]` (editor) | 366 KB | **271 KB** | yes → **no** (only the lazy renderer chunks: `b536a0f1` 79 KB, `e49654ac` 52 KB, plus `bd904a5c` 100 KB that the renderer imports) |
-| `/design` (picker) | 152 KB | 153 KB | no → no |
-| `/s/[id]` (share) | 138 KB | 138 KB | no → no |
+| `/design/[structure]` (editor) | 366 KB | **273 KB** (after merging main) | yes → **no** (only the lazy renderer chunks: `b536a0f1` 79 KB, `e49654ac` 52 KB, plus `bd904a5c` 100 KB that the renderer imports) |
+| `/design` (picker) | 152 KB | **133 KB** (R4-16) | no → no |
+| `/s/[id]` (share) | 138 KB | **121 KB** (R4-16) | no → no |
 | `/checkout/[designId]` | 155 KB | 155 KB | no → no |
 | `/catalog`, `/boxes`, `/` | 117 / 107 / 114 KB | same | no → no |
 | `/dev/3d`, `/dev/finishes` (internal) | 539 / 272 KB | 543 / 276 KB | yes → yes (they are the 3D test benches) |
 
 three.js core is now in the first load of **no product route**. The remaining 271 KB on the editor is React/Next (100 KB shared), the dieline engine (40 KB, now three-free), the editor UI and the generated 370-model slug index; family packs stay lazy (PERF-04).
+
+**Inline CSS vs linked CSS, re-checked on the merged code.** Variant B (`inlineCss` off, default merged CSS chunking, 7 files per route) measured worse on every route: phone FCP 2.00 to 2.57 s, LCP 2.12 to 3.74 s, against 1.0 to 1.5 s / 1.1 to 2.7 s with inline CSS. Inline stays.
 
 ## R4.4 Lighthouse 12 mobile (simulated Slow 4G + 4x CPU)
 
@@ -673,7 +680,14 @@ Severity before fixing. IDs R4-01… are new this round.
 | R4-13 | low | `docs/audit/tools/perf-3d.mjs` | The 50-switch leak test waits for `[data-testid="model-picker"]`, which the current picker no longer renders. | – | Update the selector to the catalogue picker (left for the 3d-engine owner, who changed the picker). | open |
 | R4-14 | low | `docs/audit/tools/perf-pages.mjs` | The harness logged in all three roles on every run and died on the OTP limits (1 per 30 s, 5 per hour per phone); pages after a heavy WebGL page measured 2 to 3 s late FCP (shared GPU process teardown). | – | Waits and retries on `RATE_LIMITED`, logs in only the roles the selected pages need, `ISOLATE=1` launches a fresh browser per page. | fixed |
 
-Counts (new this round, before fixing): **critical 3, high 4, medium 4, low 3**. Fixed 10; open 4 (R4-08 accepted trade-off with follow-ups for other owners, R4-09 platform, R4-10 decision below, R4-12 designer/3D) plus R4-13 (tool).
+| R4-15 | high | `/design` picker after merging main (`(picker)/layout.tsx`, `DesignStart.tsx`) | LCP regressed to **3.9 s** on the merged code: the designer's R4-01 fix wraps the page in `<Suspense>`, so the start stage streams after the shell, and the poster `<img>` lost its `fetchPriority`. The poster is byte 794 K of an 1 MB document (151 KB gzip before it): the page segment's own RSC payload (the 370-model browser's props) and the shell's CSS copy come first. | LCP < 2.5 s | Head preload + `fetchPriority="high"` on the poster, and R4-16 (less CSS): **2.59 to 2.76 s**. Still over. Fix for the designer: render the start stage (poster + headline) above the Suspense boundary, or stream `ModelLinks` (370 cards) in its own later boundary / load it client-side, so the hero's HTML is flushed before the card data. | open (owner: designer) |
+| R4-16 | high | `/boxes`, `/catalog`, `/vendors`, share, picker: `components/skeletons/ListSkeleton.tsx`, `s/[id]/{page,loading}.tsx`, `SharedViewer.tsx`, `(picker)/{page,error}.tsx`, `DesignStart.tsx`, `ResumeCard.tsx`, `ModelPicker.tsx`, `CataloguePicker.tsx` | Importing the `@/components/ui` barrel pulled every UI-kit stylesheet (Frame, IndexTable, CheckoutShell, Form, Modal…) into these routes; with inline CSS that is ~70 to 90 KB raw in `<head>` and again in the RSC payload. | – | Direct imports (`@/components/ui/Button` etc.), done with a codemod driven by the barrel's export map. Inline CSS: `/boxes`, `/catalog` **196 → 124 KB** raw, share **195 → 163 KB**, picker **232 → 198 KB**; first-load JS share **139 → 121 KB**, picker **153 → 133 KB**. | fixed |
+| R4-17 | medium | share after merging main | Main's share page uses the 12.5 KB `.webp` render as the poster (was the 1 KB SVG): one more round trip after the streamed segment, LCP **2.7 to 3.3 s**. | LCP < 2.5 s | `inlinePublicImage()` (`src/app/model-poster.ts`): renders ≤ 16 KB under `/models/` become a base64 `data:` URL. **1.91 to 2.38 s**. | fixed |
+| R4-18 | high | editor after merging main (`DesignerApp.tsx`) | Main's `DesignerApp` imports `defaultMaxDpr` from `components/three/hooks` again, which put three.js core back in the editor's first-load JS. | PERF-03 | Merge keeps the import from the three-free `components/three/dpr.ts`. Editor 273 KB, no three. | fixed |
+
+Counts (new this round, before fixing): **critical 3, high 7, medium 5, low 3** (18). Fixed 13. Open 6: R4-08 (accepted trade-off; follow-ups for platform/designer), R4-09 (platform), R4-10 (marketing: metric-matched fallback, per the integrator), R4-12 (designer: improved, not closed), R4-15 (designer), R4-13 (tool).
+
+R4-12 re-measured after merging the designer's `a69acf0` / `283d8d0` (one bounded turn, poster until Play on phones): `/design` phone TBT **7.1–8.5 s → 6.1–6.5 s**, INP **776–800 ms → 192 ms (ar) / 528 ms (en)**. Better, still over the 200 ms INP / 200 ms TBT budgets on this profile (SwiftShader makes every WebGL frame a long task, so a real phone GPU will do better); the remaining main-thread work before the first tap is the 370-card `ModelLinks` hydration and the preview's boot.
 
 Round 1 to 3 rows re-verified in the browser this round: PERF-03 (now fixed for the editor too, R4-03), PERF-05 (fonts: still 151 KB on `/ar`, 84 KB on `/en`; preloads now per locale), PERF-10 (renderer preload kept, now low priority), PERF-17 (strict chunking kept; its request count is moot with R4-01), PERF-02 (home hero poster stays mounted: LCP is the h1 at 1.42 to 1.56 s, R4-10 aside).
 
@@ -710,4 +724,4 @@ UPDATE_GEOMETRY_SNAPSHOT=1 npx vitest run src/lib/dieline/__tests__/geometry-sna
 
 ## R4.10 Verification
 
-`npm run lint` clean, `npm run typecheck` clean, `npm test` **8,301 passed** (81 files, incl. the new geometry snapshot, math parity, font-preload and model-poster tests), `npm run build` clean, Playwright `designer.spec.ts`, `smoke.spec.ts`, `storefront.spec.ts` **28 / 28 passed** (`--workers=2`, desktop + mobile); `models.spec.ts` (740 cases, ~2 h) was stopped after 124 cases, all passed.
+`npm run lint` clean, `npm run typecheck` clean, `npm test` **8,426 passed** (88 files, after merging main; incl. the new geometry snapshot, math parity, font-preload and model-poster tests), `npm run build` clean, Playwright `designer.spec.ts`, `smoke.spec.ts`, `storefront.spec.ts` **28 / 28 passed** (`--workers=2`, desktop + mobile); `models.spec.ts` (740 cases, ~2 h) was stopped after 124 cases, all passed.

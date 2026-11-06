@@ -1,7 +1,7 @@
 "use client";
 
 import { useI18n } from "@/i18n/client";
-import { SkeletonBodyText, SkeletonDisplayText } from "@/components/ui";
+import { SkeletonBodyText, SkeletonDisplayText } from "@/components/ui/Skeleton";
 import styles from "./ListSkeleton.module.css";
 
 /**

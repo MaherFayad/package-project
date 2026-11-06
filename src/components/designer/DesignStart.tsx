@@ -7,7 +7,8 @@ import { ArrowRight, Footprints, Pause, Pizza, Play, Shirt, SprayCan } from "luc
 import type { Locale } from "@/types";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n/types";
-import { Button, Icon } from "@/components/ui";
+import { Button } from "@/components/ui/Button";
+import { Icon } from "@/components/ui/Icon";
 import { PRODUCT_PRESETS, designerPathLite, type ProductPresetKey } from "./lib/paths";
 import styles from "./designer.module.css";
 
@@ -131,7 +132,7 @@ export function DesignStart({ locale }: { locale: Locale }) {
             phone instead of about 2 s).
           */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={`/models/${POSTER[active]}.svg`} alt="" className={styles.startPoster} data-hidden={mounted && viewerReady ? "true" : undefined} />
+          <img src={`/models/${POSTER[active]}.svg`} alt="" className={styles.startPoster} fetchPriority="high" data-hidden={mounted && viewerReady ? "true" : undefined} />
           <div className={styles.startToggle}>
             <Button
               size="slim"
