@@ -32,18 +32,27 @@ export const models: VesselModelDef[] = VESSEL_KINDS.map((kind) => {
     fillable: d.fillable,
     defaultLiquid: d.defaultLiquid,
     pricing: pricingOf(kind),
-    describe(dims, surfaces, presetId) {
+    describe(rawDims, surfaces, presetId) {
+      const dims = clampDims(kind, rawDims);
       let neck = d.presets.find((p) => p.id === presetId)?.neck ?? d.neck;
       // custom dims narrower than the neck: take the largest neck of this kind's presets that is
+<<<<<<< HEAD
       // no wider than the body (a TO 63 lug lid overhung a 40 mm jar, R5-3Q-F-18)
       // R5-3Q-F-21: bottles keep the neck under ~72 % of the body (a 24 mm cap on a 30 mm Boston
       // round read as a jar); jars, tins and cans only switch when the lid would overhang
       const k = d.family === "BOTTLE" ? 0.72 : 1;
       if (neck && !flat && neck.outerDiameterMm > dims.D * k) {
         const fits = d.presets.map((p) => p.neck).filter((n): n is NonNullable<typeof n> => !!n && n.thread === neck!.thread && n.outerDiameterMm <= dims.D * k);
+=======
+      // no wider than the body (a TO 63 lug lid overhung a 40 mm jar, R5-3Q-F-18); a can end is
+      // seamed 1.2 mm a side outside its nominal size (R6-3Q-F-02: a 202 end on a 50 mm can)
+      const span = (n: NonNullable<typeof neck>) => n.outerDiameterMm + (n.thread === "seam" ? 2.4 : 0);
+      if (neck && !flat && span(neck) > dims.D) {
+        const fits = d.presets.map((p) => p.neck).filter((n): n is NonNullable<typeof n> => !!n && n.thread === neck!.thread && span(n) <= dims.D + 0.5);
+>>>>>>> origin/claude/exciting-albattani-8kzgsu-r6-3dqa
         neck = fits.sort((a, b) => b.outerDiameterMm - a.outerDiameterMm)[0] ?? neck;
       }
-      const r = describeVessel({ kind, dims: clampDims(kind, dims), neck, surfaces: surfaces.filter(isSurface) });
+      const r = describeVessel({ kind, dims, neck, surfaces: surfaces.filter(isSurface) });
       return { profile: r.profile, areas: r.labels.map(labelArea), envelope: r.envelope };
     },
   } satisfies VesselModelDef;
