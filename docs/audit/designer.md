@@ -689,3 +689,39 @@ Files touched outside scope: none new (the share page, and the scopes file regen
 | low | 2 (R14-03, R14-04) | 1 | 1 (R14-04, library owner) |
 
 Verification (round 14, on the merged a7d341f3): lint and typecheck clean; unit tests **8,951 passed**; build OK; e2e (designer, smoke, journey, checkout, storefront, catalogue; `--workers=2 --trace off`, `OTP_DEV_ECHO=1 ALLOW_MOCK_PAYMENTS=1`) **61 passed, 9 skipped, 0 failed**; "designer pages hydrate without errors" with `--repeat-each=16` **32 / 32 passed**.
+
+# Round 15 (re-walk of R12–R14 areas, on main 60049bdd)
+
+Scope, as asked: only the areas changed in R12 to R14, plus one keyboard-only editor journey in ar on a phone.
+- share page price lines for boxes and containers;
+- short landscape with and without the banner;
+- closure picker labels;
+- size inputs with units.
+
+| angle | result |
+|---|---|
+| Share page price line, box + bottle, ar + en | Box: "500 boxes … each" / «500 علبة … للعلبة». Bottle: "500 pieces … each" / «500 قطعة … للقطعة». Axe 0, no sideways scroll |
+| Short landscape, 667×375 / 740×360 / 844×390 / 915×412, with and without the banner | Canvas 130–182 px (no banner) and 325–372 px (banner); panel 256–348 px; no overflow (R14-02 holds) |
+| Closure picker labels (glass water bottle, sports bottle, pouch; ar + en) | Unique: «الغطاء» / "Closure" select, «الغطاء في المعاينة» / "Closure in the preview" toggle, «لون الغطاء» / "Closure colour" fieldset |
+| Size inputs with units, ar + en, 390 + 1440 | Pastes «٣٣٠ مم», "340مم", «٣٥٠ ملم», "360 م.م", «٢٥٠٫٥ مم», "330 mm", "350 MM" and "250,5 mm" all apply; "12abc" shows the error. **"33 cm" / «٣٣ سم» was refused with "Enter a number"** → R15-04 |
+| Keyboard-only journey, ar, 390 × 844 (117 Tab stops): start page → model → size → tabs → add text → face editor → More → Share → Escape | Every stop has a visible focus ring, with no page errors. The face editor's arrows and "+" move and resize the layer and announce the position. **Controls hidden under the sticky tabs**: R15-01. **Focus lost after Escape**: R15-02. **Same-name controls**: R15-03 |
+
+## Findings (round 15)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R15-01 | medium | phone panel, sheet down (`designer.module.css` `.panelInner`) | Tab scrolled "Change model" and the colour swatches **fully under the sticky tab bar** (0 % of the control visible). | WCAG 2.4.11 (AA) | `scroll-padding-block` on the panel's scroller keeps a focused control below the sticky tabs. | fixed: no control fully hidden (only large tab panels are partly under the bar) |
+| R15-02 | medium | phone toolbar "More" menu (`DesignerApp.tsx`) | A dialog opened from the menu (Share, Export, Save, Rename) returned focus on close to its menu item, which the menu had removed: focus fell to `<body>`. | WCAG 2.4.3 | Each menu action moves focus to the "More" button first, so the dialog returns there. | fixed: Escape → focus on «إجراءات أخرى» (`r15-kb-share-dialog-ar-390.png`) |
+| R15-03 | low | editor names (`designer.ar.ts`, `DesignerApp.tsx`) | In Arabic, the face picker and the "Face" view button were both «الوجه» (English: "Panel" / "Face"). The undo / redo group was named "Undo", like its first button. | WCAG 2.4.6 | The picker is «الجزء». The group is "Undo and redo" / «التراجع والإعادة». | fixed. "Turntable" (button + checkbox) and "View" (group + fieldset) control the same setting in two places, so they keep their names (WCAG 3.2.4) |
+| R15-04 | low | size fields (`designer/lib/mm.ts`) | A size typed in centimetres ("33 cm", «٣٣ سم») was refused with "Enter a number", which does not say what was wrong. | WCAG 3.3.3 | Read as mm × 10 ("33 cm" → 330); the field then shows 330. Out of range ("330 cm" = 3,300 mm) shows the range error. Unit test. | fixed |
+
+## Counts (round 15, new findings before fixing)
+
+| severity | found | fixed | open |
+|---|---|---|---|
+| critical | 0 | 0 | 0 |
+| high | 0 | 0 | 0 |
+| medium | 2 (R15-01, R15-02) | 2 | 0 |
+| low | 2 (R15-03, R15-04) | 2 | 0 |
+
+R14-04 (bottle card "PP28") went to the 3D QA session.
