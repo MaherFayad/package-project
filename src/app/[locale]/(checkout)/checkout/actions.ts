@@ -154,6 +154,20 @@ export async function placeOrderAction(input: unknown): Promise<{ ok: true; orde
   }
 }
 
+/**
+ * R8-01: is this order still waiting for payment? The pay page asks on mount, when the browser
+ * restores it from history (Back after paying) and after a refused attempt, so a paid order is
+ * never offered for payment again. `SIGNED_OUT` lets the page offer sign-in instead of an error.
+ */
+export async function orderPayStateAction(orderId: string): Promise<{ ok: true; due: boolean } | { ok: false; error: "SIGNED_OUT" | "NOT_FOUND" }> {
+  const s = await getSession();
+  if (!s) return { ok: false, error: "SIGNED_OUT" };
+  if (!/^[\w-]{1,64}$/.test(orderId)) return { ok: false, error: "NOT_FOUND" };
+  const o = await db.order.findUnique({ where: { id: orderId }, select: { buyerId: true, status: true } });
+  if (!o || o.buyerId !== s.user.id) return { ok: false, error: "NOT_FOUND" };
+  return { ok: true, due: o.status === "PENDING_PAYMENT" };
+}
+
 export async function startPaymentAction(input: { orderId: string; method: PaymentMethod; locale: Locale }): Promise<{ ok: true; payment: PaymentView } | ActionError> {
   const s = await getSession();
   if (!s) return { ok: false, error: "FORBIDDEN" };

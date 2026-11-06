@@ -2,7 +2,7 @@
 
 import { Copy } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { flushSync } from "react-dom";
 import type { Locale, PaymentMethod, QuoteLine } from "@/types";
 import { useI18n } from "@/i18n/client";
@@ -27,7 +27,7 @@ import {
   TextField,
   useToast,
 } from "@/components/ui";
-import { cancelOrderAction, instapaySentAction, startPaymentAction } from "../actions";
+import { cancelOrderAction, instapaySentAction, orderPayStateAction, startPaymentAction } from "../actions";
 import styles from "./checkout.module.css";
 
 async function mockGateway(body: Record<string, string>): Promise<{ status?: "PAID" | "FAILED"; error?: string }> {
@@ -82,13 +82,54 @@ export function PaymentClient(props: {
   };
 
   const done = () => router.push(`/${locale}/orders/${orderId}?paid=1`);
+  const [signedOut, setSignedOut] = useState(false);
+
+  /**
+   * R8-01 / R8-02: true when this order can still be paid. A paid (or cancelled) order leaves the
+   * pay page for its order page with a notice; a lost session shows "sign in again" instead of
+   * "Something went wrong". Called on mount, on history restore and after any refused attempt.
+   */
+  const stillDue = useCallback(async (): Promise<boolean> => {
+    const r = await orderPayStateAction(orderId);
+    if (!r.ok && r.error === "SIGNED_OUT") {
+      setBusy(false);
+      setSignedOut(true);
+      return false;
+    }
+    if (r.ok && !r.due) {
+      toast.show(t("buyer.payState.alreadyDone"));
+      router.replace(`/${locale}/orders/${orderId}`);
+      return false;
+    }
+    return true;
+  }, [orderId, locale, router, toast, t]);
+
+  useEffect(() => {
+    void stillDue();
+    // Back/forward cache: the page comes back without a request, so ask again.
+    const onShow = (e: PageTransitionEvent) => {
+      if (e.persisted) void stillDue();
+    };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void stillDue();
+    };
+    window.addEventListener("pageshow", onShow);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.removeEventListener("pageshow", onShow);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [stillDue]);
 
   const start = async () => {
     setBusy(true);
     setError(null);
     const r = await startPaymentAction({ orderId, method, locale });
     setBusy(false);
-    if (!r.ok) return setError(errText(r.error));
+    if (!r.ok) {
+      if (!(await stillDue())) return;
+      return setError(errText(r.error));
+    }
     if (r.payment.redirectUrl) {
       window.location.assign(r.payment.redirectUrl);
       return;
@@ -106,6 +147,14 @@ export function PaymentClient(props: {
     setError(null);
     const r = await mockGateway({ paymentId: payment.paymentId, action, ...extra });
     if (r.status === "PAID") return done();
+    // The attempt was closed elsewhere (another tab or method paid, the order was cancelled) or the
+    // session ended: never report that as a declined card (R8-01, R8-02).
+    if (r.error === "NOT_PENDING" || r.error === "UNAUTHENTICATED") {
+      if (!(await stillDue())) return;
+      setBusy(false);
+      setPayment(null);
+      return setError(t("buyer.payState.attemptClosed"));
+    }
     if (r.status !== "FAILED") setBusy(false);
     if (r.error === "INVALID_CARD") return setCardErr(t("payment.card.invalid"));
     if (r.error === "INVALID_WALLET") return setError(t("checkout.address.invalidPhone"));
@@ -351,7 +400,17 @@ export function PaymentClient(props: {
               <Card>
                 <BlockStack gap="400">
                   {props.testMode ? <Banner tone="warning">{t("payment.testMode")}</Banner> : null}
-                  {error ? (
+                  {signedOut ? (
+                    <Banner
+                      tone="warning"
+                      title={t("buyer.payState.signedOutTitle")}
+                      action={{ content: t("buyer.payState.signIn"), url: `/${locale}/login?next=${encodeURIComponent(`/${locale}/checkout/pay/${orderId}`)}` }}
+                      announce
+                    >
+                      {t("buyer.payState.signedOutBody")}
+                    </Banner>
+                  ) : null}
+                  {error && !signedOut ? (
                     <Banner tone="critical" announce>
                       {error}
                     </Banner>

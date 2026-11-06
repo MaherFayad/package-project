@@ -244,7 +244,9 @@ export function CheckoutClient(props: {
     setQuoteErr(t(key) === key ? t("checkout.errors.generic") : t(key));
   };
 
-  const goTo = (s: Step) => {
+  // R8-05: each step is a history entry, so the browser's Back and Forward move between steps
+  // (on phones Back used to leave checkout from step 2 or 3 and drop the typed address).
+  const showStep = (s: Step) => {
     setStep(s);
     requestAnimationFrame(() => {
       const h = headingRefs[s].current;
@@ -252,6 +254,28 @@ export function CheckoutClient(props: {
       h?.scrollIntoView({ block: "start", behavior: scrollBehavior() });
     });
   };
+  const goTo = (s: Step) => {
+    if (typeof window !== "undefined") {
+      if (s > step) window.history.pushState({ ...window.history.state, checkoutStep: s }, "");
+      else if (s < step && window.history.state?.checkoutStep === step) {
+        // The in-page Back (and an error that sends the buyer to an earlier step) goes through
+        // history too, so the browser's Forward still works and no stale entries pile up.
+        window.history.go(s - step);
+        return;
+      }
+    }
+    showStep(s);
+  };
+  useEffect(() => {
+    const onPop = (e: PopStateEvent) => {
+      const target = (e.state?.checkoutStep ?? 0) as Step;
+      showStep(target);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+    // showStep only reads refs and setters.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const validateCompany = (): boolean => {
     if (!wantCompany) return true;

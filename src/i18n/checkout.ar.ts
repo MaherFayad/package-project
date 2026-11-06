@@ -529,6 +529,13 @@ export const checkoutAr: Pick<Dictionary, "checkout" | "payment" | "orders" | "s
       receiptBody: "أعدنا {amount} إلى {method} في {date}.",
       receiptBodyNote: "أعدنا {amount} إلى {method} في {date}. يلغي إشعار الدائن {note} هذا الإيصال.",
     },
+    payState: {
+      alreadyDone: "هذا الطلب مدفوع أو مغلق بالفعل.",
+      attemptClosed: "أغلقت محاولة الدفع هذه ولم يخصم أي مبلغ منها. اختر طريقة الدفع للمحاولة مرة أخرى.",
+      signedOutTitle: "انتهت جلستك",
+      signedOutBody: "سجل الدخول مرة أخرى لإكمال الدفع. طلبك وسعره محفوظان، ولم يخصم أي مبلغ.",
+      signIn: "تسجيل الدخول",
+    },
     qtyRange: "من {min} إلى {max}",
     qty: {
       invalid: "أدخل عددا صحيحا من العلب. فوق {max:box} نحسب السعر يدويا.",

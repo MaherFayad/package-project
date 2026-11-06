@@ -381,3 +381,50 @@ Also checked and fine: awaiting payment shows "Pay now" and a "Due" line, with t
 
 - **Vendor / admin:** the same rule for their own screens is theirs to decide. Staff and printers still see full notes, by design.
 - **Admin "Send price"** (R4-B-03 admin half): still not on main.
+
+## Round 8
+
+Base: this branch at `9c8bab9` (round 7), fresh DB, `next start`. Fresh pass on the angles the integrator listed:
+- two tabs paying the same order;
+- session expiry during payment;
+- browser Back, Forward and refresh at each step;
+- disputes and reprints from the buyer side;
+- the sample and its credit, and the proof approve or edit loop;
+- an address change mid-checkout;
+- the PDPL export and deletion flow.
+
+### Findings (new this round)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R8-01 | high | pay page (`PaymentClient.tsx`, `actions.ts`) | A paid order was still offered for payment, and the buyer was told the wrong thing. (a) Back from the success page showed the method list with "Amount due now EGP 14,250.00" and Continue, because the router cache restores the old pay page. (b) In a second tab with an open Fawry code, after the first tab paid by card, "pay at outlet" said "Your card was declined. Try another card or another method." The server had correctly voided that attempt (`NOT_PENDING`), but the client read every non-success as a decline. Both push the buyer towards paying twice. The server already prevents a double capture on the same attempt and records a late second payment for refund. | Consumer Protection Law 181/2018 (no double charge); ISO 9241-110 (self-descriptiveness); WCAG 3.3.1 | New `orderPayStateAction()` (buyer-only, cheap). The pay page asks it on mount (covers a router-cache Back), on a bfcache `pageshow`, when the tab becomes visible, and after any refused attempt. A paid or closed order moves to its order page with the notice "This order is already paid or closed." `NOT_PENDING` no longer reads as a decline: if the order is still due, the buyer sees "This payment attempt was closed. Nothing was charged on it." e2e: Back after paying lands on the order; the Fawry tab moves to the order with no "declined"; exactly one PAID payment. | fixed |
+| R8-02 | medium | pay page | When the session expired on the card form, Pay showed "Something went wrong. Try again." There was no way forward, and retrying kept failing. | WCAG 3.3.1 / 3.3.3 | Shows "Your session has ended. Sign in again to finish paying. Your order and its price are kept, and nothing was charged." with "Sign in" → `/login?next=/checkout/pay/<id>` (ar: «انتهت جلستك»). e2e asserts the message and the return link. | fixed |
+| R8-03 | medium | `account/export/route.ts` | The PDPL data export left out personal data the buyer gave: price requests (note, needed-by date, governorate), problem reports (description), and their payments. | Egypt PDPL 151/2020, right of access | The export adds `priceRequests`, `problemReports` and `payments` (method, status, amount; no card data, Elba never has it). The storefront's `buildDataExport()` is untouched; the route extends its result. Verified in the browser: a 5,000-box request with "two batches", GIZA and 2026-12-01 is in the file. | fixed |
+| R8-04 | medium | returns policy vs. "Report a problem" | The policy said "choose Report a problem and add photos", but the form has no photo upload. Its own help text says the team asks for photos on WhatsApp. | Consumer Protection Law 181/2018 (stated terms must match the service) | The policy text now matches what happens: "describe what went wrong. Our team then asks you on WhatsApp for photos…" (en/ar). A real photo upload needs a Dispute photos column and an admin view (open). | fixed (copy) |
+| R8-05 | medium | checkout steps (`CheckoutClient.tsx`) | The steps were client state only. The browser or phone Back button on Delivery or Proof left checkout altogether (to the designer or share page) and dropped the typed address. Forward did nothing. | ISO 9241-110 (controllability); Polaris checkout (each step navigable) | Each step pushes a history entry, keeping Next's own state. `popstate` shows the step. The in-page Back and an error that returns to an earlier step use `history.go()`, so entries never pile up. Verified: step 3 → Back → step 2 with "Dokki" still typed → Forward → step 3 → Back ×2 → step 1 → Back leaves checkout. e2e (mobile). | fixed |
+
+Counts (round 8, new findings before fixing): **critical 0, high 1, medium 4, low 0** (5 total). All fixed and re-checked in the browser. The stop rule is not met (R8-01 is high). The re-check after the fixes found nothing new: journey walk ar 390 and en 1440 had axe 0 and 0 px overflow, and all the scenarios above pass.
+
+Checked and fine this round:
+- Two tabs paying by card on the same attempt: the second tab lands on the paid order, with one PAID payment.
+- Refresh on the card form keeps the attempt.
+- A governorate change mid-checkout re-prices, with a status message.
+- The proof's "Edit design" returns to the designer. A new proof is made on the next approval; there is no reject flow by design.
+- The sample credit path is covered by the round 3 e2e.
+- Deletion requests are logged once (a repeat returns the open one) for team review within 30 days.
+- The review form and "Report a problem" (minimum 10 characters, one open report at a time) work.
+
+### Verification (round 8)
+
+- `npm run lint` and `npm run typecheck` are clean. `npm test` passed 8,508 tests. `next build` is OK with no warnings.
+- e2e (`--workers=2 --trace off`, fresh DB) gave 62 passed and 20 skipped by the specs themselves. One first run of the new pay-state test failed under parallel load: it clicked a visually-hidden radio input with `force` before the CSS settled. I changed the test to check the radio by its accessible name; nothing was weakened. It then passed three runs in a row with `checkout.spec.ts`, and the full set passed.
+
+### Open (round 8)
+
+- **Photos in "Report a problem"**: needs a `Dispute` photos field, buyer uploads with the image-magic check, and an admin view (checkout + admin + schema).
+- **Refresh in the middle of checkout** returns to step 1, and a typed address is re-filled only from the last order or the account. Keeping a draft in `sessionStorage` was not done (address data in browser storage needs a PDPL decision).
+- **Admin "Send price"**: now owned by `session_01ErLBscDBcwAe9g1EhxnAzG`; not on main yet.
+
+### Files touched outside scope (round 8)
+
+- `src/i18n/en.ts`, `src/i18n/ar.ts`: the returns policy "How to report a problem" body (R8-04).

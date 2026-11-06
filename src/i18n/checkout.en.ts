@@ -527,6 +527,13 @@ export const checkoutEn = {
       receiptBody: "{amount} went back to your {method} on {date}.",
       receiptBodyNote: "{amount} went back to your {method} on {date}. Credit note {note} cancels this receipt.",
     },
+    payState: {
+      alreadyDone: "This order is already paid or closed.",
+      attemptClosed: "This payment attempt was closed. Nothing was charged on it. Choose a method to try again.",
+      signedOutTitle: "Your session has ended",
+      signedOutBody: "Sign in again to finish paying. Your order and its price are kept, and nothing was charged.",
+      signIn: "Sign in",
+    },
     qtyRange: "{min} to {max}",
     qty: {
       invalid: "Enter a whole number of boxes. Above {max:box} we price by hand.",
