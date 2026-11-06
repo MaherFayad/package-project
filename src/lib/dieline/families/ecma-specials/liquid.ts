@@ -2,7 +2,7 @@ import type { Dims, StructureFeatures } from "@/types";
 import { DielineBuilder, insetSeg, rectEdges } from "../../builder";
 import { clamp, pt } from "../../geometry";
 import type { Polygon } from "../../types";
-import { IDENTITY, blockFace, deg, tube4, type Walls } from "./kit";
+import { IDENTITY, blockFace, deg, rect, tube4, withDeepParts, type Walls } from "./kit";
 import type { EcmaDraft } from "./types";
 
 /**
@@ -92,17 +92,40 @@ export function asepticBrick(dims: Dims, t: number, f: StructureFeatures = {}): 
   const w = tube4(b, Lp, Wp, Hp, LS_STRIP_MM);
   const fin = clamp(Wp * 0.12, 4, 8);
   // Top: back flap (with the seal fin overlap) under the front flap.
-  b.attach("top_back", "flap", "back", rectEdges(w.back).top, Wp / 2 + fin, { kind: "rect" }, { stage: 1, stack: -1, label: "Top seal flap" });
-  b.attach("top", "top", "front", rectEdges(w.front).top, Wp / 2 + fin, { kind: "rect" }, { stage: 2, label: "Top seal flap" });
+  // Front flap one caliper above the back flap it overlaps (both show from above, both printed).
+  b.attach("top_back", "flap", "back", rectEdges(w.back).top, Wp / 2 + fin, { kind: "rect" }, { stage: 1, label: "Top seal flap" });
+  b.attach("top", "top", "front", rectEdges(w.front).top, Wp / 2 + fin, { kind: "rect" }, { stage: 2, stack: 1, label: "Top seal flap" });
   b.attach("bottom_back", "flap", "back", rectEdges(w.back).bottom, Wp / 2 + fin, { kind: "rect" }, { stage: 1, stack: -1, label: "Bottom seal flap" });
   b.attach("bottom", "bottom", "front", rectEdges(w.front).bottom, Wp / 2 + fin, { kind: "rect" }, { stage: 2, label: "Bottom seal flap" });
+  // Top ears: the sealed top flattens into a triangular ear at each side that is folded down
+  // flat onto the side panel, printed side out. Each ear is two halves, one on the side edge
+  // of each top seal flap (front half on the front flap, back half on the back flap), meeting
+  // on the centre line. Bottom ears fold under the base.
+  const topBack = rect(w.back.x, w.back.y - (Wp / 2 + fin), Lp, Wp / 2 + fin);
+  const topFront = rect(w.front.x, w.front.y - (Wp / 2 + fin), Lp, Wp / 2 + fin);
+  const half = Wp / 2;
+  const ear = (id: string, flap: string, r: typeof topFront, side: "left" | "right", stack: number) => {
+    // Flap rect: its hinge (front/back wall top) is the bottom edge, the centre line `half` above.
+    const x = side === "left" ? r.x : r.x + r.width;
+    const corner = pt(x, r.y + r.height);
+    const centre = pt(x, r.y + r.height - half);
+    const out = side === "left" ? -1 : 1;
+    const apex = pt(x + out * half, r.y + r.height - half);
+    b.attachPoly(id, "ear", flap, [corner, centre], [corner, centre, apex], { fold: 90, stage: 3, stack, label: "Top ear" });
+  };
   for (const side of ["left", "right"] as const) {
+    // One caliper out from the side panel they lie on.
+    ear(`ear_top_${side}`, "top", topFront, side, 1);
+    ear(`ear_topBack_${side}`, "top_back", topBack, side === "left" ? "right" : "left", 1);
     const r = w[side];
-    const topEar: Polygon = [pt(r.x, r.y), pt(r.x + r.width, r.y), pt(r.x + r.width / 2, r.y - Wp / 2)];
     const botEar: Polygon = [pt(r.x, r.y + r.height), pt(r.x + r.width, r.y + r.height), pt(r.x + r.width / 2, r.y + r.height + Wp / 2)];
-    // Top ears fold outward and down flat onto the side panel; bottom ears fold under the base.
-    b.attachPoly(`ear_top_${side}`, "ear", side, rectEdges(r).top, topEar, { fold: -180, pivotDepth: 0, stage: 3, label: "Top ear" });
     b.attachPoly(`ear_bottom_${side}`, "ear", side, rectEdges(r).bottom, botEar, { fold: 90, stage: 3, stack: 1, label: "Bottom ear" });
   }
-  return { builder: b, closedRotation: IDENTITY, faceDepthTol: t + 0.2 };
+  return {
+    builder: b,
+    closedRotation: IDENTITY,
+    faceDepthTol: t + 0.2,
+    // From above both seal flaps show (the front one overlaps the back one by the fin): print both.
+    faces: (panels, computed) => withDeepParts(computed, { panels, rootId: b.rootId, thicknessMm: t, closedRotation: IDENTITY }, "top", ["top", "top_back"], 2 * t + 0.2),
+  };
 }
