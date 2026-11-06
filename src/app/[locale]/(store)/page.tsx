@@ -1,48 +1,35 @@
 import type { Metadata } from "next";
+import fs from "node:fs";
+import path from "node:path";
 import Link from "next/link";
 import { Suspense, type CSSProperties } from "react";
 import { ArrowUp, Sparkles } from "lucide-react";
 import { getT, pick, toLocale } from "@/i18n";
-import type { DictKey } from "@/i18n";
 import { formatMoney } from "@/lib/format";
 import { siteUrl } from "@/lib/env";
 import { MODEL_INDEX } from "@/lib/library/model-index.generated";
 import { MODEL_GROUPS } from "@/lib/library/types";
 import { FINISH_CODES, type StructureCode } from "@/types";
 import { designHref, structureHref } from "@/components/store/catalog";
-import {
-  getPriceFrom,
-  listStructures,
-  listVendors,
-} from "@/components/store/data";
+import { getPriceFrom, listStructures, listVendors } from "@/components/store/data";
 import { DeniedBanner } from "@/components/marketing/DeniedBanner";
 import { startHref as kitStartHref } from "@/components/marketing/MarketingHeader";
+import { TILE_BG, renderSrc, srcSetFor, vesselSrc, type VesselRender } from "@/components/marketing/assets";
 import { Sheet } from "@/components/marketing/kit/Sheet";
 import { Container } from "@/components/marketing/kit/Container";
 import { Display } from "@/components/marketing/kit/Display";
 import { Pill, PillRow } from "@/components/marketing/kit/Pill";
 import { Reveal } from "@/components/marketing/kit/Reveal";
-import { HeroImage } from "@/components/marketing/HeroImage";
-import {
-  SAMPLES,
-  TILE_BG,
-  renderDims,
-  renderSrc,
-  srcSetFor,
-  vesselSrc,
-  type VesselRender,
-} from "@/components/marketing/assets";
-import { HomeHero } from "@/components/marketing/home/HomeHero";
-import { Loop } from "@/components/marketing/home/Loop";
-import { CountUp } from "@/components/marketing/home/CountUp";
-import { HomeSteps } from "@/components/marketing/home/HomeSteps";
+import { Marquee } from "@/components/marketing/kit/Marquee";
+import { Orbit } from "@/components/marketing/kit/Orbit";
+import { Stat } from "@/components/marketing/kit/CountUp";
+import { Steps } from "@/components/marketing/kit/Steps";
+import { MotionScope } from "@/components/marketing/kit/MotionScope";
+import { R6, R6_MODELS, SAMPLE_LABEL, type R6Image, type R6ModelId } from "@/components/marketing/kit/assets";
+import { HomeHero, type HeroVideo } from "@/components/marketing/home/HomeHero";
 import { EgyptDots } from "@/components/marketing/home/EgyptDots";
-import {
-  daysWord,
-  fill,
-  homeCopy,
-  printersWord,
-} from "@/components/marketing/home/copy";
+import { R6Pic } from "@/components/marketing/home/R6Pic";
+import { daysWord, fill, homeCopy, printersWord } from "@/components/marketing/home/copy";
 import s from "@/components/marketing/home/home.module.css";
 
 type Props = { params: Promise<{ locale: string }> };
@@ -56,10 +43,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: { absolute: `${t("meta.siteName")} · ${t("meta.tagline")}` },
     description: t("meta.description"),
-    alternates: {
-      canonical: `/${locale}`,
-      languages: { ar: "/ar", en: "/en" },
-    },
+    alternates: { canonical: `/${locale}`, languages: { ar: "/ar", en: "/en" } },
     openGraph: {
       title: t("meta.tagline"),
       description: t("meta.description"),
@@ -67,7 +51,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       siteName: t("meta.siteName"),
       locale: locale === "ar" ? "ar_EG" : "en_EG",
       type: "website",
-      images: ["/marketing/renders/fefco-0427.webp"],
+      images: ["/marketing/r6/hero/mailer-iso-dark@2x.webp"],
     },
   };
 }
@@ -77,58 +61,34 @@ const MODEL_COUNT = Object.keys(MODEL_INDEX).length;
 const GROUP_COUNT = MODEL_GROUPS.length;
 const FINISH_COUNT = FINISH_CODES.filter((f) => f !== "NONE").length;
 
-const RAIL: (
-  | { kind: "render"; code: StructureCode }
-  | { kind: "sample"; i: number }
-)[] = [
-  { kind: "render", code: "FEFCO_0427" },
-  { kind: "sample", i: 0 },
-  { kind: "render", code: "ECMA_RTE" },
-  { kind: "sample", i: 2 },
-  { kind: "render", code: "RIGID_BOX" },
-  { kind: "sample", i: 4 },
-  { kind: "render", code: "GABLE_BOX" },
-  { kind: "sample", i: 7 },
-  { kind: "render", code: "PIZZA" },
-  { kind: "sample", i: 10 },
-  { kind: "render", code: "PAPER_TUBE" },
-  { kind: "sample", i: 5 },
+/** The hero turntable loop, once the assets branch ships the files (poster first, 720p first). */
+function heroVideo(): HeroVideo | null {
+  const loop = R6.loops.mailer;
+  const has = loop.sources.every((x) => fs.existsSync(path.join(process.cwd(), "public", x.src)));
+  if (!has) return null;
+  const order = [...loop.sources].sort((a, b) => a.height - b.height);
+  return { sources: order.map((x) => ({ src: x.src, type: x.type })), poster: `${loop.poster.base}.webp` };
+}
+
+/** Rail: our studio renders, dark and light, mixed like the reference's storefront strip. */
+const RAIL: { id: R6ModelId; tone: "dark" | "light" }[] = [
+  { id: "mailer", tone: "dark" },
+  { id: "perfume", tone: "light" },
+  { id: "rigid-box", tone: "dark" },
+  { id: "pouch", tone: "light" },
+  { id: "drawer-box", tone: "dark" },
+  { id: "can", tone: "light" },
+  { id: "tuck-carton", tone: "dark" },
+  { id: "jar", tone: "light" },
+  { id: "cup", tone: "dark" },
+  { id: "tea-tin", tone: "light" },
 ];
 
-const WALL_SOURCES: { src: string; tone: string }[] = [
-  ...(
-    [
-      "FEFCO_0427",
-      "FEFCO_0201",
-      "ECMA_RTE",
-      "ECMA_STE",
-      "PIZZA",
-      "SLEEVE",
-      "FEFCO_0320",
-      "ECMA_CLB",
-      "ECMA_SLB",
-      "FEFCO_0422",
-      "GABLE_BOX",
-      "PAPER_TUBE",
-      "RIGID_BOX",
-    ] as StructureCode[]
-  ).map((c) => ({ src: renderSrc(c), tone: TILE_BG[c] })),
-  ...(["jar", "bottle", "dropper", "pump", "can"] as VesselRender[]).map(
-    (v, i) => ({
-      src: vesselSrc(v),
-      tone: ["#f6ecd2", "#e2efec", "#ece6f3", "#f3e3d9", "#dfe7f1"][i]!,
-    }),
-  ),
-];
-
-/** Icon-wall tiles use the smallest render variant (64 to 72 px slots): no srcset, light HTML. */
+/** Icon wall tiles: the smallest variant of our renders (64 to 72 px slots), no srcset. */
 const smallest = (src: string) => srcSetFor(src)?.split(" ")[0] ?? src;
-const WALL_ITEMS = WALL_SOURCES.map((w) => ({ ...w, small: smallest(w.src) }));
-
-const ANYONE: { code: StructureCode; sample: number }[] = [
-  { code: "FEFCO_0427", sample: 0 },
-  { code: "PIZZA", sample: 2 },
-  { code: "ECMA_RTE", sample: 3 },
+const WALL_ITEMS: { small: string; tone: string }[] = [
+  ...(["FEFCO_0427", "FEFCO_0201", "ECMA_RTE", "ECMA_STE", "PIZZA", "SLEEVE", "FEFCO_0320", "ECMA_CLB", "ECMA_SLB", "FEFCO_0422", "GABLE_BOX", "PAPER_TUBE", "RIGID_BOX"] as StructureCode[]).map((c) => ({ small: smallest(renderSrc(c)), tone: TILE_BG[c] })),
+  ...(["jar", "bottle", "dropper", "pump", "can"] as VesselRender[]).map((v, i) => ({ small: smallest(vesselSrc(v)), tone: ["#f6ecd2", "#e2efec", "#ece6f3", "#f3e3d9", "#dfe7f1"][i]! })),
 ];
 
 const FINISH_SPOTS: { t: string; s: string; dl: string }[] = [
@@ -142,59 +102,31 @@ const FINISH_SPOTS: { t: string; s: string; dl: string }[] = [
   { t: "44%", s: "2%", dl: "-3.5s" },
 ];
 
-const THUMBS: {
-  code?: StructureCode;
-  vessel?: VesselRender;
-  t: string;
-  s: string;
-  z: string;
-  dl: string;
-}[] = [
-  { code: "ECMA_STE", t: "4%", s: "6%", z: "64px", dl: "0s" },
-  { vessel: "jar", t: "0%", s: "62%", z: "72px", dl: "-2s" },
-  { code: "GABLE_BOX", t: "38%", s: "-2%", z: "56px", dl: "-4s" },
-  { vessel: "dropper", t: "70%", s: "4%", z: "60px", dl: "-1s" },
-  { code: "PAPER_TUBE", t: "78%", s: "70%", z: "64px", dl: "-3s" },
-  { vessel: "can", t: "30%", s: "84%", z: "56px", dl: "-5s" },
+const THUMBS: { id: R6ModelId; t: string; s: string; z: string; dl: string }[] = [
+  { id: "tuck-carton", t: "4%", s: "6%", z: "72px", dl: "0s" },
+  { id: "jar", t: "0%", s: "64%", z: "80px", dl: "-2s" },
+  { id: "drawer-box", t: "40%", s: "-2%", z: "64px", dl: "-4s" },
+  { id: "dropper", t: "72%", s: "4%", z: "68px", dl: "-1s" },
+  { id: "tube", t: "78%", s: "72%", z: "72px", dl: "-3s" },
+  { id: "can", t: "30%", s: "86%", z: "64px", dl: "-5s" },
 ];
 
-const ORBIT_ANGLES = [-90, -18, 54, 126, 198];
+const cut = (id: R6ModelId, view: "iso" | "front" = "iso"): R6Image => R6.cutouts[`${id}-${view}`]!;
+const studio = (id: R6ModelId, tone: "dark" | "light", view: "iso" | "front" = "iso"): R6Image => R6.hero[`${id}-${view}-${tone}`]!;
 
 export default async function HomePage({ params }: Props) {
   const locale = toLocale((await params).locale);
   const t = getT(locale);
   const c = homeCopy(locale);
   const base = `/${locale}`;
-  const [structures, vendors, mailer] = await Promise.all([
-    listStructures(),
-    listVendors(),
-    getPriceFrom("FEFCO_0427", { L: 250, W: 180, H: 80 }),
-  ]);
-  const row500 =
-    mailer.rows.find((r) => r.quantity === 500) ?? mailer.rows[0] ?? null;
-  const price = row500
-    ? formatMoney(row500.unitPiasters, locale, { alwaysDecimals: true })
-    : "—";
-  const subtotal = row500
-    ? formatMoney(row500.subtotalPiasters, locale, { alwaysDecimals: true })
-    : "—";
-  const vat = row500
-    ? formatMoney(Math.round(row500.subtotalPiasters * 0.14), locale, {
-        alwaysDecimals: true,
-      })
-    : "—";
-  const total = row500
-    ? formatMoney(
-        row500.subtotalPiasters + Math.round(row500.subtotalPiasters * 0.14),
-        locale,
-        { alwaysDecimals: true },
-      )
-    : "—";
+  const [structures, vendors, mailer] = await Promise.all([listStructures(), listVendors(), getPriceFrom("FEFCO_0427", { L: 250, W: 180, H: 80 })]);
+  const row500 = mailer.rows.find((r) => r.quantity === 500) ?? mailer.rows[0] ?? null;
+  const money = (p: number) => formatMoney(p, locale, { alwaysDecimals: true });
+  const vatOf = (p: number) => Math.round(p * 0.14);
+  const price = row500 ? money(row500.unitPiasters) : "—";
   const days = row500?.deliveryDays ?? null;
   const printers = vendors.length;
-  const minOrder = vendors.length
-    ? Math.min(...vendors.map((v) => v.minOrderQty))
-    : null;
+  const minOrder = vendors.length ? Math.min(...vendors.map((v) => v.minOrderQty)) : null;
   const vars = {
     price,
     days: days ?? "—",
@@ -208,45 +140,32 @@ export default async function HomePage({ params }: Props) {
   const startHref = kitStartHref(locale);
   const designerHref = designHref(locale, { structure: "FEFCO_0427" });
   const catalogHref = `${base}/catalog`;
-  const structureName = (code: StructureCode) => {
-    const x = structures.find((y) => y.code === code);
-    return x
-      ? pick(locale, x.name.ar, x.name.en)
-      : t(`structures.${code}` as DictKey);
+  /** Caption for a render: the catalogue name when it is a box style, else the model description. */
+  const modelCaption = (id: R6ModelId) => {
+    const st = structures.find((y) => y.code === R6_MODELS[id].code);
+    return st ? pick(locale, st.name.ar, st.name.en) : R6_MODELS[id][locale];
   };
-  const sampleName = (i: number) => {
-    const sm = SAMPLES[i]!;
-    return sm.structure
-      ? structureName(sm.structure)
-      : t(`marketing.bottles.items.${sm.vessel}` as DictKey);
-  };
-  const heroPoster = "/marketing/renders/fefco-0427.webp";
+  const sample = SAMPLE_LABEL[locale];
+  const ui = (k: string) => R6.ui[`${k}-${locale}`]!;
+  const pauseLabel = t("mk.motion.pause");
+  const playLabel = t("mk.motion.play");
 
   const stats = [
     { value: MODEL_COUNT, label: c.stats.items[0]!.label },
     { value: printers, label: fill(c.stats.items[1]!.label, vars) },
-    ...(days != null
-      ? [{ value: days, label: fill(c.stats.items[2]!.label, vars) }]
-      : []),
-    ...(minOrder != null
-      ? [{ value: minOrder, label: c.stats.items[3]!.label }]
-      : []),
+    ...(days != null ? [{ value: days, label: fill(c.stats.items[2]!.label, vars) }] : []),
+    ...(minOrder != null ? [{ value: minOrder, label: c.stats.items[3]!.label }] : []),
   ];
 
-  const railItems = RAIL.map((it) =>
-    it.kind === "render"
-      ? {
-          src: renderSrc(it.code),
-          kind: "render" as const,
-          name: structureName(it.code),
-          w: 500,
-        }
-      : {
-          src: SAMPLES[it.i]!.src,
-          kind: "sample" as const,
-          name: sampleName(it.i),
-          w: 300,
-        },
+  const stepMedia = (a: R6Image, b: R6Image) => (
+    <div className={s.stepPair}>
+      <div className={s.stepImg}>
+        <R6Pic a={a} sizes="(min-width: 1024px) 340px, 45vw" />
+      </div>
+      <div className={s.stepImg} data-fit="contain">
+        <R6Pic a={b} sizes="(min-width: 1024px) 340px, 45vw" />
+      </div>
+    </div>
   );
 
   return (
@@ -255,26 +174,13 @@ export default async function HomePage({ params }: Props) {
         <DeniedBanner message={t("store.deniedBanner")} />
       </Suspense>
 
-      {/* 1 ───────── Hero ───────── */}
+      {/* 1 ───────── Hero: full bleed, rotating headline over our turntable ───────── */}
       <HomeHero
         titles={c.hero.titles}
         lead={c.hero.lead}
-        labels={{
-          pause: c.hero.pause,
-          play: c.hero.play,
-          mediaAlt: c.hero.mediaAlt,
-        }}
-        video={null}
-        poster={
-          <HeroImage
-            src={heroPoster}
-            sizes="(min-width: 768px) 60vw, 92vw"
-            alt=""
-            className={s.heroPoster}
-            width={914}
-            height={608}
-          />
-        }
+        labels={{ pause: c.hero.pause, play: c.hero.play }}
+        video={heroVideo()}
+        media={<R6Pic a={studio("mailer", "dark")} sizes="(min-width: 768px) 50vw, 88vw" className={s.heroPoster} priority />}
         actions={
           <PillRow className={s.pills}>
             <Pill href={startHref} size="lg">
@@ -287,64 +193,33 @@ export default async function HomePage({ params }: Props) {
         }
       />
 
-      {/* 2 ───────── Statement + model rail (sheet over the hero) ───────── */}
-      <Sheet
-        tone="dark"
-        pad="none"
-        container={false}
-        className={s.statementSheet}
-        aria-labelledby="statement-title"
-      >
+      {/* 2 ───────── Statement + studio rail (sheet over the hero) ───────── */}
+      <Sheet tone="dark" pad="none" container={false} className={s.statementSheet} aria-labelledby="statement-title">
         <Container>
           <h2 id="statement-title" className={s.statement}>
             {c.statement.lead}
             <span className={s.statementRest}>{c.statement.rest}</span>
           </h2>
         </Container>
-        <Loop
-          className={s.railWrap}
-          labels={c.rail}
-          foot={<p className={s.caption}>{c.rail.label}</p>}
-        >
-          <div
-            className={s.railViewport}
-            role="region"
-            aria-label={c.rail.label}
-            tabIndex={0}
-          >
-            <ul className={s.railTrack}>
-              {[...railItems, ...railItems].map((it, i) => {
-                const clone = i >= railItems.length;
-                return (
-                  <li
-                    key={i}
-                    className={s.railItem}
-                    aria-hidden={clone || undefined}
-                    style={{
-                      inlineSize: it.w,
-                      ["--rw" as string]: `${it.w}px`,
-                    }}
-                  >
-                    <div className={s.railCard} data-kind={it.kind}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={it.src}
-                        srcSet={srcSetFor(it.src)}
-                        sizes={`${it.w}px`}
-                        alt={clone ? "" : it.name}
-                        width={it.w}
-                        height={380}
-                        loading="lazy"
-                        decoding="async"
-                      />
-                    </div>
-                    <span className={s.railCaption}>{it.name}</span>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        </Loop>
+        <div className={s.railWrap}>
+          <Marquee
+            className={s.rail}
+            label={c.rail.label}
+            pauseLabel={c.rail.pause}
+            playLabel={c.rail.play}
+            duration={90}
+            gap="16px"
+            items={RAIL.map((r) => (
+              <figure key={r.id} className={s.railItem}>
+                <div className={s.railCard}>
+                  <R6Pic a={studio(r.id, r.tone)} sizes="300px" alt={studio(r.id, r.tone).alt[locale]} />
+                </div>
+                <figcaption className={s.railCaption}>{modelCaption(r.id)}</figcaption>
+              </figure>
+            ))}
+          />
+          <p className={`${s.caption} ${s.railNote}`}>{sample}</p>
+        </div>
       </Sheet>
 
       {/* 3 ───────── Feature card: design in the browser ───────── */}
@@ -362,40 +237,29 @@ export default async function HomePage({ params }: Props) {
                 </Link>
               </p>
             </div>
-            <div className={s.featureVisual} aria-hidden="true">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={renderSrc("ECMA_STE")}
-                srcSet={srcSetFor(renderSrc("ECMA_STE"))}
-                sizes="(min-width: 1024px) 460px, 70vw"
-                alt=""
-                {...renderDims(renderSrc("ECMA_STE"))}
-                loading="lazy"
-                decoding="async"
-                style={{ inlineSize: "min(42%, 260px)" }}
-              />
-              <div className={s.prompt}>
-                <span className={s.promptText}>{c.feature.prompt}</span>
-                <span className={s.promptGo}>
-                  <ArrowUp size={16} />
-                </span>
-              </div>
-              {row500 ? (
-                <div
-                  className={`${s.chip} ${s.chipDark}`}
-                  style={{ insetBlockStart: "14%", insetInlineEnd: "8%" }}
-                >
-                  <span className={s.chipMuted}>{c.feature.chipTitle}</span>
-                  <strong>{fill(c.feature.chipValue, vars)}</strong>
-                  <span className={s.chipMuted}>{c.feature.chipNote}</span>
+            <MotionScope className={s.featureVisual} pauseLabel={pauseLabel} playLabel={playLabel} buttonClassName={s.scopeBtn}>
+              <div aria-hidden="true" className={s.fill}>
+                <R6Pic a={cut("tuck-carton")} sizes="(min-width: 1024px) 380px, 70vw" className={s.featureImg} />
+                <div className={s.prompt}>
+                  <span className={s.promptText}>{c.feature.prompt}</span>
+                  <span className={s.promptGo}>
+                    <ArrowUp size={16} />
+                  </span>
                 </div>
-              ) : null}
-            </div>
+                {row500 ? (
+                  <div className={`${s.chip} ${s.chipDark}`} style={{ insetBlockStart: "14%", insetInlineEnd: "8%" }}>
+                    <span className={s.chipMuted}>{c.feature.chipTitle}</span>
+                    <strong>{fill(c.feature.chipValue, vars)}</strong>
+                    <span className={s.chipMuted}>{c.feature.chipNote}</span>
+                  </div>
+                ) : null}
+              </div>
+            </MotionScope>
           </Reveal>
         </Container>
       </section>
 
-      {/* 4 ───────── Every step in one place (1:2:1 cards + orbit) ───────── */}
+      {/* 4 ───────── Every step in one place: 1:2:1 cards, kit Orbit in the middle ───────── */}
       <section className={s.section} aria-labelledby="everywhere-title">
         <Container>
           <Reveal className={s.sectionHead}>
@@ -405,46 +269,10 @@ export default async function HomePage({ params }: Props) {
               {c.everywhere.titleRest}
             </Display>
           </Reveal>
-          <ul
-            className={s.trio}
-            style={{ listStyle: "none", margin: 0, padding: 0 }}
-          >
+          <ul className={s.trio}>
             <Reveal as="li" className={s.mediaCard} index={0}>
-              <div className={s.mediaFrame} data-fit="contain">
-                <div
-                  className={s.ringGlow}
-                  style={{
-                    inset: "auto",
-                    insetBlockStart: "10%",
-                    insetInlineStart: "-20%",
-                    inlineSize: "140%",
-                  }}
-                  aria-hidden="true"
-                />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={renderSrc("FEFCO_0201")}
-                  srcSet={srcSetFor(renderSrc("FEFCO_0201"))}
-                  sizes="(min-width: 1024px) 320px, 92vw"
-                  alt=""
-                  loading="lazy"
-                  decoding="async"
-                  style={{ position: "relative" }}
-                />
-                <div
-                  className={`${s.prompt} ${s.promptSmall}`}
-                  aria-hidden="true"
-                >
-                  <span className={s.promptText}>
-                    {fill("{L} × {W} × {H}", { L: 300, W: 200, H: 100 })}
-                  </span>
-                  <span
-                    className={s.promptGo}
-                    style={{ background: "#5b3fff" }}
-                  >
-                    <ArrowUp size={14} />
-                  </span>
-                </div>
+              <div className={s.mediaFrame} data-pad="true">
+                <R6Pic a={ui("designer")} sizes="(min-width: 1024px) 300px, 92vw" className={s.uiShot} />
               </div>
               <div className={s.mediaCaption}>
                 <Display as="h3" size="20" className={s.cardTitle}>
@@ -456,46 +284,20 @@ export default async function HomePage({ params }: Props) {
               </div>
             </Reveal>
             <Reveal as="li" className={s.mediaCard} index={1}>
-              <div className={s.mediaFrame} aria-hidden="true">
-                <div className={s.orbit}>
-                  <div className={s.ringGlow} />
-                  <div
-                    className={`${s.ring} ${s.ringSpin}`}
-                    style={{ ["--k" as string]: 0.55 } as CSSProperties}
-                  />
-                  <div
-                    className={`${s.ring} ${s.ringSpin}`}
-                    style={{ borderStyle: "dashed" }}
-                  />
-                  <div
-                    className={s.ring}
-                    style={{ ["--k" as string]: 1.5 } as CSSProperties}
-                  />
-                  <div className={s.orbitNodes}>
-                    {c.everywhere.nodes.map((n, i) => (
-                      <div
-                        key={n}
-                        className={s.orbitNode}
-                        style={{ ["--a" as string]: `${ORBIT_ANGLES[i]}deg` }}
-                      >
-                        <span>{n}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className={s.hub}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={renderSrc("FEFCO_0427")}
-                      srcSet={srcSetFor(renderSrc("FEFCO_0427"))}
-                      sizes="168px"
-                      alt=""
-                      {...renderDims(renderSrc("FEFCO_0427"))}
-                      loading="lazy"
-                      decoding="async"
-                    />
-                    {c.everywhere.hub}
-                  </div>
-                </div>
+              <div className={s.mediaFrame} data-orbit="true">
+                <div className={s.orbitGlow} aria-hidden="true" />
+                <Orbit
+                  className={s.orbit}
+                  label={c.everywhere.cards[1]!.title}
+                  size={400}
+                  hub={
+                    <span className={s.hub}>
+                      <R6Pic a={cut("mailer")} sizes="96px" />
+                      <span>{c.everywhere.hub}</span>
+                    </span>
+                  }
+                  nodes={c.everywhere.nodes.map((n) => ({ label: n }))}
+                />
               </div>
               <div className={s.mediaCaption}>
                 <Display as="h3" size="20" className={s.cardTitle}>
@@ -507,16 +309,8 @@ export default async function HomePage({ params }: Props) {
               </div>
             </Reveal>
             <Reveal as="li" className={s.mediaCard} index={2}>
-              <div className={s.mediaFrame}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={SAMPLES[7]!.src}
-                  srcSet={srcSetFor(SAMPLES[7]!.src)}
-                  sizes="(min-width: 1024px) 320px, 92vw"
-                  alt=""
-                  loading="lazy"
-                  decoding="async"
-                />
+              <div className={s.mediaFrame} data-pad="true">
+                <R6Pic a={ui("vendor-job")} sizes="(min-width: 1024px) 300px, 92vw" className={s.uiShot} />
               </div>
               <div className={s.mediaCaption}>
                 <Display as="h3" size="20" className={s.cardTitle}>
@@ -524,9 +318,7 @@ export default async function HomePage({ params }: Props) {
                     {c.everywhere.cards[2]!.title}
                   </Link>
                 </Display>
-                <p className={s.caption}>
-                  {fill(c.everywhere.cards[2]!.body, vars)}
-                </p>
+                <p className={s.caption}>{fill(c.everywhere.cards[2]!.body, vars)}</p>
               </div>
             </Reveal>
           </ul>
@@ -542,67 +334,31 @@ export default async function HomePage({ params }: Props) {
             </Display>
           </Reveal>
           <Reveal as="article" className={s.mapCard}>
-            <div className={s.mapStage} aria-hidden="true">
-              <div
-                className={s.mapGlow}
-                style={{
-                  inlineSize: 540,
-                  blockSize: 540,
-                  insetBlockStart: -120,
-                  insetInlineStart: -160,
-                }}
-              />
-              <div
-                className={s.mapGlow}
-                style={{
-                  inlineSize: 480,
-                  blockSize: 420,
-                  insetBlockEnd: -140,
-                  insetInlineEnd: -80,
-                  opacity: 0.6,
-                }}
-              />
-              <EgyptDots />
-              <div className={s.orderCard}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={renderSrc("FEFCO_0427")}
-                  srcSet={srcSetFor(renderSrc("FEFCO_0427"))}
-                  sizes="240px"
-                  alt=""
-                  loading="lazy"
-                  decoding="async"
-                />
-                <strong>{c.delivery.orderTitle}</strong>
-                <span className={s.chipMuted}>{c.delivery.orderQty}</span>
-                {row500 ? (
-                  <span>{fill(c.delivery.orderPrice, vars)}</span>
+            <MotionScope className={s.mapStage} pauseLabel={pauseLabel} playLabel={playLabel} buttonClassName={s.scopeBtn}>
+              <div aria-hidden="true" className={s.fill}>
+                <div className={s.mapGlow} style={{ inlineSize: 540, blockSize: 540, insetBlockStart: -120, insetInlineStart: -160 }} />
+                <div className={s.mapGlow} style={{ inlineSize: 480, blockSize: 420, insetBlockEnd: -140, insetInlineEnd: -80, opacity: 0.6 }} />
+                <EgyptDots />
+                <div className={s.orderCard}>
+                  <R6Pic a={studio("mailer", "light")} sizes="240px" className={s.orderImg} />
+                  <strong>{c.delivery.orderTitle}</strong>
+                  <span className={s.chipMuted}>{c.delivery.orderQty}</span>
+                  {row500 ? <span>{fill(c.delivery.orderPrice, vars)}</span> : null}
+                  <span className={s.orderBtn}>{c.delivery.orderCta}</span>
+                </div>
+                {days != null ? (
+                  <div className={`${s.chip} ${s.zoneChip}`} style={{ ["--t" as string]: "58%", ["--s" as string]: "60%" }}>
+                    <strong>{fill(c.delivery.orderDays, vars)}</strong>
+                    <span className={s.chipMuted}>{c.delivery.zones[0]}</span>
+                  </div>
                 ) : null}
-                <span className={s.orderBtn}>{c.delivery.orderCta}</span>
+                {c.delivery.zones.slice(1).map((z, i) => (
+                  <div key={z} className={`${s.chip} ${s.chipDark} ${s.zoneChip}`} style={{ ["--t" as string]: ["12%", "36%", "70%", "84%"][i], ["--s" as string]: ["10%", "4%", "12%", "44%"][i], animationDelay: `${-1.5 * (i + 1)}s` }}>
+                    {z}
+                  </div>
+                ))}
               </div>
-              {days != null ? (
-                <div
-                  className={`${s.chip} ${s.zoneChip}`}
-                  style={{ ["--t" as string]: "58%", ["--s" as string]: "64%" }}
-                >
-                  <strong>{fill(c.delivery.orderDays, vars)}</strong>
-                  <span className={s.chipMuted}>{c.delivery.zones[0]}</span>
-                </div>
-              ) : null}
-              {c.delivery.zones.slice(1).map((z, i) => (
-                <div
-                  key={z}
-                  className={`${s.chip} ${s.chipDark} ${s.zoneChip}`}
-                  style={{
-                    ["--t" as string]: ["12%", "36%", "70%", "84%"][i],
-                    ["--s" as string]: ["10%", "4%", "12%", "44%"][i],
-                    animationDelay: `${-1.5 * (i + 1)}s`,
-                  }}
-                >
-                  {z}
-                </div>
-              ))}
-            </div>
+            </MotionScope>
             <div className={s.mapCaption}>
               <Display as="h3" size="20" className={s.cardTitle}>
                 {c.delivery.cardTitle}
@@ -614,36 +370,29 @@ export default async function HomePage({ params }: Props) {
       </section>
 
       {/* 6 ───────── For every business ───────── */}
-      <section
-        className={`${s.section} ${s.sectionTail}`}
-        aria-labelledby="anyone-title"
-      >
+      <section className={`${s.section} ${s.sectionTail}`} aria-labelledby="anyone-title">
         <Container>
-          <Reveal className={s.sectionHead} style={{ maxInlineSize: "46rem" }}>
+          <Reveal className={`${s.sectionHead} ${s.narrowHead}`}>
             <Display id="anyone-title" size="56">
               {c.anyone.title}
             </Display>
           </Reveal>
           <ul className={s.anyone}>
-            {ANYONE.map((a, i) => (
-              <Reveal as="li" key={a.code} className={s.mediaCard} index={i}>
+            {(
+              [
+                { id: "mailer", href: structureHref(locale, "FEFCO_0427") },
+                { id: "cup", href: catalogHref },
+                { id: "jar", href: `${base}/bottles` },
+              ] as { id: R6ModelId; href: string }[]
+            ).map((a, i) => (
+              <Reveal as="li" key={a.id} className={s.mediaCard} index={i}>
                 <div className={s.mediaFrame}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={SAMPLES[a.sample]!.src}
-                    srcSet={srcSetFor(SAMPLES[a.sample]!.src)}
-                    sizes="(min-width: 768px) 420px, 82vw"
-                    alt=""
-                    loading="lazy"
-                    decoding="async"
-                  />
+                  <R6Pic a={studio(a.id, "light")} sizes="(min-width: 768px) 420px, 82vw" />
+                  <span className={s.sampleTag}>{sample}</span>
                 </div>
                 <div className={s.mediaCaption}>
                   <Display as="h3" size="20" className={s.cardTitle}>
-                    <Link
-                      href={structureHref(locale, a.code)}
-                      className={s.cardLink}
-                    >
+                    <Link href={a.href} className={s.cardLink}>
                       {c.anyone.cards[i]!.title}
                     </Link>
                   </Display>
@@ -661,110 +410,62 @@ export default async function HomePage({ params }: Props) {
       </section>
 
       {/* 7 ───────── Violet sheet: the 3D designer ───────── */}
-      <Sheet
-        tone="violet"
-        pad="none"
-        container={false}
-        className={s.sheetViolet}
-        aria-labelledby="designer-title"
-      >
-        <Container>
-          <Reveal className={s.sectionHead}>
-            <Display id="designer-title" size="56">
-              {c.designer.title}
-            </Display>
+      <Sheet tone="violet" pad="none" className={s.sheetViolet} aria-labelledby="designer-title">
+        <Reveal className={s.sectionHead}>
+          <Display id="designer-title" size="56">
+            {c.designer.title}
+          </Display>
+        </Reveal>
+        <div className={s.duo}>
+          <Reveal as="article" className={s.darkCard} index={0}>
+            <div className={s.darkCardMedia} aria-hidden="true">
+              <R6Pic a={ui("designer")} sizes="(min-width: 1024px) 820px, 92vw" className={s.darkCardShot} />
+              <div className={s.promptDark}>
+                <Sparkles size={18} className={s.sparkle} />
+                <span className={s.promptText}>{c.designer.prompt}</span>
+                <span className={s.promptGo}>
+                  <ArrowUp size={16} />
+                </span>
+              </div>
+            </div>
+            <div className={s.darkCardBody}>
+              <Display as="h3" size="20" className={s.cardTitle}>
+                <Sparkles size={18} className={s.sparkle} aria-hidden />
+                <Link href={designerHref} className={s.cardLink}>
+                  {c.designer.wideTitle}
+                </Link>
+              </Display>
+              <p className={s.body}>{c.designer.wideBody}</p>
+            </div>
           </Reveal>
-          <div className={s.duo}>
-            <Reveal as="article" className={s.darkCard} index={0}>
-              <div className={s.darkCardMedia} aria-hidden="true">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={`/marketing/designer-${locale}.webp`}
-                  srcSet={srcSetFor(`/marketing/designer-${locale}.webp`)}
-                  sizes="(min-width: 1024px) 820px, 92vw"
-                  alt=""
-                  loading="lazy"
-                  decoding="async"
-                  style={{ opacity: 0.72 }}
-                />
-                <div className={s.promptDark}>
-                  <Sparkles size={18} className={s.sparkle} />
-                  <span className={s.promptText}>{c.designer.prompt}</span>
-                  <span className={s.promptGo}>
-                    <ArrowUp size={16} />
-                  </span>
-                </div>
-              </div>
-              <div className={s.darkCardBody}>
-                <Display as="h3" size="20" className={s.cardTitle}>
-                  <Sparkles size={18} className={s.sparkle} aria-hidden />
-                  <Link href={designerHref} className={s.cardLink}>
-                    {c.designer.wideTitle}
-                  </Link>
-                </Display>
-                <p className={s.body}>{c.designer.wideBody}</p>
-              </div>
-            </Reveal>
-            <Reveal as="article" className={s.darkCard} index={1}>
-              <div
-                className={s.darkCardMedia}
-                data-fit="contain"
-                aria-hidden="true"
-              >
-                <div className={s.violetGlow} />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={renderSrc("RIGID_BOX")}
-                  srcSet={srcSetFor(renderSrc("RIGID_BOX"))}
-                  sizes="(min-width: 1024px) 400px, 92vw"
-                  alt=""
-                  loading="lazy"
-                  decoding="async"
-                />
-              </div>
-              <div className={s.darkCardBody}>
-                <Display as="h3" size="20" className={s.cardTitle}>
-                  {c.designer.narrowTitle}
-                </Display>
-                <p className={s.body}>{c.designer.narrowBody}</p>
-              </div>
-            </Reveal>
-          </div>
-        </Container>
+          <Reveal as="article" className={s.darkCard} index={1}>
+            <div className={s.darkCardMedia} aria-hidden="true">
+              <div className={s.violetGlow} />
+              <R6Pic a={cut("rigid-box")} sizes="(min-width: 1024px) 360px, 80vw" className={s.darkCardCut} />
+            </div>
+            <div className={s.darkCardBody}>
+              <Display as="h3" size="20" className={s.cardTitle}>
+                {c.designer.narrowTitle}
+              </Display>
+              <p className={s.body}>{c.designer.narrowBody}</p>
+            </div>
+          </Reveal>
+        </div>
       </Sheet>
 
-      {/* 8 ───────── Catalogue wall (app-grid equivalent) ───────── */}
+      {/* 8 ───────── Catalogue wall (the reference's app grid), paused by MotionScope ───────── */}
       <section className={s.bandNavy} aria-labelledby="wall-title">
-        <Loop
-          className={s.wall}
-          labels={c.wall}
-          controlClassName={s.wallControl}
-        >
+        <MotionScope className={s.wall} pauseLabel={c.wall.pause} playLabel={c.wall.play} buttonClassName={s.wallControl}>
           <div className={s.wallRows} aria-hidden="true">
             {[0, 1, 2, 3, 4].map((r) => {
               const k = (r * 5) % WALL_ITEMS.length;
               const row = [...WALL_ITEMS.slice(k), ...WALL_ITEMS.slice(0, k)];
               return (
-                <ul
-                  key={r}
-                  className={s.wallRow}
-                  style={{ ["--dur" as string]: `${80 + r * 9}s` }}
-                >
+                <ul key={r} className={s.wallRow} style={{ ["--dur" as string]: `${80 + r * 9}s` }}>
                   {[...row, ...row].map((it, i) => (
-                    <li
-                      key={i}
-                      className={s.tile}
-                      style={{ ["--tone" as string]: it.tone }}
-                    >
+                    <li key={i} className={s.tile} style={{ ["--tone" as string]: it.tone }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={it.small}
-                        alt=""
-                        width={64}
-                        height={64}
-                        loading="lazy"
-                        decoding="async"
-                      />
+                      <img src={it.small} alt="" width={64} height={64} loading="lazy" decoding="async" />
                     </li>
                   ))}
                 </ul>
@@ -784,14 +485,11 @@ export default async function HomePage({ params }: Props) {
               </p>
             </Reveal>
           </Container>
-        </Loop>
+        </MotionScope>
       </section>
 
       {/* 9 ───────── Finishes (navy) ───────── */}
-      <section
-        className={`${s.section} ${s.sectionTail} ${s.bandNavy}`}
-        aria-labelledby="finishes-title"
-      >
+      <section className={`${s.section} ${s.sectionTail} ${s.bandNavy}`} aria-labelledby="finishes-title">
         <Container>
           <Reveal className={`${s.sectionHead} ${s.navyHead}`}>
             <Display id="finishes-title" size="56">
@@ -799,240 +497,132 @@ export default async function HomePage({ params }: Props) {
             </Display>
             <p className={s.body}>
               {fill(c.finishes.body, vars)}{" "}
-              <Link
-                href={structureHref(locale, "RIGID_BOX")}
-                className={s.textLink}
-              >
+              <Link href={structureHref(locale, "RIGID_BOX")} className={s.textLink}>
                 {c.finishes.link}
               </Link>
             </p>
           </Reveal>
-          <Reveal className={s.navyPanel} variant="scale">
-            <div
-              className={s.navyGlow}
-              style={{
-                inlineSize: 900,
-                blockSize: 500,
-                insetBlockStart: -80,
-                insetInlineStart: "10%",
-              }}
-              aria-hidden="true"
-            />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={renderSrc("RIGID_BOX")}
-              srcSet={srcSetFor(renderSrc("RIGID_BOX"))}
-              sizes="(min-width: 1024px) 520px, 56vw"
-              alt=""
-              {...renderDims(renderSrc("RIGID_BOX"))}
-              loading="lazy"
-              decoding="async"
-            />
-            <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
-              {c.finishes.names.map((n, i) => (
-                <li
-                  key={n}
-                  className={s.finishChip}
-                  style={{
-                    ["--t" as string]: FINISH_SPOTS[i]!.t,
-                    ["--s" as string]: FINISH_SPOTS[i]!.s,
-                    ["--dl" as string]: FINISH_SPOTS[i]!.dl,
-                  }}
-                >
-                  {n}
-                </li>
-              ))}
-            </ul>
+          <Reveal variant="scale">
+            <MotionScope className={s.navyPanel} pauseLabel={pauseLabel} playLabel={playLabel} buttonClassName={s.scopeBtn}>
+              <div className={s.navyGlow} aria-hidden="true" />
+              <R6Pic a={cut("rigid-box")} sizes="(min-width: 1024px) 420px, 60vw" className={s.navyImg} />
+              <ul className={s.finishList}>
+                {c.finishes.names.map((n, i) => (
+                  <li key={n} className={s.finishChip} style={{ ["--t" as string]: FINISH_SPOTS[i]!.t, ["--s" as string]: FINISH_SPOTS[i]!.s, ["--dl" as string]: FINISH_SPOTS[i]!.dl }}>
+                    {n}
+                  </li>
+                ))}
+              </ul>
+            </MotionScope>
           </Reveal>
         </Container>
       </section>
 
       {/* 10 ───────── Green sheet: price, real numbers, secure payment ───────── */}
-      <Sheet
-        tone="green"
-        pad="none"
-        container={false}
-        className={s.sheetGreen}
-        aria-labelledby="stats-title"
-      >
-        <Container>
-          <Reveal className={s.greenHead}>
-            <Display
-              id="stats-title"
-              size="64"
-              align="center"
-              className={s.narrowTitle}
-            >
-              {c.stats.title}
+      <Sheet tone="green" pad="none" className={s.sheetGreen} aria-labelledby="stats-title">
+        <Reveal className={s.greenHead}>
+          <Display id="stats-title" size="64" align="center" className={s.narrowTitle}>
+            {c.stats.title}
+          </Display>
+        </Reveal>
+        <div className={s.split}>
+          <Reveal>
+            <Display as="h3" size="44">
+              {c.stats.checkoutTitle}
             </Display>
+            <ul className={s.stats}>
+              {stats.map((st) => (
+                <li key={st.label} className={s.stat}>
+                  <Stat value={st.value} label={st.label} />
+                </li>
+              ))}
+            </ul>
+            {row500 ? <p className={s.rule}>{fill(c.stats.rule, vars)}</p> : null}
+            <p className={s.footnote}>{c.stats.note}</p>
           </Reveal>
-          <div className={s.split}>
-            <Reveal>
-              <Display as="h3" size="44">
-                {c.stats.checkoutTitle}
-              </Display>
-              <ul className={s.stats}>
-                {stats.map((st) => (
-                  <li key={st.label} className={s.stat}>
-                    <CountUp
-                      value={st.value}
-                      locale={locale}
-                      className={s.statValue}
-                    />
-                    <span className={s.statLabel}>{st.label}</span>
-                  </li>
-                ))}
-              </ul>
+          <MotionScope className={s.splitVisual} pauseLabel={pauseLabel} playLabel={playLabel} buttonClassName={s.scopeBtn}>
+            <div aria-hidden="true" className={s.fill}>
+              {THUMBS.map((th) => (
+                <div key={th.id} className={s.thumb} style={{ ["--t" as string]: th.t, ["--s" as string]: th.s, ["--z" as string]: th.z, ["--dl" as string]: th.dl }}>
+                  <R6Pic a={cut(th.id)} sizes="80px" />
+                </div>
+              ))}
               {row500 ? (
-                <p className={s.rule}>{fill(c.stats.rule, vars)}</p>
+                <div className={s.receipt}>
+                  <div className={s.receiptHead}>
+                    <R6Pic a={cut("mailer")} sizes="56px" />
+                    <div>
+                      <strong>{c.stats.receipt.title}</strong>
+                      <div className={s.chipMuted}>{c.stats.receipt.line}</div>
+                    </div>
+                  </div>
+                  <div className={s.receiptRow}>
+                    <span>{c.stats.receipt.setup}</span>
+                    <span>{c.stats.receipt.included}</span>
+                  </div>
+                  <div className={s.receiptRow}>
+                    <span>{c.stats.receipt.delivery}</span>
+                    <span>{c.stats.receipt.included}</span>
+                  </div>
+                  <div className={s.receiptRow}>
+                    <span>{c.stats.receipt.subtotal}</span>
+                    <span>{money(row500.subtotalPiasters)}</span>
+                  </div>
+                  <div className={s.receiptRow}>
+                    <span>{c.stats.receipt.vat}</span>
+                    <span>{money(vatOf(row500.subtotalPiasters))}</span>
+                  </div>
+                  <div className={s.receiptTotal}>
+                    <span>{c.stats.receipt.total}</span>
+                    <span>{money(row500.subtotalPiasters + vatOf(row500.subtotalPiasters))}</span>
+                  </div>
+                  <div className={s.receiptPay}>{c.stats.receipt.pay}</div>
+                </div>
               ) : null}
-              <p className={s.footnote}>{c.stats.note}</p>
-            </Reveal>
-            <div className={s.splitVisual} aria-hidden="true">
-              {THUMBS.map((th, i) => {
-                const src = th.code
-                  ? renderSrc(th.code)
-                  : vesselSrc(th.vessel!);
-                return (
-                  <div
-                    key={i}
-                    className={s.thumb}
-                    style={{
-                      ["--t" as string]: th.t,
-                      ["--s" as string]: th.s,
-                      ["--z" as string]: th.z,
-                      ["--dl" as string]: th.dl,
-                      ["--tone" as string]: th.code
-                        ? TILE_BG[th.code]
-                        : "#f6ecd2",
-                    }}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={src}
-                      srcSet={srcSetFor(src)}
-                      sizes="72px"
-                      alt=""
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  </div>
-                );
-              })}
-              <div className={s.receipt}>
-                <div className={s.receiptHead}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={renderSrc("FEFCO_0427")}
-                    srcSet={srcSetFor(renderSrc("FEFCO_0427"))}
-                    sizes="56px"
-                    alt=""
-                    loading="lazy"
-                    decoding="async"
-                  />
-                  <div>
-                    <strong>{c.stats.receipt.title}</strong>
-                    <div className={s.chipMuted}>{c.stats.receipt.line}</div>
-                  </div>
-                </div>
-                <div className={s.receiptRow}>
-                  <span>{c.stats.receipt.setup}</span>
-                  <span>{c.stats.receipt.included}</span>
-                </div>
-                <div className={s.receiptRow}>
-                  <span>{c.stats.receipt.delivery}</span>
-                  <span>{c.stats.receipt.included}</span>
-                </div>
-                <div className={s.receiptRow}>
-                  <span>{c.stats.receipt.subtotal}</span>
-                  <span>{subtotal}</span>
-                </div>
-                <div className={s.receiptRow}>
-                  <span>{c.stats.receipt.vat}</span>
-                  <span>{vat}</span>
-                </div>
-                <div className={s.receiptTotal}>
-                  <span>{c.stats.receipt.total}</span>
-                  <span>{total}</span>
-                </div>
-                <div className={s.receiptPay}>{c.stats.receipt.pay}</div>
-              </div>
             </div>
-          </div>
-          <div className={`${s.split} ${s.secure}`}>
-            <Reveal>
-              <Display as="h3" size="44">
-                {c.stats.secureTitle}
-              </Display>
-              <p className={s.body}>{c.stats.secureBody}</p>
-            </Reveal>
-            <div className={s.splitVisual} aria-hidden="true">
+          </MotionScope>
+        </div>
+        <div className={`${s.split} ${s.secure}`}>
+          <Reveal>
+            <Display as="h3" size="44">
+              {c.stats.secureTitle}
+            </Display>
+            <p className={s.body}>{c.stats.secureBody}</p>
+          </Reveal>
+          <MotionScope className={s.splitVisual} pauseLabel={pauseLabel} playLabel={playLabel} buttonClassName={s.scopeBtn}>
+            <div aria-hidden="true" className={s.fill}>
               <div className={s.globe} />
               {c.stats.payChips.map((m, i) => (
-                <div
-                  key={i}
-                  className={`${s.chip} ${s.chipDark} ${s.payChip}`}
-                  style={{
-                    insetBlockStart: ["14%", "40%", "64%", "84%"][i],
-                    insetInlineStart: ["6%", "70%", "2%", "58%"][i],
-                    animationDelay: `${-1.5 * i}s`,
-                  }}
-                >
+                <div key={m} className={`${s.chip} ${s.chipDark} ${s.payChip}`} style={{ insetBlockStart: ["14%", "40%", "64%", "84%"][i], insetInlineStart: ["6%", "70%", "2%", "58%"][i], animationDelay: `${-1.5 * i}s` } as CSSProperties}>
                   {m}
                 </div>
               ))}
             </div>
-          </div>
-        </Container>
+          </MotionScope>
+        </div>
       </Sheet>
 
-      {/* 11 ───────── Steps sheet ───────── */}
-      <Sheet
-        tone="dark"
-        pad="none"
-        container={false}
-        className={s.sheetSteps}
-        aria-labelledby="steps-title"
-      >
-        <Container>
-          <Reveal className={s.sectionHead}>
-            <Display id="steps-title" size="64">
-              {c.steps.title}
-            </Display>
-          </Reveal>
-          <HomeSteps
-            items={c.steps.items}
-            labels={c.steps}
-            media={[
-              [
-                { src: SAMPLES[0]!.src, srcSet: srcSetFor(SAMPLES[0]!.src) },
-                {
-                  src: `/marketing/designer-${locale}.webp`,
-                  srcSet: srcSetFor(`/marketing/designer-${locale}.webp`),
-                },
-                { src: SAMPLES[7]!.src, srcSet: srcSetFor(SAMPLES[7]!.src) },
-              ],
-              [
-                {
-                  src: renderSrc("FEFCO_0201"),
-                  srcSet: srcSetFor(renderSrc("FEFCO_0201")),
-                  fit: "contain",
-                },
-                { src: SAMPLES[4]!.src, srcSet: srcSetFor(SAMPLES[4]!.src) },
-                {
-                  src: renderSrc("FEFCO_0427"),
-                  srcSet: srcSetFor(renderSrc("FEFCO_0427")),
-                  fit: "contain",
-                },
-              ],
-            ]}
-            cta={
-              <Pill href={startHref} size="lg">
-                {c.steps.cta}
-              </Pill>
-            }
-          />
-        </Container>
+      {/* 11 ───────── Steps sheet (kit Steps: tabs, progress underline, media swap) ───────── */}
+      <Sheet tone="dark" pad="none" className={s.sheetSteps} aria-labelledby="steps-title">
+        <Reveal className={s.sectionHead}>
+          <Display id="steps-title" size="64">
+            {c.steps.title}
+          </Display>
+        </Reveal>
+        <Steps
+          className={s.steps}
+          label={c.steps.title}
+          items={[
+            { title: c.steps.items[0]!, media: stepMedia(studio("tuck-carton", "light"), cut("perfume")) },
+            { title: c.steps.items[1]!, media: stepMedia(studio("mailer", "dark"), ui("price-badge")) },
+            { title: c.steps.items[2]!, media: stepMedia(studio("rigid-box", "dark"), ui("order-timeline")) },
+          ]}
+        />
+        <PillRow className={s.stepsCta}>
+          <Pill href={startHref} size="lg">
+            {c.steps.cta}
+          </Pill>
+        </PillRow>
       </Sheet>
     </div>
   );
