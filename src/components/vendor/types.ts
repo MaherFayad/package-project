@@ -94,6 +94,9 @@ export interface PortfolioItemDTO {
   captionAr: string;
   captionEn: string;
   structureCode: StructureCode | null;
+  /** B-08: public only once Elba approves it. */
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  reviewNote: string | null;
 }
 
 export interface VendorProfileDTO {

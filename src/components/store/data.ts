@@ -1,4 +1,5 @@
 import "server-only";
+import { stripContactDetails } from "@/components/vendor/lib/contact";
 import { cache } from "react";
 import type {
   Dims,
@@ -85,7 +86,8 @@ function toListItem(v: Awaited<ReturnType<typeof db.vendor.findMany>>[number]): 
     name: { ar: v.nameAr, en: v.nameEn },
     city: v.city as EgyptCity,
     cityName: { ar: v.cityAr, en: v.cityEn },
-    bio: { ar: v.bioAr, en: v.bioEn },
+    // B-08: never publish contact details, even in text saved before the vendor-side filter existed.
+    bio: { ar: stripContactDetails(v.bioAr), en: stripContactDetails(v.bioEn) },
     logoUrl: v.logoUrl,
     coverUrl: v.coverUrl,
     rating: v.rating,
@@ -124,7 +126,8 @@ export const getVendorBySlug = cache(async (slug: string): Promise<VendorProfile
   const v = await db.vendor.findFirst({
     where: { slug, status: "ACTIVE" },
     include: {
-      portfolio: { orderBy: { sortOrder: "asc" } },
+      // B-08: only photos Elba has reviewed are public.
+      portfolio: { where: { status: "APPROVED" }, orderBy: { sortOrder: "asc" } },
       reviews: { orderBy: { createdAt: "desc" }, take: 20, include: { author: { select: { name: true } } } },
     },
   });
@@ -137,7 +140,7 @@ export const getVendorBySlug = cache(async (slug: string): Promise<VendorProfile
     portfolio: v.portfolio.map((p) => ({
       id: p.id,
       imageUrl: p.imageUrl,
-      caption: { ar: p.captionAr, en: p.captionEn },
+      caption: { ar: stripContactDetails(p.captionAr), en: stripContactDetails(p.captionEn) },
       structureCode: (p.structureCode as StructureCode | null) ?? null,
     })),
     reviews: v.reviews.map((r) => ({

@@ -60,7 +60,8 @@
   direction: ltr;
   display: block;
   inline-size: 100%;
-  max-block-size: 22rem;
+  /* CR-44: fixed box so the lazy SVG cannot push the files / QC cards down when it arrives. */
+  block-size: clamp(12rem, 45vw, 22rem);
   object-fit: contain;
   background: var(--p-color-bg-surface-secondary);
   border: 1px solid var(--p-color-border);
@@ -277,3 +278,6 @@
 
 .ErrorSummary { border-radius: var(--p-border-radius-300); }
 .ErrorSummary:focus-visible { outline: var(--p-focus-ring-width) solid var(--p-color-border-focus); outline-offset: 2px; }
+
+/* In-page targets (header "Add QC photos" -> #qc) clear the sticky 56px top bar (WCAG 2.4.11). */
+.Anchor { scroll-margin-block-start: calc(56px + var(--p-space-400)); }
