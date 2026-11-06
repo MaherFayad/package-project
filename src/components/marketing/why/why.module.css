@@ -1,7 +1,7 @@
 /*
  * /why-elba and /pricing (owner: r6-why): page-local pieces only. Sheets, containers, type,
  * pills and reveals come from the marketing kit (src/components/marketing/kit); this file styles
- * what the kit does not have yet: the hero collage, ticker, sticky points, UI mockups, stat band,
+ * what the kit does not have: the hero collage, ticker items, UI mockups, stat band,
  * segment cards, promise card, tier cards, VAT toggle, comparison table and FAQ.
  * Every value reads the kit tokens (--mk-*); measured reference values: docs/audit/r6-why.md §0.
  */
@@ -43,10 +43,6 @@
 /* ── W1 hero ── */
 .heroBand[data-tone] { background: var(--mk-band-green-deep); }  /* measured rgb(0,8,5) */
 .heroBand[data-hero="true"] { justify-content: flex-start; min-block-size: 0; padding-block-end: 24px; }
-/* Hero title: each line slides up out of a clip (opacity stays 1, so the LCP is not delayed). */
-.heroTitle { position: relative; }
-.displayLine { display: block; overflow: hidden; padding-block: 0.04em; }
-.displayLineInner { display: block; }
 .heroPills { margin-block-start: 32px; }
 .heroInner {
   position: relative;
@@ -70,15 +66,6 @@
 .c2 { inline-size: clamp(140px, 26vw, 400px); inset-inline-end: 0; inset-block-start: 2%; transform: rotate(5deg); }
 .c3 { inline-size: clamp(70px, 10vw, 150px); inset-inline-start: 6%; inset-block-end: 6%; transform: rotate(8deg); }
 .c4 { inline-size: clamp(64px, 9vw, 130px); inset-inline-end: 22%; inset-block-end: 22%; transform: rotate(-9deg); }
-.glow {
-  position: absolute;
-  inset: 10% 15%;
-  background:
-    radial-gradient(40% 40% at 30% 40%, rgba(91, 50, 244, 0.45), transparent 70%),
-    radial-gradient(40% 40% at 70% 60%, rgba(4, 123, 93, 0.45), transparent 70%);
-  filter: blur(40px);
-  pointer-events: none;
-}
 .heroText { position: relative; z-index: 1; text-align: center; }
 .heroSub {
   font-size: clamp(1.25rem, 1rem + 1vw, 2rem);
@@ -108,10 +95,6 @@
 .heroBadge span:last-child { color: #4a4a4a; }
 
 /* Hero entrance: per line slide up from a clip (opacity stays 1 so LCP is not delayed). */
-@keyframes w-line-in {
-  from { transform: translate3d(0, 105%, 0); }
-  to { transform: none; }
-}
 @keyframes w-rise {
   from { opacity: 0; transform: translate3d(0, 24px, 0); }
   to { opacity: 1; transform: none; }
@@ -123,8 +106,6 @@
   to { translate: 0 0; }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .displayLineInner { animation: w-line-in 0.6s var(--w-ease-out) both; }
-  .displayLine:nth-child(2) .displayLineInner { animation-delay: 0.08s; }
   .collage img { animation: w-float-in 0.9s var(--w-ease-out) both; }
   .collage img:nth-child(2) { animation-delay: 0.06s; }
   .collage img:nth-child(3) { animation-delay: 0.12s; }
@@ -141,29 +122,7 @@
   .heroBadge { position: relative; inset: auto; margin: -36px auto 0; order: 3; }
   .heroSub { margin-block-start: 20px; }
 }
-
-/* ── W2 ticker ── */
-.ticker {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding-block: 40px 8px;
-}
-.tickViewport {
-  flex: 1;
-  overflow: hidden;
-  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
-  border-radius: 12px;
-}
-.tickTrack {
-  display: flex;
-  gap: 56px;
-  inline-size: max-content;
-  margin: 0;
-  padding: 8px 0;
-  list-style: none;
-}
+.ticker { margin-block-start: 40px; }
 .tickItem { display: flex; align-items: center; gap: 14px; flex: none; }
 .tickImg { display: block; flex: none; inline-size: 56px; block-size: 56px; object-fit: contain; }
 .tickDot {
@@ -174,67 +133,6 @@
 .tickText { display: grid; line-height: 1.2; }
 .tickLabel { font-size: 1.25rem; font-weight: 450; color: rgba(255, 255, 255, 0.82); white-space: nowrap; }
 .tickKind { font-size: 0.8125rem; color: rgba(255, 255, 255, 0.6); }
-.tickToggle {
-  flex: none;
-  display: grid;
-  place-items: center;
-  inline-size: 44px;
-  block-size: 44px;
-  border-radius: 50%;
-  border: 1px solid var(--w-line-dark);
-  background: transparent;
-  color: #fff;
-  cursor: pointer;
-  transition: background-color var(--w-dur-1) var(--w-ease);
-}
-.tickToggle:hover { background: rgba(255, 255, 255, 0.1); }
-@keyframes w-tick-ltr { to { transform: translate3d(-50%, 0, 0); } }
-@keyframes w-tick-rtl { to { transform: translate3d(50%, 0, 0); } }
-@media (prefers-reduced-motion: no-preference) {
-  .tickTrack { animation: w-tick-ltr 49s linear infinite; }
-  .page:lang(ar) .tickTrack, [dir="rtl"] .tickTrack { animation-name: w-tick-rtl; }
-  .ticker[data-paused="true"] .tickTrack,
-  .tickViewport:hover .tickTrack,
-  .tickViewport:focus-visible .tickTrack { animation-play-state: paused; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .tickViewport { overflow-x: auto; mask-image: none; }
-  .tickToggle { display: none; }
-}
-
-/* ── W3 sticky points ── */
-.points {
-  display: grid;
-  gap: 48px;
-}
-.pointList { list-style: none; margin: 0; padding: 0; display: grid; gap: 40px; }
-.point {
-  padding-inline-start: 24px;
-  border-inline-start: 3px solid rgba(0, 0, 0, 0.12);
-  transition: border-color var(--w-dur-2) var(--w-ease);
-}
-.pointTitle { font-size: var(--w-h3); font-weight: 360; line-height: 1.2; letter-spacing: var(--w-track); margin: 0; }
-.page:lang(ar) .pointTitle { font-weight: 500; }
-.pointBody { margin: 10px 0 0; color: var(--w-ink-muted); font-size: 1.0625rem; max-inline-size: 30rem; }
-.pointInlineMedia { margin-block-start: 24px; }
-.pointStickyWrap { display: none; }
-.device {
-  position: relative;
-  aspect-ratio: 4 / 3;
-  border-radius: var(--w-radius-card);
-  background: #e4e4e7;
-  overflow: hidden;
-}
-.deviceScreen {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  padding: 7%;
-  opacity: 0;
-  transition: opacity var(--w-dur-3) cubic-bezier(0.5, 0, 0.5, 1);
-}
-.deviceScreen[data-active="true"] { opacity: 1; }
 .screen {
   display: grid;
   place-items: center;
@@ -244,21 +142,11 @@
   padding: 7%;
   overflow: hidden;
 }
-.deviceScreen .screen { aspect-ratio: auto; inline-size: 100%; block-size: 100%; padding: 0; background: none; }
 .shot {
   inline-size: 100%;
   block-size: auto;
   border-radius: 14px;
   box-shadow: 0 24px 50px rgba(0, 0, 0, 0.18);
-}
-@media (min-width: 960px) {
-  .points { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: clamp(48px, 7vw, 120px); align-items: start; }
-  .pointList { gap: 0; padding-block: 12vh 22vh; }
-  .point { min-block-size: 46vh; display: flex; flex-direction: column; justify-content: center; }
-  .point[data-active="true"] { border-inline-start-color: #5b32f4; }
-  .pointInlineMedia { display: none; }
-  .pointStickyWrap { display: block; block-size: 100%; }
-  .pointSticky { position: sticky; inset-block-start: calc(50vh - min(22vw, 260px)); }
 }
 
 /* ── W4 violet cards ── */
@@ -432,7 +320,6 @@
 .promiseFacts li { padding: 4px 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.14); font-size: 0.875rem; }
 .promiseLink { display: inline-block; margin-block-start: 16px; color: #fff; text-underline-offset: 3px; min-block-size: 24px; }
 
-
 /* ════════════════════ Pricing ════════════════════ */
 .pricingHero[data-hero="true"] { min-block-size: 0; justify-content: flex-start; }
 .pHero { text-align: center; padding-block: 0 48px; }
@@ -493,7 +380,6 @@
 }
 .feat li:last-child { border-block-end: 0; }
 .feat svg { flex: none; margin-block-start: 3px; color: var(--w-accent); }
-.tierNote { margin: 20px 0 0; color: var(--w-muted); font-size: 0.875rem; text-align: center; }
 
 .incGrid { display: grid; gap: 16px; }
 @media (min-width: 700px) { .incGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -502,7 +388,6 @@
 .inc svg { color: var(--w-accent); }
 .incTitle { margin: 14px 0 0; font-size: 1.25rem; font-weight: 400; }
 .incBody { margin: 6px 0 0; color: var(--w-muted); font-size: 0.9375rem; }
-.h2Small { font-size: 1.5rem; font-weight: 400; margin: 0 0 24px; }
 
 .cardBand[data-tone] { background: var(--w-card-dark); }
 .incGrid, .tiers, .cards3, .stats, .segLinks { list-style: none; margin: 0; padding: 0; }
@@ -542,30 +427,6 @@
 .tick { color: #047b5d; }
 @media (min-width: 1100px) { .tableWrap { overflow: visible; } }
 
-.faq { border-block-start: 1px solid var(--w-line-dark); }
-.faqItem { border-block-end: 1px solid var(--w-line-dark); }
-.faqItem summary {
-  display: flex; align-items: center; gap: 20px; min-block-size: 56px;
-  padding-block: 24px; cursor: pointer; list-style: none;
-  font-size: clamp(1.125rem, 1rem + 0.5vw, 1.5rem); font-weight: 400;
-}
-.faqItem summary::-webkit-details-marker { display: none; }
-.faqPlus {
-  position: relative; flex: none; inline-size: 32px; block-size: 32px; border-radius: 50%;
-  background: #fff; transition: transform var(--w-dur-2) var(--w-ease);
-}
-.faqPlus::before, .faqPlus::after { content: ""; position: absolute; inset: 50% auto auto 50%; inline-size: 12px; block-size: 2px; background: #000; translate: -50% -50%; }
-.faqPlus::after { rotate: 90deg; transition: rotate var(--w-dur-2) var(--w-ease); }
-.faqItem[open] .faqPlus::after { rotate: 0deg; }
-.faqAnswer { margin: 0 0 24px; padding-inline-start: 52px; color: var(--w-muted); max-inline-size: 48rem; font-size: 1.0625rem; }
-@media (prefers-reduced-motion: no-preference) {
-  @supports (interpolate-size: allow-keywords) {
-    .faqItem { interpolate-size: allow-keywords; }
-    .faqItem::details-content { block-size: 0; overflow: hidden; transition: block-size var(--w-dur-2) var(--w-ease), content-visibility var(--w-dur-2) allow-discrete; }
-    .faqItem[open]::details-content { block-size: auto; }
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .page *, .page *::before, .page *::after { transition-duration: 0.01ms !important; animation: none !important; }
 }
@@ -575,10 +436,6 @@
   .heroPills a[data-size="lg"] { min-block-size: 48px; padding: 8px 20px; font-size: 1rem; }
   .screen { aspect-ratio: auto; min-block-size: 240px; padding: 24px 16px; }
   .collage { block-size: 210px; }
-}
-@media (min-width: 960px) {
-  .pointList { padding-block: 8vh 12vh; }
-  .point { min-block-size: 40vh; }
 }
 
 /* Plan cards rise in on first paint, staggered (measured: fadeInUpDesktop with a soft overshoot).

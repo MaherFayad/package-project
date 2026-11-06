@@ -34,7 +34,6 @@ const ar = {
       { title: (n: N) => `${n} مطابع موثقة`, body: "مطابع مصرية راجعنا معداتها وجودتها، وتظهر لك مواعيد التسليم والتقييمات الحقيقية." },
       { title: "سعر واحد من البداية للنهاية", body: "السعر الذي تراه في صفحة العلبة هو نفسه في المصمم وفي الدفع، شامل التوصيل وضريبة القيمة المضافة." },
     ],
-    deviceLabels: ["المصمم ثلاثي الأبعاد", "اختيار المطبعة", "ملخص الطلب"],
     ordersTitle: "طلبات أكثر",
     ordersSub: "أدوات تجعل قرار الطلب أسهل عليك وعلى فريقك.",
     ordersCards: [
@@ -200,7 +199,6 @@ const en: Copy = {
       { title: (n: N) => `${n} vetted printers`, body: "Egyptian print houses we checked for equipment and quality, with their real lead times and ratings." },
       { title: "One price, start to finish", body: "The price on the style page is the price in the designer and at checkout, delivery and VAT included." },
     ],
-    deviceLabels: ["3D designer", "Printer match", "Order summary"],
     ordersTitle: "More orders",
     ordersSub: "Tools that make the order an easy yes, for you and your team.",
     ordersCards: [

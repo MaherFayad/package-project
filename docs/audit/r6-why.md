@@ -36,50 +36,94 @@ Captured with Playwright (Chromium) at 1440x900 and 390x844, Arabic (`/sa/...`) 
 
 ## 1. `/sa/sell` → `/[locale]/why-elba` section table
 
-| # | Shopify section (measured) | Elba section | Content source (no fabricated proof) | Page-local piece | Status |
+| # | Shopify section (measured) | Elba section | Content source (no fabricated proof) | Built with | Status |
 |---|---|---|---|---|---|
-| W1 | Hero: dark band, giant two-line wordmark headline over a collage of UI cards, subline, white + outline pills | Two-line hero "More boxes. / Less spend." in light display type over a collage of our renders (mailer, rigid box, tube, carton) with a floating price-badge mockup and a glow; subline; "Start designing free" + "See pricing" pills | Renders in `public/marketing/renders`; badge price = reference box at 500 from the pricing engine | `WhyHero` (server) | built |
-| W2 | Logo marquee (customer logos, two copies, `marquee-rtl` 49s) | Ticker of our box styles and finishes (names + small renders), RTL-correct direction, pause button (SC 2.2.2), hover pause, static under reduced motion | `STRUCTURE_LIST` names + `DESIGN_FINISH_CODES` labels | `Ticker` (client) | built |
-| W3 | Light sheet "More customers": centred H2 + sub, then a 3-item list with a vertical progress rule beside a large media card that swaps per item | Light sheet "Better packaging": three points (see it in 3D, real printers, one price) beside a sticky device mockup that swaps its screen to the active point; on phone each point stacks under its own mockup | Our designer screenshot, price badge, printer card built from DOM (no fake data: printer count from DB) | `StickyPoints` (client), `DeviceMock` | built |
-| W4 | Violet band "More sales": H2 + sub, three cards each with a floating UI mockup and a title + one-line stat | Violet band "More orders": three cards: price badge (live tiers), checkout summary (prepay saving), order tracking timeline (real lead-time days) | All numbers from `computePricingFacts` | `MockPrice`, `MockCheckout`, `MockTracking` | built |
-| W5 | Green band "Less spend": three 120px count-up stats with an icon title and body | Green band "Less spend": four real stats that count up once on enter: per-box drop 100 → 2,000 (%), minimum order (boxes), door-to-door days, models in the designer; digital setup cost when a digital offer exists | `computePricingFacts`, `CATALOGUE` designer count | `CountUp` (client) | built |
-| W6 | Dark sheet "Migrate": H2, three steps on one side; on the other a photo with a quote card (customer testimonial) | Dark sheet "Switch from your print shop": three steps (send your box, we match a printer, same price you saw); an "Elba promise" card (our own commitments, signed "Elba", not a testimonial) over a render | Promise = our policy (72 h quote validity, price you saw is the price you pay, sample credit days) | `PromiseCard` | built |
-| W7 | Closing CTA "Why sell anywhere else?" two pills | Closing CTA with two pills | n/a | page markup | built |
+| W1 | Dark band `rgb(0,8,5)`, giant two-line headline over a collage of floating UI cards, subline, white + outline 56px pills | "علب أكثر. / إنفاق أقل." (More boxes. / Less spend.) at hero size, word slide-in, over a collage of our renders (mailer, rigid box, tube, carton) with violet + green glows and a floating price chip | Renders from `public/marketing/renders`; chip = 500 reference boxes, total incl. VAT, from the pricing engine | kit `Sheet hero`, `HeroTitle`, `Glow`, `Pill`; page-local collage | done |
+| W2 | Logo marquee (`marquee-rtl` 49s) | Marquee of our 12 box styles (with renders) and 8 finishes, reading direction, pause button + hover/focus pause (SC 2.2.2), plain scroller under reduced motion; thumbnails load after `load` | `BOX_STRUCTURE_LIST`, `finishes.*` labels | kit `Marquee` (49s, 56px gap); page-local `DeferredImg` | done |
+| W3 | Light sheet "More customers": centred H2 + sub, three items with an active rule beside a large media card that swaps | Light sheet "تغليف أفضل": three points (3D before print, N vetted printers, one price start to finish) with a sticky media column that cross-fades: real designer screenshot, printer-match card (top 3 ranked offers for 500 boxes), order summary | DB printer count, ranked offers, checkout totals | kit `StickyStory` (media end side); page-local mockups | done |
+| W4 | Violet gradient sheet "More sales": three cards, each a floating UI mockup + title + one-line stat | Violet sheet "طلبات أكثر": price badge (live per-box tiers), checkout summary (prepay discount line), tracking timeline (real door-to-door days) | `computePricingFacts` | kit `Sheet violet`, `Reveal`; page-local `Mock*` | done |
+| W5 | Green band "Less spend": three ~120px stats with icon titles | Green sheet "إنفاق أقل": 73% lower per box (100 → 2,000), 50-box minimum, 5 days door-to-door, 370 designer models; a 5th digital-setup stat appears only when a digital offer exists (none for the reference box in the seed, so it is not shown) | pricing engine, active printers' minimum, `CATALOGUE` designer count | kit `CountUp`, `Sheet green` | done |
+| W5b | (not on the reference) | White sheet "لكل نشاط تجاري" with `#cafes`, `#beauty`, `#ecommerce` cards linking to the style pages. Added because the foundation header's "Why Elba" menu links these anchors | style pages | kit `Sheet white`, `Reveal` | done |
+| W6 | Dark sheet "Migrate": H2 + three steps; a photo with a customer quote card | "انتقل من مطبعتك الحالية.": three numbered steps; an **Elba promise** card signed "فريق علبة" over our render: the price you see is the price you pay, reprint or refund per the returns policy, quote validity 72 h, sample credit 60 days, defects within 30 days, link to `/legal/returns` | our policy text (legal/returns), pricing config, checkout settings | kit `Display`, `Reveal` | done |
+| W6b | (reference has none) | FAQ `#faq` (the header's help link), 5 questions, exclusive accordion, FAQPage JSON-LD | product facts | kit `Faq` | done |
+| W7 | Closing CTA, two pills | "لماذا تطبع في مكان آخر؟" + Start designing / See pricing | n/a | kit `Pill`, `PillRow` | done |
 
 ## 2. `/sa/pricing` → `/[locale]/pricing` section table
 
-| # | Shopify section (measured) | Elba section | Content source | Page-local piece | Status |
+| # | Shopify section (measured) | Elba section | Content source | Built with | Status |
 |---|---|---|---|---|---|
-| P1 | Hero: 64px H1 "You've got plans. Us too." + one-line offer | H1 "One box. One price." + line with the reference box and that prices include delivery and VAT | `REFERENCE_BOX` | page markup | built |
-| P2 | Toggle "Pay yearly" + "Compare all features" link | Toggle "Prepay online, save N%" that switches every card total between pay-on-delivery and prepaid; link to the comparison | `prepayDiscountPct` from admin checkout settings | `PrepayToggle` (client, `aria-pressed`) | built |
-| P3 | Four plan cards (name, audience line, price, outline pill, hairline feature rows) | Four order-band cards: Trial run (100), Launch (500), Growth (2,000), Wholesale (above 2,000: price on request); each shows per-box price, order total incl. delivery and 14% VAT, door-to-door days and feature rows | `computePricingFacts().tiers`; wholesale is the engine's `manual_quote` band | `TierCards` | built |
-| P4 | "Always included" white cards on dark band (5 features) | "Always included": free 3D designer, PDF proof, vetted printers, 14% VAT receipt, delivery across Egypt | product facts | page markup | built |
-| P5 | "But wait, there's more" add-on card | Sample order card: N printed pieces, price, delivery days, credited against the next order within N days | `checkout.sample` settings + `sampleOffer` | page markup | built |
-| P6 | Testimonial strip + big numbers ("Word on the street") | Left out: it is social proof we do not have. Replaced by nothing (no invented stats) | n/a | n/a | omitted on purpose |
-| P7 | White compare sheet, sticky plan header, grouped rows of ticks and values | Comparison table: rows for per-box price, order total, prepaid total, setup, die on standard sizes, delivery days, printing method, sample credit, VAT receipt, quote validity; sticky header on desktop, horizontal scroll region on phone | `computePricingFacts` | `CompareTable` | built |
-| P8 | FAQ: dark sheet, big plus icons | FAQ: why prices include delivery, what changes the price, above 2,000, prepay, samples, VAT and receipts | copy | `<details>` styled page-locally (kit `Faq` not forked) | built |
-| P9 | Closing CTA "Turn plans into progress" with email field | Closing CTA with two pills (no data collection here) | n/a | page markup | built |
+| P1 | 64px / 330 H1 "You've got plans. Us too." + offer line | "علبة واحدة. سعر واحد." + the reference box (مايلر 300 × 220 × 60 مم, E-flute kraft) and what the price includes | `REFERENCE_BOX` | kit `Sheet hero`, `Display 64`, `Lead` | done |
+| P2 | "Pay yearly" switch + "Compare all features" | "الأسعار شاملة ضريبة القيمة المضافة 14%" switch (on by default; consumer prices are shown with taxes, Consumer Protection Law 181/2018) + link to the comparison | engine totals | page-local `VatToggle` (`aria-pressed`, 44px target) | done |
+| P3 | Four plan cards: name, audience line, price, outline pill, hairline feature rows | تجربة 100 / انطلاق 500 / توسع 2,000 / جملة (above the configured instant maximum: سعر عند الطلب). Each card: per box, total, "saved by the 3% prepay discount", door-to-door days, no die on standard sizes, setup once, PDF proof, VAT receipt | `computePricingFacts().tiers`; maximum from pricing config | page-local tier card CSS, kit `Pill` | done |
+| P4 | "Always included" cards on `rgb(20,26,26)` | متضمن دائما: free 3D designer, PDF proof, vetted printers, VAT receipt, delivery to every governorate | product facts | kit `Reveal` | done |
+| P5 | "But wait, there's more" add-on card | Sample order: 5 digitally printed pieces, total incl. delivery and VAT, delivered in 4 days, credited within 60 days | checkout settings `sample` + `sampleOffer` | page-local | done |
+| P6 | Testimonial strip and big numbers | **Omitted on purpose**: it is social proof we do not have | n/a | n/a | omitted |
+| P7 | White compare sheet, sticky plan header, grouped rows | All five tiers + wholesale: per box, list total, prepay discount, subtotal, VAT 14%, total; setup, die, delivery; method, days, proof, receipt. Sticky header and sticky label column, horizontal scroll region on phone | `computePricingFacts` | page-local table | done |
+| P8 | Dark FAQ, big plus icons | 7 questions (delivery in the price, what changes the price, above 2,000, prepay, samples, quote validity, minimum), FAQPage JSON-LD | copy + live figures | kit `Faq` | done |
+| P9 | "Turn plans into progress" with email field | CTA with two pills (no data collected on this page) | n/a | kit `Pill` | done |
 
 ## 3. Page-local pieces (`src/components/marketing/why/`)
 
-Not forks of kit components; each is page-local and reads the foundation `--mk-*` tokens with the measured values as fallbacks, so the pages pick up the foundation tokens when they merge.
+Everything the kit ships is used from the kit (`Sheet`, `Display`, `Lead`, `HeroTitle`, `Pill`, `PillRow`, `Reveal`, `Glow`, `Marquee`, `StickyStory`, `CountUp`, `Faq`). Only these are page-local, none is a fork of a kit component:
 
-| File | Kind | Notes |
+| File | Kind | Why page-local |
 |---|---|---|
-| `pricing-facts.ts` | pure | the one computation (see §4) |
-| `server.ts` | server-only | loads pricing data, config and checkout settings exactly as checkout does |
-| `copy.ts` | strings | Arabic first, English twin; page-local so it cannot collide with the foundation's dictionary edits |
-| `why.module.css` | styles | sheets, type scale, pills, cards, mockups, motion with reduced-motion fallbacks |
-| `Ticker.tsx` | client | pausable ticker (SC 2.2.2) |
-| `StickyPoints.tsx` | client | active point by IntersectionObserver; static without JS |
-| `CountUp.tsx` | client | final value in the HTML; animates only with motion allowed |
-| `PrepayToggle.tsx` | client | toggles a data attribute; both totals are in the HTML |
-| `Mockups.tsx` | server | DOM UI mockups (price badge, checkout summary, tracking, device) |
+| `pricing-facts.ts` | pure | the one price computation for both pages (§4) |
+| `server.ts` | server-only | loads pricing data, pricing config and checkout settings exactly as checkout does |
+| `copy.ts` | strings | Arabic first, English twin; next to the pages so it cannot collide with the foundation's dictionary edits |
+| `Mockups.tsx` | server | DOM UI mockups fed only engine numbers: price badge, checkout summary, tracking timeline, printer match |
+| `VatToggle.tsx` | client | incl./excl. VAT switch; both figures are in the HTML, CSS shows one |
+| `DeferredImg.tsx` | client | decorative marquee thumbnails that load after `load` (phone LCP) |
+| `why.module.css` | styles | hero collage, ticker items, mockups, stats, segments, promise, tier cards, table; reads `--mk-*` tokens |
 
 ## 4. Price integrity
 
-Every price on both pages is computed per request from `loadPricingData()` + `loadPricingConfig()` + `loadCheckoutSettings()` (the checkout inputs) through `quote()` → `headlineOffer()` → `orderTotals()` / `sampleOffer()`. The unit test `src/components/marketing/why/__tests__/pricing-facts.test.ts` checks, for the same box, that each tier equals `toCheckoutOffer(quoteDesign-equivalent offer, prepayDiscountPct)` from the order service, and that the sample equals `sampleOffer` + `orderTotals(…, 0)`.
+- Every price is computed from `loadPricingData()` + `loadPricingConfig()` + `loadCheckoutSettings()` (the checkout loaders, not the 5-minute catalogue cache) through `quote()` → `headlineOffer()` (best match, the offer checkout pre-selects) → `orderTotals()` / `sampleOffer()`.
+- Every checkout payment method is online (card, wallet, Fawry, InstaPay), and checkout always applies the admin prepay discount. So the published total is the **prepaid** total, and per box is `round(pay.subtotal / quantity)`, the exact formula of the checkout offer card. An earlier draft showed a "pay on delivery" total, a price nobody can pay; removed.
+- Unit test `src/components/marketing/why/__tests__/pricing-facts.test.ts` (11 tests): for every tier, per box, subtotal, VAT, discount, list total, saving, delivery and days equal `toCheckoutOffer()` from the order service for the same box; the sample equals the checkout sample offer; the prepay % follows the admin setting; tiers stop at the configured instant maximum.
+- e2e `card prices equal the instant quote checkout uses`: signs in, calls `POST /api/quote` for the reference box at 100, 500 and 2,000, applies the returned `prepayDiscountPct` and 14% VAT, and compares to the card totals (ar + en, desktop + phone).
+- Freshness: the pages prerender with `revalidate = 60` and are purged at once by `purgeCatalogCache()` on every pricing-relevant edit (rate cards, pricing settings, price index, vendor status, and, added here, checkout settings). Per-request rendering was tried first and put the phone LCP at 3.4 s (the page streamed behind the shell's Suspense boundary after ~300 KB of flight data).
 
-## 5. Checks
+## 5. Findings fixed while building
 
-Filled in at the end of the work (see the final section).
+| id | severity | page | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R6W-01 | critical | pricing | First draft offered a "pay on delivery" total; no such payment method exists and checkout always applies the prepay discount, so the headline price was not the price charged | price integrity | publish the prepaid total and checkout's per-box formula; VAT toggle instead | fixed |
+| R6W-02 | high | why-elba | Phone LCP 3.39 s (ar) / 2.63 s (en) | budget LCP < 2.5 s | prerender + purge, 400w AVIF + phone preload, no opacity fade on the LCP render, deferred thumbnails | fixed (1.38 / 1.34 s) |
+| R6W-03 | high | pricing | Hydration mismatch: `[data-reveal]` inside the toggle's client island got `data-revealed` before hydration | correctness | tier cards animate with CSS only, no reveal attribute | fixed |
+| R6W-04 | medium | why-elba | Mock "next step" text 4.4:1 on its card | WCAG 2.2 SC 1.4.3 | #5c5c5c (6.6:1) | fixed |
+| R6W-05 | medium | why-elba | Promise copy first claimed "we reprint at our cost", stronger than the policy | no fabricated claims | worded as the returns policy (reprint or refund, your choice, within 30 days) with a link | fixed |
+| R6W-06 | medium | pricing | Phone table wrapped money onto two lines, caption cut off inside the scroller | SC 1.4.10 | nowrap cells, sticky label column, caption shown above the region (kept in `<caption>` for AT) | fixed |
+| R6W-07 | medium | both | Header links `#cafes`, `#beauty`, `#ecommerce`, `#faq` had no targets | navigation | segments sheet + FAQ sheet | fixed |
+| R6W-08 | low | pricing | Negative discount label rendered "(3%−)" in RTL | bidi | own label "خصم الدفع المسبق 3%", amounts through `formatMoney` (isolated minus) | fixed |
+
+## 6. Checks (final build)
+
+| Check | Result |
+|---|---|
+| `npm run lint` (incl. direct UI-kit imports rule) | 0 problems |
+| `npm run typecheck` | pass |
+| `npm test` | 108 files, 8,763 tests pass (incl. 11 new pricing-facts tests) |
+| `npm run build` | pass; both pages prerendered, revalidate 1 min |
+| `e2e/why-pricing.spec.ts` (ar + en × desktop + phone) | 18 / 18 pass |
+| axe (wcag2a/aa, 21a/aa, 22aa) on both pages, both locales, both viewports | 0 violations |
+| existing `storefront`, `a11y-routes`, `smoke` specs on the merged branch | 102 / 102 pass |
+| sitemap | `/ar|en/why-elba`, `/ar|en/pricing` with hreflang alternates |
+
+Performance (`docs/audit/tools/perf-pages.mjs`, phone = 390x844 DPR 2, 4x CPU, Slow 4G; data in `docs/audit/perf-data/r6-why.json`):
+
+| Page | Phone LCP | Phone CLS | Phone TBT | Desktop LCP | Desktop CLS |
+|---|---|---|---|---|---|
+| /ar/why-elba | 1.38 s | 0.008 | 490 to 590 ms | 0.36 s | 0 |
+| /en/why-elba | 1.34 s | 0 | 370 ms | 0.35 s | 0 |
+| /ar/pricing | 1.27 s | 0.011 | 440 to 470 ms | 0.18 s | 0 |
+| /en/pricing | 1.14 s | 0 | 360 to 390 ms | 0.18 s | 0 |
+
+Phone TBT is over the 200 ms target but matches the home page on the same build (290 to 550 ms): it is the shell's hydration (header islands, dictionary flight data), not these pages. Logged for the foundation owner.
+
+## 7. Outside this scope (smallest additive changes)
+
+- `src/components/admin/server/actions.ts`: one line, `purgeCatalogCache()` after saving checkout settings, so the prepay % and sample price reach the public pages at once.
+- `src/app/sitemap.ts`: two entries.
+- `docs/audit/tools/perf-pages.mjs`: two page entries.
+- Header and footer links were already in the foundation header (`/pricing`, `/why-elba`, `#cafes`, `#beauty`, `#ecommerce`, `#faq`); this branch adds the targets, not links.

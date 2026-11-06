@@ -16,7 +16,7 @@ import { Reveal } from "@/components/marketing/kit/Reveal";
 import { whyCopy } from "@/components/marketing/why/copy";
 import { loadWhyFacts } from "@/components/marketing/why/server";
 import { VatToggle } from "@/components/marketing/why/VatToggle";
-import { Faq } from "@/components/marketing/why/Faq";
+import { Faq } from "@/components/marketing/kit/Faq";
 import type { PriceTier } from "@/components/marketing/why/pricing-facts";
 import s from "@/components/marketing/why/why.module.css";
 
@@ -283,7 +283,7 @@ export default async function PricingPage({ params }: Props) {
         <Display size="44" id="pricing-faq" className={s.faqTitle}>
           {c.faqTitle}
         </Display>
-        <Faq items={faq} />
+        <Faq items={faq} name="pricing-faq" />
       </Sheet>
 
       {/* P9 closing CTA */}

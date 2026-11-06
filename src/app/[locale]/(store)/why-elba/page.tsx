@@ -15,14 +15,17 @@ import { renderSrc, srcSetFor } from "@/components/marketing/assets";
 import { startHref } from "@/components/marketing/MarketingHeader";
 import { Sheet } from "@/components/marketing/kit/Sheet";
 import { Display, Lead } from "@/components/marketing/kit/Display";
+import { HeroTitle } from "@/components/marketing/kit/HeroTitle";
+import { StickyStory } from "@/components/marketing/kit/StickyStory";
+import { Marquee } from "@/components/marketing/kit/Marquee";
+import { CountUp } from "@/components/marketing/kit/CountUp";
+import { Faq } from "@/components/marketing/kit/Faq";
+import { Glow } from "@/components/marketing/kit/Glow";
 import { Pill, PillRow } from "@/components/marketing/kit/Pill";
 import { Reveal } from "@/components/marketing/kit/Reveal";
 import { whyCopy } from "@/components/marketing/why/copy";
 import { loadWhyFacts } from "@/components/marketing/why/server";
-import { Ticker, type TickerItem } from "@/components/marketing/why/Ticker";
-import { StickyPoints } from "@/components/marketing/why/StickyPoints";
-import { CountUp } from "@/components/marketing/why/CountUp";
-import { Faq } from "@/components/marketing/why/Faq";
+import { DeferredImg } from "@/components/marketing/why/DeferredImg";
 import { MockCheckout, MockPrice, MockPrinters, MockTracking } from "@/components/marketing/why/Mockups";
 import s from "@/components/marketing/why/why.module.css";
 
@@ -90,12 +93,21 @@ export default async function WhyElbaPage({ params }: Props) {
   const boxName = f ? `${t(`structures.${f.box.code}` as DictKey)} ${formatDims(f.box.dims, locale)}` : "";
   const name = (code: StructureCode) => t(`structures.${code}` as DictKey);
 
-  // W2: our box styles (each with its render) interleaved with our finishes.
-  const items: TickerItem[] = [];
+  // W2: our box styles (each with its render) interleaved with our finishes (no company logos).
+  const items: { label: string; kind: string; img?: string }[] = [];
   BOX_STRUCTURE_LIST.slice(0, 12).forEach((st, i) => {
     items.push({ label: name(st.code), kind: c.tickerStyle, img: small(st.code).replace(/\.webp$/, ".avif") });
     if (i < TICKER_FINISHES.length) items.push({ label: t(`finishes.${TICKER_FINISHES[i]!}` as DictKey), kind: c.tickerFinish });
   });
+  const tickerItems = items.map((it, i) => (
+    <span key={i} className={s.tickItem}>
+      {it.img ? <DeferredImg src={it.img} width={56} height={56} className={s.tickImg} /> : <span className={s.tickDot} aria-hidden="true" />}
+      <span className={s.tickText}>
+        <span className={s.tickLabel}>{it.label}</span>
+        <span className={s.tickKind}>{it.kind}</span>
+      </span>
+    </span>
+  ));
 
   // W3: one screen per point (designer, printer match, order summary), all real UI / real numbers.
   const summaryLines = t500
@@ -134,7 +146,8 @@ export default async function WhyElbaPage({ params }: Props) {
       {/* W1 hero + W2 ticker */}
       <Sheet tone="dark" hero className={s.heroBand} aria-labelledby="why-h1">
         <div className={s.heroInner}>
-          <div className={s.glow} aria-hidden="true" />
+          <Glow color="violet" x="40%" y="45%" size="48vmax" />
+          <Glow color="green" x="62%" y="58%" size="40vmax" />
           <div className={s.collage} aria-hidden="true">
             <HeroRender className={s.c1} id="fefco-0427" priority />
             <HeroRender className={s.c2} id="rigid-box" />
@@ -144,14 +157,7 @@ export default async function WhyElbaPage({ params }: Props) {
             <img className={s.c4} src="/marketing/renders/ecma-rte.400w.webp" alt="" width={400} height={695} decoding="async" />
           </div>
           <div className={s.heroText}>
-            <Display as="h1" size="hero" align="center" id="why-h1" className={s.heroTitle}>
-              <span className={s.displayLine}>
-                <span className={s.displayLineInner}>{c.heroLine1}</span>
-              </span>
-              <span className={s.displayLine}>
-                <span className={s.displayLineInner}>{c.heroLine2}</span>
-              </span>
-            </Display>
+            <HeroTitle lines={[c.heroLine1, c.heroLine2]} size="hero" align="center" id="why-h1" />
             <p className={s.heroSub}>{c.heroSub}</p>
             <PillRow align="center" className={s.heroPills}>
               <Pill href={start} size="lg">
@@ -170,7 +176,7 @@ export default async function WhyElbaPage({ params }: Props) {
             </div>
           ) : null}
         </div>
-        <Ticker items={items} label={c.tickerLabel} pause={c.tickerPause} play={c.tickerPlay} />
+        <Marquee items={tickerItems} label={c.tickerLabel} pauseLabel={c.tickerPause} playLabel={c.tickerPlay} duration={49} gap="56px" className={s.ticker} />
       </Sheet>
 
       {/* W3 light sheet: sticky device + three points */}
@@ -181,7 +187,7 @@ export default async function WhyElbaPage({ params }: Props) {
           </Display>
           <Lead align="center">{c.pointsSub}</Lead>
         </Reveal>
-        <StickyPoints points={points} screens={screens} deviceLabel={c.deviceLabels.join(", ")} />
+        <StickyStory steps={points.map((x, i) => ({ id: `point-${i}`, title: x.title, body: x.body, media: screens[i] }))} mediaSide="end" />
       </Sheet>
 
       {/* W4 violet band: three UI mockup cards */}
@@ -384,7 +390,7 @@ export default async function WhyElbaPage({ params }: Props) {
         <Display size="44" id="why-faq" className={s.faqTitle}>
           {c.faqTitle}
         </Display>
-        <Faq items={faq} />
+        <Faq items={faq} name="why-faq" />
       </Sheet>
 
       {/* W7 closing CTA */}

@@ -6,20 +6,20 @@
   "url": "http://localhost:3100/ar/why-elba",
   "status": 200,
   "finalUrl": "http://localhost:3100/ar/why-elba",
-  "loadMs": 385,
-  "ttfb": 31.800000000279397,
-  "domContentLoaded": 234.3000000002794,
-  "loadEvent": 377.8000000002794,
-  "htmlTransfer": 135860,
-  "htmlDecoded": 641885,
-  "lcp": 384,
+  "loadMs": 372,
+  "ttfb": 20,
+  "domContentLoaded": 177.79999999981374,
+  "loadEvent": 368.90000000037253,
+  "htmlTransfer": 129660,
+  "htmlDecoded": 611674,
+  "lcp": 356,
   "lcpEl": "img.why_c1__3JFt_ [renders/fefco-0427.720w.avif] size=404511",
-  "fcp": 384,
+  "fcp": 356,
   "clsLoad": 0,
   "long": [
    {
-    "t": 287,
-    "d": 51
+    "t": 238,
+    "d": 59
    }
   ],
   "imgs": [
@@ -84,7 +84,7 @@
     "nh": 266,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
     "complete": true
@@ -95,7 +95,7 @@
     "nh": 314,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
     "complete": true
@@ -106,109 +106,109 @@
     "nh": 695,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
     "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/ecma-ste.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 608,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/pizza.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 231,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/sleeve.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 255,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/fefco-0320.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 265,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/ecma-clb.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 726,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/ecma-slb.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 581,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/fefco-0422.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 252,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/gable-box.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 475,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/paper-tube.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 691,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/fefco-0427.400w.avif",
@@ -216,10 +216,10 @@
     "nh": 266,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/fefco-0201.400w.avif",
@@ -227,10 +227,10 @@
     "nh": 314,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/ecma-rte.400w.avif",
@@ -238,109 +238,109 @@
     "nh": 695,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/ecma-ste.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 608,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/pizza.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 231,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/sleeve.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 255,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/fefco-0320.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 265,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/ecma-clb.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 726,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/ecma-slb.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 581,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/fefco-0422.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 252,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/gable-box.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 475,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/paper-tube.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 691,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/designer-ar.720w.webp",
@@ -357,8 +357,8 @@
     "src": "http://localhost:3100/marketing/designer-ar.720w.webp",
     "nw": 600,
     "nh": 375,
-    "w": 553,
-    "h": 346,
+    "w": 523,
+    "h": 327,
     "loading": "lazy",
     "fp": null,
     "inView": false,
@@ -384,7 +384,7 @@
     "loading": "lazy",
     "fp": null,
     "inView": false,
-    "complete": true
+    "complete": false
    },
    {
     "src": "http://localhost:3100/marketing/renders/fefco-0427.400w.webp",
@@ -409,16 +409,14 @@
     "complete": false
    }
   ],
-  "domNodes": 1046,
+  "domNodes": 1096,
   "canvases": 0,
-  "inlineCss": 190291,
+  "inlineCss": 177096,
   "inlineStyleTags": 1,
-  "rsc": 361012,
-  "rscCss": 190291,
+  "rsc": 353463,
+  "rscCss": 177096,
   "fontsLoaded": [
    "Inter 100 900",
-   "IBM Plex Sans Arabic 400",
-   "Noto Sans Arabic 100 900",
    "Noto Sans Arabic 100 900"
   ],
   "cls": 0,
@@ -426,45 +424,37 @@
   "inp": 24,
   "inpDetail": [
    {
-    "id": 5117,
+    "id": 3453,
     "name": "pointerdown",
     "d": 24,
-    "input": 2,
+    "input": 6,
     "proc": 1,
     "target": "null"
    },
    {
-    "id": 5124,
+    "id": 3460,
     "name": "keydown",
     "d": 24,
     "input": 0,
     "proc": 0,
-    "target": "button.why_tickToggle__FW50v"
-   },
-   {
-    "id": 5131,
-    "name": "keydown",
-    "d": 16,
-    "input": 0,
-    "proc": 1,
-    "target": "button.why_tickToggle__FW50v"
+    "target": "button.kit_iconPill__9Tuga"
    }
   ],
   "clicks": 1,
   "longTasks": 1,
-  "longTaskMax": 51,
-  "tbt": 1,
-  "tbtLoad": 1,
+  "longTaskMax": 59,
+  "tbt": 9,
+  "tbtLoad": 9,
   "bytes": {
-   "total": 2068339,
-   "js": 264630,
+   "total": 1431318,
+   "js": 308275,
    "css": 0,
-   "img": 269644,
-   "font": 354372,
-   "doc": 136848,
-   "fetch": 1042350
+   "img": 218263,
+   "font": 322105,
+   "doc": 130616,
+   "fetch": 451564
   },
-  "requests": 92,
+  "requests": 82,
   "js": [
    {
     "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
@@ -475,40 +465,48 @@
     "b": 47430
    },
    {
+    "f": "/_next/static/chunks/7398-4f17a9a0c05e267d.js",
+    "b": 29113
+   },
+   {
+    "f": "/_next/static/chunks/8734-72cd3d8fa3f6c0cf.js",
+    "b": 14032
+   },
+   {
     "f": "/_next/static/chunks/1898-0fb042056b9d4885.js",
     "b": 11988
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-023f7ef37d3f7b85.js",
-    "b": 7514
+    "f": "/_next/static/chunks/1440-19eb3e0d0613e815.js",
+    "b": 8432
    },
    {
     "f": "/_next/static/chunks/4240-15f5f143528f3191.js",
     "b": 7092
    },
    {
-    "f": "/_next/static/chunks/8166-e41843046607bbf2.js",
-    "b": 7034
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-cbcc2377d80a0f12.js",
+    "b": 7073
    },
    {
-    "f": "/_next/static/chunks/302-a32451ac89a79cdb.js",
-    "b": 7032
+    "f": "/_next/static/chunks/4861-b210caaadd55a558.js",
+    "b": 6952
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/boxes/(list)/loading-e9ee6920ce2b3c99.js",
-    "b": 6990
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/pricing/page-e0c49a2f2d8569a9.js",
+    "b": 6487
    },
    {
-    "f": "/_next/static/chunks/1640-88ddc86664a9bfb1.js",
-    "b": 6468
+    "f": "/_next/static/chunks/8166-46721bcebd720413.js",
+    "b": 6419
    },
    {
-    "f": "/_next/static/chunks/8895-5f87ec9e758bb304.js",
-    "b": 6427
+    "f": "/_next/static/chunks/302-eaf483ce0fb94047.js",
+    "b": 6409
    },
    {
-    "f": "/_next/static/chunks/8152-98b9b5a7dfe1b2aa.js",
-    "b": 6067
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/boxes/(list)/loading-1e4266cd651a4592.js",
+    "b": 6373
    },
    {
     "f": "/_next/static/chunks/app/%5Blocale%5D/orders/not-found-4ff518624c0c2188.js",
@@ -523,6 +521,10 @@
     "b": 6007
    },
    {
+    "f": "/_next/static/chunks/1640-012c98289096522b.js",
+    "b": 5845
+   },
+   {
     "f": "/_next/static/chunks/9001-0fe9b97098b095cf.js",
     "b": 5212
    },
@@ -531,8 +533,8 @@
     "b": 5210
    },
    {
-    "f": "/_next/static/chunks/webpack-89c79a8ee8d80e42.js",
-    "b": 4783
+    "f": "/_next/static/chunks/webpack-8b2f975c7584fb8d.js",
+    "b": 4782
    },
    {
     "f": "/_next/static/chunks/8467-d020726048cb3218.js",
@@ -563,20 +565,16 @@
     "b": 3723
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/boxes/%5Bstructure%5D/(overview)/page-1ce91c09a0da46c3.js",
-    "b": 3603
-   },
-   {
     "f": "/_next/static/chunks/app/%5Blocale%5D/vendor/layout-db49a76eb331f78b.js",
     "b": 3242
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/page-5ba4330346d07f6b.js",
-    "b": 2980
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/why-elba/page-85c540531c4f9754.js",
+    "b": 3107
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/why-elba/page-e867307d032aaf7f.js",
-    "b": 2869
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/page-5ba4330346d07f6b.js",
+    "b": 2980
    },
    {
     "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/boxes/(list)/page-bf99773c7d9150d5.js",
@@ -591,12 +589,8 @@
     "b": 2172
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-89b919d62ccd5fd6.js",
-    "b": 1764
-   },
-   {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/pricing/page-996d9aaaba2219d8.js",
-    "b": 1518
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-c836e77ea9089959.js",
+    "b": 1775
    },
    {
     "f": "/_next/static/chunks/main-app-c659b7c05baec7d9.js",
@@ -629,10 +623,6 @@
    {
     "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/not-found-4ef0f291ff4f7f10.js",
     "b": 1085
-   },
-   {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/boxes/%5Bstructure%5D/not-found-a21a2e3ede1a72eb.js",
-    "b": 1085
    }
   ],
   "images": [
@@ -640,11 +630,6 @@
     "f": "/marketing/renders/fefco-0427.webp",
     "mime": "image/webp",
     "b": 39425
-   },
-   {
-    "f": "/marketing/renders/fefco-0201.720w.webp",
-    "mime": "image/webp",
-    "b": 22939
    },
    {
     "f": "/marketing/renders/paper-tube.400w.webp",
@@ -662,24 +647,9 @@
     "b": 13522
    },
    {
-    "f": "/marketing/renders/gable-box.avif",
-    "mime": "image/avif",
-    "b": 13471
-   },
-   {
     "f": "/marketing/designer-ar.720w.webp",
     "mime": "image/webp",
     "b": 13331
-   },
-   {
-    "f": "/marketing/renders/fefco-0427.400w.webp",
-    "mime": "image/webp",
-    "b": 13099
-   },
-   {
-    "f": "/marketing/renders/ecma-rte.avif",
-    "mime": "image/avif",
-    "b": 12909
    },
    {
     "f": "/marketing/renders/fefco-0427.720w.avif",
@@ -692,19 +662,14 @@
     "b": 11650
    },
    {
-    "f": "/marketing/renders/pizza.400w.webp",
-    "mime": "image/webp",
-    "b": 10604
-   },
-   {
     "f": "/marketing/renders/ecma-ste.400w.avif",
     "mime": "image/avif",
     "b": 10513
    },
    {
-    "f": "/marketing/renders/sleeve.720w.avif",
+    "f": "/marketing/renders/ecma-clb.400w.avif",
     "mime": "image/avif",
-    "b": 10390
+    "b": 10454
    },
    {
     "f": "/marketing/renders/ecma-rte.400w.avif",
@@ -712,19 +677,19 @@
     "b": 10379
    },
    {
-    "f": "/marketing/renders/fefco-0201.720w.avif",
+    "f": "/marketing/renders/ecma-slb.400w.avif",
     "mime": "image/avif",
-    "b": 9997
+    "b": 10319
    },
    {
-    "f": "/marketing/renders/pizza.720w.avif",
+    "f": "/marketing/renders/paper-tube.400w.avif",
     "mime": "image/avif",
-    "b": 9961
+    "b": 9104
    },
    {
-    "f": "/marketing/renders/paper-tube.avif",
+    "f": "/marketing/renders/gable-box.400w.avif",
     "mime": "image/avif",
-    "b": 9449
+    "b": 8803
    },
    {
     "f": "/marketing/renders/fefco-0427.400w.avif",
@@ -732,9 +697,29 @@
     "b": 6775
    },
    {
+    "f": "/marketing/renders/sleeve.400w.avif",
+    "mime": "image/avif",
+    "b": 6166
+   },
+   {
+    "f": "/marketing/renders/fefco-0320.400w.avif",
+    "mime": "image/avif",
+    "b": 5915
+   },
+   {
     "f": "/marketing/renders/fefco-0201.400w.avif",
     "mime": "image/avif",
     "b": 5791
+   },
+   {
+    "f": "/marketing/renders/pizza.400w.avif",
+    "mime": "image/avif",
+    "b": 5779
+   },
+   {
+    "f": "/marketing/renders/fefco-0422.400w.avif",
+    "mime": "image/avif",
+    "b": 4898
    }
   ],
   "fonts": [
@@ -747,20 +732,16 @@
     "b": 167053
    },
    {
-    "f": "b8c807255d58fc43-s.woff2",
-    "b": 32267
-   },
-   {
     "f": "9da48a48bf6500f8-s.woff2",
     "b": 34411
    },
    {
-    "f": "e4efb0298547fad0-s.woff2",
-    "b": 36783
-   },
-   {
     "f": "fb66eb17bf011c3b-s.woff2",
     "b": 34527
+   },
+   {
+    "f": "e4efb0298547fad0-s.woff2",
+    "b": 36783
    }
   ]
  },
@@ -771,17 +752,22 @@
   "url": "http://localhost:3100/ar/pricing",
   "status": 200,
   "finalUrl": "http://localhost:3100/ar/pricing",
-  "loadMs": 237,
-  "ttfb": 13.799999999813735,
-  "domContentLoaded": 127.89999999990687,
-  "loadEvent": 232.09999999962747,
-  "htmlTransfer": 131646,
-  "htmlDecoded": 627527,
-  "lcp": 236,
-  "lcpEl": "h1#pricing-h1.kit_display__KDIs_.kit_size-64__dqx7i size=73980",
-  "fcp": 236,
+  "loadMs": 243,
+  "ttfb": 13.700000000186265,
+  "domContentLoaded": 98.29999999981374,
+  "loadEvent": 239.40000000037253,
+  "htmlTransfer": 124240,
+  "htmlDecoded": 584980,
+  "lcp": 184,
+  "lcpEl": "h1#pricing-h1.kit_display__KDIs_.kit_size-64__dqx7i size=42812",
+  "fcp": 184,
   "clsLoad": 0,
-  "long": [],
+  "long": [
+   {
+    "t": 109,
+    "d": 52
+   }
+  ],
   "imgs": [
    {
     "src": "http://localhost:3100/marketing/renders/fefco-0427.webp",
@@ -797,14 +783,12 @@
   ],
   "domNodes": 849,
   "canvases": 0,
-  "inlineCss": 190291,
+  "inlineCss": 177096,
   "inlineStyleTags": 1,
-  "rsc": 357969,
-  "rscCss": 190291,
+  "rsc": 342223,
+  "rscCss": 177096,
   "fontsLoaded": [
    "Inter 100 900",
-   "IBM Plex Sans Arabic 400",
-   "Noto Sans Arabic 100 900",
    "Noto Sans Arabic 100 900"
   ],
   "cls": 0,
@@ -812,29 +796,29 @@
   "inp": 16,
   "inpDetail": [
    {
-    "id": 1832,
+    "id": 9242,
     "name": "pointerdown",
     "d": 16,
-    "input": 1,
+    "input": 2,
     "proc": 1,
     "target": "span"
    }
   ],
   "clicks": 1,
-  "longTasks": 0,
-  "longTaskMax": 0,
-  "tbt": 0,
-  "tbtLoad": 0,
+  "longTasks": 1,
+  "longTaskMax": 52,
+  "tbt": 2,
+  "tbtLoad": 2,
   "bytes": {
-   "total": 1267715,
-   "js": 259942,
+   "total": 1261383,
+   "js": 308275,
    "css": 0,
    "img": 57850,
-   "font": 354372,
-   "doc": 132608,
-   "fetch": 462448
+   "font": 322105,
+   "doc": 125195,
+   "fetch": 447463
   },
-  "requests": 65,
+  "requests": 66,
   "js": [
    {
     "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
@@ -845,40 +829,48 @@
     "b": 47430
    },
    {
+    "f": "/_next/static/chunks/7398-4f17a9a0c05e267d.js",
+    "b": 29113
+   },
+   {
+    "f": "/_next/static/chunks/8734-72cd3d8fa3f6c0cf.js",
+    "b": 14032
+   },
+   {
     "f": "/_next/static/chunks/1898-0fb042056b9d4885.js",
     "b": 11988
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-023f7ef37d3f7b85.js",
-    "b": 7514
+    "f": "/_next/static/chunks/1440-19eb3e0d0613e815.js",
+    "b": 8432
    },
    {
     "f": "/_next/static/chunks/4240-15f5f143528f3191.js",
     "b": 7092
    },
    {
-    "f": "/_next/static/chunks/8166-e41843046607bbf2.js",
-    "b": 7034
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-cbcc2377d80a0f12.js",
+    "b": 7073
    },
    {
-    "f": "/_next/static/chunks/302-a32451ac89a79cdb.js",
-    "b": 7032
+    "f": "/_next/static/chunks/4861-b210caaadd55a558.js",
+    "b": 6952
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/boxes/(list)/loading-e9ee6920ce2b3c99.js",
-    "b": 6990
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/pricing/page-e0c49a2f2d8569a9.js",
+    "b": 6487
    },
    {
-    "f": "/_next/static/chunks/1640-88ddc86664a9bfb1.js",
-    "b": 6468
+    "f": "/_next/static/chunks/8166-46721bcebd720413.js",
+    "b": 6419
    },
    {
-    "f": "/_next/static/chunks/8895-5f87ec9e758bb304.js",
-    "b": 6427
+    "f": "/_next/static/chunks/302-eaf483ce0fb94047.js",
+    "b": 6409
    },
    {
-    "f": "/_next/static/chunks/8152-98b9b5a7dfe1b2aa.js",
-    "b": 6067
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/boxes/(list)/loading-1e4266cd651a4592.js",
+    "b": 6373
    },
    {
     "f": "/_next/static/chunks/app/%5Blocale%5D/orders/not-found-4ff518624c0c2188.js",
@@ -893,6 +885,10 @@
     "b": 6007
    },
    {
+    "f": "/_next/static/chunks/1640-012c98289096522b.js",
+    "b": 5845
+   },
+   {
     "f": "/_next/static/chunks/9001-0fe9b97098b095cf.js",
     "b": 5212
    },
@@ -901,8 +897,8 @@
     "b": 5210
    },
    {
-    "f": "/_next/static/chunks/webpack-89c79a8ee8d80e42.js",
-    "b": 4783
+    "f": "/_next/static/chunks/webpack-8b2f975c7584fb8d.js",
+    "b": 4782
    },
    {
     "f": "/_next/static/chunks/8467-d020726048cb3218.js",
@@ -937,12 +933,12 @@
     "b": 3242
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/page-5ba4330346d07f6b.js",
-    "b": 2980
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/why-elba/page-85c540531c4f9754.js",
+    "b": 3107
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/why-elba/page-e867307d032aaf7f.js",
-    "b": 2869
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/page-5ba4330346d07f6b.js",
+    "b": 2980
    },
    {
     "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/boxes/(list)/page-bf99773c7d9150d5.js",
@@ -957,12 +953,8 @@
     "b": 2172
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-89b919d62ccd5fd6.js",
-    "b": 1764
-   },
-   {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/pricing/page-996d9aaaba2219d8.js",
-    "b": 1518
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-c836e77ea9089959.js",
+    "b": 1775
    },
    {
     "f": "/_next/static/chunks/main-app-c659b7c05baec7d9.js",
@@ -989,11 +981,11 @@
     "b": 1085
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/catalog/not-found-06aa1cda66d2c217.js",
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/not-found-4ef0f291ff4f7f10.js",
     "b": 1085
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/not-found-4ef0f291ff4f7f10.js",
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/catalog/not-found-06aa1cda66d2c217.js",
     "b": 1085
    }
   ],
@@ -1028,10 +1020,6 @@
     "b": 34411
    },
    {
-    "f": "b8c807255d58fc43-s.woff2",
-    "b": 32267
-   },
-   {
     "f": "e4efb0298547fad0-s.woff2",
     "b": 36783
    },
@@ -1048,20 +1036,20 @@
   "url": "http://localhost:3100/en/why-elba",
   "status": 200,
   "finalUrl": "http://localhost:3100/en/why-elba",
-  "loadMs": 363,
-  "ttfb": 19.399999999906868,
-  "domContentLoaded": 150.60000000009313,
-  "loadEvent": 360.79999999981374,
-  "htmlTransfer": 129382,
-  "htmlDecoded": 602292,
-  "lcp": 296,
+  "loadMs": 413,
+  "ttfb": 22.300000000745058,
+  "domContentLoaded": 127.40000000037253,
+  "loadEvent": 409.90000000037253,
+  "htmlTransfer": 123352,
+  "htmlDecoded": 573331,
+  "lcp": 348,
   "lcpEl": "img.why_c1__3JFt_ [renders/fefco-0427.720w.avif] size=408214",
-  "fcp": 296,
+  "fcp": 348,
   "clsLoad": 0,
   "long": [
    {
-    "t": 286,
-    "d": 65
+    "t": 336,
+    "d": 67
    }
   ],
   "imgs": [
@@ -1126,7 +1114,7 @@
     "nh": 266,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
     "complete": true
@@ -1137,7 +1125,7 @@
     "nh": 314,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
     "complete": true
@@ -1148,109 +1136,109 @@
     "nh": 695,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
     "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/ecma-ste.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 608,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/pizza.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 231,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/sleeve.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 255,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/fefco-0320.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 265,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/ecma-clb.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 726,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/ecma-slb.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 581,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/fefco-0422.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 252,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/gable-box.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 475,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/paper-tube.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 691,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/fefco-0427.400w.avif",
@@ -1258,10 +1246,10 @@
     "nh": 266,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/fefco-0201.400w.avif",
@@ -1269,10 +1257,10 @@
     "nh": 314,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/ecma-rte.400w.avif",
@@ -1280,109 +1268,109 @@
     "nh": 695,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/ecma-ste.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 608,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/pizza.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 231,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/sleeve.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 255,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/fefco-0320.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 265,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/ecma-clb.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 726,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/ecma-slb.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 581,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/fefco-0422.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 252,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/gable-box.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 475,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/paper-tube.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 691,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/designer-en.720w.webp",
@@ -1399,8 +1387,8 @@
     "src": "http://localhost:3100/marketing/designer-en.720w.webp",
     "nw": 600,
     "nh": 375,
-    "w": 553,
-    "h": 346,
+    "w": 523,
+    "h": 327,
     "loading": "lazy",
     "fp": null,
     "inView": false,
@@ -1451,52 +1439,51 @@
     "complete": false
    }
   ],
-  "domNodes": 1045,
+  "domNodes": 1102,
   "canvases": 0,
-  "inlineCss": 190291,
+  "inlineCss": 177096,
   "inlineStyleTags": 1,
-  "rsc": 326703,
-  "rscCss": 190291,
+  "rsc": 319878,
+  "rscCss": 177096,
   "fontsLoaded": [
-   "Inter 100 900",
-   "Noto Sans Arabic 100 900"
+   "Inter 100 900"
   ],
   "cls": 0,
   "shifts": [],
-  "inp": 16,
+  "inp": 24,
   "inpDetail": [
    {
-    "id": 5056,
+    "id": 3977,
     "name": "pointerdown",
-    "d": 16,
+    "d": 24,
     "input": 2,
     "proc": 1,
     "target": "null"
    },
    {
-    "id": 5070,
+    "id": 3991,
     "name": "keydown",
     "d": 16,
     "input": 0,
-    "proc": 2,
-    "target": "button.why_tickToggle__FW50v"
+    "proc": 1,
+    "target": "button.kit_iconPill__9Tuga"
    }
   ],
   "clicks": 1,
   "longTasks": 1,
-  "longTaskMax": 65,
-  "tbt": 15,
-  "tbtLoad": 15,
+  "longTaskMax": 67,
+  "tbt": 17,
+  "tbtLoad": 17,
   "bytes": {
-   "total": 1837021,
-   "js": 264630,
+   "total": 1119203,
+   "js": 308275,
    "css": 0,
-   "img": 259651,
-   "font": 216384,
-   "doc": 130362,
-   "fetch": 965499
+   "img": 218783,
+   "font": 49331,
+   "doc": 124309,
+   "fetch": 418010
   },
-  "requests": 87,
+  "requests": 78,
   "js": [
    {
     "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
@@ -1507,40 +1494,48 @@
     "b": 47430
    },
    {
+    "f": "/_next/static/chunks/7398-4f17a9a0c05e267d.js",
+    "b": 29113
+   },
+   {
+    "f": "/_next/static/chunks/8734-72cd3d8fa3f6c0cf.js",
+    "b": 14032
+   },
+   {
     "f": "/_next/static/chunks/1898-0fb042056b9d4885.js",
     "b": 11988
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-023f7ef37d3f7b85.js",
-    "b": 7514
+    "f": "/_next/static/chunks/1440-19eb3e0d0613e815.js",
+    "b": 8432
    },
    {
     "f": "/_next/static/chunks/4240-15f5f143528f3191.js",
     "b": 7092
    },
    {
-    "f": "/_next/static/chunks/8166-e41843046607bbf2.js",
-    "b": 7034
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-cbcc2377d80a0f12.js",
+    "b": 7073
    },
    {
-    "f": "/_next/static/chunks/302-a32451ac89a79cdb.js",
-    "b": 7032
+    "f": "/_next/static/chunks/4861-b210caaadd55a558.js",
+    "b": 6952
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/boxes/(list)/loading-e9ee6920ce2b3c99.js",
-    "b": 6990
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/pricing/page-e0c49a2f2d8569a9.js",
+    "b": 6487
    },
    {
-    "f": "/_next/static/chunks/1640-88ddc86664a9bfb1.js",
-    "b": 6468
+    "f": "/_next/static/chunks/8166-46721bcebd720413.js",
+    "b": 6419
    },
    {
-    "f": "/_next/static/chunks/8895-5f87ec9e758bb304.js",
-    "b": 6427
+    "f": "/_next/static/chunks/302-eaf483ce0fb94047.js",
+    "b": 6409
    },
    {
-    "f": "/_next/static/chunks/8152-98b9b5a7dfe1b2aa.js",
-    "b": 6067
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/boxes/(list)/loading-1e4266cd651a4592.js",
+    "b": 6373
    },
    {
     "f": "/_next/static/chunks/app/%5Blocale%5D/orders/not-found-4ff518624c0c2188.js",
@@ -1555,6 +1550,10 @@
     "b": 6007
    },
    {
+    "f": "/_next/static/chunks/1640-012c98289096522b.js",
+    "b": 5845
+   },
+   {
     "f": "/_next/static/chunks/9001-0fe9b97098b095cf.js",
     "b": 5212
    },
@@ -1563,8 +1562,8 @@
     "b": 5210
    },
    {
-    "f": "/_next/static/chunks/webpack-89c79a8ee8d80e42.js",
-    "b": 4783
+    "f": "/_next/static/chunks/webpack-8b2f975c7584fb8d.js",
+    "b": 4782
    },
    {
     "f": "/_next/static/chunks/8467-d020726048cb3218.js",
@@ -1595,20 +1594,16 @@
     "b": 3723
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/boxes/%5Bstructure%5D/(overview)/page-1ce91c09a0da46c3.js",
-    "b": 3603
-   },
-   {
     "f": "/_next/static/chunks/app/%5Blocale%5D/vendor/layout-db49a76eb331f78b.js",
     "b": 3242
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/page-5ba4330346d07f6b.js",
-    "b": 2980
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/why-elba/page-85c540531c4f9754.js",
+    "b": 3107
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/why-elba/page-e867307d032aaf7f.js",
-    "b": 2869
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/page-5ba4330346d07f6b.js",
+    "b": 2980
    },
    {
     "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/boxes/(list)/page-bf99773c7d9150d5.js",
@@ -1623,12 +1618,8 @@
     "b": 2172
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-89b919d62ccd5fd6.js",
-    "b": 1764
-   },
-   {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/pricing/page-996d9aaaba2219d8.js",
-    "b": 1518
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-c836e77ea9089959.js",
+    "b": 1775
    },
    {
     "f": "/_next/static/chunks/main-app-c659b7c05baec7d9.js",
@@ -1661,10 +1652,6 @@
    {
     "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/not-found-4ef0f291ff4f7f10.js",
     "b": 1085
-   },
-   {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/boxes/%5Bstructure%5D/not-found-a21a2e3ede1a72eb.js",
-    "b": 1085
    }
   ],
   "images": [
@@ -1672,11 +1659,6 @@
     "f": "/marketing/renders/fefco-0427.webp",
     "mime": "image/webp",
     "b": 39425
-   },
-   {
-    "f": "/marketing/renders/fefco-0201.720w.webp",
-    "mime": "image/webp",
-    "b": 22939
    },
    {
     "f": "/marketing/renders/paper-tube.400w.webp",
@@ -1699,21 +1681,6 @@
     "b": 13522
    },
    {
-    "f": "/marketing/renders/gable-box.avif",
-    "mime": "image/avif",
-    "b": 13471
-   },
-   {
-    "f": "/marketing/renders/fefco-0427.400w.webp",
-    "mime": "image/webp",
-    "b": 13099
-   },
-   {
-    "f": "/marketing/renders/ecma-rte.avif",
-    "mime": "image/avif",
-    "b": 12909
-   },
-   {
     "f": "/marketing/renders/fefco-0427.720w.avif",
     "mime": "image/avif",
     "b": 11835
@@ -1724,14 +1691,14 @@
     "b": 11650
    },
    {
-    "f": "/marketing/renders/pizza.400w.webp",
-    "mime": "image/webp",
-    "b": 10604
+    "f": "/marketing/renders/ecma-ste.400w.avif",
+    "mime": "image/avif",
+    "b": 10513
    },
    {
-    "f": "/marketing/renders/sleeve.720w.avif",
+    "f": "/marketing/renders/ecma-clb.400w.avif",
     "mime": "image/avif",
-    "b": 10390
+    "b": 10454
    },
    {
     "f": "/marketing/renders/ecma-rte.400w.avif",
@@ -1739,19 +1706,19 @@
     "b": 10379
    },
    {
-    "f": "/marketing/renders/fefco-0201.720w.avif",
+    "f": "/marketing/renders/ecma-slb.400w.avif",
     "mime": "image/avif",
-    "b": 9997
+    "b": 10319
    },
    {
-    "f": "/marketing/renders/pizza.720w.avif",
+    "f": "/marketing/renders/paper-tube.400w.avif",
     "mime": "image/avif",
-    "b": 9961
+    "b": 9104
    },
    {
-    "f": "/marketing/renders/paper-tube.avif",
+    "f": "/marketing/renders/gable-box.400w.avif",
     "mime": "image/avif",
-    "b": 9449
+    "b": 8803
    },
    {
     "f": "/marketing/renders/fefco-0427.400w.avif",
@@ -1759,19 +1726,35 @@
     "b": 6775
    },
    {
+    "f": "/marketing/renders/sleeve.400w.avif",
+    "mime": "image/avif",
+    "b": 6166
+   },
+   {
+    "f": "/marketing/renders/fefco-0320.400w.avif",
+    "mime": "image/avif",
+    "b": 5915
+   },
+   {
     "f": "/marketing/renders/fefco-0201.400w.avif",
     "mime": "image/avif",
     "b": 5791
+   },
+   {
+    "f": "/marketing/renders/pizza.400w.avif",
+    "mime": "image/avif",
+    "b": 5779
+   },
+   {
+    "f": "/marketing/renders/fefco-0422.400w.avif",
+    "mime": "image/avif",
+    "b": 4898
    }
   ],
   "fonts": [
    {
     "f": "e4af272ccee01ff0-s.woff2",
     "b": 49331
-   },
-   {
-    "f": "b261c59b2d76913d-s.woff2",
-    "b": 167053
    }
   ]
  },
@@ -1782,22 +1765,17 @@
   "url": "http://localhost:3100/en/pricing",
   "status": 200,
   "finalUrl": "http://localhost:3100/en/pricing",
-  "loadMs": 236,
-  "ttfb": 11.299999999813735,
-  "domContentLoaded": 98.79999999981374,
-  "loadEvent": 233.1999999997206,
-  "htmlTransfer": 125665,
-  "htmlDecoded": 588845,
+  "loadMs": 216,
+  "ttfb": 12.099999999627471,
+  "domContentLoaded": 128.79999999981374,
+  "loadEvent": 213.40000000037253,
+  "htmlTransfer": 118543,
+  "htmlDecoded": 547476,
   "lcp": 180,
   "lcpEl": "h1#pricing-h1.kit_display__KDIs_.kit_size-64__dqx7i size=43274",
   "fcp": 180,
   "clsLoad": 0,
-  "long": [
-   {
-    "t": 170,
-    "d": 56
-   }
-  ],
+  "long": [],
   "imgs": [
    {
     "src": "http://localhost:3100/marketing/renders/fefco-0427.webp",
@@ -1811,22 +1789,21 @@
     "complete": true
    }
   ],
-  "domNodes": 847,
+  "domNodes": 844,
   "canvases": 0,
-  "inlineCss": 190291,
+  "inlineCss": 177096,
   "inlineStyleTags": 1,
-  "rsc": 323922,
-  "rscCss": 190291,
+  "rsc": 308878,
+  "rscCss": 177096,
   "fontsLoaded": [
-   "Inter 100 900",
-   "Noto Sans Arabic 100 900"
+   "Inter 100 900"
   ],
   "cls": 0,
   "shifts": [],
   "inp": 16,
   "inpDetail": [
    {
-    "id": 2880,
+    "id": 8219,
     "name": "pointerdown",
     "d": 16,
     "input": 2,
@@ -1835,20 +1812,20 @@
    }
   ],
   "clicks": 1,
-  "longTasks": 1,
-  "longTaskMax": 56,
-  "tbt": 6,
-  "tbtLoad": 6,
+  "longTasks": 0,
+  "longTaskMax": 0,
+  "tbt": 0,
+  "tbtLoad": 0,
   "bytes": {
-   "total": 1157569,
-   "js": 259942,
+   "total": 955538,
+   "js": 308275,
    "css": 0,
    "img": 57850,
-   "font": 216384,
-   "doc": 126620,
-   "fetch": 496278
+   "font": 49331,
+   "doc": 119497,
+   "fetch": 420090
   },
-  "requests": 61,
+  "requests": 62,
   "js": [
    {
     "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
@@ -1859,40 +1836,48 @@
     "b": 47430
    },
    {
+    "f": "/_next/static/chunks/7398-4f17a9a0c05e267d.js",
+    "b": 29113
+   },
+   {
+    "f": "/_next/static/chunks/8734-72cd3d8fa3f6c0cf.js",
+    "b": 14032
+   },
+   {
     "f": "/_next/static/chunks/1898-0fb042056b9d4885.js",
     "b": 11988
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-023f7ef37d3f7b85.js",
-    "b": 7514
+    "f": "/_next/static/chunks/1440-19eb3e0d0613e815.js",
+    "b": 8432
    },
    {
     "f": "/_next/static/chunks/4240-15f5f143528f3191.js",
     "b": 7092
    },
    {
-    "f": "/_next/static/chunks/8166-e41843046607bbf2.js",
-    "b": 7034
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-cbcc2377d80a0f12.js",
+    "b": 7073
    },
    {
-    "f": "/_next/static/chunks/302-a32451ac89a79cdb.js",
-    "b": 7032
+    "f": "/_next/static/chunks/4861-b210caaadd55a558.js",
+    "b": 6952
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/boxes/(list)/loading-e9ee6920ce2b3c99.js",
-    "b": 6990
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/pricing/page-e0c49a2f2d8569a9.js",
+    "b": 6487
    },
    {
-    "f": "/_next/static/chunks/1640-88ddc86664a9bfb1.js",
-    "b": 6468
+    "f": "/_next/static/chunks/8166-46721bcebd720413.js",
+    "b": 6419
    },
    {
-    "f": "/_next/static/chunks/8895-5f87ec9e758bb304.js",
-    "b": 6427
+    "f": "/_next/static/chunks/302-eaf483ce0fb94047.js",
+    "b": 6409
    },
    {
-    "f": "/_next/static/chunks/8152-98b9b5a7dfe1b2aa.js",
-    "b": 6067
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/boxes/(list)/loading-1e4266cd651a4592.js",
+    "b": 6373
    },
    {
     "f": "/_next/static/chunks/app/%5Blocale%5D/orders/not-found-4ff518624c0c2188.js",
@@ -1907,6 +1892,10 @@
     "b": 6007
    },
    {
+    "f": "/_next/static/chunks/1640-012c98289096522b.js",
+    "b": 5845
+   },
+   {
     "f": "/_next/static/chunks/9001-0fe9b97098b095cf.js",
     "b": 5212
    },
@@ -1915,8 +1904,8 @@
     "b": 5210
    },
    {
-    "f": "/_next/static/chunks/webpack-89c79a8ee8d80e42.js",
-    "b": 4783
+    "f": "/_next/static/chunks/webpack-8b2f975c7584fb8d.js",
+    "b": 4782
    },
    {
     "f": "/_next/static/chunks/8467-d020726048cb3218.js",
@@ -1951,12 +1940,12 @@
     "b": 3242
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/page-5ba4330346d07f6b.js",
-    "b": 2980
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/why-elba/page-85c540531c4f9754.js",
+    "b": 3107
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/why-elba/page-e867307d032aaf7f.js",
-    "b": 2869
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/catalog/(list)/page-5ba4330346d07f6b.js",
+    "b": 2980
    },
    {
     "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/boxes/(list)/page-bf99773c7d9150d5.js",
@@ -1971,12 +1960,8 @@
     "b": 2172
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-89b919d62ccd5fd6.js",
-    "b": 1764
-   },
-   {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/pricing/page-996d9aaaba2219d8.js",
-    "b": 1518
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-c836e77ea9089959.js",
+    "b": 1775
    },
    {
     "f": "/_next/static/chunks/main-app-c659b7c05baec7d9.js",
@@ -2003,11 +1988,11 @@
     "b": 1085
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/catalog/not-found-06aa1cda66d2c217.js",
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/not-found-4ef0f291ff4f7f10.js",
     "b": 1085
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/not-found-4ef0f291ff4f7f10.js",
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/catalog/not-found-06aa1cda66d2c217.js",
     "b": 1085
    }
   ],
@@ -2032,10 +2017,6 @@
    {
     "f": "e4af272ccee01ff0-s.woff2",
     "b": 49331
-   },
-   {
-    "f": "b261c59b2d76913d-s.woff2",
-    "b": 167053
    }
   ]
  },
@@ -2046,24 +2027,32 @@
   "url": "http://localhost:3100/ar/why-elba",
   "status": 200,
   "finalUrl": "http://localhost:3100/ar/why-elba",
-  "loadMs": 4983,
-  "ttfb": 12.5,
-  "domContentLoaded": 1667.8999999999069,
-  "loadEvent": 4980.299999999814,
-  "htmlTransfer": 135833,
-  "htmlDecoded": 641857,
-  "lcp": 1364,
+  "loadMs": 4947,
+  "ttfb": 13,
+  "domContentLoaded": 1521.2999999998137,
+  "loadEvent": 4943.5,
+  "htmlTransfer": 129660,
+  "htmlDecoded": 611674,
+  "lcp": 1376,
   "lcpEl": "img.why_c1__3JFt_ [renders/fefco-0427.400w.avif] size=136884",
-  "fcp": 1268,
-  "clsLoad": 0.021382723172196468,
+  "fcp": 1348,
+  "clsLoad": 0.007645389335499409,
   "long": [
    {
-    "t": 909,
-    "d": 321
+    "t": 913,
+    "d": 395
    },
    {
-    "t": 3661,
-    "d": 259
+    "t": 3243,
+    "d": 185
+   },
+   {
+    "t": 3930,
+    "d": 61
+   },
+   {
+    "t": 4719,
+    "d": 52
    }
   ],
   "imgs": [
@@ -2128,7 +2117,7 @@
     "nh": 266,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
     "complete": true
@@ -2139,120 +2128,120 @@
     "nh": 314,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
     "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/ecma-rte.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 695,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/ecma-ste.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 608,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/pizza.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 231,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/sleeve.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 255,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/fefco-0320.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 265,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/ecma-clb.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 726,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/ecma-slb.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 581,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/fefco-0422.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 252,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/gable-box.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 475,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/paper-tube.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 691,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/fefco-0427.400w.avif",
@@ -2260,7 +2249,7 @@
     "nh": 266,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
     "complete": true
@@ -2271,127 +2260,127 @@
     "nh": 314,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/ecma-rte.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 695,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/ecma-ste.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 608,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/pizza.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 231,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/sleeve.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 255,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/fefco-0320.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 265,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/ecma-clb.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 726,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/ecma-slb.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 581,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/fefco-0422.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 252,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/gable-box.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 475,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/paper-tube.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 691,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
     "inView": false,
-    "complete": false
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/designer-ar.720w.webp",
     "nw": 358,
     "nh": 224,
-    "w": 299,
-    "h": 187,
+    "w": 326,
+    "h": 204,
     "loading": "lazy",
     "fp": null,
     "inView": false,
@@ -2453,73 +2442,54 @@
     "complete": false
    }
   ],
-  "domNodes": 1040,
+  "domNodes": 1091,
   "canvases": 0,
-  "inlineCss": 190291,
+  "inlineCss": 177096,
   "inlineStyleTags": 1,
-  "rsc": 361012,
-  "rscCss": 190291,
+  "rsc": 353463,
+  "rscCss": 177096,
   "fontsLoaded": [
    "Inter 100 900",
-   "IBM Plex Sans Arabic 400",
-   "Noto Sans Arabic 100 900",
    "Noto Sans Arabic 100 900"
   ],
-  "cls": 0.021382723172196468,
+  "cls": 0.007645389335499409,
   "shifts": [
    {
-    "t": 2485,
-    "v": 0.0123,
-    "nodes": [
-     "#text",
-     "#text",
-     "#text"
-    ]
-   },
-   {
-    "t": 4019,
-    "v": 0.0091,
+    "t": 3579,
+    "v": 0.0076,
     "nodes": [
      "div.CookieNotice_notice__Xr_DK",
      "#text",
-     "#text"
+     "span.kit_heroWord__IOBuv"
     ]
    }
   ],
   "inp": 56,
   "inpDetail": [
    {
-    "id": 7846,
+    "id": 7778,
     "name": "click",
     "d": 56,
-    "input": 26,
-    "proc": 6,
+    "input": 38,
+    "proc": 5,
     "target": "null"
-   },
-   {
-    "id": 7860,
-    "name": "keydown",
-    "d": 32,
-    "input": 0,
-    "proc": 10,
-    "target": "button.why_tickToggle__FW50v"
    }
   ],
   "clicks": 1,
-  "longTasks": 2,
-  "longTaskMax": 321,
-  "tbt": 480,
-  "tbtLoad": 480,
+  "longTasks": 4,
+  "longTaskMax": 395,
+  "tbt": 493,
+  "tbtLoad": 493,
   "bytes": {
-   "total": 965370,
-   "js": 196633,
+   "total": 959236,
+   "js": 245583,
    "css": 0,
-   "img": 123719,
-   "font": 283062,
-   "doc": 136796,
-   "fetch": 224665
+   "img": 149028,
+   "font": 216384,
+   "doc": 130614,
+   "fetch": 217132
   },
-  "requests": 49,
+  "requests": 52,
   "js": [
    {
     "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
@@ -2530,40 +2500,52 @@
     "b": 47430
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-023f7ef37d3f7b85.js",
-    "b": 7514
+    "f": "/_next/static/chunks/7398-4f17a9a0c05e267d.js",
+    "b": 29113
+   },
+   {
+    "f": "/_next/static/chunks/8734-72cd3d8fa3f6c0cf.js",
+    "b": 14032
+   },
+   {
+    "f": "/_next/static/chunks/1440-19eb3e0d0613e815.js",
+    "b": 8432
    },
    {
     "f": "/_next/static/chunks/4240-15f5f143528f3191.js",
     "b": 7092
    },
    {
-    "f": "/_next/static/chunks/8166-e41843046607bbf2.js",
-    "b": 7034
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-cbcc2377d80a0f12.js",
+    "b": 7073
    },
    {
-    "f": "/_next/static/chunks/302-a32451ac89a79cdb.js",
-    "b": 7032
+    "f": "/_next/static/chunks/4861-b210caaadd55a558.js",
+    "b": 6952
    },
    {
-    "f": "/_next/static/chunks/1640-88ddc86664a9bfb1.js",
-    "b": 6468
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/pricing/page-e0c49a2f2d8569a9.js",
+    "b": 6487
    },
    {
-    "f": "/_next/static/chunks/8895-5f87ec9e758bb304.js",
-    "b": 6427
+    "f": "/_next/static/chunks/8166-46721bcebd720413.js",
+    "b": 6419
    },
    {
-    "f": "/_next/static/chunks/8152-98b9b5a7dfe1b2aa.js",
-    "b": 6067
+    "f": "/_next/static/chunks/302-eaf483ce0fb94047.js",
+    "b": 6409
+   },
+   {
+    "f": "/_next/static/chunks/1640-012c98289096522b.js",
+    "b": 5845
    },
    {
     "f": "/_next/static/chunks/9001-0fe9b97098b095cf.js",
     "b": 5212
    },
    {
-    "f": "/_next/static/chunks/webpack-89c79a8ee8d80e42.js",
-    "b": 4783
+    "f": "/_next/static/chunks/webpack-8b2f975c7584fb8d.js",
+    "b": 4782
    },
    {
     "f": "/_next/static/chunks/8467-d020726048cb3218.js",
@@ -2586,8 +2568,8 @@
     "b": 3723
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/why-elba/page-e867307d032aaf7f.js",
-    "b": 2869
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/why-elba/page-85c540531c4f9754.js",
+    "b": 3107
    },
    {
     "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/%5Bdoc%5D/page-ec925f676a03ef01.js",
@@ -2598,12 +2580,8 @@
     "b": 2172
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-89b919d62ccd5fd6.js",
-    "b": 1764
-   },
-   {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/pricing/page-996d9aaaba2219d8.js",
-    "b": 1518
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-c836e77ea9089959.js",
+    "b": 1775
    },
    {
     "f": "/_next/static/chunks/main-app-c659b7c05baec7d9.js",
@@ -2623,11 +2601,6 @@
    }
   ],
   "images": [
-   {
-    "f": "/marketing/renders/fefco-0201.720w.webp",
-    "mime": "image/webp",
-    "b": 22939
-   },
    {
     "f": "/marketing/renders/paper-tube.400w.webp",
     "mime": "image/webp",
@@ -2644,19 +2617,34 @@
     "b": 13331
    },
    {
-    "f": "/marketing/renders/fefco-0427.400w.webp",
-    "mime": "image/webp",
-    "b": 13099
+    "f": "/marketing/renders/ecma-ste.400w.avif",
+    "mime": "image/avif",
+    "b": 10513
    },
    {
-    "f": "/marketing/renders/pizza.400w.webp",
-    "mime": "image/webp",
-    "b": 10604
+    "f": "/marketing/renders/ecma-clb.400w.avif",
+    "mime": "image/avif",
+    "b": 10454
    },
    {
     "f": "/marketing/renders/ecma-rte.400w.avif",
     "mime": "image/avif",
     "b": 10379
+   },
+   {
+    "f": "/marketing/renders/ecma-slb.400w.avif",
+    "mime": "image/avif",
+    "b": 10319
+   },
+   {
+    "f": "/marketing/renders/paper-tube.400w.avif",
+    "mime": "image/avif",
+    "b": 9104
+   },
+   {
+    "f": "/marketing/renders/gable-box.400w.avif",
+    "mime": "image/avif",
+    "b": 8803
    },
    {
     "f": "/marketing/renders/rigid-box.400w.avif",
@@ -2669,23 +2657,35 @@
     "b": 6775
    },
    {
+    "f": "/marketing/renders/sleeve.400w.avif",
+    "mime": "image/avif",
+    "b": 6166
+   },
+   {
+    "f": "/marketing/renders/fefco-0320.400w.avif",
+    "mime": "image/avif",
+    "b": 5915
+   },
+   {
     "f": "/marketing/renders/fefco-0201.400w.avif",
     "mime": "image/avif",
     "b": 5791
+   },
+   {
+    "f": "/marketing/renders/pizza.400w.avif",
+    "mime": "image/avif",
+    "b": 5779
+   },
+   {
+    "f": "/marketing/renders/fefco-0422.400w.avif",
+    "mime": "image/avif",
+    "b": 4898
    }
   ],
   "fonts": [
    {
     "f": "e4af272ccee01ff0-s.woff2",
     "b": 49331
-   },
-   {
-    "f": "b8c807255d58fc43-s.woff2",
-    "b": 32267
-   },
-   {
-    "f": "9da48a48bf6500f8-s.woff2",
-    "b": 34411
    },
    {
     "f": "b261c59b2d76913d-s.woff2",
@@ -2700,24 +2700,24 @@
   "url": "http://localhost:3100/ar/pricing",
   "status": 200,
   "finalUrl": "http://localhost:3100/ar/pricing",
-  "loadMs": 4696,
-  "ttfb": 13.400000000372529,
-  "domContentLoaded": 1515.2000000001863,
-  "loadEvent": 4693.700000000186,
-  "htmlTransfer": 131646,
-  "htmlDecoded": 627527,
+  "loadMs": 4409,
+  "ttfb": 13.5,
+  "domContentLoaded": 1380,
+  "loadEvent": 4406.0999999996275,
+  "htmlTransfer": 124240,
+  "htmlDecoded": 584980,
   "lcp": 1268,
   "lcpEl": "p.kit_lead__XaoWg.kit_align-center__bjlvl size=26832",
   "fcp": 1268,
-  "clsLoad": 0.022269484806561324,
+  "clsLoad": 0.01060617896745572,
   "long": [
    {
-    "t": 919,
-    "d": 332
+    "t": 908,
+    "d": 349
    },
    {
-    "t": 3005,
-    "d": 180
+    "t": 2466,
+    "d": 191
    }
   ],
   "imgs": [
@@ -2733,65 +2733,54 @@
     "complete": false
    }
   ],
-  "domNodes": 841,
+  "domNodes": 840,
   "canvases": 0,
-  "inlineCss": 190291,
+  "inlineCss": 177096,
   "inlineStyleTags": 1,
-  "rsc": 357969,
-  "rscCss": 190291,
+  "rsc": 342223,
+  "rscCss": 177096,
   "fontsLoaded": [
    "Inter 100 900",
-   "IBM Plex Sans Arabic 400",
-   "Noto Sans Arabic 100 900",
    "Noto Sans Arabic 100 900"
   ],
-  "cls": 0.022269484806561324,
+  "cls": 0.01060617896745572,
   "shifts": [
    {
-    "t": 3496,
-    "v": 0.0128,
+    "t": 3458,
+    "v": 0.0106,
     "nodes": [
      "div.CookieNotice_notice__Xr_DK",
      "#text",
      "#text"
     ]
-   },
-   {
-    "t": 2911,
-    "v": 0.0094,
-    "nodes": [
-     "#text",
-     "#text",
-     "#text"
-    ]
    }
   ],
-  "inp": 48,
+  "inp": 40,
   "inpDetail": [
    {
-    "id": 9259,
+    "id": 6869,
     "name": "click",
-    "d": 48,
-    "input": 25,
-    "proc": 6,
+    "d": 40,
+    "input": 21,
+    "proc": 3,
     "target": "span"
    }
   ],
   "clicks": 1,
   "longTasks": 2,
-  "longTaskMax": 332,
-  "tbt": 412,
-  "tbtLoad": 412,
+  "longTaskMax": 349,
+  "tbt": 440,
+  "tbtLoad": 440,
   "bytes": {
-   "total": 753046,
-   "js": 193764,
+   "total": 716008,
+   "js": 235524,
    "css": 0,
    "img": 0,
-   "font": 283062,
-   "doc": 132608,
-   "fetch": 143117
+   "font": 216384,
+   "doc": 125195,
+   "fetch": 138410
   },
-  "requests": 34,
+  "requests": 33,
   "js": [
    {
     "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
@@ -2802,40 +2791,48 @@
     "b": 47430
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-023f7ef37d3f7b85.js",
-    "b": 7514
+    "f": "/_next/static/chunks/7398-4f17a9a0c05e267d.js",
+    "b": 29113
+   },
+   {
+    "f": "/_next/static/chunks/8734-72cd3d8fa3f6c0cf.js",
+    "b": 14032
+   },
+   {
+    "f": "/_next/static/chunks/1440-19eb3e0d0613e815.js",
+    "b": 8432
    },
    {
     "f": "/_next/static/chunks/4240-15f5f143528f3191.js",
     "b": 7092
    },
    {
-    "f": "/_next/static/chunks/8166-e41843046607bbf2.js",
-    "b": 7034
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-cbcc2377d80a0f12.js",
+    "b": 7073
    },
    {
-    "f": "/_next/static/chunks/302-a32451ac89a79cdb.js",
-    "b": 7032
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/pricing/page-e0c49a2f2d8569a9.js",
+    "b": 6487
    },
    {
-    "f": "/_next/static/chunks/1640-88ddc86664a9bfb1.js",
-    "b": 6468
+    "f": "/_next/static/chunks/8166-46721bcebd720413.js",
+    "b": 6419
    },
    {
-    "f": "/_next/static/chunks/8895-5f87ec9e758bb304.js",
-    "b": 6427
+    "f": "/_next/static/chunks/302-eaf483ce0fb94047.js",
+    "b": 6409
    },
    {
-    "f": "/_next/static/chunks/8152-98b9b5a7dfe1b2aa.js",
-    "b": 6067
+    "f": "/_next/static/chunks/1640-012c98289096522b.js",
+    "b": 5845
    },
    {
     "f": "/_next/static/chunks/9001-0fe9b97098b095cf.js",
     "b": 5212
    },
    {
-    "f": "/_next/static/chunks/webpack-89c79a8ee8d80e42.js",
-    "b": 4783
+    "f": "/_next/static/chunks/webpack-8b2f975c7584fb8d.js",
+    "b": 4782
    },
    {
     "f": "/_next/static/chunks/8467-d020726048cb3218.js",
@@ -2866,12 +2863,8 @@
     "b": 2172
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-89b919d62ccd5fd6.js",
-    "b": 1764
-   },
-   {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/pricing/page-996d9aaaba2219d8.js",
-    "b": 1518
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-c836e77ea9089959.js",
+    "b": 1775
    },
    {
     "f": "/_next/static/chunks/main-app-c659b7c05baec7d9.js",
@@ -2897,14 +2890,6 @@
     "b": 49331
    },
    {
-    "f": "b8c807255d58fc43-s.woff2",
-    "b": 32267
-   },
-   {
-    "f": "9da48a48bf6500f8-s.woff2",
-    "b": 34411
-   },
-   {
     "f": "b261c59b2d76913d-s.woff2",
     "b": 167053
    }
@@ -2917,24 +2902,40 @@
   "url": "http://localhost:3100/en/why-elba",
   "status": 200,
   "finalUrl": "http://localhost:3100/en/why-elba",
-  "loadMs": 4465,
-  "ttfb": 14.400000000372529,
-  "domContentLoaded": 1392.9000000003725,
-  "loadEvent": 4462.300000000279,
-  "htmlTransfer": 129359,
-  "htmlDecoded": 602264,
-  "lcp": 1324,
+  "loadMs": 4236,
+  "ttfb": 11.900000000372529,
+  "domContentLoaded": 1315.7000000001863,
+  "loadEvent": 4233.4000000003725,
+  "htmlTransfer": 123352,
+  "htmlDecoded": 573331,
+  "lcp": 1336,
   "lcpEl": "img.why_c1__3JFt_ [renders/fefco-0427.400w.avif] size=139443",
-  "fcp": 1156,
+  "fcp": 1176,
   "clsLoad": 0,
   "long": [
    {
-    "t": 910,
-    "d": 215
+    "t": 906,
+    "d": 232
    },
    {
-    "t": 3070,
-    "d": 181
+    "t": 1754,
+    "d": 52
+   },
+   {
+    "t": 2496,
+    "d": 229
+   },
+   {
+    "t": 3134,
+    "d": 52
+   },
+   {
+    "t": 3771,
+    "d": 51
+   },
+   {
+    "t": 4037,
+    "d": 53
    }
   ],
   "imgs": [
@@ -2999,9 +3000,9 @@
     "nh": 266,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
-    "inView": true,
+    "inView": false,
     "complete": true
    },
    {
@@ -3010,120 +3011,120 @@
     "nh": 314,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
-    "inView": true,
+    "inView": false,
     "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/ecma-rte.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 695,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
-    "inView": true,
-    "complete": false
+    "inView": false,
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/ecma-ste.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 608,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
-    "inView": true,
-    "complete": false
+    "inView": false,
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/pizza.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 231,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
-    "inView": true,
-    "complete": false
+    "inView": false,
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/sleeve.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 255,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
-    "inView": true,
-    "complete": false
+    "inView": false,
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/fefco-0320.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 265,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
-    "inView": true,
-    "complete": false
+    "inView": false,
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/ecma-clb.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 726,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
-    "inView": true,
-    "complete": false
+    "inView": false,
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/ecma-slb.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 581,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
-    "inView": true,
-    "complete": false
+    "inView": false,
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/fefco-0422.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 252,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
-    "inView": true,
-    "complete": false
+    "inView": false,
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/gable-box.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 475,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
-    "inView": true,
-    "complete": false
+    "inView": false,
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/paper-tube.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 691,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
-    "inView": true,
-    "complete": false
+    "inView": false,
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/fefco-0427.400w.avif",
@@ -3131,9 +3132,9 @@
     "nh": 266,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
-    "inView": true,
+    "inView": false,
     "complete": true
    },
    {
@@ -3142,127 +3143,127 @@
     "nh": 314,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
-    "inView": true,
-    "complete": false
+    "inView": false,
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/ecma-rte.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 695,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
-    "inView": true,
-    "complete": false
+    "inView": false,
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/ecma-ste.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 608,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
-    "inView": true,
-    "complete": false
+    "inView": false,
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/pizza.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 231,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
-    "inView": true,
-    "complete": false
+    "inView": false,
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/sleeve.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 255,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
-    "inView": true,
-    "complete": false
+    "inView": false,
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/fefco-0320.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 265,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
-    "inView": true,
-    "complete": false
+    "inView": false,
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/ecma-clb.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 726,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
-    "inView": true,
-    "complete": false
+    "inView": false,
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/ecma-slb.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 581,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
-    "inView": true,
-    "complete": false
+    "inView": false,
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/fefco-0422.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 252,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
-    "inView": true,
-    "complete": false
+    "inView": false,
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/gable-box.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 475,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
-    "inView": true,
-    "complete": false
+    "inView": false,
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/renders/paper-tube.400w.avif",
-    "nw": 0,
-    "nh": 0,
+    "nw": 400,
+    "nh": 691,
     "w": 56,
     "h": 56,
-    "loading": "lazy",
+    "loading": "auto",
     "fp": "low",
-    "inView": true,
-    "complete": false
+    "inView": false,
+    "complete": true
    },
    {
     "src": "http://localhost:3100/marketing/designer-en.720w.webp",
     "nw": 358,
     "nh": 224,
-    "w": 299,
-    "h": 187,
+    "w": 326,
+    "h": 204,
     "loading": "lazy",
     "fp": null,
     "inView": false,
@@ -3324,52 +3325,51 @@
     "complete": false
    }
   ],
-  "domNodes": 1042,
+  "domNodes": 1092,
   "canvases": 0,
-  "inlineCss": 190291,
+  "inlineCss": 177096,
   "inlineStyleTags": 1,
-  "rsc": 326703,
-  "rscCss": 190291,
+  "rsc": 319878,
+  "rscCss": 177096,
   "fontsLoaded": [
-   "Inter 100 900",
-   "Noto Sans Arabic 100 900"
+   "Inter 100 900"
   ],
   "cls": 0,
   "shifts": [],
-  "inp": 72,
+  "inp": 80,
   "inpDetail": [
    {
-    "id": 3544,
+    "id": 2684,
     "name": "click",
-    "d": 72,
-    "input": 35,
+    "d": 80,
+    "input": 44,
     "proc": 8,
     "target": "null"
    },
    {
-    "id": 3558,
+    "id": 2698,
     "name": "keydown",
     "d": 16,
-    "input": 0,
-    "proc": 5,
-    "target": "button.why_tickToggle__FW50v"
+    "input": 1,
+    "proc": 3,
+    "target": "button.kit_iconPill__9Tuga"
    }
   ],
   "clicks": 1,
-  "longTasks": 2,
-  "longTaskMax": 215,
-  "tbt": 296,
-  "tbtLoad": 296,
+  "longTasks": 6,
+  "longTaskMax": 232,
+  "tbt": 369,
+  "tbtLoad": 369,
   "bytes": {
-   "total": 877077,
-   "js": 196633,
+   "total": 771171,
+   "js": 245583,
    "css": 0,
-   "img": 124239,
-   "font": 216384,
-   "doc": 130314,
-   "fetch": 209012
+   "img": 149548,
+   "font": 49331,
+   "doc": 124307,
+   "fetch": 201907
   },
-  "requests": 47,
+  "requests": 51,
   "js": [
    {
     "f": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
@@ -3380,40 +3380,52 @@
     "b": 47430
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-023f7ef37d3f7b85.js",
-    "b": 7514
+    "f": "/_next/static/chunks/7398-4f17a9a0c05e267d.js",
+    "b": 29113
+   },
+   {
+    "f": "/_next/static/chunks/8734-72cd3d8fa3f6c0cf.js",
+    "b": 14032
+   },
+   {
+    "f": "/_next/static/chunks/1440-19eb3e0d0613e815.js",
+    "b": 8432
    },
    {
     "f": "/_next/static/chunks/4240-15f5f143528f3191.js",
     "b": 7092
    },
    {
-    "f": "/_next/static/chunks/8166-e41843046607bbf2.js",
-    "b": 7034
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-cbcc2377d80a0f12.js",
+    "b": 7073
    },
    {
-    "f": "/_next/static/chunks/302-a32451ac89a79cdb.js",
-    "b": 7032
+    "f": "/_next/static/chunks/4861-b210caaadd55a558.js",
+    "b": 6952
    },
    {
-    "f": "/_next/static/chunks/1640-88ddc86664a9bfb1.js",
-    "b": 6468
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/pricing/page-e0c49a2f2d8569a9.js",
+    "b": 6487
    },
    {
-    "f": "/_next/static/chunks/8895-5f87ec9e758bb304.js",
-    "b": 6427
+    "f": "/_next/static/chunks/8166-46721bcebd720413.js",
+    "b": 6419
    },
    {
-    "f": "/_next/static/chunks/8152-98b9b5a7dfe1b2aa.js",
-    "b": 6067
+    "f": "/_next/static/chunks/302-eaf483ce0fb94047.js",
+    "b": 6409
+   },
+   {
+    "f": "/_next/static/chunks/1640-012c98289096522b.js",
+    "b": 5845
    },
    {
     "f": "/_next/static/chunks/9001-0fe9b97098b095cf.js",
     "b": 5212
    },
    {
-    "f": "/_next/static/chunks/webpack-89c79a8ee8d80e42.js",
-    "b": 4783
+    "f": "/_next/static/chunks/webpack-8b2f975c7584fb8d.js",
+    "b": 4782
    },
    {
     "f": "/_next/static/chunks/8467-d020726048cb3218.js",
@@ -3436,8 +3448,8 @@
     "b": 3723
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/why-elba/page-e867307d032aaf7f.js",
-    "b": 2869
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/why-elba/page-85c540531c4f9754.js",
+    "b": 3107
    },
    {
     "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/legal/%5Bdoc%5D/page-ec925f676a03ef01.js",
@@ -3448,12 +3460,8 @@
     "b": 2172
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-89b919d62ccd5fd6.js",
-    "b": 1764
-   },
-   {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/pricing/page-996d9aaaba2219d8.js",
-    "b": 1518
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-c836e77ea9089959.js",
+    "b": 1775
    },
    {
     "f": "/_next/static/chunks/main-app-c659b7c05baec7d9.js",
@@ -3474,11 +3482,6 @@
   ],
   "images": [
    {
-    "f": "/marketing/renders/fefco-0201.720w.webp",
-    "mime": "image/webp",
-    "b": 22939
-   },
-   {
     "f": "/marketing/renders/paper-tube.400w.webp",
     "mime": "image/webp",
     "b": 16889
@@ -3494,19 +3497,34 @@
     "b": 13851
    },
    {
-    "f": "/marketing/renders/fefco-0427.400w.webp",
-    "mime": "image/webp",
-    "b": 13099
+    "f": "/marketing/renders/ecma-ste.400w.avif",
+    "mime": "image/avif",
+    "b": 10513
    },
    {
-    "f": "/marketing/renders/pizza.400w.webp",
-    "mime": "image/webp",
-    "b": 10604
+    "f": "/marketing/renders/ecma-clb.400w.avif",
+    "mime": "image/avif",
+    "b": 10454
    },
    {
     "f": "/marketing/renders/ecma-rte.400w.avif",
     "mime": "image/avif",
     "b": 10379
+   },
+   {
+    "f": "/marketing/renders/ecma-slb.400w.avif",
+    "mime": "image/avif",
+    "b": 10319
+   },
+   {
+    "f": "/marketing/renders/paper-tube.400w.avif",
+    "mime": "image/avif",
+    "b": 9104
+   },
+   {
+    "f": "/marketing/renders/gable-box.400w.avif",
+    "mime": "image/avif",
+    "b": 8803
    },
    {
     "f": "/marketing/renders/rigid-box.400w.avif",
@@ -3519,19 +3537,35 @@
     "b": 6775
    },
    {
+    "f": "/marketing/renders/sleeve.400w.avif",
+    "mime": "image/avif",
+    "b": 6166
+   },
+   {
+    "f": "/marketing/renders/fefco-0320.400w.avif",
+    "mime": "image/avif",
+    "b": 5915
+   },
+   {
     "f": "/marketing/renders/fefco-0201.400w.avif",
     "mime": "image/avif",
     "b": 5791
+   },
+   {
+    "f": "/marketing/renders/pizza.400w.avif",
+    "mime": "image/avif",
+    "b": 5779
+   },
+   {
+    "f": "/marketing/renders/fefco-0422.400w.avif",
+    "mime": "image/avif",
+    "b": 4898
    }
   ],
   "fonts": [
    {
     "f": "e4af272ccee01ff0-s.woff2",
     "b": 49331
-   },
-   {
-    "f": "b261c59b2d76913d-s.woff2",
-    "b": 167053
    }
   ]
  },
@@ -3542,28 +3576,28 @@
   "url": "http://localhost:3100/en/pricing",
   "status": 200,
   "finalUrl": "http://localhost:3100/en/pricing",
-  "loadMs": 3998,
-  "ttfb": 13.100000000093132,
-  "domContentLoaded": 1326.2000000001863,
-  "loadEvent": 3994.600000000093,
-  "htmlTransfer": 125665,
-  "htmlDecoded": 588845,
-  "lcp": 1156,
+  "loadMs": 3709,
+  "ttfb": 11,
+  "domContentLoaded": 1226.5999999996275,
+  "loadEvent": 3707.0999999996275,
+  "htmlTransfer": 118543,
+  "htmlDecoded": 547476,
+  "lcp": 1140,
   "lcpEl": "p.kit_lead__XaoWg.kit_align-center__bjlvl size=26796",
-  "fcp": 1156,
+  "fcp": 1140,
   "clsLoad": 0,
   "long": [
    {
-    "t": 928,
-    "d": 218
+    "t": 905,
+    "d": 227
    },
    {
-    "t": 2259,
-    "d": 280
+    "t": 2132,
+    "d": 200
    },
    {
-    "t": 3507,
-    "d": 51
+    "t": 2679,
+    "d": 79
    }
   ],
   "imgs": [
@@ -3579,42 +3613,41 @@
     "complete": false
    }
   ],
-  "domNodes": 842,
+  "domNodes": 840,
   "canvases": 0,
-  "inlineCss": 190291,
+  "inlineCss": 177096,
   "inlineStyleTags": 1,
-  "rsc": 323922,
-  "rscCss": 190291,
+  "rsc": 308878,
+  "rscCss": 177096,
   "fontsLoaded": [
-   "Inter 100 900",
-   "Noto Sans Arabic 100 900"
+   "Inter 100 900"
   ],
   "cls": 0,
   "shifts": [],
   "inp": 64,
   "inpDetail": [
    {
-    "id": 4076,
+    "id": 987,
     "name": "click",
     "d": 64,
-    "input": 32,
-    "proc": 9,
+    "input": 35,
+    "proc": 6,
     "target": "span"
    }
   ],
   "clicks": 1,
   "longTasks": 3,
-  "longTaskMax": 280,
-  "tbt": 399,
-  "tbtLoad": 399,
+  "longTaskMax": 227,
+  "tbt": 356,
+  "tbtLoad": 356,
   "bytes": {
-   "total": 669775,
-   "js": 193764,
+   "total": 532914,
+   "js": 235524,
    "css": 0,
    "img": 0,
-   "font": 216384,
-   "doc": 126620,
-   "fetch": 132512
+   "font": 49331,
+   "doc": 119497,
+   "fetch": 128067
   },
   "requests": 32,
   "js": [
@@ -3627,40 +3660,48 @@
     "b": 47430
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-023f7ef37d3f7b85.js",
-    "b": 7514
+    "f": "/_next/static/chunks/7398-4f17a9a0c05e267d.js",
+    "b": 29113
+   },
+   {
+    "f": "/_next/static/chunks/8734-72cd3d8fa3f6c0cf.js",
+    "b": 14032
+   },
+   {
+    "f": "/_next/static/chunks/1440-19eb3e0d0613e815.js",
+    "b": 8432
    },
    {
     "f": "/_next/static/chunks/4240-15f5f143528f3191.js",
     "b": 7092
    },
    {
-    "f": "/_next/static/chunks/8166-e41843046607bbf2.js",
-    "b": 7034
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/page-cbcc2377d80a0f12.js",
+    "b": 7073
    },
    {
-    "f": "/_next/static/chunks/302-a32451ac89a79cdb.js",
-    "b": 7032
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/pricing/page-e0c49a2f2d8569a9.js",
+    "b": 6487
    },
    {
-    "f": "/_next/static/chunks/1640-88ddc86664a9bfb1.js",
-    "b": 6468
+    "f": "/_next/static/chunks/8166-46721bcebd720413.js",
+    "b": 6419
    },
    {
-    "f": "/_next/static/chunks/8895-5f87ec9e758bb304.js",
-    "b": 6427
+    "f": "/_next/static/chunks/302-eaf483ce0fb94047.js",
+    "b": 6409
    },
    {
-    "f": "/_next/static/chunks/8152-98b9b5a7dfe1b2aa.js",
-    "b": 6067
+    "f": "/_next/static/chunks/1640-012c98289096522b.js",
+    "b": 5845
    },
    {
     "f": "/_next/static/chunks/9001-0fe9b97098b095cf.js",
     "b": 5212
    },
    {
-    "f": "/_next/static/chunks/webpack-89c79a8ee8d80e42.js",
-    "b": 4783
+    "f": "/_next/static/chunks/webpack-8b2f975c7584fb8d.js",
+    "b": 4782
    },
    {
     "f": "/_next/static/chunks/8467-d020726048cb3218.js",
@@ -3691,12 +3732,8 @@
     "b": 2172
    },
    {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-89b919d62ccd5fd6.js",
-    "b": 1764
-   },
-   {
-    "f": "/_next/static/chunks/app/%5Blocale%5D/(store)/pricing/page-996d9aaaba2219d8.js",
-    "b": 1518
+    "f": "/_next/static/chunks/app/%5Blocale%5D/(detail)/layout-c836e77ea9089959.js",
+    "b": 1775
    },
    {
     "f": "/_next/static/chunks/main-app-c659b7c05baec7d9.js",
@@ -3720,10 +3757,6 @@
    {
     "f": "e4af272ccee01ff0-s.woff2",
     "b": 49331
-   },
-   {
-    "f": "b261c59b2d76913d-s.woff2",
-    "b": 167053
    }
   ]
  }
