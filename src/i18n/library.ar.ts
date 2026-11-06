@@ -18,6 +18,8 @@ export const libraryAr: typeof libraryEn = {
   panel: {
     model: "النموذج",
     base: "يصنع ويسعر على أنه {base}",
+    baseByQuote: "يصنع على أنه {base}، ويسعر بعرض سعر",
+    byQuote: "يسعر بعرض سعر",
     size: "المقاس",
     presets: "مقاسات شائعة",
     diameter: "القطر",
@@ -81,6 +83,8 @@ export const libraryAr: typeof libraryEn = {
   catalog: {
     heading: "كل النماذج التي نطبعها",
     subtitle: "{count:model} من العلب والكراتين والصواني والأنابيب والملصقات والأكياس، وكل نموذج يفتح في المصمم ثلاثي الأبعاد المجاني.",
+    more: "{count} نوعا آخر (أكواب وأكياس ورقية وعبوات لب الورق وفواصل داخلية) في الكتالوج بعرض سعر.",
+    moreLink: "فتح الكتالوج",
     design: "تصميم هذا النموذج",
     groupCount: "النماذج: {count}",
   },

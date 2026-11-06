@@ -15,7 +15,7 @@ import { Badge, BlockStack, Button, Checkbox, InlineGrid, RangeSlider, Select, T
 import { featureSupportOf, finishChoicesFor, materialChoices, printSidesChoices, type Choice } from "./lib/config";
 import { modelImage } from "./ModelPicker";
 import { FlexOptionsGroup } from "./FlexOptionsGroup";
-import { EGYPT_BADGE, egyptOf } from "@/data/catalogue/order-mode";
+import { EGYPT_BADGE, egyptOf, orderModeOf } from "@/data/catalogue/order-mode";
 import styles from "./library.module.css";
 
 export interface ViewOptions {
@@ -48,6 +48,7 @@ export const ConfigPanel = memo(function ConfigPanel(props: ConfigPanelProps) {
   const { doc, model, onOpenPicker } = props;
   const { t, locale } = useI18n();
   const base = t(`structures.${doc.structureCode}` as DictKey);
+  const orderMode = orderModeOf(model.code).mode;
   return (
     <div className={styles.config}>
       <div className={styles.modelCurrent}>
@@ -62,14 +63,20 @@ export const ConfigPanel = memo(function ConfigPanel(props: ConfigPanelProps) {
               <span dir="ltr">{model.standard}</span>
             </Text>
           ) : null}
-          {model.code !== doc.structureCode ? (
+          {/* R4-B-10: quote-priced models are not "priced as" their base; preview models (filling
+              line, rare) are not made as it by Egyptian printers either. */}
+          {orderMode === "preview" ? (
             <Text as="p" variant="bodySm" tone="subdued">
-              {t("library.panel.base", { base })}
+              {t("library.panel.byQuote")}
+            </Text>
+          ) : model.code !== doc.structureCode ? (
+            <Text as="p" variant="bodySm" tone="subdued">
+              {t(orderMode === "quote" ? "library.panel.baseByQuote" : "library.panel.base", { base })}
             </Text>
           ) : null}
           {/* B-20: availability in Egypt on every model surface. */}
           <span data-testid="model-egypt">
-            <Badge tone={egyptOf(model.code) === "local" ? "success" : egyptOf(model.code) === "imported" ? "attention" : "critical"} size="small">
+            <Badge tone={egyptOf(model.code) === "local" ? "success" : egyptOf(model.code) === "imported" ? "attention" : "warning"} size="small">
               {EGYPT_BADGE[egyptOf(model.code)][locale]}
             </Badge>
           </span>

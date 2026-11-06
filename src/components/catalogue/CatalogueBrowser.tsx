@@ -76,6 +76,31 @@ export function CatalogueBrowser({ locale, cards, taxonomy }: { locale: Locale; 
   }, [searched]);
   const results = useMemo(() => searched.filter((c) => (!family || c.family === family) && (!sub || c.subFamily === sub)), [searched, family, sub]);
   const active = taxonomy.find((n) => n.slug === family);
+  // CR-30: with no family and no search, the page shows 12 per family with "Show all N"
+  // (was every model in one 46,000 to 64,000 px list); a family or a search shows them all.
+  const grouped = !family && !q.trim();
+  const browserRef = useRef<HTMLDivElement | null>(null);
+  const searchRowRef = useRef<HTMLDivElement | null>(null);
+  // The family chips stick right under the search row (tablet and up): its height varies with
+  // the breakpoint and the font, so it is measured, not hard-coded.
+  useLayoutEffect(() => {
+    const el = searchRowRef.current;
+    const host = browserRef.current;
+    if (!el || !host) return;
+    const set = () => host.style.setProperty("--search-row-bottom", `${parseFloat(getComputedStyle(el).insetBlockStart || "0") + el.offsetHeight}px`);
+    const ro = new ResizeObserver(set);
+    ro.observe(el);
+    set();
+    return () => ro.disconnect();
+  }, []);
+  const showFamily = (slug: string) => {
+    setFamily(slug);
+    setSub("");
+    browserRef.current?.scrollIntoView({ block: "start" });
+    // R6-02: the pressed button disappears with the grouped view; keep keyboard focus on the
+    // family chip that is now selected (WCAG 2.4.3), not on <body>.
+    requestAnimationFrame(() => browserRef.current?.querySelector<HTMLButtonElement>(`[data-family="${CSS.escape(slug)}"]`)?.focus({ preventScroll: true }));
+  };
 
   const reset = () => {
     setFamily("");
@@ -85,8 +110,8 @@ export function CatalogueBrowser({ locale, cards, taxonomy }: { locale: Locale; 
   };
 
   return (
-    <div className={styles.browser}>
-      <div className={styles.searchRow}>
+    <div className={styles.browser} ref={browserRef}>
+      <div className={styles.searchRow} ref={searchRowRef}>
           <label className={styles.search}>
             <span className="visually-hidden">{COPY.search[locale]}</span>
             <Search size={20} aria-hidden className={styles.searchIcon} />
@@ -123,7 +148,7 @@ export function CatalogueBrowser({ locale, cards, taxonomy }: { locale: Locale; 
         </div>
 
       <div className={styles.toolbar}>
-        <div className={styles.chipRow} role="group" aria-label={COPY.familiesLabel[locale]}>
+        <div className={`${styles.chipRow} ${styles.familyRow}`} role="group" aria-label={COPY.familiesLabel[locale]}>
           <button type="button" className={styles.chip} aria-pressed={!family} onClick={() => (setFamily(""), setSub(""))}>
             {COPY.all[locale]} <span className={styles.chipCount}>{formatNumber(searched.length)}</span>
           </button>
@@ -175,9 +200,55 @@ export function CatalogueBrowser({ locale, cards, taxonomy }: { locale: Locale; 
             {COPY.emptyReset[locale]}
           </button>
         </div>
+      ) : grouped ? (
+        <FamilySections locale={locale} items={results} taxonomy={taxonomy} onShowAll={showFamily} />
       ) : (
         <VirtualGrid locale={locale} items={results} />
       )}
+    </div>
+  );
+}
+
+/* ───────────────────────────── family sections ───────────────────────────── */
+
+const PER_FAMILY = 12;
+
+/** CR-30: the first 12 models of each family (launch formats first), each with "Show all N". */
+function FamilySections({ locale, items, taxonomy, onShowAll }: { locale: Locale; items: CatalogueCard[]; taxonomy: TaxonomyNode[]; onShowAll: (slug: string) => void }) {
+  const byFamily = new Map<string, CatalogueCard[]>();
+  for (const c of items) byFamily.set(c.family, [...(byFamily.get(c.family) ?? []), c]);
+  let index = 0;
+  return (
+    <div className={styles.sections} data-testid="catalogue-sections">
+      {taxonomy
+        .filter((n) => byFamily.get(n.slug)?.length)
+        .map((n) => {
+          const all = byFamily.get(n.slug)!;
+          const first = index;
+          index += Math.min(all.length, PER_FAMILY);
+          const id = `fam-${n.slug}`;
+          return (
+            <section key={n.slug} className={styles.section} aria-labelledby={id}>
+              <h2 id={id} className={styles.sectionTitle}>
+                {n.name[locale]} <span className={styles.chipCount}>{formatNumber(all.length)}</span>
+              </h2>
+              <div className={styles.gridWrap}>
+                <ul className={styles.gridStatic}>
+                  {all.slice(0, PER_FAMILY).map((c, k) => (
+                    <li key={c.code}>
+                      <ModelCard locale={locale} card={c} eager={first + k < 8} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              {all.length > PER_FAMILY ? (
+                <button type="button" className={styles.pillOutline} onClick={() => onShowAll(n.slug)} data-testid={`show-all-${n.slug}`}>
+                  {fill(COPY.showAll[locale], { count: formatNumber(all.length), name: n.name[locale] })}
+                </button>
+              ) : null}
+            </section>
+          );
+        })}
     </div>
   );
 }
@@ -319,8 +390,8 @@ export function ModelCard({ locale, card, eager = false }: { locale: Locale; car
         <img src={`/models/${encodeURIComponent(card.code)}.webp`} alt="" width={480} height={480} loading={eager ? "eager" : "lazy"} decoding="async" />
       </span>
       <span className={styles.cardBody}>
-        <span className={styles.cardStd} dir="ltr">
-          {card.standard.code ? `${card.standard.system} ${card.standard.code}` : card.standard.label || COPY.noStandard[locale]}
+        <span className={styles.cardStd}>
+          {card.standard.code ? <bdi dir="ltr">{`${card.standard.system} ${card.standard.code}`}</bdi> : card.standard.label ? <bdi dir="auto">{card.standard.label}</bdi> : COPY.noStandard[locale]}
         </span>
         <span className={styles.cardName}>{card.name[locale]}</span>
         <span className={styles.badges}>

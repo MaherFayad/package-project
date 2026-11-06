@@ -12,6 +12,7 @@ import { formatEgyptPhone } from "@/lib/phone";
 import { loadCheckoutDesign, quoteDesign, sampleCreditFor, tierPrices, toCheckoutOffer } from "@/lib/orders/service";
 import { designerPath } from "@/components/designer/lib/catalog";
 import { loadCheckoutSettings } from "@/lib/orders/checkout-settings";
+import { orderModeOf } from "@/data/catalogue/order-mode";
 import { docGeometry } from "@/lib/library/doc";
 import { runPreflight, summarizePreflight } from "@/components/designer/lib/preflight";
 import { docSpec } from "@/lib/library/spec";
@@ -53,18 +54,22 @@ export default async function CheckoutPage({ params, searchParams }: { params: P
       // Re-opening the same share link must not pile up duplicate copies in the buyer's designs.
       const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
       const mine = await db.design.findMany({
-        where: { ownerId: user.id, structureCode: src.structureCode, name: src.name, materialId: src.materialId, finishCode: src.finishCode, printSides: src.printSides },
+        where: { ownerId: user.id, structureCode: src.structureCode, modelCode: src.modelCode, name: src.name, materialId: src.materialId, finishCode: src.finishCode, printSides: src.printSides },
         orderBy: { updatedAt: "desc" },
         take: 20,
-        select: { id: true, dims: true, artwork: true },
+        select: { id: true, dims: true, artwork: true, config: true },
       });
-      const existing = mine.find((d) => same(d.dims, src.dims) && same(d.artwork, src.artwork));
+      const existing = mine.find((d) => same(d.dims, src.dims) && same(d.artwork, src.artwork) && same(d.config, src.config));
       if (existing) redirect(`/${locale}/checkout/${encodeURIComponent(existing.id)}`);
       const copy = await db.design.create({
         data: {
           ownerId: user.id,
           name: src.name,
           structureCode: src.structureCode,
+          // The library model and its options travel with the copy: without them a quote-only
+          // model (aseptic brick, crash-lock…) became its instantly priced base box (B-16, R4-01).
+          modelCode: src.modelCode,
+          ...(src.config != null ? { config: src.config as Prisma.InputJsonValue } : {}),
           dims: src.dims as Prisma.InputJsonValue,
           materialId: src.materialId,
           finishCode: src.finishCode,
@@ -116,6 +121,8 @@ export default async function CheckoutPage({ params, searchParams }: { params: P
   };
 
   const tiers = await tierPrices(doc, defaultAddress.governorate);
+  // B-16: a model no Egyptian SME printer makes is never ordered here, not even as a paid sample.
+  const byQuote = ["quote", "preview"].includes(orderModeOf(doc.modelCode).mode);
   const initialQty = tiers.find((x) => x.quantity === 500 && x.unitPiasters !== null)?.quantity ?? tiers.find((x) => x.unitPiasters !== null)?.quantity ?? QTY_TIERS[0];
   const [settings, credit, org] = await Promise.all([
     loadCheckoutSettings(),
@@ -142,7 +149,7 @@ export default async function CheckoutPage({ params, searchParams }: { params: P
             validUntil: outcome.validUntil,
             credit: credit ? { piasters: credit.piasters, sampleNumber: credit.sampleNumber, expiresAt: credit.expiresAt.toISOString() } : null,
           }
-        : { ok: true, mode: "manual_quote", quantity: initialQty, max: MAX_INSTANT_QTY };
+        : { ok: true, mode: "manual_quote", quantity: initialQty, max: MAX_INSTANT_QTY, ...(outcome.reason === "MODEL_BY_QUOTE" ? { reason: "MODEL_BY_QUOTE" as const, orderReason: outcome.orderReason } : {}) };
   } catch {
     initial = { ok: false, error: "generic" };
   }
@@ -162,14 +169,14 @@ export default async function CheckoutPage({ params, searchParams }: { params: P
       designId={designId}
       doc={doc}
       designName={doc.name || t("checkout.untitled")}
-      editUrl={designerPath(locale, doc.structureCode, { d: designId })}
+      editUrl={designerPath(locale, doc.modelCode ?? doc.structureCode, { d: designId })}
       tiers={tiers}
       initialQty={initialQty}
       initial={initial}
       defaultAddress={defaultAddress}
       spec={docSpec(doc, locale)}
       contactPhone={formatEgyptPhone(user.phone)}
-      sample={settings.sample.enabled ? { pieces: settings.sample.maxPieces, pricePiasters: settings.sample.pricePiasters, creditDays: settings.sample.creditDays } : null}
+      sample={settings.sample.enabled && !byQuote && !(initial.ok && initial.mode === "manual_quote" && initial.reason === "MODEL_BY_QUOTE") ? { pieces: settings.sample.maxPieces, pricePiasters: settings.sample.pricePiasters, creditDays: settings.sample.creditDays } : null}
       prepayDiscountPct={settings.prepayDiscountPct}
       preflight={preflight}
       defaultCompany={org?.organization ? { name: org.organization.name, taxId: org.organization.taxId ?? "", commercialRegister: org.organization.commercialRegister ?? "" } : null}

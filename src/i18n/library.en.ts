@@ -16,6 +16,9 @@ export const libraryEn = {
   panel: {
     model: "Model",
     base: "Made and priced as {base}",
+    /** R4-B-10: a model priced by quote is not priced as its base structure. */
+    baseByQuote: "Made as {base}; priced by quote",
+    byQuote: "Priced by quote",
     size: "Size",
     presets: "Common sizes",
     diameter: "Diameter",
@@ -79,6 +82,9 @@ export const libraryEn = {
   catalog: {
     heading: "Every model we print",
     subtitle: "{count:model} across boxes, cartons, trays, tubes, labels and pouches. Each opens in the free 3D designer.",
+    /** R4-CR-06: the designer total vs the catalogue total, stated once. */
+    more: "{count} more formats (cups, paper bags, moulded pulp, fittings) are in the catalogue, priced by quote.",
+    moreLink: "Open the catalogue",
     design: "Design this model",
     groupCount: "Models: {count}",
   },

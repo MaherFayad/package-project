@@ -6,7 +6,7 @@ import { loadVendorsForMatch } from "@/lib/configurator/server";
 export interface CatalogueData {
   cards: CatalogueCard[];
   taxonomy: TaxonomyNode[];
-  counts: ReturnType<typeof catalogueCounts> & { instant: number; egypt: number };
+  counts: ReturnType<typeof catalogueCounts> & { instant: number; egypt: number; designer: number };
   modes: Map<string, QuoteMode>;
   vendorCount: number;
 }
@@ -33,6 +33,8 @@ export async function getCatalogueData(): Promise<CatalogueData> {
     ...catalogueCounts(),
     instant: cards.filter((c) => c.instantPrice).length,
     egypt: cards.filter((c) => c.availableInEgypt !== "rare").length,
+    // R4-CR-06: the models that open in the 3D designer (the /design library and picker total).
+    designer: CATALOGUE.filter((e) => e.designer).length,
   };
   const data: CatalogueData = { cards, taxonomy: taxonomy(CATALOGUE.map((e) => e.subFamily)), counts, modes, vendorCount: vendors.length };
   cache = { at: Date.now(), data };

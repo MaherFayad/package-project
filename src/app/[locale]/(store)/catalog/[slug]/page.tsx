@@ -94,7 +94,8 @@ export default async function Page({ params }: Props) {
                 </p>
                 {e.designer ? (
                   <div className={styles.ctaRow}>
-                    <Link href={`/${locale}/design/${e.slug}`} className={`${mk.pill} ${mk.pillLarge}`} prefetch={false}>
+                    {/* One primary per card: with a quote path the request is primary, design is secondary (R4-10). */}
+                    <Link href={`/${locale}/design/${e.slug}`} className={`${mk.pill} ${mode.mode === "instant" ? "" : mk.pillOutline} ${mk.pillLarge}`} prefetch={false}>
                       {COPY.designCta[locale]}
                     </Link>
                     {CORE_SLUGS.has(e.slug) ? (

@@ -123,7 +123,7 @@ export const DEFINITIONS: EcmaTuckDefinition[] = [
     family: "FOLDING_CARTON",
     subFamily: "TUCK_END",
     standard: "ECMA A20.20.01.03",
-    name: { ar: "علبة بلسان عكسي مقلوب", en: "French reverse tuck carton" },
+    name: { ar: "علبة بلسان عكسي فرنسي", en: "French reverse tuck carton" },
     description: {
       ar: "علبة بلسان عكسي مقلوب: الغطاء العلوي على اللوح الأمامي والسفلي على الخلفي، فيظهر خط الغلق العلوي في الخلف.",
       en: "Inverted (French) reverse tuck: top closure on the front, bottom on the back, so the top tuck seam sits at the back.",

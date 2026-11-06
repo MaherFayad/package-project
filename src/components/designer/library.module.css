@@ -76,6 +76,8 @@ a.modelCard {
 }
 .modelEgypt {
   display: flex;
+  flex-wrap: wrap;
+  gap: var(--p-space-100);
 }
 .chip:disabled {
   opacity: 0.45;
