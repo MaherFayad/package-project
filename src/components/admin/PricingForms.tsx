@@ -30,6 +30,7 @@ function PreviewResult({ preview }: { preview: PricingPreview }) {
       </Banner>
       <DataTable
         caption={t("admin.pricing.preview.caption")}
+        condensed
         columnContentTypes={["text", "text", "numeric", "numeric", "numeric"]}
         headings={[t("admin.pricing.preview.columns.structure"), t("admin.pricing.preview.columns.material"), t("admin.pricing.preview.columns.current"), t("admin.pricing.preview.columns.proposed"), t("admin.pricing.preview.columns.change")]}
         rows={preview.rows.map((r) => [

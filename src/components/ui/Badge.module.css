@@ -60,3 +60,6 @@
 .count-neutral { background: var(--p-color-bg-fill-transparent-secondary); color: var(--p-color-text-secondary); }
 .count-critical { background: var(--p-color-bg-fill-critical); color: var(--p-color-text-critical-on-bg-fill); }
 .count-inverse { background: var(--p-color-bg-fill-inverse); color: var(--p-color-text-inverse); }
+/* R4-CR-21: in table cells a badge stays on one line (Polaris Badge); the cell widens or the
+   condensed row gives it room. Text-spacing overrides (1.4.12) widen it, never clip it. */
+td .Badge, th .Badge { white-space: nowrap; max-inline-size: none; }

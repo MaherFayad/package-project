@@ -57,6 +57,7 @@ export default async function AdminUserPage({ params }: { params: Params }) {
                   {user.consents.length ? (
                     <DataTable
                       caption={t("admin.users.detail.consentCaption")}
+                    condensed
                       columnContentTypes={["text", "text", "text", "text", "text"]}
                       headings={[
                         t("admin.users.detail.consentColumns.kind"),
@@ -129,6 +130,7 @@ export default async function AdminUserPage({ params }: { params: Params }) {
                 {user.orders.length ? (
                   <DataTable
                     caption={t("admin.users.detail.orders")}
+                    condensed
                     columnContentTypes={["text", "text", "text", "numeric"]}
                     headings={[t("admin.orders.columns.order"), t("admin.orders.columns.date"), t("admin.orders.columns.status"), t("admin.orders.columns.total")]}
                     rows={user.orders.map((o) => [

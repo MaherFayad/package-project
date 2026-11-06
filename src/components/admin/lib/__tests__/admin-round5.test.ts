@@ -51,6 +51,9 @@ describe("quote lead states with a sent price", () => {
     expect(leadState([{ action: "QUOTE_PRICED", createdAt: at(-5) }, { action: "QUOTE_CLOSED", createdAt: at(-1) }])).toBe("CLOSED");
     expect(leadState([{ action: "QUOTE_PRICED", createdAt: at(-5) }], "ACCEPTED")).toBe("ORDERED");
     expect(leadState([{ action: "toString", createdAt: at(-5) }])).toBe("OPEN");
+    // R5-AD-03: a priced row without a QUOTE_PRICED log entry is still priced, not open.
+    expect(leadState([], "PRICED")).toBe("PRICED");
+    expect(leadState([{ action: "QUOTE_CLOSED", createdAt: at(-1) }], "PRICED")).toBe("CLOSED");
   });
   it("Priced view lists priced leads; Closed lists closed and ordered", () => {
     expect(inLeadView({ state: "PRICED", overdue: false }, "priced")).toBe(true);
@@ -63,5 +66,34 @@ describe("bio edit decisions (R6-05)", () => {
   it("accepts approve, reject and clean with the edit the reviewer saw", () => {
     for (const decision of ["APPROVE", "REJECT", "CLEAN"]) expect(bioEditDecisionSchema.safeParse({ vendorId: "v1", decision, submittedAt: "2026-11-06T10:00:00.000Z" }).success).toBe(true);
     expect(bioEditDecisionSchema.safeParse({ vendorId: "v1", decision: "PUBLISH", submittedAt: null }).success).toBe(false);
+  });
+});
+
+describe("sample buy price (R4-B-11)", () => {
+  it("uses the admin's sample printer price, and the 60% assumption only when it is not set", async () => {
+    const { sampleOffer } = await import("@/lib/orders/sample");
+    const offer = { lines: [{ kind: "SHIPPING", labelKey: "pricing.line.shipping", quantity: 1, unitPiasters: 14_200, totalPiasters: 14_200 }], deliveryDays: 6, leadTimeDays: 4, standardSize: true, internal: { vendorCostPiasters: 1, marginPiasters: 1 } } as unknown as Parameters<typeof sampleOffer>[0];
+    expect(sampleOffer(offer, 5, 75_000).internal).toMatchObject({ vendorCostPiasters: 45_000, marginPiasters: 30_000 });
+    expect(sampleOffer(offer, 5, 75_000, 52_000).internal).toMatchObject({ vendorCostPiasters: 52_000, marginPiasters: 23_000 });
+  });
+});
+
+describe("audit summaries without raw ids (R4-CR-13)", () => {
+  it("drops cuid-like ids and keeps words", async () => {
+    const { readableSummary } = await import("../audit");
+    expect(readableSummary("Nile Pack Printing & Packaging photo cmw4ogi8700037drbi0sbz1ku")).toBe("Nile Pack Printing & Packaging photo");
+    expect(readableSummary("Nile Pack photo cmw4ogi8700037drbi0sbz1ku: blurry")).toBe("Nile Pack photo: blurry");
+    expect(readableSummary("corrugatedcardboardmailersonly is fine")).toBe("corrugatedcardboardmailersonly is fine");
+  });
+});
+
+describe("bio edit diff (R5-AD)", () => {
+  it("marks the added words only", async () => {
+    const { wordDiff } = await import("../moderation");
+    const d = wordDiff("Fast digital shop.", "Fast digital shop. WhatsApp 0100 123 4567");
+    expect(d.filter((p) => p.added).map((p) => p.text.trim())).toEqual(["WhatsApp 0100 123 4567"]);
+    expect(d.map((p) => p.text).join("")).toBe("Fast digital shop. WhatsApp 0100 123 4567");
+    expect(wordDiff("same text", "same text").some((p) => p.added)).toBe(false);
+    expect(wordDiff("", "new bio")).toEqual([{ text: "new bio", added: true }]);
   });
 });

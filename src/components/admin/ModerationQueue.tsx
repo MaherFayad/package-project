@@ -8,6 +8,7 @@ import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { formatDate, formatNumber } from "@/lib/format";
 import { stripContactDetails } from "@/components/vendor/lib/contact";
+import { wordDiff } from "./lib/moderation";
 import { cleanBioAction, reviewBioEditAction, reviewPortfolioAction } from "./server/actions";
 import { adminStyles } from "./charts";
 import { fieldError, useAdminAction, useAdminErrorText } from "./useAdminAction";
@@ -218,16 +219,7 @@ function BioCard({ b }: { b: ModerationBio }) {
     <Card title={b.vendorName}>
       <BlockStack gap="300">
         <Flags flags={b.flags} />
-        <Text as="p" variant="bodySm">
-          <span className={adminStyles.PreWrap} dir="auto">
-            {b.bioAr}
-          </span>
-        </Text>
-        <Text as="p" variant="bodySm" tone="subdued">
-          <span className={adminStyles.PreWrap} dir="auto">
-            {b.bioEn}
-          </span>
-        </Text>
+        <BioText ar={b.bioAr} en={b.bioEn} />
         <InlineStack align="end" gap="200">
           <Button url={`/${locale}/vendors/${b.vendorSlug}`} external>
             {t("admin.moderation.viewPublic")}
@@ -256,24 +248,19 @@ function BioCard({ b }: { b: ModerationBio }) {
           <Text as="h3" variant="headingXs">
             {t("admin.moderation.after")}
           </Text>
-          <Text as="p" variant="bodySm">
-            <span className={adminStyles.PreWrap} dir="auto">
-              {after.ar || t("admin.common.none")}
-            </span>
-          </Text>
-          <Text as="p" variant="bodySm" tone="subdued">
-            <span className={adminStyles.PreWrap} dir="auto">
-              {after.en || t("admin.common.none")}
-            </span>
-          </Text>
+          <BioText ar={after.ar} en={after.en} />
         </BlockStack>
       </Modal>
     </Card>
   );
 }
 
-/** Both languages of one bio version, labelled, with user text isolated (`dir="auto"`). */
-function BioText({ ar, en }: { ar: string; en: string }) {
+/**
+ * Both languages of one bio version, labelled. User text is isolated with `dir="auto"` on the
+ * paragraph itself, so an Arabic bio is right-aligned in the English console and vice versa.
+ * With `against`, words added relative to the live bio are marked (R5-AD).
+ */
+function BioText({ ar, en, against }: { ar: string; en: string; against?: { ar: string; en: string } }) {
   const { t } = useI18n();
   return (
     <BlockStack gap="200">
@@ -287,11 +274,21 @@ function BioText({ ar, en }: { ar: string; en: string }) {
           <Text as="span" variant="bodySm" tone="subdued">
             {t(`admin.moderation.bio.${lang}`)}
           </Text>
-          <Text as="p" variant="bodySm">
-            <span className={adminStyles.PreWrap} dir="auto" lang={lang}>
-              {text || t("admin.moderation.bio.empty")}
-            </span>
-          </Text>
+          <p className={adminStyles.BioPara} dir="auto" lang={lang}>
+            {!text
+              ? t("admin.moderation.bio.empty")
+              : against
+                ? wordDiff(against[lang], text).map((p, i) =>
+                    p.added ? (
+                      <ins key={i} className={adminStyles.BioAdded}>
+                        {p.text}
+                      </ins>
+                    ) : (
+                      <span key={i}>{p.text}</span>
+                    ),
+                  )
+                : text}
+          </p>
         </BlockStack>
       ))}
     </BlockStack>
@@ -322,7 +319,7 @@ function BioEditCard({ b }: { b: ModerationBioEdit }) {
   const after = { ar: stripContactDetails(b.pendingAr), en: stripContactDetails(b.pendingEn) };
   return (
     <Card>
-      <BlockStack gap="400">
+      <BlockStack gap="400" data-bio-vendor={b.vendorSlug}>
         <InlineStack align="space-between" blockAlign="center" gap="200">
           <Text as="h2" variant="headingSm">
             <Link url={`/${locale}/admin/vendors/${b.vendorSlug}`}>
@@ -346,7 +343,10 @@ function BioEditCard({ b }: { b: ModerationBioEdit }) {
                   {t("admin.moderation.statuses.PENDING")}
                 </Badge>
               </InlineStack>
-              <BioText ar={b.pendingAr} en={b.pendingEn} />
+              <BioText ar={b.pendingAr} en={b.pendingEn} against={{ ar: b.liveAr, en: b.liveEn }} />
+              <Text as="p" variant="bodySm" tone="subdued">
+                {t("admin.moderation.bio.addedHelp")}
+              </Text>
             </BlockStack>
           </section>
           <section aria-label={t("admin.moderation.bio.live")} className={adminStyles.BioPane}>

@@ -32,6 +32,7 @@ import { contactFlags } from "../lib/moderation";
 import { FUNNEL_STEPS as EVENT_FUNNEL_STEPS, loadShareLoop } from "@/lib/analytics/funnel";
 import { eventFunnel, visitorToPaid } from "../lib/events";
 import { isOverdue, leadState, replyDueAt, type LeadState } from "../lib/quoteLeads";
+import { PRICED_FOLLOW_UP_HOURS } from "../lib/quotePricing";
 import { listQuoteRequests, QUOTE_ACCEPTED, QUOTE_PRICED, QUOTE_REQUESTED, quoteCheckoutPath } from "@/lib/orders/quote-requests";
 import { payoutSchedule, type ScheduleRow } from "@/components/vendor/lib/payouts";
 
@@ -79,7 +80,7 @@ async function loadCustomerEventFunnel(w: { from: Date; to: Date }): Promise<Rec
 
 export async function loadOverview(range: RangeKey, now = new Date()) {
   const { from, to, prevFrom } = rangeWindow(range, now);
-  const [orders, disputes, designs, accounts, priceViewers, orderUsers, qcPending, awaitingVendor, applications, dataRequests, payouts, buyerOrders, vendorEvents, moderation, quoteLeads, eventSteps, shareLoop] = await Promise.all([
+  const [orders, disputes, designs, accounts, priceViewers, orderUsers, qcPending, awaitingVendor, applications, dataRequests, payouts, buyerOrders, vendorEvents, moderation, quoteLeads, pricedExpiring, eventSteps, shareLoop] = await Promise.all([
     db.order.findMany({ where: { OR: [{ placedAt: { gte: prevFrom } }, { deliveredAt: { gte: prevFrom } }] }, select: metricSelect }),
     db.dispute.findMany({ select: { createdAt: true, status: true } }),
     db.design.count({ where: { createdAt: { gte: from, lt: to } } }),
@@ -100,6 +101,7 @@ export async function loadOverview(range: RangeKey, now = new Date()) {
     db.productionEvent.findMany({ where: { type: { in: ["VENDOR_ACCEPTED", "VENDOR_DECLINED"] }, createdAt: { gte: from, lt: to } }, select: { type: true } }),
     countModeration(),
     countOpenQuoteLeads(),
+    countPricedExpiring(),
     // B-19: launch-metrics.md funnel from the first-party Event table (unique actors per step).
     loadCustomerEventFunnel({ from, to }),
     loadShareLoop({ from, to }),
@@ -144,7 +146,7 @@ export async function loadOverview(range: RangeKey, now = new Date()) {
     repeat: repeatRate90(buyerOrders, now),
     acceptance: acceptanceRate(vendorEvents),
     events: { funnel: eventFunnel(eventSteps), visitorToPaidPct: visitorToPaid(eventSteps), share: shareLoop },
-    tasks: { qcPending, awaitingVendor, applications, openDisputes: ops.openDisputes, dataRequests, payouts, moderation, quoteLeads },
+    tasks: { qcPending, awaitingVendor, applications, openDisputes: ops.openDisputes, dataRequests, payouts, moderation, quoteLeads, pricedExpiring },
   };
 }
 
@@ -527,12 +529,18 @@ export async function loadAudit(filter: { entityType?: string | null; action?: s
     orderBy: { createdAt: "desc" },
     take: 300,
   });
+  // R4-CR-13: show who acted by name (phone in a tooltip). No relation on purpose: the row outlives
+  // account deletion, so a missing user falls back to the phone kept on the row.
+  const actorIds = [...new Set(rows.map((r) => r.actorId).filter((x): x is string => !!x))];
+  const actors = actorIds.length ? await db.user.findMany({ where: { id: { in: actorIds } }, select: { id: true, name: true } }) : [];
+  const names = new Map(actors.map((a) => [a.id, a.name]));
   return rows.map((r) => ({
     id: r.id,
     action: r.action,
     entityType: r.entityType,
     entityId: r.entityId,
     summary: r.summary,
+    actorName: r.actorId ? (names.get(r.actorId) ?? null) : null,
     actorPhone: r.actorPhone,
     ip: r.ip,
     createdAt: r.createdAt.toISOString(),
@@ -819,6 +827,17 @@ export async function loadQuoteLeads(locale: Locale, now = new Date()): Promise<
         : null,
     };
   });
+}
+
+/**
+ * Sent prices the buyer has not paid that expire within PRICED_FOLLOW_UP_HOURS and were not closed
+ * (overview to-do: call the buyer before the link stops working, R4-B-03).
+ */
+export async function countPricedExpiring(now = new Date()): Promise<number> {
+  const rows = await db.quote.findMany({ where: { status: QUOTE_PRICED, validUntil: { gt: now, lte: new Date(now.getTime() + PRICED_FOLLOW_UP_HOURS * 3_600_000) } }, select: { id: true } });
+  if (!rows.length) return 0;
+  const closed = await db.auditLog.findMany({ where: { entityType: "QUOTE", action: "QUOTE_CLOSED", entityId: { in: rows.map((r) => r.id) } }, select: { entityId: true }, distinct: ["entityId"] });
+  return rows.length - closed.length;
 }
 
 /** Open quote requests (nav badge, overview to-do). */

@@ -141,7 +141,7 @@ test.describe("admin", () => {
       }
     } finally {
       await db.vendorPortfolioItem.delete({ where: { id: item.id } }).catch(() => {});
-      await db.auditLog.deleteMany({ where: { summary: { contains: item.id } } });
+      await db.auditLog.deleteMany({ where: { OR: [{ summary: { contains: item.id } }, { summary: { contains: caption } }] } });
     }
   });
 
@@ -191,7 +191,7 @@ test.describe("admin", () => {
       await db.vendor.update({ where: { id: vendor.id }, data: { bioEnPending: `Call 0100 123 4567 ${tag}`, bioArPending: after.bioAr, bioReviewStatus: "PENDING", bioSubmittedAt: new Date() } });
       await page.goto("/en/admin/moderation?tab=bios");
       await expect(page.getByRole("button", { name: `Approve and publish: ${vendor.nameEn}` })).toBeDisabled({ timeout: 30_000 });
-      await expect(page.getByText("The edit has contact details.")).toBeVisible();
+      await expect(page.locator(`[data-bio-vendor="${vendor.slug}"]`).getByText("The edit has contact details.")).toBeVisible();
       await page.getByRole("button", { name: `Send back: ${vendor.nameEn}` }).click();
       const dialog = page.getByRole("dialog");
       await dialog.getByLabel("Reason for the vendor").fill("Please remove the phone number");
@@ -218,7 +218,7 @@ test.describe("admin", () => {
       await signIn(context, baseURL!);
       await page.goto("/en/admin/quotes");
       await expect(page.getByRole("heading", { level: 1, name: "Quote requests" })).toBeVisible({ timeout: 30_000 });
-      const row = page.getByRole("row").filter({ hasText: "6,500" });
+      const row = page.getByRole("row").filter({ hasText: "6,500" }).filter({ hasText: "E2E Lead" });
       await expect(row.getByText(/Reply in \d+ h/).filter({ visible: true })).toBeVisible();
       await row.getByRole("button", { name: /^Mark contacted:/ }).click();
       await page.getByRole("dialog").getByLabel("What you told the buyer").fill("Price and lead time sent on WhatsApp");

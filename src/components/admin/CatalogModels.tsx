@@ -27,7 +27,6 @@ import { MODEL_GROUPS, MODEL_GROUP_NAMES } from "@/lib/library/types";
 import { matchesQuery } from "@/lib/library/search";
 import { AVAILABILITY_VIEWS, inAvailabilityView, type AvailabilityView } from "./lib/availability";
 import type { CatalogModelRow } from "./server/queries";
-import { adminStyles } from "./charts";
 
 const PAGE_SIZE = 50;
 
@@ -121,6 +120,7 @@ export function ModelsPanel({
       />
       <div id="admin-models-table">
         <IndexTable
+          condensed
           resourceName={{ singular: t("admin.catalog.models.singular"), plural: t("admin.catalog.models.plural") }}
           caption={t("admin.catalog.models.caption")}
           rowIds={pageRows.map((m) => m.code)}
@@ -200,10 +200,6 @@ export function ModelsPanel({
                   <Text as="span" variant="bodySm" tone="subdued">
                     <bdi dir="ltr">{m.standard}</bdi>
                   </Text>
-                  {/* Phones: availability is the point of this table, so it also sits in the first cell. */}
-                  <div className={adminStyles.PhoneOnly}>
-                    <AvailabilityBadge m={m} />
-                  </div>
                 </BlockStack>
               </IndexTableCell>
               <IndexTableCell>{MODEL_GROUP_NAMES[m.group as keyof typeof MODEL_GROUP_NAMES]?.[locale] ?? m.group}</IndexTableCell>

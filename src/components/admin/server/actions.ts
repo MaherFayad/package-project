@@ -351,7 +351,7 @@ export async function reviewPortfolioAction(input: z.input<typeof portfolioRevie
       if (u.count !== 1) throw new AdminActionError("STALE");
       await audit(
         admin,
-        { action: d.decision === "APPROVE" ? "PORTFOLIO_APPROVE" : "PORTFOLIO_REJECT", entityType: "VENDOR", entityId: item.vendorId, summary: `${item.vendor.nameEn} photo ${item.id}${d.note ? `: ${d.note}` : ""}`, before: { status: item.status }, after: { status } },
+        { action: d.decision === "APPROVE" ? "PORTFOLIO_APPROVE" : "PORTFOLIO_REJECT", entityType: "VENDOR", entityId: item.vendorId, summary: `${item.vendor.nameEn} photo "${(item.captionEn || item.captionAr).slice(0, 60)}"${d.note ? `: ${d.note}` : ""}`, before: { itemId: item.id, status: item.status }, after: { itemId: item.id, status } },
         tx,
       );
     });

@@ -31,6 +31,7 @@ export function UsersIndex({ rows }: { rows: UserRow[] }) {
   return (
     <Page fullWidth title={t("admin.users.title")} titleIcon={Users}>
       <IndexTable
+        condensed
         resourceName={{ singular: t("admin.users.resourceSingular"), plural: t("admin.users.resourcePlural") }}
         caption={t("admin.users.title")}
         rowIds={shown.map((r) => r.id)}

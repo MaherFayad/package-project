@@ -118,6 +118,7 @@ export function QuoteLeadsIndex({ rows, now, vendors, validityHours }: { rows: A
         />
         <div id="admin-quotes-table">
           <IndexTable
+            condensed
             resourceName={{ singular: t("admin.quotes.singular"), plural: t("admin.quotes.plural") }}
             caption={t("admin.quotes.title")}
             rowIds={shown.map((r) => r.quoteId)}
@@ -178,25 +179,6 @@ export function QuoteLeadsIndex({ rows, now, vendors, validityHours }: { rows: A
                         </span>
                       </Text>
                     ) : null}
-                    {/* R4-05: on phones the table scrolls sideways, so the buyer's call link and the
-                        next step live here too (the desktop copies are hidden on phones). */}
-                    <div className={adminStyles.PhoneOnly}>
-                      <BlockStack gap="200">
-                        <InlineStack gap="200" blockAlign="center">
-                          {stateBadge(r)}
-                          <Text as="span" variant="bodySm" numeric>
-                            {t("admin.quotes.units", { count: formatNumber(r.quantity) })}
-                          </Text>
-                        </InlineStack>
-                        {r.buyerPhone ? (
-                          <Link url={`tel:${r.buyerPhone}`} className={adminStyles.TapLink}>
-                            <bdi>{r.buyerName ?? t("admin.users.noName")}</bdi> · <bdi dir="ltr">{r.buyerPhone}</bdi>
-                          </Link>
-                        ) : null}
-                        {r.priced ? <PricedSummary lead={r} /> : null}
-                        {r.state !== "CLOSED" && r.state !== "ORDERED" ? <LeadActions lead={r} align="start" onPrice={setPricing} /> : null}
-                      </BlockStack>
-                    </div>
                   </BlockStack>
                 </IndexTableCell>
                 <IndexTableCell>
@@ -209,11 +191,9 @@ export function QuoteLeadsIndex({ rows, now, vendors, validityHours }: { rows: A
                       <bdi>{r.buyerName ?? t("admin.users.noName")}</bdi>
                     )}
                     {r.buyerPhone ? (
-                      <span className={adminStyles.DesktopOnly}>
-                        <Link url={`tel:${r.buyerPhone}`} className={adminStyles.TapLink}>
-                          <bdi dir="ltr">{r.buyerPhone}</bdi>
-                        </Link>
-                      </span>
+                      <Link url={`tel:${r.buyerPhone}`} className={adminStyles.TapLink}>
+                        <bdi dir="ltr">{r.buyerPhone}</bdi>
+                      </Link>
                     ) : null}
                   </BlockStack>
                 </IndexTableCell>
@@ -233,11 +213,7 @@ export function QuoteLeadsIndex({ rows, now, vendors, validityHours }: { rows: A
                 <IndexTableCell>
                   <BlockStack gap="050">
                     <InlineStack>{stateBadge(r)}</InlineStack>
-                    {r.priced ? (
-                      <span className={adminStyles.DesktopOnly}>
-                        <PricedSummary lead={r} />
-                      </span>
-                    ) : null}
+                    {r.priced ? <PricedSummary lead={r} /> : null}
                     {(r.state === "CONTACTED" || r.state === "CLOSED") && r.lastNote ? (
                       <Text as="span" variant="bodySm" tone="subdued">
                         <bdi>{r.lastNote}</bdi>
@@ -246,9 +222,7 @@ export function QuoteLeadsIndex({ rows, now, vendors, validityHours }: { rows: A
                   </BlockStack>
                 </IndexTableCell>
                 <IndexTableCell alignment="end">
-                  <span className={adminStyles.DesktopOnly}>
-                    {r.state !== "CLOSED" && r.state !== "ORDERED" ? <LeadActions lead={r} onPrice={setPricing} /> : <Text as="span" tone="subdued">{t("admin.common.none")}</Text>}
-                  </span>
+                  {r.state !== "CLOSED" && r.state !== "ORDERED" ? <LeadActions lead={r} onPrice={setPricing} /> : <Text as="span" tone="subdued">{t("admin.common.none")}</Text>}
                 </IndexTableCell>
               </IndexTableRow>
             ))}

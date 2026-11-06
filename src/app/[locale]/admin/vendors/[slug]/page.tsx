@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Badge, BlockStack, Card, DataTable, InlineStack, Layout, LayoutSection, Link, MetricsStrip, Page, Text, Tooltip } from "@/components/ui";
+import { readableSummary } from "@/components/admin/lib/audit";
 import { adminStyles } from "@/components/admin/charts";
 import { HealthBadge } from "@/components/admin/HealthBadge";
 import { OrderStatusBadge } from "@/components/admin/OrdersIndex";
@@ -70,7 +71,7 @@ export default async function AdminVendorPage({ params }: { params: Params }) {
                   {t("admin.vendors.scorecard.health")}
                 </Tooltip>
               ),
-              value: score.health === null ? t("admin.common.none") : <HealthBadge score={score.health} label={t("admin.vendors.scorecard.health")} delivered={score.delivered} earlyLabel={t("admin.vendors.scorecard.early")} />,
+              value: score.health === null ? t("admin.common.none") : <HealthBadge score={score.health} label={t("admin.vendors.scorecard.health")} delivered={score.delivered} earlyLabel={t("admin.vendors.scorecard.early")} stacked />,
             },
           ]}
         />
@@ -81,6 +82,7 @@ export default async function AdminVendorPage({ params }: { params: Params }) {
                 {orders.length ? (
                   <DataTable
                     caption={t("admin.vendors.detail.recentOrders")}
+                    condensed
                     columnContentTypes={["text", "text", "text", "numeric"]}
                     headings={[t("admin.orders.columns.order"), t("admin.orders.columns.date"), t("admin.orders.columns.status"), t("admin.orders.columns.total")]}
                     rows={orders.slice(0, 20).map((o) => [
@@ -107,7 +109,7 @@ export default async function AdminVendorPage({ params }: { params: Params }) {
                           <Text as="span" fontWeight="semibold">
                             {t(`admin.audit.actions.${a.action}` as DictKey)}
                           </Text>
-                          {a.summary ? ` · ${a.summary}` : ""}
+                          {a.summary ? <bdi>{` · ${readableSummary(a.summary)}`}</bdi> : ""}
                         </Text>
                         <Text as="p" variant="bodySm" tone="subdued">
                           {formatDateTime(a.createdAt, locale)}

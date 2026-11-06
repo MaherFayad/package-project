@@ -181,3 +181,22 @@
   color: var(--p-color-icon);
 }
 .PillRemove:hover { background: var(--p-color-bg-fill-transparent-hover); }
+
+/* R4-CR-03: Polaris `condensed`. Above 490 px the wrappers vanish (display: contents) and the table
+   is unchanged; below it each row is a card: the first cell is the title, the others are
+   "label · value" lines. Table semantics stay, so the label is aria-hidden in the markup. */
+.StackLabel { display: none; }
+.StackValue { display: contents; }
+@media (max-width: 489.98px) {
+  .condensed .Scroll { overflow-x: visible; }
+  .condensed .Table, .condensed .Table > tbody, .condensed .Table > tfoot { display: block; inline-size: 100%; }
+  .condensed .Table > thead { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .condensed .Row, .condensed .TotalsRow { display: flex; flex-direction: column; gap: var(--p-space-100); padding-block: var(--p-space-300); padding-inline: var(--p-space-300); border-block-end: 1px solid var(--p-color-border-secondary); }
+  .condensed .Row:last-child { border-block-end: 0; }
+  .condensed .Row > .Td, .condensed .Row > th, .condensed .TotalsRow > * { display: flex; align-items: baseline; justify-content: space-between; gap: var(--p-space-300); padding: 0; border: 0; white-space: normal; text-align: end; min-inline-size: 0; overflow-wrap: break-word; }
+  .condensed .Row > :first-child { display: block; text-align: start; font-weight: var(--p-font-weight-semibold); }
+  .condensed .StackLabel { display: block; flex: 0 0 auto; max-inline-size: 45%; color: var(--p-color-text-secondary); font-size: var(--p-text-body-sm-font-size); font-weight: var(--p-font-weight-regular); text-align: start; }
+  .condensed .StackValue { display: block; min-inline-size: 0; flex: 1 1 auto; text-align: end; }
+  /* A cell whose column has no visible title (actions) takes the whole line, from the start. */
+  .condensed .Row > .Td:not(:has(.StackLabel)) .StackValue { text-align: start; }
+}

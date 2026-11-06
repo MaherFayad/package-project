@@ -30,7 +30,10 @@ const STEP_STATE: Record<string, LeadState> = { QUOTE_CONTACTED: "CONTACTED", QU
 export function leadState(events: { action: string; createdAt: Date }[], quoteStatus?: string): LeadState {
   if (quoteStatus === "ACCEPTED") return "ORDERED";
   const last = [...events].filter((e) => Object.hasOwn(STEP_STATE, e.action)).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0];
-  return last ? STEP_STATE[last.action]! : "OPEN";
+  const state = last ? STEP_STATE[last.action]! : "OPEN";
+  // A PRICED row is priced whatever the log says (a price written by another path has no
+  // QUOTE_PRICED row); only a later close ends it.
+  return quoteStatus === "PRICED" && state !== "CLOSED" ? "PRICED" : state;
 }
 
 /**

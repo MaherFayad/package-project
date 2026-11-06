@@ -23,6 +23,7 @@ export function CheckoutSettingsForm({ initial }: { initial: Settings }) {
       pieces: String(initial.sample.maxPieces),
       days: String(initial.sample.creditDays),
       cap: String(initial.sample.monthlyCap),
+      cost: initial.sample.vendorCostPiasters === null ? "" : (initial.sample.vendorCostPiasters / 100).toFixed(2),
     }),
     [initial],
   );
@@ -45,7 +46,7 @@ export function CheckoutSettingsForm({ initial }: { initial: Settings }) {
             () =>
               saveCheckoutSettingsAction({
                 prepayDiscountPct: num(d.prepay),
-                sample: { enabled: d.enabled, pricePiasters: Math.round(num(d.price) * 100), maxPieces: num(d.pieces), creditDays: num(d.days), monthlyCap: num(d.cap) },
+                sample: { enabled: d.enabled, pricePiasters: Math.round(num(d.price) * 100), maxPieces: num(d.pieces), creditDays: num(d.days), monthlyCap: num(d.cap), vendorCostPiasters: d.cost.trim() === "" ? null : Math.round(num(d.cost) * 100) },
               }),
             t("admin.pricing.checkout.saved"),
           );
@@ -79,6 +80,19 @@ export function CheckoutSettingsForm({ initial }: { initial: Settings }) {
               <TextField label={t("admin.pricing.checkout.samplePieces")} autoComplete="off" inputMode="numeric" dir="ltr" value={d.pieces} onChange={set("pieces")} disabled={!d.enabled} helpText={t("admin.pricing.checkout.samplePiecesHelp")} error={err("sample.maxPieces")} />
               <TextField label={t("admin.pricing.checkout.sampleDays")} autoComplete="off" inputMode="numeric" dir="ltr" value={d.days} onChange={set("days")} disabled={!d.enabled} helpText={t("admin.pricing.checkout.sampleDaysHelp")} error={err("sample.creditDays")} />
               <TextField label={t("admin.pricing.checkout.sampleCap")} autoComplete="off" inputMode="numeric" dir="ltr" value={d.cap} onChange={set("cap")} disabled={!d.enabled} helpText={t("admin.pricing.checkout.sampleCapHelp")} error={err("sample.monthlyCap")} />
+            </InlineGrid>
+            <InlineGrid columns={{ xs: 1, md: 2 }} gap="300">
+              <TextField
+                label={t("admin.pricing.checkout.sampleCost")}
+                autoComplete="off"
+                inputMode="decimal"
+                dir="ltr"
+                value={d.cost}
+                onChange={set("cost")}
+                disabled={!d.enabled}
+                helpText={d.cost.trim() === "" ? t("admin.pricing.checkout.sampleCostAssumed") : t("admin.pricing.checkout.sampleCostHelp")}
+                error={err("sample.vendorCostPiasters")}
+              />
             </InlineGrid>
           </BlockStack>
           <InlineStack align="end" gap="200">

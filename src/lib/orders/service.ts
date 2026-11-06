@@ -191,7 +191,7 @@ export async function sampleOffers(doc: DesignDoc, governorate?: string): Promis
   if (settings.monthlyCap > 0 && (await samplesThisMonth()) >= settings.monthlyCap) return null;
   const outcome = await quoteDesign(doc, { quantity: QTY_TIERS[0], governorate });
   if (outcome.mode !== "instant" || outcome.offers.length === 0) return null;
-  return { offers: outcome.offers.map((o) => sampleOffer(o, settings.maxPieces, settings.pricePiasters)), pieces: settings.maxPieces };
+  return { offers: outcome.offers.map((o) => sampleOffer(o, settings.maxPieces, settings.pricePiasters, settings.vendorCostPiasters)), pieces: settings.maxPieces };
 }
 
 // ───────────────────────── numbering ─────────────────────────

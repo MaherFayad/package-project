@@ -21,6 +21,7 @@ import { ChartTableToggle } from "@/components/admin/ChartTableToggle";
 import { adminStyles, ColumnChart, FunnelBars } from "@/components/admin/charts";
 import { RangeSelect } from "@/components/admin/RangeSelect";
 import { loadOverview } from "@/components/admin/server/queries";
+import { loadCheckoutSettings } from "@/lib/orders/checkout-settings";
 import { asRange, RANGES } from "@/components/admin/lib/metrics";
 import { getT, toLocale, type DictKey } from "@/i18n";
 import { formatDate, formatMoney, formatNumber, formatPercent } from "@/lib/format";
@@ -34,7 +35,7 @@ export default async function AdminOverviewPage({ params, searchParams }: { para
   const locale = toLocale((await params).locale);
   const t = getT(locale);
   const range = asRange((await searchParams).range);
-  const o = await loadOverview(range);
+  const [o, checkout] = await Promise.all([loadOverview(range), loadCheckoutSettings()]);
   const base = `/${locale}/admin`;
   const pct = (n: number | null) => (n === null ? t("admin.common.none") : formatPercent(n, locale));
   const signed = (n: number | null) => (n === null ? t("admin.overview.noPrev") : t("admin.overview.vsPrev", { pct: `${n > 0 ? "+" : ""}${formatPercent(n, locale)}` }));
@@ -57,6 +58,7 @@ export default async function AdminOverviewPage({ params, searchParams }: { para
 
   const tasks = [
     { n: o.tasks.quoteLeads, text: t("admin.overview.tasks.quoteLeads"), url: `${base}/quotes` },
+    { n: o.tasks.pricedExpiring, text: t("admin.overview.tasks.pricedExpiring"), url: `${base}/quotes?view=priced` },
     { n: o.tasks.awaitingVendor, text: t("admin.overview.tasks.awaitingVendor"), url: `${base}/orders?view=attention` },
     { n: o.tasks.qcPending, text: t("admin.overview.tasks.qc"), url: `${base}/orders?view=qc` },
     { n: o.tasks.applications, text: t("admin.overview.tasks.applications"), url: `${base}/vendors?tab=applications` },
@@ -101,7 +103,7 @@ export default async function AdminOverviewPage({ params, searchParams }: { para
           accessibilityLabel={t("admin.overview.metricsLabel")}
           metrics={[
             { label: label("admin.overview.metrics.gmv", "admin.overview.help.gmv"), value: cell(money(o.money.gmvPiasters), signed(o.gmvChangePct)) },
-            { label: label("admin.overview.metrics.margin", "admin.overview.help.margin"), value: cell(money(o.money.marginPiasters), t("admin.overview.marginOfNet", { pct: pct(o.money.marginPct), net: formatMoney(o.money.netPiasters, locale, { alwaysDecimals: true }) })) },
+            { label: label("admin.overview.metrics.margin", checkout.sample.vendorCostPiasters === null ? "admin.overview.help.marginSampleAssumed" : "admin.overview.help.margin"), value: cell(money(o.money.marginPiasters), t("admin.overview.marginOfNet", { pct: pct(o.money.marginPct), net: formatMoney(o.money.netPiasters, locale, { alwaysDecimals: true }) })) },
             { label: t("admin.overview.metrics.orders"), value: cell(formatNumber(o.money.orders), t("admin.overview.aovShort", { amount: o.money.aovPiasters === null ? t("admin.common.none") : formatMoney(o.money.aovPiasters, locale, { alwaysDecimals: true }) })) },
             { label: label("admin.overview.metrics.onTime", "admin.overview.help.onTime"), value: cell(pct(o.ops.onTimePct), t("admin.overview.ofDelivered", { count: formatNumber(o.ops.delivered) })) },
             { label: label("admin.overview.metrics.reprint", "admin.overview.help.reprint"), value: cell(pct(o.ops.reprintPct), t("admin.overview.reprintCount", { count: formatNumber(o.ops.reprints) })) },
@@ -136,7 +138,7 @@ export default async function AdminOverviewPage({ params, searchParams }: { para
                     <>
                       <FunnelBars rows={o.events.funnel.map((r) => ({ key: r.step, label: t(`admin.overview.events.steps.${r.step}` as DictKey), value: r.count, display: formatNumber(r.count) }))} />
                       <DataTable
-                        caption={t("admin.overview.events.caption")}
+                        caption={t("admin.overview.events.caption")} condensed
                         columnContentTypes={["text", "numeric", "numeric", "numeric"]}
                         headings={[t("admin.overview.funnel.columns.step"), t("admin.overview.funnel.columns.count"), t("admin.overview.events.ofVisits"), t("admin.overview.funnel.columns.ofPrev")]}
                         rows={o.events.funnel.map((r) => [t(`admin.overview.events.steps.${r.step}` as DictKey), formatNumber(r.count), pct(r.ofVisitsPct), r.ofPrevPct === null ? t("admin.common.none") : pct(r.ofPrevPct)])}
@@ -184,7 +186,7 @@ export default async function AdminOverviewPage({ params, searchParams }: { para
                     }))}
                   />
                   <DataTable
-                    caption={t("admin.overview.funnel.caption")}
+                    caption={t("admin.overview.funnel.caption")} condensed
                     columnContentTypes={["text", "numeric", "numeric", "numeric"]}
                     headings={[t("admin.overview.funnel.columns.step"), t("admin.overview.funnel.columns.count"), t("admin.overview.funnel.columns.ofFirst"), t("admin.overview.funnel.columns.ofPrev")]}
                     rows={o.funnel.map((r) => [t(`admin.overview.funnel.steps.${r.step}` as DictKey), formatNumber(r.count), pct(r.ofFirstPct), r.ofPrevPct === null ? t("admin.common.none") : pct(r.ofPrevPct)])}

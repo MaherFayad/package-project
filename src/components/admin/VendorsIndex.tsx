@@ -89,6 +89,7 @@ export function VendorsIndex({
       <div id="admin-vendors-table">
         {tab === "vendors" ? (
           <IndexTable
+            condensed
             resourceName={{ singular: t("admin.vendors.resourceSingular"), plural: t("admin.vendors.resourcePlural") }}
             caption={t("admin.vendors.title")}
             rowIds={vendorRows.map((v) => v.id)}
@@ -145,6 +146,7 @@ export function VendorsIndex({
           </IndexTable>
         ) : (
           <IndexTable
+            condensed
             resourceName={{ singular: t("admin.vendors.applications.resourceSingular"), plural: t("admin.vendors.applications.resourcePlural") }}
             caption={t("admin.vendors.tabs.applications")}
             rowIds={appRows.map((a) => a.id)}
