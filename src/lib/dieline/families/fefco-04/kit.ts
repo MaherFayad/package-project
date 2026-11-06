@@ -2,7 +2,7 @@ import { Euler, Quat as Quaternion } from "@/lib/dieline/math";
 import type { Dims, StructureFeatures } from "@/types";
 import { DielineBuilder, insetSeg, rectEdges } from "../../builder";
 import { cutWindow, notchPanel, stadium } from "../../features";
-import { bboxOf, clamp, dist, pt, rectPolygon } from "../../geometry";
+import { bboxOf, clamp, dist, pt } from "../../geometry";
 import type { StructureDraft } from "../../structures";
 import type { DielinePanel, Polygon, Pt, Rect } from "../../types";
 
@@ -61,6 +61,9 @@ export interface TrayKitOpts {
   /** Corner ears are glued (gluer) rather than trapped: geometry identical, metadata only. */
   gluedEars?: boolean;
 }
+
+/** Clearance (mm) at each vertical corner of a tray-kit blank: see `trayKit`. */
+export const CORNER_GAP = 0.1;
 
 export const IDENTITY: [number, number, number, number] = [0, 0, 0, 1];
 export const quat = (x: number, y: number, z: number): [number, number, number, number] => {
@@ -135,26 +138,44 @@ export function trayKit(dims: Dims, t: number, o: TrayKitOpts, f: StructureFeatu
   // lid instead of running up through the lid board (its fold showed as a kraft strip on the
   // printed lid, R5-3Q-C-03). Single walls keep running up to the lid's top face (corner joint).
   const hLong = Hbase + (lid || flapsOn === "long" ? cover * t : 0);
-  const hEnds = Hbase + ((lid && !d.ends) || flapsOn === "ends" ? cover * t : 0);
-  const Hf = lid ? Hbase + (d.front && !o.displayFront ? 0 : t) : hLong;
+  // Single walls that run up to the lid's top face stop CORNER_GAP short of it, and the lid stops
+  // CORNER_GAP short of the front's printed face: flush, each one's cut edge lay in the other's
+  // print along the lid's front and end edges (R6-3Q-C-01).
+  const g = CORNER_GAP;
+  const hEnds = Hbase + (lid && !d.ends ? cover * t - g : flapsOn === "ends" ? cover * t : 0);
+  const Hf = lid ? Hbase + (d.front && !o.displayFront ? 0 : t - g) : hLong;
   const Hb = (o.top.kind === "lid" ? Hbase + t : hLong) + (o.header ? dims.H * o.header : 0);
   const He = hEnds + (o.raisedEnds ? dims.H * o.raisedEnds : 0);
 
   const b = new DielineBuilder();
   const base = rect(0, 0, Lp, Wp);
-  b.root("base", "bottom", rectPolygon(0, 0, Lp, Wp), "Base");
+  // The base outline carries a vertex CORNER_GAP in from each corner, where the (shortened) wall
+  // hinges end: the renderer prints a base edge round the crease only when the edge lies on a
+  // hinge, so an unsplit edge longer than the hinge drew as raw board along every bottom edge.
+  const gb = CORNER_GAP;
+  b.root(
+    "base",
+    "bottom",
+    [pt(0, 0), pt(gb, 0), pt(Lp - gb, 0), pt(Lp, 0), pt(Lp, gb), pt(Lp, Wp - gb), pt(Lp, Wp), pt(Lp - gb, Wp), pt(gb, Wp), pt(0, Wp), pt(0, Wp - gb), pt(0, gb)],
+    "Base",
+  );
 
-  const backR = rect(0, -Hb, Lp, Hb);
-  const frontR = rect(0, Wp, Lp, Hf);
-  const rightR = rect(-He, 0, He, Wp);
-  const leftR = rect(Lp, 0, He, Wp);
+  // Vertical corners: every wall stops CORNER_GAP short of each corner of the base, so no wall's
+  // cut end lies in the neighbouring wall's printed face. Full-length walls met board-in-board at
+  // all four corners, each end face coplanar with the other wall's print: a z-fighting kraft /
+  // board strip one caliper wide down every vertical corner, patchy at small sizes
+  // (FEFCO_0400__min__d_hero, R6-3Q-C-01; same fix as the core tray's cornerGap, R5-3Q-A-07).
+  const backR = rect(g, -Hb, Lp - 2 * g, Hb);
+  const frontR = rect(g, Wp, Lp - 2 * g, Hf);
+  const rightR = rect(-He, g, He, Wp - 2 * g);
+  const leftR = rect(Lp, g, He, Wp - 2 * g);
   const E = (r: Rect) => rectEdges(r);
   const walls: WallInfo[] = [
-    { id: "back", key: "back", rect: backR, baseEdge: E(base).top, farEdge: E(backR).top, sides: [[E(backR).left[0], E(backR).left[1]], [E(backR).right[0], E(backR).right[1]]], height: Hb },
-    { id: "front", key: "front", rect: frontR, baseEdge: E(base).bottom, farEdge: E(frontR).bottom, sides: [[E(frontR).left[1], E(frontR).left[0]], [E(frontR).right[1], E(frontR).right[0]]], height: Hf },
+    { id: "back", key: "back", rect: backR, baseEdge: insetSeg(E(base).top, g), farEdge: E(backR).top, sides: [[E(backR).left[0], E(backR).left[1]], [E(backR).right[0], E(backR).right[1]]], height: Hb },
+    { id: "front", key: "front", rect: frontR, baseEdge: insetSeg(E(base).bottom, g), farEdge: E(frontR).bottom, sides: [[E(frontR).left[1], E(frontR).left[0]], [E(frontR).right[1], E(frontR).right[0]]], height: Hf },
     // Turned 180° at the end: the panel on the sheet's left becomes the box's right end.
-    { id: "right", key: "ends", rect: rightR, baseEdge: E(base).left, farEdge: E(rightR).left, sides: [[E(rightR).top[0], E(rightR).top[1]], [E(rightR).bottom[0], E(rightR).bottom[1]]], height: He },
-    { id: "left", key: "ends", rect: leftR, baseEdge: E(base).right, farEdge: E(leftR).right, sides: [[E(leftR).top[1], E(leftR).top[0]], [E(leftR).bottom[1], E(leftR).bottom[0]]], height: He },
+    { id: "right", key: "ends", rect: rightR, baseEdge: insetSeg(E(base).left, g), farEdge: E(rightR).left, sides: [[E(rightR).top[0], E(rightR).top[1]], [E(rightR).bottom[0], E(rightR).bottom[1]]], height: He },
+    { id: "left", key: "ends", rect: leftR, baseEdge: insetSeg(E(base).right, g), farEdge: E(leftR).right, sides: [[E(leftR).top[1], E(leftR).top[0]], [E(leftR).bottom[1], E(leftR).bottom[0]]], height: He },
   ];
   const wall = (id: WallInfo["id"]) => walls.find((w) => w.id === id)!;
 
@@ -182,7 +203,8 @@ export function trayKit(dims: Dims, t: number, o: TrayKitOpts, f: StructureFeatu
       const corner = Math.min(25, Lp * 0.15);
       const drop = Hf * 0.5;
       const slope = Math.min(drop, (Lp - 2 * corner) * 0.2);
-      const poly: Polygon = [fr.at(fr.a, 0, 0), fr.at(fr.a, Lp, 0), fr.at(fr.a, Lp, Hf), fr.at(fr.a, Lp - corner, Hf), fr.at(fr.a, Lp - corner - slope, Hf - drop), fr.at(fr.a, corner + slope, Hf - drop), fr.at(fr.a, corner, Hf), fr.at(fr.a, 0, Hf)];
+      const Lf = Lp - 2 * g;
+      const poly: Polygon = [fr.at(fr.a, 0, 0), fr.at(fr.a, Lf, 0), fr.at(fr.a, Lf, Hf), fr.at(fr.a, Lf - corner, Hf), fr.at(fr.a, Lf - corner - slope, Hf - drop), fr.at(fr.a, corner + slope, Hf - drop), fr.at(fr.a, corner, Hf), fr.at(fr.a, 0, Hf)];
       b.attachPoly("front", "front", "base", [fr.a, fr.b], poly, { stage: wallStage("front"), label: "Display front" });
       continue;
     }
@@ -213,7 +235,7 @@ export function trayKit(dims: Dims, t: number, o: TrayKitOpts, f: StructureFeatu
       const k = h / dist(rim, basePt);
       const rimPt = pt(basePt.x + (rim.x - basePt.x) * k, basePt.y + (rim.y - basePt.y) * k);
       const taper = Math.min(earD * 0.5, h * 0.3);
-      b.attach(`ear_${w.id}_${i}`, "ear", w.id, [rimPt, basePt], earD, { kind: "trapezoid", taperA: taper, taperB: 1 }, { stage: EAR_STAGE, stack: -1, label: o.gluedEars ? "Glue ear" : "Locking ear" });
+      b.attach(`ear_${w.id}_${i}`, "ear", w.id, [rimPt, basePt], earD, { kind: "trapezoid", taperA: taper, taperB: 1 }, { stage: EAR_STAGE, stack: -1 + g / t, label: o.gluedEars ? "Glue ear" : "Locking ear" });
     });
   }
   const earsTrappedBy = (key: WallKey) => (key === "ends" ? o.ears === "long" : o.ears === "ends");
@@ -267,14 +289,14 @@ export function trayKit(dims: Dims, t: number, o: TrayKitOpts, f: StructureFeatu
     });
   } else if (top.kind === "lid") {
     const back = wall("back");
-    const lidR = rect(0, -Hb - Wp, Lp, Wp);
-    b.attach("top", "top", "back", back.farEdge, Wp, { kind: "rect" }, { stage: topBase + 1, label: "Lid" });
+    const lidR = rect(g, -Hb - Wp + g, Lp - 2 * g, Wp - g);
+    b.attach("top", "top", "back", back.farEdge, Wp - g, { kind: "rect" }, { stage: topBase + 1, label: "Lid" });
     if (top.front === "tuck") {
       const tuckD = Math.max(8, (Hf - 2 * t - 2) * (top.tuckRatio ?? 0.7));
       b.attach("lidTuck", "tuck", "top", insetSeg(E(lidR).top, lay.ends * t + 1), tuckD, { kind: "tuck", shoulder: 2 }, { stage: topBase + 1, stack: -lay.front, label: "Lid tuck" });
     } else if (top.front === "flap") {
       outsideFlaps = true;
-      b.attach("lidFront", "flap", "top", E(lidR).top, Math.max(10, Hf * 0.45), { kind: "rect" }, { stage: topBase + 2, stack: 1, label: "Lid front flap" });
+      b.attach("lidFront", "flap", "top", E(lidR).top, Math.max(10, Hf * 0.45), { kind: "rect" }, { stage: topBase + 2, stack: 1 + g / t, label: "Lid front flap" });
     }
     if (top.sides !== "none") {
       const outside = top.sides === "outside";
@@ -286,7 +308,8 @@ export function trayKit(dims: Dims, t: number, o: TrayKitOpts, f: StructureFeatu
         b.attach(id, "dust", "top", insetSeg(edge, inset), dd, { kind: "trapezoid", taperA: taper, taperB: outside ? 0 : 2 }, {
           // Inside flaps fold square first and slide inside the end walls; outside flaps wrap over after the lid.
           stage: outside ? topBase + 2 : topBase,
-          stack: outside ? 1 : -lay.ends,
+          // (+g/t: the lid is CORNER_GAP short of the end walls' outer face; the outside flap still lies on it.)
+          stack: outside ? 1 + g / t : -lay.ends,
           label: outside ? "Lid side flap (outside)" : "Lid side flap",
         });
       }
