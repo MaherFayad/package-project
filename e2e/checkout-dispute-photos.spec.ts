@@ -93,3 +93,27 @@ test("a buyer adds photos to a problem report and the admin sees them", async ({
 
   await db.dispute.deleteMany({ where: { orderId: o.id } });
 });
+
+test("round 10: HEIC gets a clear message, a camera photo with no type uploads, and a removed photo is deleted", async ({ page, baseURL }, info) => {
+  test.skip(info.project.name !== "mobile", "the phone camera path");
+  test.setTimeout(90_000);
+  const buyer = track(await createUser({ name: "E2E photo buyer 10" }));
+  const o = await cloneOrder("ELB-26001", { status: "DELIVERED", buyerId: buyer.id, label: "DQ" });
+  await db.order.update({ where: { id: o.id }, data: { deliveredAt: new Date() } });
+  await signInAs(page.context(), baseURL!, buyer.id);
+
+  await page.goto(`/en/orders/${o.id}`);
+  await page.getByRole("button", { name: "Report a problem" }).click();
+  const picker = page.locator('input[type="file"]');
+  await picker.setInputFiles([{ name: "IMG_0001.HEIC", mimeType: "image/heic", buffer: Buffer.from("....ftypheic") }]);
+  await expect(page.getByText(/iPhone HEIC photos cannot be added/)).toBeVisible();
+
+  // Some Android camera pickers hand over a file with an empty type: the server sniffs it.
+  await picker.setInputFiles([{ name: "camera.png", mimeType: "", buffer: png() }]);
+  await expect(page.getByText("Added", { exact: true })).toHaveCount(1, { timeout: 20_000 });
+
+  const del = page.waitForResponse((r) => r.url().includes(`/api/orders/${o.id}/dispute-photos`) && r.request().method() === "DELETE");
+  await page.getByRole("button", { name: "Remove camera.png" }).click();
+  expect((await del).status()).toBe(200);
+  await expect(page.getByText("Added", { exact: true })).toHaveCount(0);
+});

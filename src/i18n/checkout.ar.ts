@@ -448,6 +448,7 @@ export const checkoutAr: Pick<Dictionary, "checkout" | "payment" | "orders" | "s
     STATUS_CHANGED: "علبة: حالة الطلب {number} الآن: {status}. التفاصيل: {url}",
     SHIPPED: "علبة: الطلب {number} في الطريق إليك. تابع الشحنة: {url}",
     DELIVERED: "علبة: تم تسليم الطلب {number}. أخبرنا برأيك: {url}",
+    REFUNDED: "علبة: ألغي الطلب {number} وجار رد {amount} إلى {method}. التفاصيل: {url}",
     DISPUTE_OPENED: "علبة: استلمنا بلاغك عن الطلب {number} وسنرد خلال يوم عمل واحد.",
     REVIEW_THANKS: "علبة: شكرا على تقييم الطلب {number}.",
     DESIGN_FOLLOW_UP:
@@ -545,6 +546,7 @@ export const checkoutAr: Pick<Dictionary, "checkout" | "payment" | "orders" | "s
       added: "تمت الإضافة",
       remove: "حذف {name}",
       type: "استخدم صورة بصيغة JPG أو PNG أو WebP.",
+      heic: "لا يمكن إضافة صور آيفون بصيغة HEIC. شارك الصورة بصيغة JPG (تطبيق الصور: مشاركة، الخيارات، الأكثر توافقا)، أو التقط لقطة شاشة لها.",
       tooLarge: "حجم هذه الصورة أكبر من 10 ميجابايت. اختر صورة أصغر.",
       tooMany: "يمكنك إضافة {max} صور بحد أقصى، ولم نضف الصور الزائدة.",
       failed: "تعذر رفع هذه الصورة. حاول مرة أخرى.",

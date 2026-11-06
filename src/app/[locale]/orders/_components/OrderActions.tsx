@@ -2,7 +2,7 @@
 
 import { ImagePlus, RotateCcw, Star, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { Locale } from "@/types";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
@@ -133,6 +133,9 @@ export function ReviewForm({ orderId }: { orderId: string }) {
 const MAX_PHOTOS = 5;
 const PHOTO_MAX_BYTES = 10 * 1024 * 1024;
 const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
+/** R10-01: some phone galleries hand over files with no type; the server checks the bytes anyway. */
+const typeOk = (f: File) => f.type === "" || PHOTO_TYPES.includes(f.type);
+const isHeic = (f: File) => /image\/hei[cf]/i.test(f.type) || /\.hei[cf]$/i.test(f.name);
 
 export function DisputeForm({ orderId }: { orderId: string }) {
   const { t } = useI18n();
@@ -148,6 +151,14 @@ export function DisputeForm({ orderId }: { orderId: string }) {
   // Checkout round 9: photos of the boxes, uploaded as they are chosen (max 5, JPG/PNG/WebP, 10 MB).
   const [photos, setPhotos] = useState<{ id: string; name: string; preview: string; key?: string; error?: string; uploading?: boolean }[]>([]);
   const ready = photos.filter((p) => p.key);
+  const uploads = useRef(new Map<string, AbortController>());
+  /** Remove a photo: cancels its upload, or deletes the stored file (nothing kept that was not sent). */
+  const removePhoto = (p: { id: string; key?: string }) => {
+    uploads.current.get(p.id)?.abort();
+    uploads.current.delete(p.id);
+    if (p.key) void fetch(`/api/orders/${encodeURIComponent(orderId)}/dispute-photos?key=${encodeURIComponent(p.key)}`, { method: "DELETE" }).catch(() => undefined);
+    setPhotos((cur) => cur.filter((x) => x.id !== p.id));
+  };
   const uploading = photos.some((p) => p.uploading);
   const addPhotos = async (files: FileList | null) => {
     if (!files) return;
@@ -159,8 +170,8 @@ export function DisputeForm({ orderId }: { orderId: string }) {
     setPhotos((cur) => [
       ...cur,
       ...rows.map((r) =>
-        !PHOTO_TYPES.includes(r.file.type)
-          ? { id: r.id, name: r.name, preview: r.preview, error: t("buyer.photos.type") }
+        !typeOk(r.file)
+          ? { id: r.id, name: r.name, preview: r.preview, error: isHeic(r.file) ? t("buyer.photos.heic") : t("buyer.photos.type") }
           : r.file.size > PHOTO_MAX_BYTES
             ? { id: r.id, name: r.name, preview: r.preview, error: t("buyer.photos.tooLarge") }
             : { id: r.id, name: r.name, preview: r.preview, uploading: true },
@@ -168,10 +179,15 @@ export function DisputeForm({ orderId }: { orderId: string }) {
     ]);
     if (extra > 0) setError(t("buyer.photos.tooMany", { max: MAX_PHOTOS }));
     for (const r of rows) {
-      if (!PHOTO_TYPES.includes(r.file.type) || r.file.size > PHOTO_MAX_BYTES) continue;
+      if (!typeOk(r.file) || r.file.size > PHOTO_MAX_BYTES) continue;
       const fd = new FormData();
       fd.append("file", r.file);
-      const res = await fetch(`/api/orders/${encodeURIComponent(orderId)}/dispute-photos`, { method: "POST", body: fd }).catch(() => null);
+      // R10-03: an upload can be cancelled by removing the photo.
+      const ac = new AbortController();
+      uploads.current.set(r.id, ac);
+      const res = await fetch(`/api/orders/${encodeURIComponent(orderId)}/dispute-photos`, { method: "POST", body: fd, signal: ac.signal }).catch(() => null);
+      uploads.current.delete(r.id);
+      if (ac.signal.aborted) continue;
       const j = (await res?.json().catch(() => null)) as { ok?: boolean; key?: string; error?: string } | null;
       setPhotos((cur) =>
         cur.map((p) =>
@@ -179,7 +195,7 @@ export function DisputeForm({ orderId }: { orderId: string }) {
             ? p
             : j?.ok && j.key
               ? { ...p, uploading: false, key: j.key }
-              : { ...p, uploading: false, error: j?.error === "TOO_LARGE" ? t("buyer.photos.tooLarge") : j?.error === "TYPE" ? t("buyer.photos.type") : t("buyer.photos.failed") },
+              : { ...p, uploading: false, error: j?.error === "TOO_LARGE" ? t("buyer.photos.tooLarge") : j?.error === "TYPE" ? (isHeic(r.file) ? t("buyer.photos.heic") : t("buyer.photos.type")) : t("buyer.photos.failed") },
         ),
       );
     }
@@ -263,8 +279,7 @@ export function DisputeForm({ orderId }: { orderId: string }) {
                           size="slim"
                           icon={X}
                           accessibilityLabel={t("buyer.photos.remove", { name: p.name })}
-                          disabled={p.uploading}
-                          onClick={() => setPhotos((cur) => cur.filter((x) => x.id !== p.id))}
+                          onClick={() => removePhoto(p)}
                         />
                       </li>
                     ))}

@@ -446,6 +446,7 @@ export const checkoutEn = {
     STATUS_CHANGED: "Elba: order {number} is now: {status}. Details: {url}",
     SHIPPED: "Elba: order {number} is on its way. Track it: {url}",
     DELIVERED: "Elba: order {number} was delivered. Tell us how it went: {url}",
+    REFUNDED: "Elba: order {number} is cancelled and {amount} is on its way back to your {method}. Details: {url}",
     DISPUTE_OPENED: "Elba: we received your report about order {number} and will reply within one working day.",
     REVIEW_THANKS: "Elba: thanks for rating order {number}.",
     DESIGN_FOLLOW_UP:
@@ -543,6 +544,7 @@ export const checkoutEn = {
       added: "Added",
       remove: "Remove {name}",
       type: "Use a JPG, PNG or WebP photo.",
+      heic: "iPhone HEIC photos cannot be added. Share the photo as JPG (Photos app: Share, Options, Most Compatible), or take a screenshot of it.",
       tooLarge: "This photo is over 10 MB. Choose a smaller one.",
       tooMany: "You can add up to {max} photos. The extra ones were left out.",
       failed: "This photo could not be uploaded. Try again.",

@@ -469,3 +469,35 @@ Checked and fine this round:
 - `src/app/[locale]/admin/disputes/[id]/page.tsx` (additive gallery); `src/i18n/admin.{en,ar}.ts` (`buyerPhotos`, `buyerPhoto`).
 - `src/i18n/{en,ar}.ts`: the returns policy line restored.
 - New: `src/app/api/orders/[id]/dispute-photos/route.ts`, `e2e/checkout-dispute-photos.spec.ts`.
+
+## Round 10 (audit-only pass on R7 to R9 changes)
+
+Focus: dispute photo flow on a phone (camera capture, iPhone HEIC, slow uploads, removal mid-upload), the checkout draft restored across reload on every step, refunded and cancelled order views, and the SMS/WhatsApp texts in both languages. Audited at 390 and 1440, ar and en, with axe.
+
+### Findings
+
+| ID | Severity | Where | Finding | Fix |
+|---|---|---|---|---|
+| R10-01 | Medium | Report a problem, photos | Some Android camera and gallery pickers hand over a `File` with an empty `type`. The client rejected it as "Use a JPG, PNG or WebP photo.", so a buyer taking a photo of a damaged box could not attach it. The server already sniffs magic bytes, so the client check was stricter than the real gate. | Empty `type` passes the client check; the server's magic-byte check decides. |
+| R10-02 | Low | Report a problem, photos | An iPhone HEIC photo got the generic type error, which does not tell the buyer what to do. | A HEIC-specific message (by MIME or `.heic/.heif` name) with the iOS steps: Share, Options, Most Compatible, or a screenshot. Also used when the server refuses the type. |
+| R10-03 | Low | Report a problem, photos | The remove button was disabled while a photo uploaded, so a slow upload could not be cancelled; a photo removed after upload stayed on disk although it was never sent (PDPL 151/2020, data minimisation). | Remove is always enabled: it aborts an upload in flight (`AbortController`), and for an uploaded photo calls the new `DELETE /api/orders/[id]/dispute-photos?key=` (buyer only, `dispute/<orderId>/` keys only, refused when the key already belongs to a sent report). |
+| R10-04 | Low | SMS/WhatsApp, refund | A refunded order sent the generic "status changed" text, with no amount and no payment method (Consumer Protection Law 181/2018: the buyer should know what is refunded and where). | New `REFUNDED` template: en "Elba: order {number} is cancelled and {amount} is on its way back to your {method}. Details: {url}"; ar "علبة: ألغي الطلب {number} وجار رد {amount} إلى {method}. التفاصيل: {url}". Falls back to the generic text when no payment row exists. |
+
+Checked and not a finding: the photo input has no `capture` attribute, so phones offer both camera and gallery (right for a report that may use older photos); the restored draft on reload holds on steps 1 to 4, including the proof step for a buyer whose address comes from a previous order, and two Back presses return to the chosen tier; no address or phone goes to sessionStorage; refunded and cancelled order views, receipt and credit note read correctly in both languages; Arabic SMS texts stay within 2 UCS-2 segments.
+
+Counts of NEW findings: critical 0, high 0, medium 1, low 3.
+
+### Verification
+
+- lint clean, `tsc --noEmit` clean, unit tests 8510 passed, build clean.
+- e2e (checkout*, journey, smoke, storefront, admin, vendor, catalogue-order-modes, `--workers=2 --trace off`): 64 passed, 22 skipped (single-project tests), 0 failed.
+- New e2e in `checkout-dispute-photos.spec.ts` (mobile): HEIC message, empty-type camera photo uploads, removing an uploaded photo sends DELETE 200; passed 3 of 3 with `--repeat-each=3`.
+- Browser checks at 390: removal mid-upload with a 3 s delayed upload leaves 0 rows and 0 files on disk; removal after upload deletes the stored file.
+- Walker (ar-390, en-1440): 44 screens, 0 overflow, 0 axe violations.
+- Screenshots: `r10-en-390-dispute-heic.png`, `r10-ar-390-dispute-heic.png`.
+
+### Files touched outside scope
+
+- `src/lib/notify/index.ts`: `REFUNDED` added to `NOTIFY_TEMPLATES` (additive).
+
+Medium finding present, so by the stop rule one more round is due.
