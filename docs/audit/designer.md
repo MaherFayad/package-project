@@ -413,3 +413,48 @@ Files touched outside scope: `src/middleware.ts` (one line, `x-elba-search`, R8-
 | high | 2 (R8-02, R8-03; both reopened by performance) | 1 fully (R8-02), 1 for the passive page (R8-03) | R8-03 after Play → 3d-engine R6-R1 |
 | medium | 1 (R8-01) | 1 | 0 |
 | low | 0 | 0 | 0 |
+
+# Round 9
+
+Base: main d61f21f. It includes this branch's 0844838, perf bbc5100, marketing, catalogue and checkout R5, so it was a fast-forward. I checked that the R8 pieces are intact: the hero above the boundary, the redirect from the layout, `x-elba-search`, the 30 fps / 1x hero turn, and `three/dpr` in `DesignerApp`.
+
+## Absolute LCP on the merged code (integrator request)
+
+`perf-pages.mjs`, `ISOLATE=1`, phone profile, 5 runs:
+
+| page | LCP ar | LCP en | FCP | INP | CLS |
+|---|---|---|---|---|---|
+| `/design` (start page) | **1.26–1.61 s** | **1.22–1.25 s** | 1.02–1.58 s | 88–232 ms (19 of 20 runs < 200 ms) | ≤ 0.002 |
+| `/design/mailer-box` (editor) | **1.45–1.49 s** | **1.34–1.36 s** | 0.98–1.05 s | 96–176 ms | 0.002 |
+
+Both pages are **under the 2.5 s budget** in every run. TBT on this profile is 0.29–1.78 s on the start page and 1.33–1.55 s in the editor. That is software WebGL after the 3D loads (in the editor by design; on the start page only after Play), and the mount task is with 3d-engine (R6-R1, as assigned).
+
+## Fresh pass
+
+- axe-core: **0 violations** on every state in ar + en at 390 and 1440: start page, editors, artwork, text, gate, the phone view menu, and the start page after Play.
+- Keyboard: the view menu works fully (Enter, arrows, Escape returns focus), and Play / Pause is a real button with the right name.
+- Deep links answer 307 (`?structure=`, `?design=`). An unknown model answers 404.
+- WCAG 1.4.12 text spacing: no model name is cut (0 of 91 on the start page, 0 in the picker).
+- Export: no placeholder, mark present. The share modal states and the copy-failure message work.
+- Quote-only model: the badge, toolbar and modal agree.
+
+## Findings (round 9)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R9-01 | medium | price badge for a signed-in visitor (`Modals.tsx · PriceBadge`) | For the first 0.5 to 1 s of every editor load, a **signed-in** visitor saw the signed-out badge: "500 قطعة: اعرف السعر" / "500 pieces: see the price" with a lock icon. The `idle` state (before the debounced first request) fell through to the locked branch. Seen on the aerosol can in ar. | ISO 9241-110 (self-descriptiveness); WCAG 4.1.3 (a wrong status is announced through the live region) | `idle` renders as loading: "Getting the price" / "جار حساب السعر", the shimmer bar, `aria-busy`, and the tag icon. | fixed. Sampled every 100 ms on load: `idle → loading → quote`, all with the loading copy until the result. The lock never shows |
+
+## Verification (round 9)
+
+- Lint and typecheck are clean. `npm test`: **95 files, 8,508 passed**. `npm run build` OK.
+- Playwright `designer` + `smoke` + `journey` + `checkout` + `catalogue` + `storefront` (`--workers=2`): **57 passed, 5 skipped**, 0 failed.
+- Hydration: e2e repeat 16 × 2 **32 / 32 passed**; 20 cold loads (fresh browser each, `/ar/design` + `/en/design`, desktop + Pixel 5) **0 errors**.
+
+## Counts (round 9, new findings before fixing)
+
+| severity | found | fixed | open |
+|---|---|---|---|
+| critical | 0 | 0 | 0 |
+| high | 0 | 0 | 0 |
+| medium | 1 (R9-01) | 1 | 0 |
+| low | 0 | 0 | 0 |
