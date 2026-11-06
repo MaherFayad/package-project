@@ -70,6 +70,8 @@
   --mk-sheet-overlap: 48px;
 
   /* ── Type (fluid). Measured desktop: 96/300, 64/330, 56/330, 44/330, 20/450, 16-18 ── */
+  /* Inter first in both locales: it has no Arabic glyphs, so Arabic falls through to Noto, while
+     digits and Latin words reuse Inter (preloaded) instead of fetching Noto's Latin subset. */
   --mk-font: var(--font-inter), var(--font-noto-arabic), "Noto Sans Arabic", -apple-system, "Segoe UI", Tahoma, sans-serif;
   --mk-fs-hero: clamp(3.5rem, 1rem + 10.4vw, 11.25rem);  /* start-page giant 180 */
   --mk-fs-96: clamp(3rem, 1.6rem + 5.6vw, 6rem);          /* h1: 48 phone -> 96 */
@@ -91,7 +93,6 @@
 }
 /* Arabic: no negative tracking (it breaks joins), taller line height for ascenders and dots. */
 [data-mk][data-mk]:lang(ar) {
-  --mk-font: var(--font-noto-arabic), "Noto Sans Arabic", var(--font-inter), "Segoe UI", Tahoma, sans-serif;
   --mk-track-display: 0;
   --mk-track-heading: 0;
   --mk-lh-display: 1.25;
