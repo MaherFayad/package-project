@@ -183,8 +183,8 @@ Browser re-check after the fixes, ar and en at 1440, 390 and 320:
 - **Fixes confirmed in the browser:** R5-CP-01, R5-CP-02, R5-CP-13, R5-CP-14 and R5-CP-83. Screenshots are in docs/screenshots/audit/copy/; the receipt is shown in ar 390, ar 1440 and en 1440.
 
 Counts of new findings this round, before fixing: critical 0 · high 15 · medium 43 · low 32. Of the 90:
-- **Fixed:** 65
-- **Open with named owners:** 21. These need component or service changes in files that other sessions are editing.
-- **Won't fix:** 4, with reasons in the rows.
+- **Fixed:** 64
+- **Open with named owners:** 23. These need component or service changes in files that other sessions are editing, or a business decision.
+- **Won't fix:** 3, with reasons in the rows.
 
 The next copy round should recheck the open rows once the owners merge.
