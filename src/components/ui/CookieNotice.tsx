@@ -57,6 +57,26 @@ export function CookieNotice() {
       const target = e.target;
       if (pointerDown || !(target instanceof HTMLElement) || el.contains(target)) return;
       if (!target.matches(":focus-visible")) return;
+      reveal(target);
+      // R6-AX-17: a control below the viewport is scrolled in by the browser only after focusin
+      // (at a later rendering step), to the bottom edge and ignoring scroll padding (Chrome).
+      // Check again on the first scroll that follows, and after two frames as a fallback.
+      const again = () => {
+        window.removeEventListener("scroll", again);
+        if (document.activeElement === target) reveal(target);
+      };
+      window.addEventListener("scroll", again, { passive: true });
+      window.setTimeout(() => window.removeEventListener("scroll", again), 500);
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        if (document.activeElement === target) reveal(target);
+      }));
+      // A layout shift right after focus (a `content-visibility: auto` section taking its real
+      // height) can also carry the control under the notice without any scroll.
+      window.setTimeout(() => {
+        if (document.activeElement === target) reveal(target);
+      }, 300);
+    };
+    const reveal = (target: HTMLElement) => {
       const n = el.getBoundingClientRect();
       const r = target.getBoundingClientRect();
       const under = (b: DOMRect) => b.bottom > n.top && b.top < n.bottom && b.right > n.left && b.left < n.right;

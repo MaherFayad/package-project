@@ -644,3 +644,15 @@ Mailer INP stays under the 200 ms phone target on every run of both builds. The 
 ### Screenshots (`docs/screenshots/audit/3d-engine-r6/`, jpg, before | after)
 
 `01-dieline-view-A-10-G-28`, `02-fold-rims-A-03`, `03-closures-bottles`, `04-closures-cosmetic-pharma`, `05-lids-flexible-G-21-G-25`, `06-lows-TK-04-E-06-E-08`. Tools: `docs/audit/tools/r6-sheets.py`, `r6-catalogue-shot.cjs`, `r6-fold-frames.cjs`.
+
+### Verification (final production build of this branch, `b4e20f0e` + this table)
+
+| Check | Result |
+|---|---|
+| `npm run lint` (direct UI-kit imports rule included), `npm run typecheck` | clean |
+| `npm test` | 113 files, **8 778 passed** (new: panel crease faces + RIGID_BOX square creases, every R6 bottle style draws its own part, closure ↔ neck finish, Stelvin skirt, cone-wrap overlap, display-front safe zones on board, hinged-lid swing, unknown closure colour, every pack style builds) |
+| geometry snapshot | re-recorded for the 10 keys above only |
+| `npm run build` | passes |
+| `e2e/models.spec.ts` + `e2e/catalogue-models.spec.ts` + `e2e/designer.spec.ts`, `--workers=2` | **402 passed**, 0 failed (392 skipped: desktop-only / phone-only by design), 37.6 min; 18 / 18 catalogue batches, all models of `models.spec` |
+| Hydration (`designer.spec` "hydrate without errors", `--repeat-each=16`, desktop + Pixel 5) | **32 / 32 passed** |
+| Round 6 capture (274 variants, before and after) | 0 console errors in the editor captures; the catalogue-route crash (R6-01) was found by e2e and fixed |

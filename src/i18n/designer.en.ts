@@ -439,7 +439,6 @@ export const designerEn = {
     notFoundTitle: "Link not found",
     notFoundBody: "This share link is not valid or was turned off by its owner.",
     subtitleDesign: "Shared packaging design",
-    prepayNote: "Price after the {pct}% discount for paying in advance.",
     sizeVessel: "Size",
     printMaterial: "Print material",
     model: "Model",

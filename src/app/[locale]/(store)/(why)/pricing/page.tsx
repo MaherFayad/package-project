@@ -188,7 +188,7 @@ export default async function PricingPage({ params }: Props) {
       </Sheet>
 
       {/* P4 always included + P5 sample order */}
-      <Sheet tone="navy" y="lg" aria-labelledby="pricing-included">
+      <Sheet tone="dark-2" y="lg" aria-labelledby="pricing-included">
         <SectionHead size="44" id="pricing-included" title={c.includedTitle}>
           <Stack gap="head-content">
             <Grid as="ul" cols={5} colsMd={2} className={s.list}>

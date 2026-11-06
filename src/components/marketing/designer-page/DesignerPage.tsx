@@ -482,12 +482,7 @@ export function DesignerPage(d: DesignerPageData) {
       </Sheet>
 
       {/* ───────── 4-5. Light sheet: bento ───────── */}
-      <Sheet
-        tone="white"
-        y="lg"
-        as="div"
-        className={`${styles.sheet} ${styles.lazySection}`}
-      >
+      <Sheet tone="white" y="lg" as="div" className={`${styles.sheet}`}>
         <Stack gap="head-content-lg">
           <section aria-labelledby="dp-make-title">
             <SectionHead
@@ -624,7 +619,7 @@ export function DesignerPage(d: DesignerPageData) {
       <Sheet
         tone="navy"
         y="lg"
-        className={`${styles.canvas} ${styles.lazySection}`}
+        className={`${styles.canvas}`}
         aria-labelledby="dp-trust-title"
       >
         <SectionHead id="dp-trust-title" title={c.trust.title}>
@@ -715,7 +710,7 @@ export function DesignerPage(d: DesignerPageData) {
         tone="navy"
         overlap={false}
         container={false}
-        className={`${styles.canvas} ${styles.lazySection}`}
+        className={`${styles.canvas}`}
         aria-labelledby="dp-mat-title"
       >
         <Stack gap="head-content">
@@ -797,7 +792,7 @@ export function DesignerPage(d: DesignerPageData) {
         tone="dark"
         y="xl"
         overlap={false}
-        className={`${styles.faq} ${styles.lazySection}`}
+        className={`${styles.faq}`}
         aria-labelledby="dp-faq-title"
       >
         <SectionHead id="dp-faq-title" size="64" title={c.faq.title}>

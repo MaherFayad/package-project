@@ -72,11 +72,16 @@ export function TextMock({ ar, en, tool }: { ar: string; en: string; tool: strin
 }
 
 export function DielineMock({ svg, legend }: { svg: string; legend: { cut: string; crease: string; safe: string; bleed: string } }) {
+  // Intrinsic size from the SVG's own viewBox (mm), so the lazy image reserves its real aspect
+  // ratio and the card does not grow when it loads.
+  const vb = /viewBox="0 0 ([\d.]+) ([\d.]+)"/.exec(svg);
+  const w = vb ? Math.round(Number(vb[1])) : 460;
+  const h = vb ? Math.round(Number(vb[2])) : 260;
   return (
     <div className={styles.cardMedia} aria-hidden="true">
       <div className={`${styles.ui} ${styles.dieline}`}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={`data:image/svg+xml;utf8,${encodeURIComponent(svg)}`} alt="" width={460} height={260} loading="lazy" decoding="async" />
+        <img src={`data:image/svg+xml;utf8,${encodeURIComponent(svg)}`} alt="" width={w} height={h} loading="lazy" decoding="async" />
         <ul className={styles.legend}>
           <li>
             <i data-k="cut" />
