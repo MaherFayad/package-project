@@ -167,7 +167,7 @@ export function SendPriceModal({ lead, vendors, validityHours, open, onClose }: 
                   {preview.lines.map((l) => (
                     <InlineStack key={l.kind} align="space-between" gap="200" wrap={false}>
                       <Text as="span" variant="bodySm">
-                        {l.kind === "PRODUCT" ? t("admin.quotes.price.product", { count: l.quantity, unit: money(l.unitPiasters) }) : t(l.labelKey as DictKey)}
+                        {l.kind === "PRODUCT" ? t("admin.quotes.price.product", { count: l.quantity, unit: money(l.unitPiasters) }) : t(`admin.quotes.price.lines.${l.kind}` as DictKey)}
                       </Text>
                       <Text as="span" variant="bodySm" numeric>
                         {money(l.totalPiasters)}

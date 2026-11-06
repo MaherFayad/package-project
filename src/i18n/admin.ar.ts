@@ -699,6 +699,7 @@ export const adminAr: Widen<typeof adminEn> = {
       vendorCostHelp: "مطلوب. السعر المتفق عليه مع المطبعة بدون التوصيل. تحسب عليه المستحقات (40% عند القبول و60% عند التسليم).",
       note: "ملاحظة لسجل التدقيق",
       summary: "يدفع العميل",
+      lines: { SETUP: "التجهيز", DIE: "قالب القص", FINISH: "التشطيب", SHIPPING: "التوصيل" },
       product: "{count:box} × {unit}",
       subtotal: "الإجمالي بدون الضريبة",
       vat: "ضريبة القيمة المضافة 14%",

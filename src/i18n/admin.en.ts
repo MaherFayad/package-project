@@ -696,6 +696,7 @@ export const adminEn = {
       vendorCostHelp: "Required. The price agreed with the printer, without delivery. Payouts (40% on acceptance, 60% on delivery) are sized on it.",
       note: "Note for the audit log",
       summary: "Buyer pays",
+      lines: { SETUP: "Setup", DIE: "Cutting die", FINISH: "Finish", SHIPPING: "Delivery" },
       product: "{count:box} × {unit}",
       subtotal: "Subtotal ex-VAT",
       vat: "VAT 14%",
