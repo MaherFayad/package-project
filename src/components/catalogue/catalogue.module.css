@@ -288,7 +288,8 @@
 .crumbs a { color: var(--mk-text-2); text-decoration: underline; text-underline-offset: 3px; }
 .crumbs a:hover { color: var(--mk-ink); }
 
-.detail { display: grid; gap: 40px; align-items: start; }
+/* a11y R4-01: an explicit shrinkable track, so a long CTA can never widen the page (WCAG 1.4.10). */
+.detail { display: grid; grid-template-columns: minmax(0, 1fr); gap: 40px; align-items: start; }
 @media (min-width: 960px) {
   .detail { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 64px; }
 }
@@ -306,9 +307,9 @@
 .poster[data-hidden="true"] { opacity: 0; }
 .stageHint { position: absolute; inset-inline: 16px; inset-block-end: 12px; font-size: 0.8125rem; color: var(--mk-muted); text-align: center; pointer-events: none; }
 
-.facts { display: grid; gap: 20px; }
+.facts { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
 .factList { display: grid; gap: 0; margin: 0; border-block-start: 1px solid var(--mk-line); }
-.fact { display: grid; grid-template-columns: minmax(120px, 0.6fr) 1fr; gap: 16px; padding-block: 14px; border-block-end: 1px solid var(--mk-line); }
+.fact { display: grid; grid-template-columns: minmax(96px, 0.6fr) minmax(0, 1fr); gap: 16px; padding-block: 14px; border-block-end: 1px solid var(--mk-line); }
 .fact dt { color: var(--mk-text-2); font-size: 0.9375rem; }
 .fact dd { margin: 0; color: var(--mk-ink); font-weight: 600; }
 .factSub { display: block; font-weight: 400; color: var(--mk-text-2); font-size: 0.875rem; margin-block-start: 2px; }
@@ -321,9 +322,12 @@
 .priceCard[data-mode="instant"] { background: var(--mk-mint); }
 .priceTitle { font-size: 1.25rem; font-weight: 700; color: var(--mk-ink); }
 .ctaRow { display: flex; flex-wrap: wrap; gap: 12px; }
+.ctaRow a, .ctaRow button { white-space: normal; text-align: center; max-inline-size: 100%; }
 
-.form { display: grid; gap: 14px; }
-.field { display: grid; gap: 6px; }
+/* R7-01: shrinkable tracks; a long preset label in the select must not widen the page at 320 px (WCAG 1.4.10). */
+.form { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.field { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.field select { inline-size: 100%; min-inline-size: 0; text-overflow: ellipsis; }
 .field label { font-weight: 600; color: var(--mk-ink); font-size: 0.9375rem; }
 .field input,
 .field select,
