@@ -72,7 +72,7 @@ export const checkoutAr: Pick<Dictionary, "checkout" | "payment" | "orders" | "s
       title: "عنوان التوصيل",
       help: "تشحن العلب مسطحة في رزم. نوصل لكل محافظات مصر، وتختلف تكلفة التوصيل حسب المحافظة.",
       name: "الاسم الكامل",
-      phone: "رقم الموبايل",
+      phone: "رقم المحمول",
       phoneHelp: "يتصل المندوب على هذا الرقم.",
       governorate: "المحافظة",
       governoratePlaceholder: "اختر المحافظة",
@@ -84,7 +84,7 @@ export const checkoutAr: Pick<Dictionary, "checkout" | "payment" | "orders" | "s
       landmark: "أقرب علامة مميزة",
       notes: "ملاحظات التوصيل",
       required: "مطلوب",
-      invalidPhone: "أدخل رقم موبايل مصري صحيح.",
+      invalidPhone: "أدخل رقم محمول مصريا صحيحا.",
       shippingChanged: "تم تحديث سعر التوصيل إلى {governorate}.",
     },
     proof: {
@@ -180,7 +180,7 @@ export const checkoutAr: Pick<Dictionary, "checkout" | "payment" | "orders" | "s
       cvc: "رمز الأمان",
       name: "الاسم على البطاقة",
       testHint: "بطاقات الاختبار: 4242 4242 4242 4242 تنجح، و4000 0000 0000 0002 ترفض.",
-      invalid: "أدخل رقم بطاقة صحيح.",
+      invalid: "أدخل رقم بطاقة صحيحا.",
       declined: "تم رفض البطاقة. جرب بطاقة أخرى أو طريقة دفع أخرى.",
     },
     wallet: {

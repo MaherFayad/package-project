@@ -36,6 +36,8 @@ export function CookieNotice() {
     const el = ref.current;
     const apply = () => {
       root.style.scrollPaddingBlockEnd = `${el.offsetHeight + 16}px`;
+      // Reserve the notice's height so the end of the page (footer links) is never stuck under it.
+      document.body.style.paddingBlockEnd = `${el.offsetHeight + 16}px`;
     };
     apply();
     const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(apply) : null;
@@ -43,6 +45,7 @@ export function CookieNotice() {
     return () => {
       ro?.disconnect();
       root.style.scrollPaddingBlockEnd = "";
+      document.body.style.paddingBlockEnd = "";
     };
   }, [show]);
 

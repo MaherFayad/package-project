@@ -513,7 +513,7 @@ export const adminAr: Widen<typeof adminEn> = {
     columns: { user: "المستخدم", kind: "نوع الطلب", status: "الحالة", received: "تاريخ الاستلام", completed: "تاريخ الإتمام", due: "الموعد" },
     kinds: { EXPORT: "نسخة من البيانات", DELETE: "حذف الحساب" },
     statuses: { OPEN: "مستلم", IN_PROGRESS: "قيد التنفيذ", COMPLETED: "مكتمل", REJECTED: "مرفوض" },
-    dueIn: "متبق {days} يوم",
+    dueIn: "متبق {days}",
     overdue: "متأخر",
     empty: "لا توجد طلبات بيانات",
     emptyBody: "تظهر هنا الطلبات المقدمة من حسابات المشترين.",
