@@ -11,7 +11,8 @@ describe("parseMmInput (R5-JR-20)", () => {
     expect(parseMmInput("250.5")).toBe(250.5);
     expect(parseMmInput("250,5")).toBe(250.5);
     expect(parseMmInput("٢٥٠٫٥")).toBe(250.5);
-    expect(parseMmInput("1,500")).toBe(1500);
+    // One shared rule: a comma is always the decimal separator in a size ("1,5" mm).
+    expect(parseMmInput("1,5")).toBe(1.5);
   });
   it("is NaN for anything else", () => {
     for (const v of ["", " ", "abc", "1.2.3", "-5", "25o"]) expect(Number.isNaN(parseMmInput(v))).toBe(true);
