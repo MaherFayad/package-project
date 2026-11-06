@@ -126,3 +126,34 @@ test("browser Back and Forward move between checkout steps and keep the typed ad
   await expect(page).toHaveURL(new RegExp(`/en/checkout/${id}$`));
   await db.design.deleteMany({ where: { ownerId: buyer.id } });
 });
+
+test("a reload keeps the step and the chosen quantity, and stores no address in the browser", async ({ page, baseURL }, info) => {
+  test.skip(info.project.name !== "desktop", "one project is enough");
+  test.setTimeout(90_000);
+  const buyer = track(await createUser({ name: "E2E draft buyer" }));
+  await signInAs(page.context(), baseURL!, buyer.id);
+  const doc = {
+    v: 1, name: "E2E draft", structureCode: "FEFCO_0427", dims: { L: 250, W: 180, H: 80 }, materialCode: "E_FLUTE_KRAFT", finishCode: "NONE", printSides: "OUTSIDE",
+    artwork: { outside: { background: "#f4e9d8", layers: [] }, inside: { background: null, layers: [] } },
+  };
+  const { id } = (await (await page.request.post("/api/designs", { data: { doc } })).json()) as { id: string };
+  await page.goto(`/en/checkout/${id}`);
+  await expect(page.getByTestId("vendor-offer").first()).toBeVisible();
+  await page.getByRole("radio", { name: /^250 boxes/ }).check({ force: true });
+  await expect(page.getByTestId("checkout-total").first()).toBeVisible();
+  const summary = page.getByRole("complementary").filter({ hasText: "Summary" });
+  await summary.getByRole("button", { name: "Continue" }).click();
+  await page.getByLabel("Full name").fill("Mona Adel");
+  await page.getByLabel("Street address").fill("12 Tahrir St");
+
+  await page.reload();
+  // Back on the delivery step, with the quantity kept; the typed street is not kept (not stored).
+  await expect(page.getByLabel("Street address")).toBeVisible();
+  await expect(page.getByLabel("Street address")).toHaveValue("");
+  const stored = await page.evaluate(() => Object.keys(sessionStorage).map((k) => sessionStorage.getItem(k)).join(" "));
+  expect(stored).not.toContain("Tahrir");
+  expect(stored).not.toContain("Mona");
+  await page.goBack();
+  await expect(page.getByRole("radio", { name: /^250 boxes/ })).toBeChecked();
+  await db.design.deleteMany({ where: { ownerId: buyer.id } });
+});

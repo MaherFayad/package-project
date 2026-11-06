@@ -57,6 +57,23 @@ export function PaymentClient(props: {
   const router = useRouter();
   const toast = useToast();
   const [method, setMethod] = useState<PaymentMethod>(props.resume?.method ?? "CARD");
+  // R9: the chosen method survives a reload (not personal data; sessionStorage, this tab only).
+  const methodKey = `elba:pay-method:${orderId}`;
+  useEffect(() => {
+    try {
+      const saved = window.sessionStorage.getItem(methodKey) as PaymentMethod | null;
+      if (saved && !props.resume && props.methods.includes(saved)) setMethod(saved);
+    } catch {
+      /* storage blocked */
+    }
+  }, [methodKey, props.methods, props.resume]);
+  useEffect(() => {
+    try {
+      window.sessionStorage.setItem(methodKey, method);
+    } catch {
+      /* storage blocked */
+    }
+  }, [methodKey, method]);
   const [payment, setPayment] = useState<PaymentView | null>(props.resume);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);

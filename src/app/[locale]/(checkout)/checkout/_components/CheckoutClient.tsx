@@ -277,6 +277,58 @@ export function CheckoutClient(props: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // R9 (integrator decision, PDPL 151/2020 data minimisation): a reload keeps the checkout where
+  // it was without storing any personal data in the browser. The step comes from the history entry
+  // (browsers keep history.state across a reload); quantity, sample and printer choice come from
+  // sessionStorage. The address is never stored on the client: it is re-filled from the server
+  // (last order or account), and if that is incomplete the buyer lands on the delivery step.
+  const draftKey = `elba:checkout:${designId}`;
+  const restored = useRef(false);
+  useEffect(() => {
+    if (restored.current || props.quoted) return;
+    restored.current = true;
+    // Only a reload or a Back/Forward return restores; opening checkout again starts fresh.
+    const nav = (performance.getEntriesByType?.("navigation")[0] as PerformanceNavigationTiming | undefined)?.type;
+    if (nav !== "reload" && nav !== "back_forward") {
+      try {
+        window.sessionStorage.removeItem(draftKey);
+      } catch {
+        /* storage blocked */
+      }
+      return;
+    }
+    let draft: { qty?: number; sample?: boolean; vendorId?: string | null } = {};
+    try {
+      draft = JSON.parse(window.sessionStorage.getItem(draftKey) ?? "{}") as typeof draft;
+    } catch {
+      /* storage blocked or malformed: start fresh */
+    }
+    if (draft.sample && props.sample) pickSample();
+    else if (typeof draft.qty === "number" && Number.isInteger(draft.qty) && draft.qty >= 1 && draft.qty !== qty) {
+      setQty(draft.qty);
+      fetchOffers(draft.qty, address.governorate);
+    }
+    if (draft.vendorId) setVendorId(draft.vendorId);
+    const savedStep = window.history.state?.checkoutStep as Step | undefined;
+    if (savedStep && savedStep > 0) {
+      const addressComplete =
+        address.name.trim().length >= 2 && !!normalizeEgyptPhone(address.phone) && !!address.governorate && address.city.trim().length >= 2 && address.street.trim().length >= 3;
+      const target = (addressComplete ? savedStep : 1) as Step;
+      if (target !== savedStep) window.history.replaceState({ ...window.history.state, checkoutStep: target }, "");
+      showStep(target);
+    }
+    // Runs once on mount with the server-rendered state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (props.quoted) return;
+    try {
+      window.sessionStorage.setItem(draftKey, JSON.stringify({ qty, sample: sampleMode, vendorId }));
+    } catch {
+      /* storage blocked: the checkout still works, it just restarts on reload */
+    }
+  }, [draftKey, qty, sampleMode, vendorId, props.quoted]);
+
   const validateCompany = (): boolean => {
     if (!wantCompany) return true;
     const e: { name?: string; taxId?: string } = {};
@@ -364,6 +416,11 @@ export function CheckoutClient(props: {
       quoteId: props.quoted?.id,
     });
     if (r.ok) {
+      try {
+        window.sessionStorage.removeItem(draftKey);
+      } catch {
+        /* storage blocked */
+      }
       router.push(`/${locale}/checkout/pay/${r.orderId}`);
       return;
     }

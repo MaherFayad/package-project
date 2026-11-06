@@ -450,6 +450,8 @@ export const adminAr: Widen<typeof adminEn> = {
       order: "الطلب",
       openOrder: "فتح الطلب",
       qcPhotos: "صور الجودة المحفوظة",
+      buyerPhotos: "صور العميل ({count})",
+      buyerPhoto: "صورة العميل {n}",
       decisionTitle: "القرار",
       refundConfirmTitle: "استرداد قيمة هذا الطلب؟",
       refundConfirmBody: "يعود المبلغ كاملا إلى العميل عبر مزود الدفع ويغلق البلاغ. لا يمكن التراجع عن ذلك.",

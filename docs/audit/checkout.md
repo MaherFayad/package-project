@@ -428,3 +428,44 @@ Checked and fine this round:
 ### Files touched outside scope (round 8)
 
 - `src/i18n/en.ts`, `src/i18n/ar.ts`: the returns policy "How to report a problem" body (R8-04).
+
+## Round 9
+
+Base: this branch at `942da8a` (round 8). First, the integrator's two decisions on round 8's open items; then a fresh pass on the new angles: the prepay discount with sample credit, quantity tier boundaries, VAT rounding, Arabic-Indic digits in inputs, and the buyer's SMS and WhatsApp texts.
+
+### Decisions built
+
+| item | what was built | verified |
+|---|---|---|
+| **Photos in "Report a problem"** (round 8 open) | **Upload:** a new private upload scope `dispute/<orderId>/…` in the existing pipeline (`components/vendor/lib/files.ts`): type by magic bytes (PNG, JPEG, WebP; never SVG or PDF), 10 MB, image metadata stripped (`saveUpload`). **Route:** `POST /api/orders/[id]/dispute-photos` (buyer of the order only, while a report can be opened, body capped and rate-limited). The vendor upload route explicitly refuses this scope. **Storage:** `Dispute.photos` (JSON list of keys). The report (`disputeAction` → `openDispute`) accepts at most 5 keys, each for this order only. **Form:** "Add photos" uploads on choose, with a thumbnail, "Uploading…" / "Added", a per-file error ("Use a JPG, PNG or WebP photo.", "This photo is over 10 MB…", "You can add up to 5…"), and "Remove {name}". Sending waits for uploads. **Reading:** the photos are readable by the order's buyer and admins only, not the printer, not other buyers. **Admin:** a read-only "Buyer's photos (n)" gallery on `/admin/disputes/[id]` (additive). The returns policy line about adding photos is restored (en/ar). | Unit: scope rules and readers (`dispute-scope.test.ts`). e2e `checkout-dispute-photos.spec.ts`: 2 PNG accepted, PDF rejected with a message, report stored with 2 keys, buyer 200, other buyer 404, printer 404, the vendor route refuses `scope=dispute` (400), and the admin page shows 2 images. Screens: `round9/after-dispute-photos-form-ar-390.png`, `round9/admin-dispute-buyer-photos-en-1440.png`. |
+| **Checkout draft on refresh** (round 8 open) | No address or phone in the browser (PDPL 151/2020 data minimisation). A **reload or Back/Forward** return restores: the step from the history entry (`history.state` survives a reload), quantity, sample choice and printer from `sessionStorage`, and the payment method choice per order. The address comes from the server (last order or account). If that is incomplete, the buyer lands on Delivery, not on Proof. Opening checkout afresh starts clean, as do a placed order or a navigation from elsewhere. | e2e: after a reload on Delivery with a 250-box choice, the step is kept, the typed street is not stored (no name or street anywhere in `sessionStorage`), and Back shows 250 boxes still selected. The journey walk (88 screens) is clean. |
+
+### Findings (new this round)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R9-01 | medium | buyer SMS / WhatsApp (`checkout.*.ts notify`, `service.ts`) | No buyer message had a link: "Complete payment" and "try again from your orders page" left the buyer to find the page. The Fawry message gave the reference code but not the amount the outlet asks for, nor the deadline. | ISO 9241-110 (task suitability); Consumer Protection Law 181/2018 (price stated with the payment request) | Links in every buyer message: order placed → pay page; payment failed → pay page ("nothing was charged"); payment received, status change, shipped, delivered → order page. Fawry: "pay EGP 14,250.00 for order … at any Fawry outlet or in myFawry with reference number … before {date}" (ar likewise). Shipped links to the order page, which shows the tracking number (a status set without a shipment would otherwise have printed an empty number). | fixed |
+| R9-02 | low | "Report a problem", a rejected file (`OrderActions.tsx`) | A rejected file (e.g. a PDF) showed the browser's broken-image icon as its preview. Found on the new feature. | Polish | A neutral placeholder for files with an error. | fixed |
+| R9-03 | medium | "Report a problem", sending (`OrderActions.tsx`) | On the first report after a server start, the report was saved and the buyer notified, but the page did not change: `router.refresh()` alone did not re-render, so the buyer saw the filled form as if nothing happened. Found when the new e2e failed on a fresh server; it was not a test problem. | WCAG 4.1.3 (status messages); ISO 9241-110 | The form confirms at once with an announced "We received your report and will reply within one working day." and then refreshes. The e2e passes on a fresh server, three runs in a row. | fixed |
+
+Counts (round 9, new findings before fixing): **critical 0, high 0, medium 2, low 1** (3 total). All fixed and re-checked. The stop rule is not met (two medium). The re-check after the fixes found nothing new.
+
+Checked and fine this round:
+- **Prepay 3% with a sample credit:** the credit is taken after the prepay discount, capped at the discounted goods (never delivery), and VAT is recomputed once on the lower subtotal. The lines reconcile to the subtotal on the summary, receipt and order. Note: the 3% applies to the goods before the credit, so the buyer also gets 3% of the credited sample price. That is a business choice and consistent with "Paying in full takes 3% off the boxes".
+- **Tiers:** 49 gives "Printers start at 50 boxes. To try a few first, choose the sample." (the real minimum, 50). 50, 99 and 100 price, with more printers eligible from 100 and 250. 2,000 is instant. 2,001 becomes a price request. 2000.5, −5 and "12abc" give "Enter a whole number…". 1,000,001 gives the request cap.
+- **Arabic-Indic digits:** «٩٩» and «٢٠٠١» in the quantity field, and «٠١٠١٢٣٤٥٦٧٨» in the delivery phone, are all accepted (ar and en).
+- **VAT rounding:** VAT is computed once on the ex-VAT subtotal, half-up to the piaster. Lines are never taxed one by one, so the total always equals subtotal + VAT on every surface.
+
+### Verification (round 9)
+
+- `npm run lint` and `npm run typecheck` are clean. `npm test` passed 8,510 tests (new: `dispute-scope`). `next build` is OK with no warnings.
+- e2e (`--workers=2 --trace off`, fresh DB): all checkout specs plus `catalogue-order-modes`, `journey`, `smoke`, `storefront`, `admin` and `vendor` gave 64 passed and 22 skipped by the specs themselves, with 0 failures.
+- Browser: the journey walk at en/ar × 390/1440 (88 screens) had axe 0 and 0 px overflow.
+
+### Files touched outside scope (round 9)
+
+- `prisma/schema.prisma`: `Dispute.photos Json?`.
+- `src/components/vendor/lib/files.ts` (`dispute` scope, rule, key pattern, readers); `src/app/api/vendor/uploads/route.ts` (refuses `dispute`); `src/app/api/vendor/files/[...key]/route.ts` (order lookup for `dispute` keys); `src/components/vendor/lib/__tests__/dispute-scope.test.ts` (new).
+- `src/app/[locale]/admin/disputes/[id]/page.tsx` (additive gallery); `src/i18n/admin.{en,ar}.ts` (`buyerPhotos`, `buyerPhoto`).
+- `src/i18n/{en,ar}.ts`: the returns policy line restored.
+- New: `src/app/api/orders/[id]/dispute-photos/route.ts`, `e2e/checkout-dispute-photos.spec.ts`.

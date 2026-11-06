@@ -48,13 +48,14 @@ export async function reviewAction(orderId: string, input: { rating: number; bod
   }
 }
 
-export async function disputeAction(orderId: string, input: { reason: string; description: string }): Promise<Result> {
+export async function disputeAction(orderId: string, input: { reason: string; description: string; photos?: string[] }): Promise<Result> {
   const user = await guard("dispute");
   if (!user) return { ok: false, error: "FORBIDDEN" };
   const p = disputeSchema.safeParse(input);
   if (!idSchema.safeParse(orderId).success || !p.success) return { ok: false, error: "INVALID" };
   try {
-    await openDispute(orderId, user, p.data.reason as DisputeReason, p.data.description);
+    const photos = Array.isArray(input.photos) ? input.photos.filter((k): k is string => typeof k === "string" && k.length <= 120).slice(0, 6) : [];
+    await openDispute(orderId, user, p.data.reason as DisputeReason, p.data.description, photos);
     return { ok: true };
   } catch (e) {
     return fail(e);
