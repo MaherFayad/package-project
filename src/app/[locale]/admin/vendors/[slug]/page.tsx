@@ -30,7 +30,8 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const t = getT(locale);
   // Entity first (WCAG 2.4.2, CR-49): "Nile Pack · Vendors · Admin".
   const v = /^[\w-]{1,80}$/.test(slug) ? await db.vendor.findUnique({ where: { slug }, select: { nameAr: true, nameEn: true } }) : null;
-  return { title: `${v ? `${pick(locale, v.nameAr, v.nameEn)} · ` : ""}${t("admin.vendors.title")} · ${t("admin.title")}` };
+  // a11y R6-AX-11 (WCAG 2.4.2): a missing record says so in the tab title too.
+  return { title: `${v ? `${pick(locale, v.nameAr, v.nameEn)} · ` : `${t("admin.common.notFoundTitle")} · `}${t("admin.vendors.title")} · ${t("admin.title")}` };
 }
 
 export default async function AdminVendorPage({ params }: { params: Params }) {

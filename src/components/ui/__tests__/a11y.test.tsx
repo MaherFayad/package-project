@@ -224,6 +224,8 @@ describe("UI kit accessibility contracts", () => {
     window.scrollBy = scrollBy as unknown as typeof window.scrollBy;
     field.focus();
     expect(scrollBy).toHaveBeenCalledWith(expect.objectContaining({ top: 688 - 655 + 16 }));
+    // R6-AX-13: the page could not scroll (end of the page): the notice adds the room itself.
+    expect(document.documentElement.style.paddingBlockEnd).toMatch(/px$/);
     // A pointer press never scrolls mid-click (it would move the target away from the pointer).
     field.blur();
     scrollBy.mockClear();

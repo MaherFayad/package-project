@@ -26,7 +26,8 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const { locale, id } = await params;
   const t = getT(toLocale(locale));
   const u = /^[\w-]{1,40}$/.test(id) ? await db.user.findUnique({ where: { id }, select: { name: true } }) : null;
-  return { title: `${u?.name ? `${u.name} · ` : ""}${t("admin.users.title")} · ${t("admin.title")}` };
+  // a11y R6-AX-11 (WCAG 2.4.2): a missing record says so in the tab title too.
+  return { title: `${u?.name ? `${u.name} · ` : !u ? `${t("admin.common.notFoundTitle")} · ` : ""}${t("admin.users.title")} · ${t("admin.title")}` };
 }
 
 export default async function AdminUserPage({ params }: { params: Params }) {

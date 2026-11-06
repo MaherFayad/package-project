@@ -50,6 +50,7 @@ export function CookieNotice() {
     // Keyboard focus only: scrolling between pointerdown and pointerup would move the target
     // out from under the pointer and swallow the click (a pointer user can see what they hit).
     let pointerDown = false;
+    let padded = false;
     const onPointerDown = () => (pointerDown = true);
     const onPointerUp = () => (pointerDown = false);
     const onFocusIn = (e: FocusEvent) => {
@@ -58,8 +59,17 @@ export function CookieNotice() {
       if (!target.matches(":focus-visible")) return;
       const n = el.getBoundingClientRect();
       const r = target.getBoundingClientRect();
-      const covered = r.bottom > n.top && r.top < n.bottom && r.right > n.left && r.left < n.right;
-      if (covered) window.scrollBy({ top: r.bottom - n.top + 16, behavior: "instant" as ScrollBehavior });
+      const under = (b: DOMRect) => b.bottom > n.top && b.top < n.bottom && b.right > n.left && b.left < n.right;
+      if (!under(r)) return;
+      window.scrollBy({ top: r.bottom - n.top + 16, behavior: "instant" as ScrollBehavior });
+      // R6-AX-13: at the end of the page there is nothing left to scroll (a shell footer without
+      // the `--e-cookie-h` padding, e.g. the last footer links on a phone). Add the room here.
+      const r2 = target.getBoundingClientRect();
+      if (under(r2)) {
+        padded = true;
+        root.style.paddingBlockEnd = `${el.offsetHeight + 32}px`;
+        window.scrollBy({ top: r2.bottom - n.top + 16, behavior: "instant" as ScrollBehavior });
+      }
     };
     document.addEventListener("pointerdown", onPointerDown, true);
     document.addEventListener("pointerup", onPointerUp, true);
@@ -73,6 +83,7 @@ export function CookieNotice() {
       ro?.disconnect();
       root.style.removeProperty("--e-cookie-h");
       root.style.scrollPaddingBlockEnd = "";
+      if (padded) root.style.paddingBlockEnd = "";
     };
   }, [show, leaving]);
 

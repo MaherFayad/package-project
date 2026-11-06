@@ -25,7 +25,8 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const { locale, id } = await params;
   const t = getT(toLocale(locale));
   const a = /^[\w-]{1,40}$/.test(id) ? await db.vendorApplication.findUnique({ where: { id }, select: { legalName: true } }) : null;
-  return { title: `${a ? `${a.legalName} · ` : ""}${t("admin.vendors.tabs.applications")} · ${t("admin.title")}` };
+  // a11y R6-AX-11 (WCAG 2.4.2): a missing record says so in the tab title too.
+  return { title: `${a ? `${a.legalName} · ` : `${t("admin.common.notFoundTitle")} · `}${t("admin.vendors.tabs.applications")} · ${t("admin.title")}` };
 }
 
 function Field({ label, children }: { label: string; children: ReactNode }) {

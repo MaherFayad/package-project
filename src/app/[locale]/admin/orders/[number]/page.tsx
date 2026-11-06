@@ -16,6 +16,7 @@ import { NoteComposer, OverrideCard, QcActions, RefundCard, RoutingCard, ShipCar
 import { OrderStatusBadge } from "@/components/admin/OrdersIndex";
 import { adminStyles } from "@/components/admin/charts";
 import { loadOrderDetail } from "@/components/admin/server/queries";
+import { db } from "@/lib/db";
 import { goodsNet, marginOf, type MetricOrder } from "@/components/admin/lib/metrics";
 import { canOverrideCost, canOverridePrice, canReassign, canRefund, canReviewQc, reprintSource } from "@/components/admin/lib/orders";
 import { isOpenDispute } from "@/components/admin/lib/ops";
@@ -34,7 +35,10 @@ type Params = Promise<{ locale: string; number: string }>;
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { locale, number } = await params;
   const t = getT(toLocale(locale));
-  return { title: `${decodeURIComponent(number)} · ${t("admin.orders.title")} · ${t("admin.title")}` };
+  const n = decodeURIComponent(number);
+  // a11y R6-AX-11 (WCAG 2.4.2): an unknown order number says "Not found" in the tab title.
+  const found = /^[\w-]{1,64}$/.test(n) ? await db.order.findFirst({ where: { OR: [{ number: n }, { id: n }] }, select: { number: true } }) : null;
+  return { title: `${found ? found.number : `${t("admin.common.notFoundTitle")} · ${n}`} · ${t("admin.orders.title")} · ${t("admin.title")}` };
 }
 
 function Row({ label, value, strong }: { label: ReactNode; value: ReactNode; strong?: boolean }) {
