@@ -1,3 +1,4 @@
+import { configFinishNames } from "@/lib/orders/finish-label";
 import "server-only";
 import { db } from "@/lib/db";
 import { fromJson } from "@/lib/json";
@@ -117,6 +118,7 @@ export async function getJob(vendorId: string, number: string): Promise<JobDetai
       dims: fromJson<Dims>(i.dims),
       materialCode: i.materialCode as MaterialCode,
       finishCode: i.finishCode as FinishCode,
+      finishNames: configFinishNames(i.config, "en") ? { ar: configFinishNames(i.config, "ar")!, en: configFinishNames(i.config, "en")! } : null,
       printSides: i.printSides as PrintSides,
       quantity: i.quantity,
       proof: i.proof ? { hash: i.proof.hash, version: i.proof.version, approvedAt: iso(i.proof.approvedAt) } : null,

@@ -1,4 +1,5 @@
 import { clientIp } from "@/lib/rate-limit";
+import { db } from "@/lib/db";
 import { currentActor, loadDesign, saveDesign } from "@/components/designer/server";
 import { SaveBody, limitWrites, readJson } from "../_shared";
 
@@ -21,7 +22,8 @@ export async function GET(_req: Request, { params }: Ctx) {
 
 /**
  * PUT /api/designs/:id — save changes. Only the owner (or the anonymous browser that made it).
- * Body: { doc, thumbnail? } · 200 { id, owned, updatedAt } · 403 FORBIDDEN · 404 NOT_FOUND
+ * Body: { doc, thumbnail?, baseUpdatedAt? } · 200 { id, owned, updatedAt } · 403 FORBIDDEN · 404 NOT_FOUND
+ * · 409 CONFLICT { updatedAt } when baseUpdatedAt is older than the stored copy
  */
 export async function PUT(req: Request, { params }: Ctx) {
   const { id } = await params;
@@ -32,6 +34,14 @@ export async function PUT(req: Request, { params }: Ctx) {
   if (json instanceof Response) return json;
   const parsed = SaveBody.safeParse(json);
   if (!parsed.success) return Response.json({ error: "INVALID_BODY", issues: parsed.error.issues.slice(0, 10) }, { status: 400 });
+  // R5-JR-04: two tabs (or a phone and a laptop) editing one design used to overwrite each other
+  // silently, each saying "Saved". A save based on an older copy is refused; the client asks to reload.
+  if (parsed.data.baseUpdatedAt) {
+    const row = await db.design.findUnique({ where: { id }, select: { updatedAt: true } });
+    if (row && row.updatedAt.toISOString() !== new Date(parsed.data.baseUpdatedAt).toISOString()) {
+      return Response.json({ error: "CONFLICT", updatedAt: row.updatedAt.toISOString() }, { status: 409, headers: { "Cache-Control": "no-store" } });
+    }
+  }
   const r = await saveDesign(parsed.data.doc, actor, { id, thumbnail: parsed.data.thumbnail });
   if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
   return Response.json({ id: r.id, owned: r.owned, updatedAt: r.updatedAt }, { headers: { "Cache-Control": "no-store" } });

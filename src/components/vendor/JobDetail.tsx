@@ -232,7 +232,7 @@ export function JobDetail({ job, vendorName }: { job: JobDetailDTO; vendorName: 
                     <dt>{t("vendorPortal.job.material")}</dt>
                     <dd>{t(`materials.${item.materialCode}` as DictKey)}</dd>
                     <dt>{t("vendorPortal.job.finish")}</dt>
-                    <dd>{t(`finishes.${item.finishCode}` as DictKey)}</dd>
+                    <dd>{item.finishNames?.[locale] ?? t(`finishes.${item.finishCode}` as DictKey)}</dd>
                     <dt>{t("vendorPortal.job.printSides")}</dt>
                     <dd>{t(`vendorPortal.job.printSidesValue.${item.printSides}` as DictKey)}</dd>
                     <dt>{t("vendorPortal.job.quantity")}</dt>

@@ -1,3 +1,4 @@
+import { finishLabel } from "@/lib/orders/finish-label";
 import type { Metadata } from "next";
 import { cache } from "react";
 import { getT, toLocale } from "@/i18n";
@@ -110,7 +111,7 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
       ? [t("designer.shared.sizeVessel"), vesselSize(doc.vessel.dims, t("common.mm"))]
       : [t("designer.shared.size"), formatDims(doc.dims, locale)],
     [t(doc.vessel ? "designer.shared.printMaterial" : "designer.shared.board"), t(`materials.${doc.materialCode}` as DictKey)],
-    [t("designer.shared.finish"), t(`finishes.${doc.finishCode}` as DictKey)],
+    [t("designer.shared.finish"), finishLabel({ finishes: doc.finishes }, doc.finishCode, locale, (k) => t(k as DictKey))],
     [t("designer.shared.printing"), doc.printSides === "BOTH" ? t("designer.box.printBoth") : t("designer.box.printOutside")],
   ];
 

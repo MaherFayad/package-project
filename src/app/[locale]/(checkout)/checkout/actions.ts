@@ -143,6 +143,14 @@ export async function placeOrderAction(input: unknown): Promise<{ ok: true; orde
       sample: p.data.sample,
       acknowledgePreflight: p.data.acknowledgePreflight === true,
     });
+    // R5-JR-03: the invoice details chosen for THIS order, frozen on it. The receipt used to read
+    // the buyer's current Organization, so unticking "company invoice" still printed the company and
+    // editing it on a later order rewrote every earlier receipt.
+    const c = p.data.company;
+    await db.order.update({
+      where: { id: r.orderId },
+      data: { billing: { company: c ? { name: c.name, taxId: normalizeTaxId(c.taxId), commercialRegister: c.commercialRegister || null } : null } },
+    });
     return { ok: true, orderId: r.orderId, number: r.number };
   } catch (e) {
     if (e instanceof OrderError) return { ok: false, error: e.code };

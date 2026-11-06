@@ -11,6 +11,8 @@ export const MAX_BODY_BYTES = 12_000_000;
 
 export const SaveBody = z.object({
   doc: designDocSchema,
+  /** R5-JR-04: the updatedAt this client last saw; a newer server copy answers 409 CONFLICT. Optional (old clients). */
+  baseUpdatedAt: z.string().datetime().optional(),
   /** Small JPEG/PNG data URL of the 3D view (optional). */
   thumbnail: z
     .string()

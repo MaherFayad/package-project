@@ -1,3 +1,4 @@
+import { finishLabel } from "@/lib/orders/finish-label";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
@@ -76,6 +77,10 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
   const base = `/${locale}/admin`;
   if (!data) notFound();
   const { order, vendorOptions, actors, reprints, auditRows } = data;
+  // The newest decline is newer than the newest reassignment: the current vendor said no.
+  const lastDecline = Math.max(0, ...order.productionEvents.filter((e) => e.type === "VENDOR_DECLINED").map((e) => e.createdAt.getTime()));
+  const lastReassign = Math.max(0, ...auditRows.filter((a) => a.action === "ORDER_REASSIGN").map((a) => a.createdAt.getTime()));
+  const declinedByVendor = lastDecline > 0 && lastDecline > lastReassign;
   const m = order as unknown as MetricOrder;
   const goods = goodsNet(m);
   const margin = marginOf(m);
@@ -154,8 +159,13 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
           <BlockStack gap="400">
             {order.status === "PAID" ? (
               // The next ops step for a paid order; on phones the vendor card sits far below, so surface it here.
-              <Banner tone="warning" title={t("admin.order.routing.awaitingTitle", { vendor: vendorName })} action={canReassign(order.status) ? { content: t("admin.order.routing.change"), url: "#order-vendor" } : undefined}>
-                {t("admin.order.routing.awaiting")}
+              // R5-JR-07: once the current vendor has declined, "waiting for it to accept" is wrong; ops must move the job.
+              <Banner
+                tone={declinedByVendor ? "critical" : "warning"}
+                title={t(declinedByVendor ? "admin.order.routing.declinedTitle" : "admin.order.routing.awaitingTitle", { vendor: vendorName })}
+                action={canReassign(order.status) ? { content: t("admin.order.routing.change"), url: "#order-vendor" } : undefined}
+              >
+                {t(declinedByVendor ? "admin.order.routing.declined" : "admin.order.routing.awaiting")}
               </Banner>
             ) : null}
             {showQc ? (
@@ -225,7 +235,7 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
                         <Text as="p" variant="bodySm" tone="subdued">
                           {t("admin.order.spec", {
                             material: t(`materials.${it.materialCode}` as DictKey),
-                            finish: t(`finishes.${it.finishCode}` as DictKey),
+                            finish: finishLabel(it.config, it.finishCode, locale, (k) => t(k as DictKey)),
                             sides: t(`admin.order.sides.${it.printSides === "BOTH" ? "BOTH" : "OUTSIDE"}` as DictKey),
                           })}
                         </Text>

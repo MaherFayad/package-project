@@ -80,7 +80,9 @@ export function PaymentClient(props: {
     return s === key ? t("checkout.errors.generic") : s;
   };
 
-  const done = () => router.push(`/${locale}/orders/${orderId}?paid=1`);
+  // replace, not push (R5-JR-06): Back from the paid order must not land on this payment step again,
+  // where a paid order showed "Amount due now" and a "Cancel order" button from the router cache.
+  const done = () => router.replace(`/${locale}/orders/${orderId}?paid=1`);
 
   const start = async () => {
     setBusy(true);
@@ -133,7 +135,7 @@ export function PaymentClient(props: {
     setConfirmCancel(false);
     if (r.ok) {
       toast.show(t("payment.cancelled"));
-      router.push(`/${locale}/orders/${orderId}`);
+      router.replace(`/${locale}/orders/${orderId}`);
     } else setError(errText(r.error));
   };
 

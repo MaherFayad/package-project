@@ -227,6 +227,8 @@ export const adminEn = {
       newCostHelp: "Leave empty to keep the current buy price.",
       submit: "Reassign",
       change: "Change vendor",
+      declinedTitle: "{vendor} declined this job",
+      declined: "Move it to another vendor now so the buyer's delivery date holds.",
       awaitingTitle: "Waiting for {vendor} to accept",
       awaiting: "The buyer has paid. If the vendor cannot take the job, move it to another vendor before production starts.",
       locked: "Production has started, so the vendor can no longer be changed.",

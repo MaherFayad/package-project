@@ -81,7 +81,7 @@ const Stage3D = dynamic(() => import("./Stage3D"), { ssr: false, loading: StageS
 const ModelPicker = dynamic(() => import("@/components/catalogue/CataloguePicker").then((m) => m.ModelPicker), { ssr: false });
 
 type View = "3d" | "face" | "dieline";
-type SaveState = "idle" | "dirty" | "saving" | "saved" | "error";
+type SaveState = "idle" | "dirty" | "saving" | "saved" | "error" | "conflict";
 type ModalName = "price" | "export" | "share" | null;
 const TAB_IDS = ["box", "artwork", "layers", "check"] as const;
 
@@ -255,6 +255,9 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
     return () => mq.removeEventListener?.("change", on);
   }, []);
   const savedDocRef = useRef<DesignDoc | null>(initialDesignId ? initialDoc : null);
+  // R5-JR-04: the server copy's updatedAt this tab is based on (null = unknown, e.g. a new design).
+  const baseStampRef = useRef<string | null>(null);
+  const conflictRef = useRef(false);
 
   const selected = findLayer(doc, selectedId);
   const faceInfo = faces[face] ?? null;
@@ -263,6 +266,21 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
 
   // A refresh (e.g. after signing in) re-renders the page with the same design: keep all state.
   // Only a link to a DIFFERENT saved design replaces the document.
+  // Re-read the stamp after this tab's own non-save writes (sign-in claims the design, a share link
+  // is created): they bump updatedAt too and must not look like another tab's save.
+  const refreshStamp = useCallback(async (id: string | null = designIdRef.current) => {
+    if (!id) return;
+    try {
+      const r = await fetch(`/api/designs/${encodeURIComponent(id)}`, { cache: "no-store" });
+      const j = r.ok ? ((await r.json()) as { updatedAt?: string }) : null;
+      if (j?.updatedAt && designIdRef.current === id) baseStampRef.current = j.updatedAt;
+    } catch {
+      /* offline: the next successful save sets it */
+    }
+  }, []);
+  useEffect(() => {
+    if (initialDesignId && !baseStampRef.current) void refreshStamp(initialDesignId);
+  }, [initialDesignId, refreshStamp]);
   useEffect(() => {
     if (initialDesignId && initialDesignId !== designIdRef.current) {
       dispatch({ type: "reset", value: initialDoc });
@@ -366,6 +384,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
   const saveToServer = useCallback(
     async (opts: { thumbnail?: boolean } = {}): Promise<string | null> => {
       if (inflight.current) await inflight.current.catch(() => null);
+      if (conflictRef.current) return null;
       const run = (async () => {
         const current = docRef.current;
         setSaveState("saving");
@@ -379,15 +398,24 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
             /* the 3D view may not be ready; the thumbnail is optional */
           }
         }
-        const body = JSON.stringify({ doc: { ...current, id: undefined }, ...(thumbnail ? { thumbnail } : {}) });
+        const bodyFor = (id: string | null) =>
+          JSON.stringify({ doc: { ...current, id: undefined }, ...(thumbnail ? { thumbnail } : {}), ...(id && baseStampRef.current ? { baseUpdatedAt: baseStampRef.current } : {}) });
         const send = (id: string | null) =>
-          fetch(id ? `/api/designs/${encodeURIComponent(id)}` : "/api/designs", { method: id ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body });
+          fetch(id ? `/api/designs/${encodeURIComponent(id)}` : "/api/designs", { method: id ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: bodyFor(id) });
         try {
           let res = await send(designIdRef.current);
+          if (res.status === 409) {
+            // Saved elsewhere since this tab loaded it: keep this tab's work locally, stop autosaving and ask to reload.
+            conflictRef.current = true;
+            saveLocalDraft({ doc: current, designId: designIdRef.current, savedAt: Date.now() });
+            setSaveState("conflict");
+            return null;
+          }
           // Expired or not ours any more (e.g. signed out): keep the work as a new design.
           if (designIdRef.current && (res.status === 404 || res.status === 403)) res = await send(null);
           if (!res.ok) throw new Error(String(res.status));
-          const json = (await res.json()) as { id: string; owned: boolean };
+          const json = (await res.json()) as { id: string; owned: boolean; updatedAt?: string };
+          if (json.updatedAt) baseStampRef.current = json.updatedAt;
           savedDocRef.current = current;
           setDesignId(json.id);
           designIdRef.current = json.id;
@@ -477,7 +505,9 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
     setPrice({ status: "idle" });
     router.refresh();
     // verify-otp claimed this browser's anonymous designs; continue what the user asked for.
-    if (pending) setTimeout(pending, 0);
+    void refreshStamp().finally(() => {
+      if (pending) setTimeout(pending, 0);
+    });
   };
 
   // ── live price badge ──────────────────────────────────────────────
@@ -683,6 +713,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
         if (!res.ok) throw new Error();
         const { path } = (await res.json()) as { path: string };
         setShareUrl(`${window.location.origin}/${locale}${path}`);
+        void refreshStamp(id);
       } catch {
         setShareError(true);
       }
@@ -709,7 +740,9 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
         ? user
           ? t("designer.save.savedAccount")
           : t("designer.save.savedLocal")
-        : saveState === "error"
+        : saveState === "conflict"
+          ? t("designer.save.conflict")
+          : saveState === "error"
           ? online
             ? t("designer.save.failed")
             : t("designer.save.offline")
@@ -834,7 +867,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
           <Button icon={Redo2} accessibilityLabel={t("designer.history.redo")} disabled={!canRedo(hist)} onClick={() => dispatch({ type: "redo" })} />
         </ButtonGroup>
         <span className={styles.saveStatus} role="status" data-testid="save-status" data-state={saveState} title={statusText || undefined}>
-          {saveState === "error" ? (
+          {saveState === "error" || saveState === "conflict" ? (
             <CloudOff size={16} aria-hidden />
           ) : saveState === "saved" ? (
             <CloudCheck size={16} aria-hidden />
@@ -846,6 +879,10 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
         {saveState === "error" && online ? (
           <Button size="slim" variant="tertiary" onClick={retryNow}>
             {t("designer.save.retry")}
+          </Button>
+        ) : saveState === "conflict" ? (
+          <Button size="slim" variant="tertiary" onClick={() => window.location.reload()}>
+            {t("designer.save.reload")}
           </Button>
         ) : null}
         <span className={styles.toolbarSpacer} />

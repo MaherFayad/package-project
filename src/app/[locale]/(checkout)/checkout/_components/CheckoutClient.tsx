@@ -1032,11 +1032,18 @@ function OfferCard({ offer, checked, onSelect, locale, sample }: { offer: Checko
           <Icon source={Clock} size="small" tone="subdued" />
           {t("checkout.offers.production", { days: offer.leadTimeDays })}
         </span>
-        <span aria-label={t("checkout.offers.rating", { rating: offer.vendor.rating.toFixed(1), count: offer.vendor.ratingCount })}>
-          <Icon source={Star} size="small" tone="subdued" />
-          <bdi>{t("checkout.offers.ratingShort", { rating: offer.vendor.rating.toFixed(1), count: offer.vendor.ratingCount })}</bdi>
-        </span>
-        <span>{t("checkout.offers.onTime", { pct: Math.round(offer.vendor.onTimePct) })}</span>
+        {/* R5-JR-05: a new vendor (no reviews) is "New", not "0.0 (0)" and "0% on time". */}
+        {offer.vendor.ratingCount > 0 ? (
+          <>
+            <span aria-label={t("checkout.offers.rating", { rating: offer.vendor.rating.toFixed(1), count: offer.vendor.ratingCount })}>
+              <Icon source={Star} size="small" tone="subdued" />
+              <bdi>{t("checkout.offers.ratingShort", { rating: offer.vendor.rating.toFixed(1), count: offer.vendor.ratingCount })}</bdi>
+            </span>
+            <span>{t("checkout.offers.onTime", { pct: Math.round(offer.vendor.onTimePct) })}</span>
+          </>
+        ) : (
+          <span>{t("store.vendor.newBadge")}</span>
+        )}
         {offer.vendor.verified ? (
           <span>
             <Icon source={BadgeCheck} size="small" tone="subdued" />

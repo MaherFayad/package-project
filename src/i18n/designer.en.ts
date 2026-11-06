@@ -260,6 +260,8 @@ export const designerEn = {
     unsaved: "Unsaved changes",
     failed: "Could not save. Retrying shortly.",
     retry: "Retry now",
+    conflict: "Changed in another tab or device. Reload to get the latest version.",
+    reload: "Reload",
     offline: "You are offline. Your work is kept on this device.",
     name: "Design name",
     savedToast: "Design saved",

@@ -1,3 +1,4 @@
+import { finishLabel } from "@/lib/orders/finish-label";
 import type { Metadata } from "next";
 import { Download, FileText, Receipt } from "lucide-react";
 import type { Dims, DisputeStatus, Locale, OrderStatus, PaymentMethod, ProductionEventType, ShipmentStatus, ShippingAddress } from "@/types";
@@ -241,7 +242,7 @@ export default async function OrderPage({ params, searchParams }: { params: Para
                               <PriceTag amount={item.lineTotalPiasters} locale={locale} />
                             </InlineStack>
                             <Text as="p" variant="bodySm" tone="subdued">
-                              {formatDims(dims, locale)} · {t(`materials.${item.materialCode}` as DictKey)} · {t(`finishes.${item.finishCode}` as DictKey)} ·{" "}
+                              {formatDims(dims, locale)} · {t(`materials.${item.materialCode}` as DictKey)} · {finishLabel(item.config, item.finishCode, locale, (k) => t(k as DictKey))} ·{" "}
                               {t(`checkout.proof.sides${item.printSides === "BOTH" ? "BOTH" : "OUTSIDE"}` as DictKey)}
                             </Text>
                             <Text as="p" variant="bodySm" numeric>

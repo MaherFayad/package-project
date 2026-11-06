@@ -432,11 +432,34 @@ export async function loadDispute(id: string) {
   });
   if (!d) return null;
   const [vendors, reprints, auditRows] = await Promise.all([
-    db.vendor.findMany({ where: { status: "ACTIVE" }, select: { id: true, nameAr: true, nameEn: true }, orderBy: { nameEn: "asc" } }),
+    db.vendor.findMany({
+      where: { status: "ACTIVE" },
+      select: {
+        id: true,
+        nameAr: true,
+        nameEn: true,
+        capabilities: true,
+        rateCards: { where: { active: true, structure: { code: d.order.items[0]?.structureCode ?? "" }, material: { code: d.order.items[0]?.materialCode ?? "" } }, select: { id: true } },
+      },
+      orderBy: { nameEn: "asc" },
+    }),
     db.order.findMany({ where: { notes: { startsWith: `REPRINT_OF:${d.order.number}` } }, select: { number: true, status: true } }),
     db.auditLog.findMany({ where: { entityType: "DISPUTE", entityId: d.id }, orderBy: { createdAt: "desc" } }),
   ]);
-  return { dispute: d, vendors, reprints, auditRows };
+  // R5-JR-08: a reprint can only go to a vendor that makes this job (an active rate card for the
+  // style and board, and the model where one must be listed), like "Change vendor" on the order.
+  // The order's own vendor stays listed (the default), whatever its cards say today.
+  const modelCode = d.order.items[0]?.modelCode ?? null;
+  const capable = (v: (typeof vendors)[number]) =>
+    v.rateCards.length > 0 &&
+    (fromJson<VendorCapabilities>(v.capabilities).structures ?? []).includes((d.order.items[0]?.structureCode ?? "") as never) &&
+    vendorListsModel(orderModeOf(modelCode).mode, modelCode ?? "", fromJson<VendorCapabilities>(v.capabilities).models);
+  return {
+    dispute: d,
+    vendors: vendors.filter((v) => v.id === d.order.vendorId || capable(v)).map((v) => ({ id: v.id, nameAr: v.nameAr, nameEn: v.nameEn })),
+    reprints,
+    auditRows,
+  };
 }
 
 /* ───────────────────────── Users & privacy ───────────────────────── */
