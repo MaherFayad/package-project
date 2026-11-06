@@ -74,3 +74,35 @@ Reference captures (screens, scroll frames, scroll videos, computed styles) were
 - Lighthouse phone: LCP under 2.5 s, CLS under 0.1, TBT under 200 ms on every rebuilt page.
 - axe: 0 violations; keyboard walk; reduced-motion walk; RTL mirror check.
 - e2e: update the storefront and marketing specs to the new structure without weakening them.
+
+## 6. Kit API (foundation session; code against this)
+
+All files live in `src/components/marketing/kit/`. Import each from its own file (no barrel), e.g. `import { Sheet } from "@/components/marketing/kit/Sheet"`. Every page under `MarketingShell` already has the tokens (`[data-mk]`), the dark header and footer, and the reveal observer. Live gallery: `/ar/dev/kit`, `/en/dev/kit` (dev and e2e only).
+
+Page skeleton:
+
+```tsx
+<Sheet tone="dark" hero aria-labelledby="h">      {/* first section: sits under the transparent header */}
+  <Eyebrow>…</Eyebrow>
+  <HeroTitle id="h" lines={["…", "…"]} />          {/* the LCP h1: word slide-in, no fade */}
+  <Lead>…</Lead>
+  <PillRow><Pill href={startHref(locale)} size="lg">…</Pill><Pill href="…" variant="outline" size="lg">…</Pill></PillRow>
+</Sheet>
+<Sheet tone="light">…</Sheet>                      {/* overlaps the previous one: -48px, 48px top radius */}
+<Sheet tone="green">…</Sheet>
+```
+
+`startHref(locale)` (exported from `MarketingHeader.tsx`) is the one place every "Start free" CTA points; it switches to `/start` when that page ships.
+
+| Component | Props (defaults first) | Notes |
+|---|---|---|
+| `Sheet` | `tone: "dark" \| "green" \| "navy" \| "violet" \| "light" \| "white"`, `overlap = true`, `hero = false`, `pad: "default" \| "sm" \| "none"`, `container: "default" \| "narrow" \| "wide" \| "full" \| false`, `as = "section"`, `id`, `aria-label(ledby)` | Sets text, muted (`--mk-muted`), line (`--mk-line`) and focus ring for its tone. `hero` adds header-height top padding and marks the page so the header starts transparent. |
+| `SheetCard` | `tone = "green"`, `as`, `className` | Rounded 32px band inside the container (the reference's green feature card). |
+| `Container` | `size = "default"` (1280), `"narrow"` (880), `"wide"` (1440), `"full"`; `as` | Fluid gutter 16 / 32 / 40px. |
+| `Display` (alias `Heading`) | `as = "h2"`, `size: "hero" \| "96" \| "64" \| "56" \| "44" \| "20"` (default 64), `align: "start" \| "center"`, `id` | Weights 300 (hero, 96), 330 (64/56/44), 450 (20). Arabic: no tracking, line height 1.25. |
+| `Eyebrow`, `Lead`, `Body` | `children`, `align` (Lead) | Eyebrow is green on dark, deep green on light, lilac on violet. |
+| `Pill` | `href?` (Link) or button props; `variant = "light" \| "outline" \| "tint" \| "dark" \| "outline-dark" \| "ghost"`; `size = "md"` (44px) `\| "sm"` (40) `\| "lg"` (56) | light/outline on dark, tint on violet, dark/outline-dark on light sheets. |
+| `PillRow` | `align = "start" \| "center"` | 40px top margin, 12px gap. |
+| `IconPill` | button props + required `aria-label` | 44px round (pause/play, arrows). |
+| `Reveal` | `as = "div"`, `variant = "rise" \| "fade" \| "scale"`, `index` (stagger, 60ms each) | Once on enter, 600ms `cubic-bezier(0.215,0.61,0.355,1)`. Visible without JS, instant under reduced motion. Never on the LCP headline. |
+| `Stagger` | `as = "div"`, `variant`, `start = 0`, `className` | Adds reveal + index to each direct child element. |
