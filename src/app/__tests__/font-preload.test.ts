@@ -24,3 +24,22 @@ describe("plexArabicPreloadUrls", () => {
     expect(plexArabicPreloadUrls([600])).toEqual([]);
   });
 });
+
+describe("interPreloadUrl", () => {
+  it("picks the Basic Latin Inter file, not the other subsets", async () => {
+    vi.resetModules();
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "elba-fonts-"));
+    fs.mkdirSync(path.join(dir, ".next/static/css"), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, ".next/static/css/b.css"),
+      [
+        "@font-face{font-family:Inter;font-weight:100 900;src:url(/_next/static/media/cyr-s.woff2) format(\"woff2\");unicode-range:u+0460-052f}",
+        "@font-face{font-family:Inter;font-weight:100 900;src:url(/_next/static/media/latin-s.woff2) format(\"woff2\");unicode-range:u+00??,u+0131}",
+        "@font-face{font-family:IBM Plex Sans Arabic;font-weight:400;src:url(/_next/static/media/plat-s.woff2) format(\"woff2\");unicode-range:u+00??}",
+      ].join("\n"),
+    );
+    vi.spyOn(process, "cwd").mockReturnValue(dir);
+    const { interPreloadUrl } = await import("@/app/font-preload");
+    expect(interPreloadUrl()).toBe("/_next/static/media/latin-s.woff2");
+  });
+});

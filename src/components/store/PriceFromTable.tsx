@@ -1,10 +1,9 @@
 import type { Dims, Locale } from "@/types";
+import { Card, Text } from "@/components/marketing/mkui";
 import { MAX_INSTANT_QTY } from "@/types";
 import { getT } from "@/i18n";
 import type { DictKey } from "@/i18n";
 import { formatDims, formatMoney, formatNumber } from "@/lib/format";
-import { Card } from "@/components/ui/Card";
-import { Text } from "@/components/ui/Text";
 import type { PriceFrom } from "./data";
 import { SpecTable } from "./SpecTable";
 import styles from "./store.module.css";

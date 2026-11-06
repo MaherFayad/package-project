@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Badge, Card, Icon, Layout, LayoutSection, Text } from "@/components/marketing/mkui";
 import { notFound } from "next/navigation";
 import { BadgeCheck, MapPin } from "lucide-react";
 import { getT, pick, toLocale } from "@/i18n";
@@ -6,11 +7,6 @@ import type { DictKey } from "@/i18n";
 import { dirOf } from "@/i18n";
 import { formatDate, formatNumber } from "@/lib/format";
 import { siteUrl } from "@/lib/env";
-import { Badge } from "@/components/ui/Badge";
-import { Card } from "@/components/ui/Card";
-import { Icon } from "@/components/ui/Icon";
-import { Layout, LayoutSection } from "@/components/ui/Layout";
-import { Text } from "@/components/ui/Text";
 import { PortfolioGallery } from "@/components/store/PortfolioGallery";
 import { SpecTable } from "@/components/store/SpecTable";
 import { RatingStars } from "@/components/store/RatingStars";
@@ -161,7 +157,7 @@ export default async function VendorProfilePage({ params }: Props) {
         <div className={mk.container}>
         <Layout>
           <LayoutSection>
-            <div className={styles.stack}>
+            <div className={mk.detailStack}>
 
               <Card title={t("store.vendor.portfolioTitle")} as="section">
                 {v.portfolio.length ? (
@@ -284,7 +280,7 @@ export default async function VendorProfilePage({ params }: Props) {
           </LayoutSection>
 
           <LayoutSection variant="oneThird" as="aside" aria-label={t("store.vendor.serviceAreas")}>
-            <div className={`${styles.stack} ${styles.sticky}`}>
+            <div className={mk.detailStack}>
               <Card>
                 <dl className={styles.specs}>
                   <div className={styles.specRow}>
@@ -296,7 +292,7 @@ export default async function VendorProfilePage({ params }: Props) {
                   {t("store.vendor.joined", { date: formatDate(v.joinedAt, locale) })}
                 </Text>
               </Card>
-              <p className={styles.infoNote}>{t("store.vendor.contactNote")}</p>
+              <p className={mk.managed}>{t("store.vendor.contactNote")}</p>
             </div>
           </LayoutSection>
         </Layout>

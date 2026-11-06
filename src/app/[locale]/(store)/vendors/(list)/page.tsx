@@ -65,7 +65,7 @@ export default async function VendorsPage({ params, searchParams }: Props) {
           </p>
           <section className={styles.filtersPanel} aria-labelledby="filters-title">
             <h2 id="filters-title">{t("marketing.vendors.filters")}</h2>
-            <VendorFiltersForm filters={filters} action={action} />
+            <VendorFiltersForm locale={locale} filters={filters} action={action} />
           </section>
           <h2 id="results-title" className={styles.results}>
             <span aria-live="polite">{t("store.vendors.results", { count: list.length })}</span>

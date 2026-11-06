@@ -34,7 +34,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     (low != null ? t("store.catalog.fromPrice", { price: formatMoney(low, locale) }) + ". " : "") +
     t("store.structure.minimumValue") + ".";
   return {
-    title: `${keyword} | ${pick(locale, s.name.ar, s.name.en)}`,
+    // R4-MK-08: "Custom printed mailer box | Mailer box · Elba" said the name twice; keep the
+    // suffix only when the keyword does not already contain the style name.
+    title: keyword.toLowerCase().includes(pick(locale, s.name.ar, s.name.en).toLowerCase()) ? keyword : `${keyword} | ${pick(locale, s.name.ar, s.name.en)}`,
     description,
     alternates: { canonical: `/${locale}/boxes/${slug}`, languages: { ar: `/ar/boxes/${slug}`, en: `/en/boxes/${slug}` } },
     openGraph: { title: keyword, description, images: [structureImage(s.code)] },
