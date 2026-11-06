@@ -267,7 +267,7 @@ export const designerEn = {
   price: {
     badgeLocked: "{qty:box}: see the price",
     badge: "{qty:box} from {price} each excl. VAT · delivered in {days:day}",
-    badgeShort: "{qty} pcs from {price}",
+    badgeShort: "{qty:piece} from {price}",
     loading: "Getting the price",
     unavailable: "Price not available for this box yet",
     heading: "Instant price",

@@ -131,7 +131,7 @@ export function RateCardForm({ card, offeredFinishes, models }: { card: RateCard
                           inputMode="numeric"
                           dir="ltr"
                           value={tier.minQty}
-                          suffix={t("vendorPortal.common.pcs", { count: "" }).trim()}
+                          suffix={t("vendorPortal.common.pcsUnit")}
                           onChange={(v) => set("tiers", form.tiers.map((x, j) => (j === i ? { ...x, minQty: v } : x)))}
                           error={err(`tiers.${i}.minQty`)}
                         />

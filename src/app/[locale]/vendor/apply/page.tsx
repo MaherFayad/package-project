@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const locale = toLocale((await params).locale);
   const t = getT(locale);
   return {
-    title: `${t("vendorPortal.apply.title")} · ${t("meta.siteName")}`,
+    title: t("vendorPortal.apply.title"),
     description: t("vendorPortal.apply.subtitle"),
     alternates: { languages: { ar: "/ar/vendor/apply", en: "/en/vendor/apply" } },
   };

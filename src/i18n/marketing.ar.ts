@@ -5,7 +5,7 @@ type Widen<T> = T extends string ? string : { [K in keyof T]: Widen<T[K]> };
 /** Marketing site strings, Arabic (MSA, no diacritics, Western digits). Shape enforced by marketing.en.ts. */
 export const marketingAr: Widen<typeof marketingEn> = {
   announce: {
-    text: "جديد: عاين البصمة الحرارية واليو في الموضعي والسلوفان المخملي بتقنية ثلاثية الأبعاد.",
+    text: "جديد: معاينة ثلاثية الأبعاد للبصمة الحرارية وطلاء UV الموضعي والسلوفان المخملي.",
     link: "عرض التشطيبات",
     dismiss: "إغلاق الإعلان",
   },
@@ -17,7 +17,7 @@ export const marketingAr: Widen<typeof marketingEn> = {
     how: "طريقة العمل",
     login: "تسجيل الدخول",
     account: "حسابي",
-    start: "ابدأ التصميم مجانا",
+    start: "بدء التصميم مجانا",
     menu: "القائمة",
     close: "إغلاق القائمة",
     productsMenu: {
@@ -43,8 +43,8 @@ export const marketingAr: Widen<typeof marketingEn> = {
     body: "صمم علبتك المطبوعة مجانا، واعرف السعر فورا بالجنيه، واطلب من مطابع مصرية معتمدة. الطلب من 100 علبة.",
     phoneLabel: "رقم المحمول (اختياري)",
     phonePlaceholder: "010 1234 5678",
-    phoneError: "أدخل رقم محمول مصريا من 11 رقما يبدأ بـ 01، أو اترك الحقل فارغا.",
-    submit: "ابدأ التصميم مجانا",
+    phoneError: "أدخل رقم محمول مصريا من 11 رقما يبدأ بالرقم 01، أو اترك الحقل فارغا.",
+    submit: "بدء التصميم مجانا",
     fine: "لا يلزم حساب للتصميم. أضف رقم المحمول لحفظ التصميمات ومعرفة السعر الدقيق: نرسل لك رمز تحقق. لا رسائل تسويقية إلا بموافقتك.",
     chips: {
       price: "500 علبة بريدية",
@@ -79,7 +79,7 @@ export const marketingAr: Widen<typeof marketingEn> = {
       payTitle: "دفع إلكتروني آمن",
       payBody: "بطاقة أو محفظة إلكترونية أو فوري أو إنستاباي. علبة هي البائع، لذلك دفعتك محمية.",
       deliveryTitle: "توصيل لكل مصر",
-      deliveryBody: "نشحن العلب مسطحة إلى المحافظات الـ27 كلها، مع تتبع من الإنتاج حتى الباب.",
+      deliveryBody: "نشحن العلب مسطحة إلى محافظات مصر كلها (27 محافظة)، مع تتبع من الإنتاج حتى الباب.",
     },
   },
   stats: {
@@ -100,7 +100,7 @@ export const marketingAr: Widen<typeof marketingEn> = {
       foodTitle: "المطاعم والأغذية",
       foodBody: "علب بيتزا وعلب آمنة للأغذية من مطابع تستخدم كرتونا صالحا لملامسة الطعام.",
       cosmeticsTitle: "التجميل والعناية بالبشرة",
-      cosmeticsBody: "علب بلسان للبرطمانات وزجاجات القطارة والسيروم، مع بصمة حرارية ويو في موضعي.",
+      cosmeticsBody: "علب بلسان للبرطمانات وزجاجات القطارة والسيروم، مع بصمة حرارية وطلاء UV موضعي.",
       apparelTitle: "الملابس والأزياء",
       apparelBody: "علب بريدية وكراتين شحن للتيشيرتات والأحذية والإصدارات الجديدة.",
       giftsTitle: "الهدايا والمناسبات",
@@ -130,7 +130,7 @@ export const marketingAr: Widen<typeof marketingEn> = {
     items: {
       foilTitle: "البصمة الحرارية",
       foilBody: "بصمة ذهبية أو فضية أو نحاسية للشعار والإطارات.",
-      spotUvTitle: "اليو في الموضعي",
+      spotUvTitle: "طلاء UV الموضعي",
       spotUvBody: "طبقة لامعة بارزة فوق السطح المطفي للمسة فاخرة.",
       embossTitle: "الطباعة البارزة",
       embossBody: "شعار بارز على الكرتون يلمسه عميلك بيده.",
@@ -161,7 +161,7 @@ export const marketingAr: Widen<typeof marketingEn> = {
   cta: {
     title: "علبتك ثلاثية الأبعاد في دقيقتين",
     body: "ابدأ بعلبة بريدية أو اختر نوعا آخر. يمكنك تغيير كل شيء لاحقا.",
-    primary: "ابدأ التصميم مجانا",
+    primary: "بدء التصميم مجانا",
     secondary: "دليل المطابع",
     tileOrder: "طلب EL-1042",
     tileOrderStatus: "خرج للتوصيل",
@@ -196,14 +196,14 @@ export const marketingAr: Widen<typeof marketingEn> = {
     eyebrow: "العلب والكراتين",
     title: "علب مطبوعة بعلامتك، بأي مقاس",
     body: "ثلاثة عشر نوعا قياسيا تصنعها كل مطابع علبة. اختر النوع، وحدد المقاس بالمليمتر، وشاهده ثلاثي الأبعاد.",
-    primary: "ابدأ التصميم مجانا",
+    primary: "بدء التصميم مجانا",
     secondary: "دليل المطابع",
     already: "صممت علبة من قبل؟",
     alreadyLink: "فتح تصميماتي",
     from: "من {price} للعلبة",
     onRequest: "السعر عند الطلب",
     sizes: "{L}–{Lmax} × {W}–{Wmax} × {H}–{Hmax} مم",
-    design: "صمم مجانا",
+    design: "التصميم مجانا",
     count: "عدد الأنواع: {count}",
     family: {
       CORRUGATED: "علب الكرتون المضلع",
@@ -217,7 +217,7 @@ export const marketingAr: Widen<typeof marketingEn> = {
       RIGID: "كرتون صلب مغلف بورق مطبوع للهدايا والإصدارات الفاخرة.",
       TUBE: "علب أسطوانية ورقية للشاي ومستحضرات التجميل والملابس.",
     },
-    renderAlt: "صورة ثلاثية الأبعاد لـ{name} بعد الطباعة",
+    renderAlt: "صورة ثلاثية الأبعاد بعد الطباعة: {name}",
     libraryCta: "تصفح كل النماذج ({count})",
     closingTitle: "علبتك ثلاثية الأبعاد في دقيقتين",
     closingBody: "اختر نوعا من الأنواع أعلاه أو ابدأ بعلبة بريدية. يمكنك تغيير المقاس والتصميم والمطبعة لاحقا.",
