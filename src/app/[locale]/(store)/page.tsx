@@ -31,7 +31,7 @@ import { MediaCard } from "@/components/marketing/kit/MediaCard";
 import { HomeHero, type HeroVideo } from "@/components/marketing/home/HomeHero";
 import { EgyptDots } from "@/components/marketing/home/EgyptDots";
 import { R6Pic } from "@/components/marketing/home/R6Pic";
-import { daysWord, fill, homeCopy, printersWord } from "@/components/marketing/home/copy";
+import { daysWord, fill, finishesWord, groupsWord, homeCopy, modelsWord, printersWord } from "@/components/marketing/home/copy";
 import s from "@/components/marketing/home/home.module.css";
 
 type Props = { params: Promise<{ locale: string }> };
@@ -150,8 +150,11 @@ export default async function HomePage({ params }: Props) {
     printers,
     printersWord: printersWord(locale, printers),
     models: MODEL_COUNT,
+    modelsWord: modelsWord(locale, MODEL_COUNT),
     groups: GROUP_COUNT,
+    groupsWord: groupsWord(locale, GROUP_COUNT),
     finishes: FINISH_COUNT,
+    finishesWord: finishesWord(locale, FINISH_COUNT),
   };
   const startHref = kitStartHref(locale);
   const designerHref = designHref(locale, { structure: "FEFCO_0427" });

@@ -46,7 +46,7 @@ describe("ar/en dictionaries", () => {
     const banned = [
       "أوردر", "ملغي", "تسعيرة", "طلب تسعير", "طلبات تسعير", "أونلاين", "موبايل", "الجوال", "لوحة التحكم",
       "الشروط والأحكام", "إشعار الخصوصية", "الديجيتال", "طلبية", "بطاقة أسعار", "المقوى", "موديل",
-      "الديلاين", "النموذج المبدئي", "يرجى", "الرجاء", "سوف", "OTP",
+      "الديلاين", "النموذج المبدئي", "يرجى", "الرجاء", "سوف", "OTP", "الطلب الأول كاملا",
     ];
     const hits = banned.flatMap((b) => offenders(new RegExp(b)).map((h) => `[${b}] ${h}`));
     // «المشتري / مشتر» as a whole word (not «مشترك»).
@@ -99,11 +99,17 @@ describe("marketing page copy (copy.ts)", () => {
   });
 
   it("keeps the glossary terms", () => {
-    const banned = /أونلاين|موبايل|كود|فاتورة|مقوى|موثق|موثوق|علبة شحن|علب شحن|صندوق شحن|صناديق|قالب قص|قالب القص|أنماط العلب|موديل|يرجى|الرجاء/;
+    const banned = /الطلب الأول كاملا|أونلاين|موبايل|كود|فاتورة|مقوى|موثق|موثوق|علبة شحن|علب شحن|صندوق شحن|صناديق|قالب قص|قالب القص|أنماط العلب|موديل|يرجى|الرجاء/;
     expect(bad(banned)).toEqual([]);
   });
 
   it("writes a starting price as «ابتداء من»", () => {
     expect(bad(/(^|[^ء-ي])من \{price\}/).filter((h) => !/ابتداء من \{price\}/.test(h))).toEqual([]);
+  });
+
+  it("payment terms match the product: every order is paid in full when placed (founder decides repeat-buyer terms)", () => {
+    const en = pages.flatMap(([name]) => strings(name === "home" ? homeCopy("en") : name === "start" ? startCopy("en") : name === "why" ? whyCopy("en") : designerPageCopy("en"), name));
+    expect(en.filter(([, v]) => /first orders? (is|are) paid/i.test(v))).toEqual([]);
+    expect(offenders(/first orders? (is|are) paid/i, EN)).toEqual([]);
   });
 });
