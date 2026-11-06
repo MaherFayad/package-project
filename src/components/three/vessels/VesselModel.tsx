@@ -74,6 +74,8 @@ export interface VesselModelProps {
   tint?: string | null;
   /** Optional bottle-neck closure style (crown, ROPP, cork + capsule, sparkling, pourer) over the core closure kind. */
   closureStyle?: ClosureStyle | null;
+  /** Lid / film in the container's own material and tint (clear clamshell lid, tinplate tin lid): R5-3Q-G-25. */
+  closureMatch?: boolean;
 }
 
 const easeOutBack = (t: number) => {
@@ -133,7 +135,7 @@ function mergeSimple(list: BufferGeometry[]): BufferGeometry {
  * axis, front facing +Z. Everything is built from @/lib/vessels so the 3D matches the print specs.
  */
 export function VesselModel(props: VesselModelProps) {
-  const { kind, dims, profile, material, closure, closureColor, liquid, fill, labels: labelInputs, quality, open = false, animate = true, replayKey, artworkVersion, tint, closureStyle } = props;
+  const { kind, dims, profile, material, closure, closureColor, liquid, fill, labels: labelInputs, quality, open = false, animate = true, replayKey, artworkVersion, tint, closureStyle, closureMatch = false } = props;
   const invalidate = useThree((s) => s.invalidate);
 
   // textures for labels given as canvases (one per canvas; a resized canvas gets a new one)
@@ -221,7 +223,10 @@ export function VesselModel(props: VesselModelProps) {
         if (s.placement.type === "band") return { label: l, geometry: bandLabelGeometry(s, 0.18, radial) as BufferGeometry };
         if (s.placement.type === "disc") {
           const g = discLabelGeometry(s);
-          g.translate(0, 0.18, 0);
+          // a lid that covers the mouth (snap / plug / hinged / double-wall cap) carries the print
+          // on its own top: lift the disc onto it instead of hiding it underneath (R5-3Q-G-25)
+          const lift = closureModel.printTopY !== undefined ? Math.max(0, closureModel.printTopY - s.placement.y) : 0;
+          g.translate(0, 0.18 + lift, 0);
           return { label: l, geometry: g as BufferGeometry, onLid: true };
         }
         if (s.placement.type === "face") return { label: l, geometry: isPouch ? pouchLabelGeometry(dims, s) : faceLabelGeometry(s, faceZ, profile) };
@@ -229,7 +234,7 @@ export function VesselModel(props: VesselModelProps) {
         return { label: l, geometry: sl.geometry as BufferGeometry, sleeve: sl };
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profileKey, radial, labels.map((l) => `${l.spec.id}:${l.spec.trimWidthMm}x${l.spec.trimHeightMm}`).join("|")]);
+  }, [profileKey, radial, closureModel, labels.map((l) => `${l.spec.id}:${l.spec.trimWidthMm}x${l.spec.trimHeightMm}`).join("|")]);
   useEffect(() => () => labelGeos.forEach((g) => g.geometry.dispose()), [labelGeos]);
 
   // ---------------------------------------------------------------- materials
@@ -243,9 +248,15 @@ export function VesselModel(props: VesselModelProps) {
   const surfaceMat = useDisposable(() => createLiquidMaterial(liquid, quality, []), [liquid, quality]);
   const closureMats = useMemo(() => {
     const map = new Map<string, Material>();
-    for (const p of closureModel.parts) if (!map.has(p.role)) map.set(p.role, createClosureMaterial(p.role, closureColor));
+    for (const p of closureModel.parts) {
+      if (map.has(p.role)) continue;
+      // the shell itself takes the container's look; pumps, rubber, wire and tabs keep theirs.
+      // Alpha-blended (thinMode) so a clear lid never needs a second transmission pass.
+      const shell = closureMatch && (p.role === "cap" || p.role === "capMetal");
+      map.set(p.role, shell ? createVesselMaterial(material, quality, { thinMode: true, kraftMap: null, tint }) : createClosureMaterial(p.role, closureColor));
+    }
     return map;
-  }, [closureModel, closureColor]);
+  }, [closureModel, closureColor, closureMatch, material, quality, tint]);
   useEffect(() => () => closureMats.forEach((m) => m.dispose()), [closureMats]);
   const labelMats = useMemo(
     // Build from the CURRENT label inputs (matched by spec id), not g.label: labelGeos is memoised

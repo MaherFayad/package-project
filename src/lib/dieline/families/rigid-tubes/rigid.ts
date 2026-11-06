@@ -2,6 +2,7 @@ import { Vec3 as Vector3 } from "@/lib/dieline/math";
 import type { Dims, FaceId, StructureFeatures } from "@/types";
 import { DielineBuilder, insetSeg, rectEdges } from "../../builder";
 import { cutWindow, notchPanel, stadium } from "../../features";
+import { boundsAt, computePoses } from "../../fold";
 import { clamp, pt, rectPolygon } from "../../geometry";
 import type { DielineAccessory, DielinePanel, FaceInfo, Polygon, Pt, Rect } from "../../types";
 import { WRAP_VISUAL_MM, mainClosedBounds, poseMatrix, quat, rect, sheetBottom, tabPivot, tabStack, turnInStack, WALL_PIVOT_MM, wallPivot } from "./common";
@@ -388,7 +389,17 @@ export function hingedLidBox(dims: Dims, t: number, f: StructureFeatures = {}): 
   const y0 = sheetBottom(b) + Hl + t + turnInGap(Hl);
   const lid = wrapTray(b, t, { pre: "lid_", L: dims.L, W: dims.W, H: Hl, origin: pt(0, y0), mode: "lid" });
   const target = new Vector3((box.min.x + box.max.x) / 2, box.max.y + Hl + t, (box.min.z + box.max.z) / 2);
-  lid.build((id, poly) => b.piece(id, "top", poly, "Lid", { matrix: poseMatrix(lid.base, target, -Math.PI / 2), stage: 3, lift: dims.H * 1.2 }, { label: "Lid" }));
+  // R5-3Q-E-07: the lid is hinged to the base along the back rim (the wrap paper runs over it):
+  // it swings shut on that line in the fold, it does not fly in from above
+  const hinge = { point: [0, box.max.y, box.min.z] as [number, number, number], axis: [1, 0, 0] as [number, number, number], openDeg: -105 };
+  lid.build((id, poly) => b.piece(id, "top", poly, "Lid", { matrix: poseMatrix(lid.base, target, -Math.PI / 2), stage: 3, lift: dims.H * 1.2, hinge }, { label: "Lid" }));
+  // the hinge is the lid's own back bottom rim (the lid tray is a little larger than the base)
+  {
+    const all = { panels: b.panels, rootId: b.rootId, thicknessMm: t, closedRotation: closedBase };
+    const lidIds = new Set(b.panels.filter((p) => p.id.startsWith("lid_")).map((p) => p.id));
+    const lb = boundsAt({ ...all, panels: b.panels.filter((p) => lidIds.has(p.id)) }, 1, computePoses(all, 1));
+    if (!lb.isEmpty()) hinge.point = [0, lb.min.y, lb.min.z];
+  }
   if (f.window) cutWindow(b, "lid_top", { ...f.window, face: "top", film: f.window.film ?? true }, { margin: 15 });
   if (f.thumbNotch) notchWalls(b, base, ["front"], Math.min(14, dims.L * 0.08, Hb * 0.35));
   return { builder: b, closedRotation: closedBase };

@@ -41,9 +41,14 @@ export function finishForDims(def: BottleDefinition, dims: VesselDims, finishId:
   const f = finishById(finishId);
   if (f.kind === "rim") return f;
   const half = Math.min(dims.D, dims.G ?? dims.D) / 2;
-  if (f.outerDiameterMm / 2 <= half) return f;
+  // R5-3Q-F-21: a bottle neck stays under ~72 % of the body (a cap 0.8–0.9 × the body reads as a
+  // jar); jars (lug / mason) keep their wide mouths and only switch when they would overhang
+  const jar = def.coreKind === "WIDE_JAR" || def.coreKind === "ROUND_TIN" || f.kind === "lug" || f.kind === "mason" || f.kind === "snap";
+  const k = jar ? 1 : 0.72;
+  if (f.outerDiameterMm / 2 <= half * k) return f;
   const same = def.finishes.map(finishById).filter((x) => x.kind === f.kind).sort((a, b) => b.outerDiameterMm - a.outerDiameterMm);
-  return same.find((x) => x.outerDiameterMm / 2 <= half) ?? same[same.length - 1] ?? f;
+  // nothing under the ratio: the narrowest that still fits the body
+  return same.find((x) => x.outerDiameterMm / 2 <= half * k) ?? same.filter((x) => x.outerDiameterMm / 2 <= half).pop() ?? same[same.length - 1] ?? f;
 }
 
 /** Outer envelope incl. closure and handle (what a carton or shipper must hold), mm. */

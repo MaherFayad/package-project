@@ -297,6 +297,10 @@ export const LIQUIDS = {
   PERFUME: { hex: "#f4e3b8", clarity: 0.95, name: { ar: "عطر", en: "Perfume" } },
   CREAM: { hex: "#f6f0e7", clarity: 0, name: { ar: "كريم", en: "Cream" } },
   COLA: { hex: "#3b1a0c", clarity: 0.3, name: { ar: "كولا", en: "Cola" } },
+  // R5-3Q-F-20: hot sauce is an opaque red-orange purée, jam a dense dark fruit gel (they read as
+  // pink translucent hibiscus)
+  HOT_SAUCE: { hex: "#b8361a", clarity: 0, name: { ar: "صوص حار", en: "Hot sauce" } },
+  JAM: { hex: "#6e1424", clarity: 0.12, name: { ar: "مربى", en: "Jam" } },
 } as const satisfies Record<string, { hex: string; clarity: number; name: LocalizedText }>;
 export type LiquidCode = keyof typeof LIQUIDS;
 

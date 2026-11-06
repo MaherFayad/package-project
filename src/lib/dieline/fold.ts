@@ -77,6 +77,25 @@ export function assemblyPoseAt(
   const own = new Matrix4().makeTranslation(ownPivot.x, ownPivot.y, ownPivot.z);
   if (a <= 0) return flat.multiply(own);
   if (a >= 1) return target.multiply(own);
+  const hinge = panel.assembly!.hinge;
+  if (hinge) {
+    // swung open about the hinge line by `deg` (the hinge rides with the main root's tilt)
+    const opened = (deg: number) => {
+      const [px, py, pz] = hinge.point;
+      const r = new Matrix4().makeRotationAxis(new Vector3(...hinge.axis).normalize(), (deg * Math.PI) / 180);
+      return follow.clone().multiply(new Matrix4().makeTranslation(px, py, pz)).multiply(r).multiply(new Matrix4().makeTranslation(-px, -py, -pz)).multiply(new Matrix4().fromArray(panel.assembly!.matrix));
+    };
+    if (a >= 0.5) return opened(hinge.openDeg * (1 - smoothstep((a - 0.5) / 0.5))).multiply(own);
+    const k = smoothstep(a / 0.5);
+    const p0 = new Vector3();
+    const q0 = new Quaternion();
+    const p1 = new Vector3();
+    const q1 = new Quaternion();
+    const sc = new Vector3();
+    flat.decompose(p0, q0, sc);
+    opened(hinge.openDeg).decompose(p1, q1, sc);
+    return new Matrix4().compose(p0.lerp(p1, k), q0.slerp(q1, k), new Vector3(1, 1, 1)).multiply(own);
+  }
   const p0 = new Vector3();
   const q0 = new Quaternion();
   const p1 = new Vector3();
