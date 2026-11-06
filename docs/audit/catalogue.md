@@ -92,3 +92,10 @@ By commerce path with the seeded printers: instant price 274, labels / sleeves b
 - `src/app/icon.svg`: new favicon (CAT-19).
 - `e2e/storefront.spec.ts`: the "home → catalogue → structure" step now finds the mailer in the new catalogue and follows the model page's "Sizes and prices" link to `/boxes/mailer-box`; the rest of the journey is unchanged.
 - `package.json` / `package-lock.json`: `@axe-core/playwright` dev dependency (allowed by the brief).
+
+## Pass 3 (after merging the base branch at 2b57cab)
+
+- Merged `origin/claude/exciting-albattani-8kzgsu` (no conflicts: the model library this work builds on was already in the base; main changed only `Modals.tsx` and `storefront.spec.ts`).
+- Integrator request: `openTop?: boolean` on library box models (`isOpenTop` in `src/lib/library/boxes.ts`): 107 styles (trays, displays, half-slotted, open sleeves, carriers, FEFCO 09 fittings); lidded trays, telescope sets, capped sleeves, hinged lids and wraps stay closed. Covered by a unit test. The designer label ("Assembled" vs "Closed", 3d-visual F67-06) is the designer owner's change.
+- Not done here: PERF-04 (lazy family loaders in `src/lib/library`) is a refactor of the library's sync API used by the server, seed and tests, left to the library owner. PERF-14/15 apply to the old `ModelBrowser`; the designer now uses the windowed `CataloguePicker` with lazy webp thumbnails, and `/catalog` server-renders compact cards (no per-card family text) with lazy images.
+- Re-verified: typecheck clean, vitest 6,704 passed. `npm run lint` reports 13 errors only in `docs/audit/tools/*` scripts that arrived with the base branch (other sessions' harnesses), none in this work.

@@ -76,6 +76,8 @@ export interface BoxModelDef extends ModelBase {
   /** Build the dieline (inner mm). Throws on invalid dims. */
   build(dims: Dims, opts: { thicknessMm: number; features?: StructureFeatures }): DielineModel;
   fidelity: "exact" | "simplified";
+  /** Open-top style (trays, half slotted, displays, open sleeves): fully folded reads "Assembled", not "Closed". */
+  openTop?: boolean;
 }
 
 /** A choice of a vessel model (container material or closure) and what the renderer draws. */

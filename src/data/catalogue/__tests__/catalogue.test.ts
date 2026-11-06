@@ -128,3 +128,11 @@ describe("thumbnails", () => {
     for (const e of CATALOGUE) expect(fs.statSync(path.join(dir, `${e.code}.webp`)).size, e.code).toBeGreaterThan(1500);
   });
 });
+
+describe("library openTop flag (designer: 'Assembled' rather than 'Closed')", () => {
+  it("marks trays, open styles and fittings, not lidded or telescope styles", async () => {
+    const { boxModel } = await import("@/lib/library");
+    for (const c of ["FEFCO_0422", "FEFCO_0200", "FEFCO_0435", "FEFCO_0501", "ECMA_TRAY_4C", "FEFCO_0901"]) expect(boxModel(c)?.openTop, c).toBe(true);
+    for (const c of ["FEFCO_0427", "FEFCO_0201", "FEFCO_0421", "FEFCO_0320", "FEFCO_0300", "ECMA_TRAY_6C_LID", "FEFCO_0615", "ECMA_RTE"]) expect(boxModel(c)?.openTop, c).toBeFalsy();
+  });
+});
