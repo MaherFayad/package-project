@@ -564,27 +564,27 @@ Phone profile: 390x844, DPR 2, 4x CPU, Slow 4G (562.5 ms RTT, 1.47 Mbps). The br
 
 ## R4.1 Before / after, phone (LCP budget < 2.5 s)
 
-After = this branch **merged with main `aa2c78f`** (includes `dccbd36` and the designer's `a69acf0` / `283d8d0`), measured with `ISOLATE=1`.
+After = this branch **merged with main `aa726b9`** (designer R5 to R7, platform, vendor, marketing, technical, 3D), commit `d4af252`, measured with `ISOLATE=1` (`perf-data/r4/pages-after-phone-aa726b9.json`). The desktop table (R4.2) and the screenshots are from the previous merge (`aa2c78f`, `b0ee870`).
 
 | Page | FCP ar (s) | LCP ar (s) | FCP en (s) | LCP en (s) | CLS ar | LCP element after (ar) | HTML+CSS KB ar | Fonts KB ar | JS KB ar | LCP < 2.5 s |
 |---|---|---|---|---|---|---|---|---|---|---|
-| home | 2.58 → **1.44** | 2.58 → **1.44** | 2.17 → **1.16** | 2.17 → **1.16** | 0.000 → 0.010 | `h1#hero-title.marketing_h1.m-enter-lcp size=29348` | 87 → **113** | 151 → **151** | 194 → **196** | pass |
-| boxes | 3.91 → **1.30** | 4.35 → **1.56** | 3.41 → **1.08** | 3.81 → **4.24** | 0.000 → 0.014 | `img [renders/fefco-0427.400w.webp] size=54600` | 111 → **108** | 151 → **151** | 214 → **218** | **fail** |
-| bottles | 2.76 → **1.14** | 2.76 → **1.91** | 1.63 → **1.03** | 2.51 → **1.84** | 0.000 → 0.005 | `img [renders/bottle.webp] size=49324` | 68 → **93** | 151 → **151** | 205 → **206** | pass |
-| catalog | 3.82 → **1.34** | 4.78 → **2.08** | 3.26 → **1.09** | 4.19 → **1.94** | 0.003 → 0.022 | `p.marketing_lead.m-enter size=29079` | 135 → **138** | 151 → **151** | 215 → **217** | pass |
-| vendors | 3.84 → **1.31** | 4.30 → **1.31** | 3.32 → **1.18** | 3.78 → **1.18** | 0.000 → 0.004 | `p.marketing_lead.m-enter-lcp size=26026` | 124 → **135** | 151 → **151** | 232 → **234** | pass |
-| design-picker | 3.88 → **1.14** | 12.85 → **2.70** | 3.60 → **1.09** | 12.02 → **2.63** | 0.001 → 0.001 | `img.designer_startPoster [models/mailer-box.svg] size=51352` | 150 → **175** | 167 → **167** | 579 → **623** | **fail** |
-| designer-box | 3.71 → **1.02** | 11.23 → **1.75** | 3.23 → **1.05** | 10.53 → **1.50** | 0.000 → 0.002 | `img.designer_stagePoster [2000/svg%22 width=%22480%22 height=%22360%22` | 119 → **137** | 167 → **167** | 652 → **662** | pass |
-| designer-bottle | 3.74 → **1.06** | 11.35 → **1.75** | 3.28 → **1.00** | 10.74 → **1.56** | 0.000 → 0.002 | `img.designer_stagePoster [2000/svg%22 width=%22480%22 height=%22360%22` | 119 → **138** | 203 → **167** | 652 → **661** | pass |
-| designer-pouch | 3.86 → **1.01** | 11.34 → **1.74** | 3.80 → **0.99** | 10.64 → **1.50** | 0.000 → 0.002 | `img.designer_stagePoster [2000/svg%22 width=%22480%22 height=%22360%22` | 119 → **137** | 203 → **167** | 652 → **661** | pass |
-| designer-fefco09 | 3.77 → **1.05** | 11.32 → **1.71** | 3.26 → **0.98** | 10.65 → **1.50** | 0.000 → 0.002 | `img.designer_stagePoster [2000/svg%22 width=%22480%22 height=%22360%22` | 119 → **137** | 151 → **151** | 668 → **677** | pass |
-| share | 3.76 → **1.17** | 4.14 → **2.38** | 3.17 → **1.03** | 3.57 → **1.91** | 0.000 → 0.001 | `img.share_viewerPoster [webp;base64,UklGRvQwAABXRUJQVlA4WAoAAAAQAAAA3w` | 120 → **168** | 151 → **151** | 609 → **631** | pass |
-| checkout | 3.33 → **1.05** | 4.56 → **2.00** | 3.19 → **0.95** | 4.02 → **1.88** | 0.000 → 0.019 | `p.CookieNotice_text size=20325` | 111 → **120** | 151 → **151** | 225 → **229** | pass |
-| order-tracking | 3.89 → **1.35** | 4.67 → **2.16** | 3.24 → **1.13** | 4.10 → **2.15** | 0.000 → 0.019 | `p.CookieNotice_text size=20325` | 118 → **173** | 151 → **151** | 221 → **226** | pass |
-| vendor-portal | 2.90 → **1.03** | 3.27 → **2.38** | 3.15 → **0.94** | 3.52 → **1.77** | 0.001 → 0.000 | `p.Text_Text.Text_bodyMd size=13590` | 142 → **149** | 151 → **151** | 226 → **227** | pass |
-| vendor-jobs | 3.23 → **1.07** | 3.59 → **1.07** | 3.16 → **0.97** | 3.49 → **1.85** | 0.013 → 0.014 | `null size=4440` | 137 → **142** | 151 → **151** | 230 → **231** | pass |
-| admin | 2.94 → **1.12** | 3.42 → **2.41** | 2.82 → **0.98** | 3.20 → **1.96** | 0.000 → 0.000 | `span.charts_TaskText size=4935` | 143 → **157** | 151 → **151** | 212 → **214** | pass |
-| admin-orders | 3.19 → **1.12** | 3.30 → **1.12** | 2.78 → **1.11** | 2.88 → **1.11** | 0.000 → 0.001 | `null size=4460` | 133 → **145** | 151 → **151** | 233 → **235** | pass |
+| home | 2.58 → **1.22** | 2.58 → **1.54** | 2.17 → **0.98** | 2.17 → **0.98** | 0.000 → 0.009 | `img.marketing_heroPoster [renders/fefco-0427.720w.avif] size=45075` | 87 → **103** | 151 → **151** | 194 → **170** | pass |
+| boxes | 3.91 → **1.23** | 4.35 → **1.44** | 3.41 → **1.06** | 3.81 → **1.33** | 0.000 → 0.013 | `img [renders/fefco-0427.400w.avif] size=54600` | 111 → **91** | 151 → **151** | 214 → **221** | pass |
+| bottles | 2.76 → **1.17** | 2.76 → **1.52** | 1.63 → **1.01** | 2.51 → **1.45** | 0.000 → 0.005 | `img [renders/bottle.avif] size=49324` | 68 → **85** | 151 → **151** | 205 → **181** | pass |
+| catalog | 3.82 → **1.29** | 4.78 → **2.13** | 3.26 → **1.09** | 4.19 → **1.88** | 0.003 → 0.022 | `p.marketing_lead.m-enter size=29079` | 135 → **128** | 151 → **151** | 215 → **192** | pass |
+| vendors | 3.84 → **1.17** | 4.30 → **1.58** | 3.32 → **1.25** | 3.78 → **1.25** | 0.000 → 0.003 | `p.marketing_lead.m-enter-lcp size=26026` | 124 → **107** | 151 → **151** | 232 → **185** | pass |
+| design-picker | 3.88 → **1.25** | 12.85 → **2.70** | 3.60 → **1.10** | 12.02 → **2.57** | 0.001 → 0.001 | `img.designer_startPoster [models/mailer-box.svg] size=51352` | 150 → **166** | 167 → **167** | 579 → **532** | **fail** |
+| designer-box | 3.71 → **1.05** | 11.23 → **1.45** | 3.23 → **1.03** | 10.53 → **1.40** | 0.000 → 0.002 | `img.designer_stagePoster [2000/svg%22 width=%22480%22 height=%22360%22` | 119 → **125** | 167 → **167** | 652 → **667** | pass |
+| designer-bottle | 3.74 → **1.07** | 11.35 → **1.51** | 3.28 → **1.02** | 10.74 → **1.37** | 0.000 → 0.002 | `img.designer_stagePoster [2000/svg%22 width=%22480%22 height=%22360%22` | 119 → **126** | 203 → **167** | 652 → **667** | pass |
+| designer-pouch | 3.86 → **1.06** | 11.34 → **1.43** | 3.80 → **1.00** | 10.64 → **1.36** | 0.000 → 0.002 | `img.designer_stagePoster [2000/svg%22 width=%22480%22 height=%22360%22` | 119 → **125** | 203 → **167** | 652 → **667** | pass |
+| designer-fefco09 | 3.77 → **1.06** | 11.32 → **1.40** | 3.26 → **1.00** | 10.65 → **1.38** | 0.000 → 0.002 | `img.designer_stagePoster [2000/svg%22 width=%22480%22 height=%22360%22` | 119 → **125** | 151 → **151** | 668 → **683** | pass |
+| share | 3.76 → **1.16** | 4.14 → **2.36** | 3.17 → **1.03** | 3.57 → **1.75** | 0.000 → 0.001 | `img.share_viewerPoster [webp;base64,UklGRvQwAABXRUJQVlA4WAoAAAAQAAAA3w` | 120 → **159** | 151 → **151** | 609 → **634** | pass |
+| checkout | 3.33 → **1.06** | 4.56 → **2.08** | 3.19 → **0.98** | 4.02 → **1.84** | 0.000 → 0.019 | `p.CookieNotice_text size=20325` | 111 → **108** | 151 → **151** | 225 → **232** | pass |
+| order-tracking | 3.89 → **1.31** | 4.67 → **2.11** | 3.24 → **1.07** | 4.10 → **2.11** | 0.000 → 0.000 | `p.CookieNotice_text size=20325` | 118 → **165** | 151 → **151** | 221 → **227** | pass |
+| vendor-portal | 2.90 → **1.05** | 3.27 → **1.94** | 3.15 → **0.94** | 3.52 → **1.55** | 0.001 → 0.002 | `p.Text_Text.Text_bodyMd size=13818` | 142 → **139** | 151 → **151** | 226 → **234** | pass |
+| vendor-jobs | 3.23 → **1.09** | 3.59 → **1.09** | 3.16 → **0.98** | 3.49 → **1.62** | 0.013 → 0.079 | `null size=4440` | 137 → **130** | 151 → **151** | 230 → **238** | pass |
+| admin | 2.94 → **1.04** | 3.42 → **2.42** | 2.82 → **1.08** | 3.20 → **1.60** | 0.000 → 0.000 | `span.charts_TaskText size=4935` | 143 → **146** | 151 → **151** | 212 → **216** | pass |
+| admin-orders | 3.19 → **1.16** | 3.30 → **1.16** | 2.78 → **1.09** | 2.88 → **1.09** | 0.000 → 0.000 | `null size=4460` | 133 → **134** | 151 → **151** | 233 → **237** | pass |
 
 Columns: FCP and LCP in seconds; "HTML+CSS KB" and the other byte columns are bytes on the wire for phone ar (KB). JS transferred includes lazy chunks that load during the run (the editor and share pages load the 3D renderer after first paint by design).
 
@@ -593,7 +593,7 @@ Columns: FCP and LCP in seconds; "HTML+CSS KB" and the other byte columns are by
 - `/boxes` (R4-05): 1.43 to 1.59 s in 9 of 10 runs since the preload; the final run's en cell is the one 4.24 s outlier (same image, it arrived late).
 - `/design` picker (R4-15): 2.59 to 2.76 s in every run after the merge, **over budget**: see R4-15.
 
-**Every other route passes in every run: phone LCP 1.07 to 2.41 s (ar) and 1.11 to 2.15 s (en); FCP 0.94 to 1.44 s on every route (was 2.6 to 3.9 s).**
+**On `aa726b9` every route except the picker passes: phone LCP 1.09 to 2.42 s (ar) and 0.98 to 2.11 s (en); FCP 0.94 to 1.31 s on every route (was 2.6 to 3.9 s). Home, vendors and `/boxes` were clean in this run (main's low-priority Inter preload on `/ar`, R4-MK-05, targets R4-10).**
 
 ## R4.2 Before / after, desktop (1440x900, no throttling)
 
@@ -724,4 +724,6 @@ UPDATE_GEOMETRY_SNAPSHOT=1 npx vitest run src/lib/dieline/__tests__/geometry-sna
 
 ## R4.10 Verification
 
-`npm run lint` clean, `npm run typecheck` clean, `npm test` **8,426 passed** (88 files, after merging main; incl. the new geometry snapshot, math parity, font-preload and model-poster tests), `npm run build` clean, Playwright `designer.spec.ts`, `smoke.spec.ts`, `storefront.spec.ts` **28 / 28 passed** (`--workers=2`, desktop + mobile); `models.spec.ts` (740 cases, ~2 h) was stopped after 124 cases, all passed.
+`npm run lint` clean, `npm run typecheck` clean, `npm test` **8,501 passed** (92 files, after merging main `aa726b9`; incl. the new geometry snapshot, math parity, font-preload and model-poster tests), `npm run build` clean, Playwright on `aa726b9`: `designer`, `catalogue`, `checkout`, `smoke` **40 passed, 4 skipped by project** and the hydration check (`designer.spec` "hydrate without errors") **20 / 20** with `--repeat-each=10`; earlier `designer.spec.ts`, `smoke.spec.ts`, `storefront.spec.ts` **28 / 28 passed** (`--workers=2`, desktop + mobile); `models.spec.ts` (740 cases, ~2 h) was stopped after 124 cases, all passed.
+
+**Geometry snapshot after merging `aa726b9`.** Main's 3D-family work changed 8 generator outputs (ECMA_RTE, PAPER_TUBE, RIGID_BOX, CONE, RIGID_DRAWER and their feature variants). The snapshot was regenerated on a worktree of pure main (three.js math) and on the merged branch (local math): the two files are byte-identical, so the re-recorded snapshot reflects main's intended geometry and the math port still changes nothing.
