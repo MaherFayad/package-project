@@ -304,3 +304,24 @@ describe("print surfaces", () => {
     expect(d.surfaces[0].placement.type).toBe("face");
   });
 });
+
+describe("R6-3Q-G: double-wall jar at its smallest size", () => {
+  const def = DEFINITIONS_BY_CODE["COS-JAR-DOUBLE"];
+
+  it("keeps a printable wrap band and a cap over the finish at every size in the limits", () => {
+    for (const D of [def.limits.D.min, 66, def.limits.D.max])
+      for (const H of [def.limits.H.min, 42, def.limits.H.max]) {
+        const d = describeCatalogueVessel(def, { D, H }, ["WRAP"]);
+        const wrap = d.surfaces.find((s) => s.kind === "WRAP")!;
+        // H 22 left a 3 mm band (no label fits; the test-pattern / any real artwork was rejected)
+        expect(wrap.trimHeightMm, `D${D} H${H}`).toBeGreaterThanOrEqual(8);
+        const g = d.geometry;
+        expect(g.lid!.y1, `D${D} H${H}`).toBeGreaterThan(g.profile!.finishTopY);
+        expect(d.envelope.height).toBeGreaterThan(g.profile!.finishTopY);
+      }
+  });
+
+  it("every preset still fits the limits", () => {
+    for (const p of def.presets) expect(p.dims.H).toBeGreaterThanOrEqual(def.limits.H.min);
+  });
+});

@@ -268,7 +268,9 @@ function jar(s: Extract<ShapeSpec, { type: "jar" }>, d: CatalogueDims, neck: Nec
     finishH: neck.heightMm,
     fillMaxY: neckRootY,
   });
-  const capH = Math.max(10, Math.min(22, H * 0.45));
+  // R6-3Q-G: the cap always covers the finish (at low H, 0.45 H was shorter than the 38-400 finish,
+  // so the closed height and the envelope stopped below the neck top).
+  const capH = Math.max(10, Math.min(22, H * 0.45), H - (neckRootY - 0.5) + 1.2);
   const lid: LidGeometry = { type: "plug", section: "round", y0: neckRootY - 0.5, y1: neckRootY - 0.5 + capH, r: R, depthRatio: 1, topR: R - 3 };
   return { profile, innerTopY: H - 1, sleeveY0: 1, sleeveY1: shoulderY, lid, closedH: lid.y1 };
 }
