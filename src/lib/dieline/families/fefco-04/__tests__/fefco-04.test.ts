@@ -2,6 +2,16 @@ import { describe, expect, it } from "vitest";
 import { Vec3 as Vector3 } from "@/lib/dieline/math";
 import { BOARD_SPECS, DielineValidationError, boundsAt, computePoses, panelLocalPoint, panelPivot } from "../../..";
 import { polygonArea } from "../../../geometry";
+
+const insidePoly = (pt: { x: number; y: number }, poly: { x: number; y: number }[]) => {
+  let r = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const a = poly[i];
+    const b = poly[j];
+    if (a.y > pt.y !== b.y > pt.y && pt.x < ((b.x - a.x) * (pt.y - a.y)) / (b.y - a.y) + a.x) r = !r;
+  }
+  return r;
+};
 import { DEFINITIONS, IMPLEMENTED_IN_CORE, definitionByCode, generateFamilyDieline, tryGenerateFamilyDieline, validateFamilyDims, type Fefco04Definition, type Fefco04Model } from "..";
 
 const THICKNESSES = [1.5, 3];
@@ -165,6 +175,10 @@ function checkModel(def: Fefco04Definition, m: Fefco04Model) {
     expect(z.rect.y).toBeGreaterThanOrEqual(p.bbox.y - 1e-6);
     expect(z.rect.x + z.rect.width).toBeLessThanOrEqual(p.bbox.x + p.bbox.width + 1e-6);
     expect(z.rect.y + z.rect.height).toBeLessThanOrEqual(p.bbox.y + p.bbox.height + 1e-6);
+    // R5-3Q-C-07: the safe zone is on board (a display front's cut-away is not printable)
+    if (z.rect.width > 0 && z.rect.height > 0)
+      for (const [fx, fy] of [[0.01, 0.01], [0.99, 0.01], [0.01, 0.99], [0.99, 0.99], [0.5, 0.5], [0.5, 0.01], [0.5, 0.99]])
+        expect(insidePoly({ x: z.rect.x + z.rect.width * fx, y: z.rect.y + z.rect.height * fy }, p.polygon), `${z.panelId} safe zone on board`).toBe(true);
   }
 
   // Board use.

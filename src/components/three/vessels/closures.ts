@@ -1,9 +1,10 @@
-import { CylinderGeometry, ExtrudeGeometry, Shape, ShapeGeometry, SphereGeometry, TorusGeometry, type BufferGeometry } from "three";
+import { BoxGeometry, CatmullRomCurve3, ConeGeometry, CylinderGeometry, ExtrudeGeometry, Shape, ShapeGeometry, SphereGeometry, TorusGeometry, TubeGeometry, Vector3, type BufferGeometry } from "three";
 import { radiusAt, roundCorners, tubeDims, tinLidHeight, type ClosureKind, type ControlPoint, type VesselDims, type VesselKind, type VesselProfile } from "@/lib/vessels";
 import { revolve, ringsFromPoints, type Ring } from "./geometry";
 
 /** What a part is made of (the model maps roles to materials). */
-export type PartRole = "cap" | "capMetal" | "rubber" | "pipette" | "dark" | "body";
+/** "gasket": the red rubber ring of a swing top; "wire": bare steel wire (bail, cage). */
+export type PartRole = "cap" | "capMetal" | "rubber" | "pipette" | "dark" | "body" | "gasket" | "wire";
 
 export interface ClosurePart {
   geometry: BufferGeometry;
@@ -26,32 +27,84 @@ export interface ClosureModel {
   pivot?: [number, number, number];
   /** Top of the closed closure (for framing). */
   topY: number;
+  /**
+   * Flat top a lid (disc) label sits on, when the closure covers the container's own lid plane
+   * (snap / plug / hinged lids): the label rides on the lid instead of hiding under it (R5-3Q-G-25).
+   */
+  printTopY?: number;
 }
 
 const lathe = (pts: ControlPoint[], opts: { segments?: number; ribs?: { count: number; depth: number; where: (r: Ring) => boolean }; section?: VesselProfile["section"] } = {}) =>
   revolve(ringsFromPoints(roundCorners(pts, 5)), { segments: opts.segments ?? 96, ribs: opts.ribs, section: opts.section });
 
+interface ScrewCapOptions {
+  /** Wider shell (mm on the radius): child-resistant caps are a double shell over the inner cap. */
+  extraR?: number;
+  /** Taller top (mm). */
+  extraTop?: number;
+  /** Tamper-evident band under the skirt (bridges + a break line), as on TE / vented caps. */
+  te?: boolean;
+  /** Rib count (0 = smooth). */
+  ribs?: number;
+}
+
 /** Ribbed screw cap over a finish. */
-function screwCap(p: VesselProfile, extraTop: ControlPoint[] = []): { geometry: BufferGeometry; yt: number } {
+function screwCap(p: VesselProfile, extraTopPts: ControlPoint[] = [], o: ScrewCapOptions = {}): { geometry: BufferGeometry; yt: number; yb: number; r: number } {
   const top = p.finishTopY;
-  const r = p.finishR + 1.5;
+  const r = p.finishR + 1.5 + (o.extraR ?? 0);
   const yb = top - p.finishH - 0.6;
-  const yt = top + 2.8;
+  const yt = top + 2.8 + (o.extraTop ?? 0);
+  // TE band: a ~3 mm ring below the skirt, joined by a perforated break line (the ring stays on
+  // the neck bead when the cap is first opened)
+  const band: ControlPoint[] = o.te
+    ? [
+        { r: r - 1.1, y: yb - 3.2 + 3 },
+        { r: r - 1.1, y: yb - 3.2, round: 0.3 },
+        { r: r - 0.3, y: yb - 3.2, round: 0.3 },
+        { r: r - 0.1, y: yb - 0.9 },
+        { r: r - 0.75, y: yb - 0.55 },
+        { r: r - 0.75, y: yb - 0.2 },
+        { r: r - 0.2, y: yb, round: 0.2 },
+      ]
+    : [
+        { r: r - 1.1, y: yb + 6 },
+        { r: r - 1.1, y: yb, round: 0.3 },
+        { r: r - 0.2, y: yb, round: 0.3 },
+      ];
   const pts: ControlPoint[] = [
-    { r: r - 1.1, y: yb + 6 },
-    { r: r - 1.1, y: yb, round: 0.3 },
-    { r: r - 0.2, y: yb, round: 0.3 },
+    ...band,
     { r, y: yb + 0.7, round: 0.3 },
     { r, y: yb + 2.2 },
     { r: r - 0.45, y: yb + 2.6 },
     { r, y: yb + 3.0 },
     { r, y: yt - 1.2, round: 1.2 },
     { r: r - 0.9, y: yt, round: 0.8 },
-    ...(extraTop.length ? extraTop : [{ r: 0, y: yt }]),
+    ...(extraTopPts.length ? extraTopPts : [{ r: 0, y: yt }]),
   ];
   const ribTop = yt - 1.6;
-  const geometry = lathe(pts, { segments: 240, ribs: { count: 72, depth: 0.32, where: (ring) => ring.y > yb + 3.4 && ring.y < ribTop && ring.r > r - 0.05 } });
-  return { geometry, yt };
+  const count = o.ribs ?? 72;
+  const geometry = lathe(pts, count ? { segments: 240, ribs: { count, depth: 0.32, where: (ring) => ring.y > yb + 3.4 && ring.y < ribTop && ring.r > r - 0.05 } } : { segments: 160 });
+  return { geometry, yt, yb: o.te ? yb - 3.2 : yb, r };
+}
+
+/** Steel wire along a path (mm points). */
+function wire(points: [number, number, number][], radius = 0.75): BufferGeometry {
+  const curve = new CatmullRomCurve3(points.map(([x, y, z]) => new Vector3(x, y, z)), false, "centripetal");
+  return new TubeGeometry(curve, Math.max(24, points.length * 12), radius, 8, false);
+}
+
+/** Largest outer radius of the container body below `belowY` (cap flush with the body). */
+function bodyR(p: VesselProfile, belowY: number): number {
+  let m = 0;
+  for (const q of p.outer as { r: number; y: number }[]) if (q.y < belowY) m = Math.max(m, q.r);
+  return m;
+}
+
+/** Length of the neck below the finish top: down to where the glass widens past 1.35 × the finish. */
+function neckLength(p: VesselProfile): number {
+  const top = p.finishTopY;
+  for (let d = 2; d < top; d += 1) if (radiusAt(p.outer as never, top - d) > p.finishR * 1.35) return d;
+  return top * 0.3;
 }
 
 /**
@@ -60,9 +113,40 @@ function screwCap(p: VesselProfile, extraTop: ControlPoint[] = []): { geometry: 
  * aluminium (knurled top band, long plain skirt with a perforated pilfer ring), wine cork under a
  * 40–60 mm foil capsule, sparkling mushroom cork under foil + wire hood, ROPP pourer with spout.
  */
-export const CLOSURE_STYLES = ["CROWN", "ROPP", "CORK_CAPSULE", "SPARKLING", "POURER", "ROLL_ON_BALL", "AIRLESS_PUMP", "BULLET_CAP", "PEEL_FOIL", "EOE_RING", "PLUG_LID", "LEVER_LID", "SNAP_LID", "HINGED_LID", "TWIST_UP"] as const;
+export const CLOSURE_STYLES = [
+  "CROWN",
+  "ROPP",
+  "CORK_CAPSULE",
+  "SPARKLING",
+  "POURER",
+  "ROLL_ON_BALL",
+  "AIRLESS_PUMP",
+  "BULLET_CAP",
+  "PEEL_FOIL",
+  "EOE_RING",
+  "PLUG_LID",
+  "LEVER_LID",
+  "SNAP_LID",
+  "HINGED_LID",
+  "TWIST_UP",
+  // R6 (R5-3Q-F-06 … G-14): closures that used to collapse onto a plain screw / lug cap
+  "SWING_TOP",
+  "MEASURE_CUP",
+  "FLIP_TOP_CAP",
+  "CR_CAP",
+  "TE_CAP",
+  "BAR_TOP",
+  "MIST_COLLAR",
+  "DROPPER_TIP",
+  "AEROSOL",
+  "CRIMP_FLIP_OFF",
+  "DOUBLE_WALL_CAP",
+  "PIERCING",
+] as const;
 /** Styles that close the whole mouth of a can / tub / tray (allowed over lid and can-end cores). */
-const MOUTH_STYLES: readonly string[] = ["PEEL_FOIL", "EOE_RING", "PLUG_LID", "LEVER_LID", "SNAP_LID", "HINGED_LID", "TWIST_UP"];
+const MOUTH_STYLES: readonly string[] = ["PEEL_FOIL", "EOE_RING", "PLUG_LID", "LEVER_LID", "SNAP_LID", "HINGED_LID", "TWIST_UP", "DOUBLE_WALL_CAP"];
+/** Squeeze-tube styles (the tube stands on its cap at y = 0). */
+const TUBE_STYLES: readonly string[] = ["PIERCING"];
 export type ClosureStyle = (typeof CLOSURE_STYLES)[number];
 
 /** Capsule / sleeve hugging the neck from `top` down `depth` mm (follows the glass, +gap). */
@@ -98,7 +182,9 @@ function styledClosure(style: ClosureStyle, p: VesselProfile): ClosureModel {
     }
     case "ROPP":
     case "POURER": {
-      const yb = top - 18;
+      // R5-3Q-F-02: an 18 mm skirt on a beer / oil ROPP finish, the full finish on a wine BVS
+      // 30H60 (Stelvin) shell ~60 mm long
+      const yb = top - Math.max(18, p.finishH);
       const yt = top + 1.5;
       const skirt = lathe(
         [
@@ -132,7 +218,9 @@ function styledClosure(style: ClosureStyle, p: VesselProfile): ClosureModel {
     }
     case "CORK_CAPSULE": {
       const yt = top + 0.5;
-      const sleeve = neckSleeve(p, 48, 0.35, top);
+      // R5-3Q-F-15: the 40–60 mm capsule covers the neck, not a fixed 48 mm that ran onto the
+      // shoulder of a short (187 ml, 250 ml) neck
+      const sleeve = neckSleeve(p, Math.max(30, Math.min(55, neckLength(p) * 0.85, Math.max(p.finishH, 48))), 0.35, top);
       const g = lathe([...sleeve, { r: r + 0.35, y: yt, round: 0.6 }, { r: 0, y: yt }]);
       return { parts: [{ geometry: g, role: "capMetal", group: "moving" }], motion: "lift", turns: 0, rise: 0, lift: 30, topY: yt };
     }
@@ -194,7 +282,9 @@ function styledClosure(style: ClosureStyle, p: VesselProfile): ClosureModel {
     }
     case "BULLET_CAP": {
       // lipstick / balm overcap: a straight cylinder reaching well down the case
-      const R = Math.max(r + 1, radiusAt(p.outer as never, top - 2) + 0.4);
+      // flush with the case / bottle body, not the neck (R5-3Q-G-02: the lip-gloss cap was
+      // narrower than its bottle)
+      const R = Math.max(r + 1, radiusAt(p.outer as never, top - 2) + 0.4, bodyR(p, top - 2) + 0.3);
       const h = Math.max(24, R * 3.2);
       const yb = top - h * 0.55;
       const yt = yb + h;
@@ -227,7 +317,7 @@ function styledClosure(style: ClosureStyle, p: VesselProfile): ClosureModel {
         parts.push({ geometry: ring, role: "body", group: "tab" }, { geometry: rivet, role: "body", group: "static" });
         return { parts, motion: "tab", turns: 0, rise: 0, lift: 0, pivot: [0, y + 1, z - rr], topY: y + 2.2 };
       }
-      return { parts, motion: "lift", turns: 0, rise: 0, lift: 20, topY: y };
+      return { parts, motion: "lift", turns: 0, rise: 0, lift: 20, topY: y, printTopY: y };
     }
     case "PLUG_LID":
     case "LEVER_LID": {
@@ -244,7 +334,7 @@ function styledClosure(style: ClosureStyle, p: VesselProfile): ClosureModel {
       if (style === "LEVER_LID") pts.push({ r: R - 3, y }, { r: R - 4, y: y - 1.6, round: 0.5 }, { r: R - 5.4, y: y - 1.6, round: 0.5 }, { r: R - 6.4, y });
       pts.push({ r: 0, y });
       const lid = lathe(pts, { section: p.section });
-      return { parts: [{ geometry: lid, role: "capMetal", group: "moving" }], motion: "lift", turns: 0, rise: 0, lift: 22, topY: y };
+      return { parts: [{ geometry: lid, role: "capMetal", group: "moving" }], motion: "lift", turns: 0, rise: 0, lift: 22, topY: y, printTopY: y };
     }
     case "SNAP_LID": {
       // thermoformed / moulded snap lid over the rim: short skirt, slightly domed top
@@ -257,12 +347,13 @@ function styledClosure(style: ClosureStyle, p: VesselProfile): ClosureModel {
           { r: R - 0.5, y: yb, round: 0.2 },
           { r: R, y: yb + 0.4, round: 0.4 },
           { r: R, y: top + 1.2, round: 1 },
-          { r: R * 0.7, y: yt, round: R * 0.2 },
+          // flat panel (the printed / embossed lid top), slight shoulder
+          { r: R - 1.4, y: yt, round: 1.2 },
           { r: 0, y: yt },
         ],
         { section: p.section },
       );
-      return { parts: [{ geometry: lid, role: "cap", group: "moving" }], motion: "lift", turns: 0, rise: 0, lift: 24, topY: yt };
+      return { parts: [{ geometry: lid, role: "cap", group: "moving" }], motion: "lift", turns: 0, rise: 0, lift: 24, topY: yt, printTopY: yt };
     }
     case "HINGED_LID": {
       // clamshell: the lid is the tray's mirror, hinged at the back edge (opens with the lift motion's tilt)
@@ -279,7 +370,7 @@ function styledClosure(style: ClosureStyle, p: VesselProfile): ClosureModel {
         ],
         { section: p.section },
       );
-      return { parts: [{ geometry: lid, role: "cap", group: "moving" }], motion: "lift", turns: 0, rise: 0, lift: depth * 0.8, topY: yt };
+      return { parts: [{ geometry: lid, role: "cap", group: "moving" }], motion: "lift", turns: 0, rise: 0, lift: depth * 0.8, topY: yt, printTopY: yt };
     }
     case "TWIST_UP": {
       // deodorant / balm stick: dome cap the full barrel width (follows an oval or rounded section)
@@ -299,6 +390,272 @@ function styledClosure(style: ClosureStyle, p: VesselProfile): ClosureModel {
       );
       return { parts: [{ geometry: lid, role: "cap", group: "moving" }], motion: "lift", turns: 0, rise: 0, lift: 30, topY: yt };
     }
+    case "SWING_TOP": {
+      // R5-3Q-F-06: ceramic / PP dome stopper on a red rubber ring, held by a wire bail: a neck
+      // ring under the bead, two side levers and a loop over the stopper top
+      const sr = r + 0.8;
+      const ys = top + 1.6;
+      const yt = ys + Math.max(9, r * 0.8);
+      const stopper = lathe([
+        { r: r * 0.55, y: top - 5 },
+        { r: r * 0.62, y: ys - 0.2, round: 0.3 },
+        { r: sr, y: ys, round: 0.8 },
+        { r: sr, y: ys + 3, round: 1.5 },
+        { r: sr * 0.62, y: yt, round: sr * 0.5 },
+        { r: 0, y: yt },
+      ]);
+      const gasket = new TorusGeometry(r * 0.86, 0.95, 10, 48);
+      gasket.rotateX(Math.PI / 2);
+      gasket.translate(0, top + 0.5, 0);
+      const neckY = top - Math.max(8, p.finishH * 0.75);
+      const nr = Math.max(p.finishR, radiusAt(p.outer as never, neckY)) + 0.7;
+      const ring = new TorusGeometry(nr, 0.8, 8, 48);
+      ring.rotateX(Math.PI / 2);
+      ring.translate(0, neckY, 0);
+      const parts: ClosurePart[] = [
+        { geometry: stopper, role: "cap", group: "moving" },
+        { geometry: gasket, role: "gasket", group: "moving" },
+        { geometry: ring, role: "wire", group: "static" },
+      ];
+      for (const sx of [-1, 1]) {
+        // lever from the neck ring up past the stopper, then the bail over the top
+        parts.push({
+          geometry: wire([
+            [sx * nr, neckY, 0],
+            [sx * (nr + 1.2), neckY + (ys - neckY) * 0.55, 0],
+            [sx * (sr + 1.4), ys + 1.5, 0],
+          ]),
+          role: "wire",
+          group: "static",
+        });
+      }
+      parts.push({
+        geometry: wire([
+          [-(sr + 1.4), ys + 1.5, 0],
+          [-(sr * 0.7), yt + 0.4, 0],
+          [0, yt + 0.9, 0],
+          [sr * 0.7, yt + 0.4, 0],
+          [sr + 1.4, ys + 1.5, 0],
+        ]),
+        role: "wire",
+        group: "moving",
+      });
+      return { parts, motion: "lift", turns: 0, rise: 0, lift: 18, topY: yt + 1.7 };
+    }
+    case "MEASURE_CUP": {
+      // R5-3Q-F-07: detergent dosing cup screwed over the spout, Ø 55–65 mm, 30–35 mm tall,
+      // translucent PP with fill lines moulded round the side
+      const R = r + 7;
+      const yb = top - 12;
+      const yt = top + 32;
+      const cup = lathe(
+        [
+          { r: R - 1.4, y: yb + 4 },
+          { r: R - 1.4, y: yb, round: 0.4 },
+          { r: R, y: yb + 0.5, round: 0.6 },
+          { r: R, y: yb + 1.6 },
+          { r: R - 0.7, y: yb + 2.4 },
+          { r: R - 0.7, y: yt - 2, round: 1.5 },
+          { r: R - 2.4, y: yt, round: 1.4 },
+          { r: 0, y: yt },
+        ],
+        { segments: 160, ribs: { count: 4, depth: 0.25, where: (ring) => ring.y > yb + 8 && ring.y < yt - 6 && Math.round(ring.y) % 6 === 0 } },
+      );
+      return { parts: [{ geometry: cup, role: "cap", group: "moving" }], motion: "unscrew", turns: 1.2, rise: 3, lift: 30, topY: yt };
+    }
+    case "FLIP_TOP_CAP": {
+      // R5-3Q-F-08: 24/410 flip-top: base and lid split by the hinge line, a hinge at the back,
+      // a thumb notch at the front and a dispensing orifice under the lid
+      const R = r + 1.6;
+      const yb = top - p.finishH - 0.6;
+      const yt = top + 10;
+      const seam = yt - 4.2;
+      const body = lathe([
+        { r: R - 1.1, y: yb + 5 },
+        { r: R - 1.1, y: yb, round: 0.3 },
+        { r: R, y: yb + 0.6, round: 0.5 },
+        { r: R, y: seam - 0.4 },
+        { r: R - 0.45, y: seam },
+        { r: R, y: seam + 0.4 },
+        { r: R, y: yt - 1.4, round: 1.4 },
+        { r: R - 1.6, y: yt, round: 1 },
+        { r: 0, y: yt },
+      ]);
+      const hinge = new BoxGeometry(R * 0.7, 3.2, 1.6);
+      hinge.translate(0, seam, -R - 0.4);
+      const notch = new BoxGeometry(R * 0.5, 1.4, 1.2);
+      notch.translate(0, seam + 1.2, R + 0.2);
+      return {
+        parts: [
+          { geometry: body, role: "cap", group: "moving" },
+          { geometry: hinge, role: "cap", group: "moving" },
+          { geometry: notch, role: "cap", group: "moving" },
+        ],
+        motion: "unscrew",
+        turns: 2,
+        rise: Math.min(6, p.finishH * 0.45),
+        lift: 26,
+        topY: yt,
+      };
+    }
+    case "CR_CAP":
+    case "TE_CAP": {
+      // R5-3Q-F-09 / G-07: ISO 8317 push-and-turn double shell, wider and taller than a plain
+      // cap, with a TE band; R5-3Q-F-10: tamper-evident screw caps show the band under the skirt
+      const cr = style === "CR_CAP";
+      const { geometry, yt } = screwCap(p, [], cr ? { extraR: 2.5, extraTop: 2, te: true, ribs: 36 } : { te: true });
+      return { parts: [{ geometry, role: "cap", group: "moving" }], motion: "unscrew", turns: 2, rise: Math.min(6, p.finishH * 0.45), lift: 26, topY: yt };
+    }
+    case "BAR_TOP": {
+      // R5-3Q-F-11: T-cork: a Ø 30 × 16 mm head (wood / PP) on a cork shank in the neck
+      const R = Math.max(15, r + 4);
+      const y0 = top + 0.4;
+      const yt = y0 + 16;
+      const head = lathe([
+        { r: r * 0.92, y: top - 2 },
+        { r: r * 0.92, y: y0 },
+        { r: R - 1.5, y: y0, round: 0.6 },
+        { r: R, y: y0 + 2, round: 1.5 },
+        { r: R, y: yt - 2.5, round: 2.2 },
+        { r: R - 2.5, y: yt, round: 2 },
+        { r: 0, y: yt },
+      ]);
+      return { parts: [{ geometry: head, role: "cap", group: "moving" }], motion: "lift", turns: 0, rise: 0, lift: 34, topY: yt };
+    }
+    case "MIST_COLLAR": {
+      // R5-3Q-G-06: the mist pump with a metal collar sleeved over the crimp ferrule and the neck
+      const base = buildClosure("PERFUME_SQUARE", "MIST_PUMP", { D: 2 * bodyR(p, top), H: top }, p);
+      const neck = Math.max(6, Math.min(neckLength(p), 14));
+      const cr = r + 2.6;
+      const collar = lathe([
+        { r: cr - 0.8, y: top - neck + 2 },
+        { r: cr - 0.8, y: top - neck, round: 0.3 },
+        { r: cr, y: top - neck + 0.5, round: 0.5 },
+        { r: cr, y: top - 1.2, round: 1 },
+        { r: r + 0.9, y: top, round: 0.6 },
+        { r: r + 0.4, y: top },
+      ]);
+      return { ...base, parts: [...base.parts, { geometry: collar, role: "capMetal", group: "static" }] };
+    }
+    case "DROPPER_TIP": {
+      // R5-3Q-G-14: LDPE dropper nozzle in the neck, a tall pointed cap over it
+      const nozzle = lathe([
+        { r: r * 0.92, y: top - 1 },
+        { r: r * 0.92, y: top + 1, round: 0.5 },
+        { r: r * 0.55, y: top + 3, round: 0.8 },
+        { r: 1.4, y: top + 11, round: 0.5 },
+        { r: 0.6, y: top + 11.6 },
+        { r: 0, y: top + 11.6 },
+      ]);
+      const R = r + 1.6;
+      const yb = top - p.finishH - 0.6;
+      const yt = top + 15;
+      const cap = lathe(
+        [
+          { r: R - 1, y: yb + 5 },
+          { r: R - 1, y: yb, round: 0.3 },
+          { r: R, y: yb + 0.6, round: 0.5 },
+          { r: R, y: top + 2 },
+          { r: R * 0.5, y: yt - 1.5, round: 1.5 },
+          { r: R * 0.32, y: yt, round: 1 },
+          { r: 0, y: yt },
+        ],
+        { segments: 180, ribs: { count: 30, depth: 0.35, where: (ring) => ring.y > yb + 1.5 && ring.y < top + 1.5 && ring.r > R - 0.05 } },
+      );
+      return {
+        parts: [
+          { geometry: nozzle, role: "pipette", group: "static" },
+          { geometry: cap, role: "cap", group: "moving" },
+        ],
+        motion: "unscrew",
+        turns: 1.5,
+        rise: 3,
+        lift: 26,
+        topY: yt,
+      };
+    }
+    case "AEROSOL": {
+      // R5-3Q-G-04 (remainder): stem and spray actuator on the 1 in valve cup
+      const stem = new CylinderGeometry(1.6, 1.6, 5, 16);
+      stem.translate(0, top + 2.5, 0);
+      const ar = Math.max(9, Math.min(13, r * 0.7));
+      const ah = 13;
+      const y0 = top + 4;
+      const act = lathe([
+        { r: ar - 0.6, y: y0 },
+        { r: ar, y: y0 + 0.8, round: 0.5 },
+        { r: ar, y: y0 + ah - 3, round: 2.5 },
+        { r: ar * 0.55, y: y0 + ah, round: 2 },
+        { r: 0, y: y0 + ah },
+      ]);
+      const finger = new BoxGeometry(ar * 1.1, 0.6, ar * 0.9);
+      finger.rotateX(-0.25);
+      finger.translate(0, y0 + ah - 0.4, -ar * 0.15);
+      const orifice = new CylinderGeometry(0.8, 0.8, 0.4, 16);
+      orifice.rotateX(Math.PI / 2);
+      orifice.translate(0, y0 + ah * 0.55, ar + 0.05);
+      return {
+        parts: [
+          { geometry: stem, role: "cap", group: "static" },
+          { geometry: act, role: "cap", group: "static" },
+          { geometry: finger, role: "cap", group: "static" },
+          { geometry: orifice, role: "dark", group: "static" },
+        ],
+        motion: "none",
+        turns: 0,
+        rise: 0,
+        lift: 0,
+        topY: y0 + ah,
+      };
+    }
+    case "CRIMP_FLIP_OFF": {
+      // R5-3Q-G-08 (remainder): aluminium crimp seal over the stopper, a plastic flip-off button on top
+      const yb = top - Math.max(4, p.finishH * 0.8);
+      const yt = top + 1.2;
+      const crimp = lathe([
+        { r: r - 0.2, y: yb },
+        { r: r + 0.4, y: yb + 0.6, round: 0.3 },
+        { r: r + 0.4, y: yt - 0.6, round: 0.6 },
+        { r: r - 1.2, y: yt, round: 0.4 },
+        { r: r * 0.5, y: yt },
+      ]);
+      const button = lathe([
+        { r: r * 0.5, y: yt - 0.3 },
+        { r: r + 0.6, y: yt + 0.2, round: 0.4 },
+        { r: r + 0.6, y: yt + 2.6, round: 1 },
+        { r: 0, y: yt + 2.8 },
+      ]);
+      return {
+        parts: [
+          { geometry: crimp, role: "body", group: "static" },
+          { geometry: button, role: "cap", group: "moving" },
+        ],
+        motion: "lift",
+        turns: 0,
+        rise: 0,
+        lift: 14,
+        topY: yt + 2.8,
+      };
+    }
+    case "DOUBLE_WALL_CAP": {
+      // R5-3Q-G-11: the cap of a double-wall jar is flush with the OUTER wall, not the inner
+      // pot's thread (it overhung the neck and stopped short of the jar edge)
+      const R = Math.max(r + 1.5, bodyR(p, top - 1) + 0.2);
+      const yb = top - Math.max(p.finishH, 6) - 0.4;
+      const yt = top + 3.2;
+      const cap = lathe([
+        { r: R - 1.2, y: yb + 4 },
+        { r: R - 1.2, y: yb, round: 0.3 },
+        { r: R, y: yb + 0.6, round: 0.5 },
+        { r: R, y: yt - 1.6, round: 1.6 },
+        { r: R - 1.6, y: yt, round: 1.2 },
+        { r: 0, y: yt },
+      ]);
+      return { parts: [{ geometry: cap, role: "cap", group: "moving" }], motion: "unscrew", turns: 1.5, rise: 2.5, lift: 26, topY: yt, printTopY: yt };
+    }
+    case "PIERCING":
+      // drawn in buildClosure (tube coordinates)
+      return { parts: [], motion: "none", turns: 0, rise: 0, lift: 0, topY: top };
     case "SPARKLING": {
       const foil = neckSleeve(p, 85, 0.4, top);
       const mr = r + 2;
@@ -338,8 +695,10 @@ export function buildClosure(kind: VesselKind, closure: ClosureKind, dims: Vesse
   const p: VesselProfile = profile.section.kind === "polygon" ? { ...profile, section: { kind: "round" } } : profile;
   // bottle-neck styles replace a screw-cap core (the core the library collapses them to)
   if (style && (CLOSURE_STYLES as readonly string[]).includes(style)) {
-    if (MOUTH_STYLES.includes(style)) return styledClosure(style, p);
-    if (p.finishR > 0 && closure !== "CAN_END" && closure !== "SLIP_LID" && closure !== "LUG_LID") return styledClosure(style, p);
+    if (TUBE_STYLES.includes(style)) {
+      if (kind === "SQUEEZE_TUBE") return piercingTubeCap(dims);
+    } else if (MOUTH_STYLES.includes(style)) return styledClosure(style, p);
+    else if (p.finishR > 0 && closure !== "CAN_END" && closure !== "SLIP_LID" && closure !== "LUG_LID") return styledClosure(style, p);
   }
   const top = p.finishTopY;
   switch (closure) {
@@ -604,6 +963,15 @@ export function buildClosure(kind: VesselKind, closure: ClosureKind, dims: Vesse
       ];
       const cap = lathe(pts, flip ? {} : { segments: 180, ribs: { count: 48, depth: 0.4, where: (ring) => ring.y > 2 && ring.y < t.capH - 1.5 } });
       const parts: ClosurePart[] = [{ geometry: cap, role: "cap", group: "static" }];
+      if (flip) {
+        // R5-3Q-F-14: a flip-top reads as one: hinge strap at the back across the lid line, a
+        // thumb lip at the front (the screw cap is a slim fluted cylinder with a shoulder disc)
+        const hinge = new BoxGeometry(cr * 0.55, 4, 1.4);
+        hinge.translate(0, seam, -cr - 0.3);
+        const lip = new BoxGeometry(cr * 0.45, 1.2, 1.4);
+        lip.translate(0, seam - 1, cr + 0.2);
+        parts.push({ geometry: hinge, role: "cap", group: "static" }, { geometry: lip, role: "cap", group: "static" });
+      }
       if (!flip) {
         // shoulder disc between the slim screw cap and the round tube
         const disc = lathe([
@@ -618,4 +986,44 @@ export function buildClosure(kind: VesselKind, closure: ClosureKind, dims: Vesse
     default:
       return { parts: [], motion: "none", turns: 0, rise: 0, lift: 0, topY: kind === "STAND_UP_POUCH" ? dims.H : top };
   }
+}
+
+/**
+ * R5-3Q-G-10: pharma / aluminium tube piercing cap: a tall, slim fluted cap (the tube stands on it)
+ * with the piercing spike moulded in its crown, visible as a cone in the recessed end.
+ */
+function piercingTubeCap(dims: VesselDims): ClosureModel {
+  const t = tubeDims(dims);
+  const cr = Math.max(t.nozzleR + 2.5, t.capR * 0.62);
+  const h = t.capH;
+  const cap = lathe(
+    [
+      { r: cr * 0.55, y: 1.2 },
+      { r: cr * 0.75, y: 0, round: 0.4 },
+      { r: cr, y: 0.8, round: 0.8 },
+      { r: cr, y: h - 2.4 },
+      { r: cr * 0.82, y: h - 0.6, round: 0.6 },
+      { r: 0, y: h - 0.6 },
+    ],
+    { segments: 180, ribs: { count: 24, depth: 0.55, where: (ring) => ring.y > 2 && ring.y < h - 3 && ring.r > cr - 0.05 } },
+  );
+  const spike = new ConeGeometry(cr * 0.3, 3.2, 20);
+  spike.rotateX(Math.PI);
+  spike.translate(0, 1.2 + 1.6, 0);
+  const disc = lathe([
+    { r: 0, y: h - 0.01 },
+    { r: t.R, y: h - 0.01 },
+  ]);
+  return {
+    parts: [
+      { geometry: cap, role: "cap", group: "static" },
+      { geometry: spike, role: "cap", group: "static" },
+      { geometry: disc, role: "body", group: "static" },
+    ],
+    motion: "none",
+    turns: 0,
+    rise: 0,
+    lift: 0,
+    topY: t.totalH,
+  };
 }

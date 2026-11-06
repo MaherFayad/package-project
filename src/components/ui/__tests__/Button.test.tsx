@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import * as React from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { Plus } from "lucide-react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -111,5 +112,58 @@ describe("helpers", () => {
     expect(fileAccepted(pdf, ".pdf,.ai")).toBe(true);
     expect(fileAccepted(png, "image/svg+xml")).toBe(false);
     expect(fileAccepted(png)).toBe(true);
+  });
+});
+
+describe("Button focus rescue (R6-AX-01)", () => {
+  const frame = () => new Promise((r) => requestAnimationFrame(() => r(null)));
+  const rects = Element.prototype.getClientRects;
+  afterEach(() => {
+    Element.prototype.getClientRects = rects;
+  });
+  function List({ start, onRemove }: { start: string[]; onRemove?: (x: string) => void }) {
+    const [items, setItems] = React.useState(start);
+    return (
+      <ul>
+        {items.map((x) => (
+          <li key={x}>
+            {x}
+            <Button
+              accessibilityLabel={`Remove ${x}`}
+              onClick={() => {
+                setItems((a) => a.filter((y) => y !== x));
+                onRemove?.(x);
+              }}
+            />
+          </li>
+        ))}
+      </ul>
+    );
+  }
+  it("a removed row's button hands focus to the next control, or the previous one at the end", async () => {
+    Element.prototype.getClientRects = () => [{}] as unknown as DOMRectList;
+    wrap(<List start={["a", "b", "c"]} />);
+    const b = screen.getByRole("button", { name: "Remove b" });
+    b.focus();
+    fireEvent.click(b);
+    await frame();
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Remove c" }));
+    fireEvent.click(screen.getByRole("button", { name: "Remove c" }));
+    await frame();
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Remove a" }));
+  });
+  it("leaves focus alone when the caller already moved it", async () => {
+    Element.prototype.getClientRects = () => [{}] as unknown as DOMRectList;
+    wrap(
+      <>
+        <input aria-label="Name" />
+        <List start={["a", "b"]} onRemove={() => (screen.getByLabelText("Name") as HTMLInputElement).focus()} />
+      </>,
+    );
+    const a = screen.getByRole("button", { name: "Remove a" });
+    a.focus();
+    fireEvent.click(a);
+    await frame();
+    expect(document.activeElement).toBe(screen.getByLabelText("Name"));
   });
 });

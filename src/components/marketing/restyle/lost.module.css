@@ -1,0 +1,59 @@
+/*
+ * R6 restyle, 404 and error states. Its own small sheet on purpose: the (store) and detail not-found
+ * and error elements are embedded, with their CSS, into every page under those layouts (R4-09), so
+ * they must not pull the page sheets in.
+ */
+.page { display: block; }
+/* ---------- 404 and error states: three big links with round arrow buttons ---------- */
+.lost.lost[data-hero="true"] {
+  min-block-size: min(100svh, 900px);
+  justify-content: center;
+  background:
+    radial-gradient(70% 80% at 85% 100%, rgba(0, 120, 120, 0.42), transparent 70%),
+    radial-gradient(60% 70% at 10% 110%, rgba(30, 50, 160, 0.4), transparent 70%),
+    var(--mk-bg);
+}
+.lostGrid { display: grid; gap: var(--mk-stack-head-content-lg); align-items: start; }
+@media (min-width: 1024px) { .lostGrid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.code { display: block; margin-block-end: var(--mk-stack-title-sub); font-size: var(--mk-fs-44); font-weight: var(--mk-fw-heading); line-height: 1.1; }
+.lostLinks { margin: 0; padding: 0; list-style: none; }
+.lostLinks li + li { border-block-start: 1px solid var(--mk-line-dark); }
+.lostLink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mk-stack-title-sub);
+  inline-size: 100%;
+  padding-block: var(--mk-grid-gap);
+  border: 0;
+  background: none;
+  color: var(--mk-on-dark);
+  font: inherit;
+  font-size: clamp(1.5rem, 1.2rem + 1vw, 2rem);
+  font-weight: var(--mk-fw-heading);
+  line-height: 1.25;
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+}
+.lostLink:lang(ar) { font-weight: 400; }
+.arrow {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  inline-size: 44px; /* WCAG 2.5.8 */
+  block-size: 44px;
+  border: 1px solid var(--mk-on-dark);
+  border-radius: 50%;
+  transition: background-color var(--mk-dur-2) var(--mk-ease-standard), color var(--mk-dur-2) var(--mk-ease-standard), transform var(--mk-dur-2) var(--mk-ease-standard);
+}
+:global([dir="rtl"]) .arrow svg { transform: scaleX(-1); }
+.lostLink:hover .arrow { background: #ffffff; color: #000000; transform: translateX(4px); }
+:global([dir="rtl"]) .lostLink:hover .arrow { transform: translateX(-4px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .arrow { transition: none; }
+  .lostLink:hover .arrow { transform: none; }
+}
+/* 20px lead, as measured on the reference 404 (also keeps it the phone LCP over the cookie notice). */
+.lead.lead { font-size: var(--mk-fs-20); }

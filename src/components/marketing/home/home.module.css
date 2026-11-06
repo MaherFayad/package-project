@@ -8,133 +8,137 @@
   --h-green-card: #061a1c;      /* measured feature card rgb(6,26,28) */
   --h-navy-card: #010624;       /* measured rgb(1,6,36) */
   --h-muted: #9797a2;           /* captions on black, measured rgb(151,151,162): 7.1:1 */
-  --h-muted-green: #9dabad;     /* body on green cards, measured: 7.4:1 on #061a1c */
-  --h-muted-soft: #bdbdca;      /* navy body, measured */
   --h-dim: #71717a;             /* statement words not yet lit (large text, 4.1:1, SC 1.4.3) */
   --h-ease-media: cubic-bezier(0.22, 1, 0.36, 1); /* measured card media transition */
-  --h-sheet-r: var(--mk-radius-sheet, 48px);
-  --h-sec: 64px;                /* measured section padding */
   overflow-x: clip;
 }
-@media (max-width: 767px) { .page { --h-sheet-r: 32px; } }
-
-/* Same column as the kit <Container>, for blocks that sit outside one. */
-.heroWrap, .railWrap {
-  inline-size: 100%;
-  max-inline-size: calc(var(--mk-container, 1280px) + 2 * var(--mk-gutter, 16px));
-  margin-inline: auto;
-  padding-inline: var(--mk-gutter, 16px);
-}
+/*
+ * Spacing (spec section 7): every band, heading stack, grid and card body uses the kit tokens
+ * (--mk-section-y*, --mk-stack-*, --mk-grid-gap*, --mk-gutter, --mk-radius-sheet) through Sheet y,
+ * SectionHead, Stack, Grid and Container. The only literal paddings left are inside the drawn UI
+ * mockups (chips, receipt, prompt bars, sample tag), which depict product UI at its own scale.
+ */
 .fill { position: absolute; inset: 0; }
+.plainList { list-style: none; margin: 0; padding: 0; }
 
-/* ───────── Type helpers (sizes come from kit Display) ───────── */
-.cardTitle { margin-block-end: 8px; display: flex; align-items: center; gap: 6px; }
-@media (max-width: 767px) { .cardTitle.cardTitle { font-size: 1rem; } }
-.body { margin: 0; font-size: 1rem; line-height: 1.4; color: var(--h-muted); text-wrap: pretty; }
-@media (min-width: 768px) { .body { font-size: 1.125rem; } }
+/* ───────── Type helpers ───────── */
 .caption { margin: 0; font-size: 0.875rem; line-height: 1.37; font-weight: 420; color: var(--h-muted); text-wrap: pretty; }
 .textLink { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.2em; transition: color var(--mk-dur-2) var(--mk-ease-standard); }
 .textLink:hover { color: #fff; }
 .light { font-weight: 300; }
-.narrowTitle { max-inline-size: 52rem; }
 .cardLink { color: inherit; text-decoration: none; }
 .cardLink::after { content: ""; position: absolute; inset: 0; z-index: 1; }
 .cardLink:focus-visible, .textLink:focus-visible { outline: 2px solid var(--mk-focus); outline-offset: 3px; border-radius: 2px; }
-.pills.pills { margin-block-start: 0; }
-@media (max-width: 639px) { .pills > * { flex: 1 1 100%; } }
-/* MotionScope pause buttons on mockups: kit icon pill, in the end-bottom corner, above card links. */
-.scopeBtn { position: absolute; inset-block-end: 16px; inset-inline-end: 16px; z-index: 3; }
-
-/* ───────── Sections + sheets ───────── */
-.section { position: relative; padding-block: var(--h-sec); color: var(--mk-on-dark); background: var(--mk-bg); }
-.sectionTail { padding-block-end: 128px; }
-.sectionHead { display: grid; gap: 16px; margin-block-end: 40px; max-inline-size: 64rem; }
-@media (min-width: 1024px) { .sectionHead { margin-block-end: 48px; } }
-.narrowHead { max-inline-size: 46rem; }
-.statementSheet { padding-block: 96px 64px; }
-.sheetViolet { padding-block: 72px; }
-@media (min-width: 1024px) { .sheetViolet { padding-block: 100px; } }
-.sheetGreen { padding-block-end: 48px; }
-.sheetSteps { padding-block: 120px 128px; }
+/* MotionScope pause buttons on mockups: kit icon pill in the end-bottom corner, above card links. */
+.scopeBtn.scopeBtn { position: absolute; inset-block-end: var(--mk-stack-title-sub); inset-inline-end: var(--mk-stack-title-sub); z-index: 3; }
+/* Grid helpers: a card spanning two columns (1:2:1 trio, 2:1 violet duo), vertically centred rows. */
+@media (min-width: 1024px) { .span2 { grid-column: span 2; } }
+.middle { align-items: center; }
+/* Phone: hero pills stack full width, as on the reference. */
+@media (max-width: 639px) { .heroPills > * { flex: 1 1 100%; } }
 .sheetSteps.sheetSteps.sheetSteps { background: linear-gradient(rgba(2, 8, 8, 0.5), #000), #0b1012; }
-.bandNavy { position: relative; color: var(--mk-on-dark); background: var(--mk-band-navy); }
 
 /* ───────── 1. Hero ───────── */
 /* The kit <Sheet hero> is the positioned box (header padding, full height, transparent header
    over it); the media and scrim fill it, the copy sits at the bottom start. */
 .heroSheet.heroSheet { overflow: hidden; background: #000; }
-.hero { display: grid; align-items: end; flex: 1; padding-block: 48px calc(var(--h-sheet-r) + 72px); }
+.hero { display: grid; align-items: end; flex: 1; }
+/* Full-bleed studio scene: the backdrop matches the loops' own studio (rgb 26,24,22), so the
+   turntable, its poster and the cutouts read as one photograph from edge to edge. */
 .heroMedia {
   position: absolute;
   inset: 0;
   z-index: -1;
+  overflow: hidden;
   background:
-    radial-gradient(60% 55% at 70% 46%, rgba(54, 244, 164, 0.1), transparent 70%),
-    radial-gradient(40% 45% at 78% 20%, rgba(70, 60, 220, 0.14), transparent 70%),
-    #030607;
+    radial-gradient(70% 70% at 68% 38%, #37322e 0%, #1c1a17 45%, #0e0d0c 80%),
+    #0e0d0c;
 }
-:global([dir="rtl"]) .heroMedia {
-  background:
-    radial-gradient(60% 55% at 30% 46%, rgba(54, 244, 164, 0.1), transparent 70%),
-    radial-gradient(40% 45% at 22% 20%, rgba(70, 60, 220, 0.14), transparent 70%),
-    #030607;
+:global([dir="rtl"]) .heroMedia { background: radial-gradient(70% 70% at 32% 38%, #37322e 0%, #1c1a17 45%, #0e0d0c 80%), #0e0d0c; }
+.heroFloor {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  block-size: 42%;
+  background: linear-gradient(to bottom, transparent, rgba(58, 52, 46, 0.55) 40%, #2a2622);
 }
 .heroStage {
   position: absolute;
-  inset-block: 8% 12%;
-  inset-inline-end: 2%;
-  inline-size: min(54%, 780px);
+  inset-block: 4% 0;
+  inset-inline-end: -4%;
+  inline-size: 82%;
   display: grid;
   place-items: center;
-  /* The studio render's own backdrop melts into the hero (no visible frame). */
-  mask-image: radial-gradient(closest-side, #000 62%, transparent 100%);
+  opacity: 1;
+  transition: opacity 0.8s var(--mk-ease-standard);
+  /* The loop's frame edges melt into the backdrop. */
+  mask-image: radial-gradient(58% 62% at 50% 52%, #000 60%, transparent 100%);
 }
-.heroDrift { inline-size: 100%; block-size: 100%; display: grid; place-items: center; animation: h-drift 14s ease-in-out infinite alternate; }
+.heroStage[data-active="false"] { opacity: 0; }
+.heroDrift { position: relative; inline-size: 100%; aspect-ratio: 16 / 9; animation: h-drift 14s ease-in-out infinite alternate; }
 .hero[data-paused="true"] .heroDrift { animation-play-state: paused; }
 @keyframes h-drift {
-  from { transform: translate3d(0, 0, 0) scale(1); }
-  to { transform: translate3d(0, -14px, 0) scale(1.04); }
+  from { transform: scale(1.2) translate3d(0, 0, 0); }
+  to { transform: scale(1.25) translate3d(0, -6px, 0); }
 }
-.heroPoster.heroPoster, .heroVideo { inline-size: 100%; block-size: 100%; object-fit: contain; }
-.heroVideo { position: absolute; inset: 0; object-fit: cover; opacity: 0; transition: opacity 0.6s var(--mk-ease-standard); }
+.heroPoster.heroPoster, .heroVideo { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; object-fit: cover; }
+.heroVideo { opacity: 0; transition: opacity 0.6s var(--mk-ease-standard); }
 .heroVideo[data-ready="true"] { opacity: 1; }
+.heroProps { position: absolute; inset: 0; pointer-events: none; }
+.heroProp {
+  position: absolute;
+  inset-block-start: var(--y);
+  inset-inline-start: var(--x);
+  inline-size: var(--w);
+  translate: -50% -50%;
+  filter: drop-shadow(0 28px 22px rgba(0, 0, 0, 0.55));
+}
+:global([dir="rtl"]) .heroProp { translate: 50% -50%; }
+.heroProp[data-depth="-1"] { filter: drop-shadow(0 18px 16px rgba(0, 0, 0, 0.5)) brightness(0.82) blur(0.4px); }
+.heroProp img { inline-size: 100%; block-size: auto; display: block; }
 .heroScrim {
   position: absolute;
   inset: 0;
   z-index: -1;
   background:
-    linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.25) 45%, transparent 70%),
-    linear-gradient(to left, transparent 40%, rgba(0, 0, 0, 0.55));
+    linear-gradient(to top, rgba(0, 0, 0, 0.55) 0%, transparent 38%),
+    linear-gradient(to left, transparent 35%, rgba(0, 0, 0, 0.72) 75%);
   pointer-events: none;
 }
 :global([dir="rtl"]) .heroScrim {
   background:
-    linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.25) 45%, transparent 70%),
-    linear-gradient(to right, transparent 40%, rgba(0, 0, 0, 0.55));
+    linear-gradient(to top, rgba(0, 0, 0, 0.55) 0%, transparent 38%),
+    linear-gradient(to right, transparent 35%, rgba(0, 0, 0, 0.72) 75%);
 }
-.heroCopy { position: relative; display: grid; gap: 24px; max-inline-size: 40rem; }
-@media (min-width: 1024px) { .heroCopy { gap: 32px; } }
+.heroCopy { position: relative; display: grid; max-inline-size: 40rem; }
 .heroTitles :is(h1, p) { max-inline-size: 7.2em; }
 .heroTitles { display: grid; }
 .heroTitles > * { grid-area: 1 / 1; }
 .heroTitle { transition: opacity 0.5s var(--mk-ease-standard), visibility 0s linear 0.5s; }
 .heroTitle[data-active="false"] { opacity: 0; visibility: hidden; }
 .heroTitle[data-active="true"] { opacity: 1; visibility: visible; transition: opacity 0.5s var(--mk-ease-standard); }
-.heroLead { margin: 0; max-inline-size: 26.25rem; font-size: 1.125rem; line-height: 1.3; color: #fff; }
-@media (min-width: 768px) { .heroLead { font-size: 1.5rem; } }
-.heroControl { position: absolute; inset-block-end: calc(var(--h-sheet-r) + 24px); inset-inline-end: var(--mk-gutter, 16px); }
+.heroLead.heroLead { max-inline-size: 26.25rem; font-size: 1.125rem; line-height: 1.3; color: #fff; }
+@media (min-width: 768px) { .heroLead.heroLead { font-size: 1.5rem; } }
+/* While the essential-cookies notice is up (first visit), the hero copy and the pause control sit
+   above it, so the notice never covers the primary CTA (WCAG 2.4.11). The notice is in the
+   server HTML (hidden by an inline script once acknowledged), so this applies from first paint. */
+/* 6.5rem = the notice's own height plus its 16px offset (its card is 1 to 3 lines tall). */
+:global(html:has([data-cookie-notice]:not([style*="none"]))) .heroSheet.heroSheet { padding-block-end: calc(var(--mk-section-y-lg) + 6.5rem); }
+.heroControl.heroControl { position: absolute; inset-block-end: calc(var(--mk-sheet-overlap) + var(--mk-grid-gap)); inset-inline-end: var(--mk-gutter); }
 @media (max-width: 767px) {
-  .hero { align-items: stretch; padding-block: 24px calc(var(--h-sheet-r) + 40px); }
+  .hero { align-items: stretch; }
   .heroWrap { display: grid; }
   .heroCopy { grid-template-rows: auto 1fr auto; }
   .heroLead { align-self: end; }
   .heroTitles.heroTitles :is(h1, p) { max-inline-size: 6em; }
-  .heroStage { inset-block: 28% 34%; inset-inline: 4%; inline-size: auto; }
-  .heroControl { inset-block-start: calc(var(--mk-header-h, 64px) + 16px); inset-block-end: auto; }
+  .heroStage { inset-block: 18% 30%; inset-inline: -40%; inline-size: auto; }
+  .heroProp[data-phone="false"] { display: none; }
+  .heroProp { --x: 78% !important; --y: 52% !important; --w: 26% !important; }
+  .heroScrim, :global([dir="rtl"]) .heroScrim { background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.75) 30%, rgba(0, 0, 0, 0) 52%, rgba(0, 0, 0, 0.35) 100%); }
+  .heroControl.heroControl { inset-block-start: calc(var(--mk-header-h) + var(--mk-stack-title-sub)); inset-block-end: auto; }
 }
 
 /* ───────── 2. Statement + rail ───────── */
-.statement { margin: 0; font-size: var(--mk-fs-56); line-height: 1.12; font-weight: var(--mk-fw-heading); text-wrap: pretty; }
 .statementRest { color: var(--h-dim); }
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
@@ -154,14 +158,12 @@
 }
 @keyframes h-fill { to { background-position: 0 0; } }
 @keyframes h-fill-rtl { to { background-position: 100% 0; } }
-.rail { margin-block-start: 40px; }
-.railItem { margin: 0; display: grid; gap: 12px; inline-size: 300px; }
-@media (max-width: 767px) { .railItem { inline-size: 200px; } }
-.railCard { overflow: hidden; border-radius: 12px; aspect-ratio: 4 / 5; background: #111; }
+.railItem { margin: 0; display: grid; gap: var(--mk-grid-gap-tight); inline-size: 360px; }
+@media (max-width: 767px) { .railItem { inline-size: 240px; } }
+.railCard { overflow: hidden; border-radius: 12px; aspect-ratio: 4 / 3; background: #111; }
 .railCard img { inline-size: 100%; block-size: 100%; object-fit: cover; display: block; transition: transform 0.5s var(--h-ease-media); }
 .railItem:hover .railCard img { transform: scale(1.03); }
 .railCaption { font-size: 0.875rem; color: #fff; opacity: 0.85; }
-.railNote { margin-block-start: 16px; }
 
 /* ───────── Floating UI bits ───────── */
 .chip {
@@ -218,38 +220,37 @@
 .promptGo { display: grid; place-items: center; inline-size: 32px; block-size: 32px; border-radius: 50%; background: #111; color: #fff; flex: none; }
 
 /* ───────── 3. Feature card ───────── */
-.featureCard { position: relative; display: grid; overflow: hidden; border-radius: 16px; background: linear-gradient(290.7deg, var(--h-green-card) 58.79%, #0e3b3b 100%); }
+/* kit SheetCard gives the card its tone, radius and token padding; this only sets the two columns. */
+.featureCard { position: relative; display: grid; gap: var(--mk-grid-gap); }
 @media (min-width: 1024px) { .featureCard { grid-template-columns: 1fr 1fr; min-block-size: 525px; align-items: end; } }
-.featureCopy { position: relative; z-index: 1; display: grid; gap: 16px; padding: 32px 24px; }
-@media (min-width: 1024px) { .featureCopy { padding: 64px; } }
-.featureCopy .body { color: var(--h-muted-green); max-inline-size: 26rem; }
 .featureVisual { position: relative; min-block-size: 340px; }
 @media (min-width: 1024px) { .featureVisual { align-self: stretch; } }
-.featureImg.featureImg { position: absolute; inset-block-start: 6%; inset-inline-start: 50%; translate: -50% 0; inline-size: min(62%, 340px); block-size: auto; filter: drop-shadow(0 30px 40px rgba(0, 0, 0, 0.55)); }
+.featureImg.featureImg { position: absolute; inset-block-start: 6%; inset-inline-start: 50%; translate: -50% 0; inline-size: min(84%, 460px); block-size: auto; filter: drop-shadow(0 30px 40px rgba(0, 0, 0, 0.55)); }
 
 /* ───────── 4. 1:2:1 trio ───────── */
-.trio { display: grid; gap: 24px; margin: 0; padding: 0; list-style: none; }
-@media (min-width: 1024px) { .trio { grid-template-columns: 1fr 2fr 1fr; } }
-.mediaCard { position: relative; display: flex; flex-direction: column; min-inline-size: 0; }
+.trio { list-style: none; margin: 0; padding: 0; }
+/* A card: media, then its title and body one grid gap below (kit Body sits under the title). */
+.mediaCard { position: relative; display: flex; flex-direction: column; gap: var(--mk-grid-gap); min-inline-size: 0; }
 .mediaFrame { position: relative; overflow: hidden; border-radius: 12px; aspect-ratio: 303 / 400; background: linear-gradient(170deg, #0c1d20, #050b0c); }
 .mediaFrame img { inline-size: 100%; block-size: 100%; object-fit: cover; display: block; transition: transform 0.5s var(--h-ease-media); }
 .mediaCard:hover .mediaFrame img { transform: scale(1.03); }
-.mediaFrame[data-pad="true"] { display: grid; place-items: center; padding: 16px; }
-.uiShot.uiShot { block-size: auto; max-block-size: 100%; object-fit: contain; filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.5)); }
-.mediaFrame[data-orbit="true"] { display: grid; place-items: center; aspect-ratio: auto; min-block-size: 420px; }
-@media (min-width: 1024px) { .trio .mediaFrame { aspect-ratio: auto; block-size: 420px; } }
+.floatUi.floatUi { position: absolute; inset-block-end: 6%; inset-inline: 6%; inline-size: 88%; block-size: auto; object-fit: contain; filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.45)); transition: none; }
+.floatUiCard.floatUiCard { inline-size: 76%; inset-inline-start: auto; border-radius: 10px; }
+.mediaCard:hover .floatUi { transform: none; }
+.mediaFrame[data-orbit="true"] { display: grid; place-items: center; aspect-ratio: auto; min-block-size: 470px; }
+@media (min-width: 1024px) { .trio .mediaFrame { aspect-ratio: auto; block-size: 470px; } }
 .orbitGlow { position: absolute; inset: 10%; border-radius: 50%; background: radial-gradient(closest-side, rgba(21, 112, 118, 0.55), transparent); }
 .orbit { position: relative; inline-size: 100%; }
 .hub { display: grid; justify-items: center; gap: 2px; inline-size: 72%; font-size: 0.8125rem; font-weight: 600; }
 .hub img { inline-size: 100%; block-size: auto; }
-.mediaCaption { padding-block: 24px 0; max-inline-size: 65ch; }
-@media (min-width: 640px) { .mediaCaption { padding-block-start: 32px; } }
 
 /* ───────── 5. Delivery map card ───────── */
 .mapCard { position: relative; overflow: hidden; border-radius: 12px; background: var(--h-green-card); display: grid; }
 @media (min-width: 1024px) { .mapCard { min-block-size: 596px; grid-template-rows: 1fr auto; } }
 .mapStage { position: relative; min-block-size: 380px; }
 .mapGlow { position: absolute; border-radius: 50%; background: radial-gradient(closest-side, rgba(21, 112, 118, 0.6), transparent); pointer-events: none; }
+.mapGlow[data-at="start"] { inline-size: 540px; block-size: 540px; inset-block-start: -120px; inset-inline-start: -160px; }
+.mapGlow[data-at="end"] { inline-size: 480px; block-size: 420px; inset-block-end: -140px; inset-inline-end: -80px; opacity: 0.6; }
 .mapDots {
   position: absolute;
   inset-block-start: 6%;
@@ -288,40 +289,22 @@
 .orderImg.orderImg { inline-size: 100%; block-size: 150px; object-fit: cover; border-radius: 8px; }
 .orderBtn { margin-block-start: 6px; padding: 8px; border-radius: 8px; background: var(--h-green-card); color: #fff; text-align: center; font-weight: 600; }
 .zoneChip { inset-block-start: var(--t); inset-inline-start: var(--s); padding: 8px 12px; font-size: 0.8125rem; }
-.mapCaption { position: relative; padding: 24px; display: grid; gap: 8px; }
-.mapCaption .body { color: var(--h-muted-green); max-inline-size: 41rem; }
-@media (min-width: 1024px) { .mapCaption { padding: 32px 64px 48px; } }
+.mapCaption { position: relative; padding: var(--mk-grid-gap) var(--mk-grid-gap) var(--mk-stack-head-content); }
+@media (min-width: 1024px) { .mapCaption { padding: var(--mk-stack-head-content) var(--mk-section-y) var(--mk-section-y); } }
 
-/* ───────── 6. For every business: snap rail on phones ───────── */
-.anyone {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 82%;
-  gap: 16px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  overscroll-behavior-x: contain;
-  scrollbar-width: none;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.anyone > li { scroll-snap-align: start; }
-@media (min-width: 768px) { .anyone { grid-auto-flow: row; grid-template-columns: repeat(3, 1fr); overflow: visible; } }
-.anyone .mediaFrame { aspect-ratio: 409 / 300; }
+/* ───────── 6. For every business ───────── */
+.mediaFrame[data-ratio="wide"] { aspect-ratio: 409 / 300; }
 .sampleTag { position: absolute; inset-block-end: 10px; inset-inline-start: 10px; padding: 4px 10px; border-radius: 9999px; background: rgba(0, 0, 0, 0.7); color: #fff; font-size: 0.75rem; line-height: 1.4; }
-.centerRow { display: flex; justify-content: center; margin-block-start: 48px; }
 
 /* ───────── 7. Violet designer band ───────── */
-.duo { display: grid; gap: 24px; }
-@media (min-width: 1024px) { .duo { grid-template-columns: 2fr 1fr; } }
 .darkCard { position: relative; display: grid; grid-template-rows: 1fr auto; overflow: hidden; border-radius: 12px; background: #020a08; min-block-size: 440px; }
 @media (min-width: 1024px) { .darkCard { min-block-size: 517px; } }
 .darkCardMedia { position: relative; overflow: hidden; min-block-size: 300px; }
 .darkCardShot.darkCardShot { position: absolute; inset-block-start: 24px; inset-inline: 24px; inline-size: calc(100% - 48px); block-size: auto; border-radius: 10px; opacity: 0.9; transition: transform 0.5s var(--h-ease-media); }
 .darkCardCut.darkCardCut { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; object-fit: contain; padding: 10%; transition: transform 0.5s var(--h-ease-media); }
 .darkCard:hover :is(.darkCardShot, .darkCardCut) { transform: scale(1.03); }
-.darkCardBody { padding: 24px 32px 32px; display: grid; gap: 4px; }
+.loopCard.loopCard { position: absolute; inset: 0; border-radius: 0; aspect-ratio: auto; background: #1a1816; }
+.darkCardBody { padding: var(--mk-grid-gap) var(--mk-stack-head-content) var(--mk-stack-head-content); }
 .violetGlow { position: absolute; inset: 0; background: radial-gradient(50% 60% at 50% 40%, rgba(120, 80, 255, 0.45), transparent 70%); animation: h-glow 8s linear infinite; }
 .sparkle { color: #b9a6ff; flex: none; animation: h-sparkle 8s linear infinite; }
 @keyframes h-sparkle { 0%, 80%, 100% { transform: scale(1) rotate(0); } 88% { transform: scale(1.25) rotate(20deg); } }
@@ -344,18 +327,19 @@
 .promptDark .promptGo { background: #5b3fff; }
 
 /* ───────── 8. Catalogue wall ───────── */
-.wall { position: relative; overflow: hidden; padding-block: 64px; min-block-size: 680px; display: grid; align-items: start; }
+.wallSheet.wallSheet { overflow: hidden; }
+.wall { position: static; min-block-size: 480px; display: grid; align-items: start; }
 .wallRows {
   position: absolute;
-  inset: 40% 0 0;
+  inset: 50% 0 0;
   display: grid;
   align-content: start;
-  gap: 10px;
-  padding-block-end: 24px;
+  gap: var(--mk-grid-gap-tight);
+  padding-block-end: var(--mk-grid-gap);
   mask-image: linear-gradient(to bottom, transparent 0%, #000 30%, #000 80%, transparent 100%);
   opacity: 0.9;
 }
-.wallRow { display: flex; gap: 10px; inline-size: max-content; margin: 0; padding: 0; list-style: none; animation: h-scroll-x var(--dur, 90s) linear infinite; }
+.wallRow { display: flex; gap: var(--mk-grid-gap-tight); inline-size: max-content; margin: 0; padding: 0; list-style: none; animation: h-scroll-x var(--dur, 90s) linear infinite; }
 .wallRow:nth-child(even) { animation-direction: reverse; }
 :global([dir="rtl"]) .wallRow { animation-name: h-scroll-x-rtl; }
 @keyframes h-scroll-x { to { transform: translate3d(-50%, 0, 0); } }
@@ -363,7 +347,7 @@
 .tile { inline-size: 56px; block-size: 56px; border-radius: 14px; display: grid; place-items: center; background: var(--tone, #e6e6e3); box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.12); }
 @media (min-width: 1024px) { .tile { inline-size: 68px; block-size: 68px; border-radius: 17px; } }
 .tile img { inline-size: 80%; block-size: 80%; object-fit: contain; }
-.wallCopy { position: relative; z-index: 1; display: grid; gap: 16px; max-inline-size: 38rem; padding-block-end: 24px; }
+.wallCopy { position: relative; z-index: 1; max-inline-size: 38rem; }
 .wallCopy .body { color: var(--h-muted-soft); }
 .wallControl.wallControl { position: absolute; inset-block-end: 16px; inset-inline-end: var(--mk-gutter, 16px); z-index: 2; }
 
@@ -372,7 +356,7 @@
 @media (min-width: 768px) { .navyHead .body { font-size: 1.25rem; line-height: 1.4; } }
 .navyPanel { position: relative; overflow: hidden; border-radius: 16px; background: var(--h-navy-card); min-block-size: 360px; display: grid; place-items: center; }
 .navyGlow { position: absolute; inset: -20% 10% auto; block-size: 500px; border-radius: 50%; background: radial-gradient(closest-side, rgba(18, 96, 255, 0.35), transparent); }
-.navyImg.navyImg { position: relative; inline-size: min(44%, 400px); block-size: auto; filter: drop-shadow(0 40px 60px rgba(0, 0, 0, 0.7)); }
+.navyImg.navyImg { position: relative; inline-size: min(60%, 520px); block-size: auto; filter: drop-shadow(0 40px 60px rgba(0, 0, 0, 0.7)); }
 .finishList { list-style: none; margin: 0; padding: 0; }
 .finishChip {
   position: absolute;
@@ -391,10 +375,6 @@
 @media (max-width: 767px) { .finishChip:nth-child(n + 6) { display: none; } }
 
 /* ───────── 10. Green band ───────── */
-.greenHead { text-align: center; display: grid; justify-items: center; padding-block: 72px 56px; }
-@media (min-width: 1024px) { .greenHead { padding-block: 128px 80px; } }
-.split { display: grid; gap: 48px; align-items: center; }
-@media (min-width: 1024px) { .split { grid-template-columns: 1fr 1fr; gap: 40px; } }
 .splitVisual { position: relative; min-block-size: 460px; }
 .receipt {
   position: absolute;
@@ -434,14 +414,10 @@
   animation-delay: var(--dl, 0s);
 }
 .thumb img { inline-size: 92%; block-size: 92%; object-fit: contain; }
-.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 32px 24px; margin: 32px 0 0; padding: 0; list-style: none; }
-.stat { padding-block-start: 8px; border-block-start: 0.5px solid #11352d; }
-.rule { margin: 32px 0 0; padding-inline-start: 18px; border-inline-start: 2px solid var(--mk-green); font-size: 1rem; line-height: 1.4; color: #99b3ad; max-inline-size: 40rem; }
+.stat { padding-block-start: calc(var(--mk-stack-title-sub) / 2); border-block-start: 0.5px solid #11352d; }
+.rule { margin: 0; padding-inline-start: var(--mk-stack-title-sub); border-inline-start: 2px solid var(--mk-green); font-size: 1rem; line-height: 1.4; color: #99b3ad; max-inline-size: 40rem; }
 @media (min-width: 768px) { .rule { font-size: 1.125rem; } }
-.footnote { margin: 24px 0 0; font-size: 0.75rem; line-height: 1.5; color: #99b3ad; }
-.secure { padding-block: 72px 140px; }
-@media (min-width: 1024px) { .secure { padding-block: 96px 200px; } }
-.secure .body { color: #99b3ad; max-inline-size: 26rem; margin-block-start: 16px; }
+.footnote { margin: 0; font-size: 0.75rem; line-height: 1.5; color: #99b3ad; }
 .globe {
   position: absolute;
   inset-block-start: 50%;
@@ -466,14 +442,12 @@
 .payChip { padding: 8px 14px; font-size: 0.875rem; font-weight: 600; }
 
 /* ───────── 11. Steps (kit Steps; two staggered photos per step, as on the reference) ───────── */
-.steps { align-items: center; }
-.stepPair { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 24px; align-items: start; }
+.stepPair { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1fr; gap: var(--mk-grid-gap); padding: var(--mk-grid-gap); align-items: start; }
 .stepImg { position: relative; aspect-ratio: 288 / 384; border-radius: 12px; overflow: hidden; background: #0c1416; }
 .stepImg:nth-child(2) { margin-block-start: 12%; }
 .stepImg img { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; object-fit: cover; }
 .stepImg[data-fit="contain"] { background: linear-gradient(170deg, #102a2c, #050b0c); }
 .stepImg[data-fit="contain"] img { object-fit: contain; padding: 8%; }
-.stepsCta.stepsCta { margin-block-start: 48px; }
 
 /* Reduced motion: a calm static page with the same content (WCAG 2.3.3). */
 @media (prefers-reduced-motion: reduce) {

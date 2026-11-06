@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect } from "react";
 import { useI18n } from "@/i18n/client";
+import { LostLinks } from "./LostLinks";
 import styles from "./not-found.module.css";
 
 /**
@@ -21,18 +21,18 @@ export default function LocaleError({ error, reset }: { error: Error & { digest?
       <main id="main" className={styles.main} tabIndex={-1}>
         <section className={styles.hero} role="alert" aria-labelledby="locale-error-title">
           <div className={styles.inner}>
-            <h1 id="locale-error-title" className={styles.title}>
-              {t("store.states.errorTitle")}
-            </h1>
-            <p className={styles.lead}>{t("store.states.errorBody")}</p>
-            <div className={styles.actions}>
-              <button type="button" className={styles.pill} onClick={() => reset()}>
-                {t("store.states.retry")}
-              </button>
-              <Link href={`/${locale}`} className={`${styles.pill} ${styles.outline}`}>
-                {t("common.goHome")}
-              </Link>
+            <div>
+              <h1 id="locale-error-title" className={styles.title}>
+                {t("store.states.errorTitle")}
+              </h1>
+              <p className={styles.lead}>{t("store.states.errorBody")}</p>
             </div>
+            <LostLinks
+              links={[
+                { label: t("store.states.retry"), onClick: () => reset() },
+                { label: t("common.goHome"), href: `/${locale}` },
+              ]}
+            />
           </div>
         </section>
       </main>

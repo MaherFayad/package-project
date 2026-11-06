@@ -62,22 +62,36 @@
   --mk-rise: 24px;
   --mk-press: 0.97;
 
-  /* ── Layout ────────────────────────────────────────────────── */
-  --mk-container: 1280px;
+  /* ── Layout and spacing (section 7 of the spec: measured, binding). Phone values here;
+     tablet (768 to 1023) and desktop (1024+) below. ── */
+  --mk-container: 1260px;
   --mk-gutter: 16px;
   --mk-header-h: 64px;
-  --mk-section-y: 80px;
-  --mk-sheet-overlap: 48px;
+  --mk-hero-top: var(--mk-header-h);
+  --mk-section-y: 40px;               /* standard band */
+  --mk-section-y-lg: 64px;            /* feature / sheet / violet and green bands */
+  --mk-section-y-xl: 80px;            /* closing CTA, after-hero statement */
+  --mk-stack-title-sub: 16px;         /* heading -> its subtitle */
+  --mk-stack-head-content: 32px;      /* heading block -> cards / media */
+  --mk-stack-head-content-lg: 48px;   /* big feature */
+  --mk-grid-gap: 16px;
+  --mk-grid-gap-tight: 12px;
+  --mk-grid-gap-bento: 16px;
+  --mk-radius-sheet: 32px;
+  --mk-sheet-overlap: var(--mk-radius-sheet); /* rule 3: the next sheet's top sits one radius into the band */
+  --mk-measure: 60ch;                 /* body line length (rule 5) */
+  --mk-intro-max: 760px;              /* centred section intros */
 
   /* ── Type (fluid). Measured desktop: 96/300, 64/330, 56/330, 44/330, 20/450, 16-18 ── */
   /* Inter first in both locales: it has no Arabic glyphs, so Arabic falls through to Noto, while
      digits and Latin words reuse Inter (preloaded) instead of fetching Noto's Latin subset. */
   --mk-font: var(--font-inter), var(--font-noto-arabic), "Noto Sans Arabic", -apple-system, "Segoe UI", Tahoma, sans-serif;
-  --mk-fs-hero: clamp(3.5rem, 1rem + 10.4vw, 11.25rem);  /* start-page giant 180 */
-  --mk-fs-96: clamp(3rem, 1.6rem + 5.6vw, 6rem);          /* h1: 48 phone -> 96 */
-  --mk-fs-64: clamp(2.25rem, 1.5rem + 3.2vw, 4rem);       /* h2 */
-  --mk-fs-56: clamp(2rem, 1.35rem + 2.8vw, 3.5rem);       /* h2 alt / h3 large */
-  --mk-fs-44: clamp(1.75rem, 1.3rem + 1.9vw, 2.75rem);    /* h3 */
+  --mk-fs-hero: clamp(3.5rem, 0.621rem + 11.81vw, 11.25rem);  /* start-page giant: 56px at 390, 180px from 1440 (spec section 7) */
+  /* Section 7 type steps: phone / tablet / desktop (set per breakpoint below). */
+  --mk-fs-96: 3.5rem;                 /* h1 hero: 56 / 72 / 96 */
+  --mk-fs-64: 2.25rem;                /* h2 page-closing: 36 / 48 / 64 */
+  --mk-fs-56: 2.25rem;                /* h2 section: 36 / 48 / 56 */
+  --mk-fs-44: 1.75rem;                /* h3: 28 / 36 / 44 */
   --mk-fs-20: 1.25rem;                                    /* card title */
   --mk-fs-18: 1.125rem;                                   /* lead */
   --mk-fs-16: 1rem;
@@ -105,13 +119,39 @@
   font-family: var(--mk-font);
 }
 @media (min-width: 768px) {
-  [data-mk][data-mk] { --mk-gutter: 32px; --mk-section-y: 112px; }
+  [data-mk][data-mk] {
+    --mk-gutter: 32px;
+    --mk-section-y: 56px;
+    --mk-section-y-lg: 80px;
+    --mk-section-y-xl: 96px;
+    --mk-stack-head-content-lg: 64px;
+    --mk-grid-gap: 24px;
+    --mk-grid-gap-tight: 16px;
+    --mk-grid-gap-bento: 24px;
+    --mk-radius-sheet: 40px;
+    --mk-fs-96: 4.5rem;
+    --mk-fs-64: 3rem;
+    --mk-fs-56: 3rem;
+    --mk-fs-44: 2.25rem;
+  }
 }
 @media (min-width: 1024px) {
-  [data-mk][data-mk] { --mk-header-h: 72px; }
-}
-@media (min-width: 1200px) {
-  [data-mk][data-mk] { --mk-gutter: 40px; --mk-section-y: 144px; }
+  [data-mk][data-mk] {
+    --mk-header-h: 72px;
+    /* Content box 1260 centred; at 1440 the gutter is 90px (shopify x=90). */
+    --mk-gutter: max(24px, (100vw - var(--mk-container)) / 2);
+    --mk-section-y: 64px;
+    --mk-section-y-lg: 100px;
+    --mk-section-y-xl: 128px;
+    --mk-stack-head-content: 40px;
+    --mk-stack-head-content-lg: 80px;
+    --mk-grid-gap-bento: 32px;
+    --mk-radius-sheet: 48px;
+    --mk-fs-96: 6rem;
+    --mk-fs-64: 4rem;
+    --mk-fs-56: 3.5rem;
+    --mk-fs-44: 2.75rem;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   [data-mk][data-mk] { --mk-rise: 0px; --mk-press: 1; }
@@ -149,4 +189,16 @@ html[data-mk-reduced][data-motion="on"] [data-reveal]:not([data-revealed]) {
 body:has([data-mk]) {
   --p-font-family-sans: var(--font-inter), var(--font-noto-arabic), "Segoe UI", Tahoma, sans-serif;
   font-family: var(--p-font-family-sans);
+}
+
+/* Page-local decorative loops register with data-mk-motion (on the element or an ancestor). A
+   MotionScope with `global` pauses every one of them on the page, wherever it sits (R6-AX-15). */
+html[data-mk-motion-paused] [data-mk-motion],
+html[data-mk-motion-paused] [data-mk-motion] *,
+html[data-mk-motion-paused] [data-mk-motion]::before,
+html[data-mk-motion-paused] [data-mk-motion]::after,
+html[data-mk-motion-paused] [data-mk-motion] *::before,
+html[data-mk-motion-paused] [data-mk-motion] *::after { animation-play-state: paused !important; }
+@media (prefers-reduced-motion: reduce) {
+  [data-mk-motion], [data-mk-motion] *, [data-mk-motion]::before, [data-mk-motion]::after, [data-mk-motion] *::before, [data-mk-motion] *::after { animation: none !important; }
 }

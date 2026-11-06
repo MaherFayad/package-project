@@ -1,9 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect } from "react";
 import { useI18n } from "@/i18n/client";
-import styles from "@/components/marketing/marketing.module.css";
+import { LostState } from "@/components/marketing/restyle/LostState";
 
 /** Store-wide error boundary: friendly message + retry in the marketing language, never a stack trace. */
 export default function StoreError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
@@ -12,21 +11,16 @@ export default function StoreError({ error, reset }: { error: Error & { digest?:
     console.error(error);
   }, [error]);
   return (
-    <section className={`${styles.centerHero} ${styles.bandMint} ${styles.stateHero}`} role="alert" aria-labelledby="store-error-title">
-      <div className={`${styles.container} ${styles.narrow}`}>
-        <h1 id="store-error-title" className={styles.h2}>
-          {t("store.states.errorTitle")}
-        </h1>
-        <p className={styles.lead}>{t("store.states.errorBody")}</p>
-        <div className={`${styles.actions} ${styles.center}`}>
-          <button type="button" className={`${styles.pill} ${styles.pillLarge}`} onClick={() => reset()}>
-            {t("store.states.retry")}
-          </button>
-          <Link href={`/${locale}`} className={`${styles.pill} ${styles.pillOutline} ${styles.pillLarge}`}>
-            {t("common.goHome")}
-          </Link>
-        </div>
-      </div>
-    </section>
+    <LostState
+      role="alert"
+      titleId="store-error-title"
+      title={t("store.states.errorTitle")}
+      body={t("store.states.errorBody")}
+      links={[
+        { label: t("store.states.retry"), onClick: () => reset() },
+        { label: t("common.goHome"), href: `/${locale}` },
+        { label: t("nav.catalog"), href: `/${locale}/catalog` },
+      ]}
+    />
   );
 }

@@ -1,3 +1,4 @@
+import { requireAdminPage } from "@/lib/auth/session";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { getT, toLocale } from "@/i18n";
@@ -10,6 +11,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 }
 
 export default async function AdminPayoutsPage({ params }: { params: Promise<{ locale: string }> }) {
+  await requireAdminPage(); // R6-SEC-09: the layout redirect does not stop this page rendering
   const locale = toLocale((await params).locale);
   const rows = await loadPayoutRows(locale);
   return (

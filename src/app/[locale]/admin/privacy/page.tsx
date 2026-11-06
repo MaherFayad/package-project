@@ -1,3 +1,4 @@
+import { requireAdminPage } from "@/lib/auth/session";
 import type { Metadata } from "next";
 import { FileLock2 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
@@ -31,6 +32,7 @@ function statusTone(status: string) {
 }
 
 export default async function AdminPrivacyPage({ params }: { params: Promise<{ locale: string }> }) {
+  await requireAdminPage(); // R6-SEC-09: the layout redirect does not stop this page rendering
   const locale: Locale = toLocale((await params).locale);
   const t = getT(locale);
   const rows = await loadDataRequests();

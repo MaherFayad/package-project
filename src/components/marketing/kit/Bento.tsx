@@ -4,7 +4,7 @@ import styles from "./kit.module.css";
 /** Bento grid: `cols` columns from 768px (1 column on phones), rows at least `row` px. */
 export function Bento({ cols = 3, row = 280, as: Tag = "div", className, children }: { cols?: 2 | 3 | 4; row?: number; as?: ElementType; className?: string; children: ReactNode }) {
   return (
-    <Tag className={[styles.bento, className].filter(Boolean).join(" ")} style={{ "--bento-cols": cols, "--bento-row": `${row}px` } as CSSProperties}>
+    <Tag className={[styles.bento, className].filter(Boolean).join(" ")} data-mk-grid="bento" style={{ "--bento-cols": cols, "--bento-row": `${row}px` } as CSSProperties}>
       {children}
     </Tag>
   );

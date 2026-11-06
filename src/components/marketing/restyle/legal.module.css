@@ -1,0 +1,25 @@
+/* R6 restyle, legal pages (TOC with the active-section rule, 720px article). Reads the kit tokens and the --rs-* values set by .page in restyle.module.css. */
+/* ---------- Legal ---------- */
+.draft { display: inline-flex; align-items: center; gap: 8px; margin-block-start: var(--mk-stack-head-content); padding: 8px 16px; border: 1px solid var(--mk-line-dark); border-radius: var(--mk-radius-pill); font-size: 0.9375rem; }
+.legalGrid { display: grid; gap: var(--mk-stack-head-content); }
+@media (min-width: 1024px) {
+  .legalGrid { grid-template-columns: 240px minmax(0, 720px); justify-content: center; gap: var(--mk-stack-head-content-lg); }
+  .toc { position: sticky; inset-block-start: calc(var(--mk-header-h) + var(--mk-stack-head-content)); align-self: start; max-block-size: calc(100dvh - 120px); overflow: auto; }
+}
+.toc { display: grid; gap: var(--mk-stack-head-content); font-size: 0.9375rem; }
+.toc h2 { margin: 0 0 var(--mk-grid-gap-tight); font-size: 1rem; font-weight: 550; }
+.toc ul { margin: 0; padding: 0; list-style: none; border-inline-start: 1px solid var(--mk-line, var(--mk-line-light)); }
+.toc a { position: relative; display: block; padding: 8px 16px; color: var(--mk-muted, var(--mk-on-light-muted)); line-height: 1.35; text-decoration: none; transition: color var(--mk-dur-2) var(--mk-ease-standard); }
+.toc a:hover { color: var(--rs-ink); }
+.toc a[aria-current]::before,
+.toc a[data-active]::before { content: ""; position: absolute; inset-block: 6px; inset-inline-start: -1.5px; inline-size: 2px; background: var(--rs-ink); }
+.toc a[aria-current],
+.toc a[data-active] { color: var(--rs-ink); font-weight: 550; }
+@media (max-width: 1023px) { .toc { padding: var(--mk-grid-gap); border-radius: var(--rs-r-tile); background: var(--rs-sheet); } }
+.prose { min-inline-size: 0; font-size: var(--mk-fs-18); line-height: 1.55; color: rgba(0, 0, 0, 0.86); }
+.prose > p:first-child { font-size: var(--mk-fs-20); color: var(--rs-ink); }
+.prose section { scroll-margin-block-start: calc(var(--mk-header-h) + var(--mk-grid-gap)); }
+.prose h2 { margin: var(--mk-stack-head-content-lg) 0 var(--mk-stack-title-sub); font-size: clamp(1.75rem, 1.5rem + 0.6vw, 2.125rem); font-weight: var(--mk-fw-heading); line-height: 1.15; color: var(--rs-ink); }
+.prose h2:lang(ar) { font-weight: 450; line-height: 1.4; }
+.prose p { margin: 0 0 var(--mk-stack-title-sub); text-wrap: pretty; }
+

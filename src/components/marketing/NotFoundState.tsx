@@ -1,15 +1,14 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect } from "react";
 import { useI18n } from "@/i18n/client";
-import styles from "./marketing.module.css";
+import { LostState } from "./restyle/LostState";
 
 /**
- * 404 content in the marketing language (CR-04). Rendered by the not-found boundaries that sit
- * inside MarketingShell ([...missing] and (store)), so an unknown URL keeps the header,
- * footer and the page language. The not-found render keeps the layout's default <title>, so
- * this sets the document title to "Page not found" (WCAG 2.4.2).
+ * 404 content in the marketing language (CR-04, R6 restyle). Rendered by the not-found
+ * boundaries that sit inside MarketingShell ([...missing], (store) and the detail segments), so an
+ * unknown URL keeps the header, footer and the page language. The not-found render keeps the
+ * layout's default <title>, so this sets the document title to "Page not found" (WCAG 2.4.2).
  */
 export function NotFoundState() {
   const { t, locale } = useI18n();
@@ -19,21 +18,16 @@ export function NotFoundState() {
     document.title = title;
   }, [title]);
   return (
-    <section className={`${styles.centerHero} ${styles.bandMint} ${styles.stateHero}`} aria-labelledby="not-found-title">
-      <div className={`${styles.container} ${styles.narrow}`}>
-        <h1 id="not-found-title" className={styles.h2}>
-          {t("common.notFoundTitle")}
-        </h1>
-        <p className={styles.lead}>{t("common.notFoundBody")}</p>
-        <div className={`${styles.actions} ${styles.center}`}>
-          <Link href={base} className={`${styles.pill} ${styles.pillLarge}`}>
-            {t("common.goHome")}
-          </Link>
-          <Link href={`${base}/catalog`} className={`${styles.pill} ${styles.pillOutline} ${styles.pillLarge}`}>
-            {t("nav.catalog")}
-          </Link>
-        </div>
-      </div>
-    </section>
+    <LostState
+      code="404"
+      titleId="not-found-title"
+      title={t("common.notFoundTitle")}
+      body={t("common.notFoundBody")}
+      links={[
+        { label: t("common.goHome"), href: base },
+        { label: t("nav.catalog"), href: `${base}/catalog` },
+        { label: t("nav.design"), href: `${base}/design` },
+      ]}
+    />
   );
 }

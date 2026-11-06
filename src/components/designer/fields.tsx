@@ -6,6 +6,8 @@ import { InlineStack } from "@/components/ui/Stack";
 import { Text } from "@/components/ui/Text";
 import { TextField } from "@/components/ui/TextField";
 import { Button } from "@/components/ui/Button";
+import { useUi } from "@/components/ui/AppProvider";
+import { fill } from "@/components/ui/strings";
 import { useI18n } from "@/i18n/client";
 import { luminance as luminanceOf, normalizeHex } from "./lib/color";
 import { useBrandColors } from "./BrandColors";
@@ -42,13 +44,28 @@ export function NumberField({
   helpText?: ReactNode;
   disabled?: boolean;
 }) {
+  const { s } = useUi();
   const fmt = (n: number) => String(Math.round(n * 10 ** decimals) / 10 ** decimals);
   const [text, setText] = useState(fmt(value));
   const editing = useRef(false);
+  // a11y R6-AX-04 (WCAG 3.3.1): a value that is not a number or is out of range used to be
+  // dropped without a word (the field snapped back on blur). Now it stays and says why.
+  const [left, setLeft] = useState(false);
   useEffect(() => {
-    if (!editing.current) setText(fmt(value));
+    if (!editing.current) {
+      setText(fmt(value));
+      setLeft(false);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
+  const parse = (v: string) => parseMmInput(v.trim().startsWith("-") ? v.trim().slice(1) : v) * (v.trim().startsWith("-") ? -1 : 1);
+  const n = parse(text);
+  const empty = text.trim() === "";
+  const nan = !empty && !Number.isFinite(n);
+  const over = Number.isFinite(n) && max !== undefined && n > max;
+  const under = Number.isFinite(n) && min !== undefined && n < min;
+  const range = fill(s.numberRange, { min: min ?? "", max: max ?? "" });
+  const own = nan ? s.numberInvalid : over || (left && (under || empty)) ? (min !== undefined && max !== undefined ? range : s.numberInvalid) : undefined;
   return (
     <TextField
       label={label}
@@ -73,17 +90,19 @@ export function NumberField({
       helpText={helpText}
       disabled={disabled}
       dir="ltr"
-      error={error}
+      error={error ?? own}
       onFocus={() => {
         editing.current = true;
       }}
       onBlur={() => {
         editing.current = false;
-        setText(fmt(value));
+        if (empty || nan || over || under) setLeft(true);
+        else setText(fmt(value));
       }}
       onChange={(v) => {
         setText(v);
-        const n = parseMmInput(v.trim().startsWith("-") ? v.trim().slice(1) : v) * (v.trim().startsWith("-") ? -1 : 1);
+        setLeft(false);
+        const n = parse(v);
         if (v.trim() !== "" && Number.isFinite(n) && (min === undefined || n >= min) && (max === undefined || n <= max)) onCommit(n);
       }}
     />

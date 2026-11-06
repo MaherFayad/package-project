@@ -124,6 +124,16 @@ export function buildPanelGeometry(model: DielineModel, panel: DielinePanel): Bu
     ...model.panels.filter((c) => c.parentId === panel.id && c.hinge && c.hingeKind !== "roll").map((c) => c.hinge!),
   ];
   const onCrease = (a: Pt, b: Pt) => creases.some((h) => onSegment(a, h) && onSegment(b, h));
+  // R6 (R5-3Q-A-03): a crease folded ~90° about the PRINTED surface (pivotDepth 0) closes its own
+  // t × t corner with the two printed faces; the crease side face of either panel then lies in the
+  // other panel's printed face and z-fights (a flickering band along every fold rim). Skip it, on
+  // the parent and on the child. Any other fold keeps its side face (the print wraps round it).
+  const square = (c: DielinePanel) => !c.pivotDepth && Math.abs(Math.abs(c.foldAngleClosed) - 90) <= 30;
+  const hidden: Segment[] = [
+    ...(panel.hinge && panel.hingeKind !== "roll" && square(panel) ? [panel.hinge] : []),
+    ...model.panels.filter((c) => c.parentId === panel.id && c.hinge && c.hingeKind !== "roll" && square(c)).map((c) => c.hinge!),
+  ];
+  const onHidden = (a: Pt, b: Pt) => hidden.some((h) => onSegment(a, h) && onSegment(b, h));
   // Rigid set-up boxes and composite tubes: the wrap / label turns over every rim, so no raw
   // board edge is visible anywhere; all outline edges take the printed outside (sheet UV).
   const family = STRUCTURE_FAMILY[model.structureCode];
@@ -148,7 +158,7 @@ export function buildPanelGeometry(model: DielineModel, panel: DielinePanel): Bu
       const e = new Vector3().subVectors(o[j], o[i]);
       const l = e.length();
       if (l < 1e-6) continue;
-      if (li === 0 && onRoll(loop[i], loop[j])) {
+      if (li === 0 && (onRoll(loop[i], loop[j]) || onHidden(loop[i], loop[j]))) {
         run += l;
         continue;
       }

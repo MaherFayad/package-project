@@ -25,6 +25,21 @@ export interface PulpModel {
 }
 
 export const PULP_WALL_MM = 1.6;
+/** Pocket profile u^1.6 up to LIP_START, then a rounded lip easing flat onto the rim by LIP_END. */
+const LIP_START = 0.82;
+const LIP_END = 1.12;
+function pocketProfile(u: number, end = LIP_END): number {
+  if (u <= LIP_START) return Math.pow(u, 1.6);
+  // cubic Hermite: value / slope of u^1.6 at LIP_START → 1 with zero slope at LIP_END (R5-3Q-E-08:
+  // the kink at the rim read as a jagged edge on the grid)
+  const h = Math.max(0.02, end - LIP_START);
+  const t = Math.min(1, (u - LIP_START) / h);
+  const v0 = Math.pow(LIP_START, 1.6);
+  const m0 = 1.6 * Math.pow(LIP_START, 0.6) * h;
+  const t2 = t * t;
+  const t3 = t2 * t;
+  return (2 * t3 - 3 * t2 + 1) * v0 + (t3 - 2 * t2 + t) * m0 + (-2 * t3 + 3 * t2) * 1;
+}
 export const PULP_RIM_MM = 6;
 
 export function buildPulp(dims: PulpDims, layout: PulpLayout, bleed = 3, safe = 3): PulpModel {
@@ -41,9 +56,11 @@ export function buildPulp(dims: PulpDims, layout: PulpLayout, bleed = 3, safe = 
   const rimY = layout.posts ? baseH * 0.7 : baseH;
   const baseHeight = (x: number, z: number) => {
     if (Math.abs(x) > dims.L / 2 + 1e-6 || Math.abs(z) > dims.W / 2 + 1e-6) return 0;
-    // Outer skirt slopes down to the table on the last 2 mm.
+    // Outer skirt: moulded pulp leaves the tool with a 3–5° draft (R5-3Q-E-08), so the skirt
+    // slopes in over rimY × tan 4° (at least 2 mm) instead of standing vertical.
     const edge = Math.min(dims.L / 2 - Math.abs(x), dims.W / 2 - Math.abs(z));
-    if (edge < 2) return rimY * Math.max(0, edge / 2);
+    const skirt = Math.max(2, rimY * Math.tan((4 * Math.PI) / 180));
+    if (edge < skirt) return rimY * Math.max(0, edge / skirt);
     // Nearest cell → bowl profile.
     const c = Math.floor((x + innerL / 2) / px);
     const r = Math.floor((z + innerW / 2) / pz);
@@ -52,7 +69,9 @@ export function buildPulp(dims: PulpDims, layout: PulpLayout, bleed = 3, safe = 
       const cx = -innerL / 2 + (c + 0.5) * px;
       const cz = -innerW / 2 + (r + 0.5) * pz;
       const d = Math.hypot(x - cx, z - cz);
-      if (d < rc) y = PULP_WALL_MM + (rimY - PULP_WALL_MM) * Math.pow(d / rc, 1.6);
+      // the lip may not run past the cell's own half pitch (it would step at the cell border)
+      const lipEnd = Math.min(LIP_END, Math.min(px, pz) / 2 / rc);
+      if (d < rc * lipEnd) y = PULP_WALL_MM + (rimY - PULP_WALL_MM) * pocketProfile(d / rc, lipEnd);
       // Posts between four cells (egg flats): cones rising to the full height.
       if (layout.posts) {
         const gx = Math.round((x + innerL / 2) / px);
@@ -88,10 +107,10 @@ export function lidHeight(m: PulpModel, x: Mm, z: Mm): Mm {
 }
 
 /** Grid budget: large export trays coarsen the step so the mesh stays light (cells are ≥ 25 mm). */
-export const PULP_MAX_GRID_VERTICES = 6000;
+export const PULP_MAX_GRID_VERTICES = 12000;
 
 /** Grid mesh of a height field over the footprint (planar top UVs: u along x, v along -z). */
-export function heightFieldMesh(m: PulpModel, part: "base" | "lid" = "base", stepMm = 2.5): MeshData {
+export function heightFieldMesh(m: PulpModel, part: "base" | "lid" = "base", stepMm = 1.6): MeshData {
   const step = Math.max(stepMm, Math.sqrt((m.dims.L * m.dims.W) / PULP_MAX_GRID_VERTICES));
   const nx = Math.max(8, Math.ceil(m.dims.L / step));
   const nz = Math.max(8, Math.ceil(m.dims.W / step));

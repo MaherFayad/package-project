@@ -99,7 +99,17 @@ export interface DielinePanel {
    * Root of an extra piece (telescope lid, partition strip, rigid-box lid). Its closed pose
    * in model space (column-major 4×4, mm) and the fold stage in which it moves there.
    */
-  assembly?: { matrix: number[]; stage: number; lift?: number };
+  assembly?: {
+    matrix: number[];
+    stage: number;
+    lift?: number;
+    /**
+     * Hinged piece (R5-3Q-E-07): the first half of its stage carries it from the sheet to its
+     * place opened `openDeg` about the hinge line (model space, mm, through `point` along
+     * `axis`), the second half swings it shut on that hinge, instead of an arc through the air.
+     */
+    hinge?: { point: [number, number, number]; axis: [number, number, number]; openDeg: number };
+  };
   /** Piece this panel belongs to (root id). Set by the engine. */
   pieceId?: string;
 }

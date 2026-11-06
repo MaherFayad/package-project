@@ -90,6 +90,11 @@ export interface VesselOption {
   tint?: string;
   /** Added by 3D engine (X-01): closure style the core kind cannot express ("CROWN" | "ROPP" | "CORK_CAPSULE" | "SPARKLING" | "POURER"). */
   closureStyle?: string;
+  /**
+   * Closure colour a new design starts with for this option (a ClosureColorCode, or "MATCH": the
+   * container's own material and colour). Default WHITE.
+   */
+  defaultColor?: string;
 }
 
 /** One flat print area of a container (label, sleeve, pouch panel, tube body). mm. */
