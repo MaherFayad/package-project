@@ -41,11 +41,11 @@ test("quote-only model: no 'Order this box' in designer, export, share, checkout
   await page.goto("/en/design/aseptic-brick-carton");
   await dismissCookies(page);
   const toolbar = page.getByRole("toolbar");
-  await expect(toolbar.getByRole("button", { name: "Request a quote" })).toBeVisible({ timeout: 30_000 });
+  await expect(toolbar.getByRole("button", { name: "Request a price" })).toBeVisible({ timeout: 30_000 });
   await expect(page.getByRole("button", { name: "Order this box" })).toHaveCount(0);
   await toolbarAction(page, "Export");
   const exp = page.getByRole("dialog", { name: "Download a mockup" });
-  await expect(exp.getByRole("button", { name: "Request a quote" })).toBeVisible();
+  await expect(exp.getByRole("button", { name: "Request a price" })).toBeVisible();
   await expect(exp.getByRole("button", { name: "Order this box" })).toHaveCount(0);
   await exp.getByRole("button", { name: "Cancel" }).click();
 
@@ -56,7 +56,7 @@ test("quote-only model: no 'Order this box' in designer, export, share, checkout
   await expect(link).toHaveValue(/\/en\/s\/[\w-]+$/, { timeout: 20_000 });
   const sharePath = new URL(await link.inputValue()).pathname;
 
-  // Another buyer opens the share page: model name, "Request a quote", "Design your own" opens the same model.
+  // Another buyer opens the share page: model name, "Request a price", "Design your own" opens the same model.
   const ctx = await browser.newContext({ baseURL });
   await signInAs(ctx, baseURL!, visitor.id);
   const v = await ctx.newPage();
@@ -65,7 +65,7 @@ test("quote-only model: no 'Order this box' in designer, export, share, checkout
   await expect(v.getByText("Aseptic brick carton").first()).toBeVisible();
   await expect(v.getByRole("link", { name: "Order this box" })).toHaveCount(0);
   await expect(v.getByRole("link", { name: "Design your own" })).toHaveAttribute("href", /\/en\/design\/aseptic-brick-carton/);
-  await v.getByRole("link", { name: "Request a quote" }).click();
+  await v.getByRole("link", { name: "Request a price" }).click();
 
   // Deep link: the visitor's copy keeps the model, so checkout is a quote request, not an order.
   await expect(v).toHaveURL(/\/en\/checkout\/[\w-]+$/, { timeout: 20_000 });
@@ -90,25 +90,25 @@ test("quote-only model: no 'Order this box' in designer, export, share, checkout
   await ctx.close();
 });
 
-test("special-gluing model no printer lists: 'Request a quote' once the price says so (R6-05)", async ({ page, baseURL }, info) => {
+test("special-gluing model no printer lists: 'Request a price' once the price says so (R6-05)", async ({ page, baseURL }, info) => {
   test.skip(info.project.name !== "desktop", "one designer session is enough");
   test.setTimeout(90_000);
   const owner = track(await createUser({ name: "E2E R6-05 owner" }));
   await signInAs(page.context(), baseURL!, owner.id);
   await page.goto("/en/design/fefco-0711-auto-bottom-rsc");
   await dismissCookies(page);
-  await expect(page.getByTestId("price-badge")).toContainText(/by quote/i, { timeout: 30_000 });
-  await expect(page.getByRole("toolbar").getByRole("button", { name: "Request a quote" })).toBeVisible();
+  await expect(page.getByTestId("price-badge")).toContainText(/price on request/i, { timeout: 30_000 });
+  await expect(page.getByRole("toolbar").getByRole("button", { name: "Request a price" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Order this box" })).toHaveCount(0);
   await toolbarAction(page, "Export");
   const exp = page.getByRole("dialog", { name: "Download a mockup" });
-  await expect(exp.getByRole("button", { name: "Request a quote" })).toBeVisible();
+  await expect(exp.getByRole("button", { name: "Request a price" })).toBeVisible();
   await exp.getByRole("button", { name: "Cancel" }).click();
   await toolbarAction(page, "Share");
   const link = page.getByRole("dialog", { name: "Share link" }).getByLabel("Link");
   await expect(link).toHaveValue(/\/en\/s\/[\w-]+$/, { timeout: 20_000 });
   await page.goto(new URL(await link.inputValue()).pathname);
-  await expect(page.getByRole("link", { name: "Request a quote" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Request a price" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Order this box" })).toHaveCount(0);
   await expect(page.getByText(/special gluing/).first()).toBeVisible();
   await db.auditLog.deleteMany({ where: { actorId: owner.id } });

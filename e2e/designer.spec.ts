@@ -62,7 +62,7 @@ test("design a box, sign up at the price gate, share and export", async ({ page 
   await gate.getByLabel("Verification code").fill(code);
   const marketing = gate.getByRole("checkbox", { name: /offers|marketing|WhatsApp/i });
   if (await marketing.count()) await expect(marketing.first()).not.toBeChecked();
-  await gate.getByLabel(/I agree to the Terms/).check();
+  await gate.getByLabel(/I agree to the terms/i).check();
   await gate.getByRole("button", { name: "Verify and continue" }).click();
 
   const price = page.getByRole("dialog", { name: "Instant price" });

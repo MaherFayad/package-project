@@ -14,7 +14,7 @@ async function signIn(page: Page, lang: "en" | "ar" = "en") {
   await expect(page).toHaveURL(new RegExp(`/${lang}/login\\?next=`));
   const code = await sendOtp(page, phone);
   await page.getByLabel("Verification code").fill(code);
-  await page.getByLabel(/I agree to the Terms/).check();
+  await page.getByLabel(/I agree to the terms/i).check();
   await page.getByRole("button", { name: "Verify and continue" }).click();
   await expect(page).toHaveURL(new RegExp(`:\\d+/${lang}/orders$`));
 }
