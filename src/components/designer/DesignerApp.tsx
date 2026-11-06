@@ -99,6 +99,8 @@ export interface DesignerAppProps {
   locale: Locale;
   initialDoc: DesignDoc;
   initialDesignId: string | null;
+  /** Stored version of the loaded design (R10-R1: sent back as `baseUpdatedAt`). */
+  initialUpdatedAt?: string | null;
   initialUser: DesignerUser | null;
   presetsByCode: Partial<Record<StructureCode, DimsPreset[]>>;
   loadError: "notFound" | null;
@@ -163,7 +165,7 @@ export function DesignerApp(props: DesignerAppProps) {
   return <DesignerEditor {...props} />;
 }
 
-function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, loadError, resumeLocal, posterSrc }: DesignerAppProps) {
+function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt, initialUser, loadError, resumeLocal, posterSrc }: DesignerAppProps) {
   const { t } = useI18n();
   const router = useRouter();
   const toast = useToast();
@@ -272,6 +274,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
     if (initialDesignId && initialDesignId !== designIdRef.current) {
       dispatch({ type: "reset", value: initialDoc });
       savedDocRef.current = initialDoc;
+      baseRef.current = initialUpdatedAt ?? null;
       setDesignId(initialDesignId);
       designIdRef.current = initialDesignId;
       setSelectedId(null);
@@ -358,6 +361,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
   const retryDelay = useRef(10_000);
   const saveRef = useRef<() => Promise<string | null>>(async () => null);
   const tooLargeToldRef = useRef(false);
+  const baseRef = useRef<string | null>(initialUpdatedAt ?? null);
   // R10-03: two tabs on the same design. Each tab announces its saves on a BroadcastChannel; a tab
   // that hears another tab save the design it has open pauses its autosave and asks, instead of
   // silently overwriting the newer version (last writer won before).
@@ -392,7 +396,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
   );
 
   const saveToServer = useCallback(
-    async (opts: { thumbnail?: boolean } = {}): Promise<string | null> => {
+    async (opts: { thumbnail?: boolean; force?: boolean } = {}): Promise<string | null> => {
       if (inflight.current) await inflight.current.catch(() => null);
       const run = (async () => {
         const current = docRef.current;
@@ -407,9 +411,19 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
             /* the 3D view may not be ready; the thumbnail is optional */
           }
         }
-        const body = JSON.stringify({ doc: { ...current, id: undefined }, ...(thumbnail ? { thumbnail } : {}) });
+        // R10-R1: a PUT says which stored version it edits; the server refuses (409) when another
+        // device or tab saved since, unless the visitor chose "Keep this version" (force).
         const send = (id: string | null) =>
-          fetch(id ? `/api/designs/${encodeURIComponent(id)}` : "/api/designs", { method: id ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body });
+          fetch(id ? `/api/designs/${encodeURIComponent(id)}` : "/api/designs", {
+            method: id ? "PUT" : "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              doc: { ...current, id: undefined },
+              ...(thumbnail ? { thumbnail } : {}),
+              ...(id && baseRef.current ? { baseUpdatedAt: baseRef.current } : {}),
+              ...(id && opts.force ? { force: true } : {}),
+            }),
+          });
         try {
           let res = await send(designIdRef.current);
           // Expired or not ours any more (e.g. signed out): keep the work as a new design.
@@ -423,8 +437,17 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
             saveLocalDraft({ doc: current, designId: designIdRef.current, savedAt: Date.now() });
             return null;
           }
+          if (res.status === 409) {
+            // Changed elsewhere: pause autosave and ask (same banner as another tab, R10-03).
+            staleRef.current = true;
+            setStale(true);
+            setSaveState("dirty");
+            saveLocalDraft({ doc: current, designId: designIdRef.current, savedAt: Date.now() });
+            return null;
+          }
           if (!res.ok) throw new Error(String(res.status));
-          const json = (await res.json()) as { id: string; owned: boolean };
+          const json = (await res.json()) as { id: string; owned: boolean; updatedAt?: string };
+          baseRef.current = json.updatedAt ?? null;
           savedDocRef.current = current;
           setDesignId(json.id);
           designIdRef.current = json.id;
@@ -515,8 +538,19 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
     setGate(null);
     setPrice({ status: "idle" });
     router.refresh();
-    // verify-otp claimed this browser's anonymous designs; continue what the user asked for.
-    if (pending) setTimeout(pending, 0);
+    // verify-otp claimed this browser's anonymous designs, which is a write: read the stored
+    // version again so the next save is not refused as stale (R10-R1), then continue what the
+    // user asked for.
+    const id = designIdRef.current;
+    const resume = () => pending && setTimeout(pending, 0);
+    if (!id) return resume();
+    fetch(`/api/designs/${encodeURIComponent(id)}`, { cache: "no-store" })
+      .then((r) => (r.ok ? (r.json() as Promise<{ updatedAt?: string }>) : null))
+      .then((j) => {
+        if (j?.updatedAt) baseRef.current = j.updatedAt;
+      })
+      .catch(() => undefined)
+      .finally(resume);
   };
 
   // ── live price badge ──────────────────────────────────────────────
@@ -962,7 +996,8 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
               onAction: () => {
                 staleRef.current = false;
                 setStale(false);
-                void saveToServer();
+                // Deliberate overwrite of the newer copy (R10-R1).
+                void saveToServer({ force: true });
               },
             }}
           >
@@ -1088,6 +1123,12 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
                   version={version}
                   label={t("designer.view.dielineLabel")}
                   legend={t("designer.view.dielineLegend")}
+                  size={t("designer.view.dielineSize", {
+                    w: `\u2066${formatNumber(model.dieBounds.width, 0)}`,
+                    h: `${formatNumber(model.dieBounds.height, 0)}\u2069`,
+                    b: formatNumber(model.bleedMm),
+                    s: formatNumber(model.safeMm),
+                  })}
                   panelLabels={panelLabels}
                   locale={locale}
                 />

@@ -18,3 +18,20 @@ export function contrastRatio(a: string, b: string): number {
 export function contrastingInk(background: string): string {
   return contrastRatio("#303030", background) >= contrastRatio("#ffffff", background) ? "#303030" : "#ffffff";
 }
+
+/**
+ * R11-02: a colour code as people type or paste it: spaces trimmed, Arabic-Indic (٠-٩) and
+ * Persian (۰-۹) digits from an Arabic keyboard read as 0-9, "#" optional, the short "#rgb" form
+ * expanded. Returns "#rrggbb" in lower case, or null when it is not a colour.
+ */
+export function normalizeHex(input: string): string | null {
+  const s = input
+    .trim()
+    .replace(/\s+/g, "")
+    .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660))
+    .replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 0x06f0))
+    .replace(/^#?/, "");
+  if (/^[0-9a-f]{3}$/i.test(s)) return `#${s.split("").map((c) => c + c).join("")}`.toLowerCase();
+  if (/^[0-9a-f]{6}$/i.test(s)) return `#${s}`.toLowerCase();
+  return null;
+}

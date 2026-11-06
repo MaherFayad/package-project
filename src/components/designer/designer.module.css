@@ -306,6 +306,9 @@
 .startFallback { min-block-size: 100dvh; }
 
 /* ── editor grid ─────────────────────────────────────────────────────── */
+.dielineSize { display: block; font-weight: var(--p-font-weight-semibold); color: var(--p-color-text); margin-block-end: var(--p-space-100); }
+/* R11-01: the side-panel layout starts at 1000 px (was 1040), so a 1024 px tablet gets the side
+   panel and a full-height stage instead of the phone sheet (its canvas was 200 px in landscape). */
 .editor {
   --sheet-closed: 36dvh;
   --sheet-open: 72dvh;
@@ -323,7 +326,7 @@
   min-block-size: 32rem;
   padding: var(--p-space-200) var(--p-space-200) 0;
 }
-@media (min-width: 1040px) {
+@media (min-width: 1000px) {
   .editor {
     grid-template-columns: minmax(0, 1fr) 24rem;
     grid-template-areas:
@@ -370,7 +373,7 @@
   .saveStatusText { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 }
 .preflightChip { display: none; }
-@media (min-width: 1040px) {
+@media (min-width: 1000px) {
   .preflightChip { display: inline-flex; }
 }
 .desktopActions { display: none; gap: var(--p-space-200); }
@@ -618,7 +621,7 @@
    ~124 px, so the page scrolled and the sticky top bar covered the view switch and face select.
    The open sheet takes what is left after those (21rem = 12rem stage + toolbar + price + gaps). */
 .editor[data-sheet="open"] .panel { block-size: min(var(--sheet-open), calc(100dvh - var(--p-top-bar-height) - 21rem)); }
-@media (min-width: 1040px) {
+@media (min-width: 1000px) {
   .panel,
   .editor[data-sheet="open"] .panel {
     block-size: auto;
@@ -660,7 +663,7 @@
   outline: var(--p-focus-ring-width, 2px) solid var(--p-color-border-focus);
   outline-offset: -2px;
 }
-@media (min-width: 1040px) {
+@media (min-width: 1000px) {
   .sheetToggle { display: none; }
 }
 .panelInner {
@@ -827,7 +830,7 @@
    about 170 px and the model about 30 % of it). The closed sheet takes what is left (at least 10rem:
    handle, tabs and the first field). The stage header drops its face select under 490 px: the
    Artwork panel has the same select, and the 3D view turns with drag or "Adjust view". */
-@media (max-width: 1039px) and (min-height: 501px) {
+@media (max-width: 999px) and (min-height: 501px) {
   .editor[data-sheet="closed"] {
     --sheet-closed: max(10rem, calc(54dvh - var(--p-top-bar-height) - 8.5rem));
     grid-template-rows: auto auto auto minmax(46dvh, 1fr) auto;
@@ -839,13 +842,13 @@
 .viewMenuSlot { display: inline-flex; }
 
 /* Phones with the sheet pulled up: the short stage keeps only the 3D view (controls return when it closes). */
-@media (max-width: 1039px) {
+@media (max-width: 999px) {
   .editor[data-sheet="open"] .viewControlsRow,
   .editor[data-sheet="open"] .foldRow { display: none; }
   .faceSelect { flex: 1 1 auto; }
 }
 /* Landscape phones (short and wide): stage and panel side by side, no page scroll. */
-@media (max-height: 500px) and (min-width: 640px) and (max-width: 1039px) {
+@media (max-height: 500px) and (min-width: 640px) and (max-width: 999px) {
   .editor {
     grid-template-columns: minmax(0, 1fr) minmax(16rem, 40%);
     grid-template-areas:

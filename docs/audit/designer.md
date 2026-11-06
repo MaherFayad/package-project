@@ -501,3 +501,34 @@ Base: unchanged (main d61f21f + 282c9eb). Fresh pass on the angles the integrato
 | high | 1 (R10-01) | 1 | 0 |
 | medium | 3 (R10-02, R10-03, R10-04) | 3 | 0 (multi-device conflicts → R10-R1) |
 | low | 0 | 0 | 0 |
+
+## R10-R1 (assigned to designer by the integrator): optimistic concurrency for saves
+
+| part | change |
+|---|---|
+| API (`api/designs/_shared.ts`, `[id]/route.ts`) | `PUT` takes `baseUpdatedAt` (the version the edit started from) and `force`. When the stored design is newer: **409** `{ error: "CONFLICT", updatedAt, doc }`. |
+| Store (`designer/server.ts · saveDesign`) | A stale base is refused (`isStaleBase`, pure, in `designer/lib/concurrency.ts`). The write itself is a compare-and-set (`updateMany where { id, updatedAt: base }`), so a save landing between the read and the write is refused too. `force` writes deliberately. Creating a share link keeps `updatedAt` (it is not a content change), so an open editor isn't falsely stale. |
+| Editor (`DesignerApp`) | The base comes from the page (`initialUpdatedAt`) and every save response. A 409 opens the R10-03 banner ("This design changed in another tab or on another device", "Load the latest" / "Keep this version") and pauses autosave. "Keep" re-sends with `force: true`. After sign-in (verify-otp claims the draft, which is a write) the editor reads the stored version again before continuing. |
+| Tests | Unit: `concurrency.test.ts` (same version, newer or older, no base, force, malformed). e2e: "two devices on one design" (two browser contexts sharing the anonymous cookie, so no BroadcastChannel between them). A's newer save stands, B's older one gets 409, the banner and "Autosave paused", the server still has A's name, and "Keep this version" stores B's. The main designer, journey and checkout flows (sign-up gate, share, order) pass with the check on. |
+
+# Round 11
+
+Fresh pass on the integrator's angles: the dieline / flat view and print accuracy, the colour picker and brand colours, image crop and rotation, RTL text alignment on faces, and the editor at 1024 px.
+
+## Findings (round 11)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R11-01 | medium | editor at 1024 px (iPad landscape / portrait) (`designer.module.css`) | 1024 px is under the 1040 px side-panel breakpoint, so the tablet got the phone bottom sheet. In landscape (1024 × 768) the 3D canvas was **199 to 207 px** tall, and the floating view controls covered about a third of it. | WCAG 1.4.10; craft | The side-panel layout starts at **1000 px** (all seven 1040 / 1039 rules). | fixed: 1024 × 768 canvas **398–406 px** (panel 384 px at the side); 1024 × 1366 canvas 996–1004 px. No page or sideways scroll; axe 0 in ar + en (`r11-after-tablet-1024x768-en.png`) |
+| R11-02 | medium | colour code field (`fields.tsx`, `lib/color.ts`) | Brand colours typed the usual ways were silently ignored: "#fff" (short form), "#١٢٣٤٥٦" (an Arabic keyboard's digits) and a pasted " #1f3d2b " (it became "# #1f3d2" because of the 7-character limit). | WCAG 3.3.1, 3.3.3 (input help); Arabic keyboards | `normalizeHex()`: trims spaces, reads Arabic-Indic and Persian digits as 0–9, makes `#` optional and expands `#rgb`. Six-digit codes apply as you type; the short form applies on leaving the field (it is also the start of a six-digit code). The limit is 12 characters, and the error says "a 3- or 6-digit colour code". Unit test `color-hex.test.ts`. | fixed: all of those apply (#ffffff, #123456, #1f3d2b), and "#12345g" still shows the error |
+| R11-03 | medium | start / end aligned text on faces (`lib/dieline/texture.ts · drawLayer`, outside scope, one line) | Start- or end-aligned text was drawn on the edge of its box, ignoring the 0.15 em padding the designer measures the box with. Arabic glyphs overhung the selection box (and the box preflight checks the safe zone with), and the print PDF draws through the same function. | print accuracy; preflight | The text is inset by the same 0.15 em. The 3D preview, the face editor and the print PDF (`orders/pdf/print.ts` → `paintArtworkSurface`) all change together. | fixed: start (right for Arabic) and end (left) now sit inside the box (`r11-before-align-ar.png` → `r11-after-align-ar.png`) |
+| R11-04 | low | dieline view (`DielineView.tsx`) | The flat view named the lines but gave no measurements: no flat (die) size, bleed or safe-zone width in mm. | print accuracy (mm) | A size line above the legend: "Flat size 584 × 673 mm · bleed 3 mm · safe zone 5 mm" / "المقاس المفرود … مم · هامش القص الزائد 3 مم · المنطقة الآمنة 5 مم", taken from the dieline model, with the numbers kept left to right. | fixed (`r11-dieline-en-1024.png`) |
+
+Checked, no change:
+- **RTL alignment:** for Arabic, "start" is right and "end" is left, so the logical alignment is correct.
+- **Image rotation:** 15° buttons and a numeric field, and it reaches the print file.
+- **Cropping:** there is none; an image is placed and scaled whole. That's a feature gap rather than a defect, so I'm proposing it, not adding it here.
+- **Pantone / spot colours:** not offered. The plan's SME printers run CMYK, so a spot colour is a price-request item. I'd add a "Brand colours (from your saved designs)" row before any Pantone support, as a separate decision.
+- **The print PDF's own bleed and crop marks:** owned by checkout (`orders/pdf`). The designer side (what it paints) is fixed by R11-03.
+
+Files touched outside scope (round 11): `src/lib/dieline/texture.ts` (the R11-03 inset, one line plus a comment). R10-R1: `src/app/api/designs/_shared.ts`, `src/app/api/designs/[id]/route.ts` (assigned by the integrator).
