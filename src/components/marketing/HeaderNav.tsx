@@ -308,8 +308,15 @@ export function HeaderNav({ slots, children }: { slots: NavSlots; children: Reac
                     aria-expanded={isOpen}
                     aria-controls={panels ? id : undefined}
                     data-menu-trigger={m.id}
-                    onClick={() => {
+                    onClick={(e) => {
                       clear();
+                      // Keyboard activation (Enter / Space: detail 0) after focus already opened the
+                      // panel keeps it open and moves to its first link (R6-AX-16); a pointer click toggles.
+                      if (e.detail === 0) {
+                        setOpen(m.id);
+                        requestAnimationFrame(() => document.getElementById(`${baseId}-${m.id}`)?.querySelector<HTMLElement>("a")?.focus());
+                        return;
+                      }
                       setOpen((o) => (o === m.id ? null : m.id));
                     }}
                     onFocus={(e) => {
