@@ -289,3 +289,12 @@ Plus 2 items reported to other owners (R4-R1, R4-R2). This round found medium-or
 Out of scope by assignment: `src/app/[locale]/s/[id]/page.tsx` (share page, designer half of R4-B-01) and `src/i18n/library.ar.ts` (`panel.closeClosure`, used only by the designer).
 
 Verification (round 5 rows): lint and typecheck are clean. `npm test`: 83 files, **8,383 passed**. Playwright `designer` + `smoke` + `journey` + `checkout`: **27 passed, 1 skipped**. Hydration e2e repeated 16×2: **32 passed**.
+
+### a11y round 4 rows (integrator request)
+
+| id | severity | where | finding | fix | status |
+|---|---|---|---|---|---|
+| a11y R4-05 | medium | model names: start page list (`library.module.css .modelName`) and the editor's model picker (`catalogue/picker.module.css .name`) | Names were clamped to 2 lines (`-webkit-line-clamp`), so under WCAG 1.4.12 text spacing the end of a long name was cut off. | No clamp: names wrap (`overflow-wrap: anywhere`). The 2-line `min-height` keeps the rows aligned. | fixed: with the 1.4.12 spacing stylesheet, **0 of 91** names cut on the start page and **0** in the picker, ar and en, at 390 and 1440 (`after-r5-picker-textspacing-ar-390.png`) |
+| a11y R4-06 | low | `ArtworkPanel` inspector | The sub-headings "Move", "Quick placement" and "Position" were h4 under the inspector's h2. | `as="h3"`. Outline: h2 "Selected item…", h3 Move / Quick placement / Position. axe (incl. best-practice) on the panel: 0. | fixed |
+
+Outside scope: `src/components/catalogue/picker.module.css` (one rule, the picker opened from the designer). Tests: lint clean, vitest 8,383 passed, Playwright `designer` + `catalogue` 22 passed, 4 skipped.
