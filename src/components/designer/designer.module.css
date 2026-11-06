@@ -868,7 +868,8 @@
       "price banner"
       "stage banner"
       "stage panel";
-    grid-template-rows: auto auto auto minmax(0, 1fr);
+    /* R14-02: the panel row keeps a screen's height under the banner (it was 22 px at 740 × 360) */
+    grid-template-rows: auto auto auto var(--short-row);
   }
   .editor[data-banner="true"] .banner { align-self: start; }
 }
@@ -912,10 +913,19 @@
       "banner banner"
       "price panel"
       "stage panel";
-    grid-template-rows: auto auto auto minmax(0, 1fr);
+    /* R14-02: a phone turned sideways is 360–412 px tall; under the top bar, toolbar, price row and
+       stage controls the 3D view was 66–118 px. Here the editor is one screen tall below the top bar
+       (which scrolls away instead of staying pinned): one scroll and the stage has the screen. */
+    --short-row: calc(100dvh - 6.5rem);
+    grid-template-rows: auto auto auto var(--short-row);
+    block-size: auto;
     min-block-size: 0;
     padding-block-end: var(--p-space-200);
   }
+  .topBar { position: static; }
+  /* The panel spans the price and stage rows; sized from its content it grew those rows to its full
+     length (the stage slid ~1,500 px down). It now takes the rows' height and scrolls inside. */
+  .panel { contain: size; }
   .panel,
   .editor[data-sheet="open"] .panel {
     block-size: auto;

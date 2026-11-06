@@ -1194,7 +1194,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
 
         {view === "3d" && isVessel ? (
           <div className={styles.foldRow}>
-            <ButtonGroup variant="segmented" accessibilityLabel={t("library.panel.closure")}>
+            <ButtonGroup variant="segmented" accessibilityLabel={t("designer.view.closurePreview")}>
               <Button size="slim" pressed={!viewOpts.open} onClick={() => setViewOpts((o) => ({ ...o, open: false }))}>
                 {t("library.panel.closeClosure")}
               </Button>
