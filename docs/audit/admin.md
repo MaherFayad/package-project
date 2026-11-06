@@ -355,6 +355,12 @@ Asked by the integrator: ship a default for founder item (b) now, then an audit 
 
 A printer's on-time percentage is public only after **5 judged deliveries** (admin setting: Pricing › "Printer figures shown to buyers", 1 to 50, audited as `VENDOR_METRICS_SETTINGS`; saving re-syncs every printer and purges the public cache). Two additive `Vendor` columns, `onTimeJudged` and `onTimePublic`, are written by `syncVendorOnTime` (after each delivery, in the daily job, and on saving the setting). `onTimePct` is overwritten only once a printer is public, so seeded printers keep their seeded figure. Below the threshold the directory, profile, showcase cards, checkout offer cards and the order page show "New on Elba" / «جديد على علبة», and the store home average uses measured printers only. The admin vendor scorecard shows the raw figure with "n of 5 deliveries. Buyers see “New on Elba” until then." On the fresh seed every printer has 0 judged deliveries, so every public card reads «جديد على علبة» (checked at 390 ar: directory 6, profile 1, home 3, no "% on time" left). It stays on the founder list.
 
+### Routed item
+
+| id | result |
+|---|---|
+| **R5-JR-22** (low, journeys) | The FX and board index form (FX, per-board multipliers, "change all by %") read values with `Number()`, so «١٫٠٥» or "1,05" became NaN and the preview silently did nothing. It now uses `parseDecimalInput` from `src/lib/money/input.ts`: «١٫٠٥» previews like 1.05 (checked in the browser: "37 of 40 sample prices change. Average change +1.4%."), while "1,05", junk or a bad "change all by %" value shows "Enter a number with a dot for decimals, for example 1.05." on its field, and Preview / Apply move focus there instead of sending. The margin warning reads the same way. **fixed** |
+
 ### Findings (new this round)
 
 | id | sev | page / file | finding | standard | fix | status |

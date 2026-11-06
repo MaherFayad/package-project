@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { parseNumberInput } from "@/lib/money/input";
+import { parseDecimalInput, parseNumberInput } from "@/lib/money/input";
 import { Banner } from "@/components/ui/Banner";
 import { BlockStack, InlineGrid, InlineStack } from "@/components/ui/Stack";
 import { Button, ButtonGroup } from "@/components/ui/Button";
@@ -108,7 +108,7 @@ export function PricingSettingsForm({ initial }: { initial: SettingsForm }) {
   const setZone = (z: DeliveryZone, f: keyof ZoneRate, v: string) => setDraft((d) => ({ ...d, zones: { ...d.zones, [z]: { ...d.zones[z], [f]: v } } }));
   const err = (k: string) => fieldError(res, k, errorText);
   // Business plan target: 20–30% on top of the vendor buy price. Allowed, but called out.
-  const marginNum = Number(draft.margin);
+  const marginNum = parseNumberInput(draft.margin);
   const marginOutside = draft.margin.trim() !== "" && Number.isFinite(marginNum) && (marginNum < 20 || marginNum > 30);
 
   return (
@@ -234,8 +234,27 @@ export function PriceIndexForm({ current }: { current: { fx: number; board: Part
   const [note, setNote] = useState("");
   const [res, setRes] = useState<AdminActionResponse<unknown> | null>(null);
   const [preview, setPreview] = useState<PricingPreview | null>(null);
-  const payload = () => ({ effectiveFrom: from, fx: Number(fx), board: Object.fromEntries(MATERIAL_CODES.map((m) => [m, Number(board[m])])) as Record<MaterialCode, number>, note });
-  const err = (k: string) => fieldError(res, k, errorText);
+  // R5-JR-22: «١٫٠٥» and "1.05" read the same; "1,05" (decimal comma) or junk is a field error
+  // instead of a silent NaN that made the preview do nothing.
+  const dec = (v: string) => parseDecimalInput(v);
+  const bad = (v: string) => {
+    const n = dec(v);
+    return n === null || Number.isNaN(n);
+  };
+  const clientErrors: Record<string, string> = Object.fromEntries([
+    ...(fx.trim() !== "" && bad(fx) ? [["fx", "NUMBER_INVALID"]] : []),
+    ...MATERIAL_CODES.filter((m) => board[m].trim() !== "" && bad(board[m])).map((m) => [`board.${m}`, "NUMBER_INVALID"]),
+  ]);
+  const bumpValue = parseDecimalInput(bump, { allowNegative: true });
+  const bumpError = bump.trim() !== "" && (bumpValue === null || Number.isNaN(bumpValue)) ? "NUMBER_INVALID" : null;
+  const payload = () => ({ effectiveFrom: from, fx: dec(fx) ?? NaN, board: Object.fromEntries(MATERIAL_CODES.map((m) => [m, dec(board[m]) ?? NaN])) as Record<MaterialCode, number>, note });
+  const err = (k: string) => (clientErrors[k] ? errorText(clientErrors[k]) : fieldError(res, k, errorText));
+  /** Do not send a request the server can only refuse: the field already says what to fix. */
+  const blocked = () => {
+    if (!Object.keys(clientErrors).length) return false;
+    setTimeout(() => document.querySelector<HTMLElement>("[aria-invalid=true]")?.focus(), 0);
+    return true;
+  };
 
   return (
     <BlockStack gap="300">
@@ -267,11 +286,11 @@ export function PriceIndexForm({ current }: { current: { fx: number; board: Part
         ))}
       </InlineGrid>
       <InlineStack gap="200" blockAlign="end" wrap>
-        <TextField label={t("admin.pricing.index.bump")} autoComplete="off" inputMode="decimal" dir="ltr" suffix="%" value={bump} onChange={setBump} />
+        <TextField label={t("admin.pricing.index.bump")} autoComplete="off" inputMode="decimal" dir="ltr" suffix="%" value={bump} onChange={setBump} error={bumpError ? errorText(bumpError) : undefined} />
         <Button
-          disabled={!bump.trim() || Number.isNaN(Number(bump))}
+          disabled={!bump.trim() || !!bumpError}
           onClick={() => {
-            const next = bumpBoard(Object.fromEntries(MATERIAL_CODES.map((m) => [m, Number(board[m]) || 1])) as Record<MaterialCode, number>, Number(bump));
+            const next = bumpBoard(Object.fromEntries(MATERIAL_CODES.map((m) => [m, dec(board[m]) || 1])) as Record<MaterialCode, number>, bumpValue!);
             setBoard(Object.fromEntries(MATERIAL_CODES.map((m) => [m, String(next[m])])) as Record<MaterialCode, string>);
             setBump("");
           }}
@@ -285,6 +304,7 @@ export function PriceIndexForm({ current }: { current: { fx: number; board: Part
           <Button
             loading={busy === "ipreview"}
             onClick={async () => {
+              if (blocked()) return;
               const r = await run("ipreview", () => previewPricingAction({ kind: "index", index: payload() }));
               setRes(r);
               if (r?.ok) setPreview(r.data);
@@ -296,6 +316,7 @@ export function PriceIndexForm({ current }: { current: { fx: number; board: Part
             variant="primary"
             loading={busy === "iapply"}
             onClick={async () => {
+              if (blocked()) return;
               const r = await run("iapply", () => applyIndexUpdateAction(payload()), t("admin.pricing.index.applied"));
               setRes(r);
               if (r?.ok) setPreview(null);
