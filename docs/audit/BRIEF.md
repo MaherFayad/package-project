@@ -31,3 +31,11 @@ ROUND 2 (and later rounds)
 - Then do a completely fresh audit as if you had never seen the product: new findings get ids prefixed R2-.
 - Append a "Round 2" section to docs/audit/<your-key>.md (keep round 1 rows). Same severity scale, same fix-and-verify method, same commit rules.
 - Measure performance of your pages with docs/audit/tools/perf-pages.mjs and docs/audit/tools/perf-3d.mjs where relevant; budgets: LCP < 2.5 s, CLS < 0.1, INP < 200 ms, non-3D JS < 200 KB gz.
+
+ROUND 4
+- Base: everything from rounds 1 to 3 is merged (main at 64f5f32 or later). Read docs/audit/ROUND3.md and your area's docs/audit/<key>.md, docs/audit/craft.md, a11y.md, business.md and performance.md first.
+- Re-verify every row marked fixed in your area in the real browser; reopen any that is not.
+- Then a completely fresh audit with ids prefixed R4-. Same severity scale, same fix-and-verify method.
+- e2e: use the factory in e2e/fixtures/factory.ts for any test that changes data (unique users and orders), so --workers=2 stays reliable. Playwright needs OTP_DEV_ECHO=1 and ALLOW_MOCK_PAYMENTS=1 under next start.
+- After adding or renaming a model, run npx tsx scripts/generate-library-index.ts, scripts/generate-order-mode-table.ts and scripts/generate-catalogue-rows.ts.
+- Append a "Round 4" section to docs/audit/<your-key>.md. FINAL REPLY must include counts of NEW findings by severity (critical/high/medium/low) found this round, before fixing; the rounds stop when a round finds no medium-or-worse issue.

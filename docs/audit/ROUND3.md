@@ -1,5 +1,7 @@
 # Round 3 work list
 
+**Status: done.** Every row below is merged on the main branch (64f5f32). Open after round 3: CR-43 needs the real legal entity, commercial registry number and DPO contact; phone LCP on Slow 4G is 3.2 to 5.9 s against 2.5 s; the editor route still ships three.js core and the dieline engine (PERF-03, 359 KB). These go to round 4.
+
 Source reports, all merged on the main branch: `docs/audit/craft.md` (CR-*), `docs/audit/a11y.md` (X-*), `docs/audit/business.md` (B-*). Each owner fixes every row assigned to it, then re-verifies in the browser and appends a "Round 3" section to its own `docs/audit/<key>.md`. Follow `docs/audit/BRIEF.md`.
 
 | Owner | Items |
