@@ -756,3 +756,5 @@ Scope, as asked: R15's fixes (panel scroll-padding, focus back on More, «الج
 | low | 1 (R16-01) | 1 | 0 |
 
 R16 found nothing medium or worse, so the stop rule is met and the designer area is done.
+
+Verification (round 16, on da525c06 + R16-01): lint and typecheck clean; unit tests **8,957 passed**; build OK; e2e (designer, smoke, journey, checkout, storefront, catalogue; `--workers=2 --trace off`, `OTP_DEV_ECHO=1 ALLOW_MOCK_PAYMENTS=1`) **61 passed, 9 skipped, 0 failed**; "designer pages hydrate without errors" with `--repeat-each=16` **32 / 32 passed**.
