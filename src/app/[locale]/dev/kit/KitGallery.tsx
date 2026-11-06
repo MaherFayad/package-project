@@ -285,7 +285,10 @@ export function KitGallery({ locale }: { locale: Locale }) {
         <Marquee
           label={c.marquee}
           items={SAMPLES.slice(0, 8).map((s, i) => (
-            <Img key={i} src={s.src} w={240} h={300} className={g.marqueeImg} alt={c.sample} />
+            // Links, so the keyboard path through a moving strip is exercised (R6-AX-18).
+            <a key={i} href={startHref(locale)} className={g.marqueeLink} aria-label={`${c.sample} ${i + 1}`}>
+              <Img src={s.src} w={240} h={300} className={g.marqueeImg} />
+            </a>
           ))}
         />
         <div style={{ marginBlockStart: 48 }}>
