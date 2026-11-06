@@ -49,3 +49,35 @@ describe("on-time from real deliveries (R5-JR-05)", () => {
     expect(onTimeFromDeliveries([]).pct).toBeNull();
   });
 });
+
+describe("reprint quantity and charge-back (R5-JR-09)", () => {
+  it("defaults: full charge-back for print defects, none otherwise", async () => {
+    const { defaultChargeBack } = await import("../ops");
+    expect(defaultChargeBack("PRINT_DEFECT")).toBe("FULL");
+    expect(defaultChargeBack("LATE")).toBe("NONE");
+    expect(defaultChargeBack("DAMAGED")).toBe("NONE");
+  });
+  it("40 smudged boxes of 500: reprint 40, pro-rata buy price, the same printer pays for it", async () => {
+    const { planReprint } = await import("../ops");
+    const p = planReprint({ originalQty: 500, originalCostPiasters: 2_049_000, paidToOriginalPiasters: 819_600, sameVendor: true, terms: { quantity: 40, chargeBack: "FULL" } });
+    expect(p).toEqual({ quantity: 40, reprintCostPiasters: 163_920, chargeBackPiasters: 163_920, reprintVendorCostPiasters: 0, originalVendorCostPiasters: 2_049_000, owedPiasters: 0 });
+    const none = planReprint({ originalQty: 500, originalCostPiasters: 2_049_000, paidToOriginalPiasters: 0, sameVendor: true, terms: { quantity: 40, chargeBack: "NONE" } });
+    expect(none).toMatchObject({ reprintVendorCostPiasters: 163_920, chargeBackPiasters: 0 });
+    const part = planReprint({ originalQty: 500, originalCostPiasters: 2_049_000, paidToOriginalPiasters: 0, sameVendor: true, terms: { quantity: 40, chargeBack: "PARTIAL", chargeBackPiasters: 60_000 } });
+    expect(part).toMatchObject({ reprintVendorCostPiasters: 103_920, chargeBackPiasters: 60_000 });
+  });
+  it("another printer is paid in full; the charge-back comes off the original buy price, any excess is owed", async () => {
+    const { planReprint } = await import("../ops");
+    const p = planReprint({ originalQty: 500, originalCostPiasters: 2_049_000, paidToOriginalPiasters: 819_600, sameVendor: false, terms: { quantity: 40, chargeBack: "FULL" } });
+    expect(p).toMatchObject({ reprintVendorCostPiasters: 163_920, originalVendorCostPiasters: 1_885_080, owedPiasters: 0 });
+    // Original fully paid already: nothing left to take off, the charge-back is owed back.
+    const paid = planReprint({ originalQty: 500, originalCostPiasters: 2_049_000, paidToOriginalPiasters: 2_049_000, sameVendor: false, terms: { quantity: 40, chargeBack: "FULL" } });
+    expect(paid).toMatchObject({ originalVendorCostPiasters: 2_049_000, owedPiasters: 163_920 });
+  });
+  it("rejects a quantity above the order and a charge-back above the reprint cost", async () => {
+    const { planReprint } = await import("../ops");
+    expect(planReprint({ originalQty: 500, originalCostPiasters: 2_049_000, paidToOriginalPiasters: 0, sameVendor: true, terms: { quantity: 501, chargeBack: "FULL" } })).toBe("QTY_RANGE");
+    expect(planReprint({ originalQty: 500, originalCostPiasters: 2_049_000, paidToOriginalPiasters: 0, sameVendor: true, terms: { quantity: 40, chargeBack: "PARTIAL", chargeBackPiasters: 200_000 } })).toBe("CHARGE_RANGE");
+    expect(planReprint({ originalQty: 500, originalCostPiasters: 2_049_000, paidToOriginalPiasters: 0, sameVendor: true, terms: { quantity: 40, chargeBack: "PARTIAL" } })).toBe("CHARGE_RANGE");
+  });
+});

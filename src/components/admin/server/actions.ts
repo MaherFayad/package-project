@@ -54,6 +54,9 @@ import {
   statusForDecision,
   vendorStatusAfter,
   vendorStatusSchema,
+  defaultChargeBack,
+  planReprint,
+  type ReprintPlan,
 } from "../lib/ops";
 import {
   appendIndexRow,
@@ -627,6 +630,7 @@ export async function decideDisputeAction(input: z.input<typeof disputeDecisionS
     if (!allowedDecisions(dispute.status).includes(d.decision)) throw new AdminActionError("NOT_ALLOWED");
     const status = statusForDecision(d.decision);
     let reprint: string | undefined;
+    let reprintPlan: ReprintPlan | undefined;
 
     if (d.decision === "REFUND") {
       await refundOrderInternal(admin, dispute.orderId, d.note, dispute.id);
@@ -636,6 +640,19 @@ export async function decideDisputeAction(input: z.input<typeof disputeDecisionS
       const vendorId = d.vendorId ?? original.vendorId;
       const vendor = await db.vendor.findUnique({ where: { id: vendorId } });
       if (!vendor || vendor.status !== "ACTIVE") throw new AdminActionError("NOT_ALLOWED", "VENDOR_INACTIVE");
+      // R5-JR-09: only the defective boxes are redone, and the charge-back is the admin's choice.
+      const originalQty = original.items.reduce((s, i) => s + i.quantity, 0) || 1;
+      const paid = await db.payout.findMany({ where: { orderId: original.id, vendorId: original.vendorId, status: "PAID" }, select: { amountPiasters: true } });
+      const plan = planReprint({
+        originalQty,
+        originalCostPiasters: original.vendorCostPiasters,
+        paidToOriginalPiasters: paid.reduce((s, p) => s + p.amountPiasters, 0),
+        sameVendor: vendorId === original.vendorId,
+        terms: { quantity: d.reprintQuantity ?? originalQty, chargeBack: d.chargeBack ?? defaultChargeBack(dispute.reason), chargeBackPiasters: d.chargeBackPiasters },
+      });
+      if (plan === "QTY_RANGE") throw new AdminFieldErrors({ reprintQuantity: "REPRINT_QTY_RANGE" });
+      if (plan === "CHARGE_RANGE") throw new AdminFieldErrors({ chargeBackPiasters: "CHARGE_BACK_RANGE" });
+      reprintPlan = plan;
       const existing = await db.order.findMany({ where: { number: { startsWith: `${original.number}-R` } }, select: { number: true } });
       reprint = reprintNumber(original.number, existing.map((e) => e.number));
       const now = new Date();
@@ -651,13 +668,14 @@ export async function decideDisputeAction(input: z.input<typeof disputeDecisionS
           vatPiasters: 0,
           shippingPiasters: 0,
           totalPiasters: 0,
-          vendorCostPiasters: original.vendorCostPiasters,
+          vendorCostPiasters: plan.reprintVendorCostPiasters,
           shippingAddress: original.shippingAddress ?? toJson<ShippingAddress | null>(null),
           notes: reprintNote(original.number, dispute.id),
           placedAt: now,
           paidAt: now,
           dueDate: new Date(now.getTime() + lead * 86_400_000),
           items: {
+            // One line per original item, scaled to the reprinted share (one-item orders: exact).
             create: original.items.map((i) => ({
               proofId: i.proofId,
               structureCode: i.structureCode,
@@ -665,7 +683,7 @@ export async function decideDisputeAction(input: z.input<typeof disputeDecisionS
               materialCode: i.materialCode,
               finishCode: i.finishCode,
               printSides: i.printSides,
-              quantity: i.quantity,
+              quantity: original.items.length === 1 ? plan.quantity : Math.max(1, Math.round((i.quantity * plan.quantity) / originalQty)),
               unitPiasters: 0,
               lineTotalPiasters: 0,
               printPdfUrl: i.printPdfUrl,
@@ -681,7 +699,18 @@ export async function decideDisputeAction(input: z.input<typeof disputeDecisionS
       });
       // launch-metrics.md §1 `reprint_opened` (reprint rate = these / delivered orders).
       void track("reprint_opened", { reason: dispute.reason, same_vendor: vendorId === original.vendorId }, { userId: original.buyerId, orderId: created.id });
-      await audit(admin, { action: "ORDER_REPRINT", entityType: "ORDER", entityId: created.id, summary: `${reprint} ← ${original.number}: ${d.note}`, after: { vendorId, vendorCostPiasters: original.vendorCostPiasters } });
+      // Charge-back on another printer: the original buy price goes down (its balance shrinks).
+      if (plan.originalVendorCostPiasters !== original.vendorCostPiasters) {
+        await db.order.update({ where: { id: original.id }, data: { vendorCostPiasters: plan.originalVendorCostPiasters } });
+      }
+      await audit(admin, {
+        action: "ORDER_REPRINT",
+        entityType: "ORDER",
+        entityId: created.id,
+        summary: `${reprint} ← ${original.number}: ${plan.quantity.toLocaleString("en-US")} of ${originalQty.toLocaleString("en-US")} boxes; charge-back EGP ${(plan.chargeBackPiasters / 100).toFixed(2)}. ${d.note}`,
+        before: { originalVendorCostPiasters: original.vendorCostPiasters },
+        after: { vendorId, chargeBack: d.chargeBack ?? defaultChargeBack(dispute.reason), ...plan },
+      });
     }
 
     const u = await db.dispute.updateMany({
@@ -695,7 +724,7 @@ export async function decideDisputeAction(input: z.input<typeof disputeDecisionS
       entityId: dispute.id,
       summary: `${dispute.order.number}${reprint ? ` → ${reprint}` : ""}${d.note ? `: ${d.note}` : ""}`,
       before: { status: dispute.status },
-      after: { status, ...(reprint ? { reprint } : {}) },
+      after: { status, ...(reprint ? { reprint, ...reprintPlan } : {}) },
     });
     revalidateAdmin();
     return { reprintNumber: reprint };

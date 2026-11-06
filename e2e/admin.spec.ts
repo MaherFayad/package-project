@@ -1,5 +1,5 @@
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
-import { SEEDED, cleanup, cloneOrder, createUser, db, signInPhone, track } from "./fixtures/factory";
+import { SEEDED, cleanup, cloneOrder, createUser, db, deleteOrder, signInPhone, track } from "./fixtures/factory";
 
 /**
  * Admin flows. Parallel-safe: the QC review and the payout test each clone ELB-26301 (QC pending,
@@ -227,6 +227,50 @@ test.describe("admin", () => {
     } finally {
       await db.auditLog.deleteMany({ where: { entityId: q.id } });
       await db.quote.delete({ where: { id: q.id } }).catch(() => {});
+    }
+  });
+});
+
+test.describe("admin disputes (R5-JR-09)", () => {
+  test.afterAll(async () => {
+    await cleanup();
+  });
+
+  test("a print-defect reprint redoes only the defective boxes and is charged back to the printer", async ({ page, context, baseURL }, info) => {
+    test.skip(info.project.name !== "desktop", "mutating flow runs once, on desktop");
+    test.setTimeout(120_000);
+    const order = await cloneOrder("ELB-26203", { status: "DELIVERED", label: "D" });
+    const full = await db.order.findUniqueOrThrow({ where: { id: order.id }, include: { items: true } });
+    const qty = full.items.reduce((s, i) => s + i.quantity, 0);
+    await db.order.update({ where: { id: order.id }, data: { deliveredAt: new Date() } });
+    const dispute = await db.dispute.create({ data: { orderId: order.id, openedById: full.buyerId, reason: "PRINT_DEFECT", description: "40 boxes smudged", status: "OPEN" } });
+    let reprintId: string | null = null;
+    try {
+      await signIn(context, baseURL!);
+      await page.goto(`/en/admin/disputes/${dispute.id}`);
+      await page.getByRole("radio", { name: "Reprint" }).check();
+      await expect(page.getByRole("radio", { name: "Full: the printer pays for the reprint" })).toBeChecked();
+      await page.getByLabel("Boxes to reprint").fill(String(qty + 1));
+      await expect(page.getByText("Enter whole boxes from 1 to the order quantity.")).toBeVisible();
+      await page.getByLabel("Boxes to reprint").fill("40");
+      await expect(page.getByText(/Elba pays the printer EGP 0\.00\./)).toBeVisible();
+      await page.getByLabel("Resolution note").fill("Reprinting the 40 smudged boxes at the printer's cost");
+      await page.getByRole("button", { name: "Apply decision" }).click();
+      await expect(page.getByText(/Reprint .* created/)).toBeVisible({ timeout: 30_000 });
+      const reprint = await db.order.findFirstOrThrow({ where: { notes: { startsWith: `REPRINT_OF:${order.number}` } }, include: { items: true } });
+      reprintId = reprint.id;
+      expect(reprint.items.reduce((s, i) => s + i.quantity, 0)).toBe(40);
+      expect(reprint.vendorCostPiasters).toBe(0);
+      expect(reprint.totalPiasters).toBe(0);
+      const audit = await db.auditLog.findFirstOrThrow({ where: { entityId: reprint.id, action: "ORDER_REPRINT" } });
+      expect(audit.after).toMatchObject({ chargeBack: "FULL", quantity: 40, chargeBackPiasters: Math.round((full.vendorCostPiasters * 40) / qty) });
+    } finally {
+      if (reprintId) {
+        const r = await db.order.findUnique({ where: { id: reprintId }, select: { number: true } });
+        if (r) await deleteOrder(reprintId, r.number);
+      }
+      await db.auditLog.deleteMany({ where: { entityId: dispute.id } });
+      await db.dispute.deleteMany({ where: { id: dispute.id } });
     }
   });
 });

@@ -429,12 +429,13 @@ export async function loadDispute(id: string) {
     },
   });
   if (!d) return null;
-  const [vendors, reprints, auditRows] = await Promise.all([
+  const [vendors, reprints, auditRows, paidPayouts] = await Promise.all([
     db.vendor.findMany({ where: { status: "ACTIVE" }, select: { id: true, nameAr: true, nameEn: true }, orderBy: { nameEn: "asc" } }),
     db.order.findMany({ where: { notes: { startsWith: `REPRINT_OF:${d.order.number}` } }, select: { number: true, status: true } }),
     db.auditLog.findMany({ where: { entityType: "DISPUTE", entityId: d.id }, orderBy: { createdAt: "desc" } }),
+    db.payout.findMany({ where: { orderId: d.order.id, vendorId: d.order.vendorId, status: "PAID" }, select: { amountPiasters: true } }),
   ]);
-  return { dispute: d, vendors, reprints, auditRows };
+  return { dispute: d, vendors, reprints, auditRows, paidToVendorPiasters: paidPayouts.reduce((s, p) => s + p.amountPiasters, 0) };
 }
 
 /* ───────────────────────── Users & privacy ───────────────────────── */
