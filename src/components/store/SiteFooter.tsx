@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getT } from "@/i18n";
 import type { Locale } from "@/types";
-import { ElbaWordmark } from "@/components/ui";
+import { ElbaWordmark } from "@/components/ui/Frame";
 import styles from "./SiteChrome.module.css";
 
 /** Store footer (owner: storefront): product links, legal links, payment methods, VAT note. */

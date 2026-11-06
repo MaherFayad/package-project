@@ -39,7 +39,7 @@ export default async function BottlesPage({ params }: Props) {
           <h1 id="bottles-title" className={`${styles.h1} m-enter-lcp`} style={{ ["--m-i" as string]: 1 }}>
             {t("marketing.bottles.title")}
           </h1>
-          <p className={`${styles.lead} m-enter`} style={{ ["--m-i" as string]: 2 }}>
+          <p className={`${styles.lead} m-enter-lcp`} style={{ ["--m-i" as string]: 2 }}>
             {t("marketing.bottles.body")}
           </p>
           <div className={`${styles.actions} m-enter`} style={{ ["--m-i" as string]: 3 }}>

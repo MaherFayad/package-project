@@ -1,15 +1,23 @@
 import Link from "next/link";
+import { preload } from "react-dom";
 import { BadgeCheck, Package, Ruler } from "lucide-react";
 import type { Dims, Locale } from "@/types";
 import { getT, pick } from "@/i18n";
 import type { DictKey } from "@/i18n";
 import { formatDims, formatNumber } from "@/lib/format";
-import { Badge, Button, Card, Icon, Layout, LayoutSection, Text } from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { Card } from "@/components/ui/Card";
+import { Icon } from "@/components/ui/Icon";
+import { Layout, LayoutSection } from "@/components/ui/Layout";
+import { Text } from "@/components/ui/Text";
 import { designHref, formatCm, sizeHref, sizeSlug, SEO_SIZES, structureHref } from "./catalog";
 import { materialsFor, type MaterialView, type PriceFrom, type StructureView } from "./data";
 import { PriceFromTable } from "./PriceFromTable";
 import type { VendorListItem } from "./vendor-filters";
 import styles from "./store.module.css";
+
+/** The hero render is about 74% of a phone viewport (was declared 92vw, which picked the full file). */
+const HERO_SIZES = "(min-width: 1024px) 600px, 74vw";
 import mk from "@/components/marketing/marketing.module.css";
 import { renderSrc, srcSetFor } from "@/components/marketing/assets";
 
@@ -47,6 +55,9 @@ export function StructureDetail({
 }) {
   const t = getT(locale);
   const name = pick(locale, structure.name.ar, structure.name.en);
+  // The hero render is the LCP on phones: start it from <head>, not when the parser reaches it.
+  const hero = renderSrc(structure.code);
+  preload(hero, { as: "image", imageSrcSet: srcSetFor(hero), imageSizes: HERO_SIZES, fetchPriority: "high" });
   const p = structure.params;
   const mats = materialsFor(structure.code, materials);
   const sizes = mergeSizes(structure, SEO_SIZES[structure.code] ?? [], locale);
@@ -77,7 +88,7 @@ export function StructureDetail({
             <h1 id="structure-title" className={`${mk.h1} m-enter-lcp`} style={{ ["--m-i" as string]: 2 }}>
               {title}
             </h1>
-            <p className={`${mk.lead} m-enter`} style={{ ["--m-i" as string]: 3 }}>
+            <p className={`${mk.lead} m-enter-lcp`} style={{ ["--m-i" as string]: 3 }}>
               {intro}
             </p>
             <ul className={`${mk.factRow} m-enter`} style={{ ["--m-i" as string]: 4 }}>
@@ -105,7 +116,7 @@ export function StructureDetail({
           </div>
           <div className={`${mk.detailMedia} m-enter-scale`} style={{ ["--m-i" as string]: 2 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={renderSrc(structure.code)} srcSet={srcSetFor(renderSrc(structure.code))} sizes="(min-width: 1024px) 600px, 92vw" alt={t("marketing.boxes.renderAlt", { name })} width={960} height={720} fetchPriority="high" />
+            <img src={renderSrc(structure.code)} srcSet={srcSetFor(renderSrc(structure.code))} sizes={HERO_SIZES} alt={t("marketing.boxes.renderAlt", { name })} width={960} height={720} fetchPriority="high" />
           </div>
         </div>
       </section>
@@ -214,9 +225,9 @@ export function StructureDetail({
                   <Text as="p" numeric>
                     {formatDims(dims, locale)}
                   </Text>
-                  <Button url={cta} variant="primary" size="large" fullWidth>
+                  <Link href={cta} className={`${mk.pill} ${mk.pillLarge} ${styles.ctaFull}`}>
                     {t("store.structure.designCta")}
-                  </Button>
+                  </Link>
                   <Text as="p" variant="bodySm" tone="subdued">
                     {t("store.structure.designHint")}
                   </Text>
@@ -228,7 +239,7 @@ export function StructureDetail({
                     <Text as="p" tone="subdued">
                       {t("store.structure.vendorsCount", { count: makers.length })}
                     </Text>
-                    <ul className={styles.plainList}>
+                    <ul className={`${styles.plainList} ${styles.makerList}`}>
                       {makers.slice(0, 5).map((v) => (
                         <li key={v.id} className={styles.designRow}>
                           <div className={styles.designMain}>
@@ -240,9 +251,9 @@ export function StructureDetail({
                         </li>
                       ))}
                     </ul>
-                    <Button url={`/${locale}/vendors?structure=${structure.code}`} variant="plain">
+                    <Link href={`/${locale}/vendors?structure=${structure.code}`} className={styles.textLink}>
                       {t("store.home.vendorsAll")}
-                    </Button>
+                    </Link>
                   </div>
                 </Card>
               ) : null}

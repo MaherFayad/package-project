@@ -194,7 +194,7 @@
 }
 .specRow:last-child { border-block-end: 0; }
 .specRow dt { color: var(--p-color-text-secondary); }
-.specRow dd { margin: 0; }
+.specRow dd { margin: 0; overflow-wrap: anywhere; } /* X-02: no reflow break at 320 px */
 
 /* sizes chips */
 .chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--p-space-200); }
@@ -306,3 +306,107 @@
 .historyList li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--p-space-200); }
 
 .plainList { list-style: none; margin: 0; padding: 0; }
+
+/* SpecTable (public price / machines tables, R2-MK-05) */
+.specScroll { overflow-x: auto; min-inline-size: 0; border-radius: 12px; }
+.specScroll:focus-visible { outline: 2px solid var(--p-color-border-focus, #005bd3); outline-offset: 2px; }
+.specTable {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+.specTable th,
+.specTable td {
+  padding: 12px 16px;
+  border-block-end: 1px solid var(--p-color-border-secondary, #ebebeb);
+  text-align: start;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.specTable thead th {
+  color: var(--p-color-text-secondary, #616161);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  background: #f5f5f3;
+}
+.specTable thead th:first-child { border-start-start-radius: 10px; border-end-start-radius: 10px; }
+.specTable thead th:last-child { border-start-end-radius: 10px; border-end-end-radius: 10px; }
+.specTable thead th { border-block-end: 0; }
+.specTable tbody th { font-weight: 600; }
+.specTable tbody tr:last-child > * { border-block-end: 0; }
+.specTable tbody tr:hover > * { background: #fafaf8; }
+.specNum { text-align: end !important; }
+.ctaFull { inline-size: 100%; }
+.textLink {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 24px;
+  color: var(--p-color-text, #1a1a1a);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.textLink:hover { text-decoration-thickness: 2px; }
+.reviewsEmpty { display: grid; gap: 4px; padding-block: 8px; }
+.galleryNav {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 44px;
+  block-size: 44px;
+  border-radius: 999px;
+  border: 1px solid var(--p-color-border, #e3e3e3);
+  background: #fff;
+  color: var(--p-color-text, #1a1a1a);
+  cursor: pointer;
+}
+.galleryNav:hover:not(:disabled) { background: #f5f5f3; }
+.galleryNav:disabled { opacity: 0.4; cursor: default; }
+.galleryNav:focus-visible { outline: 2px solid var(--p-color-border-focus, #005bd3); outline-offset: 2px; }
+/* Info note on the printer profile (was a UI kit Banner, which pulled Button + Spinner CSS). */
+.infoNote {
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #eaf4ff;
+  color: #00336b;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+/* Printer links on the public structure page: ink, not the admin link blue (R2-MK-09). */
+.makerList .designMain > a { color: var(--p-color-text, #1a1a1a); font-weight: 600; text-underline-offset: 3px; }
+.makerList .designMain > a:hover { text-decoration-thickness: 2px; }
+/* SpecTable stacked rows on phones (CR-10). */
+@media (max-width: 489.98px) {
+  .specScroll { overflow: visible; }
+  .specTable thead { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .specTable,
+  .specTable tbody { display: block; }
+  .specTable tbody tr {
+    display: grid;
+    gap: 4px;
+    padding-block: 12px;
+    border-block-end: 1px solid var(--p-color-border-secondary, #ebebeb);
+  }
+  .specTable tbody tr:last-child { border-block-end: 0; }
+  .specTable tbody tr:hover > * { background: none; }
+  .specTable tbody th,
+  .specTable tbody td {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 0;
+    border: 0;
+    white-space: normal;
+    text-align: start !important;
+  }
+  .specTable tbody th { font-size: 1rem; margin-block-end: 2px; }
+  .specTable tbody th::before { font-weight: 400; }
+  .specTable tbody th::before,
+  .specTable tbody td::before {
+    content: attr(data-label);
+    color: var(--p-color-text-secondary, #616161);
+    font-size: 0.875rem;
+  }
+}

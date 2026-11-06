@@ -51,7 +51,7 @@ export default async function VendorsPage({ params, searchParams }: Props) {
           <h1 id="vendors-title" className={`${styles.h1} m-enter-lcp`} style={{ ["--m-i" as string]: 1 }}>
             {t("marketing.vendors.title")}
           </h1>
-          <p className={`${styles.lead} m-enter`} style={{ ["--m-i" as string]: 2 }}>
+          <p className={`${styles.lead} m-enter-lcp`} style={{ ["--m-i" as string]: 2 }}>
             {t("marketing.vendors.body")}
           </p>
         </div>

@@ -46,7 +46,7 @@ export default async function LegalPage({ params }: Props) {
           <h1 id="legal-title" className={`${mk.h1} m-enter-lcp`} style={{ ["--m-i" as string]: 1 }}>
             {title}
           </h1>
-          <p className={`${mk.lead} m-enter`} style={{ ["--m-i" as string]: 2 }}>
+          <p className={`${mk.lead} m-enter-lcp`} style={{ ["--m-i" as string]: 2 }}>
             {t("legal.updated", { date: formatDate(LEGAL_UPDATED, locale, "long") })}
           </p>
           <p className="m-enter" style={{ ["--m-i" as string]: 3, marginBlockStart: 16 }}>

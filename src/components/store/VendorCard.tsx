@@ -4,7 +4,9 @@ import type { Locale } from "@/types";
 import { getT, pick } from "@/i18n";
 import type { DictKey } from "@/i18n";
 import { formatNumber } from "@/lib/format";
-import { Badge, Button, Icon } from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Icon } from "@/components/ui/Icon";
 import type { VendorListItem } from "./vendor-filters";
 import styles from "./store.module.css";
 
