@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { preloadPlexArabic } from "@/app/font-preload";
 import { getDictionary, toLocale } from "@/i18n";
 import { I18nProvider } from "@/i18n/client";
 
@@ -11,6 +12,7 @@ import { I18nProvider } from "@/i18n/client";
  */
 export default async function VendorAreaLayout({ children, params }: { children: ReactNode; params: Promise<{ locale: string }> }) {
   const locale = toLocale((await params).locale);
+  preloadPlexArabic(locale); // app frame font (Plex), Arabic only
   return (
     <I18nProvider locale={locale} dict={getDictionary(locale)}>
       {children}

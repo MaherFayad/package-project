@@ -4,136 +4,234 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createPortal } from "react-dom";
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { Boxes, ChevronDown, Menu, Milk, PackageOpen, Printer, Rotate3d, Store, X } from "lucide-react";
+import {
+  Boxes,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Coffee,
+  Layers,
+  Menu,
+  Milk,
+  MonitorSmartphone,
+  PackageOpen,
+  PenTool,
+  Printer,
+  Receipt,
+  Rotate3d,
+  Sparkles,
+  Store,
+  Truck,
+  LayoutGrid,
+  HelpCircle,
+  X,
+} from "lucide-react";
 import { useSessionRole } from "./useSessionRole";
-import styles from "./marketing.module.css";
+import styles from "./kit/chrome.module.css";
 
-export interface MenuEntry {
+const ICONS = {
+  boxes: Boxes,
+  cartons: PackageOpen,
+  bottles: Milk,
+  styles: LayoutGrid,
+  designer: Rotate3d,
+  newDesign: PenTool,
+  finishes: Sparkles,
+  pricing: Receipt,
+  track: Truck,
+  cafes: Coffee,
+  beauty: Layers,
+  ecommerce: MonitorSmartphone,
+  directory: Printer,
+  join: Store,
+  how: HelpCircle,
+} as const;
+export type MenuIcon = keyof typeof ICONS;
+
+export interface MegaLink {
   href: string;
-  title: string;
-  body: string;
-  icon: "boxes" | "cartons" | "bottles" | "designer" | "directory" | "join";
+  label: string;
+  icon: MenuIcon;
+}
+export interface MegaMenu {
+  id: string;
+  label: string;
+  groups: { title: string; links: MegaLink[] }[];
+  featured?: { eyebrow: string; title: string; body: string; href: string; image: string; latestTitle?: string; latest?: string[] };
+  foot?: { href: string; label: string; body: string }[];
 }
 export interface NavModel {
   label: string;
-  products: { label: string; items: MenuEntry[] };
-  printers: { label: string; items: MenuEntry[] };
-  links: { href: string; label: string }[];
-  /** Extra links for signed-in visitors (resolved on the client, see useSessionRole). */
-  signedInLinks?: { orders: { href: string; label: string }; vendor: { href: string; label: string }; admin: { href: string; label: string } };
-  menuLabel: string;
-  closeLabel: string;
-  /** Rendered inside the mobile sheet (login, CTA, language). */
-  sheetActions: ReactNode;
   homeHref: string;
   brand: ReactNode;
   brandLabel: string;
+  menuLabel: string;
+  closeLabel: string;
+  backLabel: string;
+  menus: MegaMenu[];
+  links: { href: string; label: string }[];
+  /** Extra links for signed-in visitors (resolved on the client, see useSessionRole). */
+  signedInLinks?: { orders: { href: string; label: string }; vendor: { href: string; label: string }; admin: { href: string; label: string } };
+  /** Rendered at the foot of the mobile menu (log in, CTA, language). */
+  sheetActions: ReactNode;
+  /** Rendered next to the menu button on phones (the underlined CTA). */
+  mobileActions?: ReactNode;
 }
 
-const ICONS = { boxes: Boxes, cartons: PackageOpen, bottles: Milk, designer: Rotate3d, directory: Printer, join: Store } as const;
+const OPEN_DELAY = 90;
+const CLOSE_DELAY = 220;
 
-/** Desktop dropdown menu: button + panel; Escape and outside click close it, focus returns. */
-function DropMenu({ label, items, open, onToggle, onClose }: { label: string; items: MenuEntry[]; open: boolean; onToggle: () => void; onClose: () => void }) {
-  const id = useId();
-  const wrap = useRef<HTMLLIElement>(null);
-  const btn = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: PointerEvent) => {
-      if (!wrap.current?.contains(e.target as Node)) onClose();
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
-        btn.current?.focus();
-      }
-    };
-    document.addEventListener("pointerdown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("pointerdown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open, onClose]);
+function MegaPanel({ menu, id, open }: { menu: MegaMenu; id: string; open: boolean }) {
   return (
-    <li
-      className={styles.navItem}
-      ref={wrap}
-      onBlur={(e) => {
-        if (open && !wrap.current?.contains(e.relatedTarget as Node | null)) onClose();
-      }}
-    >
-      <button ref={btn} type="button" className={styles.navTrigger} aria-expanded={open} aria-controls={id} onClick={onToggle}>
-        {label}
-        <ChevronDown size={16} strokeWidth={1.75} aria-hidden />
-      </button>
-      {open ? (
-        <div className={styles.menuPanel} id={id}>
-          <ul className={styles.menuList}>
-            {items.map((it) => {
-              const I = ICONS[it.icon];
-              return (
-                <li key={it.href}>
-                  <Link href={it.href} className={styles.menuLink} onClick={onClose}>
-                    <span className={styles.menuIcon} aria-hidden="true">
-                      <I size={20} strokeWidth={1.75} />
-                    </span>
-                    <span className={styles.menuText}>
-                      <span className={styles.menuTitle}>{it.title}</span>
-                      <span className={styles.menuBody}>{it.body}</span>
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+    <div className={styles.panel} id={id} data-open={open ? "true" : "false"}>
+      <div className={styles.panelInner} style={menu.featured ? undefined : { gridTemplateColumns: "1fr" }}>
+        <div className={styles.groups} style={{ ["--cols" as string]: Math.min(menu.groups.length, 3) }}>
+          {menu.groups.map((g) => (
+            <div key={g.title}>
+              <p className={styles.groupTitle}>{g.title}</p>
+              <ul className={styles.groupList}>
+                {g.links.map((l) => {
+                  const I = ICONS[l.icon];
+                  return (
+                    <li key={l.href + l.label}>
+                      <Link href={l.href} className={styles.menuLink}>
+                        <I size={20} strokeWidth={1.5} aria-hidden />
+                        <span>{l.label}</span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+        </div>
+        {menu.featured ? (
+          <div className={styles.featured}>
+            <p className={styles.groupTitle}>{menu.featured.eyebrow}</p>
+            <Link href={menu.featured.href} className={styles.featuredCard}>
+              <span className={styles.featuredMedia} aria-hidden="true">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={menu.featured.image} alt="" width={200} height={200} loading="lazy" decoding="async" />
+              </span>
+              <span className={styles.featuredTitle}>{menu.featured.title}</span>
+              <span className={styles.featuredBody}>{menu.featured.body}</span>
+            </Link>
+            {menu.featured.latest?.length ? (
+              <>
+                <p className={styles.groupTitle} style={{ marginBlockStart: 16 }}>
+                  {menu.featured.latestTitle}
+                </p>
+                <ul className={styles.latest}>
+                  {menu.featured.latest.map((x) => (
+                    <li key={x}>{x}</li>
+                  ))}
+                </ul>
+              </>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+      {menu.foot?.length ? (
+        <div className={styles.panelFoot}>
+          <div className={styles.panelFootInner}>
+            {menu.foot.map((f) => (
+              <Link key={f.href} href={f.href} className={styles.footLink}>
+                <span>{f.label}</span>
+                <span>{f.body}</span>
+              </Link>
+            ))}
+          </div>
         </div>
       ) : null}
-    </li>
+    </div>
   );
 }
 
 /**
- * Marketing header behaviour: desktop dropdowns, the full-screen mobile menu (focus kept inside,
- * Escape closes, body scroll locked) and the hairline under the bar once the page scrolls.
+ * Marketing header behaviour (client): mega-menus that open on hover (with intent delays), on
+ * keyboard focus and on click; Escape closes and returns focus; the bar turns solid once the
+ * page scrolls or a menu opens. Phones: full-screen menu with drill-down levels (focus kept
+ * inside, Escape closes, scroll locked). Everything renders in the server HTML: without JS the
+ * links in the mobile list and the top-level links still work.
  */
 export function HeaderNav({ model, children }: { model: NavModel; children: ReactNode }) {
-  const [menu, setMenu] = useState<"products" | "printers" | null>(null);
+  const [open, setOpen] = useState<string | null>(null);
   const [sheet, setSheet] = useState(false);
+  const [level, setLevel] = useState<string | null>(null);
   const pathname = usePathname();
   const me = useSessionRole();
-  const extra = model.signedInLinks;
-  const links =
-    me && extra
-      ? [...model.links, extra.orders, ...(me.role === "VENDOR" ? [extra.vendor] : me.role === "ADMIN" ? [extra.admin] : [])]
-      : model.links;
   const header = useRef<HTMLElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
   const openBtn = useRef<HTMLButtonElement>(null);
-  const close = useCallback(() => setMenu(null), []);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const baseId = useId();
+  const extra = model.signedInLinks;
+  const links = me && extra ? [...model.links, extra.orders, ...(me.role === "VENDOR" ? [extra.vendor] : me.role === "ADMIN" ? [extra.admin] : [])] : model.links;
+
+  const clear = () => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+  };
+  const schedule = useCallback((next: string | null, delay: number) => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => setOpen(next), delay);
+  }, []);
 
   useEffect(() => {
-    setMenu(null);
+    setOpen(null);
     setSheet(false);
+    setLevel(null);
   }, [pathname]);
 
   useEffect(() => {
     const el = header.current;
     if (!el) return;
-    const on = () => el.setAttribute("data-scrolled", window.scrollY > 4 ? "true" : "false");
+    let raf = 0;
+    const on = () => {
+      raf = 0;
+      el.setAttribute("data-scrolled", window.scrollY > 8 ? "true" : "false");
+    };
     on();
-    window.addEventListener("scroll", on, { passive: true });
-    return () => window.removeEventListener("scroll", on);
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(on);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
   }, []);
 
+  // Escape and outside clicks close the desktop menu.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      const btn = header.current?.querySelector<HTMLButtonElement>(`[data-menu-trigger="${open}"]`);
+      setOpen(null);
+      btn?.focus();
+    };
+    const onDown = (e: PointerEvent) => {
+      if (!header.current?.contains(e.target as Node)) setOpen(null);
+    };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onDown);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onDown);
+    };
+  }, [open]);
+
+  useEffect(() => () => clear(), []);
+
+  // Mobile menu: lock scroll, keep focus inside, Escape closes, focus returns to the opener.
   useEffect(() => {
     if (!sheet) return;
     const root = document.documentElement;
     const opener = openBtn.current;
     const prev = root.style.overflow;
     root.style.overflow = "hidden";
-    const first = sheetRef.current?.querySelector<HTMLElement>("button, a");
-    first?.focus();
+    sheetRef.current?.querySelector<HTMLElement>("button, a")?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setSheet(false);
@@ -160,23 +258,85 @@ export function HeaderNav({ model, children }: { model: NavModel; children: Reac
     };
   }, [sheet]);
 
+  // Move focus to the first item when a drill-down level opens.
+  useEffect(() => {
+    if (sheet) sheetRef.current?.querySelector<HTMLElement>("[data-level] button, [data-level] a")?.focus();
+  }, [level, sheet]);
+
   const isCurrent = (href: string) => {
     const path = href.split("#")[0];
     return !!pathname && path.length > 3 && (pathname === path || pathname.startsWith(`${path}/`));
   };
+  const levelMenu = model.menus.find((m) => m.id === level) ?? null;
 
   return (
-    <header className={styles.header} ref={header} data-scrolled="false">
-      <div className={`${styles.container} ${styles.headerInner}`}>
+    <header
+      className={styles.header}
+      ref={header}
+      data-scrolled="false"
+      data-open={open ? "true" : "false"}
+      onPointerLeave={(e) => {
+        if (e.pointerType === "mouse" && open) schedule(null, CLOSE_DELAY);
+      }}
+      onPointerEnter={(e) => {
+        if (e.pointerType === "mouse") clear();
+      }}
+    >
+      <div className={styles.bar}>
         <Link href={model.homeHref} className={styles.brand} aria-label={model.brandLabel}>
           {model.brand}
         </Link>
-        <nav aria-label={model.label} className={styles.navDesktop}>
+        <nav aria-label={model.label} className={styles.nav}>
           <ul className={styles.navList}>
-            <DropMenu label={model.products.label} items={model.products.items} open={menu === "products"} onToggle={() => setMenu((m) => (m === "products" ? null : "products"))} onClose={close} />
-            <DropMenu label={model.printers.label} items={model.printers.items} open={menu === "printers"} onToggle={() => setMenu((m) => (m === "printers" ? null : "printers"))} onClose={close} />
+            {model.menus.map((m) => {
+              const id = `${baseId}-${m.id}`;
+              const isOpen = open === m.id;
+              return (
+                <li
+                  key={m.id}
+                  className={styles.navItem}
+                  data-open={isOpen ? "true" : undefined}
+                  onPointerEnter={(e) => {
+                    if (e.pointerType === "mouse") schedule(m.id, open ? 0 : OPEN_DELAY);
+                  }}
+                  onBlur={(e) => {
+                    if (isOpen && !e.currentTarget.contains(e.relatedTarget as Node | null)) setOpen(null);
+                  }}
+                >
+                  <button
+                    type="button"
+                    className={styles.navTrigger}
+                    aria-expanded={isOpen}
+                    aria-controls={id}
+                    data-menu-trigger={m.id}
+                    onClick={() => {
+                      clear();
+                      setOpen((o) => (o === m.id ? null : m.id));
+                    }}
+                    onFocus={(e) => {
+                      // Keyboard focus opens the panel (reference behaviour); Tab then walks its links.
+                      if (e.currentTarget.matches(":focus-visible") && open !== m.id) {
+                        clear();
+                        setOpen(m.id);
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "ArrowDown") {
+                        e.preventDefault();
+                        setOpen(m.id);
+                        requestAnimationFrame(() => document.getElementById(id)?.querySelector<HTMLElement>("a")?.focus());
+                      }
+                    }}
+                  >
+                    {m.label}
+                    <ChevronDown size={14} strokeWidth={2} aria-hidden />
+                  </button>
+                  <MegaPanel menu={m} id={id} open={isOpen} />
+                </li>
+              );
+            })}
             {links.map((l) => (
-              <li key={l.href}>
+              <li key={l.href} onPointerEnter={(e) => e.pointerType === "mouse" && open && schedule(null, CLOSE_DELAY)}>
                 <Link href={l.href} className={styles.navLink} aria-current={isCurrent(l.href) ? "page" : undefined}>
                   {l.label}
                 </Link>
@@ -184,47 +344,76 @@ export function HeaderNav({ model, children }: { model: NavModel; children: Reac
             ))}
           </ul>
         </nav>
-        <div className={styles.headerActions}>
+        <div className={styles.actions}>
           {children}
-          <button ref={openBtn} type="button" className={styles.menuButton} aria-expanded={sheet} aria-label={model.menuLabel} onClick={() => setSheet(true)}>
-            <Menu size={20} strokeWidth={1.75} aria-hidden />
+          {model.mobileActions}
+          <button ref={openBtn} type="button" className={`${styles.menuButton} ${styles.mobileOnly}`} aria-expanded={sheet} aria-haspopup="dialog" aria-label={model.menuLabel} onClick={() => setSheet(true)}>
+            <Menu size={22} strokeWidth={1.75} aria-hidden />
           </button>
         </div>
       </div>
-      {/* Portalled to the .site wrapper: the sticky header's backdrop-filter makes it the
-          containing block for fixed descendants, which clipped the sheet to the 64px bar.
-          .site still provides the --mk-* tokens. */}
+      <div className={styles.scrim} aria-hidden="true" onClick={() => setOpen(null)} />
       {sheet && header.current
         ? createPortal(
-            <div className={styles.sheet} role="dialog" aria-modal="true" aria-label={model.menuLabel} ref={sheetRef}>
-              <div className={styles.sheetHead}>
+            <div className={styles.mobile} role="dialog" aria-modal="true" aria-label={model.menuLabel} ref={sheetRef}>
+              <div className={styles.mobileHead}>
                 <Link href={model.homeHref} className={styles.brand} aria-label={model.brandLabel} onClick={() => setSheet(false)}>
                   {model.brand}
                 </Link>
                 <button type="button" className={styles.menuButton} aria-label={model.closeLabel} onClick={() => setSheet(false)}>
-                  <X size={20} strokeWidth={1.75} aria-hidden />
+                  <X size={22} strokeWidth={1.75} aria-hidden />
                 </button>
               </div>
-              <nav className={styles.sheetBody} aria-label={model.label}>
-                {[model.products, model.printers].map((g) => (
-                  <div key={g.label} className={styles.sheetGroup}>
-                    <h2 className={styles.sheetGroupTitle}>{g.label}</h2>
-                    {g.items.map((it) => (
-                      <Link key={it.href} href={it.href} className={styles.sheetLink} onClick={() => setSheet(false)}>
-                        {it.title}
-                      </Link>
+              <nav className={styles.mobileBody} aria-label={model.label}>
+                {levelMenu ? (
+                  <div className={styles.mobileLevel} data-level={levelMenu.id} key={levelMenu.id}>
+                    <button type="button" className={styles.mobileBack} onClick={() => setLevel(null)}>
+                      <ChevronLeft size={20} aria-hidden />
+                      {model.backLabel}
+                    </button>
+                    <h2 className={styles.mobileRow} style={{ borderBlockEnd: 0, cursor: "default" }}>
+                      {levelMenu.label}
+                    </h2>
+                    {levelMenu.groups.map((g) => (
+                      <div key={g.title} className={styles.mobileGroup}>
+                        <p className={styles.groupTitle}>{g.title}</p>
+                        <ul className={styles.groupList}>
+                          {g.links.map((l) => {
+                            const I = ICONS[l.icon];
+                            return (
+                              <li key={l.href + l.label}>
+                                <Link href={l.href} className={styles.menuLink} onClick={() => setSheet(false)}>
+                                  <I size={20} strokeWidth={1.5} aria-hidden />
+                                  <span>{l.label}</span>
+                                </Link>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
                     ))}
                   </div>
-                ))}
-                <div className={styles.sheetGroup}>
-                  {links.map((l) => (
-                    <Link key={l.href} href={l.href} className={styles.sheetLink} onClick={() => setSheet(false)}>
-                      {l.label}
-                    </Link>
-                  ))}
-                </div>
-                <div className={styles.sheetActions}>{model.sheetActions}</div>
+                ) : (
+                  <ul className={`${styles.mobileList} ${styles.mobileLevel}`} data-level="root">
+                    {model.menus.map((m) => (
+                      <li key={m.id}>
+                        <button type="button" className={styles.mobileRow} onClick={() => setLevel(m.id)}>
+                          {m.label}
+                          <ChevronRight size={22} strokeWidth={1.5} aria-hidden />
+                        </button>
+                      </li>
+                    ))}
+                    {links.map((l) => (
+                      <li key={l.href}>
+                        <Link href={l.href} className={styles.mobileRow} onClick={() => setSheet(false)} aria-current={isCurrent(l.href) ? "page" : undefined}>
+                          {l.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </nav>
+              <div className={styles.mobileFoot}>{model.sheetActions}</div>
             </div>,
             header.current.parentElement ?? document.body,
           )

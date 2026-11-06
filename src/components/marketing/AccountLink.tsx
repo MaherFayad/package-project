@@ -5,7 +5,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { signOut } from "@/components/auth/useSession";
 import { resetSessionRole, useSessionRole } from "./useSessionRole";
-import styles from "./marketing.module.css";
+import styles from "./kit/chrome.module.css";
 
 type L = { href: string; label: string };
 
