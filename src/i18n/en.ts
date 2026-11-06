@@ -43,7 +43,7 @@ export const en = {
     days: "days",
     error: "Something went wrong. Please try again.",
     notFoundTitle: "Page not found",
-    notFoundBody: "The page you are looking for does not exist.",
+    notFoundBody: "The link may have changed, or the page is no longer available. Start from the home page or browse box styles.",
     goHome: "Go to home page",
   },
   nav: {
