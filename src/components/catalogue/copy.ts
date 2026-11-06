@@ -67,7 +67,7 @@ export const COPY = {
   instantTitle: t("Instant price from Egyptian printers", "سعر فوري من مطابع مصرية"),
   instantLabelsTitle: t("Instant price for the labels", "سعر فوري للملصقات"),
   instantBody: t(
-    "Design it free in 3D, then compare instant prices from {count} vetted printers. Prices include 14% VAT at checkout.",
+    "Design it free in 3D, then compare instant prices from {count} vetted printers. VAT 14% is added at checkout.",
     "صممها مجانا بتقنية ثلاثية الأبعاد، ثم قارن الأسعار الفورية من المطابع المعتمدة (عددها: {count}). تضاف ضريبة القيمة المضافة 14% عند الدفع.",
   ),
   quoteTitle: t("Designed free, priced on request", "تصميم مجاني والسعر عند الطلب"),

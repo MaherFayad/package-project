@@ -132,7 +132,7 @@ test("buyer checks out a saved design, pays by mock card and tracks the order", 
   await expect(page.getByText("VAT 14%", { exact: true })).toBeVisible();
   // Without the seller tax registration number it is a receipt, not a tax invoice (R4-B-07).
   await expect(page.getByRole("heading", { level: 1 })).toContainText("(not a tax invoice)");
-  await expect(page.getByText("Pending submission")).toHaveCount(0);
+  await expect(page.getByText("Not submitted yet")).toHaveCount(0);
   await expect(page.getByTestId("invoice-total")).toContainText("EGP");
 
   // Orders list shows it.

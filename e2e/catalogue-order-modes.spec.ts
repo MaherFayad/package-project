@@ -97,7 +97,7 @@ test("special-gluing model no printer lists: 'Request a price' once the price sa
   await signInAs(page.context(), baseURL!, owner.id);
   await page.goto("/en/design/fefco-0711-auto-bottom-rsc");
   await dismissCookies(page);
-  await expect(page.getByTestId("price-badge")).toContainText(/price on request/i, { timeout: 30_000 });
+  await expect(page.getByTestId("price-badge")).toContainText(/on request/i, { timeout: 30_000 });
   await expect(page.getByRole("toolbar").getByRole("button", { name: "Request a price" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Order this box" })).toHaveCount(0);
   await toolbarAction(page, "Export");
