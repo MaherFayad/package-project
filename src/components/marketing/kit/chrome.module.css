@@ -50,7 +50,7 @@
   letter-spacing: -0.01em;
 }
 .brand svg { flex: none; }
-.nav { display: none; flex: 1; }
+.nav { display: none; flex: 1 1 auto; min-inline-size: 0; }
 .navList { display: flex; align-items: center; gap: 4px; margin: 0; padding: 0; list-style: none; }
 .navItem { position: static; }
 .navTrigger, .navLink {
@@ -75,7 +75,7 @@
 .header[data-open="true"] .navList > li:not([data-open="true"]) > :where(.navTrigger, .navLink) { opacity: 0.6; }
 .navLink[aria-current="page"] { text-decoration: underline; text-underline-offset: 6px; text-decoration-thickness: 1px; }
 .navTrigger:hover, .navLink:hover { opacity: 1 !important; }
-.actions { display: flex; align-items: center; gap: 8px; margin-inline-start: auto; }
+.actions { display: flex; flex: none; align-items: center; gap: 8px; margin-inline-start: auto; }
 .textLink {
   display: inline-flex;
   align-items: center;
@@ -291,6 +291,12 @@
 
 /* ───────────── Account menu (AccountLink) ───────────── */
 .accountMenu { position: relative; display: inline-flex; align-items: center; }
+.accountMenu .navTrigger { gap: 8px; }
+/* Below 1200 px the account button shows the avatar only (its name stays for assistive tech), so
+   the bar fits at 1024 px with the longest labels (R6-AX-10, WCAG 1.4.10). */
+@media (max-width: 1199px) {
+  .accountLabel { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
 .loginLink { }
 .accountAvatar { display: inline-grid; place-items: center; inline-size: 28px; block-size: 28px; border-radius: 50%; background: #ffffff; color: #000000; font-size: 0.8125rem; font-weight: 600; }
 .accountAvatarDot { inline-size: 10px; block-size: 10px; border-radius: 50%; background: var(--mk-accent-ink); }
