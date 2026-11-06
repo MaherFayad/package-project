@@ -10,16 +10,39 @@ import { MODEL_INDEX } from "@/lib/library/model-index.generated";
 import { MODEL_GROUPS } from "@/lib/library/types";
 import { FINISH_CODES, type StructureCode } from "@/types";
 import { designHref, structureHref } from "@/components/store/catalog";
-import { getPriceFrom, listStructures, listVendors } from "@/components/store/data";
+import {
+  getPriceFrom,
+  listStructures,
+  listVendors,
+} from "@/components/store/data";
 import { DeniedBanner } from "@/components/marketing/DeniedBanner";
+import { startHref as kitStartHref } from "@/components/marketing/MarketingHeader";
+import { Sheet } from "@/components/marketing/kit/Sheet";
+import { Container } from "@/components/marketing/kit/Container";
+import { Display } from "@/components/marketing/kit/Display";
+import { Pill, PillRow } from "@/components/marketing/kit/Pill";
+import { Reveal } from "@/components/marketing/kit/Reveal";
 import { HeroImage } from "@/components/marketing/HeroImage";
-import { SAMPLES, TILE_BG, renderDims, renderSrc, srcSetFor, vesselSrc, type VesselRender } from "@/components/marketing/assets";
+import {
+  SAMPLES,
+  TILE_BG,
+  renderDims,
+  renderSrc,
+  srcSetFor,
+  vesselSrc,
+  type VesselRender,
+} from "@/components/marketing/assets";
 import { HomeHero } from "@/components/marketing/home/HomeHero";
 import { Loop } from "@/components/marketing/home/Loop";
 import { CountUp } from "@/components/marketing/home/CountUp";
 import { HomeSteps } from "@/components/marketing/home/HomeSteps";
 import { EgyptDots } from "@/components/marketing/home/EgyptDots";
-import { daysWord, fill, homeCopy, printersWord } from "@/components/marketing/home/copy";
+import {
+  daysWord,
+  fill,
+  homeCopy,
+  printersWord,
+} from "@/components/marketing/home/copy";
 import s from "@/components/marketing/home/home.module.css";
 
 type Props = { params: Promise<{ locale: string }> };
@@ -33,7 +56,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: { absolute: `${t("meta.siteName")} · ${t("meta.tagline")}` },
     description: t("meta.description"),
-    alternates: { canonical: `/${locale}`, languages: { ar: "/ar", en: "/en" } },
+    alternates: {
+      canonical: `/${locale}`,
+      languages: { ar: "/ar", en: "/en" },
+    },
     openGraph: {
       title: t("meta.tagline"),
       description: t("meta.description"),
@@ -51,7 +77,10 @@ const MODEL_COUNT = Object.keys(MODEL_INDEX).length;
 const GROUP_COUNT = MODEL_GROUPS.length;
 const FINISH_COUNT = FINISH_CODES.filter((f) => f !== "NONE").length;
 
-const RAIL: ({ kind: "render"; code: StructureCode } | { kind: "sample"; i: number })[] = [
+const RAIL: (
+  | { kind: "render"; code: StructureCode }
+  | { kind: "sample"; i: number }
+)[] = [
   { kind: "render", code: "FEFCO_0427" },
   { kind: "sample", i: 0 },
   { kind: "render", code: "ECMA_RTE" },
@@ -67,8 +96,29 @@ const RAIL: ({ kind: "render"; code: StructureCode } | { kind: "sample"; i: numb
 ];
 
 const WALL_ITEMS: { src: string; tone: string }[] = [
-  ...(["FEFCO_0427", "FEFCO_0201", "ECMA_RTE", "ECMA_STE", "PIZZA", "SLEEVE", "FEFCO_0320", "ECMA_CLB", "ECMA_SLB", "FEFCO_0422", "GABLE_BOX", "PAPER_TUBE", "RIGID_BOX"] as StructureCode[]).map((c) => ({ src: renderSrc(c), tone: TILE_BG[c] })),
-  ...(["jar", "bottle", "dropper", "pump", "can"] as VesselRender[]).map((v, i) => ({ src: vesselSrc(v), tone: ["#f6ecd2", "#e2efec", "#ece6f3", "#f3e3d9", "#dfe7f1"][i]! })),
+  ...(
+    [
+      "FEFCO_0427",
+      "FEFCO_0201",
+      "ECMA_RTE",
+      "ECMA_STE",
+      "PIZZA",
+      "SLEEVE",
+      "FEFCO_0320",
+      "ECMA_CLB",
+      "ECMA_SLB",
+      "FEFCO_0422",
+      "GABLE_BOX",
+      "PAPER_TUBE",
+      "RIGID_BOX",
+    ] as StructureCode[]
+  ).map((c) => ({ src: renderSrc(c), tone: TILE_BG[c] })),
+  ...(["jar", "bottle", "dropper", "pump", "can"] as VesselRender[]).map(
+    (v, i) => ({
+      src: vesselSrc(v),
+      tone: ["#f6ecd2", "#e2efec", "#ece6f3", "#f3e3d9", "#dfe7f1"][i]!,
+    }),
+  ),
 ];
 
 const ANYONE: { code: StructureCode; sample: number }[] = [
@@ -88,7 +138,14 @@ const FINISH_SPOTS: { t: string; s: string; dl: string }[] = [
   { t: "44%", s: "2%", dl: "-3.5s" },
 ];
 
-const THUMBS: { code?: StructureCode; vessel?: VesselRender; t: string; s: string; z: string; dl: string }[] = [
+const THUMBS: {
+  code?: StructureCode;
+  vessel?: VesselRender;
+  t: string;
+  s: string;
+  z: string;
+  dl: string;
+}[] = [
   { code: "ECMA_STE", t: "4%", s: "6%", z: "64px", dl: "0s" },
   { vessel: "jar", t: "0%", s: "62%", z: "72px", dl: "-2s" },
   { code: "GABLE_BOX", t: "38%", s: "-2%", z: "56px", dl: "-4s" },
@@ -109,14 +166,31 @@ export default async function HomePage({ params }: Props) {
     listVendors(),
     getPriceFrom("FEFCO_0427", { L: 250, W: 180, H: 80 }),
   ]);
-  const row500 = mailer.rows.find((r) => r.quantity === 500) ?? mailer.rows[0] ?? null;
-  const price = row500 ? formatMoney(row500.unitPiasters, locale, { alwaysDecimals: true }) : "—";
-  const subtotal = row500 ? formatMoney(row500.subtotalPiasters, locale, { alwaysDecimals: true }) : "—";
-  const vat = row500 ? formatMoney(Math.round(row500.subtotalPiasters * 0.14), locale, { alwaysDecimals: true }) : "—";
-  const total = row500 ? formatMoney(row500.subtotalPiasters + Math.round(row500.subtotalPiasters * 0.14), locale, { alwaysDecimals: true }) : "—";
+  const row500 =
+    mailer.rows.find((r) => r.quantity === 500) ?? mailer.rows[0] ?? null;
+  const price = row500
+    ? formatMoney(row500.unitPiasters, locale, { alwaysDecimals: true })
+    : "—";
+  const subtotal = row500
+    ? formatMoney(row500.subtotalPiasters, locale, { alwaysDecimals: true })
+    : "—";
+  const vat = row500
+    ? formatMoney(Math.round(row500.subtotalPiasters * 0.14), locale, {
+        alwaysDecimals: true,
+      })
+    : "—";
+  const total = row500
+    ? formatMoney(
+        row500.subtotalPiasters + Math.round(row500.subtotalPiasters * 0.14),
+        locale,
+        { alwaysDecimals: true },
+      )
+    : "—";
   const days = row500?.deliveryDays ?? null;
   const printers = vendors.length;
-  const minOrder = vendors.length ? Math.min(...vendors.map((v) => v.minOrderQty)) : null;
+  const minOrder = vendors.length
+    ? Math.min(...vendors.map((v) => v.minOrderQty))
+    : null;
   const vars = {
     price,
     days: days ?? "—",
@@ -127,33 +201,52 @@ export default async function HomePage({ params }: Props) {
     groups: GROUP_COUNT,
     finishes: FINISH_COUNT,
   };
-  const startHref = designHref(locale, { structure: "FEFCO_0427" });
+  const startHref = kitStartHref(locale);
+  const designerHref = designHref(locale, { structure: "FEFCO_0427" });
   const catalogHref = `${base}/catalog`;
   const structureName = (code: StructureCode) => {
     const x = structures.find((y) => y.code === code);
-    return x ? pick(locale, x.name.ar, x.name.en) : t(`structures.${code}` as DictKey);
+    return x
+      ? pick(locale, x.name.ar, x.name.en)
+      : t(`structures.${code}` as DictKey);
   };
   const sampleName = (i: number) => {
     const sm = SAMPLES[i]!;
-    return sm.structure ? structureName(sm.structure) : t(`marketing.bottles.items.${sm.vessel}` as DictKey);
+    return sm.structure
+      ? structureName(sm.structure)
+      : t(`marketing.bottles.items.${sm.vessel}` as DictKey);
   };
   const heroPoster = "/marketing/renders/fefco-0427.webp";
 
   const stats = [
     { value: MODEL_COUNT, label: c.stats.items[0]!.label },
     { value: printers, label: fill(c.stats.items[1]!.label, vars) },
-    ...(days != null ? [{ value: days, label: fill(c.stats.items[2]!.label, vars) }] : []),
-    ...(minOrder != null ? [{ value: minOrder, label: c.stats.items[3]!.label }] : []),
+    ...(days != null
+      ? [{ value: days, label: fill(c.stats.items[2]!.label, vars) }]
+      : []),
+    ...(minOrder != null
+      ? [{ value: minOrder, label: c.stats.items[3]!.label }]
+      : []),
   ];
 
   const railItems = RAIL.map((it) =>
     it.kind === "render"
-      ? { src: renderSrc(it.code), kind: "render" as const, name: structureName(it.code), w: 500 }
-      : { src: SAMPLES[it.i]!.src, kind: "sample" as const, name: sampleName(it.i), w: 300 },
+      ? {
+          src: renderSrc(it.code),
+          kind: "render" as const,
+          name: structureName(it.code),
+          w: 500,
+        }
+      : {
+          src: SAMPLES[it.i]!.src,
+          kind: "sample" as const,
+          name: sampleName(it.i),
+          w: 300,
+        },
   );
 
   return (
-    <div className={s.page} dir={locale === "ar" ? "rtl" : "ltr"}>
+    <div className={s.page}>
       <Suspense fallback={null}>
         <DeniedBanner message={t("store.deniedBanner")} />
       </Suspense>
@@ -162,43 +255,84 @@ export default async function HomePage({ params }: Props) {
       <HomeHero
         titles={c.hero.titles}
         lead={c.hero.lead}
-        labels={{ pause: c.hero.pause, play: c.hero.play, mediaAlt: c.hero.mediaAlt }}
+        labels={{
+          pause: c.hero.pause,
+          play: c.hero.play,
+          mediaAlt: c.hero.mediaAlt,
+        }}
         video={null}
-        poster={<HeroImage src={heroPoster} sizes="(min-width: 768px) 60vw, 92vw" alt="" className={s.heroPoster} width={914} height={608} />}
+        poster={
+          <HeroImage
+            src={heroPoster}
+            sizes="(min-width: 768px) 60vw, 92vw"
+            alt=""
+            className={s.heroPoster}
+            width={914}
+            height={608}
+          />
+        }
         actions={
-          <div className={s.pills}>
-            <Link href={startHref} className={`${s.pill} ${s.pillLight}`}>
+          <PillRow className={s.pills}>
+            <Pill href={startHref} size="lg">
               {c.hero.primary}
-            </Link>
-            <Link href={catalogHref} className={`${s.pill} ${s.pillOutline}`}>
+            </Pill>
+            <Pill href={catalogHref} variant="outline" size="lg">
               {c.hero.secondary}
-            </Link>
-          </div>
+            </Pill>
+          </PillRow>
         }
       />
 
       {/* 2 ───────── Statement + model rail (sheet over the hero) ───────── */}
-      <section className={`${s.section} ${s.sheet}`} aria-labelledby="statement-title" style={{ paddingBlockStart: 96 }}>
-        <div className={s.wrap}>
+      <Sheet
+        tone="dark"
+        pad="none"
+        container={false}
+        className={s.statementSheet}
+        aria-labelledby="statement-title"
+      >
+        <Container>
           <h2 id="statement-title" className={s.statement}>
             {c.statement.lead}
             <span className={s.statementRest}>{c.statement.rest}</span>
           </h2>
-        </div>
+        </Container>
         <Loop
-          className={s.wrap}
+          className={s.railWrap}
           labels={c.rail}
           foot={<p className={s.caption}>{c.rail.label}</p>}
         >
-          <div className={s.railViewport} role="region" aria-label={c.rail.label} tabIndex={0}>
+          <div
+            className={s.railViewport}
+            role="region"
+            aria-label={c.rail.label}
+            tabIndex={0}
+          >
             <ul className={s.railTrack}>
               {[...railItems, ...railItems].map((it, i) => {
                 const clone = i >= railItems.length;
                 return (
-                  <li key={i} className={s.railItem} aria-hidden={clone || undefined} style={{ inlineSize: it.w, ["--rw" as string]: `${it.w}px` }}>
+                  <li
+                    key={i}
+                    className={s.railItem}
+                    aria-hidden={clone || undefined}
+                    style={{
+                      inlineSize: it.w,
+                      ["--rw" as string]: `${it.w}px`,
+                    }}
+                  >
                     <div className={s.railCard} data-kind={it.kind}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={it.src} srcSet={srcSetFor(it.src)} sizes={`${it.w}px`} alt={clone ? "" : it.name} width={it.w} height={380} loading="lazy" decoding="async" />
+                      <img
+                        src={it.src}
+                        srcSet={srcSetFor(it.src)}
+                        sizes={`${it.w}px`}
+                        alt={clone ? "" : it.name}
+                        width={it.w}
+                        height={380}
+                        loading="lazy"
+                        decoding="async"
+                      />
                     </div>
                     <span className={s.railCaption}>{it.name}</span>
                   </li>
@@ -207,26 +341,35 @@ export default async function HomePage({ params }: Props) {
             </ul>
           </div>
         </Loop>
-      </section>
+      </Sheet>
 
       {/* 3 ───────── Feature card: design in the browser ───────── */}
       <section className={s.section} aria-labelledby="feature-title">
-        <div className={s.wrap}>
-          <article className={s.featureCard} data-reveal="" suppressHydrationWarning>
+        <Container>
+          <Reveal as="article" className={s.featureCard}>
             <div className={s.featureCopy}>
-              <h2 id="feature-title" className={s.h2}>
+              <Display id="feature-title" size="56">
                 {c.feature.title}
-              </h2>
+              </Display>
               <p className={s.body}>
                 {c.feature.body}{" "}
-                <Link href={startHref} className={s.textLink}>
+                <Link href={designerHref} className={s.textLink}>
                   {c.feature.link}
                 </Link>
               </p>
             </div>
             <div className={s.featureVisual} aria-hidden="true">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={renderSrc("ECMA_STE")} srcSet={srcSetFor(renderSrc("ECMA_STE"))} sizes="(min-width: 1024px) 460px, 70vw" alt="" {...renderDims(renderSrc("ECMA_STE"))} loading="lazy" decoding="async" style={{ inlineSize: "min(42%, 260px)" }} />
+              <img
+                src={renderSrc("ECMA_STE")}
+                srcSet={srcSetFor(renderSrc("ECMA_STE"))}
+                sizes="(min-width: 1024px) 460px, 70vw"
+                alt=""
+                {...renderDims(renderSrc("ECMA_STE"))}
+                loading="lazy"
+                decoding="async"
+                style={{ inlineSize: "min(42%, 260px)" }}
+              />
               <div className={s.prompt}>
                 <span className={s.promptText}>{c.feature.prompt}</span>
                 <span className={s.promptGo}>
@@ -234,185 +377,312 @@ export default async function HomePage({ params }: Props) {
                 </span>
               </div>
               {row500 ? (
-                <div className={`${s.chip} ${s.chipDark}`} style={{ insetBlockStart: "14%", insetInlineEnd: "8%" }}>
+                <div
+                  className={`${s.chip} ${s.chipDark}`}
+                  style={{ insetBlockStart: "14%", insetInlineEnd: "8%" }}
+                >
                   <span className={s.chipMuted}>{c.feature.chipTitle}</span>
                   <strong>{fill(c.feature.chipValue, vars)}</strong>
                   <span className={s.chipMuted}>{c.feature.chipNote}</span>
                 </div>
               ) : null}
             </div>
-          </article>
-        </div>
+          </Reveal>
+        </Container>
       </section>
 
       {/* 4 ───────── Every step in one place (1:2:1 cards + orbit) ───────── */}
       <section className={s.section} aria-labelledby="everywhere-title">
-        <div className={s.wrap}>
-          <div className={s.sectionHead} data-reveal="" suppressHydrationWarning>
-            <h2 id="everywhere-title" className={s.h2} style={{ fontWeight: 300 }}>
+        <Container>
+          <Reveal className={s.sectionHead}>
+            <Display id="everywhere-title" size="56" className={s.light}>
               {c.everywhere.title}
               <br />
               {c.everywhere.titleRest}
-            </h2>
-          </div>
-          <ul className={s.trio} style={{ listStyle: "none", margin: 0, padding: 0 }}>
-            <li className={s.mediaCard} data-reveal="" suppressHydrationWarning style={{ ["--m-i" as string]: 0 }}>
+            </Display>
+          </Reveal>
+          <ul
+            className={s.trio}
+            style={{ listStyle: "none", margin: 0, padding: 0 }}
+          >
+            <Reveal as="li" className={s.mediaCard} index={0}>
               <div className={s.mediaFrame} data-fit="contain">
-                <div className={s.ringGlow} style={{ inset: "auto", insetBlockStart: "10%", insetInlineStart: "-20%", inlineSize: "140%" }} aria-hidden="true" />
+                <div
+                  className={s.ringGlow}
+                  style={{
+                    inset: "auto",
+                    insetBlockStart: "10%",
+                    insetInlineStart: "-20%",
+                    inlineSize: "140%",
+                  }}
+                  aria-hidden="true"
+                />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={renderSrc("FEFCO_0201")} srcSet={srcSetFor(renderSrc("FEFCO_0201"))} sizes="(min-width: 1024px) 320px, 92vw" alt="" loading="lazy" decoding="async" style={{ position: "relative" }} />
-                <div className={`${s.prompt} ${s.promptSmall}`} aria-hidden="true">
-                  <span className={s.promptText}>{fill("{L} × {W} × {H}", { L: 300, W: 200, H: 100 })}</span>
-                  <span className={s.promptGo} style={{ background: "#5b3fff" }}>
+                <img
+                  src={renderSrc("FEFCO_0201")}
+                  srcSet={srcSetFor(renderSrc("FEFCO_0201"))}
+                  sizes="(min-width: 1024px) 320px, 92vw"
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  style={{ position: "relative" }}
+                />
+                <div
+                  className={`${s.prompt} ${s.promptSmall}`}
+                  aria-hidden="true"
+                >
+                  <span className={s.promptText}>
+                    {fill("{L} × {W} × {H}", { L: 300, W: 200, H: 100 })}
+                  </span>
+                  <span
+                    className={s.promptGo}
+                    style={{ background: "#5b3fff" }}
+                  >
                     <ArrowUp size={14} />
                   </span>
                 </div>
               </div>
               <div className={s.mediaCaption}>
-                <h3 className={s.cardTitle}>
-                  <Link href={startHref} className={s.cardLink}>
+                <Display as="h3" size="20" className={s.cardTitle}>
+                  <Link href={designerHref} className={s.cardLink}>
                     {c.everywhere.cards[0]!.title}
                   </Link>
-                </h3>
+                </Display>
                 <p className={s.caption}>{c.everywhere.cards[0]!.body}</p>
               </div>
-            </li>
-            <li className={s.mediaCard} data-reveal="" suppressHydrationWarning style={{ ["--m-i" as string]: 1 }}>
+            </Reveal>
+            <Reveal as="li" className={s.mediaCard} index={1}>
               <div className={s.mediaFrame} aria-hidden="true">
                 <div className={s.orbit}>
                   <div className={s.ringGlow} />
-                  <div className={`${s.ring} ${s.ringSpin}`} style={{ ["--k" as string]: 0.55 } as CSSProperties} />
-                  <div className={`${s.ring} ${s.ringSpin}`} style={{ borderStyle: "dashed" }} />
-                  <div className={s.ring} style={{ ["--k" as string]: 1.5 } as CSSProperties} />
+                  <div
+                    className={`${s.ring} ${s.ringSpin}`}
+                    style={{ ["--k" as string]: 0.55 } as CSSProperties}
+                  />
+                  <div
+                    className={`${s.ring} ${s.ringSpin}`}
+                    style={{ borderStyle: "dashed" }}
+                  />
+                  <div
+                    className={s.ring}
+                    style={{ ["--k" as string]: 1.5 } as CSSProperties}
+                  />
                   <div className={s.orbitNodes}>
                     {c.everywhere.nodes.map((n, i) => (
-                      <div key={n} className={s.orbitNode} style={{ ["--a" as string]: `${ORBIT_ANGLES[i]}deg` }}>
+                      <div
+                        key={n}
+                        className={s.orbitNode}
+                        style={{ ["--a" as string]: `${ORBIT_ANGLES[i]}deg` }}
+                      >
                         <span>{n}</span>
                       </div>
                     ))}
                   </div>
                   <div className={s.hub}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={renderSrc("FEFCO_0427")} srcSet={srcSetFor(renderSrc("FEFCO_0427"))} sizes="168px" alt="" {...renderDims(renderSrc("FEFCO_0427"))} loading="lazy" decoding="async" />
+                    <img
+                      src={renderSrc("FEFCO_0427")}
+                      srcSet={srcSetFor(renderSrc("FEFCO_0427"))}
+                      sizes="168px"
+                      alt=""
+                      {...renderDims(renderSrc("FEFCO_0427"))}
+                      loading="lazy"
+                      decoding="async"
+                    />
                     {c.everywhere.hub}
                   </div>
                 </div>
               </div>
               <div className={s.mediaCaption}>
-                <h3 className={s.cardTitle}>
+                <Display as="h3" size="20" className={s.cardTitle}>
                   <Link href={`${base}/orders`} className={s.cardLink}>
                     {c.everywhere.cards[1]!.title}
                   </Link>
-                </h3>
+                </Display>
                 <p className={s.caption}>{c.everywhere.cards[1]!.body}</p>
               </div>
-            </li>
-            <li className={s.mediaCard} data-reveal="" suppressHydrationWarning style={{ ["--m-i" as string]: 2 }}>
+            </Reveal>
+            <Reveal as="li" className={s.mediaCard} index={2}>
               <div className={s.mediaFrame}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={SAMPLES[7]!.src} srcSet={srcSetFor(SAMPLES[7]!.src)} sizes="(min-width: 1024px) 320px, 92vw" alt="" loading="lazy" decoding="async" />
+                <img
+                  src={SAMPLES[7]!.src}
+                  srcSet={srcSetFor(SAMPLES[7]!.src)}
+                  sizes="(min-width: 1024px) 320px, 92vw"
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                />
               </div>
               <div className={s.mediaCaption}>
-                <h3 className={s.cardTitle}>
+                <Display as="h3" size="20" className={s.cardTitle}>
                   <Link href={`${base}/vendors`} className={s.cardLink}>
                     {c.everywhere.cards[2]!.title}
                   </Link>
-                </h3>
-                <p className={s.caption}>{fill(c.everywhere.cards[2]!.body, vars)}</p>
+                </Display>
+                <p className={s.caption}>
+                  {fill(c.everywhere.cards[2]!.body, vars)}
+                </p>
               </div>
-            </li>
+            </Reveal>
           </ul>
-        </div>
+        </Container>
       </section>
 
       {/* 5 ───────── Delivered across Egypt ───────── */}
       <section className={s.section} aria-labelledby="delivery-title">
-        <div className={s.wrap}>
-          <div className={s.sectionHead} data-reveal="" suppressHydrationWarning>
-            <h2 id="delivery-title" className={s.h2}>
+        <Container>
+          <Reveal className={s.sectionHead}>
+            <Display id="delivery-title" size="56">
               {c.delivery.title}
-            </h2>
-          </div>
-          <article className={s.mapCard} data-reveal="" suppressHydrationWarning>
+            </Display>
+          </Reveal>
+          <Reveal as="article" className={s.mapCard}>
             <div className={s.mapStage} aria-hidden="true">
-              <div className={s.mapGlow} style={{ inlineSize: 540, blockSize: 540, insetBlockStart: -120, insetInlineStart: -160 }} />
-              <div className={s.mapGlow} style={{ inlineSize: 480, blockSize: 420, insetBlockEnd: -140, insetInlineEnd: -80, opacity: 0.6 }} />
+              <div
+                className={s.mapGlow}
+                style={{
+                  inlineSize: 540,
+                  blockSize: 540,
+                  insetBlockStart: -120,
+                  insetInlineStart: -160,
+                }}
+              />
+              <div
+                className={s.mapGlow}
+                style={{
+                  inlineSize: 480,
+                  blockSize: 420,
+                  insetBlockEnd: -140,
+                  insetInlineEnd: -80,
+                  opacity: 0.6,
+                }}
+              />
               <EgyptDots className={s.mapDots} />
               <div className={s.orderCard}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={renderSrc("FEFCO_0427")} srcSet={srcSetFor(renderSrc("FEFCO_0427"))} sizes="240px" alt="" loading="lazy" decoding="async" />
+                <img
+                  src={renderSrc("FEFCO_0427")}
+                  srcSet={srcSetFor(renderSrc("FEFCO_0427"))}
+                  sizes="240px"
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                />
                 <strong>{c.delivery.orderTitle}</strong>
                 <span className={s.chipMuted}>{c.delivery.orderQty}</span>
-                {row500 ? <span>{fill(c.delivery.orderPrice, vars)}</span> : null}
+                {row500 ? (
+                  <span>{fill(c.delivery.orderPrice, vars)}</span>
+                ) : null}
                 <span className={s.orderBtn}>{c.delivery.orderCta}</span>
               </div>
               {days != null ? (
-                <div className={`${s.chip} ${s.zoneChip}`} style={{ ["--t" as string]: "58%", ["--s" as string]: "64%" }}>
+                <div
+                  className={`${s.chip} ${s.zoneChip}`}
+                  style={{ ["--t" as string]: "58%", ["--s" as string]: "64%" }}
+                >
                   <strong>{fill(c.delivery.orderDays, vars)}</strong>
                   <span className={s.chipMuted}>{c.delivery.zones[0]}</span>
                 </div>
               ) : null}
               {c.delivery.zones.slice(1).map((z, i) => (
-                <div key={z} className={`${s.chip} ${s.chipDark} ${s.zoneChip}`} style={{ ["--t" as string]: ["12%", "36%", "70%", "84%"][i], ["--s" as string]: ["10%", "4%", "12%", "44%"][i], animationDelay: `${-1.5 * (i + 1)}s` }}>
+                <div
+                  key={z}
+                  className={`${s.chip} ${s.chipDark} ${s.zoneChip}`}
+                  style={{
+                    ["--t" as string]: ["12%", "36%", "70%", "84%"][i],
+                    ["--s" as string]: ["10%", "4%", "12%", "44%"][i],
+                    animationDelay: `${-1.5 * (i + 1)}s`,
+                  }}
+                >
                   {z}
                 </div>
               ))}
             </div>
             <div className={s.mapCaption}>
-              <h3 className={s.cardTitle}>{c.delivery.cardTitle}</h3>
+              <Display as="h3" size="20" className={s.cardTitle}>
+                {c.delivery.cardTitle}
+              </Display>
               <p className={s.body}>{fill(c.delivery.cardBody, vars)}</p>
             </div>
-          </article>
-        </div>
+          </Reveal>
+        </Container>
       </section>
 
       {/* 6 ───────── For every business ───────── */}
-      <section className={`${s.section} ${s.sectionTail}`} aria-labelledby="anyone-title">
-        <div className={s.wrap}>
-          <div className={s.sectionHead} data-reveal="" suppressHydrationWarning style={{ maxInlineSize: "46rem" }}>
-            <h2 id="anyone-title" className={s.h2}>
+      <section
+        className={`${s.section} ${s.sectionTail}`}
+        aria-labelledby="anyone-title"
+      >
+        <Container>
+          <Reveal className={s.sectionHead} style={{ maxInlineSize: "46rem" }}>
+            <Display id="anyone-title" size="56">
               {c.anyone.title}
-            </h2>
-          </div>
+            </Display>
+          </Reveal>
           <ul className={s.anyone}>
             {ANYONE.map((a, i) => (
-              <li key={a.code} className={s.mediaCard} data-reveal="" suppressHydrationWarning style={{ ["--m-i" as string]: i }}>
+              <Reveal as="li" key={a.code} className={s.mediaCard} index={i}>
                 <div className={s.mediaFrame}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={SAMPLES[a.sample]!.src} srcSet={srcSetFor(SAMPLES[a.sample]!.src)} sizes="(min-width: 768px) 420px, 82vw" alt="" loading="lazy" decoding="async" />
+                  <img
+                    src={SAMPLES[a.sample]!.src}
+                    srcSet={srcSetFor(SAMPLES[a.sample]!.src)}
+                    sizes="(min-width: 768px) 420px, 82vw"
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                  />
                 </div>
                 <div className={s.mediaCaption}>
-                  <h3 className={s.cardTitle}>
-                    <Link href={structureHref(locale, a.code)} className={s.cardLink}>
+                  <Display as="h3" size="20" className={s.cardTitle}>
+                    <Link
+                      href={structureHref(locale, a.code)}
+                      className={s.cardLink}
+                    >
                       {c.anyone.cards[i]!.title}
                     </Link>
-                  </h3>
+                  </Display>
                   <p className={s.body}>{c.anyone.cards[i]!.body}</p>
                 </div>
-              </li>
+              </Reveal>
             ))}
           </ul>
           <div className={s.centerRow}>
-            <Link href={catalogHref} className={`${s.pill} ${s.pillOutline}`}>
+            <Pill href={catalogHref} variant="outline" size="lg">
               {c.anyone.cta}
-            </Link>
+            </Pill>
           </div>
-        </div>
+        </Container>
       </section>
 
       {/* 7 ───────── Violet sheet: the 3D designer ───────── */}
-      <section className={`${s.sheet} ${s.sheetViolet}`} aria-labelledby="designer-title">
-        <div className={s.wrap}>
-          <div className={s.sectionHead} data-reveal="" suppressHydrationWarning>
-            <h2 id="designer-title" className={s.h2}>
+      <Sheet
+        tone="violet"
+        pad="none"
+        container={false}
+        className={s.sheetViolet}
+        aria-labelledby="designer-title"
+      >
+        <Container>
+          <Reveal className={s.sectionHead}>
+            <Display id="designer-title" size="56">
               {c.designer.title}
-            </h2>
-          </div>
+            </Display>
+          </Reveal>
           <div className={s.duo}>
-            <article className={s.darkCard} data-reveal="" suppressHydrationWarning style={{ ["--m-i" as string]: 0 }}>
+            <Reveal as="article" className={s.darkCard} index={0}>
               <div className={s.darkCardMedia} aria-hidden="true">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`/marketing/designer-${locale}.webp`} srcSet={srcSetFor(`/marketing/designer-${locale}.webp`)} sizes="(min-width: 1024px) 820px, 92vw" alt="" loading="lazy" decoding="async" style={{ opacity: 0.72 }} />
+                <img
+                  src={`/marketing/designer-${locale}.webp`}
+                  srcSet={srcSetFor(`/marketing/designer-${locale}.webp`)}
+                  sizes="(min-width: 1024px) 820px, 92vw"
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  style={{ opacity: 0.72 }}
+                />
                 <div className={s.promptDark}>
                   <Sparkles size={18} className={s.sparkle} />
                   <span className={s.promptText}>{c.designer.prompt}</span>
@@ -422,131 +692,243 @@ export default async function HomePage({ params }: Props) {
                 </div>
               </div>
               <div className={s.darkCardBody}>
-                <h3 className={s.cardTitle}>
+                <Display as="h3" size="20" className={s.cardTitle}>
                   <Sparkles size={18} className={s.sparkle} aria-hidden />
-                  <Link href={startHref} className={s.cardLink}>
+                  <Link href={designerHref} className={s.cardLink}>
                     {c.designer.wideTitle}
                   </Link>
-                </h3>
+                </Display>
                 <p className={s.body}>{c.designer.wideBody}</p>
               </div>
-            </article>
-            <article className={s.darkCard} data-reveal="" suppressHydrationWarning style={{ ["--m-i" as string]: 1 }}>
-              <div className={s.darkCardMedia} data-fit="contain" aria-hidden="true">
+            </Reveal>
+            <Reveal as="article" className={s.darkCard} index={1}>
+              <div
+                className={s.darkCardMedia}
+                data-fit="contain"
+                aria-hidden="true"
+              >
                 <div className={s.violetGlow} />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={renderSrc("RIGID_BOX")} srcSet={srcSetFor(renderSrc("RIGID_BOX"))} sizes="(min-width: 1024px) 400px, 92vw" alt="" loading="lazy" decoding="async" />
+                <img
+                  src={renderSrc("RIGID_BOX")}
+                  srcSet={srcSetFor(renderSrc("RIGID_BOX"))}
+                  sizes="(min-width: 1024px) 400px, 92vw"
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                />
               </div>
               <div className={s.darkCardBody}>
-                <h3 className={s.cardTitle}>{c.designer.narrowTitle}</h3>
+                <Display as="h3" size="20" className={s.cardTitle}>
+                  {c.designer.narrowTitle}
+                </Display>
                 <p className={s.body}>{c.designer.narrowBody}</p>
               </div>
-            </article>
+            </Reveal>
           </div>
-        </div>
-      </section>
+        </Container>
+      </Sheet>
 
       {/* 8 ───────── Catalogue wall (app-grid equivalent) ───────── */}
       <section className={s.bandNavy} aria-labelledby="wall-title">
-        <Loop className={s.wall} labels={c.wall} controlClassName={s.wallControl}>
+        <Loop
+          className={s.wall}
+          labels={c.wall}
+          controlClassName={s.wallControl}
+        >
           <div className={s.wallRows} aria-hidden="true">
             {[0, 1, 2, 3, 4, 5].map((r) => {
               const k = (r * 5) % WALL_ITEMS.length;
               const once = [...WALL_ITEMS.slice(k), ...WALL_ITEMS.slice(0, k)];
               const row = [...once, ...once];
               return (
-                <ul key={r} className={s.wallRow} style={{ ["--dur" as string]: `${80 + r * 9}s` }}>
+                <ul
+                  key={r}
+                  className={s.wallRow}
+                  style={{ ["--dur" as string]: `${80 + r * 9}s` }}
+                >
                   {[...row, ...row].map((it, i) => (
-                    <li key={i} className={s.tile} style={{ ["--tone" as string]: it.tone }}>
+                    <li
+                      key={i}
+                      className={s.tile}
+                      style={{ ["--tone" as string]: it.tone }}
+                    >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={it.src} srcSet={srcSetFor(it.src)} sizes="76px" alt="" width={64} height={64} loading="lazy" decoding="async" />
+                      <img
+                        src={it.src}
+                        srcSet={srcSetFor(it.src)}
+                        sizes="76px"
+                        alt=""
+                        width={64}
+                        height={64}
+                        loading="lazy"
+                        decoding="async"
+                      />
                     </li>
                   ))}
                 </ul>
               );
             })}
           </div>
-          <div className={s.wrap}>
-            <div className={s.wallCopy} data-reveal="fade" suppressHydrationWarning>
-              <h2 id="wall-title" className={s.h2}>
+          <Container>
+            <Reveal className={s.wallCopy} variant="fade">
+              <Display id="wall-title" size="56">
                 {fill(c.wall.title, vars)}
-              </h2>
+              </Display>
               <p className={s.body}>
                 {fill(c.wall.body, vars)}{" "}
                 <Link href={catalogHref} className={s.textLink}>
                   {c.wall.link}
                 </Link>
               </p>
-            </div>
-          </div>
+            </Reveal>
+          </Container>
         </Loop>
       </section>
 
       {/* 9 ───────── Finishes (navy) ───────── */}
-      <section className={`${s.section} ${s.sectionTail} ${s.bandNavy}`} aria-labelledby="finishes-title">
-        <div className={s.wrap}>
-          <div className={`${s.sectionHead} ${s.navyHead}`} data-reveal="" suppressHydrationWarning>
-            <h2 id="finishes-title" className={s.h2}>
+      <section
+        className={`${s.section} ${s.sectionTail} ${s.bandNavy}`}
+        aria-labelledby="finishes-title"
+      >
+        <Container>
+          <Reveal className={`${s.sectionHead} ${s.navyHead}`}>
+            <Display id="finishes-title" size="56">
               {c.finishes.title}
-            </h2>
+            </Display>
             <p className={s.body}>
               {fill(c.finishes.body, vars)}{" "}
-              <Link href={structureHref(locale, "RIGID_BOX")} className={s.textLink}>
+              <Link
+                href={structureHref(locale, "RIGID_BOX")}
+                className={s.textLink}
+              >
                 {c.finishes.link}
               </Link>
             </p>
-          </div>
-          <div className={s.navyPanel} data-reveal="scale" suppressHydrationWarning>
-            <div className={s.navyGlow} style={{ inlineSize: 900, blockSize: 500, insetBlockStart: -80, insetInlineStart: "10%" }} aria-hidden="true" />
+          </Reveal>
+          <Reveal className={s.navyPanel} variant="scale">
+            <div
+              className={s.navyGlow}
+              style={{
+                inlineSize: 900,
+                blockSize: 500,
+                insetBlockStart: -80,
+                insetInlineStart: "10%",
+              }}
+              aria-hidden="true"
+            />
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={renderSrc("RIGID_BOX")} srcSet={srcSetFor(renderSrc("RIGID_BOX"))} sizes="(min-width: 1024px) 520px, 56vw" alt="" {...renderDims(renderSrc("RIGID_BOX"))} loading="lazy" decoding="async" />
+            <img
+              src={renderSrc("RIGID_BOX")}
+              srcSet={srcSetFor(renderSrc("RIGID_BOX"))}
+              sizes="(min-width: 1024px) 520px, 56vw"
+              alt=""
+              {...renderDims(renderSrc("RIGID_BOX"))}
+              loading="lazy"
+              decoding="async"
+            />
             <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
               {c.finishes.names.map((n, i) => (
-                <li key={n} className={s.finishChip} style={{ ["--t" as string]: FINISH_SPOTS[i]!.t, ["--s" as string]: FINISH_SPOTS[i]!.s, ["--dl" as string]: FINISH_SPOTS[i]!.dl }}>
+                <li
+                  key={n}
+                  className={s.finishChip}
+                  style={{
+                    ["--t" as string]: FINISH_SPOTS[i]!.t,
+                    ["--s" as string]: FINISH_SPOTS[i]!.s,
+                    ["--dl" as string]: FINISH_SPOTS[i]!.dl,
+                  }}
+                >
                   {n}
                 </li>
               ))}
             </ul>
-          </div>
-        </div>
+          </Reveal>
+        </Container>
       </section>
 
       {/* 10 ───────── Green sheet: price, real numbers, secure payment ───────── */}
-      <section className={`${s.sheet} ${s.sheetGreen}`} aria-labelledby="stats-title">
-        <div className={s.wrap}>
-          <div className={s.greenHead} data-reveal="" suppressHydrationWarning>
-            <h2 id="stats-title" className={s.h2Big} style={{ maxInlineSize: "52rem" }}>
+      <Sheet
+        tone="green"
+        pad="none"
+        container={false}
+        className={s.sheetGreen}
+        aria-labelledby="stats-title"
+      >
+        <Container>
+          <Reveal className={s.greenHead}>
+            <Display
+              id="stats-title"
+              size="64"
+              align="center"
+              className={s.narrowTitle}
+            >
               {c.stats.title}
-            </h2>
-          </div>
+            </Display>
+          </Reveal>
           <div className={s.split}>
-            <div data-reveal="" suppressHydrationWarning>
-              <h3 className={s.h3Big}>{c.stats.checkoutTitle}</h3>
+            <Reveal>
+              <Display as="h3" size="44">
+                {c.stats.checkoutTitle}
+              </Display>
               <ul className={s.stats}>
                 {stats.map((st) => (
                   <li key={st.label} className={s.stat}>
-                    <CountUp value={st.value} locale={locale} className={s.statValue} />
+                    <CountUp
+                      value={st.value}
+                      locale={locale}
+                      className={s.statValue}
+                    />
                     <span className={s.statLabel}>{st.label}</span>
                   </li>
                 ))}
               </ul>
-              {row500 ? <p className={s.rule}>{fill(c.stats.rule, vars)}</p> : null}
+              {row500 ? (
+                <p className={s.rule}>{fill(c.stats.rule, vars)}</p>
+              ) : null}
               <p className={s.footnote}>{c.stats.note}</p>
-            </div>
+            </Reveal>
             <div className={s.splitVisual} aria-hidden="true">
               {THUMBS.map((th, i) => {
-                const src = th.code ? renderSrc(th.code) : vesselSrc(th.vessel!);
+                const src = th.code
+                  ? renderSrc(th.code)
+                  : vesselSrc(th.vessel!);
                 return (
-                  <div key={i} className={s.thumb} style={{ ["--t" as string]: th.t, ["--s" as string]: th.s, ["--z" as string]: th.z, ["--dl" as string]: th.dl, ["--tone" as string]: th.code ? TILE_BG[th.code] : "#f6ecd2" }}>
+                  <div
+                    key={i}
+                    className={s.thumb}
+                    style={{
+                      ["--t" as string]: th.t,
+                      ["--s" as string]: th.s,
+                      ["--z" as string]: th.z,
+                      ["--dl" as string]: th.dl,
+                      ["--tone" as string]: th.code
+                        ? TILE_BG[th.code]
+                        : "#f6ecd2",
+                    }}
+                  >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={src} srcSet={srcSetFor(src)} sizes="72px" alt="" loading="lazy" decoding="async" />
+                    <img
+                      src={src}
+                      srcSet={srcSetFor(src)}
+                      sizes="72px"
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                    />
                   </div>
                 );
               })}
               <div className={s.receipt}>
                 <div className={s.receiptHead}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={renderSrc("FEFCO_0427")} srcSet={srcSetFor(renderSrc("FEFCO_0427"))} sizes="56px" alt="" loading="lazy" decoding="async" />
+                  <img
+                    src={renderSrc("FEFCO_0427")}
+                    srcSet={srcSetFor(renderSrc("FEFCO_0427"))}
+                    sizes="56px"
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                  />
                   <div>
                     <strong>{c.stats.receipt.title}</strong>
                     <div className={s.chipMuted}>{c.stats.receipt.line}</div>
@@ -577,45 +959,80 @@ export default async function HomePage({ params }: Props) {
             </div>
           </div>
           <div className={`${s.split} ${s.secure}`}>
-            <div data-reveal="" suppressHydrationWarning>
-              <h3 className={s.h3Big}>{c.stats.secureTitle}</h3>
+            <Reveal>
+              <Display as="h3" size="44">
+                {c.stats.secureTitle}
+              </Display>
               <p className={s.body}>{c.stats.secureBody}</p>
-            </div>
+            </Reveal>
             <div className={s.splitVisual} aria-hidden="true">
               <div className={s.globe} />
               {c.stats.payChips.map((m, i) => (
-                <div key={i} className={`${s.chip} ${s.chipDark} ${s.payChip}`} style={{ insetBlockStart: ["14%", "40%", "64%", "84%"][i], insetInlineStart: ["6%", "70%", "2%", "58%"][i], animationDelay: `${-1.5 * i}s` }}>
+                <div
+                  key={i}
+                  className={`${s.chip} ${s.chipDark} ${s.payChip}`}
+                  style={{
+                    insetBlockStart: ["14%", "40%", "64%", "84%"][i],
+                    insetInlineStart: ["6%", "70%", "2%", "58%"][i],
+                    animationDelay: `${-1.5 * i}s`,
+                  }}
+                >
                   {m}
                 </div>
               ))}
             </div>
           </div>
-        </div>
-      </section>
+        </Container>
+      </Sheet>
 
       {/* 11 ───────── Steps sheet ───────── */}
-      <section className={`${s.section} ${s.sheet} ${s.sheetSteps} ${s.sectionTail}`} aria-labelledby="steps-title" style={{ paddingBlockStart: 120 }}>
-        <div className={s.wrap}>
-          <div className={s.sectionHead} data-reveal="" suppressHydrationWarning>
-            <h2 id="steps-title" className={s.h2Big}>
+      <Sheet
+        tone="dark"
+        pad="none"
+        container={false}
+        className={s.sheetSteps}
+        aria-labelledby="steps-title"
+      >
+        <Container>
+          <Reveal className={s.sectionHead}>
+            <Display id="steps-title" size="64">
               {c.steps.title}
-            </h2>
-          </div>
+            </Display>
+          </Reveal>
           <HomeSteps
             items={c.steps.items}
             labels={c.steps}
             media={[
-              [{ src: SAMPLES[0]!.src, srcSet: srcSetFor(SAMPLES[0]!.src) }, { src: `/marketing/designer-${locale}.webp`, srcSet: srcSetFor(`/marketing/designer-${locale}.webp`) }, { src: SAMPLES[7]!.src, srcSet: srcSetFor(SAMPLES[7]!.src) }],
-              [{ src: renderSrc("FEFCO_0201"), srcSet: srcSetFor(renderSrc("FEFCO_0201")), fit: "contain" }, { src: SAMPLES[4]!.src, srcSet: srcSetFor(SAMPLES[4]!.src) }, { src: renderSrc("FEFCO_0427"), srcSet: srcSetFor(renderSrc("FEFCO_0427")), fit: "contain" }],
+              [
+                { src: SAMPLES[0]!.src, srcSet: srcSetFor(SAMPLES[0]!.src) },
+                {
+                  src: `/marketing/designer-${locale}.webp`,
+                  srcSet: srcSetFor(`/marketing/designer-${locale}.webp`),
+                },
+                { src: SAMPLES[7]!.src, srcSet: srcSetFor(SAMPLES[7]!.src) },
+              ],
+              [
+                {
+                  src: renderSrc("FEFCO_0201"),
+                  srcSet: srcSetFor(renderSrc("FEFCO_0201")),
+                  fit: "contain",
+                },
+                { src: SAMPLES[4]!.src, srcSet: srcSetFor(SAMPLES[4]!.src) },
+                {
+                  src: renderSrc("FEFCO_0427"),
+                  srcSet: srcSetFor(renderSrc("FEFCO_0427")),
+                  fit: "contain",
+                },
+              ],
             ]}
             cta={
-              <Link href={startHref} className={`${s.pill} ${s.pillLight}`}>
+              <Pill href={startHref} size="lg">
                 {c.steps.cta}
-              </Link>
+              </Pill>
             }
           />
-        </div>
-      </section>
+        </Container>
+      </Sheet>
     </div>
   );
 }

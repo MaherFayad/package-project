@@ -2,6 +2,9 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Pause, Play } from "lucide-react";
+import { Sheet } from "@/components/marketing/kit/Sheet";
+import { Display } from "@/components/marketing/kit/Display";
+import { IconPill } from "@/components/marketing/kit/Pill";
 import s from "./home.module.css";
 
 /** Per-word spans for the slide-in (Arabic words stay whole; the browser shapes each one). */
@@ -51,22 +54,28 @@ export function HomeHero({
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
-  const root = useRef<HTMLElement>(null);
+  const root = useRef<HTMLDivElement>(null);
   const vid = useRef<HTMLVideoElement>(null);
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) setPaused(true);
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches)
+      setPaused(true);
     const el = root.current;
     if (!el || typeof IntersectionObserver === "undefined") return;
-    const io = new IntersectionObserver(([e]) => setVisible(e.isIntersecting), { threshold: 0.05 });
+    const io = new IntersectionObserver(([e]) => setVisible(e.isIntersecting), {
+      threshold: 0.05,
+    });
     io.observe(el);
     return () => io.disconnect();
   }, []);
 
   useEffect(() => {
     if (paused || !visible || titles.length < 2) return;
-    const id = window.setInterval(() => setActive((a) => (a + 1) % titles.length), ROTATE_MS);
+    const id = window.setInterval(
+      () => setActive((a) => (a + 1) % titles.length),
+      ROTATE_MS,
+    );
     return () => window.clearInterval(id);
   }, [paused, visible, titles.length]);
 
@@ -78,57 +87,80 @@ export function HomeHero({
   }, [paused, visible, videoReady]);
 
   return (
-    <section ref={root} className={s.hero} aria-labelledby="hero-title" data-paused={paused ? "true" : "false"}>
-      <div className={s.heroMedia} aria-hidden="true">
-        <div className={s.heroStage}>
-          <div className={s.heroFloor} />
-          <div className={s.heroDrift}>{poster}</div>
-          {video ? (
-            <video
-              ref={vid}
-              className={s.heroVideo}
-              data-ready={videoReady ? "true" : "false"}
-              muted
-              loop
-              playsInline
-              preload="none"
-              poster={video.poster}
-              onCanPlay={() => setVideoReady(true)}
-            >
-              {video.webm ? <source src={video.webm} type="video/webm" /> : null}
-              {video.mp4 ? <source src={video.mp4} type="video/mp4" /> : null}
-            </video>
-          ) : null}
-        </div>
-      </div>
-      <div className={s.heroScrim} aria-hidden="true" />
-      <div className={s.wrap}>
-        <div className={s.heroCopy}>
-          <div className={s.heroTitles}>
-            {titles.map((t, i) =>
-              i === 0 ? (
-                <h1 key={i} id="hero-title" className={`${s.h1} ${s.heroTitle}`} data-active={active === i ? "true" : "false"}>
-                  <Words text={t} />
-                </h1>
-              ) : (
-                <p key={i} className={`${s.h1} ${s.heroTitle}`} data-active={active === i ? "true" : "false"} aria-hidden="true">
-                  <Words text={t} />
-                </p>
-              ),
-            )}
-          </div>
-          <p className={s.heroLead}>{lead}</p>
-          {actions}
-        </div>
-      </div>
-      <button
-        type="button"
-        className={`${s.iconBtn} ${s.heroControl}`}
-        onClick={() => setPaused((p) => !p)}
-        aria-label={paused ? labels.play : labels.pause}
+    <Sheet
+      tone="dark"
+      hero
+      pad="none"
+      container={false}
+      className={s.heroSheet}
+      aria-labelledby="hero-title"
+    >
+      <div
+        ref={root}
+        className={s.hero}
+        data-paused={paused ? "true" : "false"}
       >
-        {paused ? <Play size={18} aria-hidden /> : <Pause size={18} aria-hidden />}
-      </button>
-    </section>
+        <div className={s.heroMedia} aria-hidden="true">
+          <div className={s.heroStage}>
+            <div className={s.heroFloor} />
+            <div className={s.heroDrift}>{poster}</div>
+            {video ? (
+              <video
+                ref={vid}
+                className={s.heroVideo}
+                data-ready={videoReady ? "true" : "false"}
+                muted
+                loop
+                playsInline
+                preload="none"
+                poster={video.poster}
+                onCanPlay={() => setVideoReady(true)}
+              >
+                {video.webm ? (
+                  <source src={video.webm} type="video/webm" />
+                ) : null}
+                {video.mp4 ? <source src={video.mp4} type="video/mp4" /> : null}
+              </video>
+            ) : null}
+          </div>
+        </div>
+        <div className={s.heroScrim} aria-hidden="true" />
+        <div className={s.heroWrap}>
+          <div className={s.heroCopy}>
+            <div className={s.heroTitles}>
+              {titles.map((t, i) => (
+                <div
+                  key={i}
+                  className={s.heroTitle}
+                  data-active={active === i ? "true" : "false"}
+                  aria-hidden={i === 0 ? undefined : "true"}
+                >
+                  <Display
+                    as={i === 0 ? "h1" : "p"}
+                    id={i === 0 ? "hero-title" : undefined}
+                    size="96"
+                  >
+                    <Words text={t} />
+                  </Display>
+                </div>
+              ))}
+            </div>
+            <p className={s.heroLead}>{lead}</p>
+            {actions}
+          </div>
+        </div>
+        <IconPill
+          className={s.heroControl}
+          onClick={() => setPaused((p) => !p)}
+          aria-label={paused ? labels.play : labels.pause}
+        >
+          {paused ? (
+            <Play size={18} aria-hidden />
+          ) : (
+            <Pause size={18} aria-hidden />
+          )}
+        </IconPill>
+      </div>
+    </Sheet>
   );
 }

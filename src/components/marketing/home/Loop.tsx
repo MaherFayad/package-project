@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Pause, Play } from "lucide-react";
+import { IconPill } from "@/components/marketing/kit/Pill";
 import s from "./home.module.css";
 
 /**
@@ -28,20 +29,35 @@ export function Loop({
   const [offscreen, setOffscreen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) setPaused(true);
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches)
+      setPaused(true);
     const el = ref.current;
     if (!el || typeof IntersectionObserver === "undefined") return;
-    const io = new IntersectionObserver(([e]) => setOffscreen(!e.isIntersecting));
+    const io = new IntersectionObserver(([e]) =>
+      setOffscreen(!e.isIntersecting),
+    );
     io.observe(el);
     return () => io.disconnect();
   }, []);
   const button = (
-    <button type="button" className={`${s.iconBtn} ${controlClassName ?? ""}`} onClick={() => setPaused((p) => !p)} aria-label={paused ? labels.play : labels.pause}>
-      {paused ? <Play size={18} aria-hidden /> : <Pause size={18} aria-hidden />}
-    </button>
+    <IconPill
+      className={controlClassName}
+      onClick={() => setPaused((p) => !p)}
+      aria-label={paused ? labels.play : labels.pause}
+    >
+      {paused ? (
+        <Play size={18} aria-hidden />
+      ) : (
+        <Pause size={18} aria-hidden />
+      )}
+    </IconPill>
   );
   return (
-    <div ref={ref} className={className} data-paused={paused || offscreen ? "true" : "false"}>
+    <div
+      ref={ref}
+      className={className}
+      data-paused={paused || offscreen ? "true" : "false"}
+    >
       {head ? (
         <div className={s.railHead}>
           {head}
