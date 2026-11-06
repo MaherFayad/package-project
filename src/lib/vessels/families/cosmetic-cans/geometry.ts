@@ -107,7 +107,18 @@ interface Built {
   sleeveY1: Mm;
   lid: LidGeometry | null;
   closedH: Mm;
+  /**
+   * Where the renderer anchors the nearest core closure (profile.finishTopY). The core closure
+   * models are round and generic; when the real closure is already part of this profile (square
+   * slip lids, lever lids, stick caps) the anchor is moved inside the closed body so the generic
+   * model stays hidden, and for ring-pull ends it is set so the core pull tab lies in the
+   * countersink (tab underside = finishTopY - 5.15 mm).
+   */
+  closureY?: Mm;
 }
+
+/** finishTopY that puts the core CAN_END pull tab flat on an end panel at `panelY`. */
+export const ringPullAnchor = (panelY: Mm): Mm => panelY + 5.15;
 
 function bottle(s: Extract<ShapeSpec, { type: "bottle" }>, d: CatalogueDims, neck: NeckFinish): Built {
   const R = d.D / 2;
@@ -189,7 +200,10 @@ function caseShape(s: Extract<ShapeSpec, { type: "case" }>, d: CatalogueDims): B
     fillMaxY: split,
   });
   const lid: LidGeometry = { type: s.capSplit > 0.5 && H < 35 ? "hinged" : "slip", section: s.section, y0: split, y1: H, r: R, depthRatio: (d.G ?? d.D) / d.D, topR: R - ch - 2 };
-  return { profile, innerTopY: split, sleeveY0: 0.5, sleeveY1: H - 0.5, lid, closedH: H };
+  // Non-round cases (oval deodorant stick): the round core cap would overhang the oval; the cap is
+  // already in this profile, so hide the core closure inside it.
+  const closureY = isRound(s.section) ? undefined : H - 4;
+  return { profile, innerTopY: split, sleeveY0: 0.5, sleeveY1: H - 0.5, lid, closedH: H, closureY };
 }
 
 /** ISO 9187-1 style ampoule: body, constriction (break ring), bulb, stem, sealed tip. */
@@ -335,7 +349,10 @@ function metalcan(s: Extract<ShapeSpec, { type: "metalcan" }>, d: CatalogueDims)
     depthRatio: section.kind === "round" ? 1 : section.depthRatio,
     topR: R - endIn - 2,
   };
-  return { profile, innerTopY: H - s.endDepthMm, sleeveY0: bodyY0 - 1, sleeveY1: bodyY1 + 1, lid, closedH: H };
+  // Lever lid (paint): the recessed lid panel and chime are in this profile; hide the core closure
+  // under the lid panel. Ring-pull ends (drawn tuna / fish tins): put the core pull tab on the panel.
+  const closureY = lid.type === "lever" ? H - s.endDepthMm - 1 : !s.bottomSeam ? ringPullAnchor(H - s.endDepthMm) : undefined;
+  return { profile, innerTopY: H - s.endDepthMm, sleeveY0: bodyY0 - 1, sleeveY1: bodyY1 + 1, lid, closedH: H, closureY };
 }
 
 /** Decorative tins (biscuit, gift, tea caddy): straight body, slip (or plug + slip) lid. */
@@ -347,15 +364,33 @@ function tin(s: Extract<ShapeSpec, { type: "tin" }>, d: CatalogueDims): Built {
   const R = d.D / 2;
   const H = d.H;
   const lidH = tinLidH(d);
-  const ctrl: ControlPoint[] = [
-    { r: 0, y: 0.6 },
-    { r: R - 1.5, y: 0, round: 0.8 },
-    { r: R, y: 1.6, round: 1 },
-    { r: R, y: H - 1.4, round: 0.5 },
-    { r: R - 0.8, y: H, round: 0.4 },
-    { r: R - 1.1, y: H - 0.5 },
-    { r: R - 1.1, y: H - 6 },
-  ];
+  const round = isRound(s.section);
+  const ctrl: ControlPoint[] = round
+    ? [
+        // round tins: open body with a rolled rim; the core slip lid closes it
+        { r: 0, y: 0.6 },
+        { r: R - 1.5, y: 0, round: 0.8 },
+        { r: R, y: 1.6, round: 1 },
+        { r: R, y: H - 1.4, round: 0.5 },
+        { r: R - 0.8, y: H, round: 0.4 },
+        { r: R - 1.1, y: H - 0.5 },
+        { r: R - 1.1, y: H - 6 },
+      ]
+    : [
+        // square / rect tins: the core slip lid is round, so the lid is part of this profile:
+        // body, lid skirt stepping out 0.8 mm with a curled edge, rounded top edge, embossed panel
+        { r: 0, y: 0.6 },
+        { r: R - 1.5, y: 0, round: 0.8 },
+        { r: R, y: 1.6, round: 1 },
+        { r: R, y: H - lidH - 0.6, round: 0.3 },
+        { r: R + 0.5, y: H - lidH - 0.4, round: 0.25 },
+        { r: R + 0.8, y: H - lidH + 0.4, round: 0.3 },
+        { r: R + 0.8, y: H - 1.7, round: 1.4 },
+        { r: R - 0.6, y: H - 0.3, round: 0.9 },
+        { r: R - 5, y: H - 0.3, round: 0.6 },
+        { r: R - 6, y: H, round: 0.6 },
+        { r: 0, y: H },
+      ];
   const section = crossSection(s.section, d, 0.1);
   const profile = finalize(ctrl, section, {
     wallMm: 0.25,
@@ -375,7 +410,7 @@ function tin(s: Extract<ShapeSpec, { type: "tin" }>, d: CatalogueDims): Built {
     depthRatio: section.kind === "round" ? 1 : section.depthRatio,
     topR: R + 0.6 - 4,
   };
-  return { profile, innerTopY: H - 1, sleeveY0: 1, sleeveY1: H - lidH - 0.5, lid, closedH: H + 0.6 };
+  return { profile, innerTopY: H - 1, sleeveY0: 1, sleeveY1: H - lidH - 0.5, lid, closedH: round ? H + 0.6 : H, closureY: round ? undefined : H - 2 };
 }
 
 /** Aerosol can: domed/concave base, ogive shoulder, 1 inch valve-cup curl. */
@@ -550,6 +585,7 @@ export function buildGeometry(shape: ShapeSpec, d: CatalogueDims, neck?: NeckFin
       kind = "tube";
       break;
   }
+  if (b.closureY !== undefined) b = { ...b, profile: { ...b.profile, finishTopY: b.closureY } };
   if (kind === "lathe" && b.profile.section.kind === "roundedRect") kind = "extrusion";
   return {
     kind,
