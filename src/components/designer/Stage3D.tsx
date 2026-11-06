@@ -36,11 +36,7 @@ export default function Stage3D({
 }) {
   return (
     <EngineCanvas
-      // Box ↔ box switches keep the canvas. A container visit on a shared canvas still leaves one
-      // texture behind (1.6 MB bottle, 4 MB pouch per visit, measured after the engine's PMREM fix;
-      // reported), so a box ↔ container switch remounts and frees it with the context. Remove
-      // this key once the remaining vessel texture is disposed on unmount.
-      key={vessel ? "vessel" : "box"}
+      // Never keyed: switching models swaps only the content; the context stays (PERF-09).
       ariaLabel={ariaLabel}
       roleDescription={roleDescription}
       keyboardHint={keyboardHint}
