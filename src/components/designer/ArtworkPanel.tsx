@@ -19,18 +19,19 @@ import {
   Trash2,
   Type,
 } from "lucide-react";
-import type { ArtworkLayer, FaceId, PrintSurface, TextLayer } from "@/types";
+import type { ArtworkLayer, DesignFinishCode, FaceId, PrintSurface, TextLayer } from "@/types";
 import { FACE_IDS } from "@/types";
 import type { FaceInfo } from "@/lib/dieline";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n/types";
-import { Banner, BlockStack, Button, ButtonGroup, Divider, DropZone, InlineGrid, InlineStack, Select, Text, TextField } from "@/components/ui";
+import { Banner, BlockStack, Button, ButtonGroup, Checkbox, Divider, DropZone, InlineGrid, InlineStack, Select, Text, TextField } from "@/components/ui";
 import { MAX_LAYERS } from "./lib/doc";
 import { normAngle, round1, scaleLayer, type Placement } from "./lib/geometry";
 import { layerName } from "./lib/describe";
 import { IMAGE_ACCEPT, IMAGE_MAX_BYTES } from "./uploadImage";
 import { ColorField, NumberField } from "./fields";
 import styles from "./designer.module.css";
+import lib from "./library.module.css";
 
 export interface ArtworkPanelProps {
   faces: Partial<Record<FaceId, FaceInfo>>;
@@ -56,6 +57,9 @@ export interface ArtworkPanelProps {
   onReorder: (delta: 1 | -1) => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  /** Masked finishes on the design (spot UV, foil, emboss) and whether the selected item carries each (FN-02). */
+  layerFinishes?: { code: DesignFinishCode; name: string; on: boolean }[];
+  onLayerFinish?: (code: DesignFinishCode, on: boolean) => void;
 }
 
 export function ArtworkPanel(p: ArtworkPanelProps) {
@@ -133,7 +137,7 @@ export function ArtworkPanel(p: ArtworkPanelProps) {
   );
 }
 
-function LayerInspector({ layer, onLayer, onSeal, onPlace, onReorder, onDuplicate, onDelete }: ArtworkPanelProps & { layer: ArtworkLayer }) {
+function LayerInspector({ layer, onLayer, onSeal, onPlace, onReorder, onDuplicate, onDelete, layerFinishes, onLayerFinish }: ArtworkPanelProps & { layer: ArtworkLayer }) {
   const { t } = useI18n();
   const set = (patch: Partial<ArtworkLayer>, key?: string) => onLayer({ ...layer, ...patch } as ArtworkLayer, key);
   const nudge = (dx: number, dy: number) => set({ x: round1(layer.x + dx), y: round1(layer.y + dy) }, `nudge:${layer.id}`);
@@ -142,7 +146,7 @@ function LayerInspector({ layer, onLayer, onSeal, onPlace, onReorder, onDuplicat
     <section aria-labelledby={`insp-${layer.id}`} className={styles.inspector} onBlur={onSeal}>
       <BlockStack gap="400">
         <InlineStack align="space-between" blockAlign="center" gap="200">
-          <Text as="h3" variant="headingSm" id={`insp-${layer.id}`}>
+          <Text as="h2" variant="headingSm" id={`insp-${layer.id}`}>
             {t("designer.artwork.selected")}: {layerName(layer, t)}
           </Text>
         </InlineStack>
@@ -150,6 +154,17 @@ function LayerInspector({ layer, onLayer, onSeal, onPlace, onReorder, onDuplicat
         {layer.kind === "text" ? <TextControls layer={layer} set={set} /> : null}
         {layer.kind === "shape" ? (
           <ColorField label={t("designer.layer.fill")} value={layer.fill} onChange={(c) => set({ fill: c } as Partial<ArtworkLayer>)} />
+        ) : null}
+
+        {layerFinishes?.length && layer.surface === "outside" ? (
+          <fieldset className={lib.group} data-testid="layer-finishes">
+            <legend className={lib.groupTitle}>{t("designer.layer.finishes")}</legend>
+            <BlockStack gap="100">
+              {layerFinishes.map((f) => (
+                <Checkbox key={f.code} label={f.name} checked={f.on} onChange={(on) => onLayerFinish?.(f.code, on)} />
+              ))}
+            </BlockStack>
+          </fieldset>
         ) : null}
 
         <BlockStack gap="200">

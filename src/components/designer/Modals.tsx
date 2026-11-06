@@ -18,6 +18,7 @@ import {
   Modal,
   PriceTag,
   Select,
+  SkeletonBodyText,
   Spinner,
   Text,
   TextField,
@@ -46,14 +47,17 @@ export function GateModal({ reason, onClose, onSuccess }: { reason: GateReason |
 }
 
 /** The live price badge on the editor ("500 boxes from EGP X each, delivered in N days"). */
-export function PriceBadge({ state, onClick }: { state: PriceState; onClick: () => void }) {
+export function PriceBadge({ state, onClick, vessel = false }: { state: PriceState; onClick: () => void; vessel?: boolean }) {
   const { t, locale } = useI18n();
   let label: string;
+  let price: string | null = null;
+  const MARK = "\u2063";
   switch (state.status) {
     case "ready":
-      label = t("designer.price.badge", {
+      price = formatMoney(state.best.unitPiasters, locale);
+      label = t(vessel ? "designer.container.badge" : "designer.price.badge", {
         qty: formatNumber(state.quantity),
-        price: formatMoney(state.best.unitPiasters, locale),
+        price: MARK,
         days: state.best.deliveryDays,
       });
       break;
@@ -61,22 +65,40 @@ export function PriceBadge({ state, onClick }: { state: PriceState; onClick: () 
       label = t("designer.price.loading");
       break;
     case "none":
-      label = t("designer.price.unavailable");
+      label = t(vessel ? "designer.container.unavailable" : "designer.price.unavailable");
       break;
     case "error":
       label = t("designer.price.errorBody");
       break;
     default:
-      label = t("designer.price.badgeLocked", { qty: formatNumber(BADGE_QTY) });
+      label = t(vessel ? "designer.container.badgeLocked" : "designer.price.badgeLocked", { qty: formatNumber(BADGE_QTY) });
   }
+  const [before, after] = price !== null ? label.split(MARK) : [label, ""];
+  const loading = state.status === "loading";
   return (
-    <button type="button" className={styles.priceBadge} onClick={onClick} aria-live="polite" data-state={state.status} data-testid="price-badge">
+    <button
+      type="button"
+      className={styles.priceBadge}
+      onClick={onClick}
+      aria-live="polite"
+      aria-busy={loading || undefined}
+      data-state={state.status}
+      data-testid="price-badge"
+    >
       <span className={styles.priceBadgeIcon} aria-hidden="true">
-        {state.status === "loading" ? <Spinner size="small" /> : state.status === "ready" ? <Tag size={16} /> : <Lock size={16} />}
+        {state.status === "ready" ? <Tag size={16} /> : loading ? <Tag size={16} /> : <Lock size={16} />}
       </span>
-      {/* Re-keyed on every new price so the number ticks in (CSS; off under reduced motion). */}
-      <span key={label} className={`${styles.priceBadgeText} ${state.status === "ready" ? lib.priceTick : ""}`}>
-        {label}
+      <span className={styles.priceBadgeText}>
+        {before}
+        {/* Only the amount re-keys and ticks in (CR-20); off under reduced motion. */}
+        {price !== null ? (
+          <span key={price} className={`${styles.priceBadgeAmount} ${lib.priceTick}`}>
+            {price}
+          </span>
+        ) : null}
+        {after}
+        {/* Loading: a shimmer bar, not a spinner (CR-21); the text alone is the accessible name. */}
+        {loading ? <span className={styles.priceShimmer} aria-hidden="true" /> : null}
       </span>
     </button>
   );
@@ -99,6 +121,8 @@ export function PriceModal({
   ordering: boolean;
 }) {
   const { t, locale } = useI18n();
+  // Containers price per piece, not per box (R2-04).
+  const vessel = !!doc.vessel;
   const [qty, setQty] = useState<number>(BADGE_QTY);
   const [state, setState] = useState<PriceState>({ status: "idle" });
   const [attempt, setAttempt] = useState(0);
@@ -120,7 +144,7 @@ export function PriceModal({
       open={open}
       onClose={onClose}
       title={t("designer.price.heading")}
-      primaryAction={{ content: t("designer.order.button"), onAction: onOrder, loading: ordering, disabled: state.status !== "ready" }}
+      primaryAction={{ content: t(vessel ? "designer.container.order" : "designer.order.button"), onAction: onOrder, loading: ordering, disabled: state.status !== "ready" }}
       secondaryActions={[{ content: t("common.close"), onAction: onClose }]}
     >
       <BlockStack gap="400">
@@ -131,18 +155,16 @@ export function PriceModal({
           onChange={(v) => setQty(Number(v))}
         />
         {state.status === "loading" || state.status === "idle" ? (
-          <InlineStack gap="200" blockAlign="center">
-            <Spinner size="small" />
-            <Text as="span" tone="subdued">
-              {t("designer.price.loading")}
-            </Text>
-          </InlineStack>
+          <div role="status" aria-busy="true">
+            <span className="visually-hidden">{t("designer.price.loading")}</span>
+            <SkeletonBodyText lines={4} />
+          </div>
         ) : state.status === "ready" ? (
           <BlockStack gap="300">
             <Inset>
               <BlockStack gap="200">
                 <InlineStack align="space-between" blockAlign="center" gap="200">
-                  <Text as="span">{t("designer.price.perBox")}</Text>
+                  <Text as="span">{t(vessel ? "designer.container.perPiece" : "designer.price.perBox")}</Text>
                   <PriceTag amount={state.best.unitPiasters} locale={locale} vat="excluded" />
                 </InlineStack>
                 <InlineStack align="space-between" blockAlign="center" gap="200">
@@ -186,7 +208,7 @@ export function PriceModal({
           </BlockStack>
         ) : state.status === "none" ? (
           <Banner tone="warning" inCard>
-            {t("designer.price.unavailable")}
+            {t(vessel ? "designer.container.unavailable" : "designer.price.unavailable")}
           </Banner>
         ) : (
           <Banner tone="critical" inCard action={{ content: t("designer.price.retry"), onAction: () => setAttempt((a) => a + 1) }}>
@@ -201,7 +223,22 @@ export function PriceModal({
 export type ExportSize = "standard" | "hd";
 
 /** PNG mockup export (screen 20 anatomy: choice list with a "Recommended" badge). No dieline PDF. */
-export function ExportModal({ open, onClose, onExport, busy }: { open: boolean; onClose: () => void; onExport: (s: ExportSize) => void; busy: boolean }) {
+export function ExportModal({
+  open,
+  onClose,
+  onExport,
+  busy,
+  onOrder,
+  orderLabel,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onExport: (s: ExportSize) => void;
+  busy: boolean;
+  /** "Order this box / design" next to the download (B-03 bridge: every export leads back to an order). */
+  onOrder?: () => void;
+  orderLabel?: string;
+}) {
   const { t } = useI18n();
   const [size, setSize] = useState<ExportSize | null>(null);
   useEffect(() => {
@@ -214,7 +251,10 @@ export function ExportModal({ open, onClose, onExport, busy }: { open: boolean; 
       title={t("designer.export.heading")}
       size="small"
       primaryAction={{ content: t("designer.export.download"), disabled: !size, loading: busy, onAction: () => size && onExport(size) }}
-      secondaryActions={[{ content: t("common.cancel"), onAction: onClose }]}
+      secondaryActions={[
+        ...(onOrder && orderLabel ? [{ content: orderLabel, onAction: onOrder }] : []),
+        { content: t("common.cancel"), onAction: onClose },
+      ]}
     >
       <BlockStack gap="400">
         <ChoiceList

@@ -190,7 +190,7 @@ export function docGeometry(doc: DesignDoc): DocGeometry | null {
     const v = doc.vessel;
     const dims = vesselDimsOf(doc, m);
     const surfaces = v?.surfaces?.length ? v.surfaces : m.defaultSurfaces;
-    const d = describeVesselModel(m, dims, surfaces, v?.presetId, v?.container);
+    const d = describeVesselModel(m, dims, surfaces, v?.presetId, v?.container, v?.options);
     if (!d.areas.length) return null;
     return { model: m, dieline: areasToDieline(d.areas, vesselBase(m), d.envelope), vessel: d };
   } catch {

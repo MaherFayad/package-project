@@ -7,6 +7,7 @@ import { BOX_BOARD_CODES, type BoxBoardCode } from "@/lib/configurator";
 import { formatNumber } from "@/lib/format";
 import { PackagingScene, PackagingSceneContent, useArtworkTexture, type PackagingSceneHandle } from "@/components/three/engine";
 import { resolveFont } from "./fonts";
+import { finishPreview } from "./lib/config";
 import styles from "./designer.module.css";
 
 /**
@@ -68,12 +69,11 @@ export default memo(function Scene3D({
   const outside = useArtworkTexture(canvases?.outside, version);
   const inside = useArtworkTexture(printInside ? canvases?.inside : null, version);
   const board = (BOX_BOARD_CODES as readonly string[]).includes(material) ? (material as BoxBoardCode) : null;
+  // FN-02: masked finishes with no artwork yet preview over the whole main face (lib/config finishPreview).
+  const finishView = useMemo(() => (finishes?.length && artwork ? finishPreview(finishes, artwork, model) : null), [finishes, artwork, model]);
   const surfaceFinish = useMemo(
-    () =>
-      board && finishes?.length
-        ? { board, finishes: finishes.map((f) => ({ code: f.code, ...(f.mask ? { mask: f.mask } : {}) })), artwork: artwork ?? null, images, resolveFont, version }
-        : undefined,
-    [board, finishes, artwork, images, version],
+    () => (board && finishView ? { board, finishes: finishView.finishes, artwork: finishView.artwork, images, resolveFont, version } : undefined),
+    [board, finishView, images, version],
   );
   const stage = useMemo(
     () => (dimensions || scene !== "none" ? { context: scene, dimensions, formatMm: (mm: number) => `${formatNumber(Math.round(mm))} ${locale === "ar" ? "مم" : "mm"}` } : undefined),

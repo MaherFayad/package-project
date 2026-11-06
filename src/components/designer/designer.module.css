@@ -848,7 +848,8 @@
 }
 /* The viewer's own 240 px floor must not push it under the rows below a short stage. */
 .stageBody { overflow: hidden; }
-.sceneWrap > * { min-block-size: 0; }
+/* (0,2,0): beats the engine's .viewport floor whatever order the CSS chunks load in (R2-02). */
+.sceneWrap > [role="application"] { min-block-size: 0; }
 /* Model thumbnail in the stage until the first 3D frame, then fades (PERF-10). */
 .stagePoster {
   position: absolute;
@@ -865,3 +866,22 @@
 @media (prefers-reduced-motion: reduce) {
   .stagePoster { transition: none; }
 }
+/* Price chip: only the amount ticks (CR-20); loading shimmer instead of a spinner (CR-21). */
+.priceBadgeAmount { display: inline-block; unicode-bidi: isolate; }
+.priceShimmer {
+  display: inline-block;
+  vertical-align: middle;
+  inline-size: 4rem;
+  block-size: 0.75rem;
+  margin-inline-start: var(--p-space-200);
+  border-radius: var(--p-border-radius-full);
+  background: linear-gradient(90deg, var(--p-color-bg-fill-tertiary) 0%, var(--p-color-bg-surface-secondary) 50%, var(--p-color-bg-fill-tertiary) 100%) 0 0 / 200% 100%;
+  animation: priceShimmer 1.2s linear infinite;
+}
+@keyframes priceShimmer { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .priceShimmer { animation: none; } }
+/* The face select has its label above (CR-58): align the stage header on the controls' baseline. */
+.stageHeader { align-items: flex-end; }
+/* CR-63: the price chip shares the toolbar's 32 px size scale (still a pill; target ≥ 24 px). */
+.priceBadge { min-block-size: 2rem; padding-block: var(--p-space-050); padding-inline: var(--p-space-100) var(--p-space-300); font-size: var(--p-font-size-325, 0.8125rem); }
+.priceBadgeIcon { inline-size: 1.5rem; block-size: 1.5rem; }

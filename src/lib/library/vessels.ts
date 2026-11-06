@@ -324,7 +324,15 @@ const FLEXIBLE: VesselModelDef[] = FLEX.DEFINITIONS.map((def) => {
     pricing: "POUCH",
     describe(dims, wanted, _presetId, ...rest: unknown[]) {
       const material = (typeof rest[0] === "string" ? rest[0] : def.defaultMaterial) as FLEX.FilmMaterialCode;
-      const cfg = FLEX.parseFlexConfig({ code: def.code, dims: { W: dims.D, H: dims.H, ...(def.limits.G ? { G: dims.G ?? def.defaultDims.G } : {}) }, fill: def.defaultFill, material, options: {} });
+      // Added by designer (E-08): the design's options (rest[1]); options the size or film rule out fall back to the defaults.
+      const base = { code: def.code, dims: { W: dims.D, H: dims.H, ...(def.limits.G ? { G: dims.G ?? def.defaultDims.G } : {}) }, fill: def.defaultFill, material };
+      const wantedOptions = rest[1] && typeof rest[1] === "object" ? (rest[1] as Record<string, unknown>) : {};
+      let cfg: FLEX.FlexConfig;
+      try {
+        cfg = FLEX.parseFlexConfig({ ...base, options: wantedOptions });
+      } catch {
+        cfg = FLEX.parseFlexConfig({ ...base, options: {} });
+      }
       const layout = FLEX.printLayout(cfg);
       const areas: PrintArea[] = layout.panels
         .filter((p) => wanted.includes(p.id))
@@ -361,6 +369,6 @@ function dedupe(list: VesselModelDef[]): VesselModelDef[] {
 export const VESSEL_MODELS: VesselModelDef[] = dedupe([...CORE, ...BOTTLES, ...COSMETIC, ...FLEXIBLE]);
 
 /** Flexible film material for a design (the "container" of a flexible model). */
-export function describeVesselModel(m: VesselModelDef, dims: VesselDims, surfaces: string[], presetId?: string, container?: string): VesselDescription {
-  return (m.describe as (d: VesselDims, s: string[], p?: string, c?: string) => VesselDescription)(dims, surfaces, presetId, container);
+export function describeVesselModel(m: VesselModelDef, dims: VesselDims, surfaces: string[], presetId?: string, container?: string, options?: Record<string, boolean | string>): VesselDescription {
+  return (m.describe as (d: VesselDims, s: string[], p?: string, c?: string, o?: Record<string, boolean | string>) => VesselDescription)(dims, surfaces, presetId, container, options);
 }

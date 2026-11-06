@@ -39,6 +39,8 @@ export interface FaceEditorProps {
   hint: string;
   /** Spoken when the selection changes ("Text “Your brand”"). */
   selectedLabel?: (layer: ArtworkLayer) => string;
+  /** Spoken after a keyboard move / resize / rotate ("X 159.5 mm, Y 41.5 mm, 103 × 26 mm, 15°"; WCAG 4.1.3). */
+  positionLabel?: (layer: ArtworkLayer) => string;
 }
 
 /**
@@ -48,7 +50,12 @@ export interface FaceEditorProps {
  * Enter / Space selects the next item, Delete removes, Escape deselects. The Artwork panel offers the same with buttons (WCAG 2.5.7).
  */
 export function FaceEditor(props: FaceEditorProps) {
-  const { face, surface, layers, background, boardColor, safeMm, images, paintVersion, selectedId, onSelect, onChange, onCommit, onDelete, label, hint, selectedLabel } = props;
+  const { face, surface, layers, background, boardColor, safeMm, images, paintVersion, selectedId, onSelect, onChange, onCommit, onDelete, label, hint, selectedLabel, positionLabel } = props;
+  const [announce, setAnnounce] = useState("");
+  const announceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (announceTimer.current) clearTimeout(announceTimer.current);
+  }, []);
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -146,6 +153,10 @@ export function FaceEditor(props: FaceEditorProps) {
   };
 
   const selected = layers.find((l) => l.id === selectedId) ?? null;
+  const layersRef = useRef(layers);
+  layersRef.current = layers;
+  // A new selection is announced by name; the last position message is cleared.
+  useEffect(() => setAnnounce(""), [selectedId]);
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     // Enter / Space picks the next item on this panel (top-most first), so a keyboard user can
@@ -222,13 +233,22 @@ export function FaceEditor(props: FaceEditorProps) {
       aria-label={label}
       aria-describedby={hintId}
       onKeyDown={onKeyDown}
-      onKeyUp={() => onCommit()}
+      onKeyUp={(e) => {
+        onCommit();
+        if (!selected || !positionLabel || !/^(Arrow|\+|=|-|_|\[|\])/.test(e.key)) return;
+        if (announceTimer.current) clearTimeout(announceTimer.current);
+        // Debounced so holding an arrow key announces the end position once.
+        announceTimer.current = setTimeout(() => {
+          const l = layersRef.current.find((x) => x.id === selected.id);
+          if (l) setAnnounce(positionLabel(l));
+        }, 300);
+      }}
     >
       <span id={hintId} className="visually-hidden">
         {hint}
       </span>
       <span className="visually-hidden" aria-live="polite">
-        {selected ? selectedLabel?.(selected) : ""}
+        {announce || (selected ? selectedLabel?.(selected) : "")}
       </span>
       {scale > 0 && (
         <div className={styles.faceSheet} style={{ width: cssW, height: cssH }}>

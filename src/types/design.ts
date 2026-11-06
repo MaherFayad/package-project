@@ -159,6 +159,8 @@ export interface DesignVessel {
   fill: number;
   /** Print surfaces (WRAP, FRONT, BACK, SHRINK_SLEEVE, NECK, LID, flexible panels). */
   surfaces: string[];
+  /** Added by designer (E-08): flexible pack options (zipper, spout, window, tear notch, hang hole…); absent = the style's defaults. */
+  options?: Record<string, boolean | string>;
 }
 
 export function emptyArtwork(): Artwork {

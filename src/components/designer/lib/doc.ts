@@ -210,6 +210,7 @@ const vesselSchema = z.object({
   content: z.string().max(32),
   fill: z.number().min(0).max(1),
   surfaces: z.array(z.string().max(32)).min(1).max(8),
+  options: z.record(z.string().max(32), z.union([z.boolean(), z.string().max(16)])).optional(),
 });
 
 /** Design.config (+ modelCode column): the DesignDoc fields added by the model library. */

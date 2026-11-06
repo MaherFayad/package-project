@@ -388,3 +388,41 @@ a.modelCard {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Options the rules rule out, folded under one disclosure (R2-05). */
+.unavailable {
+  margin-block-start: var(--p-space-100);
+}
+.unavailable > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--p-space-100);
+  min-block-size: 32px; /* WCAG 2.5.8 target size */
+  padding-inline: var(--p-space-100);
+  margin-inline-start: calc(-1 * var(--p-space-100));
+  border-radius: var(--p-border-radius-150);
+  cursor: pointer;
+  font-size: var(--p-font-size-325);
+  color: var(--p-color-text-secondary);
+  list-style: none;
+  transition: background-color 150ms ease-out, color 150ms ease-out;
+}
+.unavailable > summary::-webkit-details-marker { display: none; }
+.unavailable > summary::before {
+  content: "";
+  inline-size: 0.45em;
+  block-size: 0.45em;
+  /* physical borders: the rotation below does the mirroring (points to the inline end when closed) */
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 150ms ease-out;
+}
+:global([dir="rtl"]) .unavailable > summary::before { transform: rotate(135deg); }
+.unavailable[open] > summary::before { transform: rotate(45deg); }
+.unavailable > summary:hover { background: var(--p-color-bg-surface-hover); color: var(--p-color-text); }
+.unavailable > summary:focus-visible { outline: 2px solid var(--p-color-border-focus); outline-offset: 1px; }
+.unavailable > .optionList { margin-block-start: var(--p-space-100); }
+@media (prefers-reduced-motion: reduce) {
+  .unavailable > summary, .unavailable > summary::before { transition: none; }
+}

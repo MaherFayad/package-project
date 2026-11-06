@@ -270,7 +270,7 @@ export function lazyChunkHrefs(entry: "./Stage3D"): string[] {
       const fs = require("node:fs") as typeof import("node:fs");
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const path = require("node:path") as typeof import("node:path");
-      loadable = JSON.parse(fs.readFileSync(path.join(process.cwd(), ".next", "react-loadable-manifest.json"), "utf8"));
+      loadable = JSON.parse(fs.readFileSync(path.join(process.cwd(), process.env.NEXT_DIST_DIR || ".next", "react-loadable-manifest.json"), "utf8"));
     } catch {
       loadable = null;
     }

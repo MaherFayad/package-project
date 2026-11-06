@@ -72,7 +72,7 @@ test("design a box, sign up at the price gate, share and export", async ({ page 
   await expect(price).toBeVisible({ timeout: 20_000 });
   await expect(price.getByText("Total with VAT")).toBeVisible({ timeout: 20_000 });
   await price.getByRole("button", { name: "Close" }).first().click();
-  await expect(page.getByTestId("price-badge")).toHaveText(/500 boxes from .+ each, delivered in \d+ days/, { timeout: 20_000 });
+  await expect(page.getByTestId("price-badge")).toHaveText(/500 boxes from .+ each excl\. VAT · delivered in \d+ days?/, { timeout: 20_000 });
 
   // 7. Share link → read-only page with "Order this box".
   await toolbarAction(page, "Share");
@@ -109,4 +109,57 @@ test("Arabic editor is RTL, keeps the 3D view unmirrored and gates saving", asyn
 test("unknown structure is a 404", async ({ page }) => {
   const res = await page.goto("/en/design/no-such-box");
   expect(res?.status()).toBe(404);
+});
+
+/** React hydration failures (#418 text/HTML mismatch, #423 recoverable root error, #425 text) and their dev wording. */
+const HYDRATION = /Minified React error #(418|419|423|425)|Hydration failed|hydrat(ed|ion) .*(mismatch|didn't match)|server rendered (HTML|text) didn't match/i;
+
+test("designer pages hydrate without errors (box, container, start page, ar + en)", async ({ page }) => {
+  test.setTimeout(120_000);
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(`${page.url()}: ${String(e)}`));
+  page.on("console", (m) => {
+    if (m.type() === "error" && HYDRATION.test(m.text())) errors.push(`${page.url()}: ${m.text()}`);
+  });
+  // Saves are stubbed: this test is about the first render only.
+  await page.route("**/api/designs**", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ id: "e2e-hydration", owned: false, updatedAt: new Date().toISOString() }) }));
+  const urls = ["/en/design", "/ar/design", "/en/design/fefco-0436", "/en/design/aerosol-can", "/ar/design/mailer-box?preset=tshirt", "/ar/design/stand-up-pouch"];
+  for (let round = 0; round < 2; round++) {
+    for (const url of urls) {
+      await page.goto(url);
+      await expect(page.locator("main")).toBeVisible();
+      if (url.split("/").length > 3) await expect(page.getByTestId("stage-3d").locator("canvas").first()).toBeVisible({ timeout: 45_000 });
+      // let late Suspense boundaries hydrate
+      await page.waitForLoadState("networkidle");
+    }
+  }
+  expect(errors, errors.join("\n")).toEqual([]);
+});
+
+test("box and container switches keep one 3D canvas (PERF-09)", async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.route("**/api/designs**", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ id: "e2e-perf09", owned: false, updatedAt: new Date().toISOString() }) }));
+  await page.goto("/en/design/mailer-box");
+  const stage = page.getByTestId("stage-3d");
+  await expect(stage.locator("canvas").first()).toBeVisible({ timeout: 45_000 });
+  await stage.locator("canvas").first().evaluate((c) => ((c as HTMLCanvasElement).dataset.e2eFirst = "1"));
+  const models: [string, string][] = [
+    ["ROUND_BOTTLE", "Water and juice bottle"],
+    ["FEFCO_0201", "FEFCO 0201"],
+    ["STAND_UP_POUCH", "Stand-up pouch"],
+    ["FEFCO_0427", "FEFCO 0427"],
+  ];
+  for (const [code, query] of models) {
+    const change = page.getByRole("button", { name: "Change model" }).first();
+    if (!(await change.isVisible())) await page.getByRole("button", { name: /Show more controls/ }).click();
+    await change.click();
+    const picker = page.getByTestId("catalogue-picker");
+    await picker.getByRole("searchbox").fill(query);
+    await picker.getByRole("button", { name: /^All/ }).click();
+    await picker.locator(`[data-model="${code}"]`).click();
+    await expect(stage).toHaveAttribute("data-model", code);
+  }
+  // Same <canvas> element (same WebGL context) after every switch.
+  await expect(stage.locator("canvas")).toHaveCount(1);
+  await expect(stage.locator("canvas").first()).toHaveAttribute("data-e2e-first", "1");
 });

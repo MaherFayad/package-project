@@ -29,7 +29,7 @@ export function PreflightPanel({
   return (
     <BlockStack gap="400">
       <BlockStack gap="100">
-        <Text as="h3" variant="headingSm">
+        <Text as="h2" variant="headingSm">
           {t("designer.check.heading")}
         </Text>
         <Text as="p" tone="subdued">
