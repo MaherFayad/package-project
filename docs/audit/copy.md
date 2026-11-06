@@ -152,3 +152,39 @@ New findings this round, counted before fixing: **critical 0 · high 15 · mediu
 - `e2e/a11y.spec.ts`: one text selector follows the renamed toast ("Shipping cost updated for Giza.").
 - `docs/audit/platform-glossary.md`: additive "Copy round 5 additions" table.
 - New test: `src/i18n/__tests__/copy-rules.test.ts`.
+
+## Verification (round 5)
+
+All checks below passed on the branch head (claude/exciting-albattani-8kzgsu-r5-copy).
+
+| Check | Result |
+|---|---|
+| `npm run lint` | clean |
+| `npm run typecheck` | clean |
+| `npm test` | 93 files, 8,509 tests passed, including the new `src/i18n/__tests__/copy-rules.test.ts` |
+| `npm run build` | passed |
+| Playwright e2e, `--workers=2 --trace off`, fresh `next start` with OTP_DEV_ECHO=1 and ALLOW_MOCK_PAYMENTS=1 (smoke, storefront, checkout, catalogue-order-modes, journey, designer, a11y, vendor, admin) | **69 passed**, 15 skipped by the specs' own project conditions, 0 failed |
+
+Seven e2e specs matched old wording exactly, so their text selectors now follow the new copy. No assertion was removed or loosened beyond the wording:
+- `/I agree to the terms/i`
+- "Request a price"
+- `/on request/i`
+- "Not submitted yet"
+- "Shipping cost updated for Giza."
+
+Browser re-check after the fixes, ar and en at 1440, 390 and 320:
+- **Routes:** 342 anonymous routes and 82 signed-in routes (buyer, admin, vendor staff).
+- **Clean:** no raw keys, no leftover placeholders, no diacritics, no Arabic-Indic digits, no horizontal overflow at 320.
+- **Remaining Latin text on Arabic pages:**
+  - the model standard strings (R5-CP-12, open)
+  - admin addresses (R5-CP-86, open)
+  - staff-typed notes and machine models (R5-CP-85 and R5-CP-88, won't fix)
+  - brand names: Instagram, Facebook, TikTok, LinkedIn and ELB- numbers
+- **Fixes confirmed in the browser:** R5-CP-01, R5-CP-02, R5-CP-13, R5-CP-14 and R5-CP-83. Screenshots are in docs/screenshots/audit/copy/; the receipt is shown in ar 390, ar 1440 and en 1440.
+
+Counts of new findings this round, before fixing: critical 0 · high 15 · medium 43 · low 32. Of the 90:
+- **Fixed:** 65
+- **Open with named owners:** 21. These need component or service changes in files that other sessions are editing.
+- **Won't fix:** 4, with reasons in the rows.
+
+The next copy round should recheck the open rows once the owners merge.
