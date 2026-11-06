@@ -1,8 +1,10 @@
 import type { DesignDoc, Dims, FaceId, MaterialCode, StructureCode } from "@/types";
 import { BOARD_SPECS, type DielineModel, type DielinePanel, type FaceInfo } from "@/lib/dieline";
 import type { VesselDims } from "@/lib/vessels";
-import { boxModel, modelByCode, vesselModel } from "./index";
-import { describeVesselModel } from "./vessels";
+// Registry, not ./index: doc helpers are used in the browser, which loads only the open family
+// (PERF-04). Server callers import "@/lib/library" first (eager registration).
+import { boxModel, modelByCode, vesselModel } from "./registry";
+import { describeVesselModel } from "./packs/common-vessel";
 import type { BoxModelDef, ModelDef, PrintArea, VesselDescription, VesselModelDef } from "./types";
 
 /**

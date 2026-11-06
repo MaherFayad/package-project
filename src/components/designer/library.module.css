@@ -58,13 +58,24 @@ a.modelCard {
   cursor: pointer;
   transition: background-color var(--p-motion-duration-150) var(--p-motion-ease), border-color var(--p-motion-duration-150) var(--p-motion-ease);
 }
-.chip:hover:not(:disabled) {
+/* CR-03: the hover rule must not beat the selected fill (white text on #f7f7f7 was 1.07:1). */
+.chip:hover:not(:disabled):not([aria-pressed="true"]) {
   background: var(--p-color-bg-surface-hover);
 }
 .chip[aria-pressed="true"] {
   background: var(--p-color-bg-fill-brand, #303030);
   border-color: var(--p-color-bg-fill-brand, #303030);
   color: var(--p-color-text-brand-on-bg-fill, #fff);
+}
+.chip[aria-pressed="true"]:hover:not(:disabled) {
+  background: var(--p-color-bg-fill-brand-hover, #1a1a1a);
+}
+.scopeSwitch {
+  display: flex;
+  gap: var(--p-space-200);
+}
+.modelEgypt {
+  display: flex;
 }
 .chip:disabled {
   opacity: 0.45;
@@ -165,6 +176,12 @@ a.modelCard {
   font-size: var(--p-font-size-325);
   font-weight: var(--p-font-weight-semibold);
   line-height: 1.3;
+  /* CR-31: two lines, so rows line up */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: calc(2 * 1.3em);
 }
 .modelMeta {
   font-size: var(--p-font-size-300);

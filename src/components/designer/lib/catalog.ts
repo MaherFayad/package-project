@@ -1,7 +1,7 @@
 import { type Dims, type DimsPreset, type StructureCode } from "@/types";
 import { DEFAULT_DIMS, STRUCTURES } from "@/lib/dieline";
 import { STRUCTURE_SLUGS } from "./paths";
-import { modelByCode } from "@/lib/library";
+import { modelSlugOf } from "@/lib/library/registry";
 
 /**
  * Static catalog facts the designer needs on the client (mirrors prisma/seed.ts). Server pages
@@ -14,7 +14,7 @@ export function designerPath(locale: string, code: StructureCode | string, query
   const q = new URLSearchParams();
   for (const [k, v] of Object.entries(query ?? {})) if (v) q.set(k, v);
   const qs = q.toString();
-  const slug = STRUCTURE_SLUGS[code as StructureCode] ?? modelByCode(code)?.slug ?? STRUCTURE_SLUGS.FEFCO_0427;
+  const slug = STRUCTURE_SLUGS[code as StructureCode] ?? modelSlugOf(code) ?? STRUCTURE_SLUGS.FEFCO_0427;
   return `/${locale}/design/${slug}${qs ? `?${qs}` : ""}`;
 }
 

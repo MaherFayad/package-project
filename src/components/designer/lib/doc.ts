@@ -20,7 +20,8 @@ import {
 } from "@/types";
 import { DEFAULT_DIMS, defaultMaterialFor, materialFitsStructure } from "@/lib/dieline";
 import { DESIGN_FINISH_CODES } from "@/types";
-import { modelByCode, type ModelDef } from "@/lib/library";
+import type { ModelDef } from "@/lib/library";
+import { modelByCode, modelSourceOf } from "@/lib/library/registry";
 import { baseOf, vesselPrintMaterials } from "@/lib/library/doc";
 
 /** Max items per design (both sides together). Keeps saves and textures small. */
@@ -247,7 +248,9 @@ export const designDocSchema = z
 function modelFits(d: { modelCode?: string; structureCode: StructureCode; materialCode: MaterialCode; vessel?: unknown }): boolean {
   if (!d.modelCode) return true;
   const m = modelByCode(d.modelCode);
-  if (!m) return false;
+  // In the browser only the open family is loaded (PERF-04): accept a known code here; the server
+  // (eager library) validates fully on save.
+  if (!m) return typeof window !== "undefined" && !!modelSourceOf(d.modelCode);
   if (m.kind === "box") return m.materials.includes(d.materialCode) && m.baseFor(d.materialCode) === d.structureCode;
   return !!d.vessel && vesselPrintMaterials(m).concat(vesselPrintMaterials(m, ["SHRINK_SLEEVE"])).includes(d.materialCode) && baseOf(m, d.materialCode) === d.structureCode;
 }

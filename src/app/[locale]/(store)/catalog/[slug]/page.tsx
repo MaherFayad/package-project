@@ -7,6 +7,7 @@ import { getSession } from "@/lib/auth/session";
 import { formatNumber } from "@/lib/format";
 import { CATALOGUE, catalogueEntryFromParam, familyName, subFamilyName, type AxisKey, type CatalogueEntry } from "@/data/catalogue";
 import { COPY, fill } from "@/components/catalogue/copy";
+import { ORDER_MODE_COPY } from "@/data/catalogue/order-mode";
 import { DetailStage } from "@/components/catalogue/DetailStage";
 import { QuoteRequestForm } from "@/components/catalogue/QuoteRequestForm";
 import { ModelCard } from "@/components/catalogue/CatalogueBrowser";
@@ -83,13 +84,13 @@ export default async function Page({ params }: Props) {
               {e.source === "fefco-09" ? <p className={mk.small}>{COPY.hostNote[locale]}</p> : null}
 
               <div className={styles.priceCard} data-mode={mode.mode} data-testid="price-path">
-                <p className={styles.priceTitle}>{mode.mode === "instant" ? COPY.instantTitle[locale] : COPY.quoteTitle[locale]}</p>
+                <p className={styles.priceTitle}>{mode.mode === "instant" ? (e.render === "vessel" ? COPY.instantLabelsTitle[locale] : COPY.instantTitle[locale]) : COPY.quoteTitle[locale]}</p>
                 <p className={mk.body}>
                   {mode.mode === "instant"
                     ? fill(COPY.instantBody[locale], { count: formatNumber(mode.vendorIds.length) })
-                    : mode.reason === "LABELS_BY_QUOTE"
-                      ? COPY.quoteLabels[locale]
-                      : COPY.quoteBody[locale]}
+                    : mode.reason === "NO_VENDOR"
+                      ? COPY.quoteBody[locale]
+                      : ORDER_MODE_COPY[mode.reason][locale]}
                 </p>
                 {e.designer ? (
                   <div className={styles.ctaRow}>

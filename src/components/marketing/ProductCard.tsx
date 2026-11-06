@@ -7,6 +7,8 @@ import { designHref, structureHref } from "@/components/store/catalog";
 import type { StructureView } from "@/components/store/data";
 import { TILE_BG, renderSrc, srcSetFor } from "./assets";
 import styles from "./marketing.module.css";
+import { STRUCTURES } from "@/lib/dieline/registry";
+import { standardOf } from "@/data/catalogue/mapping";
 
 /** Marketing product card: real 3D render of the structure, name, size range, "from" price, CTAs. */
 export function ProductCard({
@@ -35,13 +37,21 @@ export function ProductCard({
           <img src={renderSrc(structure.code)} srcSet={srcSetFor(renderSrc(structure.code))} sizes="(min-width: 1024px) 400px, (min-width: 560px) 46vw, 82vw" alt={t("marketing.boxes.renderAlt", { name })} loading="lazy" decoding="async" width={480} height={360} />
         </div>
         <div className={styles.productBody}>
-          <span className={styles.productCode}>{structure.code.replace("_", " ")}</span>
+          {/* CR-32: the industry code (FEFCO 0426), never the internal code ("PIZZA"). */}
+          {(() => {
+            const std = standardOf(structure.code, STRUCTURES[structure.code]?.standard);
+            return std.code ? (
+              <span className={styles.productCode} dir="ltr">
+                {`${std.system} ${std.code}`}
+              </span>
+            ) : null;
+          })()}
           <H className={styles.h3}>
             <Link href={href} className={styles.cardLink}>
               {name}
             </Link>
           </H>
-          <p className={styles.small}>{pick(locale, structure.description.ar, structure.description.en)}</p>
+          <p className={`${styles.small} ${styles.productDesc}`}>{pick(locale, structure.description.ar, structure.description.en)}</p>
           <p className={styles.small}>
             <bdi dir="ltr" className={styles.num}>{`${p.L.min}–${p.L.max} × ${p.W.min}–${p.W.max} × ${p.H.min}–${p.H.max}`}</bdi> {t("common.mm")}
           </p>

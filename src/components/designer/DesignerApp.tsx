@@ -6,7 +6,9 @@ import { ArrowLeft, ChevronDown, ChevronUp, CloudCheck, CloudOff, CloudUpload, D
 import { startTransition, useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { FACE_IDS, type ArtworkLayer, type DesignDoc, type DesignFinishCode, type DimsPreset, type FaceId, type Locale, type PrintSurface, type StructureCode } from "@/types";
 import { boardAppearance, type DielineModel } from "@/lib/dieline";
-import { modelByCode, type ModelDef } from "@/lib/library";
+import type { ModelDef } from "@/lib/library";
+import { loadModel, modelByCode } from "@/lib/library/registry";
+import { useLibraryModel } from "@/lib/library/useLibraryModel";
 import type { ModelCard } from "@/lib/library/search";
 import { defaultMaxDpr } from "@/components/three/hooks";
 import { docGeometry, docModel, docModelCode, facesForAreas, normaliseDocModel } from "@/lib/library/doc";
@@ -67,6 +69,7 @@ import { DielineView } from "./DielineView";
 import { ArtworkPanel } from "./ArtworkPanel";
 import { LayersPanel } from "./LayersPanel";
 import { PreflightBadge, PreflightPanel } from "./PreflightPanel";
+import { orderModeOf } from "@/data/catalogue/order-mode";
 import { ExportModal, GateModal, PriceBadge, PriceModal, ShareModal, type ExportSize, type GateReason } from "./Modals";
 import styles from "./designer.module.css";
 
@@ -131,7 +134,22 @@ function slugify(name: string) {
   );
 }
 
-export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, loadError, resumeLocal, pickerCards = [] }: DesignerAppProps) {
+/**
+ * Only the open model's family pack is loaded in the browser (PERF-04): render a stage skeleton
+ * until it is in the registry, then the editor.
+ */
+export function DesignerApp(props: DesignerAppProps) {
+  const ready = useLibraryModel(docModelCode(props.initialDoc));
+  if (!ready)
+    return (
+      <div className={lib.stageSkeleton} style={{ minBlockSize: "70vh" }} aria-busy="true" data-testid="designer-loading">
+        <span className="visually-hidden">{props.locale === "ar" ? "جار تحميل المصمم" : "Loading the designer"}</span>
+      </div>
+    );
+  return <DesignerEditor {...props} />;
+}
+
+function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, loadError, resumeLocal, pickerCards = [] }: DesignerAppProps) {
   const { t } = useI18n();
   const router = useRouter();
   const toast = useToast();
@@ -454,9 +472,10 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
   );
 
   /** Switch to another library model: its default size, the closest board, same artwork. */
-  const onModel = (code: string) => {
-    const m = modelByCode(code);
+  const onModel = async (code: string) => {
     setPickerOpen(false);
+    // Another family's pack loads on demand (PERF-04).
+    const m = modelByCode(code) ?? (await loadModel(code));
     if (!m) return;
     const cur = docRef.current;
     const fresh = createModelDoc(m, { name: cur.name, materialCode: cur.materialCode });
@@ -675,6 +694,8 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
   // Open-top styles (FEFCO 0700…) never close: fold 100 % reads "Assembled". The catalogue adds
   // `openTop` to the library; read it defensively until then.
   const openTop = !!(libModel as { openTop?: boolean } | null)?.openTop;
+  // B-16: models no Egyptian SME printer makes go to checkout's quote request, not an order.
+  const byQuote = ["quote", "preview"].includes(orderModeOf(docModelCode(doc)).mode);
   const structureName = libModel?.name[locale] ?? t(`structures.${doc.structureCode}` as DictKey);
 
   return (
@@ -757,7 +778,7 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
           </Popover>
         </div>
         <Button variant="primary" onClick={doOrder} loading={ordering}>
-          {t("designer.order.button")}
+          {byQuote ? (locale === "ar" ? "اطلب عرض سعر" : "Request a quote") : t("designer.order.button")}
         </Button>
       </div>
 

@@ -1,3 +1,5 @@
+// Eager model library: doc helpers below read the registry (PERF-04).
+import "@/lib/library";
 import {
   PDFDocument,
   PDFHexString,

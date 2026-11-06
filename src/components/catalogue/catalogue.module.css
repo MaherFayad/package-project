@@ -23,7 +23,23 @@
   padding-block: 8px 4px;
 }
 
-.searchRow { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+/* CR-30: search and the Egypt switch stay under the sticky site header while the grid scrolls. */
+.searchRow {
+  position: sticky;
+  inset-block-start: 64px;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-inline: calc(-1 * var(--mk-gutter));
+  padding: 12px var(--mk-gutter);
+  background: color-mix(in srgb, var(--mk-white) 94%, transparent);
+  backdrop-filter: saturate(1.4) blur(10px);
+}
+@media (min-width: 1024px) {
+  .searchRow { inset-block-start: 72px; }
+}
 
 .search {
   position: relative;

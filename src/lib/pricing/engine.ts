@@ -4,6 +4,7 @@ import { STRUCTURE_FAMILY, validateDims } from "@/lib/dieline";
 import { boardMultiplier, DEFAULT_PRICING_CONFIG, resolvePriceIndex, type PricingConfig, type PriceIndexRow } from "./config";
 import { modelByCode } from "@/lib/library";
 import { baseOf } from "@/lib/library/doc";
+import { orderModeOf, vendorListsModel } from "@/data/catalogue/order-mode";
 import { dielineBoardArea, modelBoardArea, type BoardArea, type BoardAreaProvider } from "./area";
 import { CITY_ZONE, deliveryEstimate, flatPackBundles } from "./delivery";
 import { sumPiasters, toPiasters, vatOf, withMargin } from "./money";
@@ -316,6 +317,12 @@ export function quote(input: QuoteInput, data: PricingData, opts: QuoteOptions =
   if (input.quantity > cfg.maxInstantQty) {
     return { mode: "manual_quote", reason: "QUANTITY_ABOVE_INSTANT_MAX", quantity: input.quantity, maxInstantQty: cfg.maxInstantQty };
   }
+  // B-16: models no Egyptian SME printer makes (or only some do) never get an instant price
+  // through their base structure's rate card.
+  const order = input.model ? orderModeOf(input.model.code) : null;
+  if (order && (order.mode === "quote" || order.mode === "preview")) {
+    return { mode: "manual_quote", reason: "MODEL_BY_QUOTE", orderReason: order.reason as "QUOTE_ONLY_STOCK" | "RARE_IN_EGYPT" | "FILLING_LINE", quantity: input.quantity, maxInstantQty: cfg.maxInstantQty };
+  }
 
   let area: BoardArea;
   if (input.model && !opts.area) {
@@ -336,9 +343,16 @@ export function quote(input: QuoteInput, data: PricingData, opts: QuoteOptions =
       ineligible.push({ vendorId: vendor.id, reason: e.reason });
       continue;
     }
+    if (order && input.model && !vendorListsModel(order.mode, input.model.code, vendor.capabilities.models)) {
+      ineligible.push({ vendorId: vendor.id, reason: "MODEL_NOT_LISTED" });
+      continue;
+    }
     offers.push(priceVendor(vendor, e.card, data, input, material, finishes, area, index, cfg, validUntil));
   }
   const ranked = rankOffers(offers, cfg);
+  if (order?.mode === "listed" && ranked.length === 0) {
+    return { mode: "manual_quote", reason: "MODEL_BY_QUOTE", orderReason: "SPECIAL_GLUING", quantity: input.quantity, maxInstantQty: cfg.maxInstantQty };
+  }
 
   let suggestion: StandardSizeSuggestion | null = null;
   if (!opts.skipSuggestion && !input.model && ranked.length > 0) {

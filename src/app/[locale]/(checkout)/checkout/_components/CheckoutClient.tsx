@@ -1,5 +1,6 @@
 "use client";
 
+import { ORDER_MODE_COPY } from "@/data/catalogue/order-mode";
 import { BadgeCheck, Check, Clock, Star, Truck } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
@@ -400,7 +401,9 @@ export function CheckoutClient(props: {
                       {t("buyer.quote.title", { qty: qty.toLocaleString("en-US") })}
                     </Text>
                     <Text as="p" variant="bodySm" tone="subdued">
-                      {t("buyer.quote.body", { max: MAX_INSTANT_QTY.toLocaleString("en-US") })}
+                      {result.reason === "MODEL_BY_QUOTE"
+                        ? ORDER_MODE_COPY[result.orderReason ?? "QUOTE_ONLY_STOCK"][locale]
+                        : t("buyer.quote.body", { max: MAX_INSTANT_QTY.toLocaleString("en-US") })}
                     </Text>
                   </BlockStack>
                   <TextField

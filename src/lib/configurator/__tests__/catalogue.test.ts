@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { MATERIAL_CODES, STRUCTURE_CODES } from "@/types";
 import { MODELS, boxModel } from "@/lib/library";
 import { CATALOGUE } from "@/data/catalogue";
+import { orderModeOf } from "@/data/catalogue/order-mode";
 import { catalogueModelConfig, catalogueOptions, quoteMode, QUOTE_COPY } from "../catalogue";
 import { evaluateConfig } from "../rules";
 import type { VendorForMatch } from "../pricing";
@@ -13,6 +14,7 @@ const EVERYTHING: VendorForMatch = {
   verified: true,
   minOrderQty: 1,
   capabilities: {
+    models: CATALOGUE.map((e) => e.code),
     structures: [...STRUCTURE_CODES],
     materials: [...MATERIAL_CODES],
     finishes: ["NONE", "MATTE_LAMINATION", "GLOSS_LAMINATION", "SPOT_UV", "SOFT_TOUCH_LAMINATION", "VARNISH", "HOT_FOIL", "EMBOSS", "DEBOSS"],
@@ -83,9 +85,14 @@ describe("commerce path", () => {
   it("instant when a capable printer exists, else quote", () => {
     for (const m of MODELS) {
       const q = quoteMode(m.code, [EVERYTHING]);
-      if (m.kind === "box") expect(q.mode, m.code).toBe("instant");
-      else expect(q).toEqual({ mode: "quote", reason: "LABELS_BY_QUOTE" });
+      const order = orderModeOf(m.code);
+      // B-16: rare-in-Egypt and filling-line formats are always a quote, whatever the printers.
+      if (order.mode === "preview") expect(q, m.code).toEqual({ mode: "quote", reason: order.reason });
+      else expect(q.mode, m.code).toBe("instant");
     }
+    // Special gluing: instant only from a printer that lists the model.
+    expect(quoteMode("FEFCO_0711", [{ ...EVERYTHING, capabilities: { ...EVERYTHING.capabilities, models: [] } }])).toEqual({ mode: "quote", reason: "SPECIAL_GLUING" });
+    expect(quoteMode("LIQUID_ASEPTIC_BRICK", [EVERYTHING])).toEqual({ mode: "quote", reason: "FILLING_LINE" });
     expect(quoteMode("FEFCO_0427", [])).toEqual({ mode: "quote", reason: "NO_VENDOR" });
     expect(quoteMode("FS_CUP_DOUBLE", [EVERYTHING])).toEqual({ mode: "quote", reason: "QUOTE_ONLY_STOCK" });
   });

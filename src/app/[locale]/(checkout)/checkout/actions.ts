@@ -33,7 +33,7 @@ const locale = z.enum(["ar", "en"]);
 
 export type OffersResult =
   | { ok: true; mode: "instant"; quantity: number; offers: CheckoutOffer[]; suggestion: StandardSizeSuggestion | null; validUntil: string }
-  | { ok: true; mode: "manual_quote"; quantity: number; max: number }
+  | { ok: true; mode: "manual_quote"; quantity: number; max: number; reason?: "QUANTITY_ABOVE_INSTANT_MAX" | "MODEL_BY_QUOTE"; orderReason?: "SPECIAL_GLUING" | "QUOTE_ONLY_STOCK" | "RARE_IN_EGYPT" | "FILLING_LINE" }
   | ActionError;
 
 export async function getOffersAction(input: { designId: string; quantity: number; governorate?: string }): Promise<OffersResult> {
@@ -49,7 +49,8 @@ export async function getOffersAction(input: { designId: string; quantity: numbe
   if (!design) return { ok: false, error: "NOT_FOUND" };
   try {
     const outcome = await quoteDesign(design.doc, { quantity: p.data.quantity, governorate: p.data.governorate });
-    if (outcome.mode === "manual_quote") return { ok: true, mode: "manual_quote", quantity: outcome.quantity, max: MAX_INSTANT_QTY };
+    if (outcome.mode === "manual_quote")
+      return { ok: true, mode: "manual_quote", quantity: outcome.quantity, max: MAX_INSTANT_QTY, reason: outcome.reason, ...(outcome.orderReason ? { orderReason: outcome.orderReason } : {}) };
     return {
       ok: true,
       mode: "instant",

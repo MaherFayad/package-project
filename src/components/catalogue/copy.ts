@@ -1,4 +1,5 @@
 import type { LocalizedText } from "@/types";
+import { EGYPT_BADGE } from "@/data/catalogue/order-mode";
 
 /**
  * Catalogue copy (MSA for Egypt, noun-form labels, no diacritics). Kept next to the
@@ -35,11 +36,8 @@ export const COPY = {
   emptyTitle: t("No models match", "لا توجد نماذج مطابقة"),
   emptyBody: t("Try another word or code, or switch to Worldwide.", "جرب كلمة أو كودا آخر، أو اختر عالميا."),
   emptyReset: t("Clear filters", "مسح عوامل التصفية"),
-  egypt: {
-    local: t("Made in Egypt", "يصنع في مصر"),
-    imported: t("Imported to Egypt", "مستورد إلى مصر"),
-    rare: t("Rare in Egypt", "نادر في مصر"),
-  },
+  /** Same wording on every surface (B-20): src/data/catalogue/order-mode.ts EGYPT_BADGE. */
+  egypt: EGYPT_BADGE,
   egyptLong: {
     local: t("Egyptian converters make this at volume.", "تصنعه مصانع مصرية بكميات تجارية."),
     imported: t("Mostly imported; local stock or custom runs through importers.", "مستورد في الغالب، ويتوفر من خلال المستوردين بمخزون أو تصنيع خاص."),
@@ -64,6 +62,7 @@ export const COPY = {
   sizesPrices: t("Sizes and prices: {name}", "المقاسات والأسعار: {name}"),
   quoteCta: t("Request a quote", "اطلب عرض سعر"),
   instantTitle: t("Instant price from Egyptian printers", "سعر فوري من مطابع مصرية"),
+  instantLabelsTitle: t("Instant price for the labels", "سعر فوري للملصقات"),
   instantBody: t(
     "Design it free in 3D, then compare instant prices from {count} vetted printers. Prices include 14% VAT at checkout.",
     "صممها مجانا بتقنية ثلاثية الأبعاد، ثم قارن الأسعار الفورية من {count} مطبعة معتمدة. تضاف ضريبة القيمة المضافة 14% عند الدفع.",
@@ -73,7 +72,6 @@ export const COPY = {
     "No printer on Elba prices this format automatically yet. Send a request: a suitable converter replies with a price within 2 working days.",
     "لا توجد مطبعة على علبة تسعر هذا النوع تلقائيا بعد. أرسل طلبا وسيرد مصنع مناسب بالسعر خلال يومي عمل.",
   ),
-  quoteLabels: t("Labels and sleeves for containers are priced by quote; printers confirm within 24 hours.", "تسعر الملصقات والأغلفة للعبوات بعرض سعر، وتؤكده المطابع خلال 24 ساعة."),
   viewerHint: t("Drag to turn. Use the arrow keys when the viewer is focused.", "اسحب للتدوير، أو استخدم مفاتيح الأسهم عند تحديد العارض."),
   viewerLoading: t("Loading the 3D model", "جار تحميل النموذج ثلاثي الأبعاد"),
   related: t("More in {name}", "المزيد من {name}"),

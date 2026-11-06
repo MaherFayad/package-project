@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState, type ReactNode, memo } from "react";
 import { FACE_IDS, type DesignDoc, type DesignFinishCode, type Dims, type FaceId, type MaterialCode, type StructureFeatures } from "@/types";
 import { CLOSURE_COLORS, LIQUIDS, type ClosureColorCode, type LiquidCode, type VesselDims } from "@/lib/vessels";
 import { BOARD_SPECS } from "@/lib/dieline";
-import { describeVesselModel, type BoxModelDef, type ModelDef, type VesselModelDef } from "@/lib/library";
+import type { BoxModelDef, ModelDef, VesselModelDef } from "@/lib/library";
+import { describeVesselModel } from "@/lib/library/packs/common-vessel";
 import type { DocGeometry } from "@/lib/library/doc";
 import { FINISHES } from "@/lib/configurator";
 import { formatDims, formatNumber } from "@/lib/format";
@@ -13,6 +14,7 @@ import type { DictKey } from "@/i18n/types";
 import { Badge, BlockStack, Button, Checkbox, InlineGrid, RangeSlider, Select, Text, TextField } from "@/components/ui";
 import { featureSupportOf, finishChoicesFor, materialChoices, printSidesChoices, type Choice } from "./lib/config";
 import { modelImage } from "./ModelPicker";
+import { EGYPT_BADGE, egyptOf } from "@/data/catalogue/order-mode";
 import styles from "./library.module.css";
 
 export interface ViewOptions {
@@ -49,7 +51,7 @@ export const ConfigPanel = memo(function ConfigPanel(props: ConfigPanelProps) {
     <div className={styles.config}>
       <div className={styles.modelCurrent}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={modelImage(model.slug)} alt="" width={72} height={54} />
+        <img src={modelImage(model.slug, model.code)} alt="" width={72} height={54} />
         <div className={styles.modelCurrentText}>
           <Text as="h3" variant="headingSm">
             <span data-testid="model-name">{model.name[locale]}</span>
@@ -64,6 +66,12 @@ export const ConfigPanel = memo(function ConfigPanel(props: ConfigPanelProps) {
               {t("library.panel.base", { base })}
             </Text>
           ) : null}
+          {/* B-20: availability in Egypt on every model surface. */}
+          <span data-testid="model-egypt">
+            <Badge tone={egyptOf(model.code) === "local" ? "success" : egyptOf(model.code) === "imported" ? "attention" : "critical"} size="small">
+              {EGYPT_BADGE[egyptOf(model.code)][locale]}
+            </Badge>
+          </span>
         </div>
         <div className={styles.modelCurrentActions}>
           <Button fullWidth onClick={onOpenPicker} accessibilityLabel={t("library.picker.open")}>

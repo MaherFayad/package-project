@@ -136,3 +136,20 @@ describe("library openTop flag (designer: 'Assembled' rather than 'Closed')", ()
     for (const c of ["FEFCO_0427", "FEFCO_0201", "FEFCO_0421", "FEFCO_0320", "FEFCO_0300", "ECMA_TRAY_6C_LID", "FEFCO_0615", "ECMA_RTE"]) expect(boxModel(c)?.openTop, c).toBeFalsy();
   });
 });
+
+describe("order modes (B-16)", () => {
+  it("the generated table equals the rules over the catalogue", async () => {
+    const { orderModeForEntry, orderModeOf } = await import("../order-mode");
+    for (const e of CATALOGUE) expect(orderModeOf(e.code), e.code).toEqual(orderModeForEntry(e));
+  });
+  it("routes rare, filling-line and special-gluing formats away from instant prices", async () => {
+    const { orderModeOf } = await import("../order-mode");
+    expect(orderModeOf("LIQUID_ASEPTIC_BRICK").mode).toBe("preview");
+    expect(orderModeOf("LIQUID_GABLE_TOP").mode).toBe("preview");
+    expect(orderModeOf("FEFCO_0711").mode).toBe("listed");
+    expect(orderModeOf("FEFCO_0601").mode).toBe("preview");
+    expect(orderModeOf("FS_CUP_DOUBLE").mode).toBe("quote");
+    expect(orderModeOf("FEFCO_0427").mode).toBe("instant");
+    expect(orderModeOf("ECMA_CLB").mode).toBe("instant");
+  });
+});

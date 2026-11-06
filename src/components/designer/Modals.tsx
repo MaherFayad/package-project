@@ -23,6 +23,10 @@ import {
   TextField,
 } from "@/components/ui";
 import { BADGE_QTY, fetchQuote, quoteKey, type PriceState } from "./lib/quote";
+import { ORDER_MODE_COPY } from "@/data/catalogue/order-mode";
+
+/** Catalogue quote form for the design's model (B-16). */
+const quoteUrl = (locale: string, doc: DesignDoc) => `/${locale}/catalog/${encodeURIComponent(doc.modelCode ?? doc.structureCode)}#quote`;
 import styles from "./designer.module.css";
 import lib from "./library.module.css";
 
@@ -62,6 +66,9 @@ export function PriceBadge({ state, onClick }: { state: PriceState; onClick: () 
       break;
     case "none":
       label = t("designer.price.unavailable");
+      break;
+    case "quote":
+      label = locale === "ar" ? "بعرض سعر: اضغط للتفاصيل" : "Priced by quote: see why";
       break;
     case "error":
       label = t("designer.price.errorBody");
@@ -119,8 +126,12 @@ export function PriceModal({
     <Modal
       open={open}
       onClose={onClose}
-      title={t("designer.price.heading")}
-      primaryAction={{ content: t("designer.order.button"), onAction: onOrder, loading: ordering, disabled: state.status !== "ready" }}
+      title={state.status === "quote" ? (locale === "ar" ? "طلب عرض سعر" : "Request a quote") : t("designer.price.heading")}
+      primaryAction={
+        state.status === "quote"
+          ? { content: locale === "ar" ? "اطلب عرض سعر" : "Request a quote", url: quoteUrl(locale, doc) }
+          : { content: t("designer.order.button"), onAction: onOrder, loading: ordering, disabled: state.status !== "ready" }
+      }
       secondaryActions={[{ content: t("common.close"), onAction: onClose }]}
     >
       <BlockStack gap="400">
@@ -184,6 +195,10 @@ export function PriceModal({
               </Banner>
             ) : null}
           </BlockStack>
+        ) : state.status === "quote" ? (
+          <Banner tone="info" inCard title={locale === "ar" ? "يسعر هذا النموذج بعرض سعر" : "This model is priced by quote"}>
+            {ORDER_MODE_COPY[state.reason][locale]}
+          </Banner>
         ) : state.status === "none" ? (
           <Banner tone="warning" inCard>
             {t("designer.price.unavailable")}
