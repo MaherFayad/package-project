@@ -180,3 +180,23 @@ Round 6 counts, new findings before fixing: **critical 0, high 4, medium 1, low 
 Files outside vendor scope: `src/i18n/admin.en.ts` and `src/i18n/admin.ar.ts` (label for the new `SOLICIT` kind), and `src/components/admin/lib/__tests__/admin-round3.test.ts`. That test asserted the exact flag list for «كلمنا واتساب ٠١٠…»; the expectation now includes `SOLICIT`, which is stricter, not weaker.
 
 Verification: `npm run lint` and `npm run typecheck` clean. `npm test`: 85 files / 8,461 tests passed (round 6 cases in `bio-review.test.ts`). `npm run build` OK. e2e (`--workers=2 --trace off`): vendor, smoke, storefront, journey, checkout and admin specs gave 49 passed and 13 skipped (desktop-only mutating flows on the mobile project).
+
+## Round 7
+
+Asked by the integrator: round 6 found medium-or-worse issues, so this is a fresh pass on main `8278994` (merged here as `4235e08`). It also asked to make sure a vendor with a pending bio sees a clear "waiting for review" message and keeps the old public bio. Method: `vendor-audit.cjs` sweep (40 loads, ar/en, 390/1440: 0 axe violations, 0 console errors, 0 overflow), the bio flow driven in the browser in both locales, a look at every changed screen, and the e2e set (one spec run 3 times).
+
+### Pending bio (integrator check)
+
+Verified on the merged build. After a vendor saves a bio edit, the profile shows "Your bio changes are waiting for review. Buyers see your current bio until Elba approves them." (Arabic: «تعديلات النبذة بانتظار المراجعة…») with a "In review" badge. The public `/vendors/nile-pack` still shows the old bio and none of the pending text. The wording moved from "in review" to "waiting for review", as asked. The admin queue to approve edits is still not on main (R6-05, admin).
+
+### Findings (new this round)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R7-01 | low | Vendor home (`(portal)/page.tsx`) | A vendor lands on the home page, where nothing said a bio edit was waiting or had been sent back. The setup checklist simply showed "Write your bio" as done. | ISO 9241-110 (self-descriptiveness) | Info banner on home for a waiting edit, and a warning banner for one that was not approved, each with "View profile". e2e checks the banner and its link. | fixed |
+| R7-02 | low | Vendor home metrics and payouts card | Money precision was mixed in one strip: "EGP 5,990" next to "EGP 24,599.56" (the R5-02 rule had not reached the home page). | CR-35 | The two money metrics share one precision, and so do the payouts card rows. | fixed |
+| R7-03 | low | `e2e/vendor.spec.ts` "a vendor cannot see another vendor's job" | Failed once on mobile after the main merge: a strict text locator matched the visible not-found message and a hidden copy Next keeps outside `<main>` while the response streams. Only one copy is visible once the page settles (checked in the DOM at 390 and 1440). | Test correctness | Locator scoped to `main`, which still asserts the visible message exactly. Passed 3 of 3 runs in a row. | fixed |
+
+Round 7 counts, new findings before fixing: **critical 0, high 0, medium 0, low 3**. All fixed. This round found nothing of medium severity or worse, so the vendor area meets the stop rule. R6-05 (the admin's bio review queue) is still open with the admin session.
+
+Verification: `npm run lint` and `npm run typecheck` clean. `npm test`: 85 files / 8,461 tests passed. `npm run build` OK. e2e (`--workers=2 --trace off`): vendor, smoke, storefront, journey, checkout and admin specs gave 49 passed and 13 skipped (desktop-only mutating flows on the mobile project). `vendor.spec.ts` alone passed 3 of 3 runs (11 passed each).
