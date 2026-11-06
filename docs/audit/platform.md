@@ -41,9 +41,11 @@ Severity: critical = broken flow / data / security; high = clearly wrong, ugly o
 | P-30 | low | `src/lib/phone.ts` | Numbers pasted from Arabic text with bidi marks (LRM/RLM/isolates) were rejected. | Error tolerance | Bidi controls stripped before normalising; tests. | fixed |
 | P-31 | low | account, admin and vendor frames (outside scope) | The `LogOut` icon is not mirrored in RTL. | Directional icons in RTL | Not changed (owners: storefront, admin, vendor). Every other directional icon in the app already flips (`flipInRtl`, `:dir(rtl)`). | open |
 | P-32 | low | browser console | Chrome logs "Failed to load resource: 400" for expected validation answers (wrong code, invalid phone). | — | Correct HTTP semantics; not changed. | won't fix |
+| P-34 | medium | `legal.privacy.sections.retention` (pass 2) | The privacy policy did not say how long OTP codes (phone + IP) and sign-in sessions are kept. | PDPL 151/2020 (inform data subjects of retention) | Added: codes deleted after 24 h, sessions end after 30 days (matches the code). | fixed |
+| P-35 | low | `auth.*` (pass 2) | Links and checkbox said "Privacy Notice" but the page and footer are titled "Privacy policy" / "سياسة الخصوصية". | WCAG 3.2.4 consistent identification | Link and error texts use the page title. | fixed |
 | P-33 | low | lockout | Someone who knows a phone number can lock that number's sign-in for up to an hour by entering wrong codes. | NIST 800-63B §5.2.2 accepts throttling with this trade-off | Kept; window is 60 min, not permanent. | accepted |
 
-Counts: critical 2, high 7, medium 14, low 10 (33 total). Fixed 30 (P-16 and P-24 fixed in scope with a remainder below), open 1, won't fix 1, accepted 1.
+Counts: critical 2, high 7, medium 15, low 11 (35 total). Fixed 32 (P-16 and P-24 fixed in scope with a remainder below), open 1, won't fix 1, accepted 1.
 
 ## Open (needs another owner or a deploy decision)
 
@@ -58,3 +60,10 @@ Counts: critical 2, high 7, medium 14, low 10 (33 total). Fixed 30 (P-16 and P-2
 - `src/components/store/CookieNotice.tsx`: two lines to reserve body padding while the notice is visible (P-27).
 - Dictionary values in `checkout.ar.ts`, `marketing.ar.ts`, `designer.ar.ts`, `admin.{ar,en}.ts` (owned for quality per the brief; values only, `admin.privacy.dueIn` now takes a pre-formatted count).
 - `package.json` / `package-lock.json`: `@axe-core/playwright` dev dependency for the audit.
+
+## Verification
+
+- `npm run lint`, `npm run typecheck`, `npm test` (all suites, including the new `src/lib/auth/__tests__/auth-security.test.ts` and `src/lib/__tests__/platform-i18n.test.ts`), `npm run build`: pass.
+- e2e (`--workers=2 --trace off`): smoke, checkout, journey, admin, vendor, designer, storefront on desktop and mobile. 41 passed, 4 skipped (by the specs themselves on mobile). One run had `checkout.spec.ts:68 [mobile]` time out waiting for vendor offers (after sign-in, in the checkout offers step); it passes when re-run alone, so it is load-related flakiness outside this scope. Likewise `storefront.spec.ts:15 [desktop]` failed once right after a cold `next start` (the size-page link click did not navigate) and passed on the next two runs.
+- Browser re-audit after fixes: no axe violations on login (both steps), account, privacy policy and admin privacy pages in ar/en at 390 and 1440; no horizontal overflow; keyboard-only Arabic sign-in with Arabic-Indic digits completes; cookies `elba_session` HttpOnly + Secure + SameSite=Lax; logout expires it with the same flags.
+- API probes after fixes: parallel guessing 5/40 compared; cross-site `text/plain` POST 403; `?next=/\t/evil.com` -> `/en`; enumeration probe returns `INVALID_CODE` for unknown phones.
