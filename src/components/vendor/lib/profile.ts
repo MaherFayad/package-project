@@ -21,6 +21,16 @@ import { orderModeOf } from "@/data/catalogue/order-mode";
 /** B-08: buyers must never get a direct line to the vendor from public profile text. */
 const noContact = (s: string) => !hasContactDetails(s);
 
+/**
+ * R6: each field is clean but together they spell a contact detail (a site or number split between
+ * fields or portfolio captions). Joined with nothing and with a space, in field order.
+ */
+export function splitContact(parts: readonly (string | null | undefined)[]): boolean {
+  const list = parts.map((p) => (p ?? "").trim()).filter(Boolean);
+  if (list.some((p) => hasContactDetails(p))) return false; // a single field is reported on its own
+  return hasContactDetails(list.join("")) || hasContactDetails(list.join(" "));
+}
+
 export const MACHINE_KINDS = ["OFFSET", "FLEXO", "DIGITAL", "DIE_CUTTER", "FOLDER_GLUER", "LAMINATOR", "UV_COATER"] as const;
 export const CERT_CODES = ["FOOD_SAFE", "ISO_9001", "FSC", "ISO_22000"] as const;
 
@@ -99,6 +109,10 @@ export const profileSchema = z
         ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["certifications", i, "validUntil"], message: "CERT_EXPIRED" });
       }
     });
+    // R6: contact details split across fields ("nilepack" in one, ".com" in the next) are checked on
+    // the public text joined together, with and without a space.
+    const parts = [v.bioAr, v.bioEn, ...v.machines.map((m) => m.model), ...v.certifications.map((c) => c.issuer)];
+    if (splitContact(parts)) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["bioEn"], message: "CONTACT_SPLIT" });
     const machineKinds = new Set(v.machines.map((m) => m.kind));
     if (v.digitalShortRun && !machineKinds.has("DIGITAL")) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["digitalShortRun"], message: "DIGITAL_MACHINE_REQUIRED" });

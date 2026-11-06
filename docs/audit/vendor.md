@@ -158,3 +158,45 @@ Round 5 counts, new findings before fixing: **critical 0, high 1, medium 1, low 
 Files outside vendor scope: `prisma/schema.prisma` (five optional bio review fields on `Vendor`) and `e2e/vendor.spec.ts` (round 5 test).
 
 Verification: `npm run lint` and `npm run typecheck` clean. `npm test`: 83 files / 8,404 tests passed (new `bio-review.test.ts`). `npm run build` OK. e2e on `next start` (`--workers=2 --trace off`): vendor, smoke, storefront, journey, checkout and admin specs gave 49 passed and 13 skipped (desktop-only mutating flows on the mobile project).
+
+## Round 6
+
+Asked by the integrator: a fresh pass after round 5 found a high and a medium, and another round at the contact filter with new ideas (zero-width joiners inside words, digits spelled out in Egyptian Arabic, QR text in captions, URLs split across fields). Base: main at `aa2c78f` (includes round 5). Method: a 66-string bypass corpus, a 14-sentence number-heavy false-positive corpus on top of the earlier ones, browser runs of the caption and bio saves, the `vendor-audit.cjs` sweep (40 loads, ar/en, 390/1440: 0 axe violations, 0 console errors, 0 overflow) and the e2e set.
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R6-01 | high | `lib/contact.ts` (phone) | Phone numbers in Egyptian chat forms passed: «زيرو», English digits in Arabic letters («زيرو وان زيرو زيرو وان تو ثري فور…»), «مية» for 100 («صفر مية واحد اتنين…»), keycap emoji digits (0️⃣1️⃣…), Lao and other-script digits, and O / l for 0 / 1 across dashes ("O1OO-l23-4567"). A bug stopped Arabic number words before «،»: the guard treated Arabic punctuation as letters, so «صفر صفر، واحد…» stayed half converted. Spelled one by one, a number makes 11 groups, and the split-number check joined only 6. Zero-width joiners inside words were already caught. | B-08; Business plan §0 | Colloquial and transliterated digit words, plus «مية» → 100, are mapped. The Arabic guard checks letters only. Variation selectors and the keycap mark are stripped, and any Unicode decimal digit is converted. O/l folding works across short separators. The split-number check joins up to 14 groups, but beyond 4 only a mobile number with nothing except spaces or punctuation between groups counts, so bios full of small numbers ("1 to 2 colours, 100 to 500 pieces…") stay clean. | fixed |
+| R6-02 | high | Portfolio captions (`updatePortfolioItem`), profile fields | A website split across fields passed: "Boxes printed by nilepack" on photo 2 and ".com ramadan gift boxes…" on photo 3. Each caption is clean alone, and captions are not reviewed (only photos are), so it went public. Reproduced in the browser: the save succeeded. The same applies to bio, machine and certificate fields. | B-08 | `splitContact()` checks the fields joined in display order, with and without a space: the profile's public text in the shared schema, and on caption save all captions (English, Arabic, and both together) with the edited one in its slot. The new error code `CONTACT_SPLIT` explains why. Verified in the browser: blocked with an inline error. | fixed |
+| R6-03 | high | `lib/contact.ts` (URL) | Website forms passed: dot look-alikes (`nilepack。com`, `｡`, `·`, `nilepack،com`), letters spaced around a dot ("n i l e p a c k . c o m"), link-in-bio and short-link hosts (`linktr.ee/…`), `mailto:` and `tel:`. | B-08 | Dot look-alikes between a name and a domain ending become ".", spaced runs keep their dot, and there are new patterns for link schemes, link-in-bio and short-link hosts, and any `host.ending/path`. | fixed |
+| R6-04 | medium | `lib/contact.ts` | Invitations to take the conversation off Elba passed: "DM us", "inbox us", "call us", «ابعتلنا ع الخاص», «كلمنا خاص», «اتصل بنا», «رقمنا في الصورة» (our number is in the photo), and QR directives ("Scan the QR on the box", «امسح الكود», "QR: name"). | B-08 | New kind `SOLICIT`, with the admin queue label added in admin i18n. QR as a print capability ("We offer QR code labels", «نطبع أكواد QR») and "Contact us through Elba" stay allowed. | fixed |
+| R6-05 | high | Bio review (round 5) | The admin queue for bio edits (admin session's half of R4-B-02) is not on main yet. With round 5 merged, a vendor's bio edit waits with no way to approve it. | B-08 workflow | Contract and helpers delivered in round 5 (`lib/bio-review.ts`). Needs the admin session's queue merged. | open (admin) |
+
+Not fixed, by design: numbers built from tens and hundreds in words («صفر عشرة مية اتنين وعشرين…») and a site split as "sales at nilepack" with no ending. Parsing those reliably would flag normal text; bio edits now go through review (R4-B-02), and captions are checked across fields.
+
+Precision: 0 false positives on the round 4 corpus (16 sentences), the new number-heavy corpus (11, Arabic and English: sizes, colour counts, tiers, lead times, "QR code labels", "Contact us through Elba") and every seeded bio, machine and caption, also checked with captions and fields joined. All round 4 (57) and round 5 (business, 22) bypass strings stay blocked.
+
+Round 6 counts, new findings before fixing: **critical 0, high 4, medium 1, low 0** (5). Fixed 4. Open 1 (R6-05, admin queue). Medium-or-worse issues were found, so the rounds continue.
+
+Files outside vendor scope: `src/i18n/admin.en.ts` and `src/i18n/admin.ar.ts` (label for the new `SOLICIT` kind), and `src/components/admin/lib/__tests__/admin-round3.test.ts`. That test asserted the exact flag list for «كلمنا واتساب ٠١٠…»; the expectation now includes `SOLICIT`, which is stricter, not weaker.
+
+Verification: `npm run lint` and `npm run typecheck` clean. `npm test`: 85 files / 8,461 tests passed (round 6 cases in `bio-review.test.ts`). `npm run build` OK. e2e (`--workers=2 --trace off`): vendor, smoke, storefront, journey, checkout and admin specs gave 49 passed and 13 skipped (desktop-only mutating flows on the mobile project).
+
+## Round 7
+
+Asked by the integrator: round 6 found medium-or-worse issues, so this is a fresh pass on main `8278994` (merged here as `4235e08`). It also asked to make sure a vendor with a pending bio sees a clear "waiting for review" message and keeps the old public bio. Method: `vendor-audit.cjs` sweep (40 loads, ar/en, 390/1440: 0 axe violations, 0 console errors, 0 overflow), the bio flow driven in the browser in both locales, a look at every changed screen, and the e2e set (one spec run 3 times).
+
+### Pending bio (integrator check)
+
+Verified on the merged build. After a vendor saves a bio edit, the profile shows "Your bio changes are waiting for review. Buyers see your current bio until Elba approves them." (Arabic: «تعديلات النبذة بانتظار المراجعة…») with a "In review" badge. The public `/vendors/nile-pack` still shows the old bio and none of the pending text. The wording moved from "in review" to "waiting for review", as asked. The admin queue to approve edits is still not on main (R6-05, admin).
+
+### Findings (new this round)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R7-01 | low | Vendor home (`(portal)/page.tsx`) | A vendor lands on the home page, where nothing said a bio edit was waiting or had been sent back. The setup checklist simply showed "Write your bio" as done. | ISO 9241-110 (self-descriptiveness) | Info banner on home for a waiting edit, and a warning banner for one that was not approved, each with "View profile". e2e checks the banner and its link. | fixed |
+| R7-02 | low | Vendor home metrics and payouts card | Money precision was mixed in one strip: "EGP 5,990" next to "EGP 24,599.56" (the R5-02 rule had not reached the home page). | CR-35 | The two money metrics share one precision, and so do the payouts card rows. | fixed |
+| R7-03 | low | `e2e/vendor.spec.ts` "a vendor cannot see another vendor's job" | Failed once on mobile after the main merge: a strict text locator matched the visible not-found message and a hidden copy Next keeps outside `<main>` while the response streams. Only one copy is visible once the page settles (checked in the DOM at 390 and 1440). | Test correctness | Locator scoped to `main`, which still asserts the visible message exactly. Passed 3 of 3 runs in a row. | fixed |
+
+Round 7 counts, new findings before fixing: **critical 0, high 0, medium 0, low 3**. All fixed. This round found nothing of medium severity or worse, so the vendor area meets the stop rule. R6-05 (the admin's bio review queue) is still open with the admin session.
+
+Verification: `npm run lint` and `npm run typecheck` clean. `npm test`: 85 files / 8,461 tests passed. `npm run build` OK. e2e (`--workers=2 --trace off`): vendor, smoke, storefront, journey, checkout and admin specs gave 49 passed and 13 skipped (desktop-only mutating flows on the mobile project). `vendor.spec.ts` alone passed 3 of 3 runs (11 passed each).

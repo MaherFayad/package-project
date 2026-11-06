@@ -137,11 +137,21 @@ export function squarenessAt(outer: SectionPoint[], y: Mm): number {
   return s;
 }
 
+/** Rounded regular polygon numbers: sides, tan(π/n), corner radius (apothem a). */
+export function polygonParts(section: { sides: number; cornerRatio: number }, a: Mm) {
+  const n = Math.max(3, Math.round(section.sides));
+  return { n, t: Math.tan(Math.PI / n), c: Math.min(a, Math.max(0, a * section.cornerRatio)) };
+}
+
 /** Area of a cross-section of half width a (mm²). */
 export function sectionArea(section: CrossSection, a: Mm, squareness = 1): number {
   if (a <= 0) return 0;
   const round = Math.PI * a * a;
   if (section.kind === "round") return round;
+  if (section.kind === "polygon") {
+    const { n, t, c } = polygonParts(section, a);
+    return round + (n * a * a * t - c * c * (n * t - Math.PI) - round) * squareness;
+  }
   const w = 2 * a;
   const d = 2 * a * section.depthRatio;
   const c = Math.min(a * section.cornerRatio, a, a * section.depthRatio);
@@ -155,6 +165,10 @@ export function sectionArea(section: CrossSection, a: Mm, squareness = 1): numbe
 export function sectionPerimeter(section: CrossSection, a: Mm, squareness = 1): Mm {
   if (a <= 0) return 0;
   if (section.kind === "round") return 2 * Math.PI * a;
+  if (section.kind === "polygon") {
+    const { n, t, c } = polygonParts(section, a);
+    return 2 * Math.PI * a + (2 * n * a * t - 2 * c * (n * t - Math.PI) - 2 * Math.PI * a) * squareness;
+  }
   const w = 2 * a;
   const d = 2 * a * section.depthRatio;
   const c = Math.min(a * section.cornerRatio, a, a * section.depthRatio);

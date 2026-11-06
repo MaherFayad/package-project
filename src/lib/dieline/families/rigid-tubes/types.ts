@@ -1,6 +1,6 @@
 import type { Dims, DimsPreset, LocalizedText, StructureCode, StructureFeatures, StructureParamLimits } from "@/types";
 import type { StructureDraft } from "../../structures";
-import type { DielineModel, Segment } from "../../types";
+import type { DielineAccessory, DielineModel, Segment } from "../../types";
 
 /**
  * Local types of the rigid / tube / bulk / envelope catalogue family.
@@ -92,6 +92,8 @@ export type FamilyDraft = StructureDraft & {
    * cannot hinge (tube turn-ins, the far side of a window). Drawn as nothing.
    */
   virtualEdges?: Segment[];
+  /** Ribbon pulls etc., closed-pose frame (see DielineModel.accessories). */
+  accessories?: DielineAccessory[];
 };
 
 export type FamilyGenerator = (dims: Dims, t: number, features: StructureFeatures) => FamilyDraft;

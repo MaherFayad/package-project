@@ -106,7 +106,8 @@ test.describe("vendor portal", () => {
   test("a vendor cannot see another vendor's job or its files", async ({ page, context, baseURL }) => {
     await signIn(context, baseURL!, SEEDED.deltaStaff);
     await page.goto(`/en/vendor/jobs/${OTHER_VENDOR_JOB}`);
-    await expect(page.getByText("This job does not exist or is not routed to you.")).toBeVisible();
+    // Scoped to <main>: while the response streams, Next keeps a hidden copy of the chunk outside it.
+    await expect(page.locator("main").getByText("This job does not exist or is not routed to you.")).toBeVisible();
     const other = await db.order.findUniqueOrThrow({ where: { number: OTHER_VENDOR_JOB } });
     expect((await page.request.get(`/api/vendor/jobs/${other.id}/dieline`)).status()).toBe(404);
     expect((await page.request.get(`/api/vendor/jobs/${other.id}/print-pdf`)).status()).toBe(404);
@@ -255,7 +256,11 @@ test.describe("vendor portal, round 5", () => {
       await en.fill(`${vendor.bioEn} BIO-R5`);
       await page.locator("#vendor-profile-form button[type=submit]").click();
       await expect(page.getByText("Your bio changes were sent for review.")).toBeVisible();
-      await expect(page.getByText("Your bio changes are in review.")).toBeVisible();
+      await expect(page.getByText("Your bio changes are waiting for review.")).toBeVisible();
+      // R7: the home page says so too, and links to the profile.
+      await page.goto("/en/vendor");
+      await expect(page.getByText("Your bio changes are waiting for review.")).toBeVisible();
+      await expect(page.getByRole("link", { name: "View profile" })).toHaveAttribute("href", "/en/vendor/profile");
       const v = await db.vendor.findUniqueOrThrow({ where: { id: vendor.id } });
       expect(v.bioReviewStatus).toBe("PENDING");
       expect(v.bioEn).toBe(vendor.bioEn);

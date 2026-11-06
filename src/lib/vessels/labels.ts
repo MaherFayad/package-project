@@ -1,7 +1,7 @@
 import type { LocalizedText, Mm } from "@/types";
-import { pouchDims, radiusAt, sectionPerimeter, silhouetteLength, squarenessAt, tinLidHeight, tubeDims, type SectionPoint } from "./profile";
+import { polygonParts, pouchDims, radiusAt, sectionPerimeter, silhouetteLength, squarenessAt, tinLidHeight, tubeDims, type SectionPoint } from "./profile";
 import { LABEL_STOCKS, finishesForStock, stocksForSurface } from "./stocks";
-import type { LabelSpec, LabelStockCode, PrintSurfaceKind, SectorGeometry, SleeveGeometry, SurfacePlacement, VesselDims, VesselKind, VesselProfile } from "./types";
+import type { CrossSection, LabelSpec, LabelStockCode, PrintSurfaceKind, SectorGeometry, SleeveGeometry, SurfacePlacement, VesselDims, VesselKind, VesselProfile } from "./types";
 
 /** Default prepress numbers for roll labels (mm). */
 export const LABEL_BLEED_MM = 2;
@@ -101,20 +101,32 @@ export function sectorFor(r0: Mm, r1: Mm, height: Mm, phiLength: number, bleed: 
 }
 
 /** Band label (wrap, front, back, neck) on the revolved wall. */
-export function bandSpec(kind: PrintSurfaceKind, y0: Mm, y1: Mm, r0: Mm, r1: Mm, phiStart: number, phiLength: number, opts: { warnings?: string[]; defaultStock?: LabelStockCode } = {}): LabelSpec {
+export function bandSpec(
+  kind: PrintSurfaceKind,
+  y0: Mm,
+  y1: Mm,
+  r0: Mm,
+  r1: Mm,
+  phiStart: number,
+  phiLength: number,
+  opts: { warnings?: string[]; defaultStock?: LabelStockCode; section?: CrossSection } = {},
+): LabelSpec {
   const bleed = LABEL_BLEED_MM;
   const safe = LABEL_SAFE_MM;
-  const placement: SurfacePlacement = { type: "band", y0, y1, r0, r1, phiStart, phiLength };
+  const { section, ...rest } = opts;
+  // a faceted wall (hex jar): the band follows the section, so it is as long as the girth
+  const faceted = section && section.kind !== "round" && Math.abs(r0 - r1) < CONE_EPS_MM ? section : undefined;
+  const placement: SurfacePlacement = { type: "band", y0, y1, r0, r1, phiStart, phiLength, ...(faceted ? { section: faceted } : {}) };
   const full = phiLength >= 2 * Math.PI - 1e-6;
   if (Math.abs(r0 - r1) < CONE_EPS_MM) {
     const r = (r0 + r1) / 2;
     const overlap = full ? WRAP_OVERLAP_MM : 0;
-    const w = r * phiLength + overlap;
+    const w = (faceted ? (sectionPerimeter(faceted, r) * phiLength) / (2 * Math.PI) : r * phiLength) + overlap;
     const h = Math.hypot(y1 - y0, r1 - r0);
-    return finishSpec({ kind, placement, ...opts }, "rect", w, h, w * h, bleed, safe, { overlapMm: full ? overlap : undefined, cornerRadiusMm: full ? 0 : 2 });
+    return finishSpec({ kind, placement, ...rest }, "rect", w, h, w * h, bleed, safe, { overlapMm: full ? overlap : undefined, cornerRadiusMm: full ? 0 : 2 });
   }
   const { sector, trimW, trimH, areaMm2 } = sectorFor(r0, r1, y1 - y0, phiLength, bleed);
-  return finishSpec({ kind, placement, ...opts }, "sector", trimW, trimH, areaMm2, bleed, safe, { sector });
+  return finishSpec({ kind, placement, ...rest }, "sector", trimW, trimH, areaMm2, bleed, safe, { sector });
 }
 
 /** Shrink sleeve that conforms to the profile between y0 and y1. */
@@ -198,11 +210,19 @@ export function labelSpecsFor(kind: VesselKind, dims: VesselDims, profile: Vesse
   const rAt = (y: number) => b.r0 + ((b.r1 - b.r0) * (y - b.y0)) / Math.max(1e-6, b.y1 - b.y0);
   const isPouch = kind === "STAND_UP_POUCH";
   const isSquare = profile.section.kind === "roundedRect" && !isPouch;
+  // rounded polygon (hex jar): front / back labels sit flat on one face, the wrap follows the facets
+  const polygon = profile.section.kind === "polygon" ? profile.section : undefined;
   const wet = kind === "CAN" || kind === "ROUND_BOTTLE";
 
   for (const s of surfaces) {
     if (s === "WRAP" && !isSquare && !isPouch) {
-      out.push(bandSpec("WRAP", y0, y1, rAt(y0), rAt(y1), -Math.PI, 2 * Math.PI, { defaultStock: wet ? "WHITE_BOPP" : undefined }));
+      out.push(bandSpec("WRAP", y0, y1, rAt(y0), rAt(y1), -Math.PI, 2 * Math.PI, { defaultStock: wet ? "WHITE_BOPP" : undefined, section: profile.section }));
+    } else if ((s === "FRONT" || s === "BACK") && polygon && Math.abs(b.r0 - b.r1) < CONE_EPS_MM) {
+      const { t, c } = polygonParts(polygon, b.r0);
+      const w = Math.floor(2 * (b.r0 - c) * t * 0.88);
+      const h = Math.round((y1 - y0) * 0.72);
+      const cy = (y0 + y1) / 2;
+      out.push(faceSpec(s, -w / 2, w / 2, cy - h / 2, cy + h / 2));
     } else if ((s === "FRONT" || s === "BACK") && (isSquare || isPouch)) {
       if (isPouch) {
         const p = pouchDims(dims);

@@ -60,10 +60,14 @@ export interface FollowUpStore {
   marketingConsents(userIds: string[]): Promise<ConsentRow[]>;
   /** Users who already received a follow-up at or after `since`. */
   recentlyFollowedUp(userIds: string[], since: Date): Promise<Set<string>>;
-  /** Atomically mark the design as followed up; false when another run got there first. */
-  claim(designId: string, now: Date): Promise<boolean>;
+  /**
+   * Atomically mark the design as followed up; false when another run got there first.
+   * `updatedAt` is the design's last save: it is written back unchanged, because Prisma's
+   * `@updatedAt` would otherwise stamp the job time as the buyer's last edit (R4-09).
+   */
+  claim(designId: string, now: Date, updatedAt?: Date): Promise<boolean>;
   /** Undo a claim when the message could not be sent (so tomorrow's run can try again). */
-  release(designId: string): Promise<void>;
+  release(designId: string, updatedAt?: Date): Promise<void>;
 }
 
 export interface FollowUpMessage {
@@ -222,12 +226,12 @@ export const prismaFollowUpStore: FollowUpStore = {
     });
     return new Set(rows.map((r) => r.ownerId!).filter(Boolean));
   },
-  async claim(designId, now) {
-    const r = await db.design.updateMany({ where: { id: designId, followedUpAt: null }, data: { followedUpAt: now } });
+  async claim(designId, now, updatedAt) {
+    const r = await db.design.updateMany({ where: { id: designId, followedUpAt: null }, data: { followedUpAt: now, ...(updatedAt ? { updatedAt } : {}) } });
     return r.count === 1;
   },
-  async release(designId) {
-    await db.design.updateMany({ where: { id: designId }, data: { followedUpAt: null } });
+  async release(designId, updatedAt) {
+    await db.design.updateMany({ where: { id: designId }, data: { followedUpAt: null, ...(updatedAt ? { updatedAt } : {}) } });
   },
 };
 
@@ -262,7 +266,7 @@ export async function runFollowUps(opts: {
   const sent: string[] = [];
   for (const c of plan.send) {
     // Claim first: two overlapping runs can never both send for the same design.
-    if (!(await store.claim(c.designId, now))) {
+    if (!(await store.claim(c.designId, now, c.updatedAt))) {
       skipped.already_followed_up++;
       continue;
     }
@@ -282,7 +286,7 @@ export async function runFollowUps(opts: {
       console.error("[jobs:follow-up] send failed", e instanceof Error ? e.message : e);
     }
     if (!ok) {
-      await store.release(c.designId).catch(() => undefined);
+      await store.release(c.designId, c.updatedAt).catch(() => undefined);
       skipped.send_failed++;
       continue;
     }

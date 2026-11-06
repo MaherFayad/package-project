@@ -45,7 +45,8 @@
   text-align: center;
 }
 
-/* Added by finishes: poster-to-canvas cross-fade. */
+/* R4-CR-01: one poster layer. The canvas is never cross-faded: hidden until its first compiled
+   frame, then shown in one step; only the poster fades, over --motion-fast. */
 .poster {
   position: absolute;
   inset: 0;
@@ -54,24 +55,19 @@
   background-size: contain;
   pointer-events: none;
   opacity: 1;
-  transition: opacity var(--motion-reveal) var(--ease-enter);
+  transition: opacity var(--motion-fast, 150ms) var(--ease-enter, ease-out);
 }
 
 .poster[data-hidden="true"] {
   opacity: 0;
 }
 
-.canvas[data-fade] {
-  transition: opacity var(--motion-reveal) var(--ease-enter);
-}
-
-.canvas[data-fade="out"] {
+.canvas[data-reveal="hidden"] {
   opacity: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .poster,
-  .canvas[data-fade] {
+  .poster {
     transition: none;
   }
 }

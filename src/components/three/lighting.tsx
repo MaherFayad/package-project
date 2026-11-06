@@ -100,7 +100,7 @@ export interface StudioEnvironmentProps {
 /** Softbox environment for reflections (foil, gloss, spot UV). Rendered once. */
 export const StudioEnvironment = memo(function StudioEnvironment({ intensity = 1, resolution = 256 }: StudioEnvironmentProps) {
   return (
-    <EnvironmentScene resolution={resolution} intensity={0.7 * intensity}>
+    <EnvironmentScene resolution={resolution} intensity={0.6 * intensity}>
       <Cyclorama top="#a8a8a8" horizon="#8a8a8a" bottom="#77716a" />
       {/* overhead softbox */}
       <Lightformer form="rect" intensity={2.6} position={[0, 5, 0.5]} rotation-x={Math.PI / 2} scale={[7, 5, 1]} />
@@ -108,8 +108,15 @@ export const StudioEnvironment = memo(function StudioEnvironment({ intensity = 1
       <Lightformer form="rect" intensity={4} position={[-3.2, 1.6, 2.8]} rotation-y={Math.PI / 4} scale={[1.2, 5, 1]} />
       {/* rim strip back-right */}
       <Lightformer form="rect" intensity={2.2} position={[3.4, 1.4, -2.2]} rotation-y={(-3 * Math.PI) / 4} scale={[1, 4, 1]} />
-      {/* front fill card */}
-      <Lightformer form="rect" intensity={0.9} position={[0, 1, 5]} scale={[10, 3, 1]} />
+      {/* front fill card, and a tall front-right softbox (R4-CR-10): most light on a vertical face
+          comes from this environment, where the overhead softbox only reaches the lid. Without them
+          the sides of dark prints sat at 35 % of the lid's luminance. */}
+      <Lightformer form="rect" intensity={2.2} position={[0, 1, 5]} scale={[10, 3, 1]} />
+      <Lightformer form="rect" intensity={3} position={[4.2, 1.2, 2.6]} rotation-y={Math.PI / 3} scale={[3, 4, 1]} />
+      <Lightformer form="rect" intensity={1.2} position={[5, 0.6, -0.4]} rotation-y={Math.PI / 2} scale={[4, 3, 1]} />
+      {/* floor bounce (R4-L01): a white sweep under the product lights down-facing faces, so a
+          tilted underside reads as the same board one to two stops down, not near black */}
+      <Lightformer form="rect" intensity={1.6} color="#f3ede4" position={[0, -3.2, 0.6]} rotation-x={-Math.PI / 2} scale={[8, 6, 1]} />
       {/* small round kicker: a crisp specular dot on metals */}
       <Lightformer form="circle" intensity={3} position={[2.6, 3, 3]} scale={0.8} />
     </EnvironmentScene>
@@ -122,7 +129,9 @@ export const StudioLights = memo(function StudioLights({ intensity = 1 }: { inte
     <>
       <hemisphereLight args={["#f4f6ff", "#e6dccd", 0.35 * intensity]} />
       <directionalLight position={[-2.4, 4.2, 3.2]} intensity={1.25 * intensity} color="#fff8ee" />
-      <directionalLight position={[3, 1.6, 2.4]} intensity={0.35 * intensity} color="#f2f5ff" />
+      {/* front-right fill (R4-CR-10): keeps the side faces of dark prints at >= 55 % of the lid's
+          luminance (measured with docs/audit/tools/3d-luminance.cjs); was 0.35, side faces 35 % */}
+      <directionalLight position={[3, 1.6, 2.4]} intensity={0.45 * intensity} color="#f2f5ff" />
       <directionalLight position={[2.6, 2.4, -3.4]} intensity={0.55 * intensity} color="#e4ecff" />
     </>
   );
