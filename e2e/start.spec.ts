@@ -11,7 +11,7 @@ import { expect, test, type Page } from "@playwright/test";
 const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
 const COPY = {
-  ar: { h1: "ابدأ اليوم", h2s: ["اختر علبتك", "اجعل علبتك تلمع", "اعرف السعر، وادفع بطريقتك", "علامات تجارية بانتظار علبتها", "ابدأ، ثم توسع", "جاهز لتصميم علبتك؟"], sample: "نموذج", start: "بدء التصميم مجانا", header: "البدء مجانا" },
+  ar: { h1: "ابدأ اليوم", h2s: ["اختر علبتك", "اجعل علبتك تلمع", "اعرف السعر، وادفع بطريقتك", "علامات تجارية بانتظار علبتها", "ابدأ، ثم توسع", "هل تريد تصميم علبتك الآن؟"], sample: "نموذج", start: "بدء التصميم مجانا", header: "البدء مجانا" },
   en: { h1: "start today", h2s: ["Choose your box", "Make your packaging shine", "See the price, pay your way", "Brands waiting for their box", "Start, then grow", "Ready to design your box?"], sample: "Sample", start: "Start designing free", header: "Start free" },
 } as const;
 

@@ -223,7 +223,7 @@ export const ar: Dictionary = {
     OUTSIDE_SAFE_ZONE: "التصميم خارج المنطقة الآمنة.",
     CROSSES_FOLD: "التصميم يمر عبر خط طي.",
     ON_GLUE_FLAP: "التصميم على لسان اللصق.",
-    MISSING_BLEED: "الخلفية لا تصل إلى هامش القص.",
+    MISSING_BLEED: "الخلفية لا تصل إلى هامش النزف.",
     TEXT_TOO_SMALL: "النص أصغر من أن يطبع بوضوح.",
     EMPTY_DESIGN: "التصميم فارغ.",
     ready: "جاهز للطباعة",
