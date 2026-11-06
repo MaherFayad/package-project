@@ -302,6 +302,33 @@ New findings before fixing, all passes: **critical 0, high 2, medium 5, low 7** 
 - **Input validation**: every route and action parses with zod (strict where it matters), ids are regex-checked before queries, bodies are capped while streaming, error lists are capped.
 - **CSP / headers**: full policy on all pages including the new catalogue model, admin quotes and moderation pages; API routes keep per-route sandbox CSP on served files; `/api/events` refuses cross-site requests; the cron route is disabled in production without `CRON_SECRET` and compares the bearer token in constant time.
 
+## E2E reliability (round 4)
+
+| id | severity | file | finding | fix | status |
+|---|---|---|---|---|---|
+| E-11 | medium | `e2e/global-setup.ts` | A server under test started without `SESSION_SECRET` (or without `OTP_DEV_ECHO=1` under `next start`) failed every OTP spec (checkout ×2, designer, journey) with 30 s timeouts and no hint: `request-otp` answered 500 `SESSION_SECRET is not set` only in the server log. Seen in this round on a fresh container (the repo ships `.env.example` only). | Global setup now requests one OTP for a throwaway phone right after the server is up and stops the run with a clear message ("Is SESSION_SECRET set…?" / "start the server with OTP_DEV_ECHO=1") when it cannot sign in; the OTP row is deleted. No test was skipped or loosened. | fixed |
+
+Full suite on the final build (commit with all round 4 fixes), `next start` with `SESSION_SECRET`, `OTP_DEV_ECHO=1`, `ALLOW_MOCK_PAYMENTS=1`, `ELBA_E2E=1`; `npx playwright test --workers=2 --trace off`, all specs including `models` and `catalogue-models` (854 tests; 401 are the specs' own desktop-only / mobile-only splits):
+
+| run | passed | failed | skipped by design | time |
+|---|---|---|---|---|
+| 1 | 453 | 0 | 401 | 37.8 min |
+| 2 | 453 | 0 | 401 | 37.2 min |
+| 3 | 453 | 0 | 401 | 37.0 min |
+
+The four OTP-spec failures seen before E-11 was found were the missing `SESSION_SECRET`, not flakiness; with the server configured, the three runs above had no failure and no retry.
+
+## Round 4 verification
+
+| check | result |
+|---|---|
+| `npm run lint`, `npm run typecheck` | pass |
+| `npm test` | 80 files, 8,314 tests, all pass (19 new in `src/lib/__tests__/technical-audit-r4.test.ts`) |
+| `npm run build`, `npm run test:size` | pass; 45 / 45 non-3D pages within 200 KB gz |
+| e2e full suite ×3 (`--workers=2`) | 453 passed, 0 failed, each run (table above) |
+| live probes | every row above, before and after; evidence `docs/screenshots/audit/technical-r4/live-probes-before-after.png` |
+| deployment notes | set `TRUST_X_REAL_IP=0` unless the edge overwrites `X-Real-IP` (R4-13); `CRON_SECRET` enables the daily job in production; still open from earlier rounds: T-29 (in-memory rate limiter), T-30 (`'unsafe-inline'` scripts), R2-14 (admin/vendor query counts, owned by those sessions), E-09 (designer hydration, designer owner) |
+
 ## Files touched outside the listed scope (round 4)
 - `src/components/admin/server/actions.ts` (admin): R4-01 claim-before-refund in `refundOrderInternal`; R4-04 one `purgeCatalogCache()` call in `savePricingSettingsAction` and `applyIndexUpdateAction`; R4-10 `purgeCatalogCache()` in `reviewPortfolioAction` and `cleanBioAction`, route-group path in `saveCheckoutSettingsAction`.
 - `src/components/vendor/server/actions.ts` (vendor): R4-04 one `purgeCatalogCache()` call in `saveRateCard`.
