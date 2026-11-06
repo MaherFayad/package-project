@@ -189,10 +189,27 @@ export function catalogueClosureHeight(def: CatalogueVesselDefinition, d: Catalo
   }
 }
 
+/**
+ * Neck finish for a size: the preset's when a preset is picked, else the model default when it fits
+ * the body, else the widest preset neck that fits (R5-3Q-G: custom small sizes kept the default
+ * finish, e.g. a 20-410 roll-on neck on a Ø14 body, so the closure was wider than the bottle).
+ */
+export function neckFor(def: CatalogueVesselDefinition, dims: CatalogueDims, presetId?: string): NeckFinish | undefined {
+  const picked = presetId ? def.presets.find((p) => p.id === presetId)?.neck : undefined;
+  if (picked) return picked;
+  const fits = (n: NeckFinish | undefined) => !!n && n.outerDiameterMm <= dims.D - 2;
+  if (!def.neck || fits(def.neck)) return def.neck;
+  const necks = def.presets.map((p) => p.neck).filter((n): n is NeckFinish => !!n);
+  const ok = necks.filter(fits).sort((a, b) => b.outerDiameterMm - a.outerDiameterMm);
+  if (ok.length) return ok[0];
+  const smallest = [...necks, def.neck].sort((a, b) => a.outerDiameterMm - b.outerDiameterMm)[0];
+  return smallest;
+}
+
 /** Everything a page needs about a configured catalogue container. */
 export function describeCatalogueVessel(def: CatalogueVesselDefinition, dims: CatalogueDims, surfaces: CatalogueSurfaceKind[] = def.defaultSurfaces, presetId?: string): CatalogueVesselDescription {
   const d = clampCatalogueDims(def, dims);
-  const neck = (presetId ? def.presets.find((p) => p.id === presetId)?.neck : undefined) ?? def.neck;
+  const neck = neckFor(def, d, presetId);
   const geometry = buildGeometry(def.shape, d, neck);
   const wanted = surfaces.filter((s) => def.surfaces.includes(s));
   const printSurfaces = surfacesFor(geometry, d, wanted);

@@ -26,7 +26,7 @@ export const PHARMA_DEFINITIONS: CatalogueVesselDefinition[] = [
     closures: ["CRIMP_FLIP_OFF"],
     defaultClosure: "CRIMP_FLIP_OFF",
     neck: N.CRIMP_20,
-    limits: { D: { min: 14, max: 48 }, H: { min: 30, max: 110 } },
+    limits: { D: { min: 16, max: 48 }, H: { min: 30, max: 110 } }, // R5-3Q-G: ISO 8362-1 2R is Ø16 (13 mm crimp)
     presets: [
       preset("vial-2r", "2R (2 ml)", "2R (2 مل)", 2, { D: 16, H: 35 }, "ISO 8362-1 2R: d1 16 x h1 35 mm, 13 mm crimp, overflow ~4 ml", { neck: N.CRIMP_13, brimfulMl: 4 }),
       preset("vial-10r", "10R (10 ml)", "10R (10 مل)", 10, { D: 24, H: 45 }, "ISO 8362-1 10R: d1 24 x h1 45 mm (SGD Pharma), 20 mm crimp, overflow ~13.5 ml", { neck: N.CRIMP_20, brimfulMl: 13.5, egypt: true }),
@@ -87,7 +87,7 @@ export const PHARMA_DEFINITIONS: CatalogueVesselDefinition[] = [
     closures: ["CHILD_RESISTANT_CAP", "SCREW_CAP"],
     defaultClosure: "CHILD_RESISTANT_CAP",
     neck: N.F38_400,
-    limits: { D: { min: 30, max: 90 }, H: { min: 40, max: 160 } },
+    limits: { D: { min: 40, max: 90 }, H: { min: 40, max: 160 } }, // R5-3Q-G: 38-400 finish
     presets: [
       preset("pill-75", "75 cc", "75 سم3", 75, { D: 45, H: 66 }, `HDPE packer 75 cc, 38-400 (${APPROX})`, { neck: N.F38_400, egypt: true }),
       preset("pill-150", "150 cc", "150 سم3", 150, { D: 55, H: 86 }, `HDPE packer 150 cc, 38-400 (${APPROX})`, { neck: N.F38_400, egypt: true }),
