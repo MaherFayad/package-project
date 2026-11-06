@@ -1,5 +1,5 @@
 const { chromium } = require("playwright");
-// Usage: needs a page at /en/dev/engine-leak that toggles box / vessel content in one EngineCanvas on #next (see docs/audit/3d-engine.md E-51).
+// Usage: node scripts/perf/leak-shared-canvas.cjs <base> [VESSEL_KIND]. Needs a page at /en/dev/engine-leak that toggles box / vessel content (with label canvases sized after mount) in one EngineCanvas on #next (see docs/audit/3d-engine.md E-51, E-55).
 const HOOK = () => {
   const st = { tex: 0, fbo: 0, prog: 0 };
   for (const C of [WebGL2RenderingContext]) {
@@ -17,7 +17,7 @@ const HOOK = () => {
   await ctx.addInitScript(HOOK);
   const p = await ctx.newPage();
   const errs = []; p.on("pageerror", (e) => errs.push(e.message));
-  await p.goto(process.argv[2] + "/en/dev/engine-leak", { waitUntil: "load" });
+  await p.goto(process.argv[2] + "/en/dev/engine-leak" + (process.argv[3] ? "?kind=" + process.argv[3] : ""), { waitUntil: "load" });
   await p.waitForTimeout(8000);
   const out = [];
   for (let i = 0; i <= 12; i++) {

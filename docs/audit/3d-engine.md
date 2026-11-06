@@ -149,6 +149,8 @@ Re-measured after the last commit (final build): 50 draw calls, 0 idle frames, 1
 | E-53 / CF R2 | low | `vessels/closures.ts · EOE_RING` | Ring placed at 0.55 × half width: hung over the short edge of rectangular / oval tins. | Placed at 0.55 × half depth (`R × depthRatio`). | fixed |
 | E-54 / CF R2 | high | `vessels/closures.ts`, `lib/library/vessels.ts` | Square / oval / rectangular lids still faked in the family geometry. | Section-following styles `PLUG_LID`, `LEVER_LID` (pry groove), `SNAP_LID`, `HINGED_LID` (clamshell), `TWIST_UP` (dome cap the full barrel width); mapped from the catalogue codes. Core `SLIP_LID` / `LUG_LID` already follow the section (E-29). The family can drop its own lid hacks. | fixed |
 
+| E-55 | critical | `vessels/VesselModel.tsx · labelMats` | Designer report after E-51: still +1 texture per container visit (sized like the label). Traced with per-texture size + allocation stacks: label materials were rebuilt when the label texture changed but built from `labelGeos[i].label.texture`, a copy memoised with the geometry, i.e. the texture `ownTextures` had just disposed. three re-uploads a disposed texture that a material still references, so one orphan per mount (and on every label-canvas resize). | Materials are built from the current label inputs (matched by spec id). Box ↔ ROUND_BOTTLE / STAND_UP_POUCH / SQUEEZE_TUBE with 1200×800 label canvases resized after mount, 6 round trips: 13 → 19 textures before, 13 → 13 after. | fixed |
+
 Also for the designer (PERF-09): `EngineCanvas` gains `onContentReady`, fired after each content component's first frame (every box ↔ container switch).
 
 ### Pass 2 verification (after the EngineCanvas split, closures and tint)
