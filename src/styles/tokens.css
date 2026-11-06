@@ -196,7 +196,7 @@
   /* top bar search pill */
   --e-color-topbar-search-bg: #303030;
   --e-color-topbar-search-bg-hover: #3a3a3a;
-  --e-color-topbar-search-border: #4a4a4a;
+  --e-color-topbar-search-border: #757575;       /* 3.8:1 on the #1a1a1a bar (1.4.11; a11y R5-AX-07, was #4a4a4a 1.96:1) */
   --e-color-topbar-text: #e3e3e3;
   --e-color-topbar-text-secondary: #b5b5b5;
 

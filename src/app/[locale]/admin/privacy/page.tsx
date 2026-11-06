@@ -73,7 +73,7 @@ export default async function AdminPrivacyPage({ params }: { params: Promise<{ l
               <DataTable
                 caption={t("admin.privacy.title")}
                 columnContentTypes={["text", "text", "text", "text", "text", "text"]}
-                headings={[t("admin.privacy.columns.user"), t("admin.privacy.columns.kind"), t("admin.privacy.columns.status"), t("admin.privacy.columns.received"), t("admin.privacy.columns.due"), ""]}
+                headings={[t("admin.privacy.columns.user"), t("admin.privacy.columns.kind"), t("admin.privacy.columns.status"), t("admin.privacy.columns.received"), t("admin.privacy.columns.due"), <span key="h" className="visually-hidden">{t("admin.common.actionsColumn")}</span>]}
                 rows={rows.map((r) => [user(r), t(`admin.privacy.kinds.${r.kind}` as DictKey), status(r), formatDate(r.createdAt, locale, "medium"), dueCell(r), actions(r)])}
               />
             </div>
