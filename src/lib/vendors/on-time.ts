@@ -28,3 +28,12 @@ export function onTimeFromDeliveries(orders: DeliveryRow[]): { judged: number; o
   const onTime = judged.filter(Boolean).length;
   return { judged: judged.length, onTime, pct: judged.length ? Math.round((onTime / judged.length) * 1000) / 10 : null };
 }
+
+/**
+ * Admin round 8: what to write on the vendor row. Under the minimum the stored percentage is left
+ * as it is (seeded printers keep their figure) and buyers see "New on Elba".
+ */
+export function onTimeWrite(r: { judged: number; pct: number | null }, min: number): { onTimeJudged: number; onTimePublic: boolean; onTimePct?: number } {
+  const show = r.judged >= min && r.pct !== null;
+  return { onTimeJudged: r.judged, onTimePublic: show, ...(show ? { onTimePct: r.pct! } : {}) };
+}

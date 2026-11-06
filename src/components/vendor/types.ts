@@ -44,6 +44,8 @@ export interface JobItemDTO {
   dims: Dims;
   materialCode: MaterialCode;
   finishCode: FinishCode;
+  /** R5-JR-02: the chosen finishes by name ("Gold foil"), when the design's config names them. */
+  finishNames?: { ar: string; en: string } | null;
   printSides: PrintSides;
   quantity: number;
   proof: { hash: string; version: number; approvedAt: string | null } | null;

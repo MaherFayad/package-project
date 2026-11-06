@@ -27,7 +27,7 @@ export const COSMETIC_DEFINITIONS: CatalogueVesselDefinition[] = [
     closures: ["DROPPER", "SCREW_CAP", "TREATMENT_PUMP"],
     defaultClosure: "DROPPER",
     neck: NECK_FINISHES.DIN18,
-    limits: { D: { min: 16, max: 52 }, H: { min: 40, max: 130 } },
+    limits: { D: { min: 18.5, max: 52 }, H: { min: 40, max: 130 } }, // R5-3Q-G: DIN 18 finish needs Ø ≥ 18.5
     presets: [
       preset("dropper-5", "5 ml", "5 مل", 5, { D: 18.5, H: 47 }, `Euro dropper 5 ml, DIN 18 (${APPROX})`, { neck: NECK_FINISHES.DIN18 }),
       preset("dropper-10", "10 ml", "10 مل", 10, { D: 22.5, H: 57 }, `Euro dropper 10 ml, DIN 18 (${APPROX})`, { neck: NECK_FINISHES.DIN18, egypt: true }),
@@ -177,7 +177,7 @@ export const COSMETIC_DEFINITIONS: CatalogueVesselDefinition[] = [
     closures: ["ROLL_BALL_CAP"],
     defaultClosure: "ROLL_BALL_CAP",
     neck: N.F20_410,
-    limits: { D: { min: 14, max: 50 }, H: { min: 40, max: 120 } },
+    limits: { D: { min: 18, max: 50 }, H: { min: 40, max: 120 } }, // R5-3Q-G: smallest finish 13-415 + ball cap
     presets: [
       preset("roll-on-10", "10 ml", "10 مل", 10, { D: 20, H: 68 }, `Perfume oil roller 10 ml, 13 mm ball (${APPROX})`, { neck: N.F13_415, egypt: true }),
       preset("roll-on-30", "30 ml", "30 مل", 30, { D: 30, H: 78 }, `Roll-on 30 ml (${APPROX})`, { neck: N.F20_410 }),
@@ -263,7 +263,7 @@ export const COSMETIC_DEFINITIONS: CatalogueVesselDefinition[] = [
     closures: ["WAND_CAP"],
     defaultClosure: "WAND_CAP",
     neck: N.WIPER_12,
-    limits: { D: { min: 12, max: 26 }, H: { min: 45, max: 110 } },
+    limits: { D: { min: 14, max: 26 }, H: { min: 45, max: 110 } }, // R5-3Q-G: 12.5 mm wiper neck
     presets: [
       preset("gloss-5", "5 ml", "5 مل", 5, { D: 15, H: 66 }, `Round lip gloss 5 ml (${APPROX})`, { neck: N.WIPER_12, egypt: true }),
       preset("gloss-8", "8 ml", "8 مل", 8, { D: 18, H: 74 }, `Round lip gloss 8 ml (${APPROX})`, { neck: N.WIPER_12 }),
@@ -349,7 +349,7 @@ export const COSMETIC_DEFINITIONS: CatalogueVesselDefinition[] = [
     closures: ["DOUBLE_WALL_CAP"],
     defaultClosure: "DOUBLE_WALL_CAP",
     neck: N.F58_400,
-    limits: { D: { min: 35, max: 100 }, H: { min: 22, max: 80 } },
+    limits: { D: { min: 42, max: 100 }, H: { min: 22, max: 80 } }, // R5-3Q-G: smallest finish 38-400
     presets: [
       preset("jar-dw-15", "15 g", "15 جم", 15, { D: 50, H: 34 }, `Double-wall jar 15 g, 38-400 (${APPROX})`, { neck: N.F38_400 }),
       preset("jar-dw-30", "30 g", "30 جم", 30, { D: 60, H: 40 }, `Double-wall jar 30 g, 45-400 (${APPROX})`, { neck: N.F45_400, egypt: true }),
