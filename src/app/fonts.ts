@@ -49,13 +49,16 @@ export const PLEX_PRELOAD_WEIGHTS = [400, 600, 700] as const;
  * (docs/design-refs/shopify-2026-reference.md, light display weights 300/330). One variable file
  * carries every weight, so the light display cut and the 550 buttons cost a single request.
  * Not preloaded by next/font: MarketingShell preloads it on Arabic marketing pages only (see
- * ./font-preload.ts `notoArabicPreloadUrl`). `adjustFontFallback` (default) emits a size-adjusted
- * local fallback, so the swap does not shift the layout (CLS).
+ * ./font-preload.ts `notoArabicPreloadUrl`). Its fallbacks are metric-matched local Arabic faces
+ * (src/styles/font-fallbacks.css, R5-PL-16): next/font's generated one was local Arial sized from Latin
+ * widths, which neither has Arabic on Android nor matched Noto, so the swap re-wrapped headlines
+ * (/ar/why-elba CLS 0.061).
  */
 export const notoArabic = Noto_Sans_Arabic({
   subsets: ["arabic"],
   display: "swap",
   preload: false,
-  adjustFontFallback: true,
+  adjustFontFallback: false,
+  fallback: ["Elba Noto Fallback Local", "Elba Noto Fallback DejaVu"],
   variable: "--font-noto-arabic",
 });
