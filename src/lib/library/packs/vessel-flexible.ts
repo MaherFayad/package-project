@@ -36,12 +36,17 @@ export const models: VesselModelDef[] = FLEX.DEFINITIONS.map((def) => {
       // E-08: the design's options (rest[1]); options the size or film rule out fall back to the defaults.
       const base = { code: def.code, dims: { W: dims.D, H: dims.H, ...(def.limits.G ? { G: dims.G ?? def.defaultDims.G } : {}) }, fill: def.defaultFill, material };
       const wantedOptions = rest[1] && typeof rest[1] === "object" ? (rest[1] as Record<string, unknown>) : {};
-      let cfg: FLEX.FlexConfig;
-      try {
-        cfg = FLEX.parseFlexConfig({ ...base, options: wantedOptions });
-      } catch {
-        cfg = FLEX.parseFlexConfig({ ...base, options: {} });
+      // R5-3Q-G: drop only the options the size / film rule out (a metallised film refuses a window,
+      // a short pouch a zipper…) instead of resetting every option, so the others still show.
+      const opts: Record<string, unknown> = { ...wantedOptions };
+      let parsed = FLEX.safeParseFlexConfig({ ...base, options: opts });
+      for (let i = 0; !parsed.success && i < 8; i++) {
+        const bad = parsed.error.issues.map((is) => (is.path[0] === "options" ? is.path[1] : undefined)).filter((k): k is string => typeof k === "string" && k in opts);
+        if (!bad.length) break;
+        for (const k of bad) delete opts[k];
+        parsed = FLEX.safeParseFlexConfig({ ...base, options: opts });
       }
+      const cfg: FLEX.FlexConfig = parsed.success ? parsed.data : FLEX.parseFlexConfig({ ...base, options: {} });
       const layout = FLEX.printLayout(cfg);
       const areas: PrintArea[] = layout.panels
         .filter((p) => wanted.includes(p.id))
