@@ -334,7 +334,7 @@ export function HeaderNav({ slots, children }: { slots: NavSlots; children: Reac
                 </li>
               );
             })}
-            {links.map((l) => (
+            {model.links.map((l) => (
               <li key={l.href} onPointerEnter={(e) => e.pointerType === "mouse" && open && schedule(null, CLOSE_DELAY)}>
                 <Link href={l.href} className={styles.navLink} aria-current={isCurrent(l.href) ? "page" : undefined}>
                   {l.label}

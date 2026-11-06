@@ -23,6 +23,11 @@ export function MarketingHeader({ locale }: { locale: Locale }) {
   const login = { href: `${base}/login`, label: t("mk.nav.login") };
   const account = { href: `${base}/account`, label: t("mk.nav.account") };
   const signOut = t("nav.signOut");
+  const roleLinks = {
+    orders: { href: `${base}/orders`, label: t("nav.orders") },
+    vendor: { href: `${base}/vendor`, label: t("nav.vendorPortal") },
+    admin: { href: `${base}/admin`, label: t("nav.admin") },
+  };
 
   const slots: NavSlots = {
     brand: <Wordmark locale={locale} />,
@@ -40,7 +45,7 @@ export function MarketingHeader({ locale }: { locale: Locale }) {
     <HeaderNav slots={slots}>
       <LangLink className={`${styles.textLink} ${styles.desktopOnly}`} />
       <span className={styles.desktopOnly}>
-        <AccountLink login={login} account={account} signOutLabel={signOut} home={base} className={styles.textLink} />
+        <AccountLink login={login} account={account} signOutLabel={signOut} home={base} className={styles.textLink} roleLinks={roleLinks} />
       </span>
       <StartLink href={start} label={t("mk.nav.start")} signedInLabel={t("mk.nav.newDesign")} className={`${styles.ctaPill} ${styles.desktopOnly}`} />
     </HeaderNav>
