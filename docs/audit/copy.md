@@ -248,3 +248,11 @@ Not new this pass: designer-page and why still say "First orders are paid in ful
 - diacritics, tatweel or Arabic-Indic digits
 - the glossary bans (أونلاين, موبايل, كود, فاتورة, مقوى, موثق/موثوق, علبة شحن, صندوق, قالب قص, أنماط العلب, موديل)
 - a bare «من {price}»
+
+**Verification, pass 2.**
+- **Unit tests:** `src/i18n`, `src/lib/__tests__` and `src/components/marketing` all pass (143 tests, including the extended copy-rules test and the noun-form label test with its PENDING list now empty).
+- **Typecheck and lint:** clean.
+- **Build:** passed.
+- **Playwright** (`--workers=2 --trace off`): start, marketing-kit, marketing-spacing, why-pricing, designer-page, admin-quote-price, checkout-quote, checkout, checkout-states, smoke, storefront, journey and a11y specs; every copy assertion passes.
+  - Two more specs (designer-page, start) looked up the old «أنماط العلب» / «محرر علبة» names; their selectors now use the new copy.
+  - The only remaining failure is `marketing-kit.spec.ts:305` (the `Sheet tone="dark-2"` background on /en/dev/kit). It checks CSS, which this pass does not touch, and it failed on only one project in each run (mobile, then desktop), so it belongs to the kit owner.
