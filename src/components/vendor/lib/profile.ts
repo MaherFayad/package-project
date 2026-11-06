@@ -16,6 +16,7 @@ import {
 } from "@/types";
 
 import { materialFitsStructure } from "@/lib/dieline/materials";
+import { orderModeOf } from "@/data/catalogue/order-mode";
 
 /** B-08: buyers must never get a direct line to the vendor from public profile text. */
 const noContact = (s: string) => !hasContactDetails(s);
@@ -69,6 +70,16 @@ export const profileSchema = z
     minOrderQty: z.number().int("WHOLE").min(1, "MIN_1").max(100_000, "TOO_HIGH"),
     serviceAreas: z.array(z.enum(EGYPT_CITIES)).min(1, "AREAS_EMPTY"),
     certifications: z.array(certificationSchema).max(8, "TOO_MANY"),
+    /**
+     * R4: special-gluing models (order mode "listed") this plant confirms it makes. Only those
+     * codes are accepted; the server also checks the base box style is ticked.
+     */
+    models: z
+      .array(z.string().regex(/^[A-Z0-9_]{2,40}$/, "MODEL_NOT_LISTABLE"))
+      .max(80, "TOO_MANY")
+      .default([])
+      .refine((list) => list.every((c) => orderModeOf(c).mode === "listed"), "MODEL_NOT_LISTABLE")
+      .refine((list) => new Set(list).size === list.length, "MODEL_NOT_LISTABLE"),
   })
   .superRefine((v, ctx) => {
     // Every structure needs at least one board the vendor can run for it.

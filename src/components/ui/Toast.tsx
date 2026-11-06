@@ -1,7 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { uiStrings } from "./strings";
 import { useOptionalI18n } from "@/i18n/client";
 import { Icon } from "./Icon";
@@ -117,6 +117,15 @@ function Toast({
   const [paused, setPaused] = useState(false);
   const remaining = useRef(item.duration ?? (item.action ? 10000 : 5000));
   const closing = Boolean(item.closing);
+  // Where focus was before it entered this toast. Dismissing makes the toast inert and then
+  // removes it, which would drop keyboard focus to <body> (2.4.3, R4-K03): hand it back first.
+  const returnTo = useRef<HTMLElement | null>(null);
+  const close = (e: MouseEvent<HTMLElement>) => {
+    const toast = e.currentTarget.closest<HTMLElement>("[data-toast]");
+    const back = returnTo.current;
+    if (toast && toast.contains(document.activeElement) && back && back.isConnected) back.focus({ preventScroll: true });
+    onDismiss(item.id);
+  };
   useEffect(() => {
     // A toast with an action stays until dismissed: an auto-hiding action is a time limit the
     // user cannot extend (WCAG 2.2.1) and is hard to reach by keyboard in time.
@@ -144,7 +153,12 @@ function Toast({
       }}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
-      onFocus={() => setPaused(true)}
+      data-toast=""
+      onFocus={(e) => {
+        const from = e.relatedTarget;
+        if (from instanceof HTMLElement && !e.currentTarget.contains(from)) returnTo.current = from;
+        setPaused(true);
+      }}
       onBlur={() => setPaused(false)}
     >
       <span className={styles.Message}>{item.content}</span>
@@ -152,15 +166,15 @@ function Toast({
         <button
           type="button"
           className={styles.Action}
-          onClick={() => {
+          onClick={(e) => {
             item.action?.onAction();
-            onDismiss(item.id);
+            close(e);
           }}
         >
           {item.action.content}
         </button>
       ) : null}
-      <button type="button" className={styles.Close} aria-label={closeLabel} onClick={() => onDismiss(item.id)}>
+      <button type="button" className={styles.Close} aria-label={closeLabel} onClick={close}>
         <Icon source={X} size="small" />
       </button>
     </div>

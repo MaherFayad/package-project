@@ -5,8 +5,8 @@ import { readUpload } from "@/components/vendor/server/storage";
 
 /**
  * GET /api/vendor/files/<scope>/<ownerId>/<file>
- * Portfolio images are public once approved (B-08), otherwise owner vendor + admins only. QC photos, certificates and application documents
- * are private: see canReadFile(). Unknown or forbidden keys both return 404 (no existence leak).
+ * Portfolio images are public once approved (B-08), otherwise owner vendor + admins only. QC photos (the
+ * order's buyer only once approved), certificates and application documents are private: see canReadFile(). Unknown or forbidden keys both return 404 (no existence leak).
  */
 export async function GET(_req: Request, { params }: { params: Promise<{ key: string[] }> }) {
   const key = (await params).key.join("/");
@@ -25,10 +25,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ key: st
     const s = await getSession();
     const viewer = s ? { id: s.user.id, role: s.user.role, vendorId: s.user.vendorId } : null;
     let parties: { vendorId: string; buyerId: string } | null = null;
+    let qcStatus: string | null = null;
     if (parsed.scope === "qc" && viewer) {
       parties = await db.order.findUnique({ where: { id: parsed.ownerId }, select: { vendorId: true, buyerId: true } });
+      // R4: buyers see a QC photo only after ops approved it (canReadFile).
+      qcStatus = (await db.qcPhoto.findFirst({ where: { orderId: parsed.ownerId, url: fileUrl(key) }, select: { status: true } }))?.status ?? null;
     }
-    allowed = canReadFile(parsed, viewer, parties, portfolioStatus);
+    allowed = canReadFile(parsed, viewer, parties, portfolioStatus, qcStatus);
   }
   if (!allowed) return new Response("Not found", { status: 404 });
 

@@ -265,7 +265,7 @@ for (const role of Object.keys(PHONES).filter((r) => needed.has(r))) {
 const results = fs.existsSync(OUT) && process.env.APPEND ? JSON.parse(fs.readFileSync(OUT, "utf8")) : [];
 for (const profile of PROFILES)
   for (const locale of LOCALES)
-    for (const pg of PAGES) {
+    for (const pg of PAGES.filter((p) => !process.env.ONLY || process.env.ONLY.split(",").includes(p.key))) {
       if (filter && !filter.test(pg.key)) continue;
       // ISOLATE=1: a fresh browser per page. Without it, a page measured right after a heavy
       // WebGL page (bottle, pouch) shares the GPU process with that page's teardown and its

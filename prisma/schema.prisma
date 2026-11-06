@@ -111,6 +111,12 @@ model Vendor {
   cityEn         String
   bioAr          String
   bioEn          String
+  // B-08 / R5 (vendor): bio edits wait here until Elba ops approves them; bioAr/bioEn stay public.
+  bioArPending    String?
+  bioEnPending    String?
+  bioReviewStatus String?   // null = nothing waiting | PENDING | REJECTED
+  bioReviewNote   String?   // shown to the vendor on rejection
+  bioSubmittedAt  DateTime?
   logoUrl        String?
   coverUrl       String?
   machines       Json     // VendorMachine[]

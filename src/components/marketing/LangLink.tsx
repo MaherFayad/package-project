@@ -38,7 +38,7 @@ export function LangLink({ className, showIcon = true }: { className?: string; s
         }
       }}
     >
-      {showIcon ? <Globe aria-hidden size={16} /> : null}
+      {showIcon ? <Globe aria-hidden size={16} strokeWidth={1.75} /> : null}
       <span>{other === "ar" ? t("common.switchToArabic") : t("common.switchToEnglish")}</span>
     </Link>
   );

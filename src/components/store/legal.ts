@@ -10,7 +10,7 @@ export type LegalDoc = keyof typeof LEGAL_DOCS;
 export const LEGAL_DOC_IDS = Object.keys(LEGAL_DOCS) as LegalDoc[];
 
 /** Date of the current drafts (shown as "Last updated"). Bump with every legal text change. */
-export const LEGAL_UPDATED = "2026-11-05";
+export const LEGAL_UPDATED = "2026-11-06";
 
 export function isLegalDoc(x: string): x is LegalDoc {
   return Object.prototype.hasOwnProperty.call(LEGAL_DOCS, x);

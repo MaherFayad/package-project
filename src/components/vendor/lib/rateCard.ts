@@ -233,3 +233,12 @@ export function unitAt(tiers: RateTier[], qty: number): number | null {
   for (const t of sorted) if (qty >= t.minQty) hit = t;
   return hit ? hit.unitPiasters : null;
 }
+
+/** R4: what one priced piece is called on a rate card (vocabulary per production family). */
+export type RateUnit = "box" | "label" | "pouch" | "tube";
+export function rateUnit(structure: StructureCode): RateUnit {
+  if (structure === "ROLL_LABEL") return "label";
+  if (structure === "PRINTED_POUCH") return "pouch";
+  if (structure === "PRINTED_TUBE") return "tube";
+  return "box";
+}

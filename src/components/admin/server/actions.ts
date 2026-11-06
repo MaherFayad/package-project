@@ -18,7 +18,7 @@ import { getPaymentProvider } from "@/lib/payments";
 import { QuoteInputError, quote, type PricingConfig } from "@/lib/pricing";
 import { loadPricingData } from "@/lib/pricing/server";
 import { STRUCTURE_LIMITS } from "@/lib/dieline";
-import type { Dims, OrderStatus, ShippingAddress, StructureCode, StructureParamLimits } from "@/types";
+import type { Dims, OrderStatus, ShippingAddress, StructureCode, StructureParamLimits, VendorCapabilities } from "@/types";
 import { AdminActionError, AdminFieldErrors, adminForMutation, audit, issuesToFields, runAdminAction, type AdminActionResponse } from "./context";
 import { loadPricingSettings } from "./settings";
 import {
@@ -70,6 +70,7 @@ import { CHECKOUT_SETTING_KEY, loadCheckoutSettings } from "@/lib/orders/checkou
 import { QUOTE_REQUESTED } from "@/lib/orders/quote-requests";
 import { bioCleanSchema, canApprovePortfolio, portfolioReviewSchema, reviewNoteRequired } from "../lib/moderation";
 import { stripContactDetails } from "@/components/vendor/lib/contact";
+import { orderModeOf, vendorListsModel } from "@/data/catalogue/order-mode";
 import { canRaisePayout, payoutAmount, payoutStepSchema, STEP_FROM, STEP_TO } from "../lib/payouts";
 import { defaultFits, finishUpdateSchema, materialUpdateSchema, mergeLimits, outsideHardBounds, structureUpdateSchema } from "../lib/catalog";
 
@@ -96,11 +97,14 @@ export async function reassignOrderAction(input: z.input<typeof reassignSchema>)
     const vendor = await db.vendor.findUnique({ where: { id: d.vendorId } });
     if (!vendor || vendor.status !== "ACTIVE") throw new AdminActionError("NOT_ALLOWED", "VENDOR_INACTIVE");
     // Quote-only for this vendor (no active rate card for the job): the buy price must be entered.
-    const item = await db.orderItem.findFirst({ where: { orderId: order.id }, select: { structureCode: true, materialCode: true } });
+    const item = await db.orderItem.findFirst({ where: { orderId: order.id }, select: { structureCode: true, materialCode: true, modelCode: true } });
     const card = item
       ? await db.rateCard.findFirst({ where: { vendorId: vendor.id, active: true, structure: { code: item.structureCode }, material: { code: item.materialCode } }, select: { id: true } })
       : null;
-    if (needsManualCost(!!card, d.vendorCostPiasters)) throw new AdminFieldErrors({ vendorCostPiasters: "COST_REQUIRED" });
+    // B-16 (R4-02): special-gluing models price instantly only from vendors that list the model;
+    // preview / quote-only models never do, so the buy price is agreed by hand.
+    const listsModel = vendorListsModel(orderModeOf(item?.modelCode).mode, item?.modelCode ?? "", fromJson<VendorCapabilities>(vendor.capabilities)?.models);
+    if (needsManualCost(!!card && listsModel, d.vendorCostPiasters)) throw new AdminFieldErrors({ vendorCostPiasters: "COST_REQUIRED" });
     const nextStatus = statusAfterReassign(order.status as OrderStatus);
     const cost = d.vendorCostPiasters ?? order.vendorCostPiasters;
     await db.$transaction(async (tx) => {
@@ -109,8 +113,12 @@ export async function reassignOrderAction(input: z.input<typeof reassignSchema>)
         data: { vendorId: vendor.id, status: nextStatus, vendorCostPiasters: cost },
       });
       if (u.count !== 1) throw new AdminActionError("STALE");
-      // Advance payouts that were not paid yet follow the job; paid ones stay with the old vendor.
-      await tx.payout.updateMany({ where: { orderId: order.id, status: "PENDING" }, data: { vendorId: vendor.id } });
+      // R4-01: an unpaid advance was earned by the OLD vendor's acceptance, at the OLD buy price.
+      // The new vendor must accept again (ACCEPTED goes back to PAID) and earns its own advance at
+      // the new price then, so the unpaid row is voided rather than handed over. A paid advance
+      // stays with the old vendor (recovered off-platform) and is kept in the audit row below.
+      const voided = await tx.payout.findMany({ where: { orderId: order.id, kind: "ADVANCE", status: { in: ["PENDING", "APPROVED"] } }, select: { id: true, amountPiasters: true, status: true, vendorId: true } });
+      if (voided.length) await tx.payout.deleteMany({ where: { id: { in: voided.map((p) => p.id) } } });
       await audit(
         admin,
         {
@@ -118,8 +126,8 @@ export async function reassignOrderAction(input: z.input<typeof reassignSchema>)
           entityType: "ORDER",
           entityId: order.id,
           summary: `${order.number}: ${order.vendor.nameEn} → ${vendor.nameEn}. ${d.reason}`,
-          before: { vendorId: order.vendorId, status: order.status, vendorCostPiasters: order.vendorCostPiasters },
-          after: { vendorId: vendor.id, status: nextStatus, vendorCostPiasters: cost },
+          before: { vendorId: order.vendorId, status: order.status, vendorCostPiasters: order.vendorCostPiasters, unpaidAdvances: voided },
+          after: { vendorId: vendor.id, status: nextStatus, vendorCostPiasters: cost, unpaidAdvances: [] },
         },
         tx,
       );
@@ -141,7 +149,9 @@ export async function payoutStepAction(input: z.input<typeof payoutStepSchema>):
     const order = await db.order.findUnique({ where: { id: d.orderId }, include: { vendor: { select: { nameEn: true } }, payouts: true, disputes: { select: { status: true } } } });
     if (!order) throw new AdminActionError("NOT_FOUND");
     if (d.kind === "BALANCE" && order.disputes.some((x) => isOpenDispute(x.status))) throw new AdminActionError("NOT_ALLOWED", "PAYOUT_DISPUTE_HOLD");
-    const existing = order.payouts.find((p) => (p.kind === "BALANCE" ? "BALANCE" : "ADVANCE") === d.kind) ?? null;
+    // Only the current vendor's part counts: after a reassignment the old vendor's paid advance
+    // stays on the order but must not block raising the new vendor's own advance (R4-01).
+    const existing = order.payouts.find((p) => (p.kind === "BALANCE" ? "BALANCE" : "ADVANCE") === d.kind && p.vendorId === order.vendorId) ?? null;
     if (d.step === "PAY" && d.kind === "BALANCE" && !d.eInvoice) throw new AdminFieldErrors({ eInvoice: "REQUIRED" });
     const label = `${order.number} ${d.kind.toLowerCase()} (${order.vendor.nameEn})`;
     await db.$transaction(async (tx) => {

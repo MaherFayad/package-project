@@ -184,9 +184,10 @@ export type QuoteMode =
 export function quoteMode(code: string, vendors: readonly VendorForMatch[]): QuoteMode {
   const e = catalogueEntry(code);
   const m = modelByCode(code);
-  if (!e || !m) return { mode: "quote", reason: "QUOTE_ONLY_STOCK" };
   const order = orderModeOf(code);
+  // The order-mode reason first, also for family models outside the library (blister: filling line).
   if (order.mode === "quote" || order.mode === "preview") return { mode: "quote", reason: order.reason as "QUOTE_ONLY_STOCK" | "RARE_IN_EGYPT" | "FILLING_LINE" };
+  if (!e || !m) return { mode: "quote", reason: "QUOTE_ONLY_STOCK" };
   const listed = (v: VendorForMatch) => vendorListsModel(order.mode, code, v.capabilities.models);
   const ids = new Set<string>();
   if (m.kind === "vessel") {

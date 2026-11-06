@@ -183,3 +183,199 @@ Severity: critical = broken flow, data or security; high = clearly wrong, ugly o
 - No source files were changed. The only writes are `docs/audit/craft.md`, `docs/screenshots/final/**` and `docs/screenshots/motion/**`.
 - The payment run needs `ALLOW_MOCK_PAYMENTS=1` under `next start` (see `src/lib/payments/config.ts:41`). Without it, the pay page shows "This payment method is not available right now". That is correct behaviour in production, so it is not a finding.
 - The capture scripts live outside the repo, in this session's scratchpad. To re-run: full-page capture through `page.screenshot({ fullPage: true })` **without** the SwiftShader GL flags for non-3D pages. With `--use-angle=swiftshader`, Chromium repeats the top of the page beyond about 8,000 px in stitched captures, so 3D pages are captured separately with GL on.
+
+---
+
+# Round 4: fresh cross-app craft review
+
+Owner key: `craft`. This pass only reports and records: no source files changed. The writes are this section, `docs/screenshots/final/**` (replaced) and `docs/screenshots/motion/**` (replaced). The base is `781d663` (rounds 1 to 3 merged). The bar is still "looks and feels amazing in every way" (Shopify-grade).
+
+**Verdict.** Round 3 closed almost every round 2 gap. There is now one buyer chrome, one cookie notice and one status-tone map. Hover contrast holds, the 404 is styled, and the success moment, modal and toast exits, and price ticks all work. The design system now reads as one product. What still keeps the product below the bar:
+- **3D first impression and lighting:** the poster and canvas show a double image on load, dark prints go black on the side faces, and the model is small on phones.
+- **Arabic and mobile edges of the back office:** the audit table is unreadable at 390, and the invoice address is reversed.
+- **A few truth-in-UI mismatches:** the stepper after payment, the model counts and the minimum quantity.
+
+## R4.1 Scope and method
+
+| | |
+|---|---|
+| Build | `next build` + `next start -p 3100`, SQLite seed, `OTP_DEV_ECHO=1`, `ALLOW_MOCK_PAYMENTS=1` |
+| Pages | 57 page states: marketing 10, catalogue 4, designer 5, platform 2, checkout and orders 10, vendor 9, admin 17 |
+| Matrix | ar and en × 390×844 (mobile, touch) and 1440×900 = **228 full-page captures**, 1x DPR, JPEG |
+| States | empty (applicant orders, catalogue search `zzzzqqq`, quotes, moderation after review), error (unknown route, bad share link, bad checkout design, another vendor's job), success (paid order, toasts), live data (a real order ELB-26302 placed through the UI) |
+| Per page, measured | CLS with shift sources, console errors, horizontal overflow, targets under 24 px, H1 count and scale, broken images, spinners, `<title>` |
+| Targeted probes | hover colours, cookie notice per surface, badge tones per area, `dir=auto`, bidi of ranges, button heights, rendered lucide stroke widths, focus ring, the 3D stage poster to canvas sequence frame by frame |
+| Capture rule | non-3D pages without SwiftShader GL flags (tall stitched captures repeat with GL on); designer and share with GL. Lazy images are forced eager and decoded before capture. |
+
+Automated sweep result: **0** horizontal overflow, **0** broken images, exactly **1** H1 on every page, no console errors except the expected 404 response. All small-target hits are visually hidden inputs behind full-size labels or full-width 20 px block links, so none is an issue. CLS is ≤ 0.002 everywhere except `/ar/catalog` (R4-CR-05).
+
+## R4.2 Media
+
+- `docs/screenshots/final/<area>/<page>-<locale>-<width>.jpg`: 228 files, **25 MB**.
+- `docs/screenshots/motion/` (11 clips, **11 MB**, VP9):
+
+| Clip | Shows | Result |
+|---|---|---|
+| `01-home-hover-press-en-1440` | pill hover and press, Products menu, card lift, printer card hover, FAQ open | Pass. Header CTA keeps white on `#2b2b2b` on hover. |
+| `02-home-scroll-reveal-en-1440` | reveal on scroll | Pass. 39 `[data-reveal]` nodes; 0 left hidden after a full scroll; reveals once. |
+| `03-home-scroll-reveal-ar-390` | Arabic mobile menu and reveal | Pass. |
+| `04-home-reduced-motion-en-1440` | `prefers-reduced-motion: reduce` | Pass. 0 running animations after load. |
+| `05-designer-model-fold-finish-export-en-1440` | first load, finishes (gold foil, matte varnish, window), fold Half / Flat / Closed, model switch to Pizza box via picker search, PNG export (downloads `elba-pizza-box-1080.png`) | Works end to end. The price moves 40.06 → 48.36 per box with a tick. **First load ghosts** (R4-CR-01). |
+| `06-checkout-price-tick-to-payment-success-en-1440` | quantity 250 / 1,000 / 500 with total tick, printer switch, address, company invoice, 3D and flat proof, approve, card pay, success | Works. Focus lands on the "Payment received" heading. **The stepper is ahead of the status** (R4-CR-04). |
+| `07-vendor-job-accept-toast-en-390` | accept a job (bottom-sheet dialog), "Job accepted" toast, start production, "Production started" toast | Pass. The toast enters and exits. |
+| `08-vendor-profile-savebar-toast-en-1440` | contextual save bar, save, "Changes saved" toast | Pass. |
+| `09-admin-moderation-en-1440` | approve a photo, reject one with a reason, toast, empty state | Pass. "Photo rejected. The vendor sees your note." |
+| `10-designer-reduced-motion-ar-390` | fold under reduced motion, 7 s idle | Pass. The fold snaps, no autorotate, 0 running animations. |
+| `11-designer-mobile-tabs-sheet-ar-390` | Arabic mobile designer, panel tabs, sheet | Works. **The model is small** (R4-CR-11). |
+
+- Evidence stills: `evidence-designer-first-load-ghosting.jpg` (10 frames at 4 fps, 2.8 to 5.2 s after navigation), `evidence-share-dark-side-faces.jpg`, `evidence-admin-audit-ar-390.jpg`.
+- Test data I created and then removed: three portfolio items for the moderation clip (deleted), and one Nile Pack English and Arabic bio edit (reverted). Kept: order ELB-26302 (paid through the UI) and the accepted / in-production state of ELB-26202.
+
+## R4.3 Re-verification of round 2 rows (CR-*)
+
+| ID | Status | Evidence (round 4) |
+|---|---|---|
+| CR-01 | fixed | `a:where(:hover)` (`globals.css:54`). Header CTA hover: `#fff` on `#2b2b2b`. Picker CTA: `#fff` on `#1a1a1a`. |
+| CR-02 | fixed | Footer social on hover: `#000` icon on a `#fff` disc. |
+| CR-03 | fixed | Selected chip on hover: `#fff` on `#0b0b0b`. |
+| CR-04 | fixed | `/ar|en/<unknown>` renders the styled 404 with header and footer in the right language. |
+| CR-05 | fixed | Login, account, orders, order, invoice, share, vendor apply and the design picker use MarketingHeader with an avatar menu. Checkout uses the white minimal header. Dark chrome is kept only for vendor, admin and the editor. |
+| CR-06 | fixed | One `CookieNotice` (white card, dark button) on `/`, `/catalog`, `/login`, `/design` and `/vendors/*`. |
+| CR-07 | fixed | One dark footer family on buyer pages; checkout keeps its one-row footer. |
+| CR-08 | fixed | Paid is neutral (`#e3e3e3`) in buyer detail and admin. Awaiting printer / vendor is attention. In production is info. Delivered is success. Same map everywhere. |
+| CR-09 | fixed | ELB-26001 line shows `/models/mailer-box.svg`, never the broken glyph. |
+| CR-10 | fixed | The size price table stacks into a definition list at 390 (ar and en). |
+| CR-11 | fixed | Ranges render as `<bdi dir=ltr>` "80–600" in Arabic. |
+| CR-12 | fixed (on the reported surfaces) | Three `dir=auto` nodes on the application page; the message reads correctly. **Invoice address missed** (R4-CR-02). |
+| CR-13 | fixed | View controls sit below the canvas at 390; nothing covers the model. Framing is still small (R4-CR-11). |
+| CR-14 | fixed | Share viewer is centred at 1440 and 390. |
+| CR-15 | fixed | Kraft fibre, "Your logo" / "شعارك هنا" hint on the lid, contact shadow. Lid seam visible but faint. |
+| CR-16 | fixed | Toast `closing` state with a 150 ms exit plus a fallback; clips 07 to 09. |
+| CR-17 | fixed | Modal exit seen in clips 05 and 07 (accept dialog, picker). |
+| CR-18 | fixed (remnant, low) | Curves live only in `tokens.css` and `motion.ts`. Two hard-coded `150ms ease-out` remain at `designer/library.module.css:425,436`. Swap to `var(--motion-fast) var(--ease-enter)`. |
+| CR-19 | fixed | `CheckoutClient.tsx:961-968` keyed tick on totals (clip 06). |
+| CR-20 | fixed | `Modals.tsx:102` keys only the amount span. |
+| CR-21 / CR-24 | fixed | A MutationObserver saw no spinner during 3D → Face → Dieline switches or a price refresh. |
+| CR-22 | fixed | The Pay button keeps its fill and label while busy (clip 06). |
+| CR-23 | fixed | Success card on a tint, check icon, "What happens next" list, focus on the heading. |
+| CR-25 | fixed | Admin and vendor KPIs at 390 are a 2-column grid; no clipped labels. |
+| CR-26 | fixed | The nav column holds its background to the page end. |
+| CR-27 | partly fixed (low) | Dieline labels are now Arabic ("الأمام", "جدار داخلي"). They are still about 8 px at fit on the job page. Set a 10 px minimum and hide labels on panels under 40 px. |
+| CR-28 | fixed | Org name truncates at the end. |
+| CR-29 | fixed | "Everything you need" is centred in both locales at 1440. |
+| CR-30 | **reopened (medium), round 4** | `/design` is fixed (5,583 px at 1440). **`/catalog` grew to 46,528 px at 1440 and 64,334 px at 390** (all 394 models in one list). Apply the same "12 per family + Show all N" pattern there, keep search and chips sticky, and add `content-visibility: auto` on family sections. |
+| CR-31 | fixed | `/boxes` and `/catalog` card actions align on a row. |
+| CR-32 | fixed | Pizza shows "FEFCO 0426". |
+| CR-33 | not reproduced | No "Simplified" tag on the seeded models. |
+| CR-34 | fixed | "Activity" card; times "9:35 AM" / "9:35 ص". |
+| CR-35 | **reopened (medium), round 4** | Buyer and admin lists are consistent (always two decimals). It is still mixed in: the checkout summary ("EGP 16,520" above "EGP 1,062.50"), the vendor jobs list ("EGP 15,500" vs "EGP 16,572.02") and the public size price list ("9,733" vs "15,007.50"). One `formatMoney(…, { fraction: "always" })` for every column of amounts, with `tabular-nums`. |
+| CR-36 | fixed | Money cells `text-align:end` plus `tabular-nums`. |
+| CR-37 | fixed in apps | App buttons are 28 / 32 / 40 / 44 only. Marketing pills: see R4-CR-20. |
+| CR-38 | **partly reopened (low), round 4** | App body icons are 1.75. The marketing chrome now also wraps buyer pages, and its icons still render `stroke-width=2`: nav chevrons, globe, menu, close, footer globe, the checkout lock and globe, the picker product icons and the vendor checklist circles. So orders, account and checkout mix 2 and 1.75 on one screen. Pass `strokeWidth={1.75}` in `MarketingHeader`, `MarketingFooter`, `CheckoutShell` and the designer `productIcon`. |
+| CR-39 | fixed | ar H1 76/98.8 px (1.3). |
+| CR-40 | fixed | The counter sits below the field (2 px clear). |
+| CR-41 | fixed | The checklist uses check icons, no strikethrough. |
+| CR-42 | fixed | Portfolio shows `/marketing/samples/sample-0N.webp` renders. |
+| CR-43 | **open** (business facts) | Privacy placeholder and draft banner unchanged. See also R4-CR-12 (invoice). |
+| CR-44 | fixed | `/s/<bad>` CLS 0.0000; vendor job CLS 0.0000. |
+| CR-45 | fixed | Home CLS 0 to 0.0001. |
+| CR-46 | accepted | Spinner kept as an essential indicator (500 ms). |
+| CR-47 / CR-58 | fixed | "الوجه" label outside the select; values only inside. Alignment nit: R4-CR-19. |
+| CR-48 | fixed | One name: "Back: Bloom mailer". |
+| CR-49 | fixed | e.g. "Mailer box, E-flute kraft · Rate cards · Vendor portal · Elba", "ELB-26001 · Orders · Admin · Elba". |
+| CR-50 | fixed | No admin table targets under 24 px at 390. |
+| CR-51 | fixed | "(excl. VAT)" / "(دون الضريبة)" on its own line by design. |
+| CR-52 | fixed | One "Submit for quality check" with help text. |
+| CR-53 / CR-54 | partly fixed (low) | `/catalog` is fixed. `/boxes` family header still puts "Styles: 5" / "عدد الأنواع: 5" at the far end of the row at 1440. Move it under the family title as a caption. |
+| CR-55 | fixed | Nav item renamed "Box styles"; active on `/catalog`. |
+| CR-56 | fixed | 0 clear buttons on `/admin/pricing`. |
+| CR-57 | partly fixed (low) | The seed admin is now "فريق تشغيل علبة" in **both** locales, so the English shell shows Arabic. Show the localized role label ("Elba operations" / "فريق تشغيل علبة"), or seed `nameEn`. |
+| CR-59 | fixed | ELB-26001: 500 × 24.70 = 12,350 = "Printed boxes EGP 12,350". |
+| CR-60 | fixed | `loading.tsx` on orders, catalogue, boxes, vendors, account, checkout, share, editor, vendor and admin. |
+| CR-61 | fixed | Covered by CR-05. |
+| CR-62 | fixed | "علبة بريدية مطبوعة 250 × 180 × 80 مم" (isolated). |
+| CR-63 | fixed | The price chip has its own row above the stage. |
+| CR-64 | fixed | Portal sidebar footer links are separated and secondary. |
+| CR-65 | fixed | "Start review" first, Approve last, with the disabled reason shown. |
+| CR-66 | fixed | Pill focus: 2 px solid `#005bd3`, offset 2 px. |
+
+Tally: 55 fixed, 1 accepted, 1 not reproduced, 1 open (CR-43). **2 reopened** (CR-30, CR-35) and **5 partly fixed with a low remnant** (CR-18, CR-27, CR-38, CR-53/54, CR-57).
+
+## R4.4 New findings (R4-CR-*)
+
+Severity: critical = broken flow, data or security; high = clearly wrong, ugly or inaccessible; medium = noticeable polish; low = nitpick. Status for every row: **open** (report-only session).
+
+| ID | Sev | Area | Page / file | Finding | Standard | Fix |
+|---|---|---|---|---|---|---|
+| R4-CR-01 | high | 3d-engine, designer | `/design/<model>` first load. `DesignerApp.tsx:904-907` (`stagePoster` img), `PackagingScene.module.css:48-77` (`.poster` / `.canvas[data-fade]` 480 ms cross-fade), `DesignScene.tsx:54` | On every editor open, the SVG poster (a different projection, scale and position from the 3D camera) stays up while the first frame renders. For about 1 s the real model shows *through* a larger flat poster box (two boxes, two shadows), then both fade at once for 480 ms as a double image. This is the first 3D moment a buyer sees. Evidence: clip 05 at 2.8 to 5.2 s, `evidence-designer-first-load-ghosting.jpg`. | Craft (3D render quality); ISO 9241-110 (conformity with expectations) | Pick one: **(a, recommended)** render the posters from the engine with the same camera fit, so poster and frame 1 match pixel for pixel (generate them in `scripts/` with the `fit.ts` framing at 1440 and 390 aspect ratios). Or **(b)** cut instead of cross-fade: keep the canvas at opacity 1 underneath, fade only the poster out over 150 ms (`--motion-fast`) after `onReady`, and never animate the canvas opacity. Remove the second poster layer: `DesignerApp` `stagePoster` and the `PackagingScene` `poster` both show today. |
+| R4-CR-02 | high | checkout | `/ar/orders/[id]/invoice`: customer block (also seller and customer address lines on the ar order page) | The Latin address typed by the buyer renders reversed in RTL on the **tax invoice**: "Abbas El Akkad St, Nasr City, Cairo 14" instead of "14 Abbas El Akkad St, Nasr City, Cairo". CR-12 added `dir=auto` to the application and dispute text but not to invoice or order addresses. | WCAG 1.3.2; Unicode bidi; ETA invoices must carry the buyer address as given | `<span dir="auto">` (or `<bdi>`) on every address line, name, company name and tax number in `invoice/page.tsx`, the order "Delivery address" card, the vendor job "Delivery" card and the admin order page. Add a vitest check that renders an Arabic invoice with a Latin address and asserts `dir="auto"`. |
+| R4-CR-03 | high | admin | `/ar/admin/audit` at 390 (also `/admin/users/[id]` and `/admin/vendors/[slug]` tables at 390) | The IndexTable keeps all 5 columns at 390. "Details" is squeezed to about 45 px, so text breaks every few characters across about 20 lines and is clipped at the inline-start edge. Status badges wrap to 3 lines, and money cells are clipped ("3.81" for 23,490.81). Evidence: `evidence-admin-audit-ar-390.jpg`. | WCAG 1.4.10 reflow | Under 490 px, render IndexTable rows as stacked cards. Polaris IndexTable does this with `condensed`: the first column is the title, the others become label/value lines. Otherwise put the table in an `overflow-x:auto` scroller with a fixed 160 px minimum per column and an edge fade. Badges get `white-space:nowrap`. |
+| R4-CR-04 | medium | checkout | `/orders/[id]?paid=1` stepper (`PaidHeader.tsx` plus progress component) | Straight after payment the stepper marks **"In production"** as current. Meanwhile the order list says "Awaiting printer" (status `PAID`), the copy says "The printer checks your file and starts production", and the vendor has not accepted yet. The UI tells two different truths one second apart. | Trust; ISO 9241-110 (self-descriptiveness) | Insert a step "Printer accepted" ("قبول المطبعة") between Paid and In production, or keep "Paid" as current until the vendor accepts (`ACCEPTED`). Drive the stepper from the same `statusTone()` map as the badges. |
+| R4-CR-05 | medium | catalogue, platform | `/ar/catalog` at 1440: filter chips (`catalogue_chip`). `src/app/fonts.ts:21-29` | CLS **0.069 to 0.075** (budget 0.1). At about 450 ms IBM Plex Sans Arabic 600 swaps in (`preload:false`, "600 loads on demand"), the chips get wider, and one chip wraps from y 720 to the next line. | CLS (Core Web Vitals); WCAG 2.2.2-adjacent motion | Preload Plex Arabic 600 on Arabic pages (it is the chip and heading weight), or set the chips to 500. Make the chip row `flex-wrap:nowrap; overflow-x:auto` with an end fade, so a width change can never re-wrap the row. Target CLS < 0.01. |
+| R4-CR-06 | medium | catalogue, designer | `/catalog` hero vs `/design` and the "Change model" dialog | The same "Available in Egypt" filter reports different totals: catalogue "410 models · 394 available in Egypt", designer picker "370 models · All 355". A buyer who filters in one place and then the other sees 39 models missing. | Trust; consistency (B-20/B-21 signal) | One source (`library index`), with both totals stated: "394 to order in Egypt · 355 in the 3D designer". Or show the designable subset everywhere, with a "Quote only" chip for the other 39. |
+| R4-CR-07 | medium | checkout | Checkout "Other quantity" (`checkout.en.ts:33,35`, `checkout.ar.ts`) | The help text says "Between 1 and 2,000 boxes" ("من 1 إلى 2,000"). Marketing says "From 100 boxes" (`home`, `/boxes`), the printer cards say "From 50 / 100 / 500 boxes", and the sample is 5. The minimum quantity is stated 4 ways. | Consistency; consumer protection (clear terms) | State the real per-printer minimum: "From {min} to {max} boxes with this printer" ("من {min} إلى {max} علبة مع هذه المطبعة"). Validate against the selected offer's MOQ, and reword the hero "From 100 boxes" to "From 50 boxes" if that is the true floor. |
+| R4-CR-08 | medium | marketing | Home hero at 390 (ar and en) | The floating price card ("500 علبة بريدية 40.06 ج.م للعلبة") covers the top corner of the NOUR box, and the "Delivered to Alexandria" chip covers its front corner, so the product shot reads cluttered. At 1440 the chips float clear. | Craft, hierarchy | Under 490 px, move the price card and chips below the render as a 2-up row, or shrink the render to 86% and anchor the chips outside its bounding box (`inset-inline-end:-8px; top:-12px`, max 50% overlap with empty background only). |
+| R4-CR-09 | medium | platform, marketing | Announcement bar plus header CTA on signed-in buyer pages (`/orders/[id]?paid=1`, `/account`, `/orders`, invoice) | After CR-05 the marketing promo bar ("New: preview foil… See finishes") and "Start designing free" sit above the payment-success card and the tax invoice. At 390 ar the bar wraps to 3 lines and splits the link "عرض التشطيبات" across lines. | Hierarchy; Polaris (no promo in transactional views) | Hide the announcement bar on account, orders, invoice and checkout routes, and for 30 days after it is dismissed (cookie). Signed-in CTA: "New design" ("تصميم جديد"). At 390, shorten to "جديد: معاينة البصمة والسلوفان في 3D · عرض" with `white-space:nowrap` on the link. |
+| R4-CR-10 | medium | 3d-engine | Share viewer, checkout 3D proof, designer: dark printed colours (`#1f3d2b` Bloom mailer). `lighting.tsx`, `finishes/finishMaterial.ts` | Vertical faces of dark prints crush to near-black (side faces about `#16220f` against a `#263c22` lid). The brand colour the buyer approved is not readable on 2 of 3 visible faces. Gold foil text reads as flat orange print, with no specular sweep. The marketing renders (NOUR) keep side faces readable, so this is an expectation gap at proof approval. Evidence: `evidence-share-dark-side-faces.jpg`. | Craft (3D render quality); proof accuracy | Add a soft front fill (or raise the environment intensity on vertical normals) so side-face luminance is ≥ 55 to 60% of the lid for any albedo. Clamp shadow darkness for printed albedo. Give foil `metalness 1, roughness 0.25` with the studio HDRI reflection and a 1.5 s light sweep on idle (off under reduced motion). Add a visual check in `docs/audit/tools/3d-ecma` for side/top luminance ratio. |
+| R4-CR-11 | medium | designer, 3d-engine | Designer at 390 (ar and en), all models; worst on bottles | With the stage header (view tabs plus a duplicated "Face" select), the 7-button control row and the fold row stacked, the canvas is about 170 px tall. The model fills about 30% of it (the bottle about 12%, roughly 40 px wide). The "Face" select also appears twice on screen (stage header and the Artwork panel). | Craft; WCAG 1.4.4-adjacent legibility; ISO 9241-110 | Stage `min-block-size: 46dvh` on phones. Collapse the arrow and zoom buttons into one "View" menu button (keep them for keyboard: WCAG 2.5.7 is met by drag plus the menu), put fold as a segmented control inside the canvas bottom inset, and drop the stage-header Face select under 490 px (the panel has it). Fit target: model bounding box at 70 to 80% of the visible canvas. |
+| R4-CR-12 | medium | checkout, business | `/orders/[id]/invoice` seller block (ar and en) | The tax invoice reads "Tax registration number: To be assigned", "Commercial register: To be assigned", and ETA "Activity code / Item code (EGS): To be assigned". A B2B buyer cannot reclaim input VAT on an invoice without the seller TRN. | Egyptian VAT Law 67/2016 and ETA e-invoicing (seller TRN and EGS codes are mandatory); same business-facts gap as CR-43 | Until the legal entity exists, title the document "Order receipt (not a tax invoice)" ("إيصال طلب (ليس فاتورة ضريبية)") and hide the ETA block. Switch to "Tax invoice" only when `ELBA_SELLER_TRN` is configured. Show the EGS item code per line once it is registered. |
+| R4-CR-13 | low | admin | `/admin/audit`, `/admin/vendors/[slug]` history | Summaries embed raw record ids: "Nile Pack Printing & Packaging photo cmw4ogi8700037drbi0sbz1ku". The Admin column shows a phone number, not a name. | Clarity | Store and show the caption ("photo "Printed pizza boxes…"") and link it to the record. Keep the id in the expandable "Changes". Admin column: name, with the phone in a tooltip. |
+| R4-CR-14 | low | marketing | Home dark CTA band tile (`marketing.*.ts:162-166` `tileOrder`) | Mock order "EL-1042"; real orders are "ELB-26001". | Consistency | "Order ELB-26014" / "طلب ELB-26014". |
+| R4-CR-15 | low | checkout | Checkout summary "Prepayment discount" | "EGP -621.53"; in ar the minus floats to the wrong side of the number. | Typography; bidi | Use `formatMoney(-x)` → "−EGP 621.53" with U+2212, wrapped in `<bdi dir="ltr">` in ar ("‎−621.53 ج.م"), coloured `--p-color-text-success`. |
+| R4-CR-16 | low | checkout | ar invoice and order spec lines | Latin commas inside Arabic: "علبة بريدية, 250 × 180 × 80 مم, كرتون مضلع E كرافت". | Arabic typography (MSA) | Join list parts with "، " in ar (use `Intl.ListFormat("ar", { type: "unit" })` or a locale separator). |
+| R4-CR-17 | low | catalogue, designer | "Change model" dialog cards | On the current model, "Current" replaces the "Made in Egypt" badge and sits inline with the code. Across the grid, badges sit at different heights because the titles wrap. | Component consistency; rhythm | Show both badges in a footer row pinned with `margin-block-start:auto`, "Current" first. Clamp titles to 2 lines. |
+| R4-CR-18 | low | designer | ar fold and view controls | Box: "مسطحة / نصف طي / مغلقة" (adjective, noun, adjective). Vessel: "إغلاق / فتح / دوران تلقائي" (verbal nouns). Two grammars for one control. | Arabic UX (noun-form labels) | Box: "فرد · نصف طي · طي كامل". Vessel: "غلق · فتح · دوران تلقائي". Same pattern in en: "Flat · Half · Closed" stays. |
+| R4-CR-19 | low | designer | ar designer at 390, stage header | The "الوجه" label is centred above its select instead of start-aligned. | Alignment | `text-align:start` on the field label (it inherits a centred cell). |
+| R4-CR-20 | low | marketing | Home | Marketing pills come in 52 px ("Start designing free", "Open the designer", "Browse box styles") and 48 px ("See all printers") on one page. | Design-system hygiene | One marketing large pill (52 px) for section CTAs; 40 px for header and inline links. |
+| R4-CR-21 | low | admin | Badges in admin tables at 1440 ("Photo approved") and 390 | Badges wrap onto two or three lines. | Polaris Badge (single line) | `.Badge { white-space:nowrap }`; let the cell widen. |
+| R4-CR-22 | low | vendor | Vendor top bar search at 390 | Placeholder cut: "Search jobs by nu…" / "البحث في الطلبات بال…". | Micro-copy | Short placeholder under 490 px: "Search jobs" / "بحث في الطلبات". |
+| R4-CR-23 | low | checkout | `/en/orders` tabs at 390 | The last tab is cut ("Deliver…") with no scroll affordance. | Affordance | End fade mask on the tab scroller, plus `scroll-padding-inline` so the selected tab is never clipped. |
+| R4-CR-24 | low | marketing | Printer cards on home and `/vendors` (Cairo Label & Flex) | Small tiles crop the bottle renders (the pump and water bottle tops are cut off). | Craft | `object-fit:contain` with 8% padding for vessel renders, or pick a box render for small tiles. |
+
+## R4.5 Counts
+
+**New findings this round, before any fixing** (R4-CR-*):
+
+| Severity | Count |
+|---|---:|
+| Critical | 0 |
+| High | 3 |
+| Medium | 9 |
+| Low | 12 |
+| **Total new** | **24** |
+
+Reopened round 2 rows: 2 medium (CR-30 `/catalog` length, CR-35 money precision). Partly fixed with a low remnant: 5 (CR-18, CR-27, CR-38, CR-53/54, CR-57). Still open on business facts: CR-43.
+
+By owner (new plus reopened): 3d-engine 3 (R4-CR-01, 10, 11, shared with designer); checkout 7 (02, 04, 07, 12, 15, 16, 23, plus CR-35); admin 3 (03, 13, 21); catalogue 3 (05, 06, 17, plus CR-30); marketing 4 (08, 14, 20, 24); platform 1 (09, plus CR-38); designer 2 (18, 19); vendor 1 (22).
+
+The stop rule is "a round with no medium-or-worse issue". It is **not met**: 3 high, 9 medium, plus 2 reopened medium.
+
+## R4.6 Top 20 (do these first)
+
+| # | ID | Sev | Area | Fix in one line |
+|---|---|---|---|---|
+| 1 | R4-CR-01 | high | 3d-engine | Engine-rendered posters with the same fit, or a 150 ms poster-only fade over an opaque canvas; one poster layer |
+| 2 | R4-CR-02 | high | checkout | `dir="auto"` / `<bdi>` on every address, name and tax id on the invoice, order, job and admin pages |
+| 3 | R4-CR-03 | high | admin | IndexTable condensed (stacked) rows under 490 px; badges `nowrap` |
+| 4 | R4-CR-10 | medium | 3d-engine | Front fill, side/top luminance ≥ 0.55; metallic foil with an HDRI reflection |
+| 5 | R4-CR-11 | medium | designer | Phone stage ≥ 46dvh, controls into one menu, no duplicate Face select, fit at 70 to 80% |
+| 6 | R4-CR-04 | medium | checkout | "Printer accepted" step; stepper follows the status map |
+| 7 | R4-CR-12 | medium | checkout | "Order receipt (not a tax invoice)" until the seller TRN exists |
+| 8 | CR-30 | medium (reopened) | catalogue | `/catalog`: 12 per family + "Show all", sticky filters (46 to 64k px today) |
+| 9 | CR-35 | medium (reopened) | checkout, vendor, marketing | One money precision per column, `tabular-nums` |
+| 10 | R4-CR-06 | medium | catalogue | One model count source; state both totals |
+| 11 | R4-CR-07 | medium | checkout | Real per-printer minimum in the quantity help and validation |
+| 12 | R4-CR-05 | medium | catalogue | Preload Plex Arabic 600; chip row `nowrap` scroller (CLS 0.075 → < 0.01) |
+| 13 | R4-CR-09 | medium | platform | No promo bar or "Start designing free" on signed-in transactional pages |
+| 14 | R4-CR-08 | medium | marketing | Hero chips off the render at 390 |
+| 15 | CR-38 | low (partly reopened) | platform | Stroke 1.75 in the marketing header and footer and the checkout shell |
+| 16 | R4-CR-13 | low | admin | Captions, not cuids, in audit summaries |
+| 17 | R4-CR-15 | low | checkout | "−EGP 621.53" with a U+2212 minus and bidi isolation |
+| 18 | R4-CR-16 | low | checkout | Arabic list separator "،" |
+| 19 | R4-CR-18 | low | designer | One noun-form grammar for the fold and view controls in ar |
+| 20 | R4-CR-21 | low | admin | Single-line badges |
+
+## R4.7 Notes for the integrator
+
+- Only `docs/audit/craft.md`, `docs/screenshots/final/**` and `docs/screenshots/motion/**` changed. The round 2 clips and `cta-hover-contrast-bug.png` were replaced by the round 4 set.
+- The capture, probe and motion scripts are in this session's scratchpad, not in the repo (same as round 2). To reproduce: create session rows directly (sha256 of a random token into `Session.tokenHash`, cookie `elba_session`) and set cookie `elba_cookie_ack=1` to suppress the notice. Order pages poll, so wait for `load` plus up to 8 s of `networkidle`, never `networkidle` alone. Force lazy images to eager and `decode()` them before full-page capture.

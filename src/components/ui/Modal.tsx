@@ -1,7 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
-import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useUi } from "./AppProvider";
 import { Button } from "./Button";
@@ -91,7 +91,10 @@ export function Modal({
   // Open: remember opener, focus inside, lock scroll, make siblings inert. The cleanup runs as
   // soon as `open` turns false, so focus is back on the opener and the page is interactive
   // while the exit plays; the leaving dialog is aria-hidden and ignores the pointer meanwhile.
-  useEffect(() => {
+  // Layout effect, not effect: it runs before the dialog is painted. With a passive effect a Tab
+  // pressed between paint and effect (slow device, lazy-loaded dialog) moved focus past the
+  // opener, which was then remembered as the return target (2.4.3, R4-K05).
+  useLayoutEffect(() => {
     if (!open || !mounted) return;
     restoreRef.current = document.activeElement as HTMLElement | null;
     const dialog = dialogRef.current;
@@ -107,10 +110,19 @@ export function Modal({
     return () => {
       siblings.forEach((el) => el.removeAttribute("inert"));
       document.body.style.overflow = prevOverflow;
+    };
+  }, [open, mounted, initialFocusRef]);
+
+  // Focus goes back to the opener from a passive cleanup: layout cleanups run inside React's
+  // mutation phase, after which React re-focuses whatever was focused before the commit (the
+  // closing dialog, still mounted for its exit), which would undo the restore.
+  useEffect(() => {
+    if (!open || !mounted) return;
+    return () => {
       const r = restoreRef.current;
       if (r && document.contains(r)) r.focus({ preventScroll: true });
     };
-  }, [open, mounted, initialFocusRef]);
+  }, [open, mounted]);
 
   function onKeyDown(e: KeyboardEvent<HTMLDivElement>) {
     if (closing) return;

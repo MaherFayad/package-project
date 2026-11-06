@@ -3,6 +3,7 @@
 import { Copy } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { flushSync } from "react-dom";
 import type { Locale, PaymentMethod, QuoteLine } from "@/types";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
@@ -91,9 +92,11 @@ export function PaymentClient(props: {
       window.location.assign(r.payment.redirectUrl);
       return;
     }
-    setPayment(r.payment);
     // The method list (and its Continue button) unmounts: move focus into the next step (X-01).
-    requestAnimationFrame(() => document.getElementById(r.payment.method === "CARD" ? "card-number" : "payment-step-heading")?.focus());
+    // flushSync: after an await React renders in a scheduler task, which can land after a
+    // requestAnimationFrame, so the target did not exist yet and focus fell to <body> (R4 a11y).
+    flushSync(() => setPayment(r.payment));
+    document.getElementById(r.payment.method === "CARD" ? "card-number" : "payment-step-heading")?.focus();
   };
 
   const simulate = async (action: "card" | "wallet" | "fawry" | "instapay", extra: Record<string, string> = {}) => {
@@ -161,7 +164,7 @@ export function PaymentClient(props: {
         }}
       >
         <BlockStack gap="300">
-          <Text as="h3" variant="headingSm">
+          <Text as="h2" variant="headingSm">
             {t("payment.card.title")}
           </Text>
           {props.testMode ? <Banner tone="info">{t("payment.card.testHint")}</Banner> : null}
@@ -199,7 +202,7 @@ export function PaymentClient(props: {
         }}
       >
         <BlockStack gap="300">
-          <Text as="h3" variant="headingSm">
+          <Text as="h2" variant="headingSm">
             <span id="payment-step-heading" tabIndex={-1} className={styles.stepHeading}>
               {t("payment.wallet.title")}
             </span>
@@ -213,7 +216,7 @@ export function PaymentClient(props: {
       </form>
     ) : payment.method === "FAWRY" && payment.fawry ? (
       <BlockStack gap="300">
-        <Text as="h3" variant="headingSm">
+        <Text as="h2" variant="headingSm">
           <span id="payment-step-heading" tabIndex={-1} className={styles.stepHeading}>
             {t("payment.fawry.title")}
           </span>
@@ -259,7 +262,7 @@ export function PaymentClient(props: {
       </BlockStack>
     ) : payment.method === "INSTAPAY" && payment.instapay ? (
       <BlockStack gap="300">
-        <Text as="h3" variant="headingSm">
+        <Text as="h2" variant="headingSm">
           <span id="payment-step-heading" tabIndex={-1} className={styles.stepHeading}>
             {t("payment.instapay.title")}
           </span>

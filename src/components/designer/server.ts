@@ -114,6 +114,10 @@ export function rowToDoc(row: DesignRow): DesignDoc | null {
     const withModel = { ...doc, ...(e.modelCode ? { modelCode: e.modelCode } : {}), ...(e.features ? { features: e.features } : {}), ...(e.finishes ? { finishes: e.finishes } : {}), ...(e.vessel ? { vessel: e.vessel } : {}) } as DesignDoc;
     // A model whose material was changed underneath (admin edits): keep the base design.
     if (designDocSchema.safeParse(withModel).success) return withModel;
+    // Keep the model even when its options no longer validate: dropping it would turn a model
+    // priced by quote (B-16) into its instantly priced base box.
+    const modelOnly = e.modelCode ? ({ ...doc, modelCode: e.modelCode } as DesignDoc) : null;
+    if (modelOnly && designDocSchema.safeParse(modelOnly).success) return modelOnly;
   }
   return doc;
 }

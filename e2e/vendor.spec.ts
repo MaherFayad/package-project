@@ -170,3 +170,99 @@ test.describe("vendor portal", () => {
     }
   });
 });
+
+test.describe("vendor portal, round 4", () => {
+  test("special gluing: a listed model gets an instant price from the printer that lists it", async ({ page, context, baseURL }, info) => {
+    test.skip(info.project.name !== "desktop", "mutates Nile Pack's capabilities (desktop only, restored after)");
+    test.setTimeout(90_000);
+    const vendor = await db.vendor.findUniqueOrThrow({ where: { slug: "nile-pack" } });
+    const before = vendor.capabilities;
+    try {
+      const staff = track(await createUser({ role: "VENDOR", vendorId: vendor.id, name: "E2E Nile staff" }));
+      await signInAs(context, baseURL!, staff.id);
+      const quote = () =>
+        page.request.post("/api/quote", {
+          data: { structureCode: "FEFCO_0201", model: { code: "FEFCO_0711" }, dims: { L: 300, W: 200, H: 150 }, materialCode: "E_FLUTE_KRAFT", quantity: 500, colours: 1, printSides: "OUTSIDE" },
+        });
+      const q0 = await (await quote()).json();
+      expect(q0.offers?.some((o: { vendorId: string }) => o.vendorId === vendor.id) ?? false).toBe(false);
+
+      await page.goto("/en/vendor/profile");
+      const card = page.locator("#special-gluing");
+      await expect(card.getByRole("heading", { name: "Special gluing models" })).toBeVisible();
+      // A model whose base style is off cannot be ticked.
+      await expect(card.getByRole("checkbox", { name: "Tuck top, crash-lock (auto) bottom" })).toBeDisabled();
+      const box = card.getByRole("checkbox", { name: "Auto-bottom shipping case" });
+      await box.uncheck();
+      await box.check();
+      await page.locator("#vendor-profile-form button[type=submit]").click();
+      await expect(page.getByText("Saved").first()).toBeVisible();
+      await expect.poll(async () => ((await db.vendor.findUniqueOrThrow({ where: { id: vendor.id } })).capabilities as { models?: string[] }).models ?? []).toContain("FEFCO_0711");
+
+      const q1 = await (await quote()).json();
+      expect(q1.mode).toBe("instant");
+      expect(q1.offers.some((o: { vendorId: string }) => o.vendorId === vendor.id)).toBe(true);
+    } finally {
+      await db.vendor.update({ where: { id: vendor.id }, data: { capabilities: before as object } });
+    }
+  });
+
+  test("vendor notes and unreviewed QC photos never reach the buyer", async ({ page, context, baseURL, browser }, info) => {
+    test.skip(info.project.name !== "desktop", "mutating flow runs once (desktop)");
+    test.setTimeout(90_000);
+    const job = await cloneOrder(TEMPLATE_JOB, { status: "IN_PRODUCTION", label: "N" });
+    const staff = track(await createUser({ role: "VENDOR", vendorId: job.vendorId, name: "E2E Delta staff" }));
+    await signInAs(context, baseURL!, staff.id);
+    await page.goto(`/en/vendor/jobs/${job.number}`);
+    await page.getByLabel("Note to the Elba team").fill("Call me on 01001234567 NOTE-R4");
+    await page.getByRole("button", { name: "Post" }).click();
+    await expect(page.getByText("NOTE-R4")).toBeVisible();
+    const up = await (await page.request.post("/api/vendor/uploads", { multipart: { scope: "qc", orderId: job.id, kind: "OTHER", file: { name: "x.png", mimeType: "image/png", buffer: PNG } } })).json();
+    expect(up.ok).toBe(true);
+
+    const order = await db.order.findUniqueOrThrow({ where: { id: job.id } });
+    const buyerCtx = await browser.newContext();
+    try {
+      await signInAs(buyerCtx, baseURL!, order.buyerId);
+      const buyer = await buyerCtx.newPage();
+      await buyer.goto(`/en/orders/${job.number}`);
+      await expect(buyer.getByRole("heading", { level: 1 })).toBeVisible();
+      expect(await buyer.content()).not.toContain("NOTE-R4");
+      expect(await buyer.content()).not.toContain(up.url);
+      expect((await buyer.request.get(up.url)).status()).toBe(404);
+      await db.qcPhoto.updateMany({ where: { url: up.url }, data: { status: "APPROVED" } });
+      expect((await buyer.request.get(up.url)).status()).toBe(200);
+    } finally {
+      await buyerCtx.close();
+    }
+  });
+});
+
+test.describe("vendor portal, round 5", () => {
+  test("bio changes wait for Elba's review; contact details in a bio are blocked", async ({ page, context, baseURL }, info) => {
+    test.skip(info.project.name !== "desktop", "mutates Nile Pack's bio (desktop only, restored after)");
+    test.setTimeout(90_000);
+    const vendor = await db.vendor.findUniqueOrThrow({ where: { slug: "nile-pack" } });
+    try {
+      const staff = track(await createUser({ role: "VENDOR", vendorId: vendor.id, name: "E2E Nile staff" }));
+      await signInAs(context, baseURL!, staff.id);
+      await page.goto("/en/vendor/profile");
+      const en = page.getByLabel("Bio in English");
+      await en.fill(`${vendor.bioEn} Sales: 010 1234 / 5678. Follow us on انستقرام nilepack. Or nilepack[.]com`);
+      await page.locator("#vendor-profile-form button[type=submit]").click();
+      await expect(en).toHaveAttribute("aria-invalid", "true");
+
+      await en.fill(`${vendor.bioEn} BIO-R5`);
+      await page.locator("#vendor-profile-form button[type=submit]").click();
+      await expect(page.getByText("Your bio changes were sent for review.")).toBeVisible();
+      await expect(page.getByText("Your bio changes are in review.")).toBeVisible();
+      const v = await db.vendor.findUniqueOrThrow({ where: { id: vendor.id } });
+      expect(v.bioReviewStatus).toBe("PENDING");
+      expect(v.bioEn).toBe(vendor.bioEn);
+      await page.goto(`/en/vendors/${vendor.slug}`);
+      expect(await page.content()).not.toContain("BIO-R5");
+    } finally {
+      await db.vendor.update({ where: { id: vendor.id }, data: { bioAr: vendor.bioAr, bioEn: vendor.bioEn, bioArPending: null, bioEnPending: null, bioReviewStatus: null, bioReviewNote: null, bioSubmittedAt: null } });
+    }
+  });
+});

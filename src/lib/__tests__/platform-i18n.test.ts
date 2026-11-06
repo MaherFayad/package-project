@@ -95,3 +95,27 @@ describe("counted placeholders {n:unit}", () => {
     expect(bad).toEqual([]);
   });
 });
+
+describe("round 4 copy rules", () => {
+  const A = flat(ar);
+  it("no tatweel in Arabic values (write بالرقم / لكمية, not بـ / لـ)", () => {
+    expect(Object.entries(A).filter(([, v]) => /ـ/.test(v))).toEqual([]);
+  });
+  it("Arabic uses «» quotation marks, not ASCII quotes", () => {
+    expect(Object.entries(A).filter(([, v]) => /[؀-ۿ]/.test(v) && /"/.test(v))).toEqual([]);
+  });
+  it("no bare {placeholder} before a counted noun (use {n:box}, {n:piece}, {n:hour})", () => {
+    const nouns = /^(علبة|علب|قطعة|قطع|ساعة|ساعات|يوم|أيام|طلب|طلبات|مطبعة|مطابع|ثانية|دقيقة|دقائق)$/;
+    const bad = Object.entries(A).filter(([, v]) => [...v.matchAll(/\{\w+\}\s([؀-ۿ]+)/g)].some((m) => nouns.test(m[1])));
+    expect(bad).toEqual([]);
+  });
+  it("counted box quantities agree in Arabic", () => {
+    expect(interpolate(ar.checkout.quantity.customHelp, { max: "2,000" })).toBe("من 1 إلى 2,000 علبة.");
+    expect(interpolate(ar.buyer.sample.tier, { pieces: 3 })).toBe("عينة · 3 علب");
+    expect(interpolate(ar.admin.quotes.dueIn, { hours: 5 })).toBe("الرد خلال 5 ساعات");
+    expect(interpolate(ar.vendorPortal.common.pcs, { count: "1,500" }, "ar")).toBe("1,500 قطعة");
+  });
+  it("Spot UV is not transliterated (يو في)", () => {
+    expect(Object.entries(A).filter(([, v]) => /يو في/.test(v))).toEqual([]);
+  });
+});
