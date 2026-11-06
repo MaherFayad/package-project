@@ -1,0 +1,8 @@
+.label { margin: 0 0 32px; font-size: 1rem; font-weight: 500; color: var(--mk-muted); }
+.stack { display: grid; gap: 24px; }
+.typeRow { display: grid; grid-template-columns: 56px 1fr; gap: 16px; align-items: baseline; border-block-end: 1px solid var(--mk-line); padding-block-end: 16px; overflow: hidden; }
+.meta { font-size: 0.8125rem; font-family: ui-monospace, monospace; color: var(--mk-muted, #52525b); }
+.split { display: grid; gap: 48px; align-items: center; }
+@media (min-width: 900px) { .split { grid-template-columns: 1fr 1fr; } }
+.cards { display: grid; gap: 16px; }
+.img { inline-size: 100%; max-inline-size: 480px; block-size: auto; margin-inline: auto; display: block; }

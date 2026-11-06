@@ -11,8 +11,8 @@ import { expect, test, type Page } from "@playwright/test";
 const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
 const COPY = {
-  ar: { h1: "ابدأ اليوم", h2s: ["اختر علبتك", "اجعل علبتك تلمع", "اعرف السعر، وادفع بطريقتك", "علامات تجارية بانتظار علبتها", "ابدأ، ثم توسع", "جاهز لتصميم علبتك؟"], sample: "نموذج", start: "بدء التصميم مجانا", header: "بدء التصميم مجانا" },
-  en: { h1: "start today", h2s: ["Choose your box", "Make your packaging shine", "See the price, pay your way", "Brands waiting for their box", "Start, then grow", "Ready to design your box?"], sample: "Sample", start: "Start designing free", header: "Start designing free" },
+  ar: { h1: "ابدأ اليوم", h2s: ["اختر علبتك", "اجعل علبتك تلمع", "اعرف السعر، وادفع بطريقتك", "علامات تجارية بانتظار علبتها", "ابدأ، ثم توسع", "جاهز لتصميم علبتك؟"], sample: "نموذج", start: "بدء التصميم مجانا", header: "البدء مجانا" },
+  en: { h1: "start today", h2s: ["Choose your box", "Make your packaging shine", "See the price, pay your way", "Brands waiting for their box", "Start, then grow", "Ready to design your box?"], sample: "Sample", start: "Start designing free", header: "Start free" },
 } as const;
 
 function watchErrors(page: Page) {
@@ -101,8 +101,8 @@ for (const locale of ["ar", "en"] as const) {
   });
 }
 
-test("site CTA: home 'Start designing free' opens /start", async ({ page }) => {
+test("site CTA: the header's start pill opens /start", async ({ page }) => {
   await page.goto("/en");
-  await page.getByRole("link", { name: "Start designing free" }).first().click();
+  await page.getByRole("banner").getByRole("link", { name: "Start free" }).filter({ visible: true }).first().click();
   await expect(page).toHaveURL(/\/en\/start$/);
 });

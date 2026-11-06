@@ -1,7 +1,6 @@
 /* eslint-disable @next/next/no-img-element -- local pre-sized /marketing renders with hand-written srcset and AVIF (see HeroImage); next/image would re-encode them. */
 import type { Metadata } from "next";
 import type { CSSProperties } from "react";
-import Link from "next/link";
 import { ArrowRight, BadgeCheck, Box, FileDown, Link2, PackageCheck, RefreshCw, Rotate3d, Sparkles } from "lucide-react";
 import { pick, toLocale } from "@/i18n";
 import type { DictKey } from "@/i18n";
@@ -15,7 +14,10 @@ import { designHref } from "@/components/store/catalog";
 import { getPriceFrom, listStructures, listVendors } from "@/components/store/data";
 import { HeroImage } from "@/components/marketing/HeroImage";
 import { HeroPhoneForm } from "@/components/marketing/HeroPhoneForm";
-import { RevealScope } from "@/components/marketing/useReveal";
+import { Sheet } from "@/components/marketing/kit/Sheet";
+import { Display, Lead } from "@/components/marketing/kit/Display";
+import { Pill } from "@/components/marketing/kit/Pill";
+import { Reveal } from "@/components/marketing/kit/Reveal";
 import { renderDims, renderSrc, srcSetFor } from "@/components/marketing/assets";
 import { StartMotion } from "@/components/marketing/start/StartMotion";
 import { fill, startCopy } from "@/components/marketing/start/copy";
@@ -100,11 +102,11 @@ export default async function StartPage({ params }: Props) {
   return (
     <div className={s.page} data-locale={locale}>
       <StartMotion />
-      <RevealScope />
 
       {/* Collage pieces are decorative (alt=""): the headline and chips carry the meaning. */}
       {/* ───────── 1 · Hero: giant split headline around the box collage ───────── */}
-      <section className={s.hero} aria-labelledby="start-title" data-sp="view">
+      <Sheet tone="dark" hero pad="none" container={false} className={s.hero} aria-labelledby="start-title">
+        <div className={s.heroBody} data-sp="view">
         <div className={s.heroStage}>
           <div className={s.collage}>
             <div className={s.heroCenter} style={{ "--depth": 0.25 } as CSSProperties}>
@@ -156,19 +158,18 @@ export default async function StartPage({ params }: Props) {
         </div>
         <div className={s.heroFoot}>
           <p className={s.heroSub}>{c.hero.sub}</p>
-          <Link href={design} className={s.pill}>
-            {c.hero.cta}
-          </Link>
+          <Pill href={design}>{c.hero.cta}</Pill>
         </div>
-      </section>
+        </div>
+      </Sheet>
 
       {/* ───────── 2 · Choose your box: pinned card that grows into the designer ───────── */}
       <section className={s.choose} aria-labelledby="choose-title">
         <div className={s.pinRun} data-sp="pin">
           <div className={s.pinStick}>
             <header className={s.head}>
-              <h2 id="choose-title" className={s.h2}>{c.choose.title}</h2>
-              <p className={s.sub}>{c.choose.sub}</p>
+              <Display id="choose-title" size="56" align="center">{c.choose.title}</Display>
+              <Lead align="center">{c.choose.sub}</Lead>
             </header>
             <div className={s.pinStage}>
               {SIDE_STYLES.map((code, i) => {
@@ -200,10 +201,10 @@ export default async function StartPage({ params }: Props) {
               </div>
             </div>
             <div className={s.pinFoot}>
-              <Link href={design} className={s.pill}>
+              <Pill href={design}>
                 {c.choose.cta}
                 <ArrowRight size={18} aria-hidden="true" className={s.flip} />
-              </Link>
+              </Pill>
               <span className={s.muted}>{fill(c.choose.count, { count: formatNumber(MODELS.length) })}</span>
             </div>
           </div>
@@ -212,11 +213,11 @@ export default async function StartPage({ params }: Props) {
 
       {/* ───────── 3 · Make your packaging shine: finishes and 3D ───────── */}
       <section className={s.band} aria-labelledby="shine-title">
-        <header className={s.head} data-reveal="" suppressHydrationWarning>
-          <h2 id="shine-title" className={s.h2}>{c.shine.title}</h2>
-          <p className={s.sub}>{c.shine.sub}</p>
-        </header>
-        <div className={s.shineStage} data-reveal="scale" suppressHydrationWarning>
+        <Reveal as="header" className={s.head}>
+          <Display id="shine-title" size="56" align="center">{c.shine.title}</Display>
+          <Lead align="center">{c.shine.sub}</Lead>
+        </Reveal>
+        <Reveal variant="scale" className={s.shineStage}>
           <div className={s.glow} aria-hidden="true" />
           <figure className={s.shineCard}>
             <img src={renderSrc("RIGID_BOX")} srcSet={srcSetFor(renderSrc("RIGID_BOX"))} sizes="(max-width: 720px) 80vw, 460px" {...renderDims(renderSrc("RIGID_BOX"))} loading="lazy" decoding="async" alt={c.shine.alt} />
@@ -225,8 +226,8 @@ export default async function StartPage({ params }: Props) {
               {c.shine.chip}
             </span>
           </figure>
-        </div>
-        <ul className={s.finishes} aria-label={fill(c.shine.count, { count: DESIGN_FINISH_CODES.length })} data-reveal="" suppressHydrationWarning>
+        </Reveal>
+        <ul className={s.finishes} aria-label={fill(c.shine.count, { count: DESIGN_FINISH_CODES.length })}>
           {FINISH_KEYS.map((k) => (
             <li key={k} className={`${s.finish} ${s[`fin_${k}`]}`}>
               <span className={s.swatch} aria-hidden="true" />
@@ -238,11 +239,11 @@ export default async function StartPage({ params }: Props) {
 
       {/* ───────── 4 · Get paid: real engine prices in a checkout preview ───────── */}
       <section className={s.band} aria-labelledby="paid-title">
-        <header className={s.head} data-reveal="" suppressHydrationWarning>
-          <h2 id="paid-title" className={s.h2}>{c.paid.title}</h2>
-          <p className={s.sub}>{c.paid.sub}</p>
-        </header>
-        <div className={s.paidStage} data-reveal="" suppressHydrationWarning>
+        <Reveal as="header" className={s.head}>
+          <Display id="paid-title" size="56" align="center">{c.paid.title}</Display>
+          <Lead align="center">{c.paid.sub}</Lead>
+        </Reveal>
+        <Reveal className={s.paidStage}>
           <div className={s.glowBlue} aria-hidden="true" />
           <article className={s.checkout} aria-labelledby="paid-card-title">
             <div className={s.coItem}>
@@ -291,9 +292,9 @@ export default async function StartPage({ params }: Props) {
               </dl>
             ) : null}
             {row500 ? <p className={s.coMeta}>{fill(c.paid.delivery, { days: formatNumber(row500.deliveryDays) })}</p> : null}
-            <Link href={design} className={`${s.pill} ${s.pillViolet}`}>
+            <Pill href={design} variant="dark" className={s.coCta}>
               {c.choose.cta}
-            </Link>
+            </Pill>
           </article>
           <div className={s.notify}>
             <span className={s.chipIcon} aria-hidden="true"><BadgeCheck size={16} /></span>
@@ -302,15 +303,15 @@ export default async function StartPage({ params }: Props) {
               <span className={s.chipNote}>{c.paid.statusNote}</span>
             </span>
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* ───────── 5 · Card fan of SAMPLE brand boxes ───────── */}
       <section className={s.fanBand} aria-labelledby="fan-title">
-        <header className={s.head} data-reveal="" suppressHydrationWarning>
-          <h2 id="fan-title" className={s.h2xl}>{c.fan.title}</h2>
-          <p className={s.sub}>{c.fan.sub}</p>
-        </header>
+        <Reveal as="header" className={s.head}>
+          <Display id="fan-title" size="64" align="center">{c.fan.title}</Display>
+          <Lead align="center">{c.fan.sub}</Lead>
+        </Reveal>
         <div className={s.fanWrap} data-sp="view">
           <ul className={s.fan} aria-label={c.fan.listLabel}>
             {FAN.map((f, i) => (
@@ -326,23 +327,23 @@ export default async function StartPage({ params }: Props) {
             <li className={`${s.fanCard} ${s.fanYours}`} style={{ "--i": FAN.length / 2 } as CSSProperties}>
               <strong className={s.fanYoursTitle}>{c.fan.yours}</strong>
               <span>{c.fan.yoursBody}</span>
-              <Link href={design} className={`${s.pill} ${s.pillSmall}`}>
+              <Pill href={design} size="sm">
                 {c.fan.yoursCta}
                 <ArrowRight size={16} aria-hidden="true" className={s.flip} />
-              </Link>
+              </Pill>
             </li>
           </ul>
         </div>
       </section>
 
       {/* ───────── 6 · Light bento: start, then grow ───────── */}
-      <section className={s.sheet} aria-labelledby="bento-title">
+      <Sheet tone="white" container={false} className={s.sheet} aria-labelledby="bento-title">
         <div className={s.sheetInner}>
-          <header className={s.head} data-reveal="" suppressHydrationWarning>
-            <h2 id="bento-title" className={`${s.h2xl} ${s.ink}`}>{c.bento.title}</h2>
-          </header>
+          <Reveal as="header" className={s.head}>
+            <Display id="bento-title" size="64" align="center">{c.bento.title}</Display>
+          </Reveal>
           <div className={s.bento}>
-            <article className={s.tile} data-reveal="" suppressHydrationWarning>
+            <Reveal as="article" className={s.tile}>
               <div className={s.mock} aria-hidden="true">
                 <div className={s.mockLink}>
                   <Link2 size={16} />
@@ -352,8 +353,8 @@ export default async function StartPage({ params }: Props) {
               </div>
               <h3 className={s.tileTitle}>{c.bento.share.title}</h3>
               <p className={s.tileBody}>{c.bento.share.body}</p>
-            </article>
-            <article className={s.tile} data-reveal="" suppressHydrationWarning>
+            </Reveal>
+            <Reveal as="article" className={s.tile}>
               <div className={s.mock} aria-hidden="true">
                 <div className={s.mockFile}>
                   <FileDown size={22} />
@@ -365,8 +366,8 @@ export default async function StartPage({ params }: Props) {
               </div>
               <h3 className={s.tileTitle}>{c.bento.export.title}</h3>
               <p className={s.tileBody}>{c.bento.export.body}</p>
-            </article>
-            <article className={s.tile} data-reveal="" suppressHydrationWarning>
+            </Reveal>
+            <Reveal as="article" className={s.tile}>
               <div className={s.mock} aria-hidden="true">
                 <img src="/marketing/samples/sample-08.webp" srcSet={srcSetFor("/marketing/samples/sample-08.webp")} sizes="160px" width={640} height={800} loading="lazy" decoding="async" alt="" className={s.mockSample} />
                 <span className={s.mockQty}>
@@ -376,8 +377,8 @@ export default async function StartPage({ params }: Props) {
               </div>
               <h3 className={s.tileTitle}>{c.bento.sample.title}</h3>
               <p className={s.tileBody}>{c.bento.sample.body}</p>
-            </article>
-            <article className={s.tile} data-reveal="" suppressHydrationWarning>
+            </Reveal>
+            <Reveal as="article" className={s.tile}>
               <div className={s.mock} aria-hidden="true">
                 <div className={s.mockOrder}>
                   <img src={renderSrc("FEFCO_0201")} srcSet={srcSetFor(renderSrc("FEFCO_0201"))} sizes="64px" {...renderDims(renderSrc("FEFCO_0201"))} loading="lazy" decoding="async" alt="" />
@@ -389,9 +390,9 @@ export default async function StartPage({ params }: Props) {
               </div>
               <h3 className={s.tileTitle}>{c.bento.reorder.title}</h3>
               <p className={s.tileBody}>{c.bento.reorder.body}</p>
-            </article>
+            </Reveal>
           </div>
-          <div className={s.statsCard} data-reveal="" suppressHydrationWarning>
+          <Reveal className={s.statsCard}>
             <h3 className={s.statsTitle}>
               <Sparkles size={18} aria-hidden="true" />
               {c.bento.statsTitle}
@@ -404,20 +405,20 @@ export default async function StartPage({ params }: Props) {
                 </div>
               ))}
             </dl>
-          </div>
+          </Reveal>
         </div>
-      </section>
+      </Sheet>
 
       {/* ───────── 7 · Closing CTA with phone sign-up ───────── */}
-      <section className={s.closing} aria-labelledby="closing-title">
-        <div className={s.closingInner} data-reveal="" suppressHydrationWarning>
+      <Sheet tone="dark" container={false} className={s.closing} aria-labelledby="closing-title">
+        <Reveal className={s.closingInner}>
           <span className={s.mark} aria-hidden="true">
             <svg viewBox="0 0 24 24" width="40" height="40" focusable="false">
               <path d="M12 2.5 21 7v10l-9 4.5L3 17V7z" fill="#fff" />
               <path d="M3 7l9 4.5L21 7M12 11.5V21.5" fill="none" stroke="#02090a" strokeWidth="1.4" strokeLinejoin="round" />
             </svg>
           </span>
-          <h2 id="closing-title" className={s.h2}>{c.closing.title}</h2>
+          <Display id="closing-title" size="56" align="center">{c.closing.title}</Display>
           <ol className={s.steps}>
             {c.closing.steps.map((step, i) => (
               <li key={step}>
@@ -439,8 +440,8 @@ export default async function StartPage({ params }: Props) {
               }}
             />
           </div>
-        </div>
-      </section>
+        </Reveal>
+      </Sheet>
     </div>
   );
 }
