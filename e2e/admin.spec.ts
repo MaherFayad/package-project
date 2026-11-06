@@ -125,7 +125,7 @@ test.describe("admin", () => {
     await page.goto("/en/admin/catalog");
     await expect(page.getByRole("tab", { name: "Models" })).toHaveAttribute("aria-selected", "true", { timeout: 30_000 });
     await expect(page.getByRole("link", { name: "Shipping box", exact: true })).toBeVisible();
-    await expect(page.getByText(/^Instant · vendors: \d+$/).first()).toBeVisible();
+    await expect(page.getByText(/^Instant · vendors: \d+$/).filter({ visible: true }).first()).toBeVisible();
     await page.getByPlaceholder("Search name, code or standard").fill("FEFCO 0203");
     await expect(page.getByRole("link", { name: "Full overlap slotted container (FOL)" })).toBeVisible();
   });

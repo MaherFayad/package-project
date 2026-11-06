@@ -27,8 +27,22 @@ import { MODEL_GROUPS, MODEL_GROUP_NAMES } from "@/lib/library/types";
 import { matchesQuery } from "@/lib/library/search";
 import { AVAILABILITY_VIEWS, inAvailabilityView, type AvailabilityView } from "./lib/availability";
 import type { CatalogModelRow } from "./server/queries";
+import { adminStyles } from "./charts";
 
 const PAGE_SIZE = 50;
+
+function AvailabilityBadge({ m }: { m: Pick<CatalogModelRow, "instant" | "vendorIds"> }) {
+  const { t } = useI18n();
+  return m.instant ? (
+    <Badge tone="success" progress="complete">
+      {t("admin.catalog.models.instantCount", { count: formatNumber(m.vendorIds.length) })}
+    </Badge>
+  ) : (
+    <Badge tone="warning" progress="incomplete">
+      {t("admin.catalog.models.quoteOnly")}
+    </Badge>
+  );
+}
 
 function asView(v: string | null): AvailabilityView {
   return (AVAILABILITY_VIEWS as readonly string[]).includes(v ?? "") ? (v as AvailabilityView) : "all";
@@ -186,6 +200,10 @@ export function ModelsPanel({
                   <Text as="span" variant="bodySm" tone="subdued">
                     <bdi dir="ltr">{m.standard}</bdi>
                   </Text>
+                  {/* Phones: availability is the point of this table, so it also sits in the first cell. */}
+                  <div className={adminStyles.PhoneOnly}>
+                    <AvailabilityBadge m={m} />
+                  </div>
                 </BlockStack>
               </IndexTableCell>
               <IndexTableCell>{MODEL_GROUP_NAMES[m.group as keyof typeof MODEL_GROUP_NAMES]?.[locale] ?? m.group}</IndexTableCell>
@@ -194,15 +212,7 @@ export function ModelsPanel({
                 {t("admin.catalog.models.boardsOf", { priced: formatNumber(m.boardsPriced), total: formatNumber(m.boardsTotal) })}
               </IndexTableCell>
               <IndexTableCell>
-                {m.instant ? (
-                  <Badge tone="success" progress="complete">
-                    {t("admin.catalog.models.instantCount", { count: formatNumber(m.vendorIds.length) })}
-                  </Badge>
-                ) : (
-                  <Badge tone="warning" progress="incomplete">
-                    {t("admin.catalog.models.quoteOnly")}
-                  </Badge>
-                )}
+                <AvailabilityBadge m={m} />
               </IndexTableCell>
             </IndexTableRow>
           ))}

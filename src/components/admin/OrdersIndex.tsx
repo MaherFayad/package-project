@@ -26,6 +26,7 @@ import type { DictKey } from "@/i18n";
 import { formatDate, formatMoney, formatNumber } from "@/lib/format";
 import { statusBadge } from "@/lib/orders/state";
 import type { OrderStatus } from "@/types";
+import { adminStyles } from "./charts";
 import { asOrderView, countByOrderView, filterOrders, ORDER_SORTS, ORDER_VIEWS, type AdminOrderRow, type OrderSort } from "./lib/orders";
 
 function asSort(v: string | null): OrderSort {
@@ -168,6 +169,15 @@ export function OrdersIndex({ rows, vendors, openDisputes }: { rows: AdminOrderR
                       </Badge>
                     ) : null}
                   </InlineStack>
+                  {/* Phones: the table scrolls sideways, so status and total also sit under the number. */}
+                  <div className={adminStyles.PhoneOnly}>
+                    <InlineStack gap="200" blockAlign="center">
+                      <OrderStatusBadge status={r.status} />
+                      <Text as="span" variant="bodySm" numeric>
+                        <bdi>{formatMoney(r.totalPiasters, locale)}</bdi>
+                      </Text>
+                    </InlineStack>
+                  </div>
                 </IndexTableCell>
                 <IndexTableCell>
                   <time dateTime={r.placedAt}>{formatDate(r.placedAt, locale, "medium")}</time>
