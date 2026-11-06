@@ -119,7 +119,7 @@ export function byWedge<T extends { code: string }>(rows: readonly T[]): T[] {
 
 /** Badge copy for the three availability levels (B-20). */
 export const EGYPT_BADGE: Record<"local" | "imported" | "rare", LocalizedText> = {
-  local: { ar: "متوفر في مصر", en: "Made in Egypt" },
+  local: { ar: "يصنع في مصر", en: "Made in Egypt" },
   imported: { ar: "مستورد", en: "Imported" },
   rare: { ar: "توفر محدود", en: "Limited in Egypt" },
 };

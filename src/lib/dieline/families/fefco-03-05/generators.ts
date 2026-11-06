@@ -5,7 +5,7 @@ import { clamp, pt, rectPolygon } from "../../geometry";
 import { FACE_FRAMES, computePoses, panelLocalPoint, panelPivot } from "../../fold";
 import type { Affine, DielinePanel, FaceInfo, Pt } from "../../types";
 import { telescope, type StructureDraft } from "../../structures";
-import { deepEnds } from "../fefco-02/kit";
+import { composeFaces, deepEnds } from "../fefco-02/kit";
 import {
   IDENTITY_Q,
   ORIENT,
@@ -152,7 +152,9 @@ export function fefco0321(dims: Dims, t: number, f: StructureFeatures): Structur
   const box = subtreeBounds(b, base.rootId, t);
   const s = size(box);
   const lidH = lidDepthOf(f, dims.H, dims.H);
-  const lid = slottedBody(b, t, { prefix: "lid_", L: s.x + 2 * clear, W: s.z + 2 * clear, H: lidH, top: true, bottom: false, kind: "envelope", mount: { kind: "piece", label: "Lid" }, origin: nextOrigin(b, 20) });
+  // The lid's manufacturer's joint lies inside its left wall, in the gap over the base: +t a
+  // side on L so the joint clears the base wall (it went 0.5 mm into it: 3d.md R4-08).
+  const lid = slottedBody(b, t, { prefix: "lid_", L: s.x + 2 * clear + 2 * t, W: s.z + 2 * clear, H: lidH, top: true, bottom: false, kind: "envelope", mount: { kind: "piece", label: "Lid" }, origin: nextOrigin(b, 20) });
   placePiece(b, lid.rootId, t, ORIENT.upright(), alignOn(box, { top: box.max.y + 2 * t }), maxStageOf(b) + 1, dims.H * 1.4);
   // The minor envelope flaps show in the corners between the tapered majors: print them too.
   return { builder: b, closedRotation: IDENTITY_Q, faceDepthTol: clear + t + 0.5, faces: deepEnds({ b, t }, ["top", "bottom"], 0) };
@@ -239,7 +241,9 @@ export function fefco0325(dims: Dims, t: number, f: StructureFeatures): Structur
   // (flapped trays: inner + 2t along L, + 4t along W) hold the inner size; the sleeve fits
   // round them with clearance.
   const c = clearOf(t);
-  rectTube(b, t, { prefix: "", Lp: dims.L + 2 * t + 2 * c + 2 * t, Wp: dims.W + 4 * t + 2 * c + 2 * t, Hp: dims.H + 2 * t, mount: { kind: "root", label: "Sleeve" }, origin: pt(0, 0) });
+  // Lp also leaves one caliper a side for the sleeve's joint, glued inside its left side next
+  // to the caps' end walls (it went 0.5 mm into them: 3d.md R4-08).
+  rectTube(b, t, { prefix: "", Lp: dims.L + 2 * t + 2 * c + 4 * t, Wp: dims.W + 4 * t + 2 * c + 2 * t, Hp: dims.H + 2 * t, mount: { kind: "root", label: "Sleeve" }, origin: pt(0, 0) });
   const r = addCaps(b, t, dims, f, IDENTITY_Q, { style: { corners: flapsEnd }, top: true, bottom: true, internal: true }, clamp(Math.round(dims.H * 0.15), 30, 100), dims.H / 2);
   return { builder: b, closedRotation: IDENTITY_Q, ...r };
 }
@@ -299,7 +303,10 @@ function octabin(dims: Dims, t: number, f: StructureFeatures, regular: boolean, 
     });
     placePiece(b, cap.rootId, t, end === "top" ? ORIENT.ceiling() : ORIENT.floor(), alignOn(box, end === "top" ? { top: box.max.y + t } : { bottom: box.min.y - t }), maxStageOf(b) + 1, dims.H * 0.8);
   }
-  return { builder: b, closedRotation: IDENTITY_Q, faceDepthTol: clear + 2 * t + 0.5, faces: octFaces(t) };
+  // 0350 flap bottom: the side and corner minor flaps show round the two majors (most of the
+  // octagon), so they join the bottom face too (they showed bare board under a bottom design).
+  const faces = bottomFlaps ? composeFaces(octFaces(t), deepEnds({ b, t }, ["bottom"], 0)) : octFaces(t);
+  return { builder: b, closedRotation: IDENTITY_Q, faceDepthTol: clear + 2 * t + 0.5, faces };
 }
 
 /**
@@ -441,7 +448,9 @@ function nestInside(b: DielineBuilder, t: number, rootId: string, mainRotation: 
 export function fefco0504(dims: Dims, t: number): StructureDraft {
   const c = clearOf(t);
   const b = new DielineBuilder();
-  sleeve0501(b, t, { prefix: "", L: dims.L + 2 * t + 2 * c, W: dims.W + 2 * c, H: dims.H + 2 * t + 2 * c, mount: { kind: "root", label: "Outer sleeve" }, origin: pt(0, 0) });
+  // L leaves one caliper a side for the outer sleeve's joint, glued inside its left side next
+  // to the inner sleeve's end (it went 0.5 mm into it: 3d.md R4-08).
+  sleeve0501(b, t, { prefix: "", L: dims.L + 4 * t + 2 * c, W: dims.W + 2 * c, H: dims.H + 2 * t + 2 * c, mount: { kind: "root", label: "Outer sleeve" }, origin: pt(0, 0) });
   const inner = sleeve0502(b, t, { prefix: "in_", L: dims.L, W: dims.W, H: dims.H, mount: { kind: "piece", label: "Inner sleeve" }, origin: nextOrigin(b) });
   nestInside(b, t, inner.rootId, IDENTITY_Q, ORIENT.ceiling(), dims.H * 1.5);
   return { builder: b, closedRotation: IDENTITY_Q, faceDepthTol: c + t + 0.5 };

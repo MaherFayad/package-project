@@ -43,27 +43,38 @@ export interface Ctx {
   wallIds: Record<WallId, string>;
 }
 
+/** Clearance between the left wall's free end and the front's printed face at the glued joint. */
+export const JOINT_GAP_MM = 0.1;
+/** The joint flap hinges this far inside the printed face of its wall (no z-fight at the corner). */
+export const JOINT_PIVOT_MM = 0.08;
+
 /** Standard tube: joint | front | right | back | left. Front is the root. */
 export function standardTube(Lp: number, Wp: number, Hp: number, t: number, opts: { joint?: boolean } = {}): Ctx {
   const b = new DielineBuilder();
   const j = jointWidth(Hp);
   const xF = j;
+  // The free end of the left wall stops JOINT_GAP_MM short of the front's outer face: flush,
+  // its cut edge lay in the FRONT print and z-fought down the joint corner (R5-3Q-A).
+  const Wl = opts.joint !== false ? Wp - JOINT_GAP_MM : Wp;
   const walls: Walls = {
     front: rect(xF, 0, Lp, Hp),
     right: rect(xF + Lp, 0, Wp, Hp),
     back: rect(xF + Lp + Wp, 0, Lp, Hp),
-    left: rect(xF + 2 * Lp + Wp, 0, Wp, Hp),
+    left: rect(xF + 2 * Lp + Wp, 0, Wl, Hp),
   };
   b.root("front", "front", rectPolygon(walls.front.x, 0, Lp, Hp), "Front");
   b.attach("right", "right", "front", rectEdges(walls.front).right, Wp, { kind: "rect" }, { stage: 0, label: "Right side" });
   b.attach("back", "back", "right", rectEdges(walls.right).right, Lp, { kind: "rect" }, { stage: 0, label: "Back" });
-  b.attach("left", "left", "back", rectEdges(walls.back).right, Wp, { kind: "rect" }, { stage: 0, label: "Left side" });
+  b.attach("left", "left", "back", rectEdges(walls.back).right, Wl, { kind: "rect" }, { stage: 0, label: "Left side" });
   if (opts.joint !== false) {
     // The joint stops 2t + 1 short of each end crease: overlapped minor flaps sit up to two
     // calipers inside the wall top, and would otherwise fold down into the glued joint.
     b.attach("glue", "glue", "front", insetSeg(rectEdges(walls.front).left, 2 * t + 1), j, { kind: "trapezoid", taperA: Math.max(j * 0.25, 3 * t), taperB: Math.max(j * 0.25, 3 * t) }, {
       stage: 0,
-      stack: -1,
+      // Hinged a hair (0.08 mm) inside the front's printed face: on the face itself the joint's
+      // board-coloured hinge edge lay in the FRONT print beside the corner and flickered (R5-3Q-A).
+      stack: -1 - JOINT_PIVOT_MM / t,
+      pivotDepth: JOINT_PIVOT_MM / t,
       label: "Manufacturer's joint",
     });
   }

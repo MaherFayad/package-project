@@ -7,7 +7,15 @@ import type { Locale } from "@/types";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { DISPUTE_REASONS_LIST } from "@/lib/orders/schema-constants";
-import { Banner, BlockStack, Button, Card, Icon, Select, Text, TextField, useToast } from "@/components/ui";
+import { Banner } from "@/components/ui/Banner";
+import { BlockStack } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Icon } from "@/components/ui/Icon";
+import { Select } from "@/components/ui/Select";
+import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
+import { useToast } from "@/components/ui/Toast";
 import { cancelAction, disputeAction, reorderAction, reviewAction } from "../[id]/actions";
 import styles from "./orders.module.css";
 

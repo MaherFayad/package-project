@@ -1,0 +1,18 @@
+/* Split out of Misc.module.css (R5-PL-05): with inlineCss each route segment inlines the CSS of
+   the components it renders, so one shared sheet was copied whole into every page, loading and
+   error segment that used any of these components. */
+/* ── Link / Breadcrumbs ───────────────────────────────────── */
+.Link { color: var(--p-color-text-link); text-decoration: underline; text-underline-offset: 0.15em; border-radius: var(--p-border-radius-050); }
+.Link:hover { color: var(--p-color-text-link-hover); }
+.Link:active { color: var(--p-color-text-link-active); }
+.monochrome, .monochrome:hover { color: inherit; }
+.noUnderline { text-decoration: none; }
+.noUnderline:hover { text-decoration: underline; }
+.ExternalIcon { display: inline-flex; vertical-align: middle; margin-inline-start: var(--p-space-050); }
+.Breadcrumbs { display: flex; flex-wrap: wrap; align-items: center; gap: var(--p-space-100); margin: 0; padding: 0; list-style: none; font-size: var(--p-text-body-md-font-size); }
+.Crumb { display: inline-flex; align-items: center; gap: var(--p-space-100); color: var(--p-color-text-secondary); }
+.Crumb + .Crumb::before { content: "›"; color: var(--p-color-icon-secondary); }
+:global([dir="rtl"]) .Crumb + .Crumb::before { content: "‹"; }
+.CrumbLink { color: var(--p-color-text-secondary); text-decoration: none; }
+.CrumbLink:hover { color: var(--p-color-text); text-decoration: underline; }
+.CrumbCurrent { color: var(--p-color-text); font-weight: var(--p-font-weight-semibold); }

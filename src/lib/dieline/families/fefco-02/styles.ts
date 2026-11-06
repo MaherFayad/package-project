@@ -23,6 +23,8 @@ import {
   slotWidth,
   slottedEnd,
   snapLockBottom,
+  JOINT_GAP_MM,
+  JOINT_PIVOT_MM,
   standardTube,
   stripFace,
   tuckLidEnd,
@@ -487,17 +489,18 @@ const s0225: Fefco02Generator = (d, t, f, p = {}) => {
   const Hp = d.H + (l.top + l.bottom) * t;
   const b = new DielineBuilder();
   const j = jointWidth(Hp);
+  // The left wall's free end stops JOINT_GAP_MM short of the back's printed face (as standardTube).
   const walls: Walls = {
-    left: rect(0, 0, Wp, Hp),
+    left: rect(JOINT_GAP_MM, 0, Wp - JOINT_GAP_MM, Hp),
     front: rect(Wp, 0, Lp, Hp),
     right: rect(Wp + Lp, 0, Wp, Hp),
     back: rect(2 * Wp + Lp, 0, Lp, Hp),
   };
   b.root("front", "front", rectPolygon(walls.front.x, 0, Lp, Hp), "Front");
-  b.attach("left", "left", "front", rectEdges(walls.front).left, Wp, { kind: "rect" }, { stage: 0, label: "Left side" });
+  b.attach("left", "left", "front", rectEdges(walls.front).left, walls.left.width, { kind: "rect" }, { stage: 0, label: "Left side" });
   b.attach("right", "right", "front", rectEdges(walls.front).right, Wp, { kind: "rect" }, { stage: 0, label: "Right side" });
   b.attach("back", "back", "right", rectEdges(walls.right).right, Lp, { kind: "rect" }, { stage: 0, label: "Back" });
-  b.attach("glue", "glue", "back", insetSeg(rectEdges(walls.back).right, 2 * t + 1), j, { kind: "trapezoid", taperA: Math.max(j * 0.25, 3 * t), taperB: Math.max(j * 0.25, 3 * t) }, { stage: 0, stack: -1, label: "Manufacturer's joint" });
+  b.attach("glue", "glue", "back", insetSeg(rectEdges(walls.back).right, 2 * t + 1), j, { kind: "trapezoid", taperA: Math.max(j * 0.25, 3 * t), taperB: Math.max(j * 0.25, 3 * t) }, { stage: 0, stack: -1 - JOINT_PIVOT_MM / t, pivotDepth: JOINT_PIVOT_MM / t, label: "Manufacturer's joint" });
   const c: Ctx = { b, t, Lp, Wp, Hp, slot: slotWidth(t), walls, wallIds: { front: "front", right: "right", back: "back", left: "left" } };
   rscEnd(c, "top");
 

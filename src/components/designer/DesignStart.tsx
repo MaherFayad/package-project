@@ -9,11 +9,13 @@ import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n/types";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
+import { loadEngineStack } from "@/components/three";
 import { PRODUCT_PRESETS, designerPathLite, type ProductPresetKey } from "./lib/paths";
 import styles from "./designer.module.css";
 
 // No loading poster here: DesignStart keeps one poster <img> until the first frame (R4-11).
-const StartViewer = dynamic(() => import("./StartViewer"), { ssr: false, loading: () => null });
+// R6-R1: three.js, the React renderer and the viewer load in steps with yields between them
+const StartViewer = dynamic(() => loadEngineStack().then(() => import("./StartViewer")), { ssr: false, loading: () => null });
 
 const ICONS = { tshirt: Shirt, shoe: Footprints, perfume50: SprayCan, pizza30: Pizza } as const;
 /** Poster (the model's thumbnail) shown until the 3D chunk is ready. */

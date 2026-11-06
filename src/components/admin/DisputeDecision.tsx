@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Banner, BlockStack, Button, Card, ChoiceList, InlineStack, Modal, Select, Text, TextField } from "@/components/ui";
+import { Banner } from "@/components/ui/Banner";
+import { BlockStack, InlineStack } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { ChoiceList } from "@/components/ui/ChoiceList";
+import { Modal } from "@/components/ui/Modal";
+import { Select } from "@/components/ui/Select";
+import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { decideDisputeAction } from "./server/actions";

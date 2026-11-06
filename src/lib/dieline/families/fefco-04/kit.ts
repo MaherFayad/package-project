@@ -130,9 +130,13 @@ export function trayKit(dims: Dims, t: number, o: TrayKitOpts, f: StructureFeatu
   // Wall heights. Flap covers only raise the walls that carry them; the others stop under the flaps.
   const Hbase = dims.H + t;
   const flapsOn = o.top.kind === "flaps" ? o.top.on : null;
-  const hLong = Hbase + (o.top.kind === "lid" || flapsOn === "long" ? cover * t : 0);
-  const hEnds = Hbase + (o.top.kind === "lid" || flapsOn === "ends" ? cover * t : 0);
-  const Hf = o.top.kind === "lid" ? Hbase + t : hLong;
+  const lid = o.top.kind === "lid";
+  // Under a lid, a rolled double wall stops at the lid's underside: the roll then sits under the
+  // lid instead of running up through the lid board (its fold showed as a kraft strip on the
+  // printed lid, R5-3Q-C-03). Single walls keep running up to the lid's top face (corner joint).
+  const hLong = Hbase + (lid || flapsOn === "long" ? cover * t : 0);
+  const hEnds = Hbase + ((lid && !d.ends) || flapsOn === "ends" ? cover * t : 0);
+  const Hf = lid ? Hbase + (d.front && !o.displayFront ? 0 : t) : hLong;
   const Hb = (o.top.kind === "lid" ? Hbase + t : hLong) + (o.header ? dims.H * o.header : 0);
   const He = hEnds + (o.raisedEnds ? dims.H * o.raisedEnds : 0);
 
@@ -185,6 +189,10 @@ export function trayKit(dims: Dims, t: number, o: TrayKitOpts, f: StructureFeatu
     b.attach(w.id, w.id, "base", w.baseEdge, w.height, { kind: "rect" }, { stage: wallStage(w.key), label: `${w.id[0].toUpperCase()}${w.id.slice(1)} wall` });
   }
 
+  const holeW = Math.min(80, Wp * 0.45);
+  // Hand holes need a wall tall and wide enough for a hand (else the toggle is a no-op, as before).
+  const handHoles = (o.handHoles || !!f.handle) && o.top.kind !== "lid" && holeW >= 35 && Math.min(26, He * 0.25) >= 14;
+
   // ── corner ears: fold onto the inside of the neighbouring wall
   const earOwners = o.ears === "long" ? walls.filter((w) => w.key !== "ends") : o.ears === "ends" ? walls.filter((w) => w.key === "ends") : [];
   for (const w of earOwners) {
@@ -192,9 +200,16 @@ export function trayKit(dims: Dims, t: number, o: TrayKitOpts, f: StructureFeatu
     const span = w.key === "ends" ? Lp : Wp;
     // End-wall ears lie along the long walls on the sheet: keep them shorter than those walls
     // so they never run into the lid side flaps or cover flaps hinged beyond them.
-    const earD = clamp(span * 0.38, 10, w.key === "ends" ? Math.min(110, Math.min(Hf, Hb) - 2) : 160);
+    // Ears trapped in an end wall with a hand hole stop 4 mm short of the hole: full-length ears
+    // ran ~6 mm into each side of it and showed their board inside the hole (R5-3Q-C-04).
+    const holeClear = w.key !== "ends" && handHoles ? (Wp - holeW) / 2 - 4 : Infinity;
+    const earD = clamp(Math.min(span * 0.38, holeClear), 10, w.key === "ends" ? Math.min(110, Math.min(Hf, Hb) - 2) : 160);
     w.sides.forEach(([rim, basePt], i) => {
-      const h = Math.min(w.height, neighbourH) - 0.5;
+      // An end-wall ear landing on a display front (side 1 = front) stays below the cut-down
+      // (half the front height): full-height ears stood ~12 cm² above the opening, loose and in
+      // full view of the shopper (R5-3Q-C-05).
+      const onDisplay = o.displayFront && w.key === "ends" && i === 1;
+      const h = Math.min(w.height, onDisplay ? Hf * 0.5 : neighbourH) - 0.5;
       const k = h / dist(rim, basePt);
       const rimPt = pt(basePt.x + (rim.x - basePt.x) * k, basePt.y + (rim.y - basePt.y) * k);
       const taper = Math.min(earD * 0.5, h * 0.3);
@@ -279,14 +294,13 @@ export function trayKit(dims: Dims, t: number, o: TrayKitOpts, f: StructureFeatu
   }
 
   // ── hand holes in the end walls (and their rolled inner walls)
-  if ((o.handHoles || f.handle) && top.kind !== "lid") {
+  if (handHoles) {
     for (const w of [wall("right"), wall("left")]) {
       const p = b.byId(w.id);
       const [ra, rb] = w.farEdge;
       const mid = pt((ra.x + rb.x) / 2, (ra.y + rb.y) / 2);
-      const hw = Math.min(80, Wp * 0.45);
+      const hw = holeW;
       const hh = Math.min(26, w.height * 0.25);
-      if (hw < 35 || hh < 14) continue;
       const off = hh / 2 + Math.max(10, w.height * 0.12);
       const sign = w.id === "right" ? 1 : -1; // toward the base
       p.holes = [...(p.holes ?? []), stadium(mid.x + sign * off, mid.y, hh, hw, false)];
@@ -301,7 +315,12 @@ export function trayKit(dims: Dims, t: number, o: TrayKitOpts, f: StructureFeatu
   if (f.window && top.kind === "lid") cutWindow(b, "top", f.window, { margin: Math.max(12, lay.ends * t + 8) });
   if (f.thumbNotch && top.kind === "none" && !o.displayFront) {
     const fr = b.byId("front");
-    notchPanel(fr, farPoints(fr), Math.min(18, Lp * 0.1));
+    const r = Math.min(18, Lp * 0.1);
+    notchPanel(fr, farPoints(fr), r);
+    // A rolled double front is notched through both layers (one die cut across the roll): with the
+    // outer wall alone notched, the inner wall stood straight behind the notch and hid it (R5-3Q-C-02).
+    const inner = b.panels.find((q) => q.id === "frontInner");
+    if (inner?.hinge) notchPanel(inner, [inner.hinge.a, inner.hinge.b], r);
   }
 
   return { builder: b, closedRotation: TILT_UP, ...(outsideFlaps ? { faceDepthTol: t + 0.5 } : {}) };

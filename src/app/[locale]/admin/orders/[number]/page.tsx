@@ -1,23 +1,15 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import {
-  Badge,
-  Banner,
-  BlockStack,
-  Box,
-  Card,
-  Divider,
-  InlineStack,
-  Inset,
-  Layout,
-  LayoutSection,
-  Link,
-  Page,
-  Text,
-  Timeline,
-  type TimelineGroup,
-} from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { Banner } from "@/components/ui/Banner";
+import { BlockStack, Box, Divider, InlineStack } from "@/components/ui/Stack";
+import { Card, Inset } from "@/components/ui/Card";
+import { Layout, LayoutSection } from "@/components/ui/Layout";
+import { Link } from "@/components/ui/Link";
+import { Page } from "@/components/ui/Page";
+import { Text } from "@/components/ui/Text";
+import { Timeline, type TimelineGroup } from "@/components/ui/Timeline";
 import { NoteComposer, OverrideCard, QcActions, RefundCard, RoutingCard, ShipCard } from "@/components/admin/OrderActions";
 import { OrderStatusBadge } from "@/components/admin/OrdersIndex";
 import { adminStyles } from "@/components/admin/charts";

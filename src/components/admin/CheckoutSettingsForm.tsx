@@ -1,7 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BlockStack, Button, Card, Checkbox, InlineGrid, InlineStack, Text, TextField } from "@/components/ui";
+import { BlockStack, InlineGrid, InlineStack } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Checkbox } from "@/components/ui/Checkbox";
+import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
 import { useI18n } from "@/i18n/client";
 import { saveCheckoutSettingsAction } from "./server/actions";
 import type { CheckoutSettingsForm as Settings } from "./lib/checkoutSettings";

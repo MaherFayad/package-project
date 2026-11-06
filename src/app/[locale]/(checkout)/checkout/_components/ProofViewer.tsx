@@ -10,7 +10,8 @@ import { useArtworkCanvases } from "@/components/designer/useArtworkCanvases";
 import { DielineView } from "@/components/designer/DielineView";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
-import { Button, ButtonGroup, Tabs } from "@/components/ui";
+import { Button, ButtonGroup } from "@/components/ui/Button";
+import { Tabs } from "@/components/ui/Tabs";
 import styles from "./checkout.module.css";
 
 

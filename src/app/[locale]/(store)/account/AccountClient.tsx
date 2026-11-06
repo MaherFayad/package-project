@@ -7,7 +7,14 @@ import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { formatDate } from "@/lib/format";
 import { signOut } from "@/components/auth";
-import { Badge, Banner, BlockStack, Button, InlineStack, Modal, Text, TextField, useToast } from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { Banner } from "@/components/ui/Banner";
+import { BlockStack, InlineStack } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
+import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
+import { useToast } from "@/components/ui/Toast";
 import type { AccountErrorCode, ActionResult, DataRequestStatus } from "@/components/store/account-logic";
 import { deleteDesignAction, requestDeletionAction, setMarketingConsentAction, updateProfileAction } from "./actions";
 

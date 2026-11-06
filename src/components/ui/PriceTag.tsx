@@ -5,7 +5,7 @@ import type { Locale, Piasters } from "@/types";
 import { useUi } from "./AppProvider";
 import { uiStrings } from "./strings";
 import { cx } from "./utils";
-import styles from "./Misc.module.css";
+import styles from "./PriceTag.module.css";
 
 export interface PriceTagProps {
   /** Integer piasters (1 EGP = 100). */

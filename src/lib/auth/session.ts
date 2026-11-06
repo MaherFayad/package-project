@@ -7,7 +7,7 @@ import { isProd } from "@/lib/env";
 import { clientIp } from "@/lib/rate-limit";
 import type { Locale, Role } from "@/types";
 import { DEFAULT_LOCALE } from "@/types";
-import { SESSION_COOKIE, SESSION_TTL_DAYS } from "./constants";
+import { SESSION_COOKIE, SESSION_TTL_DAYS, sessionLive } from "./constants";
 import { randomToken, sha256 } from "./crypto";
 
 /** What server code gets about the signed-in user. Serialisable; safe to pass to client components. */
@@ -39,7 +39,12 @@ export const getSession = cache(async (): Promise<Session | null> => {
     where: { tokenHash: sha256(token) },
     include: { user: true },
   });
-  if (!row || row.expiresAt < new Date()) return null;
+  if (!row) return null;
+  if (!sessionLive(row, row.user.role)) {
+    // Expired, or an ADMIN session past ADMIN_SESSION_MAX_HOURS (R5-SEC-12): drop it so it cannot come back.
+    await db.session.deleteMany({ where: { id: row.id } }).catch(() => undefined);
+    return null;
+  }
   const u = row.user;
   return {
     id: row.id,

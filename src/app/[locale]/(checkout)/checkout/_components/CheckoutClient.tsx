@@ -13,26 +13,21 @@ import { formatDateTime, formatDims, formatMoney } from "@/lib/format";
 import { normalizeEgyptPhone } from "@/lib/phone";
 import { GOVERNORATES } from "@/lib/orders/governorates";
 import type { CheckoutOffer } from "@/lib/orders/service";
-import {
-  Badge,
-  Banner,
-  BlockStack,
-  Box,
-  Button,
-  Card,
-  Checkbox,
-  Divider,
-  Icon,
-  InlineStack,
-  Link,
-  Page,
-  PriceTag,
-  Select,
-  SkeletonBodyText,
-  Stepper,
-  Text,
-  TextField,
-} from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { Banner } from "@/components/ui/Banner";
+import { BlockStack, Box, Divider, InlineStack } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Checkbox } from "@/components/ui/Checkbox";
+import { Icon } from "@/components/ui/Icon";
+import { Link } from "@/components/ui/Link";
+import { Page } from "@/components/ui/Page";
+import { PriceTag } from "@/components/ui/PriceTag";
+import { Select } from "@/components/ui/Select";
+import { SkeletonBodyText } from "@/components/ui/Skeleton";
+import { Stepper } from "@/components/ui/Stepper";
+import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
 import { getOffersAction, placeOrderAction, requestQuoteAction, type OffersResult } from "../actions";
 import { QUOTE_NOTE_MAX } from "../quote-request";
 import { formatTaxId, isValidTaxId } from "@/lib/orders/company";
@@ -562,7 +557,8 @@ export function CheckoutClient(props: {
                   tone="success"
                   title={t("buyer.quote.sentTitle", { qty: qty.toLocaleString("en-US") })}
                   action={{ content: t("buyer.quote.viewRequests"), url: `/${locale}/account#quote-requests` }}
-                  announce
+                  // a11y R5-AX-11: no `announce` here; the polite offers region above already reads
+                  // it and focus moves onto it, so a nested status made screen readers say it twice.
                 >
                   {t("buyer.quote.sentBody", { phone: props.contactPhone })}
                 </Banner>

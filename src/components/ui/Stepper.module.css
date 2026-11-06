@@ -1,0 +1,71 @@
+/* Split out of Misc.module.css (R5-PL-05): with inlineCss each route segment inlines the CSS of
+   the components it renders, so one shared sheet was copied whole into every page, loading and
+   error segment that used any of these components. */
+/* ── Stepper ──────────────────────────────────────────────── */
+.Stepper { display: flex; margin: 0; padding: 0; list-style: none; }
+.Step {
+  --step-color: var(--p-color-bg-fill-tertiary);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--p-space-200);
+  flex: 1 1 0;
+  min-width: 0;
+  text-align: center;
+}
+/* connector to the previous step */
+.Step + .Step::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 0.6875rem;
+  inset-inline-end: calc(50% + 1rem);
+  inline-size: calc(100% - 2rem);
+  block-size: 2px;
+  background: var(--step-line, var(--p-color-border));
+}
+.step-complete, .step-current { --step-line: var(--p-color-bg-fill-brand); }
+.StepMarker {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  border-radius: var(--p-border-radius-full);
+  background: var(--p-color-bg-surface);
+  box-shadow: inset 0 0 0 2px var(--p-color-border-tertiary);
+  color: var(--p-color-text-brand-on-bg-fill);
+}
+.step-complete .StepMarker { background: var(--p-color-bg-fill-brand); box-shadow: none; }
+.step-current .StepMarker { box-shadow: inset 0 0 0 2px var(--p-color-bg-fill-brand); }
+.StepDot { inline-size: 0.5rem; block-size: 0.5rem; border-radius: var(--p-border-radius-full); background: transparent; }
+.step-current .StepDot { background: var(--p-color-bg-fill-brand); }
+.stepCritical .StepMarker { background: var(--p-color-bg-fill-critical); box-shadow: none; }
+.StepText { display: flex; flex-direction: column; gap: var(--p-space-050); min-width: 0; }
+.StepLabel { font-weight: var(--p-font-weight-semibold); color: var(--p-color-text); overflow-wrap: anywhere; }
+.step-upcoming .StepLabel { color: var(--p-color-text-secondary); font-weight: var(--p-font-weight-medium); }
+.stepCritical .StepLabel { color: var(--p-color-text-critical); }
+.StepDescription { font-size: var(--p-text-body-sm-font-size); color: var(--p-color-text-secondary); font-variant-numeric: tabular-nums; }
+
+.stepperVertical { flex-direction: column; gap: var(--p-space-400); }
+.stepperVertical .Step { flex-direction: row; align-items: flex-start; text-align: start; }
+.stepperVertical .Step + .Step::before {
+  inset-block-start: calc(-1 * var(--p-space-400));
+  inset-inline-start: calc(0.75rem - 1px);
+  inset-inline-end: auto;
+  inline-size: 2px;
+  block-size: var(--p-space-400);
+}
+@media (max-width: 489.98px) {
+  .Stepper { flex-direction: column; gap: var(--p-space-400); }
+  .Step { flex-direction: row; align-items: flex-start; text-align: start; }
+  .Step + .Step::before {
+    inset-block-start: calc(-1 * var(--p-space-400));
+    inset-inline-start: calc(0.75rem - 1px);
+    inset-inline-end: auto;
+    inline-size: 2px;
+    block-size: var(--p-space-400);
+  }
+}

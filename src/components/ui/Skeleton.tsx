@@ -2,7 +2,7 @@
 
 import { useUi } from "./AppProvider";
 import { cx } from "./utils";
-import styles from "./Misc.module.css";
+import styles from "./Skeleton.module.css";
 
 /** Grey lines standing in for text while loading. Decorative; wrap regions in SkeletonPage or aria-busy. */
 export function SkeletonBodyText({ lines = 3 }: { lines?: number }) {

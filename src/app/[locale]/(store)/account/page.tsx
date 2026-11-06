@@ -7,7 +7,13 @@ import { fromJson } from "@/lib/json";
 import { requireUser } from "@/lib/auth/session";
 import { formatDate, formatDateTime, formatDims, formatMoney } from "@/lib/format";
 import type { Dims, OrderStatus } from "@/types";
-import { Badge, Button, Card, EmptyBoxIllustration, EmptyState, Layout, LayoutSection, Text, Thumbnail } from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { EmptyBoxIllustration, EmptyState } from "@/components/ui/EmptyState";
+import { Layout, LayoutSection } from "@/components/ui/Layout";
+import { Text } from "@/components/ui/Text";
+import { Thumbnail } from "@/components/ui/Thumbnail";
 import { designHref } from "@/components/store/catalog";
 import type { DataRequestStatus } from "@/components/store/account-logic";
 import { modelPoster } from "@/lib/orders/poster";
@@ -98,7 +104,7 @@ export default async function AccountPage({ params }: Props) {
                         <li key={d.id} className={`${styles.designRow} ${accountStyles.designRow}`}>
                           <Thumbnail source={d.thumbnailUrl ?? modelPoster(d.modelCode, d.structureCode)} alt="" size="small" />
                           <div className={styles.designMain}>
-                            <Text as="span" fontWeight="semibold" truncate>
+                            <Text as="span" fontWeight="semibold" breakWord>
                               {label}
                             </Text>
                             <Text as="span" variant="bodySm" tone="subdued">
@@ -181,7 +187,8 @@ export default async function AccountPage({ params }: Props) {
                         // R5-03: same phone layout as saved designs (actions on their own row).
                         <li key={q.id} className={`${styles.designRow} ${accountStyles.designRow}`}>
                           <div className={styles.designMain}>
-                            <Text as="span" fontWeight="semibold" truncate>
+                            {/* a11y R5-AX-12: wraps instead of an ellipsis, so 1.4.12 text spacing never hides the design name */}
+                            <Text as="span" fontWeight="semibold" breakWord>
                               {t("buyer.quote.listItem", { qty: q.quantity.toLocaleString("en-US"), design: q.design })}
                             </Text>
                             <Text as="span" variant="bodySm" tone="subdued">

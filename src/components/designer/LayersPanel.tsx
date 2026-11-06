@@ -4,7 +4,11 @@ import { FACE_IDS, type DesignDoc, type FaceId, type PrintSurface, type Prefligh
 import type { FaceInfo } from "@/lib/dieline";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n/types";
-import { Badge, BlockStack, Button, Card, Text } from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { BlockStack } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Text } from "@/components/ui/Text";
 import { describeFace } from "./lib/describe";
 import styles from "./designer.module.css";
 

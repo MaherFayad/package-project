@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
-import { Select } from "@/components/ui";
+import { Select } from "@/components/ui/Select";
 
 /** Period selector for the overview (state in the URL, ?range=7d|30d|90d). */
 export function RangeSelect({ value, options, label }: { value: string; options: { value: string; label: string }[]; label: string }) {

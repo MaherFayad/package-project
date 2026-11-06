@@ -1,0 +1,18 @@
+/* Split out of Misc.module.css (R5-PL-05): with inlineCss each route segment inlines the CSS of
+   the components it renders, so one shared sheet was copied whole into every page, loading and
+   error segment that used any of these components. */
+/* ── EmptyState ───────────────────────────────────────────── */
+.EmptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--p-space-300);
+  padding: var(--p-space-1000) var(--p-space-400);
+  text-align: center;
+}
+.emptyCompact { padding-block: var(--p-space-600); }
+.EmptyImage { margin-block-end: var(--p-space-200); }
+.EmptyHeading { margin: 0; font-size: var(--p-text-heading-md-font-size); line-height: var(--p-text-heading-md-font-line-height); font-weight: var(--p-font-weight-semibold); }
+.EmptyBody { max-inline-size: 25rem; color: var(--p-color-text-secondary); }
+.EmptyActions { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: var(--p-space-200); margin-block-start: var(--p-space-100); }
+.EmptyFooter { margin-block-start: var(--p-space-200); color: var(--p-color-text-secondary); font-size: var(--p-text-body-sm-font-size); }

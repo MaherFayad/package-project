@@ -2,16 +2,18 @@ import type { LocalizedText } from "@/types";
 import type { BottleMaterial, BottleMaterialCode, ContentCode } from "./types";
 
 /**
- * `coreMaterial` is the core look the 3D view uses until it takes `hex` as a tint. Rule: never
- * render a different colour family (green glass was shown amber). Untinted clear is the fallback
- * for green / cobalt glass; translucent natural HDPE / PP use the frosted (milky) look; amber
- * PET uses amber glass, which is the right colour.
+ * `coreMaterial` is the core look the 3D view uses; the library passes `hex` as a tint whenever
+ * the two codes differ (X-01), and the tint replaces the core colour and absorption colour. Green
+ * and cobalt glass ride on the dense GLASS_AMBER base (opacity 0.55, short absorption distance):
+ * on the clear base (opacity 0.16) the tint read as pale mint / lavender, i.e. nearly flint
+ * (R5-3Q-F-04). Translucent natural HDPE / PP use the frosted (milky) look; amber PET uses amber
+ * glass, which is the right colour.
  */
 export const BOTTLE_MATERIALS: Record<BottleMaterialCode, BottleMaterial> = {
   GLASS_FLINT: { code: "GLASS_FLINT", name: { ar: "زجاج شفاف", en: "Flint glass" }, kind: "GLASS", hex: "#eef4f2", transmission: 0.92, frosted: false, recyclingCode: "70 GL", uvBlock: "low", coreMaterial: "GLASS_CLEAR" },
   GLASS_AMBER: { code: "GLASS_AMBER", name: { ar: "زجاج عسلي", en: "Amber glass" }, kind: "GLASS", hex: "#8a4b12", transmission: 0.55, frosted: false, recyclingCode: "72 GL", uvBlock: "high", coreMaterial: "GLASS_AMBER" },
-  GLASS_GREEN: { code: "GLASS_GREEN", name: { ar: "زجاج أخضر", en: "Green glass" }, kind: "GLASS", hex: "#2f5a2c", transmission: 0.5, frosted: false, recyclingCode: "71 GL", uvBlock: "medium", coreMaterial: "GLASS_CLEAR" },
-  GLASS_COBALT: { code: "GLASS_COBALT", name: { ar: "زجاج أزرق كوبالت", en: "Cobalt blue glass" }, kind: "GLASS", hex: "#1d3f8f", transmission: 0.45, frosted: false, recyclingCode: "70 GL", uvBlock: "low", coreMaterial: "GLASS_CLEAR" },
+  GLASS_GREEN: { code: "GLASS_GREEN", name: { ar: "زجاج أخضر", en: "Green glass" }, kind: "GLASS", hex: "#2f5a2c", transmission: 0.5, frosted: false, recyclingCode: "71 GL", uvBlock: "medium", coreMaterial: "GLASS_AMBER" },
+  GLASS_COBALT: { code: "GLASS_COBALT", name: { ar: "زجاج أزرق كوبالت", en: "Cobalt blue glass" }, kind: "GLASS", hex: "#1d3f8f", transmission: 0.45, frosted: false, recyclingCode: "70 GL", uvBlock: "low", coreMaterial: "GLASS_AMBER" },
   GLASS_FROSTED: { code: "GLASS_FROSTED", name: { ar: "زجاج مصنفر", en: "Frosted glass" }, kind: "GLASS", hex: "#e4ebe9", transmission: 0.6, frosted: true, recyclingCode: "70 GL", uvBlock: "low", coreMaterial: "GLASS_FROSTED" },
   PET_CLEAR: { code: "PET_CLEAR", name: { ar: "بلاستيك PET شفاف", en: "Clear PET" }, kind: "PET", hex: "#f2f7fa", transmission: 0.95, frosted: false, recyclingCode: "1 PET", uvBlock: "low", coreMaterial: "PET_CLEAR" },
   PET_AMBER: { code: "PET_AMBER", name: { ar: "بلاستيك PET عسلي", en: "Amber PET" }, kind: "PET", hex: "#9a5418", transmission: 0.6, frosted: false, recyclingCode: "1 PET", uvBlock: "high", coreMaterial: "GLASS_AMBER" },

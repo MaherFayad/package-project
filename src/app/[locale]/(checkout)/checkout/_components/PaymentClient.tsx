@@ -9,24 +9,20 @@ import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { formatDateTime, formatMoney } from "@/lib/format";
 import type { PaymentView } from "@/lib/orders/service";
-import {
-  Badge,
-  Banner,
-  BlockStack,
-  Button,
-  Card,
-  ChoiceList,
-  Divider,
-  InlineStack,
-  Modal,
-  Page,
-  PriceTag,
-  Spinner,
-  Stepper,
-  Text,
-  TextField,
-  useToast,
-} from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { Banner } from "@/components/ui/Banner";
+import { BlockStack, Divider, InlineStack } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { ChoiceList } from "@/components/ui/ChoiceList";
+import { Modal } from "@/components/ui/Modal";
+import { Page } from "@/components/ui/Page";
+import { PriceTag } from "@/components/ui/PriceTag";
+import { Spinner } from "@/components/ui/Spinner";
+import { Stepper } from "@/components/ui/Stepper";
+import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
+import { useToast } from "@/components/ui/Toast";
 import { cancelOrderAction, instapaySentAction, orderPayStateAction, startPaymentAction } from "../actions";
 import styles from "./checkout.module.css";
 

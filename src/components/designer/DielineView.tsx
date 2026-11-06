@@ -14,6 +14,7 @@ export function DielineView({
   version,
   label,
   legend,
+  size,
   panelLabels,
   locale = "en",
 }: {
@@ -22,6 +23,8 @@ export function DielineView({
   version: number;
   label: string;
   legend: string;
+  /** R11-05: the flat (die) size, bleed and safe zone in mm, for the buyer and the printer. */
+  size?: string;
   panelLabels: Record<string, string>;
   /** Role names (tuck, dust flap, ear…) for panels without a face label (CR-27). */
   locale?: "ar" | "en";
@@ -86,7 +89,14 @@ export function DielineView({
         <canvas ref={canvasRef} className={styles.dielineCanvas} aria-hidden="true" />
         <div className={styles.dielineSvg} aria-hidden="true" dangerouslySetInnerHTML={{ __html: haloed }} />
       </div>
-      <figcaption className={styles.dielineLegend}>{legend}</figcaption>
+      <figcaption className={styles.dielineLegend} dir={locale === "ar" ? "rtl" : "ltr"}>
+        {size ? (
+          <span className={styles.dielineSize} data-testid="dieline-size">
+            {size}
+          </span>
+        ) : null}
+        {legend}
+      </figcaption>
     </figure>
   );
 }

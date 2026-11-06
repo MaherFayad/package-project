@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { cx } from "./utils";
-import styles from "./Misc.module.css";
+import styles from "./Timeline.module.css";
 
 export interface TimelineEvent {
   id: string;

@@ -2,7 +2,10 @@
 
 import { useEffect } from "react";
 import { useI18n } from "@/i18n/client";
-import { Button, Card, EmptyState, EmptyBoxIllustration, Page } from "@/components/ui";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { EmptyState, EmptyBoxIllustration } from "@/components/ui/EmptyState";
+import { Page } from "@/components/ui/Page";
 
 /** 404 for /s/<token> (unknown, revoked or never shared), inside the store chrome. */
 export default function ShareNotFound() {

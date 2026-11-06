@@ -7,7 +7,10 @@ import { safeParseFlexConfig } from "@/lib/vessels/families/flexible/schema";
 import type { FlexOptionKey, FlexibleCode } from "@/lib/vessels/families/flexible/types";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n/types";
-import { BlockStack, Checkbox, Select, Text } from "@/components/ui";
+import { BlockStack } from "@/components/ui/Stack";
+import { Checkbox } from "@/components/ui/Checkbox";
+import { Select } from "@/components/ui/Select";
+import { Text } from "@/components/ui/Text";
 import styles from "./library.module.css";
 
 const SPOUTS = ["none", "corner", "top", "front"] as const;

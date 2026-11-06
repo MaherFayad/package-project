@@ -6,22 +6,18 @@ import { QTY_TIERS, type DesignDoc, type Dims } from "@/types";
 import { formatDate, formatDims, formatMoney, formatNumber } from "@/lib/format";
 import { useI18n } from "@/i18n/client";
 import { OtpForm, type OtpSuccess } from "@/components/auth";
-import {
-  Badge,
-  Banner,
-  BlockStack,
-  Button,
-  ChoiceList,
-  Divider,
-  InlineStack,
-  Inset,
-  Modal,
-  PriceTag,
-  Select,
-  SkeletonBodyText,
-  Text,
-  TextField,
-} from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { Banner } from "@/components/ui/Banner";
+import { BlockStack, Divider, InlineStack } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { ChoiceList } from "@/components/ui/ChoiceList";
+import { Inset } from "@/components/ui/Card";
+import { Modal } from "@/components/ui/Modal";
+import { PriceTag } from "@/components/ui/PriceTag";
+import { Select } from "@/components/ui/Select";
+import { SkeletonBodyText } from "@/components/ui/Skeleton";
+import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
 import { BADGE_QTY, fetchQuote, quoteKey, type PriceState } from "./lib/quote";
 import { ORDER_MODE_COPY } from "@/data/catalogue/order-mode";
 
@@ -64,6 +60,9 @@ export function PriceBadge({ state, onClick, vessel = false }: { state: PriceSta
         days: state.best.deliveryDays,
       });
       break;
+    // R9-01: "idle" is a signed-in visitor before the first request (500 ms debounce). It fell
+    // through to the locked "see the price" copy with a lock icon; it is loading.
+    case "idle":
     case "loading":
       label = t("designer.price.loading");
       break;
@@ -80,7 +79,7 @@ export function PriceBadge({ state, onClick, vessel = false }: { state: PriceSta
       label = t(vessel ? "designer.container.badgeLocked" : "designer.price.badgeLocked", { qty: formatNumber(BADGE_QTY) });
   }
   const [before, after] = price !== null ? label.split(MARK) : [label, ""];
-  const loading = state.status === "loading";
+  const loading = state.status === "loading" || state.status === "idle";
   return (
     <button
       type="button"

@@ -41,11 +41,15 @@ export function octagonalTray(dims: Dims, t: number, _f: StructureFeatures = {},
     // The ear is a triangle that fits the 45° gap between this wall and the corner wall.
     for (const [k, basePt] of [["a", a], ["b", e]] as const) {
       const rim = near(basePt);
+      // The ear's hinge starts one caliper (+0.2 mm) above the base, so its foot stays on the base's
+      // inside face instead of showing its cut edge on the printed bottom (R5-3Q-C-01).
+      const lift = (t + 0.2) / Math.hypot(rim.x - basePt.x, rim.y - basePt.y);
+      const foot = pt(basePt.x + (rim.x - basePt.x) * lift, basePt.y + (rim.y - basePt.y) * lift);
       const fr = b.frame(name, [basePt, rim]);
       // Each corner wall takes one ear from each side: keep each under half its width so they never overlap.
       const d = Math.min(Hp * 0.8, (cornerLen * 0.5 - 1) / 0.9);
-      const poly: Polygon = [basePt, rim, fr.at(rim, -d * 0.15, d * 0.9)];
-      b.attachPoly(`ear_${name}_${k}`, "ear", name, [basePt, rim], poly, { fold: 45, stage: 0, stack: -1, label: "Glue ear" });
+      const poly: Polygon = [foot, rim, fr.at(rim, -d * 0.15, d * 0.9)];
+      b.attachPoly(`ear_${name}_${k}`, "ear", name, [foot, rim], poly, { fold: 45, stage: 0, stack: -1, label: "Glue ear" });
     }
   });
   turn180(b);

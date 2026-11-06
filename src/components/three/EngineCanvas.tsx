@@ -1,10 +1,10 @@
 "use client";
 
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useThree } from "@react-three/fiber";
 import { createContext, useCallback, useContext, useEffect, useId, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import { ACESFilmicToneMapping, AgXToneMapping, NeutralToneMapping, type ToneMapping } from "three";
 import { defaultMaxDpr } from "./hooks";
-import { KEY_SHORTCUTS, RendererSettings, ShaderWarmup, registerDebugRenderer } from "./perf";
+import { KEY_SHORTCUTS, RendererSettings, ShaderWarmup, registerDebugRenderer, yieldToMain } from "./perf";
 import type { ScreenshotOptions } from "./screenshot";
 import type { FitInsets } from "./fit";
 import styles from "./PackagingScene.module.css";
@@ -77,6 +77,15 @@ export function useRegisterViewApi(apiRef: { current: EngineViewApi | null }) {
   }, [ctx, apiRef]);
 }
 
+/** Draws a frame when `on` turns true (the safety reveal starts the frameloop without a warm-up). */
+function DrawWhen({ on }: { on: boolean }) {
+  const invalidate = useThree((st) => st.invalidate);
+  useEffect(() => {
+    if (on) invalidate();
+  }, [on, invalidate]);
+  return null;
+}
+
 export type EngineToneMapping = "neutral" | "aces" | "agx";
 export const TONE_MAPPING: Record<EngineToneMapping, ToneMapping> = {
   neutral: NeutralToneMapping,
@@ -136,6 +145,9 @@ export function EngineCanvas({
   // fades out over --motion-fast; a page that owns its poster fades it on onContentReady, which
   // fires at the reveal.
   const [warm, setWarm] = useState(false);
+  // R6-R1: no frame is drawn until ShaderWarmup has built the programs in slices; the first render
+  // would otherwise link them all in one long task
+  const [compiled, setCompiled] = useState(false);
   const [contentSeen, setContentSeen] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
   useEffect(() => {
@@ -172,6 +184,9 @@ export function EngineCanvas({
   const ctx = useMemo(() => ({ register, contentReady }), [register, contentReady]);
   const tm = TONE_MAPPING[toneMapping] ?? NeutralToneMapping;
   const onWarm = useCallback(() => setWarm(true), []);
+  const onCompiled = useCallback(() => setCompiled(true), []);
+  // R6-R1: the renderer (context, drawing buffer) and the scene mount in separate tasks
+  const [mountContent, setMountContent] = useState(false);
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (!enableKeyboard || e.altKey || e.ctrlKey || e.metaKey) return;
@@ -233,7 +248,7 @@ export function EngineCanvas({
       <Canvas
         className={styles.canvas}
         data-reveal={ready ? "shown" : "hidden"}
-        frameloop="demand"
+        frameloop={compiled || timedOut ? "demand" : "never"}
         dpr={[1, dprCap]}
         // drag / keyboard input drops the pixel ratio to 2/3 (never below 1) until 300 ms after it ends
         performance={{ min: 0.66, max: 1, debounce: 300 }}
@@ -246,13 +261,19 @@ export function EngineCanvas({
           gl.setClearColor(0x000000, 0);
           registerDebugRenderer(gl);
           onReady?.();
+          void yieldToMain().then(() => setMountContent(true));
         }}
         fallback={fallback ?? <div className={styles.fallback}>3D preview is not available on this device.</div>}
       >
         {/* compile every shader before the canvas fades in (no first-interaction hitch), then reveal */}
-        <ShaderWarmup onDone={onWarm} />
+        <DrawWhen on={timedOut} />
         <RendererSettings toneMapping={tm} exposure={exposure} />
-        <EngineCanvasContext.Provider value={ctx}>{children}</EngineCanvasContext.Provider>
+        {mountContent ? (
+          <>
+            <ShaderWarmup onDone={onWarm} onCompiled={onCompiled} />
+            <EngineCanvasContext.Provider value={ctx}>{children}</EngineCanvasContext.Provider>
+          </>
+        ) : null}
       </Canvas>
     </div>
   );

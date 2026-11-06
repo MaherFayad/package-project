@@ -413,3 +413,137 @@ Files touched outside scope: `src/middleware.ts` (one line, `x-elba-search`, R8-
 | high | 2 (R8-02, R8-03; both reopened by performance) | 1 fully (R8-02), 1 for the passive page (R8-03) | R8-03 after Play → 3d-engine R6-R1 |
 | medium | 1 (R8-01) | 1 | 0 |
 | low | 0 | 0 | 0 |
+
+# Round 9
+
+Base: main d61f21f. It includes this branch's 0844838, perf bbc5100, marketing, catalogue and checkout R5, so it was a fast-forward. I checked that the R8 pieces are intact: the hero above the boundary, the redirect from the layout, `x-elba-search`, the 30 fps / 1x hero turn, and `three/dpr` in `DesignerApp`.
+
+## Absolute LCP on the merged code (integrator request)
+
+`perf-pages.mjs`, `ISOLATE=1`, phone profile, 5 runs:
+
+| page | LCP ar | LCP en | FCP | INP | CLS |
+|---|---|---|---|---|---|
+| `/design` (start page) | **1.26–1.61 s** | **1.22–1.25 s** | 1.02–1.58 s | 88–232 ms (19 of 20 runs < 200 ms) | ≤ 0.002 |
+| `/design/mailer-box` (editor) | **1.45–1.49 s** | **1.34–1.36 s** | 0.98–1.05 s | 96–176 ms | 0.002 |
+
+Both pages are **under the 2.5 s budget** in every run. TBT on this profile is 0.29–1.78 s on the start page and 1.33–1.55 s in the editor. That is software WebGL after the 3D loads (in the editor by design; on the start page only after Play), and the mount task is with 3d-engine (R6-R1, as assigned).
+
+## Fresh pass
+
+- axe-core: **0 violations** on every state in ar + en at 390 and 1440: start page, editors, artwork, text, gate, the phone view menu, and the start page after Play.
+- Keyboard: the view menu works fully (Enter, arrows, Escape returns focus), and Play / Pause is a real button with the right name.
+- Deep links answer 307 (`?structure=`, `?design=`). An unknown model answers 404.
+- WCAG 1.4.12 text spacing: no model name is cut (0 of 91 on the start page, 0 in the picker).
+- Export: no placeholder, mark present. The share modal states and the copy-failure message work.
+- Quote-only model: the badge, toolbar and modal agree.
+
+## Findings (round 9)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R9-01 | medium | price badge for a signed-in visitor (`Modals.tsx · PriceBadge`) | For the first 0.5 to 1 s of every editor load, a **signed-in** visitor saw the signed-out badge: "500 قطعة: اعرف السعر" / "500 pieces: see the price" with a lock icon. The `idle` state (before the debounced first request) fell through to the locked branch. Seen on the aerosol can in ar. | ISO 9241-110 (self-descriptiveness); WCAG 4.1.3 (a wrong status is announced through the live region) | `idle` renders as loading: "Getting the price" / "جار حساب السعر", the shimmer bar, `aria-busy`, and the tag icon. | fixed. Sampled every 100 ms on load: `idle → loading → quote`, all with the loading copy until the result. The lock never shows |
+
+## Verification (round 9)
+
+- Lint and typecheck are clean. `npm test`: **95 files, 8,508 passed**. `npm run build` OK.
+- Playwright `designer` + `smoke` + `journey` + `checkout` + `catalogue` + `storefront` (`--workers=2`): **57 passed, 5 skipped**, 0 failed.
+- Hydration: e2e repeat 16 × 2 **32 / 32 passed**; 20 cold loads (fresh browser each, `/ar/design` + `/en/design`, desktop + Pixel 5) **0 errors**.
+
+## Counts (round 9, new findings before fixing)
+
+| severity | found | fixed | open |
+|---|---|---|---|
+| critical | 0 | 0 | 0 |
+| high | 0 | 0 | 0 |
+| medium | 1 (R9-01) | 1 | 0 |
+| low | 0 | 0 | 0 |
+
+# Round 10
+
+Base: unchanged (main d61f21f + 282c9eb). Fresh pass on the angles the integrator suggested: Slow 3G, upload errors, undo/redo and autosave after reload, two tabs on one design, long Arabic text on small faces, and the export modal on a phone.
+
+## Checked and fine
+
+| angle | check | result |
+|---|---|---|
+| Slow 3G (2 s RTT, 500 kbps), ar pouch, phone | timeline sampled every second | the poster and editor skeleton are up at **4.1 s**, the canvas and badge at 22.5 s. No spinner anywhere, no console errors (`r10-slow3g-early-ar-390.png`) |
+| Reload after autosave | add text → URL gains `?d=` → "Saved" → reload | same URL, the text layer is back, status "Saved for 30 days". Undo starts empty after a reload (history is per session), and that is expected |
+| Upload: transparent PNG, CMYK JPEG, tiny PNG | added and saved (201) | transparency kept. CMYK is decoded by the browser. The 60 × 40 px PNG is flagged LOW_DPI by the print check |
+| Export modal, phone, ar + en | sheet at the bottom, targets, axe | radios 24 px, buttons 114 × 40 px, no overflow, axe 0 (`r10-export-ar-390.png`) |
+
+## Findings (round 10)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R10-01 | high | image upload + autosave (`uploadImage.ts`, `DesignerApp.saveToServer`) | **A valid image could make the design unsaveable.** A 9.7 MB PNG (under the 10 MB upload limit) became a ~13 MB data URL. Every save then answered **413** (body cap 12 MB), the toolbar said "Could not save. Retrying shortly." and retried forever, and the work was never stored on the server. | WCAG 3.3.4-adjacent (error prevention); data loss | (1) A size budget per stored image (`IMAGE_MAX_SRC_CHARS` = 3 M characters, so 3 images and the doc fit in 12 MB). An image over budget is re-encoded as WebP (keeps transparency), then stepped down 0.8× at a time. It is refused with the "too large" message only if it still doesn't fit at 20 %. (2) A 413 is now the `tooLarge` state: "This design is too large to save. Replace a large image with a smaller one." (and Arabic), shown in the status and once in a critical toast. There's no retry loop; the next edit tries again. | fixed. The 9.7 MB PNG now saves (**201**) in ar + en. With a 413 forced by the test: one request in 31 s (it was a 10 s / 20 s / 40 s… retry loop), plus the message and the toast (`r10-too-large-en-1440.png`) |
+| R10-02 | medium | upload errors (`uploadImage.ts`, `ArtworkPanel`, `DesignerApp`) | One message for every failure ("Use PNG, JPG, WebP or SVG under 10 MB"), whether the file was the wrong type, too big or unreadable. | WCAG 3.3.1, 3.3.3 | `rejectReason()` / `UploadError(kind)`: "This file type cannot be added…", "This file is larger than 10 MB. Save a smaller copy…", "This file could not be opened as an image. Export it again as PNG or JPG." (and Arabic). The drop zone passes its own reason. Unit test `upload-reject.test.ts`. | fixed: `.txt` → type, 12 MB → size, a fake `.png` → unreadable |
+| R10-03 | medium | two tabs on one design (`DesignerApp`) | **Silent last-writer-wins.** Tab B renamed and saved, then tab A's next autosave overwrote it without any notice. | ISO 9241-110 (controllability); data loss | Tabs announce saves on a `BroadcastChannel`. A tab that hears another tab save the same design pauses its autosave (status "Autosave paused") and shows a warning banner: "This design changed in another tab. Autosave is paused here so neither version is lost." with **Load the latest** / **Keep this version**. Keeping saves this tab's version, and then the other tab gets the banner. | fixed for tabs in the same browser: the server keeps A's version until B chooses, and "Keep" stores B's (`r10-stale-tab-en-1440.png`). Two different devices would need a server version check (R10-R1) |
+| R10-04 | medium | long text on small faces (`DesignerApp.onLayerChange`, `preflight.ts`) | Typing a long Arabic line on the mailer's side panel kept the font size, so the text ran far past both panel edges and would be cut in print. The print check only said "review" (outside the safe zone). | content integrity; preflight | (1) When the words change and the line outgrows the panel's safe width, the size steps down to fit (6 pt minimum), as it already does when text is added. A size the visitor sets on purpose is kept. (2) Preflight: text that runs past the panel edge itself is an **error**; images and shapes there stay a warning (they may be intentional bleed). Unit test in `preflight.test.ts`. | fixed: the same sentence now fits inside the safe area at about 6.7 pt with no issue (`r10-before-longtext-ar-390.png` → `r10-after-longtext-ar-390.png`) |
+
+### Reported to other owners (not edited)
+
+| id | owner | finding | suggested fix |
+|---|---|---|---|
+| R10-R1 | technical / platform (`api/designs`) | Saves have no version check, so two **devices** editing one design still overwrite each other silently. R10-03 covers tabs in the same browser only. | Send `updatedAt` with each PUT and answer 409 when it is stale. The designer would then show the R10-03 banner on a 409 too. |
+
+## Verification (round 10)
+
+- Lint and typecheck are clean. `npm test`: **96 files, 8,513 passed** (new: `upload-reject.test.ts`, the off-panel case in `preflight.test.ts`). `npm run build` OK.
+- Playwright `designer` + `smoke` + `journey` + `checkout` + `catalogue` + `storefront` (`--workers=2`): **57 passed, 5 skipped**, 0 failed.
+- Hydration e2e, 16 × 2 projects: **32 / 32 passed**.
+
+## Counts (round 10, new findings before fixing)
+
+| severity | found | fixed | open |
+|---|---|---|---|
+| critical | 0 | 0 | 0 |
+| high | 1 (R10-01) | 1 | 0 |
+| medium | 3 (R10-02, R10-03, R10-04) | 3 | 0 (multi-device conflicts → R10-R1) |
+| low | 0 | 0 | 0 |
+
+## R10-R1 (assigned to designer by the integrator): optimistic concurrency for saves
+
+| part | change |
+|---|---|
+| API (`api/designs/_shared.ts`, `[id]/route.ts`) | `PUT` takes `baseUpdatedAt` (the version the edit started from) and `force`. When the stored design is newer: **409** `{ error: "CONFLICT", updatedAt, doc }`. |
+| Store (`designer/server.ts · saveDesign`) | A stale base is refused (`isStaleBase`, pure, in `designer/lib/concurrency.ts`). The write itself is a compare-and-set (`updateMany where { id, updatedAt: base }`), so a save landing between the read and the write is refused too. `force` writes deliberately. Creating a share link keeps `updatedAt` (it is not a content change), so an open editor isn't falsely stale. |
+| Editor (`DesignerApp`) | The base comes from the page (`initialUpdatedAt`) and every save response. A 409 opens the R10-03 banner ("This design changed in another tab or on another device", "Load the latest" / "Keep this version") and pauses autosave. "Keep" re-sends with `force: true`. After sign-in (verify-otp claims the draft, which is a write) the editor reads the stored version again before continuing. |
+| Tests | Unit: `concurrency.test.ts` (same version, newer or older, no base, force, malformed). e2e: "two devices on one design" (two browser contexts sharing the anonymous cookie, so no BroadcastChannel between them). A's newer save stands, B's older one gets 409, the banner and "Autosave paused", the server still has A's name, and "Keep this version" stores B's. The main designer, journey and checkout flows (sign-up gate, share, order) pass with the check on. |
+
+# Round 11
+
+Fresh pass on the integrator's angles: the dieline / flat view and print accuracy, the colour picker and brand colours, image crop and rotation, RTL text alignment on faces, and the editor at 1024 px.
+
+## Findings (round 11)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R11-01 | medium | editor at 1024 px (iPad landscape / portrait) (`designer.module.css`) | 1024 px is under the 1040 px side-panel breakpoint, so the tablet got the phone bottom sheet. In landscape (1024 × 768) the 3D canvas was **199 to 207 px** tall, and the floating view controls covered about a third of it. | WCAG 1.4.10; craft | The side-panel layout starts at **1000 px** (all seven 1040 / 1039 rules). | fixed: 1024 × 768 canvas **398–406 px** (panel 384 px at the side); 1024 × 1366 canvas 996–1004 px. No page or sideways scroll; axe 0 in ar + en (`r11-after-tablet-1024x768-en.png`) |
+| R11-02 | medium | colour code field (`fields.tsx`, `lib/color.ts`) | Brand colours typed the usual ways were silently ignored: "#fff" (short form), "#١٢٣٤٥٦" (an Arabic keyboard's digits) and a pasted " #1f3d2b " (it became "# #1f3d2" because of the 7-character limit). | WCAG 3.3.1, 3.3.3 (input help); Arabic keyboards | `normalizeHex()`: trims spaces, reads Arabic-Indic and Persian digits as 0–9, makes `#` optional and expands `#rgb`. Six-digit codes apply as you type; the short form applies on leaving the field (it is also the start of a six-digit code). The limit is 12 characters, and the error says "a 3- or 6-digit colour code". Unit test `color-hex.test.ts`. | fixed: all of those apply (#ffffff, #123456, #1f3d2b), and "#12345g" still shows the error |
+| R11-03 | medium | start / end aligned text on faces (`lib/dieline/texture.ts · drawLayer`, outside scope, one line) | Start- or end-aligned text was drawn on the edge of its box, ignoring the 0.15 em padding the designer measures the box with. Arabic glyphs overhung the selection box (and the box preflight checks the safe zone with), and the print PDF draws through the same function. | print accuracy; preflight | The text is inset by the same 0.15 em. The 3D preview, the face editor and the print PDF (`orders/pdf/print.ts` → `paintArtworkSurface`) all change together. | fixed: start (right for Arabic) and end (left) now sit inside the box (`r11-before-align-ar.png` → `r11-after-align-ar.png`) |
+| R11-04 | low | dieline view (`DielineView.tsx`) | The flat view named the lines but gave no measurements: no flat (die) size, bleed or safe-zone width in mm. | print accuracy (mm) | A size line above the legend: "Flat size 584 × 673 mm · bleed 3 mm · safe zone 5 mm" / "المقاس المفرود … مم · هامش القص الزائد 3 مم · المنطقة الآمنة 5 مم", taken from the dieline model, with the numbers kept left to right. | fixed (`r11-dieline-en-1024.png`) |
+
+Checked, no change:
+- **RTL alignment:** for Arabic, "start" is right and "end" is left, so the logical alignment is correct.
+- **Image rotation:** 15° buttons and a numeric field, and it reaches the print file.
+- **Cropping:** there is none; an image is placed and scaled whole. That's a feature gap rather than a defect, so I'm proposing it, not adding it here.
+- **Pantone / spot colours:** not offered. The plan's SME printers run CMYK, so a spot colour is a price-request item. I'd add a "Brand colours (from your saved designs)" row before any Pantone support, as a separate decision.
+- **The print PDF's own bleed and crop marks:** owned by checkout (`orders/pdf`). The designer side (what it paints) is fixed by R11-03.
+
+Files touched outside scope (round 11): `src/lib/dieline/texture.ts` (the R11-03 inset, one line plus a comment). R10-R1: `src/app/api/designs/_shared.ts`, `src/app/api/designs/[id]/route.ts` (assigned by the integrator).
+
+## Verification (R10-R1 + round 11)
+
+- Lint and typecheck are clean. `npm test`: **98 files, 8,521 passed** (new: `concurrency.test.ts`, `color-hex.test.ts`). `npm run build` OK.
+- Playwright `designer` + `smoke` + `journey` + `checkout` + `catalogue` + `storefront` + **`models`** (`--workers=2`): **428 passed, 376 skipped**, 0 failed. That includes the new "two devices on one design" test and every library model after the text-inset change.
+- Hydration e2e, 16 × 2 projects: **32 / 32 passed**.
+
+## Counts (round 11, new findings before fixing)
+
+| severity | found | fixed | open |
+|---|---|---|---|
+| critical | 0 | 0 | 0 |
+| high | 0 | 0 | 0 |
+| medium | 3 (R11-01, R11-02, R11-03) | 3 | 0 |
+| low | 1 (R11-04) | 1 | 0 |

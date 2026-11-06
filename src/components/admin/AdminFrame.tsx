@@ -3,7 +3,7 @@
 import { BarChart3, Boxes, ClipboardList, Factory, FileLock2, Gavel, History, LogOut, Languages, MessageSquareQuote, Store, ShieldCheck, Tags, Users, Wallet } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { Frame, Navigation, TopBar, TopBarSearchField, type ContextualSaveBarProps, type NavigationSectionProps } from "@/components/ui";
+import { Frame, Navigation, TopBar, TopBarSearchField, type ContextualSaveBarProps, type NavigationSectionProps } from "@/components/ui/Frame";
 import { signOut } from "@/components/auth";
 import { useI18n } from "@/i18n/client";
 import type { Locale } from "@/types";

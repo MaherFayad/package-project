@@ -17,10 +17,40 @@ const COS_CLOSURE_STYLE: Partial<Record<string, string>> = {
   SNAP_LID: "SNAP_LID",
   HINGED_LID: "HINGED_LID",
   TWIST_UP: "TWIST_UP",
+  // R5-3Q-G: mascara / lip-gloss wand caps and nail-polish brush caps are tall cylindrical overcaps
+  // (≈ 40 % of the closed height), not a jar lug lid / a perfume mist pump.
+  WAND_CAP: "BULLET_CAP",
+  BRUSH_CAP: "BULLET_CAP",
+};
+
+/**
+ * R5-3Q-G: catalogue closures whose nearest core renderer kind is not the model core's default
+ * (the default collapsed them onto another option or drew the wrong part).
+ */
+const COS_CLOSURE_CORE: Partial<Record<string, string>> = {
+  // treatment (serum) pump: a small pump actuator, not the dropper bulb it collapsed to
+  TREATMENT_PUMP: "LOTION_PUMP",
+  // wand cap: screw-cap core so the bottle-neck BULLET_CAP style applies (a LUG_LID core blocks styles)
+  WAND_CAP: "SCREW_CAP",
+  // vial crimp seal: smooth short aluminium-look seal, not a ribbed plastic screw cap
+  CRIMP_FLIP_OFF: "LUG_LID",
+  // OPC ampoule is flame-sealed: no closure at all (ZIP_SEAL core draws no parts)
+  OPC_BREAK: "ZIP_SEAL",
+  // aerosol: the profile's 1 inch valve cup, not a beverage-can pull tab inside it
+  AEROSOL_VALVE: "ZIP_SEAL",
 };
 
 /** Cosmetic materials whose core look has the wrong colour (X-01, V-14). */
-const COS_TINT: Partial<Record<string, string>> = { ABS_BLACK: "#161616" };
+const COS_TINT: Partial<Record<string, string>> = {
+  ABS_BLACK: "#161616",
+  // R5-3Q-G: natural (unpigmented) PP / HDPE / LDPE is translucent milky (same hex as the bottles
+  // family's HDPE_NATURAL / PP_NATURAL), on the frosted core below.
+  PP_NATURAL: "#eef0ee",
+  HDPE_NATURAL: "#ece9df",
+  LDPE_NATURAL: "#eeece4",
+  // rPET carries a faint grey-blue cast from recycled flake; APET / virgin PET is water clear
+  RPET_CLEAR: "#e4ecef",
+};
 
 export 
 
@@ -28,12 +58,12 @@ const COS_MATERIAL: Record<string, VesselMaterialCode> = {
   GLASS_TYPE1_CLEAR: "GLASS_CLEAR",
   GLASS_TYPE1_AMBER: "GLASS_AMBER",
   PP_WHITE: "HDPE_WHITE",
-  PP_NATURAL: "HDPE_WHITE",
+  PP_NATURAL: "GLASS_FROSTED",
   PP_CLEAR: "PET_CLEAR",
   PS_WHITE: "HDPE_WHITE",
-  LDPE_NATURAL: "HDPE_WHITE",
+  LDPE_NATURAL: "GLASS_FROSTED",
   LDPE_WHITE: "HDPE_WHITE",
-  HDPE_NATURAL: "HDPE_WHITE",
+  HDPE_NATURAL: "GLASS_FROSTED",
   PETG_CLEAR: "PET_CLEAR",
   ACRYLIC_CLEAR: "PET_CLEAR",
   ABS_BLACK: "HDPE_WHITE",
@@ -64,7 +94,7 @@ export const models: VesselModelDef[] = COS.DEFINITIONS.filter((d) => d.geometry
   const closures: VesselOption[] = def.closures.map((c) => ({
     code: c,
     name: isCoreClosure(c) ? CLOSURE_NAMES[c] : (COS.CLOSURE_NAMES[c as keyof typeof COS.CLOSURE_NAMES] ?? { ar: c, en: c }),
-    core: isCoreClosure(c) && coreDef.closures.includes(c) ? c : coreDef.defaultClosure,
+    core: COS_CLOSURE_CORE[c] ?? (isCoreClosure(c) && coreDef.closures.includes(c) ? c : coreDef.defaultClosure),
     ...(COS_CLOSURE_STYLE[c] ? { closureStyle: COS_CLOSURE_STYLE[c] } : {}),
   }));
   const can = def.family === "CAN";

@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
-import { fromJson } from "@/lib/json";
 import { getSession } from "@/lib/auth/session";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { crossSiteResponse, isCrossSiteRequest } from "@/lib/auth/csrf";
 import { buildDataExport, exportFileName } from "@/components/store/account-logic";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +11,9 @@ export const dynamic = "force-dynamic";
  * a JSON download and logs a completed EXPORT DataRequest. 401 when signed out.
  */
 export async function GET(req: Request) {
+  // R5-SEC-07: a GET that writes (an EXPORT DataRequest, the hourly quota) must not run from a
+  // link or navigation on another site (SameSite=Lax sends the session cookie on those).
+  if (isCrossSiteRequest(req.headers)) return crossSiteResponse();
   const session = await getSession();
   if (!session) return Response.json({ error: "UNAUTHORIZED" }, { status: 401 });
   const userId = session.user.id;
@@ -25,41 +28,20 @@ export async function GET(req: Request) {
       designs: { orderBy: { createdAt: "asc" } },
       orders: { orderBy: { placedAt: "asc" }, include: { items: true } },
       reviews: { orderBy: { createdAt: "asc" } },
+      quotes: { orderBy: { createdAt: "asc" }, select: { status: true, lines: true, totalPiasters: true, validUntil: true, createdAt: true } },
+      disputes: { orderBy: { createdAt: "asc" }, select: { reason: true, description: true, status: true, resolution: true, createdAt: true } },
+      sessions: { where: { expiresAt: { gt: new Date() } }, orderBy: { createdAt: "asc" }, select: { ip: true, userAgent: true, createdAt: true, expiresAt: true } },
     },
   });
   if (!user) return Response.json({ error: "UNAUTHORIZED" }, { status: 401 });
-  const [requests, quotes, disputes, payments] = await Promise.all([
+  const [requests, payments] = await Promise.all([
     db.dataRequest.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }),
-    db.quote.findMany({ where: { userId, NOT: { status: "OPEN" } }, orderBy: { createdAt: "asc" } }),
-    db.dispute.findMany({ where: { openedById: userId }, orderBy: { createdAt: "asc" }, include: { order: { select: { number: true } } } }),
     db.payment.findMany({ where: { order: { buyerId: userId } }, orderBy: { createdAt: "asc" }, include: { order: { select: { number: true } } } }),
   ]);
-  // R8-03: what the buyer typed on a price request (note, needed-by date, governorate) is kept on
-  // its audit row; it is their personal data too.
-  const quoteAudits = quotes.length
-    ? await db.auditLog.findMany({ where: { action: "QUOTE_REQUEST", entityType: "QUOTE", entityId: { in: quotes.map((q) => q.id) } }, select: { entityId: true, after: true } })
-    : [];
-  const detail = new Map(quoteAudits.map((a) => [a.entityId, fromJson<Record<string, unknown>>(a.after) ?? {}]));
   const now = new Date();
   const doc = {
-    ...buildDataExport({ user, organization: user.organization, consents: user.consents, designs: user.designs, orders: user.orders, reviews: user.reviews, requests }, now),
-    // R8-03 (PDPL right of access): price requests, problem reports and payments were missing.
-    priceRequests: quotes.map((q) => {
-      const d = detail.get(q.id) ?? {};
-      const lines = fromJson<{ quantity?: number }[]>(q.lines);
-      return {
-        status: q.status,
-        quantity: Array.isArray(lines) ? (lines[0]?.quantity ?? null) : null,
-        designId: q.designId,
-        governorate: typeof d.governorate === "string" ? d.governorate : null,
-        neededBy: typeof d.neededBy === "string" ? d.neededBy : null,
-        note: typeof d.note === "string" ? d.note : null,
-        totalPiasters: q.totalPiasters || null,
-        createdAt: q.createdAt.toISOString(),
-      };
-    }),
-    problemReports: disputes.map((d) => ({ order: d.order.number, reason: d.reason, description: d.description, status: d.status, resolution: d.resolution, createdAt: d.createdAt.toISOString(), resolvedAt: d.resolvedAt?.toISOString() ?? null })),
-    // Method, amount and status only: Elba never sees or stores card numbers.
+    ...buildDataExport({ user, organization: user.organization, consents: user.consents, designs: user.designs, orders: user.orders, reviews: user.reviews, requests, quotes: user.quotes, disputes: user.disputes, sessions: user.sessions }, now),
+    // R8-03 (PDPL right of access): payments. Method, amount and status only: Elba never sees or stores card numbers.
     payments: payments.map((p) => ({ order: p.order.number, method: p.method, status: p.status, amountPiasters: p.amountPiasters, createdAt: p.createdAt.toISOString() })),
   };
   await db.dataRequest.create({ data: { userId, kind: "EXPORT", status: "COMPLETED", completedAt: now, ip: clientIp(req.headers) } });

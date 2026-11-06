@@ -1,21 +1,16 @@
 import { CircleCheck, Circle } from "lucide-react";
-import {
-  Badge,
-  Banner,
-  BlockStack,
-  Box,
-  Button,
-  Card,
-  Icon,
-  InlineStack,
-  Layout,
-  LayoutSection,
-  Link,
-  MetricsStrip,
-  Page,
-  ProgressBar,
-  Text,
-} from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { Banner } from "@/components/ui/Banner";
+import { BlockStack, Box, InlineStack } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Icon } from "@/components/ui/Icon";
+import { Layout, LayoutSection } from "@/components/ui/Layout";
+import { Link } from "@/components/ui/Link";
+import { MetricsStrip } from "@/components/ui/MetricsStrip";
+import { Page } from "@/components/ui/Page";
+import { ProgressBar } from "@/components/ui/ProgressBar";
+import { Text } from "@/components/ui/Text";
 import { DueLabel, JobStatusBadge } from "@/components/vendor/JobBits";
 import { requireVendorContext } from "@/components/vendor/server/context";
 import { getDashboard } from "@/components/vendor/server/queries";

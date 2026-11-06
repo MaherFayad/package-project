@@ -36,7 +36,7 @@ export default function GlobalNotFound() {
             <h1 id="nf-ar" style={{ margin: 0, fontSize: "var(--p-font-size-750, 2rem)", fontWeight: "var(--p-font-weight-bold)", lineHeight: 1.3 }}>
               الصفحة غير موجودة
             </h1>
-            <p style={{ margin: 0, color: "var(--p-color-text-secondary)" }}>الصفحة التي تبحث عنها غير موجودة.</p>
+            <p style={{ margin: 0, color: "var(--p-color-text-secondary)" }}>ربما تغير الرابط أو لم تعد الصفحة متاحة.</p>
             <p style={{ margin: 0 }}>
               <Link href="/ar" style={{ color: "var(--p-color-text)", fontWeight: "var(--p-font-weight-semibold)" }}>
                 الذهاب إلى الصفحة الرئيسية
@@ -47,7 +47,7 @@ export default function GlobalNotFound() {
             <h2 id="nf-en" style={{ margin: 0, fontSize: "var(--p-font-size-600, 1.5rem)", fontWeight: "var(--p-font-weight-bold)", lineHeight: 1.3 }}>
               Page not found
             </h2>
-            <p style={{ margin: 0, color: "var(--p-color-text-secondary)" }}>The page you are looking for does not exist.</p>
+            <p style={{ margin: 0, color: "var(--p-color-text-secondary)" }}>The link may have changed, or the page is no longer available.</p>
             <p style={{ margin: 0 }}>
               <Link href="/en" hrefLang="en" style={{ color: "var(--p-color-text)", fontWeight: "var(--p-font-weight-semibold)" }}>
                 Go to home page
