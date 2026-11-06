@@ -66,9 +66,6 @@ const PENDING = new Set<string>([
   "why/copy.ts:why.ctaStart",
   "why/copy.ts:pricing.tierCta",
   "why/copy.ts:pricing.wholesaleCta",
-  // designer page owner: «بدء التصميم مجانا», «تجربة المصمم الآن»
-  "designer-page/copy.ts:hero.cta",
-  "designer-page/copy.ts:make.cta",
 ]);
 
 const all = SOURCES.flatMap(([source, tree]) => labels(source, tree));

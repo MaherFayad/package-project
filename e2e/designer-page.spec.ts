@@ -11,7 +11,7 @@ import { expect, test, type Page } from "@playwright/test";
 const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 const LOCALES = ["ar", "en"] as const;
 const H1 = { ar: "مصمم العلب ثلاثي الأبعاد من علبة", en: "Elba 3D packaging designer" };
-const CTA = { ar: "ابدأ التصميم مجانا", en: "Start designing free" };
+const CTA = { ar: "بدء التصميم مجانا", en: "Start designing free" };
 const PROMPT = { ar: "ماذا تريد أن تغلف؟", en: "What are you packing?" };
 
 test.beforeEach(async ({ context, baseURL }) => {
