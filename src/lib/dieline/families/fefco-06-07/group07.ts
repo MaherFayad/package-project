@@ -6,7 +6,8 @@ import { stadium } from "@/lib/dieline/features";
 import { clamp, pt, rectPolygon } from "@/lib/dieline/geometry";
 import type { StructureDraft } from "@/lib/dieline/structures";
 import type { Polygon } from "@/lib/dieline/types";
-import { deepEnds } from "../fefco-02/kit";
+import { computeFaces } from "@/lib/dieline/fold";
+import { composeFaces, deepEnds, trimFaces, type FacesFn } from "../fefco-02/kit";
 import {
   CRASH_LAYERS,
   IDENTITY,
@@ -73,7 +74,32 @@ export function autoBottomCase(dims: Dims, t: number, o: CaseOpts): StructureDra
   if (o.cells) partitions(b, t, IDENTITY, dims, { rows: o.cells.rows, cols: o.cells.cols }, CRASH_LAYERS * t);
   // The crash-lock back and side flaps show beside the outer (front) lock flap under the case:
   // print them with the bottom face too (half the underside was bare board).
-  return { builder: b, closedRotation: IDENTITY, faces: deepEnds({ b, t }, ["bottom"], 0, IDENTITY) };
+  const bottom = deepEnds({ b, t }, ["bottom"], 0, IDENTITY);
+  return { builder: b, closedRotation: IDENTITY, faces: o.top === "handle" ? composeFaces(bottom, handleFaces(t)) : bottom };
+}
+
+/**
+ * 0717 carry handle: the closed box is taller than its walls by the handle, so every side face
+ * reserved an empty band above the rim (a quarter of FRONT / BACK fell on nothing and the
+ * centred artwork sat low). Seen from the front the handle stands right above the front wall:
+ * FRONT / BACK run on up onto the handle half that faces them (as a printed carrier does),
+ * and the end faces stop at the rim.
+ */
+function handleFaces(t: number): FacesFn {
+  return (panels, computed) => {
+    const out = { ...computed };
+    for (const side of ["front", "back"] as const) {
+      const chain = side === "front" ? ["front", "top_front", "handle_front"] : ["front", "right", "back", "top_back", "handle_back"];
+      const sub = panels.filter((p) => chain.includes(p.id));
+      // The handle halves meet on the centre line, ½W behind the walls.
+      const Wp = panels.find((p) => p.id === "left")!.bbox.width;
+      const deep = computeFaces({ panels: sub, rootId: "front", thicknessMm: t, closedRotation: IDENTITY }, Wp).faces[side];
+      const f = computed[side];
+      if (deep && f && Math.abs(deep.width - f.width) < 0.01 && Math.abs(deep.height - f.height) < 0.01) out[side] = deep;
+    }
+    const ends = trimFaces({ left: computed.left, right: computed.right });
+    return { ...out, left: ends.left, right: ends.right };
+  };
 }
 
 /* ───────────────────────── 0714: auto-bottom base + auto-bottom lid ───────────────────────── */

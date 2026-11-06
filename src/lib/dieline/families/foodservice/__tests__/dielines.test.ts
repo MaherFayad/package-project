@@ -157,3 +157,18 @@ describe("foodservice dieline specifics", () => {
     expect(m.faces.front!.width).toBeCloseTo(50, 1);
   });
 });
+
+describe("R6-3Q-D: one face per printed panel", () => {
+  it("no box panel is mapped by two faces (sandwich wedge lid was top AND front)", () => {
+    for (const def of DEFINITIONS.filter((d) => d.kind === "dieline")) {
+      const m = buildFoodservice(def.code as never, def.defaultDims as Dims).model as FamilyDielineModel;
+      const seen = new Map<string, string>();
+      for (const [face, f] of Object.entries(m.faces)) {
+        for (const p of f!.parts) {
+          expect(seen.get(p.panelId), `${def.code}: ${p.panelId} in ${seen.get(p.panelId)} and ${face}`).toBeUndefined();
+          seen.set(p.panelId, face);
+        }
+      }
+    }
+  });
+});

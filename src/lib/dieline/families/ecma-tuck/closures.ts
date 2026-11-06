@@ -1,4 +1,6 @@
+import type { StructureFeatures } from "@/types";
 import { DielineBuilder, insetSeg, rectEdges } from "../../builder";
+import { roundedRect } from "../../features";
 import { clamp, pt, rectPolygon } from "../../geometry";
 import type { Polygon, Pt, Rect } from "../../types";
 import type { TuckLock } from "./types";
@@ -192,6 +194,33 @@ export function snapLockBottom(b: DielineBuilder, w: Walls, t: number, Wp: numbe
     const poly: Polygon = [f.at(f.a, 0, 0), f.at(f.a, L, 0), f.at(f.a, L, d - ch), f.at(f.a, L - ch, d), f.at(f.a, c + tw * 1.6, d), f.at(f.a, c + tw * 1.4, d + tab), f.at(f.a, c + tw * 0.5, d + tab), f.at(f.a, c + tw * 0.3, d), f.at(f.a, c - tw * 0.3, d), f.at(f.a, c - tw * 0.5, d + tab), f.at(f.a, c - tw * 1.4, d + tab), f.at(f.a, c - tw * 1.6, d), f.at(f.a, ch, d), f.at(f.a, 0, d - ch)];
     b.attachPoly("bottom_back", "bottom", "back", [f.a, f.b], poly, { stage: 3, stack: 0, label: "Bottom lock flap (3)" });
   }
+}
+
+/**
+ * Window (die-cut hole + inside film) like `cutWindow`, but kept inside the band
+ * y0..y1 (sheet mm) of the panel: clear of tear-strip perforations or lock slits that cross
+ * the panel. Same width / height ratios and margin rules as `cutWindow`; the hole is centred
+ * in the band and the film never reaches past it. Returns false (nothing cut) when the band
+ * cannot hold a 10 mm window.
+ */
+export function cutWindowInBand(b: DielineBuilder, panelId: string, win: NonNullable<StructureFeatures["window"]>, y0: number, y1: number, margin = 8): boolean {
+  const panel = b.byId(panelId);
+  const box = panel.bbox;
+  const top = Math.max(y0, box.y);
+  const bottom = Math.min(y1, box.y + box.height);
+  const grow = Math.min(10, margin - 1);
+  const w = Math.max(10, Math.min(box.width * (win.widthRatio ?? 0.55), box.width - 2 * margin));
+  const h = Math.min(box.height * (win.heightRatio ?? 0.45), bottom - top - 2 * margin);
+  if (h < 10) return false;
+  const cx = box.x + box.width / 2;
+  const cy = (top + bottom) / 2;
+  panel.holes = [...(panel.holes ?? []), roundedRect(cx, cy, w, h, Math.min(6, w * 0.15, h * 0.15))];
+  if (win.film !== false) {
+    const fw = Math.min(w + 2 * grow, box.width - 2);
+    const fh = Math.min(h + 2 * grow, bottom - top - 2);
+    b.films.push({ panelId, polygon: roundedRect(cx, cy, fw, fh, 0, 1) });
+  }
+  return true;
 }
 
 /* ───────────────────────── hang holes ───────────────────────── */
