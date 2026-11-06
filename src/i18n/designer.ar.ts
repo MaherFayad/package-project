@@ -440,7 +440,6 @@ export const designerAr: Dictionary["designer"] = {
     notFoundTitle: "الرابط غير موجود",
     notFoundBody: "رابط المشاركة غير صالح أو أوقفه صاحبه.",
     subtitleDesign: "تصميم عبوة تمت مشاركته",
-    prepayNote: "السعر بعد خصم الدفع المقدم {pct}%.",
     sizeVessel: "المقاس",
     printMaterial: "خامة الطباعة",
     model: "النموذج",
