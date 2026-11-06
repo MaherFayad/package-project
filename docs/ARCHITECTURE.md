@@ -73,16 +73,16 @@ src/app/
   [locale]/
     layout.tsx                  <html lang dir>, fonts, I18nProvider, skip link. NO chrome.
     not-found.tsx
-    (auth)/login/               phone + OTP page                         -> StoreShell
-    (store)/                    / (home), /catalog, /catalog/[slug], /vendors, /vendors/[slug] -> StoreShell
-    (checkout)/checkout/        -> StoreShell
-    orders/, orders/[id]        requireUser                              -> StoreShell
+    (auth)/login/               phone + OTP page                         -> MarketingShell
+    (store)/                    / (home), /catalog, /catalog/[slug], /vendors, /vendors/[slug] -> MarketingShell
+    (checkout)/checkout/        -> CheckoutShell (minimal white header)
+    orders/, orders/[id]        requireUser                              -> MarketingShell
     design/                     full-screen designer (own layout, renders <main id="main">)
     vendor/                     requireRole("VENDOR")  -> admin frame (to build)
     admin/                      requireRole("ADMIN")   -> admin frame (to build)
 ```
 
-Each area adds its own chrome in its route-group `layout.tsx`. Buyer-facing areas use `StoreShell` from `src/components/store/StoreShell.tsx` (header, `<main id="main">`, footer). Every layout must render exactly one `<main id="main">`, because the skip link targets it.
+Each area adds its own chrome in its route-group `layout.tsx`. Buyer-facing areas ((store), (auth), orders, s, vendor/apply) use `MarketingShell` from `src/components/marketing/MarketingShell.tsx` (white header with account menu, `<main id="main">`, footer, the shared `ui/CookieNotice`); checkout uses its minimal white `CheckoutShell`. Every layout must render exactly one `<main id="main">`, because the skip link targets it.
 
 ## 4. Data model (Prisma, `prisma/schema.prisma`)
 

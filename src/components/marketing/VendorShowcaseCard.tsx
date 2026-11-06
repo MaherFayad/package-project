@@ -45,14 +45,14 @@ export function VendorShowcaseCard({ locale, vendor, index = 0, headingLevel = "
                 </Link>
               </H>
               <p className={`${styles.small} ${styles.inlineIcon}`}>
-                <MapPin size={14} aria-hidden /> {t(`cities.${vendor.city}` as DictKey)}
+                <MapPin size={16} aria-hidden /> {t(`cities.${vendor.city}` as DictKey)}
               </p>
             </div>
           </div>
           <ul className={styles.tags}>
             {vendor.verified ? (
               <li className={`${styles.tag} ${styles.tagGreen}`}>
-                <BadgeCheck size={14} aria-hidden />
+                <BadgeCheck size={16} aria-hidden />
                 {t("vendors.verified")}
               </li>
             ) : null}
@@ -61,15 +61,15 @@ export function VendorShowcaseCard({ locale, vendor, index = 0, headingLevel = "
           </ul>
           <ul className={styles.vendorMeta}>
             <li>
-              <Star size={15} aria-hidden fill="#b98900" color="#b98900" />
+              <Star size={16} aria-hidden fill="#b98900" color="#b98900" />
               <span className={styles.num}>{t("marketing.printers.rating", { rating: vendor.rating.toFixed(1), count: formatNumber(vendor.ratingCount) })}</span>
             </li>
             <li>
-              <Clock size={15} aria-hidden />
+              <Clock size={16} aria-hidden />
               <span>{t("marketing.printers.onTime", { pct: formatNumber(vendor.onTimePct) })}</span>
             </li>
             <li>
-              <Timer size={15} aria-hidden />
+              <Timer size={16} aria-hidden />
               <span>{t("marketing.printers.lead", { days: vendor.leadTimeDays })}</span>
             </li>
           </ul>

@@ -11,6 +11,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { track } from "@/lib/analytics/track";
 import { fromJson, toJson } from "@/lib/json";
 import { OrderError, shipOrder, transitionOrder } from "@/lib/orders/service";
 import { getPaymentProvider } from "@/lib/payments";
@@ -483,6 +484,8 @@ export async function decideDisputeAction(input: z.input<typeof disputeDecisionS
           },
         },
       });
+      // launch-metrics.md §1 `reprint_opened` (reprint rate = these / delivered orders).
+      void track("reprint_opened", { reason: dispute.reason, same_vendor: vendorId === original.vendorId }, { userId: original.buyerId, orderId: created.id });
       await audit(admin, { action: "ORDER_REPRINT", entityType: "ORDER", entityId: created.id, summary: `${reprint} ← ${original.number}: ${d.note}`, after: { vendorId, vendorCostPiasters: original.vendorCostPiasters } });
     }
 
@@ -749,6 +752,9 @@ export async function decideDataRequestAction(input: z.input<typeof dataRequestD
             await tx.order.update({ where: { id: o.id }, data: { shippingAddress: toJson({ name: "—", phone: "—", governorate: addr?.governorate ?? "", city: addr?.city ?? "", street: "—" }), notes: null } });
           }
           await tx.consent.updateMany({ where: { userId: user.id }, data: { phone: null, ip: null, userAgent: null } });
+          // First-party analytics rows of this user (B-19): deleting them also drops the
+          // account_created row that linked the anonymous browser id to the account.
+          await tx.event.deleteMany({ where: { userId: user.id } });
           await tx.user.update({
             where: { id: user.id },
             data: { name: null, email: null, phone: anonymisedPhone(user.id), marketingConsent: false, organizationId: null, vendorId: null, role: "BUYER" },

@@ -329,7 +329,7 @@ export function Dev3DClient({ locale }: { locale: Locale }) {
           </div>
 
           <button type="button" className={styles.primary} onClick={screenshot}>
-            <Camera size={18} aria-hidden="true" /> PNG 2048 × 2048
+            <Camera size={16} aria-hidden="true" /> PNG 2048 × 2048
           </button>
 
           {dieline ? (

@@ -69,6 +69,7 @@ import { LayersPanel } from "./LayersPanel";
 import { PreflightBadge, PreflightPanel } from "./PreflightPanel";
 import { ExportModal, GateModal, PriceBadge, PriceModal, ShareModal, type ExportSize, type GateReason } from "./Modals";
 import styles from "./designer.module.css";
+import { trackClient } from "@/lib/analytics/client";
 
 const StageSkeleton = () => <div className={lib.stageSkeleton} aria-hidden="true" />;
 const Scene3D = dynamic(() => import("./Scene3D"), { ssr: false, loading: StageSkeleton });
@@ -271,6 +272,15 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
   // ── preflight ────────────────────────────────────────────────────
   const issues = useMemo(() => (model ? runPreflight(doc, model) : []), [doc, model]);
   const summary = useMemo(() => summarizePreflight(issues), [issues]);
+  // Analytics (launch-metrics.md §1): `design_completed` the first time preflight turns green
+  // after an edit, `artwork_uploaded` on the first image placed. Once per designer session.
+  const sentRef = useRef<{ completed?: boolean; uploaded?: boolean }>({});
+  const edited = hist.past.length > 0;
+  useEffect(() => {
+    if (!summary.ready || !edited || sentRef.current.completed) return;
+    sentRef.current.completed = true;
+    trackClient("design_completed", { structure_code: doc.structureCode, model_code: doc.modelCode ?? null, locale });
+  }, [summary.ready, edited, doc.structureCode, doc.modelCode, locale]);
 
   // ── saving ───────────────────────────────────────────────────────
   const inflight = useRef<Promise<string | null> | null>(null);
@@ -389,9 +399,12 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
   const requireAccount = useCallback(
     (reason: GateReason, then: () => void) => {
       if (user) then();
-      else setGate({ reason, then });
+      else {
+        trackClient("gate_shown", { gate_reason: reason, structure_code: docRef.current.structureCode, locale });
+        setGate({ reason, then });
+      }
     },
-    [user],
+    [user, locale],
   );
 
   const onSignedIn = (u: OtpSuccess) => {
@@ -487,6 +500,10 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
     try {
       const img = await prepareImage(file);
       add(makeImageLayer(face, surface, faceInfo, img));
+      if (!sentRef.current.uploaded) {
+        sentRef.current.uploaded = true;
+        trackClient("artwork_uploaded", { structure_code: docRef.current.structureCode, surface, locale });
+      }
     } catch {
       setUploadError(t("designer.artwork.uploadError"));
     } finally {
@@ -558,7 +575,10 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
   const doSave = () =>
     requireAccount("save", async () => {
       const id = await saveToServer({ thumbnail: true });
-      if (id) toast.show(t("designer.save.savedToast"));
+      if (id) {
+        trackClient("design_saved", { structure_code: docRef.current.structureCode, locale });
+        toast.show(t("designer.save.savedToast"));
+      }
       else toast.show(t("designer.save.failed"), { tone: "critical" });
     });
 
@@ -573,6 +593,7 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
       const px = size === "hd" ? 2160 : 1080;
       const blob = await sceneRef.current!.screenshot({ width: px, height: px, background: "#ffffff" });
       downloadBlob(blob, `elba-${slugify(doc.name || libModel?.slug || doc.structureCode)}-${px}.png`);
+      trackClient("export_png", { size, structure_code: doc.structureCode, locale });
       setModal(null);
       toast.show(t("designer.export.done"));
     } catch {

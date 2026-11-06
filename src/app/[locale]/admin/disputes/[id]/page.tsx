@@ -1,4 +1,3 @@
-import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { BlockStack, Card, InlineStack, Layout, LayoutSection, Link, Page, Text } from "@/components/ui";
@@ -10,6 +9,7 @@ import { loadDispute } from "@/components/admin/server/queries";
 import { canRefund } from "@/components/admin/lib/orders";
 import { isolate } from "@/components/admin/lib/bidi";
 import { getT, pick, toLocale, type DictKey } from "@/i18n";
+import { db } from "@/lib/db";
 import { formatDate, formatDateTime, formatMoney } from "@/lib/format";
 
 type Params = Promise<{ locale: string; id: string }>;
@@ -17,8 +17,9 @@ type Params = Promise<{ locale: string; id: string }>;
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { locale, id } = await params;
   const t = getT(toLocale(locale));
-  const d = /^[\w-]{1,40}$/.test(id) ? await db.dispute.findUnique({ where: { id }, select: { order: { select: { number: true } } } }) : null;
-  return { title: `${d ? `${d.order.number} · ` : ""}${t("admin.disputes.title")} · ${t("admin.title")}` };
+  const d = await db.dispute.findUnique({ where: { id }, select: { order: { select: { number: true } } } }).catch(() => null);
+  const section = `${t("admin.disputes.title")} · ${t("admin.title")}`;
+  return { title: d ? `${t("admin.disputes.detail.title", { number: d.order.number })} · ${section}` : section };
 }
 
 export default async function AdminDisputePage({ params }: { params: Params }) {

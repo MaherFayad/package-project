@@ -9,6 +9,7 @@ import {
   DataTable,
   Icon,
   InlineGrid,
+  InlineStack,
   Layout,
   LayoutSection,
   MetricsStrip,
@@ -113,6 +114,61 @@ export default async function AdminOverviewPage({ params, searchParams }: { para
         <Layout>
           <LayoutSection>
             <BlockStack gap="400">
+              {/* B-19: the launch-metrics.md funnel from first-party events (no third-party pixels). */}
+              <Card title={t("admin.overview.events.title")}>
+                <BlockStack gap="400">
+                  <InlineStack align="space-between" blockAlign="baseline" gap="200">
+                    <Text as="p" tone="subdued">
+                      {t("admin.overview.events.description")}
+                    </Text>
+                    <Text as="p" fontWeight="semibold">
+                      <Tooltip content={t("admin.overview.events.conversionHelp")} dotted>
+                        {t("admin.overview.events.conversion", { pct: o.events.visitorToPaidPct === null ? t("admin.common.none") : formatPercent(o.events.visitorToPaidPct, locale) })}
+                      </Tooltip>
+                    </Text>
+                  </InlineStack>
+                  {o.events.funnel[0]!.count === 0 ? (
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      {t("admin.overview.events.empty")}
+                    </Text>
+                  ) : (
+                    <>
+                      <FunnelBars rows={o.events.funnel.map((r) => ({ key: r.step, label: t(`admin.overview.events.steps.${r.step}` as DictKey), value: r.count, display: formatNumber(r.count) }))} />
+                      <DataTable
+                        caption={t("admin.overview.events.caption")}
+                        columnContentTypes={["text", "numeric", "numeric", "numeric"]}
+                        headings={[t("admin.overview.funnel.columns.step"), t("admin.overview.funnel.columns.count"), t("admin.overview.events.ofVisits"), t("admin.overview.funnel.columns.ofPrev")]}
+                        rows={o.events.funnel.map((r) => [t(`admin.overview.events.steps.${r.step}` as DictKey), formatNumber(r.count), pct(r.ofVisitsPct), r.ofPrevPct === null ? t("admin.common.none") : pct(r.ofPrevPct)])}
+                      />
+                    </>
+                  )}
+                  <InlineGrid columns={{ xs: 1, sm: 2 }} gap="300">
+                    <BlockStack gap="050">
+                      <Text as="p" variant="bodySm" tone="subdued">
+                        {t("admin.overview.events.shareVisits")}
+                      </Text>
+                      <Text as="p" variant="headingMd" numeric>
+                        {formatNumber(o.events.share.visits)}
+                      </Text>
+                      <Text as="p" variant="bodySm" tone="subdued">
+                        {t("admin.overview.events.shareSub", { links: formatNumber(o.events.share.linksCreated), accounts: formatNumber(o.events.share.accountsFromShares) })}
+                      </Text>
+                    </BlockStack>
+                    <BlockStack gap="050">
+                      <Text as="p" variant="bodySm" tone="subdued">
+                        {t("admin.overview.events.referrals")}
+                      </Text>
+                      <Text as="p" variant="headingMd">
+                        {t("admin.common.none")}
+                      </Text>
+                      <Text as="p" variant="bodySm" tone="subdued">
+                        {t("admin.overview.events.referralsSub")}
+                      </Text>
+                    </BlockStack>
+                  </InlineGrid>
+                </BlockStack>
+              </Card>
+
               <Card title={t("admin.overview.funnel.title")}>
                 <BlockStack gap="400">
                   <Text as="p" tone="subdued">

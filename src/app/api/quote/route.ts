@@ -8,6 +8,7 @@ import type { QuoteModel } from "@/lib/pricing";
 import { designConfigSchema } from "@/components/designer/lib/doc";
 import { loadPricingConfig } from "@/components/admin/server/settings";
 import { readJsonCapped } from "../_lib/body";
+import { deviceOf, track } from "@/lib/analytics/track";
 
 const Mm = z.number().finite().positive().max(5000);
 
@@ -90,6 +91,16 @@ export async function POST(req: Request) {
       data,
       { config },
     );
+    // launch-metrics.md §1 `price_viewed`: the instant price table shown to a signed-in user
+    // (the designer badge and price modal both come through here). The badge re-prices on every
+    // edit, so one event per user and structure per 10 minutes is enough for the funnel.
+    if (outcome.mode === "instant" && rateLimit("analytics:price_viewed", `${auth.id}:${b.structureCode}`, 1, 600_000).ok) {
+      void track(
+        "price_viewed",
+        { source: "designer", structure_code: b.structureCode, model_code: b.model?.code ?? null, quantity: b.quantity, offers: outcome.offers.length, device: deviceOf(req.headers) },
+        { userId: auth.id },
+      );
+    }
     return Response.json(toPublicOutcome(outcome), { headers: { "Cache-Control": "no-store" } });
   } catch (e) {
     if (e instanceof QuoteInputError) {

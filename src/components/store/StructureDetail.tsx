@@ -93,15 +93,15 @@ export function StructureDetail({
             </p>
             <ul className={`${mk.factRow} m-enter`} style={{ ["--m-i" as string]: 4 }}>
               <li>
-                <Package size={18} aria-hidden />
+                <Package size={20} aria-hidden />
                 <bdi>{structure.code.replace("_", " ")}</bdi>
               </li>
               <li>
-                <Ruler size={18} aria-hidden />
+                <Ruler size={20} aria-hidden />
                 <span className={mk.num}>{formatDims(dims, locale)}</span>
               </li>
               <li>
-                <BadgeCheck size={18} aria-hidden />
+                <BadgeCheck size={20} aria-hidden />
                 {t("store.structure.minimumValue")}
               </li>
             </ul>

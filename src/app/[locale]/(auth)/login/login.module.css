@@ -3,7 +3,8 @@
   grid-template-columns: minmax(0, 27rem);
   justify-content: center;
   align-content: start;
-  min-block-size: calc(100dvh - 12rem);
+  /* Fill the marketing <main> (CR-44) so the grey surface meets the footer, not a white strip. */
+  min-block-size: calc(100dvh - var(--mk-header-h, 64px));
   padding: var(--p-space-1000, 40px) var(--p-page-gutter) var(--p-space-1600, 64px);
   background: var(--p-color-bg);
 }

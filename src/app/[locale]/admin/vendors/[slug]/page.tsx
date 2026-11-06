@@ -1,4 +1,3 @@
-import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Badge, BlockStack, Card, DataTable, InlineStack, Layout, LayoutSection, Link, MetricsStrip, Page, Text, Tooltip } from "@/components/ui";
@@ -8,6 +7,7 @@ import { OrderStatusBadge } from "@/components/admin/OrdersIndex";
 import { VendorStatusActions } from "@/components/admin/VendorActions";
 import { loadVendorDetail, vendorModelCoverage } from "@/components/admin/server/queries";
 import { getT, pick, toLocale, type DictKey } from "@/i18n";
+import { db } from "@/lib/db";
 import { formatDate, formatDateTime, formatMoney, formatNumber, formatPercent } from "@/lib/format";
 
 type Params = Promise<{ locale: string; slug: string }>;
@@ -16,9 +16,9 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const { locale: raw, slug } = await params;
   const locale = toLocale(raw);
   const t = getT(locale);
-  // Entity first (WCAG 2.4.2, CR-49): "Nile Pack · Vendors · Admin".
-  const v = /^[\w-]{1,80}$/.test(slug) ? await db.vendor.findUnique({ where: { slug }, select: { nameAr: true, nameEn: true } }) : null;
-  return { title: `${v ? `${pick(locale, v.nameAr, v.nameEn)} · ` : ""}${t("admin.vendors.title")} · ${t("admin.title")}` };
+  const v = await db.vendor.findUnique({ where: { slug }, select: { nameAr: true, nameEn: true } }).catch(() => null);
+  const section = `${t("admin.vendors.title")} · ${t("admin.title")}`;
+  return { title: v ? `${pick(locale, v.nameAr, v.nameEn)} · ${section}` : section };
 }
 
 export default async function AdminVendorPage({ params }: { params: Params }) {

@@ -18,8 +18,11 @@ export interface OtpSuccess {
 const RESEND_SECONDS = 30;
 const CODE_LENGTH = 6;
 
-/** Left-to-right isolate so "+20…" and digits never reorder inside Arabic sentences. */
-const ltr = (s: string) => `\u2066${s}\u2069`;
+/**
+ * Left-to-right isolate so "+20…" and digits never reorder inside Arabic sentences, with
+ * no-break spaces so a number never wraps across two lines (WCAG 1.3.2).
+ */
+const ltr = (s: string) => `\u2066${s.replace(/ /g, "\u00a0")}\u2069`;
 
 /**
  * Render a dictionary string that contains {placeholders} as rich content:
@@ -100,6 +103,7 @@ export function OtpForm({ onSuccess, reason }: { onSuccess: (u: OtpSuccess) => v
 
   async function sendCode(e?: FormEvent) {
     e?.preventDefault();
+    if (busy) return;
     setError(null);
     setNotice(null);
     const target = step === "code" ? normalized : normalizeEgyptPhone(phone);
@@ -116,7 +120,9 @@ export function OtpForm({ onSuccess, reason }: { onSuccess: (u: OtpSuccess) => v
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        fail(data.error ?? "INVALID_INPUT", data.retryAfterSec);
+        // A server fault is not the user's input: say "something went wrong", not "check your details".
+        if (res.status >= 500 || !data.error) setError({ text: t("common.error"), field: null });
+        else fail(data.error, data.retryAfterSec);
         return;
       }
       const resent = step === "code";
@@ -136,6 +142,7 @@ export function OtpForm({ onSuccess, reason }: { onSuccess: (u: OtpSuccess) => v
 
   async function verify(e: FormEvent) {
     e.preventDefault();
+    if (busy) return;
     setError(null);
     setNotice(null);
     if (code.length !== CODE_LENGTH) {
@@ -160,7 +167,9 @@ export function OtpForm({ onSuccess, reason }: { onSuccess: (u: OtpSuccess) => v
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        fail(data.error ?? "INVALID_INPUT", data.retryAfterSec);
+        // A server fault is not the user's input: say "something went wrong", not "check your details".
+        if (res.status >= 500 || !data.error) setError({ text: t("common.error"), field: null });
+        else fail(data.error, data.retryAfterSec);
         return;
       }
       onSuccess(data.user as OtpSuccess);
@@ -222,7 +231,13 @@ export function OtpForm({ onSuccess, reason }: { onSuccess: (u: OtpSuccess) => v
               {t("auth.phoneHint")}
             </span>
           </div>
-          <button type="submit" className={styles.primary} disabled={!hydrated || busy} aria-busy={busy || undefined}>
+          <button
+            type="submit"
+            className={styles.primary}
+            disabled={!hydrated}
+            aria-disabled={busy || undefined}
+            aria-busy={busy || undefined}
+          >
             {busy ? t("auth.sending") : t("auth.sendCode")}
           </button>
           <p className={styles.fine}>
@@ -310,15 +325,18 @@ export function OtpForm({ onSuccess, reason }: { onSuccess: (u: OtpSuccess) => v
                 aria-invalid={error?.field === "terms" || undefined}
                 aria-describedby={describe(`${uid}-termshint`, "terms")}
               />
-              <label htmlFor={`${uid}-terms`}>
-                {rich(t("auth.acceptTermsRich"), {
-                  terms: legalLink("terms", t("auth.termsLink")),
-                  privacy: legalLink("privacy", t("auth.privacyLink")),
-                })}
+              <div>
+                <label htmlFor={`${uid}-terms`}>{t("auth.acceptTerms")}</label>
                 <span id={`${uid}-termshint`} className={styles.checkHint}>
                   {t("auth.acceptTermsHint")}
                 </span>
-              </label>
+                <span className={styles.checkHint}>
+                  {rich(t("auth.readLegal"), {
+                    terms: legalLink("terms", t("auth.termsLink")),
+                    privacy: legalLink("privacy", t("auth.privacyLink")),
+                  })}
+                </span>
+              </div>
             </div>
             <div className={styles.check}>
               <input id={`${uid}-mkt`} type="checkbox" checked={marketing} onChange={(e) => setMarketing(e.target.checked)} />
@@ -328,11 +346,11 @@ export function OtpForm({ onSuccess, reason }: { onSuccess: (u: OtpSuccess) => v
               </label>
             </div>
           </fieldset>
-          <button type="submit" className={styles.primary} disabled={busy} aria-busy={busy || undefined}>
+          <button type="submit" className={styles.primary} aria-disabled={busy || undefined} aria-busy={busy || undefined}>
             {busy ? t("auth.verifying") : t("auth.verify")}
           </button>
           <div className={styles.row}>
-            <button type="button" className={styles.plain} disabled={cooldown > 0 || busy} onClick={() => sendCode()}>
+            <button type="button" className={styles.plain} disabled={cooldown > 0} aria-disabled={busy || undefined} onClick={() => sendCode()}>
               {cooldown > 0 ? t("auth.resendIn", { seconds: formatCount(cooldown, "second", locale) }) : t("auth.resend")}
             </button>
           </div>

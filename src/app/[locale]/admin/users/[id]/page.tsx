@@ -1,4 +1,3 @@
-import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Download } from "lucide-react";
@@ -7,15 +6,18 @@ import { DataRequestActions } from "@/components/admin/DataRequestActions";
 import { OrderStatusBadge } from "@/components/admin/OrdersIndex";
 import { loadUser } from "@/components/admin/server/queries";
 import { getT, pick, toLocale, type DictKey } from "@/i18n";
+import { db } from "@/lib/db";
 import { formatDate, formatDateTime, formatMoney, formatNumber } from "@/lib/format";
 
 type Params = Promise<{ locale: string; id: string }>;
 
+/** Entity first (WCAG 2.4.2). The name only, never the phone number: titles end up in history and tab lists. */
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { locale, id } = await params;
   const t = getT(toLocale(locale));
-  const u = /^[\w-]{1,40}$/.test(id) ? await db.user.findUnique({ where: { id }, select: { name: true } }) : null;
-  return { title: `${u?.name ? `${u.name} · ` : ""}${t("admin.users.title")} · ${t("admin.title")}` };
+  const user = await db.user.findUnique({ where: { id }, select: { name: true } }).catch(() => null);
+  const section = `${t("admin.users.title")} · ${t("admin.title")}`;
+  return { title: user ? `${user.name ?? t("admin.users.noName")} · ${section}` : section };
 }
 
 export default async function AdminUserPage({ params }: { params: Params }) {

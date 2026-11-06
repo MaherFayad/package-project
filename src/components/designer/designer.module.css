@@ -37,7 +37,7 @@
 .topBarBrand:focus-visible,
 .topBarLink:focus-visible {
   outline: var(--p-focus-ring-width, 2px) solid var(--p-color-text-inverse, #fff);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 .topBarTitle {
   font-size: var(--p-font-size-325);
@@ -59,7 +59,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--p-space-150);
-  min-block-size: 2.25rem;
+  min-block-size: var(--p-control-height); /* medium button: 32, 40 on coarse pointers (CR-37) */
   padding-inline: var(--p-space-300);
   border-radius: var(--p-border-radius-200);
   background: var(--e-color-topbar-search-bg);
@@ -70,7 +70,8 @@
   text-decoration: none;
   white-space: nowrap;
 }
-.topBarLink:hover { background: var(--e-color-topbar-search-bg-hover); }
+.topBarLink:hover { background: var(--e-color-topbar-search-bg-hover); color: var(--e-color-topbar-text); } /* CR-01: 8.9:1 */
+@media (pointer: coarse) { .topBarLink { min-block-size: var(--e-control-height-touch); } }
 
 .main {
   flex: 1 1 auto;
@@ -288,9 +289,9 @@
   color: var(--p-color-text-brand-on-bg-fill, #fff);
   font-weight: var(--p-font-weight-semibold);
   text-decoration: none;
-  transition: background-color var(--p-motion-duration-150, 150ms) var(--p-motion-ease-out, ease-out), transform var(--p-motion-duration-100, 100ms) var(--p-motion-ease-out, ease-out);
+  transition: background-color var(--motion-fast) var(--ease-standard), transform var(--motion-instant) var(--ease-standard);
 }
-.startCtaLink:hover { background: var(--p-color-bg-fill-brand-hover, var(--p-color-bg-inverse)); }
+.startCtaLink:hover { background: var(--p-color-bg-fill-brand-hover, var(--p-color-bg-inverse)); color: var(--p-color-text-brand-on-bg-fill, #fff); } /* CR-01: 17.4:1 */
 .startCtaLink:active { transform: scale(0.98); }
 .startCtaLink:focus-visible { outline: var(--p-focus-ring-width, 2px) solid var(--p-color-border-focus); outline-offset: 2px; }
 @media (max-width: 899px) {

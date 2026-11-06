@@ -45,6 +45,7 @@
   accent-color: var(--p-color-bg-fill-brand);
 }
 .check input[aria-invalid="true"] { outline: 2px solid var(--p-color-border-critical); outline-offset: 2px; }
+.check > div { min-inline-size: 0; }
 .check label { display: block; line-height: var(--p-font-line-height-500, 1.5); }
 .checkHint { display: block; margin-block-start: 2px; color: var(--p-color-text-secondary); font-size: var(--p-font-size-325); }
 .link { color: var(--p-color-text-link); text-decoration: underline; text-underline-offset: 2px; }
@@ -60,9 +61,11 @@
   padding-inline: var(--p-space-400);
   transition: background-color var(--p-motion-duration-150, 150ms) var(--p-motion-ease-out, ease-out);
 }
-.primary:hover:not(:disabled) { background: var(--p-color-bg-fill-brand-hover); }
+.primary:hover:not(:disabled):not([aria-disabled="true"]) { background: var(--p-color-bg-fill-brand-hover); }
 .primary:active:not(:disabled) { box-shadow: var(--p-shadow-button-primary-inset); }
 .primary:disabled { opacity: 0.6; cursor: not-allowed; }
+/* While a request runs the button stays focusable (aria-disabled, WCAG 2.4.3) and the handler ignores presses. */
+.primary[aria-disabled="true"] { opacity: 0.6; }
 .primary[aria-busy="true"] { cursor: progress; }
 .row { display: flex; justify-content: center; flex-wrap: wrap; gap: var(--p-space-200); }
 .plain {

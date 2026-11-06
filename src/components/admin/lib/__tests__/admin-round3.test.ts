@@ -90,3 +90,20 @@ describe("checkout settings form (B-05, B-11)", async () => {
     expect(checkoutSettingsFormSchema.safeParse({ ...ok, sample: { ...ok.sample, creditDays: Number.NaN } }).success).toBe(false);
   });
 });
+
+describe("event funnel (B-19)", async () => {
+  const { eventFunnel, visitorToPaid, conversionBand } = await import("../events");
+  const counts = { visit: 1000, design_started: 300, gate_shown: 120, account_created: 80, price_viewed: 70, order_started: 40, payment_succeeded: 25 };
+  it("shows each step against visitors and the step before", () => {
+    const f = eventFunnel(counts);
+    expect(f[0]).toEqual({ step: "visit", count: 1000, ofVisitsPct: 100, ofPrevPct: null });
+    expect(f[6]).toEqual({ step: "payment_succeeded", count: 25, ofVisitsPct: 2.5, ofPrevPct: 62.5 });
+    expect(visitorToPaid(counts)).toBe(2.5);
+    expect(conversionBand(2.5)).toBe("in");
+  });
+  it("has no ratios without visits", () => {
+    const zero = { visit: 0, design_started: 0, gate_shown: 0, account_created: 0, price_viewed: 0, order_started: 0, payment_succeeded: 0 };
+    expect(visitorToPaid(zero)).toBeNull();
+    expect(eventFunnel(zero)[3]!.ofPrevPct).toBeNull();
+  });
+});
