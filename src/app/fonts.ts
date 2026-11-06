@@ -1,8 +1,10 @@
 import { IBM_Plex_Sans_Arabic, Inter } from "next/font/google";
 
 /**
- * Inter (variable, Latin) carries every Latin run and all digits, in both locales, and is
- * preloaded everywhere.
+ * Inter (variable, Latin) carries every Latin run and all digits, in both locales. It is
+ * preloaded on English pages only (see interLatinPreloadUrl): on Arabic pages it only renders
+ * digits and brand names and loads on demand, leaving the slow-network critical path to the
+ * Arabic text font and the LCP image (PERF-R4-03).
  *
  * IBM Plex Sans Arabic is loaded for the Arabic block only (Latin falls through to Inter in
  * the font stack). The UI uses three static cuts: 400 body, 600 medium / semibold, 700 bold.
@@ -15,6 +17,8 @@ import { IBM_Plex_Sans_Arabic, Inter } from "next/font/google";
 export const inter = Inter({
   subsets: ["latin"],
   display: "swap",
+  // Preloaded by `[locale]/layout.tsx` on English pages only (PERF-R4-03).
+  preload: false,
   variable: "--font-inter",
 });
 

@@ -1,4 +1,4 @@
-import { Vector3 } from "three";
+import { Vec3 as Vector3 } from "@/lib/dieline/math";
 import type { FaceId } from "@/types";
 import { FACE_FRAMES, applyAffine, computePoses, panelLocalPoint, panelPivot } from "../../../fold";
 import type { DielineModel, FaceInfo, Pt } from "../../../types";

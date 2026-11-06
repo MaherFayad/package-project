@@ -1,4 +1,4 @@
-import { Box3, Euler, Matrix4, Quaternion, Vector3 } from "three";
+import { Box3, Euler, Mat4 as Matrix4, Quat as Quaternion, Vec3 as Vector3 } from "./math";
 import type { Dims, FaceId, StructureCode, StructureFeatures } from "@/types";
 import { DielineBuilder, insetSeg, rectEdges } from "./builder";
 import { boundsAt, panelPivot } from "./fold";

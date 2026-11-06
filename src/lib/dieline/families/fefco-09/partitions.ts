@@ -1,4 +1,4 @@
-import { Matrix4 } from "three";
+import { Mat4 as Matrix4 } from "@/lib/dieline/math";
 import { DielineBuilder } from "../../builder";
 import { bboxOf, pt } from "../../geometry";
 import type { Polygon } from "../../types";

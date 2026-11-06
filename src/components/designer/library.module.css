@@ -372,6 +372,10 @@ a.modelCard {
   background: var(--p-color-bg-surface-tertiary);
   opacity: 0.7;
 }
+/* Editor loading state with the server-rendered model poster: no placeholder square behind it. */
+.stageSkeleton:has(> img)::after {
+  display: none;
+}
 @keyframes shimmer {
   to {
     background-position: center 78%, -200% 0;

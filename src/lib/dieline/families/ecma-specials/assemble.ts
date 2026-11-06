@@ -1,4 +1,4 @@
-import { Matrix4 } from "three";
+import { Mat4 as Matrix4 } from "@/lib/dieline/math";
 import { z } from "zod";
 import type { Dims, StructureCode, StructureFeatures, StructureParamLimits } from "@/types";
 import { panelCreases } from "../../builder";

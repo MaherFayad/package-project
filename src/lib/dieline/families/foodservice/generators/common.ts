@@ -1,4 +1,4 @@
-import { Euler, Quaternion } from "three";
+import { Euler, Quat as Quaternion } from "@/lib/dieline/math";
 import { DielineBuilder } from "../../../builder";
 import { bboxOf, pt } from "../../../geometry";
 import type { Polygon, Pt, Rect } from "../../../types";

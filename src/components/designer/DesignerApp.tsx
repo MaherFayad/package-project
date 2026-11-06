@@ -1,5 +1,6 @@
 "use client";
 
+import { preload } from "react-dom";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ChevronDown, ChevronUp, CloudCheck, CloudOff, CloudUpload, Download, MoreHorizontal, Redo2, Save, Share2, Undo2 } from "lucide-react";
@@ -7,9 +8,9 @@ import { startTransition, useCallback, useEffect, useMemo, useReducer, useRef, u
 import { FACE_IDS, type ArtworkLayer, type DesignDoc, type DesignFinishCode, type DimsPreset, type FaceId, type Locale, type PrintSurface, type StructureCode } from "@/types";
 import { boardAppearance, type DielineModel } from "@/lib/dieline";
 import type { ModelDef } from "@/lib/library";
-import { loadModel, modelByCode } from "@/lib/library/registry";
+import { loadModel, modelByCode, modelSlugOf } from "@/lib/library/registry";
 import { useLibraryModel } from "@/lib/library/useLibraryModel";
-import { defaultMaxDpr } from "@/components/three/hooks";
+import { defaultMaxDpr } from "@/components/three/dpr";
 import { docGeometry, docModel, docModelCode, facesForAreas, normaliseDocModel } from "@/lib/library/doc";
 import { FINISHES } from "@/lib/configurator";
 import { ViewControls, type PackagingSceneHandle } from "@/components/three";
@@ -138,10 +139,22 @@ function slugify(name: string) {
  * until it is in the registry, then the editor.
  */
 export function DesignerApp(props: DesignerAppProps) {
-  const ready = useLibraryModel(docModelCode(props.initialDoc));
+  const code = docModelCode(props.initialDoc);
+  const ready = useLibraryModel(code);
+  // The model poster is server-rendered inside the skeleton (it needs only the generated slug
+  // index, not the family pack), so the first paint already shows the model and the LCP image
+  // starts downloading with the HTML instead of after hydration + pack load (PERF-R4-02).
+  const posterSlug = modelSlugOf(code);
+  // Discovered in <head>, ahead of the 3D renderer script preloads that otherwise fill the six
+  // HTTP/1.1 sockets on a slow network and hold the poster back by ~3 s.
+  if (posterSlug) preload(`/models/${posterSlug}.svg`, { as: "image", fetchPriority: "high" });
   if (!ready)
     return (
       <div className={lib.stageSkeleton} style={{ minBlockSize: "70vh" }} aria-busy="true" data-testid="designer-loading">
+        {posterSlug ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={`/models/${posterSlug}.svg`} alt="" aria-hidden="true" className={styles.stagePoster} fetchPriority="high" decoding="async" />
+        ) : null}
         <span className="visually-hidden">{props.locale === "ar" ? "جار تحميل المصمم" : "Loading the designer"}</span>
       </div>
     );
@@ -866,7 +879,10 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
                   roleDescription={t("viewer.roleDescription")}
                   keyboardHint={t("viewer.keyboardHint")}
                   fallback={t("viewer.unsupported")}
-                  poster={libModel ? `/models/${libModel.slug}.svg` : undefined}
+                  // No scene poster: the stage's own <img> below (server-rendered, same file) is the
+                  // poster. The scene's CSS-background poster painted later and larger, so it became
+                  // the LCP element at ~11 s on a phone (PERF-R4-02).
+                  poster={undefined}
                   onReady={onSceneReady}
                   {...(geo?.vessel && libModel?.kind === "vessel"
                     ? {

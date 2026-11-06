@@ -3,8 +3,9 @@ import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { preload } from "react-dom";
 import { inter, plexArabic, PLEX_PRELOAD_WEIGHTS } from "@/app/fonts";
-import { plexArabicPreloadUrls } from "@/app/font-preload";
+import { interLatinPreloadUrl, plexArabicPreloadUrls } from "@/app/font-preload";
 import { dirOf, getDictionary, getPublicDictionary, isLocale } from "@/i18n";
+import type { Dictionary } from "@/i18n/types";
 import { I18nProvider } from "@/i18n/client";
 import { LOCALES } from "@/types";
 import { VisitBeacon } from "@/lib/analytics/VisitBeacon";
@@ -31,6 +32,18 @@ export async function generateMetadata({
   };
 }
 
+/**
+ * Dictionary sent to the browser on every page (it is serialised into the HTML's RSC payload).
+ * `legal` (the long policy texts) and `notify` (email / SMS templates) are read only by server
+ * code, so they stay out of the client copy: ~9 KB raw less in every page (PERF-R4-05).
+ */
+function clientDictionary(locale: "ar" | "en"): Dictionary {
+  const { legal: _legal, notify: _notify, ...rest } = getPublicDictionary(locale);
+  void _legal;
+  void _notify;
+  return rest as Dictionary;
+}
+
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
@@ -55,11 +68,11 @@ export default async function LocaleLayout({
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
   const dict = getDictionary(locale);
-  // Arabic pages only: preload the two Plex Arabic cuts used above the fold (PERF-05).
-  if (locale === "ar") {
-    for (const href of plexArabicPreloadUrls(PLEX_PRELOAD_WEIGHTS)) {
-      preload(href, { as: "font", type: "font/woff2", crossOrigin: "anonymous" });
-    }
+  // Arabic pages: the two Plex Arabic cuts used above the fold (PERF-05).
+  // English pages: Inter's Latin file only (PERF-R4-03); Arabic pages never preload Inter.
+  const fontPreloads = locale === "ar" ? plexArabicPreloadUrls(PLEX_PRELOAD_WEIGHTS) : [interLatinPreloadUrl()];
+  for (const href of fontPreloads) {
+    if (href) preload(href, { as: "font", type: "font/woff2", crossOrigin: "anonymous" });
   }
   return (
     <html lang={locale} dir={dirOf(locale)} className={`${inter.variable} ${plexArabic.variable}`}>
@@ -67,7 +80,7 @@ export default async function LocaleLayout({
         <a className="skip-link" href="#main">
           {dict.common.skipToContent}
         </a>
-        <I18nProvider locale={locale} dict={getPublicDictionary(locale)}>
+        <I18nProvider locale={locale} dict={clientDictionary(locale)}>
           {children}
         </I18nProvider>
         {/* First-party `visit` event (B-19): one beacon per browser session, no third-party pixel. */}

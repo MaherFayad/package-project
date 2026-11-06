@@ -1,4 +1,4 @@
-import { Matrix4, Vector3 } from "three";
+import { Mat4 as Matrix4, Vec3 as Vector3 } from "@/lib/dieline/math";
 import { computePoses, panelLocalPoint, panelPivot } from "../../../fold";
 import { polygonArea } from "../../../geometry";
 import type { DielineModel, DielinePanel, Pt } from "../../../types";

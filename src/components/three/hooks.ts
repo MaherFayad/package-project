@@ -26,13 +26,7 @@ export function usePrefersReducedMotion(): boolean {
 }
 
 /** Max device-pixel ratio for the 3D canvas: lower on touch / low-core devices. */
-export function defaultMaxDpr(): number {
-  if (typeof window === "undefined") return 1.5;
-  const coarse = window.matchMedia?.("(pointer: coarse)").matches;
-  const cores = navigator.hardwareConcurrency ?? 4;
-  if (coarse || cores <= 4) return 1.5;
-  return 2;
-}
+export { defaultMaxDpr } from "./dpr";
 
 /**
  * Wrap a canvas (painted with paintArtworkSurface) in a texture. Bump `version` after

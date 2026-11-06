@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Matrix4, Vector3 } from "three";
+import { Mat4 as Matrix4, Vec3 as Vector3 } from "@/lib/dieline/math";
 import { computePoses, panelLocalPoint, panelPivot, type DielineModel, type DielinePanel } from "../../..";
 import { DEFINITIONS, generateFamilyDieline, type Fefco04Definition } from "..";
 

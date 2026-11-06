@@ -1,4 +1,4 @@
-import { Box3, Euler, Matrix4, Quaternion, Vector3 } from "three";
+import { Box3, Euler, Mat4 as Matrix4, Quat as Quaternion, Vec3 as Vector3 } from "@/lib/dieline/math";
 import { DielineBuilder, insetSeg, rectEdges } from "@/lib/dieline/builder";
 import { boundsAt } from "@/lib/dieline/fold";
 import { roundedRect, stadium } from "@/lib/dieline/features";

@@ -57,6 +57,7 @@ export default function StartViewer({
   wrapRef,
   labels,
   poster,
+  onReady,
 }: {
   active: ProductPresetKey;
   locale: Locale;
@@ -64,6 +65,8 @@ export default function StartViewer({
   wrapRef: RefObject<HTMLDivElement | null>;
   labels: { viewer: string; roleDescription: string; keyboardHint: string; unsupported: string };
   poster?: string;
+  /** First frame drawn (the caller removes its poster image). */
+  onReady?: () => void;
 }) {
   const handle = useRef<PackagingSceneHandle>(null);
   const preset = PRODUCT_PRESETS.find((p) => p.key === active)!;
@@ -133,6 +136,7 @@ export default function StartViewer({
       artworkVersion={version}
       handleRef={handle}
       poster={poster}
+      onReady={onReady}
       ariaLabel={labels.viewer}
       roleDescription={labels.roleDescription}
       keyboardHint={labels.keyboardHint}

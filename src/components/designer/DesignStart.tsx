@@ -13,8 +13,7 @@ import styles from "./designer.module.css";
 
 const StartViewer = dynamic(() => import("./StartViewer"), {
   ssr: false,
-  // eslint-disable-next-line @next/next/no-img-element
-  loading: () => <img src="/models/mailer-box.svg" alt="" className={styles.startPoster} />,
+  loading: () => null,
 });
 
 const ICONS = { tshirt: Shirt, shoe: Footprints, perfume50: SprayCan, pizza30: Pizza } as const;
@@ -32,9 +31,13 @@ export function DesignStart({ locale }: { locale: Locale }) {
   const { t } = useI18n();
   const [active, setActive] = useState<ProductPresetKey>("tshirt");
   const [mounted, setMounted] = useState(false);
+  const [viewerReady, setViewerReady] = useState(false);
   const [playing, setPlaying] = useState(true);
   const wrapRef = useRef<HTMLDivElement>(null);
   const preset = PRODUCT_PRESETS.find((p) => p.key === active)!;
+
+  // A new product remounts the 3D scene: show its poster again until the scene draws.
+  useEffect(() => setViewerReady(false), [active]);
 
   // three.js loads once the browser is idle, so the page paints fast on mid-range phones.
   useEffect(() => {
@@ -85,16 +88,18 @@ export function DesignStart({ locale }: { locale: Locale }) {
 
       <div className={styles.startStageCol}>
         <div className={styles.startStage} ref={wrapRef} onPointerDown={() => setPlaying(false)}>
+          {/* The server-rendered poster stays until the 3D preview has drawn a frame; the scene gets no
+              poster of its own, which used to paint later and larger and become the LCP (PERF-R4-04). */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          {!mounted ? <img src={`/models/${POSTER[active]}.svg`} alt="" className={styles.startPoster} /> : null}
+          {!viewerReady ? <img src={`/models/${POSTER[active]}.svg`} alt="" className={styles.startPoster} fetchPriority="high" /> : null}
           {mounted ? (
             <div className={styles.startViewer} onFocusCapture={() => setPlaying(false)}>
               <StartViewer
                 active={active}
+                onReady={() => setViewerReady(true)}
                 locale={locale}
                 playing={playing}
                 wrapRef={wrapRef}
-                poster={`/models/${POSTER[active]}.svg`}
                 labels={{
                   viewer: t("designer.start.viewerLabel", { product: productName }),
                   roleDescription: t("viewer.roleDescription"),

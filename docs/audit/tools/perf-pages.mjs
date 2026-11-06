@@ -48,8 +48,14 @@ const PHONES = { buyer: "+201000000002", vendor: "+201000000010", admin: "+20100
 
 async function login(request, role) {
   const phone = PHONES[role];
-  const r1 = await request.post(`${BASE}/api/auth/request-otp`, { data: { phone } });
-  const { devCode } = await r1.json();
+  // Per-phone OTP limit is 1 per 30 s: wait and retry instead of failing the whole run.
+  let devCode;
+  for (let i = 0; i < 4 && !devCode; i++) {
+    const r1 = await request.post(`${BASE}/api/auth/request-otp`, { data: { phone } });
+    const j = await r1.json();
+    devCode = j.devCode;
+    if (!devCode) await new Promise((r) => setTimeout(r, ((j.retryAfterSec ?? 30) + 1) * 1000));
+  }
   const r2 = await request.post(`${BASE}/api/auth/verify-otp`, { data: { phone, code: devCode, locale: "en", acceptTerms: true } });
   if (!r2.ok()) throw new Error(`login ${role} failed ${r2.status()}`);
 }

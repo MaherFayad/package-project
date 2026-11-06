@@ -1,4 +1,4 @@
-import { Box3, Matrix4, Quaternion, Vector3 } from "three";
+import { Box3, Mat4 as Matrix4, Quat as Quaternion, Vec3 as Vector3 } from "./math";
 import type { Dims, FaceId } from "@/types";
 import type { Affine, DielineModel, DielinePanel, FaceInfo, FacePart, Pt } from "./types";
 import { bboxOf, centroid } from "./geometry";
