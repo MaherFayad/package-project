@@ -41,6 +41,7 @@ Severity: critical = broken flow / data; high = clearly wrong to a packaging buy
 | E-09 | medium | All clear glass / PET with labels | Back of a white label shows the artwork **mirrored** through the glass. (3d-visual V-06) | Self-adhesive label back is white liner side. | 3d-visual V-06 (`createLabelMaterial` FrontSide + white back mesh). | open |
 | E-10 | medium | All | Turntable spins 20°/s immediately and stops for good after the first touch; framing uses the bounding sphere. (3d-visual X-08, X-02) | WCAG 2.2.2 pause / stop. | 3d-visual X-08 / X-02. | open |
 | E-11 | low | JERRYCAN_HDPE | Spout on the axis; real jerrycans have it off-centre towards a corner. | DIN 61 jerrycan. | `VesselModel`: translate the finish / closure group by `profile.handle` side (`x = −0.25 D`) for `family === "JERRYCAN"`, or build the shoulder as a separate offset lathe. | open |
+| E-13 | low | BTL_HDPE_GALLON_JUG (natural, back view) | Through the frosted body the transmission pass shows a dark vertical wedge where the square section's back corners and the back label overlap. Pass 2 re-check; it reads like the hollow handle recess, but it is a transmission artefact. | — | Goes away once E-02 draws the handle and E-09 gives labels an opaque back; otherwise `thinMode` (alpha glass) for frosted plastics in `VesselModel`. | open |
 | E-12 | low | TUB_PP_*, PAIL_PP_ROUND | `SLIP_LID` uses the `capMetal` role, so a white PP snap lid reads grey and metallic. | PP snap lid: matte-gloss plastic. | `vessels/closures.ts`: `SLIP_LID` role `cap` when the container is plastic (pass `kind`/material). | open |
 
 ### Checked and fine
@@ -61,7 +62,7 @@ Severity: critical = broken flow / data; high = clearly wrong to a packaging buy
 | critical | 0 | 0 | 0 |
 | high | 7 | 3 (B-01, B-02, B-03 fallback) | 4 (E-01..E-04) |
 | medium | 9 | 2 (B-04, B-05) | 7 (E-05..E-10, E-07) |
-| low | 3 | 1 (B-06) | 2 (E-11, E-12) |
+| low | 4 | 1 (B-06) | 3 (E-11..E-13) |
 
 ## Verification
 
