@@ -532,3 +532,18 @@ Checked, no change:
 - **The print PDF's own bleed and crop marks:** owned by checkout (`orders/pdf`). The designer side (what it paints) is fixed by R11-03.
 
 Files touched outside scope (round 11): `src/lib/dieline/texture.ts` (the R11-03 inset, one line plus a comment). R10-R1: `src/app/api/designs/_shared.ts`, `src/app/api/designs/[id]/route.ts` (assigned by the integrator).
+
+## Verification (R10-R1 + round 11)
+
+- Lint and typecheck are clean. `npm test`: **98 files, 8,521 passed** (new: `concurrency.test.ts`, `color-hex.test.ts`). `npm run build` OK.
+- Playwright `designer` + `smoke` + `journey` + `checkout` + `catalogue` + `storefront` + **`models`** (`--workers=2`): **428 passed, 376 skipped**, 0 failed. That includes the new "two devices on one design" test and every library model after the text-inset change.
+- Hydration e2e, 16 × 2 projects: **32 / 32 passed**.
+
+## Counts (round 11, new findings before fixing)
+
+| severity | found | fixed | open |
+|---|---|---|---|
+| critical | 0 | 0 | 0 |
+| high | 0 | 0 | 0 |
+| medium | 3 (R11-01, R11-02, R11-03) | 3 | 0 |
+| low | 1 (R11-04) | 1 | 0 |
