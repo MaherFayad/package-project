@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/Card";
 import { SkeletonBodyText, SkeletonDisplayText, SkeletonPage } from "@/components/ui/Skeleton";
 
 /** Admin loading state: page-shaped skeleton inside the frame while data streams in. */
-export default function Loading() {
+export function AdminLoading() {
   return (
     <SkeletonPage primaryAction fullWidth>
       <BlockStack gap="400">

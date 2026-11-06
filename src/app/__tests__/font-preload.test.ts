@@ -43,3 +43,22 @@ describe("interPreloadUrl", () => {
     expect(interPreloadUrl()).toBe("/_next/static/media/latin-s.woff2");
   });
 });
+
+describe("notoArabicPreloadUrl", () => {
+  it("picks the Arabic-block Noto Sans Arabic file, not its Latin subset", async () => {
+    vi.resetModules();
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "elba-fonts-"));
+    fs.mkdirSync(path.join(dir, ".next/static/css"), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, ".next/static/css/c.css"),
+      [
+        "@font-face{font-family:Noto Sans Arabic;font-weight:100 900;src:url(/_next/static/media/nlat-s.woff2) format(\"woff2\");unicode-range:u+00??,u+0131}",
+        "@font-face{font-family:Noto Sans Arabic;font-weight:100 900;src:url(/_next/static/media/nar-s.woff2) format(\"woff2\");unicode-range:u+06??,u+0750-077f}",
+        "@font-face{font-family:IBM Plex Sans Arabic;font-weight:400;src:url(/_next/static/media/plex-s.woff2) format(\"woff2\");unicode-range:u+06??}",
+      ].join("\n"),
+    );
+    vi.spyOn(process, "cwd").mockReturnValue(dir);
+    const { notoArabicPreloadUrl } = await import("@/app/font-preload");
+    expect(notoArabicPreloadUrl()).toBe("/_next/static/media/nar-s.woff2");
+  });
+});
