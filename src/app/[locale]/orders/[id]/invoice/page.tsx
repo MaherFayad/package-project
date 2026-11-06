@@ -61,7 +61,11 @@ export default async function InvoicePage({ params }: { params: Params }) {
   // R7-01: after a refund the receipt says so (amount, method, credit note), instead of reading as paid.
   const refund = order.payments.find((p) => p.status === "REFUNDED");
   const creditNote = order.invoices.find((i) => i.kind === "CREDIT_NOTE");
-  const buyerName = order.buyer.organization?.name ?? order.buyer.name ?? addr.name;
+  // R5-JR-03: the company frozen on the order at checkout; orders from before the snapshot (billing
+  // null) fall back to the buyer's Organization as before.
+  const billing = order.billing == null ? null : fromJson<{ company: { name: string; taxId: string; commercialRegister: string | null } | null }>(order.billing);
+  const company = billing ? billing.company : order.buyer.organization ? { name: order.buyer.organization.name, taxId: order.buyer.organization.taxId ?? "", commercialRegister: order.buyer.organization.commercialRegister } : null;
+  const buyerName = company?.name ?? order.buyer.name ?? addr.name;
   // Addresses store the canonical English governorate; the invoice shows it in the page language.
   const govKey = governorateKey(addr.governorate);
   const governorateLabel = govKey ? t(`governorates.${govKey}` as DictKey) : addr.governorate;
@@ -114,7 +118,7 @@ export default async function InvoicePage({ params }: { params: Params }) {
                     <IsolatedList sep={locale === "ar" ? "، " : ", "} parts={[addr.street, addr.city, governorateLabel]} />
                   </Text>
                   <Text as="p" variant="bodySm">
-                    {t("orders.invoice.buyerTaxId")}: <bdi>{order.buyer.organization?.taxId ? formatTaxId(order.buyer.organization.taxId) : "-"}</bdi>
+                    {t("orders.invoice.buyerTaxId")}: <bdi>{company?.taxId ? formatTaxId(company.taxId) : "-"}</bdi>
                   </Text>
                   <Text as="p" variant="bodySm">
                     {t("orders.invoice.issued")}: {formatDate(invoice.issuedAt, locale, "long")}

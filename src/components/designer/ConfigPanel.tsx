@@ -23,6 +23,7 @@ import { featureSupportOf, finishChoicesFor, materialChoices, printSidesChoices,
 import { modelImage } from "./ModelPicker";
 import { FlexOptionsGroup } from "./FlexOptionsGroup";
 import { EGYPT_BADGE, egyptOf, orderModeOf } from "@/data/catalogue/order-mode";
+import { parseMmInput } from "./lib/mm";
 import styles from "./library.module.css";
 
 export interface ViewOptions {
@@ -258,7 +259,8 @@ function BoxSection({ doc, model, geo, view, onView, onGeometry, onFinish, onPri
 
   const tryDims = (next: typeof draft) => {
     setDraft(next);
-    const dims: Dims = { L: Number(next.L), W: cylinder ? Number(next.L) : Number(next.W), H: Number(next.H) };
+    // R5-JR-20: typed as text (Arabic-Indic digits, decimal comma), read with parseMmInput.
+    const dims: Dims = { L: parseMmInput(next.L), W: cylinder ? parseMmInput(next.L) : parseMmInput(next.W), H: parseMmInput(next.H) };
     if (![dims.L, dims.W, dims.H].every((n) => Number.isFinite(n) && n > 0)) return setInvalid(true);
     try {
       model.build(dims, { thicknessMm: BOARD_SPECS[doc.materialCode].thicknessMm, features: doc.features });
@@ -311,8 +313,18 @@ function BoxSection({ doc, model, geo, view, onView, onGeometry, onFinish, onPri
             <TextField
               key={axis}
               label={cylinder && axis === "L" ? t("library.panel.diameter") : t(AXIS_KEY[axis])}
-              type="number"
+              type="text"
               inputMode="decimal"
+              spinbutton={{
+                now: parseMmInput(draft[axis]),
+                min: lims[axis].min,
+                max: lims[axis].max,
+                onStep: (d) => {
+                  const cur = parseMmInput(draft[axis]);
+                  const base = Number.isFinite(cur) ? cur : lims[axis].min;
+                  tryDims({ ...draft, [axis]: String(Math.min(lims[axis].max, Math.max(lims[axis].min, Math.round((base + d) * 10) / 10))) });
+                },
+              }}
               autoComplete="off"
               dir="ltr"
               min={lims[axis].min}
@@ -428,7 +440,7 @@ function VesselSection({ doc, model, geo, view, onView, onGeometry, onFinish }: 
 
   const tryDims = (next: typeof draft) => {
     setDraft(next);
-    const dims: VesselDims = { D: Number(next.D), H: Number(next.H), ...(model.limits.G && next.G !== "" ? { G: Number(next.G) } : {}), ...(v.dims.taper !== undefined ? { taper: v.dims.taper } : {}) };
+    const dims: VesselDims = { D: parseMmInput(next.D), H: parseMmInput(next.H), ...(model.limits.G && next.G !== "" ? { G: parseMmInput(next.G) } : {}), ...(v.dims.taper !== undefined ? { taper: v.dims.taper } : {}) };
     const inRange = (n: number | undefined, r?: { min: number; max: number }) => n === undefined || !r || (Number.isFinite(n) && n >= r.min && n <= r.max);
     if (!inRange(dims.D, model.limits.D) || !inRange(dims.H, model.limits.H) || !inRange(dims.G, model.limits.G)) return setInvalid(true);
     try {
@@ -477,8 +489,18 @@ function VesselSection({ doc, model, geo, view, onView, onGeometry, onFinish }: 
               <TextField
                 key={a}
                 label={axisLabel(a)}
-                type="number"
+                type="text"
                 inputMode="decimal"
+                spinbutton={{
+                  now: parseMmInput(draft[a]),
+                  min: r.min,
+                  max: r.max,
+                  onStep: (d) => {
+                    const cur = parseMmInput(draft[a]);
+                    const base = Number.isFinite(cur) ? cur : r.min;
+                    tryDims({ ...draft, [a]: String(Math.min(r.max, Math.max(r.min, Math.round((base + d) * 10) / 10))) });
+                  },
+                }}
                 autoComplete="off"
                 dir="ltr"
                 min={r.min}

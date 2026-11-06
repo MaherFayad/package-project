@@ -166,6 +166,8 @@ export type ShapeSpec =
       beads: boolean;
       /** Depth of the top end panel below the seam (lever lids sit deeper), mm. */
       endDepthMm: Mm;
+      /** Wire bail handle from this body diameter up (paint tins from 1 litre), mm. */
+      bailFromD?: Mm;
     }
   | { type: "tin"; section: SectionKind; lid: "slip" | "plug" }
   | { type: "aerosol"; monobloc: boolean }

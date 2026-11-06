@@ -105,7 +105,7 @@ export function StructureDetail({
                 {t("store.structure.designCta")}
               </Link>
               <a href="#prices" className={`${mk.pill} ${mk.pillOutline} ${mk.pillLarge}`}>
-                {t("marketing.nav.pricing")}
+                {t("mk.nav.pricing")}
               </a>
             </div>
           </div>
