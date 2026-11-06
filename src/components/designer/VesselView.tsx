@@ -7,7 +7,7 @@ import { buildProfile, type ClosureColorCode, type ClosureKind, type LiquidCode,
 import type { VesselModelDef } from "@/lib/library";
 import type { DocGeometry } from "@/lib/library/doc";
 import { buildFlexibleGroup, type FlexConfig, type FlexPanelId } from "@/lib/vessels/families/flexible";
-import { VesselScene } from "@/components/three/vessels/VesselScene";
+import { VesselScene, VesselSceneContent } from "@/components/three/vessels/VesselScene";
 import type { ClosureStyle, VesselLabel } from "@/components/three/vessels";
 import type { PackagingSceneHandle } from "@/components/three";
 import { labelFinishOf, labelStockOf } from "./lib/config";
@@ -32,6 +32,7 @@ export default function VesselView({
   keyboardHint,
   fallback,
   onReady,
+  embedded = false,
 }: {
   model: VesselModelDef;
   doc: DesignDoc;
@@ -47,6 +48,8 @@ export default function VesselView({
   fallback: string;
   /** First frame rendered (the stage fades its poster out). */
   onReady?: () => void;
+  /** Render only the scene content, inside a parent `<EngineCanvas>` (PERF-09). */
+  embedded?: boolean;
 }) {
   const v = doc.vessel!;
   const desc = geo.vessel!;
@@ -138,6 +141,29 @@ export default function VesselView({
   );
 
   const profile = desc.profile ?? buildProfile(model.coreKind, v.dims);
+  if (embedded)
+    return (
+      <VesselSceneContent
+        key={model.render === "flexible" ? `flex-${model.code}` : model.code}
+        kind={model.coreKind}
+        dims={v.dims}
+        profile={profile}
+        envelope={desc.envelope}
+        material={containerCore}
+        closure={closureCore}
+        tint={containerTint}
+        closureStyle={closureStyle}
+        closureColor={(v.closureColor as ClosureColorCode) ?? "WHITE"}
+        liquid={(v.content as LiquidCode) ?? model.defaultLiquid}
+        fill={v.fill}
+        labels={labels}
+        artworkVersion={`${version}:${sheet ? 1 : 0}`}
+        open={open}
+        turntable={turntable}
+        customObject={flexGroup}
+        handleRef={handleRef as Ref<never>}
+      />
+    );
   return (
     <VesselScene
       key={model.render === "flexible" ? `flex-${model.code}` : model.code}

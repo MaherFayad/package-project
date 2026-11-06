@@ -71,10 +71,10 @@ import { ExportModal, GateModal, PriceBadge, PriceModal, ShareModal, type Export
 import styles from "./designer.module.css";
 
 const StageSkeleton = () => <div className={lib.stageSkeleton} aria-hidden="true" />;
-const Scene3D = dynamic(() => import("./Scene3D"), { ssr: false, loading: StageSkeleton });
+// One persistent 3D canvas for boxes and containers (PERF-09).
+const Stage3D = dynamic(() => import("./Stage3D"), { ssr: false, loading: StageSkeleton });
 // The picker (370 cards, search) loads only when it is opened (PERF-04).
 const ModelPicker = dynamic(() => import("./ModelPicker").then((m) => m.ModelPicker), { ssr: false });
-const VesselView = dynamic(() => import("./VesselView"), { ssr: false, loading: StageSkeleton });
 
 type View = "3d" | "face" | "dieline";
 type SaveState = "idle" | "dirty" | "saving" | "saved" | "error";
@@ -802,47 +802,46 @@ export function DesignerApp({ locale, initialDoc, initialDesignId, initialUser, 
           {model ? (
             <>
               <div className={styles.sceneWrap} data-active={view === "3d"} aria-hidden={view !== "3d"} data-testid="stage-3d" data-model={docModelCode(doc)}>
-                {geo?.vessel && libModel?.kind === "vessel" ? (
-                  <VesselView
-                    model={libModel}
-                    doc={doc}
-                    geo={geo}
-                    sheet={canvases?.outside ?? null}
-                    version={version}
-                    handleRef={sceneRef}
-                    turntable={viewOpts.turntable}
-                    open={viewOpts.open}
-                    ariaLabel={t("viewer.label")}
-                    roleDescription={t("viewer.roleDescription")}
-                    keyboardHint={t("viewer.keyboardHint")}
-                    fallback={t("viewer.unsupported")}
-                    onReady={onSceneReady}
-                  />
-                ) : (
-                  <Scene3D
-                    model={model}
-                    material={doc.materialCode}
-                    finish={doc.finishCode}
-                    finishes={doc.finishes}
-                    artwork={doc.artwork}
-                    images={images}
-                    foldProgress={fold}
-                    canvases={canvases}
-                    version={version}
-                    printInside={bothSides}
-                    handleRef={sceneRef}
-                    dimensions={viewOpts.dimensions}
-                    scene={viewOpts.scene}
-                    turntable={viewOpts.turntable}
-                    locale={locale}
-                    poster={libModel ? `/models/${libModel.slug}.svg` : undefined}
-                    onReady={onSceneReady}
-                    ariaLabel={t("viewer.label")}
-                    roleDescription={t("viewer.roleDescription")}
-                    keyboardHint={t("viewer.keyboardHint")}
-                    fallback={t("viewer.unsupported")}
-                  />
-                )}
+                <Stage3D
+                  ariaLabel={t("viewer.label")}
+                  roleDescription={t("viewer.roleDescription")}
+                  keyboardHint={t("viewer.keyboardHint")}
+                  fallback={t("viewer.unsupported")}
+                  poster={libModel ? `/models/${libModel.slug}.svg` : undefined}
+                  onReady={onSceneReady}
+                  {...(geo?.vessel && libModel?.kind === "vessel"
+                    ? {
+                        vessel: {
+                          model: libModel,
+                          doc,
+                          geo,
+                          sheet: canvases?.outside ?? null,
+                          version,
+                          handleRef: sceneRef,
+                          turntable: viewOpts.turntable,
+                          open: viewOpts.open,
+                        },
+                      }
+                    : {
+                        box: {
+                          model,
+                          material: doc.materialCode,
+                          finish: doc.finishCode,
+                          finishes: doc.finishes,
+                          artwork: doc.artwork,
+                          images,
+                          foldProgress: fold,
+                          canvases,
+                          version,
+                          printInside: bothSides,
+                          handleRef: sceneRef,
+                          dimensions: viewOpts.dimensions,
+                          scene: viewOpts.scene,
+                          turntable: viewOpts.turntable,
+                          locale,
+                        },
+                      })}
+                />
                 {/* Large poster from the first paint until the 3D chunk renders a frame (PERF-10). */}
                 {libModel ? (
                   // eslint-disable-next-line @next/next/no-img-element

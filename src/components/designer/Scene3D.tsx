@@ -5,7 +5,7 @@ import type { Artwork, DesignFinish, FinishCode, Locale, MaterialCode } from "@/
 import type { DielineModel } from "@/lib/dieline";
 import { BOX_BOARD_CODES, type BoxBoardCode } from "@/lib/configurator";
 import { formatNumber } from "@/lib/format";
-import { PackagingScene, useArtworkTexture, type PackagingSceneHandle } from "@/components/three/engine";
+import { PackagingScene, PackagingSceneContent, useArtworkTexture, type PackagingSceneHandle } from "@/components/three/engine";
 import { resolveFont } from "./fonts";
 import styles from "./designer.module.css";
 
@@ -37,6 +37,7 @@ export default memo(function Scene3D({
   fallback,
   poster,
   onReady,
+  embedded = false,
 }: {
   model: DielineModel;
   material: MaterialCode;
@@ -61,6 +62,8 @@ export default memo(function Scene3D({
   poster?: string;
   /** First frame rendered (the stage fades its poster out). */
   onReady?: () => void;
+  /** Render only the scene content, inside a parent `<EngineCanvas>` (PERF-09: one WebGL context for every model). */
+  embedded?: boolean;
 }) {
   const outside = useArtworkTexture(canvases?.outside, version);
   const inside = useArtworkTexture(printInside ? canvases?.inside : null, version);
@@ -76,6 +79,20 @@ export default memo(function Scene3D({
     () => (dimensions || scene !== "none" ? { context: scene, dimensions, formatMm: (mm: number) => `${formatNumber(Math.round(mm))} ${locale === "ar" ? "مم" : "mm"}` } : undefined),
     [dimensions, scene, locale],
   );
+  const content = {
+    dieline: model,
+    material,
+    finish,
+    foldProgress,
+    artworkTextures: { outside, inside },
+    artworkVersion: version,
+    printInside,
+    handleRef,
+    surfaceFinish,
+    stage,
+    autoRotate: turntable,
+  };
+  if (embedded) return <PackagingSceneContent {...content} />;
   return (
     <PackagingScene
       dieline={model}

@@ -82,7 +82,7 @@ export default async function DesignEditorPage({ params, searchParams }: { param
   }
 
   // Start fetching the 3D renderer while the page hydrates (PERF-10).
-  for (const href of lazyChunkHrefs(libModel.kind === "vessel" ? "./VesselView" : "./Scene3D")) preload(href, { as: "script" });
+  for (const href of lazyChunkHrefs("./Stage3D")) preload(href, { as: "script" });
 
   return (
     <DesignerApp
