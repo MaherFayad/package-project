@@ -114,3 +114,23 @@ Lint 0 errors · typecheck pass · unit 112 files / 8,771 tests · build pass ·
 Change outside scope (smallest additive): `src/components/ui/CookieNotice.tsx` gets a `data-cookie-notice=""` attribute, a stable hook for layouts that keep their CTA clear of it.
 
 Re-verified: lint 0 errors · tsc pass · unit 8,771 · build pass (`/[locale]` 3.64 kB) · i18n scopes `--check` clean · e2e 123 passed, 3 skipped · axe 0 in all 8 · phone LCP 1.96 s ar / 1.87 s en, CLS 0.006 / 0 (first visit with notice 0.0012), INP 88 / 72 ms · desktop LCP 0.40 / 0.36 s, CLS 0. Screenshots refreshed, plus first-visit frames with the notice.
+
+### Pass 3: spacing system (spec section 7), foundation `a7b9fc22`
+
+Every band, heading stack, grid and card body now uses kit primitives and tokens: `Sheet y` (md/lg/xl), `SectionHead` (with `lg` for the green band), `Stack`, `Grid` (1:2:1 trio = 4 columns with the orbit spanning 2; violet 2:1 = 3 columns), `SheetCard` (feature card), `Container` (hero column too), kit `Lead`/`Body`/`PillRow`. Page-local paddings, margins and gaps are gone except inside drawn UI mockups (chips, receipt, prompt bars, sample tag), which depict product UI at its own scale. The cookie-notice reserve is `--mk-section-y-lg + 6.5rem` (the notice's height).
+
+The hero uses `tone="navy"` (it paints its own scene) so the dark statement sheet overlaps it with rounded corners instead of collapsing into it (rules 2 and 3).
+
+Measured on /ar (cookie acknowledged):
+
+| | 1440 | 390 | Token |
+|---|---|---|---|
+| Container | 1260 at x=90 | 358 at x=16 | ✓ |
+| Hero padding-top | 72 | 64 (phone header) | `--mk-hero-top` ✓ |
+| Head → content | 40, green band 80 | 32, green band 48 | ✓ |
+| Grid gaps | 24, stats bento 32 | 16 | ✓ |
+| Bands | md 64, lg 100, xl 128; same-tone neighbours collapse | 40 / 64 / 80 | ✓ |
+| h2 | 56 | 36 | ✓ |
+| Sheet radius | 48 | 32 | ✓ |
+
+Checks: `e2e/marketing-spacing.spec.ts` passes for /ar and /en (home was already on in the foundation spec; no fixme to flip) · full e2e set incl. spacing: 138 passed, 34 skipped (other pages' fixme plus desktop-only) · lint clean · tsc · unit 8,791 · build (`/[locale]` 3.45 kB) · i18n `--check` clean · axe 0 in all 8 · phone LCP 1.97 s ar / 1.84 s en, CLS 0.007 / 0, INP 144 / 112 ms · desktop LCP 0.36 s, CLS 0. Side-by-sides re-captured per section at 1440 and 390 (local only); ours are in docs/screenshots/r6/home/.

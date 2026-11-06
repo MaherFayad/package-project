@@ -4,6 +4,8 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Pause, Play } from "lucide-react";
 import { Sheet } from "@/components/marketing/kit/Sheet";
 import { HeroTitle } from "@/components/marketing/kit/HeroTitle";
+import { Container } from "@/components/marketing/kit/Container";
+import { Lead } from "@/components/marketing/kit/Display";
 import { IconPill } from "@/components/marketing/kit/Pill";
 import { useReducedMotion } from "@/components/marketing/kit/motion";
 import s from "./home.module.css";
@@ -87,7 +89,9 @@ export function HomeHero({
   }, [paused, visible, active]);
 
   return (
-    <Sheet tone="dark" hero pad="none" container={false} className={s.heroSheet} aria-labelledby="hero-title">
+    // tone "navy": the hero paints its own studio scene; a non-dark tone keeps the next (dark) sheet
+    // overlapping it with its rounded corners instead of collapsing into it (spec section 7, rules 2-3).
+    <Sheet tone="navy" hero container={false} className={s.heroSheet} aria-labelledby="hero-title">
       <div ref={root} className={s.hero} data-paused={paused ? "true" : "false"}>
         <div className={s.heroMedia} aria-hidden="true">
           <div className={s.heroFloor} />
@@ -118,7 +122,7 @@ export function HomeHero({
           {props ? <div className={s.heroProps}>{props}</div> : null}
         </div>
         <div className={s.heroScrim} aria-hidden="true" />
-        <div className={s.heroWrap}>
+        <Container className={s.heroWrap}>
           <div className={s.heroCopy}>
             <div className={s.heroTitles}>
               {titles.map((t, i) => (
@@ -132,10 +136,10 @@ export function HomeHero({
                 </div>
               ))}
             </div>
-            <p className={s.heroLead}>{lead}</p>
+            <Lead className={s.heroLead}>{lead}</Lead>
             {actions}
           </div>
-        </div>
+        </Container>
         {reduce ? null : (
           <IconPill className={s.heroControl} onClick={() => setUserPaused((p) => !p)} aria-label={paused ? labels.play : labels.pause}>
             {paused ? <Play size={18} aria-hidden /> : <Pause size={18} aria-hidden />}
