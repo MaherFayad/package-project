@@ -33,3 +33,16 @@ describe("closure anchors (core closure placement)", () => {
     expect(maxR).toBeGreaterThan(d.D / 2 + 0.5);
   });
 });
+
+describe("non-round tubs and trays (3d-visual V-12)", () => {
+  it.each(["TUB-ICE-RECT", "TRAY-CLAMSHELL", "TRAY-PUNNET"])("%s: lid follows the footprint, core closure shrunk and parked under the base", (code) => {
+    const { d, g } = geo(code);
+    const p = g.profile!;
+    expect(p.section.kind).toBe("roundedRect");
+    expect(p.finishR).toBeLessThan(1);
+    expect(p.finishTopY).toBeLessThan(0);
+    const last = p.outer[p.outer.length - 1];
+    expect(last.r).toBeLessThan(0.5);
+    expect(last.y).toBeGreaterThan(d.H - 1);
+  });
+});

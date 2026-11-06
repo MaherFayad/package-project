@@ -29,6 +29,7 @@ Severity: critical = not the product it claims; high = clearly wrong to a packag
 | CF-09 | medium | All sealed packs · `crimpNormalTexture` | Crimp serration read as hard ruler lines at 1x DPR. | Crimp jaws give a fine, low-relief texture. | Normal slope 0.7 → 0.42. | fixed |
 | CF-10 | medium | FILM_METALLISED packs · `materials.ts` (≈ V-21) | Printed metallised film rendered 35 % metal: artwork looked dull and dark. | Metallised film is printed over a white underlay; metal shows only where unprinted. | Mapped metallised metalness 0.35 → 0.12. | fixed |
 | CF-11 | medium | COS-PERFUME-ROUND, COS-PERFUME-OVAL · `definitions/cosmetic.ts` (= V-17) | Walls 3 mm read thin and cheap; brim volume 1.34× nominal. | Perfume flacons: 4–8 mm walls, 8–15 mm base. | Round wall 3.2 → 5 mm; oval 3 → 4.5 mm, base 8 → 10 mm (capacity tests still pass). | fixed |
+| CF-14 | critical | TUB-ICE-RECT, TRAY-CLAMSHELL, TRAY-PUNNET · `geometry.ts · cup` (= 3d-visual V-12) | Rectangular ice-cream tub, clamshell and punnet carried a **round** lid disc (core `LUG_LID`) over a rectangular footprint. | Lid follows the body footprint: snap lid skirt over the flange; top-seal film flat on the flange; clamshell lid tray. | Non-round snap / film lids built into the profile (skirt with rounded top edge and recessed panel; flat film); the core closure is shrunk (`closureR` 0.4) and parked under the base (`CLEAR_HIDE_Y`). A ~1 px dot can still show through clear bases until E-04 lands. Sheets: `trays-lids-*.jpg`. | fixed |
 | CF-12 | low | FLEX_SIDE_GUSSET_BAG tin tie | Tin tie is a flat 8 mm strip standing off the face; real ties fold over at the ends. | — | Left as is (reads correctly at default zoom). | open (low) |
 | CF-13 | low | FLEX_MAILER_BAG | Adhesive flap is modelled on the front (README convention). Most retail poly mailers fold the flap onto the back so the front stays clean for the shipping label. | — | Needs a product decision (moves the keep-out to the back panel). | open (decision) |
 
@@ -57,7 +58,7 @@ Live designer at iPhone 13 viewport, SwiftShader (software GL, so a floor, not a
 
 | Severity | Found | Fixed | Open |
 |---|---|---|---|
-| critical | 1 | 1 | 0 |
+| critical | 2 | 2 | 0 |
 | high | 7 (+ 4 engine/library) | 7 | 4 engine/library |
 | medium | 3 (+ 5 engine/library) | 3 | 5 engine/library |
 | low | 2 (+ 3 engine/library) | 0 | 2 + 3 engine/library |

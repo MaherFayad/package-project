@@ -115,7 +115,15 @@ interface Built {
    * countersink (tab underside = finishTopY - 5.15 mm).
    */
   closureY?: Mm;
+  /** Radius the core closure is built at (profile.finishR); a tiny radius shrinks it out of sight under a lid in the profile. */
+  closureR?: Mm;
 }
+
+/**
+ * Closure anchor for clear-plastic tubs and trays whose lid is in the profile: the core closure is
+ * shrunk (closureR) and parked just under the base, so it does not show through the clear lid.
+ */
+const CLEAR_HIDE_Y: Mm = -2.5;
 
 /** finishTopY that puts the core CAN_END pull tab flat on an end panel at `panelY`. */
 export const ringPullAnchor = (panelY: Mm): Mm => panelY + 5.15;
@@ -489,18 +497,44 @@ function cup(s: Extract<ShapeSpec, { type: "cup" }>, d: CatalogueDims): Built {
       fillMaxY: hb,
     });
     const lid: LidGeometry = { type: "hinged", section: s.section, y0: hb, y1: H, r: Rm, depthRatio: section.kind === "round" ? 1 : section.depthRatio, topR: RtLid - 4 };
-    return { profile, innerTopY: H - s.wallMm, sleeveY0: 1, sleeveY1: hb - 1, lid, closedH: H };
+    // the lid tray is in the profile: shrink the round core closure out of sight under it
+    return { profile, innerTopY: H - s.wallMm, sleeveY0: 1, sleeveY1: hb - 1, lid, closedH: H, closureY: CLEAR_HIDE_Y, closureR: 0.4 };
   }
-  const rimY = H - 1.2;
+  // Non-round tubs and punnets: the round core lid cannot follow the footprint, so the lid is drawn
+  // here (snap lid: skirt over the flange with a recessed panel; film lid: flat film on the flange)
+  // and the core closure is shrunk out of sight under it. Round cups keep the core lid.
+  const ownLid = !isRound(s.section) && (s.lid === "snap" || s.lid === "foil");
+  const snapT = s.lid === "snap" ? Math.max(6, Math.min(10, H * 0.08)) : 0;
+  const rimY = ownLid && s.lid === "snap" ? H - snapT + 1 : H - 1.2;
+  const top: ControlPoint[] = !ownLid
+    ? [
+        { r: Rt + f, y: H, round: 0.4 },
+        { r: Rt - s.wallMm, y: H, round: 0.3 },
+        { r: Rt - s.wallMm - 0.2, y: H - 3 },
+      ]
+    : s.lid === "snap"
+      ? [
+          { r: Rt + f, y: rimY + 0.4, round: 0.3 },
+          { r: Rt + f + 1, y: rimY - 0.6, round: 0.3 },
+          { r: Rt + f + 1.4, y: rimY - 0.2, round: 0.4 },
+          { r: Rt + f + 1.4, y: H - 1.6, round: 1.6 },
+          { r: Rt + f - 1, y: H, round: 1 },
+          { r: Rt - 3, y: H, round: 0.8 },
+          { r: Rt - 4.5, y: H - 0.8, round: 0.8 },
+          { r: 0, y: H - 0.8 },
+        ]
+      : [
+          { r: Rt + f, y: H - 0.1, round: 0.4 },
+          { r: Rt + f - 0.6, y: H, round: 0.3 },
+          { r: 0, y: H },
+        ];
   const ctrl: ControlPoint[] = [
     { r: 0, y: 1.2 },
     { r: Rb - 2, y: 0, round: 1 },
     { r: Rb, y: 1.5, round: 1.5 },
     { r: Rt - 0.4, y: rimY - 1, round: 1.5 },
     { r: Rt + f, y: rimY, round: 0.5 },
-    { r: Rt + f, y: H, round: 0.4 },
-    { r: Rt - s.wallMm, y: H, round: 0.3 },
-    { r: Rt - s.wallMm - 0.2, y: H - 3 },
+    ...top,
   ];
   const y0 = 3;
   const y1 = rimY - 2.5;
@@ -517,6 +551,7 @@ function cup(s: Extract<ShapeSpec, { type: "cup" }>, d: CatalogueDims): Built {
   const lidT = s.lid === "snap" ? Math.max(6, Math.min(14, H * 0.12)) : s.lid === "foil" ? 0.1 : 0;
   const lid: LidGeometry | null =
     s.lid === "none" ? null : { type: s.lid, section: s.section, y0: H - (s.lid === "snap" ? 2 : 0), y1: H + lidT, r: Rt + f + (s.lid === "snap" ? 1 : 0), depthRatio: section.kind === "round" ? 1 : section.depthRatio, topR: Rt - 3 };
+  if (ownLid) return { profile, innerTopY: H - 0.5, sleeveY0: 2, sleeveY1: rimY - 1.5, lid, closedH: H, closureY: CLEAR_HIDE_Y, closureR: 0.4 };
   return { profile, innerTopY: H - 0.5, sleeveY0: 2, sleeveY1: rimY - 1.5, lid, closedH: lid ? lid.y1 : H };
 }
 
@@ -586,6 +621,7 @@ export function buildGeometry(shape: ShapeSpec, d: CatalogueDims, neck?: NeckFin
       break;
   }
   if (b.closureY !== undefined) b = { ...b, profile: { ...b.profile, finishTopY: b.closureY } };
+  if (b.closureR !== undefined) b = { ...b, profile: { ...b.profile, finishR: b.closureR } };
   if (kind === "lathe" && b.profile.section.kind === "roundedRect") kind = "extrusion";
   return {
     kind,
