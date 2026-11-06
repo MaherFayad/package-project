@@ -175,7 +175,11 @@ async function startServer() {
   throw new Error("dev server did not start");
 }
 function stopServer() {
-  if (!args.base && !args.keep) fs.rmSync(path.dirname(ROUTE), { recursive: true, force: true });
+  if (!args.base && !args.keep) {
+    fs.rmSync(path.dirname(ROUTE), { recursive: true, force: true });
+    // next dev leaves route types behind; a stale entry would fail `tsc`
+    fs.rmSync(path.join(ROOT, ".next/types/app/[locale]/dev/r6-capture"), { recursive: true, force: true });
+  }
   if (server) process.kill(-server.pid);
 }
 
