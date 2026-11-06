@@ -8,6 +8,6 @@
 @keyframes pulse { 50% { opacity: 0.45; } }
 @media (prefers-reduced-motion: reduce) {
   /* No rotation (WCAG 2.3.3): a slow opacity pulse keeps "busy" perceivable without movement.
-     !important beats the global reduced-motion override in globals.css, on purpose. */
+     !important beats the global reduced-motion override in globals.css, on purpose; the exception is documented in src/styles/motion.css (CR-46). */
   .Svg { animation: pulse 2s var(--p-motion-ease-in-out) infinite !important; }
 }

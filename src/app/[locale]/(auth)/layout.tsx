@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { StoreShell } from "@/components/store/StoreShell";
+import { MarketingShell } from "@/components/marketing/MarketingShell";
 import { toLocale } from "@/i18n";
 
 export default async function Layout({
@@ -10,5 +10,5 @@ export default async function Layout({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  return <StoreShell locale={toLocale(locale)}>{children}</StoreShell>;
+  return <MarketingShell locale={toLocale(locale)}>{children}</MarketingShell>;
 }

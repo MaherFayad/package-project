@@ -27,7 +27,7 @@ export function LangLink({ className, showIcon = true }: { className?: string; s
         document.cookie = `${LOCALE_COOKIE}=${other}; path=/; max-age=31536000; samesite=lax`;
       }}
     >
-      {showIcon ? <Globe aria-hidden size={18} /> : null}
+      {showIcon ? <Globe aria-hidden size={16} /> : null}
       <span>{other === "ar" ? t("common.switchToArabic") : t("common.switchToEnglish")}</span>
     </Link>
   );

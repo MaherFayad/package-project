@@ -1,10 +1,9 @@
 "use client";
 
+import NextLink from "next/link";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { Cookie } from "lucide-react";
 import { useI18n } from "@/i18n/client";
-import { Button, Icon, Link } from "@/components/ui";
-import styles from "./SiteChrome.module.css";
+import styles from "./CookieNotice.module.css";
 
 export const COOKIE_ACK = "elba_cookie_ack";
 
@@ -37,52 +36,82 @@ export function useCookieAck(): [boolean, () => void] {
 /** Inline, runs during HTML parse right after the notice: hides it if the ack cookie exists. */
 export const COOKIE_HIDE_SCRIPT = `(function(s){try{if(document.cookie.split("; ").indexOf("${COOKIE_ACK}=1")>-1){s.previousElementSibling.style.display="none"}}catch(e){}})(document.currentScript)`;
 
+/** Exit fade length; matches --p-motion-duration-150 (0 under reduced motion, see the CSS). */
+const EXIT_MS = 150;
+
 /**
- * Essential-cookies notice (we set no advertising cookies, so this is information, not a
- * consent wall). Shown once per browser. While visible it reserves scroll padding at the
- * bottom so focused elements are never hidden behind it (WCAG 2.4.11).
+ * The one essential-cookies notice (CR-06), used by every buyer-facing shell. We set no
+ * advertising cookies, so this is information, not a consent wall. Shown once per browser.
+ *
+ * White surface card at the bottom inline-start (full width on phones), rises in over 200 ms and
+ * fades out over 150 ms (no movement under prefers-reduced-motion). While it is shown it never
+ * covers content (WCAG 2.4.11): it publishes its height as `--e-cookie-h` on <html> (shell
+ * footers add it to their bottom padding) and as scroll padding, so a focused control is always
+ * scrolled clear of it.
  */
 export function CookieNotice() {
   const { t, locale } = useI18n();
   const [ack, dismiss] = useCookieAck();
-  const show = !ack;
+  const [leaving, setLeaving] = useState(false);
+  const [gone, setGone] = useState(false);
+  const show = !ack || (leaving && !gone);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const root = document.documentElement;
-    if (!show || !ref.current) return;
     const el = ref.current;
+    if (!show || leaving || !el) return;
     const apply = () => {
-      root.style.scrollPaddingBlockEnd = `${el.offsetHeight + 16}px`;
-      // Reserve the notice's height so the end of the page (footer links) is never stuck under it.
-      document.body.style.paddingBlockEnd = `${el.offsetHeight + 16}px`;
+      const h = el.offsetHeight + 16;
+      root.style.setProperty("--e-cookie-h", `${h}px`);
+      root.style.scrollPaddingBlockEnd = `${h + 16}px`;
     };
     apply();
     const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(apply) : null;
     ro?.observe(el);
     return () => {
       ro?.disconnect();
+      root.style.removeProperty("--e-cookie-h");
       root.style.scrollPaddingBlockEnd = "";
-      document.body.style.paddingBlockEnd = "";
     };
-  }, [show]);
+  }, [show, leaving]);
+
+  useEffect(() => {
+    if (!leaving) return;
+    const id = window.setTimeout(() => setGone(true), EXIT_MS + 50);
+    return () => window.clearTimeout(id);
+  }, [leaving]);
 
   if (!show) return null;
   return (
     <>
-      <div ref={ref} className={styles.cookie} role="region" aria-label={t("store.cookie.label")} suppressHydrationWarning>
-        <span className={styles.cookieIcon}>
-          <Icon source={Cookie} />
-        </span>
-        <p className={styles.cookieText}>
+      <div
+        ref={ref}
+        className={styles.notice}
+        data-leaving={leaving ? "true" : undefined}
+        role="region"
+        aria-label={t("store.cookie.label")}
+        onAnimationEnd={(e) => {
+          if (leaving && e.target === e.currentTarget) setGone(true);
+        }}
+        suppressHydrationWarning
+      >
+        <p className={styles.text}>
           {t("store.cookie.message")}{" "}
-          <Link url={`/${locale}/legal/cookies`} monochrome>
+          <NextLink href={`/${locale}/legal/cookies`} className={styles.more}>
             {t("store.cookie.more")}
-          </Link>
+          </NextLink>
         </p>
-        <Button variant="secondary" onClick={dismiss}>
+        <button
+          type="button"
+          className={styles.ok}
+          onClick={() => {
+            dismiss();
+            setLeaving(true);
+          }}
+        >
           {t("store.cookie.ok")}
-        </Button>
+        </button>
       </div>
       <script dangerouslySetInnerHTML={{ __html: COOKIE_HIDE_SCRIPT }} />
     </>

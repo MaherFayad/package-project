@@ -111,7 +111,7 @@ export function ColorField({
             title={noneLabel}
             onClick={() => onChange(null)}
           >
-            {value === null && <Check aria-hidden size={14} />}
+            {value === null && <Check aria-hidden size={16} />}
           </button>
         )}
         {SWATCHES.map((c) => (
@@ -126,7 +126,7 @@ export function ColorField({
             title={t(`designer.artwork.colorNames.${c}` as DictKey)}
             onClick={() => onChange(c)}
           >
-            {value?.toLowerCase() === c && <Check aria-hidden size={14} />}
+            {value?.toLowerCase() === c && <Check aria-hidden size={16} />}
           </button>
         ))}
       </div>
