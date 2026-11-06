@@ -8,6 +8,8 @@ import {
   type Ctx,
   type End,
   type Walls,
+  composeFaces,
+  deepEnds,
   endHinge,
   flap,
   fullMajor,
@@ -22,6 +24,7 @@ import {
   slottedEnd,
   snapLockBottom,
   standardTube,
+  stripFace,
   tuckLidEnd,
 } from "./kit";
 import type { Fefco02Code, Fefco02Generator, Fefco02Params } from "./types";
@@ -96,7 +99,7 @@ export function defaultParams(code: Fefco02Code, d: Dims): Fefco02Params {
     case "FEFCO_0225":
       return { linerHeightMm: Math.round(clamp(d.H * 0.5, 20, d.H)) };
     case "FEFCO_0226":
-      return { bevelFoldDeg: 45 };
+      return { bevelFoldDeg: 60 };
     default:
       return {};
   }
@@ -129,7 +132,8 @@ const s0202: Fefco02Generator = (d, t, f, p = {}) => {
   const minor = Math.min(major, meetMinor(c));
   for (const end of ["top", "bottom"] as const) slottedEnd(c, end, major, minor, { overlap: true });
   slottedFeatures(c, d, f);
-  return draft(c);
+  // The inner major shows beside the outer one (overlap o): it carries the end-face artwork.
+  return draft(c, { faces: deepEnds(c, ["top", "bottom"], 1) });
 };
 
 /** 0203 full overlap slotted container: all flaps B; outer flaps cover the whole opening. */
@@ -138,7 +142,7 @@ const s0203: Fefco02Generator = (d, t, f) => {
   const major = fullMajor(c);
   for (const end of ["top", "bottom"] as const) slottedEnd(c, end, major, Math.min(major, meetMinor(c)), { overlap: true });
   slottedFeatures(c, d, f);
-  return draft(c);
+  return draft(c, { faces: deepEnds(c, ["top", "bottom"], 1) });
 };
 
 /** 0204 centre special slotted container: outer flaps ½B and inner flaps ½L, both pairs meet. */
@@ -155,7 +159,7 @@ const s0205: Fefco02Generator = (d, t, f) => {
   const major = Math.min(c.Lp / 2, fullMajor(c));
   for (const end of ["top", "bottom"] as const) slottedEnd(c, end, major, meetMinor(c), { overlap: true });
   slottedFeatures(c, d, f);
-  return draft(c);
+  return draft(c, { faces: deepEnds(c, ["top", "bottom"], 1) });
 };
 
 /** 0206 centre special full overlap slotted container: outer flaps B, inner flaps ½L. */
@@ -163,7 +167,7 @@ const s0206: Fefco02Generator = (d, t, f) => {
   const c = tube("FEFCO_0206", d, t);
   for (const end of ["top", "bottom"] as const) slottedEnd(c, end, fullMajor(c), meetMinor(c), { overlap: true });
   slottedFeatures(c, d, f);
-  return draft(c);
+  return draft(c, { faces: deepEnds(c, ["top", "bottom"], 1) });
 };
 
 /* ───────────── 0207, 0208, 0229: integral divisions / double-folded flaps ───────────── */
@@ -172,9 +176,14 @@ const s0206: Fefco02Generator = (d, t, f) => {
  * A flap with an intermediate crease: `shelf` mm folds over the end (90°), then `drop` mm
  * folds a further 90° into the box and stands as a division / inner wall.
  */
-function shelfAndDrop(c: Ctx, wall: "front" | "right" | "back" | "left", end: End, shelf: number, drop: number, o: { id?: string; insetA?: number; insetB?: number; stage?: number; stack?: number } = {}) {
+function shelfAndDrop(c: Ctx, wall: "front" | "right" | "back" | "left", end: End, shelf: number, drop: number, o: { id?: string; insetA?: number; insetB?: number; stage?: number; stack?: number; dropStage?: number } = {}) {
   const fl = flap(c, wall, end, shelf, { id: o.id, insetA: o.insetA, insetB: o.insetB, stage: o.stage, stack: o.stack });
-  c.b.attach(`${fl.panel.id}_drop`, "inner", fl.panel.id, insetSeg(fl.far, 0.5), drop, { kind: "rect" }, { stage: 3, label: "Integral division" });
+  // `stack` only moves the shelf's own mesh, not its children: pivot the division as many
+  // calipers deep so it hangs from the shelf as drawn instead of poking through it.
+  const sink = Math.max(0, -(fl.panel.stackOffset ?? 0));
+  // The division is pre-folded (stage 0) before its shelf closes, as on the packing line, so
+  // two long shelf + division strips never swing through each other under the box.
+  c.b.attach(`${fl.panel.id}_drop`, "inner", fl.panel.id, insetSeg(fl.far, 0.5), drop, { kind: "rect" }, { stage: o.dropStage ?? 0, label: "Integral division", ...(sink ? { pivotDepth: sink } : {}) });
 }
 
 /**
@@ -187,10 +196,13 @@ const s0207: Fefco02Generator = (d, t, f) => {
   rscEnd(c, "top");
   const dh = clamp(d.H * 0.8, 15, d.H - 2);
   const cross = Math.min(c.Lp / 3, meetMinor(c));
-  shelfAndDrop(c, "left", "bottom", cross, dh, { stage: 1, stack: -1 });
-  shelfAndDrop(c, "right", "bottom", cross, dh, { stage: 1, stack: -1 });
-  shelfAndDrop(c, "front", "bottom", meetMajor(c) - t, dh, { stage: 2, stack: 0 });
-  shelfAndDrop(c, "back", "bottom", meetMajor(c) - t, dh, { stage: 2, stack: 0 });
+  // Each flap swings in with its division already square to it, one side at a time (left,
+  // right, then the two lengthwise halves): the strips are longer than the box is wide, so
+  // folded together or left flat they would cross each other or a wall on the way in.
+  shelfAndDrop(c, "left", "bottom", cross, dh, { stage: 1, stack: -1, dropStage: 1 });
+  shelfAndDrop(c, "right", "bottom", cross, dh, { stage: 2, stack: -1, dropStage: 2 });
+  shelfAndDrop(c, "front", "bottom", meetMajor(c) - t, dh, { stage: 3, stack: 0, dropStage: 3 });
+  shelfAndDrop(c, "back", "bottom", meetMajor(c) - t, dh, { stage: 3, stack: 0, dropStage: 3 });
   slottedFeatures(c, d, { ...f, tearStrip: false });
   return draft(c);
 };
@@ -218,20 +230,20 @@ const s0208: Fefco02Generator = (d, t, f) => {
 };
 
 /**
- * 0229: all flaps have an intermediate crease. The first part folds over the end as a
- * frame, the second folds into the box as a double inner wall: reinforced rims top and
- * bottom (stacking strength) around an open frame closed by the inner walls.
+ * 0229 multi-divisional box: the L-panel bottom flaps have an intermediate crease. Their first
+ * part folds in over the end as a shelf, the rest stands up inside the box as a lengthwise
+ * division, one at about a third of B from each long wall. The B-panel bottom flaps then
+ * close the bottom under them (meeting at the centre); the top closes as a 0201.
  */
 const s0229: Fefco02Generator = (d, t, f) => {
   const c = tube("FEFCO_0229", d, t);
+  rscEnd(c, "top");
   const shelf = clamp(c.Wp * 0.3, 15, c.Wp / 2 - t);
-  const drop = Math.max(10, Math.min(c.Wp * 0.4, d.H / 2 - 2));
-  for (const end of ["top", "bottom"] as const) {
-    shelfAndDrop(c, "left", end, Math.min(shelf, meetMinor(c)), drop, { stage: 1, stack: -1 });
-    shelfAndDrop(c, "right", end, Math.min(shelf, meetMinor(c)), drop, { stage: 1, stack: -1 });
-    shelfAndDrop(c, "front", end, shelf, drop, { stage: 2, stack: 0 });
-    shelfAndDrop(c, "back", end, shelf, drop, { stage: 2, stack: 0 });
-  }
+  const drop = clamp(d.H * 0.75, 10, d.H - 2 * t - 2);
+  shelfAndDrop(c, "front", "bottom", shelf, drop, { stage: 1, stack: -1 });
+  shelfAndDrop(c, "back", "bottom", shelf, drop, { stage: 1, stack: -1 });
+  flap(c, "left", "bottom", meetMinor(c), { stage: 2, stack: 0, label: "Bottom flap" });
+  flap(c, "right", "bottom", meetMinor(c), { stage: 2, stack: 0, label: "Bottom flap" });
   slottedFeatures(c, d, { ...f, tearStrip: false });
   return draft(c);
 };
@@ -245,7 +257,8 @@ const s0209: Fefco02Generator = (d, t, f, p = {}) => {
   const h = Math.min(p.rimMm ?? defaultParams("FEFCO_0209", d).rimMm!, meetMajor(c) - t, meetMinor(c));
   slottedEnd(c, "top", h, h);
   slottedFeatures(c, d, { ...f, tearStrip: false });
-  return draft(c);
+  // The frame's end (minor) flaps are as visible as the side ones.
+  return draft(c, { faces: deepEnds(c, ["top"], 1) });
 };
 
 /**
@@ -264,31 +277,49 @@ const s0214: Fefco02Generator = (d, t, f, p = {}) => {
 };
 
 /**
- * 0226: all flaps ½B; the B-panel flaps have diagonal creases from the flap corners to the
- * centre of the free edge. Their side triangles fold under the centre triangle, so the end
- * flaps can follow the outer flaps when these are folded in at an angle (bevelled top);
- * folded flat (bottom) the box closes like a 0201.
+ * 0226 pinch-folding top: all flaps on one row; the B-panel flaps carry reverse creases from
+ * the flap corners to the centre of the free edge. At the top the L flaps lean in at the bevel
+ * angle and meet in a ridge; each B flap's centre triangle leans in at the same angle and
+ * closes the hip end while its two side triangles pinch in behind it. At the bottom the same
+ * flaps fold flat and the box closes like a 0201.
  */
 const s0226: Fefco02Generator = (d, t, f, p = {}) => {
   const c = tube("FEFCO_0226", d, t);
-  const bevel = clamp(p.bevelFoldDeg ?? 45, 20, 90);
+  const bevel = clamp(p.bevelFoldDeg ?? 60, 20, 90);
   for (const end of ["top", "bottom"] as const) {
     const fold = end === "top" ? bevel : 90;
-    const dep = Math.min(meetMajor(c), meetMinor(c));
+    const lean = Math.sin((fold * Math.PI) / 180);
+    // L flaps reach the ridge (centre line) at this lean; the hip triangles reach as far in.
+    const major = Math.min((meetMajor(c) - t) / lean, c.Hp);
+    const dep = Math.min(major, meetMinor(c) / lean);
     for (const side of ["left", "right"] as const) {
       const hinge = endHinge(c, c.walls[side], end);
       const fr = c.b.frame(side, hinge);
       const apex = fr.at(fr.a, fr.length / 2, dep);
       const centreId = `${end}Flap_${side}`;
       c.b.attachPoly(centreId, "flap", side, hinge, [fr.a, fr.b, apex], { fold, stage: 1, stack: -1, label: "Gusset flap" });
-      c.b.attachPoly(`${centreId}_ga`, "flap", centreId, [fr.a, apex], [fr.a, apex, fr.at(fr.a, 0, dep)], { fold: 180, stage: 2, label: "Gusset" });
-      c.b.attachPoly(`${centreId}_gb`, "flap", centreId, [apex, fr.b], [apex, fr.b, fr.at(fr.a, fr.length, dep)], { fold: 180, stage: 2, label: "Gusset" });
+      // Folded back under the centre triangle: pivot below the stacked centre so the three
+      // layers lie one caliper apart instead of inside each other.
+      c.b.attachPoly(`${centreId}_ga`, "flap", centreId, [fr.a, apex], [fr.a, apex, fr.at(fr.a, 0, dep)], { fold: 180, pivotDepth: 1.5, stage: 2, label: "Gusset" });
+      c.b.attachPoly(`${centreId}_gb`, "flap", centreId, [apex, fr.b], [apex, fr.b, fr.at(fr.a, fr.length, dep)], { fold: 180, pivotDepth: 2.5, stage: 2, label: "Gusset" });
     }
-    flap(c, "front", end, meetMajor(c), { fold, stage: 2 });
-    flap(c, "back", end, meetMajor(c), { fold, stage: 2 });
+    flap(c, "front", end, end === "top" ? major : meetMajor(c), { fold, stage: 2 });
+    flap(c, "back", end, end === "top" ? major : meetMajor(c), { fold, stage: 2 });
   }
   slottedFeatures(c, d, { ...f, tearStrip: false });
-  return draft(c);
+  return draft(c, {
+    // The roof has no flat top: each wall face runs on over the flap leaning in above it.
+    faces: (panels, computed) => {
+      const { top: _top, ...rest } = computed;
+      void _top;
+      const out = { ...rest };
+      for (const w of ["front", "back", "left", "right"] as const) {
+        const face = stripFace(w, panels, [w, `topFlap_${w}`]);
+        if (face) out[w] = face;
+      }
+      return out;
+    },
+  });
 };
 
 /* ───────────── 0210, 0211, 0212, 0215, 0216, 0227: tuck lids and snap-lock bottoms ───────────── */
@@ -326,7 +357,7 @@ const s0215: Fefco02Generator = (d, t, f) => {
   tuckLidEnd(c, "top", "back");
   snapLockBottom(c);
   if (f.handle) handHoles(c, Math.max(25, d.H * 0.1));
-  return draft(c);
+  return draft(c, { faces: deepEnds(c, ["bottom"], 2) });
 };
 
 /** 0216: top flaps as 0201, 1-2-3 snap-lock bottom (top can be closed automatically). */
@@ -335,7 +366,8 @@ const s0216: Fefco02Generator = (d, t, f) => {
   rscEnd(c, "top");
   snapLockBottom(c);
   slottedFeatures(c, d, f);
-  return draft(c);
+  // All three snap-lock flaps show on the underside.
+  return draft(c, { faces: deepEnds(c, ["bottom"], 2) });
 };
 
 /**
@@ -360,7 +392,8 @@ const s0227: Fefco02Generator = (d, t, f) => {
     notchPanel(lid, [fr.at(fr.a, L - ch, D), fr.at(fr.a, ch, D)], Math.min(12, L * 0.08));
   }
   if (f.handle) handHoles(c, Math.max(25, d.H * 0.1));
-  return draft(c);
+  // The inner flap shows at the lid's chamfered corners and through the thumb notch.
+  return draft(c, { faces: deepEnds(c, ["top", "bottom"], 1) });
 };
 
 /* ───────────── 0217, 0218: carry and locking styles ───────────── */
@@ -391,11 +424,15 @@ const s0217: Fefco02Generator = (d, t) => {
     c.b.attachPoly(`gable_${w}`, "flap", w, hinge, [fr.a, fr.b, fr.at(fr.a, fr.length / 2, rise)], { fold: 0, stage: 1, label: "Gable end" });
   }
   return draft(c, {
-    faces: (_panels, computed) => {
+    faces: composeFaces(deepEnds(c, ["bottom"], 2), (panels, computed) => {
+      // No flat top: the front and back faces run on over the roof and the handle (the sheet
+      // strip above each L wall), the end faces include the gable triangles.
       const { top: _top, ...rest } = computed;
       void _top;
-      return rest;
-    },
+      const front = stripFace("front", panels, ["front", "roof_front", "handle_front"]);
+      const back = stripFace("back", panels, ["back", "roof_back", "handle_back"]);
+      return { ...rest, ...(front ? { front } : {}), ...(back ? { back } : {}) };
+    }),
   });
 };
 
@@ -422,7 +459,8 @@ const s0218: Fefco02Generator = (d, t, f) => {
   const sw = Math.min(30, bb.width * 0.1);
   inner.panel.holes = [slit(bb.x + taper + sw / 2, y, sw), slit(bb.x + bb.width - taper - sw / 2, y, sw)];
   slottedFeatures(c, d, { ...f, tearStrip: false });
-  return draft(c);
+  // The inner flap shows beside the tapered tongue.
+  return draft(c, { faces: deepEnds(c, ["top", "bottom"], 1) });
 };
 
 /* ───────────── 0225, 0228, 0230, 0231: special layouts ───────────── */
@@ -449,20 +487,25 @@ const s0225: Fefco02Generator = (d, t, f, p = {}) => {
   b.attach("left", "left", "front", rectEdges(walls.front).left, Wp, { kind: "rect" }, { stage: 0, label: "Left side" });
   b.attach("right", "right", "front", rectEdges(walls.front).right, Wp, { kind: "rect" }, { stage: 0, label: "Right side" });
   b.attach("back", "back", "right", rectEdges(walls.right).right, Lp, { kind: "rect" }, { stage: 0, label: "Back" });
-  b.attach("glue", "glue", "back", rectEdges(walls.back).right, j, { kind: "trapezoid", taperA: j * 0.25, taperB: j * 0.25 }, { stage: 0, stack: -1, label: "Manufacturer's joint" });
+  b.attach("glue", "glue", "back", insetSeg(rectEdges(walls.back).right, 2 * t + 1), j, { kind: "trapezoid", taperA: Math.max(j * 0.25, 3 * t), taperB: Math.max(j * 0.25, 3 * t) }, { stage: 0, stack: -1, label: "Manufacturer's joint" });
   const c: Ctx = { b, t, Lp, Wp, Hp, slot: slotWidth(t), walls, wallIds: { front: "front", right: "right", back: "back", left: "left" } };
   rscEnd(c, "top");
 
-  const base = flap(c, "back", "bottom", Wp - 2 * t, { id: "base", role: "bottom", stage: 1, stack: 0, label: "Base" });
+  // Erection order: the wings are pre-folded square to the liner (stage 1), the liner swings
+  // up inside the front (stage 2), then the base closes under them (stage 3): nothing sweeps
+  // through a wall or the base.
+  const base = flap(c, "back", "bottom", Wp - 2 * t, { id: "base", role: "bottom", stage: 3, stack: 0, label: "Base" });
   notchPanel(base.panel, base.far, Math.min(12, Lp * 0.06));
   const h = clamp(p.linerHeightMm ?? defaultParams("FEFCO_0225", d).linerHeightMm!, 15, d.H);
-  const linerInset = 2 * t;
-  const liner = flap(c, "front", "bottom", h, { id: "liner", role: "inner", fold: 180, pivotDepth: 1, stage: 2, stack: 0, insetA: linerInset, insetB: linerInset, label: "Inner front liner" });
-  void liner;
-  const lr = rect(walls.front.x + linerInset, Hp, Lp - 2 * linerInset, h);
+  // The left wing lines the left wall over the manufacturer's joint (glued inside that wall),
+  // so the liner stops one more caliper short on that side: wing, joint and wall never share space.
+  const insetL = 3 * t;
+  const insetR = 2 * t;
+  flap(c, "front", "bottom", h, { id: "liner", role: "inner", fold: 180, pivotDepth: 1, stage: 2, stack: 0, insetA: insetL, insetB: insetR, label: "Inner front liner" });
+  const lr = rect(walls.front.x + insetL, Hp, Lp - insetL - insetR, h);
   const wing = Wp - 3 * t - 1;
-  b.attach("wingL", "inner", "liner", insetSeg(rectEdges(lr).left, 0.5), wing, { kind: "rect" }, { fold: -90, stage: 3, label: "End liner wing" });
-  b.attach("wingR", "inner", "liner", insetSeg(rectEdges(lr).right, 0.5), wing, { kind: "rect" }, { fold: -90, stage: 3, label: "End liner wing" });
+  b.attach("wingL", "inner", "liner", insetSeg(rectEdges(lr).left, 0.5), wing, { kind: "rect" }, { fold: -90, stage: 1, label: "End liner wing" });
+  b.attach("wingR", "inner", "liner", insetSeg(rectEdges(lr).right, 0.5), wing, { kind: "rect" }, { fold: -90, stage: 1, label: "End liner wing" });
   if (f.handle) handHoles(c, Math.max(25, d.H * 0.1));
   return draft(c);
 };

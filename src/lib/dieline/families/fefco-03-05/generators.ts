@@ -3,6 +3,7 @@ import type { Dims, StructureFeatures } from "@/types";
 import { DielineBuilder, rectEdges } from "../../builder";
 import { clamp, pt, rectPolygon } from "../../geometry";
 import { telescope, type StructureDraft } from "../../structures";
+import { deepEnds } from "../fefco-02/kit";
 import {
   IDENTITY_Q,
   ORIENT,
@@ -18,6 +19,7 @@ import {
   rectTube,
   subtreeBounds,
   tray,
+  trayLayers,
   tube,
   type Corners,
   type EndFlaps,
@@ -148,7 +150,8 @@ export function fefco0321(dims: Dims, t: number, f: StructureFeatures): Structur
   const lidH = lidDepthOf(f, dims.H, dims.H);
   const lid = slottedBody(b, t, { prefix: "lid_", L: s.x + 2 * clear, W: s.z + 2 * clear, H: lidH, top: true, bottom: false, kind: "envelope", mount: { kind: "piece", label: "Lid" }, origin: nextOrigin(b, 20) });
   placePiece(b, lid.rootId, t, ORIENT.upright(), alignOn(box, { top: box.max.y + 2 * t }), maxStageOf(b) + 1, dims.H * 1.4);
-  return { builder: b, closedRotation: IDENTITY_Q, faceDepthTol: clear + t + 0.5 };
+  // The minor envelope flaps show in the corners between the tapered majors: print them too.
+  return { builder: b, closedRotation: IDENTITY_Q, faceDepthTol: clear + t + 0.5, faces: deepEnds({ b, t }, ["top", "bottom"], 0) };
 }
 
 /* ───────────────────────── Bodies with caps (0310, 0312, 0313, 0314, 0325) ───────────────────────── */
@@ -186,7 +189,10 @@ function addCaps(b: DielineBuilder, t: number, dims: Dims, f: StructureFeatures,
     const y = spec.internal ? (end === "top" ? { top: box.max.y } : { bottom: box.min.y }) : end === "top" ? { top: box.max.y + t } : { bottom: box.min.y - t };
     placePiece(b, cap.rootId, t, end === "top" ? ORIENT.ceiling() : ORIENT.floor(), alignOn(box, y), maxStageOf(b) + 1, dims.H * 1.3);
   }
-  return { faceDepthTol: clear + 2 * t + 0.5 };
+  // Cap walls stand clear of the body by the clearance plus their own layers (rolled walls
+  // and trapped ears on 0314): count them all so the body walls between the caps stay printed.
+  const lay = trayLayers(spec.style);
+  return { faceDepthTol: clear + (Math.max(2, Math.max(lay.end, lay.long) + 1)) * t + 0.5 };
 }
 
 /** 0310: open sleeve (0501) with a cap over each end (three blanks). */
@@ -247,7 +253,11 @@ function octBody(b: DielineBuilder, t: number, dims: Dims, regular: boolean, bot
   const w = Wp - 2 * k;
   const c = k * Math.SQRT2;
   const Hp = dims.H + (bottomFlaps ? 2 * t : 0);
-  const flaps: EndFlaps | undefined = bottomFlaps ? { kind: "slotted", depthMajor: Wp / 2, depthMinor: Math.min(Wp * 0.3, c), majors: [0, 4] } : undefined;
+  // Neighbouring minor flaps overlap toward the centre: the corner flaps go in first, one
+  // caliper inside the side flaps, so no two flaps share a plane (they z-fought before).
+  const flaps: EndFlaps | undefined = bottomFlaps
+    ? { kind: "slotted", depthMajor: Wp / 2, depthMinor: Math.min(Wp * 0.3, c), majors: [0, 4], minorStack: { 1: -2, 3: -2, 5: -2, 7: -2 }, stages: { 1: 1, 3: 1, 5: 1, 7: 1, 2: 2, 6: 2, 0: 3, 4: 3 } }
+    : undefined;
   tube(b, t, {
     prefix: "",
     widths: [a, c, w, c, a, c, w, c],

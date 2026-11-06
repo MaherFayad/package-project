@@ -215,8 +215,13 @@ export function tray(b: DielineBuilder, t: number, o: TrayOpts): TrayBlank {
       endL: { role: "left" as PanelRole, edge: fe.left, kind: "end" as const },
       endR: { role: "right" as PanelRole, edge: fe.right, kind: "end" as const },
     };
+    // Erection order: the wall pair that carries the corner flaps / ears goes up first, those
+    // flaps fold in, then the other pair rises over them (so nothing sweeps through a wall).
+    const c0 = o.corners;
+    const carrier: "end" | "long" | null = o.ears ?? (c0.kind === "flaps" && !c0.outside ? c0.on : null);
     for (const [k, w] of Object.entries(walls)) {
-      b.attach(id(k), w.role, rootId, w.edge, Hp, { kind: "rect" }, { stage: 0, label: `${w.kind === "long" ? "Long" : "End"} wall` });
+      const stage = carrier && w.kind !== carrier ? 2 : 0;
+      b.attach(id(k), w.role, rootId, w.edge, Hp, { kind: "rect" }, { stage, label: `${w.kind === "long" ? "Long" : "End"} wall` });
     }
 
     const c = o.corners;
@@ -234,7 +239,9 @@ export function tray(b: DielineBuilder, t: number, o: TrayOpts): TrayBlank {
         // Side edge of the carrying wall at this corner.
         const E = pt(cr.O.x + cr.sx * Hp, cr.O.y);
         const G = pt(cr.O.x, cr.O.y + cr.sy * Hp);
-        const edge: [Pt, Pt] = c.on === "end" ? [cr.O, E] : [cr.O, G];
+        // Start one caliper (+0.5) up from the floor crease: the wall bends round the floor's
+        // edge there, and a flap reaching down to the crease would sit inside the floor board.
+        const edge: [Pt, Pt] = insetSeg(c.on === "end" ? [cr.O, E] : [cr.O, G], t + 0.5, 0);
         const runLen = c.on === "end" ? Lp : Wp;
         const d = clamp(Math.min(Hp, runLen * 0.4), 8, 80);
         const fid = id(`flap${cr.k}`);
@@ -319,7 +326,7 @@ export function tray(b: DielineBuilder, t: number, o: TrayOpts): TrayBlank {
         const edge: [Pt, Pt] = o.ears === "end" ? [cr.O, E] : [cr.O, G];
         const runLen = o.ears === "end" ? Lp : Wp;
         const d = clamp(runLen * 0.3, 10, Math.max(10, Hp));
-        b.attach(id(`ear${cr.k}`), "ear", wallId, insetSeg(edge, 0, t + 0.5), d, { kind: "trapezoid", taperA: 1, taperB: Math.min(d * 0.5, Hp * 0.3) }, {
+        b.attach(id(`ear${cr.k}`), "ear", wallId, insetSeg(edge, t + 0.5, t + 0.5), d, { kind: "trapezoid", taperA: 1, taperB: Math.min(d * 0.5, Hp * 0.3) }, {
           stage: 1,
           stack: -1,
           label: "Locking ear",
@@ -361,7 +368,7 @@ export function tray(b: DielineBuilder, t: number, o: TrayOpts): TrayBlank {
       } else {
         poly.push(f.at(f.a, f.length, depth), f.at(f.a, 0, depth));
       }
-      b.attachPoly(id(`${wid}Inner`), "inner", id(wid), [a, c2], poly, { fold: 180, pivotDepth: trapsEars ? 1.5 : 1, stage: 2, label: "Roll-over inner wall" });
+      b.attachPoly(id(`${wid}Inner`), "inner", id(wid), [a, c2], poly, { fold: 180, pivotDepth: trapsEars ? 1.5 : 1, stage: 3, label: "Roll-over inner wall" });
     };
     if (o.rollover?.end) {
       const inset = lay.long; // clear the long walls' layers at both ends
@@ -380,8 +387,8 @@ export function tray(b: DielineBuilder, t: number, o: TrayOpts): TrayBlank {
 /* ───────────────────────── Tubes and sleeves ───────────────────────── */
 
 export type EndFlaps =
-  | { kind: "slotted"; depthMajor: number; depthMinor: number; majors: number[] }
-  | { kind: "envelope"; depthMajor: number; depthMinor: number; majors: number[] }
+  | { kind: "slotted"; depthMajor: number; depthMinor: number; majors: number[]; minorStack?: Record<number, number>; stages?: Record<number, number> }
+  | { kind: "envelope"; depthMajor: number; depthMinor: number; majors: number[]; minorStack?: Record<number, number>; stages?: Record<number, number> }
   | { kind: "dust"; depth: number; on: number[] };
 
 export interface TubeOpts {
@@ -449,8 +456,8 @@ export function tube(b: DielineBuilder, t: number, o: TubeOpts): { rootId: strin
         const depth = major ? spec.depthMajor : spec.depthMinor;
         const shape = spec.kind === "envelope" ? { kind: "trapezoid" as const, taperA: Math.min(depth * 0.7, w * 0.3), taperB: Math.min(depth * 0.7, w * 0.3) } : { kind: "rect" as const };
         b.attach(id(`${where}Flap${i}`), "flap", ids[i], insetSeg(edge, slot / 2), depth, shape, {
-          stage: major ? 2 : 1,
-          stack: major ? 0 : -1,
+          stage: spec.stages?.[i] ?? (major ? 2 : 1),
+          stack: major ? 0 : (spec.minorStack?.[i] ?? -1),
           label: major ? "Major flap" : "Minor flap",
         });
       });
