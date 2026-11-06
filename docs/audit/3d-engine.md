@@ -106,4 +106,14 @@ The face test pattern draws a white stroke round each face, so with it the wrapp
 
 ## Verification
 
-See the final section of the session reply (lint, typecheck, unit tests, build, e2e).
+| Check | Result |
+|---|---|
+| `npm run lint` | clean |
+| `npm run typecheck` | clean |
+| `npm test` | 43 files, 5 905 tests passed (incl. panel geometry group/UV/count tests) |
+| `npm run build` | passes |
+| `e2e/models.spec.ts` (every library model renders a non-blank canvas, desktop + mobile) | 380 passed |
+| `e2e/designer`, `journey`, `smoke`, `checkout` | 10 passed, 9 failed at the OTP dev-code step / payment webhook (auth and payments, out of scope); the same 9 fail identically on the base build |
+| Browser console on `/en/dev/3d` (all structures, fold 0 ↔ 1) and `/en/dev/finishes` | no page errors; remaining "unmount a root while rendering" message is React StrictMode in `next dev` only |
+
+Re-measured after the last commit (final build): 50 draw calls, 0 idle frames, 14.7 fps drag / 15.5 fps keyboard at 4× in SwiftShader, 13 live textures and 14 framebuffers at both 0 and 50 switches.
