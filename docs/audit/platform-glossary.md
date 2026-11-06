@@ -55,3 +55,32 @@ One term per concept across buyer, vendor and admin. MSA that reads naturally in
 - Counted nouns: never write "{count} أيام" or "{n} طلبات". Use a counted placeholder `{count:unit}` (rendered with the right Arabic form for 1, 2, 3–10, 11–99, 100+), or rephrase as "label: {count}". Units: second, minute, hour, day, week, month, box, order, item, vendor, review, unit, colour, piece, model, photo, error, priceList, design, file. The English string uses the same placeholder and gets "1 day" / "5 days".
 - Arabic punctuation next to Arabic text: ، ؛ ؟. Space-separated digit groups go inside LTR isolates (U+2066 … U+2069).
 - No diacritics, no tatweel, no English left in Arabic values (brand and standard codes such as FEFCO, PDF, ISO are fine).
+
+## Copy round 5 additions (docs/audit/copy.md)
+
+| Concept (en) | Arabic (use this) | Do not use |
+|---|---|---|
+| Order receipt (the buyer's document until Elba has a tax registration number) | إيصال الطلب (ليس فاتورة ضريبية) | فاتورة ضريبية، فاتورة |
+| ETA e-invoice (only once Elba's tax registration is active) | الفاتورة الإلكترونية | |
+| Price request (buyer asks Elba for a fixed price) | طلب عرض سعر / طلبات عروض الأسعار | طلب تسعير، طلب سعر، طلب السعر |
+| Price on request (state of a model or quantity with no instant price) | السعر عند الطلب / يسعر عند الطلب | يسعر بعرض سعر، بعرض سعر |
+| Instant price (valid 72 hours) | السعر الفوري | عرض السعر (that is the manual one) |
+| From {price} | ابتداء من {price} | من {price} (reads as "of") |
+| Model (an item in the library / catalogue) | النموذج / النماذج | الموديل، الموديلات |
+| Box style (structure) | نوع العلبة / أنواع العلب | أشكال العلب، تصميمات قياسية |
+| Rigid box family | علب صلبة (فاخرة) | علب مقواة |
+| Greyboard | الكرتون الرمادي | الكرتون المقوى |
+| Paper tube family | علب أسطوانية ورقية | أسطوانات ورقية |
+| Spot UV | طلاء UV موضعي | يو في |
+| Hot foil (gold / silver) | بصمة حرارية (ذهبية / فضية) | بصمة ذهبي |
+| Tooling (non-die one-time cost: tube heads, shaped pouches) | أدوات التصنيع | القوالب (القالب is the dieline) |
+| Blank (flat unfolded piece) | القطعة المفرودة | الفرخ (that is the printed sheet) |
+| Quality check status | قيد فحص الجودة / اجتياز فحص الجودة / عدم اجتياز فحص الجودة | اعتماد الجودة، رفض الجودة |
+| Shipping cost line | الشحن (Shipping) | التوصيل (that is the service/event) |
+| Subtotal | المجموع الفرعي | الإجمالي الفرعي |
+| Delivered (status) | تم التسليم | تم التوصيل |
+| Download | تنزيل / نزل | حمل، تحميل (تحميل = loading) |
+| Code (standard or colour code) | رمز | كود |
+| Hashed (tokens, codes) | في صورة قيم تجزئة | مشفرة (that is encrypted) |
+| Vendor's public page | الصفحة العامة / ملف المطبعة | الملف العام |
+| Food-safe certificate | شهادة سلامة الغذاء | شهادة ملامسة الغذاء |

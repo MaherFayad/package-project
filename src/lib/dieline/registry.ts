@@ -61,9 +61,9 @@ const ENTRIES: Record<StructureCode, Entry> = {
   FEFCO_0201: {
     slug: "shipping-box",
     standard: "FEFCO 0201",
-    name: { ar: "علبة شحن", en: "Shipping box" },
+    name: { ar: "كرتونة شحن", en: "Shipping box" },
     description: {
-      ar: "علبة شحن كرتون مضلع قياسية بأربعة ألسنة علوية وسفلية، قوية وموفرة.",
+      ar: "كرتونة شحن كرتون مضلع قياسية بأربعة ألسنة علوية وسفلية، قوية وموفرة.",
       en: "Regular slotted container (RSC): the standard, economical corrugated shipping carton.",
     },
     presets: [
@@ -79,9 +79,9 @@ const ENTRIES: Record<StructureCode, Entry> = {
   ECMA_RTE: {
     slug: "reverse-tuck-end",
     standard: "ECMA A20.20.03.01",
-    name: { ar: "علبة كرتون بلسان عكسي", en: "Reverse tuck end carton" },
+    name: { ar: "علبة دوبلكس بلسان عكسي", en: "Reverse tuck end carton" },
     description: {
-      ar: "علبة كرتون دوبلكس خفيفة بلسانين في اتجاهين متعاكسين، شائعة لمستحضرات التجميل والعطور.",
+      ar: "علبة دوبلكس خفيفة بلسانين في اتجاهين متعاكسين، شائعة لمستحضرات التجميل والعطور.",
       en: "Lightweight SBS folding carton with tucks on opposite panels; classic for cosmetics and perfume.",
     },
     presets: [
@@ -97,9 +97,9 @@ const ENTRIES: Record<StructureCode, Entry> = {
   ECMA_STE: {
     slug: "straight-tuck-end",
     standard: "ECMA A20.20.03.03",
-    name: { ar: "علبة كرتون بلسان مستقيم", en: "Straight tuck end carton" },
+    name: { ar: "علبة دوبلكس بلسان مستقيم", en: "Straight tuck end carton" },
     description: {
-      ar: "علبة كرتون دوبلكس بلسانين في نفس الاتجاه لواجهة أمامية نظيفة، مناسبة للأغذية الجافة والهدايا.",
+      ar: "علبة دوبلكس بلسانين في نفس الاتجاه لواجهة أمامية نظيفة، مناسبة للأغذية الجافة والهدايا.",
       en: "SBS folding carton with both tucks on the same side for a clean front; good for dry food and gifts.",
     },
     presets: [
@@ -167,9 +167,9 @@ const ENTRIES: Record<StructureCode, Entry> = {
   ECMA_CLB: {
     slug: "crash-lock-carton",
     standard: "ECMA A60.20",
-    name: { ar: "علبة كرتون بقاع أوتوماتيكي", en: "Crash-lock bottom carton" },
+    name: { ar: "علبة دوبلكس بقاع أوتوماتيكي", en: "Crash-lock bottom carton" },
     description: {
-      ar: "علبة كرتون دوبلكس بقاع ملصوق مسبقا ينفتح ويقفل بضغطة واحدة ولسان علوي، تتحمل الزجاجات والبرطمانات الثقيلة.",
+      ar: "علبة دوبلكس بقاع ملصوق مسبقا ينفتح ويقفل بضغطة واحدة ولسان علوي، تتحمل الزجاجات والبرطمانات الثقيلة.",
       en: "SBS carton with a pre-glued crash-lock bottom that pops open in one move and a tuck top; holds heavier bottles and jars.",
     },
     presets: [
@@ -186,9 +186,9 @@ const ENTRIES: Record<StructureCode, Entry> = {
   ECMA_SLB: {
     slug: "snap-lock-carton",
     standard: "ECMA A55.20",
-    name: { ar: "علبة كرتون بقاع مقفل 1-2-3", en: "Snap-lock bottom carton (1-2-3)" },
+    name: { ar: "علبة دوبلكس بقاع مقفل 1-2-3", en: "Snap-lock bottom carton (1-2-3)" },
     description: {
-      ar: "علبة كرتون دوبلكس بقاع يقفل يدويا في ثلاث خطوات دون لصق ولسان علوي، أوفر من القاع الأوتوماتيكي للكميات الصغيرة.",
+      ar: "علبة دوبلكس بقاع يقفل يدويا في ثلاث خطوات دون لصق ولسان علوي، أوفر من القاع الأوتوماتيكي للكميات الصغيرة.",
       en: "SBS carton with a 1-2-3 snap-lock bottom folded by hand (no glue) and a tuck top; cheaper than crash-lock for short runs.",
     },
     presets: [
@@ -224,7 +224,7 @@ const ENTRIES: Record<StructureCode, Entry> = {
     standard: "Gable carrier",
     name: { ar: "علبة حمل بمقبض", en: "Gable box with handle" },
     description: {
-      ar: "علبة كرتون دوبلكس بسقف جملوني ومقبض مدمج وقاع مقفل، للحلويات ووجبات الأطفال والهدايا.",
+      ar: "علبة دوبلكس بسقف جملوني ومقبض مدمج وقاع مقفل، للحلويات ووجبات الأطفال والهدايا.",
       en: "SBS gable box with a built-in carry handle and snap-lock bottom; for pastries, kids' meals and gifts.",
     },
     presets: [
