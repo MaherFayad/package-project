@@ -88,6 +88,8 @@ export function CookieNotice() {
       <div
         ref={ref}
         className={styles.notice}
+        // Stable hook for page layouts that keep their primary CTA clear of the notice (2.4.11).
+        data-cookie-notice=""
         data-leaving={leaving ? "true" : undefined}
         role="region"
         // Kit string, not store.cookie.label: that equals the /legal/cookies page title, and two

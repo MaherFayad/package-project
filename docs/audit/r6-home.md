@@ -100,3 +100,17 @@ Screenshots (ours only): `docs/screenshots/r6/home/` (ar 1440 per section, ar 39
 ### Re-verified after merging foundation `cdf37a4` (main `f8db398`, i18n scopes)
 
 Lint 0 errors · typecheck pass · unit 112 files / 8,771 tests · build pass · `generate-i18n-scopes --check` up to date · e2e (smoke, storefront, a11y, a11y-routes, marketing-kit, journey) 123 passed, 3 skipped · axe 0 in all 8 · phone LCP 1.96 s ar / 1.82 s en, CLS 0.006 / 0, INP 128 / 88 ms. Home conflict: kept the R6 page (main only touched the old page's on-time average, which the R6 page does not show).
+
+### Pass 2: integrator side-by-side (5 gaps), merged assets `7cf260a`
+
+| Gap | Fix | Status |
+|---|---|---|
+| 1. Hero was a small box in a dark void | Full-bleed studio scene. The backdrop matches the loops' studio (rgb 26,24,22) with a lit floor; the `R6.loops` turntable plays large (scale 1.2) at the end side, with cutouts (perfume, rigid box, can) as set pieces and drop shadows. One scene per headline (mailer, then rigid box) cross-fades with the headline; only the active loop is fetched and played (720p under 1024px, 1080p above, poster = LCP). Headline at the bottom start, kit 96px. Alternate headline shortened to two lines («صممها وشاهدها تدور» / "Design it. Watch it turn."), so the hero fits the viewport | fixed |
+| 2. Sparse cards | Trio frames 470px tall with studio photos and floating real UI (price badge, vendor job); feature cutout up to 460px; finishes box up to 520px; rail switched to landscape 4:3, 360px wide; violet narrow card is the kit `MediaCard` with the perfume loop (plays on hover/focus) | fixed |
+| 3. First sheet must overlap the hero with 48px corners | The scene now runs to the hero's bottom edge, over a lit floor, so the statement sheet's 48px corners read against it as on the reference | fixed |
+| 4. Cookie notice covered the hero CTA (SC 2.4.11) | While the notice is in the page (first visit), the hero reserves space above it via `html:has([data-cookie-notice])`: 200px desktop, 156px phone. The notice is server-rendered, so this applies from first paint (first-visit CLS 0.0012). Phone scrim strengthened: the lead text's brightest background pixel gives 9.98:1 on white | fixed |
+| 5. Older posters | Hero, rail, cards, steps, the wall (R6 cutouts) and the violet card all use assets-branch renders and loops; no `/marketing/renders` or `/marketing/samples` left on the page | fixed |
+
+Change outside scope (smallest additive): `src/components/ui/CookieNotice.tsx` gets a `data-cookie-notice=""` attribute, a stable hook for layouts that keep their CTA clear of it.
+
+Re-verified: lint 0 errors · tsc pass · unit 8,771 · build pass (`/[locale]` 3.64 kB) · i18n scopes `--check` clean · e2e 123 passed, 3 skipped · axe 0 in all 8 · phone LCP 1.96 s ar / 1.87 s en, CLS 0.006 / 0 (first visit with notice 0.0012), INP 88 / 72 ms · desktop LCP 0.40 / 0.36 s, CLS 0. Screenshots refreshed, plus first-visit frames with the notice.

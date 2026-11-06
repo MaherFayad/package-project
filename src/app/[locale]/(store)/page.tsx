@@ -9,12 +9,11 @@ import { formatMoney } from "@/lib/format";
 import { siteUrl } from "@/lib/env";
 import { MODEL_INDEX } from "@/lib/library/model-index.generated";
 import { MODEL_GROUPS } from "@/lib/library/types";
-import { FINISH_CODES, type StructureCode } from "@/types";
+import { FINISH_CODES } from "@/types";
 import { designHref, structureHref } from "@/components/store/catalog";
 import { getPriceFrom, listStructures, listVendors } from "@/components/store/data";
 import { DeniedBanner } from "@/components/marketing/DeniedBanner";
 import { startHref as kitStartHref } from "@/components/marketing/MarketingHeader";
-import { TILE_BG, renderSrc, srcSetFor, vesselSrc, type VesselRender } from "@/components/marketing/assets";
 import { Sheet } from "@/components/marketing/kit/Sheet";
 import { Container } from "@/components/marketing/kit/Container";
 import { Display } from "@/components/marketing/kit/Display";
@@ -25,7 +24,8 @@ import { Orbit } from "@/components/marketing/kit/Orbit";
 import { Stat } from "@/components/marketing/kit/CountUp";
 import { Steps } from "@/components/marketing/kit/Steps";
 import { MotionScope } from "@/components/marketing/kit/MotionScope";
-import { R6, R6_MODELS, SAMPLE_LABEL, type R6Image, type R6ModelId } from "@/components/marketing/kit/assets";
+import { R6, R6_MODELS, SAMPLE_LABEL, src, srcSetW, type R6Image, type R6ModelId } from "@/components/marketing/kit/assets";
+import { MediaCard } from "@/components/marketing/kit/MediaCard";
 import { HomeHero, type HeroVideo } from "@/components/marketing/home/HomeHero";
 import { EgyptDots } from "@/components/marketing/home/EgyptDots";
 import { R6Pic } from "@/components/marketing/home/R6Pic";
@@ -61,14 +61,24 @@ const MODEL_COUNT = Object.keys(MODEL_INDEX).length;
 const GROUP_COUNT = MODEL_GROUPS.length;
 const FINISH_COUNT = FINISH_CODES.filter((f) => f !== "NONE").length;
 
-/** The hero turntable loop, once the assets branch ships the files (poster first, 720p first). */
-function heroVideo(): HeroVideo | null {
-  const loop = R6.loops.mailer;
+type LoopId = keyof typeof R6.loops;
+
+/** A turntable loop from the assets branch (720p below 1024px, 1080p above), or null if not shipped. */
+function loopVideo(id: LoopId): HeroVideo | null {
+  const loop = R6.loops[id];
   const has = loop.sources.every((x) => fs.existsSync(path.join(process.cwd(), "public", x.src)));
   if (!has) return null;
-  const order = [...loop.sources].sort((a, b) => a.height - b.height);
-  return { sources: order.map((x) => ({ src: x.src, type: x.type })), poster: `${loop.poster.base}.webp` };
+  const small = loop.sources.filter((x) => x.height === 720).map((x) => ({ src: x.src, type: x.type, media: "(max-width: 1023px)" }));
+  const large = loop.sources.filter((x) => x.height === 1080).map((x) => ({ src: x.src, type: x.type }));
+  return { sources: [...small, ...large], poster: `${loop.poster.base}.webp` };
 }
+
+/** Set pieces on the hero's studio floor (logical x: they mirror in Arabic). depth < 0 sits further back. */
+const HERO_PROPS: { id: R6ModelId; view: "iso" | "front"; x: string; y: string; w: string; depth: number; phone: boolean }[] = [
+  { id: "perfume", view: "iso", x: "52%", y: "68%", w: "12%", depth: 1, phone: true },
+  { id: "rigid-box", view: "iso", x: "86%", y: "70%", w: "16%", depth: 1, phone: false },
+  { id: "can", view: "front", x: "95%", y: "40%", w: "10%", depth: -1, phone: false },
+]
 
 /** Rail: our studio renders, dark and light, mixed like the reference's storefront strip. */
 const RAIL: { id: R6ModelId; tone: "dark" | "light" }[] = [
@@ -84,12 +94,9 @@ const RAIL: { id: R6ModelId; tone: "dark" | "light" }[] = [
   { id: "tea-tin", tone: "light" },
 ];
 
-/** Icon wall tiles: the smallest variant of our renders (64 to 72 px slots), no srcset. */
-const smallest = (src: string) => srcSetFor(src)?.split(" ")[0] ?? src;
-const WALL_ITEMS: { small: string; tone: string }[] = [
-  ...(["FEFCO_0427", "FEFCO_0201", "ECMA_RTE", "ECMA_STE", "PIZZA", "SLEEVE", "FEFCO_0320", "ECMA_CLB", "ECMA_SLB", "FEFCO_0422", "GABLE_BOX", "PAPER_TUBE", "RIGID_BOX"] as StructureCode[]).map((c) => ({ small: smallest(renderSrc(c)), tone: TILE_BG[c] })),
-  ...(["jar", "bottle", "dropper", "pump", "can"] as VesselRender[]).map((v, i) => ({ small: smallest(vesselSrc(v)), tone: ["#f6ecd2", "#e2efec", "#ece6f3", "#f3e3d9", "#dfe7f1"][i]! })),
-];
+/** Icon wall tiles: R6 cutouts (transparent, 1x file only: 68 px slots). */
+const WALL_TONES = ["#f3e3d9", "#e2efec", "#ece6f3", "#f6ecd2", "#dfe7f1", "#efe5ef", "#e6e6e3"];
+const WALL_ITEMS: { small: string; tone: string }[] = (Object.keys(R6_MODELS) as R6ModelId[]).map((id, i) => ({ small: src(R6.cutouts[`${id}-iso`]!), tone: WALL_TONES[i % WALL_TONES.length]! }));
 
 const FINISH_SPOTS: { t: string; s: string; dl: string }[] = [
   { t: "12%", s: "8%", dl: "0s" },
@@ -113,6 +120,13 @@ const THUMBS: { id: R6ModelId; t: string; s: string; z: string; dl: string }[] =
 
 const cut = (id: R6ModelId, view: "iso" | "front" = "iso"): R6Image => R6.cutouts[`${id}-${view}`]!;
 const studio = (id: R6ModelId, tone: "dark" | "light", view: "iso" | "front" = "iso"): R6Image => R6.hero[`${id}-${view}-${tone}`]!;
+
+/** webm + mp4 (720p) for a kit MediaCard. */
+function loopSources(id: LoopId): { webm?: string; mp4?: string } | undefined {
+  const v = loopVideo(id);
+  if (!v) return undefined;
+  return { webm: v.sources.find((x) => x.type === "video/webm")?.src, mp4: v.sources.find((x) => x.type === "video/mp4")?.src };
+}
 
 export default async function HomePage({ params }: Props) {
   const locale = toLocale((await params).locale);
@@ -177,8 +191,15 @@ export default async function HomePage({ params }: Props) {
         titles={c.hero.titles}
         lead={c.hero.lead}
         labels={{ pause: c.hero.pause, play: c.hero.play }}
-        video={heroVideo()}
-        media={<R6Pic a={studio("mailer", "dark")} sizes="(min-width: 768px) 50vw, 88vw" className={s.heroPoster} priority />}
+        scenes={(["mailer", "rigid-box"] as LoopId[]).map((id, i) => ({
+          poster: <R6Pic a={R6.loops[id].poster} sizes="(min-width: 1024px) 100vw, 160vw" className={s.heroPoster} priority={i === 0} />,
+          video: loopVideo(id),
+        }))}
+        props={HERO_PROPS.map((p) => (
+          <div key={p.id} className={s.heroProp} data-depth={p.depth} data-phone={p.phone ? "true" : "false"} style={{ ["--x" as string]: p.x, ["--y" as string]: p.y, ["--w" as string]: p.w }}>
+            <R6Pic a={cut(p.id, p.view)} sizes="(min-width: 1024px) 18vw, 30vw" />
+          </div>
+        ))}
         actions={
           <PillRow className={s.pills}>
             <Pill href={startHref} size="lg">
@@ -210,7 +231,7 @@ export default async function HomePage({ params }: Props) {
             items={RAIL.map((r) => (
               <figure key={r.id} className={s.railItem}>
                 <div className={s.railCard}>
-                  <R6Pic a={studio(r.id, r.tone)} sizes="300px" alt={studio(r.id, r.tone).alt[locale]} />
+                  <R6Pic a={studio(r.id, r.tone)} sizes="360px" alt={studio(r.id, r.tone).alt[locale]} />
                 </div>
                 <figcaption className={s.railCaption}>{modelCaption(r.id)}</figcaption>
               </figure>
@@ -269,8 +290,9 @@ export default async function HomePage({ params }: Props) {
           </Reveal>
           <ul className={s.trio}>
             <Reveal as="li" className={s.mediaCard} index={0}>
-              <div className={s.mediaFrame} data-pad="true">
-                <R6Pic a={ui("designer")} sizes="(min-width: 1024px) 300px, 92vw" className={s.uiShot} />
+              <div className={s.mediaFrame}>
+                <R6Pic a={studio("perfume", "dark")} sizes="(min-width: 1024px) 320px, 92vw" />
+                <R6Pic a={ui("price-badge")} sizes="(min-width: 1024px) 280px, 80vw" className={s.floatUi} />
               </div>
               <div className={s.mediaCaption}>
                 <Display as="h3" size="20" className={s.cardTitle}>
@@ -307,8 +329,9 @@ export default async function HomePage({ params }: Props) {
               </div>
             </Reveal>
             <Reveal as="li" className={s.mediaCard} index={2}>
-              <div className={s.mediaFrame} data-pad="true">
-                <R6Pic a={ui("vendor-job")} sizes="(min-width: 1024px) 300px, 92vw" className={s.uiShot} />
+              <div className={s.mediaFrame}>
+                <R6Pic a={studio("drawer-box", "light")} sizes="(min-width: 1024px) 320px, 92vw" />
+                <R6Pic a={ui("vendor-job")} sizes="(min-width: 1024px) 240px, 70vw" className={`${s.floatUi} ${s.floatUiCard}`} />
               </div>
               <div className={s.mediaCaption}>
                 <Display as="h3" size="20" className={s.cardTitle}>
@@ -437,9 +460,13 @@ export default async function HomePage({ params }: Props) {
             </div>
           </Reveal>
           <Reveal as="article" className={s.darkCard} index={1}>
-            <div className={s.darkCardMedia} aria-hidden="true">
-              <div className={s.violetGlow} />
-              <R6Pic a={cut("rigid-box")} sizes="(min-width: 1024px) 360px, 80vw" className={s.darkCardCut} />
+            <div className={s.darkCardMedia}>
+              <MediaCard
+                className={s.loopCard}
+                ratio="auto"
+                poster={{ src: src(R6.loops.perfume.poster), srcSet: srcSetW(R6.loops.perfume.poster, "webp"), sizes: "(min-width: 1024px) 420px, 92vw", width: R6.loops.perfume.poster.width, height: R6.loops.perfume.poster.height, alt: R6.loops.perfume.alt[locale] }}
+                video={loopSources("perfume")}
+              />
             </div>
             <div className={s.darkCardBody}>
               <Display as="h3" size="20" className={s.cardTitle}>
@@ -455,9 +482,10 @@ export default async function HomePage({ params }: Props) {
       <section className={s.bandNavy} aria-labelledby="wall-title">
         <MotionScope className={s.wall} pauseLabel={c.wall.pause} playLabel={c.wall.play} buttonClassName={s.wallControl}>
           <div className={s.wallRows} aria-hidden="true">
-            {[0, 1, 2, 3, 4].map((r) => {
+            {[0, 1, 2, 3].map((r) => {
               const k = (r * 5) % WALL_ITEMS.length;
-              const row = [...WALL_ITEMS.slice(k), ...WALL_ITEMS.slice(0, k)];
+              const once = [...WALL_ITEMS.slice(k), ...WALL_ITEMS.slice(0, k)];
+              const row = [...once, ...once];
               return (
                 <ul key={r} className={s.wallRow} style={{ ["--dur" as string]: `${80 + r * 9}s` }}>
                   {[...row, ...row].map((it, i) => (

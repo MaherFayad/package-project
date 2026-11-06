@@ -11,7 +11,7 @@ import type { Locale } from "@/types";
  */
 const en = {
   hero: {
-    titles: ["Packaging worthy of your brand", "Design it in 3D. Print it in Egypt."],
+    titles: ["Packaging worthy of your brand", "Design it. Watch it turn."],
     lead: "Design your printed box free on a live 3D model, see the price instantly and order from vetted Egyptian printers.",
     primary: "Start designing free",
     secondary: "Browse box styles",
@@ -137,7 +137,7 @@ export type HomeCopy = Widen<typeof en>;
 
 const ar: HomeCopy = {
   hero: {
-    titles: ["علبة تليق بعلامتك", "صمم في ثلاثة أبعاد، واطبع في مصر"],
+    titles: ["علبة تليق بعلامتك", "صممها وشاهدها تدور"],
     lead: "صمم علبتك المطبوعة مجانا على نموذج حي ثلاثي الأبعاد، واعرف السعر فورا، واطلب من مطابع مصرية معتمدة.",
     primary: "ابدأ التصميم مجانا",
     secondary: "تصفح النماذج",

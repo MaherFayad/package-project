@@ -11,8 +11,14 @@ import s from "./home.module.css";
 const ROTATE_MS = 7000;
 
 export interface HeroVideo {
-  sources: { src: string; type: string }[];
+  sources: { src: string; type: string; media?: string }[];
   poster: string;
+}
+
+/** One full-bleed studio scene per headline: the poster (LCP for the first) and its turntable loop. */
+export interface HeroScene {
+  poster: ReactNode;
+  video: HeroVideo | null;
 }
 
 /**
@@ -28,15 +34,17 @@ export function HomeHero({
   titles,
   lead,
   actions,
-  media,
-  video,
+  scenes,
+  props,
   labels,
 }: {
   titles: string[];
   lead: string;
   actions: ReactNode;
-  media: ReactNode;
-  video?: HeroVideo | null;
+  /** Aligned with `titles`: the scene swaps with the headline, as on the reference. */
+  scenes: HeroScene[];
+  /** Static set pieces around the turntable (cutouts on the studio floor). */
+  props?: ReactNode;
   labels: { pause: string; play: string };
 }) {
   const reduce = useReducedMotion();
@@ -44,9 +52,9 @@ export function HomeHero({
   const [cycle, setCycle] = useState(0);
   const [userPaused, setUserPaused] = useState(false);
   const [visible, setVisible] = useState(true);
-  const [videoReady, setVideoReady] = useState(false);
+  const [ready, setReady] = useState<Record<number, boolean>>({});
   const root = useRef<HTMLDivElement>(null);
-  const vid = useRef<HTMLVideoElement>(null);
+  const vids = useRef<(HTMLVideoElement | null)[]>([]);
   const paused = userPaused || reduce;
 
   useEffect(() => {
@@ -66,40 +74,48 @@ export function HomeHero({
     return () => window.clearTimeout(id);
   }, [paused, visible, titles.length, active]);
 
+  // Only the active scene's loop plays (and only it is fetched: preload stays "none" until then).
   useEffect(() => {
-    const v = vid.current;
-    if (!v) return;
-    if (paused || !visible) v.pause();
-    else {
-      if (v.preload === "none") v.preload = "auto";
-      void v.play().catch(() => undefined);
-    }
-  }, [paused, visible]);
+    vids.current.forEach((v, i) => {
+      if (!v) return;
+      if (paused || !visible || i !== active) v.pause();
+      else {
+        if (v.preload === "none") v.preload = "auto";
+        void v.play().catch(() => undefined);
+      }
+    });
+  }, [paused, visible, active]);
 
   return (
     <Sheet tone="dark" hero pad="none" container={false} className={s.heroSheet} aria-labelledby="hero-title">
       <div ref={root} className={s.hero} data-paused={paused ? "true" : "false"}>
         <div className={s.heroMedia} aria-hidden="true">
-          <div className={s.heroStage}>
-            <div className={s.heroDrift}>{media}</div>
-            {video && !reduce ? (
-              <video
-                ref={vid}
-                className={s.heroVideo}
-                data-ready={videoReady ? "true" : "false"}
-                muted
-                loop
-                playsInline
-                preload="none"
-                poster={video.poster}
-                onPlaying={() => setVideoReady(true)}
-              >
-                {video.sources.map((x) => (
-                  <source key={x.src} src={x.src} type={x.type} />
-                ))}
-              </video>
-            ) : null}
-          </div>
+          <div className={s.heroFloor} />
+          {scenes.map((sc, i) => (
+            <div key={i} className={s.heroStage} data-active={active === i ? "true" : "false"}>
+              <div className={s.heroDrift}>
+                {sc.poster}
+                {sc.video && !reduce ? (
+                  <video
+                    ref={(el) => void (vids.current[i] = el)}
+                    className={s.heroVideo}
+                    data-ready={ready[i] ? "true" : "false"}
+                    muted
+                    loop
+                    playsInline
+                    preload="none"
+                    poster={sc.video.poster}
+                    onPlaying={() => setReady((r) => ({ ...r, [i]: true }))}
+                  >
+                    {sc.video.sources.map((x) => (
+                      <source key={x.src} src={x.src} type={x.type} media={x.media} />
+                    ))}
+                  </video>
+                ) : null}
+              </div>
+            </div>
+          ))}
+          {props ? <div className={s.heroProps}>{props}</div> : null}
         </div>
         <div className={s.heroScrim} aria-hidden="true" />
         <div className={s.heroWrap}>
