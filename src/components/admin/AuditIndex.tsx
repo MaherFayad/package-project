@@ -23,7 +23,7 @@ export interface AuditRow {
   after: string | null;
 }
 
-const ENTITIES = ["ORDER", "VENDOR", "VENDOR_APPLICATION", "DISPUTE", "USER", "DATA_REQUEST", "STRUCTURE", "MATERIAL", "FINISH", "SETTINGS"] as const;
+const ENTITIES = ["ORDER", "VENDOR", "VENDOR_APPLICATION", "DISPUTE", "USER", "DATA_REQUEST", "STRUCTURE", "MATERIAL", "FINISH", "SETTINGS", "PAYOUT"] as const;
 
 /** Append-only admin audit log with record-type and action filters (state in the URL). */
 export function AuditIndex({ rows }: { rows: AuditRow[] }) {
@@ -104,7 +104,7 @@ export function AuditIndex({ rows }: { rows: AuditRow[] }) {
             <IndexTableCell>
               <BlockStack gap="100">
                 <Text as="span">
-                  <span className={adminStyles.PreWrap}>{r.summary ?? t("admin.common.none")}</span>
+                  <span className={adminStyles.PreWrap} dir="auto">{r.summary ?? t("admin.common.none")}</span>
                 </Text>
                 {r.before || r.after ? (
                   <details>

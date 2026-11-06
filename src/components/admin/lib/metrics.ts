@@ -274,3 +274,39 @@ export function scorecard(input: ScorecardInput): Scorecard {
 export function round1(n: number): number {
   return Math.round(n * 10) / 10;
 }
+
+/* ───────────────────────── Retention and supply (B-19, research report §6.3) ───────────────────────── */
+
+/**
+ * 90-day repeat rate: of buyers whose first kept order is at least 90 days old, the share who
+ * placed another kept order within 90 days of the first. Younger buyers are left out (they have
+ * not had 90 days yet), so the number does not sink with growth. null when nobody qualifies.
+ * The plan's Phase 3 gate is ≥ 40%.
+ */
+export function repeatRate90(orders: { buyerId: string; placedAt: Date }[], now: Date): { pct: number | null; cohort: number; repeaters: number } {
+  const byBuyer = new Map<string, number[]>();
+  for (const o of orders) {
+    const list = byBuyer.get(o.buyerId) ?? [];
+    list.push(o.placedAt.getTime());
+    byBuyer.set(o.buyerId, list);
+  }
+  let cohort = 0;
+  let repeaters = 0;
+  const window = 90 * DAY_MS;
+  for (const times of byBuyer.values()) {
+    times.sort((a, b) => a - b);
+    const first = times[0]!;
+    if (now.getTime() - first < window) continue;
+    cohort++;
+    if (times.some((t, i) => i > 0 && t - first <= window)) repeaters++;
+  }
+  return { pct: cohort ? round1((repeaters / cohort) * 100) : null, cohort, repeaters };
+}
+
+/** Vendor acceptance rate from VENDOR_ACCEPTED / VENDOR_DECLINED events in the window. */
+export function acceptanceRate(events: { type: string }[]): { pct: number | null; accepted: number; declined: number } {
+  const accepted = events.filter((e) => e.type === "VENDOR_ACCEPTED").length;
+  const declined = events.filter((e) => e.type === "VENDOR_DECLINED").length;
+  const n = accepted + declined;
+  return { pct: n ? round1((accepted / n) * 100) : null, accepted, declined };
+}

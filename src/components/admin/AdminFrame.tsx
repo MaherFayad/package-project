@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, Boxes, ClipboardList, Factory, FileLock2, Gavel, History, LogOut, Languages, Store, Tags, Users } from "lucide-react";
+import { BarChart3, Boxes, ClipboardList, Factory, FileLock2, Gavel, History, LogOut, Languages, Store, ShieldCheck, Tags, Users, Wallet } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Frame, Navigation, TopBar, TopBarSearchField, type ContextualSaveBarProps, type NavigationSectionProps } from "@/components/ui";
@@ -38,7 +38,7 @@ export function useAdminSaveBar(state: SaveBarState) {
 export interface AdminFrameProps {
   locale: Locale;
   userName: string;
-  counts: { qc: number; applications: number; disputes: number; dataRequests: number };
+  counts: { qc: number; applications: number; disputes: number; dataRequests: number; payouts: number; moderation: number };
   children: ReactNode;
 }
 
@@ -62,6 +62,8 @@ export function AdminFrame({ locale, userName, counts, children }: AdminFramePro
           { url: `${base}/orders`, label: t("admin.nav.orders"), icon: ClipboardList, badge: counts.qc > 0 ? counts.qc : undefined },
           { url: `${base}/vendors`, label: t("admin.nav.vendors"), icon: Factory, badge: counts.applications > 0 ? counts.applications : undefined },
           { url: `${base}/disputes`, label: t("admin.nav.disputes"), icon: Gavel, badge: counts.disputes > 0 ? counts.disputes : undefined },
+          { url: `${base}/moderation`, label: t("admin.nav.moderation"), icon: ShieldCheck, badge: counts.moderation > 0 ? counts.moderation : undefined },
+          { url: `${base}/payouts`, label: t("admin.nav.payouts"), icon: Wallet, badge: counts.payouts > 0 ? counts.payouts : undefined },
           { url: `${base}/pricing`, label: t("admin.nav.pricing"), icon: Tags },
           { url: `${base}/catalog`, label: t("admin.nav.catalog"), icon: Boxes },
           { url: `${base}/users`, label: t("admin.nav.users"), icon: Users },

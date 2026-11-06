@@ -63,7 +63,7 @@ export async function runAdminAction<T>(fn: () => Promise<T>): Promise<AdminActi
   }
 }
 
-export type AuditEntity = "ORDER" | "VENDOR" | "VENDOR_APPLICATION" | "DISPUTE" | "USER" | "DATA_REQUEST" | "STRUCTURE" | "MATERIAL" | "FINISH" | "SETTINGS";
+export type AuditEntity = "ORDER" | "VENDOR" | "VENDOR_APPLICATION" | "DISPUTE" | "USER" | "DATA_REQUEST" | "STRUCTURE" | "MATERIAL" | "FINISH" | "SETTINGS" | "PAYOUT";
 
 import { AUDIT_ACTIONS, type AuditAction } from "../lib/audit";
 export { AUDIT_ACTIONS, type AuditAction };

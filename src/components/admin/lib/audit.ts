@@ -29,5 +29,11 @@ export const AUDIT_ACTIONS = [
   "DATA_REQUEST_COMPLETE",
   "DATA_REQUEST_REJECT",
   "USER_ANONYMISE",
+  "PAYOUT_RAISE",
+  "PAYOUT_APPROVE",
+  "PAYOUT_PAY",
+  "PORTFOLIO_APPROVE",
+  "PORTFOLIO_REJECT",
+  "VENDOR_BIO_CLEAN",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

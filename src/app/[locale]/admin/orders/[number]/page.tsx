@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import {
@@ -19,7 +20,6 @@ import {
 } from "@/components/ui";
 import { NoteComposer, OverrideCard, QcActions, RefundCard, RoutingCard, ShipCard } from "@/components/admin/OrderActions";
 import { OrderStatusBadge } from "@/components/admin/OrdersIndex";
-import { NotFoundCard } from "@/components/admin/NotFoundCard";
 import { adminStyles } from "@/components/admin/charts";
 import { loadOrderDetail } from "@/components/admin/server/queries";
 import { goodsNet, marginOf, type MetricOrder } from "@/components/admin/lib/metrics";
@@ -28,6 +28,10 @@ import { isOpenDispute } from "@/components/admin/lib/ops";
 import { requireRole } from "@/lib/auth/session";
 import { getT, pick, toLocale, type DictKey, type TFunction } from "@/i18n";
 import { fromJson } from "@/lib/json";
+import { PayoutsCard } from "@/components/admin/PayoutActions";
+import { adminPayoutStatus, nextPayoutStep } from "@/components/admin/lib/payouts";
+import { payoutSchedule } from "@/components/vendor/lib/payouts";
+import { modelByCode } from "@/lib/library";
 import { formatDate, formatDateTime, formatDims, formatMoney, formatNumber } from "@/lib/format";
 import type { Dims, Locale, ShippingAddress } from "@/types";
 
@@ -36,7 +40,7 @@ type Params = Promise<{ locale: string; number: string }>;
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { locale, number } = await params;
   const t = getT(toLocale(locale));
-  return { title: `${number} · ${t("admin.orders.title")}` };
+  return { title: `${decodeURIComponent(number)} · ${t("admin.orders.title")} · ${t("admin.title")}` };
 }
 
 function Row({ label, value, strong }: { label: ReactNode; value: ReactNode; strong?: boolean }) {
@@ -70,7 +74,7 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
   const admin = await requireRole("ADMIN", locale, `/${locale}/admin/orders/${number}`);
   const data = await loadOrderDetail(decodeURIComponent(number));
   const base = `/${locale}/admin`;
-  if (!data) return <NotFoundCard locale={locale} backUrl={`${base}/orders`} backLabel={t("admin.order.back")} />;
+  if (!data) notFound();
   const { order, vendorOptions, actors, reprints, auditRows } = data;
   const m = order as unknown as MetricOrder;
   const goods = goodsNet(m);
@@ -101,7 +105,7 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
             <Text as="span" fontWeight="semibold">
               {t(`admin.audit.actions.${e.type}` as DictKey)}
             </Text>
-            {e.note ? <span className={adminStyles.PreWrap}>{`: ${e.note.replace(/^[\w-]+:\s?/, "")}`}</span> : null}
+            {e.note ? <span className={adminStyles.PreWrap} dir="auto">{`: ${e.note.replace(/^[\w-]+:\s?/, "")}`}</span> : null}
           </span>
         ),
         details: e.actor ? <bdi dir="ltr">{e.actor}</bdi> : undefined,
@@ -114,13 +118,18 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
       content: (
         <span>
           {t(`admin.order.events.${e.type}` as DictKey)}
-          {e.note ? <Text as="span" tone="subdued">{` · ${e.note}`}</Text> : null}
+          {e.note ? <Text as="span" tone="subdued">{" · "}<bdi>{e.note}</bdi></Text> : null}
         </span>
       ),
     };
   });
 
   const vendorName = pick(locale, order.vendor.nameAr, order.vendor.nameEn);
+  /** Library model name when the buyer designed one (Design.modelCode), else the core style name. */
+  const libraryName = (modelCode: string | null, structureCode: string) => {
+    const lib = modelByCode(modelCode);
+    return lib ? pick(locale, lib.name.ar, lib.name.en) : t(`structures.${structureCode}` as DictKey);
+  };
 
   return (
     <Page
@@ -175,7 +184,7 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
                               </InlineStack>
                               {p.reviewNote ? (
                                 <Text as="p" variant="bodySm" tone="subdued">
-                                  {p.reviewNote}
+                                  <bdi>{p.reviewNote}</bdi>
                                 </Text>
                               ) : null}
                             </figcaption>
@@ -202,11 +211,17 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
                     <InlineStack align="space-between" gap="300" blockAlign="start">
                       <BlockStack gap="100">
                         <Text as="p" fontWeight="semibold">
-                          {t(`structures.${it.structureCode}` as DictKey)}{" "}
+                          {libraryName(it.modelCode, it.structureCode)}{" "}
                           <Text as="span" tone="subdued">
-                            {formatDims(fromJson<Dims>(it.dims), locale)}
+                            <bdi dir="ltr">{formatDims(fromJson<Dims>(it.dims), locale)}</bdi>
                           </Text>
                         </Text>
+                        {modelByCode(it.modelCode) ? (
+                          // The buyer designed a library model; the vendor produces and prices it as its base style.
+                          <Text as="p" variant="bodySm" tone="subdued">
+                            {t("admin.order.madeAs", { standard: modelByCode(it.modelCode)!.standard, style: t(`structures.${it.structureCode}` as DictKey) })}
+                          </Text>
+                        ) : null}
                         <Text as="p" variant="bodySm" tone="subdued">
                           {t("admin.order.spec", {
                             material: t(`materials.${it.materialCode}` as DictKey),
@@ -222,10 +237,12 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
                       </BlockStack>
                       <BlockStack gap="100" align="end">
                         <Text as="p" numeric alignment="end">
-                          {formatNumber(it.quantity)} × {formatMoney(it.unitPiasters, locale)}
+                          <bdi>
+                            {formatNumber(it.quantity)} × {formatMoney(it.unitPiasters, locale, { alwaysDecimals: true })}
+                          </bdi>
                         </Text>
                         <Text as="p" numeric fontWeight="semibold" alignment="end">
-                          {formatMoney(it.lineTotalPiasters, locale)}
+                          {formatMoney(it.lineTotalPiasters, locale, { alwaysDecimals: true })}
                         </Text>
                       </BlockStack>
                     </InlineStack>
@@ -238,17 +255,17 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
               <BlockStack gap="300">
                 <Inset>
                   <BlockStack gap="200">
-                    <Row label={t("admin.order.money.goods")} value={formatMoney(goods, locale)} />
-                    <Row label={t("admin.order.money.delivery")} value={formatMoney(order.shippingPiasters, locale)} />
-                    <Row label={t("admin.order.money.vat")} value={formatMoney(order.vatPiasters, locale)} />
+                    <Row label={t("admin.order.money.goods")} value={formatMoney(goods, locale, { alwaysDecimals: true })} />
+                    <Row label={t("admin.order.money.delivery")} value={formatMoney(order.shippingPiasters, locale, { alwaysDecimals: true })} />
+                    <Row label={t("admin.order.money.vat")} value={formatMoney(order.vatPiasters, locale, { alwaysDecimals: true })} />
                     <Divider />
-                    <Row label={t("admin.order.money.total")} value={formatMoney(order.totalPiasters, locale)} strong />
+                    <Row label={t("admin.order.money.total")} value={formatMoney(order.totalPiasters, locale, { alwaysDecimals: true })} strong />
                   </BlockStack>
                 </Inset>
                 <Inset>
                   <BlockStack gap="200">
-                    <Row label={t("admin.order.money.vendorCost")} value={formatMoney(order.vendorCostPiasters, locale)} />
-                    <Row label={t("admin.order.money.margin")} value={formatMoney(margin, locale)} strong />
+                    <Row label={t("admin.order.money.vendorCost")} value={formatMoney(order.vendorCostPiasters, locale, { alwaysDecimals: true })} />
+                    <Row label={t("admin.order.money.margin")} value={formatMoney(margin, locale, { alwaysDecimals: true })} strong />
                   </BlockStack>
                 </Inset>
                 {order.payments.length ? (
@@ -263,7 +280,7 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
                         </Text>
                         <InlineStack gap="150" blockAlign="center">
                           <Text as="span" numeric variant="bodySm">
-                            {formatMoney(p.amountPiasters, locale)}
+                            {formatMoney(p.amountPiasters, locale, { alwaysDecimals: true })}
                           </Text>
                           <Badge size="small" tone={p.status === "PAID" ? "neutral" : p.status === "REFUNDED" ? "critical" : "warning"} progress={p.status === "PAID" ? "complete" : "incomplete"}>
                             {t(`admin.orders.paymentStatus.${p.status}` as DictKey)}
@@ -291,7 +308,7 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
           <BlockStack gap="400">
             <Card title={t("admin.order.buyer.title")}>
               <BlockStack gap="200">
-                <Link url={`${base}/users/${order.buyer.id}`}>{order.buyer.name ?? t("admin.users.noName")}</Link>
+                <Link url={`${base}/users/${order.buyer.id}`}><bdi>{order.buyer.name ?? t("admin.users.noName")}</bdi></Link>
                 <Text as="p">
                   <bdi dir="ltr">{order.buyer.phone}</bdi>
                 </Text>
@@ -302,7 +319,7 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
                       {t("admin.order.buyer.address")}
                     </Text>
                     <Text as="p" variant="bodySm">
-                      {addr.name}
+                      <bdi>{addr.name}</bdi>
                       <br />
                       <bdi>{[addr.street, addr.building, addr.city, addr.governorate].filter(Boolean).join(", ")}</bdi>
                     </Text>
@@ -316,6 +333,8 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
               currentVendorId={order.vendorId}
               canReassign={canReassign(order.status)}
               vendorCostPiasters={order.vendorCostPiasters}
+              goodsPiasters={goods}
+              jobLabel={order.items[0] ? `${t(`structures.${order.items[0].structureCode}` as DictKey)} · ${t(`materials.${order.items[0].materialCode}` as DictKey)}` : ""}
               vendors={vendorOptions.map((v) => ({ id: v.id, name: pick(locale, v.nameAr, v.nameEn), capable: v.capable }))}
               vendor={
                 <BlockStack gap="100">
@@ -326,6 +345,13 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
                   </Text>
                 </BlockStack>
               }
+            />
+
+            <PayoutsCard
+              orderId={order.id}
+              orderNumber={order.number}
+              vendorName={vendorName}
+              parts={payoutSchedule([order], order.payouts).map((r) => ({ kind: r.kind, amountPiasters: r.amountPiasters, status: adminPayoutStatus(r, order.status), date: r.date, step: nextPayoutStep(r, order.status, order.disputes.some((d) => isOpenDispute(d.status))), held: r.kind === "BALANCE" && r.status !== "PAID" && order.disputes.some((d) => isOpenDispute(d.status)) }))}
             />
 
             <OverrideCard

@@ -1,20 +1,24 @@
+import { db } from "@/lib/db";
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { BlockStack, Card, InlineStack, Layout, LayoutSection, Link, Page, Text } from "@/components/ui";
 import { DisputeDecision } from "@/components/admin/DisputeDecision";
 import { DisputeStatusBadge } from "@/components/admin/DisputesIndex";
 import { OrderStatusBadge } from "@/components/admin/OrdersIndex";
-import { NotFoundCard } from "@/components/admin/NotFoundCard";
 import { adminStyles } from "@/components/admin/charts";
 import { loadDispute } from "@/components/admin/server/queries";
 import { canRefund } from "@/components/admin/lib/orders";
+import { isolate } from "@/components/admin/lib/bidi";
 import { getT, pick, toLocale, type DictKey } from "@/i18n";
 import { formatDate, formatDateTime, formatMoney } from "@/lib/format";
 
 type Params = Promise<{ locale: string; id: string }>;
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
-  const t = getT(toLocale((await params).locale));
-  return { title: `${t("admin.disputes.title")} · ${t("admin.title")}` };
+  const { locale, id } = await params;
+  const t = getT(toLocale(locale));
+  const d = /^[\w-]{1,40}$/.test(id) ? await db.dispute.findUnique({ where: { id }, select: { order: { select: { number: true } } } }) : null;
+  return { title: `${d ? `${d.order.number} · ` : ""}${t("admin.disputes.title")} · ${t("admin.title")}` };
 }
 
 export default async function AdminDisputePage({ params }: { params: Params }) {
@@ -23,7 +27,7 @@ export default async function AdminDisputePage({ params }: { params: Params }) {
   const t = getT(locale);
   const base = `/${locale}/admin`;
   const data = await loadDispute(id);
-  if (!data) return <NotFoundCard locale={locale} backUrl={`${base}/disputes`} backLabel={t("admin.disputes.detail.back")} />;
+  if (!data) notFound();
   const { dispute: d, vendors, reprints, auditRows } = data;
   const order = d.order;
 
@@ -31,7 +35,7 @@ export default async function AdminDisputePage({ params }: { params: Params }) {
     <Page
       title={t("admin.disputes.detail.title", { number: order.number })}
       titleMetadata={<DisputeStatusBadge status={d.status} />}
-      subtitle={t("admin.disputes.detail.opened", { date: formatDateTime(d.createdAt, locale), name: d.openedBy.name ?? d.openedBy.phone })}
+      subtitle={t("admin.disputes.detail.opened", { date: formatDateTime(d.createdAt, locale), name: isolate(d.openedBy.name ?? d.openedBy.phone) })}
       backAction={{ content: t("admin.disputes.detail.back"), url: `${base}/disputes` }}
     >
       <Layout>
@@ -43,7 +47,7 @@ export default async function AdminDisputePage({ params }: { params: Params }) {
                   {t(`admin.disputes.reasons.${d.reason}` as DictKey)}
                 </Text>
                 <Text as="p">
-                  <span className={adminStyles.PreWrap}>{d.description}</span>
+                  <span className={adminStyles.PreWrap} dir="auto">{d.description}</span>
                 </Text>
               </BlockStack>
             </Card>
@@ -71,7 +75,7 @@ export default async function AdminDisputePage({ params }: { params: Params }) {
                 <BlockStack gap="100">
                   {d.resolution ? (
                     <Text as="p">
-                      <span className={adminStyles.PreWrap}>{d.resolution}</span>
+                      <span className={adminStyles.PreWrap} dir="auto">{d.resolution}</span>
                     </Text>
                   ) : null}
                   {d.resolvedAt ? (
@@ -114,7 +118,7 @@ export default async function AdminDisputePage({ params }: { params: Params }) {
                   <OrderStatusBadge status={order.status} />
                 </InlineStack>
                 <Text as="p" numeric>
-                  {formatMoney(order.totalPiasters, locale)}
+                  {formatMoney(order.totalPiasters, locale, { alwaysDecimals: true })}
                 </Text>
                 <Text as="p" variant="bodySm" tone="subdued">
                   {pick(locale, order.vendor.nameAr, order.vendor.nameEn)}
@@ -128,7 +132,7 @@ export default async function AdminDisputePage({ params }: { params: Params }) {
             </Card>
             <Card title={t("admin.order.buyer.title")}>
               <BlockStack gap="100">
-                <Link url={`${base}/users/${d.openedBy.id}`}>{d.openedBy.name ?? t("admin.users.noName")}</Link>
+                <Link url={`${base}/users/${d.openedBy.id}`}><bdi>{d.openedBy.name ?? t("admin.users.noName")}</bdi></Link>
                 <Text as="p" variant="bodySm">
                   <bdi dir="ltr">{d.openedBy.phone}</bdi>
                 </Text>

@@ -63,7 +63,7 @@ export function DataRequestActions({ requestId, userId, kind, status }: { reques
       >
         <BlockStack gap="300">
           {modal === "COMPLETE" ? <Text as="p">{kind === "DELETE" ? t("admin.privacy.actions.completeDelete") : t("admin.privacy.actions.completeExport")}</Text> : null}
-          <TextField label={t("admin.privacy.actions.note")} autoComplete="off" value={note} onChange={setNote} multiline={2} maxLength={1000} />
+          <TextField label={t("admin.privacy.actions.note")} autoComplete="off" dir="auto" value={note} onChange={setNote} multiline={2} maxLength={1000} />
         </BlockStack>
       </Modal>
     </>

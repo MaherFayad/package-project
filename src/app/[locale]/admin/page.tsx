@@ -51,15 +51,39 @@ export default async function AdminOverviewPage({ params, searchParams }: { para
     </span>
   );
 
-  const money = (p: number | null) => (p === null ? t("admin.common.none") : <bdi>{formatMoney(p, locale)}</bdi>);
-  const seriesRows = o.gmvSeries.map((p, i) => [formatDate(p.start, locale, "medium"), formatMoney(p.value, locale), formatMoney(o.marginSeries[i]?.value ?? 0, locale)]);
+  const money = (p: number | null) => (p === null ? t("admin.common.none") : <bdi>{formatMoney(p, locale, { alwaysDecimals: true })}</bdi>);
+  const seriesRows = o.gmvSeries.map((p, i) => [formatDate(p.start, locale, "medium"), formatMoney(p.value, locale, { alwaysDecimals: true }), formatMoney(o.marginSeries[i]?.value ?? 0, locale, { alwaysDecimals: true })]);
 
   const tasks = [
     { n: o.tasks.qcPending, text: t("admin.overview.tasks.qc"), url: `${base}/orders?view=qc` },
     { n: o.tasks.applications, text: t("admin.overview.tasks.applications"), url: `${base}/vendors?tab=applications` },
     { n: o.tasks.openDisputes, text: t("admin.overview.tasks.disputes"), url: `${base}/disputes` },
+    { n: o.tasks.moderation, text: t("admin.overview.tasks.moderation"), url: `${base}/moderation` },
+    { n: o.tasks.payouts, text: t("admin.overview.tasks.payouts"), url: `${base}/payouts` },
     { n: o.tasks.dataRequests, text: t("admin.overview.tasks.dataRequests"), url: `${base}/privacy` },
   ].filter((x) => x.n > 0);
+
+  const todo = (
+    <Card title={t("admin.overview.tasks.title")}>
+      {tasks.length ? (
+        <ul className={adminStyles.TaskList}>
+          {tasks.map((x) => (
+            <li key={x.url}>
+              <NextLink href={x.url} className={adminStyles.TaskLink}>
+                <CountBadge>{formatNumber(x.n)}</CountBadge>
+                <span className={adminStyles.TaskText}>{x.text}</span>
+                <Icon source={ChevronRight} tone="subdued" flipInRtl />
+              </NextLink>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <Text as="p" tone="subdued">
+          {t("admin.overview.tasks.allClear")}
+        </Text>
+      )}
+    </Card>
+  );
 
   return (
     <Page
@@ -74,13 +98,16 @@ export default async function AdminOverviewPage({ params, searchParams }: { para
           accessibilityLabel={t("admin.overview.metricsLabel")}
           metrics={[
             { label: label("admin.overview.metrics.gmv", "admin.overview.help.gmv"), value: cell(money(o.money.gmvPiasters), signed(o.gmvChangePct)) },
-            { label: label("admin.overview.metrics.margin", "admin.overview.help.margin"), value: cell(money(o.money.marginPiasters), t("admin.overview.marginOfNet", { pct: pct(o.money.marginPct), net: formatMoney(o.money.netPiasters, locale) })) },
-            { label: t("admin.overview.metrics.orders"), value: cell(formatNumber(o.money.orders), t("admin.overview.aovShort", { amount: o.money.aovPiasters === null ? t("admin.common.none") : formatMoney(o.money.aovPiasters, locale) })) },
+            { label: label("admin.overview.metrics.margin", "admin.overview.help.margin"), value: cell(money(o.money.marginPiasters), t("admin.overview.marginOfNet", { pct: pct(o.money.marginPct), net: formatMoney(o.money.netPiasters, locale, { alwaysDecimals: true }) })) },
+            { label: t("admin.overview.metrics.orders"), value: cell(formatNumber(o.money.orders), t("admin.overview.aovShort", { amount: o.money.aovPiasters === null ? t("admin.common.none") : formatMoney(o.money.aovPiasters, locale, { alwaysDecimals: true }) })) },
             { label: label("admin.overview.metrics.onTime", "admin.overview.help.onTime"), value: cell(pct(o.ops.onTimePct), t("admin.overview.ofDelivered", { count: formatNumber(o.ops.delivered) })) },
             { label: label("admin.overview.metrics.reprint", "admin.overview.help.reprint"), value: cell(pct(o.ops.reprintPct), t("admin.overview.reprintCount", { count: formatNumber(o.ops.reprints) })) },
             { label: label("admin.overview.metrics.disputes", "admin.overview.help.disputes"), value: cell(pct(o.ops.disputePct), t("admin.overview.openDisputes", { count: formatNumber(o.ops.openDisputes) })) },
           ]}
         />
+
+        {/* Phones: the to-do list is the next action, so it comes before the funnel and charts. */}
+        <div className={adminStyles.PhoneOnly}>{todo}</div>
 
         <Layout>
           <LayoutSection>
@@ -153,24 +180,37 @@ export default async function AdminOverviewPage({ params, searchParams }: { para
 
           <LayoutSection variant="oneThird" as="aside">
             <BlockStack gap="400">
-              <Card title={t("admin.overview.tasks.title")}>
-                {tasks.length ? (
-                  <ul className={adminStyles.TaskList}>
-                    {tasks.map((x) => (
-                      <li key={x.url}>
-                        <NextLink href={x.url} className={adminStyles.TaskLink}>
-                          <CountBadge>{formatNumber(x.n)}</CountBadge>
-                          <span className={adminStyles.TaskText}>{x.text}</span>
-                          <Icon source={ChevronRight} tone="subdued" flipInRtl />
-                        </NextLink>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <Text as="p" tone="subdued">
-                    {t("admin.overview.tasks.allClear")}
-                  </Text>
-                )}
+              <div className={adminStyles.DesktopOnly}>{todo}</div>
+              {/* B-19: the plan's retention and supply gates (repeat ≥ 40% at 90 days; vendor acceptance). */}
+              <Card title={t("admin.overview.health.title")}>
+                <BlockStack gap="300">
+                  <BlockStack gap="050">
+                    <Text as="p" variant="bodySm" fontWeight="semibold">
+                      <Tooltip content={t("admin.overview.health.repeatHelp")} dotted>
+                        {t("admin.overview.health.repeat")}
+                      </Tooltip>
+                    </Text>
+                    <Text as="p" variant="headingMd" numeric>
+                      {o.repeat.pct === null ? t("admin.common.none") : formatPercent(o.repeat.pct, locale)}
+                    </Text>
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      {o.repeat.cohort ? t("admin.overview.health.repeatSub", { repeaters: formatNumber(o.repeat.repeaters), cohort: formatNumber(o.repeat.cohort) }) : t("admin.overview.health.repeatEmpty")}
+                    </Text>
+                  </BlockStack>
+                  <BlockStack gap="050">
+                    <Text as="p" variant="bodySm" fontWeight="semibold">
+                      <Tooltip content={t("admin.overview.health.acceptanceHelp")} dotted>
+                        {t("admin.overview.health.acceptance")}
+                      </Tooltip>
+                    </Text>
+                    <Text as="p" variant="headingMd" numeric>
+                      {o.acceptance.pct === null ? t("admin.common.none") : formatPercent(o.acceptance.pct, locale)}
+                    </Text>
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      {t("admin.overview.health.acceptanceSub", { accepted: formatNumber(o.acceptance.accepted), declined: formatNumber(o.acceptance.declined) })}
+                    </Text>
+                  </BlockStack>
+                </BlockStack>
               </Card>
               <Card title={t("admin.overview.ops.definitions")}>
                 <BlockStack gap="200">

@@ -91,7 +91,7 @@ test.describe("admin", () => {
   test("admin pages work at 360px and in Arabic", async ({ page, context, baseURL }, info) => {
     test.skip(info.project.name !== "mobile", "layout check runs on the 360px project");
     await signIn(context, baseURL!);
-    for (const p of ["/ar/admin", "/ar/admin/orders", "/en/admin/vendors", "/en/admin/pricing", "/en/admin/disputes"]) {
+    for (const p of ["/ar/admin", "/ar/admin/orders", "/en/admin/vendors", "/en/admin/pricing", "/en/admin/disputes", "/ar/admin/payouts", "/en/admin/catalog", "/ar/admin/moderation"]) {
       await page.goto(p);
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 30_000 });
       await noHorizontalScroll(page);
@@ -99,5 +99,52 @@ test.describe("admin", () => {
     await page.goto("/ar/admin");
     await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
     await expect(page.getByRole("heading", { level: 1, name: "نظرة عامة" })).toBeVisible({ timeout: 30_000 });
+  });
+
+  test("vendor payout: raise → approve → mark paid, audited", async ({ page, context, baseURL }, info) => {
+    test.skip(info.project.name !== "desktop", "mutating flow runs once, on desktop");
+    const order = await db.order.findUniqueOrThrow({ where: { number: ORDER } });
+    await db.payout.deleteMany({ where: { orderId: order.id } });
+    await db.auditLog.deleteMany({ where: { entityType: "PAYOUT", summary: { startsWith: ORDER } } });
+    await signIn(context, baseURL!);
+    await page.goto("/en/admin/payouts");
+    await expect(page.getByRole("heading", { level: 1, name: "Payouts" })).toBeVisible({ timeout: 30_000 });
+    await page.getByRole("button", { name: `Raise: ${ORDER}, Advance 40%` }).click();
+    await page.getByRole("button", { name: `Approve: ${ORDER}, Advance 40%` }).click();
+    await page.getByRole("button", { name: `Mark paid: ${ORDER}, Advance 40%` }).click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByRole("button", { name: "Mark paid" }).click();
+    await expect(dialog).toBeHidden();
+    await expect.poll(async () => (await db.payout.findFirst({ where: { orderId: order.id, kind: "ADVANCE" } }))?.status, { timeout: 15_000 }).toBe("PAID");
+    expect(await db.auditLog.count({ where: { entityType: "PAYOUT", summary: { startsWith: ORDER } } })).toBe(3);
+  });
+
+  test("catalogue lists library models with availability in Egypt", async ({ page, context, baseURL }, info) => {
+    test.skip(info.project.name !== "desktop", "runs on desktop");
+    await signIn(context, baseURL!);
+    await page.goto("/en/admin/catalog");
+    await expect(page.getByRole("tab", { name: "Models" })).toHaveAttribute("aria-selected", "true", { timeout: 30_000 });
+    await expect(page.getByRole("link", { name: "Shipping box", exact: true })).toBeVisible();
+    await expect(page.getByText(/^Instant · vendors: \d+$/).filter({ visible: true }).first()).toBeVisible();
+    await page.getByPlaceholder("Search name, code or standard").fill("FEFCO 0203");
+    await expect(page.getByRole("link", { name: "Full overlap slotted container (FOL)" })).toBeVisible();
+  });
+
+  test("moderation: a pending portfolio photo is approved and goes public", async ({ page, context, baseURL }, info) => {
+    test.skip(info.project.name !== "desktop", "mutating flow runs once, on desktop");
+    const vendor = await db.vendor.findUniqueOrThrow({ where: { slug: "nile-pack" } });
+    // No digits: a long number would (rightly) be flagged as a phone number and block approval.
+    const caption = `E2E moderation ${Math.random().toString(36).replace(/[^a-z]/g, "").slice(0, 8)}`;
+    const item = await db.vendorPortfolioItem.create({ data: { vendorId: vendor.id, imageUrl: "/seed/portfolio/alex-print-house-1.svg", captionAr: caption, captionEn: caption, status: "PENDING" } });
+    try {
+      await signIn(context, baseURL!);
+      await page.goto("/en/admin/moderation");
+      await expect(page.getByRole("heading", { level: 1, name: "Moderation" })).toBeVisible({ timeout: 30_000 });
+      await page.getByRole("button", { name: `Approve: ${caption}` }).click();
+      await expect.poll(async () => (await db.vendorPortfolioItem.findUnique({ where: { id: item.id } }))?.status, { timeout: 15_000 }).toBe("APPROVED");
+    } finally {
+      await db.vendorPortfolioItem.delete({ where: { id: item.id } }).catch(() => {});
+      await db.auditLog.deleteMany({ where: { summary: { contains: item.id } } });
+    }
   });
 });
