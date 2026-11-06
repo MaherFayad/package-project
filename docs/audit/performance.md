@@ -2,6 +2,8 @@
 
 Key: `performance` · Branch: `claude/exciting-albattani-8kzgsu-audit-performance` · Base: `claude/exciting-albattani-8kzgsu` @ `a63b8a6` · Measured 2026-11-06 on a production build (`next build && next start`).
 
+**Re-verified on `febf5f2`** (rebased base that includes `36ab41f`, the 370-model designer and marketing redesign): the only source difference from the measured snapshot is a 6-line price-badge animation in `src/components/designer/Modals.tsx`. The rebuilt route sizes are identical (517 / 483 / 472 / 473 KB first-load on designer / checkout / design picker / admin pricing), and a spot re-run of home, boxes, design picker, designer box, checkout and order tracking (en, both profiles) reproduced the numbers below within run-to-run noise (e.g. desktop CLS 0.483 on home/boxes, phone checkout LCP 6.76 s, designer JS 722 KB, home phone INP 736 ms). Raw spot data: `docs/audit/perf-data/spot-febf5f2.json`.
+
 This is a **baseline**: no source code was changed. Fixes are listed per issue with the file and the change so the next round can apply them. Everything here is reproducible with the scripts in `docs/audit/tools/` and the raw data in `docs/audit/perf-data/`.
 
 ## 1. The 20 worst issues
