@@ -21,3 +21,4 @@ var/
 # Shopify reference screenshots (reference only, never committed)
 docs/design-refs/shopify/
 docs/design-refs/shopify-web/
+prisma/merge-check.db*
