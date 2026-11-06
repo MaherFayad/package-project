@@ -20,6 +20,55 @@ Severity: **critical** = model is wrong / broken (not the product it claims), **
 
 ---
 
+## Summary
+
+**97 findings** across 370 models: **4 critical · 17 high · 42 medium · 33 low** (rows marked "—" are verified-correct notes, not counted).
+
+| Family | Models | Critical | High | Medium | Low |
+|---|---:|---:|---:|---:|---:|
+| 0. Cross-cutting renderer | all | 0 | 1 | 8 | 3 |
+| 1. Core structures | 13 | 0 | 1 | 4 | 5 |
+| 2. FEFCO 02 | 24 | 1 | 1 | 2 | 1 |
+| 3. FEFCO 03 / 05 | 32 | 1 | 1 | 3 | 1 |
+| 4. FEFCO 04 | 80 | 0 | 0 | 3 | 2 |
+| 5. FEFCO 06 / 07 | 33 | 0 | 0 | 4 | 2 |
+| 6. ECMA specials | 20 | 0 | 2 | 1 | 3 |
+| 7. Food service + rigid + tubes | 22 | 0 | 1 | 4 | 3 |
+| 8. FEFCO 09 fittings | 36 | 0 | 0 | 3 | 1 |
+| 9. ECMA tuck | 14 | 0 | 0 | 2 | 2 |
+| 10. Finishes + options (boxes) | — | 0 | 2 | 4 | 3 |
+| 11. Bottles, jars, tubs (+ core) | 44 | 0 | 5 | 1 | 3 |
+| 12. Cosmetic, pharma, cans, cups, tubes | 37 | 2 | 3 | 2 | 2 |
+| 13. Flexible | 15 | 0 | 0 | 1 | 2 |
+| **Total** | **370** | **4** | **17** | **42** | **33** |
+
+No console errors or WebGL failures on any of the 370 models (harness log); 1 frame missing (FEFCO_0321 flat, harness selector clash).
+
+### Top 20 fixes (in order)
+
+1. **F02-01** FEFCO_0226 closed state not closed + gusset z-fight → `fefco-02/styles.ts` gusset `foldAngleClosed ±180`, `stack −1/−2`.
+2. **F35-01** FEFCO_0322 tray + lid never assemble → `fefco-03-05/generators.ts` end-wall folds + lid `assembly.matrix`.
+3. **V-11** Square tins get a round lid → lid built from `profile.section` (`cosmetic-cans/geometry.ts`, `vessels/closures.ts`).
+4. **V-12** Rectangular punnet / clamshell / ice tub get round lids → same section-driven lid + `TOP_SEAL_FILM`/`HINGED_LID`.
+5. **X-01** Pass container tint + closure style through `VesselOption` (green glass, cobalt, PET blue, coloured HDPE, ABS black, crown, ROPP, cork) → `library/vessels.ts`, `VesselView.tsx` L81–82, `vessels/materials.ts`.
+6. **FN-01** Gold/silver foil renders black → StudioLights for finishes + foil `envMapIntensity 1.6` in `finishMaterial.ts`.
+7. **X-03** One shared light rig (`StudioLights`) for boxes, finishes and vessels; brighter fill (fixes muddy bottoms, black tinplate V-13, foil).
+8. **FN-02** Spot UV invisible without a mask → default mask to logo layer in `toggleFinish`.
+9. **V-02** Hex honey jar renders round → polygon section (6 sides) in `bottles/models/jars.ts`.
+10. **V-03** Shampoo oval: missing flip-top + label slicing the body → `closures.ts` FLIP_TOP for pump-core, oval label band in `labels.ts`.
+11. **V-04** Detergent / jerrycan / gallon jug lack handles → handle sweep in `vessels/geometry.ts`.
+12. **SP-01** Cone artwork upside-down/mirrored → 180° face transform in `ecma-specials/shapes.ts`.
+13. **SP-02** Aseptic brick ears stand up unprinted → fold ears flat (`carriers.ts`).
+14. **C-01 / FR-01** Rigid lids/sleeves interpenetrate base walls → lid inner `+ 2t + 1 mm` in `structures.ts` and `rigid-tubes/rigid.ts`.
+15. **F35-02** Octabin bottom flaps coplanar → per-flap `stack` in `fefco-03-05/generators.ts`.
+16. **F04-01/02** 18 FEFCO 04 trays: bottom flaps 0.5 mm inside the base, corner flaps coplanar → full-caliper `stack` in `fefco-04/build.ts`.
+17. **V-06** Label backs show mirrored artwork through clear glass → `createLabelMaterial` FrontSide + white liner back mesh.
+18. **X-06** White rim on rigid boxes → wrap colour on rigid cut edges.
+19. **X-02** Framing fills only ~35–40 % → projected-box fit, margin 1.08 (`PackagingScene.tsx · frameFor`).
+20. **V-15 / V-14** Deodorant stick renders as a lidded cup; black compact renders white → `TWIST_UP` closure, `ABS_BLACK` core material.
+
+---
+
 ## 0. Cross-cutting (renderer, applies to every box or every container)
 
 | ID | Scope | Sev | Finding | Real-world reference | Fix (file · function · values) |
@@ -64,7 +113,7 @@ Contact sheets: `fefco-02-01..03.jpg`.
 | ID | Model | Sev | Finding | Real-world reference | Fix |
 |---|---|---|---|---|---|
 | F02-01 | FEFCO_0226 | **critical** | Closed state is **not closed**: a top gusset flap stands up behind the lid (closed outer H 295 mm vs 200 mm inner) and the bevelled gusset parts are coplanar with the top flaps (`topFlap_left↔topFlap_left_ga` z-fight 8 279 mm², `…_gb` 7 843 mm²) — visible zebra striping on the lid. | FEFCO 0226: RSC with bevelled gusset flaps that fold flat inside the top. | `families/fefco-02/styles.ts` 0226 builder: gusset parts `_ga/_gb` need `foldAngleClosed` ±180 (fold back on themselves) and `stack: -1/-2`; parent top flap `foldAngleClosed 90`. Add a test: closed H ≤ inner H + 4 t. |
-| F02-02 | FEFCO_0217 | low | Closed H 254 vs 150 inner: the carry handle stands 100 mm up. Matches the reference (handle above the gable). | FEFCO 0217 gable carry. | None (expected); exclude from the outer-H check. |
+| F02-02 | FEFCO_0217 | — | Closed H 254 vs 150 inner: the carry handle stands 100 mm up. Matches the reference (handle above the gable). | FEFCO 0217 gable carry. | None (expected); exclude from the outer-H check. |
 | F02-03 | FEFCO_0225 | high | `glue↔wingL` coplanar (z-fight 2 338 mm²) on the wall; at 50 % fold the integral base/liner strip passes straight **through** the box walls. | FEFCO 0225: liner is folded in last. | `styles.ts` 0225: `wingL` `stack +1`; liner panels `foldStage` = max stage + 1. |
 | F02-04 | FEFCO_0229 | medium | Bottom (double-folded flaps) leaves a rectangular **opening** in the bottom showing the box interior and a tab inside. | FEFCO 0229 double-folded flaps form a solid reinforced bottom (inner flaps meet). | `styles.ts` 0229: inner fold depth = W/2 − t so the folded halves meet at the centre line. |
 | F02-05 | FEFCO_0230 | low | Overlap joint in the length panel shows as a dark slot crossing the lid and front at the closed state (the slot between flap groups is 2× the needed width). | FEFCO 0230: slot = 2 t + 1 mm. | `styles.ts`: slot width `2*t + 1` instead of fixed 6 mm. |
