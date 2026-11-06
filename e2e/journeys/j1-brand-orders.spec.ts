@@ -21,9 +21,11 @@ test("J1 · coffee brand: design → share → OTP → company checkout → pay 
   const t = tFor(locale);
   await ackCookies(page.context(), baseURL!);
 
-  // 1. Home → "Start designing free" opens the mailer box in the 3D designer.
+  // 1. Home → "Start designing free" opens the /start landing (R6); its CTA opens the mailer box in the 3D designer.
   await page.goto(`/${locale}`);
   await page.getByRole("link", { name: tr(locale, "Start designing free") }).first().click();
+  await expect(page).toHaveURL(new RegExp(`/${locale}/start$`), { timeout: 30_000 });
+  await page.getByRole("main").getByRole("link", { name: tr(locale, "Start designing free") }).first().click();
   await expect(page).toHaveURL(new RegExp(`/${locale}/design`), { timeout: 30_000 });
   const stage = page.getByRole("application", { name: tr(locale, "3D preview of your box") });
   await expect(stage).toBeVisible({ timeout: 30_000 });
