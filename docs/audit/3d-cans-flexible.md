@@ -92,3 +92,21 @@ Still open:
 In `src/lib/library/vessels.ts`:
 - `COSMETIC`: `const shown = COS.displaySurfaces(def);` then `surfaces: shown.surfaces, defaultSurfaces: shown.defaultSurfaces` (replaces the `isSurface` filter), and `defaultLiquid: COS.displayLiquid(def)`.
 - `FLEXIBLE`: `defaultSurfaces: FLEX.defaultPrintPanels(def.code)`, and in `describe`: `envelope: FLEX.flexDisplayEnvelope(cfg)`.
+
+## Round 3
+
+Merged `origin/claude/exciting-albattani-8kzgsu-3d-engine` 4d9d1e7: section-following `PLUG_LID`, `LEVER_LID`, `SNAP_LID`, `HINGED_LID`, `TWIST_UP` closure styles, a section-following core `SLIP_LID`, the oval tube body (E-09) and the EOE ring depth fix. Every remaining lid hack is gone; `geometry.ts` no longer hides or shrinks any renderer closure. Sheets: `round3-lids-before.jpg` / `round3-lids-after.jpg`.
+
+| ID | Sev | Model / file | Change | Status |
+|---|---|---|---|---|
+| R3-01 | high | TIN-GIFT-SQUARE, TIN-TEA-CADDY · `geometry.ts · tin`, `definitions/cans.ts` | Profile-built square lid removed: open rolled rim for every section, core `ROUND_TIN` again. The renderer's `SLIP_LID` (square / rect section) and `PLUG_LID` style draw the lid. | fixed |
+| R3-02 | high | CAN-PAINT · `geometry.ts · metalcan` | Hidden-closure anchor removed; the renderer's `LEVER_LID` plugs into the chime from the seam top. | fixed |
+| R3-03 | high | COS-DEO-STICK · `geometry.ts · caseShape`, `definitions/cosmetic.ts` | Core-hiding removed (core back to the family default). New `cap: "twist"`: the renderer's `TWIST_UP` oval dome cap is anchored so its top is the case top, with the split groove under its edge. | fixed |
+| R3-04 | high | TUB-ICE-RECT · `geometry.ts · cup` | Profile-built snap lid and shrunk fallback removed; the renderer's `SNAP_LID` follows the rectangle. | fixed |
+| R3-05 | high | TRAY-CLAMSHELL · `geometry.ts · cup` | Profile is now the base tray with its flange; the renderer's `HINGED_LID` draws the lid. Hinge line `hb` solves `hb + max(8, min(30, 0.35 hb)) = H`, so the closed height is still H. The catalogue test checks that sum instead of the profile top. | fixed |
+| R3-06 | medium | TRAY-PUNNET | Round fallback shrink removed; both options (`TOP_SEAL_FILM`, `HINGED_LID`) are now renderer styles. | fixed |
+| R3-07 | medium | CAN-SARDINE, CAN-OVAL-FISH (EOE ring), TUBE-OVAL (E-09) | Verified after the engine fixes: the ring sits on the panel and the oval tube is flattened. | fixed (engine) |
+
+What is left of `closureY`: anchors only. End panel for ring-pull and foil ends, and the anchor that puts `BULLET_CAP` / `TWIST_UP` flush with the case top. The overcap anchors mirror the renderer's cap formulas (noted at both places). If those formulas change, update `caseShape`.
+
+Still open: E-02 / E-03 / E-06 / E-07 library hook (Round 2) and E-08 (flex options UI).

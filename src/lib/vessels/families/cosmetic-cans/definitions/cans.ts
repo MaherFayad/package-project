@@ -82,7 +82,7 @@ export const CAN_DEFINITIONS: CatalogueVesselDefinition[] = [
     family: "CAN",
     subFamily: FISH,
     standard: "ISO 1361 (83 mm / 307 end)",
-    coreKind: "CAN", // closure drawn by the profile (core CAN_END tab placed / hidden by geometry.ts closureY)
+    coreKind: "CAN", // can-end core: no lid-label disc; the renderer draws EOE_RING / LEVER_LID
     geometry: "lathe",
     shape: { type: "metalcan", section: "round", bottomSeam: false, beads: false, endDepthMm: 3.2 },
     materials: ["TINPLATE", "ALUMINIUM"],
@@ -196,7 +196,7 @@ export const CAN_DEFINITIONS: CatalogueVesselDefinition[] = [
     family: "CAN",
     subFamily: DECO,
     standard: null,
-    coreKind: "CAN", // closure drawn by the profile (core CAN_END tab placed / hidden by geometry.ts closureY)
+    coreKind: "ROUND_TIN",
     geometry: "extrusion",
     shape: { type: "tin", section: "square", lid: "slip" },
     materials: ["TINPLATE"],
@@ -224,7 +224,7 @@ export const CAN_DEFINITIONS: CatalogueVesselDefinition[] = [
     family: "CAN",
     subFamily: DECO,
     standard: null,
-    coreKind: "CAN", // closure drawn by the profile (core CAN_END tab placed / hidden by geometry.ts closureY)
+    coreKind: "ROUND_TIN",
     geometry: "extrusion",
     shape: { type: "tin", section: "square", lid: "plug" },
     materials: ["TINPLATE"],
@@ -253,7 +253,7 @@ export const CAN_DEFINITIONS: CatalogueVesselDefinition[] = [
     family: "CAN",
     subFamily: IND,
     standard: "IS 2552 (BIS round paint tins, lever lid) as reference",
-    coreKind: "CAN", // closure drawn by the profile (core CAN_END tab placed / hidden by geometry.ts closureY)
+    coreKind: "CAN", // can-end core: no lid-label disc; the renderer draws EOE_RING / LEVER_LID
     geometry: "lathe",
     shape: { type: "metalcan", section: "round", bottomSeam: true, beads: false, endDepthMm: 7 },
     materials: ["TINPLATE"],

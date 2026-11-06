@@ -23,41 +23,40 @@ describe("closure anchors (core closure placement)", () => {
     expect(g.profile!.finishTopY + 0.45 * h).toBeCloseTo(d.H, 3);
   });
 
-  it.each(["TIN-GIFT-SQUARE", "TIN-TEA-CADDY", "CAN-PAINT", "COS-DEO-STICK"])("%s: lid is in the profile and the round core closure is hidden inside", (code) => {
+  it.each(["TIN-GIFT-SQUARE", "TIN-TEA-CADDY"])("%s: open rim at H for the renderer's section-following slip / plug lid", (code) => {
     const { def, d, g } = geo(code);
-    expect(def.coreKind).toBe("CAN");
+    expect(def.coreKind).toBe("ROUND_TIN");
     const p = g.profile!;
-    expect(p.finishTopY).toBeLessThan(d.H);
-    // closed top: the profile ends on the axis at the top
-    const last = p.outer[p.outer.length - 1];
-    expect(last.r).toBeLessThan(0.5);
-    expect(last.y).toBeGreaterThan(d.H - 8);
+    expect(p.section.kind).toBe("roundedRect");
+    expect(p.finishTopY).toBeCloseTo(d.H, 1);
+    expect(p.outer.at(-1)!.r).toBeGreaterThan(d.D / 2 - 5); // open: ends on the inner rim wall, not the axis
   });
 
-  it("square tins: slip-lid skirt stands proud of the body", () => {
-    const { d, g } = geo("TIN-GIFT-SQUARE");
-    const maxR = Math.max(...g.profile!.outer.map((q) => q.r));
-    expect(maxR).toBeGreaterThan(d.D / 2 + 0.5);
+  it("CAN-PAINT: renderer LEVER_LID anchored on the seam top", () => {
+    const { d, g } = geo("CAN-PAINT");
+    expect(g.profile!.finishTopY).toBeCloseTo(d.H, 0);
+  });
+
+  it("COS-DEO-STICK: TWIST_UP overcap anchored so its top is the case top", () => {
+    const { d, g } = geo("COS-DEO-STICK");
+    const R = d.D / 2;
+    expect(g.profile!.finishTopY + Math.max(8, (R + 0.6) * 0.5)).toBeCloseTo(d.H, 3);
   });
 });
 
-describe("non-round tubs and trays (3d-visual V-12)", () => {
-  it.each(["TUB-ICE-RECT", "TRAY-CLAMSHELL"])("%s: lid in the profile follows the footprint, core closure shrunk and parked under the base", (code) => {
+describe("non-round tubs and trays (3d-visual V-12): lids drawn by the renderer, following the section", () => {
+  it.each(["TUB-ICE-RECT", "TRAY-PUNNET"])("%s: open flanged rim at H for SNAP_LID / PEEL_FOIL", (code) => {
     const { d, g } = geo(code);
     const p = g.profile!;
     expect(p.section.kind).toBe("roundedRect");
-    expect(p.finishR).toBeLessThan(1);
-    expect(p.finishTopY).toBeLessThan(0);
-    const last = p.outer[p.outer.length - 1];
-    expect(last.r).toBeLessThan(0.5);
-    expect(last.y).toBeGreaterThan(d.H - 1);
+    expect(p.finishTopY).toBeCloseTo(d.H, 1);
+    expect(p.finishR).toBeGreaterThan(d.D / 2 - 1);
   });
 
-  it("TRAY-PUNNET: open rim at H for the renderer's section-following PEEL_FOIL; round fallback shrunk", () => {
-    const { d, g } = geo("TRAY-PUNNET");
-    const p = g.profile!;
-    expect(p.finishTopY).toBeCloseTo(d.H, 1);
-    expect(p.finishR).toBeLessThan(1);
-    expect(Math.max(...p.outer.map((q) => q.y))).toBeCloseTo(d.H, 1);
+  it("TRAY-CLAMSHELL: base tray to the hinge line; HINGED_LID closes it at H", () => {
+    const { d, g } = geo("TRAY-CLAMSHELL");
+    const hb = g.profile!.finishTopY;
+    expect(hb).toBeLessThan(d.H);
+    expect(hb + Math.max(8, Math.min(30, 0.35 * hb))).toBeCloseTo(d.H, 1);
   });
 });

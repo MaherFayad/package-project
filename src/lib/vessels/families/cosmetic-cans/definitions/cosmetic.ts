@@ -199,9 +199,9 @@ export const COSMETIC_DEFINITIONS: CatalogueVesselDefinition[] = [
     family: "COSMETIC",
     subFamily: BODY,
     standard: null,
-    coreKind: "CAN", // cap is in the profile; core closure hidden (geometry.ts closureY)
+    coreKind: null,
     geometry: "extrusion",
-    shape: { type: "case", section: "stadium", capSplit: 0.78, wallMm: 1.8 },
+    shape: { type: "case", section: "stadium", capSplit: 0.78, wallMm: 1.8, cap: "twist" },
     materials: ["PP_WHITE", "PP_NATURAL"],
     defaultMaterial: "PP_WHITE",
     closures: ["TWIST_UP"],
