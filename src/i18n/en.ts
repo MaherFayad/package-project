@@ -480,6 +480,7 @@ export const en = {
       emptyBody: "Try removing a filter or choosing another city.",
       ratingValue: "{rating} ({count:review})",
       onTimeValue: "{pct}% on time",
+      onTimeNew: "New on Elba",
       leadValue: "Lead time {days:day}",
       minQty: "From {qty:box}",
       viewProfile: "View profile",

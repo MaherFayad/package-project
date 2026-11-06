@@ -81,3 +81,13 @@ describe("reprint quantity and charge-back (R5-JR-09)", () => {
     expect(planReprint({ originalQty: 500, originalCostPiasters: 2_049_000, paidToOriginalPiasters: 0, sameVendor: true, terms: { quantity: 40, chargeBack: "PARTIAL" } })).toBe("CHARGE_RANGE");
   });
 });
+
+describe("public on-time threshold (admin round 8)", () => {
+  it("publishes the figure only from the minimum; below it the stored figure is untouched", async () => {
+    const { onTimeWrite } = await import("@/lib/vendors/on-time");
+    expect(onTimeWrite({ judged: 1, pct: 0 }, 5)).toEqual({ onTimeJudged: 1, onTimePublic: false });
+    expect(onTimeWrite({ judged: 4, pct: 75 }, 5)).toEqual({ onTimeJudged: 4, onTimePublic: false });
+    expect(onTimeWrite({ judged: 5, pct: 80 }, 5)).toEqual({ onTimeJudged: 5, onTimePublic: true, onTimePct: 80 });
+    expect(onTimeWrite({ judged: 0, pct: null }, 1)).toEqual({ onTimeJudged: 0, onTimePublic: false });
+  });
+});

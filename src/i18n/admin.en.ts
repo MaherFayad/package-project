@@ -96,6 +96,7 @@ export const adminEn = {
     DAYS_RANGE: "Enter whole days from 1 to 120.",
     REPRINT_QTY_RANGE: "Enter whole boxes from 1 to the order quantity.",
     CHARGE_BACK_RANGE: "Enter an amount from 0 to the reprint buy price.",
+    ON_TIME_MIN_RANGE: "Enter a whole number from 1 to 50.",
     QUOTE_NO_BUYER: "This request has no buyer account, so a price cannot be sent here. Call the number on the request.",
     QUOTE_NO_MODEL: "The requested model is no longer in the library. Ask the buyer to start a design, then price that.",
     PAYOUT_ZERO: "The vendor buy price is zero, so nothing is owed.",
@@ -364,7 +365,7 @@ export const adminEn = {
       rating: "Rating",
       qcPass: "QC pass rate",
       health: "Health score",
-      publicNoDeliveries: "Public on-time figure updates from the first delivery",
+      publicAfter: "{n} of {min} deliveries. Buyers see “New on Elba” until then.",
       healthHelp: "40% on time, 40% quality (reprints and disputes), 20% rating. Early data until 5 delivered orders.",
       early: "early data",
     },
@@ -505,6 +506,13 @@ export const adminEn = {
       help: "Courier price ex-VAT for the included kilograms, the price per extra kilogram, and the truck price above 150 kg.",
       caption: "Delivery rates by zone",
       columns: { zone: "Zone", base: "Base (EGP)", includedKg: "Included weight (kg)", perKg: "Per extra kg (EGP)", freight: "Truck per load (EGP)", transit: "Transit (days)" },
+    },
+    vendorMetrics: {
+      title: "Printer figures shown to buyers",
+      help: "A printer's on-time percentage is shown on the directory, its profile and offer cards only after enough delivered orders to mean something. Until then buyers see “New on Elba”. The threshold is a founder decision; 5 is the default.",
+      min: "Deliveries before the on-time figure is shown",
+      minHelp: "Whole number from 1 to 50. Saving updates every printer.",
+      saved: "Saved. Printer figures updated.",
     },
     checkout: {
       title: "Checkout: prepay discount and samples",
@@ -894,6 +902,7 @@ export const adminEn = {
       QUOTE_CLOSED: "Quote request closed",
       QUOTE_PRICED: "Price sent",
       QUOTE_ACCEPTED: "Sent price accepted",
+      VENDOR_METRICS_SETTINGS: "Printer figures setting changed",
     },
   },
 };

@@ -496,7 +496,7 @@ export default async function OrderPage({ params, searchParams }: { params: Para
                   </Text>
                   <Text as="p" variant="bodySm" tone="subdued">
                     <bdi>{t("checkout.offers.ratingShort", { rating: order.vendor.rating.toFixed(1), count: order.vendor.ratingCount })}</bdi> ·{" "}
-                    {t("checkout.offers.onTime", { pct: Math.round(order.vendor.onTimePct) })}
+                    {order.vendor.onTimePublic ? t("checkout.offers.onTime", { pct: Math.round(order.vendor.onTimePct) }) : t("store.vendors.onTimeNew")}
                   </Text>
                 </BlockStack>
               </Card>

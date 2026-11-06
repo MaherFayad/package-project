@@ -1157,7 +1157,7 @@ function OfferCard({ offer, checked, onSelect, locale, sample, prepayPct = 0 }: 
           <Icon source={Star} size="small" tone="subdued" />
           <bdi>{t("checkout.offers.ratingShort", { rating: offer.vendor.rating.toFixed(1), count: offer.vendor.ratingCount })}</bdi>
         </span>
-        <span>{t("checkout.offers.onTime", { pct: Math.round(offer.vendor.onTimePct) })}</span>
+        <span>{offer.vendor.onTimeShown === false ? t("store.vendors.onTimeNew") : t("checkout.offers.onTime", { pct: Math.round(offer.vendor.onTimePct) })}</span>
         {offer.vendor.verified ? (
           <span>
             <Icon source={BadgeCheck} size="small" tone="subdued" />

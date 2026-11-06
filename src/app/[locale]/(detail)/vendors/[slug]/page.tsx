@@ -134,7 +134,7 @@ export default async function VendorProfilePage({ params }: Props) {
               </li>
               <li className={`${mk.statItem} m-enter`} style={{ ["--m-i" as string]: 3 }}>
                 <span className={mk.statValue}>
-                  <bdi>{formatNumber(v.onTimePct)}%</bdi>
+                  {v.onTimeShown === false ? t("store.vendors.onTimeNew") : <bdi>{formatNumber(v.onTimePct)}%</bdi>}
                 </span>
                 <span className={mk.statLabel}>{t("store.vendor.onTime")}</span>
               </li>

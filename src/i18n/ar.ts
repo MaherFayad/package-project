@@ -479,6 +479,7 @@ export const ar: Dictionary = {
       emptyBody: "جرب إزالة أحد عوامل التصفية أو اختيار مدينة أخرى.",
       ratingValue: "{rating} ({count:review})",
       onTimeValue: "{pct}% في الموعد",
+      onTimeNew: "جديد على علبة",
       leadValue: "التنفيذ خلال {days:day}",
       minQty: "ابتداء من {qty:box}",
       viewProfile: "عرض ملف المطبعة",

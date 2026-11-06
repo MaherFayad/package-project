@@ -53,7 +53,7 @@ export function VendorCard({ locale, vendor, headingLevel = "h3" }: { locale: Lo
           </li>
           <li>
             <Icon source={Clock} size="small" />
-            <span>{t("store.vendors.onTimeValue", { pct: formatNumber(vendor.onTimePct) })}</span>
+            <span>{vendor.onTimeShown === false ? t("store.vendors.onTimeNew") : t("store.vendors.onTimeValue", { pct: formatNumber(vendor.onTimePct) })}</span>
           </li>
           <li>
             <Icon source={Timer} size="small" />

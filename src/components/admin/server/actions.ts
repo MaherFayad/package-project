@@ -10,6 +10,8 @@
  */
 import { revalidatePath } from "next/cache";
 import { purgeCatalogCache } from "@/lib/catalog-cache";
+import { loadOnTimeMinDeliveries, VENDOR_METRICS_SETTING_KEY, vendorMetricsSchema } from "@/lib/vendors/on-time-settings";
+import { syncVendorOnTime } from "@/lib/vendors/on-time-sync";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { scrubErasedUserTraces } from "@/lib/auth/erasure";
@@ -199,6 +201,29 @@ export async function payoutStepAction(input: z.input<typeof payoutStepSchema>):
     });
     revalidateAdmin();
     return null;
+  });
+}
+
+/* ───────────── Printer metrics shown to buyers (R5-JR-05, admin round 8) ───────────── */
+
+/** Minimum judged deliveries before a printer's on-time figure is public; re-syncs every printer. */
+export async function saveVendorMetricsAction(input: z.input<typeof vendorMetricsSchema>): Promise<AdminActionResponse<{ updated: number }>> {
+  return runAdminAction(async () => {
+    const admin = await adminForMutation();
+    const d = parse(vendorMetricsSchema, input);
+    const before = await loadOnTimeMinDeliveries();
+    await db.$transaction(async (tx) => {
+      await tx.platformSetting.upsert({
+        where: { key: VENDOR_METRICS_SETTING_KEY },
+        create: { key: VENDOR_METRICS_SETTING_KEY, value: toJson(d), updatedById: admin.id },
+        update: { value: toJson(d), updatedById: admin.id },
+      });
+      await audit(admin, { action: "VENDOR_METRICS_SETTINGS", entityType: "SETTINGS", entityId: VENDOR_METRICS_SETTING_KEY, summary: `On-time shown after ${d.onTimeMinDeliveries} deliveries`, before: { onTimeMinDeliveries: before }, after: d }, tx);
+    });
+    const r = await syncVendorOnTime();
+    revalidateAdmin();
+    purgeCatalogCache();
+    return r;
   });
 }
 
