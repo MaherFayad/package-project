@@ -1,7 +1,6 @@
 /* eslint-disable @next/next/no-img-element -- local pre-sized /marketing renders with hand-written srcset and AVIF (see HeroImage); next/image would re-encode them. */
 import type { Metadata } from "next";
-import type { CSSProperties } from "react";
-import { ArrowRight, BadgeCheck, Box, FileDown, Link2, PackageCheck, RefreshCw, Rotate3d, Sparkles } from "lucide-react";
+import { ArrowRight, BadgeCheck, Box, FileDown, Link2, PackageCheck, RefreshCw, Rotate3d } from "lucide-react";
 import { pick, toLocale } from "@/i18n";
 import type { DictKey } from "@/i18n";
 import { getT } from "@/i18n";
@@ -13,13 +12,18 @@ import { DESIGN_FINISH_CODES, type StructureCode } from "@/types";
 import { designHref } from "@/components/store/catalog";
 import { getPriceFrom, listStructures, listVendors } from "@/components/store/data";
 import { HeroImage } from "@/components/marketing/HeroImage";
-import { HeroPhoneForm } from "@/components/marketing/HeroPhoneForm";
 import { Sheet } from "@/components/marketing/kit/Sheet";
 import { Display, Lead } from "@/components/marketing/kit/Display";
 import { Pill } from "@/components/marketing/kit/Pill";
 import { Reveal } from "@/components/marketing/kit/Reveal";
+import { HeroTitle } from "@/components/marketing/kit/HeroTitle";
+import { Collage, type CollageItem } from "@/components/marketing/kit/Collage";
+import { PinnedScale } from "@/components/marketing/kit/PinnedScale";
+import { CardFan } from "@/components/marketing/kit/CardFan";
+import { Bento, BentoCard } from "@/components/marketing/kit/Bento";
+import { Glow } from "@/components/marketing/kit/Glow";
+import { PhoneSignup } from "@/components/marketing/kit/PhoneSignup";
 import { renderDims, renderSrc, srcSetFor } from "@/components/marketing/assets";
-import { StartMotion } from "@/components/marketing/start/StartMotion";
 import { fill, startCopy } from "@/components/marketing/start/copy";
 import s from "@/components/marketing/start/start.module.css";
 
@@ -48,13 +52,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-/** Hero collage around the centre render: sample tiles and chips at different parallax depths. */
-const PIECES: { src: string; cls: string; depth: number; rot: number }[] = [
-  { src: "/marketing/samples/sample-05.webp", cls: "p1", depth: 1.4, rot: -6 },
-  { src: "/marketing/samples/sample-02.webp", cls: "p2", depth: 0.7, rot: 5 },
-  { src: "/marketing/samples/sample-04.webp", cls: "p3", depth: 1.1, rot: 4 },
-  { src: "/marketing/samples/sample-09.webp", cls: "p4", depth: 1.8, rot: -4 },
-  { src: "/marketing/samples/sample-07.webp", cls: "p5", depth: 0.5, rot: -3 },
+/**
+ * Hero collage around the centre render: sample tiles at different parallax depths (kit Collage,
+ * logical x so it mirrors in Arabic). Decorative (alt=""): the headline and chips carry the meaning.
+ */
+const PIECES: { src: string; x: string; y: string; w: string; depth: number; rotate: number; hideOnPhone?: boolean }[] = [
+  { src: "/marketing/samples/sample-05.webp", x: "68%", y: "6%", w: "12%", depth: 0.8, rotate: -6 },
+  { src: "/marketing/samples/sample-02.webp", x: "18%", y: "4%", w: "11%", depth: 0.4, rotate: 5 },
+  { src: "/marketing/samples/sample-04.webp", x: "30%", y: "66%", w: "9%", depth: 0.6, rotate: 4, hideOnPhone: true },
+  { src: "/marketing/samples/sample-09.webp", x: "72%", y: "64%", w: "8%", depth: 1, rotate: -4 },
+  { src: "/marketing/samples/sample-07.webp", x: "4%", y: "62%", w: "9%", depth: 0.3, rotate: -3, hideOnPhone: true },
 ];
 
 /** Card fan: sample designs for made-up brands (each card says so). Same order as copy.fan.brands. */
@@ -99,116 +106,107 @@ export default async function StartPage({ params }: Props) {
   const heroDims = renderDims(heroSrc);
   const designerSrc = `/marketing/designer-${locale}.webp`;
 
-  return (
-    <div className={s.page} data-locale={locale}>
-      <StartMotion />
-
-      {/* Collage pieces are decorative (alt=""): the headline and chips carry the meaning. */}
-      {/* ───────── 1 · Hero: giant split headline around the box collage ───────── */}
-      <Sheet tone="dark" hero pad="none" container={false} className={s.hero} aria-labelledby="start-title">
-        <div className={s.heroBody} data-sp="view">
-        <div className={s.heroStage}>
-          <div className={s.collage}>
-            <div className={s.heroCenter} style={{ "--depth": 0.25 } as CSSProperties}>
-              <HeroImage
-                src={heroSrc}
-                sizes="(max-width: 720px) 72vw, 520px"
-                alt={c.hero.heroAlt}
-                width={heroDims.width}
-                height={heroDims.height}
-                className={s.heroImg}
-              />
-            </div>
-            {PIECES.map((p) => (
-              <div key={p.cls} className={`${s.piece} ${s[p.cls]}`} style={{ "--depth": p.depth, "--rot": `${p.rot}deg` } as CSSProperties}>
-                <img
-                  src={p.src}
-                  srcSet={srcSetFor(p.src)}
-                  sizes="180px"
-                  width={640}
-                  height={800}
-                  loading="lazy"
-                  decoding="async"
-                  fetchPriority="low"
-                  alt=""
-                />
-              </div>
-            ))}
-            {row500 ? (
-              <div className={`${s.chip} ${s.chipPrice}`} style={{ "--depth": 2.1 } as CSSProperties}>
+  const tile = (src: string, sizes: string) => (
+    <img src={src} srcSet={srcSetFor(src)} sizes={sizes} width={640} height={800} loading="lazy" decoding="async" fetchPriority="low" alt="" className={s.tileImg} />
+  );
+  const collage: CollageItem[] = [
+    ...PIECES.map((p) => ({ media: tile(p.src, "180px"), x: p.x, y: p.y, w: p.w, depth: p.depth, rotate: p.rotate, hideOnPhone: p.hideOnPhone })),
+    ...(row500
+      ? [
+          {
+            media: (
+              <div className={s.chip}>
                 <span className={s.chipIcon} aria-hidden="true"><Box size={16} /></span>
                 <span>
                   <strong className={s.num}>{fill(c.hero.chipPrice, { price: money(row500.unitPiasters) })}</strong>
                   <span className={s.chipNote}>{c.hero.chipPriceNote}</span>
                 </span>
               </div>
-            ) : null}
-            <div className={`${s.chip} ${s.chipProof}`} style={{ "--depth": 1.6 } as CSSProperties}>
-              <span className={s.chipIcon} aria-hidden="true"><Rotate3d size={16} /></span>
-              <span>
-                <strong>{c.hero.chipProof}</strong>
-                <span className={s.chipNote}>{c.hero.chipProofNote}</span>
-              </span>
+            ),
+            x: "2%",
+            y: "28%",
+            w: "auto",
+            depth: 1,
+            front: true,
+          },
+        ]
+      : []),
+    {
+      media: (
+        <div className={s.chip}>
+          <span className={s.chipIcon} aria-hidden="true"><Rotate3d size={16} /></span>
+          <span>
+            <strong>{c.hero.chipProof}</strong>
+            <span className={s.chipNote}>{c.hero.chipProofNote}</span>
+          </span>
+        </div>
+      ),
+      x: "62%",
+      y: "80%",
+      w: "auto",
+      depth: 0.7,
+      front: true,
+      hideOnPhone: true,
+    },
+  ];
+
+  return (
+    <div className={s.page} data-locale={locale}>
+      {/* ───────── 1 · Hero: giant split headline around the box collage ───────── */}
+      <Sheet tone="dark" hero pad="none" container={false} className={s.hero} aria-labelledby="start-title">
+        <div className={s.heroStage}>
+          <Collage items={collage} height="min(64svh, 640px)" travel={120} className={s.collage}>
+            <div className={s.heroCenter}>
+              <HeroImage src={heroSrc} sizes="(max-width: 720px) 72vw, 480px" alt={c.hero.heroAlt} width={heroDims.width} height={heroDims.height} className={s.heroImg} />
             </div>
-          </div>
-          <h1 id="start-title" className={s.heroTitle}>
-            <span className={`${s.heroWord} ${s.word1}`}>{c.hero.word1}</span>{" "}
-            <span className={`${s.heroWord} ${s.word2}`}>{c.hero.word2}</span>
-          </h1>
+          </Collage>
+          <HeroTitle id="start-title" size="hero" lines={[c.hero.word1, c.hero.word2]} className={s.heroTitle} />
         </div>
         <div className={s.heroFoot}>
           <p className={s.heroSub}>{c.hero.sub}</p>
           <Pill href={design}>{c.hero.cta}</Pill>
         </div>
-        </div>
       </Sheet>
 
       {/* ───────── 2 · Choose your box: pinned card that grows into the designer ───────── */}
       <section className={s.choose} aria-labelledby="choose-title">
-        <div className={s.pinRun} data-sp="pin">
-          <div className={s.pinStick}>
-            <header className={s.head}>
-              <Display id="choose-title" size="56" align="center">{c.choose.title}</Display>
-              <Lead align="center">{c.choose.sub}</Lead>
-            </header>
-            <div className={s.pinStage}>
-              {SIDE_STYLES.map((code, i) => {
-                const src = renderSrc(code);
-                const d = renderDims(src);
-                return (
-                  <figure key={code} className={`${s.side} ${s[`side${i}`]}`}>
-                    <img src={src} srcSet={srcSetFor(src)} sizes="240px" width={d.width} height={d.height} loading="lazy" decoding="async" alt={fill(c.choose.styleAlt, { name: structureName(code) })} />
-                    <figcaption>{structureName(code)}</figcaption>
-                  </figure>
-                );
-              })}
-              <div className={s.pinCard}>
-                <span className={s.liveTag}>
-                  <span className={s.liveDot} aria-hidden="true" />
-                  {c.choose.live}
-                </span>
-                <img
-                  src={designerSrc}
-                  srcSet={srcSetFor(designerSrc)}
-                  sizes="(max-width: 720px) 100vw, 1100px"
-                  width={1440}
-                  height={900}
-                  loading="lazy"
-                  decoding="async"
-                  alt={c.choose.previewAlt}
-                  className={s.pinImg}
-                />
-              </div>
-            </div>
-            <div className={s.pinFoot}>
-              <Pill href={design}>
-                {c.choose.cta}
-                <ArrowRight size={18} aria-hidden="true" className={s.flip} />
-              </Pill>
-              <span className={s.muted}>{fill(c.choose.count, { count: formatNumber(MODELS.length) })}</span>
-            </div>
-          </div>
+        <Reveal as="header" className={s.head}>
+          <Display id="choose-title" size="56" align="center">{c.choose.title}</Display>
+          <Lead align="center">{c.choose.sub}</Lead>
+        </Reveal>
+        <PinnedScale
+          from={0.5}
+          length="190vh"
+          className={s.pin}
+          media={
+            <>
+              <span className={s.liveTag}>
+                <span className={s.liveDot} aria-hidden="true" />
+                {c.choose.live}
+              </span>
+              <img src={designerSrc} srcSet={srcSetFor(designerSrc)} sizes="100vw" width={1440} height={900} loading="lazy" decoding="async" alt={c.choose.previewAlt} className={s.pinImg} />
+            </>
+          }
+        />
+        <div className={s.pinFoot}>
+          <Pill href={design}>
+            {c.choose.cta}
+            <ArrowRight size={18} aria-hidden="true" className={s.flip} />
+          </Pill>
+          <span className={s.muted}>{fill(c.choose.count, { count: formatNumber(MODELS.length) })}</span>
         </div>
+        <ul className={s.styles} aria-label={c.choose.stylesLabel}>
+          {SIDE_STYLES.map((code) => {
+            const src = renderSrc(code);
+            const d = renderDims(src);
+            return (
+              <li key={code} className={s.styleTile}>
+                <img src={src} srcSet={srcSetFor(src)} sizes="200px" width={d.width} height={d.height} loading="lazy" decoding="async" alt="" />
+                <span>{structureName(code)}</span>
+              </li>
+            );
+          })}
+        </ul>
       </section>
 
       {/* ───────── 3 · Make your packaging shine: finishes and 3D ───────── */}
@@ -217,8 +215,8 @@ export default async function StartPage({ params }: Props) {
           <Display id="shine-title" size="56" align="center">{c.shine.title}</Display>
           <Lead align="center">{c.shine.sub}</Lead>
         </Reveal>
-        <Reveal variant="scale" className={s.shineStage}>
-          <div className={s.glow} aria-hidden="true" />
+        <Reveal variant="scale" className={s.stage}>
+          <Glow color="violet" size="min(640px, 90vw)" />
           <figure className={s.shineCard}>
             <img src={renderSrc("RIGID_BOX")} srcSet={srcSetFor(renderSrc("RIGID_BOX"))} sizes="(max-width: 720px) 80vw, 460px" {...renderDims(renderSrc("RIGID_BOX"))} loading="lazy" decoding="async" alt={c.shine.alt} />
             <span className={s.toolChip}>
@@ -243,8 +241,8 @@ export default async function StartPage({ params }: Props) {
           <Display id="paid-title" size="56" align="center">{c.paid.title}</Display>
           <Lead align="center">{c.paid.sub}</Lead>
         </Reveal>
-        <Reveal className={s.paidStage}>
-          <div className={s.glowBlue} aria-hidden="true" />
+        <Reveal className={s.stage}>
+          <Glow color="navy" size="min(620px, 90vw)" />
           <article className={s.checkout} aria-labelledby="paid-card-title">
             <div className={s.coItem}>
               <img src={renderSrc("FEFCO_0427")} srcSet={srcSetFor(renderSrc("FEFCO_0427"))} sizes="72px" width={914} height={608} loading="lazy" decoding="async" alt="" />
@@ -306,68 +304,90 @@ export default async function StartPage({ params }: Props) {
         </Reveal>
       </section>
 
-      {/* ───────── 5 · Card fan of SAMPLE brand boxes ───────── */}
+      {/* ───────── 5 · Card fan of SAMPLE brand boxes (each card says so) ───────── */}
       <section className={s.fanBand} aria-labelledby="fan-title">
         <Reveal as="header" className={s.head}>
           <Display id="fan-title" size="64" align="center">{c.fan.title}</Display>
           <Lead align="center">{c.fan.sub}</Lead>
         </Reveal>
-        <div className={s.fanWrap} data-sp="view">
-          <ul className={s.fan} aria-label={c.fan.listLabel}>
-            {FAN.map((f, i) => (
-              <li key={f.src} className={s.fanCard} style={{ "--i": i - (FAN.length) / 2 } as CSSProperties}>
-                <img src={f.src} srcSet={srcSetFor(f.src)} sizes="260px" width={640} height={800} loading="lazy" decoding="async" alt={fill(c.hero.pieceAlt, { name: structureName(f.structure) })} />
-                <span className={s.fanBadge}>{c.fan.badge}</span>
+        <CardFan
+          aria-label={c.fan.listLabel}
+          width={220}
+          tilt={5}
+          height={520}
+          className={s.fan}
+          cards={[
+            ...FAN.map((f, i) => ({
+              media: (
+                <>
+                  <img src={f.src} srcSet={srcSetFor(f.src)} sizes="240px" width={640} height={800} loading="lazy" decoding="async" alt={fill(c.hero.pieceAlt, { name: structureName(f.structure) })} />
+                  <span className={s.fanBadge}>{c.fan.badge}</span>
+                </>
+              ),
+              label: (
                 <span className={s.fanName}>
                   {c.fan.brands[i]}
                   <span className={s.fanStyle}>{structureName(f.structure)}</span>
                 </span>
-              </li>
-            ))}
-            <li className={`${s.fanCard} ${s.fanYours}`} style={{ "--i": FAN.length / 2 } as CSSProperties}>
-              <strong className={s.fanYoursTitle}>{c.fan.yours}</strong>
-              <span>{c.fan.yoursBody}</span>
-              <Pill href={design} size="sm">
-                {c.fan.yoursCta}
-                <ArrowRight size={16} aria-hidden="true" className={s.flip} />
-              </Pill>
-            </li>
-          </ul>
-        </div>
+              ),
+            })),
+            {
+              media: (
+                <div className={s.fanYours}>
+                  <strong className={s.fanYoursTitle}>{c.fan.yours}</strong>
+                  <span>{c.fan.yoursBody}</span>
+                  <Pill href={design} size="sm">
+                    {c.fan.yoursCta}
+                    <ArrowRight size={16} aria-hidden="true" className={s.flip} />
+                  </Pill>
+                </div>
+              ),
+            },
+          ]}
+        />
       </section>
 
       {/* ───────── 6 · Light bento: start, then grow ───────── */}
-      <Sheet tone="white" container={false} className={s.sheet} aria-labelledby="bento-title">
-        <div className={s.sheetInner}>
-          <Reveal as="header" className={s.head}>
-            <Display id="bento-title" size="64" align="center">{c.bento.title}</Display>
-          </Reveal>
-          <div className={s.bento}>
-            <Reveal as="article" className={s.tile}>
+      <Sheet tone="white" aria-labelledby="bento-title">
+        <Reveal as="header" className={s.head}>
+          <Display id="bento-title" size="64" align="center">{c.bento.title}</Display>
+        </Reveal>
+        <Bento cols={2} row={360} className={s.bento}>
+          <BentoCard
+            tone="grey"
+            title={c.bento.share.title}
+            body={c.bento.share.body}
+            media={
               <div className={s.mock} aria-hidden="true">
-                <div className={s.mockLink}>
+                <span className={s.mockLink}>
                   <Link2 size={16} />
                   <span dir="ltr">{c.bento.linkLabel}</span>
-                </div>
+                </span>
                 <img src={renderSrc("ECMA_RTE")} srcSet={srcSetFor(renderSrc("ECMA_RTE"))} sizes="140px" {...renderDims(renderSrc("ECMA_RTE"))} loading="lazy" decoding="async" alt="" className={s.mockImg} />
               </div>
-              <h3 className={s.tileTitle}>{c.bento.share.title}</h3>
-              <p className={s.tileBody}>{c.bento.share.body}</p>
-            </Reveal>
-            <Reveal as="article" className={s.tile}>
+            }
+          />
+          <BentoCard
+            tone="grey"
+            title={c.bento.export.title}
+            body={c.bento.export.body}
+            media={
               <div className={s.mock} aria-hidden="true">
-                <div className={s.mockFile}>
+                <span className={s.mockFile}>
                   <FileDown size={22} />
                   <span dir="ltr">{c.bento.pdfName}</span>
-                </div>
+                </span>
                 <svg className={s.dieline} viewBox="0 0 200 120" aria-hidden="true">
                   <path d="M40 10h120v100H40z M40 40h120 M40 80h120 M10 40h30v40H10z M160 40h30v40h-30z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeDasharray="5 4" />
                 </svg>
               </div>
-              <h3 className={s.tileTitle}>{c.bento.export.title}</h3>
-              <p className={s.tileBody}>{c.bento.export.body}</p>
-            </Reveal>
-            <Reveal as="article" className={s.tile}>
+            }
+          />
+          <BentoCard
+            tone="grey"
+            title={c.bento.sample.title}
+            body={c.bento.sample.body}
+            media={
               <div className={s.mock} aria-hidden="true">
                 <img src="/marketing/samples/sample-08.webp" srcSet={srcSetFor("/marketing/samples/sample-08.webp")} sizes="160px" width={640} height={800} loading="lazy" decoding="async" alt="" className={s.mockSample} />
                 <span className={s.mockQty}>
@@ -375,28 +395,25 @@ export default async function StartPage({ params }: Props) {
                   {c.bento.sampleQty}
                 </span>
               </div>
-              <h3 className={s.tileTitle}>{c.bento.sample.title}</h3>
-              <p className={s.tileBody}>{c.bento.sample.body}</p>
-            </Reveal>
-            <Reveal as="article" className={s.tile}>
+            }
+          />
+          <BentoCard
+            tone="grey"
+            title={c.bento.reorder.title}
+            body={c.bento.reorder.body}
+            media={
               <div className={s.mock} aria-hidden="true">
-                <div className={s.mockOrder}>
+                <span className={s.mockOrder}>
                   <img src={renderSrc("FEFCO_0201")} srcSet={srcSetFor(renderSrc("FEFCO_0201"))} sizes="64px" {...renderDims(renderSrc("FEFCO_0201"))} loading="lazy" decoding="async" alt="" />
                   <span className={s.mockBtn}>
                     <RefreshCw size={14} />
                     {c.bento.reorderCta}
                   </span>
-                </div>
+                </span>
               </div>
-              <h3 className={s.tileTitle}>{c.bento.reorder.title}</h3>
-              <p className={s.tileBody}>{c.bento.reorder.body}</p>
-            </Reveal>
-          </div>
-          <Reveal className={s.statsCard}>
-            <h3 className={s.statsTitle}>
-              <Sparkles size={18} aria-hidden="true" />
-              {c.bento.statsTitle}
-            </h3>
+            }
+          />
+          <BentoCard span={2} tone="dark" title={c.bento.statsTitle} className={s.statsCard}>
             <dl className={s.stats}>
               {stats.map((x) => (
                 <div key={x.label}>
@@ -405,12 +422,12 @@ export default async function StartPage({ params }: Props) {
                 </div>
               ))}
             </dl>
-          </Reveal>
-        </div>
+          </BentoCard>
+        </Bento>
       </Sheet>
 
-      {/* ───────── 7 · Closing CTA with phone sign-up ───────── */}
-      <Sheet tone="dark" container={false} className={s.closing} aria-labelledby="closing-title">
+      {/* ───────── 7 · Closing CTA with phone sign-up (kit PhoneSignup = HeroPhoneForm logic) ───────── */}
+      <Sheet tone="dark" container="narrow" aria-labelledby="closing-title">
         <Reveal className={s.closingInner}>
           <span className={s.mark} aria-hidden="true">
             <svg viewBox="0 0 24 24" width="40" height="40" focusable="false">
@@ -427,19 +444,12 @@ export default async function StartPage({ params }: Props) {
               </li>
             ))}
           </ol>
-          <div className={s.closingForm}>
-            <HeroPhoneForm
-              locale={locale}
-              designPath={design}
-              labels={{
-                label: c.closing.label,
-                placeholder: c.closing.placeholder,
-                submit: c.closing.submit,
-                error: c.closing.error,
-                fine: c.closing.fine,
-              }}
-            />
-          </div>
+          <PhoneSignup
+            designPath={design}
+            align="center"
+            className={s.signup}
+            labels={{ label: c.closing.label, placeholder: c.closing.placeholder, submit: c.closing.submit, error: c.closing.error, fine: c.closing.fine }}
+          />
         </Reveal>
       </Sheet>
     </div>

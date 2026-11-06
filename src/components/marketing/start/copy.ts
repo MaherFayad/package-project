@@ -29,6 +29,7 @@ const ar = {
     live: "معاينة المحرر",
     styleAlt: "طراز {name}",
     count: "{count} نموذجا في المكتبة",
+    stylesLabel: "طرز جاهزة للبدء",
   },
   shine: {
     title: "اجعل علبتك تلمع",
@@ -116,6 +117,7 @@ const en: Copy = {
     live: "Designer preview",
     styleAlt: "{name} style",
     count: "{count} models in the library",
+    stylesLabel: "Ready styles to start from",
   },
   shine: {
     title: "Make your packaging shine",

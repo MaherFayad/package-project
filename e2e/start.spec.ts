@@ -90,13 +90,12 @@ for (const locale of ["ar", "en"] as const) {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto(`/${locale}/start`);
     for (const h of c.h2s) await expect(page.getByRole("heading", { level: 2, name: h })).toBeVisible();
-    await expect(page.locator("html")).not.toHaveAttribute("data-start-motion", "on");
     // The pinned run collapses and the designer card shows at full size, with no scroll-driven transform.
     const card = page.getByRole("img", { name: locale === "ar" ? /^محرر علبة:/ : /^The Elba designer/ });
     await card.scrollIntoViewIfNeeded();
     const t = await card.evaluate((img) => getComputedStyle(img.parentElement!).transform);
     expect(["none", "matrix(1, 0, 0, 1, 0, 0)"]).toContain(t);
-    const pinStyle = await card.evaluate((img) => getComputedStyle(img.closest("[data-sp='pin']")!.firstElementChild!).position);
+    const pinStyle = await card.evaluate((img) => getComputedStyle(img.parentElement!.parentElement!).position);
     expect(pinStyle).not.toBe("sticky");
   });
 }
