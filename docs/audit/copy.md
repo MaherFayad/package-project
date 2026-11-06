@@ -188,3 +188,71 @@ Counts of new findings this round, before fixing: critical 0 · high 15 · mediu
 - **Won't fix:** 3, with reasons in the rows.
 
 The next copy round should recheck the open rows once the owners merge.
+
+## Round 5, pass 2: rebuilt public site (main 263685c)
+
+**Scope.** The rebuilt public site and the dictionaries changed since pass 1, 946 entries in all:
+- the four page copy files: `src/components/marketing/{home,start,why,designer-page}/copy.ts`, including their template functions
+- the new `mk` namespace and every dictionary key added or changed since pass 1
+- the catalogue copy
+
+**Method.** The same rules as pass 1, plus checking each VAT label against the amount it describes. For every string I changed I grepped `e2e/` and every `__tests__` folder for the old text and updated those tests in the same commit.
+
+**New findings, counted before fixing:**
+
+| critical | high | medium | low | total |
+|---|---|---|---|---|
+| 0 | 5 | 17 | 13 | 35 |
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R5-CP-91 | high | home, start, designer-page (14 strings) | "Mailer box" was translated as «علبة شحن» / «صندوق شحن» (shipping carton / box), which is a different product. The English said mailer; the Arabic said shipping box. | glossary; ISO 9241-110 | «علبة بريدية» everywhere. Shipping cartons stay «كراتين شحن». | fixed |
+| R5-CP-92 | high | home stats, why switch step | "Clear invoice" / «فاتورة واضحة» / «والفاتورة تفصل الضريبة» promised an invoice; the document is a receipt until Elba is registered. | ETA e-invoicing | "Clear receipt" / «إيصال واضح», «والإيصال يفصل الضريبة والتوصيل». | fixed |
+| R5-CP-93 | high | /why point 3 | "The price on the style page is the price … at checkout, delivery and VAT included", but style-page prices exclude VAT (`store.structure.priceNote`). | Egyptian VAT 14% (clear price display) | "… with delivery included and VAT 14% on its own line" / «شامل التوصيل، مع ضريبة القيمة المضافة 14% في سطر مستقل». | fixed |
+| R5-CP-94 | high | /start order card | "Printer confirms before you are charged" / «قبل تحصيل المبلغ» is false: every order is paid before the printer accepts it. | Consumer Protection Law 181/2018 (no misleading claims) | "Printer confirms · within 24 hours of payment" / «خلال 24 ساعة من الدفع». | fixed |
+| R5-CP-95 | high | /start bento "Print-ready file" | "Download a PDF with cut and fold lines" is false: the designer exports a PNG, and the team prepares the print PDF with each order (`designer.export.noPdf`). | Law 181/2018 | "Every order gets a print-ready PDF with cut and fold lines…" / «يجهز مع كل طلب ملف PDF جاهز للطباعة…». | fixed |
+| R5-CP-96 | medium | why (3 strings), designer-page trust card | "VAT receipt" / «إيصال ضريبي» reads as a tax document. | ETA | "Receipt with VAT (shown)" / «إيصال يوضح الضريبة»; «إيصالات توضح ضريبة {rate}%». | fixed |
+| R5-CP-97 | medium | why, start (6) | «موثقة» / «موثوقة» used for vetted printers, where the glossary term is «معتمدة». | glossary | «معتمدة» | fixed |
+| R5-CP-98 | medium | why, start, designer-page (≈18) | «أنماط / نمط / طراز / طرز» used for box style, where the glossary term is «أنواع العلب». | glossary | «نوع / أنواع» | fixed |
+| R5-CP-99 | medium | /start (6) | «المحرر» for the 3D designer, while the rest of the site says «المصمم». | one term per concept | «المصمم» | fixed |
+| R5-CP-100 | medium | /start finishes, mk nav "new" item | Finish names drifted: «رقائق ذهبية», «الورنيش الموضعي» (spot UV), «بصمة بارزة» for emboss (بصمة is foil, so the meaning is wrong), «ملمس ناعم», «التغليف الناعم». | glossary | «بصمة ذهبية», «طلاء UV موضعي», «طباعة بارزة», «سلوفان مخملي». | fixed |
+| R5-CP-101 | medium | home, why, designer-page families and materials | Folding carton appeared as «كرتون مقوى / رقيقة / مطوي»; rigid as «الكرتون المقوى / علبة فاخرة»; tube as «أنبوب ورقي». | glossary | «علب دوبلكس / كرتون دوبلكس», «الكرتون الرمادي / علبة صلبة», «علبة أسطوانية ورقية». | fixed |
+| R5-CP-102 | medium | designer-page (9) | «خط القص» (cut line) used for the dieline. | glossary (القالب = dieline) | «القالب». «خط القص» is kept where it means the cut line itself (the bleed FAQ). | fixed |
+| R5-CP-103 | medium | why CTAs (in the label test's PENDING list), /start closing steps | Imperative button and step labels: «ابدأ التصميم», «صمم واطلب عرض سعر», «صمم مجانا / وافق على البروفة / اطبع واستلم». | noun-form labels | «بدء التصميم (مجانا)», «التصميم وطلب عرض سعر», «التصميم مجانا / الموافقة على البروفة / الطباعة والتسليم». The PENDING entries were removed. | fixed |
+| R5-CP-104 | medium | start, why, designer-page FAQ | Banned or drifting terms: «رقم الموبايل» ×2, «رمز الدخول», «كود فوري», «برقم هاتفك», «أونلاين» ×2. EN "Fawry reference code" and "phone number". | glossary | «رقم المحمول», «رمز التحقق», «الرقم المرجعي لفوري», «إلكترونيا». EN "reference number" and "mobile number". | fixed |
+| R5-CP-105 | medium | /start hero chip | A bare «من {price}» (reads as "of"), plus a tatweel in «لـ 500 علبة». | glossary; diacritics/tatweel rule | «ابتداء من {price}», «لطلب 500 علبة». | fixed |
+| R5-CP-106 | medium | why (4), admin price form (2) | «قالب قص / قالب القص» for the cutting die. | glossary (فورمة التكسير) | «فورمة التكسير» | fixed |
+| R5-CP-107 | medium | why printers card, /start finishes count | `${n} مطابع` is wrong for 11 or more; «{count} تشطيبا متاحا» is wrong for 3–10. | counted-noun rule | The plural form is chosen from the number; «التشطيبات المتاحة: {count}». | fixed |
+| R5-CP-108 | medium | `buyer.qty.byQuote/byQuoteSummary`, why copy | "By quote / بعرض سعر", "Quotes hold for", "custom quote", "Design, then request a quote", "Larger runs get a quote", and «عرض السعر صالح» used for the instant price. | one term (pass-1 decision) | "Price on request / السعر عند الطلب", "Prices hold for", "request a price", «السعر صالح». | fixed |
+| R5-CP-109 | medium | why (4) | «النسخة / نسخة للاعتماد» for the proof. | glossary (البروفة) | «البروفة / بروفة PDF للاعتماد» | fixed |
+| R5-CP-110 | medium | home "Print at a vetted printer" | "Printers … send a proof before printing" is wrong: Elba generates the proof and the buyer approves it before paying. | Law 181/2018 | "… check every file before printing, after you approve the proof" | fixed |
+| R5-CP-111 | medium | /start bento "Sample first" | "Order one box to test" / «1 علبة»: the sample is a digital-print sample pack, not one box. | Law 181/2018 | "Order a printed sample before the full run" / «اطلب عينة مطبوعة…», «علبة واحدة». | fixed |
+| R5-CP-113 | medium | `mk.nav.login` (en) | "Log in", while the rest of the site says "Sign in". | one term | "Sign in". The e2e/marketing-kit.spec.ts selector was updated. | fixed |
+| R5-CP-112 | low | `designer.view.dielineSize`, `preflight.MISSING_BLEED` | Bleed had three names: «هامش القص الزائد», «هامش القص» and «هامش النزف». | «هامش النزف» (added to the glossary) | fixed |
+| R5-CP-114 | low | `notify.STATUS_CHANGED` (en) | The double colon ("is now: {status}") came back with the merge. | "status: {status}" | fixed |
+| R5-CP-115 | low | `notify.REFUNDED` (ar) | «ألغي» unvocalised reads as active or imperative. | «تم إلغاء» | fixed |
+| R5-CP-116 | low | `buyer.receipt.title/metaTitle` (ar) | «إيصال طلب» vs the glossary's «إيصال الطلب». | «إيصال الطلب» | fixed |
+| R5-CP-117 | low | `buyer.quoted.*`, `buyer.qty.tooLarge` | «سار حتى», «طلب سعر جديد», «طلب السعر». | «صالح حتى», «طلب عرض سعر» | fixed |
+| R5-CP-118 | low | `admin.order.buyer.company` | "Invoice to {name}" / «الفاتورة باسم». | "Company {name}" / «الشركة: {name}» | fixed |
+| R5-CP-119 | low | admin price form | "Delivery" for the cost line. | "Shipping / الشحن". The e2e/admin-quote-price.spec.ts labels were updated. | fixed |
+| R5-CP-120 | low | home receipt card and chips | «الإعداد» (setup), «الإجمالي الفرعي», «علبة حد أدنى». /start: «المجموع قبل الضريبة». | «التجهيز وفورمة التكسير», «المجموع الفرعي», «علبة كحد أدنى» | fixed |
+| R5-CP-121 | low | /start order card | «2000» without a thousands separator; the dimensions «250 × 180 × 80» were not LTR-isolated. | «2,000»; U+2066…U+2069 around the dimensions | fixed |
+| R5-CP-122 | low | why, designer-page | «سعر عند الطلب», «يستخدمه الدفع», «ملاءمة الوجه» (the designer says «ملء الوجه»), «يحمل النموذج» (reads as "carries"). | aligned | fixed |
+| R5-CP-123 | low | /start meta title and closing, designer-page start heading | Imperative titles («ابدأ تصميم علبتك مجانا», «ابدأ التصميم مجانا»), and a masculine-only «جاهز لتصميم علبتك؟». | «بدء …», «هل تريد تصميم علبتك الآن؟». The e2e/start.spec.ts heading list was updated. Hero slogans such as «ابدأ اليوم» stay as marketing convention. | fixed |
+| R5-CP-124 | low | `mk.nav.featured.latest` | «جديد علبة» is ungrammatical. | «الجديد في علبة» | fixed |
+| R5-CP-125 | low | home `wall.body`, `finishes.body` | `{groups} مجموعات` and `{finishes} تشطيبات` are right for today's values (10 or fewer) but break above 10. | Use the page's `counted()` helper. | open (marketing owner) |
+
+Not new this pass: designer-page and why still say "First orders are paid in full" (R5-CP-81, open for a business decision).
+
+**New guard.** `src/i18n/__tests__/copy-rules.test.ts` now also scans every Arabic string in the four page copy.ts files, including the template functions. It fails on:
+- diacritics, tatweel or Arabic-Indic digits
+- the glossary bans (أونلاين, موبايل, كود, فاتورة, مقوى, موثق/موثوق, علبة شحن, صندوق, قالب قص, أنماط العلب, موديل)
+- a bare «من {price}»
+
+**Verification, pass 2.**
+- **Unit tests:** `src/i18n`, `src/lib/__tests__` and `src/components/marketing` all pass (143 tests, including the extended copy-rules test and the noun-form label test with its PENDING list now empty).
+- **Typecheck and lint:** clean.
+- **Build:** passed.
+- **Playwright** (`--workers=2 --trace off`): start, marketing-kit, marketing-spacing, why-pricing, designer-page, admin-quote-price, checkout-quote, checkout, checkout-states, smoke, storefront, journey and a11y specs; every copy assertion passes.
+  - Two more specs (designer-page, start) looked up the old «أنماط العلب» / «محرر علبة» names; their selectors now use the new copy.
+  - The only remaining failure is `marketing-kit.spec.ts:305` (the `Sheet tone="dark-2"` background on /en/dev/kit). It checks CSS, which this pass does not touch, and it failed on only one project in each run (mobile, then desktop), so it belongs to the kit owner.

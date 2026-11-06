@@ -19,3 +19,4 @@
 .small { max-inline-size: 180px; }
 @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.6); } }
 .pulseDot { display: inline-block; inline-size: 12px; block-size: 12px; margin-block-end: 16px; border-radius: 50%; background: var(--mk-green); animation: pulse 2s ease-in-out infinite; }
+.marqueeLink { display: block; border-radius: 20px; }

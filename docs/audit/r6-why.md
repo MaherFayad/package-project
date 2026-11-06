@@ -161,3 +161,16 @@ Measured band paddings at 1440 / 390 after the change (top/bottom px), against t
 The section-7 tokens standardise the reference's mixed values (80 on /sell sheets, 64 on /pricing bands) at 100 for sheets; the pages follow section 7. Side-by-side captures with shopify.com/sa/sell and /sa/pricing (1440 and 390, ar and en) were made with Playwright and stay out of git (they contain Shopify's pixels); our own captures are in `docs/screenshots/audit/r6-why/`.
 
 Perf after the change (phone, Slow 4G, 4x CPU): /ar/why-elba LCP 1.43 to 1.50 s, CLS 0.061 (Noto Arabic swap reflowing the 56px hero words, plus the shared cookie notice; under 0.1); /en/why-elba 1.30 s, CLS 0; /ar/pricing 1.29 to 1.37 s, CLS 0.011; /en/pricing 1.19 to 1.22 s, CLS 0. On phone the hero collage keeps two renders: the two small ones loaded late and became the LCP candidate (2.3 to 2.8 s).
+
+### 8.1 Merge of main a657116+ and foundation c13d51bc
+
+- `e2e/marketing-spacing.spec.ts`: `NOT_YET` is now empty (main had only `/why-elba` left); all public pages pass, ar + en, 1440/1024/768/390.
+- Arabic noun-form labels (`kit/__tests__/arabic-labels.test.ts`): «ابدأ التصميم مجانا» → «بدء التصميم مجانا», «ابدأ التصميم» → «بدء التصميم», «صمم واطلب عرض سعر» → «التصميم وطلب عرض سعر»; my three PENDING lines removed.
+- Band paddings re-measured on this build: unchanged from the table above. Phone LCP 1.18 to 1.49 s, CLS ≤ 0.061.
+
+### 8.2 Merge of main 263685c (foundation 1653751e)
+
+- /pricing "Always included" is on kit `tone="dark-2"` (rgb(20,26,26), as measured on /sa/pricing), overlapping the hero with 48px corners, 100/100 padding. Replaces the interim navy.
+- R6-AX-14 is now fixed in the kit (violet tone sets `--mk-muted` and `--mk-on-dark-muted` to #fff). The page override is removed, and page text reads the per-sheet `--mk-muted`, so it follows every tone. Verified: violet card text and lead computed `rgb(255,255,255)`.
+- arabic-labels.test.ts PENDING merged to empty (every owner fixed theirs); the test passes.
+- Open on the platform side: the metric-matched Arabic fallback font, after which ar /why-elba CLS (0.061) gets re-measured.

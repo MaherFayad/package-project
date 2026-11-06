@@ -6,7 +6,7 @@ export const kitEn = {
     why: "Why Elba",
     pricing: "Pricing",
     catalogue: "Box styles",
-    login: "Log in",
+    login: "Sign in",
     start: "Start free",
     menu: "Menu",
     close: "Close menu",

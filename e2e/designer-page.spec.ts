@@ -71,7 +71,7 @@ for (const locale of LOCALES) {
       const cta = page.getByRole("link", { name: CTA[locale] }).first();
       await expect(cta).toHaveAttribute("href", `/${locale}/design?structure=FEFCO_0427`);
       // Stop the drifting strip first (its own pause button): a moving card never settles for a click.
-      await page.getByRole("button", { name: locale === "ar" ? "إيقاف شريط أنماط العلب" : "Pause the box styles strip" }).click();
+      await page.getByRole("button", { name: locale === "ar" ? "إيقاف شريط أنواع العلب" : "Pause the box styles strip" }).click();
       // A style card (the first real one, not the loop copy).
       const card = page.locator(`#dp-styles li:not([aria-hidden]) a[href*="/${locale}/design?structure="]`).first();
       const href = await card.getAttribute("href");
@@ -126,8 +126,8 @@ test("reduced motion: content visible, loops stopped, no pause buttons for still
   expect(state.floats.every((a) => a === "none")).toBe(true);
   expect(state.hidden).toBe(0);
   // The strips are still, so their pause buttons are gone; the strip stays keyboard-scrollable.
-  await expect(page.getByRole("button", { name: "إيقاف شريط أنماط العلب" })).toHaveCount(0);
-  await expect(page.getByRole("region", { name: "أنماط العلب", exact: true })).toHaveAttribute("tabindex", "0");
+  await expect(page.getByRole("button", { name: "إيقاف شريط أنواع العلب" })).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "أنواع العلب", exact: true })).toHaveAttribute("tabindex", "0");
   expect(errors).toEqual([]);
   await context.close();
 });
@@ -196,6 +196,23 @@ test("hero: no floating mockup covers the Turn in 3D / pause controls at phone w
         return out;
       });
       expect(hits, `${locale} ${w}px`).toEqual([]);
+    }
+  }
+});
+
+test("page height is stable: nothing grows after scrolling or keyboard focus (layout stability, WCAG 2.4.11)", async ({ page }, info) => {
+  test.skip(info.project.name !== "desktop", "widths are set per step");
+  test.setTimeout(180_000);
+  for (const locale of LOCALES) {
+    for (const w of [320, 390, 768, 1440]) {
+      await page.setViewportSize({ width: w, height: w < 800 ? 844 : 900 });
+      await page.goto(`/${locale}/designer`);
+      await page.waitForLoadState("networkidle");
+      const before = await page.evaluate(() => document.documentElement.scrollHeight);
+      await scrollThrough(page);
+      for (let i = 0; i < 40; i++) await page.keyboard.press("Tab");
+      const after = await page.evaluate(() => document.documentElement.scrollHeight);
+      expect(Math.abs(after - before), `${locale} ${w}px: ${before} -> ${after}`).toBeLessThanOrEqual(2);
     }
   }
 });

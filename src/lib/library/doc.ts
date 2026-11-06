@@ -1,6 +1,6 @@
 import type { DesignDoc, Dims, FaceId, MaterialCode, StructureCode } from "@/types";
 import { BOARD_SPECS, type DielineModel, type DielinePanel, type FaceInfo } from "@/lib/dieline";
-import type { VesselDims } from "@/lib/vessels";
+import { flatPoint, type VesselDims } from "@/lib/vessels";
 // Registry, not ./index: doc helpers are used in the browser, which loads only the open family
 // (PERF-04). Server callers import "@/lib/library" first (eager registration).
 import { boxModel, modelByCode, vesselModel } from "./registry";
@@ -56,6 +56,33 @@ export function facesForAreas(areas: PrintArea[]): Map<string, FaceId> {
 const GAP_MM = 10;
 
 /** Flat sheet of print areas as a DielineModel (no folds). */
+/** Largest axis-aligned rectangle inside an annular-sector label, inset by its safe margin (sheet mm). */
+function sectorSafeRect(spec: NonNullable<PrintArea["spec"]>, x: number, y: number): { x: number; y: number; width: number; height: number } {
+  const at = (s: number, t: number) => flatPoint(spec, s, t);
+  let best = { x: 0, y: 0, width: 1, height: 1 };
+  for (let f = 0.3; f <= 1.0001; f += 0.05) {
+    const s0 = 0.5 - f / 2;
+    const s1 = 0.5 + f / 2;
+    let top = -Infinity;
+    let bottom = Infinity;
+    for (let i = 0; i <= 24; i++) {
+      const s = s0 + ((s1 - s0) * i) / 24;
+      const ya = at(s, 0).y;
+      const yb = at(s, 1).y;
+      top = Math.max(top, Math.min(ya, yb));
+      bottom = Math.min(bottom, Math.max(ya, yb));
+    }
+    const left = Math.max(at(s0, 0).x, at(s0, 1).x);
+    const right = Math.min(at(s1, 0).x, at(s1, 1).x);
+    const width = right - left - 2 * spec.safeMm;
+    const height = bottom - top - 2 * spec.safeMm;
+    if (width > 0 && height > 0 && width * height > best.width * best.height) {
+      best = { x: x + left + spec.safeMm - spec.bleedMm, y: y + top + spec.safeMm - spec.bleedMm, width, height };
+    }
+  }
+  return best;
+}
+
 export function areasToDieline(areas: PrintArea[], baseCode: StructureCode, envelope: { width: number; depth: number; height: number }): DielineModel {
   const faceOf = facesForAreas(areas);
   const bleed = Math.max(2, ...areas.map((a) => a.bleedMm));
@@ -79,12 +106,22 @@ export function areasToDieline(areas: PrintArea[], baseCode: StructureCode, enve
       y += rowH + GAP_MM + 2 * bleed;
       rowH = 0;
     }
-    const poly = [
-      { x, y },
-      { x: x + w, y },
-      { x: x + w, y: y + h },
-      { x, y: y + h },
-    ];
+    // a tapered wrap is an annular sector, not its bounding box: cut on the real outline so the
+    // Dieline view and the print file show where the 3D label ends (R6-3Q-F-04)
+    const sector = a.spec?.shape === "sector" && a.spec.sector ? a.spec : null;
+    const poly = sector
+      ? [0, 1].flatMap((t) =>
+          Array.from({ length: 33 }, (_, i) => {
+            const q = flatPoint(sector, t === 0 ? i / 32 : 1 - i / 32, t);
+            return { x: x + q.x - sector.bleedMm, y: y + q.y - sector.bleedMm };
+          }),
+        )
+      : [
+          { x, y },
+          { x: x + w, y },
+          { x: x + w, y: y + h },
+          { x, y: y + h },
+        ];
     panels.push({
       id: a.id,
       role: face,
@@ -110,7 +147,7 @@ export function areasToDieline(areas: PrintArea[], baseCode: StructureCode, enve
         { x: x - b, y: y + h + b },
       ],
     });
-    safeZones.push({ panelId: a.id, rect: { x: x + a.safeMm, y: y + a.safeMm, width: Math.max(1, w - 2 * a.safeMm), height: Math.max(1, h - 2 * a.safeMm) } });
+    safeZones.push({ panelId: a.id, rect: sector ? sectorSafeRect(sector, x, y) : { x: x + a.safeMm, y: y + a.safeMm, width: Math.max(1, w - 2 * a.safeMm), height: Math.max(1, h - 2 * a.safeMm) } });
     faces[face] = { face, width: w, height: h, parts: [{ panelId: a.id, rect: { x: 0, y: 0, width: w, height: h }, transform: [1, 0, 0, 1, x, y] }] };
     x += w + GAP_MM + 2 * bleed;
     rowH = Math.max(rowH, h);
