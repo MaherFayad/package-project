@@ -56,3 +56,10 @@
     padding-block-end: calc(var(--p-space-600) + 88px);
   }
 }
+
+/* Cookie notice must not cover the sticky action bar (WCAG 2.4.11 focus not obscured). */
+@media (max-width: 1039px) {
+  .shell:has([data-sticky-action]) .cookieSlot > [role="region"] {
+    inset-block-end: calc(var(--p-space-400) + 76px + env(safe-area-inset-bottom, 0px));
+  }
+}

@@ -19,7 +19,7 @@ export function CheckoutShell({ locale, children }: { locale: Locale; children: 
   const base = `/${locale}`;
   return (
     <AppProvider locale={locale}>
-      <div className={chrome.shell}>
+      <div className={`${chrome.shell} ${styles.shell}`}>
         <header className={chrome.header}>
           <div className={styles.bar}>
             <Link href={base} className={chrome.brand} aria-label={`${t("meta.siteName")}, ${t("nav.home")}`}>
@@ -55,7 +55,10 @@ export function CheckoutShell({ locale, children }: { locale: Locale; children: 
           </nav>
           <p>{t("common.vatNote")}</p>
         </footer>
-        <CookieNotice />
+        {/* Lifted above the sticky checkout action bar on phones so it never covers the primary action. */}
+        <div className={styles.cookieSlot}>
+          <CookieNotice />
+        </div>
       </div>
     </AppProvider>
   );

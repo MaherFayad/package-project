@@ -35,13 +35,19 @@ Step count (phone, design saved to paid): before 9 taps + full re-entry of the c
 | CO-23 | low | proof viewer (phone) | Seven 44px view controls wrapped to two rows (reset alone) on 390px. | Visual polish (targets stay 44px, WCAG 2.5.8) | Tighter toolbar gap/padding on phones; one row. | fixed |
 | CO-24 | low | account header | New accounts see a bare "Hello" with no hint. | UX copy | Hint to add a name in Profile. | fixed |
 | CO-25 | low | phone order cards | Pending orders showed both "Awaiting payment" status and a "Pending" payment badge. | Copy redundancy | Payment badge on cards only when refunded. | fixed |
+| CO-26 | high | checkout (phone), pass 2 | Found by the mobile e2e: on a first visit the cookie notice sat on top of the new sticky action bar and swallowed the tap on "Continue". | WCAG 2.4.11 | Inside the checkout shell the notice is lifted above the bar whenever a sticky action is present (`:has([data-sticky-action])`); store pages unchanged. | fixed (reopened, then fixed) |
+| CO-27 | medium | checkout (phone), pass 2 | Tabbing to fields near the bottom could scroll them under the fixed bar. | WCAG 2.4.11 | `scroll-padding-block-end` on the document while the bar exists. Keyboard walk: 18 stops on step 1, none under the bar, radios one tab stop per group. | fixed |
+| CO-28 | low | `checkout/loading.tsx`, pass 2 | Skeleton was a single column, so the 2/3 + 1/3 layout jumped in when prices arrived (CLS). | CLS < 0.1 | Skeleton mirrors the step card + summary grid. | fixed |
 
-Counts: critical 2, high 8, medium 12, low 3 (25 total). Fixed 25 (CO-06 partially, see below).
+Counts: critical 2, high 9, medium 13, low 4 (28 total). Fixed 28 (CO-06 partially, see below).
+
+Pass 2 checks: axe 0 violations on all 21 screens x 4 (390/1440 x ar/en), no horizontal overflow; keyboard-only walk of step 1; `prefers-reduced-motion: reduce` runs zero animations (price tick, success entrance, segments off); live total announced ("Total updated: EGP 17,969.25").
 
 ## Open / outside scope (reported, not changed)
 
 - **Manual quote request (>2,000 boxes)**: there is no endpoint or admin queue to request a hand-priced quote, and no support WhatsApp number in config. Needs the technical session (API + `NEXT_PUBLIC_SUPPORT_WHATSAPP` or a quote request model). The UI now avoids the dead end and the false promise.
-- **Cookie notice overlaps the checkout action bar** until dismissed (`components/store/CookieNotice`, storefront owner). It is dismissed once per browser, but on a first visit it covers the primary action on phones (WCAG 2.4.11 focus not obscured). Suggest moving it above a fixed bottom bar or offsetting it when `[data-sticky-action]` is present.
+- **Cookie notice** (`components/store/CookieNotice`, storefront owner) still covers bottom content on store pages until dismissed; inside checkout it is now lifted above the action bar (CO-26).
+- **Flaky `e2e/smoke.spec.ts:16`** (auth area): clicks "Send code" before the login form hydrates, so it fails about 1 run in 8 under `next start`. `checkout.spec.ts` already retries the fill until the button is enabled; smoke should do the same.
 - **Page "More actions" popover in RTL on phones** opens at the top of the viewport over the top bar instead of under the ⋯ button (`components/ui/Page` / `Popover`, UI-kit owner).
 - **Designer price modal and soft sign-up gate** live in `src/components/designer` (designer session). Not changed here.
 - Seeded and API-created designs have no thumbnail, so checkout/account lists show the placeholder icon (thumbnail generation is designer-owned).

@@ -411,3 +411,10 @@
   max-inline-size: 10.5rem;
   text-align: end;
 }
+
+/* Keyboard focus never lands under the sticky bar (WCAG 2.4.11) */
+@media (max-width: 1039px) {
+  :global(html):has(.actionBar) {
+    scroll-padding-block-end: 104px;
+  }
+}

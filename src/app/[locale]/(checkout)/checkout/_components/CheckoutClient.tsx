@@ -629,7 +629,7 @@ export function CheckoutClient(props: {
                     {placeErr}
                   </Banner>
                 ) : null}
-                <div className={selected ? styles.actionBar : undefined}>
+                <div className={selected ? styles.actionBar : undefined} data-sticky-action={selected ? "" : undefined}>
                   {selected ? (
                     <div className={styles.actionBarTotal}>
                       <button
