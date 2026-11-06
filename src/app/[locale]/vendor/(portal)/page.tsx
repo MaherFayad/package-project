@@ -197,8 +197,10 @@ export default async function VendorDashboard({ params }: { params: Promise<{ lo
                       <li key={s.key} className={styles.ChecklistItem}>
                         <Icon source={d.setup[s.key] ? <CircleCheck aria-hidden="true" /> : <Circle aria-hidden="true" />} tone={d.setup[s.key] ? "success" : "subdued"} />
                         {d.setup[s.key] ? (
-                          <Text as="span" tone="subdued" textDecorationLine="line-through">
+                          // CR-41: done = check icon + secondary text (strikethrough cuts Arabic letter joins).
+                          <Text as="span" tone="subdued">
                             {t(s.label)}
+                            <span className="visually-hidden">{` (${t("vendorPortal.dashboard.setupDone")})`}</span>
                           </Text>
                         ) : (
                           <Link url={s.url}>{t(s.label)}</Link>

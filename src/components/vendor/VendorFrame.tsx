@@ -81,7 +81,9 @@ export function VendorFrame({ locale, userName, vendor, awaitingCount, children 
               ],
             },
             {
+              // CR-64: a divider sets the secondary links apart from the main nav.
               pinned: true,
+              separator: true,
               items: [
                 { url: `/${locale}/vendors/${vendor.slug}`, label: t("vendorPortal.nav.publicProfile"), icon: ExternalLink, exactMatch: true },
                 { url: `/${locale}`, label: t("vendorPortal.nav.backToStore"), icon: Store, exactMatch: true },
@@ -115,8 +117,10 @@ export function VendorFrame({ locale, userName, vendor, awaitingCount, children 
         ) : undefined
       }
       userMenu={{
-        name: userName,
-        detail: vendor?.name ?? t("vendorPortal.topBar.account"),
+        // CR-28: the visible label is the printer's name in the UI language (Polaris shows the store,
+        // not the person); the staff account name is the secondary line.
+        name: vendor?.name ?? userName,
+        detail: vendor ? userName : t("vendorPortal.topBar.account"),
         actions: [
           {
             items: [
