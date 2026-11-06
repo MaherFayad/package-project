@@ -10,7 +10,8 @@ const PAGES = [
   { key: "vendors", path: "/vendors" }, { key: "legal", path: "/legal/privacy" }, { key: "login", path: "/login" },
   { key: "design", path: "/design" }, { key: "vendor-apply", path: "/vendor/apply" },
   { key: "account", path: "/account", role: "buyer" }, { key: "orders", path: "/orders", role: "buyer" },
-  { key: "admin", path: "/admin", role: "admin" }, { key: "vendor", path: "/vendor", role: "vendor" },
+  { key: "admin", path: "/admin", role: "admin" }, { key: "admin-quotes", path: "/admin/quotes", role: "admin" }, { key: "admin-disputes", path: "/admin/disputes", role: "admin" }, { key: "vendor", path: "/vendor", role: "vendor" },
+  { key: "checkout", path: "/checkout/" + (process.env.DESIGN_ID || ""), role: "buyer" }, { key: "share", path: "/s/" + (process.env.SHARE || "") },
 ];
 const PHONES = { buyer: "+201000000002", vendor: "+201000000010", admin: "+201000000001" };
 async function login(ctx, phone) {
@@ -26,7 +27,7 @@ async function login(ctx, phone) {
   const states = {};
   for (const role of Object.keys(PHONES)) { const c = await browser.newContext(); await login(c, PHONES[role]); states[role] = await c.storageState(); await c.close(); }
   const rows = [];
-  for (const pg of PAGES) for (const locale of ["ar", "en"]) for (const vp of [{ width: 390, height: 844 }, { width: 1440, height: 900 }]) {
+  for (const pg of PAGES) for (const locale of ["ar", "en"]) for (const vp of [{ width: 320, height: 640 }, { width: 390, height: 844 }, { width: 1440, height: 900 }]) {
     const ctx = await browser.newContext({ viewport: vp, storageState: pg.role ? states[pg.role] : undefined, reducedMotion: "reduce" });
     const page = await ctx.newPage();
     const errors = [];
