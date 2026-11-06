@@ -117,5 +117,6 @@ test("designer dialogs trap focus, close on Escape and return focus (2.1.2, 2.4.
   }
   await page.keyboard.press("Escape");
   await expect(dialog).toBeHidden();
-  await expect(opener, `page errors: ${errors.join(" | ")}`).toBeFocused();
+  const active = await page.evaluate(() => { const a = document.activeElement; return a ? `${a.tagName}#${a.id}.${String(a.className).slice(0, 40)} "${(a.getAttribute("aria-label") ?? a.textContent ?? "").slice(0, 30)}"` : "none"; });
+  await expect(opener, `focused: ${active}; page errors: ${errors.join(" | ")}`).toBeFocused();
 });

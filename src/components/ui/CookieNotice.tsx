@@ -47,16 +47,28 @@ export function CookieNotice() {
     // Scroll padding only helps when the browser scrolls. A control that is already inside the
     // viewport but under the notice gets focus without any scroll and stays hidden (2.4.11,
     // R4-K01: "Other quantity" at checkout on a 390 px phone). Move it clear of the notice.
+    // Keyboard focus only: scrolling between pointerdown and pointerup would move the target
+    // out from under the pointer and swallow the click (a pointer user can see what they hit).
+    let pointerDown = false;
+    const onPointerDown = () => (pointerDown = true);
+    const onPointerUp = () => (pointerDown = false);
     const onFocusIn = (e: FocusEvent) => {
       const target = e.target;
-      if (!(target instanceof HTMLElement) || el.contains(target)) return;
+      if (pointerDown || !(target instanceof HTMLElement) || el.contains(target)) return;
+      if (!target.matches(":focus-visible")) return;
       const n = el.getBoundingClientRect();
       const r = target.getBoundingClientRect();
       const covered = r.bottom > n.top && r.top < n.bottom && r.right > n.left && r.left < n.right;
       if (covered) window.scrollBy({ top: r.bottom - n.top + 16, behavior: "instant" as ScrollBehavior });
     };
+    document.addEventListener("pointerdown", onPointerDown, true);
+    document.addEventListener("pointerup", onPointerUp, true);
+    document.addEventListener("pointercancel", onPointerUp, true);
     document.addEventListener("focusin", onFocusIn);
     return () => {
+      document.removeEventListener("pointerdown", onPointerDown, true);
+      document.removeEventListener("pointerup", onPointerUp, true);
+      document.removeEventListener("pointercancel", onPointerUp, true);
       document.removeEventListener("focusin", onFocusIn);
       ro?.disconnect();
       root.style.removeProperty("--e-cookie-h");

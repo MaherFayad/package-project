@@ -223,5 +223,12 @@ describe("UI kit accessibility contracts", () => {
     window.scrollBy = scrollBy as unknown as typeof window.scrollBy;
     field.focus();
     expect(scrollBy).toHaveBeenCalledWith(expect.objectContaining({ top: 688 - 655 + 16 }));
+    // A pointer press never scrolls mid-click (it would move the target away from the pointer).
+    field.blur();
+    scrollBy.mockClear();
+    fireEvent.pointerDown(field);
+    field.focus();
+    fireEvent.pointerUp(field);
+    expect(scrollBy).not.toHaveBeenCalled();
   });
 });
