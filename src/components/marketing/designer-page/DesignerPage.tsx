@@ -7,6 +7,9 @@ import { JsonLd } from "@/components/store/JsonLd";
 import { faqJsonLd } from "@/components/store/jsonld";
 import { designHref, structureHref } from "@/components/store/catalog";
 import { HeroImage } from "../HeroImage";
+import { Sheet } from "../kit/Sheet";
+import { Display } from "../kit/Display";
+import { Pill } from "../kit/Pill";
 import { renderDims, renderSrc, srcSetFor } from "../assets";
 import { designerPageCopy, fill } from "./copy";
 import { LiveBox } from "./LiveBox";
@@ -122,7 +125,7 @@ export function DesignerPage(d: DesignerPageData) {
       <JsonLd data={faqJsonLd(faq)} />
 
       {/* ───────── 1. Hero ───────── */}
-      <section className={styles.hero} aria-labelledby="dp-hero-title">
+      <Sheet tone="navy" hero container={false} className={`${styles.canvas} ${styles.hero}`} aria-labelledby="dp-hero-title">
         <div className={styles.heroGrid} aria-hidden="true" />
         <div className={styles.heroGlow} aria-hidden="true" />
         <div className={`${styles.container} ${styles.heroInner}`}>
@@ -133,17 +136,19 @@ export function DesignerPage(d: DesignerPageData) {
             <h1 id="dp-hero-title" className={styles.eyebrow}>
               {c.hero.eyebrow}
             </h1>
-            <p className={styles.display}>{c.hero.title}</p>
+            <Display as="p" size="96" align="center">
+              {c.hero.title}
+            </Display>
             <p className={styles.lead}>{c.hero.body}</p>
           </div>
           <div className={styles.heroCtas}>
-            <Link href={startHref} className={styles.pillLight} prefetch={false}>
+            <Pill href={startHref} variant="light" prefetch={false}>
               {c.hero.cta}
               <ArrowRight size={18} className={styles.flip} aria-hidden />
-            </Link>
-            <a href="#dp-styles" className={styles.pillOutline}>
+            </Pill>
+            <Pill href="#dp-styles" variant="outline">
               {c.hero.secondary}
-            </a>
+            </Pill>
           </div>
           <p className={styles.small}>{c.hero.small}</p>
 
@@ -212,14 +217,14 @@ export function DesignerPage(d: DesignerPageData) {
             }}
           />
         </div>
-      </section>
+      </Sheet>
 
       {/* ───────── 2. Prompt bar ───────── */}
-      <section className={styles.prompt} aria-labelledby="dp-prompt-title">
+      <Sheet tone="navy" overlap={false} pad="none" container={false} className={`${styles.canvas} ${styles.prompt}`} aria-labelledby="dp-prompt-title">
         <div className={`${styles.container} ${styles.promptHead}`} data-reveal>
-          <h2 id="dp-prompt-title" className={styles.h2}>
+          <Display id="dp-prompt-title" size="64" align="center">
             {c.prompt.title}
-          </h2>
+          </Display>
           <p className={styles.lead}>{c.prompt.body}</p>
         </div>
         <div className={styles.violet}>
@@ -235,14 +240,14 @@ export function DesignerPage(d: DesignerPageData) {
             <p className={styles.promptNote}>{fill(c.prompt.note, { models: d.modelCount })}</p>
           </div>
         </div>
-      </section>
+      </Sheet>
 
       {/* ───────── 3. Style wall ───────── */}
-      <section id="dp-styles" className={styles.wall} aria-labelledby="dp-wall-title">
+      <Sheet tone="navy" overlap={false} pad="none" container={false} id="dp-styles" className={`${styles.canvas} ${styles.wall}`} aria-labelledby="dp-wall-title">
         <div className={`${styles.container} ${styles.wallHead}`} data-reveal>
-          <h2 id="dp-wall-title" className={styles.h2}>
+          <Display id="dp-wall-title" size="64" align="center">
             {c.wall.title}
-          </h2>
+          </Display>
           <p className={styles.lead}>
             {c.wall.body}{" "}
             <Link href={`${base}/catalog`} style={{ color: "#fff", textUnderlineOffset: 4 }} prefetch={false}>
@@ -251,20 +256,21 @@ export function DesignerPage(d: DesignerPageData) {
           </p>
         </div>
         <Rail variant="wall" label={c.wall.label} pause={c.wall.pause} play={c.wall.play} items={wall.map((s, i) => styleCard(s, i, false))} echo={wall.map((s, i) => styleCard(s, i, true))} />
-      </section>
+        <div className={styles.wallEnd} />
+      </Sheet>
 
       {/* ───────── 4-5. Light sheet: bento ───────── */}
-      <div className={`${styles.sheet} ${styles.lazySection}`}>
+      <Sheet tone="white" as="div" container={false} className={`${styles.sheet} ${styles.lazySection}`}>
         <div className={styles.container}>
           <section className={styles.bentoGroup} aria-labelledby="dp-make-title">
             <div className={styles.bentoHead} data-reveal>
-              <h2 id="dp-make-title" className={styles.h2Sheet}>
-                {c.make.title}
-              </h2>
-              <Link href={startHref} className={styles.pillDark} prefetch={false}>
+              <Display id="dp-make-title" size="56">
+            {c.make.title}
+          </Display>
+              <Pill href={startHref} variant="dark" prefetch={false}>
                 {c.make.cta}
                 <ArrowRight size={18} className={styles.flip} aria-hidden />
-              </Link>
+              </Pill>
               <p className={styles.lead}>{c.make.body}</p>
             </div>
             <ul className={`${styles.bento} ${styles.bentoWide}`} style={{ listStyle: "none", margin: 0, padding: 0 }}>
@@ -290,13 +296,13 @@ export function DesignerPage(d: DesignerPageData) {
 
           <section className={styles.bentoGroup} aria-labelledby="dp-share-title">
             <div className={styles.bentoHead} data-reveal>
-              <h2 id="dp-share-title" className={styles.h2Sheet}>
-                {c.share.title}
-              </h2>
-              <Link href={startHref} className={styles.pillDark} prefetch={false}>
+              <Display id="dp-share-title" size="56">
+            {c.share.title}
+          </Display>
+              <Pill href={startHref} variant="dark" prefetch={false}>
                 {c.share.cta}
                 <ArrowRight size={18} className={styles.flip} aria-hidden />
-              </Link>
+              </Pill>
               <p className={styles.lead}>{c.share.body}</p>
             </div>
             <ul className={styles.bento} style={{ listStyle: "none", margin: 0, padding: 0 }}>
@@ -327,14 +333,14 @@ export function DesignerPage(d: DesignerPageData) {
             </ul>
           </section>
         </div>
-      </div>
+      </Sheet>
 
       {/* ───────── 6. Trust trio ───────── */}
-      <section className={`${styles.trust} ${styles.lazySection}`} aria-labelledby="dp-trust-title">
+      <Sheet tone="navy" container={false} className={`${styles.canvas} ${styles.trust} ${styles.lazySection}`} aria-labelledby="dp-trust-title">
         <div className={styles.container}>
-          <h2 id="dp-trust-title" className={styles.h2Sheet} data-reveal>
+          <Display id="dp-trust-title" size="56">
             {c.trust.title}
-          </h2>
+          </Display>
           <ul className={styles.trustGrid} style={{ listStyle: "none", padding: 0 }}>
             {c.trust.cards.map((card, i) => (
               <li key={card.key} className={styles.trustCard} data-reveal style={{ ["--m-i" as string]: i }}>
@@ -390,14 +396,14 @@ export function DesignerPage(d: DesignerPageData) {
             ))}
           </ul>
         </div>
-      </section>
+      </Sheet>
 
       {/* ───────── 7. Materials and finishes wall ───────── */}
-      <section className={`${styles.materials} ${styles.lazySection}`} aria-labelledby="dp-mat-title">
+      <Sheet tone="navy" overlap={false} container={false} className={`${styles.canvas} ${styles.materials} ${styles.lazySection}`} aria-labelledby="dp-mat-title">
         <div className={styles.container}>
-          <h2 id="dp-mat-title" className={styles.h2Sheet} data-reveal>
+          <Display id="dp-mat-title" size="56">
             {fill(c.materials.title, { count: matCount })}
-          </h2>
+          </Display>
         </div>
         <Rail variant="materials" label={c.materials.label} pause={c.materials.pause} play={c.materials.play} items={matTiles(false)} echo={matTiles(true)} />
         <div className={styles.container}>
@@ -418,30 +424,30 @@ export function DesignerPage(d: DesignerPageData) {
             ))}
           </ul>
         </div>
-      </section>
+      </Sheet>
 
       {/* ───────── 8. Start carousel ───────── */}
-      <section className={styles.start} aria-labelledby="dp-start-title">
+      <Sheet tone="navy" overlap={false} container={false} className={`${styles.canvas} ${styles.start}`} aria-labelledby="dp-start-title">
         <div className={styles.container}>
           <div className={styles.startHead} data-reveal>
-            <h2 id="dp-start-title" className={styles.h2Sheet}>
-              {c.start.title}
-            </h2>
-            <Link href={startHref} className={styles.pillLight} prefetch={false}>
+            <Display id="dp-start-title" size="56">
+            {c.start.title}
+          </Display>
+            <Pill href={startHref} variant="light" prefetch={false}>
               {c.start.cta}
-            </Link>
+            </Pill>
             <p className={styles.small}>{c.start.body}</p>
           </div>
           <StartCarousel steps={c.start.steps} label={c.start.label} prev={c.start.prev} next={c.start.next} locale={locale} />
         </div>
-      </section>
+      </Sheet>
 
       {/* ───────── 9. FAQ ───────── */}
-      <section className={`${styles.faq} ${styles.lazySection}`} aria-labelledby="dp-faq-title">
+      <Sheet tone="dark" overlap={false} container={false} className={`${styles.faq} ${styles.lazySection}`} aria-labelledby="dp-faq-title">
         <div className={styles.container}>
-          <h2 id="dp-faq-title" className={styles.h2}>
+          <Display id="dp-faq-title" size="64">
             {c.faq.title}
-          </h2>
+          </Display>
           <div className={styles.faqList}>
             {faq.map((it) => (
               <details key={it.q} className={styles.faqItem}>
@@ -454,7 +460,7 @@ export function DesignerPage(d: DesignerPageData) {
             ))}
           </div>
         </div>
-      </section>
+      </Sheet>
     </div>
   );
 }

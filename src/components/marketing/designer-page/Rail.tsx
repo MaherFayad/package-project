@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { Pause, Play } from "lucide-react";
+import { IconPill } from "../kit/Pill";
 import styles from "./designer-page.module.css";
 
 /**
@@ -48,9 +49,9 @@ export function Rail({
       </div>
       {controls === "below" && !reduced ? (
         <div className={styles.wallBar}>
-          <button type="button" className={styles.iconBtn} onClick={() => setPaused((p) => !p)} aria-label={paused ? play : pause}>
+          <IconPill className={styles.iconBtn} onClick={() => setPaused((p) => !p)} aria-label={paused ? play : pause}>
             {paused ? <Play size={16} aria-hidden /> : <Pause size={16} aria-hidden />}
-          </button>
+          </IconPill>
         </div>
       ) : null}
     </div>

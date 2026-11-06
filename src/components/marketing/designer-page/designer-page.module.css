@@ -8,12 +8,13 @@
  */
 
 .page {
-  --dp-bg: #050917;
+  /* Kit tokens first (src/components/marketing/kit/tokens.css), literal fallbacks second. */
+  --dp-bg: var(--mk-band-navy-2, #050917);
   --dp-bg-2: #0b1124;
-  --dp-black: #000;
+  --dp-black: var(--mk-footer-bg, #000);
   --dp-text: #fff;
-  --dp-muted: rgba(255, 255, 255, 0.72);      /* 11.9:1 on --dp-bg */
-  --dp-line: rgba(255, 255, 255, 0.16);
+  --dp-muted: var(--mk-on-dark-muted, rgba(255, 255, 255, 0.7)); /* 12:1 on --dp-bg */
+  --dp-line: var(--mk-line-dark, rgba(255, 255, 255, 0.16));
   --dp-line-2: rgba(255, 255, 255, 0.24);
   --dp-lilac: #c4bffc;                         /* eyebrow, 11:1 on --dp-bg */
   --dp-violet: #5b3df5;
@@ -23,13 +24,13 @@
   --dp-ink-2: #4a4a55;                         /* 8.5:1 on the lilac card */
   --dp-card: linear-gradient(180deg, rgba(173, 149, 219, 0.2) 50%, rgba(229, 177, 175, 0.2) 50%);
   --dp-card-flat: #f4f0fa;
-  --dp-radius-sheet: 48px;
+  --dp-radius-sheet: var(--mk-radius-sheet, 48px);
   --dp-radius-card: 24px;
   --dp-radius-tile: 16px;
-  --dp-ease: cubic-bezier(0.4, 0, 0.2, 1);
-  --dp-ease-out: cubic-bezier(0.215, 0.61, 0.355, 1);
+  --dp-ease: var(--mk-ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+  --dp-ease-out: var(--mk-ease-out, cubic-bezier(0.215, 0.61, 0.355, 1));
   --dp-dur: 0.3s;
-  --dp-gutter: 16px;
+  --dp-gutter: var(--mk-gutter, 16px);
   --dp-display: clamp(3rem, 1.6rem + 5.6vw, 6rem);
   --dp-h2: clamp(2.25rem, 1.4rem + 3.2vw, 4rem);
   --dp-h2-sheet: clamp(2rem, 1.3rem + 2.8vw, 3.5rem);
@@ -51,7 +52,7 @@
   --dp-lh-display: 1.28;
   --dp-display: clamp(2.75rem, 1.5rem + 5vw, 5.5rem);
 }
-@media (min-width: 768px) { .page { --dp-gutter: 40px; } }
+
 
 .container {
   inline-size: 100%;
@@ -62,23 +63,6 @@
 
 /* ───────── Shared type + controls ───────── */
 .eyebrow { margin: 0; font-size: 1rem; font-weight: 550; letter-spacing: -0.01em; line-height: 1.5; color: var(--dp-lilac); }
-.display {
-  margin: 0;
-  font-size: var(--dp-display);
-  font-weight: 300;
-  line-height: var(--dp-lh-display);
-  letter-spacing: var(--dp-track-display);
-  text-wrap: balance;
-}
-.h2 {
-  margin: 0;
-  font-size: var(--dp-h2);
-  font-weight: 330;
-  line-height: var(--dp-lh-display);
-  letter-spacing: var(--dp-track-h2);
-  text-wrap: balance;
-}
-.h2Sheet { composes: h2; font-size: var(--dp-h2-sheet); }
 .lead { margin: 0; font-size: clamp(1.125rem, 1rem + 0.4vw, 1.25rem); line-height: 1.45; color: var(--dp-muted); text-wrap: pretty; max-inline-size: 60ch; }
 .small { margin: 0; font-size: 0.875rem; color: var(--dp-muted); }
 .num { font-variant-numeric: tabular-nums; unicode-bidi: isolate; }
@@ -91,23 +75,12 @@
   transition: background-color 0.15s var(--dp-ease), color 0.15s var(--dp-ease), border-color 0.15s var(--dp-ease), transform 0.15s var(--dp-ease);
 }
 .pill:active { transform: scale(0.97); }
-.pillLight { composes: pill; background: #fff; color: #000; }
-.pillLight:hover { background: #e9e7fd; }
-.pillOutline { composes: pill; background: transparent; color: #fff; border-color: rgba(255, 255, 255, 0.7); }
-.pillOutline:hover { background: rgba(255, 255, 255, 0.1); border-color: #fff; }
-.pillDark { composes: pill; background: #000; color: #fff; }
-.pillDark:hover { background: #2a2a33; }
 .pill svg { flex: none; }
 .page:dir(rtl) .flip { transform: scaleX(-1); }
 
-.iconBtn {
-  display: inline-grid; place-items: center; inline-size: 44px; block-size: 44px; border-radius: 9999px;
-  border: 1px solid var(--dp-line-2); background: rgba(5, 9, 23, 0.6); color: #fff; cursor: pointer;
-  transition: background-color 0.15s var(--dp-ease), border-color 0.15s var(--dp-ease);
-}
-.iconBtn:hover { background: rgba(255, 255, 255, 0.12); border-color: #fff; }
+/* Kit IconPill + the states it does not style. */
 .iconBtn:disabled { opacity: 0.4; cursor: default; }
-.iconBtnLight { composes: iconBtn; border-color: rgba(0, 0, 0, 0.3); background: #fff; color: #000; }
+.iconBtn:disabled:hover { background: rgba(0, 0, 0, 0.35); }
 
 .page :where(a, button, input, summary, [tabindex]):focus-visible {
   outline: 2px solid #fff;
@@ -118,13 +91,13 @@
 
 /* Reveals: [data-reveal] + style="--m-i" from motion.css / useReveal (shell's RevealScope). */
 
+/* Kit sheets carry the tone; the builder canvas is a flat navy black (measured rgb(5,9,23)),
+   flatter than the kit's navy band gradient. */
+.page .canvas[data-tone] { background: var(--dp-bg); }
+.page .faq[data-tone] { background: var(--dp-black); }
+
 /* ───────── 1. Hero ───────── */
-.hero {
-  position: relative;
-  padding-block: clamp(48px, 6vw, 96px) clamp(48px, 6vw, 80px);
-  isolation: isolate;
-  overflow: clip;
-}
+.hero { overflow: clip; }
 .heroGrid {
   position: absolute; inset: 0; z-index: -2; pointer-events: none;
   background-image:
@@ -220,8 +193,8 @@
 }
 
 /* ───────── 2. Prompt ───────── */
-.prompt { padding-block: clamp(64px, 8vw, 120px) 0; text-align: center; }
-.promptHead { display: grid; gap: 16px; justify-items: center; margin-block-end: 40px; }
+.prompt { text-align: center; }
+.promptHead { display: grid; gap: 16px; justify-items: center; padding-block-start: clamp(64px, 8vw, 120px); margin-block-end: 40px; }
 .promptHead .lead { margin-inline: auto; }
 .violet {
   position: relative; overflow: clip; isolation: isolate;
@@ -271,8 +244,9 @@
 .srOnly { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 /* ───────── 3. Style wall ───────── */
-.wall { padding-block: clamp(64px, 8vw, 120px) clamp(96px, 10vw, 140px); text-align: center; }
-.wallHead { display: grid; gap: 16px; justify-items: center; margin-block-end: 40px; }
+.wall { text-align: center; }
+.wallHead { display: grid; gap: 16px; justify-items: center; padding-block-start: clamp(64px, 8vw, 120px); margin-block-end: 40px; }
+.wallEnd { block-size: clamp(96px, 10vw, 140px); }
 .wallHead .lead { margin-inline: auto; }
 .wallBar { display: flex; justify-content: center; gap: 12px; align-items: center; margin-block-start: 28px; }
 .wallViewport {
@@ -303,13 +277,7 @@
 .stylePill::before { content: ""; inline-size: 6px; block-size: 6px; border-radius: 9999px; background: #fff; }
 
 /* ───────── 4-5. Light sheet + bento ───────── */
-.sheet {
-  position: relative; z-index: 1;
-  margin-block-start: calc(-1 * var(--dp-radius-sheet));
-  border-radius: var(--dp-radius-sheet) var(--dp-radius-sheet) 0 0;
-  background: var(--dp-sheet); color: var(--dp-ink);
-  padding-block: clamp(64px, 7vw, 112px) clamp(80px, 8vw, 128px);
-}
+.sheet { color: var(--dp-ink); }
 .sheet .lead { color: var(--dp-ink-2); }
 .bentoGroup + .bentoGroup { margin-block-start: clamp(80px, 9vw, 140px); }
 .bentoHead { display: grid; gap: 12px; margin-block-end: 40px; grid-template-columns: minmax(0, 1fr); align-items: end; }
@@ -392,7 +360,7 @@
 .qtyRow span[data-on] { background: #1f2124; color: #fff; border-color: #1f2124; }
 
 /* ───────── 6. Trust trio ───────── */
-.trust { padding-block: clamp(80px, 9vw, 128px) 0; }
+.page .trust[data-tone] { padding-block-end: 0; }
 .trustGrid { display: grid; gap: 16px; margin-block-start: 48px; grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 768px) { .trustGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .trustCard { display: grid; gap: 20px; align-content: start; padding: 16px 16px 28px; border-radius: 12px; border: 1px solid var(--dp-line); background: var(--dp-bg); }
@@ -412,7 +380,7 @@
 .payGrid span { display: flex; align-items: center; justify-content: center; gap: 6px; min-block-size: 52px; border-radius: 10px; background: #fff; color: #1f2124; font-weight: 600; font-size: 0.875rem; }
 
 /* ───────── 7. Materials wall ───────── */
-.materials { padding-block: clamp(80px, 9vw, 128px) 0; }
+.page .materials[data-tone] { padding-block-end: 0; }
 .matRail { margin-block: 40px; overflow-x: auto; scrollbar-width: none; mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); }
 .matRail::-webkit-scrollbar { display: none; }
 .matTrack { list-style: none; margin: 0; padding: 8px 0; display: flex; gap: 12px; inline-size: max-content; animation: dp-marquee 50s linear infinite; }
@@ -433,7 +401,7 @@
 .matGroups p { margin: 0; font-size: 0.875rem; color: var(--dp-muted); }
 
 /* ───────── 8. Start carousel ───────── */
-.start { padding-block: clamp(80px, 9vw, 128px) clamp(64px, 6vw, 96px); }
+
 .startHead { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); align-items: end; }
 @media (min-width: 768px) { .startHead { grid-template-columns: minmax(0, 1fr) auto; } .startHead .pillLight { grid-row: 1; grid-column: 2; } }
 .stepsViewport { margin-block-start: 40px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; scroll-behavior: smooth; }
@@ -446,7 +414,7 @@
 .stepNav { display: flex; gap: 12px; margin-block-start: 24px; }
 
 /* ───────── 9. FAQ ───────── */
-.faq { background: var(--dp-black); padding-block: clamp(80px, 9vw, 128px); }
+
 .faqList { margin: 48px auto 0; max-inline-size: 1080px; border-block-start: 1px solid var(--dp-line-2); interpolate-size: allow-keywords; }
 .faqItem { border-block-end: 1px solid var(--dp-line-2); }
 .faqItem summary {

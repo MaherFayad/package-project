@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { IconPill } from "../kit/Pill";
 import styles from "./designer-page.module.css";
 
 /**
@@ -56,12 +57,12 @@ export function StartCarousel({ steps, label, prev, next, locale }: { steps: str
         </ol>
       </div>
       <div className={styles.stepNav}>
-        <button type="button" className={styles.iconBtn} onClick={() => go(-1)} disabled={atStart} aria-label={prev}>
+        <IconPill className={styles.iconBtn} onClick={() => go(-1)} disabled={atStart} aria-label={prev}>
           {rtl ? <ArrowRight size={18} aria-hidden /> : <ArrowLeft size={18} aria-hidden />}
-        </button>
-        <button type="button" className={styles.iconBtn} onClick={() => go(1)} disabled={atEnd} aria-label={next}>
+        </IconPill>
+        <IconPill className={styles.iconBtn} onClick={() => go(1)} disabled={atEnd} aria-label={next}>
           {rtl ? <ArrowLeft size={18} aria-hidden /> : <ArrowRight size={18} aria-hidden />}
-        </button>
+        </IconPill>
       </div>
     </>
   );

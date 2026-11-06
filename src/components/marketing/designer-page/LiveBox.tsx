@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Pause, Play, Rotate3d } from "lucide-react";
 import type { HeroScene3DProps } from "../HeroScene3D";
+import { IconPill } from "../kit/Pill";
 import styles from "./designer-page.module.css";
 
 const loadScene = () => import("../HeroScene3D");
@@ -73,9 +74,9 @@ export function LiveBox({
               {labels.turn}
             </button>
           ) : null}
-          <button type="button" className={styles.iconBtn} onClick={() => setPlaying((p) => !p)} aria-label={playing ? labels.pause : labels.play}>
+          <IconPill className={styles.iconBtn} onClick={() => setPlaying((p) => !p)} aria-label={playing ? labels.pause : labels.play}>
             {playing ? <Pause size={16} aria-hidden /> : <Play size={16} aria-hidden />}
-          </button>
+          </IconPill>
         </div>
       </div>
     </div>
