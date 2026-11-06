@@ -35,6 +35,9 @@ export function middleware(req: NextRequest) {
     // Added by designer (R2-01): the design layout validates the model segment above its
     // hydration Suspense boundary, so an unknown model still answers a real 404.
     reqHeaders.set("x-elba-path", pathname);
+    // Added by designer (R8-01): the start page answers its storefront deep links with a real 307
+    // from above its Suspense boundary, so it needs the query too.
+    reqHeaders.set("x-elba-search", req.nextUrl.search);
     const res = NextResponse.next({ request: { headers: reqHeaders } });
     res.headers.set("x-elba-locale", first);
     if (cookieLocale !== first) {

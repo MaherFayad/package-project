@@ -383,3 +383,33 @@ Still owned elsewhere: R4-R1 (MarketingShell boundary, platform/marketing), R4-R
 - Lint and typecheck are clean. `npm test`: **85 files, 8,419 passed**. `npm run build` OK.
 - Playwright `designer` + `smoke` + `journey` + `checkout` + `catalogue` (`--workers=2`): **41 passed, 5 skipped**, 0 failed.
 - Hydration e2e, 16 × 2 projects: **32 / 32 passed**.
+
+# Round 8 (performance reopened R4-15 and R4-12)
+
+Base: main 0cc1957 merged in. The performance branch (`r4-performance` b0ee870) is **not in main yet**. A trial merge conflicted only in files outside designer scope (`[locale]/layout.tsx`, `font-preload.ts`, `fonts.ts`), where marketing and performance each built the same English-only Inter preload. I aborted it, so those are left for the integrator. The designer code follows its conventions: direct UI-kit imports in the touched files, and `fetchPriority="high"` on the hero poster. `three/dpr.ts` arrives with that merge, and `DesignerApp` takes it from there.
+
+## Findings (round 8, new)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R8-01 | medium | `/design?structure=…`, `/design?design=…` (storefront deep links) | Since R4-01 these deep links answered **200 with a `<meta http-equiv="refresh">`** instead of a 307: the page's `redirect()` ran inside the Suspense boundary, after the shell had streamed. Browsers still arrived, but crawlers, link checkers and storefront tooling saw a 200 page. | HTTP semantics; SEO | `startPageRedirect()` (new `designer/startRedirect.ts`) runs in the picker **layout**, above the boundary, using the query that `src/middleware.ts` now forwards as `x-elba-search` (one additive line). The page keeps the same check for soft navigations. | fixed: `?structure=FEFCO_0201` → **307** `/en/design/shipping-box`, `?design=abc` → 307 `…/mailer-box?d=abc`, size params kept |
+| R8-02 (= PERF R4-15) | high | `/design` phone LCP (`(picker)/layout.tsx`, `page.tsx`) | The hero (headline, stage, poster: the LCP element) streamed after the page's 370-card RSC payload. The poster was at byte 794 K of a 1 MB document. | LCP < 2.5 s | The hero and the resume card render in the **layout, above the boundary**. The page holds only the catalogue section, inside the boundary. The R4-01 boundary still sits between `<main>` and the page's payload read. | fixed: the poster is at byte **15.5 K** of 359 K, and LCP is now **FCP + 0.06 to 0.12 s** (phone, ISOLATE=1, 5 runs: ar 3.83–3.90 s with FCP 3.73–3.79 s, en 3.42–3.49 s with FCP 3.36–3.40 s). This base doesn't include the performance branch's FCP work (inline CSS, font preloads), so the absolute LCP has to be re-checked after that merge. With the payload ordering fixed, LCP follows FCP |
+| R8-03 (= PERF R4-12) | high | `/design` phone TBT / INP (`DesignStart`, `StartViewer`) | TBT and INP over budget on the phone profile. | INP < 200 ms | Before tapping Play (R6-01), the page does no 3D work: the hand-replayed tool taps showed no long task over 200 ms during load in ar and one 213 ms task in en, and the chip and tab handlers take under 12 ms. Added this round: the hero turns at about 30 fps (one demand-rendered frame per 33 ms, not every display frame) and draws at 1x on touch screens. | **passive page within budget.** Runs where the 3D view hadn't loaded before the tool's last interaction (JS ≈ 440 KB): INP 104–136 ms, TBT 0.43–0.54 s. **Still over after Play**: perf-pages taps the hero's Play button, which loads the 3D view (two 450–550 ms startup tasks). The tool's next key press then waits: INP 264–760 ms, TBT 1.1–1.4 s, in both locales, with or without the frame cap and 1x canvas. That startup work is the engine's (R6-R1: yield between import, scene build and first render; `compileAsync`) |
+
+Hydration: 40 cold loads (a fresh browser per load: `/ar/design` + `/en/design`, desktop + Pixel 5, 10 rounds), **0 errors**. The e2e hydration test repeated 16 × 2: **32 / 32 passed**.
+
+Files touched outside scope: `src/middleware.ts` (one line, `x-elba-search`, R8-01).
+
+## Verification (round 8)
+
+- Lint and typecheck are clean. `npm test`: **89 files, 8,494 passed**. `npm run build` OK.
+- Playwright `designer` + `smoke` + `journey` + `checkout` + `catalogue` + `storefront` (`--workers=2`): **57 passed, 5 skipped**, 0 failed.
+
+## Counts (round 8, new findings before fixing)
+
+| severity | found | fixed | open |
+|---|---|---|---|
+| critical | 0 | 0 | 0 |
+| high | 2 (R8-02, R8-03; both reopened by performance) | 1 fully (R8-02), 1 for the passive page (R8-03) | R8-03 after Play → 3d-engine R6-R1 |
+| medium | 1 (R8-01) | 1 | 0 |
+| low | 0 | 0 | 0 |

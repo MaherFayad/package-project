@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getT, toLocale } from "@/i18n";
-import { BlockStack, Box, EmptyState, EmptyBoxIllustration, Text } from "@/components/ui";
-import { designerPath, structureFromParam } from "@/components/designer/lib/catalog";
+import { BlockStack, Box } from "@/components/ui/Stack";
+import { EmptyState, EmptyBoxIllustration } from "@/components/ui/EmptyState";
+import { Text } from "@/components/ui/Text";
 import { loadPickerStructures } from "@/components/designer/server";
-import { ResumeCard } from "@/components/designer/ResumeCard";
-import { DesignStart } from "@/components/designer/DesignStart";
+import { startPageRedirect } from "@/components/designer/startRedirect";
 import { ModelLinks } from "@/components/designer/ModelLinks";
 import { MODELS } from "@/lib/library";
 import Link from "next/link";
@@ -34,32 +34,14 @@ export default async function DesignPickerPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const locale = toLocale((await params).locale);
-  // Storefront deep links (designHref in src/components/store/catalog.ts):
-  // ?structure=CODE&L=&W=&H=&material=&vendor= opens the editor; ?design=<id> opens a saved design.
-  const sp = await searchParams;
-  const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
-  const linkCode = one(sp.structure) ? structureFromParam(one(sp.structure)!) : null;
-  const designId = one(sp.design);
-  if (designId) redirect(designerPath(locale, linkCode ?? "FEFCO_0427", { d: designId }));
-  if (linkCode) {
-    redirect(
-      designerPath(locale, linkCode, {
-        L: one(sp.L),
-        W: one(sp.W),
-        H: one(sp.H),
-        material: one(sp.material),
-        vendor: one(sp.vendor),
-      }),
-    );
-  }
+  // Deep links: the layout already redirected on a full load; this covers soft navigations.
+  const to = startPageRedirect(locale, await searchParams);
+  if (to) redirect(to);
   const t = getT(locale);
   const structures = await loadPickerStructures();
 
+  // The hero and the resume card render in the layout, above the Suspense boundary (R8-02).
   return (
-    <div className={styles.startPage}>
-        <ResumeCard locale={locale} />
-        <DesignStart locale={locale} />
-
         <section aria-labelledby="styles-heading" className={styles.startCatalog}>
           <BlockStack gap="300">
             <BlockStack gap="100">
@@ -84,6 +66,5 @@ export default async function DesignPickerPage({
             )}
           </BlockStack>
         </section>
-    </div>
   );
 }
