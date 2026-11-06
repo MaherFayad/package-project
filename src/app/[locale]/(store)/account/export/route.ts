@@ -34,9 +34,16 @@ export async function GET(req: Request) {
     },
   });
   if (!user) return Response.json({ error: "UNAUTHORIZED" }, { status: 401 });
-  const requests = await db.dataRequest.findMany({ where: { userId }, orderBy: { createdAt: "asc" } });
+  const [requests, payments] = await Promise.all([
+    db.dataRequest.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }),
+    db.payment.findMany({ where: { order: { buyerId: userId } }, orderBy: { createdAt: "asc" }, include: { order: { select: { number: true } } } }),
+  ]);
   const now = new Date();
-  const doc = buildDataExport({ user, organization: user.organization, consents: user.consents, designs: user.designs, orders: user.orders, reviews: user.reviews, requests, quotes: user.quotes, disputes: user.disputes, sessions: user.sessions }, now);
+  const doc = {
+    ...buildDataExport({ user, organization: user.organization, consents: user.consents, designs: user.designs, orders: user.orders, reviews: user.reviews, requests, quotes: user.quotes, disputes: user.disputes, sessions: user.sessions }, now),
+    // R8-03 (PDPL right of access): payments. Method, amount and status only: Elba never sees or stores card numbers.
+    payments: payments.map((p) => ({ order: p.order.number, method: p.method, status: p.status, amountPiasters: p.amountPiasters, createdAt: p.createdAt.toISOString() })),
+  };
   await db.dataRequest.create({ data: { userId, kind: "EXPORT", status: "COMPLETED", completedAt: now, ip: clientIp(req.headers) } });
 
   return new Response(JSON.stringify(doc, null, 2), {

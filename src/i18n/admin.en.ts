@@ -447,6 +447,8 @@ export const adminEn = {
       order: "Order",
       openOrder: "Open order",
       qcPhotos: "QC photos on file",
+      buyerPhotos: "Buyer's photos ({count})",
+      buyerPhoto: "Buyer's photo {n}",
       decisionTitle: "Decision",
       refundConfirmTitle: "Refund this order?",
       refundConfirmBody: "The full amount goes back to the buyer through the payment provider and the dispute closes. This cannot be undone.",
