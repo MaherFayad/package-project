@@ -30,7 +30,7 @@ import type { AdminOrderRow } from "../lib/orders";
 import { adminPayoutStatus, needsAction } from "../lib/payouts";
 import { contactFlags } from "../lib/moderation";
 import { FUNNEL_STEPS as EVENT_FUNNEL_STEPS, loadShareLoop } from "@/lib/analytics/funnel";
-import { eventFunnel, visitorToPaid } from "../lib/events";
+import { cohortFunnel, eventFunnel, visitorToPaid } from "../lib/events";
 import { isOverdue, leadState, replyDueAt, type LeadState } from "../lib/quoteLeads";
 import { PRICED_FOLLOW_UP_HOURS } from "../lib/quotePricing";
 import { listQuoteRequests, QUOTE_ACCEPTED, QUOTE_PRICED, QUOTE_REQUESTED, quoteCheckoutPath } from "@/lib/orders/quote-requests";
@@ -66,16 +66,12 @@ const metricSelect = {
  */
 async function loadCustomerEventFunnel(w: { from: Date; to: Date }): Promise<Record<(typeof EVENT_FUNNEL_STEPS)[number], number>> {
   const staff = (await db.user.findMany({ where: { role: { in: ["ADMIN", "VENDOR"] } }, select: { id: true } })).map((u) => u.id);
-  const counts = await Promise.all(
-    EVENT_FUNNEL_STEPS.map(async (name) => {
-      const rows = await db.event.findMany({
-        where: { name, at: { gte: w.from, lt: w.to }, OR: [{ userId: null }, { userId: { notIn: staff } }] },
-        select: { userId: true, anonId: true, id: true },
-      });
-      return new Set(rows.map((r) => r.userId ?? (r.anonId ? `a:${r.anonId}` : `e:${r.id}`))).size;
-    }),
-  );
-  return Object.fromEntries(EVENT_FUNNEL_STEPS.map((s, i) => [s, counts[i]])) as Record<(typeof EVENT_FUNNEL_STEPS)[number], number>;
+  // R5-JR-13: one query, then the visitor-cohort rule (see cohortFunnel).
+  const rows = await db.event.findMany({
+    where: { name: { in: [...EVENT_FUNNEL_STEPS] }, at: { gte: w.from, lt: w.to }, OR: [{ userId: null }, { userId: { notIn: staff } }] },
+    select: { name: true, userId: true, anonId: true },
+  });
+  return cohortFunnel(rows, EVENT_FUNNEL_STEPS) as Record<(typeof EVENT_FUNNEL_STEPS)[number], number>;
 }
 
 export async function loadOverview(range: RangeKey, now = new Date()) {

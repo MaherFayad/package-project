@@ -144,7 +144,7 @@ export const adminEn = {
     ops: { title: "Operations", metric: "Metric", value: "Value", definitions: "Definitions" },
     events: {
       title: "Visitor funnel (tracked events)",
-      description: "People at each step in the selected period, from first-party events (launch metrics). Elba and vendor staff are left out.",
+      description: "People who visited in the selected period, and how far each got (a step counts everyone who reached it or a later one). From first-party events (launch metrics); a visitor who later signs in is one person. Elba and vendor staff are left out.",
       caption: "Visitor funnel by step",
       conversion: "Visitor to paid: {pct}",
       conversionHelp: "Paying buyers out of unique visitors. Plan target for B2B small businesses: 2 to 4% (an assumption to replace with our own baseline).",
