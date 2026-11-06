@@ -84,8 +84,9 @@
 .card[aria-current="true"] { border-color: var(--p-color-border-focus); box-shadow: 0 0 0 1px var(--p-color-border-focus); }
 .thumb { display: block; aspect-ratio: 1; border-radius: var(--p-border-radius-200); background: var(--p-color-bg-surface-secondary, #f7f7f7); overflow: hidden; }
 .thumb img { inline-size: 100%; block-size: 100%; object-fit: contain; padding: 6%; }
-.name { font-size: var(--p-font-size-325); font-weight: var(--p-font-weight-semibold); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.meta { display: flex; flex-wrap: wrap; gap: var(--p-space-100); align-items: flex-end; align-self: end; min-inline-size: 0; }
+/* a11y R4-05 (WCAG 1.4.12): names wrap, never clamped, so text spacing cannot cut them. */
+.name { font-size: var(--p-font-size-325); font-weight: var(--p-font-weight-semibold); line-height: 1.3; overflow-wrap: anywhere; }
+.meta { display: flex; flex-wrap: wrap; gap: var(--p-space-100); align-items: center; justify-content: space-between; min-inline-size: 0; }
 .std { font-size: var(--p-font-size-300); color: var(--p-color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-inline-size: 100%; }
 .empty { color: var(--p-color-text-secondary); text-align: center; padding-block: var(--p-space-800); }
 .empty p { margin: 0; }

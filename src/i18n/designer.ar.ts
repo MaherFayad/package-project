@@ -56,10 +56,11 @@ export const designerAr: Dictionary["designer"] = {
     face: "الوجه",
     dieline: "القالب",
     fold: "الطي",
-    flat: "مسطحة",
+    adjust: "ضبط العرض",
+    flat: "فرد",
     half: "نصف طي",
-    closed: "مغلقة",
-    assembled: "مجمعة",
+    closed: "طي كامل",
+    assembled: "تجميع كامل",
     foldValue: "الطي {pct}%",
     loading: "جار تحميل العرض ثلاثي الأبعاد",
     faceEditorLabel: "محرر التصميم للوجه {face}",
@@ -284,6 +285,10 @@ export const designerAr: Dictionary["designer"] = {
     retry: "إعادة المحاولة",
     suggestion: "المقاس القياسي {dims} يناسب منتجك: وفر {pct}% واستلم قبل الموعد بفارق {days:day}.",
     useSuggestion: "استخدام هذا المقاس",
+    quoteBadge: "التسعير بعرض سعر: عرض السبب",
+    quoteHeading: "طلب عرض سعر",
+    quoteTitle: "يسعر هذا النموذج بعرض سعر",
+    quoteAction: "طلب عرض سعر",
   },
   gate: {
     title: "إنشاء حسابك المجاني",
@@ -319,6 +324,7 @@ export const designerAr: Dictionary["designer"] = {
     copied: "تم نسخ الرابط",
     creating: "جار إنشاء الرابط",
     failed: "تعذر إنشاء الرابط. حاول مرة أخرى.",
+    copyFailed: "تعذر النسخ. حدد الرابط وانسخه.",
     open: "فتح",
   },
   flex: {
@@ -338,12 +344,13 @@ export const designerAr: Dictionary["designer"] = {
   /** العبوات (زجاجات وبرطمانات وعلب صفيح وأكياس وأنابيب): النصوص نفسها دون كلمة علبة (R2-04). */
   container: {
     untitled: "تصميم بدون اسم",
-    order: "اطلب هذا التصميم",
+    order: "طلب هذا التصميم",
     badgeLocked: "{qty:piece}: اعرف السعر",
     badge: "{qty:piece} من {price} للقطعة دون الضريبة · التوصيل خلال {days:day}",
     unavailable: "السعر غير متاح لهذا التصميم بعد",
     perPiece: "سعر القطعة",
     collapse: "تكبير عرض النموذج",
+    shareBody: "يمكن لأي شخص لديه هذا الرابط عرض التصميم ثلاثي الأبعاد دون تعديله.",
   },
   order: {
     button: "طلب هذه العلبة",
@@ -373,5 +380,9 @@ export const designerAr: Dictionary["designer"] = {
     printing: "الطباعة",
     notFoundTitle: "الرابط غير موجود",
     notFoundBody: "رابط المشاركة غير صالح أو أوقفه صاحبه.",
+    subtitleDesign: "تصميم عبوة مشترك",
+    sizeVessel: "المقاس",
+    printMaterial: "خامة الطباعة",
+    model: "النموذج",
   },
 };

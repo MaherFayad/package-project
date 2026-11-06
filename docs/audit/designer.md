@@ -206,3 +206,95 @@ Base: `main` (platform, admin, checkout, catalogue, engine) merged with the roun
 - `npm run lint` and `npm run typecheck` are clean. `npm test`: 8,282 passed (new: `flex-options.test.ts`; `storage-quote-catalog.test.ts` now expects the headline offer). `npm run build` OK.
 - axe-core: 0 violations on the start page (en 1440, ar 390), the box editor (ar 1440) and the pouch editor (en 390). No console errors, no horizontal scroll. Screenshots: `docs/screenshots/audit/designer/r3/`.
 - Playwright `designer` + `smoke` + `journey` (`--workers=2 --trace off`): 16 passed, 1 skipped, 1 failed. All 5 designer tests pass on desktop and mobile, including **"designer pages hydrate without errors"** and the PERF-09 canvas test. The failure is `journey` on desktop at the vendor step "Submit for quality check" (button stays disabled after the QC photo upload), outside designer scope; the design, gate, price and checkout steps before it pass.
+
+# Round 4
+
+Base: `main` at 781d663 (rounds 1 to 3 merged). Method: `next build && next start` (`OTP_DEV_ECHO=1`, `ALLOW_MOCK_PAYMENTS=1`), Playwright ar + en, 390 × 844 (touch) and 1440 × 900, no account and signed in, keyboard, axe-core (wcag2a/aa, 21aa, 22aa), `docs/audit/tools/perf-pages.mjs`. For the hydration lead, a temporary probe was patched into the built React DOM chunk (`throwOnHydrationMismatch`: logs the failing fiber's ancestry and the hydration cursor). It was never committed, and the final build has no probe. Screenshots are in `docs/screenshots/audit/designer/r4/`.
+
+## Round 3 rows re-verified in the browser
+
+| id | check (round 4) | result |
+|---|---|---|
+| R2-01 (#418 editor) | The e2e "designer pages hydrate without errors" was repeated 8, 32 and 24 times on the base. Every failure (3 in 120 runs) was on **`/en/design`, the start page**. The editor had none. | editor still fixed. The start page had the same defect, now R4-01 |
+| B-26 / B-02 badge | Signed in, mailer: "500 boxes from EGP 40.06 each excl. VAT · delivered in 10 days" / "500 علبة من 40.06 ج.م للعلبة دون الضريبة · التوصيل خلال 10 أيام". The headline offer and counted forms are correct ("10 أيام" is right for 3 to 10). | still fixed |
+| CR-20 / CR-21 / CR-63 | The amount ticks on its own, the chip loads with a shimmer bar, and the chip is 32 px. | still fixed |
+| B-22 / B-03 | The standard PNG carries the mark. The export modal has "Order this box" and the toast offers the order action. **However, the PNG also carried the "Your logo here" hint** (R4-10). | mark: still fixed. Hint: R4-10 |
+| E-08 | The pouch editor shows "Pack options" with only the allowed options. | still fixed |
+| CR-11 | Arabic size helpers read "80–600" and "25–250". | still fixed |
+| CR-47 / CR-58 | The face select has its label above and the value only inside. | still fixed |
+| X-04 / X-05 | The top bar link is named "علبة الرئيسية" / "Elba Home", and panel headings are h2. axe finds 0 violations. | still fixed |
+| X-07 | The live region announces position and size after keyboard moves. | still fixed |
+| B-17 | The gate's step 1 copy says you choose about offers on the next step. | still fixed |
+| Route split | `/en/design` 200 with the white header, `/en/design/mailer-box` 200 with the dark bar, `/en/design/no-such` **404**. | still fixed |
+| `measureText` lead | `measureText` / `fitTextBox` are called only in the add-text and layer-change handlers (`DesignerApp.tsx`). No render or `useMemo` path reads them. `resolveFont` is passed as a function and only called while painting canvases inside effects. | no render path depends on it. Guarded by R4-09 |
+
+axe-core round 4: **0 violations** on the start page, box editor, pouch editor, artwork tab, text added and gate, in ar and en, at 390 and 1440. No console errors and no horizontal scroll.
+
+## Findings (round 4)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R4-01 | high | `/design` start page (`design/(picker)/layout.tsx`) | **Intermittent React #418 ("HTML") on the start page.** It failed in 3 of 120 repeated runs of the hydration e2e on the base (mobile 2/16, desktop 1/48). The probe named the failing fiber `main` (`marketing_main`, from `MarketingShell`) while the hydration cursor was already inside it on `<div class="designer_startPage">`. This is the R2-01 signature: the page segment reads its RSC payload with `use()`, and nothing sits between `<main>` and that read. React threw away the server HTML and re-rendered the document on the client, which loses scroll and focus. | WCAG 4.1.2, 2.4.3 | `<Suspense>` directly inside `<main>` in the picker layout. The page now streams into it within the same response, so the fallback is a `min-block-size: 100dvh` block: the footer never paints above the fold and then jumps. | fixed: **0 failures in 128 runs** after (64 with the probe, 64 on the final build). CLS 0.000 before and after. LCP/TBT unchanged against a base build measured side by side |
+| R4-02 | medium | editor top bar (`DesignerTopBar.tsx`) | "Sign in" in the editor always used `next=/design`. A visitor who signed in from the top bar landed on the start page and lost the editor and their `?d=` design. | ISO 9241-110 (controllability), WCAG 3.3.7 (redundant entry) | New client `TopBarSignIn` (in `TopBarLanguage.tsx`) carries the live path and query, read on click because `?d=` is written with `replaceState`. The server fallback is the old link. | fixed: `login?next=%2Fen%2Fdesign%2Fmailer-box` |
+| R4-03 | medium | quote-only and preview models (`DesignerApp.tsx`, `Modals.tsx`) | On quote-only and preview models (for example the aerosol can), the toolbar said "Request a quote", but the export modal's secondary action and the "Image downloaded" toast said "Order this design". The quote copy was also hard-coded with `locale === "ar" ? … : …` in four places, outside the dictionary. | consistency (ISO 9241-110), i18n | One `orderLabel` (quote or order) for the toolbar, export modal and toast. Keys `designer.price.quoteBadge / quoteHeading / quoteTitle / quoteAction`. Arabic uses the noun form "طلب عرض سعر" and "التسعير بعرض سعر: عرض السبب" in place of the imperative "اطلب عرض سعر" and "اضغط للتفاصيل". The quote state now shows the tag icon, not the lock icon (it is not gated). | fixed (`after-aerosol-export-*.png`) |
+| R4-04 | medium | share modal (`Modals.tsx`) | A spinner showed while the link was being created. Every other loading state in the designer uses a skeleton (CR-21). | skeletons over spinners; WCAG 4.1.3 | A `role="status"` `aria-busy` skeleton with "Creating link" as its text. | fixed (`after-share-loading-ar.png`) |
+| R4-05 | low | `DesignerApp.applyGeometry` | The "Removed finishes" toast joined the names with the Arabic comma "،" in English too. | localisation | Use "، " in ar and ", " in en. | fixed |
+| R4-06 | low | share modal | When the clipboard was blocked (permissions, insecure origin), "Copy link" did nothing with no feedback. Focusing the read-only link did not select it either. | WCAG 3.3.1 (error identification), 4.1.3 | Visible and announced "Could not copy. Select the link and copy it." / "تعذر النسخ. حدد الرابط وانسخه.". Focusing the link selects all of it. | fixed (`after-share-copy-en.png`) |
+| R4-07 | low | export file name | An Arabic design name slugged to an empty string and the file fell back to `elba-box-1080.png`, even for a bottle. | — | Fall back to the model slug (`elba-mailer-box-1080.png`, `elba-stand-up-pouch-…`). | fixed |
+| R4-08 | medium | editor, phone, sheet open (`designer.module.css`) | The open sheet (72dvh), the toolbar, the price row and the stage's 12rem floor added up to 968 px on an 844 px phone. After "Add text" the page scrolled 124 px and the sticky top bar covered the 3D/Face/Dieline switch and the "Panel" label. | WCAG 2.4.11 (focus not obscured), 1.4.10 | The open sheet height is `min(72dvh, 100dvh − top bar − 21rem)`, and the panel scrolls inside itself. | fixed: page scrollHeight 844 = viewport, scrollY 0 (`before-phone-sheet-overflow-en-390.png` → `after-phone-sheet-en-390.png`) |
+| R4-09 | low | `fonts.ts` (hydration lead) | `measureText` estimates on the server and measures with canvas in the browser, and the result changes when the webfont loads. It is safe today because only event handlers call it, but nothing stops a render path from starting to. | WCAG 4.1.2 (robust) | Doc comment on the contract and a unit guard (`measure-text-usage.test.ts`): only `DesignerApp`'s add-text and layer-change handlers may call `measureText` / `fitTextBox`. | fixed |
+| R4-10 | high | export PNG and saved thumbnails (`DesignerApp.exportPng`, `saveToServer`) | **Exported mockups carried the "شعارك هنا" / "Your logo here" hint** whenever the outside had no artwork yet. A visitor exporting a plain kraft box to post got a placeholder on it. Saved design thumbnails had it too. CR-15 says the hint is preview-only. | content accuracy; business plan §1.3 social loop | `shoot()`: when the outside is still empty, it repaints the sheet without the hint, waits for the texture version and two frames, takes the screenshot, then restores the hint. The export and the thumbnail both use it. | fixed (`after-export-ar.png`: plain box with the mark) |
+| R4-11 | high | start page, phone (`DesignStart.tsx`, `StartViewer.tsx`) | **Phone LCP 11.2 to 12.9 s** (perf-pages phone profile). The hero's SVG poster painted at about 2 s. When the 3D chunk mounted, the engine painted its own, larger poster `div` at about 6 s, which became the LCP element. | LCP < 2.5 s budget | One poster `<img>` stays mounted from the first paint and fades out (200 ms, off under reduced motion) when the viewer reports its first frame. The engine gets no `poster`, so no later, larger candidate appears. | fixed: phone LCP **4.0 to 4.6 s** (ar/en), CLS 0. What remains is the Slow 4G profile's FCP of 3.3 to 3.9 s, which is platform-wide (CR-43 / round 3 note) |
+| R4-12 | high | editor, phone (`DesignerApp.tsx`, `[structure]/page.tsx`) | **Phone LCP 10.5 to 11.1 s.** The editor's server HTML was an empty skeleton until the family pack loaded. The stage poster then painted at about 6.1 s, followed by the engine's larger poster `div` at about 6.3 s. | LCP < 2.5 s budget | The page passes `posterSlug`, and the loading skeleton in the server HTML shows the model's poster. The engine no longer gets its own poster, because the stage `<img>` overlay already covers it until the first frame. | fixed: in the LCP harness (Pixel 5, 4x CPU, 150 ms RTT) the LCP element is the poster at **2.1 s** (was 6.3 s) |
+
+### Reported to other owners (not edited)
+
+| id | owner | finding | suggested fix |
+|---|---|---|---|
+| R4-R1 | platform / marketing (`MarketingShell.tsx`) | Every page in `MarketingShell` has the R4-01 structure (`<main>{children}</main>`, no boundary). The designer start page now has its own boundary, but home, boxes, catalogue, share and account pages can hit the same intermittent #418. | Put the boundary in `MarketingShell` (`<main><Suspense fallback={<div style={{minBlockSize:"100dvh"}}/>}>{children}</Suspense></main>`), then repeat each page's hydration check. |
+| R4-R2 | 3d-engine (`PackagingScene` `poster`) | The engine's poster is a full-bleed `div` that paints after the JS chunk. Any page that already shows its own poster (share viewer, marketing hero) gets a second, larger LCP candidate seconds later. | Document "pass `poster` only when the page has none", or render the engine poster in the server HTML. |
+
+## Files touched outside scope
+
+None. `src/app/[locale]/design/(editor)/[structure]/page.tsx` (one prop) and the i18n `designer.*` keys are inside scope.
+
+## Verification (round 4)
+
+- `npm run lint` and `npm run typecheck` are clean. `npm test`: **80 files, 8,297 tests passed** (new: `measure-text-usage.test.ts`). `npm run build` OK.
+- Playwright (`--workers=2 --trace off`): `designer` + `smoke` + `journey`: **17 passed, 1 skipped** (journey's own desktop-only skip), 0 failed.
+- Hydration e2e repeated: before, **3 failed in 120** (all `/en/design`). After, **0 in 128**: 64 on the probe build and 64 on the final build.
+- perf-pages, start page: phone LCP 11.3–12.9 s → **4.0–4.6 s**, CLS 0.000. Desktop LCP 0.58–0.68 s, unchanged.
+- The rest of the fixes were checked in the browser: export PNG, share modal states, quote-only labels, phone sheet, top bar sign-in link, ar and en.
+
+## Counts (round 4, new findings, before fixing)
+
+| severity | found | fixed | open |
+|---|---|---|---|
+| critical | 0 | 0 | 0 |
+| high | 4 (R4-01, R4-10, R4-11, R4-12) | 4 | 0 |
+| medium | 4 (R4-02, R4-03, R4-04, R4-08) | 4 | 0 |
+| low | 4 (R4-05, R4-06, R4-07, R4-09) | 4 | 0 |
+
+Plus 2 items reported to other owners (R4-R1, R4-R2). This round found medium-or-worse issues, so the designer area needs another round.
+
+## Round 5 rows (integrator request, `docs/audit/ROUND5.md` at 553e407, merged)
+
+| id | severity | where | finding | fix | status |
+|---|---|---|---|---|---|
+| R4-CR-11 | medium | editor, phones (`DesignerApp.tsx`, `designer.module.css`) | The stage header, a 7-button control row and the fold row were stacked, so the canvas was about 170 px tall and the model filled about 30 % of it (a bottle about 40 px wide). The Face select appeared twice. | Phones, portrait, sheet down: the stage is `minmax(46dvh, 1fr)` and the closed sheet takes the rest (at least 10rem). The seven view buttons became one "Adjust view" / "ضبط العرض" menu (7 menu items, stays open between taps, Escape closes it; drag plus the menu meets 2.5.7) in the fold row, so there is one control row. Under 490 px the stage header has no Face select (the Artwork panel has it). In landscape the row keeps only the menu. | fixed. At 390 × 844 the canvas is **294 px** (was about 170), stage 412 px (≥ 46dvh = 388), page height = viewport. Model bounding box (shadow included): mailer 82 % × 69 %, bottle 90 % of the height, pouch 85 % of the height (`after-r5-stage-*.png`, `after-r5-view-menu-ar-390.png`, `after-r5-landscape-en.png`) |
+| R4-CR-18 | low | ar fold and closure labels | Two grammars: "مسطحة / نصف طي / مغلقة" and "إغلاق / فتح". | Box: "فرد · نصف طي · طي كامل" (open-top: "تجميع كامل"). Vessel: "غلق · فتح · دوران تلقائي". | fixed |
+| R4-B-01 (designer half) | critical | share page (`s/[id]/page.tsx`) | The share page named and linked the base structure: the badge and "Style" said "Straight tuck end carton" for an aseptic brick, "Design your own" opened the base structure, and the CTA said "Order this box" even for quote-only models. | The page uses the library model: its name in the badge, title and "Style", a new "Model" row with the code, the model's poster, and "Design your own" / "Open design" link to the model. The CTA is "Request a quote" / "طلب عرض سعر" for quote and preview models, and "Order this design" for containers. Its checkout URL carries `&model=<code>` for checkout's server guard (checkout session). Containers show their own size ("Ø 52 × 160 mm", or W × G × H for pouches) and "Print material", not the label sheet's "100 × 1 × 100 mm" and "Board". | fixed, designer half (`after-r5-share-aerosol-*.png`). The fork copy and the server guard belong to checkout |
+| R4-24 | medium | start page hero (`DesignStart.tsx`, `StartViewer.tsx`) | The hero 3D turned all the time. | One bounded turn: it stops after a full turn or 8 s of real time (frames are capped, but the budget uses wall time, so a slow GPU still stops at 8 s), then rests. Hovering the stage (mouse) or hovering / focusing a product shortcut starts another turn. Pause, a drag or focus inside the viewer stops it until Play, and Play turns until Pause. Under `prefers-reduced-motion` it never starts by itself. WCAG 2.2.2, 2.3.3. | fixed. Measured: playing at 6 s, resting at 8 s, a hover restarts it, resting again 10 s later. Reduced motion stays at rest after a hover |
+
+Out of scope by assignment: `src/app/[locale]/s/[id]/page.tsx` (share page, designer half of R4-B-01) and `src/i18n/library.ar.ts` (`panel.closeClosure`, used only by the designer).
+
+Verification (round 5 rows): lint and typecheck are clean. `npm test`: 83 files, **8,383 passed**. Playwright `designer` + `smoke` + `journey` + `checkout`: **27 passed, 1 skipped**. Hydration e2e repeated 16×2: **32 passed**.
+
+### a11y round 4 rows (integrator request)
+
+| id | severity | where | finding | fix | status |
+|---|---|---|---|---|---|
+| a11y R4-05 | medium | model names: start page list (`library.module.css .modelName`) and the editor's model picker (`catalogue/picker.module.css .name`) | Names were clamped to 2 lines (`-webkit-line-clamp`), so under WCAG 1.4.12 text spacing the end of a long name was cut off. | No clamp: names wrap (`overflow-wrap: anywhere`). The 2-line `min-height` keeps the rows aligned. | fixed: with the 1.4.12 spacing stylesheet, **0 of 91** names cut on the start page and **0** in the picker, ar and en, at 390 and 1440 (`after-r5-picker-textspacing-ar-390.png`) |
+| a11y R4-06 | low | `ArtworkPanel` inspector | The sub-headings "Move", "Quick placement" and "Position" were h4 under the inspector's h2. | `as="h3"`. Outline: h2 "Selected item…", h3 Move / Quick placement / Position. axe (incl. best-practice) on the panel: 0. | fixed |
+
+Outside scope: `src/components/catalogue/picker.module.css` (one rule, the picker opened from the designer). Tests: lint clean, vitest 8,383 passed, Playwright `designer` + `catalogue` 22 passed, 4 skipped.

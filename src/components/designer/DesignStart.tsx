@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowRight, Footprints, Pause, Pizza, Play, Shirt, SprayCan } from "lucide-react";
 import type { Locale } from "@/types";
 import { useI18n } from "@/i18n/client";
@@ -11,11 +11,8 @@ import { Button, Icon } from "@/components/ui";
 import { PRODUCT_PRESETS, designerPathLite, type ProductPresetKey } from "./lib/paths";
 import styles from "./designer.module.css";
 
-const StartViewer = dynamic(() => import("./StartViewer"), {
-  ssr: false,
-  // eslint-disable-next-line @next/next/no-img-element
-  loading: () => <img src="/models/mailer-box.svg" alt="" className={styles.startPoster} />,
-});
+// No loading poster here: DesignStart keeps one poster <img> until the first frame (R4-11).
+const StartViewer = dynamic(() => import("./StartViewer"), { ssr: false, loading: () => null });
 
 const ICONS = { tshirt: Shirt, shoe: Footprints, perfume50: SprayCan, pizza30: Pizza } as const;
 /** Poster (the model's thumbnail) shown until the 3D chunk is ready. */
@@ -35,10 +32,33 @@ export function DesignStart({ locale }: { locale: Locale }) {
   const [playing, setPlaying] = useState(true);
   const wrapRef = useRef<HTMLDivElement>(null);
   const preset = PRODUCT_PRESETS.find((p) => p.key === active)!;
+  // The viewer remounts per product (key={active}); the poster covers it until its first frame.
+  const [viewerReady, setViewerReady] = useState(false);
+  const onViewerReady = useCallback(() => setViewerReady(true), []);
+  useEffect(() => setViewerReady(false), [active]);
+
+  // R4-24: the hero turns for one bounded turn (≤ 8 s), then rests. Hovering or focusing the stage
+  // or a product shortcut starts another turn; Pause, a drag or focus inside the viewer stops it
+  // until Play. Under prefers-reduced-motion it never starts by itself (WCAG 2.2.2, 2.3.3).
+  const [turn, setTurn] = useState<number | null>(0);
+  const quietRef = useRef(false);
+  const kick = useCallback(() => {
+    if (quietRef.current) return;
+    setTurn((n) => (n ?? 0) + 1);
+    setPlaying(true);
+  }, []);
+  const stopForGood = useCallback(() => {
+    quietRef.current = true;
+    setPlaying(false);
+  }, []);
+  const onTurnDone = useCallback(() => setPlaying(false), []);
 
   // three.js loads once the browser is idle, so the page paints fast on mid-range phones.
   useEffect(() => {
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) setPlaying(false);
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      quietRef.current = true;
+      setPlaying(false);
+    }
     const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
     if (w.requestIdleCallback) {
       const id = w.requestIdleCallback(() => setMounted(true), { timeout: 1200 });
@@ -84,17 +104,17 @@ export function DesignStart({ locale }: { locale: Locale }) {
       </div>
 
       <div className={styles.startStageCol}>
-        <div className={styles.startStage} ref={wrapRef} onPointerDown={() => setPlaying(false)}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          {!mounted ? <img src={`/models/${POSTER[active]}.svg`} alt="" className={styles.startPoster} /> : null}
+        <div className={styles.startStage} ref={wrapRef} onPointerDown={stopForGood} onPointerEnter={(e) => e.pointerType === "mouse" && kick()}>
           {mounted ? (
-            <div className={styles.startViewer} onFocusCapture={() => setPlaying(false)}>
+            <div className={styles.startViewer} onFocusCapture={stopForGood}>
               <StartViewer
                 active={active}
                 locale={locale}
                 playing={playing}
                 wrapRef={wrapRef}
-                poster={`/models/${POSTER[active]}.svg`}
+                onReady={onViewerReady}
+                turn={turn}
+                onTurnDone={onTurnDone}
                 labels={{
                   viewer: t("designer.start.viewerLabel", { product: productName }),
                   roleDescription: t("viewer.roleDescription"),
@@ -104,11 +124,27 @@ export function DesignStart({ locale }: { locale: Locale }) {
               />
             </div>
           ) : null}
+          {/*
+            R4-11: one poster element from the first paint until the 3D view has drawn a frame,
+            then it fades out. The engine's own poster (passed before) was a second, larger
+            element painted seconds later, so it became the page's LCP (about 6 s on a throttled
+            phone instead of about 2 s).
+          */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={`/models/${POSTER[active]}.svg`} alt="" className={styles.startPoster} data-hidden={mounted && viewerReady ? "true" : undefined} />
           <div className={styles.startToggle}>
             <Button
               size="slim"
               icon={playing ? Pause : Play}
-              onClick={() => setPlaying((v) => !v)}
+              onClick={() => {
+                if (playing) stopForGood();
+                else {
+                  // An explicit Play turns until Pause.
+                  quietRef.current = false;
+                  setTurn(null);
+                  setPlaying(true);
+                }
+              }}
               accessibilityLabel={playing ? t("designer.start.pause") : t("designer.start.play")}
             />
           </div>
@@ -137,8 +173,14 @@ export function DesignStart({ locale }: { locale: Locale }) {
                   className={styles.productLink}
                   data-active={p.key === active ? "true" : undefined}
                   href={designerPathLite(locale, p.structureCode, { preset: p.presetId })}
-                  onPointerEnter={() => setActive(p.key)}
-                  onFocus={() => setActive(p.key)}
+                  onPointerEnter={() => {
+                    setActive(p.key);
+                    kick();
+                  }}
+                  onFocus={() => {
+                    setActive(p.key);
+                    kick();
+                  }}
                 >
                   <span className={styles.productIcon} aria-hidden="true">
                     <IconC size={20} strokeWidth={1.75} />
