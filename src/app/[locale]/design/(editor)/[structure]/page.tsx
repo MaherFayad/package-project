@@ -82,6 +82,8 @@ export default async function DesignEditorPage({ params, searchParams }: { param
 
   // Start fetching the 3D renderer while the page hydrates (PERF-10).
   for (const href of lazyChunkHrefs("./Stage3D")) preload(href, { as: "script" });
+  // R6-02: the stage poster is the phone LCP element; fetch it with the HTML, not after the CSS.
+  preload(`/models/${libModel.slug}.svg`, { as: "image", fetchPriority: "high" });
 
   return (
     <DesignerApp
