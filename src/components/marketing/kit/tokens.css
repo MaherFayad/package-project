@@ -190,3 +190,15 @@ body:has([data-mk]) {
   --p-font-family-sans: var(--font-inter), var(--font-noto-arabic), "Segoe UI", Tahoma, sans-serif;
   font-family: var(--p-font-family-sans);
 }
+
+/* Page-local decorative loops register with data-mk-motion (on the element or an ancestor). A
+   MotionScope with `global` pauses every one of them on the page, wherever it sits (R6-AX-15). */
+html[data-mk-motion-paused] [data-mk-motion],
+html[data-mk-motion-paused] [data-mk-motion] *,
+html[data-mk-motion-paused] [data-mk-motion]::before,
+html[data-mk-motion-paused] [data-mk-motion]::after,
+html[data-mk-motion-paused] [data-mk-motion] *::before,
+html[data-mk-motion-paused] [data-mk-motion] *::after { animation-play-state: paused !important; }
+@media (prefers-reduced-motion: reduce) {
+  [data-mk-motion], [data-mk-motion] *, [data-mk-motion]::before, [data-mk-motion]::after, [data-mk-motion] *::before, [data-mk-motion] *::after { animation: none !important; }
+}

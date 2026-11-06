@@ -243,3 +243,49 @@ for (const who of [
     }
   });
 }
+
+test("mega-menu: focus opens it, then Enter keeps it open and moves to the first link (R6-AX-16)", async ({ page }, info) => {
+  test.skip(info.project.name !== "desktop", "desktop navigation");
+  await page.goto("/en/dev/kit");
+  await page.waitForLoadState("networkidle");
+  await page.locator("header").getByRole("link", { name: "Elba, Home" }).focus();
+  await page.keyboard.press("Tab");
+  const products = page.getByRole("button", { name: "Products" });
+  await expect(products).toBeFocused();
+  await expect(products).toHaveAttribute("aria-expanded", "true");
+  await page.keyboard.press("Enter");
+  await expect(products).toHaveAttribute("aria-expanded", "true");
+  await expect(page.getByRole("link", { name: "Mailer and shipping boxes" })).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(products).toBeFocused();
+  await page.keyboard.press(" ");
+  await expect(products).toHaveAttribute("aria-expanded", "true");
+  await expect(page.getByRole("link", { name: "Mailer and shipping boxes" })).toBeFocused();
+});
+
+test("violet band: text and muted text are solid white (R6-AX-14, WCAG 1.4.3)", async ({ page }) => {
+  await page.goto("/en/dev/kit");
+  const colours = await page.evaluate(() =>
+    // Every text element whose nearest band / card is violet (Sheet, SheetCard, BentoCard).
+    Array.from(document.querySelectorAll('[data-tone="violet"] :is(p, span, h2, h3, li)'))
+      .filter((el) => (el.textContent ?? "").trim() && el.closest("[data-tone]")?.getAttribute("data-tone") === "violet" && !el.closest("button, a, code, [class*='orbitNode'], [class*='orbitHub']"))
+      .map((el) => getComputedStyle(el).color),
+  );
+  expect(colours.length).toBeGreaterThan(3);
+  expect([...new Set(colours)]).toEqual(["rgb(255, 255, 255)"]);
+});
+
+test("page-local loops register with data-mk-motion: a global MotionScope pauses them (R6-AX-15)", async ({ page }) => {
+  await page.goto("/en/dev/kit");
+  await page.waitForLoadState("networkidle");
+  const loop = page.getByTestId("page-loop");
+  const state = () => loop.evaluate((el) => getComputedStyle(el).animationPlayState);
+  expect(await state()).toBe("running");
+  // The violet section holds two scopes: Orbit's own and, around it, the global one (last in DOM).
+  const pause = page.locator('[data-tone="violet"]').getByRole("button", { name: "Pause animation" }).last();
+  await pause.scrollIntoViewIfNeeded();
+  await pause.click();
+  await expect.poll(state).toBe("paused");
+  await page.locator('[data-tone="violet"]').getByRole("button", { name: "Play animation" }).last().click();
+  await expect.poll(state).toBe("running");
+});
