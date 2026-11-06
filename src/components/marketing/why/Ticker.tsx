@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pause, Play } from "lucide-react";
 import styles from "./why.module.css";
 
@@ -18,12 +18,29 @@ export interface TickerItem {
  */
 export function Ticker({ items, label, pause, play }: { items: TickerItem[]; label: string; pause: string; play: string }) {
   const [paused, setPaused] = useState(false);
+  // The thumbnails are decorative (alt="") and sit in the hero next to the LCP render: load them
+  // only after the page has loaded, so they never compete with it on a slow phone connection.
+  // The 56px box is reserved either way (no layout shift).
+  const [thumbs, setThumbs] = useState(false);
+  useEffect(() => {
+    const go = () => setThumbs(true);
+    if (document.readyState === "complete") {
+      const id = setTimeout(go, 0);
+      return () => clearTimeout(id);
+    }
+    window.addEventListener("load", go, { once: true });
+    return () => window.removeEventListener("load", go);
+  }, []);
   const row = (copy: number) =>
     items.map((it, i) => (
       <li key={`${copy}-${i}`} className={styles.tickItem} aria-hidden={copy > 0 || undefined}>
         {it.img ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={it.img} alt="" width={56} height={56} loading="lazy" decoding="async" className={styles.tickImg} />
+          thumbs ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={it.img} alt="" width={56} height={56} loading="lazy" decoding="async" fetchPriority="low" className={styles.tickImg} />
+          ) : (
+            <span className={styles.tickImg} aria-hidden="true" />
+          )
         ) : (
           <span className={styles.tickDot} aria-hidden="true" />
         )}

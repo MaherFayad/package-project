@@ -22,8 +22,15 @@ import s from "@/components/marketing/why/why.module.css";
 
 type Props = { params: Promise<{ locale: string }> };
 
-/** Prices are read live from the checkout pricing inputs on every request (never a stale cache). */
-export const dynamic = "force-dynamic";
+/**
+ * Prerendered so the hero ships in the first HTML bytes (a per-request page streams behind the
+ * shell's Suspense boundary and ~300 KB of flight data, which put the phone LCP over 3 s).
+ * Prices still come from the uncached checkout loaders at render time; the page re-renders at
+ * most 60 s later, and at once on every pricing edit: rate cards, pricing settings, the price
+ * index, vendor status and checkout settings all call purgeCatalogCache() → revalidatePath
+ * ("/[locale]", "layout"). See docs/audit/r6-why.md §4.
+ */
+export const revalidate = 60;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const locale = toLocale((await params).locale);
@@ -91,7 +98,7 @@ export default async function PricingPage({ params }: Props) {
           >
             <ul className={s.tiers}>
               {cards.map((tier, i) => (
-                <li key={tier.quantity} className={s.tier} style={{ ["--m-i" as string]: i }}>
+                <li key={tier.quantity} className={s.tier} style={{ ["--m-i" as string]: i }} data-testid={`tier-${tier.quantity}`}>
                   <div className={s.tierTop}>
                     <div>
                       <h2 className={s.tierName}>{c.tierNames[tier.quantity]}</h2>
@@ -109,10 +116,10 @@ export default async function PricingPage({ params }: Props) {
                   </p>
                   <div className={s.tierTotals}>
                     <p className={s.showIncl}>
-                      {c.totalIncl} <strong>{money(tier.totalPiasters)}</strong>
+                      {c.totalIncl} <strong data-testid="tier-total">{money(tier.totalPiasters)}</strong>
                     </p>
                     <p className={s.showExcl}>
-                      {c.totalExcl} <strong>{money(tier.subtotalPiasters)}</strong>
+                      {c.totalExcl} <strong data-testid="tier-subtotal">{money(tier.subtotalPiasters)}</strong>
                     </p>
                     {tier.savingPiasters > 0 ? <p className={s.save}>{c.youSave(money(tier.savingPiasters), pct)}</p> : null}
                   </div>
@@ -148,7 +155,7 @@ export default async function PricingPage({ params }: Props) {
                   </ul>
                 </li>
               ))}
-              <li className={s.tier} style={{ ["--m-i" as string]: cards.length }}>
+              <li className={s.tier} style={{ ["--m-i" as string]: cards.length }} data-testid="tier-wholesale">
                 <div className={s.tierTop}>
                   <div>
                     <h2 className={s.tierName}>{c.wholesale}</h2>

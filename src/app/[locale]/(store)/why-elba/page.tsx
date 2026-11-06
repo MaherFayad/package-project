@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { preload } from "react-dom";
 import { BadgeCheck, Boxes, PackageCheck, TrendingDown, Truck } from "lucide-react";
 import { getT, toLocale } from "@/i18n";
 import type { DictKey } from "@/i18n";
@@ -27,8 +28,15 @@ import s from "@/components/marketing/why/why.module.css";
 
 type Props = { params: Promise<{ locale: string }> };
 
-/** Prices are read live from the checkout pricing inputs on every request (never a stale cache). */
-export const dynamic = "force-dynamic";
+/**
+ * Prerendered so the hero ships in the first HTML bytes (a per-request page streams behind the
+ * shell's Suspense boundary and ~300 KB of flight data, which put the phone LCP over 3 s).
+ * Prices still come from the uncached checkout loaders at render time; the page re-renders at
+ * most 60 s later, and at once on every pricing edit: rate cards, pricing settings, the price
+ * index, vendor status and checkout settings all call purgeCatalogCache() → revalidatePath
+ * ("/[locale]", "layout"). See docs/audit/r6-why.md §4.
+ */
+export const revalidate = 60;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const locale = toLocale((await params).locale);
@@ -47,6 +55,18 @@ const SEGMENTS: { id: "cafes" | "beauty" | "ecommerce"; img: StructureCode; styl
   { id: "beauty", img: "ECMA_RTE", styles: ["ECMA_RTE", "RIGID_BOX", "PAPER_TUBE"] },
   { id: "ecommerce", img: "FEFCO_0427", styles: ["FEFCO_0427", "FEFCO_0201"] },
 ];
+/** A hero render: AVIF first, 400w for phones, 720w for desktop (sized ~30vw there). */
+function HeroRender({ id, className, priority = false }: { id: string; className: string; priority?: boolean }) {
+  const r = `/marketing/renders/${id}`;
+  const sizes = "(min-width: 768px) 30vw, 200px";
+  return (
+    <picture>
+      <source type="image/avif" srcSet={`${r}.400w.avif 400w, ${r}.720w.avif 720w`} sizes={sizes} />
+      <img className={className} src={`${r}.720w.webp`} srcSet={`${r}.400w.webp 400w, ${r}.720w.webp 720w`} sizes={sizes} alt="" width={720} height={480} fetchPriority={priority ? "high" : "auto"} decoding="async" />
+    </picture>
+  );
+}
+
 const small = (code: StructureCode) => renderSrc(code).replace(/\.webp$/, ".400w.webp");
 
 export default async function WhyElbaPage({ params }: Props) {
@@ -57,6 +77,8 @@ export default async function WhyElbaPage({ params }: Props) {
   const p = all.pricing;
   const u = all.units;
   const { pricing: f, designerModels } = await loadWhyFacts();
+  // Phone LCP is the first hero render: fetch it ahead of the fonts and the rest of the page.
+  preload("/marketing/renders/fefco-0427.400w.avif", { as: "image", type: "image/avif", fetchPriority: "high", media: "(max-width: 767px)" } as Parameters<typeof preload>[1]);
   const money = (v: number, unit = false) => formatMoney(v, locale, { alwaysDecimals: unit });
   const start = startHref(locale);
   const refStart = f ? designHref(locale, { structure: f.box.code, dims: f.box.dims, material: f.box.material }) : start;
@@ -71,7 +93,7 @@ export default async function WhyElbaPage({ params }: Props) {
   // W2: our box styles (each with its render) interleaved with our finishes.
   const items: TickerItem[] = [];
   BOX_STRUCTURE_LIST.slice(0, 12).forEach((st, i) => {
-    items.push({ label: name(st.code), kind: c.tickerStyle, img: small(st.code) });
+    items.push({ label: name(st.code), kind: c.tickerStyle, img: small(st.code).replace(/\.webp$/, ".avif") });
     if (i < TICKER_FINISHES.length) items.push({ label: t(`finishes.${TICKER_FINISHES[i]!}` as DictKey), kind: c.tickerFinish });
   });
 
@@ -114,10 +136,8 @@ export default async function WhyElbaPage({ params }: Props) {
         <div className={s.heroInner}>
           <div className={s.glow} aria-hidden="true" />
           <div className={s.collage} aria-hidden="true">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className={s.c1} src="/marketing/renders/fefco-0427.720w.webp" alt="" width={720} height={479} fetchPriority="high" decoding="async" />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className={s.c2} src="/marketing/renders/rigid-box.720w.webp" alt="" width={720} height={481} decoding="async" />
+            <HeroRender className={s.c1} id="fefco-0427" priority />
+            <HeroRender className={s.c2} id="rigid-box" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img className={s.c3} src="/marketing/renders/paper-tube.400w.webp" alt="" width={400} height={691} decoding="async" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
