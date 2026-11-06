@@ -2,6 +2,7 @@ import { designerEn } from "./designer.en";
 import { vendorPortalEn } from "./vendorPortal.en";
 import { checkoutEn } from "./checkout.en";
 import { adminEn } from "./admin.en";
+import { kitEn } from "./kit.en";
 import { marketingEn } from "./marketing.en";
 import { libraryEn } from "./library.en";
 
@@ -243,6 +244,7 @@ export const en = {
   vendorPortal: vendorPortalEn,
   admin: adminEn,
   marketing: marketingEn,
+  mk: kitEn,
   library: libraryEn,
   viewer: {
     label: "3D preview of your box",

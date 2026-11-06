@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import type { Locale, StructureFamily } from "@/types";
 import { getT } from "@/i18n";
 import type { DictKey } from "@/i18n";
-import { designHref } from "@/components/store/catalog";
 import { getLowestUnit, listStructures } from "@/components/store/data";
 import { HeroImage } from "./HeroImage";
 import { ProductCard } from "./ProductCard";
@@ -53,7 +52,7 @@ export async function BoxesLanding({
             {t("marketing.boxes.body")}
           </p>
           <div className={`${styles.actions} m-enter`} style={{ ["--m-i" as string]: 3 }}>
-            <Link href={designHref(locale, { structure: "FEFCO_0427" })} className={`${styles.pill} ${styles.pillLarge}`}>
+            <Link href={`${base}/start`} className={`${styles.pill} ${styles.pillLarge}`}>
               {t("marketing.boxes.primary")}
             </Link>
             <Link href={`${base}/vendors`} className={`${styles.pill} ${styles.pillOutline} ${styles.pillLarge}`}>
@@ -136,7 +135,7 @@ export async function BoxesLanding({
                 </h2>
                 <p className={styles.lead}>{t("marketing.boxes.closingBody")}</p>
                 <div className={`${styles.actions} ${styles.center}`}>
-                  <Link href={designHref(locale, { structure: "FEFCO_0427" })} className={`${styles.pill} ${styles.pillLime} ${styles.pillLarge}`}>
+                  <Link href={`${base}/start`} className={`${styles.pill} ${styles.pillLime} ${styles.pillLarge}`}>
                     {t("marketing.boxes.primary")}
                   </Link>
                   <Link href={`${base}/vendors`} className={`${styles.pill} ${styles.pillGhostDark} ${styles.pillLarge}`}>

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { preloadPlexArabic } from "@/app/font-preload";
 import { toLocale } from "@/i18n";
 import { I18nScope } from "@/i18n/I18nScope";
 // R5-PL-07: kit styles shared by this area's page, loading, error and not-found segments. With
@@ -17,6 +18,7 @@ import "@/components/ui/Spinner.module.css";
  */
 export default async function VendorAreaLayout({ children, params }: { children: ReactNode; params: Promise<{ locale: string }> }) {
   const locale = toLocale((await params).locale);
+  preloadPlexArabic(locale); // app frame font (Plex), Arabic only
   return (
     <I18nScope locale={locale} scope="vendor">
       {children}
