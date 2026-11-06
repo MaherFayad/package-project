@@ -16,9 +16,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
   const paths: { path: string; priority: number; freq: Entry["changeFrequency"] }[] = [
     { path: "", priority: 1, freq: "weekly" },
+    { path: "/start", priority: 0.9, freq: "weekly" },
     { path: "/designer", priority: 0.9, freq: "weekly" },
     { path: "/catalog", priority: 0.9, freq: "weekly" },
     { path: "/vendors", priority: 0.8, freq: "weekly" },
+    // r6-why: the 2026 marketing pages (prices on /pricing are live, so weekly).
+    { path: "/why-elba", priority: 0.8, freq: "monthly" },
+    { path: "/pricing", priority: 0.9, freq: "weekly" },
     ...STRUCTURE_CODES.map((c) => ({ path: `/boxes/${STRUCTURE_SLUGS[c]}`, priority: 0.9, freq: "weekly" as const })),
     ...seoSizeParams().map((p) => ({ path: `/boxes/${p.structure}/${p.size}`, priority: 0.7, freq: "weekly" as const })),
     ...LEGAL_DOC_IDS.map((d) => ({ path: `/legal/${d}`, priority: 0.3, freq: "yearly" as const })),

@@ -27,11 +27,14 @@ const LOCALES = (process.env.LOCALES || "ar,en").split(",");
 
 const PAGES = [
   { key: "home", path: "" },
+  { key: "start", path: "/start" },
   { key: "designer-page", path: "/designer" },
   { key: "boxes", path: "/boxes" },
   { key: "bottles", path: "/bottles" },
   { key: "catalog", path: "/catalog" },
   { key: "vendors", path: "/vendors" },
+  { key: "why-elba", path: "/why-elba" },
+  { key: "pricing", path: "/pricing" },
   { key: "design-picker", path: "/design" },
   { key: "designer-box", path: "/design/mailer-box", threeD: true },
   { key: "designer-bottle", path: "/design/round-bottle", threeD: true },
