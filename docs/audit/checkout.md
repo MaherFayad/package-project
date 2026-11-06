@@ -527,7 +527,7 @@ Counts of NEW findings: critical 0, high 0, medium 0, low 1.
 - **e2e changes.**
   - New `checkout-vendor-view.spec.ts`: the printer is redirected to its job page and sees its note, the receipt redirects too, another buyer gets 404, and the buyer never sees the note.
   - `checkout-states.spec.ts`: the Fawry radio selector now follows main's copy change ("reference code" to "reference number").
-- **Walker** (ar-390, en-1440, full page): 44 screens, 0 overflow, 0 page errors. axe is clean except the scrolled `target-size` case above.
+- **Walker** (ar-390, en-1440, full page): 41 screens, 0 overflow, 0 page errors. axe is clean except the scrolled `target-size` case above.
 - **Screenshots.** `r11-vendor-job-en-1440.png`, `r11-vendor-job-ar-390.png`, `r11-buyer-order-en-1440.png`, `r11-buyer-order-ar-390.png`.
 
 ### Files touched outside scope
