@@ -87,7 +87,7 @@ let n = 0;
 const id = () => `r6-${++n}`;
 
 /** Strong sample artwork: brand colour, a pattern, a framed panel with latin + arabic wordmark on the main faces. */
-function brandArtwork(faces: Partial<Record<FaceId, { width: number; height: number }>>, b: Brand): DesignDoc["artwork"]["outside"] {
+function brandArtwork(faces: Partial<Record<FaceId, { width: number; height: number }>>, b: Brand, wrap = false): DesignDoc["artwork"]["outside"] {
   const entries = Object.entries(faces) as [FaceId, { width: number; height: number }][];
   const maxArea = Math.max(...entries.map(([, f]) => f.width * f.height));
   const layers: ArtworkLayer[] = [];
@@ -101,7 +101,7 @@ function brandArtwork(faces: Partial<Record<FaceId, { width: number; height: num
       if (sz > 6) layers.push({ id: id(), kind: "text", face, surface: "outside", x: w / 2, y: h / 2, width: w * 0.9, height: h * 0.5, rotation: 0, text: b.latin, fontFamily: "Inter", fontSizePt: sz, fontWeight: 700, color: b.ink, align: "center", direction: "ltr" });
       continue;
     }
-    const pw = w * 0.78, ph = Math.min(h * 0.7, pw * 1.05);
+    const pw = wrap ? w * 0.3 : Math.min(w * 0.78, h * 1.1), ph = Math.min(h * 0.7, pw * 1.05); // wrap labels: keep the panel on the visible front
     layers.push({ id: id(), kind: "shape", face, surface: "outside", shape: "rect", x: w / 2, y: h / 2, width: pw, height: ph, rotation: 0, fill: b.bg, stroke: b.accent, strokeWidthMm: Math.max(0.6, w * 0.008) });
     const latinMm = Math.min(pw * 0.86 / (b.latin.length * 0.64), ph * 0.26);
     layers.push({ id: id(), kind: "text", face, surface: "outside", x: w / 2, y: h / 2 - ph * 0.1, width: pw * 0.95, height: latinMm * 1.4, rotation: 0, text: b.latin, fontFamily: "Inter", fontSizePt: latinMm * PT_PER_MM, fontWeight: 700, color: b.ink, align: "center", direction: "ltr" });
@@ -121,7 +121,7 @@ function shotDoc(shotId: string): DesignDoc | null {
   const geo = docGeometry(doc);
   const faces = geo?.dieline.faces ?? {};
   const vessel = doc.vessel && s.vessel ? { ...doc.vessel, ...s.vessel } : doc.vessel;
-  return { ...doc, ...(vessel ? { vessel } : {}), finishCode: "MATTE_LAMINATION", artwork: { ...doc.artwork, outside: brandArtwork(faces, BRANDS[s.brand]) } };
+  return { ...doc, ...(vessel ? { vessel } : {}), finishCode: "MATTE_LAMINATION", artwork: { ...doc.artwork, outside: brandArtwork(faces, BRANDS[s.brand], !!doc.vessel?.surfaces.some((x) => x === "WRAP" || x === "SHRINK_SLEEVE")) } };
 }
 
 interface R6Api {

@@ -53,6 +53,7 @@ const COLLAGE = [
   { id: "tube-turn", shot: "tube", az: 35, polar: 8 },
 ];
 const LOOPS = ["mailer", "perfume", "can", "pouch", "rigid-box"];
+const LOOP_ZOOM = { mailer: 1, "rigid-box": 1, perfume: 0.92, can: 0.92, pouch: 0.92 };
 export const CARDS = [
   { id: "nour", shot: "mailer", latin: "NOUR", arabic: "نور", bg: "#c9572f", ink: "#fff3e4", en: "Atelier mailer", ar: "علبة شحن أتيليه" },
   { id: "attar", shot: "rigid-box", latin: "ATTAR", arabic: "عطار", bg: "#14161c", ink: "#e9cf8f", en: "Perfume gift box", ar: "علبة هدايا عطور" },
@@ -174,7 +175,11 @@ async function startServer() {
   throw new Error("dev server did not start");
 }
 function stopServer() {
-  if (!args.base && !args.keep) fs.rmSync(path.dirname(ROUTE), { recursive: true, force: true });
+  if (!args.base && !args.keep) {
+    fs.rmSync(path.dirname(ROUTE), { recursive: true, force: true });
+    // next dev leaves route types behind; a stale entry would fail `tsc`
+    fs.rmSync(path.join(ROOT, ".next/types/app/[locale]/dev/r6-capture"), { recursive: true, force: true });
+  }
   if (server) process.kill(-server.pid);
 }
 
@@ -256,7 +261,7 @@ async function collage() {
   // process piece 1: the flat dieline with artwork, straight from the engine (fold = 0, top view)
   const flat = await cached("process-dieline", async () => {
     const s = await stage("mailer", { fold: 0 });
-    await s.view("top");
+    await s.view(String(args.flatView ?? "front")); // the flat sheet lies in the front plane
     await s.page.waitForTimeout(800);
     const b = await s.shot(1600, 1200);
     await s.close();
@@ -289,7 +294,7 @@ async function cards() {
 }
 
 async function loops() {
-  const FPS = 24, SECONDS = 4, N = FPS * SECONDS, F = 840; // F: frame px (product + engine contact shadow)
+  const FPS = 24, SECONDS = 4, N = FPS * SECONDS, F = 1080; // F: frame px (product + engine contact shadow)
   const bg = await sharp(studioSvg(1920, 1080, "dark")).png().toBuffer();
   const bgFile = path.join(RAW, "loop-bg.png");
   fs.writeFileSync(bgFile, bg);
@@ -301,7 +306,9 @@ async function loops() {
       // two pages render interleaved halves of the turn; each frame is an absolute angle so the loop is seamless
       const halves = [missing.filter((i) => i % 2 === 0), missing.filter((i) => i % 2 === 1)];
       await Promise.all(halves.map(async (frames) => {
-        const s = await stage(id, { w: 840, h: 840 });
+        const s = await stage(id, { w: F, h: F });
+        await s.zoom(LOOP_ZOOM[id] ?? 0.8); // the studio is 1920x1080; the product frame is the middle 1080x1080
+        await s.page.waitForTimeout(300);
         let at = 0;
         for (const i of frames) {
           const deg = (360 * i) / N;
@@ -316,8 +323,8 @@ async function loops() {
     fs.mkdirSync(vdir, { recursive: true });
     // the frame (product + the engine's own soft contact shadow, transparent) centred on the 1920x1080 studio, over a floor glow
     const sh = path.join(RAW, `loop-shadow-${id}.png`);
-    fs.writeFileSync(sh, await sharp(shadowSvg(1920, 1080, 960, 120 + F * 0.78, 300, true)).png().toBuffer());
-    const X = (1920 - F) / 2, Y = 120;
+    fs.writeFileSync(sh, await sharp(shadowSvg(1920, 1080, 960, F * 0.8, 380, true)).png().toBuffer());
+    const X = (1920 - F) / 2, Y = 0;
     const filter = `[0][1]overlay[b];[b][2]overlay=x=${X}:y=${Y}:shortest=1,format=yuv420p`;
     const inputs = ["-loop", "1", "-i", bgFile, "-loop", "1", "-i", sh, "-framerate", String(FPS), "-i", path.join(dir, "f%03d.png")];
     const ff = (extra) => execFileSync("ffmpeg", ["-y", "-loglevel", "error", ...inputs, "-filter_complex", extra.filter, "-frames:v", String(N), "-an", ...extra.codec, extra.out]);
@@ -338,7 +345,7 @@ async function loops() {
 
 async function ui() {
   const { renderUi } = await import("./render-ui.mjs");
-  await renderUi({ base: BASE, browser, out: path.join(OUT, "ui"), raw: RAW, emit, record });
+  await renderUi({ base: BASE, browser, out: path.join(OUT, "ui"), emit, only: args.ui ? String(args.ui).split(",") : null });
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -354,6 +361,14 @@ async function ui() {
   } finally {
     await browser.close();
     fs.mkdirSync(path.dirname(MANIFEST_FILE), { recursive: true });
+    // merge with what other runs wrote meanwhile (stages can run in parallel processes)
+    if (fs.existsSync(MANIFEST_FILE)) {
+      const now = JSON.parse(fs.readFileSync(MANIFEST_FILE, "utf8"));
+      manifest.files = { ...now.files, ...manifest.files };
+      manifest.bases = { ...now.bases, ...manifest.bases };
+    }
+    for (const k of Object.keys(manifest.files)) if (!fs.existsSync(path.join(ROOT, "public", k))) delete manifest.files[k];
+    for (const k of Object.keys(manifest.files)) manifest.files[k].bytes = fs.statSync(path.join(ROOT, "public", k)).size;
     const sorted = Object.fromEntries(Object.entries(manifest.files).sort(([a], [b]) => a.localeCompare(b)));
     const bases = Object.fromEntries(Object.entries(manifest.bases).sort(([a], [b]) => a.localeCompare(b)));
     fs.writeFileSync(MANIFEST_FILE, JSON.stringify({ generatedAt: manifest.generatedAt, files: sorted, bases }, null, 1) + "\n");
