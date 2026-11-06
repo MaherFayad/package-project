@@ -113,7 +113,8 @@ export const designerAr: Dictionary["designer"] = {
   },
   artwork: {
     heading: "التصميم",
-    face: "الوجه",
+    // R15-03: «الوجه» is also the Face view button; English keeps them apart (Panel / Face)
+    face: "الجزء",
     surface: "الجهة",
     background: "لون الخلفية",
     backgroundHelp: "يغطي كل الأوجه المطبوعة في هذه الجهة.",
@@ -256,6 +257,7 @@ export const designerAr: Dictionary["designer"] = {
   history: {
     undo: "تراجع",
     redo: "إعادة",
+    group: "التراجع والإعادة",
   },
   save: {
     save: "حفظ",

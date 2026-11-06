@@ -684,6 +684,9 @@
   min-block-size: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+  /* R15-01: the tab bar is sticky at the top of this scroller; a control scrolled into view by Tab
+     ("Change model", the colour swatches) landed fully under it (WCAG 2.4.11). Keep it below. */
+  scroll-padding-block: 3.75rem var(--p-space-200);
 }
 .panelBody {
   display: flex;

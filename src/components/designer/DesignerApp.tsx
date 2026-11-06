@@ -240,6 +240,14 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareError, setShareError] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  // R15-02: a dialog opened from the phone "More" menu returned focus to its menu item, which the
+  // closing menu had removed, so focus fell to <body> (WCAG 2.4.3). The action moves focus to the
+  // menu button first; the dialog remembers that and returns there.
+  const moreRef = useRef<HTMLDivElement>(null);
+  const fromMenu = (fn: () => void) => () => {
+    moreRef.current?.querySelector<HTMLButtonElement>("button[aria-haspopup]")?.focus({ preventScroll: true });
+    fn();
+  };
   const [viewMenuOpen, setViewMenuOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -967,7 +975,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
             onBlur={seal}
           />
         </div>
-        <ButtonGroup variant="segmented" accessibilityLabel={t("designer.history.undo")}>
+        <ButtonGroup variant="segmented" accessibilityLabel={t("designer.history.group")}>
           <Button icon={Undo2} accessibilityLabel={t("designer.history.undo")} disabled={!canUndo(hist)} onClick={() => dispatch({ type: "undo" })} />
           <Button icon={Redo2} accessibilityLabel={t("designer.history.redo")} disabled={!canRedo(hist)} onClick={() => dispatch({ type: "redo" })} />
         </ButtonGroup>
@@ -1001,7 +1009,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
             {t("designer.save.save")}
           </Button>
         </div>
-        <div className={styles.mobileActions}>
+        <div className={styles.mobileActions} ref={moreRef}>
           <Popover
             active={moreOpen}
             onClose={() => setMoreOpen(false)}
@@ -1014,12 +1022,12 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
               actionRole="menuitem"
               onActionAnyItem={() => setMoreOpen(false)}
               items={[
-                { content: t("designer.export.button"), icon: Download, onAction: doExport },
-                { content: t("designer.share.button"), icon: Share2, onAction: doShare },
-                { content: t("designer.save.save"), icon: Save, onAction: doSave },
+                { content: t("designer.export.button"), icon: Download, onAction: fromMenu(doExport) },
+                { content: t("designer.share.button"), icon: Share2, onAction: fromMenu(doShare) },
+                { content: t("designer.save.save"), icon: Save, onAction: fromMenu(doSave) },
                 // R5-JR-14: phones have no name field in the toolbar; the share page and follow-ups
                 // used the style name for every phone design.
-                { content: t("designer.save.rename"), icon: Pencil, onAction: () => setRenameOpen(true) },
+                { content: t("designer.save.rename"), icon: Pencil, onAction: fromMenu(() => setRenameOpen(true)) },
               ]}
             />
           </Popover>

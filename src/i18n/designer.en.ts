@@ -256,6 +256,8 @@ export const designerEn = {
   history: {
     undo: "Undo",
     redo: "Redo",
+    // R15-03: the undo / redo pair; the group had the name of its first button
+    group: "Undo and redo",
   },
   save: {
     save: "Save",

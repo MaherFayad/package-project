@@ -412,6 +412,7 @@ export const I18N_SCOPES = {
     "designer.gate.note",
     "designer.gate.reason.",
     "designer.gate.title",
+    "designer.history.group",
     "designer.history.redo",
     "designer.history.undo",
     "designer.layer.align",
