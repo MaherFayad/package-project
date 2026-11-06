@@ -8,8 +8,8 @@
 }
 .toc { display: grid; gap: 32px; font-size: 0.9375rem; }
 .toc h2 { margin: 0 0 12px; font-size: 1rem; font-weight: 550; }
-.toc ul { margin: 0; padding: 0; list-style: none; border-inline-start: 1px solid var(--rs-line); }
-.toc a { position: relative; display: block; padding: 8px 16px; color: var(--rs-muted); line-height: 1.35; text-decoration: none; transition: color var(--mk-dur-2) var(--mk-ease-standard); }
+.toc ul { margin: 0; padding: 0; list-style: none; border-inline-start: 1px solid var(--mk-line, var(--mk-line-light)); }
+.toc a { position: relative; display: block; padding: 8px 16px; color: var(--mk-muted, var(--mk-on-light-muted)); line-height: 1.35; text-decoration: none; transition: color var(--mk-dur-2) var(--mk-ease-standard); }
 .toc a:hover { color: var(--rs-ink); }
 .toc a[aria-current]::before,
 .toc a[data-active]::before { content: ""; position: absolute; inset-block: 6px; inset-inline-start: -1.5px; inline-size: 2px; background: var(--rs-ink); }

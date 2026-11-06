@@ -55,3 +55,5 @@
   .arrow { transition: none; }
   .lostLink:hover .arrow { transform: none; }
 }
+/* 20px lead, as measured on the reference 404 (also keeps it the phone LCP over the cookie notice). */
+.lead.lead { font-size: var(--mk-fs-20); }

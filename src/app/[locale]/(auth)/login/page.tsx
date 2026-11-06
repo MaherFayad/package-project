@@ -7,8 +7,7 @@ import { getT, toLocale } from "@/i18n";
 import { LoginClient } from "./LoginClient";
 import { Sheet } from "@/components/marketing/kit/Sheet";
 import { Glow } from "@/components/marketing/kit/Glow";
-import { Lead } from "@/components/marketing/kit/Display";
-import { HeroTitle } from "@/components/marketing/kit/HeroTitle";
+import { Display, Lead } from "@/components/marketing/kit/Display";
 import rs from "@/components/marketing/restyle/restyle.module.css";
 import au from "@/components/marketing/restyle/auth.module.css";
 
@@ -46,7 +45,9 @@ export default async function LoginPage({
             <span className={au.badge} aria-hidden="true">
               <LockKeyhole size={20} />
             </span>
-            <HeroTitle size="64" id="login-title" text={t("auth.title")} />
+            <Display as="h1" size="64" id="login-title" className="m-enter-lcp">
+              {t("auth.title")}
+            </Display>
             <Lead>{t("auth.subtitle")}</Lead>
           </div>
           <section className={au.authCard} aria-labelledby="login-title">

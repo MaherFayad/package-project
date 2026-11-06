@@ -1,17 +1,41 @@
-/* Share page (R6 restyle): 3D viewer on a grey tile, order card in the dark tone, specs list. */
+/*
+ * Share page (R6 restyle): 3D viewer on a grey tile, order card in the dark tone, specs list.
+ * Self-contained on purpose: importing the restyle sheets pulled a merged CSS chunk (restyle +
+ * detail + store) into this streamed page and delayed the poster (phone LCP 2.7 s against 2.35 s).
+ */
+.page { display: block; }
+.clip { overflow: clip; }
+.hero { padding-block: clamp(40px, 4vw + 16px, 80px) calc(var(--mk-sheet-overlap) + clamp(40px, 4vw, 72px)); }
+.sheetTop.sheetTop[data-overlap="true"] { padding-block-start: clamp(48px, 4vw + 24px, 96px); }
+.small { margin: 0; font-size: var(--mk-fs-14); line-height: 1.4; color: var(--mk-muted); }
+.muted { margin: 0; color: var(--mk-muted); }
+.layout { display: grid; gap: 20px; }
+.stack { display: grid; gap: 20px; min-inline-size: 0; }
+@media (min-width: 1024px) {
+  .layout { grid-template-columns: minmax(0, 1fr) 360px; gap: 32px; align-items: start; }
+  .aside { position: sticky; inset-block-start: calc(var(--mk-header-h) + 24px); }
+}
+.tile { display: grid; gap: 16px; min-inline-size: 0; padding: clamp(24px, 2vw + 12px, 40px); border-radius: 24px; background: var(--mk-sheet); color: var(--mk-on-light); --mk-muted: var(--mk-on-light-muted); }
+.tileDark { background: var(--mk-bg); color: var(--mk-on-dark); --mk-muted: var(--mk-on-dark-muted); --mk-ring: var(--mk-focus); }
+.tileTitle { margin: 0; font-size: clamp(1.375rem, 1.2rem + 0.6vw, 1.75rem); font-weight: 360; line-height: 1.2; }
+.tileTitle:lang(ar) { font-weight: 500; line-height: 1.4; }
+@media (max-width: 767px) { .page :global([data-overlap="true"]) { border-start-start-radius: 20px; border-start-end-radius: 20px; } }
 .viewerTile { border-radius: 24px; background: var(--mk-sheet, #f5f5f3); overflow: hidden; }
 /* Placeholder with the viewer's footprint while its chunk loads (no layout shift). */
 .viewerSkeleton {
   display: grid;
   place-items: center;
   overflow: hidden;
-  block-size: min(70dvh, 36rem);
-  min-block-size: 24rem;
+  /* Same box as designer.module.css .sharedViewer, so the swap does not shift (it was 70dvh / 36rem
+     against the viewer's 60dvh / 32rem: CLS 0.14 when the 3D chunk arrived). */
+  block-size: min(60dvh, 32rem);
+  min-block-size: 18rem;
   border-radius: 24px;
   background: var(--mk-sheet, #f5f5f3);
 }
 /* A hair wider than the 3D poster that replaces it (LCP keeps the first paint of the box
    unless a later element is strictly larger); the 2% is not visible in the cross-fade. */
+.foldRowSpace { block-size: 49px; }
 .viewerPoster { inline-size: 102%; max-inline-size: none; block-size: 100%; object-fit: contain; }
 /* R4-12: headline price above the order button, the first thing a visitor reads in the card. */
 .price { margin: 0; font-size: var(--mk-fs-20, 1.25rem); line-height: 1.4; font-weight: 450; font-variant-numeric: tabular-nums; }

@@ -43,7 +43,7 @@ export default async function BottlesPage({ params }: Props) {
     <div className={rs.page}>
       <Sheet tone="dark" hero className={rs.heroLanding} aria-labelledby="bottles-title">
         <Eyebrow className="m-enter">{t("marketing.bottles.eyebrow")}</Eyebrow>
-        <HeroTitle size="96" align="center" id="bottles-title" text={t("marketing.bottles.title")} />
+        <HeroTitle size="64" align="center" id="bottles-title" text={t("marketing.bottles.title")} />
         <Lead align="center" className="m-enter-lcp">
           {t("marketing.bottles.body")}
         </Lead>

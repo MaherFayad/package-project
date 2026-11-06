@@ -86,7 +86,7 @@
 .lead {
   max-inline-size: 38em;
   margin: 20px 0 0;
-  font-size: clamp(1.125rem, 1.05rem + 0.3vw, 1.25rem);
+  font-size: 1.25rem; /* 20px, as the reference 404 */
   line-height: 1.45;
   color: #bbc7d8;
   text-wrap: pretty;

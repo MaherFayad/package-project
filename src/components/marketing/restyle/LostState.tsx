@@ -47,7 +47,7 @@ export function LostState({
             <Display as="h1" size="64" id={titleId}>
               {title}
             </Display>
-            <Lead>{body}</Lead>
+            <Lead className={ls.lead}>{body}</Lead>
           </div>
           <ul className={ls.lostLinks}>
             {links.map((l) => (
