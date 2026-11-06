@@ -1,13 +1,14 @@
 "use client";
 
 import { useFrame, useThree } from "@react-three/fiber";
-import { Environment, Lightformer, OrbitControls } from "@react-three/drei";
+import { Lightformer, OrbitControls } from "@react-three/drei";
 import { memo, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type Ref } from "react";
 import { PerspectiveCamera, Spherical, Vector3, type Object3D } from "three";
 import { defaultMaxDpr, usePrefersReducedMotion } from "../hooks";
 import { AUTO_ROTATE, easeInOutCubic } from "../finishes/motion";
 import { captureScreenshot } from "../screenshot";
 import { SoftShadow } from "../SoftShadow";
+import { EnvironmentScene } from "../lighting";
 import { InteractionDpr, useOnScreen } from "../perf";
 import type { PackagingSceneHandle } from "../PackagingScene";
 import { EngineCanvas, useRegisterViewApi, type EngineViewApi, type ViewName } from "../EngineCanvas";
@@ -231,7 +232,7 @@ const VesselLights = memo(function VesselLights() {
       <ambientLight intensity={0.25} />
       <directionalLight position={[2.5, 4, 3]} intensity={1.4} />
       <directionalLight position={[-3, 2.2, -2]} intensity={0.45} color="#dfe8ff" />
-      <Environment resolution={256} frames={1} environmentIntensity={0.9}>
+      <EnvironmentScene resolution={256} intensity={0.9}>
         <color attach="background" args={["#202020"]} />
         <Lightformer form="rect" intensity={3} position={[-2.2, 1.2, 1.6]} rotation-y={Math.PI / 4} scale={[0.6, 4, 1]} />
         <Lightformer form="rect" intensity={2.2} position={[2.4, 1.2, 1.2]} rotation-y={-Math.PI / 3} scale={[0.5, 4, 1]} />
@@ -240,7 +241,7 @@ const VesselLights = memo(function VesselLights() {
         <Lightformer form="ring" intensity={1.2} position={[1.5, 2.5, 3]} scale={0.8} />
         {/* broad front fill: tinplate and aluminium need something bright to mirror (V-13) */}
         <Lightformer form="rect" intensity={0.8} position={[0, 1, 5]} scale={[10, 3, 1]} />
-      </Environment>
+      </EnvironmentScene>
     </>
   );
 });
