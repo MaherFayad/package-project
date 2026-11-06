@@ -48,7 +48,8 @@ export interface ArtworkPanelProps {
   onSurface: (s: PrintSurface) => void;
   onBackground: (c: string | null) => void;
   onUpload: (file: File) => void;
-  onUploadRejected: () => void;
+  /** The drop zone refused the file: its size or its type (R10-02, specific message). */
+  onUploadRejected: (reason: "size" | "type") => void;
   onAddText: () => void;
   onAddShape: (shape: "rect" | "ellipse") => void;
   onLayer: (layer: ArtworkLayer, coalesce?: string) => void;
@@ -104,7 +105,7 @@ export function ArtworkPanel(p: ArtworkPanelProps) {
         error={p.uploadError ?? undefined}
         onDrop={(_all, accepted, rejected) => {
           if (accepted[0]) p.onUpload(accepted[0]);
-          else if (rejected.length) p.onUploadRejected();
+          else if (rejected.length) p.onUploadRejected(rejected[0].reason);
         }}
       />
 

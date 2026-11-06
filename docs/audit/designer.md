@@ -458,3 +458,46 @@ Both pages are **under the 2.5 s budget** in every run. TBT on this profile is 0
 | high | 0 | 0 | 0 |
 | medium | 1 (R9-01) | 1 | 0 |
 | low | 0 | 0 | 0 |
+
+# Round 10
+
+Base: unchanged (main d61f21f + 282c9eb). Fresh pass on the angles the integrator suggested: Slow 3G, upload errors, undo/redo and autosave after reload, two tabs on one design, long Arabic text on small faces, and the export modal on a phone.
+
+## Checked and fine
+
+| angle | check | result |
+|---|---|---|
+| Slow 3G (2 s RTT, 500 kbps), ar pouch, phone | timeline sampled every second | the poster and editor skeleton are up at **4.1 s**, the canvas and badge at 22.5 s. No spinner anywhere, no console errors (`r10-slow3g-early-ar-390.png`) |
+| Reload after autosave | add text → URL gains `?d=` → "Saved" → reload | same URL, the text layer is back, status "Saved for 30 days". Undo starts empty after a reload (history is per session), and that is expected |
+| Upload: transparent PNG, CMYK JPEG, tiny PNG | added and saved (201) | transparency kept. CMYK is decoded by the browser. The 60 × 40 px PNG is flagged LOW_DPI by the print check |
+| Export modal, phone, ar + en | sheet at the bottom, targets, axe | radios 24 px, buttons 114 × 40 px, no overflow, axe 0 (`r10-export-ar-390.png`) |
+
+## Findings (round 10)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R10-01 | high | image upload + autosave (`uploadImage.ts`, `DesignerApp.saveToServer`) | **A valid image could make the design unsaveable.** A 9.7 MB PNG (under the 10 MB upload limit) became a ~13 MB data URL. Every save then answered **413** (body cap 12 MB), the toolbar said "Could not save. Retrying shortly." and retried forever, and the work was never stored on the server. | WCAG 3.3.4-adjacent (error prevention); data loss | (1) A size budget per stored image (`IMAGE_MAX_SRC_CHARS` = 3 M characters, so 3 images and the doc fit in 12 MB). An image over budget is re-encoded as WebP (keeps transparency), then stepped down 0.8× at a time. It is refused with the "too large" message only if it still doesn't fit at 20 %. (2) A 413 is now the `tooLarge` state: "This design is too large to save. Replace a large image with a smaller one." (and Arabic), shown in the status and once in a critical toast. There's no retry loop; the next edit tries again. | fixed. The 9.7 MB PNG now saves (**201**) in ar + en. With a 413 forced by the test: one request in 31 s (it was a 10 s / 20 s / 40 s… retry loop), plus the message and the toast (`r10-too-large-en-1440.png`) |
+| R10-02 | medium | upload errors (`uploadImage.ts`, `ArtworkPanel`, `DesignerApp`) | One message for every failure ("Use PNG, JPG, WebP or SVG under 10 MB"), whether the file was the wrong type, too big or unreadable. | WCAG 3.3.1, 3.3.3 | `rejectReason()` / `UploadError(kind)`: "This file type cannot be added…", "This file is larger than 10 MB. Save a smaller copy…", "This file could not be opened as an image. Export it again as PNG or JPG." (and Arabic). The drop zone passes its own reason. Unit test `upload-reject.test.ts`. | fixed: `.txt` → type, 12 MB → size, a fake `.png` → unreadable |
+| R10-03 | medium | two tabs on one design (`DesignerApp`) | **Silent last-writer-wins.** Tab B renamed and saved, then tab A's next autosave overwrote it without any notice. | ISO 9241-110 (controllability); data loss | Tabs announce saves on a `BroadcastChannel`. A tab that hears another tab save the same design pauses its autosave (status "Autosave paused") and shows a warning banner: "This design changed in another tab. Autosave is paused here so neither version is lost." with **Load the latest** / **Keep this version**. Keeping saves this tab's version, and then the other tab gets the banner. | fixed for tabs in the same browser: the server keeps A's version until B chooses, and "Keep" stores B's (`r10-stale-tab-en-1440.png`). Two different devices would need a server version check (R10-R1) |
+| R10-04 | medium | long text on small faces (`DesignerApp.onLayerChange`, `preflight.ts`) | Typing a long Arabic line on the mailer's side panel kept the font size, so the text ran far past both panel edges and would be cut in print. The print check only said "review" (outside the safe zone). | content integrity; preflight | (1) When the words change and the line outgrows the panel's safe width, the size steps down to fit (6 pt minimum), as it already does when text is added. A size the visitor sets on purpose is kept. (2) Preflight: text that runs past the panel edge itself is an **error**; images and shapes there stay a warning (they may be intentional bleed). Unit test in `preflight.test.ts`. | fixed: the same sentence now fits inside the safe area at about 6.7 pt with no issue (`r10-before-longtext-ar-390.png` → `r10-after-longtext-ar-390.png`) |
+
+### Reported to other owners (not edited)
+
+| id | owner | finding | suggested fix |
+|---|---|---|---|
+| R10-R1 | technical / platform (`api/designs`) | Saves have no version check, so two **devices** editing one design still overwrite each other silently. R10-03 covers tabs in the same browser only. | Send `updatedAt` with each PUT and answer 409 when it is stale. The designer would then show the R10-03 banner on a 409 too. |
+
+## Verification (round 10)
+
+- Lint and typecheck are clean. `npm test`: **96 files, 8,513 passed** (new: `upload-reject.test.ts`, the off-panel case in `preflight.test.ts`). `npm run build` OK.
+- Playwright `designer` + `smoke` + `journey` + `checkout` + `catalogue` + `storefront` (`--workers=2`): **57 passed, 5 skipped**, 0 failed.
+- Hydration e2e, 16 × 2 projects: **32 / 32 passed**.
+
+## Counts (round 10, new findings before fixing)
+
+| severity | found | fixed | open |
+|---|---|---|---|
+| critical | 0 | 0 | 0 |
+| high | 1 (R10-01) | 1 | 0 |
+| medium | 3 (R10-02, R10-03, R10-04) | 3 | 0 (multi-device conflicts → R10-R1) |
+| low | 0 | 0 | 0 |

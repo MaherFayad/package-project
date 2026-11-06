@@ -812,7 +812,8 @@
   z-index: 1;
   background: var(--p-color-bg-surface);
 }
-.saveStatus[data-state="error"] { color: var(--p-color-text-critical); }
+.saveStatus[data-state="error"],
+.saveStatus[data-state="tooLarge"] { color: var(--p-color-text-critical); }
 .saveStatus[data-state="saved"] { color: var(--p-color-text-success); }
 .saveStatus[data-state="saved"] .saveStatusText { color: var(--p-color-text-secondary); }
 .skeletonBar {

@@ -60,7 +60,7 @@ import { ConfigPanel, surfaceName, type ViewOptions } from "./ConfigPanel";
 import lib from "./library.module.css";
 import { loadLocalDraft, saveLocalDraft } from "./lib/storage";
 import { useArtworkCanvases } from "./useArtworkCanvases";
-import { prepareImage } from "./uploadImage";
+import { prepareImage, UploadError, type UploadErrorKind } from "./uploadImage";
 import { stampExportMark } from "@/components/marketing/exportMark";
 import { formatNumber } from "@/lib/format";
 import { fitTextBox, measureText } from "./fonts";
@@ -81,7 +81,12 @@ const Stage3D = dynamic(() => import("./Stage3D"), { ssr: false, loading: StageS
 const ModelPicker = dynamic(() => import("@/components/catalogue/CataloguePicker").then((m) => m.ModelPicker), { ssr: false });
 
 type View = "3d" | "face" | "dieline";
-type SaveState = "idle" | "dirty" | "saving" | "saved" | "error";
+type SaveState = "idle" | "dirty" | "saving" | "saved" | "error" | "tooLarge";
+const UPLOAD_ERROR_KEY: Record<UploadErrorKind, DictKey> = {
+  type: "designer.artwork.uploadWrongType",
+  size: "designer.artwork.uploadTooLarge",
+  decode: "designer.artwork.uploadUnreadable",
+};
 type ModalName = "price" | "export" | "share" | null;
 const TAB_IDS = ["box", "artwork", "layers", "check"] as const;
 
@@ -352,6 +357,29 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
   const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const retryDelay = useRef(10_000);
   const saveRef = useRef<() => Promise<string | null>>(async () => null);
+  const tooLargeToldRef = useRef(false);
+  // R10-03: two tabs on the same design. Each tab announces its saves on a BroadcastChannel; a tab
+  // that hears another tab save the design it has open pauses its autosave and asks, instead of
+  // silently overwriting the newer version (last writer won before).
+  const [tabId] = useState(() => Math.random().toString(36).slice(2));
+  const channelRef = useRef<BroadcastChannel | null>(null);
+  const staleRef = useRef(false);
+  const [stale, setStale] = useState(false);
+  useEffect(() => {
+    if (typeof BroadcastChannel === "undefined") return;
+    const ch = new BroadcastChannel("elba-designer");
+    channelRef.current = ch;
+    ch.onmessage = (e: MessageEvent<{ id?: string; tab?: string }>) => {
+      if (e.data?.id && e.data.id === designIdRef.current && e.data.tab !== tabId) {
+        staleRef.current = true;
+        setStale(true);
+      }
+    };
+    return () => {
+      ch.close();
+      channelRef.current = null;
+    };
+  }, [tabId]);
   const [online, setOnline] = useState(true);
   const touchedRef = useRef(false);
 
@@ -386,6 +414,15 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
           let res = await send(designIdRef.current);
           // Expired or not ours any more (e.g. signed out): keep the work as a new design.
           if (designIdRef.current && (res.status === 404 || res.status === 403)) res = await send(null);
+          // R10-01: 413 never succeeds on a retry; say why and stop retrying until the doc changes.
+          if (res.status === 413) {
+            setSaveState("tooLarge");
+            // The toolbar status can be cut short on phones: say it once in a toast as well.
+            if (!tooLargeToldRef.current) toast.show(t("designer.save.tooLarge"), { tone: "critical" });
+            tooLargeToldRef.current = true;
+            saveLocalDraft({ doc: current, designId: designIdRef.current, savedAt: Date.now() });
+            return null;
+          }
           if (!res.ok) throw new Error(String(res.status));
           const json = (await res.json()) as { id: string; owned: boolean };
           savedDocRef.current = current;
@@ -394,6 +431,8 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
           setUrl(json.id, docModelCode(current));
           saveLocalDraft({ doc: current, designId: json.id, savedAt: Date.now() });
           setSaveState(docRef.current === current ? "saved" : "dirty");
+          tooLargeToldRef.current = false;
+          channelRef.current?.postMessage({ id: json.id, tab: tabId });
           retryDelay.current = 10_000;
           return json.id;
         } catch {
@@ -402,7 +441,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
           if (retryTimer.current) clearTimeout(retryTimer.current);
           retryTimer.current = setTimeout(() => {
             retryTimer.current = null;
-            if (savedDocRef.current !== docRef.current) void saveRef.current();
+            if (savedDocRef.current !== docRef.current && !staleRef.current) void saveRef.current();
           }, retryDelay.current);
           retryDelay.current = Math.min(retryDelay.current * 2, 120_000);
           return null;
@@ -415,7 +454,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
         if (inflight.current === run) inflight.current = null;
       }
     },
-    [setUrl, shoot],
+    [setUrl, shoot, toast, t, tabId],
   );
 
   saveRef.current = () => saveToServer();
@@ -450,7 +489,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
     if (savedDocRef.current !== doc) setSaveState((s) => (s === "saving" ? s : "dirty"));
     const local = setTimeout(() => saveLocalDraft({ doc, designId: designIdRef.current, savedAt: Date.now() }), 600);
     const server = setTimeout(() => {
-      if (savedDocRef.current !== docRef.current) void saveToServer();
+      if (savedDocRef.current !== docRef.current && !staleRef.current) void saveToServer();
     }, 4000);
     return () => {
       clearTimeout(local);
@@ -546,7 +585,22 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
   const onPrintSides = useCallback((p: DesignDoc["printSides"]) => commit({ ...docRef.current, printSides: p }), [commit]);
 
   const onLayerChange = useCallback(
-    (layer: ArtworkLayer, coalesce?: string) => commit(updateLayer(docRef.current, layer.id, () => fitTextBox(layer)), coalesce),
+    (layer: ArtworkLayer, coalesce?: string) => {
+      let next = fitTextBox(layer);
+      // R10-04: typing longer text keeps it on its panel: when the words change and the line
+      // outgrows the panel's safe width, the size steps down (to 6 pt at least), as it does when
+      // text is first added. A size the visitor sets on purpose (same words) is kept.
+      const before = findLayer(docRef.current, layer.id);
+      const info = modelRef.current?.faces[layer.face];
+      if (next.kind === "text" && before?.kind === "text" && before.text !== next.text && info) {
+        const room = Math.max(10, info.width - 2 * (modelRef.current?.safeMm ?? 3));
+        if (next.width > room && next.fontSizePt > 6) {
+          const pt = Math.max(6, Math.floor(next.fontSizePt * (room / next.width) * 10) / 10);
+          next = fitTextBox({ ...next, fontSizePt: pt });
+        }
+      }
+      commit(updateLayer(docRef.current, layer.id, () => next), coalesce);
+    },
     [commit],
   );
 
@@ -569,8 +623,9 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
         sentRef.current.uploaded = true;
         trackClient("artwork_uploaded", { structure_code: docRef.current.structureCode, surface, locale });
       }
-    } catch {
-      setUploadError(t("designer.artwork.uploadError"));
+    } catch (e) {
+      // R10-02: say which rule the file broke (WCAG 3.3.1 / 3.3.3).
+      setUploadError(t(e instanceof UploadError ? UPLOAD_ERROR_KEY[e.kind] : "designer.artwork.uploadError"));
     } finally {
       setUploading(false);
     }
@@ -702,14 +757,17 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
   const openPrice = () => requireAccount("price", () => setModal("price"));
 
   // ── render helpers ────────────────────────────────────────────────
-  const statusText =
-    saveState === "saving"
+  const statusText = stale
+    ? t("designer.save.stalePaused")
+    : saveState === "saving"
       ? t("designer.save.saving")
       : saveState === "saved"
         ? user
           ? t("designer.save.savedAccount")
           : t("designer.save.savedLocal")
-        : saveState === "error"
+        : saveState === "tooLarge"
+          ? t("designer.save.tooLarge")
+          : saveState === "error"
           ? online
             ? t("designer.save.failed")
             : t("designer.save.offline")
@@ -834,7 +892,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
           <Button icon={Redo2} accessibilityLabel={t("designer.history.redo")} disabled={!canRedo(hist)} onClick={() => dispatch({ type: "redo" })} />
         </ButtonGroup>
         <span className={styles.saveStatus} role="status" data-testid="save-status" data-state={saveState} title={statusText || undefined}>
-          {saveState === "error" ? (
+          {saveState === "error" || saveState === "tooLarge" ? (
             <CloudOff size={16} aria-hidden />
           ) : saveState === "saved" ? (
             <CloudCheck size={16} aria-hidden />
@@ -891,6 +949,27 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
       <div className={styles.priceRow}>
         <PriceBadge state={price} onClick={openPrice} vessel={isVessel} />
       </div>
+
+      {stale ? (
+        <div className={styles.banner}>
+          <Banner
+            tone="warning"
+            title={t("designer.save.staleTitle")}
+            announce
+            action={{ content: t("designer.save.staleReload"), onAction: () => window.location.reload() }}
+            secondaryAction={{
+              content: t("designer.save.staleKeep"),
+              onAction: () => {
+                staleRef.current = false;
+                setStale(false);
+                void saveToServer();
+              },
+            }}
+          >
+            {t("designer.save.staleBody")}
+          </Banner>
+        </div>
+      ) : null}
 
       {notFound ? (
         <div className={styles.banner}>
@@ -1135,7 +1214,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
                   onSurface={setSurface}
                   onBackground={(c) => commit(setBackground(docRef.current, surface, c), `bg:${surface}`)}
                   onUpload={onUpload}
-                  onUploadRejected={() => setUploadError(t("designer.artwork.uploadError"))}
+                  onUploadRejected={(reason) => setUploadError(t(UPLOAD_ERROR_KEY[reason]))}
                   onAddText={onAddText}
                   onAddShape={onAddShape}
                   onLayer={onLayerChange}
