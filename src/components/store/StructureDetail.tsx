@@ -74,7 +74,7 @@ export function StructureDetail({
             <span className={`${mk.eyebrow} m-enter`} style={{ ["--m-i" as string]: 1, marginBlockEnd: 0 }}>
               {t(`marketing.boxes.family.${structure.family}` as DictKey)}
             </span>
-            <h1 id="structure-title" className={`${mk.h1} m-enter`} style={{ ["--m-i" as string]: 2 }}>
+            <h1 id="structure-title" className={`${mk.h1} m-enter-lcp`} style={{ ["--m-i" as string]: 2 }}>
               {title}
             </h1>
             <p className={`${mk.lead} m-enter`} style={{ ["--m-i" as string]: 3 }}>

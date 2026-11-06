@@ -10,14 +10,12 @@ import {
   Badge,
   Banner,
   Breadcrumbs,
-  Button,
   Card,
   DataTable,
   EmptyState,
   Icon,
   Layout,
   LayoutSection,
-  ProgressBar,
   Text,
 } from "@/components/ui";
 import { PortfolioGallery } from "@/components/store/PortfolioGallery";
@@ -26,7 +24,9 @@ import { JsonLd } from "@/components/store/JsonLd";
 import { breadcrumbJsonLd, vendorJsonLd } from "@/components/store/jsonld";
 import { designHref } from "@/components/store/catalog";
 import { getVendorBySlug } from "@/components/store/data";
+import Link from "next/link";
 import styles from "@/components/store/store.module.css";
+import mk from "@/components/marketing/marketing.module.css";
 
 type Props = { params: Promise<{ locale: string; slug: string }> };
 
@@ -59,7 +59,7 @@ export default async function VendorProfilePage({ params }: Props) {
   const sep = locale === "ar" ? "، " : ", ";
 
   return (
-    <div className={styles.page}>
+    <>
       <JsonLd
         data={[
           vendorJsonLd({ name, url, logo: v.logoUrl ? `${base}${v.logoUrl}` : null, city, description: pick(locale, v.bio.ar, v.bio.en), rating: v.rating, ratingCount: v.ratingCount }),
@@ -70,27 +70,28 @@ export default async function VendorProfilePage({ params }: Props) {
           ]),
         ]}
       />
-      <div className={styles.stack}>
-        <div className={styles.headerBlock}>
+      <section className={`${mk.hero} ${mk.vendorHero}`} aria-labelledby="vendor-title">
+        <div className={`${mk.container} ${mk.vendorHeroInner}`}>
           <Breadcrumbs items={[{ content: t("nav.home"), url: `/${locale}` }, { content: t("vendors.title"), url: `/${locale}/vendors` }, { content: name }]} />
-          <div className={styles.vendorHead}>
-            {v.logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={v.logoUrl} alt="" className={`${styles.vendorLogo} ${styles.vendorLogoLarge}`} width={72} height={72} />
-            ) : null}
-            <div className={styles.headerBlock}>
-              <h1 className={styles.pageTitle}>{name}</h1>
-              <ul className={styles.metaList}>
-                <li>
-                  <Icon source={MapPin} size="small" />
+          <div className={mk.vendorHeroGrid}>
+            <div className={mk.vendorHeroCopy}>
+              <div className={`${mk.vendorIdentity} m-enter`}>
+                {v.logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={v.logoUrl} alt="" className={mk.vendorHeroLogo} width={72} height={72} />
+                ) : null}
+                <span className={mk.eyebrow}>
+                  <MapPin size={16} aria-hidden />
                   {city}
-                </li>
-                <li>
-                  <RatingStars rating={v.rating} label={t("store.vendor.stars", { rating: v.rating.toFixed(1) })} />
-                  <span>{t("store.vendors.ratingValue", { rating: v.rating.toFixed(1), count: formatNumber(v.ratingCount) })}</span>
-                </li>
-              </ul>
-              <div className={styles.badges}>
+                </span>
+              </div>
+              <h1 id="vendor-title" className={`${mk.h1} ${mk.vendorTitle} m-enter-lcp`} style={{ ["--m-i" as string]: 1 }}>
+                {name}
+              </h1>
+              <p className={`${mk.lead} m-enter`} style={{ ["--m-i" as string]: 2 }}>
+                {pick(locale, v.bio.ar, v.bio.en)}
+              </p>
+              <div className={`${styles.badges} m-enter`} style={{ ["--m-i" as string]: 2 }}>
                 {v.verified ? (
                   <Badge tone="success" icon={<Icon source={BadgeCheck} size="small" />}>
                     {t("vendors.verified")}
@@ -99,16 +100,54 @@ export default async function VendorProfilePage({ params }: Props) {
                 {v.foodSafe ? <Badge tone="info">{t("vendors.foodSafe")}</Badge> : null}
                 {v.capabilities.digitalShortRun ? <Badge>{t("store.vendors.digital")}</Badge> : null}
               </div>
+              <div className={`${mk.actions} m-enter`} style={{ ["--m-i" as string]: 3 }}>
+                <Link href={cta} className={`${mk.pill} ${mk.pillLarge}`}>
+                  {t("store.vendor.designCta")}
+                </Link>
+                <Link href={`/${locale}/vendors`} className={`${mk.pill} ${mk.pillOutline} ${mk.pillLarge}`}>
+                  {t("marketing.printers.all")}
+                </Link>
+              </div>
+              <p className={`${mk.fine} m-enter`} style={{ ["--m-i" as string]: 4 }}>
+                {t("store.vendor.designHint")}
+              </p>
             </div>
+            <ul className={`${mk.statsList} ${mk.vendorStats}`} aria-label={t("store.vendor.statsTitle")}>
+              <li className={`${mk.statItem} m-enter`} style={{ ["--m-i" as string]: 2 }}>
+                <span className={mk.statValue}>
+                  <bdi>{v.rating.toFixed(1)}</bdi>
+                </span>
+                <span className={`${mk.statLabel} ${mk.inlineIcon}`}>
+                  <RatingStars rating={v.rating} label={t("store.vendor.stars", { rating: v.rating.toFixed(1) })} />
+                  {t("store.vendor.rating")}
+                </span>
+              </li>
+              <li className={`${mk.statItem} m-enter`} style={{ ["--m-i" as string]: 3 }}>
+                <span className={mk.statValue}>
+                  <bdi>{formatNumber(v.onTimePct)}%</bdi>
+                </span>
+                <span className={mk.statLabel}>{t("store.vendor.onTime")}</span>
+              </li>
+              <li className={`${mk.statItem} m-enter`} style={{ ["--m-i" as string]: 4 }}>
+                <span className={mk.statValue}>{t("store.structure.deliveryDays", { days: v.leadTimeDays })}</span>
+                <span className={mk.statLabel}>{t("store.vendor.leadTime")}</span>
+              </li>
+              <li className={`${mk.statItem} m-enter`} style={{ ["--m-i" as string]: 5 }}>
+                <span className={mk.statValue}>
+                  <bdi>{formatNumber(v.minOrderQty)}</bdi>
+                </span>
+                <span className={mk.statLabel}>{t("store.vendor.minOrder")}</span>
+              </li>
+            </ul>
           </div>
         </div>
+      </section>
 
+      <section className={`${mk.band} ${mk.bandGrey} ${mk.profileBody}`} aria-label={t("store.vendor.about")}>
+        <div className={mk.container}>
         <Layout>
           <LayoutSection>
             <div className={styles.stack}>
-              <Card title={t("store.vendor.about")} as="section">
-                <Text as="p">{pick(locale, v.bio.ar, v.bio.en)}</Text>
-              </Card>
 
               <Card title={t("store.vendor.portfolioTitle")} as="section">
                 {v.portfolio.length ? (
@@ -225,41 +264,10 @@ export default async function VendorProfilePage({ params }: Props) {
             </div>
           </LayoutSection>
 
-          <LayoutSection variant="oneThird" as="aside" aria-label={t("store.vendor.statsTitle")}>
+          <LayoutSection variant="oneThird" as="aside" aria-label={t("store.vendor.serviceAreas")}>
             <div className={`${styles.stack} ${styles.sticky}`}>
               <Card>
-                <div className={styles.ctaCard}>
-                  <Button url={cta} variant="primary" size="large" fullWidth>
-                    {t("store.vendor.designCta")}
-                  </Button>
-                  <Text as="p" variant="bodySm" tone="subdued">
-                    {t("store.vendor.designHint")}
-                  </Text>
-                </div>
-              </Card>
-              <Card title={t("store.vendor.statsTitle")} as="section">
                 <dl className={styles.specs}>
-                  <div className={styles.specRow}>
-                    <dt>{t("store.vendor.rating")}</dt>
-                    <dd>
-                      <bdi>{v.rating.toFixed(1)}</bdi> / 5
-                    </dd>
-                  </div>
-                  <div className={styles.specRow}>
-                    <dt>{t("store.vendor.onTime")}</dt>
-                    <dd>
-                      <bdi>{formatNumber(v.onTimePct)}%</bdi>
-                      <ProgressBar progress={v.onTimePct} size="small" tone="success" accessibilityLabel={t("store.vendor.onTime")} animated={false} />
-                    </dd>
-                  </div>
-                  <div className={styles.specRow}>
-                    <dt>{t("store.vendor.leadTime")}</dt>
-                    <dd>{t("store.structure.deliveryDays", { days: v.leadTimeDays })}</dd>
-                  </div>
-                  <div className={styles.specRow}>
-                    <dt>{t("store.vendor.minOrder")}</dt>
-                    <dd>{t("store.vendors.minQty", { qty: formatNumber(v.minOrderQty) })}</dd>
-                  </div>
                   <div className={styles.specRow}>
                     <dt>{t("store.vendor.serviceAreas")}</dt>
                     <dd>{v.serviceAreas.map((c) => t(`cities.${c}` as DictKey)).join(sep)}</dd>
@@ -273,7 +281,8 @@ export default async function VendorProfilePage({ params }: Props) {
             </div>
           </LayoutSection>
         </Layout>
-      </div>
-    </div>
+        </div>
+      </section>
+    </>
   );
 }

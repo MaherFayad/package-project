@@ -20,7 +20,7 @@ export function Marquee({ items, label, pause, play }: { items: { src: string; a
           {paused ? <Play size={16} aria-hidden /> : <Pause size={16} aria-hidden />}
         </button>
       </div>
-      <div className={styles.marqueeViewport}>
+      <div className={styles.marqueeViewport} role="group" aria-label={label}>
         <ul className={styles.marqueeTrack}>
           {loop.map((it, i) => (
             <li key={i} className={styles.marqueeItem} aria-hidden={i >= items.length || undefined}>

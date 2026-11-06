@@ -43,7 +43,6 @@
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  padding-block-end: var(--mk-cookie-h, 0px);
 }
 .site:lang(ar) {
   --mk-h1: clamp(2.25rem, 1.15rem + 4.6vw, 4.75rem);
@@ -56,6 +55,37 @@
 }
 @media (min-width: 1200px) {
   .site { --mk-gutter: 48px; --mk-section: 120px; }
+}
+
+/*
+ * Keyframes used by this module. They must live here: CSS Modules renames every animation
+ * name referenced in this file (m-marquee -> marketing_m-marquee__hash), so the global copies
+ * in src/styles/motion.css are never matched from here. Keep the two sets in sync.
+ */
+@keyframes m-rise-in {
+  from { opacity: 0; transform: translate3d(0, var(--m-rise), 0); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes m-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes m-float {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -10px, 0); }
+}
+@keyframes m-marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+@keyframes m-marquee-rtl {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(50%, 0, 0); }
+}
+@keyframes m-pulse-dot {
+  0% { box-shadow: 0 0 0 0 rgba(4, 123, 93, 0.45); }
+  70% { box-shadow: 0 0 0 8px rgba(4, 123, 93, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(4, 123, 93, 0); }
 }
 
 .main { flex: 1; display: block; outline: none; }
@@ -350,7 +380,7 @@
 .loginLink { display: none; }
 @media (min-width: 640px) { .loginLink { display: inline-flex; } }
 .headerCta { display: none; }
-@media (min-width: 480px) { .headerCta { display: inline-flex; } }
+@media (min-width: 360px) { .headerCta { display: inline-flex; } }
 .langLink {
   display: inline-flex;
   align-items: center;
@@ -980,7 +1010,7 @@
 }
 
 /* ───────────── Footer (black) ───────────── */
-.footer { background: #000; color: #e3e3e3; padding-block: 72px 32px; font-size: 0.9375rem; }
+.footer { background: #000; color: #e3e3e3; padding-block: 72px calc(32px + var(--mk-cookie-h, 0px)); font-size: 0.9375rem; }
 .footerTop { display: grid; gap: 40px; }
 @media (min-width: 1024px) { .footerTop { grid-template-columns: 1.2fr repeat(4, minmax(0, 1fr)); gap: 32px; } }
 .footerBrand { display: grid; gap: 16px; align-content: start; max-inline-size: 22rem; }
@@ -1050,6 +1080,22 @@
 .cookieInner { display: flex; align-items: center; gap: 12px 24px; padding-block: 12px; flex-wrap: wrap; }
 .cookieText { flex: 1 1 18rem; margin: 0; font-size: 0.875rem; color: var(--mk-text); line-height: 1.5; }
 .cookieText a { color: var(--mk-ink); font-weight: 600; }
+@media (max-width: 559px) {
+  /* Compact on phones: one row, text beside the button, so the bar stays under ~90px. */
+  .cookieInner { flex-wrap: nowrap; padding-block: 10px; gap: 12px; }
+  .cookieText { flex: 1 1 auto; font-size: 0.8125rem; line-height: 1.45; }
+  .cookieInner .pill { flex: none; }
+}
+
+/* Phones: primary and secondary CTAs go full width (thumb reach, WCAG 2.5.8 target size). */
+@media (max-width: 559px) {
+  .actions { flex-direction: column; align-items: stretch; }
+  .actions .pill,
+  .tilesCta .pill,
+  .sectionHeadRow > .pill { inline-size: 100%; }
+  .ctaInner .actions,
+  .vendorHeroCopy .actions { justify-self: stretch; inline-size: 100%; }
+}
 
 /* ───────────── Category hero (centred) ───────────── */
 .centerHero { text-align: center; padding-block: clamp(56px, 8vw, 112px) 0; }
@@ -1207,3 +1253,49 @@
 .flipRtl:dir(rtl) { scale: -1 1; }
 
 .inlineIcon { display: inline-flex; align-items: center; gap: 4px; }
+
+/* ───────────── Loading skeleton (route streaming) ───────────── */
+.skeletonPage { min-block-size: calc(100dvh - 64px); }
+.skeletonHero { padding-block: clamp(56px, 8vw, 112px); min-block-size: calc(100dvh - 64px); }
+.skeletonCopy { display: grid; gap: 18px; max-inline-size: 720px; }
+.skel {
+  display: block;
+  border-radius: 12px;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.06) 0%, rgba(0, 0, 0, 0.1) 50%, rgba(0, 0, 0, 0.06) 100%);
+  background-size: 200% 100%;
+  animation: m-shimmer 1.4s linear infinite;
+}
+.skelEyebrow { inline-size: 160px; block-size: 14px; }
+.skelTitle { inline-size: 100%; block-size: clamp(40px, 6vw, 72px); border-radius: 16px; }
+.skelLine { inline-size: 90%; block-size: 18px; }
+.skelShort { inline-size: 60%; }
+.skelPill { inline-size: 220px; block-size: 52px; border-radius: 999px; margin-block-start: 12px; }
+@keyframes m-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skel { animation: none; }
+}
+
+/* Error / empty route states inside the marketing chrome. */
+.stateHero { padding-block: clamp(72px, 10vw, 140px); min-block-size: 60dvh; }
+
+/* Section head with no trailing grid (e.g. /boxes library teaser). */
+.flushHead { margin-block-end: 0; }
+/* Closing CTA band without the tile row (category landings). */
+.ctaBandCompact { padding-block-end: var(--mk-section); }
+.ctaTitle { font-size: clamp(2.25rem, 1.2rem + 3.6vw, 4rem); }
+
+/* ───────────── Printer profile hero ───────────── */
+.vendorHeroInner { display: grid; gap: 32px; padding-block: 24px clamp(56px, 7vw, 96px); }
+.vendorHeroGrid { display: grid; gap: 48px; align-items: end; }
+@media (min-width: 1024px) { .vendorHeroGrid { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 64px; } }
+.vendorHeroCopy { display: grid; gap: 20px; justify-items: start; }
+.vendorIdentity { display: flex; align-items: center; gap: 16px; }
+.vendorIdentity .eyebrow { margin: 0; }
+.vendorHeroLogo { inline-size: 72px; block-size: 72px; border-radius: 20px; box-shadow: var(--mk-shadow-card); background: #fff; object-fit: cover; }
+.vendorTitle { font-size: clamp(2.25rem, 1.3rem + 3.6vw, 4rem); max-inline-size: 14em; }
+.vendorStats { gap: 32px 24px; }
+.vendorStats .statValue { font-size: clamp(1.875rem, 1.3rem + 1.8vw, 2.75rem); }
+.profileBody { padding-block-start: clamp(40px, 5vw, 64px); }

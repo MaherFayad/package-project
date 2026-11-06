@@ -33,7 +33,7 @@ export default async function BottlesPage({ params }: Props) {
       <section className={`${styles.centerHero} ${styles.bandMint}`} aria-labelledby="bottles-title">
         <div className={styles.container}>
           <span className={`${styles.eyebrow} m-enter`}>{t("marketing.bottles.eyebrow")}</span>
-          <h1 id="bottles-title" className={`${styles.h1} m-enter`} style={{ ["--m-i" as string]: 1 }}>
+          <h1 id="bottles-title" className={`${styles.h1} m-enter-lcp`} style={{ ["--m-i" as string]: 1 }}>
             {t("marketing.bottles.title")}
           </h1>
           <p className={`${styles.lead} m-enter`} style={{ ["--m-i" as string]: 2 }}>

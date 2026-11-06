@@ -18,7 +18,16 @@ const SHOWCASE = ["ECMA_RTE", "PIZZA", "FEFCO_0427", "GABLE_BOX", "RIGID_BOX"] a
  * Category landing for boxes and cartons (/boxes and /catalog): centred hero with a row of
  * real 3D renders, then every structure grouped by family with its "from" price.
  */
-export async function BoxesLanding({ locale, titleAs = "h1" }: { locale: Locale; titleAs?: "h1" }) {
+export async function BoxesLanding({
+  locale,
+  titleAs = "h1",
+  library = "full",
+}: {
+  locale: Locale;
+  titleAs?: "h1";
+  /** "full": the whole model library inline (/catalog). "teaser": a link band + closing CTA (/boxes). */
+  library?: "full" | "teaser";
+}) {
   const t = getT(locale);
   const H = titleAs;
   const structures = await listStructures();
@@ -29,7 +38,7 @@ export async function BoxesLanding({ locale, titleAs = "h1" }: { locale: Locale;
       <section className={`${styles.centerHero} ${styles.bandMint}`} aria-labelledby="boxes-title">
         <div className={styles.container}>
           <span className={`${styles.eyebrow} m-enter`}>{t("marketing.boxes.eyebrow")}</span>
-          <H id="boxes-title" className={`${styles.h1} m-enter`} style={{ ["--m-i" as string]: 1 }}>
+          <H id="boxes-title" className={`${styles.h1} m-enter-lcp`} style={{ ["--m-i" as string]: 1 }}>
             {t("marketing.boxes.title")}
           </H>
           <p className={`${styles.lead} m-enter`} style={{ ["--m-i" as string]: 2 }}>
@@ -87,21 +96,61 @@ export async function BoxesLanding({ locale, titleAs = "h1" }: { locale: Locale;
         </div>
       </section>
 
-      {/* Added by 3D integration: the whole model library (every FEFCO / ECMA style, rigid box,
-          tube, bottle, jar, can and pouch), each with a thumbnail drawn from its 3D model. */}
-      <section className={styles.band} id="all-models" aria-labelledby="all-models-title" style={{ scrollMarginBlockStart: 96 }}>
-        <div className={styles.container}>
-          <div className={styles.sectionHeadRow}>
-            <div>
-              <h2 id="all-models-title" className={styles.h2}>
-                {t("library.catalog.heading")}
-              </h2>
-              <p className={styles.lead}>{t("library.catalog.subtitle", { count: formatNumber(MODELS.length) })}</p>
+      {library === "teaser" ? (
+        <>
+          <section className={`${styles.band} ${styles.bandGrey}`} aria-labelledby="all-models-title">
+            <div className={styles.container}>
+              <div className={`${styles.sectionHeadRow} ${styles.flushHead}`} data-reveal="" suppressHydrationWarning>
+                <div>
+                  <h2 id="all-models-title" className={styles.h2}>
+                    {t("library.catalog.heading")}
+                  </h2>
+                  <p className={styles.lead}>{t("library.catalog.subtitle", { count: formatNumber(MODELS.length) })}</p>
+                </div>
+                <Link href={`${base}/catalog#all-models`} className={`${styles.pill} ${styles.pillOutline} ${styles.pillLarge}`}>
+                  {t("marketing.boxes.libraryCta", { count: formatNumber(MODELS.length) })}
+                </Link>
+              </div>
             </div>
+          </section>
+          <section className={`${styles.band} ${styles.dark} ${styles.ctaBand} ${styles.ctaBandCompact}`} aria-labelledby="boxes-cta-title">
+            <div className={styles.ctaGridLines} aria-hidden="true" />
+            <div className={styles.ctaGlow} aria-hidden="true" />
+            <div className={styles.container}>
+              <div className={styles.ctaInner} data-reveal="" suppressHydrationWarning>
+                <h2 id="boxes-cta-title" className={`${styles.h2} ${styles.ctaTitle}`}>
+                  {t("marketing.boxes.closingTitle")}
+                </h2>
+                <p className={styles.lead}>{t("marketing.boxes.closingBody")}</p>
+                <div className={`${styles.actions} ${styles.center}`}>
+                  <Link href={designHref(locale, { structure: "FEFCO_0427" })} className={`${styles.pill} ${styles.pillLime} ${styles.pillLarge}`}>
+                    {t("marketing.boxes.primary")}
+                  </Link>
+                  <Link href={`${base}/vendors`} className={`${styles.pill} ${styles.pillGhostDark} ${styles.pillLarge}`}>
+                    {t("marketing.boxes.secondary")}
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </section>
+        </>
+      ) : (
+        /* Added by 3D integration: the whole model library (every FEFCO / ECMA style, rigid box,
+           tube, bottle, jar, can and pouch), each with a thumbnail drawn from its 3D model. */
+        <section className={styles.band} id="all-models" aria-labelledby="all-models-title" style={{ scrollMarginBlockStart: 96 }}>
+          <div className={styles.container}>
+            <div className={styles.sectionHeadRow}>
+              <div>
+                <h2 id="all-models-title" className={styles.h2}>
+                  {t("library.catalog.heading")}
+                </h2>
+                <p className={styles.lead}>{t("library.catalog.subtitle", { count: formatNumber(MODELS.length) })}</p>
+              </div>
+            </div>
+            <ModelLinks locale={locale} />
           </div>
-          <ModelLinks locale={locale} />
-        </div>
-      </section>
+        </section>
+      )}
     </>
   );
 }

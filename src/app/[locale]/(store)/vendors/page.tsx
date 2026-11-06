@@ -48,7 +48,7 @@ export default async function VendorsPage({ params, searchParams }: Props) {
       <section className={`${styles.centerHero} ${styles.bandMint}`} aria-labelledby="vendors-title" style={{ paddingBlockEnd: "clamp(48px, 6vw, 80px)" }}>
         <div className={styles.container}>
           <span className={`${styles.eyebrow} m-enter`}>{t("marketing.vendors.eyebrow")}</span>
-          <h1 id="vendors-title" className={`${styles.h1} m-enter`} style={{ ["--m-i" as string]: 1 }}>
+          <h1 id="vendors-title" className={`${styles.h1} m-enter-lcp`} style={{ ["--m-i" as string]: 1 }}>
             {t("marketing.vendors.title")}
           </h1>
           <p className={`${styles.lead} m-enter`} style={{ ["--m-i" as string]: 2 }}>

@@ -137,7 +137,7 @@ export default async function HomePage({ params, searchParams }: Props) {
               <span className={styles.eyebrowDot} aria-hidden="true" />
               {t("marketing.hero.eyebrow")}
             </span>
-            <h1 id="hero-title" className={`${styles.h1} m-enter`} style={{ ["--m-i" as string]: 1 }}>
+            <h1 id="hero-title" className={`${styles.h1} m-enter-lcp`} style={{ ["--m-i" as string]: 1 }}>
               {t("marketing.hero.title")}
             </h1>
             <p className={`${styles.lead} m-enter`} style={{ ["--m-i" as string]: 2 }}>
@@ -395,7 +395,7 @@ export default async function HomePage({ params, searchParams }: Props) {
         <div className={styles.ctaGlow} aria-hidden="true" />
         <div className={styles.container}>
           <div className={styles.ctaInner} data-reveal="" suppressHydrationWarning>
-            <h2 id="cta-title" className={styles.h2} style={{ fontSize: "clamp(2.25rem, 1.2rem + 3.6vw, 4rem)" }}>
+            <h2 id="cta-title" className={`${styles.h2} ${styles.ctaTitle}`}>
               {t("marketing.cta.title")}
             </h2>
             <p className={styles.lead}>{t("marketing.cta.body")}</p>

@@ -17,5 +17,5 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 /** Products → Boxes and cartons: category landing. */
 export default async function BoxesPage({ params }: Props) {
-  return <BoxesLanding locale={toLocale((await params).locale)} />;
+  return <BoxesLanding locale={toLocale((await params).locale)} library="teaser" />;
 }

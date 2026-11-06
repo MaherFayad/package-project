@@ -214,6 +214,9 @@ export const marketingEn = {
       TUBE: "Paper tubes for tea, cosmetics and apparel.",
     },
     renderAlt: "3D render of a printed {name}",
+    libraryCta: "Browse all {count} models",
+    closingTitle: "Your box in 3D, in two minutes",
+    closingBody: "Pick a style above or start with a mailer box. You can change the size, artwork and printer later.",
   },
   bottles: {
     eyebrow: "Bottles and labels",
