@@ -441,6 +441,8 @@ export const checkoutEn = {
     DELIVERED: "Elba: order {number} was delivered. Tell us how it went.",
     DISPUTE_OPENED: "Elba: we received your report about order {number} and will reply within one working day.",
     REVIEW_THANKS: "Elba: thanks for rating order {number}.",
+    DESIGN_FOLLOW_UP:
+      "Elba: your design “{design}” is saved in your account. See the price and order printing here: {url} and reply here with any question. To stop these messages, turn off marketing messages on your account page: {account}",
   },
   buyer: {
     secureCheckout: "Secure checkout",

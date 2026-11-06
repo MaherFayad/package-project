@@ -25,6 +25,8 @@ import { loadPricingConfig } from "@/components/admin/server/settings";
 import { getPaymentProvider, mockPaymentsEnabled, paymentConfig, type Intention, type WebhookOutcome, type WebhookRequest } from "@/lib/payments";
 import { getShippingProvider, type TrackingEvent } from "@/lib/shipping";
 import { notify } from "@/lib/notify";
+import { track } from "@/lib/analytics/track";
+import { isReprint } from "@/components/admin/lib/metrics";
 import { generatePrintPdf } from "./pdf/print";
 import { putFile, getFile } from "./storage";
 import { assertTransition, canBuyerCancel, canOpenDispute, canReview, isPaidStatus, type Actor } from "./state";
@@ -275,6 +277,15 @@ async function createOrderFromOffer(
     await db.proof.update({ where: { id: result.proofId }, data: { pdfUrl: `/api/orders/${result.orderId}/proof-pdf` } });
   }
 
+  // launch-metrics.md §1 `proof_approved`: the buyer approved the frozen 3D + PDF proof (the legal
+  // record is the Proof row; this is the funnel step). A reorder reuses the approved proof.
+  if (!p.existingProofId) {
+    void track(
+      "proof_approved",
+      { locale: p.locale, structure_code: p.doc.structureCode, model_code: p.doc.modelCode ?? null, quantity: p.offer.quantity },
+      { userId: user.id, designId, orderId: result.orderId },
+    );
+  }
   await notify({ to: { phone: user.phone }, locale: p.locale, template: "ORDER_PLACED", params: { number: result.number } });
   return { orderId: result.orderId, number: result.number };
 }
@@ -382,6 +393,11 @@ export async function transitionOrder(orderId: string, to: OrderStatus, actor: T
     return true;
   });
   if (!changed) throw new OrderError("INVALID_STATE");
+  // launch-metrics.md §1 `order_delivered` (courier sync or vendor/admin confirmation).
+  if (to === "DELIVERED") {
+    const onTime = order.dueDate ? now.getTime() <= order.dueDate.getTime() : null;
+    void track("order_delivered", { by: actor.role, on_time: onTime, reprint: isReprint(order) }, { userId: order.buyerId, orderId });
+  }
   await notifyStatus(order, to);
 }
 
@@ -601,6 +617,9 @@ export async function applyPaymentOutcome(o: Extract<WebhookOutcome, { ok: true 
       throw e;
     });
   if (!changed) return "ALREADY_PAID";
+  // launch-metrics.md §1 `payment_succeeded`: the source of truth for "paid order" is this
+  // verified gateway webhook, after the PAID transition committed.
+  void trackPaymentSucceeded(order, payment);
 
   // Side effects after commit: print files, then messages. Failures never undo the payment.
   try {
@@ -615,6 +634,23 @@ export async function applyPaymentOutcome(o: Extract<WebhookOutcome, { ok: true 
     await notify({ to: { phone: s.phone }, locale: s.locale === "en" ? "en" : "ar", template: "VENDOR_NEW_JOB", params: { number: order.number } });
   }
   return "PAID";
+}
+
+async function trackPaymentSucceeded(
+  order: { id: string; buyerId: string; totalPiasters: number },
+  payment: { method: string; provider: string },
+): Promise<void> {
+  let firstOrder: boolean | null = null;
+  try {
+    firstOrder = (await db.order.count({ where: { buyerId: order.buyerId, paidAt: { not: null } } })) <= 1;
+  } catch {
+    /* analytics only */
+  }
+  await track(
+    "payment_succeeded",
+    { method: payment.method, provider: payment.provider, total_piasters: order.totalPiasters, first_order: firstOrder },
+    { userId: order.buyerId, orderId: order.id },
+  );
 }
 
 // ───────────────────────── print files ─────────────────────────
@@ -793,6 +829,8 @@ export async function openDispute(orderId: string, user: SessionUser, reason: Di
   const hasOpen = order.disputes.some((d) => d.status === "OPEN" || d.status === "UNDER_REVIEW");
   if (!canOpenDispute(order.status as OrderStatus, order.deliveredAt, new Date(), hasOpen)) throw new OrderError("NOT_ALLOWED");
   await db.dispute.create({ data: { orderId, openedById: user.id, reason, description } });
+  // launch-metrics.md §1 `dispute_opened` (reason only; the free-text description stays out of analytics).
+  void track("dispute_opened", { reason }, { userId: user.id, orderId });
   await db.productionEvent.create({ data: { orderId, type: "NOTE" as ProductionEventType, note: `DISPUTE_OPENED:${reason}`, actorId: user.id } });
   await notify({ to: { phone: user.phone }, locale: user.locale, template: "DISPUTE_OPENED", params: { number: order.number } });
 }

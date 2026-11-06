@@ -443,6 +443,8 @@ export const checkoutAr: Pick<Dictionary, "checkout" | "payment" | "orders" | "s
     DELIVERED: "علبة: تم تسليم الطلب {number}. أخبرنا برأيك.",
     DISPUTE_OPENED: "علبة: استلمنا بلاغك عن الطلب {number} وسنرد خلال يوم عمل واحد.",
     REVIEW_THANKS: "علبة: شكرا على تقييم الطلب {number}.",
+    DESIGN_FOLLOW_UP:
+      "علبة: تصميمك «{design}» محفوظ في حسابك. اعرف السعر واطلب الطباعة من هنا: {url} ويسعدنا الرد على أي سؤال في هذه المحادثة. لإيقاف هذه الرسائل، أوقف الرسائل التسويقية من صفحة حسابك: {account}",
   },
   buyer: {
     secureCheckout: "دفع آمن",

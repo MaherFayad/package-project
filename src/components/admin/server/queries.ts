@@ -1,5 +1,6 @@
 import "server-only";
 import { db } from "@/lib/db";
+import { priceViewedUsers } from "@/lib/analytics/funnel";
 import { fromJson } from "@/lib/json";
 import { pick } from "@/i18n";
 import type { Dims, Locale, OrderStatus, StructureParamLimits, VendorCapabilities } from "@/types";
@@ -43,12 +44,15 @@ const metricSelect = {
 
 export async function loadOverview(range: RangeKey, now = new Date()) {
   const { from, to, prevFrom } = rangeWindow(range, now);
-  const [orders, disputes, designs, accounts, quoteUsers, qcPending, applications, dataRequests] = await Promise.all([
+  const [orders, disputes, designs, accounts, priceViewed, qcPending, applications, dataRequests] = await Promise.all([
     db.order.findMany({ where: { OR: [{ placedAt: { gte: prevFrom } }, { deliveredAt: { gte: prevFrom } }] }, select: metricSelect }),
     db.dispute.findMany({ select: { createdAt: true, status: true } }),
     db.design.count({ where: { createdAt: { gte: from, lt: to } } }),
     db.user.count({ where: { role: "BUYER", createdAt: { gte: from, lt: to } } }),
-    db.quote.findMany({ where: { createdAt: { gte: from, lt: to }, userId: { not: null } }, select: { userId: true }, distinct: ["userId"] }),
+    // B-19: "price viewed" now comes from the first-party Event table (price_viewed is written by
+    // /api/quote and the checkout price seams). Quote rows are only written at checkout, so the
+    // old count showed paid orders above price views.
+    priceViewedUsers({ from, to }),
     db.order.count({ where: { status: "QC_PENDING" } }),
     db.vendorApplication.count({ where: { status: { in: ["SUBMITTED", "UNDER_REVIEW"] } } }),
     db.dataRequest.count({ where: { status: { in: ["OPEN", "IN_PROGRESS"] } } }),
@@ -80,7 +84,7 @@ export async function loadOverview(range: RangeKey, now = new Date()) {
     from: from.toISOString(),
     to: to.toISOString(),
     bucketDays,
-    funnel: funnel({ designs, accounts, priceViewed: quoteUsers.length, orders: paidOrders }),
+    funnel: funnel({ designs, accounts, priceViewed, orders: paidOrders }),
     money,
     gmvChangePct: changePct(money.gmvPiasters, prevMoney.gmvPiasters),
     marginChangePct: changePct(money.marginPiasters, prevMoney.marginPiasters),

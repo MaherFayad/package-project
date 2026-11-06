@@ -279,6 +279,9 @@ model Design {
   thumbnailUrl  String?
   shareToken    String?   @unique // public share link token (account required to create)
   expiresAt     DateTime? // anonymous designs expire after 30 days
+  // Added by platform round 3 (B-23): when the one 24 h WhatsApp follow-up for this saved design
+  // was sent (src/lib/jobs/followUp.ts). Set once, never cleared, so a design is nudged at most once.
+  followedUpAt  DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -286,6 +289,7 @@ model Design {
 
   @@index([ownerId])
   @@index([anonId])
+  @@index([ownerId, followedUpAt])
 }
 
 model Proof {
@@ -355,6 +359,9 @@ model Order {
   dueDate     DateTime?
   deliveredAt DateTime?
   cancelledAt DateTime?
+  // Reserved by platform round 3 (B-24, Phase 3 designer referral programme): the referring
+  // designer's User.id. Nullable, no relation and no UI yet; written by nothing today.
+  referrerId  String?
   updatedAt   DateTime @updatedAt
 
   items            OrderItem[]
@@ -371,6 +378,7 @@ model Order {
   @@index([vendorId, status])
   // Added by technical audit: foreign-key / filter indexes (no FK auto-index in SQLite or Postgres).
   @@index([status, placedAt])
+  @@index([referrerId])
 }
 
 model OrderItem {
@@ -593,4 +601,28 @@ model PlatformSetting {
   value       Json
   updatedById String?
   updatedAt   DateTime @updatedAt
+}
+
+// ───────────────────────────── Analytics (added by platform round 3, B-19) ─────────────────────────────
+// First-party product analytics: one row per funnel event from docs/business/launch-metrics.md §1,
+// written only by src/lib/analytics/track.ts. No third-party pixels, so no extra PDPL consent.
+// Data minimisation (Egypt PDPL Law 151/2020): pseudonymous ids only (userId = User.id, anonId =
+// the elba_anon cookie). NEVER a phone number, email, name, address, IP address or user agent: track()
+// drops such keys and values before writing. Retention: rows older than 13 months are deleted by
+// the daily job (src/lib/jobs/retention.ts). No relation on purpose: a DELETE data request removes
+// the user's rows with `event.deleteMany({ where: { userId } })` (admin anonymise flow; compliance-checklist.md 2.9).
+model Event {
+  id       String   @id @default(cuid())
+  name     String   // AnalyticsEventName (src/lib/analytics/events.ts)
+  at       DateTime @default(now())
+  userId   String?
+  anonId   String?
+  designId String?
+  orderId  String?
+  props    Json?    // small flat object: locale, device, structure_code, gate_reason, utm_*, ...
+
+  @@index([name, at])
+  @@index([userId, name])
+  @@index([anonId])
+  @@index([at])
 }
