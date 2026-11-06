@@ -316,3 +316,39 @@ test('Sheet tone="dark-2": raised dark that overlaps a dark band instead of coll
   expect(r.radius).toBeGreaterThan(0);
   expect(r.color).toBe("rgb(255, 255, 255)");
 });
+
+// R6-AX-18 (WCAG 2.4.11 Focus Not Obscured): tabbing through a moving Marquee at 320 px, every
+// focused item is fully inside the viewport (the loop stops on focus and the strip scrolls).
+for (const locale of ["ar", "en"] as const) {
+  for (const path of ["/dev/kit", "/designer"]) {
+    test(`marquee: every item is fully on screen when focused at 320 px (${locale}${path})`, async ({ page }, info) => {
+      test.skip(info.project.name !== "desktop", "viewport set explicitly");
+      await page.setViewportSize({ width: 320, height: 700 });
+      const res = await page.goto(`/${locale}${path}`);
+      test.skip(res?.status() !== 200, `${path} not on this branch`);
+      await page.waitForLoadState("networkidle");
+      const strips = page.locator('[class*="marqueeViewport"]');
+      const n = await strips.count();
+      test.skip(n === 0, "no marquee on the page");
+      let checked = 0;
+      for (let s = 0; s < n; s++) {
+        const items = strips.nth(s).locator("li:not([aria-hidden]) :is(a, button, [tabindex='0'])");
+        const count = await items.count();
+        if (!count) continue;
+        await page.waitForTimeout(1500); // let the loop carry items past the start first
+        await items.first().focus();
+        for (let i = 0; i < count; i++) {
+          if (i > 0) await page.keyboard.press("Tab");
+          const box = await page.evaluate(() => {
+            const r = document.activeElement!.getBoundingClientRect();
+            return { left: r.left, right: r.right, w: window.innerWidth, label: document.activeElement!.getAttribute("aria-label") ?? document.activeElement!.textContent?.trim() };
+          });
+          expect(box.left, `${box.label} left`).toBeGreaterThanOrEqual(-0.5);
+          expect(box.right, `${box.label} right`).toBeLessThanOrEqual(box.w + 0.5);
+          checked++;
+        }
+      }
+      expect(checked).toBeGreaterThan(0);
+    });
+  }
+}
