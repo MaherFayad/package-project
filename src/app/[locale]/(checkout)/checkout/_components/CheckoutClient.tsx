@@ -461,7 +461,8 @@ export function CheckoutClient(props: {
                   tone="success"
                   title={t("buyer.quote.sentTitle", { qty: qty.toLocaleString("en-US") })}
                   action={{ content: t("buyer.quote.viewRequests"), url: `/${locale}/account#quote-requests` }}
-                  announce
+                  // a11y R5-AX-11: no `announce` here; the polite offers region above already reads
+                  // it and focus moves onto it, so a nested status made screen readers say it twice.
                 >
                   {t("buyer.quote.sentBody", { phone: props.contactPhone })}
                 </Banner>

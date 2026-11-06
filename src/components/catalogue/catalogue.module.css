@@ -48,7 +48,7 @@
   display: flex;
   align-items: center;
   min-block-size: 52px;
-  border: 1.5px solid var(--mk-line-strong);
+  border: 1.5px solid #8a8a8a; /* a11y R5-AX-10 (1.4.11) */
   border-radius: 999px;
   background: var(--mk-white);
   transition: border-color var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard);

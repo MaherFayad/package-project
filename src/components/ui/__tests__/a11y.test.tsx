@@ -22,6 +22,7 @@ import { ToastProvider, useToast } from "../Toast";
 import { Tooltip } from "../Tooltip";
 import { Button } from "../Button";
 import { CookieNotice } from "../CookieNotice";
+import { useInlineEditFocus } from "../useInlineEditFocus";
 import { Stepper } from "../Stepper";
 import { I18nProvider } from "@/i18n/client";
 import { getDictionary } from "@/i18n";
@@ -257,5 +258,56 @@ describe("UI kit accessibility contracts", () => {
     chip.focus();
     fireEvent.pointerUp(chip);
     expect(scroll).not.toHaveBeenCalled();
+  });
+  it("a button disabled while it has focus keeps focus as aria-disabled and ignores clicks (2.4.3)", () => {
+    const onClick = vi.fn();
+    function Form() {
+      const [note, setNote] = useState("x");
+      return (
+        <Button submit disabled={!note} onClick={() => (onClick(), setNote(""))}>
+          Post
+        </Button>
+      );
+    }
+    wrap(<Form />);
+    const btn = screen.getByRole("button", { name: "Post" });
+    act(() => btn.focus());
+    fireEvent.click(btn);
+    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(document.activeElement).toBe(btn);
+    expect(btn.hasAttribute("disabled")).toBe(false);
+    expect(btn.getAttribute("aria-disabled")).toBe("true");
+    fireEvent.click(btn);
+    expect(onClick).toHaveBeenCalledTimes(1);
+    act(() => btn.blur());
+    expect(btn.hasAttribute("disabled")).toBe(true);
+  });
+
+  it("an inline Edit → form swap moves focus into the form and back to Edit on cancel (2.4.3)", () => {
+    function Inline() {
+      const [open, setOpen] = useState(false);
+      const { containerRef, openerRef } = useInlineEditFocus(open);
+      return !open ? (
+        <Button ref={openerRef} onClick={() => setOpen(true)}>
+          Edit
+        </Button>
+      ) : (
+        <form ref={containerRef}>
+          <input aria-label="Price" />
+          <button type="button" onClick={() => setOpen(false)}>
+            Cancel
+          </button>
+        </form>
+      );
+    }
+    wrap(<Inline />);
+    const edit = screen.getByRole("button", { name: "Edit" });
+    edit.focus();
+    fireEvent.click(edit);
+    expect(document.activeElement).toBe(screen.getByLabelText("Price"));
+    const cancel = screen.getByRole("button", { name: "Cancel" });
+    cancel.focus();
+    fireEvent.click(cancel);
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Edit" }));
   });
 });

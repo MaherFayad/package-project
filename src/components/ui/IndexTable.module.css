@@ -118,6 +118,9 @@
   min-width: 0;
   min-block-size: var(--p-control-height-slim);
   border-radius: var(--p-border-radius-200);
+  /* a11y R5-AX-09 (WCAG 1.4.11): the borderless filter search had no visible edge on white (1:1);
+     an inset line in the input-border token (3.4:1) marks the field without shifting layout. */
+  box-shadow: inset 0 0 0 1px var(--p-color-input-border);
 }
 .Query:hover { background: var(--p-color-bg-surface-hover); }
 .Query:focus-within { background: var(--p-color-bg-surface); outline: var(--p-focus-ring-width) solid var(--p-color-border-focus); outline-offset: 0; }
