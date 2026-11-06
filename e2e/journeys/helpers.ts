@@ -141,7 +141,6 @@ export const ONE_PX_PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfF
  * step. Returns the design id and the order id of the PENDING_PAYMENT order.
  */
 export async function designToPayStep(page: Page, locale: Locale, opts: { company?: boolean } = {}): Promise<{ designId: string; orderId: string }> {
-  const t = getT(locale);
   await page.goto(`/${locale}/design/mailer-box`);
   await expect(page.getByRole("application", { name: tr(locale, "3D preview of your box") })).toBeVisible({ timeout: 30_000 });
   const panel = page.getByRole("complementary", { name: tr(locale, "Designer panels") });
@@ -150,6 +149,12 @@ export async function designToPayStep(page: Page, locale: Locale, opts: { compan
   await expect(page).toHaveURL(/[?&]d=[\w-]+/, { timeout: 30_000 });
   const designId = new URL(page.url()).searchParams.get("d")!;
   await page.goto(`/${locale}/checkout/${designId}`);
+  return { designId, orderId: await checkoutToPayStep(page, locale, opts) };
+}
+
+/** From the open checkout page of a design to its payment step; returns the new order id. */
+export async function checkoutToPayStep(page: Page, locale: Locale, opts: { company?: boolean } = {}): Promise<string> {
+  const t = getT(locale);
   await expect(page.getByTestId("vendor-offer").first()).toBeVisible({ timeout: 30_000 });
   const summary = page.getByRole("complementary").filter({ hasText: t("checkout.summary.title") });
   await summary.getByRole("button", { name: t("checkout.actions.continue") }).click();
@@ -168,7 +173,7 @@ export async function designToPayStep(page: Page, locale: Locale, opts: { compan
   await page.getByLabel(t("checkout.proof.approve")).check();
   await summary.getByRole("button", { name: t("checkout.actions.approveAndPay") }).click();
   await expect(page).toHaveURL(new RegExp(`/${locale}/checkout/pay/`), { timeout: 30_000 });
-  return { designId, orderId: page.url().split("/").pop()! };
+  return page.url().split("/").pop()!;
 }
 
 /** Pay the open payment step by mock card (`4000 0000 0000 0002` is declined). */

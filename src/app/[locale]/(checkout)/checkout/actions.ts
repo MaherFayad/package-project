@@ -5,6 +5,7 @@ import { z } from "zod";
 import { MAX_INSTANT_QTY, type Locale, type PaymentMethod } from "@/types";
 import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
+import { SAMPLE_ORDER_NOTE } from "@/lib/orders/sample";
 import { toJson } from "@/lib/json";
 import { toGovernorateKey } from "@/lib/orders/governorates";
 import { loadCheckoutSettings } from "@/lib/orders/checkout-settings";
@@ -151,6 +152,7 @@ export async function placeOrderAction(input: unknown): Promise<{ ok: true; orde
       where: { id: r.orderId },
       data: { billing: { company: c ? { name: c.name, taxId: normalizeTaxId(c.taxId), commercialRegister: c.commercialRegister || null } : null } },
     });
+    await supersedeUnpaidOrders(s.user.id, p.data.designId, r.orderId, r.number);
     return { ok: true, orderId: r.orderId, number: r.number };
   } catch (e) {
     if (e instanceof OrderError) return { ok: false, error: e.code };
@@ -300,6 +302,40 @@ export async function requestQuoteAction(input: unknown): Promise<{ ok: true; qu
   } catch (e) {
     console.error("[checkout] quote request failed", e);
     return { ok: false, error: "generic" };
+  }
+}
+
+/**
+ * R5-JR-10: an expired price ("Get a new price"), Back and approve again, or a second tab each placed
+ * a new PENDING_PAYMENT order and left the old one open forever. A new order for the same design
+ * cancels the buyer's earlier unpaid ones of the same kind (sample or run), quietly (no message: the
+ * buyer is paying the new one). An order with a payment in flight (Fawry code, InstaPay transfer)
+ * is left alone. Never throws into the checkout.
+ */
+async function supersedeUnpaidOrders(buyerId: string, designId: string, keepId: string, keepNumber: string): Promise<void> {
+  try {
+    const sampleMark = { type: "NOTE", note: SAMPLE_ORDER_NOTE };
+    const keptIsSample = (await db.productionEvent.count({ where: { orderId: keepId, ...sampleMark } })) > 0;
+    const stale = await db.order.findMany({
+      where: {
+        buyerId,
+        id: { not: keepId },
+        status: "PENDING_PAYMENT",
+        quote: { designId },
+        productionEvents: keptIsSample ? { some: sampleMark } : { none: sampleMark },
+        payments: { none: { status: "PENDING" } },
+      },
+      select: { id: true },
+    });
+    const now = new Date();
+    for (const o of stale) {
+      await db.$transaction(async (tx) => {
+        const u = await tx.order.updateMany({ where: { id: o.id, status: "PENDING_PAYMENT" }, data: { status: "CANCELLED", cancelledAt: now } });
+        if (u.count === 1) await tx.productionEvent.create({ data: { orderId: o.id, type: "CANCELLED", note: `SUPERSEDED:${keepNumber}`, actorId: buyerId, createdAt: now } });
+      });
+    }
+  } catch (e) {
+    console.error("[checkout] superseding unpaid orders failed", e);
   }
 }
 

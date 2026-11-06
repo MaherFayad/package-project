@@ -1,4 +1,5 @@
 import { finishLabel } from "@/lib/orders/finish-label";
+import { formatTaxId } from "@/lib/orders/company";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
@@ -81,6 +82,7 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
   const lastDecline = Math.max(0, ...order.productionEvents.filter((e) => e.type === "VENDOR_DECLINED").map((e) => e.createdAt.getTime()));
   const lastReassign = Math.max(0, ...auditRows.filter((a) => a.action === "ORDER_REASSIGN").map((a) => a.createdAt.getTime()));
   const declinedByVendor = lastDecline > 0 && lastDecline > lastReassign;
+  const invoiceCompany = (order.billing as { company?: { name: string; taxId: string } | null } | null)?.company ?? null;
   const m = order as unknown as MetricOrder;
   const goods = goodsNet(m);
   const margin = marginOf(m);
@@ -318,7 +320,13 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
           <BlockStack gap="400">
             <Card title={t("admin.order.buyer.title")}>
               <BlockStack gap="200">
-                <Link url={`${base}/users/${order.buyer.id}`}><bdi>{order.buyer.name ?? t("admin.users.noName")}</bdi></Link>
+                {/* R5-JR-12: the account often has no name; the delivery name does. Show who is invoiced. */}
+                <Link url={`${base}/users/${order.buyer.id}`}><bdi>{order.buyer.name ?? addr?.name ?? t("admin.users.noName")}</bdi></Link>
+                {invoiceCompany ? (
+                  <Text as="p" variant="bodySm">
+                    {t("admin.order.buyer.company", { name: invoiceCompany.name, taxId: formatTaxId(invoiceCompany.taxId) })}
+                  </Text>
+                ) : null}
                 <Text as="p">
                   <bdi dir="ltr">{order.buyer.phone}</bdi>
                 </Text>

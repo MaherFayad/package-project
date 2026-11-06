@@ -159,6 +159,8 @@ test("J1 · coffee brand: design → share → OTP → company checkout → pay 
   await expect(ap.getByRole("heading", { level: 1, name: order.number })).toBeVisible({ timeout: 30_000 });
   await expect(ap.getByRole("main")).toContainText(formatMoney(order.totalPiasters, locale, { alwaysDecimals: true }));
   await expect(ap.getByRole("main")).toContainText(formatMoney(order.vatPiasters, locale, { alwaysDecimals: true }));
+  // R5-JR-12: ops see who is invoiced (frozen on the order), not "No name".
+  await expect(ap.getByRole("main")).toContainText(t("admin.order.buyer.company", { name: "Bunn Coffee LLC", taxId: "123-456-789" }));
   await ap.getByRole("button", { name: t("admin.order.qc.approve") }).click();
   await ap.getByRole("button", { name: t("admin.order.ship.action") }).click();
   await expect.poll(async () => (await db.order.findUniqueOrThrow({ where: { id: orderId } })).status, { timeout: 30_000 }).toBe("SHIPPED");

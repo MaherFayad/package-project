@@ -214,7 +214,7 @@ export const adminEn = {
       paidWith: "Paid with {method}",
       payments: "Payments",
     },
-    buyer: { title: "Buyer", address: "Delivery address", orders: "All orders by this buyer" },
+    buyer: { title: "Buyer", address: "Delivery address", orders: "All orders by this buyer", company: "Invoice to {name} · tax no. {taxId}" },
     vendorCard: { title: "Vendor", profile: "View vendor", due: "Due {date}" },
     routing: {
       title: "Routing",

@@ -217,7 +217,7 @@ export const adminAr: Widen<typeof adminEn> = {
       paidWith: "تم الدفع عبر {method}",
       payments: "المدفوعات",
     },
-    buyer: { title: "العميل", address: "عنوان التوصيل", orders: "كل طلبات هذا العميل" },
+    buyer: { title: "العميل", address: "عنوان التوصيل", orders: "كل طلبات هذا العميل", company: "الفاتورة باسم {name} · الرقم الضريبي {taxId}" },
     vendorCard: { title: "المطبعة", profile: "عرض المطبعة", due: "الاستحقاق {date}" },
     routing: {
       title: "التوجيه",

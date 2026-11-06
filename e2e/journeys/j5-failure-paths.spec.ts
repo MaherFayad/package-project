@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { SEEDED, cleanup, cloneOrder, createUser, db, signInAs, signInPhone, track, uniquePhone } from "../fixtures/factory";
-import { ackCookies, designToPayStep, localeOf, payByCard, sendOtpIn, tFor, tr } from "./helpers";
+import { ackCookies, checkoutToPayStep, designToPayStep, localeOf, payByCard, sendOtpIn, tFor, tr } from "./helpers";
 
 /**
  * Journey 5 (docs/audit/journeys.md): what goes wrong, and that nothing is lost or charged twice.
@@ -78,7 +78,14 @@ test("J5 · expired price: no pay button, a way back to a new price", async ({ p
   await page.getByRole("link", { name: t("payment.restart") }).or(page.getByRole("button", { name: t("payment.restart") })).first().click();
   await expect(page).toHaveURL(new RegExp(`/${locale}/checkout/${designId}`), { timeout: 30_000 });
   expect((await db.payment.count({ where: { orderId } }))).toBe(0);
-  await db.order.delete({ where: { id: orderId } }).catch(() => undefined);
+  // R5-JR-10: the new order supersedes the expired one; it does not stay "awaiting payment".
+  const fresh = await checkoutToPayStep(page, locale);
+  expect(fresh).not.toBe(orderId);
+  const old = await db.order.findUniqueOrThrow({ where: { id: orderId }, include: { productionEvents: true } });
+  expect(old.status).toBe("CANCELLED");
+  expect(old.productionEvents.some((e) => e.type === "CANCELLED" && e.note?.startsWith("SUPERSEDED:"))).toBe(true);
+  expect((await db.order.findUniqueOrThrow({ where: { id: fresh } })).status).toBe("PENDING_PAYMENT");
+  for (const id of [orderId, fresh]) await db.order.delete({ where: { id } }).catch(() => undefined);
 });
 
 test("J5 · printer declines, admin sees it and moves the job to a capable printer", async ({ browser, baseURL }, info) => {
