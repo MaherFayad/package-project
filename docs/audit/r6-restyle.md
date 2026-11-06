@@ -153,3 +153,18 @@ The remaining layout margins, gaps and tile paddings read the tokens: `--mk-stac
 `e2e/marketing-spacing.spec.ts`: `/boxes`, `/catalog` and `/vendors` are removed from `NOT_YET`. `/boxes/mailer-box`, `/boxes/mailer-box/250x180x80`, `/catalog/bakery-box`, `/bottles`, `/vendors/nile-pack`, `/legal/privacy` and `/login` are added to `PAGES`. All pass at 1440, 1024, 768 and 390 in ar and en. The share page and the 404s are not in the spec: the spec needs a 200 response and a fixed URL, which a 404 cannot give and the share page only has with a seeded token.
 
 After the change: e2e storefront + catalogue + catalogue-models + designer + smoke + marketing-spacing, `--workers=2`: 95 passed, 0 failed. axe: 0 violations. Phone LCP 1.05 to 1.69 s and CLS ≤ 0.021 on every page re-measured (`docs/audit/perf-data/r6-restyle/check-spacing.jsonl`).
+
+## 9. Height stability: content-visibility removed
+
+The designer-page session found that `content-visibility: auto` with a fixed `contain-intrinsic-size` grows pages after scroll and keyboard focus. Measured with `docs/audit/tools/height-stability.mjs`: document height before and after a full scroll plus 60 Tabs, at 320/390/768/1024/1440, in ar and en.
+
+| Rule | Pages that matched it | Growth before | Action | After |
+|---|---|---|---|---|
+| `marketing.module.css` `.main > section.band:not(:first-of-type), .main > .marquee` (900px placeholder) | none: no public page renders a legacy band or marquee any more (0 `content-visibility:auto` elements in `<main>` on home, /start, /why-elba, /pricing, /account, /vendor/apply and every restyle page) | – | rule deleted | – |
+| `catalogue.module.css` `.section` (1400px placeholder, 12 family sections) | `/catalog` | ar +1,313 / +2,311 / +11,542 / +2,060 / −2,326 px; en +1,647 / +2,615 / +11,483 / +2,001 / −2,393 px (320 to 1440) | dropped. The sections hold links (focused cards jumped), and per-breakpoint intrinsic sizes cannot stay within 2px because the names wrap differently per locale. | 0 px at every width, both locales |
+
+`/designer` still shows 4 `content-visibility:auto` sections on this branch (grows 1 to 5k px); those belong to the designer-page module and are being fixed on that branch.
+
+`/catalog` phone LCP before → after: ar 1.27 → 1.45 s, en 1.12 → 1.31 s (median of 5, phone profile). CLS stays at 0.012 / 0. Both remain well inside the 2.5 s budget, so the sections render without the optimisation.
+
+New e2e `e2e/restyle-height.spec.ts`: on each restyle page, ar and en, at 5 widths, height change is ≤ 2px after a scroll and 60 Tabs. 20 of 20 pass; before the fix it failed on `/catalog` (19,938 → 21,251 px at 320).

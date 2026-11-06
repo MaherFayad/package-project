@@ -190,17 +190,9 @@
 
 /* ───────────── Bands ───────────── */
 .band { padding-block: var(--mk-section); position: relative; }
-/*
- * R4-MK-01 (phone LCP): bands below the hero skip style, layout and paint until they near the
- * viewport. The first layout of the Arabic home took ~400 ms at 4x CPU (Arabic shaping of every
- * band before first paint); now it lays out the hero only. `auto` remembers the real size once
- * rendered, so scrolling back never jumps. The first band of a page (a page hero) is excluded.
- */
-.main > section.band:not(:first-of-type),
-.main > .marquee {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 900px;
-}
+/* R6: the R4-MK-01 content-visibility rule on ".main > section.band" / ".main > .marquee" is gone.
+   No page renders a legacy band or marquee any more (the R6 pages are kit Sheets), and a fixed
+   contain-intrinsic-size grew pages by up to 4,600px after scroll and keyboard focus. */
 .bandGrey { background: var(--mk-grey); }
 .bandMint {
   background:
