@@ -8,6 +8,7 @@ import { AUTO_BOTTOM_SEQUENCE, DEFINITIONS, definitionByCode, generateFamilyDiel
 import type { FamilyDielineModel } from "..";
 import type { DielineModel } from "@/lib/dieline/types";
 import { overlappingPanels } from "../../fefco-09/__tests__/overlap";
+import { clashes, faceCoverage, mirroredParts } from "../../fefco-02/__tests__/closedPose";
 
 const GROUP_06 = ["0601", "0602", "0605", "0606", "0607", "0608", "0610", "0615", "0616", "0620", "0621"];
 const GROUP_07 = ["0700", "0701", "0703", "0711", "0712", "0713", "0714", "0715", "0716", "0717", "0718", "0747", "0748", "0751", "0752", "0759", "0761", "0770", "0771", "0772", "0773", "0774"];
@@ -268,5 +269,46 @@ describe("FEFCO 07 crash-lock bottoms are printed on every visible flap", () => 
     const ids = (f: "top" | "bottom") => new Set(m.faces[f]?.parts.map((p) => p.panelId));
     for (const flap of ["bottom_front", "bottom_back", "bottom_left", "bottom_right"]) expect(ids("bottom").has(flap), flap).toBe(true);
     if (code === "0714") for (const flap of ["lid_bottom_front", "lid_bottom_back"]) expect(ids("top").has(flap), flap).toBe(true);
+  });
+});
+
+// R6-3Q-B: the 0621 inner end wall ran the full blank height through the closed end flap and
+// the long wall's ½W flap: its cut edge lay in the TOP / BOTTOM print (a z-fighting line ~v in
+// from each end). It now stands between the flap layers.
+describe("FEFCO 0621 inner end walls stand between the closed flaps", () => {
+  it.each([1.5, 3])("t=%s", (t) => {
+    const def = definitionByCode("FEFCO_0621")!;
+    for (const dims of [def.defaultDims, { L: def.params.L.max, W: def.params.W.max, H: def.params.H.max }]) {
+      const m = generateFamilyDieline(def, dims, { thicknessMm: t }) as unknown as DielineModel;
+      const found = clashes(m, 1).filter((c) => /endInner/.test(c.a + c.b));
+      expect(found.map((c) => `${c.a} × ${c.b}`), JSON.stringify(dims)).toEqual([]);
+      const top = boundsAt(m, 1).max.y;
+      const poses = computePoses(m, 1);
+      const v = new Vector3();
+      for (const id of ["endInner", "b_endInner"]) {
+        const p = m.panels.find((x) => x.id === id)!;
+        const pivot = panelPivot(p, t);
+        for (const q of p.polygon) expect(panelLocalPoint(p, q, 0, pivot, t, v).applyMatrix4(poses.get(id)!.world).y).toBeLessThanOrEqual(top - 2 * t + 1e-6);
+      }
+    }
+  });
+});
+
+// R6-3Q-B: 0717's side faces were sized to the closed box including the carry handle, so a
+// quarter of FRONT / BACK (and LEFT / RIGHT) was an empty band above the rim. FRONT / BACK run
+// on up onto the handle half that faces them; the end faces stop at the rim.
+describe("FEFCO 0717 handle faces", () => {
+  it.each([1.5, 3])("t=%s", (t) => {
+    const def = definitionByCode("FEFCO_0717")!;
+    for (const dims of [def.defaultDims, { L: def.params.L.min, W: def.params.W.min, H: def.params.H.min }]) {
+      const m = generateFamilyDieline(def, dims, { thicknessMm: t }) as unknown as DielineModel;
+      expect(m.faces.front!.parts.map((p) => p.panelId)).toEqual(["front", "handle_front"]);
+      expect(m.faces.back!.parts.map((p) => p.panelId)).toEqual(["back", "handle_back"]);
+      expect(mirroredParts(m)).toEqual([]);
+      const cov = faceCoverage(m);
+      for (const f of ["front", "back", "left", "right"]) expect(cov[f], `${f} ${JSON.stringify(dims)}`).toBeGreaterThanOrEqual(0.93);
+      const wall = m.panels.find((p) => p.id === "left")!;
+      expect(m.faces.left!.height).toBeCloseTo(wall.bbox.height, 1);
+    }
   });
 });

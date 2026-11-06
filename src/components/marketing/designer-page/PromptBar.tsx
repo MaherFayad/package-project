@@ -9,7 +9,8 @@ import styles from "./designer-page.module.css";
  * without JavaScript too. The picker filters its models by the words (name and use keywords);
  * there is no AI behind it and the copy says so. The placeholder types example searches while
  * the field is empty, idle and on screen; never under reduced motion, never once focused
- * (the visible label stays the accessible name, WCAG 3.3.2).
+ * (the visible label stays the accessible name, WCAG 3.3.2), and never while the enclosing
+ * MotionScope is paused (WCAG 2.2.2).
  */
 export function PromptBar({
   action,
@@ -39,7 +40,8 @@ export function PromptBar({
     let dir = 1;
     let hold = 0;
     const id = window.setInterval(() => {
-      if (!visible) return;
+      // Stop typing while hidden or while the band's MotionScope is paused (WCAG 2.2.2).
+      if (!visible || el?.closest('[data-paused="true"]')) return;
       const w = examples[word % examples.length] ?? "";
       if (hold > 0) {
         hold -= 1;

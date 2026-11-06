@@ -23,13 +23,18 @@ async function settle(page: Page) {
     Promise.all(
       document
         .getAnimations()
-        .filter((a) => Number.isFinite(Number(a.effect?.getComputedTiming().endTime)))
+        .filter((a) => a.playState === "running" && Number.isFinite(Number(a.effect?.getComputedTiming().endTime)))
         .map((a) => a.finished.catch(() => undefined)),
     ),
   );
 }
 
 async function axe(page: Page) {
+  // Stop every auto-advancing stepper with its own pause button (the WCAG 2.2.2 control) so axe
+  // measures settled panels, not a cross-fade between two of them.
+  for (const pause of await page.locator('button[aria-pressed="false"]:is([aria-label="Pause steps"], [aria-label="إيقاف الخطوات"])').all()) {
+    await pause.evaluate((el) => (el as HTMLButtonElement).click());
+  }
   // Reveal every [data-reveal] block first (axe would measure text mid-fade).
   await page.evaluate(() => document.querySelectorAll("[data-reveal]").forEach((el) => el.setAttribute("data-revealed", "")));
   await settle(page);

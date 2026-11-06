@@ -59,16 +59,10 @@ const SOURCES: [string, unknown][] = [
  * cannot go stale). Key: `${source}:${key}`.
  */
 const PENDING = new Set<string>([
-  // home page owner: «بدء التصميم مجانا»
-  "home/copy.ts:hero.primary",
-  "home/copy.ts:steps.cta",
   // why-elba / pricing owner: «بدء التصميم مجانا», «بدء التصميم», «التصميم وطلب عرض سعر»
   "why/copy.ts:why.ctaStart",
   "why/copy.ts:pricing.tierCta",
   "why/copy.ts:pricing.wholesaleCta",
-  // designer page owner: «بدء التصميم مجانا», «تجربة المصمم الآن»
-  "designer-page/copy.ts:hero.cta",
-  "designer-page/copy.ts:make.cta",
 ]);
 
 const all = SOURCES.flatMap(([source, tree]) => labels(source, tree));

@@ -1,3 +1,4 @@
+import { requireAdminPage } from "@/lib/auth/session";
 import type { Metadata } from "next";
 import NextLink from "next/link";
 import type { ReactNode } from "react";
@@ -27,6 +28,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 }
 
 export default async function AdminOverviewPage({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ range?: string }> }) {
+  await requireAdminPage(); // R6-SEC-09: the layout redirect does not stop this page rendering
   const locale = toLocale((await params).locale);
   const t = getT(locale);
   const range = asRange((await searchParams).range);
@@ -184,9 +186,12 @@ export default async function AdminOverviewPage({ params, searchParams }: { para
                   />
                   <DataTable
                     caption={t("admin.overview.funnel.caption")} condensed
-                    columnContentTypes={["text", "numeric", "numeric", "numeric"]}
-                    headings={[t("admin.overview.funnel.columns.step"), t("admin.overview.funnel.columns.count"), t("admin.overview.funnel.columns.ofFirst"), t("admin.overview.funnel.columns.ofPrev")]}
-                    rows={o.funnel.map((r) => [t(`admin.overview.funnel.steps.${r.step}` as DictKey), formatNumber(r.count), pct(r.ofFirstPct), r.ofPrevPct === null ? t("admin.common.none") : pct(r.ofPrevPct)])}
+                    // Integrator (round 9): the steps count different things (designs, new accounts, people
+                    // who saw a price, paying buyers), so a step ratio could read 183% of the one before.
+                    // Plain counts with what each one counts; the visitor funnel above is the cohort view.
+                    columnContentTypes={["text", "numeric", "text"]}
+                    headings={[t("admin.overview.funnel.columns.step"), t("admin.overview.funnel.columns.count"), t("admin.overview.funnel.columns.counts")]}
+                    rows={o.funnel.map((r) => [t(`admin.overview.funnel.steps.${r.step}` as DictKey), formatNumber(r.count), t(`admin.overview.funnel.units.${r.step}` as DictKey)])}
                   />
                   <Text as="p" variant="bodySm" tone="subdued">
                     {t("admin.overview.funnel.note")}

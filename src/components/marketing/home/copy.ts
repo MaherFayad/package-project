@@ -11,7 +11,7 @@ import type { Locale } from "@/types";
  */
 const en = {
   hero: {
-    titles: ["Packaging worthy of your brand", "Design it in 3D. Print it in Egypt."],
+    titles: ["Packaging worthy of your brand", "Design it. Watch it turn."],
     lead: "Design your printed box free on a live 3D model, see the price instantly and order from vetted Egyptian printers.",
     primary: "Start designing free",
     secondary: "Browse box styles",
@@ -122,6 +122,7 @@ const en = {
     finishes: ["Pause the finishes", "Play the finishes"],
     price: ["Pause the order summary", "Play the order summary"],
     pay: ["Pause the payment methods", "Play the payment methods"],
+    designer: ["Pause the designer preview animation", "Play the designer preview animation"],
   },
   steps: {
     title: "Start your box today",
@@ -137,10 +138,10 @@ export type HomeCopy = Widen<typeof en>;
 
 const ar: HomeCopy = {
   hero: {
-    titles: ["علبة تليق بعلامتك", "صمم في ثلاثة أبعاد، واطبع في مصر"],
+    titles: ["علبة تليق بعلامتك", "صممها وشاهدها تدور"],
     lead: "صمم علبتك المطبوعة مجانا على نموذج حي ثلاثي الأبعاد، واعرف السعر فورا، واطلب من مطابع مصرية معتمدة.",
-    primary: "ابدأ التصميم مجانا",
-    secondary: "تصفح النماذج",
+    primary: "بدء التصميم مجانا",
+    secondary: "عرض النماذج",
     pause: "إيقاف الدوران",
     play: "تدوير العلبة",
     mediaAlt: "علبة شحن مطبوعة تدور على نموذجنا ثلاثي الأبعاد",
@@ -169,7 +170,7 @@ const ar: HomeCopy = {
     cards: [
       { title: "تصميم على نموذج حي", body: "قص وطي ولسان لصق حقيقي لكل نموذج، بمقاسك بالمليمتر.", link: "فتح المصمم" },
       { title: "إدارة الطلب كله", body: "التصميم والسعر والدفع والتوصيل في حساب واحد.", link: "طلباتي" },
-      { title: "طباعة عند مطبعة معتمدة", body: "{printers} {printersWord} في مصر تراجع كل ملف وترسل بروفة قبل الطباعة.", link: "تعرف على المطابع" },
+      { title: "طباعة عند مطبعة معتمدة", body: "{printers} {printersWord} في مصر تراجع كل ملف وترسل بروفة قبل الطباعة.", link: "التعرف على المطابع" },
     ],
     nodes: ["التصميم", "السعر", "الدفع", "المطبعة", "التوصيل"],
     hub: "علبة",
@@ -192,7 +193,7 @@ const ar: HomeCopy = {
       { title: "المطاعم والمقاهي", body: "علب بيتزا وعلب تيك أواي مطبوعة باسمك." },
       { title: "مستحضرات التجميل والعناية", body: "علب كرتون رقيقة بتشطيب لامع أو مخملي." },
     ],
-    cta: "تصفح النماذج",
+    cta: "عرض النماذج",
   },
   designer: {
     title: "تعرف على مصممك ثلاثي الأبعاد",
@@ -206,7 +207,7 @@ const ar: HomeCopy = {
   wall: {
     title: "{models} نموذجا في مكتبة واحدة",
     body: "علب شحن وكرتون وعلب فاخرة وصوان وأنابيب وزجاجات وأكياس وعلب معدنية، في {groups} مجموعات، ولكل نموذج فرد حقيقي.",
-    link: "تصفح الكتالوج",
+    link: "عرض الكتالوج",
     pause: "إيقاف الحركة",
     play: "تشغيل الحركة",
   },
@@ -243,11 +244,12 @@ const ar: HomeCopy = {
     finishes: ["إيقاف حركة التشطيبات", "تشغيل حركة التشطيبات"],
     price: ["إيقاف حركة ملخص الطلب", "تشغيل حركة ملخص الطلب"],
     pay: ["إيقاف حركة وسائل الدفع", "تشغيل حركة وسائل الدفع"],
+    designer: ["إيقاف حركة معاينة المصمم", "تشغيل حركة معاينة المصمم"],
   },
   steps: {
     title: "ابدأ علبتك اليوم",
     items: ["اختيار النموذج والمقاس", "التصميم والمعاينة", "الطلب والتوصيل"],
-    cta: "ابدأ التصميم مجانا",
+    cta: "بدء التصميم مجانا",
     pause: "إيقاف الخطوات",
     play: "تشغيل الخطوات",
   },

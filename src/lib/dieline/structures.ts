@@ -388,8 +388,9 @@ function handHoles(b: DielineBuilder, ids: string[], fromTop: number) {
     const p = b.byId(id);
     const r = p.bbox;
     const w = Math.min(90, r.width * 0.6);
-    const h = Math.min(30, r.height * 0.18);
-    if (w < 40 || h < 15) continue;
+    // 15 mm minimum (a finger grip) on low walls; below ~83 mm the 18 % hole was dropped (R6-3Q-A).
+    const h = clamp(r.height * 0.18, 15, 30);
+    if (w < 40 || r.height < Math.max(fromTop, h) + h + 8) continue;
     p.holes = [...(p.holes ?? []), stadium(r.x + r.width / 2, r.y + Math.max(fromTop, h) + h / 2, w, h)];
   }
 }
@@ -435,13 +436,37 @@ export function telescope(dims: Dims, t: number, f: StructureFeatures = {}): Str
   const matrix = new Matrix4().makeTranslation(delta.x - cb.x, delta.y - cb.y, delta.z - cb.z).toArray();
   lid.build({ matrix, stage: 3, lift: dims.H * 1.4 });
 
-  if (f.thumbNotch) for (const id of ["front", "back"]) notchPanel(b.byId(id), rectEdges(base.walls[id as "front" | "back"]).top, Math.min(15, dims.L * 0.08));
-  if (f.handle && lidH < dims.H * 0.6) handHoles(b, ["left", "right"], lidH + 10);
+  // Thumb notches in the lid's open edge (front and back): the lid always covers the base rim,
+  // so notches cut there were hidden and did nothing in 3D or in use (R6-3Q-A). The notch in the
+  // lid skirt is where the fingers grip the base to slide the lid off.
+  if (f.thumbNotch) for (const id of ["front", "back"] as const) notchPanel(b.byId(`lid_${id}`), rectEdges(lid.walls[id]).bottom, Math.min(15, dims.L * 0.08, lidH * 0.35));
+  if (f.handle) {
+    if (lidH < dims.H * 0.6) handHoles(b, ["left", "right"], lidH + 10);
+    else {
+      // Deep lid: it covers the base end walls, so the hand holes are cut through both, in
+      // register (the default full-depth lid had no hand hole at all, R6-3Q-A). The lid's wall
+      // top stands 2t above the base's (its top flaps rest on the base rim).
+      const Hb = dims.H + 2 * t;
+      const hh = clamp(Hb * 0.18, 15, 30);
+      const cy = Math.max(25, dims.H * 0.1, hh) + hh / 2; // hole centre below the base wall top
+      if (cy + hh / 2 + 8 <= lidH) {
+        for (const [id, r, off] of [["left", base.walls.left, 0], ["right", base.walls.right, 0], ["lid_left", lid.walls.left, 2 * t], ["lid_right", lid.walls.right, 2 * t]] as const) {
+          const hw = Math.min(90, base.walls.right.width * 0.6);
+          if (hw < 40) continue;
+          const p = b.byId(id);
+          p.holes = [...(p.holes ?? []), stadium(r.x + r.width / 2, r.y + off + cy, hw, hh)];
+        }
+      }
+    }
+  }
   if (f.partitions) {
     defer(b, (p) => p.id === "lid_front", 1); // dividers (3) before the lid (4)
     addPartitions(b, t, IDENTITY, dims, f.partitions, 2 * t, 3);
   }
-  return { builder: b, closedRotation: IDENTITY, faceDepthTol: clear + t + 0.5 };
+  // The lid's left wall stands clear + 2t outside the base's (the lid is one caliper longer for
+  // its joint and shifted t/2): at clear + t + 0.5 a partial lid left the base LEFT wall below
+  // it out of the face, unprinted (R6-3Q-A, as B-01 on FEFCO 0321).
+  return { builder: b, closedRotation: IDENTITY, faceDepthTol: clear + 2 * t + 0.5 };
 }
 
 /* ───────────────────────── Trays (mailer 0427, pizza 0426, display tray 0422) ───────────────────────── */
@@ -988,11 +1013,13 @@ export function rigidBox(dims: Dims, t: number, f: StructureFeatures = {}): Stru
 
   if (f.window) cutWindow(b, "lid_top", f.window, { margin: 15 });
   if (f.thumbNotch) {
-    // Finger notches through the base's front and back walls (and their turn-ins).
-    for (const name of ["front", "back"]) {
+    // Finger notches through the LID's front and back skirt (and their turn-ins): the lid covers
+    // the base rim, so notches in the base walls were hidden under it and did nothing (R6-3Q-A).
+    // A notch in the lid's open edge lets the fingers hold the base while the lid lifts off.
+    for (const name of ["lid_front", "lid_back"]) {
       const w = b.byId(name);
       const far = farEdge(w)!;
-      const r = Math.min(14, dims.L * 0.08, dims.H * 0.35);
+      const r = Math.min(14, dims.L * 0.08, lidH * 0.35);
       notchPanel(w, far, r);
       const ti = b.byId(`${name}Turn`);
       const near = nearEdgeTo(ti, far);

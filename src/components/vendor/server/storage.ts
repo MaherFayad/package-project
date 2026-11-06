@@ -1,6 +1,6 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { buildKey, checkUpload, parseKey, stripImageMetadata, type UploadCheck, type UploadScope } from "../lib/files";
 
@@ -52,5 +52,16 @@ export async function deleteUpload(key: string): Promise<void> {
     await rm(pathFor(key), { force: true });
   } catch {
     /* already gone */
+  }
+}
+
+/** Keys stored under one scope and owner (R6-SEC-06: caps unsent dispute photos per order). */
+export async function listUploads(scope: UploadScope, ownerId: string): Promise<string[]> {
+  if (!/^[A-Za-z0-9_-]{1,40}$/.test(ownerId)) return [];
+  try {
+    const names = await readdir(path.join(uploadRoot(), scope, ownerId));
+    return names.map((n) => `${scope}/${ownerId}/${n}`).filter((k) => parseKey(k) !== null);
+  } catch {
+    return [];
   }
 }

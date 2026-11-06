@@ -2,7 +2,7 @@
 
 import { ImagePlus, RotateCcw, Star, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { Locale } from "@/types";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
@@ -16,6 +16,7 @@ import { Select } from "@/components/ui/Select";
 import { Text } from "@/components/ui/Text";
 import { TextField } from "@/components/ui/TextField";
 import { useToast } from "@/components/ui/Toast";
+import { useInlineEditFocus } from "@/components/ui/useInlineEditFocus";
 import { cancelAction, disputeAction, reorderAction, reviewAction } from "../[id]/actions";
 import styles from "./orders.module.css";
 
@@ -156,6 +157,25 @@ export function DisputeForm({ orderId }: { orderId: string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+  // a11y R6-AX-07 (WCAG 2.4.3): "Report a problem" is replaced by the form, the form by the
+  // confirmation and the photo picker leaves at 5 photos; focus followed none of them.
+  const { containerRef, openerRef } = useInlineEditFocus(open);
+  const sentRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+  useEffect(() => {
+    if (sent) sentRef.current?.focus();
+  }, [sent]);
+  // The refresh then replaces this form with the "report open" card: follow it there.
+  useLayoutEffect(
+    () => () => {
+      const box = sentRef.current;
+      if (!box || !box.contains(document.activeElement)) return;
+      requestAnimationFrame(() => {
+        if (!document.activeElement || document.activeElement === document.body) document.getElementById("dispute-open")?.focus();
+      });
+    },
+    [],
+  );
   // Checkout round 9: photos of the boxes, uploaded as they are chosen (max 5, JPG/PNG/WebP, 10 MB).
   const [photos, setPhotos] = useState<{ id: string; name: string; preview: string; key?: string; error?: string; uploading?: boolean }[]>([]);
   const ready = photos.filter((p) => p.key);
@@ -186,6 +206,11 @@ export function DisputeForm({ orderId }: { orderId: string }) {
       ),
     ]);
     if (extra > 0) setError(t("buyer.photos.tooMany", { max: MAX_PHOTOS }));
+    // At the limit the picker (which had focus) is removed: go to the last photo's Remove.
+    if (rows.filter((r) => typeOk(r.file) && r.file.size <= PHOTO_MAX_BYTES).length >= room)
+      requestAnimationFrame(() => {
+        if (document.activeElement === document.body) listRef.current?.querySelector<HTMLElement>("li:last-child button")?.focus();
+      });
     for (const r of rows) {
       if (!typeOk(r.file) || r.file.size > PHOTO_MAX_BYTES) continue;
       const fd = new FormData();
@@ -215,15 +240,20 @@ export function DisputeForm({ orderId }: { orderId: string }) {
           {t("orders.dispute.help")}
         </Text>
         {sent ? (
-          <Banner tone="success" announce>
-            {t("orders.dispute.sent")}
-          </Banner>
+          <div ref={sentRef} tabIndex={-1}>
+            <Banner tone="success" announce>
+              {t("orders.dispute.sent")}
+            </Banner>
+          </div>
         ) : !open ? (
           <div>
-            <Button onClick={() => setOpen(true)}>{t("orders.dispute.title")}</Button>
+            <Button ref={openerRef} onClick={() => setOpen(true)}>
+              {t("orders.dispute.title")}
+            </Button>
           </div>
         ) : (
           <form
+            ref={containerRef}
             onSubmit={async (e) => {
               e.preventDefault();
               if (description.trim().length < 10) return setDescErr(t("orders.dispute.tooShort"));
@@ -267,7 +297,7 @@ export function DisputeForm({ orderId }: { orderId: string }) {
                   {t("buyer.photos.help", { max: MAX_PHOTOS })}
                 </Text>
                 {photos.length ? (
-                  <ul className={styles.photoList} aria-label={t("buyer.photos.label")}>
+                  <ul ref={listRef} className={styles.photoList} aria-label={t("buyer.photos.label")}>
                     {photos.map((p) => (
                       <li key={p.id} className={styles.photoItem} data-error={p.error ? "" : undefined}>
                         {p.error ? (

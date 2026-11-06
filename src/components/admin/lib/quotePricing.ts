@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { QuoteLine } from "@/types";
 import { orderTotals } from "@/lib/orders/totals";
 import { marginPreview } from "./orders";
+import { MAX_DB_PIASTERS } from "@/lib/money/input";
 
 /**
  * "Send price" on a quote lead (R4-B-03, admin half). Ops prices the lead's own Quote row with
@@ -27,8 +28,12 @@ export const sendPriceSchema = z.object({
   finishPiasters: piasters(100_000_000),
   shippingPiasters: piasters(100_000_000),
   deliveryDays: z.number().int().min(1).max(120),
-  vendorCostPiasters: z.number().int().min(1).max(10_000_000_000),
+  vendorCostPiasters: z.number().int().min(1).max(MAX_DB_PIASTERS),
   note: z.string().trim().max(500).optional(),
+}).superRefine((d, ctx) => {
+  // R6-SEC-05: the total incl. VAT must fit the money columns (it was refused by the database
+  // with a generic error from about EGP 21.5 million, e.g. 1,000,000 boxes at EGP 30).
+  if (priceLines(d).totalPiasters > MAX_DB_PIASTERS) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["unitPiasters"], message: "TOTAL_TOO_HIGH" });
 });
 export type SendPriceInput = z.infer<typeof sendPriceSchema>;
 

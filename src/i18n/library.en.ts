@@ -78,6 +78,7 @@ export const libraryEn = {
     RED: "Red",
     GREEN: "Green",
     NATURAL: "Natural",
+    MATCH: "Same as container",
   },
   catalog: {
     heading: "Every model we print",

@@ -7,6 +7,7 @@ import { defaultMaxDpr } from "./hooks";
 import { KEY_SHORTCUTS, RendererSettings, ShaderWarmup, registerDebugRenderer, yieldToMain } from "./perf";
 import type { ScreenshotOptions } from "./screenshot";
 import type { FitInsets } from "./fit";
+import { useOptionalI18n } from "@/i18n/client";
 import styles from "./PackagingScene.module.css";
 
 /**
@@ -188,6 +189,29 @@ export function EngineCanvas({
   // R6-R1: the renderer (context, drawing buffer) and the scene mount in separate tasks
   const [mountContent, setMountContent] = useState(false);
 
+  // a11y R4-10 (WCAG 4.1.3): keyboard view changes are confirmed in a polite status, debounced
+  // 300 ms so holding an arrow key gives one message ("Rotate left"), not one per step.
+  const i18n = useOptionalI18n();
+  const VIEW_SAY = {
+    left: i18n?.t("viewer.rotateLeft") ?? "Rotate left",
+    right: i18n?.t("viewer.rotateRight") ?? "Rotate right",
+    up: i18n?.t("viewer.tiltUp") ?? "Tilt up",
+    down: i18n?.t("viewer.tiltDown") ?? "Tilt down",
+    zoomIn: i18n?.t("viewer.zoomIn") ?? "Zoom in",
+    zoomOut: i18n?.t("viewer.zoomOut") ?? "Zoom out",
+    reset: i18n?.t("viewer.reset") ?? "Reset view",
+  };
+  const [said, setSaid] = useState("");
+  const sayTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (sayTimer.current) clearTimeout(sayTimer.current);
+  }, []);
+  const say = (text: string) => {
+    if (sayTimer.current) clearTimeout(sayTimer.current);
+    setSaid("");
+    sayTimer.current = setTimeout(() => setSaid(text), 300);
+  };
+
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (!enableKeyboard || e.altKey || e.ctrlKey || e.metaKey) return;
     const a = api.current;
@@ -196,29 +220,36 @@ export function EngineCanvas({
     switch (e.key) {
       case "ArrowLeft":
         a.rotate(-step);
+        say(VIEW_SAY.left);
         break;
       case "ArrowRight":
         a.rotate(step);
+        say(VIEW_SAY.right);
         break;
       case "ArrowUp":
         a.rotate(0, step * 0.66);
+        say(VIEW_SAY.up);
         break;
       case "ArrowDown":
         a.rotate(0, -step * 0.66);
+        say(VIEW_SAY.down);
         break;
       case "+":
       case "=":
       case "PageUp":
         a.zoom(0.85);
+        say(VIEW_SAY.zoomIn);
         break;
       case "-":
       case "_":
       case "PageDown":
         a.zoom(1 / 0.85);
+        say(VIEW_SAY.zoomOut);
         break;
       case "0":
       case "Home":
         a.reset();
+        say(VIEW_SAY.reset);
         break;
       default:
         return;
@@ -244,6 +275,11 @@ export function EngineCanvas({
       <span id={hintId} className={styles.hint}>
         {keyboardHint}
       </span>
+      {enableKeyboard ? (
+        <span className={styles.hint} role="status">
+          {said}
+        </span>
+      ) : null}
       {poster ? <div aria-hidden="true" className={styles.poster} data-hidden={ready ? "true" : undefined} style={{ backgroundImage: `url(${JSON.stringify(poster)})` }} /> : null}
       <Canvas
         className={styles.canvas}

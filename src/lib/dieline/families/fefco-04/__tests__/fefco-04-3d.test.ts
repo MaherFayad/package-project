@@ -180,3 +180,43 @@ describe("FEFCO 04 in 3D: printed faces", () => {
       }
     });
 });
+
+describe("FEFCO 04 in 3D: corners", () => {
+  /**
+   * R6-3Q-C-01: at each vertical corner neither wall's cut end lies in the other wall's printed
+   * face. Full-length walls met board-in-board, each end face coplanar with the neighbour's print:
+   * a z-fighting board strip down all four corners, worst at small sizes (FEFCO_0400__min__d_hero).
+   */
+  const box = (d: DielineModel, p: DielinePanel, poses: ReturnType<typeof computePoses>) => {
+    const t = d.thicknessMm;
+    const pv = panelPivot(p, t);
+    const pts = p.polygon.flatMap((q) => [0, 1].map((dep) => panelLocalPoint(p, q, dep, pv, t).applyMatrix4(poses.get(p.id)!.world)));
+    const r = (k: "x" | "y" | "z") => [Math.min(...pts.map((v) => v[k])), Math.max(...pts.map((v) => v[k]))];
+    return { x: r("x"), y: r("y"), z: r("z") };
+  };
+  for (const def of DEFINITIONS)
+    it(`${def.fefco}: walls (and the lid) stop short of the neighbouring printed face`, () => {
+      for (const t of [1.5, 3]) {
+        const d = asModel(def, t);
+        const poses = computePoses(d, 1);
+        const wall = (role: string) => d.panels.find((p) => p.parentId === d.rootId && p.role === role);
+        const long = ["front", "back"].map(wall).filter((p): p is DielinePanel => !!p);
+        const ends = ["left", "right"].map(wall).filter((p): p is DielinePanel => !!p);
+        // Rectangular kit trays only (octagon walls are not axis-aligned; wraps have no end walls).
+        if (long.length < 2 || ends.length < 2 || d.panels.some((p) => /^corner/.test(p.id))) continue;
+        const L = long.map((p) => box(d, p, poses));
+        const E = ends.map((p) => box(d, p, poses));
+        const outerX = Math.max(...E.map((e) => e.x[1]));
+        const outerZ = Math.max(...L.map((l) => l.z[1]));
+        for (const l of L) expect(Math.max(Math.abs(l.x[0]), Math.abs(l.x[1])), `${def.fefco} long wall end t=${t}`).toBeLessThan(outerX - 0.05);
+        for (const e of E) expect(Math.max(Math.abs(e.z[0]), Math.abs(e.z[1])), `${def.fefco} end wall end t=${t}`).toBeLessThan(outerZ - 0.05);
+        // Lid edges: the lid stops short of the front's print, the walls under it short of its print.
+        const lidPanel = d.panels.find((p) => p.id === "top" && p.role === "top");
+        if (lidPanel) {
+          const lid = box(d, lidPanel, poses);
+          expect(lid.z[1], `${def.fefco} lid front edge t=${t}`).toBeLessThan(outerZ - 0.05);
+          for (const w of [wall("front"), ...ends]) if (w) expect(box(d, w, poses).y[1], `${def.fefco} ${w.id} under the lid t=${t}`).toBeLessThan(lid.y[1] - 0.05);
+        }
+      }
+    });
+});

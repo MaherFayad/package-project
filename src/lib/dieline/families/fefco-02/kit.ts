@@ -241,8 +241,10 @@ export function handHoles(c: Ctx, fromTop: number) {
     const p = c.b.byId(c.wallIds[w]);
     const r = c.walls[w];
     const hw = Math.min(90, r.width * 0.6);
-    const hh = Math.min(30, r.height * 0.18);
-    if (hw < 40 || hh < 15) continue;
+    // 15 mm minimum (a finger grip) on low walls: at 18 % of the wall the hole fell under 15 mm
+    // below ~83 mm wall height and was dropped, so "handle" did nothing on smaller boxes (R6-3Q-A).
+    const hh = clamp(r.height * 0.18, 15, 30);
+    if (hw < 40 || r.height < Math.max(fromTop, hh) + hh + 8) continue;
     p.holes = [...(p.holes ?? []), stadium(r.x + r.width / 2, r.y + Math.max(fromTop, hh) + hh / 2, hw, hh)];
   }
 }

@@ -37,7 +37,7 @@ export const LIQUID_OF_CONTENT: Record<string, LiquidCode> = {
   SPARKLING: "SERUM",
   BEER: "HONEY",
   OLIVE_OIL: "OLIVE_OIL",
-  HOT_SAUCE: "HIBISCUS",
+  HOT_SAUCE: "HOT_SAUCE",
   SPIRIT: "PERFUME",
   MILK: "CREAM",
   SYRUP: "HIBISCUS",
@@ -46,7 +46,7 @@ export const LIQUID_OF_CONTENT: Record<string, LiquidCode> = {
   DETERGENT: "CREAM",
   MOTOR_OIL: "OLIVE_OIL",
   HONEY: "HONEY",
-  JAM: "HIBISCUS",
+  JAM: "JAM",
   NUT_BUTTER: "CREAM",
   PICKLES: "OLIVE_OIL",
   TAHINI: "CREAM",
@@ -56,6 +56,6 @@ export const LIQUID_OF_CONTENT: Record<string, LiquidCode> = {
 };
 
 /** Flexible film material for a design (the "container" of a flexible model). */
-export function describeVesselModel(m: VesselModelDef, dims: VesselDims, surfaces: string[], presetId?: string, container?: string, options?: Record<string, boolean | string>): VesselDescription {
-  return (m.describe as (d: VesselDims, s: string[], p?: string, c?: string, o?: Record<string, boolean | string>) => VesselDescription)(dims, surfaces, presetId, container, options);
+export function describeVesselModel(m: VesselModelDef, dims: VesselDims, surfaces: string[], presetId?: string, container?: string, options?: Record<string, boolean | string>, closure?: string): VesselDescription {
+  return (m.describe as (d: VesselDims, s: string[], p?: string, c?: string, o?: Record<string, boolean | string>, cl?: string) => VesselDescription)(dims, surfaces, presetId, container, options, closure);
 }

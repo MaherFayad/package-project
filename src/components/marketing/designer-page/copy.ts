@@ -43,6 +43,8 @@ const en = {
     examples: ["mailer", "pizza", "gift", "coffee", "perfume", "rigid"],
     submit: "Find box styles",
     note: "Searches all {models} models by name and use.",
+    pause: "Pause the moving background and typing examples",
+    play: "Play the moving background and typing examples",
   },
   wall: {
     title: "Or start from one of our box styles",
@@ -172,7 +174,7 @@ const ar: Copy = {
     eyebrow: "مصمم العلب ثلاثي الأبعاد من علبة",
     title: "علامتك على كل وجه",
     body: "صمم علبتك على نموذج ثلاثي الأبعاد مباشر، مجانا من متصفحك. ما تراه هو خط القص الفعلي الذي تقصه المطبعة.",
-    cta: "ابدأ التصميم مجانا",
+    cta: "بدء التصميم مجانا",
     secondary: "تصفح أنماط العلب",
     small: "التصميم بدون حساب. سجل الدخول للحفظ أو الطلب.",
     frameTag: "عنوان",
@@ -197,6 +199,8 @@ const ar: Copy = {
     examples: ["بيتزا", "هدايا", "قهوة", "عطر", "حلويات", "تجميل"],
     submit: "بحث عن أنماط العلب",
     note: "البحث في كل النماذج ({models}) بالاسم والاستخدام.",
+    pause: "إيقاف حركة الخلفية وأمثلة الكتابة",
+    play: "تشغيل حركة الخلفية وأمثلة الكتابة",
   },
   wall: {
     title: "أو ابدأ من أحد أنماط العلب",
@@ -210,7 +214,7 @@ const ar: Copy = {
   make: {
     title: "علبة بهويتك، دون برامج تصميم",
     body: "كل ما تحتاجه لوضع علامتك على علبة، من المتصفح، وعلى هاتفك أيضا.",
-    cta: "جربه الآن",
+    cta: "تجربة المصمم الآن",
     cards: [
       { key: "artwork", title: "رفع التصميم وقصه", body: "أضف شعارا أو تصميما كاملا، ثم قصه وأدره وضعه على أي وجه، وشاهده يطوى في ثلاثة أبعاد." },
       { key: "colours", title: "ألوان علامتك", body: "حدد ألوانك مرة واحدة واستخدمها على كل وجه وكل نص وكل علبة تصممها." },

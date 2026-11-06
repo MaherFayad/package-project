@@ -14,9 +14,10 @@ import { faqJsonLd } from "@/components/store/jsonld";
 import { renderSrc, srcSetFor } from "@/components/marketing/assets";
 import { startHref } from "@/components/marketing/MarketingHeader";
 import { Sheet } from "@/components/marketing/kit/Sheet";
-import { Display, Lead } from "@/components/marketing/kit/Display";
+import { SectionHead, Stack } from "@/components/marketing/kit/SectionHead";
+import { Grid } from "@/components/marketing/kit/Grid";
 import { HeroTitle } from "@/components/marketing/kit/HeroTitle";
-import { StickyStory } from "@/components/marketing/kit/StickyStory";
+import { Steps } from "@/components/marketing/kit/Steps";
 import { Marquee } from "@/components/marketing/kit/Marquee";
 import { CountUp } from "@/components/marketing/kit/CountUp";
 import { Faq } from "@/components/marketing/kit/Faq";
@@ -59,13 +60,23 @@ const SEGMENTS: { id: "cafes" | "beauty" | "ecommerce"; img: StructureCode; styl
   { id: "ecommerce", img: "FEFCO_0427", styles: ["FEFCO_0427", "FEFCO_0201"] },
 ];
 /** A hero render: AVIF first, 400w for phones, 720w for desktop (sized ~30vw there). */
-function HeroRender({ id, className, priority = false }: { id: string; className: string; priority?: boolean }) {
+function HeroRender({ id, className, priority = false, w = 720, h = 480 }: { id: string; className: string; priority?: boolean; w?: number; h?: number }) {
   const r = `/marketing/renders/${id}`;
   const sizes = "(min-width: 768px) 30vw, 200px";
   return (
     <picture>
-      <source type="image/avif" srcSet={`${r}.400w.avif 400w, ${r}.720w.avif 720w`} sizes={sizes} />
-      <img className={className} src={`${r}.720w.webp`} srcSet={`${r}.400w.webp 400w, ${r}.720w.webp 720w`} sizes={sizes} alt="" width={720} height={480} fetchPriority={priority ? "high" : "auto"} decoding="async" />
+      <source type="image/avif" srcSet={w > 400 ? `${r}.400w.avif 400w, ${r}.720w.avif 720w` : `${r}.400w.avif`} sizes={w > 400 ? sizes : undefined} />
+      <img
+        className={className}
+        src={w > 400 ? `${r}.720w.webp` : `${r}.400w.webp`}
+        srcSet={w > 400 ? `${r}.400w.webp 400w, ${r}.720w.webp 720w` : undefined}
+        sizes={w > 400 ? sizes : undefined}
+        alt=""
+        width={w}
+        height={h}
+        fetchPriority={priority ? "high" : "auto"}
+        decoding="async"
+      />
     </picture>
   );
 }
@@ -121,7 +132,17 @@ export default async function WhyElbaPage({ params }: Props) {
   const screens = [
     <div key="d" className={s.screen}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img className={s.shot} src={`/marketing/designer-${locale}.720w.webp`} srcSet={srcSetFor(`/marketing/designer-${locale}.webp`)} sizes="(min-width: 960px) 600px, 92vw" alt="" width={720} height={450} loading="lazy" decoding="async" />
+      <img
+        className={s.shot}
+        src={`/marketing/designer-${locale}.720w.webp`}
+        srcSet={srcSetFor(`/marketing/designer-${locale}.webp`)}
+        sizes="(min-width: 960px) 600px, 92vw"
+        alt=""
+        width={720}
+        height={450}
+        loading="lazy"
+        decoding="async"
+      />
     </div>,
     <div key="p" className={s.screen}>
       <MockPrinters
@@ -145,223 +166,216 @@ export default async function WhyElbaPage({ params }: Props) {
 
       {/* W1 hero + W2 ticker */}
       <Sheet tone="dark" hero className={s.heroBand} aria-labelledby="why-h1">
-        <div className={s.heroInner}>
-          <Glow color="violet" x="40%" y="45%" size="48vmax" />
-          <Glow color="green" x="62%" y="58%" size="40vmax" />
-          <div className={s.collage} aria-hidden="true">
-            <HeroRender className={s.c1} id="fefco-0427" priority />
-            <HeroRender className={s.c2} id="rigid-box" />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className={s.c3} src="/marketing/renders/paper-tube.400w.webp" alt="" width={400} height={691} decoding="async" />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className={s.c4} src="/marketing/renders/ecma-rte.400w.webp" alt="" width={400} height={695} decoding="async" />
-          </div>
-          <div className={s.heroText}>
-            <HeroTitle lines={[c.heroLine1, c.heroLine2]} size="hero" align="center" id="why-h1" />
-            <p className={s.heroSub}>{c.heroSub}</p>
-            <PillRow align="center" className={s.heroPills}>
-              <Pill href={start} size="lg">
-                {c.ctaStart}
-              </Pill>
-              <Pill href={pricingHref} size="lg" variant="outline">
-                {c.ctaPricing}
-              </Pill>
-            </PillRow>
-          </div>
-          {t500 ? (
-            <div className={s.heroBadge} aria-hidden="true">
-              <span>{c.heroBadgeLabel(formatNumber(t500.quantity))}</span>
-              <strong className={s.num}>{money(t500.totalPiasters)}</strong>
-              <span>{c.heroBadgeUnit(money(t500.unitPiasters, true))}</span>
+        <Stack gap="head-content">
+          <div className={s.heroInner}>
+            <Glow color="violet" x="40%" y="45%" size="48vmax" />
+            <Glow color="green" x="62%" y="58%" size="40vmax" />
+            <div className={s.collage} aria-hidden="true">
+              <HeroRender className={s.c1} id="fefco-0427" priority />
+              <HeroRender className={s.c2} id="rigid-box" />
+              <HeroRender className={s.c3} id="paper-tube" w={400} h={691} />
+              <HeroRender className={s.c4} id="ecma-rte" w={400} h={695} />
             </div>
-          ) : null}
-        </div>
-        <Marquee items={tickerItems} label={c.tickerLabel} pauseLabel={c.tickerPause} playLabel={c.tickerPlay} duration={49} gap="56px" className={s.ticker} />
+            <div className={s.heroText}>
+              <HeroTitle lines={[c.heroLine1, c.heroLine2]} size="96" align="center" id="why-h1" />
+              <p className={s.heroSub}>{c.heroSub}</p>
+              <PillRow align="center">
+                <Pill href={start} size="lg">
+                  {c.ctaStart}
+                </Pill>
+                <Pill href={pricingHref} size="lg" variant="outline">
+                  {c.ctaPricing}
+                </Pill>
+              </PillRow>
+            </div>
+            {t500 ? (
+              <div className={s.heroBadge} aria-hidden="true">
+                <span>{c.heroBadgeLabel(formatNumber(t500.quantity))}</span>
+                <strong className={s.num}>{money(t500.totalPiasters)}</strong>
+                <span>{c.heroBadgeUnit(money(t500.unitPiasters, true))}</span>
+              </div>
+            ) : null}
+          </div>
+          <Marquee items={tickerItems} label={c.tickerLabel} pauseLabel={c.tickerPause} playLabel={c.tickerPlay} duration={49} gap="56px" />
+        </Stack>
       </Sheet>
 
       {/* W3 light sheet: sticky device + three points */}
-      <Sheet tone="light" aria-labelledby="why-points">
-        <Reveal className={s.head}>
-          <Display size="56" align="center" id="why-points">
-            {c.pointsTitle}
-          </Display>
-          <Lead align="center">{c.pointsSub}</Lead>
-        </Reveal>
-        <StickyStory steps={points.map((x, i) => ({ id: `point-${i}`, title: x.title, body: x.body, media: screens[i] }))} mediaSide="end" />
+      <Sheet tone="light" y="lg" aria-labelledby="why-points">
+        <SectionHead size="56" align="center" id="why-points" title={c.pointsTitle} sub={c.pointsSub}>
+          <Steps items={points.map((x, i) => ({ title: x.title, body: x.body, media: screens[i] }))} label={c.pointsTitle} />
+        </SectionHead>
       </Sheet>
 
       {/* W4 violet band: three UI mockup cards */}
-      <Sheet tone="violet" aria-labelledby="why-orders">
-        <Reveal className={s.head}>
-          <Display size="56" align="center" id="why-orders">
-            {c.ordersTitle}
-          </Display>
-          <Lead align="center">{c.ordersSub}</Lead>
-        </Reveal>
-        <ul className={s.cards3}>
-          <Reveal as="li" index={0} className={s.vCard}>
-            <div className={s.vMedia}>
-              {f && t500 ? (
-                <MockPrice
-                  title={boxName}
-                  rows={f.tiers.slice(0, 4).map((x) => ({ qty: p.boxes(formatNumber(x.quantity)), unit: money(x.unitPiasters, true), active: x.quantity === t500.quantity }))}
-                  totalLabel={p.totalIncl}
-                  total={money(t500.totalPiasters)}
-                />
-              ) : null}
-            </div>
-            <div className={s.vBody}>
-              <h3 className={s.vTitle}>{c.ordersCards[0]!.title.replace("2,000", formatNumber(f?.maxInstantQty ?? 2000))}</h3>
-              <p className={s.vText}>{c.ordersCards[0]!.body(formatNumber(f?.maxInstantQty ?? 2000))}</p>
-            </div>
-          </Reveal>
-          <Reveal as="li" index={1} className={s.vCard}>
-            <div className={s.vMedia}>{t500 ? <MockCheckout lines={summaryLines.slice(0, 2)} discount={discount} total={{ label: p.totalIncl, value: money(t500.totalPiasters) }} cta={p.tierCta} /> : null}</div>
-            <div className={s.vBody}>
-              <h3 className={s.vTitle}>{c.ordersCards[1]!.title}</h3>
-              <p className={s.vText}>{c.ordersCards[1]!.body(pct)}</p>
-            </div>
-          </Reveal>
-          <Reveal as="li" index={2} className={s.vCard}>
-            <div className={s.vMedia}>
-              {t500 ? (
-                <MockTracking
-                  current={2}
-                  steps={[
-                    { label: c.track[0]!, meta: c.trackMeta.done },
-                    { label: c.track[1]!, meta: p.methods[t500.method] },
-                    { label: c.track[2]!, meta: c.trackMeta.eta(u.days(t500.deliveryDays)) },
-                    { label: c.track[3]!, meta: c.trackMeta.receipt },
-                  ]}
-                />
-              ) : null}
-            </div>
-            <div className={s.vBody}>
-              <h3 className={s.vTitle}>{c.ordersCards[2]!.title}</h3>
-              <p className={s.vText}>{c.ordersCards[2]!.body(u.days(f?.fastestDeliveryDays ?? 0))}</p>
-            </div>
-          </Reveal>
-        </ul>
+      <Sheet tone="violet" y="lg" className={s.violetBand} aria-labelledby="why-orders">
+        <SectionHead size="56" align="center" id="why-orders" title={c.ordersTitle} sub={c.ordersSub}>
+          <Grid as="ul" cols={3} colsMd={1} className={s.list}>
+            <Reveal as="li" index={0} className={s.vCard}>
+              <div className={s.vMedia}>
+                {f && t500 ? (
+                  <MockPrice
+                    title={boxName}
+                    rows={f.tiers.slice(0, 4).map((x) => ({ qty: p.boxes(formatNumber(x.quantity)), unit: money(x.unitPiasters, true), active: x.quantity === t500.quantity }))}
+                    totalLabel={p.totalIncl}
+                    total={money(t500.totalPiasters)}
+                  />
+                ) : null}
+              </div>
+              <div className={s.vBody}>
+                <h3 className={s.vTitle}>{c.ordersCards[0]!.title.replace("2,000", formatNumber(f?.maxInstantQty ?? 2000))}</h3>
+                <p className={s.vText}>{c.ordersCards[0]!.body(formatNumber(f?.maxInstantQty ?? 2000))}</p>
+              </div>
+            </Reveal>
+            <Reveal as="li" index={1} className={s.vCard}>
+              <div className={s.vMedia}>
+                {t500 ? <MockCheckout lines={summaryLines.slice(0, 2)} discount={discount} total={{ label: p.totalIncl, value: money(t500.totalPiasters) }} cta={p.tierCta} /> : null}
+              </div>
+              <div className={s.vBody}>
+                <h3 className={s.vTitle}>{c.ordersCards[1]!.title}</h3>
+                <p className={s.vText}>{c.ordersCards[1]!.body(pct)}</p>
+              </div>
+            </Reveal>
+            <Reveal as="li" index={2} className={s.vCard}>
+              <div className={s.vMedia}>
+                {t500 ? (
+                  <MockTracking
+                    current={2}
+                    steps={[
+                      { label: c.track[0]!, meta: c.trackMeta.done },
+                      { label: c.track[1]!, meta: p.methods[t500.method] },
+                      { label: c.track[2]!, meta: c.trackMeta.eta(u.days(t500.deliveryDays)) },
+                      { label: c.track[3]!, meta: c.trackMeta.receipt },
+                    ]}
+                  />
+                ) : null}
+              </div>
+              <div className={s.vBody}>
+                <h3 className={s.vTitle}>{c.ordersCards[2]!.title}</h3>
+                <p className={s.vText}>{c.ordersCards[2]!.body(u.days(f?.fastestDeliveryDays ?? 0))}</p>
+              </div>
+            </Reveal>
+          </Grid>
+        </SectionHead>
       </Sheet>
 
       {/* W5 green band: real numbers, counting up once */}
-      <Sheet tone="green" aria-labelledby="why-spend" className={s.greenBand}>
+      <Sheet tone="green" y="lg" aria-labelledby="why-spend" className={s.greenBand}>
         <div className={s.greenTexture} aria-hidden="true" />
-        <Reveal className={s.head}>
-          <Display size="56" align="center" id="why-spend">
-            {c.spendTitle}
-          </Display>
-          <Lead align="center">{c.spendSub}</Lead>
-        </Reveal>
-        <ul className={s.stats}>
-          {f?.unitDropPct != null && firstTier && lastTier ? (
-            <Reveal as="li" index={0} className={s.stat}>
+        <SectionHead size="56" align="center" id="why-spend" title={c.spendTitle} sub={c.spendSub}>
+          <Grid as="ul" cols={4} colsMd={2} className={s.list}>
+            {f?.unitDropPct != null && firstTier && lastTier ? (
+              <Reveal as="li" index={0} className={s.stat}>
+                <span className={s.statFig}>
+                  <CountUp value={f.unitDropPct} suffix="%" />
+                </span>
+                <h3 className={s.statLabel}>
+                  <TrendingDown size={20} aria-hidden />
+                  {c.stats.drop.label}
+                </h3>
+                <p className={s.statBody}>{c.stats.drop.body(formatNumber(firstTier.quantity), formatNumber(lastTier.quantity))}</p>
+              </Reveal>
+            ) : null}
+            {f ? (
+              <Reveal as="li" index={1} className={s.stat}>
+                <span className={s.statFig}>
+                  <CountUp value={f.minOrderQty} />
+                  <span className={s.statUnit}>{c.stats.min.unit}</span>
+                </span>
+                <h3 className={s.statLabel}>
+                  <PackageCheck size={20} aria-hidden />
+                  {c.stats.min.label}
+                </h3>
+                <p className={s.statBody}>{c.stats.min.body}</p>
+              </Reveal>
+            ) : null}
+            {f?.fastestDeliveryDays != null ? (
+              <Reveal as="li" index={2} className={s.stat}>
+                <span className={s.statFig}>
+                  <CountUp value={f.fastestDeliveryDays} />
+                  <span className={s.statUnit}>{c.stats.days.unit}</span>
+                </span>
+                <h3 className={s.statLabel}>
+                  <Truck size={20} aria-hidden />
+                  {c.stats.days.label}
+                </h3>
+                <p className={s.statBody}>{c.stats.days.body}</p>
+              </Reveal>
+            ) : null}
+            <Reveal as="li" index={3} className={s.stat}>
               <span className={s.statFig}>
-                <CountUp value={f.unitDropPct} suffix="%" />
+                <CountUp value={designerModels} />
               </span>
               <h3 className={s.statLabel}>
-                <TrendingDown size={20} aria-hidden />
-                {c.stats.drop.label}
+                <Boxes size={20} aria-hidden />
+                {c.stats.models.label}
               </h3>
-              <p className={s.statBody}>{c.stats.drop.body(formatNumber(firstTier.quantity), formatNumber(lastTier.quantity))}</p>
+              <p className={s.statBody}>{c.stats.models.body}</p>
             </Reveal>
-          ) : null}
-          {f ? (
-            <Reveal as="li" index={1} className={s.stat}>
-              <span className={s.statFig}>
-                <CountUp value={f.minOrderQty} />
-                <span className={s.statUnit}>{c.stats.min.unit}</span>
-              </span>
-              <h3 className={s.statLabel}>
-                <PackageCheck size={20} aria-hidden />
-                {c.stats.min.label}
-              </h3>
-              <p className={s.statBody}>{c.stats.min.body}</p>
-            </Reveal>
-          ) : null}
-          {f?.fastestDeliveryDays != null ? (
-            <Reveal as="li" index={2} className={s.stat}>
-              <span className={s.statFig}>
-                <CountUp value={f.fastestDeliveryDays} />
-                <span className={s.statUnit}>{c.stats.days.unit}</span>
-              </span>
-              <h3 className={s.statLabel}>
-                <Truck size={20} aria-hidden />
-                {c.stats.days.label}
-              </h3>
-              <p className={s.statBody}>{c.stats.days.body}</p>
-            </Reveal>
-          ) : null}
-          <Reveal as="li" index={3} className={s.stat}>
-            <span className={s.statFig}>
-              <CountUp value={designerModels} />
-            </span>
-            <h3 className={s.statLabel}>
-              <Boxes size={20} aria-hidden />
-              {c.stats.models.label}
-            </h3>
-            <p className={s.statBody}>{c.stats.models.body}</p>
-          </Reveal>
-          {f?.digitalSetupPiasters != null ? (
-            <Reveal as="li" index={4} className={s.stat}>
-              <span className={s.statFig}>{money(f.digitalSetupPiasters)}</span>
-              <h3 className={s.statLabel}>
-                <BadgeCheck size={20} aria-hidden />
-                {c.stats.digital.label}
-              </h3>
-              <p className={s.statBody}>{c.stats.digital.body}</p>
-            </Reveal>
-          ) : null}
-        </ul>
+            {f?.digitalSetupPiasters != null ? (
+              <Reveal as="li" index={4} className={s.stat}>
+                <span className={s.statFig}>{money(f.digitalSetupPiasters)}</span>
+                <h3 className={s.statLabel}>
+                  <BadgeCheck size={20} aria-hidden />
+                  {c.stats.digital.label}
+                </h3>
+                <p className={s.statBody}>{c.stats.digital.body}</p>
+              </Reveal>
+            ) : null}
+          </Grid>
+        </SectionHead>
       </Sheet>
 
       {/* Segments (the header's "Why Elba" menu links here: #cafes, #beauty, #ecommerce) */}
-      <Sheet tone="white" aria-labelledby="why-segments">
-        <Reveal className={s.head}>
-          <Display size="56" align="center" id="why-segments">
-            {c.segmentsTitle}
-          </Display>
-          <Lead align="center">{c.segmentsSub}</Lead>
-        </Reveal>
-        <ul className={s.cards3}>
-          {SEGMENTS.map((seg, i) => (
-            <Reveal as="li" key={seg.id} index={i} className={s.segCard} id={seg.id}>
-              <div className={s.segMedia}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={small(seg.img)} alt="" width={400} height={300} loading="lazy" decoding="async" />
-              </div>
-              <h3 className={s.vTitle}>{c.segments[seg.id].title}</h3>
-              <p className={s.segText}>{c.segments[seg.id].body}</p>
-              <p className={s.segStylesLabel}>{c.segmentsStyles}</p>
-              <ul className={s.segLinks}>
-                {seg.styles.map((code) => (
-                  <li key={code}>
-                    <Link href={structureHref(locale, code)}>{name(code)}</Link>
-                  </li>
-                ))}
-              </ul>
-            </Reveal>
-          ))}
-        </ul>
+      <Sheet tone="white" y="lg" aria-labelledby="why-segments">
+        <SectionHead size="56" align="center" id="why-segments" title={c.segmentsTitle} sub={c.segmentsSub}>
+          <Grid as="ul" cols={3} colsMd={1} className={s.list}>
+            {SEGMENTS.map((seg, i) => (
+              <Reveal as="li" key={seg.id} index={i} className={s.segCard} id={seg.id}>
+                <div className={s.segMedia}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={small(seg.img)} alt="" width={400} height={300} loading="lazy" decoding="async" />
+                </div>
+                <h3 className={s.vTitle}>{c.segments[seg.id].title}</h3>
+                <p className={s.segText}>{c.segments[seg.id].body}</p>
+                <p className={s.segStylesLabel}>{c.segmentsStyles}</p>
+                <ul className={s.segLinks}>
+                  {seg.styles.map((code) => (
+                    <li key={code}>
+                      <Link href={structureHref(locale, code)}>{name(code)}</Link>
+                    </li>
+                  ))}
+                </ul>
+              </Reveal>
+            ))}
+          </Grid>
+        </SectionHead>
       </Sheet>
 
       {/* W6 switch from your print shop + the Elba promise (our policy, not a testimonial) */}
-      <Sheet tone="dark" aria-labelledby="why-switch">
-        <div className={s.switchGrid}>
+      <Sheet tone="dark" y="lg" aria-labelledby="why-switch">
+        <Grid cols={2} colsMd={1} className={s.switchGrid}>
           <Reveal>
-            <Display size="44" id="why-switch">
-              {c.switchTitle1}
-              <br />
-              {c.switchTitle2}
-            </Display>
-            <ol className={s.steps}>
-              {c.switchSteps.map((st) => (
-                <li key={st.title} className={s.step}>
-                  <h3 className={s.stepTitle}>{st.title}</h3>
-                  <p className={s.stepBody}>{st.body}</p>
-                </li>
-              ))}
-            </ol>
+            <SectionHead
+              size="44"
+              id="why-switch"
+              title={
+                <>
+                  {c.switchTitle1}
+                  <br />
+                  {c.switchTitle2}
+                </>
+              }
+            >
+              <ol className={s.steps}>
+                {c.switchSteps.map((st) => (
+                  <li key={st.title} className={s.step}>
+                    <h3 className={s.stepTitle}>{st.title}</h3>
+                    <p className={s.stepBody}>{st.body}</p>
+                  </li>
+                ))}
+              </ol>
+            </SectionHead>
           </Reveal>
           <Reveal variant="fade" className={s.promiseWrap}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -382,23 +396,20 @@ export default async function WhyElbaPage({ params }: Props) {
               </Link>
             </figure>
           </Reveal>
-        </div>
+        </Grid>
       </Sheet>
 
       {/* FAQ (the header's help link points to #faq) */}
-      <Sheet tone="dark" overlap={false} id="faq" aria-labelledby="why-faq">
-        <Display size="44" id="why-faq" className={s.faqTitle}>
-          {c.faqTitle}
-        </Display>
-        <Faq items={faq} name="why-faq" />
+      <Sheet tone="dark" y="lg" id="faq" aria-labelledby="why-faq">
+        <SectionHead size="44" id="why-faq" title={c.faqTitle}>
+          <Faq items={faq} name="why-faq" />
+        </SectionHead>
       </Sheet>
 
       {/* W7 closing CTA */}
-      <Sheet tone="dark" overlap={false} aria-labelledby="why-close" className={s.close}>
+      <Sheet tone="dark" y="xl" aria-labelledby="why-close">
         <Reveal>
-          <Display size="56" align="center" id="why-close">
-            {c.closeTitle}
-          </Display>
+          <SectionHead size="64" align="center" id="why-close" title={c.closeTitle} />
           <PillRow align="center">
             <Pill href={refStart} size="lg">
               {c.ctaStart}

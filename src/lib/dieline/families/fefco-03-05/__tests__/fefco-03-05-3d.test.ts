@@ -125,4 +125,26 @@ describe("FEFCO 03 / 05 fold sequence and mapping", () => {
     expect(sheetAt("p7", left, v).x).toBeCloseTo(p7.bbox.x + p7.bbox.width, 6);
     expect(sheetAt("p0", left, v).x).toBeCloseTo(side.bbox.x, 6);
   });
+
+  it.each(["FEFCO_0300", "FEFCO_0303", "FEFCO_0304", "FEFCO_0307", "FEFCO_0308", "FEFCO_0309", "FEFCO_0321", "FEFCO_0322", "FEFCO_0323", "FEFCO_0330", "FEFCO_0331", "FEFCO_0310", "FEFCO_0313"])(
+    "%s: below a partial lid the base walls carry the side artwork (R6-3Q-B)",
+    (code) => {
+      // 0304: the base end walls between the outside gusset triangles were bare board below a
+      // partial lid (they lie 11.5 mm under the lid's gussets); 0321: both base end walls.
+      const def = byCode(code);
+      // Sizes where the two outside gussets on one wall overlap (four layers out).
+      const d = code === "FEFCO_0304" ? { L: 330, W: 210, H: 120 } : code === "FEFCO_0303" ? { L: 150, W: 120, H: 100 } : def.defaultDims;
+      for (const t of [1.5, 3]) {
+        const m = generateFamilyDieline(def, d, { thicknessMm: t, features: { lidHeightMm: Math.round(d.H * 0.4) } });
+        const base = m.panels[0].pieceId;
+        const cov = faceCoverage(m);
+        for (const face of ["front", "back", "left", "right"] as const) {
+          const parts = m.faces[face]!.parts.map((p) => m.panels.find((q) => q.id === p.panelId)!);
+          expect(parts.some((p) => p.pieceId === base), `${code} t=${t} ${face}: base wall printed`).toBe(true);
+          // 0.85: the outside gussets of the other wall pair stand up to 4t proud of these edges.
+          expect(cov[face], `${code} t=${t} ${face}`).toBeGreaterThanOrEqual(0.85);
+        }
+      }
+    },
+  );
 });
