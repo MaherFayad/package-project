@@ -37,7 +37,7 @@ test("quote-only model: no 'Order this box' in designer, export, share, checkout
   expect(api.status()).toBe(200);
   expect(body).toMatchObject({ mode: "manual_quote", reason: "MODEL_BY_QUOTE", orderReason: "FILLING_LINE" });
 
-  // Designer: top bar and export modal say "Request a quote".
+  // Designer: top bar and export modal say "Request a price".
   await page.goto("/en/design/aseptic-brick-carton");
   await dismissCookies(page);
   const toolbar = page.getByRole("toolbar");
