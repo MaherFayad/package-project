@@ -63,6 +63,8 @@ import {
   type PreviewRow,
   type PreviewSample,
 } from "../lib/pricingSettings";
+import { bioCleanSchema, canApprovePortfolio, portfolioReviewSchema, reviewNoteRequired } from "../lib/moderation";
+import { stripContactDetails } from "@/components/vendor/lib/contact";
 import { canRaisePayout, payoutAmount, payoutStepSchema, STEP_FROM, STEP_TO } from "../lib/payouts";
 import { defaultFits, finishUpdateSchema, materialUpdateSchema, mergeLimits, outsideHardBounds, structureUpdateSchema } from "../lib/catalog";
 
@@ -170,6 +172,53 @@ export async function payoutStepAction(input: z.input<typeof payoutStepSchema>):
       );
     });
     revalidateAdmin();
+    return null;
+  });
+}
+
+/* ───────────────────────── Moderation (B-08) ───────────────────────── */
+
+/** Approve or reject a vendor portfolio photo. Captions with contact details cannot be approved. */
+export async function reviewPortfolioAction(input: z.input<typeof portfolioReviewSchema>): Promise<AdminActionResponse> {
+  return runAdminAction(async () => {
+    const admin = await adminForMutation();
+    const d = parse(portfolioReviewSchema, input);
+    if (reviewNoteRequired(d.decision, d.note)) throw new AdminFieldErrors({ note: "NOTE_REQUIRED" });
+    const item = await db.vendorPortfolioItem.findUnique({ where: { id: d.itemId }, include: { vendor: { select: { nameEn: true } } } });
+    if (!item) throw new AdminActionError("NOT_FOUND");
+    if (d.decision === "APPROVE" && !canApprovePortfolio(item)) throw new AdminActionError("NOT_ALLOWED", item.status === "PENDING" ? "CONTACT_IN_CAPTION" : "");
+    const status = d.decision === "APPROVE" ? "APPROVED" : "REJECTED";
+    await db.$transaction(async (tx) => {
+      const u = await tx.vendorPortfolioItem.updateMany({ where: { id: item.id, status: item.status }, data: { status, reviewNote: d.note?.trim() || null } });
+      if (u.count !== 1) throw new AdminActionError("STALE");
+      await audit(
+        admin,
+        { action: d.decision === "APPROVE" ? "PORTFOLIO_APPROVE" : "PORTFOLIO_REJECT", entityType: "VENDOR", entityId: item.vendorId, summary: `${item.vendor.nameEn} photo ${item.id}${d.note ? `: ${d.note}` : ""}`, before: { status: item.status }, after: { status } },
+        tx,
+      );
+    });
+    revalidateAdmin();
+    revalidatePath("/[locale]/vendors/[slug]", "page");
+    return null;
+  });
+}
+
+/** Remove contact details from a vendor bio (sentences holding them go), audited with the old text. */
+export async function cleanBioAction(input: z.input<typeof bioCleanSchema>): Promise<AdminActionResponse> {
+  return runAdminAction(async () => {
+    const admin = await adminForMutation();
+    const d = parse(bioCleanSchema, input);
+    const v = await db.vendor.findUnique({ where: { id: d.vendorId }, select: { id: true, nameEn: true, bioAr: true, bioEn: true, updatedAt: true } });
+    if (!v) throw new AdminActionError("NOT_FOUND");
+    const after = { bioAr: stripContactDetails(v.bioAr), bioEn: stripContactDetails(v.bioEn) };
+    if (after.bioAr === v.bioAr && after.bioEn === v.bioEn) throw new AdminActionError("STALE");
+    await db.$transaction(async (tx) => {
+      const u = await tx.vendor.updateMany({ where: { id: v.id, bioAr: v.bioAr, bioEn: v.bioEn }, data: after });
+      if (u.count !== 1) throw new AdminActionError("STALE");
+      await audit(admin, { action: "VENDOR_BIO_CLEAN", entityType: "VENDOR", entityId: v.id, summary: `${v.nameEn}: contact details removed from bio`, before: { bioAr: v.bioAr, bioEn: v.bioEn }, after }, tx);
+    });
+    revalidateAdmin();
+    revalidatePath("/[locale]/vendors/[slug]", "page");
     return null;
   });
 }

@@ -24,8 +24,7 @@ import {
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { formatDate, formatMoney, formatNumber } from "@/lib/format";
-import { statusBadge } from "@/lib/orders/state";
-import type { OrderStatus } from "@/types";
+import { statusTone } from "@/lib/orders/status-tone";
 import { adminStyles } from "./charts";
 import { asOrderView, countByOrderView, filterOrders, ORDER_SORTS, ORDER_VIEWS, type AdminOrderRow, type OrderSort } from "./lib/orders";
 
@@ -38,7 +37,8 @@ const ADMIN_STATUS_LABELS = new Set(["PAID"]);
 
 export function OrderStatusBadge({ status }: { status: string }) {
   const { t } = useI18n();
-  const b = statusBadge(status as OrderStatus);
+  // CR-08: one tone map for buyer, vendor and admin (labels stay per area).
+  const b = statusTone(status);
   return (
     <Badge tone={b.tone} progress={b.progress}>
       {t((ADMIN_STATUS_LABELS.has(status) ? `admin.orders.statusLabel.${status}` : `orderStatus.${status}`) as DictKey)}

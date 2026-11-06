@@ -32,5 +32,8 @@ export const AUDIT_ACTIONS = [
   "PAYOUT_RAISE",
   "PAYOUT_APPROVE",
   "PAYOUT_PAY",
+  "PORTFOLIO_APPROVE",
+  "PORTFOLIO_REJECT",
+  "VENDOR_BIO_CLEAN",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

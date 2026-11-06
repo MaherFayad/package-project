@@ -91,7 +91,7 @@ test.describe("admin", () => {
   test("admin pages work at 360px and in Arabic", async ({ page, context, baseURL }, info) => {
     test.skip(info.project.name !== "mobile", "layout check runs on the 360px project");
     await signIn(context, baseURL!);
-    for (const p of ["/ar/admin", "/ar/admin/orders", "/en/admin/vendors", "/en/admin/pricing", "/en/admin/disputes", "/ar/admin/payouts", "/en/admin/catalog"]) {
+    for (const p of ["/ar/admin", "/ar/admin/orders", "/en/admin/vendors", "/en/admin/pricing", "/en/admin/disputes", "/ar/admin/payouts", "/en/admin/catalog", "/ar/admin/moderation"]) {
       await page.goto(p);
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 30_000 });
       await noHorizontalScroll(page);
@@ -128,5 +128,23 @@ test.describe("admin", () => {
     await expect(page.getByText(/^Instant · vendors: \d+$/).filter({ visible: true }).first()).toBeVisible();
     await page.getByPlaceholder("Search name, code or standard").fill("FEFCO 0203");
     await expect(page.getByRole("link", { name: "Full overlap slotted container (FOL)" })).toBeVisible();
+  });
+
+  test("moderation: a pending portfolio photo is approved and goes public", async ({ page, context, baseURL }, info) => {
+    test.skip(info.project.name !== "desktop", "mutating flow runs once, on desktop");
+    const vendor = await db.vendor.findUniqueOrThrow({ where: { slug: "nile-pack" } });
+    // No digits: a long number would (rightly) be flagged as a phone number and block approval.
+    const caption = `E2E moderation ${Math.random().toString(36).replace(/[^a-z]/g, "").slice(0, 8)}`;
+    const item = await db.vendorPortfolioItem.create({ data: { vendorId: vendor.id, imageUrl: "/seed/portfolio/alex-print-house-1.svg", captionAr: caption, captionEn: caption, status: "PENDING" } });
+    try {
+      await signIn(context, baseURL!);
+      await page.goto("/en/admin/moderation");
+      await expect(page.getByRole("heading", { level: 1, name: "Moderation" })).toBeVisible({ timeout: 30_000 });
+      await page.getByRole("button", { name: `Approve: ${caption}` }).click();
+      await expect.poll(async () => (await db.vendorPortfolioItem.findUnique({ where: { id: item.id } }))?.status, { timeout: 15_000 }).toBe("APPROVED");
+    } finally {
+      await db.vendorPortfolioItem.delete({ where: { id: item.id } }).catch(() => {});
+      await db.auditLog.deleteMany({ where: { summary: { contains: item.id } } });
+    }
   });
 });

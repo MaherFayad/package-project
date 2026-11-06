@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { toLocale } from "@/i18n";
 import { AppProvider } from "@/components/ui";
 import { AdminFrame } from "@/components/admin/AdminFrame";
-import { countPayoutsToAct } from "@/components/admin/server/queries";
+import { countModeration, countPayoutsToAct } from "@/components/admin/server/queries";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -18,16 +18,17 @@ export default async function AdminLayout({ children, params }: { children: Reac
   const locale = toLocale((await params).locale);
   const user = await requireRole("ADMIN", locale, `/${locale}/admin`);
   // Orders badge = jobs ops must act on: QC review plus paid orders still waiting for a vendor.
-  const [qc, applications, disputes, dataRequests, payouts] = await Promise.all([
+  const [qc, applications, disputes, dataRequests, payouts, moderation] = await Promise.all([
     db.order.count({ where: { status: { in: ["QC_PENDING", "PAID"] } } }),
     db.vendorApplication.count({ where: { status: { in: ["SUBMITTED", "UNDER_REVIEW"] } } }),
     db.dispute.count({ where: { status: { in: ["OPEN", "UNDER_REVIEW"] } } }),
     db.dataRequest.count({ where: { status: { in: ["OPEN", "IN_PROGRESS"] } } }),
     countPayoutsToAct(),
+    countModeration(),
   ]);
   return (
     <AppProvider locale={locale}>
-      <AdminFrame locale={locale} userName={user.name ?? user.phone} counts={{ qc, applications, disputes, dataRequests, payouts }}>
+      <AdminFrame locale={locale} userName={user.name ?? user.phone} counts={{ qc, applications, disputes, dataRequests, payouts, moderation }}>
         {children}
       </AdminFrame>
     </AppProvider>

@@ -27,6 +27,7 @@ import { MODELS } from "@/lib/library";
 import { baseOf, vesselPrintMaterials } from "@/lib/library/doc";
 import type { AdminOrderRow } from "../lib/orders";
 import { adminPayoutStatus, needsAction } from "../lib/payouts";
+import { contactFlags } from "../lib/moderation";
 import { payoutSchedule, type ScheduleRow } from "@/components/vendor/lib/payouts";
 
 /** Orders whose vendor has earned at least the advance (accepted or later). */
@@ -53,7 +54,7 @@ const metricSelect = {
 
 export async function loadOverview(range: RangeKey, now = new Date()) {
   const { from, to, prevFrom } = rangeWindow(range, now);
-  const [orders, disputes, designs, accounts, quoteUsers, orderUsers, qcPending, applications, dataRequests, payouts, buyerOrders, vendorEvents] = await Promise.all([
+  const [orders, disputes, designs, accounts, quoteUsers, orderUsers, qcPending, applications, dataRequests, payouts, buyerOrders, vendorEvents, moderation] = await Promise.all([
     db.order.findMany({ where: { OR: [{ placedAt: { gte: prevFrom } }, { deliveredAt: { gte: prevFrom } }] }, select: metricSelect }),
     db.dispute.findMany({ select: { createdAt: true, status: true } }),
     db.design.count({ where: { createdAt: { gte: from, lt: to } } }),
@@ -68,6 +69,7 @@ export async function loadOverview(range: RangeKey, now = new Date()) {
     // Kept orders (not reprints) for the 90-day repeat rate; all time, the cohort rule picks who counts.
     db.order.findMany({ where: { status: { notIn: ["PENDING_PAYMENT", "CANCELLED", "REFUNDED"] }, NOT: { notes: { startsWith: "REPRINT_OF:" } } }, select: { buyerId: true, placedAt: true } }),
     db.productionEvent.findMany({ where: { type: { in: ["VENDOR_ACCEPTED", "VENDOR_DECLINED"] }, createdAt: { gte: from, lt: to } }, select: { type: true } }),
+    countModeration(),
   ]);
   const priceViewed = new Set([...quoteUsers.map((q) => q.userId), ...orderUsers.map((o) => o.buyerId)]).size;
   const rows = orders as MetricOrder[];
@@ -106,7 +108,7 @@ export async function loadOverview(range: RangeKey, now = new Date()) {
     marginSeries,
     repeat: repeatRate90(buyerOrders, now),
     acceptance: acceptanceRate(vendorEvents),
-    tasks: { qcPending, applications, openDisputes: ops.openDisputes, dataRequests, payouts },
+    tasks: { qcPending, applications, openDisputes: ops.openDisputes, dataRequests, payouts, moderation },
   };
 }
 
@@ -544,4 +546,68 @@ export async function countPayoutsToAct(): Promise<number> {
     for (const r of payoutSchedule([o], o.payouts)) if (needsAction(r.status, r.kind, o.status, held)) n++;
   }
   return n;
+}
+
+/* ───────────────────────── Moderation (B-08) ───────────────────────── */
+
+export interface ModerationPhoto {
+  id: string;
+  vendorId: string;
+  vendorSlug: string;
+  vendorName: string;
+  imageUrl: string;
+  captionAr: string;
+  captionEn: string;
+  status: string;
+  reviewNote: string | null;
+  createdAt: string;
+  flags: string[];
+}
+
+export interface ModerationBio {
+  vendorId: string;
+  vendorSlug: string;
+  vendorName: string;
+  bioAr: string;
+  bioEn: string;
+  flags: string[];
+}
+
+export async function loadModeration(locale: Locale): Promise<{ photos: ModerationPhoto[]; bios: ModerationBio[] }> {
+  const [items, vendors] = await Promise.all([
+    db.vendorPortfolioItem.findMany({
+      where: { OR: [{ status: "PENDING" }, { status: "REJECTED" }, { createdAt: { gte: new Date(Date.now() - 30 * 86_400_000) } }] },
+      orderBy: { createdAt: "asc" },
+      take: 500,
+      include: { vendor: { select: { slug: true, nameAr: true, nameEn: true } } },
+    }),
+    db.vendor.findMany({ select: { id: true, slug: true, nameAr: true, nameEn: true, bioAr: true, bioEn: true } }),
+  ]);
+  return {
+    photos: items.map((i) => ({
+      id: i.id,
+      vendorId: i.vendorId,
+      vendorSlug: i.vendor.slug,
+      vendorName: pick(locale, i.vendor.nameAr, i.vendor.nameEn),
+      imageUrl: i.imageUrl,
+      captionAr: i.captionAr,
+      captionEn: i.captionEn,
+      status: i.status,
+      reviewNote: i.reviewNote,
+      createdAt: i.createdAt.toISOString(),
+      flags: contactFlags(i.captionAr, i.captionEn),
+    })),
+    bios: vendors
+      .map((v) => ({ vendorId: v.id, vendorSlug: v.slug, vendorName: pick(locale, v.nameAr, v.nameEn), bioAr: v.bioAr, bioEn: v.bioEn, flags: contactFlags(v.bioAr, v.bioEn) }))
+      .filter((v) => v.flags.length > 0),
+  };
+}
+
+/** Pending photos plus bios with contact details (nav badge, overview to-do). */
+export async function countModeration(): Promise<number> {
+  const [pending, vendors] = await Promise.all([
+    db.vendorPortfolioItem.count({ where: { status: "PENDING" } }),
+    db.vendor.findMany({ select: { bioAr: true, bioEn: true } }),
+  ]);
+  return pending + vendors.filter((v) => contactFlags(v.bioAr, v.bioEn).length > 0).length;
 }

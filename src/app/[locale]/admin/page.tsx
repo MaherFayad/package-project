@@ -58,6 +58,7 @@ export default async function AdminOverviewPage({ params, searchParams }: { para
     { n: o.tasks.qcPending, text: t("admin.overview.tasks.qc"), url: `${base}/orders?view=qc` },
     { n: o.tasks.applications, text: t("admin.overview.tasks.applications"), url: `${base}/vendors?tab=applications` },
     { n: o.tasks.openDisputes, text: t("admin.overview.tasks.disputes"), url: `${base}/disputes` },
+    { n: o.tasks.moderation, text: t("admin.overview.tasks.moderation"), url: `${base}/moderation` },
     { n: o.tasks.payouts, text: t("admin.overview.tasks.payouts"), url: `${base}/payouts` },
     { n: o.tasks.dataRequests, text: t("admin.overview.tasks.dataRequests"), url: `${base}/privacy` },
   ].filter((x) => x.n > 0);

@@ -219,3 +219,8 @@
   .PhoneOnly { display: block; }
   .DesktopOnly { display: none; }
 }
+
+/* Moderation queue: photo cards in a responsive grid (B-08). */
+.ModGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: var(--p-space-400); }
+.ModImage { display: block; inline-size: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: var(--p-color-bg-surface-secondary); border-start-start-radius: inherit; border-start-end-radius: inherit; }
+.ModBody { padding: var(--p-space-400); }

@@ -36,3 +36,23 @@ describe("bidi isolate (CR-12)", () => {
     expect(isolate("Nile Pack.")).toBe("⁨Nile Pack.⁩");
   });
 });
+
+describe("profile moderation (B-08)", async () => {
+  const { canApprovePortfolio, contactFlags, reviewNoteRequired, portfolioReviewSchema } = await import("../moderation");
+  it("flags contact details in either language, Arabic-Indic digits included", () => {
+    expect(contactFlags("نطبع علب الشحن", "We print shipping boxes.")).toEqual([]);
+    expect(contactFlags("كلمنا واتساب ٠١٠٠١٢٣٤٥٦٧", "")).toEqual(["MESSENGER", "PHONE"]);
+    expect(contactFlags("", "Visit www.nilepack-direct.com")).toContain("URL");
+  });
+  it("cannot approve a caption with contact details or a photo already reviewed", () => {
+    expect(canApprovePortfolio({ status: "PENDING", captionAr: "علبة", captionEn: "Mailer" })).toBe(true);
+    expect(canApprovePortfolio({ status: "PENDING", captionAr: "علبة", captionEn: "Call 01001234567" })).toBe(false);
+    expect(canApprovePortfolio({ status: "APPROVED", captionAr: "علبة", captionEn: "Mailer" })).toBe(false);
+  });
+  it("needs a note to reject", () => {
+    expect(reviewNoteRequired("REJECT", " ")).toBe(true);
+    expect(reviewNoteRequired("REJECT", "Phone on the box")).toBe(false);
+    expect(reviewNoteRequired("APPROVE", undefined)).toBe(false);
+    expect(portfolioReviewSchema.safeParse({ itemId: "x", decision: "MAYBE" }).success).toBe(false);
+  });
+});
