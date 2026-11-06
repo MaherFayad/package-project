@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Suspense } from "react";
 import { Globe } from "lucide-react";
 import { getT } from "@/i18n";
 import type { Locale } from "@/types";
@@ -85,9 +84,7 @@ export function MarketingFooter({ locale }: { locale: Locale }) {
             <Globe size={16} aria-hidden />
             {t("marketing.footer.region")}
           </span>
-          <Suspense fallback={null}>
-            <LangLink showIcon={false} />
-          </Suspense>
+          <LangLink showIcon={false} />
           <ul className={styles.footerLegal}>
             <li>
               <Link href={`${base}/legal/terms`}>{t("store.footer.terms")}</Link>

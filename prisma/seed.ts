@@ -622,13 +622,15 @@ async function main() {
 
   const qty = 500;
   const unit = egp(19 * 1.0 * 1.3); // sell price incl. margin, ex-VAT
-  const subtotal = unit * qty + egp(600);
-  const vat = Math.round(subtotal * 0.14);
+  // Lines must reconcile (CR-59, ETA e-invoice): goods = the line total; VAT 14% on goods + delivery,
+  // as placeOrder() stores it (subtotal includes shipping, total = subtotal + VAT).
   const shipping = egp(150);
+  const subtotal = unit * qty + shipping;
+  const vat = Math.round(subtotal * 0.14);
   const order = await db.order.create({
     data: {
       number: "ELB-26001", buyerId: buyer.id, vendorId: vendorIds[0], status: "IN_PRODUCTION",
-      subtotalPiasters: subtotal, vatPiasters: vat, shippingPiasters: shipping, totalPiasters: subtotal + vat + shipping,
+      subtotalPiasters: subtotal, vatPiasters: vat, shippingPiasters: shipping, totalPiasters: subtotal + vat,
       vendorCostPiasters: egp(19) * qty + egp(600),
       shippingAddress: { name: "منى عادل", phone: "+201000000002", governorate: "Cairo", city: "Nasr City", street: "14 Abbas El Akkad St", building: "14", floor: "3", apartment: "7" },
       paidAt: now, dueDate: new Date(now.getTime() + 6 * 86_400_000),
@@ -647,7 +649,7 @@ async function main() {
           { type: "PRODUCTION_STARTED" },
         ],
       },
-      payments: { create: [{ provider: "mock", method: "CARD", status: "PAID", amountPiasters: subtotal + vat + shipping, providerRef: "mock_txn_0001" }] },
+      payments: { create: [{ provider: "mock", method: "CARD", status: "PAID", amountPiasters: subtotal + vat, providerRef: "mock_txn_0001" }] },
       invoices: { create: [{ number: "INV-26001", subtotalPiasters: subtotal, vatPiasters: vat, totalPiasters: subtotal + vat }] },
     },
   });

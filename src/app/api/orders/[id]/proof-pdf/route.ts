@@ -14,12 +14,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   if (!rl.ok) return Response.json({ error: "RATE_LIMITED" }, { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } });
   const { id } = await params;
   if (!/^[\w-]{1,64}$/.test(id)) return Response.json({ error: "NOT_FOUND" }, { status: 404 });
-  const order = await db.order.findUnique({ where: { id }, select: { id: true, buyerId: true, vendorId: true, status: true } });
+  const order = await db.order.findUnique({ where: { id }, select: { id: true, buyerId: true, vendorId: true, paidAt: true } });
+  // Vendor staff only once the order was paid (canViewOrder); 404 so ids are not confirmed.
   if (!order || !canViewOrder(order, user)) return Response.json({ error: "NOT_FOUND" }, { status: 404 });
-  // Unpaid orders are never routed to a vendor; its staff must not see them (ASVS V4.2.1).
-  if (user.role === "VENDOR" && order.buyerId !== user.id && order.status === "PENDING_PAYMENT") {
-    return Response.json({ error: "NOT_FOUND" }, { status: 404 });
-  }
   const file = await proofPdfBytes(order.id, "PROOF - NOT FOR PRINT");
   if (!file) return Response.json({ error: "NOT_FOUND" }, { status: 404 });
   return new Response(new Uint8Array(file.bytes), {

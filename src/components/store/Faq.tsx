@@ -1,5 +1,5 @@
 import { ChevronDown } from "lucide-react";
-import { Icon } from "@/components/ui";
+import { Icon } from "@/components/ui/Icon";
 import styles from "./store.module.css";
 
 /** Accessible FAQ built on native <details>/<summary> (keyboard and screen reader support for free). */

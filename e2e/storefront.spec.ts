@@ -35,7 +35,10 @@ test("home → catalogue → structure → SEO size page with price table and JS
     if (!/330x200x120$/.test(page.url())) await page.getByRole("link", { name: /Shoe box/ }).first().click();
     await expect(page).toHaveURL(/\/en\/boxes\/mailer-box\/330x200x120$/, { timeout: 5_000 });
   }).toPass({ timeout: 30_000 });
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Custom printed mailer box 33×20×12 cm");
+  // CR-62: the visible H1 uses millimetres like the body (bidi isolates around the numbers);
+  // the <title> keeps the "33×20×12 cm" search form.
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/^Custom printed mailer box \u2066?330 × 200 × 120\u2069? mm$/);
+  await expect(page).toHaveTitle(/Custom printed mailer box 33×20×12 cm/);
   const ld = await page.locator('script[type="application/ld+json"]').first().textContent();
   expect(JSON.parse(ld!)[0]).toMatchObject({ "@type": "Product", offers: { priceCurrency: "EGP" } });
   const cta = page.getByRole("link", { name: "Design it free" }).first();

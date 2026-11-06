@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getSession } from "@/lib/auth/session";
 import { getT } from "@/i18n";
 import type { Locale } from "@/types";
-import { ElbaWordmark } from "@/components/ui";
+import { ElbaWordmark } from "@/components/ui/Frame";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { NavLinks } from "./NavLinks";
 import styles from "./SiteChrome.module.css";

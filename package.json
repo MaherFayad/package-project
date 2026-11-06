@@ -11,6 +11,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:size": "node scripts/check-bundle-size.mjs",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
     "db:reset": "prisma db push --force-reset && prisma db seed",

@@ -1,4 +1,4 @@
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth/session";
@@ -55,7 +55,6 @@ export async function POST(req: Request) {
   if (!parsed.success || !(file instanceof File)) return err("INVALID", 400);
   const { scope, orderId, kind } = parsed.data;
   if (file.size > UPLOAD_RULES[scope].maxBytes) return err("TOO_LARGE", 413);
-  if ((scope === "apply" || scope === "cert") && !rateLimit("vendor-upload:loose", user.id, DAILY_LOOSE_FILES, 86_400_000).ok) return err("RATE_LIMITED", 429);
 
   // ── Authorisation per scope
   let vendorId: string | null = null;
@@ -67,6 +66,9 @@ export async function POST(req: Request) {
   } else if (user.vendorId) {
     return err("FORBIDDEN", 403);
   }
+
+  // Counted only once the caller is allowed to upload, so refused attempts do not use up the quota.
+  if ((scope === "apply" || scope === "cert") && !rateLimit("vendor-upload:loose", user.id, DAILY_LOOSE_FILES, 86_400_000).ok) return err("RATE_LIMITED", 429);
 
   let order: { id: string } | null = null;
   if (scope === "qc") {
@@ -107,6 +109,7 @@ export async function POST(req: Request) {
         data: { vendorId: vendorId!, imageUrl: url, captionAr: vendor.nameAr, captionEn: vendor.nameEn, sortOrder: (last._max.sortOrder ?? -1) + 1, status: "PENDING" },
       });
       revalidatePath("/[locale]", "layout");
+      revalidateTag("catalog"); // CATALOG_TAG: the cached vendor profile (src/components/store/data.ts)
       return Response.json({ ok: true, key: saved.key, url, item: { id: item.id, imageUrl: url, captionAr: item.captionAr, captionEn: item.captionEn, structureCode: null, status: item.status, reviewNote: null } });
     }
     return Response.json({ ok: true, key: saved.key, url, name, size: saved.size, type: saved.type });

@@ -32,3 +32,34 @@ export function statusTone(status: OrderStatus | string): { tone: StatusTone; pr
 
 /** Disputes and other problems override the status colour. */
 export const PROBLEM_TONE = { tone: "critical", progress: "incomplete" } as const;
+
+/** Tone + progress pair (same shape as `statusTone()` returns). */
+export interface ToneSpec {
+  tone: StatusTone;
+  progress: StatusProgress;
+}
+
+/**
+ * Payment badge (checkout, extended in round 3): paid = neutral, complete (done, nothing to act
+ * on); pending = attention, incomplete; failed = critical; refunded = critical, complete.
+ * Buyer screens show this "Paid" badge next to the fulfilment status, whose PAID value reads
+ * "Awaiting printer" (attention) for buyers, so "Paid" itself is never yellow (CR-08).
+ */
+export function paymentTone(status: string): ToneSpec {
+  switch (status) {
+    case "PAID":
+      return { tone: "neutral", progress: "complete" };
+    case "FAILED":
+      return { tone: "critical", progress: "incomplete" };
+    case "REFUNDED":
+      return { tone: "critical", progress: "complete" };
+    case "EXPIRED":
+    case "CANCELLED":
+      return { tone: "neutral", progress: "incomplete" };
+    default:
+      return { tone: "attention", progress: "incomplete" };
+  }
+}
+
+/** Alias kept for checkout code: an open dispute on an order. */
+export const DISPUTED_TONE: ToneSpec = PROBLEM_TONE;
