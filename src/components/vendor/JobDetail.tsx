@@ -62,7 +62,8 @@ export function JobDetail({ job, vendorName }: { job: JobDetailDTO; vendorName: 
   const base = `/${locale}/vendor`;
   const pdfUnlocked = ["ACCEPTED", "IN_PRODUCTION", "QC_PENDING", "READY_TO_SHIP", "SHIPPED", "DELIVERED"].includes(job.status);
   const pdfUrl = `/api/vendor/jobs/${job.id}/print-pdf${item ? `?item=${item.id}` : ""}`;
-  const dielineUrl = `/api/vendor/jobs/${job.id}/dieline${item ? `?item=${item.id}` : ""}`;
+  // Added by 3D engine (CR-27): localized panel labels
+  const dielineUrl = `/api/vendor/jobs/${job.id}/dieline?lang=${locale}${item ? `&item=${item.id}` : ""}`;
   const structureName = t(`structures.${job.structureCode}` as DictKey);
   // The exact model the buyer designed on; the rate card structure is only how it is priced.
   const model = item?.model && item.model.code !== item.structureCode ? item.model : null;
@@ -264,7 +265,7 @@ export function JobDetail({ job, vendorName }: { job: JobDetailDTO; vendorName: 
                   </dl>
                 ) : null}
                 {/* eslint-disable-next-line @next/next/no-img-element -- generated SVG from our API, sized by CSS */}
-                <img className={styles.Dieline} src={`${dielineUrl}${item ? "&" : "?"}inline=1`} alt={t("vendorPortal.job.dielinePreview", { name: productName })} loading="lazy" />
+                <img className={styles.Dieline} src={`${dielineUrl}&inline=1`} alt={t("vendorPortal.job.dielinePreview", { name: productName })} loading="lazy" />
               </BlockStack>
             </Card>
 

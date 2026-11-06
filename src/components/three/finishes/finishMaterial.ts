@@ -28,6 +28,10 @@ export interface FinishUniforms {
   elbaFoilRough: { value: number };
   elbaUvRough: { value: number };
   elbaInkTone: { value: number };
+  /** 1 = transparent process ink printed straight on a coloured liner (kraft, no white underprint). */
+  elbaInkOnBoard: { value: number };
+  /** Liner colour (linear): what the artwork canvas uses for unprinted areas, and what the ink multiplies with. */
+  elbaBoardColor: { value: Color };
   /** Reflection strength inside foil, independent of the coating's envIntensity (soft-touch dims the print, not the foil). */
   elbaFoilEnv: { value: number };
 }
@@ -42,6 +46,8 @@ uniform float elbaMaskFade;
 uniform float elbaFoilRough;
 uniform float elbaUvRough;
 uniform float elbaInkTone;
+uniform float elbaInkOnBoard;
+uniform vec3 elbaBoardColor;
 uniform float elbaFoilEnv;
 `;
 
@@ -67,6 +73,10 @@ export function patchFinishShader(mat: MeshPhysicalMaterial, uniforms: FinishUni
         "#include <metalnessmap_fragment>",
         /* glsl */ `#include <metalnessmap_fragment>
   float elbaGrain = texture2D( elbaDetailMap, elbaUv * elbaDetailRepeat ).r;
+  // ink on kraft: only printed pixels multiply with the liner (unprinted pixels already ARE the
+  // liner colour in the artwork canvas, so multiplying everything would darken the board twice)
+  float elbaInk = elbaInkOnBoard * smoothstep( 0.02, 0.1, distance( diffuseColor.rgb, elbaBoardColor ) );
+  diffuseColor.rgb *= mix( vec3( 1.0 ), mix( vec3( 1.0 ), elbaBoardColor / max( max( elbaBoardColor.r, elbaBoardColor.g ), max( elbaBoardColor.b, 0.001 ) ), 0.85 ), elbaInk );
   diffuseColor.rgb *= elbaInkTone * mix( 1.0, 0.78 + 0.44 * elbaGrain, elbaDetail );
   diffuseColor.rgb = mix( diffuseColor.rgb, elbaFoil.rgb, elbaFoilA );
   metalnessFactor = mix( metalnessFactor, 1.0, elbaFoilA );`,
@@ -95,7 +105,7 @@ export function patchFinishShader(mat: MeshPhysicalMaterial, uniforms: FinishUni
   #endif`,
       );
   };
-  mat.customProgramCacheKey = () => "elba-finish-v3";
+  mat.customProgramCacheKey = () => "elba-finish-v4";
 }
 
 export interface FinishMapTextures {
@@ -135,6 +145,8 @@ export interface FinishedBoardMaterials extends BoardMaterialSet {
   setMasks(side: "outside" | "inside", maps: FinishMapTextures): void;
   /** Apply a (possibly mid-tween) look state to a side. */
   apply(side: "outside" | "inside", s: FinishedSurfaceState): void;
+  /** Artwork printed straight on a coloured liner: tint printed pixels by the liner (boardHex = canvas background). */
+  setInkOnBoard(side: "outside" | "inside", on: boolean, boardHex: string): void;
   /** Re-skin for another board without recreating materials (colours, tile, edge). */
   setBoard(app: BoardAppearance, fluteLayers: 0 | 1 | 2, detail: number): void;
 }
@@ -155,6 +167,15 @@ export function createFinishedBoardMaterials(sheet: { width: number; height: num
   let tile = own(boardTileTexture(app.fluteColor ? 12 : 4, sheet));
   let insideTile = own(boardTileTexture(app.fluteColor ? 12 : 4, sheet, 7654321));
   const detailRepeat = new Vector2(sheet.width / 60, sheet.height / 60);
+  // Fibre relief: the same grain tile as a low-strength bump map, so light rakes across the paper
+  // (strongest on kraft, almost nothing under film laminates). Replaced by an emboss mask if any.
+  const fibre = grain ? own(grain.clone()) : null;
+  if (fibre) {
+    fibre.repeat.copy(detailRepeat);
+    fibre.needsUpdate = true;
+  }
+  const fibreScale = { outside: detail * 1.8, inside: detail * 2.2 };
+  const relief: Record<"outside" | "inside", Texture | null> = { outside: null, inside: null };
 
   const makeUniforms = (): FinishUniforms => ({
     elbaFinishMap: { value: black },
@@ -166,6 +187,8 @@ export function createFinishedBoardMaterials(sheet: { width: number; height: num
     elbaFoilRough: { value: FOIL_LOOKS.FOIL_GOLD.roughness },
     elbaUvRough: { value: SPOT_UV_LOOK.clearcoatRoughness },
     elbaInkTone: { value: 1 },
+    elbaInkOnBoard: { value: 0 },
+    elbaBoardColor: { value: new Color("#ffffff") },
     // the studio sweep is mid-grey (~0.25 linear); a light tent around real foil is near white, so foil
     // reflections get ~2.6× to read as polished metal next to diffuse paper
     elbaFoilEnv: { value: 2.6 },
@@ -230,13 +253,20 @@ export function createFinishedBoardMaterials(sheet: { width: number; height: num
         m.needsUpdate = true;
       }
     },
+    setInkOnBoard(side, on, boardHex) {
+      const u = side === "outside" ? uOut : uIn;
+      u.elbaInkOnBoard.value = on ? 1 : 0;
+      u.elbaBoardColor.value.set(boardHex);
+    },
     setMasks(side, maps) {
       const m = side === "outside" ? outside : inside;
       const u = side === "outside" ? uOut : uIn;
       u.elbaFinishMap.value = maps.finish ?? black;
       u.elbaFoilMap.value = maps.foil ?? clear;
-      if (m.bumpMap !== maps.relief) {
-        m.bumpMap = maps.relief;
+      relief[side] = maps.relief;
+      const next = maps.relief ?? fibre;
+      if (m.bumpMap !== next) {
+        m.bumpMap = next;
         m.needsUpdate = true;
       }
     },
@@ -250,13 +280,17 @@ export function createFinishedBoardMaterials(sheet: { width: number; height: num
       m.sheenRoughness = s.look.sheenRoughness;
       m.envMapIntensity = s.look.envIntensity;
       m.color.copy(s.color);
-      m.bumpScale = s.bumpScale * RELIEF_BUMP_SCALE;
+      m.bumpScale = relief[side] ? s.bumpScale * RELIEF_BUMP_SCALE : fibreScale[side];
       u.elbaInkTone.value = s.look.inkTone;
       u.elbaMaskFade.value = s.maskFade;
     },
     setBoard(a, layers, d) {
       setEdge(a, layers);
       uOut.elbaDetail.value = d;
+      fibreScale.outside = d * 1.8;
+      fibreScale.inside = d * 2.2;
+      if (!relief.outside) outside.bumpScale = fibreScale.outside;
+      if (!relief.inside) inside.bumpScale = fibreScale.inside;
       uIn.elbaDetail.value = d * 1.2;
       // tiles are neutral; only the strength changes between corrugated and solid board
       const strength = a.fluteColor ? 12 : 4;
