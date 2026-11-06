@@ -55,6 +55,21 @@ async function phoneFrame(png) {
   return frame(phone, { radius: r, margin: Math.round(40 * k), shadow: 0.3 });
 }
 
+/** Give the box a brand colour and a text layer the way a buyer does (Artwork tab), then back to the 3D view. */
+async function decorate(page, locale) {
+  const en = locale === "en";
+  const t = { timeout: 4000 };
+  await page.getByRole("tab", { name: en ? "Artwork" : "التصميم" }).first().click(t).catch(() => {});
+  await page.waitForTimeout(600);
+  await page.getByRole("button", { name: /#1f3d2b|Forest green|أخضر غامق/i }).first().click(t).catch(() => {});
+  await page.getByRole("button", { name: en ? "Add text" : "إضافة نص" }).first().click(t).catch(() => {});
+  await page.waitForTimeout(600);
+  await page.getByText(en ? "3D" : "ثلاثي الأبعاد", { exact: true }).first().click(t).catch(() => {});
+  await page.keyboard.press("Escape").catch(() => {});
+  await page.mouse.move(0, 0);
+  await page.waitForTimeout(5000);
+}
+
 /** Mark the element (or its closest Card) and screenshot it. */
 async function grab(page, finder, pad = 0) {
   const ok = await page.evaluate(finder);
@@ -107,8 +122,7 @@ export async function renderUi({ base, browser, out, emit, only = null }) {
     await page.goto(`${base}/${locale}/design/mailer-box`, { waitUntil: "networkidle", timeout: 180000 });
     await page.waitForSelector("[data-testid=stage-3d] canvas", { timeout: 120000 }).catch(() => {});
     await page.waitForSelector("[data-testid=price-badge][data-state=ready]", { timeout: 60000 }).catch(() => {});
-    await page.mouse.move(0, 0);
-    await page.waitForTimeout(5000);
+    await decorate(page, locale);
     const designer = await page.screenshot({ animations: "disabled" });
     await save(`designer-${locale}`, await frame(designer, { radius: 40, margin: 80 }), 760, 490);
     const badge = await grab(page, `(() => { const b = document.querySelector("[data-testid=price-badge]"); if (b) b.setAttribute("data-r6-grab", ""); return !!b; })()`, 10);
@@ -142,7 +156,7 @@ export async function renderUi({ base, browser, out, emit, only = null }) {
     const pp = await pctx.newPage();
     await pp.goto(`${base}/${locale}/design/mailer-box`, { waitUntil: "networkidle", timeout: 180000 });
     await pp.waitForSelector("[data-testid=stage-3d] canvas", { timeout: 120000 }).catch(() => {});
-    await pp.waitForTimeout(6000);
+    await decorate(pp, locale);
     const phone = await phoneFrame(await pp.screenshot({ animations: "disabled" }));
     const [pw, ph] = await size(phone, 3);
     await save(`phone-designer-${locale}`, phone, pw, ph);
@@ -179,7 +193,7 @@ export async function renderUi({ base, browser, out, emit, only = null }) {
     const ap = await actx.newPage();
     await ap.goto(`${base}/${locale}/admin`, { waitUntil: "networkidle", timeout: 180000 });
     await ap.waitForTimeout(2000);
-    const kpi = await grab(ap, `(() => { const m = [...document.querySelectorAll('section[class*="Metrics"] *')].find((el) => [...el.classList].some((c) => /(^|_)Metric(_|$)/.test(c))); if (m) m.setAttribute("data-r6-grab", ""); return !!m; })()`, 0);
+    const kpi = await grab(ap, `(() => { const m = [...document.querySelectorAll('section[class*="Metrics"] *')].find((el) => [...el.classList].some((c) => /(^|_)Metric(_|$)/.test(c))); if (m) { m.setAttribute("data-r6-grab", ""); Object.assign(m.style, { border: "0", boxShadow: "none", borderRadius: "0", background: "#fff" }); } return !!m; })()`, 0);
     if (kpi) {
       const [w, h] = await size(kpi, DPR);
       const bg = await sharp(kpi).flatten({ background: "#ffffff" }).extend({ top: 24 * DPR, bottom: 24 * DPR, left: 28 * DPR, right: 28 * DPR, background: "#ffffff" }).png().toBuffer();
