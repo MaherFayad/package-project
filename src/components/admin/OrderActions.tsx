@@ -5,6 +5,7 @@ import { Avatar, BlockStack, Button, ButtonGroup, Card, InlineStack, Modal, Sele
 import { useI18n } from "@/i18n/client";
 import { formatMoney } from "@/lib/format";
 import { addOrderNoteAction, overrideOrderAction, reassignOrderAction, refundOrderAction, reviewQcAction, shipOrderAction } from "./server/actions";
+import { adminStyles } from "./charts";
 import { applyGoodsOverride } from "./lib/orders";
 import { egpToPiastersInput, fieldError, piastersToInput, useAdminAction, useAdminErrorText } from "./useAdminAction";
 import type { AdminActionResponse } from "./server/context";
@@ -57,7 +58,7 @@ export function RoutingCard({
 
   return (
     // id: target of the "Change vendor" link in the awaiting-vendor banner at the top of the page.
-    <div id="order-vendor">
+    <div id="order-vendor" className={adminStyles.AnchorTarget}>
       <Card title={t("admin.order.vendorCard.title")}>
         <BlockStack gap="300">
           {vendor}

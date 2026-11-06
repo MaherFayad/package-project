@@ -38,4 +38,15 @@ Severity: critical = broken flow / data / security; high = clearly wrong, ugly o
 | A-27 | low | overview | Dead code: `label()` helper ignored its argument with `void help`. | maintainability | Replaced by the tooltip label. | fixed |
 | A-28 | low | admin detail pages | Unknown order/vendor/dispute ids render the in-frame "not found" card with HTTP 200 instead of 404. | HTTP semantics | Left: pages are auth-gated and `noindex`, so nothing user-visible changes; a real 404 needs `not-found.tsx` boundaries per route. | open |
 
+## Pass 2
+
+Re-ran every route (plus empty search, pending vendor, catalogue tabs) in both locales and both viewports on a production build: no axe violations, no console errors, no horizontal scroll. Drove the flows: change vendor → reassign (toast, card refresh, DB updated, then restored), price override open/cancel, order refund modal, dispute refund confirmation, keyboard tab order on the overview.
+
+| id | sev | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| A-29 | medium | order detail / `OrderActions.tsx` | The banner's "Change vendor" in-page link scrolled the vendor card under the sticky 56px top bar. | WCAG 2.4.11 | `scroll-margin-block-start` on the anchor target. | fixed |
+| A-30 | medium | vendor detail (pending vendor) | "Open public profile" linked to a store page that is not public until the vendor is active. | correctness | Link only for ACTIVE vendors; otherwise "Not shown in the store until the vendor is active." | fixed |
+| A-31 | low | admin copy (EN/AR) | Count strings without plural handling ("1 results", "1 active rate cards", "متبق 1 بند مطلوب", "{count} جلسة نشطة"). The i18n layer has no plural rules. | MSA copy | Label-colon form in both languages ("Results: 5", "النتائج: 5", "البنود المطلوبة المتبقية: 7"). | fixed |
+| A-32 | low | order detail | First reassign on a cold server took ~5 s before the vendor card refreshed, behind a slow prefetch of the new vendor's page; warm runs refresh in ~80 ms. | performance | Not reproducible warm; not changed. | open (observed once) |
+
 Checked and fine: role gate (buyer sent away from `/admin`, e2e), server actions re-check ADMIN, phones masked in the users index (PDPL), consent log with text version on user detail (PDPL Law 151/2020), VAT 14% line and totals, 72h quote validity default, money right-aligned with tabular figures, RTL frame mirroring, keyboard tabs (arrow keys follow reading direction), contextual save bar on pricing, no horizontal page scroll at 390px on any admin page, no console errors.

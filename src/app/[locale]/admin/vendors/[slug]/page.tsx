@@ -121,9 +121,15 @@ export default async function AdminVendorPage({ params }: { params: Params }) {
             <BlockStack gap="400">
               <Card title={t("admin.vendors.detail.publicProfile")}>
                 <BlockStack gap="200">
-                  <Link url={`/${locale}/vendors/${vendor.slug}`} external>
-                    {t("admin.vendors.detail.openProfile")}
-                  </Link>
+                  {vendor.status === "ACTIVE" ? (
+                    <Link url={`/${locale}/vendors/${vendor.slug}`} external>
+                      {t("admin.vendors.detail.openProfile")}
+                    </Link>
+                  ) : (
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      {t("admin.vendors.detail.profileHidden")}
+                    </Text>
+                  )}
                   {application ? <Link url={`${base}/vendors/applications/${application.id}`}>{t("admin.vendors.detail.application")}</Link> : null}
                 </BlockStack>
               </Card>

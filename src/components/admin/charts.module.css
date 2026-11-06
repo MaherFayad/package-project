@@ -208,3 +208,7 @@
 .ZoneTable tbody tr + tr > * {
   border-block-start: 1px solid var(--p-color-border-secondary);
 }
+/* In-page link targets clear the sticky 56px top bar (WCAG 2.4.11 focus not obscured). */
+.AnchorTarget {
+  scroll-margin-block-start: calc(56px + var(--p-space-400));
+}
