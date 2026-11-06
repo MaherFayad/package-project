@@ -23,6 +23,9 @@ import { STRUCTURE_LIMITS } from "@/lib/dieline";
 import type { Dims, OrderStatus, ShippingAddress, StructureCode, StructureParamLimits, VendorCapabilities } from "@/types";
 import { AdminActionError, AdminFieldErrors, adminForMutation, audit, issuesToFields, runAdminAction, type AdminActionResponse } from "./context";
 import { loadPricingConfig, loadPricingSettings } from "./settings";
+import { seedStarterRateCards } from "./starter-rate-cards";
+import { notify } from "@/lib/notify";
+import { getT, type DictKey } from "@/i18n";
 import {
   applyGoodsOverride,
   canOverrideCost,
@@ -97,6 +100,16 @@ function parse<S extends z.ZodTypeAny>(schema: S, input: unknown): z.output<S> {
 
 /* ───────────────────────── Orders ───────────────────────── */
 
+/** WhatsApp "new job" to every staff member of a vendor (after a reassignment or a reprint). Never throws. */
+async function notifyVendorNewJob(vendorId: string, number: string): Promise<void> {
+  try {
+    const staff = await db.user.findMany({ where: { vendorId, role: "VENDOR" }, select: { phone: true, locale: true } });
+    for (const s of staff) await notify({ to: { phone: s.phone }, locale: s.locale === "en" ? "en" : "ar", template: "VENDOR_NEW_JOB", params: { number } });
+  } catch (e) {
+    console.error("[admin] vendor notification failed", e);
+  }
+}
+
 export async function reassignOrderAction(input: z.input<typeof reassignSchema>): Promise<AdminActionResponse> {
   return runAdminAction(async () => {
     const admin = await adminForMutation();
@@ -143,6 +156,8 @@ export async function reassignOrderAction(input: z.input<typeof reassignSchema>)
         tx,
       );
     });
+    // R5-JR-05: the new vendor has 24 hours to answer, so tell its staff now (payment does the same).
+    await notifyVendorNewJob(vendor.id, order.number);
     revalidateAdmin();
     return null;
   });
@@ -679,6 +694,10 @@ export async function decideDisputeAction(input: z.input<typeof disputeDecisionS
             create: original.items.map((i) => ({
               proofId: i.proofId,
               structureCode: i.structureCode,
+              // R5-JR-02: keep the model and the configured finishes (gold vs silver foil, masks),
+              // or the reprint is made as the base box with a generic "Hot foil".
+              modelCode: i.modelCode,
+              config: i.config ?? undefined,
               dims: i.dims ?? toJson<Dims | null>(null),
               materialCode: i.materialCode,
               finishCode: i.finishCode,
@@ -711,6 +730,7 @@ export async function decideDisputeAction(input: z.input<typeof disputeDecisionS
         before: { originalVendorCostPiasters: original.vendorCostPiasters },
         after: { vendorId, chargeBack: d.chargeBack ?? defaultChargeBack(dispute.reason), ...plan },
       });
+      await notifyVendorNewJob(vendorId, created.number);
     }
 
     const u = await db.dispute.updateMany({
@@ -726,6 +746,18 @@ export async function decideDisputeAction(input: z.input<typeof disputeDecisionS
       before: { status: dispute.status },
       after: { status, ...(reprint ? { reprint, ...reprintPlan } : {}) },
     });
+    // R5-JR-16: tell the buyer the outcome (the order page shows it, with the reprint to track).
+    if (d.decision !== "REVIEW") {
+      try {
+        const buyer = await db.user.findUnique({ where: { id: dispute.order.buyerId }, select: { phone: true, locale: true } });
+        if (buyer) {
+          const loc = buyer.locale === "en" ? "en" : "ar";
+          await notify({ to: { phone: buyer.phone }, locale: loc, template: "STATUS_CHANGED", params: { number: dispute.order.number, status: getT(loc)(`orders.dispute.status.${status}` as DictKey) } });
+        }
+      } catch (e) {
+        console.error("[admin] dispute notification failed", e);
+      }
+    }
     revalidateAdmin();
     return { reprintNumber: reprint };
   });
@@ -775,6 +807,8 @@ export async function decideApplicationAction(input: z.input<typeof applicationD
       if (u.count !== 1) throw new AdminActionError("STALE");
       if (d.decision === "APPROVE") {
         await tx.vendor.update({ where: { id: app.vendorId }, data: { status: "ACTIVE", verified: true } });
+        // R5-JR-01: paused starter rate cards, so the new vendor can review prices and go live.
+        await seedStarterRateCards(tx, app.vendorId);
         const applicant = await tx.user.findUnique({ where: { id: app.applicantId }, select: { role: true } });
         if (applicant) {
           await tx.user.update({ where: { id: app.applicantId }, data: { vendorId: app.vendorId, ...(applicant.role === "ADMIN" ? {} : { role: "VENDOR" }) } });

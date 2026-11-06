@@ -1,5 +1,6 @@
 "use client";
 
+import { parseWholeInput } from "@/lib/money/input";
 import { ORDER_MODE_COPY } from "@/data/catalogue/order-mode";
 import { BadgeCheck, Check, Clock, Star, Truck } from "lucide-react";
 import dynamic from "next/dynamic";
@@ -182,7 +183,8 @@ export function CheckoutClient(props: {
   };
 
   const applyCustom = () => {
-    const n = Number(customQty.trim().replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))).replace(/[,\s٬،]/g, ""));
+    // R5-JR-21: "5.000" used to be read as 5 boxes, and Persian digits were refused.
+    const n = parseWholeInput(customQty) ?? NaN;
     // R4-B-09 / R4-CR-07: one honest message per case; above 2,000 is a price request, not an error.
     if (!Number.isInteger(n) || n < 1) {
       setCustomErr(t("buyer.qty.invalid", { max: MAX_INSTANT_QTY }));
@@ -1153,11 +1155,18 @@ function OfferCard({ offer, checked, onSelect, locale, sample, prepayPct = 0 }: 
           <Icon source={Clock} size="small" tone="subdued" />
           {t("checkout.offers.production", { days: offer.leadTimeDays })}
         </span>
-        <span aria-label={t("checkout.offers.rating", { rating: offer.vendor.rating.toFixed(1), count: offer.vendor.ratingCount })}>
-          <Icon source={Star} size="small" tone="subdued" />
-          <bdi>{t("checkout.offers.ratingShort", { rating: offer.vendor.rating.toFixed(1), count: offer.vendor.ratingCount })}</bdi>
-        </span>
-        <span>{t("checkout.offers.onTime", { pct: Math.round(offer.vendor.onTimePct) })}</span>
+        {/* R5-JR-05: a new vendor (no reviews) is "New", not "0.0 (0)" and "0% on time". */}
+        {offer.vendor.ratingCount > 0 ? (
+          <>
+            <span aria-label={t("checkout.offers.rating", { rating: offer.vendor.rating.toFixed(1), count: offer.vendor.ratingCount })}>
+              <Icon source={Star} size="small" tone="subdued" />
+              <bdi>{t("checkout.offers.ratingShort", { rating: offer.vendor.rating.toFixed(1), count: offer.vendor.ratingCount })}</bdi>
+            </span>
+            <span>{t("checkout.offers.onTime", { pct: Math.round(offer.vendor.onTimePct) })}</span>
+          </>
+        ) : (
+          <span>{t("store.vendor.newBadge")}</span>
+        )}
         {offer.vendor.verified ? (
           <span>
             <Icon source={BadgeCheck} size="small" tone="subdued" />

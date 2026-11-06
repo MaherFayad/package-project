@@ -230,7 +230,7 @@ export const adminAr: Widen<typeof adminEn> = {
       paidWith: "تم الدفع عبر {method}",
       payments: "المدفوعات",
     },
-    buyer: { title: "العميل", address: "عنوان التوصيل", orders: "كل طلبات هذا العميل" },
+    buyer: { title: "العميل", address: "عنوان التوصيل", orders: "كل طلبات هذا العميل", company: "الفاتورة باسم {name} · الرقم الضريبي {taxId}" },
     vendorCard: { title: "المطبعة", profile: "عرض المطبعة", due: "موعد التسليم {date}" },
     routing: {
       title: "التوجيه",
@@ -243,6 +243,8 @@ export const adminAr: Widen<typeof adminEn> = {
       newCostHelp: "اتركه فارغا للإبقاء على السعر الحالي.",
       submit: "إعادة التوجيه",
       change: "تغيير المطبعة",
+      declinedTitle: "رفضت {vendor} هذا الطلب",
+      declined: "انقل الطلب إلى مطبعة أخرى الآن حتى يبقى موعد التسليم للعميل كما هو.",
       awaitingTitle: "بانتظار قبول {vendor}",
       awaiting: "دفع العميل قيمة الطلب. إذا تعذر على المطبعة تنفيذه، انقله إلى مطبعة أخرى قبل بدء الإنتاج.",
       locked: "بدأ الإنتاج، لذلك لا يمكن تغيير المطبعة.",

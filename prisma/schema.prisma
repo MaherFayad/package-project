@@ -375,6 +375,9 @@ model Order {
   vendorCostPiasters Int @default(0) // platform buy price from vendor (managed model)
   currency    String   @default("EGP")
   shippingAddress Json // ShippingAddress
+  // R5-JR-03: invoice details as chosen for THIS order: { company: { name, taxId, commercialRegister } | null }.
+  // Null on orders placed before the snapshot (their invoice falls back to the buyer's Organization).
+  billing     Json?
   notes       String?
   placedAt    DateTime @default(now())
   paidAt      DateTime?

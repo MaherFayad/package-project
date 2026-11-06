@@ -1,3 +1,5 @@
+import { finishLabel } from "@/lib/orders/finish-label";
+import { db } from "@/lib/db";
 import type { Metadata } from "next";
 import { Download, FileText, Receipt } from "lucide-react";
 import type { Dims, DisputeStatus, Locale, OrderStatus, PaymentMethod, ProductionEventType, ShipmentStatus, ShippingAddress } from "@/types";
@@ -144,6 +146,12 @@ export default async function OrderPage({ params, searchParams }: { params: Para
   const proof = order.items[0]?.proof ?? null;
   const myReview = order.reviews.find((r) => r.authorId === user.id);
   const openDisputeRow = order.disputes.find((d) => d.status === "OPEN" || d.status === "UNDER_REVIEW");
+  // R5-JR-16: the outcome of the latest closed report (and the free reprint, if any) for the buyer.
+  const closedDispute = openDisputeRow ? null : (order.disputes[0] ?? null);
+  const reprintOrder =
+    closedDispute?.status === "RESOLVED_REPRINT"
+      ? await db.order.findFirst({ where: { buyerId: order.buyerId, notes: { startsWith: `REPRINT_OF:${order.number}:${closedDispute.id}` } }, select: { id: true, number: true } })
+      : null;
   const terminal = status === "CANCELLED" || status === "REFUNDED";
   const eventTypes = order.productionEvents.map((e) => e.type as ProductionEventType);
   const firstOf = (type: ProductionEventType) => order!.productionEvents.find((e) => e.type === type)?.createdAt;
@@ -249,7 +257,7 @@ export default async function OrderPage({ params, searchParams }: { params: Para
                               <PriceTag alwaysDecimals amount={item.lineTotalPiasters} locale={locale} />
                             </InlineStack>
                             <Text as="p" variant="bodySm" tone="subdued">
-                              {formatDims(dims, locale)} · {t(`materials.${item.materialCode}` as DictKey)} · {t(`finishes.${item.finishCode}` as DictKey)} ·{" "}
+                              {formatDims(dims, locale)} · {t(`materials.${item.materialCode}` as DictKey)} · {finishLabel(item.config, item.finishCode, locale, (k) => t(k as DictKey))} ·{" "}
                               {t(`checkout.proof.sides${item.printSides === "BOTH" ? "BOTH" : "OUTSIDE"}` as DictKey)}
                             </Text>
                             <Text as="p" variant="bodySm" numeric>
@@ -476,9 +484,19 @@ export default async function OrderPage({ params, searchParams }: { params: Para
                     <Badge tone="attention">{t(`orders.dispute.status.${openDisputeRow.status as DisputeStatus}` as DictKey)}</Badge>
                   </InlineStack>
                 </Card>
-              ) : isBuyer && canOpenDispute(status, order.deliveredAt) ? (
-                <DisputeForm orderId={order.id} />
               ) : null}
+              {isBuyer && closedDispute ? (
+                <Card title={t("orders.dispute.outcomeTitle")}>
+                  <BlockStack gap="200">
+                    <InlineStack gap="200" blockAlign="center">
+                      <Text as="p">{t("orders.dispute.last", { reason: t(`orders.dispute.reasons.${closedDispute.reason}` as DictKey) })}</Text>
+                      <Badge tone={closedDispute.status === "REJECTED" ? undefined : "success"}>{t(`orders.dispute.status.${closedDispute.status as DisputeStatus}` as DictKey)}</Badge>
+                    </InlineStack>
+                    {reprintOrder ? <Link url={`/${locale}/orders/${reprintOrder.id}`}>{t("orders.dispute.reprintLink", { number: reprintOrder.number })}</Link> : null}
+                  </BlockStack>
+                </Card>
+              ) : null}
+              {isBuyer && !openDisputeRow && canOpenDispute(status, order.deliveredAt) ? <DisputeForm orderId={order.id} /> : null}
 
               <Card title={t("orders.detail.timeline")}>
                 <Timeline groups={timelineGroups(order, t, locale, internal)} />
