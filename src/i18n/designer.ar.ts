@@ -51,7 +51,8 @@ export const designerAr: Dictionary["designer"] = {
     check: "الفحص",
   },
   view: {
-    label: "العرض",
+    // R16-01: «العرض» is also the Width field; the view switch is «طريقة العرض» (WCAG 2.4.6)
+    label: "طريقة العرض",
     threeD: "ثلاثي الأبعاد",
     face: "الوجه",
     dieline: "القالب",
