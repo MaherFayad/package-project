@@ -21,6 +21,7 @@ import { formatDate, formatDims, formatMoney, formatNumber } from "@/lib/format"
 import { asLeadView, inLeadView, LEAD_VIEWS, slaHoursLeft, type LeadView } from "./lib/quoteLeads";
 import { hoursToExpiry, PRICED_FOLLOW_UP_HOURS } from "./lib/quotePricing";
 import { SendPriceModal, type QuoteVendorOption } from "./QuoteSendPrice";
+import { useFocusRescue } from "./useFocusRescue";
 import { quoteLeadStepAction } from "./server/actions";
 import { adminStyles } from "./charts";
 import { fieldError, useAdminAction, useAdminErrorText } from "./useAdminAction";
@@ -37,6 +38,7 @@ export function QuoteLeadsIndex({ rows, now, vendors, validityHours }: { rows: A
   // Held here, not in the row: sending a price moves the row out of the Open view, and the dialog
   // must stay up to show the buyer link.
   const [pricing, setPricing] = useState<AdminQuoteLead | null>(null);
+  const armFocus = useFocusRescue("#admin-quotes-table [role=region]", rows);
   const nowDate = useMemo(() => new Date(now), [now]);
   const counts = useMemo(() => Object.fromEntries(LEAD_VIEWS.map((v) => [v, rows.filter((r) => inLeadView(r, v)).length])) as Record<LeadView, number>, [rows]);
   const q = query.trim().toLowerCase();
@@ -215,14 +217,19 @@ export function QuoteLeadsIndex({ rows, now, vendors, validityHours }: { rows: A
                   </BlockStack>
                 </IndexTableCell>
                 <IndexTableCell alignment="end">
-                  {r.state !== "CLOSED" && r.state !== "ORDERED" ? <LeadActions lead={r} onPrice={setPricing} /> : <Text as="span" tone="subdued">{t("admin.common.none")}</Text>}
+                  {r.state !== "CLOSED" && r.state !== "ORDERED" ? <LeadActions lead={r} onPrice={setPricing} onDone={armFocus} /> : <Text as="span" tone="subdued">{t("admin.common.none")}</Text>}
                 </IndexTableCell>
               </IndexTableRow>
             ))}
           </IndexTable>
         </div>
       </BlockStack>
-      {pricing ? <SendPriceModal key={pricing.quoteId} lead={pricing} vendors={vendors} validityHours={validityHours} open onClose={() => setPricing(null)} /> : null}
+      {pricing ? <SendPriceModal key={pricing.quoteId} lead={pricing} vendors={vendors} validityHours={validityHours} open
+          onClose={() => {
+            setPricing(null);
+            armFocus();
+          }}
+        /> : null}
     </Page>
   );
 }
@@ -261,7 +268,7 @@ function PricedSummary({ lead }: { lead: AdminQuoteLead }) {
   );
 }
 
-function LeadActions({ lead, align = "end", onPrice }: { lead: AdminQuoteLead; align?: "start" | "end"; onPrice: (lead: AdminQuoteLead) => void }) {
+function LeadActions({ lead, align = "end", onPrice, onDone }: { lead: AdminQuoteLead; align?: "start" | "end"; onPrice: (lead: AdminQuoteLead) => void; onDone: () => void }) {
   const { t } = useI18n();
   const { run, busy } = useAdminAction();
   const errorText = useAdminErrorText();
@@ -297,6 +304,7 @@ function LeadActions({ lead, align = "end", onPrice }: { lead: AdminQuoteLead; a
             const r = await run("lead", () => quoteLeadStepAction({ quoteId: lead.quoteId, step: step!, note }), t("admin.quotes.saved"));
             setRes(r);
             if (r?.ok) {
+              onDone();
               setStep(null);
               setNote("");
             }

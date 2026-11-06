@@ -51,7 +51,11 @@ test("admin sends a price for a lead; the buyer pays it; the order has the quote
     await dialog.getByLabel("Setup ex-VAT (EGP)").fill("1500");
     await dialog.getByLabel("Delivery ex-VAT (EGP)").fill("1200");
     await dialog.getByLabel("Production and delivery (days)").fill("18");
-    await expect(dialog.getByRole("button", { name: "Send price" })).toBeDisabled(); // buy price is required
+    // The buy price is required: sending without it shows the reason on the field and saves nothing.
+    await dialog.getByRole("button", { name: "Send price" }).click();
+    await expect(dialog.getByText("Enter the buy price agreed with this vendor.")).toBeVisible();
+    await expect(dialog.getByLabel(/^Printer buy price/)).toBeFocused();
+    expect((await db.quote.findUniqueOrThrow({ where: { id: quote.id } })).status).toBe("REQUESTED");
     // At a loss the margin line warns before sending.
     await dialog.getByLabel(/^Printer buy price/).fill("95000");
     await expect(dialog.getByText("Sold at a loss.")).toBeVisible();

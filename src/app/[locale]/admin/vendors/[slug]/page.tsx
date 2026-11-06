@@ -95,7 +95,7 @@ export default async function AdminVendorPage({ params }: { params: Params }) {
                     columnContentTypes={["text", "text", "text", "numeric"]}
                     headings={[t("admin.orders.columns.order"), t("admin.orders.columns.date"), t("admin.orders.columns.status"), t("admin.orders.columns.total")]}
                     rows={orders.slice(0, 20).map((o) => [
-                      <Link key={o.id} url={`${base}/orders/${o.number}`}>
+                      <Link key={o.id} url={`${base}/orders/${o.number}`} className={adminStyles.TapLink}>
                         <bdi>{o.number}</bdi>
                       </Link>,
                       formatDate(o.placedAt, locale, "medium"),
@@ -139,7 +139,7 @@ export default async function AdminVendorPage({ params }: { params: Params }) {
               <Card title={t("admin.vendors.detail.publicProfile")}>
                 <BlockStack gap="200">
                   {vendor.status === "ACTIVE" ? (
-                    <Link url={`/${locale}/vendors/${vendor.slug}`} external>
+                    <Link url={`/${locale}/vendors/${vendor.slug}`} external className={adminStyles.TapLink}>
                       {t("admin.vendors.detail.openProfile")}
                     </Link>
                   ) : (
@@ -147,7 +147,7 @@ export default async function AdminVendorPage({ params }: { params: Params }) {
                       {t("admin.vendors.detail.profileHidden")}
                     </Text>
                   )}
-                  {application ? <Link url={`${base}/vendors/applications/${application.id}`}>{t("admin.vendors.detail.application")}</Link> : null}
+                  {application ? <Link url={`${base}/vendors/applications/${application.id}`} className={adminStyles.TapLink}>{t("admin.vendors.detail.application")}</Link> : null}
                 </BlockStack>
               </Card>
               <Card title={t("admin.vendors.detail.staff")}>
@@ -155,7 +155,7 @@ export default async function AdminVendorPage({ params }: { params: Params }) {
                   <BlockStack gap="200" as="ul" className={adminStyles.PlainList}>
                     {vendor.staff.map((s) => (
                       <li key={s.id}>
-                        <Link url={`${base}/users/${s.id}`}><bdi>{s.name ?? t("admin.users.noName")}</bdi></Link>
+                        <Link url={`${base}/users/${s.id}`} className={adminStyles.TapLink}><bdi>{s.name ?? t("admin.users.noName")}</bdi></Link>
                         <Text as="p" variant="bodySm" tone="subdued">
                           <bdi dir="ltr">{s.phone}</bdi>
                         </Text>
@@ -172,7 +172,7 @@ export default async function AdminVendorPage({ params }: { params: Params }) {
                 <BlockStack gap="200">
                   <Text as="p">{t("admin.vendors.detail.rateCardCount", { count: formatNumber(vendor.rateCards.filter((r) => r.active).length) })}</Text>
                   {vendor.status === "ACTIVE" ? (
-                    <Link url={`${base}/catalog?vendor=${vendor.slug}`}>
+                    <Link url={`${base}/catalog?vendor=${vendor.slug}`} className={adminStyles.TapLink}>
                       {t("admin.vendors.detail.modelsCount", { count: formatNumber(models.priced), total: formatNumber(models.total) })}
                     </Link>
                   ) : null}

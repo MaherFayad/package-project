@@ -13,6 +13,7 @@ import type { DictKey } from "@/i18n";
 import { formatDate, formatMoney } from "@/lib/format";
 import { MarginLine } from "./OrderActions";
 import { priceLines } from "./lib/quotePricing";
+import { parseWholeInput } from "./lib/moneyInput";
 import { sendQuotePriceAction } from "./server/actions";
 import { egpToPiastersInput, fieldError, piastersToInput, useAdminAction, useAdminErrorText } from "./useAdminAction";
 import type { AdminActionResponse } from "./server/context";
@@ -54,17 +55,36 @@ export function SendPriceModal({ lead, vendors, validityHours, open, onClose }: 
   const [res, setRes] = useState<AdminActionResponse<unknown> | null>(null);
   const [sent, setSent] = useState<{ path: string; validUntil: string } | null>(null);
 
-  const qty = /^\d+$/.test(quantity.trim()) ? Number(quantity.trim()) : NaN;
+  const qty = parseWholeInput(quantity) ?? NaN;
+  const dayCount = parseWholeInput(days) ?? NaN;
   const unitP = egpToPiastersInput(unit);
   const costP = egpToPiastersInput(cost);
   const extras = { setupPiasters: optional(setup), diePiasters: optional(die), finishPiasters: optional(finish), shippingPiasters: optional(shipping) };
+  // R6-AD: the button used to stay disabled with no reason given. Now a malformed amount is flagged
+  // as it is typed, and a missing required value when Send is pressed (WCAG 3.3.1, 3.3.3).
+  const [tried, setTried] = useState(false);
+  const bad = (p: number | null) => p !== null && (Number.isNaN(p) || p < 0);
+  const daysOk = Number.isInteger(dayCount) && dayCount >= 1 && dayCount <= 120;
+  const problems: Record<string, string | null> = {
+    vendorId: !vendorId ? (tried ? "PRINTER_REQUIRED" : null) : null,
+    quantity: quantity.trim() === "" ? (tried ? "QTY_INVALID" : null) : Number.isInteger(qty) && qty >= 1 && qty <= 1_000_000 ? null : "QTY_INVALID",
+    unitPiasters: unit.trim() === "" ? (tried ? "PRICE_REQUIRED" : null) : bad(unitP) || unitP === 0 ? "AMOUNT_INVALID" : null,
+    setupPiasters: bad(egpToPiastersInput(setup)) ? "AMOUNT_INVALID" : null,
+    diePiasters: bad(egpToPiastersInput(die)) ? "AMOUNT_INVALID" : null,
+    finishPiasters: bad(egpToPiastersInput(finish)) ? "AMOUNT_INVALID" : null,
+    shippingPiasters: bad(egpToPiastersInput(shipping)) ? "AMOUNT_INVALID" : null,
+    deliveryDays: days.trim() === "" ? (tried ? "DAYS_RANGE" : null) : daysOk ? null : "DAYS_RANGE",
+    vendorCostPiasters: cost.trim() === "" ? (tried ? "COST_REQUIRED" : null) : bad(costP) || costP === 0 ? "AMOUNT_INVALID" : null,
+  };
   const valid =
     !!vendorId &&
     Number.isInteger(qty) && qty >= 1 &&
     unitP !== null && !Number.isNaN(unitP) && unitP > 0 &&
     Object.values(extras).every((v) => !Number.isNaN(v)) &&
     costP !== null && !Number.isNaN(costP) && costP > 0 &&
-    /^\d+$/.test(days.trim()) && Number(days) >= 1 && Number(days) <= 120;
+    daysOk;
+  /** Client problem first, then the server's field error. */
+  const err = (k: string) => (problems[k] ? errorText(problems[k]!) : fieldError(res, k, errorText));
   const preview = useMemo(
     () => (Number.isInteger(qty) && qty > 0 && unitP && !Number.isNaN(unitP) && Object.values(extras).every((v) => !Number.isNaN(v)) ? priceLines({ quantity: qty, unitPiasters: unitP, ...extras }) : null),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- extras is rebuilt from these strings
@@ -79,9 +99,14 @@ export function SendPriceModal({ lead, vendors, validityHours, open, onClose }: 
   };
 
   const submit = async () => {
-    if (!valid) return;
+    if (!valid) {
+      setTried(true);
+      // Move focus to the first field that needs fixing once the errors render.
+      setTimeout(() => document.querySelector<HTMLElement>("[role=dialog] [aria-invalid=true]")?.focus(), 0);
+      return;
+    }
     const r = await run("send-price", () =>
-      sendQuotePriceAction({ quoteId: lead.quoteId, vendorId, quantity: qty, unitPiasters: unitP!, ...extras, deliveryDays: Number(days), vendorCostPiasters: costP!, note: note.trim() || undefined }),
+      sendQuotePriceAction({ quoteId: lead.quoteId, vendorId, quantity: qty, unitPiasters: unitP!, ...extras, deliveryDays: dayCount, vendorCostPiasters: costP!, note: note.trim() || undefined }),
     t("admin.quotes.price.sent"));
     setRes(r);
     if (r?.ok) setSent({ path: r.data.path, validUntil: r.data.validUntil });
@@ -120,7 +145,7 @@ export function SendPriceModal({ lead, vendors, validityHours, open, onClose }: 
       onClose={close}
       size="large"
       title={t("admin.quotes.price.title", { count: lead.quantity })}
-      primaryAction={{ content: prev ? t("admin.quotes.price.resend") : t("admin.quotes.price.send"), disabled: !valid, loading: busy === "send-price", onAction: submit }}
+      primaryAction={{ content: prev ? t("admin.quotes.price.resend") : t("admin.quotes.price.send"), loading: busy === "send-price", onAction: submit }}
       secondaryActions={[{ content: t("admin.common.cancel"), onAction: close }]}
     >
       <form
@@ -141,16 +166,16 @@ export function SendPriceModal({ lead, vendors, validityHours, open, onClose }: 
               options={vendors.map((v) => ({ label: `${v.name} · ${v.city}`, value: v.id }))}
               value={vendorId}
               onChange={setVendorId}
-              error={fieldError(res, "vendorId", errorText)}
+              error={err("vendorId")}
               requiredIndicator
             />
-            <TextField label={t("admin.quotes.price.quantity")} autoComplete="off" inputMode="numeric" value={quantity} onChange={setQuantity} error={fieldError(res, "quantity", errorText)} requiredIndicator />
-            <TextField label={t("admin.quotes.price.unit")} autoComplete="off" inputMode="decimal" value={unit} onChange={setUnit} error={fieldError(res, "unitPiasters", errorText)} requiredIndicator />
-            <TextField label={t("admin.quotes.price.setup")} autoComplete="off" inputMode="decimal" value={setup} onChange={setSetup} helpText={t("admin.quotes.price.optional")} error={fieldError(res, "setupPiasters", errorText)} />
-            <TextField label={t("admin.quotes.price.die")} autoComplete="off" inputMode="decimal" value={die} onChange={setDie} helpText={t("admin.quotes.price.optional")} error={fieldError(res, "diePiasters", errorText)} />
-            <TextField label={t("admin.quotes.price.finish")} autoComplete="off" inputMode="decimal" value={finish} onChange={setFinish} helpText={t("admin.quotes.price.optional")} error={fieldError(res, "finishPiasters", errorText)} />
-            <TextField label={t("admin.quotes.price.shipping")} autoComplete="off" inputMode="decimal" value={shipping} onChange={setShipping} error={fieldError(res, "shippingPiasters", errorText)} />
-            <TextField label={t("admin.quotes.price.deliveryDays")} autoComplete="off" inputMode="numeric" value={days} onChange={setDays} error={fieldError(res, "deliveryDays", errorText)} requiredIndicator />
+            <TextField label={t("admin.quotes.price.quantity")} autoComplete="off" inputMode="numeric" value={quantity} onChange={setQuantity} error={err("quantity")} requiredIndicator />
+            <TextField label={t("admin.quotes.price.unit")} autoComplete="off" inputMode="decimal" value={unit} onChange={setUnit} error={err("unitPiasters")} requiredIndicator />
+            <TextField label={t("admin.quotes.price.setup")} autoComplete="off" inputMode="decimal" value={setup} onChange={setSetup} helpText={t("admin.quotes.price.optional")} error={err("setupPiasters")} />
+            <TextField label={t("admin.quotes.price.die")} autoComplete="off" inputMode="decimal" value={die} onChange={setDie} helpText={t("admin.quotes.price.optional")} error={err("diePiasters")} />
+            <TextField label={t("admin.quotes.price.finish")} autoComplete="off" inputMode="decimal" value={finish} onChange={setFinish} helpText={t("admin.quotes.price.optional")} error={err("finishPiasters")} />
+            <TextField label={t("admin.quotes.price.shipping")} autoComplete="off" inputMode="decimal" value={shipping} onChange={setShipping} error={err("shippingPiasters")} />
+            <TextField label={t("admin.quotes.price.deliveryDays")} autoComplete="off" inputMode="numeric" value={days} onChange={setDays} error={err("deliveryDays")} requiredIndicator />
           </InlineGrid>
           <TextField
             label={t("admin.quotes.price.vendorCost")}
@@ -159,7 +184,7 @@ export function SendPriceModal({ lead, vendors, validityHours, open, onClose }: 
             inputMode="decimal"
             value={cost}
             onChange={setCost}
-            error={fieldError(res, "vendorCostPiasters", errorText)}
+            error={err("vendorCostPiasters")}
             requiredIndicator
           />
           <Divider />

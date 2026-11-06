@@ -21,6 +21,7 @@ import type { DictKey } from "@/i18n";
 import { formatDate, formatNumber } from "@/lib/format";
 import { stripContactDetails } from "@/components/vendor/lib/contact";
 import { wordDiff } from "./lib/moderation";
+import { useFocusRescue } from "./useFocusRescue";
 import { cleanBioAction, reviewBioEditAction, reviewPortfolioAction } from "./server/actions";
 import { adminStyles } from "./charts";
 import { fieldError, useAdminAction, useAdminErrorText } from "./useAdminAction";
@@ -44,6 +45,8 @@ export function ModerationQueue({ photos, bios, bioEdits }: { photos: Moderation
   const pending = photos.filter((p) => p.status === "PENDING");
   const reviewed = photos.filter((p) => p.status !== "PENDING").reverse();
   const count = (n: number) => (n > 0 ? formatNumber(n) : undefined);
+  // R6-AD: a decided card leaves the list; keep keyboard focus in the panel, not on <body>.
+  const armFocus = useFocusRescue("#moderation-panel", [photos, bioEdits]);
 
   return (
     <Page title={t("admin.moderation.title")} titleIcon={ShieldCheck} subtitle={t("admin.moderation.subtitle")}>
@@ -61,11 +64,12 @@ export function ModerationQueue({ photos, bios, bioEdits }: { photos: Moderation
           window.history.replaceState(null, "", `${pathname}${next === "photos" ? "" : `?tab=${next}`}`);
         }}
       >
+        <div id="moderation-panel" tabIndex={-1} className={adminStyles.PanelFocus}>
         {tab === "photos" ? (
           pending.length ? (
             <div className={adminStyles.ModGrid}>
               {pending.map((p) => (
-                <PhotoCard key={p.id} p={p} />
+                <PhotoCard key={p.id} p={p} onDone={armFocus} />
               ))}
             </div>
           ) : (
@@ -76,7 +80,7 @@ export function ModerationQueue({ photos, bios, bioEdits }: { photos: Moderation
           bioEdits.length ? (
             <BlockStack gap="400">
               {bioEdits.map((b) => (
-                <BioEditCard key={`${b.vendorId}-${b.submittedAt}`} b={b} />
+                <BioEditCard key={`${b.vendorId}-${b.submittedAt}`} b={b} onDone={armFocus} />
               ))}
             </BlockStack>
           ) : (
@@ -98,13 +102,14 @@ export function ModerationQueue({ photos, bios, bioEdits }: { photos: Moderation
           reviewed.length ? (
             <div className={adminStyles.ModGrid}>
               {reviewed.map((p) => (
-                <PhotoCard key={p.id} p={p} />
+                <PhotoCard key={p.id} p={p} onDone={armFocus} />
               ))}
             </div>
           ) : (
             <Empty heading={t("admin.moderation.emptyReviewed")} body={t("admin.moderation.emptyReviewedBody")} />
           )
         ) : null}
+        </div>
       </Tabs>
     </Page>
   );
@@ -132,7 +137,7 @@ function Flags({ flags }: { flags: string[] }) {
   );
 }
 
-function PhotoCard({ p }: { p: ModerationPhoto }) {
+function PhotoCard({ p, onDone }: { p: ModerationPhoto; onDone: () => void }) {
   const { t, locale } = useI18n();
   const { run, busy } = useAdminAction();
   const errorText = useAdminErrorText();
@@ -189,7 +194,11 @@ function PhotoCard({ p }: { p: ModerationPhoto }) {
                   variant="primary"
                   disabled={note.trim().length < 3}
                   loading={busy === `rej-${p.id}`}
-                  onClick={async () => setRes(await run(`rej-${p.id}`, () => reviewPortfolioAction({ itemId: p.id, decision: "REJECT", note }), t("admin.moderation.rejected")))}
+                  onClick={async () => {
+                    const r = await run(`rej-${p.id}`, () => reviewPortfolioAction({ itemId: p.id, decision: "REJECT", note }), t("admin.moderation.rejected"));
+                    setRes(r);
+                    if (r?.ok) onDone();
+                  }}
                 >
                   {t("admin.moderation.reject")}
                 </Button>
@@ -212,7 +221,10 @@ function PhotoCard({ p }: { p: ModerationPhoto }) {
                   disabled={flagged}
                   loading={busy === `ok-${p.id}`}
                   accessibilityLabel={`${t("admin.moderation.approve")}: ${caption}`}
-                  onClick={() => run(`ok-${p.id}`, () => reviewPortfolioAction({ itemId: p.id, decision: "APPROVE" }), t("admin.moderation.approved"))}
+                  onClick={async () => {
+                    const r = await run(`ok-${p.id}`, () => reviewPortfolioAction({ itemId: p.id, decision: "APPROVE" }), t("admin.moderation.approved"));
+                    if (r?.ok) onDone();
+                  }}
                 >
                   {t("admin.moderation.approve")}
                 </Button>
@@ -315,7 +327,7 @@ function BioText({ ar, en, against }: { ar: string; en: string; against?: { ar: 
  * Approve publishes it (blocked while the contact filter trips), Send back needs a reason the
  * vendor sees, Remove contact details cleans the waiting text and keeps it in review.
  */
-function BioEditCard({ b }: { b: ModerationBioEdit }) {
+function BioEditCard({ b, onDone }: { b: ModerationBioEdit; onDone: () => void }) {
   const { t, locale } = useI18n();
   const { run, busy } = useAdminAction();
   const errorText = useAdminErrorText();
@@ -329,6 +341,7 @@ function BioEditCard({ b }: { b: ModerationBioEdit }) {
     if (r?.ok) {
       setDialog(null);
       setNote("");
+      if (decision !== "CLEAN") onDone();
     }
   };
   const after = { ar: stripContactDetails(b.pendingAr), en: stripContactDetails(b.pendingEn) };

@@ -122,7 +122,7 @@ export function AuditIndex({ rows }: { rows: AuditRow[] }) {
                 </Text>
                 {r.before || r.after ? (
                   <details>
-                    <summary>
+                    <summary className={adminStyles.DetailsSummary}>
                       <Text as="span" variant="bodySm" tone="subdued">
                         {t("admin.audit.showChanges")}
                       </Text>

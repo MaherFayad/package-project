@@ -143,7 +143,7 @@ export default async function AdminUserPage({ params }: { params: Params }) {
                     columnContentTypes={["text", "text", "text", "numeric"]}
                     headings={[t("admin.orders.columns.order"), t("admin.orders.columns.date"), t("admin.orders.columns.status"), t("admin.orders.columns.total")]}
                     rows={user.orders.map((o) => [
-                      <Link key="n" url={`${base}/orders/${o.number}`}>
+                      <Link key="n" url={`${base}/orders/${o.number}`} className={adminStyles.TapLink}>
                         <bdi>{o.number}</bdi>
                       </Link>,
                       formatDate(o.placedAt, locale, "medium"),

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { parseNumberInput } from "./lib/moneyInput";
 import { BlockStack, InlineGrid, InlineStack } from "@/components/ui/Stack";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -13,7 +14,7 @@ import type { CheckoutSettingsForm as Settings } from "./lib/checkoutSettings";
 import { fieldError, useAdminAction, useAdminErrorText } from "./useAdminAction";
 import type { AdminActionResponse } from "./server/context";
 
-const num = (v: string) => (v.trim() === "" ? NaN : Number(v.replace(/,/g, "")));
+const num = parseNumberInput; // R6-AD: "750,50" is not 75050
 
 /** Prepay discount (B-11) and paid physical samples (B-05), saved to PlatformSetting "checkout". */
 export function CheckoutSettingsForm({ initial }: { initial: Settings }) {
