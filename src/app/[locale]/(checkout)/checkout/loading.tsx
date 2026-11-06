@@ -4,7 +4,7 @@ import styles from "./_components/checkout.module.css";
 /** Checkout loading state (prices are computed on the server). Mirrors the step + summary layout so nothing jumps. */
 export default function Loading() {
   return (
-    <div role="status" aria-busy="true">
+    <div role="status" aria-busy="true" style={{ minBlockSize: "100dvh" }}>
       <SkeletonPage>
         <BlockStack gap="400">
           <Card>

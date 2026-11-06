@@ -1,6 +1,7 @@
 "use client";
 
 import { BadgeCheck, Check, Clock, Star, Truck } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
 import { MAX_INSTANT_QTY, type DesignDoc, type Locale, type QuoteLine } from "@/types";
@@ -32,9 +33,15 @@ import {
   TextField,
 } from "@/components/ui";
 import { getOffersAction, placeOrderAction, type OffersResult } from "../actions";
-import { ProofViewer } from "./ProofViewer";
-import { docSpec } from "@/lib/library/spec";
+import type { DocSpec } from "@/lib/library/spec";
 import styles from "./checkout.module.css";
+
+// The proof viewer pulls the model library, dieline engine and three.js: load it only when the
+// buyer reaches the proof step, so steps 1 and 2 stay light (PERF-03). docSpec is computed on the server.
+const ProofViewer = dynamic(() => import("./ProofViewer").then((m) => m.ProofViewer), {
+  ssr: false,
+  loading: () => <div className={styles.stageSkeleton} aria-hidden="true" />,
+});
 
 export interface TierPrice {
   quantity: number;
@@ -80,6 +87,7 @@ export function CheckoutClient(props: {
   initialQty: number;
   initial: OffersResult;
   defaultAddress: AddressState;
+  spec: DocSpec;
 }) {
   const { locale, designId, doc, editUrl } = props;
   const { t } = useI18n();
@@ -437,7 +445,7 @@ export function CheckoutClient(props: {
     </BlockStack>
   );
 
-  const spec = docSpec(doc, locale);
+  const spec = props.spec;
   const proofStep = (
     <BlockStack gap="400">
       <Text as="p" tone="subdued">

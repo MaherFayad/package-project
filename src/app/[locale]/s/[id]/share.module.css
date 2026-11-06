@@ -1,0 +1,7 @@
+/* Placeholder with the viewer's footprint while its chunk loads (no layout shift). */
+.viewerSkeleton {
+  block-size: min(70dvh, 36rem);
+  min-block-size: 24rem;
+  border-radius: var(--p-border-radius-300);
+  background: var(--p-color-bg-surface-secondary);
+}

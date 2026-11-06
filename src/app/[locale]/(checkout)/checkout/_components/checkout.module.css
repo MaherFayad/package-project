@@ -418,3 +418,11 @@
     scroll-padding-block-end: 104px;
   }
 }
+
+/* Placeholder while the proof viewer chunk loads: same footprint as tabs + stage + fold row */
+.stageSkeleton {
+  block-size: calc(min(60dvh, 30rem) + 6rem);
+  min-block-size: 24rem;
+  border-radius: var(--p-border-radius-200);
+  background: var(--p-color-bg-surface-secondary);
+}

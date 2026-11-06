@@ -9,6 +9,7 @@ import { fromJson } from "@/lib/json";
 import { formatEgyptPhone } from "@/lib/phone";
 import { loadCheckoutDesign, quoteDesign, tierPrices, toCheckoutOffer } from "@/lib/orders/service";
 import { designerPath } from "@/components/designer/lib/catalog";
+import { docSpec } from "@/lib/library/spec";
 import { Button, Card, EmptyState, EmptyBoxIllustration, Page } from "@/components/ui";
 import { CheckoutClient, type AddressState } from "../_components/CheckoutClient";
 import type { OffersResult } from "../actions";
@@ -131,6 +132,7 @@ export default async function CheckoutPage({ params, searchParams }: { params: P
       initialQty={initialQty}
       initial={initial}
       defaultAddress={defaultAddress}
+      spec={docSpec(doc, locale)}
     />
   );
 }
