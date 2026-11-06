@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Banner, BlockStack, Button, Card, ChoiceList, InlineStack, Select, Text, TextField } from "@/components/ui";
+import { Banner, BlockStack, Button, Card, ChoiceList, InlineStack, Modal, Select, Text, TextField } from "@/components/ui";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { decideDisputeAction } from "./server/actions";
@@ -32,20 +32,25 @@ export function DisputeDecision({
   const [note, setNote] = useState("");
   const [vendorId, setVendorId] = useState(originalVendorId);
   const [res, setRes] = useState<AdminActionResponse<{ reprintNumber?: string }> | null>(null);
+  const [confirmRefund, setConfirmRefund] = useState(false);
   if (!options.length) return null;
   const needsNote = decision !== "REVIEW";
+  const submit = async () => {
+    if (!decision) return;
+    const r = await run("decide", () => decideDisputeAction({ disputeId, decision, note, vendorId: decision === "REPRINT" ? vendorId : undefined }), t("admin.disputes.detail.success"));
+    setRes(r);
+    setConfirmRefund(false);
+    if (r?.ok) setNote("");
+  };
 
   return (
     <Card title={t("admin.disputes.detail.decisionTitle")}>
       <form
         onSubmit={async (e) => {
           e.preventDefault();
-          if (!decision) return;
-          const r = await run("decide", () => decideDisputeAction({ disputeId, decision, note, vendorId: decision === "REPRINT" ? vendorId : undefined }), t("admin.disputes.detail.success"));
-          setRes(r);
-          if (r?.ok) {
-            setNote("");
-          }
+          // Money leaves through the payment provider and cannot be undone: confirm first.
+          if (decision === "REFUND") setConfirmRefund(true);
+          else await submit();
         }}
       >
         <BlockStack gap="300">
@@ -103,6 +108,15 @@ export function DisputeDecision({
           </InlineStack>
         </BlockStack>
       </form>
+      <Modal
+        open={confirmRefund}
+        onClose={() => setConfirmRefund(false)}
+        title={t("admin.disputes.detail.refundConfirmTitle")}
+        primaryAction={{ content: t("admin.disputes.detail.decisions.REFUND"), destructive: true, loading: busy === "decide", onAction: submit }}
+        secondaryActions={[{ content: t("admin.common.cancel"), onAction: () => setConfirmRefund(false) }]}
+      >
+        <Text as="p">{t("admin.disputes.detail.refundConfirmBody")}</Text>
+      </Modal>
     </Card>
   );
 }

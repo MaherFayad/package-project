@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
-import { Badge, BlockStack, Card, DataTable, InlineStack, Layout, LayoutSection, Link, MetricsStrip, Page, Text } from "@/components/ui";
+import { Badge, BlockStack, Card, DataTable, InlineStack, Layout, LayoutSection, Link, MetricsStrip, Page, Text, Tooltip } from "@/components/ui";
+import { adminStyles } from "@/components/admin/charts";
+import { HealthBadge } from "@/components/admin/HealthBadge";
+import { OrderStatusBadge } from "@/components/admin/OrdersIndex";
 import { VendorStatusActions } from "@/components/admin/VendorActions";
 import { NotFoundCard } from "@/components/admin/NotFoundCard";
 import { loadVendorDetail } from "@/components/admin/server/queries";
@@ -22,6 +25,12 @@ export default async function AdminVendorPage({ params }: { params: Params }) {
   if (!data) return <NotFoundCard locale={locale} backUrl={`${base}/vendors`} backLabel={t("admin.vendors.detail.back")} />;
   const { vendor, orders, score, application, auditRows } = data;
   const name = pick(locale, vendor.nameAr, vendor.nameEn);
+  // Capabilities: active rate cards grouped by box style (one row per style, materials listed).
+  const rateCardGroups = [
+    ...vendor.rateCards
+      .filter((r) => r.active)
+      .reduce((m, r) => m.set(r.structure.code, [...new Set([...(m.get(r.structure.code) ?? []), r.material.code])]), new Map<string, string[]>()),
+  ];
   const pct = (n: number | null) => (n === null ? t("admin.common.none") : formatPercent(n, locale));
 
   return (
@@ -43,16 +52,19 @@ export default async function AdminVendorPage({ params }: { params: Params }) {
         <MetricsStrip
           accessibilityLabel={t("admin.vendors.scorecard.title")}
           metrics={[
-            { label: t("admin.vendors.scorecard.orders"), value: formatNumber(score.orders), trend: formatMoney(score.gmvPiasters, locale) },
-            { label: t("admin.vendors.scorecard.onTime"), value: pct(score.onTimePct), trend: `${t("admin.vendors.scorecard.delivered")}: ${formatNumber(score.delivered)}` },
+            { label: t("admin.vendors.scorecard.orders"), value: <span className={adminStyles.MetricStack}><span className={adminStyles.MetricNum}>{formatNumber(score.orders)}</span><span className={adminStyles.MetricSub}>{formatMoney(score.gmvPiasters, locale)}</span></span> },
+            { label: t("admin.vendors.scorecard.onTime"), value: <span className={adminStyles.MetricStack}><span className={adminStyles.MetricNum}>{pct(score.onTimePct)}</span><span className={adminStyles.MetricSub}>{`${t("admin.vendors.scorecard.delivered")}: ${formatNumber(score.delivered)}`}</span></span> },
             { label: t("admin.vendors.scorecard.reprint"), value: pct(score.reprintPct) },
             { label: t("admin.vendors.scorecard.dispute"), value: pct(score.disputePct) },
             { label: t("admin.vendors.scorecard.qcPass"), value: pct(score.qcPassPct) },
             { label: t("admin.vendors.scorecard.rating"), value: score.rating === null ? t("admin.common.none") : formatNumber(score.rating, 1) },
             {
-              label: t("admin.vendors.scorecard.health"),
-              value: score.health === null ? t("admin.common.none") : formatNumber(score.health),
-              trend: t("admin.vendors.scorecard.healthHelp"),
+              label: (
+                <Tooltip content={t("admin.vendors.scorecard.healthHelp")} dotted>
+                  {t("admin.vendors.scorecard.health")}
+                </Tooltip>
+              ),
+              value: score.health === null ? t("admin.common.none") : <HealthBadge score={score.health} label={t("admin.vendors.scorecard.health")} />,
             },
           ]}
         />
@@ -70,7 +82,7 @@ export default async function AdminVendorPage({ params }: { params: Params }) {
                         <bdi>{o.number}</bdi>
                       </Link>,
                       formatDate(o.placedAt, locale, "medium"),
-                      t(`orderStatus.${o.status}` as DictKey),
+                      <OrderStatusBadge key="s" status={o.status} />,
                       formatMoney(o.totalPiasters, locale),
                     ])}
                   />
@@ -82,7 +94,7 @@ export default async function AdminVendorPage({ params }: { params: Params }) {
               </Card>
               <Card title={t("admin.vendors.detail.history")}>
                 {auditRows.length ? (
-                  <BlockStack gap="200" as="ul">
+                  <BlockStack gap="200" as="ul" className={adminStyles.PlainList}>
                     {auditRows.map((a) => (
                       <li key={a.id}>
                         <Text as="p">
@@ -99,7 +111,7 @@ export default async function AdminVendorPage({ params }: { params: Params }) {
                   </BlockStack>
                 ) : (
                   <Text as="p" tone="subdued">
-                    {t("admin.common.none")}
+                    {t("admin.vendors.detail.noHistory")}
                   </Text>
                 )}
               </Card>
@@ -109,13 +121,21 @@ export default async function AdminVendorPage({ params }: { params: Params }) {
             <BlockStack gap="400">
               <Card title={t("admin.vendors.detail.publicProfile")}>
                 <BlockStack gap="200">
-                  <Link url={`/${locale}/vendors/${vendor.slug}`}>{`/${locale}/vendors/${vendor.slug}`}</Link>
+                  {vendor.status === "ACTIVE" ? (
+                    <Link url={`/${locale}/vendors/${vendor.slug}`} external>
+                      {t("admin.vendors.detail.openProfile")}
+                    </Link>
+                  ) : (
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      {t("admin.vendors.detail.profileHidden")}
+                    </Text>
+                  )}
                   {application ? <Link url={`${base}/vendors/applications/${application.id}`}>{t("admin.vendors.detail.application")}</Link> : null}
                 </BlockStack>
               </Card>
               <Card title={t("admin.vendors.detail.staff")}>
                 {vendor.staff.length ? (
-                  <BlockStack gap="200" as="ul">
+                  <BlockStack gap="200" as="ul" className={adminStyles.PlainList}>
                     {vendor.staff.map((s) => (
                       <li key={s.id}>
                         <Link url={`${base}/users/${s.id}`}>{s.name ?? t("admin.users.noName")}</Link>
@@ -134,16 +154,17 @@ export default async function AdminVendorPage({ params }: { params: Params }) {
               <Card title={t("admin.vendors.detail.rateCards")}>
                 <BlockStack gap="200">
                   <Text as="p">{t("admin.vendors.detail.rateCardCount", { count: formatNumber(vendor.rateCards.filter((r) => r.active).length) })}</Text>
-                  <BlockStack gap="100" as="ul">
-                    {vendor.rateCards
-                      .filter((r) => r.active)
-                      .map((r) => (
-                        <li key={r.id}>
-                          <Text as="span" variant="bodySm">
-                            {t(`structures.${r.structure.code}` as DictKey)} · {t(`materials.${r.material.code}` as DictKey)}
-                          </Text>
-                        </li>
-                      ))}
+                  <BlockStack gap="200" as="ul" className={adminStyles.PlainList}>
+                    {rateCardGroups.map(([code, materials]) => (
+                      <li key={code}>
+                        <Text as="p" variant="bodySm" fontWeight="semibold">
+                          {t(`structures.${code}` as DictKey)}
+                        </Text>
+                        <Text as="p" variant="bodySm" tone="subdued">
+                          {materials.map((m) => t(`materials.${m}` as DictKey)).join(locale === "ar" ? "، " : ", ")}
+                        </Text>
+                      </li>
+                    ))}
                   </BlockStack>
                 </BlockStack>
               </Card>

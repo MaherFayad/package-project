@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import {
   Badge,
+  Banner,
   BlockStack,
   Box,
   Card,
@@ -142,6 +143,12 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
       <Layout>
         <LayoutSection>
           <BlockStack gap="400">
+            {order.status === "PAID" ? (
+              // The next ops step for a paid order; on phones the vendor card sits far below, so surface it here.
+              <Banner tone="warning" title={t("admin.order.routing.awaitingTitle", { vendor: vendorName })} action={canReassign(order.status) ? { content: t("admin.order.routing.change"), url: "#order-vendor" } : undefined}>
+                {t("admin.order.routing.awaiting")}
+              </Banner>
+            ) : null}
             {showQc ? (
               <Card title={t("admin.order.qc.title")}>
                 <BlockStack gap="300">
@@ -297,20 +304,10 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
                     <Text as="p" variant="bodySm">
                       {addr.name}
                       <br />
-                      {[addr.street, addr.building, addr.city, addr.governorate].filter(Boolean).join(locale === "ar" ? "، " : ", ")}
+                      <bdi>{[addr.street, addr.building, addr.city, addr.governorate].filter(Boolean).join(", ")}</bdi>
                     </Text>
                   </BlockStack>
                 ) : null}
-              </BlockStack>
-            </Card>
-
-            <Card title={t("admin.order.vendorCard.title")}>
-              <BlockStack gap="100">
-                <Link url={`${base}/vendors/${order.vendor.slug}`}>{vendorName}</Link>
-                <Text as="p" variant="bodySm" tone="subdued">
-                  {t(`admin.vendors.statuses.${order.vendor.status}` as DictKey)}
-                  {order.dueDate ? ` · ${formatDate(order.dueDate, locale, "medium")}` : ""}
-                </Text>
               </BlockStack>
             </Card>
 
@@ -320,6 +317,15 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
               canReassign={canReassign(order.status)}
               vendorCostPiasters={order.vendorCostPiasters}
               vendors={vendorOptions.map((v) => ({ id: v.id, name: pick(locale, v.nameAr, v.nameEn), capable: v.capable }))}
+              vendor={
+                <BlockStack gap="100">
+                  <Link url={`${base}/vendors/${order.vendor.slug}`}>{vendorName}</Link>
+                  <Text as="p" variant="bodySm" tone="subdued">
+                    {t(`admin.vendors.statuses.${order.vendor.status}` as DictKey)}
+                    {order.dueDate ? ` · ${t("admin.order.vendorCard.due", { date: formatDate(order.dueDate, locale, "medium") })}` : ""}
+                  </Text>
+                </BlockStack>
+              }
             />
 
             <OverrideCard
@@ -369,7 +375,7 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
                 <BlockStack gap="100">
                   {order.shipments.map((s) => (
                     <Text as="p" key={s.id} variant="bodySm">
-                      {s.provider} · {s.status}
+                      {t(`admin.order.shipments.statuses.${s.status}` as DictKey)}
                       {s.trackingNumber ? (
                         <>
                           {" · "}
