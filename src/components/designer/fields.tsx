@@ -6,6 +6,7 @@ import { InlineStack } from "@/components/ui/Stack";
 import { Text } from "@/components/ui/Text";
 import { TextField } from "@/components/ui/TextField";
 import { useI18n } from "@/i18n/client";
+import { normalizeHex } from "./lib/color";
 import type { DictKey } from "@/i18n/types";
 import styles from "./designer.module.css";
 
@@ -98,7 +99,7 @@ export function ColorField({
   const id = useId();
   const [hex, setHex] = useState(value ?? "");
   useEffect(() => setHex(value ?? ""), [value]);
-  const valid = /^#[0-9a-fA-F]{6}$/.test(hex);
+  const valid = normalizeHex(hex) !== null;
   return (
     <fieldset className={styles.colorField} aria-describedby={helpText ? `${id}-help` : undefined}>
       <legend className={styles.fieldLegend}>{label}</legend>
@@ -133,20 +134,30 @@ export function ColorField({
         ))}
       </div>
       <InlineStack gap="200" blockAlign="end" wrap={false}>
-        <span className={styles.swatchPreview} style={{ background: valid ? hex : "transparent" }} aria-hidden="true" />
+        <span className={styles.swatchPreview} style={{ background: normalizeHex(hex) ?? "transparent" }} aria-hidden="true" />
         <div className={styles.grow}>
           <TextField
             label={t("designer.artwork.hex")}
             autoComplete="off"
             value={hex}
             dir="ltr"
-            maxLength={7}
+            maxLength={12}
             size="slim"
             error={hex && !valid ? t("designer.artwork.hexError") : undefined}
             onChange={(v) => {
-              const next = v.startsWith("#") ? v : `#${v}`;
-              setHex(v === "" ? "" : next);
-              if (/^#[0-9a-fA-F]{6}$/.test(next)) onChange(next.toLowerCase());
+              // R11-02: "#fff", pasted codes with spaces and Arabic-keyboard digits all apply.
+              // Six digits apply as you type; the short "#rgb" form on leaving the field (it is
+              // also the first half of a six-digit code being typed).
+              setHex(v);
+              const c = normalizeHex(v);
+              if (c && v.replace(/[\s#]/g, "").length >= 6) onChange(c);
+            }}
+            onBlur={() => {
+              const c = normalizeHex(hex);
+              if (c) {
+                setHex(c);
+                if (c !== value) onChange(c);
+              }
             }}
           />
         </div>

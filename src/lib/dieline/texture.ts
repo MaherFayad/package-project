@@ -148,7 +148,11 @@ export function drawLayer(ctx: Ctx2D, layer: ArtworkLayer, opts: Pick<PaintOptio
       ctx.fillStyle = layer.color;
       const dir = layer.direction === "auto" ? (/[؀-ۿ]/.test(layer.text) ? "rtl" : "ltr") : layer.direction;
       if ("direction" in ctx) (ctx as CanvasRenderingContext2D).direction = dir;
-      const alignX = layer.align === "center" ? 0 : (layer.align === "start") === (dir === "ltr") ? -w / 2 : w / 2;
+      // Start / end text sits inside the box's padding (0.15 em each side, as the designer measures
+      // the box: designer fonts.ts measureText), not on its edge (designer R11-03). The print PDF
+      // paints through this function too.
+      const inset = sizeMm * 0.15;
+      const alignX = layer.align === "center" ? 0 : (layer.align === "start") === (dir === "ltr") ? -w / 2 + inset : w / 2 - inset;
       ctx.textAlign = layer.align === "center" ? "center" : (layer.align === "start") === (dir === "ltr") ? "left" : "right";
       ctx.textBaseline = "middle";
       const lines = layer.text.split("\n");

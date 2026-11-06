@@ -18,6 +18,13 @@ export const SaveBody = z.object({
     .regex(/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/)
     .nullable()
     .optional(),
+  /**
+   * R10-R1 optimistic concurrency: the `updatedAt` this edit started from. When the stored design
+   * is newer, the save is refused with 409 and the newer copy, unless `force` (the visitor chose
+   * "Keep this version").
+   */
+  baseUpdatedAt: z.string().datetime().optional(),
+  force: z.boolean().optional(),
 });
 
 /**
