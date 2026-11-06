@@ -82,6 +82,7 @@ export const en = {
     acceptTerms: "I agree to the Terms of Service and Privacy Policy",
     acceptTermsRich: "I agree to the {terms} and the {privacy}",
     acceptTermsHint: "Required for new accounts.",
+    readLegal: "Read the {terms} and the {privacy}.",
     termsLink: "Terms of Service",
     privacyLink: "Privacy Policy",
     opensNewTab: "(opens in a new tab)",

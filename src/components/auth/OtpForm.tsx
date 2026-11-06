@@ -103,6 +103,7 @@ export function OtpForm({ onSuccess, reason }: { onSuccess: (u: OtpSuccess) => v
 
   async function sendCode(e?: FormEvent) {
     e?.preventDefault();
+    if (busy) return;
     setError(null);
     setNotice(null);
     const target = step === "code" ? normalized : normalizeEgyptPhone(phone);
@@ -141,6 +142,7 @@ export function OtpForm({ onSuccess, reason }: { onSuccess: (u: OtpSuccess) => v
 
   async function verify(e: FormEvent) {
     e.preventDefault();
+    if (busy) return;
     setError(null);
     setNotice(null);
     if (code.length !== CODE_LENGTH) {
@@ -229,7 +231,13 @@ export function OtpForm({ onSuccess, reason }: { onSuccess: (u: OtpSuccess) => v
               {t("auth.phoneHint")}
             </span>
           </div>
-          <button type="submit" className={styles.primary} disabled={!hydrated || busy} aria-busy={busy || undefined}>
+          <button
+            type="submit"
+            className={styles.primary}
+            disabled={!hydrated}
+            aria-disabled={busy || undefined}
+            aria-busy={busy || undefined}
+          >
             {busy ? t("auth.sending") : t("auth.sendCode")}
           </button>
           <p className={styles.fine}>
@@ -317,15 +325,18 @@ export function OtpForm({ onSuccess, reason }: { onSuccess: (u: OtpSuccess) => v
                 aria-invalid={error?.field === "terms" || undefined}
                 aria-describedby={describe(`${uid}-termshint`, "terms")}
               />
-              <label htmlFor={`${uid}-terms`}>
-                {rich(t("auth.acceptTermsRich"), {
-                  terms: legalLink("terms", t("auth.termsLink")),
-                  privacy: legalLink("privacy", t("auth.privacyLink")),
-                })}
+              <div>
+                <label htmlFor={`${uid}-terms`}>{t("auth.acceptTerms")}</label>
                 <span id={`${uid}-termshint`} className={styles.checkHint}>
                   {t("auth.acceptTermsHint")}
                 </span>
-              </label>
+                <span className={styles.checkHint}>
+                  {rich(t("auth.readLegal"), {
+                    terms: legalLink("terms", t("auth.termsLink")),
+                    privacy: legalLink("privacy", t("auth.privacyLink")),
+                  })}
+                </span>
+              </div>
             </div>
             <div className={styles.check}>
               <input id={`${uid}-mkt`} type="checkbox" checked={marketing} onChange={(e) => setMarketing(e.target.checked)} />
@@ -335,11 +346,11 @@ export function OtpForm({ onSuccess, reason }: { onSuccess: (u: OtpSuccess) => v
               </label>
             </div>
           </fieldset>
-          <button type="submit" className={styles.primary} disabled={busy} aria-busy={busy || undefined}>
+          <button type="submit" className={styles.primary} aria-disabled={busy || undefined} aria-busy={busy || undefined}>
             {busy ? t("auth.verifying") : t("auth.verify")}
           </button>
           <div className={styles.row}>
-            <button type="button" className={styles.plain} disabled={cooldown > 0 || busy} onClick={() => sendCode()}>
+            <button type="button" className={styles.plain} disabled={cooldown > 0} aria-disabled={busy || undefined} onClick={() => sendCode()}>
               {cooldown > 0 ? t("auth.resendIn", { seconds: formatCount(cooldown, "second", locale) }) : t("auth.resend")}
             </button>
           </div>

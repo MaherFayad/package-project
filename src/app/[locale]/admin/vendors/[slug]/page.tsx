@@ -7,13 +7,18 @@ import { VendorStatusActions } from "@/components/admin/VendorActions";
 import { NotFoundCard } from "@/components/admin/NotFoundCard";
 import { loadVendorDetail } from "@/components/admin/server/queries";
 import { getT, pick, toLocale, type DictKey } from "@/i18n";
+import { db } from "@/lib/db";
 import { formatDate, formatDateTime, formatMoney, formatNumber, formatPercent } from "@/lib/format";
 
 type Params = Promise<{ locale: string; slug: string }>;
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
-  const t = getT(toLocale((await params).locale));
-  return { title: `${t("admin.vendors.title")} · ${t("admin.title")}` };
+  const { locale: raw, slug } = await params;
+  const locale = toLocale(raw);
+  const t = getT(locale);
+  const v = await db.vendor.findUnique({ where: { slug }, select: { nameAr: true, nameEn: true } }).catch(() => null);
+  const section = `${t("admin.vendors.title")} · ${t("admin.title")}`;
+  return { title: v ? `${pick(locale, v.nameAr, v.nameEn)} · ${section}` : section };
 }
 
 export default async function AdminVendorPage({ params }: { params: Params }) {

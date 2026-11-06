@@ -81,6 +81,7 @@ export const ar: Dictionary = {
     acceptTerms: "أوافق على شروط الخدمة وسياسة الخصوصية",
     acceptTermsRich: "أوافق على {terms} و{privacy}",
     acceptTermsHint: "مطلوب للحسابات الجديدة.",
+    readLegal: "اقرأ {terms} و{privacy}.",
     termsLink: "شروط الخدمة",
     privacyLink: "سياسة الخصوصية",
     opensNewTab: "(يفتح في علامة تبويب جديدة)",
