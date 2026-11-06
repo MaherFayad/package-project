@@ -354,3 +354,23 @@ for (const locale of ["ar", "en"] as const) {
     });
   }
 }
+
+// Regression (merge24): the focus reset of R6-AX-18 must not catch the pause button, which sits
+// inside the Marquee; after pressing it the track's computed play state is "paused".
+for (const locale of ["ar", "en"] as const) {
+  test(`marquee pause button leaves the track paused (${locale})`, async ({ page }) => {
+    await page.goto(`/${locale}/dev/kit`);
+    await page.waitForLoadState("networkidle");
+    const name = locale === "ar" ? "إيقاف الشريط المتحرك" : "Pause the moving strip";
+    const btn = page.getByRole("button", { name }).first();
+    await btn.scrollIntoViewIfNeeded();
+    await btn.click();
+    // After the click the same button is named "Play …" and pressed (focus stays on it).
+    const pressed = page.getByRole("button", { name: locale === "ar" ? "تشغيل الشريط المتحرك" : "Play the moving strip" }).first();
+    await expect(pressed).toHaveAttribute("aria-pressed", "true");
+    await expect(pressed).toBeFocused();
+    const track = page.locator('[class*="marqueeTrack"]').first();
+    await expect(track).toHaveCSS("animation-play-state", "paused");
+    expect(await track.evaluate((el) => getComputedStyle(el).animationName)).not.toBe("none");
+  });
+}
