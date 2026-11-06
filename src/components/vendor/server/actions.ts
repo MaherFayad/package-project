@@ -22,7 +22,7 @@ import { FINISH_CODES, LOCALES } from "@/types";
 import { DECLINE_REASONS, can, declineNote, eventFor, nextStatus, type JobAction } from "../lib/jobs";
 import { splitVendorCost } from "../lib/payouts";
 import { rateCardFormSchema, validateRateCard } from "../lib/rateCard";
-import { isFoodSafe, isPermutation, issuesToErrors, mergeCertifications, portfolioCaptionSchema, profileSchema, MAX_PORTFOLIO_ITEMS } from "../lib/profile";
+import { isFoodSafe, isPermutation, issuesToErrors, mergeCertifications, portfolioCaptionSchema, profileSchema, splitContact, MAX_PORTFOLIO_ITEMS } from "../lib/profile";
 import { applicationSchema, slugify, uniqueSlug } from "../lib/application";
 import { keyFromUrl, parseKey } from "../lib/files";
 import { listedBases } from "../lib/coverage";
@@ -208,6 +208,14 @@ export async function updatePortfolioItem(input: z.input<typeof captionInput>): 
     const { vendor } = await vendorForMutation();
     const p = captionInput.safeParse(input);
     if (!p.success) throw new FieldErrors(issuesToErrors(p.error.issues));
+    // R6: a site or number split across captions (this photo's and the others') is blocked too.
+    // Captions in display order, this photo's new text in its own slot.
+    const all = (await db.vendorPortfolioItem.findMany({ where: { vendorId: vendor.id }, orderBy: { sortOrder: "asc" }, select: { id: true, captionAr: true, captionEn: true } })).map((o) =>
+      o.id === p.data.id ? { ...o, captionAr: p.data.captionAr, captionEn: p.data.captionEn } : o,
+    );
+    if (splitContact(all.map((o) => o.captionEn)) || splitContact(all.map((o) => o.captionAr)) || splitContact(all.flatMap((o) => [o.captionAr, o.captionEn]))) {
+      throw new FieldErrors({ captionEn: "CONTACT_SPLIT" });
+    }
     const r = await db.vendorPortfolioItem.updateMany({
       where: { id: p.data.id, vendorId: vendor.id },
       data: { captionAr: p.data.captionAr, captionEn: p.data.captionEn, structureCode: p.data.structureCode },

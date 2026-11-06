@@ -14,7 +14,8 @@
  * ("010 then 0123 then 4567") are caught when the digits form an Egyptian number.
  */
 
-export type ContactKind = "PHONE" | "EMAIL" | "URL" | "HANDLE" | "MESSENGER";
+/** SOLICIT (R6): an invitation to take the conversation off Elba ("DM us", "ع الخاص", "scan the QR"). */
+export type ContactKind = "PHONE" | "EMAIL" | "URL" | "HANDLE" | "MESSENGER" | "SOLICIT";
 
 // Endings that are rarely an English word glued after a missing space ("boxes.top" would be).
 const TLDS = [
@@ -43,6 +44,10 @@ const PATTERNS: [ContactKind, RegExp][] = [
   // "email: nilepack", "ايميل nilepack" (an address with the domain left out).
   ["EMAIL", /(?:\be-?mail\s*[:\-]|ايميل|إيميل|الايميل|الإيميل)\s*[:\-]?\s*[a-z0-9._]{3,}/giu],
   ["URL", /\b(?:h[tx*]{2}ps?:\/\/|www\.)[^\s]*/giu],
+  // R6: link schemes, link-in-bio and short-link hosts, and any "host.ending/path".
+  ["URL", /\b(?:mailto|tel|sms|whatsapp|viber|tg):\s*\S/giu],
+  ["URL", /\b(?:linktr\.ee|lnk\.bio|linkin\.bio|beacons\.ai|taplink|msha\.ke|bit\.ly|tinyurl|goo\.gl|cutt\.ly|rb\.gy|wa\.link|qrco\.de)\b/giu],
+  ["URL", /\b[a-z0-9-]{2,}\.[a-z]{2,10}\/[a-z0-9_\-]{2,}/giu],
   ["URL", new RegExp(`\\b[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9-]+)*\\.(?:${TLDS})(?:\\.[a-z]{2})?(?:\\/[^\\s]*)?(?![a-z0-9])`, "giu")],
   // Map pins lead straight to the plant's phone: "Google Maps", "خرائط جوجل", "جوجل ماب", goo.gl links.
   ["URL", /google\s*maps?|maps\.app|خرائط\s*جوجل|جوجل\s*ماب/giu],
@@ -62,6 +67,19 @@ const PATTERNS: [ContactKind, RegExp][] = [
   ],
 ];
 
+/**
+ * R6: invitations to move the conversation off Elba, and QR directives ("scan the QR on the box").
+ * Mentions of QR codes as a print capability ("QR code labels") stay allowed.
+ */
+const SOLICIT: RegExp[] = [
+  /\b(?:dm|pm|inbox|whisper)\s+(?:us|me)\b|\bmessage\s+(?:us|me)\s+(?:directly|privately|on)\b|\bcall\s+(?:us|me)\b|\bcontact\s+(?:us|me)\s+directly\b|\b(?:our|my)\s+(?:number|phone|contact)\s+(?:is\s+)?(?:in|on)\s+the\s+(?:photo|picture|image|box)\b/iu,
+  /(?:ع|على|علي|في|فى)\s*(?:ال)?خاص|كلمن[اى]|كلمني|اتصل\s*(?:بنا|بي|علينا)|اتصلوا|ابعت(?:لنا|لي|ولنا)|راسلن[اى]|رقم(?:نا|ي|ى)\s*(?:في|فى|على|علي)\s*(?:ال)?(?:صور|علب|كرتون)|الرقم\s*(?:في|فى|على)\s*(?:ال)?(?:صور|علب)/u,
+  /\bscan\s+(?:me|(?:the|this|our|my)\s+(?:qr|code|barcode))\b|\bqr\s*(?:code)?\s*[:\-–]\s*\S|امسح\s*(?:ال)?(?:كود|باركود|كيو\s*[اآ]ر|qr)/iu,
+];
+
+/** Egyptian mobile numbers (with or without the country code). */
+const EG_MOBILE = /^(?:(?:\+?20|0020)1[0125]\d{8}|01[0125]\d{8})$/;
+
 /** Egyptian phone shapes, used for digit groups split by words ("010 then 0123 then 4567"). */
 const EG_PHONE = /^(?:(?:\+?20|0020)1[0125]\d{8}|01[0125]\d{8}|0(?:2|3)\d{7,8}|0(?:4|5|6|8|9)\d{7,8}|(?:\+?20|0020)(?:2|3)\d{8})$/;
 
@@ -78,7 +96,8 @@ const CONFUSABLES: Record<string, string> = {
 
 const EN_NUMBERS: Record<string, string> = { zero: "0", oh: "0", one: "1", two: "2", three: "3", four: "4", five: "5", six: "6", seven: "7", eight: "8", nine: "9" };
 const AR_NUMBERS: [RegExp, string][] = [
-  [/صفر/gu, "0"],
+  [/صفر|زيرو|زيرول/gu, "0"],
+  [/مية|ميه|مائة|مئة/gu, "100"],
   [/واحد|وحده|واحده/gu, "1"],
   [/اثنين|اثنان|إثنين|اتنين|إتنين/gu, "2"],
   [/ثلاثة|ثلاثه|تلاتة|تلاته|ثلاث|تلات/gu, "3"],
@@ -88,7 +107,33 @@ const AR_NUMBERS: [RegExp, string][] = [
   [/سبعة|سبعه|سبع/gu, "7"],
   [/ثمانية|ثمانيه|تمانية|تمانيه|ثماني|تمان/gu, "8"],
   [/تسعة|تسعه|تسع/gu, "9"],
+  // English digits written in Arabic letters, common in Egyptian chat ("زيرو وان تو ثري").
+  [/وان/gu, "1"],
+  [/تو|تيو/gu, "2"],
+  [/ثري|تري/gu, "3"],
+  [/فور/gu, "4"],
+  [/فايف|فايڤ/gu, "5"],
+  [/سكس|سيكس/gu, "6"],
+  [/سفن|سيفن/gu, "7"],
+  [/ايت|إيت|إيت/gu, "8"],
+  [/ناين/gu, "9"],
 ];
+/** Arabic letters only (not Arabic punctuation such as "،" or "؛"), for whole-word number matching. */
+const AR_LETTER = "\\u0621-\\u064a\\u0671-\\u06d3";
+
+/** R6: decimal digits of any other script (Lao, Thai, Devanagari, Bengali…) to Western digits. */
+function otherDigits(s: string): string {
+  return s.replace(/\p{Nd}/gu, (c) => {
+    if (c >= "0" && c <= "9") return c;
+    let cp = c.codePointAt(0)!;
+    let v = 0;
+    while (v < 9 && /\p{Nd}/u.test(String.fromCodePoint(cp - 1))) {
+      cp--;
+      v++;
+    }
+    return String(v);
+  });
+}
 
 /**
  * Canonical form for matching. Keeps one output character per input character where it can, but
@@ -98,15 +143,22 @@ export function canonicalText(text: string): string {
   let s = text.normalize("NFKC");
   // Invisible characters: zero-width, joiners, bidi controls, soft hyphen, word joiner, BOM; tatweel.
   s = s.replace(/[­؜​-‏‪-‮⁠-⁤⁦-⁩﻿ـ]/g, "");
-  s = normaliseDigits(s).toLowerCase();
+  // R6: emoji variation selectors and the keycap mark ("0️⃣1️⃣…" is digits underneath).
+  s = s.replace(/[\ufe00-\ufe0f\u20e3]/g, "");
+  s = otherDigits(normaliseDigits(s)).toLowerCase();
   s = s.replace(/[Ͱ-ϿЀ-ӿ]/g, (c) => CONFUSABLES[c] ?? c);
   // Number words to digits (whole words only), English then Arabic (with an optional "و" prefix).
   s = s.replace(/\b(zero|oh|one|two|three|four|five|six|seven|eight|nine)\b/g, (w) => EN_NUMBERS[w] ?? w);
-  for (const [re, d] of AR_NUMBERS) s = s.replace(new RegExp(`(?<![\\u0600-\\u06ff])و?(?:${re.source})(?![\\u0600-\\u06ff])`, "gu"), d);
+  for (const [re, d] of AR_NUMBERS) s = s.replace(new RegExp(`(?<![${AR_LETTER}])و?(?:${re.source})(?![${AR_LETTER}])`, "gu"), d);
   // Letters spaced one by one ("w h a t s a p p", "و ا ت س"): join runs of 4+ single letters.
-  s = s.replace(/(?<![\p{L}\p{N}])\p{L}(?:[\s.\-_*]{1,2}\p{L}(?![\p{L}\p{N}])){3,}/gu, (run) => run.replace(/[\s.\-_*]/g, ""));
+  // A dot between spaced letters stays a dot ("n i l e p a c k . c o m" -> "nilepack.com").
+  s = s.replace(/(?<![\p{L}\p{N}])\p{L}(?:[\s.\-_*]{1,3}\p{L}(?![\p{L}\p{N}])){3,}/gu, (run) =>
+    run.replace(/[\s\-_*]*\.[\s\-_*]*/g, ".").replace(/[\s\-_*]/g, ""),
+  );
   // Letter O / l / I standing for 0 / 1 inside a run that is mostly digits ("O1OO1234567").
-  s = s.replace(/[0-9oil|]{7,}/g, (run) => ((run.match(/\d/g)?.length ?? 0) >= 5 ? run.replace(/o/g, "0").replace(/[il|]/g, "1") : run));
+  s = s.replace(/[0-9oil|](?:[\s\-.]{0,2}[0-9oil|]){6,}/g, (run) => ((run.match(/\d/g)?.length ?? 0) >= 5 ? run.replace(/o/g, "0").replace(/[il|]/g, "1") : run));
+  // R6: dot look-alikes between a name and a domain ending ("nilepack。com", "nilepack·com", "nilepack،com").
+  s = s.replace(new RegExp(`([a-z0-9])[。｡·•‧∙،,](?=(?:${TLDS})\\b)`, "gu"), "$1.");
   // R5: bracketed dots "nilepack[.]com", "(.)", "{.}", "<.>".
   s = s.replace(/\s*[[({<]\s*\.\s*[\])}>]\s*/g, ".");
   // Spelled-out dots before a domain ending: "nilepack dot com", "nilepack (dot) com", "nilepack دوت كوم",
@@ -121,12 +173,19 @@ function hasSplitPhone(s: string): boolean {
   const chunks = [...s.matchAll(/\+?\d+/g)].map((m) => ({ d: m[0], start: m.index!, end: m.index! + m[0].length }));
   for (let i = 0; i < chunks.length; i++) {
     let joined = chunks[i]!.d;
-    for (let j = i + 1; j < chunks.length && j < i + 6; j++) {
+    let wordy = false;
+    for (let j = i + 1; j < chunks.length && j < i + 14; j++) {
       const gap = s.slice(chunks[j - 1]!.end, chunks[j]!.start);
       // At most three short words between two groups.
       if (gap.length > 32 || gap.split(/\s+/).filter((w) => /\p{L}/u.test(w)).length > 3) break;
+      wordy ||= /\p{L}/u.test(gap);
       joined += chunks[j]!.d;
-      if (EG_PHONE.test(joined.replace(/^\+/, ""))) return true;
+      const n = j - i + 1;
+      const digits = joined.replace(/^\+/, "");
+      // R6: up to 4 groups ("010 then 0123 then 4567") any shape; more groups (digits spelled one by
+      // one) only a mobile number with nothing but spaces or punctuation between the groups, so a
+      // bio full of small numbers ("1 to 2 colours, 100 to 500 pieces…") never adds up to a phone.
+      if (n <= 4 ? EG_PHONE.test(digits) : !wordy && EG_MOBILE.test(digits)) return true;
     }
   }
   return false;
@@ -142,6 +201,7 @@ export function findContactDetails(text: string | null | undefined): ContactKind
     if (re.test(s)) found.add(kind);
   }
   if (!found.has("PHONE") && hasSplitPhone(s)) found.add("PHONE");
+  if (SOLICIT.some((re) => re.test(s))) found.add("SOLICIT");
   return [...found];
 }
 

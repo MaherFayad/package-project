@@ -693,7 +693,7 @@ export const adminEn = {
     photoAlt: "Portfolio photo from {vendor}: {caption}",
     fullSize: "Open photo at full size",
     flagged: "Contact details: {kinds}",
-    kinds: { PHONE: "phone", EMAIL: "email", URL: "website", HANDLE: "handle", MESSENGER: "messaging app" },
+    kinds: { PHONE: "phone", EMAIL: "email", URL: "website", HANDLE: "handle", MESSENGER: "messaging app", SOLICIT: "invitation to contact off Elba" },
     statuses: { APPROVED: "Approved", REJECTED: "Rejected", PENDING: "To review" },
     viewPublic: "Open public profile",
     clean: "Remove contact details",

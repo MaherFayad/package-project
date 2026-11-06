@@ -365,6 +365,7 @@ export const vendorPortalEn = {
     onTime: "{pct} on time",
     viewPublic: "View public profile",
     errors: {
+      CONTACT_SPLIT: "Together with your other fields this spells out contact details, for example a website split across two fields. Remove it. Elba handles every buyer conversation.",
       CONTACT: "Remove contact details: phone numbers, emails, websites, social handles and messaging apps. Elba handles every buyer conversation.",
       REQUIRED: "Required.",
       INVALID: "Check this value.",
