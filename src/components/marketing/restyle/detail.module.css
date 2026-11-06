@@ -1,0 +1,114 @@
+/* R6 restyle, detail pieces: tiles, product cards, category showcase, printer profile (mkui stand-ins). Reads the kit tokens and the --rs-* values set by .page in restyle.module.css. */
+/* ---------- Tiles (grey cards on white; white on grey) ---------- */
+.tile { display: grid; gap: var(--mk-stack-title-sub); min-inline-size: 0; padding: var(--mk-stack-head-content); border-radius: var(--rs-r-tile); background: var(--rs-sheet); color: var(--mk-on-light); }
+:global([data-tone="light"]) .tile { background: #ffffff; }
+.tileTitle { margin: 0; font-size: clamp(1.375rem, 1.2rem + 0.6vw, 1.75rem); font-weight: 360; line-height: 1.2; }
+.tileTitle:lang(ar) { font-weight: 500; line-height: 1.4; }
+.tile :where(dl, table) { font-size: 1rem; }
+.tile :where(a:not([data-variant])) { color: inherit; }
+.tileDark { background: var(--mk-bg); color: var(--mk-on-dark); --mk-muted: var(--mk-on-dark-muted); --mk-line: var(--mk-line-dark); --mk-ring: var(--mk-focus); }
+.withAside { display: grid; gap: var(--mk-grid-gap); }
+@media (min-width: 1024px) {
+  .withAside { grid-template-columns: minmax(0, 1fr) 360px; gap: var(--mk-grid-gap-bento); align-items: start; }
+  .aside { position: sticky; inset-block-start: calc(var(--mk-header-h) + var(--mk-grid-gap)); }
+}
+.stack { display: grid; gap: var(--mk-grid-gap); min-inline-size: 0; }
+.grid2, .grid3 { display: grid; gap: var(--mk-grid-gap); }
+@media (min-width: 768px) { .grid2, .grid3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .grid3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* mkui stand-ins (Text, Badge) */
+.text { margin: 0; line-height: 1.55; }
+.textSm { font-size: var(--mk-fs-14); line-height: 1.45; }
+.headingSm { font-size: 1.125rem; font-weight: 550; line-height: 1.35; }
+.headingMd { font-size: 1.5rem; font-weight: var(--mk-fw-title); line-height: 1.25; }
+.headingMd:lang(ar) { font-weight: 550; line-height: 1.4; }
+.strong { font-weight: 550; }
+.tag { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: var(--mk-radius-pill); background: rgba(0, 0, 0, 0.06); color: var(--mk-on-light); font-size: 0.8125rem; font-weight: 550; }
+.tagSuccess { background: #d9f5e6; color: #035c46; }
+.tagInfo { background: #e6e9ff; color: #2a1aa8; }
+:global([data-tone="dark"]) .tag:not(.tagSuccess):not(.tagInfo) { background: rgba(255, 255, 255, 0.12); color: var(--mk-on-dark); }
+
+/* ---------- Category landing: render row on a violet glow under the hero copy ---------- */
+.showcase {
+  position: relative;
+  margin-block-start: var(--mk-stack-head-content-lg);
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: flex-end;
+  gap: var(--mk-grid-gap-tight);
+}
+.showcase::before {
+  content: "";
+  position: absolute;
+  inset-inline: 10%;
+  inset-block-end: 0;
+  block-size: 80%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(77, 33, 255, 0.45), rgba(77, 33, 255, 0) 75%);
+  pointer-events: none;
+}
+.showcaseItem { position: relative; display: grid; place-items: end center; }
+/* Definite height before the image arrives, so the row never grows on load (CLS, MK-20). */
+.showcaseItem img { inline-size: auto; max-inline-size: 100%; block-size: clamp(110px, 18vw, 260px); object-fit: contain; object-position: 50% 100%; filter: drop-shadow(0 24px 32px rgba(0, 0, 0, 0.5)); }
+/* Side renders stay smaller than the preloaded centre render, so the centre one stays the LCP. */
+.showcaseItem:not(:nth-child(3)) img { block-size: clamp(90px, 15vw, 220px); }
+.showcaseItem:nth-child(3) img { max-inline-size: 125%; block-size: clamp(140px, 24vw, 340px); }
+@media (max-width: 639px) {
+  .showcase { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .showcase > :nth-child(1), .showcase > :nth-child(5) { display: none; }
+}
+
+/* ---------- Product cards (grey bento tiles) ---------- */
+/* Card lists are kit <Grid>s (section-7 gaps); these only reset the list. */
+.cards { margin: 0; padding: 0; list-style: none; }
+@media (max-width: 767px) {
+  /* Phones: each family is a swipe rail; the next card peeks. No snapping while focus is inside
+     (a11y R4-02, WCAG 2.4.11); RailFocus scrolls the focused card into view. */
+  .rail.rail {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: 82%;
+    gap: var(--mk-grid-gap);
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: var(--mk-gutter);
+    margin-inline: calc(-1 * var(--mk-gutter));
+    padding-inline: var(--mk-gutter);
+    scrollbar-width: none;
+  }
+  .rail.rail::-webkit-scrollbar { display: none; }
+  .rail.rail > li { scroll-snap-align: start; }
+  .rail.rail:focus-within { scroll-snap-type: none; }
+}
+.card { position: relative; display: flex; flex-direction: column; block-size: 100%; overflow: hidden; border-radius: var(--rs-r-tile); background: var(--rs-sheet); color: var(--mk-on-light); }
+:global([data-tone="light"]) .card { background: #ffffff; }
+.cardMedia { position: relative; aspect-ratio: 4 / 3; display: grid; place-items: center; overflow: hidden; }
+.cardMedia img { position: absolute; inset: 12%; inline-size: 76%; block-size: 76%; object-fit: contain; filter: drop-shadow(0 16px 20px rgba(0, 0, 0, 0.14)); transition: transform var(--mk-dur-4) var(--mk-ease-media); }
+.card:hover .cardMedia img { transform: scale(1.05); }
+.cardBody { display: flex; flex-direction: column; gap: 8px; flex: 1; padding: 0 var(--mk-grid-gap) var(--mk-grid-gap); }
+.cardCode { font-size: 0.8125rem; font-weight: 550; color: var(--mk-muted, var(--mk-on-light-muted)); }
+.cardPrice { margin: 4px 0 0; font-weight: 550; }
+.cardDesc { min-block-size: 3em; } /* WCAG 1.4.12: reserve two lines instead of clamping */
+.cardActions { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 8px; margin-block-start: auto; padding-block-start: var(--mk-grid-gap-tight); }
+.cardLink { color: inherit; text-decoration: none; }
+.cardLink::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+.cardLink:focus-visible { outline: none; }
+.card:has(.cardLink:focus-visible) { outline: 2px solid var(--mk-focus-light); outline-offset: 3px; }
+.soon { position: absolute; inset-block-start: 14px; inset-inline-start: 14px; z-index: 1; }
+
+/* ---------- Printer profile ---------- */
+.identity { display: flex; align-items: center; gap: var(--mk-stack-title-sub); margin-block-end: var(--mk-stack-title-sub); }
+.identity > p { margin: 0; }
+.logo { inline-size: 56px; block-size: 56px; border-radius: 16px; background: #ffffff; object-fit: contain; }
+.badges { display: flex; flex-wrap: wrap; gap: 8px; margin-block-start: var(--mk-stack-head-content); }
+.results { margin: 0; font-size: var(--mk-fs-20); font-weight: var(--mk-fw-title); }
+
+@media (prefers-reduced-motion: reduce) {
+  .cardMedia img { transition: none; }
+  .card:hover .cardMedia img { transform: none; }
+}
+/* Empty results tile, centred (directory). */
+.empty { justify-items: center; padding-block: var(--mk-stack-head-content-lg); }
+.empty > p { margin: 0; }

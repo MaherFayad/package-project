@@ -2,12 +2,9 @@
 
 import { useEffect } from "react";
 import { useI18n } from "@/i18n/client";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { EmptyState, EmptyBoxIllustration } from "@/components/ui/EmptyState";
-import { Page } from "@/components/ui/Page";
+import { LostState } from "@/components/marketing/restyle/LostState";
 
-/** 404 for /s/<token> (unknown, revoked or never shared), inside the store chrome. */
+/** 404 for /s/<token> (unknown, revoked or never shared), inside the store chrome (R6: the 404 language). */
 export default function ShareNotFound() {
   const { t, locale } = useI18n();
   const title = `${t("designer.shared.notFoundTitle")} · ${t("meta.siteName")}`;
@@ -15,20 +12,16 @@ export default function ShareNotFound() {
     document.title = title;
   }, [title]);
   return (
-    <Page narrowWidth title={t("designer.shared.notFoundTitle")}>
-      <Card>
-        <EmptyState
-          heading={t("designer.shared.notFoundTitle")}
-          image={<EmptyBoxIllustration />}
-          action={
-            <Button variant="primary" url={`/${locale}/design`}>
-              {t("designer.shared.copyDesign")}
-            </Button>
-          }
-        >
-          <p>{t("designer.shared.notFoundBody")}</p>
-        </EmptyState>
-      </Card>
-    </Page>
+    <LostState
+      code="404"
+      titleId="not-found-title"
+      title={t("designer.shared.notFoundTitle")}
+      body={t("designer.shared.notFoundBody")}
+      links={[
+        { label: t("designer.shared.copyDesign"), href: `/${locale}/design` },
+        { label: t("common.goHome"), href: `/${locale}` },
+        { label: t("nav.catalog"), href: `/${locale}/catalog` },
+      ]}
+    />
   );
 }
