@@ -10,32 +10,63 @@ import styles from "./designer-page.module.css";
 const loadScene = () => import("../HeroScene3D");
 const HeroScene3D = dynamic<HeroScene3DProps>(loadScene, { ssr: false });
 
+export interface LoopSource {
+  src: string;
+  type: "video/webm" | "video/mp4";
+  /** e.g. "(min-width: 900px)" for the 1080p files. */
+  media?: string;
+}
+
 /**
  * The hero stage: the poster render (server-rendered child, the LCP image) with our floating
- * editor pieces around it. three.js never loads on first paint: the kit's HeroScene3D (the same
- * mailer, artwork and angle as the poster) mounts only on intent, i.e. the pointer entering the
- * box on a hover device, a tap or press on it, or the "Turn in 3D" button (keyboard users).
- * Booting it on view or idle blocked first taps on phones (INP, see HeroVisual), so phones keep
- * the poster until they ask. One pause button stops the floating pieces and the turntable
- * (WCAG 2.2.2); both start paused under prefers-reduced-motion.
+ * editor pieces around it.
+ *
+ * Motion, lightest first:
+ * - With a turntable loop (ASSETS kit, muted 5 s video): it plays while the stage is in view,
+ *   from `preload="none"`, so it never competes with the poster for first paint.
+ * - three.js never loads on first paint. The kit's HeroScene3D (same mailer, artwork and angle as
+ *   the poster) mounts only on intent: the "Turn in 3D" button (keyboard and touch), a press on
+ *   the box, or, when there is no loop, the mouse entering the box. Booting it on view or idle
+ *   blocked first taps on phones (INP, see HeroVisual).
+ * One pause button stops the loop, the floating pieces and the turntable (WCAG 2.2.2); all start
+ * paused under prefers-reduced-motion (WCAG 2.3.3).
  */
 export function LiveBox({
   poster,
   pieces,
+  loop,
   labels,
 }: {
   poster: ReactNode;
   pieces: ReactNode;
+  loop?: LoopSource[];
   labels: { viewer: string; roleDescription: string; keyboardHint: string; unsupported: string; turn: string; turnHint: string; pause: string; play: string };
 }) {
   const [mount, setMount] = useState(false);
   const [ready, setReady] = useState(false);
   const [playing, setPlaying] = useState(true);
+  const [inView, setInView] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
   const asked = useRef(false);
+  const stage = useRef<HTMLDivElement>(null);
+  const video = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) setPlaying(false);
+    const el = stage.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(([e]) => setInView(e.isIntersecting), { threshold: 0.25 });
+    io.observe(el);
+    return () => io.disconnect();
   }, []);
+
+  // The loop plays only while visible, wanted and not replaced by the live 3D box.
+  useEffect(() => {
+    const v = video.current;
+    if (!v) return;
+    if (playing && inView && !ready) void v.play().catch(() => undefined);
+    else v.pause();
+  }, [playing, inView, ready]);
 
   const intent = () => {
     if (asked.current) return;
@@ -49,14 +80,32 @@ export function LiveBox({
       });
   };
   const hover = (e: React.PointerEvent) => {
-    if (e.pointerType === "mouse") intent();
+    if (!loop && e.pointerType === "mouse") intent();
   };
 
   return (
-    <div className={styles.stage} data-paused={playing ? "false" : "true"}>
+    <div ref={stage} className={styles.stage} data-paused={playing ? "false" : "true"}>
       {pieces}
-      <div className={styles.box} data-live={ready ? "true" : "false"} onPointerEnter={hover} onPointerDown={intent}>
+      <div className={styles.box} data-live={ready ? "true" : "false"} data-video={videoReady && !ready ? "true" : "false"} onPointerEnter={hover} onPointerDown={intent}>
         {poster}
+        {loop ? (
+          <video
+            ref={video}
+            className={styles.boxVideo}
+            muted
+            loop
+            playsInline
+            preload="none"
+            aria-hidden="true"
+            tabIndex={-1}
+            disablePictureInPicture
+            onPlaying={() => setVideoReady(true)}
+          >
+            {loop.map((s) => (
+              <source key={s.src} src={s.src} type={s.type} media={s.media} />
+            ))}
+          </video>
+        ) : null}
         {mount ? (
           <div className={styles.boxCanvas} data-ready={ready ? "true" : "false"}>
             <HeroScene3D

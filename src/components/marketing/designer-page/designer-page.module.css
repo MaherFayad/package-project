@@ -156,8 +156,8 @@
 .layerAdd { color: var(--dp-lilac) !important; }
 .swatchRow { display: flex; gap: 8px; }
 .swatch { inline-size: 26px; block-size: 26px; border-radius: 9999px; border: 2px solid rgba(255, 255, 255, 0.85); }
-.tile { inline-size: 64px; block-size: 64px; border-radius: 10px; background: #eceaf3; display: grid; place-items: center; overflow: hidden; }
-.tile img { inline-size: 86%; block-size: 86%; object-fit: contain; }
+.tile { inline-size: 64px; block-size: 64px; border-radius: 10px; background: radial-gradient(closest-side, #2a3150, #161b30); display: grid; place-items: center; overflow: hidden; }
+.tile img { inline-size: 100%; block-size: 100%; object-fit: contain; }
 .priceValue { display: block; font-size: 1.375rem; font-weight: 500; margin-block: 2px; }
 .priceNote { color: #9fe3c0; font-size: 0.8125rem; }
 .finishDot { inline-size: 12px; block-size: 12px; border-radius: 9999px; background: linear-gradient(135deg, #f3e6c4, #b99653); }
@@ -169,6 +169,16 @@
 }
 .boxPoster { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; object-fit: contain; filter: drop-shadow(0 40px 60px rgba(0, 0, 0, 0.55)); }
 .boxCanvas { position: absolute; inset: 0; opacity: 0; transition: opacity 0.5s var(--dp-ease); }
+.boxVideo {
+  position: absolute; inset: -8% -12%; inline-size: 124%; block-size: 116%; object-fit: cover;
+  opacity: 0; transition: opacity 0.5s var(--dp-ease); pointer-events: none;
+  /* The loop is shot on a dark studio backdrop: feather its edges into the page canvas. */
+  mask-image: radial-gradient(closest-side, #000 62%, transparent 100%);
+}
+.box[data-video="true"] .boxVideo { opacity: 1; }
+.box[data-video="true"] .boxPoster { opacity: 0; transition: opacity 0.5s var(--dp-ease) 0.1s; }
+.sampleNote { margin: 0; font-size: 0.75rem; color: var(--dp-muted); }
+.heroSample { margin-block-start: 24px; }
 .boxCanvas[data-ready="true"] { opacity: 1; }
 .box[data-live="true"] .boxPoster { opacity: 0; transition: opacity 0.5s var(--dp-ease) 0.1s; }
 .boxControls { position: absolute; z-index: 3; inset-block-end: 0; inset-inline-start: 50%; translate: -50% 40%; display: flex; gap: 8px; align-items: center; }

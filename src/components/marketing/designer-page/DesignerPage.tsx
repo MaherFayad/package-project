@@ -11,8 +11,9 @@ import { Sheet } from "../kit/Sheet";
 import { Display } from "../kit/Display";
 import { Pill } from "../kit/Pill";
 import { renderDims, renderSrc, srcSetFor } from "../assets";
+import { R6, SAMPLE_LABEL, srcSet as r6SrcSet, src as r6Src } from "../kit/assets";
 import { designerPageCopy, fill } from "./copy";
-import { LiveBox } from "./LiveBox";
+import { LiveBox, type LoopSource } from "./LiveBox";
 import { PromptBar } from "./PromptBar";
 import { Rail } from "./Rail";
 import { StartCarousel } from "./StartCarousel";
@@ -34,6 +35,8 @@ export interface DesignerPageData {
   bleedMm: number;
   safeMm: number;
   host: string;
+  /** Mailer turntable loop from the ASSETS kit, when its files are deployed. */
+  loop?: LoopSource[];
 }
 
 /** Board and finish swatches for the materials wall (a colour study of each, not a photo). */
@@ -185,12 +188,17 @@ export function DesignerPage(d: DesignerPageData) {
                   </div>
                 </div>
                 <div className={`${styles.float} ${styles.floatTiles}`} style={{ ["--i" as string]: 2 }} aria-hidden="true">
-                  {(["ECMA_RTE", "RIGID_BOX", "PAPER_TUBE"] as StructureCode[]).map((code) => (
-                    <span key={code} className={styles.tile}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={renderSrc(code).replace(/\.webp$/, ".400w.webp")} alt="" width={64} height={64} loading="lazy" decoding="async" fetchPriority="low" />
-                    </span>
-                  ))}
+                  {(["tuck-carton-iso", "rigid-box-iso", "tube-iso"] as const).map((k) => {
+                    const a = R6.cutouts[k];
+                    return (
+                      <span key={k} className={styles.tile}>
+                        <picture>
+                          <source type="image/avif" srcSet={r6SrcSet(a, "avif")} />
+                          <img src={r6Src(a)} srcSet={r6SrcSet(a, "webp")} alt="" width={64} height={64} loading="lazy" decoding="async" fetchPriority="low" />
+                        </picture>
+                      </span>
+                    );
+                  })}
                 </div>
                 <div className={`${styles.float} ${styles.floatFinish}`} style={{ ["--i" as string]: 3 }} aria-hidden="true">
                   <span className={styles.finishDot} />
@@ -205,6 +213,7 @@ export function DesignerPage(d: DesignerPageData) {
                 ) : null}
               </>
             }
+            loop={d.loop}
             labels={{
               viewer: c.hero.viewer,
               roleDescription: t("viewer.roleDescription"),
@@ -216,6 +225,7 @@ export function DesignerPage(d: DesignerPageData) {
               play: c.hero.play,
             }}
           />
+          <p className={`${styles.sampleNote} ${styles.heroSample}`}>{SAMPLE_LABEL[locale]}</p>
         </div>
       </Sheet>
 
@@ -254,6 +264,7 @@ export function DesignerPage(d: DesignerPageData) {
               {c.wall.all}
             </Link>
           </p>
+          <p className={styles.sampleNote}>{SAMPLE_LABEL[locale]}</p>
         </div>
         <Rail variant="wall" label={c.wall.label} pause={c.wall.pause} play={c.wall.play} items={wall.map((s, i) => styleCard(s, i, false))} echo={wall.map((s, i) => styleCard(s, i, true))} />
         <div className={styles.wallEnd} />
