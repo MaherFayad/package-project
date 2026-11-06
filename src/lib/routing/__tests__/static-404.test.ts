@@ -24,7 +24,8 @@ describe("static 404 routing", () => {
   it("never treats a real page as missing", () => {
     for (const seg of TOP_SEGMENTS) if (seg !== "s") expect(isKnownMissing([seg]), seg).toBe(false); // /s alone has no page
     expect(isKnownMissing([])).toBe(false);
-    expect(isKnownMissing(["catalog", "any-model"])).toBe(false); // needs a lookup: left to notFound()
+    expect(isKnownMissing(["vendors", "any-printer"])).toBe(false); // needs the database: left to notFound()
+    expect(isKnownMissing(["orders", "ELB-99999"])).toBe(false);
     expect(isKnownMissing(["s", "rf_CZMTsKqxP2TQH"])).toBe(false); // a 16-character token
     for (const doc of LEGAL_DOC_IDS) expect(isKnownMissing(["legal", doc])).toBe(false);
   });
@@ -54,5 +55,46 @@ describe("editor model check matches lib/library modelFromParam", () => {
     for (const s of samples) expect(isEditorModel(s), s).toBe(!!(() => { try { return modelFromParam(s); } catch { return null; } })());
     expect(isKnownMissing(["design", "no-such-model"])).toBe(true);
     expect(isKnownMissing(["design", Object.values(MODEL_INDEX)[0]![1]])).toBe(false);
+  });
+});
+
+describe("R5-PL-19: generated slug sets", () => {
+  it("route-slugs.generated.ts is current (npx tsx scripts/generate-route-slugs.ts)", async () => {
+    const { compute, render } = await import("../../../../scripts/generate-route-slugs");
+    const cur = fs.readFileSync(path.join(process.cwd(), "src/lib/routing/route-slugs.generated.ts"), "utf8");
+    expect(cur).toBe(render(compute()));
+  });
+
+  it("accepts every real catalogue model (slug and code, any case) and every redirecting structure URL", async () => {
+    const { CATALOGUE, catalogueEntryFromParam } = await import("@/data/catalogue");
+    const { STRUCTURE_LIST } = await import("@/lib/dieline");
+    for (const e of CATALOGUE) {
+      for (const p of [e.slug, e.slug.toUpperCase(), e.code, e.code.toLowerCase()]) {
+        expect(isKnownMissing(["catalog", p]), p).toBe(!catalogueEntryFromParam(p));
+      }
+    }
+    for (const s of STRUCTURE_LIST) expect(isKnownMissing(["catalog", s.slug]), s.slug).toBe(false);
+    expect(isKnownMissing(["catalog", "no-such-model"])).toBe(true);
+    expect(isKnownMissing(["catalog", CATALOGUE[0]!.slug, "extra"])).toBe(true);
+  });
+
+  it("accepts every box style and every SEO size page; rejects unknown styles and malformed sizes", async () => {
+    const { STRUCTURE_SLUGS, seoSizeParams, structureFromSlug, parseSizeSlug } = await import("@/components/store/catalog");
+    for (const slug of Object.values(STRUCTURE_SLUGS)) expect(isKnownMissing(["boxes", slug]), slug).toBe(!structureFromSlug(slug));
+    for (const { structure, size } of seoSizeParams()) expect(isKnownMissing(["boxes", structure, size]), `${structure}/${size}`).toBe(false);
+    const any = Object.values(STRUCTURE_SLUGS)[0]!;
+    for (const size of ["300X200X150", "300×200×150", "99x99x99"]) expect(isKnownMissing(["boxes", any, size]), size).toBe(!parseSizeSlug(size));
+    expect(isKnownMissing(["boxes", "no-such-style"])).toBe(true);
+    expect(isKnownMissing(["boxes", any, "big"])).toBe(true);
+    expect(isKnownMissing(["boxes", any, "300x200x150", "x"])).toBe(true);
+  });
+
+  it("paths below pages without children are unknown", async () => {
+    const { LEAF_SEGMENTS } = await import("../route-slugs.generated");
+    expect(LEAF_SEGMENTS).toContain("bottles");
+    for (const leaf of LEAF_SEGMENTS) {
+      if (leaf !== NOT_FOUND_SEGMENT) expect(isKnownMissing([leaf]), leaf).toBe(false);
+      expect(isKnownMissing([leaf, "x"]), leaf).toBe(true);
+    }
   });
 });

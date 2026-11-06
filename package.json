@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "tsx scripts/generate-i18n-scopes.ts",
+    "prebuild": "tsx scripts/generate-i18n-scopes.ts && tsx scripts/generate-route-slugs.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",

@@ -33,6 +33,8 @@ const PAGES = [
   { key: "bottles", path: "/bottles" },
   { key: "catalog", path: "/catalog" },
   { key: "vendors", path: "/vendors" },
+  { key: "start", path: "/start" },
+  { key: "why-elba", path: "/why-elba" },
   { key: "why-elba", path: "/why-elba" },
   { key: "pricing", path: "/pricing" },
   { key: "design-picker", path: "/design" },

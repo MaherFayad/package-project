@@ -1662,7 +1662,6 @@ export const I18N_SCOPES = {
     "vendorPortal.rateCards.units.",
     "vendorPortal.title",
     "vendorPortal.topBar.account",
-    "vendorPortal.topBar.search",
     "vendorPortal.topBar.searchShort",
     "vendorPortal.topBar.signOut",
     "vendorPortal.topBar.switchLanguage",

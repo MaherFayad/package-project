@@ -9,8 +9,8 @@ const p = await b.newPage();
 await p.goto(BASE + "/robots.txt");
 const html = await (await p.request.get(BASE + "/ar")).text();
 const pick = (re) => (html.match(re) || [])[1];
-const plex = Object.fromEntries([400, 600, 700].map((w) => [w, pick(new RegExp(`font-family:IBM Plex Sans Arabic;font-style:normal;font-weight:${w};font-display:swap;src:url\\((/_next/static/media/[a-z0-9]+-s\\.woff2)\\) format\\("woff2"\\);unicode-range:u\\+06`))]));
-const noto = pick(/font-family:Noto Sans Arabic;font-style:normal;font-weight:100 900;[^}]*?src:url\((\/_next\/static\/media\/[a-z0-9]+-s\.woff2)\)[^}]*unicode-range:u\+06/);
+const plex = Object.fromEntries([400, 600, 700].map((w) => [w, pick(new RegExp(`font-family:IBM Plex Sans Arabic;font-style:normal;font-weight:${w};font-display:swap;src:url\\((/_next/static/media/[a-z0-9]+(?:-s)?\\.woff2)\\) format\\("woff2"\\);unicode-range:u\\+06`))]));
+const noto = pick(/font-family:Noto Sans Arabic;font-style:normal;font-weight:100 900;[^}]*?src:url\((\/_next\/static\/media\/[a-z0-9]+(?:-s)?\.woff2)\)[^}]*unicode-range:u\+06/);
 const SAMPLES = [
   "نستخدم ملفات تعريف الارتباط الضرورية لإبقائك مسجلا للدخول وتذكر لغتك والاحتفاظ بتصميمك غير المحفوظ، وقياسا داخليا لاستخدام الموقع لا نشاركه مع أي جهة أخرى. لا نستخدم ملفات إعلانية.",
   "الكمية والسعر ومتابعة الطلب وتأكيد البروفة قبل الطباعة",
@@ -36,6 +36,14 @@ const out = await p.evaluate(async ({ plex, noto, SAMPLES }) => {
       const size = P.width / F.width; // size-adjust that makes the fallback run as wide as Plex
       res[w][name] = { sizeAdjust: +(size * 100).toFixed(2), ascent: +((P.asc / 100 / size) * 100).toFixed(2), descent: +((P.desc / 100 / size) * 100).toFixed(2), raw: F };
     }
+  }
+  // Noto Sans Arabic (marketing face) against DejaVu Sans (Book up to 500, Bold above)
+  res.noto = {};
+  for (const w of [300, 400, 550, 700]) {
+    const N = m("MNoto", w);
+    const D = m("'DejaVu Sans'", w <= 500 ? 400 : 700);
+    const size = N.width / D.width;
+    res.noto[w] = { sizeAdjust: +(size * 100).toFixed(2), ascent: +((N.asc / 100 / size) * 100).toFixed(2), descent: +((N.desc / 100 / size) * 100).toFixed(2), notoAsc: N.asc, notoDesc: N.desc };
   }
   return res;
 }, { plex, noto, SAMPLES });
