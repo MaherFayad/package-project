@@ -1,20 +1,26 @@
 import type { LocalizedText } from "@/types";
 import type { BottleMaterial, BottleMaterialCode, ContentCode } from "./types";
 
+/**
+ * `coreMaterial` is the core look the 3D view uses until it takes `hex` as a tint. Rule: never
+ * render a different colour family (green glass was shown amber). Untinted clear is the fallback
+ * for green / cobalt glass; translucent natural HDPE / PP use the frosted (milky) look; amber
+ * PET uses amber glass, which is the right colour.
+ */
 export const BOTTLE_MATERIALS: Record<BottleMaterialCode, BottleMaterial> = {
   GLASS_FLINT: { code: "GLASS_FLINT", name: { ar: "زجاج شفاف", en: "Flint glass" }, kind: "GLASS", hex: "#eef4f2", transmission: 0.92, frosted: false, recyclingCode: "70 GL", uvBlock: "low", coreMaterial: "GLASS_CLEAR" },
   GLASS_AMBER: { code: "GLASS_AMBER", name: { ar: "زجاج عسلي", en: "Amber glass" }, kind: "GLASS", hex: "#8a4b12", transmission: 0.55, frosted: false, recyclingCode: "72 GL", uvBlock: "high", coreMaterial: "GLASS_AMBER" },
-  GLASS_GREEN: { code: "GLASS_GREEN", name: { ar: "زجاج أخضر", en: "Green glass" }, kind: "GLASS", hex: "#2f5a2c", transmission: 0.5, frosted: false, recyclingCode: "71 GL", uvBlock: "medium", coreMaterial: "GLASS_AMBER" },
+  GLASS_GREEN: { code: "GLASS_GREEN", name: { ar: "زجاج أخضر", en: "Green glass" }, kind: "GLASS", hex: "#2f5a2c", transmission: 0.5, frosted: false, recyclingCode: "71 GL", uvBlock: "medium", coreMaterial: "GLASS_CLEAR" },
   GLASS_COBALT: { code: "GLASS_COBALT", name: { ar: "زجاج أزرق كوبالت", en: "Cobalt blue glass" }, kind: "GLASS", hex: "#1d3f8f", transmission: 0.45, frosted: false, recyclingCode: "70 GL", uvBlock: "low", coreMaterial: "GLASS_CLEAR" },
   GLASS_FROSTED: { code: "GLASS_FROSTED", name: { ar: "زجاج مصنفر", en: "Frosted glass" }, kind: "GLASS", hex: "#e4ebe9", transmission: 0.6, frosted: true, recyclingCode: "70 GL", uvBlock: "low", coreMaterial: "GLASS_FROSTED" },
   PET_CLEAR: { code: "PET_CLEAR", name: { ar: "بلاستيك PET شفاف", en: "Clear PET" }, kind: "PET", hex: "#f2f7fa", transmission: 0.95, frosted: false, recyclingCode: "1 PET", uvBlock: "low", coreMaterial: "PET_CLEAR" },
-  PET_AMBER: { code: "PET_AMBER", name: { ar: "بلاستيك PET عسلي", en: "Amber PET" }, kind: "PET", hex: "#9a5418", transmission: 0.6, frosted: false, recyclingCode: "1 PET", uvBlock: "high", coreMaterial: "PET_CLEAR" },
+  PET_AMBER: { code: "PET_AMBER", name: { ar: "بلاستيك PET عسلي", en: "Amber PET" }, kind: "PET", hex: "#9a5418", transmission: 0.6, frosted: false, recyclingCode: "1 PET", uvBlock: "high", coreMaterial: "GLASS_AMBER" },
   PET_BLUE: { code: "PET_BLUE", name: { ar: "بلاستيك PET أزرق فاتح", en: "Light blue PET" }, kind: "PET", hex: "#cfe6f5", transmission: 0.88, frosted: false, recyclingCode: "1 PET", uvBlock: "low", coreMaterial: "PET_CLEAR" },
   HDPE_WHITE: { code: "HDPE_WHITE", name: { ar: "بلاستيك HDPE أبيض", en: "White HDPE" }, kind: "HDPE", hex: "#f4f4f1", transmission: 0, frosted: false, recyclingCode: "2 HDPE", uvBlock: "high", coreMaterial: "HDPE_WHITE" },
-  HDPE_NATURAL: { code: "HDPE_NATURAL", name: { ar: "بلاستيك HDPE طبيعي", en: "Natural HDPE" }, kind: "HDPE", hex: "#ece9df", transmission: 0.35, frosted: true, recyclingCode: "2 HDPE", uvBlock: "medium", coreMaterial: "HDPE_WHITE" },
+  HDPE_NATURAL: { code: "HDPE_NATURAL", name: { ar: "بلاستيك HDPE طبيعي", en: "Natural HDPE" }, kind: "HDPE", hex: "#ece9df", transmission: 0.35, frosted: true, recyclingCode: "2 HDPE", uvBlock: "medium", coreMaterial: "GLASS_FROSTED" },
   HDPE_COLOURED: { code: "HDPE_COLOURED", name: { ar: "بلاستيك HDPE ملون", en: "Coloured HDPE" }, kind: "HDPE", hex: "#2a2d33", transmission: 0, frosted: false, recyclingCode: "2 HDPE", uvBlock: "high", coreMaterial: "HDPE_WHITE" },
   PP_WHITE: { code: "PP_WHITE", name: { ar: "بلاستيك PP أبيض", en: "White PP" }, kind: "PP", hex: "#f6f6f4", transmission: 0, frosted: false, recyclingCode: "5 PP", uvBlock: "high", coreMaterial: "HDPE_WHITE" },
-  PP_NATURAL: { code: "PP_NATURAL", name: { ar: "بلاستيك PP شفاف", en: "Translucent PP" }, kind: "PP", hex: "#eef0ee", transmission: 0.55, frosted: true, recyclingCode: "5 PP", uvBlock: "low", coreMaterial: "PET_CLEAR" },
+  PP_NATURAL: { code: "PP_NATURAL", name: { ar: "بلاستيك PP شفاف", en: "Translucent PP" }, kind: "PP", hex: "#eef0ee", transmission: 0.55, frosted: true, recyclingCode: "5 PP", uvBlock: "low", coreMaterial: "GLASS_FROSTED" },
 };
 
 /** Fill (product) appearance. clarity: 1 = water clear, 0 = opaque. density g/ml for grams presets. */
