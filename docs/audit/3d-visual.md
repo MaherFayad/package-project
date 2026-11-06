@@ -139,3 +139,27 @@ Contact sheets: `foodservice-rigid-tubes-01..02.jpg`.
 | FR-07 | FS_PIZZA_SLICE | low | Side ears 0.56 mm into the side walls (766 mm² × 2). | — | `boxes.ts` ears `stack -1`. |
 | FR-08 | FS_FRIES_SCOOP | low | `glue↔bottomTuck` coplanar (94 mm²). | — | `bottomTuck stack -2`. |
 | FR-09 | FS_CAKE_BOX_WINDOW, FS_BAKERY_BOX, FS_BURGER_CLAMSHELL, FS_SANDWICH_WEDGE, FS_PIZZA_ROUND, RIGID_COLLAPSIBLE, PALLET_BOX | — | Assemble correctly; window film on cake box and sandwich wedge reads as clear film. | — | — |
+
+## 8. FEFCO 09 interior fittings (36 printed of 48) — `src/lib/dieline/families/fefco-09`
+
+Contact sheets: `fefco-09-01..03.jpg`. Fittings are sized by the host box's inner dims, so "outer < inner" in the geometry check is expected (not a finding).
+
+| ID | Model | Sev | Finding | Real-world reference | Fix |
+|---|---|---|---|---|---|
+| F09-01 | FEFCO_0904, 0907, 0908, 0920, 0970, 0971, 0971A, 0902 | medium | The default 3/4 view shows the **unprinted** side: the printed face is `left` / `back` / `right` only (no `front` / `top`), so the user lands on bare kraft and must orbit to find the artwork. | — | `PackagingScene.tsx · Rig` initial framing: pick `DEFAULT_VIEW.theta` from the largest printed face in `dieline.faces` (front 32°, right 122°, back 212°, left −58°). |
+| F09-02 | FEFCO_0945 | medium | Pad coplanar with its edge strips (`pad↔edgeLeft`, `pad↔edgeRight`, d = 0, 4 876 mm² each): z-fight stripes along both long edges. | — | `cushions.ts` 0945 edge strips `stack -1`. |
+| F09-03 | FEFCO_0948 | medium | Accordion pad panels coplanar (`p4↔p8`, `p4↔p0`, 4 469 mm²). | Folded pad: each layer one caliper apart. | `cushions.ts` 0948: `stack` = layer index. |
+| F09-04 | FEFCO_0902 | low | Single pad rendered **standing on edge** in the closed state (it is a flat pad with one printed face). | A pad lies flat in the box bottom. | `liners.ts` 0902: `closedRotation` identity → −90° about X. |
+| F09-05 | all others | — | Liners, sleeves (0906/0931/0932), H-dividers (0920/0921), corner posts read correctly. | FEFCO code book 09. | — |
+
+## 9. ECMA tuck-end family (14) — `src/lib/dieline/families/ecma-tuck`
+
+Contact sheet: `ecma-tuck-01.jpg`. All 14 cartons assemble; tuck flaps, dust flaps, hanger tabs (euro slot, round hole), seal-end tear strip and snap/crash-lock bottoms render to life.
+
+| ID | Model | Sev | Finding | Real-world reference | Fix |
+|---|---|---|---|---|---|
+| TK-01 | ECMA_TUCK_RTE, AIRPLANE, FRENCH_RTE, HANGER_EURO, HANGER_ROUND, WINDOW_RTE, PHARMA_RTE | low | Glue flap coplanar with the tuck flap (`glue↔bottomTuck` / `glue↔topTuck`, d = 0, 46–266 mm²): z-fight visible when looking into an open end. | — | `families/ecma-tuck/closures.ts`: tuck flaps `stack -2` (glue is −1). |
+| TK-02 | ECMA_DOUBLE_WALL_TUCK | medium | Inner walls coplanar with glue and tucks (`glue↔backInner` 2 467 mm², `topTuck↔frontInner` 1 457 mm², `bottomTuck↔backInner` 1 467 mm²). | Double-wall carton: inner walls one caliper inside. | `generators.ts` double wall: inner walls `stack -1`, glue `-2`, tucks `-3`. |
+| TK-03 | ECMA_FLIP_TOP | medium | Top lip coplanar with the collar (417 mm²) — flicker on the front under the lid. | Flip-top (cigarette-style) collar sits inside the body. | `closures.ts` collar `stack -1`. |
+| TK-04 | ECMA_WINDOW_RTE | low | Window film reads as an opaque light-grey patch (you see the unprinted inside of the back panel through 16 % film). | Real window cartons show the product; empty preview should look like clear film. | `PackagingModel.tsx` film material: `opacity 0.16 → 0.08`, add `transmission 1, thickness 0.05` on high quality; tint the inside back panel 5 % darker so depth reads. |
+| TK-05 | ECMA_HANGER_EURO / ROUND | — | H +27/32 mm over inner = hanger tab (expected). | — | Exclude from outer-H check. |
