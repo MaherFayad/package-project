@@ -189,7 +189,7 @@ export const VESSELS: Record<VesselKind, VesselDefinition> = {
     closures: ["CAN_END"],
     defaultClosure: "CAN_END",
     neck: P.END_202,
-    limits: { D: { min: 50, max: 70 }, H: { min: 80, max: 170 } },
+    limits: { D: { min: 53, max: 70 }, H: { min: 80, max: 170 } }, // D >= 53: the smallest end (200, seam Ø53.2) may not stand proud of the body (R6-3Q-F-02)
     presets: [
       { id: "can-250-slim", name: { ar: "250 مل رفيعة", en: "250 ml slim" }, capacityMl: 250, dims: { D: 53.4, H: 134 }, neck: P.END_200, source: "Ardagh 250 ml slim: Ø53.4 x 134.0 mm, 200 end" },
       { id: "can-330", name: { ar: "330 مل عادية", en: "330 ml standard" }, capacityMl: 330, dims: { D: 66.2, H: 115.2 }, neck: P.END_202, source: "Crown 330 ml standard: Ø66 x 115.2 mm, 202 end" },

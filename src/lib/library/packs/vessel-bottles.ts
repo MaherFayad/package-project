@@ -54,13 +54,16 @@ export const models: VesselModelDef[] = BTL.DEFINITIONS.map((def) => {
     fillable: def.fillable,
     defaultLiquid: LIQUID_OF_CONTENT[def.defaultContent] ?? "WATER",
     pricing: "LABEL",
-    describe(dims, surfaces, presetId) {
+    // `closure` (the design's chosen closure) picks the neck finish it fits (R6-3Q-F-01)
+    describe(dims, surfaces, presetId, _container?: string, _options?: unknown, closure?: string) {
       const p = BTL.bottlePreset(def, presetId);
       const v = BTL.validateBottleDims(def, dims);
       if (!v.ok) throw new Error(`Invalid dims for ${def.code}`);
-      const profile = BTL.profileFor(def, dims, BTL.finishForDims(def, dims, p.finish));
+      const finish = BTL.finishForConfig(def, dims, p.finish, closure);
+      const profile = BTL.profileFor(def, dims, finish);
       const labels = labelSpecsFor(coreKind, dims, profile, surfaces.filter(isSurface));
-      return { profile, areas: labels.map(labelArea), envelope: BTL.bottleEnvelope(def, profile, dims) };
+      const fitted = def.closures.find((c) => c === closure && BTL.closureFits(c, finish));
+      return { profile, areas: labels.map(labelArea), envelope: BTL.bottleEnvelope(def, profile, dims, fitted) };
     },
   } satisfies VesselModelDef;
 });

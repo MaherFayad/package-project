@@ -245,3 +245,17 @@ describe("label runs (pricing inputs)", () => {
     expect(labelRun(wrap, 100, { webWidthMm: 250 }).fits).toBe(false);
   });
 });
+
+describe("core pack sizes (R6-3Q-F-02)", () => {
+  it("a can end / lug neck never stands proud of the body at the size limits", async () => {
+    const { models } = await import("@/lib/library/packs/vessel-core");
+    for (const m of models) {
+      if (m.code === "STAND_UP_POUCH" || m.code === "ROUND_TIN" || m.code === "SQUEEZE_TUBE") continue;
+      for (const D of [m.limits.D.min, m.limits.D.max]) {
+        const dims = { ...m.presets[0].dims, D };
+        const p = m.describe(dims, [], undefined).profile!;
+        expect(p.finishR, `${m.code} D${D}`).toBeLessThanOrEqual(D / 2 + 0.3);
+      }
+    }
+  });
+});
