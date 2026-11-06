@@ -60,4 +60,4 @@ Severity follows the brief: critical = broken flow, data or security; high = cle
 - `src/lib/dieline/families/fefco-06-07/group07.ts`: 0714 clearance.
 - Tests: `fefco-09/__tests__/overlap.ts` (new), `fefco-09.test.ts` (+48 strict tests), `fefco-06-07.test.ts` (+33 shared-board tests). Against the base sources, the new tests fail on exactly the 17 models fixed here.
 - READMEs of both families.
-- No files outside scope.
+- `docs/screenshots/models/FEFCO_06xx|07xx|09xx.png`: the 9 e2e `models.spec` screenshots of models whose geometry changed, rewritten by that spec. No source files outside scope.
