@@ -3,7 +3,7 @@ import type { Dims, StructureFeatures } from "@/types";
 import { DielineBuilder, rectEdges } from "../../builder";
 import { computeFaces, panelPivot } from "../../fold";
 import { cutWindow, notchPanel, tearBand } from "../../features";
-import { bboxOf, clamp, rectPolygon } from "../../geometry";
+import { bboxOf, clamp, pt, rectPolygon } from "../../geometry";
 import type { Rect } from "../../types";
 import {
   crashLockBottom,
@@ -161,7 +161,13 @@ export function hangerTuck(defaultHole: "euro" | "round") {
       faces: (panels, computed) => {
         const body = panels.filter((p) => p.id !== "header" && p.id !== "headerTag");
         const top = computeFaces({ panels: body, rootId: b.rootId, thicknessMm: t, closedRotation: IDENTITY }).faces.top;
-        return top ? { ...computed, top } : computed;
+        // The doubler is the FRONT of the hang tab (seen above the lid on the shelf), but it
+        // sits a box depth behind the front plane: pick its part up with a deep face search
+        // (same face frame and origin) so the front artwork runs up onto the tab.
+        const deep = computeFaces({ panels, rootId: b.rootId, thicknessMm: t, closedRotation: IDENTITY }, Wp + 4 * t).faces.front;
+        const tab = deep?.parts.find((x) => x.panelId === "headerTag");
+        const front = computed.front && tab ? { ...computed.front, parts: [...computed.front.parts, tab] } : computed.front;
+        return { ...computed, ...(front ? { front } : {}), ...(top ? { top } : {}) };
       },
     };
   };
@@ -202,23 +208,28 @@ export function pharmaTuck(dims: Dims, t: number, f: StructureFeatures, o: EcmaT
  * Reverse tuck with doubled front and back walls: an inner wall folds 180° from the free
  * (non-closure) edge of each long wall. Top closure on the back, bottom closure on the front;
  * the front's inner wall hangs from its top edge, the back's rises from its bottom edge.
- * Each long wall is two layers, so the side panels are W + 4t deep.
+ * Each long wall is two layers (the back's inner wall also clears the glue flap), so the side
+ * panels are W + 5t deep.
  */
 export function doubleWallTuck(dims: Dims, t: number, f: StructureFeatures, o: EcmaTuckOptions): EcmaTuckDraft {
   const Lp = dims.L + 2 * t;
-  const Wp = dims.W + 4 * t;
+  // Front = 2 layers, back = 3 (wall, glue flap gap, inner wall): W + 5t crease to crease.
+  const Wp = dims.W + 5 * t;
   const Hp = dims.H + 4 * t;
   const b = new DielineBuilder();
   const w = tube(b, Lp, Wp, Hp, glueWidth(dims.W, o.glueFlapMm));
-  tuckClosure(b, w, "top", "back", t, Lp, Wp, Hp, { tuckDepthMm: o.tuckDepthMm, lock: o.tuckLock });
-  tuckClosure(b, w, "bottom", "front", t, Lp, Wp, Hp, { tuckDepthMm: o.tuckDepthMm, lock: o.tuckLock });
+  // Layers inside each long wall, outside → in: front = wall | inner wall | top tuck;
+  // back = wall | glue flap | inner wall | bottom tuck.
+  tuckClosure(b, w, "top", "back", t, Lp, Wp, Hp, { tuckDepthMm: o.tuckDepthMm, lock: o.tuckLock, tuckStack: -2 });
+  tuckClosure(b, w, "bottom", "front", t, Lp, Wp, Hp, { tuckDepthMm: o.tuckDepthMm, lock: o.tuckLock, tuckStack: -3 });
   const innerH = Hp - 2 * t - 1; // clears the closure + dust layers at the far end
   const innerL = Lp - 2 * t - 0.5; // fits between the side walls
   const inset = (Lp - innerL) / 2;
   for (const [id, edge] of [["front", rectEdges(w.front).top], ["back", rectEdges(w.back).bottom]] as const) {
     const fr = b.frame(id, edge);
     const poly = [fr.at(fr.a, 0, 0), fr.at(fr.a, fr.length, 0), fr.at(fr.a, fr.length - inset, innerH), fr.at(fr.a, inset, innerH)];
-    b.attachPoly(`${id}Inner`, "inner", id, [fr.a, fr.b], poly, { fold: 180, stage: 1, label: "Inner wall" });
+    // 180° roll about a pivot p·t deep leaves a (2p − 2)·t gap: the back's inner wall clears the glue flap.
+    b.attachPoly(`${id}Inner`, "inner", id, [fr.a, fr.b], poly, { fold: 180, pivotDepth: id === "back" ? 1.5 : 1, stage: 1, label: "Inner wall" });
   }
   return { builder: b, closedRotation: IDENTITY, inner: { ...dims } };
 }
@@ -247,7 +258,10 @@ export function flipTop(dims: Dims, t: number, _f: StructureFeatures, o: EcmaTuc
   const xR = xF + Lp;
   const xB = xR + Wp;
   const body: Walls = { left: rect(xL, lidH, Wp, bodyH), front: rect(xF, lidH, Lp, bodyH), right: rect(xR, lidH, Wp, bodyH), back: rect(xB, lidH, Lp, bodyH) };
-  const lid: Walls = { left: rect(xL, 0, Wp, lidH), front: rect(xF, 0, Lp, lidH), right: rect(xR, 0, Wp, lidH), back: rect(xB, 0, Lp, lidH) };
+  // The lid is cut free of the body on the front and sides with a hairline clearance (the
+  // knife's kerf plus the opening allowance), so the closed pack shows the lid line.
+  const cut = 0.4;
+  const lid: Walls = { left: rect(xL, 0, Wp, lidH - cut), front: rect(xF, 0, Lp, lidH - cut), right: rect(xR, 0, Wp, lidH - cut), back: rect(xB, 0, Lp, lidH) };
   const taper = (d: number) => Math.min(d * 0.6, 4);
 
   b.root("front", "front", rectPolygon(body.front.x, body.front.y, Lp, bodyH), "Front (body)");
@@ -258,21 +272,23 @@ export function flipTop(dims: Dims, t: number, _f: StructureFeatures, o: EcmaTuc
 
   // Lid: hinged on a crease across the back; front and sides are cut free of the body.
   b.attach("lidBack", "back", "back", rectEdges(body.back).top, lidH, { kind: "rect" }, { fold: 0, stage: 0, label: "Lid back (hinge)" });
-  b.attach("lidRight", "right", "lidBack", rectEdges(lid.back).left, Wp, { kind: "rect" }, { stage: 0, label: "Lid right" });
+  b.attach("lidRight", "right", "lidBack", [pt(xB, 0), pt(xB, lidH - cut)], Wp, { kind: "rect" }, { stage: 0, label: "Lid right" });
   b.attach("lidFront", "front", "lidRight", rectEdges(lid.right).left, Lp, { kind: "rect" }, { stage: 0, label: "Lid front" });
   b.attach("lidLeft", "left", "lidFront", rectEdges(lid.front).left, Wp, { kind: "rect" }, { stage: 0, label: "Lid left" });
   const lg = Math.min(g, lidH * 0.8);
   b.attach("lidGlue", "glue", "lidLeft", rectEdges(lid.left).left, lg, { kind: "trapezoid", taperA: taper(lg), taperB: taper(lg) }, { stage: 0, stack: -1, label: "Lid glue flap" });
 
   // Glued ends: top on the lid back, bottom on the body back, each with a glue lip and dust flaps.
-  const lip = (d: number) => Math.min(12, d * 0.6);
+  // The lid's glue lip must stay above the inner frame (collar) that rises into the closed lid.
+  const topLip = Math.min(8, lidH * 0.35);
+  const lip = (d: number, where: "top" | "bottom") => (where === "top" ? topLip : Math.min(12, d * 0.6));
   const end = (where: "top" | "bottom", owner: string, ownerRect: Rect, sides: [string, Rect][], depthAvail: number) => {
     const edge = where === "top" ? rectEdges(ownerRect).top : rectEdges(ownerRect).bottom;
     b.attach(where, where, owner, edge, Wp, { kind: "rect" }, { stage: 2, label: where === "top" ? "Lid top" : "Bottom" });
     const endR = rect(ownerRect.x, where === "top" ? ownerRect.y - Wp : ownerRect.y + ownerRect.height, Lp, Wp);
     const far = where === "top" ? rectEdges(endR).top : rectEdges(endR).bottom;
     const fr = b.frame(where, far);
-    const ld = lip(depthAvail);
+    const ld = lip(depthAvail, where);
     const inset = t + 0.5;
     b.attachPoly(`${where}Lip`, "glue", where, [fr.at(fr.a, inset, 0), fr.at(fr.a, fr.length - inset, 0)], [fr.at(fr.a, inset, 0), fr.at(fr.a, fr.length - inset, 0), fr.at(fr.a, fr.length - inset - 2, ld), fr.at(fr.a, inset + 2, ld)], {
       stage: 2,
@@ -289,7 +305,7 @@ export function flipTop(dims: Dims, t: number, _f: StructureFeatures, o: EcmaTuc
 
   // Inner frame (collar): separate blank, U-shaped (front + two part sides), glued inside the
   // body front, standing `rise` mm above the body edge into the lid.
-  const rise = Math.max(4, lidH - 2 * t - 1);
+  const rise = Math.max(4, lidH - topLip - 2 * t - 1);
   const overlap = clamp(bodyH * 0.35, 12, 30);
   const cH = rise + overlap;
   const cL = Lp - 2 * t - 0.5;
