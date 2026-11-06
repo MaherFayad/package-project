@@ -199,7 +199,11 @@ function PickerGrid({ items, current, onPick }: { items: PickerRow[]; current?: 
   return (
     <div ref={scroller} className={styles.body} onScroll={onScroll}>
       {items.length === 0 ? (
-        <p className={styles.empty}>{COPY.emptyTitle[locale]}</p>
+        <div className={styles.empty}>
+          <p>{COPY.emptyTitle[locale]}</p>
+          {/* R6-03: say what to try, as the catalogue does. */}
+          <p className={styles.emptyBody}>{COPY.emptyBody[locale]}</p>
+        </div>
       ) : (
         <ul className={styles.grid} style={{ blockSize: rows * rowH - GAP }} onKeyDown={onKeyDown}>
           {items.slice(from, to).map((e, k) => {

@@ -88,6 +88,9 @@
 .meta { display: flex; flex-wrap: wrap; gap: var(--p-space-100); align-items: flex-end; align-self: end; min-inline-size: 0; }
 .std { font-size: var(--p-font-size-300); color: var(--p-color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-inline-size: 100%; }
 .empty { color: var(--p-color-text-secondary); text-align: center; padding-block: var(--p-space-800); }
+.empty p { margin: 0; }
+.empty p:first-child { color: var(--p-color-text); font-weight: var(--p-font-weight-semibold); }
+.emptyBody { margin-block-start: var(--p-space-100); font-size: var(--p-font-size-325); }
 @media (prefers-reduced-motion: reduce) {
   .card { transition: none; }
 }

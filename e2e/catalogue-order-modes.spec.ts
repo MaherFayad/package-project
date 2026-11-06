@@ -89,3 +89,28 @@ test("quote-only model: no 'Order this box' in designer, export, share, checkout
   await db.design.deleteMany({ where: { ownerId: { in: [owner.id, visitor.id] } } });
   await ctx.close();
 });
+
+test("special-gluing model no printer lists: 'Request a quote' once the price says so (R6-05)", async ({ page, baseURL }, info) => {
+  test.skip(info.project.name !== "desktop", "one designer session is enough");
+  test.setTimeout(90_000);
+  const owner = track(await createUser({ name: "E2E R6-05 owner" }));
+  await signInAs(page.context(), baseURL!, owner.id);
+  await page.goto("/en/design/fefco-0711-auto-bottom-rsc");
+  await dismissCookies(page);
+  await expect(page.getByTestId("price-badge")).toContainText(/by quote/i, { timeout: 30_000 });
+  await expect(page.getByRole("toolbar").getByRole("button", { name: "Request a quote" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Order this box" })).toHaveCount(0);
+  await toolbarAction(page, "Export");
+  const exp = page.getByRole("dialog", { name: "Download a mockup" });
+  await expect(exp.getByRole("button", { name: "Request a quote" })).toBeVisible();
+  await exp.getByRole("button", { name: "Cancel" }).click();
+  await toolbarAction(page, "Share");
+  const link = page.getByRole("dialog", { name: "Share link" }).getByLabel("Link");
+  await expect(link).toHaveValue(/\/en\/s\/[\w-]+$/, { timeout: 20_000 });
+  await page.goto(new URL(await link.inputValue()).pathname);
+  await expect(page.getByRole("link", { name: "Request a quote" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Order this box" })).toHaveCount(0);
+  await expect(page.getByText(/special gluing/).first()).toBeVisible();
+  await db.auditLog.deleteMany({ where: { actorId: owner.id } });
+  await db.design.deleteMany({ where: { ownerId: owner.id } });
+});

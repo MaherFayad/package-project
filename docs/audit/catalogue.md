@@ -228,3 +228,27 @@ New finding while fixing: **R5-01 (low)**, `/catalog` desktop now lazy-loads mor
 Verification: typecheck and lint clean; vitest 82 files, 8,381 passed; build passes; e2e `catalogue-order-modes`, `catalogue`, `designer`, `checkout`, `storefront`, `smoke`, `journey`, `admin` (desktop + mobile): 63 passed, 13 skipped, 0 failed. perf-pages `/catalog`: desktop ar / en LCP 0.31 / 0.36 s, CLS 0.000, INP 48 to 56 ms, TBT 15 to 27 ms; phone (Slow 4G, 4x CPU) ar / en LCP 4.0 / 4.3 s (platform-wide phone item from round 3), CLS 0.000, INP 80 ms.
 
 Files outside the original scope this step: `src/app/fonts.ts` (preload weights), `src/i18n/library.{en,ar}.ts` (3 keys), `src/components/designer/ConfigPanel.tsx`, `src/app/[locale]/design/(picker)/page.tsx` (subtitle sentence and link).
+
+## Stop-rule counts (round 4 + round 5 together, NEW findings by this area, before fixing)
+
+| critical | high | medium | low | total |
+|---|---|---|---|---|
+| 2 | 8 | 8 | 8 | 26 |
+
+R4-01 to R4-25 (critical 2, high 8, medium 8, low 7) plus R5-01 (low). The five ROUND5 rows (CR-30 reopened, R4-CR-05, R4-CR-06, R4-CR-17, R4-B-10) were found by the craft and business audits and are counted there. Medium or worse is non-zero, so a fresh pass R6 follows.
+
+## Round 6 (fresh pass on this branch merged with main at d56634b)
+
+Fresh audit of `/catalog` (grouped view, keyboard walk of 40 Tabs per locale and size with a check that no focused element sits under the sticky search / chip bars, axe WCAG 2.2 AA), the picker (keyboard, empty state), the designer, share page and checkout for each order mode, including a special-gluing model that no seeded printer lists (FEFCO 0711).
+
+Counts before fixing: **critical 0, high 1, medium 1, low 3** (5).
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R6-05 | high | designer top bar, export modal / toast, `/s/[id]` | A special-gluing model no printer lists (FEFCO 0711 auto-bottom) showed "Priced by quote" on the badge but "Order this box" on the top bar, the export modal and the share page: the label followed the static order mode only. | B-16 | Designer: the label also follows the live price state (`status: "quote"`). Share page: reads the engine's `MODEL_BY_QUOTE` reason from the quote it already runs for the share price, and shows "Request a quote" with the special-gluing reason. Checkout already followed the engine. e2e covers the badge, top bar, export modal and share page. | fixed |
+| R6-02 | medium | `/catalog` "Show all N" | Activating "Show all" removed the button with the grouped view and dropped keyboard focus to `<body>`. | WCAG 2.4.3 focus order | Focus moves to the family chip that is now selected. e2e asserts it. | fixed |
+| R6-01 | low | `/catalog` grouped view, axe | axe intermittently reports a 3.74:1 contrast on a card code in a section still skipped by `content-visibility: auto` (it measures before the section renders); in view the same text is #047b5d on the light card. | Tooling (WCAG 1.4.3 passes in view) | Left: dropping `content-visibility` would cost render time on 12 sections; the e2e axe run covers the rendered page. | open |
+| R6-03 | low | picker empty state | Only "No models match", no hint (the catalogue suggests another word or Worldwide). | ISO 9241-110 (error tolerance) | Same body text as the catalogue. | fixed |
+| R6-04 | low | `/catalog` hero stats | "In the 3D designer" (added in round 5) sat after the instant-price total. | Hierarchy | Order: models, in the 3D designer, available in Egypt, instant price. | fixed |
+
+Verification: typecheck and lint clean; vitest 82 files, 8,381 passed; build passes; e2e `catalogue-order-modes` (now 2 tests), `catalogue`, `designer`, `checkout`, `storefront`, `smoke`, `journey`, `admin` (desktop + mobile): 64 passed, 14 skipped, 0 failed. Keyboard walk: 0 focused elements obscured by the sticky bars (en / ar, 1440 / 390).

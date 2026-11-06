@@ -54,9 +54,9 @@ export default async function CatalogPage({ params }: Props) {
           <dl className={`${styles.stats} m-enter`} style={{ ["--m-i" as string]: 3 }}>
             {[
               [data.counts.total, COPY.statModels],
+              [data.counts.designer, COPY.statDesigner],
               [data.counts.egypt, COPY.statEgypt],
               [data.counts.instant, COPY.statInstant],
-              [data.counts.designer, COPY.statDesigner],
             ].map(([n, label]) => (
               <div key={(label as { en: string }).en} className={styles.stat}>
                 <dt className={styles.statLabel}>{(label as { ar: string; en: string })[locale]}</dt>

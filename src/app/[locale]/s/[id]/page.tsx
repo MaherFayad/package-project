@@ -16,7 +16,7 @@ import { cookies } from "next/headers";
 import { ANON_COOKIE } from "@/lib/auth/constants";
 import { track } from "@/lib/analytics/track";
 import { rateLimit } from "@/lib/rate-limit";
-import { ORDER_MODE_COPY, orderModeOf } from "@/data/catalogue/order-mode";
+import { ORDER_MODE_COPY, orderModeOf, type OrderModeReason } from "@/data/catalogue/order-mode";
 
 export const dynamic = "force-dynamic";
 
@@ -85,11 +85,13 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
   const styleName = lib?.name[locale] ?? t(`structures.${doc.structureCode}` as DictKey);
   const name = doc.name.trim() || styleName;
   // B-16: a model no Egyptian SME printer makes is requested by quote, never "Order this box".
-  const order = orderModeOf(doc.modelCode);
-  const byQuote = order.mode === "quote" || order.mode === "preview";
   // R4-12: the visitor sees the price before being asked to sign in, the same figure checkout
   // shows for 500 boxes (best match, prepay discount, delivery to Greater Cairo, excl. VAT).
-  const price = await sharePrice(doc);
+  const { price, quoteReason } = await sharePrice(doc);
+  // R6-05: also a special-gluing model that no printer lists yet (the engine says "by quote").
+  const order = orderModeOf(doc.modelCode);
+  const reason = order.mode === "quote" || order.mode === "preview" ? order.reason : quoteReason;
+  const byQuote = !!reason;
   const specs: [string, string][] = [
     [t("designer.shared.style"), styleName],
     [t("designer.shared.size"), formatDims(doc.dims, locale)],
@@ -113,7 +115,7 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
                     {t("buyer.sharePrice", { qty: price.quantity, price: formatMoney(price.unitPiasters, locale), days: price.days })}
                   </p>
                 ) : null}
-                <Text as="p">{byQuote ? ORDER_MODE_COPY[order.reason][locale] : t("designer.shared.ctaHelp")}</Text>
+                <Text as="p">{reason ? ORDER_MODE_COPY[reason][locale] : t("designer.shared.ctaHelp")}</Text>
                 <Button variant="primary" fullWidth url={`/${locale}/checkout/${encodeURIComponent(designId)}?share=${encodeURIComponent(id)}`}>
                   {byQuote ? (locale === "ar" ? "اطلب عرض سعر" : "Request a quote") : t("designer.shared.cta")}
                 </Button>
@@ -149,13 +151,14 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
 const SHARE_PRICE_QTY = 500;
 
 /** Headline price for the share page, or null when the box has no instant price (quote only). */
-async function sharePrice(doc: Parameters<typeof quoteDesign>[0]): Promise<{ quantity: number; unitPiasters: number; days: number } | null> {
+async function sharePrice(doc: Parameters<typeof quoteDesign>[0]): Promise<{ price: { quantity: number; unitPiasters: number; days: number } | null; quoteReason: OrderModeReason | null }> {
   try {
     const [tiers, outcome] = await Promise.all([tierPrices(doc), quoteDesign(doc, { quantity: SHARE_PRICE_QTY })]);
     const unit = tiers.find((x) => x.quantity === SHARE_PRICE_QTY)?.unitPiasters ?? null;
     const best = outcome.mode === "instant" ? outcome.offers[0] : null;
-    return unit !== null && best ? { quantity: SHARE_PRICE_QTY, unitPiasters: unit, days: best.deliveryDays } : null;
+    const quoteReason = outcome.mode === "manual_quote" && outcome.reason === "MODEL_BY_QUOTE" ? (outcome.orderReason ?? "QUOTE_ONLY_STOCK") : null;
+    return { price: unit !== null && best ? { quantity: SHARE_PRICE_QTY, unitPiasters: unit, days: best.deliveryDays } : null, quoteReason };
   } catch {
-    return null;
+    return { price: null, quoteReason: null };
   }
 }

@@ -80,6 +80,8 @@ test("catalogue: 12 per family with Show all, sticky family chips, short page (C
   expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThan(25_000);
   await page.getByTestId("show-all-corrugated").click();
   await expect(page.getByTestId("catalogue-sections")).toHaveCount(0);
+  // Focus moves to the selected family chip, not to <body> (R6-02, WCAG 2.4.3).
+  await expect(page.locator('[data-family="corrugated"]')).toBeFocused();
   await expect(page.locator('[data-family="corrugated"]')).toHaveAttribute("aria-pressed", "true");
   expect(await count(page)).toBeGreaterThan(200);
   if (info.project.name === "desktop") {

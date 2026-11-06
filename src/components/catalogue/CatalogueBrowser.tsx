@@ -97,6 +97,9 @@ export function CatalogueBrowser({ locale, cards, taxonomy }: { locale: Locale; 
     setFamily(slug);
     setSub("");
     browserRef.current?.scrollIntoView({ block: "start" });
+    // R6-02: the pressed button disappears with the grouped view; keep keyboard focus on the
+    // family chip that is now selected (WCAG 2.4.3), not on <body>.
+    requestAnimationFrame(() => browserRef.current?.querySelector<HTMLButtonElement>(`[data-family="${CSS.escape(slug)}"]`)?.focus({ preventScroll: true }));
   };
 
   const reset = () => {
