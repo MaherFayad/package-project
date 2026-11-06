@@ -73,7 +73,7 @@ import styles from "./designer.module.css";
 const StageSkeleton = () => <div className={lib.stageSkeleton} aria-hidden="true" />;
 const Scene3D = dynamic(() => import("./Scene3D"), { ssr: false, loading: StageSkeleton });
 // The picker (370 cards, search) loads only when it is opened (PERF-04).
-const ModelPicker = dynamic(() => import("./ModelPicker").then((m) => m.ModelPicker), { ssr: false });
+const ModelPicker = dynamic(() => import("@/components/catalogue/CataloguePicker").then((m) => m.ModelPicker), { ssr: false });
 const VesselView = dynamic(() => import("./VesselView"), { ssr: false, loading: StageSkeleton });
 
 type View = "3d" | "face" | "dieline";
