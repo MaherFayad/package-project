@@ -22,7 +22,8 @@ export type HistoryAction<T> =
   /** End the current coalescing group (e.g. on pointer up / field blur). */
   | { type: "seal" };
 
-export const HISTORY_LIMIT = 100;
+/** Cap (PERF-19): 50 steps; snapshots are DesignDocs only (no geometry, images shared by reference). */
+export const HISTORY_LIMIT = 50;
 
 export function initHistory<T>(value: T): History<T> {
   return { past: [], present: value, future: [], lastKey: null };

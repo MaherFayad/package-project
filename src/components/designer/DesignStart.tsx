@@ -1,55 +1,25 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Footprints, Pause, Pizza, Play, Shirt, SprayCan } from "lucide-react";
-import type { ArtworkSurface, Locale, MaterialCode } from "@/types";
-import { BOARD_SPECS, boardAppearance, generateDieline, paintArtworkSurface, surfaceCanvasSize, type DielineModel } from "@/lib/dieline";
-import { PackagingSceneLazy, type PackagingSceneHandle } from "@/components/three";
-import { useArtworkTexture } from "@/components/three/hooks";
+import type { Locale } from "@/types";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n/types";
 import { Button, Icon } from "@/components/ui";
-import { PRODUCT_PRESETS, designerPath, presetDims, type ProductPresetKey } from "./lib/catalog";
-import { resolveFont } from "./fonts";
+import { PRODUCT_PRESETS, designerPathLite, type ProductPresetKey } from "./lib/paths";
 import styles from "./designer.module.css";
 
+const StartViewer = dynamic(() => import("./StartViewer"), {
+  ssr: false,
+  // eslint-disable-next-line @next/next/no-img-element
+  loading: () => <img src="/models/mailer-box.svg" alt="" className={styles.startPoster} />,
+});
+
 const ICONS = { tshirt: Shirt, shoe: Footprints, perfume50: SprayCan, pizza30: Pizza } as const;
-
-/** Look of each product preview: board + a sample brand (our own words, never a real brand). */
-const LOOK: Record<ProductPresetKey, { material: MaterialCode; bg: string | null; ink: string; slug: string }> = {
-  tshirt: { material: "E_FLUTE_WHITE", bg: "#1f3d2b", ink: "#ffffff", slug: "mailer-box" },
-  shoe: { material: "E_FLUTE_KRAFT", bg: null, ink: "#1a1a1a", slug: "mailer-box" },
-  perfume50: { material: "SBS_350", bg: "#e4deff", ink: "#303030", slug: "reverse-tuck-end" },
-  pizza30: { material: "E_FLUTE_KRAFT", bg: null, ink: "#c70a24", slug: "pizza-box" },
-};
-
-/** Degrees per second of the slow turntable. */
-const SPEED = 16;
-
-function sampleArtwork(model: DielineModel, locale: Locale, look: (typeof LOOK)[ProductPresetKey]): ArtworkSurface {
-  const ar = locale === "ar";
-  const font = ar ? "IBM Plex Sans Arabic" : "Inter";
-  const layers: ArtworkSurface["layers"] = [];
-  const top = model.faces.top;
-  const front = model.faces.front;
-  const brand = ar ? "علامتك" : "Your brand";
-  const fit = (w: number, h: number, chars: number) => Math.max(8, Math.min(72, Math.min((w * 0.7) / (chars * 0.19), h * 0.45 * 2.83)));
-  if (top && top.height > 40) {
-    layers.push({
-      id: "s-top", kind: "text", face: "top", surface: "outside", x: top.width / 2, y: top.height / 2, width: top.width * 0.8, height: top.height * 0.4,
-      rotation: 0, text: brand, fontFamily: font, fontSizePt: fit(top.width, top.height, brand.length), fontWeight: 700, color: look.ink, align: "center", direction: ar ? "rtl" : "ltr",
-    });
-  }
-  if (front) {
-    const text = top && top.height > 40 ? (ar ? "صنع في مصر" : "Made in Egypt") : brand;
-    layers.push({
-      id: "s-front", kind: "text", face: "front", surface: "outside", x: front.width / 2, y: front.height / 2, width: front.width * 0.9, height: front.height * 0.5,
-      rotation: 0, text, fontFamily: font, fontSizePt: fit(front.width, front.height, text.length), fontWeight: 600, color: look.ink, align: "center", direction: ar ? "rtl" : "ltr",
-    });
-  }
-  return { background: look.bg, layers };
-}
+/** Poster (the model's thumbnail) shown until the 3D chunk is ready. */
+const POSTER: Record<ProductPresetKey, string> = { tshirt: "mailer-box", shoe: "mailer-box", perfume50: "reverse-tuck-end", pizza30: "pizza-box" };
 
 /**
  * Start page hero: a live, slowly turning 3D box that switches with the product shortcuts, so a
@@ -63,15 +33,8 @@ export function DesignStart({ locale }: { locale: Locale }) {
   const [active, setActive] = useState<ProductPresetKey>("tshirt");
   const [mounted, setMounted] = useState(false);
   const [playing, setPlaying] = useState(true);
-  const handle = useRef<PackagingSceneHandle>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const preset = PRODUCT_PRESETS.find((p) => p.key === active)!;
-  const look = LOOK[active];
-
-  const dieline = useMemo(
-    () => generateDieline(preset.structureCode, presetDims(preset.structureCode, preset.presetId), { thicknessMm: BOARD_SPECS[look.material].thicknessMm }),
-    [preset, look.material],
-  );
 
   // three.js loads once the browser is idle, so the page paints fast on mid-range phones.
   useEffect(() => {
@@ -94,56 +57,9 @@ export function DesignStart({ locale }: { locale: Locale }) {
     return () => el.removeEventListener("wheel", stop, { capture: true });
   }, []);
 
-  const [canvas, setCanvas] = useState<HTMLCanvasElement | null>(null);
-  const [version, setVersion] = useState(0);
-  useEffect(() => {
-    if (!mounted) return;
-    let cancelled = false;
-    const c = document.createElement("canvas");
-    const size = surfaceCanvasSize(dieline, 1024);
-    c.width = size.width;
-    c.height = size.height;
-    const paint = () => {
-      const ctx = c.getContext("2d");
-      if (!ctx || cancelled) return;
-      paintArtworkSurface(ctx, dieline, sampleArtwork(dieline, locale, look), {
-        surface: "outside",
-        pxPerMm: size.pxPerMm,
-        boardColor: boardAppearance(look.material).outside,
-        resolveFont,
-      });
-      setCanvas(c);
-      setVersion((v) => v + 1);
-    };
-    paint();
-    document.fonts?.ready.then(paint).catch(() => undefined);
-    return () => {
-      cancelled = true;
-    };
-  }, [mounted, dieline, locale, look]);
-  const texture = useArtworkTexture(canvas, version);
 
-  useEffect(() => {
-    if (!playing || !mounted) return;
-    let raf = 0;
-    let last = performance.now();
-    let visible = true;
-    const io = typeof IntersectionObserver !== "undefined" ? new IntersectionObserver(([e]) => (visible = e.isIntersecting)) : null;
-    if (wrapRef.current) io?.observe(wrapRef.current);
-    const tick = (now: number) => {
-      const dt = Math.min(now - last, 64);
-      last = now;
-      if (visible && document.visibilityState === "visible") handle.current?.rotate((SPEED * dt) / 1000);
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => {
-      cancelAnimationFrame(raf);
-      io?.disconnect();
-    };
-  }, [playing, mounted]);
 
-  const href = designerPath(locale, preset.structureCode, { preset: preset.presetId });
+  const href = designerPathLite(locale, preset.structureCode, { preset: preset.presetId });
   const productName = t(`designer.productPresets.${active}` as DictKey);
 
   return (
@@ -170,23 +86,21 @@ export function DesignStart({ locale }: { locale: Locale }) {
       <div className={styles.startStageCol}>
         <div className={styles.startStage} ref={wrapRef} onPointerDown={() => setPlaying(false)}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          {!mounted ? <img src={`/models/${look.slug}.svg`} alt="" className={styles.startPoster} /> : null}
+          {!mounted ? <img src={`/models/${POSTER[active]}.svg`} alt="" className={styles.startPoster} /> : null}
           {mounted ? (
             <div className={styles.startViewer} onFocusCapture={() => setPlaying(false)}>
-              <PackagingSceneLazy
-                key={active}
-                dieline={dieline}
-                material={look.material}
-                finish="MATTE_LAMINATION"
-                foldProgress={1}
-                animateFold={false}
-                artworkTextures={{ outside: texture }}
-                artworkVersion={version}
-                handleRef={handle}
-                ariaLabel={t("designer.start.viewerLabel", { product: productName })}
-                roleDescription={t("viewer.roleDescription")}
-                keyboardHint={t("viewer.keyboardHint")}
-                fallback={<p className={styles.sceneFallback}>{t("viewer.unsupported")}</p>}
+              <StartViewer
+                active={active}
+                locale={locale}
+                playing={playing}
+                wrapRef={wrapRef}
+                poster={`/models/${POSTER[active]}.svg`}
+                labels={{
+                  viewer: t("designer.start.viewerLabel", { product: productName }),
+                  roleDescription: t("viewer.roleDescription"),
+                  keyboardHint: t("viewer.keyboardHint"),
+                  unsupported: t("viewer.unsupported"),
+                }}
               />
             </div>
           ) : null}
@@ -222,7 +136,7 @@ export function DesignStart({ locale }: { locale: Locale }) {
                 <Link
                   className={styles.productLink}
                   data-active={p.key === active ? "true" : undefined}
-                  href={designerPath(locale, p.structureCode, { preset: p.presetId })}
+                  href={designerPathLite(locale, p.structureCode, { preset: p.presetId })}
                   onPointerEnter={() => setActive(p.key)}
                   onFocus={() => setActive(p.key)}
                 >

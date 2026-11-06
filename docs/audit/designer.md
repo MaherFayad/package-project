@@ -71,3 +71,19 @@ Screenshots: `docs/screenshots/audit/designer/` (`before-*`, `after-*`).
 | low | 8 | 8 | 0 |
 
 Plus 6 items reported to other owners (R-01 to R-06), not edited.
+
+## Performance fixes (from `docs/audit/performance.md`, integrator request)
+
+Measured with the report's own harness (`docs/audit/tools/bundle-report.mjs`, `perf-3d.mjs`) on `next build && next start`, the same profiles (desktop; phone = 4x CPU + Slow 4G).
+
+| id | change | before | after |
+|---|---|---|---|
+| PERF-03a | `lib/paths.ts`: dependency-free `STRUCTURE_SLUGS`, `structureFromParam`, `designerPathLite`, `PRODUCT_PRESETS`, `readDraftSummary` (`catalog.ts` re-exports them). `ResumeCard` reads a draft summary, not the parsed doc. The start page's 3D preview is a lazy chunk (`StartViewer.tsx`) with an SVG poster. A unit test keeps the slugs equal to the engine's. | `/design` 472 KB gz, three + library + dieline in the first bundle | **146 KB gz**, none of them (they load after idle for the preview) |
+| PERF-04 (share) | `SharedViewer` is light. The 3D view (`SharedScene.tsx`: library, dieline, three) is a lazy chunk; the page passes the model thumbnail as a poster. | `/s/[id]` 463 KB gz | **142 KB gz** |
+| PERF-04 (editor) | No client-side `MODELS.map(toCard)`: the page sends `pickerCards` from the server. `ModelPicker` is `next/dynamic`, mounted on first open and kept, so closing still animates and returns focus. | 507 KB gz | 509 KB gz. The editor still needs `docGeometry` / `modelByCode`, and `@/lib/library` imports every generator, so the per-family `import()` split in `src/lib/library` (not designer scope) is what removes the 172 KB library chunk. |
+| PERF-10 | The editor page emits `<link rel="preload" as="script">` for the 3D chunks of the current kind (read from the build's react-loadable manifest; `rel=preload` because Next's chunks are classic scripts, not modules). A large model poster shows in the stage from the first paint and fades out on the first rendered frame (`onReady`). | first 3D frame 639 ms / 9,029 ms (phone); LCP = 160x120 poster | 845 ms / 9,505 ms (the same within run noise: the bundle is unchanged). The poster is visible at first paint. The phone number needs PERF-04's library split. |
+| PERF-08 (designer part) | While a size field is typed (coalesced `dims` / `vessel` steps), dieline + textures + mesh rebuild after 150 ms of quiet; artwork rescaling tracks the latest committed geometry (`geoFacesRef`) so quick edits do not compound. "Skip the repaint when only dims change" needs UV scaling in the engine's texture path (report items 2 and 3): engine session. | config → frame p50 2,184 ms desktop / 2,293 ms phone | **1,461 ms** / 2,222 ms |
+| PERF-22 | `useArtworkCanvases` sheet capped at 1024 px when `defaultMaxDpr() < 2`. | resident texture after config 37.3 MB; texture data uploaded over 12 changes 438 MB | **23.3 MB**; **11 MB** (23 uploads) |
+| PERF-18 | Quote results and tab switches are applied in `startTransition`; `ConfigPanel` and `Scene3D` are `memo`, with stable `onOpenPicker` / `onFinish` / `onPrintSides`. | INP 168-336 ms | Not re-measured (needs the page harness's INP run). |
+| PERF-19 | Undo stack capped at 50 (was 100). Snapshots are `DesignDoc`s only, with no geometry and images shared by reference. | heap 16.6 → 41.3 MB after 50 switches | 17.1 → 28.1 MB after 20 switches (same harness, `SWITCHES=20`). The rest scales with WebGL context churn (PERF-09). |
+| PERF-09 | One persistent `<Canvas>` needs engine API (`PackagingSceneContent` / `VesselSceneContent` without their own Canvas). Requested from the engine session; not changed yet. | 16 contexts over 20 switches | unchanged |

@@ -1,12 +1,13 @@
 import type { DesignDoc } from "@/types";
 import { ANON_DESIGN_TTL_DAYS } from "@/types";
 import { parseDesignDoc, withoutInlineImages } from "./doc";
+import { LOCAL_DRAFT_KEY } from "./paths";
 
 /**
  * Per-browser autosave. Every write is wrapped in try/catch: storage can be full, blocked or
  * missing (private mode). The server copy (POST /api/designs) is the durable one.
  */
-export const LOCAL_KEY = "elba.designer.last.v1";
+export const LOCAL_KEY = LOCAL_DRAFT_KEY;
 
 export interface LocalDraft {
   doc: DesignDoc;

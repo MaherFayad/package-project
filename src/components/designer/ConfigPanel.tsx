@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode, memo } from "react";
 import { FACE_IDS, type DesignDoc, type DesignFinishCode, type Dims, type FaceId, type MaterialCode, type StructureFeatures } from "@/types";
 import { CLOSURE_COLORS, LIQUIDS, type ClosureColorCode, type LiquidCode, type VesselDims } from "@/lib/vessels";
 import { BOARD_SPECS } from "@/lib/dieline";
@@ -40,7 +40,8 @@ export interface ConfigPanelProps {
  * option is listed, the ones no printer can make are disabled WITH the reason (Arabic or
  * English), warnings are shown under the option.
  */
-export function ConfigPanel(props: ConfigPanelProps) {
+/** Memoised: a price badge or tab click does not re-render the configurator (PERF-18). */
+export const ConfigPanel = memo(function ConfigPanel(props: ConfigPanelProps) {
   const { doc, model, onOpenPicker } = props;
   const { t, locale } = useI18n();
   const base = t(`structures.${doc.structureCode}` as DictKey);
@@ -73,7 +74,7 @@ export function ConfigPanel(props: ConfigPanelProps) {
       {model.kind === "box" ? <BoxSection {...props} model={model} /> : <VesselSection {...props} model={model} />}
     </div>
   );
-}
+});
 
 /* ───────────────────────────── shared bits ───────────────────────────── */
 

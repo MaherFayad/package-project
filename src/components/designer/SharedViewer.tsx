@@ -1,31 +1,43 @@
 "use client";
 
-import { DesignScene } from "@/components/designer/DesignScene";
-import { useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
+import { useCallback, useRef, useState } from "react";
 import type { DesignDoc } from "@/types";
-import { docGeometry } from "@/lib/library/doc";
-import { ViewControls, type PackagingSceneHandle } from "@/components/three";
+import type { PackagingSceneHandle } from "@/components/three";
+import { ViewControls } from "@/components/three/ViewControls";
 import { useI18n } from "@/i18n/client";
 import { Button, ButtonGroup } from "@/components/ui";
-import { useArtworkCanvases } from "./useArtworkCanvases";
 import styles from "./designer.module.css";
+import lib from "./library.module.css";
 
+const SharedScene = dynamic(() => import("./SharedScene"), { ssr: false, loading: () => <div className={lib.stageSkeleton} aria-hidden="true" /> });
 
-/** Read-only 3D view of a shared design (rotate, zoom, fold; no editing). */
-export function SharedViewer({ doc }: { doc: DesignDoc }) {
+/**
+ * Read-only 3D view of a shared design (rotate, zoom, fold; no editing). The page paints with the
+ * model's thumbnail; the 3D view (library + three.js) is a lazy chunk (PERF-04).
+ */
+export function SharedViewer({ doc, poster }: { doc: DesignDoc; poster?: string }) {
   const { t } = useI18n();
   const ref = useRef<PackagingSceneHandle | null>(null);
   const [fold, setFold] = useState(1);
-  // Box dieline or container print sheet (src/lib/library/doc).
-  const geo = useMemo(() => docGeometry(doc), [doc]);
-  const model = geo?.dieline ?? null;
-  const both = doc.printSides === "BOTH";
-  const { canvases, version } = useArtworkCanvases(model, doc.artwork, doc.materialCode, both);
-  if (!model) return null;
+  const [openTop, setOpenTop] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const onMounted = useCallback((v: boolean) => {
+    setOpenTop(v);
+    setLoaded(true);
+  }, []);
   return (
     <div className={styles.stage}>
       <div className={styles.sharedViewer}>
-        {geo ? <DesignScene doc={doc} geo={geo} canvases={canvases} version={version} fold={fold} handleRef={ref} /> : null}
+        <SharedScene
+          doc={doc}
+          fold={fold}
+          handleRef={ref}
+          onOpenTop={onMounted}
+        />
+        {/* The model's thumbnail until the 3D chunk has mounted (it then cross-fades itself). */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        {poster ? <img src={poster} alt="" aria-hidden="true" className={styles.stagePoster} data-hidden={loaded ? "true" : undefined} /> : null}
         <div className={styles.viewControls}>
           <ViewControls
             handle={ref}
@@ -51,7 +63,7 @@ export function SharedViewer({ doc }: { doc: DesignDoc }) {
             {t("designer.view.half")}
           </Button>
           <Button size="slim" pressed={fold === 1} onClick={() => setFold(1)}>
-            {(geo?.model as { openTop?: boolean } | undefined)?.openTop ? t("designer.view.assembled") : t("designer.view.closed")}
+            {openTop ? t("designer.view.assembled") : t("designer.view.closed")}
           </Button>
         </ButtonGroup>
       </div>
