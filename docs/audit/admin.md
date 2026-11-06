@@ -307,3 +307,42 @@ Counts (round 6, new, before fixing): **critical 0, high 1, medium 3, low 1 (5)*
 - e2e (`--workers=2 --trace off`): `admin`, `admin-quote-price`, `checkout-quote`, `vendor` gave 24 passed and 16 skipped (desktop-only mutating flows on the mobile project). One assertion in `admin-quote-price.spec.ts` changes with R6-AD-02: it expected a disabled button, and now checks the error message, the focus and that nothing is saved (stricter).
 
 Files outside admin: none this round (`e2e/admin-quote-price.spec.ts` as above).
+
+## Round 7
+
+Asked by the integrator: (1) make the round 6 amount reader a shared helper and use it in every admin and vendor money or decimal field; (2) fold in three items routed from the journeys session (`docs/audit/journeys.md` on the r5-journeys branch); (3) an audit of the result. Base: this branch at `fd4a3d3` with main `1ce3991` merged in (no conflicts). Method: the round 5 and 6 tools again (`admin-audit.cjs`: 80 views; `admin-r6-narrow.cjs`: 120 views; `admin-r6-flows.cjs`), the new `admin-r7-dispute.cjs` (the reprint form at 390 ar and 1440 en, read-only), and the e2e set run three times in a row.
+
+### Work list
+
+| id | result |
+|---|---|
+| Shared amount reader | `src/lib/money/input.ts` (`parseEgpInput`, `parseWholeInput`, `parseNumberInput`, `parseDecimalInput`): a comma counts only as a thousands separator in groups of three, Arabic-Indic and Persian digits and «٫ ٬ ،» are read, and anything ambiguous is invalid. Used by every admin amount field (`egpToPiastersInput`, Send price, checkout settings, pricing, catalogue editor, reprint charge-back) and the vendor portal's `rateCard.parseNumber` (rate card tiers, setup, die, finishes; profile numbers). Vendor payouts have no typed amounts. **fixed** |
+| **R5-JR-13** (low, journeys) | The overview visitor funnel is a cohort: an anonymous visit and the same person's signed-in steps are one person whenever an event row carries both ids; only people who visited in the period count; a step counts everyone who reached it or a later one. No step can exceed the one before and visitor to paid cannot pass 100%. Card description says so. `cohortFunnel`, unit-tested. **fixed** |
+| **R5-JR-09** (medium, journeys) | The reprint form takes **Boxes to reprint** (default the order quantity, at most it) and **Charge the reprint back to the original printer**: Full (default for PRINT_DEFECT), Partial (an amount, at most the reprint buy price) or None (default for other reasons, paid from the reprint reserve). The reprint buy price is the original buy price pro rata. Same printer: it reprints at its own cost for the charged part (full charge-back: Elba pays EGP 0.00). Another printer: it is paid in full, and the charge-back comes off the original order's buy price, so its balance shrinks; any part above what is still unpaid is shown as owed back off-platform. Live summary in the form, the plan in the `ORDER_REPRINT` and `DISPUTE_REPRINT` audit rows. `planReprint`, unit-tested; e2e reprints 40 boxes with a full charge-back. When to charge back, and caps, stay a founder decision. **fixed (mechanism)** |
+| **R5-JR-05** (high, journeys, recompute half) | One on-time rule, `src/lib/vendors/on-time.ts`: delivered by the end of the promised day; reprints and undelivered orders are not judged. The admin scorecard uses it, and `syncVendorOnTime` writes `Vendor.onTimePct` (the public figure) after every DELIVERED transition and in the daily job. A vendor with no judged delivery keeps its value, so no measurement is never published as 0%. The vendor detail metric says "Public on-time figure updates from the first delivery" until then. On the seed the daily job moved Nile Pack from the seeded 96% to 0% (one delivery, late), which matches the admin scorecard. **fixed** |
+
+### Findings (new this round)
+
+| id | sev | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R7-AD-01 | high | Vendor rate cards (`vendor/lib/rateCard.ts parseNumber`) | Same bug as R6-AD-01 on the vendor side: the reader dropped every comma, so a vendor typing "18,50" per box saved a rate of EGP 1,850.00, and that rate feeds every instant buyer price. | Data correctness | The shared reader: "18,50" is an error, "1,250" and «١٢٣٫٥» still read. Unit-tested. | fixed |
+| R7-AD-02 | medium | Dispute decision (`DisputeDecision.tsx`) | "Apply decision" stayed disabled until the note and the reprint fields were valid, with no reason given. | WCAG 3.3.1, 3.3.3 | Always active. Pressing it shows the field errors (note, boxes, charge-back amount) and focuses the first. | fixed |
+| R7-AD-03 | low | Dispute decision help | The help still said a reprint is "a free copy of the order … paid from the reprint reserve", wrong once the quantity and charge-back exist. | Accuracy | "A reprint sends the buyer the boxes you enter again, free, from the same or another printer; you choose who pays for it." | fixed |
+| R7-AD-04 | low | Dispute decision | The "Reprint … created" banner lived in the decision card, which leaves as soon as the dispute is resolved, so the confirmation flashed away. | ISO 9241-110 (feedback) | The reprint number goes in the toast; the Reprints card lists it. | fixed |
+| R7-AD-05 | low | `e2e/admin.spec.ts` (round 5 bio test) | The test made a temporary ACTIVE vendor. `checkout-quote.spec.ts` picks `findFirst({ status: "ACTIVE" })` and sometimes got it, then lost it when the bio test deleted it, so the priced quote looked unavailable (1 failure in 4 parallel runs). | Test isolation | The bio test edits a seeded vendor no other spec touches (Damietta) and restores it. 3 parallel runs in a row green. | fixed |
+
+Counts (round 7, new, before fixing): **critical 0, high 1, medium 1, low 3 (5)**. All fixed. Medium-or-worse issues were found (one from this round's own work), so the rounds continue for admin.
+
+For the founder list: (a) the charge-back policy (when to charge a printer back, partial caps, how an owed amount is recovered); (b) whether a printer's public on-time figure needs a minimum number of deliveries before it is shown (today one late first delivery reads 0%).
+
+### Verification (round 7)
+
+- `admin-audit.cjs` 80 views, `admin-r6-narrow.cjs` 120 views: 0 issues. `admin-r7-dispute.cjs`: 0 overflow and axe 0 at 390 ar and 1440 en; the live summary reads "Reprint buy price EGP 4,875.00; charged back EGP 250.00; Elba pays the printer EGP 4,625.00." for a partial charge-back.
+- `npm run lint`, `npm run typecheck`, `npm run build`: clean. `npm test`: 8,670 passed, 1 failed (the geometry snapshot, failing the same way on main, 3D owners).
+- e2e (`--workers=2 --trace off`): `admin`, `admin-quote-price`, `checkout-quote`, `vendor`: 25 passed, 17 skipped, three runs in a row. `checkout`, `checkout-dispute-photos`, `smoke`: 17 passed, 1 skipped.
+
+### Files outside admin (round 7)
+
+- `src/lib/money/input.ts` (moved from admin, shared), `src/components/vendor/lib/rateCard.ts` (`parseNumber` delegates to it).
+- `src/lib/vendors/on-time.ts`, `on-time-sync.ts` (new); `src/lib/orders/service.ts` (one call after DELIVERED); `src/lib/jobs/index.ts` (one step in the daily job).
+- `e2e/admin.spec.ts`: reprint test added; bio test uses a seeded vendor.

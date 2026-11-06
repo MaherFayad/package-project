@@ -9,6 +9,7 @@ import { ChoiceList } from "@/components/ui/ChoiceList";
 import { Modal } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
 import { Text } from "@/components/ui/Text";
+import { useToast } from "@/components/ui/Toast";
 import { TextField } from "@/components/ui/TextField";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
@@ -46,7 +47,9 @@ export function DisputeDecision({
   const [qtyText, setQtyText] = useState(String(originalQuantity));
   const [charge, setCharge] = useState<ChargeBackMode>(defaultChargeBack(reason));
   const [chargeText, setChargeText] = useState("");
+  const [tried, setTried] = useState(false);
   const { run, busy } = useAdminAction();
+  const toast = useToast();
   const errorText = useAdminErrorText();
   const options = allowedDecisions(status).filter((d) => d !== "REFUND" || refundable);
   const [picked, setDecision] = useState<Decision | "">(options[0] ?? "");
@@ -70,14 +73,19 @@ export function DisputeDecision({
           terms: { quantity: qty, chargeBack: charge, chargeBackPiasters: charge === "PARTIAL" ? (chargeP ?? undefined) : undefined },
         })
       : null;
-  const chargeError = charge === "PARTIAL" && chargeText.trim() !== "" && (chargeP === null || Number.isNaN(chargeP) || preview === "CHARGE_RANGE") ? "CHARGE_BACK_RANGE" : null;
+  const chargeError = charge === "PARTIAL" && (chargeText.trim() !== "" || tried) && (chargeP === null || Number.isNaN(chargeP) || preview === "CHARGE_RANGE") ? "CHARGE_BACK_RANGE" : null;
+  // R7-AD: the button explains itself instead of staying disabled (same rule as R6-AD-02).
+  const noteError = tried && needsNote && note.trim().length < 3 ? "NOTE_REQUIRED" : null;
+  const blocked = !decision || (needsNote && note.trim().length < 3) || (decision === "REPRINT" && (!!qtyError || !!chargeError || (charge === "PARTIAL" && chargeText.trim() === "")));
   const submit = async () => {
     if (!decision) return;
     const reprintTerms =
       decision === "REPRINT"
         ? { reprintQuantity: parseWholeInput(qtyText) ?? undefined, chargeBack: charge, chargeBackPiasters: charge === "PARTIAL" ? (egpToPiastersInput(chargeText) ?? undefined) : undefined }
         : {};
-    const r = await run("decide", () => decideDisputeAction({ disputeId, decision, note, vendorId: decision === "REPRINT" ? vendorId : undefined, ...reprintTerms }), t("admin.disputes.detail.success"));
+    const r = await run("decide", () => decideDisputeAction({ disputeId, decision, note, vendorId: decision === "REPRINT" ? vendorId : undefined, ...reprintTerms }), decision === "REPRINT" ? undefined : t("admin.disputes.detail.success"));
+    // R7-AD: the card leaves once the dispute is resolved, so the reprint number goes in the toast.
+    if (r?.ok && r.data.reprintNumber) toast.show(t("admin.disputes.detail.reprintCreated", { number: r.data.reprintNumber }));
     setRes(r);
     setConfirmRefund(false);
     if (r?.ok) setNote("");
@@ -89,6 +97,11 @@ export function DisputeDecision({
         onSubmit={async (e) => {
           e.preventDefault();
           // Money leaves through the payment provider and cannot be undone: confirm first.
+          if (blocked) {
+            setTried(true);
+            setTimeout(() => (e.target as HTMLElement).querySelector<HTMLElement>("[aria-invalid=true]")?.focus(), 0);
+            return;
+          }
           if (decision === "REFUND") setConfirmRefund(true);
           else await submit();
         }}
@@ -175,7 +188,7 @@ export function DisputeDecision({
             maxLength={1000}
             helpText={t("admin.disputes.detail.noteHelp")}
             requiredIndicator={needsNote}
-            error={fieldError(res, "note", errorText)}
+            error={noteError ? errorText(noteError) : fieldError(res, "note", errorText)}
           />
           {res?.ok && res.data.reprintNumber ? (
             <Banner tone="success" inCard announce>
@@ -187,7 +200,7 @@ export function DisputeDecision({
               submit
               variant="primary"
               tone={decision === "REFUND" || decision === "REJECT" ? "critical" : undefined}
-              disabled={!decision || (needsNote && note.trim().length < 3) || (decision === "REPRINT" && (!!qtyError || !!chargeError || (charge === "PARTIAL" && chargeText.trim() === "")))}
+              disabled={!decision}
               loading={busy === "decide"}
             >
               {t("admin.disputes.detail.submit")}

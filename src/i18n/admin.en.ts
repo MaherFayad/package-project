@@ -466,7 +466,7 @@ export const adminEn = {
       decisionTitle: "Decision",
       refundConfirmTitle: "Refund this order?",
       refundConfirmBody: "The full amount goes back to the buyer through the payment provider and the dispute closes. This cannot be undone.",
-      decisionHelp: "A reprint creates a free copy of the order for the same or another vendor, paid from the reprint reserve. A refund returns the full amount through the payment provider.",
+      decisionHelp: "A reprint sends the buyer the boxes you enter again, free, from the same or another printer; you choose who pays for it. A refund returns the full amount through the payment provider.",
       decisions: { REVIEW: "Start review", REPRINT: "Reprint", REFUND: "Refund", REJECT: "Reject" },
       note: "Resolution note",
       noteHelp: "The buyer sees this note.",
