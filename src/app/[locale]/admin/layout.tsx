@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { preloadPlexArabic } from "@/app/font-preload";
 import type { Metadata } from "next";
 import { requireRole } from "@/lib/auth/session";
