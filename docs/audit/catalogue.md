@@ -163,7 +163,7 @@ axe (wcag2a/aa, 21aa, 22aa) on `/catalog`, four model pages and `/design`, en + 
 
 ### New findings (round 4)
 
-Counts before fixing: **critical 2, high 6, medium 8, low 6** (22).
+Counts before fixing: **critical 2, high 6, medium 8, low 6** (22, pass 1); pass 2 added **high 2, low 1** (R4-23 to R4-25). Round total: critical 2, high 8, medium 8, low 7.
 
 | id | severity | page / file | finding | standard | fix | status |
 |---|---|---|---|---|---|---|
@@ -194,8 +194,18 @@ Counts before fixing: **critical 2, high 6, medium 8, low 6** (22).
 
 - `npm run typecheck`, `eslint src e2e scripts prisma`: clean. `npm test`: 79 files, 8,295 passed (new assertions in `src/lib/configurator/__tests__/catalogue.test.ts`; the "library models are preview or instant" assertion now follows the rule for quote models too, nothing removed).
 - Generated files rerun: `generate-library-index.ts` (370), `generate-order-mode-table.ts` (108 non-instant, was 95 + 13), `generate-catalogue-rows.ts` (370).
-- e2e (`next start`, `OTP_DEV_ECHO=1 ALLOW_MOCK_PAYMENTS=1`, `--workers=2 --trace off`): new `e2e/catalogue-order-modes.spec.ts` (API, designer top bar, export modal, share page, share-link checkout copy, no instant tiers / sample / "Order 2,000 now", quote request at 100 boxes); `e2e/catalogue.spec.ts` (quote request now also checks the audit row and dedupe). Results are listed in the final report of this round.
+- e2e (`next start`, `OTP_DEV_ECHO=1 ALLOW_MOCK_PAYMENTS=1`, `--workers=2 --trace off`): new `e2e/catalogue-order-modes.spec.ts` (API, designer top bar, export modal, share page, share-link checkout copy, no instant tiers / sample / "Order 2,000 now", quote request at 100 boxes); `e2e/catalogue.spec.ts` (quote request now also checks the audit row and dedupe). `catalogue-order-modes`, `catalogue`, `designer`, `checkout`, `storefront`, `smoke`, `journey`, `admin` (desktop + mobile): **58 passed, 12 skipped** (one-project tests), 0 failed. `catalogue-models.spec.ts` (all 410 models, desktop): **18 / 18 batches passed** (11.7 min).
 - Screenshots: `docs/screenshots/audit/catalogue/round4/` (`before-*` and `after-*`).
+
+### Pass 2 (fresh re-audit after the fixes)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R4-23 | high | `/design` library (`designer/ModelPicker.tsx`) | A family chip or the scope switch re-rendered up to 370 cards synchronously: 430 to 544 ms per click at 4x CPU (INP budget 200 ms). | Core Web Vitals INP | Chip state stays urgent, the list renders from `useDeferredValue(group / scope)` (interruptible), cards are memoised. With the hero 3D paused the same clicks take 40 to 80 ms at 4x CPU (input 24 ms). | fixed |
+| R4-24 | high | `/design` hero (`designer/DesignStart.tsx`, designer / 3D owner) | The hero 3D preview animates continuously: desktop TBT 4.3 s, phone (Slow 4G, 4x CPU) LCP 12.2 to 12.6 s, TBT 7.5 to 8.4 s, INP 608 to 704 ms, 576 KB JS. Even a hover costs 224 ms while it runs (headless software WebGL inflates this; the shape holds on a GPU). | LCP < 2.5 s, INP < 200 ms | Not in this scope: render on demand (`frameloop="demand"`, rotate only on interaction or once), mount the canvas after LCP with the webp poster first, as the catalogue `DetailStage` does. | open (designer / 3D owner) |
+| R4-25 | low | `QuoteRequestForm` | The quantity error was linked with `aria-describedby` but not announced when it appeared. | WCAG 3.3.1, 4.1.3 | `role="alert"`. | fixed |
+
+Perf (`docs/audit/tools/perf-pages.mjs`, after fixes): `/catalog` desktop LCP < 0.5 s, CLS 0.000; phone ar / en LCP 4.7 / 4.2 s (Slow 4G, hero text; the phone LCP gap is the platform-wide item carried from round 3), CLS 0.003 / 0.000, INP 48 ms, TBT 353 to 361 ms, JS 212 KB transferred. `/catalog/[slug]` 126 KB first-load JS; `/catalog` 120 KB.
 
 ### Files touched outside the original scope (all B-16 enforcement or name data)
 

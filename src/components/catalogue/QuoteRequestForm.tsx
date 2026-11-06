@@ -61,7 +61,7 @@ export function QuoteRequestForm({ locale, code, slug, presets, signedIn }: { lo
         <label htmlFor={`${id}-q`}>{COPY.formQty[locale]}</label>
         <input id={`${id}-q`} inputMode="numeric" value={qty} onChange={(e) => setQty(e.target.value)} aria-invalid={state === "qty" || undefined} aria-describedby={state === "qty" ? `${id}-qe` : undefined} required />
         {state === "qty" ? (
-          <p id={`${id}-qe`} className={styles.error}>
+          <p id={`${id}-qe`} className={styles.error} role="alert">
             {COPY.formErrorQty[locale]}
           </p>
         ) : null}
