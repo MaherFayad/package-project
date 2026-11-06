@@ -3,6 +3,7 @@ import { apiRequireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { rateLimit } from "@/lib/rate-limit";
 import { catalogueEntry } from "@/data/catalogue";
+import { readJsonCapped } from "../../_lib/body";
 
 const Body = z.object({
   code: z.string().min(1).max(64),
@@ -10,7 +11,7 @@ const Body = z.object({
   quantity: z.number().int().min(100).max(1_000_000),
   /** Free text for the converter (material, colours, delivery city). Not personal data. */
   notes: z.string().trim().max(1000).optional(),
-});
+}).strict();
 
 /**
  * POST /api/catalogue/quote-request — a buyer asks for a price on a catalogue model that no
@@ -27,7 +28,10 @@ export async function POST(req: Request) {
   const rl = rateLimit("catalogue-quote", auth.id, 5, 60_000);
   if (!rl.ok) return Response.json({ error: "RATE_LIMITED", retryAfterSec: rl.retryAfterSec }, { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } });
 
-  const parsed = Body.safeParse(await req.json().catch(() => null));
+  // Capped while streaming (ASVS V12.1.1): the body is a few fields, never more than 4 KB.
+  const json = await readJsonCapped(req, 4_096);
+  if (json instanceof Response) return json;
+  const parsed = Body.safeParse(json);
   if (!parsed.success) return Response.json({ error: "INVALID_BODY", issues: parsed.error.issues.map((i) => ({ path: i.path.join("."), code: i.code })) }, { status: 400 });
   const b = parsed.data;
   const e = catalogueEntry(b.code);

@@ -43,7 +43,10 @@ function copy(locale: Locale, d: NonNullable<Awaited<ReturnType<typeof load>>>) 
   return {
     keyword,
     title: t("store.seo.title", { keyword, cm }),
-    h1: t("store.seo.h1", { keyword, cm }),
+    // CR-62: the visible heading uses the same unit and spacing as the body ("250 × 180 × 80 mm",
+    // isolated for RTL); <title>/meta keep the cm form people search for ("علبة 25×18×8 سم").
+    h1: t("store.seo.h1", { keyword, dims: formatDims(d.dims, locale) }),
+    h1Text: t("store.seo.h1", { keyword, dims: dimsText }),
     description:
       low != null
         ? t("store.seo.description", { keyword, cm, dims: dimsText, price: formatMoney(low, locale) })
@@ -84,7 +87,7 @@ export default async function SizeLandingPage({ params }: Props) {
       <JsonLd
         data={[
           productJsonLd({
-            name: c.h1,
+            name: c.h1Text,
             description: c.description,
             url,
             image: `${base}${structureImage(s.code)}`,
@@ -101,7 +104,7 @@ export default async function SizeLandingPage({ params }: Props) {
             { name: t("nav.home"), url: `${base}/${locale}` },
             { name: t("nav.catalog"), url: `${base}/${locale}/catalog` },
             { name: pick(locale, s.name.ar, s.name.en), url: `${base}/${locale}/boxes/${p.structure}` },
-            { name: c.h1, url },
+            { name: c.h1Text, url },
           ]),
         ]}
       />

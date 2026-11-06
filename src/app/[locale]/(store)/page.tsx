@@ -140,7 +140,7 @@ export default async function HomePage({ params }: Props) {
             <h1 id="hero-title" className={`${styles.h1} m-enter-lcp`} style={{ ["--m-i" as string]: 1 }}>
               {t("marketing.hero.title")}
             </h1>
-            <p className={`${styles.lead} m-enter`} style={{ ["--m-i" as string]: 2 }}>
+            <p className={`${styles.lead} m-enter-lcp`} style={{ ["--m-i" as string]: 2 }}>
               {t("marketing.hero.body")}
             </p>
             <div className="m-enter" style={{ ["--m-i" as string]: 3, inlineSize: "100%" }}>
@@ -255,7 +255,7 @@ export default async function HomePage({ params }: Props) {
               {t("marketing.useCases.title")}
             </h2>
           </div>
-          <ul className={styles.cardGrid}>
+          <ul className={`${styles.cardGrid} ${styles.useRail}`}>
             {USE_CASES.map((u, i) => {
               const title = t(`marketing.useCases.items.${u.key}Title` as DictKey);
               const I = u.icon;

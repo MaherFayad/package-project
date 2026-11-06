@@ -148,8 +148,13 @@ model VendorPortfolioItem {
   structureCode String?  // StructureCode
   sortOrder     Int      @default(0)
   createdAt     DateTime @default(now())
+  // Added by vendor portal (B-08): a photo goes public only after Elba reviews it (no phone numbers,
+  // logos with contact details or QR codes). PENDING | APPROVED | REJECTED; seed rows are APPROVED.
+  status        String   @default("APPROVED")
+  reviewNote    String?
 
   @@index([vendorId])
+  @@index([status])
 }
 
 // ───────────────────────────── Catalog ─────────────────────────────
@@ -300,6 +305,9 @@ model Proof {
   approvedAt  DateTime?
   approvedIp  String?
   approvedById String?
+  /// Added by technical audit round 3 (B-04): server-side preflight of the snapshot at approval
+  /// ({ errors, warnings, issues[], acknowledged, ran }), the same check the designer shows.
+  preflight   Json?
   createdAt   DateTime  @default(now())
 
   orderItems OrderItem[]
@@ -517,9 +525,13 @@ model Dispute {
   resolution String?
   createdAt  DateTime @default(now())
   resolvedAt DateTime?
+  /// Added by technical audit round 2: number of disputes the order had before this one. With the
+  /// unique below, two simultaneous submits cannot both open a dispute. Null on older rows.
+  seq        Int?
   // Added by technical audit: foreign-key / filter indexes (no FK auto-index in SQLite or Postgres).
   @@index([orderId])
   @@index([status])
+  @@unique([orderId, seq])
 }
 
 // ───────────────────────────── Privacy (PDPL 151/2020 data-subject requests) ─────────────────────────────

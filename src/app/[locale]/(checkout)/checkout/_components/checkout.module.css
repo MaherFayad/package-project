@@ -315,15 +315,17 @@
   padding-block-start: var(--p-space-150);
 }
 
-/* Price tick when a total changes */
-.tick {
+/* Price tick when an amount changes: same motion as the designer badge (lib.priceTick, CR-19). */
+.tickHost {
   display: inline-block;
-  animation: price-tick var(--p-motion-duration-250) var(--p-motion-ease-out);
+}
+.tick {
+  animation: price-tick var(--p-motion-duration-300) var(--p-motion-ease-out);
 }
 @keyframes price-tick {
   from {
-    opacity: 0.35;
-    transform: translateY(-3px);
+    opacity: 0.4;
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
@@ -447,4 +449,64 @@
   outline: 2px solid var(--p-color-border-focus);
   outline-offset: 2px;
   border-radius: var(--p-border-radius-300);
+}
+
+/* Busy "Pay" label: brand fill stays, leading 16 px spinner + "Paying…" (CR-22). */
+.payBusy {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--p-space-200);
+}
+.payBusy svg {
+  inline-size: 16px;
+  block-size: 16px;
+}
+
+/* Paid sample tier (B-05): spans the row under the quantity tiers. */
+.sampleTier {
+  grid-column: 1 / -1;
+  border-style: dashed;
+}
+
+/* Company invoice fields (B-13) */
+.companyFields {
+  display: grid;
+  gap: var(--p-space-300);
+}
+
+/* Print check on the proof step (B-04) */
+.preflight {
+  display: grid;
+  gap: var(--p-space-200);
+  padding: var(--p-space-300);
+  border-radius: var(--p-border-radius-200);
+  border: 1px solid var(--p-color-border-secondary);
+  border-inline-start: 3px solid var(--p-color-icon-caution);
+}
+.preflight[data-state="ready"] {
+  border-inline-start-color: var(--p-color-icon-success);
+}
+.preflight[data-state="error"] {
+  border-inline-start-color: var(--p-color-icon-critical);
+}
+.preflightLine {
+  display: flex;
+  align-items: center;
+  gap: var(--p-space-150);
+  margin: 0;
+}
+.preflightList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--p-space-150);
+}
+.preflightList li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--p-space-200);
+}
+.neededBy {
+  max-inline-size: 16rem;
 }

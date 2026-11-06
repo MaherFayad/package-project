@@ -1,4 +1,5 @@
 import type { OrderStatus, ProductionEventType, Role } from "@/types";
+import { statusTone, type ToneSpec } from "./status-tone";
 
 /**
  * Order state machine (pure, no DB). Every status change in the app goes through
@@ -158,31 +159,9 @@ export function stoppedStepIndex(events: ProductionEventType[]): number {
   return 1;
 }
 
-/** Badge tone + progress pip for a status pill (Polaris pattern: colour AND shape AND text). */
-export function statusBadge(status: OrderStatus): {
-  tone: "neutral" | "info" | "success" | "attention" | "warning" | "critical";
-  progress: "incomplete" | "partiallyComplete" | "complete";
-} {
-  switch (status) {
-    case "PENDING_PAYMENT":
-      return { tone: "warning", progress: "incomplete" };
-    case "PAID":
-    case "PROOF_APPROVED":
-    case "ACCEPTED":
-      return { tone: "attention", progress: "incomplete" };
-    case "IN_PRODUCTION":
-    case "QC_PENDING":
-    case "READY_TO_SHIP":
-      return { tone: "info", progress: "partiallyComplete" };
-    case "SHIPPED":
-      return { tone: "info", progress: "partiallyComplete" };
-    case "DELIVERED":
-      return { tone: "success", progress: "complete" };
-    case "CANCELLED":
-      return { tone: "neutral", progress: "complete" };
-    case "REFUNDED":
-      return { tone: "critical", progress: "complete" };
-  }
+/** Badge tone + progress pip for a status pill. Delegates to the shared map in `status-tone.ts` (CR-08). */
+export function statusBadge(status: OrderStatus): ToneSpec {
+  return statusTone(status);
 }
 
 // ───────────────────────── after-sale rules ─────────────────────────
@@ -234,3 +213,18 @@ export function canDownloadPrintFile(
  * "paid" without a Payment row and an invoice.
  */
 export const MONEY_STATUSES: readonly OrderStatus[] = ["PAID", "REFUNDED"];
+
+/**
+ * Buyer owns it, ADMIN, or vendor staff of its vendor ONCE THE ORDER WAS PAID. Unpaid orders are
+ * never routed to a vendor (and one cancelled before payment never will be), so the vendor must
+ * not see the buyer's name, delivery address, proof or dieline (PDPL 151/2020 data minimisation,
+ * OWASP ASVS 4.0.3 V4.2.1). `paidAt` survives a later refund, so job history stays visible.
+ */
+export function canViewOrder(
+  order: { buyerId: string; vendorId: string; paidAt: Date | null },
+  user: { id: string; role: Role; vendorId: string | null },
+): boolean {
+  if (user.role === "ADMIN") return true;
+  if (order.buyerId === user.id) return true;
+  return user.role === "VENDOR" && !!user.vendorId && user.vendorId === order.vendorId && order.paidAt !== null;
+}

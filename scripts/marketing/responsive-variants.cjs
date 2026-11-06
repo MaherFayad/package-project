@@ -13,6 +13,9 @@ const jobs = [
   { dir: "renders", w: 400 },
   { dir: "samples", w: 320 },
   { dir: ".", w: 720, only: /^designer-(ar|en)\.webp$/ },
+  // R2-MK-04: the wide box renders (home hero poster, /boxes/[structure] hero: the phone LCP
+  // images) also get a 720w step, so a 390px DPR 2 phone downloads about 25 KB instead of 30-40 KB.
+  { dir: "renders", w: 720, only: /^(fefco-0201|fefco-0320|fefco-0422|fefco-0427|pizza|rigid-box|sleeve)\.webp$/, quality: 78 },
 ];
 
 (async () => {
@@ -26,7 +29,7 @@ const jobs = [
       widths[path.posix.join(j.dir, f)] = meta.width;
       if (meta.width <= j.w) continue; // already small: no variant
       const out = src.replace(/\.webp$/, `.${j.w}w.webp`);
-      await sharp(src).resize({ width: j.w }).webp({ quality: 80, effort: 6 }).toFile(out);
+      await sharp(src).resize({ width: j.w }).webp({ quality: j.quality ?? 80, effort: 6 }).toFile(out);
       console.log(`${path.relative(root, out)}  ${(fs.statSync(out).size / 1024).toFixed(1)} KB (from ${(fs.statSync(src).size / 1024).toFixed(1)} KB)`);
     }
   }

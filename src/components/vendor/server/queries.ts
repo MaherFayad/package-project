@@ -257,6 +257,8 @@ export async function getProfile(vendorId: string): Promise<{ profile: VendorPro
       captionAr: p.captionAr,
       captionEn: p.captionEn,
       structureCode: (p.structureCode as StructureCode | null) ?? null,
+      status: (p.status as PortfolioItemDTO["status"]) ?? "APPROVED",
+      reviewNote: p.reviewNote,
     })),
   };
 }

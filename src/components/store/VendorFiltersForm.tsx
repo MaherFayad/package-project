@@ -1,6 +1,8 @@
 "use client";
 
-import { Button, Checkbox, Select } from "@/components/ui";
+import { Button } from "@/components/ui/Button";
+import { Checkbox } from "@/components/ui/Checkbox";
+import { Select } from "@/components/ui/Select";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { EGYPT_CITIES, STRUCTURE_CODES } from "@/types";

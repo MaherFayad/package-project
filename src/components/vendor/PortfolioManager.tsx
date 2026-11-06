@@ -3,7 +3,7 @@
 import { ArrowDown, ArrowUp, GripVertical, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { BlockStack, Button, Card, DropZone, Icon, InlineStack, Modal, Select, Text, TextField, useToast } from "@/components/ui";
+import { Badge, BlockStack, Button, Card, DropZone, Icon, InlineStack, Modal, Select, Text, TextField, useToast } from "@/components/ui";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { STRUCTURE_CODES, type StructureCode } from "@/types";
@@ -65,6 +65,7 @@ export function PortfolioManager({ items: initialItems }: { items: PortfolioItem
     setUploading(false);
     if (added.length) {
       setItems((cur) => [...cur, ...added]);
+      toast.show(t("vendorPortal.portfolio.uploadedForReview", { count: added.length }));
       router.refresh();
     }
   }
@@ -185,6 +186,19 @@ export function PortfolioManager({ items: initialItems }: { items: PortfolioItem
                           {t("vendorPortal.portfolio.position", { index: i + 1, total: items.length })}
                         </Text>
                       </InlineStack>
+                      {/* B-08: photos go public only after Elba's review. */}
+                      <Badge
+                        tone={it.status === "APPROVED" ? "success" : it.status === "REJECTED" ? "critical" : "attention"}
+                        progress={it.status === "APPROVED" ? "complete" : "incomplete"}
+                        size="small"
+                      >
+                        {t(`vendorPortal.portfolio.status.${it.status}` as DictKey)}
+                      </Badge>
+                      {it.status === "REJECTED" && it.reviewNote ? (
+                        <Text as="p" variant="bodySm" tone="critical">
+                          {it.reviewNote}
+                        </Text>
+                      ) : null}
                     </div>
                     <BlockStack gap="300">
                       <TextField
