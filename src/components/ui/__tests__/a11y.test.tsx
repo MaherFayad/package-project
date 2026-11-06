@@ -231,4 +231,31 @@ describe("UI kit accessibility contracts", () => {
     fireEvent.pointerUp(field);
     expect(scrollBy).not.toHaveBeenCalled();
   });
+  it("keyboard focus on a clipped chip in a horizontal scroller scrolls it fully into view, pointer focus does not (2.4.7, 2.4.11)", () => {
+    render(
+      <AppProvider locale="en">
+        <div data-testid="row" style={{ overflowX: "auto" }}>
+          <button type="button">First</button>
+          <button type="button">Clipped</button>
+        </div>
+      </AppProvider>,
+    );
+    const row = screen.getByTestId("row");
+    const chip = screen.getByRole("button", { name: "Clipped" });
+    const rect = (left: number, right: number) => ({ left, right, top: 0, bottom: 40, width: right - left, height: 40, x: left, y: 0, toJSON: () => ({}) }) as DOMRect;
+    Object.defineProperty(row, "scrollWidth", { value: 900 });
+    Object.defineProperty(row, "clientWidth", { value: 320 });
+    row.getBoundingClientRect = () => rect(0, 320);
+    chip.getBoundingClientRect = () => rect(260, 420);
+    const scroll = vi.fn();
+    chip.scrollIntoView = scroll;
+    chip.focus();
+    expect(scroll).toHaveBeenCalledWith(expect.objectContaining({ inline: "nearest", block: "nearest" }));
+    chip.blur();
+    scroll.mockClear();
+    fireEvent.pointerDown(chip);
+    chip.focus();
+    fireEvent.pointerUp(chip);
+    expect(scroll).not.toHaveBeenCalled();
+  });
 });

@@ -1227,7 +1227,7 @@
 .productCard:hover .productMedia img { transform: scale(1.06) rotate(-1.5deg); }
 .productBody { display: flex; flex-direction: column; gap: 8px; padding: 20px 24px 24px; flex: 1; }
 /* CR-31: descriptions clamp to 2 lines and the action row sits at the bottom, so rows line up. */
-.productDesc { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.productDesc { min-block-size: 3em; } /* a11y R4-09 (WCAG 1.4.12): reserve two lines instead of clamping, so spacing never cuts the text */
 .productBody .h3 { font-size: 1.125rem; }
 .productCode { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; color: var(--mk-muted); }
 .productPrice { font-weight: 650; color: var(--mk-ink); margin-block-start: 4px; }

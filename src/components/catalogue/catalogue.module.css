@@ -221,15 +221,17 @@
 @media (prefers-reduced-motion: reduce) {
   .card:hover .thumb img { transform: none; }
 }
-.cardBody { display: grid; gap: 4px; padding-block-start: 12px; align-content: start; min-inline-size: 0; block-size: 132px; overflow: hidden; }
+.cardBody { display: grid; gap: 4px; padding-block-start: 12px; align-content: start; min-inline-size: 0; min-block-size: 132px; }
+/* a11y R5-AX-03 (WCAG 1.4.10, 1.4.12): the body was a fixed 132px with overflow hidden, so on a
+   two-column phone grid a two-line name plus wrapped badges was squeezed: the name was cut through
+   mid-line and the price badge slid under the code. min-block-size keeps the reserved height (CLS)
+   and lets a long name or user text spacing grow the card instead of clipping it. */
 .cardStd {
   font-size: 0.8125rem;
   font-weight: 600;
   color: var(--mk-accent);
   letter-spacing: 0.01em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere; /* R5-AX-03: wraps instead of an ellipsis under 1.4.12 spacing */
   text-align: start;
   unicode-bidi: plaintext;
 }
@@ -238,10 +240,7 @@
   font-weight: 650;
   line-height: 1.35;
   color: var(--mk-ink);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  overflow-wrap: anywhere; /* R5-AX-03: no two-line clamp (same rule as the designer picker, R4-05) */
 }
 .badges { display: flex; flex-wrap: wrap; gap: 6px; margin-block-start: 6px; }
 .badge {
