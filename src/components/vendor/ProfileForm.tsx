@@ -254,7 +254,7 @@ export function ProfileForm({ profile, portfolio }: { profile: VendorProfileDTO;
                   ) : null}
                   <div className={styles.Rows}>
                     {form.machines.map((m, i) => (
-                      <div key={i} className={styles.Row} style={{ ["--row-cols" as string]: 3 }}>
+                      <div key={i} className={`${styles.Row} ${styles.MachineRow}`} style={{ ["--row-cols" as string]: 3 }}>
                         <Select
                           label={t("vendorPortal.profile.machineKind")}
                           value={m.kind}

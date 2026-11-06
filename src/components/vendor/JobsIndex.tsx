@@ -16,6 +16,7 @@ import {
   Page,
   Select,
   BlockStack,
+  Tabs,
   Text,
   type AppliedFilter,
 } from "@/components/ui";
@@ -26,6 +27,9 @@ import { STRUCTURE_CODES } from "@/types";
 import { countByView, filterJobs, JOB_SORTS, JOB_VIEWS, type JobSort, type JobView } from "./lib/jobs";
 import { DueLabel, JobStatusBadge } from "./JobBits";
 import type { JobListItemDTO } from "./types";
+import styles from "./vendor.module.css";
+
+const PANEL_ID = "vendor-jobs-results";
 
 function asView(v: string | null): JobView {
   return (JOB_VIEWS as readonly string[]).includes(v ?? "") ? (v as JobView) : "all";
@@ -75,12 +79,17 @@ export function JobsIndex({ jobs }: { jobs: JobListItemDTO[] }) {
     id: `jobs-view-${v}`,
     content: t(`vendorPortal.views.${v}` as DictKey),
     badge: counts[v] > 0 ? formatNumber(counts[v]) : undefined,
+    panelID: PANEL_ID,
   }));
+  const selectView = (i: number) => setParam({ view: JOB_VIEWS[i] === "all" ? null : JOB_VIEWS[i]! });
 
   const filtered = Boolean(query || structure || dueSoonOnly || view !== "all");
 
   return (
     <Page fullWidth title={t("vendorPortal.jobs.title")} titleIcon={ClipboardList}>
+      {/* The view tabs control this region; the tab row sits on its own line so long view names
+          never collide with the search field (Polaris IndexFilters anatomy). */}
+      <div id={PANEL_ID} role="tabpanel" aria-label={views[JOB_VIEWS.indexOf(view)]!.content} className={styles.JobsTable}>
       <IndexTable
           resourceName={{ singular: t("vendorPortal.jobs.resourceSingular"), plural: t("vendorPortal.jobs.resourcePlural") }}
           caption={t("vendorPortal.jobs.title")}
@@ -95,10 +104,11 @@ export function JobsIndex({ jobs }: { jobs: JobListItemDTO[] }) {
             { title: t("vendorPortal.jobs.columns.payout"), alignment: "end" },
           ]}
           toolbar={
+            <>
+            <div className={styles.ViewTabs}>
+              <Tabs tabs={views} selected={JOB_VIEWS.indexOf(view)} onSelect={selectView} accessibilityLabel={t("vendorPortal.jobs.title")} />
+            </div>
             <IndexFilters
-              views={views}
-              selectedView={JOB_VIEWS.indexOf(view)}
-              onSelectView={(i) => setParam({ view: JOB_VIEWS[i] === "all" ? null : JOB_VIEWS[i]! })}
               queryValue={query}
               onQueryChange={(v) => {
                 setQuery(v);
@@ -123,6 +133,7 @@ export function JobsIndex({ jobs }: { jobs: JobListItemDTO[] }) {
               sortSelected={sort}
               onSort={(v) => setParam({ sort: v === "due" ? null : v })}
             />
+            </>
           }
           emptyState={
             <EmptyState
@@ -148,32 +159,46 @@ export function JobsIndex({ jobs }: { jobs: JobListItemDTO[] }) {
                 <IndexTableRowLink url={`/${locale}/vendor/jobs/${j.number}`}>
                   <bdi>{j.number}</bdi>
                 </IndexTableRowLink>
+                {/* Phones: Polaris condensed row (everything in one cell, other columns hidden). */}
+                <div className={styles.Condensed}>
+                  <JobStatusBadge job={j} />
+                  <Text as="span" tone="subdued" variant="bodySm">
+                    {structureName(j.structureCode)} · {t("vendorPortal.common.pcs", { count: formatNumber(j.quantity) })}
+                  </Text>
+                  <span className={styles.CondensedMeta}>
+                    <DueLabel dueDate={j.dueDate} status={j.status} compact />
+                    <Text as="span" numeric fontWeight="semibold">
+                      {formatMoney(j.vendorCostPiasters, locale)}
+                    </Text>
+                  </span>
+                </div>
               </IndexTableCell>
-              <IndexTableCell>
+              <IndexTableCell className={styles.WideOnly}>
                 <time dateTime={j.placedAt}>{formatDate(j.placedAt, locale, "medium")}</time>
               </IndexTableCell>
-              <IndexTableCell>
+              <IndexTableCell className={styles.WideOnly}>
                 {structureName(j.structureCode)}
                 <Text as="span" tone="subdued" variant="bodySm">
                   {" · "}
-                  {j.buyerName}
+                  <bdi>{j.buyerName}</bdi>
                 </Text>
               </IndexTableCell>
-              <IndexTableCell alignment="end" numeric>
+              <IndexTableCell className={styles.WideOnly} alignment="end" numeric>
                 {formatNumber(j.quantity)}
               </IndexTableCell>
-              <IndexTableCell>
+              <IndexTableCell className={styles.WideOnly}>
                 <DueLabel dueDate={j.dueDate} status={j.status} compact />
               </IndexTableCell>
-              <IndexTableCell>
+              <IndexTableCell className={styles.WideOnly}>
                 <JobStatusBadge job={j} />
               </IndexTableCell>
-              <IndexTableCell alignment="end" numeric>
+              <IndexTableCell className={styles.WideOnly} alignment="end" numeric>
                 {formatMoney(j.vendorCostPiasters, locale)}
               </IndexTableCell>
             </IndexTableRow>
           ))}
         </IndexTable>
+      </div>
     </Page>
   );
 }

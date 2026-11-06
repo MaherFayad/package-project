@@ -8,7 +8,6 @@ import {
   IndexTableRow,
   IndexTableRowLink,
   Page,
-  BlockStack,
   Text,
 } from "@/components/ui";
 import { requireVendorContext } from "@/components/vendor/server/context";
@@ -29,11 +28,7 @@ export default async function RateCardsPage({ params }: { params: Promise<{ loca
   const cards = await listRateCards(vendor.id);
 
   return (
-    <Page fullWidth title={t("vendorPortal.rateCards.title")} titleIcon={<Table2 aria-hidden="true" />}>
-      <BlockStack gap="400">
-        <Text as="p" tone="subdued">
-          {t("vendorPortal.rateCards.subtitle")}
-        </Text>
+    <Page fullWidth title={t("vendorPortal.rateCards.title")} titleIcon={<Table2 aria-hidden="true" />} subtitle={t("vendorPortal.rateCards.subtitle")}>
         <IndexTable
           resourceName={{ singular: t("vendorPortal.rateCards.resourceSingular"), plural: t("vendorPortal.rateCards.resourcePlural") }}
           caption={t("vendorPortal.rateCards.title")}
@@ -65,16 +60,36 @@ export default async function RateCardsPage({ params }: { params: Promise<{ loca
                 </IndexTableCell>
                 <IndexTableCell>{t(`materials.${c.materialCode}` as DictKey)}</IndexTableCell>
                 <IndexTableCell alignment="end" numeric>
-                  {first ? formatMoney(first.unitPiasters, locale) : "—"}
+                  {first ? (
+                    <>
+                      {formatMoney(first.unitPiasters, locale)}
+                      <Text as="span" tone="subdued" variant="bodySm">
+                        {" · "}
+                        {t("vendorPortal.rateCards.tierQty", { count: formatNumber(first.minQty) })}
+                      </Text>
+                    </>
+                  ) : (
+                    "—"
+                  )}
                 </IndexTableCell>
                 <IndexTableCell alignment="end" numeric>
-                  {last ? formatMoney(last.unitPiasters, locale) : "—"}
+                  {last ? (
+                    <>
+                      {formatMoney(last.unitPiasters, locale)}
+                      <Text as="span" tone="subdued" variant="bodySm">
+                        {" · "}
+                        {t("vendorPortal.rateCards.tierQty", { count: formatNumber(last.minQty) })}
+                      </Text>
+                    </>
+                  ) : (
+                    "—"
+                  )}
                 </IndexTableCell>
                 <IndexTableCell alignment="end" numeric>
                   {formatMoney(c.setupPiasters, locale)}
                 </IndexTableCell>
                 <IndexTableCell alignment="end" numeric>
-                  {formatMoney(c.dieCostPiasters, locale)}
+                  {c.dieCostPiasters > 0 ? formatMoney(c.dieCostPiasters, locale) : <Text as="span" tone="subdued">{t("vendorPortal.rateCards.noDie")}</Text>}
                 </IndexTableCell>
                 <IndexTableCell alignment="end" numeric>
                   {t("vendorPortal.common.days", { count: formatNumber(c.leadTimeDays) })}
@@ -88,7 +103,6 @@ export default async function RateCardsPage({ params }: { params: Promise<{ loca
             );
           })}
         </IndexTable>
-      </BlockStack>
     </Page>
   );
 }

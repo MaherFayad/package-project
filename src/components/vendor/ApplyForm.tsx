@@ -2,7 +2,7 @@
 
 import { FileCheck2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Banner, BlockStack, Button, Card, Checkbox, DropZone, Icon, InlineGrid, InlineStack, Select, Text, TextField, useToast } from "@/components/ui";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
@@ -46,6 +46,21 @@ export function ApplyForm({ defaultName, defaultPhone }: { defaultName: string; 
   const [uploadErr, setUploadErr] = useState<Partial<Record<DocKind, string>>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const [focusNonce, setFocusNonce] = useState(0);
+
+  // After a failed submit, move focus to the first invalid field (WCAG 3.3.1, 2.4.3); fall back to
+  // the error summary when the problem is not on a focusable control (e.g. a missing upload).
+  useEffect(() => {
+    if (!focusNonce) return;
+    const form = formRef.current;
+    const first = form?.querySelector<HTMLElement>("input[aria-invalid='true'], select[aria-invalid='true'], textarea[aria-invalid='true'], fieldset[aria-invalid='true'] input");
+    const target = first ?? form?.querySelector<HTMLElement>("[data-error-summary]");
+    if (!target) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    target.scrollIntoView({ block: "center", behavior: reduce ? "auto" : "smooth" });
+    target.focus({ preventScroll: true });
+  }, [focusNonce]);
 
   const set = <K extends keyof typeof v>(k: K, val: (typeof v)[K]) => setV((s) => ({ ...s, [k]: val }));
   const err = (path: string) => {
@@ -85,6 +100,7 @@ export function ApplyForm({ defaultName, defaultPhone }: { defaultName: string; 
     if (!local.success) {
       const e = issuesToErrors(local.error.issues);
       setErrors(e);
+      setFocusNonce((n) => n + 1);
       toast.show(t("vendorPortal.apply.errors.summary", { count: Object.keys(e).length }), { tone: "critical" });
       return;
     }
@@ -95,6 +111,7 @@ export function ApplyForm({ defaultName, defaultPhone }: { defaultName: string; 
         router.refresh();
       } else if (res.fieldErrors) {
         setErrors(res.fieldErrors);
+        setFocusNonce((n) => n + 1);
         toast.show(res.fieldErrors._ ? t("vendorPortal.apply.errors.ALREADY_APPLIED") : t("vendorPortal.apply.errors.summary", { count: Object.keys(res.fieldErrors).length }), { tone: "critical" });
         if (res.fieldErrors._) router.refresh();
       } else {
@@ -111,6 +128,7 @@ export function ApplyForm({ defaultName, defaultPhone }: { defaultName: string; 
 
   return (
     <form
+      ref={formRef}
       noValidate
       onSubmit={(e) => {
         e.preventDefault();
@@ -118,7 +136,11 @@ export function ApplyForm({ defaultName, defaultPhone }: { defaultName: string; 
       }}
     >
       <BlockStack gap="400">
-        {errorCount ? <Banner tone="critical" title={t("vendorPortal.apply.errors.summary", { count: errorCount })} /> : null}
+        {errorCount ? (
+          <div data-error-summary tabIndex={-1} className={styles.ErrorSummary}>
+            <Banner tone="critical" title={t("vendorPortal.apply.errors.summary", { count: errorCount })} />
+          </div>
+        ) : null}
 
         <Card title={t("vendorPortal.apply.companyTitle")}>
           <BlockStack gap="300">

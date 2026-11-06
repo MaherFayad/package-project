@@ -82,9 +82,8 @@ export function JobDetail({ job, vendorName }: { job: JobDetailDTO; vendorName: 
       onAction: () => run("submitQc", () => submitQc(job.id), t("vendorPortal.job.qcSubmitted")),
     };
 
+  // Downloads live in the "Production files" card; the header keeps only the workflow actions.
   const secondaryActions: PageAction[] = [
-    { content: t("vendorPortal.job.actions.downloadDieline"), icon: Download, url: dielineUrl, external: false },
-    ...(pdfUnlocked ? [{ content: t("vendorPortal.job.actions.downloadPdf"), icon: FileText, url: pdfUrl }] : []),
     ...(actions.includes("decline") ? [{ content: t("vendorPortal.job.actions.decline"), destructive: true, onAction: () => setDeclineOpen(true) }] : []),
   ];
 
@@ -123,7 +122,7 @@ export function JobDetail({ job, vendorName }: { job: JobDetailDTO; vendorName: 
         content = (
           <span>
             <Text as="span" fontWeight="semibold">
-              {e.by === "you" ? vendorName : "Elba"}
+              {e.by === "you" ? vendorName : t("meta.siteName")}
             </Text>
             {": "}
             <span className={styles.PreWrap}>{e.note}</span>
@@ -165,6 +164,13 @@ export function JobDetail({ job, vendorName }: { job: JobDetailDTO; vendorName: 
   }
 
   const canUploadQc = actions.includes("uploadQc");
+  /** Addresses store the governorate as a code or an English name; show it in the UI language. */
+  const governorateName = (g: string) => {
+    const code = g.trim().toUpperCase().replace(/[\s-]+/g, "_");
+    const key = `governorates.${code}` as DictKey;
+    const name = t(key);
+    return name === key ? g : name;
+  };
   const kindLabel = (k: string) => t(`vendorPortal.job.qcKinds.${k}` as DictKey);
 
   return (
@@ -347,55 +353,6 @@ export function JobDetail({ job, vendorName }: { job: JobDetailDTO; vendorName: 
               </BlockStack>
             </Card>
 
-            <BlockStack gap="200">
-              <Text as="h2" variant="headingMd">
-                {t("vendorPortal.job.notesTitle")}
-              </Text>
-              <Timeline
-                headingLevel={3}
-                composer={
-                  actions.includes("addNote") ? (
-                    <form
-                      onSubmit={async (e) => {
-                        e.preventDefault();
-                        if (!note.trim()) return;
-                        const r = await run("note", () => addJobNote({ orderId: job.id, note }), t("vendorPortal.job.noteAdded"));
-                        if (r?.ok) setNote("");
-                      }}
-                    >
-                      <Card>
-                        <BlockStack gap="300">
-                          <InlineStack gap="300" blockAlign="start" wrap={false}>
-                            <Avatar name={vendorName} size="md" decorative />
-                            <div className={styles.Grow}>
-                              <TextField
-                                label={t("vendorPortal.job.notesLabel")}
-                                labelHidden
-                                autoComplete="off"
-                                multiline={2}
-                                maxLength={1000}
-                                value={note}
-                                onChange={setNote}
-                                placeholder={t("vendorPortal.job.notesPlaceholder")}
-                              />
-                            </div>
-                          </InlineStack>
-                          <InlineStack align="space-between" blockAlign="center" gap="200">
-                            <Text as="span" tone="subdued" variant="bodySm">
-                              {t("vendorPortal.job.notesHelp")}
-                            </Text>
-                            <Button submit disabled={!note.trim()} loading={busy === "note"}>
-                              {t("vendorPortal.job.notesPost")}
-                            </Button>
-                          </InlineStack>
-                        </BlockStack>
-                      </Card>
-                    </form>
-                  ) : undefined
-                }
-                groups={groups}
-              />
-            </BlockStack>
           </BlockStack>
         </LayoutSection>
 
@@ -460,7 +417,7 @@ export function JobDetail({ job, vendorName }: { job: JobDetailDTO; vendorName: 
             </Card>
             <Card title={t("vendorPortal.job.deliveryTitle")}>
               <BlockStack gap="200">
-                {job.shipTo.city || job.shipTo.governorate ? <Text as="p">{t("vendorPortal.job.deliveryTo", { city: job.shipTo.city, governorate: job.shipTo.governorate })}</Text> : null}
+                {job.shipTo.city || job.shipTo.governorate ? <Text as="p">{t("vendorPortal.job.deliveryTo", { city: job.shipTo.city, governorate: governorateName(job.shipTo.governorate) })}</Text> : null}
                 <Text as="p" tone="subdued" variant="bodySm">
                   {t("vendorPortal.job.deliveryBody")}
                 </Text>
@@ -476,6 +433,60 @@ export function JobDetail({ job, vendorName }: { job: JobDetailDTO; vendorName: 
             </Card>
           </BlockStack>
         </LayoutSection>
+
+        {/* Activity sits after the summary so phones see due date, price and delivery first. */}
+        <section className={styles.NotesSection} aria-labelledby="job-notes-title">
+          <BlockStack gap="200">
+            <Text as="h2" variant="headingMd" id="job-notes-title">
+              {t("vendorPortal.job.notesTitle")}
+            </Text>
+            <Timeline
+              headingLevel={3}
+              composer={
+                actions.includes("addNote") ? (
+                  <form
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      if (!note.trim()) return;
+                      const r = await run("note", () => addJobNote({ orderId: job.id, note }), t("vendorPortal.job.noteAdded"));
+                      if (r?.ok) setNote("");
+                    }}
+                  >
+                    <Card>
+                      <BlockStack gap="300">
+                        <InlineStack gap="300" blockAlign="start" wrap={false}>
+                          <Avatar name={vendorName} size="md" decorative />
+                          <div className={styles.Grow}>
+                            <TextField
+                              label={t("vendorPortal.job.notesLabel")}
+                              labelHidden
+                              autoComplete="off"
+                              multiline={2}
+                              maxLength={1000}
+                              value={note}
+                              onChange={setNote}
+                              placeholder={t("vendorPortal.job.notesPlaceholder")}
+                            />
+                          </div>
+                        </InlineStack>
+                        <InlineStack align="space-between" blockAlign="center" gap="200">
+                          <Text as="span" tone="subdued" variant="bodySm">
+                            {t("vendorPortal.job.notesHelp")}
+                          </Text>
+                          <Button submit disabled={!note.trim()} loading={busy === "note"}>
+                            {t("vendorPortal.job.notesPost")}
+                          </Button>
+                        </InlineStack>
+                      </BlockStack>
+                    </Card>
+                  </form>
+                ) : undefined
+              }
+              groups={groups}
+            />
+          </BlockStack>
+        </section>
+        <div className={styles.NotesSpacer} aria-hidden="true" />
       </Layout>
 
       <Modal
@@ -528,7 +539,7 @@ export function JobDetail({ job, vendorName }: { job: JobDetailDTO; vendorName: 
           <Select
             label={t("vendorPortal.job.declineReason")}
             value={reason}
-            placeholder="—"
+            placeholder={t("vendorPortal.job.declineReasonPlaceholder")}
             onChange={(v) => setReason(v as DeclineReason)}
             options={DECLINE_REASONS.map((r) => ({ label: t(`vendorPortal.job.declineReasons.${r}` as DictKey), value: r }))}
             requiredIndicator

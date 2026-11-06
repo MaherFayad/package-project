@@ -1,6 +1,7 @@
 import { CircleCheck, Circle } from "lucide-react";
 import {
   Badge,
+  Banner,
   BlockStack,
   Box,
   Button,
@@ -53,7 +54,7 @@ function JobList({ jobs, locale, empty }: { jobs: JobListItemDTO[]; locale: Loca
               <JobStatusBadge job={j} />
             </InlineStack>
             <Text as="span" tone="subdued" variant="bodySm">
-              {t(`structures.${j.structureCode}` as DictKey)} · {t("vendorPortal.common.pcs", { count: formatNumber(j.quantity) })} · {j.buyerName}
+              {t(`structures.${j.structureCode}` as DictKey)} · {t("vendorPortal.common.pcs", { count: formatNumber(j.quantity) })} · <bdi>{j.buyerName}</bdi>
             </Text>
           </div>
           <div className={styles.ListMeta}>
@@ -169,9 +170,9 @@ export default async function VendorDashboard({ params }: { params: Promise<{ lo
                   ))}
                   {d.payouts.eInvoiceCount > 0 ? (
                     <Box paddingBlockStart="200">
-                      <Badge tone="warning" progress="incomplete">
-                        {t("vendorPortal.dashboard.eInvoiceReminder", { count: d.payouts.eInvoiceCount })}
-                      </Badge>
+                      <Banner tone="warning" inCard>
+                        {t("vendorPortal.dashboard.eInvoiceReminder", { count: formatNumber(d.payouts.eInvoiceCount) })}
+                      </Banner>
                     </Box>
                   ) : null}
                 </BlockStack>
