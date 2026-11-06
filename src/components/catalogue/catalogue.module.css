@@ -157,7 +157,13 @@
 
 .resultCount { font-size: 0.9375rem; color: var(--mk-text-2); }
 
+.gridWrap { container-type: inline-size; }
 .grid { position: relative; list-style: none; margin: 0; padding: 0; }
+/* Pre-measurement grid: same columns (columnsFor), gaps and row height as the windowed grid. */
+.gridStatic { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; list-style: none; margin: 0; padding: 0; }
+@container (min-width: 480px) { .gridStatic { gap: 16px; } }
+@container (min-width: 720px) { .gridStatic { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@container (min-width: 1100px) { .gridStatic { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .cell { position: absolute; }
 
 .card {
@@ -184,7 +190,7 @@
 @media (prefers-reduced-motion: reduce) {
   .card:hover .thumb img { transform: none; }
 }
-.cardBody { display: grid; gap: 4px; padding-block-start: 12px; align-content: start; min-inline-size: 0; }
+.cardBody { display: grid; gap: 4px; padding-block-start: 12px; align-content: start; min-inline-size: 0; block-size: 132px; overflow: hidden; }
 .cardStd {
   font-size: 0.8125rem;
   font-weight: 600;

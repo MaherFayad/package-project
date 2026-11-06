@@ -36,11 +36,20 @@ const EGYPT_TONE = { local: "success", imported: "attention", rare: "critical" }
  * grid of real 3D thumbnails inside the dialog's scroll area. Same props as the designer's
  * ModelPicker, so it drops in; `cards` is accepted for compatibility and ignored.
  */
+/**
+ * Search gets focus on open only with a mouse or trackpad. On touch, focusing it opens the
+ * keyboard over the grid, so the dialog keeps its default focus and its title is read first
+ * (WCAG 2.4.3 focus order).
+ */
+function finePointer(): boolean {
+  return typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia("(pointer: fine)").matches;
+}
+
 export function ModelPicker({ open, current, onClose, onPick }: { open: boolean; cards?: ModelCard[]; current: string; onClose: () => void; onPick: (code: string) => void }) {
   const { locale } = useI18n();
   const searchRef = useRef<HTMLInputElement | null>(null);
   return (
-    <Modal open={open} onClose={onClose} title={locale === "ar" ? "اختر نموذجا" : "Choose a model"} size="large" initialFocusRef={searchRef} flush>
+    <Modal open={open} onClose={onClose} title={locale === "ar" ? "اختر نموذجا" : "Choose a model"} size="large" initialFocusRef={finePointer() ? searchRef : undefined} flush>
       <CataloguePickerBody current={current} onPick={onPick} searchRef={searchRef} />
     </Modal>
   );

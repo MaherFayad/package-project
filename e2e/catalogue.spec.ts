@@ -141,3 +141,15 @@ test("designer picker: families, Egypt filter, search, pick a model", async ({ p
   await expect(page.getByTestId("stage-3d")).toHaveAttribute("data-model", "FEFCO_0201");
   await page.screenshot({ path: path.join(SHOTS, "after-en-1440-designer.png") });
 });
+
+test("designer picker on touch: no search autofocus, the dialog keeps focus (WCAG 2.4.3)", async ({ page }, info) => {
+  test.skip(info.project.name !== "mobile", "touch only");
+  await page.route("**/api/designs**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ id: "e2e-picker-m", owned: false, updatedAt: new Date().toISOString() }) }));
+  await page.goto("/ar/design/mailer-box");
+  await dismissCookies(page);
+  await page.getByRole("button", { name: /تغيير النموذج|غير النموذج/ }).first().click();
+  const picker = page.getByTestId("catalogue-picker");
+  await expect(picker).toBeVisible();
+  await expect(picker.getByRole("searchbox")).not.toBeFocused();
+  expect(await page.evaluate(() => !!document.activeElement?.closest('[role="dialog"]'))).toBe(true);
+});
