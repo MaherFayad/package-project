@@ -86,7 +86,7 @@
   /* Inter first in both locales: it has no Arabic glyphs, so Arabic falls through to Noto, while
      digits and Latin words reuse Inter (preloaded) instead of fetching Noto's Latin subset. */
   --mk-font: var(--font-inter), var(--font-noto-arabic), "Noto Sans Arabic", -apple-system, "Segoe UI", Tahoma, sans-serif;
-  --mk-fs-hero: clamp(3.5rem, 1rem + 10.4vw, 11.25rem);  /* start-page giant 180 */
+  --mk-fs-hero: clamp(3.5rem, 0.621rem + 11.81vw, 11.25rem);  /* start-page giant: 56px at 390, 180px from 1440 (spec section 7) */
   /* Section 7 type steps: phone / tablet / desktop (set per breakpoint below). */
   --mk-fs-96: 3.5rem;                 /* h1 hero: 56 / 72 / 96 */
   --mk-fs-64: 2.25rem;                /* h2 page-closing: 36 / 48 / 64 */
