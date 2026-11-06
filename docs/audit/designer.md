@@ -298,3 +298,56 @@ Verification (round 5 rows): lint and typecheck are clean. `npm test`: 83 files,
 | a11y R4-06 | low | `ArtworkPanel` inspector | The sub-headings "Move", "Quick placement" and "Position" were h4 under the inspector's h2. | `as="h3"`. Outline: h2 "Selected item…", h3 Move / Quick placement / Position. axe (incl. best-practice) on the panel: 0. | fixed |
 
 Outside scope: `src/components/catalogue/picker.module.css` (one rule, the picker opened from the designer). Tests: lint clean, vitest 8,383 passed, Playwright `designer` + `catalogue` 22 passed, 4 skipped.
+
+# Round 6
+
+Base: main 7292e05 (includes 7936acb) merged into this branch (`49f8490`). Conflicts:
+- **Share page:** I kept checkout's quote reason and model poster, then added the designer half on top (Model row, container size, `&model=` on the CTA, i18n labels).
+- **`DesignerApp`:** I kept main's `staticQuote || price.status === "quote"`, with the label coming from the dictionary.
+- **Picker `.name`:** the line clamp stays removed.
+
+Fresh pass: Playwright ar + en, 390 and 1440, axe, keyboard, `perf-pages.mjs` (both profiles, every designer page).
+
+axe-core: **0 violations** on the start page, box and pouch editors, artwork tab, text added and gate, ar + en, 390 + 1440. No console errors and no horizontal scroll.
+
+## Findings (round 6)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R6-01 | high | start page, phone (`DesignStart.tsx`) | **INP 640 ms** (budget 200). The first tap waited 444 to 474 ms for a 784 to 816 ms main-thread task: the hero's 3D viewer mounting on idle, right when the visitor starts to interact. TBT was 6.3 to 6.5 s. | INP < 200 ms; WCAG 2.2.2 (and battery) | On phones and touch screens (`max-width: 767px` or `pointer: coarse`) the hero keeps its poster, and the 3D view loads only when the visitor presses Play. Hover and focus no longer start a turn before then. Desktop is unchanged. | fixed for the passive load: **TBT 6.3–6.5 s → 1.7–2.1 s**, no 3D work unless asked. perf-pages still reports a high INP (784 / 1,248 ms). The cause is the tool itself: it taps Play, which loads the 3D view (one 700–880 ms task, engine), and its next key press lands during that task. The chip handlers take under 5 ms. Splitting that task goes to the 3D engine (R6-R1) |
+| R6-02 | medium | editor and start page, phone (`[structure]/page.tsx`, `(picker)/layout.tsx`) | The LCP element (the stage or hero poster SVG) was only requested after the CSS, so LCP was about FCP + 1.3 s. | LCP < 2.5 s | Preload with `fetchPriority="high"`: `preload()` in the editor page, and a real `<link>` in the picker layout's shell. `preload()` inside the page that streams into the R4-01 boundary only reached the RSC payload, not `<head>`. | fixed: editor phone LCP **4.55 → 3.54 s (en), 5.20 → 4.33 s (ar)**; LCP is now FCP + 0.3 s |
+
+### LCP check on the editor (integrator request)
+
+`perf-pages.mjs`, phone profile (390 × 844, 4x CPU, 562 ms RTT, 1.47 Mbps):
+
+| page | round 4 base | after R4-11/12 | after R6-02 |
+|---|---|---|---|
+| designer-box en / ar | 10.45 / 11.12 s | 4.56 / 5.20 s | **3.54 / 4.33 s** |
+| designer-bottle en / ar | — | 4.58 / 5.23 s | **3.51 / 4.26 s** |
+| design-picker en / ar | 11.3 / 12.9 s | 3.92 / 4.64 s | 3.89 / 4.70 s |
+
+The remaining gap to 2.5 s is FCP (3.2 to 4.0 s on this profile). FCP is platform-wide (fonts, CSS, document on Slow 4G), as noted after round 3. Desktop LCP is 0.48 to 0.66 s and CLS is 0.000 to 0.003 everywhere.
+
+### Reported to other owners (not edited)
+
+| id | owner | finding | suggested fix |
+|---|---|---|---|
+| R6-R1 | 3d-engine | Mounting a `PackagingScene` (three import, scene, first shader link) is one 700 to 880 ms task at 4x CPU, and 1.2 s for the bottle in the editor. Any input during it waits. | Yield between import, scene build and first render (`scheduler.yield` / `setTimeout(0)`), and warm programs with `compileAsync` before mounting the canvas. |
+
+## Verification (round 6)
+
+- Lint and typecheck are clean. `npm test`: **85 files, 8,419 passed**. `npm run build` OK.
+- Playwright `designer` + `smoke` + `journey` + `checkout` + `catalogue` (`--workers=2`): **41 passed, 5 skipped**, 0 failed.
+- Hydration e2e repeated 16 × 2 after the merge: **32 passed**.
+
+## Counts (round 6, new findings before fixing)
+
+| severity | found | fixed | open |
+|---|---|---|---|
+| critical | 0 | 0 | 0 |
+| high | 1 (R6-01) | 1 | 0 (the engine part is R6-R1) |
+| medium | 1 (R6-02) | 1 | 0 |
+| low | 0 | 0 | 0 |
+
+This round still found a medium-or-worse issue (both are performance), so the stop rule calls for another pass.
