@@ -448,7 +448,7 @@ export const checkoutEn = {
     DISPUTE_OPENED: "Elba: we received your report about order {number} and will reply within one working day.",
     REVIEW_THANKS: "Elba: thanks for rating order {number}.",
     DESIGN_FOLLOW_UP:
-      "Elba: your design “{design}” is saved in your account. See the price and order printing here: {url} and reply here with any question. To stop these messages: {stop}",
+      "Elba: your design “{design}” is saved in your account. See the price and order printing here: {url} and reply here with any question. To stop these messages, reply STOP or open: {stop}",
   },
   buyer: {
     secureCheckout: "Secure checkout",

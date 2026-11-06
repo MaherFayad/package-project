@@ -368,3 +368,51 @@ critical 0 · high 1 · medium 7 · low 6. All 14 are fixed. No round 3 row reop
 - `src/lib/jobs/followUp.ts` and its test: stop link and erasure skip (B-23 is a platform item).
 - `src/components/store/legal.ts`: `LEGAL_UPDATED`.
 - New route `src/app/[locale]/(auth)/unsubscribe/*` (PDPL consent).
+
+## Round 5
+
+Base: main at 553e407 (round 4 merged), merged into this branch. Scope: the platform rows of `docs/audit/ROUND5.md` (R4-B-04, R4-B-08, R4-CR-09, the CR-38 remnant), then a fresh look at everything those fixes touch. Method as before: production build, Playwright at 390 and 1440 in ar and en, axe, DB checks after each flow, and direct HTTP probes of `/api/events` and the new webhook.
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R4-B-04 | medium | `api/events/route.ts` | Rotating the unsigned `elba_anon` cookie gave every request a fresh rate-limit key, so a script could add unlimited `visit`s and inflate the other browser events. | Plan §6.3, §10 gates (data integrity) | Limits also key on what a script cannot rotate for free (the IP comes from `clientIp`, which already trusts only proxy-added hops). The caps:<br>- **All events:** 120 per minute per IP, on top of the per-browser 60.<br>- **`visit`:** one per browser fingerprint (SHA-256 of IP + User-Agent, held in memory, never stored) per 30 minutes, and at most 30 per IP per 30 minutes (for shared NAT).<br>- **Other browser events:** 30 per name per IP per 10 minutes.<br>Over a cap the event is dropped silently (204).<br>Verified against `next start`: 25 visits with 25 rotated cookies record 1 visit. Unit tests: 90 rotated cookies give 1 visit; 40 user agents behind one IP give 30; 50 rotated `artwork_uploaded` give 30; 130 rotated `gate_shown` give 10 × 429. | fixed |
+| R4-B-08 (a) | medium | `jobs/followUp.ts` | An untitled design produced 'your design “”'. | Copy quality | `designLabel()`: the design's name, else the library model name, else the box style ("علبة بريدية" / "Mailer box"), never empty. | fixed |
+| R4-B-08 (b) | medium | `api/webhooks/whatsapp`, `lib/notify/whatsapp-inbound.ts`, `lib/auth/marketing-consent.ts`, notify `DESIGN_FOLLOW_UP` | There was no reply-STOP opt-out. | PDPL 151/2020; WhatsApp Business messaging policy | **Message:** now ends "لإيقاف هذه الرسائل أرسل «إيقاف» أو افتح: {stop}" / "reply STOP or open: {stop}".<br>**Webhook** (Cloud API format): the GET handshake checks `WHATSAPP_VERIFY_TOKEN`. A POST needs a valid `X-Hub-Signature-256` for `WHATSAPP_APP_SECRET`: without one it answers 401, and with no secret configured 503.<br>**Matching:** STOP, UNSUBSCRIBE, إيقاف, ايقاف, إلغاء الاشتراك, توقف, … with alef forms, diacritics and punctuation folded. Only a short message that is the keyword counts, so "لا" and "please stop by" do not.<br>**Withdrawal:** goes through the shared `withdrawMarketingConsent()` (consent log row and flag), which the one-click link now uses too.<br>Verified on `next start`: unsigned → 401 with the consent unchanged; signed "إيقاف" → 200 and the consent off; the handshake echoes the challenge. | fixed (Meta app setup is ops) |
+| R4-B-08 (c) | medium | `jobs/followUp.ts` | Designs with an open price request were still nudged to "order printing here". | Business: no nudge while the team is pricing | The store flags designs that have a non-instant, non-expired Quote (price request, or a later admin offer) from the last 30 days. They are skipped with reason `price_requested`. | fixed |
+| R4-CR-09 | medium | `marketing/AnnouncementBar.tsx`, `MarketingHeader.tsx`, new `StartLink.tsx` | The promo bar and "Start designing free" sat above the account, orders, order tracking and invoice pages. At 390 ar the bar took 3 lines and split its link. | Hierarchy; Polaris (no promo in task flows) | **Transactional routes:** the bar is never rendered on account, orders (including invoice and tracking), sign-in or unsubscribe. The path is known on the server, so there is no flash.<br>**Dismissal:** lasts 30 days via a functional cookie. An inline script hides the bar before paint (CLS 0 after dismissing).<br>**Phones:** at 480 px and below a short text ("جديد: معاينة البصمة والسلوفان ثلاثية الأبعاد."), with `white-space: nowrap` on the link. At 390 it is 2 lines and the link is whole.<br>**Signed in:** the header CTA reads "تصميم جديد" / "New design". | fixed |
+| CR-38 (remnant) | low | `HeaderNav`, `AccountLink`, `LangLink`, `MarketingFooter`, `CheckoutShell`, `DesignStart`, `AnnouncementBar` | The craft report saw `stroke-width="2"` on chrome icons. The global rule already rendered them at 1.75; the report read the DOM attribute, not the computed style. Sizes were off-scale: menu and close 24, checkout lock 14. | Icon consistency | `strokeWidth={1.75}` is set explicitly, so the attribute matches. Menu and close are now 20, the lock 16. Measured computed values in the chrome: only `1.75px` at 16 and 20. | fixed |
+| R5-01 | low | `legal.cookies.sections.essential` | The cookie page did not list `elba_cookie_ack` (exists since round 2) or the new `elba_announce`. | PDPL 151/2020 transparency | Both are listed, with their lifetimes, in ar and en. | fixed |
+
+Also: `.env.example` documents `WHATSAPP_APP_SECRET` and `WHATSAPP_VERIFY_TOKEN`.
+
+### Round 5: left open
+
+| id | owner | note |
+|---|---|---|
+| R4-B-04 (part) | designer / ops | `elba_anon` is still unsigned. Signing it (HMAC, as the brief suggests) changes the value format read by the designer server, `verify-otp` and share pages, which is outside platform scope. Event counts no longer depend on it. The in-memory limiter is per process: a multi-instance deployment needs a shared store (Redis), as `rate-limit.ts` already notes. |
+| R4-B-08 (part) | ops | Register the webhook URL and the two secrets in the Meta app. Optional: send a "you will not get these messages" confirmation reply. Not done: skipping designs whose share-fork copy was ordered. Forks keep no link to the original, so this would need a schema field (designer). |
+| R4-04 (part) | counsel | Unchanged from round 4: older marketing grants. |
+
+### Round 5 counts (new findings, before fixing)
+
+critical 0 · high 0 · medium 0 · low 1 (R5-01). The four ROUND5.md rows (4 medium, 1 low remnant) are fixed. Under the brief's rule ("stop when a round finds nothing of medium or worse") the platform area is done.
+
+### Round 5 verification
+
+- `npm run lint`, `npm run typecheck`, `npm test` (83 files, 8,390 tests; new: `whatsapp-inbound.test.ts`, cookie-rotation and per-IP cases in `routes.test.ts`, the label, price-request and STOP-text cases in `followUp.test.ts`), `npm run build`: pass.
+- e2e (`--workers=2`, `next start`): smoke, storefront, checkout, designer, journey, admin, vendor: 58 passed, 12 skipped by the specs.
+- Browser checks:
+  - Signed-in account, orders and order tracking: no bar, CTA "تصميم جديد".
+  - Home: visitor sees the bar and "بدء التصميم مجانا".
+  - Dismissal: catalogue without the bar, CLS 0, and the cookie lasts 30 days.
+  - axe: 0 violations on signed-in home.
+- Screenshots: `docs/screenshots/audit/platform/r5-*`.
+
+### Files touched outside the listed scope (round 5)
+
+- `src/lib/jobs/followUp.ts` and its test.
+- `src/app/[locale]/(checkout)/_components/CheckoutShell.tsx` and `src/components/designer/DesignStart.tsx`: icon stroke only.
+- `src/app/api/events/route.ts` (the analytics endpoint).
+- New `src/app/api/webhooks/whatsapp/route.ts`.
+- `src/lib/notify/whatsapp-inbound.ts`.
+- `.env.example`.

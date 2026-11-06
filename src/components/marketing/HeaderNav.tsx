@@ -65,7 +65,7 @@ function DropMenu({ label, items, open, onToggle, onClose }: { label: string; it
     >
       <button ref={btn} type="button" className={styles.navTrigger} aria-expanded={open} aria-controls={id} onClick={onToggle}>
         {label}
-        <ChevronDown size={16} aria-hidden />
+        <ChevronDown size={16} strokeWidth={1.75} aria-hidden />
       </button>
       {open ? (
         <div className={styles.menuPanel} id={id}>
@@ -76,7 +76,7 @@ function DropMenu({ label, items, open, onToggle, onClose }: { label: string; it
                 <li key={it.href}>
                   <Link href={it.href} className={styles.menuLink} onClick={onClose}>
                     <span className={styles.menuIcon} aria-hidden="true">
-                      <I size={20} />
+                      <I size={20} strokeWidth={1.75} />
                     </span>
                     <span className={styles.menuText}>
                       <span className={styles.menuTitle}>{it.title}</span>
@@ -187,7 +187,7 @@ export function HeaderNav({ model, children }: { model: NavModel; children: Reac
         <div className={styles.headerActions}>
           {children}
           <button ref={openBtn} type="button" className={styles.menuButton} aria-expanded={sheet} aria-label={model.menuLabel} onClick={() => setSheet(true)}>
-            <Menu size={24} aria-hidden />
+            <Menu size={20} strokeWidth={1.75} aria-hidden />
           </button>
         </div>
       </div>
@@ -202,7 +202,7 @@ export function HeaderNav({ model, children }: { model: NavModel; children: Reac
                   {model.brand}
                 </Link>
                 <button type="button" className={styles.menuButton} aria-label={model.closeLabel} onClick={() => setSheet(false)}>
-                  <X size={24} aria-hidden />
+                  <X size={20} strokeWidth={1.75} aria-hidden />
                 </button>
               </div>
               <nav className={styles.sheetBody} aria-label={model.label}>
