@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+import { signInPhone } from "./fixtures/factory";
 
 /**
  * Marketing kit foundation (docs/design-refs/shopify-2026-reference.md, section 6): the dev
@@ -197,3 +198,106 @@ test("kit gallery is not in the sitemap and is disallowed in robots", async ({ r
   const robots = await (await request.get("/robots.txt")).text();
   expect(robots).toContain("Disallow: /*/dev/");
 });
+
+/** Header controls that run past either edge of the viewport, and the page's horizontal overflow. */
+const headerOverflow = (page: Page) =>
+  page.evaluate(() => {
+    const h = document.querySelector("header")!;
+    const out = Array.from(h.querySelectorAll<HTMLElement>("a, button"))
+      .filter((e) => {
+        const r = e.getBoundingClientRect();
+        return r.width > 0 && (r.right > window.innerWidth + 0.5 || r.left < -0.5);
+      })
+      .map((e) => e.textContent?.trim() || e.getAttribute("aria-label"));
+    return { page: document.documentElement.scrollWidth - window.innerWidth, out };
+  });
+
+// R6-AX-10 (WCAG 1.4.10): the desktop header fits from 1000 to 1280 px in both locales, signed out
+// and signed in with the longest role (vendor: Orders + Vendor portal; admin: Orders + Admin).
+for (const who of [
+  { key: "anon", phone: null },
+  { key: "buyer", phone: "+201000000002" },
+  { key: "vendor", phone: "+201000000010" },
+  { key: "admin", phone: "+201000000001" },
+] as const) {
+  test(`header fits 1000 to 1280 px, ar and en (${who.key})`, async ({ page, baseURL }, info) => {
+    test.skip(info.project.name !== "desktop", "desktop widths");
+    test.setTimeout(120_000);
+    if (who.phone) await signInPhone(page.context(), baseURL!, who.phone);
+    for (const locale of ["ar", "en"] as const) {
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.goto(`/${locale}/vendors`);
+      await page.waitForLoadState("networkidle");
+      // Signed in for real (the account menu replaces "Log in"); desktop actions show from 1024 px.
+      if (who.phone) await expect(page.locator("header").getByRole("button", { name: locale === "ar" ? "حسابي" : "My account" })).toBeVisible();
+      for (let w = 1000; w <= 1280; w += 20) {
+        await page.setViewportSize({ width: w, height: 800 });
+        expect(await headerOverflow(page), `${locale} ${who.key} at ${w}px`).toEqual({ page: 0, out: [] });
+      }
+    }
+    if (who.key === "vendor" || who.key === "admin") {
+      // The role links moved from the bar into the account menu.
+      await page.getByRole("button", { name: "My account" }).click();
+      await expect(page.getByRole("link", { name: "Orders" })).toBeVisible();
+      await expect(page.getByRole("link", { name: who.key === "vendor" ? "Vendor portal" : "Admin" })).toBeVisible();
+    }
+  });
+}
+
+test("mega-menu: focus opens it, then Enter keeps it open and moves to the first link (R6-AX-16)", async ({ page }, info) => {
+  test.skip(info.project.name !== "desktop", "desktop navigation");
+  await page.goto("/en/dev/kit");
+  await page.waitForLoadState("networkidle");
+  await page.locator("header").getByRole("link", { name: "Elba, Home" }).focus();
+  await page.keyboard.press("Tab");
+  const products = page.getByRole("button", { name: "Products" });
+  await expect(products).toBeFocused();
+  await expect(products).toHaveAttribute("aria-expanded", "true");
+  await page.keyboard.press("Enter");
+  await expect(products).toHaveAttribute("aria-expanded", "true");
+  await expect(page.getByRole("link", { name: "Mailer and shipping boxes" })).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(products).toBeFocused();
+  await page.keyboard.press(" ");
+  await expect(products).toHaveAttribute("aria-expanded", "true");
+  await expect(page.getByRole("link", { name: "Mailer and shipping boxes" })).toBeFocused();
+});
+
+test("violet band: text and muted text are solid white (R6-AX-14, WCAG 1.4.3)", async ({ page }) => {
+  await page.goto("/en/dev/kit");
+  const colours = await page.evaluate(() =>
+    // Every text element whose nearest band / card is violet (Sheet, SheetCard, BentoCard).
+    Array.from(document.querySelectorAll('[data-tone="violet"] :is(p, span, h2, h3, li)'))
+      .filter((el) => (el.textContent ?? "").trim() && el.closest("[data-tone]")?.getAttribute("data-tone") === "violet" && !el.closest("button, a, code, [class*='orbitNode'], [class*='orbitHub']"))
+      .map((el) => getComputedStyle(el).color),
+  );
+  expect(colours.length).toBeGreaterThan(3);
+  expect([...new Set(colours)]).toEqual(["rgb(255, 255, 255)"]);
+});
+
+test("page-local loops register with data-mk-motion: a global MotionScope pauses them (R6-AX-15)", async ({ page }) => {
+  await page.goto("/en/dev/kit");
+  await page.waitForLoadState("networkidle");
+  const loop = page.getByTestId("page-loop");
+  const state = () => loop.evaluate((el) => getComputedStyle(el).animationPlayState);
+  expect(await state()).toBe("running");
+  // The violet section holds two scopes: Orbit's own and, around it, the global one (last in DOM).
+  const pause = page.locator('[data-tone="violet"]').getByRole("button", { name: "Pause animation" }).last();
+  await pause.scrollIntoViewIfNeeded();
+  await pause.click();
+  await expect.poll(state).toBe("paused");
+  await page.locator('[data-tone="violet"]').getByRole("button", { name: "Play animation" }).last().click();
+  await expect.poll(state).toBe("running");
+});
+
+for (const locale of ["ar", "en"] as const) {
+  test(`footer: every link appears once (unique href and name, ${locale})`, async ({ page }) => {
+    await page.goto(`/${locale}/vendors`);
+    const links = await page.locator("footer a").evaluateAll((as) => as.map((a) => ({ href: (a as HTMLAnchorElement).getAttribute("href") ?? "", name: (a.getAttribute("aria-label") ?? a.textContent ?? "").trim() })));
+    expect(links.length).toBeGreaterThan(15);
+    const dup = (xs: string[]) => xs.filter((x, i) => xs.indexOf(x) !== i);
+    // The brand link (home) and the language switch are the only non-column links; both are unique too.
+    expect(dup(links.map((l) => l.href)), "duplicate footer hrefs").toEqual([]);
+    expect(dup(links.map((l) => l.name)), "duplicate footer link names").toEqual([]);
+  });
+}

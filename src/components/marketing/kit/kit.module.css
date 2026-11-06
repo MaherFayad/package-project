@@ -20,6 +20,7 @@
 .sheet {
   position: relative;
   isolation: isolate;
+  /* Section 7: a Sheet IS the band (rule 1); y="md" 64/56/40, "lg" 100/80/64, "xl" 128/96/80. */
   padding-block: var(--mk-section-y);
   font-family: var(--mk-font);
   color: var(--mk-on-dark);
@@ -27,26 +28,45 @@
   /* Glows and fans bleed past the edges; clip (not hidden) keeps sticky children working. */
   overflow-x: clip;
 }
+.sheet[data-y="lg"] { padding-block: var(--mk-section-y-lg); }
+.sheet[data-y="xl"] { padding-block: var(--mk-section-y-xl); }
+/* Rule 3: an overlapping sheet's top edge sits one sheet radius into the previous band, and its
+   first heading sits --mk-section-y-lg below that edge (xl bands keep xl). */
 .sheet[data-overlap="true"] {
   margin-block-start: calc(-1 * var(--mk-sheet-overlap));
   border-start-start-radius: var(--mk-radius-sheet);
   border-start-end-radius: var(--mk-radius-sheet);
+  padding-block-start: var(--mk-section-y-lg);
 }
+.sheet[data-overlap="true"][data-y="xl"] { padding-block-start: var(--mk-section-y-xl); }
 .sheet[data-tone="dark"] { background: var(--mk-bg); }
 .sheet[data-tone="green"] { background: radial-gradient(120% 90% at 85% 0%, #0a3d30 0%, var(--mk-band-green) 45%, var(--mk-band-green-deep) 100%); }
 .sheet[data-tone="navy"] { background: radial-gradient(120% 90% at 15% 0%, #0b1f4a 0%, var(--mk-band-navy) 50%, var(--mk-band-navy-2) 100%); }
 .sheet[data-tone="violet"] { background: var(--mk-violet); background-image: var(--mk-band-violet); }
 .sheet[data-tone="light"] { background: var(--mk-sheet); color: var(--mk-on-light); }
 .sheet[data-tone="white"] { background: var(--mk-sheet-2); color: var(--mk-on-light); }
-.sheet[data-pad="none"] { padding-block: 0; }
-.sheet[data-pad="sm"] { padding-block: calc(var(--mk-section-y) / 2); }
+/* Rule 2: adjacent bands of the same tone collapse to ONE --mk-section-y between them (the first
+   band's bottom padding): no overlap, no corner, no top padding on the second. */
+.sheet[data-tone="dark"] + .sheet[data-tone="dark"],
+.sheet[data-tone="green"] + .sheet[data-tone="green"],
+.sheet[data-tone="navy"] + .sheet[data-tone="navy"],
+.sheet[data-tone="violet"] + .sheet[data-tone="violet"],
+.sheet[data-tone="light"] + .sheet[data-tone="light"],
+.sheet[data-tone="white"] + .sheet[data-tone="white"] {
+  margin-block-start: 0;
+  border-start-start-radius: 0;
+  border-start-end-radius: 0;
+  padding-block-start: 0;
+}
+.sheet[data-pad="none"], .sheet[data-pad="none"][data-overlap="true"] { padding-block: 0; }
 .sheet[data-hero="true"] {
-  padding-block-start: calc(var(--mk-header-h) + var(--mk-section-y) / 2);
+  padding-block: var(--mk-hero-top) var(--mk-section-y-lg);
   min-block-size: min(100svh, 980px);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
 }
+.sheet[data-hero="true"][data-pad="none"] { padding-block: 0; }
 /* Inset card variant: a rounded band inside the container (the green card on the reference). */
 .sheetCard {
   color: var(--mk-on-dark);
@@ -58,16 +78,19 @@
 .sheetCard[data-tone="navy"] { background: radial-gradient(110% 120% at 10% 0%, #0d2556 0%, var(--mk-band-navy) 60%); }
 .sheetCard[data-tone="violet"] { background: var(--mk-violet); background-image: var(--mk-band-violet); }
 .sheetCard[data-tone="light"] { background: var(--mk-sheet); color: var(--mk-on-light); }
+.sheetCard[data-tone="white"] { background: var(--mk-sheet-2); color: var(--mk-on-light); }
 .sheetCard[data-tone="dark"] { background: var(--mk-bg-2); }
 /* Muted text and lines follow the tone. */
 .sheet, .sheetCard { --mk-muted: var(--mk-on-dark-muted); --mk-line: var(--mk-line-dark); --mk-ring: var(--mk-focus); }
-.sheet[data-tone="light"], .sheet[data-tone="white"], .sheetCard[data-tone="light"] { --mk-muted: var(--mk-on-light-muted); --mk-line: var(--mk-line-light); --mk-ring: var(--mk-focus-light); }
+.sheet[data-tone="light"], .sheet[data-tone="white"], .sheetCard[data-tone="light"], .sheetCard[data-tone="white"] { --mk-muted: var(--mk-on-light-muted); --mk-line: var(--mk-line-light); --mk-ring: var(--mk-focus-light); }
 .sheet :is(a, button, input, summary, [tabindex]):focus-visible,
 .sheetCard :is(a, button, input, summary, [tabindex]):focus-visible {
   outline: 2px solid var(--mk-ring);
   outline-offset: 3px;
 }
-.sheet[data-tone="violet"], .sheetCard[data-tone="violet"] { --mk-ring: #ffffff; --mk-muted: rgba(255, 255, 255, 0.82); }
+/* Violet (#3b1fd9 to #6a4cff): muted text is solid white too. 70% white was 3.32:1 and 82% 3.98:1
+   on #6a4cff; #fff is 5.15:1 at the lightest stop (R6-AX-14, WCAG 1.4.3). */
+.sheet[data-tone="violet"], .sheetCard[data-tone="violet"] { --mk-ring: #ffffff; --mk-muted: #ffffff; --mk-on-dark-muted: #ffffff; --mk-on-dark-subtle: #ffffff; color: #ffffff; }
 
 /* ───────────── Type ───────────── */
 .display, .heading {
@@ -90,26 +113,27 @@
 .weight-light { font-weight: 300; }
 .align-center { text-align: center; margin-inline: auto; }
 .eyebrow {
-  margin: 0 0 16px;
+  margin: 0 0 var(--mk-stack-title-sub);
   font-size: var(--mk-fs-14);
   font-weight: 500;
   line-height: 1.4;
   color: var(--mk-green);
 }
 .sheet[data-tone="light"] .eyebrow, .sheet[data-tone="white"] .eyebrow, .sheetCard[data-tone="light"] .eyebrow { color: var(--mk-accent-ink); }
-.sheet[data-tone="violet"] .eyebrow, .sheetCard[data-tone="violet"] .eyebrow { color: var(--mk-violet-tint); }
+/* Lilac #d9d0ff was 3.9:1 on #6a4cff: eyebrows on violet are white (R6-AX-14). */
+.sheet[data-tone="violet"] .eyebrow, .sheetCard[data-tone="violet"] .eyebrow { color: #ffffff; }
 .lead {
-  margin: 24px 0 0;
-  max-inline-size: 40em;
+  margin: var(--mk-stack-title-sub) 0 0;
+  max-inline-size: var(--mk-measure);
   font-size: var(--mk-fs-18);
   line-height: 1.55;
   color: var(--mk-muted, var(--mk-on-dark-muted));
 }
-.lead.align-center { margin-inline: auto; }
+.lead.align-center { margin-inline: auto; max-inline-size: var(--mk-intro-max); }
 .body { margin: 12px 0 0; font-size: var(--mk-fs-16); line-height: 1.55; color: var(--mk-muted, var(--mk-on-dark-muted)); }
 
 /* ───────────── Pills ───────────── */
-.pillRow { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-block-start: 40px; }
+.pillRow { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-block-start: var(--mk-stack-head-content); }
 .pillRow[data-align="center"] { justify-content: center; }
 .pill {
   --pill-bg: #ffffff;
@@ -195,6 +219,7 @@
 .motionScope[data-paused="true"] *,
 .motionScope[data-paused="true"] *::before,
 .motionScope[data-paused="true"] *::after { animation-play-state: paused !important; }
+/* Page-local loops (data-mk-motion) are paused / stopped from kit/tokens.css (global selectors). */
 .pauseBtn { position: absolute; inset-block-end: 16px; inset-inline-end: 16px; z-index: 3; }
 
 /* ───────────── PinnedScale ───────────── */
@@ -454,7 +479,7 @@ html[data-motion="on"] .fan:not([data-revealed]) .fanCard { transform: translate
 @media (prefers-reduced-motion: reduce) { .stepPanel, .stepBtn { transition: none; } .steps .stepBarFill { animation: none !important; } }
 
 /* ───────────── Bento ───────────── */
-.bento { display: grid; gap: 16px; grid-template-columns: 1fr; }
+.bento { display: grid; gap: var(--mk-grid-gap-bento); grid-template-columns: 1fr; }
 @media (min-width: 768px) { .bento { grid-template-columns: repeat(var(--bento-cols, 3), 1fr); grid-auto-rows: minmax(var(--bento-row, 280px), auto); } }
 .bentoCard {
   position: relative;
@@ -474,7 +499,7 @@ html[data-motion="on"] .fan:not([data-revealed]) .fanCard { transform: translate
 .bentoCard[data-tone="dark"] { background: var(--mk-bg-2); color: var(--mk-on-dark); --mk-muted: var(--mk-on-dark-muted); }
 .bentoCard[data-tone="grey"] { background: #ebebe8; }
 .bentoCard[data-tone="green"] { background: var(--mk-band-green); color: #fff; --mk-muted: var(--mk-on-dark-muted); }
-.bentoCard[data-tone="violet"] { background: var(--mk-violet); background-image: var(--mk-band-violet); color: #fff; --mk-muted: rgba(255, 255, 255, 0.85); }
+.bentoCard[data-tone="violet"] { background: var(--mk-violet); background-image: var(--mk-band-violet); color: #fff; --mk-muted: #ffffff; }
 .bentoTitle { margin: 0; font-size: var(--mk-fs-20); font-weight: var(--mk-fw-title); line-height: 1.3; }
 .bentoBody { margin: 0; color: var(--mk-muted); line-height: 1.55; }
 .bentoMedia { margin-block-start: auto; padding-block-start: 24px; display: grid; place-items: center; }
@@ -551,3 +576,23 @@ html[data-motion="on"] .fan:not([data-revealed]) .fanCard { transform: translate
 .mockup[data-tilt="true"]:dir(rtl) { transform: perspective(1600px) rotateY(8deg) rotateX(4deg); }
 .mockupCaption { margin-block-start: 12px; font-size: var(--mk-fs-14); color: var(--mk-muted); }
 .floatChip { position: absolute; z-index: 2; padding: 12px 16px; border-radius: 16px; background: #fff; color: #000; box-shadow: var(--mk-shadow-float); font-size: var(--mk-fs-14); line-height: 1.4; }
+
+/* ───────────── SectionHead / Stack / Grid (section 7 stacks and gaps) ───────────── */
+.sectionHead[data-align="center"] { text-align: center; }
+.sectionHead[data-align="center"] .head { max-inline-size: var(--mk-intro-max); margin-inline: auto; }
+.sectionHead[data-align="center"] .head .lead { margin-inline: auto; }
+.head > * + * { margin-block-start: var(--mk-stack-title-sub); }
+.head > .eyebrow + * { margin-block-start: 0; }
+.headContent { margin-block-start: var(--mk-stack-head-content); }
+.headContent[data-lg="true"] { margin-block-start: var(--mk-stack-head-content-lg); }
+.stack { display: flex; flex-direction: column; gap: var(--stack-gap); }
+.stack[data-gap="title-sub"] { --stack-gap: var(--mk-stack-title-sub); }
+.stack[data-gap="head-content"] { --stack-gap: var(--mk-stack-head-content); }
+.stack[data-gap="head-content-lg"] { --stack-gap: var(--mk-stack-head-content-lg); }
+.stack[data-gap="grid"] { --stack-gap: var(--mk-grid-gap); }
+.stack > * { margin-block: 0; }
+.grid { display: grid; gap: var(--mk-grid-gap); grid-template-columns: repeat(var(--cols-sm, 1), minmax(0, 1fr)); }
+.grid[data-gap="tight"] { gap: var(--mk-grid-gap-tight); }
+.grid[data-gap="bento"] { gap: var(--mk-grid-gap-bento); }
+@media (min-width: 768px) { .grid { grid-template-columns: repeat(var(--cols-md, var(--cols, 2)), minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .grid { grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr)); } }
