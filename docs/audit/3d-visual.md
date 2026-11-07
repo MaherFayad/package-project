@@ -903,3 +903,12 @@ Not counted (by design / known): FEFCO 04 display fronts with centred art in the
 **Screenshots.** `docs/screenshots/audit/3dqa-r7/details-r7.jpg`: the two fixes, the nail-polish regression and three engine round-7 fixes, before | after.
 
 **Verification (final production build of this branch).** `npm run typecheck` clean; `npm run lint` 0 errors (1 pre-existing warning, the local `.next-*` audit build folders excluded); `npm test` 126 files, **9 006 passed**; `npm run build` passes; `e2e/models.spec.ts` + `e2e/catalogue-models.spec.ts` (`--workers=2`): see the commit message of this report; round-7 capture 1 196 records, 0 console errors.
+
+### R7-3Q-L-01 fix (engine)
+
+| id | sev | fix | status |
+|---|---|---|---|
+| R7-3Q-L-01 | high | New `BRUSH_CAP` closure style (`three/vessels/closures.ts`), mapped from the cosmetic `BRUSH_CAP` option instead of `BULLET_CAP`: a tall cylinder on the neck, radius `max(finishR + 1, min(finishR + 2, 0.62 × body))`, skirt over the finish only (`finishTopY − finishH − 0.6`), height `clamp(0.55 × top, 16, 30)`. `BULLET_CAP` stays the flush overcap of lipstick / gloss / mascara cases (R5-3Q-G-02). Test: cap ≤ 0.62 × the bottle wide and skirt ≤ finishH + 0.6 at default and min (the regressed sizing fails both); gloss overcap still flush. Verified in the editor: COS-NAIL-POLISH default / min / max / phone. | fixed, verified |
+| R7-3Q-V-01 | low | Looked at, no single obvious cause: the round shoulder above the label reflects the overhead softbox (it is clear grey from behind, `d_back`) over the faint perfume tint; PERFUME_SQUARE's flat shoulder does not catch it. Left as is, as asked. | open |
+
+Checks: typecheck clean; lint 0 errors (the pre-existing admin `Suspense` warning); `npm test` 132 files, **9 030 passed**; `npm run build` passes; `e2e/models.spec.ts -g "COS-" --workers=2` **13 passed**, 0 failed.

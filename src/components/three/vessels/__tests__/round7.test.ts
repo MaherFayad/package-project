@@ -93,3 +93,27 @@ describe("round 7 engine: treatment pump overcap (R6-3Q-G-04, spec r = finishR +
     }
   });
 });
+
+describe("R7-3Q-L-01: brush cap on the neck, bullet overcap flush", () => {
+  const minYOf = (g: BufferGeometry) => minY(g);
+  for (const size of ["def", "min"] as const) {
+    it(`COS-NAIL-POLISH brush cap (${size}): ≤ 0.62 × the bottle wide, skirt only over the finish`, () => {
+      const { c, profile } = built("COS-NAIL-POLISH", "BRUSH_CAP", size);
+      const p = profile as typeof profile & { finishH: number };
+      const cap = c.parts[0].geometry;
+      const body = Math.max(...p.outer.map((q) => q.r));
+      const R = maxR(cap);
+      // diameter: wider than the finish, at most ~0.62 of the bottle (it was the full body width)
+      expect(R).toBeGreaterThan(p.finishR);
+      expect(R).toBeLessThanOrEqual(Math.max(p.finishR + 1, 0.62 * body) + 0.01);
+      // skirt depth: from the finish top down over the finish only (it reached 55 % of the cap
+      // height below the top, over the shoulder)
+      expect(p.finishTopY - minYOf(cap)).toBeLessThanOrEqual(p.finishH + 0.6 + 0.01);
+    });
+  }
+  it("lip gloss / mascara bullet overcaps stay flush with their body (R5-3Q-G-02 unchanged)", () => {
+    const { c, profile } = built("COS-LIP-GLOSS", "WAND_CAP");
+    const body = Math.max(...profile.outer.map((q) => q.r));
+    expect(maxR(c.parts[0].geometry)).toBeGreaterThanOrEqual(body);
+  });
+});

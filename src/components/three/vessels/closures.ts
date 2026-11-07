@@ -145,6 +145,8 @@ export const CLOSURE_STYLES = [
   "PIERCING",
   // R6-3Q-G-04
   "TREATMENT_PUMP",
+  // R7-3Q-L-01
+  "BRUSH_CAP",
 ] as const;
 /** Styles that close the whole mouth of a can / tub / tray (allowed over lid and can-end cores). */
 const MOUTH_STYLES: readonly string[] = ["PEEL_FOIL", "EOE_RING", "PLUG_LID", "LEVER_LID", "SNAP_LID", "HINGED_LID", "TWIST_UP", "DOUBLE_WALL_CAP"];
@@ -656,6 +658,25 @@ function styledClosure(style: ClosureStyle, p: VesselProfile): ClosureModel {
         { r: 0, y: yt },
       ]);
       return { parts: [{ geometry: cap, role: "cap", group: "moving" }], motion: "unscrew", turns: 1.5, rise: 2.5, lift: 26, topY: yt, printTopY: yt };
+    }
+    case "BRUSH_CAP": {
+      // R7-3Q-L-01: nail-polish brush cap. A tall cylinder on the NECK, ~0.5–0.6 × the bottle
+      // width, its skirt over the finish only: it sits on the shoulder. (BULLET_CAP is the flush
+      // overcap of a lipstick / gloss / mascara case and reached 55 % down a square bottle.)
+      const body = bodyR(p, top - p.finishH);
+      const R = Math.max(r + 1, Math.min(r + 2, 0.62 * body));
+      const yb = top - p.finishH - 0.6;
+      const h = Math.max(16, Math.min(30, 0.55 * top, R * 3.4));
+      const yt = top + h - p.finishH;
+      const cap = lathe([
+        { r: R - 0.8, y: yb + 3 },
+        { r: R - 0.8, y: yb, round: 0.2 },
+        { r: R, y: yb + 0.4, round: 0.4 },
+        { r: R, y: yt - 1.5, round: 1.5 },
+        { r: R - 1.5, y: yt, round: 1.2 },
+        { r: 0, y: yt },
+      ]);
+      return { parts: [{ geometry: cap, role: "cap", group: "moving" }], motion: "unscrew", turns: 1.5, rise: 3, lift: Math.max(30, h), topY: yt };
     }
     case "TREATMENT_PUMP": {
       // R6-3Q-G-04: serum / treatment pump: a short ribbed collar, a Ø ≤ 16 mm actuator with a

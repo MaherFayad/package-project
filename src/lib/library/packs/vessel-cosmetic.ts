@@ -20,7 +20,8 @@ const COS_CLOSURE_STYLE: Partial<Record<string, string>> = {
   // R5-3Q-G: mascara / lip-gloss wand caps and nail-polish brush caps are tall cylindrical overcaps
   // (≈ 40 % of the closed height), not a jar lug lid / a perfume mist pump.
   WAND_CAP: "BULLET_CAP",
-  BRUSH_CAP: "BULLET_CAP",
+  // R7-3Q-L-01: the nail-polish brush cap sits on the neck (its own style), not a flush overcap
+  BRUSH_CAP: "BRUSH_CAP",
   // R6: closures that used to collapse onto a plain screw / lug cap or the bare pump
   MIST_PUMP_COLLAR: "MIST_COLLAR",
   CHILD_RESISTANT_CAP: "CR_CAP",
