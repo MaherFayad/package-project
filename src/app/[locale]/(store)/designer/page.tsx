@@ -1,5 +1,4 @@
-import fs from "node:fs";
-import path from "node:path";
+import { publicFileExists } from "@/lib/runtime/public-files";
 import type { Metadata } from "next";
 import { getT, pick, toLocale } from "@/i18n";
 import { formatMoney, formatNumber } from "@/lib/format";
@@ -21,7 +20,7 @@ import { R6 } from "@/components/marketing/kit/assets";
  */
 function mailerLoop(): LoopSource[] | undefined {
   const sources = R6.loops.mailer.sources;
-  const present = sources.filter((s) => fs.existsSync(path.join(process.cwd(), "public", s.src)));
+  const present = sources.filter((s) => publicFileExists(s.src));
   if (present.length !== sources.length) return undefined;
   const wide = "(min-width: 900px)";
   return [...present.filter((s) => s.height === 1080).map((s) => ({ src: s.src, type: s.type, media: wide })), ...present.filter((s) => s.height === 720).map((s) => ({ src: s.src, type: s.type }))];

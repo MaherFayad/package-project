@@ -56,6 +56,10 @@ export function __resetRateLimits() {
  * OTP limits (SMS pumping). Technical R4-13; OWASP ASVS 4.0.3 V11.1.4 (anti-automation).
  */
 export function clientIp(headers: Headers): string {
+  // Cloudflare (production on Workers, TRUST_CF_CONNECTING_IP=1 in wrangler.jsonc): the edge sets
+  // CF-Connecting-IP itself and overwrites any value the client sent, while X-Real-IP and
+  // X-Forwarded-For pass through from the client unchanged. Trust ONLY that header there.
+  if (process.env.TRUST_CF_CONNECTING_IP === "1") return headers.get("cf-connecting-ip")?.trim() || "unknown";
   const real = process.env.TRUST_X_REAL_IP === "0" ? undefined : headers.get("x-real-ip")?.trim();
   if (real) return real;
   const chain = (headers.get("x-forwarded-for") ?? "")

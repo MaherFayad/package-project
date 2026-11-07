@@ -7,7 +7,6 @@
  *   BUYER  +201000000002   (01000000002)
  *   VENDOR +201000000010 … +201000000014 (one per vendor, in the order below)
  */
-import { PrismaClient } from "@prisma/client";
 import type {
   Artwork,
   Dims,
@@ -29,8 +28,10 @@ import { materialFitsStructure } from "../src/lib/dieline/materials";
 import { MODELS } from "../src/lib/library";
 import { baseOf, vesselPrintMaterials } from "../src/lib/library/doc";
 import { extendCatalogueCapabilities } from "./seed-catalogue";
+import { createClient } from "../src/lib/db";
 
-const db = new PrismaClient();
+// The pg adapter on Postgres, the engine on SQLite (src/lib/db.ts).
+const db = createClient(process.env.ELBA_DATABASE_URL, { sqliteSingleWriter: false });
 const egp = (n: number) => Math.round(n * 100);
 
 // ───────────────────────── Structures ─────────────────────────

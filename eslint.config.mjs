@@ -25,7 +25,7 @@ const eslintConfig = [
       ],
     },
   },
-  { ignores: ["node_modules/**", ".next/**", "playwright-report/**", "test-results/**", "next-env.d.ts", "scripts/**/*.cjs", "docs/audit/tools/**"] },
+  { ignores: ["node_modules/**", ".next/**", "playwright-report/**", "test-results/**", "next-env.d.ts", "scripts/**/*.cjs", "docs/audit/tools/**", ".open-next/**", ".wrangler/**"] },
 ];
 
 export default eslintConfig;

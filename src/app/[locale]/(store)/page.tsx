@@ -1,6 +1,5 @@
+import { publicFileExists } from "@/lib/runtime/public-files";
 import type { Metadata } from "next";
-import fs from "node:fs";
-import path from "node:path";
 import Link from "next/link";
 import { Suspense, type CSSProperties } from "react";
 import { ArrowUp, Sparkles } from "lucide-react";
@@ -68,7 +67,7 @@ type LoopId = keyof typeof R6.loops;
 /** A turntable loop from the assets branch (720p below 1024px, 1080p above), or null if not shipped. */
 function loopVideo(id: LoopId): HeroVideo | null {
   const loop = R6.loops[id];
-  const has = loop.sources.every((x) => fs.existsSync(path.join(process.cwd(), "public", x.src)));
+  const has = loop.sources.every((x) => publicFileExists(x.src));
   if (!has) return null;
   const small = loop.sources.filter((x) => x.height === 720).map((x) => ({ src: x.src, type: x.type, media: "(max-width: 1023px)" }));
   const large = loop.sources.filter((x) => x.height === 1080).map((x) => ({ src: x.src, type: x.type }));

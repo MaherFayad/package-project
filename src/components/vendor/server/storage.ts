@@ -1,26 +1,16 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
-import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
-import path from "node:path";
+import { deleteBlob, getBlob, hasBlob, listBlobs, putBlob } from "@/lib/storage/blob";
 import { buildKey, checkUpload, parseKey, stripImageMetadata, type UploadCheck, type UploadScope } from "../lib/files";
 
 /**
- * Local disk storage for vendor uploads (dev and single-server deployments).
- * Files live OUTSIDE /public (Next only serves files present at build time, and private files
- * must go through the access check in /api/vendor/files). Production should swap this module
- * for object storage (S3/R2) with the same three functions.
+ * Vendor and buyer uploads (vendor documents, dispute photos, artwork). Private: served only
+ * through the access check in /api/vendor/files. Backed by src/lib/storage/blob.ts (R2 on
+ * Cloudflare Workers, var/uploads or ELBA_UPLOAD_DIR on disk elsewhere) under "uploads/<key>".
  */
-export function uploadRoot(): string {
-  return process.env.ELBA_UPLOAD_DIR || path.join(process.cwd(), "var", "uploads");
-}
-
-function pathFor(key: string): string {
-  const parsed = parseKey(key);
-  if (!parsed) throw new Error("invalid key");
-  const root = uploadRoot();
-  const full = path.join(root, parsed.scope, parsed.ownerId, parsed.file);
-  if (!full.startsWith(root + path.sep)) throw new Error("invalid key");
-  return full;
+function blobKey(key: string): string {
+  if (!parseKey(key)) throw new Error("invalid key");
+  return `uploads/${key}`;
 }
 
 export type SaveResult = { ok: true; key: string; type: string; size: number } | { ok: false; error: Exclude<UploadCheck, { ok: true }>["error"] };
@@ -33,35 +23,29 @@ export async function saveUpload(scope: UploadScope, ownerId: string, bytes: Uin
   const clean = check.type === "application/pdf" ? bytes : stripImageMetadata(bytes, check.type);
   if (!clean) return { ok: false, error: "TYPE" };
   const key = buildKey(scope, ownerId, randomBytes(12).toString("base64url"), check.ext);
-  const full = pathFor(key);
-  await mkdir(path.dirname(full), { recursive: true });
-  await writeFile(full, clean, { flag: "wx" });
+  await putBlob(blobKey(key), clean, { contentType: check.type, createOnly: true });
   return { ok: true, key, type: check.type, size: clean.length };
 }
 
 export async function readUpload(key: string): Promise<Buffer | null> {
-  try {
-    return await readFile(pathFor(key));
-  } catch {
-    return null;
-  }
+  if (!parseKey(key)) return null;
+  return getBlob(blobKey(key));
+}
+
+/** Whether an upload exists (vendor application documents are re-checked on submit). */
+export async function uploadExists(key: string): Promise<boolean> {
+  if (!parseKey(key)) return false;
+  return hasBlob(blobKey(key));
 }
 
 export async function deleteUpload(key: string): Promise<void> {
-  try {
-    await rm(pathFor(key), { force: true });
-  } catch {
-    /* already gone */
-  }
+  if (!parseKey(key)) return;
+  await deleteBlob(blobKey(key));
 }
 
 /** Keys stored under one scope and owner (R6-SEC-06: caps unsent dispute photos per order). */
 export async function listUploads(scope: UploadScope, ownerId: string): Promise<string[]> {
   if (!/^[A-Za-z0-9_-]{1,40}$/.test(ownerId)) return [];
-  try {
-    const names = await readdir(path.join(uploadRoot(), scope, ownerId));
-    return names.map((n) => `${scope}/${ownerId}/${n}`).filter((k) => parseKey(k) !== null);
-  } catch {
-    return [];
-  }
+  const keys = await listBlobs(`uploads/${scope}/${ownerId}`);
+  return keys.map((k) => k.slice("uploads/".length)).filter((k) => parseKey(k) !== null);
 }

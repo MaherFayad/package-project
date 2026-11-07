@@ -31,6 +31,8 @@ const nextConfig: NextConfig = {
   ...(process.env.NEXT_DIST_DIR ? { distDir: process.env.NEXT_DIST_DIR } : {}),
   // three / r3f ship ESM that Next handles natively; transpile drei helpers for safety.
   transpilePackages: ["three"],
+  // Cloudflare Workers (OpenNext): ship the generated Prisma client and its workerd build as-is.
+  serverExternalPackages: ["@prisma/client", ".prisma/client"],
   experimental: {
     optimizePackageImports: ["lucide-react", "@react-three/drei"],
     // PERF-17: per-route CSS so admin/vendor pages stop loading designer and marketing CSS.

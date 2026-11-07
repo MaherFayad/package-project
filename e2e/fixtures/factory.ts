@@ -1,5 +1,6 @@
 import { expect, test, type BrowserContext, type Locator, type Page } from "@playwright/test";
-import { PrismaClient, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
+import { createClient } from "../../src/lib/db";
 import { createHash, randomBytes, randomInt } from "node:crypto";
 import path from "node:path";
 
@@ -15,7 +16,7 @@ import path from "node:path";
  * - Sign-in for non-OTP tests inserts a session row with the same hashing as src/lib/auth.
  */
 const dbUrl = process.env.ELBA_DATABASE_URL ?? `file:${path.resolve(__dirname, "../../prisma/dev.db")}`;
-export const db = new PrismaClient({ datasources: { db: { url: dbUrl } } });
+export const db = createClient(dbUrl, { sqliteSingleWriter: false });
 
 /** Seeded staff and admin accounts (read-only use: never mutate their orders in a test). */
 export const SEEDED = {

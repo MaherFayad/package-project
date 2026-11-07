@@ -1,4 +1,5 @@
 import "server-only";
+import { workersBuildFacts } from "@/lib/runtime/build-facts";
 import { isStaleBase } from "./lib/concurrency";
 import { cookies } from "next/headers";
 import { Prisma } from "@prisma/client";
@@ -296,7 +297,10 @@ let loadable: Record<string, { files?: string[] }> | null | undefined;
  * hydrates instead of after. Empty under `next dev` or when the manifest is missing.
  */
 export function lazyChunkHrefs(entry: "./Stage3D"): string[] {
-  if (loadable === undefined) {
+  // Cloudflare Workers: the manifest is not on disk; the worker entry loaded it (build-facts.ts).
+  const facts = workersBuildFacts();
+  if (facts) loadable = Object.fromEntries(Object.entries(facts.loadable).map(([k, files]) => [k, { files }]));
+  else if (loadable === undefined) {
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const fs = require("node:fs") as typeof import("node:fs");

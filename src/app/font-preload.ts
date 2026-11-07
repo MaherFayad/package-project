@@ -2,6 +2,8 @@ import "server-only";
 import fs from "node:fs";
 import path from "node:path";
 import { preload } from "react-dom";
+import { workersBuildFacts } from "@/lib/runtime/build-facts";
+import { interFace, notoArabicFace, plexArabicFaces } from "@/lib/runtime/font-faces";
 
 /**
  * URLs of the built IBM Plex Sans Arabic woff2 files (Arabic block) for the given weights.
@@ -14,16 +16,24 @@ import { preload } from "react-dom";
  */
 let cache: Map<number, string> | null = null;
 let interCache: string | null | undefined;
+let notoCache: string | null | undefined;
 
-function cssFiles(): string[] {
+/** Text of every built CSS file (Node). Empty under a missing build or off-disk runtimes. */
+function builtCss(): string[] {
   const dist = process.env.NEXT_DIST_DIR || ".next";
   const root = path.join(process.cwd(), dist, "static", "css");
-  const files: string[] = [];
+  const out: string[] = [];
   const walk = (dir: string) => {
     for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
       const p = path.join(dir, e.name);
       if (e.isDirectory()) walk(p);
-      else if (e.name.endsWith(".css")) files.push(p);
+      else if (e.name.endsWith(".css")) {
+        try {
+          out.push(fs.readFileSync(p, "utf8"));
+        } catch {
+          /* unreadable file: skip */
+        }
+      }
     }
   };
   try {
@@ -31,35 +41,16 @@ function cssFiles(): string[] {
   } catch {
     return [];
   }
-  return files;
+  return out;
 }
 
-function scan(): Map<number, string> {
-  const found = new Map<number, string>();
-  const files = cssFiles();
-  const rule = /@font-face\s*{([^}]*)}/g;
-  for (const f of files) {
-    let css: string;
-    try {
-      css = fs.readFileSync(f, "utf8");
-    } catch {
-      continue;
-    }
-    if (!css.includes("IBM Plex Sans Arabic")) continue;
-    for (const m of css.matchAll(rule)) {
-      const body = m[1];
-      if (!/font-family:\s*['"]?IBM Plex Sans Arabic['"]?\s*;/.test(body)) continue;
-      if (!/unicode-range:[^;]*u\+06/i.test(body)) continue; // the Arabic-block file
-      const w = /font-weight:\s*(\d{3})\s*;/.exec(body);
-      const u = /url\(([^)]+\.woff2)\)/.exec(body);
-      if (w && u) found.set(Number(w[1]), u[1].replace(/^['"]|['"]$/g, ""));
-    }
-  }
-  return found;
-}
+const dev = () => process.env.NODE_ENV !== "production";
 
 export function plexArabicPreloadUrls(weights: readonly number[]): string[] {
-  if (!cache || (cache.size === 0 && process.env.NODE_ENV !== "production")) cache = scan();
+  // Cloudflare Workers: no build directory; the worker entry loaded the same facts (build-facts.ts).
+  const facts = workersBuildFacts();
+  if (facts) return weights.map((w) => facts.fonts.plexArabic[String(w)]).filter((u): u is string => !!u && u.startsWith("/_next/"));
+  if (!cache || (cache.size === 0 && dev())) cache = plexArabicFaces(builtCss());
   return weights.map((w) => cache!.get(w)).filter((u): u is string => !!u && u.startsWith("/_next/"));
 }
 
@@ -70,57 +61,19 @@ export function plexArabicPreloadUrls(weights: readonly number[]): string[] {
  * (Arabic phone LCP 2.69 -> 2.22 s on /ar/vendors without it; R4-MK-05).
  */
 export function interPreloadUrl(): string | null {
-  if (interCache === undefined || (interCache === null && process.env.NODE_ENV !== "production")) {
-    interCache = null;
-    for (const f of cssFiles()) {
-      let css: string;
-      try {
-        css = fs.readFileSync(f, "utf8");
-      } catch {
-        continue;
-      }
-      if (!css.includes("Inter")) continue;
-      for (const m of css.matchAll(/@font-face\s*{([^}]*)}/g)) {
-        const body = m[1];
-        if (!/font-family:\s*['"]?Inter['"]?\s*;/.test(body)) continue;
-        if (!/unicode-range:[^;]*u\+00(\?\?|00-00ff)/i.test(body)) continue; // Basic Latin file
-        const u = /url\(([^)]+\.woff2)\)/.exec(body);
-        if (u) interCache = u[1].replace(/^['"]|['"]$/g, "");
-      }
-      if (interCache) break;
-    }
-  }
-  return interCache && interCache.startsWith("/_next/") ? interCache : null;
+  const facts = workersBuildFacts();
+  const url = facts ? facts.fonts.inter : (interCache === undefined || (interCache === null && dev()) ? (interCache = interFace(builtCss())) : interCache);
+  return url && url.startsWith("/_next/") ? url : null;
 }
-
-let notoCache: string | null | undefined;
 
 /**
  * URL of the built Noto Sans Arabic (variable) woff2, Arabic block. Preloaded by MarketingShell on
  * Arabic marketing pages, where it carries the LCP headline (it replaces Plex there).
  */
 export function notoArabicPreloadUrl(): string | null {
-  if (notoCache === undefined || (notoCache === null && process.env.NODE_ENV !== "production")) {
-    notoCache = null;
-    for (const f of cssFiles()) {
-      let css: string;
-      try {
-        css = fs.readFileSync(f, "utf8");
-      } catch {
-        continue;
-      }
-      if (!css.includes("Noto Sans Arabic")) continue;
-      for (const m of css.matchAll(/@font-face\s*{([^}]*)}/g)) {
-        const body = m[1];
-        if (!/font-family:\s*['"]?Noto Sans Arabic['"]?\s*;/.test(body)) continue;
-        if (!/unicode-range:[^;]*u\+06/i.test(body)) continue; // the Arabic-block file
-        const u = /url\(([^)]+\.woff2)\)/.exec(body);
-        if (u) notoCache = u[1].replace(/^['"]|['"]$/g, "");
-      }
-      if (notoCache) break;
-    }
-  }
-  return notoCache && notoCache.startsWith("/_next/") ? notoCache : null;
+  const facts = workersBuildFacts();
+  const url = facts ? facts.fonts.noto : (notoCache === undefined || (notoCache === null && dev()) ? (notoCache = notoArabicFace(builtCss())) : notoCache);
+  return url && url.startsWith("/_next/") ? url : null;
 }
 
 /**
