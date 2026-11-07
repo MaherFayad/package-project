@@ -1,4 +1,5 @@
 import type { PaymentMethod } from "@/types";
+import { devFlag } from "@/lib/env";
 
 /**
  * Payment rules (report §7.3): first orders are 100% prepaid. An optional prepayment discount
@@ -36,10 +37,11 @@ export function paymentConfig(env: Record<string, string | undefined> = process.
 /**
  * The mock gateway (and its "simulate payment" endpoint) may run in dev, and under `next start`
  * only when ALLOW_MOCK_PAYMENTS="1" (local prod builds and e2e). NEVER set it in a deployment:
- * it would let anyone mark orders paid.
+ * it would let anyone mark orders paid. On an https:// site URL the flag is ignored (src/lib/env.ts).
  */
 export function mockPaymentsEnabled(env: Record<string, string | undefined> = process.env): boolean {
   if (paymentConfig(env).provider !== "mock") return false;
-  if (env.NODE_ENV === "production") return env.ALLOW_MOCK_PAYMENTS === "1";
+  // Ignored (with one warning) when NEXT_PUBLIC_SITE_URL is https://, i.e. a real deployment.
+  if (env.NODE_ENV === "production") return devFlag("ALLOW_MOCK_PAYMENTS", env) === "1";
   return true;
 }

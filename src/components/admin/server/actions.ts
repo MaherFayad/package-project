@@ -14,6 +14,7 @@ import { loadOnTimeMinDeliveries, VENDOR_METRICS_SETTING_KEY, vendorMetricsSchem
 import { syncVendorOnTime } from "@/lib/vendors/on-time-sync";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import type { Prisma } from "@prisma/client";
 import { scrubErasedUserTraces } from "@/lib/auth/erasure";
 import { track } from "@/lib/analytics/track";
 import { fromJson, toJson } from "@/lib/json";
@@ -88,7 +89,7 @@ import { bioReviewData, canApproveBio } from "@/components/vendor/lib/bio-review
 import type { AuditAction } from "../lib/audit";
 import { stripContactDetails } from "@/components/vendor/lib/contact";
 import { orderModeOf, vendorListsModel } from "@/data/catalogue/order-mode";
-import { canRaisePayout, payoutAmount, payoutStepSchema, STEP_FROM, STEP_TO } from "../lib/payouts";
+import { canRaisePayout, payoutAmount, payoutStepSchema, STEP_FROM, STEP_TO, UNPAID_PAYOUT_STATUSES } from "../lib/payouts";
 import { defaultFits, finishUpdateSchema, materialUpdateSchema, mergeLimits, outsideHardBounds, structureUpdateSchema } from "../lib/catalog";
 
 function revalidateAdmin() {
@@ -572,16 +573,27 @@ async function refundOrderInternal(admin: Awaited<ReturnType<typeof adminForMuta
   }
   // Every PAID payment was claimed by a concurrent refund of the same order: nothing left to do here.
   if (paid.length && !refs.length) throw new AdminActionError("STALE");
-  await transitionOrder(order.id, "REFUNDED", { role: "ADMIN", userId: admin.id }, `REFUNDED:${reason.replace(/\s+/g, " ").slice(0, 200)}`);
-  // Unpaid vendor payouts for a refunded job are not owed any more.
-  await db.payout.deleteMany({ where: { orderId: order.id, status: "PENDING" } });
-  await audit(admin, {
-    action: "ORDER_REFUND",
-    entityType: "ORDER",
-    entityId: order.id,
-    summary: `${order.number}: ${reason}${disputeId ? ` (dispute ${disputeId})` : ""}`,
-    before: { status: order.status, payments: paid.map((p) => ({ id: p.id, status: p.status, amountPiasters: p.amountPiasters })) },
-    after: { status: "REFUNDED", refundRefs: refs },
+  // R7 fix: the status change, the credit note, the payout voids and the audit row commit together.
+  await transitionOrder(order.id, "REFUNDED", { role: "ADMIN", userId: admin.id }, `REFUNDED:${reason.replace(/\s+/g, " ").slice(0, 200)}`, {
+    inTx: async (tx) => {
+      // Unpaid vendor payouts (PENDING and APPROVED) for a refunded job are not owed any more and
+      // could never be paid (PAYOUT_ORDER_CLOSED). Voided like a reassignment voids the old
+      // advance: removed, with the rows kept in the audit entry. PAID rows stay.
+      const voided = await tx.payout.findMany({ where: { orderId: order.id, status: { in: [...UNPAID_PAYOUT_STATUSES] } }, select: { id: true, vendorId: true, kind: true, status: true, amountPiasters: true } });
+      if (voided.length) await tx.payout.deleteMany({ where: { id: { in: voided.map((p) => p.id) }, status: { in: [...UNPAID_PAYOUT_STATUSES] } } });
+      await audit(
+        admin,
+        {
+          action: "ORDER_REFUND",
+          entityType: "ORDER",
+          entityId: order.id,
+          summary: `${order.number}: ${reason}${disputeId ? ` (dispute ${disputeId})` : ""}`,
+          before: { status: order.status, payments: paid.map((p) => ({ id: p.id, status: p.status, amountPiasters: p.amountPiasters })), unpaidPayouts: voided },
+          after: { status: "REFUNDED", refundRefs: refs, unpaidPayouts: [] },
+        },
+        tx,
+      );
+    },
   });
 }
 
@@ -605,18 +617,26 @@ export async function reviewQcAction(input: z.input<typeof qcSchema>): Promise<A
     if (!canReviewQc(order.status, order.qcPhotos)) throw new AdminActionError("NOT_ALLOWED");
     const pending = order.qcPhotos.filter((p) => p.status === "PENDING").map((p) => p.id);
     const now = new Date();
-    await db.qcPhoto.updateMany({
-      where: { id: { in: pending } },
-      data: { status: d.decision === "APPROVE" ? "APPROVED" : "REJECTED", reviewNote: d.note || null, reviewedAt: now },
-    });
-    await transitionOrder(order.id, d.decision === "APPROVE" ? "READY_TO_SHIP" : "IN_PRODUCTION", { role: "ADMIN", userId: admin.id }, d.decision === "REJECT" ? d.note : undefined);
-    await audit(admin, {
-      action: d.decision === "APPROVE" ? "ORDER_QC_APPROVE" : "ORDER_QC_REJECT",
-      entityType: "ORDER",
-      entityId: order.id,
-      summary: `${order.number}${d.note ? `: ${d.note}` : ""}`,
-      before: { status: order.status, photos: pending.length },
-      after: { status: d.decision === "APPROVE" ? "READY_TO_SHIP" : "IN_PRODUCTION" },
+    // R7 fix: photo decisions, the status change and the audit row commit together.
+    await transitionOrder(order.id, d.decision === "APPROVE" ? "READY_TO_SHIP" : "IN_PRODUCTION", { role: "ADMIN", userId: admin.id }, d.decision === "REJECT" ? d.note : undefined, {
+      inTx: async (tx) => {
+        await tx.qcPhoto.updateMany({
+          where: { id: { in: pending } },
+          data: { status: d.decision === "APPROVE" ? "APPROVED" : "REJECTED", reviewNote: d.note || null, reviewedAt: now },
+        });
+        await audit(
+          admin,
+          {
+            action: d.decision === "APPROVE" ? "ORDER_QC_APPROVE" : "ORDER_QC_REJECT",
+            entityType: "ORDER",
+            entityId: order.id,
+            summary: `${order.number}${d.note ? `: ${d.note}` : ""}`,
+            before: { status: order.status, photos: pending.length },
+            after: { status: d.decision === "APPROVE" ? "READY_TO_SHIP" : "IN_PRODUCTION" },
+          },
+          tx,
+        );
+      },
     });
     revalidateAdmin();
     return null;
@@ -635,19 +655,15 @@ export async function shipOrderAction(input: z.input<typeof shipSchema>): Promis
     if (order.status !== "READY_TO_SHIP") throw new AdminActionError("NOT_ALLOWED");
     let trackingNumber: string;
     try {
-      ({ trackingNumber } = await shipOrder(order.id, { role: "ADMIN", userId: admin.id }));
+      // R7 fix: the audit row commits with the shipment record and its timeline event.
+      ({ trackingNumber } = await shipOrder(order.id, { role: "ADMIN", userId: admin.id }, {
+        inTx: (tx, tracking) =>
+          audit(admin, { action: "ORDER_SHIP", entityType: "ORDER", entityId: order.id, summary: `${order.number}: ${tracking}`, before: { status: order.status }, after: { status: "SHIPPED", trackingNumber: tracking } }, tx),
+      }));
     } catch (e) {
       if (e instanceof OrderError) throw new AdminActionError("NOT_ALLOWED");
       throw e;
     }
-    await audit(admin, {
-      action: "ORDER_SHIP",
-      entityType: "ORDER",
-      entityId: order.id,
-      summary: `${order.number}: ${trackingNumber}`,
-      before: { status: order.status },
-      after: { status: "SHIPPED", trackingNumber },
-    });
     revalidateAdmin();
     return { trackingNumber };
   });
@@ -707,84 +723,110 @@ export async function decideDisputeAction(input: z.input<typeof disputeDecisionS
       reprintPlan = plan;
       const existing = await db.order.findMany({ where: { number: { startsWith: `${original.number}-R` } }, select: { number: true } });
       reprint = reprintNumber(original.number, existing.map((e) => e.number));
-      const now = new Date();
-      const lead = Math.max(2, vendor.leadTimeDays);
-      // R6-SEC-08: a replayed or double-clicked decision computes the same reprint number; the
-      // unique index refuses the second order, which is answered as STALE instead of a crash.
-      const created = await db.order.create({
-        data: {
-          number: reprint,
-          buyerId: original.buyerId,
-          vendorId,
-          status: "PAID",
-          // Free for the buyer; the vendor is paid again from the reprint reserve (report §6.2).
-          subtotalPiasters: 0,
-          vatPiasters: 0,
-          shippingPiasters: 0,
-          totalPiasters: 0,
-          vendorCostPiasters: plan.reprintVendorCostPiasters,
-          shippingAddress: original.shippingAddress ?? toJson<ShippingAddress | null>(null),
-          notes: reprintNote(original.number, dispute.id),
-          placedAt: now,
-          paidAt: now,
-          dueDate: new Date(now.getTime() + lead * 86_400_000),
-          items: {
-            // One line per original item, scaled to the reprinted share (one-item orders: exact).
-            create: original.items.map((i) => ({
-              proofId: i.proofId,
-              structureCode: i.structureCode,
-              // R5-JR-02: keep the model and the configured finishes (gold vs silver foil, masks),
-              // or the reprint is made as the base box with a generic "Hot foil".
-              modelCode: i.modelCode,
-              config: i.config ?? undefined,
-              dims: i.dims ?? toJson<Dims | null>(null),
-              materialCode: i.materialCode,
-              finishCode: i.finishCode,
-              printSides: i.printSides,
-              quantity: original.items.length === 1 ? plan.quantity : Math.max(1, Math.round((i.quantity * plan.quantity) / originalQty)),
-              unitPiasters: 0,
-              lineTotalPiasters: 0,
-              printPdfUrl: i.printPdfUrl,
-            })),
-          },
-          productionEvents: {
-            create: [
-              { type: "ORDER_PLACED", note: `REORDER:${original.number}`, actorId: admin.id },
-              { type: "PAYMENT_CONFIRMED", actorId: admin.id },
-            ],
-          },
-        },
-      }).catch(staleOnDuplicate);
-      // launch-metrics.md §1 `reprint_opened` (reprint rate = these / delivered orders).
-      void track("reprint_opened", { reason: dispute.reason, same_vendor: vendorId === original.vendorId }, { userId: original.buyerId, orderId: created.id });
-      // Charge-back on another printer: the original buy price goes down (its balance shrinks).
-      if (plan.originalVendorCostPiasters !== original.vendorCostPiasters) {
-        await db.order.update({ where: { id: original.id }, data: { vendorCostPiasters: plan.originalVendorCostPiasters } });
-      }
-      await audit(admin, {
-        action: "ORDER_REPRINT",
-        entityType: "ORDER",
-        entityId: created.id,
-        summary: `${reprint} ← ${original.number}: ${plan.quantity.toLocaleString("en-US")} of ${originalQty.toLocaleString("en-US")} boxes; charge-back EGP ${(plan.chargeBackPiasters / 100).toFixed(2)}. ${d.note}`,
-        before: { originalVendorCostPiasters: original.vendorCostPiasters },
-        after: { vendorId, chargeBack: d.chargeBack ?? defaultChargeBack(dispute.reason), ...plan },
-      });
-      await notifyVendorNewJob(vendorId, created.number);
     }
 
-    const u = await db.dispute.updateMany({
-      where: { id: dispute.id, status: dispute.status },
-      data: { status, resolution: d.note || dispute.resolution, ...(status === "UNDER_REVIEW" ? {} : { resolvedAt: new Date() }) },
+    const reprintVendorId = d.vendorId ?? dispute.order.vendorId;
+    // R7 fix: the reprint order, the charge-back, the dispute decision and both audit rows commit
+    // together, so a failure (STALE, duplicate reprint) leaves no change without its audit row.
+    const createdReprint = await db.$transaction(async (tx) => {
+      let created: { id: string; number: string } | null = null;
+      if (d.decision === "REPRINT" && reprintPlan && reprint) {
+        const original = dispute.order;
+        const plan = reprintPlan;
+        const vendorId = reprintVendorId;
+        const vendor = (await tx.vendor.findUnique({ where: { id: vendorId }, select: { leadTimeDays: true } }))!;
+        const originalQty = original.items.reduce((s, i) => s + i.quantity, 0) || 1;
+        const now = new Date();
+        const lead = Math.max(2, vendor.leadTimeDays);
+        // R6-SEC-08: a replayed or double-clicked decision computes the same reprint number; the
+        // unique index refuses the second order, which is answered as STALE instead of a crash.
+        created = await tx.order.create({
+          data: {
+            number: reprint,
+            buyerId: original.buyerId,
+            vendorId,
+            status: "PAID",
+            // Free for the buyer; the vendor is paid again from the reprint reserve (report §6.2).
+            subtotalPiasters: 0,
+            vatPiasters: 0,
+            shippingPiasters: 0,
+            totalPiasters: 0,
+            vendorCostPiasters: plan.reprintVendorCostPiasters,
+            shippingAddress: original.shippingAddress ?? toJson<ShippingAddress | null>(null),
+            notes: reprintNote(original.number, dispute.id),
+            placedAt: now,
+            paidAt: now,
+            dueDate: new Date(now.getTime() + lead * 86_400_000),
+            items: {
+              // One line per original item, scaled to the reprinted share (one-item orders: exact).
+              create: original.items.map((i) => ({
+                proofId: i.proofId,
+                structureCode: i.structureCode,
+                // R5-JR-02: keep the model and the configured finishes (gold vs silver foil, masks),
+                // or the reprint is made as the base box with a generic "Hot foil".
+                modelCode: i.modelCode,
+                config: i.config ?? undefined,
+                dims: i.dims ?? toJson<Dims | null>(null),
+                materialCode: i.materialCode,
+                finishCode: i.finishCode,
+                printSides: i.printSides,
+                quantity: original.items.length === 1 ? plan.quantity : Math.max(1, Math.round((i.quantity * plan.quantity) / originalQty)),
+                unitPiasters: 0,
+                lineTotalPiasters: 0,
+                printPdfUrl: i.printPdfUrl,
+              })),
+            },
+            productionEvents: {
+              create: [
+                { type: "ORDER_PLACED", note: `REORDER:${original.number}`, actorId: admin.id },
+                { type: "PAYMENT_CONFIRMED", actorId: admin.id },
+              ],
+            },
+          },
+          select: { id: true, number: true },
+        }).catch(staleOnDuplicate);
+        // Charge-back on another printer: the original buy price goes down (its balance shrinks).
+        if (plan.originalVendorCostPiasters !== original.vendorCostPiasters) {
+          await tx.order.update({ where: { id: original.id }, data: { vendorCostPiasters: plan.originalVendorCostPiasters } });
+        }
+        await audit(
+          admin,
+          {
+            action: "ORDER_REPRINT",
+            entityType: "ORDER",
+            entityId: created.id,
+            summary: `${reprint} ← ${original.number}: ${plan.quantity.toLocaleString("en-US")} of ${originalQty.toLocaleString("en-US")} boxes; charge-back EGP ${(plan.chargeBackPiasters / 100).toFixed(2)}. ${d.note}`,
+            before: { originalVendorCostPiasters: original.vendorCostPiasters },
+            after: { vendorId, chargeBack: d.chargeBack ?? defaultChargeBack(dispute.reason), ...plan },
+          },
+          tx,
+        );
+      }
+
+      const u = await tx.dispute.updateMany({
+        where: { id: dispute.id, status: dispute.status },
+        data: { status, resolution: d.note || dispute.resolution, ...(status === "UNDER_REVIEW" ? {} : { resolvedAt: new Date() }) },
     });
     if (u.count !== 1) throw new AdminActionError("STALE");
-    await audit(admin, {
-      action: d.decision === "REVIEW" ? "DISPUTE_REVIEW" : d.decision === "REPRINT" ? "DISPUTE_REPRINT" : d.decision === "REFUND" ? "DISPUTE_REFUND" : "DISPUTE_REJECT",
-      entityType: "DISPUTE",
-      entityId: dispute.id,
-      summary: `${dispute.order.number}${reprint ? ` → ${reprint}` : ""}${d.note ? `: ${d.note}` : ""}`,
-      before: { status: dispute.status },
-      after: { status, ...(reprint ? { reprint, ...reprintPlan } : {}) },
+    await audit(
+      admin,
+      {
+        action: d.decision === "REVIEW" ? "DISPUTE_REVIEW" : d.decision === "REPRINT" ? "DISPUTE_REPRINT" : d.decision === "REFUND" ? "DISPUTE_REFUND" : "DISPUTE_REJECT",
+        entityType: "DISPUTE",
+        entityId: dispute.id,
+        summary: `${dispute.order.number}${reprint ? ` → ${reprint}` : ""}${d.note ? `: ${d.note}` : ""}`,
+        before: { status: dispute.status },
+        after: { status, ...(reprint ? { reprint, ...reprintPlan } : {}) },
+      },
+      tx,
+    );
+    return created;
     });
+    if (createdReprint) {
+      // launch-metrics.md §1 `reprint_opened` (reprint rate = these / delivered orders).
+      void track("reprint_opened", { reason: dispute.reason, same_vendor: reprintVendorId === dispute.order.vendorId }, { userId: dispute.order.buyerId, orderId: createdReprint.id });
+      await notifyVendorNewJob(reprintVendorId, createdReprint.number);
+    }
     // R5-JR-16: tell the buyer the outcome (the order page shows it, with the reprint to track).
     if (d.decision !== "REVIEW") {
       try {
@@ -812,18 +854,24 @@ export async function setVendorStatusAction(input: z.input<typeof vendorStatusSc
     if (!vendor) throw new AdminActionError("NOT_FOUND");
     const next = vendorStatusAfter(vendor, d.action);
     if (!next) throw new AdminActionError("NOT_ALLOWED");
-    const u = await db.vendor.updateMany({ where: { id: vendor.id, status: vendor.status, verified: vendor.verified }, data: next });
-    if (u.count !== 1) throw new AdminActionError("STALE");
-    await audit(admin, {
-      action: d.action === "SUSPEND" ? "VENDOR_SUSPEND" : d.action === "REINSTATE" ? "VENDOR_REINSTATE" : d.action === "VERIFY" ? "VENDOR_VERIFY" : "VENDOR_UNVERIFY",
-      entityType: "VENDOR",
-      entityId: vendor.id,
-      summary: `${vendor.nameEn}${d.reason ? `: ${d.reason}` : ""}`,
-      before: { status: vendor.status, verified: vendor.verified },
-      after: next,
+    await db.$transaction(async (tx) => {
+      const u = await tx.vendor.updateMany({ where: { id: vendor.id, status: vendor.status, verified: vendor.verified }, data: next });
+      if (u.count !== 1) throw new AdminActionError("STALE");
+      await audit(
+        admin,
+        {
+          action: d.action === "SUSPEND" ? "VENDOR_SUSPEND" : d.action === "REINSTATE" ? "VENDOR_REINSTATE" : d.action === "VERIFY" ? "VENDOR_VERIFY" : "VENDOR_UNVERIFY",
+          entityType: "VENDOR",
+          entityId: vendor.id,
+          summary: `${vendor.nameEn}${d.reason ? `: ${d.reason}` : ""}`,
+          before: { status: vendor.status, verified: vendor.verified },
+          after: next,
+        },
+        tx,
+      );
     });
     revalidateAdmin();
-    revalidatePath("/[locale]", "layout");
+    purgeCatalogCache(); // structures, materials, finishes and vendors feed the catalogue cache
     return null;
   });
 }
@@ -867,15 +915,15 @@ export async function decideApplicationAction(input: z.input<typeof applicationD
       );
     });
     revalidateAdmin();
-    revalidatePath("/[locale]", "layout");
+    purgeCatalogCache(); // structures, materials, finishes and vendors feed the catalogue cache
     return null;
   });
 }
 
 /* ───────────────────────── Pricing config ───────────────────────── */
 
-async function saveSettings(admin: Awaited<ReturnType<typeof adminForMutation>>, next: AdminPricingSettings) {
-  await db.platformSetting.upsert({
+async function saveSettings(admin: Awaited<ReturnType<typeof adminForMutation>>, next: AdminPricingSettings, tx: Prisma.TransactionClient) {
+  await tx.platformSetting.upsert({
     where: { key: PRICING_SETTING_KEY },
     create: { key: PRICING_SETTING_KEY, value: toJson(next), updatedById: admin.id },
     update: { value: toJson(next), updatedById: admin.id },
@@ -888,14 +936,20 @@ export async function savePricingSettingsAction(input: z.input<typeof settingsFo
     const d = parse(settingsFormSchema, input);
     const { settings } = await loadPricingSettings();
     const next: AdminPricingSettings = { ...settings, ...d };
-    await saveSettings(admin, next);
-    await audit(admin, {
-      action: "PRICING_SETTINGS",
-      entityType: "SETTINGS",
-      entityId: PRICING_SETTING_KEY,
-      summary: `margin ${Math.round(d.marginPct * 1000) / 10}%, validity ${d.quoteValidityHours} h`,
-      before: { marginPct: settings.marginPct, marginOnShipping: settings.marginOnShipping, quoteValidityHours: settings.quoteValidityHours, zones: settings.zones },
-      after: d,
+    await db.$transaction(async (tx) => {
+      await saveSettings(admin, next, tx);
+      await audit(
+        admin,
+        {
+          action: "PRICING_SETTINGS",
+          entityType: "SETTINGS",
+          entityId: PRICING_SETTING_KEY,
+          summary: `margin ${Math.round(d.marginPct * 1000) / 10}%, validity ${d.quoteValidityHours} h`,
+          before: { marginPct: settings.marginPct, marginOnShipping: settings.marginOnShipping, quoteValidityHours: settings.quoteValidityHours, zones: settings.zones },
+          after: d,
+        },
+        tx,
+      );
     });
     revalidateAdmin();
     purgeCatalogCache(); // public "from" prices use this config (R4-04)
@@ -909,8 +963,10 @@ export async function applyIndexUpdateAction(input: z.input<typeof indexUpdateSc
     const d = parse(indexUpdateSchema, input);
     const { settings } = await loadPricingSettings();
     const priceIndex = appendIndexRow(settings.priceIndex, d, new Date());
-    await saveSettings(admin, { ...settings, priceIndex });
-    await audit(admin, { action: "PRICING_INDEX", entityType: "SETTINGS", entityId: PRICING_SETTING_KEY, summary: `${d.effectiveFrom} fx ${d.fx}${d.note ? `: ${d.note}` : ""}`, after: d });
+    await db.$transaction(async (tx) => {
+      await saveSettings(admin, { ...settings, priceIndex }, tx);
+      await audit(admin, { action: "PRICING_INDEX", entityType: "SETTINGS", entityId: PRICING_SETTING_KEY, summary: `${d.effectiveFrom} fx ${d.fx}${d.note ? `: ${d.note}` : ""}`, after: d }, tx);
+    });
     revalidateAdmin();
     purgeCatalogCache(); // public "from" prices use this config (R4-04)
     return null;
@@ -983,10 +1039,12 @@ export async function updateStructureAction(input: z.input<typeof structureUpdat
     if (!defaultFits(fromJson<Dims>(s.defaultDims), d)) throw new AdminFieldErrors({ _: "DEFAULT_OUTSIDE" });
     const before = fromJson<StructureParamLimits>(s.params);
     const params = mergeLimits(before, d);
-    await db.structure.update({ where: { id: s.id }, data: { params: toJson(params), active: d.active } });
-    await audit(admin, { action: "STRUCTURE_UPDATE", entityType: "STRUCTURE", entityId: s.id, summary: s.code, before: { params: before, active: s.active }, after: { params, active: d.active } });
+    await db.$transaction(async (tx) => {
+      await tx.structure.update({ where: { id: s.id }, data: { params: toJson(params), active: d.active } });
+      await audit(admin, { action: "STRUCTURE_UPDATE", entityType: "STRUCTURE", entityId: s.id, summary: s.code, before: { params: before, active: s.active }, after: { params, active: d.active } }, tx);
+    });
     revalidateAdmin();
-    revalidatePath("/[locale]", "layout");
+    purgeCatalogCache(); // structures, materials, finishes and vendors feed the catalogue cache
     return null;
   });
 }
@@ -998,10 +1056,12 @@ export async function updateMaterialAction(input: z.input<typeof materialUpdateS
     const m = await db.material.findUnique({ where: { id: d.id } });
     if (!m) throw new AdminActionError("NOT_FOUND");
     const { id, ...data } = d;
-    await db.material.update({ where: { id }, data });
-    await audit(admin, { action: "MATERIAL_UPDATE", entityType: "MATERIAL", entityId: m.id, summary: m.code, before: { gsm: m.gsm, thicknessMm: m.thicknessMm, foodSafe: m.foodSafe, active: m.active }, after: data });
+    await db.$transaction(async (tx) => {
+      await tx.material.update({ where: { id }, data });
+      await audit(admin, { action: "MATERIAL_UPDATE", entityType: "MATERIAL", entityId: m.id, summary: m.code, before: { gsm: m.gsm, thicknessMm: m.thicknessMm, foodSafe: m.foodSafe, active: m.active }, after: data }, tx);
+    });
     revalidateAdmin();
-    revalidatePath("/[locale]", "layout");
+    purgeCatalogCache(); // structures, materials, finishes and vendors feed the catalogue cache
     return null;
   });
 }
@@ -1014,10 +1074,12 @@ export async function updateFinishAction(input: z.input<typeof finishUpdateSchem
     if (!f) throw new AdminActionError("NOT_FOUND");
     if (f.code === "NONE" && !d.active) throw new AdminFieldErrors({ active: "NONE_REQUIRED" });
     const { id, ...data } = d;
-    await db.finish.update({ where: { id }, data });
-    await audit(admin, { action: "FINISH_UPDATE", entityType: "FINISH", entityId: f.id, summary: f.code, before: { unitSurchargePiasters: f.unitSurchargePiasters, setupPiasters: f.setupPiasters, active: f.active }, after: data });
+    await db.$transaction(async (tx) => {
+      await tx.finish.update({ where: { id }, data });
+      await audit(admin, { action: "FINISH_UPDATE", entityType: "FINISH", entityId: f.id, summary: f.code, before: { unitSurchargePiasters: f.unitSurchargePiasters, setupPiasters: f.setupPiasters, active: f.active }, after: data }, tx);
+    });
     revalidateAdmin();
-    revalidatePath("/[locale]", "layout");
+    purgeCatalogCache(); // structures, materials, finishes and vendors feed the catalogue cache
     return null;
   });
 }
@@ -1066,18 +1128,24 @@ export async function decideDataRequestAction(input: z.input<typeof dataRequestD
     }
 
     const status = d.decision === "START" ? "IN_PROGRESS" : d.decision === "COMPLETE" ? "COMPLETED" : "REJECTED";
-    const u = await db.dataRequest.updateMany({
-      where: { id: req.id, status: req.status },
-      data: { status, note: d.note || req.note, ...(status === "IN_PROGRESS" ? {} : { completedAt: now }) },
-    });
-    if (u.count !== 1) throw new AdminActionError("STALE");
-    await audit(admin, {
-      action: d.decision === "START" ? "DATA_REQUEST_START" : d.decision === "COMPLETE" ? "DATA_REQUEST_COMPLETE" : "DATA_REQUEST_REJECT",
-      entityType: "DATA_REQUEST",
-      entityId: req.id,
-      summary: `${req.kind} user ${req.userId}${d.note ? `: ${d.note}` : ""}`,
-      before: { status: req.status },
-      after: { status },
+    await db.$transaction(async (tx) => {
+      const u = await tx.dataRequest.updateMany({
+        where: { id: req.id, status: req.status },
+        data: { status, note: d.note || req.note, ...(status === "IN_PROGRESS" ? {} : { completedAt: now }) },
+      });
+      if (u.count !== 1) throw new AdminActionError("STALE");
+      await audit(
+        admin,
+        {
+          action: d.decision === "START" ? "DATA_REQUEST_START" : d.decision === "COMPLETE" ? "DATA_REQUEST_COMPLETE" : "DATA_REQUEST_REJECT",
+          entityType: "DATA_REQUEST",
+          entityId: req.id,
+          summary: `${req.kind} user ${req.userId}${d.note ? `: ${d.note}` : ""}`,
+          before: { status: req.status },
+          after: { status },
+        },
+        tx,
+      );
     });
     revalidateAdmin();
     return null;

@@ -69,7 +69,7 @@ Founder items still open (CR-43 and business R4.4): legal entity name, commercia
 
 ## Dev flags that must never reach production
 
-`OTP_DEV_ECHO`, `ALLOW_MOCK_PAYMENTS`, `ELBA_E2E`, `ELBA_DEV_PAGES`, `E2E_INSECURE_COOKIES`. No startup check refuses them; the deploy doc and secrets list are the control. `/[locale]/dev/*` answers 404 in production unless `devPagesEnabled()` (R5-SEC-04).
+`OTP_DEV_ECHO`, `ALLOW_MOCK_PAYMENTS`, `ELBA_E2E`, `ELBA_DEV_PAGES`, `E2E_INSECURE_COOKIES`. Fixed (R7): the first four are read through `devFlag()` (`src/lib/env.ts`), which ignores them and logs one warning when `NEXT_PUBLIC_SITE_URL` starts with `https://`; `E2E_INSECURE_COOKIES` is still only controlled by the deploy doc. `.env.example` keeps them commented out in a local-testing block. `/[locale]/dev/*` answers 404 in production unless `devPagesEnabled()` (R5-SEC-04).
 
 ## How to add a protected route
 

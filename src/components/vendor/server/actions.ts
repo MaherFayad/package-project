@@ -20,7 +20,7 @@ import { assertTransition, OrderTransitionError } from "@/lib/orders/state";
 import type { FinishCode, OrderStatus, StructureCode, VendorCapabilities, VendorCertification } from "@/types";
 import { FINISH_CODES, LOCALES } from "@/types";
 import { DECLINE_REASONS, can, declineNote, eventFor, nextStatus, type JobAction } from "../lib/jobs";
-import { splitVendorCost } from "../lib/payouts";
+import { advanceOnAccept } from "../lib/payouts";
 import { rateCardFormSchema, validateRateCard } from "../lib/rateCard";
 import { isFoodSafe, isPermutation, issuesToErrors, mergeCertifications, portfolioCaptionSchema, profileSchema, splitContact, MAX_PORTFOLIO_ITEMS } from "../lib/profile";
 import { applicationSchema, slugify, uniqueSlug } from "../lib/application";
@@ -36,8 +36,9 @@ function revalidatePortal() {
   revalidatePath("/[locale]/vendor", "layout");
 }
 function revalidatePublic() {
-  // Vendor profile pages on the storefront (and lists that show the vendor).
-  revalidatePath("/[locale]", "layout");
+  // Vendor profile pages on the storefront (and lists that show the vendor). Capabilities and
+  // service areas also decide instant vs quote, so the catalogue caches go too (R7 fix).
+  purgeCatalogCache();
 }
 
 /* ───────────────────────── Jobs ───────────────────────── */
@@ -77,8 +78,10 @@ async function moveJob(orderId: string, action: JobAction, note?: string | null)
       if (r.count !== 1) throw new VendorActionError("STALE");
     }
     if (type) await tx.productionEvent.create({ data: { orderId: order.id, type, note: note ?? null, actorId: user.id } });
-    if (action === "accept" && !order.payouts.some((p) => p.kind === "ADVANCE")) {
-      const { advance } = splitVendorCost(order.vendorCostPiasters);
+    if (action === "accept") {
+      // Re-read inside the transaction so a concurrent accept cannot create a second row.
+      const rows = await tx.payout.findMany({ where: { orderId: order.id }, select: { kind: true, vendorId: true } });
+      const advance = advanceOnAccept(rows, vendor.id, order.vendorCostPiasters);
       if (advance > 0) await tx.payout.create({ data: { vendorId: vendor.id, orderId: order.id, kind: "ADVANCE", amountPiasters: advance, status: "PENDING" } });
     }
   });

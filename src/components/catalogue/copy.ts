@@ -96,6 +96,7 @@ export const COPY = {
   formErrorQty: t("Enter a quantity from 100 to 1,000,000.", "أدخل كمية من 100 إلى 1,000,000."),
   formError: t("Could not send the request. Try again.", "تعذر إرسال الطلب. حاول مرة أخرى."),
   formRateLimited: t("Too many requests. Try again in a minute.", "طلبات كثيرة. حاول بعد دقيقة."),
+  formInstant: t("This model now has an instant price, so no request is needed.", "أصبح لهذا الطراز سعر فوري، فلا حاجة إلى طلب سعر."),
 } as const;
 
 /** Fill "{name}" placeholders. */

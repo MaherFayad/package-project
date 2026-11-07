@@ -1,6 +1,43 @@
 /** Server env access with dev-safe defaults. Server-only. */
 export const isProd = process.env.NODE_ENV === "production";
 
+type Env = Record<string, string | undefined>;
+
+/** Dev and test flags that must never take effect in a real deployment. */
+export const DEV_ONLY_FLAGS = ["OTP_DEV_ECHO", "ALLOW_MOCK_PAYMENTS", "ELBA_E2E", "ELBA_DEV_PAGES"] as const;
+export type DevOnlyFlag = (typeof DEV_ONLY_FLAGS)[number];
+
+/**
+ * A real deployment serves an https:// site URL. Local runs, the e2e suite (`next start` on
+ * http://localhost:3100) and the local Cloudflare preview all use http://localhost. Pure.
+ */
+export function isRealDeployment(env: Env = process.env): boolean {
+  return (env.NEXT_PUBLIC_SITE_URL ?? "").trim().toLowerCase().startsWith("https://");
+}
+
+let devFlagWarned = false;
+
+/**
+ * Read a dev-only flag. On a real deployment (see isRealDeployment) every such flag reads as
+ * unset, and a single warning names the ones that were set (OWASP ASVS 4.0.3 V14.1.3, R7 fix).
+ */
+export function devFlag(name: DevOnlyFlag, env: Env = process.env): string | undefined {
+  if (!isRealDeployment(env)) return env[name];
+  if (!devFlagWarned) {
+    const set = DEV_ONLY_FLAGS.filter((f) => env[f] !== undefined && env[f] !== "");
+    if (set.length) {
+      devFlagWarned = true;
+      console.warn(`[env] ignoring dev-only flags on a real deployment (${env.NEXT_PUBLIC_SITE_URL}): ${set.join(", ")}`);
+    }
+  }
+  return undefined;
+}
+
+/** Test hook: let the next ignored flag warn again. */
+export function resetDevFlagWarning(): void {
+  devFlagWarned = false;
+}
+
 /** Values shipped in .env.example / docs: never acceptable as a production secret. */
 const KNOWN_PLACEHOLDER_SECRETS = new Set(["dev-only-change-me-please-32-chars-min", "dev-only-insecure-session-secret"]);
 
@@ -20,7 +57,7 @@ export function sessionSecretProblem(secret: string | undefined, prod: boolean, 
 
 export function sessionSecret(): string {
   const s = process.env.SESSION_SECRET;
-  const problem = sessionSecretProblem(s, isProd, process.env.OTP_DEV_ECHO === "1");
+  const problem = sessionSecretProblem(s, isProd, devFlag("OTP_DEV_ECHO") === "1");
   if (problem) {
     if (isProd) throw new Error(problem);
     return "dev-only-insecure-session-secret";
@@ -34,9 +71,10 @@ export function sessionSecret(): string {
  * - `next start` (NODE_ENV=production): only when OTP_DEV_ECHO="1" explicitly — used for
  *   local prod builds and Playwright e2e. NEVER set OTP_DEV_ECHO in a real deployment.
  */
-export function otpDevEcho(): boolean {
-  if (isProd) return process.env.OTP_DEV_ECHO === "1";
-  return process.env.OTP_DEV_ECHO !== "0";
+export function otpDevEcho(env: Env = process.env): boolean {
+  const flag = devFlag("OTP_DEV_ECHO", env);
+  if (env.NODE_ENV === "production") return flag === "1";
+  return flag !== "0";
 }
 
 export function siteUrl(): string {
@@ -57,8 +95,9 @@ export const OTP_IP_LIMITS = { requestPerHour: 20, verifyPer10Min: 30 } as const
  */
 export function otpIpLimits(env: Record<string, string | undefined> = process.env): { requestPerHour: number; verifyPer10Min: number } {
   const prod = env.NODE_ENV === "production";
-  const devEcho = prod ? env.OTP_DEV_ECHO === "1" : env.OTP_DEV_ECHO !== "0";
-  if (env.ELBA_E2E === "1" && devEcho) return { requestPerHour: 5_000, verifyPer10Min: 5_000 };
+  const echo = devFlag("OTP_DEV_ECHO", env);
+  const devEcho = prod ? echo === "1" : echo !== "0";
+  if (devFlag("ELBA_E2E", env) === "1" && devEcho) return { requestPerHour: 5_000, verifyPer10Min: 5_000 };
   return { ...OTP_IP_LIMITS };
 }
 
@@ -69,5 +108,6 @@ export function otpIpLimits(env: Record<string, string | undefined> = process.en
  * ELBA_E2E=1 (playwright.config webServer; the catalogue spec renders /dev/catalogue). Pure.
  */
 export function devPagesEnabled(env: Record<string, string | undefined> = process.env): boolean {
-  return env.NODE_ENV !== "production" || env.ELBA_DEV_PAGES === "1" || env.ELBA_E2E === "1";
+  if (env.NODE_ENV !== "production") return true;
+  return devFlag("ELBA_DEV_PAGES", env) === "1" || devFlag("ELBA_E2E", env) === "1";
 }

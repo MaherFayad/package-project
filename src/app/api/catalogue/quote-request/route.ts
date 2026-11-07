@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { toJson } from "@/lib/json";
 import { catalogueEntry } from "@/data/catalogue";
+import { getCatalogueData } from "@/components/catalogue/server";
 import { readJsonCapped } from "../../_lib/body";
 
 const Body = z.object({
@@ -25,7 +26,10 @@ const Body = z.object({
  * so the admin quote-leads inbox shows the model, standard and size, and the same request sent
  * again within 14 days returns the open one instead of a duplicate lead.
  *
- * 201 { id } | 200 { id, repeat: true } | 400 { error: "INVALID_BODY" | "UNKNOWN_MODEL" } | 401 | 403 | 429 { retryAfterSec }
+ * A model with an instant price is refused with 409 INSTANT_PRICE (R7 fix): the page decides the
+ * same way (`getCatalogueData().modes`, missing = quote) and offers the designer instead.
+ *
+ * 201 { id } | 200 { id, repeat: true } | 400 { error: "INVALID_BODY" | "UNKNOWN_MODEL" } | 401 | 403 | 409 { error: "INSTANT_PRICE" } | 429 { retryAfterSec }
  */
 export async function POST(req: Request) {
   // Buyers (and ops testing the flow). Vendor staff accounts are portal accounts: their requests
@@ -43,6 +47,7 @@ export async function POST(req: Request) {
   const b = parsed.data;
   const e = catalogueEntry(b.code);
   if (!e) return Response.json({ error: "UNKNOWN_MODEL" }, { status: 400 });
+  if ((await getCatalogueData()).modes.get(e.code)?.mode === "instant") return Response.json({ error: "INSTANT_PRICE" }, { status: 409 });
   const preset = b.presetId ? e.presets.find((p) => p.id === b.presetId) : undefined;
 
   const dims = preset?.dims ?? e.defaultDims;

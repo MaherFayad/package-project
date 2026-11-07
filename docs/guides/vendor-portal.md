@@ -82,6 +82,6 @@ Never SVG. Metadata (EXIF GPS, PNG text chunks) is stripped on upload (R4-04).
 - **R4-03**: buyers see QC photos only once approved.
 - **R4-05 / R4-06**: a special-gluing model is instant only when listed; coverage counts must respect order mode.
 - **R2-01**: show `OrderItem.modelCode`, not only the base structure.
-- **Not in the audits, found in code**: `moveJob` creates the advance only if the order has no ADVANCE row at all, without filtering by vendor. After a reassignment where the old advance was already PAID, the new vendor gets none and admin must raise it by hand.
+- **Fixed (R7)**: `moveJob` used to skip the advance when the order had any ADVANCE row, so after a reassignment where the old advance was PAID the new printer got none. It now counts only the accepting printer's own rows (`advanceOnAccept`, read inside the transaction), so each printer gets its advance exactly once; the old printer's unpaid advance is still voided by the reassignment.
 - **Still open**: V-21 / R2-11 dieline SVG labels in English and small (3d-engine E-59 addressed part), R2-12 portal phone LCP, CR-42 placeholder seed portfolio.
 - `capabilities.monthlyCapacityUnits` is collected and shown but not used in pricing or matching.

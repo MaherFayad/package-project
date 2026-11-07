@@ -22,7 +22,7 @@ The storefront also covers `/boxes` (box styles and SEO size pages), `/bottles`,
 | `src/components/catalogue/CatalogueBrowser.tsx`, `rank.ts` | Client filters (`?family=&sub=&q=&scope=world`), search ranking |
 | `src/components/catalogue/QuoteRequestForm.tsx` | Price request form on a model page |
 | `src/components/store/data.ts`, `catalog.ts` | Storefront read models (`unstable_cache`, tag `catalog`, 300 s), structure slugs, SEO sizes |
-| `src/lib/catalog-cache.ts` | `purgeCatalogCache()` (revalidates tag and layout) |
+| `src/lib/catalog-cache.ts` | `purgeCatalogCache()` (revalidates tag and layout, drops the `getCatalogueData()` memo) |
 | `src/app/api/catalogue/quote-request/route.ts` | Creates a REQUESTED `Quote` from the catalogue |
 
 ## Order modes (B-16)
@@ -71,6 +71,6 @@ The generated table has 44 listed, 45 quote, 19 preview rows. Regenerate with `n
 - **R3-01, R7-01**: the windowed grid needs a pre-measure CSS fallback and `minmax(0,1fr)` tracks for 320 px.
 - **CAT-05**: B-flute-only models need a spot-ink default, not CMYK.
 - **Not in the audits, found in code**:
-  - `purgeCatalogCache()` does not clear the per-process cache in `getCatalogueData()`, so badges can lag up to 5 minutes after an admin or vendor edit.
-  - `/api/catalogue/quote-request` accepts any catalogue code, including instant ones; only the page restricts the form.
+  - Fixed (R7): `purgeCatalogCache()` also drops the per-process memo in `getCatalogueData()` (`catalogPurgedAt()`), and it now runs on admin structure, material, finish, vendor status and application edits and on every vendor profile or portfolio save, besides prices and rate cards.
+  - Fixed (R7): `/api/catalogue/quote-request` answers 409 `INSTANT_PRICE` for a model the page would price instantly (`getCatalogueData().modes`); the form shows a link to the designer.
 - `StructureCode` is not widened for catalogue models on purpose: rate cards key on the 16 core structures.

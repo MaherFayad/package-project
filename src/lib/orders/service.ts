@@ -616,7 +616,16 @@ const EVENT_TIMESTAMPS: Partial<Record<OrderStatus, "paidAt" | "deliveredAt" | "
  * Move an order along the state machine. Checks the edge and the actor (vendors only for their
  * own orders, buyers only for their own), writes the timeline event and notifies the buyer.
  */
-export async function transitionOrder(orderId: string, to: OrderStatus, actor: TransitionActor, note?: string): Promise<void> {
+export interface TransitionOptions {
+  /**
+   * Extra writes that must commit with the status change (the admin audit row, payout voids,
+   * QC photo decisions). Runs inside the same transaction, after the change; a throw rolls the
+   * whole move back (R7 fix: no change without its audit row).
+   */
+  inTx?: (tx: Prisma.TransactionClient) => Promise<void>;
+}
+
+export async function transitionOrder(orderId: string, to: OrderStatus, actor: TransitionActor, note?: string, opts: TransitionOptions = {}): Promise<void> {
   const order = await db.order.findUnique({ where: { id: orderId }, include: { buyer: true } });
   if (!order) throw new OrderError("NOT_FOUND");
   if (actor.role === "VENDOR" && actor.vendorId !== order.vendorId) throw new OrderError("FORBIDDEN");
@@ -634,6 +643,7 @@ export async function transitionOrder(orderId: string, to: OrderStatus, actor: T
     if (updated.count !== 1) return false;
     await tx.productionEvent.create({ data: { orderId, type: rule.event, note: note ?? null, actorId: actor.userId ?? null, createdAt: now } });
     if (to === "REFUNDED") await issueCreditNote(tx, orderId, now);
+    if (opts.inTx) await opts.inTx(tx);
     return true;
   });
   if (!changed) throw new OrderError("INVALID_STATE");
@@ -1018,7 +1028,7 @@ export async function proofPdfBytes(orderId: string, watermark: string): Promise
  * conditional update, so a double click or two staff members cannot book two couriers), book the
  * courier, then record the shipment. If the booking fails the claim is released.
  */
-export async function shipOrder(orderId: string, actor: TransitionActor): Promise<{ trackingNumber: string }> {
+export async function shipOrder(orderId: string, actor: TransitionActor, opts: { inTx?: (tx: Prisma.TransactionClient, trackingNumber: string) => Promise<void> } = {}): Promise<{ trackingNumber: string }> {
   const order = await db.order.findUnique({ where: { id: orderId }, include: { vendor: true, items: true, buyer: true } });
   if (!order) throw new OrderError("NOT_FOUND");
   if (actor.role === "VENDOR" && actor.vendorId !== order.vendorId) throw new OrderError("FORBIDDEN");
@@ -1044,8 +1054,9 @@ export async function shipOrder(orderId: string, actor: TransitionActor): Promis
     throw new OrderError("NOT_ALLOWED");
   }
   const now = new Date();
-  await db.$transaction([
-    db.shipment.create({
+  // The shipment, its timeline event and the caller's audit row (opts.inTx) commit together.
+  await db.$transaction(async (tx) => {
+    await tx.shipment.create({
       data: {
         orderId,
         provider: provider.name,
@@ -1054,9 +1065,10 @@ export async function shipOrder(orderId: string, actor: TransitionActor): Promis
         labelUrl: created.labelUrl ?? null,
         events: toJson([{ status: created.status, at: now.toISOString() }]),
       },
-    }),
-    db.productionEvent.create({ data: { orderId, type: rule.event, note: created.trackingNumber, actorId: actor.userId ?? null, createdAt: now } }),
-  ]);
+    });
+    await tx.productionEvent.create({ data: { orderId, type: rule.event, note: created.trackingNumber, actorId: actor.userId ?? null, createdAt: now } });
+    if (opts.inTx) await opts.inTx(tx, created.trackingNumber);
+  });
   await notifyStatus(order, "SHIPPED", created.trackingNumber);
   return { trackingNumber: created.trackingNumber };
 }

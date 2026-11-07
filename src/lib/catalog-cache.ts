@@ -7,6 +7,13 @@ import { revalidatePath, revalidateTag } from "next/cache";
  */
 export const CATALOG_CACHE_TAG = "catalog";
 
+let purgedAt = 0;
+
+/** Time of the last purge in this process (ms). An in-process memo built at or before it is stale. */
+export function catalogPurgedAt(): number {
+  return purgedAt;
+}
+
 /**
  * Expire the public catalogue right after an edit that changes a public price (admin margin, zones,
  * FX/board index; a vendor rate card). Without it, public pages kept the old price while checkout
@@ -19,6 +26,9 @@ export const CATALOG_CACHE_TAG = "catalog";
  * Outside a request (scripts, unit tests) there is nothing to purge, so errors are ignored.
  */
 export function purgeCatalogCache(): void {
+  // The per-process memo in getCatalogueData() (src/components/catalogue/server.ts) is not a Next
+  // cache, so revalidateTag never reached it and badges lagged up to 5 minutes (R7 fix).
+  purgedAt = Math.max(Date.now(), purgedAt + 1);
   try {
     revalidateTag(CATALOG_CACHE_TAG);
     revalidatePath("/[locale]", "layout");

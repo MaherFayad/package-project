@@ -2,6 +2,7 @@ import "server-only";
 import { CATALOGUE, catalogueCounts, taxonomy, toCatalogueCard, type CatalogueCard, type TaxonomyNode } from "@/data/catalogue";
 import { quoteMode, type QuoteMode } from "@/lib/configurator/catalogue";
 import { loadVendorsForMatch } from "@/lib/configurator/server";
+import { catalogPurgedAt } from "@/lib/catalog-cache";
 
 export interface CatalogueData {
   cards: CatalogueCard[];
@@ -16,10 +17,13 @@ const TTL_MS = 5 * 60_000;
 
 /**
  * Catalogue rows plus the live commerce path of each model (instant price when an active
- * printer can make it, else quote), cached for 5 minutes per server process.
+ * printer can make it, else quote), cached for 5 minutes per server process. Any
+ * purgeCatalogCache() (price, rate card, vendor or catalogue edit) drops the memo at once.
  */
 export async function getCatalogueData(): Promise<CatalogueData> {
-  if (cache && Date.now() - cache.at < TTL_MS) return cache.data;
+  if (cache && Date.now() - cache.at < TTL_MS && cache.at > catalogPurgedAt()) return cache.data;
+  // Stamped before the vendors load: a purge that lands meanwhile makes this build stale.
+  const builtAt = Date.now();
   let vendors: Awaited<ReturnType<typeof loadVendorsForMatch>> = [];
   try {
     vendors = await loadVendorsForMatch();
@@ -37,6 +41,6 @@ export async function getCatalogueData(): Promise<CatalogueData> {
     designer: CATALOGUE.filter((e) => e.designer).length,
   };
   const data: CatalogueData = { cards, taxonomy: taxonomy(CATALOGUE.map((e) => e.subFamily)), counts, modes, vendorCount: vendors.length };
-  cache = { at: Date.now(), data };
+  cache = { at: builtAt, data };
   return data;
 }

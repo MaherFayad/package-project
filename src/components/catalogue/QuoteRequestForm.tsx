@@ -21,7 +21,7 @@ export function QuoteRequestForm({ locale, code, slug, presets, signedIn }: { lo
   // would do a native GET of this page).
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => setHydrated(true), []);
-  const [state, setState] = useState<"idle" | "sending" | "sent" | "error" | "qty" | "limited">("idle");
+  const [state, setState] = useState<"idle" | "sending" | "sent" | "error" | "qty" | "limited" | "instant">("idle");
   // The form (and its focused Send button) is replaced by the confirmation: move focus to it so
   // keyboard and screen-reader users are not dropped to <body> (WCAG 2.4.3).
   const sentRef = useRef<HTMLParagraphElement>(null);
@@ -61,7 +61,8 @@ export function QuoteRequestForm({ locale, code, slug, presets, signedIn }: { lo
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ code, quantity, ...(preset ? { presetId: preset } : {}), ...(notes.trim() ? { notes: notes.trim() } : {}) }),
       });
-      setState(res.ok ? "sent" : res.status === 429 ? "limited" : "error");
+      // 409 INSTANT_PRICE: a printer now prices this model instantly (the page was cached).
+      setState(res.ok ? "sent" : res.status === 429 ? "limited" : res.status === 409 ? "instant" : "error");
     } catch {
       setState("error");
     }
@@ -100,6 +101,14 @@ export function QuoteRequestForm({ locale, code, slug, presets, signedIn }: { lo
           {COPY.formNotesHint[locale]}
         </p>
       </div>
+      {state === "instant" ? (
+        <p className={styles.error} role="alert" data-testid="quote-instant">
+          {COPY.formInstant[locale]}{" "}
+          <Link href={`/${locale}/design/${slug}`} prefetch={false}>
+            {COPY.designCta[locale]}
+          </Link>
+        </p>
+      ) : null}
       {state === "error" || state === "limited" ? (
         <p className={styles.error} role="alert">
           {state === "limited" ? COPY.formRateLimited[locale] : COPY.formError[locale]}

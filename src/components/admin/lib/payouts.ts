@@ -21,6 +21,18 @@ export const payoutStepSchema = z.object({
 });
 export type PayoutStepInput = z.infer<typeof payoutStepSchema>;
 
+/**
+ * Payout rows that can no longer be paid once the order is refunded or cancelled: everything not
+ * PAID yet (PENDING and APPROVED). There is no VOID status, so they are voided the way a
+ * reassignment voids the old advance: deleted, with the rows kept in the audit entry (R7 fix; a
+ * leftover APPROVED row was refused at PAY with PAYOUT_ORDER_CLOSED). Pure.
+ */
+export const UNPAID_PAYOUT_STATUSES = ["PENDING", "APPROVED"] as const;
+
+export function unpaidPayouts<T extends { status: string }>(rows: readonly T[]): T[] {
+  return rows.filter((r) => (UNPAID_PAYOUT_STATUSES as readonly string[]).includes(r.status));
+}
+
 /** Order states in which the vendor has accepted the job (the advance is earned). */
 const ACCEPTED_OR_LATER: readonly string[] = ["ACCEPTED", "IN_PRODUCTION", "QC_PENDING", "READY_TO_SHIP", "SHIPPED", "DELIVERED"];
 

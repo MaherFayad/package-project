@@ -35,7 +35,7 @@ Loaders live in `src/components/admin/server/queries.ts` and `settings.ts`; pure
 |---|---|
 | `reassignOrderAction` | Move an order to another ACTIVE printer (from PENDING_PAYMENT, PAID, PROOF_APPROVED, ACCEPTED). Asks for a buy price when the new printer has no card or does not list the model. Deletes unpaid ADVANCE rows (R4-01). Notifies the new printer |
 | `overrideOrderAction` | Price or cost override with an `updatedAt` lock |
-| `refundOrderAction` | Claims each PAID payment, calls the provider `refund()`, then `transitionOrder("REFUNDED")` (credit note), deletes PENDING payouts |
+| `refundOrderAction` | Claims each PAID payment, calls the provider `refund()`, then `transitionOrder("REFUNDED")` (credit note); in that same transaction it voids every unpaid payout (PENDING and APPROVED) and writes the audit row |
 | `reviewQcAction` | Approve (READY_TO_SHIP) or reject with a note of at least 3 characters (IN_PRODUCTION) |
 | `shipOrderAction`, `addOrderNoteAction` | Ship from READY_TO_SHIP; a note stored only in the audit log |
 | `payoutStepAction` | RAISE, APPROVE, PAY. A BALANCE is held while a dispute is open; paying a BALANCE needs the e-invoice checkbox |
@@ -78,6 +78,6 @@ New detail page: a `layout.tsx` record guard above Suspense and a `not-found.tsx
 - **R5-CP-11, R5-CP-46, R5-CP-86 (open)**: English audit summaries, raw note codes and English governorates on Arabic pages.
 - Postgres `contains` is case-sensitive, so audit search behaves differently in production.
 - **Not in the audits, found in code**:
-  - Several actions write the audit row outside the transaction (`refundOrderInternal`, `reviewQcAction`, `shipOrderAction`, `setVendorStatusAction`, `decideDisputeAction`, pricing and catalogue updates). A failure can leave a change without its audit row.
-  - A refund deletes only PENDING payouts; APPROVED rows stay and PAY is then refused (`PAYOUT_ORDER_CLOSED`).
+  - Fixed (R7): every admin mutation writes its audit row in the transaction of its change. Order moves pass the row through `transitionOrder(..., { inTx })` and `shipOrder(..., { inTx })`; the rest use `db.$transaction` with `audit(..., tx)`. Only `addOrderNoteAction` audits alone (the row is the change). Guarded by `src/lib/__tests__/r7-audit-in-transaction.test.ts`. A dispute REFUND still commits the refund and the dispute decision as two atomic steps, because the gateway call sits between them.
+  - Fixed (R7): a refund voids PENDING and APPROVED payouts (deleted like a reassignment voids the old advance, rows kept in the `ORDER_REFUND` audit entry); PAID rows stay.
   - An application can be approved with no starter rate cards when no peer prices a style; nothing warns.

@@ -42,7 +42,7 @@ Docs index: `docs/README.md`. Architecture: `docs/ARCHITECTURE.md`. Area guides:
 
 ```bash
 npm install                      # postinstall runs prisma generate (SQLite client)
-cp .env.example .env             # first time; gives SESSION_SECRET and dev flags
+cp .env.example .env             # first time; gives SESSION_SECRET (dev flags are commented out)
 npm run db:push && npm run db:seed
 npm run dev                      # http://localhost:3000 -> /ar
 npm run lint                     # eslint (also run by next build)
@@ -106,13 +106,13 @@ Playwright starts `npm run start -- -p $E2E_PORT` (default 3100) with `ELBA_E2E=
 
 | Flag | Effect | Guard in code |
 |---|---|---|
-| `OTP_DEV_ECHO=1` | Returns the OTP as `devCode` and logs it; also relaxes the `SESSION_SECRET` placeholder check | None besides "exactly 1" under `next start`. Under `next dev` it is on unless `0` |
+| `OTP_DEV_ECHO=1` | Returns the OTP as `devCode` and logs it; also relaxes the `SESSION_SECRET` placeholder check | `otpDevEcho()`: "exactly 1" under `next start`. Under `next dev` it is on unless `0` |
 | `ALLOW_MOCK_PAYMENTS=1` | Enables the mock gateway under `next start` | `mockPaymentsEnabled()` in `src/lib/payments/config.ts` |
 | `ELBA_E2E=1` | Lifts per-IP OTP limits (with dev echo) and opens `/dev` pages | `otpIpLimits()`, `devPagesEnabled()` in `src/lib/env.ts` |
 | `ELBA_DEV_PAGES=1` | Opens `/[locale]/dev/*` in production builds | `devPagesEnabled()` |
 | `E2E_INSECURE_COOKIES` | Session cookie without `Secure` | None |
 
-Nothing refuses these at startup. `.env.example` ships `OTP_DEV_ECHO="1"` and `ALLOW_MOCK_PAYMENTS="1"` for local use.
+**Guard**: when `NEXT_PUBLIC_SITE_URL` starts with `https://` (a real deployment) the first four flags are ignored and one warning is logged (`devFlag()` / `isRealDeployment()` in `src/lib/env.ts`). Local runs, e2e and the local preview use `http://localhost`, so they keep working. `.env.example` lists the flags commented out in a "LOCAL TESTING ONLY" block; the e2e command passes `OTP_DEV_ECHO=1 ALLOW_MOCK_PAYMENTS=1` itself.
 
 ## Known gotchas
 

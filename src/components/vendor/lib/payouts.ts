@@ -17,6 +17,16 @@ export function splitVendorCost(costPiasters: number, share = ADVANCE_SHARE): { 
   return { advance, balance: cost - advance };
 }
 
+/**
+ * Advance to create when `vendorId` accepts a job, or 0. Only that vendor's own ADVANCE rows
+ * count: after a reassignment the old printer's PAID advance stays on the order, and the new
+ * printer still earns its own (R7 fix; the old unpaid one is voided by the reassignment). Pure.
+ */
+export function advanceOnAccept(payouts: readonly { kind: string; vendorId: string }[], vendorId: string, vendorCostPiasters: number): number {
+  if (payouts.some((p) => p.kind === "ADVANCE" && p.vendorId === vendorId)) return 0;
+  return splitVendorCost(vendorCostPiasters).advance;
+}
+
 /** Order states in which the vendor has accepted the job (advance is earned). */
 const ACCEPTED_OR_LATER: readonly OrderStatus[] = ["ACCEPTED", "IN_PRODUCTION", "QC_PENDING", "READY_TO_SHIP", "SHIPPED", "DELIVERED"];
 
