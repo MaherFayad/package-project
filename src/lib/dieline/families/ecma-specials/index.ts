@@ -13,4 +13,4 @@ export { endFlapWallet, pivotForGap, presentationFolder } from "./folders";
 export { CONE_FACETS, PILLOW_STRIPS, cone, coneSectorDeg, ngonSide, pillowLens, pillowPack, polygonalCarton } from "./shapes";
 export { withDeepParts } from "./kit";
 export { basketCarrier, basketHandleRise, counterDisplay, cupCarrier, cupHoleDiameter, cupsPerSide, displayFrontHeight, gableCarry, type BasketGrid } from "./carriers";
-export { GABLE_FIN_MM, LS_STRIP_MM, asepticBrick, bodyVolumeMl, gableTopCarton } from "./liquid";
+export { GABLE_FIN_MM, GUSSET_CLEARANCE_MM, LS_STRIP_MM, asepticBrick, bodyVolumeMl, gableTopCarton, gussetFolds } from "./liquid";
