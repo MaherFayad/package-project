@@ -284,3 +284,14 @@ export function pruneFinishes(doc: DesignDoc, m: ModelDef): { doc: DesignDoc; re
 export function describeVesselDraft(m: VesselModelDef, dims: VesselDims, v: Pick<DesignVessel, "surfaces" | "container" | "options" | "closure">) {
   return describeVesselModel(m, dims, v.surfaces, undefined, v.container, v.options, v.closure);
 }
+
+/**
+ * R14-04: the neck finish shown under a bottle or jar's name (it used to be the preset's raw
+ * finish id, "PP28", and stayed after a swing top or crown was chosen). It follows the chosen
+ * closure; null when the model or closure has none (boxes keep their own standard line).
+ */
+export function neckFinishLabel(m: ModelDef, closure: string | undefined, locale: "ar" | "en"): string | null {
+  if (m.kind !== "vessel") return null;
+  const c = m.closures.find((x) => x.code === closure) ?? m.closures.find((x) => x.code === m.defaultClosure);
+  return c?.neckFinish?.[locale] ?? null;
+}

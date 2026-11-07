@@ -20,7 +20,7 @@ import { Text } from "@/components/ui/Text";
 import { TextField } from "@/components/ui/TextField";
 import { useUi } from "@/components/ui/AppProvider";
 import { fill } from "@/components/ui/strings";
-import { describeVesselDraft, featureSupportOf, finishChoicesFor, materialChoices, printSidesChoices, type Choice } from "./lib/config";
+import { describeVesselDraft, featureSupportOf, neckFinishLabel, finishChoicesFor, materialChoices, printSidesChoices, type Choice } from "./lib/config";
 import { modelImage } from "./ModelPicker";
 import { FlexOptionsGroup } from "./FlexOptionsGroup";
 import { EGYPT_BADGE, egyptOf, orderModeOf } from "@/data/catalogue/order-mode";
@@ -69,6 +69,8 @@ export const ConfigPanel = memo(function ConfigPanel(props: ConfigPanelProps) {
   const { t, locale } = useI18n();
   const base = t(`structures.${doc.structureCode}` as DictKey);
   const orderMode = orderModeOf(model.code).mode;
+  // R14-04: a bottle or jar shows the neck finish of the chosen closure, not the preset's finish id.
+  const neck = neckFinishLabel(model, doc.vessel?.closure, locale);
   return (
     <div className={styles.config}>
       <div className={styles.modelCurrent}>
@@ -78,7 +80,11 @@ export const ConfigPanel = memo(function ConfigPanel(props: ConfigPanelProps) {
           <Text as="h2" variant="headingSm">
             <span data-testid="model-name">{model.name[locale]}</span>
           </Text>
-          {model.standard && model.standard !== "none" ? (
+          {neck ? (
+            <Text as="p" variant="bodySm" tone="subdued">
+              <bdi data-testid="model-neck">{neck}</bdi>
+            </Text>
+          ) : model.standard && model.standard !== "none" ? (
             <Text as="p" variant="bodySm" tone="subdued">
               <span dir="ltr">{model.standard}</span>
             </Text>
