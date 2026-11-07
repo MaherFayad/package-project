@@ -611,7 +611,7 @@ function featureParts(shape: FlexShape, layout: FlexPrintLayout): FlexMeshPart[]
  */
 function productParts(shape: FlexShape): FlexMeshPart[] {
   const cfg = shape.config;
-  // R6-3Q-G: a window shows the product too (an opaque film with a clear window)
+  // R5-3Q-G-21: an opaque film with a clear window shows the product through the window
   if (shape.model === "sleeve" || !(FILM_MATERIALS[cfg.material].transparent || cfg.options.window) || cfg.fill < 0.15) return [];
   const k = 0.92;
   // R5-3Q-G: the product settles below the zipper / header instead of running up to the top seal as

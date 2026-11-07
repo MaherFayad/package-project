@@ -14,6 +14,7 @@ export function DielineView({
   version,
   label,
   legend,
+  size,
   panelLabels,
   locale = "en",
 }: {
@@ -22,6 +23,8 @@ export function DielineView({
   version: number;
   label: string;
   legend: string;
+  /** R11-05: the flat (die) size, bleed and safe zone in mm, for the buyer and the printer. */
+  size?: string;
   panelLabels: Record<string, string>;
   /** Role names (tuck, dust flap, ear…) for panels without a face label (CR-27). */
   locale?: "ar" | "en";
@@ -50,8 +53,9 @@ export function DielineView({
     ctx.clearRect(0, 0, c.width, c.height);
     // Show only the die shape: board outside the cut line is waste.
     ctx.save();
-    const k = c.width / model.sheet.width;
-    ctx.setTransform(k, 0, 0, k, 0, 0);
+    // per-axis scale: the raster is rounded to whole pixels on each axis (a 17 mm stick pack panel
+    // is only ~100 px wide), so one factor would drift the clip off the print (R5-3Q-G-28)
+    ctx.setTransform(c.width / model.sheet.width, 0, 0, c.height / model.sheet.height, 0, 0);
     ctx.beginPath();
     for (const p of model.panels) {
       ctx.moveTo(p.polygon[0].x, p.polygon[0].y);
@@ -82,11 +86,18 @@ export function DielineView({
 
   return (
     <figure ref={figRef} className={styles.dieline} dir="ltr" aria-label={label}>
-      <div className={styles.dielineSheet} style={{ aspectRatio: `${model.sheet.width} / ${model.sheet.height}` }}>
+      <div className={styles.dielineSheet} style={{ ["--dl-ratio" as string]: `${model.sheet.width / model.sheet.height}` }}>
         <canvas ref={canvasRef} className={styles.dielineCanvas} aria-hidden="true" />
         <div className={styles.dielineSvg} aria-hidden="true" dangerouslySetInnerHTML={{ __html: haloed }} />
       </div>
-      <figcaption className={styles.dielineLegend}>{legend}</figcaption>
+      <figcaption className={styles.dielineLegend} dir={locale === "ar" ? "rtl" : "ltr"}>
+        {size ? (
+          <span className={styles.dielineSize} data-testid="dieline-size">
+            {size}
+          </span>
+        ) : null}
+        {legend}
+      </figcaption>
     </figure>
   );
 }

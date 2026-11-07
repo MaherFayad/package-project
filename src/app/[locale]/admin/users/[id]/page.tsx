@@ -1,8 +1,18 @@
+import { isAdminSession, requireAdminPage } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Download } from "lucide-react";
-import { Badge, Banner, BlockStack, Button, Card, DataTable, InlineStack, Layout, LayoutSection, Link, Page, Text } from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { Banner } from "@/components/ui/Banner";
+import { BlockStack, InlineStack } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { DataTable } from "@/components/ui/IndexTable";
+import { Layout, LayoutSection } from "@/components/ui/Layout";
+import { Link } from "@/components/ui/Link";
+import { Page } from "@/components/ui/Page";
+import { Text } from "@/components/ui/Text";
 import { DataRequestActions } from "@/components/admin/DataRequestActions";
 import { OrderStatusBadge } from "@/components/admin/OrdersIndex";
 import { adminStyles } from "@/components/admin/charts";
@@ -16,11 +26,14 @@ type Params = Promise<{ locale: string; id: string }>;
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { locale, id } = await params;
   const t = getT(toLocale(locale));
-  const u = /^[\w-]{1,40}$/.test(id) ? await db.user.findUnique({ where: { id }, select: { name: true } }) : null;
-  return { title: `${u?.name ? `${u.name} · ` : ""}${t("admin.users.title")} · ${t("admin.title")}` };
+  const isAdmin = await isAdminSession();
+  const u = isAdmin && /^[\w-]{1,40}$/.test(id) ? await db.user.findUnique({ where: { id }, select: { name: true } }) : null;
+  // a11y R6-AX-11 (WCAG 2.4.2): a missing record says so in the tab title too.
+  return { title: `${u?.name ? `${u.name} · ` : isAdmin && !u ? `${t("admin.common.notFoundTitle")} · ` : ""}${t("admin.users.title")} · ${t("admin.title")}` };
 }
 
 export default async function AdminUserPage({ params }: { params: Params }) {
+  await requireAdminPage(); // R6-SEC-09: the layout redirect does not stop this page rendering
   const { locale: raw, id } = await params;
   const locale = toLocale(raw);
   const t = getT(locale);
@@ -57,6 +70,7 @@ export default async function AdminUserPage({ params }: { params: Params }) {
                   {user.consents.length ? (
                     <DataTable
                       caption={t("admin.users.detail.consentCaption")}
+                    condensed
                       columnContentTypes={["text", "text", "text", "text", "text"]}
                       headings={[
                         t("admin.users.detail.consentColumns.kind"),
@@ -129,10 +143,11 @@ export default async function AdminUserPage({ params }: { params: Params }) {
                 {user.orders.length ? (
                   <DataTable
                     caption={t("admin.users.detail.orders")}
+                    condensed
                     columnContentTypes={["text", "text", "text", "numeric"]}
                     headings={[t("admin.orders.columns.order"), t("admin.orders.columns.date"), t("admin.orders.columns.status"), t("admin.orders.columns.total")]}
                     rows={user.orders.map((o) => [
-                      <Link key="n" url={`${base}/orders/${o.number}`}>
+                      <Link key="n" url={`${base}/orders/${o.number}`} className={adminStyles.TapLink}>
                         <bdi>{o.number}</bdi>
                       </Link>,
                       formatDate(o.placedAt, locale, "medium"),

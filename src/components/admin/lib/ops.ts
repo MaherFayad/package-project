@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MAX_DB_PIASTERS } from "@/lib/money/input";
 
 /**
  * Disputes, vendor applications, vendor status and PDPL requests: admin rules (pure).
@@ -34,6 +35,10 @@ export const disputeDecisionSchema = z
     note: z.string().trim().max(1000).default(""),
     /** Reprint only: vendor for the reprint (defaults to the original vendor). */
     vendorId: z.string().min(1).max(40).optional(),
+    /** Reprint only (R5-JR-09): boxes to redo and the charge-back to the original printer. */
+    reprintQuantity: z.number().int().min(1).max(1_000_000).optional(),
+    chargeBack: z.enum(["FULL", "PARTIAL", "NONE"]).optional(),
+    chargeBackPiasters: z.number().int().min(0).max(MAX_DB_PIASTERS).optional(),
   })
   .refine((d) => d.decision === "REVIEW" || d.note.length >= 3, { message: "NOTE_REQUIRED", path: ["note"] });
 
@@ -168,4 +173,59 @@ export function maskPhone(phone: string): string {
   if (phone.startsWith("deleted:")) return "—";
   if (phone.length < 8) return phone;
   return `${phone.slice(0, 5)}****${phone.slice(-4)}`;
+}
+
+/* ───────────── Reprint quantity and charge-back (journeys R5-JR-09) ───────────── */
+
+/**
+ * A reprint redoes only the defective boxes, and the printer that caused a print defect pays for
+ * it by default. The admin picks per dispute: FULL (default for PRINT_DEFECT), PARTIAL (an amount)
+ * or NONE (default for other reasons: late, damaged in transit, wrong item from our side). The
+ * policy itself (when to charge back, limits) is a founder decision; this is the mechanism.
+ */
+export const CHARGE_BACK_MODES = ["FULL", "PARTIAL", "NONE"] as const;
+export type ChargeBackMode = (typeof CHARGE_BACK_MODES)[number];
+
+export function defaultChargeBack(reason: string): ChargeBackMode {
+  return reason === "PRINT_DEFECT" ? "FULL" : "NONE";
+}
+
+export const reprintTermsSchema = z.object({
+  quantity: z.number().int().min(1).max(1_000_000),
+  chargeBack: z.enum(CHARGE_BACK_MODES),
+  /** PARTIAL only: piasters charged back to the original printer. */
+  chargeBackPiasters: z.number().int().min(0).max(MAX_DB_PIASTERS).optional(),
+});
+export type ReprintTerms = z.infer<typeof reprintTermsSchema>;
+
+export interface ReprintPlan {
+  quantity: number;
+  /** The buy price of the reprinted boxes (pro rata of the original buy price). */
+  reprintCostPiasters: number;
+  chargeBackPiasters: number;
+  /** What Elba pays the reprint printer. */
+  reprintVendorCostPiasters: number;
+  /** New buy price of the ORIGINAL order (charge-back taken off it) when another printer reprints. */
+  originalVendorCostPiasters: number;
+  /** Charge-back larger than what is still unpaid on the original: recover off-platform. */
+  owedPiasters: number;
+}
+
+/**
+ * Same printer: it reprints at its own cost for the charged-back part (Elba pays the rest).
+ * Another printer: it is paid in full; the charge-back comes off the original printer's buy price,
+ * and whatever exceeds its unpaid balance is owed back.
+ */
+export function planReprint(p: { originalQty: number; originalCostPiasters: number; paidToOriginalPiasters: number; sameVendor: boolean; terms: ReprintTerms }): ReprintPlan | "QTY_RANGE" | "CHARGE_RANGE" {
+  const { terms } = p;
+  if (terms.quantity < 1 || terms.quantity > p.originalQty) return "QTY_RANGE";
+  const reprintCost = Math.round((p.originalCostPiasters * terms.quantity) / p.originalQty);
+  const charge = terms.chargeBack === "FULL" ? reprintCost : terms.chargeBack === "NONE" ? 0 : (terms.chargeBackPiasters ?? -1);
+  if (charge < 0 || charge > reprintCost) return "CHARGE_RANGE";
+  if (p.sameVendor) {
+    return { quantity: terms.quantity, reprintCostPiasters: reprintCost, chargeBackPiasters: charge, reprintVendorCostPiasters: reprintCost - charge, originalVendorCostPiasters: p.originalCostPiasters, owedPiasters: 0 };
+  }
+  const newOriginal = Math.max(p.paidToOriginalPiasters, p.originalCostPiasters - charge);
+  const owed = Math.max(0, charge - (p.originalCostPiasters - newOriginal));
+  return { quantity: terms.quantity, reprintCostPiasters: reprintCost, chargeBackPiasters: charge, reprintVendorCostPiasters: reprintCost, originalVendorCostPiasters: newOriginal, owedPiasters: owed };
 }

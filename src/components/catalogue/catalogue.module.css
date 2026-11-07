@@ -4,16 +4,6 @@
  * throughout so RTL mirrors; thumbnails are never mirrored.
  */
 
-.stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px 40px;
-  margin-block-start: 32px;
-}
-.stat { display: grid; gap: 2px; }
-.statNum { font-size: clamp(1.75rem, 1.2rem + 1.6vw, 2.5rem); font-weight: 700; color: var(--mk-ink); line-height: 1.1; font-variant-numeric: tabular-nums; }
-.statLabel { font-size: 0.9375rem; color: var(--mk-text-2); }
-
 .browser { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
 
 .toolbar {
@@ -48,7 +38,7 @@
   display: flex;
   align-items: center;
   min-block-size: 52px;
-  border: 1.5px solid var(--mk-line-strong);
+  border: 1.5px solid #8a8a8a; /* a11y R5-AX-10 (1.4.11) */
   border-radius: 999px;
   background: var(--mk-white);
   transition: border-color var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard);
@@ -104,7 +94,7 @@
   background: transparent;
   font: inherit;
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 550;
   color: var(--mk-text-2);
   white-space: nowrap;
   cursor: pointer;
@@ -146,7 +136,7 @@
   background: var(--mk-white);
   font: inherit;
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 550;
   color: var(--mk-ink);
   cursor: pointer;
   white-space: nowrap;
@@ -180,11 +170,13 @@
   display: grid;
   gap: 20px;
   justify-items: start;
-  content-visibility: auto;
-  contain-intrinsic-block-size: auto 1400px;
+  /* R6: no content-visibility. With a fixed 1400px placeholder the page grew by up to 11,500px
+     after a scroll and 60 Tabs (cards are links: focused cards jumped); the 12 sections render
+     without it inside the LCP budget (docs/audit/r6-restyle.md, section 9). */
 }
 .section > .gridWrap { justify-self: stretch; }
-.sectionTitle { margin: 0; font-size: clamp(1.375rem, 1.1rem + 0.8vw, 1.75rem); font-weight: 700; letter-spacing: -0.01em; }
+.sectionTitle { margin: 0; font-size: clamp(1.5rem, 1.2rem + 1vw, 2.125rem); font-weight: var(--mk-fw-heading, 330); line-height: 1.2; letter-spacing: -0.01em; }
+.sectionTitle:lang(ar) { font-weight: 450; letter-spacing: 0; line-height: 1.4; }
 
 .resultCount { font-size: 0.9375rem; color: var(--mk-text-2); }
 
@@ -210,8 +202,8 @@
   position: relative;
   display: block;
   aspect-ratio: 1;
-  border-radius: var(--mk-radius-tile);
-  background: radial-gradient(70% 60% at 50% 42%, #ffffff 0%, var(--mk-grey) 100%);
+  border-radius: 20px;
+  background: var(--mk-sheet, #f5f5f3);
   overflow: hidden;
   transition: box-shadow var(--motion-base) var(--ease-enter), transform var(--motion-base) var(--ease-enter);
 }
@@ -221,27 +213,26 @@
 @media (prefers-reduced-motion: reduce) {
   .card:hover .thumb img { transform: none; }
 }
-.cardBody { display: grid; gap: 4px; padding-block-start: 12px; align-content: start; min-inline-size: 0; block-size: 132px; overflow: hidden; }
+.cardBody { display: grid; gap: 4px; padding-block-start: 12px; align-content: start; min-inline-size: 0; min-block-size: 132px; }
+/* a11y R5-AX-03 (WCAG 1.4.10, 1.4.12): the body was a fixed 132px with overflow hidden, so on a
+   two-column phone grid a two-line name plus wrapped badges was squeezed: the name was cut through
+   mid-line and the price badge slid under the code. min-block-size keeps the reserved height (CLS)
+   and lets a long name or user text spacing grow the card instead of clipping it. */
 .cardStd {
   font-size: 0.8125rem;
-  font-weight: 600;
+  font-weight: 550;
   color: var(--mk-accent);
   letter-spacing: 0.01em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere; /* R5-AX-03: wraps instead of an ellipsis under 1.4.12 spacing */
   text-align: start;
   unicode-bidi: plaintext;
 }
 .cardName {
   font-size: 1rem;
-  font-weight: 650;
+  font-weight: 550;
   line-height: 1.35;
   color: var(--mk-ink);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  overflow-wrap: anywhere; /* R5-AX-03: no two-line clamp (same rule as the designer picker, R4-05) */
 }
 .badges { display: flex; flex-wrap: wrap; gap: 6px; margin-block-start: 6px; }
 .badge {
@@ -251,7 +242,7 @@
   padding-inline: 10px;
   border-radius: 999px;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 550;
   background: var(--mk-grey);
   color: var(--mk-text);
   white-space: nowrap;
@@ -267,7 +258,7 @@
 }
 
 .empty { display: grid; gap: 12px; justify-items: center; text-align: center; padding-block: 64px; }
-.emptyTitle { font-size: 1.5rem; font-weight: 700; color: var(--mk-ink); }
+.emptyTitle { font-size: 1.5rem; font-weight: 500; color: var(--mk-ink); }
 .emptyBody { color: var(--mk-text-2); }
 .pillOutline {
   min-block-size: 48px;
@@ -276,7 +267,7 @@
   border-radius: 999px;
   background: transparent;
   font: inherit;
-  font-weight: 600;
+  font-weight: 550;
   color: var(--mk-ink);
   cursor: pointer;
 }
@@ -284,9 +275,13 @@
 
 /* ───────────── detail page ───────────── */
 
-.crumbs { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 0.9375rem; color: var(--mk-text-2); margin-block-end: 24px; }
-.crumbs a { color: var(--mk-text-2); text-decoration: underline; text-underline-offset: 3px; }
-.crumbs a:hover { color: var(--mk-ink); }
+/* Breadcrumbs in the dark hero (R6). */
+.crumbs { margin-block-end: var(--mk-stack-title-sub); font-size: var(--mk-fs-14); }
+.crumbs ol { display: flex; flex-wrap: wrap; gap: 4px 8px; margin: 0; padding: 0; list-style: none; }
+.crumbs li { display: inline-flex; align-items: center; gap: 8px; color: var(--mk-muted); }
+.crumbs li + li::before { content: "/"; opacity: 0.6; }
+.crumbs a { color: inherit; text-decoration: none; }
+.crumbs a:hover { color: var(--mk-on-dark); text-decoration: underline; }
 
 /* a11y R4-01: an explicit shrinkable track, so a long CTA can never widen the page (WCAG 1.4.10). */
 .detail { display: grid; grid-template-columns: minmax(0, 1fr); gap: 40px; align-items: start; }
@@ -297,11 +292,11 @@
   position: relative;
   aspect-ratio: 1;
   border-radius: var(--mk-radius-card);
-  background: radial-gradient(70% 60% at 50% 42%, #ffffff 0%, var(--mk-grey) 100%);
+  background: var(--mk-sheet, #f5f5f3);
   overflow: hidden;
 }
 @media (min-width: 960px) {
-  .stage { position: sticky; inset-block-start: 96px; }
+  .stage { position: sticky; inset-block-start: calc(var(--mk-header-h, 72px) + 24px); }
 }
 .poster { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; object-fit: contain; padding: 8%; transition: opacity var(--motion-slow) var(--ease-enter); }
 .poster[data-hidden="true"] { opacity: 0; }
@@ -311,16 +306,16 @@
 .factList { display: grid; gap: 0; margin: 0; border-block-start: 1px solid var(--mk-line); }
 .fact { display: grid; grid-template-columns: minmax(96px, 0.6fr) minmax(0, 1fr); gap: 16px; padding-block: 14px; border-block-end: 1px solid var(--mk-line); }
 .fact dt { color: var(--mk-text-2); font-size: 0.9375rem; }
-.fact dd { margin: 0; color: var(--mk-ink); font-weight: 600; }
+.fact dd { margin: 0; color: var(--mk-ink); font-weight: 550; }
 .factSub { display: block; font-weight: 400; color: var(--mk-text-2); font-size: 0.875rem; margin-block-start: 2px; }
 
 .sizes { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 0; }
 .sizes li { padding: 8px 14px; border-radius: 12px; background: var(--mk-grey); font-size: 0.875rem; }
 .sizes strong { display: block; color: var(--mk-ink); }
 
-.priceCard { display: grid; gap: 12px; padding: 24px; border-radius: var(--mk-radius-card); background: var(--mk-grey); }
+.priceCard { display: grid; gap: 12px; padding: clamp(24px, 2vw + 12px, 32px); border-radius: 24px; background: var(--mk-sheet, #f5f5f3); }
 .priceCard[data-mode="instant"] { background: var(--mk-mint); }
-.priceTitle { font-size: 1.25rem; font-weight: 700; color: var(--mk-ink); }
+.priceTitle { font-size: 1.25rem; font-weight: 500; color: var(--mk-ink); }
 .ctaRow { display: flex; flex-wrap: wrap; gap: 12px; }
 .ctaRow a, .ctaRow button { white-space: normal; text-align: center; max-inline-size: 100%; }
 
@@ -328,7 +323,7 @@
 .form { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
 .field { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
 .field select { inline-size: 100%; min-inline-size: 0; text-overflow: ellipsis; }
-.field label { font-weight: 600; color: var(--mk-ink); font-size: 0.9375rem; }
+.field label { font-weight: 550; color: var(--mk-ink); font-size: 0.9375rem; }
 .field input,
 .field select,
 .field textarea {
@@ -345,10 +340,32 @@
 .field select:focus-visible,
 .field textarea:focus-visible { outline: 2px solid var(--p-color-border-focus, #005bd3); outline-offset: 2px; border-color: var(--mk-ink); }
 .hint { font-size: 0.8125rem; color: var(--mk-text-2); }
-.error { color: #b0001a; font-size: 0.875rem; font-weight: 600; }
-.success { color: var(--mk-accent-ink); font-weight: 600; }
+.error { color: #b0001a; font-size: 0.875rem; font-weight: 550; }
+.success { color: var(--mk-accent-ink); font-weight: 550; }
 
 .relatedGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; list-style: none; padding: 0; margin: 0; }
 @media (min-width: 960px) {
   .relatedGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
+
+/* ───────────── R6 restyle: hero pieces for /catalog and /catalog/[slug] ─────────────
+   Kept here (about 2 KB) instead of importing restyle/restyle.module.css: with strict CSS chunking
+   that import pulled a merged chunk (restyle + detail + store + account, about 30 KB) into the
+   370-model page. Same values as restyle.module.css; the two never load on one page. */
+.heroCompact.heroCompact[data-hero="true"] { min-block-size: 0; }
+.heroClip { overflow: clip; } /* clips the kit <Glow> orbs (no sideways scroll) */
+.stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: var(--mk-stack-head-content) 0 0; padding: 0; border: 1px solid var(--mk-line); border-radius: var(--mk-radius-tile); }
+@media (min-width: 768px) { .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); max-inline-size: 760px; } }
+.stat { display: flex; flex-direction: column; gap: 6px; padding: var(--mk-grid-gap); border-inline-start: 1px solid var(--mk-line); }
+.stat:first-child { border-inline-start: 0; }
+@media (max-width: 767px) {
+  .stat:nth-child(odd) { border-inline-start: 0; }
+  .stat:nth-child(n + 3) { border-block-start: 1px solid var(--mk-line); }
+}
+.statNum { order: -1; margin: 0; font-size: clamp(1.5rem, 1.2rem + 1vw, 1.75rem); font-weight: 360; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.statLabel { font-size: var(--mk-fs-14); line-height: 1.3; color: var(--mk-muted); }
+.heroNote { margin: var(--mk-stack-title-sub) 0 0; font-size: var(--mk-fs-14); color: var(--mk-muted); }
+.relatedTitle { margin-block-end: var(--mk-stack-head-content); }
+.cardMuted { margin: 0; color: var(--mk-on-light-muted); }
+.cardHeading { margin: 0 0 var(--mk-stack-title-sub); font-size: var(--mk-fs-20); font-weight: var(--mk-fw-title); line-height: 1.3; }
+.cardHeading:lang(ar) { font-weight: 550; line-height: 1.45; }

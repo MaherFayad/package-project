@@ -2,7 +2,11 @@
 
 import { Users } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Badge, EmptyBoxIllustration, EmptyState, IndexFilters, IndexTable, IndexTableCell, IndexTableRow, IndexTableRowLink, Page, Select } from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { EmptyBoxIllustration, EmptyState } from "@/components/ui/EmptyState";
+import { IndexFilters, IndexTable, IndexTableCell, IndexTableRow, IndexTableRowLink } from "@/components/ui/IndexTable";
+import { Page } from "@/components/ui/Page";
+import { Select } from "@/components/ui/Select";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { formatDate, formatNumber } from "@/lib/format";
@@ -31,6 +35,7 @@ export function UsersIndex({ rows }: { rows: UserRow[] }) {
   return (
     <Page fullWidth title={t("admin.users.title")} titleIcon={Users}>
       <IndexTable
+        condensed
         resourceName={{ singular: t("admin.users.resourceSingular"), plural: t("admin.users.resourcePlural") }}
         caption={t("admin.users.title")}
         rowIds={shown.map((r) => r.id)}

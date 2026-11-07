@@ -3,28 +3,25 @@
 import { MessageSquareQuote } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
-import {
-  Badge,
-  BlockStack,
-  Button,
-  EmptyBoxIllustration,
-  EmptyState,
-  IndexFilters,
-  IndexTable,
-  IndexTableCell,
-  IndexTableRow,
-  InlineStack,
-  Link,
-  MetricsStrip,
-  Modal,
-  Page,
-  Text,
-  TextField,
-} from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { BlockStack, InlineStack } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { EmptyBoxIllustration, EmptyState } from "@/components/ui/EmptyState";
+import { IndexFilters, IndexTable, IndexTableCell, IndexTableRow } from "@/components/ui/IndexTable";
+import { Link } from "@/components/ui/Link";
+import { MetricsStrip } from "@/components/ui/MetricsStrip";
+import { Modal } from "@/components/ui/Modal";
+import { Page } from "@/components/ui/Page";
+import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
+import { useToast } from "@/components/ui/Toast";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
-import { formatDate, formatDims, formatNumber } from "@/lib/format";
+import { formatDate, formatDims, formatMoney, formatNumber } from "@/lib/format";
 import { asLeadView, inLeadView, LEAD_VIEWS, slaHoursLeft, type LeadView } from "./lib/quoteLeads";
+import { hoursToExpiry, PRICED_FOLLOW_UP_HOURS } from "./lib/quotePricing";
+import { SendPriceModal, type QuoteVendorOption } from "./QuoteSendPrice";
+import { useFocusRescue } from "./useFocusRescue";
 import { quoteLeadStepAction } from "./server/actions";
 import { adminStyles } from "./charts";
 import { fieldError, useAdminAction, useAdminErrorText } from "./useAdminAction";
@@ -32,12 +29,16 @@ import type { AdminActionResponse } from "./server/context";
 import type { AdminQuoteLead } from "./server/queries";
 
 /** Quote leads inbox (B-15): runs above 2,000 units and quote-only models, with a 24 h reply target. */
-export function QuoteLeadsIndex({ rows, now }: { rows: AdminQuoteLead[]; now: string }) {
+export function QuoteLeadsIndex({ rows, now, vendors, validityHours }: { rows: AdminQuoteLead[]; now: string; vendors: QuoteVendorOption[]; validityHours: number }) {
   const { t, locale } = useI18n();
   const pathname = usePathname();
   const params = useSearchParams();
   const [view, setView] = useState<LeadView>(asLeadView(params.get("view")));
   const [query, setQuery] = useState("");
+  // Held here, not in the row: sending a price moves the row out of the Open view, and the dialog
+  // must stay up to show the buyer link.
+  const [pricing, setPricing] = useState<AdminQuoteLead | null>(null);
+  const armFocus = useFocusRescue("#admin-quotes-table [role=region]", rows);
   const nowDate = useMemo(() => new Date(now), [now]);
   const counts = useMemo(() => Object.fromEntries(LEAD_VIEWS.map((v) => [v, rows.filter((r) => inLeadView(r, v)).length])) as Record<LeadView, number>, [rows]);
   const q = query.trim().toLowerCase();
@@ -54,7 +55,7 @@ export function QuoteLeadsIndex({ rows, now }: { rows: AdminQuoteLead[]; now: st
     const s = t(key as DictKey);
     return s === key ? code : s;
   };
-  const units = rows.filter((r) => r.state !== "CLOSED").reduce((s, r) => s + r.quantity, 0);
+  const units = rows.filter((r) => r.state !== "CLOSED" && r.state !== "ORDERED").reduce((s, r) => s + r.quantity, 0);
 
   const sla = (r: AdminQuoteLead) => {
     if (r.state !== "OPEN") return null;
@@ -69,9 +70,28 @@ export function QuoteLeadsIndex({ rows, now }: { rows: AdminQuoteLead[]; now: st
       </Badge>
     );
   };
+  /** R4-B-03: a sent price counts down to its expiry so ops can follow up in time. */
+  const pricedBadge = (r: AdminQuoteLead) => {
+    const h = hoursToExpiry(new Date(r.validUntil), nowDate);
+    return h <= 0 ? (
+      <Badge tone="critical" progress="incomplete">
+        {t("admin.quotes.expired")}
+      </Badge>
+    ) : (
+      <Badge tone={h < PRICED_FOLLOW_UP_HOURS ? "warning" : "info"} progress="partiallyComplete">
+        {t("admin.quotes.expiresIn", { hours: Math.max(1, Math.floor(h)) })}
+      </Badge>
+    );
+  };
   const stateBadge = (r: AdminQuoteLead) =>
     r.state === "OPEN" ? (
       sla(r)
+    ) : r.state === "PRICED" ? (
+      pricedBadge(r)
+    ) : r.state === "ORDERED" ? (
+      <Badge tone="success" progress="complete">
+        {r.priced?.orderNumber ? t("admin.quotes.ordered", { number: r.priced.orderNumber }) : t("admin.quotes.states.ORDERED")}
+      </Badge>
     ) : (
       <Badge tone={r.state === "CONTACTED" ? "info" : "neutral"} progress={r.state === "CONTACTED" ? "partiallyComplete" : "complete"}>
         {t(`admin.quotes.states.${r.state}` as DictKey)}
@@ -87,11 +107,13 @@ export function QuoteLeadsIndex({ rows, now }: { rows: AdminQuoteLead[]; now: st
             { label: t("admin.quotes.metrics.open"), value: formatNumber(counts.open) },
             { label: t("admin.quotes.metrics.overdue"), value: formatNumber(counts.overdue) },
             { label: t("admin.quotes.metrics.contacted"), value: formatNumber(counts.contacted) },
+            { label: t("admin.quotes.metrics.priced"), value: formatNumber(counts.priced) },
             { label: t("admin.quotes.metrics.units"), value: formatNumber(units) },
           ]}
         />
         <div id="admin-quotes-table">
           <IndexTable
+            condensed
             resourceName={{ singular: t("admin.quotes.singular"), plural: t("admin.quotes.plural") }}
             caption={t("admin.quotes.title")}
             rowIds={shown.map((r) => r.quoteId)}
@@ -152,24 +174,6 @@ export function QuoteLeadsIndex({ rows, now }: { rows: AdminQuoteLead[]; now: st
                         </span>
                       </Text>
                     ) : null}
-                    {/* R4-05: on phones the table scrolls sideways, so the buyer's call link and the
-                        next step live here too (the desktop copies are hidden on phones). */}
-                    <div className={adminStyles.PhoneOnly}>
-                      <BlockStack gap="200">
-                        <InlineStack gap="200" blockAlign="center">
-                          {stateBadge(r)}
-                          <Text as="span" variant="bodySm" numeric>
-                            {t("admin.quotes.units", { count: formatNumber(r.quantity) })}
-                          </Text>
-                        </InlineStack>
-                        {r.buyerPhone ? (
-                          <Link url={`tel:${r.buyerPhone}`} className={adminStyles.TapLink}>
-                            <bdi>{r.buyerName ?? t("admin.users.noName")}</bdi> · <bdi dir="ltr">{r.buyerPhone}</bdi>
-                          </Link>
-                        ) : null}
-                        {r.state !== "CLOSED" ? <LeadActions lead={r} align="start" /> : null}
-                      </BlockStack>
-                    </div>
                   </BlockStack>
                 </IndexTableCell>
                 <IndexTableCell>
@@ -182,11 +186,9 @@ export function QuoteLeadsIndex({ rows, now }: { rows: AdminQuoteLead[]; now: st
                       <bdi>{r.buyerName ?? t("admin.users.noName")}</bdi>
                     )}
                     {r.buyerPhone ? (
-                      <span className={adminStyles.DesktopOnly}>
-                        <Link url={`tel:${r.buyerPhone}`} className={adminStyles.TapLink}>
-                          <bdi dir="ltr">{r.buyerPhone}</bdi>
-                        </Link>
-                      </span>
+                      <Link url={`tel:${r.buyerPhone}`} className={adminStyles.TapLink}>
+                        <bdi dir="ltr">{r.buyerPhone}</bdi>
+                      </Link>
                     ) : null}
                   </BlockStack>
                 </IndexTableCell>
@@ -206,7 +208,8 @@ export function QuoteLeadsIndex({ rows, now }: { rows: AdminQuoteLead[]; now: st
                 <IndexTableCell>
                   <BlockStack gap="050">
                     <InlineStack>{stateBadge(r)}</InlineStack>
-                    {r.state !== "OPEN" && r.lastNote ? (
+                    {r.priced ? <PricedSummary lead={r} /> : null}
+                    {(r.state === "CONTACTED" || r.state === "CLOSED") && r.lastNote ? (
                       <Text as="span" variant="bodySm" tone="subdued">
                         <bdi>{r.lastNote}</bdi>
                       </Text>
@@ -214,20 +217,58 @@ export function QuoteLeadsIndex({ rows, now }: { rows: AdminQuoteLead[]; now: st
                   </BlockStack>
                 </IndexTableCell>
                 <IndexTableCell alignment="end">
-                  <span className={adminStyles.DesktopOnly}>
-                    {r.state !== "CLOSED" ? <LeadActions lead={r} /> : <Text as="span" tone="subdued">{t("admin.common.none")}</Text>}
-                  </span>
+                  {r.state !== "CLOSED" && r.state !== "ORDERED" ? <LeadActions lead={r} onPrice={setPricing} onDone={armFocus} /> : <Text as="span" tone="subdued">{t("admin.common.none")}</Text>}
                 </IndexTableCell>
               </IndexTableRow>
             ))}
           </IndexTable>
         </div>
       </BlockStack>
+      {pricing ? <SendPriceModal key={pricing.quoteId} lead={pricing} vendors={vendors} validityHours={validityHours} open
+          onClose={() => {
+            setPricing(null);
+            armFocus();
+          }}
+        /> : null}
     </Page>
   );
 }
 
-function LeadActions({ lead, align = "end" }: { lead: AdminQuoteLead; align?: "start" | "end" }) {
+/** Sent price on the row: total, printer, delivery days and the buyer link (R4-B-03). */
+function PricedSummary({ lead }: { lead: AdminQuoteLead }) {
+  const { t, locale } = useI18n();
+  const toast = useToast();
+  const p = lead.priced!;
+  const url = p.path && typeof window !== "undefined" ? `${window.location.origin}${p.path}` : p.path;
+  return (
+    <BlockStack gap="100">
+      <Text as="span" variant="bodySm" numeric>
+        {t("admin.quotes.pricedSummary", { total: formatMoney(p.totalPiasters, locale, { alwaysDecimals: true }), vendor: p.vendorName ?? t("admin.common.none"), days: p.deliveryDays ?? 0 })}
+      </Text>
+      {lead.state === "PRICED" && p.path ? (
+        <InlineStack gap="200" wrap>
+          <Button
+            size="slim"
+            variant="plain"
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(url!);
+                toast.show(t("admin.quotes.linkCopied"));
+              } catch {
+                window.prompt(t("admin.quotes.copyLink"), url!);
+              }
+            }}
+            accessibilityLabel={`${t("admin.quotes.copyLink")}: ${lead.buyerName ?? lead.buyerPhone ?? ""}`}
+          >
+            {t("admin.quotes.copyLink")}
+          </Button>
+        </InlineStack>
+      ) : null}
+    </BlockStack>
+  );
+}
+
+function LeadActions({ lead, align = "end", onPrice, onDone }: { lead: AdminQuoteLead; align?: "start" | "end"; onPrice: (lead: AdminQuoteLead) => void; onDone: () => void }) {
   const { t } = useI18n();
   const { run, busy } = useAdminAction();
   const errorText = useAdminErrorText();
@@ -237,9 +278,12 @@ function LeadActions({ lead, align = "end" }: { lead: AdminQuoteLead; align?: "s
   const who = lead.buyerName ?? lead.buyerPhone ?? "";
   return (
     <span onClick={(e) => e.stopPropagation()} style={{ display: "contents" }}>
-      <InlineStack gap="200" align={align} wrap={false}>
+      <InlineStack gap="200" align={align} wrap>
+        <Button size="slim" variant={lead.state === "PRICED" ? "secondary" : "primary"} onClick={() => onPrice(lead)} accessibilityLabel={`${lead.state === "PRICED" ? t("admin.quotes.price.resend") : t("admin.quotes.price.send")}: ${who}`}>
+          {lead.state === "PRICED" ? t("admin.quotes.price.resend") : t("admin.quotes.price.send")}
+        </Button>
         {lead.state === "OPEN" ? (
-          <Button size="slim" variant="primary" onClick={() => setStep("CONTACTED")} accessibilityLabel={`${t("admin.quotes.contacted")}: ${who}`}>
+          <Button size="slim" onClick={() => setStep("CONTACTED")} accessibilityLabel={`${t("admin.quotes.contacted")}: ${who}`}>
             {t("admin.quotes.contacted")}
           </Button>
         ) : null}
@@ -252,13 +296,15 @@ function LeadActions({ lead, align = "end" }: { lead: AdminQuoteLead; align?: "s
         onClose={() => setStep(null)}
         title={step === "CLOSED" ? t("admin.quotes.closeTitle") : t("admin.quotes.contactedTitle")}
         primaryAction={{
-          content: step === "CLOSED" ? t("admin.quotes.close") : t("admin.quotes.contacted"),
+          // R5-AD: "Close" alone matched the dialog's own Close (dismiss) button for screen readers.
+          content: step === "CLOSED" ? t("admin.quotes.closeConfirm") : t("admin.quotes.contacted"),
           disabled: note.trim().length < 3,
           loading: busy === "lead",
           onAction: async () => {
             const r = await run("lead", () => quoteLeadStepAction({ quoteId: lead.quoteId, step: step!, note }), t("admin.quotes.saved"));
             setRes(r);
             if (r?.ok) {
+              onDone();
               setStep(null);
               setNote("");
             }

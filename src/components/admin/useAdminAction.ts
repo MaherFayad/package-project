@@ -1,8 +1,9 @@
 "use client";
 
+import { parseEgpInput } from "@/lib/money/input";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
-import { useToast } from "@/components/ui";
+import { useToast } from "@/components/ui/Toast";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import type { AdminActionResponse } from "./server/context";
@@ -78,11 +79,8 @@ export function fieldError(res: AdminActionResponse<unknown> | null, key: string
 
 /** EGP text field value (e.g. "1250.50") → piasters, or null when empty/invalid. */
 export function egpToPiastersInput(v: string): number | null {
-  const s = v.replace(/,/g, "").trim();
-  if (!s) return null;
-  const n = Number(s);
-  if (!Number.isFinite(n) || n < 0) return NaN;
-  return Math.round(n * 100);
+  // R6-AD: a decimal comma ("18,50") was read as 1850; see parseEgpInput.
+  return parseEgpInput(v);
 }
 
 export function piastersToInput(p: number): string {

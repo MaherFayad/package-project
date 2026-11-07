@@ -2,31 +2,22 @@
 
 import { Circle, CircleCheck, ClipboardList, Download, FileText, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
-import {
-  Avatar,
-  Badge,
-  Banner,
-  BlockStack,
-  Box,
-  Button,
-  Card,
-  Divider,
-  DropZone,
-  Icon,
-  InlineStack,
-  Inset,
-  Layout,
-  LayoutSection,
-  Modal,
-  Page,
-  Select,
-  Text,
-  TextField,
-  Timeline,
-  useToast,
-  type PageAction,
-  type TimelineGroup,
-} from "@/components/ui";
+import { Avatar } from "@/components/ui/Avatar";
+import { Badge } from "@/components/ui/Badge";
+import { Banner } from "@/components/ui/Banner";
+import { BlockStack, Box, Divider, InlineStack } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { Card, Inset } from "@/components/ui/Card";
+import { DropZone } from "@/components/ui/DropZone";
+import { Icon } from "@/components/ui/Icon";
+import { Layout, LayoutSection } from "@/components/ui/Layout";
+import { Modal } from "@/components/ui/Modal";
+import { Page, type PageAction } from "@/components/ui/Page";
+import { Select } from "@/components/ui/Select";
+import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
+import { Timeline, type TimelineGroup } from "@/components/ui/Timeline";
+import { useToast } from "@/components/ui/Toast";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { formatDate, formatDateTime, formatDims, formatMoney, formatNumber } from "@/lib/format";
@@ -232,7 +223,7 @@ export function JobDetail({ job, vendorName }: { job: JobDetailDTO; vendorName: 
                     <dt>{t("vendorPortal.job.material")}</dt>
                     <dd>{t(`materials.${item.materialCode}` as DictKey)}</dd>
                     <dt>{t("vendorPortal.job.finish")}</dt>
-                    <dd>{t(`finishes.${item.finishCode}` as DictKey)}</dd>
+                    <dd>{item.finishNames?.[locale] ?? t(`finishes.${item.finishCode}` as DictKey)}</dd>
                     <dt>{t("vendorPortal.job.printSides")}</dt>
                     <dd>{t(`vendorPortal.job.printSidesValue.${item.printSides}` as DictKey)}</dd>
                     <dt>{t("vendorPortal.job.quantity")}</dt>

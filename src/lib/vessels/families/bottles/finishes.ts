@@ -19,6 +19,9 @@ export const FINISHES = {
   SCREW_48: { id: "SCREW_48", code: "48 mm screw", outerDiameterMm: 48, heightMm: 16, thread: "screw", kind: "screw", standard: "48 mm bulk-water screw neck (trade)", boreMm: 41, supportRing: true, tamperBead: true, verified: false },
   SNAP_55: { id: "SNAP_55", code: "55 mm snap (crown)", outerDiameterMm: 55, heightMm: 22, thread: "none", kind: "snap", standard: "55 mm water-cooler snap neck (trade)", boreMm: 45, supportRing: true, verified: true },
   // --- SPI / GPI continuous thread ------------------------------------------------------------
+  // R5-3Q-F-21: the narrow necks small syrups / ovals / oils use (30–60 ml)
+  F20_410: { ...core.F20_410, id: "F20_410", kind: "screw", standard: "SPI/GPI 20-410", boreMm: 13.2, verified: true },
+  PP18: { id: "PP18", code: "PP 18 x 14 (ROPP)", outerDiameterMm: 18, heightMm: 14, thread: "screw", kind: "ropp", standard: "18 mm roll-on pilfer-proof (pharma, trade)", boreMm: 11.5, tamperBead: true, verified: false },
   F24_410: { ...core.F24_410, id: "F24_410", kind: "screw", standard: "SPI/GPI 24-410", boreMm: 17.5, verified: true },
   F24_414: { id: "F24_414", code: "24-414", outerDiameterMm: 23.9, heightMm: 18.0, thread: "screw", kind: "screw", standard: "GPI 24-414 (woozy)", boreMm: 13.5, verified: false },
   F28_400: { id: "F28_400", code: "28-400", outerDiameterMm: 27.9, heightMm: 10.2, thread: "screw", kind: "screw", standard: "SPI/GPI 28-400", boreMm: 20.5, verified: true },

@@ -3,7 +3,10 @@
 import { Gavel } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
-import { Badge, EmptyBoxIllustration, EmptyState, IndexFilters, IndexTable, IndexTableCell, IndexTableRow, IndexTableRowLink, Page } from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { EmptyBoxIllustration, EmptyState } from "@/components/ui/EmptyState";
+import { IndexFilters, IndexTable, IndexTableCell, IndexTableRow, IndexTableRowLink } from "@/components/ui/IndexTable";
+import { Page } from "@/components/ui/Page";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { formatDate, formatMoney, formatNumber } from "@/lib/format";
@@ -50,6 +53,7 @@ export function DisputesIndex({ rows }: { rows: DisputeRow[] }) {
     <Page fullWidth title={t("admin.disputes.title")} titleIcon={Gavel}>
       <div id="admin-disputes-table">
         <IndexTable
+          condensed
           resourceName={{ singular: t("admin.disputes.resourceSingular"), plural: t("admin.disputes.resourcePlural") }}
           caption={t("admin.disputes.title")}
           rowIds={shown.map((r) => r.id)}

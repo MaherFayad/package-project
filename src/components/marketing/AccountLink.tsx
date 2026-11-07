@@ -5,7 +5,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { signOut } from "@/components/auth/useSession";
 import { resetSessionRole, useSessionRole } from "./useSessionRole";
-import styles from "./marketing.module.css";
+import styles from "./kit/chrome.module.css";
 
 type L = { href: string; label: string };
 
@@ -32,6 +32,7 @@ export function AccountLink({
   home,
   className,
   variant = "bar",
+  roleLinks,
 }: {
   login: L;
   account: L;
@@ -40,6 +41,12 @@ export function AccountLink({
   home: string;
   className: string;
   variant?: "bar" | "sheet";
+  /**
+   * Signed-in destinations shown in the desktop account menu (Orders, plus Vendor portal or Admin
+   * by role). They used to sit in the top nav and pushed the header past the viewport at 1024 to
+   * 1150 px (R6-AX-10, WCAG 1.4.10); the phone menu lists them as rows.
+   */
+  roleLinks?: { orders: L; vendor: L; admin: L };
 }) {
   const me = useSessionRole();
   if (!me) {
@@ -61,11 +68,12 @@ export function AccountLink({
       </>
     );
   }
-  return <AccountMenu account={account} signOutLabel={signOutLabel} home={home} initial={me.initial} />;
+  const extra = roleLinks ? [roleLinks.orders, ...(me.role === "VENDOR" ? [roleLinks.vendor] : me.role === "ADMIN" ? [roleLinks.admin] : [])] : [];
+  return <AccountMenu account={account} signOutLabel={signOutLabel} home={home} initial={me.initial} extra={extra} />;
 }
 
 /** Desktop account menu: disclosure button + small panel. Escape and outside click close it. */
-function AccountMenu({ account, signOutLabel, home, initial }: { account: L; signOutLabel: string; home: string; initial: string }) {
+function AccountMenu({ account, signOutLabel, home, initial, extra }: { account: L; signOutLabel: string; home: string; initial: string; extra: L[] }) {
   const [open, setOpen] = useState(false);
   const id = useId();
   const wrap = useRef<HTMLDivElement>(null);
@@ -102,7 +110,7 @@ function AccountMenu({ account, signOutLabel, home, initial }: { account: L; sig
         <span className={styles.accountAvatar} aria-hidden="true">
           {initial || <span className={styles.accountAvatarDot} />}
         </span>
-        {account.label}
+        <span className={styles.accountLabel}>{account.label}</span>
         <ChevronDown size={16} strokeWidth={1.75} aria-hidden />
       </button>
       {open ? (
@@ -113,6 +121,13 @@ function AccountMenu({ account, signOutLabel, home, initial }: { account: L; sig
                 {account.label}
               </Link>
             </li>
+            {extra.map((l) => (
+              <li key={l.href}>
+                <Link href={l.href} className={styles.accountItem} onClick={() => setOpen(false)}>
+                  {l.label}
+                </Link>
+              </li>
+            ))}
             <li>
               <button type="button" className={styles.accountItem} onClick={() => void doSignOut(home)}>
                 {signOutLabel}

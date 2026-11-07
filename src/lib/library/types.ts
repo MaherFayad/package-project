@@ -86,10 +86,21 @@ export interface VesselOption {
   name: LocalizedText;
   /** Core renderer code: VesselMaterialCode for containers, ClosureKind for closures. */
   core: string;
+  /**
+   * Closures of bottles / jars: the neck finish this closure sits on at the default preset,
+   * localised (R14-04). The finish follows the closure (crown, swing top, cork pick their own
+   * neck), so the model card shows this for the chosen closure instead of a raw finish id.
+   */
+  neckFinish?: LocalizedText;
   /** Added by 3D engine (X-01): body colour (sRGB hex) when the core material is only the nearest look (green / cobalt glass, coloured plastics). */
   tint?: string;
   /** Added by 3D engine (X-01): closure style the core kind cannot express ("CROWN" | "ROPP" | "CORK_CAPSULE" | "SPARKLING" | "POURER"). */
   closureStyle?: string;
+  /**
+   * Closure colour a new design starts with for this option (a ClosureColorCode, or "MATCH": the
+   * container's own material and colour). Default WHITE.
+   */
+  defaultColor?: string;
 }
 
 /** One flat print area of a container (label, sleeve, pouch panel, tube body). mm. */

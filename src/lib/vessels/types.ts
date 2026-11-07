@@ -229,6 +229,12 @@ export interface SectorGeometry {
   apexAbove: boolean;
   /** Slant height of the frustum = outer - inner radius. */
   slantMm: Mm;
+  /**
+   * Full-wrap cone labels (IML / wrap round a tapered tub): the flat angle that goes once round
+   * the wall. The rest of `angle` is the 5–8 mm glued overlap under the start edge (R5-3Q-F-19).
+   * Absent = `angle`.
+   */
+  wrapAngle?: number;
 }
 
 export interface SleeveGeometry {

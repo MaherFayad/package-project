@@ -5,6 +5,7 @@ import { z } from "zod";
 import { MAX_INSTANT_QTY, type Locale, type PaymentMethod } from "@/types";
 import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
+import { SAMPLE_ORDER_NOTE } from "@/lib/orders/sample";
 import { toJson } from "@/lib/json";
 import { toGovernorateKey } from "@/lib/orders/governorates";
 import { loadCheckoutSettings } from "@/lib/orders/checkout-settings";
@@ -93,7 +94,9 @@ export async function getOffersAction(input: { designId: string; quantity: numbe
 
 const placeSchema = z.object({
   designId: idSchema,
-  quantity: z.number().int().min(1).max(MAX_INSTANT_QTY),
+  // Above the instant cap only with a price the team sent (R4-B-03); the service re-checks both.
+  quantity: z.number().int().min(1).max(1_000_000),
+  quoteId: idSchema.optional(),
   vendorId: idSchema,
   address: addressSchema,
   approved: z.literal(true),
@@ -116,7 +119,7 @@ const placeSchema = z.object({
     .nullable()
     .optional(),
   locale,
-});
+}).refine((v) => !!v.quoteId || v.quantity <= MAX_INSTANT_QTY, { path: ["quantity"] });
 
 export async function placeOrderAction(input: unknown): Promise<{ ok: true; orderId: string; number: string } | ActionError> {
   const s = await getSession();
@@ -142,13 +145,37 @@ export async function placeOrderAction(input: unknown): Promise<{ ok: true; orde
       locale: p.data.locale as Locale,
       sample: p.data.sample,
       acknowledgePreflight: p.data.acknowledgePreflight === true,
+      quoteId: p.data.quoteId,
     });
+    // R5-JR-03: the invoice details chosen for THIS order, frozen on it. The receipt used to read
+    // the buyer's current Organization, so unticking "company invoice" still printed the company and
+    // editing it on a later order rewrote every earlier receipt.
+    const c = p.data.company;
+    await db.order.update({
+      where: { id: r.orderId },
+      data: { billing: { company: c ? { name: c.name, taxId: normalizeTaxId(c.taxId), commercialRegister: c.commercialRegister || null } : null } },
+    });
+    await supersedeUnpaidOrders(s.user.id, p.data.designId, r.orderId, r.number);
     return { ok: true, orderId: r.orderId, number: r.number };
   } catch (e) {
     if (e instanceof OrderError) return { ok: false, error: e.code };
     console.error("[checkout] place order failed", e);
     return { ok: false, error: "generic" };
   }
+}
+
+/**
+ * R8-01: is this order still waiting for payment? The pay page asks on mount, when the browser
+ * restores it from history (Back after paying) and after a refused attempt, so a paid order is
+ * never offered for payment again. `SIGNED_OUT` lets the page offer sign-in instead of an error.
+ */
+export async function orderPayStateAction(orderId: string): Promise<{ ok: true; due: boolean } | { ok: false; error: "SIGNED_OUT" | "NOT_FOUND" }> {
+  const s = await getSession();
+  if (!s) return { ok: false, error: "SIGNED_OUT" };
+  if (!/^[\w-]{1,64}$/.test(orderId)) return { ok: false, error: "NOT_FOUND" };
+  const o = await db.order.findUnique({ where: { id: orderId }, select: { buyerId: true, status: true } });
+  if (!o || o.buyerId !== s.user.id) return { ok: false, error: "NOT_FOUND" };
+  return { ok: true, due: o.status === "PENDING_PAYMENT" };
 }
 
 export async function startPaymentAction(input: { orderId: string; method: PaymentMethod; locale: Locale }): Promise<{ ok: true; payment: PaymentView } | ActionError> {
@@ -292,6 +319,40 @@ export async function requestQuoteAction(input: unknown): Promise<{ ok: true; qu
   } catch (e) {
     console.error("[checkout] quote request failed", e);
     return { ok: false, error: "generic" };
+  }
+}
+
+/**
+ * R5-JR-10: an expired price ("Get a new price"), Back and approve again, or a second tab each placed
+ * a new PENDING_PAYMENT order and left the old one open forever. A new order for the same design
+ * cancels the buyer's earlier unpaid ones of the same kind (sample or run), quietly (no message: the
+ * buyer is paying the new one). An order with a payment in flight (Fawry code, InstaPay transfer)
+ * is left alone. Never throws into the checkout.
+ */
+async function supersedeUnpaidOrders(buyerId: string, designId: string, keepId: string, keepNumber: string): Promise<void> {
+  try {
+    const sampleMark = { type: "NOTE", note: SAMPLE_ORDER_NOTE };
+    const keptIsSample = (await db.productionEvent.count({ where: { orderId: keepId, ...sampleMark } })) > 0;
+    const stale = await db.order.findMany({
+      where: {
+        buyerId,
+        id: { not: keepId },
+        status: "PENDING_PAYMENT",
+        quote: { designId },
+        productionEvents: keptIsSample ? { some: sampleMark } : { none: sampleMark },
+        payments: { none: { status: "PENDING" } },
+      },
+      select: { id: true },
+    });
+    const now = new Date();
+    for (const o of stale) {
+      await db.$transaction(async (tx) => {
+        const u = await tx.order.updateMany({ where: { id: o.id, status: "PENDING_PAYMENT" }, data: { status: "CANCELLED", cancelledAt: now } });
+        if (u.count === 1) await tx.productionEvent.create({ data: { orderId: o.id, type: "CANCELLED", note: `SUPERSEDED:${keepNumber}`, actorId: buyerId, createdAt: now } });
+      });
+    }
+  } catch (e) {
+    console.error("[checkout] superseding unpaid orders failed", e);
   }
 }
 

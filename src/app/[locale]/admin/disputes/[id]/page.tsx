@@ -1,7 +1,13 @@
+import { isAdminSession, requireAdminPage } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { BlockStack, Card, InlineStack, Layout, LayoutSection, Link, Page, Text } from "@/components/ui";
+import { BlockStack, InlineStack } from "@/components/ui/Stack";
+import { Card } from "@/components/ui/Card";
+import { Layout, LayoutSection } from "@/components/ui/Layout";
+import { Link } from "@/components/ui/Link";
+import { Page } from "@/components/ui/Page";
+import { Text } from "@/components/ui/Text";
 import { DisputeDecision } from "@/components/admin/DisputeDecision";
 import { DisputeStatusBadge } from "@/components/admin/DisputesIndex";
 import { OrderStatusBadge } from "@/components/admin/OrdersIndex";
@@ -9,6 +15,7 @@ import { adminStyles } from "@/components/admin/charts";
 import { loadDispute } from "@/components/admin/server/queries";
 import { canRefund } from "@/components/admin/lib/orders";
 import { isolate } from "@/components/admin/lib/bidi";
+import { fileUrl, parseKey } from "@/components/vendor/lib/files";
 import { getT, pick, toLocale, type DictKey } from "@/i18n";
 import { formatDate, formatDateTime, formatMoney } from "@/lib/format";
 
@@ -17,19 +24,23 @@ type Params = Promise<{ locale: string; id: string }>;
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { locale, id } = await params;
   const t = getT(toLocale(locale));
-  const d = /^[\w-]{1,40}$/.test(id) ? await db.dispute.findUnique({ where: { id }, select: { order: { select: { number: true } } } }) : null;
-  return { title: `${d ? `${d.order.number} · ` : ""}${t("admin.disputes.title")} · ${t("admin.title")}` };
+  const isAdmin = await isAdminSession();
+  const d = isAdmin && /^[\w-]{1,40}$/.test(id) ? await db.dispute.findUnique({ where: { id }, select: { order: { select: { number: true } } } }) : null;
+  // a11y R6-AX-11 (WCAG 2.4.2): a missing record says so in the tab title too.
+  return { title: `${d ? `${d.order.number} · ` : isAdmin ? `${t("admin.common.notFoundTitle")} · ` : ""}${t("admin.disputes.title")} · ${t("admin.title")}` };
 }
 
 export default async function AdminDisputePage({ params }: { params: Params }) {
+  await requireAdminPage(); // R6-SEC-09: the layout redirect does not stop this page rendering
   const { locale: raw, id } = await params;
   const locale = toLocale(raw);
   const t = getT(locale);
   const base = `/${locale}/admin`;
   const data = await loadDispute(id);
   if (!data) notFound();
-  const { dispute: d, vendors, reprints, auditRows } = data;
+  const { dispute: d, vendors, reprints, auditRows, paidToVendorPiasters } = data;
   const order = d.order;
+  const buyerPhotos = (Array.isArray(d.photos) ? d.photos : []).filter((k): k is string => typeof k === "string" && parseKey(k)?.scope === "dispute").map(fileUrl);
 
   return (
     <Page
@@ -51,6 +62,19 @@ export default async function AdminDisputePage({ params }: { params: Params }) {
                 </Text>
               </BlockStack>
             </Card>
+            {buyerPhotos.length ? (
+              // Added by checkout round 9: the buyer's photos with the report (private uploads).
+              <Card title={t("admin.disputes.detail.buyerPhotos", { count: buyerPhotos.length })}>
+                <div className={adminStyles.Photos} data-testid="dispute-buyer-photos">
+                  {buyerPhotos.map((url, i) => (
+                    <a key={url} href={url} target="_blank" rel="noreferrer">
+                      {/* eslint-disable-next-line @next/next/no-img-element -- private upload served by the API */}
+                      <img className={adminStyles.Photo} src={url} alt={t("admin.disputes.detail.buyerPhoto", { n: i + 1 })} />
+                    </a>
+                  ))}
+                </div>
+              </Card>
+            ) : null}
             {order.qcPhotos.length ? (
               <Card title={t("admin.disputes.detail.qcPhotos")}>
                 <div className={adminStyles.Photos}>
@@ -68,6 +92,10 @@ export default async function AdminDisputePage({ params }: { params: Params }) {
               status={d.status}
               originalVendorId={order.vendorId}
               refundable={canRefund(order.status, order.payments)}
+              reason={d.reason}
+              originalQuantity={order.items.reduce((s, i) => s + i.quantity, 0)}
+              originalCostPiasters={order.vendorCostPiasters}
+              paidToVendorPiasters={paidToVendorPiasters}
               vendors={vendors.map((v) => ({ id: v.id, name: pick(locale, v.nameAr, v.nameEn) }))}
             />
             {d.resolution || d.resolvedAt ? (

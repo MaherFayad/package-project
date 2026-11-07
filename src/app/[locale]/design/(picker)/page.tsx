@@ -4,14 +4,11 @@ import { getT, toLocale } from "@/i18n";
 import { BlockStack, Box } from "@/components/ui/Stack";
 import { EmptyState, EmptyBoxIllustration } from "@/components/ui/EmptyState";
 import { Text } from "@/components/ui/Text";
-import { designerPath, structureFromParam } from "@/components/designer/lib/catalog";
 import { loadPickerStructures } from "@/components/designer/server";
-import { ResumeCard } from "@/components/designer/ResumeCard";
-import { DesignStart } from "@/components/designer/DesignStart";
+import { startPageRedirect } from "@/components/designer/startRedirect";
 import { ModelLinks } from "@/components/designer/ModelLinks";
 import { MODELS } from "@/lib/library";
 import Link from "next/link";
-import { preload } from "react-dom";
 import { CATALOGUE } from "@/data/catalogue";
 import { formatNumber } from "@/lib/format";
 import styles from "@/components/designer/designer.module.css";
@@ -37,35 +34,17 @@ export default async function DesignPickerPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const locale = toLocale((await params).locale);
-  // The start stage's poster is the phone LCP: request it from <head> at high priority, ahead of
-  // the page's ~25 script chunks (PERF R4-04; LCP 3.9 s without it after the R4-11 rework).
-  preload("/models/mailer-box.svg", { as: "image", fetchPriority: "high" });
-  // Storefront deep links (designHref in src/components/store/catalog.ts):
-  // ?structure=CODE&L=&W=&H=&material=&vendor= opens the editor; ?design=<id> opens a saved design.
-  const sp = await searchParams;
-  const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
-  const linkCode = one(sp.structure) ? structureFromParam(one(sp.structure)!) : null;
-  const designId = one(sp.design);
-  if (designId) redirect(designerPath(locale, linkCode ?? "FEFCO_0427", { d: designId }));
-  if (linkCode) {
-    redirect(
-      designerPath(locale, linkCode, {
-        L: one(sp.L),
-        W: one(sp.W),
-        H: one(sp.H),
-        material: one(sp.material),
-        vendor: one(sp.vendor),
-      }),
-    );
-  }
+  // Deep links: the layout already redirected on a full load; this covers soft navigations.
+  const search = await searchParams;
+  const to = startPageRedirect(locale, search);
+  if (to) redirect(to);
+  // ?q= prefills the model search (the prompt bar on /[locale]/designer).
+  const q = (Array.isArray(search.q) ? search.q[0] : search.q)?.trim().slice(0, 80) ?? "";
   const t = getT(locale);
   const structures = await loadPickerStructures();
 
+  // The hero and the resume card render in the layout, above the Suspense boundary (R8-02).
   return (
-    <div className={styles.startPage}>
-        <ResumeCard locale={locale} />
-        <DesignStart locale={locale} />
-
         <section aria-labelledby="styles-heading" className={styles.startCatalog}>
           <BlockStack gap="300">
             <BlockStack gap="100">
@@ -86,10 +65,9 @@ export default async function DesignPickerPage({
                 </EmptyState>
               </Box>
             ) : (
-              <ModelLinks locale={locale} />
+              <ModelLinks locale={locale} query={q} />
             )}
           </BlockStack>
         </section>
-    </div>
   );
 }

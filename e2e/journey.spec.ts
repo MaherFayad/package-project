@@ -26,9 +26,11 @@ test("home → design → gate → price → checkout → pay → vendor → QC 
   test.setTimeout(240_000);
   await page.context().addCookies([{ name: "elba_cookie_ack", value: "1", url: baseURL! }]);
 
-  // 1. Home → "Start designing free" deep link opens the mailer editor directly.
+  // 1. Home → "Start designing free" opens the /start landing (R6), whose CTA deep-links the mailer editor.
   await page.goto("/en");
   await page.getByRole("link", { name: "Start designing free" }).first().click();
+  await expect(page).toHaveURL(/\/en\/start$/, { timeout: 30_000 });
+  await page.getByRole("main").getByRole("link", { name: "Start designing free" }).first().click();
   await expect(page).toHaveURL(/\/en\/design\/mailer-box/, { timeout: 30_000 });
   await expect(page.getByRole("application", { name: "3D preview of your box" })).toBeVisible({ timeout: 30_000 });
 
@@ -44,7 +46,7 @@ test("home → design → gate → price → checkout → pay → vendor → QC 
   await expect(gate).toBeVisible();
   const phone = (await uniquePhone("12")).local;
   await gate.getByLabel("Verification code").fill(await sendOtp(gate, phone));
-  await gate.getByLabel(/I agree to the Terms/).check();
+  await gate.getByLabel(/I agree to the terms/i).check();
   await gate.getByRole("button", { name: "Verify and continue" }).click();
   const price = page.getByRole("dialog", { name: "Instant price" });
   await expect(price.getByText("Total with VAT")).toBeVisible({ timeout: 30_000 });

@@ -14,7 +14,7 @@ async function signIn(page: Page, lang: "en" | "ar" = "en") {
   await expect(page).toHaveURL(new RegExp(`/${lang}/login\\?next=`));
   const code = await sendOtp(page, phone);
   await page.getByLabel("Verification code").fill(code);
-  await page.getByLabel(/I agree to the Terms/).check();
+  await page.getByLabel(/I agree to the terms/i).check();
   await page.getByRole("button", { name: "Verify and continue" }).click();
   await expect(page).toHaveURL(new RegExp(`:\\d+/${lang}/orders$`));
 }
@@ -115,7 +115,8 @@ test("buyer checks out a saved design, pays by mock card and tracks the order", 
   await expect(page.getByText("Payment received. Your order is going to the printer.")).toBeVisible();
   await expect(page.getByRole("heading", { level: 1 })).toContainText(/Order ELB-\d+/);
   const progress = page.getByRole("group", { name: "Progress" });
-  await expect(progress.locator('[aria-current="step"]')).toContainText("In production");
+  // Paid, not yet accepted by the printer: the current step is the printer's acceptance (R4-CR-04).
+  await expect(progress.locator('[aria-current="step"]')).toContainText("Printer acceptance");
   await expect(page.getByText("Payment confirmed: Card (Meeza, Visa, Mastercard)")).toBeVisible();
   const orderUrl = page.url().split("?")[0];
   const orderId = orderUrl.split("/").pop()!;
@@ -129,7 +130,9 @@ test("buyer checks out a saved design, pays by mock card and tracks the order", 
   // Invoice with VAT 14%.
   await page.goto(`${orderUrl}/invoice`);
   await expect(page.getByText("VAT 14%", { exact: true })).toBeVisible();
-  await expect(page.getByText("Pending submission")).toBeVisible();
+  // Without the seller tax registration number it is a receipt, not a tax invoice (R4-B-07).
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("(not a tax invoice)");
+  await expect(page.getByText("Not submitted yet")).toHaveCount(0);
   await expect(page.getByTestId("invoice-total")).toContainText("EGP");
 
   // Orders list shows it.
@@ -198,6 +201,6 @@ test("a share link shows the checkout price to a signed-out visitor", async ({ p
   const visitor = await browser.newContext({ baseURL });
   const anon = await visitor.newPage();
   await anon.goto(`/en${path}`);
-  await expect(anon.getByTestId("share-price")).toContainText(`500 boxes from ${unit} each excl. VAT`);
+  await expect(anon.getByTestId("share-price")).toContainText(`500 boxes from ${unit} each after the 3% prepay discount, excl. VAT`);
   await visitor.close();
 });

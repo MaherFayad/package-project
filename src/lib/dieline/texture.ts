@@ -95,6 +95,36 @@ export function paintArtworkSurface(ctx: Ctx2D, model: DielineModel, art: Artwor
 }
 
 /** Draw one layer in face-local mm (the current transform maps face mm → canvas). */
+/**
+ * Where an image layer's picture goes inside its w × h box (box centred on 0,0), honouring `fit`
+ * and the non-destructive `crop` (added by designer). The whole image is drawn, scaled so the
+ * cropped part fits the box, and `clip` hides the rest: every renderer (canvas, the print PDF
+ * shim) only needs the 5-argument drawImage and a rectangular clip.
+ */
+export function imagePlacement(
+  layer: { pxWidth: number; pxHeight: number; fit?: "contain" | "cover" | "stretch"; crop?: { x: number; y: number; width: number; height: number } },
+  w: number,
+  h: number,
+): { dx: number; dy: number; dw: number; dh: number; clip: { x: number; y: number; w: number; h: number } | null } {
+  const iw = layer.pxWidth || 1;
+  const ih = layer.pxHeight || 1;
+  const c = layer.crop && (layer.crop.width < 1 || layer.crop.height < 1 || layer.crop.x > 0 || layer.crop.y > 0) ? layer.crop : null;
+  const cw = (c?.width ?? 1) * iw;
+  const ch = (c?.height ?? 1) * ih;
+  const fit = layer.fit ?? "contain";
+  const sx = fit === "stretch" ? w / cw : fit === "contain" ? Math.min(w / cw, h / ch) : Math.max(w / cw, h / ch);
+  const sy = fit === "stretch" ? h / ch : sx;
+  const dw = iw * sx;
+  const dh = ih * sy;
+  if (!c) return { dx: -dw / 2, dy: -dh / 2, dw, dh, clip: null };
+  // Centre the crop's middle on the box centre.
+  const cx = (c.x + c.width / 2) * dw;
+  const cy = (c.y + c.height / 2) * dh;
+  const vw = cw * sx;
+  const vh = ch * sy;
+  return { dx: -cx, dy: -cy, dw, dh, clip: { x: -vw / 2, y: -vh / 2, w: vw, h: vh } };
+}
+
 export function drawLayer(ctx: Ctx2D, layer: ArtworkLayer, opts: Pick<PaintOptions, "images" | "resolveFont">) {
   ctx.save();
   ctx.globalAlpha = layer.opacity ?? 1;
@@ -125,20 +155,17 @@ export function drawLayer(ctx: Ctx2D, layer: ArtworkLayer, opts: Pick<PaintOptio
     case "image": {
       const img = opts.images?.get(layer.src);
       if (!img) break;
-      const iw = layer.pxWidth || 1;
-      const ih = layer.pxHeight || 1;
-      let dw = w;
-      let dh = h;
-      const fit = layer.fit ?? "contain";
-      if (fit !== "stretch") {
-        const sc = fit === "contain" ? Math.min(w / iw, h / ih) : Math.max(w / iw, h / ih);
-        dw = iw * sc;
-        dh = ih * sc;
-      }
+      const p = imagePlacement(layer, w, h);
       ctx.beginPath();
       ctx.rect(-w / 2, -h / 2, w, h);
       ctx.clip();
-      ctx.drawImage(img, -dw / 2, -dh / 2, dw, dh);
+      if (p.clip) {
+        // Crop (designer): only the chosen part of the image shows.
+        ctx.beginPath();
+        ctx.rect(p.clip.x, p.clip.y, p.clip.w, p.clip.h);
+        ctx.clip();
+      }
+      ctx.drawImage(img, p.dx, p.dy, p.dw, p.dh);
       break;
     }
     case "text": {
@@ -148,7 +175,11 @@ export function drawLayer(ctx: Ctx2D, layer: ArtworkLayer, opts: Pick<PaintOptio
       ctx.fillStyle = layer.color;
       const dir = layer.direction === "auto" ? (/[؀-ۿ]/.test(layer.text) ? "rtl" : "ltr") : layer.direction;
       if ("direction" in ctx) (ctx as CanvasRenderingContext2D).direction = dir;
-      const alignX = layer.align === "center" ? 0 : (layer.align === "start") === (dir === "ltr") ? -w / 2 : w / 2;
+      // Start / end text sits inside the box's padding (0.15 em each side, as the designer measures
+      // the box: designer fonts.ts measureText), not on its edge (designer R11-03). The print PDF
+      // paints through this function too.
+      const inset = sizeMm * 0.15;
+      const alignX = layer.align === "center" ? 0 : (layer.align === "start") === (dir === "ltr") ? -w / 2 + inset : w / 2 - inset;
       ctx.textAlign = layer.align === "center" ? "center" : (layer.align === "start") === (dir === "ltr") ? "left" : "right";
       ctx.textBaseline = "middle";
       const lines = layer.text.split("\n");

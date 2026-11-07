@@ -16,11 +16,15 @@ const SharedViewer = lazy(() => import("@/components/designer/SharedViewer").the
  */
 function Placeholder({ poster }: { poster?: string }) {
   return (
-    <div className={styles.viewerSkeleton} aria-hidden="true">
-      {poster ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img className={styles.viewerPoster} src={poster} alt="" fetchPriority="high" decoding="async" />
-      ) : null}
+    <div aria-hidden="true">
+      <div className={styles.viewerSkeleton}>
+        {poster ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img className={styles.viewerPoster} src={poster} alt="" fetchPriority="high" decoding="async" />
+        ) : null}
+      </div>
+      {/* The viewer's fold-state row (designer .foldRow) sits under the stage; reserve it too. */}
+      <div className={styles.foldRowSpace} />
     </div>
   );
 }

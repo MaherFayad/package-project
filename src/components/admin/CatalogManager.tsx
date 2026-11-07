@@ -1,22 +1,20 @@
 "use client";
 
 import { Boxes, Pencil } from "lucide-react";
+import { parseNumberInput } from "@/lib/money/input";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
-import {
-  Badge,
-  BlockStack,
-  Button,
-  Card,
-  Checkbox,
-  DataTable,
-  InlineGrid,
-  Modal,
-  Page,
-  Tabs,
-  Text,
-  TextField,
-} from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { BlockStack, InlineGrid } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Checkbox } from "@/components/ui/Checkbox";
+import { DataTable } from "@/components/ui/IndexTable";
+import { Modal } from "@/components/ui/Modal";
+import { Page } from "@/components/ui/Page";
+import { Tabs } from "@/components/ui/Tabs";
+import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { formatMoney, formatNumber } from "@/lib/format";
@@ -334,7 +332,7 @@ function StructureModal({
         content: t("admin.common.save"),
         loading: busy === "structure",
         onAction: async () => {
-          const toNum = (s: string) => Number(s);
+          const toNum = (s: string) => parseNumberInput(s);
           const r = await run(
             "structure",
             () =>
@@ -431,8 +429,8 @@ function MaterialModal({
             () =>
               updateMaterialAction({
                 id: row.id,
-                gsm: Number(v.gsm),
-                thicknessMm: Number(v.thicknessMm),
+                gsm: parseNumberInput(v.gsm),
+                thicknessMm: parseNumberInput(v.thicknessMm),
                 foodSafe: v.foodSafe,
                 active: v.active,
               }),
@@ -513,8 +511,8 @@ function FinishModal({
             () =>
               updateFinishAction({
                 id: row.id,
-                unitSurchargePiasters: Math.round(Number(v.unit) * 100),
-                setupPiasters: Math.round(Number(v.setup) * 100),
+                unitSurchargePiasters: Math.round(parseNumberInput(v.unit) * 100),
+                setupPiasters: Math.round(parseNumberInput(v.setup) * 100),
                 active: v.active,
               }),
             t("admin.catalog.saved"),

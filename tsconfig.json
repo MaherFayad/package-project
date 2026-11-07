@@ -40,6 +40,8 @@
   "exclude": [
     "node_modules",
     "playwright-report",
-    "test-results"
+    "test-results",
+    ".open-next",
+    ".wrangler"
   ]
 }

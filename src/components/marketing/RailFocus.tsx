@@ -12,7 +12,7 @@ export function RailFocus() {
   useEffect(() => {
     const onFocus = (e: FocusEvent) => {
       const t = e.target as Element | null;
-      const card = t?.closest?.("[data-rail] > li");
+      const card = t?.closest?.("[data-rail] li");
       if (!card) return;
       const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
       card.scrollIntoView({ inline: "start", block: "nearest", behavior: reduce ? "auto" : "smooth" });

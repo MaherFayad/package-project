@@ -7,20 +7,13 @@ import type { Locale, OrderStatus } from "@/types";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { paymentTone, statusTone } from "@/lib/orders/status-tone";
-import {
-  Badge,
-  Card,
-  EmptyBoxIllustration,
-  Icon,
-  EmptyState,
-  IndexFilters,
-  IndexTable,
-  IndexTableCell,
-  IndexTableRow,
-  IndexTableRowLink,
-  PriceTag,
-  Text,
-} from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { Card } from "@/components/ui/Card";
+import { EmptyBoxIllustration, EmptyState } from "@/components/ui/EmptyState";
+import { Icon } from "@/components/ui/Icon";
+import { IndexFilters, IndexTable, IndexTableCell, IndexTableRow, IndexTableRowLink } from "@/components/ui/IndexTable";
+import { PriceTag } from "@/components/ui/PriceTag";
+import { Text } from "@/components/ui/Text";
 import styles from "./orders.module.css";
 
 export interface OrderRow {
@@ -53,6 +46,7 @@ export function OrdersTable({ rows, locale }: { rows: OrderRow[]; locale: Locale
   }, [rows, view, q]);
 
   const filters = (
+    <div className={styles.tabsFade}>
     <IndexFilters
       views={VIEWS.map((v) => ({ id: `orders-view-${v.id}`, content: t(`orders.views.${v.id}` as DictKey) }))}
       selectedView={view}
@@ -62,6 +56,7 @@ export function OrdersTable({ rows, locale }: { rows: OrderRow[]; locale: Locale
       onQueryClear={() => setQ("")}
       queryPlaceholder={t("orders.searchPlaceholder")}
     />
+    </div>
   );
   const payBadge = (r: OrderRow) => (
     <Badge tone={paymentTone(r.paymentStatus).tone} progress={paymentTone(r.paymentStatus).progress}>

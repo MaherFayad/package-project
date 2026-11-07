@@ -61,3 +61,13 @@ export function otpIpLimits(env: Record<string, string | undefined> = process.en
   if (env.ELBA_E2E === "1" && devEcho) return { requestPerHour: 5_000, verifyPer10Min: 5_000 };
   return { ...OTP_IP_LIMITS };
 }
+
+/**
+ * Developer tool pages under /{locale}/dev (3D engine bench, UI kit, catalogue renderer). Never
+ * public in a deployment (security R5-SEC-04; OWASP ASVS 4.0.3 V14.3.2): on in `next dev`, and
+ * under `next start` only with ELBA_DEV_PAGES=1 (render and perf scripts) or the e2e marker
+ * ELBA_E2E=1 (playwright.config webServer; the catalogue spec renders /dev/catalogue). Pure.
+ */
+export function devPagesEnabled(env: Record<string, string | undefined> = process.env): boolean {
+  return env.NODE_ENV !== "production" || env.ELBA_DEV_PAGES === "1" || env.ELBA_E2E === "1";
+}

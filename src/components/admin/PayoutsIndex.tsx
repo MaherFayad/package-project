@@ -3,8 +3,12 @@
 import { Wallet } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
-import { BlockStack, EmptyBoxIllustration, EmptyState, IndexFilters, IndexTable, IndexTableCell, IndexTableRow, IndexTableRowLink, InlineStack, MetricsStrip, Page, Text } from "@/components/ui";
-import { adminStyles } from "./charts";
+import { BlockStack } from "@/components/ui/Stack";
+import { EmptyBoxIllustration, EmptyState } from "@/components/ui/EmptyState";
+import { IndexFilters, IndexTable, IndexTableCell, IndexTableRow, IndexTableRowLink } from "@/components/ui/IndexTable";
+import { MetricsStrip } from "@/components/ui/MetricsStrip";
+import { Page } from "@/components/ui/Page";
+import { Text } from "@/components/ui/Text";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { formatDate, formatMoney, formatNumber } from "@/lib/format";
@@ -48,6 +52,7 @@ export function PayoutsIndex({ rows }: { rows: AdminPayoutRow[] }) {
         />
         <div id="admin-payouts-table">
           <IndexTable
+            condensed
             resourceName={{ singular: t("admin.payouts.resourceSingular"), plural: t("admin.payouts.resourcePlural") }}
             caption={t("admin.payouts.title")}
             rowIds={shown.map((r) => r.key)}
@@ -98,18 +103,6 @@ export function PayoutsIndex({ rows }: { rows: AdminPayoutRow[] }) {
                       <IndexTableRowLink url={`/${locale}/admin/orders/${r.orderNumber}`}>
                         <bdi>{r.orderNumber}</bdi>
                       </IndexTableRowLink>
-                      {/* Phones: the table scrolls, so the part, amount, status and next step sit in the first cell too. */}
-                      <div className={adminStyles.PhoneOnly}>
-                        <BlockStack gap="150">
-                          <Text as="span" variant="bodySm" tone="subdued">
-                            {t(`admin.payouts.kinds.${r.kind}` as DictKey)} · <bdi>{formatMoney(r.amountPiasters, locale, { alwaysDecimals: true })}</bdi>
-                          </Text>
-                          <InlineStack gap="200" blockAlign="center">
-                            <PayoutStatusBadge status={r.status} />
-                            {step && r.orderId && r.orderNumber ? <PayoutStepButton orderId={r.orderId} orderNumber={r.orderNumber} kind={r.kind} step={step} amountPiasters={r.amountPiasters} vendorName={r.vendorName} size="slim" /> : null}
-                          </InlineStack>
-                        </BlockStack>
-                      </div>
                     </BlockStack>
                   </IndexTableCell>
                   <IndexTableCell>{r.vendorName}</IndexTableCell>
@@ -129,9 +122,7 @@ export function PayoutsIndex({ rows }: { rows: AdminPayoutRow[] }) {
                   </IndexTableCell>
                   <IndexTableCell alignment="end">
                     {step && r.orderId && r.orderNumber ? (
-                      <span className={adminStyles.DesktopOnly}>
                       <PayoutStepButton orderId={r.orderId} orderNumber={r.orderNumber} kind={r.kind} step={step} amountPiasters={r.amountPiasters} vendorName={r.vendorName} size="slim" />
-                      </span>
                     ) : (
                       <Text as="span" tone="subdued" variant="bodySm">
                         {r.openDispute && r.kind === "BALANCE" && r.status !== "PAID" ? t("admin.payouts.disputeHold") : t("admin.common.none")}

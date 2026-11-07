@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ChevronDown, ChevronUp, CloudCheck, CloudOff, CloudUpload, Download, Move3d, MoreHorizontal, Redo2, RotateCcw, Save, Share2, Undo2, ZoomIn, ZoomOut } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ChevronDown, ChevronUp, CloudCheck, CloudOff, CloudUpload, Download, Move3d, MoreHorizontal, Pencil, Redo2, RotateCcw, Save, Share2, Undo2, ZoomIn, ZoomOut } from "lucide-react";
 import { startTransition, useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { FACE_IDS, type ArtworkLayer, type DesignDoc, type DesignFinishCode, type DimsPreset, type FaceId, type Locale, type PrintSurface, type StructureCode } from "@/types";
 import { boardAppearance, type DielineModel } from "@/lib/dieline";
@@ -12,24 +12,22 @@ import { useLibraryModel } from "@/lib/library/useLibraryModel";
 import { defaultMaxDpr } from "@/components/three/dpr";
 import { docGeometry, docModel, docModelCode, facesForAreas, normaliseDocModel } from "@/lib/library/doc";
 import { FINISHES } from "@/lib/configurator";
-import { ViewControls, type PackagingSceneHandle } from "@/components/three";
+import { ViewControls, loadEngineStack, type PackagingSceneHandle } from "@/components/three";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n/types";
-import {
-  ActionList,
-  Badge,
-  Banner,
-  Button,
-  ButtonGroup,
-  Icon,
-  Popover,
-  RangeSlider,
-  Select,
-  Tabs,
-  Text,
-  TextField,
-  useToast,
-} from "@/components/ui";
+import { ActionList } from "@/components/ui/ActionList";
+import { Badge } from "@/components/ui/Badge";
+import { Banner } from "@/components/ui/Banner";
+import { Button, ButtonGroup } from "@/components/ui/Button";
+import { Icon } from "@/components/ui/Icon";
+import { Popover } from "@/components/ui/Popover";
+import { RangeSlider } from "@/components/ui/RangeSlider";
+import { Select } from "@/components/ui/Select";
+import { Tabs } from "@/components/ui/Tabs";
+import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
+import { useToast } from "@/components/ui/Toast";
+import { Modal } from "@/components/ui/Modal";
 import type { OtpSuccess } from "@/components/auth";
 import {
   addLayer,
@@ -60,7 +58,7 @@ import { ConfigPanel, surfaceName, type ViewOptions } from "./ConfigPanel";
 import lib from "./library.module.css";
 import { loadLocalDraft, saveLocalDraft } from "./lib/storage";
 import { useArtworkCanvases } from "./useArtworkCanvases";
-import { prepareImage } from "./uploadImage";
+import { prepareImage, UploadError, type UploadErrorKind } from "./uploadImage";
 import { stampExportMark } from "@/components/marketing/exportMark";
 import { formatNumber } from "@/lib/format";
 import { fitTextBox, measureText } from "./fonts";
@@ -71,17 +69,25 @@ import { LayersPanel } from "./LayersPanel";
 import { PreflightBadge, PreflightPanel } from "./PreflightPanel";
 import { orderModeOf } from "@/data/catalogue/order-mode";
 import { ExportModal, GateModal, PriceBadge, PriceModal, ShareModal, type ExportSize, type GateReason } from "./Modals";
+import { BrandColorsModal, BrandColorsProvider, usedBrandColors, type BrandColorsApi } from "./BrandColors";
+import type { BrandColor } from "@/types";
 import styles from "./designer.module.css";
 import { trackClient } from "@/lib/analytics/client";
 
 const StageSkeleton = () => <div className={lib.stageSkeleton} aria-hidden="true" />;
 // One persistent 3D canvas for boxes and containers (PERF-09).
-const Stage3D = dynamic(() => import("./Stage3D"), { ssr: false, loading: StageSkeleton });
+// R6-R1: three.js, the React renderer and the stage load in steps with yields between them
+const Stage3D = dynamic(() => loadEngineStack().then(() => import("./Stage3D")), { ssr: false, loading: StageSkeleton });
 // The picker (370 cards, search) loads only when it is opened (PERF-04).
 const ModelPicker = dynamic(() => import("@/components/catalogue/CataloguePicker").then((m) => m.ModelPicker), { ssr: false });
 
 type View = "3d" | "face" | "dieline";
-type SaveState = "idle" | "dirty" | "saving" | "saved" | "error";
+type SaveState = "idle" | "dirty" | "saving" | "saved" | "error" | "tooLarge";
+const UPLOAD_ERROR_KEY: Record<UploadErrorKind, DictKey> = {
+  type: "designer.artwork.uploadWrongType",
+  size: "designer.artwork.uploadTooLarge",
+  decode: "designer.artwork.uploadUnreadable",
+};
 type ModalName = "price" | "export" | "share" | null;
 const TAB_IDS = ["box", "artwork", "layers", "check"] as const;
 
@@ -94,6 +100,8 @@ export interface DesignerAppProps {
   locale: Locale;
   initialDoc: DesignDoc;
   initialDesignId: string | null;
+  /** Stored version of the loaded design (R10-R1: sent back as `baseUpdatedAt`). */
+  initialUpdatedAt?: string | null;
   initialUser: DesignerUser | null;
   presetsByCode: Partial<Record<StructureCode, DimsPreset[]>>;
   loadError: "notFound" | null;
@@ -158,7 +166,7 @@ export function DesignerApp(props: DesignerAppProps) {
   return <DesignerEditor {...props} />;
 }
 
-function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, loadError, resumeLocal, posterSrc }: DesignerAppProps) {
+function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt, initialUser, loadError, resumeLocal, posterSrc }: DesignerAppProps) {
   const { t } = useI18n();
   const router = useRouter();
   const toast = useToast();
@@ -232,7 +240,16 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareError, setShareError] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  // R15-02: a dialog opened from the phone "More" menu returned focus to its menu item, which the
+  // closing menu had removed, so focus fell to <body> (WCAG 2.4.3). The action moves focus to the
+  // menu button first; the dialog remembers that and returns there.
+  const moreRef = useRef<HTMLDivElement>(null);
+  const fromMenu = (fn: () => void) => () => {
+    moreRef.current?.querySelector<HTMLButtonElement>("button[aria-haspopup]")?.focus({ preventScroll: true });
+    fn();
+  };
   const [viewMenuOpen, setViewMenuOpen] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   // Mounted on first open and kept (so closing animates and returns focus).
   const [pickerUsed, setPickerUsed] = useState(false);
@@ -267,6 +284,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
     if (initialDesignId && initialDesignId !== designIdRef.current) {
       dispatch({ type: "reset", value: initialDoc });
       savedDocRef.current = initialDoc;
+      baseRef.current = initialUpdatedAt ?? null;
       setDesignId(initialDesignId);
       designIdRef.current = initialDesignId;
       setSelectedId(null);
@@ -352,6 +370,35 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
   const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const retryDelay = useRef(10_000);
   const saveRef = useRef<() => Promise<string | null>>(async () => null);
+  const tooLargeToldRef = useRef(false);
+  const baseRef = useRef<string | null>(initialUpdatedAt ?? null);
+  // Brand colours of the signed-in buyer (integrator decision: no Pantone library).
+  const [brandColors, setBrandColors] = useState<BrandColor[]>(initialDoc.brandColors ?? []);
+  const brandRef = useRef<BrandColor[]>(brandColors);
+  brandRef.current = brandColors;
+  const [brandModal, setBrandModal] = useState<{ hex: string | null } | null>(null);
+  // R10-03: two tabs on the same design. Each tab announces its saves on a BroadcastChannel; a tab
+  // that hears another tab save the design it has open pauses its autosave and asks, instead of
+  // silently overwriting the newer version (last writer won before).
+  const [tabId] = useState(() => Math.random().toString(36).slice(2));
+  const channelRef = useRef<BroadcastChannel | null>(null);
+  const staleRef = useRef(false);
+  const [stale, setStale] = useState(false);
+  useEffect(() => {
+    if (typeof BroadcastChannel === "undefined") return;
+    const ch = new BroadcastChannel("elba-designer");
+    channelRef.current = ch;
+    ch.onmessage = (e: MessageEvent<{ id?: string; tab?: string }>) => {
+      if (e.data?.id && e.data.id === designIdRef.current && e.data.tab !== tabId) {
+        staleRef.current = true;
+        setStale(true);
+      }
+    };
+    return () => {
+      ch.close();
+      channelRef.current = null;
+    };
+  }, [tabId]);
   const [online, setOnline] = useState(true);
   const touchedRef = useRef(false);
 
@@ -364,7 +411,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
   );
 
   const saveToServer = useCallback(
-    async (opts: { thumbnail?: boolean } = {}): Promise<string | null> => {
+    async (opts: { thumbnail?: boolean; force?: boolean } = {}): Promise<string | null> => {
       if (inflight.current) await inflight.current.catch(() => null);
       const run = (async () => {
         const current = docRef.current;
@@ -379,21 +426,52 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
             /* the 3D view may not be ready; the thumbnail is optional */
           }
         }
-        const body = JSON.stringify({ doc: { ...current, id: undefined }, ...(thumbnail ? { thumbnail } : {}) });
+        // R10-R1: a PUT says which stored version it edits; the server refuses (409) when another
+        // device or tab saved since, unless the visitor chose "Keep this version" (force).
         const send = (id: string | null) =>
-          fetch(id ? `/api/designs/${encodeURIComponent(id)}` : "/api/designs", { method: id ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body });
+          fetch(id ? `/api/designs/${encodeURIComponent(id)}` : "/api/designs", {
+            method: id ? "PUT" : "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              // The brand colours this design uses travel with it to the printer's proof.
+              doc: { ...current, id: undefined, ...(brandRef.current.length ? { brandColors: usedBrandColors(current, brandRef.current) } : {}) },
+              ...(thumbnail ? { thumbnail } : {}),
+              ...(id && baseRef.current ? { baseUpdatedAt: baseRef.current } : {}),
+              ...(id && opts.force ? { force: true } : {}),
+            }),
+          });
         try {
           let res = await send(designIdRef.current);
           // Expired or not ours any more (e.g. signed out): keep the work as a new design.
           if (designIdRef.current && (res.status === 404 || res.status === 403)) res = await send(null);
+          // R10-01: 413 never succeeds on a retry; say why and stop retrying until the doc changes.
+          if (res.status === 413) {
+            setSaveState("tooLarge");
+            // The toolbar status can be cut short on phones: say it once in a toast as well.
+            if (!tooLargeToldRef.current) toast.show(t("designer.save.tooLarge"), { tone: "critical" });
+            tooLargeToldRef.current = true;
+            saveLocalDraft({ doc: current, designId: designIdRef.current, savedAt: Date.now() });
+            return null;
+          }
+          if (res.status === 409) {
+            // Changed elsewhere: pause autosave and ask (same banner as another tab, R10-03).
+            staleRef.current = true;
+            setStale(true);
+            setSaveState("dirty");
+            saveLocalDraft({ doc: current, designId: designIdRef.current, savedAt: Date.now() });
+            return null;
+          }
           if (!res.ok) throw new Error(String(res.status));
-          const json = (await res.json()) as { id: string; owned: boolean };
+          const json = (await res.json()) as { id: string; owned: boolean; updatedAt?: string };
+          baseRef.current = json.updatedAt ?? null;
           savedDocRef.current = current;
           setDesignId(json.id);
           designIdRef.current = json.id;
           setUrl(json.id, docModelCode(current));
           saveLocalDraft({ doc: current, designId: json.id, savedAt: Date.now() });
           setSaveState(docRef.current === current ? "saved" : "dirty");
+          tooLargeToldRef.current = false;
+          channelRef.current?.postMessage({ id: json.id, tab: tabId });
           retryDelay.current = 10_000;
           return json.id;
         } catch {
@@ -402,7 +480,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
           if (retryTimer.current) clearTimeout(retryTimer.current);
           retryTimer.current = setTimeout(() => {
             retryTimer.current = null;
-            if (savedDocRef.current !== docRef.current) void saveRef.current();
+            if (savedDocRef.current !== docRef.current && !staleRef.current) void saveRef.current();
           }, retryDelay.current);
           retryDelay.current = Math.min(retryDelay.current * 2, 120_000);
           return null;
@@ -415,7 +493,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
         if (inflight.current === run) inflight.current = null;
       }
     },
-    [setUrl, shoot],
+    [setUrl, shoot, toast, t, tabId],
   );
 
   saveRef.current = () => saveToServer();
@@ -450,7 +528,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
     if (savedDocRef.current !== doc) setSaveState((s) => (s === "saving" ? s : "dirty"));
     const local = setTimeout(() => saveLocalDraft({ doc, designId: designIdRef.current, savedAt: Date.now() }), 600);
     const server = setTimeout(() => {
-      if (savedDocRef.current !== docRef.current) void saveToServer();
+      if (savedDocRef.current !== docRef.current && !staleRef.current) void saveToServer();
     }, 4000);
     return () => {
       clearTimeout(local);
@@ -470,14 +548,62 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
     [user, locale],
   );
 
+  useEffect(() => {
+    if (!user) return;
+    let alive = true;
+    fetch("/api/designs/brand-colors", { cache: "no-store" })
+      .then((r) => (r.ok ? (r.json() as Promise<{ colors: BrandColor[] }>) : null))
+      .then((j) => {
+        if (alive && j) setBrandColors((prev) => (j.colors.length ? j.colors : prev));
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [user]);
+  const saveBrandColors = useCallback(async (next: BrandColor[]) => {
+    try {
+      const r = await fetch("/api/designs/brand-colors", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ colors: next }) });
+      if (!r.ok) return false;
+      const j = (await r.json()) as { colors: BrandColor[] };
+      setBrandColors(j.colors);
+      // The printer's colour references follow the account: re-save a touched design now (its
+      // saved snapshot lists the brand colours it uses).
+      brandRef.current = j.colors;
+      if (touchedRef.current && !staleRef.current) void saveRef.current();
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+  const brandApi = useMemo<BrandColorsApi>(
+    () => ({
+      colors: brandColors,
+      saveCurrent: (hex) => requireAccount("save", () => setBrandModal({ hex })),
+      manage: () => requireAccount("save", () => setBrandModal({ hex: null })),
+    }),
+    [brandColors, requireAccount],
+  );
+
   const onSignedIn = (u: OtpSuccess) => {
     const pending = gate?.then;
     setUser({ id: u.id, name: u.name });
     setGate(null);
     setPrice({ status: "idle" });
     router.refresh();
-    // verify-otp claimed this browser's anonymous designs; continue what the user asked for.
-    if (pending) setTimeout(pending, 0);
+    // verify-otp claimed this browser's anonymous designs, which is a write: read the stored
+    // version again so the next save is not refused as stale (R10-R1), then continue what the
+    // user asked for.
+    const id = designIdRef.current;
+    const resume = () => pending && setTimeout(pending, 0);
+    if (!id) return resume();
+    fetch(`/api/designs/${encodeURIComponent(id)}`, { cache: "no-store" })
+      .then((r) => (r.ok ? (r.json() as Promise<{ updatedAt?: string }>) : null))
+      .then((j) => {
+        if (j?.updatedAt) baseRef.current = j.updatedAt;
+      })
+      .catch(() => undefined)
+      .finally(resume);
   };
 
   // ── live price badge ──────────────────────────────────────────────
@@ -546,7 +672,22 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
   const onPrintSides = useCallback((p: DesignDoc["printSides"]) => commit({ ...docRef.current, printSides: p }), [commit]);
 
   const onLayerChange = useCallback(
-    (layer: ArtworkLayer, coalesce?: string) => commit(updateLayer(docRef.current, layer.id, () => fitTextBox(layer)), coalesce),
+    (layer: ArtworkLayer, coalesce?: string) => {
+      let next = fitTextBox(layer);
+      // R10-04: typing longer text keeps it on its panel: when the words change and the line
+      // outgrows the panel's safe width, the size steps down (to 6 pt at least), as it does when
+      // text is first added. A size the visitor sets on purpose (same words) is kept.
+      const before = findLayer(docRef.current, layer.id);
+      const info = modelRef.current?.faces[layer.face];
+      if (next.kind === "text" && before?.kind === "text" && before.text !== next.text && info) {
+        const room = Math.max(10, info.width - 2 * (modelRef.current?.safeMm ?? 3));
+        if (next.width > room && next.fontSizePt > 6) {
+          const pt = Math.max(6, Math.floor(next.fontSizePt * (room / next.width) * 10) / 10);
+          next = fitTextBox({ ...next, fontSizePt: pt });
+        }
+      }
+      commit(updateLayer(docRef.current, layer.id, () => next), coalesce);
+    },
     [commit],
   );
 
@@ -569,8 +710,9 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
         sentRef.current.uploaded = true;
         trackClient("artwork_uploaded", { structure_code: docRef.current.structureCode, surface, locale });
       }
-    } catch {
-      setUploadError(t("designer.artwork.uploadError"));
+    } catch (e) {
+      // R10-02: say which rule the file broke (WCAG 3.3.1 / 3.3.3).
+      setUploadError(t(e instanceof UploadError ? UPLOAD_ERROR_KEY[e.kind] : "designer.artwork.uploadError"));
     } finally {
       setUploading(false);
     }
@@ -702,14 +844,17 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
   const openPrice = () => requireAccount("price", () => setModal("price"));
 
   // ── render helpers ────────────────────────────────────────────────
-  const statusText =
-    saveState === "saving"
+  const statusText = stale
+    ? t("designer.save.stalePaused")
+    : saveState === "saving"
       ? t("designer.save.saving")
       : saveState === "saved"
         ? user
           ? t("designer.save.savedAccount")
           : t("designer.save.savedLocal")
-        : saveState === "error"
+        : saveState === "tooLarge"
+          ? t("designer.save.tooLarge")
+          : saveState === "error"
           ? online
             ? t("designer.save.failed")
             : t("designer.save.offline")
@@ -805,7 +950,8 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
   const structureName = libModel?.name[locale] ?? t(`structures.${doc.structureCode}` as DictKey);
 
   return (
-    <div className={styles.editor} data-sheet={sheetOpen ? "open" : "closed"}>
+    <BrandColorsProvider value={brandApi}>
+    <div className={styles.editor} data-sheet={sheetOpen ? "open" : "closed"} data-banner={stale || notFound ? "true" : undefined}>
       <h1 className="visually-hidden">{t("designer.editorTitle", { structure: structureName })}</h1>
 
       {/* ── toolbar ── */}
@@ -829,12 +975,12 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
             onBlur={seal}
           />
         </div>
-        <ButtonGroup variant="segmented" accessibilityLabel={t("designer.history.undo")}>
+        <ButtonGroup variant="segmented" accessibilityLabel={t("designer.history.group")}>
           <Button icon={Undo2} accessibilityLabel={t("designer.history.undo")} disabled={!canUndo(hist)} onClick={() => dispatch({ type: "undo" })} />
           <Button icon={Redo2} accessibilityLabel={t("designer.history.redo")} disabled={!canRedo(hist)} onClick={() => dispatch({ type: "redo" })} />
         </ButtonGroup>
         <span className={styles.saveStatus} role="status" data-testid="save-status" data-state={saveState} title={statusText || undefined}>
-          {saveState === "error" ? (
+          {saveState === "error" || saveState === "tooLarge" ? (
             <CloudOff size={16} aria-hidden />
           ) : saveState === "saved" ? (
             <CloudCheck size={16} aria-hidden />
@@ -863,7 +1009,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
             {t("designer.save.save")}
           </Button>
         </div>
-        <div className={styles.mobileActions}>
+        <div className={styles.mobileActions} ref={moreRef}>
           <Popover
             active={moreOpen}
             onClose={() => setMoreOpen(false)}
@@ -876,9 +1022,12 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
               actionRole="menuitem"
               onActionAnyItem={() => setMoreOpen(false)}
               items={[
-                { content: t("designer.export.button"), icon: Download, onAction: doExport },
-                { content: t("designer.share.button"), icon: Share2, onAction: doShare },
-                { content: t("designer.save.save"), icon: Save, onAction: doSave },
+                { content: t("designer.export.button"), icon: Download, onAction: fromMenu(doExport) },
+                { content: t("designer.share.button"), icon: Share2, onAction: fromMenu(doShare) },
+                { content: t("designer.save.save"), icon: Save, onAction: fromMenu(doSave) },
+                // R5-JR-14: phones have no name field in the toolbar; the share page and follow-ups
+                // used the style name for every phone design.
+                { content: t("designer.save.rename"), icon: Pencil, onAction: fromMenu(() => setRenameOpen(true)) },
               ]}
             />
           </Popover>
@@ -891,6 +1040,28 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
       <div className={styles.priceRow}>
         <PriceBadge state={price} onClick={openPrice} vessel={isVessel} />
       </div>
+
+      {stale ? (
+        <div className={styles.banner}>
+          <Banner
+            tone="warning"
+            title={t("designer.save.staleTitle")}
+            announce
+            action={{ content: t("designer.save.staleReload"), onAction: () => window.location.reload() }}
+            secondaryAction={{
+              content: t("designer.save.staleKeep"),
+              onAction: () => {
+                staleRef.current = false;
+                setStale(false);
+                // Deliberate overwrite of the newer copy (R10-R1).
+                void saveToServer({ force: true });
+              },
+            }}
+          >
+            {t("designer.save.staleBody")}
+          </Banner>
+        </div>
+      ) : null}
 
       {notFound ? (
         <div className={styles.banner}>
@@ -1009,6 +1180,12 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
                   version={version}
                   label={t("designer.view.dielineLabel")}
                   legend={t("designer.view.dielineLegend")}
+                  size={t("designer.view.dielineSize", {
+                    w: `\u2066${formatNumber(model.dieBounds.width, 0)}`,
+                    h: `${formatNumber(model.dieBounds.height, 0)}\u2069`,
+                    b: formatNumber(model.bleedMm),
+                    s: formatNumber(model.safeMm),
+                  })}
                   panelLabels={panelLabels}
                   locale={locale}
                 />
@@ -1025,7 +1202,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
 
         {view === "3d" && isVessel ? (
           <div className={styles.foldRow}>
-            <ButtonGroup variant="segmented" accessibilityLabel={t("library.panel.closure")}>
+            <ButtonGroup variant="segmented" accessibilityLabel={t("designer.view.closurePreview")}>
               <Button size="slim" pressed={!viewOpts.open} onClick={() => setViewOpts((o) => ({ ...o, open: false }))}>
                 {t("library.panel.closeClosure")}
               </Button>
@@ -1135,7 +1312,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
                   onSurface={setSurface}
                   onBackground={(c) => commit(setBackground(docRef.current, surface, c), `bg:${surface}`)}
                   onUpload={onUpload}
-                  onUploadRejected={() => setUploadError(t("designer.artwork.uploadError"))}
+                  onUploadRejected={(reason) => setUploadError(t(UPLOAD_ERROR_KEY[reason]))}
                   onAddText={onAddText}
                   onAddShape={onAddShape}
                   onLayer={onLayerChange}
@@ -1195,6 +1372,33 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUser, load
         }}
       />
       <ShareModal open={modal === "share"} onClose={() => setModal(null)} url={shareUrl} error={shareError} vessel={isVessel} />
+      <Modal
+        open={renameOpen}
+        onClose={() => {
+          seal();
+          setRenameOpen(false);
+        }}
+        title={t("designer.save.renameHeading")}
+        size="small"
+        primaryAction={{
+          content: t("designer.save.renameDone"),
+          onAction: () => {
+            seal();
+            setRenameOpen(false);
+          },
+        }}
+      >
+        <TextField
+          label={t("designer.save.name")}
+          autoComplete="off"
+          maxLength={120}
+          placeholder={t(isVessel ? "designer.container.untitled" : "designer.untitled")}
+          value={doc.name}
+          onChange={(v) => commit({ ...docRef.current, name: v }, "name")}
+        />
+      </Modal>
+      <BrandColorsModal open={brandModal !== null} colors={brandColors} initialHex={brandModal?.hex ?? null} onClose={() => setBrandModal(null)} onSave={saveBrandColors} />
     </div>
+    </BrandColorsProvider>
   );
 }

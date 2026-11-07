@@ -24,6 +24,7 @@ import { rowToDoc } from "@/components/designer/server";
 import { designQuoteFields, priceTable, quote, toPublicOffer, zoneForGovernorate, type PublicVendorOffer, type QuoteOutcome, type VendorOffer } from "@/lib/pricing";
 import { loadPricingData } from "@/lib/pricing/server";
 import { loadPricingConfig } from "@/components/admin/server/settings";
+import { syncVendorOnTime } from "@/lib/vendors/on-time-sync";
 import { HEADLINE_DEFAULTS } from "@/lib/pricing/headline";
 import { loadCheckoutSettings } from "./checkout-settings";
 import { SAMPLE_LINE_LABEL, SAMPLE_ORDER_NOTE, applySampleCredit, sampleOffer } from "./sample";
@@ -37,10 +38,17 @@ import { rateLimit } from "@/lib/rate-limit";
 import { isReprint } from "@/components/admin/lib/metrics";
 import { generatePrintPdf } from "./pdf/print";
 import { putFile, getFile } from "./storage";
-import { assertTransition, canBuyerCancel, canViewOrder, canOpenDispute, canReview, isPaidStatus, type Actor } from "./state";
+import { assertTransition, canBuyerCancel, canViewBuyerOrder, canViewOrder, canOpenDispute, canReview, isPaidStatus, type Actor } from "./state";
 import { isQuoteValid, nextSequence, orderTotals } from "./totals";
 import { decidePaymentOutcome, storedGatewayRef } from "./payment-rules";
 import { preflightBlocks, proofPreflight, type ProofPreflight } from "./preflight";
+import { instantOrderBlock } from "./order-guard";
+import { formatDateTime, formatMoney } from "@/lib/format";
+import { parseKey as parseUploadKey } from "@/components/vendor/lib/files";
+import { QUOTE_PRICED } from "./quote-status";
+import { quoteMatchesDesign } from "./quote-spec";
+import { quoteGovernorate } from "./quote-requests";
+import { toGovernorateKey } from "./governorates";
 
 /**
  * Order service (owner: checkout). Every order mutation in the app goes through here so the
@@ -93,6 +101,13 @@ const pricingInputs = cache(async () => {
   const [data, config] = await Promise.all([loadPricingData(), loadPricingConfig()]);
   return { data, config };
 });
+
+/** Smallest run any active printer takes (R4-CR-07: the one minimum checkout states and checks). */
+export async function minOrderQuantity(): Promise<number> {
+  const { data } = await pricingInputs();
+  const mins = data.vendors.map((v) => v.minOrderQty).filter((n) => Number.isFinite(n) && n > 0);
+  return mins.length ? Math.min(...mins) : 1;
+}
 
 /** Instant quote for a design (internal: includes vendor cost; never send to the browser). */
 export async function quoteDesign(doc: DesignDoc, opts: { quantity: number; governorate?: string; vendorId?: string }): Promise<QuoteOutcome> {
@@ -182,7 +197,7 @@ export async function sampleOffers(doc: DesignDoc, governorate?: string): Promis
   if (settings.monthlyCap > 0 && (await samplesThisMonth()) >= settings.monthlyCap) return null;
   const outcome = await quoteDesign(doc, { quantity: QTY_TIERS[0], governorate });
   if (outcome.mode !== "instant" || outcome.offers.length === 0) return null;
-  return { offers: outcome.offers.map((o) => sampleOffer(o, settings.maxPieces, settings.pricePiasters)), pieces: settings.maxPieces };
+  return { offers: outcome.offers.map((o) => sampleOffer(o, settings.maxPieces, settings.pricePiasters, settings.vendorCostPiasters)), pieces: settings.maxPieces };
 }
 
 // ───────────────────────── numbering ─────────────────────────
@@ -230,6 +245,8 @@ export interface PlaceOrderInput {
   sample?: boolean;
   /** The buyer saw the red preflight issues and approves anyway (recorded on the proof). */
   acknowledgePreflight?: boolean;
+  /** R4-B-03: order at the price the team sent for this price request (quantity and printer come from it). */
+  quoteId?: string;
 }
 
 /**
@@ -243,6 +260,25 @@ export async function placeOrder(user: SessionUser, input: PlaceOrderInput): Pro
   // B-04: production preflight on the exact snapshot being approved (same rules as the designer).
   const preflight = proofPreflight({ ...design.doc, id: input.designId }, input.acknowledgePreflight === true);
   if (preflightBlocks(preflight)) throw new OrderError("PREFLIGHT_BLOCKED");
+  if (input.quoteId) {
+    // The proof is made from `design.doc`, so that exact copy is the one checked against the price.
+    const priced = await loadPricedQuote(input.quoteId, user, input.designId, new Date(), design.doc);
+    if (!priced) throw new OrderError("QUOTE_EXPIRED");
+    // R6-SEC-10: the sent price includes delivery to the governorate of the request (the form locks
+    // it); a tampered request for another governorate is refused, not shipped at that price.
+    const leadGov = toGovernorateKey(await quoteGovernorate(priced.id));
+    if (leadGov && toGovernorateKey(input.address.governorate) !== leadGov) throw new OrderError("NOT_ALLOWED");
+    return createOrderFromOffer(user, {
+      doc: { ...design.doc, id: input.designId },
+      offer: priced.offer,
+      quoteId: priced.id,
+      address: input.address,
+      approval: input.approval,
+      preview: input.preview ?? null,
+      locale: input.locale,
+      preflight,
+    });
+  }
   if (input.sample) {
     const samples = await sampleOffers(design.doc, input.address.governorate);
     const offer = samples?.offers.find((o) => o.vendorId === input.vendorId);
@@ -277,8 +313,10 @@ export async function placeOrder(user: SessionUser, input: PlaceOrderInput): Pro
 async function createOrderFromOffer(
   user: SessionUser,
   p: {
+    /** Set only when the order comes from a price the team sent for a price request (R4-B-03). */
+    quoteId?: string | null;
     doc: DesignDoc;
-    offer: VendorOffer;
+    offer: OrderOffer;
     address: ShippingAddress;
     approval?: { ip: string; userAgent?: string };
     existingProofId?: string;
@@ -290,13 +328,16 @@ async function createOrderFromOffer(
     preflight?: ProofPreflight;
   },
 ): Promise<{ orderId: string; number: string }> {
-  const totals = buyerTotals(p.offer.lines, (await loadCheckoutSettings()).prepayDiscountPct, { sample: p.sample, creditPiasters: p.credit?.piasters });
+  // B-16 / R4-B-01: the last check before any order is written (checkout, sample, reorder).
+  if (instantOrderBlock(p.doc, p.offer, p.quoteId)) throw new OrderError("MANUAL_QUOTE");
+  // A price the team sent is final: no prepay discount on top (R4-B-03, agreed with admin).
+  const totals = p.quoteId ? orderTotals(p.offer.lines, 0) : buyerTotals(p.offer.lines, (await loadCheckoutSettings()).prepayDiscountPct, { sample: p.sample, creditPiasters: p.credit?.piasters });
   const product = p.offer.lines.find((l) => l.kind === "PRODUCT");
   const now = new Date();
   // Admin's quote validity (clamped to 1 to 72 h in makeConfig), the same value the designer and
   // the public pages promise (B-14). The offer's own validUntil already used it; this is the cap.
   const validityHours = (await loadPricingConfig()).quoteValidityHours;
-  const validUntil = new Date(Math.min(new Date(p.offer.validUntil).getTime(), now.getTime() + validityHours * 3_600_000));
+  const validUntil = p.quoteId ? new Date(p.offer.validUntil) : new Date(Math.min(new Date(p.offer.validUntil).getTime(), now.getTime() + validityHours * 3_600_000));
   const designId = p.doc.id!;
 
   const result = await withRetry(() =>
@@ -321,7 +362,14 @@ async function createOrderFromOffer(
         });
         proofId = proof.id;
       }
-      const q = await tx.quote.create({
+      // A sent price is used once: PRICED -> ACCEPTED in the same transaction as the order.
+      const q = p.quoteId
+        ? await (async () => {
+            const claimed = await tx.quote.updateMany({ where: { id: p.quoteId!, userId: user.id, status: QUOTE_PRICED, validUntil: { gt: now } }, data: { status: "ACCEPTED" } });
+            if (claimed.count !== 1) throw new OrderError("QUOTE_EXPIRED");
+            return { id: p.quoteId! };
+          })()
+        : await tx.quote.create({
         data: {
           userId: user.id,
           designId,
@@ -418,8 +466,74 @@ async function createOrderFromOffer(
       { userId: user.id, designId, orderId: result.orderId },
     );
   }
-  await notify({ to: { phone: user.phone }, locale: p.locale, template: "ORDER_PLACED", params: { number: result.number } });
+  if (p.quoteId) {
+    await db.auditLog
+      .create({ data: { actorId: user.id, action: "QUOTE_ACCEPTED", entityType: "QUOTE", entityId: p.quoteId, summary: `Price accepted: order ${result.number}`, after: toJson({ orderId: result.orderId, number: result.number }) } })
+      .catch((e) => console.warn("[orders] quote audit failed", e));
+  }
+  await notify({ to: { phone: user.phone }, locale: p.locale, template: "ORDER_PLACED", params: { number: result.number, url: buyerLink(p.locale, `/checkout/pay/${result.orderId}`) } });
   return { orderId: result.orderId, number: result.number };
+}
+
+// ───────────────────────── team-priced quotes (R4-B-03) ─────────────────────────
+
+/** Fields of an offer that order creation reads; instant offers and team-priced quotes both fit. */
+export type OrderOffer = Pick<VendorOffer, "vendorId" | "quantity" | "lines" | "subtotalPiasters" | "unitPiasters" | "validUntil" | "deliveryDays"> & {
+  internal: Pick<VendorOffer["internal"], "vendorCostPiasters">;
+};
+
+export interface PricedQuote {
+  id: string;
+  quantity: number;
+  validUntil: Date;
+  /** Buyer-safe offer for the checkout page (no vendor cost). */
+  publicOffer: PublicVendorOffer;
+  offer: OrderOffer;
+}
+
+/**
+ * A price the team sent for this buyer's price request on this design, still valid, from an
+ * active printer, with the printer's agreed price recorded. Null otherwise (expired, used,
+ * someone else's, another design, or not priced yet).
+ */
+export async function loadPricedQuote(quoteId: string, user: SessionUser, designId: string, now = new Date(), against?: DesignDoc): Promise<PricedQuote | null> {
+  if (!/^[\w-]{1,64}$/.test(quoteId)) return null;
+  const q = await db.quote.findFirst({ where: { id: quoteId, userId: user.id, designId, status: QUOTE_PRICED, validUntil: { gt: now } } });
+  if (!q || !q.vendorId || q.vendorCostPiasters == null || q.totalPiasters <= 0) return null;
+  const lines = fromJson<QuoteLine[]>(q.lines);
+  const product = Array.isArray(lines) ? lines.find((l) => l.kind === "PRODUCT") : undefined;
+  if (!product || product.quantity < 1) return null;
+  // R6-SEC-01: the price is for the box as priced; a changed size, board or model voids it.
+  const designRow = await db.design.findUnique({ where: { id: designId }, include: { material: true } });
+  const designDoc = designRow ? rowToDoc(designRow) : null;
+  if (!designRow || !designDoc || !quoteMatchesDesign((product as { specHash?: unknown }).specHash, against ?? designDoc, designRow, q.pricedAt)) return null;
+  const vendor = await db.vendor.findFirst({ where: { id: q.vendorId, status: "ACTIVE" } });
+  if (!vendor) return null;
+  const totals = orderTotals(lines, 0);
+  const deliveryDays = q.deliveryDays ?? 14;
+  const base = {
+    vendorId: vendor.id,
+    quantity: product.quantity,
+    lines,
+    subtotalPiasters: totals.subtotalPiasters,
+    vatPiasters: totals.vatPiasters,
+    totalPiasters: totals.totalPiasters,
+    unitPiasters: Math.round(totals.subtotalPiasters / product.quantity),
+    leadTimeDays: deliveryDays,
+    deliveryDays,
+    standardSize: false,
+    validUntil: q.validUntil.toISOString(),
+  };
+  const publicOffer = {
+    ...base,
+    vendor: { id: vendor.id, slug: vendor.slug, name: { ar: vendor.nameAr, en: vendor.nameEn }, city: vendor.city, rating: vendor.rating, ratingCount: vendor.ratingCount, onTimePct: vendor.onTimePct, verified: vendor.verified },
+    printMethod: "OFFSET",
+    shippingPiasters: totals.shippingPiasters,
+    shipping: null,
+    score: 1,
+    badges: [],
+  } as unknown as PublicVendorOffer;
+  return { id: q.id, quantity: product.quantity, validUntil: q.validUntil, publicOffer, offer: { ...base, internal: { vendorCostPiasters: q.vendorCostPiasters } } };
 }
 
 // ───────────────────────── reading orders ─────────────────────────
@@ -446,7 +560,8 @@ export { canViewOrder };
 export async function getOrderForViewer(idOrNumber: string, user: SessionUser): Promise<OrderDetail | null> {
   if (!/^[\w-]{1,64}$/.test(idOrNumber)) return null;
   const order = await db.order.findFirst({ where: { OR: [{ id: idOrNumber }, { number: idOrNumber }] }, include: orderInclude });
-  if (!order || !canViewOrder(order, user)) return null;
+  // Buyer-side pages: never vendor staff (R5-SEC-01); they use the vendor portal job page.
+  if (!order || !canViewBuyerOrder(order, user)) return null;
   return order;
 }
 
@@ -526,6 +641,8 @@ export async function transitionOrder(orderId: string, to: OrderStatus, actor: T
   if (to === "DELIVERED") {
     const onTime = order.dueDate ? now.getTime() <= order.dueDate.getTime() : null;
     void track("order_delivered", { by: actor.role, on_time: onTime, reprint: isReprint(order) }, { userId: order.buyerId, orderId });
+    // R5-JR-05 (admin): the public on-time figure follows real deliveries.
+    void syncVendorOnTime([order.vendorId]).catch(() => undefined);
   }
   await notifyStatus(order, to);
 }
@@ -555,16 +672,30 @@ async function issueCreditNote(tx: Prisma.TransactionClient, orderId: string, no
   });
 }
 
-async function notifyStatus(order: { number: string; buyer: { locale: string; phone: string; email: string | null } }, to: OrderStatus): Promise<void> {
+/** R9: every buyer message links to the page it talks about. */
+function buyerLink(locale: Locale, path: string): string {
+  return `${siteUrl()}/${locale}${path}`;
+}
+
+async function notifyStatus(order: { id: string; number: string; buyer: { locale: string; phone: string; email: string | null } }, to: OrderStatus, tracking?: string): Promise<void> {
 
   const locale = (order.buyer.locale === "en" ? "en" : "ar") as Locale;
-  const template = to === "SHIPPED" ? "SHIPPED" : to === "DELIVERED" ? "DELIVERED" : "STATUS_CHANGED";
+  let template: "SHIPPED" | "DELIVERED" | "REFUNDED" | "STATUS_CHANGED" = to === "SHIPPED" ? "SHIPPED" : to === "DELIVERED" ? "DELIVERED" : "STATUS_CHANGED";
   const { getT } = await import("@/i18n");
+  // R10-04: a refund says how much went back and where.
+  let refund: { amount: string; method: string } | null = null;
+  if (to === "REFUNDED") {
+    const p = await db.payment.findFirst({ where: { orderId: order.id, status: { in: ["REFUNDED", "PAID"] } }, orderBy: { createdAt: "desc" }, select: { amountPiasters: true, method: true } });
+    if (p) {
+      refund = { amount: formatMoney(p.amountPiasters, locale, { alwaysDecimals: true }), method: getT(locale)(`paymentMethods.${p.method}` as never) };
+      template = "REFUNDED";
+    }
+  }
   await notify({
     to: { phone: order.buyer.phone, email: order.buyer.email },
     locale,
     template,
-    params: { number: order.number, status: getT(locale)(`orderStatus.${to}`) },
+    params: { number: order.number, status: getT(locale)(`orderStatus.${to}`), url: buyerLink(locale, `/orders/${order.id}`), tracking: tracking ?? "", amount: refund?.amount ?? "", method: refund?.method ?? "" },
   });
 }
 
@@ -651,7 +782,13 @@ export async function startPayment(orderId: string, user: SessionUser, method: P
       to: { phone: order.buyer.phone },
       locale,
       template: "FAWRY_CODE",
-      params: { number: order.number, code: intention.fawry.referenceCode },
+      // R9: the outlet needs the amount, and the buyer the deadline.
+      params: {
+        number: order.number,
+        code: intention.fawry.referenceCode,
+        amount: formatMoney(order.totalPiasters, locale, { alwaysDecimals: true }),
+        date: formatDateTime(intention.fawry.expiresAt, locale),
+      },
     });
   }
   return paymentView(saved);
@@ -709,7 +846,7 @@ export async function applyPaymentOutcome(o: Extract<WebhookOutcome, { ok: true 
     // Conditional: never downgrade a payment that turned PAID concurrently.
     const upd = await db.payment.updateMany({ where: { id: payment.id, status: payment.status }, data: { status: "FAILED", raw: lastRaw } });
     if (upd.count !== 1) return "DUPLICATE";
-    await notify({ to: { phone: order.buyer.phone }, locale, template: "PAYMENT_FAILED", params: { number: order.number } });
+    await notify({ to: { phone: order.buyer.phone }, locale, template: "PAYMENT_FAILED", params: { number: order.number, url: buyerLink(locale, `/checkout/pay/${order.id}`) } });
     return "FAILED";
   }
 
@@ -796,7 +933,7 @@ export async function applyPaymentOutcome(o: Extract<WebhookOutcome, { ok: true 
     console.error("[orders] print PDF generation failed", e);
     await db.productionEvent.create({ data: { orderId: order.id, type: "NOTE", note: "PRINT_PDF_FAILED" } });
   }
-  await notify({ to: { phone: order.buyer.phone, email: order.buyer.email }, locale, template: "PAYMENT_RECEIVED", params: { number: order.number } });
+  await notify({ to: { phone: order.buyer.phone, email: order.buyer.email }, locale, template: "PAYMENT_RECEIVED", params: { number: order.number, url: buyerLink(locale, `/orders/${order.id}`) } });
   const staff = await db.user.findMany({ where: { vendorId: order.vendorId, role: "VENDOR" }, select: { phone: true, locale: true } });
   for (const s of staff) {
     await notify({ to: { phone: s.phone }, locale: s.locale === "en" ? "en" : "ar", template: "VENDOR_NEW_JOB", params: { number: order.number } });
@@ -920,7 +1057,7 @@ export async function shipOrder(orderId: string, actor: TransitionActor): Promis
     }),
     db.productionEvent.create({ data: { orderId, type: rule.event, note: created.trackingNumber, actorId: actor.userId ?? null, createdAt: now } }),
   ]);
-  await notifyStatus(order, "SHIPPED");
+  await notifyStatus(order, "SHIPPED", created.trackingNumber);
   return { trackingNumber: created.trackingNumber };
 }
 
@@ -1005,7 +1142,13 @@ export async function submitReview(orderId: string, user: SessionUser, rating: n
   await notify({ to: { phone: user.phone }, locale: user.locale, template: "REVIEW_THANKS", params: { number: order.number } });
 }
 
-export async function openDispute(orderId: string, user: SessionUser, reason: DisputeReason, description: string): Promise<void> {
+/** Photos a buyer may attach to one report (checkout round 9). */
+export const MAX_DISPUTE_PHOTOS = 5;
+
+export async function openDispute(orderId: string, user: SessionUser, reason: DisputeReason, description: string, photoKeys: string[] = []): Promise<void> {
+  // Only this order's own report uploads, each at most once (keys come from the upload route).
+  const photos = [...new Set(photoKeys)].filter((k) => parseUploadKey(k)?.scope === "dispute" && parseUploadKey(k)?.ownerId === orderId);
+  if (photos.length !== new Set(photoKeys).size || photos.length > MAX_DISPUTE_PHOTOS) throw new OrderError("NOT_ALLOWED");
   const order = await db.order.findUnique({ where: { id: orderId }, include: { disputes: true } });
   if (!order || order.buyerId !== user.id) throw new OrderError("NOT_FOUND");
   const hasOpen = order.disputes.some((d) => d.status === "OPEN" || d.status === "UNDER_REVIEW");
@@ -1019,7 +1162,7 @@ export async function openDispute(orderId: string, user: SessionUser, reason: Di
       // read the same seq and the unique index rejects the second.
       if (await tx.dispute.count({ where: { orderId, status: { in: ["OPEN", "UNDER_REVIEW"] } } })) throw new OrderError("NOT_ALLOWED");
       const seq = await tx.dispute.count({ where: { orderId } });
-      await tx.dispute.create({ data: { orderId, openedById: user.id, reason, description: description.slice(0, 4000), seq } });
+      await tx.dispute.create({ data: { orderId, openedById: user.id, reason, description: description.slice(0, 4000), seq, ...(photos.length ? { photos: toJson(photos) } : {}) } });
       await tx.productionEvent.create({ data: { orderId, type: "NOTE" as ProductionEventType, note: `DISPUTE_OPENED:${reason}`, actorId: user.id } });
     });
   } catch (e) {

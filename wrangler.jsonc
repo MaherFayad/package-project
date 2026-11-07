@@ -1,0 +1,44 @@
+{
+  // Cloudflare Workers deployment (docs/DEPLOY-CLOUDFLARE.md). Requires the Workers Paid plan
+  // (10 MiB worker size limit; the Free plan's 3 MiB and 10 ms CPU are too small for this app).
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "elba",
+  "main": "worker.ts",
+  // node:fs, node:crypto, Buffer, AsyncLocalStorage (OpenNext and Prisma need them).
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+  "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "elba" }],
+  "observability": { "enabled": true },
+  // next/image optimisation through Cloudflare Images (OpenNext image loader).
+  "images": { "binding": "IMAGES" },
+
+  // PostgreSQL on Neon through Hyperdrive (pooled; one socket per request).
+  // Create with: npx wrangler hyperdrive create elba-db --connection-string="<Neon direct URL>"
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "<HYPERDRIVE_ID>",
+      // `wrangler dev` / `opennextjs-cloudflare preview` use this instead (local Postgres).
+      "localConnectionString": "postgresql://elba:elba@localhost:5432/elba_check"
+    }
+  ],
+
+  "r2_buckets": [
+    // Private files: vendor uploads, dispute photos, print PDFs, proof previews (src/lib/storage/blob.ts).
+    { "binding": "ELBA_FILES", "bucket_name": "elba-files" },
+    // OpenNext ISR cache (open-next.config.ts).
+    { "binding": "NEXT_INC_CACHE_R2_BUCKET", "bucket_name": "elba-next-cache" }
+  ],
+
+  // Daily job at 06:17 UTC (09:17 Cairo): retention purges + WhatsApp follow-ups (worker.ts).
+  "triggers": { "crons": ["17 6 * * *"] },
+
+  // Non-secret settings. Secrets go in with `npx wrangler secret put <NAME>`:
+  // SESSION_SECRET, CRON_SECRET, WHATSAPP_APP_SECRET, WHATSAPP_VERIFY_TOKEN, BOSTA_API_KEY, payment keys.
+  "vars": {
+    "NEXT_PUBLIC_SITE_URL": "https://elba.example",
+    // Client IP comes from CF-Connecting-IP only (src/lib/rate-limit.ts clientIp).
+    "TRUST_CF_CONNECTING_IP": "1"
+  }
+}

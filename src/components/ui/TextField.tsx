@@ -55,7 +55,18 @@ export interface TextFieldProps {
   autoFocus?: boolean;
   /** Visual variant: "borderless" for search inside toolbars. */
   variant?: "inherit" | "borderless";
+  /**
+   * Added by designer (R5-JR-20): a number field typed as text (so Arabic-Indic digits and a
+   * decimal comma work) that keeps spin-button semantics: role="spinbutton", aria-valuenow/min/
+   * max, and ArrowUp/ArrowDown (Shift: ×10) / PageUp/PageDown call `onStep`.
+   */
+  spinbutton?: { now?: number; min?: number; max?: number; onStep: (delta: number) => void; step?: number };
+  /** Extra ids for aria-describedby (e.g. a group error shown once under several fields). */
+  ariaDescribedBy?: string;
 }
+
+const inRange = (sb: { now?: number; min?: number; max?: number }): sb is { now: number } =>
+  sb.now !== undefined && Number.isFinite(sb.now) && (sb.min === undefined || sb.now >= sb.min) && (sb.max === undefined || sb.now <= sb.max);
 
 /** Text input / textarea with label, help text, inline error, prefix/suffix and character count. */
 export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, TextFieldProps>(function TextField(props, ref) {
@@ -100,6 +111,8 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
     size = "medium",
     autoFocus,
     variant = "inherit",
+    spinbutton,
+    ariaDescribedBy,
   } = props;
   const { s } = useUi();
   const autoId = useId();
@@ -131,8 +144,27 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
     autoFocus,
     dir,
     "aria-invalid": error ? true : undefined,
-    "aria-describedby": describedBy(id, error, helpText, showCharacterCount ? countId : undefined),
+    "aria-describedby": describedBy(id, error, helpText, [showCharacterCount ? countId : null, ariaDescribedBy].filter(Boolean).join(" ") || undefined),
     className: cx(styles.Input, align && styles[`align-${align}`], monospaced && styles.mono),
+    ...(spinbutton
+      ? {
+          role: "spinbutton",
+          // Only a value inside [min, max] is a valid aria-valuenow; out of range the field is invalid.
+          "aria-valuenow": inRange(spinbutton) ? spinbutton.now : undefined,
+          "aria-valuemin": spinbutton.min,
+          "aria-valuemax": spinbutton.max,
+          // R6-AX-05: the unit is visible beside the value but was not spoken ("Length 250").
+          "aria-valuetext":
+            inRange(spinbutton) && (typeof suffix === "string" || typeof suffix === "number") ? `${spinbutton.now} ${suffix}` : undefined,
+          onKeyDown: (e: React.KeyboardEvent) => {
+            const st = spinbutton.step ?? 1;
+            const d = e.key === "ArrowUp" ? st : e.key === "ArrowDown" ? -st : e.key === "PageUp" ? st * 10 : e.key === "PageDown" ? -st * 10 : 0;
+            if (!d) return;
+            e.preventDefault();
+            spinbutton.onStep(e.shiftKey && Math.abs(d) === st ? d * 10 : d);
+          },
+        }
+      : {}),
   };
 
   const rows = typeof multiline === "number" ? multiline : 3;

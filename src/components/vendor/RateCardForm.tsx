@@ -2,23 +2,19 @@
 
 import { Plus, Table2, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
-import {
-  Banner,
-  BlockStack,
-  Button,
-  Card,
-  Checkbox,
-  DataTable,
-  InlineGrid,
-  InlineStack,
-  Layout,
-  LayoutSection,
-  Page,
-  Text,
-  TextField,
-  useToast,
-} from "@/components/ui";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { Banner } from "@/components/ui/Banner";
+import { BlockStack, InlineGrid, InlineStack } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Checkbox } from "@/components/ui/Checkbox";
+import { DataTable } from "@/components/ui/IndexTable";
+import { Layout, LayoutSection } from "@/components/ui/Layout";
+import { Page } from "@/components/ui/Page";
+import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
+import { rememberFocusedField, useRestoreRememberedFocus } from "@/components/ui/focusRescue";
+import { useToast } from "@/components/ui/Toast";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { formatMoney, formatNumber } from "@/lib/format";
@@ -62,11 +58,14 @@ export function RateCardForm({ card, offeredFinishes, models, listed = [] }: { c
   const unitDec = { alwaysDecimals: preview.some((p) => p.unit !== null && Math.round(p.unit) % 100 !== 0) };
   const totalDec = { alwaysDecimals: preview.some((p) => p.total !== null && Math.round(p.total) % 100 !== 0) };
 
+  const lastField = useRef<HTMLElement | null>(null);
   const onSave = useCallback(async () => {
     const local = validateRateCard(form, card.structureCode, finishes);
     if (!local.ok) {
       setErrors(local.errors);
       toast.show(t("vendorPortal.rateCards.errors.summary", { count: Object.keys(local.errors).length }), { tone: "critical" });
+      // a11y R6-AX-08: take the keyboard to the first field to fix (Save sits in the top bar).
+      requestAnimationFrame(() => document.querySelector<HTMLElement>("main [aria-invalid=true]")?.focus());
       return;
     }
     setSaving(true);
@@ -77,6 +76,8 @@ export function RateCardForm({ card, offeredFinishes, models, listed = [] }: { c
         setInitial(form);
         setUpdatedAt(res.data.updatedAt);
         toast.show(t("vendorPortal.rateCards.saved"));
+        // a11y R6-AX-06: the form remounts with the saved data; keep the keyboard on the same field.
+        rememberFocusedField(lastField.current);
         router.refresh();
       } else if (res.fieldErrors) {
         setErrors(res.fieldErrors as RateCardErrors);
@@ -96,6 +97,7 @@ export function RateCardForm({ card, offeredFinishes, models, listed = [] }: { c
     setErrors({});
   }, [initial]);
 
+  useRestoreRememberedFocus();
   useContextualSaveBar({ dirty, saving, onSave, onDiscard });
 
   // R4: labels, pouches and tubes are priced per label / pouch / tube, not "per box".
@@ -110,6 +112,9 @@ export function RateCardForm({ card, offeredFinishes, models, listed = [] }: { c
   return (
     <Page title={title} titleIcon={Table2} backAction={{ content: t("vendorPortal.rateCards.back"), url: `/${locale}/vendor/rate-cards` }} subtitle={t("vendorPortal.rateCards.editSubtitle", u)}>
       <form
+        onFocusCapture={(e) => {
+          lastField.current = e.target as HTMLElement;
+        }}
         noValidate
         onSubmit={(e) => {
           e.preventDefault();

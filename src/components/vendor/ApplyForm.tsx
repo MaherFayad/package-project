@@ -3,7 +3,17 @@
 import { FileCheck2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Banner, BlockStack, Button, Card, Checkbox, DropZone, Icon, InlineGrid, InlineStack, Select, Text, TextField, useToast } from "@/components/ui";
+import { Banner } from "@/components/ui/Banner";
+import { BlockStack, InlineGrid, InlineStack } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Checkbox } from "@/components/ui/Checkbox";
+import { DropZone } from "@/components/ui/DropZone";
+import { Icon } from "@/components/ui/Icon";
+import { Select } from "@/components/ui/Select";
+import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
+import { useToast } from "@/components/ui/Toast";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { STRUCTURE_FAMILY } from "@/lib/dieline/materials";

@@ -21,7 +21,7 @@ test("phone + OTP sign-in (dev banner) reaches protected orders page", async ({ 
   await expect(page).toHaveURL(/\/en\/login\?next=/);
   const code = await sendOtp(page, phone);
   await page.getByLabel("Verification code").fill(code);
-  await page.getByLabel(/I agree to the Terms/).check();
+  await page.getByLabel(/I agree to the terms/i).check();
   await page.getByRole("button", { name: "Verify and continue" }).click();
   await expect(page).toHaveURL(/\/en\/orders$/);
 });

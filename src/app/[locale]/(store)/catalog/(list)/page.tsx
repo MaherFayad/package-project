@@ -7,8 +7,11 @@ import { formatNumber } from "@/lib/format";
 import { CatalogueBrowser } from "@/components/catalogue/CatalogueBrowser";
 import { COPY, fill } from "@/components/catalogue/copy";
 import { getCatalogueData } from "@/components/catalogue/server";
-import mk from "@/components/marketing/marketing.module.css";
 import styles from "@/components/catalogue/catalogue.module.css";
+import { Sheet } from "@/components/marketing/kit/Sheet";
+import { Glow } from "@/components/marketing/kit/Glow";
+import { Eyebrow, Lead } from "@/components/marketing/kit/Display";
+import { HeroTitle } from "@/components/marketing/kit/HeroTitle";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -35,44 +38,36 @@ export default async function CatalogPage({ params }: Props) {
   const base = siteUrl();
   const data = await getCatalogueData();
   return (
-    <>
+    <div>
       <JsonLd
         data={breadcrumbJsonLd([
           { name: t("nav.home"), url: `${base}/${locale}` },
           { name: t("nav.catalog"), url: `${base}/${locale}/catalog` },
         ])}
       />
-      <section className={`${mk.band} ${mk.bandMint}`} aria-labelledby="catalogue-title" style={{ paddingBlockStart: "clamp(48px, 6vw, 80px)", paddingBlockEnd: 40 }}>
-        <div className={mk.container}>
-          <span className={`${mk.eyebrow} m-enter`}>{COPY.eyebrow[locale]}</span>
-          <h1 id="catalogue-title" className={`${mk.h1} m-enter`} style={{ ["--m-i" as string]: 1 }}>
-            {COPY.title[locale]}
-          </h1>
-          <p className={`${mk.lead} m-enter`} style={{ ["--m-i" as string]: 2, marginBlockStart: 20 }}>
-            {fill(COPY.lead[locale], { count: formatNumber(data.counts.total) })}
-          </p>
-          <dl className={`${styles.stats} m-enter`} style={{ ["--m-i" as string]: 3 }}>
-            {[
-              [data.counts.total, COPY.statModels],
-              [data.counts.designer, COPY.statDesigner],
-              [data.counts.egypt, COPY.statEgypt],
-              [data.counts.instant, COPY.statInstant],
-            ].map(([n, label]) => (
-              <div key={(label as { en: string }).en} className={styles.stat}>
-                <dt className={styles.statLabel}>{(label as { ar: string; en: string })[locale]}</dt>
-                <dd className={styles.statNum} style={{ order: -1, margin: 0 }}>
-                  {formatNumber(n as number)}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-      </section>
-      <section className={mk.band} style={{ paddingBlockStart: 0 }} aria-label={COPY.eyebrow[locale]}>
-        <div className={mk.container}>
-          <CatalogueBrowser locale={locale} cards={data.cards} taxonomy={data.taxonomy} />
-        </div>
-      </section>
-    </>
+      <Sheet tone="dark" hero className={`${styles.heroCompact} ${styles.heroClip}`} aria-labelledby="catalogue-title">
+        <Glow color="violet" x="85%" y="0%" size="70vmax" />
+        <Glow color="green" x="5%" y="110%" size="45vmax" />
+        <Eyebrow className="m-enter">{COPY.eyebrow[locale]}</Eyebrow>
+        <HeroTitle size="64" id="catalogue-title" text={COPY.title[locale]} />
+        <Lead className="m-enter-lcp">{fill(COPY.lead[locale], { count: formatNumber(data.counts.total) })}</Lead>
+        <dl className={`${styles.stats} m-enter`}>
+          {[
+            [data.counts.total, COPY.statModels],
+            [data.counts.designer, COPY.statDesigner],
+            [data.counts.egypt, COPY.statEgypt],
+            [data.counts.instant, COPY.statInstant],
+          ].map(([n, label]) => (
+            <div key={(label as { en: string }).en} className={styles.stat}>
+              <dt className={styles.statLabel}>{(label as { ar: string; en: string })[locale]}</dt>
+              <dd className={styles.statNum}>{formatNumber(n as number)}</dd>
+            </div>
+          ))}
+        </dl>
+      </Sheet>
+      <Sheet tone="white" aria-label={COPY.eyebrow[locale]}>
+        <CatalogueBrowser locale={locale} cards={data.cards} taxonomy={data.taxonomy} />
+      </Sheet>
+    </div>
   );
 }

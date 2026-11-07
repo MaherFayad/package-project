@@ -260,8 +260,10 @@
   font: inherit;
   font-size: var(--p-text-body-md-font-size);
   outline: none;
+  /* R5-PL-12: at 320 px the placeholder was cut mid-word ("البحث في الطل"); end it with an ellipsis. */
+  text-overflow: ellipsis;
 }
-.SearchInput::placeholder { color: var(--e-color-topbar-text-secondary); opacity: 1; }
+.SearchInput::placeholder { text-overflow: ellipsis; color: var(--e-color-topbar-text-secondary); opacity: 1; }
 .SearchInput::-webkit-search-cancel-button { filter: invert(1); }
 @media (max-width: 767.98px) { .SearchInput { font-size: var(--p-font-size-400); } }
 .Kbd { display: none; gap: var(--p-space-100); padding-inline-end: var(--p-space-200); }
@@ -320,7 +322,7 @@
 .SaveBarDiscard:hover { background: #5a5a5a; }
 .SaveBarSave { background: #ffffff; color: var(--p-color-text); box-shadow: var(--p-shadow-button); }
 .SaveBarSave:hover { background: #f1f1f1; }
-.SaveBarSave:disabled { background: #616161; color: #cccccc; box-shadow: none; cursor: default; }
+.SaveBarSave:disabled, .SaveBarSave[aria-disabled="true"] { background: #616161; color: #cccccc; box-shadow: none; cursor: default; }
 .SaveBarDiscard:focus-visible, .SaveBarSave:focus-visible { outline: var(--p-focus-ring-width) solid var(--e-color-border-focus-inverse); outline-offset: var(--p-focus-ring-offset); }
 @media (pointer: coarse) { .SaveBarDiscard, .SaveBarSave { min-block-size: var(--e-control-height-touch); } }
 @media (max-width: 489.98px) {

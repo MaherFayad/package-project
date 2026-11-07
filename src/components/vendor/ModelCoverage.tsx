@@ -1,7 +1,13 @@
 "use client";
 
 import { useId, useMemo, useState } from "react";
-import { Badge, BlockStack, Button, Card, Link, Text, TextField } from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { BlockStack } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Link } from "@/components/ui/Link";
+import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
 import { useI18n } from "@/i18n/client";
 import { formatNumber } from "@/lib/format";
 import { normaliseQuery } from "./lib/jobs";

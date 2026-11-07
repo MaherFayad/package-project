@@ -3,23 +3,15 @@
 import { ClipboardList } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
-import {
-  Button,
-  Checkbox,
-  EmptyBoxIllustration,
-  EmptyState,
-  IndexFilters,
-  IndexTable,
-  IndexTableCell,
-  IndexTableRow,
-  IndexTableRowLink,
-  Page,
-  Select,
-  BlockStack,
-  Tabs,
-  Text,
-  type AppliedFilter,
-} from "@/components/ui";
+import { Button } from "@/components/ui/Button";
+import { Checkbox } from "@/components/ui/Checkbox";
+import { EmptyBoxIllustration, EmptyState } from "@/components/ui/EmptyState";
+import { IndexFilters, IndexTable, IndexTableCell, IndexTableRow, IndexTableRowLink, type AppliedFilter } from "@/components/ui/IndexTable";
+import { Page } from "@/components/ui/Page";
+import { Select } from "@/components/ui/Select";
+import { BlockStack } from "@/components/ui/Stack";
+import { Tabs } from "@/components/ui/Tabs";
+import { Text } from "@/components/ui/Text";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { formatDate, formatMoney, formatNumber } from "@/lib/format";

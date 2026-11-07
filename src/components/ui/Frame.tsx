@@ -9,9 +9,11 @@ import {
   useContext,
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
+  Suspense,
   type KeyboardEvent,
   type ReactNode,
 } from "react";
@@ -23,6 +25,7 @@ import { Button } from "./Button";
 import { Icon, renderIcon, type IconSource } from "./Icon";
 import { Popover } from "./Popover";
 import { cx, getFocusable } from "./utils";
+import { captureFocusRescue } from "./focusRescue";
 import styles from "./Frame.module.css";
 
 /* ───────────────────────── Frame ───────────────────────── */
@@ -46,6 +49,12 @@ export interface FrameProps {
   navigationLabel?: string;
   /** Render the content area as a <div> when an outer layout already owns <main id="main">. */
   contentElement?: "main" | "div";
+  /**
+   * Wrap the content in a Suspense boundary (R5-PL-17, default true). Pass false when the routes
+   * under this frame own their boundaries below their own checks: a notFound() inside a boundary
+   * streams with a 200 status (admin detail routes, R5-PL-03), same as MarketingShell boundary={false}.
+   */
+  boundary?: boolean;
 }
 
 /**
@@ -53,7 +62,7 @@ export interface FrameProps {
  * the #f1f1f1 canvas in a rounded sheet. Renders the page's single <main id="main">.
  * Side nav sits on the inline start (right in RTL).
  */
-export function Frame({ topBar, navigation, children, navigationLabel, contentElement = "main" }: FrameProps) {
+export function Frame({ topBar, navigation, children, navigationLabel, contentElement = "main", boundary = true }: FrameProps) {
   const { s } = useUi();
   const navId = useId();
   const [navOpen, setNavOpen] = useState(false);
@@ -132,12 +141,18 @@ export function Frame({ topBar, navigation, children, navigationLabel, contentEl
               {navOpen ? <div className={styles.NavBackdrop} onClick={closeNav} aria-hidden="true" /> : null}
             </>
           ) : null}
+          {/* R5-PL-17: a boundary between the frame and the page. Under a slow phone CPU a page's
+              client chunk or RSC row can still be pending when hydration reaches <main>; without a
+              boundary React could not wait, reported #418 and re-rendered the whole app on the
+              client (LCP ~5 s). With it, React keeps the server HTML and hydrates it when ready. */}
           {contentElement === "main" ? (
             <main id="main" tabIndex={-1} className={styles.Main}>
-              {children}
+              {boundary ? <Suspense fallback={null}>{children}</Suspense> : children}
             </main>
           ) : (
-            <div className={styles.Main}>{children}</div>
+            <div className={styles.Main}>
+              {boundary ? <Suspense fallback={null}>{children}</Suspense> : children}
+            </div>
           )}
         </div>
       </div>
@@ -339,8 +354,35 @@ function UserMenu({ name, detail, initials, avatarSource, actions }: UserMenuPro
 /** Dark pill: "Unsaved changes" · Discard · Save. Lives in the top bar while a form is dirty. */
 export function ContextualSaveBar({ message, saveAction, discardAction }: ContextualSaveBarProps) {
   const { s } = useUi();
+  // a11y R6-AX-06: Save / Discard close the bar, so focus inside it used to fall to <body> (and a
+  // natively disabled Save blurred while saving). Focus goes back to the last control used outside
+  // the bar (the field that made the form dirty); if that is gone, to the nearest control.
+  const barRef = useRef<HTMLDivElement>(null);
+  const lastOutside = useRef<HTMLElement | null>(typeof document !== "undefined" && document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null);
+  useEffect(() => {
+    const onFocusIn = (e: FocusEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (el && el !== document.body && !barRef.current?.contains(el)) lastOutside.current = el;
+    };
+    document.addEventListener("focusin", onFocusIn);
+    return () => document.removeEventListener("focusin", onFocusIn);
+  }, []);
+  useLayoutEffect(() => {
+    const bar = barRef.current;
+    return () => {
+      const active = document.activeElement as HTMLElement | null;
+      if (!bar || !active || !bar.contains(active)) return;
+      const back = lastOutside.current;
+      // Registered first, so it runs before the generic rescue's frame callback.
+      requestAnimationFrame(() => {
+        if (back && back.isConnected && (document.activeElement === document.body || !document.activeElement)) back.focus();
+      });
+      captureFocusRescue(active);
+    };
+  }, []);
+  const busy = Boolean(saveAction.loading);
   return (
-    <div className={styles.SaveBar} role="region" aria-label={typeof message === "string" ? message : s.unsavedChanges}>
+    <div ref={barRef} className={styles.SaveBar} role="region" aria-label={typeof message === "string" ? message : s.unsavedChanges}>
       <span className={styles.SaveBarMessage}>
         <Icon source={CircleAlert} size="small" />
         <span role="status">{message ?? s.unsavedChanges}</span>
@@ -355,9 +397,11 @@ export function ContextualSaveBar({ message, saveAction, discardAction }: Contex
           type={saveAction.submit ? "submit" : "button"}
           form={saveAction.form}
           className={styles.SaveBarSave}
-          onClick={saveAction.onAction}
-          disabled={saveAction.disabled || saveAction.loading}
-          aria-busy={saveAction.loading || undefined}
+          onClick={busy ? (e) => e.preventDefault() : saveAction.onAction}
+          // Saving keeps focus (aria-disabled, clicks and the implicit submit ignored), like the kit Button.
+          disabled={saveAction.disabled}
+          aria-disabled={busy || undefined}
+          aria-busy={busy || undefined}
         >
           {saveAction.content ?? s.save}
         </button>

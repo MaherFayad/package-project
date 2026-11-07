@@ -7,14 +7,13 @@
  *  3. scopes every query by the caller's vendorId (no cross-vendor access),
  *  4. re-checks the job state machine and the shared order graph (src/lib/orders/state.ts).
  */
-import { access } from "node:fs/promises";
 import { revalidatePath } from "next/cache";
 import { purgeCatalogCache } from "@/lib/catalog-cache";
 import { headers } from "next/headers";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { toJson, fromJson } from "@/lib/json";
-import { rateLimit } from "@/lib/rate-limit";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { getSession } from "@/lib/auth/session";
 import { getDictionary } from "@/i18n";
 import { assertTransition, OrderTransitionError } from "@/lib/orders/state";
@@ -29,8 +28,7 @@ import { keyFromUrl, parseKey } from "../lib/files";
 import { listedBases } from "../lib/coverage";
 import { bioSaveData } from "../lib/bio-review";
 import { FieldErrors, VendorActionError, runAction, vendorForMutation, type ActionResponse } from "./context";
-import { deleteUpload, uploadRoot } from "./storage";
-import path from "node:path";
+import { deleteUpload, uploadExists } from "./storage";
 
 const id = z.string().min(1).max(40).regex(/^[A-Za-z0-9_-]+$/);
 
@@ -305,7 +303,7 @@ export async function submitApplication(input: unknown, locale: string): Promise
     const open = await db.vendorApplication.findFirst({ where: { applicantId: user.id, status: { in: ["SUBMITTED", "UNDER_REVIEW"] } } });
     if (open) throw new FieldErrors({ _: "ALREADY_APPLIED" });
 
-    // Documents must be this applicant's own uploads and must exist on disk.
+    // Documents must be this applicant's own uploads and must exist in storage.
     const fields: Record<string, string> = {};
     for (const [i, d] of v.documents.entries()) {
       const k = parseKey(d.key);
@@ -313,11 +311,7 @@ export async function submitApplication(input: unknown, locale: string): Promise
         fields[`documents.${i}`] = "INVALID";
         continue;
       }
-      try {
-        await access(path.join(uploadRoot(), k.scope, k.ownerId, k.file));
-      } catch {
-        fields[`documents.${i}`] = "INVALID";
-      }
+      if (!(await uploadExists(d.key))) fields[`documents.${i}`] = "INVALID";
     }
     if (Object.keys(fields).length) throw new FieldErrors(fields);
 
@@ -371,7 +365,7 @@ export async function submitApplication(input: unknown, locale: string): Promise
           granted: true,
           textVersion: APPLICATION_TEXT_VERSION,
           locale: loc,
-          ip: h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
+          ip: ((ip) => (ip === "unknown" ? null : ip))(clientIp(h)),
           userAgent: h.get("user-agent")?.slice(0, 300) ?? null,
         },
       });

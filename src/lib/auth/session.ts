@@ -1,13 +1,13 @@
 import "server-only";
 import { cookies, headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
 import { db } from "@/lib/db";
 import { isProd } from "@/lib/env";
 import { clientIp } from "@/lib/rate-limit";
 import type { Locale, Role } from "@/types";
 import { DEFAULT_LOCALE } from "@/types";
-import { SESSION_COOKIE, SESSION_TTL_DAYS } from "./constants";
+import { SESSION_COOKIE, SESSION_TTL_DAYS, sessionLive } from "./constants";
 import { randomToken, sha256 } from "./crypto";
 
 /** What server code gets about the signed-in user. Serialisable; safe to pass to client components. */
@@ -39,7 +39,12 @@ export const getSession = cache(async (): Promise<Session | null> => {
     where: { tokenHash: sha256(token) },
     include: { user: true },
   });
-  if (!row || row.expiresAt < new Date()) return null;
+  if (!row) return null;
+  if (!sessionLive(row, row.user.role)) {
+    // Expired, or an ADMIN session past ADMIN_SESSION_MAX_HOURS (R5-SEC-12): drop it so it cannot come back.
+    await db.session.deleteMany({ where: { id: row.id } }).catch(() => undefined);
+    return null;
+  }
   const u = row.user;
   return {
     id: row.id,
@@ -64,6 +69,28 @@ export async function requireUser(locale: Locale, nextPath?: string): Promise<Se
     redirect(`/${locale}/login?next=${encodeURIComponent(next)}`);
   }
   return s.user;
+}
+
+/**
+ * R6-SEC-09: first line of EVERY admin page. Next renders a page alongside its layouts, so the
+ * admin layout's redirect does not stop the page: its data was streamed in the body of the 307
+ * (every user's phone number on /admin/users). A non-admin gets the not-found branch instead,
+ * while the layout's redirect still decides the response.
+ */
+export async function requireAdminPage(): Promise<SessionUser> {
+  const s = await getSession();
+  if (!s || s.user.role !== "ADMIN") notFound();
+  return s.user;
+}
+
+/**
+ * R6-SEC-02/03: true only for a signed-in ADMIN. Next renders nested layouts, pages and
+ * `generateMetadata` alongside the admin layout's redirect, so an admin detail layout or title
+ * that looks a record up must check this itself, or a signed-out request learns whether the
+ * record exists (and its name, through the title).
+ */
+export async function isAdminSession(): Promise<boolean> {
+  return (await getSession())?.user.role === "ADMIN";
 }
 
 /**

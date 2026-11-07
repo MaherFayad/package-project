@@ -227,3 +227,30 @@
 
 /* Stacked links in a table cell: 24 px targets with no overlap (WCAG 2.5.8). */
 .TapLink { display: inline-block; min-block-size: 1.5rem; padding-block: 0.125rem; }
+
+/* R6-05: bio edit next to the live bio (two columns from 768 px, stacked on phones). */
+.BioCompare { display: grid; gap: var(--p-space-300); grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 768px) { .BioCompare { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.BioPane { padding: var(--p-space-300); border: var(--p-border-width-025) solid var(--p-color-border-secondary); border-radius: var(--p-border-radius-200); background: var(--p-color-bg-surface-secondary); min-inline-size: 0; overflow-wrap: anywhere; }
+.BioPane[data-tone="edit"] { background: var(--p-color-bg-surface); border-color: var(--p-color-border-caution, var(--p-color-border)); }
+.BioPara { margin: 0; white-space: pre-wrap; text-align: start; font-size: var(--p-text-body-sm-font-size); line-height: var(--p-text-body-sm-font-line-height, 1.5); }
+/* Added words: underline + tint (not colour alone, WCAG 1.4.1); text keeps body contrast. */
+.BioAdded { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; text-decoration-color: var(--p-color-border-caution-strong, #b98900); background: var(--p-color-bg-surface-caution, #fff8db); color: inherit; border-radius: 2px; }
+
+/* R6-AD: delivery zones editor reflows under 490 px (WCAG 1.4.10): one card per zone, fields in
+   two columns with their names shown, no sideways scroll. */
+.ZoneFieldLabel { display: none; }
+@media (max-width: 489.98px) {
+  .ZoneScroll { overflow-x: visible; }
+  .ZoneTable { min-inline-size: 0; }
+  .ZoneTable thead { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .ZoneTable, .ZoneTable tbody { display: block; }
+  .ZoneTable tbody tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--p-space-200) var(--p-space-300); padding-block: var(--p-space-300); }
+  .ZoneTable tbody tr + tr > * { border-block-start: 0; }
+  .ZoneTable tbody tr + tr { border-block-start: 1px solid var(--p-color-border-secondary); }
+  .ZoneTable tbody th { grid-column: 1 / -1; padding: 0; }
+  .ZoneTable td { display: block; padding: 0; min-inline-size: 0; }
+  .ZoneFieldLabel { display: block; margin-block-end: var(--p-space-050); font-size: var(--p-text-body-sm-font-size); color: var(--p-color-text-secondary); }
+}
+.DetailsSummary { min-block-size: 1.5rem; padding-block: 0.125rem; cursor: pointer; }
+.PanelFocus:focus { outline: none; } .PanelFocus:focus-visible { outline: var(--p-focus-ring-width, 2px) solid var(--p-color-border-focus); outline-offset: 4px; border-radius: var(--p-border-radius-200); }

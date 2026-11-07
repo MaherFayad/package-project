@@ -1,0 +1,108 @@
+/*
+ * R6 restyle: page-local pieces for the catalogue, product, printer, legal, 404, sign-in and share
+ * pages. Sections, type and pills come from the foundation kit (kit/Sheet, kit/Display, kit/Pill);
+ * this sheet only adds what the kit has no component for (product split hero, media card, stats
+ * row, tiles, cards, legal TOC, 404 links, sign-in card). One stylesheet for the whole page group,
+ * so each page's inline CSS grows by this file once. Colours, radii and motion read the kit tokens
+ * (kit/tokens.css). Logical properties throughout, so RTL mirrors; renders are never mirrored.
+ */
+.page {
+  --rs-sheet: var(--mk-sheet);
+  --rs-ink: var(--mk-on-light);
+  --rs-r-tile: 24px;
+  display: block;
+}
+@media (max-width: 767px) {
+  .page { --rs-r-tile: 20px; }
+}
+
+/* Hero sheets: kit hero is near full height (landing pages); detail pages use a compact one. */
+.heroCompact.heroCompact[data-hero="true"] { min-block-size: 0; }
+.heroLanding.heroLanding[data-hero="true"] { min-block-size: 0; text-align: center; }
+.heroCenter { text-align: center; }
+.heroCenter :where(p) { margin-inline: auto; }
+
+/* Clips the kit <Glow> orbs to the sheet (no sideways scroll, WCAG 1.4.10). */
+.clip { overflow: clip; }
+
+/* ---------- Small type helpers ---------- */
+.small { margin: 0; font-size: var(--mk-fs-14); line-height: 1.4; color: var(--mk-muted, var(--mk-on-light-muted)); }
+.muted { margin: 0; color: var(--mk-muted, var(--mk-on-light-muted)); }
+.num { font-variant-numeric: tabular-nums; }
+.cardTitle { margin: 0; font-size: var(--mk-fs-20); font-weight: var(--mk-fw-title); line-height: 1.3; }
+.cardTitle:lang(ar) { font-weight: 550; line-height: 1.45; }
+.textLink { color: inherit; font-weight: 550; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.2em; }
+.textLink:hover { text-decoration-thickness: 2px; }
+:global([dir="rtl"]) .flip { transform: scaleX(-1); }
+
+/* ---------- Breadcrumbs ---------- */
+.crumbs { margin-block-end: var(--mk-stack-title-sub); font-size: var(--mk-fs-14); }
+.crumbs ol { display: flex; flex-wrap: wrap; gap: 4px 8px; margin: 0; padding: 0; list-style: none; }
+.crumbs li { display: inline-flex; align-items: center; gap: 8px; color: var(--mk-muted, var(--mk-on-light-muted)); }
+.crumbs li + li::before { content: "/"; opacity: 0.6; }
+.crumbs a { color: inherit; text-decoration: none; }
+.crumbs a:hover { text-decoration: underline; }
+.crumbs [aria-current] { color: inherit; font-weight: 550; }
+:global([data-tone="dark"]) .crumbs [aria-current] { color: var(--mk-on-dark); }
+
+/* ---------- Product split hero ---------- */
+.split { display: grid; gap: var(--mk-stack-head-content); align-items: center; }
+@media (min-width: 1024px) { .split { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: var(--mk-stack-head-content-lg); } }
+.mediaCard {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border: 1px solid var(--mk-line-dark);
+  border-radius: var(--mk-radius-card);
+  background: radial-gradient(120% 90% at 50% 100%, rgba(77, 33, 255, 0.3), transparent 60%), rgba(255, 255, 255, 0.04);
+}
+.mediaCard img { inline-size: 88%; block-size: auto; transition: transform var(--mk-dur-4) var(--mk-ease-media); }
+.mediaCard:hover img { transform: scale(1.03); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: var(--mk-stack-head-content) 0 0; padding: 0; list-style: none; }
+.chips li { display: inline-flex; align-items: center; gap: 8px; min-block-size: 36px; padding: 6px 14px; border: 1px solid var(--mk-line, var(--mk-line-light)); border-radius: var(--mk-radius-pill); font-size: 0.9375rem; }
+
+/* Stats row in a hairline box (the reference's checkout hero). Real numbers only. */
+.stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: var(--mk-stack-head-content) 0 0; padding: 0; border: 1px solid var(--mk-line, var(--mk-line-light)); border-radius: var(--mk-radius-tile); }
+@media (min-width: 768px) { .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); max-inline-size: 760px; } }
+.stat { display: flex; flex-direction: column; gap: 6px; padding: var(--mk-grid-gap) var(--mk-grid-gap); border-inline-start: 1px solid var(--mk-line, var(--mk-line-light)); }
+.stat:first-child { border-inline-start: 0; }
+@media (max-width: 767px) {
+  .stat:nth-child(odd) { border-inline-start: 0; }
+  .stat:nth-child(n + 3) { border-block-start: 1px solid var(--mk-line, var(--mk-line-light)); }
+}
+.statNum { order: -1; margin: 0; font-size: clamp(1.5rem, 1.2rem + 1vw, 1.75rem); font-weight: 360; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.statLabel { font-size: var(--mk-fs-14); line-height: 1.3; color: var(--mk-muted, var(--mk-on-light-muted)); }
+
+/* Printer profile stats (2 x 2) */
+.inlineIcon { display: inline-flex; align-items: center; gap: 6px; }
+.stats.stats2 { grid-template-columns: repeat(2, minmax(0, 1fr)); max-inline-size: none; margin: 0; }
+.stats2 .stat { padding: var(--mk-grid-gap-bento); }
+.stats2 .stat:nth-child(odd) { border-inline-start: 0; }
+.stats2 .stat:nth-child(n + 3) { border-block-start: 1px solid var(--mk-line, var(--mk-line-light)); }
+.stats2 .statNum { font-size: var(--mk-fs-44); font-weight: var(--mk-fw-heading); }
+.stats dd { margin: 0; }
+ul.stats { list-style: none; }
+
+/* ---------- Section heads ---------- */
+.head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--mk-stack-title-sub) var(--mk-grid-gap-bento); margin-block-end: var(--mk-stack-head-content); }
+.head > div { max-inline-size: 44rem; }
+.head :where(div > p) { margin-block-start: var(--mk-stack-title-sub); }
+.headGap { margin-block-end: var(--mk-stack-head-content); }
+
+@media (prefers-reduced-motion: reduce) {
+  .mediaCard img { transition: none; }
+  .mediaCard:hover img { transform: none; }
+}
+/* "Sample design · fictional brand" under renders that show our made-up brands (assets kit rule). */
+.figure { margin: 0; display: grid; gap: var(--mk-stack-title-sub); }
+.sampleNote { text-align: center; }
+.heroLandingNote { margin: 0; padding-block-start: var(--mk-stack-title-sub); }
+/* Share page: solid header, so a plain dark sheet with the compact hero rhythm. */
+/* Legal hero subline: 20px, as the reference's legal pages (also keeps it the phone LCP over the cookie notice). */
+.leadLg.leadLg { font-size: var(--mk-fs-20); }
+/* Pills-row follow-up line and in-page anchors (section-7 tokens only). */
+.afterPills { margin-block-start: var(--mk-stack-title-sub); }
+.anchor { scroll-margin-block-start: var(--mk-header-h); }
+.afterLead { margin-block-start: var(--mk-stack-head-content); }

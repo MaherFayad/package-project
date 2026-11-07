@@ -1,15 +1,9 @@
 import { Table2 } from "lucide-react";
-import {
-  Badge,
-  EmptyBoxIllustration,
-  EmptyState,
-  IndexTable,
-  IndexTableCell,
-  IndexTableRow,
-  IndexTableRowLink,
-  Page,
-  Text,
-} from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { EmptyBoxIllustration, EmptyState } from "@/components/ui/EmptyState";
+import { IndexTable, IndexTableCell, IndexTableRow, IndexTableRowLink } from "@/components/ui/IndexTable";
+import { Page } from "@/components/ui/Page";
+import { Text } from "@/components/ui/Text";
 import { requireVendorContext } from "@/components/vendor/server/context";
 import { listRateCards } from "@/components/vendor/server/queries";
 import { getT, toLocale, type DictKey } from "@/i18n";
@@ -53,8 +47,9 @@ export default async function RateCardsPage({ params }: { params: Promise<{ loca
             const tiers = [...c.qtyTiers].sort((a, b) => a.minQty - b.minQty);
             const first = tiers[0];
             const last = tiers[tiers.length - 1];
+            // R5-JR-17: a paused card is not cancelled; the "Paused" badge says it, so no strike-through.
             return (
-              <IndexTableRow key={c.id} id={c.id} tone={c.active ? undefined : "subdued"}>
+              <IndexTableRow key={c.id} id={c.id}>
                 <IndexTableCell>
                   <IndexTableRowLink url={`/${locale}/vendor/rate-cards/${c.id}`}>{t(`structures.${c.structureCode}` as DictKey)}</IndexTableRowLink>
                   {/* How many designer models this card prices (a style covers many family models). */}

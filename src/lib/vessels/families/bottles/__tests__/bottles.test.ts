@@ -303,7 +303,9 @@ describe("print surfaces", () => {
     const pl = wrap.placement as { r0: number; r1: number; y0: number; y1: number };
     expect(pl.r1).toBeGreaterThan(pl.r0); // widens upwards
     const slant = Math.hypot(pl.r1 - pl.r0, pl.y1 - pl.y0);
-    expect(wrap.trimAreaM2 * 1e6).toBeCloseTo(Math.PI * (pl.r0 + pl.r1) * slant, 0);
+    // frustum area plus the glued overlap past the seam (8 mm at the big end, R5-3Q-F-19)
+    const overlap = (2 * Math.PI + 8 / Math.max(pl.r0, pl.r1)) / (2 * Math.PI);
+    expect(wrap.trimAreaM2 * 1e6).toBeCloseTo(Math.PI * (pl.r0 + pl.r1) * slant * overlap, 0);
     expect(lid.shape).toBe("circle");
     expect(lid.trimWidthMm).toBeLessThan(326);
   });

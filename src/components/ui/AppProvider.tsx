@@ -4,6 +4,7 @@ import { createContext, useContext, useMemo, type ReactNode } from "react";
 import { useOptionalI18n } from "@/i18n/client";
 import { uiStrings, type UiLocale, type UiStrings } from "./strings";
 import { ToastProvider } from "./Toast";
+import { useFocusReveal } from "./useFocusReveal";
 
 interface UiContextValue {
   locale: UiLocale;
@@ -21,6 +22,7 @@ const UiContext = createContext<UiContextValue | null>(null);
 export function AppProvider({ locale, children }: { locale?: UiLocale; children: ReactNode }) {
   const i18n = useOptionalI18n();
   const resolved: UiLocale = locale ?? i18n?.locale ?? "en";
+  useFocusReveal();
   const value = useMemo<UiContextValue>(
     () => ({ locale: resolved, dir: resolved === "ar" ? "rtl" : "ltr", s: uiStrings[resolved] }),
     [resolved],

@@ -1,0 +1,206 @@
+/*
+ * Marketing kit tokens (public site, shopify.com 2026 design language; values measured on the
+ * reference, see docs/design-refs/shopify-2026-reference.md). Global, scoped to [data-mk]: the
+ * MarketingShell root carries it, the dev gallery too. Page CSS reads these, never literals.
+ *
+ * Dark-first: --mk-bg is the page canvas of rebuilt pages. The shell itself stays neutral so
+ * not-yet-rebuilt light pages (account, orders, sign-in) keep working; a page opts into the dark
+ * canvas with <Sheet tone="dark"> sections.
+ */
+[data-mk][data-mk] {
+  /* ── Colour: canvas and bands ─────────────────────────────── */
+  --mk-bg: #02090a;                 /* page canvas (measured rgb(2,9,10)) */
+  --mk-bg-2: #0a1314;               /* raised surface on dark (cards, menu panel) */
+  --mk-bg-3: #141d1e;               /* hover on dark */
+  --mk-bg-raised: #141a1a;          /* raised dark band, tone="dark-2" (reference pricing rgb(20,26,26));
+                                       white 17.4:1, 70% white 8.8:1, #a1a1aa 6.9:1 on it */
+  --mk-band-green: #041e18;         /* rgb(4,30,24) */
+  --mk-band-green-deep: #000805;
+  --mk-band-navy: #000a1e;          /* rgb(0,10,30) */
+  --mk-band-navy-2: #050917;        /* builder canvas rgb(5,9,23) */
+  --mk-band-violet: linear-gradient(160deg, #3b1fd9 0%, #5434f0 55%, #6a4cff 100%);
+  --mk-violet: #4b2ee6;             /* solid fallback / focus on violet */
+  --mk-violet-tint: #d9d0ff;        /* lilac pill on violet */
+  --mk-sheet: #f5f5f3;              /* light sheet rgb(245,245,243) */
+  --mk-sheet-2: #ffffff;
+  --mk-footer-bg: #000000;
+
+  /* ── Colour: text ─────────────────────────────────────────── */
+  --mk-on-dark: #ffffff;
+  --mk-on-dark-muted: rgba(255, 255, 255, 0.7);   /* 12.6:1 on --mk-bg */
+  --mk-on-dark-subtle: #a1a1aa;                   /* footer links (measured), 7.6:1 on black */
+  --mk-on-light: #000000;
+  --mk-on-light-muted: #52525b;                   /* 7.1:1 on --mk-sheet */
+  --mk-line-dark: rgba(255, 255, 255, 0.16);
+  --mk-line-dark-strong: rgba(255, 255, 255, 0.3);
+  --mk-line-light: rgba(0, 0, 0, 0.12);
+  --mk-green: #36f4a4;             /* green accent on dark (progress bars, dots) */
+  --mk-accent-ink: #047b5d;         /* accent on light (5.3:1 on white) */
+  --mk-focus: #36f4a4;              /* focus ring on dark (WCAG 2.4.7: 3:1+ vs every band) */
+  --mk-focus-light: #005bd3;
+
+  /* ── Radii ─────────────────────────────────────────────────── */
+  --mk-radius-sheet: 48px;          /* section sheet top corners */
+  --mk-radius-card: 32px;           /* inner cards */
+  --mk-radius-media: 20px;          /* media 16 to 24 */
+  --mk-radius-tile: 16px;
+  --mk-radius-pill: 9999px;
+
+  /* ── Shadows ───────────────────────────────────────────────── */
+  --mk-shadow-float: 0 2px 6px rgba(0, 0, 0, 0.18), 0 24px 64px rgba(0, 0, 0, 0.35);
+  --mk-shadow-light: 0 1px 2px rgba(0, 0, 0, 0.06), 0 12px 32px rgba(0, 0, 0, 0.08);
+
+  /* ── Motion (measured) ─────────────────────────────────────── */
+  --mk-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);   /* most transitions, reveals */
+  --mk-ease-out: cubic-bezier(0.215, 0.61, 0.355, 1); /* reveal variant */
+  --mk-ease-media: cubic-bezier(0.5, 0, 0.5, 1);      /* media hover 0.45s */
+  --mk-ease-enter: cubic-bezier(0, 0, 0.2, 1);
+  --mk-dur-1: 150ms;                /* hover colour, press */
+  --mk-dur-2: 200ms;                /* menu, footer links */
+  --mk-dur-3: 300ms;                /* reveal */
+  --mk-dur-4: 450ms;                /* media */
+  --mk-dur-title: 400ms;            /* hero-title-slide-in */
+  --mk-stagger: 60ms;
+  --mk-rise: 24px;
+  --mk-press: 0.97;
+
+  /* ── Layout and spacing (section 7 of the spec: measured, binding). Phone values here;
+     tablet (768 to 1023) and desktop (1024+) below. ── */
+  --mk-container: 1260px;
+  --mk-gutter: 16px;
+  --mk-header-h: 64px;
+  --mk-hero-top: var(--mk-header-h);
+  --mk-section-y: 40px;               /* standard band */
+  --mk-section-y-lg: 64px;            /* feature / sheet / violet and green bands */
+  --mk-section-y-xl: 80px;            /* closing CTA, after-hero statement */
+  --mk-stack-title-sub: 16px;         /* heading -> its subtitle */
+  --mk-stack-head-content: 32px;      /* heading block -> cards / media */
+  --mk-stack-head-content-lg: 48px;   /* big feature */
+  --mk-grid-gap: 16px;
+  --mk-grid-gap-tight: 12px;
+  --mk-grid-gap-bento: 16px;
+  --mk-radius-sheet: 32px;
+  --mk-sheet-overlap: var(--mk-radius-sheet); /* rule 3: the next sheet's top sits one radius into the band */
+  --mk-measure: 60ch;                 /* body line length (rule 5) */
+  --mk-intro-max: 760px;              /* centred section intros */
+
+  /* ── Type (fluid). Measured desktop: 96/300, 64/330, 56/330, 44/330, 20/450, 16-18 ── */
+  /* Inter first in both locales: it has no Arabic glyphs, so Arabic falls through to Noto, while
+     digits and Latin words reuse Inter (preloaded) instead of fetching Noto's Latin subset. */
+  --mk-font: var(--font-inter), var(--font-noto-arabic), "Noto Sans Arabic", -apple-system, "Segoe UI", Tahoma, sans-serif;
+  --mk-fs-hero: clamp(3.5rem, 0.621rem + 11.81vw, 11.25rem);  /* start-page giant: 56px at 390, 180px from 1440 (spec section 7) */
+  /* Section 7 type steps: phone / tablet / desktop (set per breakpoint below). */
+  --mk-fs-96: 3.5rem;                 /* h1 hero: 56 / 72 / 96 */
+  --mk-fs-64: 2.25rem;                /* h2 page-closing: 36 / 48 / 64 */
+  --mk-fs-56: 2.25rem;                /* h2 section: 36 / 48 / 56 */
+  --mk-fs-44: 1.75rem;                /* h3: 28 / 36 / 44 */
+  --mk-fs-20: 1.25rem;                                    /* card title */
+  --mk-fs-18: 1.125rem;                                   /* lead */
+  --mk-fs-16: 1rem;
+  --mk-fs-14: 0.875rem;
+  --mk-fw-display: 300;
+  --mk-fw-heading: 330;
+  --mk-fw-title: 450;
+  --mk-fw-button: 550;
+  --mk-lh-display: 1.08;
+  --mk-lh-heading: 1.08;
+  --mk-track-display: -0.02em;
+  --mk-track-heading: -0.03em;
+}
+/* Arabic: no negative tracking (it breaks joins), taller line height for ascenders and dots. */
+[data-mk][data-mk]:lang(ar) {
+  --mk-track-display: 0;
+  --mk-track-heading: 0;
+  --mk-lh-display: 1.25;
+  --mk-lh-heading: 1.25;
+}
+/* The marketing face for everything inside the shell (kit components and the admin-kit fields on
+   sign-in and account pages, which read --p-font-family-sans). */
+[data-mk][data-mk] {
+  --p-font-family-sans: var(--mk-font);
+  font-family: var(--mk-font);
+}
+@media (min-width: 768px) {
+  [data-mk][data-mk] {
+    --mk-gutter: 32px;
+    --mk-section-y: 56px;
+    --mk-section-y-lg: 80px;
+    --mk-section-y-xl: 96px;
+    --mk-stack-head-content-lg: 64px;
+    --mk-grid-gap: 24px;
+    --mk-grid-gap-tight: 16px;
+    --mk-grid-gap-bento: 24px;
+    --mk-radius-sheet: 40px;
+    --mk-fs-96: 4.5rem;
+    --mk-fs-64: 3rem;
+    --mk-fs-56: 3rem;
+    --mk-fs-44: 2.25rem;
+  }
+}
+@media (min-width: 1024px) {
+  [data-mk][data-mk] {
+    --mk-header-h: 72px;
+    /* Content box 1260 centred; at 1440 the gutter is 90px (shopify x=90). */
+    --mk-gutter: max(24px, (100vw - var(--mk-container)) / 2);
+    --mk-section-y: 64px;
+    --mk-section-y-lg: 100px;
+    --mk-section-y-xl: 128px;
+    --mk-stack-head-content: 40px;
+    --mk-stack-head-content-lg: 80px;
+    --mk-grid-gap-bento: 32px;
+    --mk-radius-sheet: 48px;
+    --mk-fs-96: 6rem;
+    --mk-fs-64: 4rem;
+    --mk-fs-56: 3.5rem;
+    --mk-fs-44: 2.75rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-mk][data-mk] { --mk-rise: 0px; --mk-press: 1; }
+}
+
+/* A page built from kit sheets gets the dark canvas behind and between them (no white gaps under
+   the overlapping 48px corners, or before the footer). Legacy light pages keep the white shell. */
+.mk-site:has(main [data-tone]) {
+  background: var(--mk-bg);
+  color: var(--mk-on-dark);
+}
+
+/* Kit gallery "reduced motion" preview (html[data-mk-reduced], set by the gallery toggle; JS
+   components read it through useReducedMotion). Mirrors what prefers-reduced-motion does. */
+html[data-mk-reduced] [data-mk] *,
+html[data-mk-reduced] [data-mk] *::before,
+html[data-mk-reduced] [data-mk] *::after {
+  animation: none !important;
+  transition: none !important;
+}
+html[data-mk-reduced][data-motion="on"] [data-reveal]:not([data-revealed]) {
+  opacity: 1;
+  transform: none;
+}
+
+/* English pages: the one Arabic word ("العربية" in the language switch) uses the system Arabic
+   face, so English visitors never download the 166 KB Noto Sans Arabic file. The name "Noto Sans
+   Arabic" must not appear here: it now matches our @font-face and would fetch the web font. */
+[data-mk][data-mk]:lang(en) [lang="ar"] {
+  font-family: system-ui, -apple-system, "Segoe UI", "Geeza Pro", Tahoma, sans-serif;
+}
+
+/* Outside the shell root but on a marketing page (the skip link, portals): same face, so Arabic
+   pages do not fetch a Plex cut just for the skip link's text. */
+body:has([data-mk]) {
+  --p-font-family-sans: var(--font-inter), var(--font-noto-arabic), "Segoe UI", Tahoma, sans-serif;
+  font-family: var(--p-font-family-sans);
+}
+
+/* Page-local decorative loops register with data-mk-motion (on the element or an ancestor). A
+   MotionScope with `global` pauses every one of them on the page, wherever it sits (R6-AX-15). */
+html[data-mk-motion-paused] [data-mk-motion],
+html[data-mk-motion-paused] [data-mk-motion] *,
+html[data-mk-motion-paused] [data-mk-motion]::before,
+html[data-mk-motion-paused] [data-mk-motion]::after,
+html[data-mk-motion-paused] [data-mk-motion] *::before,
+html[data-mk-motion-paused] [data-mk-motion] *::after { animation-play-state: paused !important; }
+@media (prefers-reduced-motion: reduce) {
+  [data-mk-motion], [data-mk-motion] *, [data-mk-motion]::before, [data-mk-motion]::after, [data-mk-motion] *::before, [data-mk-motion] *::after { animation: none !important; }
+}

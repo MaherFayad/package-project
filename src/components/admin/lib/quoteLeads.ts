@@ -7,8 +7,12 @@ import { z } from "zod";
  * account read, keeps its status. SLA: a reply within one working day (24 h), research report §4.1.
  */
 
-export type LeadState = "OPEN" | "CONTACTED" | "CLOSED";
-export const LEAD_VIEWS = ["open", "overdue", "contacted", "closed", "all"] as const;
+/**
+ * PRICED (R4-B-03): ops sent a fixed price (QUOTE_PRICED audit row, Quote.status PRICED); ops
+ * follows it up before it expires. ORDERED: the buyer paid the sent price (Quote.status ACCEPTED).
+ */
+export type LeadState = "OPEN" | "CONTACTED" | "PRICED" | "ORDERED" | "CLOSED";
+export const LEAD_VIEWS = ["open", "overdue", "contacted", "priced", "closed", "all"] as const;
 export type LeadView = (typeof LEAD_VIEWS)[number];
 
 export const leadStepSchema = z.object({
@@ -17,10 +21,19 @@ export const leadStepSchema = z.object({
   note: z.string().trim().min(3).max(500),
 });
 
-/** Latest admin outcome wins; no outcome = OPEN. */
-export function leadState(events: { action: string; createdAt: Date }[]): LeadState {
-  const last = [...events].filter((e) => e.action === "QUOTE_CONTACTED" || e.action === "QUOTE_CLOSED").sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0];
-  return last ? (last.action === "QUOTE_CLOSED" ? "CLOSED" : "CONTACTED") : "OPEN";
+const STEP_STATE: Record<string, LeadState> = { QUOTE_CONTACTED: "CONTACTED", QUOTE_PRICED: "PRICED", QUOTE_CLOSED: "CLOSED" };
+
+/**
+ * Latest admin outcome wins; no outcome = OPEN. A quote the buyer accepted is ORDERED whatever
+ * came before (`quoteStatus` ACCEPTED), and a closed lead stays closed.
+ */
+export function leadState(events: { action: string; createdAt: Date }[], quoteStatus?: string): LeadState {
+  if (quoteStatus === "ACCEPTED") return "ORDERED";
+  const last = [...events].filter((e) => Object.hasOwn(STEP_STATE, e.action)).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0];
+  const state = last ? STEP_STATE[last.action]! : "OPEN";
+  // A PRICED row is priced whatever the log says (a price written by another path has no
+  // QUOTE_PRICED row); only a later close ends it.
+  return quoteStatus === "PRICED" && state !== "CLOSED" ? "PRICED" : state;
 }
 
 /**
@@ -72,8 +85,10 @@ export function inLeadView(r: { state: LeadState; overdue: boolean }, view: Lead
       return r.overdue;
     case "contacted":
       return r.state === "CONTACTED";
+    case "priced":
+      return r.state === "PRICED";
     case "closed":
-      return r.state === "CLOSED";
+      return r.state === "CLOSED" || r.state === "ORDERED";
     default:
       return true;
   }

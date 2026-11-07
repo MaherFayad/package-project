@@ -1,19 +1,13 @@
 import { Banknote } from "lucide-react";
-import {
-  Badge,
-  Banner,
-  BlockStack,
-  Card,
-  EmptyBoxIllustration,
-  EmptyState,
-  IndexTable,
-  IndexTableCell,
-  IndexTableRow,
-  IndexTableRowLink,
-  MetricsStrip,
-  Page,
-  Text,
-} from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { Banner } from "@/components/ui/Banner";
+import { BlockStack } from "@/components/ui/Stack";
+import { Card } from "@/components/ui/Card";
+import { EmptyBoxIllustration, EmptyState } from "@/components/ui/EmptyState";
+import { IndexTable, IndexTableCell, IndexTableRow, IndexTableRowLink } from "@/components/ui/IndexTable";
+import { MetricsStrip } from "@/components/ui/MetricsStrip";
+import { Page } from "@/components/ui/Page";
+import { Text } from "@/components/ui/Text";
 import { requireVendorContext } from "@/components/vendor/server/context";
 import { getPayoutRows } from "@/components/vendor/server/queries";
 import { payoutBadge, payoutSummary } from "@/components/vendor/lib/payouts";

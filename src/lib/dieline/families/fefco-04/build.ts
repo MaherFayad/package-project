@@ -177,7 +177,7 @@ export function generateFamilyDieline(def: Fefco04Definition, dims: Dims, option
   const facePanelIds = new Set(Object.values(faces).flatMap((f) => f!.parts.map((x) => x.panelId)));
   const safeZones = draft.safeZones
     ? draft.safeZones(panels, safe)
-    : panels.filter((p) => facePanelIds.has(p.id)).map((p) => ({ panelId: p.id, rect: insetRect(p.bbox, safe) }));
+    : panels.filter((p) => facePanelIds.has(p.id)).map((p) => ({ panelId: p.id, rect: insetRect(clearRect(p), safe) }));
   const printPolys = bleedRegions.map((r) => r.polygon);
 
   const pieces: DielinePiece[] = panels
@@ -233,4 +233,42 @@ export function tryGenerateFamilyDieline(def: Fefco04Definition, dims: Dims, opt
   } catch {
     return null;
   }
+}
+
+/** Even-odd point in polygon (sheet coordinates). */
+function inside(pt: Pt, poly: Polygon): boolean {
+  let r = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const a = poly[i];
+    const b = poly[j];
+    if (a.y > pt.y !== b.y > pt.y && pt.x < ((b.x - a.x) * (pt.y - a.y)) / (b.y - a.y) + a.x) r = !r;
+  }
+  return r;
+}
+
+/**
+ * R5-3Q-C-07: the printable box of a face panel. A plain wall is its bbox; a cut-away (display
+ * front, scooped wall) gets the largest band of its bbox that the outline fully covers, so centred
+ * artwork stays on board and out of the opening.
+ */
+function clearRect(p: DielinePanel): { x: number; y: number; width: number; height: number } {
+  const b = p.bbox;
+  if (polygonArea(p.polygon) >= 0.985 * b.width * b.height) return b;
+  // candidate rects spanned by the outline's own x / y coordinates (bands, and the inner box of a
+  // chamfered octagon)
+  const xs = [...new Set([b.x, b.x + b.width, ...p.polygon.map((q) => q.x)])].sort((u, v) => u - v);
+  const ys = [...new Set([b.y, b.y + b.height, ...p.polygon.map((q) => q.y)])].sort((u, v) => u - v);
+  const cands: { x: number; y: number; width: number; height: number }[] = [];
+  for (let i = 0; i < xs.length; i++)
+    for (let j = i + 1; j < xs.length; j++)
+      for (let k = 0; k < ys.length; k++)
+        for (let l = k + 1; l < ys.length; l++) cands.push({ x: xs[i], y: ys[k], width: xs[j] - xs[i], height: ys[l] - ys[k] });
+  const covered = (r: (typeof cands)[number]) => {
+    const e = 0.2;
+    for (let i = 0; i <= 8; i++)
+      for (let j = 0; j <= 8; j++) if (!inside({ x: r.x + e + ((r.width - 2 * e) * i) / 8, y: r.y + e + ((r.height - 2 * e) * j) / 8 }, p.polygon)) return false;
+    return true;
+  };
+  cands.sort((a, c) => c.width * c.height - a.width * a.height);
+  return cands.find(covered) ?? b;
 }

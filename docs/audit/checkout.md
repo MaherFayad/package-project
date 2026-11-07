@@ -263,3 +263,277 @@ Counts (round 4, new findings before fixing): **critical 0, high 1, medium 7, lo
 - `src/i18n/en.ts`, `src/i18n/ar.ts`: one key, `account.notGiven` (R4-07).
 - `docs/audit/tools/perf-pages.mjs`: an optional `ONLY=` page filter. `docs/audit/tools/checkout-walk.cjs` is new.
 - `e2e/checkout.spec.ts`: one new test. Existing tests are unchanged.
+
+## Round 5
+
+Base: main at `aa726b9` (round 4 of every area merged), fast-forwarded into this branch. Work list: the checkout row of `docs/audit/ROUND5.md`, plus three items the integrator added: a11y R4-04 (invoice table at 320 px), real 404s for unknown `/orders/<id>` and `/s/<token>` (the R4-MK-09 Suspense boundary made them answer 200), and the R4-B-03 data shape agreed with the admin session.
+
+### Work list
+
+| id | result |
+|---|---|
+| **R4-B-01** (critical) | The fork fix itself (`modelCode` and `config` copied, the duplicate check includes them) came in with catalogue round 4 (`13f12e7`), along with its deep-link e2e. This round adds the server-side guard: `instantOrderBlock()` (`src/lib/orders/order-guard.ts`) runs in `createOrderFromOffer`, the single place every order is written (checkout, sample, reorder). A model whose order mode is quote or preview, or a run above 2,000 boxes, throws `MANUAL_QUOTE` unless the order comes from a price the team sent (`quoteId`). Unit test: `order-guard.test.ts`. New e2e `checkout-share-guard.spec.ts`: a wrong token, another design's id with a real token, and no token all give "Design not found" and create no copy. The real deep link creates one copy that keeps `LIQUID_ASEPTIC_BRICK`, shows "Request a price", and shows no per-box prices, no sample and no Continue. Opening it again reuses the same copy. **fixed** |
+| **R4-B-03** (high, checkout half) | Shape agreed by `send_message` with the admin session. The lead's own `Quote` row goes `REQUESTED → PRICED → ACCEPTED`, using three new nullable columns: `pricedAt`, `deliveryDays` and `vendorCostPiasters` (the printer's agreed price, needed for payouts). There is no prepay discount on a sent price. The link is `quoteCheckoutPath()` → `/checkout/<design>?quote=<id>` (`src/lib/orders/quote-status.ts`). `loadPricedQuote()` accepts only the buyer's own quote, for this design, still `PRICED`, still valid, from an active printer, with a vendor cost. The checkout then shows one offer card and "Your price for 5,000 boxes … valid until …". The governorate is locked to the one in the request (with help text). Order creation claims the quote (`PRICED → ACCEPTED`, conditional update) in the same transaction, so it works once. It writes a `QUOTE_ACCEPTED` audit row and sets `order.quoteId`. The 2,000-box cap is lifted only through this path (action schema + guard). A used, expired or foreign link shows "This price is no longer available" above the normal checkout. The account's "Price requests" card shows "Price ready · EGP 105,678.00 for 5,000 boxes, valid until …" and "Review price and pay". New e2e `checkout-quote.spec.ts` covers: another account gets nothing → account card → checkout → paid order with 5,000 boxes and the sent total and vendor cost → quote `ACCEPTED` → link refused when reused. **fixed** (admin "Send price" form: admin session) |
+| **R4-B-05** (medium) | The sample card label now reads "Sample + delivery, incl. VAT" / "العينة والتوصيل، شامل الضريبة", which matches the figure it shows. **fixed** |
+| **R4-B-06** (medium) | Already fixed by catalogue round 4: the quote-only reason shows at every quantity, there is no "Order 2,000 now" and no sample, and the summary says "priced by quote". Re-verified by `catalogue-order-modes.spec.ts`. The two hard-coded ar/en ternaries left in `CheckoutClient` are now dictionary keys (`buyer.qty.byQuote`, `byQuoteSummary`, `byQuoteHelp`). **fixed** |
+| **R4-B-07 / R4-CR-12** (medium) | `sellerTaxReady()` (`src/lib/orders/tax-document.ts`) checks for a 9-digit `ELBA_TAX_ID`. Until one is set, the document is "Order receipt INV-… (not a tax invoice)" / "إيصال طلب … (ليس فاتورة ضريبية)". The ETA block and its "is submitted" sentence are replaced by a plain note, and the order page action says "View receipt". With the variable set, the tax invoice returns unchanged. The checkout e2e now asserts "(not a tax invoice)" and the absence of "Pending submission"; VAT 14% is still asserted. Blocking a live deployment while it is unset is a platform/env check (open). **fixed** |
+| **R4-B-09 / R4-CR-07** (low / medium) | One stated minimum: `minOrderQuantity()` (smallest `minOrderQty` among active printers) drives the placeholder ("{min} to 2,000"). Each case gets its own message: a non-integer gives "Enter a whole number of boxes. Above 2,000 boxes we price by hand."; below the minimum gives "Printers start at {min} boxes. To try a few first, choose the sample."; above 1,000,000 gives "A price request takes up to 1,000,000 boxes." **fixed** |
+| **R4-B-13** (low) | The tier help text adds "Prices per box include setup and delivery, after the 3% prepay discount." **fixed** |
+| **R4-CR-02** (high) | `IsolatedList` (`orders/_components`) wraps every typed address part (street, building, city, governorate, landmark, name, company name) in its own `<bdi>`, joined with "، " in Arabic. It is used on the invoice/receipt and in the order's delivery card. The vendor job and admin order pages are other owners' files (open for them). **fixed (checkout files)** |
+| **R4-CR-04** (medium) | `BUYER_TRACK` (`src/lib/orders/buyer-track.ts`) adds a "Printer acceptance" / "قبول المطبعة" step between Paid and In production. Right after payment (status `PAID`) that step is current, so the tracker agrees with the "Awaiting printer" badge. The shared `BUYER_STEPS` in `state.ts` is unchanged, as vendor and admin use it. Unit test added. The checkout e2e now expects "Printer acceptance" as the current step after payment (this was the bug, so the assertion changes with it). **fixed** |
+| **R4-CR-15** (low) | The minus sign was fixed in round 4 (R4-02). This round: discount and credit lines use the success tone on checkout, payment and the order page. **fixed** |
+| **R4-CR-16** (low) | Already "، " in `orders.invoice.lineDesc` and the spec lines (verified in the ar receipt). **fixed (no change)** |
+| **R4-CR-23** (low) | The orders view tabs at 390 px get an end fade mask (direction-aware) plus end padding, so "Delivered" scrolls fully clear of it. Below 640 px only. **fixed** |
+| **CR-35** (medium, reopened) | Every money column in checkout, payment, the order and the receipt uses two decimals (`alwaysDecimals` on every `PriceTag`, tier and per-box figures), with tabular figures from `PriceTag`. The vendor jobs list and the public price list are other owners'. **fixed (checkout files)** |
+| **vendor R4-13** (low) | "Photos appear here once our team has checked them." / "تظهر الصور هنا بعد أن يراجعها فريقنا." **fixed** |
+| **a11y R4-04** (medium) | The phone invoice rows wrap (flex-wrap) instead of using a fixed 3-column grid, so a long amount drops to its own line. Measured at 320 px (ar and en, receipt, order, orders list): no table wrapper scrolls (`scrollWidth − clientWidth = 0`), 0 px page overflow, axe 0. Nothing left to make keyboard-scrollable. **fixed** |
+| **404s** (integrator) | `orders/layout.tsx` and `s/layout.tsx` render the shell with `boundary={false}`. The new segment layouts `orders/[id]/layout.tsx` and `s/[id]/layout.tsx` validate first (same viewer rule as the page; same token rules as `loadSharedDesign`) and then add the Suspense boundary themselves. `orders/(list)/layout.tsx` gives the list its boundary back. They pair with `orders/not-found.tsx` and `s/not-found.tsx`. An unknown order, another buyer's order (by id or number) and its invoice all answer the same 404, never 403. An unknown token answers 404 for anonymous visitors in ar and en. New e2e in `checkout-share-guard.spec.ts`. **fixed** |
+
+### Findings (new this round)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R5-01 | low | receipt (`invoice/page.tsx`) | The new receipt still printed "Tax registration number: To be assigned" and "Commercial register: To be assigned" for the seller. | Egyptian VAT Law 67/2016 (do not present tax-invoice fields on a receipt) | The seller tax lines are shown only when `sellerTaxReady()`. | fixed |
+| R5-02 | low | step 1, sample tile | "EGP 750 + VAT" in a column where every other price has two decimals. | CR-35 consistency | "EGP 750.00 + VAT". | fixed |
+| R5-03 | medium | account, price requests, 390 (`account/page.tsx`, `account.module.css`) | A priced request's badge and "Review price and pay" button squeezed the text column to one word per line, and the request title disappeared. | WCAG 1.4.10 Reflow | The row uses the saved-design phone layout (actions on their own row), indented to the text edge because requests have no thumbnail. | fixed |
+| R5-04 | medium | order 404 (`orders/not-found.tsx`, order page, receipt) | An unknown order said "We could not find this design." | ISO 9241-110 (self-descriptiveness) | "We could not find this order" plus "Check the order number in our message, or open your orders…" and "My orders" (ar: «لم نجد هذا الطلب»، «طلباتي»). | fixed |
+
+Counts (round 5, new findings before fixing): **critical 0, high 0, medium 2, low 2** (4 total). All fixed and re-checked in the browser. R5-03 came from this round's own new feature, the priced-request row. The rounds should stop only when a round finds nothing of medium or worse, so this round does not close them. The re-check after these fixes, below, found nothing new.
+
+### Verification (round 5)
+
+- Browser, rebuilt `next start`. The full journey walk (`checkout-walk.cjs`, 22 screens × en/ar × 390/1440 = 88) had axe 0 and 0 px overflow. Twenty-six round-5 screens were checked: the quoted checkout, an invalid quote link, the account priced row, order 404 and share 404 (ar/en × 390/1440), plus the receipt, order and orders list at 320 px (ar/en). All had axe 0, 0 px overflow and no table scroll. Seen: the tracker shows "قبول المطبعة" as current after payment; the ar receipt reads "12 شارع التحرير، الدقي، الجيزة" with green "−621.53" discount lines and two decimals in every column; the quoted step shows one printer and EGP 105,678.00.
+- `npm run lint` and `npm run typecheck` are clean. `npm test` passed 92 files and 8,501 tests (new: `order-guard`, `buyer-track`, `tax-document`). Two Arabic copy rules in `platform-i18n.test.ts` caught my first `buyer.quoted.title` (tatweel and a bare count); I fixed the copy, not the test. `next build` is OK with no warnings. First-load JS: checkout 159 KB, pay 150 KB, orders 148 KB, order 149 KB, invoice 146 KB, account 152 KB, share 142 KB.
+- e2e (`--workers=2 --trace off`, desktop + mobile, on a freshly seeded DB): `checkout`, `checkout-quote` (new), `checkout-share-guard` (new), `catalogue-order-modes`, `journey`, `smoke`, `admin` and `vendor` gave 52 passed and 17 skipped by the specs themselves. `storefront` gave 16 passed. Two earlier `storefront` runs failed 7 tests (legal pages, the box page and the vendor directory answered 404). The cause was this environment, not the code: a server process left over from before the rebuild, on a dev DB that had not been reseeded after the merge. A build of main on the same fresh DB answered 200 on those pages. After restarting my build on that DB, all 16 passed.
+
+### Open / for other owners (round 5)
+
+- **Admin**: the "Send price" form that writes the agreed shape. Set `vendorId`, `lines`, the totals (`vatOn`), `validUntil` (from the quote-validity setting), `deliveryDays`, `vendorCostPiasters`, `pricedAt` and `status = "PRICED"`, plus a `QUOTE_PRICED` audit row. Send the buyer `quoteCheckoutPath()`. The checkout refuses a priced quote without `vendorCostPiasters`. No reply yet in this session.
+- **Platform**: the `quote_sent` / `quote_accepted` analytics events (the event list in `src/lib/analytics/events.ts` belongs to platform; checkout writes the `QUOTE_ACCEPTED` audit row today), and blocking a live deployment while `ELBA_TAX_ID` is unset (R4-B-07).
+- **Vendor / admin**: `dir`-isolated addresses on the vendor job "Delivery" card and the admin order page (R4-CR-02), and one money precision in the vendor jobs list (CR-35).
+- **Platform (R4-CR-09)**: signed-in order pages still show the promo bar and "New design" in the header.
+
+### Files touched outside scope (round 5)
+
+- `prisma/schema.prisma`: `Quote.pricedAt`, `Quote.deliveryDays`, `Quote.vendorCostPiasters` (nullable, additive; agreed with admin).
+- `src/lib/orders/`: `order-guard.ts`, `buyer-track.ts`, `tax-document.ts`, `quote-status.ts` (new); `service.ts` (guard call, `minOrderQuantity`, `loadPricedQuote`, quoted order path, `OrderOffer` type); `quote-requests.ts` (re-exports, `quoteGovernorate`); three new unit tests.
+- `e2e/checkout-quote.spec.ts`, `e2e/checkout-share-guard.spec.ts` (new). `e2e/checkout.spec.ts`: two assertions follow the intended changes (receipt title, "Printer acceptance"); nothing removed or weakened.
+
+## Round 6
+
+Base: main at `d61f21f` (my round 5 merged, plus designer R8, performance, marketing and catalogue R8; `boxes/[structure]` and `legal/[doc]` now sit in the `(detail)` group with guard layouts). Fresh audit of the whole scope on a freshly seeded DB under `next start`:
+- the full journey walk (88 screens, en/ar × 390/1440);
+- the round 5 screens (quoted checkout, account price row, 404s, 320 px receipt);
+- for the first time in these rounds, the three non-card payment methods (mobile wallet, Fawry, InstaPay) at ar/en × 390/1440, including the clipboard.
+
+### Re-verification of round 5
+
+All round 5 rows still hold after the merge. Every walk screen had axe 0 and 0 px overflow. The tracker shows "Printer acceptance" after payment. The receipt title applies while `ELBA_TAX_ID` is unset. Unknown or other buyers' orders and unknown share tokens answer 404 (e2e). The guard and the quoted path pass their e2e. The admin "Send price" form is not on main yet (see Open).
+
+### Findings (new this round)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R6-01 | medium | payment, InstaPay (`PaymentClient.tsx`) | The buyer must type the InstaPay address and the order number into the bank app exactly, but neither had a copy action (Fawry has one). A wrong note means a transfer ops cannot match. | ISO 9241-110 (error tolerance); WCAG 3.3.4 spirit (prevent errors on financial actions) | "Copy address" and "Copy note" buttons (`buyer.copy.*`, "تم النسخ" toast) next to each value, wrapping under the value on phones. Verified: the clipboard holds exactly the order number. | fixed |
+| R6-02 | low | payment, card and wallet | "Pay EGP 14,250" / "دفع 14,250 ج.م" next to a summary that says "EGP 14,250.00". | CR-35 consistency | The pay amount always has two decimals. | fixed |
+| R6-03 | low | account header hint | "Add your name in Profile so the courier knows who to ask for" was not true: the courier uses the name on each delivery address. | Copy accuracy | "Add your name in Profile. It appears on your account and on your receipts; the courier uses the name on each delivery address." (ar likewise). | fixed |
+| R6-04 | low | payment, Fawry | The 13-digit reference was one unbroken run of digits, hard to read out at an outlet. | Readability | Shown in groups of four; screen readers and Copy get the raw digits (visually hidden span). | fixed |
+
+Counts (round 6, new findings before fixing): **critical 0, high 0, medium 1, low 3** (4 total). All fixed and re-checked in the browser. R6-01 is medium, so the stop rule ("no medium or worse") is not met yet. The re-walk after these fixes (journey en-390 and ar-1440, plus the payment-method screens) found nothing new.
+
+### Verification (round 6)
+
+- `npm run lint` and `npm run typecheck` are clean. `npm test` passed 8,508 tests. `next build` is OK with no warnings.
+- e2e (`--workers=2 --trace off`, desktop + mobile, fresh DB): `checkout`, `checkout-quote`, `checkout-share-guard`, `catalogue-order-modes`, `journey`, `smoke`, `storefront`, `admin` and `vendor` gave 59 passed and 17 skipped by the specs themselves, with 0 failures.
+- Browser: the payment methods had axe 0 and 0 px overflow, with focus on the step heading after Continue (X-01 holds). The journey re-walk had axe 0 and 0 px overflow on every screen.
+
+### Open (round 6)
+
+- **Admin "Send price"** (R4-B-03 admin half) is not on main yet. Until it is, a price request can only be priced by writing the row directly.
+- Native date input ("Needed by") shows the browser's date format, e.g. "mm/dd/yyyy" in an Arabic page; it follows the browser locale and is not set by the page.
+
+## Round 7
+
+Base: this branch at `c9864b5` (round 6), on a freshly seeded DB under `next start`. This was a fresh pass, focused as the integrator asked on what earlier walks never reached:
+- every order-tracking state: awaiting payment, cancelled, refunded, QC pending (with a photo), ready to ship, and shipped (with a shipment and tracking), each with its orders list and receipt, in ar 390 and en 1440 (32 screens);
+- the Arabic phone payment screens (card, declined, wallet, Fawry, InstaPay);
+- receipts after a refund.
+All screens had axe 0 and 0 px overflow, so every finding below is visible content, not markup.
+
+### Findings (new this round)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R7-02 | high | order tracking, Activity (`orders/[id]/page.tsx` `eventText`) | Free-text notes on any event other than NOTE were shown to the buyer verbatim. Printers and staff write these notes through the status API (a decline reason, a QC remark). A printer's "Call me on 01001234567" on VENDOR_DECLINED reached the buyer, and an English staff note appeared as-is in the Arabic timeline ("إلغاء الطلب: Buyer cancelled"). Round 4 (vendor) closed this only for NOTE events. | Plan §0 / B-08 (managed marketplace: no direct printer contact); PDPL 151/2020 (staff notes are not for the buyer) | Buyers see an event's label only. The single exception is the courier's tracking number on SHIPPED. Staff and printers keep the full note (`internal`). e2e: the printer's phone number and the refund reason never render. | fixed |
+| R7-01 | medium | refunded order, receipt (`orders/[id]/page.tsx`, `invoice/page.tsx`) | A refunded order showed no refund anywhere. The payment card dropped the paid line and showed nothing returned. The timeline said "Order cancelled", because a refund writes a CANCELLED event. The receipt still read "This is a receipt for your payment … Paid by Card". An unknown event type would have printed its raw dictionary key. | Consumer Protection Law 181/2018 (the buyer must be able to see the refund); ISO 9241-110 (self-descriptiveness) | The payment card now has a line "Refunded · Card  EGP 14,250.00" (success tone). On a refunded order the closing event reads "Order cancelled and refunded" / «إلغاء الطلب واسترداد المبلغ». The receipt gets a banner: "This order was refunded: EGP 14,250.00 went back to your Card on November 5, 2026. Credit note CN-… cancels this receipt." Unknown event types read "Order updated". e2e added (`checkout-states.spec.ts`). | fixed |
+| R7-03 | low | payment, card form | "Name on card" is not required (payment succeeds without it), but it was the only optional field without "(Optional)". | WCAG 3.3.2 | Marked optional like every other optional field. | fixed |
+
+Counts (round 7, new findings before fixing): **critical 0, high 1, medium 1, low 1** (3 total). All fixed and re-checked in the browser. R7-02 and R7-01 are high and medium, so the stop rule is not met. The re-check after the fixes (refunded order and receipt, ar 390 and en 1440: axe 0, 0 px overflow, no printer phone in the HTML) found nothing new.
+
+Also checked and fine: awaiting payment shows "Pay now" and a "Due" line, with the "print file after payment" hint before payment only. Cancelled shows "Order this design" and no due amount. QC pending shows no unreviewed photo to the buyer ("appear once our team has checked them"). Shipped shows the carrier, tracking number, status badge and tracking link. Ready to ship is current on Shipped. A typed Latin street ("14 Abbas El Akkad St") stays in order in every Arabic address card. On the Arabic phone card form, the decline keeps the expiry and CVC and focuses the number.
+
+### Verification (round 7)
+
+- `npm run lint` and `npm run typecheck` are clean. `npm test` passed 8,508 tests. `next build` is OK with no warnings.
+- e2e (`--workers=2 --trace off`, fresh DB): `checkout`, `checkout-quote`, `checkout-share-guard`, `checkout-states` (new), `catalogue-order-modes`, `journey`, `smoke`, `storefront`, `admin` and `vendor` gave 60 passed and 18 skipped by the specs themselves, with 0 failures. A first run of the new spec signed in against `dev.db` because `ELBA_DATABASE_URL` was not set for the test process. With the variable set it passed; nothing in the spec was weakened.
+
+### Open (round 7)
+
+- **Vendor / admin:** the same rule for their own screens is theirs to decide. Staff and printers still see full notes, by design.
+- **Admin "Send price"** (R4-B-03 admin half): still not on main.
+
+## Round 8
+
+Base: this branch at `9c8bab9` (round 7), fresh DB, `next start`. Fresh pass on the angles the integrator listed:
+- two tabs paying the same order;
+- session expiry during payment;
+- browser Back, Forward and refresh at each step;
+- disputes and reprints from the buyer side;
+- the sample and its credit, and the proof approve or edit loop;
+- an address change mid-checkout;
+- the PDPL export and deletion flow.
+
+### Findings (new this round)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R8-01 | high | pay page (`PaymentClient.tsx`, `actions.ts`) | A paid order was still offered for payment, and the buyer was told the wrong thing. (a) Back from the success page showed the method list with "Amount due now EGP 14,250.00" and Continue, because the router cache restores the old pay page. (b) In a second tab with an open Fawry code, after the first tab paid by card, "pay at outlet" said "Your card was declined. Try another card or another method." The server had correctly voided that attempt (`NOT_PENDING`), but the client read every non-success as a decline. Both push the buyer towards paying twice. The server already prevents a double capture on the same attempt and records a late second payment for refund. | Consumer Protection Law 181/2018 (no double charge); ISO 9241-110 (self-descriptiveness); WCAG 3.3.1 | New `orderPayStateAction()` (buyer-only, cheap). The pay page asks it on mount (covers a router-cache Back), on a bfcache `pageshow`, when the tab becomes visible, and after any refused attempt. A paid or closed order moves to its order page with the notice "This order is already paid or closed." `NOT_PENDING` no longer reads as a decline: if the order is still due, the buyer sees "This payment attempt was closed. Nothing was charged on it." e2e: Back after paying lands on the order; the Fawry tab moves to the order with no "declined"; exactly one PAID payment. | fixed |
+| R8-02 | medium | pay page | When the session expired on the card form, Pay showed "Something went wrong. Try again." There was no way forward, and retrying kept failing. | WCAG 3.3.1 / 3.3.3 | Shows "Your session has ended. Sign in again to finish paying. Your order and its price are kept, and nothing was charged." with "Sign in" → `/login?next=/checkout/pay/<id>` (ar: «انتهت جلستك»). e2e asserts the message and the return link. | fixed |
+| R8-03 | medium | `account/export/route.ts` | The PDPL data export left out personal data the buyer gave: price requests (note, needed-by date, governorate), problem reports (description), and their payments. | Egypt PDPL 151/2020, right of access | The export adds `priceRequests`, `problemReports` and `payments` (method, status, amount; no card data, Elba never has it). The storefront's `buildDataExport()` is untouched; the route extends its result. Verified in the browser: a 5,000-box request with "two batches", GIZA and 2026-12-01 is in the file. | fixed |
+| R8-04 | medium | returns policy vs. "Report a problem" | The policy said "choose Report a problem and add photos", but the form has no photo upload. Its own help text says the team asks for photos on WhatsApp. | Consumer Protection Law 181/2018 (stated terms must match the service) | The policy text now matches what happens: "describe what went wrong. Our team then asks you on WhatsApp for photos…" (en/ar). A real photo upload needs a Dispute photos column and an admin view (open). | fixed (copy) |
+| R8-05 | medium | checkout steps (`CheckoutClient.tsx`) | The steps were client state only. The browser or phone Back button on Delivery or Proof left checkout altogether (to the designer or share page) and dropped the typed address. Forward did nothing. | ISO 9241-110 (controllability); Polaris checkout (each step navigable) | Each step pushes a history entry, keeping Next's own state. `popstate` shows the step. The in-page Back and an error that returns to an earlier step use `history.go()`, so entries never pile up. Verified: step 3 → Back → step 2 with "Dokki" still typed → Forward → step 3 → Back ×2 → step 1 → Back leaves checkout. e2e (mobile). | fixed |
+
+Counts (round 8, new findings before fixing): **critical 0, high 1, medium 4, low 0** (5 total). All fixed and re-checked in the browser. The stop rule is not met (R8-01 is high). The re-check after the fixes found nothing new: journey walk ar 390 and en 1440 had axe 0 and 0 px overflow, and all the scenarios above pass.
+
+Checked and fine this round:
+- Two tabs paying by card on the same attempt: the second tab lands on the paid order, with one PAID payment.
+- Refresh on the card form keeps the attempt.
+- A governorate change mid-checkout re-prices, with a status message.
+- The proof's "Edit design" returns to the designer. A new proof is made on the next approval; there is no reject flow by design.
+- The sample credit path is covered by the round 3 e2e.
+- Deletion requests are logged once (a repeat returns the open one) for team review within 30 days.
+- The review form and "Report a problem" (minimum 10 characters, one open report at a time) work.
+
+### Verification (round 8)
+
+- `npm run lint` and `npm run typecheck` are clean. `npm test` passed 8,508 tests. `next build` is OK with no warnings.
+- e2e (`--workers=2 --trace off`, fresh DB) gave 62 passed and 20 skipped by the specs themselves. One first run of the new pay-state test failed under parallel load: it clicked a visually-hidden radio input with `force` before the CSS settled. I changed the test to check the radio by its accessible name; nothing was weakened. It then passed three runs in a row with `checkout.spec.ts`, and the full set passed.
+
+### Open (round 8)
+
+- **Photos in "Report a problem"**: needs a `Dispute` photos field, buyer uploads with the image-magic check, and an admin view (checkout + admin + schema).
+- **Refresh in the middle of checkout** returns to step 1, and a typed address is re-filled only from the last order or the account. Keeping a draft in `sessionStorage` was not done (address data in browser storage needs a PDPL decision).
+- **Admin "Send price"**: now owned by `session_01ErLBscDBcwAe9g1EhxnAzG`; not on main yet.
+
+### Files touched outside scope (round 8)
+
+- `src/i18n/en.ts`, `src/i18n/ar.ts`: the returns policy "How to report a problem" body (R8-04).
+
+## Round 9
+
+Base: this branch at `942da8a` (round 8). First, the integrator's two decisions on round 8's open items; then a fresh pass on the new angles: the prepay discount with sample credit, quantity tier boundaries, VAT rounding, Arabic-Indic digits in inputs, and the buyer's SMS and WhatsApp texts.
+
+### Decisions built
+
+| item | what was built | verified |
+|---|---|---|
+| **Photos in "Report a problem"** (round 8 open) | **Upload:** a new private upload scope `dispute/<orderId>/…` in the existing pipeline (`components/vendor/lib/files.ts`): type by magic bytes (PNG, JPEG, WebP; never SVG or PDF), 10 MB, image metadata stripped (`saveUpload`). **Route:** `POST /api/orders/[id]/dispute-photos` (buyer of the order only, while a report can be opened, body capped and rate-limited). The vendor upload route explicitly refuses this scope. **Storage:** `Dispute.photos` (JSON list of keys). The report (`disputeAction` → `openDispute`) accepts at most 5 keys, each for this order only. **Form:** "Add photos" uploads on choose, with a thumbnail, "Uploading…" / "Added", a per-file error ("Use a JPG, PNG or WebP photo.", "This photo is over 10 MB…", "You can add up to 5…"), and "Remove {name}". Sending waits for uploads. **Reading:** the photos are readable by the order's buyer and admins only, not the printer, not other buyers. **Admin:** a read-only "Buyer's photos (n)" gallery on `/admin/disputes/[id]` (additive). The returns policy line about adding photos is restored (en/ar). | Unit: scope rules and readers (`dispute-scope.test.ts`). e2e `checkout-dispute-photos.spec.ts`: 2 PNG accepted, PDF rejected with a message, report stored with 2 keys, buyer 200, other buyer 404, printer 404, the vendor route refuses `scope=dispute` (400), and the admin page shows 2 images. Screens: `round9/after-dispute-photos-form-ar-390.png`, `round9/admin-dispute-buyer-photos-en-1440.png`. |
+| **Checkout draft on refresh** (round 8 open) | No address or phone in the browser (PDPL 151/2020 data minimisation). A **reload or Back/Forward** return restores: the step from the history entry (`history.state` survives a reload), quantity, sample choice and printer from `sessionStorage`, and the payment method choice per order. The address comes from the server (last order or account). If that is incomplete, the buyer lands on Delivery, not on Proof. Opening checkout afresh starts clean, as do a placed order or a navigation from elsewhere. | e2e: after a reload on Delivery with a 250-box choice, the step is kept, the typed street is not stored (no name or street anywhere in `sessionStorage`), and Back shows 250 boxes still selected. The journey walk (88 screens) is clean. |
+
+### Findings (new this round)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R9-01 | medium | buyer SMS / WhatsApp (`checkout.*.ts notify`, `service.ts`) | No buyer message had a link: "Complete payment" and "try again from your orders page" left the buyer to find the page. The Fawry message gave the reference code but not the amount the outlet asks for, nor the deadline. | ISO 9241-110 (task suitability); Consumer Protection Law 181/2018 (price stated with the payment request) | Links in every buyer message: order placed → pay page; payment failed → pay page ("nothing was charged"); payment received, status change, shipped, delivered → order page. Fawry: "pay EGP 14,250.00 for order … at any Fawry outlet or in myFawry with reference number … before {date}" (ar likewise). Shipped links to the order page, which shows the tracking number (a status set without a shipment would otherwise have printed an empty number). | fixed |
+| R9-02 | low | "Report a problem", a rejected file (`OrderActions.tsx`) | A rejected file (e.g. a PDF) showed the browser's broken-image icon as its preview. Found on the new feature. | Polish | A neutral placeholder for files with an error. | fixed |
+| R9-03 | medium | "Report a problem", sending (`OrderActions.tsx`) | On the first report after a server start, the report was saved and the buyer notified, but the page did not change: `router.refresh()` alone did not re-render, so the buyer saw the filled form as if nothing happened. Found when the new e2e failed on a fresh server; it was not a test problem. | WCAG 4.1.3 (status messages); ISO 9241-110 | The form confirms at once with an announced "We received your report and will reply within one working day." and then refreshes. The e2e passes on a fresh server, three runs in a row. | fixed |
+
+Counts (round 9, new findings before fixing): **critical 0, high 0, medium 2, low 1** (3 total). All fixed and re-checked. The stop rule is not met (two medium). The re-check after the fixes found nothing new.
+
+Checked and fine this round:
+- **Prepay 3% with a sample credit:** the credit is taken after the prepay discount, capped at the discounted goods (never delivery), and VAT is recomputed once on the lower subtotal. The lines reconcile to the subtotal on the summary, receipt and order. Note: the 3% applies to the goods before the credit, so the buyer also gets 3% of the credited sample price. That is a business choice and consistent with "Paying in full takes 3% off the boxes".
+- **Tiers:** 49 gives "Printers start at 50 boxes. To try a few first, choose the sample." (the real minimum, 50). 50, 99 and 100 price, with more printers eligible from 100 and 250. 2,000 is instant. 2,001 becomes a price request. 2000.5, −5 and "12abc" give "Enter a whole number…". 1,000,001 gives the request cap.
+- **Arabic-Indic digits:** «٩٩» and «٢٠٠١» in the quantity field, and «٠١٠١٢٣٤٥٦٧٨» in the delivery phone, are all accepted (ar and en).
+- **VAT rounding:** VAT is computed once on the ex-VAT subtotal, half-up to the piaster. Lines are never taxed one by one, so the total always equals subtotal + VAT on every surface.
+
+### Verification (round 9)
+
+- `npm run lint` and `npm run typecheck` are clean. `npm test` passed 8,510 tests (new: `dispute-scope`). `next build` is OK with no warnings.
+- e2e (`--workers=2 --trace off`, fresh DB): all checkout specs plus `catalogue-order-modes`, `journey`, `smoke`, `storefront`, `admin` and `vendor` gave 64 passed and 22 skipped by the specs themselves, with 0 failures.
+- Browser: the journey walk at en/ar × 390/1440 (88 screens) had axe 0 and 0 px overflow.
+
+### Files touched outside scope (round 9)
+
+- `prisma/schema.prisma`: `Dispute.photos Json?`.
+- `src/components/vendor/lib/files.ts` (`dispute` scope, rule, key pattern, readers); `src/app/api/vendor/uploads/route.ts` (refuses `dispute`); `src/app/api/vendor/files/[...key]/route.ts` (order lookup for `dispute` keys); `src/components/vendor/lib/__tests__/dispute-scope.test.ts` (new).
+- `src/app/[locale]/admin/disputes/[id]/page.tsx` (additive gallery); `src/i18n/admin.{en,ar}.ts` (`buyerPhotos`, `buyerPhoto`).
+- `src/i18n/{en,ar}.ts`: the returns policy line restored.
+- New: `src/app/api/orders/[id]/dispute-photos/route.ts`, `e2e/checkout-dispute-photos.spec.ts`.
+
+## Round 10 (audit-only pass on R7 to R9 changes)
+
+Focus: dispute photo flow on a phone (camera capture, iPhone HEIC, slow uploads, removal mid-upload), the checkout draft restored across reload on every step, refunded and cancelled order views, and the SMS/WhatsApp texts in both languages. Audited at 390 and 1440, ar and en, with axe.
+
+### Findings
+
+| ID | Severity | Where | Finding | Fix |
+|---|---|---|---|---|
+| R10-01 | Medium | Report a problem, photos | Some Android camera and gallery pickers hand over a `File` with an empty `type`. The client rejected it as "Use a JPG, PNG or WebP photo.", so a buyer taking a photo of a damaged box could not attach it. The server already sniffs magic bytes, so the client check was stricter than the real gate. | Empty `type` passes the client check; the server's magic-byte check decides. |
+| R10-02 | Low | Report a problem, photos | An iPhone HEIC photo got the generic type error, which does not tell the buyer what to do. | A HEIC-specific message (by MIME or `.heic/.heif` name) with the iOS steps: Share, Options, Most Compatible, or a screenshot. Also used when the server refuses the type. |
+| R10-03 | Low | Report a problem, photos | The remove button was disabled while a photo uploaded, so a slow upload could not be cancelled; a photo removed after upload stayed on disk although it was never sent (PDPL 151/2020, data minimisation). | Remove is always enabled: it aborts an upload in flight (`AbortController`), and for an uploaded photo calls the new `DELETE /api/orders/[id]/dispute-photos?key=` (buyer only, `dispute/<orderId>/` keys only, refused when the key already belongs to a sent report). |
+| R10-04 | Low | SMS/WhatsApp, refund | A refunded order sent the generic "status changed" text, with no amount and no payment method (Consumer Protection Law 181/2018: the buyer should know what is refunded and where). | New `REFUNDED` template: en "Elba: order {number} is cancelled and {amount} is on its way back to your {method}. Details: {url}"; ar "علبة: ألغي الطلب {number} وجار رد {amount} إلى {method}. التفاصيل: {url}". Falls back to the generic text when no payment row exists. |
+
+Checked and not a finding: the photo input has no `capture` attribute, so phones offer both camera and gallery (right for a report that may use older photos); the restored draft on reload holds on steps 1 to 4, including the proof step for a buyer whose address comes from a previous order, and two Back presses return to the chosen tier; no address or phone goes to sessionStorage; refunded and cancelled order views, receipt and credit note read correctly in both languages; Arabic SMS texts stay within 2 UCS-2 segments.
+
+Counts of NEW findings: critical 0, high 0, medium 1, low 3.
+
+### Verification
+
+- lint clean, `tsc --noEmit` clean, unit tests 8510 passed, build clean.
+- e2e (checkout*, journey, smoke, storefront, admin, vendor, catalogue-order-modes, `--workers=2 --trace off`): 64 passed, 22 skipped (single-project tests), 0 failed.
+- New e2e in `checkout-dispute-photos.spec.ts` (mobile): HEIC message, empty-type camera photo uploads, removing an uploaded photo sends DELETE 200; passed 3 of 3 with `--repeat-each=3`.
+- Browser checks at 390: removal mid-upload with a 3 s delayed upload leaves 0 rows and 0 files on disk; removal after upload deletes the stored file.
+- Walker (ar-390, en-1440): 44 screens, 0 overflow, 0 axe violations.
+- Screenshots: `r10-en-390-dispute-heic.png`, `r10-ar-390-dispute-heic.png`.
+
+### Files touched outside scope
+
+- `src/lib/notify/index.ts`: `REFUNDED` added to `NOTIFY_TEMPLATES` (additive).
+
+Medium finding present, so by the stop rule one more round is due.
+
+## Round 11 (audit-only pass on the merged code)
+
+Main (`eda6d57`) merged into this branch with no conflicts. Walked the whole buyer path again in ar 390 and en 1440 on the merged build: soft gate, step 1 with the quote request, delivery with errors and company invoice, proof with print check, mock payment with decline and success, order, receipt, orders list, account, share links (owner and signed out). I also checked the printer's view of the order event rules.
+
+### Findings
+
+| ID | Severity | Where | Finding | Fix |
+|---|---|---|---|---|
+| R11-01 | Low | `/orders/[id]` and its receipt, opened by printer staff | Security R5-SEC-01 (on main) keeps printer staff off buyer order pages through `getOrderForViewer`, but the order layout still gated on `canViewOrder`. So the order's printer got the buyer "We could not find this order" card with status 200, not a real 404 and not a way to its job. A printer following a link from a message or the admin to `/orders/<id>` hit a dead end. | The layout now gates on `canViewBuyerOrder`. The order's own printer staff are redirected to `/vendor/jobs/<number>` while the order is in a status the portal shows, where their notes are. Everyone else gets the same 404 as an unknown id. No buyer address or phone reaches printers (B-08, PDPL 151/2020). |
+
+Folded in from the journeys audit (R5-JR-15, already logged there, so not counted as new here): the share page line and the checkout offer card show a per-box price that already has the prepay discount taken off, but said only "excl. VAT". Both now say so, and only when the discount actually applies (not for samples or an accepted quote): en "500 boxes from EGP 38.53 each after the 3% prepay discount, excl. VAT, delivered in 10 days", "EGP 38.53 per box after the 3% prepay discount (excl. VAT)"; ar "500 علبة ابتداء من 38.53 ج.م للعلبة بعد خصم الدفع المقدم 3%، دون الضريبة، والتوصيل خلال 10 أيام", "38.53 ج.م للعلبة بعد خصم الدفع المقدم 3% (دون الضريبة)". The percentage comes from the admin setting (`loadCheckoutSettings`). The step 1 tiles already said it (R4-B-13). The designer badge and price dialog are the designer's half. `checkout.spec.ts` share assertion updated to the new wording. Screenshots `r11-{ar-390,en-1440}-{share,offer}-prepay.png`.
+
+Checked and not a finding:
+- **Printer notes.** The vendor job page shows every note the portal lets a printer write: free notes, decline reason and QC rejection. A note sent through the status API on accept or start-production is not shown in the portal, but that path is API-only and owned by the vendor portal; noted for that owner. The buyer sees none of these notes in ar or en (B-08).
+- **axe `target-size` on ar-390 step 1 after opening the quote form.** Opening the form scrolls the page 84 px, and the page back link (28×28 px) is then partly under the sticky checkout header. That is content scrolled under a sticky bar, not an undersized target: at the top of the page it is 28×28 with 65 px to the nearest target (WCAG 2.2 SC 2.5.8 passes).
+- **Pre-existing, out of scope.** `src/lib/dieline/__tests__/geometry-snapshot.test.ts` fails on main itself (all 127 generators differ from the recorded snapshot after the dieline merges). Left for the designer and dieline owner.
+
+Counts of NEW findings: critical 0, high 0, medium 0, low 1.
+
+### Verification
+
+- **Static checks.** Lint clean, typecheck clean, build clean.
+- **Unit tests.** 8647 passed and 1 failed: the dieline snapshot above, which fails on main too.
+- **e2e.** The run covered checkout*, journey, smoke, storefront, admin, vendor, catalogue-order-modes and security, with `--workers=2 --trace off`. Result: 66 passed, 24 skipped (single-project tests), 0 failed.
+- **e2e changes.**
+  - New `checkout-vendor-view.spec.ts`: the printer is redirected to its job page and sees its note, the receipt redirects too, another buyer gets 404, and the buyer never sees the note.
+  - `checkout-states.spec.ts`: the Fawry radio selector now follows main's copy change ("reference code" to "reference number").
+- **Walker** (ar-390, en-1440, full page): 41 screens, 0 overflow, 0 page errors. axe is clean except the scrolled `target-size` case above.
+- **Screenshots.** `r11-vendor-job-en-1440.png`, `r11-vendor-job-ar-390.png`, `r11-buyer-order-en-1440.png`, `r11-buyer-order-ar-390.png`.
+
+### Files touched outside scope
+
+None. `orders/[id]/layout.tsx` is in scope; it imports `VENDOR_VISIBLE_STATUSES` read-only.
+
+No medium or worse finding this round, so by the BRIEF stop rule the checkout rounds stop here.

@@ -3,7 +3,7 @@
 import { BarChart3, Boxes, ClipboardList, Factory, FileLock2, Gavel, History, LogOut, Languages, MessageSquareQuote, Store, ShieldCheck, Tags, Users, Wallet } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { Frame, Navigation, TopBar, TopBarSearchField, type ContextualSaveBarProps, type NavigationSectionProps } from "@/components/ui";
+import { Frame, Navigation, TopBar, TopBarSearchField, type ContextualSaveBarProps, type NavigationSectionProps } from "@/components/ui/Frame";
 import { signOut } from "@/components/auth";
 import { useI18n } from "@/i18n/client";
 import type { Locale } from "@/types";
@@ -48,6 +48,10 @@ export function AdminFrame({ locale, userName, counts, children }: AdminFramePro
   const router = useRouter();
   const pathname = usePathname() ?? `/${locale}/admin`;
   const [query, setQuery] = useState("");
+  // R9-AD: the placeholder is short enough for 320 px. No viewport state here on purpose: a state
+  // update in the frame right after hydration reached Suspense boundaries that were still streaming
+  // on slow phones, React client-rendered them, and the server copy stayed beside the client one
+  // (two banners on the order page, two search fields on the quote inbox; journeys J2 and J5).
   const [saveBar, setSaveBar] = useState<SaveBarState | null>(null);
   const register = useCallback((s: SaveBarState | null) => setSaveBar(s), []);
   const base = `/${locale}/admin`;
@@ -122,7 +126,9 @@ export function AdminFrame({ locale, userName, counts, children }: AdminFramePro
 
   return (
     <SaveBarCtx.Provider value={register}>
-      <Frame topBar={topBar} navigation={<Navigation sections={sections} ariaLabel={t("admin.nav.label")} />} navigationLabel={t("admin.nav.label")}>
+      <Frame topBar={topBar} navigation={<Navigation sections={sections} ariaLabel={t("admin.nav.label")} />} navigationLabel={t("admin.nav.label")} boundary={false}>
+        {/* Each admin route owns its boundary: list and leaf routes through loading.tsx, detail
+            routes in their layout below the record check (R5-PL-03 404s, R5-PL-17 hydration). */}
         {children}
       </Frame>
     </SaveBarCtx.Provider>

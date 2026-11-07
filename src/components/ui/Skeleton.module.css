@@ -1,0 +1,37 @@
+/* Split out of Misc.module.css (R5-PL-05): with inlineCss each route segment inlines the CSS of
+   the components it renders, so one shared sheet was copied whole into every page, loading and
+   error segment that used any of these components. */
+/* ── Skeleton ─────────────────────────────────────────────── */
+.Shimmer {
+  background: linear-gradient(90deg, var(--p-color-bg-fill-tertiary) 25%, var(--p-color-bg-surface-tertiary) 50%, var(--p-color-bg-fill-tertiary) 75%);
+  background-size: 200% 100%;
+  border-radius: var(--p-border-radius-100);
+  animation: shimmer 1.4s var(--p-motion-ease-in-out) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .Shimmer { animation: none !important; background: var(--p-color-bg-fill-tertiary); }
+}
+@keyframes shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+.SkeletonBody { display: flex; flex-direction: column; gap: var(--p-space-300); }
+.SkeletonLine { block-size: var(--p-space-200); }
+.SkeletonLine:last-child:not(:first-child) { inline-size: 80%; }
+.SkeletonDisplay { block-size: var(--p-space-500); inline-size: 12rem; max-inline-size: 100%; }
+.display-small { block-size: var(--p-space-400); inline-size: 8rem; }
+.display-large { block-size: var(--p-space-800); inline-size: 16rem; }
+.SkeletonThumb { inline-size: 3.75rem; block-size: 3.75rem; border-radius: var(--p-border-radius-200); }
+.thumb-small { inline-size: 2.5rem; block-size: 2.5rem; }
+.thumb-large { inline-size: 5rem; block-size: 5rem; }
+.SkeletonTabs { display: flex; gap: var(--p-space-200); }
+.SkeletonTab { inline-size: 5rem; block-size: var(--p-space-600); border-radius: var(--p-border-radius-200); }
+.SkeletonPage {
+  inline-size: 100%;
+  max-inline-size: calc(var(--p-page-max-width) + 2 * var(--p-page-gutter));
+  margin-inline: auto;
+  padding: var(--p-space-600) var(--p-page-gutter);
+}
+.skeletonFull { max-inline-size: none; }
+.SkeletonHeader { display: flex; align-items: center; justify-content: space-between; gap: var(--p-space-400); margin-block-end: var(--p-space-400); }
+.SkeletonTitle { block-size: var(--p-space-600); inline-size: 12rem; }
+.SkeletonTitleText { margin: 0; font-size: var(--p-font-size-500); font-weight: var(--p-font-weight-bold); }
+.SkeletonButton { block-size: var(--p-control-height-slim); inline-size: 6rem; border-radius: var(--p-border-radius-200); }
+.SkeletonContent { display: flex; flex-direction: column; gap: var(--p-space-400); }

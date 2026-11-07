@@ -32,6 +32,8 @@ model User {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   lastLoginAt      DateTime?
+  /// Added by designer: saved brand colours (up to 12 of { name, hex, cmyk?, spot? }).
+  brandColors      Json?
 
   sessions  Session[]
   designs   Design[]
@@ -126,6 +128,10 @@ model Vendor {
   rating         Float    @default(0) // 0..5
   ratingCount    Int      @default(0)
   onTimePct      Float    @default(0) // 0..100
+  // Added by admin round 8 (R5-JR-05): judged deliveries behind onTimePct, and whether buyers see it
+  // (judged >= the admin's minimum, default 5; below that public pages say "New on Elba").
+  onTimeJudged   Int      @default(0)
+  onTimePublic   Boolean  @default(false)
   leadTimeDays   Int      @default(7) // typical lead time
   minOrderQty    Int      @default(100)
   serviceAreas   Json     // EgyptCity[]
@@ -342,8 +348,12 @@ model Quote {
   totalPiasters    Int
   currency   String   @default("EGP")
   validUntil DateTime // createdAt + 72h
-  status     String   @default("OPEN") // QuoteStatus: OPEN | ACCEPTED | EXPIRED
+  status     String   @default("OPEN") // QuoteStatus: OPEN | ACCEPTED | EXPIRED; price requests: REQUESTED -> PRICED -> ACCEPTED
   createdAt  DateTime @default(now())
+  // Added by checkout R4-B-03 (agreed with admin): a price the team sends for a price request.
+  pricedAt           DateTime? // when the team sent the price (status PRICED)
+  deliveryDays       Int?      // production + transit days promised with that price
+  vendorCostPiasters Int?      // the printer's agreed price for the whole job, ex-VAT (payouts, margin)
 
   orders Order[]
   // Added by technical audit: foreign-key / filter indexes (no FK auto-index in SQLite or Postgres).
@@ -369,6 +379,9 @@ model Order {
   vendorCostPiasters Int @default(0) // platform buy price from vendor (managed model)
   currency    String   @default("EGP")
   shippingAddress Json // ShippingAddress
+  // R5-JR-03: invoice details as chosen for THIS order: { company: { name, taxId, commercialRegister } | null }.
+  // Null on orders placed before the snapshot (their invoice falls back to the buyer's Organization).
+  billing     Json?
   notes       String?
   placedAt    DateTime @default(now())
   paidAt      DateTime?
@@ -542,6 +555,9 @@ model Dispute {
   description String
   status     String   @default("OPEN") // OPEN | UNDER_REVIEW | RESOLVED_REPRINT | RESOLVED_REFUND | REJECTED
   resolution String?
+  /// Added by checkout round 9: the buyer's photos with the report, a JSON list of private upload
+  /// keys (`dispute/<orderId>/<random>.<ext>`, served by /api/vendor/files to the buyer and admins).
+  photos     Json?
   createdAt  DateTime @default(now())
   resolvedAt DateTime?
   /// Added by technical audit round 2: number of disputes the order had before this one. With the

@@ -21,6 +21,33 @@ const COS_CLOSURE_STYLE: Partial<Record<string, string>> = {
   // (≈ 40 % of the closed height), not a jar lug lid / a perfume mist pump.
   WAND_CAP: "BULLET_CAP",
   BRUSH_CAP: "BULLET_CAP",
+  // R6: closures that used to collapse onto a plain screw / lug cap or the bare pump
+  MIST_PUMP_COLLAR: "MIST_COLLAR",
+  CHILD_RESISTANT_CAP: "CR_CAP",
+  PIERCING_CAP: "PIERCING",
+  DROPPER_TIP_CAP: "DROPPER_TIP",
+  AEROSOL_VALVE: "AEROSOL",
+  CRIMP_FLIP_OFF: "CRIMP_FLIP_OFF",
+  DOUBLE_WALL_CAP: "DOUBLE_WALL_CAP",
+};
+
+/**
+ * Default closure colour (R5-3Q-F-13 / G-25 / G-11): "MATCH" = the lid is the container's own
+ * material and colour (a clear APET clamshell is one clear piece, tinplate tins have tinplate lids,
+ * a compact lid matches its base); metal seals default to bare metal.
+ */
+const COS_CLOSURE_COLOR: Partial<Record<string, string>> = {
+  HINGED_LID: "MATCH",
+  SNAP_LID: "MATCH",
+  TOP_SEAL_FILM: "MATCH",
+  SLIP_LID: "MATCH",
+  PLUG_LID: "MATCH",
+  LEVER_LID: "MATCH",
+  HINGED_COMPACT_LID: "MATCH",
+  CRIMP_FLIP_OFF: "BLUE",
+  PEEL_FOIL: "SILVER",
+  LIDDING_FOIL: "SILVER",
+  MIST_PUMP_COLLAR: "SILVER",
 };
 
 /**
@@ -32,8 +59,11 @@ const COS_CLOSURE_CORE: Partial<Record<string, string>> = {
   TREATMENT_PUMP: "LOTION_PUMP",
   // wand cap: screw-cap core so the bottle-neck BULLET_CAP style applies (a LUG_LID core blocks styles)
   WAND_CAP: "SCREW_CAP",
-  // vial crimp seal: smooth short aluminium-look seal, not a ribbed plastic screw cap
-  CRIMP_FLIP_OFF: "LUG_LID",
+  // R6 styled closures replace a screw-cap core (the engine refuses a style over LUG_LID)
+  CRIMP_FLIP_OFF: "SCREW_CAP",
+  CHILD_RESISTANT_CAP: "SCREW_CAP",
+  DROPPER_TIP_CAP: "SCREW_CAP",
+  PIERCING_CAP: "SCREW_TUBE_CAP",
   // OPC ampoule is flame-sealed: no closure at all (ZIP_SEAL core draws no parts)
   OPC_BREAK: "ZIP_SEAL",
   // aerosol: the profile's 1 inch valve cup, not a beverage-can pull tab inside it
@@ -99,6 +129,7 @@ export const models: VesselModelDef[] = COS.DEFINITIONS.filter((d) => d.geometry
     name: isCoreClosure(c) ? CLOSURE_NAMES[c] : (COS.CLOSURE_NAMES[c as keyof typeof COS.CLOSURE_NAMES] ?? { ar: c, en: c }),
     core: COS_CLOSURE_CORE[c] ?? (isCoreClosure(c) && coreDef.closures.includes(c) ? c : coreDef.defaultClosure),
     ...(COS_CLOSURE_STYLE[c] ? { closureStyle: COS_CLOSURE_STYLE[c] } : {}),
+    ...(COS_CLOSURE_COLOR[c] ? { defaultColor: COS_CLOSURE_COLOR[c] } : {}),
   }));
   const can = def.family === "CAN";
   return {

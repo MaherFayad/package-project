@@ -27,10 +27,16 @@ const LOCALES = (process.env.LOCALES || "ar,en").split(",");
 
 const PAGES = [
   { key: "home", path: "" },
+  { key: "start", path: "/start" },
+  { key: "designer-page", path: "/designer" },
   { key: "boxes", path: "/boxes" },
   { key: "bottles", path: "/bottles" },
   { key: "catalog", path: "/catalog" },
   { key: "vendors", path: "/vendors" },
+  { key: "start", path: "/start" },
+  { key: "why-elba", path: "/why-elba" },
+  { key: "why-elba", path: "/why-elba" },
+  { key: "pricing", path: "/pricing" },
   { key: "design-picker", path: "/design" },
   { key: "designer-box", path: "/design/mailer-box", threeD: true },
   { key: "designer-bottle", path: "/design/round-bottle", threeD: true },
@@ -39,6 +45,15 @@ const PAGES = [
   { key: "share", path: `/s/${SHARE}`, threeD: true },
   { key: "checkout", path: `/checkout/${DESIGN_ID}`, role: "buyer" },
   { key: "order-tracking", path: `/orders/${ORDER}`, role: "buyer" },
+  { key: "account", path: "/account", role: "buyer" },
+  // 404 renders (R6-RS-11): the first four are answered by the middleware's static 404, the last
+  // two still go through notFound() (client-rendered in Next 15.5, see src/lib/routing/static-404.ts).
+  { key: "404-missing", path: "/no-such-page" },
+  { key: "404-share", path: "/s/no-such-token-123" },
+  { key: "404-legal", path: "/legal/no-such-policy" },
+  { key: "404-design", path: "/design/no-such-model" },
+  { key: "404-catalog", path: "/catalog/no-such-model" },
+  { key: "404-share-wellformed", path: "/s/aaaaaaaaaaaaaaaa" },
   { key: "vendor-portal", path: "/vendor", role: "vendor" },
   { key: "vendor-jobs", path: "/vendor/jobs", role: "vendor" },
   { key: "admin", path: "/admin", role: "admin" },
@@ -80,7 +95,7 @@ const INIT = () => {
       for (const e of l.getEntries()) {
         if (e.hadRecentInput) continue;
         P.cls += e.value;
-        P.shifts.push({ t: Math.round(e.startTime), v: +e.value.toFixed(4), nodes: (e.sources || []).map((s) => sel(s.node)).slice(0, 3) });
+        P.shifts.push({ t: Math.round(e.startTime), v: +e.value.toFixed(4), nodes: (e.sources || []).map((s) => sel(s.node)).slice(0, 3), rects: (e.sources || []).slice(0, 3).map((s) => `${Math.round(s.previousRect.x)},${Math.round(s.previousRect.y)} ${Math.round(s.previousRect.width)}x${Math.round(s.previousRect.height)} -> ${Math.round(s.currentRect.x)},${Math.round(s.currentRect.y)} ${Math.round(s.currentRect.width)}x${Math.round(s.currentRect.height)}`) });
       }
     }).observe({ type: "layout-shift", buffered: true });
     new PerformanceObserver((l) => {
@@ -195,6 +210,21 @@ async function runOne(browser, profile, locale, pg, storage) {
       imgs,
       domNodes: document.getElementsByTagName("*").length,
       canvases: document.querySelectorAll("canvas").length,
+      // Round 5 (R4-08): bytes of CSS inlined as <style> (experimental.inlineCss) and of the RSC
+      // payload (self.__next_f chunks), UTF-8, uncompressed. rscCss = the part of the RSC payload
+      // that repeats an inlined stylesheet (each <style>'s text found verbatim, JSON-escaped).
+      ...(() => {
+        const u8 = (s) => new TextEncoder().encode(s).length;
+        const styles = [...document.querySelectorAll("style")].map((s) => s.textContent || "");
+        const rsc = (self.__next_f || []).filter((x) => x[0] === 1 && typeof x[1] === "string").map((x) => x[1]).join("");
+        let rscCss = 0;
+        for (const css of styles) {
+          if (css.length < 200) continue;
+          const probe = JSON.stringify(css.slice(0, 120)).slice(1, -1);
+          if (rsc.includes(probe) || rsc.includes(css.slice(0, 120))) rscCss += u8(css);
+        }
+        return { inlineCss: styles.reduce((a, s) => a + u8(s), 0), inlineStyleTags: styles.length, rsc: u8(rsc), rscCss };
+      })(),
       fontsLoaded: [...document.fonts].filter((f) => f.status === "loaded").map((f) => `${f.family} ${f.weight}`),
     };
   });
@@ -275,7 +305,7 @@ for (const profile of PROFILES)
       if (br !== browser) await br.close();
       results.push(r);
       console.log(
-        [profile, locale, pg.key, r.status, `ttfb=${Math.round(r.ttfb)}`, `fcp=${Math.round(r.fcp)}`, `lcp=${Math.round(r.lcp)}`, `cls=${r.cls?.toFixed(3)}`, `inp=${Math.round(r.inp ?? -1)}`, `tbt=${r.tbt}`, `js=${Math.round((r.bytes?.js ?? 0) / 1024)}KB`, `img=${Math.round((r.bytes?.img ?? 0) / 1024)}KB`, `font=${Math.round((r.bytes?.font ?? 0) / 1024)}KB`, r.error || ""].join(" "),
+        [profile, locale, pg.key, r.status, `ttfb=${Math.round(r.ttfb)}`, `fcp=${Math.round(r.fcp)}`, `lcp=${Math.round(r.lcp)}`, `cls=${r.cls?.toFixed(3)}`, `inp=${Math.round(r.inp ?? -1)}`, `tbt=${r.tbt}`, `js=${Math.round((r.bytes?.js ?? 0) / 1024)}KB`, `img=${Math.round((r.bytes?.img ?? 0) / 1024)}KB`, `font=${Math.round((r.bytes?.font ?? 0) / 1024)}KB`, `css=${Math.round((r.inlineCss ?? 0) / 1024)}KB`, `rsc=${Math.round((r.rsc ?? 0) / 1024)}KB`, r.error || ""].join(" "),
       );
       fs.writeFileSync(OUT, JSON.stringify(results, null, 1));
     }

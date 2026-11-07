@@ -6,8 +6,15 @@ import { BOARD_SPECS, STRUCTURE_LIMITS, materialFitsStructure, validateDims, typ
 import { formatDims } from "@/lib/format";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n/types";
-import { Badge, BlockStack, Button, ChoiceList, InlineGrid, InlineStack, Select, Text, TextField } from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { BlockStack, InlineGrid, InlineStack } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { ChoiceList } from "@/components/ui/ChoiceList";
+import { Select } from "@/components/ui/Select";
+import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
 import { matchingPreset } from "./lib/catalog";
+import { parseMmInput } from "./lib/mm";
 import styles from "./designer.module.css";
 
 const AXES = ["L", "W", "H"] as const;
@@ -47,7 +54,8 @@ export function BoxPanel({
   const change = (axis: "L" | "W" | "H", v: string) => {
     const next = { ...draft, [axis]: v };
     setDraft(next);
-    const nums = { L: Number(next.L), W: Number(next.W), H: Number(next.H) };
+    // R5-JR-20: typed as text (Arabic-Indic digits, decimal comma), read with parseMmInput.
+    const nums = { L: parseMmInput(next.L), W: parseMmInput(next.W), H: parseMmInput(next.H) };
     const r = validateDims(code, Object.values(next).some((s) => s.trim() === "") ? { ...nums, [axis]: NaN } : nums);
     if (r.ok) {
       setIssues([]);
@@ -106,8 +114,18 @@ export function BoxPanel({
             <TextField
               key={axis}
               label={t(AXIS_KEY[axis])}
-              type="number"
+              type="text"
               inputMode="decimal"
+              spinbutton={{
+                now: parseMmInput(draft[axis]),
+                min: limits[axis].min,
+                max: limits[axis].max,
+                onStep: (d) => {
+                  const cur = parseMmInput(draft[axis]);
+                  const base = Number.isFinite(cur) ? cur : limits[axis].min;
+                  change(axis, String(Math.min(limits[axis].max, Math.max(limits[axis].min, Math.round((base + d) * 10) / 10))));
+                },
+              }}
               autoComplete="off"
               dir="ltr"
               min={limits[axis].min}

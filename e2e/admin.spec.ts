@@ -1,5 +1,5 @@
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
-import { SEEDED, cleanup, cloneOrder, createUser, db, signInPhone, track } from "./fixtures/factory";
+import { SEEDED, cleanup, cloneOrder, createUser, db, deleteOrder, signInPhone, track } from "./fixtures/factory";
 
 /**
  * Admin flows. Parallel-safe: the QC review and the payout test each clone ELB-26301 (QC pending,
@@ -36,7 +36,7 @@ test.describe("admin", () => {
 
     await page.goto("/en/admin");
     await expect(page.getByRole("heading", { level: 1, name: "Overview" })).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByRole("table", { name: "Free tool funnel by step" })).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole("table", { name: "Free tool activity by step" })).toBeVisible({ timeout: 30_000 });
     const nav = page.getByRole("navigation", { name: "Admin navigation" });
     await expect(nav).toBeVisible();
 
@@ -141,7 +141,54 @@ test.describe("admin", () => {
       }
     } finally {
       await db.vendorPortfolioItem.delete({ where: { id: item.id } }).catch(() => {});
-      await db.auditLog.deleteMany({ where: { summary: { contains: item.id } } });
+      await db.auditLog.deleteMany({ where: { OR: [{ summary: { contains: item.id } }, { summary: { contains: caption } }] } });
+    }
+  });
+
+  test("moderation: a vendor bio edit is approved and goes public; a second edit is sent back with a reason (R6-05)", async ({ page, context, baseURL }, info) => {
+    test.skip(info.project.name !== "desktop", "mutating flow runs once, on desktop");
+    test.setTimeout(120_000);
+    const tag = Math.random().toString(36).replace(/[^a-z]/g, "").slice(0, 8);
+    // A seeded vendor no other spec edits (the vendor spec edits nile-pack). A temporary ACTIVE vendor
+    // was picked up by other specs' findFirst({ status: "ACTIVE" }) and then deleted under them.
+    const vendor = await db.vendor.findUniqueOrThrow({ where: { slug: "damietta-packaging" } });
+    const saved = { bioAr: vendor.bioAr, bioEn: vendor.bioEn, bioArPending: vendor.bioArPending, bioEnPending: vendor.bioEnPending, bioReviewStatus: vendor.bioReviewStatus, bioReviewNote: vendor.bioReviewNote, bioSubmittedAt: vendor.bioSubmittedAt };
+    await db.vendor.update({
+      where: { id: vendor.id },
+      data: { bioAr: "نبذة قديمة", bioEn: `Old public bio ${tag}`, bioArPending: "نطبع علب الهدايا والكرتون المضلع", bioEnPending: `New reviewed bio ${tag}: gift boxes and corrugated mailers`, bioReviewStatus: "PENDING", bioReviewNote: null, bioSubmittedAt: new Date() },
+    });
+    try {
+      await signIn(context, baseURL!);
+      await page.goto("/en/admin/moderation?tab=bios");
+      await expect(page.getByRole("heading", { level: 1, name: "Moderation" })).toBeVisible({ timeout: 30_000 });
+      await expect(page.getByRole("tab", { name: /Bio edits/ })).toHaveAttribute("aria-selected", "true");
+      await expect(page.getByText(`Old public bio ${tag}`)).toBeVisible();
+      await page.getByRole("button", { name: `Approve and publish: ${vendor.nameEn}` }).click();
+      await expect.poll(async () => (await db.vendor.findUnique({ where: { id: vendor.id } }))?.bioEn, { timeout: 15_000 }).toBe(`New reviewed bio ${tag}: gift boxes and corrugated mailers`);
+      const after = await db.vendor.findUniqueOrThrow({ where: { id: vendor.id } });
+      expect(after).toMatchObject({ bioReviewStatus: null, bioArPending: null, bioEnPending: null, bioAr: "نطبع علب الهدايا والكرتون المضلع" });
+      expect(await db.auditLog.count({ where: { entityId: vendor.id, action: "VENDOR_BIO_APPROVE" } })).toBe(1);
+      // The public profile shows the approved bio right away (catalogue cache purged).
+      await page.goto(`/en/vendors/${vendor.slug}`);
+      await expect(page.getByText(`New reviewed bio ${tag}`)).toBeVisible({ timeout: 30_000 });
+
+      // A second edit with a phone number cannot be approved; it is sent back with a reason.
+      await db.vendor.update({ where: { id: vendor.id }, data: { bioEnPending: `Call 0100 123 4567 ${tag}`, bioArPending: after.bioAr, bioReviewStatus: "PENDING", bioSubmittedAt: new Date() } });
+      await page.goto("/en/admin/moderation?tab=bios");
+      await expect(page.getByRole("button", { name: `Approve and publish: ${vendor.nameEn}` })).toBeDisabled({ timeout: 30_000 });
+      await expect(page.locator(`[data-bio-vendor="${vendor.slug}"]`).getByText("The edit has contact details.")).toBeVisible();
+      await page.getByRole("button", { name: `Send back: ${vendor.nameEn}` }).click();
+      const dialog = page.getByRole("dialog");
+      await dialog.getByLabel("Reason for the vendor").fill("Please remove the phone number");
+      await dialog.getByRole("button", { name: "Send back" }).click();
+      await expect.poll(async () => (await db.vendor.findUnique({ where: { id: vendor.id } }))?.bioReviewStatus, { timeout: 15_000 }).toBe("REJECTED");
+      const rejected = await db.vendor.findUniqueOrThrow({ where: { id: vendor.id } });
+      expect(rejected.bioReviewNote).toBe("Please remove the phone number");
+      expect(rejected.bioEn).toBe(`New reviewed bio ${tag}: gift boxes and corrugated mailers`);
+      expect(await db.auditLog.count({ where: { entityId: vendor.id, action: "VENDOR_BIO_REJECT" } })).toBe(1);
+    } finally {
+      await db.auditLog.deleteMany({ where: { entityId: vendor.id, action: { in: ["VENDOR_BIO_APPROVE", "VENDOR_BIO_REJECT", "VENDOR_BIO_CLEAN"] }, createdAt: { gte: new Date(Date.now() - 600_000) } } });
+      await db.vendor.update({ where: { id: vendor.id }, data: saved });
     }
   });
 
@@ -156,7 +203,7 @@ test.describe("admin", () => {
       await signIn(context, baseURL!);
       await page.goto("/en/admin/quotes");
       await expect(page.getByRole("heading", { level: 1, name: "Quote requests" })).toBeVisible({ timeout: 30_000 });
-      const row = page.getByRole("row").filter({ hasText: "6,500" });
+      const row = page.getByRole("row").filter({ hasText: "6,500" }).filter({ hasText: "E2E Lead" });
       await expect(row.getByText(/Reply in \d+ h/).filter({ visible: true })).toBeVisible();
       await row.getByRole("button", { name: /^Mark contacted:/ }).click();
       await page.getByRole("dialog").getByLabel("What you told the buyer").fill("Price and lead time sent on WhatsApp");
@@ -165,6 +212,53 @@ test.describe("admin", () => {
     } finally {
       await db.auditLog.deleteMany({ where: { entityId: q.id } });
       await db.quote.delete({ where: { id: q.id } }).catch(() => {});
+    }
+  });
+});
+
+test.describe("admin disputes (R5-JR-09)", () => {
+  test.afterAll(async () => {
+    await cleanup();
+  });
+
+  test("a print-defect reprint redoes only the defective boxes and is charged back to the printer", async ({ page, context, baseURL }, info) => {
+    test.skip(info.project.name !== "desktop", "mutating flow runs once, on desktop");
+    test.setTimeout(120_000);
+    const order = await cloneOrder("ELB-26203", { status: "DELIVERED", label: "D" });
+    const full = await db.order.findUniqueOrThrow({ where: { id: order.id }, include: { items: true } });
+    const qty = full.items.reduce((s, i) => s + i.quantity, 0);
+    await db.order.update({ where: { id: order.id }, data: { deliveredAt: new Date() } });
+    const dispute = await db.dispute.create({ data: { orderId: order.id, openedById: full.buyerId, reason: "PRINT_DEFECT", description: "40 boxes smudged", status: "OPEN" } });
+    let reprintId: string | null = null;
+    try {
+      await signIn(context, baseURL!);
+      await page.goto(`/en/admin/disputes/${dispute.id}`);
+      await page.getByRole("radio", { name: "Reprint" }).check();
+      await expect(page.getByRole("radio", { name: "Full: the printer pays for the reprint" })).toBeChecked();
+      await page.getByLabel("Boxes to reprint").fill(String(qty + 1));
+      await expect(page.getByText("Enter whole boxes from 1 to the order quantity.")).toBeVisible();
+      await page.getByLabel("Boxes to reprint").fill("40");
+      await expect(page.getByText(/Elba pays the printer EGP 0\.00\./)).toBeVisible();
+      await page.getByLabel("Resolution note").fill("Reprinting the 40 smudged boxes at the printer's cost");
+      await page.getByRole("button", { name: "Apply decision" }).click();
+      await expect(page.getByRole("status").getByText(`Reprint ${order.number}-R1 created`).first()).toBeVisible({ timeout: 30_000 });
+      // The decision card leaves once the dispute is resolved; the Reprints card lists the new order.
+      await expect(page.getByRole("heading", { level: 2, name: "Reprints" })).toBeVisible({ timeout: 30_000 });
+      await expect(page.getByText(`${order.number}-R1`).first()).toBeVisible();
+      const reprint = await db.order.findFirstOrThrow({ where: { notes: { startsWith: `REPRINT_OF:${order.number}` } }, include: { items: true } });
+      reprintId = reprint.id;
+      expect(reprint.items.reduce((s, i) => s + i.quantity, 0)).toBe(40);
+      expect(reprint.vendorCostPiasters).toBe(0);
+      expect(reprint.totalPiasters).toBe(0);
+      const audit = await db.auditLog.findFirstOrThrow({ where: { entityId: reprint.id, action: "ORDER_REPRINT" } });
+      expect(audit.after).toMatchObject({ chargeBack: "FULL", quantity: 40, chargeBackPiasters: Math.round((full.vendorCostPiasters * 40) / qty) });
+    } finally {
+      if (reprintId) {
+        const r = await db.order.findUnique({ where: { id: reprintId }, select: { number: true } });
+        if (r) await deleteOrder(reprintId, r.number);
+      }
+      await db.auditLog.deleteMany({ where: { entityId: dispute.id } });
+      await db.dispute.deleteMany({ where: { id: dispute.id } });
     }
   });
 });
@@ -194,5 +288,35 @@ test.describe("admin routing (round 4)", () => {
     expect(after.payouts.find((p) => p.id === oldAdvance.id)).toBeUndefined();
     const audit = await db.auditLog.findFirstOrThrow({ where: { action: "ORDER_REASSIGN", entityId: order.id } });
     expect(JSON.stringify(audit.before)).toContain(oldAdvance.id);
+  });
+});
+
+test.describe("admin detail routes answer 404 for unknown records (R5-PL-03)", () => {
+  test("orders, vendors, applications, users and disputes: unknown id or slug → HTTP 404 with the admin not-found card", async ({ page, context, baseURL }) => {
+    await signIn(context, baseURL!);
+    const cases: [string, string][] = [
+      ["/en/admin/orders/ELB-NOPE-0000", "orders"],
+      ["/ar/admin/vendors/no-such-printer", "vendors"],
+      ["/en/admin/vendors/applications/nosuchapplication000000", "applications"],
+      ["/en/admin/users/nosuchuser0000000000000", "users"],
+      ["/ar/admin/disputes/nosuchdispute00000000000", "disputes"],
+    ];
+    for (const [path] of cases) {
+      const res = await page.request.get(path);
+      expect(res.status(), path).toBe(404);
+    }
+    // A malformed escape is refused by the server itself (400), never a 200 page.
+    expect([400, 404]).toContain((await page.request.get("/en/admin/orders/%E0%A4%A")).status());
+    // The page itself still renders the admin not-found card inside the frame.
+    await page.goto("/en/admin/users/nosuchuser0000000000000");
+    await expect(page.getByRole("heading", { level: 1, name: "Not found" })).toBeVisible();
+    await expect(page.getByText("This record does not exist or was removed.")).toBeVisible();
+    // Known records still answer 200.
+    const known = await db.order.findFirstOrThrow({ where: { number: "ELB-26203" }, select: { number: true } });
+    const vendor = await db.vendor.findFirstOrThrow({ where: { status: "ACTIVE" }, select: { slug: true } });
+    for (const path of [`/en/admin/orders/${known.number}`, `/en/admin/vendors/${vendor.slug}`, "/en/admin", "/en/admin/orders", "/ar/admin/quotes"]) {
+      const res = await page.request.get(path);
+      expect(res.status(), path).toBe(200);
+    }
   });
 });

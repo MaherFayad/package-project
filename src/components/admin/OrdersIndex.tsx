@@ -3,29 +3,19 @@
 import { ClipboardList } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
-import {
-  Badge,
-  BlockStack,
-  Button,
-  EmptyBoxIllustration,
-  EmptyState,
-  IndexFilters,
-  IndexTable,
-  IndexTableCell,
-  IndexTableRow,
-  IndexTableRowLink,
-  InlineStack,
-  MetricsStrip,
-  Page,
-  Select,
-  Text,
-  type AppliedFilter,
-} from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { BlockStack, InlineStack } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { EmptyBoxIllustration, EmptyState } from "@/components/ui/EmptyState";
+import { IndexFilters, IndexTable, IndexTableCell, IndexTableRow, IndexTableRowLink, type AppliedFilter } from "@/components/ui/IndexTable";
+import { MetricsStrip } from "@/components/ui/MetricsStrip";
+import { Page } from "@/components/ui/Page";
+import { Select } from "@/components/ui/Select";
+import { Text } from "@/components/ui/Text";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { formatDate, formatMoney, formatNumber } from "@/lib/format";
 import { statusTone } from "@/lib/orders/status-tone";
-import { adminStyles } from "./charts";
 import { asOrderView, countByOrderView, filterOrders, ORDER_SORTS, ORDER_VIEWS, type AdminOrderRow, type OrderSort } from "./lib/orders";
 
 function asSort(v: string | null): OrderSort {
@@ -93,6 +83,7 @@ export function OrdersIndex({ rows, vendors, openDisputes }: { rows: AdminOrderR
         />
         <div id="admin-orders-table">
           <IndexTable
+            condensed
             resourceName={{ singular: t("admin.orders.resourceSingular"), plural: t("admin.orders.resourcePlural") }}
             caption={t("admin.orders.title")}
             rowIds={shown.map((r) => r.id)}
@@ -169,15 +160,6 @@ export function OrdersIndex({ rows, vendors, openDisputes }: { rows: AdminOrderR
                       </Badge>
                     ) : null}
                   </InlineStack>
-                  {/* Phones: the table scrolls sideways, so status and total also sit under the number. */}
-                  <div className={adminStyles.PhoneOnly}>
-                    <InlineStack gap="200" blockAlign="center">
-                      <OrderStatusBadge status={r.status} />
-                      <Text as="span" variant="bodySm" numeric>
-                        <bdi>{formatMoney(r.totalPiasters, locale, { alwaysDecimals: true })}</bdi>
-                      </Text>
-                    </InlineStack>
-                  </div>
                 </IndexTableCell>
                 <IndexTableCell>
                   <time dateTime={r.placedAt}>{formatDate(r.placedAt, locale, "medium")}</time>

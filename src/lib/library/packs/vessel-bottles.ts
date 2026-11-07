@@ -12,7 +12,59 @@ const BOTTLE_CLOSURE_STYLE: Partial<Record<string, string>> = {
   CROWN_29: "CROWN",
   NATURAL_CORK: "CORK_CAPSULE",
   SPARKLING_CORK: "SPARKLING",
+  // R6: closures that used to collapse onto the plain screw / lug cap (R5-3Q-F-06 … F-11)
+  SWING_TOP: "SWING_TOP",
+  MEASURE_CAP: "MEASURE_CUP",
+  FLIP_TOP: "FLIP_TOP_CAP",
+  CHILD_RESISTANT_CAP: "CR_CAP",
+  BAR_TOP: "BAR_TOP",
+  SCREW_CAP_TE: "TE_CAP",
+  VENTED_SCREW_CAP: "TE_CAP",
 };
+
+/**
+ * Default closure colour of a styled option (R5-3Q-F-13): crowns and ROPP shells are bare
+ * tinplate / aluminium, wine and sparkling capsules gold foil. The buyer can still recolour them.
+ */
+const BOTTLE_CLOSURE_COLOR: Partial<Record<string, string>> = {
+  ROPP_CAP: "SILVER",
+  POURER_CAP: "SILVER",
+  CROWN_26: "GOLD",
+  CROWN_29: "GOLD",
+  NATURAL_CORK: "GOLD",
+  SPARKLING_CORK: "GOLD",
+};
+
+/**
+ * Localised name of a neck finish for the model card (R14-04): MSA noun phrases, the trade
+ * designation kept in Latin digits as printers write it. Open-top rims have none.
+ */
+export function finishLabel(f: BTL.BottleFinish): { en: string; ar: string } | null {
+  const d = Math.round(f.outerDiameterMm * 10) / 10;
+  const b = Math.round(f.boreMm * 10) / 10;
+  switch (f.kind) {
+    case "screw":
+      return { en: `${f.code} screw neck`, ar: `عنق لولبي ${f.code}` };
+    case "ropp":
+      return { en: `${f.code} aluminium roll-on neck`, ar: `عنق لغطاء ألومنيوم ملفوف ${f.code}` };
+    case "crown":
+      return { en: `${d} mm crown neck`, ar: `عنق لغطاء تاجي ${d} مم` };
+    case "cork":
+      return { en: `Cork mouth, ${b} mm bore`, ar: `فوهة سدادة فلين بقطر ${b} مم` };
+    case "bartop":
+      return { en: `Bar-top neck, ${b} mm bore`, ar: `عنق لسدادة برأس بقطر ${b} مم` };
+    case "lug":
+      return { en: `Twist-off ${d} mm lug neck`, ar: `عنق لغطاء تويست ${d} مم` };
+    case "mason":
+      return { en: `Mason mouth, ${d} mm lid`, ar: `فوهة برطمان ميسون لغطاء ${d} مم` };
+    case "snap":
+      return { en: `${d} mm snap neck`, ar: `عنق كبس ${d} مم` };
+    case "swing":
+      return { en: "Swing-top neck", ar: "عنق لسدادة سلكية" };
+    default:
+      return null;
+  }
+}
 
 export const models: VesselModelDef[] = BTL.DEFINITIONS.map((def) => {
   const preset = BTL.bottlePreset(def);
@@ -23,11 +75,14 @@ export const models: VesselModelDef[] = BTL.DEFINITIONS.map((def) => {
     return { code: m, name: mat.name, core: mat.coreMaterial, ...(mat.code !== mat.coreMaterial ? { tint: mat.hex } : {}) };
   });
   const closures: VesselOption[] = def.closures.map((c) => {
-    // A wine ROPP is a BVS 30H60 (Stelvin) shell 60 mm long; the engine ROPP style is a fixed 18 mm
-    // skirt, so wine bottles keep the smooth metal LUG_LID drawn over the whole finishH (R5-3Q-F-02).
-    if (c === "ROPP_CAP" && def.finishes.includes("BVS_30H60")) return { code: c, name: BTL.BOTTLE_CLOSURES[c].name, core: "LUG_LID" };
+    // A wine ROPP is a BVS 30H60 (Stelvin) shell 60 mm long: the engine ROPP style draws its skirt
+    // over the whole finishH now (R5-3Q-F-02), so wine bottles take the style too.
     const style = BOTTLE_CLOSURE_STYLE[c];
-    return { code: c, name: BTL.BOTTLE_CLOSURES[c].name, core: BTL.BOTTLE_CLOSURES[c].coreClosure, ...(style ? { closureStyle: style } : {}) };
+    const color = BOTTLE_CLOSURE_COLOR[c];
+    // a style replaces a screw-cap core (the engine refuses a style over LUG_LID: swing top)
+    const core = style ? "SCREW_CAP" : BTL.BOTTLE_CLOSURES[c].coreClosure;
+    const neckFinish = finishLabel(BTL.finishForConfig(def, preset.dims, preset.finish, c));
+    return { code: c, name: BTL.BOTTLE_CLOSURES[c].name, core, ...(style ? { closureStyle: style } : {}), ...(color ? { defaultColor: color } : {}), ...(neckFinish ? { neckFinish } : {}) };
   });
   return {
     kind: "vessel",
@@ -35,7 +90,9 @@ export const models: VesselModelDef[] = BTL.DEFINITIONS.map((def) => {
     slug: def.slug,
     group: "BOTTLES_JARS",
     source: "vessel-bottles",
-    standard: def.standard === "none" ? (preset.finish ?? "") : def.standard,
+    // R14-04: no raw finish id ("PP28") on the card; the closure options carry the localised
+    // neck finish they sit on (neckFinish), which follows the chosen closure.
+    standard: def.standard === "none" ? "" : def.standard,
     name: def.name,
     description: def.description,
     search: search(def.code, def.code.replace(/_/g, " "), def.name.en, def.name.ar, def.standard, def.subFamily, ...def.typicalUses.map((u) => `${u.en} ${u.ar}`)),

@@ -2,24 +2,15 @@
 
 import { usePathname, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
-import {
-  Badge,
-  BlockStack,
-  Button,
-  EmptyBoxIllustration,
-  EmptyState,
-  IndexFilters,
-  IndexTable,
-  IndexTableCell,
-  IndexTableRow,
-  IndexTableRowLink,
-  InlineStack,
-  MetricsStrip,
-  Pagination,
-  Select,
-  Text,
-  type AppliedFilter,
-} from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { BlockStack, InlineStack } from "@/components/ui/Stack";
+import { Button } from "@/components/ui/Button";
+import { EmptyBoxIllustration, EmptyState } from "@/components/ui/EmptyState";
+import { IndexFilters, IndexTable, IndexTableCell, IndexTableRow, IndexTableRowLink, type AppliedFilter } from "@/components/ui/IndexTable";
+import { MetricsStrip } from "@/components/ui/MetricsStrip";
+import { Pagination } from "@/components/ui/Pagination";
+import { Select } from "@/components/ui/Select";
+import { Text } from "@/components/ui/Text";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { formatNumber } from "@/lib/format";
@@ -27,7 +18,6 @@ import { MODEL_GROUPS, MODEL_GROUP_NAMES } from "@/lib/library/types";
 import { matchesQuery } from "@/lib/library/search";
 import { AVAILABILITY_VIEWS, inAvailabilityView, type AvailabilityView } from "./lib/availability";
 import type { CatalogModelRow } from "./server/queries";
-import { adminStyles } from "./charts";
 
 const PAGE_SIZE = 50;
 
@@ -121,6 +111,7 @@ export function ModelsPanel({
       />
       <div id="admin-models-table">
         <IndexTable
+          condensed
           resourceName={{ singular: t("admin.catalog.models.singular"), plural: t("admin.catalog.models.plural") }}
           caption={t("admin.catalog.models.caption")}
           rowIds={pageRows.map((m) => m.code)}
@@ -200,10 +191,6 @@ export function ModelsPanel({
                   <Text as="span" variant="bodySm" tone="subdued">
                     <bdi dir="ltr">{m.standard}</bdi>
                   </Text>
-                  {/* Phones: availability is the point of this table, so it also sits in the first cell. */}
-                  <div className={adminStyles.PhoneOnly}>
-                    <AvailabilityBadge m={m} />
-                  </div>
                 </BlockStack>
               </IndexTableCell>
               <IndexTableCell>{MODEL_GROUP_NAMES[m.group as keyof typeof MODEL_GROUP_NAMES]?.[locale] ?? m.group}</IndexTableCell>

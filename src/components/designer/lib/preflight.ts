@@ -11,9 +11,10 @@ export const MIN_TEXT_PT = 6;
 const SEVERITY_ORDER: Record<PreflightSeverity, number> = { error: 0, warning: 1, info: 2 };
 
 /** Effective DPI of an image layer at its printed size. */
-export function effectiveDpi(l: Pick<ImageLayer, "width" | "height" | "pxWidth" | "pxHeight" | "fit">): number {
-  const iw = Math.max(1, l.pxWidth);
-  const ih = Math.max(1, l.pxHeight);
+export function effectiveDpi(l: Pick<ImageLayer, "width" | "height" | "pxWidth" | "pxHeight" | "fit" | "crop">): number {
+  // A crop prints fewer pixels over the same box (designer: crop).
+  const iw = Math.max(1, l.pxWidth * (l.crop?.width ?? 1));
+  const ih = Math.max(1, l.pxHeight * (l.crop?.height ?? 1));
   const fit = l.fit ?? "contain";
   if (fit === "stretch") return Math.min(iw / (l.width / 25.4), ih / (l.height / 25.4));
   const mmPerPx = fit === "contain" ? Math.min(l.width / iw, l.height / ih) : Math.max(l.width / iw, l.height / ih);
@@ -40,7 +41,8 @@ function insideRect(quad: P[], minX: number, minY: number, maxX: number, maxY: n
  * - LOW_DPI: images under 300 dpi (warning) or 150 dpi (error) at their printed size.
  * - ON_GLUE_FLAP: an item runs onto a glue flap (that part is cut off: glue flaps stay ink-free).
  * - CROSSES_FOLD: an item crosses a fold line (it is clipped at the fold). Error for text.
- * - OUTSIDE_SAFE_ZONE: text or an image sits closer to an edge than the safe margin.
+ * - OUTSIDE_SAFE_ZONE: text or an image sits closer to an edge than the safe margin. Error for
+ *   text that runs past the panel edge itself: those words are cut off (R10-04).
  * - TEXT_TOO_SMALL: text under 6 pt.
  * - EMPTY_DESIGN: nothing printed on the outside (info).
  * The inside surface is only checked when printSides is BOTH.
@@ -76,7 +78,8 @@ export function runPreflight(doc: DesignDoc, model: DielineModel): PreflightIssu
       if (onGlue) push("ON_GLUE_FLAP", layer.kind === "text" ? "error" : "warning");
       else if (crossesFold) push("CROSSES_FOLD", layer.kind === "text" ? "error" : "warning");
       else if (layer.kind !== "shape" && !insideRect(layerQuad(layer), safe, safe, face.width - safe, face.height - safe)) {
-        push("OUTSIDE_SAFE_ZONE", "warning");
+        const offPanel = layer.kind === "text" && !insideRect(layerQuad(layer), 0, 0, face.width, face.height);
+        push("OUTSIDE_SAFE_ZONE", offPanel ? "error" : "warning");
       }
     }
   }

@@ -3,7 +3,7 @@
 import { Banknote, ClipboardList, ExternalLink, House, Languages, LogOut, Store, Table2, UserRound } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { Frame, Navigation, TopBar, TopBarSearchField, type ContextualSaveBarProps, type NavigationSectionProps } from "@/components/ui";
+import { Frame, Navigation, TopBar, TopBarSearchField, type ContextualSaveBarProps, type NavigationSectionProps } from "@/components/ui/Frame";
 import { signOut } from "@/components/auth";
 import { useI18n } from "@/i18n/client";
 import type { Locale } from "@/types";
@@ -55,15 +55,9 @@ export function VendorFrame({ locale, userName, vendor, awaitingCount, children 
   const router = useRouter();
   const pathname = usePathname() ?? `/${locale}/vendor`;
   const [query, setQuery] = useState("");
-  // R4-CR-22: the full placeholder is cut on phones; under 490 px use the short one.
-  const [narrow, setNarrow] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 30.62rem)");
-    const on = () => setNarrow(mq.matches);
-    on();
-    mq.addEventListener("change", on);
-    return () => mq.removeEventListener("change", on);
-  }, []);
+  // R4-CR-22 / R5-PL-17: one short placeholder that fits 320 px. No viewport state here on purpose:
+  // a state update in the frame right after hydration reached Suspense boundaries still streaming on
+  // slow phones, React client-rendered them (#418, LCP ~5 s). Same fix as AdminFrame (c1bcad65).
   const [saveBar, setSaveBar] = useState<SaveBarState | null>(null);
   const register = useCallback((s: SaveBarState | null) => setSaveBar(s), []);
   const base = `/${locale}/vendor`;
@@ -120,7 +114,7 @@ export function VendorFrame({ locale, userName, vendor, awaitingCount, children 
           <TopBarSearchField
             value={query}
             onChange={setQuery}
-            placeholder={t(narrow ? "vendorPortal.topBar.searchShort" : "vendorPortal.topBar.search")}
+            placeholder={t("vendorPortal.topBar.searchShort")}
             onSubmit={(q) => router.push(`${base}/jobs${q.trim() ? `?q=${encodeURIComponent(q.trim())}` : ""}`)}
           />
         ) : undefined

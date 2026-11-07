@@ -42,6 +42,11 @@ const GLASS: Partial<Record<VesselMaterialCode, GlassLook>> = {
   PET_CLEAR: { color: "#f6fbff", roughness: 0.06, attenuation: "#e8f3fb", attenuationDistance: 0.2, opacity: 0.12, ior: 1.57, thickness: 0.4 },
 };
 
+/** Alpha-blended (no transmission) look where the surface colour alone is wrong. */
+const LOW_PATH: Partial<Record<VesselMaterialCode, { color: string; opacity: number }>> = {
+  GLASS_AMBER: { color: "#8a4b12", opacity: 0.8 },
+};
+
 export function isTransparentVessel(code: VesselMaterialCode): boolean {
   return code in GLASS;
 }
@@ -86,12 +91,15 @@ function baseVesselMaterial(code: VesselMaterialCode, quality: VesselQuality, op
         side: FrontSide,
       });
     }
+    // R5-3Q-G-15: without transmission there is no absorption through the wall, so amber glass
+    // needs its body colour and more opacity on the low path (it read pale peach)
+    const low = LOW_PATH[code];
     return new MeshPhysicalMaterial({
-      color: new Color(glass.color),
+      color: new Color(low?.color ?? glass.color),
       metalness: 0,
       roughness: glass.roughness,
       transparent: true,
-      opacity: glass.opacity,
+      opacity: low?.opacity ?? glass.opacity,
       depthWrite: false,
       clearcoat: 1,
       clearcoatRoughness: glass.roughness * 0.5,
@@ -149,8 +157,14 @@ export function createLiquidMaterial(code: LiquidCode, quality: VesselQuality, c
 
 /** Closure part materials. */
 export function createClosureMaterial(role: PartRole, color: ClosureColorCode): Material {
-  const c = CLOSURE_COLORS[color];
+  // an unknown code ("MATCH" handled upstream, an old saved doc) draws white, never throws
+  const c = CLOSURE_COLORS[color] ?? CLOSURE_COLORS.WHITE;
   switch (role) {
+    case "gasket":
+      // swing-top seal: natural red rubber whatever the stopper colour
+      return new MeshPhysicalMaterial({ color: "#b8312b", roughness: 0.7, sheen: 0.3, sheenRoughness: 0.6, sheenColor: new Color("#ffffff") });
+    case "wire":
+      return new MeshPhysicalMaterial({ color: "#c9ccd0", roughness: 0.32, metalness: 1 });
     case "rubber":
       return new MeshPhysicalMaterial({ color: color === "WHITE" || color === "NATURAL" ? "#f0eee8" : c.metal ? "#1f1f22" : c.hex, roughness: 0.62, sheen: 0.4, sheenRoughness: 0.5, sheenColor: new Color("#ffffff") });
     case "pipette":

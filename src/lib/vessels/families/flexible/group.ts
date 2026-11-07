@@ -19,8 +19,8 @@ export function buildFlexibleGroup(cfg: FlexConfig, opts: FlexGroupOptions = {})
   const group = new Group();
   group.name = `flexible-${cfg.code}`;
   const crimp = crimpNormalTexture();
-  // R6-3Q-G: the renderer never passed a window mask, so the window option drew nothing. Build it
-  // from the model's window rectangle when the caller has none.
+  // R5-3Q-G-21: the window option cut nothing: the front film now carries an alpha mask built from
+  // the model's windowUv (the unprinted clear window) unless the caller brings its own.
   const windowMask = opts.windowMask ?? (model.windowUv ? windowMaskTexture(model.windowUv) : undefined);
   for (const part of model.parts) {
     let material;
@@ -48,26 +48,22 @@ function definitionCrimp(model: FlexModel) {
   return model.config.code !== "FLEX_MAILER_BAG" && model.config.code !== "FLEX_BAG_IN_BOX";
 }
 
-/** Clear film left in the window (alpha); the rest of the front is opaque printed film. */
-export const WINDOW_FILM_ALPHA = 0.16;
-
 /**
- * Window alpha mask in the front panel's UV space (white = printed film, dark = clear window).
- * DataTexture rows run bottom-up (flipY false), the same way as the panel UV's v.
+ * Alpha mask for the front face: white (opaque printed film) with the window rectangle at ~12 %
+ * (clear film: still shows its gloss), in the face's UV space. alphaMap reads the green channel;
+ * a DataTexture is not flipped, so row 0 is v = 0.
  */
 export function windowMaskTexture(w: { u0: number; v0: number; u1: number; v1: number }, size = 256): DataTexture {
   const data = new Uint8Array(size * size * 4);
-  const clear = Math.round(WINDOW_FILM_ALPHA * 255);
+  const [ua, ub] = [Math.min(w.u0, w.u1), Math.max(w.u0, w.u1)];
+  const [va, vb] = [Math.min(w.v0, w.v1), Math.max(w.v0, w.v1)];
   for (let y = 0; y < size; y++)
     for (let x = 0; x < size; x++) {
       const u = (x + 0.5) / size;
       const v = (y + 0.5) / size;
-      const inside = u >= w.u0 && u <= w.u1 && v >= w.v0 && v <= w.v1;
-      const a = inside ? clear : 255;
+      const a = u >= ua && u <= ub && v >= va && v <= vb ? 30 : 255;
       const k = (y * size + x) * 4;
-      data[k] = a;
-      data[k + 1] = a;
-      data[k + 2] = a;
+      data[k] = data[k + 1] = data[k + 2] = a;
       data[k + 3] = 255;
     }
   const tex = new DataTexture(data, size, size, RGBAFormat);

@@ -1,10 +1,16 @@
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
+import { preloadPlexArabic } from "@/app/font-preload";
 import type { Metadata } from "next";
 import { requireRole } from "@/lib/auth/session";
 import { db } from "@/lib/db";
-import { getDictionary, toLocale } from "@/i18n";
-import { I18nProvider } from "@/i18n/client";
-import { AppProvider } from "@/components/ui";
+import { toLocale } from "@/i18n";
+import { I18nScope } from "@/i18n/I18nScope";
+// R5-PL-07: kit styles shared by this area's page, loading, error and not-found segments. With
+// inlineCss each segment inlines its own CSS again, unless an ancestor layout already has it.
+import "@/components/ui/Stack.module.css";
+import "@/components/ui/Card.module.css";
+import "@/components/ui/Page.module.css";
+import { AppProvider } from "@/components/ui/AppProvider";
 import { AdminFrame } from "@/components/admin/AdminFrame";
 import { countModeration, countOpenQuoteLeads, countPayoutsToAct } from "@/components/admin/server/queries";
 
@@ -17,6 +23,7 @@ export const dynamic = "force-dynamic";
  */
 export default async function AdminLayout({ children, params }: { children: ReactNode; params: Promise<{ locale: string }> }) {
   const locale = toLocale((await params).locale);
+  preloadPlexArabic(locale); // app frame font (Plex), Arabic only
   const user = await requireRole("ADMIN", locale, `/${locale}/admin`);
   // Orders badge = jobs ops must act on: QC review plus paid orders still waiting for a vendor.
   const [qc, applications, disputes, dataRequests, payouts, moderation, quotes] = await Promise.all([
@@ -29,13 +36,13 @@ export default async function AdminLayout({ children, params }: { children: Reac
     countOpenQuoteLeads(),
   ]);
   return (
-    // Full dictionary: the root layout leaves the admin namespace out of public pages.
-    <I18nProvider locale={locale} dict={getDictionary(locale)}>
+    // Adds the admin namespace (and what admin code reads) to the root scope (R5-PL-08).
+    <I18nScope locale={locale} scope="admin">
     <AppProvider locale={locale}>
       <AdminFrame locale={locale} userName={user.name ?? user.phone} counts={{ qc, applications, disputes, dataRequests, payouts, moderation, quotes }}>
         {children}
       </AdminFrame>
     </AppProvider>
-    </I18nProvider>
+    </I18nScope>
   );
 }

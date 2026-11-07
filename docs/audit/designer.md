@@ -383,3 +383,378 @@ Still owned elsewhere: R4-R1 (MarketingShell boundary, platform/marketing), R4-R
 - Lint and typecheck are clean. `npm test`: **85 files, 8,419 passed**. `npm run build` OK.
 - Playwright `designer` + `smoke` + `journey` + `checkout` + `catalogue` (`--workers=2`): **41 passed, 5 skipped**, 0 failed.
 - Hydration e2e, 16 × 2 projects: **32 / 32 passed**.
+
+# Round 8 (performance reopened R4-15 and R4-12)
+
+Base: main 0cc1957 merged in. The performance branch (`r4-performance` b0ee870) is **not in main yet**. A trial merge conflicted only in files outside designer scope (`[locale]/layout.tsx`, `font-preload.ts`, `fonts.ts`), where marketing and performance each built the same English-only Inter preload. I aborted it, so those are left for the integrator. The designer code follows its conventions: direct UI-kit imports in the touched files, and `fetchPriority="high"` on the hero poster. `three/dpr.ts` arrives with that merge, and `DesignerApp` takes it from there.
+
+## Findings (round 8, new)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R8-01 | medium | `/design?structure=…`, `/design?design=…` (storefront deep links) | Since R4-01 these deep links answered **200 with a `<meta http-equiv="refresh">`** instead of a 307: the page's `redirect()` ran inside the Suspense boundary, after the shell had streamed. Browsers still arrived, but crawlers, link checkers and storefront tooling saw a 200 page. | HTTP semantics; SEO | `startPageRedirect()` (new `designer/startRedirect.ts`) runs in the picker **layout**, above the boundary, using the query that `src/middleware.ts` now forwards as `x-elba-search` (one additive line). The page keeps the same check for soft navigations. | fixed: `?structure=FEFCO_0201` → **307** `/en/design/shipping-box`, `?design=abc` → 307 `…/mailer-box?d=abc`, size params kept |
+| R8-02 (= PERF R4-15) | high | `/design` phone LCP (`(picker)/layout.tsx`, `page.tsx`) | The hero (headline, stage, poster: the LCP element) streamed after the page's 370-card RSC payload. The poster was at byte 794 K of a 1 MB document. | LCP < 2.5 s | The hero and the resume card render in the **layout, above the boundary**. The page holds only the catalogue section, inside the boundary. The R4-01 boundary still sits between `<main>` and the page's payload read. | fixed: the poster is at byte **15.5 K** of 359 K, and LCP is now **FCP + 0.06 to 0.12 s** (phone, ISOLATE=1, 5 runs: ar 3.83–3.90 s with FCP 3.73–3.79 s, en 3.42–3.49 s with FCP 3.36–3.40 s). This base doesn't include the performance branch's FCP work (inline CSS, font preloads), so the absolute LCP has to be re-checked after that merge. With the payload ordering fixed, LCP follows FCP |
+| R8-03 (= PERF R4-12) | high | `/design` phone TBT / INP (`DesignStart`, `StartViewer`) | TBT and INP over budget on the phone profile. | INP < 200 ms | Before tapping Play (R6-01), the page does no 3D work: the hand-replayed tool taps showed no long task over 200 ms during load in ar and one 213 ms task in en, and the chip and tab handlers take under 12 ms. Added this round: the hero turns at about 30 fps (one demand-rendered frame per 33 ms, not every display frame) and draws at 1x on touch screens. | **passive page within budget.** Runs where the 3D view hadn't loaded before the tool's last interaction (JS ≈ 440 KB): INP 104–136 ms, TBT 0.43–0.54 s. **Still over after Play**: perf-pages taps the hero's Play button, which loads the 3D view (two 450–550 ms startup tasks). The tool's next key press then waits: INP 264–760 ms, TBT 1.1–1.4 s, in both locales, with or without the frame cap and 1x canvas. That startup work is the engine's (R6-R1: yield between import, scene build and first render; `compileAsync`) |
+
+Hydration: 40 cold loads (a fresh browser per load: `/ar/design` + `/en/design`, desktop + Pixel 5, 10 rounds), **0 errors**. The e2e hydration test repeated 16 × 2: **32 / 32 passed**.
+
+Files touched outside scope: `src/middleware.ts` (one line, `x-elba-search`, R8-01).
+
+## Verification (round 8)
+
+- Lint and typecheck are clean. `npm test`: **89 files, 8,494 passed**. `npm run build` OK.
+- Playwright `designer` + `smoke` + `journey` + `checkout` + `catalogue` + `storefront` (`--workers=2`): **57 passed, 5 skipped**, 0 failed.
+
+## Counts (round 8, new findings before fixing)
+
+| severity | found | fixed | open |
+|---|---|---|---|
+| critical | 0 | 0 | 0 |
+| high | 2 (R8-02, R8-03; both reopened by performance) | 1 fully (R8-02), 1 for the passive page (R8-03) | R8-03 after Play → 3d-engine R6-R1 |
+| medium | 1 (R8-01) | 1 | 0 |
+| low | 0 | 0 | 0 |
+
+# Round 9
+
+Base: main d61f21f. It includes this branch's 0844838, perf bbc5100, marketing, catalogue and checkout R5, so it was a fast-forward. I checked that the R8 pieces are intact: the hero above the boundary, the redirect from the layout, `x-elba-search`, the 30 fps / 1x hero turn, and `three/dpr` in `DesignerApp`.
+
+## Absolute LCP on the merged code (integrator request)
+
+`perf-pages.mjs`, `ISOLATE=1`, phone profile, 5 runs:
+
+| page | LCP ar | LCP en | FCP | INP | CLS |
+|---|---|---|---|---|---|
+| `/design` (start page) | **1.26–1.61 s** | **1.22–1.25 s** | 1.02–1.58 s | 88–232 ms (19 of 20 runs < 200 ms) | ≤ 0.002 |
+| `/design/mailer-box` (editor) | **1.45–1.49 s** | **1.34–1.36 s** | 0.98–1.05 s | 96–176 ms | 0.002 |
+
+Both pages are **under the 2.5 s budget** in every run. TBT on this profile is 0.29–1.78 s on the start page and 1.33–1.55 s in the editor. That is software WebGL after the 3D loads (in the editor by design; on the start page only after Play), and the mount task is with 3d-engine (R6-R1, as assigned).
+
+## Fresh pass
+
+- axe-core: **0 violations** on every state in ar + en at 390 and 1440: start page, editors, artwork, text, gate, the phone view menu, and the start page after Play.
+- Keyboard: the view menu works fully (Enter, arrows, Escape returns focus), and Play / Pause is a real button with the right name.
+- Deep links answer 307 (`?structure=`, `?design=`). An unknown model answers 404.
+- WCAG 1.4.12 text spacing: no model name is cut (0 of 91 on the start page, 0 in the picker).
+- Export: no placeholder, mark present. The share modal states and the copy-failure message work.
+- Quote-only model: the badge, toolbar and modal agree.
+
+## Findings (round 9)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R9-01 | medium | price badge for a signed-in visitor (`Modals.tsx · PriceBadge`) | For the first 0.5 to 1 s of every editor load, a **signed-in** visitor saw the signed-out badge: "500 قطعة: اعرف السعر" / "500 pieces: see the price" with a lock icon. The `idle` state (before the debounced first request) fell through to the locked branch. Seen on the aerosol can in ar. | ISO 9241-110 (self-descriptiveness); WCAG 4.1.3 (a wrong status is announced through the live region) | `idle` renders as loading: "Getting the price" / "جار حساب السعر", the shimmer bar, `aria-busy`, and the tag icon. | fixed. Sampled every 100 ms on load: `idle → loading → quote`, all with the loading copy until the result. The lock never shows |
+
+## Verification (round 9)
+
+- Lint and typecheck are clean. `npm test`: **95 files, 8,508 passed**. `npm run build` OK.
+- Playwright `designer` + `smoke` + `journey` + `checkout` + `catalogue` + `storefront` (`--workers=2`): **57 passed, 5 skipped**, 0 failed.
+- Hydration: e2e repeat 16 × 2 **32 / 32 passed**; 20 cold loads (fresh browser each, `/ar/design` + `/en/design`, desktop + Pixel 5) **0 errors**.
+
+## Counts (round 9, new findings before fixing)
+
+| severity | found | fixed | open |
+|---|---|---|---|
+| critical | 0 | 0 | 0 |
+| high | 0 | 0 | 0 |
+| medium | 1 (R9-01) | 1 | 0 |
+| low | 0 | 0 | 0 |
+
+# Round 10
+
+Base: unchanged (main d61f21f + 282c9eb). Fresh pass on the angles the integrator suggested: Slow 3G, upload errors, undo/redo and autosave after reload, two tabs on one design, long Arabic text on small faces, and the export modal on a phone.
+
+## Checked and fine
+
+| angle | check | result |
+|---|---|---|
+| Slow 3G (2 s RTT, 500 kbps), ar pouch, phone | timeline sampled every second | the poster and editor skeleton are up at **4.1 s**, the canvas and badge at 22.5 s. No spinner anywhere, no console errors (`r10-slow3g-early-ar-390.png`) |
+| Reload after autosave | add text → URL gains `?d=` → "Saved" → reload | same URL, the text layer is back, status "Saved for 30 days". Undo starts empty after a reload (history is per session), and that is expected |
+| Upload: transparent PNG, CMYK JPEG, tiny PNG | added and saved (201) | transparency kept. CMYK is decoded by the browser. The 60 × 40 px PNG is flagged LOW_DPI by the print check |
+| Export modal, phone, ar + en | sheet at the bottom, targets, axe | radios 24 px, buttons 114 × 40 px, no overflow, axe 0 (`r10-export-ar-390.png`) |
+
+## Findings (round 10)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R10-01 | high | image upload + autosave (`uploadImage.ts`, `DesignerApp.saveToServer`) | **A valid image could make the design unsaveable.** A 9.7 MB PNG (under the 10 MB upload limit) became a ~13 MB data URL. Every save then answered **413** (body cap 12 MB), the toolbar said "Could not save. Retrying shortly." and retried forever, and the work was never stored on the server. | WCAG 3.3.4-adjacent (error prevention); data loss | (1) A size budget per stored image (`IMAGE_MAX_SRC_CHARS` = 3 M characters, so 3 images and the doc fit in 12 MB). An image over budget is re-encoded as WebP (keeps transparency), then stepped down 0.8× at a time. It is refused with the "too large" message only if it still doesn't fit at 20 %. (2) A 413 is now the `tooLarge` state: "This design is too large to save. Replace a large image with a smaller one." (and Arabic), shown in the status and once in a critical toast. There's no retry loop; the next edit tries again. | fixed. The 9.7 MB PNG now saves (**201**) in ar + en. With a 413 forced by the test: one request in 31 s (it was a 10 s / 20 s / 40 s… retry loop), plus the message and the toast (`r10-too-large-en-1440.png`) |
+| R10-02 | medium | upload errors (`uploadImage.ts`, `ArtworkPanel`, `DesignerApp`) | One message for every failure ("Use PNG, JPG, WebP or SVG under 10 MB"), whether the file was the wrong type, too big or unreadable. | WCAG 3.3.1, 3.3.3 | `rejectReason()` / `UploadError(kind)`: "This file type cannot be added…", "This file is larger than 10 MB. Save a smaller copy…", "This file could not be opened as an image. Export it again as PNG or JPG." (and Arabic). The drop zone passes its own reason. Unit test `upload-reject.test.ts`. | fixed: `.txt` → type, 12 MB → size, a fake `.png` → unreadable |
+| R10-03 | medium | two tabs on one design (`DesignerApp`) | **Silent last-writer-wins.** Tab B renamed and saved, then tab A's next autosave overwrote it without any notice. | ISO 9241-110 (controllability); data loss | Tabs announce saves on a `BroadcastChannel`. A tab that hears another tab save the same design pauses its autosave (status "Autosave paused") and shows a warning banner: "This design changed in another tab. Autosave is paused here so neither version is lost." with **Load the latest** / **Keep this version**. Keeping saves this tab's version, and then the other tab gets the banner. | fixed for tabs in the same browser: the server keeps A's version until B chooses, and "Keep" stores B's (`r10-stale-tab-en-1440.png`). Two different devices would need a server version check (R10-R1) |
+| R10-04 | medium | long text on small faces (`DesignerApp.onLayerChange`, `preflight.ts`) | Typing a long Arabic line on the mailer's side panel kept the font size, so the text ran far past both panel edges and would be cut in print. The print check only said "review" (outside the safe zone). | content integrity; preflight | (1) When the words change and the line outgrows the panel's safe width, the size steps down to fit (6 pt minimum), as it already does when text is added. A size the visitor sets on purpose is kept. (2) Preflight: text that runs past the panel edge itself is an **error**; images and shapes there stay a warning (they may be intentional bleed). Unit test in `preflight.test.ts`. | fixed: the same sentence now fits inside the safe area at about 6.7 pt with no issue (`r10-before-longtext-ar-390.png` → `r10-after-longtext-ar-390.png`) |
+
+### Reported to other owners (not edited)
+
+| id | owner | finding | suggested fix |
+|---|---|---|---|
+| R10-R1 | technical / platform (`api/designs`) | Saves have no version check, so two **devices** editing one design still overwrite each other silently. R10-03 covers tabs in the same browser only. | Send `updatedAt` with each PUT and answer 409 when it is stale. The designer would then show the R10-03 banner on a 409 too. |
+
+## Verification (round 10)
+
+- Lint and typecheck are clean. `npm test`: **96 files, 8,513 passed** (new: `upload-reject.test.ts`, the off-panel case in `preflight.test.ts`). `npm run build` OK.
+- Playwright `designer` + `smoke` + `journey` + `checkout` + `catalogue` + `storefront` (`--workers=2`): **57 passed, 5 skipped**, 0 failed.
+- Hydration e2e, 16 × 2 projects: **32 / 32 passed**.
+
+## Counts (round 10, new findings before fixing)
+
+| severity | found | fixed | open |
+|---|---|---|---|
+| critical | 0 | 0 | 0 |
+| high | 1 (R10-01) | 1 | 0 |
+| medium | 3 (R10-02, R10-03, R10-04) | 3 | 0 (multi-device conflicts → R10-R1) |
+| low | 0 | 0 | 0 |
+
+## R10-R1 (assigned to designer by the integrator): optimistic concurrency for saves
+
+| part | change |
+|---|---|
+| API (`api/designs/_shared.ts`, `[id]/route.ts`) | `PUT` takes `baseUpdatedAt` (the version the edit started from) and `force`. When the stored design is newer: **409** `{ error: "CONFLICT", updatedAt, doc }`. |
+| Store (`designer/server.ts · saveDesign`) | A stale base is refused (`isStaleBase`, pure, in `designer/lib/concurrency.ts`). The write itself is a compare-and-set (`updateMany where { id, updatedAt: base }`), so a save landing between the read and the write is refused too. `force` writes deliberately. Creating a share link keeps `updatedAt` (it is not a content change), so an open editor isn't falsely stale. |
+| Editor (`DesignerApp`) | The base comes from the page (`initialUpdatedAt`) and every save response. A 409 opens the R10-03 banner ("This design changed in another tab or on another device", "Load the latest" / "Keep this version") and pauses autosave. "Keep" re-sends with `force: true`. After sign-in (verify-otp claims the draft, which is a write) the editor reads the stored version again before continuing. |
+| Tests | Unit: `concurrency.test.ts` (same version, newer or older, no base, force, malformed). e2e: "two devices on one design" (two browser contexts sharing the anonymous cookie, so no BroadcastChannel between them). A's newer save stands, B's older one gets 409, the banner and "Autosave paused", the server still has A's name, and "Keep this version" stores B's. The main designer, journey and checkout flows (sign-up gate, share, order) pass with the check on. |
+
+# Round 11
+
+Fresh pass on the integrator's angles: the dieline / flat view and print accuracy, the colour picker and brand colours, image crop and rotation, RTL text alignment on faces, and the editor at 1024 px.
+
+## Findings (round 11)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R11-01 | medium | editor at 1024 px (iPad landscape / portrait) (`designer.module.css`) | 1024 px is under the 1040 px side-panel breakpoint, so the tablet got the phone bottom sheet. In landscape (1024 × 768) the 3D canvas was **199 to 207 px** tall, and the floating view controls covered about a third of it. | WCAG 1.4.10; craft | The side-panel layout starts at **1000 px** (all seven 1040 / 1039 rules). | fixed: 1024 × 768 canvas **398–406 px** (panel 384 px at the side); 1024 × 1366 canvas 996–1004 px. No page or sideways scroll; axe 0 in ar + en (`r11-after-tablet-1024x768-en.png`) |
+| R11-02 | medium | colour code field (`fields.tsx`, `lib/color.ts`) | Brand colours typed the usual ways were silently ignored: "#fff" (short form), "#١٢٣٤٥٦" (an Arabic keyboard's digits) and a pasted " #1f3d2b " (it became "# #1f3d2" because of the 7-character limit). | WCAG 3.3.1, 3.3.3 (input help); Arabic keyboards | `normalizeHex()`: trims spaces, reads Arabic-Indic and Persian digits as 0–9, makes `#` optional and expands `#rgb`. Six-digit codes apply as you type; the short form applies on leaving the field (it is also the start of a six-digit code). The limit is 12 characters, and the error says "a 3- or 6-digit colour code". Unit test `color-hex.test.ts`. | fixed: all of those apply (#ffffff, #123456, #1f3d2b), and "#12345g" still shows the error |
+| R11-03 | medium | start / end aligned text on faces (`lib/dieline/texture.ts · drawLayer`, outside scope, one line) | Start- or end-aligned text was drawn on the edge of its box, ignoring the 0.15 em padding the designer measures the box with. Arabic glyphs overhung the selection box (and the box preflight checks the safe zone with), and the print PDF draws through the same function. | print accuracy; preflight | The text is inset by the same 0.15 em. The 3D preview, the face editor and the print PDF (`orders/pdf/print.ts` → `paintArtworkSurface`) all change together. | fixed: start (right for Arabic) and end (left) now sit inside the box (`r11-before-align-ar.png` → `r11-after-align-ar.png`) |
+| R11-04 | low | dieline view (`DielineView.tsx`) | The flat view named the lines but gave no measurements: no flat (die) size, bleed or safe-zone width in mm. | print accuracy (mm) | A size line above the legend: "Flat size 584 × 673 mm · bleed 3 mm · safe zone 5 mm" / "المقاس المفرود … مم · هامش القص الزائد 3 مم · المنطقة الآمنة 5 مم", taken from the dieline model, with the numbers kept left to right. | fixed (`r11-dieline-en-1024.png`) |
+
+Checked, no change:
+- **RTL alignment:** for Arabic, "start" is right and "end" is left, so the logical alignment is correct.
+- **Image rotation:** 15° buttons and a numeric field, and it reaches the print file.
+- **Cropping:** there is none; an image is placed and scaled whole. That's a feature gap rather than a defect, so I'm proposing it, not adding it here.
+- **Pantone / spot colours:** not offered. The plan's SME printers run CMYK, so a spot colour is a price-request item. I'd add a "Brand colours (from your saved designs)" row before any Pantone support, as a separate decision.
+- **The print PDF's own bleed and crop marks:** owned by checkout (`orders/pdf`). The designer side (what it paints) is fixed by R11-03.
+
+Files touched outside scope (round 11): `src/lib/dieline/texture.ts` (the R11-03 inset, one line plus a comment). R10-R1: `src/app/api/designs/_shared.ts`, `src/app/api/designs/[id]/route.ts` (assigned by the integrator).
+
+## Verification (R10-R1 + round 11)
+
+- Lint and typecheck are clean. `npm test`: **98 files, 8,521 passed** (new: `concurrency.test.ts`, `color-hex.test.ts`). `npm run build` OK.
+- Playwright `designer` + `smoke` + `journey` + `checkout` + `catalogue` + `storefront` + **`models`** (`--workers=2`): **428 passed, 376 skipped**, 0 failed. That includes the new "two devices on one design" test and every library model after the text-inset change.
+- Hydration e2e, 16 × 2 projects: **32 / 32 passed**.
+
+## Counts (round 11, new findings before fixing)
+
+| severity | found | fixed | open |
+|---|---|---|---|
+| critical | 0 | 0 | 0 |
+| high | 0 | 0 | 0 |
+| medium | 3 (R11-01, R11-02, R11-03) | 3 | 0 |
+| low | 1 (R11-04) | 1 | 0 |
+
+# Integrator decisions after round 11: image crop and brand colours
+
+## Image crop (built)
+
+| part | change |
+|---|---|
+| Doc (`types/design.ts`, `designer/lib/doc.ts`) | `ImageLayer.crop?: { x, y, width, height }` as fractions of the whole image (0..1), validated inside the image. **Non-destructive**: `src`, `pxWidth` and `pxHeight` keep the whole image. |
+| Renderers (`lib/dieline/texture.ts`, outside scope, additive) | `imagePlacement()` (pure, exported): the whole image is drawn, scaled so the crop fills the box, and a clip hides the rest. That needs only the 5-argument `drawImage` and a rectangular clip, which the print PDF's canvas shim already supports. So the 3D preview, the face editor, the dieline and the **print PDF** all honour the crop through `drawLayer`. |
+| Preflight | `effectiveDpi` counts only the cropped pixels, so a heavy crop is flagged as low DPI. |
+| UI (`CropDialog.tsx`, `ArtworkPanel`) | "Crop" / "قص" on each image, plus "Remove crop" when one is set. Shapes: **Panel shape** (the face's aspect), Square, Original, Free. The frame is dragged, or its 24 px corner. **Keyboard**: the frame is focusable; arrows move it, Shift + arrows resize (WCAG 2.5.7, 2.1.1). Four **numeric fields** (left / top / width / height %) set it exactly, and a live line gives the result in pixels. The image is never mirrored in RTL. On apply, the layer box takes the crop's shape, keeping its centre and staying inside the panel. |
+| Tests | Unit `crop.test.ts`: placement maths (no crop is the old fit; a right-half crop fills the box), DPI, the schema, the frame rules (inside the image, locked aspect in pixels, centred) and `withCrop` (shape applied and removed). e2e "crop an image to a square": upload, Square, an arrow key, apply → box W = H, "Remove crop" shown, and the saved doc has `crop.width` 0.5 with `pxWidth` 400 (the whole image kept). |
+
+## Brand colours (built; no Pantone library, as decided)
+
+| part | change |
+|---|---|
+| Storage (`prisma/schema.prisma`, outside scope, additive) | `User.brandColors Json?`. |
+| API (`api/designs/brand-colors`) | `GET` / `PUT` for signed-in buyers only. Up to **12** `{ name ≤ 40, hex, cmyk? [0..100 × 4], spot? ≤ 60 }`, one per colour code, rate-limited. |
+| Picker (`fields.tsx`, `BrandColors.tsx`) | Brand colours come **first** in every colour field (background, shape fill, text), as named swatches ("لون العلامة {name}، {hex}"). "Save to brand colours" appears under any colour not yet saved, plus "Manage brand colours". Both ask for the free account first. The manager has a name, the colour code (the R11-02 normaliser), optional CMYK (Arabic-keyboard digits accepted, all four or none) and an optional **"Spot colour reference"** with the help text "The printer uses it as a reference to match; it is not a colour guarantee." / "تستخدمه المطبعة مرجعا للمطابقة، وليس ضمانا لدقة اللون." |
+| To the printer | A save adds `doc.brandColors`: the brand colours the design actually uses. It is kept in `Design.config` (`docConfig` / `rowToDoc`), so the proof snapshot carries it. The **print PDF** slug gets a second line: "Buyer colour references (match, not guaranteed): #7A1FA2 CMYK 50/90/0/10 ref PMS 2603 C". Names are left out because that line is ASCII. Saving brand colours re-saves an open design, so its snapshot stays current. |
+| Tests | Unit: `brandColorSchema` (name, hex, CMYK 0..100, spot). e2e "brand colours" (ar, signed in): save "بنفسجي الشركة" with CMYK typed as "٥٠ / ٩٠ / 0 / 10" and spot "PMS 2603 C". It appears first in the picker; the account API returns exactly that entry; the saved design's `brandColors[0].spot` is "PMS 2603 C". |
+
+# Round 12 (audit of the R10 to R12 changes)
+
+Angles from the integrator: the 409 banner on a phone; the 1000 px breakpoint at 999 / 1000 / 1024 / 1180; crop on Arabic faces; brand colours with the Arabic keyboard.
+
+| angle | result |
+|---|---|
+| 1000 px breakpoint | 1000 / 1024 / 1180 × 768 / 820: side panel (384 px), canvas 398–450 px tall, no scroll. **999 × 768: phone sheet, canvas 199 px** → R12-01 |
+| 409 banner on a phone (ar + en, sheet up) | Shows with both actions ("Load the latest" 40 px, "Keep this version" 28 px ≥ 24 px) and "Autosave paused", axe 0. **The page overflowed by 94 to 106 px** → R12-02 |
+| Crop on an Arabic face | "شكل الوجه" sets the panel's aspect (100 % × 64.1 % of a 2:1 image). Shift + ← shrinks it while keeping the aspect (95 % × 60.9 %). Corner target 24 × 24 px, axe 0 on the dialog. The face shows the cropped part filling the box (`r12-crop-face-ar.png`) |
+| Brand colours with an Arabic keyboard | "#١٢٣٤٥٦" becomes #123456 and applies. Anonymous "Save to brand colours" opens the account gate. CMYK in Arabic digits is stored as numbers (e2e above) |
+
+## Findings (round 12)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R12-01 | medium | editor, landscape 768–999 px (`designer.module.css`) | The R11-01 breakpoint fixed 1024 px, but any landscape screen from 768 to 999 px (small tablets, split view, 999 × 768) still got the phone sheet with a **199 px** canvas. | WCAG 1.4.10; craft | Landscape 768–999 px wide and more than 500 px tall uses the side panel too (panel `minmax(16rem, 38%)`, no sheet handle). | fixed: 999 × 768 canvas **418 px**, panel 374 px, no scroll (`r12-bp-999x768-ar.png`) |
+| R12-02 | medium | 409 / "not found" banner on phones (`DesignerApp`, `designer.module.css`) | The ~130 px banner pushed the editor **94 to 106 px** past the viewport (sheet up), so the stage header scrolled under the sticky top bar: the same class of problem as R4-08. | WCAG 2.4.11, 1.4.10 | `data-banner` on the editor. While a banner shows, the phone stage's floor drops to 12rem (sheet down) and the pulled-up sheet leaves 9rem more. | fixed: overflow **0** in ar and en with the banner and the sheet up (`r12-409-banner-ar-390.png`) |
+
+Files touched outside scope (crop, brand colours): `src/types/design.ts` (two optional fields and two types), `src/lib/dieline/texture.ts` + `index.ts` (`imagePlacement`, crop in `drawLayer`), `src/lib/orders/pdf/print.ts` (the colour reference slug line), `prisma/schema.prisma` (`User.brandColors Json?`).
+
+## Journeys items folded into round 12 (`docs/audit/journeys.md`)
+
+| id | severity | where | finding | fix | status |
+|---|---|---|---|---|---|
+| R5-JR-14 | low | editor on phones (`DesignerApp`) | The phone toolbar has no design-name field, so phone designs stayed untitled. The share page and the WhatsApp follow-up fell back to the style name. | "Rename" / "إعادة التسمية" in More actions opens a small dialog with the name field (same history step as the toolbar field). e2e (mobile): rename → the saved doc has the new name. | fixed |
+| R5-JR-15 | low | share page vs designer price (`s/[id]/page.tsx`, `Modals.tsx`, `api/quote`) | The share page showed the unit price after the 3 % prepay discount (EGP 50.70); the designer's badge and dialog showed it before (52.24); neither said which. | Share page: "Price after the {pct}% discount for paying in advance." Designer price dialog: "Prices here are before the {pct}% discount for paying in advance at checkout." The percentage is the admin setting (`loadCheckoutSettings`, now also in the `/api/quote` response) and is hidden when it is 0. I didn't add a computed "after" price to the dialog: the share page discounts the product lines only, so a flat × 0.97 would show 50.67 against 50.70. The checkout half is with checkout. | fixed (designer half) |
+| R5-JR-20 | medium | size fields (`BoxPanel`, `ConfigPanel` box + vessel, `fields.tsx NumberField`) | Native `type="number"`: Chromium refuses Arabic-Indic digits, so «٢٥٠» left the size unchanged without a word. "250,5" failed the same way. | `type="text"` + `inputMode="decimal"`, read with `parseMmInput` (`designer/lib/mm.ts`, on top of the shared `normaliseNumberInput` / `parseDecimalInput` in `lib/money/input.ts`, plus a decimal comma before 1–2 digits for sizes). Spin-button semantics are kept through a new optional `spinbutton` prop on `TextField`: `role="spinbutton"`, `aria-valuenow/min/max`, ↑/↓ step (Shift ×10), PageUp/PageDown. Unit test `mm.test.ts`. | fixed: «٢٥٠» → 250 (pouch 230 → 250 applied); "250,5" → 250.5 and the outer size updates; ↑ / Shift+↓ step; "abc" shows the size error; axe 0, ar + en |
+
+Files touched outside scope (journeys items): `src/app/api/quote/route.ts` (`prepayDiscountPct` in the response), `src/components/ui/TextField.tsx` (optional `spinbutton` prop).
+
+## Verification (crop, brand colours, round 12 and journeys items; on main fd40cef + 69054fb)
+
+- Lint and typecheck are clean (including main's no-barrel rule). `npm test`: **108 files, 8,755 passed** (new: `crop.test.ts`, `mm.test.ts`). `npm run build` OK.
+- Playwright `designer` + `smoke` + `journey` + `checkout` + `storefront` + `catalogue` (`--workers=2`): **69 passed, 10 skipped**, 0 failed. The first run had 3 checkout / journey failures from a dev database that had not been `db push`ed after merging main (Prisma error on the pay page, new columns). After the push: checkout + journey 11 passed, 1 skipped. The full models run on the crop / brand colour build: 430 passed, 378 skipped, 0 failed.
+- Hydration e2e, 16 × 2: **32 / 32 passed**.
+- Re-run on the final build:
+  - JR-20 (ar box, en box, ar pouch): «٢٥٠» → 250, "250,5" → 250.5, ↑ → 251.5, Shift+↓ → 241.5, axe 0.
+  - R12: 409 banner overflow 0 (ar, en); 999 / 1000 / 1024 / 1180 px all side panel with a 398–450 px canvas; crop dialog axe 0; anonymous brand save opens the gate and «#١٢٣٤٥٦» → #123456.
+
+## Counts (round 12, new findings before fixing)
+
+| severity | found | fixed | open |
+|---|---|---|---|
+| critical | 0 | 0 | 0 |
+| high | 0 | 0 | 0 |
+| medium | 2 (R12-01, R12-02) + 1 from journeys (R5-JR-20) | 3 | 0 |
+| low | 0 + 2 from journeys (R5-JR-14, R5-JR-15 designer half) | 2 | 0 |
+
+# Round 13 (audit of the merged main 263685c → 846028ab)
+
+Merged main: the R6 public site with its new header, the spacing system, crop, brand colours and R12 are all in. `designer/lib/mm.ts` now wraps the one shared `parseMmInput` in `lib/money/input.ts` (journeys), which already reads a decimal comma. With it, "1,500" in a size is 1.5 mm, which is out of range, so the size error shows. The designer wrapper only drops a pasted unit (R13-02).
+
+Angles: the editor at 320 / 390 / 1024 / 1440 in ar + en with the new public header; phone landscape and the 768–999 px band with the banner; crop and brand colours through to the share page; size fields with paste and autofill.
+
+| angle | result |
+|---|---|
+| Start page + editor at 320 / 390 / 1024 / 1440, ar + en | The start page uses the new public header (`chrome_header`); the editor keeps its own bar. axe **0** on all 16 states, no sideways scroll, no page errors. Editor canvas: 304×198 (320), 374×246 (390), 592×430 (1024), 1008×562 (1440) |
+| Banner (forced 409) at 800×600, 900×700, 999×768 | Side layout, canvas 217–385 px, no overflow, axe 0. **844×390 (phone landscape): canvas 19 px** → R13-01 |
+| Crop + brand colour → share page, ar + en | The saved doc has `crop {x 0.25, w 0.5}` and the brand colour with CMYK + "PMS 356 C". The share page's 3D shows the cropped (square) part. New header, axe 0, no sideways scroll. **The prepay sentence appeared twice** → R13-03 |
+| Size fields: paste and autofill (ar) | Paste «٣٠٠», " 320 ", "3٥0" and "\t360\n" all apply; an autofill-style input event «٢٧٠» applies. **"330 مم" / "340mm" were refused** → R13-02 |
+
+## Findings (round 13)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R13-01 | medium | editor, phone landscape with a banner (`designer.module.css`) | At 844 × 390 the "changed elsewhere" (or "not found") banner spanned both columns, and the 3D canvas shrank to **19 px**. | WCAG 1.4.10; craft | Short landscape with a banner: the banner moves to the panel column (`"price banner" / "stage banner" / "stage panel"`), so the stage keeps the full height below the price row. | fixed: canvas **153 px**, no overflow, axe 0 (`r13-banner-landscape-ar.png`) |
+| R13-02 | low | size fields: pasting a size with its unit (`designer/lib/mm.ts`) | A size copied from a spec sheet ("330 مم", "340mm", "350 ملم") was refused (the error showed, nothing changed). | WCAG 3.3.3 (input help) | The designer wrapper drops a trailing mm / مم / ملم / م.م, then reads with the shared parser. Unit test. | fixed: 330 and 340 apply |
+| R13-03 | low | share page (`s/[id]/page.tsx`) | After main's `buyer.sharePricePrepay` ("… after the 3% prepay discount …"), my R5-JR-15 line below it said the same again. | content | My line and its key are removed; main's price sentence carries it. i18n scopes regenerated. | fixed (`r13-share-crop-ar-1440.png`) |
+
+Files touched outside scope: none new (the share page and the scopes file regenerated by its script).
+
+## Counts (round 13, new findings before fixing)
+
+| severity | found | fixed | open |
+|---|---|---|---|
+| critical | 0 | 0 | 0 |
+| high | 0 | 0 | 0 |
+| medium | 1 (R13-01) | 1 | 0 |
+| low | 2 (R13-02, R13-03) | 2 | 0 |
+
+Verification (round 13, on fd799af6): lint and typecheck are clean; unit tests 8,938 passed; build OK; e2e (designer, smoke, journey, checkout, storefront, catalogue; `--workers=2 --trace off`, `OTP_DEV_ECHO=1 ALLOW_MOCK_PAYMENTS=1`) **61 passed, 9 skipped, 0 failed**; "designer pages hydrate without errors" with `--repeat-each=16` **32 / 32 passed**.
+
+# Round 14 (audit of main a7d341f3)
+
+Angles:
+- the whole editor journey at 320 / 390 / 844 × 390 / 1024 / 1440, ar + en (start page, editor, a size pasted with its unit, the banner);
+- more phone landscape sizes (667 × 375, 740 × 360, 915 × 412), with and without the banner;
+- the share page price line for a box and a bottle;
+- the engine's new closures in the closure picker: every bottle, every option (`finishForConfig`, R6-3Q-F-01).
+
+| angle | result |
+|---|---|
+| Journey, 10 states | axe **0**, no sideways scroll, no page errors. "330 مم" / "330 mm" pasted into Length gives 330 (R13-02 holds) |
+| Closure picker: 34 bottles, 52 options (ar), 18 multi-closure bottles (en) | Every option sticks, the price badge stays, axe 0 on the panel, no page or console errors. The engine (`finishForConfig`): 139 / 139 model × preset × closure combinations draw the closure on a neck it fits |
+| Share page, box + bottle, ar + en | axe 0, no sideways scroll. **A bottle's line said "500 boxes … per box"** → R14-01 |
+| Phone landscape (667–915 × 360–412) | **Canvas 66–118 px without a banner; with a banner (R13-01's layout) the panel was 22–37 px at 667 / 740** → R14-02 |
+| Names | **Two controls named "Closure"**: the closure select and the 3D open / closed toggle → R14-03 |
+
+## Findings (round 14)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R14-01 | medium | share page for a container (`s/[id]/page.tsx`) | A bottle, jar or pouch share link priced "500 boxes from EGP 4.18 each" / «500 علبة … للعلبة». The editor's own badge for the same design says pieces. | content; consistency | For a container the line uses `designer.container.sharePrice` / `sharePricePrepay` («500 قطعة … للقطعة», "500 pieces … each"). Boxes keep `buyer.sharePrice*`. | fixed (`r14-share-bottle-ar.png`) |
+| R14-02 | medium | editor, phone landscape (`designer.module.css`) | 360–412 px tall: the 3D view was **66–118 px** (pinned top bar, toolbar, price row and stage controls above it). With a banner, R13-01's layout left the panel **22 px** (740 × 360) or 37 px (667 × 375). | WCAG 1.4.10; craft | Short landscape: the top bar scrolls away instead of staying pinned. The stage and panel row is one screen tall (`100dvh − 6.5rem`), and the panel is size-contained so it scrolls inside. | fixed: canvas **130–182 px** without a banner, **325–372 px** with one; panel **256–308 px** under the banner; no sideways scroll (`r14-landscape-844x390-ar.png`, `r14-landscape-banner-740x360-ar.png`) |
+| R14-03 | low | 3D view for containers (`DesignerApp.tsx`) | The open / closed toggle group was labelled "Closure" / «الغطاء», the same as the Closure select: two different controls with one name. | WCAG 2.4.6 | The group is "Closure in the preview" / «الغطاء في المعاينة» (`designer.view.closurePreview`). | fixed |
+| R14-04 | low | model card for bottles (`lib/library/packs/vessel-bottles.ts`, not in scope) | The card shows `standard` = the preset's finish id ("PP28"): a raw code, not localised, and still "PP28" after a swing top or crown is chosen (that closure draws on another neck). | content | Owner: library / 3D engine. Show the fitted finish's name for the chosen closure, or no code when `standard` is "none". | open, reported (`r14-closure-swing-top-en.png`) |
+
+Files touched outside scope: none new (the share page, and the scopes file regenerated by its script).
+
+## Counts (round 14, new findings before fixing)
+
+| severity | found | fixed | open |
+|---|---|---|---|
+| critical | 0 | 0 | 0 |
+| high | 0 | 0 | 0 |
+| medium | 2 (R14-01, R14-02) | 2 | 0 |
+| low | 2 (R14-03, R14-04) | 1 | 1 (R14-04, library owner) |
+
+Verification (round 14, on the merged a7d341f3): lint and typecheck clean; unit tests **8,951 passed**; build OK; e2e (designer, smoke, journey, checkout, storefront, catalogue; `--workers=2 --trace off`, `OTP_DEV_ECHO=1 ALLOW_MOCK_PAYMENTS=1`) **61 passed, 9 skipped, 0 failed**; "designer pages hydrate without errors" with `--repeat-each=16` **32 / 32 passed**.
+
+# Round 15 (re-walk of R12–R14 areas, on main 60049bdd)
+
+Scope, as asked: only the areas changed in R12 to R14, plus one keyboard-only editor journey in ar on a phone.
+- share page price lines for boxes and containers;
+- short landscape with and without the banner;
+- closure picker labels;
+- size inputs with units.
+
+| angle | result |
+|---|---|
+| Share page price line, box + bottle, ar + en | Box: "500 boxes … each" / «500 علبة … للعلبة». Bottle: "500 pieces … each" / «500 قطعة … للقطعة». Axe 0, no sideways scroll |
+| Short landscape, 667×375 / 740×360 / 844×390 / 915×412, with and without the banner | Canvas 130–182 px (no banner) and 325–372 px (banner); panel 256–348 px; no overflow (R14-02 holds) |
+| Closure picker labels (glass water bottle, sports bottle, pouch; ar + en) | Unique: «الغطاء» / "Closure" select, «الغطاء في المعاينة» / "Closure in the preview" toggle, «لون الغطاء» / "Closure colour" fieldset |
+| Size inputs with units, ar + en, 390 + 1440 | Pastes «٣٣٠ مم», "340مم", «٣٥٠ ملم», "360 م.م", «٢٥٠٫٥ مم», "330 mm", "350 MM" and "250,5 mm" all apply; "12abc" shows the error. **"33 cm" / «٣٣ سم» was refused with "Enter a number"** → R15-04 |
+| Keyboard-only journey, ar, 390 × 844 (117 Tab stops): start page → model → size → tabs → add text → face editor → More → Share → Escape | Every stop has a visible focus ring, with no page errors. The face editor's arrows and "+" move and resize the layer and announce the position. **Controls hidden under the sticky tabs**: R15-01. **Focus lost after Escape**: R15-02. **Same-name controls**: R15-03 |
+
+## Findings (round 15)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R15-01 | medium | phone panel, sheet down (`designer.module.css` `.panelInner`) | Tab scrolled "Change model" and the colour swatches **fully under the sticky tab bar** (0 % of the control visible). | WCAG 2.4.11 (AA) | `scroll-padding-block` on the panel's scroller keeps a focused control below the sticky tabs. | fixed: no control fully hidden (only large tab panels are partly under the bar) |
+| R15-02 | medium | phone toolbar "More" menu (`DesignerApp.tsx`) | A dialog opened from the menu (Share, Export, Save, Rename) returned focus on close to its menu item, which the menu had removed: focus fell to `<body>`. | WCAG 2.4.3 | Each menu action moves focus to the "More" button first, so the dialog returns there. | fixed: Escape → focus on «إجراءات أخرى» (`r15-kb-share-dialog-ar-390.png`) |
+| R15-03 | low | editor names (`designer.ar.ts`, `DesignerApp.tsx`) | In Arabic, the face picker and the "Face" view button were both «الوجه» (English: "Panel" / "Face"). The undo / redo group was named "Undo", like its first button. | WCAG 2.4.6 | The picker is «الجزء». The group is "Undo and redo" / «التراجع والإعادة». | fixed. "Turntable" (button + checkbox) and "View" (group + fieldset) control the same setting in two places, so they keep their names (WCAG 3.2.4) |
+| R15-04 | low | size fields (`designer/lib/mm.ts`) | A size typed in centimetres ("33 cm", «٣٣ سم») was refused with "Enter a number", which does not say what was wrong. | WCAG 3.3.3 | Read as mm × 10 ("33 cm" → 330); the field then shows 330. Out of range ("330 cm" = 3,300 mm) shows the range error. Unit test. | fixed |
+
+## Counts (round 15, new findings before fixing)
+
+| severity | found | fixed | open |
+|---|---|---|---|
+| critical | 0 | 0 | 0 |
+| high | 0 | 0 | 0 |
+| medium | 2 (R15-01, R15-02) | 2 | 0 |
+| low | 2 (R15-03, R15-04) | 2 | 0 |
+
+R14-04 (bottle card "PP28") went to the 3D QA session.
+
+Verification (round 15, on 60049bdd + R15-04): lint and typecheck clean; unit tests **8,957 passed**; build OK. E2E (designer, smoke, journey, checkout, storefront, catalogue; `--workers=2 --trace off`, `OTP_DEV_ECHO=1 ALLOW_MOCK_PAYMENTS=1`): **60 passed, 9 skipped, 1 failed**. The failure was `checkout.spec.ts:58` (desktop) in the full run. It passed alone, and **40 / 40** in `checkout.spec.ts --repeat-each=4`, so it is a one-off under load; the designer change in this round (size parser) is not on its path. "designer pages hydrate without errors" with `--repeat-each=16`: **32 / 32 passed**.
+
+# Round 16 (re-walk of R15's fixes, two more keyboard journeys; main da525c06)
+
+Scope, as asked: R15's fixes (panel scroll-padding, focus back on More, «الجزء» and the undo / redo names, cm parsing), one keyboard-only journey in en on a phone (390 × 844) and one in ar at 1440 × 900. The ar phone journey was repeated too.
+
+| angle | result |
+|---|---|
+| Keyboard, en, 390 × 844 (76 Tab stops) | Skip link → model card → editor → "33 cm" typed (330) → ArrowUp (331) → Artwork tab → Add text → face editor (arrows and "+" move and resize; position announced) → More actions → Share → Escape. Focus is back on **More actions**; dialog axe 0; no page errors. No control fully hidden (only large tab panels partly under the sticky tabs) |
+| Keyboard, ar, 1440 × 900 (111 Tab stops) | The same journey through the toolbar Share button. Escape puts focus back on **مشاركة**; axe 0; no errors. The fold slider's focus ring is on its thumb. A 3D preview that seemed covered by the public header's menu scrim was the scrim fading out while focus left the header (gone a moment later): not a finding |
+| Keyboard, ar, 390 × 844 (repeat) | Escape puts focus back on **إجراءات أخرى**; «الجزء» picker; no fully hidden control (R15-01, R15-02, R15-03 hold) |
+| Names (bottle, sports bottle, pouch; ar + en) | Closure controls unique; undo / redo group named apart. **Arabic «العرض» named both the view switch and the Width field** → R16-01. "Turntable" and "View" (one setting, two places) keep their names (3.2.4) |
+| Sizes in cm, ar + en, 390 + 1440 | "33 cm" / «٣٣ سم» → 330; "330 cm" / «٣٣٠ سم» → range error; unit-suffixed mm values apply (R15-04 holds) |
+
+## Findings (round 16)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R16-01 | low | editor (`designer.ar.ts` `view.label`) | In Arabic the view switch (3D / Face / Dieline) and the stage region were «العرض», the same word as the Width size field (English: "View" / "Width"). | WCAG 2.4.6 | The view switch is «طريقة العرض». | fixed |
+
+## Counts (round 16, new findings before fixing)
+
+| severity | found | fixed | open |
+|---|---|---|---|
+| critical | 0 | 0 | 0 |
+| high | 0 | 0 | 0 |
+| medium | 0 | 0 | 0 |
+| low | 1 (R16-01) | 1 | 0 |
+
+R16 found nothing medium or worse, so the stop rule is met and the designer area is done.
+
+Verification (round 16, on da525c06 + R16-01): lint and typecheck clean; unit tests **8,957 passed**; build OK; e2e (designer, smoke, journey, checkout, storefront, catalogue; `--workers=2 --trace off`, `OTP_DEV_ECHO=1 ALLOW_MOCK_PAYMENTS=1`) **61 passed, 9 skipped, 0 failed**; "designer pages hydrate without errors" with `--repeat-each=16` **32 / 32 passed**.

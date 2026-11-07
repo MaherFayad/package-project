@@ -129,8 +129,13 @@ describe("label specs", () => {
     expect(spec.shape).toBe("sector");
     const g = spec.sector!;
     expect(g.outerRadiusMm - g.innerRadiusMm).toBeCloseTo(Math.hypot(h, r0 - r1), 9);
-    // exact frustum lateral area
-    expect(spec.trimAreaM2 * 1e6).toBeCloseTo(Math.PI * (r0 + r1) * Math.hypot(h, r0 - r1), 3);
+    // exact frustum lateral area, plus the glued overlap a full wrap runs past the seam
+    // (WRAP_OVERLAP_MM at the big end, R5-3Q-F-19)
+    const k = (2 * Math.PI + WRAP_OVERLAP_MM / Math.max(r0, r1)) / (2 * Math.PI);
+    expect(spec.trimAreaM2 * 1e6).toBeCloseTo(Math.PI * (r0 + r1) * Math.hypot(h, r0 - r1) * k, 3);
+    // the overlap is WRAP_OVERLAP_MM of arc at the big (outer) edge, past s = 1
+    expect((g.angle - g.wrapAngle!) * g.outerRadiusMm).toBeCloseTo(WRAP_OVERLAP_MM, 6);
+    expect(spec.overlapMm).toBe(WRAP_OVERLAP_MM);
     // isometry: small steps on the cone have the same length on the flat label
     const ds = 1e-4;
     for (const t of [0.1, 0.5, 0.9]) {

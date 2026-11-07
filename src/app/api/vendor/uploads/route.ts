@@ -29,7 +29,8 @@ const MAX_BODY_BYTES = 11 * 1024 * 1024;
 const DAILY_LOOSE_FILES = 30;
 
 const fields = z.object({
-  scope: z.enum(UPLOAD_SCOPES),
+  // Buyer report photos (`dispute`) go through /api/orders/[id]/dispute-photos, never this route.
+  scope: z.enum(UPLOAD_SCOPES).exclude(["dispute"]),
   orderId: z.string().regex(/^[A-Za-z0-9_-]{1,40}$/).optional(),
   kind: z.enum(QC_PHOTO_KINDS).optional(),
 });

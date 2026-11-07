@@ -1,27 +1,22 @@
+import { finishLabel } from "@/lib/orders/finish-label";
+import { formatTaxId } from "@/lib/orders/company";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import {
-  Badge,
-  Banner,
-  BlockStack,
-  Box,
-  Card,
-  Divider,
-  InlineStack,
-  Inset,
-  Layout,
-  LayoutSection,
-  Link,
-  Page,
-  Text,
-  Timeline,
-  type TimelineGroup,
-} from "@/components/ui";
+import { Badge } from "@/components/ui/Badge";
+import { Banner } from "@/components/ui/Banner";
+import { BlockStack, Box, Divider, InlineStack } from "@/components/ui/Stack";
+import { Card, Inset } from "@/components/ui/Card";
+import { Layout, LayoutSection } from "@/components/ui/Layout";
+import { Link } from "@/components/ui/Link";
+import { Page } from "@/components/ui/Page";
+import { Text } from "@/components/ui/Text";
+import { Timeline, type TimelineGroup } from "@/components/ui/Timeline";
 import { NoteComposer, OverrideCard, QcActions, RefundCard, RoutingCard, ShipCard } from "@/components/admin/OrderActions";
 import { OrderStatusBadge } from "@/components/admin/OrdersIndex";
 import { adminStyles } from "@/components/admin/charts";
 import { loadOrderDetail } from "@/components/admin/server/queries";
+import { db } from "@/lib/db";
 import { goodsNet, marginOf, type MetricOrder } from "@/components/admin/lib/metrics";
 import { canOverrideCost, canOverridePrice, canReassign, canRefund, canReviewQc, reprintSource } from "@/components/admin/lib/orders";
 import { isOpenDispute } from "@/components/admin/lib/ops";
@@ -40,7 +35,10 @@ type Params = Promise<{ locale: string; number: string }>;
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { locale, number } = await params;
   const t = getT(toLocale(locale));
-  return { title: `${decodeURIComponent(number)} · ${t("admin.orders.title")} · ${t("admin.title")}` };
+  const n = decodeURIComponent(number);
+  // a11y R6-AX-11 (WCAG 2.4.2): an unknown order number says "Not found" in the tab title.
+  const found = /^[\w-]{1,64}$/.test(n) ? await db.order.findFirst({ where: { OR: [{ number: n }, { id: n }] }, select: { number: true } }) : null;
+  return { title: `${found ? found.number : `${t("admin.common.notFoundTitle")} · ${n}`} · ${t("admin.orders.title")} · ${t("admin.title")}` };
 }
 
 function Row({ label, value, strong }: { label: ReactNode; value: ReactNode; strong?: boolean }) {
@@ -76,6 +74,11 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
   const base = `/${locale}/admin`;
   if (!data) notFound();
   const { order, vendorOptions, actors, reprints, auditRows } = data;
+  // The newest decline is newer than the newest reassignment: the current vendor said no.
+  const lastDecline = Math.max(0, ...order.productionEvents.filter((e) => e.type === "VENDOR_DECLINED").map((e) => e.createdAt.getTime()));
+  const lastReassign = Math.max(0, ...auditRows.filter((a) => a.action === "ORDER_REASSIGN").map((a) => a.createdAt.getTime()));
+  const declinedByVendor = lastDecline > 0 && lastDecline > lastReassign;
+  const invoiceCompany = (order.billing as { company?: { name: string; taxId: string } | null } | null)?.company ?? null;
   const m = order as unknown as MetricOrder;
   const goods = goodsNet(m);
   const margin = marginOf(m);
@@ -154,8 +157,13 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
           <BlockStack gap="400">
             {order.status === "PAID" ? (
               // The next ops step for a paid order; on phones the vendor card sits far below, so surface it here.
-              <Banner tone="warning" title={t("admin.order.routing.awaitingTitle", { vendor: vendorName })} action={canReassign(order.status) ? { content: t("admin.order.routing.change"), url: "#order-vendor" } : undefined}>
-                {t("admin.order.routing.awaiting")}
+              // R5-JR-07: once the current vendor has declined, "waiting for it to accept" is wrong; ops must move the job.
+              <Banner
+                tone={declinedByVendor ? "critical" : "warning"}
+                title={t(declinedByVendor ? "admin.order.routing.declinedTitle" : "admin.order.routing.awaitingTitle", { vendor: vendorName })}
+                action={canReassign(order.status) ? { content: t("admin.order.routing.change"), url: "#order-vendor" } : undefined}
+              >
+                {t(declinedByVendor ? "admin.order.routing.declined" : "admin.order.routing.awaiting")}
               </Banner>
             ) : null}
             {showQc ? (
@@ -225,7 +233,7 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
                         <Text as="p" variant="bodySm" tone="subdued">
                           {t("admin.order.spec", {
                             material: t(`materials.${it.materialCode}` as DictKey),
-                            finish: t(`finishes.${it.finishCode}` as DictKey),
+                            finish: finishLabel(it.config, it.finishCode, locale, (k) => t(k as DictKey)),
                             sides: t(`admin.order.sides.${it.printSides === "BOTH" ? "BOTH" : "OUTSIDE"}` as DictKey),
                           })}
                         </Text>
@@ -308,7 +316,13 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
           <BlockStack gap="400">
             <Card title={t("admin.order.buyer.title")}>
               <BlockStack gap="200">
-                <Link url={`${base}/users/${order.buyer.id}`}><bdi>{order.buyer.name ?? t("admin.users.noName")}</bdi></Link>
+                {/* R5-JR-12: the account often has no name; the delivery name does. Show who is invoiced. */}
+                <Link url={`${base}/users/${order.buyer.id}`}><bdi>{order.buyer.name ?? addr?.name ?? t("admin.users.noName")}</bdi></Link>
+                {invoiceCompany ? (
+                  <Text as="p" variant="bodySm">
+                    {t("admin.order.buyer.company", { name: invoiceCompany.name, taxId: formatTaxId(invoiceCompany.taxId) })}
+                  </Text>
+                ) : null}
                 <Text as="p">
                   <bdi dir="ltr">{order.buyer.phone}</bdi>
                 </Text>

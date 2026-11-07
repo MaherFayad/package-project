@@ -1,7 +1,7 @@
 import "server-only";
 import { db } from "@/lib/db";
 import { fromJson } from "@/lib/json";
-import { toGovernorateKey, type GovernorateKey } from "./governorates";
+import { GOVERNORATES, toGovernorateKey, type GovernorateKey } from "./governorates";
 
 /**
  * Price requests above the instant cap (B-15, checkout half). Each is a `Quote` with status
@@ -9,7 +9,8 @@ import { toGovernorateKey, type GovernorateKey } from "./governorates";
  * details (governorate, needed-by date, note, phone, spec snapshot). This reader is what the admin
  * "quote leads" inbox lists; the SLA is one working day (24 h shown as a timer).
  */
-export const QUOTE_REQUESTED = "REQUESTED";
+export { QUOTE_ACCEPTED, QUOTE_PRICED, QUOTE_REQUESTED, quoteCheckoutPath } from "./quote-status";
+import { QUOTE_REQUESTED } from "./quote-status";
 export const QUOTE_REQUEST_SLA_HOURS = 24;
 
 export interface QuoteRequestLead {
@@ -60,4 +61,12 @@ export async function listQuoteRequests(opts: { status?: string; take?: number }
       spec: d.spec && typeof d.spec === "object" ? (d.spec as Record<string, unknown>) : null,
     };
   });
+}
+
+/** Governorate the buyer asked a price for (stored as a code on the request's audit row), as the address name. */
+export async function quoteGovernorate(quoteId: string): Promise<string | null> {
+  const a = await db.auditLog.findFirst({ where: { action: "QUOTE_REQUEST", entityType: "QUOTE", entityId: quoteId }, select: { after: true } });
+  const raw = (fromJson<Record<string, unknown>>(a?.after ?? null) ?? {}).governorate;
+  const key = toGovernorateKey(typeof raw === "string" ? raw : null);
+  return key ? (GOVERNORATES.find((g) => g.key === key)?.name ?? null) : null;
 }

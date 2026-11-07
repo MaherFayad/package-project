@@ -47,7 +47,7 @@
 .slim { min-block-size: var(--p-control-height-slim); }
 .error, .error:hover { border-color: var(--p-color-border-critical-secondary); background: var(--p-color-bg-surface-critical); }
 .disabled, .disabled:hover { border-color: var(--p-color-border-disabled); background: var(--p-color-bg-surface-disabled); color: var(--p-color-text-disabled); }
-.readOnly { background: var(--p-color-bg-surface-secondary); border-color: var(--p-color-border); }
+.readOnly { background: var(--p-color-bg-surface-secondary); border-color: var(--p-color-input-border); } /* R5-AX-08: a read-only field is still a focusable field; its edge needs 3:1 (1.4.11) */
 .borderless, .borderless:hover { border-color: transparent; background: transparent; }
 
 .Input {

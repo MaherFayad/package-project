@@ -48,6 +48,8 @@ export const uiStrings = {
     noResults: "No results",
     progress: "Progress",
     characterCount: "{count} of {max} characters used",
+    numberRange: "Enter a number from {min} to {max}",
+    numberInvalid: "Enter a number",
     /** Cookie banner landmark. Distinct from the "Cookie notice" policy page title (landmark-unique). */
     cookieBanner: "Cookies",
   },
@@ -95,6 +97,8 @@ export const uiStrings = {
     noResults: "لا توجد نتائج",
     progress: "التقدم",
     characterCount: "الأحرف المستخدمة: {count} من {max}",
+    numberRange: "أدخل رقما من {min} إلى {max}",
+    numberInvalid: "أدخل رقما",
     cookieBanner: "ملفات تعريف الارتباط",
   },
 } as const;

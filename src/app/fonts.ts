@@ -1,4 +1,4 @@
-import { IBM_Plex_Sans_Arabic, Inter } from "next/font/google";
+import { IBM_Plex_Sans_Arabic, Inter, Noto_Sans_Arabic } from "next/font/google";
 
 /**
  * Inter (variable, Latin) carries every Latin run and all digits, in both locales. It is
@@ -19,6 +19,10 @@ export const inter = Inter({
   // Preloaded by `[locale]/layout.tsx` on English pages only (R4-MK-05, see ./font-preload.ts).
   preload: false,
   variable: "--font-inter",
+  // R5-PL-21: our own Latin-only fallback (src/styles/font-fallbacks.css). next/font's generated one
+  // has no unicode-range, so where Arial has Arabic glyphs it captured Arabic text ahead of Plex.
+  adjustFontFallback: false,
+  fallback: ["Elba Inter Fallback"],
 });
 
 export const plexArabic = IBM_Plex_Sans_Arabic({
@@ -27,6 +31,10 @@ export const plexArabic = IBM_Plex_Sans_Arabic({
   display: "swap",
   preload: false,
   variable: "--font-plex-arabic",
+  // R5-PL-16: metric-matched Arabic fallbacks (src/styles/font-fallbacks.css) instead of next/font's
+  // Arial-based one, which neither has Arabic on Android nor matches Plex's Arabic widths.
+  adjustFontFallback: false,
+  fallback: ["Elba Plex Fallback Noto", "Elba Plex Fallback DejaVu"],
 });
 
 /**
@@ -35,3 +43,22 @@ export const plexArabic = IBM_Plex_Sans_Arabic({
  * chips (CLS 0.075 on /ar/catalog, R4-CR-05).
  */
 export const PLEX_PRELOAD_WEIGHTS = [400, 600, 700] as const;
+
+/**
+ * Noto Sans Arabic (variable, wght 100 to 900, SIL OFL): the public marketing site's Arabic face
+ * (docs/design-refs/shopify-2026-reference.md, light display weights 300/330). One variable file
+ * carries every weight, so the light display cut and the 550 buttons cost a single request.
+ * Not preloaded by next/font: MarketingShell preloads it on Arabic marketing pages only (see
+ * ./font-preload.ts `notoArabicPreloadUrl`). Its fallbacks are metric-matched local Arabic faces
+ * (src/styles/font-fallbacks.css, R5-PL-16): next/font's generated one was local Arial sized from Latin
+ * widths, which neither has Arabic on Android nor matched Noto, so the swap re-wrapped headlines
+ * (/ar/why-elba CLS 0.061).
+ */
+export const notoArabic = Noto_Sans_Arabic({
+  subsets: ["arabic"],
+  display: "swap",
+  preload: false,
+  adjustFontFallback: false,
+  fallback: ["Elba Noto Fallback Local", "Elba Noto Fallback DejaVu"],
+  variable: "--font-noto-arabic",
+});

@@ -306,6 +306,9 @@
 .startFallback { min-block-size: 100dvh; }
 
 /* ── editor grid ─────────────────────────────────────────────────────── */
+.dielineSize { display: block; font-weight: var(--p-font-weight-semibold); color: var(--p-color-text); margin-block-end: var(--p-space-100); }
+/* R11-01: the side-panel layout starts at 1000 px (was 1040), so a 1024 px tablet gets the side
+   panel and a full-height stage instead of the phone sheet (its canvas was 200 px in landscape). */
 .editor {
   --sheet-closed: 36dvh;
   --sheet-open: 72dvh;
@@ -323,7 +326,7 @@
   min-block-size: 32rem;
   padding: var(--p-space-200) var(--p-space-200) 0;
 }
-@media (min-width: 1040px) {
+@media (min-width: 1000px) {
   .editor {
     grid-template-columns: minmax(0, 1fr) 24rem;
     grid-template-areas:
@@ -370,7 +373,7 @@
   .saveStatusText { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 }
 .preflightChip { display: none; }
-@media (min-width: 1040px) {
+@media (min-width: 1000px) {
   .preflightChip { display: inline-flex; }
 }
 .desktopActions { display: none; gap: var(--p-space-200); }
@@ -575,10 +578,20 @@
   padding: var(--p-space-300);
   overflow: auto;
 }
+/* R6 (R5-3Q-A-10 / G-28): the sheet box keeps the die's exact aspect ratio at every viewport.
+   It used to be width 100% + max-height 100%: on a tall sheet the height cap bound, the box lost
+   its ratio, the canvas stretched sideways to fill it while the SVG letterboxed, and print and die
+   no longer registered. Now the width is the smaller of the room across and the room down × the
+   ratio (container units of .dieline; 4rem keeps the legend), and both layers letterbox the same
+   way inside the box as a second guard. */
+.dieline {
+  container-type: size;
+}
 .dielineSheet {
   position: relative;
-  inline-size: 100%;
-  max-block-size: 100%;
+  flex: none;
+  inline-size: min(100%, calc((100cqb - 2 * var(--p-space-300) - 4rem) * var(--dl-ratio, 1)));
+  aspect-ratio: var(--dl-ratio, 1);
   margin: auto;
   background: var(--p-color-bg-surface);
 }
@@ -588,6 +601,9 @@
   inset: 0;
   inline-size: 100%;
   block-size: 100%;
+}
+.dielineCanvas {
+  object-fit: contain;
 }
 .dielineSvg svg {
   display: block;
@@ -618,7 +634,7 @@
    ~124 px, so the page scrolled and the sticky top bar covered the view switch and face select.
    The open sheet takes what is left after those (21rem = 12rem stage + toolbar + price + gaps). */
 .editor[data-sheet="open"] .panel { block-size: min(var(--sheet-open), calc(100dvh - var(--p-top-bar-height) - 21rem)); }
-@media (min-width: 1040px) {
+@media (min-width: 1000px) {
   .panel,
   .editor[data-sheet="open"] .panel {
     block-size: auto;
@@ -660,7 +676,7 @@
   outline: var(--p-focus-ring-width, 2px) solid var(--p-color-border-focus);
   outline-offset: -2px;
 }
-@media (min-width: 1040px) {
+@media (min-width: 1000px) {
   .sheetToggle { display: none; }
 }
 .panelInner {
@@ -668,6 +684,9 @@
   min-block-size: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+  /* R15-01: the tab bar is sticky at the top of this scroller; a control scrolled into view by Tab
+     ("Change model", the colour swatches) landed fully under it (WCAG 2.4.11). Keep it below. */
+  scroll-padding-block: 3.75rem var(--p-space-200);
 }
 .panelBody {
   display: flex;
@@ -812,7 +831,8 @@
   z-index: 1;
   background: var(--p-color-bg-surface);
 }
-.saveStatus[data-state="error"] { color: var(--p-color-text-critical); }
+.saveStatus[data-state="error"],
+.saveStatus[data-state="tooLarge"] { color: var(--p-color-text-critical); }
 .saveStatus[data-state="saved"] { color: var(--p-color-text-success); }
 .saveStatus[data-state="saved"] .saveStatusText { color: var(--p-color-text-secondary); }
 .skeletonBar {
@@ -826,7 +846,7 @@
    about 170 px and the model about 30 % of it). The closed sheet takes what is left (at least 10rem:
    handle, tabs and the first field). The stage header drops its face select under 490 px: the
    Artwork panel has the same select, and the 3D view turns with drag or "Adjust view". */
-@media (max-width: 1039px) and (min-height: 501px) {
+@media (max-width: 999px) and (min-height: 501px) {
   .editor[data-sheet="closed"] {
     --sheet-closed: max(10rem, calc(54dvh - var(--p-top-bar-height) - 8.5rem));
     grid-template-rows: auto auto auto minmax(46dvh, 1fr) auto;
@@ -835,16 +855,60 @@
 @media (max-width: 489px) {
   .stageHeader .faceSelect { display: none; }
 }
+/* R12-02: a banner (changed elsewhere, design not found) on a phone takes ~130 px; the stage gives
+   up its 46dvh floor while it shows, so the editor still fits the screen (no scroll under the bar). */
+@media (max-width: 999px) and (min-height: 501px) {
+  .editor[data-sheet="closed"][data-banner="true"] { grid-template-rows: auto auto auto minmax(12rem, 1fr) auto; }
+  /* Sheet pulled up: leave room for the banner too (R4-08's 21rem + ~9rem banner). */
+  .editor[data-sheet="open"][data-banner="true"] .panel { block-size: min(var(--sheet-open), calc(100dvh - var(--p-top-bar-height) - 30rem)); }
+}
+/* R13-01: short landscape (phones turned sideways) with a banner: the banner goes to the panel
+   column, above the panel, so the stage keeps its height (the canvas was 19 px at 844 × 390). */
+@media (max-height: 500px) and (min-width: 640px) and (max-width: 999px) {
+  .editor[data-banner="true"] {
+    grid-template-areas:
+      "toolbar toolbar"
+      "price banner"
+      "stage banner"
+      "stage panel";
+    /* R14-02: the panel row keeps a screen's height under the banner (it was 22 px at 740 × 360) */
+    grid-template-rows: auto auto auto var(--short-row);
+  }
+  .editor[data-banner="true"] .banner { align-self: start; }
+}
+/* R12-01: landscape screens from 768 to 999 px wide (small tablets, split views) take the side
+   panel too: with the phone sheet their 3D view was ~200 px tall. */
+@media (orientation: landscape) and (min-width: 768px) and (max-width: 999px) and (min-height: 501px) {
+  .editor,
+  .editor[data-sheet="closed"],
+  .editor[data-sheet="closed"][data-banner="true"] {
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 38%);
+    grid-template-areas:
+      "toolbar toolbar"
+      "banner banner"
+      "price panel"
+      "stage panel";
+    grid-template-rows: auto auto auto minmax(0, 1fr);
+    padding-block-end: var(--p-space-300);
+  }
+  .panel,
+  .editor[data-sheet="open"] .panel {
+    block-size: auto;
+    margin-inline: 0;
+    border-radius: var(--p-border-radius-300);
+  }
+  .sheetToggle { display: none; }
+}
 .viewMenuSlot { display: inline-flex; }
 
 /* Phones with the sheet pulled up: the short stage keeps only the 3D view (controls return when it closes). */
-@media (max-width: 1039px) {
+@media (max-width: 999px) {
   .editor[data-sheet="open"] .viewControlsRow,
   .editor[data-sheet="open"] .foldRow { display: none; }
   .faceSelect { flex: 1 1 auto; }
 }
 /* Landscape phones (short and wide): stage and panel side by side, no page scroll. */
-@media (max-height: 500px) and (min-width: 640px) and (max-width: 1039px) {
+@media (max-height: 500px) and (min-width: 640px) and (max-width: 999px) {
   .editor {
     grid-template-columns: minmax(0, 1fr) minmax(16rem, 40%);
     grid-template-areas:
@@ -852,10 +916,19 @@
       "banner banner"
       "price panel"
       "stage panel";
-    grid-template-rows: auto auto auto minmax(0, 1fr);
+    /* R14-02: a phone turned sideways is 360–412 px tall; under the top bar, toolbar, price row and
+       stage controls the 3D view was 66–118 px. Here the editor is one screen tall below the top bar
+       (which scrolls away instead of staying pinned): one scroll and the stage has the screen. */
+    --short-row: calc(100dvh - 6.5rem);
+    grid-template-rows: auto auto auto var(--short-row);
+    block-size: auto;
     min-block-size: 0;
     padding-block-end: var(--p-space-200);
   }
+  .topBar { position: static; }
+  /* The panel spans the price and stage rows; sized from its content it grew those rows to its full
+     length (the stage slid ~1,500 px down). It now takes the rows' height and scrolls inside. */
+  .panel { contain: size; }
   .panel,
   .editor[data-sheet="open"] .panel {
     block-size: auto;
@@ -911,3 +984,38 @@
 /* CR-63: the price chip shares the toolbar's 32 px size scale (still a pill; target ≥ 24 px). */
 .priceBadge { min-block-size: 2rem; padding-block: var(--p-space-050); padding-inline: var(--p-space-100) var(--p-space-300); font-size: var(--p-font-size-325, 0.8125rem); }
 .priceBadgeIcon { inline-size: 1.5rem; block-size: 1.5rem; }
+
+/* ── brand colours (integrator decision: own colours, no Pantone library) ── */
+.brandList { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--p-space-200); }
+.brandRow { display: flex; align-items: center; gap: var(--p-space-300); min-block-size: 2.75rem; }
+.brandChip { flex: none; inline-size: 2rem; block-size: 2rem; border-radius: var(--p-border-radius-200); box-shadow: inset 0 0 0 1px var(--p-color-border-secondary); }
+.brandText { flex: 1 1 auto; min-inline-size: 0; display: grid; }
+.brandName { font-weight: var(--p-font-weight-semibold); overflow-wrap: anywhere; }
+.brandMeta { font-size: var(--p-font-size-300); color: var(--p-color-text-secondary); text-align: start; unicode-bidi: isolate; overflow-wrap: anywhere; }
+.cmykFields { border: 0; margin: 0; padding: 0; min-inline-size: 0; }
+.cmykGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--p-space-200); }
+
+/* ── crop dialog (integrator decision) ─────────────────────────────── */
+.cropStage { display: grid; place-items: center; padding: var(--p-space-200); background: var(--p-color-bg-surface-secondary); border-radius: var(--p-border-radius-200); touch-action: none; }
+.cropImage { position: relative; inline-size: min(100%, 28rem); max-block-size: 50dvh; user-select: none; }
+.cropImage img { display: block; inline-size: 100%; block-size: 100%; object-fit: fill; opacity: 0.45; pointer-events: none; }
+.cropFrame {
+  position: absolute;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.35);
+  outline: 2px solid #ffffff;
+  cursor: move;
+  touch-action: none;
+}
+.cropFrame:focus-visible { outline: 3px solid var(--p-color-border-focus); outline-offset: 2px; }
+.cropCorner {
+  position: absolute;
+  inset-block-end: -12px;
+  inset-inline-end: -12px;
+  inline-size: 24px;
+  block-size: 24px;
+  border-radius: var(--p-border-radius-full);
+  background: #ffffff;
+  box-shadow: 0 0 0 2px var(--p-color-border-focus);
+  cursor: nwse-resize;
+}
+.cropStage { overflow: hidden; }

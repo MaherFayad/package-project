@@ -1,0 +1,15 @@
+/* Split out of Misc.module.css (R5-PL-05): with inlineCss each route segment inlines the CSS of
+   the components it renders, so one shared sheet was copied whole into every page, loading and
+   error segment that used any of these components. */
+/* ── PriceTag ─────────────────────────────────────────────── */
+.PriceTag { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: var(--p-space-100) var(--p-space-150); }
+.PriceAmount { font-variant-numeric: tabular-nums; font-weight: var(--p-font-weight-semibold); white-space: nowrap; }
+.PriceCompare { color: var(--p-color-text-secondary); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.PriceQualifier, .PriceLabel { color: var(--p-color-text-secondary); font-size: var(--p-text-body-sm-font-size); }
+.price-small .PriceAmount { font-size: var(--p-text-body-sm-font-size); }
+.price-medium .PriceAmount { font-size: var(--p-text-body-md-font-size); }
+.price-large .PriceAmount { font-size: var(--p-font-size-450); font-weight: var(--p-font-weight-bold); }
+.price-display .PriceAmount { font-size: var(--p-font-size-750); line-height: var(--p-font-line-height-1000); font-weight: var(--p-font-weight-bold); letter-spacing: var(--p-font-letter-spacing-denser); }
+.priceTone-subdued .PriceAmount { color: var(--p-color-text-secondary); }
+.priceTone-success .PriceAmount { color: var(--p-color-text-success); }
+.priceTone-critical .PriceAmount { color: var(--p-color-text-critical); }
