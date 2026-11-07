@@ -81,3 +81,15 @@ describe("round 7 engine (R6-3Q rows)", () => {
     for (const m of [water, perfume, honey, cream]) m.dispose();
   });
 });
+
+describe("round 7 engine: treatment pump overcap (R6-3Q-G-04, spec r = finishR + 1.5)", () => {
+  it("the clear overcap is finishR + 1.5 and covers the spout tip, at default and min", () => {
+    for (const size of ["def", "min"] as const) {
+      const { c, profile } = built("COS-SERUM", "TREATMENT_PUMP", size);
+      const over = c.parts.find((p) => p.role === "clear")!;
+      expect(maxR(over.geometry)).toBeCloseTo(profile.finishR + 1.5, 1);
+      const tip = c.parts.find((p) => p.role === "dark")!;
+      expect(maxR(tip.geometry)).toBeLessThanOrEqual(profile.finishR + 1.5);
+    }
+  });
+});

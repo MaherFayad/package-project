@@ -676,7 +676,9 @@ function styledClosure(style: ClosureStyle, p: VesselProfile): ClosureModel {
         ],
         { segments: 120, ribs: { count: 30, depth: 0.3, where: (ring) => ring.y > yb + 0.8 && ring.y < yc - 0.8 && ring.r > cr - 0.05 } },
       );
-      const hr = Math.min(8, Math.max(3.5, r));
+      const or = r + 1.5;
+      // the actuator and its spout fit under the overcap (r + 1.5): a short spout on a narrow neck
+      const hr = Math.min(8, Math.max(3.5, r), or - 3);
       const h0 = yc + 2;
       const head = lathe([
         { r: 0, y: h0 },
@@ -684,22 +686,21 @@ function styledClosure(style: ClosureStyle, p: VesselProfile): ClosureModel {
         { r: hr, y: h0 + 7, round: 1.6 },
         { r: 0, y: h0 + 7.4 },
       ]);
-      const sl = Math.min(8, hr * 0.9);
+      const sl = Math.max(2, Math.min(8, hr * 0.9, or - 0.8 - hr + 1));
       const spout = new CylinderGeometry(1.3, 1.5, sl, 16);
       spout.rotateX(Math.PI / 2);
       spout.translate(0, h0 + 4.5, hr + sl / 2 - 1);
       const orifice = new CylinderGeometry(0.6, 0.6, 0.3, 12);
       orifice.rotateX(Math.PI / 2);
       orifice.translate(0, h0 + 4.5, hr + sl - 0.9);
-      const or = r + 1.5;
       const ob = yb + 0.5;
       const ot = h0 + 7.4 + 2.5;
       const overcap = lathe([
         { r: or - 0.6, y: ob + 3 },
         { r: or - 0.6, y: ob, round: 0.2 },
         { r: or, y: ob + 0.3, round: 0.3 },
-        { r: Math.max(or, hr + sl + 0.8), y: ob + 4, round: 2 },
-        { r: Math.max(or, hr + sl + 0.8), y: ot - 1.5, round: 1.5 },
+        { r: or, y: ob + 4, round: 2 },
+        { r: or, y: ot - 1.5, round: 1.5 },
         { r: 0, y: ot },
       ]);
       return {
