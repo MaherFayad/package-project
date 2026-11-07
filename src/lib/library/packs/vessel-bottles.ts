@@ -35,6 +35,37 @@ const BOTTLE_CLOSURE_COLOR: Partial<Record<string, string>> = {
   SPARKLING_CORK: "GOLD",
 };
 
+/**
+ * Localised name of a neck finish for the model card (R14-04): MSA noun phrases, the trade
+ * designation kept in Latin digits as printers write it. Open-top rims have none.
+ */
+export function finishLabel(f: BTL.BottleFinish): { en: string; ar: string } | null {
+  const d = Math.round(f.outerDiameterMm * 10) / 10;
+  const b = Math.round(f.boreMm * 10) / 10;
+  switch (f.kind) {
+    case "screw":
+      return { en: `${f.code} screw neck`, ar: `عنق لولبي ${f.code}` };
+    case "ropp":
+      return { en: `${f.code} aluminium roll-on neck`, ar: `عنق لغطاء ألومنيوم ملفوف ${f.code}` };
+    case "crown":
+      return { en: `${d} mm crown neck`, ar: `عنق لغطاء تاجي ${d} مم` };
+    case "cork":
+      return { en: `Cork mouth, ${b} mm bore`, ar: `فوهة سدادة فلين بقطر ${b} مم` };
+    case "bartop":
+      return { en: `Bar-top neck, ${b} mm bore`, ar: `عنق لسدادة برأس بقطر ${b} مم` };
+    case "lug":
+      return { en: `Twist-off ${d} mm lug neck`, ar: `عنق لغطاء تويست ${d} مم` };
+    case "mason":
+      return { en: `Mason mouth, ${d} mm lid`, ar: `فوهة برطمان ميسون لغطاء ${d} مم` };
+    case "snap":
+      return { en: `${d} mm snap neck`, ar: `عنق كبس ${d} مم` };
+    case "swing":
+      return { en: "Swing-top neck", ar: "عنق لسدادة سلكية" };
+    default:
+      return null;
+  }
+}
+
 export const models: VesselModelDef[] = BTL.DEFINITIONS.map((def) => {
   const preset = BTL.bottlePreset(def);
   const coreKind = def.coreKind;
@@ -50,7 +81,8 @@ export const models: VesselModelDef[] = BTL.DEFINITIONS.map((def) => {
     const color = BOTTLE_CLOSURE_COLOR[c];
     // a style replaces a screw-cap core (the engine refuses a style over LUG_LID: swing top)
     const core = style ? "SCREW_CAP" : BTL.BOTTLE_CLOSURES[c].coreClosure;
-    return { code: c, name: BTL.BOTTLE_CLOSURES[c].name, core, ...(style ? { closureStyle: style } : {}), ...(color ? { defaultColor: color } : {}) };
+    const neckFinish = finishLabel(BTL.finishForConfig(def, preset.dims, preset.finish, c));
+    return { code: c, name: BTL.BOTTLE_CLOSURES[c].name, core, ...(style ? { closureStyle: style } : {}), ...(color ? { defaultColor: color } : {}), ...(neckFinish ? { neckFinish } : {}) };
   });
   return {
     kind: "vessel",
@@ -58,7 +90,9 @@ export const models: VesselModelDef[] = BTL.DEFINITIONS.map((def) => {
     slug: def.slug,
     group: "BOTTLES_JARS",
     source: "vessel-bottles",
-    standard: def.standard === "none" ? (preset.finish ?? "") : def.standard,
+    // R14-04: no raw finish id ("PP28") on the card; the closure options carry the localised
+    // neck finish they sit on (neckFinish), which follows the chosen closure.
+    standard: def.standard === "none" ? "" : def.standard,
     name: def.name,
     description: def.description,
     search: search(def.code, def.code.replace(/_/g, " "), def.name.en, def.name.ar, def.standard, def.subFamily, ...def.typicalUses.map((u) => `${u.en} ${u.ar}`)),

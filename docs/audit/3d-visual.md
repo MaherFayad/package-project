@@ -558,105 +558,6 @@ None in source. The fixes stay in `src/lib/dieline/**`, `src/lib/library/**` and
 | `r5-geometry.ts` over every box variant | no new z-fight / interpenetration rows; FEFCO_0320, 0321, 0325, 0504 lid-joint rows and the ECMA_TRAY_6C_LID E-flute row gone |
 | `npm run test:size` | 3D pages within budget; one non-3D page over (vendor profile, 201.7 KB): outside this scope, unchanged by this branch |
 
-## Round 6 (engine) — the 32 open rows of round 5 (key `3d-visual`, session r6-engine)
-
-Branch `claude/exciting-albattani-8kzgsu-r6-engine` (base `claude/exciting-albattani-8kzgsu` + the round 5 report). Scope: the engine and designer 3D parts (`src/components/three/**`, `src/components/designer/**` 3D stage, Dieline view, VesselView, ConfigPanel closure colour) plus the smallest additive changes in the packs / generators the precise fixes named.
-
-### Method
-
-- **Real editor, production build**, same harness as round 5 (`r5-variants.ts` → `r5-capture.cjs`, `?resume=1`): the **274 variants of the 50 affected models** (default, min, max, every container / closure / flexible option / feature), 1440 × 900 hero + back / top / open / half / flat / Dieline view, 390 × 844 phone hero for default, min and max. Captured on the base build (before) and on this branch (after; a second and third after build for the generator lows and TK-04). Catalogue-only parts (FEFCO 09 fittings, pulp carriers) through `/en/dev/catalogue/<code>` with `r6-catalogue-shot.cjs`; the base for those from a worktree of the base.
-- Closure variants of the after set apply each option's new default colour, as the closure picker now does.
-- Every row below was looked at before and after; contact sheets in `docs/screenshots/audit/3d-engine-r6/`.
-
-### Counts (the 32 open rows)
-
-| Severity | Open at round 5 | Fixed, verified | No change (cause shown) | Still open |
-|---|---:|---:|---:|---:|
-| high | 7 | 7 | 0 | 0 |
-| medium | 10 | 10 | 0 | 0 |
-| low | 15 | 11 | 1 (A-13) | 3 (A-12, C-08, D-12) |
-| **total** | **32** | **28** | **1** | **3** |
-
-Also closed: the open remainders of fixed rows (F-02 engine half, G-02 cap width, G-04 actuator, G-08 button), the duplicates of A-10 (B-07, C-06, D-04), TK-04 (reopened), and 3d-rigid-food FR-06 / E-02 (no change, see below). X-07 re-verified (the paper tube already opens at 18°). One regression of this round's own work was caught by e2e before merge and fixed (R6-01).
-
-### Rows
-
-| id | sev | where | fix (round 6) | status |
-|---|---|---|---|---|
-| R5-3Q-A-10 (+ B-07, C-06, D-04) | high | `DielineView.tsx`, `designer.module.css` | The sheet box keeps the die's aspect ratio at every viewport: width = min(room across, room down × ratio) in container units of `.dieline` (it was width 100 % + max-height 100 %, so a tall sheet lost its ratio and the canvas stretched while the SVG letterboxed). The canvas also `object-fit: contain`s like the SVG. The size legend that fell off the stage is back in view. | fixed, verified (SLEEVE, 0310, 0404, PAPER_TUBE, RIGID_BOX, ECMA_WINDOW_RTE) |
-| R5-3Q-G-28 | medium | `DielineView.tsx` | Same root; the die clip now scales per axis (`c.width / sheet.width`, `c.height / sheet.height`): the raster is rounded on each axis and a 17 mm stick-pack panel drifted with one factor. | fixed, verified (perfume oval, stick pack, deli lid, tubes) |
-| R5-3Q-A-03 | medium | `three/panelGeometry.ts` | No crease side face on a non-roll hinge folded 90° ± 30° about the printed face (pivotDepth 0), on parent and child: the t × t corner is closed by the two printed faces. Test: panel vertex counts per hinge + a RIGID_BOX case. | fixed, verified (RIGID_BOX lid rim, 0230, 0204, 0427 mailer, min / max, phone) |
-| R5-3Q-F-06 | high | `three/vessels/closures.ts` · pack | `SWING_TOP` style: dome stopper, red rubber gasket, neck wire ring, two levers and the bail over the stopper (new `gasket` / `wire` part roles). Swing top now on a screw-cap core so the style applies. | fixed, verified (GLASS_WATER, BEER_STUBBY) |
-| R5-3Q-F-07 | high | `closures.ts` | `MEASURE_CUP`: r = finishR + 7, top − 12 … top + 32, translucent PP with fill rings. | fixed, verified (DETERGENT_HANDLE) |
-| R5-3Q-F-08 | medium | `closures.ts` | `FLIP_TOP_CAP`: base / lid split line, back hinge, front thumb notch. | fixed, verified (SHAMPOO_OVAL) |
-| R5-3Q-F-09 / G-07 | medium / high | `closures.ts` | `CR_CAP`: `screwCap(p, { extraR: 2.5, extraTop: 2, te, 36 ribs })`, the double shell. | fixed, verified (PH-PILL-CR, PET / glass syrups) |
-| R5-3Q-F-10 | low | `closures.ts` | `screwCap` TE band (break line + band) as `TE_CAP` for screw-cap-TE and vented caps. The orifice reducer stays a plain cap (it is inside: true to life). | fixed, verified (NUT_BUTTER, JERRYCAN) |
-| R5-3Q-F-11 | medium | `closures.ts` | `BAR_TOP`: Ø 30 × 16 mm T-cork head on its shank. | fixed, verified (SPIRITS_FLASK) |
-| R5-3Q-F-14 | low | `closures.ts` | Tube flip-top gets its own parts (hinge strap across the lid line, thumb lip); the screw tube cap keeps the slim fluted body + shoulder disc. | fixed, verified (SQUEEZE_TUBE) |
-| R5-3Q-F-15 | low | `closures.ts` | Cork capsule depth from the neck: clamp(30, 0.85 × neck length, 55), no longer a fixed 48 mm onto a short shoulder. | fixed, verified (wine models) |
-| R5-3Q-F-02 (engine half) | — | `closures.ts` · pack | ROPP skirt `yb = top − max(18, finishH)`; wine BVS 30H60 bottles now take the ROPP style (the LUG_LID stand-in is gone). Test: the Stelvin skirt covers finishH. | fixed, verified (BURGUNDY ROPP) |
-| R5-3Q-G-06 | high | `closures.ts` · `cosmetic-cans/definitions/cosmetic.ts` | `MIST_COLLAR`: the mist pump plus a metal collar over ferrule and neck; `collarMm` dropped from the two perfume profiles, so MIST_PUMP and MIST_PUMP_COLLAR now differ. | fixed, verified (PERFUME-ROUND / OVAL) |
-| R5-3Q-G-10 | medium | `closures.ts` | `PIERCING` tube style: tall slim fluted cap, spike moulded in the recessed crown. | fixed, verified (PH-TUBE, TUBE-ALU) |
-| R5-3Q-G-11 | medium | `closures.ts` · pack | `DOUBLE_WALL_CAP` flush with the outer wall (body radius, not the inner pot's thread); compact lid takes the container's look (see G-25). | fixed, verified (COS-JAR-DOUBLE, COS-COMPACT) |
-| R5-3Q-G-14 | low | `closures.ts` | `DROPPER_TIP`: LDPE nozzle in the neck + tall pointed cap. | fixed, verified (PH-EYE-DROP) |
-| R5-3Q-G-04 / G-08 / G-02 (remainders) | — | `closures.ts` | `AEROSOL` stem + actuator with orifice on the valve cup; `CRIMP_FLIP_OFF` aluminium crimp + coloured flip-off button; `BULLET_CAP` flush with the body (max body radius). | fixed, verified |
-| R5-3Q-G-21 | high | `flexible/group.ts`, `flexible/geometry.ts` | The front film gets an alpha mask from `windowUv` (window at 12 %: clear film still glosses) and the product part is drawn behind a window on opaque films too. | fixed, verified (stand-up pouch o-window) |
-| R5-3Q-G-25 | high | `VesselModel.tsx`, `VesselView.tsx`, `ConfigPanel.tsx`, `lib/doc.ts`, packs | Per-option `defaultColor` on closures. New colour **"MATCH" (Same as container / مثل العبوة)**: the lid / film shell uses the container's own material and tint (alpha-blended, no second transmission pass); default for hinged / snap / plug / lever / slip lids, top-seal films and the compact lid. A new design starts with the default closure's colour; switching closure moves an unchanged colour to the new default. A raised lid (snap, plug, lever, hinged, double-wall) carries the lid label on its own top (`ClosureModel.printTopY`), so the yogurt snap-lid print is no longer hidden. | fixed, verified (clamshell, deli, punnet film, tins, compact, yogurt) |
-| R5-3Q-F-13 | low | `vessel-bottles.ts` | Metal defaults: ROPP / pourer SILVER, crowns, cork capsule and sparkling hood GOLD (recolourable). | fixed, verified |
-| R5-3Q-F-12 | medium | `vessel-bottles.ts`, `common-vessel.ts`, `library/doc.ts`, `ConfigPanel.tsx` | `describe(…, closure)`: the preset finish when the closure fits it, else the model's finish of the closure's kind nearest in diameter (crown bead for a crown, swing bead for a swing top). The envelope uses the chosen closure. Test added. | fixed, verified (WATER, STUBBY, FLASK) |
-| R5-3Q-F-19 | medium | `vessels/labels.ts`, `vessels/types.ts`, `cosmetic-cans/surfaces.ts` | Full cone wraps run `WRAP_OVERLAP_MM` (8 mm at the big end) past the seam: `SectorGeometry.wrapAngle` = the angle once round, the flat sector is longer by the overlap, `overlapMm` set, the 3D maps only `wrapAngle`. Tests: overlap arc = 8 mm, area = frustum × overlap factor. (The small wedge still seen on the **test pattern** at the tub seam is the pattern's own white frame line on the rectangular trim edge, which the sector corner touches; real artwork with background bleed has none.) | fixed, verified |
-| R5-3Q-F-20 | low | `vessels/registry.ts`, `common-vessel.ts` | New products HOT_SAUCE (opaque red-orange) and JAM (dense dark fruit); hot sauce / jam no longer map to translucent hibiscus. Syrups keep hibiscus (a reasonable cough-syrup look). | fixed, verified (SAUCE_WOOZY) |
-| R5-3Q-F-21 | low | `bottles/finishes.ts`, `bottles/registry.ts`, two model files, `vessel-core.ts` | New finishes F20-410 and PP 18 ROPP; bottle necks stay under ~72 % of the body (`finishForDims`), jars / tins only switch when they would overhang. No default preset changed (checked over every preset). | fixed, verified (syrups, marasca, shampoo at min) |
-| R5-3Q-G-15 | low | `vessels/materials.ts` | Alpha-blended amber glass `#8a4b12` at 0.8 (low path and thin mode): no more pale peach. | fixed, verified (glass syrup, phone) |
-| R5-3Q-E-06 | medium | `catalogue/CatalogueViewer.tsx` | Fittings rest on the top of the host's bottom flaps (highest horizontal lower-half panel at the closed pose), not at t. | fixed, verified (0949, 0946, 0973) |
-| R5-3Q-C-07 | low | `fefco-04/build.ts` | A cut-away face panel's safe zone is the largest rectangle its outline covers (display fronts, chamfered 0459 base). Test: every safe-zone point is on board. | fixed, verified (geometry snapshot, 10 keys) |
-| R5-3Q-E-07 | low | `dieline/fold.ts`, `types.ts`, `builder.ts`, `rigid-tubes/rigid.ts` | `assembly.hinge`: the hinged lid travels to its place opened 105° about the lid's back bottom rim, then swings shut on it, instead of the lift arc. Test: lid on the hinge line from 0.85 to 0.95 progress, closed pose unchanged. (The editor's fold animation is ~0.6 s and could not be sampled frame by frame here; verified numerically.) | fixed, verified (test) |
-| R5-3Q-E-08 | low | `foodservice/pulp.ts` | Pocket profile u^1.6 then a cubic rounded lip easing flat onto the rim (never past the cell's half pitch), 4° skirt draft, 1.6 mm grid within 12 000 vertices. | fixed, verified (cup carrier 2 / 4) |
-| TK-04 (reopened) | low | `PackagingModel.tsx`, `finishes/finishMaterial.ts` | The inside board of a closed windowed carton is shaded (×0.58 as the fold closes; flat / half it is lit as before): the window reads into a cavity, not as an opaque light patch. The finished-board material keeps the shade. | fixed, verified (ECMA_WINDOW_RTE, FS_CAKE_BOX_WINDOW) |
-| R5-3Q-A-13 | low | lighting | Looked at: the washed-out LEFT face in the back view is the gloss-laminated rigid wrap reflecting the front-left key softbox at grazing incidence; matte kraft (0204) in the same view reads correctly. Dimming the studio would undo R4-CR-10 / R4-L01. | no change (cause shown) |
-| 3d-rigid-food FR-06 / E-02 | medium | FS_NOODLE_PAIL | The model is the **wire-free** pail by definition ("locks with a tab and slit instead of a wire handle"); the engine already draws wire accessories when a generator emits one. | no change (by design) |
-| X-07 | low | PackagingScene | Already fixed (roll-hinged tubes open at 18°); re-verified. | verified |
-| R5-3Q-A-12 | low | FEFCO_0230 | Needs the FEFCO 0230 drawing to decide whether the back overlap top flap is one layer proud; public catalogues list 0230 without the flap layout. | open (needs the drawing) |
-| R5-3Q-C-08 | low | 0435 / 0435a / 0449 header inside, 0459 chamfers | A printable face there needs new face ids in the artwork model (designer data model, face editor, sheet painter); the print still reaches those panels on the sheet. | open (designer data model) |
-| R5-3Q-D-12 | low | foodservice boards | A CUK board in `BOARD_SPECS` needs vendor rate cards and pricing: business decision. | open (business) |
-| R6-01 (new, this round) | high | `VesselView.tsx` | The non-embedded VesselScene path still passed the raw closure colour, so "MATCH" reached `CLOSURE_COLORS` and the catalogue route crashed for CAN-PAINT, COS-COMPACT, TRAY-PUNNET (found by `catalogue-models` e2e). Both paths map MATCH; `createClosureMaterial` falls back to white for any unknown code. | fixed, verified (e2e) |
-| R4-05, R4-06, FF-13 / FF-15 | — | catalogue / designer | Not part of the 32; not re-examined this round. | unchanged |
-
-### Generator output (geometry snapshot)
-
-Re-recorded in the same commit as the change for exactly **10 keys**, all on the `dieline` fingerprint only (poses, bounds and SVG identical): FEFCO_0422a, FEFCO_0423a, FEFCO_0423_1a, FEFCO_0424a, FEFCO_0435, FEFCO_0435a, FEFCO_0449, FEFCO_0459, FEFCO_0472 (safe zones, C-07) and RIGID_HINGED_LID (assembly hinge, E-07).
-
-### Engine mount performance (`3d-mount-tasks.cjs`, TYPE=1, phone profile, 4× CPU)
-
-A / B on the same container: base build and this branch served side by side, alternating runs. This container's SwiftShader numbers are noisy (the base alone ranged 56–520 ms INP).
-
-| Page | INP base (runs) | INP branch (runs) | TBT after tap base / branch | Longest task base / branch (median) |
-|---|---|---|---|---|
-| `/en/design/mailer-box` (7 runs each) | 152, 72, 56, 144, 80, 104, 88 (median 88) | 152, 112, 120, 48, 24, 48, 112 (median 112) | ~1.6 s / ~1.6 s | 465 / 532 ms |
-| `/en/design` + "Turn the box" (3 runs) | 320, 520, 240 | 544, 120, 224 | ~0.95 s / ~1.04 s | 381 / 418 ms |
-
-Mailer INP stays under the 200 ms phone target on every run of both builds. The engine-mount structure is untouched: `loadEngineStack`, chunked shader warm-up and no three.js on first paint. New closure styles are built only when a container with that closure mounts. The longest mount task is ~65 ms longer in the median on the mailer, inside the run-to-run spread; it was not reproduced as a profile delta.
-
-### Files outside the engine / designer scope (smallest additive changes the fixes named)
-
-`src/lib/library/{types,doc}.ts`, `src/lib/library/packs/{common-vessel,vessel-bottles,vessel-cosmetic,vessel-core}.ts`, `src/lib/vessels/{labels,registry,types}.ts`, `src/lib/vessels/families/{bottles/{finishes,registry,models/glass,models/plastic},cosmetic-cans/{surfaces,definitions/cosmetic},flexible/{geometry,group}}.ts`, `src/lib/dieline/{fold,types,builder}.ts`, `src/lib/dieline/families/{fefco-04/build,rigid-tubes/rigid,foodservice/pulp}.ts`, `src/components/catalogue/CatalogueViewer.tsx`, `src/i18n/library.{en,ar}.ts` (one key: `library.colors.MATCH`).
-
-### Screenshots (`docs/screenshots/audit/3d-engine-r6/`, jpg, before | after)
-
-`01-dieline-view-A-10-G-28`, `02-fold-rims-A-03`, `03-closures-bottles`, `04-closures-cosmetic-pharma`, `05-lids-flexible-G-21-G-25`, `06-lows-TK-04-E-06-E-08`. Tools: `docs/audit/tools/r6-sheets.py`, `r6-catalogue-shot.cjs`, `r6-fold-frames.cjs`.
-
-### Verification (final production build of this branch, `b4e20f0e` + this table)
-
-| Check | Result |
-|---|---|
-| `npm run lint` (direct UI-kit imports rule included), `npm run typecheck` | clean |
-| `npm test` | 113 files, **8 778 passed** (new: panel crease faces + RIGID_BOX square creases, every R6 bottle style draws its own part, closure ↔ neck finish, Stelvin skirt, cone-wrap overlap, display-front safe zones on board, hinged-lid swing, unknown closure colour, every pack style builds) |
-| geometry snapshot | re-recorded for the 10 keys above only |
-| `npm run build` | passes |
-| `e2e/models.spec.ts` + `e2e/catalogue-models.spec.ts` + `e2e/designer.spec.ts`, `--workers=2` | **402 passed**, 0 failed (392 skipped: desktop-only / phone-only by design), 37.6 min; 18 / 18 catalogue batches, all models of `models.spec` |
-| Hydration (`designer.spec` "hydrate without errors", `--repeat-each=16`, desktop + Pixel 5) | **32 / 32 passed** |
-| Round 6 capture (274 variants, before and after) | 0 console errors in the editor captures; the catalogue-route crash (R6-01) was found by e2e and fixed |
-
 ## Round 6 — 3D QA of every model (key `3d-visual`, ids `R6-3Q-`)
 
 Branch `claude/exciting-albattani-8kzgsu-r6-3dqa`, base `131ba63` (round 5 head). Scope: generators and packs only (`src/lib/library/**`, `src/lib/dieline/**`, `src/lib/vessels/**`); `src/components/**` belongs to the parallel engine session (`claude/exciting-albattani-8kzgsu-r6-engine`, fixing the 32 open round-5 rows), so engine / designer defects found here are open rows with a precise fix (list at the end).
@@ -836,6 +737,113 @@ G-01 note: `VesselView` may keep passing its own `windowMask`; the flexible grou
 | library generators | `generate-library-index.ts`, `generate-order-mode-table.ts`, `generate-catalogue-rows.ts`: outputs unchanged |
 | Round 6 capture | before 2 098 variants + 40 catalogue, after 754 + 40: **0 console errors** either way |
 | `r6-geometry.ts` over every box variant (2 098 docs regenerated from the final code) | 653 rows before, 653 after, identical set (all baseline: glued laps / turn-ins, fittings inside a host, handles / headers above the body); no new z-fight or interpenetration |
+
+## Round 6 (engine) — the 32 open rows of round 5 (key `3d-visual`, session r6-engine)
+
+Branch `claude/exciting-albattani-8kzgsu-r6-engine` (base `claude/exciting-albattani-8kzgsu` + the round 5 report). Scope: the engine and designer 3D parts (`src/components/three/**`, `src/components/designer/**` 3D stage, Dieline view, VesselView, ConfigPanel closure colour) plus the smallest additive changes in the packs / generators the precise fixes named.
+
+### Method
+
+- **Real editor, production build**, same harness as round 5 (`r5-variants.ts` → `r5-capture.cjs`, `?resume=1`): the **274 variants of the 50 affected models** (default, min, max, every container / closure / flexible option / feature), 1440 × 900 hero + back / top / open / half / flat / Dieline view, 390 × 844 phone hero for default, min and max. Captured on the base build (before) and on this branch (after; a second and third after build for the generator lows and TK-04). Catalogue-only parts (FEFCO 09 fittings, pulp carriers) through `/en/dev/catalogue/<code>` with `r6-catalogue-shot.cjs`; the base for those from a worktree of the base.
+- Closure variants of the after set apply each option's new default colour, as the closure picker now does.
+- Every row below was looked at before and after; contact sheets in `docs/screenshots/audit/3d-engine-r6/`.
+
+### Counts (the 32 open rows)
+
+| Severity | Open at round 5 | Fixed, verified | No change (cause shown) | Still open |
+|---|---:|---:|---:|---:|
+| high | 7 | 7 | 0 | 0 |
+| medium | 10 | 10 | 0 | 0 |
+| low | 15 | 11 | 1 (A-13) | 3 (A-12, C-08, D-12) |
+| **total** | **32** | **28** | **1** | **3** |
+
+Also closed: the open remainders of fixed rows (F-02 engine half, G-02 cap width, G-04 actuator, G-08 button), the duplicates of A-10 (B-07, C-06, D-04), TK-04 (reopened), and 3d-rigid-food FR-06 / E-02 (no change, see below). X-07 re-verified (the paper tube already opens at 18°). One regression of this round's own work was caught by e2e before merge and fixed (R6-01).
+
+### Rows
+
+| id | sev | where | fix (round 6) | status |
+|---|---|---|---|---|
+| R5-3Q-A-10 (+ B-07, C-06, D-04) | high | `DielineView.tsx`, `designer.module.css` | The sheet box keeps the die's aspect ratio at every viewport: width = min(room across, room down × ratio) in container units of `.dieline` (it was width 100 % + max-height 100 %, so a tall sheet lost its ratio and the canvas stretched while the SVG letterboxed). The canvas also `object-fit: contain`s like the SVG. The size legend that fell off the stage is back in view. | fixed, verified (SLEEVE, 0310, 0404, PAPER_TUBE, RIGID_BOX, ECMA_WINDOW_RTE) |
+| R5-3Q-G-28 | medium | `DielineView.tsx` | Same root; the die clip now scales per axis (`c.width / sheet.width`, `c.height / sheet.height`): the raster is rounded on each axis and a 17 mm stick-pack panel drifted with one factor. | fixed, verified (perfume oval, stick pack, deli lid, tubes) |
+| R5-3Q-A-03 | medium | `three/panelGeometry.ts` | No crease side face on a non-roll hinge folded 90° ± 30° about the printed face (pivotDepth 0), on parent and child: the t × t corner is closed by the two printed faces. Test: panel vertex counts per hinge + a RIGID_BOX case. | fixed, verified (RIGID_BOX lid rim, 0230, 0204, 0427 mailer, min / max, phone) |
+| R5-3Q-F-06 | high | `three/vessels/closures.ts` · pack | `SWING_TOP` style: dome stopper, red rubber gasket, neck wire ring, two levers and the bail over the stopper (new `gasket` / `wire` part roles). Swing top now on a screw-cap core so the style applies. | fixed, verified (GLASS_WATER, BEER_STUBBY) |
+| R5-3Q-F-07 | high | `closures.ts` | `MEASURE_CUP`: r = finishR + 7, top − 12 … top + 32, translucent PP with fill rings. | fixed, verified (DETERGENT_HANDLE) |
+| R5-3Q-F-08 | medium | `closures.ts` | `FLIP_TOP_CAP`: base / lid split line, back hinge, front thumb notch. | fixed, verified (SHAMPOO_OVAL) |
+| R5-3Q-F-09 / G-07 | medium / high | `closures.ts` | `CR_CAP`: `screwCap(p, { extraR: 2.5, extraTop: 2, te, 36 ribs })`, the double shell. | fixed, verified (PH-PILL-CR, PET / glass syrups) |
+| R5-3Q-F-10 | low | `closures.ts` | `screwCap` TE band (break line + band) as `TE_CAP` for screw-cap-TE and vented caps. The orifice reducer stays a plain cap (it is inside: true to life). | fixed, verified (NUT_BUTTER, JERRYCAN) |
+| R5-3Q-F-11 | medium | `closures.ts` | `BAR_TOP`: Ø 30 × 16 mm T-cork head on its shank. | fixed, verified (SPIRITS_FLASK) |
+| R5-3Q-F-14 | low | `closures.ts` | Tube flip-top gets its own parts (hinge strap across the lid line, thumb lip); the screw tube cap keeps the slim fluted body + shoulder disc. | fixed, verified (SQUEEZE_TUBE) |
+| R5-3Q-F-15 | low | `closures.ts` | Cork capsule depth from the neck: clamp(30, 0.85 × neck length, 55), no longer a fixed 48 mm onto a short shoulder. | fixed, verified (wine models) |
+| R5-3Q-F-02 (engine half) | — | `closures.ts` · pack | ROPP skirt `yb = top − max(18, finishH)`; wine BVS 30H60 bottles now take the ROPP style (the LUG_LID stand-in is gone). Test: the Stelvin skirt covers finishH. | fixed, verified (BURGUNDY ROPP) |
+| R5-3Q-G-06 | high | `closures.ts` · `cosmetic-cans/definitions/cosmetic.ts` | `MIST_COLLAR`: the mist pump plus a metal collar over ferrule and neck; `collarMm` dropped from the two perfume profiles, so MIST_PUMP and MIST_PUMP_COLLAR now differ. | fixed, verified (PERFUME-ROUND / OVAL) |
+| R5-3Q-G-10 | medium | `closures.ts` | `PIERCING` tube style: tall slim fluted cap, spike moulded in the recessed crown. | fixed, verified (PH-TUBE, TUBE-ALU) |
+| R5-3Q-G-11 | medium | `closures.ts` · pack | `DOUBLE_WALL_CAP` flush with the outer wall (body radius, not the inner pot's thread); compact lid takes the container's look (see G-25). | fixed, verified (COS-JAR-DOUBLE, COS-COMPACT) |
+| R5-3Q-G-14 | low | `closures.ts` | `DROPPER_TIP`: LDPE nozzle in the neck + tall pointed cap. | fixed, verified (PH-EYE-DROP) |
+| R5-3Q-G-04 / G-08 / G-02 (remainders) | — | `closures.ts` | `AEROSOL` stem + actuator with orifice on the valve cup; `CRIMP_FLIP_OFF` aluminium crimp + coloured flip-off button; `BULLET_CAP` flush with the body (max body radius). | fixed, verified |
+| R5-3Q-G-21 | high | `flexible/group.ts`, `flexible/geometry.ts` | The front film gets an alpha mask from `windowUv` (window at 12 %: clear film still glosses) and the product part is drawn behind a window on opaque films too. | fixed, verified (stand-up pouch o-window) |
+| R5-3Q-G-25 | high | `VesselModel.tsx`, `VesselView.tsx`, `ConfigPanel.tsx`, `lib/doc.ts`, packs | Per-option `defaultColor` on closures. New colour **"MATCH" (Same as container / مثل العبوة)**: the lid / film shell uses the container's own material and tint (alpha-blended, no second transmission pass); default for hinged / snap / plug / lever / slip lids, top-seal films and the compact lid. A new design starts with the default closure's colour; switching closure moves an unchanged colour to the new default. A raised lid (snap, plug, lever, hinged, double-wall) carries the lid label on its own top (`ClosureModel.printTopY`), so the yogurt snap-lid print is no longer hidden. | fixed, verified (clamshell, deli, punnet film, tins, compact, yogurt) |
+| R5-3Q-F-13 | low | `vessel-bottles.ts` | Metal defaults: ROPP / pourer SILVER, crowns, cork capsule and sparkling hood GOLD (recolourable). | fixed, verified |
+| R5-3Q-F-12 | medium | `vessel-bottles.ts`, `common-vessel.ts`, `library/doc.ts`, `ConfigPanel.tsx` | `describe(…, closure)`: the preset finish when the closure fits it, else the model's finish of the closure's kind nearest in diameter (crown bead for a crown, swing bead for a swing top). The envelope uses the chosen closure. Test added. | fixed, verified (WATER, STUBBY, FLASK) |
+| R5-3Q-F-19 | medium | `vessels/labels.ts`, `vessels/types.ts`, `cosmetic-cans/surfaces.ts` | Full cone wraps run `WRAP_OVERLAP_MM` (8 mm at the big end) past the seam: `SectorGeometry.wrapAngle` = the angle once round, the flat sector is longer by the overlap, `overlapMm` set, the 3D maps only `wrapAngle`. Tests: overlap arc = 8 mm, area = frustum × overlap factor. (The small wedge still seen on the **test pattern** at the tub seam is the pattern's own white frame line on the rectangular trim edge, which the sector corner touches; real artwork with background bleed has none.) | fixed, verified |
+| R5-3Q-F-20 | low | `vessels/registry.ts`, `common-vessel.ts` | New products HOT_SAUCE (opaque red-orange) and JAM (dense dark fruit); hot sauce / jam no longer map to translucent hibiscus. Syrups keep hibiscus (a reasonable cough-syrup look). | fixed, verified (SAUCE_WOOZY) |
+| R5-3Q-F-21 | low | `bottles/finishes.ts`, `bottles/registry.ts`, two model files, `vessel-core.ts` | New finishes F20-410 and PP 18 ROPP; bottle necks stay under ~72 % of the body (`finishForDims`), jars / tins only switch when they would overhang. No default preset changed (checked over every preset). | fixed, verified (syrups, marasca, shampoo at min) |
+| R5-3Q-G-15 | low | `vessels/materials.ts` | Alpha-blended amber glass `#8a4b12` at 0.8 (low path and thin mode): no more pale peach. | fixed, verified (glass syrup, phone) |
+| R5-3Q-E-06 | medium | `catalogue/CatalogueViewer.tsx` | Fittings rest on the top of the host's bottom flaps (highest horizontal lower-half panel at the closed pose), not at t. | fixed, verified (0949, 0946, 0973) |
+| R5-3Q-C-07 | low | `fefco-04/build.ts` | A cut-away face panel's safe zone is the largest rectangle its outline covers (display fronts, chamfered 0459 base). Test: every safe-zone point is on board. | fixed, verified (geometry snapshot, 10 keys) |
+| R5-3Q-E-07 | low | `dieline/fold.ts`, `types.ts`, `builder.ts`, `rigid-tubes/rigid.ts` | `assembly.hinge`: the hinged lid travels to its place opened 105° about the lid's back bottom rim, then swings shut on it, instead of the lift arc. Test: lid on the hinge line from 0.85 to 0.95 progress, closed pose unchanged. (The editor's fold animation is ~0.6 s and could not be sampled frame by frame here; verified numerically.) | fixed, verified (test) |
+| R5-3Q-E-08 | low | `foodservice/pulp.ts` | Pocket profile u^1.6 then a cubic rounded lip easing flat onto the rim (never past the cell's half pitch), 4° skirt draft, 1.6 mm grid within 12 000 vertices. | fixed, verified (cup carrier 2 / 4) |
+| TK-04 (reopened) | low | `PackagingModel.tsx`, `finishes/finishMaterial.ts` | The inside board of a closed windowed carton is shaded (×0.58 as the fold closes; flat / half it is lit as before): the window reads into a cavity, not as an opaque light patch. The finished-board material keeps the shade. | fixed, verified (ECMA_WINDOW_RTE, FS_CAKE_BOX_WINDOW) |
+| R5-3Q-A-13 | low | lighting | Looked at: the washed-out LEFT face in the back view is the gloss-laminated rigid wrap reflecting the front-left key softbox at grazing incidence; matte kraft (0204) in the same view reads correctly. Dimming the studio would undo R4-CR-10 / R4-L01. | no change (cause shown) |
+| 3d-rigid-food FR-06 / E-02 | medium | FS_NOODLE_PAIL | The model is the **wire-free** pail by definition ("locks with a tab and slit instead of a wire handle"); the engine already draws wire accessories when a generator emits one. | no change (by design) |
+| X-07 | low | PackagingScene | Already fixed (roll-hinged tubes open at 18°); re-verified. | verified |
+| R5-3Q-A-12 | low | FEFCO_0230 | Needs the FEFCO 0230 drawing to decide whether the back overlap top flap is one layer proud; public catalogues list 0230 without the flap layout. | open (needs the drawing) |
+| R5-3Q-C-08 | low | 0435 / 0435a / 0449 header inside, 0459 chamfers | A printable face there needs new face ids in the artwork model (designer data model, face editor, sheet painter); the print still reaches those panels on the sheet. | open (designer data model) |
+| R5-3Q-D-12 | low | foodservice boards | A CUK board in `BOARD_SPECS` needs vendor rate cards and pricing: business decision. | open (business) |
+| R6-01 (new, this round) | high | `VesselView.tsx` | The non-embedded VesselScene path still passed the raw closure colour, so "MATCH" reached `CLOSURE_COLORS` and the catalogue route crashed for CAN-PAINT, COS-COMPACT, TRAY-PUNNET (found by `catalogue-models` e2e). Both paths map MATCH; `createClosureMaterial` falls back to white for any unknown code. | fixed, verified (e2e) |
+| R4-05, R4-06, FF-13 / FF-15 | — | catalogue / designer | Not part of the 32; not re-examined this round. | unchanged |
+
+### Generator output (geometry snapshot)
+
+Re-recorded in the same commit as the change for exactly **10 keys**, all on the `dieline` fingerprint only (poses, bounds and SVG identical): FEFCO_0422a, FEFCO_0423a, FEFCO_0423_1a, FEFCO_0424a, FEFCO_0435, FEFCO_0435a, FEFCO_0449, FEFCO_0459, FEFCO_0472 (safe zones, C-07) and RIGID_HINGED_LID (assembly hinge, E-07).
+
+### Engine mount performance (`3d-mount-tasks.cjs`, TYPE=1, phone profile, 4× CPU)
+
+A / B on the same container: base build and this branch served side by side, alternating runs. This container's SwiftShader numbers are noisy (the base alone ranged 56–520 ms INP).
+
+| Page | INP base (runs) | INP branch (runs) | TBT after tap base / branch | Longest task base / branch (median) |
+|---|---|---|---|---|
+| `/en/design/mailer-box` (7 runs each) | 152, 72, 56, 144, 80, 104, 88 (median 88) | 152, 112, 120, 48, 24, 48, 112 (median 112) | ~1.6 s / ~1.6 s | 465 / 532 ms |
+| `/en/design` + "Turn the box" (3 runs) | 320, 520, 240 | 544, 120, 224 | ~0.95 s / ~1.04 s | 381 / 418 ms |
+
+Mailer INP stays under the 200 ms phone target on every run of both builds. The engine-mount structure is untouched: `loadEngineStack`, chunked shader warm-up and no three.js on first paint. New closure styles are built only when a container with that closure mounts. The longest mount task is ~65 ms longer in the median on the mailer, inside the run-to-run spread; it was not reproduced as a profile delta.
+
+### Files outside the engine / designer scope (smallest additive changes the fixes named)
+
+`src/lib/library/{types,doc}.ts`, `src/lib/library/packs/{common-vessel,vessel-bottles,vessel-cosmetic,vessel-core}.ts`, `src/lib/vessels/{labels,registry,types}.ts`, `src/lib/vessels/families/{bottles/{finishes,registry,models/glass,models/plastic},cosmetic-cans/{surfaces,definitions/cosmetic},flexible/{geometry,group}}.ts`, `src/lib/dieline/{fold,types,builder}.ts`, `src/lib/dieline/families/{fefco-04/build,rigid-tubes/rigid,foodservice/pulp}.ts`, `src/components/catalogue/CatalogueViewer.tsx`, `src/i18n/library.{en,ar}.ts` (one key: `library.colors.MATCH`).
+
+### Screenshots (`docs/screenshots/audit/3d-engine-r6/`, jpg, before | after)
+
+`01-dieline-view-A-10-G-28`, `02-fold-rims-A-03`, `03-closures-bottles`, `04-closures-cosmetic-pharma`, `05-lids-flexible-G-21-G-25`, `06-lows-TK-04-E-06-E-08`. Tools: `docs/audit/tools/r6-sheets.py`, `r6-catalogue-shot.cjs`, `r6-fold-frames.cjs`.
+
+### Verification (final production build of this branch, `b4e20f0e` + this table)
+
+| Check | Result |
+|---|---|
+| `npm run lint` (direct UI-kit imports rule included), `npm run typecheck` | clean |
+| `npm test` | 113 files, **8 778 passed** (new: panel crease faces + RIGID_BOX square creases, every R6 bottle style draws its own part, closure ↔ neck finish, Stelvin skirt, cone-wrap overlap, display-front safe zones on board, hinged-lid swing, unknown closure colour, every pack style builds) |
+| geometry snapshot | re-recorded for the 10 keys above only |
+| `npm run build` | passes |
+| `e2e/models.spec.ts` + `e2e/catalogue-models.spec.ts` + `e2e/designer.spec.ts`, `--workers=2` | **402 passed**, 0 failed (392 skipped: desktop-only / phone-only by design), 37.6 min; 18 / 18 catalogue batches, all models of `models.spec` |
+| Hydration (`designer.spec` "hydrate without errors", `--repeat-each=16`, desktop + Pixel 5) | **32 / 32 passed** |
+| Round 6 capture (274 variants, before and after) | 0 console errors in the editor captures; the catalogue-route crash (R6-01) was found by e2e and fixed |
+
+### Round 6 (3D QA) — merge with main and integrator follow-ups
+
+| id | sev | model(s) · file | finding | fix | status |
+|---|---|---|---|---|---|
+| R14-04 (designer, folded in here) | low | every bottle / jar with no standard · `library/packs/vessel-bottles.ts`, `library/types.ts` | Model card showed the preset's raw finish id ("PP28", "TO43", "RIM") and kept it after a swing top or crown, which sit on another neck. | `standard` is empty for those definitions; each closure option carries `neckFinish` (en / ar, MSA, Latin digits as printers write them) for the finish `finishForConfig` fits for that closure. Test `neck-finish-label.test.ts`. Designer: show `model.closures.find(c => c.code === v.closure)?.neckFinish?.[locale]` next to the model name (`ConfigPanel.tsx` / `ModelPicker.tsx`, engine session). | fixed (pack) / designer display open |
+
+Merged `claude/exciting-albattani-8kzgsu` (822cad94): flexible `geometry.ts` / `group.ts` take main's window mask (same behaviour as R6-3Q-G-01); both Round 6 sections kept. Checked on the merged production build: the 8 FEFCO 04 display trays main re-recorded (0422a, 0423a, 0423_1a, 0424a, 0435, 0435a, 0449, 0472: def / min / max / every option, hero + underside: clean corners, no strips; centred FRONT in the cut-away is C-07), every bottle / jar / can / cosmetic closure variant (engine's swing top, crown, bar top, CR, TE, mist collar, piercing, dropper, aerosol, crimp, double wall, ROPP, cork capsule: each on its neck; numerically 0 closure / finish misfits), every flexible pack with and without the window (product shows through). `npm test` 123 files / 8 977 passed, typecheck clean, `e2e/models` + `catalogue-models` (`--workers=2`) **388 passed**, geometry snapshot test green on the merged code.
 
 ## Round 7 (engine) — the R6-3Q engine rows
 
