@@ -49,6 +49,14 @@ export interface FrameProps {
   navigationLabel?: string;
   /** Render the content area as a <div> when an outer layout already owns <main id="main">. */
   contentElement?: "main" | "div";
+  /**
+   * R5-PL-17: wrap the page in a Suspense boundary inside <main>. On a slow phone CPU the page
+   * segment can still be pending when hydration reaches <main>; without a boundary React reported
+   * #418 and re-rendered the whole app on the client (LCP ~5 s, ~1 in 4 loads on vendor jobs and
+   * admin orders). Opt-in because a notFound() below a Suspense boundary is streamed with HTTP 200:
+   * areas whose detail layouts guard with notFound() (admin) must not set it.
+   */
+  suspendContent?: boolean;
 }
 
 /**
@@ -56,7 +64,7 @@ export interface FrameProps {
  * the #f1f1f1 canvas in a rounded sheet. Renders the page's single <main id="main">.
  * Side nav sits on the inline start (right in RTL).
  */
-export function Frame({ topBar, navigation, children, navigationLabel, contentElement = "main" }: FrameProps) {
+export function Frame({ topBar, navigation, children, navigationLabel, contentElement = "main", suspendContent = false }: FrameProps) {
   const { s } = useUi();
   const navId = useId();
   const [navOpen, setNavOpen] = useState(false);
@@ -135,18 +143,12 @@ export function Frame({ topBar, navigation, children, navigationLabel, contentEl
               {navOpen ? <div className={styles.NavBackdrop} onClick={closeNav} aria-hidden="true" /> : null}
             </>
           ) : null}
-          {/* R5-PL-17: a boundary between the frame and the page. Under a slow phone CPU a page's
-              client chunk or RSC row can still be pending when hydration reaches <main>; without a
-              boundary React could not wait, reported #418 and re-rendered the whole app on the
-              client (LCP ~5 s). With it, React keeps the server HTML and hydrates it when ready. */}
           {contentElement === "main" ? (
             <main id="main" tabIndex={-1} className={styles.Main}>
-              <Suspense fallback={null}>{children}</Suspense>
+              {suspendContent ? <Suspense fallback={null}>{children}</Suspense> : children}
             </main>
           ) : (
-            <div className={styles.Main}>
-              <Suspense fallback={null}>{children}</Suspense>
-            </div>
+            <div className={styles.Main}>{suspendContent ? <Suspense fallback={null}>{children}</Suspense> : children}</div>
           )}
         </div>
       </div>
