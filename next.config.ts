@@ -41,7 +41,11 @@ const nextConfig: NextConfig = {
     // page linked 20 render-blocking CSS files (43 KB gzip); on Slow 4G (562 ms RTT, 6
     // connections) that was 3-4 round trips before the first paint. Inline, the CSS arrives
     // with the HTML and FCP/LCP no longer wait on it. Production only (dev keeps <link>s).
-    inlineCss: true,
+    // OFF for the Cloudflare Workers build (ELBA_TARGET=cloudflare, npm run cf:build): Next copies
+    // each route's inlined CSS into every page's client-reference manifest (~1 MB x 87 pages),
+    // and OpenNext bundles all manifests into the Worker: 14.3 MiB gzip against the 10 MiB limit.
+    // There the CSS files come from Cloudflare's cache over HTTP/2-3 (docs/DEPLOY-CLOUDFLARE.md).
+    inlineCss: process.env.ELBA_TARGET !== "cloudflare",
   },
   // R5-PL-11: replace Next's strict CSS chunking plugin with the vendored copy that never merges
   // a module into a chunk used by routes that do not import it (scripts/next/css-chunking-plugin.cjs).

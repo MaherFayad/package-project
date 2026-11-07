@@ -20,7 +20,7 @@
     "postinstall": "prisma generate",
     "db:schema:pg": "tsx scripts/generate-postgres-schema.ts",
     "db:migrate:pg": "prisma migrate deploy --schema prisma/postgres/schema.prisma",
-    "cf:build": "tsx scripts/generate-postgres-schema.ts && prisma generate --schema prisma/postgres/schema.prisma && opennextjs-cloudflare build && tsx scripts/cloudflare/write-build-facts.ts; status=$?; prisma generate >/dev/null; exit $status",
+    "cf:build": "tsx scripts/generate-postgres-schema.ts && prisma generate --schema prisma/postgres/schema.prisma && ELBA_TARGET=cloudflare opennextjs-cloudflare build && tsx scripts/cloudflare/write-build-facts.ts; status=$?; prisma generate >/dev/null; exit $status",
     "cf:preview": "opennextjs-cloudflare preview",
     "cf:deploy": "opennextjs-cloudflare deploy",
     "cf:typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
