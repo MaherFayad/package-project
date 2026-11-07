@@ -126,7 +126,7 @@ export function AdminFrame({ locale, userName, counts, children }: AdminFramePro
 
   return (
     <SaveBarCtx.Provider value={register}>
-      <Frame topBar={topBar} navigation={<Navigation sections={sections} ariaLabel={t("admin.nav.label")} />} navigationLabel={t("admin.nav.label")} boundary={false}>
+      <Frame topBar={topBar} navigation={<Navigation sections={sections} ariaLabel={t("admin.nav.label")} />} navigationLabel={t("admin.nav.label")}>
         {/* Each admin route owns its boundary: list and leaf routes through loading.tsx, detail
             routes in their layout below the record check (R5-PL-03 404s, R5-PL-17 hydration). */}
         {children}

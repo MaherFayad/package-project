@@ -81,6 +81,10 @@ export function CookieNotice() {
       const r = target.getBoundingClientRect();
       const under = (b: DOMRect) => b.bottom > n.top && b.top < n.bottom && b.right > n.left && b.left < n.right;
       if (!under(r)) return;
+      // R5-PL-22: only lift a control the notice actually hides. A target that starts above the
+      // notice, or is taller than the room above it (the skip link's <main>, a long section), is
+      // already visible; scrolling by its bottom sent "skip to content" to the end of the page.
+      if (r.top < n.top - 8 || r.height > n.top - 16) return;
       window.scrollBy({ top: r.bottom - n.top + 16, behavior: "instant" as ScrollBehavior });
       // R6-AX-13: at the end of the page there is nothing left to scroll (a shell footer without
       // the `--e-cookie-h` padding, e.g. the last footer links on a phone). Add the room here.

@@ -8,7 +8,7 @@ import { isAdminSession } from "@/lib/auth/session";
  * unknown order answers a real 404 (a notFound() inside the streaming boundary answered 200). The
  * page keeps its own check.
  *
- * The shared Frame's boundary is off for admin (boundary={false}), so this layout adds the R5-PL-17
+ * The shared Frame's boundary is off for admin (Frame suspendContent is opt-in), so this layout adds the R5-PL-17
  * boundary itself, BELOW the check (fallback null: React keeps the server HTML and hydrates it when
  * ready). The duplicate-copy race seen in journeys J5 came from a frame state update after
  * hydration (fixed in AdminFrame), not from this boundary.

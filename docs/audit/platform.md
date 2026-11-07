@@ -806,3 +806,102 @@ critical 0 · high 0 · medium 1 (R5-PL-19, open) · low 1 (R5-PL-20, accepted).
   - smoke + storefront + designer: **36 passed, 4 skipped**; this includes "unknown marketing URLs answer a real 404 with the marketing chrome" and "unknown structure is a 404";
   - checkout + admin + vendor + journey + catalogue + a11y: **53 passed, 19 skipped**.
 - `notfound-check.mjs`: 58 / 58 (404 status, styled, one `<main>`, no console errors). Screenshots: `docs/screenshots/audit/platform/r5g/`.
+
+### Round 5 (h): R5-PL-16, R5-PL-17, R5-PL-19 and an audit-only pass (main merged, admin `c1bcad65` merged)
+
+**R5-PL-19, server-rendered 404s for static slugs: fixed.**
+- **Generator:** `scripts/generate-route-slugs.ts` (in `prebuild`, with `--check`) writes `src/lib/routing/route-slugs.generated.ts`. It holds 410 catalogue slugs and 410 codes, the 16 box styles, the 16 `/catalog/<structure>` redirect slugs, and the top-level segments with no route below them.
+- **Middleware:** it now also answers the static 404 for unknown catalogue models, box styles, malformed size slugs (`/boxes/<style>/<size>`, same pattern as `parseSizeSlug`) and any path below a leaf page (`/bottles/x`, `/why-elba/x`…).
+- **Test:** every real catalogue slug and code in any case, every box style, every SEO size page and every redirect slug is accepted, and each check agrees with the page's own lookup.
+- **Left to `notFound()`, the client-rendered 404:** records that need the database (printer, order, admin record, a well-formed but unknown share token) and in-format sizes outside a style's limits. Re-check on the next Next upgrade.
+
+**R5-PL-16, metric-matched Arabic fallbacks: fixed.**
+- **Plex:** next/font's generated fallbacks were `local("Arial")` sized from Latin widths. Arial is absent on Android and Linux, and its sizes do not match Arabic. They are replaced by `src/styles/font-fallbacks.css`: one family per local face (Noto Sans Arabic for Android, DejaVu Sans), Arabic block only, with size-adjust and ascent / descent / line-gap overrides measured in Chromium by `docs/audit/tools/arabic-fallback-metrics.mjs` on real UI strings (Plex 400 / 600 / 700). Size-adjust: Noto 93.8 / 92.5 %, DejaVu 88.8 / 78.9 %.
+- **Noto Sans Arabic** (the marketing face; 300, 400, 550, 700) gets the same treatment against DejaVu Sans, and against the device's own Noto with the measured width ratios of the light and 550 cuts.
+- **Cookie notice:** its inline script reserves its first-paint height while web fonts load. The reservation is released on the first tap, key press or resize. Unit test: `cookie-hide-script.test.ts`.
+- **Font preloads** still resolve: next/font drops the `-s` suffix when its fallback is off, and `font-preload.ts` reads the real URL.
+
+| Page (phone ar, 8 runs) | CLS before | CLS after | LCP after |
+|---|---|---|---|
+| `/ar/checkout/<design>` | 0.121 | **0.000 × 8** | 2.06 to 2.31 s |
+| `/ar` | – | **0.000 × 8** | 2.00 to 2.03 s (one 3.08) |
+| `/ar/start` | – | **0.000 × 8** | 1.75 to 2.00 s |
+| `/ar/why-elba` | 0.061 (integrator) | **0.022 × 8** | 1.35 to 1.37 s |
+
+The 0.022 left on `/ar/why-elba` is not the font: at 3.3 s a strip near the fold changes item widths (65 → 139 px) after hydration (R5-PL-23).
+
+**R5-PL-17, React #418 on the frames: fixed for the vendor portal, open for admin (R5-PL-24).**
+- **How it was found:** a diagnostic build logged React's `errorInfo.componentStack` (a temporary patch of Next's `on-recoverable-error.js`, restored and checked byte for byte). The mismatch is directly under `Frame`'s `<main>`. `docs/audit/tools/hydration-repeat.mjs` repeats cold phone loads and counts #418.
+- **Fix:** `Frame` takes `suspendContent`, a Suspense boundary inside `<main>` that lets React wait for a still-pending page instead of re-rendering the app on the client. With it, #418 appeared on **0 of 72** loads across vendor jobs, admin orders and the vendor dashboard; it was about 1 in 4.
+- **Viewport state:** `VendorFrame` no longer sets `matchMedia` state after hydration (as AdminFrame in `c1bcad65`); there is one short placeholder.
+- **Admin conflict:** the boundary is opt-in, because a `notFound()` below a Suspense boundary is streamed with HTTP 200. That broke admin's detail-route 404 guards (`e2e/admin.spec.ts` R5-PL-03). Vendor opts in: **vendor jobs 10 / 10 clean**, LCP 0.98 to 1.35 s. Admin does not: **admin orders is still 3 / 10 with #418** even without the viewport state, though its LCP in clean loads is 1.00 to 1.05 s.
+
+**Audit pass.** Phone, `ISOLATE=1`; data `perf-data/r5-platform/pages-r5i-phone.json`, compared with `pages-r5f-phone.json`:
+
+| Route | Inline CSS ar (KB) | RSC ar (KB) | HTML gz ar (KB) | LCP ar (s) | LCP en (s) | CLS ar / en | INP ar (ms) |
+|---|---|---|---|---|---|---|---|
+| home | 95 → **165** | 217 → **412** | 82 → **127** | 1.50 → **2.01** | 0.98 → **1.89** | 0.000 / 0.000 | 160 |
+| start | **153** | **320** | **111** | **1.81** | **1.73** | 0.000 / 0.000 | 24 |
+| designer-page | **168** | **375** | **133** | **1.69** | **1.52** | 0.000 / 0.000 | 120 |
+| boxes | 95 → **155** | 200 → **330** | 70 → **108** | 1.42 → **1.37** | 1.38 → **1.30** | 0.002 / 0.000 | 40 |
+| bottles | 95 → **155** | 168 → **292** | 64 → **101** | 1.52 → **1.51** | 1.40 → **1.36** | 0.001 / 0.000 | 16 |
+| catalog | 111 → **161** | 408 → **522** | 106 → **142** | 2.07 → **1.15** | 1.88 → **1.31** | 0.002 / 0.000 | 112 |
+| vendors | 95 → **155** | 197 → **322** | 85 → **128** | 1.47 → **1.78** | 1.05 → **1.15** | 0.001 / 0.000 | 48 |
+| why-elba | **163** | **342** | **119** | **1.37** | **1.33** | 0.022 / 0.000 | 88 |
+| pricing | **163** | **330** | **114** | **1.15** | **1.30** | 0.000 / 0.000 | 48 |
+| design-picker | 172 → **190** | 411 → **423** | 143 → **150** | 1.27 → **1.25** | 1.23 → **1.27** | 0.000 / 0.000 | 104 |
+| designer-box | 141 → **149** | 231 → **234** | 96 → **98** | 1.28 → **1.27** | 1.28 → **1.25** | 0.002 / 0.002 | 152 |
+| designer-bottle | 141 → **149** | 234 → **237** | 98 → **100** | 1.29 → **1.24** | 1.27 → **1.26** | 0.002 / 0.003 | 200 |
+| designer-pouch | 141 → **149** | 231 → **234** | 96 → **98** | 1.28 → **1.28** | 1.25 → **1.26** | 0.002 / 0.003 | 216 |
+| designer-fefco09 | 141 → **149** | 231 → **234** | 96 → **98** | 1.28 → **1.27** | 1.24 → **1.29** | 0.002 / 0.002 | 120 |
+| share | 125 → **167** | 228 → **293** | 118 → **140** | 1.39 → **1.99** | 1.30 → **1.67** | 0.000 / 0.000 | 304 |
+| checkout | 98 → **106** | 191 → **194** | 85 → **87** | 2.05 → **2.10** | 2.02 → **1.94** | 0.000 / 0.005 | 120 |
+| order-tracking | 156 → **173** | 268 → **280** | 116 → **124** | 2.03 → **2.26** | 1.80 → **1.73** | 0.007 / 0.000 | 72 |
+| account | 161 → **177** | 254 → **335** | 110 → **133** | 1.99 → **2.32** | 1.72 → **2.02** | 0.007 / 0.007 | 64 |
+| 404-missing | **145** | **273** | **95** | **2.20** | **1.04** | 0.000 / 0.000 | 16 |
+| 404-share | **145** | **273** | **95** | **2.28** | **1.06** | 0.000 / 0.000 | 24 |
+| 404-legal | **145** | **273** | **95** | **2.26** | **1.04** | 0.000 / 0.000 | 16 |
+| 404-design | **145** | **273** | **95** | **2.20** | **1.08** | 0.000 / 0.000 | 24 |
+| 404-catalog | **145** | **273** | **95** | **2.20** | **1.02** | 0.000 / 0.000 | 16 |
+| 404-share-wellformed | **163** | **271** | **76** | **4.82** | **4.51** | 0.000 / 0.000 | 16 |
+| vendor-portal | 97 → **105** | 209 → **220** | 89 → **94** | 1.32 → **1.27** | 1.24 → **1.25** | 0.000 / 0.000 | 24 |
+| vendor-jobs | 115 → **120** | 211 → **221** | 89 → **91** | 1.31 → **1.00** | 1.21 → **1.31** | 0.075 / 0.000 | 136 |
+| admin | 115 → **122** | 270 → **275** | 109 → **113** | 1.42 → **1.33** | 1.32 → **1.41** | 0.000 / 0.000 | 16 |
+| admin-orders | 104 → **111** | 228 → **240** | 92 → **96** | 4.97 → **1.02** | 0.94 → **1.06** | 0.000 / 0.006 | 120 |
+
+- **Budgets:** LCP and CLS are within budget on every route except the well-formed unknown share token (client-rendered 404, R5-PL-19 scope note).
+- **R6 marketing pages** are heavier since main's rebuild: home inline CSS 95 → 165 KB and RSC 217 → 412 KB, with every marketing route +50 to +60 KB CSS. That is for the foundation owner; my changes do not touch these routes' CSS.
+- **INP over 200 ms:** share (304 / 320 ms, was 160; R5-PL-26), and designer-pouch ar 216 ms (borderline; SwiftShader).
+
+**Other checks** on the final build:
+
+| Check | Result |
+|---|---|
+| `rawkey-sweep.cjs` | 76 screens, 233 dialogs/menus/tabs opened, 14 forced error states, **no raw keys** |
+| `notfound-check.mjs` | 58 / 58 |
+| `platform-shell.cjs` | 96 / 96, with the new skip-link check |
+| Generators | i18n scopes, route slugs and debarrel checks clean |
+
+**New findings this pass:**
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R5-PL-22 | high | `ui/CookieNotice.tsx` (focus reveal) | While the cookie notice was shown, "skip to content" scrolled to the **end** of the page on every marketing page (`/ar` 8,411 px, `/ar/catalog` 16,196 px; checkout moves focus to its step heading and was fine). The notice treated `<main>`, taller than the viewport, as covered and scrolled by its bottom edge. Every first-time keyboard visitor hit it. | WCAG 2.4.1, 2.4.3 | Only a control the notice actually hides is lifted: one that starts above the notice, or is taller than the room above it, is left alone. Unit test, plus a `platform-shell.cjs` check that the skip target is on screen. | fixed |
+| R5-PL-24 | medium | admin frame | #418 on admin orders persists in about 3 / 10 cold phone loads without the frame boundary, and the boundary would break admin's real-404 guards. | WCAG 4.1.2; CWV LCP | Decision for the integrator and the admin owner. Options: (a) move the detail guards above the frame (admin layout via `x-elba-path`, which renders the locale 404, not the admin card); (b) accept 200 for admin 404s (noindex, staff only) and opt in; (c) find the remaining post-hydration update in the admin tree. | open (admin) |
+| R5-PL-21 | low | `app/fonts.ts` | next/font's `Inter Fallback` (`local("Arial")`, no `unicode-range`) sat ahead of Plex in the Arabic stack. Where Arial has Arabic glyphs (Windows) it would render Arabic in Arial at Inter's Latin size-adjust. Not reproducible here (no Arial). | Typography | `Elba Inter Fallback`, limited to Latin. | fixed (unverified on Windows) |
+| R5-PL-23 | low | `/ar/why-elba` (marketing) | CLS 0.022 at 3.3 s: list items in a strip near the fold change width after hydration (65 → 139 px). | CWV CLS (within budget) | Marketing: render the final widths on the server, or reserve them. | open (marketing) |
+| R5-PL-25 | low | `marketing/restyle/legal.module.css` | At the end of a legal page the sticky table of contents is pushed up by its container and slides under the 72 px header, so its first links are hidden. | WCAG 2.4.11, 2.5.8 | Marketing: end the sticky range earlier (`max-block-size` against the article), or stop the TOC above the footer. | open (marketing) |
+| R5-PL-26 | medium | `/s/<token>` (designer, R6) | Share INP 304 / 320 ms (was 160) and LCP 1.39 → 1.99 s (ar). | CWV INP < 200 ms | Owner: profile the share page's first interaction after the R6 restyle. | open (designer / R6) |
+
+### Round 5 (h) counts (new findings, before fixing)
+
+critical 0 · high 1 (R5-PL-22) · medium 2 (R5-PL-24, R5-PL-26) · low 3 (R5-PL-21, R5-PL-23, R5-PL-25). Fixed: R5-PL-22 and R5-PL-21. The assigned R5-PL-16 and R5-PL-19 are fixed, and R5-PL-17 is fixed for the vendor portal. Medium findings remain open, so the rounds continue.
+
+### Round 5 (h) verification
+
+- `npm run lint` clean and `npm run typecheck` clean.
+- `npm test`: 121 files, 8,956 passed.
+- `npm run build` clean (the prebuild generators ran).
+- e2e (`--workers=2`):
+  - smoke + storefront + designer: **36 passed, 4 skipped**;
+  - checkout + admin + vendor + journey + catalogue + a11y: **53 passed, 19 skipped**, including admin's R5-PL-03 404 test.

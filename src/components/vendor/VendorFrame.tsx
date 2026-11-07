@@ -151,7 +151,7 @@ export function VendorFrame({ locale, userName, vendor, awaitingCount, children 
 
   return (
     <SaveBarCtx.Provider value={register}>
-      <Frame topBar={topBar} navigation={<Navigation sections={sections} ariaLabel={t("vendorPortal.nav.label")} />} navigationLabel={t("vendorPortal.nav.label")}>
+      <Frame suspendContent topBar={topBar} navigation={<Navigation sections={sections} ariaLabel={t("vendorPortal.nav.label")} />} navigationLabel={t("vendorPortal.nav.label")}>
         {children}
       </Frame>
     </SaveBarCtx.Provider>
