@@ -8,9 +8,11 @@ Three independent full checks ran in parallel cloud sessions on the same commit,
 
 | Check | Session | Lint | Typecheck | Unit | Build | e2e |
 |---|---|---|---|---|---|---|
-| 1 | final-1 | RESULT_1_LINT | RESULT_1_TC | RESULT_1_UNIT | RESULT_1_BUILD | RESULT_1_E2E |
-| 2 | final-2 | RESULT_2_LINT | RESULT_2_TC | RESULT_2_UNIT | RESULT_2_BUILD | RESULT_2_E2E |
-| 3 | final-3 | RESULT_3_LINT | RESULT_3_TC | RESULT_3_UNIT | RESULT_3_BUILD | RESULT_3_E2E |
+| 1 | final-1 | 0 errors, 1 warning | pass | 9,030 / 9,030 (132 files) | pass | **767 passed, 0 failed, 0 flaky** (493 skipped by project), 59.5 min |
+| 2 | final-2 | 0 errors, 1 warning | pass | 9,030 / 9,030 (132 files) | pass | **767 passed, 0 failed, 0 flaky** (493 skipped by project), 73 min |
+| 3 | final-3 | 0 errors, 1 warning | pass | 9,030 / 9,030 (132 files) | pass | **767 passed, 0 failed, 0 flaky** (493 skipped by project), 70 min |
+
+**Result: 3 of 3 green on the same commit, with no failing or flaky test.** The one lint warning is `Suspense` imported but not used in `src/app/[locale]/admin/layout.tsx`. Check 2 also logged five `prisma:error` foreign-key messages from e2e cleanup code (`e2e/admin-quote-price.spec.ts:116`, `e2e/fixtures/factory.ts:182`). No test failed from them; they only leave test rows in the throwaway database.
 
 The same suite also ran on the Cloudflare Worker locally, against Postgres 16 through Hyperdrive and local R2. The result: 760 passed. The two real failures (a malformed URL returning 500) are fixed. Five more failed only under load and passed on a single-worker re-run (`docs/DEPLOY-CLOUDFLARE.md`, verification log).
 
