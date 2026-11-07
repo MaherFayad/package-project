@@ -869,3 +869,38 @@ Branch `claude/exciting-albattani-8kzgsu-r6-engine` restarted from `claude/excit
 Generator output: no box generator changed; geometry snapshot untouched. Item 9 lows (lid-piece half fold on PAPER_TUBE / RIGID_BOX, G-08 compact skirt print band, E-04 catalogue envelopes) were not in this session's list and stay with their owners.
 
 **Verification (round 7, final build).** `npm run typecheck` clean; `npm run lint` 0 errors (1 pre-existing warning: unused `Suspense` in `src/app/[locale]/admin/layout.tsx`, not this scope); `npm test` 123 files, **8 981 passed**; `npm run build` passes; `e2e/models.spec.ts --workers=2` **370 passed, 0 failed** (370 skipped: phone project, desktop-only by design), 29.5 min; geometry snapshot unchanged.
+
+## Round 7 — 3D QA, last round (key `3d-visual`, ids `R7-3Q-`)
+
+Branch `claude/exciting-albattani-8kzgsu-r6-3dqa`, main merged at `cd25f2f1` (engine round-7 fixes `a2dcb9d3` included: lug lid, clear liquids, sparkling foil, treatment pump, vial crimp, dropper collar, wrap-coloured rigid / tube side faces, outline split at hinges). The orchestrator declared this the **last** 3D QA round: one pass, anything not fixed stays as a documented open row for the backlog.
+
+**Method.** Production build of the merged tree; `r6-variants.ts` (test pattern + Arabic line on every face) regenerated from the merged code; `r6-capture.cjs` over **1 156 variants** (every model at default with every view, smallest and largest size on desktop and phone, every closure option, the flexible window) **plus the 40 catalogue-only models: 1 196 records, 0 console errors** (the container restarted mid-capture; the remainder was re-captured on a fresh server). Four reviewers in parallel (boxes core / 02 / 03–07; FEFCO 04; ECMA / food service / rigid / tubes / FEFCO 09 / catalogue; containers) plus the lead's own sheet of every container at default / min / max (the container reviewer covered only 11 of 96 grids after the restart). Each reviewer re-checked its families' round-6 "fixed" rows and the engine's round-7 changes against the round-6 captures.
+
+**Counts (new round 7 findings, before fixing).**
+
+| Severity | Found | Fixed | Open |
+|---|---:|---:|---:|
+| critical | 0 | 0 | 0 |
+| high | 1 | 0 | 1 (L-01, engine regression) |
+| medium | 1 | 1 | 0 |
+| low | 1 | 0 | 1 (V-01, engine) |
+| **total** | **3** | **1** | **2** |
+
+Carried over and fixed this round: **R6-3Q-D-06** (medium, LIQUID_GABLE_TOP gusset). Every round-6 "fixed" row re-checked holds (visually where the r7 set has the variant, otherwise by its tests); every engine round-7 fix reads correctly on the images (lug lids on the finish, clear spirits / perfume, foil above the label at min, treatment pump and vial crimp within the body, dropper collar, printed fold rims on FEFCO 04 trays and rigid / tube wraps).
+
+| id | sev | model(s) · file | finding | real-world reference | fix | status |
+|---|---|---|---|---|---|---|
+| R6-3Q-D-06 (carried) | medium | LIQUID_GABLE_TOP · `ecma-specials/liquid.ts · gableTopCarton` | Gable ends were flat pentagons flush with the sides: a house-shaped prism, gusset creases never folded. | Pure-Pak / Tetra Rex gable top: end-panel top strip as tall as the roof, diagonal creases to the fin centre, centre triangle tilts in under the fin (recessed V), outer triangles fold back under the roof. | End walls rectangles + a roof-height gusset strip (two centre halves + two tucks, tuck ↔ roof seams creased); `gussetFolds()` derives the closed angles from the caliper (halves ≈ 46–47° in, tucks ≈ −121°); tucks 0.08 mm under the roof (no gap, nothing through the roof, closed length unchanged); LEFT / RIGHT art covers the whole strip. New `gable-gusset.test.ts` (every size × 0.3 / 0.48 / 0.6 mm board); the render-quality outward-print check exempts exactly the four tucks (printed side = ceiling of the open gable pocket). A very faint dotted line can remain on the roof over the diagonal (kept: pushing the gusset lower exposes unprinted roof underside). | fixed, verified |
+| R7-3Q-P-01 | medium | FEFCO_0717 · `fefco-06-07/group07.ts · handleFaces` | No TOP face: the two handle base flaps forming the whole top deck either side of the handle were bare kraft between printed walls and the printed handle (`FEFCO_0717__def__d_hero`, `__def__d_flat`); they sit a handle height below the face's top, outside the depth tolerance. | A printed bottle carrier prints its top deck. | TOP mapped with depth tolerance handle height + 2t + 0.5, trimmed (`top_front` + `top_back`). Test (no TOP face on old code). | fixed, verified |
+| R7-3Q-L-01 | high | COS-NAIL-POLISH (def / min / max) · **engine** `three/vessels/closures.ts · BULLET_CAP` (regression from engine round 6/7) | The brush cap is now as wide as the square glass body and reaches 55 % of its height down over the shoulder: a tall white cylinder swallows the bottle, the pink polish shows only below it (`r7/COS-NAIL-POLISH__def__d_hero` vs round-6 `before/…`, where the cap sat on the neck). `R = max(r + 1, radiusAt(top − 2) + 0.4, bodyR(p, top − 2) + 0.3)` and `yb = top − 0.55 h` were made for flush lipstick / lip-gloss / mascara overcaps (R5-3Q-G-02) and also hit the nail-polish brush cap that maps to the same style. | Nail-polish brush cap: tall cylinder on the neck, about 0.5–0.6 × the bottle width, sitting on the shoulder. | Engine: flush only when the body is round and the cap is an overcap: e.g. `const flush = p.bottleSection?.kind !== "rect" && bodyR(p, top − 2) − r < 6;` `R = flush ? <current> : r + 1.5`, `yb = flush ? top − 0.55 h : top − finishH` (or a separate `BRUSH_CAP` style that the cosmetic pack maps COS-NAIL-POLISH's closure to). | open (engine) |
+| R7-3Q-V-01 | low | COS-PERFUME-ROUND (GLASS_CLEAR, perfume) · engine `three/vessels/materials.ts` / label liner | The band between label top and overcap reads milky white in the hero (`COS-PERFUME-ROUND__def__d_hero`), clear grey in `d_back`; PERFUME_SQUARE now renders clear. Not diagnosed: label inner face seen through the shoulder, or the liquid at this size. | Clear perfume in flint glass is see-through above the label. | Check which layer is white; if the liquid, use the PERFUME_SQUARE alpha path. | open (engine) |
+
+Not counted (by design / known): FEFCO 04 display fronts with centred art in the cut-away (C-07), outside-flap text break at min (C-02), BOTTLE_BASKET handle art twice (D-07), rigid lid parallax (E-02), tube cap disc edge (E-03), catalogue envelopes flat (E-04), sardine / oval-fish thin lid label (E-02 core), round tin at min (test-pattern text crowding a 10 mm band), FLEX clear-film variants opaque (the test pattern prints the whole face). Sub-pixel hairlines on FEFCO 0440 / 0442 / 0458 / 0402 at min below what a buyer would see.
+
+**Changed models (geometry snapshot re-recorded in the same commits):** LIQUID_GABLE_TOP, FEFCO_0717. Every other key identical. Library generators re-run: outputs unchanged.
+
+**Files outside scope.** None (`src/lib/dieline/families/ecma-specials/**`, `fefco-06-07/**`).
+
+**Screenshots.** `docs/screenshots/audit/3dqa-r7/details-r7.jpg`: the two fixes, the nail-polish regression and three engine round-7 fixes, before | after.
+
+**Verification (final production build of this branch).** `npm run typecheck` clean; `npm run lint` 0 errors (1 pre-existing warning, the local `.next-*` audit build folders excluded); `npm test` 126 files, **9 006 passed**; `npm run build` passes; `e2e/models.spec.ts` + `e2e/catalogue-models.spec.ts` (`--workers=2`): see the commit message of this report; round-7 capture 1 196 records, 0 console errors.
