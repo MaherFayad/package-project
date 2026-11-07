@@ -557,3 +557,183 @@ None in source. The fixes stay in `src/lib/dieline/**`, `src/lib/library/**` and
 | Round 5 capture, every variant | before 2 098 + 40, after 1 613 + 40 (board-only frames skipped): **0 console errors** either way |
 | `r5-geometry.ts` over every box variant | no new z-fight / interpenetration rows; FEFCO_0320, 0321, 0325, 0504 lid-joint rows and the ECMA_TRAY_6C_LID E-flute row gone |
 | `npm run test:size` | 3D pages within budget; one non-3D page over (vendor profile, 201.7 KB): outside this scope, unchanged by this branch |
+
+## Round 6 — 3D QA of every model (key `3d-visual`, ids `R6-3Q-`)
+
+Branch `claude/exciting-albattani-8kzgsu-r6-3dqa`, base `131ba63` (round 5 head). Scope: generators and packs only (`src/lib/library/**`, `src/lib/dieline/**`, `src/lib/vessels/**`); `src/components/**` belongs to the parallel engine session (`claude/exciting-albattani-8kzgsu-r6-engine`, fixing the 32 open round-5 rows), so engine / designer defects found here are open rows with a precise fix (list at the end).
+
+### Method
+
+| Step | Tool (`docs/audit/tools/`) | What it gives |
+|---|---|---|
+| Variants | `r6-variants.ts` | Round 5's **2 098 DesignDocs** for the 370 library models (default, smallest and largest size the generator builds, every feature / window face / handle / notch / tear strip / partitions / display / lid height, one other board, every other container and closure, every flexible option) with the face test pattern **plus an Arabic sample line «علبة مصرية» (RTL, IBM Plex Sans Arabic) on every face, narrow faces included**, so clipped, mirrored or stretched Arabic on dust flaps, tucks, side panels, vials and tube bodies shows at once. |
+| Capture | `r6-capture.cjs` | Real editor, production build, autosave + `?resume=1`; 1440 × 900 hero for every variant; for the default also back + underside, half fold, flat and the Dieline view (boxes) / back, top and open closure (containers); 390 × 844 hero for default, min and max; the 40 catalogue-only models through `/en/dev/catalogue/<code>`. Before: 2 138 records, **0 console errors**. |
+| Review | `r6-review.py`, `r6-sheets.py` | Per-model labelled grids; contact sheets. |
+| Numbers | `r6-geometry.ts`, `r6-option-collapse.ts` | z-fight / interpenetration / outer-vs-inner over every box variant (glued-lap and turn-in rows at 0.15 / 0.30 mm are the known baseline); reviewers added family probes (face coverage, clashes, mirrored parts, lid vs body width). |
+| Snapshot | `r6-snapshot-merge.py` | Re-records `geometry.json` for one family's keys only, so each family commit lists exactly its changed keys. |
+| People | 7 reviewers in parallel by family (A core + FEFCO 02, B FEFCO 03/05 + 06/07, C FEFCO 04, D ECMA + food service, E rigid / tubes / FEFCO 09 / catalogue, F core containers + bottles, G cosmetic / cans + flexible) plus a second visual pass over G (pass 1 there was mostly numeric), each judging every model in every variant and view as a packaging engineer and a product designer, fixing in its family generator and verifying on a dev server. |
+
+Severity scale as in round 5.
+
+### Counts (new round 6 findings, before fixing)
+
+| Severity | Found | Fixed | Open |
+|---|---:|---:|---:|
+| critical | 0 | 0 | 0 |
+| high | 10 | 10 | 0 |
+| medium | 20 | 15 | 5 (D-06 gable-top gusset rewrite; F-06 lug-lid width, F-07 clear liquids, F-08 sparkling foil, G-04 treatment pump — engine) |
+| low | 15 | 1 | 14 |
+| **total** | **45** | **26** | **19** |
+
+Reopened older rows: R5-3Q-F-12 (closure ↔ neck finish, now fixed as F-01), R5-3Q-G-21 (flexible window, fixed in scope as G-01), R5-3Q-F-16 / F-17 in part (jar lids at min, fixed as F-05). Every other round-5 "fixed" row was re-checked in the new captures and holds. Round-5 open engine / designer rows reproduce and are not counted again (A-03, A-10, A-13, X-07, TK-04, E-06…E-08, F-06…F-15, F-19…F-21, G-06, G-07, G-10, G-11, G-14, G-25, G-28, FR-06).
+Medium-or-worse issues were still found (20), so the rounds continue (BRIEF round 4 rule). The family most affected by round 5 changes held: no regression from the round-5 fixes was found in FEFCO 04, FEFCO 07, rigid boxes, tubes, bottles or closures; the new rows there are defects round 5 did not reach (tray corners, tube cap bleed, closure ↔ finish).
+
+### Findings
+
+### A. Core structures (13) + FEFCO 02 (24)
+
+| id | sev | model(s) · file | finding | real-world reference | fix | status |
+|---|---|---|---|---|---|---|
+| R6-3Q-A-01 | high | FEFCO_0320 · `structures.ts · telescope` | Handle option did nothing at the default full-depth lid: hand holes were cut only for lids < 0.6 H (`FEFCO_0320__handle__d_hero` = def, pixel-identical). | Full telescope: hand holes through lid and base end walls in register. | Lid ≥ 0.6 H: one shared hole size cut in `left`/`right` and `lid_left`/`lid_right`, lid holes offset 2t (lid wall top 2t above base); centres match within 0.1 mm. Test. | fixed, verified |
+| R6-3Q-A-02 | high | FEFCO_0320 · `telescope` | Thumb-notch option did nothing in 3D: notches cut in the base rim, always under the lid (`FEFCO_0320__notch__d_hero` = def). | Thumb cuts are in the lid's open edge. | Notch `lid_front` / `lid_back` at their bottom edge, r ≤ 0.35 × lid height. Test. | fixed, verified |
+| R6-3Q-A-03 | high | RIGID_BOX · `rigidBox` | Same as A-02: notches in base walls / turn-ins under the lid (`RIGID_BOX__notch__d_hero` = def). | Lid-off set-up box: thumb cut in the lid skirt. | Notch `lid_front` / `lid_back` + turn-ins, r = min(14, 0.08 L, 0.35 × lid height). Test. | fixed (tests; faint edge in 3D) |
+| R6-3Q-A-04 | high | FEFCO_0201 + FEFCO 02 handle styles, walls < ~83 mm · `structures.ts · handHoles`, `fefco-02/kit.ts · handHoles` | Handle option silently did nothing on small walls: hole height 0.18 × wall and holes < 15 mm dropped (0201 at min 100×80×60 had none). | A 15 mm finger-grip hole fits a 60 mm wall. | Hole height clamped 15–30 mm, cut when the wall has 8 mm below it; walls > ~83 mm unchanged. Test. | fixed, verified |
+| R6-3Q-A-05 | medium | FEFCO_0230, FEFCO_0228 · `fefco-02/styles.ts · splitLength` | Slot-wide kraft stripe from the back edge to the centre of TOP at every size (`FEFCO_0230__min__d_hero`, `FEFCO_0228__min__d_hero`): both split-flap halves inset half a slot at the seam. | Split major flaps butt at one knife cut. | Seam insets 0 (inner) / o (outer): abut, no overlap (no-interpenetration tests pass). | fixed, verified |
+| R6-3Q-A-06 | low | RIGID_BOX (all sizes) · engine `panelGeometry.ts` | Pale vertical strips at the lid front corners, pale rim on TOP edges (`RIGID_BOX__def__d_hero`); wall ends overlap with only 0.1 mm exposed (numeric), so it is the crease / board-edge side faces. | — | Engine: skip crease side face at 90° (A-03); wrap-colour side faces on rigid boards. | open (engine) |
+| R6-3Q-A-07 | low | RIGID_BOX min | At H 20 / lid 15 the FRONT Arabic line falls on the lid's bottom edge: one face spans lid and base at two depths. | Lid and base wraps are separate prints. | Separate lid face (design decision). | open (design) |
+
+Re-verified round 5: A-01, A-02, A-04, A-06, A-07, A-09, L-01 hold. Reproduce (open, not counted): A-03, A-10, A-12, A-13, X-07, TK-04. Arabic on narrow faces holds at min (PIZZA front, 0427 ends, SLEEVE, ECMA, GABLE, RIGID walls).
+Engine (low): fold engine lid-piece half fold drops PAPER_TUBE / RIGID_BOX lids below the body (`__def__d_half`); lift straight up for the second half.
+
+| R6-3Q-A-08 | medium | FEFCO_0320 with lid < H, PALLET_BOX_LID (default 0.2 H lid), FEFCO 03/05 0320 · `structures.ts · telescope` | Partial lid: LEFT face held only `lid_left`, the base left wall below the lid unprinted (lid left wall stands clear + 2t out because of its joint, tolerance clear + t + 0.5). Found from face parts (LEFT faces away in the hero). Same class as B-01. | Base walls below a lid are printed. | `faceDepthTol` clear + 2t + 0.5; all four side faces hold base + lid wall on E / B flute and 7 / 15 mm pallet board. Test. | fixed (numeric / tests) |
+
+### B. FEFCO 03 / 05 (32) + FEFCO 06 / 07 (33)
+
+| id | sev | model(s) · file | finding | real-world reference | fix | status |
+|---|---|---|---|---|---|---|
+| R6-3Q-B-01 | medium | FEFCO_0321 · `fefco-03-05/generators.ts · fefco0321` | Under a partial lid both base end walls bare board (`FEFCO_0321__lid__d_hero`; flat: FRONT, kraft, BACK, kraft): end walls lie lid wall + clearance + t deep (4.0 mm at t 1.5), `faceDepthTol` was clear + t + 0.5 (3.0). | On a telescope every wall visible below the lid is printed. | `faceDepthTol: clear + 2t + 0.5`. Test (13 styles × 2 boards; fails on old code for 0303 / 0304 / 0321). | fixed, verified |
+| R6-3Q-B-02 | medium | FEFCO_0304 (+ 0303 when two outside gussets on a wall overlap) · `trayAndLid` | Under a partial lid the base end wall between the gusset triangles bare board, LEFT / RIGHT coverage 0.60 (`FEFCO_0304__lid__d_hero`): wall 11.5 mm deep vs fixed tolerance 9 mm. | Wall face shows between folded webs. | Tolerance from the closed set: `max(clear + 5t, (outer − base wall)/2) + 0.5`. | fixed, verified |
+| R6-3Q-B-03 | high | FEFCO_0717 · `fefco-06-07/group07.ts · autoBottomCase` | Side faces sized to the whole closed box incl. the carry handle: 25–30 % of FRONT / BACK an empty band above the rim (artwork lost, coverage 0.70–0.84), handle bare kraft (`FEFCO_0717__def__d_hero`, `__m_hero`). | Printed bottle carriers print the handle. | `handleFaces`: FRONT / BACK continue onto their handle half (wall → top flap → handle chain), LEFT / RIGHT trimmed to the wall. Test. | fixed, verified |
+| R6-3Q-B-04 | low | FEFCO_0621 · `group06.ts · halfShells` | Inner end wall ran full blank height through the closed end flap and ½W flap: cut edge coplanar with TOP / BOTTOM print, faint flicker line (24–132 penetrating samples every size). | Inner wall stands between the flap layers. | Inner wall hinge inset 2t at both ends; joint tab follows; inner size unchanged. Test. | fixed (numeric + test), render clean |
+| R6-3Q-B-05 | low | lidded 07 trays 0747, 0748, 0751, 0759, 0761 | Lid inside the rim: wall / web tops reach the lid's outer plane, a t-wide edge band round TOP (class of R5-3Q-A-06). | — | Lid on the rim (5 geometry changes for a hairline). | open |
+| R6-3Q-B-06 | low | FEFCO_0714 | Partial lid rim cuts through face-centred FRONT / RIGHT text. | — | Safe zone below the lid rim (designer aid). | open |
+
+Re-verified round 5: B-01…B-06, R4-08 hold. Reproduces: B-07 / A-10 (`FEFCO_0310__def__d_dieline`).
+
+### C. FEFCO 04 (80)
+
+| id | sev | model(s) · file | finding | real-world reference | fix | status |
+|---|---|---|---|---|---|---|
+| R6-3Q-C-01 | medium | all 70 `trayKit` styles (every 04 except wraps 0404 / 0406 / 0409* / 0410* / 0411*, Bliss 0405, octagon 0459) · `fefco-04/kit.ts · trayKit`, `build.ts` | Walls ran the full base length and met board-in-board at the four vertical corners: each cut end lay in the neighbour's print, a z-fighting brown strip down every corner, patchy at min and on phone (`FEFCO_0400__min__d_hero`, `FEFCO_0412__min__d_hero`, `FEFCO_0413__min__d_hero`); on lid styles the same flush joint along the lid front / end edges (`FEFCO_0416__min__d_hero`, `FEFCO_0429__min__d_hero`). | At a corner one panel's board edge shows as a hairline; the print does not flicker. | `CORNER_GAP` 0.1 mm (as core `cornerGap`, R5-3Q-A-07): walls stop 0.1 mm short of each base corner, single walls under a lid 0.1 mm below its top; ears / outside lid flaps get + g / t stack so they stay put (numeric). Base outline split 0.1 mm from each corner so the crease print still follows the hinge; collinear tiny edge takes the neighbour's bleed in `build.ts`. New "corners" test ×80 (70 fail with gap 0). | fixed, verified |
+| R6-3Q-C-02 | low | 0415, 0429, 0440, 0442, 0458 (outside lid front / side flaps) | Text across an outside flap's lower edge reads broken at small sizes (flap one caliper proud of the wall) (`FEFCO_0442__min__d_hero`). | Physically correct registration over a stacked flap. | Front safe zone below the flap (designer aid). | open (by design) |
+
+Re-verified round 5: C-01…C-05 and mailer tucks hold. Reproduce (open, not counted): C-07, C-08, A-10 / C-06 (very visible on `FEFCO_0423_1__def__d_dieline`: hand holes land in BOTTOM), A-03 (worst on five-panel folders at min, `FEFCO_0409__min__d_hero`, `FEFCO_0411a__min__m_hero`).
+
+### D. ECMA tuck (14) + ECMA specials (20) + food service (8)
+
+| id | sev | model(s) · file | finding | real-world reference | fix | status |
+|---|---|---|---|---|---|---|
+| R6-3Q-D-01 | high | ECMA_WRAP_LOCK · `ecma-specials/sleeves.ts · lockWrap` | Top window centred on the top panel cut straight through both lock slits: nibs had nothing to catch, the plain closing flap showed through (`ECMA_WRAP_LOCK__win-top__d_hero`). | ECMA E30: nibs lock into intact slits. | Window between the slits and the front crease (new `cutWindowInBand`); dropped when the band cannot hold 10 mm (W < ~38). Test. | fixed, verified |
+| R6-3Q-D-02 | medium | ECMA_COUNTER_DISPLAY · `carriers.ts · counterDisplay` | Front window straddled the tear-off perforation: film across the tear, half a window after tearing (`__win-front__d_hero`). | Die-cuts stay clear of the tear line. | Window in the part of the front that stays (below the perforation). Test. | fixed, verified |
+| R6-3Q-D-03 | medium | ECMA_SEAL_END, ECMA_SEAL_END_TEAR (tear + window) · `ecma-tuck/generators.ts · sealEndCarton` | Short cartons: the centred window crossed both tear-strip perforations, film over the strip (H 50–60: window top 14 mm, strip 10–16 mm). | A tear strip runs through plain board. | Window and film kept below the strip. Test (3 heights × 2). | fixed (numeric / tests) |
+| R6-3Q-D-04 | medium | FS_SANDWICH_WEDGE · `foodservice/generators/boxes.ts · sandwichWedge` | Sloped lid mapped twice (`top` + a `front` copy): two faces in the editor, Front art painted over Top art, a design placed on Top never showed (lid blue "FRONT" in `__def__d_hero`). | One printed panel, one artwork. | Duplicate `front` face removed. Test: one face per panel over every food-service box. | fixed, verified |
+| R6-3Q-D-05 | medium | BOTTLE_BASKET_4 / 6 · `carriers.ts · basketCarrier` | Cross-partition edges showed as light seam lines through the printed front wall (`__def__d_hero`, at L/2, L/3, 2L/3): partitions 0.5 mm from the inner walls. | Partitions cut ~1.5 mm short of the wall for erecting. | Handle and cross partitions 3 mm shorter than inner size (1.5 mm each side). Test. | fixed, verified |
+| R6-3Q-D-06 | medium | LIQUID_GABLE_TOP · `ecma-specials/liquid.ts · gableTopCarton` | Gable ends are flat pentagons flush with the sides: reads as a house-shaped prism; gusset creases drawn but never folded (`__def__d_hero`). | Fresh-milk gable top: side gusset folds in under the roof, recessed V end. | Gusset as two half-triangles on the diagonal creases tied to the roof edges (a partial version opens holes). | open (geometry rewrite) |
+| R6-3Q-D-07 | low | BOTTLE_BASKET_4 / 6, CUP_CARRIER · `carriers.ts` handle | Handle plies share the front / back face with the walls: from above the handle's art shows below the rim, front logo twice (`BOTTLE_BASKET_6__min__d_hero`). | Handle partitions carry their own print. | Own "handle" face (new face id in the shared face model). | open (face model) |
+| R6-3Q-D-08 | low | ECMA_WRAP_LOCK, W < ~38 mm | Follows from D-01: top window dropped. | — | Fall back to the front face. | open |
+| R6-3Q-D-09 | low | FS_PIZZA_SLICE · `boxes.ts · pizzaSlice` | Lid window fixed 0.3 B × 0.25 D, ignores the width / height ratios (`__win-top__d_hero`). | — | Scale by the chosen ratios. | open |
+
+Holds: tuck directions on every model, dust-flap / tuck clearance (L − 1), lock bottoms fully printed, Arabic on the pharma side panel. Round 5 D-01…D-09 hold. Reproduce (not counted): TK-04, A-10 / D-04, FR-06.
+
+### E. Rigid boxes + tubes (14), FEFCO 09 fittings (36), catalogue-only models (40)
+
+| id | sev | model(s) · file | finding | real-world reference | fix | status |
+|---|---|---|---|---|---|---|
+| R6-3Q-E-01 | medium | TUBE_LID_BASE, TUBE_ROLLED_EDGE, TUBE_TELESCOPING, TUBE_PUSH_UP, TUBE_WINDOW, TUBE_SHOULDER · `rigid-tubes/assemble.ts` | Cap TOP artwork leaked onto the cap wall beside the disc hinge: a thick red wedge on one side of every cap, worst at min (`TUBE_SHOULDER__min__d_hero`, `TUBE_TELESCOPING__min__d_hero`, `TUBE_LID_BASE__def__d_hero`). `offsetConvex` on the 32-gon disc with 0 bleed on the short hinge and 3 mm on its neighbours (11° turn) threw the corners ~15 mm out along the hinge, folding the bleed 1.3–1.5 mm into ~6 cap strips. | Cap side label prints right up to the top edge, cap top stays on the disc. | `clipToCreases()`: an edge with less than full bleed clips the bleed region to its own half-plane (only when the panel lies wholly on one side). Every rigid / pallet / octabin preset identical. Test (fails on old code at 1.31 mm). | fixed, verified |
+| R6-3Q-E-02 | low | RIGID_* / TUBE_* lid-off at min | Face art straddling the lid edge loses a band (letter tops, Arabic line): real 3 mm lid parallax (as A-07). | — | Separate lid face (design). | open (design) |
+| R6-3Q-E-03 | low | RIGID_SHOULDER, TUBE_SHOULDER | Neck unprinted white when the lid is off; cap disc 1.5 mm edge reads TOP colour. | Shoulder necks are often wrapped in a contrast paper. | Neck face / wrap colour option. | open |
+| R6-3Q-E-04 | low | catalogue ENVELOPE_CARD, ENVELOPE_DOCUMENT, MAILER_BAG, FS_BAG_MERCHANDISE | Flat sheet front only, no flap in view. | — | Catalogue viewer azimuth (outside scope). | open (catalogue) |
+
+Not a defect: white bands along rigid lid edges are the test pattern's own 4 % white stroke (verified by a reverted crease-trap trial: pixels unchanged). FEFCO 09 (36, every variant): read as real pads, liners, partitions, cushions, risers, protectors; print on outward faces; `geom.json` no-print / outer<inner rows expected for inserts. Catalogue 40 plausible.
+Round 5 E-01…E-05 hold. Reproduce (not counted): E-06, E-07, E-08, X-07, A-10 / G-28, A-13.
+
+### F. Core containers (10) + bottles, jars, tubs (34)
+
+| id | sev | model(s) · file | finding | real-world reference | fix | status |
+|---|---|---|---|---|---|---|
+| R6-3Q-F-01 (reopens R5-3Q-F-12, fixes it) | high | BTL_GLASS_WATER, BEER_STUBBY, SPIRITS_FLASK, WINE_BORDEAUX / BURGUNDY / HOCK · `packs/vessel-bottles.ts`, `bottles/registry.ts`, shared `library/doc.ts`, `packs/common-vessel.ts` | Choosing a closure never changed the neck finish (`describe()` never got the closure): swing top as a tall white cap over a PP 28 thread (`BTL_GLASS_WATER__k-SWING_TOP__d_hero`), crown on PP 28, bar top on a screw finish, cork capsule over a BVS 60 screw neck (`HOCK__k-NATURAL_CORK`); neck label zones for the wrong finish. | Crown on ISO 12821, cork on CETIE GME 1.04, Stelvin on BVS 30H60. | `finishForConfig(def, dims, presetFinish, closure)`: keep the preset finish or switch to the model's first finish the closure fits; `describeVesselModel` optional 7th `closure`, passed by `docGeometry`. Test. | fixed, verified |
+| R6-3Q-F-02 | high | CAN (core) · `vessels/registry.ts`, `packs/vessel-core.ts` | At min D 50 the 202 end (seam Ø 56.4) stood past the body: a mushroom (`CAN__min__d_hero`); the fallback ignored the 1.2 mm seam and used raw D. | Smallest standard is the 53 mm slim can with a 200 end. | D.min 53; fallback counts the seam (+2.4) on clamped dims (D 53–56 → 200 end). Test. | fixed, verified |
+| R6-3Q-F-03 | medium | BTL_GLASS_JUICE, BTL_GLASS_MILK, JERRYCAN_HDPE, PET_WATER_EG (min) · `bottles/registry.ts · finishForDims` | Narrow custom sizes kept a neck nearly as wide as the body (juice D 50 on TO 43 = 0.86 × body, reads as a jar, `BTL_GLASS_JUICE__min__d_hero`; 150 × 90 jerrycan on DIN 61); the old rule also moved the hex-45 preset off its TO 43. | Small juice → TO 38; 5 l jerrycan → DIN 45. | Neck ≤ width × (widest preset neck / body ratio + 3 %); every preset keeps its finish (test). | fixed (numeric / tests) |
+| R6-3Q-F-04 | medium | TUB_PP_TAHINI, TUB_PP_HALAWA, PAIL_PP_ROUND, tapered neck labels, CUP-YOGURT / ICE-PINT / DELI, COS-DROPPER · shared `library/doc.ts · areasToDieline` | Tapered wraps are annular sectors but the dieline / print sheet cut and the safe zone were the bounding rectangle: art inside the "safe" zone was cut off in 3D (Arabic line on the pail, `PAIL_PP_ROUND__def__d_dieline` vs `d_hero`). | IML / tapered blanks are cut on the sector. | Cut = sampled sector outline (`flatPoint`); safe zone = largest inset rectangle inside the sector (`sectorSafeRect`); bbox unchanged. Test. | fixed, verified |
+| R6-3Q-F-05 (reopens R5-3Q-F-16 / F-17 in part) | medium | JAR_GLASS_JAM, JAR_PET_NUT_BUTTER, JAR_PICKLE, JAR_GLASS_MASON (min) · `bottles/models/jars.ts` | At min the lid still overhung the glass 1–2 mm a side (`JAR_PET_NUT_BUTTER__min__d_hero`): D.min was the bare finish Ø, the drawn lid is finish + 4.2 (lug) / + 3 (screw). | 70-400 jars ≥ 73 mm; TO 82 ≥ 87. | D.min jam 58, nut butter 74, pickle 87, mason 72. Test: drawn lid ≤ body at D.min. | fixed, verified |
+| R6-3Q-F-06 | medium | lug-lid jars / bottles incl. defaults (JAM 74.2 lid on a 72 body) · engine `three/vessels/closures.ts · LUG_LID` | Twist-off lid drawn 4.2 mm wider than the finish (finishR + 1.6 + 0.5 curl); TO sizes are nominal lid diameters. | A TO 70 lid is ~70–72 mm. | `r = p.finishR + 0.4`, keep the curl. | open (engine) |
+| R6-3Q-F-07 | medium | every clear liquid (perfume, serum, white / sparkling wine, spirit, water) at medium quality · engine `three/vessels/materials.ts · createLiquidMaterial` | Clear liquids render opaque: flask and PERFUME_SQUARE look full of milk (`BTL_GLASS_SPIRITS_FLASK__def__d_hero`). Only `quality === "high"` gets transmission. | Spirits / perfume are clear. | Medium / low with clarity > 0: `transparent`, `opacity 0.35 + 0.55·(1 − clarity)`, `depthWrite: false`. | open (engine) |
+| R6-3Q-F-08 | medium | BTL_GLASS_SPARKLING min (180 mm, piccolo) · engine `closures.ts · SPARKLING` (+ `bottles/builder.ts · neckSleeveMm`) | Fixed 85 mm foil hood runs down the whole shoulder to the label on small bottles (`BTL_GLASS_SPARKLING__min__d_hero`). | Piccolo foil ~50–60 mm. | `neckSleeve(p, clamp(0.28·H, 45, 85))`, then the same in `neckSleeveMm`. | open (engine) |
+
+Round 5 F-01…F-05, F-18 hold; F-16 / F-17 reopened as F-05. Reproduce (not counted): A-10, F-06, F-11, F-13, F-19, F-20, F-21 (true to life for 28 mm pharma necks: proposed close), 3d-bottles E-05.
+Designer: `components/designer/ConfigPanel.tsx:423` should pass `v.closure` as the 7th argument to `describeVesselModel` so the panel's print areas match the 3D after F-01.
+
+### G. Cosmetic, pharma, cans, tins, cups, tubes (37) + flexible (15) — pass 1
+
+| id | sev | model(s) · file | finding | real-world reference | fix | status |
+|---|---|---|---|---|---|---|
+| R6-3Q-G-01 (reopens R5-3Q-G-21, fixes it in scope) | high | every flexible model, o-window · `flexible/group.ts`, `flexible/geometry.ts · productParts` | Window option drew nothing (`FLEX_STAND_UP_POUCH__o-window__d_hero` = def): VesselView never passes a `windowMask`. | An unprinted window shows the product. | `buildFlexibleGroup` builds the front alpha mask from `model.windowUv` when none is passed (film alpha 0.16); `productParts` builds the product when the window is on, not only on clear film. Test. | fixed, verified |
+| R6-3Q-G-02 | high | PH-TUBE (D 12–32), TUBE-ALU (D 13–40) · `packs/vessel-cosmetic.ts · describe` | Below Ø 19 the description was clamped to the core tube limits: at Ø 12 profile, cap and wrap built for Ø 19 (wrap ~68 mm on a ~38 mm girth) while the body drew at Ø 12 — squeezed art, wrong print area and price, cap from the wider profile. | 3–5 g ointment tubes are Ø 12–13. | `describe` builds profile, labels and envelope at the catalogue-clamped size. Test. | fixed, verified (`PH-TUBE__min__d_hero`) |
+| R6-3Q-G-03 | medium | PH-TUBE / TUBE-ALU min · shared `vessels/profile.ts · tubeDims` | Fixed 6.5 mm nozzle radius wider than a Ø 12 body: shoulder pinched outwards (`PH-TUBE__min__d_hero`). | M7 / M9 nozzle on small tubes. | `nozzleR = min(6.5, R − 2.5)`; unchanged for D ≥ 18 (core tube untouched). | fixed, verified |
+| R6-3Q-G-04 | medium | COS-SERUM (def / min / max), COS-DROPPER k-TREATMENT_PUMP · engine `closures.ts · LOTION_PUMP` | Treatment pump drawn as a full lotion pump (Ø 22.4 head, 17 mm nozzle); at min D 22 the ribbed collar is wider than the bottle (`COS-SERUM__min__d_hero`). | Treatment pump: Ø 14–16 actuator, short spout, clear overcap. | `TREATMENT_PUMP` style: head r = min(8, finishR), spout ≤ 8, overcap r = finishR + 1.5. | open (engine) |
+| R6-3Q-G-05 | low | PH-VIAL min (D 16, 13 mm crimp) · engine `LUG_LID` | Crimp seal 17.2 mm on a 16 mm vial. | Flip-off ≈ crimp Ø (13.3). | Vial crimp style r = finishR + 0.4. | open (engine) |
+| R6-3Q-G-06 | low | COS-DROPPER min (D 19), PH-EYE-DROP min (D 14) · engine `DROPPER` | Dropper collar ~1.6 mm a side wider than the body at min; eye-drop still a glass pipette (G-14). | DIN 18 collar Ø ~20 on 5 ml. | `DROPPER_TIP` style. | open (engine) |
+
+Round 5 holds: G-12, G-16, G-17, G-18, G-19, G-22, G-23, G-26 (numeric), G-27. G-21 fixed as G-01. Reproduce (engine, not counted): G-06, G-07, G-10, G-11, G-14, G-25.
+
+### G. pass 2 (visual pass over all 52 grids)
+
+| id | sev | model(s) · file | finding | real-world reference | fix | status |
+|---|---|---|---|---|---|---|
+| R6-3Q-G-07 | medium | COS-JAR-DOUBLE · `cosmetic-cans/definitions/cosmetic.ts`, `geometry.ts · jar` | At min (D 42 H 22) the wrap band was 3 mm tall (finish 9.7 + shoulder + 5 mm base radius leave no straight wall): the design was rejected and the editor fell back to the blank doc, unprinted jar with "Your logo" lid (`COS-JAR-DOUBLE__min__d_hero`); catalogue lid 0.45 H stopped below the finish top (envelope 21 on a 22 jar). | Double-wall jars carry a ≥ 8–10 mm band; smallest preset (15 g) D 50 H 34. | H.min 30 (band ≥ 8.4 mm across the limits, presets valid); lid capH ≥ finish + 1.2. Test (fails at old H 22). | fixed, verified |
+| R6-3Q-G-08 | low | COS-COMPACT · core `vessels/labels.ts · labelSpecsFor` / engine | DIRECT_PRINT shows only as a 4.3 mm base side band (0.9 mm at H 8); the lid skirt is not a print surface. | Compact decoration covers the lid skirt. | Lid-skirt band placement. | open (core labels / engine) |
+
+Not defects: FLEX_VACUUM_PACK metallised all-black frame was a capture glitch (re-captured printed); "FRONT" / Arabic cut on narrow wraps is the test pattern wider than half the girth; polygonal TOP discs are the square pattern clipped by the round label; Arabic in the pillow end-seal pinch is physical. Round 5 G rows hold; reproduce (not counted): G-06, G-07, G-10, G-11, G-14, G-25, G-28, E-02 (sardine / oval lid placement), low roll-on cap gap at min (engine `ROLL_ON_BALL`).
+
+### Models whose geometry changed deliberately (geometry snapshot re-recorded per family commit for exactly these 87 keys)
+
+Core / FEFCO 02: FEFCO_0228, FEFCO_0230, FEFCO_0320, FEFCO_0320+features, RIGID_BOX+features · FEFCO 03/05 + 06/07: FEFCO_0321, FEFCO_0621, FEFCO_0717 · FEFCO 04: the 70 tray-kit styles (every 04 except 0404, 0405, 0406, 0409, 0409a, 0410, 0410a, 0411, 0411a, 0459) · ECMA / food service: BOTTLE_BASKET_4, BOTTLE_BASKET_6, FS_SANDWICH_WEDGE · tubes: TUBE_LID_BASE, TUBE_ROLLED_EDGE, TUBE_TELESCOPING, TUBE_PUSH_UP, TUBE_WINDOW, TUBE_SHOULDER. Every other key is byte-identical. Variant-only changes with no snapshot key: FEFCO_0201 / 02 handle styles at walls of ~48–83 mm, FEFCO_0304 / 0303 partial lid, ECMA_WRAP_LOCK top window, ECMA_COUNTER_DISPLAY window, ECMA_SEAL_END / _TEAR window + tear strip, PALLET_BOX_LID default lid (family definition).
+Containers (no snapshot): closure-driven neck finish on BTL_GLASS_WATER, BEER_STUBBY, SPIRITS_FLASK, WINE_BORDEAUX / BURGUNDY / HOCK; min sizes CAN (D 53), BTL_GLASS_JUICE, BTL_GLASS_MILK, BTL_PET_WATER_EG, JERRYCAN_HDPE (narrower finishes), JAR_GLASS_JAM (D 58), JAR_GLASS_MASON (72), JAR_PET_NUT_BUTTER (74), JAR_PICKLE (87), COS-JAR-DOUBLE (H 30); PH-TUBE / TUBE-ALU below Ø 19; every flexible model's window variant; sector-cut dieline / safe zone on every tapered wrap (tubs, pails, cups, tapered neck labels, COS-DROPPER).
+Size rules tightened (a buyer can no longer enter a size the real construction cannot make): the D / H minimums above. Presets and defaults all stay valid (tests).
+`generate-library-index.ts`, `generate-order-mode-table.ts`, `generate-catalogue-rows.ts` re-run after the model changes: outputs unchanged (no model added or renamed; limits are not part of those tables).
+
+### Files outside scope
+
+None. Every change is in `src/lib/dieline/**`, `src/lib/library/**`, `src/lib/vessels/**` (shared files touched minimally and on purpose: `dieline/structures.ts` (telescope / rigid box / hand holes), `library/doc.ts` (closure into `describeVesselModel`, sector cut), `library/packs/common-vessel.ts` (optional closure argument), `vessels/registry.ts` (CAN D.min), `vessels/profile.ts` (small-tube nozzle, unchanged for D ≥ 18)). Audit tooling: `docs/audit/tools/r6-*`.
+
+### New items for the engine / designer session (`claude/exciting-albattani-8kzgsu-r6-engine`)
+
+1. **R6-3Q-F-07** (medium) `three/vessels/materials.ts · createLiquidMaterial`: clear liquids are opaque at medium quality (spirits, perfume, water look milky). Clarity > 0 → `transparent: true`, `opacity 0.35 + 0.55·(1 − clarity)`, `depthWrite: false`.
+2. **R6-3Q-F-06** (medium) `three/vessels/closures.ts · LUG_LID`: lid 4.2 mm wider than the finish; `r = p.finishR + 0.4` (keep the curl).
+3. **R6-3Q-F-08** (medium) `closures.ts · SPARKLING`: foil depth `clamp(0.28·H, 45, 85)` (then the same in `bottles/builder.ts · neckSleeveMm`, this scope).
+4. **R6-3Q-G-04** (medium) `closures.ts`: `TREATMENT_PUMP` style (head r = min(8, finishR), spout ≤ 8 mm, clear overcap finishR + 1.5), map `COS_CLOSURE_STYLE.TREATMENT_PUMP` to it.
+5. **R6-3Q-G-05 / G-06** (low) vial crimp `r = finishR + 0.4` with flip-off button; `DROPPER_TIP` style (also R5 G-14).
+6. **R6-3Q-A-06** (low) `three/panelGeometry.ts`: on wrapped (rigid) boards colour crease / board-edge side faces with the wrap, not raw board; plus R5 A-03.
+7. **R6-3Q-C-01 follow-up** `panelGeometry.ts` cut-edge loop `onCrease`: an outline edge longer than its child's hinge draws as raw flute along its whole length; treat the covered part as fold (the generators now split their outlines, core `trayWithLid` may still show it).
+8. **Designer** `components/designer/ConfigPanel.tsx:423`: pass `v.closure` as the 7th argument of `describeVesselModel` so the panel's print areas match the 3D after R6-3Q-F-01.
+9. Low: lid-piece half fold drops PAPER_TUBE / RIGID_BOX lids below the body (lift straight up in the second half); G-08 compact lid-skirt print band; E-04 catalogue envelopes / bags shown flap-away.
+G-01 note: `VesselView` may keep passing its own `windowMask`; the flexible group now falls back to `model.windowUv`, so R5 G-21 no longer needs an engine change.
+
+### Screenshots (`docs/screenshots/audit/3dqa-r6/`, 13MB)
+
+- `before/<family>-NN.jpg`, `after/<family>-NN.jpg`: one row per model, the same tiles before and after: every model's default views (hero / back + underside / half / flat / Dieline view or back / top / open / phone) plus every variant of the 115 models changed this round (sizes, features, windows, containers, closures, flexible window); catalogue-only models in `catalogue-extra-*`. "Before" = base build `131ba63`, "after" = this branch's production build. The full before set (2 138 records, every variant of all 370 models, test pattern + Arabic line) was reviewed from the per-model grids (not committed, size).
+- `details-r6.jpg`: 16 headline fixes, before | after (0230 seam, 0320 handle, 0201 small-wall hand hole, 0400 / 0416 tray corners, 0321 partial lid, 0717 printed handle, wrap-lock window, sandwich-wedge lid face, tube cap, swing-top finish, can at min, jar lid at min, pouch window, Ø 12 pharma tube, double-wall jar at min).
+
+### Verification (final production build of this branch)
+
+| Check | Result |
+|---|---|
+| `npm run lint` | clean (with the local build folders `.next-*` of the audit servers excluded; they are untracked) |
+| `npm run typecheck` | clean |
+| `npm test` | 93 files, **8 796 passed** (new: r6-core-a telescope handle / notch / partial lid, rigid notch, small hand holes; fefco-04 corners ×80; fefco-03-05 partial-lid print ×13 × 2 boards; 0621 inner wall, 0717 handle faces; ECMA window vs slits / tear lines, basket partitions, one face per food-service panel; tube cap bleed; closure → finish, neck ratio, sector cut, jar lid ≤ body, can end ≤ body; flexible window; small tubes; double-wall jar at min) |
+| geometry snapshot | re-recorded per family commit for the 87 deliberately changed keys only (listed above); every other key identical |
+| `npm run build` | passes |
+| `e2e/models.spec.ts` + `e2e/catalogue-models.spec.ts --project=desktop --workers=2` | **388 passed** (33.7 min): 370 models render and configure, 18 / 18 catalogue batches (410 models) render, no console errors |
+| library generators | `generate-library-index.ts`, `generate-order-mode-table.ts`, `generate-catalogue-rows.ts`: outputs unchanged |
+| Round 6 capture | before 2 098 variants + 40 catalogue, after 754 + 40: **0 console errors** either way |
+| `r6-geometry.ts` over every box variant (2 098 docs regenerated from the final code) | 653 rows before, 653 after, identical set (all baseline: glued laps / turn-ins, fittings inside a host, handles / headers above the body); no new z-fight or interpenetration |
