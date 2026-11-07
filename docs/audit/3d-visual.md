@@ -858,3 +858,5 @@ Branch `claude/exciting-albattani-8kzgsu-r6-engine` restarted from `claude/excit
 | R6-3Q-C-01 follow-up | medium | `three/panelGeometry.ts` | Outline edges are split where any collinear hinge (own, children's, roll, square) starts or ends: the covered part is a printed fold, the rest a raw cut, the A-03 / roll rules apply per piece. Test: slab count per the split rule over every core structure + a long-edge case. | fixed, verified (0201, 0422, GABLE_BOX, RIGID_BOX unchanged look) |
 
 Generator output: no box generator changed; geometry snapshot untouched. Item 9 lows (lid-piece half fold on PAPER_TUBE / RIGID_BOX, G-08 compact skirt print band, E-04 catalogue envelopes) were not in this session's list and stay with their owners.
+
+**Verification (round 7, final build).** `npm run typecheck` clean; `npm run lint` 0 errors (1 pre-existing warning: unused `Suspense` in `src/app/[locale]/admin/layout.tsx`, not this scope); `npm test` 123 files, **8 981 passed**; `npm run build` passes; `e2e/models.spec.ts --workers=2` **370 passed, 0 failed** (370 skipped: phone project, desktop-only by design), 29.5 min; geometry snapshot unchanged.
