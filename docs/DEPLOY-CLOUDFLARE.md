@@ -103,3 +103,14 @@ The unit test `src/lib/__tests__/cloudflare.test.ts` fails when the Postgres cop
   ```
   Then run `npm run db:migrate:pg`, `npx prisma db seed`, `npm run build`, and the Playwright suite as usual.
 - **The Worker itself:** run `npm run cf:build`, then `npm run cf:preview`. This runs workerd locally with the Hyperdrive `localConnectionString` from `wrangler.jsonc` and local R2.
+
+## Verification log (local Worker, 2026-11-07)
+
+- `wrangler deploy --dry-run`: **5.4 MiB gzip** (25 MiB raw), under the Workers Paid 10 MiB limit. With `inlineCss` on it was 14.3 MiB, which is why the Cloudflare build turns it off (`next.config.ts`).
+- `wrangler dev` (workerd) against local Postgres 16 through the Hyperdrive `localConnectionString`, with local R2:
+  - `/api/health` answered `{"runtime":"workers","facts":true,"db":"ok"}`;
+  - OTP sign-in, sessions and authenticated pages worked across repeated requests, with no cross-request I/O errors.
+- **Full Playwright suite against that Worker: 760 passed, 7 failed.**
+  - 2 were the malformed-URL 500, fixed in `worker.ts` (now 400, as on Node).
+  - 5 were timeouts under load (checkout, J1, share price, R6-SEC-10, storefront); all 5 passed on a single-worker re-run. Locally one workerd process served two parallel browsers.
+- The same suite on Node and SQLite: 767 passed, 0 failed.
