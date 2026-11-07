@@ -1,6 +1,6 @@
 import { Suspense, type ReactNode } from "react";
 import { notFound } from "next/navigation";
-import { loadSharedDesign } from "@/components/designer/server";
+import { getShared } from "./shared";
 
 /**
  * Share-link guard. The token is checked HERE, above the loading and hydration boundaries, so an
@@ -9,6 +9,6 @@ import { loadSharedDesign } from "@/components/designer/server";
 export default async function ShareLayout({ children, params }: { children: ReactNode; params: Promise<{ id: string }> }) {
   const { id } = await params;
   // Same rules as the page (token shape, an account owns the design, the document parses).
-  if (!(await loadSharedDesign(id))) notFound();
+  if (!(await getShared(id))) notFound();
   return <Suspense fallback={null}>{children}</Suspense>;
 }

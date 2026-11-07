@@ -905,3 +905,72 @@ critical 0 · high 1 (R5-PL-22) · medium 2 (R5-PL-24, R5-PL-26) · low 3 (R5-PL
 - e2e (`--workers=2`):
   - smoke + storefront + designer: **36 passed, 4 skipped**;
   - checkout + admin + vendor + journey + catalogue + a11y: **53 passed, 19 skipped**, including admin's R5-PL-03 404 test.
+
+## Round 5 (i), final pass: R5-PL-26 share LCP, R5-PL-24 admin #418
+
+Base: main `cd25f2f1`. Measured on the phone profile (4x CPU, Slow 4G, cache off, one isolated browser per load).
+
+**R5-PL-26 cause.** The share page renders inside the `[id]` layout's Suspense boundary (`loading.tsx`, the R5-PL-17 hydration boundary). Before it could render anything it waited on:
+
+- a second token lookup, because the page's `cache()` was not the layout's;
+- the session and the owner lookup;
+- three pricing queries, added in designer R13/R14 (`tierPrices`, `quoteDesign`, `loadCheckoutSettings`).
+
+So the whole page, including the poster that is the LCP element, missed the shell. It streamed as segment `S:1` after the shell's 326 KB of inline RSC (mostly the inlineCss stylesheets repeated as RSC text rows): the poster sat at byte 496,989 of 516,776 and painted only at the end of the document (responseEnd 1.83 s, then LCP 1.98 s).
+
+**Fix (designer route, this fix only):**
+
+- `s/[id]/shared.ts` holds one per-request `cache(loadSharedDesign)`, used by the layout guard, the metadata and the page.
+- The page now awaits only that lookup. The hero, the viewer poster and the specs render at once.
+- The order tile (session, owner check, `share_link_visit` analytics, `sharePrice`) moved into its own async `ShareOrderTile` under a nested `<Suspense>`. Its fallback is a dark tile with `min-block-size: 19rem`, so the specs below it do not move.
+- The layout guard is unchanged: an unknown token is still a real 404.
+
+| `/s/<token>`, phone | before | after |
+|---|---|---|
+| poster position in the HTML | byte 496,989 (streamed segment) | byte 186,495 (shell) |
+| LCP ar (5 runs) | 1.86 – 2.00 s | 1.09 – 1.11 s |
+| LCP en (5 runs) | about 1.4 s | 1.12 – 1.14 s |
+| CLS | 0.000 | 0.000 (ar and en, 5 runs each) |
+| HTML bytes | 516,776 | 517,030 (+254, the fallback) |
+
+**INP, still open: new finding R5-PL-27.**
+
+- After the fix, INP was 184 – 536 ms over six loads. On every load the slowest event is the input delay of a click on a 3D view control (rotate / tilt icon, `path` target): 184 – 219 ms of input delay against 26 ms of processing.
+- The delay comes from the long tasks of the previous control's 3D re-render: 98 – 808 ms each, at t ≈ 10.4 – 11.7 s, after the boot.
+- The DPR is already capped at 1.5 (`three/dpr.ts`), so the cost is per-frame render work in the 3D engine (rounds 6 / 7 added closures, liquids and split fold edges), not the page.
+- The audit clicks controls in quick succession, so its numbers are a worst case. A person who taps one control and waits sees the 26 ms processing time.
+
+**R5-PL-24, still open. New evidence.**
+
+- I ran 18 more cold phone loads of `/ar/admin/orders`: 7 hit #418 (3 / 10 on the first 10, 4 / 8 on the next 8).
+- Comparing the server HTML with the client DOM after a failure: the client re-rendered **the whole root**, with every `useId` turned from a server `_R_…` id into a client `_r_…` id. That happens only when the mismatch is **outside every Suspense boundary**.
+- The list's `loading.tsx` boundary is present and pending in the shell (`<main><!--$--><!--$?--><template id="B:0">`), so the page segment is not the cause. The mismatch is in the admin shell: the AdminFrame top bar or navigation, or the metadata outlet, before `<main>`'s boundaries.
+- This narrows option (c) of R5-PL-24 to the frame chrome. A Suspense boundary in the list or leaf layouts, below the record checks, cannot fix it: the mismatch sits above those layouts.
+- I could not capture a component stack in the time left: the production `onRecoverableError` patch did not reach the build. Options (a) and (b) from Round 5 (h) stand.
+- R5-PL-03 is untouched: admin detail `notFound()` is still HTTP 404 (admin e2e green).
+
+**New findings this pass:**
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R5-PL-27 | medium | `/s/<token>` 3D viewer (`components/three`, engine rounds 6 / 7) | INP 184 – 536 ms on the phone profile: input delay behind 98 – 808 ms long tasks from the 3D re-render after each view-control click (processing 26 ms). | CWV INP < 200 ms | 3D engine owner: profile `PackagingScene` per-frame cost on 4x CPU. Candidates: a cheaper `SoftShadow` while the camera moves, fewer draw calls for closures and fold edges, a lower DPR during camera animation. | open (3D engine) |
+
+R5-PL-26 is fixed for LCP; its INP half is now R5-PL-27. R5-PL-24 stays open, narrowed to the admin frame chrome above `<main>`.
+
+### Round 5 (i) counts (new findings)
+
+critical 0 · high 0 · medium 1 (R5-PL-27) · low 0. Fixed this pass: R5-PL-26 (LCP). Open: R5-PL-24 (admin), R5-PL-27 (3D engine), and the Round 5 (h) lows R5-PL-23 and R5-PL-25 (marketing).
+
+### Round 5 (i) verification
+
+| check | result |
+|---|---|
+| `npm run lint` | pass |
+| `npm run typecheck` | pass |
+| unit (`vitest run`) | 124 files, 8,985 tests passed |
+| `npm run build` | pass |
+| e2e: `admin`, `admin-quote-price`, `checkout-share-guard`, `designer-page`, `designer` (`--workers=2 --trace off`) | 59 passed, 19 skipped (project-gated), 0 failed |
+| `cls-repeat.mjs` share ar / en | LCP 1.09 – 1.14 s, CLS 0.000 (5 runs each) |
+| `perf-pages.mjs` share (phone, ISOLATE) | LCP 1.10 – 1.16 s, INP 184 – 536 ms (R5-PL-27) |
+| `hydration-repeat.mjs` `/ar/admin/orders` | #418 in 7 / 18 runs (R5-PL-24, open) |
+| node_modules diagnostics | `on-recoverable-error.js` (cjs and esm) restored, sha1 verified (`0ce4c352…`, `54393834…`) |

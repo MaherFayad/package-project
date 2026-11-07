@@ -43,3 +43,8 @@
 .specs > div:first-child { border-block-start: 0; padding-block-start: 0; }
 .specs dt { color: var(--mk-on-light-muted); }
 .specs dd { margin: 0; font-weight: 550; }
+
+/* R5-PL-26: streamed order tile placeholder; holds the tile's usual height so the specs below do not move. */
+.tilePending {
+  min-block-size: 19rem;
+}
