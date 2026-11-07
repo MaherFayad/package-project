@@ -309,6 +309,13 @@ describe("FEFCO 0717 handle faces", () => {
       for (const f of ["front", "back", "left", "right"]) expect(cov[f], `${f} ${JSON.stringify(dims)}`).toBeGreaterThanOrEqual(0.93);
       const wall = m.panels.find((p) => p.id === "left")!;
       expect(m.faces.left!.height).toBeCloseTo(wall.bbox.height, 1);
+      // R7-3Q-P-01: the handle base flaps (the carrier's top, either side of the handle) are
+      // printed with a TOP face; they sit a handle height under the handle top.
+      expect(m.faces.top!.parts.map((p) => p.panelId).sort()).toEqual(["top_back", "top_front"]);
+      expect(cov.top, `top ${JSON.stringify(dims)}`).toBeGreaterThanOrEqual(0.93);
+      // Front flap on the front (lower) half of TOP, as on every other box.
+      const tf = m.faces.top!.parts.find((p) => p.panelId === "top_front")!;
+      expect(tf.rect.y).toBeGreaterThan(m.faces.top!.height / 2 - 2 * t);
     }
   });
 });
