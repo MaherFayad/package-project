@@ -60,3 +60,20 @@ describe("non-round tubs and trays (3d-visual V-12): lids drawn by the renderer,
     expect(hb + Math.max(8, Math.min(30, 0.35 * hb))).toBeCloseTo(d.H, 1);
   });
 });
+
+describe("R6-3Q-G: small tubes keep their catalogue size in the 3D description", () => {
+  it.each([
+    ["PH-TUBE", 12, 55],
+    ["TUBE-ALU", 13, 60],
+  ])("%s at Ø%d: profile and wrap area at that diameter, nozzle inside the body", async (code, D, H) => {
+    const { models } = await import("@/lib/library/packs/vessel-cosmetic");
+    const m = models.find((x) => x.code === code)!;
+    const desc = m.describe({ D, H }, m.defaultSurfaces, undefined);
+    const maxR = Math.max(...desc.profile!.outer.map((q) => q.r));
+    expect(maxR).toBeLessThanOrEqual(D / 2 + 1e-6);
+    expect(desc.profile!.finishR).toBeLessThan(D / 2);
+    const wrap = desc.areas[0];
+    // girth + seam allowance at this diameter (the core Ø19 clamp gave ~68 mm)
+    expect(wrap.trimWidthMm).toBeLessThan(Math.PI * D + 10);
+  });
+});

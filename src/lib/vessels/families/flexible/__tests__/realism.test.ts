@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildFlexibleModel, defaultFlexConfig, panelUv, parseFlexConfig, printLayout, solveShape, wrinkleAt } from "@/lib/vessels/families/flexible";
+import { buildFlexibleGroup, buildFlexibleModel, defaultFlexConfig, panelUv, parseFlexConfig, printLayout, solveShape, wrinkleAt } from "@/lib/vessels/families/flexible";
 
 describe("flexible realism", () => {
   it("flow wrap print panels are landscape and read along the bar", () => {
@@ -61,5 +61,23 @@ describe("flexible realism", () => {
     const Wi = cfg.dims.W - 2 * shape.seals.side;
     // an elliptical section (the old model) pinches the base into a narrow cup
     expect(bottomHalf / (Wi / 2)).toBeGreaterThan(0.85);
+  });
+
+  it("R6-3Q-G: the window option masks the front face and shows the product behind it", () => {
+    const cfg = parseFlexConfig({ code: "FLEX_STAND_UP_POUCH", dims: { W: 120, H: 200, G: 80 }, material: "FILM_KRAFT_LAMINATE", options: { window: true } });
+    const { group, model } = buildFlexibleGroup(cfg);
+    expect(model.parts.some((p) => p.role === "product")).toBe(true);
+    const front = group.getObjectByName("face-front") as unknown as { material: { alphaMap: { image: { data: Uint8Array; width: number } } | null; transparent: boolean } };
+    expect(front.material.alphaMap).toBeTruthy();
+    expect(front.material.transparent).toBe(true);
+    const w = model.windowUv!;
+    const img = front.material.alphaMap!.image;
+    const px = (u: number, v: number) => img.data[(Math.floor(v * img.width) * img.width + Math.floor(u * img.width)) * 4];
+    expect(px((w.u0 + w.u1) / 2, (w.v0 + w.v1) / 2)).toBeLessThan(80);
+    expect(px(0.05, 0.95)).toBe(255);
+    // no window: no mask, no product inside an opaque film
+    const plain = buildFlexibleGroup(parseFlexConfig({ ...cfg, options: {} }));
+    expect((plain.group.getObjectByName("face-front") as unknown as { material: { alphaMap: unknown } }).material.alphaMap).toBeNull();
+    expect(plain.model.parts.some((p) => p.role === "product")).toBe(false);
   });
 });

@@ -485,7 +485,9 @@ export function tubeDims(d: VesselDims) {
   const sealH = d.D <= 25 ? 7 : 10;
   const bodyY0 = capH + shoulderH;
   const totalH = capH + d.H;
-  return { R, capH, capR, shoulderH, sealH, bodyY0, sealY0: totalH - sealH, totalH, nozzleR: 6.5 };
+  // R6-3Q-G: a Ø12-16 ointment tube has a narrower nozzle (M7 / M9), not a 13 mm one wider than the
+  // body; unchanged from Ø18 up (every core tube size)
+  return { R, capH, capR, shoulderH, sealH, bodyY0, sealY0: totalH - sealH, totalH, nozzleR: Math.min(6.5, R - 2.5) };
 }
 
 /** Stand-up pouch numbers (W x H + G). */

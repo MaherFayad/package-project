@@ -1,5 +1,5 @@
 import type { LocalizedText } from "@/types";
-import { CLOSURE_NAMES, VESSELS, discSpec, VESSEL_MATERIALS, buildProfile, clampDims, describeVessel, labelSpecsFor, type PrintSurfaceKind, type VesselKind, type VesselMaterialCode } from "@/lib/vessels";
+import { CLOSURE_NAMES, VESSELS, discSpec, VESSEL_MATERIALS, buildProfile, labelSpecsFor, vesselEnvelope, type PrintSurfaceKind, type VesselKind, type VesselMaterialCode } from "@/lib/vessels";
 import * as COS from "@/lib/vessels/families/cosmetic-cans";
 import type { VesselModelDef, VesselOption } from "../types";
 import { isCoreClosure, isCoreMaterial, isSurface, labelArea, search } from "./common-vessel";
@@ -162,10 +162,13 @@ export const models: VesselModelDef[] = COS.DEFINITIONS.filter((d) => d.geometry
       const d = COS.clampCatalogueDims(def, dims);
       const neck = COS.neckFor(def, d, presetId);
       if (def.geometry === "tube") {
-        const cd = clampDims("SQUEEZE_TUBE", d);
-        let r = describeVessel({ kind: "SQUEEZE_TUBE", dims: cd, surfaces: wanted.filter(isSurface) });
-        if (!r.labels.length) r = describeVessel({ kind: "SQUEEZE_TUBE", dims: cd, surfaces: ["WRAP"] });
-        return { profile: r.profile, areas: r.labels.map(labelArea), envelope: r.envelope };
+        // R6-3Q-G: build at the catalogue size, not the core tube's limits (Ø19 min): a Ø12 ointment
+        // tube was described as Ø19 (wrap print area 60 mm on a 38 mm girth, artwork squeezed, cap
+        // from the wider profile) while the renderer drew the body at Ø12.
+        const profile = buildProfile("SQUEEZE_TUBE", d);
+        let labels = labelSpecsFor("SQUEEZE_TUBE", d, profile, wanted.filter(isSurface));
+        if (!labels.length) labels = labelSpecsFor("SQUEEZE_TUBE", d, profile, ["WRAP"]);
+        return { profile, areas: labels.map(labelArea), envelope: vesselEnvelope("SQUEEZE_TUBE", d) };
       }
       const g = COS.buildGeometry(def.shape, d, neck);
       const profile = g.profile ?? buildProfile(coreKind, d);

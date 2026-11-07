@@ -349,7 +349,9 @@ export const COSMETIC_DEFINITIONS: CatalogueVesselDefinition[] = [
     closures: ["DOUBLE_WALL_CAP"],
     defaultClosure: "DOUBLE_WALL_CAP",
     neck: N.F58_400,
-    limits: { D: { min: 42, max: 100 }, H: { min: 22, max: 80 } }, // R5-3Q-G: smallest finish 38-400
+    // R5-3Q-G: D min = smallest finish 38-400. R6-3Q-G: H min 30 — below it the outer wall under the
+    // 9.7 mm finish, the shoulder and the base radius left a 3 mm wrap band at H 22 (no printable label).
+    limits: { D: { min: 42, max: 100 }, H: { min: 30, max: 80 } },
     presets: [
       preset("jar-dw-15", "15 g", "15 جم", 15, { D: 50, H: 34 }, `Double-wall jar 15 g, 38-400 (${APPROX})`, { neck: N.F38_400 }),
       preset("jar-dw-30", "30 g", "30 جم", 30, { D: 60, H: 40 }, `Double-wall jar 30 g, 45-400 (${APPROX})`, { neck: N.F45_400, egypt: true }),
