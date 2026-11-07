@@ -689,3 +689,72 @@ Files touched outside scope: none new (the share page, and the scopes file regen
 | low | 2 (R14-03, R14-04) | 1 | 1 (R14-04, library owner) |
 
 Verification (round 14, on the merged a7d341f3): lint and typecheck clean; unit tests **8,951 passed**; build OK; e2e (designer, smoke, journey, checkout, storefront, catalogue; `--workers=2 --trace off`, `OTP_DEV_ECHO=1 ALLOW_MOCK_PAYMENTS=1`) **61 passed, 9 skipped, 0 failed**; "designer pages hydrate without errors" with `--repeat-each=16` **32 / 32 passed**.
+
+# Round 15 (re-walk of R12–R14 areas, on main 60049bdd)
+
+Scope, as asked: only the areas changed in R12 to R14, plus one keyboard-only editor journey in ar on a phone.
+- share page price lines for boxes and containers;
+- short landscape with and without the banner;
+- closure picker labels;
+- size inputs with units.
+
+| angle | result |
+|---|---|
+| Share page price line, box + bottle, ar + en | Box: "500 boxes … each" / «500 علبة … للعلبة». Bottle: "500 pieces … each" / «500 قطعة … للقطعة». Axe 0, no sideways scroll |
+| Short landscape, 667×375 / 740×360 / 844×390 / 915×412, with and without the banner | Canvas 130–182 px (no banner) and 325–372 px (banner); panel 256–348 px; no overflow (R14-02 holds) |
+| Closure picker labels (glass water bottle, sports bottle, pouch; ar + en) | Unique: «الغطاء» / "Closure" select, «الغطاء في المعاينة» / "Closure in the preview" toggle, «لون الغطاء» / "Closure colour" fieldset |
+| Size inputs with units, ar + en, 390 + 1440 | Pastes «٣٣٠ مم», "340مم", «٣٥٠ ملم», "360 م.م", «٢٥٠٫٥ مم», "330 mm", "350 MM" and "250,5 mm" all apply; "12abc" shows the error. **"33 cm" / «٣٣ سم» was refused with "Enter a number"** → R15-04 |
+| Keyboard-only journey, ar, 390 × 844 (117 Tab stops): start page → model → size → tabs → add text → face editor → More → Share → Escape | Every stop has a visible focus ring, with no page errors. The face editor's arrows and "+" move and resize the layer and announce the position. **Controls hidden under the sticky tabs**: R15-01. **Focus lost after Escape**: R15-02. **Same-name controls**: R15-03 |
+
+## Findings (round 15)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R15-01 | medium | phone panel, sheet down (`designer.module.css` `.panelInner`) | Tab scrolled "Change model" and the colour swatches **fully under the sticky tab bar** (0 % of the control visible). | WCAG 2.4.11 (AA) | `scroll-padding-block` on the panel's scroller keeps a focused control below the sticky tabs. | fixed: no control fully hidden (only large tab panels are partly under the bar) |
+| R15-02 | medium | phone toolbar "More" menu (`DesignerApp.tsx`) | A dialog opened from the menu (Share, Export, Save, Rename) returned focus on close to its menu item, which the menu had removed: focus fell to `<body>`. | WCAG 2.4.3 | Each menu action moves focus to the "More" button first, so the dialog returns there. | fixed: Escape → focus on «إجراءات أخرى» (`r15-kb-share-dialog-ar-390.png`) |
+| R15-03 | low | editor names (`designer.ar.ts`, `DesignerApp.tsx`) | In Arabic, the face picker and the "Face" view button were both «الوجه» (English: "Panel" / "Face"). The undo / redo group was named "Undo", like its first button. | WCAG 2.4.6 | The picker is «الجزء». The group is "Undo and redo" / «التراجع والإعادة». | fixed. "Turntable" (button + checkbox) and "View" (group + fieldset) control the same setting in two places, so they keep their names (WCAG 3.2.4) |
+| R15-04 | low | size fields (`designer/lib/mm.ts`) | A size typed in centimetres ("33 cm", «٣٣ سم») was refused with "Enter a number", which does not say what was wrong. | WCAG 3.3.3 | Read as mm × 10 ("33 cm" → 330); the field then shows 330. Out of range ("330 cm" = 3,300 mm) shows the range error. Unit test. | fixed |
+
+## Counts (round 15, new findings before fixing)
+
+| severity | found | fixed | open |
+|---|---|---|---|
+| critical | 0 | 0 | 0 |
+| high | 0 | 0 | 0 |
+| medium | 2 (R15-01, R15-02) | 2 | 0 |
+| low | 2 (R15-03, R15-04) | 2 | 0 |
+
+R14-04 (bottle card "PP28") went to the 3D QA session.
+
+Verification (round 15, on 60049bdd + R15-04): lint and typecheck clean; unit tests **8,957 passed**; build OK. E2E (designer, smoke, journey, checkout, storefront, catalogue; `--workers=2 --trace off`, `OTP_DEV_ECHO=1 ALLOW_MOCK_PAYMENTS=1`): **60 passed, 9 skipped, 1 failed**. The failure was `checkout.spec.ts:58` (desktop) in the full run. It passed alone, and **40 / 40** in `checkout.spec.ts --repeat-each=4`, so it is a one-off under load; the designer change in this round (size parser) is not on its path. "designer pages hydrate without errors" with `--repeat-each=16`: **32 / 32 passed**.
+
+# Round 16 (re-walk of R15's fixes, two more keyboard journeys; main da525c06)
+
+Scope, as asked: R15's fixes (panel scroll-padding, focus back on More, «الجزء» and the undo / redo names, cm parsing), one keyboard-only journey in en on a phone (390 × 844) and one in ar at 1440 × 900. The ar phone journey was repeated too.
+
+| angle | result |
+|---|---|
+| Keyboard, en, 390 × 844 (76 Tab stops) | Skip link → model card → editor → "33 cm" typed (330) → ArrowUp (331) → Artwork tab → Add text → face editor (arrows and "+" move and resize; position announced) → More actions → Share → Escape. Focus is back on **More actions**; dialog axe 0; no page errors. No control fully hidden (only large tab panels partly under the sticky tabs) |
+| Keyboard, ar, 1440 × 900 (111 Tab stops) | The same journey through the toolbar Share button. Escape puts focus back on **مشاركة**; axe 0; no errors. The fold slider's focus ring is on its thumb. A 3D preview that seemed covered by the public header's menu scrim was the scrim fading out while focus left the header (gone a moment later): not a finding |
+| Keyboard, ar, 390 × 844 (repeat) | Escape puts focus back on **إجراءات أخرى**; «الجزء» picker; no fully hidden control (R15-01, R15-02, R15-03 hold) |
+| Names (bottle, sports bottle, pouch; ar + en) | Closure controls unique; undo / redo group named apart. **Arabic «العرض» named both the view switch and the Width field** → R16-01. "Turntable" and "View" (one setting, two places) keep their names (3.2.4) |
+| Sizes in cm, ar + en, 390 + 1440 | "33 cm" / «٣٣ سم» → 330; "330 cm" / «٣٣٠ سم» → range error; unit-suffixed mm values apply (R15-04 holds) |
+
+## Findings (round 16)
+
+| id | severity | page / file | finding | standard | fix | status |
+|---|---|---|---|---|---|---|
+| R16-01 | low | editor (`designer.ar.ts` `view.label`) | In Arabic the view switch (3D / Face / Dieline) and the stage region were «العرض», the same word as the Width size field (English: "View" / "Width"). | WCAG 2.4.6 | The view switch is «طريقة العرض». | fixed |
+
+## Counts (round 16, new findings before fixing)
+
+| severity | found | fixed | open |
+|---|---|---|---|
+| critical | 0 | 0 | 0 |
+| high | 0 | 0 | 0 |
+| medium | 0 | 0 | 0 |
+| low | 1 (R16-01) | 1 | 0 |
+
+R16 found nothing medium or worse, so the stop rule is met and the designer area is done.
+
+Verification (round 16, on da525c06 + R16-01): lint and typecheck clean; unit tests **8,957 passed**; build OK; e2e (designer, smoke, journey, checkout, storefront, catalogue; `--workers=2 --trace off`, `OTP_DEV_ECHO=1 ALLOW_MOCK_PAYMENTS=1`) **61 passed, 9 skipped, 0 failed**; "designer pages hydrate without errors" with `--repeat-each=16` **32 / 32 passed**.

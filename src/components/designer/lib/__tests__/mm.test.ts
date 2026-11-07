@@ -20,6 +20,13 @@ describe("parseMmInput (R5-JR-20)", () => {
     expect(parseMmInput("350 ملم")).toBe(350);
     expect(Number.isNaN(parseMmInput("mm"))).toBe(true);
   });
+  it("reads centimetres as millimetres × 10 (R15-04)", () => {
+    expect(parseMmInput("33 cm")).toBe(330);
+    expect(parseMmInput("٣٣ سم")).toBe(330);
+    expect(parseMmInput("25,5cm")).toBe(255);
+    expect(parseMmInput("12.34 CM")).toBe(123.4);
+    expect(Number.isNaN(parseMmInput("cm"))).toBe(true);
+  });
   it("is NaN for anything else", () => {
     for (const v of ["", " ", "abc", "1.2.3", "-5", "25o"]) expect(Number.isNaN(parseMmInput(v))).toBe(true);
   });
