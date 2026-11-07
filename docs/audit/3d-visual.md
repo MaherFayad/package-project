@@ -836,3 +836,11 @@ Mailer INP stays under the 200 ms phone target on every run of both builds. The 
 | `e2e/models.spec.ts` + `e2e/catalogue-models.spec.ts` + `e2e/designer.spec.ts`, `--workers=2` | **402 passed**, 0 failed (392 skipped: desktop-only / phone-only by design), 37.6 min; 18 / 18 catalogue batches, all models of `models.spec` |
 | Hydration (`designer.spec` "hydrate without errors", `--repeat-each=16`, desktop + Pixel 5) | **32 / 32 passed** |
 | Round 6 capture (274 variants, before and after) | 0 console errors in the editor captures; the catalogue-route crash (R6-01) was found by e2e and fixed |
+
+### Round 6 (3D QA) — merge with main and integrator follow-ups
+
+| id | sev | model(s) · file | finding | fix | status |
+|---|---|---|---|---|---|
+| R14-04 (designer, folded in here) | low | every bottle / jar with no standard · `library/packs/vessel-bottles.ts`, `library/types.ts` | Model card showed the preset's raw finish id ("PP28", "TO43", "RIM") and kept it after a swing top or crown, which sit on another neck. | `standard` is empty for those definitions; each closure option carries `neckFinish` (en / ar, MSA, Latin digits as printers write them) for the finish `finishForConfig` fits for that closure. Test `neck-finish-label.test.ts`. Designer: show `model.closures.find(c => c.code === v.closure)?.neckFinish?.[locale]` next to the model name (`ConfigPanel.tsx` / `ModelPicker.tsx`, engine session). | fixed (pack) / designer display open |
+
+Merged `claude/exciting-albattani-8kzgsu` (822cad94): flexible `geometry.ts` / `group.ts` take main's window mask (same behaviour as R6-3Q-G-01); both Round 6 sections kept. Checked on the merged production build: the 8 FEFCO 04 display trays main re-recorded (0422a, 0423a, 0423_1a, 0424a, 0435, 0435a, 0449, 0472: def / min / max / every option, hero + underside: clean corners, no strips; centred FRONT in the cut-away is C-07), every bottle / jar / can / cosmetic closure variant (engine's swing top, crown, bar top, CR, TE, mist collar, piercing, dropper, aerosol, crimp, double wall, ROPP, cork capsule: each on its neck; numerically 0 closure / finish misfits), every flexible pack with and without the window (product shows through). `npm test` 123 files / 8 977 passed, typecheck clean, `e2e/models` + `catalogue-models` (`--workers=2`) **388 passed**, geometry snapshot test green on the merged code.
