@@ -1,4 +1,4 @@
-import type { Artwork, DesignDoc, DesignFinish, DesignFinishCode, FaceId, LocalizedText, MaterialCode, ShapeLayer } from "@/types";
+import type { Artwork, DesignDoc, DesignVessel, DesignFinish, DesignFinishCode, FaceId, LocalizedText, MaterialCode, ShapeLayer } from "@/types";
 import { DESIGN_FINISH_CODES, PRICED_FINISH_OF } from "@/types";
 import {
   BOX_BOARDS,
@@ -18,6 +18,8 @@ import { FEATURE_SUPPORT, type FeatureSupport } from "@/lib/dieline";
 import { PRINT_SURFACE_KINDS, type LabelFinishCode, type LabelStockCode, type PrintSurfaceKind } from "@/lib/vessels";
 import type { BoxModelDef, ModelDef, VesselModelDef } from "@/lib/library";
 import { vesselPrintMaterials } from "@/lib/library/doc";
+import { describeVesselModel } from "@/lib/library/packs/common-vessel";
+import type { VesselDims } from "@/lib/vessels";
 
 /**
  * Designer ↔ configurator rules engine. The DesignDoc is what the designer edits; for every
@@ -272,4 +274,13 @@ export function pruneFinishes(doc: DesignDoc, m: ModelDef): { doc: DesignDoc; re
     if (legacy && !(finishChoicesFor(cur, m).find((c) => c.value === legacy)?.enabled ?? false)) cur = { ...cur, finishCode: "NONE" };
   }
   return { doc: cur, removed };
+}
+
+/**
+ * The vessel description for sizes typed in the Model panel. The chosen closure picks the neck
+ * finish it fits (engine R6-3Q-F-01), so the panel's check and print areas match the 3D view: a swing
+ * top or crown on a bottle preset with a PP 28 thread draws on its own neck (3D QA round 6, item 8).
+ */
+export function describeVesselDraft(m: VesselModelDef, dims: VesselDims, v: Pick<DesignVessel, "surfaces" | "container" | "options" | "closure">) {
+  return describeVesselModel(m, dims, v.surfaces, undefined, v.container, v.options, v.closure);
 }

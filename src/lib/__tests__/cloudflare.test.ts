@@ -143,6 +143,15 @@ describe("blob storage", () => {
   });
 });
 
+describe("worker entry", () => {
+  it("flags paths with malformed percent-escapes (answered 400, not 500)", async () => {
+    const { decodablePath } = await import("@/lib/runtime/cloudflare");
+    expect(decodablePath("https://x.test/en/admin/orders/%E0%A4%A")).toBe(false);
+    expect(decodablePath("https://x.test/en/admin/orders/%E0%A4%A4")).toBe(true);
+    expect(decodablePath("https://x.test/ar/%D8%B9%D9%84%D8%A8%D8%A9")).toBe(true);
+  });
+});
+
 describe("client IP behind Cloudflare", () => {
   it("trusts only CF-Connecting-IP when TRUST_CF_CONNECTING_IP=1", async () => {
     const { clientIp } = await import("@/lib/rate-limit");

@@ -141,8 +141,25 @@ export function createLiquidMaterial(code: LiquidCode, quality: VesselQuality, c
       side: FrontSide,
     });
   }
-  if (quality === "low" && l.clarity > 0) {
-    return new MeshStandardMaterial({ color, roughness: 0.15, transparent: true, opacity: 0.35 + 0.55 * (1 - l.clarity), depthWrite: false, clippingPlanes: clip });
+  if (l.clarity > 0) {
+    // R6-3Q-F-07: without transmission (phones, 1x screens, and the semi-clear products on any
+    // quality) a clear product is alpha-blended. Opacity follows how much light it stops: spirit /
+    // perfume / water ~0.1, oil / honey ~0.35, cola ~0.6 (it read milky at a flat 0.35 + 0.55 (1 − c)).
+    const opacity = Math.min(0.92, 0.08 + 0.8 * Math.pow(1 - l.clarity, 1.2));
+    // phones keep the cheap standard shader (no clearcoat pass)
+    if (quality === "low") return new MeshStandardMaterial({ color, roughness: 0.12, transparent: true, opacity, depthWrite: false, clippingPlanes: clip });
+    return new MeshPhysicalMaterial({
+      color,
+      roughness: 0.08,
+      clearcoat: 0.6,
+      clearcoatRoughness: 0.05,
+      emissive: color,
+      emissiveIntensity: 0.06 + 0.12 * l.clarity,
+      transparent: true,
+      opacity,
+      depthWrite: false,
+      clippingPlanes: clip,
+    });
   }
   // a little self-light so honey and oil glow like they do against a window
   return new MeshPhysicalMaterial({
@@ -160,6 +177,9 @@ export function createClosureMaterial(role: PartRole, color: ClosureColorCode): 
   // an unknown code ("MATCH" handled upstream, an old saved doc) draws white, never throws
   const c = CLOSURE_COLORS[color] ?? CLOSURE_COLORS.WHITE;
   switch (role) {
+    case "clear":
+      // clear PP / PETG overcap: see-through, glossy
+      return new MeshPhysicalMaterial({ color: "#f4f8fa", roughness: 0.08, metalness: 0, transparent: true, opacity: 0.28, clearcoat: 1, clearcoatRoughness: 0.05, depthWrite: false, side: DoubleSide });
     case "gasket":
       // swing-top seal: natural red rubber whatever the stopper colour
       return new MeshPhysicalMaterial({ color: "#b8312b", roughness: 0.7, sheen: 0.3, sheenRoughness: 0.6, sheenColor: new Color("#ffffff") });

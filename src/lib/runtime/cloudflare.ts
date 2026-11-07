@@ -37,3 +37,16 @@ export interface R2BucketLike {
 export interface AssetsLike {
   fetch(input: string | Request): Promise<Response>;
 }
+
+/**
+ * Whether a request URL's path percent-decodes. The worker entry answers 400 when it does not
+ * (Node's server does the same; the OpenNext router threw a URIError, HTTP 500). Pure.
+ */
+export function decodablePath(url: string): boolean {
+  try {
+    decodeURIComponent(new URL(url).pathname);
+    return true;
+  } catch {
+    return false;
+  }
+}

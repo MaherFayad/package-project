@@ -16,18 +16,49 @@ const onSeg = (p: Pt, s: Segment) => {
 };
 /** R5-3Q-A-03: outline edges on a crease folded ~90° about the printed face carry no side face. */
 const squareCrease = (c: DielinePanel) => !!c.hinge && c.hingeKind !== "roll" && !c.pivotDepth && Math.abs(Math.abs(c.foldAngleClosed) - 90) <= 30;
-function hiddenEdges(model: DielineModel, panel: DielinePanel): number {
-  const segs = [panel, ...model.panels.filter((c) => c.parentId === panel.id)].filter(squareCrease).map((c) => c.hinge!);
+/**
+ * Side quads of the outline after the R6 split (R6-3Q-C-01 follow-up): every outline edge is cut
+ * where a collinear hinge (own, children's, roll) starts or ends; pieces on a roll hinge or a
+ * square crease (A-03) get no side face. Returns { quads, hidden, foldOnLongEdge }.
+ */
+function outlinePieces(model: DielineModel, panel: DielinePanel) {
+  const hingeSegs = [panel, ...model.panels.filter((c) => c.parentId === panel.id)].filter((c) => c.hinge).map((c) => ({ c, h: c.hinge! }));
+  const skip = hingeSegs.filter(({ c }) => c.hingeKind === "roll" || squareCrease(c)).map((x) => x.h);
+  const creases = hingeSegs.filter(({ c }) => c.hingeKind !== "roll").map((x) => x.h);
   const poly = panel.polygon;
-  let n = 0;
+  let quads = 0;
+  let hidden = 0;
+  let foldOnLongEdge = 0;
   for (let i = 0; i < poly.length; i++) {
-    const a = poly[i];
-    const b = poly[(i + 1) % poly.length];
-    if (Math.hypot(b.x - a.x, b.y - a.y) < 1e-6) continue;
-    if (segs.some((h) => onSeg(a, h) && onSeg(b, h))) n++;
+    const A = poly[i];
+    const B = poly[(i + 1) % poly.length];
+    const dx = B.x - A.x;
+    const dy = B.y - A.y;
+    const L2 = dx * dx + dy * dy;
+    if (L2 < 1e-12) continue;
+    const ts = [0, 1];
+    for (const { h } of hingeSegs)
+      for (const q of [h.a, h.b]) {
+        const t = ((q.x - A.x) * dx + (q.y - A.y) * dy) / L2;
+        if (t > 1e-4 && t < 1 - 1e-4 && Math.abs(dx * (q.y - A.y) - dy * (q.x - A.x)) / Math.sqrt(L2) < 1e-3) ts.push(t);
+      }
+    ts.sort((a, b) => a - b);
+    const split = ts.length > 2;
+    for (let k = 0; k + 1 < ts.length; k++) {
+      if (ts[k + 1] - ts[k] < 1e-6 || Math.sqrt(L2) * (ts[k + 1] - ts[k]) < 1e-6) continue;
+      const pa = { x: A.x + dx * ts[k], y: A.y + dy * ts[k] };
+      const pb = { x: A.x + dx * ts[k + 1], y: A.y + dy * ts[k + 1] };
+      if (skip.some((h) => onSeg(pa, h) && onSeg(pb, h))) {
+        hidden++;
+        continue;
+      }
+      quads++;
+      if (split && creases.some((h) => onSeg(pa, h) && onSeg(pb, h))) foldOnLongEdge++;
+    }
   }
-  return n;
+  return { quads, hidden, foldOnLongEdge };
 }
+const hiddenEdges = (model: DielineModel, panel: DielinePanel) => outlinePieces(model, panel).hidden;
 
 describe.each(STRUCTURE_CODES)("panel geometry %s", (code) => {
   const material = defaultMaterialFor(code);
@@ -44,8 +75,7 @@ describe.each(STRUCTURE_CODES)("panel geometry %s", (code) => {
       const hv = holes.reduce((s, h) => s + h.length, 0);
       // earcut: V - 2 + 2 × holes triangles per face; 2 triangles per outline/aperture edge
       const tris = n + hv - 2 + 2 * holes.length;
-      const rollEdges = (panel.hingeKind === "roll" ? 1 : 0) + model.panels.filter((c) => c.parentId === panel.id && c.hingeKind === "roll").length;
-      expect(pos.count).toBe(tris * 3 * 2 + (n + hv - rollEdges - hiddenEdges(model, panel)) * 6);
+      expect(pos.count).toBe(tris * 3 * 2 + (outlinePieces(model, panel).quads + hv) * 6);
       expect(g.groups.map((x) => x.materialIndex)).toEqual([MAT_OUTSIDE, MAT_INSIDE, MAT_EDGE]);
       expect(Array.from(pos.array as Float32Array).every(Number.isFinite)).toBe(true);
       // outside face points +Z, triangles wound counter-clockwise (front-facing)
@@ -79,7 +109,7 @@ describe("feature geometry", () => {
     const n = lid.polygon.length;
     const h = lid.holes![0].length;
     // outline + hole: (n + h) edge quads, and earcut uses n + h vertices → n + h triangles per face
-    expect(g.getAttribute("position").count).toBe((n + h) * 3 * 2 + (n + h - hiddenEdges(m, lid)) * 6);
+    expect(g.getAttribute("position").count).toBe((n + h) * 3 * 2 + (outlinePieces(m, lid).quads + h) * 6);
     g.dispose();
     const film = buildFilmGeometry(m, lid, m.films[0].polygon);
     expect(film.getAttribute("position").count).toBeGreaterThan(0);
@@ -103,8 +133,28 @@ describe("feature geometry", () => {
     // no edge vertex sits on the hinge line at mid-thickness of a side face along it
     const pos = g.getAttribute("position");
     const faces = (wall.polygon.length + (wall.holes ?? []).reduce((s, h) => s + h.length, 0) - 2 + 2 * (wall.holes?.length ?? 0)) * 6;
-    expect(pos.count - faces).toBe((wall.polygon.length + (wall.holes ?? []).reduce((s, h) => s + h.length, 0) - hiddenEdges(m, wall)) * 6);
+    expect(pos.count - faces).toBe((outlinePieces(m, wall).quads + (wall.holes ?? []).reduce((s, h) => s + h.length, 0)) * 6);
     g.dispose();
+  });
+
+  it("prints the part of a long outline edge a shorter flap is hinged on (R6-3Q-C-01 follow-up)", () => {
+    // across every core structure, some outline edges are longer than the hinge on them; their
+    // covered piece is a printed fold now, and it lands in the outside (printed) group
+    let found = 0;
+    for (const code of STRUCTURE_CODES) {
+      const m = generateDieline(code, DEFAULT_DIMS[code], { thicknessMm: BOARD_SPECS[defaultMaterialFor(code)].thicknessMm });
+      for (const p of m.panels) {
+        const { foldOnLongEdge } = outlinePieces(m, p);
+        if (!foldOnLongEdge) continue;
+        found += foldOnLongEdge;
+        const g = buildPanelGeometry(m, p);
+        const faceVerts = (p.polygon.length + (p.holes ?? []).reduce((s, h) => s + h.length, 0) - 2 + 2 * (p.holes?.length ?? 0)) * 3;
+        // outside group = outside face + every fold side face
+        expect(g.groups[0].count, `${code}/${p.id}`).toBeGreaterThanOrEqual(faceVerts + foldOnLongEdge * 6);
+        g.dispose();
+      }
+    }
+    expect(found).toBeGreaterThan(0);
   });
 
   it("smooths shading across the rolled tube label", () => {
