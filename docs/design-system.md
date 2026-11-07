@@ -125,7 +125,7 @@ All tokens are CSS custom properties on `:root`.
 
 ## Component API (summary)
 
-Import everything from `@/components/ui`.
+Import each component from its own file, e.g. `import { Button } from "@/components/ui/Button"`. Never import the `@/components/ui` barrel: ESLint rejects it (R4-08, it pulls every kit stylesheet into the route). `node scripts/codemods/debarrel-ui.mjs <file>` rewrites a file.
 
 - **Server-safe** components (no hooks) can be used directly in Server Components: Text, Box, BlockStack, InlineStack, InlineGrid, Divider, Bleed, Card, CardSection, Inset, Layout/LayoutSection/LayoutAnnotatedSection, Badge, CountBadge, Icon, Avatar, Thumbnail, ProgressBar, EmptyState, Timeline and MetricsStrip.
 - **All other components are Client Components.** Two rules follow from that:

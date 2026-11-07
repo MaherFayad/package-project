@@ -1,287 +1,175 @@
-# Elba (علبة): architecture and team contracts
+# Elba (علبة): architecture
 
-Elba is a web platform for custom printed packaging in Egypt. Visitors design a box in 3D for free. The platform then prices it from vendor rate cards and takes the order as a managed marketplace (Elba is the merchant of record). Product reasoning is in `docs/research-report.md`. This file covers how the code is organised and the contracts every agent must follow.
+Elba is a managed marketplace for custom printed packaging in Egypt. A visitor designs packaging in 3D for free, gets a price from printer rate cards (or asks for one), approves a proof and pays. Elba is the merchant of record: it buys the job from the printer (`vendorCostPiasters`) and sells it to the buyer with a margin. Product reasoning is in `docs/research-report.md`. Deploy is in `docs/DEPLOY-CLOUDFLARE.md`. Session orientation is in `CLAUDE.md`.
 
-## 1. How to run
+This file was refreshed against the code on 2026-11-07. Paths are relative to the repo root.
 
-```bash
-npm install                 # also runs `prisma generate`
-cp .env.example .env        # first time only
-npm run db:push             # create/update SQLite schema (prisma/dev.db)
-npm run db:seed             # wipe + seed sample data (idempotent)
-npm run dev                 # http://localhost:3000  ->  redirects to /ar
-```
+## 1. Runtime shape
 
-| Script | What it does |
-|---|---|
-| `dev` / `build` / `start` | Next.js dev server / production build / production server |
-| `lint` | `eslint .` (flat config, `next/core-web-vitals` + `next/typescript`). `next build` also lints, so lint errors break the build. |
-| `typecheck` | `tsc --noEmit` (strict) |
-| `test` | Vitest unit tests: `src/**/*.test.ts(x)` and `tests/unit/**` |
-| `test:e2e` | Playwright (`e2e/`). Starts `npm run start -p 3100` unless a server is already on 3100, so run `npm run build` first. Uses the preinstalled Chromium at `/opt/pw-browsers/chromium`. **Never run `playwright install`.** Projects: `desktop` and `mobile` (360 px wide). |
-| `db:push` / `db:seed` / `db:reset` | Prisma schema push / seed / force-reset and seed |
-
-Seed users (sign in at `/ar/login`; the OTP is shown in the dev banner and logged to the server console):
-
-| Role | Phone |
-|---|---|
-| ADMIN | `01000000001` |
-| BUYER | `01000000002` (owns design "Bloom mailer" and order `ELB-26001`) |
-| VENDOR | `01000000010` Nile Pack, `…011` Delta Cartons, `…012` Obour Box Works, `…013` Alex Print House, `…014` Damietta Modern Packaging |
-
-## 2. Environment variables
-
-| Var | Default (dev) | Notes |
+| Concern | Dev, unit tests, e2e | Production |
 |---|---|---|
-| `ELBA_DATABASE_URL` | `file:./dev.db` | **Not** `DATABASE_URL`: some hosts and containers pre-set `DATABASE_URL` to an unrelated Postgres. In production, set `provider = "postgresql"` in `schema.prisma` and point this at Postgres. |
-| `SESSION_SECRET` | dev fallback | Required in production (32+ chars). Used to hash OTP codes. |
-| `NEXT_PUBLIC_SITE_URL` | `http://localhost:3000` | Canonical URLs, share links, metadataBase |
-| `OTP_DEV_ECHO` | `1` | Under `next dev` the OTP is echoed unless this is `"0"`. Under `next start` it is echoed **only** when this is `"1"` (local prod builds and e2e). **Never set it in a real deployment.** |
-| `PAYMENTS_PROVIDER` | `mock` | `mock` or `paymob` (adapter in `src/lib/payments`) |
-| `PAYMOB_*` | empty | Paymob credentials, used when the provider is `paymob` |
-| `SHIPPING_PROVIDER` | `mock` | `mock` or `bosta` (adapter in `src/lib/shipping`) |
-| `BOSTA_API_KEY` | empty | |
-| `E2E_INSECURE_COOKIES` | unset | If set, the session cookie is sent without `Secure` under `next start`. Only needed when testing over plain HTTP on a host other than localhost. |
+| App server | `next dev` / `next start` on Node | One Cloudflare Worker (`worker.ts` wraps `.open-next/worker.js`) |
+| Database | SQLite, `prisma/schema.prisma`, one client | Neon Postgres via Hyperdrive, `prisma/postgres/schema.prisma` (generated), one client per request (`src/lib/db.ts`) |
+| Private files | `var/uploads`, `./storage` on disk | R2 binding `ELBA_FILES` |
+| Static files | `public/`, `.next/static` | Workers static assets |
+| Daily job | `npm run jobs:daily` | Cron Trigger `17 6 * * *` (09:17 Cairo) |
 
-## 3. Folder ownership
+`src/lib/runtime/cloudflare.ts` detects Workers by reading the OpenNext context slot (`cloudflareContext()`); no code imports `@opennextjs/cloudflare` directly. `src/lib/runtime/build-facts.ts` replaces build-directory reads on Workers with `/_elba/build-facts.json` (written by `scripts/cloudflare/write-build-facts.ts`). `GET /api/health` reports runtime, build facts and database status.
 
-Edit only what you own. For shared files (`prisma/schema.prisma`, `src/i18n/{ar,en}.ts`, `package.json`, `src/types/*`), make **minimal additive edits** and **re-read the file right before editing**, because other agents edit them in parallel. Do not delete or reformat other people's code.
+## 2. Request flow
 
-| Path | Owner |
+1. **Worker** (production only, `worker.ts`): a URL whose path cannot be percent-decoded gets `400 Bad Request` (OpenNext would throw a 500). Build facts load once per isolate. Then OpenNext handles the request.
+2. **Middleware** (`src/middleware.ts`). Matcher skips `api`, `_next`, `seed`, `favicon.ico`, `robots.txt`, `sitemap.xml` and any path with a dot.
+   - First segment `ar` or `en`: forwards request headers `x-elba-locale`, `x-elba-path` (R2-01, lets the design layout 404 an unknown model) and `x-elba-search` (R8-01, lets `/start` answer deep links with a 307). Sets the `elba_locale` cookie (1 year) when it differs.
+   - **Static 404 rewrite** (R6-RS-11): `isKnownMissing()` in `src/lib/routing/static-404.ts` decides, without a database, that a URL cannot exist (unknown top segment, bad `/s/<token>`, unknown legal doc, design model, catalogue param, box style or size, children of leaf pages). Those are rewritten to `/{locale}/page-not-found` with status 404, so the server-rendered 404 is sent instead of a client-only `notFound()`. The slug sets come from `src/lib/routing/route-slugs.generated.ts`.
+   - Any other path: 307 to `/{elba_locale cookie or "ar"}{path}` with the query kept.
+   - Every response gets the security headers (section 12).
+3. **Layouts**: `src/app/[locale]/layout.tsx` sets `<html lang dir>`, fonts, the root i18n scope and `VisitBeacon`. Area layouts add chrome: `MarketingShell` (store, detail, auth, orders, share, vendor apply, design picker), `CheckoutShell` (checkout), and their own frames for the editor, vendor portal and admin. Each renders exactly one `<main id="main">`.
+4. **Detail pages** validate their record in `layout.tsx` and call `notFound()` above any Suspense boundary (R5-PL-03), because a `notFound()` inside a streamed boundary answers 200.
+
+## 3. Route map (`src/app`)
+
+| Area | Routes |
 |---|---|
-| `src/components/ui/**`, `src/styles/**` | UI kit |
-| `src/lib/dieline/**`, `src/components/three/**` | 3D engine |
-| `src/lib/pricing/**` | Pricing |
-| `src/app/[locale]/design/**`, `src/components/designer/**` | Designer |
-| `src/app/[locale]/(store)/**` (home, catalog, structure/SEO pages, vendors, vendor profile), `src/components/store/**` | Storefront |
-| `src/app/[locale]/(checkout)/**`, `src/app/[locale]/orders/**`, `src/lib/{payments,shipping,orders}/**`, `src/app/api/{orders,payments}/**` | Checkout |
-| `src/app/[locale]/vendor/**`, `src/components/vendor/**` | Vendor portal |
-| `src/app/[locale]/admin/**`, `src/components/admin/**` | Admin |
-| `docs/business/**` | Business kit |
-| Everything else (`src/lib/auth`, `src/lib/{db,format,phone,json,rate-limit,env}.ts`, `src/i18n/{index,core,client,types}.ts`, `src/types/**`, `src/middleware.ts`, `src/app/[locale]/layout.tsx`, `src/app/[locale]/(auth)/**`, `src/components/auth/**`, `prisma/**`) | Foundation (additive edits allowed, see above) |
+| Public site | `(store)/page.tsx` home, `start`, `designer`, `(why)/why-elba`, `(why)/pricing`, `catalog/(list)`, `boxes/(list)`, `bottles`, `vendors/(list)`, `account` (+ `account/export` route), `page-not-found`, `[...missing]` |
+| Detail | `(detail)/catalog/[slug]`, `boxes/[structure]/(overview)`, `boxes/[structure]/[size]`, `vendors/[slug]`, `legal/[doc]` |
+| Auth | `(auth)/login`, `(auth)/unsubscribe` |
+| Designer | `design/(picker)`, `design/(editor)/[structure]` |
+| Buyer | `(checkout)/checkout`, `checkout/[designId]`, `checkout/pay/[orderId]`, `orders/(list)`, `orders/[id]`, `orders/[id]/invoice`, `s/[id]` (share) |
+| Printer | `vendor/apply`, `vendor/(portal)`: overview, `jobs`, `jobs/[number]`, `payouts`, `profile`, `rate-cards`, `rate-cards/[id]` |
+| Admin | `admin/(overview)`, `orders`, `orders/[number]`, `vendors`, `vendors/[slug]`, `vendors/applications/[id]`, `users`, `users/[id]`, `privacy`, `catalog`, `pricing`, `payouts`, `disputes`, `disputes/[id]`, `quotes`, `moderation`, `audit` |
+| Dev (gated) | `dev/(tools)/3d`, `dev/(tools)/catalogue/[code]`, `dev/(tools)/finishes`, `dev/(tools)/ui`, `dev/kit` |
+| API | `api/auth/{request-otp,verify-otp,logout,me}`, `api/designs`, `api/designs/[id]`, `api/designs/[id]/share`, `api/designs/brand-colors`, `api/quote`, `api/catalogue/quote-request`, `api/orders/[id]/{status,print-pdf,proof-pdf,dispute-photos}`, `api/orders/proofs/[proofId]/preview`, `api/payments/{mock,webhook}`, `api/vendor/{uploads,files/[...key],jobs/[id]/dieline,jobs/[id]/print-pdf}`, `api/admin/users/[id]/export`, `api/events`, `api/jobs/follow-up`, `api/webhooks/whatsapp`, `api/health` |
+| Root | `robots.ts`, `sitemap.ts`, `not-found.tsx`, `global-error.tsx`, `fonts.ts`, `font-preload.ts`, `model-poster.ts` |
 
-The placeholder pages are marked `FOUNDATION PLACEHOLDER — owner: …`. Replace them. Delete `src/components/placeholder/` once nothing imports it.
+Most mutations are server actions (`actions.ts` next to the page, or `src/components/{vendor,admin}/server/actions.ts`), not API routes. `src/app/api/_lib/body.ts` caps request bodies (`readJsonCapped`, `readFormCapped`, 413 `TOO_LARGE`).
 
-### Route map
+## 4. Data model (`prisma/schema.prisma`)
 
-```
-src/app/
-  layout.tsx                    pass-through (html/body live in [locale]/layout.tsx)
-  not-found.tsx                 global 404 (outside a locale)
-  fonts.ts                      Inter + IBM Plex Sans Arabic (next/font/google) -> --font-inter / --font-plex-arabic
-  api/auth/{request-otp,verify-otp,logout,me}/route.ts
-  [locale]/
-    layout.tsx                  <html lang dir>, fonts, I18nProvider, skip link. NO chrome.
-    not-found.tsx
-    (auth)/login/               phone + OTP page                         -> MarketingShell
-    (store)/                    / (home), /catalog, /catalog/[slug], /vendors, /vendors/[slug] -> MarketingShell
-    (checkout)/checkout/        -> CheckoutShell (minimal white header)
-    orders/, orders/[id]        requireUser                              -> MarketingShell
-    design/                     full-screen designer (own layout, renders <main id="main">)
-    vendor/                     requireRole("VENDOR")  -> admin frame (to build)
-    admin/                      requireRole("ADMIN")   -> admin frame (to build)
-```
+Conventions: money in integer piasters (`...Piasters`), enum-like columns are `String` with unions in `src/types/*.ts`, Json columns via `toJson` / `fromJson`, bilingual pairs `xxxAr` / `xxxEn`, ids are `cuid()`. Import the client as `import { db } from "@/lib/db"` (server only).
 
-Each area adds its own chrome in its route-group `layout.tsx`. Buyer-facing areas ((store), (auth), orders, s, vendor/apply) use `MarketingShell` from `src/components/marketing/MarketingShell.tsx` (white header with account menu, `<main id="main">`, footer, the shared `ui/CookieNotice`); checkout uses its minimal white `CheckoutShell`. Every layout must render exactly one `<main id="main">`, because the skip link targets it.
-
-## 4. Data model (Prisma, `prisma/schema.prisma`)
-
-Conventions:
-- **Money is stored as integer piasters** (1 EGP = 100 piasters). Field names end in `Piasters`. Never use floats for money. Format only at the edge with `formatMoney()`.
-- **Enum-like columns are `String`**, so the schema works on both SQLite and Postgres. Their allowed values are TS unions in `src/types/*.ts` (`Role`, `OrderStatus`, `PaymentMethod`, …). Validate with zod at API boundaries.
-- **Json columns** hold structured blobs: dims, artwork, rate tiers, machines, etc. Write with `toJson(value)` and read with `fromJson<T>(row.col)`, both from `src/lib/json.ts`.
-- **Bilingual columns** come in pairs: `nameAr`/`nameEn`, `bioAr`/`bioEn`, `captionAr`/`captionEn`. Pick one with `pick(locale, row.nameAr, row.nameEn)`.
-- All ids are `cuid()` strings.
-
-| Model | Key fields |
-|---|---|
-| `User` | `phone` (E.164, unique), `name`, `role` BUYER/VENDOR/ADMIN, `locale`, `marketingConsent`, `consentAt`, `organizationId?`, `vendorId?` (vendor staff) |
-| `Organization` | `name`, `taxId`, `commercialRegister`, `city` |
-| `Session` | `tokenHash` (sha256 of the cookie token), `userId`, `expiresAt`, `ip`, `userAgent` |
-| `OtpCode` | `phone`, `codeHash`, `expiresAt`, `attempts`, `consumedAt` |
-| `Consent` | PDPL log: `userId?`, `phone`, `kind` TERMS/PRIVACY/MARKETING/RETARGETING, `granted`, `textVersion`, `locale`, `ip`, `userAgent` |
-| `Vendor` | `slug`, `nameAr/En`, `city` (EgyptCity key) + `cityAr/En`, `bioAr/En`, `logoUrl`, `coverUrl`, `machines` Json `VendorMachine[]`, `capabilities` Json `VendorCapabilities`, `certifications` Json `VendorCertification[]`, `foodSafe`, `rating`, `ratingCount`, `onTimePct` (0–100), `leadTimeDays`, `minOrderQty`, `serviceAreas` Json `EgyptCity[]`, `verified`, `status` |
-| `VendorPortfolioItem` | `vendorId`, `imageUrl` (local `/seed/...`), `captionAr/En`, `structureCode?`, `sortOrder` |
-| `Structure` | `code` StructureCode, `slug`, `family`, `nameAr/En`, `descriptionAr/En`, `params` Json `StructureParamLimits`, `defaultDims` Json `Dims`, `presets` Json `DimsPreset[]` |
-| `Material` | `code` MaterialCode, `family`, `boardType`, `flute`, `color`, `gsm`, `thicknessMm`, `nameAr/En`, `foodSafe` |
-| `Finish` | `code` FinishCode, `nameAr/En`, `unitSurchargePiasters`, `setupPiasters` |
-| `RateCard` | unique (`vendorId`, `structureId`, `materialId`); `qtyTiers` Json `RateTier[]` (vendor **buy** price per unit, ex-VAT, for `referenceAreaM2`), `setupPiasters`, `dieCostPiasters`, `printSidesSurchargePct`, `finishSurcharges` Json `Partial<Record<FinishCode, piasters>>`, `leadTimeDays` |
-| `Design` | `ownerId?` (null means anonymous), `anonId?` (cookie `elba_anon`), `name`, `structureCode`, `dims`, `materialId?`, `finishCode`, `printSides`, `artwork` Json `Artwork`, `thumbnailUrl`, `shareToken?`, `expiresAt?` (anonymous: +30 days) |
-| `Proof` | immutable: `designId`, `version`, `snapshot` Json `DesignDoc`, `hash` = sha256(`canonicalJson(snapshot)`), `pdfUrl`, `previewUrl`, `approvedAt`, `approvedIp`, `approvedById` |
-| `Quote` | `lines` Json `QuoteLine[]`, `subtotalPiasters`, `vatPiasters`, `shippingPiasters`, `totalPiasters`, `validUntil` (+72 h), `status` |
-| `Order` | `number` (e.g. `ELB-26001`), `buyerId`, `vendorId`, `quoteId?`, `status` OrderStatus, money fields, `vendorCostPiasters`, `shippingAddress` Json `ShippingAddress`, timestamps |
-| `OrderItem` | `proofId?`, `structureCode`, `dims`, `materialCode`, `finishCode`, `printSides`, `quantity`, `unitPiasters`, `lineTotalPiasters`, `printPdfUrl` (print-ready dieline PDF, **orders only**) |
-| `ProductionEvent` | `orderId`, `type` ProductionEventType, `note`, `actorId` |
-| `QcPhoto` | `orderId`, `url`, `kind`, `status` PENDING/APPROVED/REJECTED |
-| `Shipment` | `provider`, `trackingNumber`, `status` ShipmentStatus, `events` Json |
-| `Payment` | `provider`, `method` PaymentMethod, `status`, `amountPiasters`, `providerRef`, `fawryRef`, `raw` |
-| `Payout` | `vendorId`, `orderId?`, `kind` ADVANCE/BALANCE, `amountPiasters`, `status` |
-| `Invoice` | `number`, `subtotal/vat/totalPiasters`, `etaUuid?`, `etaStatus?` |
-| `Review` | `orderId`, `vendorId`, `authorId`, `rating` 1–5, `body` |
-| `Dispute` | `orderId`, `openedById`, `reason`, `description`, `status`, `resolution` |
-
-Seed contents: 13 structures, 7 materials, 4 finishes, 5 vendors with 3 portfolio items each, rate cards for every (vendor × structure × compatible material), 7 users, and 1 sample order. Images are local SVGs under `public/seed/{vendors,portfolio,structures}/`, generated by `node scripts/generate-seed-images.mjs`.
-
-Corrugated structures (`FEFCO_0427`, `FEFCO_0201`, `PIZZA`) use the corrugated materials (`E_FLUTE_*`, `B_FLUTE_KRAFT`). Folding cartons (`ECMA_RTE`, `ECMA_STE`, `SLEEVE`, `ECMA_CLB`, `ECMA_SLB`, `GABLE_BOX`) use `SBS_300` and `SBS_350`. `FEFCO_0320` and `FEFCO_0422` are corrugated; `RIGID_BOX` uses `GREYBOARD_WRAP` and `PAPER_TUBE` uses `KRAFT_TUBE`. Rate cards follow the same pairing (same `family`).
-
-Import the client as `import { db } from "@/lib/db"` (server only).
-
-## 5. Shared TypeScript contracts (`src/types/*.ts`, import from `@/types`)
-
-These are the interfaces between agents. Change them only additively (new optional fields, new union members), and say so in your summary.
-
-```ts
-// common.ts
-type Locale = "ar" | "en";            LOCALES, DEFAULT_LOCALE = "ar"
-type Role = "BUYER" | "VENDOR" | "ADMIN";
-interface LocalizedText { ar: string; en: string }
-type Piasters = number;               // integer, 1 EGP = 100
-VAT_RATE = 0.14; QUOTE_VALIDITY_HOURS = 72; ANON_DESIGN_TTL_DAYS = 30; CURRENCY = "EGP"
-type Mm = number;
-type ConsentKind = "TERMS" | "PRIVACY" | "MARKETING" | "RETARGETING";
-
-// structure.ts
-type StructureCode = "FEFCO_0427" | "FEFCO_0201" | "ECMA_RTE" | "ECMA_STE" | "PIZZA" | "SLEEVE"
-  | "FEFCO_0320" | "ECMA_CLB" | "ECMA_SLB" | "FEFCO_0422" | "GABLE_BOX" | "PAPER_TUBE" | "RIGID_BOX";  // STRUCTURE_CODES
-// Full catalogue facts (names, standard ref, limits, boards, features, presets): STRUCTURES in @/lib/dieline
-interface StructureFeatures { window?; thumbNotch?; handle?; tearStrip?; partitions?; lidHeightMm?; displayFront? }  // DesignDoc.features
-type StructureFamily = "CORRUGATED" | "FOLDING_CARTON" | "RIGID" | "TUBE";
-interface Dims { L: Mm; W: Mm; H: Mm }            // INNER dimensions, mm
-interface StructureParamLimits { L: Range; W: Range; H: Range; rules?: string[] }
-interface DimsPreset { id: string; name: LocalizedText; dims: Dims; standard?: boolean }
-interface StructureInfo { code; slug; family; name; description; params; defaultDims; presets }
-type FaceId = "front" | "back" | "left" | "right" | "top" | "bottom";   // FACE_IDS
-type PrintSurface = "outside" | "inside";
-
-// material.ts
-type MaterialCode = "E_FLUTE_KRAFT" | "E_FLUTE_WHITE" | "B_FLUTE_KRAFT" | "SBS_300" | "SBS_350";
-type FinishCode = "NONE" | "MATTE_LAMINATION" | "GLOSS_LAMINATION" | "SPOT_UV";
-type PrintSides = "OUTSIDE" | "BOTH";
-type BoardType = "CORRUGATED" | "SBS"; type Flute = "E" | "B"; type BoardColor = "KRAFT" | "WHITE";
-interface MaterialInfo { code; family; boardType; flute; color; gsm; thicknessMm; name; foodSafe }
-
-// design.ts
-// Layers are placed per FACE in mm, relative to the face's top-left corner as seen from
-// outside the closed box (x right, y down). (x, y) is the layer CENTRE; rotation is
-// degrees clockwise. Never mirrored in RTL.
-interface LayerBase { id; face: FaceId; surface: PrintSurface; x; y; width; height; rotation; opacity?; locked?; hidden? }
-interface ImageLayer extends LayerBase { kind: "image"; src; pxWidth; pxHeight; fit? }
-interface TextLayer  extends LayerBase { kind: "text"; text; fontFamily: "IBM Plex Sans Arabic" | "Inter"; fontSizePt; fontWeight; color; align: "start"|"center"|"end"; direction: "rtl"|"ltr"|"auto" }
-interface ShapeLayer extends LayerBase { kind: "shape"; shape: "rect"|"ellipse"|"line"; fill; stroke; strokeWidthMm }
-type ArtworkLayer = ImageLayer | TextLayer | ShapeLayer;
-interface ArtworkSurface { background: string | null; layers: ArtworkLayer[] }   // index 0 = bottom
-interface Artwork { outside: ArtworkSurface; inside: ArtworkSurface }          // Design.artwork
-interface DesignDoc { v: 1; id?; name; structureCode; dims; materialCode; finishCode; printSides; artwork }
-emptyArtwork(): Artwork
-interface PreflightIssue { code: "LOW_DPI"|"OUTSIDE_SAFE_ZONE"|"CROSSES_FOLD"|"ON_GLUE_FLAP"|"MISSING_BLEED"|"TEXT_TOO_SMALL"|"EMPTY_DESIGN"; severity: "error"|"warning"|"info"; layerId?; face?; messageKey }
-
-// pricing.ts
-QTY_TIERS = [100, 250, 500, 1000, 2000]; MAX_INSTANT_QTY = 2000   // above: "Request a quote"
-interface RateTier { minQty: number; unitPiasters: Piasters }      // RateCard.qtyTiers
-interface QuoteRequest { structureCode; dims; materialCode; finishCode; printSides; quantity; vendorId? }
-interface QuoteLine { kind: "PRODUCT"|"SETUP"|"DIE"|"FINISH"|"SHIPPING"|"DISCOUNT"; labelKey; quantity; unitPiasters; totalPiasters }
-interface QuoteResult { vendorId; quantity; lines; subtotalPiasters; vatPiasters; totalPiasters; unitPiasters; leadTimeDays; standardSize; validUntil /* ISO */ }
-interface PriceTableRow { quantity: QtyTier; best: QuoteResult | null }
-
-// vendor.ts
-type EgyptCity = "CAIRO"|"GIZA"|"SIXTH_OF_OCTOBER"|"TENTH_OF_RAMADAN"|"OBOUR"|"ALEXANDRIA"|"NEW_DAMIETTA"|"SADAT_CITY";
-interface VendorMachine { kind: "OFFSET"|"FLEXO"|"DIGITAL"|"DIE_CUTTER"|"FOLDER_GLUER"|"LAMINATOR"|"UV_COATER"; model; count }
-interface VendorCapabilities { structures: StructureCode[]; materials: MaterialCode[]; finishes: FinishCode[]; maxColors; digitalShortRun; monthlyCapacityUnits }
-interface VendorCertification { code: "FOOD_SAFE"|"ISO_9001"|"FSC"|"ISO_22000"; issuer; validUntil? }
-interface VendorSummary { id; slug; name: LocalizedText; city; rating; ratingCount; onTimePct; leadTimeDays; verified; foodSafe; logoUrl }
-
-// order.ts
-type OrderStatus = "PENDING_PAYMENT"|"PAID"|"PROOF_APPROVED"|"ACCEPTED"|"IN_PRODUCTION"|"QC_PENDING"|"READY_TO_SHIP"|"SHIPPED"|"DELIVERED"|"CANCELLED"|"REFUNDED";
-type ProductionEventType = "ORDER_PLACED"|"PAYMENT_CONFIRMED"|"PROOF_APPROVED"|"VENDOR_ACCEPTED"|"VENDOR_DECLINED"|"PRODUCTION_STARTED"|"QC_UPLOADED"|"QC_APPROVED"|"QC_REJECTED"|"SHIPPED"|"DELIVERED"|"CANCELLED"|"NOTE";
-type PaymentMethod = "CARD"|"WALLET"|"FAWRY"|"INSTAPAY"; type PaymentStatus = "PENDING"|"PAID"|"FAILED"|"REFUNDED";
-type ShipmentStatus = "CREATED"|"PICKED_UP"|"IN_TRANSIT"|"OUT_FOR_DELIVERY"|"DELIVERED"|"RETURNED";
-type PayoutKind = "ADVANCE"|"BALANCE"; type PayoutStatus = "PENDING"|"APPROVED"|"PAID";
-type DisputeReason = "PRINT_DEFECT"|"WRONG_ITEM"|"LATE"|"DAMAGED"|"OTHER";
-interface ShippingAddress { name; phone; governorate; city; street; building?; floor?; apartment?; landmark?; notes? }
-```
-
-Module contracts that other owners are expected to expose (suggested; owners finalise them and document in their summary):
-- `src/lib/dieline`: `generateDieline(code: StructureCode, dims: Dims, material: MaterialInfo)` returns panels with hinge edges, a face map (`FaceId` to panel), cut and crease paths, bleed and safe zone. One shared module drives the 3D view, the PDF and the area used by pricing.
-- `src/lib/pricing`: `quote(req: QuoteRequest): Promise<QuoteResult[]>` and `priceTable(...) → PriceTableRow[]`. Pure helpers stay DB-free so they can be unit-tested.
-- `src/lib/payments`: a `PaymentProvider` adapter (`mock`, `paymob`). `src/lib/shipping`: a `ShippingProvider` adapter (`mock`, `bosta`).
-
-## 6. Auth and session API
-
-Phone + OTP only. There are no passwords. Sessions are DB rows referenced by a random token in an httpOnly cookie.
-
-**HTTP**
-
-| Endpoint | Body | Response |
+| Group | Model | One line |
 |---|---|---|
-| `POST /api/auth/request-otp` | `{ phone }` (any Egyptian format, Arabic digits OK) | `200 { ok, phone: "+20…", expiresAt, devCode? }` · `400 INVALID_PHONE` · `429 RATE_LIMITED { retryAfterSec }` |
-| `POST /api/auth/verify-otp` | `{ phone, code, name?, locale, acceptTerms?, marketingConsent? }` | `200 { ok, user: { id, role, name, isNew } }` and sets the cookie · `400 INVALID_INPUT \| INVALID_PHONE \| TERMS_REQUIRED \| INVALID_CODE \| EXPIRED \| TOO_MANY_ATTEMPTS` |
-| `POST /api/auth/logout` | none | `200 { ok }` and clears the cookie |
-| `GET /api/auth/me` | none | `200 { user: SessionUser \| null }` |
+| Identity | `User` | Phone (E.164, unique), name, `role` BUYER/VENDOR/ADMIN, locale, marketing consent, `vendorId` for printer staff, `brandColors` Json |
+| | `Organization` | Buyer company: name, tax id, commercial register, city |
+| | `Session` | `tokenHash` (sha256 of the cookie token), expiry, ip, user agent |
+| | `OtpCode` | Hashed 6-digit code, expiry, attempts, `consumedAt` |
+| | `Consent` | PDPL log: kind TERMS/PRIVACY/MARKETING/RETARGETING, granted, `textVersion`, locale, ip |
+| Printers | `Vendor` | Slug, bilingual name/city/bio (+ pending bio under review), machines, capabilities, certifications, rating, on-time stats, lead time, MOQ, service areas, status PENDING/ACTIVE/SUSPENDED |
+| | `VendorPortfolioItem` | Photo + bilingual caption, status PENDING/APPROVED/REJECTED (public only once approved) |
+| | `VendorApplication` | Onboarding form: legal name, CR and tax card numbers, documents (private upload keys), status SUBMITTED/UNDER_REVIEW/APPROVED/REJECTED |
+| Catalogue | `Structure` | The 16 core structure codes (the rate-card bases): limits, default dims, presets |
+| | `CatalogModel` | One row per library model: code, slug, kind box/vessel, group, `baseCodes` (structures it is priced as), materials, presets |
+| | `Material` | Board or stock: code, family, board type, flute, colour, gsm, thickness, food safe |
+| | `Finish` | Finish code with default unit surcharge and setup (piasters) |
+| | `RateCard` | Per vendor x structure x material: qty tiers (buy price ex-VAT at `referenceAreaM2`), setup, die cost, sides surcharge, finish surcharges, lead time, `standardDies` |
+| Design | `Design` | Owner or `anonId`, `structureCode` (base), `modelCode`, `config` (features, finishes, vessel), dims, material, finish, print sides, artwork, `shareToken`, `expiresAt` (anonymous: 30 days), `followedUpAt` |
+| | `Proof` | Immutable `snapshot` of the DesignDoc, `hash`, PDFs, approval (time, ip, user), server `preflight` |
+| Commerce | `Quote` | Lines, subtotal/VAT/shipping/total, `validUntil`, status (OPEN, ACCEPTED; price requests REQUESTED, PRICED, ACCEPTED), `pricedAt`, `deliveryDays`, `vendorCostPiasters` |
+| | `Order` | `number` (`ELB-YYnnn`, reprints `<number>-R<n>`), buyer, vendor, quote, `status`, money fields, `vendorCostPiasters`, shipping address, `billing` snapshot, timestamps, reserved `referrerId` |
+| | `OrderItem` | Proof, structure, `modelCode`, `config`, dims, material, finish, sides, quantity, unit and line totals, `printPdfUrl` |
+| | `ProductionEvent` | Order timeline: type (ProductionEventType), note, actor |
+| | `QcPhoto` | Printer QC photo: kind FIRST_SHEET/PACKED_BUNDLE/OTHER, status PENDING/APPROVED/REJECTED |
+| | `Shipment` | Provider mock/bosta/vendor_van, tracking number, status, events |
+| | `Payment` | Provider mock/paymob, method CARD/WALLET/FAWRY/INSTAPAY, status, amount, gateway refs, sanitised `raw` |
+| | `Payout` | To the printer: kind ADVANCE (40%)/BALANCE, status PENDING/APPROVED/PAID |
+| | `Invoice` | SALE (`INV-YYnnn`) or CREDIT_NOTE (`CN-YYnnn`), totals, ETA e-invoice uuid/status |
+| | `Review` | 1 to 5 rating per order and author |
+| | `Dispute` | Reason, description, photos (private keys), status OPEN/UNDER_REVIEW/RESOLVED_REPRINT/RESOLVED_REFUND/REJECTED, `seq` unique per order |
+| Privacy | `DataRequest` | PDPL EXPORT or DELETE request, status, no relation (survives anonymisation) |
+| Ops | `AuditLog` | Append-only log of admin mutations: actor, action, entity, before/after, ip |
+| | `PlatformSetting` | Key/value settings edited in admin (`pricing`, `checkout`, `vendor-metrics`) |
+| Analytics | `Event` | First-party funnel event: name, pseudonymous ids, small props; deleted after 13 months |
 
-- OTP: 6 digits, 5-minute TTL, 5 wrong attempts max. Requesting a new code invalidates earlier ones. Codes are stored hashed.
-- Rate limits (in memory, per process): 1 request per 30 s and 5 per hour per phone, 20 per hour per IP; verify is limited to 30 per 10 min per IP.
-- New accounts must send `acceptTerms: true`. Marketing consent is a **separate, unchecked** checkbox. Every change writes a `Consent` row (PDPL 151/2020) with `CONSENT_TEXT_VERSION`.
-- On verify, anonymous designs with the `elba_anon` cookie's `anonId` are claimed by the user, and their expiry is cleared.
-- Cookies: `elba_session` (httpOnly, SameSite=Lax, Secure in production, 30 days), `elba_anon` (designer's anonymous id, set by the designer), `elba_locale` (last chosen language). Names are exported from `@/lib/auth/constants`.
-- The SMS/WhatsApp sender is a stub, `sendOtpSms()` in `src/lib/auth/otp.ts`.
+Shared types live in `src/types/` (`common.ts`, `structure.ts`, `material.ts`, `design.ts`, `pricing.ts`, `vendor.ts`, `order.ts`), re-exported from `@/types`. Change them additively.
 
-**Server helpers** (`import { … } from "@/lib/auth"` or `@/lib/auth/session`)
+## 5. Auth, sessions and roles
 
-```ts
-getSession(): Promise<Session | null>             // cached per request; Server Components, Actions, Route Handlers
-requireUser(locale, nextPath?): Promise<SessionUser>        // redirects to /{locale}/login?next=…
-requireRole(roles, locale, nextPath?): Promise<SessionUser> // ADMIN passes every check; wrong role -> /{locale}?denied=1
-apiRequireRole(roles?): Promise<SessionUser | Response>     // in route handlers: if (r instanceof Response) return r;
-createSession(userId) / destroySession()
-interface SessionUser { id; phone; name; role: Role; locale: Locale; vendorId: string | null; marketingConsent }
+- **Phone OTP only**, no passwords. `POST /api/auth/request-otp` `{ phone }` (any Egyptian format, Arabic digits accepted, normalised by `normalizeEgyptPhone`) then `POST /api/auth/verify-otp` `{ phone, code, name?, locale, acceptTerms?, marketingConsent?, gateReason? }`. Also `logout` and `me`.
+- OTP: 6 digits, 5 minutes, 5 attempts per code (claimed atomically). Hash is `sha256(phone:code:SESSION_SECRET)` (`src/lib/auth/crypto.ts`). A new request invalidates older codes; rows older than 24 h are deleted. **Lockout**: 10 wrong codes per phone in 60 minutes (database backed).
+- Sending: `sendOtpSms()` in `src/lib/auth/otp.ts` is an empty stub. With `OTP_DEV_ECHO` on, the code is logged and returned as `devCode`.
+- New accounts must accept terms; marketing consent is a separate unchecked box. Each choice writes a `Consent` row with `CONSENT_TEXT_VERSION` (`src/lib/auth/constants.ts`). Verify claims anonymous designs by the `elba_anon` cookie.
+- **Sessions**: random token in cookie `elba_session` (httpOnly, SameSite=Lax, Secure in production, 30 days); only its sha256 is stored. `createSession` rotates. ADMIN sessions die 12 hours after creation (`sessionLive`).
+- **Roles**: BUYER, VENDOR, ADMIN. ADMIN passes every role check. Helpers in `src/lib/auth/session.ts`:
+
+| Helper | Use |
+|---|---|
+| `getSession()` | Cached per request |
+| `requireUser(locale, next?)` | Redirects to `/{locale}/login?next=` |
+| `requireRole(roles, locale, next?)` | Wrong role redirects to `/{locale}?denied=1` |
+| `requireAdminPage()` | `notFound()` unless ADMIN (first line of every admin page, R6-SEC-09) |
+| `apiRequireRole(roles?)` | Route handlers: returns the user or a 401/403 Response |
+
+- **CSRF**: `isCrossSiteRequest()` (`src/lib/auth/csrf.ts`) uses `Sec-Fetch-Site`, then Origin vs Host; mutating API routes return 403 on cross-site requests. Server actions rely on Next's own origin check.
+
+## 6. Pricing and quotes
+
+- Pure engine in `src/lib/pricing/engine.ts` (`quote`, `priceTable`, `rankOffers`); database loading in `src/lib/pricing/server.ts` (`loadPricingData`, `quoteFromDb`); defaults in `src/lib/pricing/config.ts` (`DEFAULT_PRICING_CONFIG`), overridden by the admin `pricing` setting.
+- A price per vendor: interpolate the rate card tiers in log(quantity), scale by blank area vs the card's reference area (board share 0.6, clamped 0.25 to 6) and the weekly board/FX index, apply colours and sides, compare offset with digital short run, add finishes, die (waived for a standard die within 2 mm), setup and shipping (per zone), add margin (default 25%, not on shipping), then VAT 14% on the subtotal.
+- Instant prices cover quantities up to `MAX_INSTANT_QTY = 2000` (tiers 100, 250, 500, 1000, 2000). Above that, or for a model whose order mode is not instant, the outcome is `manual_quote` and the buyer files a **price request**: a `Quote` with status REQUESTED. Admin sends a price (PRICED, `validUntil` from settings, `vendorCostPiasters` stored), the buyer checks out with `?quote=<id>` and the quote becomes ACCEPTED on payment.
+- Library models price through their base structure's rate card with their own area (`QuoteInput.model`). Containers price as `ROLL_LABEL`, `PRINTED_POUCH` or `PRINTED_TUBE`.
+- `POST /api/quote` (signed in, 60/min) returns `toPublicOutcome()`, which strips vendor cost and margin. Details: `docs/guides/checkout-and-orders.md`.
+
+## 7. Orders lifecycle
+
+Statuses (`src/types/order.ts`): `PENDING_PAYMENT`, `PAID`, `PROOF_APPROVED`, `ACCEPTED`, `IN_PRODUCTION`, `QC_PENDING`, `READY_TO_SHIP`, `SHIPPED`, `DELIVERED`, terminal `CANCELLED`, `REFUNDED`.
+
+```
+PENDING_PAYMENT --pay (SYSTEM)--> PAID --accept (VENDOR)--> ACCEPTED --start--> IN_PRODUCTION
+   |  cancel (BUYER/SYSTEM)                                        QC upload (VENDOR) |
+   v                                                                                  v
+CANCELLED            READY_TO_SHIP <--QC approve (ADMIN)-- QC_PENDING --QC reject--> IN_PRODUCTION
+                         | ship (VENDOR/SYSTEM)
+                         v
+                      SHIPPED --courier sync (SYSTEM)--> DELIVERED
+Any paid status --refund (SYSTEM via admin)--> REFUNDED
 ```
 
-**Client** (`@/components/auth`)
-- `<OtpForm onSuccess reason? />`: the two-step phone + code form, with the dev banner and consent checkboxes.
-- `<AuthGateDialog open onClose onSuccess reason? />`: the **G2 soft gate** modal (native `<dialog>`). Open it when an anonymous user tries to export, save, share or view the instant price, then `router.refresh()` and continue the action.
-- `useSession()` → `{ user, loading, refresh }`, `signOut()`, `<SignOutButton />`.
+- The edge table and actors live in `src/lib/orders/state.ts` (`assertTransition`, `canActorTransition`). `transitionOrder()` in `src/lib/orders/service.ts` applies one with a conditional update, writes the `ProductionEvent`, stamps dates, issues a credit note on REFUNDED and notifies the buyer.
+- The proof is approved at checkout, before the order exists. A printer can download the print PDF from ACCEPTED on (`PRINT_FILES_UNLOCKED`).
+- Disputes open within 30 days of DELIVERED. Admin resolves by refund or reprint (a new zero-price PAID order `<number>-R<n>`).
+- Payouts: 40% ADVANCE on vendor acceptance, BALANCE after delivery, both moved RAISE, APPROVE, PAY by admin. A BALANCE is held during an open dispute.
 
-## 7. i18n
+## 8. Payments
 
-- Routes: `/{locale}/…` with `locale ∈ {ar, en}`. `src/middleware.ts` redirects un-prefixed paths (including `/`) to `/{elba_locale cookie || "ar"}/…`. API routes, `_next`, `/seed` and files are skipped.
-- `<html lang dir>` is set in `src/app/[locale]/layout.tsx`: `ar` uses `rtl`, `en` uses `ltr`.
-- Dictionaries: `src/i18n/en.ts` **defines the shape**, and `src/i18n/ar.ts` is typed `Dictionary`, so TypeScript fails if a key is missing. A unit test also checks key parity and that the Arabic has no diacritics. Add keys under your own namespace (`designer.*`, `checkout.*`, `vendorPortal.*`, `admin.*`, `catalog.*`, `vendors.*`, …) **in both files in the same edit**. Interpolation uses `{name}`.
-- Server: `const t = getT(locale); t("nav.home")`, `getDictionary(locale)`, `toLocale(params.locale)`, `dirOf(locale)`, `pick(locale, row.nameAr, row.nameEn)`, `localized(locale, {ar, en})`.
-- Client: `const { t, locale, dir } = useI18n()` from `@/i18n/client`. The provider is already mounted.
-- Keys are typed (`DictKey`). For dynamic keys, cast with `` `orderStatus.${status}` as DictKey ``.
-- Shared lookup namespaces: `structures.<StructureCode>`, `materials.<MaterialCode>`, `finishes.<FinishCode>`, `cities.<EgyptCity>`, `orderStatus.<OrderStatus>`, `paymentMethods.<PaymentMethod>`, `preflight.<code>`, `pricing.line.*`, `auth.errors.*`.
-- Arabic copy rules: MSA, noun-form labels ("الطلبات"), no diacritics, Western digits for sizes and prices, and "ج.م" after amounts.
-- Formatting (`src/lib/format.ts`): `formatMoney(piasters, locale)` gives `1,250.50 ج.م` or `EGP 1,250.50`. Also `formatNumber`, `formatDims` (bidi-isolated, never mirrored), `formatDate`/`formatDateTime` (Africa/Cairo, Western digits) and `formatPercent`. Phones: `normalizeEgyptPhone()` and `formatEgyptPhone()` in `src/lib/phone.ts`.
-- **Do not mirror** the 3D scene, the dieline, dimension strings or artwork coordinates in RTL. Use logical CSS properties (`margin-inline-start`, `inset-inline-end`, …) everywhere else.
+- `getPaymentProvider()` (`src/lib/payments`) returns Paymob when `PAYMENTS_PROVIDER=paymob`, else the mock. Methods CARD, WALLET, FAWRY (Paymob kiosk integration), INSTAPAY (manual match against `INSTAPAY_ADDRESS`).
+- **Mock**: allowed in dev; under `next start` only with `ALLOW_MOCK_PAYMENTS=1` (`mockPaymentsEnabled()`). Its webhook is signed with HMAC-SHA256 (`x-mock-signature`). `POST /api/payments/mock` drives it and returns 404 when disabled.
+- **Webhook**: `POST /api/payments/webhook?provider=` (600/min per IP, 200 KB cap). Paymob uses HMAC-SHA512 over the documented field list. `decidePaymentOutcome()` (`src/lib/orders/payment-rules.ts`) binds the gateway reference, currency and amount and ignores duplicates; `applyPaymentOutcome()` marks the order PAID, the quote ACCEPTED and issues the `INV-` invoice in one transaction, then generates print PDFs and notifies buyer and printer. A capture after cancel is flagged `PAID_AFTER_CANCEL_REFUND_NEEDED`.
+- Prepay discount: 3% by default (`src/lib/orders/checkout-settings.ts`), overridden by `PREPAY_DISCOUNT_PCT` or the admin `checkout` setting.
 
-## 8. Styling
+## 9. Shipping
 
-- Plain CSS custom properties plus CSS Modules. No Tailwind, no `@shopify/polaris`, no Polaris icons, no Shopify logo, name or brand assets. Icons come from `lucide-react`.
-- `src/styles/tokens.css` holds the Polaris-modelled tokens (`--p-color-*`, `--p-font-size-*`, `--p-space-*` on a 4 px scale, `--p-border-radius-*`, `--p-shadow-*` including bevel and button shadows, `--p-focus-ring`, `--p-motion-*`, layout and z-index). This is a first pass; the UI kit owner refines it. `src/styles/globals.css` holds the reset, base typography, focus-visible outline, `.visually-hidden`, `.skip-link` and the reduced-motion override.
-- Fonts: Inter (`--font-inter`) and IBM Plex Sans Arabic (`--font-plex-arabic`). `--p-font-family-sans` puts Plex first under `:lang(ar)`.
-- Quality bars: WCAG 2.2 AA, visible focus that is not obscured (sticky header offset via `scroll-padding-top`), targets of at least 24 px (we use 44 px on touch), works at 360 px wide, no horizontal scroll, 16 px side gutters on phones (`--p-page-gutter`), and `prefers-reduced-motion` respected.
+`getShippingProvider()` (`src/lib/shipping`) returns Bosta when `SHIPPING_PROVIDER=bosta`, else the mock. Bosta (`bosta.ts`, a skeleton) creates deliveries and reads their state; there is **no Bosta webhook**. `syncShipments()` polls at most once a minute per order and moves SHIPPED to DELIVERED. Without `BOSTA_API_KEY`, shipping fails with `NOT_ALLOWED` and the order stays where it was. The mock walks PICKED_UP, IN_TRANSIT, OUT_FOR_DELIVERY, DELIVERED over 26 hours (`MOCK_SHIPPING_SPEED` divides that).
 
-## 9. Other shared helpers
+## 10. Notifications
 
-| Module | Exports |
-|---|---|
-| `@/lib/db` | `db` (PrismaClient singleton, server only) |
-| `@/lib/json` | `toJson`, `fromJson`, `canonicalJson` (use the last for proof hashes) |
-| `@/lib/rate-limit` | `rateLimit(ns, key, limit, windowMs)`, `clientIp(headers)` |
-| `@/lib/env` | `isProd`, `sessionSecret()`, `otpDevEcho()`, `siteUrl()` |
-| `@/lib/format`, `@/lib/phone` | see §7 |
+`notify()` (`src/lib/notify/index.ts`) tries WhatsApp, falls back to SMS, and also emails when an address is known. **All transports are console transports today**; `setNotifyTransport()` is the seam for real ones. Failures never throw. Templates (`NOTIFY_TEMPLATES`): ORDER_PLACED, PAYMENT_RECEIVED, PAYMENT_FAILED, FAWRY_CODE, INSTAPAY_PENDING, VENDOR_NEW_JOB, STATUS_CHANGED, SHIPPED, DELIVERED, REFUNDED, DISPUTE_OPENED, REVIEW_THANKS, DESIGN_FOLLOW_UP; texts live under `notify.*` in the dictionaries (server only). Inbound WhatsApp (`/api/webhooks/whatsapp`) verifies `X-Hub-Signature-256` and treats a STOP reply as withdrawing marketing consent; without `WHATSAPP_APP_SECRET` it answers 503.
 
-## 10. Model library (3D integration)
+## 11. Files and storage
 
-`src/lib/library` is the one catalogue of everything the designer shows and pricing prices:
+`src/lib/storage/blob.ts`: `putBlob`, `getBlob`, `hasBlob`, `deleteBlob`, `listBlobs`. On Workers it uses R2 (`ELBA_FILES`); on Node, keys `uploads/*` go to `ELBA_UPLOAD_DIR` (default `var/uploads`) and `storage/*` to `ELBA_STORAGE_DIR` (default `./storage`). Keys are validated against path traversal. There are **no signed URLs**: private files are served only by authorised routes (`/api/vendor/files/[...key]` via `canReadFile`, the order PDF and preview routes). Upload rules (`UPLOAD_RULES` in `src/components/vendor/lib/files.ts`): images or PDF by magic bytes, never SVG, 8 to 10 MB, metadata stripped.
 
-- **Boxes** (`boxes.ts`): the 13 core structures plus every family generator under `src/lib/dieline/families` whose output folds in the shared engine and whose boards printers quote (286 styles). Each `BoxModelDef` has `build(dims, { thicknessMm, features })` → `DielineModel` and `baseFor(material)` → the core `StructureCode` it is produced and priced as (slotted case, mailer, tray, telescope, tuck carton, crash/snap lock, sleeve, gable, rigid, tube). `EXCLUDED_FAMILY_MODELS` lists what is left out and why (cups, lids, moulded pulp, paper bags and envelopes without a quoting printer, unprinted FEFCO 09 partitions).
-- **Containers** (`vessels.ts`): the 10 core vessels, the bottles / jars / tubs catalogue, the cosmetic / pharma / can / tube catalogue (exact family silhouettes rendered by the core lathe renderer) and the 15 flexible packs (film model). `describe(dims, surfaces)` gives the profile, print areas (`PrintArea`, mm with bleed / safe zone) and envelope.
-- **Groups** for the picker: Boxes, Cartons, Rigid boxes, Trays, Tubes, Bottles and jars, Pouches, Cans; `matchesQuery` searches codes, both names and standards (Arabic letters normalised).
-- **DesignDoc** (additive): `modelCode` (absent = core structure), `finishes` (every finish with its artwork mask; `finishCode` = the main one), `vessel` (size, container, closure, colour, product, fill, surfaces). Stored in `Design.modelCode` / `Design.config` and `OrderItem.modelCode` / `OrderItem.config`. `structureCode` is always the BASE structure, so vendors, rate cards, orders and invoices work unchanged.
-- `doc.ts`: `docGeometry(doc)` = the box dieline, or for containers the print areas laid side by side as a flat `DielineModel` (so the face editor, layers, preflight, dieline view and print PDF work for labels too). `normaliseDocModel`, `baseOf`, `vesselPrintMaterials`, `docBoardArea`.
-- **Pricing**: `QuoteInput.model` prices a library model through its base structure's rate card with the model's OWN board / label area (`modelBoardArea`); the engine rejects a model sent with the wrong base. Containers price as `ROLL_LABEL` (label stocks + PETG sleeves), `PRINTED_POUCH` or `PRINTED_TUBE`. Foil, emboss, deboss, soft touch and varnish are priced `FinishCode`s now. `designQuoteFields(doc)` builds the priced spec for the quote API, checkout and tier tables.
-- **Seed**: `CatalogModel` rows for every model with their base codes; the seed fails if any model has no vendor rate card. The new vendor `cairo-label-flex` (phone `01000000015`) prints labels, sleeves, pouches and tubes.
-- **Thumbnails**: `npx tsx scripts/generate-model-thumbnails.ts` writes `public/models/<slug>.svg` (drawn from the fold model / lathe profile) and `e2e/fixtures/models.json` (a unit test keeps the manifest in sync).
-- **Designer**: `ModelPicker` / `ModelBrowser` (grouped + search), `ConfigPanel` (driven by the configurator rules engine; disabled options show the reason), `VesselView` (labels cropped from the painted sheet onto the container), `DesignScene` (read-only, share page and proof). Dev page: `/[locale]/dev/3d?model=<code>`.
-- **e2e**: `e2e/models.spec.ts` opens every model, changes size + board + one finish, checks no console errors and a painted WebGL canvas, and writes `docs/screenshots/models/<code>.png` (desktop project only).
+## 12. Security headers, CSP, rate limiting
+
+- One source: `src/lib/security-headers.ts`, applied by `next.config.ts` and repeated by the middleware (a header set in middleware replaces the config one). CSP: `default-src 'self'`, `script-src 'self' 'unsafe-inline'` (no nonce, so pages stay static; T-30), `frame-ancestors 'none'`, `object-src 'none'`, `frame-src 'none'`, `form-action 'self'`. Also `X-Frame-Options: DENY`, `nosniff`, strict referrer, a Permissions-Policy that denies camera, mic, geolocation and payment, `Cross-Origin-Opener-Policy: same-origin`, and HSTS on production HTTPS. API routes get the same set without CSP plus `X-Robots-Tag: noindex`.
+- Rate limiting: `rateLimit(namespace, key, limit, windowMs)` in `src/lib/rate-limit.ts`, a fixed window **in memory per process** (per isolate on Workers; T-29 open). `clientIp()` trusts `CF-Connecting-IP` only when `TRUST_CF_CONNECTING_IP=1`. OTP: 1 per 30 s and 5 per hour per phone, 20 per hour per IP; verify 30 per 10 minutes per IP. Production adds Cloudflare WAF rules (`docs/DEPLOY-CLOUDFLARE.md` step 9).
+
+## 13. Jobs
+
+`runDailyJobs(now)` (`src/lib/jobs/index.ts`) runs, each isolated: `runRetention` (OTP rows over 24 h, expired sessions, expired anonymous designs without proofs, analytics events over 13 months), `runFollowUps` (one WhatsApp nudge for a design saved 24 h to 7 days ago with no order, only with marketing consent; recorded in `Design.followedUpAt`) and `syncVendorOnTime`. Triggered by `POST /api/jobs/follow-up` with `Authorization: Bearer $CRON_SECRET` (503 when the secret is unset in production), by the Worker cron, or locally by `npm run jobs:daily`.
+
+## 14. i18n
+
+Locales `ar` (default, RTL) and `en`. Dictionaries are TypeScript in `src/i18n/` (`en.ts` defines the shape; namespaces split into `designer`, `vendorPortal`, `checkout`, `admin`, `kit` (`mk.*`), `marketing`, `library`). Server: `getT(locale)`, `pick()`, `dirOf()`. Client: `useI18n()`. Each area sends only its keys to the browser through `<I18nScope>` and `src/i18n/scopes.generated.ts`. Formatting in `src/lib/format.ts` (Western digits, «ج.م» after amounts, Africa/Cairo). Details: `docs/guides/i18n-and-copy.md`.
+
+## 15. Analytics
+
+First-party only (`src/lib/analytics`). 17 funnel events (`ANALYTICS_EVENTS`); the browser may send only `CLIENT_EVENTS` (visit, artwork_uploaded, design_completed, gate_shown, export_png, design_saved) through `POST /api/events` (rate limited, 2 KB, strict zod). Everything else is tracked server-side with `track()`, which drops personal keys and values (phone, email, IP, name...). Rows go to `Event` with pseudonymous ids and are deleted after 13 months. There is no consent gate because no third-party tools run; the cookie notice is an acknowledgement. Admin overview funnels read these rows (`src/components/admin/lib/metrics.ts`).
+
+## 16. 3D and the model library
+
+`src/lib/library` registers every designer model from packs (`packs/*.ts`) built on the family generators in `src/lib/dieline/families/*` (boxes) and `src/lib/vessels/families/*` (containers). Each box model knows how to build its dieline and which base structure it is priced as. The browser loads packs lazily (`loadModel(code)`, `MODEL_INDEX`). `docGeometry(doc)` turns a design into one flat `DielineModel`, so the editor, preflight, dieline view and print PDF treat boxes and labels alike. The renderer is `src/components/three`. Details: `docs/guides/3d-engine-and-model-library.md` and `docs/guides/designer.md`.
+
+## 17. Styling
+
+Plain CSS custom properties plus CSS Modules, no Tailwind, no Polaris package, icons from `lucide-react`. App tokens `src/styles/tokens.css` (`--p-*`, `--e-*`); marketing tokens `src/components/marketing/kit/tokens.css` (`--mk-*`, scoped to `[data-mk]`). Quality bars: WCAG 2.2 AA, 360 px without side scroll, 44 px touch targets, `prefers-reduced-motion`. See `docs/design-system.md` and `docs/guides/marketing-site.md`.
