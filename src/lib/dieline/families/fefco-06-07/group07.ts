@@ -97,8 +97,13 @@ function handleFaces(t: number): FacesFn {
       const f = computed[side];
       if (deep && f && Math.abs(deep.width - f.width) < 0.01 && Math.abs(deep.height - f.height) < 0.01) out[side] = deep;
     }
-    const ends = trimFaces({ left: computed.left, right: computed.right });
-    return { ...out, left: ends.left, right: ends.right };
+    // TOP: the two handle base flaps lie a handle height under the handle's top edge, past the
+    // face depth tolerance, so the carrier had no TOP face and its top read bare board between
+    // the printed walls and the printed handle (R7-3Q-P-01). Detect it that deep.
+    const hh = panels.find((p) => p.id === "handle_front")!.bbox.height;
+    const top = computeFaces({ panels: panels.filter((p) => p.role !== "glue"), rootId: "front", thicknessMm: t, closedRotation: IDENTITY }, hh + 2 * t + 0.5).faces.top;
+    const ends = trimFaces({ left: computed.left, right: computed.right, ...(top ? { top } : {}) });
+    return { ...out, left: ends.left, right: ends.right, ...(ends.top ? { top: ends.top } : {}) };
   };
 }
 

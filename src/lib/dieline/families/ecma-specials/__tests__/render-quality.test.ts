@@ -107,7 +107,10 @@ describe.each(cases)("$code $dims.L×$dims.W×$dims.H t=$t", ({ m, dims, t }) =>
         // Wrap-around faces (a cone wall printed as one face): outward = away from the axis.
         const c = panelLocalPoint(panel, { x: panel.bbox.x + panel.bbox.width / 2, y: panel.bbox.y + panel.bbox.height / 2 }, 0, panelPivot(panel, d.thicknessMm), d.thicknessMm).applyMatrix4(world);
         const radial = new Vector3(c.x - centre.x, 0, c.z - centre.z);
-        const out = facing > 0.2 || (radial.length() > 1 && n.dot(radial.normalize()) > 0.2);
+        // Gable-top gusset tucks (R6-3Q-D-06): folded back under the roof, their printed side is
+        // the ceiling of the open gable pocket, seen from outside through the gable.
+        const pocket = /^gusset_(left|right)_[ab]_tuck$/.test(panel.id) && n.y < -0.5;
+        const out = pocket || facing > 0.2 || (radial.length() > 1 && n.dot(radial.normalize()) > 0.2);
         expect(out, `${face}/${part.panelId} facing ${facing.toFixed(2)}`).toBe(true);
         // Artwork orientation: face +u (right) and -v (up) as they land on the board.
         const pv = panelPivot(panel, d.thicknessMm);
