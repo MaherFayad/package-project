@@ -5,7 +5,6 @@ import { FACE_IDS, type DesignDoc, type DesignFinishCode, type Dims, type FaceId
 import { CLOSURE_COLORS, LIQUIDS, type ClosureColorCode, type LiquidCode, type VesselDims } from "@/lib/vessels";
 import { BOARD_SPECS } from "@/lib/dieline";
 import type { BoxModelDef, ModelDef, VesselModelDef } from "@/lib/library";
-import { describeVesselModel } from "@/lib/library/packs/common-vessel";
 import type { DocGeometry } from "@/lib/library/doc";
 import { FINISHES } from "@/lib/configurator";
 import { formatDims, formatNumber } from "@/lib/format";
@@ -21,7 +20,7 @@ import { Text } from "@/components/ui/Text";
 import { TextField } from "@/components/ui/TextField";
 import { useUi } from "@/components/ui/AppProvider";
 import { fill } from "@/components/ui/strings";
-import { featureSupportOf, finishChoicesFor, materialChoices, printSidesChoices, type Choice } from "./lib/config";
+import { describeVesselDraft, featureSupportOf, finishChoicesFor, materialChoices, printSidesChoices, type Choice } from "./lib/config";
 import { modelImage } from "./ModelPicker";
 import { FlexOptionsGroup } from "./FlexOptionsGroup";
 import { EGYPT_BADGE, egyptOf, orderModeOf } from "@/data/catalogue/order-mode";
@@ -460,7 +459,7 @@ function VesselSection({ doc, model, geo, view, onView, onGeometry, onFinish }: 
     const inRange = (n: number | undefined, r?: { min: number; max: number }) => n === undefined || !r || (Number.isFinite(n) && n >= r.min && n <= r.max);
     if (!inRange(dims.D, model.limits.D) || !inRange(dims.H, model.limits.H) || !inRange(dims.G, model.limits.G)) return setInvalid(true);
     try {
-      const d = describeVesselModel(model, dims, v.surfaces, undefined, v.container, v.options, v.closure);
+      const d = describeVesselDraft(model, dims, v);
       if (!d.areas.length) throw new Error("no print area");
       setInvalid(false);
       setVessel({ dims, presetId: undefined });
