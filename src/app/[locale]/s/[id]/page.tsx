@@ -1,6 +1,6 @@
 import { finishLabel } from "@/lib/orders/finish-label";
 import type { Metadata } from "next";
-import { cache } from "react";
+import { Suspense } from "react";
 import { getT, toLocale } from "@/i18n";
 import { getSession } from "@/lib/auth/session";
 import type { DictKey } from "@/i18n/types";
@@ -16,7 +16,7 @@ import { Display, Eyebrow, Lead } from "@/components/marketing/kit/Display";
 import { Pill } from "@/components/marketing/kit/Pill";
 import { LostState } from "@/components/marketing/restyle/LostState";
 import { designerPath } from "@/components/designer/lib/catalog";
-import { loadSharedDesign } from "@/components/designer/server";
+import { getShared } from "./shared";
 import { modelByCode } from "@/lib/library";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
@@ -28,8 +28,6 @@ import { ORDER_MODE_COPY, orderModeOf, type OrderModeReason } from "@/data/catal
 export const dynamic = "force-dynamic";
 
 type Params = Promise<{ locale: string; id: string }>;
-
-const getShared = cache((token: string) => loadSharedDesign(token));
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { locale: l, id } = await params;
@@ -45,7 +43,7 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
   const { locale: l, id } = await params;
   const locale = toLocale(l);
   const t = getT(locale);
-  const [shared, session] = await Promise.all([getShared(id), getSession()]);
+  const shared = await getShared(id);
 
   if (!shared) {
     // The [id] layout already answers 404 for unknown tokens; this is a defensive fallback.
@@ -63,22 +61,6 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
   }
 
   const { doc, designId } = shared;
-  // The owner opening their own link orders the original; nobody else gets a copy notice wrong.
-  const isOwner = session ? (await db.design.findUnique({ where: { id: designId }, select: { ownerId: true } }))?.ownerId === session.user.id : false;
-  // launch-metrics.md §1 `share_link_visit` (the owner opening their own link is not a visit).
-  // "returning" = the browser already had an Elba id (account session or anonymous designer cookie).
-  if (!isOwner) {
-    const rawAnon = (await cookies()).get(ANON_COOKIE)?.value ?? null;
-    const anonId = rawAnon && /^[\w-]{16,64}$/.test(rawAnon) ? rawAnon : null;
-    const who = session?.user.id ?? anonId;
-    if (!who || rateLimit("analytics:share_visit", `${who}:${designId}`, 1, 1_800_000).ok) {
-      void track(
-        "share_link_visit",
-        { locale, returning: !!(session || anonId), structure_code: doc.structureCode, referrer_type: "share_link" },
-        { userId: session?.user.id ?? null, anonId, designId },
-      );
-    }
-  }
   // The library model (aseptic brick, crash-lock…), not only the base structure it is priced as.
   const lib = modelByCode(doc.modelCode ?? doc.structureCode);
   const modelCode = lib?.code ?? doc.structureCode;
@@ -86,13 +68,6 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
   const name = doc.name.trim() || styleName;
   // B-16: a model no Egyptian SME printer makes is requested by quote, never "Order this box".
   const isVessel = lib?.kind === "vessel";
-  // R4-12: the visitor sees the price before being asked to sign in, the same figure checkout
-  // shows for 500 boxes (best match, prepay discount, delivery to Greater Cairo, excl. VAT).
-  const { price, quoteReason } = await sharePrice(doc);
-  // R6-05: also a special-gluing model that no printer lists yet (the engine says "by quote").
-  const order = orderModeOf(doc.modelCode);
-  const reason = order.mode === "quote" || order.mode === "preview" ? order.reason : quoteReason;
-  const byQuote = !!reason;
   const specs: [string, string][] = [
     [t("designer.shared.style"), styleName],
     [t("designer.shared.model"), modelCode.replace(/_/g, " ")],
@@ -104,7 +79,6 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
     [t("designer.shared.printing"), doc.printSides === "BOTH" ? t("designer.box.printBoth") : t("designer.box.printOutside")],
   ];
 
-  const orderHref = `/${locale}/checkout/${encodeURIComponent(designId)}?share=${encodeURIComponent(id)}&model=${encodeURIComponent(modelCode)}`;
   return (
     <div className={styles.page}>
       {/* No `hero`: this page streams in after the header (force-dynamic, guarded layout), and the
@@ -124,41 +98,11 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
             <SharedViewerLazy doc={doc} poster={inlinePublicImage(`/models/${encodeURIComponent(modelCode)}.webp`)} />
           </div>
           <aside className={`${styles.stack} ${styles.aside}`}>
-            <div className={`${styles.tile} ${styles.tileDark}`}>
-              {price ? (
-                <p className={styles.price} data-testid="share-price">
-                  {price.prepayPct > 0
-                    ? t(isVessel ? "designer.container.sharePricePrepay" : "buyer.sharePricePrepay", {
-                        qty: price.quantity,
-                        price: formatMoney(price.unitPiasters, locale),
-                        days: price.days,
-                        pct: price.prepayPct,
-                      })
-                    : t(isVessel ? "designer.container.sharePrice" : "buyer.sharePrice", { qty: price.quantity, price: formatMoney(price.unitPiasters, locale), days: price.days })}
-                </p>
-              ) : null}
-              <p className={styles.muted}>{reason ? ORDER_MODE_COPY[reason][locale] : t("designer.shared.ctaHelp")}</p>
-              <Pill href={orderHref} size="lg" className={styles.full}>
-                {byQuote ? t("designer.price.quoteAction") : isVessel ? t("designer.container.order") : t("designer.shared.cta")}
-              </Pill>
-              <p className={styles.small}>
-                {isOwner ? (
-                  t("buyer.shareOwner")
-                ) : (
-                  <>
-                    {t("buyer.shareOwnCopy")} {session ? null : t("buyer.shareSignIn")}
-                  </>
-                )}
-              </p>
-              <Pill
-                href={isOwner ? designerPath(locale, modelCode, { d: designId }) : designerPath(locale, modelCode)}
-                variant="outline"
-                size="lg"
-                className={styles.full}
-              >
-                {isOwner ? t("account.openDesign") : t("designer.shared.copyDesign")}
-              </Pill>
-            </div>
+            {/* R5-PL-26: the order tile needs the session, the owner check and three pricing queries;
+                streaming it on its own lets the hero, the poster (LCP) and the specs paint first. */}
+            <Suspense fallback={<div className={`${styles.tile} ${styles.tileDark} ${styles.tilePending}`} aria-busy="true" />}>
+              <ShareOrderTile id={id} locale={locale} doc={doc} designId={designId} modelCode={modelCode} isVessel={isVessel} />
+            </Suspense>
             <section className={styles.tile} aria-labelledby="share-specs-title">
               <h2 id="share-specs-title" className={styles.tileTitle}>
                 {t("designer.shared.specs")}
@@ -175,6 +119,87 @@ export default async function SharedDesignPage({ params }: { params: Params }) {
           </aside>
         </div>
       </Sheet>
+    </div>
+  );
+}
+
+/** Price, order and copy actions: everything on the page that depends on who is looking. */
+async function ShareOrderTile({
+  id,
+  locale,
+  doc,
+  designId,
+  modelCode,
+  isVessel,
+}: {
+  id: string;
+  locale: ReturnType<typeof toLocale>;
+  doc: NonNullable<Awaited<ReturnType<typeof getShared>>>["doc"];
+  designId: string;
+  modelCode: string;
+  isVessel: boolean;
+}) {
+  const t = getT(locale);
+  const session = await getSession();
+  // The owner opening their own link orders the original; nobody else gets a copy notice wrong.
+  const isOwner = session ? (await db.design.findUnique({ where: { id: designId }, select: { ownerId: true } }))?.ownerId === session.user.id : false;
+  // launch-metrics.md §1 `share_link_visit` (the owner opening their own link is not a visit).
+  // "returning" = the browser already had an Elba id (account session or anonymous designer cookie).
+  if (!isOwner) {
+    const rawAnon = (await cookies()).get(ANON_COOKIE)?.value ?? null;
+    const anonId = rawAnon && /^[\w-]{16,64}$/.test(rawAnon) ? rawAnon : null;
+    const who = session?.user.id ?? anonId;
+    if (!who || rateLimit("analytics:share_visit", `${who}:${designId}`, 1, 1_800_000).ok) {
+      void track(
+        "share_link_visit",
+        { locale, returning: !!(session || anonId), structure_code: doc.structureCode, referrer_type: "share_link" },
+        { userId: session?.user.id ?? null, anonId, designId },
+      );
+    }
+  }
+  // R4-12: the visitor sees the price before being asked to sign in, the same figure checkout
+  // shows for 500 boxes (best match, prepay discount, delivery to Greater Cairo, excl. VAT).
+  const { price, quoteReason } = await sharePrice(doc);
+  // R6-05: also a special-gluing model that no printer lists yet (the engine says "by quote").
+  const order = orderModeOf(doc.modelCode);
+  const reason = order.mode === "quote" || order.mode === "preview" ? order.reason : quoteReason;
+  const byQuote = !!reason;
+  const orderHref = `/${locale}/checkout/${encodeURIComponent(designId)}?share=${encodeURIComponent(id)}&model=${encodeURIComponent(modelCode)}`;
+  return (
+    <div className={`${styles.tile} ${styles.tileDark}`}>
+      {price ? (
+        <p className={styles.price} data-testid="share-price">
+          {price.prepayPct > 0
+            ? t(isVessel ? "designer.container.sharePricePrepay" : "buyer.sharePricePrepay", {
+                qty: price.quantity,
+                price: formatMoney(price.unitPiasters, locale),
+                days: price.days,
+                pct: price.prepayPct,
+              })
+            : t(isVessel ? "designer.container.sharePrice" : "buyer.sharePrice", { qty: price.quantity, price: formatMoney(price.unitPiasters, locale), days: price.days })}
+        </p>
+      ) : null}
+      <p className={styles.muted}>{reason ? ORDER_MODE_COPY[reason][locale] : t("designer.shared.ctaHelp")}</p>
+      <Pill href={orderHref} size="lg" className={styles.full}>
+        {byQuote ? t("designer.price.quoteAction") : isVessel ? t("designer.container.order") : t("designer.shared.cta")}
+      </Pill>
+      <p className={styles.small}>
+        {isOwner ? (
+          t("buyer.shareOwner")
+        ) : (
+          <>
+            {t("buyer.shareOwnCopy")} {session ? null : t("buyer.shareSignIn")}
+          </>
+        )}
+      </p>
+      <Pill
+        href={isOwner ? designerPath(locale, modelCode, { d: designId }) : designerPath(locale, modelCode)}
+        variant="outline"
+        size="lg"
+        className={styles.full}
+      >
+        {isOwner ? t("account.openDesign") : t("designer.shared.copyDesign")}
+      </Pill>
     </div>
   );
 }
