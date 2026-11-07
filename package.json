@@ -42,6 +42,7 @@
     "react-dom": "^19.1.1",
     "server-only": "^0.0.1",
     "three": "^0.180.0",
+    "three-gpu-pathtracer": "0.0.24",
     "zod": "^3.25.76"
   },
   "devDependencies": {
