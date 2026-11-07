@@ -153,44 +153,86 @@ export function buildPanelGeometry(model: DielineModel, panel: DielinePanel): Bu
     // outward of this loop for the outline, inward (into the hole) for apertures
     const flip = (li === 0) !== ccw;
     let run = 0;
+    // sheet-space interior side of this loop (shoelace sign): the left of each edge when > 0
+    const sheetSign = signedArea(loop) > 0 ? 1 : -1;
+    const lerp3 = (a: Vector3, b: Vector3, t: number) => new Vector3().lerpVectors(a, b, t);
     for (let i = 0; i < n; i++) {
       const j = (i + 1) % n;
-      const e = new Vector3().subVectors(o[j], o[i]);
-      const l = e.length();
-      if (l < 1e-6) continue;
-      if (li === 0 && (onRoll(loop[i], loop[j]) || onHidden(loop[i], loop[j]))) {
-        run += l;
-        continue;
-      }
-      const normal = new Vector3(e.y, -e.x, 0).normalize();
-      if (flip) normal.negate();
-      const fold = (li === 0 && onCrease(loop[i], loop[j])) || (wrapped && li === 0);
-      const alongFlute = corrugated && Math.abs(loop[j].y - loop[i].y) > 2.5 * Math.abs(loop[j].x - loop[i].x);
-      cur = fold ? foldBuf : edgeBuf;
-      // fold edges: sheet UV of the crease (print continues round the fold); cut edges: flute pitch
-      const sa = uvAll[base - n + i];
-      const sb = uvAll[base - n + j];
-      const u0 = fold ? 0 : alongFlute ? 0.02 : run / pitch;
-      const u1 = fold ? 0 : alongFlute ? 0.02 : (run + l) / pitch;
-      run += l;
-      const tri = (a: Vector3, b: Vector3, c: Vector3, ua: [number, number], ub: [number, number], uc: [number, number]) => {
-        const cr = new Vector3().subVectors(b, a).cross(new Vector3().subVectors(c, a));
-        if (cr.dot(normal) >= 0) {
-          push(a, normal, ...ua);
-          push(b, normal, ...ub);
-          push(c, normal, ...uc);
-        } else {
-          push(a, normal, ...ua);
-          push(c, normal, ...uc);
-          push(b, normal, ...ub);
+      const A = loop[i];
+      const B = loop[j];
+      const dx = B.x - A.x;
+      const dy = B.y - A.y;
+      const L2 = dx * dx + dy * dy;
+      if (L2 < 1e-12) continue;
+      // R6-3Q-C-01 follow-up: an outline edge can be longer than the hinge lying on it (a wall
+      // edge whose flap is shorter): split it where any collinear hinge starts / ends, so the
+      // covered part is a fold and only the rest is a raw cut.
+      const cuts = [0, 1];
+      if (li === 0)
+        for (const h of [...creases, ...hidden, ...rollHinges])
+          for (const q of [h.a, h.b]) {
+            const t = ((q.x - A.x) * dx + (q.y - A.y) * dy) / L2;
+            const off = Math.abs(dx * (q.y - A.y) - dy * (q.x - A.x)) / Math.sqrt(L2);
+            if (t > 1e-4 && t < 1 - 1e-4 && off < 1e-3) cuts.push(t);
+          }
+      cuts.sort((x, y) => x - y);
+      for (let k = 0; k + 1 < cuts.length; k++) {
+        const ta = cuts[k];
+        const tb = cuts[k + 1];
+        if (tb - ta < 1e-6) continue;
+        const pa = { x: A.x + dx * ta, y: A.y + dy * ta };
+        const pb = { x: A.x + dx * tb, y: A.y + dy * tb };
+        const oa = lerp3(o[i], o[j], ta);
+        const ob = lerp3(o[i], o[j], tb);
+        const ia = lerp3(inn[i], inn[j], ta);
+        const ib = lerp3(inn[i], inn[j], tb);
+        const e = new Vector3().subVectors(ob, oa);
+        const l = e.length();
+        if (l < 1e-6) continue;
+        if (li === 0 && (onRoll(pa, pb) || onHidden(pa, pb))) {
+          run += l;
+          continue;
         }
-      };
-      if (fold) {
-        tri(o[i], inn[i], inn[j], [sa[0], sa[1]], [sa[0], sa[1]], [sb[0], sb[1]]);
-        tri(o[i], inn[j], o[j], [sa[0], sa[1]], [sb[0], sb[1]], [sb[0], sb[1]]);
-      } else {
-        tri(o[i], inn[i], inn[j], [u0, 1], [u0, 0], [u1, 0]);
-        tri(o[i], inn[j], o[j], [u0, 1], [u1, 0], [u1, 1]);
+        const normal = new Vector3(e.y, -e.x, 0).normalize();
+        if (flip) normal.negate();
+        const fold = (li === 0 && onCrease(pa, pb)) || (wrapped && li === 0);
+        const alongFlute = corrugated && Math.abs(pb.y - pa.y) > 2.5 * Math.abs(pb.x - pa.x);
+        cur = fold ? foldBuf : edgeBuf;
+        // fold edges carry the print of their own panel: sample ~1.2 mm inside the panel, not on
+        // the crease / trim line itself (R6-3Q-A-06: on rigid wraps the side faces of the lid
+        // corners and rims read as pale strips from the line / frame of the artwork there)
+        let sa: [number, number] = [pa.x / sw, 1 - pa.y / sh];
+        let sb: [number, number] = [pb.x / sw, 1 - pb.y / sh];
+        if (fold) {
+          const len = Math.sqrt(dx * dx + dy * dy);
+          const d = Math.min(1.2, 0.25 * Math.min(panel.bbox.width, panel.bbox.height));
+          const nx = (-dy / len) * sheetSign * (li === 0 ? 1 : -1) * d;
+          const ny = (dx / len) * sheetSign * (li === 0 ? 1 : -1) * d;
+          sa = [(pa.x + nx) / sw, 1 - (pa.y + ny) / sh];
+          sb = [(pb.x + nx) / sw, 1 - (pb.y + ny) / sh];
+        }
+        const u0 = fold ? 0 : alongFlute ? 0.02 : run / pitch;
+        const u1 = fold ? 0 : alongFlute ? 0.02 : (run + l) / pitch;
+        run += l;
+        const tri = (a: Vector3, b: Vector3, c: Vector3, ua: [number, number], ub: [number, number], uc: [number, number]) => {
+          const cr = new Vector3().subVectors(b, a).cross(new Vector3().subVectors(c, a));
+          if (cr.dot(normal) >= 0) {
+            push(a, normal, ...ua);
+            push(b, normal, ...ub);
+            push(c, normal, ...uc);
+          } else {
+            push(a, normal, ...ua);
+            push(c, normal, ...uc);
+            push(b, normal, ...ub);
+          }
+        };
+        if (fold) {
+          tri(oa, ia, ib, sa, sa, sb);
+          tri(oa, ib, ob, sa, sb, sb);
+        } else {
+          tri(oa, ia, ib, [u0, 1], [u0, 0], [u1, 0]);
+          tri(oa, ib, ob, [u0, 1], [u1, 0], [u1, 1]);
+        }
       }
     }
   });
