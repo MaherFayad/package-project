@@ -902,7 +902,7 @@ Not counted (by design / known): FEFCO 04 display fronts with centred art in the
 
 **Screenshots.** `docs/screenshots/audit/3dqa-r7/details-r7.jpg`: the two fixes, the nail-polish regression and three engine round-7 fixes, before | after.
 
-**Verification (final production build of this branch).** `npm run typecheck` clean; `npm run lint` 0 errors (1 pre-existing warning, the local `.next-*` audit build folders excluded); `npm test` 126 files, **9 006 passed**; `npm run build` passes; `e2e/models.spec.ts` + `e2e/catalogue-models.spec.ts` (`--workers=2`): see the commit message of this report; round-7 capture 1 196 records, 0 console errors.
+**Verification (final production build of this branch).** `npm run typecheck` clean; `npm run lint` 0 errors (1 pre-existing warning, the local `.next-*` audit build folders excluded); `npm test` 126 files, **9 006 passed**; `npm run build` passes; `e2e/models.spec.ts` + `e2e/catalogue-models.spec.ts` (`--workers=2`): **388 passed** (36.9 min); round-7 capture 1 196 records, 0 console errors.
 
 ### R7-3Q-L-01 fix (engine)
 
