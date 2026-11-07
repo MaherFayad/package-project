@@ -61,12 +61,16 @@
   outline-offset: var(--p-focus-ring-offset, 2px);
 }
 
-/* Phones: a full-width card on the bottom edge, text beside the button. */
+/* Phones: a full-width card on the bottom edge, text beside the button. R1-16: the base
+   inset-inline-start (compiled per direction) still won in RTL and pushed the card 16 px past the
+   left edge; physical left/right are direction-free, the doubled class out-ranks the base rule,
+   and the width follows from the two insets instead of a 100% that over-constrains them. */
 @media (max-width: 489px) {
-  .notice {
-    inset-inline: 0;
+  .notice.notice {
+    left: 0;
+    right: 0;
     inset-block-end: 0;
-    inline-size: 100%;
+    inline-size: auto;
     max-inline-size: none;
     flex-wrap: nowrap;
     padding: var(--p-space-300) var(--p-space-400) calc(var(--p-space-300) + env(safe-area-inset-bottom, 0px));
@@ -74,7 +78,7 @@
     border-inline: 0;
     border-block-end: 0;
   }
-  .text { flex: 1 1 auto; font-size: 0.8125rem; line-height: 1.45; }
+  .text { flex: 1 1 auto; font-size: 0.875rem; line-height: 1.45; }
 }
 
 @keyframes cookie-rise {

@@ -10,7 +10,8 @@
  */
 export * from "./types";
 export { designQuoteFields } from "./design";
-export { HEADLINE_DEFAULTS, headlineInput, headlineOffer } from "./headline";
+export { HEADLINE_DEFAULTS, checkoutVendor, headlineInput, headlineOffer } from "./headline";
+export { PRICE_REFERENCE, buyerPrice, arrivalDate, type BuyerPrice } from "./buyer";
 export {
   DEFAULT_PRICING_CONFIG,
   PRICE_INDEX_TABLE,
@@ -38,5 +39,6 @@ export {
   toPublicOutcome,
   fromQuoteRequest,
   QuoteInputError,
+  modelHasStandardDie,
   type QuoteOptions,
 } from "./engine";

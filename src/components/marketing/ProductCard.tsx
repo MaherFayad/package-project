@@ -1,35 +1,40 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import type { Locale, Piasters } from "@/types";
+import type { Locale } from "@/types";
 import { getT, pick } from "@/i18n";
 import { formatMoney } from "@/lib/format";
 import { designHref, structureHref } from "@/components/store/catalog";
-import type { StructureView } from "@/components/store/data";
+import type { PriceFromRow, StructureView } from "@/components/store/data";
+import { daysWord } from "./home/copy";
 import { renderSrc, srcSetFor } from "./assets";
 import { Pill } from "./kit/Pill";
 import styles from "./restyle/restyle.module.css";
 import dt from "./restyle/detail.module.css";
-import { STRUCTURES } from "@/lib/dieline/registry";
-import { standardOf } from "@/data/catalogue/mapping";
 
-/** Marketing product card (R6: grey bento tile): real 3D render of the structure, name, size range, "from" price, CTAs. */
+/**
+ * Box chooser card (R6 grey bento tile): real 3D render, everyday name, what it is for, the price
+ * per box for 500 boxes and the delivery days, exactly as `getPriceFrom` returns them (ex-VAT,
+ * all-in, best-match offer; R1-08). The primary action sells the printed box ("Order this box",
+ * R1-05) and opens the designer, where the exact price shows; "Details" opens the box page. No
+ * industry codes or size ranges on the card (R1-10): those live on the box page.
+ */
 export function ProductCard({
   locale,
   structure,
-  fromPiasters,
+  row500,
   headingLevel = "h3",
   index = 0,
 }: {
   locale: Locale;
   structure: StructureView;
-  fromPiasters: Piasters | null;
+  /** The 500-box row of `getPriceFrom` (null when the box has no instant price). */
+  row500: PriceFromRow | null;
   headingLevel?: "h2" | "h3";
   index?: number;
 }) {
   const t = getT(locale);
   const H = headingLevel;
   const name = pick(locale, structure.name.ar, structure.name.en);
-  const p = structure.params;
   const href = structureHref(locale, structure.code);
   return (
     <li data-reveal="" suppressHydrationWarning style={{ ["--m-i" as string]: index % 3 }}>
@@ -48,36 +53,21 @@ export function ProductCard({
           />
         </div>
         <div className={dt.cardBody}>
-          {/* CR-32: the industry code (FEFCO 0426), never the internal code ("PIZZA"). */}
-          {(() => {
-            const std = standardOf(structure.code, STRUCTURES[structure.code]?.standard);
-            return std.code ? (
-              <span className={dt.cardCode} dir="ltr">
-                {`${std.system} ${std.code}`}
-              </span>
-            ) : null;
-          })()}
           <H className={styles.cardTitle}>
             <Link href={href} className={dt.cardLink}>
               {name}
             </Link>
           </H>
           <p className={`${styles.small} ${dt.cardDesc}`}>{pick(locale, structure.description.ar, structure.description.en)}</p>
-          <p className={styles.small}>
-            <bdi dir="ltr" className={styles.num}>{`${p.L.min}–${p.L.max} × ${p.W.min}–${p.W.max} × ${p.H.min}–${p.H.max}`}</bdi> {t("common.mm")}
-          </p>
           <p className={dt.cardPrice}>
-            {fromPiasters != null
-              ? t("marketing.boxes.from", {
-                  price: formatMoney(fromPiasters, locale, {
-                    alwaysDecimals: true,
-                  }),
-                })
+            {row500
+              ? t("marketing.boxes.from500", { price: formatMoney(row500.unitPiasters, locale, { alwaysDecimals: true }) })
               : t("marketing.boxes.onRequest")}
           </p>
+          {row500 ? <p className={styles.small}>{t("marketing.boxes.days", { days: row500.deliveryDays, daysWord: daysWord(locale, row500.deliveryDays) })}</p> : null}
           <div className={dt.cardActions}>
-            <Pill href={designHref(locale, { structure: structure.code })} variant="dark" size="sm">
-              {t("marketing.boxes.design")}
+            <Pill href={designHref(locale, { structure: structure.code })} variant="dark" size="sm" aria-label={t("marketing.boxes.orderLabel", { name })}>
+              {t("marketing.boxes.order")}
             </Pill>
             <Pill href={href} variant="outline-dark" size="sm" aria-label={`${t("store.catalog.details")}: ${name}`}>
               {t("store.catalog.details")}

@@ -46,3 +46,15 @@ export function headlineInput(structureCode: StructureCode, dims: Dims, material
 export function headlineOffer<O>(offers: readonly O[] | null | undefined): O | null {
   return offers && offers.length ? offers[0]! : null;
 }
+
+/**
+ * R3-01: which printer checkout selects after a re-price (quantity or governorate changed).
+ * The same order to the same governorate must always get the same printer, price and date, so
+ * the result depends only on the new offers, never on what was selected for the old address:
+ * the best match, unless the buyer chose a printer themselves under "More options" (`picked`) and
+ * that printer still prices the run. A governorate change clears `picked` in checkout.
+ */
+export function checkoutVendor<O extends { vendorId: string }>(offers: readonly O[], picked: string | null): string | null {
+  if (picked && offers.some((o) => o.vendorId === picked)) return picked;
+  return headlineOffer(offers)?.vendorId ?? null;
+}

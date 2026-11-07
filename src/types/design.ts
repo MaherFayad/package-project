@@ -84,6 +84,20 @@ export type ArtworkLayerKind = ArtworkLayer["kind"];
 export interface ArtworkSurface {
   background: string | null; // #RRGGBB or null = bare board colour
   layers: ArtworkLayer[];
+  /**
+   * Added by designer (full artwork): one image laid over the whole printed sheet, drawn under the
+   * layers. It covers the sheet (die + bleed, the frame of the dieline template), centred, keeping
+   * its aspect ratio, so a print file designed on the template lines up with every panel. The
+   * inside is seen from the inside (mirrored on the sheet, as the template shows it).
+   */
+  sheetImage?: SheetImage | null;
+}
+
+export interface SheetImage {
+  /** Data URL (unsaved) or uploaded asset URL. */
+  src: string;
+  pxWidth: number;
+  pxHeight: number;
 }
 
 /** Stored in Design.artwork (Json). */
@@ -165,7 +179,7 @@ export function designPricedFinishes(doc: Pick<DesignDoc, "finishCode" | "finish
 
 export interface DesignFinish {
   code: DesignFinishCode;
-  /** Masked finishes (foil, spot UV, emboss): the artwork layers that carry it. Empty = the whole main face. */
+  /** Masked finishes (foil, spot UV, emboss): the artwork layers that carry it. Empty = every face. */
   mask?: { surface: PrintSurface; layerIds: string[] };
 }
 

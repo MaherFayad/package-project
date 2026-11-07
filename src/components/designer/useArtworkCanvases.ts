@@ -14,7 +14,10 @@ export function useImageCache(artwork: Artwork) {
   const [version, setVersion] = useState(0);
   const srcs = useMemo(() => {
     const s = new Set<string>();
-    for (const side of [artwork.outside, artwork.inside]) for (const l of side.layers) if (l.kind === "image") s.add(l.src);
+    for (const side of [artwork.outside, artwork.inside]) {
+      if (side.sheetImage) s.add(side.sheetImage.src);
+      for (const l of side.layers) if (l.kind === "image") s.add(l.src);
+    }
     return [...s];
   }, [artwork]);
   useEffect(() => {
@@ -67,7 +70,7 @@ export interface ArtworkPlaceholder {
 
 /** The outside surface to paint: the real artwork, or (when it is empty) the placeholder hint. */
 export function previewSurface(model: DielineModel, art: ArtworkSurface, placeholder?: ArtworkPlaceholder | null): ArtworkSurface {
-  if (!placeholder || art.layers.length > 0 || art.background) return art;
+  if (!placeholder || art.layers.length > 0 || art.background || art.sheetImage) return art;
   const face = model.faces.top && model.faces.top.height > 30 ? "top" : model.faces.front ? "front" : null;
   const info = face ? model.faces[face] : null;
   if (!face || !info) return art;

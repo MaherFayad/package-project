@@ -60,14 +60,16 @@ const structures: StructureSeed[] = [
     nameAr: "علبة بريدية",
     nameEn: "Mailer box",
     descriptionAr: "علبة كرتون مضلع بغطاء متصل ولسان أمامي، مثالية لتجربة فتح مميزة للمتاجر الإلكترونية.",
-    descriptionEn: "Corrugated roll-end tuck-front mailer, the go-to e-commerce unboxing box.",
+    descriptionEn: "Strong corrugated box with an attached lid and a front tuck: the go-to box for online shops.",
     params: { L: { min: 80, max: 600 }, W: { min: 60, max: 450 }, H: { min: 25, max: 250 }, rules: ["H <= W"] },
     defaultDims: { L: 250, W: 180, H: 80 },
     presets: [
       { id: "accessories", name: { ar: "إكسسوارات", en: "Accessories" }, dims: { L: 180, W: 120, H: 50 }, standard: true },
       { id: "tshirt", name: { ar: "تيشيرت", en: "T-shirt" }, dims: { L: 300, W: 220, H: 60 }, standard: true },
       { id: "shoe", name: { ar: "حذاء", en: "Shoe box" }, dims: { L: 330, W: 200, H: 120 }, standard: true },
-      { id: "cosmetics-kit", name: { ar: "طقم مستحضرات", en: "Cosmetics kit" }, dims: { L: 250, W: 180, H: 80 } },
+      // R1-03: the default mailer size is a standard die (every mailer printer cuts it), so the
+      // box most buyers start with is not charged a cutting die.
+      { id: "cosmetics-kit", name: { ar: "طقم مستحضرات", en: "Cosmetics kit" }, dims: { L: 250, W: 180, H: 80 }, standard: true },
     ],
     refArea: 0.25,
     baseTiers: [38, 27, 19, 14, 11],
@@ -80,7 +82,7 @@ const structures: StructureSeed[] = [
     nameAr: "كرتونة شحن",
     nameEn: "Shipping box",
     descriptionAr: "كرتونة شحن كرتون مضلع قياسية بأربعة ألسنة علوية وسفلية، قوية وموفرة.",
-    descriptionEn: "Regular slotted container (RSC): the standard, economical corrugated shipping carton.",
+    descriptionEn: "The standard corrugated shipping carton with four flaps top and bottom: strong and economical.",
     params: { L: { min: 100, max: 800 }, W: { min: 80, max: 600 }, H: { min: 60, max: 800 } },
     defaultDims: { L: 300, W: 200, H: 150 },
     presets: [
@@ -99,7 +101,7 @@ const structures: StructureSeed[] = [
     nameAr: "علبة دوبلكس بلسان عكسي",
     nameEn: "Reverse tuck end carton",
     descriptionAr: "علبة دوبلكس خفيفة بلسانين في اتجاهين متعاكسين، شائعة لمستحضرات التجميل والعطور.",
-    descriptionEn: "Lightweight SBS folding carton with tucks on opposite panels; classic for cosmetics and perfume.",
+    descriptionEn: "Light white carton box with tucks at opposite ends; common for cosmetics and perfume.",
     params: { L: { min: 30, max: 200 }, W: { min: 20, max: 150 }, H: { min: 40, max: 300 } },
     defaultDims: { L: 60, W: 60, H: 140 },
     presets: [
@@ -118,7 +120,7 @@ const structures: StructureSeed[] = [
     nameAr: "علبة دوبلكس بلسان مستقيم",
     nameEn: "Straight tuck end carton",
     descriptionAr: "علبة دوبلكس بلسانين في نفس الاتجاه لواجهة أمامية نظيفة، مناسبة للأغذية الجافة والهدايا.",
-    descriptionEn: "SBS folding carton with both tucks on the same side for a clean front; good for dry food and gifts.",
+    descriptionEn: "White carton box with both tucks on the same side for a clean front; good for dry food and gifts.",
     params: { L: { min: 30, max: 220 }, W: { min: 20, max: 160 }, H: { min: 40, max: 300 } },
     defaultDims: { L: 90, W: 50, H: 150 },
     presets: [
@@ -136,7 +138,7 @@ const structures: StructureSeed[] = [
     nameAr: "علبة بيتزا",
     nameEn: "Pizza box",
     descriptionAr: "علبة بيتزا كرتون مضلع آمنة للأغذية مع فتحات تهوية اختيارية.",
-    descriptionEn: "Food-safe corrugated pizza box (FEFCO 0426 style).",
+    descriptionEn: "Food-safe corrugated pizza box with optional air vents.",
     params: { L: { min: 200, max: 500 }, W: { min: 200, max: 500 }, H: { min: 30, max: 60 }, rules: ["L == W"] },
     defaultDims: { L: 300, W: 300, H: 40 },
     presets: [

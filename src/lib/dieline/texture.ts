@@ -67,6 +67,20 @@ export function paintArtworkSurface(ctx: Ctx2D, model: DielineModel, art: Artwor
     ctx.fill();
   }
 
+  // Full artwork (designer): one image over the whole sheet, under the layers.
+  const sheetImg = art?.sheetImage ? opts.images?.get(art.sheetImage.src) : null;
+  if (art?.sheetImage && sheetImg && regions.length) {
+    const p = sheetImagePlacement(model, art.sheetImage);
+    ctx.save();
+    ctx.beginPath();
+    for (const r of regions) tracePolygon(ctx, r);
+    ctx.clip();
+    // the inside is designed as seen from the inside: mirrored on the sheet
+    if (opts.surface === "inside") ctx.transform(-1, 0, 0, 1, model.sheet.width, 0);
+    ctx.drawImage(sheetImg, p.x, p.y, p.width, p.height);
+    ctx.restore();
+  }
+
   const layers = (art?.layers ?? []).filter((l) => !l.hidden && l.surface === opts.surface);
   for (const layer of layers) {
     if (opts.faces && !opts.faces.includes(layer.face)) continue;
@@ -92,6 +106,18 @@ export function paintArtworkSurface(ctx: Ctx2D, model: DielineModel, art: Artwor
     }
   }
   ctx.restore();
+}
+
+/**
+ * Where a full-sheet image goes (sheet mm): it covers the sheet (die + bleed, the dieline
+ * template's frame), centred, aspect kept. An image made on the template fits it exactly.
+ */
+export function sheetImagePlacement(model: Pick<DielineModel, "sheet">, img: { pxWidth: number; pxHeight: number }) {
+  const { width: sw, height: sh } = model.sheet;
+  const s = Math.max(sw / (img.pxWidth || 1), sh / (img.pxHeight || 1));
+  const width = img.pxWidth * s;
+  const height = img.pxHeight * s;
+  return { x: (sw - width) / 2, y: (sh - height) / 2, width, height, pxPerMm: 1 / s };
 }
 
 /** Draw one layer in face-local mm (the current transform maps face mm → canvas). */

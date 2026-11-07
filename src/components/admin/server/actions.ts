@@ -185,6 +185,30 @@ export async function payoutStepAction(input: z.input<typeof payoutStepSchema>):
     if (d.step === "PAY" && d.kind === "BALANCE" && !d.eInvoice) throw new AdminFieldErrors({ eInvoice: "REQUIRED" });
     const label = `${order.number} ${d.kind.toLowerCase()} (${order.vendor.nameEn})`;
     await db.$transaction(async (tx) => {
+      // A-01 (simplicity review): "Mark paid" is one confirmed step from any unpaid state. Ops
+      // records the transfer once; the raise and approve it implies are written with it, each
+      // with its own audit row, so the trail still reads raise → approve → pay.
+      if (d.step === "PAY" && (!existing || existing.status === "PENDING")) {
+        if (["REFUNDED", "CANCELLED"].includes(order.status)) throw new AdminActionError("NOT_ALLOWED", "PAYOUT_ORDER_CLOSED");
+        const now = new Date();
+        let row = existing;
+        if (!row) {
+          if (!canRaisePayout(d.kind, order.status)) throw new AdminActionError("NOT_ALLOWED", "PAYOUT_NOT_EARNED");
+          const amount = payoutAmount(d.kind, order.vendorCostPiasters);
+          if (amount <= 0) throw new AdminActionError("NOT_ALLOWED", "PAYOUT_ZERO");
+          row = await tx.payout.create({ data: { vendorId: order.vendorId, orderId: order.id, kind: d.kind, amountPiasters: amount, status: "PENDING", createdAt: now } });
+          await audit(admin, { action: "PAYOUT_RAISE", entityType: "PAYOUT", entityId: row.id, summary: `${label}: ${amount / 100} EGP`, after: { status: "PENDING", amountPiasters: amount } }, tx);
+        }
+        const u = await tx.payout.updateMany({ where: { id: row.id, status: "PENDING" }, data: { status: "PAID", approvedAt: now, paidAt: now } });
+        if (u.count !== 1) throw new AdminActionError("STALE");
+        await audit(admin, { action: "PAYOUT_APPROVE", entityType: "PAYOUT", entityId: row.id, summary: `${label}: ${row.amountPiasters / 100} EGP`, before: { status: "PENDING" }, after: { status: "APPROVED" } }, tx);
+        await audit(
+          admin,
+          { action: "PAYOUT_PAY", entityType: "PAYOUT", entityId: row.id, summary: `${label}: ${row.amountPiasters / 100} EGP${d.kind === "BALANCE" ? ", e-invoice on file" : ""}`, before: { status: "APPROVED" }, after: { status: "PAID" } },
+          tx,
+        );
+        return;
+      }
       if (d.step === "RAISE") {
         if (existing) throw new AdminActionError("STALE");
         if (!canRaisePayout(d.kind, order.status)) throw new AdminActionError("NOT_ALLOWED", "PAYOUT_NOT_EARNED");

@@ -17,7 +17,7 @@ import type { DictKey } from "@/i18n";
 import { formatDate, formatMoney, formatNumber } from "@/lib/format";
 import { STRUCTURE_CODES } from "@/types";
 import { countByView, filterJobs, JOB_SORTS, JOB_VIEWS, type JobSort, type JobView } from "./lib/jobs";
-import { DueLabel, JobStatusBadge, useProductName } from "./JobBits";
+import { DueLabel, JobStatusBadge, ReplyBy, StandardCode, showsStandard, useProductName } from "./JobBits";
 import type { JobListItemDTO } from "./types";
 import styles from "./vendor.module.css";
 
@@ -159,7 +159,9 @@ export function JobsIndex({ jobs }: { jobs: JobListItemDTO[] }) {
                   <JobStatusBadge job={j} />
                   <Text as="span" tone="subdued" variant="bodySm">
                     {productName(j)} · {t("vendorPortal.common.pcs", { count: formatNumber(j.quantity) })}
+                    {j.city ? <> · <bdi>{j.city}</bdi></> : null}
                   </Text>
+                  <ReplyBy job={j} />
                   <span className={styles.CondensedMeta}>
                     <DueLabel dueDate={j.dueDate} status={j.status} compact />
                     <Text as="span" numeric fontWeight="semibold">
@@ -174,9 +176,9 @@ export function JobsIndex({ jobs }: { jobs: JobListItemDTO[] }) {
               <IndexTableCell className={styles.WideOnly}>
                 {productName(j)}
                 <Text as="span" tone="subdued" variant="bodySm">
-                  {j.model && j.model.code !== j.structureCode ? <> · <bdi dir="ltr">{j.model.standard}</bdi></> : null}
-                  {" · "}
-                  <bdi>{j.buyerName}</bdi>
+                  {j.model && j.model.code !== j.structureCode && showsStandard(j.model.standard, locale) ? <> · <StandardCode standard={j.model.standard} /></> : null}
+                  {/* P-11: delivery city instead of the buyer's first name. */}
+                  {j.city ? <> · <bdi>{j.city}</bdi></> : null}
                 </Text>
               </IndexTableCell>
               <IndexTableCell className={styles.WideOnly} alignment="end" numeric>

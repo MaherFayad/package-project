@@ -6,7 +6,7 @@ import { formatDims, formatMoney } from "@/lib/format";
 import { siteUrl } from "@/lib/env";
 import type { Locale } from "@/types";
 import { StructureDetail } from "@/components/store/StructureDetail";
-import { JsonLd } from "@/components/store/JsonLd";
+import { JsonLd } from "@/components/store/JsonLdScript";
 import { breadcrumbJsonLd, productJsonLd } from "@/components/store/jsonld";
 import { formatCm, parseValidSize, seoSizeParams, sizeSlug, structureFromSlug, structureImage } from "@/components/store/catalog";
 import { getPriceFrom, getStructureBySlug, listMaterials, listVendors } from "@/components/store/data";

@@ -126,6 +126,21 @@ export async function quoteDesign(doc: DesignDoc, opts: { quantity: number; gove
   );
 }
 
+/**
+ * R3-01: the price and lead time the designer and the public pages showed for this design and
+ * quantity (best match, delivery to Greater Cairo). Checkout compares the buyer's governorate
+ * against it and says so in one line when it changes the price or the date. Null when the
+ * governorate is in Greater Cairo (nothing to compare) or the run has no instant price.
+ */
+export async function designerReference(doc: DesignDoc, quantity: number, governorate: string | undefined, prepayDiscountPct: number): Promise<{ unitPiasters: number; deliveryDays: number } | null> {
+  const zone = (governorate && zoneForGovernorate(governorate)) || HEADLINE_DEFAULTS.zone;
+  if (zone === HEADLINE_DEFAULTS.zone) return null;
+  const outcome = await quoteDesign(doc, { quantity });
+  const best = outcome.mode === "instant" ? outcome.offers[0] : undefined;
+  if (!best) return null;
+  return { unitPiasters: Math.round(orderTotals(best.lines, prepayDiscountPct).subtotalPiasters / quantity), deliveryDays: best.deliveryDays };
+}
+
 /** Buyer-safe offers plus the totals the buyer will actually pay (prepay discount applied). */
 export interface CheckoutOffer extends PublicVendorOffer {
   pay: ReturnType<typeof orderTotals>;
@@ -569,7 +584,7 @@ export async function listBuyerOrders(userId: string) {
   return db.order.findMany({
     where: { buyerId: userId },
     orderBy: { placedAt: "desc" },
-    include: { vendor: { select: { nameAr: true, nameEn: true, slug: true } }, items: { select: { quantity: true, structureCode: true } }, payments: { select: { status: true } } },
+    include: { vendor: { select: { nameAr: true, nameEn: true, slug: true } }, items: { select: { quantity: true, structureCode: true, modelCode: true } }, payments: { select: { status: true } } },
   });
 }
 

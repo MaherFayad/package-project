@@ -13,6 +13,8 @@ export interface ModelCard {
   name: { ar: string; en: string };
   search: string;
   simplified: boolean;
+  /** Plain kind ("Mailer boxes and trays") shown before the FEFCO / ECMA code, when known. */
+  kindName?: { ar: string; en: string };
 }
 
 /** Normalise for search: lower case, Arabic letter variants folded, no diacritics/tatweel. */

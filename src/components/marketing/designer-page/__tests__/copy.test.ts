@@ -26,16 +26,20 @@ describe("designer page copy", () => {
     for (const [p, v] of arLeaves) expect(/[ً-ْٰـ]/.test(v), `${p}: ${v}`).toBe(false);
   });
 
-  it("makes no AI claim (the prompt bar is a search)", () => {
+  it("makes no AI claim", () => {
     for (const [p, v] of [...arLeaves, ...enLeaves]) expect(/\bAI\b|ذكاء اصطناعي|الذكاء الاصطناعي/.test(v), p).toBe(false);
   });
 
-  it("has ten FAQ items with an answer each", () => {
-    expect(ar.faq.items).toHaveLength(10);
+  it("has nine FAQ items with an answer each", () => {
+    expect(ar.faq.items).toHaveLength(9);
     for (const it of [...ar.faq.items, ...en.faq.items]) {
       expect(it.q.length).toBeGreaterThan(5);
       expect(it.a.length).toBeGreaterThan(20);
     }
+  });
+
+  it("sells printed boxes without print jargon (R2-04)", () => {
+    for (const [p, v] of [...arLeaves, ...enLeaves]) if (!p.endsWith(".key")) expect(/\bSBS\b|PETG|PET\/PE|\bPDF\b|dieline|localhost|FEFCO/i.test(v), `${p}: ${v}`).toBe(false);
   });
 
   it("fills placeholders and leaves unknown ones visible", () => {

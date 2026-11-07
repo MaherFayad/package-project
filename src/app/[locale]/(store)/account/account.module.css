@@ -22,3 +22,14 @@
   flex-wrap: nowrap;
   gap: 0;
 }
+
+/* R2-11: older designs and untouched drafts wait behind one disclosure under the 3 latest. */
+.moreDesigns { margin-block-start: var(--p-space-300); }
+.moreDesigns > summary {
+  cursor: pointer;
+  min-block-size: 44px;
+  display: flex;
+  align-items: center;
+  font-weight: var(--p-font-weight-semibold);
+  color: var(--p-color-text-link, inherit);
+}

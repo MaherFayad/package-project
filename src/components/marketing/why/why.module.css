@@ -317,23 +317,18 @@
   display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: calc(var(--w-u) * 3) calc(var(--w-u) * 6);
   margin-block-end: calc(var(--w-u) * 5);
 }
-.switch {
-  display: inline-flex; align-items: center; gap: calc(var(--w-u) * 3); min-block-size: 44px;
-  padding: calc(var(--w-u) * 1) calc(var(--w-u) * 2) calc(var(--w-u) * 1) calc(var(--w-u) * 1); border: 0; border-radius: 999px; background: transparent; color: inherit;
-  font: inherit; cursor: pointer;
+/* R3-09: two named segments; the pressed one is the price shown below it. */
+.segments {
+  display: inline-flex; padding: 3px; border-radius: 999px;
+  background: #2a2f2f; border: 1px solid rgba(255, 255, 255, 0.3);
 }
-.switchTrack {
-  position: relative; inline-size: 48px; block-size: 28px; border-radius: 999px;
-  background: #3a3f3f; border: 1px solid rgba(255, 255, 255, 0.3);
-  transition: background-color var(--w-dur-2) var(--w-ease);
+.segment {
+  min-block-size: 44px; padding-inline: calc(var(--w-u) * 4); border: 0; border-radius: 999px;
+  background: transparent; color: rgba(255, 255, 255, 0.86); font: inherit; cursor: pointer;
+  transition: background-color var(--w-dur-2) var(--w-ease), color var(--w-dur-2) var(--w-ease);
 }
-.switchThumb {
-  position: absolute; inset-block-start: 3px; inset-inline-start: 3px; inline-size: 20px; block-size: 20px; border-radius: 50%;
-  background: #fff; transition: transform var(--w-dur-2) var(--w-ease);
-}
-.switch[aria-pressed="true"] .switchTrack { background: #7ab55c; border-color: #7ab55c; }
-.switch[aria-pressed="true"] .switchThumb { transform: translateX(20px); }
-[dir="rtl"] .switch[aria-pressed="true"] .switchThumb { transform: translateX(-20px); }
+.segment[aria-pressed="true"] { background: #fff; color: #111; font-weight: 600; }
+.segment:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .compareLink { color: #fff; text-underline-offset: 3px; min-block-size: 24px; display: inline-flex; align-items: center; }
 
 .tier {
@@ -349,6 +344,7 @@
 .tierPrice { margin: calc(var(--w-u) * 6) 0 0; display: flex; align-items: baseline; gap: calc(var(--w-u) * 1.5); flex-wrap: wrap; }
 .tierPrice strong { font-size: clamp(2rem, 1.6rem + 1vw, 2.5rem); font-weight: 400; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 .tierPrice span { color: var(--mk-muted); font-size: 0.9375rem; }
+.tierAlt { margin: calc(var(--w-u) * 1) 0 0; color: var(--mk-muted); font-size: 1rem; font-variant-numeric: tabular-nums; }
 .tierTotals { margin: calc(var(--w-u) * 2) 0 0; min-block-size: 3em; color: var(--mk-muted); font-size: 0.9375rem; }
 .tierTotals strong { color: #fff; font-weight: 500; font-variant-numeric: tabular-nums; }
 .vatScope[data-vat="incl"] .showExcl,

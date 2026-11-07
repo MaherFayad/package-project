@@ -26,7 +26,7 @@ import { modelAvailability, vendorsByPair, withOrderMode } from "../lib/availabi
 import { orderModeOf, vendorListsModel } from "@/data/catalogue/order-mode";
 import { MODELS, modelByCode } from "@/lib/library";
 import { baseOf, vesselPrintMaterials } from "@/lib/library/doc";
-import type { AdminOrderRow } from "../lib/orders";
+import { AWAITING_VENDOR_STATUSES, type AdminOrderRow } from "../lib/orders";
 import { adminPayoutStatus, needsAction } from "../lib/payouts";
 import { contactFlags } from "../lib/moderation";
 import { FUNNEL_STEPS as EVENT_FUNNEL_STEPS, loadShareLoop } from "@/lib/analytics/funnel";
@@ -87,8 +87,8 @@ export async function loadOverview(range: RangeKey, now = new Date()) {
     db.event.findMany({ where: { name: "price_viewed", at: { gte: from, lt: to }, userId: { not: null } }, select: { userId: true }, distinct: ["userId"] }),
     db.order.findMany({ where: { placedAt: { gte: from, lt: to } }, select: { buyerId: true }, distinct: ["buyerId"] }),
     db.order.count({ where: { status: "QC_PENDING" } }),
-    // R4-06: paid jobs no vendor has accepted yet (the nav badge counts them too).
-    db.order.count({ where: { status: "PAID" } }),
+    // R4-06, A-04: paid jobs no vendor has accepted yet (same statuses as the orders tab and the nav badge).
+    db.order.count({ where: { status: { in: AWAITING_VENDOR_STATUSES } } }),
     db.vendorApplication.count({ where: { status: { in: ["SUBMITTED", "UNDER_REVIEW"] } } }),
     db.dataRequest.count({ where: { status: { in: ["OPEN", "IN_PROGRESS"] } } }),
     countPayoutsToAct(),
@@ -195,6 +195,8 @@ export async function loadOrderDetail(number: string) {
       disputes: { orderBy: { createdAt: "desc" } },
       invoices: true,
       payouts: true,
+      // A-03: the priced lines (setup, prepay discount) that explain goods vs the item lines.
+      quote: { select: { lines: true } },
     },
   });
   if (!order) return null;

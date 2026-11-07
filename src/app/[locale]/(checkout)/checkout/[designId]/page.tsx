@@ -4,12 +4,14 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import type { Prisma } from "@prisma/client";
 import { MAX_INSTANT_QTY, QTY_TIERS, type ShippingAddress } from "@/types";
-import { getT, toLocale } from "@/i18n";
+import { getT, toLocale, type DictKey } from "@/i18n";
+import { boxName } from "@/lib/orders/box-name";
+import { modelPoster } from "@/lib/orders/poster";
 import { requireUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { fromJson } from "@/lib/json";
 import { formatEgyptPhone } from "@/lib/phone";
-import { loadCheckoutDesign, loadPricedQuote, minOrderQuantity, quoteDesign, sampleCreditFor, tierPrices, toCheckoutOffer } from "@/lib/orders/service";
+import { designerReference, loadCheckoutDesign, loadPricedQuote, minOrderQuantity, quoteDesign, sampleCreditFor, sampleOffers, tierPrices, toCheckoutOffer } from "@/lib/orders/service";
 import { designerPath } from "@/components/designer/lib/catalog";
 import { loadCheckoutSettings } from "@/lib/orders/checkout-settings";
 import { quoteGovernorate } from "@/lib/orders/quote-requests";
@@ -20,6 +22,7 @@ import { runPreflight, summarizePreflight } from "@/components/designer/lib/pref
 import { docSpec } from "@/lib/library/spec";
 import { track } from "@/lib/analytics/track";
 import { rateLimit } from "@/lib/rate-limit";
+import { supportContact } from "@/lib/support";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState, EmptyBoxIllustration } from "@/components/ui/EmptyState";
@@ -153,6 +156,7 @@ export default async function CheckoutPage({ params, searchParams }: { params: P
   try {
     const outcome = await quoteDesign(doc, { quantity: initialQty, governorate: defaultAddress.governorate });
     const prepay = settings.prepayDiscountPct;
+    const reference = outcome.mode === "instant" ? await designerReference(doc, initialQty, defaultAddress.governorate, prepay).catch(() => null) : null;
     initial =
       outcome.mode === "instant"
         ? {
@@ -163,6 +167,7 @@ export default async function CheckoutPage({ params, searchParams }: { params: P
             suggestion: outcome.suggestion,
             validUntil: outcome.validUntil,
             credit: credit ? { piasters: credit.piasters, sampleNumber: credit.sampleNumber, expiresAt: credit.expiresAt.toISOString() } : null,
+            reference,
           }
         : { ok: true, mode: "manual_quote", quantity: initialQty, max: MAX_INSTANT_QTY, ...(outcome.reason === "MODEL_BY_QUOTE" ? { reason: "MODEL_BY_QUOTE" as const, orderReason: outcome.orderReason } : {}) };
   } catch {
@@ -188,26 +193,39 @@ export default async function CheckoutPage({ params, searchParams }: { params: P
     if (initial.ok && initial.mode === "instant") void track("price_viewed", { ...props, source: "checkout", quantity: initialQty }, { userId: user.id, designId });
   }
 
+  // R2-09: the sample row shows what the sample costs in full (delivery and VAT in), as /pricing does,
+  // from the same offer checkout charges when the sample is picked (sampleOffers → no prepay discount).
+  const sampleOn = !priced && settings.sample.enabled && !byQuote && !(initial.ok && initial.mode === "manual_quote" && initial.reason === "MODEL_BY_QUOTE");
+  const sampleBest = sampleOn ? ((await sampleOffers(doc, defaultAddress.governorate).catch(() => null))?.offers[0] ?? null) : null;
+  const sampleTotal = sampleBest ? orderTotals(sampleBest.lines, 0).totalPiasters : null;
+
+  // R1-18: a design without its own name is called by its box and size, never "Untitled box".
+  const spec = docSpec(doc, locale);
+  const boxLabel = boxName({ modelCode: doc.modelCode, structureCode: doc.structureCode, dims: doc.dims, size: spec.vesselSize }, locale, t(`structures.${doc.structureCode}` as DictKey));
+
   return (
     <CheckoutClient
       locale={locale}
       designId={designId}
       doc={doc}
-      designName={doc.name || t("checkout.untitled")}
+      designName={doc.name.trim() || boxLabel}
+      boxLabel={boxLabel}
+      thumbnail={design.thumbnailUrl ?? modelPoster(doc.modelCode, doc.structureCode)}
       editUrl={designerPath(locale, doc.modelCode ?? doc.structureCode, { d: designId })}
       tiers={tiers}
       initialQty={priced ? priced.quantity : initialQty}
       initial={initial}
       defaultAddress={defaultAddress}
-      spec={docSpec(doc, locale)}
+      spec={spec}
       contactPhone={formatEgyptPhone(user.phone)}
       quoted={priced ? { id: priced.id, quantity: priced.quantity, validUntil: priced.validUntil.toISOString() } : null}
       quoteInvalid={!!quoteParam && !priced}
-      sample={!priced && settings.sample.enabled && !byQuote && !(initial.ok && initial.mode === "manual_quote" && initial.reason === "MODEL_BY_QUOTE") ? { pieces: settings.sample.maxPieces, pricePiasters: settings.sample.pricePiasters, creditDays: settings.sample.creditDays } : null}
+      sample={sampleOn ? { pieces: settings.sample.maxPieces, pricePiasters: settings.sample.pricePiasters, totalPiasters: sampleTotal, creditDays: settings.sample.creditDays } : null}
       prepayDiscountPct={settings.prepayDiscountPct}
       minQty={minQty}
       preflight={preflight}
       defaultCompany={org?.organization ? { name: org.organization.name, taxId: org.organization.taxId ?? "", commercialRegister: org.organization.commercialRegister ?? "" } : null}
+      support={supportContact()}
     />
   );
 }

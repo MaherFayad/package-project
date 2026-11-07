@@ -2,10 +2,10 @@
 
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ChevronDown, ChevronUp, CloudCheck, CloudOff, CloudUpload, Download, Move3d, MoreHorizontal, Pencil, Redo2, RotateCcw, Save, Share2, Undo2, ZoomIn, ZoomOut } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ChevronDown, ChevronUp, CloudCheck, CloudOff, CloudUpload, Download, ImagePlus, Move3d, MoreHorizontal, Pencil, Redo2, RotateCcw, Save, Share2, Type, Undo2, ZoomIn, ZoomOut } from "lucide-react";
 import { startTransition, useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { FACE_IDS, type ArtworkLayer, type DesignDoc, type DesignFinishCode, type DimsPreset, type FaceId, type Locale, type PrintSurface, type StructureCode } from "@/types";
-import { boardAppearance, type DielineModel } from "@/lib/dieline";
+import { boardAppearance, dielineToSvg, type DielineModel } from "@/lib/dieline";
 import type { ModelDef } from "@/lib/library";
 import { loadModel, modelByCode } from "@/lib/library/registry";
 import { useLibraryModel } from "@/lib/library/useLibraryModel";
@@ -47,24 +47,25 @@ import {
 } from "./lib/doc";
 import { contrastingInk } from "./lib/color";
 import { canRedo, canUndo, historyReducer, initHistory, type History, type HistoryAction } from "./lib/history";
-import { runPreflight, summarizePreflight } from "./lib/preflight";
-import { placeLayer, type Placement } from "./lib/geometry";
+import { DPI_WARNING, effectiveDpi, runPreflight, summarizePreflight } from "./lib/preflight";
+import { faceAtHit, placeLayer, type Placement } from "./lib/geometry";
 import { BADGE_QTY, fetchQuote, quoteKey, type PriceState } from "./lib/quote";
 import { designerPath } from "./lib/catalog";
-import { fillEmptyFinishMasks, pruneFinishes, setLayerFinish, toggleFinish } from "./lib/config";
+import { extendFinishMasks, fillEmptyFinishMasks, pruneFinishes, setLayerFinish, toggleFinish } from "./lib/config";
 import { createModelDoc } from "./lib/doc";
 import { layerName } from "./lib/describe";
 import { ConfigPanel, surfaceName, type ViewOptions } from "./ConfigPanel";
 import lib from "./library.module.css";
 import { loadLocalDraft, saveLocalDraft } from "./lib/storage";
 import { useArtworkCanvases } from "./useArtworkCanvases";
-import { prepareImage, UploadError, type UploadErrorKind } from "./uploadImage";
+import { IMAGE_ACCEPT, prepareImage, SHEET_IMAGE_OPTIONS, UploadError, type UploadErrorKind } from "./uploadImage";
 import { stampExportMark } from "@/components/marketing/exportMark";
 import { formatNumber } from "@/lib/format";
 import { fitTextBox, measureText } from "./fonts";
 import { FaceEditor } from "./FaceEditor";
 import { DielineView } from "./DielineView";
 import { ArtworkPanel } from "./ArtworkPanel";
+import { SimplePanel } from "./SimplePanel";
 import { LayersPanel } from "./LayersPanel";
 import { PreflightBadge, PreflightPanel } from "./PreflightPanel";
 import { orderModeOf } from "@/data/catalogue/order-mode";
@@ -90,6 +91,20 @@ const UPLOAD_ERROR_KEY: Record<UploadErrorKind, DictKey> = {
 };
 type ModalName = "price" | "export" | "share" | null;
 const TAB_IDS = ["box", "artwork", "layers", "check"] as const;
+/**
+ * Simple mode (the default) shows a shop owner's few steps: logo, a name, colour, size, price,
+ * order. "All options" brings back every panel, view and field. Remembered per browser.
+ */
+type Mode = "simple" | "advanced";
+const MODE_KEY = "elba.designer.mode";
+
+/** The side a logo goes on first: the lid when it is big enough, else the front (as the "Your logo" hint). */
+function logoFaceOf(m: DielineModel | null, vessel = false): FaceId | null {
+  if (!m) return null;
+  if (!vessel && m.faces.top && m.faces.top.height > 30) return "top";
+  if (m.faces.front) return "front";
+  return (Object.keys(m.faces)[0] as FaceId | undefined) ?? null;
+}
 
 export interface DesignerUser {
   id: string;
@@ -114,6 +129,12 @@ export interface DesignerAppProps {
 }
 
 const reducer = (s: History<DesignDoc>, a: HistoryAction<DesignDoc>) => historyReducer(s, a);
+
+/** Any picture on the box yet (a logo layer or a full-artwork image)? */
+function hasImage(doc: DesignDoc): boolean {
+  const { outside, inside } = doc.artwork;
+  return !!(outside.sheetImage || inside.sheetImage) || [...outside.layers, ...inside.layers].some((l) => l.kind === "image");
+}
 
 function blobToDataUrl(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -169,7 +190,25 @@ export function DesignerApp(props: DesignerAppProps) {
 function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt, initialUser, loadError, resumeLocal, posterSrc }: DesignerAppProps) {
   const { t } = useI18n();
   const router = useRouter();
-  const toast = useToast();
+  // R1-21: remember the toasts this editor shows so opening the price sheet can clear them (an
+  // "image added" toast used to sit on top of the sheet's price lines for seconds).
+  const rawToast = useToast();
+  const toastIds = useRef<number[]>([]);
+  const toast = useMemo(
+    () => ({
+      ...rawToast,
+      show: (...args: Parameters<typeof rawToast.show>) => {
+        const id = rawToast.show(...args);
+        toastIds.current = [...toastIds.current.slice(-4), id];
+        return id;
+      },
+      dismissAll: () => {
+        for (const id of toastIds.current) rawToast.dismiss(id);
+        toastIds.current = [];
+      },
+    }),
+    [rawToast],
+  );
 
   // ── document + history ──────────────────────────────────────────
   const [hist, dispatch] = useReducer(reducer, initialDoc, initHistory);
@@ -223,13 +262,59 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
   const [view, setView] = useState<View>("3d");
   const [fold, setFold] = useState(1);
   const [tab, setTab] = useState(0);
+  const [mode, setModeState] = useState<Mode>("simple");
+  useEffect(() => {
+    try {
+      if (window.localStorage.getItem(MODE_KEY) === "advanced") setModeState("advanced");
+    } catch {
+      /* storage blocked: stay in simple mode */
+    }
+  }, []);
+  const setMode = useCallback((m: Mode) => {
+    setModeState(m);
+    // Simple mode has the 3D view only (the face editor and dieline are "All options").
+    if (m === "simple") {
+      setView("3d");
+      setFold(1);
+    }
+    try {
+      window.localStorage.setItem(MODE_KEY, m);
+    } catch {
+      /* not remembered: fine */
+    }
+  }, []);
+  const simple = mode === "simple";
+  const [focusTextId, setFocusTextId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const swipeY = useRef<number | null>(null);
   const swipedRef = useRef(false);
+  // Phones: toasts ("Saved", upload errors) sit above the Logo / Text / Order bar instead of on
+  // top of it. The toast region (components/ui/Toast) reads --e-toast-offset; the bar is
+  // display:none on wider screens, so its height (and the offset) is 0 there.
+  const actionBarRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const bar = actionBarRef.current;
+    if (!bar || typeof ResizeObserver === "undefined") return;
+    const root = document.documentElement;
+    const update = () => {
+      const h = bar.offsetHeight;
+      if (h > 0) root.style.setProperty("--e-toast-offset", `${h}px`);
+      else root.style.removeProperty("--e-toast-offset");
+    };
+    const ro = new ResizeObserver(update);
+    ro.observe(bar);
+    update();
+    return () => {
+      ro.disconnect();
+      root.style.removeProperty("--e-toast-offset");
+    };
+  }, []);
   const [saveState, setSaveState] = useState<SaveState>(initialDesignId ? "saved" : "idle");
   const [gate, setGate] = useState<{ reason: GateReason; then: () => void } | null>(null);
   const [modal, setModal] = useState<ModalName>(null);
-  const [price, setPrice] = useState<PriceState>(initialUser ? { status: "idle" } : { status: "locked" });
+  // R1-01: the live price is public (no account needed); the phone is asked for only to order,
+  // save, share or export.
+  const [price, setPrice] = useState<PriceState>({ status: "idle" });
   // R6-05: also when the live price says "by quote" (a special-gluing model no printer lists yet).
   const byQuote = staticQuote || price.status === "quote";
   const orderLabel = byQuote ? t("designer.price.quoteAction") : t(isVessel ? "designer.container.order" : "designer.order.button");
@@ -333,22 +418,30 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
    * Screenshot of the 3D view as the design really is: when the outside is still empty, repaint
    * the artwork sheet without the "Your logo" hint first, then put it back (R4-10).
    */
-  const shoot = useCallback(async (opts: Parameters<PackagingSceneHandle["screenshot"]>[0]) => {
-    const scene = sceneRef.current;
-    if (!scene) throw new Error("3D view not ready");
+  const withCleanArtwork = useCallback(async <T,>(fn: () => Promise<T>): Promise<T> => {
     const outside = docRef.current.artwork.outside;
-    if (outside.layers.length > 0 || outside.background) return scene.screenshot(opts);
+    if (outside.layers.length > 0 || outside.background || outside.sheetImage) return fn();
     const before = versionRef.current;
     setCleanShot(true);
     try {
       for (let i = 0; i < 40 && versionRef.current === before; i++) await new Promise((r) => setTimeout(r, 25));
       // Let the texture upload and one frame render with the repainted sheet.
       await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-      return await scene.screenshot(opts);
+      return await fn();
     } finally {
       setCleanShot(false);
     }
   }, []);
+  const shoot = useCallback(
+    async (opts: Parameters<PackagingSceneHandle["screenshot"]>[0]) => {
+      const scene = sceneRef.current;
+      if (!scene) throw new Error("3D view not ready");
+      return withCleanArtwork(() => scene.screenshot(opts));
+    },
+    [withCleanArtwork],
+  );
+  const canvasesRef = useRef(canvases);
+  canvasesRef.current = canvases;
 
   // ── preflight ────────────────────────────────────────────────────
   const issues = useMemo(() => (model ? runPreflight(doc, model) : []), [doc, model]);
@@ -589,7 +682,6 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
     const pending = gate?.then;
     setUser({ id: u.id, name: u.name });
     setGate(null);
-    setPrice({ status: "idle" });
     router.refresh();
     // verify-otp claimed this browser's anonymous designs, which is a write: read the stored
     // version again so the next save is not refused as stale (R10-R1), then continue what the
@@ -609,25 +701,18 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
   // ── live price badge ──────────────────────────────────────────────
   const qKey = quoteKey(doc, BADGE_QTY);
   useEffect(() => {
-    if (!user) {
-      setPrice({ status: "locked" });
-      return;
-    }
     const ctrl = new AbortController();
     const timer = setTimeout(() => {
       setPrice({ status: "loading" });
       fetchQuote(docRef.current, BADGE_QTY, ctrl.signal)
-        .then((s) => {
-          if (s.status === "locked") setUser(null);
-          startTransition(() => setPrice(s));
-        })
+        .then((s) => startTransition(() => setPrice(s)))
         .catch(() => undefined);
     }, 500);
     return () => {
       clearTimeout(timer);
       ctrl.abort();
     };
-  }, [qKey, user]);
+  }, [qKey]);
 
   // ── document operations ───────────────────────────────────────────
   /** Apply a geometry change (size, board, features, container), keeping artwork in place. */
@@ -691,41 +776,225 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
     [commit],
   );
 
-  const add = (layer: ArtworkLayer) => {
+  const add = (layer: ArtworkLayer, opts: { stay3d?: boolean } = {}) => {
     if (layerCount(docRef.current) >= 60) return;
-    // A masked finish switched on before any artwork existed starts on the first item (FN-02).
-    commit(fillEmptyFinishMasks(addLayer(docRef.current, layer)));
+    // A masked finish switched on before any artwork existed starts on the first item (FN-02);
+    // one that covers every item takes the new one too (finishes apply to the whole design).
+    const before = docRef.current;
+    commit(fillEmptyFinishMasks(extendFinishMasks(before, addLayer(before, layer), layer.id)));
     setSelectedId(layer.id);
-    setView("face");
+    // Simple mode keeps the 3D view: the logo shows on the box at once.
+    if (!opts.stay3d && !simple) setView("face");
   };
 
-  const onUpload = async (file: File) => {
-    if (!faceInfo) return;
+  /**
+   * Add an uploaded image. Default: the face and surface picked in the panel. From the 3D view
+   * (click or drop on a side of the box): that face, centred where it was dropped, and the 3D
+   * view stays open.
+   */
+  const onUpload = async (file: File, target?: { face: FaceId; surface: PrintSurface; at?: { x: number; y: number } }) => {
+    const f = target?.face ?? face;
+    const s = target?.surface ?? surface;
+    const info = modelRef.current?.faces[f] ?? null;
+    if (!info) return;
+    if (target) {
+      setFace(f);
+      setSurface(s);
+      setTab(1);
+    }
     setUploading(true);
     setUploadError(null);
     try {
       const img = await prepareImage(file);
-      add(makeImageLayer(face, surface, faceInfo, img));
+      let layer = makeImageLayer(f, s, info, img);
+      if (target?.at) {
+        // centred where it was dropped, kept inside the panel's safe zone
+        const safe = modelRef.current?.safeMm ?? 3;
+        const hw = Math.min(layer.width / 2 + safe, info.width / 2);
+        const hh = Math.min(layer.height / 2 + safe, info.height / 2);
+        layer = { ...layer, x: Math.min(info.width - hw, Math.max(hw, target.at.x)), y: Math.min(info.height - hh, Math.max(hh, target.at.y)) };
+      }
+      add(layer, { stay3d: !!target });
+      // R2-12: a logo too small to print sharp is said right away, not first at checkout.
+      if (target) toast.show(effectiveDpi(layer) < DPI_WARNING ? `${t("designer.artwork.addedTo", { face: faceLabel(f) })}. ${t("designer.simple.lowRes")}` : t("designer.artwork.addedTo", { face: faceLabel(f) }));
       if (!sentRef.current.uploaded) {
         sentRef.current.uploaded = true;
-        trackClient("artwork_uploaded", { structure_code: docRef.current.structureCode, surface, locale });
+        trackClient("artwork_uploaded", { structure_code: docRef.current.structureCode, surface: s, locale });
       }
     } catch (e) {
       // R10-02: say which rule the file broke (WCAG 3.3.1 / 3.3.3).
-      setUploadError(t(e instanceof UploadError ? UPLOAD_ERROR_KEY[e.kind] : "designer.artwork.uploadError"));
+      const msg = t(e instanceof UploadError ? UPLOAD_ERROR_KEY[e.kind] : "designer.artwork.uploadError");
+      setUploadError(msg);
+      if (target) toast.show(msg, { tone: "critical" });
     } finally {
       setUploading(false);
     }
   };
 
+  /** Full artwork: one image over the whole dieline of the current surface. */
+  const onSheetUpload = async (file: File) => {
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const img = await prepareImage(file, SHEET_IMAGE_OPTIONS);
+      const cur = docRef.current;
+      commit({ ...cur, artwork: { ...cur.artwork, [surface]: { ...cur.artwork[surface], sheetImage: img } } });
+      toast.show(t("designer.artwork.sheetAdded"));
+    } catch (e) {
+      setUploadError(t(e instanceof UploadError ? UPLOAD_ERROR_KEY[e.kind] : "designer.artwork.uploadError"));
+    } finally {
+      setUploading(false);
+    }
+  };
+  const onSheetRemove = () => {
+    const cur = docRef.current;
+    commit({ ...cur, artwork: { ...cur.artwork, [surface]: { ...cur.artwork[surface], sheetImage: null } } });
+  };
+
+  // ── 3D: click or drop an image on a side of the box ──────────────────
+  const pickFaceAt = useCallback(
+    (x: number, y: number) => {
+      const hit = sceneRef.current?.pickAt?.(x, y);
+      const m = modelRef.current;
+      if (!hit || !m) return null;
+      if (hit.surface === "inside" && docRef.current.printSides !== "BOTH") return null;
+      return faceAtHit(m, hit);
+    },
+    [],
+  );
+  const faceInput = useRef<HTMLInputElement>(null);
+  const faceTarget = useRef<{ face: FaceId; surface: PrintSurface; at?: { x: number; y: number } } | null>(null);
+  const press = useRef<{ x: number; y: number; t: number } | null>(null);
+  const [hoverFace, setHoverFace] = useState<FaceId | null>(null);
+  const [dragFace, setDragFace] = useState<FaceId | "none" | null>(null);
+  const [hoverSurface, setHoverSurface] = useState<PrintSurface>("outside");
+  const moveRaf = useRef(0);
+  const tapGlow = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const trackHover = (x: number, y: number, drag: boolean) => {
+    const hit = pickFaceAt(x, y);
+    if (hit) setHoverSurface(hit.surface);
+    if (drag) setDragFace(hit?.face ?? "none");
+    else setHoverFace(hit?.face ?? null);
+  };
+  // the side under the pointer (or the drop target) glows in the 3D view
+  const glowFace = dragFace && dragFace !== "none" ? dragFace : hoverFace;
+  useEffect(() => {
+    const ids = glowFace ? modelRef.current?.faces[glowFace]?.parts.map((p) => p.panelId) : null;
+    sceneRef.current?.highlight?.(ids ?? null, hoverSurface);
+  }, [glowFace, hoverSurface]);
+  useEffect(() => () => clearTimeout(tapGlow.current), []);
+  const scenePointer = {
+    onPointerDown: (e: React.PointerEvent) => {
+      // only presses on the 3D canvas itself (not the view buttons laid over it)
+      press.current = e.button === 0 && (e.target as HTMLElement).tagName === "CANVAS" ? { x: e.clientX, y: e.clientY, t: performance.now() } : null;
+    },
+    onPointerUp: (e: React.PointerEvent) => {
+      const p = press.current;
+      press.current = null;
+      // a click, not an orbit drag: short and still
+      if (!p || e.button !== 0 || Math.hypot(e.clientX - p.x, e.clientY - p.y) > 5 || performance.now() - p.t > 450) return;
+      if (isVessel || layerCount(docRef.current) >= 60) return;
+      const hit = pickFaceAt(e.clientX, e.clientY);
+      if (!hit) return;
+      setFace(hit.face);
+      setSurface(hit.surface);
+      // show which side was tapped (touch has no hover)
+      setHoverSurface(hit.surface);
+      setHoverFace(hit.face);
+      clearTimeout(tapGlow.current);
+      tapGlow.current = setTimeout(() => setHoverFace(null), 1500);
+      faceTarget.current = hit;
+      faceInput.current?.click();
+    },
+    onPointerMove: (e: React.PointerEvent) => {
+      if (e.buttons || isVessel || e.pointerType !== "mouse") return;
+      if ((e.target as HTMLElement).tagName !== "CANVAS") {
+        setHoverFace(null);
+        return;
+      }
+      const { clientX, clientY } = e;
+      cancelAnimationFrame(moveRaf.current);
+      moveRaf.current = requestAnimationFrame(() => trackHover(clientX, clientY, false));
+    },
+    onPointerLeave: () => setHoverFace(null),
+    onDragOver: (e: React.DragEvent) => {
+      if (isVessel || !e.dataTransfer.types.includes("Files")) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "copy";
+      const { clientX, clientY } = e;
+      cancelAnimationFrame(moveRaf.current);
+      moveRaf.current = requestAnimationFrame(() => trackHover(clientX, clientY, true));
+    },
+    onDragLeave: (e: React.DragEvent) => {
+      if (!(e.currentTarget as HTMLElement).contains(e.relatedTarget as Node | null)) setDragFace(null);
+    },
+    onDrop: (e: React.DragEvent) => {
+      if (isVessel) return;
+      e.preventDefault();
+      setDragFace(null);
+      const file = e.dataTransfer.files?.[0];
+      if (!file) return;
+      const hit = pickFaceAt(e.clientX, e.clientY);
+      if (!hit) {
+        toast.show(t("designer.artwork.dropOnBox"));
+        return;
+      }
+      void onUpload(file, hit);
+    },
+  };
+
+  const downloadDieline = async (kind: "svg" | "pdf") => {
+    const m = modelRef.current;
+    if (!m) return;
+    const name = `elba-${libModel?.slug ?? slugify(doc.structureCode)}-${doc.dims.L}x${doc.dims.W}x${doc.dims.H}-dieline`;
+    if (kind === "svg") {
+      const svg = dielineToSvg(m, { showBleed: true, showSafeZones: true, showLabels: true, locale, title: `${doc.name || libModel?.slug || doc.structureCode} dieline` });
+      downloadBlob(new Blob([svg], { type: "image/svg+xml" }), `${name}.svg`);
+      return;
+    }
+    await downloadPdf("template");
+  };
+
+  const downloadPdf = async (kind: "print" | "template") => {
+    const res = await fetch("/api/designs/print-pdf", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ doc: docRef.current, kind }),
+    });
+    if (!res.ok) throw new Error(`pdf ${res.status}`);
+    const blob = await res.blob();
+    const cd = res.headers.get("Content-Disposition") ?? "";
+    downloadBlob(blob, /filename="([^"]+)"/.exec(cd)?.[1] ?? `elba-${kind}.pdf`);
+  };
+
+  const logoFace = logoFaceOf(model, isVessel);
   const onAddText = () => {
-    if (!faceInfo) return;
-    let text = makeTextLayer(face, surface, faceInfo, locale === "ar" ? t("designer.artwork.defaultTextAr") : t("designer.artwork.defaultTextEn"));
+    // Simple mode: on the logo's side, outside, under the logo when there is one.
+    const f = simple && logoFace ? logoFace : face;
+    const s: PrintSurface = simple ? "outside" : surface;
+    const info = faces[f];
+    if (!info) return;
+    let text = makeTextLayer(f, s, info, locale === "ar" ? t("designer.artwork.defaultTextAr") : t("designer.artwork.defaultTextEn"));
     // Start at a size that fits the panel's safe zone.
-    const room = Math.max(10, faceInfo.width - 2 * (model?.safeMm ?? 3)) * 0.8;
+    const room = Math.max(10, info.width - 2 * (model?.safeMm ?? 3)) * 0.8;
     const m = measureText(text);
     if (m.width > room) text = { ...text, fontSizePt: Math.max(6, Math.floor(text.fontSizePt * (room / m.width))) };
-    add(fitTextBox({ ...text, color: contrastingInk(docRef.current.artwork[surface].background ?? look.outside) }));
+    text = fitTextBox({ ...text, color: contrastingInk(docRef.current.artwork[s].background ?? look.outside) });
+    if (simple && model && docRef.current.artwork[s].layers.some((l) => l.face === f)) text = placeLayer(text, info, "bottom", model.safeMm);
+    add(text);
+    if (simple) {
+      setFace(f);
+      setSurface(s);
+      setFocusTextId(text.id);
+      // Phones: the sheet comes up with the text field focused, ready to type.
+      setSheetOpen(true);
+    }
+  };
+  /** Simple mode's "Add your logo": the file picker, then the logo's side in 3D. */
+  const addLogo = () => {
+    if (!logoFace || layerCount(docRef.current) >= 60) return;
+    faceTarget.current = { face: logoFace, surface: "outside" };
+    faceInput.current?.click();
   };
   const onAddShape = (shape: "rect" | "ellipse") => faceInfo && add(makeShapeLayer(face, surface, faceInfo, shape));
   const onDelete = (id: string) => {
@@ -792,22 +1061,60 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
   const doExport = () => requireAccount("export", () => setModal("export"));
 
   const exportPng = async (size: ExportSize) => {
+    if (size === "pdf" || size === "dielinePdf" || size === "dielineSvg" || size === "glb") return exportFile(size);
     setExporting(true);
     try {
       if (view !== "3d") setView("3d");
       // Wait for the lazily loaded 3D view to be ready.
       for (let i = 0; i < 40 && !sceneRef.current?.getCanvas(); i++) await new Promise((r) => setTimeout(r, 100));
-      const px = size === "hd" ? 2160 : 1080;
-      const shot = await shoot({ width: px, height: px, background: "#ffffff" });
+      const px = size === "uhd" ? 3840 : size === "hd" ? 2160 : 1080;
+      // Supersampled (rendered larger, scaled down): crisp fold lines and print detail. The 4K
+      // studio render keeps a see-through background for websites and catalogues.
+      const shot = await shoot({ width: px, height: px, background: size === "uhd" ? null : "#ffffff", supersample: 2, maxSize: 4096 });
       // B-22: the standard PNG carries the small Elba mark (social loop); HD stays clean.
-      const blob = size === "hd" ? shot : await stampExportMark(shot, { locale }).catch(() => shot);
+      const blob = size !== "standard" ? shot : await stampExportMark(shot, { locale }).catch(() => shot);
       // Arabic names have no Latin letters: fall back to the model slug, not "box" (R4-07).
-      downloadBlob(blob, `elba-${slugify(doc.name) || libModel?.slug || slugify(doc.structureCode) || "design"}-${px}.png`);
+      downloadBlob(blob, `${exportBase()}-${px}.png`);
       trackClient("export_png", { size, structure_code: doc.structureCode, locale });
       setModal(null);
       toast.show(t("designer.export.done"), { action: { content: orderLabel, onAction: doOrder } });
     } catch {
       toast.show(t("designer.export.failed"), { tone: "critical" });
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const exportBase = () => `elba-${slugify(docRef.current.name) || libModel?.slug || slugify(docRef.current.structureCode) || "design"}`;
+
+  /** Print PDF, dieline template (SVG / PDF) and the GLB 3D model. */
+  const exportFile = async (kind: "pdf" | "dielinePdf" | "dielineSvg" | "glb") => {
+    setExporting(true);
+    try {
+      if (kind === "pdf") await downloadPdf("print");
+      else if (kind === "dielinePdf") await downloadPdf("template");
+      else if (kind === "dielineSvg") await downloadDieline("svg");
+      else {
+        if (view !== "3d") setView("3d");
+        for (let i = 0; i < 40 && !sceneRef.current?.getModel?.(); i++) await new Promise((r) => setTimeout(r, 100));
+        const root = sceneRef.current?.getModel?.();
+        const c = { get outside() { return canvasesRef.current?.outside ?? null; }, get inside() { return canvasesRef.current?.inside ?? null; } };
+        const m = modelRef.current;
+        if (!root || !m) throw new Error("3D view not ready");
+        const { exportGlb } = await import("./exportGlb");
+        const blob = await withCleanArtwork(() => exportGlb(root, {
+          outside: c?.outside ?? null,
+          inside: docRef.current.printSides === "BOTH" ? (c?.inside ?? null) : null,
+          board: boardAppearance(docRef.current.materialCode),
+          name: docRef.current.name,
+        }));
+        downloadBlob(blob, `${exportBase()}.glb`);
+      }
+      trackClient("export_png", { size: kind, structure_code: docRef.current.structureCode, locale });
+      setModal(null);
+      toast.show(t("designer.export.fileDone"), { action: { content: orderLabel, onAction: doOrder } });
+    } catch {
+      toast.show(t("designer.export.fileFailed"), { tone: "critical" });
     } finally {
       setExporting(false);
     }
@@ -841,7 +1148,11 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
       }
     });
 
-  const openPrice = () => requireAccount("price", () => setModal("price"));
+  // R1-01: no account needed to see the price sheet; R1-21: clear any toast so it never covers it.
+  const openPrice = () => {
+    toast.dismissAll();
+    setModal("price");
+  };
 
   // ── render helpers ────────────────────────────────────────────────
   const statusText = stale
@@ -1032,9 +1343,12 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
             />
           </Popover>
         </div>
-        <Button variant="primary" onClick={doOrder} loading={ordering}>
-          {orderLabel}
-        </Button>
+        {/* Phones: the order button lives in the bottom bar, under the thumb (one visible at a time). */}
+        <span className={styles.toolbarOrder}>
+          <Button variant="primary" onClick={doOrder} loading={ordering}>
+            {orderLabel}
+          </Button>
+        </span>
       </div>
 
       <div className={styles.priceRow}>
@@ -1073,6 +1387,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
 
       {/* ── stage ── */}
       <section className={styles.stage} aria-label={t("designer.view.label")}>
+        {simple ? null : (
         <div className={styles.stageHeader}>
           <ButtonGroup variant="segmented" accessibilityLabel={t("designer.view.label")}>
             {(["3d", "face", "dieline"] as const).map((v) => (
@@ -1096,11 +1411,50 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
             </ButtonGroup>
           ) : null}
         </div>
+        )}
 
         <div className={styles.stageBody}>
           {model ? (
             <>
-              <div className={styles.sceneWrap} data-active={view === "3d"} aria-hidden={view !== "3d"} data-testid="stage-3d" data-model={docModelCode(doc)}>
+              <div
+                className={styles.sceneWrap}
+                data-active={view === "3d"}
+                aria-hidden={view !== "3d"}
+                data-testid="stage-3d"
+                data-model={docModelCode(doc)}
+                data-pick={hoverFace ? "face" : undefined}
+                data-dragging={dragFace ? "true" : undefined}
+                {...(view === "3d" ? scenePointer : {})}
+              >
+                <input
+                  ref={faceInput}
+                  type="file"
+                  accept={IMAGE_ACCEPT}
+                  hidden
+                  tabIndex={-1}
+                  aria-hidden="true"
+                  data-testid="face-upload-input"
+                  onChange={(e) => {
+                    const file = e.currentTarget.files?.[0];
+                    e.currentTarget.value = "";
+                    const target = faceTarget.current;
+                    faceTarget.current = null;
+                    if (file && target) void onUpload(file, target);
+                  }}
+                />
+                {dragFace || (hoverFace && !uploading) ? (
+                  <div className={styles.dropHint} role="status">
+                    {dragFace === "none"
+                      ? t("designer.artwork.dropOnBox")
+                      : dragFace
+                        ? t("designer.artwork.dropHere", { face: faceLabel(dragFace) })
+                        : t("designer.artwork.clickHere", { face: faceLabel(hoverFace!) })}
+                  </div>
+                ) : !isVessel && !uploading && !hasImage(doc) ? (
+                  <div className={styles.dropHint} data-idle="true">
+                    {t("designer.artwork.pickHint")}
+                  </div>
+                ) : null}
                 <Stage3D
                   ariaLabel={t("viewer.label")}
                   roleDescription={t("viewer.roleDescription")}
@@ -1200,7 +1554,13 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
           )}
         </div>
 
-        {view === "3d" && isVessel ? (
+        {/* Simple mode: no fold or closure controls; phones keep the "Adjust view" menu (WCAG 2.5.7). */}
+        {simple && !wide ? (
+          <div className={styles.foldRow}>
+            <span className={styles.viewMenuSlot}>{viewMenu}</span>
+          </div>
+        ) : null}
+        {view === "3d" && isVessel && !simple ? (
           <div className={styles.foldRow}>
             <ButtonGroup variant="segmented" accessibilityLabel={t("designer.view.closurePreview")}>
               <Button size="slim" pressed={!viewOpts.open} onClick={() => setViewOpts((o) => ({ ...o, open: false }))}>
@@ -1216,7 +1576,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
             {!wide ? <span className={styles.viewMenuSlot}>{viewMenu}</span> : null}
           </div>
         ) : null}
-        {view === "3d" && !isVessel ? (
+        {view === "3d" && !isVessel && !simple ? (
           <div className={styles.foldRow}>
             <div className={styles.foldSlider}>
               <RangeSlider
@@ -1280,6 +1640,49 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
           <span>{sheetOpen ? t(isVessel ? "designer.container.collapse" : "designer.sheet.collapse") : t("designer.sheet.expand")}</span>
         </button>
         <div className={styles.panelInner} id="designer-panel">
+          <div className={styles.modeSwitch}>
+            <ButtonGroup variant="segmented" accessibilityLabel={t("designer.simple.modeLabel")}>
+              <Button pressed={simple} onClick={() => setMode("simple")}>
+                {t("designer.simple.modeSimple")}
+              </Button>
+              <Button pressed={!simple} onClick={() => setMode("advanced")}>
+                {t("designer.simple.modeAdvanced")}
+              </Button>
+            </ButtonGroup>
+          </div>
+          {simple ? (
+            <div className={styles.panelBody} data-tab="simple">
+              <SimplePanel
+                doc={doc}
+                model={libModel}
+                selected={selected}
+                uploading={uploading}
+                uploadError={uploadError}
+                faceLabel={faceLabel}
+                focusTextId={focusTextId}
+                onFocusedText={() => setFocusTextId(null)}
+                onAddLogo={addLogo}
+                onAddText={onAddText}
+                onSelect={selectLayer}
+                onLayer={onLayerChange}
+                onSeal={seal}
+                onPlace={onPlace}
+                onDelete={onDelete}
+                onBackground={(c) => commit(setBackground(docRef.current, "outside", c), "bg:outside")}
+                onGeometry={changeGeometry}
+                onOpenPicker={openPicker}
+                onAdvanced={(i) => {
+                  setMode("advanced");
+                  if (i !== undefined) setTab(i);
+                }}
+              />
+              {!user ? (
+                <Text as="p" variant="bodySm" tone="subdued">
+                  <Badge tone="info">{t("designer.freeBadge")}</Badge> {t("designer.save.anonNote")}
+                </Text>
+              ) : null}
+            </div>
+          ) : (
           <Tabs tabs={tabs} selected={tab} onSelect={(i) => startTransition(() => setTab(i))} fitted accessibilityLabel={t("designer.tabs.label")}>
             <div className={styles.panelBody} data-tab={TAB_IDS[tab]}>
               {tab === 0 ? (
@@ -1328,6 +1731,10 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
                   onDelete={() => selected && onDelete(selected.id)}
                   layerFinishes={layerFinishes}
                   onLayerFinish={(code, on) => selected && commit(setLayerFinish(docRef.current, code, selected.id, on))}
+                  sheetImage={doc.artwork[surface].sheetImage ?? null}
+                  onSheetUpload={isVessel ? undefined : onSheetUpload}
+                  onSheetRemove={onSheetRemove}
+                  onTemplate={() => void downloadDieline("svg")}
                 />
               ) : tab === 2 ? (
                 <LayersPanel doc={doc} faces={faces} faceLabel={faceLabel} issues={issues} selectedId={selectedId} onSelect={(id, f, s) => goToLayer(id, f, s)} />
@@ -1341,8 +1748,22 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
               ) : null}
             </div>
           </Tabs>
+          )}
         </div>
       </aside>
+
+      {/* Phones: the main path under one thumb (logo, text, order). */}
+      <nav ref={actionBarRef} className={styles.actionBar} aria-label={t("designer.simple.bar")}>
+        <Button icon={ImagePlus} onClick={addLogo} disabled={uploading || !logoFace} loading={uploading}>
+          {t("designer.simple.barLogo")}
+        </Button>
+        <Button icon={Type} onClick={onAddText} disabled={!model}>
+          {t("designer.simple.barText")}
+        </Button>
+        <Button variant="primary" onClick={doOrder} loading={ordering}>
+          {orderLabel}
+        </Button>
+      </nav>
 
       {pickerUsed ? <ModelPicker open={pickerOpen} current={docModelCode(doc)} onClose={() => setPickerOpen(false)} onPick={onModel} /> : null}
       <GateModal reason={gate?.reason ?? null} onClose={() => setGate(null)} onSuccess={onSignedIn} />
@@ -1364,6 +1785,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
         open={modal === "export"}
         onClose={() => setModal(null)}
         onExport={exportPng}
+        model3d={!isVessel}
         busy={exporting}
         orderLabel={orderLabel}
         onOrder={() => {

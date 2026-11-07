@@ -10,7 +10,7 @@ import { siteUrl } from "@/lib/env";
 import { PortfolioGallery } from "@/components/store/PortfolioGallery";
 import { SpecTable } from "@/components/store/SpecTable";
 import { RatingStars } from "@/components/store/RatingStars";
-import { JsonLd } from "@/components/store/JsonLd";
+import { JsonLd } from "@/components/store/JsonLdScript";
 import { breadcrumbJsonLd, vendorJsonLd } from "@/components/store/jsonld";
 import { designHref } from "@/components/store/catalog";
 import { getVendorBySlug } from "@/components/store/data";

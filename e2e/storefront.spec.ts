@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { sendOtp, uniquePhone } from "./fixtures/factory";
+import { sendOtp, uniquePhone, verifyNewAccount } from "./fixtures/factory";
 
 /** Storefront main flows on seeded data (owner: storefront). */
 
@@ -17,21 +17,23 @@ test("home → catalogue → structure → SEO size page with price table and JS
   await page.goto("/en");
   await page.waitForLoadState("networkidle");
   // R6 home: one real h1 (the rotating alternates are aria-hidden), the hero motion control
-  // (WCAG 2.2.2), real numbers from the library and the pricing engine, no FAQ (the home mirrors
-  // the marketing reference, which has none).
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Packaging worthy of your brand");
+  // (WCAG 2.2.2), real numbers from the library and the pricing engine, and since the
+  // simplicity round (docs/audit/simplicity-2026-11/marketing.md) a plain-words FAQ near the end.
+  // Printing first (printing-first.md): the h1 sells printed boxes and "What we print" comes second.
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Printed boxes for your brand");
   await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
   await expect(page.getByRole("button", { name: /Pause rotation|Rotate the box/ })).toBeVisible();
-  await expect(page.getByRole("heading", { level: 2, name: /^\d+ models in one library$/ })).toBeVisible();
-  await expect(page.getByText(/^EGP [\d,.]+ per box for 500 mailer boxes/)).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: "What we print for you" })).toBeVisible();
+  // R1-12: short home; the guarantee comes right after the products, prices are for 500 pieces.
+  await expect(page.getByRole("heading", { level: 2, name: "Elba stands behind every order" })).toBeVisible();
+  await expect(page.getByText(/^EGP [\d,.]+ each for 500 pieces$/).first()).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: "Questions about ordering and printing" })).toBeVisible();
   await noHorizontalScroll(page);
 
-  await page.getByRole("link", { name: "Browse box styles" }).first().click();
-  await expect(page).toHaveURL(/\/en\/catalog$/, { timeout: 20_000 });
-  // Worldwide catalogue (e2e/catalogue.spec.ts): find the mailer by code, open its model page.
-  await page.getByTestId("catalogue-search").fill("FEFCO 0427");
-  await page.locator('[data-model="FEFCO_0427"]').click();
-  await page.getByRole("link", { name: "Sizes and prices: Mailer box" }).click();
+  // R1-04: "Get your box price" opens the /boxes chooser; a card's "Details" opens the box page.
+  await page.getByRole("main").getByRole("link", { name: "Get your box price" }).first().click();
+  await expect(page).toHaveURL(/\/en\/boxes$/, { timeout: 20_000 });
+  await page.getByRole("link", { name: "Details: Mailer box" }).click();
   await expect(page).toHaveURL(/\/en\/boxes\/mailer-box$/, { timeout: 20_000 });
   await expect(page.getByRole("heading", { level: 1, name: "Mailer box" })).toBeVisible();
   await expect(page.getByRole("table")).toContainText("2,000");
@@ -48,7 +50,7 @@ test("home → catalogue → structure → SEO size page with price table and JS
   await expect(page).toHaveTitle(/Custom printed mailer box 33×20×12 cm/);
   const ld = await page.locator('script[type="application/ld+json"]').first().textContent();
   expect(JSON.parse(ld!)[0]).toMatchObject({ "@type": "Product", offers: { priceCurrency: "EGP" } });
-  const cta = page.getByRole("link", { name: "Design it free" }).first();
+  const cta = page.getByRole("link", { name: "Order this box" }).first();
   await expect(cta).toHaveAttribute("href", /\/en\/design\?structure=FEFCO_0427&L=330&W=200&H=120/);
   await noHorizontalScroll(page);
 });
@@ -112,10 +114,7 @@ test("account: sign in, withdraw marketing consent, request data deletion", asyn
   await expect(page).toHaveURL(/\/en\/login\?next=/, { timeout: 20_000 });
   await page.waitForLoadState("networkidle"); // let the form hydrate before typing
   const code = await sendOtp(page, phone);
-  await page.getByLabel("Verification code").fill(code);
-  await page.getByLabel(/I agree to the terms/i).check();
-  await page.getByLabel(/Send me offers/).check();
-  await page.getByRole("button", { name: "Verify and continue" }).click();
+  await verifyNewAccount(page, code, { marketing: true });
   await expect(page).toHaveURL(/\/en\/account$/, { timeout: 30_000 });
   await page.waitForLoadState("networkidle");
 

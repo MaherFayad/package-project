@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
 import { getT, toLocale } from "@/i18n";
-import { JsonLd } from "@/components/store/JsonLd";
+import { JsonLd } from "@/components/store/JsonLdScript";
 import { breadcrumbJsonLd } from "@/components/store/jsonld";
 import { siteUrl } from "@/lib/env";
-import { formatNumber } from "@/lib/format";
 import { CatalogueBrowser } from "@/components/catalogue/CatalogueBrowser";
-import { COPY, fill } from "@/components/catalogue/copy";
+import { COPY } from "@/components/catalogue/copy";
 import { getCatalogueData } from "@/components/catalogue/server";
 import styles from "@/components/catalogue/catalogue.module.css";
 import { Sheet } from "@/components/marketing/kit/Sheet";
 import { Glow } from "@/components/marketing/kit/Glow";
 import { Eyebrow, Lead } from "@/components/marketing/kit/Display";
 import { HeroTitle } from "@/components/marketing/kit/HeroTitle";
+import { Pill } from "@/components/marketing/kit/Pill";
+import { startHref } from "@/components/marketing/navModel";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -50,20 +51,14 @@ export default async function CatalogPage({ params }: Props) {
         <Glow color="green" x="5%" y="110%" size="45vmax" />
         <Eyebrow className="m-enter">{COPY.eyebrow[locale]}</Eyebrow>
         <HeroTitle size="64" id="catalogue-title" text={COPY.title[locale]} />
-        <Lead className="m-enter-lcp">{fill(COPY.lead[locale], { count: formatNumber(data.counts.total) })}</Lead>
-        <dl className={`${styles.stats} m-enter`}>
-          {[
-            [data.counts.total, COPY.statModels],
-            [data.counts.designer, COPY.statDesigner],
-            [data.counts.egypt, COPY.statEgypt],
-            [data.counts.instant, COPY.statInstant],
-          ].map(([n, label]) => (
-            <div key={(label as { en: string }).en} className={styles.stat}>
-              <dt className={styles.statLabel}>{(label as { ar: string; en: string })[locale]}</dt>
-              <dd className={styles.statNum}>{formatNumber(n as number)}</dd>
-            </div>
-          ))}
-        </dl>
+        <Lead className="m-enter-lcp">{COPY.lead[locale]}</Lead>
+        {/* R1-09: no counter block; the shop-style way in is the box chooser, grouped by what you sell. */}
+        <div className={`${styles.pick} m-enter`}>
+          <p>{COPY.pickTitle[locale]}</p>
+          <Pill href={startHref(locale)} size="lg">
+            {COPY.pickCta[locale]}
+          </Pill>
+        </div>
       </Sheet>
       <Sheet tone="white" aria-label={COPY.eyebrow[locale]}>
         <CatalogueBrowser locale={locale} cards={data.cards} taxonomy={data.taxonomy} />

@@ -3,7 +3,8 @@ import { Card, Text } from "@/components/marketing/mkui";
 import { MAX_INSTANT_QTY } from "@/types";
 import { getT } from "@/i18n";
 import type { DictKey } from "@/i18n";
-import { formatDims, formatMoney, formatNumber } from "@/lib/format";
+import { formatMoney, formatNumber } from "@/lib/format";
+import { formatCm } from "./catalog";
 import type { PriceFrom } from "./data";
 import { SpecTable } from "./SpecTable";
 import styles from "./store.module.css";
@@ -15,7 +16,8 @@ export function PriceFromTable({ locale, dims, price, title }: { locale: Locale;
     <Card title={title ?? t("store.structure.priceTitle")} as="section">
       <div className={styles.prose}>
         <Text as="p" tone="subdued">
-          {t("store.structure.priceIntro", { dims: formatDims(dims, locale), material: t(`materials.${price.material}` as DictKey) })}
+          {/* R3-06: cm and the plain board name, as on the rest of the page. */}
+          {t("store.structure.priceIntro", { dims: `⁦${formatCm(dims).replace(/×/g, " × ")}⁩ ${t("common.cm")}`, material: t(`materialsPlain.${price.material}` as DictKey) })}
         </Text>
         {price.rows.length ? (
           <div className={styles.tableWrap}>

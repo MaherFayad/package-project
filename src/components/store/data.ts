@@ -19,7 +19,8 @@ import type {
 import { db } from "@/lib/db";
 import { fromJson } from "@/lib/json";
 import { defaultMaterialFor, materialFitsStructure } from "@/lib/dieline";
-import { headlineInput, priceTable, toPublicOffer, type PricingData, type VendorOffer } from "@/lib/pricing";
+import { buyerPrice, headlineInput, PRICE_REFERENCE, priceTable, toPublicOffer, type PricingData, type VendorOffer } from "@/lib/pricing";
+import { loadCheckoutSettings } from "@/lib/orders/checkout-settings";
 import { loadPricingData } from "@/lib/pricing/server";
 import { loadPricingConfig } from "@/components/admin/server/settings";
 import type { VendorListItem } from "./vendor-filters";
@@ -219,12 +220,19 @@ export const getVendorBySlug = catalogCached("vendor-by-slug", async (slug: stri
 
 // ───────────────────────────── "From" prices ─────────────────────────────
 
+/**
+ * One row of the public price table, in the ONE buyer model (R1-02, `buyerPrice` in
+ * `@/lib/pricing/buyer`): exactly what checkout charges for this quantity.
+ */
 export interface PriceFromRow {
   quantity: number;
-  /** All-in per box ex-VAT (setup, die if any, delivery to Greater Cairo). */
+  /** All-in per box ex-VAT: printing, setup, die (non-standard sizes only), delivery to Greater Cairo, after the online-payment discount. */
   unitPiasters: Piasters;
-  /** Total ex-VAT. */
+  /** Total ex-VAT (same basis). */
   subtotalPiasters: Piasters;
+  /** What the buyer pays, incl. 14% VAT. */
+  totalPiasters: Piasters;
+  /** Door-to-door calendar days, the same number checkout turns into an arrival date. */
   deliveryDays: number;
 }
 
@@ -233,49 +241,62 @@ export interface PriceFrom {
   rows: PriceFromRow[];
   validUntil: string | null;
   vendorCount: number;
+  /** The smallest quantity a buyer can order at checkout (the first instant tier with a price); null when none. */
+  minQuantity: number | null;
+  /** The online-payment discount already included in every row (percent). */
+  prepayDiscountPct: number;
 }
 
 const pricingData = catalogCached("pricing-data", async (): Promise<PricingData> => loadPricingData());
 const pricingConfig = catalogCached("pricing-config", () => loadPricingConfig());
+const checkoutSettings = catalogCached("checkout-settings", () => loadCheckoutSettings());
 
 /**
- * Public prices for the catalogue, from the ONE journey price source (B-26,
- * `@/lib/pricing/headline`): headline defaults (full colour, outside print, no finish, default
- * board, Greater Cairo) and the best-match offer per quantity tier, which is the vendor checkout
- * pre-selects. The designer badge and checkout use the same rule, so a 500-box mailer shows one
- * price and one lead time from landing to payment. (Was: 1 colour here, the cheapest offer in
- * the designer, best match in checkout: three different numbers.)
+ * Public prices for the catalogue, from the ONE journey price source (B-26 / R1-02):
+ * headline defaults (full colour, outside print, no finish, default board, Greater Cairo), the
+ * best-match offer per quantity tier (the vendor checkout pre-selects), and `buyerPrice` (the
+ * totals checkout charges, online-payment discount included). The designer badge, its price
+ * sheet and checkout use the same rule, so a 500-box mailer shows one price and one delivery
+ * time from landing to payment.
  * Only public numbers leave this function (vendor buy price and margin are stripped).
- * The buyer's exact instant price stays behind the free account in the designer (G2 gate).
  */
 export async function getPriceFrom(code: StructureCode, dims: Dims, material?: MaterialCode): Promise<PriceFrom> {
   const mat = material && materialFitsStructure(material, code) ? material : defaultMaterialFor(code);
   try {
-    const data = await pricingData();
-    const table = priceTable(
-      headlineInput(code, dims, mat),
-      data,
-      { config: await pricingConfig() },
-    );
+    const [data, config, settings] = await Promise.all([pricingData(), pricingConfig(), checkoutSettings()]);
+    const table = priceTable(headlineInput(code, dims, mat), data, { config });
     const rows: PriceFromRow[] = [];
     let validUntil: string | null = null;
     for (const r of table) {
       if (!r.best) continue;
       const o = toPublicOffer(r.best as VendorOffer);
       validUntil = validUntil ?? o.validUntil;
-      rows.push({ quantity: r.quantity, unitPiasters: o.unitPiasters, subtotalPiasters: o.subtotalPiasters, deliveryDays: o.deliveryDays });
+      const p = buyerPrice(o, settings.prepayDiscountPct);
+      rows.push({ quantity: r.quantity, unitPiasters: p.unitPiasters, subtotalPiasters: p.subtotalPiasters, totalPiasters: p.totalPiasters, deliveryDays: p.deliveryDays });
     }
     const vendorCount = data.vendors.filter((v) => v.status === "ACTIVE" && v.capabilities.structures.includes(code)).length;
-    return { material: mat, rows, validUntil, vendorCount };
+    return { material: mat, rows, validUntil, vendorCount, minQuantity: rows[0]?.quantity ?? null, prepayDiscountPct: settings.prepayDiscountPct };
   } catch {
     // Invalid size for pricing or engine error: the page still renders, without prices.
-    return { material: mat, rows: [], validUntil: null, vendorCount: 0 };
+    return { material: mat, rows: [], validUntil: null, vendorCount: 0, minQuantity: null, prepayDiscountPct: 0 };
   }
 }
 
-/** Cheapest per-box price at the largest instant tier (for catalogue cards). */
-export async function getLowestUnit(code: StructureCode, dims: Dims): Promise<Piasters | null> {
+/**
+ * Per-box price at the reference quantity (500, `PRICE_REFERENCE.quantity`) for catalogue and
+ * home cards: "500 boxes: EGP X per box". R1-08: was the 2,000-box price, about 4x below what a
+ * small order costs. Falls back to the nearest smaller tier when 500 has no instant price.
+ */
+export async function getReferenceUnit(code: StructureCode, dims: Dims): Promise<Piasters | null> {
   const p = await getPriceFrom(code, dims);
-  if (!p.rows.length) return null;
-  return Math.min(...p.rows.map((r) => r.unitPiasters));
+  const row = p.rows.find((r) => r.quantity === PRICE_REFERENCE.quantity) ?? [...p.rows].reverse().find((r) => r.quantity < PRICE_REFERENCE.quantity) ?? p.rows[0];
+  return row?.unitPiasters ?? null;
+}
+
+/** @deprecated Name kept for existing call sites: returns the 500-box price (`getReferenceUnit`), not the lowest tier. */
+export const getLowestUnit = getReferenceUnit;
+
+/** The smallest quantity a buyer can order at checkout, for "minimum order" copy (R1-08). */
+export async function getMinOrderQuantity(): Promise<number | null> {
+  return (await getPriceFrom(PRICE_REFERENCE.code, PRICE_REFERENCE.dims)).minQuantity;
 }

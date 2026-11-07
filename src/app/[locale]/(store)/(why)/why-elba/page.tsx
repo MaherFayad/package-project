@@ -9,7 +9,7 @@ import { siteUrl } from "@/lib/env";
 import { BOX_STRUCTURE_LIST } from "@/lib/dieline";
 import type { FinishCode, StructureCode } from "@/types";
 import { designHref, structureHref } from "@/components/store/catalog";
-import { JsonLd } from "@/components/store/JsonLd";
+import { JsonLd } from "@/components/store/JsonLdScript";
 import { faqJsonLd } from "@/components/store/jsonld";
 import { renderSrc, srcSetFor } from "@/components/marketing/assets";
 import { startHref } from "@/components/marketing/MarketingHeader";

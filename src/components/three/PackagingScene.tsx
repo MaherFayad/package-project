@@ -3,12 +3,14 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type Ref } from "react";
-import { PerspectiveCamera, Spherical, Vector3, type DirectionalLight, type Group } from "three";
+import { PerspectiveCamera, Raycaster, Spherical, Vector2, Vector3, type DirectionalLight, type Group, type Object3D } from "three";
+import { MAT_INSIDE, MAT_OUTSIDE } from "./boardMaterials";
 import { boundsAt, maxStage, type DielineModel } from "@/lib/dieline";
 import { BOX_BOARD_CODES, type BoxBoardCode, type ConfigFinishCode } from "@/lib/configurator";
 import { usePrefersReducedMotion } from "./hooks";
 import { MM, PackagingModel, type PackagingModelProps } from "./PackagingModel";
 import { captureScreenshot, type ScreenshotOptions } from "./screenshot";
+import { setHighlight } from "./pickHighlight";
 import { FinishedPackagingModel, type SurfaceFinishProps } from "./finishes/FinishedPackagingModel";
 import { StudioStage, type StageOptions } from "./finishes/StudioStage";
 import { AUTO_ROTATE, easeInOutCubic, easeOutQuint } from "./finishes/motion";
@@ -16,9 +18,9 @@ import { StudioLighting } from "./lighting";
 import { SoftShadow } from "./SoftShadow";
 import { InteractionDpr, useOnScreen } from "./perf";
 import { applyViewInsets, normInsets, sameInsets, visibleFraction, NO_INSETS, type FitInsets } from "./fit";
-import { EngineCanvas, useRegisterViewApi, type EngineToneMapping, type EngineViewApi, type ViewName } from "./EngineCanvas";
+import { EngineCanvas, useRegisterViewApi, type EngineToneMapping, type EngineViewApi, type PickHit, type ViewName } from "./EngineCanvas";
 
-export type { ViewName } from "./EngineCanvas";
+export type { ViewName, PickHit } from "./EngineCanvas";
 export type { FitInsets } from "./fit";
 
 /** Imperative API (keyboard/button controls, export). Angles in degrees. */
@@ -35,6 +37,12 @@ export interface PackagingSceneHandle {
   getCanvas(): HTMLCanvasElement | null;
   /** Report an overlay covering part of the canvas (px); the fit frames the model in the rest. ViewControls calls this itself. */
   setFitInsets?(insets: FitInsets | null): void;
+  /** The printed board under a viewport point (client px): panel, surface and sheet mm. */
+  pickAt?(clientX: number, clientY: number): PickHit | null;
+  /** The box model's root object (3D export). */
+  getModel?(): Object3D | null;
+  /** Glow the given panels' printed surface (hover / drop target); null clears it. */
+  highlight?(panelIds: readonly string[] | null, surface?: "outside" | "inside"): void;
 }
 
 export interface PackagingSceneProps extends Omit<PackagingModelProps, "foldProgress"> {
@@ -448,6 +456,37 @@ function Rig({
       setFitInsets(i) {
         setApiInsets(i ? normInsets(i) : NO_INSETS);
       },
+      pickAt(clientX, clientY) {
+        const rect = gl.domElement.getBoundingClientRect();
+        if (!rect.width || !rect.height) return null;
+        const ndc = new Vector2(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
+        const ray = new Raycaster();
+        ray.setFromCamera(ndc, cam);
+        for (const hit of ray.intersectObjects(scene.children, true)) {
+          const panelId = hit.object.userData?.panelId as string | undefined;
+          if (!panelId) continue;
+          const slot = hit.face?.materialIndex;
+          // cut edges carry a flute tile, not sheet UVs: look at the next surface behind
+          if (!hit.uv || (slot !== MAT_OUTSIDE && slot !== MAT_INSIDE)) continue;
+          return {
+            panelId,
+            surface: slot === MAT_INSIDE ? "inside" : "outside",
+            sheet: { x: hit.uv.x * dieline.sheet.width, y: (1 - hit.uv.y) * dieline.sheet.height },
+          };
+        }
+        return null;
+      },
+      getModel() {
+        let found: Object3D | null = null;
+        scene.traverse((o) => {
+          if (!found && o.userData?.elbaModel) found = o;
+        });
+        return found;
+      },
+      highlight(ids, surface = "outside") {
+        setHighlight(scene, ids, surface);
+        invalidate();
+      },
     };
     return () => {
       apiRef.current = null;
@@ -458,6 +497,8 @@ function Rig({
   const flatSize = useMemo(() => boundsAt(dieline, 0).getSize(new Vector3()).multiplyScalar(MM), [dieline]);
   // the shadow area covers the flat sheet too, so unfolding never clips it
   const extent = Math.max(closedSize.x, closedSize.z, flatSize.x * 0.6, flatSize.z * 0.6, 0.05);
+  // key-light shadow camera: covers the model at any fold (the flat sheet included)
+  const shadowRadius = 0.55 * Math.max(closedSize.length(), flatSize.length(), 0.05);
 
   return (
     <>
@@ -466,12 +507,13 @@ function Rig({
           {...stage}
           size={{ x: closedSize.x, y: closedSize.y, z: closedSize.z }}
           outerMm={dieline.closedOuter}
+          shadowRadius={shadowRadius}
           shadows={shadows}
           progressRef={progressRef}
         />
       ) : (
         <>
-          <StudioLighting />
+          <StudioLighting shadowRadius={shadows ? shadowRadius : 0} />
           {shadows ? <SoftShadow scale={extent * 4} far={Math.max(closedSize.y, extent) * 1.5} blur={2.4} opacity={0.5} contactOpacity={0.55} /> : null}
         </>
       )}
@@ -570,6 +612,9 @@ export function PackagingSceneContent(props: PackagingSceneContentProps) {
       screenshot: (o) => (apiRef.current ? apiRef.current.screenshot(o) : Promise.reject(new Error("3D view not ready"))),
       getCanvas: () => apiRef.current?.canvas ?? null,
       setFitInsets: (i) => apiRef.current?.setFitInsets?.(i),
+      pickAt: (x, y) => apiRef.current?.pickAt?.(x, y) ?? null,
+      getModel: () => apiRef.current?.getModel?.() ?? null,
+      highlight: (ids, s) => apiRef.current?.highlight?.(ids, s),
     }),
     [],
   );

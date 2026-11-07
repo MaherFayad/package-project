@@ -24,6 +24,9 @@ export function apiHeaders(dev = isDev, https = httpsSite): { key: string; value
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Pin the workspace root: a stray lockfile in a parent folder (e.g. the user's home dir)
+  // otherwise makes Next infer the wrong root and resolve modules from outside the project.
+  outputFileTracingRoot: process.cwd(),
   // The floating dev badge sat on top of the admin/vendor side-nav footer ("Back to store").
   // Build and runtime errors still open the dev overlay.
   devIndicators: false,

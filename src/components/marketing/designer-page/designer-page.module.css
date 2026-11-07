@@ -115,6 +115,11 @@
   padding: 2px 8px; font-size: 0.75rem; font-weight: 550; background: var(--dp-violet); color: #fff; border-radius: 4px 4px 0 0;
 }
 .frame .lead { margin-inline: auto; color: rgba(255, 255, 255, 0.82); }
+/* Phone: the "selected text box" drawing reads as a debug overlay and its tag hits the header. */
+@media (max-width: 767px) {
+  .frame { border-color: transparent; background: none; padding-inline: 0; }
+  .frameTag { display: none; }
+}
 .heroCtas { align-items: center; }
 .pillLine { display: flex; flex-wrap: wrap; gap: var(--mk-grid-gap-tight); justify-content: center; }
 

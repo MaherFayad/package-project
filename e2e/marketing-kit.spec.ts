@@ -143,7 +143,7 @@ test("header: transparent over a hero, solid after scroll; mega-menu by hover, c
   await expect(page.getByRole("link", { name: "Folding cartons" })).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(products).toBeFocused();
-  await expect(page.getByRole("link", { name: "Start free" }).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: "Get your box price" }).first()).toBeVisible();
   await expect(page.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/en/login");
 });
 

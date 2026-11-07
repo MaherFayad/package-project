@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import models from "./fixtures/models.json";
+import { designerAllOptions } from "./fixtures/factory";
 
 /**
  * Every model of the library (src/lib/library, manifest in e2e/fixtures/models.json): open it in
@@ -76,8 +77,10 @@ async function pickOther(page: Page, group: string, type: "radio" | "checkbox") 
   return false;
 }
 
-test.beforeEach(({}, info) => {
+test.beforeEach(async ({ context }, info) => {
   test.skip(info.project.name !== "desktop", "desktop only");
+  // Size fields, board and finishes are under "All options" (the designer opens in Basics).
+  await designerAllOptions(context);
 });
 
 for (const m of models) {

@@ -7,10 +7,9 @@ import { getT } from "@/i18n";
 import { formatMoney, formatNumber } from "@/lib/format";
 import { siteUrl } from "@/lib/env";
 import { vatOf } from "@/lib/pricing/money";
-import { MODELS } from "@/lib/library";
 import { DESIGN_FINISH_CODES, type StructureCode } from "@/types";
 import { designHref } from "@/components/store/catalog";
-import { getPriceFrom, listStructures, listVendors } from "@/components/store/data";
+import { getPriceFrom, listStructures } from "@/components/store/data";
 import { preload } from "react-dom";
 import { R6_CARDS, SAMPLE_LABEL } from "@/components/marketing/kit/assets";
 import { Sheet } from "@/components/marketing/kit/Sheet";
@@ -24,9 +23,10 @@ import { PinnedScale } from "@/components/marketing/kit/PinnedScale";
 import { CardFan } from "@/components/marketing/kit/CardFan";
 import { Bento, BentoCard } from "@/components/marketing/kit/Bento";
 import { Glow } from "@/components/marketing/kit/Glow";
-import { PhoneSignup } from "@/components/marketing/kit/PhoneSignup";
 import { renderDims, renderSrc, srcSetFor } from "@/components/marketing/assets";
 import { fill, startCopy } from "@/components/marketing/start/copy";
+import { daysWord } from "@/components/marketing/home/copy";
+import { startHref } from "@/components/marketing/navModel";
 import s from "@/components/marketing/start/start.module.css";
 
 type Props = { params: Promise<{ locale: string }> };
@@ -104,9 +104,8 @@ export default async function StartPage({ params }: Props) {
   const locale = toLocale((await params).locale);
   const t = getT(locale);
   const c = startCopy(locale);
-  const [structures, vendors, mailer] = await Promise.all([
+  const [structures, mailer] = await Promise.all([
     listStructures(),
-    listVendors(),
     getPriceFrom("FEFCO_0427", { L: 250, W: 180, H: 80 }),
   ]);
   const design = designHref(locale, { structure: "FEFCO_0427" });
@@ -117,11 +116,6 @@ export default async function StartPage({ params }: Props) {
   const money = (p: number) => formatMoney(p, locale, { alwaysDecimals: true });
   const rows = QTYS.map((q) => mailer.rows.find((r) => r.quantity === q)).filter((r): r is NonNullable<typeof r> => !!r);
   const row500 = rows.find((r) => r.quantity === 500) ?? rows[0];
-  const stats = [
-    { n: MODELS.length, label: c.bento.stats.models },
-    { n: DESIGN_FINISH_CODES.length, label: c.bento.stats.finishes },
-    { n: vendors.length, label: c.bento.stats.printers },
-  ];
   // The centre cutout is the LCP image: preload its AVIF from <head> with the same srcset.
   const heroSizes = "(max-width: 767px) 74vw, 480px";
   preload(`${R6}/${HERO_KEY}.avif`, { as: "image", type: "image/avif", imageSrcSet: `${R6}/${HERO_KEY}.avif 400w, ${R6}/${HERO_KEY}@2x.avif 800w`, imageSizes: heroSizes, fetchPriority: "high" });
@@ -183,7 +177,7 @@ export default async function StartPage({ params }: Props) {
         </div>
         <div className={s.heroFoot}>
           <p className={s.heroSub}>{c.hero.sub}</p>
-          <Pill href={design}>{c.hero.cta}</Pill>
+          <Pill href={startHref(locale)}>{c.hero.cta}</Pill>
         </div>
         </Stack>
       </Sheet>
@@ -216,7 +210,6 @@ export default async function StartPage({ params }: Props) {
             {c.choose.cta}
             <ArrowRight size={18} aria-hidden="true" className={s.flip} />
           </Pill>
-          <span className={s.muted}>{fill(c.choose.count, { count: formatNumber(MODELS.length) })}</span>
         </div>
         <Grid as="ul" cols={4} colsMd={4} colsSm={2} className={s.styles}>
           {SIDE_STYLES.map((code) => {
@@ -311,7 +304,7 @@ export default async function StartPage({ params }: Props) {
                 </div>
               </dl>
             ) : null}
-            {row500 ? <p className={s.coMeta}>{fill(c.paid.delivery, { days: formatNumber(row500.deliveryDays) })}</p> : null}
+            {row500 ? <p className={s.coMeta}>{fill(c.paid.delivery, { days: formatNumber(row500.deliveryDays), daysWord: daysWord(locale, row500.deliveryDays) })}</p> : null}
             <Pill href={design} variant="dark" className={s.coCta}>
               {c.choose.cta}
             </Pill>
@@ -374,7 +367,7 @@ export default async function StartPage({ params }: Props) {
               <div className={s.mock} aria-hidden="true">
                 <span className={s.mockLink}>
                   <Link2 size={16} />
-                  <span dir="ltr">{c.bento.linkLabel}</span>
+                  <span>{c.bento.linkLabel}</span>
                 </span>
                 <img src={renderSrc("ECMA_RTE")} srcSet={srcSetFor(renderSrc("ECMA_RTE"))} sizes="140px" {...renderDims(renderSrc("ECMA_RTE"))} loading="lazy" decoding="async" alt="" className={s.mockImg} />
               </div>
@@ -388,7 +381,7 @@ export default async function StartPage({ params }: Props) {
               <div className={s.mock} aria-hidden="true">
                 <span className={s.mockFile}>
                   <FileDown size={22} />
-                  <span dir="ltr">{c.bento.pdfName}</span>
+                  <span>{c.bento.pdfName}</span>
                 </span>
                 <svg className={s.dieline} viewBox="0 0 200 120" aria-hidden="true">
                   <path d="M40 10h120v100H40z M40 40h120 M40 80h120 M10 40h30v40H10z M160 40h30v40h-30z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeDasharray="5 4" />
@@ -426,21 +419,11 @@ export default async function StartPage({ params }: Props) {
               </div>
             }
           />
-          <BentoCard span={2} tone="dark" title={c.bento.statsTitle} className={s.statsCard}>
-            <dl className={s.stats}>
-              {stats.map((x) => (
-                <div key={x.label}>
-                  <dt>{x.label}</dt>
-                  <dd className={s.num}>{formatNumber(x.n)}</dd>
-                </div>
-              ))}
-            </dl>
-          </BentoCard>
         </Bento>
         </SectionHead>
       </Sheet>
 
-      {/* ───────── 7 · Closing CTA with phone sign-up (kit PhoneSignup = HeroPhoneForm logic) ───────── */}
+      {/* ───────── 7 · Closing CTA: one link to the /boxes chooser. No phone field (R3-07): the price never needs a number. ───────── */}
       <Sheet tone="dark" y="xl" aria-labelledby="closing-title">
         <SectionHead
           id="closing-title"
@@ -462,11 +445,12 @@ export default async function StartPage({ params }: Props) {
                 </li>
               ))}
             </ol>
-            <PhoneSignup
-              designPath={design}
-              align="center"
-              labels={{ label: c.closing.label, placeholder: c.closing.placeholder, submit: c.closing.submit, error: c.closing.error, fine: c.closing.fine }}
-            />
+            <div className={s.closingCta}>
+              <Pill href={startHref(locale)} size="lg">
+                {c.closing.cta}
+              </Pill>
+              <p className={s.muted}>{c.closing.fine}</p>
+            </div>
           </Stack>
         </SectionHead>
       </Sheet>

@@ -82,3 +82,22 @@ describe("money math is exact integer piasters (Egyptian VAT 14%)", () => {
     expect(u.totalPiasters).toBe(u.subtotalPiasters + u.vatPiasters);
   });
 });
+
+describe("R3-12: per box × quantity = the boxes line", () => {
+  it("rounds the discounted ex-VAT amount down to whole piasters per box, in the buyer's favour", () => {
+    const l: QuoteLine[] = [
+      { kind: "PRODUCT", labelKey: "x", quantity: 500, unitPiasters: 3_661, totalPiasters: 1_830_500 },
+      { kind: "SETUP", labelKey: "x", quantity: 1, unitPiasters: 75_000, totalPiasters: 75_000 },
+      { kind: "SHIPPING", labelKey: "x", quantity: 1, unitPiasters: 50_200, totalPiasters: 50_200 },
+    ];
+    const plain = 1_830_500 + 75_000 + 50_200 - 57_165; // 3% of the goods, the old rule
+    const t = orderTotals(l, 3);
+    expect(t.subtotalPiasters % 500).toBe(0);
+    expect(t.subtotalPiasters).toBeLessThanOrEqual(plain);
+    expect(plain - t.subtotalPiasters).toBeLessThan(500);
+    expect(t.discountPiasters).toBe(t.subtotalPiasters === plain ? 57_165 : 57_165 + (plain - t.subtotalPiasters));
+    expect(t.totalPiasters).toBe(t.subtotalPiasters + vatOn(t.subtotalPiasters));
+    // Without the discount nothing is rounded (a team price or a sample is charged as sent).
+    expect(orderTotals(l, 0).subtotalPiasters).toBe(1_955_700);
+  });
+});

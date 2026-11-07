@@ -51,7 +51,21 @@ function loadImage(url: string): Promise<HTMLImageElement> {
  * Turn an uploaded file into a data URL we can store: SVGs are rasterised (scripts in SVG never
  * run in an <img>, and the server only accepts raster data), big photos are scaled down.
  */
-export async function prepareImage(file: File): Promise<PreparedImage> {
+/** Limits for one upload. Full-sheet artwork gets a larger budget than a face image. */
+export interface PrepareOptions {
+  maxPx?: number;
+  maxChars?: number;
+  /** No transparency needed (a full print sheet): encode as JPEG, smaller. */
+  opaque?: boolean;
+}
+
+/** Full artwork over the whole dieline: up to 7000 px (300 dpi on a ~590 mm sheet). */
+export const SHEET_IMAGE_OPTIONS: PrepareOptions = { maxPx: 7000, maxChars: 6_500_000, opaque: true };
+
+export async function prepareImage(file: File, opts: PrepareOptions = {}): Promise<PreparedImage> {
+  const maxPx = opts.maxPx ?? IMAGE_MAX_PX;
+  const maxChars = opts.maxChars ?? IMAGE_MAX_SRC_CHARS;
+  const svgPx = opts.maxPx ? Math.max(SVG_RASTER_PX, Math.min(opts.maxPx, 6000)) : SVG_RASTER_PX;
   const refused = rejectReason(file);
   if (refused) throw new UploadError(refused);
   const isSvg = file.type === "image/svg+xml" || file.name.toLowerCase().endsWith(".svg");
@@ -62,20 +76,20 @@ export async function prepareImage(file: File): Promise<PreparedImage> {
     let h = img.naturalHeight || 0;
     if (isSvg) {
       if (!w || !h) {
-        w = SVG_RASTER_PX;
-        h = SVG_RASTER_PX;
+        w = svgPx;
+        h = svgPx;
       }
-      const k = SVG_RASTER_PX / Math.max(w, h);
+      const k = svgPx / Math.max(w, h);
       w = Math.round(w * k);
       h = Math.round(h * k);
-    } else if (Math.max(w, h) > IMAGE_MAX_PX) {
-      const k = IMAGE_MAX_PX / Math.max(w, h);
+    } else if (Math.max(w, h) > maxPx) {
+      const k = maxPx / Math.max(w, h);
       w = Math.round(w * k);
       h = Math.round(h * k);
     }
     if (!w || !h) throw new UploadError("decode");
     // Base64 adds a third: keep the file as is only when its data URL fits the budget.
-    const keepOriginal = !isSvg && w === img.naturalWidth && /^image\/(png|jpeg|webp)$/.test(file.type) && file.size * 1.37 < IMAGE_MAX_SRC_CHARS;
+    const keepOriginal = !isSvg && w === img.naturalWidth && /^image\/(png|jpeg|webp)$/.test(file.type) && file.size * 1.37 < maxChars;
     if (keepOriginal) {
       const src = await new Promise<string>((resolve, reject) => {
         const r = new FileReader();
@@ -87,25 +101,29 @@ export async function prepareImage(file: File): Promise<PreparedImage> {
     }
     // PNG keeps transparency (logos); photos go to JPEG to stay small. Too big for the budget:
     // WebP (keeps transparency, much smaller), then step the size down (R10-01).
-    const png = isSvg || file.type === "image/png" || file.type === "image/webp";
+    const png = !opts.opaque && (isSvg || file.type === "image/png" || file.type === "image/webp");
     const encode = (cw: number, ch: number, type: string) => {
       const canvas = document.createElement("canvas");
       canvas.width = cw;
       canvas.height = ch;
       const ctx = canvas.getContext("2d");
       if (!ctx) throw new UploadError("decode");
+      if (type === "image/jpeg") {
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, cw, ch);
+      }
       ctx.drawImage(img, 0, 0, cw, ch);
       return canvas.toDataURL(type, type === "image/png" ? undefined : 0.9);
     };
     let src = encode(w, h, png ? "image/png" : "image/jpeg");
     const lossy = png ? "image/webp" : "image/jpeg";
-    for (let k = 1; src.length > IMAGE_MAX_SRC_CHARS && k > 0.2; k *= 0.8) {
+    for (let k = 1; src.length > maxChars && k > 0.2; k *= 0.8) {
       const cw = Math.max(1, Math.round(w * k));
       const ch = Math.max(1, Math.round(h * k));
       src = encode(cw, ch, lossy);
-      if (src.length <= IMAGE_MAX_SRC_CHARS) return { src, pxWidth: cw, pxHeight: ch };
+      if (src.length <= maxChars) return { src, pxWidth: cw, pxHeight: ch };
     }
-    if (src.length > IMAGE_MAX_SRC_CHARS) throw new UploadError("size");
+    if (src.length > maxChars) throw new UploadError("size");
     return { src, pxWidth: w, pxHeight: h };
   } finally {
     URL.revokeObjectURL(url);

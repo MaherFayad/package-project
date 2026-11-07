@@ -11,7 +11,8 @@ import { MetricsStrip } from "@/components/ui/MetricsStrip";
 import { Page } from "@/components/ui/Page";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Text } from "@/components/ui/Text";
-import { DueLabel, JobStatusBadge } from "@/components/vendor/JobBits";
+import { DueLabel, JobStatusBadge, ReplyBy } from "@/components/vendor/JobBits";
+import { isAwaitingAcceptance } from "@/components/vendor/lib/jobs";
 import { requireVendorContext } from "@/components/vendor/server/context";
 import { getDashboard } from "@/components/vendor/server/queries";
 import styles from "@/components/vendor/vendor.module.css";
@@ -49,10 +50,13 @@ function JobList({ jobs, locale, empty }: { jobs: JobListItemDTO[]; locale: Loca
               <JobStatusBadge job={j} />
             </InlineStack>
             <Text as="span" tone="subdued" variant="bodySm">
-              {j.model && j.model.code !== j.structureCode ? j.model.name[locale] : t(`structures.${j.structureCode}` as DictKey)} · {t("vendorPortal.common.pcs", { count: formatNumber(j.quantity) })} · <bdi>{j.buyerName}</bdi>
+              {j.model && j.model.code !== j.structureCode ? j.model.name[locale] : t(`structures.${j.structureCode}` as DictKey)} · {t("vendorPortal.common.pcs", { count: formatNumber(j.quantity) })}
+              {/* P-11: the delivery city, not the buyer's (often missing) first name. */}
+              {j.city ? <> · <bdi>{j.city}</bdi></> : null}
             </Text>
           </div>
           <div className={styles.ListMeta}>
+            {isAwaitingAcceptance(j) ? <ReplyBy job={j} /> : null}
             <DueLabel dueDate={j.dueDate} status={j.status} />
             <Text as="span" numeric fontWeight="semibold">
               {formatMoney(j.vendorCostPiasters, locale)}
@@ -88,6 +92,8 @@ export default async function VendorDashboard({ params }: { params: Promise<{ lo
   const hasPiasters = (...v: number[]) => ({ alwaysDecimals: v.some((x) => Math.round(x) % 100 !== 0) });
   const metricDec = hasPiasters(d.payouts.paidPiasters, upcoming);
   const cardDec = hasPiasters(d.payouts.paidPiasters, d.payouts.pendingPiasters + d.payouts.approvedPiasters, d.payouts.scheduledPiasters);
+  // P-02: real deliveries and reviews (the admin scorecard's sources); "New on Elba" under the minimum.
+  const s = d.stats;
 
   return (
     <Page fullWidth title={t("vendorPortal.dashboard.greeting", { name: pick(locale, vendor.nameAr, vendor.nameEn) })} subtitle={t("vendorPortal.dashboard.subtitle")}>
@@ -106,12 +112,20 @@ export default async function VendorDashboard({ params }: { params: Promise<{ lo
               { label: t("vendorPortal.dashboard.metrics.awaiting"), value: <span data-testid="metric-awaiting">{formatNumber(d.awaitingCount)}</span> },
               { label: t("vendorPortal.dashboard.metrics.inProduction"), value: formatNumber(d.inProductionCount) },
               { label: t("vendorPortal.dashboard.metrics.dueSoon"), value: formatNumber(d.dueSoonCount) },
-              { label: t("vendorPortal.dashboard.metrics.onTime"), value: formatPercent(d.onTimePct, locale) },
-              {
-                label: t("vendorPortal.dashboard.metrics.rating"),
-                value: t("vendorPortal.dashboard.ratingValue", { rating: d.rating.toFixed(1) }),
-                trend: t("vendorPortal.dashboard.ratingCount", { count: formatNumber(d.ratingCount) }),
-              },
+              s.onTimePct === null
+                ? {
+                    label: t("vendorPortal.dashboard.metrics.onTime"),
+                    value: t("vendorPortal.dashboard.onTimeNewShort"),
+                    trend: t("vendorPortal.dashboard.onTimeProgress", { judged: formatNumber(s.judged), min: formatNumber(s.min) }),
+                  }
+                : { label: t("vendorPortal.dashboard.metrics.onTime"), value: formatPercent(s.onTimePct, locale) },
+              s.rating === null
+                ? { label: t("vendorPortal.dashboard.metrics.rating"), value: "—", trend: t("vendorPortal.dashboard.ratingNone") }
+                : {
+                    label: t("vendorPortal.dashboard.metrics.rating"),
+                    value: t("vendorPortal.dashboard.ratingValue", { rating: s.rating.toFixed(1) }),
+                    trend: t("vendorPortal.dashboard.ratingCount", { count: formatNumber(s.ratingCount) }),
+                  },
               { label: t("vendorPortal.dashboard.metrics.paidOut"), value: formatMoney(d.payouts.paidPiasters, locale, metricDec) },
               { label: t("vendorPortal.dashboard.metrics.upcoming"), value: formatMoney(upcoming, locale, metricDec) },
             ]}
@@ -177,6 +191,13 @@ export default async function VendorDashboard({ params }: { params: Promise<{ lo
                       </Text>
                     </div>
                   ))}
+                  {d.payoutsLate > 0 ? (
+                    <Box paddingBlockStart="200">
+                      <Banner tone="warning" inCard>
+                        {t("vendorPortal.dashboard.payoutsLate", { count: formatNumber(d.payoutsLate) })}
+                      </Banner>
+                    </Box>
+                  ) : null}
                   {d.payouts.eInvoiceCount > 0 ? (
                     <Box paddingBlockStart="200">
                       <Banner tone="warning" inCard>
@@ -186,6 +207,8 @@ export default async function VendorDashboard({ params }: { params: Promise<{ lo
                   ) : null}
                 </BlockStack>
               </Card>
+              {/* P-13: the setup checklist leaves the dashboard once every required step is done (food-safe is optional). */}
+              {!setupItems.every((x) => x.key === "foodSafe" || d.setup[x.key]) ? (
               <Card
                 title={t("vendorPortal.dashboard.setupTitle")}
                 footer={
@@ -217,6 +240,7 @@ export default async function VendorDashboard({ params }: { params: Promise<{ lo
                   </ul>
                 </BlockStack>
               </Card>
+              ) : null}
               <Card
                 title={t("vendorPortal.dashboard.rateCardsTitle")}
                 footer={

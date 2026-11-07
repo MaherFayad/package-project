@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { SEEDED, cleanup, cloneOrder, createUser, db, signInAs, signInPhone, track, uniquePhone } from "../fixtures/factory";
-import { ackCookies, checkoutToPayStep, designToPayStep, localeOf, payByCard, sendOtpIn, tFor, tr } from "./helpers";
+import { SEEDED, cleanup, cloneOrder, createUser, db, designerAllOptions, signInAs, signInPhone, track, uniquePhone } from "../fixtures/factory";
+import { ackCookies, basicsPanel, checkoutToPayStep, designToPayStep, localeOf, payByCard, sendOtpIn, tFor, tr } from "./helpers";
 
 /**
  * Journey 5 (docs/audit/journeys.md): what goes wrong, and that nothing is lost or charged twice.
@@ -74,7 +74,7 @@ test("J5 · expired price: no pay button, a way back to a new price", async ({ p
   await db.quote.update({ where: { id: order.quoteId! }, data: { validUntil: new Date(Date.now() - 60_000) } });
   await page.reload();
   await expect(page.getByText(t("payment.expired"))).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByRole("button", { name: t("checkout.actions.continue") })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: t("buyer.easy.pay.next"), exact: true })).toHaveCount(0);
   await page.getByRole("link", { name: t("payment.restart") }).or(page.getByRole("button", { name: t("payment.restart") })).first().click();
   await expect(page).toHaveURL(new RegExp(`/${locale}/checkout/${designId}`), { timeout: 30_000 });
   expect((await db.payment.count({ where: { orderId } }))).toBe(0);
@@ -127,6 +127,7 @@ test("J5 · printer declines, admin sees it and moves the job to a capable print
   await card.getByLabel(t("admin.order.routing.newVendor")).selectOption(alex.id);
   await card.getByLabel(t("admin.common.reason")).fill("Nile declined: capacity");
   await card.getByRole("button", { name: t("admin.order.routing.submit") }).click();
+  await ap.getByRole("dialog").getByRole("button", { name: t("admin.order.routing.submit") }).click();
   await expect.poll(async () => (await db.order.findUniqueOrThrow({ where: { id: job.id } })).vendorId, { timeout: 30_000 }).toBe(alex.id);
   // The banner is back to "waiting for Alex to accept".
   await expect(ap.getByText(t("admin.order.routing.awaitingTitle", { vendor: locale === "ar" ? alex.nameAr : alex.nameEn }))).toBeVisible({ timeout: 30_000 });
@@ -140,8 +141,7 @@ test("J5 · offline mid-design: work kept, saved when back online, survives a re
   await ackCookies(context, baseURL!);
   await page.goto(`/${locale}/design/mailer-box`);
   await expect(page.getByRole("application", { name: tr(locale, "3D preview of your box") })).toBeVisible({ timeout: 30_000 });
-  const panel = page.getByRole("complementary", { name: tr(locale, "Designer panels") });
-  await panel.getByRole("tab", { name: tr(locale, "Artwork") }).click();
+  const panel = await basicsPanel(page, locale);
   await panel.getByRole("button", { name: /#1f3d2b/ }).first().click();
   await expect(page).toHaveURL(/[?&]d=[\w-]+/, { timeout: 30_000 });
   const designId = new URL(page.url()).searchParams.get("d")!;
@@ -171,8 +171,7 @@ test("J5 · two tabs on one design: the stale tab is stopped, nothing is overwri
   const a = await context.newPage();
   await a.goto(`/${locale}/design/mailer-box`);
   await expect(a.getByRole("application", { name: tr(locale, "3D preview of your box") })).toBeVisible({ timeout: 30_000 });
-  const panelA = a.getByRole("complementary", { name: tr(locale, "Designer panels") });
-  await panelA.getByRole("tab", { name: tr(locale, "Artwork") }).click();
+  const panelA = await basicsPanel(a, locale);
   await panelA.getByRole("button", { name: /#1f3d2b/ }).first().click();
   await expect(a).toHaveURL(/[?&]d=[\w-]+/, { timeout: 30_000 });
   const designId = new URL(a.url()).searchParams.get("d")!;
@@ -188,8 +187,7 @@ test("J5 · two tabs on one design: the stale tab is stopped, nothing is overwri
   await expect.poll(async () => JSON.stringify((await db.design.findUniqueOrThrow({ where: { id: designId } })).artwork), { timeout: 30_000 }).toContain("#c70a24");
 
   // Tab B, still on the old copy, edits: it must not overwrite A's change.
-  const panelB = b.getByRole("complementary", { name: tr(locale, "Designer panels") });
-  await panelB.getByRole("tab", { name: tr(locale, "Artwork") }).click();
+  const panelB = await basicsPanel(b, locale);
   await panelB.getByRole("button", { name: /#f2c14e/ }).first().click();
   // Main's R10 handling: tab B is told (BroadcastChannel or a 409 on its save) and autosave pauses.
   await expect(b.getByText(t("designer.save.staleTitle"))).toBeVisible({ timeout: 30_000 });
@@ -211,6 +209,8 @@ test("J5 · typed numbers: Arabic digits and separators, no decimal comma read a
   await ackCookies(page.context(), baseURL!);
   const buyer = track(await createUser());
   await signInAs(page.context(), baseURL!, buyer.id);
+  // The millimetre fields are under "All options".
+  await designerAllOptions(page.context());
   await page.goto(`/${locale}/design/mailer-box`);
   await expect(page.getByRole("application", { name: tr(locale, "3D preview of your box") })).toBeVisible({ timeout: 30_000 });
   // Designer size. Western digits, as a numeric keypad sends them: the L × W × H fields are native
@@ -224,8 +224,9 @@ test("J5 · typed numbers: Arabic digits and separators, no decimal comma read a
 
   // Checkout quantity: "5.000" is not five boxes; five thousand in the buyer's own digits is.
   await page.goto(`/${locale}/checkout/${designId}`);
-  await expect(page.getByTestId("vendor-offer").first()).toBeVisible({ timeout: 30_000 });
-  const qty = page.getByLabel(t("checkout.quantity.custom"));
+  await expect(page.getByTestId("checkout-total")).toBeVisible({ timeout: 30_000 });
+  await page.getByRole("button", { name: t("buyer.easy.otherQty") }).click();
+  const qty = page.getByLabel(t("buyer.easy.otherQtyLabel"));
   await qty.fill("5.000");
   await page.getByRole("button", { name: t("checkout.quantity.apply") }).click();
   await expect(page.getByText(t("buyer.qty.invalid", { max: 2000 })).first()).toBeVisible();

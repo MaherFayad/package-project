@@ -5,6 +5,7 @@ import { z } from "zod";
 import { MAX_INSTANT_QTY, type Locale, type PaymentMethod } from "@/types";
 import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
+import { cleanDisplayName } from "@/lib/auth/display-name";
 import { SAMPLE_ORDER_NOTE } from "@/lib/orders/sample";
 import { toJson } from "@/lib/json";
 import { toGovernorateKey } from "@/lib/orders/governorates";
@@ -16,6 +17,7 @@ import { addressSchema, idSchema, paymentMethodSchema } from "@/lib/orders/schem
 import {
   OrderError,
   cancelOrder,
+  designerReference,
   loadCheckoutDesign,
   markInstapaySent,
   placeOrder,
@@ -50,6 +52,8 @@ export type OffersResult =
       sample?: boolean;
       /** Unused sample credit applied to these totals (B-05). */
       credit?: { piasters: number; sampleNumber: string; expiresAt: string } | null;
+      /** R3-01: what the designer showed (Greater Cairo delivery), set only outside Greater Cairo. */
+      reference?: { unitPiasters: number; deliveryDays: number } | null;
     }
   | { ok: true; mode: "manual_quote"; quantity: number; max: number; reason?: "QUANTITY_ABOVE_INSTANT_MAX" | "MODEL_BY_QUOTE"; orderReason?: "SPECIAL_GLUING" | "QUOTE_ONLY_STOCK" | "RARE_IN_EGYPT" | "FILLING_LINE" }
   | ActionError;
@@ -76,7 +80,10 @@ export async function getOffersAction(input: { designId: string; quantity: numbe
     const outcome = await quoteDesign(design.doc, { quantity: p.data.quantity, governorate: p.data.governorate });
     if (outcome.mode === "manual_quote")
       return { ok: true, mode: "manual_quote", quantity: outcome.quantity, max: MAX_INSTANT_QTY, reason: outcome.reason, ...(outcome.orderReason ? { orderReason: outcome.orderReason } : {}) };
-    const credit = await sampleCreditFor(s.user.id, p.data.designId);
+    const [credit, reference] = await Promise.all([
+      sampleCreditFor(s.user.id, p.data.designId),
+      designerReference(design.doc, outcome.quantity, p.data.governorate, prepay).catch(() => null),
+    ]);
     return {
       ok: true,
       mode: "instant",
@@ -85,6 +92,7 @@ export async function getOffersAction(input: { designId: string; quantity: numbe
       suggestion: outcome.suggestion,
       validUntil: outcome.validUntil,
       credit: credit ? { piasters: credit.piasters, sampleNumber: credit.sampleNumber, expiresAt: credit.expiresAt.toISOString() } : null,
+      reference,
     };
   } catch (e) {
     console.error("[checkout] offers failed", e);
@@ -156,6 +164,9 @@ export async function placeOrderAction(input: unknown): Promise<{ ok: true; orde
       data: { billing: { company: c ? { name: c.name, taxId: normalizeTaxId(c.taxId), commercialRegister: c.commercialRegister || null } : null } },
     });
     await supersedeUnpaidOrders(s.user.id, p.data.designId, r.orderId, r.number);
+    // R3-14: the name is asked once, in the address; an account without a name takes it from there.
+    const name = cleanDisplayName(p.data.address.name);
+    if (name) await db.user.updateMany({ where: { id: s.user.id, OR: [{ name: null }, { name: "" }] }, data: { name } }).catch(() => undefined);
     return { ok: true, orderId: r.orderId, number: r.number };
   } catch (e) {
     if (e instanceof OrderError) return { ok: false, error: e.code };

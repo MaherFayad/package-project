@@ -144,28 +144,33 @@ async function prepareAssets(pdf: PDFDocument, doc: DesignDoc, surfaces: PrintSu
   let sharp: SharpLike | null | undefined;
   const getSharp = async () => (sharp === undefined ? (sharp = await loadSharp()) : sharp);
 
+  const embed = async (src: string, id: string) => {
+    if (images.has(src)) return;
+    const d = decodeDataUrl(src);
+    if (!d) {
+      warnings.push(`IMAGE_NOT_EMBEDDED:${id}`);
+      return;
+    }
+    try {
+      if (d.mime === "image/png") images.set(src, await pdf.embedPng(d.bytes));
+      else if (d.mime === "image/jpeg" || d.mime === "image/jpg") images.set(src, await pdf.embedJpg(d.bytes));
+      else {
+        const s = await getSharp();
+        if (!s) throw new Error("no converter");
+        const { data } = await s(d.bytes).png().toBuffer({ resolveWithObject: true });
+        images.set(src, await pdf.embedPng(data));
+      }
+    } catch {
+      warnings.push(`IMAGE_NOT_EMBEDDED:${id}`);
+    }
+  };
+
   for (const surface of surfaces) {
+    const sheetImage = doc.artwork[surface].sheetImage;
+    if (sheetImage) await embed(sheetImage.src, `sheet-${surface}`);
     for (const layer of doc.artwork[surface].layers) {
       if (layer.hidden || layer.surface !== surface) continue;
-      if (layer.kind === "image" && !images.has(layer.src)) {
-        const d = decodeDataUrl(layer.src);
-        if (!d) {
-          warnings.push(`IMAGE_NOT_EMBEDDED:${layer.id}`);
-          continue;
-        }
-        try {
-          if (d.mime === "image/png") images.set(layer.src, await pdf.embedPng(d.bytes));
-          else if (d.mime === "image/jpeg" || d.mime === "image/jpg") images.set(layer.src, await pdf.embedJpg(d.bytes));
-          else {
-            const s = await getSharp();
-            if (!s) throw new Error("no converter");
-            const { data } = await s(d.bytes).png().toBuffer({ resolveWithObject: true });
-            images.set(layer.src, await pdf.embedPng(data));
-          }
-        } catch {
-          warnings.push(`IMAGE_NOT_EMBEDDED:${layer.id}`);
-        }
-      }
+      if (layer.kind === "image") await embed(layer.src, layer.id);
       if (layer.kind === "text") {
         const sizeMm = layer.fontSizePt * PT_TO_MM;
         for (const line of layer.text.split("\n")) {

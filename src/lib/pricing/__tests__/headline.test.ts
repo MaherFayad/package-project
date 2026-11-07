@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { HEADLINE_DEFAULTS, headlineInput, headlineOffer, priceTable, quote } from "..";
+import { HEADLINE_DEFAULTS, checkoutVendor, headlineInput, headlineOffer, priceTable, quote } from "..";
+import { orderTotals } from "@/lib/orders/totals";
 import { CFG, NOW, baseInput, makeData, refArea } from "./fixtures";
 
 const data = makeData();
@@ -33,5 +34,51 @@ describe("headline price (B-26: one price source for page, designer badge and ch
   it("returns null without offers", () => {
     expect(headlineOffer([])).toBeNull();
     expect(headlineOffer(undefined)).toBeNull();
+  });
+});
+
+describe("R3-01: the same order to the same governorate always gets the same printer, price and date", () => {
+  const zones = ["GREATER_CAIRO", "ALEXANDRIA", "DELTA", "CANAL", "UPPER_EGYPT"] as const;
+  const offersFor = (zone: (typeof zones)[number], d = data) => {
+    const r = quote({ ...headlineInput(baseInput.structureCode, baseInput.dims, baseInput.materialId), quantity: 500, zone }, d, { ...opts, skipSuggestion: true });
+    if (r.mode !== "instant") throw new Error("expected instant quote");
+    return r.offers;
+  };
+  const pick = (offers: ReturnType<typeof offersFor>, id: string | null) => {
+    const o = offers.find((x) => x.vendorId === id)!;
+    return { vendorId: o.vendorId, subtotal: orderTotals(o.lines, 3).subtotalPiasters, days: o.deliveryDays };
+  };
+
+  it("quoting twice, or with the printers listed in another order, ranks the same best match", () => {
+    for (const zone of zones) {
+      const a = offersFor(zone);
+      const b = offersFor(zone);
+      const shuffled = offersFor(zone, { ...data, vendors: [...data.vendors].reverse() });
+      expect(a.map((o) => o.vendorId)).toEqual(b.map((o) => o.vendorId));
+      expect(headlineOffer(shuffled)?.vendorId).toBe(headlineOffer(a)?.vendorId);
+      expect(headlineOffer(shuffled)?.totalPiasters).toBe(headlineOffer(a)?.totalPiasters);
+    }
+  });
+
+  it("re-pricing for a new governorate does not keep the printer chosen for the old one", () => {
+    const cairo = offersFor("GREATER_CAIRO");
+    for (const zone of zones) {
+      const fresh = offersFor(zone);
+      // Path 1: a returning buyer whose saved address is already in `zone`.
+      const direct = pick(fresh, checkoutVendor(fresh, null));
+      // Path 2: a new buyer who started on Cairo's best match, then picked `zone`.
+      const cairoChoice = checkoutVendor(cairo, null);
+      expect(cairoChoice).toBe(cairo[0]!.vendorId);
+      const switched = pick(fresh, checkoutVendor(fresh, null));
+      expect(switched).toEqual(direct);
+    }
+  });
+
+  it("keeps a printer the buyer chose themselves while it still prices the run", () => {
+    const offers = offersFor("UPPER_EGYPT");
+    const other = offers.at(-1)!.vendorId;
+    expect(checkoutVendor(offers, other)).toBe(other);
+    expect(checkoutVendor(offers, "gone")).toBe(offers[0]!.vendorId);
+    expect(checkoutVendor([], other)).toBeNull();
   });
 });

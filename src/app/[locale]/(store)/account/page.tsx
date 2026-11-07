@@ -5,8 +5,8 @@ import type { DictKey } from "@/i18n";
 import { db } from "@/lib/db";
 import { fromJson } from "@/lib/json";
 import { requireUser } from "@/lib/auth/session";
-import { formatDate, formatDateTime, formatDims, formatMoney } from "@/lib/format";
-import type { Dims, OrderStatus } from "@/types";
+import { formatDate, formatDateTime, formatMoney } from "@/lib/format";
+import type { DesignDoc, Dims, OrderStatus } from "@/types";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -17,7 +17,9 @@ import { Thumbnail } from "@/components/ui/Thumbnail";
 import { designHref } from "@/components/store/catalog";
 import type { DataRequestStatus } from "@/components/store/account-logic";
 import { modelPoster } from "@/lib/orders/poster";
+import { boxName } from "@/lib/orders/box-name";
 import { statusTone } from "@/lib/orders/status-tone";
+import { buyerStatusKey } from "@/lib/orders/buyer-track";
 import { AccountSignOut, DataRights, DeleteDesignButton, MarketingConsent, ProfileForm } from "./AccountClient";
 import styles from "@/components/store/store.module.css";
 import accountStyles from "./account.module.css";
@@ -39,7 +41,13 @@ export default async function AccountPage({ params }: Props) {
 
   const [user, designs, orderCount, orders, consents, pendingDelete, quoteRows] = await Promise.all([
     db.user.findUnique({ where: { id: session.id }, select: { name: true, email: true, phone: true, marketingConsent: true } }),
-    db.design.findMany({ where: { ownerId: session.id }, orderBy: { updatedAt: "desc" }, take: 50 }),
+    db.design.findMany({
+      where: { ownerId: session.id },
+      orderBy: { updatedAt: "desc" },
+      take: 50,
+      // The order a design went into (through its proof), to name it "Box for order ELB-…" (R2-11).
+      include: { proofs: { select: { orderItems: { select: { order: { select: { number: true, placedAt: true } } } } } } },
+    }),
     db.order.count({ where: { buyerId: session.id } }),
     db.order.findMany({ where: { buyerId: session.id }, orderBy: { placedAt: "desc" }, take: 3, select: { id: true, number: true, status: true, totalPiasters: true, placedAt: true } }),
     db.consent.findMany({ where: { userId: session.id }, orderBy: { createdAt: "desc" }, take: 10 }),
@@ -65,6 +73,48 @@ export default async function AccountPage({ params }: Props) {
   });
   const name = user?.name ?? session.name;
 
+  // R2-11: a returning buyer comes for their orders, so orders come first. Designs are named by box
+  // and size (or by their order), the 3 latest with something on them show, and the rest, untouched
+  // drafts included, wait behind "Show all designs".
+  const designRows = designs.map((d) => {
+    const dims = fromJson<Dims>(d.dims);
+    const art = fromJson<DesignDoc["artwork"] | null>(d.artwork);
+    const layers = (art?.outside?.layers?.length ?? 0) + (art?.inside?.layers?.length ?? 0) + (art?.outside?.sheetImage ? 1 : 0);
+    const orderNo = d.proofs.flatMap((pr) => pr.orderItems.map((i) => i.order)).sort((a, b) => +b.placedAt - +a.placedAt)[0]?.number ?? null;
+    const box = boxName({ modelCode: d.modelCode, structureCode: d.structureCode, dims }, locale, t(`structures.${d.structureCode}` as DictKey));
+    const label = d.name || (orderNo ? t("account.orderedBox", { number: orderNo }) : box);
+    return { d, box, label, used: layers > 0 || !!orderNo || !!d.name };
+  });
+  const shownDesigns = designRows.filter((r) => r.used).slice(0, 3);
+  const moreDesigns = designRows.filter((r) => !shownDesigns.includes(r));
+  const designItem = ({ d, box, label }: (typeof designRows)[number]) => (
+    <li key={d.id} className={`${styles.designRow} ${accountStyles.designRow}`}>
+      <Thumbnail source={d.thumbnailUrl ?? modelPoster(d.modelCode, d.structureCode)} alt="" size="small" />
+      <div className={styles.designMain}>
+        <Text as="span" fontWeight="semibold" breakWord>
+          {label}
+        </Text>
+        {label !== box ? (
+          <Text as="span" variant="bodySm" tone="subdued">
+            {box}
+          </Text>
+        ) : null}
+        <Text as="span" variant="bodySm" tone="subdued">
+          {t("account.edited", { date: formatDate(d.updatedAt, locale) })}
+        </Text>
+      </div>
+      <div className={`${styles.designActions} ${accountStyles.designActions}`}>
+        <Button url={designHref(locale, { design: d.id })} size="slim" variant="plain" accessibilityLabel={`${t("account.openDesign")}: ${label}`}>
+          {t("account.openDesign")}
+        </Button>
+        <Button url={`/${locale}/checkout/${encodeURIComponent(d.id)}`} size="slim" accessibilityLabel={`${t("buyer.order")}: ${label}`}>
+          {t("buyer.order")}
+        </Button>
+        <DeleteDesignButton id={d.id} name={label} />
+      </div>
+    </li>
+  );
+
   return (
     <div className={styles.page}>
       <div className={styles.stack}>
@@ -87,60 +137,6 @@ export default async function AccountPage({ params }: Props) {
           <LayoutSection>
             <div className={styles.stack}>
               <Card
-                title={t("account.designsTitle")}
-                as="section"
-                headerActions={
-                  <Button url={designHref(locale)} variant="plain">
-                    {t("account.startDesign")}
-                  </Button>
-                }
-              >
-                {designs.length ? (
-                  <ul className={styles.plainList} data-testid="saved-designs">
-                    {designs.map((d) => {
-                      const dims = fromJson<Dims>(d.dims);
-                      const label = d.name || t("account.untitled");
-                      return (
-                        <li key={d.id} className={`${styles.designRow} ${accountStyles.designRow}`}>
-                          <Thumbnail source={d.thumbnailUrl ?? modelPoster(d.modelCode, d.structureCode)} alt="" size="small" />
-                          <div className={styles.designMain}>
-                            <Text as="span" fontWeight="semibold" breakWord>
-                              {label}
-                            </Text>
-                            <Text as="span" variant="bodySm" tone="subdued">
-                              {t(`structures.${d.structureCode}` as DictKey)} · {formatDims(dims, locale)}
-                            </Text>
-                            <Text as="span" variant="bodySm" tone="subdued">
-                              {t("account.edited", { date: formatDate(d.updatedAt, locale) })}
-                            </Text>
-                          </div>
-                          <div className={`${styles.designActions} ${accountStyles.designActions}`}>
-                            <Button url={designHref(locale, { design: d.id })} size="slim" variant="plain" accessibilityLabel={`${t("account.openDesign")}: ${label}`}>
-                              {t("account.openDesign")}
-                            </Button>
-                            <Button url={`/${locale}/checkout/${encodeURIComponent(d.id)}`} size="slim" accessibilityLabel={`${t("buyer.order")}: ${label}`}>
-                              {t("buyer.order")}
-                            </Button>
-                            <DeleteDesignButton id={d.id} name={label} />
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                ) : (
-                  <EmptyState
-                    heading={t("account.designsEmpty")}
-                    headingAs="h3"
-                    compact
-                    image={<EmptyBoxIllustration size={80} />}
-                    action={<Button url={designHref(locale, { structure: "FEFCO_0427" })} variant="primary">{t("account.startDesign")}</Button>}
-                  >
-                    {t("account.designsEmptyBody")}
-                  </EmptyState>
-                )}
-              </Card>
-
-              <Card
                 title={t("account.ordersTitle")}
                 as="section"
                 headerActions={
@@ -162,7 +158,7 @@ export default async function AccountPage({ params }: Props) {
                           </Text>
                         </div>
                         <Badge tone={statusTone(o.status as OrderStatus).tone} progress={statusTone(o.status as OrderStatus).progress}>
-                          {o.status === "PAID" ? t("buyer.awaitingPrinter") : t(`orderStatus.${o.status}` as DictKey)}
+                          {t(buyerStatusKey(o.status as OrderStatus) as DictKey)}
                         </Badge>
                       </li>
                     ))}
@@ -177,6 +173,42 @@ export default async function AccountPage({ params }: Props) {
                     {t("account.ordersCount", { count: orderCount })}
                   </Text>
                 ) : null}
+              </Card>
+
+              <Card
+                title={t("account.designsTitle")}
+                as="section"
+                headerActions={
+                  <Button url={designHref(locale)} variant="plain">
+                    {t("account.startDesign")}
+                  </Button>
+                }
+              >
+                {designRows.length ? (
+                  <>
+                    <ul className={styles.plainList} data-testid="saved-designs">
+                      {shownDesigns.map(designItem)}
+                    </ul>
+                    {moreDesigns.length ? (
+                      <details className={accountStyles.moreDesigns}>
+                        <summary>{t("account.designsMore", { count: designRows.length })}</summary>
+                        <ul className={styles.plainList} data-testid="more-designs">
+                          {moreDesigns.map(designItem)}
+                        </ul>
+                      </details>
+                    ) : null}
+                  </>
+                ) : (
+                  <EmptyState
+                    heading={t("account.designsEmpty")}
+                    headingAs="h3"
+                    compact
+                    image={<EmptyBoxIllustration size={80} />}
+                    action={<Button url={designHref(locale, { structure: "FEFCO_0427" })} variant="primary">{t("account.startDesign")}</Button>}
+                  >
+                    {t("account.designsEmptyBody")}
+                  </EmptyState>
+                )}
               </Card>
 
               {quoteRequests.length ? (

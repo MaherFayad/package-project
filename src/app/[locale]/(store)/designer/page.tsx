@@ -1,10 +1,9 @@
 import { publicFileExists } from "@/lib/runtime/public-files";
 import type { Metadata } from "next";
 import { getT, pick, toLocale } from "@/i18n";
-import { formatMoney, formatNumber } from "@/lib/format";
-import { siteUrl } from "@/lib/env";
+import { formatMoney } from "@/lib/format";
+import { isRealDeployment, siteUrl } from "@/lib/env";
 import { DEFAULT_DIMS, defaultMaterialFor, dielineToSvg, generateDielineForMaterial } from "@/lib/dieline";
-import { MODELS } from "@/lib/library";
 import { paymentConfig } from "@/lib/payments/config";
 import { VAT_RATE } from "@/types";
 import { getPriceFrom, listStructures, listVendors } from "@/components/store/data";
@@ -51,7 +50,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-/** /[locale]/designer: the product page of the free 3D packaging designer (R6). */
+/** /[locale]/designer: "see your printed box before you order", the page for the free 3D preview (R6, R2-04). */
 export default async function DesignerProductPage({ params }: Props) {
   const locale = toLocale((await params).locale);
   const t = getT(locale);
@@ -70,13 +69,11 @@ export default async function DesignerProductPage({ params }: Props) {
       styles={structures.map((s) => ({ code: s.code, family: s.family, name: pick(locale, s.name.ar, s.name.en) }))}
       mailerUnit500={row500 ? formatMoney(row500.unitPiasters, locale, { alwaysDecimals: true }) : null}
       vendorCount={vendors.length}
-      modelCount={formatNumber(MODELS.length)}
       vatPct={Math.round(VAT_RATE * 100)}
       payMethods={paymentConfig().methods}
       dielineSvg={dielineSvg}
-      bleedMm={model.bleedMm}
-      safeMm={model.safeMm}
-      host={siteUrl().replace(/^https?:\/\//, "").replace(/\/$/, "")}
+      // A sample share link: the real host on a deployment, the brand domain elsewhere (never «localhost», R2-04).
+      host={isRealDeployment() ? siteUrl().replace(/^https?:\/\//, "").replace(/\/$/, "") : "elba.eg"}
       loop={mailerLoop()}
     />
   );

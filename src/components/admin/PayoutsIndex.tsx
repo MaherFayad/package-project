@@ -16,7 +16,7 @@ import { asPayoutView, inPayoutView, nextPayoutStep, PAYOUT_VIEWS } from "./lib/
 import { PayoutStatusBadge, PayoutStepButton } from "./PayoutActions";
 import type { AdminPayoutRow } from "./server/queries";
 
-/** Vendor payouts: what ops must raise, approve or pay, then what is scheduled and what is paid. */
+/** Vendor payouts: what ops must pay (one confirmed step), then what is scheduled and what is paid. */
 export function PayoutsIndex({ rows }: { rows: AdminPayoutRow[] }) {
   const { t, locale } = useI18n();
   const pathname = usePathname();
@@ -44,8 +44,8 @@ export function PayoutsIndex({ rows }: { rows: AdminPayoutRow[] }) {
         <MetricsStrip
           accessibilityLabel={t("admin.payouts.metricsLabel")}
           metrics={[
-            { label: t("admin.payouts.metrics.toApprove"), value: formatMoney(sum((r) => r.status === "PENDING" || r.status === "ON_HOLD"), locale, { alwaysDecimals: true }) },
-            { label: t("admin.payouts.metrics.toPay"), value: formatMoney(sum((r) => r.status === "APPROVED"), locale, { alwaysDecimals: true }) },
+            // A-01: one "Mark paid" step, so one "to pay" total (earned, raised or approved, not on dispute hold).
+            { label: t("admin.payouts.metrics.toPay"), value: formatMoney(sum((r) => inPayoutView(r, "todo")), locale, { alwaysDecimals: true }) },
             { label: t("admin.payouts.metrics.scheduled"), value: formatMoney(sum((r) => r.status === "SCHEDULED"), locale, { alwaysDecimals: true }) },
             { label: t("admin.payouts.metrics.paid"), value: formatMoney(sum((r) => r.status === "PAID"), locale, { alwaysDecimals: true }) },
           ]}

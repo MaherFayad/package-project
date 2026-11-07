@@ -2,7 +2,7 @@
 
 import { Search } from "lucide-react";
 import { useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type RefObject } from "react";
-import { familyName, subFamilyName, taxonomy as buildTaxonomy } from "@/data/catalogue/taxonomy";
+import { familyName, plainKindName, subFamilyName, taxonomy as buildTaxonomy } from "@/data/catalogue/taxonomy";
 import type { CatalogueEntry } from "@/data/catalogue/types";
 // Generated rows (scripts/generate-catalogue-rows.ts): no generators in this chunk (PERF-04).
 import PICKER_ROWS from "@/data/catalogue/picker-rows.generated.json";
@@ -220,8 +220,8 @@ function PickerGrid({ items, current, onPick }: { items: PickerRow[]; current?: 
                   </span>
                   <span className={styles.name}>{e.name[locale]}</span>
                   <span className={styles.std}>
-                    {/* Codes read left to right but sit at the start of the line in Arabic too (R4-07); no internal code names (R4-08). */}
-                    {e.standard.code ? <bdi dir="ltr">{`${e.standard.system} ${e.standard.code}`}</bdi> : subFamilyName(e.subFamily)[locale]}
+                    {/* SIM-10: the plain kind, not the FEFCO / ECMA code (still searchable). */}
+                    {plainKindName(e.subFamily)[locale]}
                   </span>
                   <span className={styles.meta}>
                     {isCurrent ? <Badge tone="info">{locale === "ar" ? "الحالي" : "Current"}</Badge> : null}

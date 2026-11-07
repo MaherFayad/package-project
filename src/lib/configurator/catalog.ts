@@ -159,7 +159,7 @@ export const FINISHES: Record<ConfigFinishCode, FinishDef> = {
   SOFT_TOUCH_LAMINATION: fd({ code: "SOFT_TOUCH_LAMINATION", group: "coating", masked: false, name: { ar: "سلوفان مخملي", en: "Soft-touch lamination" }, label: null }),
   GLOSS_VARNISH: fd({ code: "GLOSS_VARNISH", group: "coating", masked: false, name: { ar: "ورنيش لامع", en: "Gloss varnish" }, label: "GLOSS_VARNISH" }),
   MATTE_VARNISH: fd({ code: "MATTE_VARNISH", group: "coating", masked: false, name: { ar: "ورنيش مطفي", en: "Matte varnish" }, label: "MATTE_VARNISH" }),
-  SPOT_UV: fd({ code: "SPOT_UV", group: "spotUv", masked: true, name: { ar: "طلاء UV موضعي", en: "Spot UV" }, label: "SPOT_UV" }),
+  SPOT_UV: fd({ code: "SPOT_UV", group: "spotUv", masked: true, name: { ar: "طلاء لامع موضعي", en: "Spot UV" }, label: "SPOT_UV" }),
   FOIL_GOLD: fd({ code: "FOIL_GOLD", group: "foil", masked: true, name: { ar: "بصمة ذهبية", en: "Gold foil" }, label: "HOT_FOIL" }),
   FOIL_SILVER: fd({ code: "FOIL_SILVER", group: "foil", masked: true, name: { ar: "بصمة فضية", en: "Silver foil" }, label: "HOT_FOIL" }),
   FOIL_ROSE_GOLD: fd({ code: "FOIL_ROSE_GOLD", group: "foil", masked: true, name: { ar: "بصمة ذهبية وردية", en: "Rose gold foil" }, label: "HOT_FOIL" }),

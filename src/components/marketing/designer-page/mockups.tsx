@@ -38,7 +38,6 @@ export function ColourMock({ title, colours, render }: { title: string; colours:
           <div key={c.hex} className={styles.colourRow} data-active={i === 1 ? "" : undefined}>
             <span style={{ background: c.hex }} />
             <span>{c.name}</span>
-            <code>{c.hex}</code>
           </div>
         ))}
       </div>
@@ -147,7 +146,6 @@ export function MockupMock({ render, label }: { render: string; label: string })
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={render} alt="" width={300} height={300} loading="lazy" decoding="async" />
         <div className={styles.mockBar}>
-          <span>PNG</span>
           <span className={styles.linkBtn} style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
             <Download size={14} />
             {label}

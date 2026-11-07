@@ -192,6 +192,10 @@ export const layerSchema = z.discriminatedUnion("kind", [imageLayerSchema, textL
 const surfaceSchema = z.object({
   background: hex.nullable(),
   layers: z.array(layerSchema).max(MAX_LAYERS),
+  sheetImage: z
+    .object({ src: imageSrc, pxWidth: z.number().int().min(1).max(20000), pxHeight: z.number().int().min(1).max(20000) })
+    .nullable()
+    .optional(),
 });
 
 const featuresSchema = z

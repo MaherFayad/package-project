@@ -7,7 +7,8 @@ import type { Dims, PaymentMethod, ShippingAddress } from "@/types";
 import { getT, toLocale, type DictKey } from "@/i18n";
 import { requireUser } from "@/lib/auth/session";
 import { fromJson } from "@/lib/json";
-import { formatDate, formatDims, formatMoney } from "@/lib/format";
+import { formatDate, formatMoney } from "@/lib/format";
+import { formatDimsCm } from "@/lib/orders/box-name";
 import { getOrderForViewer, moneyOf } from "@/lib/orders/service";
 import { invoiceBreakdown } from "@/lib/orders/totals";
 import { Banner } from "@/components/ui/Banner";
@@ -38,6 +39,10 @@ export default async function InvoicePage({ params }: { params: Params }) {
   const { locale: raw, id } = await params;
   const locale = toLocale(raw);
   const t = getT(locale);
+  const plainMaterial = (code: string) => {
+    const k = `materialsPlain.${code}` as DictKey;
+    return t(k) === k ? t(`materials.${code}` as DictKey) : t(k);
+  };
   const user = await requireUser(locale, `/${locale}/orders/${encodeURIComponent(id)}/invoice`);
   const order = await getOrderForViewer(id, user);
   const back = { content: t("orders.invoice.back"), url: `/${locale}/orders/${order?.id ?? ""}` };
@@ -55,6 +60,14 @@ export default async function InvoicePage({ params }: { params: Params }) {
   const docTitle = taxReady ? t("orders.invoice.title", { number: invoice.number }) : t("buyer.receipt.title", { number: invoice.number });
   const money = moneyOf(order);
   const b = invoiceBreakdown({ subtotalPiasters: money.netPiasters, vatPiasters: money.vatPiasters, shippingPiasters: money.shippingPiasters });
+  const single = order.items.length === 1;
+  const lineName = (key: string) => t((key === "pricing.line.shipping" ? "buyer.easy.delivery" : key === "pricing.line.die" ? "buyer.easy.dieLine" : key) as DictKey);
+  const includes: { label: string; amount: number }[] = money.lines
+    ? money.lines.map((l) => ({ label: lineName(l.labelKey), amount: l.totalPiasters }))
+    : [
+        { label: t("pricing.line.product"), amount: b.netPiasters - b.shippingPiasters },
+        { label: t("checkout.summary.shipping"), amount: b.shippingPiasters },
+      ];
   const addr = fromJson<ShippingAddress>(order.shippingAddress);
   const placeholder = t("orders.invoice.placeholder");
   const paidMethod = order.payments.find((p) => p.status === "PAID" || p.status === "REFUNDED")?.method as PaymentMethod | undefined;
@@ -147,49 +160,41 @@ export default async function InvoicePage({ params }: { params: Params }) {
                     </tr>
                   </thead>
                   <tbody role="rowgroup">
+                    {/* R2-01: one row at the buyer price (setup, delivery and the prepay discount are in
+                        it, as on every page before payment), so the visible rows add up to the net total.
+                        What it includes is listed inside the row, not as amounts to add. */}
                     {order.items.map((it) => (
                       <tr key={it.id} role="row">
                         <td role="cell">
                           {t("orders.invoice.goods")}:{" "}
                           {t("orders.invoice.lineDesc", {
                             structure: t(`structures.${it.structureCode}` as DictKey),
-                            dims: formatDims(fromJson<Dims>(it.dims), locale),
-                            material: t(`materials.${it.materialCode}` as DictKey),
+                            // R3-06: the size in cm and the board's plain name, as on the box page.
+                            dims: formatDimsCm(fromJson<Dims>(it.dims), locale),
+                            material: plainMaterial(it.materialCode),
                           })}
+                          {single ? (
+                            <div className={styles.invIncludes}>
+                              <span>{t("buyer.receipt.includes")}</span>
+                              <ul>
+                                {includes.map((l, i) => (
+                                  <li key={i}>
+                                    {l.label} <PriceTag alwaysDecimals amount={l.amount} size="small" locale={locale} />
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ) : null}
                         </td>
                         <td role="cell" className={`${styles.num} ${styles.invQty}`}>{it.quantity.toLocaleString("en-US")}</td>
                         <td role="cell" className={styles.num}>
-                          <PriceTag alwaysDecimals amount={it.unitPiasters} size="small" locale={locale} />
+                          <PriceTag alwaysDecimals amount={single ? Math.round(b.netPiasters / Math.max(1, it.quantity)) : it.unitPiasters} size="small" locale={locale} />
                         </td>
                         <td role="cell" className={styles.num}>
-                          <PriceTag alwaysDecimals amount={it.lineTotalPiasters} size="small" locale={locale} />
+                          <PriceTag alwaysDecimals amount={single ? b.netPiasters : it.lineTotalPiasters} size="small" locale={locale} />
                         </td>
                       </tr>
                     ))}
-                    {(money.lines ?? []).filter((l) => l.kind !== "PRODUCT").map((l, i) => (
-                      <tr key={`l${i}`} role="row">
-                        <td role="cell">{t((l.labelKey === "pricing.line.shipping" ? "checkout.summary.shipping" : l.labelKey) as DictKey)}</td>
-                        <td role="cell" className={`${styles.num} ${styles.invQty}`}>{l.quantity.toLocaleString("en-US")}</td>
-                        <td role="cell" className={styles.num}>
-                          <PriceTag alwaysDecimals amount={l.unitPiasters} size="small" locale={locale} />
-                        </td>
-                        <td role="cell" className={styles.num}>
-                          <PriceTag alwaysDecimals amount={l.totalPiasters} size="small" locale={locale} />
-                        </td>
-                      </tr>
-                    ))}
-                    {!money.lines ? (
-                      <tr role="row">
-                        <td role="cell">{t("checkout.summary.shipping")}</td>
-                        <td role="cell" className={`${styles.num} ${styles.invQty}`}>1</td>
-                        <td role="cell" className={styles.num}>
-                          <PriceTag alwaysDecimals amount={b.shippingPiasters} size="small" locale={locale} />
-                        </td>
-                        <td role="cell" className={styles.num}>
-                          <PriceTag alwaysDecimals amount={b.shippingPiasters} size="small" locale={locale} />
-                        </td>
-                      </tr>
-                    ) : null}
                   </tbody>
                 </table>
               </div>

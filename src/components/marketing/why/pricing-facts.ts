@@ -1,7 +1,7 @@
 import type { Dims, MaterialCode, Piasters, StructureCode } from "@/types";
 import { QTY_TIERS, VAT_RATE } from "@/types";
 import { defaultMaterialFor } from "@/lib/dieline";
-import { headlineInput, headlineOffer, quote, toPublicOffer, type PricingConfig, type PricingData, type VendorOffer } from "@/lib/pricing";
+import { headlineInput, headlineOffer, PRICE_REFERENCE, quote, toPublicOffer, type PricingConfig, type PricingData, type VendorOffer } from "@/lib/pricing";
 import { orderTotals } from "@/lib/orders/totals";
 import { applySampleCredit, sampleOffer, SAMPLE_PRODUCTION_DAYS } from "@/lib/orders/sample";
 
@@ -24,9 +24,10 @@ import { applySampleCredit, sampleOffer, SAMPLE_PRODUCTION_DAYS } from "@/lib/or
 
 /** The reference box every public price on these pages is computed for. */
 export const REFERENCE_BOX: { code: StructureCode; dims: Dims; material: MaterialCode } = {
-  code: "FEFCO_0427",
-  // Standard T-shirt mailer: a catalogue standard size, so no new cutting die is charged.
-  dims: { L: 300, W: 220, H: 60 },
+  // R1-02 / R1-15: the same reference box as the home page, box pages and designer default
+  // (250×180×80 mailer, a standard size, so no new cutting die is charged).
+  code: PRICE_REFERENCE.code,
+  dims: PRICE_REFERENCE.dims,
   material: defaultMaterialFor("FEFCO_0427"),
 };
 
@@ -50,6 +51,9 @@ export interface PriceTier {
   totalPiasters: Piasters;
   /** Total incl. VAT before the prepay discount (the list price the discount comes off). */
   listTotalPiasters: Piasters;
+  /** Ex-VAT before the prepay discount (goods + delivery): the comparison table's first row, so the
+   *  ex-VAT rows add up: listSubtotal − discount = subtotal (R2-08). */
+  listSubtotalPiasters: Piasters;
   /** listTotal − total. */
   savingPiasters: Piasters;
   /** Ex-VAT goods before the discount (product + setup + die + finishes). */
@@ -146,6 +150,7 @@ export function computePricingFacts(
       subtotalPiasters: pay.subtotalPiasters,
       totalPiasters: pay.totalPiasters,
       listTotalPiasters: list.totalPiasters,
+      listSubtotalPiasters: list.subtotalPiasters,
       savingPiasters: list.totalPiasters - pay.totalPiasters,
       goodsPiasters: list.subtotalPiasters - list.shippingPiasters,
       discountPiasters: pay.discountPiasters,
@@ -181,7 +186,8 @@ export function computePricingFacts(
     box,
     tiers,
     maxInstantQty: config.maxInstantQty,
-    minOrderQty: mins.length ? Math.min(...mins) : 1,
+    // R1-08: the smallest quantity checkout offers (its first priced tier), never below a printer's own minimum.
+    minOrderQty: tiers[0]?.quantity ?? (mins.length ? Math.min(...mins) : 1),
     prepayDiscountPct: settings.prepayDiscountPct,
     vatRate: VAT_RATE,
     quoteValidityHours: config.quoteValidityHours,

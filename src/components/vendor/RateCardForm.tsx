@@ -126,6 +126,11 @@ export function RateCardForm({ card, offeredFinishes, models, listed = [] }: { c
             <BlockStack gap="400">
               {errorCount ? <Banner tone="critical" title={t("vendorPortal.rateCards.errors.summary", { count: errorCount })} /> : null}
 
+              {/* P-14: on/off first, next to the title, and it says that Save covers it. */}
+              <Card title={t("vendorPortal.rateCards.statusTitle")}>
+                <Checkbox label={t("vendorPortal.rateCards.activeLabel")} helpText={`${t("vendorPortal.rateCards.activeHelp")} ${t("vendorPortal.rateCards.activeSaveNote")}`} checked={form.active} onChange={(on) => set("active", on)} />
+              </Card>
+
               <Card title={t("vendorPortal.rateCards.tiersTitle", u)}>
                 <BlockStack gap="300">
                   <Text as="p" tone="subdued">
@@ -269,9 +274,6 @@ export function RateCardForm({ card, offeredFinishes, models, listed = [] }: { c
 
           <LayoutSection variant="oneThird" as="aside" aria-label={t("vendorPortal.rateCards.statusTitle")}>
             <BlockStack gap="400">
-              <Card title={t("vendorPortal.rateCards.statusTitle")}>
-                <Checkbox label={t("vendorPortal.rateCards.activeLabel")} helpText={t("vendorPortal.rateCards.activeHelp")} checked={form.active} onChange={(on) => set("active", on)} />
-              </Card>
               <DataTable
                 caption={t("vendorPortal.rateCards.previewTitle")}
                 hideCaption={false}

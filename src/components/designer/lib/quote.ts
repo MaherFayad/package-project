@@ -1,17 +1,19 @@
-import type { DesignDoc, Dims, Piasters } from "@/types";
+import type { DesignDoc, Dims } from "@/types";
 import { designPricedFinishes } from "@/types";
 import { headlineOffer } from "@/lib/pricing/headline";
+import type { BuyerPrice } from "@/lib/pricing/buyer";
 
-/** The live price badge quantity ("500 of these: from EGP X"). */
+/** The live price badge quantity ("500 boxes: EGP X per box"), the same reference quantity as the public pages. */
 export const BADGE_QTY = 500;
 
-/** The public offer fields the designer reads from POST /api/quote. */
+/**
+ * The public offer fields the designer reads from POST /api/quote. R1-02: the designer shows
+ * `pay` (the buyer price checkout charges, online-payment discount included), never the raw
+ * pre-discount offer totals.
+ */
 export interface BadgeOffer {
   vendor: { id: string; name: { ar: string; en: string } };
-  unitPiasters: Piasters;
-  subtotalPiasters: Piasters;
-  vatPiasters: Piasters;
-  totalPiasters: Piasters;
+  pay: BuyerPrice;
   deliveryDays: number;
   validUntil: string;
 }
@@ -24,7 +26,6 @@ export interface BadgeSuggestion {
 
 export type PriceState =
   | { status: "idle" }
-  | { status: "locked" }
   | { status: "loading" }
   | { status: "ready"; quantity: number; best: BadgeOffer; vendorCount: number; suggestion: BadgeSuggestion | null; validUntil: string; prepayDiscountPct?: number }
   | { status: "none" }
@@ -70,7 +71,6 @@ export function quoteKey(doc: DesignDoc, quantity: number): string {
  * checkout pre-selects), so the badge, the public page and checkout agree (B-26 / B-02).
  */
 export function toPriceState(status: number, body: unknown): PriceState {
-  if (status === 401) return { status: "locked" };
   if (status !== 200 || !body || typeof body !== "object") return { status: "error" };
   const b = body as {
     mode?: string;
@@ -85,6 +85,7 @@ export function toPriceState(status: number, body: unknown): PriceState {
   if (b.mode === "manual_quote" && b.reason === "MODEL_BY_QUOTE") return { status: "quote", reason: b.orderReason ?? "QUOTE_ONLY_STOCK" };
   if (b.mode !== "instant" || !Array.isArray(b.offers)) return { status: "error" };
   if (b.offers.length === 0) return { status: "none" };
+  if (!b.offers[0]?.pay) return { status: "error" };
   const best = headlineOffer(b.offers)!;
   return {
     status: "ready",

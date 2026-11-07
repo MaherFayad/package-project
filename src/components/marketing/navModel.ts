@@ -1,18 +1,16 @@
 import type { Locale } from "@/types";
 import type { TFunction } from "@/i18n/types";
-import { designHref } from "@/components/store/catalog";
 import { renderSrc } from "./assets";
 import type { MegaMenu } from "./HeaderNav";
 
 /**
- * Where every visitor "Start free" CTA points: the /start landing (R6), whose own CTAs open the
- * designer. Signed-in people's "New design" opens the designer directly (newDesignHref).
+ * Where every "Get your box price" CTA points, for visitors and signed-in people alike: the short
+ * box chooser /boxes (box types grouped by use, each with its price at 500 boxes and an "Order
+ * this box" button that opens the designer, where the price for the exact box shows). One label,
+ * one destination across the site (R1-04, R1-19). /start stays as a secondary page.
  */
 export function startHref(locale: Locale): string {
-  return `/${locale}/start`;
-}
-export function newDesignHref(locale: Locale): string {
-  return designHref(locale, { structure: "FEFCO_0427" });
+  return `/${locale}/boxes`;
 }
 
 /**
@@ -32,25 +30,25 @@ export function buildNav(locale: Locale, t: TFunction) {
           title: t("mk.nav.groups.packaging"),
           links: [
             { href: `${base}/boxes`, label: t("mk.nav.items.boxes"), icon: "boxes" },
-            { href: `${base}/boxes#FOLDING_CARTON`, label: t("mk.nav.items.cartons"), icon: "cartons" },
+            { href: `${base}/boxes#shelf`, label: t("mk.nav.items.cartons"), icon: "cartons" },
             { href: `${base}/bottles`, label: t("mk.nav.items.bottles"), icon: "bottles" },
             { href: `${base}/catalog`, label: t("mk.nav.items.styles"), icon: "styles" },
           ],
         },
-        {
-          title: t("mk.nav.groups.design"),
-          links: [
-            { href: `${base}/designer`, label: t("mk.nav.items.designer"), icon: "designer" },
-            { href: `${base}/design`, label: t("mk.nav.items.newDesign"), icon: "newDesign" },
-            { href: `${base}/designer#finishes`, label: t("mk.nav.items.finishes"), icon: "finishes" },
-          ],
-        },
+        // Printing first (docs/audit/simplicity-2026-11/printing-first.md): ordering before the designer.
         {
           title: t("mk.nav.groups.order"),
           links: [
             { href: `${base}/pricing`, label: t("mk.nav.items.pricing"), icon: "pricing" },
             { href: `${base}/vendors`, label: t("mk.nav.items.directory"), icon: "directory" },
             { href: `${base}/orders`, label: t("mk.nav.items.track"), icon: "track" },
+          ],
+        },
+        {
+          title: t("mk.nav.groups.design"),
+          links: [
+            { href: `${base}/designer`, label: t("mk.nav.items.designer"), icon: "designer" },
+            { href: start, label: t("mk.nav.items.newDesign"), icon: "newDesign" },
           ],
         },
       ],
@@ -102,7 +100,7 @@ export function buildNav(locale: Locale, t: TFunction) {
     menus,
     links: [
       { href: `${base}/pricing`, label: t("mk.nav.pricing") },
-      { href: `${base}/catalog`, label: t("mk.nav.catalogue") },
+      // The full catalogue stays in the products menu and the footer, not the top bar (R2-13).
     ],
     signedInLinks: {
       orders: { href: `${base}/orders`, label: t("nav.orders") },

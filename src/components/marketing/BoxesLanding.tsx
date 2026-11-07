@@ -1,160 +1,104 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
-import type { Locale, StructureFamily } from "@/types";
+import type { Locale, StructureCode } from "@/types";
 import { getT } from "@/i18n";
 import type { DictKey } from "@/i18n";
-import { getLowestUnit, listStructures } from "@/components/store/data";
-import { HeroImage } from "./HeroImage";
+import { getPriceFrom, listStructures, type PriceFromRow } from "@/components/store/data";
 import { ProductCard } from "./ProductCard";
-import { renderDims, renderSrc, srcSetFor } from "./assets";
 import rs from "./restyle/restyle.module.css";
 import dt from "./restyle/detail.module.css";
 import { Sheet } from "./kit/Sheet";
 import { SAMPLE_LABEL } from "./kit/assets";
-import { Glow } from "./kit/Glow";
-import { Display, Eyebrow, Lead } from "./kit/Display";
+import { Eyebrow, Lead } from "./kit/Display";
 import { HeroTitle } from "./kit/HeroTitle";
 import { Pill, PillRow } from "./kit/Pill";
-import { Reveal } from "./kit/Reveal";
 import { SectionHead } from "./kit/SectionHead";
 import { Grid } from "./kit/Grid";
-import { MODELS } from "@/lib/library";
-import { formatNumber } from "@/lib/format";
-
-const FAMILIES: StructureFamily[] = ["CORRUGATED", "FOLDING_CARTON", "RIGID", "TUBE"];
-const SHOWCASE = ["ECMA_RTE", "PIZZA", "FEFCO_0427", "GABLE_BOX", "RIGID_BOX"] as const;
 
 /**
- * Category landing for boxes and cartons (/boxes and /catalog): centred hero with a row of
- * real 3D renders, then every structure grouped by family with its "from" price.
+ * The box types grouped by what the buyer sells (R1-09), not by board. Every active box structure
+ * appears once; a structure missing here falls into the last group so nothing disappears.
  */
-export async function BoxesLanding({
-  locale,
-  titleAs = "h1",
-  library,
-}: {
-  locale: Locale;
-  titleAs?: "h1";
-  /**
-   * The whole model library, rendered inline (/catalog passes `<ModelLinks />`). Omitted: a link
-   * band + closing CTA (/boxes). A slot, not an import: importing ModelLinks here put the model
-   * picker's client chunk and 15 Polaris stylesheets in front of first paint on /boxes, which
-   * never shows the library (R2-MK-02).
-   */
-  library?: ReactNode;
-}) {
+const USE_GROUPS: { key: "shipping" | "food" | "shelf" | "gifts"; codes: StructureCode[] }[] = [
+  { key: "shipping", codes: ["FEFCO_0427", "FEFCO_0201", "FEFCO_0320"] },
+  { key: "food", codes: ["PIZZA", "GABLE_BOX"] },
+  { key: "shelf", codes: ["ECMA_RTE", "ECMA_STE", "ECMA_CLB", "ECMA_SLB", "SLEEVE", "FEFCO_0422"] },
+  { key: "gifts", codes: ["RIGID_BOX", "PAPER_TUBE"] },
+];
+const BOX_FAMILIES = new Set(["CORRUGATED", "FOLDING_CARTON", "RIGID", "TUBE"]);
+
+/**
+ * The box chooser (/boxes): where every "Get your box price" CTA lands (R1-04). A short title,
+ * then the box types grouped by use, each with its price per box for 500 boxes and an "Order this
+ * box" button that opens the designer. Labels, pouches and quote-only shapes are one link away.
+ */
+export async function BoxesLanding({ locale }: { locale: Locale }) {
   const t = getT(locale);
-  // The 0427 render in the hero showcase is the phone LCP. HeroImage preloads its AVIF from <head>
-  // (R4-MK-06); a second webp preload here made the render download twice (PERF-R4-06 merge).
-  const structures = await listStructures();
-  const prices = new Map(await Promise.all(structures.map(async (s) => [s.code, await getLowestUnit(s.code, s.defaultDims)] as const)));
+  const structures = (await listStructures()).filter((s) => BOX_FAMILIES.has(s.family));
+  const rows = new Map<StructureCode, PriceFromRow | null>(
+    await Promise.all(
+      structures.map(async (s) => {
+        const p = await getPriceFrom(s.code, s.defaultDims);
+        return [s.code, p.rows.find((r) => r.quantity === 500) ?? null] as const;
+      }),
+    ),
+  );
+  const grouped = new Set(USE_GROUPS.flatMap((g) => g.codes));
+  const groups = USE_GROUPS.map((g, i) => ({
+    ...g,
+    list: [
+      ...g.codes.map((c) => structures.find((s) => s.code === c)).filter((s) => s != null),
+      ...(i === USE_GROUPS.length - 1 ? structures.filter((s) => !grouped.has(s.code)) : []),
+    ],
+  }));
   const base = `/${locale}`;
   return (
     <div className={rs.page}>
       <Sheet tone="dark" hero className={rs.heroLanding} aria-labelledby="boxes-title">
         <Eyebrow className="m-enter">{t("marketing.boxes.eyebrow")}</Eyebrow>
-        <HeroTitle as={titleAs} size="96" align="center" id="boxes-title" text={t("marketing.boxes.title")} />
+        <HeroTitle as="h1" size="64" align="center" id="boxes-title" text={t("marketing.boxes.title")} />
         <Lead align="center" className="m-enter-lcp">
           {t("marketing.boxes.body")}
         </Lead>
-        <PillRow align="center" className="m-enter">
-          <Pill href={`${base}/start`} size="lg">
-            {t("marketing.boxes.primary")}
-          </Pill>
-          <Pill href={`${base}/vendors`} variant="outline" size="lg">
-            {t("marketing.boxes.secondary")}
-          </Pill>
-        </PillRow>
-        <p className={`${rs.small} ${rs.afterPills} m-enter`}>
+        <p className={`${rs.small} ${rs.afterPills} m-enter`}>{t("marketing.boxes.priceNote")}</p>
+        <p className={`${rs.small} m-enter`}>
           {t("marketing.boxes.already")}{" "}
           <Link href={`${base}/account`} className={rs.textLink}>
             {t("marketing.boxes.alreadyLink")}
           </Link>
         </p>
-        <div className={`${dt.showcase} m-enter-lcp`} aria-hidden="true">
-          {SHOWCASE.map((c) => (
-            <div key={c} className={dt.showcaseItem}>
-              {c === "FEFCO_0427" ? (
-                <HeroImage src={renderSrc(c)} sizes="(min-width: 1024px) 260px, 34vw" alt="" {...renderDims(renderSrc(c))} />
-              ) : (
-                // Side renders: low priority and no preload, so only the LCP render competes with the CSS (R4-MK-06).
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={renderSrc(c)}
-                  srcSet={srcSetFor(renderSrc(c))}
-                  sizes="(min-width: 1024px) 260px, 34vw"
-                  alt=""
-                  {...renderDims(renderSrc(c))}
-                  fetchPriority="low"
-                  decoding="async"
-                />
-              )}
-            </div>
-          ))}
-        </div>
-        <p className={`${rs.small} ${rs.sampleNote} ${rs.heroLandingNote}`}>{SAMPLE_LABEL[locale]}</p>
       </Sheet>
 
-      {/* One white sheet per family: the first overlaps the hero, the next ones collapse onto it
+      {/* One white sheet per use: the first overlaps the hero, the next ones collapse onto it
           to one --mk-section-y (spec section 7, rule 2). */}
-      {FAMILIES.map((family) => {
-        const list = structures.filter((s) => s.family === family);
-        if (!list.length) return null;
-        return (
-          <Sheet key={family} tone="white" id={family} className={rs.anchor} aria-labelledby={`fam-${family}`}>
-            <SectionHead
-              id={`fam-${family}`}
-              eyebrow={t("marketing.boxes.count", { count: list.length })}
-              title={t(`marketing.boxes.family.${family}` as DictKey)}
-              sub={t(`marketing.boxes.familyBody.${family}` as DictKey)}
-            >
+      {groups.map((g) =>
+        g.list.length ? (
+          <Sheet key={g.key} tone="white" id={g.key} className={rs.anchor} aria-labelledby={`use-${g.key}`}>
+            <SectionHead id={`use-${g.key}`} title={t(`marketing.boxes.use.${g.key}` as DictKey)} sub={t(`marketing.boxes.use.${g.key}Body` as DictKey)}>
               <div data-rail="">
                 <Grid as="ul" cols={3} colsMd={2} colsSm={1} className={`${dt.cards} ${dt.rail}`}>
-                  {list.map((s, i) => (
-                    <ProductCard key={s.code} locale={locale} structure={s} fromPiasters={prices.get(s.code) ?? null} index={i} />
+                  {g.list.map((s, i) => (
+                    <ProductCard key={s.code} locale={locale} structure={s} row500={rows.get(s.code) ?? null} index={i} />
                   ))}
                 </Grid>
               </div>
             </SectionHead>
           </Sheet>
-        );
-      })}
-
-      {!library ? (
-        <>
-          <Sheet tone="light" aria-labelledby="all-models-title">
-            <SectionHead id="all-models-title" title={t("library.catalog.heading")} sub={t("library.catalog.subtitle", { count: formatNumber(MODELS.length) })}>
-              <Pill href={`${base}/catalog#all-models`} variant="outline-dark" size="lg">
-                {t("marketing.boxes.libraryCta", { count: formatNumber(MODELS.length) })}
-              </Pill>
-            </SectionHead>
-          </Sheet>
-          <Sheet tone="dark" y="xl" className={rs.clip} container="narrow" aria-labelledby="boxes-cta-title">
-            <Glow color="violet" x="85%" y="0%" size="70vmax" />
-            <Glow color="green" x="5%" y="110%" size="45vmax" />
-            <Reveal className={rs.heroCenter}>
-              <Display size="64" align="center" id="boxes-cta-title">
-                {t("marketing.boxes.closingTitle")}
-              </Display>
-              <Lead align="center">{t("marketing.boxes.closingBody")}</Lead>
-              <PillRow align="center">
-                <Pill href={`${base}/start`} size="lg">
-                  {t("marketing.boxes.primary")}
-                </Pill>
-                <Pill href={`${base}/vendors`} variant="outline" size="lg">
-                  {t("marketing.boxes.secondary")}
-                </Pill>
-              </PillRow>
-            </Reveal>
-          </Sheet>
-        </>
-      ) : (
-        <Sheet tone="white" id="all-models" className={rs.anchor} aria-labelledby="all-models-title">
-          <SectionHead id="all-models-title" title={t("library.catalog.heading")} sub={t("library.catalog.subtitle", { count: formatNumber(MODELS.length) })}>
-            {library}
-          </SectionHead>
-        </Sheet>
+        ) : null,
       )}
+
+      <Sheet tone="light" aria-labelledby="boxes-more-title">
+        <SectionHead id="boxes-more-title" title={t("marketing.boxes.moreTitle")} sub={t("marketing.boxes.moreBody")}>
+          <PillRow>
+            <Pill href={`${base}/bottles`} variant="outline-dark" size="lg">
+              {t("marketing.boxes.moreLabels")}
+            </Pill>
+            <Pill href={`${base}/catalog`} variant="outline-dark" size="lg">
+              {t("marketing.boxes.moreAll")}
+            </Pill>
+          </PillRow>
+          <p className={`${rs.small} ${rs.sampleNote}`}>{SAMPLE_LABEL[locale]}</p>
+        </SectionHead>
+      </Sheet>
     </div>
   );
 }

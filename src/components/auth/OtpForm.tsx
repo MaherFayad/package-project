@@ -19,10 +19,15 @@ const RESEND_SECONDS = 30;
 const CODE_LENGTH = 6;
 
 /**
- * Left-to-right isolate so "+20…" and digits never reorder inside Arabic sentences, with
- * no-break spaces so a number never wraps across two lines (WCAG 1.3.2).
+ * R3-04: a phone number inside an Arabic sentence is its own left-to-right island (a `<bdi
+ * dir="ltr">` element, not only invisible isolate characters that copy tools drop), with
+ * no-break spaces so it never wraps across two lines (WCAG 1.3.2).
  */
-const ltr = (s: string) => `\u2066${s.replace(/ /g, "\u00a0")}\u2069`;
+const PhoneNum = ({ value }: { value: string }) => (
+  <bdi dir="ltr" className={styles.num}>
+    {value.replace(/ /g, " ")}
+  </bdi>
+);
 
 /**
  * Render a dictionary string that contains {placeholders} as rich content:
@@ -51,17 +56,19 @@ export function OtpForm({ onSuccess, reason }: { onSuccess: (u: OtpSuccess) => v
   const [phone, setPhone] = useState("");
   const [normalized, setNormalized] = useState("");
   const [code, setCode] = useState("");
-  const [name, setName] = useState("");
-  const [acceptTerms, setAcceptTerms] = useState(false);
   const [marketing, setMarketing] = useState(false);
+  // R3-03: the terms are accepted by continuing, with one line above the button that every buyer
+  // sees, new or returning, so Verify never fails with TERMS_REQUIRED (it used to, once, for every
+  // new number, and only then showed a name field and a checkbox). The phone's status is still never
+  // revealed: the form is the same for a new and a returning number. The name is asked once, in the
+  // delivery address (R3-14).
   const [devCode, setDevCode] = useState<string | null>(null);
-  const [error, setError] = useState<{ text: string; field: "phone" | "code" | "terms" | null } | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [error, setError] = useState<{ text: string; field: "phone" | "code" | null } | null>(null);
+  const [notice, setNotice] = useState<ReactNode>(null);
   const [busy, setBusy] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const phoneRef = useRef<HTMLInputElement>(null);
   const codeRef = useRef<HTMLInputElement>(null);
-  const termsRef = useRef<HTMLInputElement>(null);
   const firstStep = useRef(true);
 
   useEffect(() => setHydrated(true), []);
@@ -87,17 +94,10 @@ export function OtpForm({ onSuccess, reason }: { onSuccess: (u: OtpSuccess) => v
       seconds: formatCount(seconds, "second", locale),
       minutes: formatCount(Math.max(1, Math.ceil(seconds / 60)), "minute", locale),
     });
-    const field =
-      codeKey === "TERMS_REQUIRED"
-        ? "terms"
-        : codeKey === "INVALID_PHONE"
-          ? "phone"
-          : step === "code" && codeKey !== "RATE_LIMITED" && codeKey !== "LOCKED"
-            ? "code"
-            : null;
+    const field = codeKey === "INVALID_PHONE" ? "phone" : step === "code" && codeKey !== "RATE_LIMITED" && codeKey !== "LOCKED" ? "code" : null;
     setError({ text, field });
     if (retryAfterSec && (codeKey === "RATE_LIMITED" || codeKey === "LOCKED")) setCooldown(retryAfterSec);
-    const target = field === "terms" ? termsRef : field === "code" ? codeRef : field === "phone" ? phoneRef : null;
+    const target = field === "code" ? codeRef : field === "phone" ? phoneRef : null;
     requestAnimationFrame(() => target?.current?.focus());
   }
 
@@ -131,7 +131,7 @@ export function OtpForm({ onSuccess, reason }: { onSuccess: (u: OtpSuccess) => v
       setCode("");
       setStep("code");
       setCooldown(RESEND_SECONDS);
-      setNotice(t(resent ? "auth.codeResent" : "auth.codeSent", { phone: ltr(formatEgyptPhone(data.phone)) }));
+      setNotice(rich(t(resent ? "auth.codeResent" : "auth.codeSent"), { phone: <PhoneNum value={formatEgyptPhone(data.phone)} /> }));
       if (resent) codeRef.current?.focus();
     } catch {
       setError({ text: t("common.error"), field: null });
@@ -157,9 +157,9 @@ export function OtpForm({ onSuccess, reason }: { onSuccess: (u: OtpSuccess) => v
         body: JSON.stringify({
           phone: normalized,
           code,
-          name: name.trim() || undefined,
           locale,
-          acceptTerms,
+          // Accepted by continuing: the line above the button says so (R3-03).
+          acceptTerms: true,
           // Only an explicit tick is sent: leaving the box empty must never withdraw an
           // earlier consent (PDPL 151/2020; withdrawal lives on the account page).
           ...(marketing ? { marketingConsent: true } : {}),
@@ -181,7 +181,7 @@ export function OtpForm({ onSuccess, reason }: { onSuccess: (u: OtpSuccess) => v
   }
 
   const errId = `${uid}-err`;
-  const describe = (own: string, field: "phone" | "code" | "terms") =>
+  const describe = (own: string, field: "phone" | "code") =>
     [own, error?.field === field ? errId : null].filter(Boolean).join(" ") || undefined;
   const newTab = <span className="visually-hidden"> {t("auth.opensNewTab")}</span>;
   const legalLink = (doc: "terms" | "privacy", label: string) => (
@@ -228,7 +228,7 @@ export function OtpForm({ onSuccess, reason }: { onSuccess: (u: OtpSuccess) => v
               placeholder="010 1234 5678"
             />
             <span id={`${uid}-hint`} className={styles.hint}>
-              {t("auth.phoneHint")}
+              {rich(t("auth.phoneHint"), { example: <PhoneNum value="010 1234 5678" /> })}
             </span>
           </div>
           <button
@@ -276,7 +276,7 @@ export function OtpForm({ onSuccess, reason }: { onSuccess: (u: OtpSuccess) => v
               aria-invalid={error?.field === "code" || undefined}
             />
             <span id={`${uid}-codehint`} className={styles.hint}>
-              {t("auth.codeHint", { phone: ltr(formatEgyptPhone(normalized)) })}{" "}
+              {rich(t("auth.codeHint"), { phone: <PhoneNum value={formatEgyptPhone(normalized)} /> })}{" "}
               <button
                 type="button"
                 className={styles.inlineLink}
@@ -292,68 +292,21 @@ export function OtpForm({ onSuccess, reason }: { onSuccess: (u: OtpSuccess) => v
               </button>
             </span>
           </div>
-          <div className={styles.field}>
-            <label htmlFor={`${uid}-name`} className={styles.label}>
-              {t("auth.nameLabel")} <span className={styles.muted}>({t("common.optional")})</span>
-            </label>
-            <input
-              id={`${uid}-name`}
-              className={styles.input}
-              type="text"
-              autoComplete="name"
-              maxLength={120}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              aria-describedby={`${uid}-namehint`}
-            />
-            <span id={`${uid}-namehint`} className={styles.hint}>
-              {t("auth.nameHint")}
-            </span>
+          <div className={styles.check}>
+            <input id={`${uid}-mkt`} type="checkbox" checked={marketing} onChange={(e) => setMarketing(e.target.checked)} aria-describedby={`${uid}-mkthint`} />
+            <div>
+              <label htmlFor={`${uid}-mkt`}>{t("auth.marketingConsent")}</label>
+              <span id={`${uid}-mkthint`} className={styles.checkHint}>
+                {t("auth.marketingHint")}
+              </span>
+            </div>
           </div>
-          <fieldset className={styles.consents}>
-            <legend className="visually-hidden">{t("auth.consentLegend")}</legend>
-            <div className={styles.check}>
-              <input
-                ref={termsRef}
-                id={`${uid}-terms`}
-                type="checkbox"
-                checked={acceptTerms}
-                onChange={(e) => {
-                  setAcceptTerms(e.target.checked);
-                  if (error?.field === "terms") setError(null);
-                }}
-                aria-invalid={error?.field === "terms" || undefined}
-                aria-describedby={describe(`${uid}-termshint`, "terms")}
-              />
-              <div>
-                <label htmlFor={`${uid}-terms`}>{t("auth.acceptTerms")}</label>
-                <span id={`${uid}-termshint`} className={styles.checkHint}>
-                  {t("auth.acceptTermsHint")}
-                </span>
-                <span className={styles.checkHint}>
-                  {rich(t("auth.readLegal"), {
-                    terms: legalLink("terms", t("auth.termsLink")),
-                    privacy: legalLink("privacy", t("auth.privacyLink")),
-                  })}
-                </span>
-              </div>
-            </div>
-            <div className={styles.check}>
-              <input
-                id={`${uid}-mkt`}
-                type="checkbox"
-                checked={marketing}
-                onChange={(e) => setMarketing(e.target.checked)}
-                aria-describedby={`${uid}-mkthint`}
-              />
-              <div>
-                <label htmlFor={`${uid}-mkt`}>{t("auth.marketingConsent")}</label>
-                <span id={`${uid}-mkthint`} className={styles.checkHint}>
-                  {t("auth.marketingHint")}
-                </span>
-              </div>
-            </div>
-          </fieldset>
+          <p className={styles.fine} data-testid="otp-terms">
+            {rich(t("auth.termsByContinuing"), {
+              terms: legalLink("terms", t("auth.termsLink")),
+              privacy: legalLink("privacy", t("auth.privacyLink")),
+            })}
+          </p>
           <button type="submit" className={styles.primary} aria-disabled={busy || undefined} aria-busy={busy || undefined}>
             {busy ? t("auth.verifying") : t("auth.verify")}
           </button>

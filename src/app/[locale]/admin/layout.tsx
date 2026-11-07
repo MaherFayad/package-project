@@ -1,4 +1,4 @@
-import { Suspense, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { preloadPlexArabic } from "@/app/font-preload";
 import type { Metadata } from "next";
 import { requireRole } from "@/lib/auth/session";
@@ -13,6 +13,7 @@ import "@/components/ui/Page.module.css";
 import { AppProvider } from "@/components/ui/AppProvider";
 import { AdminFrame } from "@/components/admin/AdminFrame";
 import { countModeration, countOpenQuoteLeads, countPayoutsToAct } from "@/components/admin/server/queries";
+import { ORDERS_TO_ACT_STATUSES } from "@/components/admin/lib/orders";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -25,9 +26,10 @@ export default async function AdminLayout({ children, params }: { children: Reac
   const locale = toLocale((await params).locale);
   preloadPlexArabic(locale); // app frame font (Plex), Arabic only
   const user = await requireRole("ADMIN", locale, `/${locale}/admin`);
-  // Orders badge = jobs ops must act on: QC review plus paid orders still waiting for a vendor.
+  // Orders badge = jobs ops must act on: QC review plus paid orders still waiting for a vendor
+  // (A-04: the same statuses as the "Awaiting printer" and "QC review" tabs).
   const [qc, applications, disputes, dataRequests, payouts, moderation, quotes] = await Promise.all([
-    db.order.count({ where: { status: { in: ["QC_PENDING", "PAID"] } } }),
+    db.order.count({ where: { status: { in: ORDERS_TO_ACT_STATUSES } } }),
     db.vendorApplication.count({ where: { status: { in: ["SUBMITTED", "UNDER_REVIEW"] } } }),
     db.dispute.count({ where: { status: { in: ["OPEN", "UNDER_REVIEW"] } } }),
     db.dataRequest.count({ where: { status: { in: ["OPEN", "IN_PROGRESS"] } } }),

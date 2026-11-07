@@ -1,9 +1,10 @@
 "use client";
 
-import { Copy, ExternalLink, Lock, Tag } from "lucide-react";
+import { Copy, ExternalLink, Tag } from "lucide-react";
 import { useEffect, useState } from "react";
 import { QTY_TIERS, type DesignDoc, type Dims } from "@/types";
 import { formatDate, formatDims, formatMoney, formatNumber } from "@/lib/format";
+import { arrivalDate } from "@/lib/pricing/buyer";
 import { useI18n } from "@/i18n/client";
 import { OtpForm, type OtpSuccess } from "@/components/auth";
 import { Badge } from "@/components/ui/Badge";
@@ -26,7 +27,8 @@ const quoteUrl = (locale: string, doc: DesignDoc) => `/${locale}/catalog/${encod
 import styles from "./designer.module.css";
 import lib from "./library.module.css";
 
-export type GateReason = "price" | "save" | "export" | "share" | "order";
+/** R1-01: the price is public; the phone is asked for only to save, export, share or order. */
+export type GateReason = "save" | "export" | "share" | "order";
 
 /** Soft gate G2: phone + OTP with a separate, unchecked marketing consent (inside OtpForm). */
 export function GateModal({ reason, onClose, onSuccess }: { reason: GateReason | null; onClose: () => void; onSuccess: (u: OtpSuccess) => void }) {
@@ -45,7 +47,7 @@ export function GateModal({ reason, onClose, onSuccess }: { reason: GateReason |
   );
 }
 
-/** The live price badge on the editor ("500 boxes from EGP X each, delivered in N days"). */
+/** The live price badge on the editor ("500 boxes: EGP X per box, all-in excl. VAT · delivered in N days"). */
 export function PriceBadge({ state, onClick, vessel = false }: { state: PriceState; onClick: () => void; vessel?: boolean }) {
   const { t, locale } = useI18n();
   let label: string;
@@ -53,15 +55,14 @@ export function PriceBadge({ state, onClick, vessel = false }: { state: PriceSta
   const MARK = "\u2063";
   switch (state.status) {
     case "ready":
-      price = formatMoney(state.best.unitPiasters, locale);
+      price = formatMoney(state.best.pay.unitPiasters, locale, { alwaysDecimals: true });
       label = t(vessel ? "designer.container.badge" : "designer.price.badge", {
         qty: formatNumber(state.quantity),
         price: MARK,
         days: state.best.deliveryDays,
       });
       break;
-    // R9-01: "idle" is a signed-in visitor before the first request (500 ms debounce). It fell
-    // through to the locked "see the price" copy with a lock icon; it is loading.
+    // "idle" is the 500 ms debounce before the first request: show it as loading.
     case "idle":
     case "loading":
       label = t("designer.price.loading");
@@ -72,11 +73,8 @@ export function PriceBadge({ state, onClick, vessel = false }: { state: PriceSta
     case "quote":
       label = t("designer.price.quoteBadge");
       break;
-    case "error":
-      label = t("designer.price.errorBody");
-      break;
     default:
-      label = t(vessel ? "designer.container.badgeLocked" : "designer.price.badgeLocked", { qty: formatNumber(BADGE_QTY) });
+      label = t("designer.price.errorBody");
   }
   const [before, after] = price !== null ? label.split(MARK) : [label, ""];
   const loading = state.status === "loading" || state.status === "idle";
@@ -91,7 +89,7 @@ export function PriceBadge({ state, onClick, vessel = false }: { state: PriceSta
       data-testid="price-badge"
     >
       <span className={styles.priceBadgeIcon} aria-hidden="true">
-        {state.status === "ready" || state.status === "quote" || loading ? <Tag size={16} /> : <Lock size={16} />}
+        <Tag size={16} />
       </span>
       <span className={styles.priceBadgeText}>
         {before}
@@ -170,43 +168,37 @@ export function PriceModal({
           </div>
         ) : state.status === "ready" ? (
           <BlockStack gap="300">
+            {/* R1-02 / R1-21: the numbers checkout charges (`pay`), the online-payment discount
+                already taken off, so there is no condition left to read in small print. */}
             <Inset>
               <BlockStack gap="200">
                 <InlineStack align="space-between" blockAlign="center" gap="200">
                   <Text as="span">{t(vessel ? "designer.container.perPiece" : "designer.price.perBox")}</Text>
-                  <PriceTag amount={state.best.unitPiasters} locale={locale} vat="excluded" />
+                  <PriceTag amount={state.best.pay.unitPiasters} locale={locale} vat="excluded" alwaysDecimals />
                 </InlineStack>
                 <InlineStack align="space-between" blockAlign="center" gap="200">
                   <Text as="span">{t("pricing.subtotal")}</Text>
-                  <PriceTag amount={state.best.subtotalPiasters} locale={locale} />
+                  <PriceTag amount={state.best.pay.subtotalPiasters} locale={locale} alwaysDecimals />
                 </InlineStack>
                 <InlineStack align="space-between" blockAlign="center" gap="200">
                   <Text as="span">{t("pricing.vat")}</Text>
-                  <PriceTag amount={state.best.vatPiasters} locale={locale} />
+                  <PriceTag amount={state.best.pay.vatPiasters} locale={locale} alwaysDecimals />
                 </InlineStack>
                 <Divider />
                 <InlineStack align="space-between" blockAlign="center" gap="200">
                   <Text as="span" fontWeight="semibold">
                     {t("designer.price.total")}
                   </Text>
-                  <PriceTag amount={state.best.totalPiasters} locale={locale} size="large" />
+                  <PriceTag amount={state.best.pay.totalPiasters} locale={locale} size="large" alwaysDecimals />
                 </InlineStack>
               </BlockStack>
             </Inset>
-            <InlineStack gap="200" wrap>
-              <Badge tone="info">{t("designer.price.delivery", { days: state.best.deliveryDays })}</Badge>
-              <Badge>{t("designer.price.vendor", { vendor: state.best.vendor.name[locale] })}</Badge>
-              <Badge>{t("designer.price.vendorsCount", { count: state.vendorCount })}</Badge>
-            </InlineStack>
-            {/* R5-JR-15: the share page and checkout show the price after the prepay discount; say
-                both here so the numbers match what the buyer sees next. */}
-            {state.prepayDiscountPct ? (
-              <Text as="p" variant="bodySm">
-                {t("designer.price.prepay", { pct: state.prepayDiscountPct })}
-              </Text>
-            ) : null}
+            <Text as="p">
+              <span suppressHydrationWarning>{t("designer.price.arrives", { date: arrivalDate(state.best.deliveryDays, locale), days: state.best.deliveryDays })}</span>
+            </Text>
             <Text as="p" variant="bodySm" tone="subdued">
-              {t("designer.price.validUntil", { date: formatDate(state.validUntil, locale) })} · {t("designer.price.note")}
+              {state.prepayDiscountPct ? t("designer.price.includesPrepay", { pct: state.prepayDiscountPct }) : t("designer.price.includes")}{" "}
+              {t("designer.price.validUntil", { date: formatDate(state.validUntil, locale) })}
             </Text>
             {state.suggestion ? (
               <Banner
@@ -240,9 +232,10 @@ export function PriceModal({
   );
 }
 
-export type ExportSize = "standard" | "hd";
+/** What the export modal downloads: 3D renders (PNG), the 3D model, the print PDF, the dieline template. */
+export type ExportSize = "standard" | "hd" | "uhd" | "glb" | "pdf" | "dielineSvg" | "dielinePdf";
 
-/** PNG mockup export (screen 20 anatomy: choice list with a "Recommended" badge). No dieline PDF. */
+/** Export (screen 20 anatomy: choice lists with a "Recommended" badge): images, print and 3D files. */
 export function ExportModal({
   open,
   onClose,
@@ -250,6 +243,7 @@ export function ExportModal({
   busy,
   onOrder,
   orderLabel,
+  model3d = true,
 }: {
   open: boolean;
   onClose: () => void;
@@ -258,12 +252,15 @@ export function ExportModal({
   /** "Order this box / design" next to the download (B-03 bridge: every export leads back to an order). */
   onOrder?: () => void;
   orderLabel?: string;
+  /** Offer the GLB 3D model (boxes). */
+  model3d?: boolean;
 }) {
   const { t } = useI18n();
   const [size, setSize] = useState<ExportSize | null>(null);
   useEffect(() => {
     if (open) setSize(null);
   }, [open]);
+  const pick = (v: string[]) => setSize((v[0] as ExportSize) ?? null);
   return (
     <Modal
       open={open}
@@ -278,10 +275,9 @@ export function ExportModal({
     >
       <BlockStack gap="400">
         <ChoiceList
-          title={t("designer.export.heading")}
-          titleHidden
+          title={t("designer.export.groupImage")}
           selected={size ? [size] : []}
-          onChange={(v) => setSize((v[0] as ExportSize) ?? null)}
+          onChange={pick}
           choices={[
             {
               value: "standard",
@@ -294,11 +290,25 @@ export function ExportModal({
               helpText: t("designer.export.standardHelp"),
             },
             { value: "hd", label: t("designer.export.hd"), helpText: t("designer.export.hdHelp") },
+            { value: "uhd", label: t("designer.export.uhd"), helpText: t("designer.export.uhdHelp") },
           ]}
         />
-        <Banner tone="info" inCard>
-          {t("designer.export.noPdf")}
-        </Banner>
+        <ChoiceList
+          title={t("designer.export.groupFiles")}
+          selected={size ? [size] : []}
+          onChange={pick}
+          choices={[
+            { value: "pdf", label: t("designer.export.pdf"), helpText: t("designer.export.pdfHelp") },
+            ...(model3d ? [{ value: "glb", label: t("designer.export.glb"), helpText: t("designer.export.glbHelp") }] : []),
+            { value: "dielineSvg", label: t("designer.export.dielineSvg"), helpText: t("designer.export.dielineSvgHelp") },
+            { value: "dielinePdf", label: t("designer.export.dielinePdf"), helpText: t("designer.export.dielinePdfHelp") },
+          ]}
+        />
+        {size === "pdf" ? (
+          <Banner tone="info" inCard>
+            {t("designer.export.printNote")}
+          </Banner>
+        ) : null}
       </BlockStack>
     </Modal>
   );

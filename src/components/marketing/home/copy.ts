@@ -1,135 +1,83 @@
 import type { Locale } from "@/types";
 
 /**
- * Home page copy (R6). Arabic first: MSA natural for Egypt, noun-form labels, no diacritics,
- * Western digits. Page-local on purpose so the shared dictionaries stay conflict-free while the
- * foundation branch rebuilds the chrome; the English object fixes the shape and the Arabic one
+ * Home page copy. Arabic first: MSA natural for Egypt, noun-form labels, no diacritics,
+ * Western digits. Page-local on purpose; the English object fixes the shape and the Arabic one
  * must match it key for key (type `Widen<typeof en>`).
  *
- * Every number is passed in from real data ({models}, {groups}, {finishes}, {printers}, {days},
- * {price}, {min}, {max}). No customer names, quotes, logos or counters we cannot back.
+ * Printing first (docs/audit/simplicity-2026-11/printing-first.md): the page sells printed
+ * packaging (made by vetted Egyptian printers, sold and guaranteed by Elba, paid online,
+ * delivered by Bosta). The free 3D designer is the easy way in, one supporting section.
+ * Written for a small shop owner on a phone: no FEFCO, dieline, bleed or preflight. Every number
+ * is passed in from real data ({models}, {groups}, {finishes}, {printers}, {days}, {price},
+ * {min}, {max}). No customer names, quotes, logos or counters we cannot back.
+ * Facts: quantities (QTY_TIERS, maxInstantQty), lead time + transit (src/lib/pricing), proof at
+ * checkout and quality check (src/lib/orders/state.ts), reprint or refund within 30 days (returns
+ * policy in src/i18n/en.ts), payment (PAYMENT_METHODS, Paymob), delivery (src/lib/shipping, Bosta),
+ * printed products (printer capabilities in prisma/seed.ts; quote-only stock in
+ * src/data/catalogue/order-mode.ts).
  */
 const en = {
   hero: {
-    titles: ["Packaging worthy of your brand", "Design it. Watch it turn."],
-    lead: "Design your printed box free on a live 3D model, see the price instantly and order from vetted Egyptian printers.",
-    primary: "Start designing free",
-    secondary: "Browse box styles",
+    titles: ["Printed boxes for your brand", "Delivered to your door"],
+    lead: "Custom boxes with your logo, printed by vetted Egyptian printers, guaranteed by Elba and delivered across Egypt. See yours in 3D with the exact price before you pay.",
+    primary: "Get your box price",
+    secondary: "See what we print",
+    trustLabel: "Why Elba",
+    trust: ["Printed by vetted Egyptian printers", "Price known before you pay", "Delivery across Egypt"],
     pause: "Pause rotation",
     play: "Rotate the box",
-    mediaAlt: "A printed mailer box turning on our 3D model",
+    mediaAlt: "A mailer box printed with a brand's logo, turning",
   },
-  statement: {
-    lead: "A box for everything you sell.",
-    rest: " For online stores, cafés, cosmetics and gifts, in your size, your print and your finish.",
-  },
-  rail: {
-    label: "From the model library",
-    pause: "Pause the strip",
-    play: "Play the strip",
-  },
-  feature: {
-    title: "Design your box right in the browser",
-    body: "Upload your logo, pick colours and Arabic or Latin type, and see it on a 3D model before you print. No software, no designer, no fees.",
-    link: "Open the designer",
-    prompt: "Your brand name",
-    chipTitle: "500 mailer boxes",
-    chipValue: "{price} per box",
-    chipNote: "Setup and delivery included, ex-VAT",
-  },
-  everywhere: {
-    title: "Every step in one place.",
-    titleRest: "From the idea to your door.",
-    cards: [
-      { title: "Design on a live model", body: "Real cuts, glue flaps and folds for every model, sized to the millimetre.", link: "Open the designer" },
-      { title: "Run the whole order", body: "Design, price, payment and delivery in one account.", link: "Your orders" },
-      { title: "Print at a vetted printer", body: "{printers} {printersWord} in Egypt check every file before printing, after you approve the proof.", link: "Meet the printers" },
-    ],
-    nodes: ["Design", "Price", "Payment", "Printer", "Delivery"],
-    hub: "Elba",
-  },
-  delivery: {
-    title: "Delivered across Egypt",
-    cardTitle: "Delivery to 27 governorates",
-    cardBody: "Boxes ship flat to cut shipping cost, and you see the delivery time before you pay: {days} {daysWord} to Greater Cairo for 500 mailer boxes.",
-    orderTitle: "Mailer box",
-    orderQty: "500 boxes",
-    orderPrice: "{price} per box",
-    orderDays: "Delivery in {days} {daysWord}",
-    orderCta: "Order",
-    zones: ["Greater Cairo", "Alexandria", "Delta", "Canal", "Upper Egypt"],
-  },
-  anyone: {
-    title: "For every business, from the first order to thousands of boxes",
-    cards: [
-      { title: "Online stores", body: "Mailer boxes that protect the product and open like a gift." },
-      { title: "Restaurants and cafés", body: "Pizza and takeaway boxes printed with your name." },
-      { title: "Cosmetics and care", body: "Folding cartons with gloss or soft-touch finishes." },
-    ],
-    cta: "Browse box styles",
-  },
-  designer: {
-    title: "Meet your 3D designer",
-    narrowTitle: "Watch it turn",
-    narrowBody: "Rotate, zoom and open the box to check every side before you print.",
-    wideTitle: "Design with no experience",
-    wideBody: "Arabic and Latin fonts, artwork that snaps to the fold lines and autosave on every change.",
-    prompt: "Add my logo to the lid",
-    link: "Open the designer",
-  },
-  wall: {
-    title: "{models} {modelsWord} in one library",
-    body: "Mailer and shipping boxes, folding cartons, rigid boxes, trays, tubes, bottles, pouches and cans, in {groups} {groupsWord}, each with its real dieline.",
-    link: "Browse the catalogue",
-    pause: "Pause the wall",
-    play: "Play the wall",
-  },
-  finishes: {
-    title: "Finishes you see before you print",
-    body: "{finishes} {finishesWord} previewed on the model the way they will print: lamination, spot UV, varnish, hot foil, emboss and deboss.",
-    link: "See the finishes",
-    names: ["Matte lamination", "Gloss lamination", "Spot UV", "Soft-touch lamination", "Varnish", "Hot foil", "Emboss", "Deboss"],
-  },
-  stats: {
-    title: "Everything you need to print your box",
-    checkoutTitle: "A clear price before you order",
-    rule: "{price} per box for 500 mailer boxes, setup and delivery to Greater Cairo included. VAT 14% is shown separately.",
+  products: {
+    title: "What we print for you",
+    sub: "Choose the packaging, add your logo, and a vetted printer makes it. Add a finish such as foil, spot UV or soft-touch if you like.",
+    from: "{price} each for 500 pieces",
     items: [
-      { label: "Models in the library" },
-      { label: "{printersWord}" },
-      { label: "{daysWord} to Greater Cairo" },
-      { label: "Boxes minimum order" },
+      { key: "mailer", title: "Mailer and shipping boxes", body: "Strong boxes that protect your orders on the way and open like a gift." },
+      { key: "carton", title: "Product boxes", body: "Printed card boxes for cosmetics, tea, medicine and shop shelves." },
+      { key: "food", title: "Food boxes", body: "Pizza boxes and carry boxes with a handle, for restaurants, cafés and bakeries." },
+      { key: "rigid", title: "Rigid gift boxes", body: "Sturdy lid-and-base boxes wrapped in printed paper, for perfume, gifts and launches." },
+      { key: "labels", title: "Labels for bottles, jars and cans", body: "Roll labels on paper or on white or clear film, sized to your container." },
+      { key: "pouches", title: "Pouches and squeeze tubes", body: "Stand-up pouches for coffee and snacks, and printed tubes for creams." },
     ],
-    note: "Numbers come from our model library, our printers and the pricing engine, and refresh every hour.",
-    secureTitle: "Secure payment, clear receipt",
-    payChips: ["Meeza or Visa card", "Mobile wallet", "Fawry", "InstaPay"],
-    secureBody: "Pay by card, mobile wallet, Fawry or InstaPay. Every order comes with a receipt showing VAT 14%.",
-    receipt: {
-      title: "Order summary",
-      line: "Mailer box × 500",
-      setup: "Setup and die",
-      delivery: "Delivery, Greater Cairo",
-      included: "Included",
-      subtotal: "Subtotal",
-      vat: "VAT 14%",
-      total: "Total",
-      pay: "Pay",
-    },
+    note: "Prices are per piece for 500 pieces in a standard size, with setup and delivery to Greater Cairo included, paid online, before VAT 14%. Cups, paper bags and moulded pulp are priced on request.",
+    cta: "Get your box price",
   },
-  motion: {
-    feature: ["Pause the designer preview", "Play the designer preview"],
-    delivery: ["Pause the delivery map", "Play the delivery map"],
-    finishes: ["Pause the finishes", "Play the finishes"],
-    price: ["Pause the order summary", "Play the order summary"],
-    pay: ["Pause the payment methods", "Play the payment methods"],
-    designer: ["Pause the designer preview animation", "Play the designer preview animation"],
+  trust: {
+    title: "Elba stands behind every order",
+    items: [
+      { key: "reprint", title: "Reprint or refund", body: "If your boxes differ from the approved proof, arrive damaged or short, tell us within 30 days of delivery and we reprint or refund them, your choice." },
+      { key: "proof", title: "A proof before printing", body: "Nothing prints until you approve the proof of your box. {printers} {printersWord} make every order." },
+      { key: "pay", title: "Secure payment, one receipt", body: "Pay by card, mobile wallet, Fawry or InstaPay. You buy from Elba, with one receipt showing VAT 14%." },
+      { key: "delivery", title: "Delivered and tracked", body: "Shipped with Bosta to every governorate. You see the delivery date before you pay and follow every step in your account." },
+    ],
   },
-  steps: {
-    title: "Start your box today",
-    items: ["Pick a model and size", "Design and preview", "Order and delivery"],
-    cta: "Start designing free",
-    pause: "Pause the steps",
-    play: "Play the steps",
+  how: {
+    title: "How ordering works",
+    sub: "Three steps from your logo to boxes at your door.",
+    step: "Step {n}",
+    steps: [
+      { title: "Choose your box", body: "Pick the box for what you sell, from mailer boxes to gift boxes." },
+      { title: "Add your logo, see the price", body: "Place your logo on the box in the free 3D preview and see the exact price for your size and quantity." },
+      { title: "Approve, pay, receive", body: "Approve the proof and pay online. A vetted printer makes your boxes and Bosta delivers them." },
+    ],
+    daysLine: "For example, 500 mailer boxes reach Greater Cairo in {days} {daysWord}.",
+    cta: "Get your box price",
+  },
+  faq: {
+    title: "Questions about ordering and printing",
+    items: [
+      { key: "min", q: "What is the smallest order?", a: "You get an instant price from {min} boxes up to {max} boxes. For more, ask for a quote." },
+      { key: "days", q: "How long until my boxes arrive?", a: "It is the printer's production time plus delivery, and you see the date before you pay. For example, 500 mailer boxes reach Greater Cairo in {days} {daysWord}." },
+      { key: "designer", q: "Do I need a designer?", a: "No. Upload your logo or a ready design in the free 3D preview, on your phone or computer, and see the result right away." },
+      { key: "quote", q: "What if the box I need is not listed?", a: "Browse the catalogue and ask for a quote. Our team replies with a price." },
+    ],
+  },
+  final: {
+    title: "Your boxes, printed and delivered",
+    body: "See your box and its exact price in seconds. You pay only when you order.",
+    cta: "Get your box price",
   },
 };
 
@@ -138,120 +86,65 @@ export type HomeCopy = Widen<typeof en>;
 
 const ar: HomeCopy = {
   hero: {
-    titles: ["علبة تليق بعلامتك", "صممها وشاهدها تدور"],
-    lead: "صمم علبتك المطبوعة مجانا على نموذج حي ثلاثي الأبعاد، واعرف السعر فورا، واطلب من مطابع مصرية معتمدة.",
-    primary: "بدء التصميم مجانا",
-    secondary: "عرض النماذج",
+    titles: ["علب مطبوعة بشعار مشروعك", "تصلك حتى بابك"],
+    lead: "تطبعها بشعارك مطابع مصرية معتمدة، وتضمنها علبة، وتصلك في أي محافظة. شاهد علبتك ثلاثية الأبعاد واعرف سعرها بالضبط قبل الدفع.",
+    primary: "معرفة سعر علبتك",
+    secondary: "عرض ما نطبعه",
+    trustLabel: "لماذا علبة",
+    trust: ["مطابع مصرية معتمدة", "السعر معروف قبل الدفع", "توصيل لكل محافظات مصر"],
     pause: "إيقاف الدوران",
     play: "تدوير العلبة",
-    mediaAlt: "علبة بريدية مطبوعة تدور على نموذجنا ثلاثي الأبعاد",
+    mediaAlt: "علبة بريدية مطبوعة بشعار علامة تجارية تدور",
   },
-  statement: {
-    lead: "علبة لكل ما تبيعه.",
-    rest: " للمتجر الإلكتروني والمقهى ومستحضرات التجميل والهدايا، بمقاسك وطباعتك وتشطيبك.",
-  },
-  rail: {
-    label: "من مكتبة النماذج",
-    pause: "إيقاف الشريط",
-    play: "تشغيل الشريط",
-  },
-  feature: {
-    title: "صمم علبتك داخل المتصفح",
-    body: "ارفع شعارك واختر الألوان والخطوط العربية أو اللاتينية، وشاهد التصميم على نموذج ثلاثي الأبعاد قبل الطباعة. دون برامج ودون مصمم ودون رسوم.",
-    link: "فتح المصمم",
-    prompt: "اسم علامتك",
-    chipTitle: "500 علبة بريدية",
-    chipValue: "{price} للعلبة",
-    chipNote: "شامل التجهيز والتوصيل، قبل الضريبة",
-  },
-  everywhere: {
-    title: "كل خطوة في مكان واحد.",
-    titleRest: "من الفكرة إلى باب بيتك.",
-    cards: [
-      { title: "تصميم على نموذج حي", body: "قص وطي ولسان لصق حقيقي لكل نموذج، بمقاسك بالمليمتر.", link: "فتح المصمم" },
-      { title: "إدارة الطلب كله", body: "التصميم والسعر والدفع والتوصيل في حساب واحد.", link: "طلباتي" },
-      { title: "طباعة عند مطبعة معتمدة", body: "{printers} {printersWord} في مصر تراجع كل ملف قبل الطباعة، بعد أن تعتمد أنت البروفة.", link: "التعرف على المطابع" },
+  products: {
+    title: "ما نطبعه لك",
+    sub: "اختر العبوة وأضف شعارك، وتنفذها مطبعة معتمدة. ويمكنك إضافة تشطيب مثل البصمة الذهبية أو الطلاء اللامع على الشعار أو السلوفان المخملي.",
+    from: "{price} للقطعة عند طلب 500 قطعة",
+    items: [
+      { key: "mailer", title: "علب بريدية وكراتين شحن", body: "علب قوية تحمي طلباتك في الطريق وتفتح كأنها هدية." },
+      { key: "carton", title: "علب كرتون للمنتجات", body: "علب كرتون مطبوعة لمستحضرات التجميل والشاي والأدوية ورفوف المتاجر." },
+      { key: "food", title: "علب الطعام", body: "علب بيتزا وعلب بمقبض للمطاعم والمقاهي والمخابز." },
+      { key: "rigid", title: "علب هدايا صلبة", body: "علب متينة بغطاء وقاعدة مغلفة بورق مطبوع، للعطور والهدايا والإصدارات الخاصة." },
+      { key: "labels", title: "ملصقات للزجاجات والبرطمانات والعلب المعدنية", body: "ملصقات على ورق أو على بلاستيك أبيض أو شفاف، بمقاس عبوتك." },
+      { key: "pouches", title: "أكياس وأنابيب مطبوعة", body: "أكياس قائمة للقهوة والوجبات الخفيفة، وأنابيب مطبوعة للكريمات." },
     ],
-    nodes: ["التصميم", "السعر", "الدفع", "المطبعة", "التوصيل"],
-    hub: "علبة",
+    note: "الأسعار للقطعة الواحدة عند طلب 500 قطعة بمقاس قياسي، شاملة التجهيز والتوصيل إلى القاهرة الكبرى بعد خصم الدفع مقدما، قبل ضريبة القيمة المضافة 14%. الأكواب والأكياس الورقية وعبوات اللب المضغوط بعرض سعر.",
+    cta: "معرفة سعر علبتك",
   },
-  delivery: {
-    title: "توصيل إلى كل محافظات مصر",
-    cardTitle: "التوصيل إلى 27 محافظة",
-    cardBody: "تشحن العلب مسطحة لتقل تكلفة الشحن، وتعرف مدة التسليم قبل الدفع: {days} {daysWord} إلى القاهرة الكبرى لطلب 500 علبة بريدية.",
-    orderTitle: "علبة بريدية",
-    orderQty: "500 علبة",
-    orderPrice: "{price} للعلبة",
-    orderDays: "التسليم خلال {days} {daysWord}",
-    orderCta: "طلب",
-    zones: ["القاهرة الكبرى", "الإسكندرية", "الدلتا", "القناة", "الصعيد"],
-  },
-  anyone: {
-    title: "لكل نشاط، من أول طلب إلى آلاف العلب",
-    cards: [
-      { title: "المتاجر الإلكترونية", body: "علب بريدية تحمي المنتج وتفتح كأنها هدية." },
-      { title: "المطاعم والمقاهي", body: "علب بيتزا وعلب تيك أواي مطبوعة باسمك." },
-      { title: "مستحضرات التجميل والعناية", body: "علب دوبلكس بتشطيب لامع أو مخملي." },
+  trust: {
+    title: "علبة مسؤولة عن طلبك من البداية إلى النهاية",
+    items: [
+      { key: "reprint", title: "إعادة الطباعة أو رد المبلغ", body: "إذا اختلفت علبك عن البروفة المعتمدة أو وصلت تالفة أو ناقصة، أبلغنا خلال 30 يوما من التسليم ونعيد طباعتها أو نرد المبلغ، حسب اختيارك." },
+      { key: "proof", title: "بروفة قبل الطباعة", body: "لا تبدأ الطباعة إلا بعد أن تعتمد بروفة علبتك. وتنفذ الطلبات {printers} {printersWord}." },
+      { key: "pay", title: "دفع آمن وإيصال واحد", body: "ادفع بالبطاقة أو المحفظة الإلكترونية أو فوري أو إنستاباي. تشتري من علبة مباشرة، وتحصل على إيصال واحد يوضح ضريبة القيمة المضافة 14%." },
+      { key: "delivery", title: "توصيل ومتابعة", body: "نشحن مع بوسطة إلى كل محافظات مصر، وتعرف موعد التسليم قبل الدفع، وتتابع كل خطوة من حسابك." },
     ],
-    cta: "عرض النماذج",
   },
-  designer: {
-    title: "تعرف على مصممك ثلاثي الأبعاد",
-    narrowTitle: "معاينة من كل الجهات",
-    narrowBody: "حرك العلبة وكبرها وافتحها لترى كل وجه قبل الطباعة.",
-    wideTitle: "تصميم دون خبرة سابقة",
-    wideBody: "خطوط عربية ولاتينية، وتصميم يلتزم بخطوط الطي، وحفظ تلقائي مع كل تعديل.",
-    prompt: "إضافة الشعار على الغطاء",
-    link: "فتح المصمم",
+  how: {
+    title: "كيف تطلب علبك",
+    sub: "ثلاث خطوات من شعارك حتى وصول العلب إلى بابك.",
+    step: "الخطوة {n}",
+    steps: [
+      { title: "اختر علبتك", body: "اختر العلبة المناسبة لما تبيعه، من العلب البريدية حتى علب الهدايا." },
+      { title: "أضف شعارك واعرف السعر", body: "ضع شعارك على العلبة في المعاينة ثلاثية الأبعاد المجانية، واعرف السعر بالضبط لمقاسك وكميتك." },
+      { title: "اعتمد وادفع واستلم", body: "اعتمد البروفة وادفع إلكترونيا، ثم تطبع علبك مطبعة معتمدة وتوصلها بوسطة إليك." },
+    ],
+    daysLine: "فمثلا تصل 500 علبة بريدية إلى القاهرة الكبرى خلال {days} {daysWord}.",
+    cta: "معرفة سعر علبتك",
   },
-  wall: {
-    title: "{models} {modelsWord} في مكتبة واحدة",
-    body: "علب بريدية وكراتين شحن وعلب دوبلكس وعلب صلبة وصوان وأنابيب وزجاجات وأكياس وعلب معدنية، في {groups} {groupsWord}، ولكل نموذج قالب حقيقي.",
-    link: "عرض الكتالوج",
-    pause: "إيقاف الحركة",
-    play: "تشغيل الحركة",
+  faq: {
+    title: "أسئلة عن الطلب والطباعة",
+    items: [
+      { key: "min", q: "ما أقل كمية يمكنني طلبها؟", a: "تحصل على سعر فوري من {min} علبة حتى {max} علبة، وللكميات الأكبر اطلب عرض سعر." },
+      { key: "days", q: "متى تصل علبي؟", a: "المدة هي وقت الإنتاج في المطبعة مع التوصيل، وتعرف الموعد قبل الدفع. فمثلا تصل 500 علبة بريدية إلى القاهرة الكبرى خلال {days} {daysWord}." },
+      { key: "designer", q: "هل أحتاج إلى مصمم؟", a: "لا. ارفع شعارك أو تصميمك الجاهز في المعاينة ثلاثية الأبعاد المجانية، من هاتفك أو الكمبيوتر، وشاهد النتيجة في الحال." },
+      { key: "quote", q: "ماذا لو لم أجد العلبة التي أحتاجها؟", a: "تصفح الكتالوج واطلب عرض سعر، وسيرد فريقنا بالسعر." },
+    ],
   },
-  finishes: {
-    title: "تشطيبات تراها قبل أن تطبعها",
-    body: "{finishes} {finishesWord} تظهر على النموذج كما ستطبع: سلوفان وطلاء UV موضعي وورنيش وبصمة حرارية وطباعة بارزة وغائرة.",
-    link: "عرض التشطيبات",
-    names: ["سلوفان مطفي", "سلوفان لامع", "طلاء UV موضعي", "سلوفان مخملي", "ورنيش", "بصمة حرارية", "طباعة بارزة", "طباعة غائرة"],
-  },
-  stats: {
-    title: "كل ما تحتاجه لتطبع علبتك",
-    checkoutTitle: "سعر واضح قبل أن تطلب",
-    rule: "{price} للعلبة لطلب 500 علبة بريدية، شامل التجهيز والتوصيل إلى القاهرة الكبرى، وتظهر ضريبة القيمة المضافة 14% بشكل منفصل.",
-    items: [{ label: "نموذج في المكتبة" }, { label: "{printersWord}" }, { label: "{daysWord} للتسليم في القاهرة الكبرى" }, { label: "علبة كحد أدنى للطلب" }],
-    note: "الأرقام من مكتبة النماذج والمطابع ومحرك الأسعار، وتتحدث كل ساعة.",
-    secureTitle: "دفع آمن وإيصال واضح",
-    payChips: ["بطاقة ميزة أو فيزا", "محفظة إلكترونية", "فوري", "إنستاباي"],
-    secureBody: "ادفع بالبطاقة أو المحفظة الإلكترونية أو فوري أو إنستاباي، ومع كل طلب إيصال يوضح ضريبة القيمة المضافة 14%.",
-    receipt: {
-      title: "ملخص الطلب",
-      line: "علبة بريدية × 500",
-      setup: "التجهيز وفورمة التكسير",
-      delivery: "التوصيل، القاهرة الكبرى",
-      included: "مشمول",
-      subtotal: "المجموع الفرعي",
-      vat: "ضريبة القيمة المضافة 14%",
-      total: "الإجمالي",
-      pay: "الدفع",
-    },
-  },
-  motion: {
-    feature: ["إيقاف حركة معاينة التصميم", "تشغيل حركة معاينة التصميم"],
-    delivery: ["إيقاف حركة خريطة التوصيل", "تشغيل حركة خريطة التوصيل"],
-    finishes: ["إيقاف حركة التشطيبات", "تشغيل حركة التشطيبات"],
-    price: ["إيقاف حركة ملخص الطلب", "تشغيل حركة ملخص الطلب"],
-    pay: ["إيقاف حركة وسائل الدفع", "تشغيل حركة وسائل الدفع"],
-    designer: ["إيقاف حركة معاينة المصمم", "تشغيل حركة معاينة المصمم"],
-  },
-  steps: {
-    title: "ابدأ علبتك اليوم",
-    items: ["اختيار النموذج والمقاس", "التصميم والمعاينة", "الطلب والتوصيل"],
-    cta: "بدء التصميم مجانا",
-    pause: "إيقاف الخطوات",
-    play: "تشغيل الخطوات",
+  final: {
+    title: "علبك مطبوعة وتصل إلى بابك",
+    body: "شاهد علبتك واعرف سعرها بالضبط في ثوان، ولا تدفع إلا عند الطلب.",
+    cta: "معرفة سعر علبتك",
   },
 };
 

@@ -5,10 +5,11 @@ import { Search, X } from "lucide-react";
 import { useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import type { Locale } from "@/types";
 import type { CatalogueCard } from "@/data/catalogue/types";
-import type { TaxonomyNode } from "@/data/catalogue/taxonomy";
+import { plainKindName, type TaxonomyNode } from "@/data/catalogue/taxonomy";
 import { searchRanked } from "./rank";
 import { byWedge } from "@/data/catalogue/order-mode";
 import { formatNumber } from "@/lib/format";
+import { RENDER_ID } from "@/components/marketing/assets";
 import { COPY, fill } from "./copy";
 import styles from "./catalogue.module.css";
 
@@ -131,20 +132,6 @@ export function CatalogueBrowser({ locale, cards, taxonomy }: { locale: Locale; 
               </button>
             ) : null}
           </label>
-          <div className={styles.segmented} role="group" aria-label={COPY.scopeLabel[locale]}>
-            {(["egypt", "world"] as const).map((s) => (
-              <button
-                key={s}
-                type="button"
-                aria-pressed={scope === s}
-                className={styles.segment}
-                onClick={() => setScope(s)}
-                data-testid={`scope-${s}`}
-              >
-                {s === "egypt" ? COPY.scopeEgypt[locale] : COPY.scopeWorld[locale]}
-              </button>
-            ))}
-          </div>
         </div>
 
       <div className={styles.toolbar}>
@@ -190,6 +177,10 @@ export function CatalogueBrowser({ locale, cards, taxonomy }: { locale: Locale; 
         <p className={styles.resultCount} role="status" data-testid="catalogue-count">
           {q.trim() ? fill(COPY.resultsFor[locale], { count: formatNumber(results.length), q: q.trim() }) : fill(COPY.results[locale], { count: formatNumber(results.length) })}
         </p>
+        {/* R1-09: what Egyptian printers make is the default; the rest is one small, secondary switch. */}
+        <button type="button" aria-pressed={scope === "world"} className={styles.scopeToggle} onClick={() => setScope(scope === "world" ? "egypt" : "world")} data-testid="scope-world">
+          {COPY.scopeWorld[locale]}
+        </button>
       </div>
 
       {results.length === 0 ? (
@@ -233,7 +224,8 @@ function FamilySections({ locale, items, taxonomy, onShowAll }: { locale: Locale
                 {n.name[locale]} <span className={styles.chipCount}>{formatNumber(all.length)}</span>
               </h2>
               <div className={styles.gridWrap}>
-                <ul className={styles.gridStatic}>
+                {/* Phones: one swipeable shelf per family (catalogue.module.css .shelf). */}
+                <ul className={`${styles.gridStatic} ${styles.shelf}`}>
                   {all.slice(0, PER_FAMILY).map((c, k) => (
                     <li key={c.code}>
                       <ModelCard locale={locale} card={c} eager={first + k < 8} />
@@ -381,17 +373,24 @@ function VirtualGrid({ locale, items }: { locale: Locale; items: CatalogueCard[]
   );
 }
 
+/** R2-13: the boxes we sell most have branded renders (the ones on /boxes); use them instead of the plain model shot. */
+const BRANDED: Record<string, string> = Object.fromEntries(
+  Object.entries(RENDER_ID).filter(([code]) => !["ROLL_LABEL", "PRINTED_POUCH", "PRINTED_TUBE"].includes(code)),
+);
+
 export function ModelCard({ locale, card, eager = false }: { locale: Locale; card: CatalogueCard; eager?: boolean }) {
   const egypt = COPY.egypt[card.availableInEgypt][locale];
+  const branded = BRANDED[card.code];
   return (
     <Link href={`/${locale}/catalog/${card.slug}`} className={styles.card} prefetch={false} data-model={card.code}>
       <span className={styles.thumb}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={`/models/${encodeURIComponent(card.code)}.webp`} alt="" width={480} height={480} loading={eager ? "eager" : "lazy"} decoding="async" />
+        <img src={branded ? `/marketing/renders/${branded}.webp` : `/models/${encodeURIComponent(card.code)}.webp`} alt="" width={480} height={480} loading={eager ? "eager" : "lazy"} decoding="async" />
       </span>
       <span className={styles.cardBody}>
         <span className={styles.cardStd}>
-          {card.standard.code ? <bdi dir="ltr">{`${card.standard.system} ${card.standard.code}`}</bdi> : card.standard.label ? <bdi dir="auto">{card.standard.label}</bdi> : COPY.noStandard[locale]}
+          {/* SIM-10: a plain kind ("Corrugated mailers") on the card; the FEFCO / ECMA code stays searchable and on the model page. */}
+          {plainKindName(card.subFamily)[locale]}
         </span>
         <span className={styles.cardName}>{card.name[locale]}</span>
         <span className={styles.badges}>

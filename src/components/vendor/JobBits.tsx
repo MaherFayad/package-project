@@ -4,8 +4,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Text } from "@/components/ui/Text";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
-import { formatDate } from "@/lib/format";
-import { daysUntil, dueState, jobView, statusBadge, type JobStateInput } from "./lib/jobs";
+import { formatDate, formatDateTime } from "@/lib/format";
+import { daysUntil, dueState, jobView, replyBy, statusBadge, type JobStateInput } from "./lib/jobs";
 
 /** Status pill: colour + progress pip + explicit text (declined/awaiting use the vendor's view names). */
 export function JobStatusBadge({ job }: { job: JobStateInput }) {
@@ -42,11 +42,44 @@ export function DueLabel({ dueDate, status, compact }: { dueDate: string | null;
       </span>
     );
   }
+  // P-05: a bare date read as the order date; say it is the delivery date.
   return (
     <Text as="span" numeric={!compact}>
-      <time dateTime={dueDate}>{date}</time>
+      <time dateTime={dueDate}>{t("vendorPortal.due.short", { date })}</time>
     </Text>
   );
+}
+
+/** P-05: "Reply by Tue 10:18 pm" on a new job (24 hours from payment), red once it has passed. */
+export function ReplyBy({ job }: { job: JobStateInput }) {
+  const { t, locale } = useI18n();
+  const iso = replyBy(job);
+  if (!iso) return null;
+  const late = Date.now() > new Date(iso).getTime();
+  const time = formatDateTime(iso, locale);
+  return (
+    <span suppressHydrationWarning>
+      <Badge tone={late ? "critical" : "attention"} progress="incomplete">
+        {late ? t("vendorPortal.job.replyLate", { time }) : t("vendorPortal.job.replyBy", { time })}
+      </Badge>
+    </span>
+  );
+}
+
+/**
+ * P-09: industry codes (FEFCO 0427, ECMA A20.20.03.01) stay as small secondary text; English
+ * family names ("Gable carrier") are hidden on Arabic pages, where the Arabic model name says it.
+ */
+export function StandardCode({ standard }: { standard: string | null | undefined }) {
+  const { locale } = useI18n();
+  if (!standard) return null;
+  if (locale === "ar" && !/^(FEFCO|ECMA)\b/i.test(standard)) return null;
+  return <bdi dir="ltr">{standard}</bdi>;
+}
+
+/** Whether StandardCode renders anything (for separators). */
+export function showsStandard(standard: string | null | undefined, locale: string): boolean {
+  return !!standard && (locale !== "ar" || /^(FEFCO|ECMA)\b/i.test(standard));
 }
 
 /** What was ordered: the exact library model ("FEFCO 0203 · Full overlap slotted container"),

@@ -44,7 +44,7 @@ test("quote-only model: no 'Order this box' in designer, export, share, checkout
   await expect(toolbar.getByRole("button", { name: "Request a price" })).toBeVisible({ timeout: 30_000 });
   await expect(page.getByRole("button", { name: "Order this box" })).toHaveCount(0);
   await toolbarAction(page, "Export");
-  const exp = page.getByRole("dialog", { name: "Download a mockup" });
+  const exp = page.getByRole("dialog", { name: "Export your design" });
   await expect(exp.getByRole("button", { name: "Request a price" })).toBeVisible();
   await expect(exp.getByRole("button", { name: "Order this box" })).toHaveCount(0);
   await exp.getByRole("button", { name: "Cancel" }).click();
@@ -76,7 +76,7 @@ test("quote-only model: no 'Order this box' in designer, export, share, checkout
   await expect(v.getByText(/EGP [\d.,]+ per box/)).toHaveCount(0);
   await expect(v.getByRole("radio", { name: /Sample/ })).toHaveCount(0);
   await expect(v.getByRole("button", { name: /Order 2,000 boxes now/ })).toHaveCount(0);
-  await expect(v.getByRole("button", { name: /Pay|Continue to delivery/ })).toHaveCount(0);
+  await expect(v.getByRole("button", { name: /Pay|Continue to/ })).toHaveCount(0);
 
   // Request a price for 100 boxes (below the instant cap: allowed for a model priced by quote).
   await v.getByRole("button", { name: "Request a price" }).click();
@@ -101,7 +101,7 @@ test("special-gluing model no printer lists: 'Request a price' once the price sa
   await expect(page.getByRole("toolbar").getByRole("button", { name: "Request a price" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Order this box" })).toHaveCount(0);
   await toolbarAction(page, "Export");
-  const exp = page.getByRole("dialog", { name: "Download a mockup" });
+  const exp = page.getByRole("dialog", { name: "Export your design" });
   await expect(exp.getByRole("button", { name: "Request a price" })).toBeVisible();
   await exp.getByRole("button", { name: "Cancel" }).click();
   await toolbarAction(page, "Share");

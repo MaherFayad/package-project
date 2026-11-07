@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { getT, toLocale } from "@/i18n";
 import type { DictKey } from "@/i18n";
 import { designHref } from "@/components/store/catalog";
+import { getReferenceUnit, listStructures } from "@/components/store/data";
+import { formatMoney } from "@/lib/format";
 import { VESSEL_RENDERS, renderDims, srcSetFor, vesselSrc } from "@/components/marketing/assets";
 import { HeroImage } from "@/components/marketing/HeroImage";
 import rs from "@/components/marketing/restyle/restyle.module.css";
@@ -32,13 +35,28 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 /**
- * Products → Bottles and labels. Label printing is not orderable yet, so this page says so
- * plainly ("Coming soon") and points to the carton that goes around the bottle meanwhile.
+ * The designer model each render opens. Vessels are priced instantly as their label (ROLL_LABEL,
+ * order mode "instant") and ordered from the designer like a box (R3-02).
+ */
+const VESSEL_MODEL: Record<(typeof VESSEL_RENDERS)[number], string> = {
+  jar: "wide-jar",
+  bottle: "round-bottle",
+  dropper: "dropper-bottle",
+  pump: "pump-bottle",
+  can: "beverage-can-two-piece",
+};
+
+/**
+ * Products → Bottles and labels. Labels are orderable: each card opens its container in the
+ * designer, which prices the label and has the order button. The price line is the same
+ * reference price the home card shows (ROLL_LABEL, default size, 500 pieces), so the two agree.
  * The images are renders of the 3D vessel models with sample labels.
  */
 export default async function BottlesPage({ params }: Props) {
   const locale = toLocale((await params).locale);
   const t = getT(locale);
+  const label = (await listStructures()).find((x) => x.code === "ROLL_LABEL");
+  const price = label ? await getReferenceUnit("ROLL_LABEL", label.defaultDims).catch(() => null) : null;
   return (
     <div className={rs.page}>
       <Sheet tone="dark" hero className={rs.heroLanding} aria-labelledby="bottles-title">
@@ -47,11 +65,14 @@ export default async function BottlesPage({ params }: Props) {
         <Lead align="center" className="m-enter-lcp">
           {t("marketing.bottles.body")}
         </Lead>
+        {price != null ? (
+          <p className={`${rs.small} ${rs.sampleNote} ${rs.heroLandingNote} m-enter`}>{t("marketing.bottles.price", { price: formatMoney(price, locale, { alwaysDecimals: true }) })}</p>
+        ) : null}
         <PillRow align="center" className="m-enter">
-          <Pill href={designHref(locale, { structure: "ECMA_RTE" })} size="lg">
+          <Pill href="#vessels" size="lg">
             {t("marketing.bottles.primary")}
           </Pill>
-          <Pill href={`/${locale}/boxes`} variant="outline" size="lg">
+          <Pill href={designHref(locale, { structure: "ECMA_RTE" })} variant="outline" size="lg">
             {t("marketing.bottles.secondary")}
           </Pill>
         </PillRow>
@@ -78,7 +99,7 @@ export default async function BottlesPage({ params }: Props) {
         </div>
         <p className={`${rs.small} ${rs.sampleNote} ${rs.heroLandingNote}`}>{SAMPLE_LABEL[locale]}</p>
       </Sheet>
-      <Sheet tone="white" aria-labelledby="vessels-title">
+      <Sheet tone="white" id="vessels" aria-labelledby="vessels-title">
         <h2 id="vessels-title" className="visually-hidden">
           {t("marketing.bottles.eyebrow")}
         </h2>
@@ -87,7 +108,6 @@ export default async function BottlesPage({ params }: Props) {
             <li key={v} data-reveal="" suppressHydrationWarning style={{ ["--m-i" as string]: i % 4 }}>
               <article className={dt.card}>
                 <div className={dt.cardMedia}>
-                  <span className={`${dt.tag} ${dt.soon}`}>{t("marketing.bottles.soon")}</span>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={vesselSrc(v)}
@@ -101,7 +121,12 @@ export default async function BottlesPage({ params }: Props) {
                   />
                 </div>
                 <div className={dt.cardBody}>
-                  <h3 className={rs.cardTitle}>{t(`marketing.bottles.items.${v}` as DictKey)}</h3>
+                  <h3 className={rs.cardTitle}>
+                    <Link href={`/${locale}/design/${VESSEL_MODEL[v]}`} prefetch={false} className={dt.cardLink}>
+                      {t(`marketing.bottles.items.${v}` as DictKey)}
+                    </Link>
+                  </h3>
+                  <p className={rs.small}>{t("marketing.bottles.instant")}</p>
                 </div>
               </article>
             </li>

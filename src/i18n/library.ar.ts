@@ -4,9 +4,9 @@ import type { libraryEn } from "./library.en";
 export const libraryAr: typeof libraryEn = {
   picker: {
     title: "اختيار النموذج",
-    open: "تغيير النموذج",
+    open: "تغيير نوع العلبة",
     search: "البحث في النماذج",
-    searchPlaceholder: "علبة بريدية، FEFCO 0203، برطمان عسل…",
+    searchPlaceholder: "علبة بريدية، علبة بيتزا، برطمان عسل…",
     all: "الكل",
     count: "{count:model}",
     empty: "لا يوجد نموذج يطابق «{q}». جرب رمزا مثل 0201 أو منتجا مثل برطمان.",
@@ -39,7 +39,7 @@ export const libraryAr: typeof libraryEn = {
     surfaces: "مناطق الطباعة",
     surfaceSize: "{w} × {h} مم",
     finishes: "التشطيبات",
-    finishesHelp: "تبدأ البصمة وطلاء UV الموضعي والطباعة البارزة على الشعار. اختر عنصرا لإضافته أو إزالته.",
+    finishesHelp: "تبدأ البصمة والطلاء اللامع الموضعي والطباعة البارزة على الشعار. اختر عنصرا لإضافته أو إزالته.",
     finishOnLogo: "على الشعار",
     finishOnImages: "على الصور: {count}",
     finishOnItems: "على العناصر: {count}",

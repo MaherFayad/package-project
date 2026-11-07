@@ -169,21 +169,38 @@ export function featureSupportOf(m: BoxModelDef, doc: DesignDoc): FeatureSupport
 }
 
 /**
- * Layers a masked finish (spot UV, foil, emboss) starts on (FN-02): the logo (image layers), else
- * the text, else every visible item on the outside. Empty when the outside has no artwork yet;
- * an empty mask means "the whole main face" (DesignFinish contract) and is filled in as soon as
- * the first item is added (`fillEmptyFinishMasks`).
+ * Layers a masked finish (spot UV, foil, emboss) starts on: every visible item on the outside, on
+ * every face (a finish switched on applies to the whole design; the buyer can then take it off
+ * single items). Empty when the outside has no artwork yet; an empty mask means "every face"
+ * (DesignFinish contract) and is filled in as soon as the first item is added
+ * (`fillEmptyFinishMasks`).
  */
 export function defaultFinishLayerIds(doc: Pick<DesignDoc, "artwork">): string[] {
-  const visible = doc.artwork.outside.layers.filter((l) => !l.hidden);
-  const images = visible.filter((l) => l.kind === "image");
-  if (images.length) return images.map((l) => l.id);
-  const text = visible.filter((l) => l.kind === "text");
-  if (text.length) return text.map((l) => l.id);
-  return visible.map((l) => l.id);
+  return doc.artwork.outside.layers.filter((l) => !l.hidden).map((l) => l.id);
 }
 
-/** Toggle a finish; masked finishes start on the logo layer (see `defaultFinishLayerIds`, editable per item). */
+/**
+ * A new outside item joins every masked finish that already covers ALL the other visible items
+ * (the finish "applies to everything"), so uploading a logo on another face after switching foil
+ * on puts foil there too. Finishes the buyer narrowed to some items are left alone.
+ */
+export function extendFinishMasks(before: DesignDoc, after: DesignDoc, layerId: string): DesignDoc {
+  if (!after.finishes?.some((f) => FINISHES[f.code].masked)) return after;
+  const layer = after.artwork.outside.layers.find((l) => l.id === layerId);
+  if (!layer) return after;
+  const prev = before.artwork.outside.layers.filter((l) => !l.hidden).map((l) => l.id);
+  let changed = false;
+  const finishes = after.finishes.map((f) => {
+    if (!FINISHES[f.code].masked || (f.mask?.surface ?? "outside") !== "outside") return f;
+    const ids = f.mask?.layerIds ?? [];
+    if (ids.includes(layerId) || !prev.every((id) => ids.includes(id))) return f;
+    changed = true;
+    return { ...f, mask: { surface: "outside" as const, layerIds: [...ids, layerId] } };
+  });
+  return changed ? { ...after, finishes } : after;
+}
+
+/** Toggle a finish; masked finishes start on every item (see `defaultFinishLayerIds`, editable per item). */
 export function toggleFinish(doc: DesignDoc, code: DesignFinishCode, on: boolean): DesignDoc {
   const cur = doc.finishes ?? [];
   let next: DesignFinish[];
@@ -227,13 +244,13 @@ export function setLayerFinish(doc: DesignDoc, code: DesignFinishCode, layerId: 
   return { ...doc, finishes };
 }
 
-/** Id of the stand-in layer `finishPreview` adds when a masked finish has no artwork to sit on. */
-export const FINISH_PREVIEW_LAYER = "finish-preview-main-face";
+/** Id prefix of the stand-in layers `finishPreview` adds (one per face) when a masked finish has no artwork to sit on. */
+export const FINISH_PREVIEW_LAYER = "finish-preview-face";
 
 /**
  * What the 3D view paints for masked finishes. The engine only coats the layers a mask lists, so
  * an empty mask (no artwork yet) would be invisible (FN-02): following the DesignFinish contract
- * it covers the whole main face, drawn as a stand-in rectangle that never enters the document.
+ * it covers every face, drawn as stand-in rectangles that never enter the document.
  */
 export function finishPreview(
   finishes: readonly DesignFinish[],
@@ -241,19 +258,23 @@ export function finishPreview(
   model: { faces: Partial<Record<FaceId, { width: number; height: number }>> },
 ): { finishes: { code: DesignFinishCode; mask?: DesignFinish["mask"] }[]; artwork: Artwork } {
   const live = new Set(artwork.outside.layers.filter((l) => !l.hidden).map((l) => l.id));
-  let stand: ShapeLayer | null = null;
+  let stand: ShapeLayer[] | null = null;
   const out = finishes.map((f) => {
     if (!FINISHES[f.code].masked) return { code: f.code };
     const surface = f.mask?.surface ?? "outside";
     const ids = (f.mask?.layerIds ?? []).filter((id) => surface !== "outside" || live.has(id));
     if (ids.length) return { code: f.code, mask: { surface, layerIds: ids } };
-    const face = (["front", ...Object.keys(model.faces)] as FaceId[]).find((k) => model.faces[k]);
-    const info = face ? model.faces[face] : null;
-    if (!face || !info) return { code: f.code };
-    stand ??= { id: FINISH_PREVIEW_LAYER, kind: "shape", shape: "rect", face, surface: "outside", x: info.width / 2, y: info.height / 2, width: info.width, height: info.height, rotation: 0, fill: "#000000", stroke: null, strokeWidthMm: 0 };
-    return { code: f.code, mask: { surface: "outside" as const, layerIds: [FINISH_PREVIEW_LAYER] } };
+    stand ??= (Object.keys(model.faces) as FaceId[]).flatMap((face) => {
+      const info = model.faces[face];
+      return info
+        ? [{ id: `${FINISH_PREVIEW_LAYER}-${face}`, kind: "shape" as const, shape: "rect" as const, face, surface: "outside" as const, x: info.width / 2, y: info.height / 2, width: info.width, height: info.height, rotation: 0, fill: "#000000", stroke: null, strokeWidthMm: 0 }]
+        : [];
+    });
+    if (!stand.length) return { code: f.code };
+    return { code: f.code, mask: { surface: "outside" as const, layerIds: stand.map((l) => l.id) } };
   });
-  const art: Artwork = stand ? { ...artwork, outside: { ...artwork.outside, layers: [...artwork.outside.layers, stand] } } : artwork;
+  const used = stand as ShapeLayer[] | null;
+  const art: Artwork = used?.length ? { ...artwork, outside: { ...artwork.outside, layers: [...artwork.outside.layers, ...used] } } : artwork;
   return { finishes: out, artwork: art };
 }
 

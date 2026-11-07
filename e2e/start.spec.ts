@@ -11,8 +11,8 @@ import { expect, test, type Page } from "@playwright/test";
 const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
 const COPY = {
-  ar: { h1: "ابدأ اليوم", h2s: ["اختر علبتك", "اجعل علبتك تلمع", "اعرف السعر، وادفع بطريقتك", "علامات تجارية بانتظار علبتها", "ابدأ، ثم توسع", "هل تريد تصميم علبتك الآن؟"], sample: "نموذج", start: "بدء التصميم مجانا", header: "البدء مجانا" },
-  en: { h1: "start today", h2s: ["Choose your box", "Make your packaging shine", "See the price, pay your way", "Brands waiting for their box", "Start, then grow", "Ready to design your box?"], sample: "Sample", start: "Start designing free", header: "Start free" },
+  ar: { h1: "ابدأ اليوم", h2s: ["اختر علبتك", "اجعل علبتك تلمع", "اعرف السعر، وادفع بطريقتك", "علامات تجارية بانتظار علبتها", "ابدأ، ثم توسع", "هل تريد طباعة علبك؟"], sample: "نموذج", start: "معرفة سعر علبتك", header: "معرفة سعر علبتك" },
+  en: { h1: "start today", h2s: ["Choose your box", "Make your packaging shine", "See the price, pay your way", "Brands waiting for their box", "Start, then grow", "Ready to get your boxes printed?"], sample: "Sample", start: "Get your box price", header: "Get your box price" },
 } as const;
 
 function watchErrors(page: Page) {
@@ -46,30 +46,19 @@ for (const locale of ["ar", "en"] as const) {
     expect(n).toBeGreaterThanOrEqual(5);
     for (let i = 0; i < n - 1; i++) await expect(cards.nth(i)).toContainText(c.sample);
 
-    // Every link in the page body is a designer CTA.
+    // Every link in the page body opens the designer or the /boxes chooser.
     const hrefs = await page.locator("main a[href]").evaluateAll((as) => as.map((a) => a.getAttribute("href") ?? ""));
     expect(hrefs.length).toBeGreaterThanOrEqual(4);
-    for (const h of hrefs) expect(h).toMatch(new RegExp(`^/${locale}/design(\\?|$)`));
+    for (const h of hrefs) expect(h).toMatch(new RegExp(`^/${locale}/(design(\\?|$)|boxes$)`));
 
     // Header CTA (visitor) points here.
-    await expect(page.getByRole("banner").getByRole("link", { name: c.header }).first()).toHaveAttribute("href", `/${locale}/start`);
+    await expect(page.getByRole("banner").getByRole("link", { name: c.header }).first()).toHaveAttribute("href", `/${locale}/boxes`);
 
-    // Closing phone form: an empty submit goes straight to the designer.
-    await page.getByRole("main").getByRole("button", { name: c.start }).click();
-    await expect(page).toHaveURL(new RegExp(`/${locale}/design`), { timeout: 30_000 });
+    // Closing CTA (R3-07): one link to the /boxes chooser, no phone field.
+    await expect(page.locator("main form")).toHaveCount(0);
+    await page.getByRole("main").getByRole("link", { name: c.start }).last().click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/boxes$`), { timeout: 30_000 });
     expect(errors.filter((e) => !/Download the React DevTools/.test(e))).toEqual([]);
-  });
-
-  test(`start ${locale}: phone form rejects a bad number without putting it in the URL`, async ({ page }) => {
-    await page.goto(`/${locale}/start`);
-    const form = page.locator("main form");
-    await form.getByRole("textbox").fill("12345");
-    await form.getByRole("button").click();
-    await expect(form.getByRole("alert")).toBeVisible();
-    await form.getByRole("textbox").fill("01012345678");
-    await form.getByRole("button").click();
-    await expect(page).toHaveURL(new RegExp(`/${locale}/login\\?next=`));
-    expect(page.url()).not.toContain("01012345678");
   });
 
   test(`start ${locale}: axe 0 and no horizontal scroll`, async ({ page }) => {
@@ -101,8 +90,8 @@ for (const locale of ["ar", "en"] as const) {
   });
 }
 
-test("site CTA: the header's start pill opens /start", async ({ page }) => {
+test("site CTA: the header's price pill opens the /boxes chooser (R1-04, R1-19)", async ({ page }) => {
   await page.goto("/en");
-  await page.getByRole("banner").getByRole("link", { name: "Start free" }).filter({ visible: true }).first().click();
-  await expect(page).toHaveURL(/\/en\/start$/);
+  await page.getByRole("banner").getByRole("link", { name: "Get your box price" }).filter({ visible: true }).first().click();
+  await expect(page).toHaveURL(/\/en\/boxes$/);
 });

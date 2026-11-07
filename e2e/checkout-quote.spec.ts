@@ -72,20 +72,20 @@ test("a team-priced request above 2,000 boxes is accepted and paid once", async 
   await expect(page).toHaveURL(new RegExp(`/en/checkout/${design.id}\\?quote=${quote.id}$`));
   await expect(page.getByText("Your price for 5,000 boxes")).toBeVisible();
   await expect(page.getByRole("radio", { name: /^500 boxes/ })).toHaveCount(0);
-  const summary = page.getByRole("complementary").filter({ hasText: "Summary" });
+  const summary = page.getByRole("complementary").filter({ hasText: "Your order" });
   await expect(summary).toContainText("EGP 105,678.00");
-  await summary.getByRole("button", { name: "Continue" }).click();
+  await summary.getByRole("button", { name: "Continue to address" }).click();
 
+  // Address and approval on one step.
   await page.getByLabel("Full name").fill("Mona Adel");
   await expect(page.getByLabel("Governorate")).toBeDisabled();
   await expect(page.getByLabel("Governorate")).toHaveValue("Giza");
   await page.getByLabel("City or district").fill("Dokki");
   await page.getByLabel("Street address").fill("12 Tahrir St");
-  await summary.getByRole("button", { name: "Continue" }).click();
-  await page.getByLabel("I approve this proof for printing").check();
-  const override = page.getByLabel(/Print it as it is/);
+  await page.getByLabel("I checked the design. Print it as it is.").check();
+  const override = page.locator("#preflight-override");
   if (await override.count()) await override.check();
-  await summary.getByRole("button", { name: "Approve proof and pay" }).click();
+  await summary.getByRole("button", { name: "Continue to payment" }).click();
   await expect(page).toHaveURL(/\/en\/checkout\/pay\//, { timeout: 30_000 });
   await expect(page.getByTestId("pay-total")).toContainText("EGP 105,678.00");
 

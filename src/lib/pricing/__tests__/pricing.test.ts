@@ -1,9 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_DIMS, blankAreaM2 } from "@/lib/dieline";
+import { DEFAULT_DIMS, STRUCTURES, blankAreaM2 } from "@/lib/dieline";
+import { orderTotals } from "@/lib/orders/totals";
 import type { StructureCode } from "@/types";
 import {
   CITY_ZONE,
   DEFAULT_PRICING_CONFIG,
+  PRICE_REFERENCE,
+  buyerPrice,
+  modelHasStandardDie,
+  sameSize,
   QuoteInputError,
   boardMultiplier,
   deliveryEstimate,
@@ -259,6 +264,25 @@ describe("standard sizes (vendor owns the die)", () => {
     if (r.mode !== "instant") throw new Error();
     expect(offerOf(r, "alex").standardSize).toBe(true);
     expect(offerOf(r, "nile").standardSize).toBe(false);
+  });
+
+  // R1-03: designer quotes for library models used to hard-code "custom size", so every one paid the die.
+  it("prices a library model at one of its own standard sizes without a die", () => {
+    const model = { code: "FEFCO_0400" };
+    const std = offerOf(instant({ model, dims: { L: 240, W: 170, H: 40 } }), "nile");
+    expect(std.standardSize).toBe(true);
+    expect(line(std, "DIE")).toBeUndefined();
+    const custom = offerOf(instant({ model, dims: { L: 420, W: 320, H: 35 } }), "nile");
+    expect(custom.standardSize).toBe(false);
+    expect(line(custom, "DIE")).toBeDefined();
+    expect(std.leadTimeDays).toBe(custom.leadTimeDays - 3);
+    expect(modelHasStandardDie("FEFCO_0400", { L: 241, W: 169, H: 41 }, 2)).toBe(true);
+    expect(modelHasStandardDie("NO_SUCH_MODEL", { L: 240, W: 170, H: 40 }, 2)).toBe(false);
+  });
+
+  it("the advertised reference mailer (the designer's default size) is a standard size", () => {
+    expect(STRUCTURES.FEFCO_0427.presets.some((p) => p.standard && sameSize(p.dims, PRICE_REFERENCE.dims, 0))).toBe(true);
+    expect(DEFAULT_DIMS.FEFCO_0427).toEqual(PRICE_REFERENCE.dims);
   });
 
   it("does not add a die or extra days when the structure needs no die (RSC)", () => {
@@ -536,5 +560,24 @@ describe("board area from the dieline engine", () => {
       const est = estimateBoardArea(code, DEFAULT_DIMS[code]).blankAreaM2;
       expect(Math.abs(est - real) / real).toBeLessThan(0.15);
     }
+  });
+});
+
+// ───────────────────────── one buyer price (R1-02) ─────────────────────────
+
+describe("buyerPrice (the one number every surface shows)", () => {
+  it("is exactly what checkout charges: discount on goods, delivery included, VAT on top", () => {
+    const o = offerOf(instant(), "nile");
+    const p = buyerPrice(o, 3);
+    const t = orderTotals(o.lines, 3);
+    expect(p.subtotalPiasters).toBe(t.subtotalPiasters);
+    expect(p.totalPiasters).toBe(t.totalPiasters);
+    expect(p.vatPiasters).toBe(t.vatPiasters);
+    expect(p.unitPiasters).toBe(Math.round(t.subtotalPiasters / 500));
+    expect(p.discountPiasters).toBeGreaterThan(0);
+    expect(p.subtotalPiasters).toBeLessThan(o.subtotalPiasters);
+    expect(p.deliveryDays).toBe(o.deliveryDays);
+    // No discount: the plain offer totals.
+    expect(buyerPrice(o, 0).totalPiasters).toBe(o.totalPiasters);
   });
 });

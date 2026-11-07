@@ -224,7 +224,7 @@
 
 /* ───────── 6 · Bento ───────── */
 .bento.bento { grid-auto-rows: auto; }
-.bento > article:not(.statsCard) { min-block-size: 340px; }
+.bento > article { min-block-size: 340px; }
 .mock { position: relative; display: grid; place-items: center; inline-size: 100%; min-block-size: 180px; }
 .mockLink,
 .mockFile,
@@ -249,14 +249,11 @@
 .mockOrder { display: flex; align-items: center; gap: 16px; padding: 14px 18px; border-radius: 20px; background: #fff; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1); }
 .mockOrder img { inline-size: 72px; block-size: auto; }
 .mockBtn { background: #000; color: #fff; box-shadow: none; }
-.statsCard { min-block-size: 0; }
-.stats { margin: var(--mk-stack-title-sub) 0 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--mk-grid-gap); }
-.stats div { display: flex; flex-direction: column-reverse; gap: 4px; }
-.stats dt { color: var(--mk-muted); font-size: 0.9375rem; }
-.stats dd { margin: 0; font-size: clamp(2.5rem, 1.5rem + 3vw, 4rem); font-weight: 300; line-height: 1; }
 
 /* ───────── 7 · Closing ───────── */
 .closingBody { align-items: center; }
+.closingCta { display: flex; flex-direction: column; align-items: center; gap: var(--mk-grid-gap-tight); text-align: center; }
+.closingCta p { margin: 0; }
 .mark { display: block; margin-inline: auto; }
 .steps {
   list-style: none;
@@ -276,15 +273,28 @@
   .heroTitle,
   .heroTitle:dir(rtl) { flex-direction: column; justify-content: space-between; padding-block: 0; }
   .heroTitle:dir(rtl) > :is(:first-child, :last-child) { margin: 0; }
-  .heroCenter { inline-size: 74vw; }
+  .heroCenter { inline-size: 62vw; }
+  /* Phone: a shorter stage keeps the two words close and the call to action above the fold. */
+  .collage.collage { --collage-h: min(46svh, 400px) !important; }
   /* Phone: the pinned card shows the portrait phone frame of the designer, whole. */
   .pinImg { object-fit: contain !important; }
-  .stats { grid-template-columns: 1fr; }
-  .notify { inset-block-start: -28px; inset-inline-end: 24px; }
+  /* R1-06: the floating chip covered the card heading; on phones it sits in the flow under the card. */
+  .notify { position: relative; inset: auto; margin: var(--mk-grid-gap) auto 0; inline-size: max-content; max-inline-size: 100%; }
+  /* R1-06: the title sits on its own lines above the box collage instead of being split around it. */
+  .heroStage { display: flex; flex-direction: column; gap: var(--mk-grid-gap); }
+  .heroTitle,
+  .heroTitle:dir(rtl) { position: static; order: -1; display: block; text-align: center; font-size: clamp(3rem, 15vw, 4.5rem); text-shadow: none; }
+  .heroTitle.heroTitle > * { display: inline; margin: 0 0.15em; }
+  /* R1-06: no 2-screen scroll-scrubbed stretch on phones: the designer frame shows once, static. */
+  .pin.pin { block-size: auto !important; }
+  .pin.pin > div { position: relative; block-size: auto; min-block-size: 0; }
+  .pin.pin > div > div:last-child { transform: none !important; animation: none !important; }
 }
 @media (max-width: 559px) {
   .steps { flex-direction: column; align-items: center; }
   .steps li { flex-direction: column; }
-  .steps svg { rotate: 90deg; }
+  /* R1-17: the arrows point down the column in both directions (the RTL flip no longer turns them up). */
+  .steps svg,
+  .steps svg:dir(rtl) { transform: none; rotate: 90deg; }
 }
 .bento { text-align: start; }

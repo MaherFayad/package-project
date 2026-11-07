@@ -19,7 +19,7 @@ export async function DesignerTopBar({ locale }: { locale: Locale }) {
         {/* Visible wordmark leads the name (WCAG 2.5.3), "Home" follows for context. */}
         <span className="visually-hidden">{t("nav.home")}</span>
       </Link>
-      <span className={styles.topBarTitle}>{t("designer.title")}</span>
+      <span className={styles.topBarTitle}>{t("designer.topBar")}</span>
       <span className={styles.topBarSpacer} />
       <Suspense fallback={null}>
         <TopBarLanguage />

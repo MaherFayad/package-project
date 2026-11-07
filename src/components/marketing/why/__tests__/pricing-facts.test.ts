@@ -5,7 +5,7 @@ vi.mock("server-only", () => ({}));
 import type { DesignDoc } from "@/types";
 import { QTY_TIERS } from "@/types";
 import { designQuoteFields, headlineOffer, HEADLINE_DEFAULTS, makeConfig, quote } from "@/lib/pricing";
-import { CFG, makeData, NOW } from "@/lib/pricing/__tests__/fixtures";
+import { CFG, makeData as makeFixtureData, NOW } from "@/lib/pricing/__tests__/fixtures";
 import { orderTotals } from "@/lib/orders/totals";
 import { sampleOffer } from "@/lib/orders/sample";
 import { mergeCheckoutSettings } from "@/lib/orders/checkout-settings";
@@ -20,6 +20,13 @@ const settings = mergeCheckoutSettings({ prepayDiscountPct: 3 }, {
   prepayDiscountPct: 0,
   sample: { enabled: true, pricePiasters: 75_000, maxPieces: 5, creditDays: 60, monthlyCap: 100, vendorCostPiasters: null },
 });
+
+// As in the seed (R1-03): the reference mailer size is a catalogue standard die.
+function makeData() {
+  const d = makeFixtureData();
+  d.presets.FEFCO_0427 = [...(d.presets.FEFCO_0427 ?? []), { id: "cosmetics-kit", name: { ar: "x", en: "x" }, dims: REFERENCE_BOX.dims, standard: true }];
+  return d;
+}
 
 // The reference box as a design nobody has decorated yet (what the "Start designing" link opens).
 const doc = {
@@ -62,6 +69,9 @@ describe("pricing page facts = checkout prices", () => {
     expect(tier.listTotalPiasters).toBe(list.pay.totalPiasters);
     expect(tier.savingPiasters).toBe(list.pay.totalPiasters - pay.pay.totalPiasters);
     expect(tier.savingPiasters).toBeGreaterThan(0);
+    // R2-08: the comparison table's ex-VAT rows add up as read.
+    expect(tier.listSubtotalPiasters - tier.discountPiasters).toBe(tier.subtotalPiasters);
+    expect(tier.subtotalPiasters + tier.vatPiasters).toBe(tier.totalPiasters);
     expect(tier.shippingPiasters).toBe(pay.pay.shippingPiasters);
     expect(tier.deliveryDays).toBe(pay.deliveryDays);
     expect(tier.method).toBe(best.printMethod);
@@ -93,7 +103,8 @@ describe("pricing page facts = checkout prices", () => {
 
   it("reports only real figures: printers, minimum order, standard-size die", () => {
     expect(facts.printerCount).toBe(3); // the suspended printer is not counted
-    expect(facts.minOrderQty).toBe(50);
+    // R1-08: the smallest quantity checkout offers (its first tier), not a printer's own minimum (50).
+    expect(facts.minOrderQty).toBe(100);
     expect(facts.tiers.every((t) => t.diePiasters === 0)).toBe(true); // the reference box is a standard die size
     expect(facts.unitDropPct).toBe(Math.round((1 - facts.tiers.at(-1)!.unitPiasters / facts.tiers[0]!.unitPiasters) * 100));
   });

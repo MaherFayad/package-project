@@ -8,7 +8,7 @@ import { orderModeOf, vendorListsModel } from "@/data/catalogue/order-mode";
 import { dielineBoardArea, modelBoardArea, type BoardArea, type BoardAreaProvider } from "./area";
 import { CITY_ZONE, deliveryEstimate, flatPackBundles } from "./delivery";
 import { sumPiasters, toPiasters, vatOf, withMargin } from "./money";
-import { nearbyStandardSizes, vendorHasDie } from "./standard";
+import { nearbyStandardSizes, sameSize, vendorHasDie } from "./standard";
 import { interpolateUnit } from "./tiers";
 import type {
   DeliveryZone,
@@ -119,7 +119,14 @@ export function digitalOffsetBreakpoint(
   return lastDigital === null ? null : lastDigital + 1;
 }
 
-type Eligibility = { ok: true; card: PricingRateCard } | { ok: false; reason: IneligibleReason };
+/** A library box model at one of its own standard preset sizes (a die exists): no die cost. */
+export function modelHasStandardDie(code: string, dims: QuoteInput["dims"], toleranceMm: number): boolean {
+  const m = modelByCode(code);
+  if (!m || m.kind !== "box") return false;
+  return m.presets.some((p) => p.standard && sameSize(p.dims, dims, toleranceMm));
+}
+
+type Eligibility ={ ok: true; card: PricingRateCard } | { ok: false; reason: IneligibleReason };
 
 function eligibility(
   vendor: PricingVendor,
@@ -175,8 +182,11 @@ function priceVendor(
     return { f, buyUnit, setup };
   });
 
-  // A library style has its own die: the base structure's standard dies do not apply.
-  const standardSize = input.model ? false : vendorHasDie(data, vendor, input.structureCode, input.dims, cfg.standardToleranceMm);
+  // R1-03: a library style has its own die, so the base structure's dies do not apply, but the
+  // model's own standard presets do. (Was: every library model paid the die, whatever its size.)
+  const standardSize = input.model
+    ? modelHasStandardDie(input.model.code, input.dims, cfg.standardToleranceMm)
+    : vendorHasDie(data, vendor, input.structureCode, input.dims, cfg.standardToleranceMm);
   const needsDie = card.dieCostPiasters > 0;
   const dieBuy = needsDie && !standardSize ? card.dieCostPiasters : 0;
 

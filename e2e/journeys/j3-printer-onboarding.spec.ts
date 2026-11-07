@@ -119,7 +119,9 @@ test("J3 · printer: apply → approved → rate card on → job → QC → ship
   // 5. Ops approve QC, book the courier, approve and pay the 40% advance.
   await ap.goto(`/${locale}/admin/orders/${job.number}`);
   await ap.getByRole("button", { name: t("admin.order.qc.approve") }).click();
+  await ap.getByRole("dialog").getByRole("button", { name: t("admin.order.qc.approve") }).click();
   await ap.getByRole("button", { name: t("admin.order.ship.action") }).click();
+  await ap.getByRole("dialog").getByRole("button", { name: t("admin.order.ship.action") }).click();
   await expect.poll(async () => (await db.order.findUniqueOrThrow({ where: { id: job.id } })).status, { timeout: 30_000 }).toBe("SHIPPED");
   const advance = await db.payout.findFirstOrThrow({ where: { orderId: job.id, kind: "ADVANCE" } });
   const cost = (await db.order.findUniqueOrThrow({ where: { id: job.id } })).vendorCostPiasters;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   ArrowDown,
   ArrowLeft,
@@ -20,8 +20,9 @@ import {
   Square,
   Trash2,
   Type,
+  Upload,
 } from "lucide-react";
-import type { ArtworkLayer, DesignFinishCode, FaceId, ImageCrop, ImageLayer, PrintSurface, TextLayer } from "@/types";
+import type { ArtworkLayer, DesignFinishCode, FaceId, ImageCrop, ImageLayer, PrintSurface, SheetImage, TextLayer } from "@/types";
 import { FACE_IDS } from "@/types";
 import type { FaceInfo } from "@/lib/dieline";
 import { useI18n } from "@/i18n/client";
@@ -71,11 +72,17 @@ export interface ArtworkPanelProps {
   /** Masked finishes on the design (spot UV, foil, emboss) and whether the selected item carries each (FN-02). */
   layerFinishes?: { code: DesignFinishCode; name: string; on: boolean }[];
   onLayerFinish?: (code: DesignFinishCode, on: boolean) => void;
+  /** Full artwork over the whole dieline on this surface (designer: full artwork). */
+  sheetImage?: SheetImage | null;
+  onSheetUpload?: (file: File) => void;
+  onSheetRemove?: () => void;
+  onTemplate?: () => void;
 }
 
 export function ArtworkPanel(p: ArtworkPanelProps) {
   const { t } = useI18n();
   const full = p.layerTotal >= MAX_LAYERS;
+  const sheetInput = useRef<HTMLInputElement>(null);
   const faceOptions = FACE_IDS.filter((f) => p.faces[f]).map((f) => ({ value: f, label: p.faceLabel ? p.faceLabel(f) : t(`designer.faces.${f}` as DictKey) }));
 
   return (
@@ -118,6 +125,56 @@ export function ArtworkPanel(p: ArtworkPanelProps) {
           else if (rejected.length) p.onUploadRejected(rejected[0].reason);
         }}
       />
+
+      <Text as="p" variant="bodySm" tone="subdued">
+        {t("designer.artwork.click3dHint")}
+      </Text>
+
+      {p.onSheetUpload ? (
+        <fieldset className={lib.group} data-testid="sheet-artwork">
+          <legend className={lib.groupTitle}>{t("designer.artwork.sheetTitle")}</legend>
+          <BlockStack gap="200">
+            <Text as="p" variant="bodySm" tone="subdued">
+              {t("designer.artwork.sheetHelp")}
+            </Text>
+            {p.sheetImage ? (
+              <InlineStack gap="200" blockAlign="center" wrap>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={p.sheetImage.src} alt="" className={styles.sheetThumb} />
+                <Text as="span" variant="bodySm">
+                  {p.sheetImage.pxWidth} × {p.sheetImage.pxHeight} px
+                </Text>
+                <Button variant="tertiary" tone="critical" icon={Trash2} onClick={p.onSheetRemove}>
+                  {t("designer.artwork.sheetRemove")}
+                </Button>
+              </InlineStack>
+            ) : null}
+            <InlineStack gap="200" wrap>
+              <input
+                ref={sheetInput}
+                type="file"
+                accept={IMAGE_ACCEPT}
+                hidden
+                tabIndex={-1}
+                aria-hidden="true"
+                onChange={(e) => {
+                  const f = e.currentTarget.files?.[0];
+                  e.currentTarget.value = "";
+                  if (f) p.onSheetUpload?.(f);
+                }}
+              />
+              <Button icon={Upload} onClick={() => sheetInput.current?.click()} disabled={p.uploading} loading={p.uploading}>
+                {p.sheetImage ? t("designer.artwork.sheetReplace") : t("designer.artwork.sheetAction")}
+              </Button>
+              {p.onTemplate ? (
+                <Button variant="tertiary" onClick={p.onTemplate}>
+                  {t("designer.artwork.sheetTemplate")}
+                </Button>
+              ) : null}
+            </InlineStack>
+          </BlockStack>
+        </fieldset>
+      ) : null}
 
       <InlineStack gap="200" wrap>
         <Button icon={Type} onClick={p.onAddText} disabled={full}>

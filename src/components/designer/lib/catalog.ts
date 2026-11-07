@@ -24,7 +24,7 @@ export const FALLBACK_PRESETS: Record<StructureCode, DimsPreset[]> = {
     { id: "accessories", name: { ar: "إكسسوارات", en: "Accessories" }, dims: { L: 180, W: 120, H: 50 }, standard: true },
     { id: "tshirt", name: { ar: "تيشيرت", en: "T-shirt" }, dims: { L: 300, W: 220, H: 60 }, standard: true },
     { id: "shoe", name: { ar: "حذاء", en: "Shoe box" }, dims: { L: 330, W: 200, H: 120 }, standard: true },
-    { id: "cosmetics-kit", name: { ar: "طقم مستحضرات", en: "Cosmetics kit" }, dims: { L: 250, W: 180, H: 80 } },
+    { id: "cosmetics-kit", name: { ar: "طقم مستحضرات", en: "Cosmetics kit" }, dims: { L: 250, W: 180, H: 80 }, standard: true },
   ],
   FEFCO_0201: [
     { id: "small", name: { ar: "صغيرة", en: "Small" }, dims: { L: 200, W: 150, H: 100 }, standard: true },

@@ -281,3 +281,83 @@
 
 /* In-page targets (header "Add QC photos" -> #qc) clear the sticky 56px top bar (WCAG 2.4.11). */
 .Anchor { scroll-margin-block-start: calc(56px + var(--p-space-400)); }
+
+/* P-01: the buyer's artwork on the job page (3D render, then what is on each panel). Never mirrored. */
+.ArtPreview {
+  display: block;
+  inline-size: 100%;
+  block-size: clamp(14rem, 70vw, 24rem);
+  object-fit: contain;
+  background: var(--p-color-bg-surface-secondary);
+  border: 1px solid var(--p-color-border);
+  border-radius: var(--p-border-radius-200);
+}
+.Faces { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--p-space-200); grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); }
+.Face {
+  display: flex;
+  flex-direction: column;
+  gap: var(--p-space-100);
+  min-width: 0;
+  padding: var(--p-space-200) var(--p-space-300);
+  border: 1px solid var(--p-color-border-secondary);
+  border-radius: var(--p-border-radius-200);
+  overflow-wrap: anywhere;
+}
+.FaceImages { display: flex; flex-wrap: wrap; gap: var(--p-space-150); }
+.FaceImg {
+  inline-size: 4.5rem;
+  block-size: 4.5rem;
+  object-fit: contain;
+  background: repeating-conic-gradient(var(--p-color-bg-surface-secondary) 0 25%, var(--p-color-bg-surface) 0 50%) 0 0 / 12px 12px;
+  border: 1px solid var(--p-color-border);
+  border-radius: var(--p-border-radius-150, 6px);
+}
+.Swatch { inline-size: 1.25rem; block-size: 1.25rem; border-radius: var(--p-border-radius-100); border: 1px solid var(--p-color-border); flex: none; }
+
+/* P-07: one labelled upload slot per QC photo. */
+.QcSlots { display: grid; gap: var(--p-space-300); grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); }
+.QcSlot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--p-space-150);
+  min-width: 0;
+  padding: var(--p-space-300);
+  border: 1px solid var(--p-color-border);
+  border-radius: var(--p-border-radius-200);
+}
+.QcSlot[data-done="true"] { border-color: var(--p-color-border-success, var(--p-color-border)); background: var(--p-color-bg-surface-success, transparent); }
+
+/* P-06: sticky action bar on phones (Accept / Decline, or the next step), under the thumb. */
+.StickyBar, .StickySpacer { display: none; }
+@media (max-width: 47.99rem) {
+  .StickySpacer { display: block; block-size: calc(4.5rem + env(safe-area-inset-bottom, 0px)); }
+  .StickyBar {
+    position: fixed;
+    inset-inline: 0;
+    inset-block-end: 0;
+    z-index: calc(var(--p-z-index-3) - 2);
+    display: flex;
+    gap: var(--p-space-200);
+    padding: var(--p-space-300) var(--p-space-400) calc(var(--p-space-300) + env(safe-area-inset-bottom, 0px));
+    background: var(--p-color-bg-surface);
+    border-block-start: 1px solid var(--p-color-border);
+    box-shadow: var(--p-shadow-400);
+  }
+  .StickyBar > * { flex: 1 1 0; min-width: 0; }
+}
+
+/* P-08: rate cards as stacked rows on phones. */
+.CardRows { list-style: none; margin: 0; padding: 0; display: none; }
+@media (max-width: 47.99rem) {
+  .CardRows { display: flex; flex-direction: column; gap: var(--p-space-200); }
+  .CardTable { display: none; }
+}
+.CardRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--p-space-100);
+  padding: var(--p-space-300) var(--p-space-400);
+  background: var(--p-color-bg-surface);
+  border: 1px solid var(--p-color-border);
+  border-radius: var(--p-border-radius-300);
+}

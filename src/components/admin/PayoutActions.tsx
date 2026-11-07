@@ -29,15 +29,15 @@ export function PayoutStatusBadge({ status }: { status: ScheduleStatus }) {
 }
 
 /**
- * One next step on a payout part. Raise and approve run at once (both are reversible by ops until
- * money moves); "Mark paid" asks for confirmation, and for the balance also for the vendor's ETA
- * e-invoice (Egyptian e-invoicing: Elba books the vendor's invoice against this payment).
+ * A-01 (simplicity review): one confirmed "Mark paid" per payout part. Ops makes the bank transfer,
+ * then records it here; the raise and approve steps it implies are written in the same action
+ * (each audited). The dialog states the amount, the vendor and the part, and for the balance asks
+ * for the vendor's ETA e-invoice (Egyptian e-invoicing: Elba books it against this payment).
  */
 export function PayoutStepButton({
   orderId,
   orderNumber,
   kind,
-  step,
   amountPiasters,
   vendorName,
   size,
@@ -45,6 +45,7 @@ export function PayoutStepButton({
   orderId: string;
   orderNumber: string;
   kind: PayoutKind;
+  /** The row's next step; any step is completed by recording the payment. */
   step: PayoutStep;
   amountPiasters: number;
   vendorName: string;
@@ -58,9 +59,9 @@ export function PayoutStepButton({
   const [res, setRes] = useState<AdminActionResponse<unknown> | null>(null);
   const key = `payout-${orderId}-${kind}`;
   const kindLabel = t(`admin.payouts.kinds.${kind}` as DictKey);
-  const label = t(`admin.payouts.steps.${step}` as DictKey);
+  const label = t("admin.payouts.steps.PAY");
   const go = async () => {
-    const r = await run(key, () => payoutStepAction({ orderId, kind, step, eInvoice: kind === "BALANCE" && step === "PAY" ? eInvoice : undefined }), t(`admin.payouts.done.${step}` as DictKey));
+    const r = await run(key, () => payoutStepAction({ orderId, kind, step: "PAY", eInvoice: kind === "BALANCE" ? eInvoice : undefined }), t("admin.payouts.done.PAY"));
     setRes(r);
     if (r?.ok) {
       setOpen(false);
@@ -70,37 +71,29 @@ export function PayoutStepButton({
   return (
     // React events bubble out of the portalled modal; keep them from reaching a clickable table row.
     <span onClick={(e) => e.stopPropagation()} style={{ display: "contents" }}>
-      <Button
-        size={size}
-        variant={step === "PAY" ? "primary" : undefined}
-        loading={busy === key && !open}
-        accessibilityLabel={`${label}: ${orderNumber}, ${kindLabel}`}
-        onClick={() => (step === "PAY" ? setOpen(true) : void go())}
-      >
+      <Button size={size} variant="primary" accessibilityLabel={`${label}: ${orderNumber}, ${kindLabel}`} onClick={() => setOpen(true)}>
         {label}
       </Button>
-      {step === "PAY" ? (
-        <Modal
-          open={open}
-          onClose={() => setOpen(false)}
-          title={t("admin.payouts.payTitle", { kind: kindLabel, number: orderNumber })}
-          primaryAction={{ content: label, disabled: kind === "BALANCE" && !eInvoice, loading: busy === key, onAction: go }}
-          secondaryActions={[{ content: t("admin.common.cancel"), onAction: () => setOpen(false) }]}
-        >
-          <BlockStack gap="300">
-            <Text as="p">{t("admin.payouts.payBody", { amount: formatMoney(amountPiasters, locale, { alwaysDecimals: true }), vendor: vendorName })}</Text>
-            {kind === "BALANCE" ? (
-              <Checkbox
-                label={t("admin.payouts.eInvoiceConfirm")}
-                helpText={t("admin.payouts.eInvoiceHelp")}
-                checked={eInvoice}
-                onChange={setEInvoice}
-                error={fieldError(res, "eInvoice", errorText)}
-              />
-            ) : null}
-          </BlockStack>
-        </Modal>
-      ) : null}
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title={t("admin.payouts.payTitle", { kind: kindLabel, number: orderNumber })}
+        primaryAction={{ content: t("admin.payouts.payConfirm", { amount: formatMoney(amountPiasters, locale, { alwaysDecimals: true }) }), disabled: kind === "BALANCE" && !eInvoice, loading: busy === key, onAction: go }}
+        secondaryActions={[{ content: t("admin.common.cancel"), onAction: () => setOpen(false) }]}
+      >
+        <BlockStack gap="300">
+          <Text as="p">{t("admin.payouts.payBody", { amount: formatMoney(amountPiasters, locale, { alwaysDecimals: true }), vendor: vendorName, kind: kindLabel, number: orderNumber })}</Text>
+          {kind === "BALANCE" ? (
+            <Checkbox
+              label={t("admin.payouts.eInvoiceConfirm")}
+              helpText={t("admin.payouts.eInvoiceHelp")}
+              checked={eInvoice}
+              onChange={setEInvoice}
+              error={fieldError(res, "eInvoice", errorText)}
+            />
+          ) : null}
+        </BlockStack>
+      </Modal>
     </span>
   );
 }

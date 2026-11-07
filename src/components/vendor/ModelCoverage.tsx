@@ -11,6 +11,7 @@ import { TextField } from "@/components/ui/TextField";
 import { useI18n } from "@/i18n/client";
 import { formatNumber } from "@/lib/format";
 import { normaliseQuery } from "./lib/jobs";
+import { StandardCode, showsStandard } from "./JobBits";
 import type { JobModelDTO } from "./types";
 import styles from "./vendor.module.css";
 
@@ -86,9 +87,11 @@ export function ModelCoverage({ models: all0, material, listed = [] }: { models:
                 <Text as="span" variant="bodySm" fontWeight="medium">
                   {m.name[locale]}
                 </Text>
-                <Text as="span" variant="bodySm" tone="subdued">
-                  <bdi dir="ltr">{m.standard}</bdi>
-                </Text>
+                {showsStandard(m.standard, locale) ? (
+                  <Text as="span" variant="bodySm" tone="subdued">
+                    <StandardCode standard={m.standard} />
+                  </Text>
+                ) : null}
                 {m.mode === "listed" ? (
                   <span>
                     <Badge size="small" tone={listed.includes(m.code) ? "success" : "attention"}>

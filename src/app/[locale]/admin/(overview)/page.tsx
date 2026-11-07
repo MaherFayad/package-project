@@ -98,6 +98,9 @@ export default async function AdminOverviewPage({ params, searchParams }: { para
       primaryAction={<RangeSelect value={range} options={RANGES.map((r) => ({ value: r, label: t(`admin.overview.ranges.${r}` as DictKey) }))} label={t("admin.overview.range")} />}
     >
       <BlockStack gap="400">
+        {/* A-06 (simplicity review): ops opens the console to act, so the to-do list comes first on
+            every screen size, then the KPIs, then the funnel and charts. */}
+        {todo}
         <MetricsStrip
           accessibilityLabel={t("admin.overview.metricsLabel")}
           metrics={[
@@ -109,9 +112,6 @@ export default async function AdminOverviewPage({ params, searchParams }: { para
             { label: label("admin.overview.metrics.disputes", "admin.overview.help.disputes"), value: cell(pct(o.ops.disputePct), t("admin.overview.openDisputes", { count: formatNumber(o.ops.openDisputes) })) },
           ]}
         />
-
-        {/* Phones: the to-do list is the next action, so it comes before the funnel and charts. */}
-        <div className={adminStyles.PhoneOnly}>{todo}</div>
 
         <Layout>
           <LayoutSection>
@@ -242,7 +242,6 @@ export default async function AdminOverviewPage({ params, searchParams }: { para
 
           <LayoutSection variant="oneThird" as="aside">
             <BlockStack gap="400">
-              <div className={adminStyles.DesktopOnly}>{todo}</div>
               {/* B-19: the plan's retention and supply gates (repeat ≥ 40% at 90 days; vendor acceptance). */}
               <Card title={t("admin.overview.health.title")}>
                 <BlockStack gap="300">

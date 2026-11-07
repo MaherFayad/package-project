@@ -8,6 +8,8 @@ import { formatDims, formatNumber } from "@/lib/format";
 import { designHref, formatCm, sizeHref, sizeSlug, SEO_SIZES, structureHref } from "./catalog";
 import { materialsFor, type MaterialView, type PriceFrom, type StructureView } from "./data";
 import { PriceFromTable } from "./PriceFromTable";
+import { catalogueEntry } from "@/data/catalogue";
+import { plainKindName } from "@/data/catalogue/taxonomy";
 import type { VendorListItem } from "./vendor-filters";
 import styles from "./store.module.css";
 
@@ -62,6 +64,8 @@ export function StructureDetail({
   const mats = materialsFor(structure.code, materials);
   const sizes = mergeSizes(structure, SEO_SIZES[structure.code] ?? [], locale);
   const makers = vendors.filter((v) => v.capabilities.structures.includes(structure.code));
+  const sub = catalogueEntry(structure.code)?.subFamily;
+  const kind = sub ? plainKindName(sub) : null;
   const crumbs = [
     { content: t("nav.home"), url: `/${locale}` },
     { content: t("nav.catalog"), url: `/${locale}/catalog` },
@@ -77,6 +81,8 @@ export function StructureDetail({
         ]
       : []),
   ];
+  // Buyers read sizes in centimetres (inside size); the exact millimetres stay under "Technical details" (R2-06).
+  const cm = (d: Dims) => <bdi>{`${formatCm(d).replace(/×/g, " × ")} ${t("common.cm")}`}</bdi>;
   const cta = designHref(locale, {
     structure: structure.code,
     dims,
@@ -109,15 +115,17 @@ export function StructureDetail({
             )}
             <Lead className="m-enter-lcp">{intro}</Lead>
             <ul className={`${rs.chips} m-enter`} style={{ ["--m-i" as string]: 4 }}>
-              {/^FEFCO_/.test(structure.code) ? (
+              {/* The plain kind only ("Mailer boxes and trays"). R1-10: no FEFCO / ECMA code on buyer
+                  pages; the code stays searchable in the catalogue and on its model page. */}
+              {kind ? (
                 <li>
                   <Package size={18} aria-hidden />
-                  <bdi>{structure.code.replace("_", " ")}</bdi>
+                  {kind[locale]}
                 </li>
               ) : null}
               <li>
                 <Ruler size={18} aria-hidden />
-                <span className={rs.num}>{formatDims(dims, locale)}</span>
+                <span className={rs.num}>{cm(dims)}</span>
               </li>
               <li>
                 <BadgeCheck size={18} aria-hidden />
@@ -149,56 +157,6 @@ export function StructureDetail({
               <div id="prices" style={{ scrollMarginBlockStart: 96 }} />
               <PriceFromTable locale={locale} dims={dims} price={price} />
 
-              <Card title={t("store.structure.specsTitle")} as="section">
-                <dl className={styles.specs}>
-                  <div className={styles.specRow}>
-                    <dt>{t("store.structure.family")}</dt>
-                    <dd>{t(`store.catalog.family.${structure.family}` as DictKey)}</dd>
-                  </div>
-                  <div className={styles.specRow}>
-                    <dt>{t("store.structure.defaultSize")}</dt>
-                    <dd>{formatDims(structure.defaultDims, locale)}</dd>
-                  </div>
-                  {(["L", "W", "H"] as const).map((k) => (
-                    <div key={k} className={styles.specRow}>
-                      <dt>
-                        {t(`store.structure.dimension.${k}` as DictKey)} ({t("common.mm")})
-                      </dt>
-                      <dd>
-                        <bdi>
-                          {t("store.structure.rangeValue", {
-                            min: formatNumber(p[k].min),
-                            max: formatNumber(p[k].max),
-                          })}
-                        </bdi>
-                      </dd>
-                    </div>
-                  ))}
-                  {p.rules?.length ? (
-                    <div className={styles.specRow}>
-                      <dt>{t("store.structure.rules")}</dt>
-                      <dd>{p.rules.map((r) => (RULE_KEYS[r] ? t(RULE_KEYS[r]) : r)).join(" ")}</dd>
-                    </div>
-                  ) : null}
-                  <div className={styles.specRow}>
-                    <dt>{t("store.structure.printing")}</dt>
-                    <dd>{t("store.structure.printingValue")}</dd>
-                  </div>
-                  <div className={styles.specRow}>
-                    <dt>{t("store.structure.finishes")}</dt>
-                    <dd>
-                      {(["MATTE_LAMINATION", "GLOSS_LAMINATION", "SPOT_UV"] as const)
-                        .map((f) => t(`finishes.${f}` as DictKey))
-                        .join(locale === "ar" ? "، " : ", ")}
-                    </dd>
-                  </div>
-                  <div className={styles.specRow}>
-                    <dt>{t("store.structure.minimum")}</dt>
-                    <dd>{t("store.structure.minimumValue")}</dd>
-                  </div>
-                </dl>
-              </Card>
-
               <Card title={t("store.structure.sizesTitle")} as="section">
                 <div className={styles.prose}>
                   <Text as="p" tone="subdued">
@@ -213,16 +171,13 @@ export function StructureDetail({
                             <Icon source={Ruler} size="small" />
                             <span>
                               {s.label ? `${s.label} · ` : ""}
-                              {formatDims(s.dims, locale)}
+                              {cm(s.dims)}
                             </span>
                           </Link>
                         </li>
                       );
                     })}
                   </ul>
-                  <Text as="h3" variant="headingSm">
-                    {t("store.structure.customTitle")}
-                  </Text>
                   <Text as="p" tone="subdued">
                     {t("store.structure.customBody")}
                   </Text>
@@ -230,22 +185,66 @@ export function StructureDetail({
               </Card>
 
               <Card title={t("store.structure.materialsTitle")} as="section">
-                <dl className={styles.specs}>
+                <ul className={`${styles.plainList} ${styles.prose}`}>
                   {mats.map((m) => (
-                    <div key={m.code} className={styles.specRow}>
-                      <dt>{t(`materials.${m.code}` as DictKey)}</dt>
+                    <li key={m.code}>
+                      {t(`materialsPlain.${m.code}` as DictKey)}{" "}
+                      {m.foodSafe ? <Badge tone="info">{t("store.structure.foodSafe")}</Badge> : null}
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+
+              {/* Printer-sheet facts (mm ranges, size rules, board grades) for the few who need them, closed by default (R2-06). */}
+              <Card as="section">
+                <details className={styles.faqItem}>
+                  <summary className={styles.faqQ}>{t("store.structure.techTitle")}</summary>
+                  <dl className={styles.specs}>
+                    <div className={styles.specRow}>
+                      <dt>{t("store.structure.defaultSize")}</dt>
+                      <dd>{formatDims(structure.defaultDims, locale)}</dd>
+                    </div>
+                    {(["L", "W", "H"] as const).map((k) => (
+                      <div key={k} className={styles.specRow}>
+                        <dt>
+                          {t(`store.structure.dimension.${k}` as DictKey)} ({t("common.mm")})
+                        </dt>
+                        <dd>
+                          <bdi>
+                            {t("store.structure.rangeValue", {
+                              min: formatNumber(p[k].min),
+                              max: formatNumber(p[k].max),
+                            })}
+                          </bdi>
+                        </dd>
+                      </div>
+                    ))}
+                    {p.rules?.length ? (
+                      <div className={styles.specRow}>
+                        <dt>{t("store.structure.rules")}</dt>
+                        <dd>{p.rules.map((r) => (RULE_KEYS[r] ? t(RULE_KEYS[r]) : r)).join(" ")}</dd>
+                      </div>
+                    ) : null}
+                    <div className={styles.specRow}>
+                      <dt>{t("store.structure.printing")}</dt>
+                      <dd>{t("store.structure.printingValue")}</dd>
+                    </div>
+                    <div className={styles.specRow}>
+                      <dt>{t("store.structure.finishes")}</dt>
                       <dd>
-                        <span>
-                          {t("store.structure.materialSpec", {
-                            gsm: m.gsm,
-                            mm: m.thicknessMm,
-                          })}
-                        </span>{" "}
-                        {m.foodSafe ? <Badge tone="info">{t("store.structure.foodSafe")}</Badge> : null}
+                        {(["MATTE_LAMINATION", "GLOSS_LAMINATION", "SPOT_UV"] as const)
+                          .map((f) => t(`finishes.${f}` as DictKey))
+                          .join(locale === "ar" ? "، " : ", ")}
                       </dd>
                     </div>
-                  ))}
-                </dl>
+                    {mats.map((m) => (
+                      <div key={m.code} className={styles.specRow}>
+                        <dt>{t(`materials.${m.code}` as DictKey)}</dt>
+                        <dd>{t("store.structure.materialSpec", { gsm: m.gsm, mm: m.thicknessMm })}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </details>
               </Card>
             </div>
           </LayoutSection>
@@ -258,7 +257,7 @@ export function StructureDetail({
                     {name}
                   </Text>
                   <Text as="p" numeric>
-                    {formatDims(dims, locale)}
+                    {cm(dims)}
                   </Text>
                   <Pill href={cta} size="lg" className={styles.ctaFull}>
                     {t("store.structure.designCta")}
@@ -269,31 +268,13 @@ export function StructureDetail({
                 </div>
               </Card>
               {makers.length ? (
+                // R2-05: no printer list with its own lead times (they contradicted the one delivery
+                // promise in the price table, and the buyer deals only with Elba): one line, cities only.
                 <Card title={t("store.structure.vendorsTitle")} as="section">
                   <div className={styles.prose}>
                     <Text as="p" tone="subdued">
-                      {t("store.structure.vendorsCount", {
-                        count: makers.length,
-                      })}
+                      {t("store.structure.printedIn", { cities: listCities(makers.map((v) => t(`cities.${v.city}` as DictKey)), locale) })}
                     </Text>
-                    <ul className={`${styles.plainList} ${styles.makerList}`}>
-                      {makers.slice(0, 5).map((v) => (
-                        <li key={v.id} className={styles.designRow}>
-                          <div className={styles.designMain}>
-                            <Link href={`/${locale}/vendors/${v.slug}`}>{pick(locale, v.name.ar, v.name.en)}</Link>
-                            <Text as="span" variant="bodySm" tone="subdued">
-                              {t(`cities.${v.city}` as DictKey)} ·{" "}
-                              {t("store.vendors.leadValue", {
-                                days: v.leadTimeDays,
-                              })}
-                            </Text>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                    <Link href={`/${locale}/vendors?structure=${structure.code}`} className={styles.textLink}>
-                      {t("store.home.vendorsAll")}
-                    </Link>
                   </div>
                 </Card>
               ) : null}
@@ -303,6 +284,13 @@ export function StructureDetail({
       </Sheet>
     </div>
   );
+}
+
+/** «القاهرة والإسكندرية ودمياط» / "Cairo, Alexandria and Damietta": unique city names, joined. */
+function listCities(names: string[], locale: Locale): string {
+  const u = [...new Set(names)];
+  if (u.length < 2) return u.join("");
+  return locale === "ar" ? `${u.slice(0, -1).join("، ")} و${u[u.length - 1]}` : `${u.slice(0, -1).join(", ")} and ${u[u.length - 1]}`;
 }
 
 /** Catalogue presets (named) first, then the remaining SEO sizes, de-duplicated. */

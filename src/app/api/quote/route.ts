@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { FINISH_CODES, MATERIAL_CODES, STRUCTURE_CODES } from "@/types";
-import { apiRequireRole } from "@/lib/auth";
-import { rateLimit } from "@/lib/rate-limit";
-import { DEFAULT_PRICING_CONFIG, DELIVERY_ZONES, QuoteInputError, quote, toPublicOutcome, zoneForGovernorate } from "@/lib/pricing";
+import { getSession } from "@/lib/auth";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { buyerPrice, DEFAULT_PRICING_CONFIG, DELIVERY_ZONES, QuoteInputError, quote, toPublicOutcome, zoneForGovernorate } from "@/lib/pricing";
 import { loadPricingData } from "@/lib/pricing/server";
 import type { QuoteModel } from "@/lib/pricing";
 import { designConfigSchema } from "@/components/designer/lib/doc";
@@ -42,21 +42,23 @@ const Body = z
   .refine((b) => b.materialId || b.materialCode, { message: "MATERIAL_REQUIRED", path: ["materialId"] });
 
 /**
- * POST /api/quote — instant price for a box across all eligible vendors (soft gate G2: signed-in
- * users only). Body: { structureCode, dims, materialId|materialCode, finishes[], printSides,
+ * POST /api/quote — instant price for a box across all eligible vendors. R1-01: open to anonymous
+ * visitors (the public pages already show the same numbers); the phone is asked for only when
+ * the buyer orders, saves or shares. Rate limited per user, or per IP when signed out. Body: { structureCode, dims, materialId|materialCode, finishes[], printSides,
  * colours, quantity, vendorId?, zone|governorate }.
  *
- * 200 { mode: "instant", offers (best match first), suggestion, validUntil, ... }
+ * 200 { mode: "instant", offers (best match first, each with `pay`: the buyer price checkout
+ *       charges, see `buyerPrice`), suggestion, validUntil, prepayDiscountPct, ... }
  *   | { mode: "manual_quote", quantity, maxInstantQty }      (quantity above 2,000)
  * 400 { error: "INVALID_BODY", issues } | { error: "INVALID_DIMS" | "UNKNOWN_MATERIAL" | ..., details? }
- * 401 { error: "UNAUTHENTICATED" }   429 { error: "RATE_LIMITED", retryAfterSec }
+ * 429 { error: "RATE_LIMITED", retryAfterSec }
  * Offers never include vendor buy prices or the platform margin.
  */
 export async function POST(req: Request) {
-  const auth = await apiRequireRole();
-  if (auth instanceof Response) return auth;
+  const user = (await getSession())?.user ?? null;
+  const who = user ? user.id : `ip:${clientIp(req.headers)}`;
 
-  const rl = rateLimit("quote", auth.id, 60, 60_000);
+  const rl = rateLimit("quote", who, 60, 60_000);
   if (!rl.ok) {
     return Response.json(
       { error: "RATE_LIMITED", retryAfterSec: rl.retryAfterSec },
@@ -92,19 +94,22 @@ export async function POST(req: Request) {
       data,
       { config },
     );
-    // launch-metrics.md §1 `price_viewed`: the instant price table shown to a signed-in user
-    // (the designer badge and price modal both come through here). The badge re-prices on every
+    // launch-metrics.md §1 `price_viewed`: the instant price table shown in the designer (badge
+    // and price sheet both come through here; signed-out visitors count by IP key, no user id). The badge re-prices on every
     // edit, so one event per user and structure per 10 minutes is enough for the funnel.
-    if (outcome.mode === "instant" && rateLimit("analytics:price_viewed", `${auth.id}:${b.structureCode}`, 1, 600_000).ok) {
+    if (outcome.mode === "instant" && rateLimit("analytics:price_viewed", `${who}:${b.structureCode}`, 1, 600_000).ok) {
       void track(
         "price_viewed",
         { source: "designer", structure_code: b.structureCode, model_code: b.model?.code ?? null, quantity: b.quantity, offers: outcome.offers.length, device: deviceOf(req.headers) },
-        { userId: auth.id },
+        { userId: user?.id ?? null },
       );
     }
-    // R5-JR-15 (designer): the admin prepay discount, so the price dialog can show both prices.
+    // R1-02: every offer carries `pay`, the buyer price checkout charges (online-payment discount
+    // included), so the designer shows the same per-box price and total as checkout.
     const { prepayDiscountPct } = await loadCheckoutSettings();
-    return Response.json({ ...toPublicOutcome(outcome), prepayDiscountPct }, { headers: { "Cache-Control": "no-store" } });
+    const pub = toPublicOutcome(outcome);
+    const body = pub.mode === "instant" ? { ...pub, offers: pub.offers.map((o) => ({ ...o, pay: buyerPrice(o, prepayDiscountPct) })) } : pub;
+    return Response.json({ ...body, prepayDiscountPct }, { headers: { "Cache-Control": "no-store" } });
   } catch (e) {
     if (e instanceof QuoteInputError) {
       return Response.json({ error: e.code, details: e.details }, { status: 400 });

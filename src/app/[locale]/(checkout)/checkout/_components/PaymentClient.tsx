@@ -9,6 +9,8 @@ import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { formatDateTime, formatMoney } from "@/lib/format";
 import type { PaymentView } from "@/lib/orders/service";
+import { isSampleLines } from "@/lib/orders/sample";
+import { PREPAY_DISCOUNT_LABEL } from "@/lib/orders/totals";
 import { Badge } from "@/components/ui/Badge";
 import { Banner } from "@/components/ui/Banner";
 import { BlockStack, Divider, InlineStack } from "@/components/ui/Stack";
@@ -21,9 +23,13 @@ import { PriceTag } from "@/components/ui/PriceTag";
 import { Spinner } from "@/components/ui/Spinner";
 import { Stepper } from "@/components/ui/Stepper";
 import { Text } from "@/components/ui/Text";
+import { Thumbnail } from "@/components/ui/Thumbnail";
 import { TextField } from "@/components/ui/TextField";
 import { useToast } from "@/components/ui/Toast";
+import type { SupportContact } from "@/lib/support";
 import { cancelOrderAction, instapaySentAction, orderPayStateAction, startPaymentAction } from "../actions";
+import { HelpBox } from "./HelpBox";
+import { arrivalDate } from "./arrival";
 import styles from "./checkout.module.css";
 
 async function mockGateway(body: Record<string, string>): Promise<{ status?: "PAID" | "FAILED"; error?: string }> {
@@ -35,7 +41,10 @@ export function PaymentClient(props: {
   locale: Locale;
   orderId: string;
   number: string;
-  vendorName: string;
+  /** Everyday name of the box ("Mailer box 25 × 18 × 8 cm"); Elba picks the printer (R1-13). */
+  boxLabel: string;
+  /** The approved render, or the model's drawing (R1-18). */
+  thumbnail: string;
   quantity: number;
   lines: QuoteLine[];
   vatPiasters: number;
@@ -47,8 +56,16 @@ export function PaymentClient(props: {
   fawryHours: number;
   methods: PaymentMethod[];
   resume: PaymentView | null;
+  /** Help line (ELBA_SUPPORT_PHONE), or null. */
+  support?: SupportContact | null;
+  /** Door-to-door days promised at checkout (dueDate - placedAt); the Fawry screen repeats the date (R3-16). */
+  deliveryDays?: number | null;
+  /** The signed-in buyer's mobile, prefilled as the wallet number (R3-10): most wallets use it. */
+  walletPhone?: string;
 }) {
   const { locale, orderId } = props;
+  // R2-02: delivery is inside the boxes line (as on the per-box price), never a second summed row.
+  const inclKey = isSampleLines(props.lines) ? "buyer.easy.inclDelivery" : props.lines.some((l) => l.kind === "DISCOUNT" && l.labelKey === PREPAY_DISCOUNT_LABEL) ? "buyer.easy.inclAll" : "buyer.easy.inclNoDiscount";
   const { t } = useI18n();
   const router = useRouter();
   const toast = useToast();
@@ -75,18 +92,19 @@ export function PaymentClient(props: {
   const [error, setError] = useState<string | null>(null);
   const [card, setCard] = useState({ number: "", expiry: "", cvc: "", name: "" });
   const [cardErr, setCardErr] = useState<string | undefined>();
-  const [wallet, setWallet] = useState("");
+  const [wallet, setWallet] = useState(props.walletPhone ?? "");
   const [instapaySent, setInstapaySent] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   // R6-02: the pay button shows the same two decimals as the summary beside it.
   const amount = formatMoney(props.totalPiasters, locale, { alwaysDecimals: true });
+  // Same three steps as the checkout page (docs/audit/simplicity-2026-11/flows.md): this is the last.
   const steps = [
-    { id: "offer", label: t("checkout.steps.offer") },
-    { id: "delivery", label: t("checkout.steps.delivery") },
-    { id: "proof", label: t("checkout.steps.proof") },
-    { id: "payment", label: t("checkout.steps.payment") },
+    { id: "quantity", label: t("buyer.easy.steps.quantity") },
+    { id: "review", label: t("buyer.easy.steps.review") },
+    { id: "payment", label: t("buyer.easy.steps.pay") },
   ];
+  const last = steps.length - 1;
 
   const errText = (code: string) => {
     const key = `checkout.errors.${code}` as DictKey;
@@ -200,20 +218,21 @@ export function PaymentClient(props: {
     } else setError(errText(r.error));
   };
 
+  // SIM-09: plain names ("Cash at Fawry", "Mobile wallet (Vodafone Cash and others)") with one line each.
   const methodChoices = props.methods.map((m) => ({
     value: m,
     label:
       m === "CARD" ? (
         <InlineStack gap="200" blockAlign="center" as="span">
-          {t(`paymentMethods.${m}` as DictKey)}
+          {t(`buyer.easy.pay.methods.${m}` as DictKey)}
           <Badge tone="info" size="small">
             {t("payment.recommended")}
           </Badge>
         </InlineStack>
       ) : (
-        t(`paymentMethods.${m}` as DictKey)
+        t(`buyer.easy.pay.methods.${m}` as DictKey)
       ),
-    helpText: t(`payment.methodHelp.${m}` as DictKey, { hours: props.fawryHours }),
+    helpText: t(`buyer.easy.pay.methodHelp.${m}` as DictKey, { hours: props.fawryHours }),
   }));
 
   const detail = payment ? (
@@ -247,7 +266,7 @@ export function PaymentClient(props: {
             maxLength={23}
           />
           <div className={styles.grid2}>
-            <TextField label={t("payment.card.expiry")} autoComplete="cc-exp" inputMode="numeric" dir="ltr" placeholder="MM/YY" value={card.expiry} onChange={(v) => setCard((c) => ({ ...c, expiry: formatExpiry(v, c.expiry) }))} maxLength={5} />
+            <TextField label={t("payment.card.expiry")} autoComplete="cc-exp" inputMode="numeric" dir="ltr" placeholder={t("payment.card.expiryPlaceholder")} value={card.expiry} onChange={(v) => setCard((c) => ({ ...c, expiry: formatExpiry(v, c.expiry) }))} maxLength={5} />
             <TextField label={t("payment.card.cvc")} autoComplete="cc-csc" inputMode="numeric" dir="ltr" value={card.cvc} onChange={(v) => setCard((c) => ({ ...c, cvc: v }))} maxLength={4} />
           </div>
           {/* R7-03: not required by the gateway; say so like every other optional field. */}
@@ -300,6 +319,11 @@ export function PaymentClient(props: {
           <Text as="p" tone="caution">
             {t("payment.fawry.expires", { date: formatDateTime(payment.fawry.expiresAt, locale) })}
           </Text>
+          {props.deliveryDays ? (
+            <Text as="p" variant="bodySm">
+              <span suppressHydrationWarning>{t("payment.fawry.arrives", { date: arrivalDate(props.deliveryDays, locale) })}</span>
+            </Text>
+          ) : null}
         </BlockStack>
         <Text as="p">{t("payment.fawry.steps")}</Text>
         <InlineStack gap="200">
@@ -384,24 +408,25 @@ export function PaymentClient(props: {
     <Page
       title={t("payment.title")}
       subtitle={t("payment.subtitle", { number: props.number })}
-      backAction={{ content: t("orders.title"), url: `/${locale}/orders/${orderId}` }}
+      // R3-15: back to the checkout this payment came from (address and approval), not the orders list.
+      backAction={{ content: t("buyer.easy.steps.review"), url: props.restartUrl }}
       secondaryActions={[{ content: t("payment.cancelOrder"), onAction: () => setConfirmCancel(true), destructive: true }]}
     >
       <BlockStack gap="400">
         {/* Same progress as steps 1 to 3 so the buyer knows this is the last step (R2-03). */}
         <div className={styles.stepperWide}>
           <Card>
-            <Stepper steps={steps} current={3} accessibilityLabel={t("checkout.steps.label")} />
+            <Stepper steps={steps} current={last} accessibilityLabel={t("checkout.steps.label")} />
           </Card>
         </div>
         <div className={styles.stepperCompact} aria-hidden="true">
           <div className={styles.compactHead}>
-            <span className={styles.compactCount}>{t("checkout.stepOf", { current: 4, total: 4 })}</span>
-            <span className={styles.compactNext}>{t("buyer.nextStep", { step: t("buyer.stepPrinting") })}</span>
+            <span className={styles.compactCount}>{t("checkout.stepOf", { current: steps.length, total: steps.length })}</span>
+            <span className={styles.compactNext}>{t("buyer.easy.stepsDone")}</span>
           </div>
           <div className={styles.segments}>
             {steps.map((s, i) => (
-              <span key={s.id} className={styles.segment} data-state={i < 3 ? "done" : "current"} />
+              <span key={s.id} className={styles.segment} data-state={i < last ? "done" : "current"} />
             ))}
           </div>
         </div>
@@ -430,24 +455,31 @@ export function PaymentClient(props: {
                   ) : null}
                   {!payment ? (
                     <BlockStack gap="300">
+                      <div className={styles.due}>
+                        <Text as="span" fontWeight="semibold">
+                          {t("buyer.amountDue")}
+                          <span className={styles.totalNote}>{t("buyer.easy.totalNote")}</span>
+                        </Text>
+                        <PriceTag alwaysDecimals amount={props.totalPiasters} size="medium" locale={locale} />
+                      </div>
                       <ChoiceList
-                        title={t("payment.choose")}
+                        title={t("buyer.easy.pay.title")}
                         choices={methodChoices}
                         selected={[method]}
                         onChange={(v) => setMethod(v[0] as PaymentMethod)}
                       />
-                      <div className={styles.due}>
-                        <Text as="span" fontWeight="semibold">
-                          {t("buyer.amountDue")}
+                      {/* R2-15: every method pays before print, so the one discount applies to all of them. */}
+                      {inclKey === "buyer.easy.inclAll" ? (
+                        <Text as="p" variant="bodySm" tone="subdued">
+                          {t("buyer.easy.pay.discountAll")}
                         </Text>
-                        <PriceTag alwaysDecimals amount={props.totalPiasters} size="medium" locale={locale} />
-                      </div>
-                      <Text as="p" variant="bodySm" tone="subdued">
-                        {t("payment.chooseHelp")}
-                      </Text>
+                      ) : null}
                       <Button variant="primary" size="large" fullWidth onClick={start} loading={busy}>
-                        {t("payment.continue")}
+                        {t("buyer.easy.pay.next")}
                       </Button>
+                      <Text as="p" variant="bodySm" tone="subdued">
+                        {t("buyer.easy.pay.safe")}
+                      </Text>
                     </BlockStack>
                   ) : (
                     <BlockStack gap="300">
@@ -469,52 +501,75 @@ export function PaymentClient(props: {
           </BlockStack>
 
           <aside className={styles.summary} aria-labelledby="pay-summary">
-            <Card title={<span id="pay-summary">{t("checkout.summary.title")}</span>}>
-              <BlockStack gap="300">
-                <BlockStack gap="050">
-                  <Text as="p" fontWeight="semibold">
-                    {props.vendorName}
-                  </Text>
-                  <Text as="p" variant="bodySm" tone="subdued">
-                    {t("checkout.summary.quantity", { qty: props.quantity.toLocaleString("en-US") })}
-                  </Text>
-                </BlockStack>
-                <Divider />
-                <dl className={styles.lines}>
-                  {props.lines.map((l, i) => (
-                    <div className={styles.line} key={i}>
-                      <dt>{t((l.labelKey === "pricing.line.shipping" ? "checkout.summary.shipping" : l.labelKey) as DictKey)}</dt>
+            <BlockStack gap="400">
+              <Card title={<span id="pay-summary">{t("buyer.easy.summaryTitle")}</span>}>
+                <BlockStack gap="300">
+                  <div className={styles.summaryBox}>
+                    <Thumbnail source={props.thumbnail} alt="" size="medium" />
+                    <BlockStack gap="050">
+                      {/* R3-15: the quantity is the first line below; it is not repeated here. */}
+                      <Text as="p" fontWeight="semibold">
+                        {props.boxLabel}
+                      </Text>
+                    </BlockStack>
+                  </div>
+                  {/* SIM-03 / R2-02: boxes (all-in, ex-VAT), VAT, total; the engine's lines sit behind "Price details". */}
+                  <dl className={styles.lines}>
+                    <div className={styles.line}>
+                      <dt>
+                        {t("buyer.easy.boxes", { qty: props.quantity.toLocaleString("en-US") })}
+                        <span className={styles.totalNote}>{t(inclKey)}</span>
+                      </dt>
                       <dd>
-                        <PriceTag alwaysDecimals amount={l.totalPiasters} size="small" locale={locale} tone={l.totalPiasters < 0 ? "success" : "base"} />
+                        <PriceTag alwaysDecimals amount={props.totalPiasters - props.vatPiasters} size="small" locale={locale} />
                       </dd>
                     </div>
-                  ))}
-                  <div className={`${styles.line} ${styles.lineSub}`}>
-                    <dt>{t("buyer.subtotalExVat")}</dt>
-                    <dd>
-                      <PriceTag alwaysDecimals amount={props.totalPiasters - props.vatPiasters} size="small" locale={locale} />
-                    </dd>
-                  </div>
-                  <div className={styles.line}>
-                    <dt>{t("checkout.summary.vat")}</dt>
-                    <dd>
-                      <PriceTag alwaysDecimals amount={props.vatPiasters} size="small" locale={locale} />
-                    </dd>
-                  </div>
-                  <div className={`${styles.line} ${styles.lineTotal}`}>
-                    <dt>{t("checkout.summary.total")}</dt>
-                    <dd data-testid="pay-total">
-                      <PriceTag alwaysDecimals amount={props.totalPiasters} locale={locale} />
-                    </dd>
-                  </div>
-                </dl>
-                {props.validUntil ? (
-                  <Text as="p" variant="bodySm" tone="subdued">
-                    {t("checkout.summary.validUntil", { date: formatDateTime(props.validUntil, locale) })}
-                  </Text>
-                ) : null}
-              </BlockStack>
-            </Card>
+                    <div className={styles.line}>
+                      <dt>{t("buyer.easy.vat")}</dt>
+                      <dd>
+                        <PriceTag alwaysDecimals amount={props.vatPiasters} size="small" locale={locale} />
+                      </dd>
+                    </div>
+                    <div className={`${styles.line} ${styles.lineTotal}`}>
+                      <dt>
+                        {t("buyer.easy.total")}
+                        <span className={styles.totalNote}>{t("buyer.easy.totalNote")}</span>
+                      </dt>
+                      <dd data-testid="pay-total">
+                        <PriceTag alwaysDecimals amount={props.totalPiasters} locale={locale} />
+                      </dd>
+                    </div>
+                  </dl>
+                  <details className={styles.disclosure}>
+                    <summary>{t("buyer.easy.breakdown")}</summary>
+                    <BlockStack gap="200">
+                      <dl className={styles.lines}>
+                        {props.lines.map((l, i) => (
+                          <div className={styles.line} key={i}>
+                            <dt>{t((l.labelKey === "pricing.line.shipping" ? "checkout.summary.shipping" : l.labelKey === "pricing.line.die" ? "buyer.easy.dieLine" : l.labelKey) as DictKey)}</dt>
+                            <dd>
+                              <PriceTag alwaysDecimals amount={l.totalPiasters} size="small" locale={locale} tone={l.totalPiasters < 0 ? "success" : "base"} />
+                            </dd>
+                          </div>
+                        ))}
+                        <div className={`${styles.line} ${styles.lineSub}`}>
+                          <dt>{t("buyer.subtotalExVat")}</dt>
+                          <dd>
+                            <PriceTag alwaysDecimals amount={props.totalPiasters - props.vatPiasters} size="small" locale={locale} />
+                          </dd>
+                        </div>
+                      </dl>
+                      {props.validUntil ? (
+                        <Text as="p" variant="bodySm" tone="subdued">
+                          {t("checkout.summary.validUntil", { date: formatDateTime(props.validUntil, locale) })}
+                        </Text>
+                      ) : null}
+                    </BlockStack>
+                  </details>
+                </BlockStack>
+              </Card>
+              <HelpBox support={props.support ?? null} />
+            </BlockStack>
           </aside>
         </div>
       </BlockStack>

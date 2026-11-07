@@ -42,3 +42,42 @@ export function buyerTrackStopped(events: readonly ProductionEventType[]): numbe
   if (has("PAYMENT_CONFIRMED")) return 2;
   return 1;
 }
+
+/**
+ * The buyer's plain tracker (R1-14): four stages a shop owner understands, «استلمنا طلبك ← نطبع
+ * علبك ← في الطريق إليك ← تم التسليم». Printer acceptance, QC and the rest stay in the detailed
+ * BUYER_TRACK, shown behind a disclosure. Same index rule: steps before it are complete.
+ */
+export const BUYER_SIMPLE_TRACK = ["RECEIVED", "PRINTING", "ON_THE_WAY", "DELIVERED"] as const;
+export type BuyerSimpleStep = (typeof BUYER_SIMPLE_TRACK)[number];
+
+/** Detailed BUYER_TRACK index to the plain one. */
+export function simpleTrackFrom(detailed: number): number {
+  if (detailed >= BUYER_TRACK.length) return BUYER_SIMPLE_TRACK.length;
+  if (detailed >= BUYER_TRACK.indexOf("SHIPPED")) return 2; // ready to ship or shipped
+  // R3-11: "Printing your boxes" only once the printer has accepted; a paid order waiting for the
+  // printer's confirmation stays on "Order received".
+  if (detailed >= BUYER_TRACK.indexOf("IN_PRODUCTION")) return 1;
+  return 0;
+}
+
+export function buyerSimpleIndex(status: OrderStatus): number {
+  return simpleTrackFrom(buyerTrackIndex(status));
+}
+
+export function buyerSimpleStopped(events: readonly ProductionEventType[]): number {
+  return simpleTrackFrom(buyerTrackStopped(events));
+}
+
+/**
+ * R2-10: the ONE status name a buyer reads for an order, on the order page, the orders list and
+ * the account page: the plain tracker stage it is in («استلمنا طلبك / نطبع علبك / في الطريق إليك /
+ * تم التسليم»). Only an unpaid, cancelled or refunded order keeps its own word.
+ */
+export function buyerStatusKey(status: OrderStatus): string {
+  if (status === "PENDING_PAYMENT" || status === "CANCELLED" || status === "REFUNDED") return `orderStatus.${status}`;
+  // R3-11: paid, the printer has not confirmed yet (it does within 24 hours).
+  if (status === "PAID" || status === "PROOF_APPROVED") return "orders.detail.simple.AWAITING_PRINTER";
+  const i = Math.min(buyerSimpleIndex(status), BUYER_SIMPLE_TRACK.length - 1);
+  return `orders.detail.simple.${BUYER_SIMPLE_TRACK[i]}`;
+}

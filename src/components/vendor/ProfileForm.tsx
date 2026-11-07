@@ -26,6 +26,7 @@ import { CERT_CODES, MACHINE_KINDS, issuesToErrors, profileSchema } from "./lib/
 import { fileUrl, formatBytes, UPLOAD_RULES } from "./lib/files";
 import { parseNumber } from "./lib/rateCard";
 import { saveProfile } from "./server/actions";
+import { StandardCode, showsStandard } from "./JobBits";
 import { uploadFile, useVendorErrorText } from "./useVendorAction";
 import { useContextualSaveBar } from "./VendorFrame";
 import { PortfolioManager } from "./PortfolioManager";
@@ -382,8 +383,8 @@ export function ProfileForm({ profile, portfolio, coverage, gluing }: { profile:
                                       helpText={
                                         cov ? (
                                           <>
-                                            <bdi dir="ltr">{cov.standard}</bdi>
-                                            {" · "}
+                                            <StandardCode standard={cov.standard} />
+                                            {showsStandard(cov.standard, locale) ? " · " : null}
                                             {t("vendorPortal.rateCards.modelCount", { count: formatNumber(cov.count) })}
                                             {cov.examples.length ? <span className={styles.CoverageExamples}>{t("vendorPortal.profile.coverageExamples", { examples: cov.examples.join(locale === "ar" ? "، " : ", ") })}</span> : null}
                                             {cov.listed ? <span className={styles.CoverageExamples}>{t("vendorPortal.profile.coverageListed", { count: formatNumber(cov.listed) })}</span> : null}
@@ -527,7 +528,7 @@ export function ProfileForm({ profile, portfolio, coverage, gluing }: { profile:
                                   <Checkbox
                                     key={m.code}
                                     label={m.name[locale]}
-                                    helpText={<bdi dir="ltr">{m.standard}</bdi>}
+                                    helpText={showsStandard(m.standard, locale) ? <StandardCode standard={m.standard} /> : undefined}
                                     disabled={!enabled}
                                     checked={enabled && form.models.includes(m.code)}
                                     onChange={(v) => set("models", toggle(form.models, m.code, v))}
@@ -684,11 +685,16 @@ export function ProfileForm({ profile, portfolio, coverage, gluing }: { profile:
                     </Badge>
                     {profile.foodSafe ? <Badge tone="info">{t("vendorPortal.profile.foodSafe")}</Badge> : null}
                   </InlineStack>
+                  {/* P-02: the same numbers as the admin scorecard; "New on Elba" until enough deliveries. */}
                   <Text as="p" tone="subdued">
-                    {t("vendorPortal.profile.rating", { rating: profile.rating.toFixed(1), count: formatNumber(profile.ratingCount) })}
+                    {profile.stats.rating === null
+                      ? t("vendorPortal.dashboard.ratingNone")
+                      : t("vendorPortal.profile.rating", { rating: profile.stats.rating.toFixed(1), count: formatNumber(profile.stats.ratingCount) })}
                   </Text>
                   <Text as="p" tone="subdued">
-                    {t("vendorPortal.profile.onTime", { pct: formatPercent(profile.onTimePct, locale) })}
+                    {profile.stats.onTimePct === null
+                      ? `${t("vendorPortal.dashboard.onTimeNew")} · ${t("vendorPortal.dashboard.onTimeProgress", { judged: formatNumber(profile.stats.judged), min: formatNumber(profile.stats.min) })}`
+                      : t("vendorPortal.profile.onTime", { pct: formatPercent(profile.stats.onTimePct, locale) })}
                   </Text>
                 </BlockStack>
               </Card>

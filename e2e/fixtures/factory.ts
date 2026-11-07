@@ -66,6 +66,21 @@ export async function createUser(opts: { role?: Role; vendorId?: string; name?: 
   });
 }
 
+/**
+ * Open the designer with "All options" (tabs, face/dieline views, fold, board, finishes) instead of
+ * the Basics panel new visitors get (docs/audit/simplicity-2026-11/designer.md). The editor reads
+ * `localStorage["elba.designer.mode"]` on mount; set it before every page of this context loads.
+ */
+export async function designerAllOptions(context: BrowserContext): Promise<void> {
+  await context.addInitScript(() => {
+    try {
+      window.localStorage.setItem("elba.designer.mode", "advanced");
+    } catch {
+      /* storage blocked (about:blank): the designer page sets it on its own origin */
+    }
+  });
+}
+
 /** Sign a browser context in as `userId` (session row + cookie). */
 export async function signInAs(context: BrowserContext, baseURL: string, userId: string): Promise<void> {
   const token = randomBytes(32).toString("base64url");
@@ -181,6 +196,25 @@ export async function cleanup(): Promise<void> {
     await db.session.deleteMany({ where: { userId: id } }).catch(() => undefined);
     await db.user.deleteMany({ where: { id } }).catch(() => undefined);
   }
+}
+
+/**
+ * Sign up with the code (a phone that has no account yet). Since R3-03 the terms are accepted by
+ * continuing (one line above Verify, the same for every number), so a new phone verifies in one
+ * press, like a returning one. `labels.terms` is kept for callers and no longer used.
+ */
+export async function verifyNewAccount(
+  scope: Page | Locator,
+  code: string,
+  opts: { marketing?: boolean; labels?: { code: string; terms: string | RegExp; marketing: string | RegExp; verify: string } } = {},
+): Promise<void> {
+  const l = opts.labels ?? { code: "Verification code", terms: /I agree to the terms/i, marketing: /Send me offers/, verify: "Verify and continue" };
+  await scope.getByLabel(l.code).fill(code);
+  await expect(scope.getByTestId("otp-terms")).toBeVisible();
+  const marketing = scope.getByLabel(l.marketing);
+  await expect(marketing).not.toBeChecked();
+  if (opts.marketing) await marketing.check();
+  await scope.getByRole("button", { name: l.verify }).click();
 }
 
 /**

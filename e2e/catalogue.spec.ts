@@ -27,8 +27,9 @@ async function count(page: Page) {
 test("catalogue: Egypt by default, Worldwide, search by code and name, families", async ({ page }, info) => {
   await page.goto("/en/catalog");
   await dismissCookies(page);
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Every packaging type");
-  await expect(page.getByTestId("scope-egypt")).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Everything we print");
+  // R1-09: Egypt is the default; "include hard-to-find types" is one secondary switch.
+  await expect(page.getByTestId("scope-world")).toHaveAttribute("aria-pressed", "false");
   const egypt = await count(page);
   await page.getByTestId("scope-world").click();
   await expect.poll(() => count(page)).toBeGreaterThan(egypt);
@@ -96,7 +97,7 @@ test("catalogue: Arabic RTL, no horizontal scroll, axe clean", async ({ page }, 
   await page.goto("/ar/catalog");
   await dismissCookies(page);
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("كل أنواع العبوات");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("كل ما نطبعه");
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(0);
   const axe = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).include("main").analyze();
@@ -109,7 +110,7 @@ test("model page: designer + instant price for a printed box", async ({ page }) 
   await dismissCookies(page);
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await expect(page.getByTestId("price-path")).toHaveAttribute("data-mode", "instant");
-  await expect(page.getByRole("link", { name: "Design it free" })).toHaveAttribute("href", /\/en\/design\//);
+  await expect(page.getByRole("link", { name: "Order this with your logo" })).toHaveAttribute("href", /\/en\/design\//);
   await expect(page.getByTestId("catalogue-stage")).toHaveAttribute("data-ready", "true", { timeout: 60_000 });
 });
 
@@ -159,7 +160,8 @@ test("designer picker: families, Egypt filter, search, pick a model", async ({ p
   test.skip(info.project.name !== "desktop", "desktop");
   await page.route("**/api/designs**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ id: "e2e-picker", owned: false, updatedAt: new Date().toISOString() }) }));
   await page.goto("/en/design/mailer-box");
-  await page.getByRole("button", { name: "Change model" }).first().click();
+  // Basics mode (the default) opens the picker from "Change box type".
+  await page.getByRole("button", { name: "Change box type" }).first().click();
   const picker = page.getByTestId("catalogue-picker");
   await expect(picker).toBeVisible();
   await expect(picker.getByRole("button", { name: "Available in Egypt" })).toHaveAttribute("aria-pressed", "true");
@@ -178,7 +180,7 @@ test("designer picker on touch: no search autofocus, the dialog keeps focus (WCA
   await page.route("**/api/designs**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ id: "e2e-picker-m", owned: false, updatedAt: new Date().toISOString() }) }));
   await page.goto("/ar/design/mailer-box");
   await dismissCookies(page);
-  await page.getByRole("button", { name: /تغيير النموذج|غير النموذج/ }).first().click();
+  await page.getByRole("button", { name: /تغيير نوع العلبة|تغيير النموذج/ }).first().click();
   const picker = page.getByTestId("catalogue-picker");
   await expect(picker).toBeVisible();
   await expect(picker.getByRole("searchbox")).not.toBeFocused();

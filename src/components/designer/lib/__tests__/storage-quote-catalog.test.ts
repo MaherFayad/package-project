@@ -58,22 +58,23 @@ describe("price badge", () => {
   });
 
   it("maps responses to badge states (cheapest offer wins)", () => {
-    expect(toPriceState(401, { error: "UNAUTHENTICATED" })).toEqual({ status: "locked" });
+    // R1-01: the price is public, so a 401 is just an error (there is no "locked" state any more).
+    expect(toPriceState(401, { error: "UNAUTHENTICATED" })).toEqual({ status: "error" });
     expect(toPriceState(500, null)).toEqual({ status: "error" });
     expect(toPriceState(200, { mode: "instant", offers: [] })).toEqual({ status: "none" });
     const offer = (id: string, total: number, days: number) => ({
       vendor: { id, name: { ar: id, en: id } },
-      unitPiasters: total / 500,
-      subtotalPiasters: total,
-      vatPiasters: 0,
-      totalPiasters: total,
+      pay: { quantity: 500, unitPiasters: total / 500, subtotalPiasters: total, vatPiasters: 0, totalPiasters: total, discountPiasters: 0, shippingPiasters: 0, deliveryDays: days },
       deliveryDays: days,
       validUntil: "2026-11-08T00:00:00.000Z",
     });
     const s = toPriceState(200, { mode: "instant", quantity: 500, offers: [offer("a", 9000, 5), offer("b", 8000, 9)], suggestion: null, validUntil: "x" });
     // B-26: the headline (best-match, first-ranked) offer, not the cheapest.
     expect(s.status === "ready" && s.best.vendor.id).toBe("a");
+    expect(s.status === "ready" && s.best.pay.unitPiasters).toBe(18);
     expect(s.status === "ready" && s.vendorCount).toBe(2);
+    // An offer without the buyer price (an old server) is not shown as a price.
+    expect(toPriceState(200, { mode: "instant", offers: [{ vendor: { id: "a" } }] })).toEqual({ status: "error" });
   });
 });
 

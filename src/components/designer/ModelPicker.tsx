@@ -201,8 +201,10 @@ function ModelCardBody({ model, current }: { model: ModelCard; current: boolean 
         <img src={modelImage(model.slug, model.code)} alt="" width={160} height={120} loading="lazy" decoding="async" />
       </span>
       <span className={styles.modelName}>{model.name[locale]}</span>
+      {/* The plain kind first; the FEFCO / ECMA code is the small print under it. */}
+      {model.kindName ? <span className={styles.modelMeta}>{model.kindName[locale]}</span> : null}
       {model.standard && model.standard.toLowerCase() !== "none" ? (
-        <span className={styles.modelMeta}>
+        <span className={model.kindName ? styles.modelCode : styles.modelMeta}>
           <bdi dir="ltr">{model.standard}</bdi>
         </span>
       ) : null}

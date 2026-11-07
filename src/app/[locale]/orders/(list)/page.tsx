@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { OrderStatus } from "@/types";
-import { getT, pick, toLocale } from "@/i18n";
+import { getT, toLocale, type DictKey } from "@/i18n";
+import { boxName } from "@/lib/orders/box-name";
 import { requireUser } from "@/lib/auth/session";
 import { formatDate } from "@/lib/format";
 import { listBuyerOrders } from "@/lib/orders/service";
@@ -32,7 +33,7 @@ export default async function OrdersPage({ params }: { params: Promise<{ locale:
       number: o.number,
       placedAt: o.placedAt.toISOString(),
       placedLabel: formatDate(o.placedAt, locale),
-      vendor: pick(locale, o.vendor.nameAr, o.vendor.nameEn),
+      box: o.items[0] ? boxName({ modelCode: o.items[0].modelCode, structureCode: o.items[0].structureCode }, locale, t(`structures.${o.items[0].structureCode}` as DictKey)) : "",
       quantity: o.items.reduce((s, i) => s + i.quantity, 0),
       totalPiasters: o.totalPiasters,
       status,

@@ -156,7 +156,7 @@ export function createBoardMaterials(input: BoardMaterialInput): BoardMaterialSe
   const edgeTex = appearance.fluteColor ? fluteTexture(appearance.edge, appearance.fluteColor, appearance.outside, appearance.inside) : null;
   if (edgeTex) owned.push(edgeTex);
   const edge = new MeshStandardMaterial({
-    color: new Color(edgeTex ? "#ffffff" : appearance.edge),
+    color: new Color(edgeTex ? "#c9c9c9" : appearance.edge).multiplyScalar(edgeTex ? 1 : 0.85),
     map: edgeTex,
     roughness: 0.95,
     metalness: 0,

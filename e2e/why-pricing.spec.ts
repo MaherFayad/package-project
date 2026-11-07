@@ -99,15 +99,20 @@ for (const locale of ["ar", "en"] as const) {
       await expect(page.getByTestId("tier-wholesale")).toBeVisible();
 
       const card = page.getByTestId("tier-500");
+      // R2-08: starts ex-VAT like every other page (37.97 per box); the incl. VAT total stays in view.
       await expect(card.getByTestId("tier-total")).toBeVisible();
-      await expect(card.getByTestId("tier-subtotal")).toBeHidden();
-      const toggle = page.getByRole("button", { name: locale === "ar" ? "الأسعار شاملة ضريبة القيمة المضافة 14%" : "Prices incl. 14% VAT" });
-      await expect(toggle).toHaveAttribute("aria-pressed", "true");
-      await toggle.click();
-      await expect(toggle).toHaveAttribute("aria-pressed", "false");
       await expect(card.getByTestId("tier-subtotal")).toBeVisible();
-      await expect(card.getByTestId("tier-total")).toBeHidden();
+      // R3-09: two named segments; the pressed one names the price shown.
+      const excl = page.getByRole("button", { name: locale === "ar" ? "بدون الضريبة" : "Excl. VAT", exact: true });
+      const toggle = page.getByRole("button", { name: locale === "ar" ? "شاملة الضريبة 14%" : "Incl. 14% VAT", exact: true });
+      await expect(excl).toHaveAttribute("aria-pressed", "true");
+      await expect(toggle).toHaveAttribute("aria-pressed", "false");
       await toggle.click();
+      await expect(toggle).toHaveAttribute("aria-pressed", "true");
+      await expect(excl).toHaveAttribute("aria-pressed", "false");
+      await expect(card.getByTestId("tier-subtotal")).toBeHidden();
+      await expect(card.getByTestId("tier-total")).toBeVisible();
+      await excl.click();
 
       // The comparison table total for 500 equals the card.
       const total500 = piasters((await card.getByTestId("tier-total").textContent())!);

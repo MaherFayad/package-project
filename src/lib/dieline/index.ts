@@ -72,6 +72,7 @@ export {
   paintArtworkSurface,
   drawLayer,
   imagePlacement,
+  sheetImagePlacement,
   testPatternArtwork,
   MAX_TEXTURE_PX,
   type PaintOptions,

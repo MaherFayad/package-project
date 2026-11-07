@@ -1,0 +1,75 @@
+# Printer portal and admin console: simplicity review (2026-11-08)
+
+Review only, no code changes. I walked both portals on the dev server (http://localhost:3000) with the real OTP sign-in.
+
+- **Printer:** Obour Box Works (`01000000012`), Arabic. Main pass at 390x844, then a look at 1440x900.
+- **Admin:** `01000000001`, Arabic plus a check of the English pages, at 1440x900.
+
+Screenshots are in `C:\Users\Admin\AppData\Local\Temp\claude\f8173f44571ee159\d92726ee-f788-4602-8df6-7bcebbbfc7a0\scratchpad\portals-review\`. Each issue below names its file, written as `SS/<file>.png`.
+
+Paid orders and their printers: ELB-26307, ELB-26310, ELB-26314, ELB-26306 and ELB-26302 go to Obour Box Works (`...12`). ELB-26313, ELB-26303, ELB-26305 and ELB-26202 go to Nile Pack (`...10`). ELB-26201 goes to Delta Cartons (`...11`).
+
+**Data changed (test data):**
+- ELB-26307 moved PAID → ACCEPTED → IN_PRODUCTION → QC_PENDING as the printer, with 2 QC photos uploaded (dashboard screenshots).
+- As admin I then approved QC and booked the courier pickup, so the order is now SHIPPED with tracking 3326529140.
+- Its 40% advance (6,098.18 EGP) is now APPROVED. This happened by accident: the "اعتماد" button has no confirmation dialog.
+- I opened the reassign, refund and decline dialogs on ELB-26310 and ELB-26306 and cancelled them. Nothing else changed.
+
+---
+
+## Printer portal
+
+| ID | Sev | Page | What the printer sees | Why it matters | Suggested fix | Screenshot |
+|---|---|---|---|---|---|---|
+| P-01 | High | Job detail, new job | The page says "راجع المواصفات والقالب، ثم اقبل الطلب أو ارفضه". The only picture is a blank dieline with tiny labels. The print PDF, the only file that shows the artwork (a red "ZAD" logo on 26307), stays locked until the printer accepts. | The printer agrees to a price and a date without seeing the design. One decline reason is "مشكلة في التصميم", yet they can't see the design. Most likely result: accept, then fight over the artwork. | Show a low-res, watermarked artwork preview on the dieline before acceptance. Keep only the full-res PDF locked. | SS/v-job-new.png, SS/file-26307.pdf |
+| P-02 | High | Dashboard vs admin | The printer dashboard shows on-time 98% and rating 4.5/5 from 61 reviews. For the same printer, admin shows on-time "—", 0 deliveries and rating "—". | Neither side can trust the numbers. The printer believes they're rated well, while ops sees no history at all. | Use one source for both sides. Show "جديد على علبة" until 5 deliveries, as the public page does. | SS/v-dash.png, SS/a-vendor-detail.png |
+| P-03 | High | Payouts / dashboard | The page promises the advance "تصرف خلال يومي عمل من قبول الطلب". ELB-26301 was accepted on 1 Nov and its advance still reads "مجدولة". Admin hasn't even raised it ("بانتظار الإصدار"). The dashboard shows "المدفوع لك 0 ج.م". No row has an expected pay date. | Money is what printers care about most. A promise that's visibly broken, with no date, means phone calls to ops. | Raise the advance automatically on accept. Show "متوقع في <date>" on each row. Flag rows past the promise to ops. | SS/v-payouts.png |
+| P-04 | Medium | Job detail: سعرك | It shows the total and the per-box price (30.49) with no breakdown. The printer's own rate card says 21.28/box at 500 (total 11,240). The difference comes from area scaling and the die cost, and the page shows neither. ELB-26301 (same model, same 500 qty) pays 12.50/box. | The printer can't check the price against their own rate card. | Add a short "كيف حسب السعر" list: box price × qty, area factor, setup, die. | SS/v-job-new.png, SS/v-ratecard-edit.png |
+| P-05 | Medium | Dashboard, job list | Rows show a bare date such as "2026/11/12" with no label: is it the order date or the due date? The 24-hour reply window has no deadline or countdown. | A printer can't tell how urgent a job is. | Label the dates ("التسليم 12/11"). Show "الرد قبل 10:18 م غدا" on new jobs. | SS/v-dash.png, SS/v-jobs.png |
+| P-06 | Medium | Job detail at 390 px | Accept is a small button at the top of a 2,400 px page. Decline hides behind an unlabelled "⋯". At the bottom, after reading the specs, price and date, there's no action. | Thumb reach on a phone. Decline is hard to find, so printers may simply ignore jobs they don't want. | Add a sticky bottom bar with "قبول الطلب" and "رفض" side by side. | SS/v-job-new.png, SS/v-act-01-menu.png |
+| P-07 | Medium | QC photos | There's one upload box with a "نوع الصورة" dropdown above it. The printer has to change the dropdown before the second photo. Otherwise both photos are tagged "أول فرخ مطبوع" and "إرسال" stays greyed out, with only a small checklist explaining why. | This is a stuck point on the step that releases the 60% payment. | Use two labelled upload slots ("صورة أول فرخ" and "صورة الحزمة"), each with its own camera button. | SS/v-act-05-qc-uploaded.png |
+| P-08 | Medium | Rate cards list at 390 px | An 8-column table. On a phone only the type and part of the material show. The prices, setup, die, lead time and status are cut off inside a scroll box. | The printer can't see their own prices on a phone. | Use stacked cards on mobile: name, from-price, best price, status. | SS/v-ratecards.png |
+| P-09 | Medium | Profile, rate card, job | Codes and English on Arabic pages: "FEFCO 0427", "ECMA A20.20.03.01", "Gable carrier", "Rigid set-up box", "Composite can", "Die-cut roll labels / shrink sleeves", "Laminated flexible pouch". The job shows "بصمة البروفة: 04994ef16e30960a" and "v1". The PDF header line reads "FEFCO_0427 E_FLUTE_KRAFT NONE OUTSIDE". | Small-shop staff read the Arabic names. The hash means nothing to them. | Keep FEFCO codes as small secondary text. Translate the English family names. Remove the hash from the printer view. Write the PDF slug line in plain words. | SS/v-profile.png, SS/v-ratecard-edit.png |
+| P-10 | Medium | Job after QC | After QC is approved, the printer has no step and sees no pickup date or courier. Admin books the pickup. The printer's last status is "يراجع فريق عمليات علبة صورك", then the job jumps to "تم الشحن". | The printer doesn't know when to have the boxes ready at the door. | After QC, show "جاهز للاستلام" with the booked pickup date and the courier. Optionally let the printer press "جاهز للاستلام". | SS/v-act-06-qc-sent.png |
+| P-11 | Low | Dashboard, job | Customer names show as "ads" and "—" (on 26310 and 26314). | It looks broken, and the name gives the printer nothing useful anyway. | Show the delivery city instead of a missing or junk first name. | SS/v-dash.png, SS/v-desk-job.png |
+| P-12 | Low | Job: التوصيل | "الشحن إلى مدينة نصر، أسوان". Nasr City is in Cairo, not Aswan. | The printer and the courier get a contradictory address. Checkout let it through (see A-10). | Validate the city against the governorate at checkout. | SS/v-desk-job.png |
+| P-13 | Low | Profile | A very long single form: three repeated machine rows, then capabilities listing model counts and FEFCO/ECMA codes per family. The 4-of-5 setup checklist stays on the dashboard permanently. | It's heavy to edit on a phone. | Split it into sections (نبذة، ماكينات، ما ننتجه). Hide the checklist once it's done, or on dismiss. | SS/v-profile.png |
+| P-14 | Low | Rate card editor | The "قبول الطلبات الفورية" switch sits below the Save/Discard buttons, so it isn't clear whether Save covers it. | The printer may turn a card on or off by mistake, or not at all. | Move the status switch to the top, next to the title, and say whether it saves on its own. | SS/v-ratecard-edit.png |
+| P-15 | Low | QC submit | One 500 response during the QC submit (the action succeeded and the cause wasn't reproduced). Otherwise no console errors and no page-level horizontal scroll on any printer page at 390 px. | Low impact. | Check the server log around 23:38. | n/a |
+
+**Taps per order (printer, happy path):** about 10 taps over 3 visits: open job, accept, confirm, download PDF, start production, then (pick type and upload) twice, then submit QC. There's no ship step. Decline takes 4 taps and is hidden behind "⋯".
+
+**Verdict:** The portal is clean, Arabic and readable on a phone. But the printer accepts jobs without seeing the artwork, can't reconcile the price or the payout timing, and sees performance numbers that don't match ops.
+
+---
+
+## Admin console
+
+| ID | Sev | Page | What ops sees | Why it matters | Suggested fix | Screenshot |
+|---|---|---|---|---|---|---|
+| A-01 | High | Order detail and payouts | Every payout takes three manual steps (إصدار → اعتماد → تسجيل الدفع), plus an e-invoice checkbox on the balance. That's 7 clicks per order. None of the three steps has a confirmation dialog: one click on "اعتماد" approved 6,098.18 EGP. Advances aren't raised on accept: ELB-26301's advance is still "بانتظار الإصدار" 7 days later. | It's the slowest part of running an order, money moves without confirmation, and printers miss their promised dates (P-03). | Raise the advance automatically on accept. Merge approve and pay into one confirmed step. Add a batch "دفع المحدد" on /admin/payouts. | SS/a-order-qc.png, SS/a-payouts.png |
+| A-02 | High | Order detail vs Pricing | Pricing says "هامش المنصة 25%". Every order shows a 17.5% margin with the yellow warning "أقل من المستهدف 20 إلى 30%". The setting is a markup on cost and the order shows margin on the sale price, after the 3% prepay discount. | It's a permanent false alarm on every order, and ops will learn to ignore the warning. | Use one definition and label it ("هامش من سعر البيع"). Base the target warning on the same number. | SS/a-override.png, SS/a-pricing.png |
+| A-03 | High | Order detail: products vs payment | ELB-26307: the line reads "500 × 36.61 = 18,305.00" while Payment shows "المنتجات 18,483.35". The 178.35 EGP gap isn't explained. ELB-26313 has the same kind of gap: 16,345.00 vs 16,582.15. Total, VAT and margin match the database. | Ops can't confirm on screen what the buyer paid for. | Show the missing line (setup, rounding, discount) so the items sum to "المنتجات". | SS/a-order-qc.png, SS/a-en-order.png |
+| A-04 | High | Nav, dashboard, orders | Three counts for "needs a printer": nav badge الطلبات 11, dashboard task "طلبات مدفوعة بانتظار قبول المطبعة" 9, orders tab "بانتظار المطبعة" 14. The tab counts 5 unpaid orders (26304 and 26308 to 26312). | Ops doesn't know which queue is real, and unpaid orders mixed into "waiting for printer" invite reassigning orders nobody has paid for. | Add a separate "بانتظار الدفع" tab. Make the badge and dashboard use the same query as the tab. | SS/a-orders.png, SS/a-dash.png |
+| A-05 | Medium | Order detail | "اعتماد للشحن" (QC) and "حجز استلام الشحنة" (books a real courier) each fire on one click with no confirmation. "إزالة شارة التوثيق" is the same (R2-17). | A mis-click books Bosta or ships a bad batch, with no undo. | Use a confirm dialog for ship and QC approve (Enter to confirm keeps it fast). Add undo for QC approve while nothing is booked. | SS/a-after-qc.png, SS/a-after-ship.png |
+| A-06 | Medium | Overview | The ops to-do list (المهام: 1 quote, 9 paid waiting, 2 QC, 1 application, 1 dispute, 2 payouts, 1 data request) sits at the very bottom, after about two screens of funnel and marketing analytics. | Ops opens the console to act, not to read the funnel. | Put the tasks first, then KPIs, with the funnel lower or on its own tab. | SS/a-dash.png |
+| A-07 | Medium | Order timeline, address, audit, pricing | Raw codes and English on Arabic pages: "PREFLIGHT:1E/0W:ACK", "CARD", "WALLET", governorates "Cairo" and "Aswan", audit text "ELB-26307 advance (Obour Box Works): 6098.18 EGP" and "100 x FEFCO_0422", index notes "Kraft liner up after Q3 mill price rise" and "2026-W40". These are the known open items R5-CP-11, R5-CP-46 and R5-CP-86. | Slower reading and more errors for ops. | Map codes to labels (for example "اعتمد العميل مع تحذير واحد"). Localize governorates. Generate audit summaries per locale. | SS/a-order-qc.png, SS/a-audit.png |
+| A-08 | Medium | Printers list, overview | Performance numbers come from tiny samples but look final. Obour scores "100/100" with 0 deliveries. Nile Pack scores "20/100" with on-time 0% from one delivery. The overview shows "نسبة البلاغات 100%" and "التسليم في الموعد 0%" from one order. The small "بيانات أولية" tag is easy to miss. | Ops may misjudge or punish a printer on one data point. | Show "—" with "n من 5" below the threshold instead of a score. | SS/a-vendors.png, SS/a-dash.png |
+| A-09 | Medium | Reassign | "تغيير المطبعة" scrolls to a side form. Its dropdown lists only names, with no price, coverage or load per printer. The buy-price field is prefilled with the old printer's price (15245.46), with the hint "اتركه فارغا للإبقاء على السعر الحالي". | It's easy to move a job at the wrong cost or to a printer who can't make the model. | Show each eligible printer's own price for this job and whether they list the model. Prefill the new printer's price. | SS/a-reassign-dialog.png |
+| A-10 | Medium | Order detail: address | "شارع عباس العقاد 12, مدينة نصر, Aswan" is shown with no warning. The order was charged the Aswan delivery rate (1,007.40 vs 502.00 for Cairo). | The buyer may have overpaid for shipping, or the courier goes to the wrong city. | Flag city and governorate mismatches on the order page and validate them at checkout. | SS/a-reassign-dialog.png |
+| A-11 | Low | Quotes | The quote request made on 07/11 shows "مطلوب بحلول 05/11/2026", a past date, without a flag. | A confusing priority signal. | Flag "التاريخ المطلوب مضى" or block past dates at request time. | SS/a-quotes.png |
+| A-12 | Low | Audit log | It says "كل إجراءات المديرين وخطوات العملاء والمطابع", but the printer's accept, start and QC submit on 26307 aren't listed (they're only on the order timeline). | Ops can't find "who did what" in one place. | Include printer actions, or change the subtitle. | SS/a-audit.png |
+| A-13 | Low | Pricing | One long page with five separate Save buttons (margin, zones, sample, metrics, index) and a 15-field board-index grid. | It's easy to edit one section and save another, or none. | Use tabs per section, or one sticky "حفظ" that names the dirty section. | SS/a-pricing.png |
+| A-14 | Low | Dispute detail | It's clear: the decision radio, a note shown to the buyer, then apply. The refund dialog states the amount and "لا يمكن التراجع". No issue, noted as a good pattern to copy for A-05. | | | SS/a-dispute.png, SS/a-refund-dialog.png |
+
+**Clicks per order (admin, happy path, no problems):** about 13 clicks over at least 4 visits:
+- Open the queue and the order (2).
+- Approve QC (1).
+- Book pickup (1).
+- Advance: raise, approve, pay (3).
+- Balance: raise, approve, e-invoice tick, pay (4).
+- Reopen the order between steps (about 2).
+
+A decline adds about 5 more (open, pick a printer, check the price, reason, re-route).
+
+**Verdict:** Every needed action is there and refunds and disputes are well guarded, but the counts and margin figures disagree, payouts are a 7-click manual chore, and ship and pay actions fire on one click with no confirmation.

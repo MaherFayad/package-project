@@ -171,3 +171,53 @@ export function payoutBadge(status: ScheduleStatus): { tone: "neutral" | "info" 
       return { tone: "neutral", progress: "incomplete" };
   }
 }
+
+/* ── P-03 (simplicity 2026-11): when the printer can expect each payout ── */
+
+/** Target days, as the payouts page states them. Ops raises, approves and pays every payout by hand. */
+export const ADVANCE_TARGET_BUSINESS_DAYS = 2;
+export const BALANCE_TARGET_BUSINESS_DAYS = 7;
+
+/** Add working days, skipping Friday and Saturday (the Egyptian weekend). UTC calendar days. */
+export function addBusinessDays(from: Date | string, days: number): Date {
+  const d = new Date(typeof from === "string" ? from : from.getTime());
+  let left = days;
+  while (left > 0) {
+    d.setUTCDate(d.getUTCDate() + 1);
+    const wd = d.getUTCDay();
+    if (wd !== 5 && wd !== 6) left--;
+  }
+  return d;
+}
+
+/**
+ * What the printer sees for one payout row:
+ * - PAID: paid on `date`.
+ * - ON_ITS_WAY: approved by Elba, transfer pending.
+ * - ELBA_REVIEW: earned, waiting for Elba to review and approve it (an advance with or without a row).
+ * - NEEDS_INVOICE: delivered balance, waiting for the printer's e-invoice and Elba's review.
+ * - AFTER_DELIVERY: balance not earned yet (job still in the factory or on the road).
+ */
+export type PayoutStage = "PAID" | "ON_ITS_WAY" | "ELBA_REVIEW" | "NEEDS_INVOICE" | "AFTER_DELIVERY";
+
+export interface PayoutExpectation {
+  stage: PayoutStage;
+  /** ISO date the payout is expected by (target), null when it is paid or not earned yet. */
+  expectedBy: string | null;
+  /** Past the target and still not paid. */
+  late: boolean;
+}
+
+export function payoutExpectation(
+  row: Pick<ScheduleRow, "kind" | "status" | "date">,
+  ctx: { acceptedAt?: Date | string | null; deliveredAt?: Date | string | null },
+  now: Date = new Date(),
+): PayoutExpectation {
+  if (row.status === "PAID") return { stage: "PAID", expectedBy: null, late: false };
+  const base = row.kind === "ADVANCE" ? (ctx.acceptedAt ?? (row.status === "SCHEDULED" ? null : row.date)) : ctx.deliveredAt;
+  if (!base) return { stage: row.kind === "ADVANCE" ? "ELBA_REVIEW" : "AFTER_DELIVERY", expectedBy: null, late: false };
+  const by = addBusinessDays(base, row.kind === "ADVANCE" ? ADVANCE_TARGET_BUSINESS_DAYS : BALANCE_TARGET_BUSINESS_DAYS);
+  by.setUTCHours(23, 59, 59, 999);
+  const stage: PayoutStage = row.status === "APPROVED" ? "ON_ITS_WAY" : row.kind === "ADVANCE" ? "ELBA_REVIEW" : "NEEDS_INVOICE";
+  return { stage, expectedBy: by.toISOString(), late: now.getTime() > by.getTime() };
+}

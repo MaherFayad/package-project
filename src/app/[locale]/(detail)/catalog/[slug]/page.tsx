@@ -5,7 +5,8 @@ import type { Locale } from "@/types";
 import { toLocale } from "@/i18n";
 import { getSession } from "@/lib/auth/session";
 import { formatNumber } from "@/lib/format";
-import { CATALOGUE, catalogueEntryFromParam, familyName, subFamilyName, type AxisKey, type CatalogueEntry } from "@/data/catalogue";
+import { CATALOGUE, catalogueEntryFromParam, familyName, type AxisKey, type CatalogueEntry } from "@/data/catalogue";
+import { plainKindName } from "@/data/catalogue/taxonomy";
 import { COPY, fill } from "@/components/catalogue/copy";
 import { ORDER_MODE_COPY } from "@/data/catalogue/order-mode";
 import { DetailStage } from "@/components/catalogue/DetailStage";
@@ -15,7 +16,7 @@ import { getCatalogueData } from "@/components/catalogue/server";
 import { STRUCTURE_LIST } from "@/lib/dieline";
 import { Sheet } from "@/components/marketing/kit/Sheet";
 import { Glow } from "@/components/marketing/kit/Glow";
-import { Display, Eyebrow, Lead } from "@/components/marketing/kit/Display";
+import { Display, Lead } from "@/components/marketing/kit/Display";
 import { HeroTitle } from "@/components/marketing/kit/HeroTitle";
 import { Pill } from "@/components/marketing/kit/Pill";
 import styles from "@/components/catalogue/catalogue.module.css";
@@ -30,19 +31,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const e = catalogueEntryFromParam(slug);
   if (!e) return {};
   return {
-    title: `${e.name[locale]}${e.standard.code ? ` (${e.standard.system} ${e.standard.code})` : ""}`,
+    // The FEFCO / ECMA code stays in the English tab title for search, never on the Arabic page (R3).
+    title: `${e.name[locale]}${locale === "en" && e.standard.code ? ` (${e.standard.system} ${e.standard.code})` : ""}`,
     description: e.description[locale],
     alternates: { canonical: `/${locale}/catalog/${e.slug}`, languages: { ar: `/ar/catalog/${e.slug}`, en: `/en/catalog/${e.slug}` } },
   };
 }
 
+/** Sizes in cm, as shop owners measure (R3-06); dims are stored in mm. */
 function sizeText(locale: Locale, axes: AxisKey[], dims: Partial<Record<AxisKey, number>>, capacityMl?: number): string {
-  const parts = axes.filter((a) => typeof dims[a] === "number").map((a) => `${COPY.axes[a][locale]} ${formatNumber(dims[a]!)}`);
-  const s = `${parts.join(" × ")} ${COPY.mm[locale]}`;
+  const parts = axes.filter((a) => typeof dims[a] === "number").map((a) => `${COPY.axes[a][locale]} ${formatNumber(dims[a]! / 10, 1)}`);
+  const s = `${parts.join(" × ")} ${COPY.cm[locale]}`;
   return capacityMl ? `${s} · ${formatNumber(capacityMl)} ${COPY.ml[locale]}` : s;
 }
 
-/** Catalogue model page: live 3D, standard, Egyptian availability, sizes and the commerce path. */
+/** Catalogue model page: live 3D (no FEFCO / ECMA code shown, R3), Egyptian availability, sizes and the commerce path. */
 export default async function Page({ params }: Props) {
   const { locale: l, slug } = await params;
   const locale = toLocale(l);
@@ -55,7 +58,7 @@ export default async function Page({ params }: Props) {
   const [data, session] = await Promise.all([getCatalogueData(), getSession()]);
   const mode = data.modes.get(e.code) ?? { mode: "quote", reason: "NO_VENDOR" as const };
   const fam = familyName(e.family);
-  const sub = subFamilyName(e.subFamily);
+  const sub = plainKindName(e.subFamily);
   const related = CATALOGUE.filter((x: CatalogueEntry) => x.subFamily === e.subFamily && x.code !== e.code).slice(0, 4);
   const cards = new Map(data.cards.map((c) => [c.code, c]));
   const presets = e.presets.map((p) => ({ ...p, label: `${p.name[locale]} · ${sizeText(locale, e.axes, p.dims, p.capacityMl)}` }));
@@ -80,11 +83,6 @@ export default async function Page({ params }: Props) {
             ) : null}
           </ol>
         </nav>
-        {e.standard.label ? (
-          <Eyebrow className="m-enter">
-            <bdi dir="ltr">{e.standard.code ? `${e.standard.system} ${e.standard.code}` : e.standard.label}</bdi>
-          </Eyebrow>
-        ) : null}
         <HeroTitle size="64" id="model-title" text={e.name[locale]} />
         <Lead className="m-enter-lcp">{e.description[locale]}</Lead>
         {e.source === "fefco-09" ? <p className={styles.heroNote}>{COPY.hostNote[locale]}</p> : null}
@@ -127,10 +125,6 @@ export default async function Page({ params }: Props) {
                   {fam[locale]}
                   {e.subFamily.includes("/") ? <span className={styles.factSub}>{sub[locale]}</span> : null}
                 </dd>
-              </div>
-              <div className={styles.fact}>
-                <dt>{COPY.standard[locale]}</dt>
-                <dd dir="auto">{e.standard.label || COPY.noStandard[locale]}</dd>
               </div>
               <div className={styles.fact}>
                 <dt>{COPY.availability[locale]}</dt>

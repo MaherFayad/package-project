@@ -3,10 +3,11 @@ import type { ReactNode } from "react";
 import { Check, FileCheck2, ReceiptText, Rotate3d, ShieldCheck, Truck } from "lucide-react";
 import { getT, toLocale } from "@/i18n";
 import type { DictKey } from "@/i18n";
-import { formatDims, formatMoney, formatNumber } from "@/lib/format";
+import { formatMoney, formatNumber } from "@/lib/format";
 import { siteUrl } from "@/lib/env";
+import { formatDimsCm } from "@/lib/orders/box-name";
 import { designHref } from "@/components/store/catalog";
-import { JsonLd } from "@/components/store/JsonLd";
+import { JsonLd } from "@/components/store/JsonLdScript";
 import { faqJsonLd } from "@/components/store/jsonld";
 import { startHref } from "@/components/marketing/MarketingHeader";
 import { Sheet } from "@/components/marketing/kit/Sheet";
@@ -57,7 +58,8 @@ export default async function PricingPage({ params }: Props) {
   const { pricing: f } = await loadWhyFacts();
   const money = (v: number, unit = false) => formatMoney(v, locale, { alwaysDecimals: unit });
   const refStart = f ? designHref(locale, { structure: f.box.code, dims: f.box.dims, material: f.box.material }) : startHref(locale);
-  const boxName = f ? `${t(`structures.${f.box.code}` as DictKey)} ${formatDims(f.box.dims, locale)}` : "";
+  // R3-06: the size in cm, as on the box page, kept on one line so it never wraps out of order.
+  const boxName = f ? `${t(`structures.${f.box.code}` as DictKey)} ${formatDimsCm(f.box.dims, locale).replace(/ /g, "\u00a0")}` : "";
   const pct = `${formatNumber(f?.prepayDiscountPct ?? 0, 1)}%`;
   const cards = f ? CARD_QTYS.map((q) => f.tiers.find((x) => x.quantity === q)).filter((x): x is PriceTier => !!x) : [];
   const faq = c.faq({
@@ -86,6 +88,8 @@ export default async function PricingPage({ params }: Props) {
           {f ? (
             <VatToggle
               label={c.vatToggle}
+              excl={c.vatExcl}
+              incl={c.vatIncl}
               aside={
                 <a href="#compare" className={s.compareLink}>
                   {c.compareLink}
@@ -95,69 +99,48 @@ export default async function PricingPage({ params }: Props) {
               <Grid as="ul" cols={4} colsMd={2} className={s.list}>
                 {cards.map((tier, i) => (
                   <li key={tier.quantity} className={s.tier} style={{ ["--m-i" as string]: i }} data-testid={`tier-${tier.quantity}`}>
+                    {/* R1-15: a plain quantity, no plan names: the buyer is choosing how many boxes. */}
                     <div className={s.tierTop}>
-                      <div>
-                        <h2 className={s.tierName}>{c.tierNames[tier.quantity]}</h2>
-                        <p className={s.tierFor}>{c.tierFor[tier.quantity]}</p>
-                      </div>
-                      <p className={s.tierQty}>{c.boxes(formatNumber(tier.quantity))}</p>
+                      <h2 className={s.tierName}>{c.boxes(formatNumber(tier.quantity))}</h2>
                     </div>
                     <p className={`${s.tierPrice} ${s.showIncl}`}>
                       <strong>{money(tier.unitInclVatPiasters, true)}</strong>
                       <span>{c.perBoxIncl}</span>
+                    </p>
+                    {/* R1-15: the same per-box basis as the home page and the box pages, to compare. */}
+                    <p className={`${s.tierAlt} ${s.showIncl}`}>
+                      {money(tier.unitPiasters, true)} {c.perBoxExcl}
                     </p>
                     <p className={`${s.tierPrice} ${s.showExcl}`}>
                       <strong>{money(tier.unitPiasters, true)}</strong>
                       <span>{c.perBoxExcl}</span>
                     </p>
                     <div className={s.tierTotals}>
-                      <p className={s.showIncl}>
-                        {c.totalIncl} <strong data-testid="tier-total">{money(tier.totalPiasters)}</strong>
-                      </p>
+                      {/* R2-08: the VAT-inclusive total is always in view (what checkout charges). */}
                       <p className={s.showExcl}>
                         {c.totalExcl} <strong data-testid="tier-subtotal">{money(tier.subtotalPiasters)}</strong>
                       </p>
-                      {tier.savingPiasters > 0 ? <p className={s.save}>{c.youSave(money(tier.savingPiasters), pct)}</p> : null}
+                      <p>
+                        {c.totalIncl} <strong data-testid="tier-total">{money(tier.totalPiasters)}</strong>
+                      </p>
+                      {/* R2-08: the ex-VAT discount, the same figure as the table row and the order's price details. */}
+                      {tier.discountPiasters > 0 ? <p className={s.save}>{c.youSave(money(tier.discountPiasters), pct)}</p> : null}
                     </div>
                     <Pill href={refStart} variant="outline" className={s.tierCta}>
                       {c.tierCta}
-                      <span className={s.srOnly}> {c.tierNames[tier.quantity]}</span>
+                      <span className={s.srOnly}> {c.boxes(formatNumber(tier.quantity))}</span>
                     </Pill>
                     <ul className={s.feat}>
                       <li>
                         <Truck size={16} aria-hidden />
                         {c.deliveryIn(u.days(tier.deliveryDays))}
                       </li>
-                      {tier.diePiasters === 0 ? (
-                        <li>
-                          <Check size={16} aria-hidden />
-                          {c.tierFeatures.noDie}
-                        </li>
-                      ) : null}
-                      {tier.setupPiasters > 0 ? (
-                        <li>
-                          <Check size={16} aria-hidden />
-                          {c.tierFeatures.setup(money(tier.setupPiasters))}
-                        </li>
-                      ) : null}
-                      <li>
-                        <Check size={16} aria-hidden />
-                        {c.tierFeatures.proof}
-                      </li>
-                      <li>
-                        <Check size={16} aria-hidden />
-                        {c.tierFeatures.vat}
-                      </li>
                     </ul>
                   </li>
                 ))}
                 <li className={s.tier} style={{ ["--m-i" as string]: cards.length }} data-testid="tier-wholesale">
                   <div className={s.tierTop}>
-                    <div>
-                      <h2 className={s.tierName}>{c.wholesale}</h2>
-                      <p className={s.tierFor}>{c.wholesaleFor}</p>
-                    </div>
-                    <p className={s.tierQty}>{c.wholesaleQty(formatNumber(f.maxInstantQty))}</p>
+                    <h2 className={s.tierName}>{c.wholesaleQty(formatNumber(f.maxInstantQty))}</h2>
                   </div>
                   <p className={s.tierPrice}>
                     <strong>{c.wholesalePrice}</strong>
@@ -168,14 +151,6 @@ export default async function PricingPage({ params }: Props) {
                   <Pill href={refStart} variant="outline" className={s.tierCta}>
                     {c.wholesaleCta}
                   </Pill>
-                  <ul className={s.feat}>
-                    {c.wholesaleFeatures.map((x) => (
-                      <li key={x}>
-                        <Check size={16} aria-hidden />
-                        {x}
-                      </li>
-                    ))}
-                  </ul>
                 </li>
               </Grid>
             </VatToggle>
@@ -238,20 +213,19 @@ export default async function PricingPage({ params }: Props) {
                     <td />
                     {f.tiers.map((x) => (
                       <th key={x.quantity} scope="col">
-                        {c.tierNames[x.quantity]}
-                        <span className={s.thQty}>{c.boxes(formatNumber(x.quantity))}</span>
+                        {c.boxes(formatNumber(x.quantity))}
                       </th>
                     ))}
                     <th scope="col">
-                      {c.wholesale}
-                      <span className={s.thQty}>{c.wholesaleQty(formatNumber(f.maxInstantQty))}</span>
+                      {c.wholesaleQty(formatNumber(f.maxInstantQty))}
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   <Group label={c.compareRows.group1} span={span} />
                   <Row label={c.compareRows.unit} cells={f.tiers.map((x) => money(x.unitPiasters, true))} tail={c.onRequest} />
-                  <Row label={c.compareRows.list} cells={f.tiers.map((x) => money(x.listTotalPiasters))} tail={c.onRequest} />
+                  {/* R2-08: one basis, ex-VAT, so the rows add up: list − discount = subtotal; + VAT = total. */}
+                  <Row label={c.compareRows.list} cells={f.tiers.map((x) => money(x.listSubtotalPiasters, true))} tail={c.onRequest} />
                   <Row label={c.compareRows.discount(pct)} cells={f.tiers.map((x) => money(-x.discountPiasters))} tail={c.onRequest} />
                   <Row label={c.compareRows.subtotal} cells={f.tiers.map((x) => money(x.subtotalPiasters))} tail={c.onRequest} />
                   <Row label={c.compareRows.vat} cells={f.tiers.map((x) => money(x.vatPiasters))} tail={c.onRequest} />

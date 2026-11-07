@@ -40,7 +40,7 @@ export default async function AdminPricingPage({ params }: { params: Promise<{ l
     <Page title={t("admin.pricing.title")} titleIcon={<Tags aria-hidden="true" />} subtitle={updatedAt ? t("admin.pricing.lastSaved", { date: formatDateTime(updatedAt, locale) }) : t("admin.pricing.subtitle")}>
       <BlockStack gap="400">
         <Banner tone="info">{t("admin.pricing.notWired")}</Banner>
-        <PricingSettingsForm initial={{ marginPct: settings.marginPct, marginOnShipping: settings.marginOnShipping, quoteValidityHours: settings.quoteValidityHours, zones: settings.zones }} />
+        <PricingSettingsForm initial={{ marginPct: settings.marginPct, marginOnShipping: settings.marginOnShipping, quoteValidityHours: settings.quoteValidityHours, zones: settings.zones }} prepayDiscountPct={checkout.prepayDiscountPct} />
         <CheckoutSettingsForm initial={checkout} />
         <VendorMetricsForm initial={onTimeMin} />
         <Card title={t("admin.pricing.index.title")}>

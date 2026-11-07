@@ -6,11 +6,14 @@ import type { Dims, DisputeStatus, Locale, OrderStatus, PaymentMethod, Productio
 import { getT, pick, toLocale, type DictKey, type TFunction } from "@/i18n";
 import { requireUser } from "@/lib/auth/session";
 import { fromJson } from "@/lib/json";
-import { formatDate, formatDateTime, formatDims } from "@/lib/format";
+import { formatDate, formatDateTime } from "@/lib/format";
+import { formatDimsCm } from "@/lib/orders/box-name";
 import { formatEgyptPhone } from "@/lib/phone";
 import { getOrderForViewer, moneyOf, syncShipments, type OrderDetail } from "@/lib/orders/service";
 import { canBuyerCancel, canOpenDispute, canReview, isPaidStatus } from "@/lib/orders/state";
-import { BUYER_TRACK, buyerTrackIndex, buyerTrackStopped } from "@/lib/orders/buyer-track";
+import { BUYER_SIMPLE_TRACK, BUYER_TRACK, buyerSimpleIndex, buyerSimpleStopped, buyerStatusKey, buyerTrackIndex, buyerTrackStopped, type BuyerSimpleStep } from "@/lib/orders/buyer-track";
+import { boxName } from "@/lib/orders/box-name";
+import { isSampleLines } from "@/lib/orders/sample";
 import { paymentTone, statusTone } from "@/lib/orders/status-tone";
 import { modelPoster } from "@/lib/orders/poster";
 import { governorateKey } from "@/lib/orders/governorates";
@@ -35,6 +38,14 @@ import { Timeline, type TimelineGroup } from "@/components/ui/Timeline";
 import { PaidHeader } from "../_components/PaidHeader";
 import { CancelOrderButton, DisputeForm, ReorderButton, ReviewForm } from "../_components/OrderActions";
 import styles from "../_components/orders.module.css";
+import { Fragment } from "react";
+
+/** Plain name of a box board ("Natural brown cardboard"); null for labels, pouches, tubes… */
+function plainBoardKey(code: string): DictKey | null {
+  if (/^[EB]_FLUTE_KRAFT$/.test(code)) return "buyer.easy.board.kraft";
+  if (code === "E_FLUTE_WHITE" || code.startsWith("SBS_")) return "buyer.easy.board.white";
+  return null;
+}
 
 type Params = Promise<{ locale: string; id: string }>;
 type Search = Promise<{ paid?: string }>;
@@ -173,6 +184,29 @@ export default async function OrderPage({ params, searchParams }: { params: Para
     label: t(`orders.detail.steps.${s}` as DictKey),
     description: stepDates[s] && i < current ? formatDate(stepDates[s]!, locale) : undefined,
   }));
+  // R1-14: four plain stages up front; the seven production steps sit behind a disclosure.
+  const simpleCurrent = terminal ? buyerSimpleStopped(eventTypes) : buyerSimpleIndex(status);
+  const simpleDates: Record<BuyerSimpleStep, Date | null | undefined> = {
+    RECEIVED: order.paidAt ?? order.placedAt,
+    PRINTING: firstOf("PRODUCTION_STARTED") ?? firstOf("VENDOR_ACCEPTED"),
+    ON_THE_WAY: firstOf("SHIPPED"),
+    DELIVERED: order.deliveredAt,
+  };
+  const simpleSteps = BUYER_SIMPLE_TRACK.map((s, i) => ({
+    id: s,
+    label: t(`orders.detail.simple.${s}` as DictKey),
+    description: simpleDates[s] && i < simpleCurrent ? formatDate(simpleDates[s]!, locale) : undefined,
+  }));
+  const itemName = (item: OrderDetail["items"][number]) =>
+    boxName({ modelCode: item.modelCode, structureCode: item.structureCode, dims: fromJson<Dims>(item.dims) }, locale, t(`structures.${item.structureCode}` as DictKey));
+  // R2-01: the buyer price, as on every page before payment: what was charged ex-VAT (print, setup,
+  // delivery, minus the prepay discount) over the boxes. The engine's split stays behind "Price details".
+  const netPiasters = money.totalPiasters - money.vatPiasters;
+  const boxCount = order.items.reduce((s, i) => s + i.quantity, 0);
+  const isSample = isSampleLines(money.lines);
+  const inclKey: DictKey = isSample ? "buyer.easy.inclDelivery" : money.discountPiasters > 0 ? "buyer.easy.inclAll" : "buyer.easy.inclNoDiscount";
+  const vendorCityKey = `cities.${order.vendor.city}` as DictKey;
+  const vendorCity = t(vendorCityKey) === vendorCityKey ? null : t(vendorCityKey);
 
   const primary =
     isBuyer && status === "PENDING_PAYMENT" ? (
@@ -188,6 +222,12 @@ export default async function OrderPage({ params, searchParams }: { params: Para
     <Page
       title={t("orders.detail.title", { number: order.number })}
       titleMetadata={
+        // R2-10: a buyer reads one status, the tracker stage; staff keep payment + fulfilment badges.
+        !internal ? (
+          <Badge tone={badge.tone} progress={badge.progress}>
+            {t(buyerStatusKey(status) as DictKey)}
+          </Badge>
+        ) : (
         <InlineStack gap="100">
           {paidSum > 0 || !terminal ? (
             <Badge tone={paymentTone(paidSum > 0 ? "PAID" : "PENDING").tone} progress={paymentTone(paidSum > 0 ? "PAID" : "PENDING").progress}>
@@ -200,6 +240,7 @@ export default async function OrderPage({ params, searchParams }: { params: Para
             </Badge>
           ) : null}
         </InlineStack>
+        )
       }
       subtitle={t("orders.detail.placed", { date: formatDateTime(order.placedAt, locale) })}
       backAction={{ content: t("orders.detail.back"), url: `/${locale}/orders` }}
@@ -210,7 +251,7 @@ export default async function OrderPage({ params, searchParams }: { params: Para
         {paid && isPaidStatus(status) ? (
           <PaidHeader
             title={t("payment.paid")}
-            body={order.dueDate ? t("buyer.successBody", { vendor: vendorName, date: formatDate(order.dueDate, locale) }) : t("buyer.successBodyNoDate", { vendor: vendorName })}
+            body={order.dueDate ? t("buyer.successBody", { date: formatDate(order.dueDate, locale) }) : t("buyer.successBodyNoDate")}
             nextTitle={t("buyer.whatNext")}
             steps={[t("buyer.next1"), t("buyer.next2"), t("buyer.next3")]}
           />
@@ -232,36 +273,48 @@ export default async function OrderPage({ params, searchParams }: { params: Para
             <BlockStack gap="400">
               <Card title={t("orders.detail.progress")}>
                 <BlockStack gap="300">
-                  <Stepper steps={steps} current={current} currentTone={terminal ? "critical" : "default"} accessibilityLabel={t("orders.detail.progress")} />
+                  <Stepper steps={simpleSteps} current={simpleCurrent} currentTone={terminal ? "critical" : "default"} accessibilityLabel={t("orders.detail.progress")} />
                   {order.dueDate && !terminal && status !== "DELIVERED" ? (
-                    <Text as="p" variant="bodySm" tone="subdued">
+                    <Text as="p" fontWeight="semibold">
                       {t("orders.detail.dueBy", { date: formatDate(order.dueDate, locale) })}
                     </Text>
                   ) : null}
+                  <details className={styles.disclosure}>
+                    <summary>{t("orders.detail.progressDetails")}</summary>
+                    <Stepper steps={steps} current={current} currentTone={terminal ? "critical" : "default"} accessibilityLabel={t("orders.detail.progressDetails")} />
+                  </details>
                 </BlockStack>
               </Card>
 
               <Card title={t("orders.detail.items")}>
                 <BlockStack gap="300">
                   {order.items.map((item) => {
-                    const dims = fromJson<Dims>(item.dims);
+                    // One item per order: it carries the whole buyer price (see netPiasters above).
+                    const single = order!.items.length === 1;
+                    const lineTotal = single ? netPiasters : item.lineTotalPiasters;
+                    const unit = single ? Math.round(netPiasters / Math.max(1, boxCount)) : item.unitPiasters;
                     return (
                       <div className={styles.item} key={item.id}>
-                        <Thumbnail source={item.proof?.previewUrl ?? modelPoster(item.modelCode, item.structureCode)} alt={t(`structures.${item.structureCode}` as DictKey)} size="large" />
+                        <Thumbnail source={item.proof?.previewUrl ?? modelPoster(item.modelCode, item.structureCode)} alt={itemName(item)} size="large" />
                         <div className={styles.itemBody}>
                           <BlockStack gap="100">
                             <InlineStack align="space-between" gap="200">
                               <Text as="h3" variant="headingSm">
-                                {t(`structures.${item.structureCode}` as DictKey)}
+                                {itemName(item)}
                               </Text>
-                              <PriceTag alwaysDecimals amount={item.lineTotalPiasters} locale={locale} />
+                              <PriceTag alwaysDecimals amount={lineTotal} locale={locale} />
                             </InlineStack>
                             <Text as="p" variant="bodySm" tone="subdued">
-                              {formatDims(dims, locale)} · {t(`materials.${item.materialCode}` as DictKey)} · {finishLabel(item.config, item.finishCode, locale, (k) => t(k as DictKey))} ·{" "}
-                              {t(`checkout.proof.sides${item.printSides === "BOTH" ? "BOTH" : "OUTSIDE"}` as DictKey)}
+                              {t(plainBoardKey(item.materialCode) ?? (`materials.${item.materialCode}` as DictKey))} · {finishLabel(item.config, item.finishCode, locale, (k) => t(k as DictKey))} · {t(`checkout.proof.sides${item.printSides === "BOTH" ? "BOTH" : "OUTSIDE"}` as DictKey)}
                             </Text>
                             <Text as="p" variant="bodySm" numeric>
-                              <bdi>{item.quantity.toLocaleString("en-US")}</bdi> × <PriceTag alwaysDecimals amount={item.unitPiasters} size="small" locale={locale} />
+                              <bdi>{item.quantity.toLocaleString("en-US")}</bdi> × <PriceTag alwaysDecimals amount={unit} size="small" locale={locale} />
+                              {single ? (
+                                <Text as="span" variant="bodySm" tone="subdued">
+                                  {" "}
+                                  {t("buyer.easy.perBoxNote")} ({t(inclKey)})
+                                </Text>
+                              ) : null}
                             </Text>
                             <InlineStack gap="300">
                               {item.proof ? (
@@ -272,18 +325,15 @@ export default async function OrderPage({ params, searchParams }: { params: Para
                                   </InlineStack>
                                 </Link>
                               ) : null}
-                              {item.printPdfUrl && isPaidStatus(status) ? (
+                              {/* R1-14: the print file is production's business; only staff get the link. */}
+                              {internal && item.printPdfUrl && isPaidStatus(status) ? (
                                 <Link url={item.printPdfUrl}>
                                   <InlineStack gap="100" as="span" blockAlign="center">
                                     <Icon source={Download} size="small" />
                                     {t("orders.detail.downloadPrint")}
                                   </InlineStack>
                                 </Link>
-                              ) : terminal || isPaidStatus(status) ? null : (
-                                <Text as="span" variant="bodySm" tone="subdued">
-                                  {t("orders.detail.printOnlyPaid")}
-                                </Text>
-                              )}
+                              ) : null}
                             </InlineStack>
                           </BlockStack>
                         </div>
@@ -296,11 +346,41 @@ export default async function OrderPage({ params, searchParams }: { params: Para
               <Card title={t("orders.detail.payment")}>
                 <BlockStack gap="300">
                   <Inset>
+                    {/* R2-01: the visible rows add up: boxes (all-in, ex-VAT) + VAT = total. */}
+                    <dl className={styles.lines}>
+                      <div className={styles.line}>
+                        <dt>
+                          {isSample ? t("buyer.sample.line") : t("buyer.easy.boxes", { qty: boxCount })}
+                          <Text as="span" variant="bodySm" tone="subdued">
+                            {" "}
+                            ({t(inclKey)})
+                          </Text>
+                        </dt>
+                        <dd>
+                          <PriceTag alwaysDecimals amount={netPiasters} size="small" locale={locale} />
+                        </dd>
+                      </div>
+                      <div className={styles.line}>
+                        <dt>{t("checkout.summary.vat")}</dt>
+                        <dd>
+                          <PriceTag alwaysDecimals amount={money.vatPiasters} size="small" locale={locale} />
+                        </dd>
+                      </div>
+                      <div className={`${styles.line} ${styles.total}`}>
+                        <dt>{t("checkout.summary.total")}</dt>
+                        <dd>
+                          <PriceTag alwaysDecimals amount={money.totalPiasters} locale={locale} />
+                        </dd>
+                      </div>
+                    </dl>
+                    {/* SIM-03: the engine's lines sit behind "Price details", under the rows above. */}
+                    <details className={styles.disclosure}>
+                      <summary>{t("buyer.easy.breakdown")}</summary>
                     <dl className={styles.lines}>
                       {money.lines ? (
                         money.lines.map((l, i) => (
                           <div className={styles.line} key={i}>
-                            <dt>{t((l.labelKey === "pricing.line.shipping" ? "checkout.summary.shipping" : l.labelKey) as DictKey)}</dt>
+                            <dt>{t((l.labelKey === "pricing.line.shipping" ? "buyer.easy.delivery" : l.labelKey === "pricing.line.die" ? "buyer.easy.dieLine" : l.labelKey) as DictKey)}</dt>
                             <dd>
                               <PriceTag alwaysDecimals amount={l.totalPiasters} size="small" locale={locale} tone={l.totalPiasters < 0 ? "success" : "base"} />
                             </dd>
@@ -328,19 +408,8 @@ export default async function OrderPage({ params, searchParams }: { params: Para
                           <PriceTag alwaysDecimals amount={money.totalPiasters - money.vatPiasters} size="small" locale={locale} />
                         </dd>
                       </div>
-                      <div className={styles.line}>
-                        <dt>{t("checkout.summary.vat")}</dt>
-                        <dd>
-                          <PriceTag alwaysDecimals amount={money.vatPiasters} size="small" locale={locale} />
-                        </dd>
-                      </div>
-                      <div className={`${styles.line} ${styles.total}`}>
-                        <dt>{t("checkout.summary.total")}</dt>
-                        <dd>
-                          <PriceTag alwaysDecimals amount={money.totalPiasters} locale={locale} />
-                        </dd>
-                      </div>
                     </dl>
+                    </details>
                   </Inset>
                   {refundedSum > 0 ? (
                     <Inset>
@@ -509,17 +578,30 @@ export default async function OrderPage({ params, searchParams }: { params: Para
 
           <LayoutSection variant="oneThird" as="aside" aria-label={t("orders.detail.printer")}>
             <BlockStack gap="400">
+              {/* R1-13: Elba picked the printer and answers for the order; the buyer reads that promise,
+                  not a printer profile with a rating to judge. Staff keep the printer's details. */}
               <Card title={t("orders.detail.printer")}>
-                <BlockStack gap="100">
-                  <Link url={`/${locale}/vendors/${order.vendor.slug}`}>{vendorName}</Link>
-                  <Text as="p" variant="bodySm" tone="subdued">
-                    {pick(locale, order.vendor.cityAr, order.vendor.cityEn)}
-                  </Text>
-                  <Text as="p" variant="bodySm" tone="subdued">
-                    <bdi>{t("checkout.offers.ratingShort", { rating: order.vendor.rating.toFixed(1), count: order.vendor.ratingCount })}</bdi> ·{" "}
-                    {order.vendor.onTimePublic ? t("checkout.offers.onTime", { pct: Math.round(order.vendor.onTimePct) }) : t("store.vendors.onTimeNew")}
-                  </Text>
-                </BlockStack>
+                {internal ? (
+                  <BlockStack gap="100">
+                    <Link url={`/${locale}/vendors/${order.vendor.slug}`}>{vendorName}</Link>
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      {pick(locale, order.vendor.cityAr, order.vendor.cityEn)}
+                    </Text>
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      {order.vendor.ratingCount > 0 ? <bdi>{t("checkout.offers.ratingShort", { rating: order.vendor.rating.toFixed(1), count: order.vendor.ratingCount })}</bdi> : t("store.vendor.newBadge")}
+                      {order.vendor.onTimePublic ? ` · ${t("checkout.offers.onTime", { pct: Math.round(order.vendor.onTimePct) })}` : ""}
+                    </Text>
+                  </BlockStack>
+                ) : (
+                  <BlockStack gap="100">
+                    <Text as="p" fontWeight="semibold">
+                      {vendorCity ? t("buyer.easy.printerTitle", { city: vendorCity }) : t("buyer.easy.printerTitleNoCity")}
+                    </Text>
+                    <Text as="p" tone="subdued">
+                      {t("orders.detail.printerBody")}
+                    </Text>
+                  </BlockStack>
+                )}
               </Card>
 
               <Card title={t("orders.detail.address")}>
@@ -552,23 +634,50 @@ export default async function OrderPage({ params, searchParams }: { params: Para
               {proof ? (
                 <Card title={t("orders.detail.proof")}>
                   <dl className={styles.dl}>
-                    <dt>{t("orders.detail.proofVersion", { version: "" }).trim()}</dt>
-                    <dd>
-                      <bdi>{proof.version}</bdi>
-                    </dd>
                     {proof.approvedAt ? (
                       <>
                         <dt>{t("orders.detail.proofApproved", { date: "" }).trim()}</dt>
                         <dd>{formatDateTime(proof.approvedAt, locale)}</dd>
                       </>
                     ) : null}
-                    <dt>{t("orders.detail.proofHash")}</dt>
-                    <dd>
-                      <span className={styles.hash} title={proof.hash}>
-                        {proof.hash.slice(0, 16)}…
-                      </span>
-                    </dd>
                   </dl>
+                  {/* SIM-11 / R1-14: version and file fingerprint are records for disputes; buyers never
+                      see them (a hash labelled «البصمة» read as foil stamping). Staff keep them. */}
+                  <details className={styles.disclosure}>
+                    <summary>{t("buyer.easy.proof.details")}</summary>
+                    <dl className={styles.dl}>
+                      {/* The board grade behind the plain name on the item line ("Natural brown cardboard"). */}
+                      {order.items
+                        .filter((i) => plainBoardKey(i.materialCode))
+                        .slice(0, 1)
+                        .map((i) => (
+                          <Fragment key={i.id}>
+                            <dt>{t("checkout.proof.material")}</dt>
+                            <dd>{t(`materials.${i.materialCode}` as DictKey)}</dd>
+                          </Fragment>
+                        ))}
+                      {order.items.slice(0, 1).map((i) => (
+                        <Fragment key={`size-${i.id}`}>
+                          <dt>{t("checkout.proof.size")}</dt>
+                          <dd>{formatDimsCm(fromJson<Dims>(i.dims), locale)}</dd>
+                        </Fragment>
+                      ))}
+                      {internal ? (
+                        <>
+                          <dt>{t("orders.detail.proofVersion", { version: "" }).trim()}</dt>
+                          <dd>
+                            <bdi>{proof.version}</bdi>
+                          </dd>
+                          <dt>{t("orders.detail.proofHash")}</dt>
+                          <dd>
+                            <span className={styles.hash} title={proof.hash}>
+                              {proof.hash.slice(0, 16)}…
+                            </span>
+                          </dd>
+                        </>
+                      ) : null}
+                    </dl>
+                  </details>
                 </Card>
               ) : null}
 

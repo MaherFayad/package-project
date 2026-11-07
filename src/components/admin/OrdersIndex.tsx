@@ -76,6 +76,7 @@ export function OrdersIndex({ rows, vendors, openDisputes }: { rows: AdminOrderR
           accessibilityLabel={t("admin.orders.metricsLabel")}
           metrics={[
             { label: t("admin.orders.metrics.total"), value: formatNumber(counts.all) },
+            { label: t("admin.orders.metrics.unpaid"), value: formatNumber(counts.unpaid) },
             { label: t("admin.orders.metrics.attention"), value: formatNumber(counts.attention) },
             { label: t("admin.orders.metrics.qc"), value: formatNumber(counts.qc) },
             { label: t("admin.orders.metrics.disputes"), value: formatNumber(openDisputes) },

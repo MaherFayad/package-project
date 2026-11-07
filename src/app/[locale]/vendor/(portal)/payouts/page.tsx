@@ -10,7 +10,8 @@ import { Page } from "@/components/ui/Page";
 import { Text } from "@/components/ui/Text";
 import { requireVendorContext } from "@/components/vendor/server/context";
 import { getPayoutRows } from "@/components/vendor/server/queries";
-import { payoutBadge, payoutSummary } from "@/components/vendor/lib/payouts";
+import { payoutSummary, type PayoutStage } from "@/components/vendor/lib/payouts";
+import type { VendorPayoutRow } from "@/components/vendor/types";
 import styles from "@/components/vendor/vendor.module.css";
 import { getT, toLocale, type DictKey } from "@/i18n";
 import { formatDate, formatMoney } from "@/lib/format";
@@ -18,6 +19,18 @@ import { formatDate, formatMoney } from "@/lib/format";
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const t = getT(toLocale((await params).locale));
   return { title: `${t("vendorPortal.payouts.title")} · ${t("vendorPortal.title")}` };
+}
+
+/** P-03: one badge per stage, in the printer's terms ("Waiting for Elba's review"), amber when late. */
+function stageBadge(r: VendorPayoutRow): { tone: "neutral" | "info" | "success" | "attention" | "warning"; progress: "incomplete" | "partiallyComplete" | "complete" } {
+  const map: Record<PayoutStage, ReturnType<typeof stageBadge>> = {
+    PAID: { tone: "success", progress: "complete" },
+    ON_ITS_WAY: { tone: "info", progress: "partiallyComplete" },
+    ELBA_REVIEW: { tone: "attention", progress: "incomplete" },
+    NEEDS_INVOICE: { tone: "warning", progress: "incomplete" },
+    AFTER_DELIVERY: { tone: "neutral", progress: "incomplete" },
+  };
+  return r.late ? { tone: "warning", progress: "incomplete" } : map[r.stage];
 }
 
 export default async function PayoutsPage({ params }: { params: Promise<{ locale: string }> }) {
@@ -30,6 +43,13 @@ export default async function PayoutsPage({ params }: { params: Promise<{ locale
   // R5 (CR-35): one money precision per column: two decimals for all amounts when any has piasters.
   const metricDec = { alwaysDecimals: [sum.paidPiasters, sum.approvedPiasters, sum.pendingPiasters, sum.scheduledPiasters].some((v) => Math.round(v) % 100 !== 0) };
   const rowDec = { alwaysDecimals: rows.some((r) => Math.round(r.amountPiasters) % 100 !== 0) };
+  const late = rows.filter((r) => r.late).length;
+  /** "Paid on 3 Nov" / "Expected by 10 Nov" / "Late: target was 3 Nov" / "After delivery". */
+  const when = (r: VendorPayoutRow) => {
+    if (r.stage === "PAID") return r.date ? t("vendorPortal.payouts.paidOn", { date: formatDate(r.date, locale) }) : t("vendorPortal.payouts.stages.PAID");
+    if (r.expectedBy) return t(r.late ? "vendorPortal.payouts.expectedLate" : "vendorPortal.payouts.expectedBy", { date: formatDate(r.expectedBy, locale) });
+    return r.stage === "AFTER_DELIVERY" ? t("vendorPortal.payouts.afterDelivery") : t("vendorPortal.payouts.afterReview");
+  };
 
   return (
     <Page fullWidth title={t("vendorPortal.payouts.title")} titleIcon={<Banknote aria-hidden="true" />} subtitle={t("vendorPortal.payouts.subtitle")}>
@@ -45,6 +65,11 @@ export default async function PayoutsPage({ params }: { params: Promise<{ locale
             ]}
           />
         </div>
+        {late > 0 ? (
+          <Banner tone="warning" title={t("vendorPortal.payouts.lateTitle")}>
+            {t("vendorPortal.payouts.lateBody", { count: late })}
+          </Banner>
+        ) : null}
         {sum.eInvoiceCount > 0 ? (
           <Banner tone="warning" title={t("vendorPortal.payouts.eInvoiceTitle")}>
             {t("vendorPortal.payouts.eInvoiceBody", { count: sum.eInvoiceCount })}
@@ -61,7 +86,7 @@ export default async function PayoutsPage({ params }: { params: Promise<{ locale
             { title: t("vendorPortal.payouts.columns.kind") },
             { title: t("vendorPortal.payouts.columns.trigger") },
             { title: t("vendorPortal.payouts.columns.status") },
-            { title: t("vendorPortal.payouts.columns.date") },
+            { title: t("vendorPortal.payouts.columns.expected") },
             { title: t("vendorPortal.payouts.columns.amount"), alignment: "end" },
           ]}
           emptyState={
@@ -71,7 +96,8 @@ export default async function PayoutsPage({ params }: { params: Promise<{ locale
           }
         >
           {rows.map((r) => {
-            const b = payoutBadge(r.status);
+            const b = stageBadge(r);
+            const stage = t(`vendorPortal.payouts.stages.${r.stage}` as DictKey);
             return (
               <IndexTableRow key={r.key} id={r.key}>
                 <IndexTableCell>
@@ -89,17 +115,15 @@ export default async function PayoutsPage({ params }: { params: Promise<{ locale
                     </Text>
                     <span className={styles.CondensedMeta}>
                       <Badge tone={b.tone} progress={b.progress}>
-                        {t(`vendorPortal.payouts.statuses.${r.status}` as DictKey)}
+                        {stage}
                       </Badge>
                       <Text as="span" numeric fontWeight="semibold">
                         {formatMoney(r.amountPiasters, locale, rowDec)}
                       </Text>
                     </span>
-                    {r.date ? (
-                      <Text as="span" tone="subdued" variant="bodySm">
-                        <time dateTime={r.date}>{formatDate(r.date, locale)}</time>
-                      </Text>
-                    ) : null}
+                    <Text as="span" tone={r.late ? "caution" : "subdued"} variant="bodySm" fontWeight={r.late ? "semibold" : undefined}>
+                      {when(r)}
+                    </Text>
                   </div>
                 </IndexTableCell>
                 <IndexTableCell className={styles.WideOnly}>{t(`vendorPortal.payouts.kinds.${r.kind}` as DictKey)}</IndexTableCell>
@@ -110,10 +134,14 @@ export default async function PayoutsPage({ params }: { params: Promise<{ locale
                 </IndexTableCell>
                 <IndexTableCell className={styles.WideOnly}>
                   <Badge tone={b.tone} progress={b.progress}>
-                    {t(`vendorPortal.payouts.statuses.${r.status}` as DictKey)}
+                    {stage}
                   </Badge>
                 </IndexTableCell>
-                <IndexTableCell className={styles.WideOnly}>{r.date ? <time dateTime={r.date}>{formatDate(r.date, locale)}</time> : "—"}</IndexTableCell>
+                <IndexTableCell className={styles.WideOnly}>
+                  <Text as="span" tone={r.late ? "caution" : undefined} fontWeight={r.late ? "semibold" : undefined}>
+                    {when(r)}
+                  </Text>
+                </IndexTableCell>
                 <IndexTableCell className={styles.WideOnly} alignment="end" numeric>
                   {formatMoney(r.amountPiasters, locale, rowDec)}
                 </IndexTableCell>
@@ -127,6 +155,7 @@ export default async function PayoutsPage({ params }: { params: Promise<{ locale
             <li>{t("vendorPortal.payouts.termsAdvance")}</li>
             <li>{t("vendorPortal.payouts.termsBalance")}</li>
             <li>{t("vendorPortal.payouts.termsBank")}</li>
+            <li>{t("vendorPortal.payouts.termsManual")}</li>
           </ul>
         </Card>
       </BlockStack>

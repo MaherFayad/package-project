@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { cleanup, createUser, db, deleteOrder, signInAs, signInPhone, SEEDED, track } from "../fixtures/factory";
 import { formatMoney } from "../../src/lib/format";
-import { ackCookies, localeOf, payByCard, tFor, tr, vatOf } from "./helpers";
+import { ackCookies, basicsPanel, localeOf, payByCard, tFor, tr, vatOf } from "./helpers";
 
 /**
  * Journey 2 (docs/audit/journeys.md): the coffee brand asks for 5,000 boxes, above the 2,000-box
@@ -19,14 +19,21 @@ test.afterAll(cleanup);
 async function designAndOpenCheckout(page: import("@playwright/test").Page, locale: "ar" | "en"): Promise<string> {
   await page.goto(`/${locale}/design/mailer-box`);
   await expect(page.getByRole("application", { name: tr(locale, "3D preview of your box") })).toBeVisible({ timeout: 30_000 });
-  const panel = page.getByRole("complementary", { name: tr(locale, "Designer panels") });
-  await panel.getByRole("tab", { name: tr(locale, "Artwork") }).click();
+  const panel = await basicsPanel(page, locale);
   await panel.getByRole("button", { name: /#303030/ }).first().click();
   await expect(page).toHaveURL(/[?&]d=[\w-]+/, { timeout: 30_000 });
   const designId = new URL(page.url()).searchParams.get("d")!;
   await page.goto(`/${locale}/checkout/${designId}`);
-  await expect(page.getByTestId("vendor-offer").first()).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId("checkout-total")).toBeVisible({ timeout: 30_000 });
   return designId;
+}
+
+/** "Another quantity" opens the custom quantity field (simplified checkout). */
+async function typeQuantity(page: import("@playwright/test").Page, locale: "ar" | "en", qty: string): Promise<void> {
+  const t = tFor(locale);
+  await page.getByRole("button", { name: t("buyer.easy.otherQty") }).click();
+  await page.getByLabel(t("buyer.easy.otherQtyLabel")).fill(qty);
+  await page.getByRole("button", { name: t("checkout.quantity.apply") }).click();
 }
 
 test("J2 · 5,000 boxes: price request reaches the account and the admin inbox", async ({ page, browser, baseURL }, info) => {
@@ -38,8 +45,7 @@ test("J2 · 5,000 boxes: price request reaches the account and the admin inbox",
   await signInAs(page.context(), baseURL!, buyer.id);
   const designId = await designAndOpenCheckout(page, locale);
 
-  await page.getByLabel(t("checkout.quantity.custom")).fill("5000");
-  await page.getByRole("button", { name: t("checkout.quantity.apply") }).click();
+  await typeQuantity(page, locale, "5000");
   await page.getByLabel(t("buyer.quote.note")).fill("Matte black, delivery in two batches");
   await page.getByRole("button", { name: t("buyer.quote.send"), exact: true }).click();
   await expect(page.getByText(t("buyer.quote.sentTitle", { qty: 5000 }))).toBeVisible({ timeout: 30_000 });
@@ -86,8 +92,7 @@ test("J2 · admin prices the 5,000-box request, the buyer accepts and pays (R4-B
 
   // 1. The buyer asks for 5,000 boxes from checkout (above the 2,000-box instant limit).
   const designId = await designAndOpenCheckout(page, locale);
-  await page.getByLabel(t("checkout.quantity.custom")).fill(ar ? "٥٬٠٠٠" : "5,000");
-  await page.getByRole("button", { name: t("checkout.quantity.apply") }).click();
+  await typeQuantity(page, locale, ar ? "٥٬٠٠٠" : "5,000");
   await page.getByRole("button", { name: t("buyer.quote.send"), exact: true }).click();
   await expect(page.getByText(t("buyer.quote.sentTitle", { qty: 5000 }))).toBeVisible({ timeout: 30_000 });
   const lead = await db.quote.findFirstOrThrow({ where: { userId: buyer.id, designId } });
@@ -132,23 +137,23 @@ test("J2 · admin prices the 5,000-box request, the buyer accepts and pays (R4-B
     await expect(card).toContainText(t("buyer.quoted.statusPriced"), { timeout: 30_000 });
     await card.getByRole("link", { name: t("buyer.quoted.action") }).click();
     await expect(page.getByText(t("buyer.quoted.title", { qty: 5000 }))).toBeVisible({ timeout: 30_000 });
-    const summary = page.getByRole("complementary").filter({ hasText: t("checkout.summary.title") });
+    const summary = page.getByRole("complementary").filter({ hasText: t("buyer.easy.summaryTitle") });
     await expect(summary).toContainText(formatMoney(total, locale, { alwaysDecimals: true }));
-    await summary.getByRole("button", { name: t("checkout.actions.continue") }).click();
+    await summary.getByRole("button", { name: t("buyer.easy.actions.toAddress") }).click();
     await page.getByLabel(t("checkout.address.name")).fill("Omar Bunn");
     await page.getByLabel(t("checkout.address.phone")).fill("010 1234 5678");
     const gov = page.getByLabel(t("checkout.address.governorate"));
     if (await gov.isEnabled()) await gov.selectOption("Cairo");
     await page.getByLabel(t("checkout.address.city")).fill("Zamalek");
     await page.getByLabel(t("checkout.address.street")).fill("12 Brazil St");
+    await page.locator("details").filter({ hasText: t("buyer.easy.address.company") }).locator("summary").click();
     await page.getByLabel(t("buyer.company.toggle")).check();
     await page.getByLabel(t("buyer.company.name")).fill("Bunn Coffee LLC");
     await page.getByLabel(t("buyer.company.taxId")).fill(ar ? "١٢٣٤٥٦٧٨٩" : "123456789");
-    await summary.getByRole("button", { name: t("checkout.actions.continue") }).click();
-    await page.getByLabel(t("checkout.proof.approve")).check();
-    const asIs = page.getByLabel(/Print it as it is|اطبعها كما هي/);
+    await page.getByLabel(t("buyer.easy.proof.approve")).check();
+    const asIs = page.locator("#preflight-override");
     if (await asIs.count()) await asIs.check();
-    await summary.getByRole("button", { name: t("checkout.actions.approveAndPay") }).click();
+    await summary.getByRole("button", { name: t("buyer.easy.actions.toPay") }).click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/checkout/pay/`), { timeout: 30_000 });
     await expect(page.getByTestId("pay-total")).toContainText(formatMoney(total, locale, { alwaysDecimals: true }));
     await payByCard(page, locale);

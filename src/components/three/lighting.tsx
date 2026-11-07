@@ -1,9 +1,9 @@
 "use client";
 
 import { Lightformer } from "@react-three/drei";
-import { memo, useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from "react";
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal, useThree } from "@react-three/fiber";
-import { BackSide, Color, CubeCamera, HalfFloatType, PMREMGenerator, Scene, ShaderMaterial, SphereGeometry, WebGLCubeRenderTarget, type WebGLRenderer } from "three";
+import { BackSide, Color, CubeCamera, HalfFloatType, PMREMGenerator, Scene, ShaderMaterial, SphereGeometry, Vector3, WebGLCubeRenderTarget, type DirectionalLight, type WebGLRenderer } from "three";
 
 /**
  * Studio lighting for packaging product shots (owner: 3D engine).
@@ -100,7 +100,7 @@ export interface StudioEnvironmentProps {
 /** Softbox environment for reflections (foil, gloss, spot UV). Rendered once. */
 export const StudioEnvironment = memo(function StudioEnvironment({ intensity = 1, resolution = 256 }: StudioEnvironmentProps) {
   return (
-    <EnvironmentScene resolution={resolution} intensity={0.6 * intensity}>
+    <EnvironmentScene resolution={resolution} intensity={0.42 * intensity}>
       <Cyclorama top="#a8a8a8" horizon="#8a8a8a" bottom="#77716a" />
       {/* overhead softbox */}
       <Lightformer form="rect" intensity={2.6} position={[0, 5, 0.5]} rotation-x={Math.PI / 2} scale={[7, 5, 1]} />
@@ -123,12 +123,57 @@ export const StudioEnvironment = memo(function StudioEnvironment({ intensity = 1
   );
 });
 
-/** Direct lights of the studio rig. */
-export const StudioLights = memo(function StudioLights({ intensity = 1 }: { intensity?: number }) {
+/** Key light direction (front-left-high), normalised. */
+const KEY_DIR = new Vector3(-2.4, 4.2, 3.2).normalize();
+
+/**
+ * The key light. With `shadowRadius` (metres, bounding radius of the model) it casts real soft
+ * shadows: flaps shade the walls under them, an open box is darker inside, and every fold reads
+ * as depth instead of one flat colour. The shadow camera is fitted to the model so the map's
+ * texels stay well under a millimetre.
+ */
+function KeyLight({ intensity, shadowRadius }: { intensity: number; shadowRadius: number }) {
+  const ref = useRef<DirectionalLight>(null);
+  const invalidate = useThree((s) => s.invalidate);
+  const r = Math.max(0.02, shadowRadius);
+  useLayoutEffect(() => {
+    const l = ref.current;
+    if (!l) return;
+    l.position.copy(KEY_DIR).multiplyScalar(r * 4);
+    l.target.position.set(0, r * 0.3, 0);
+    l.target.updateMatrixWorld();
+    const cam = l.shadow.camera;
+    cam.left = -r;
+    cam.right = r;
+    cam.top = r;
+    cam.bottom = -r;
+    cam.near = r * 0.5;
+    cam.far = r * 8;
+    cam.updateProjectionMatrix();
+    l.shadow.needsUpdate = true;
+    invalidate();
+  }, [r, invalidate]);
+  return (
+    <directionalLight
+      ref={ref}
+      intensity={2.3 * intensity}
+      color="#fff8ee"
+      castShadow={shadowRadius > 0}
+      shadow-mapSize-width={2048}
+      shadow-mapSize-height={2048}
+      shadow-radius={3}
+      shadow-bias={-0.0002}
+      shadow-normalBias={Math.max(0.0004, r * 0.002)}
+    />
+  );
+}
+
+/** Direct lights of the studio rig. `shadowRadius` (metres) turns on the key light's shadows. */
+export const StudioLights = memo(function StudioLights({ intensity = 1, shadowRadius = 0 }: { intensity?: number; shadowRadius?: number }) {
   return (
     <>
-      <hemisphereLight args={["#f4f6ff", "#e6dccd", 0.35 * intensity]} />
-      <directionalLight position={[-2.4, 4.2, 3.2]} intensity={1.25 * intensity} color="#fff8ee" />
+      <hemisphereLight args={["#f4f6ff", "#e6dccd", 0.3 * intensity]} />
+      <KeyLight intensity={intensity} shadowRadius={shadowRadius} />
       {/* front-right fill (R4-CR-10): keeps the side faces of dark prints at >= 55 % of the lid's
           luminance (measured with docs/audit/tools/3d-luminance.cjs); was 0.35, side faces 35 % */}
       <directionalLight position={[3, 1.6, 2.4]} intensity={0.45 * intensity} color="#f2f5ff" />
@@ -138,10 +183,10 @@ export const StudioLights = memo(function StudioLights({ intensity = 1 }: { inte
 });
 
 /** Direct lights + environment, the default set behind every box viewer. */
-export const StudioLighting = memo(function StudioLighting({ intensity = 1 }: { intensity?: number }) {
+export const StudioLighting = memo(function StudioLighting({ intensity = 1, shadowRadius = 0 }: { intensity?: number; shadowRadius?: number }) {
   return (
     <>
-      <StudioLights intensity={intensity} />
+      <StudioLights intensity={intensity} shadowRadius={shadowRadius} />
       <StudioEnvironment intensity={intensity} />
     </>
   );

@@ -36,6 +36,20 @@ export interface EngineViewApi {
   onKeyboard?(): void;
   /** Overlay insets in px (see fit.ts). */
   setFitInsets?(insets: FitInsets | null): void;
+  /** What printed board is under a viewport point (client px), or null. */
+  pickAt?(clientX: number, clientY: number): PickHit | null;
+  /** The model's root object (for 3D export). */
+  getModel?(): import("three").Object3D | null;
+  /** Glow the given panels' printed surface (hover / drop target); null clears it. */
+  highlight?(panelIds: readonly string[] | null, surface?: "outside" | "inside"): void;
+}
+
+/** A point on the printed board under the pointer: panel, printed surface and sheet position (mm). */
+export interface PickHit {
+  panelId: string;
+  surface: "outside" | "inside";
+  /** Sheet coordinates in mm (origin top-left of the printed sheet, x right, y down). */
+  sheet: { x: number; y: number };
 }
 
 interface EngineCanvasContextValue {
@@ -63,6 +77,9 @@ export function useRegisterViewApi(apiRef: { current: EngineViewApi | null }) {
       screenshot: (o) => (apiRef.current ? apiRef.current.screenshot(o) : Promise.reject(new Error("3D view not ready"))),
       onKeyboard: () => apiRef.current?.onKeyboard?.(),
       setFitInsets: (i) => apiRef.current?.setFitInsets?.(i),
+      pickAt: (x, y) => apiRef.current?.pickAt?.(x, y) ?? null,
+      getModel: () => apiRef.current?.getModel?.() ?? null,
+      highlight: (ids, s) => apiRef.current?.highlight?.(ids, s),
     };
     ctx.register(proxy);
     // report the first frame of this content (after a model / kind switch too)
@@ -286,6 +303,8 @@ export function EngineCanvas({
         data-reveal={ready ? "shown" : "hidden"}
         frameloop={compiled || timedOut ? "demand" : "never"}
         dpr={[1, dprCap]}
+        // PCF soft shadow maps: the key light shades flaps, walls and the inside of open boxes
+        shadows="soft"
         // drag / keyboard input drops the pixel ratio to 2/3 (never below 1) until 300 ms after it ends
         performance={{ min: 0.66, max: 1, debounce: 300 }}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance", localClippingEnabled: true } as never}

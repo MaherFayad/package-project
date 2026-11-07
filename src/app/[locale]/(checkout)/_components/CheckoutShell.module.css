@@ -4,6 +4,24 @@
   display: flex;
   flex-direction: column;
   background: var(--p-color-bg);
+  /* R1-20: buyer pages read at 16px body (17px Arabic) and nothing under 14px, money, dates and
+     status chips included. The app kit defaults (12-14px) suit the dense admin, not a shop owner
+     checking a 20,000 EGP total on a budget phone, so the scale is raised for this subtree only. */
+  --p-font-size-275: 0.875rem;
+  --p-font-size-300: 0.875rem;
+  --p-font-size-325: 0.875rem;
+  --p-text-body-lg-font-size: 1.0625rem;
+  --p-text-body-md-font-size: 1rem;
+  --p-text-body-sm-font-size: 0.875rem;
+  --p-text-heading-sm-font-size: 1rem;
+  --p-text-heading-xs-font-size: 0.875rem;
+}
+.shell:lang(ar) {
+  --p-text-body-lg-font-size: 1.125rem;
+  --p-text-body-md-font-size: 1.0625rem;
+  --p-text-body-sm-font-size: 0.9375rem;
+  --p-text-heading-sm-font-size: 1.0625rem;
+  --p-text-heading-xs-font-size: 0.9375rem;
 }
 .main {
   flex: 1;

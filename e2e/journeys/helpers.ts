@@ -137,14 +137,25 @@ export async function logoPng(page: Page): Promise<Buffer> {
 export const ONE_PX_PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
 
 /**
- * Signed-in buyer: a quick design (background colour, autosaved), then checkout up to the payment
- * step. Returns the design id and the order id of the PENDING_PAYMENT order.
+ * The designer's Basics panel (the default for a new visitor: logo, text, colour, size). On phones
+ * the panel is a bottom sheet that starts closed: open it first.
+ */
+export async function basicsPanel(page: Page, locale: Locale): Promise<Locator> {
+  const panel = page.getByTestId("simple-panel");
+  await expect(panel).toBeAttached({ timeout: 30_000 });
+  const expand = page.getByRole("button", { name: tr(locale, "Show more controls") });
+  if (await expand.isVisible().catch(() => false)) await expand.click();
+  return panel;
+}
+
+/**
+ * Signed-in buyer: a quick design (one print colour from the Basics panel, autosaved), then
+ * checkout up to the payment step. Returns the design id and the order id of the PENDING_PAYMENT order.
  */
 export async function designToPayStep(page: Page, locale: Locale, opts: { company?: boolean } = {}): Promise<{ designId: string; orderId: string }> {
   await page.goto(`/${locale}/design/mailer-box`);
   await expect(page.getByRole("application", { name: tr(locale, "3D preview of your box") })).toBeVisible({ timeout: 30_000 });
-  const panel = page.getByRole("complementary", { name: tr(locale, "Designer panels") });
-  await panel.getByRole("tab", { name: tr(locale, "Artwork") }).click();
+  const panel = await basicsPanel(page, locale);
   await panel.getByRole("button", { name: /#c70a24/ }).first().click();
   await expect(page).toHaveURL(/[?&]d=[\w-]+/, { timeout: 30_000 });
   const designId = new URL(page.url()).searchParams.get("d")!;
@@ -155,23 +166,29 @@ export async function designToPayStep(page: Page, locale: Locale, opts: { compan
 /** From the open checkout page of a design to its payment step; returns the new order id. */
 export async function checkoutToPayStep(page: Page, locale: Locale, opts: { company?: boolean } = {}): Promise<string> {
   const t = getT(locale);
-  await expect(page.getByTestId("vendor-offer").first()).toBeVisible({ timeout: 30_000 });
-  const summary = page.getByRole("complementary").filter({ hasText: t("checkout.summary.title") });
-  await summary.getByRole("button", { name: t("checkout.actions.continue") }).click();
+  // Simplified checkout (docs/audit/simplicity-2026-11/flows.md): quantity, then address +
+  // approval on one step, then payment. The printer is chosen for the buyer.
+  await expect(page.getByTestId("checkout-total")).toBeVisible({ timeout: 30_000 });
+  const summary = page.getByRole("complementary").filter({ hasText: t("buyer.easy.summaryTitle") });
+  await summary.getByRole("button", { name: t("buyer.easy.actions.toAddress") }).click();
+  // A remembered address shows as a card: open the form to type a fresh one.
+  const change = page.getByRole("button", { name: t("buyer.easy.address.edit") });
+  if (await change.isVisible().catch(() => false)) await change.click();
   await page.getByLabel(t("checkout.address.name")).fill("Mona Adel");
   await page.getByLabel(t("checkout.address.phone")).fill("010 1234 5678");
   await page.getByLabel(t("checkout.address.governorate")).selectOption("Cairo");
   await page.getByLabel(t("checkout.address.city")).fill("Heliopolis");
   await page.getByLabel(t("checkout.address.street")).fill("3 Baghdad St");
   if (opts.company) {
+    const details = page.locator("details").filter({ hasText: t("buyer.easy.address.company") });
+    if (!(await details.getAttribute("open").catch(() => null))) await details.locator("summary").click();
     await page.getByLabel(t("buyer.company.toggle")).check();
     await page.getByLabel(t("buyer.company.name")).fill("Mona Foods LLC");
     await page.getByLabel(t("buyer.company.taxId")).fill("111222333");
   }
-  await summary.getByRole("button", { name: t("checkout.actions.continue") }).click();
   await expect(page.getByRole("tab", { name: t("checkout.proof.tab3d") })).toBeVisible({ timeout: 30_000 });
-  await page.getByLabel(t("checkout.proof.approve")).check();
-  await summary.getByRole("button", { name: t("checkout.actions.approveAndPay") }).click();
+  await page.getByLabel(t("buyer.easy.proof.approve")).check();
+  await summary.getByRole("button", { name: t("buyer.easy.actions.toPay") }).click();
   await expect(page).toHaveURL(new RegExp(`/${locale}/checkout/pay/`), { timeout: 30_000 });
   return page.url().split("/").pop()!;
 }
@@ -179,7 +196,7 @@ export async function checkoutToPayStep(page: Page, locale: Locale, opts: { comp
 /** Pay the open payment step by mock card (`4000 0000 0000 0002` is declined). */
 export async function payByCard(page: Page, locale: Locale, card = "4242 4242 4242 4242"): Promise<void> {
   const t = getT(locale);
-  const cont = page.getByRole("button", { name: t("checkout.actions.continue") });
+  const cont = page.getByRole("button", { name: t("buyer.easy.pay.next"), exact: true });
   const number = page.getByLabel(t("payment.card.number"));
   // The method step (Continue) or, after a declined card, the card form again.
   await expect(cont.or(number).first()).toBeVisible({ timeout: 30_000 });

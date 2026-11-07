@@ -49,12 +49,13 @@ test("keyboard-only checkout keeps focus on every step and reaches the card fiel
   const { id: designId } = (await res.json()) as { id: string };
 
   await page.goto(`/en/checkout/${designId}`);
-  await expect(page.getByTestId("vendor-offer").first()).toBeVisible();
+  await expect(page.getByTestId("checkout-total")).toBeVisible();
   await axeClean(page);
-  const summary = page.getByRole("complementary").filter({ hasText: "Summary" });
+  const summary = page.getByRole("complementary").filter({ hasText: "Your order" });
+  const toPay = summary.getByRole("button", { name: "Continue to payment" });
 
-  // Step 1 → 2: focus moves into the delivery step, not to <body>.
-  await press(page, summary.getByRole("button", { name: "Continue" }));
+  // Step 1 → 2 (address and approval): focus moves into the step, not to <body>.
+  await press(page, summary.getByRole("button", { name: "Continue to address" }));
   await expect(page.getByLabel("Full name")).toBeVisible();
   expect((await focused(page)).tag).not.toBe("BODY");
   await axeClean(page);
@@ -62,7 +63,7 @@ test("keyboard-only checkout keeps focus on every step and reaches the card fiel
   // Missing fields: focus goes to the first invalid field (3.3.1). The name is prefilled from the
   // account, so clear it to make it the first invalid one.
   await page.getByLabel("Full name").fill("");
-  await press(page, summary.getByRole("button", { name: "Continue" }));
+  await press(page, toPay);
   await expect(page.getByLabel("Full name")).toBeFocused();
   await expect(page.getByLabel("Full name")).toHaveAttribute("aria-invalid", "true");
 
@@ -73,24 +74,22 @@ test("keyboard-only checkout keeps focus on every step and reaches the card fiel
   await page.getByLabel("Street address").fill("12 Tahrir St");
   // The governorate re-prices delivery; Continue is busy until that lands.
   await expect(page.getByText("Shipping cost updated for Giza.")).toBeVisible();
-  await press(page, summary.getByRole("button", { name: "Continue" }));
 
-  // Step 3: proof approval, keyboard only.
-  const approve = summary.getByRole("button", { name: "Approve proof and pay" });
-  await expect(approve).toBeVisible();
-  expect((await focused(page)).tag).not.toBe("BODY");
+  // Proof approval on the same step, keyboard only: without the tick, focus goes to it.
+  await press(page, toPay);
+  await expect(page.getByText("Tick the box to confirm you checked the design.")).toBeVisible();
+  const approve = page.getByLabel("I checked the design. Print it as it is.");
+  await expect(approve).toBeFocused();
   await axeClean(page);
-  await press(page, approve);
-  await expect(page.getByText("Tick the box to approve the proof.")).toBeVisible();
-  await press(page, page.getByLabel("I approve this proof for printing"), "Space");
-  await press(page, approve);
+  await press(page, approve, "Space");
+  await press(page, toPay);
 
   // Payment: Continue on the method list moves focus to the card number (X-01).
   await expect(page).toHaveURL(/\/en\/checkout\/pay\//, { timeout: 30_000 });
   await expect(page.getByRole("heading", { level: 1, name: "Payment" })).toBeVisible();
   await expect(page).toHaveTitle(/Payment/);
   await axeClean(page);
-  await press(page, page.getByRole("button", { name: "Continue" }));
+  await press(page, page.getByRole("button", { name: "Continue", exact: true }));
   await expect(page.getByLabel("Card number")).toBeFocused();
 
   // A declined card: focus stays in the card field and the error is tied to it (3.3.1).
@@ -106,7 +105,8 @@ test("designer dialogs trap focus, close on Escape and return focus (2.1.2, 2.4.
   page.on("pageerror", (e) => errors.push(e.message.slice(0, 200)));
   page.on("console", (m) => { if (m.type() === "error") errors.push(m.text().slice(0, 200)); });
   await page.goto("/en/design/mailer-box");
-  const opener = page.getByRole("button", { name: "Change model" });
+  // Basics mode (the default) opens the model picker from "Change box type".
+  const opener = page.getByRole("button", { name: "Change box type" });
   await expect(opener).toBeVisible();
   await press(page, opener);
   const dialog = page.getByRole("dialog");

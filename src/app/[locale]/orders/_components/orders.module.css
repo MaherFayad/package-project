@@ -1,4 +1,25 @@
 /* Orders area (owner: checkout). Tokens only; logical properties. */
+
+/* R1-20: same buyer type scale as the checkout shell: 16px body (17px Arabic), nothing under
+   14px, so totals, dates and status chips stay readable on a phone. Scoped to the orders area. */
+.buyerType {
+  display: contents;
+  --p-font-size-275: 0.875rem;
+  --p-font-size-300: 0.875rem;
+  --p-font-size-325: 0.875rem;
+  --p-text-body-lg-font-size: 1.0625rem;
+  --p-text-body-md-font-size: 1rem;
+  --p-text-body-sm-font-size: 0.875rem;
+  --p-text-heading-sm-font-size: 1rem;
+  --p-text-heading-xs-font-size: 0.875rem;
+}
+.buyerType:lang(ar) {
+  --p-text-body-lg-font-size: 1.125rem;
+  --p-text-body-md-font-size: 1.0625rem;
+  --p-text-body-sm-font-size: 0.9375rem;
+  --p-text-heading-sm-font-size: 1.0625rem;
+  --p-text-heading-xs-font-size: 0.9375rem;
+}
 .stars {
   margin: 0;
   padding: 0;
@@ -109,6 +130,22 @@
   flex: 1;
   min-inline-size: 0;
 }
+/* "Details" disclosure: technical records one tap away (simplicity audit SIM-03, SIM-11) */
+.disclosure {
+  margin-block-end: var(--p-space-200);
+}
+.disclosure > summary {
+  display: flex;
+  align-items: center;
+  min-block-size: 44px;
+  cursor: pointer;
+  font-weight: var(--p-font-weight-medium, 500);
+  color: var(--p-color-text-link, #005bd3);
+}
+.disclosure > summary:focus-visible {
+  outline: var(--p-border-width-050, 2px) solid var(--p-color-border-focus);
+  outline-offset: 2px;
+}
 .hash {
   font-family: var(--p-font-family-mono, ui-monospace, monospace);
   font-size: var(--p-font-size-300, 0.75rem);
@@ -147,6 +184,19 @@
   color: var(--p-color-text-secondary);
   font-weight: var(--p-font-weight-semibold);
   font-size: var(--p-font-size-300, 0.75rem);
+}
+/* R2-01: what the buyer price includes, inside the goods row (not amounts to add up). */
+.invIncludes {
+  margin-block-start: var(--p-space-100);
+  padding-inline-start: var(--p-space-300);
+  border-inline-start: 2px solid var(--p-color-border);
+  color: var(--p-color-text-secondary);
+  font-size: var(--p-font-size-325, 0.875rem);
+}
+.invIncludes ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 .num {
   text-align: end !important;

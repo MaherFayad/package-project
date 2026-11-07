@@ -31,6 +31,8 @@ export interface StudioStageProps extends StageOptions {
   /** Outer mm for the labels (defaults to size × 1000). */
   outerMm?: { L: number; W: number; H: number };
   shadows?: boolean;
+  /** Bounding radius (m) for the key light's shadow camera; 0 / absent = no self-shadows. */
+  shadowRadius?: number;
   /** Fold progress (0 flat … 1 closed): the overlay shows only when closed. */
   progressRef?: { readonly current: number };
 }
@@ -172,7 +174,7 @@ function DimensionOverlay({ size, outerMm, formatMm }: { size: StudioStageProps[
 
 const defaultFormat = (mm: number) => `${Math.round(mm)} mm`;
 
-export function StudioStage({ size, outerMm, shadows = true, context = "none", dimensions = false, formatMm = defaultFormat, intensity, progressRef }: StudioStageProps) {
+export function StudioStage({ size, outerMm, shadowRadius = 0, shadows = true, context = "none", dimensions = false, formatMm = defaultFormat, intensity, progressRef }: StudioStageProps) {
   const extent = Math.max(size.x, size.z, 0.05);
   const [closed, setClosed] = useState(() => (progressRef ? progressRef.current > 0.98 : true));
   useFrame(() => {
@@ -184,7 +186,7 @@ export function StudioStage({ size, outerMm, shadows = true, context = "none", d
   const canX = size.x / 2 + CAN_R + Math.max(0.02, extent * 0.12);
   return (
     <>
-      <StudioLighting intensity={intensity} />
+      <StudioLighting intensity={intensity} shadowRadius={shadows ? shadowRadius : 0} />
       {shadows ? (
         <SoftShadow
           scale={extent * 4 + (context === "reference" ? 0.25 : 0)}

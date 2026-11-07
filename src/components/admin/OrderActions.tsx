@@ -16,7 +16,7 @@ import { formatMoney, formatPercent } from "@/lib/format";
 import type { DictKey } from "@/i18n";
 import { addOrderNoteAction, overrideOrderAction, reassignOrderAction, refundOrderAction, reviewQcAction, shipOrderAction } from "./server/actions";
 import { adminStyles } from "./charts";
-import { applyGoodsOverride, isQuoteOnly, marginPreview } from "./lib/orders";
+import { applyGoodsOverride, isQuoteOnly, marginPreview, TARGET_MARGIN_PCT } from "./lib/orders";
 import { egpToPiastersInput, fieldError, piastersToInput, useAdminAction, useAdminErrorText } from "./useAdminAction";
 import type { AdminActionResponse } from "./server/context";
 
@@ -32,6 +32,9 @@ export interface VendorOption {
 
 export function RoutingCard({
   orderId,
+  number,
+  currentVendorName,
+  marginTargetPct,
   currentVendorId,
   vendors,
   canReassign,
@@ -41,6 +44,10 @@ export function RoutingCard({
   vendor,
 }: {
   orderId: string;
+  number: string;
+  currentVendorName: string;
+  /** Margin share of the sale price the current pricing settings give (A-02). */
+  marginTargetPct: number | null;
   currentVendorId: string;
   vendors: VendorOption[];
   canReassign: boolean;
@@ -52,8 +59,9 @@ export function RoutingCard({
   /** Current vendor summary shown at the top of the card. */
   vendor: ReactNode;
 }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const quoteOnly = isQuoteOnly(vendors);
+  const [confirming, setConfirming] = useState(false);
   const { run, busy } = useAdminAction();
   const errorText = useAdminErrorText();
   const [open, setOpen] = useState(false);
@@ -70,10 +78,18 @@ export function RoutingCard({
   const effectiveCost = costValue === null || Number.isNaN(costValue) ? vendorCostPiasters : costValue;
   const reset = () => {
     setOpen(false);
+    setConfirming(false);
     setVendorId("");
     setCost("");
     setReason("");
     setRes(null);
+  };
+  const submit = async () => {
+    if (Number.isNaN(costValue)) return;
+    const r = await run("route", () => reassignOrderAction({ orderId, vendorId, vendorCostPiasters: costValue, reason }), t("admin.order.routing.success"));
+    setRes(r);
+    setConfirming(false);
+    if (r?.ok) reset();
   };
 
   return (
@@ -99,12 +115,10 @@ export function RoutingCard({
             <form
               ref={containerRef}
               aria-label={t("admin.order.routing.title")}
-              onSubmit={async (e) => {
+              onSubmit={(e) => {
                 e.preventDefault();
-                if (Number.isNaN(costValue)) return;
-                const r = await run("route", () => reassignOrderAction({ orderId, vendorId, vendorCostPiasters: costValue, reason }), t("admin.order.routing.success"));
-                setRes(r);
-                if (r?.ok) reset();
+                // A-05: moving a job changes who is paid and at what price; confirm it first.
+                if (!Number.isNaN(costValue)) setConfirming(true);
               }}
             >
               <BlockStack gap="300">
@@ -132,7 +146,7 @@ export function RoutingCard({
                   placeholder={costRequired ? undefined : piastersToInput(vendorCostPiasters)}
                   helpText={
                     <>
-                      {costRequired ? t("admin.order.routing.newCostManualHelp") : t("admin.order.routing.newCostHelp")} <MarginLine goodsPiasters={goodsPiasters} vendorCostPiasters={effectiveCost} />
+                      {costRequired ? t("admin.order.routing.newCostManualHelp") : t("admin.order.routing.newCostHelp")} <MarginLine goodsPiasters={goodsPiasters} vendorCostPiasters={effectiveCost} targetPct={marginTargetPct} />
                     </>
                   }
                   error={Number.isNaN(costValue) ? t("admin.errors.INVALID") : fieldError(res, "vendorCostPiasters", errorText)}
@@ -158,22 +172,39 @@ export function RoutingCard({
             </form>
           )}
         </BlockStack>
+        <ConfirmDialog
+          open={confirming}
+          onClose={() => setConfirming(false)}
+          title={t("admin.order.routing.confirmTitle", { number, vendor: selected?.name ?? "" })}
+          confirm={t("admin.order.routing.submit")}
+          loading={busy === "route"}
+          onConfirm={submit}
+        >
+          {t("admin.order.routing.confirmBody", {
+            from: currentVendorName,
+            to: selected?.name ?? "",
+            cost: formatMoney(effectiveCost, locale, { alwaysDecimals: true }),
+          })}
+        </ConfirmDialog>
       </Card>
     </div>
   );
 }
 
-/** "Margin: EGP 1,500 (25%)", with a warning outside the 20 to 30% business-plan band or at a loss. */
-export function MarginLine({ goodsPiasters, vendorCostPiasters }: { goodsPiasters: number; vendorCostPiasters: number }) {
+/**
+ * "Margin: EGP 1,500 (17.5% of the sale price)". A-02: the warning compares the same measure with
+ * what the current pricing settings give (targetPct), so a correctly priced order shows none.
+ */
+export function MarginLine({ goodsPiasters, vendorCostPiasters, targetPct }: { goodsPiasters: number; vendorCostPiasters: number; targetPct?: number | null }) {
   const { t, locale } = useI18n();
-  const m = marginPreview(goodsPiasters, vendorCostPiasters);
+  const m = marginPreview(goodsPiasters, vendorCostPiasters, targetPct);
   const text = t("admin.order.margin.line", { amount: formatMoney(m.marginPiasters, locale, { alwaysDecimals: true }), pct: m.pct === null ? t("admin.common.none") : formatPercent(m.pct, locale) });
   return (
     <span aria-live="polite">
       <bdi>{text}</bdi>
       {m.band !== "in" ? (
         <Text as="span" variant="bodySm" tone={m.band === "loss" ? "critical" : "caution"} fontWeight="semibold">
-          {` ${t(`admin.order.margin.${m.band}` as DictKey)}`}
+          {` ${t(`admin.order.margin.${m.band}` as DictKey, { target: formatPercent(targetPct ?? TARGET_MARGIN_PCT.min, locale) })}`}
         </Text>
       ) : null}
     </span>
@@ -190,8 +221,10 @@ export function OverrideCard({
   vendorCostPiasters,
   canPrice,
   canCost,
+  marginTargetPct,
 }: {
   orderId: string;
+  marginTargetPct: number | null;
   status: string;
   money: { subtotalPiasters: number; vatPiasters: number; shippingPiasters: number; totalPiasters: number };
   goodsPiasters: number;
@@ -285,7 +318,7 @@ export function OverrideCard({
               value={cost}
               onChange={setCost}
               placeholder={piastersToInput(vendorCostPiasters)}
-              helpText={<MarginLine goodsPiasters={canPrice && goodsValue !== null && !Number.isNaN(goodsValue) ? goodsValue : goodsPiasters} vendorCostPiasters={costValue === null || Number.isNaN(costValue) ? vendorCostPiasters : costValue} />}
+              helpText={<MarginLine goodsPiasters={canPrice && goodsValue !== null && !Number.isNaN(goodsValue) ? goodsValue : goodsPiasters} vendorCostPiasters={costValue === null || Number.isNaN(costValue) ? vendorCostPiasters : costValue} targetPct={marginTargetPct} />}
               error={Number.isNaN(costValue) ? t("admin.errors.INVALID") : fieldError(res, "vendorCostPiasters", errorText)}
             />
           ) : null}
@@ -353,11 +386,16 @@ export function RefundCard({ orderId, number, totalPiasters, canRefund }: { orde
 
 /* ───────────────────────── QC ───────────────────────── */
 
-export function QcActions({ orderId }: { orderId: string }) {
-  const { t } = useI18n();
+/**
+ * A-05 (simplicity review): approving QC releases the batch for dispatch and cannot be undone
+ * here, so it asks first, the same way the refund does (A-14).
+ */
+export function QcActions({ orderId, number, vendorName, balancePiasters }: { orderId: string; number: string; vendorName: string; balancePiasters: number }) {
+  const { t, locale } = useI18n();
   const { run, busy } = useAdminAction();
   const errorText = useAdminErrorText();
   const [rejecting, setRejecting] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [note, setNote] = useState("");
   const [res, setRes] = useState<Res>(null);
   return (
@@ -382,12 +420,25 @@ export function QcActions({ orderId }: { orderId: string }) {
         ) : (
           <ButtonGroup>
             <Button onClick={() => setRejecting(true)}>{t("admin.order.qc.reject")}</Button>
-            <Button variant="primary" loading={busy === "qc-approve"} onClick={() => run("qc-approve", () => reviewQcAction({ orderId, decision: "APPROVE" }), t("admin.order.qc.approved"))}>
+            <Button variant="primary" onClick={() => setConfirming(true)}>
               {t("admin.order.qc.approve")}
             </Button>
           </ButtonGroup>
         )}
       </InlineStack>
+      <ConfirmDialog
+        open={confirming}
+        onClose={() => setConfirming(false)}
+        title={t("admin.order.qc.confirmTitle", { number })}
+        confirm={t("admin.order.qc.approve")}
+        loading={busy === "qc-approve"}
+        onConfirm={async () => {
+          const r = await run("qc-approve", () => reviewQcAction({ orderId, decision: "APPROVE" }), t("admin.order.qc.approved"));
+          if (r?.ok) setConfirming(false);
+        }}
+      >
+        {t("admin.order.qc.confirmBody", { vendor: vendorName, amount: formatMoney(balancePiasters, locale, { alwaysDecimals: true }) })}
+      </ConfirmDialog>
     </BlockStack>
   );
 }
@@ -395,9 +446,10 @@ export function QcActions({ orderId }: { orderId: string }) {
 /* ───────────────────────── Dispatch ───────────────────────── */
 
 /** READY_TO_SHIP: book the courier pickup (creates the shipment and marks the order shipped). */
-export function ShipCard({ orderId }: { orderId: string }) {
+export function ShipCard({ orderId, number, vendorName, destination }: { orderId: string; number: string; vendorName: string; destination: string }) {
   const { t } = useI18n();
   const { run, busy } = useAdminAction();
+  const [confirming, setConfirming] = useState(false);
   return (
     <Card title={t("admin.order.ship.title")}>
       <BlockStack gap="300">
@@ -405,12 +457,67 @@ export function ShipCard({ orderId }: { orderId: string }) {
           {t("admin.order.ship.help")}
         </Text>
         <InlineStack align="end">
-          <Button variant="primary" loading={busy === "ship"} onClick={() => run("ship", () => shipOrderAction({ orderId }), t("admin.order.ship.done"))}>
+          <Button variant="primary" onClick={() => setConfirming(true)}>
             {t("admin.order.ship.action")}
           </Button>
         </InlineStack>
       </BlockStack>
+      <ConfirmDialog
+        open={confirming}
+        onClose={() => setConfirming(false)}
+        title={t("admin.order.ship.confirmTitle", { number })}
+        confirm={t("admin.order.ship.action")}
+        loading={busy === "ship"}
+        onConfirm={async () => {
+          const r = await run("ship", () => shipOrderAction({ orderId }), t("admin.order.ship.done"));
+          if (r?.ok) setConfirming(false);
+        }}
+      >
+        {t("admin.order.ship.confirmBody", { vendor: vendorName, destination })}
+      </ConfirmDialog>
     </Card>
+  );
+}
+
+/* ───────────────────────── Confirmation ───────────────────────── */
+
+/**
+ * One confirmation for every money or irreversible admin step (A-05, the refund pattern A-14):
+ * the title names the order, the body says exactly what happens, the button repeats the action.
+ * Escape or the backdrop cancels (not while the action runs).
+ */
+export function ConfirmDialog({
+  open,
+  onClose,
+  title,
+  confirm,
+  onConfirm,
+  loading,
+  destructive,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  confirm: string;
+  onConfirm: () => void | Promise<void>;
+  loading?: boolean;
+  destructive?: boolean;
+  children: ReactNode;
+}) {
+  const { t } = useI18n();
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={title}
+      size="small"
+      preventClose={loading}
+      primaryAction={{ content: confirm, destructive, loading, onAction: () => void onConfirm() }}
+      secondaryActions={[{ content: t("admin.common.cancel"), onAction: onClose }]}
+    >
+      <Text as="p">{children}</Text>
+    </Modal>
   );
 }
 

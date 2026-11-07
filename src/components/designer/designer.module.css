@@ -1019,3 +1019,167 @@
   cursor: nwse-resize;
 }
 .cropStage { overflow: hidden; }
+
+/* Full artwork thumbnail (Artwork panel). */
+.sheetThumb {
+  inline-size: 72px;
+  block-size: 48px;
+  object-fit: contain;
+  border: 1px solid var(--p-color-border);
+  border-radius: var(--p-border-radius-100);
+  background: var(--p-color-bg-surface-secondary);
+}
+
+/* 3D view: a side of the box under the pointer can take an image (click or drop). */
+.sceneWrap[data-pick="face"] canvas {
+  cursor: pointer;
+}
+/* idle invitation (no picture yet): lighter, gently pulsing */
+.dropHint[data-idle="true"] {
+  background: var(--p-color-bg-surface);
+  color: var(--p-color-text);
+  border: 1px solid var(--p-color-border);
+  box-shadow: var(--p-shadow-200, 0 2px 6px rgba(0, 0, 0, 0.12));
+  white-space: normal;
+  text-align: center;
+  max-inline-size: calc(100% - 2 * var(--p-space-300));
+  animation: dropHintPulse 2.4s ease-in-out infinite;
+}
+@keyframes dropHintPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(31, 111, 235, 0.35); }
+  50% { box-shadow: 0 0 0 6px rgba(31, 111, 235, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dropHint[data-idle="true"] { animation: none; }
+}
+.dropHint {
+  position: absolute;
+  inset-block-start: var(--p-space-300);
+  inset-inline: 0;
+  margin-inline: auto;
+  inline-size: fit-content;
+  z-index: 3;
+  padding: var(--p-space-150) var(--p-space-300);
+  border-radius: var(--p-border-radius-full, 999px);
+  background: var(--p-color-bg-inverse);
+  color: var(--p-color-text-inverse);
+  font-size: var(--p-font-size-325);
+  font-weight: var(--p-font-weight-semibold);
+  pointer-events: none;
+  white-space: nowrap;
+}
+.sceneWrap[data-dragging="true"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 2px dashed var(--p-color-border-emphasis, #303030);
+  border-radius: var(--p-border-radius-300);
+  pointer-events: none;
+}
+
+/* ── simple mode (the default) ────────────────────────────────────────── */
+/* Basics / All options switch at the top of the panel. */
+.modeSwitch {
+  display: flex;
+  justify-content: center;
+  padding: var(--p-space-300) var(--p-space-400) 0;
+}
+.modeSwitch [aria-pressed] { min-inline-size: 7.5rem; }
+@media (pointer: coarse) {
+  .modeSwitch button { min-block-size: 2.75rem; }
+}
+.simple { display: flex; flex-direction: column; gap: var(--p-space-500, 1.25rem); }
+.simpleStep { display: flex; flex-direction: column; gap: var(--p-space-200); min-inline-size: 0; }
+.simpleHeading {
+  display: flex;
+  align-items: center;
+  gap: var(--p-space-200);
+  margin: 0;
+  font-size: var(--p-font-size-400, 1rem);
+  font-weight: var(--p-font-weight-semibold);
+  line-height: 1.4;
+}
+.simpleHeadingSm { margin: 0; font-size: var(--p-font-size-350, 0.875rem); font-weight: var(--p-font-weight-semibold); }
+.simpleNum {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  border-radius: var(--p-border-radius-full);
+  background: var(--p-color-bg-inverse);
+  color: var(--p-color-text-inverse);
+  font-size: var(--p-font-size-300, 0.75rem);
+}
+.simpleChoices { display: flex; flex-wrap: wrap; gap: var(--p-space-200); }
+.simpleItems { display: flex; flex-wrap: wrap; gap: var(--p-space-200); margin: 0; padding: 0; list-style: none; }
+.simpleItems button { max-inline-size: 100%; }
+.simpleEdit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--p-space-300);
+  padding: var(--p-space-300);
+  border-radius: var(--p-border-radius-300);
+  background: var(--p-color-bg-surface-secondary);
+}
+.simpleEditRow { display: flex; flex-direction: column; gap: var(--p-space-300); }
+.simpleFieldset { margin: 0; padding: 0; border: 0; min-inline-size: 0; }
+/* Cardboard colour: large tap targets with a chip of the real board colour. */
+.simpleChoice {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--p-space-200);
+  min-block-size: 2.75rem;
+  padding: var(--p-space-150) var(--p-space-300);
+  border: var(--p-border-width-025, 1px) solid var(--p-color-border);
+  border-radius: var(--p-border-radius-200);
+  background: var(--p-color-bg-surface);
+  color: var(--p-color-text);
+  font: inherit;
+  cursor: pointer;
+}
+.simpleChoice:hover { background: var(--p-color-bg-surface-hover); }
+.simpleChoice[aria-pressed="true"] { border-color: var(--p-color-text); box-shadow: inset 0 0 0 1px var(--p-color-text); font-weight: var(--p-font-weight-semibold); }
+.simpleChoice:focus-visible { outline: var(--p-focus-ring-width, 2px) solid var(--p-color-border-focus); outline-offset: 2px; }
+.simpleChip { inline-size: 1.5rem; block-size: 1.5rem; border-radius: var(--p-border-radius-full); box-shadow: inset 0 0 0 1px var(--p-color-border-secondary); }
+.simpleMore {
+  display: flex;
+  flex-direction: column;
+  gap: var(--p-space-200);
+  padding-block-start: var(--p-space-400);
+  border-block-start: var(--p-border-width-025, 1px) solid var(--p-color-border-secondary);
+}
+
+/* Phones (portrait): the main path in a bottom bar under the thumb: Logo, Text, Order. The toolbar
+   keeps undo, save state and "More"; its order button moves here (one visible at a time). */
+.actionBar { display: none; }
+@media (max-width: 767px) and (min-height: 501px) {
+  .toolbarOrder { display: none; }
+  .editor {
+    grid-template-areas:
+      "toolbar"
+      "price"
+      "banner"
+      "stage"
+      "panel"
+      "actions";
+  }
+  .actionBar {
+    grid-area: actions;
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr);
+    gap: var(--p-space-200);
+    margin-inline: calc(-1 * var(--p-space-200));
+    padding: var(--p-space-200) var(--p-space-300) calc(var(--p-space-200) + env(safe-area-inset-bottom, 0px));
+    border-block-start: var(--p-border-width-025, 1px) solid var(--p-color-border-secondary);
+    background: var(--p-color-bg-surface);
+  }
+  .actionBar button { min-block-size: 2.75rem; inline-size: 100%; }
+  /* The bar takes ~3.75rem: the closed and open sheet give it up (no page scroll under the top bar). */
+  .editor[data-sheet="closed"] { --sheet-closed: max(9rem, calc(54dvh - var(--p-top-bar-height) - 12rem)); }
+  .editor[data-sheet="open"] .panel { block-size: min(var(--sheet-open), calc(100dvh - var(--p-top-bar-height) - 25rem)); }
+}
+.toolbarOrder { display: inline-flex; }
+@media (max-width: 767px) and (min-height: 501px) {
+  .toolbarOrder { display: none; }
+}

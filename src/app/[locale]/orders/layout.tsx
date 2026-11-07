@@ -9,6 +9,7 @@ import "@/components/ui/Page.module.css";
 import "@/components/ui/ActionList.module.css";
 import "@/components/ui/Button.module.css";
 import "@/components/ui/Spinner.module.css";
+import styles from "./_components/orders.module.css";
 
 export default async function Layout({
   children,
@@ -23,7 +24,7 @@ export default async function Layout({
   return (
     <I18nScope locale={toLocale(locale)} scope="orders">
       <MarketingShell locale={toLocale(locale)} boundary={false}>
-        {children}
+        <div className={styles.buyerType}>{children}</div>
       </MarketingShell>
     </I18nScope>
   );

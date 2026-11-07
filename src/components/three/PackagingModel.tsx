@@ -192,7 +192,7 @@ export function PackagingModel({
         else groups.current.delete(panel.id);
       }}
     >
-      <mesh geometry={geometries.get(panel.id)} material={materials.list} castShadow={castShadow} receiveShadow />
+      <mesh geometry={geometries.get(panel.id)} material={materials.list} castShadow={castShadow} receiveShadow userData={{ panelId: panel.id }} />
       {extras.perfs.has(panel.id) ? <mesh geometry={extras.perfs.get(panel.id)} material={extraMaterials.perf} renderOrder={1} /> : null}
       {(extras.films.get(panel.id) ?? []).map((g, i) => (
         <mesh key={`film${i}`} geometry={g} material={extraMaterials.film} renderOrder={2} />
@@ -206,7 +206,7 @@ export function PackagingModel({
     .map((id) => dieline.panels.find((p) => p.id === id))
     .filter((p): p is DielinePanel => !!p);
   return (
-    <group scale={MM}>
+    <group scale={MM} userData={{ elbaModel: true, sheet: dieline.sheet }}>
       <group ref={centre}>{roots.map(renderPanel)}</group>
       {accessories.length ? (
         <group ref={accessoryGroup}>

@@ -544,8 +544,8 @@ const SUBS: Record<string, Record<string, Sub>> = {
     "cosmetic-glass": { name: { ar: "زجاج التجميل والعطور", en: "Cosmetic and perfume glass" }, standards: ["Boston round, dropper, perfume FEA 15"], egypt: "imported", notes: "Premium perfume and dropper glass is largely imported from China, Turkey and EU." },
   },
   "rigid-plastic": {
-    "pet-bottle": { name: { ar: "زجاجات PET", en: "PET bottles" }, standards: ["PCO 1881 28 mm", "38 mm", "Wide mouth 63 mm"], sizes: ["330 ml", "500 ml", "1 L", "1.5 L"], priceBandEGP: price(1.5, 5, "per bottle", "Stock 500 ml PET with cap, unprinted, by the carton") },
-    "hdpe-bottle": { name: { ar: "زجاجات HDPE", en: "HDPE bottles" }, standards: ["28/410, 38 mm"], sizes: ["250 ml", "500 ml", "1 L"] },
+    "pet-bottle": { name: { ar: "زجاجات بلاستيك شفاف", en: "PET bottles" }, standards: ["PCO 1881 28 mm", "38 mm", "Wide mouth 63 mm"], sizes: ["330 ml", "500 ml", "1 L", "1.5 L"], priceBandEGP: price(1.5, 5, "per bottle", "Stock 500 ml PET with cap, unprinted, by the carton") },
+    "hdpe-bottle": { name: { ar: "زجاجات بلاستيك متين", en: "HDPE bottles" }, standards: ["28/410, 38 mm"], sizes: ["250 ml", "500 ml", "1 L"] },
     "plastic-jar": { name: { ar: "برطمانات بلاستيك", en: "Plastic jars" }, standards: ["PET/PP wide mouth"] },
     tub: { name: { ar: "علب بلاستيك", en: "Tubs (thermoformed / IML)" }, standards: ["PP/PS tubs with lids"], egyptPrintMethods: ["dry-offset", "iml", "label-only"] },
     pail: { name: { ar: "جرادل", en: "Pails" }, standards: ["PP 1 to 20 L"], egyptPrintMethods: ["iml", "screen", "dry-offset"], priceBandEGP: price(25, 80, "per pail", "10 L PP pail with lid, 1 colour, 1,000 pcs") },

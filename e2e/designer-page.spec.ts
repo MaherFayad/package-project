@@ -4,15 +4,14 @@ import { expect, test, type Page } from "@playwright/test";
 /**
  * /[locale]/designer, the 3D designer product page (R6, docs/audit/r6-designer-page.md).
  * Runs in both projects (desktop 1280 and phone 360), Arabic and English: hydration without
- * console errors, no three.js on first paint, links into the editor, the prompt bar's search
- * hand-off to the picker, reduced motion, axe (WCAG 2.2 AA), sitemap entry.
+ * console errors, no three.js on first paint, CTAs into the box chooser and box pages (R2-04),
+ * reduced motion, axe (WCAG 2.2 AA), sitemap entry.
  */
 
 const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 const LOCALES = ["ar", "en"] as const;
-const H1 = { ar: "مصمم العلب ثلاثي الأبعاد من علبة", en: "Elba 3D packaging designer" };
-const CTA = { ar: "بدء التصميم مجانا", en: "Start designing free" };
-const PROMPT = { ar: "ماذا تريد أن تغلف؟", en: "What are you packing?" };
+const H1 = { ar: "معاينة علبتك قبل الطباعة", en: "Preview your box before printing" };
+const CTA = { ar: "معرفة سعر علبتك", en: "Get your box price" };
 
 test.beforeEach(async ({ context, baseURL }) => {
   await context.addCookies([{ name: "elba_cookie_ack", value: "1", url: baseURL! }]);
@@ -48,8 +47,8 @@ for (const locale of LOCALES) {
       await page.waitForLoadState("networkidle");
       await expect(page.locator("html")).toHaveAttribute("dir", locale === "ar" ? "rtl" : "ltr");
       await expect(page.getByRole("heading", { level: 1 })).toHaveText(H1[locale]);
-      // Nine sections, in order: hero, prompt, styles, two bento groups, trust, materials, start, FAQ.
-      for (const id of ["dp-hero-title", "dp-prompt-title", "dp-wall-title", "dp-make-title", "dp-share-title", "dp-trust-title", "dp-mat-title", "dp-start-title", "dp-faq-title"]) {
+      // Seven sections, in order: hero, box types, two bento groups, trust, start, FAQ (R2-04).
+      for (const id of ["dp-hero-title", "dp-wall-title", "dp-make-title", "dp-share-title", "dp-trust-title", "dp-start-title", "dp-faq-title"]) {
         await expect(page.locator(`#${id}`)).toHaveCount(1);
       }
       // three.js registers window.__THREE__ when it loads; it must not on first paint.
@@ -58,42 +57,23 @@ for (const locale of LOCALES) {
       await scrollThrough(page);
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       expect(overflow).toBeLessThanOrEqual(0);
-      // FAQ: 10 native disclosures + FAQPage JSON-LD.
-      await expect(page.locator("details")).toHaveCount(10);
+      // FAQ: 9 native disclosures + FAQPage JSON-LD.
+      await expect(page.locator("details")).toHaveCount(9);
       const ld = await page.locator('script[type="application/ld+json"]').allTextContents();
       expect(ld.some((s) => s.includes('"FAQPage"'))).toBe(true);
+      // Sells printed boxes: no board grades or a localhost share link (R2-04).
+      await expect(page.locator("main")).not.toContainText(/SBS|PETG|localhost/);
       expect(errors).toEqual([]);
     });
 
-    test("hero CTA and a box style open the editor", async ({ page }) => {
+    test("hero CTA goes to the box chooser and a box type to its price page", async ({ page }) => {
       await page.goto(`/${locale}/designer`);
       await page.waitForLoadState("networkidle");
       const cta = page.getByRole("link", { name: CTA[locale] }).first();
-      await expect(cta).toHaveAttribute("href", `/${locale}/design?structure=FEFCO_0427`);
-      // Stop the drifting strip first (its own pause button): a moving card never settles for a click.
-      await page.getByRole("button", { name: locale === "ar" ? "إيقاف شريط أنواع العلب" : "Pause the box styles strip" }).click();
-      // A style card (the first real one, not the loop copy).
-      const card = page.locator(`#dp-styles li:not([aria-hidden]) a[href*="/${locale}/design?structure="]`).first();
-      const href = await card.getAttribute("href");
-      expect(href).toMatch(new RegExp(`^/${locale}/design\\?structure=[A-Z0-9_]+$`));
-      await expect(async () => {
-        if (!/\/design\/[a-z0-9-]+/.test(page.url())) await card.click();
-        await expect(page).toHaveURL(new RegExp(`/${locale}/design/[a-z0-9-]+`), { timeout: 10_000 });
-      }).toPass({ timeout: 45_000 });
-    });
-
-    test("prompt bar hands the words to the picker search", async ({ page }) => {
-      await page.goto(`/${locale}/designer`);
-      await page.waitForLoadState("networkidle");
-      const word = locale === "ar" ? "بيتزا" : "pizza";
-      const input = page.getByRole("searchbox", { name: PROMPT[locale] });
-      await input.fill(word);
-      await input.press("Enter");
-      await expect(page).toHaveURL(new RegExp(`/${locale}/design\\?q=`), { timeout: 20_000 });
-      const search = page.getByRole("searchbox").first();
-      await expect(search).toHaveValue(word);
-      // The picker lists matching models, each a link into the editor.
-      await expect(page.locator(`a[href^="/${locale}/design/"]`).first()).toBeVisible();
+      await expect(cta).toHaveAttribute("href", `/${locale}/boxes`);
+      // A box type card (the first real one, not the loop copy) opens its box page with the price.
+      const card = page.locator(`#dp-styles li:not([aria-hidden]) a[href^="/${locale}/boxes/"]`).first();
+      expect(await card.getAttribute("href")).toMatch(new RegExp(`^/${locale}/boxes/[a-z0-9-]+$`));
     });
 
     test("axe: no WCAG 2.2 AA violations", async ({ page }) => {
@@ -135,10 +115,10 @@ test("reduced motion: content visible, loops stopped, no pause buttons for still
 test("pause controls stop the moving strips (WCAG 2.2.2)", async ({ page }) => {
   await page.goto("/en/designer");
   await page.waitForLoadState("networkidle");
-  const pause = page.getByRole("button", { name: "Pause the box styles strip" });
+  const pause = page.getByRole("button", { name: "Pause the box types strip" });
   await pause.scrollIntoViewIfNeeded();
   await pause.click();
-  await expect(page.getByRole("button", { name: "Play the box styles strip" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Play the box types strip" })).toBeVisible();
   const playState = await page.locator('#dp-styles [class*="marqueeTrack"]').evaluate((el) => getComputedStyle(el).animationPlayState);
   expect(playState).toBe("paused");
 });
@@ -157,23 +137,6 @@ test("sitemap lists the designer page in both languages", async ({ request }) =>
   const xml = await (await request.get("/sitemap.xml")).text();
   expect(xml).toMatch(/\/ar\/designer</);
   expect(xml).toMatch(/\/en\/designer</);
-});
-
-test("violet band: its pause button stops the spin and the typing examples (R6-AX-15, WCAG 2.2.2)", async ({ page }) => {
-  await page.goto("/en/designer");
-  await page.waitForLoadState("networkidle");
-  const pause = page.getByRole("button", { name: "Pause the moving background and typing examples" });
-  await pause.scrollIntoViewIfNeeded();
-  const band = page.locator('[class*="designer-page_violet"]').first();
-  const spin = () => band.evaluate((el) => getComputedStyle(el, "::before").animationPlayState);
-  expect(await spin()).toBe("running");
-  await pause.click();
-  await expect(page.getByRole("button", { name: "Play the moving background and typing examples" })).toBeVisible();
-  expect(await spin()).toBe("paused");
-  const input = page.getByRole("searchbox", { name: "What are you packing?" });
-  const before = await input.getAttribute("placeholder");
-  await page.waitForTimeout(1200);
-  expect(await input.getAttribute("placeholder")).toBe(before);
 });
 
 test("hero: no floating mockup covers the Turn in 3D / pause controls at phone widths (R6-AX-19, WCAG 2.4.11)", async ({ page }, info) => {

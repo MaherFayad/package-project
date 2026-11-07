@@ -51,15 +51,15 @@ test("a paid order is never offered for payment again: Back after paying, a seco
 
   // Tab 1 opens a Fawry code; tab 2 pays by card.
   await fawryTab.goto(`/en/checkout/pay/${o.id}`);
-  await fawryTab.getByRole("radio", { name: /Fawry reference/ }).check();
-  await fawryTab.getByRole("button", { name: "Continue" }).click();
+  await fawryTab.getByRole("radio", { name: /Cash at Fawry/ }).check();
+  await fawryTab.getByRole("button", { name: "Continue", exact: true }).click();
   await expect(fawryTab.getByTestId("fawry-code")).toBeVisible();
   // The second tab resumes the open Fawry attempt; the buyer switches to card there.
   await cardTab.goto(`/en/checkout/pay/${o.id}`);
   await expect(cardTab.getByTestId("fawry-code")).toBeVisible();
   await cardTab.getByRole("button", { name: "Payment method" }).click();
-  await cardTab.getByRole("radio", { name: /^Card/ }).check();
-  await cardTab.getByRole("button", { name: "Continue" }).click();
+  await cardTab.getByRole("radio", { name: /^Bank card/ }).check();
+  await cardTab.getByRole("button", { name: "Continue", exact: true }).click();
   await cardTab.getByLabel("Card number").fill("4242 4242 4242 4242");
   await cardTab.getByLabel("Expiry (MM/YY)").fill("12/30");
   await cardTab.getByLabel("Security code").fill("123");
@@ -85,7 +85,7 @@ test("a paid order is never offered for payment again: Back after paying, a seco
   await signInAs(ctx2, baseURL!, buyer.id);
   const p = await ctx2.newPage();
   await p.goto(`/en/checkout/pay/${o2.id}`);
-  await p.getByRole("button", { name: "Continue" }).click();
+  await p.getByRole("button", { name: "Continue", exact: true }).click();
   await expect(p.getByLabel("Card number")).toBeVisible();
   await db.session.deleteMany({ where: { userId: buyer.id } });
   await p.getByLabel("Card number").fill("4242 4242 4242 4242");
@@ -109,20 +109,21 @@ test("browser Back and Forward move between checkout steps and keep the typed ad
   const { id } = (await (await page.request.post("/api/designs", { data: { doc } })).json()) as { id: string };
   await page.goto("/en/checkout");
   await page.goto(`/en/checkout/${id}`);
-  await expect(page.getByTestId("vendor-offer").first()).toBeVisible();
-  const bar = page.locator("[data-sticky-action]").getByRole("button", { name: "Continue" });
-  await bar.click();
+  await expect(page.getByTestId("chosen-printer")).toBeVisible();
+  const bar = page.locator("[data-sticky-action]");
+  await bar.getByRole("button", { name: "Continue to address" }).click();
+  // Address and approval share one step (simplified checkout).
   await page.getByLabel("City or district").fill("Dokki");
   await page.getByLabel("Street address").fill("12 Tahrir St");
-  await bar.click();
   await expect(page.getByRole("tab", { name: "3D proof" })).toBeVisible();
+  await expect(bar.getByRole("button", { name: "Continue to payment" })).toBeVisible();
   await page.goBack();
-  await expect(page.getByLabel("City or district")).toHaveValue("Dokki");
+  await expect(page.getByTestId("chosen-printer")).toBeVisible();
   await page.goForward();
   await expect(page.getByRole("tab", { name: "3D proof" })).toBeVisible();
+  await expect(page.getByLabel("City or district")).toHaveValue("Dokki");
   await page.goBack();
-  await page.goBack();
-  await expect(page.getByTestId("vendor-offer").first()).toBeVisible();
+  await expect(page.getByTestId("chosen-printer")).toBeVisible();
   await expect(page).toHaveURL(new RegExp(`/en/checkout/${id}$`));
   await db.design.deleteMany({ where: { ownerId: buyer.id } });
 });
@@ -138,11 +139,11 @@ test("a reload keeps the step and the chosen quantity, and stores no address in 
   };
   const { id } = (await (await page.request.post("/api/designs", { data: { doc } })).json()) as { id: string };
   await page.goto(`/en/checkout/${id}`);
-  await expect(page.getByTestId("vendor-offer").first()).toBeVisible();
+  await expect(page.getByTestId("chosen-printer")).toBeVisible();
   await page.getByRole("radio", { name: /^250 boxes/ }).check({ force: true });
   await expect(page.getByTestId("checkout-total").first()).toBeVisible();
-  const summary = page.getByRole("complementary").filter({ hasText: "Summary" });
-  await summary.getByRole("button", { name: "Continue" }).click();
+  const summary = page.getByRole("complementary").filter({ hasText: "Your order" });
+  await summary.getByRole("button", { name: "Continue to address" }).click();
   await page.getByLabel("Full name").fill("Mona Adel");
   await page.getByLabel("Street address").fill("12 Tahrir St");
 

@@ -1,4 +1,5 @@
-import type { ArtworkLayer } from "@/types";
+import { FACE_IDS, type ArtworkLayer, type FaceId, type PrintSurface } from "@/types";
+import { faceTransform, partRect, type DielineModel } from "@/lib/dieline";
 
 export interface P {
   x: number;
@@ -150,4 +151,31 @@ export function normAngle(deg: number): number {
 
 export function round1(n: number): number {
   return Math.round(n * 10) / 10;
+}
+
+/**
+ * The face (and the point on it, face-local mm) under a 3D pick: the face whose part on the hit
+ * panel contains the sheet point. A panel that is not part of any face (a glue flap, a dust flap)
+ * gives null.
+ */
+export function faceAtHit(model: DielineModel, hit: { panelId: string; surface: PrintSurface; sheet: { x: number; y: number } }): { face: FaceId; surface: PrintSurface; at: { x: number; y: number } } | null {
+  let fallback: { face: FaceId; surface: PrintSurface; at: { x: number; y: number } } | null = null;
+  for (const id of FACE_IDS) {
+    const info = model.faces[id];
+    if (!info) continue;
+    for (const part of info.parts) {
+      if (part.panelId !== hit.panelId) continue;
+      const [a, b, c, d, e, f] = faceTransform(info, part, hit.surface);
+      const det = a * d - b * c;
+      if (Math.abs(det) < 1e-9) continue;
+      const dx = hit.sheet.x - e;
+      const dy = hit.sheet.y - f;
+      const at = { x: (d * dx - c * dy) / det, y: (-b * dx + a * dy) / det };
+      const r = partRect(info, part, hit.surface);
+      const tol = 2;
+      if (at.x >= r.x - tol && at.x <= r.x + r.width + tol && at.y >= r.y - tol && at.y <= r.y + r.height + tol) return { face: id, surface: hit.surface, at };
+      fallback ??= { face: id, surface: hit.surface, at: { x: info.width / 2, y: info.height / 2 } };
+    }
+  }
+  return fallback;
 }

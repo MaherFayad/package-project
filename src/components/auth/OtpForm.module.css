@@ -111,3 +111,10 @@
   color: var(--p-color-text-caution);
   font-weight: var(--p-font-weight-semibold);
 }
+
+/* R3-04: a phone number inside a sentence reads left to right in Arabic too. */
+.num {
+  direction: ltr;
+  unicode-bidi: isolate;
+  white-space: nowrap;
+}

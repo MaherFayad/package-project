@@ -29,6 +29,17 @@ export function subFamilyName(slug: string): LocalizedText {
   return AVAILABILITY[slug]?.name ?? familyName(slug.split("/")[0]);
 }
 
+/**
+ * A sub-family name for shoppers: without the "(FEFCO 02)" / "(ECMA B series)" code the English
+ * research names carry. The code stays on the model page and in search.
+ */
+export function plainKindName(slug: string): LocalizedText {
+  const n = subFamilyName(slug);
+  // Codes in brackets: "(FEFCO 02)", "(ECMA B series)", "(RTE, STE)", "(VFFS)".
+  const strip = (s: string) => s.replace(/\s*\((?:(?:FEFCO|ECMA)[^)]*|[A-Z]{2,}(?:[,/ ]+[A-Z]{2,})*)\)/g, "").trim();
+  return { ar: strip(n.ar), en: strip(n.en) };
+}
+
 /** Plain, serialisable taxonomy for the browser (names only). */
 export interface TaxonomyNode {
   slug: string;
@@ -44,6 +55,6 @@ export function taxonomy(subFamiliesInUse: Iterable<string>): TaxonomyNode[] {
     children: [...used]
       .filter((s) => s.split("/")[0] === f && s.includes("/"))
       .sort()
-      .map((s) => ({ slug: s, name: subFamilyName(s) })),
+      .map((s) => ({ slug: s, name: plainKindName(s) })),
   })).filter((n) => n.children.length > 0 || used.has(n.slug));
 }

@@ -2,9 +2,9 @@
 export const libraryEn = {
   picker: {
     title: "Choose a model",
-    open: "Change model",
+    open: "Change box type",
     search: "Search models",
-    searchPlaceholder: "Mailer, FEFCO 0203, honey jar…",
+    searchPlaceholder: "Mailer, pizza box, honey jar…",
     all: "All",
     count: "{count:model}",
     empty: "No model matches “{q}”. Try a code like 0201 or a product like jar.",

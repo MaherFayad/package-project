@@ -1,5 +1,5 @@
 import type { ArtworkLayer, DesignDoc, FaceId, ImageLayer, PreflightIssue, PreflightSeverity, PrintSurface } from "@/types";
-import { applyAffine, faceTransform, type DielineModel, type FaceInfo } from "@/lib/dieline";
+import { applyAffine, faceTransform, sheetImagePlacement, type DielineModel, type FaceInfo } from "@/lib/dieline";
 import { convexOverlap, layerQuad, type P } from "./geometry";
 
 /** Print resolution thresholds (effective dots per inch at the printed size). */
@@ -55,6 +55,12 @@ export function runPreflight(doc: DesignDoc, model: DielineModel): PreflightIssu
   const safe = model.safeMm;
 
   for (const surface of surfaces) {
+    // Full artwork over the sheet: its resolution at the sheet's printed size.
+    const sheetImage = doc.artwork[surface].sheetImage;
+    if (sheetImage) {
+      const dpi = sheetImagePlacement(model, sheetImage).pxPerMm * 25.4;
+      if (dpi < DPI_WARNING) issues.push({ code: "LOW_DPI", severity: dpi < DPI_ERROR ? "error" : "warning", messageKey: "preflight.LOW_DPI" });
+    }
     for (const layer of doc.artwork[surface].layers) {
       if (layer.hidden || layer.surface !== surface) continue;
       const face = model.faces[layer.face];
@@ -86,7 +92,7 @@ export function runPreflight(doc: DesignDoc, model: DielineModel): PreflightIssu
 
   const outside = doc.artwork.outside;
   const hasVisible = outside.layers.some((l) => !l.hidden && (l.kind !== "text" || l.text.trim()));
-  if (!outside.background && !hasVisible) {
+  if (!outside.background && !outside.sheetImage && !hasVisible) {
     issues.push({ code: "EMPTY_DESIGN", severity: "info", messageKey: "preflight.EMPTY_DESIGN" });
   }
 

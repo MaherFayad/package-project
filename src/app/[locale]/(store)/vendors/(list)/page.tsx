@@ -3,7 +3,7 @@ import { ShieldCheck } from "lucide-react";
 import { getT, toLocale } from "@/i18n";
 import { siteUrl } from "@/lib/env";
 import { VendorFiltersForm } from "@/components/store/VendorFiltersForm";
-import { JsonLd } from "@/components/store/JsonLd";
+import { JsonLd } from "@/components/store/JsonLdScript";
 import { breadcrumbJsonLd } from "@/components/store/jsonld";
 import { listVendors } from "@/components/store/data";
 import { activeFilterCount, filterVendors, parseVendorFilters } from "@/components/store/vendor-filters";

@@ -1,11 +1,73 @@
 import { expect, test, type Page } from "@playwright/test";
-import { createUser, sendOtp, signInAs, track, uniquePhone } from "./fixtures/factory";
+import { createUser, designerAllOptions, sendOtp, signInAs, track, uniquePhone, verifyNewAccount } from "./fixtures/factory";
 
 /**
  * Designer main flow (seeded DB): pick a product preset, design anonymously (autosaved to the
- * server under the anonymous cookie), pass the preflight, hit the soft gate from the price
- * badge, sign up with phone + OTP, see the instant price, share a read-only link and export a PNG.
+ * server under the anonymous cookie), pass the preflight, see the instant price with no account
+ * (R1-01), hit the soft gate from Share, sign up with phone + OTP, share a read-only link and export a PNG.
+ *
+ * New visitors get the Basics panel (logo, text, colour, size); the first test below covers it.
+ * Tests of the full editor (tabs, millimetres, finishes, layers, print check) open it with
+ * "All options" remembered (`designerAllOptions`, docs/audit/simplicity-2026-11/designer.md).
  */
+
+/** A 300 × 300 PNG logo, drawn in the page. */
+async function logo(page: Page): Promise<Buffer> {
+  const b64 = await page.evaluate(() => {
+    const c = document.createElement("canvas");
+    c.width = c.height = 300;
+    const x = c.getContext("2d")!;
+    x.fillStyle = "#c8964f";
+    x.beginPath();
+    x.arc(150, 150, 140, 0, Math.PI * 2);
+    x.fill();
+    return c.toDataURL("image/png").split(",")[1];
+  });
+  return Buffer.from(b64, "base64");
+}
+
+test("Basics (the default): logo and a name go on the 3D box; All options is remembered", async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.goto("/en/design/mailer-box");
+  const stage = page.getByTestId("stage-3d");
+  await expect(stage.locator("canvas").first()).toBeVisible({ timeout: 45_000 });
+  await expect(page.getByRole("button", { name: "Basics", exact: true })).toHaveAttribute("aria-pressed", "true");
+  // No printer tabs, no face / dieline switch for a first-time visitor.
+  await expect(page.getByRole("tab", { name: "Artwork" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Laid flat", exact: true })).toHaveCount(0);
+  const expand = page.getByRole("button", { name: "Show more controls" });
+  if (await expand.isVisible()) await expand.click();
+  const basics = page.getByTestId("simple-panel");
+
+  // Logo: one tap + the file; the editor stays on the 3D box (no jump to the flat face editor).
+  const chooser = page.waitForEvent("filechooser");
+  await basics.getByRole("button", { name: "Add your logo" }).click();
+  await (await chooser).setFiles({ name: "logo.png", mimeType: "image/png", buffer: await logo(page) });
+  await expect(basics.getByRole("button", { name: "Add another picture" })).toBeVisible({ timeout: 30_000 });
+  await expect(stage).toBeVisible();
+
+  // A name: one tap, the text field is focused, typed text goes under the logo on the same side.
+  await basics.getByRole("button", { name: "Add a name or text" }).click();
+  const field = basics.getByRole("textbox", { name: "Text", exact: true });
+  await expect(field).toBeFocused();
+  await field.fill("Nour Bakery");
+  await expect(stage).toBeVisible();
+  await expect(page).toHaveURL(/[?&]d=[\w-]+/, { timeout: 20_000 });
+  await expect(page.getByTestId("save-status")).toHaveAttribute("data-state", "saved", { timeout: 20_000 });
+  const saved = await (await page.request.get(`/api/designs/${new URL(page.url()).searchParams.get("d")}`)).json();
+  const layers = saved.doc.artwork.outside.layers as { kind: string; face: string; text?: string }[];
+  const image = layers.find((l) => l.kind === "image");
+  const text = layers.find((l) => l.kind === "text");
+  expect(image).toBeTruthy();
+  expect(text?.text).toBe("Nour Bakery");
+  expect(text?.face).toBe(image?.face);
+
+  // "All options" opens the full editor and is remembered on this device.
+  await page.getByRole("button", { name: "All options", exact: true }).click();
+  await expect(page.getByRole("tab", { name: "Artwork" })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("tab", { name: "Artwork" })).toBeVisible({ timeout: 45_000 });
+});
 
 async function noHorizontalScroll(page: Page) {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
@@ -20,8 +82,9 @@ async function toolbarAction(page: Page, name: string, more = "More actions") {
   await page.getByRole("menuitem", { name }).click();
 }
 
-test("design a box, sign up at the price gate, share and export", async ({ page }) => {
+test("design a box, see the price signed out, sign up at the share gate, share and export", async ({ page }) => {
   test.setTimeout(120_000);
+  await designerAllOptions(page.context());
 
   // 1. Picker → product preset.
   await page.goto("/en/design");
@@ -53,26 +116,23 @@ test("design a box, sign up at the price gate, share and export", async ({ page 
   // 5. Anonymous autosave to the server puts the design id in the URL.
   await expect(page).toHaveURL(/[?&]d=[\w-]+/, { timeout: 15_000 });
 
-  // 6. Price badge → soft gate (phone + OTP, marketing consent unchecked) → instant price.
+  // 6. R1-01: the live price is public: the badge and the price sheet show it with no account.
+  await expect(page.getByTestId("price-badge")).toHaveText(/500 boxes: .+ per box, all-in excl\. VAT · delivered in \d+ days?/, { timeout: 20_000 });
   await page.getByTestId("price-badge").click();
-  const gate = page.getByRole("dialog", { name: "Create your free account" });
-  await expect(gate).toBeVisible();
-  // Unique per test and worker (OTP limits are per phone): e2e/fixtures/factory.ts.
-  const code = await sendOtp(gate, (await uniquePhone("11")).local);
-  await gate.getByLabel("Verification code").fill(code);
-  const marketing = gate.getByRole("checkbox", { name: /offers|marketing|WhatsApp/i });
-  if (await marketing.count()) await expect(marketing.first()).not.toBeChecked();
-  await gate.getByLabel(/I agree to the terms/i).check();
-  await gate.getByRole("button", { name: "Verify and continue" }).click();
-
   const price = page.getByRole("dialog", { name: "Instant price" });
   await expect(price).toBeVisible({ timeout: 20_000 });
   await expect(price.getByText("Total with VAT")).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole("dialog", { name: "Your mobile number to continue" })).toHaveCount(0);
   await price.getByRole("button", { name: "Close" }).first().click();
-  await expect(page.getByTestId("price-badge")).toHaveText(/500 boxes from .+ each excl\. VAT · delivered in \d+ days?/, { timeout: 20_000 });
 
-  // 7. Share link → read-only page with "Order this box".
+  // 7. Share → soft gate (phone + OTP, marketing consent unchecked) → read-only page with "Order this box".
   await toolbarAction(page, "Share");
+  const gate = page.getByRole("dialog", { name: "Your mobile number to continue" });
+  await expect(gate).toBeVisible();
+  // Unique per test and worker (OTP limits are per phone): e2e/fixtures/factory.ts.
+  const code = await sendOtp(gate, (await uniquePhone("11")).local);
+  // New phone: terms (and the unticked marketing box) appear after the first Verify (SIM-12).
+  await verifyNewAccount(gate, code);
   const share = page.getByRole("dialog", { name: "Share link" });
   const link = share.getByLabel("Link");
   await expect(link).toHaveValue(/\/en\/s\/[\w-]+$/, { timeout: 20_000 });
@@ -81,8 +141,9 @@ test("design a box, sign up at the price gate, share and export", async ({ page 
 
   // 8. PNG export (standard size) downloads a file.
   await toolbarAction(page, "Export");
-  const exp = page.getByRole("dialog", { name: "Download a mockup" });
-  await expect(exp.getByText(/print-ready dieline PDF/)).toBeVisible();
+  const exp = page.getByRole("dialog", { name: "Export your design" });
+  // Images and print / 3D files in one dialog (the print-ready PDF is offered here now).
+  await expect(exp.getByRole("radio", { name: "Print-ready PDF" })).toBeVisible();
   await exp.getByLabel(/Standard PNG/).check();
   const [download] = await Promise.all([page.waitForEvent("download", { timeout: 30_000 }), exp.getByRole("button", { name: "Download" }).click()]);
   expect(download.suggestedFilename()).toMatch(/\.png$/);
@@ -94,6 +155,7 @@ test("design a box, sign up at the price gate, share and export", async ({ page 
 });
 
 test("Arabic editor is RTL, keeps the 3D view unmirrored and gates saving", async ({ page }) => {
+  await designerAllOptions(page.context());
   await page.goto("/ar/design/pizza-box?preset=pizza-30");
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
   await expect(page.getByRole("application")).toHaveAttribute("dir", "ltr");
@@ -135,6 +197,7 @@ test("designer pages hydrate without errors (box, container, start page, ar + en
 
 test("box and container switches keep one 3D canvas (PERF-09)", async ({ page }) => {
   test.setTimeout(120_000);
+  await designerAllOptions(page.context());
   await page.route("**/api/designs**", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ id: "e2e-perf09", owned: false, updatedAt: new Date().toISOString() }) }));
   await page.goto("/en/design/mailer-box");
   const stage = page.getByTestId("stage-3d");
@@ -147,7 +210,7 @@ test("box and container switches keep one 3D canvas (PERF-09)", async ({ page })
     ["FEFCO_0427", "FEFCO 0427"],
   ];
   for (const [code, query] of models) {
-    const change = page.getByRole("button", { name: "Change model" }).first();
+    const change = page.getByRole("button", { name: "Change box type" }).first();
     if (!(await change.isVisible())) await page.getByRole("button", { name: /Show more controls/ }).click();
     await change.click();
     const picker = page.getByTestId("catalogue-picker");
@@ -225,10 +288,12 @@ async function twoToneImage(page: Page): Promise<Buffer> {
 test("crop an image to a square: non-destructive, kept in the saved design", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === "mobile", "inspector fields are checked on desktop");
   test.setTimeout(120_000);
+  await designerAllOptions(page.context());
   await page.goto("/en/design/mailer-box");
   await expect(page.getByTestId("stage-3d").locator("canvas").first()).toBeVisible({ timeout: 45_000 });
   await page.getByRole("tab", { name: "Artwork" }).click();
-  await page.locator("input[type=file]").first().setInputFiles({ name: "two-tone.png", mimeType: "image/png", buffer: await twoToneImage(page) });
+  // The Artwork tab's own picker (the stage has a hidden one for "tap a side of the box").
+  await page.getByRole("tabpanel", { name: "Artwork" }).locator("input[type=file]").first().setInputFiles({ name: "two-tone.png", mimeType: "image/png", buffer: await twoToneImage(page) });
   const crop = page.getByRole("button", { name: "Crop", exact: true });
   await expect(crop).toBeVisible({ timeout: 15_000 });
   await crop.click();
@@ -258,6 +323,7 @@ test("brand colours: saved per account, shown first, sent with the design", asyn
   test.setTimeout(120_000);
   const user = track(await createUser({ name: "Brand colours e2e" }));
   await signInAs(context, baseURL!, user.id);
+  await designerAllOptions(context);
   await page.goto("/ar/design/mailer-box");
   await expect(page.getByTestId("stage-3d").locator("canvas").first()).toBeVisible({ timeout: 45_000 });
   await page.getByRole("tab", { name: "التصميم" }).click();

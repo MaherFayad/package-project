@@ -188,6 +188,12 @@ a.modelCard {
   color: var(--p-color-text-secondary);
   unicode-bidi: isolate;
 }
+/* The industry code under the plain kind: small print for printers, not the card's lead. */
+.modelCode {
+  font-size: var(--p-font-size-275, 0.6875rem);
+  color: var(--p-color-text-secondary);
+  unicode-bidi: isolate;
+}
 .modelBadge {
   position: absolute;
   inset-block-start: var(--p-space-300);
@@ -447,3 +453,6 @@ a.modelCard {
 @media (prefers-reduced-motion: reduce) {
   .unavailable > summary, .unavailable > summary::before { transition: none; }
 }
+
+/* Box style code (FEFCO / ECMA): kept for printers, explained in its tooltip. */
+.standardCode { text-decoration: underline dotted; text-underline-offset: 2px; cursor: help; }

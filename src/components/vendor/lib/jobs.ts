@@ -95,6 +95,15 @@ export function isAwaitingAcceptance(job: JobStateInput): boolean {
   return AWAITING_STATUSES.includes(job.status as OrderStatus) && job.paidAt !== null && !isDeclined(job);
 }
 
+/** P-05: a new job asks for a reply within this many hours of payment. */
+export const REPLY_HOURS = 24;
+
+/** When the reply to a new job is due (ISO), or null when the job is not waiting for one. */
+export function replyBy(job: JobStateInput): string | null {
+  if (!isAwaitingAcceptance(job) || !job.paidAt) return null;
+  return new Date(time(job.paidAt) + REPLY_HOURS * 3_600_000).toISOString();
+}
+
 export function qcState(job: JobStateInput): QcState {
   const e = latestEvent(job.events, ["QC_UPLOADED", "QC_APPROVED", "QC_REJECTED"]);
   if (!e) return "none";

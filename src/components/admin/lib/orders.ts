@@ -7,11 +7,22 @@ import { REPRINT_NOTE_PREFIX } from "./metrics";
  * status changes still go through the shared state machine (src/lib/orders/state.ts).
  */
 
-export const ORDER_VIEWS = ["all", "attention", "qc", "production", "shipping", "closed"] as const;
+export const ORDER_VIEWS = ["all", "unpaid", "attention", "qc", "production", "shipping", "closed"] as const;
 export type OrderView = (typeof ORDER_VIEWS)[number];
 
+/**
+ * A-04: paid jobs no printer has accepted yet. The one definition of "waiting for a printer":
+ * the orders tab, the nav badge and the overview to-do all count these statuses. Unpaid orders
+ * have their own "Awaiting payment" tab (nothing for ops to route until the buyer pays).
+ */
+export const AWAITING_VENDOR_STATUSES: OrderStatus[] = ["PAID", "PROOF_APPROVED"];
+
+/** The orders nav badge: jobs ops must act on (waiting for a printer, plus QC review). */
+export const ORDERS_TO_ACT_STATUSES: OrderStatus[] = [...AWAITING_VENDOR_STATUSES, "QC_PENDING"];
+
 const VIEW_STATUSES: Record<Exclude<OrderView, "all">, OrderStatus[]> = {
-  attention: ["PENDING_PAYMENT", "PAID", "PROOF_APPROVED"],
+  unpaid: ["PENDING_PAYMENT"],
+  attention: AWAITING_VENDOR_STATUSES,
   qc: ["QC_PENDING"],
   production: ["ACCEPTED", "IN_PRODUCTION"],
   shipping: ["READY_TO_SHIP", "SHIPPED"],
@@ -227,9 +238,30 @@ export const TARGET_MARGIN_PCT = { min: 20, max: 30 } as const;
 
 export type MarginBand = "loss" | "below" | "in" | "above";
 
-export function marginPreview(goodsPiasters: number, vendorCostPiasters: number): { marginPiasters: number; pct: number | null; band: MarginBand } {
+/**
+ * A-02 (simplicity review): one margin definition everywhere in admin, the share of the ex-VAT
+ * sale price ("margin of the sale price"). The pricing setting is a markup on the vendor buy price
+ * and checkout then takes the prepay discount off the goods, so a 25% markup with a 3% discount
+ * gives 1 - 1 / (1.25 × 0.97) = 17.5% of the sale price. This is the margin an order priced by
+ * the current settings carries (one decimal).
+ */
+export function settingsMarginPct(markup: number, prepayDiscountPct = 0): number {
+  const sell = (1 + markup) * (1 - Math.max(0, prepayDiscountPct) / 100);
+  return sell > 0 ? Math.round((1 - 1 / sell) * 1000) / 10 : 0;
+}
+
+/** Points of slack under the settings margin before an order is flagged (piaster rounding, setup). */
+export const MARGIN_SLACK_PCT = 0.5;
+
+/**
+ * Margin of one order as a share of its sale price. `expectedPct` is what the current pricing
+ * settings produce (settingsMarginPct); an order is "below" only when it earns less than that,
+ * so a correctly priced order never shows a warning. Without it, the business-plan floor applies.
+ */
+export function marginPreview(goodsPiasters: number, vendorCostPiasters: number, expectedPct?: number | null): { marginPiasters: number; pct: number | null; band: MarginBand } {
   const marginPiasters = goodsPiasters - vendorCostPiasters;
   const pct = goodsPiasters > 0 ? Math.round((marginPiasters / goodsPiasters) * 1000) / 10 : null;
-  const band: MarginBand = marginPiasters < 0 ? "loss" : pct === null || pct < TARGET_MARGIN_PCT.min ? "below" : pct > TARGET_MARGIN_PCT.max ? "above" : "in";
+  const floor = expectedPct == null ? TARGET_MARGIN_PCT.min : Math.min(TARGET_MARGIN_PCT.min, expectedPct - MARGIN_SLACK_PCT);
+  const band: MarginBand = marginPiasters < 0 ? "loss" : pct === null || pct < floor ? "below" : pct > TARGET_MARGIN_PCT.max ? "above" : "in";
   return { marginPiasters, pct, band };
 }

@@ -1,9 +1,9 @@
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
-import { SEEDED, db, sendOtp, signInAs, uniquePhone } from "./fixtures/factory";
+import { SEEDED, db, sendOtp, signInAs, uniquePhone, verifyNewAccount } from "./fixtures/factory";
 
 /**
  * End-to-end journey across every area (seeded DB):
- * home → free designer (anonymous) → soft gate (phone + OTP) → instant price → "Order this box"
+ * home → free designer (anonymous) → instant price (no account, R1-01) → "Order this box" → soft gate (phone + OTP)
  * → checkout → proof approval → mock card payment → order tracking;
  * the assigned vendor accepts the job → production → QC photos;
  * admin approves QC → books the courier → buyer sees the order shipped.
@@ -26,48 +26,45 @@ test("home → design → gate → price → checkout → pay → vendor → QC 
   test.setTimeout(240_000);
   await page.context().addCookies([{ name: "elba_cookie_ack", value: "1", url: baseURL! }]);
 
-  // 1. Home → "Start designing free" opens the /start landing (R6), whose CTA deep-links the mailer editor.
+  // 1. Home → "Get your box price" opens the /boxes chooser (R1-04); "Order this box" on the mailer opens the editor.
   await page.goto("/en");
-  await page.getByRole("link", { name: "Start designing free" }).first().click();
-  await expect(page).toHaveURL(/\/en\/start$/, { timeout: 30_000 });
-  await page.getByRole("main").getByRole("link", { name: "Start designing free" }).first().click();
+  await page.getByRole("main").getByRole("link", { name: "Get your box price" }).first().click();
+  await expect(page).toHaveURL(/\/en\/boxes$/, { timeout: 30_000 });
+  await page.getByRole("main").getByRole("link", { name: "Order this box: Mailer box" }).click();
   await expect(page).toHaveURL(/\/en\/design\/mailer-box/, { timeout: 30_000 });
   await expect(page.getByRole("application", { name: "3D preview of your box" })).toBeVisible({ timeout: 30_000 });
 
-  // 2. Anonymous design: background + text, autosaved to the server.
-  await page.getByRole("tab", { name: "Artwork" }).click();
-  await page.getByRole("button", { name: "Colour #1f3d2b" }).first().click();
-  await page.getByRole("button", { name: "Add text" }).click();
+  // 2. Anonymous design in the Basics panel (the default): one print colour + a name, autosaved.
+  const basics = page.getByTestId("simple-panel");
+  await basics.getByRole("button", { name: "Colour #1f3d2b" }).first().click();
+  await basics.getByRole("button", { name: "Add a name or text" }).click();
   await expect(page).toHaveURL(/[?&]d=[\w-]+/, { timeout: 20_000 });
 
-  // 3. Price badge → soft gate → instant price → "Order this box".
+  // 3. Price badge → instant price with no account (R1-01) → "Order this box" → soft gate.
   await page.getByTestId("price-badge").click();
-  const gate = page.getByRole("dialog", { name: "Create your free account" });
-  await expect(gate).toBeVisible();
-  const phone = (await uniquePhone("12")).local;
-  await gate.getByLabel("Verification code").fill(await sendOtp(gate, phone));
-  await gate.getByLabel(/I agree to the terms/i).check();
-  await gate.getByRole("button", { name: "Verify and continue" }).click();
   const price = page.getByRole("dialog", { name: "Instant price" });
   await expect(price.getByText("Total with VAT")).toBeVisible({ timeout: 30_000 });
   await price.getByRole("button", { name: "Order this box" }).click();
+  const gate = page.getByRole("dialog", { name: "Your mobile number to continue" });
+  await expect(gate).toBeVisible();
+  const phone = (await uniquePhone("12")).local;
+  await verifyNewAccount(gate, await sendOtp(gate, phone));
 
   // 4. Checkout → address → proof approval → mock card payment.
   await expect(page).toHaveURL(/\/en\/checkout\/[\w-]+$/, { timeout: 30_000 });
-  await expect(page.getByTestId("vendor-offer").first()).toBeVisible({ timeout: 30_000 });
-  const summary = page.getByRole("complementary").filter({ hasText: "Summary" });
-  await summary.getByRole("button", { name: "Continue" }).click();
+  await expect(page.getByTestId("checkout-total")).toBeVisible({ timeout: 30_000 });
+  const summary = page.getByRole("complementary").filter({ hasText: "Your order" });
+  await summary.getByRole("button", { name: "Continue to address" }).click();
   await page.getByLabel("Full name").fill("Journey Buyer");
   await page.getByLabel("Mobile number").fill("010 1234 5678");
   await page.getByLabel("Governorate").selectOption("Cairo");
   await page.getByLabel("City or district").fill("Nasr City");
   await page.getByLabel("Street address").fill("5 Abbas El Akkad St");
-  await summary.getByRole("button", { name: "Continue" }).click();
   await expect(page.getByRole("tab", { name: "3D proof" })).toBeVisible({ timeout: 30_000 });
-  await page.getByLabel("I approve this proof for printing").check();
-  await summary.getByRole("button", { name: "Approve proof and pay" }).click();
+  await page.getByLabel("I checked the design. Print it as it is.").check();
+  await summary.getByRole("button", { name: "Continue to payment" }).click();
   await expect(page).toHaveURL(/\/en\/checkout\/pay\//, { timeout: 30_000 });
-  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.getByLabel("Card number").fill("4242 4242 4242 4242");
   await page.getByLabel("Expiry (MM/YY)").fill("12/30");
   await page.getByLabel("Security code").fill("123");
@@ -118,8 +115,10 @@ test("home → design → gate → price → checkout → pay → vendor → QC 
   await ap.goto(`/en/admin/orders/${order.number}`);
   await expect(ap.getByRole("heading", { level: 1, name: order.number })).toBeVisible({ timeout: 30_000 });
   await ap.getByRole("button", { name: "Approve for dispatch" }).click();
+  await ap.getByRole("dialog").getByRole("button", { name: "Approve for dispatch" }).click();
   await expect(ap.getByRole("button", { name: "Book courier pickup" })).toBeVisible({ timeout: 30_000 });
   await ap.getByRole("button", { name: "Book courier pickup" }).click();
+  await ap.getByRole("dialog").getByRole("button", { name: "Book courier pickup" }).click();
   await expect(ap.getByRole("button", { name: "Book courier pickup" })).toHaveCount(0, { timeout: 30_000 });
   await expect.poll(async () => (await db.order.findUniqueOrThrow({ where: { id: orderId } })).status, { timeout: 30_000 }).toMatch(/SHIPPED|DELIVERED/);
 

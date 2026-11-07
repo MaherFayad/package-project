@@ -18,17 +18,20 @@ import { adminStyles } from "@/components/admin/charts";
 import { loadOrderDetail } from "@/components/admin/server/queries";
 import { db } from "@/lib/db";
 import { goodsNet, marginOf, type MetricOrder } from "@/components/admin/lib/metrics";
-import { canOverrideCost, canOverridePrice, canReassign, canRefund, canReviewQc, reprintSource } from "@/components/admin/lib/orders";
+import { canOverrideCost, canOverridePrice, canReassign, canRefund, canReviewQc, marginPreview, reprintSource, settingsMarginPct } from "@/components/admin/lib/orders";
+import { loadPricingSettings } from "@/components/admin/server/settings";
+import { loadCheckoutSettings } from "@/lib/orders/checkout-settings";
+import { governorateKey } from "@/lib/orders/governorates";
 import { isOpenDispute } from "@/components/admin/lib/ops";
 import { requireRole } from "@/lib/auth/session";
 import { getT, pick, toLocale, type DictKey, type TFunction } from "@/i18n";
 import { fromJson } from "@/lib/json";
 import { PayoutsCard } from "@/components/admin/PayoutActions";
-import { adminPayoutStatus, nextPayoutStep } from "@/components/admin/lib/payouts";
+import { adminPayoutStatus, nextPayoutStep, payoutAmount } from "@/components/admin/lib/payouts";
 import { payoutSchedule } from "@/components/vendor/lib/payouts";
 import { modelByCode } from "@/lib/library";
-import { formatDate, formatDateTime, formatDims, formatMoney, formatNumber } from "@/lib/format";
-import type { Dims, Locale, ShippingAddress } from "@/types";
+import { formatDate, formatDateTime, formatDims, formatMoney, formatNumber, formatPercent } from "@/lib/format";
+import type { Dims, Locale, QuoteLine, ShippingAddress } from "@/types";
 
 type Params = Promise<{ locale: string; number: string }>;
 
@@ -85,6 +88,61 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
   const addr = fromJson<ShippingAddress | null>(order.shippingAddress);
   const source = reprintSource(order.notes);
   const showQc = order.qcPhotos.length > 0 || order.status === "QC_PENDING";
+  const vendorName = pick(locale, order.vendor.nameAr, order.vendor.nameEn);
+  const openDispute = order.disputes.some((d) => isOpenDispute(d.status));
+  const payoutParts = payoutSchedule([order], order.payouts).map((r) => ({
+    kind: r.kind,
+    amountPiasters: r.amountPiasters,
+    status: adminPayoutStatus(r, order.status),
+    date: r.date,
+    step: nextPayoutStep(r, order.status, openDispute),
+    held: r.kind === "BALANCE" && r.status !== "PAID" && openDispute,
+  }));
+  const balancePiasters = payoutAmount("BALANCE", order.vendorCostPiasters);
+
+  // A-02: one margin measure (share of the sale price), compared with what the current pricing
+  // settings give after the prepay discount.
+  const [{ settings: pricing }, checkout] = await Promise.all([loadPricingSettings(), loadCheckoutSettings()]);
+  const marginTargetPct = settingsMarginPct(pricing.marginPct, checkout.prepayDiscountPct);
+  const marginPct = marginPreview(goods, order.vendorCostPiasters, marginTargetPct);
+
+  // A-03: the item lines hold only the boxes; setup and the prepay discount sit on the priced
+  // quote. Show them (plus any leftover from an override or rounding) so the rows add up to goods.
+  const itemsTotal = order.items.reduce((s, it) => s + it.lineTotalPiasters, 0);
+  const quoteLines = fromJson<QuoteLine[] | null>(order.quote?.lines ?? null) ?? [];
+  const extraLines = quoteLines.filter((l) => l.kind !== "PRODUCT" && l.kind !== "SHIPPING" && l.totalPiasters !== 0);
+  const leftover = goods - itemsTotal - extraLines.reduce((s, l) => s + l.totalPiasters, 0);
+  const lineLabel = (l: QuoteLine) => {
+    const label = t(l.labelKey as DictKey);
+    return label === l.labelKey ? t(`admin.order.money.lineOther`) : label;
+  };
+  const showBreakdown = itemsTotal !== goods;
+
+  // Clear next step for every status (simplicity review: "what do I do with this order now?").
+  const nextPay = payoutParts.find((p) => p.step !== null);
+  const nextText =
+    order.status === "PAID" || order.status === "PROOF_APPROVED"
+      ? null // the routing banner below says it
+      : ["CANCELLED", "REFUNDED"].includes(order.status)
+        ? t("admin.order.next.closed")
+        : t(`admin.order.next.${order.status}` as DictKey, { vendor: vendorName });
+  const nextPayText = nextPay ? t(`admin.order.next.pay${nextPay.kind}` as DictKey, { vendor: vendorName, amount: formatMoney(nextPay.amountPiasters, locale, { alwaysDecimals: true }) }) : null;
+
+  // A-07: addresses store the English governorate; show it in the page language.
+  const govKey = addr ? governorateKey(addr.governorate) : null;
+  const governorateLabel = addr ? (govKey ? t(`governorates.${govKey}` as DictKey) : addr.governorate) : "";
+  const destination = addr ? [addr.city, governorateLabel].filter(Boolean).join(locale === "ar" ? "، " : ", ") : "";
+  /** A-07: raw event codes ("PREFLIGHT:1E/0W:ACK", "CARD") read as words. */
+  const eventNote = (type: string, note: string | null): string | null => {
+    if (!note) return null;
+    const pre = /^PREFLIGHT:(\d+)E\/(\d+)W(:ACK)?$/.exec(note);
+    if (pre) return t(pre[3] ? "admin.order.notes.PREFLIGHT_ACK" : "admin.order.notes.PREFLIGHT", { errors: pre[1]!, warnings: pre[2]! });
+    if (type === "PAYMENT_CONFIRMED") {
+      const m = t(`paymentMethods.${note}` as DictKey);
+      return m === `paymentMethods.${note}` ? note : m;
+    }
+    return note;
+  };
 
   // Timeline: production events + admin audit rows, newest first.
   const events = [
@@ -121,13 +179,12 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
       content: (
         <span>
           {t(`admin.order.events.${e.type}` as DictKey)}
-          {e.note ? <Text as="span" tone="subdued">{" · "}<bdi>{e.note}</bdi></Text> : null}
+          {eventNote(e.type, e.note) ? <Text as="span" tone="subdued">{" · "}<bdi>{eventNote(e.type, e.note)}</bdi></Text> : null}
         </span>
       ),
     };
   });
 
-  const vendorName = pick(locale, order.vendor.nameAr, order.vendor.nameEn);
   /** Library model name when the buyer designed one (Design.modelCode), else the core style name. */
   const libraryName = (modelCode: string | null, structureCode: string) => {
     const lib = modelByCode(modelCode);
@@ -140,7 +197,7 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
       titleMetadata={
         <InlineStack gap="150">
           <OrderStatusBadge status={order.status} />
-          {order.disputes.some((d) => isOpenDispute(d.status)) ? <Badge tone="critical">{t("admin.orders.dispute")}</Badge> : null}
+          {openDispute ? <Badge tone="critical">{t("admin.orders.dispute")}</Badge> : null}
           {source ? <Badge tone="info">{t("admin.orders.reprint")}</Badge> : null}
         </InlineStack>
       }
@@ -155,7 +212,15 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
       <Layout>
         <LayoutSection>
           <BlockStack gap="400">
-            {order.status === "PAID" ? (
+            {nextText || nextPayText ? (
+              <Banner tone={order.status === "QC_PENDING" || order.status === "READY_TO_SHIP" || nextPayText ? "warning" : "info"} title={t("admin.order.next.title")}>
+                <BlockStack gap="100">
+                  {nextText ? <Text as="p">{nextText}</Text> : null}
+                  {nextPayText ? <Text as="p">{nextPayText}</Text> : null}
+                </BlockStack>
+              </Banner>
+            ) : null}
+            {order.status === "PAID" || order.status === "PROOF_APPROVED" ? (
               // The next ops step for a paid order; on phones the vendor card sits far below, so surface it here.
               // R5-JR-07: once the current vendor has declined, "waiting for it to accept" is wrong; ops must move the job.
               <Banner
@@ -205,12 +270,12 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
                       {t("admin.order.qc.noPhotos")}
                     </Text>
                   )}
-                  {canReviewQc(order.status, order.qcPhotos) ? <QcActions orderId={order.id} /> : null}
+                  {canReviewQc(order.status, order.qcPhotos) ? <QcActions orderId={order.id} number={order.number} vendorName={vendorName} balancePiasters={balancePiasters} /> : null}
                 </BlockStack>
               </Card>
             ) : null}
 
-            {order.status === "READY_TO_SHIP" ? <ShipCard orderId={order.id} /> : null}
+            {order.status === "READY_TO_SHIP" ? <ShipCard orderId={order.id} number={order.number} vendorName={vendorName} destination={destination} /> : null}
 
             <Card title={t("admin.order.items")}>
               <BlockStack gap="300">
@@ -263,7 +328,17 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
               <BlockStack gap="300">
                 <Inset>
                   <BlockStack gap="200">
-                    <Row label={t("admin.order.money.goods")} value={formatMoney(goods, locale, { alwaysDecimals: true })} />
+                    {showBreakdown ? (
+                      <>
+                        <Row label={t("admin.order.money.itemLines")} value={formatMoney(itemsTotal, locale, { alwaysDecimals: true })} />
+                        {extraLines.map((l, i) => (
+                          <Row key={`${l.kind}-${i}`} label={lineLabel(l)} value={formatMoney(l.totalPiasters, locale, { alwaysDecimals: true })} />
+                        ))}
+                        {leftover !== 0 ? <Row label={t("admin.order.money.lineOther")} value={formatMoney(leftover, locale, { alwaysDecimals: true })} /> : null}
+                        <Divider />
+                      </>
+                    ) : null}
+                    <Row label={showBreakdown ? t("admin.order.money.goodsNet") : t("admin.order.money.goods")} value={formatMoney(goods, locale, { alwaysDecimals: true })} />
                     <Row label={t("admin.order.money.delivery")} value={formatMoney(order.shippingPiasters, locale, { alwaysDecimals: true })} />
                     <Row label={t("admin.order.money.vat")} value={formatMoney(order.vatPiasters, locale, { alwaysDecimals: true })} />
                     <Divider />
@@ -274,6 +349,10 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
                   <BlockStack gap="200">
                     <Row label={t("admin.order.money.vendorCost")} value={formatMoney(order.vendorCostPiasters, locale, { alwaysDecimals: true })} />
                     <Row label={t("admin.order.money.margin")} value={formatMoney(margin, locale, { alwaysDecimals: true })} strong />
+                    <Text as="p" variant="bodySm" tone={marginPct.band === "loss" ? "critical" : marginPct.band === "in" ? "subdued" : "caution"} alignment="end">
+                      {marginPct.pct === null ? t("admin.common.none") : t("admin.order.money.marginPct", { pct: formatPercent(marginPct.pct, locale) })}
+                      {marginPct.band !== "in" ? ` · ${t(`admin.order.margin.${marginPct.band}` as DictKey, { target: formatPercent(marginTargetPct, locale) })}` : ""}
+                    </Text>
                   </BlockStack>
                 </Inset>
                 {order.payments.length ? (
@@ -335,7 +414,7 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
                     <Text as="p" variant="bodySm">
                       <bdi>{addr.name}</bdi>
                       <br />
-                      <bdi>{[addr.street, addr.building, addr.city, addr.governorate].filter(Boolean).join(", ")}</bdi>
+                      <bdi>{[addr.street, addr.building, addr.city, governorateLabel].filter(Boolean).join(locale === "ar" ? "، " : ", ")}</bdi>
                     </Text>
                   </BlockStack>
                 ) : null}
@@ -344,6 +423,9 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
 
             <RoutingCard
               orderId={order.id}
+              number={order.number}
+              currentVendorName={vendorName}
+              marginTargetPct={marginTargetPct}
               currentVendorId={order.vendorId}
               canReassign={canReassign(order.status)}
               vendorCostPiasters={order.vendorCostPiasters}
@@ -365,11 +447,12 @@ export default async function AdminOrderPage({ params }: { params: Params }) {
               orderId={order.id}
               orderNumber={order.number}
               vendorName={vendorName}
-              parts={payoutSchedule([order], order.payouts).map((r) => ({ kind: r.kind, amountPiasters: r.amountPiasters, status: adminPayoutStatus(r, order.status), date: r.date, step: nextPayoutStep(r, order.status, order.disputes.some((d) => isOpenDispute(d.status))), held: r.kind === "BALANCE" && r.status !== "PAID" && order.disputes.some((d) => isOpenDispute(d.status)) }))}
+              parts={payoutParts}
             />
 
             <OverrideCard
               orderId={order.id}
+              marginTargetPct={marginTargetPct}
               status={order.status}
               money={order}
               goodsPiasters={goods}

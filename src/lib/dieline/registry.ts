@@ -45,13 +45,13 @@ const ENTRIES: Record<StructureCode, Entry> = {
     name: { ar: "علبة بريدية", en: "Mailer box" },
     description: {
       ar: "علبة كرتون مضلع بغطاء متصل ولسان أمامي، مثالية لتجربة فتح مميزة للمتاجر الإلكترونية.",
-      en: "Corrugated roll-end tuck-front mailer, the go-to e-commerce unboxing box.",
+      en: "Strong corrugated box with an attached lid and a front tuck: the go-to box for online shops.",
     },
     presets: [
       p("accessories", "إكسسوارات", "Accessories", { L: 180, W: 120, H: 50 }, true),
       p("tshirt", "تيشيرت", "T-shirt", { L: 300, W: 220, H: 60 }, true),
       p("shoe", "حذاء", "Shoe box", { L: 330, W: 200, H: 120 }, true),
-      p("cosmetics-kit", "طقم مستحضرات", "Cosmetics kit", { L: 250, W: 180, H: 80 }),
+      p("cosmetics-kit", "طقم مستحضرات", "Cosmetics kit", { L: 250, W: 180, H: 80 }, true),
     ],
     shape: "box",
     pieces: 1,
@@ -64,7 +64,7 @@ const ENTRIES: Record<StructureCode, Entry> = {
     name: { ar: "كرتونة شحن", en: "Shipping box" },
     description: {
       ar: "كرتونة شحن كرتون مضلع قياسية بأربعة ألسنة علوية وسفلية، قوية وموفرة.",
-      en: "Regular slotted container (RSC): the standard, economical corrugated shipping carton.",
+      en: "The standard corrugated shipping carton with four flaps top and bottom: strong and economical.",
     },
     presets: [
       p("small", "صغيرة", "Small", { L: 200, W: 150, H: 100 }, true),
@@ -82,7 +82,7 @@ const ENTRIES: Record<StructureCode, Entry> = {
     name: { ar: "علبة دوبلكس بلسان عكسي", en: "Reverse tuck end carton" },
     description: {
       ar: "علبة دوبلكس خفيفة بلسانين في اتجاهين متعاكسين، شائعة لمستحضرات التجميل والعطور.",
-      en: "Lightweight SBS folding carton with tucks on opposite panels; classic for cosmetics and perfume.",
+      en: "Light white carton box with tucks at opposite ends; common for cosmetics and perfume.",
     },
     presets: [
       p("perfume-50ml", "عطر 50 مل", "Perfume 50 ml", { L: 55, W: 45, H: 130 }, true),
@@ -100,7 +100,7 @@ const ENTRIES: Record<StructureCode, Entry> = {
     name: { ar: "علبة دوبلكس بلسان مستقيم", en: "Straight tuck end carton" },
     description: {
       ar: "علبة دوبلكس بلسانين في نفس الاتجاه لواجهة أمامية نظيفة، مناسبة للأغذية الجافة والهدايا.",
-      en: "SBS folding carton with both tucks on the same side for a clean front; good for dry food and gifts.",
+      en: "White carton box with both tucks on the same side for a clean front; good for dry food and gifts.",
     },
     presets: [
       p("tea", "علبة شاي", "Tea box", { L: 90, W: 60, H: 140 }, true),
@@ -117,7 +117,7 @@ const ENTRIES: Record<StructureCode, Entry> = {
     name: { ar: "علبة بيتزا", en: "Pizza box" },
     description: {
       ar: "علبة بيتزا كرتون مضلع آمنة للأغذية مع فتحات تهوية اختيارية.",
-      en: "Food-safe corrugated pizza box (FEFCO 0426 style).",
+      en: "Food-safe corrugated pizza box with optional air vents.",
     },
     presets: [
       p("pizza-25", "بيتزا 25 سم", "Pizza 25 cm", { L: 260, W: 260, H: 40 }, true),
@@ -152,7 +152,7 @@ const ENTRIES: Record<StructureCode, Entry> = {
     name: { ar: "علبة تلسكوبية بغطاء منفصل", en: "Telescope box (lid and base)" },
     description: {
       ar: "علبة من قطعتين من الكرتون المضلع: قاعدة وغطاء ينزلق فوقها، مناسبة لعلب الهدايا والأحذية والملابس.",
-      en: "Two-piece corrugated box (FEFCO 0320): an open base and a lid that slides over it. Gift, shoe and apparel boxes.",
+      en: "Two-piece corrugated box: an open base and a lid that slides over it. Gift, shoe and apparel boxes.",
     },
     presets: [
       p("shirt", "قميص", "Shirt box", { L: 330, W: 250, H: 60 }, true),
@@ -170,7 +170,7 @@ const ENTRIES: Record<StructureCode, Entry> = {
     name: { ar: "علبة دوبلكس بقاع أوتوماتيكي", en: "Crash-lock bottom carton" },
     description: {
       ar: "علبة دوبلكس بقاع ملصوق مسبقا ينفتح ويقفل بضغطة واحدة ولسان علوي، تتحمل الزجاجات والبرطمانات الثقيلة.",
-      en: "SBS carton with a pre-glued crash-lock bottom that pops open in one move and a tuck top; holds heavier bottles and jars.",
+      en: "White carton with a pre-glued bottom that pops open in one move and a tuck top; holds heavier bottles and jars.",
     },
     presets: [
       p("oil-1l", "زيت 1 لتر", "Oil bottle 1 L", { L: 85, W: 85, H: 300 }, true),
@@ -189,7 +189,7 @@ const ENTRIES: Record<StructureCode, Entry> = {
     name: { ar: "علبة دوبلكس بقاع مقفل 1-2-3", en: "Snap-lock bottom carton (1-2-3)" },
     description: {
       ar: "علبة دوبلكس بقاع يقفل يدويا في ثلاث خطوات دون لصق ولسان علوي، أوفر من القاع الأوتوماتيكي للكميات الصغيرة.",
-      en: "SBS carton with a 1-2-3 snap-lock bottom folded by hand (no glue) and a tuck top; cheaper than crash-lock for short runs.",
+      en: "White carton with a bottom you lock by hand in three folds (no glue) and a tuck top; cheaper than the pre-glued bottom for small runs.",
     },
     presets: [
       p("cream-tube", "أنبوب كريم", "Cream tube", { L: 45, W: 35, H: 160 }, true),
@@ -225,7 +225,7 @@ const ENTRIES: Record<StructureCode, Entry> = {
     name: { ar: "علبة حمل بمقبض", en: "Gable box with handle" },
     description: {
       ar: "علبة دوبلكس بسقف جملوني ومقبض مدمج وقاع مقفل، للحلويات ووجبات الأطفال والهدايا.",
-      en: "SBS gable box with a built-in carry handle and snap-lock bottom; for pastries, kids' meals and gifts.",
+      en: "White carton box with a built-in carry handle and a locking bottom; for pastries, kids' meals and gifts.",
     },
     presets: [
       p("cake-slice", "قطعة كيك", "Cake slice", { L: 160, W: 100, H: 120 }, true),
@@ -282,8 +282,8 @@ const ENTRIES: Record<StructureCode, Entry> = {
     standard: "Die-cut roll labels / shrink sleeves",
     name: { ar: "ملصقات رول", en: "Roll labels" },
     description: {
-      ar: "ملصقات مطبوعة على رول من الورق أو البولي بروبيلين أو أكمام حرارية، بمقاس العبوة.",
-      en: "Printed roll labels on paper or BOPP, or PETG shrink sleeves, sized to the container.",
+      ar: "ملصقات مطبوعة على ورق أو بلاستيك، أو أغلفة تنكمش على العبوة، بمقاس زجاجتك أو برطمانك أو علبتك المعدنية.",
+      en: "Printed labels on paper or plastic, or shrink sleeves, sized to your bottle, jar or can.",
     },
     presets: [p("wrap-500ml", "زجاجة 500 مل", "500 ml bottle wrap", { L: 215, W: 1, H: 70 }, true), p("jar-front", "برطمان", "Jar front", { L: 90, W: 1, H: 60 }, true)],
     shape: "flat",
@@ -296,8 +296,8 @@ const ENTRIES: Record<StructureCode, Entry> = {
     standard: "Laminated flexible pouch",
     name: { ar: "أكياس مطبوعة", en: "Printed pouches" },
     description: {
-      ar: "أكياس مرنة مطبوعة من رقائق PET/PE أو كرافت/PE بسحاب وقاع قائم.",
-      en: "Printed flexible pouches in PET/PE or kraft/PE laminate, with zipper and stand-up base.",
+      ar: "أكياس مطبوعة من البلاستيك أو الورق البني المبطن، بسحاب وقاع قائم.",
+      en: "Printed plastic or lined kraft pouches, with a zipper and a stand-up base.",
     },
     presets: [p("pouch-250g", "250 جم", "250 g", { L: 320, W: 1, H: 230 }, true), p("pouch-500g", "500 جم", "500 g", { L: 400, W: 1, H: 280 }, true)],
     shape: "flat",

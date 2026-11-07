@@ -2,7 +2,7 @@ import { expect, test, type Browser } from "@playwright/test";
 import { randomBytes } from "node:crypto";
 import { SEEDED, cleanup, cloneOrder, createUser, db, deleteOrder, signInAs, signInPhone, track } from "../fixtures/factory";
 import { formatMoney } from "../../src/lib/format";
-import { ackCookies, localeOf, tFor, tr } from "./helpers";
+import { ackCookies, basicsPanel, localeOf, tFor, tr } from "./helpers";
 
 /**
  * Journey 4 (docs/audit/journeys.md): a day in ops. A buyer reports a print defect and ops order a
@@ -86,7 +86,7 @@ test("J4 · refund a paid order: payment refunded, order closed", async ({ brows
   await ctx.close();
 });
 
-test("J4 · payouts: raise, approve and pay a vendor advance (40% of the buy price)", async ({ browser, baseURL }, info) => {
+test("J4 · payouts: pay a vendor advance (40% of the buy price) in one confirmed step", async ({ browser, baseURL }, info) => {
   test.setTimeout(120_000);
   const locale = localeOf(info);
   const t = tFor(locale);
@@ -94,10 +94,6 @@ test("J4 · payouts: raise, approve and pay a vendor advance (40% of the buy pri
   const { ctx, page: ap } = await adminPage(browser, baseURL!);
   await ap.goto(`/${locale}/admin/orders/${order.number}`);
   const kind = t("admin.payouts.kinds.ADVANCE");
-  for (const step of ["RAISE", "APPROVE"] as const) {
-    await ap.getByRole("button", { name: `${t(`admin.payouts.steps.${step}`)}: ${order.number}, ${kind}` }).click();
-    await expect.poll(async () => (await db.payout.findFirst({ where: { orderId: order.id, kind: "ADVANCE" } }))?.status ?? null, { timeout: 30_000 }).toBe(step === "RAISE" ? "PENDING" : "APPROVED");
-  }
   await ap.getByRole("button", { name: `${t("admin.payouts.steps.PAY")}: ${order.number}, ${kind}` }).click();
   await ap.getByRole("dialog").getByRole("button", { name: t("admin.payouts.steps.PAY") }).click();
   await expect.poll(async () => (await db.payout.findFirst({ where: { orderId: order.id, kind: "ADVANCE" } }))?.status ?? null, { timeout: 30_000 }).toBe("PAID");
@@ -151,8 +147,7 @@ test("J4 · settings: the sample credit window set by ops reaches checkout", asy
     await signInAs(page.context(), baseURL!, buyer.id);
     await page.goto(`/${locale}/design/mailer-box`);
     await expect(page.getByRole("application", { name: tr(locale, "3D preview of your box") })).toBeVisible({ timeout: 30_000 });
-    const panel = page.getByRole("complementary", { name: tr(locale, "Designer panels") });
-    await panel.getByRole("tab", { name: tr(locale, "Artwork") }).click();
+    const panel = await basicsPanel(page, locale);
     await panel.getByRole("button", { name: /#c8964f/ }).first().click();
     await expect(page).toHaveURL(/[?&]d=[\w-]+/, { timeout: 30_000 });
     const designId = new URL(page.url()).searchParams.get("d")!;

@@ -12,11 +12,11 @@ import type {
   StructureCode,
   StructureFamily,
 } from "@/types";
-import { FINISH_CODES, MATERIAL_CODES } from "@/types";
-import type { DictKey, TFunction } from "@/i18n";
-import { JsonLd } from "@/components/store/JsonLd";
+import type { TFunction } from "@/i18n";
+import { JsonLd } from "@/components/store/JsonLdScript";
 import { faqJsonLd } from "@/components/store/jsonld";
-import { designHref, structureHref } from "@/components/store/catalog";
+import { structureHref } from "@/components/store/catalog";
+import { startHref as boxesHref } from "../navModel";
 import { HeroImage } from "../HeroImage";
 import { Sheet } from "../kit/Sheet";
 import { Display } from "../kit/Display";
@@ -33,11 +33,9 @@ import {
 } from "../kit/assets";
 import { designerPageCopy, fill } from "./copy";
 import { LiveBox, type LoopSource } from "./LiveBox";
-import { PromptBar } from "./PromptBar";
 import { Marquee } from "../kit/Marquee";
 import { Faq } from "../kit/Faq";
 import { Glow } from "../kit/Glow";
-import { MotionScope } from "../kit/MotionScope";
 import { StartCarousel } from "./StartCarousel";
 import {
   ColourMock,
@@ -59,48 +57,14 @@ export interface DesignerPageData {
   /** "EGP 4.20" unit price of the default mailer at 500, from the pricing engine (null when no rate card). */
   mailerUnit500: string | null;
   vendorCount: number;
-  modelCount: string;
   vatPct: number;
   payMethods: PaymentMethod[];
   dielineSvg: string;
-  bleedMm: number;
-  safeMm: number;
+  /** Public host for the sample share link ("elba.eg" off a real deployment, never localhost). */
   host: string;
   /** Mailer turntable loop from the ASSETS kit, when its files are deployed. */
   loop?: LoopSource[];
 }
-
-/** Board and finish swatches for the materials wall (a colour study of each, not a photo). */
-const MAT_SWATCH: Record<string, string> = {
-  E_FLUTE_KRAFT:
-    "repeating-linear-gradient(90deg,#b98a56 0 3px,#a87a48 3px 6px)",
-  E_FLUTE_WHITE:
-    "repeating-linear-gradient(90deg,#f2efe8 0 3px,#e1ddd3 3px 6px)",
-  B_FLUTE_KRAFT:
-    "repeating-linear-gradient(90deg,#b5844f 0 5px,#9c6f3e 5px 10px)",
-  SBS_300: "linear-gradient(135deg,#ffffff,#e9e9ee)",
-  SBS_350: "linear-gradient(135deg,#fbfbfd,#dcdce4)",
-  GREYBOARD_WRAP: "linear-gradient(135deg,#2f5d50 60%,#8d9690 60%)",
-  KRAFT_TUBE:
-    "repeating-linear-gradient(120deg,#c39a68 0 8px,#b38a58 8px 16px)",
-  LABEL_PAPER: "linear-gradient(135deg,#fffdf6,#efe9d8)",
-  LABEL_WHITE_BOPP: "linear-gradient(135deg,#ffffff,#d9e6f2)",
-  LABEL_CLEAR_BOPP:
-    "linear-gradient(135deg,rgba(255,255,255,.35),rgba(200,220,255,.12)),repeating-linear-gradient(45deg,#2a3142 0 6px,#353d50 6px 12px)",
-  LABEL_METALLIC_BOPP: "linear-gradient(135deg,#9aa3ad,#eef2f6 45%,#7d8792)",
-  SHRINK_PETG: "linear-gradient(135deg,#7ec8c0,#2e7d74)",
-  POUCH_PET_PE: "linear-gradient(135deg,#d64f6e,#8c2a44)",
-  POUCH_KRAFT_PE: "linear-gradient(135deg,#c9a06c,#9b7646)",
-  TUBE_PE: "linear-gradient(135deg,#f4f6fb,#c9d2e3)",
-  MATTE_LAMINATION: "linear-gradient(135deg,#3b3f4a,#2b2e36)",
-  GLOSS_LAMINATION: "linear-gradient(135deg,#1f2a44,#3f5a9a 50%,#1f2a44)",
-  SPOT_UV: "radial-gradient(circle at 50% 50%,#3a3f52 0 28%,#22262f 30%)",
-  SOFT_TOUCH_LAMINATION: "linear-gradient(135deg,#d9cfe6,#b7a8cc)",
-  VARNISH: "linear-gradient(135deg,#efe6cf,#d6c7a1)",
-  HOT_FOIL: "linear-gradient(135deg,#8a6a2a,#f3e2a5 45%,#9b7a35 70%,#e8d08a)",
-  EMBOSS: "radial-gradient(circle at 40% 40%,#ffffff,#d8d2c6 60%)",
-  DEBOSS: "radial-gradient(circle at 60% 60%,#cfc8bb,#efebe3 60%)",
-};
 
 const BOX_FAMILIES: StructureFamily[] = [
   "CORRUGATED",
@@ -121,27 +85,13 @@ const TILE_TONES = [
 export function DesignerPage(d: DesignerPageData) {
   const { locale, t } = d;
   const c = designerPageCopy(locale);
-  const base = `/${locale}`;
-  const startHref = designHref(locale, { structure: "FEFCO_0427" });
-  const pickerHref = `${base}/design`;
+  // Every CTA goes to the box chooser, where each box shows its price (R2-04).
+  const startHref = boxesHref(locale);
   const mailer = renderSrc("FEFCO_0427");
   const mailerDims = renderDims(mailer);
-  const finishes = FINISH_CODES.filter((f) => f !== "NONE");
-  const matCount = MATERIAL_CODES.length + finishes.length;
   const wall = d.styles.filter((s) => BOX_FAMILIES.includes(s.family));
   const faq = c.faq.items;
 
-  const matGroupHref: Record<string, string> = {
-    corrugated: structureHref(locale, "FEFCO_0427"),
-    carton: structureHref(locale, "ECMA_RTE"),
-    rigid: structureHref(locale, "RIGID_BOX"),
-    tube: structureHref(locale, "PAPER_TUBE"),
-    labels: `${base}/bottles`,
-    pouch: `${base}/catalog`,
-    lamination: designHref(locale, { structure: "ECMA_RTE" }),
-    uv: designHref(locale, { structure: "ECMA_STE" }),
-    foil: designHref(locale, { structure: "RIGID_BOX" }),
-  };
   const payIcon: Record<PaymentMethod, typeof CreditCard> = {
     CARD: CreditCard,
     WALLET: Smartphone,
@@ -156,7 +106,7 @@ export function DesignerPage(d: DesignerPageData) {
     return (
       <Link
         key={s.code}
-        href={designHref(locale, { structure: s.code })}
+        href={structureHref(locale, s.code)}
         className={styles.styleCard}
         style={{ background: TILE_TONES[i % TILE_TONES.length] }}
         prefetch={false}
@@ -185,22 +135,6 @@ export function DesignerPage(d: DesignerPageData) {
       </Link>
     );
   };
-
-  const matTiles = [
-    ...MATERIAL_CODES.map((m) => ({
-      code: m,
-      name: t(`materials.${m}` as DictKey),
-    })),
-    ...finishes.map((f) => ({ code: f, name: t(`finishes.${f}` as DictKey) })),
-  ].map((m) => (
-    <span key={m.code} className={styles.matTile}>
-      <span
-        className={styles.matSwatch}
-        style={{ background: MAT_SWATCH[m.code] ?? "#333" }}
-      />
-      <span className={styles.matName}>{m.name}</span>
-    </span>
-  ));
 
   const price = d.mailerUnit500
     ? fill(c.hero.priceValue, { price: d.mailerUnit500 })
@@ -387,54 +321,6 @@ export function DesignerPage(d: DesignerPageData) {
         </Container>
       </Sheet>
 
-      {/* ───────── 2. Prompt bar: head, then the violet band ───────── */}
-      <Sheet
-        tone="navy"
-        overlap={false}
-        className={styles.canvas}
-        aria-labelledby="dp-prompt-title"
-      >
-        <SectionHead
-          id="dp-prompt-title"
-          align="center"
-          title={c.prompt.title}
-          sub={c.prompt.body}
-        />
-      </Sheet>
-      <MotionScope pauseLabel={c.prompt.pause} playLabel={c.prompt.play}>
-        <Sheet
-          tone="violet"
-          y="lg"
-          overlap={false}
-          as="div"
-          className={styles.violet}
-        >
-          <Stack gap="grid" className={styles.promptStack}>
-            <PromptBar
-              action={pickerHref}
-              label={c.prompt.label}
-              submit={c.prompt.submit}
-              examples={c.prompt.examples}
-            />
-            <div className={styles.promptChips}>
-              {c.prompt.examples.map((ex) => (
-                <Link
-                  key={ex}
-                  href={`${pickerHref}?q=${encodeURIComponent(ex)}`}
-                  className={styles.promptChip}
-                  prefetch={false}
-                >
-                  {ex}
-                </Link>
-              ))}
-            </div>
-            <p className={styles.promptNote}>
-              {fill(c.prompt.note, { models: d.modelCount })}
-            </p>
-          </Stack>
-        </Sheet>
-      </MotionScope>
-
       {/* ───────── 3. Style wall ───────── */}
       <Sheet
         tone="navy"
@@ -454,7 +340,7 @@ export function DesignerPage(d: DesignerPageData) {
                 <>
                   {c.wall.body}{" "}
                   <Link
-                    href={`${base}/catalog`}
+                    href={startHref}
                     className={styles.inlineLink}
                     prefetch={false}
                   >
@@ -572,21 +458,8 @@ export function DesignerPage(d: DesignerPageData) {
                     >
                       {card.key === "link" ? (
                         <LinkMock host={d.host} button={c.ui.shareButton} />
-                      ) : card.key === "export" ? (
-                        <ProofMock
-                          rows={[
-                            [c.ui.proofRows[0][0], c.ui.proofRows[0][1]],
-                            [
-                              c.ui.legend.bleed,
-                              `${d.bleedMm} ${locale === "ar" ? "مم" : "mm"}`,
-                            ],
-                            [
-                              c.ui.legend.safe,
-                              `${d.safeMm} ${locale === "ar" ? "مم" : "mm"}`,
-                            ],
-                          ]}
-                          ok={c.ui.proofOk}
-                        />
+                      ) : card.key === "approve" ? (
+                        <ProofMock rows={c.ui.proofRows} ok={c.ui.proofOk} />
                       ) : card.key === "views" ? (
                         <MockupMock
                           render={renderSrc("RIGID_BOX").replace(
@@ -703,62 +576,6 @@ export function DesignerPage(d: DesignerPageData) {
             ))}
           </Grid>
         </SectionHead>
-      </Sheet>
-
-      {/* ───────── 7. Materials and finishes wall ───────── */}
-      <Sheet
-        tone="navy"
-        overlap={false}
-        container={false}
-        className={`${styles.canvas}`}
-        aria-labelledby="dp-mat-title"
-      >
-        <Stack gap="head-content">
-          <Container>
-            <SectionHead
-              id="dp-mat-title"
-              title={fill(c.materials.title, { count: matCount })}
-            />
-          </Container>
-          <Marquee
-            className={styles.matRail}
-            label={c.materials.label}
-            pauseLabel={c.materials.pause}
-            playLabel={c.materials.play}
-            duration={50}
-            gap="var(--mk-grid-gap-tight)"
-            items={matTiles}
-          />
-          <Container>
-            <Stack gap="head-content">
-              <p className={styles.matLead}>
-                {c.materials.body}{" "}
-                <Link href={`${base}/catalog`} prefetch={false}>
-                  {c.materials.linkLabel}
-                </Link>
-              </p>
-              <Grid
-                as="ul"
-                cols={3}
-                colsMd={2}
-                colsSm={1}
-                className={`${styles.plainList} ${styles.matGroups}`}
-              >
-                {c.materials.groups.map((g) => (
-                  <li key={g.key}>
-                    <Link
-                      href={matGroupHref[g.key] ?? `${base}/catalog`}
-                      prefetch={false}
-                    >
-                      {g.title}
-                    </Link>
-                    <p>{g.body}</p>
-                  </li>
-                ))}
-              </Grid>
-            </Stack>
-          </Container>
-        </Stack>
       </Sheet>
 
       {/* ───────── 8. Start carousel ───────── */}

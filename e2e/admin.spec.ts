@@ -54,6 +54,8 @@ test.describe("admin", () => {
     await expect(page.getByText("Quality check").first()).toBeVisible({ timeout: 30_000 });
 
     await page.getByRole("button", { name: "Approve for dispatch" }).click();
+    // A-05: QC approval asks for confirmation first.
+    await page.getByRole("dialog").getByRole("button", { name: "Approve for dispatch" }).click();
     await expect(page.getByRole("status").getByText("QC approved. The job is ready to ship.")).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText("Ready to ship").first()).toBeVisible({ timeout: 30_000 });
     await expect(page.getByRole("button", { name: "Approve for dispatch" })).toHaveCount(0);
@@ -88,15 +90,14 @@ test.describe("admin", () => {
     await expect(page.getByRole("heading", { level: 1, name: "نظرة عامة" })).toBeVisible({ timeout: 30_000 });
   });
 
-  test("vendor payout: raise → approve → mark paid, audited", async ({ page, context, baseURL }, info) => {
+  test("vendor payout: one confirmed mark paid (raise, approve and pay audited)", async ({ page, context, baseURL }, info) => {
     test.skip(info.project.name !== "desktop", "mutating flow runs once, on desktop");
     const order = await cloneOrder(TEMPLATE_QC, { status: "QC_PENDING", label: "P" });
     const ORDER = order.number;
     await signIn(context, baseURL!);
     await page.goto("/en/admin/payouts");
     await expect(page.getByRole("heading", { level: 1, name: "Payouts" })).toBeVisible({ timeout: 30_000 });
-    await page.getByRole("button", { name: `Raise: ${ORDER}, Advance 40%` }).click();
-    await page.getByRole("button", { name: `Approve: ${ORDER}, Advance 40%` }).click();
+    // A-01: one "Mark paid" with a confirmation that states the amount.
     await page.getByRole("button", { name: `Mark paid: ${ORDER}, Advance 40%` }).click();
     const dialog = page.getByRole("dialog");
     await dialog.getByRole("button", { name: "Mark paid" }).click();
@@ -282,6 +283,7 @@ test.describe("admin routing (round 4)", () => {
     await select.selectOption(target);
     await page.getByLabel("Reason").fill("Vendor out of B-flute stock this week");
     await page.getByRole("button", { name: "Reassign" }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Reassign" }).click();
     await expect.poll(async () => (await db.order.findUnique({ where: { id: order.id } }))?.vendorId, { timeout: 30_000 }).toBe(target);
     const after = await db.order.findUniqueOrThrow({ where: { id: order.id }, include: { payouts: true } });
     expect(after.status).toBe("PAID");

@@ -32,7 +32,13 @@ export function orderTotals(lines: QuoteLine[], prepayDiscountPct = 0): OrderTot
   const goods = base.filter((l) => l.kind !== "SHIPPING").reduce((s, l) => s + l.totalPiasters, 0);
   const pct = Math.max(0, Math.min(20, prepayDiscountPct));
   // Half-up on integer basis points (pct may be fractional, e.g. 2.5%).
-  const discount = pct > 0 ? Math.floor((goods * Math.round(pct * 100) + 5_000) / 10_000) : 0;
+  let discount = pct > 0 ? Math.floor((goods * Math.round(pct * 100) + 5_000) / 10_000) : 0;
+  // R3-12: the buyer reads "500 boxes × 37.97" and checks it with a calculator. With the discount
+  // on, the ex-VAT amount is rounded DOWN to a whole piaster per box: the few piasters left over
+  // (fewer than the quantity) go into the prepay discount, in the buyer's favour. So per box ×
+  // quantity = the boxes line, exactly, on every surface (they all read these totals).
+  const qty = base.find((l) => l.kind === "PRODUCT")?.quantity ?? 1;
+  if (discount > 0 && Number.isInteger(qty) && qty > 1) discount += (goods + shipping - discount) % qty;
   const out = [...base];
   if (discount > 0) {
     out.push({ kind: "DISCOUNT", labelKey: PREPAY_DISCOUNT_LABEL, quantity: 1, unitPiasters: -discount, totalPiasters: -discount });

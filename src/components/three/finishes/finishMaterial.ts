@@ -231,7 +231,9 @@ export function createFinishedBoardMaterials(sheet: { width: number; height: num
         : solidEdgeTexture({ top: a.outside, core: a.edge, bottom: a.inside }),
     );
     edge.map = edgeTex;
-    edge.color.set(edgeTex ? "#ffffff" : a.edge);
+    // cut edges sit a little darker than the faces (they catch less light and the flutes are in
+    // shade): a full-white tint read as a pale seam along every flap edge seen edge-on
+    edge.color.set(edgeTex ? "#c9c9c9" : a.edge).multiplyScalar(edgeTex ? 1 : 0.85);
     edge.needsUpdate = true;
   };
   setEdge(app, fluteLayers);

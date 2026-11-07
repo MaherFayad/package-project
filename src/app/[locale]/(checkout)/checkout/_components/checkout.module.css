@@ -298,7 +298,8 @@
 }
 .segments {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
   gap: var(--p-space-100);
 }
 .segment {
@@ -514,10 +515,161 @@
   max-inline-size: 16rem;
 }
 
+/* ── Simplified journey (docs/audit/simplicity-2026-11/flows.md) ── */
+
+.legendSm {
+  padding: 0;
+  margin-block-end: var(--p-space-100);
+  color: var(--p-color-text-secondary);
+  font-size: var(--p-text-body-sm-font-size, 0.75rem);
+}
+
+/* Tier: radio dot + quantity (+ "Most ordered"), then total and per-box price */
+.tier {
+  min-block-size: 56px;
+}
+.tierMain {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--p-space-200);
+  flex-wrap: wrap;
+}
+.tierPrice {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+@media (max-width: 489px) {
+  .tierPrice {
+    align-items: flex-end;
+    text-align: end;
+  }
+}
+
+/* Chosen printer and saved address: icon + lines */
+.printer,
+.savedAddress {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--p-space-300);
+  padding: var(--p-space-300);
+  border-radius: var(--p-border-radius-200);
+  background: var(--p-color-bg-surface-secondary);
+}
+.printerIcon {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 32px;
+  block-size: 32px;
+  border-radius: var(--p-border-radius-full);
+  background: var(--p-color-bg-surface);
+}
+
+/* "Details" disclosures: technical facts stay one tap away (SIM-03, SIM-05) */
+.disclosure {
+  border: var(--p-border-width-025, 1px) solid var(--p-color-border-secondary, var(--p-color-border));
+  border-radius: var(--p-border-radius-200);
+  padding-inline: var(--p-space-300);
+}
+.disclosure > summary {
+  display: flex;
+  align-items: center;
+  min-block-size: 44px;
+  cursor: pointer;
+  font-weight: var(--p-font-weight-medium, 500);
+  color: var(--p-color-text-link, #005bd3);
+}
+.disclosure > summary:focus-visible {
+  outline: var(--p-border-width-050, 2px) solid var(--p-color-border-focus);
+  outline-offset: 2px;
+}
+.disclosure[open] {
+  padding-block-end: var(--p-space-300);
+}
+
+/* The approval tick stands out: it is the one decision on the review step */
+.approve {
+  padding: var(--p-space-300);
+  border-radius: var(--p-border-radius-200);
+  border: var(--p-border-width-050, 2px) solid var(--p-color-border-focus);
+}
+
+.totalNote {
+  display: block;
+  font-weight: var(--p-font-weight-regular, 400);
+  font-size: var(--p-text-body-sm-font-size, 0.75rem);
+  color: var(--p-color-text-secondary);
+}
+.arrives {
+  display: flex;
+  align-items: center;
+  gap: var(--p-space-150);
+  margin: 0;
+  font-weight: var(--p-font-weight-semibold);
+}
+/* R3-01: the governorate changed the designer's price or date. */
+.designerDiff {
+  margin: 0;
+  padding: var(--p-space-200) var(--p-space-300);
+  border-inline-start: 3px solid var(--p-color-icon-caution);
+  border-radius: var(--p-border-radius-200, 8px);
+  background: var(--p-color-bg-surface-secondary);
+  font-size: var(--p-text-body-md-font-size, 0.875rem);
+  line-height: 1.5;
+}
+.actionBarLabel {
+  font-size: var(--p-text-body-sm-font-size, 0.75rem);
+  color: var(--p-color-text-secondary);
+}
+/* Printer profile link: a 44px row, not a 17px line (SIM-13) */
+.offerLink {
+  display: flex;
+  align-items: center;
+  min-block-size: 44px;
+}
+
+/* Help box */
+.help {
+  display: grid;
+  gap: var(--p-space-200);
+  padding: var(--p-space-400);
+  border-radius: var(--p-border-radius-300);
+  border: var(--p-border-width-025, 1px) solid var(--p-color-border-secondary, var(--p-color-border));
+  background: var(--p-color-bg-surface);
+}
+.helpActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--p-space-200);
+}
+
 /* InstaPay values with their copy buttons (R6-01): value first, button after, wraps on phones. */
 .copyRow {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--p-space-200);
+}
+
+/* R1-18: the buyer's box (picture + everyday name) at the top of the order summary. */
+.summaryBox {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--p-space-300);
+}
+
+/* R1-11: what happens after the approval, under the one approval tick. */
+.nextSteps {
+  display: grid;
+  gap: var(--p-space-150);
+  padding: var(--p-space-300);
+  border-radius: var(--p-border-radius-200);
+  background: var(--p-color-bg-surface-secondary);
+}
+.nextList {
+  margin: 0;
+  padding-inline-start: var(--p-space-500);
+  display: grid;
+  gap: var(--p-space-100);
 }

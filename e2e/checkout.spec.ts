@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { sendOtp, uniquePhone } from "./fixtures/factory";
+import { sendOtp, uniquePhone, verifyNewAccount } from "./fixtures/factory";
 
 /**
  * Checkout main flow (seeded vendors + rate cards):
@@ -13,9 +13,7 @@ async function signIn(page: Page, lang: "en" | "ar" = "en") {
   await page.goto(`/${lang}/orders`);
   await expect(page).toHaveURL(new RegExp(`/${lang}/login\\?next=`));
   const code = await sendOtp(page, phone);
-  await page.getByLabel("Verification code").fill(code);
-  await page.getByLabel(/I agree to the terms/i).check();
-  await page.getByRole("button", { name: "Verify and continue" }).click();
+  await verifyNewAccount(page, code);
   await expect(page).toHaveURL(new RegExp(`:\\d+/${lang}/orders$`));
 }
 
@@ -64,42 +62,45 @@ test("buyer checks out a saved design, pays by mock card and tracks the order", 
   expect(res.status()).toBe(201);
   const { id: designId } = (await res.json()) as { id: string };
 
-  // 1) Quantity + printer
+  // 1) Quantity (Elba picks the printer; the other offers are behind "More options", R1-13)
   await page.goto(`/en/checkout/${designId}`);
   await expect(page.getByRole("heading", { level: 1, name: "Checkout" })).toBeVisible();
+  await expect(page.getByTestId("chosen-printer")).toContainText(/Printed by a vetted Elba printer/);
+  await page.getByTestId("printer-options").locator("summary").click();
   const offers = page.getByTestId("vendor-offer");
   await expect(offers.first()).toBeVisible();
   await expect(offers.first()).toContainText("Best match");
   await page.getByRole("radio", { name: /250 boxes/ }).check({ force: true });
-  await expect(offers.first()).toBeVisible();
+  await expect(page.getByTestId("chosen-printer")).toBeVisible();
   await expect(page.getByTestId("checkout-total")).toContainText("EGP");
-  const summary = page.getByRole("complementary").filter({ hasText: "Summary" });
-  await summary.getByRole("button", { name: "Continue" }).click();
+  const summary = page.getByRole("complementary").filter({ hasText: "Your order" });
+  await summary.getByRole("button", { name: "Continue to address" }).click();
 
-  // 2) Delivery
+  // 2) Address and approval on one step (a new account has no remembered address)
   await expect(page.getByLabel("Full name")).toBeVisible();
+  const toPay = summary.getByRole("button", { name: "Continue to payment" });
+  await toPay.click();
+  await expect(page.getByText("Write the name of the person who will receive the boxes.")).toBeVisible();
   await page.getByLabel("Full name").fill("Mona Adel");
   await page.getByLabel("Mobile number").fill("010 1234 5678");
   await page.getByLabel("Governorate").selectOption("Giza");
   await page.getByLabel("City or district").fill("Dokki");
   await page.getByLabel("Street address").fill("12 Tahrir St");
-  await summary.getByRole("button", { name: "Continue" }).click();
 
-  // 3) Proof review: approval is required
+  // Proof review on the same step: approval is required
   await expect(page.getByRole("tab", { name: "3D proof" })).toBeVisible();
   await page.getByRole("tab", { name: "Flat proof" }).click();
   await expect(page.getByRole("figure", { name: /Flat dieline proof/ })).toBeVisible();
-  const approve = summary.getByRole("button", { name: "Approve proof and pay" });
-  await approve.click();
-  await expect(page.getByText("Tick the box to approve the proof.")).toBeVisible();
-  await page.getByLabel("I approve this proof for printing").check();
-  await approve.click();
+  await toPay.click();
+  await expect(page.getByText("Tick the box to confirm you checked the design.")).toBeVisible();
+  await page.getByLabel("I checked the design. Print it as it is.").check();
+  await toPay.click();
 
-  // 4) Payment: a declined card, then a good one
+  // 3) Payment: a declined card, then a good one
   await expect(page).toHaveURL(/\/en\/checkout\/pay\//, { timeout: 30_000 });
   await expect(page.getByRole("heading", { level: 1, name: "Payment" })).toBeVisible();
   await expect(page.getByTestId("pay-total")).toContainText("EGP");
-  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.getByLabel("Card number").fill("4000 0000 0000 0002");
   await page.getByRole("button", { name: /^Pay / }).click();
   await expect(page.getByText("Your card was declined.")).toBeVisible();
@@ -115,8 +116,9 @@ test("buyer checks out a saved design, pays by mock card and tracks the order", 
   await expect(page.getByText("Payment received. Your order is going to the printer.")).toBeVisible();
   await expect(page.getByRole("heading", { level: 1 })).toContainText(/Order ELB-\d+/);
   const progress = page.getByRole("group", { name: "Progress" });
-  // Paid, not yet accepted by the printer: the current step is the printer's acceptance (R4-CR-04).
-  await expect(progress.locator('[aria-current="step"]')).toContainText("Printer acceptance");
+  // Paid, the printer has not confirmed yet: "Order received" stays current (R3-11); the detailed
+  // steps (printer acceptance first, R4-CR-04) sit behind "All steps in detail".
+  await expect(progress.locator('[aria-current="step"]')).toContainText("Order received");
   await expect(page.getByText("Payment confirmed: Card (Meeza, Visa, Mastercard)")).toBeVisible();
   const orderUrl = page.url().split("?")[0];
   const orderId = orderUrl.split("/").pop()!;
@@ -154,12 +156,13 @@ test("above 2,000 boxes the buyer sends a price request and sees it in the accou
   const { id: designId } = (await res.json()) as { id: string };
 
   await page.goto(`/en/checkout/${designId}`);
-  await expect(page.getByTestId("vendor-offer").first()).toBeVisible();
-  await page.getByLabel("Other quantity").fill("5,000");
-  await page.getByLabel("Other quantity").press("Enter");
+  await expect(page.getByTestId("checkout-total")).toBeVisible();
+  await page.getByRole("button", { name: "Another quantity" }).click();
+  await page.getByLabel("Number of boxes").fill("5,000");
+  await page.getByLabel("Number of boxes").press("Enter");
   await expect(page.getByRole("heading", { name: "Request a price for 5,000 boxes" })).toBeVisible();
   // No dead end: no disabled "Continue" for a quantity that cannot be ordered instantly.
-  await expect(page.getByRole("button", { name: "Continue" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Continue to address" })).toHaveCount(0);
   await page.getByLabel(/Anything we should know/).fill("Delivery in two batches");
   await page.getByRole("button", { name: "Request a price" }).click();
   await expect(page.getByText("Price request sent for 5,000 boxes")).toBeVisible();
@@ -195,7 +198,8 @@ test("a share link shows the checkout price to a signed-out visitor", async ({ p
   await page.goto(`/en/checkout/${designId}`);
   const tier = page.getByRole("radio", { name: /^500 boxes/ });
   const tierText = (await page.locator("label").filter({ has: tier }).first().textContent()) ?? "";
-  const unit = /EGP [\d,.]+/.exec(tierText)?.[0];
+  // Tiles show the total first, then "EGP x per box".
+  const unit = /(EGP [\d,.]+) per box/.exec(tierText)?.[1];
   expect(unit).toBeTruthy();
 
   const visitor = await browser.newContext({ baseURL });

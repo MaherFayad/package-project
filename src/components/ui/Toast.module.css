@@ -1,7 +1,9 @@
 .Region {
   position: fixed;
   inset-inline: 0;
-  inset-block-end: 0;
+  /* A page with a bottom action bar (the designer on phones) sets --e-toast-offset to the bar's
+     height, so toasts appear above the bar and never cover its buttons. */
+  inset-block-end: var(--e-toast-offset, 0px);
   z-index: var(--p-z-index-6);
   display: flex;
   flex-direction: column;

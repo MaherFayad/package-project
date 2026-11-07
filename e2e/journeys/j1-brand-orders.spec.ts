@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { SEEDED, cleanup, db, signInAs, track, uniquePhone } from "../fixtures/factory";
+import { SEEDED, cleanup, db, designerAllOptions, signInAs, track, uniquePhone, verifyNewAccount } from "../fixtures/factory";
 import { formatMoney } from "../../src/lib/format";
 import { FINISHES } from "../../src/lib/configurator/catalog";
 import { ONE_PX_PNG, ackCookies, ageShipments, localeOf, logoPng, noSideScroll, rx, sendOtpIn, tFor, tr, vatOf } from "./helpers";
@@ -20,12 +20,14 @@ test("J1 · coffee brand: design → share → OTP → company checkout → pay 
   const locale = localeOf(info);
   const t = tFor(locale);
   await ackCookies(page.context(), baseURL!);
+  // Gold foil and the white board are under "All options" (the designer opens in Basics).
+  await designerAllOptions(page.context());
 
-  // 1. Home → "Start designing free" opens the /start landing (R6); its CTA opens the mailer box in the 3D designer.
+  // 1. Home → the header's "Get your box price" pill opens the /boxes chooser (R1-04); "Order this box" on the mailer opens the 3D designer.
   await page.goto(`/${locale}`);
-  await page.getByRole("link", { name: tr(locale, "Start designing free") }).first().click();
-  await expect(page).toHaveURL(new RegExp(`/${locale}/start$`), { timeout: 30_000 });
-  await page.getByRole("main").getByRole("link", { name: tr(locale, "Start designing free") }).first().click();
+  await page.getByRole("banner").getByRole("link", { name: tr(locale, "Get your box price") }).filter({ visible: true }).first().click();
+  await expect(page).toHaveURL(new RegExp(`/${locale}/boxes$`), { timeout: 30_000 });
+  await page.getByRole("main").getByRole("link", { name: new RegExp(`^${tr(locale, "Order this box")}`) }).first().click();
   await expect(page).toHaveURL(new RegExp(`/${locale}/design`), { timeout: 30_000 });
   const stage = page.getByRole("application", { name: tr(locale, "3D preview of your box") });
   await expect(stage).toBeVisible({ timeout: 30_000 });
@@ -62,12 +64,12 @@ test("J1 · coffee brand: design → share → OTP → company checkout → pay 
     await more.click();
     await page.getByRole("menuitem", { name: t("designer.share.button") }).click();
   } else await page.getByRole("button", { name: t("designer.share.button") }).first().click();
-  const gate = page.getByRole("dialog", { name: tr(locale, "Create your free account") });
+  const gate = page.getByRole("dialog", { name: tr(locale, "Your mobile number to continue") });
   await expect(gate).toBeVisible();
   const phone = await uniquePhone("12");
-  await gate.getByLabel(tr(locale, "Verification code")).fill(await sendOtpIn(gate, phone.local, locale));
-  await gate.getByLabel(t("auth.acceptTerms")).check();
-  await gate.getByRole("button", { name: tr(locale, "Verify and continue") }).click();
+  await verifyNewAccount(gate, await sendOtpIn(gate, phone.local, locale), {
+    labels: { code: tr(locale, "Verification code"), terms: t("auth.acceptTerms"), marketing: t("auth.marketingConsent"), verify: tr(locale, "Verify and continue") },
+  });
   const share = page.getByRole("dialog", { name: t("designer.share.heading") });
   const link = share.getByRole("textbox").first();
   await expect(link).toHaveValue(/\/s\/[\w-]+$/, { timeout: 30_000 });
@@ -88,23 +90,23 @@ test("J1 · coffee brand: design → share → OTP → company checkout → pay 
   await expect(price.getByText(t("designer.price.total"))).toBeVisible({ timeout: 30_000 });
   await price.getByRole("button", { name: t("designer.order.button") }).click();
   await expect(page).toHaveURL(new RegExp(`/${locale}/checkout/[\\w-]+$`), { timeout: 30_000 });
-  await expect(page.getByTestId("vendor-offer").first()).toBeVisible({ timeout: 30_000 });
-  const summary = page.getByRole("complementary").filter({ hasText: t("checkout.summary.title") });
-  await summary.getByRole("button", { name: t("checkout.actions.continue") }).click();
+  await expect(page.getByTestId("checkout-total")).toBeVisible({ timeout: 30_000 });
+  const summary = page.getByRole("complementary").filter({ hasText: t("buyer.easy.summaryTitle") });
+  await summary.getByRole("button", { name: t("buyer.easy.actions.toAddress") }).click();
 
-  // 5. Delivery + company invoice (name and 9-digit tax number), proof approval.
+  // 5. Address + company invoice (name and 9-digit tax number) and proof approval, one step.
   await page.getByLabel(t("checkout.address.name")).fill("Omar Bunn");
   await page.getByLabel(t("checkout.address.phone")).fill(phone.local);
   await page.getByLabel(t("checkout.address.governorate")).selectOption("Cairo");
   await page.getByLabel(t("checkout.address.city")).fill("Zamalek");
   await page.getByLabel(t("checkout.address.street")).fill("12 Brazil St");
+  await page.locator("details").filter({ hasText: t("buyer.easy.address.company") }).locator("summary").click();
   await page.getByLabel(t("buyer.company.toggle")).check();
   await page.getByLabel(t("buyer.company.name")).fill("Bunn Coffee LLC");
   await page.getByLabel(t("buyer.company.taxId")).fill("123456789");
-  await summary.getByRole("button", { name: t("checkout.actions.continue") }).click();
   await expect(page.getByRole("tab", { name: t("checkout.proof.tab3d") })).toBeVisible({ timeout: 30_000 });
-  await page.getByLabel(t("checkout.proof.approve")).check();
-  await summary.getByRole("button", { name: t("checkout.actions.approveAndPay") }).click();
+  await page.getByLabel(t("buyer.easy.proof.approve")).check();
+  await summary.getByRole("button", { name: t("buyer.easy.actions.toPay") }).click();
 
   // 6. Payment page: the amount due is the order's total; VAT is 14% of the ex-VAT subtotal.
   await expect(page).toHaveURL(new RegExp(`/${locale}/checkout/pay/`), { timeout: 30_000 });
@@ -115,7 +117,7 @@ test("J1 · coffee brand: design → share → OTP → company checkout → pay 
   const total = formatMoney(order.totalPiasters, locale);
   await expect(page.getByRole("main")).toContainText(total);
   expect(order.items[0]!.config).toMatchObject({ finishes: [expect.objectContaining({ code: "FOIL_GOLD" })] });
-  await page.getByRole("button", { name: t("checkout.actions.continue") }).click();
+  await page.getByRole("button", { name: t("buyer.easy.pay.next"), exact: true }).click();
   await page.getByLabel(t("payment.card.number")).fill("4242 4242 4242 4242");
   await page.getByLabel(t("payment.card.expiry")).fill("12/30");
   await page.getByLabel(t("payment.card.cvc")).fill("123");
@@ -169,7 +171,9 @@ test("J1 · coffee brand: design → share → OTP → company checkout → pay 
   // R5-JR-12: ops see who is invoiced (frozen on the order), not "No name".
   await expect(ap.getByRole("main")).toContainText(t("admin.order.buyer.company", { name: "Bunn Coffee LLC", taxId: "123-456-789" }));
   await ap.getByRole("button", { name: t("admin.order.qc.approve") }).click();
+  await ap.getByRole("dialog").getByRole("button", { name: t("admin.order.qc.approve") }).click();
   await ap.getByRole("button", { name: t("admin.order.ship.action") }).click();
+  await ap.getByRole("dialog").getByRole("button", { name: t("admin.order.ship.action") }).click();
   await expect.poll(async () => (await db.order.findUniqueOrThrow({ where: { id: orderId } })).status, { timeout: 30_000 }).toBe("SHIPPED");
   await actx.close();
 

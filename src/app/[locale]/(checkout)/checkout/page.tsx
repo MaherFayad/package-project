@@ -3,7 +3,8 @@ import { getT, toLocale, type DictKey } from "@/i18n";
 import { requireUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { fromJson } from "@/lib/json";
-import { formatDate, formatDims } from "@/lib/format";
+import { formatDate } from "@/lib/format";
+import { boxName, formatDimsCm } from "@/lib/orders/box-name";
 import type { Dims, StructureCode } from "@/types";
 import { designerPath } from "@/components/designer/lib/catalog";
 import { modelPoster } from "@/lib/orders/poster";
@@ -54,7 +55,9 @@ export default async function CheckoutStartPage({ params }: { params: Promise<{ 
         <BlockStack gap="300">
           {designs.map((d) => {
             const code = d.structureCode as StructureCode;
-            const name = d.name || t("checkout.untitled");
+            const dims = fromJson<Dims>(d.dims);
+            // R1-18: no "Untitled box": a design without a name is called by its box and size.
+            const name = d.name.trim() || boxName({ modelCode: d.modelCode, structureCode: d.structureCode, dims }, locale, t(`structures.${code}` as DictKey));
             return (
               <Card key={d.id}>
                 <InlineStack gap="300" blockAlign="center" align="space-between">
@@ -65,7 +68,7 @@ export default async function CheckoutStartPage({ params }: { params: Promise<{ 
                         {name}
                       </Text>
                       <Text as="p" variant="bodySm" tone="subdued">
-                        {t(`structures.${code}` as DictKey)} · {formatDims(fromJson<Dims>(d.dims), locale)}
+                        {t(`structures.${code}` as DictKey)} · {formatDimsCm(dims, locale)}
                       </Text>
                       <Text as="p" variant="bodySm" tone="subdued">
                         {t("checkout.start.updated", { date: formatDate(d.updatedAt, locale) })}

@@ -84,11 +84,8 @@ export const ConfigPanel = memo(function ConfigPanel(props: ConfigPanelProps) {
             <Text as="p" variant="bodySm" tone="subdued">
               <bdi data-testid="model-neck">{neck}</bdi>
             </Text>
-          ) : model.standard && model.standard !== "none" ? (
-            <Text as="p" variant="bodySm" tone="subdued">
-              <span dir="ltr">{model.standard}</span>
-            </Text>
           ) : null}
+          {/* R2-07: no FEFCO / ECMA code for buyers; printers get it on the order's print sheet. */}
           {/* R4-B-10: quote-priced models are not "priced as" their base; preview models (filling
               line, rare) are not made as it by Egyptian printers either. */}
           {orderMode === "preview" ? (
@@ -120,6 +117,13 @@ export const ConfigPanel = memo(function ConfigPanel(props: ConfigPanelProps) {
 
 /* ───────────────────────────── shared bits ───────────────────────────── */
 
+/** R2-07: the plain board name a shop owner reads ("Natural brown board"), the trade grade when there is none. */
+function plainMaterial(t: (k: DictKey) => string, code: string): string {
+  const key = `materialsPlain.${code}` as DictKey;
+  const plain = t(key);
+  return plain === key ? t(`materials.${code}` as DictKey) : plain;
+}
+
 function OptionGroup<T extends string>({
   legend,
   type,
@@ -140,8 +144,15 @@ function OptionGroup<T extends string>({
   extra?: (c: Choice<T>) => ReactNode;
 }) {
   const { t, locale } = useI18n();
+  // R2-07: a warning shared by two or more options (the foil line-width note on every foil colour)
+  // shows once under the group; each of those options is described by that one note.
+  const warnCount = new Map<string, number>();
+  for (const c of choices) if (c.warning && !(c.reason && !c.enabled)) warnCount.set(c.warning[locale], (warnCount.get(c.warning[locale]) ?? 0) + 1);
+  const shared = [...warnCount].filter(([, n]) => n > 1).map(([w]) => w);
+  const sharedId = (w: string) => `${name}-shared-${shared.indexOf(w)}`;
   const row = (c: Choice<T>) => {
     const checked = selected.includes(c.value);
+    const sharedWarn = c.warning && shared.includes(c.warning[locale]) && !(c.reason && !c.enabled) ? c.warning[locale] : null;
     // A selected option the rules no longer allow stays editable (so it can be removed).
     const disabled = !c.enabled && !checked;
     const id = `${name}-${c.value}`;
@@ -158,7 +169,7 @@ function OptionGroup<T extends string>({
             // a11y R4-07 / R5: the whole row stays the click target, but the name is the short
             // label only; the reason, warning and finish placement are the description (2.5.3, 2.4.6).
             aria-labelledby={`${id}-name`}
-            aria-describedby={[c.reason || c.warning ? `${id}-note` : "", checked && extra ? `${id}-extra` : ""].filter(Boolean).join(" ") || undefined}
+            aria-describedby={[sharedWarn ? sharedId(sharedWarn) : c.reason || c.warning ? `${id}-note` : "", checked && extra ? `${id}-extra` : ""].filter(Boolean).join(" ") || undefined}
             onChange={(e) => onChange(c.value, e.currentTarget.checked)}
           />
           <span className={styles.optionText}>
@@ -169,7 +180,7 @@ function OptionGroup<T extends string>({
               <span id={`${id}-note`} className={styles.optionReason}>
                 {t("library.panel.notAvailable")}: {c.reason[locale]}
               </span>
-            ) : c.warning ? (
+            ) : c.warning && !sharedWarn ? (
               <span id={`${id}-note`} className={styles.optionWarning}>
                 {c.warning[locale]}
               </span>
@@ -189,6 +200,11 @@ function OptionGroup<T extends string>({
     <fieldset className={styles.group} data-testid={`group-${name}`}>
       <legend className={styles.groupTitle}>{legend}</legend>
       <ul className={styles.optionList}>{on.map(row)}</ul>
+      {shared.map((w) => (
+        <p key={w} id={sharedId(w)} className={styles.optionWarning}>
+          {w}
+        </p>
+      ))}
       {fold ? (
         <details className={styles.unavailable}>
           <summary>{t("library.panel.unavailableCount", { count: formatNumber(off.length) })}</summary>
@@ -373,9 +389,14 @@ function BoxSection({ doc, model, geo, view, onView, onGeometry, onFinish, onPri
         name="material"
         choices={materials}
         selected={[doc.materialCode]}
-        label={(c) => t(`materials.${c.value}` as DictKey)}
+        label={(c) => plainMaterial(t, c.value)}
         onChange={(v) => onGeometry({ materialCode: v as MaterialCode })}
       />
+      {materials.some((m) => m.value.includes("FLUTE")) ? (
+        <Text as="p" variant="bodySm" tone="subdued">
+          {t("designer.box.boardHelp")}
+        </Text>
+      ) : null}
 
       <OptionGroup
         legend={t("library.panel.printSides")}
@@ -386,6 +407,9 @@ function BoxSection({ doc, model, geo, view, onView, onGeometry, onFinish, onPri
         label={(c) => (c.value === "OUTSIDE" ? t("designer.box.printOutside") : t("designer.box.printBoth"))}
         onChange={(v) => onPrintSides(v)}
       />
+      <Text as="p" variant="bodySm" tone="subdued">
+        {t("designer.box.printSidesHelp")}
+      </Text>
 
       <FinishesGroup doc={doc} model={model} onFinish={onFinish} />
 
@@ -639,7 +663,7 @@ function VesselSection({ doc, model, geo, view, onView, onGeometry, onFinish }: 
         name="material"
         choices={materials}
         selected={[doc.materialCode]}
-        label={(c) => t(`materials.${c.value}` as DictKey)}
+        label={(c) => plainMaterial(t, c.value)}
         onChange={(val) => onGeometry({ materialCode: val as MaterialCode })}
       />
 

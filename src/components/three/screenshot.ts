@@ -14,6 +14,11 @@ export interface ScreenshotOptions {
   background?: string | null;
   /** Upper bound for the longest side (also capped by the GPU). Default 4096. */
   maxSize?: number;
+  /**
+   * Render this many times larger (capped by the GPU) and scale down with high-quality smoothing:
+   * cleaner edges, fold lines and print detail than the canvas's own MSAA. Default 1.
+   */
+  supersample?: number;
 }
 
 /**
@@ -36,6 +41,10 @@ export function captureScreenshot(gl: WebGLRenderer, scene: Scene, camera: Camer
   const k = Math.min(1, gpuMax / Math.max(w, h));
   w = Math.max(1, Math.floor(w * k));
   h = Math.max(1, Math.floor(h * k));
+  // render size (supersampled), then the output size
+  const ss = Math.max(1, Math.min(opts.supersample ?? 1, (gl.capabilities.maxTextureSize || 4096) / Math.max(w, h), 8192 / Math.max(w, h)));
+  const rw = Math.max(1, Math.floor(w * ss));
+  const rh = Math.max(1, Math.floor(h * ss));
 
   const persp = camera instanceof PerspectiveCamera ? camera : null;
   const prevAspect = persp?.aspect ?? 1;
@@ -45,9 +54,9 @@ export function captureScreenshot(gl: WebGLRenderer, scene: Scene, camera: Camer
   let blobPromise: Promise<Blob>;
   try {
     gl.setPixelRatio(1);
-    gl.setSize(w, h, false);
+    gl.setSize(rw, rh, false);
     if (persp) {
-      persp.aspect = w / h;
+      persp.aspect = rw / rh;
       if (prevView) persp.clearViewOffset();
       persp.updateProjectionMatrix();
     }
@@ -55,8 +64,22 @@ export function captureScreenshot(gl: WebGLRenderer, scene: Scene, camera: Camer
     if (bg) gl.setClearColor(new Color(bg), 1);
     else gl.setClearColor(prevClear, 0);
     gl.render(scene, camera);
+    let out: HTMLCanvasElement = canvas;
+    if (rw !== w || rh !== h) {
+      // read the frame in this task (no preserveDrawingBuffer) and scale it down
+      out = document.createElement("canvas");
+      out.width = w;
+      out.height = h;
+      const ctx = out.getContext("2d");
+      if (ctx) {
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(canvas, 0, 0, rw, rh, 0, 0, w, h);
+      } else out = canvas;
+    }
+    const src = out;
     blobPromise = new Promise<Blob>((resolve, reject) => {
-      canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Screenshot failed"))), mime, opts.quality);
+      src.toBlob((b) => (b ? resolve(b) : reject(new Error("Screenshot failed"))), mime, opts.quality);
     });
   } finally {
     gl.setClearColor(prevClear, prevAlpha);

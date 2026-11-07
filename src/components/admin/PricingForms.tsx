@@ -19,6 +19,7 @@ import type { ZoneRate } from "@/lib/pricing/config";
 import { MATERIAL_CODES, type MaterialCode } from "@/types";
 import { applyIndexUpdateAction, previewPricingAction, savePricingSettingsAction, type PricingPreview } from "./server/actions";
 import { bumpBoard, type SettingsForm } from "./lib/pricingSettings";
+import { settingsMarginPct, TARGET_MARGIN_PCT } from "./lib/orders";
 import { useAdminSaveBar } from "./AdminFrame";
 import { adminStyles } from "./charts";
 import { fieldError, useAdminAction, useAdminErrorText } from "./useAdminAction";
@@ -83,8 +84,9 @@ function fromDraft(d: ReturnType<typeof toDraft>): SettingsForm {
   };
 }
 
-export function PricingSettingsForm({ initial }: { initial: SettingsForm }) {
-  const { t } = useI18n();
+/** prepayDiscountPct: the checkout setting, so the margin help can show the order-side figure (A-02). */
+export function PricingSettingsForm({ initial, prepayDiscountPct = 0 }: { initial: SettingsForm; prepayDiscountPct?: number }) {
+  const { t, locale } = useI18n();
   const { run, busy } = useAdminAction();
   const errorText = useAdminErrorText();
   const start = useMemo(() => toDraft(initial), [initial]);
@@ -107,9 +109,19 @@ export function PricingSettingsForm({ initial }: { initial: SettingsForm }) {
 
   const setZone = (z: DeliveryZone, f: keyof ZoneRate, v: string) => setDraft((d) => ({ ...d, zones: { ...d.zones, [z]: { ...d.zones[z], [f]: v } } }));
   const err = (k: string) => fieldError(res, k, errorText);
-  // Business plan target: 20–30% on top of the vendor buy price. Allowed, but called out.
+  // A-02: the setting is a markup on the vendor buy price; orders show margin as a share of the
+  // sale price after the prepay discount. Both are shown here, and the business-plan target
+  // (20 to 30% of the sale price) is checked on the order-side figure, the same one orders use.
   const marginNum = parseNumberInput(draft.margin);
-  const marginOutside = draft.margin.trim() !== "" && Number.isFinite(marginNum) && (marginNum < 20 || marginNum > 30);
+  const marginKnown = draft.margin.trim() !== "" && Number.isFinite(marginNum);
+  const afterPrepay = marginKnown ? settingsMarginPct(marginNum / 100, prepayDiscountPct) : null;
+  const marginOutside = afterPrepay !== null && (afterPrepay < TARGET_MARGIN_PCT.min || afterPrepay > TARGET_MARGIN_PCT.max);
+  const marginVars = {
+    markup: formatPercent(marginKnown ? marginNum : 0, locale),
+    sale: formatPercent(settingsMarginPct(marginKnown ? marginNum / 100 : 0), locale),
+    afterPrepay: formatPercent(afterPrepay ?? 0, locale),
+    prepay: formatPercent(prepayDiscountPct, locale),
+  };
 
   return (
     <BlockStack gap="400">
@@ -124,7 +136,7 @@ export function PricingSettingsForm({ initial }: { initial: SettingsForm }) {
               suffix="%"
               value={draft.margin}
               onChange={(v) => setDraft((d) => ({ ...d, margin: v }))}
-              helpText={marginOutside ? t("admin.pricing.settings.marginOutside") : t("admin.pricing.settings.marginHelp")}
+              helpText={marginOutside ? t("admin.pricing.settings.marginOutside", marginVars) : t("admin.pricing.settings.marginHelp", marginVars)}
               error={err("marginPct")}
             />
             <TextField

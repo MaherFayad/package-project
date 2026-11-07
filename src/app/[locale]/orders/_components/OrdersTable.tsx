@@ -7,6 +7,7 @@ import type { Locale, OrderStatus } from "@/types";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n";
 import { paymentTone, statusTone } from "@/lib/orders/status-tone";
+import { buyerStatusKey } from "@/lib/orders/buyer-track";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { EmptyBoxIllustration, EmptyState } from "@/components/ui/EmptyState";
@@ -21,7 +22,8 @@ export interface OrderRow {
   number: string;
   placedAt: string;
   placedLabel: string;
-  vendor: string;
+  /** Everyday name of the box (R1-13: the buyer reads the box, not the printer). */
+  box: string;
   quantity: number;
   totalPiasters: number;
   status: OrderStatus;
@@ -42,7 +44,7 @@ export function OrdersTable({ rows, locale }: { rows: OrderRow[]; locale: Locale
   const [q, setQ] = useState("");
   const visible = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    return rows.filter((r) => VIEWS[view].match(r.status) && (!needle || r.number.toLowerCase().includes(needle) || r.vendor.toLowerCase().includes(needle)));
+    return rows.filter((r) => VIEWS[view].match(r.status) && (!needle || r.number.toLowerCase().includes(needle) || r.box.toLowerCase().includes(needle)));
   }, [rows, view, q]);
 
   const filters = (
@@ -87,11 +89,11 @@ export function OrdersTable({ rows, locale }: { rows: OrderRow[]; locale: Locale
                         <PriceTag amount={r.totalPiasters} locale={locale} alwaysDecimals />
                       </span>
                       <Text as="span" variant="bodySm" tone="subdued">
-                        {r.placedLabel} · {r.vendor} · {t("orders.boxes", { qty: r.quantity.toLocaleString("en-US") })}
+                        {r.placedLabel} · {r.box} · {t("orders.boxes", { qty: r.quantity.toLocaleString("en-US") })}
                       </Text>
                       <span className={styles.cardBadges}>
                         <Badge tone={b.tone} progress={b.progress}>
-                          {r.status === "PAID" ? t("buyer.awaitingPrinter") : t(`orderStatus.${r.status}` as DictKey)}
+                          {t(buyerStatusKey(r.status) as DictKey)}
                         </Badge>
                         {r.paymentStatus === "REFUNDED" ? payBadge(r) : null}
                       </span>
@@ -115,7 +117,7 @@ export function OrdersTable({ rows, locale }: { rows: OrderRow[]; locale: Locale
       headings={[
         { title: t("orders.col.order") },
         { title: t("orders.col.date") },
-        { title: t("orders.col.printer") },
+        { title: t("orders.col.box") },
         { title: t("orders.col.items"), alignment: "end" },
         { title: t("orders.col.total"), alignment: "end" },
         { title: t("orders.col.payment") },
@@ -137,7 +139,7 @@ export function OrdersTable({ rows, locale }: { rows: OrderRow[]; locale: Locale
               </IndexTableRowLink>
             </IndexTableCell>
             <IndexTableCell>{r.placedLabel}</IndexTableCell>
-            <IndexTableCell>{r.vendor}</IndexTableCell>
+            <IndexTableCell>{r.box}</IndexTableCell>
             <IndexTableCell alignment="end" numeric>
               {r.quantity.toLocaleString("en-US")}
             </IndexTableCell>
@@ -147,7 +149,7 @@ export function OrdersTable({ rows, locale }: { rows: OrderRow[]; locale: Locale
             <IndexTableCell>{payBadge(r)}</IndexTableCell>
             <IndexTableCell>
               <Badge tone={b.tone} progress={b.progress}>
-                {r.status === "PAID" ? t("buyer.awaitingPrinter") : t(`orderStatus.${r.status}` as DictKey)}
+                {t(buyerStatusKey(r.status) as DictKey)}
               </Badge>
             </IndexTableCell>
           </IndexTableRow>

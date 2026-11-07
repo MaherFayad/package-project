@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import type { OrderStatus } from "@/types";
-import { getT, toLocale } from "@/i18n";
+import type { Dims, OrderStatus } from "@/types";
+import { getT, toLocale, type DictKey } from "@/i18n";
+import { fromJson } from "@/lib/json";
+import { boxName } from "@/lib/orders/box-name";
+import { modelPoster } from "@/lib/orders/poster";
 import { requireUser } from "@/lib/auth/session";
+import { formatEgyptPhone } from "@/lib/phone";
 import { mockPaymentsEnabled, paymentConfig } from "@/lib/payments";
 import { getOrderForViewer, moneyOf, paymentView } from "@/lib/orders/service";
 import { isQuoteValid } from "@/lib/orders/totals";
+import { supportContact } from "@/lib/support";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState, EmptyBoxIllustration } from "@/components/ui/EmptyState";
@@ -43,13 +48,15 @@ export default async function PayPage({ params }: { params: Params }) {
   const resume = pending.find((p) => p.fawry && new Date(p.fawry.expiresAt).getTime() > Date.now()) ?? pending.find((p) => p.instapay) ?? null;
   const money = moneyOf(order);
   const designId = order.items[0]?.proof?.designId ?? null;
+  const item = order.items[0];
 
   return (
     <PaymentClient
       locale={locale}
       orderId={order.id}
       number={order.number}
-      vendorName={locale === "ar" ? order.vendor.nameAr : order.vendor.nameEn}
+      boxLabel={item ? boxName({ modelCode: item.modelCode, structureCode: item.structureCode, dims: fromJson<Dims>(item.dims) }, locale, t(`structures.${item.structureCode}` as DictKey)) : t("buyer.order")}
+      thumbnail={item?.proof?.previewUrl ?? modelPoster(item?.modelCode, item?.structureCode)}
       quantity={order.items.reduce((s, i) => s + i.quantity, 0)}
       lines={money.lines ?? []}
       vatPiasters={order.vatPiasters}
@@ -61,6 +68,9 @@ export default async function PayPage({ params }: { params: Params }) {
       fawryHours={cfg.fawryExpiryHours}
       methods={cfg.methods}
       resume={resume}
+      support={supportContact()}
+      deliveryDays={order.dueDate ? Math.max(1, Math.round((order.dueDate.getTime() - order.placedAt.getTime()) / 86_400_000)) : null}
+      walletPhone={formatEgyptPhone(user.phone)}
     />
   );
 }
