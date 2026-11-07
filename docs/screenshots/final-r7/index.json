@@ -1,0 +1,1034 @@
+[
+ {
+  "group": "1-public",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar",
+  "status": 200,
+  "file": "pages/1-public__ar-desktop__home.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/start",
+  "status": 200,
+  "file": "pages/1-public__ar-desktop__start.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/why-elba",
+  "status": 200,
+  "file": "pages/1-public__ar-desktop__why-elba.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/pricing",
+  "status": 200,
+  "file": "pages/1-public__ar-desktop__pricing.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/designer",
+  "status": 200,
+  "file": "pages/1-public__ar-desktop__designer.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/boxes",
+  "status": 200,
+  "file": "pages/1-public__ar-desktop__boxes.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/boxes/mailer-box",
+  "status": 200,
+  "file": "pages/1-public__ar-desktop__boxes_mailer-box.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/catalog",
+  "status": 200,
+  "file": "pages/1-public__ar-desktop__catalog.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/bottles",
+  "status": 200,
+  "file": "pages/1-public__ar-desktop__bottles.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/vendors",
+  "status": 200,
+  "file": "pages/1-public__ar-desktop__vendors.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/legal/terms",
+  "status": 200,
+  "file": "pages/1-public__ar-desktop__legal_terms.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/legal/privacy",
+  "status": 200,
+  "file": "pages/1-public__ar-desktop__legal_privacy.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/login",
+  "status": 200,
+  "file": "pages/1-public__ar-desktop__login.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/no-such-page",
+  "status": 404,
+  "file": "pages/1-public__ar-desktop__no-such-page.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/vendors/obour-box-works",
+  "status": 200,
+  "file": "pages/1-public__ar-desktop__vendors_obour-box-works.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/catalog/shipping-box",
+  "status": 200,
+  "file": "pages/1-public__ar-desktop__catalog_shipping-box.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en",
+  "status": 200,
+  "file": "pages/1-public__en-desktop__home.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/start",
+  "status": 200,
+  "file": "pages/1-public__en-desktop__start.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/why-elba",
+  "status": 200,
+  "file": "pages/1-public__en-desktop__why-elba.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/pricing",
+  "status": 200,
+  "file": "pages/1-public__en-desktop__pricing.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/designer",
+  "status": 200,
+  "file": "pages/1-public__en-desktop__designer.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/boxes",
+  "status": 200,
+  "file": "pages/1-public__en-desktop__boxes.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/boxes/mailer-box",
+  "status": 200,
+  "file": "pages/1-public__en-desktop__boxes_mailer-box.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/catalog",
+  "status": 200,
+  "file": "pages/1-public__en-desktop__catalog.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/bottles",
+  "status": 200,
+  "file": "pages/1-public__en-desktop__bottles.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/vendors",
+  "status": 200,
+  "file": "pages/1-public__en-desktop__vendors.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/legal/terms",
+  "status": 200,
+  "file": "pages/1-public__en-desktop__legal_terms.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/legal/privacy",
+  "status": 200,
+  "file": "pages/1-public__en-desktop__legal_privacy.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/login",
+  "status": 200,
+  "file": "pages/1-public__en-desktop__login.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/no-such-page",
+  "status": 404,
+  "file": "pages/1-public__en-desktop__no-such-page.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/vendors/obour-box-works",
+  "status": 200,
+  "file": "pages/1-public__en-desktop__vendors_obour-box-works.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/catalog/shipping-box",
+  "status": 200,
+  "file": "pages/1-public__en-desktop__catalog_shipping-box.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar",
+  "status": 200,
+  "file": "pages/1-public__ar-phone__home.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/start",
+  "status": 200,
+  "file": "pages/1-public__ar-phone__start.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/why-elba",
+  "status": 200,
+  "file": "pages/1-public__ar-phone__why-elba.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/pricing",
+  "status": 200,
+  "file": "pages/1-public__ar-phone__pricing.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/designer",
+  "status": 200,
+  "file": "pages/1-public__ar-phone__designer.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/boxes",
+  "status": 200,
+  "file": "pages/1-public__ar-phone__boxes.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/boxes/mailer-box",
+  "status": 200,
+  "file": "pages/1-public__ar-phone__boxes_mailer-box.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/catalog",
+  "status": 200,
+  "file": "pages/1-public__ar-phone__catalog.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/bottles",
+  "status": 200,
+  "file": "pages/1-public__ar-phone__bottles.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/vendors",
+  "status": 200,
+  "file": "pages/1-public__ar-phone__vendors.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/legal/terms",
+  "status": 200,
+  "file": "pages/1-public__ar-phone__legal_terms.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/legal/privacy",
+  "status": 200,
+  "file": "pages/1-public__ar-phone__legal_privacy.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/login",
+  "status": 200,
+  "file": "pages/1-public__ar-phone__login.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/no-such-page",
+  "status": 404,
+  "file": "pages/1-public__ar-phone__no-such-page.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/vendors/obour-box-works",
+  "status": 200,
+  "file": "pages/1-public__ar-phone__vendors_obour-box-works.jpg"
+ },
+ {
+  "group": "1-public",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/catalog/shipping-box",
+  "status": 200,
+  "file": "pages/1-public__ar-phone__catalog_shipping-box.jpg"
+ },
+ {
+  "group": "2-designer",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/design",
+  "status": 200,
+  "file": "pages/2-designer__ar-desktop__design.jpg"
+ },
+ {
+  "group": "2-designer",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/design/mailer-box",
+  "status": 200,
+  "file": "pages/2-designer__ar-desktop__design_mailer-box.jpg"
+ },
+ {
+  "group": "2-designer",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/design/fefco-0201",
+  "status": 200,
+  "file": "pages/2-designer__ar-desktop__design_fefco-0201.jpg"
+ },
+ {
+  "group": "2-designer",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/design",
+  "status": 200,
+  "file": "pages/2-designer__en-desktop__design.jpg"
+ },
+ {
+  "group": "2-designer",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/design/mailer-box",
+  "status": 200,
+  "file": "pages/2-designer__en-desktop__design_mailer-box.jpg"
+ },
+ {
+  "group": "2-designer",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/design/fefco-0201",
+  "status": 200,
+  "file": "pages/2-designer__en-desktop__design_fefco-0201.jpg"
+ },
+ {
+  "group": "2-designer",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/design",
+  "status": 200,
+  "file": "pages/2-designer__ar-phone__design.jpg"
+ },
+ {
+  "group": "2-designer",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/design/mailer-box",
+  "status": 200,
+  "file": "pages/2-designer__ar-phone__design_mailer-box.jpg"
+ },
+ {
+  "group": "2-designer",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/design/fefco-0201",
+  "status": 200,
+  "file": "pages/2-designer__ar-phone__design_fefco-0201.jpg"
+ },
+ {
+  "group": "3-buyer",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/account",
+  "status": 200,
+  "file": "pages/3-buyer__ar-desktop__account.jpg"
+ },
+ {
+  "group": "3-buyer",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/orders",
+  "status": 200,
+  "file": "pages/3-buyer__ar-desktop__orders.jpg"
+ },
+ {
+  "group": "3-buyer",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/orders/cmw5ysebm00gu7dilpov103vt",
+  "status": null,
+  "file": "pages/3-buyer__ar-desktop__orders_cmw5ysebm00gu7dilpov103vt.jpg"
+ },
+ {
+  "group": "3-buyer",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/orders/cmw5ysebm00gu7dilpov103vt/invoice",
+  "status": 200,
+  "file": "pages/3-buyer__ar-desktop__orders_cmw5ysebm00gu7dilpov103vt_invoice.jpg"
+ },
+ {
+  "group": "3-buyer",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/account",
+  "status": 200,
+  "file": "pages/3-buyer__en-desktop__account.jpg"
+ },
+ {
+  "group": "3-buyer",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/orders",
+  "status": 200,
+  "file": "pages/3-buyer__en-desktop__orders.jpg"
+ },
+ {
+  "group": "3-buyer",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/orders/cmw5ysebm00gu7dilpov103vt",
+  "status": null,
+  "file": "pages/3-buyer__en-desktop__orders_cmw5ysebm00gu7dilpov103vt.jpg"
+ },
+ {
+  "group": "3-buyer",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/orders/cmw5ysebm00gu7dilpov103vt/invoice",
+  "status": 200,
+  "file": "pages/3-buyer__en-desktop__orders_cmw5ysebm00gu7dilpov103vt_invoice.jpg"
+ },
+ {
+  "group": "3-buyer",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/account",
+  "status": 200,
+  "file": "pages/3-buyer__ar-phone__account.jpg"
+ },
+ {
+  "group": "3-buyer",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/orders",
+  "status": 200,
+  "file": "pages/3-buyer__ar-phone__orders.jpg"
+ },
+ {
+  "group": "3-buyer",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/orders/cmw5ysebm00gu7dilpov103vt",
+  "status": null,
+  "file": "pages/3-buyer__ar-phone__orders_cmw5ysebm00gu7dilpov103vt.jpg"
+ },
+ {
+  "group": "3-buyer",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/orders/cmw5ysebm00gu7dilpov103vt/invoice",
+  "status": 200,
+  "file": "pages/3-buyer__ar-phone__orders_cmw5ysebm00gu7dilpov103vt_invoice.jpg"
+ },
+ {
+  "group": "4-vendor",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/vendor",
+  "status": 200,
+  "file": "pages/4-vendor__ar-desktop__vendor.jpg"
+ },
+ {
+  "group": "4-vendor",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/vendor/jobs",
+  "status": 200,
+  "file": "pages/4-vendor__ar-desktop__vendor_jobs.jpg"
+ },
+ {
+  "group": "4-vendor",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/vendor/rate-cards",
+  "status": 200,
+  "file": "pages/4-vendor__ar-desktop__vendor_rate-cards.jpg"
+ },
+ {
+  "group": "4-vendor",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/vendor/profile",
+  "status": 200,
+  "file": "pages/4-vendor__ar-desktop__vendor_profile.jpg"
+ },
+ {
+  "group": "4-vendor",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/vendor/payouts",
+  "status": 200,
+  "file": "pages/4-vendor__ar-desktop__vendor_payouts.jpg"
+ },
+ {
+  "group": "4-vendor",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/vendor/jobs/ELB-26202",
+  "status": 200,
+  "file": "pages/4-vendor__ar-desktop__vendor_jobs_ELB-26202.jpg"
+ },
+ {
+  "group": "4-vendor",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/vendor",
+  "status": 200,
+  "file": "pages/4-vendor__en-desktop__vendor.jpg"
+ },
+ {
+  "group": "4-vendor",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/vendor/jobs",
+  "status": 200,
+  "file": "pages/4-vendor__en-desktop__vendor_jobs.jpg"
+ },
+ {
+  "group": "4-vendor",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/vendor/rate-cards",
+  "status": 200,
+  "file": "pages/4-vendor__en-desktop__vendor_rate-cards.jpg"
+ },
+ {
+  "group": "4-vendor",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/vendor/profile",
+  "status": 200,
+  "file": "pages/4-vendor__en-desktop__vendor_profile.jpg"
+ },
+ {
+  "group": "4-vendor",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/vendor/payouts",
+  "status": 200,
+  "file": "pages/4-vendor__en-desktop__vendor_payouts.jpg"
+ },
+ {
+  "group": "4-vendor",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/vendor/jobs/ELB-26202",
+  "status": 200,
+  "file": "pages/4-vendor__en-desktop__vendor_jobs_ELB-26202.jpg"
+ },
+ {
+  "group": "4-vendor",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/vendor",
+  "status": 200,
+  "file": "pages/4-vendor__ar-phone__vendor.jpg"
+ },
+ {
+  "group": "4-vendor",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/vendor/jobs",
+  "status": 200,
+  "file": "pages/4-vendor__ar-phone__vendor_jobs.jpg"
+ },
+ {
+  "group": "4-vendor",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/vendor/rate-cards",
+  "status": 200,
+  "file": "pages/4-vendor__ar-phone__vendor_rate-cards.jpg"
+ },
+ {
+  "group": "4-vendor",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/vendor/profile",
+  "status": 200,
+  "file": "pages/4-vendor__ar-phone__vendor_profile.jpg"
+ },
+ {
+  "group": "4-vendor",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/vendor/payouts",
+  "status": 200,
+  "file": "pages/4-vendor__ar-phone__vendor_payouts.jpg"
+ },
+ {
+  "group": "4-vendor",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/vendor/jobs/ELB-26202",
+  "status": 200,
+  "file": "pages/4-vendor__ar-phone__vendor_jobs_ELB-26202.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/admin",
+  "status": 200,
+  "file": "pages/5-admin__ar-desktop__admin.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/admin/orders",
+  "status": 200,
+  "file": "pages/5-admin__ar-desktop__admin_orders.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/admin/vendors",
+  "status": 200,
+  "file": "pages/5-admin__ar-desktop__admin_vendors.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/admin/disputes",
+  "status": 200,
+  "file": "pages/5-admin__ar-desktop__admin_disputes.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/admin/quotes",
+  "status": 200,
+  "file": "pages/5-admin__ar-desktop__admin_quotes.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/admin/moderation",
+  "status": 200,
+  "file": "pages/5-admin__ar-desktop__admin_moderation.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/admin/pricing",
+  "status": 200,
+  "file": "pages/5-admin__ar-desktop__admin_pricing.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/admin/catalog",
+  "status": 200,
+  "file": "pages/5-admin__ar-desktop__admin_catalog.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/admin/payouts",
+  "status": 200,
+  "file": "pages/5-admin__ar-desktop__admin_payouts.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/admin/users",
+  "status": 200,
+  "file": "pages/5-admin__ar-desktop__admin_users.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/admin/audit",
+  "status": 200,
+  "file": "pages/5-admin__ar-desktop__admin_audit.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/admin/privacy",
+  "status": 200,
+  "file": "pages/5-admin__ar-desktop__admin_privacy.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/admin/orders/ELB-26001",
+  "status": 200,
+  "file": "pages/5-admin__ar-desktop__admin_orders_ELB-26001.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "ar",
+  "viewport": "desktop",
+  "path": "/ar/admin/vendors/nile-pack",
+  "status": 200,
+  "file": "pages/5-admin__ar-desktop__admin_vendors_nile-pack.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/admin",
+  "status": 200,
+  "file": "pages/5-admin__en-desktop__admin.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/admin/orders",
+  "status": 200,
+  "file": "pages/5-admin__en-desktop__admin_orders.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/admin/vendors",
+  "status": 200,
+  "file": "pages/5-admin__en-desktop__admin_vendors.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/admin/disputes",
+  "status": 200,
+  "file": "pages/5-admin__en-desktop__admin_disputes.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/admin/quotes",
+  "status": 200,
+  "file": "pages/5-admin__en-desktop__admin_quotes.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/admin/moderation",
+  "status": 200,
+  "file": "pages/5-admin__en-desktop__admin_moderation.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/admin/pricing",
+  "status": 200,
+  "file": "pages/5-admin__en-desktop__admin_pricing.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/admin/catalog",
+  "status": 200,
+  "file": "pages/5-admin__en-desktop__admin_catalog.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/admin/payouts",
+  "status": 200,
+  "file": "pages/5-admin__en-desktop__admin_payouts.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/admin/users",
+  "status": 200,
+  "file": "pages/5-admin__en-desktop__admin_users.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/admin/audit",
+  "status": 200,
+  "file": "pages/5-admin__en-desktop__admin_audit.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/admin/privacy",
+  "status": 200,
+  "file": "pages/5-admin__en-desktop__admin_privacy.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/admin/orders/ELB-26001",
+  "status": 200,
+  "file": "pages/5-admin__en-desktop__admin_orders_ELB-26001.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "en",
+  "viewport": "desktop",
+  "path": "/en/admin/vendors/nile-pack",
+  "status": 200,
+  "file": "pages/5-admin__en-desktop__admin_vendors_nile-pack.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/admin",
+  "status": 200,
+  "file": "pages/5-admin__ar-phone__admin.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/admin/orders",
+  "status": 200,
+  "file": "pages/5-admin__ar-phone__admin_orders.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/admin/vendors",
+  "status": 200,
+  "file": "pages/5-admin__ar-phone__admin_vendors.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/admin/disputes",
+  "status": 200,
+  "file": "pages/5-admin__ar-phone__admin_disputes.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/admin/quotes",
+  "status": 200,
+  "file": "pages/5-admin__ar-phone__admin_quotes.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/admin/moderation",
+  "status": 200,
+  "file": "pages/5-admin__ar-phone__admin_moderation.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/admin/pricing",
+  "status": 200,
+  "file": "pages/5-admin__ar-phone__admin_pricing.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/admin/catalog",
+  "status": 200,
+  "file": "pages/5-admin__ar-phone__admin_catalog.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/admin/payouts",
+  "status": 200,
+  "file": "pages/5-admin__ar-phone__admin_payouts.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/admin/users",
+  "status": 200,
+  "file": "pages/5-admin__ar-phone__admin_users.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/admin/audit",
+  "status": 200,
+  "file": "pages/5-admin__ar-phone__admin_audit.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/admin/privacy",
+  "status": 200,
+  "file": "pages/5-admin__ar-phone__admin_privacy.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/admin/orders/ELB-26001",
+  "status": 200,
+  "file": "pages/5-admin__ar-phone__admin_orders_ELB-26001.jpg"
+ },
+ {
+  "group": "5-admin",
+  "locale": "ar",
+  "viewport": "phone",
+  "path": "/ar/admin/vendors/nile-pack",
+  "status": 200,
+  "file": "pages/5-admin__ar-phone__admin_vendors_nile-pack.jpg"
+ }
+]
