@@ -197,7 +197,8 @@ export function closureCoverMm(finish: BottleFinish, H: Mm, neckBaseY: Mm): Mm {
  */
 export function neckSleeveMm(finish: BottleFinish, H: Mm, neckBaseY: Mm): Mm {
   if (finish.kind === "cork") return Math.max(48, closureCoverMm(finish, H, neckBaseY));
-  if (finish.id === "CROWN_29") return 85;
+  // sparkling foil hood: ~28 % of the bottle, 45–85 mm (R6-3Q-F-08; the engine draws the same)
+  if (finish.id === "CROWN_29") return Math.min(85, Math.max(45, 0.28 * H));
   return 0;
 }
 

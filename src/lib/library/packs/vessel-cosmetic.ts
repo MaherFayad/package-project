@@ -29,6 +29,8 @@ const COS_CLOSURE_STYLE: Partial<Record<string, string>> = {
   AEROSOL_VALVE: "AEROSOL",
   CRIMP_FLIP_OFF: "CRIMP_FLIP_OFF",
   DOUBLE_WALL_CAP: "DOUBLE_WALL_CAP",
+  // R6-3Q-G-04: a serum pump is not a full lotion pump
+  TREATMENT_PUMP: "TREATMENT_PUMP",
 };
 
 /**

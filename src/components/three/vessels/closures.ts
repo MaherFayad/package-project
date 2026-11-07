@@ -4,7 +4,8 @@ import { revolve, ringsFromPoints, type Ring } from "./geometry";
 
 /** What a part is made of (the model maps roles to materials). */
 /** "gasket": the red rubber ring of a swing top; "wire": bare steel wire (bail, cage). */
-export type PartRole = "cap" | "capMetal" | "rubber" | "pipette" | "dark" | "body" | "gasket" | "wire";
+/** "clear": a clear PP / PETG overcap. */
+export type PartRole = "cap" | "capMetal" | "rubber" | "pipette" | "dark" | "body" | "gasket" | "wire" | "clear";
 
 export interface ClosurePart {
   geometry: BufferGeometry;
@@ -142,6 +143,8 @@ export const CLOSURE_STYLES = [
   "CRIMP_FLIP_OFF",
   "DOUBLE_WALL_CAP",
   "PIERCING",
+  // R6-3Q-G-04
+  "TREATMENT_PUMP",
 ] as const;
 /** Styles that close the whole mouth of a can / tub / tray (allowed over lid and can-end cores). */
 const MOUTH_STYLES: readonly string[] = ["PEEL_FOIL", "EOE_RING", "PLUG_LID", "LEVER_LID", "SNAP_LID", "HINGED_LID", "TWIST_UP", "DOUBLE_WALL_CAP"];
@@ -621,8 +624,9 @@ function styledClosure(style: ClosureStyle, p: VesselProfile): ClosureModel {
       ]);
       const button = lathe([
         { r: r * 0.5, y: yt - 0.3 },
-        { r: r + 0.6, y: yt + 0.2, round: 0.4 },
-        { r: r + 0.6, y: yt + 2.6, round: 1 },
+        // R6-3Q-G-05: the flip-off button is the crimp's own diameter
+        { r: r + 0.35, y: yt + 0.2, round: 0.4 },
+        { r: r + 0.35, y: yt + 2.6, round: 1 },
         { r: 0, y: yt + 2.8 },
       ]);
       return {
@@ -653,11 +657,74 @@ function styledClosure(style: ClosureStyle, p: VesselProfile): ClosureModel {
       ]);
       return { parts: [{ geometry: cap, role: "cap", group: "moving" }], motion: "unscrew", turns: 1.5, rise: 2.5, lift: 26, topY: yt, printTopY: yt };
     }
+    case "TREATMENT_PUMP": {
+      // R6-3Q-G-04: serum / treatment pump: a short ribbed collar, a Ø ≤ 16 mm actuator with a
+      // short spout (≤ 8 mm) and a clear overcap just wider than the finish
+      const cr = r + 0.8;
+      const yb = top - p.finishH - 0.4;
+      const yc = top + 1.2;
+      const collar = lathe(
+        [
+          { r: cr - 0.8, y: yb + 3 },
+          { r: cr - 0.8, y: yb, round: 0.3 },
+          { r: cr, y: yb + 0.4, round: 0.4 },
+          { r: cr, y: yc - 0.6, round: 0.6 },
+          { r: Math.min(cr - 0.8, 3.2), y: yc },
+          { r: 2, y: yc },
+          { r: 2, y: yc + 2.5 },
+          { r: 0, y: yc + 2.5 },
+        ],
+        { segments: 120, ribs: { count: 30, depth: 0.3, where: (ring) => ring.y > yb + 0.8 && ring.y < yc - 0.8 && ring.r > cr - 0.05 } },
+      );
+      const or = r + 1.5;
+      // the actuator and its spout fit under the overcap (r + 1.5): a short spout on a narrow neck
+      const hr = Math.min(8, Math.max(3.5, r), or - 3);
+      const h0 = yc + 2;
+      const head = lathe([
+        { r: 0, y: h0 },
+        { r: hr, y: h0, round: 0.8 },
+        { r: hr, y: h0 + 7, round: 1.6 },
+        { r: 0, y: h0 + 7.4 },
+      ]);
+      const sl = Math.max(2, Math.min(8, hr * 0.9, or - 0.8 - hr + 1));
+      const spout = new CylinderGeometry(1.3, 1.5, sl, 16);
+      spout.rotateX(Math.PI / 2);
+      spout.translate(0, h0 + 4.5, hr + sl / 2 - 1);
+      const orifice = new CylinderGeometry(0.6, 0.6, 0.3, 12);
+      orifice.rotateX(Math.PI / 2);
+      orifice.translate(0, h0 + 4.5, hr + sl - 0.9);
+      const ob = yb + 0.5;
+      const ot = h0 + 7.4 + 2.5;
+      const overcap = lathe([
+        { r: or - 0.6, y: ob + 3 },
+        { r: or - 0.6, y: ob, round: 0.2 },
+        { r: or, y: ob + 0.3, round: 0.3 },
+        { r: or, y: ob + 4, round: 2 },
+        { r: or, y: ot - 1.5, round: 1.5 },
+        { r: 0, y: ot },
+      ]);
+      return {
+        parts: [
+          { geometry: collar, role: "cap", group: "static" },
+          { geometry: head, role: "cap", group: "static" },
+          { geometry: spout, role: "cap", group: "static" },
+          { geometry: orifice, role: "dark", group: "static" },
+          { geometry: overcap, role: "clear", group: "moving" },
+        ],
+        motion: "lift",
+        turns: 0,
+        rise: 0,
+        lift: 30,
+        topY: ot,
+      };
+    }
     case "PIERCING":
       // drawn in buildClosure (tube coordinates)
       return { parts: [], motion: "none", turns: 0, rise: 0, lift: 0, topY: top };
     case "SPARKLING": {
-      const foil = neckSleeve(p, 85, 0.4, top);
+      // R6-3Q-F-08: the hood runs ~28 % of the bottle down the neck, 45–85 mm (a piccolo's foil is
+      // ~50 mm; a fixed 85 mm reached the label on small bottles)
+      const foil = neckSleeve(p, Math.min(85, Math.max(45, 0.28 * top)), 0.4, top);
       const mr = r + 2;
       const yt = top + 24;
       const g = lathe([
@@ -721,7 +788,8 @@ export function buildClosure(kind: VesselKind, closure: ClosureKind, dims: Vesse
       return { parts: [{ geometry, role: "cap", group: "moving" }], motion: "unscrew", turns: 2, rise: Math.min(6, p.finishH * 0.45), lift: 26, topY: yt + 14.2 };
     }
     case "DROPPER": {
-      const r = p.finishR + 1.7;
+      // R6-3Q-G-06: the ribbed collar never wider than the bottle (a 5 ml DIN 18 bottle, D 19)
+      const r = Math.min(p.finishR + 1.7, Math.max(p.finishR + 0.6, bodyR(p, top - p.finishH) - 0.65)); // ribs add 0.45
       const yb = top - p.finishH - 0.6;
       const yt = top + 2.4;
       const collar = lathe(
@@ -857,7 +925,9 @@ export function buildClosure(kind: VesselKind, closure: ClosureKind, dims: Vesse
       };
     }
     case "LUG_LID": {
-      const r = p.finishR + 1.6;
+      // R6-3Q-F-06: twist-off sizes are the lid's own diameter (a TO 70 lid is ~70–72 mm): the
+      // shell sits 0.4 mm outside the finish, plus the 0.5 mm curl (it was 1.6 + 0.5 mm a side)
+      const r = p.finishR + 0.4;
       const yb = top - p.finishH + 0.5;
       const yt = top + 1.6;
       const lid = lathe([

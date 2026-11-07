@@ -836,3 +836,27 @@ G-01 note: `VesselView` may keep passing its own `windowMask`; the flexible grou
 | library generators | `generate-library-index.ts`, `generate-order-mode-table.ts`, `generate-catalogue-rows.ts`: outputs unchanged |
 | Round 6 capture | before 2 098 variants + 40 catalogue, after 754 + 40: **0 console errors** either way |
 | `r6-geometry.ts` over every box variant (2 098 docs regenerated from the final code) | 653 rows before, 653 after, identical set (all baseline: glued laps / turn-ins, fittings inside a host, handles / headers above the body); no new z-fight or interpenetration |
+
+## Round 7 (engine) — the R6-3Q engine rows
+
+Branch `claude/exciting-albattani-8kzgsu-r6-engine` restarted from `claude/exciting-albattani-8kzgsu` (`44ee8a6e`, round 6 QA merged). Scope: the engine rows of "New items for the engine / designer session" above. Prisma / postgres, `src/lib/db.ts` and `src/lib/storage` not touched.
+
+**Method.** Base and branch production builds served side by side; the 86 variants of the 14 affected models (`r5-variants.ts`, default, min, max, every closure / container) captured in the real editor on both (`r5-capture.cjs`, 1440 × 900 + phone). A-06 also with a plain full-bleed background instead of the test pattern. Sheet: `docs/screenshots/audit/3d-engine-r6/07-round7.jpg` (before | after).
+
+**Counts.** New this round: 0 critical, 0 high, 1 medium (R7-01), 0 low. Fixed: 9 (R6-3Q-F-06, F-07, F-08, G-04, G-05, G-06, A-06, C-01 follow-up, R7-01). Open: 0 of the rows sent to this session. Already done before this round: item 8 (`describeVesselModel(…, v.closure)` in ConfigPanel, round 6) and G-01 (window mask fallback, noted above).
+
+| id | sev | where | fix | status |
+|---|---|---|---|---|
+| R6-3Q-F-07 | medium | `three/vessels/materials.ts · createLiquidMaterial` | Every product with clarity > 0 that has no transmission pass (phones, 1x screens, and the semi-clear products on desktop) is alpha-blended with opacity `0.08 + 0.8 (1 − clarity)^1.2`: spirit / perfume / water ≈ 0.1, honey ≈ 0.35, cola ≈ 0.6. The report's `0.35 + 0.55 (1 − c)` is what the low path already used and is what read milky (perfume 0.38 of a cream tint). Phones keep the standard shader. | fixed, verified (flask, PERFUME_SQUARE) |
+| R6-3Q-F-06 | medium | `closures.ts · LUG_LID` | Shell `r = finishR + 0.4`, curl kept (+0.5). | fixed, verified (JAM, HONEY_HEX), test |
+| R6-3Q-F-08 | medium | `closures.ts · SPARKLING`, `bottles/builder.ts · neckSleeveMm` | Foil hood `clamp(0.28 H, 45, 85)` in both. | fixed, verified (piccolo min: hood ends at the shoulder), test |
+| R6-3Q-G-04 | medium | `closures.ts`, `vessel-cosmetic.ts` | `TREATMENT_PUMP` style: ribbed collar, actuator r ≤ 8, spout 2–8 mm (fits under the overcap), clear overcap `finishR + 1.5` on a new `clear` part role; COS `TREATMENT_PUMP` maps to it. | fixed, verified (COS-SERUM def / min, COS-DROPPER option), test |
+| R7-01 (new, own work) | medium | `closures.ts · TREATMENT_PUMP` | First build sized the overcap to enclose a full 8 mm spout: Ø 32 on the Ø 22 serum at min. Spout now shortens to fit an overcap of exactly `finishR + 1.5`. | fixed, verified, test |
+| R6-3Q-G-05 | low | `closures.ts · CRIMP_FLIP_OFF` | Crimp `finishR + 0.4` (round 6), flip-off button now the crimp's own diameter (`+0.35`, was `+0.6`). | fixed, verified (PH-VIAL min) |
+| R6-3Q-G-06 | low | `closures.ts · DROPPER` | Collar `min(finishR + 1.7, max(finishR + 0.6, body − 0.65))` (+0.45 ribs): Ø 19.9 on the 5 ml bottle (the real DIN 18 collar), was Ø 22. The eye-drop dropper tip is the round 6 `DROPPER_TIP` style. | fixed, verified, test |
+| R6-3Q-A-06 | low | `three/panelGeometry.ts` | Fold side faces (all outline edges of rigid / tube wraps, creases elsewhere) sample the panel's own print ~1.2 mm inside the line instead of on it. With a plain full-bleed background the rigid lid corners and rims read clean on base and branch alike: the pale strips in the QA shots are the **test pattern's own white face stroke** (`texture.ts`, 4 % of the face), which sits on the face itself. | fixed (robustness), verified with full-bleed art |
+| R6-3Q-C-01 follow-up | medium | `three/panelGeometry.ts` | Outline edges are split where any collinear hinge (own, children's, roll, square) starts or ends: the covered part is a printed fold, the rest a raw cut, the A-03 / roll rules apply per piece. Test: slab count per the split rule over every core structure + a long-edge case. | fixed, verified (0201, 0422, GABLE_BOX, RIGID_BOX unchanged look) |
+
+Generator output: no box generator changed; geometry snapshot untouched. Item 9 lows (lid-piece half fold on PAPER_TUBE / RIGID_BOX, G-08 compact skirt print band, E-04 catalogue envelopes) were not in this session's list and stay with their owners.
+
+**Verification (round 7, final build).** `npm run typecheck` clean; `npm run lint` 0 errors (1 pre-existing warning: unused `Suspense` in `src/app/[locale]/admin/layout.tsx`, not this scope); `npm test` 123 files, **8 981 passed**; `npm run build` passes; `e2e/models.spec.ts --workers=2` **370 passed, 0 failed** (370 skipped: phone project, desktop-only by design), 29.5 min; geometry snapshot unchanged.
