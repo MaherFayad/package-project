@@ -3,7 +3,9 @@
 You design a custom printed box in 3D for free, get an instant price, and order it from a vetted Egyptian print vendor.
 
 - Product research and plan: [`docs/research-report.md`](docs/research-report.md)
-- Architecture, folder ownership, data model and shared contracts: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+- Orientation (commands, rules, gotchas): [`CLAUDE.md`](CLAUDE.md)
+- Architecture and data model: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+- Docs index and reading order per role: [`docs/README.md`](docs/README.md)
 
 ```bash
 npm install
