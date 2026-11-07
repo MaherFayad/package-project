@@ -234,6 +234,25 @@ describe("UI kit accessibility contracts", () => {
     fireEvent.pointerUp(field);
     expect(scrollBy).not.toHaveBeenCalled();
   });
+  it("the skip link's <main> target is not scrolled to the end of the page by the cookie banner (2.4.1, R5-PL-22)", () => {
+    const dict = getDictionary("en");
+    render(
+      <I18nProvider locale="en" dict={dict}>
+        <main id="main" tabIndex={-1}>content</main>
+        <CookieNotice />
+      </I18nProvider>,
+    );
+    const banner = screen.getByRole("region");
+    const main = screen.getByRole("main");
+    const rect = (top: number, bottom: number) => ({ top, bottom, left: 0, right: 1440, width: 1440, height: bottom - top, x: 0, y: top, toJSON: () => ({}) }) as DOMRect;
+    banner.getBoundingClientRect = () => rect(750, 884);
+    main.getBoundingClientRect = () => rect(0, 9712); // the whole page, under the banner too
+    const scrollBy = vi.fn();
+    window.scrollBy = scrollBy as unknown as typeof window.scrollBy;
+    Object.defineProperty(main, "matches", { configurable: true, value: () => true }); // :focus-visible
+    main.focus();
+    expect(scrollBy).not.toHaveBeenCalled();
+  });
   it("a control the browser scrolls under the cookie banner after focus is moved clear one frame later (2.4.11, R6-AX-17)", async () => {
     const dict = getDictionary("en");
     render(

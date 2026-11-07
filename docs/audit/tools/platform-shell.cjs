@@ -53,7 +53,15 @@ async function login(ctx, phone) {
     await page.keyboard.press("Tab");
     const firstFocus = await page.evaluate(() => document.activeElement?.className?.toString() || document.activeElement?.tagName);
     await page.keyboard.press("Enter");
-    const afterSkip = await page.evaluate(() => !!document.activeElement?.closest("main") || document.activeElement?.id === "main");
+    await page.waitForTimeout(400);
+    // R5-PL-22: the skip link must land at the start of <main>, not scroll it to its end.
+    // (a page may move focus on to its first heading, as checkout does: then that must be on screen)
+    const afterSkip = await page.evaluate(() => {
+      const a = document.activeElement;
+      if (!a || !(a.closest("main") || a.id === "main")) return false;
+      const t = (a.tagName === "MAIN" ? a : a).getBoundingClientRect().top;
+      return a.tagName === "MAIN" ? t > -120 : t >= 0 && t < innerHeight;
+    });
     const axe = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
     const v = axe.violations.map((x) => `${x.id}(${x.nodes.length})`);
     if (SHOTS && ((vp.width === 390 && locale === "ar") || (vp.width === 1440 && locale === "en"))) { fs.mkdirSync(SHOTS, { recursive: true }); await page.screenshot({ path: `${SHOTS}/shell-${pg.key}-${locale}-${vp.width}.png` }); }
