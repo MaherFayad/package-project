@@ -10,12 +10,14 @@ import { BOX_BOARD_CODES, type BoxBoardCode, type ConfigFinishCode } from "@/lib
 import { usePrefersReducedMotion } from "./hooks";
 import { MM, PackagingModel, type PackagingModelProps } from "./PackagingModel";
 import { captureScreenshot, type ScreenshotOptions } from "./screenshot";
+import type { PhotoRenderOptions, PhotoRenderResult } from "./photoRender";
 import { setHighlight } from "./pickHighlight";
 import { FinishedPackagingModel, type SurfaceFinishProps } from "./finishes/FinishedPackagingModel";
 import { StudioStage, type StageOptions } from "./finishes/StudioStage";
 import { AUTO_ROTATE, easeInOutCubic, easeOutQuint } from "./finishes/motion";
 import { StudioLighting } from "./lighting";
 import { SoftShadow } from "./SoftShadow";
+import { LiveAOAuto } from "./LiveAO";
 import { InteractionDpr, useOnScreen } from "./perf";
 import { applyViewInsets, normInsets, sameInsets, visibleFraction, NO_INSETS, type FitInsets } from "./fit";
 import { EngineCanvas, useRegisterViewApi, type EngineToneMapping, type EngineViewApi, type PickHit, type ViewName } from "./EngineCanvas";
@@ -43,6 +45,8 @@ export interface PackagingSceneHandle {
   getModel?(): Object3D | null;
   /** Glow the given panels' printed surface (hover / drop target); null clears it. */
   highlight?(panelIds: readonly string[] | null, surface?: "outside" | "inside"): void;
+  /** Path-traced studio image of the box (falls back to a supersampled screenshot on weak GPUs). */
+  renderPhoto?(opts?: PhotoRenderOptions): Promise<PhotoRenderResult>;
 }
 
 export interface PackagingSceneProps extends Omit<PackagingModelProps, "foldProgress"> {
@@ -124,11 +128,16 @@ const LEGACY_COATING: Partial<Record<string, ConfigFinishCode>> = {
 /** Frame margin: the subject fills ~75 % of the frame (leaves room for the view toolbar) (product-shot convention). */
 const FRAME_MARGIN = 1.3;
 const FLAT = 0.02;
+/** Fold progress below which a model counts as open (lids and flaps up) for the hero view. */
+const OPEN_BELOW = 0.97;
+const OPEN_PHI = 50 * DEG;
 
 /** Hero view for a model: cylinders (rolled tubes) are shot nearer the front so centred copy is not on the silhouette. */
 export function heroView(dieline: DielineModel, progress: number): { theta: number; phi: number } {
   if (progress < FLAT) return VIEWS.front; // a die-cut blank is shown face-on, like a dieline proof
-  const base = dieline.panels.some((p) => p.hingeKind === "roll") ? { theta: 18 * DEG, phi: DEFAULT_VIEW.phi } : DEFAULT_VIEW;
+  // part-folded (open lid, flaps up): look down a little more so the inside of the box shows
+  const phi = progress < OPEN_BELOW ? OPEN_PHI : DEFAULT_VIEW.phi;
+  const base = dieline.panels.some((p) => p.hingeKind === "roll") ? { theta: 18 * DEG, phi } : { theta: DEFAULT_VIEW.theta, phi };
   // Open on printed board (FF-15): when neither front nor right is a print face (FEFCO 09 liners,
   // dividers and pads print the side that goes against the host wall), turn the 3/4 view to the
   // largest printed side wall, so the first frame shows the artwork, not the blank side.
@@ -487,6 +496,25 @@ function Rig({
         setHighlight(scene, ids, surface);
         invalidate();
       },
+      async renderPhoto(opts = {}) {
+        let model = null as Object3D | null;
+        scene.traverse((o) => {
+          if (!model && o.userData?.elbaModel) model = o;
+        });
+        if (!model) throw new Error("3D view not ready");
+        // the path tracer (and this module) load only when a photo render is asked for
+        const photo = await import("./photoRender");
+        try {
+          return await photo.renderPhoto(model, cam, opts);
+        } catch (e) {
+          if (photo.isAbortError(e)) throw e;
+          console.warn("[elba] photo render unavailable, using the supersampled screenshot", e);
+          const t0 = performance.now();
+          const studio = opts.background !== "transparent";
+          const blob = await captureScreenshot(gl, scene, cam, { width: opts.width ?? 1600, height: opts.height ?? 1200, supersample: 2, background: studio ? (opts.backdrop ?? "#efeeeb") : null });
+          return { blob, samples: 0, ms: Math.round(performance.now() - t0), fallback: true };
+        }
+      },
     };
     return () => {
       apiRef.current = null;
@@ -517,6 +545,8 @@ function Rig({
           {shadows ? <SoftShadow scale={extent * 4} far={Math.max(closedSize.y, extent) * 1.5} blur={2.4} opacity={0.5} contactOpacity={0.55} /> : null}
         </>
       )}
+      {/* ambient occlusion (creases, inside of open boxes) on desktop-class GPUs; see LiveAO.tsx */}
+      {shadows ? <LiveAOAuto radius={Math.min(0.09, Math.max(0.01, 0.2 * Math.max(closedSize.x, closedSize.y, closedSize.z)))} /> : null}
       <OrbitControls makeDefault enablePan={false} enableDamping={!reduced} dampingFactor={0.12} rotateSpeed={0.8} regress />
       <InteractionDpr />
     </>
@@ -615,6 +645,7 @@ export function PackagingSceneContent(props: PackagingSceneContentProps) {
       pickAt: (x, y) => apiRef.current?.pickAt?.(x, y) ?? null,
       getModel: () => apiRef.current?.getModel?.() ?? null,
       highlight: (ids, s) => apiRef.current?.highlight?.(ids, s),
+      renderPhoto: (o) => (apiRef.current?.renderPhoto ? apiRef.current.renderPhoto(o) : Promise.reject(new Error("3D view not ready"))),
     }),
     [],
   );

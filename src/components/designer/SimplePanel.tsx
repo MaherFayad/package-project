@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
-import { ImagePlus, Minus, Plus, Ruler, Shapes, SlidersHorizontal, Trash2, Type } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Boxes, ChevronRight, ImageUp, Ruler, Shapes, SlidersHorizontal, Trash2, Type, Upload, type LucideIcon } from "lucide-react";
 import type { ArtworkLayer, DesignDoc, FaceId, MaterialCode, TextLayer } from "@/types";
 import { boardAppearance } from "@/lib/dieline";
 import type { ModelDef } from "@/lib/library";
@@ -10,6 +10,7 @@ import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n/types";
 import { Banner } from "@/components/ui/Banner";
 import { Button } from "@/components/ui/Button";
+import { RangeSlider } from "@/components/ui/RangeSlider";
 import { Text } from "@/components/ui/Text";
 import { TextField } from "@/components/ui/TextField";
 import { materialChoices } from "./lib/config";
@@ -21,7 +22,8 @@ import { ColorField } from "./fields";
 import styles from "./designer.module.css";
 
 /**
- * The beginner panel (simple mode, the default): logo, a name or text, colour, size. Every other
+ * The beginner panel (simple mode, the default), one rail section at a time: logo (with a name or
+ * text, and rows to the other sections), colour, size, more. Every other
  * option (exact millimetres, board grade, finishes, inside print, layers, print check, full
  * artwork, dieline template) lives under "All options" (the tabs), nothing is removed.
  */
@@ -42,12 +44,24 @@ export interface SimplePanelProps {
   onSeal: () => void;
   onPlace: (where: Placement) => void;
   onDelete: (id: string) => void;
+  /** Size of a side in mm (the size slider is a share of its width). */
+  faceSize: (f: FaceId) => { width: number; height: number } | null;
+  /** Copy a picture onto every other side; absent for containers (one label). */
+  onAllSides?: (id: string) => void;
   onBackground: (c: string | null) => void;
   onGeometry: (patch: Partial<Pick<DesignDoc, "dims" | "materialCode" | "vessel">>) => void;
   onOpenPicker: () => void;
   /** Switch to all options, optionally on a tab (0 box, 1 artwork, 2 layers, 3 check). */
   onAdvanced: (tab?: number) => void;
+  /** Which rail section the panel shows. */
+  section: SimpleSection;
+  onSection: (s: SimpleSection) => void;
+  /** A logo file dropped on the upload zone. */
+  onLogoFile?: (file: File) => void;
 }
+
+/** Basics rail sections (the Box type item opens the model picker, it has no panel). */
+export type SimpleSection = "logo" | "colour" | "size" | "more";
 
 /** Plain name of a board colour: what a shop owner sees, not the grade (E-flute kraft…). */
 function boardColourKey(code: MaterialCode): DictKey | null {
@@ -100,107 +114,141 @@ export function SimplePanel(p: SimplePanelProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [p.focusTextId, selected?.id]);
 
+  const typeLabel = t(model?.kind === "vessel" ? "designer.simple.changeTypeVessel" : "designer.simple.changeType");
+  const boxDims = `⁦${cm(doc.dims.L)} × ${cm(doc.dims.W)} × ${cm(doc.dims.H)}⁩`;
+  const sizeValue = model?.kind === "box" ? t("designer.simple.sizeCm", { dims: boxDims }) : (activePreset?.name[locale] ?? "");
+  const [dragOver, setDragOver] = useState(false);
+
   return (
-    <div className={styles.simple} data-testid="simple-panel">
-      {/* 1. Logo */}
-      <section className={styles.simpleStep} aria-labelledby="simple-logo">
-        <h2 id="simple-logo" className={styles.simpleHeading}>
-          <span className={styles.simpleNum} aria-hidden="true">1</span>
-          {t("designer.simple.logoHeading")}
-        </h2>
-        <Button variant="primary" size="large" fullWidth icon={ImagePlus} onClick={p.onAddLogo} disabled={full || p.uploading} loading={p.uploading}>
-          {hasImage ? t("designer.simple.logoAnother") : t("designer.simple.logoAction")}
-        </Button>
-        <Text as="p" variant="bodySm" tone="subdued">
-          {model?.kind === "vessel" ? t("designer.simple.logoHintVessel") : t("designer.simple.logoHint")}
-        </Text>
-        {lowRes ? (
-          <Banner tone="warning" inCard>
-            <span data-testid="logo-low-res">{t("designer.simple.lowRes")}</span>
-          </Banner>
-        ) : null}
-        {p.uploadError ? (
-          <Banner tone="critical" inCard>
-            {p.uploadError}
-          </Banner>
-        ) : null}
-      </section>
+    <div className={styles.simple} data-testid="simple-panel" data-section={p.section}>
+      {p.section === "logo" ? (
+        <>
+          {/* 1. Logo: the upload zone is the hero of the panel (button, or drop a file on it). */}
+          <section className={styles.simpleStep} aria-labelledby="simple-logo">
+            <h2 id="simple-logo" className={styles.panelTitle}>
+              {t("designer.simple.logoHeading")}
+            </h2>
+            <div
+              className={styles.dropZone}
+              data-over={dragOver || undefined}
+              onDragOver={(e) => {
+                if (!p.onLogoFile || !e.dataTransfer.types.includes("Files")) return;
+                e.preventDefault();
+                setDragOver(true);
+              }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={(e) => {
+                setDragOver(false);
+                const file = e.dataTransfer.files?.[0];
+                if (!file || !p.onLogoFile) return;
+                e.preventDefault();
+                p.onLogoFile(file);
+              }}
+            >
+              <span className={styles.dropZoneIcon} aria-hidden="true">
+                <ImageUp size={30} strokeWidth={1.5} />
+              </span>
+              <Button variant="primary" size="large" icon={Upload} onClick={p.onAddLogo} disabled={full || p.uploading} loading={p.uploading}>
+                {hasImage ? t("designer.simple.logoAnother") : t("designer.simple.logoAction")}
+              </Button>
+              <span className={styles.dropZoneHint}>{t("designer.simple.dropHint")}</span>
+            </div>
+            <p className={styles.panelNote}>{model?.kind === "vessel" ? t("designer.simple.logoHintVessel") : t("designer.simple.logoHint")}</p>
+            {lowRes ? (
+              <Banner tone="warning" inCard>
+                <span data-testid="logo-low-res">{t("designer.simple.lowRes")}</span>
+              </Banner>
+            ) : null}
+            {p.uploadError ? (
+              <Banner tone="critical" inCard>
+                {p.uploadError}
+              </Banner>
+            ) : null}
+          </section>
 
-      {/* 2. Name or text */}
-      <section className={styles.simpleStep} aria-labelledby="simple-text">
-        <h2 id="simple-text" className={styles.simpleHeading}>
-          <span className={styles.simpleNum} aria-hidden="true">2</span>
-          {t("designer.simple.textHeading")}
-        </h2>
-        <Button fullWidth icon={Type} onClick={p.onAddText} disabled={full}>
-          {t("designer.simple.textAction")}
-        </Button>
-        {full ? (
-          <Banner tone="warning" inCard>
-            {t("designer.artwork.tooManyLayers", { max: MAX_LAYERS })}
-          </Banner>
-        ) : null}
-      </section>
+          {/* 2. Name or text */}
+          <section className={styles.simpleStep} aria-labelledby="simple-text">
+            <h2 id="simple-text" className={styles.simpleHeadingSm}>
+              {t("designer.simple.textHeading")}
+            </h2>
+            <Button fullWidth icon={Type} onClick={p.onAddText} disabled={full}>
+              {t("designer.simple.textAction")}
+            </Button>
+            {full ? (
+              <Banner tone="warning" inCard>
+                {t("designer.artwork.tooManyLayers", { max: MAX_LAYERS })}
+              </Banner>
+            ) : null}
+          </section>
 
-      {/* What is on the box: tap one to change it (no layers jargon). */}
-      {outside.length ? (
-        <section className={styles.simpleStep} aria-labelledby="simple-items">
-          <h2 id="simple-items" className={styles.simpleHeadingSm}>
-            {t("designer.simple.itemsHeading")}
+          {/* What is on the box: tap one to change it (no layers jargon). */}
+          {outside.length ? (
+            <section className={styles.simpleStep} aria-labelledby="simple-items">
+              <h2 id="simple-items" className={styles.simpleHeadingSm}>
+                {t("designer.simple.itemsHeading")}
+              </h2>
+              <ul className={styles.simpleItems}>
+                {outside.map((l) => (
+                  <li key={l.id}>
+                    <Button size="slim" pressed={selected?.id === l.id} onClick={() => p.onSelect(selected?.id === l.id ? null : l.id)}>
+                      {`${layerName(l, t)} · ${p.faceLabel(l.face)}`}
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+              {selected && selected.surface === "outside" ? <QuickEdit {...p} layer={selected} textRef={textRef} /> : null}
+            </section>
+          ) : null}
+
+          {/* The other choices as list rows, one tap to their own panel. */}
+          {model ? (
+            <div className={styles.rowList}>
+              {currentBoard && boards.length > 1 ? <PanelRow label={t("designer.simple.boardColour")} value={t(currentBoard)} onClick={() => p.onSection("colour")} /> : null}
+              {sizeValue ? <PanelRow label={t("designer.simple.sizeHeading")} value={sizeValue} onClick={() => p.onSection("size")} /> : null}
+              <PanelRow label={typeLabel} value={model.name[locale]} onClick={p.onOpenPicker} />
+            </div>
+          ) : null}
+        </>
+      ) : null}
+
+      {p.section === "colour" ? (
+        <section className={styles.simpleStep} aria-labelledby="simple-colour">
+          <h2 id="simple-colour" className={styles.panelTitle}>
+            {t("designer.simple.colourHeading")}
           </h2>
-          <ul className={styles.simpleItems}>
-            {outside.map((l) => (
-              <li key={l.id}>
-                <Button size="slim" pressed={selected?.id === l.id} onClick={() => p.onSelect(selected?.id === l.id ? null : l.id)}>
-                  {`${layerName(l, t)} · ${p.faceLabel(l.face)}`}
-                </Button>
-              </li>
-            ))}
-          </ul>
-          {selected && selected.surface === "outside" ? <QuickEdit {...p} layer={selected} textRef={textRef} /> : null}
+          {boards.length > 1 ? (
+            <fieldset className={styles.simpleFieldset}>
+              <legend className={styles.fieldLegend}>{t("designer.simple.boardColour")}</legend>
+              <div className={styles.simpleChoices}>
+                {boards.map((b) => (
+                  <button
+                    key={b.key}
+                    type="button"
+                    className={styles.simpleChoice}
+                    aria-pressed={currentBoard === boardColourKey(b.code)}
+                    onClick={() => b.code !== doc.materialCode && p.onGeometry({ materialCode: b.code })}
+                    title={t(`materials.${b.code}` as DictKey)}
+                  >
+                    <span className={styles.simpleChip} style={{ background: b.hex }} aria-hidden="true" />
+                    {t(b.key)}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+          ) : null}
+          <ColorField
+            label={t("designer.simple.printColour")}
+            value={doc.artwork.outside.background}
+            onChange={p.onBackground}
+            allowNone
+            noneLabel={model?.kind === "vessel" ? t("designer.simple.noColourLabel") : t("designer.artwork.noBackground")}
+          />
         </section>
       ) : null}
 
-      {/* 3. Colour */}
-      <section className={styles.simpleStep} aria-labelledby="simple-colour">
-        <h2 id="simple-colour" className={styles.simpleHeading}>
-          <span className={styles.simpleNum} aria-hidden="true">3</span>
-          {t("designer.simple.colourHeading")}
-        </h2>
-        {boards.length > 1 ? (
-          <fieldset className={styles.simpleFieldset}>
-            <legend className={styles.fieldLegend}>{t("designer.simple.boardColour")}</legend>
-            <div className={styles.simpleChoices}>
-              {boards.map((b) => (
-                <button
-                  key={b.key}
-                  type="button"
-                  className={styles.simpleChoice}
-                  aria-pressed={currentBoard === boardColourKey(b.code)}
-                  onClick={() => b.code !== doc.materialCode && p.onGeometry({ materialCode: b.code })}
-                  title={t(`materials.${b.code}` as DictKey)}
-                >
-                  <span className={styles.simpleChip} style={{ background: b.hex }} aria-hidden="true" />
-                  {t(b.key)}
-                </button>
-              ))}
-            </div>
-          </fieldset>
-        ) : null}
-        <ColorField
-          label={t("designer.simple.printColour")}
-          value={doc.artwork.outside.background}
-          onChange={p.onBackground}
-          allowNone
-          noneLabel={model?.kind === "vessel" ? t("designer.simple.noColourLabel") : t("designer.artwork.noBackground")}
-        />
-      </section>
-
-      {/* 4. Size */}
-      {model ? (
+      {p.section === "size" && model ? (
         <section className={styles.simpleStep} aria-labelledby="simple-size">
-          <h2 id="simple-size" className={styles.simpleHeading}>
-            <span className={styles.simpleNum} aria-hidden="true">4</span>
+          <h2 id="simple-size" className={styles.panelTitle}>
             {t("designer.simple.sizeHeading")}
           </h2>
           {presets.length ? (
@@ -221,38 +269,53 @@ export function SimplePanel(p: SimplePanelProps) {
           ) : null}
           {model.kind === "box" ? (
             <Text as="p" variant="bodySm" tone="subdued">
-              <bdi>{t("designer.simple.sizeNow", { dims: `⁦${cm(doc.dims.L)} × ${cm(doc.dims.W)} × ${cm(doc.dims.H)}⁩` })}</bdi>
+              <bdi>{t("designer.simple.sizeNow", { dims: boxDims })}</bdi>
             </Text>
           ) : null}
-          <div className={styles.simpleChoices}>
-            <Button variant="tertiary" icon={Ruler} onClick={() => p.onAdvanced(0)}>
-              {t("designer.simple.sizeExact")}
-            </Button>
-            <Button variant="tertiary" icon={Shapes} onClick={p.onOpenPicker}>
-              {t(model.kind === "vessel" ? "designer.simple.changeTypeVessel" : "designer.simple.changeType")}
-            </Button>
+          <div className={styles.rowList}>
+            <PanelRow icon={Ruler} label={t("designer.simple.sizeExact")} onClick={() => p.onAdvanced(0)} />
+            <PanelRow icon={Shapes} label={typeLabel} value={model.name[locale]} onClick={p.onOpenPicker} />
           </div>
         </section>
       ) : null}
 
       {/* Everything else, one tap away. */}
-      <section className={styles.simpleMore} aria-labelledby="simple-more">
-        <h2 id="simple-more" className={styles.simpleHeadingSm}>
-          {t("designer.simple.moreHeading")}
-        </h2>
-        <Text as="p" variant="bodySm" tone="subdued">
-          {t("designer.simple.moreBody")}
-        </Text>
-        <Button fullWidth icon={SlidersHorizontal} onClick={() => p.onAdvanced()}>
-          {t("designer.simple.moreAction")}
-        </Button>
-      </section>
+      {p.section === "more" ? (
+        <section className={styles.simpleStep} aria-labelledby="simple-more">
+          <h2 id="simple-more" className={styles.panelTitle}>
+            {t("designer.simple.moreHeading")}
+          </h2>
+          <Text as="p" variant="bodySm" tone="subdued">
+            {t("designer.simple.moreBody")}
+          </Text>
+          <Button fullWidth icon={SlidersHorizontal} onClick={() => p.onAdvanced()}>
+            {t("designer.simple.moreAction")}
+          </Button>
+        </section>
+      ) : null}
     </div>
   );
 }
 
-function QuickEdit({ layer, onLayer, onSeal, onPlace, onDelete, textRef }: SimplePanelProps & { layer: ArtworkLayer; textRef: React.RefObject<HTMLDivElement | null> }) {
+/** A light-grey list row with a chevron (label, then the current value under it). */
+function PanelRow({ label, value, icon: RowIcon, onClick }: { label: string; value?: string; icon?: LucideIcon; onClick: () => void }) {
+  return (
+    <button type="button" className={styles.panelRow} onClick={onClick}>
+      {RowIcon ? <RowIcon size={18} aria-hidden className={styles.panelRowIcon} /> : null}
+      <span className={styles.panelRowText}>
+        <span className={value ? styles.panelRowLabel : undefined}>{label}</span>
+        {value ? <bdi className={styles.panelRowValue}>{value}</bdi> : null}
+      </span>
+      <ChevronRight size={18} aria-hidden className={styles.panelRowChevron} />
+    </button>
+  );
+}
+
+function QuickEdit({ layer, onLayer, onSeal, onPlace, onDelete, faceSize, onAllSides, textRef }: SimplePanelProps & { layer: ArtworkLayer; textRef: React.RefObject<HTMLDivElement | null> }) {
   const { t } = useI18n();
+  // Size as a share of the side's width: one slider instead of "bigger" / "smaller" steps.
+  const side = faceSize(layer.face);
+  const pct = side ? Math.round((layer.width / side.width) * 100) : null;
   return (
     <div className={styles.simpleEdit} onBlur={onSeal} role="group" aria-label={`${t("designer.artwork.selected")}: ${layerName(layer, t)}`}>
       {layer.kind === "text" ? (
@@ -268,14 +331,23 @@ function QuickEdit({ layer, onLayer, onSeal, onPlace, onDelete, textRef }: Simpl
           <ColorField label={t("designer.layer.color")} value={layer.color} onChange={(c) => c && onLayer({ ...layer, color: c } as TextLayer)} />
         </div>
       ) : null}
-      <div className={styles.simpleChoices}>
-        <Button icon={Plus} onClick={() => onLayer(scaleLayer(layer, 1.15), `scale:${layer.id}`)}>
-          {t("designer.layer.bigger")}
+      {side && pct !== null ? (
+        <RangeSlider
+          label={t("designer.simple.size")}
+          min={10}
+          max={100}
+          step={5}
+          value={Math.min(100, Math.max(10, pct))}
+          output
+          formatValue={(v) => t("designer.simple.sizeValue", { pct: v })}
+          onChange={(v) => onLayer(scaleLayer(layer, ((v / 100) * side.width) / layer.width), `scale:${layer.id}`)}
+        />
+      ) : null}
+      {onAllSides && layer.kind === "image" ? (
+        <Button icon={Boxes} onClick={() => onAllSides(layer.id)}>
+          {t("designer.simple.allSides")}
         </Button>
-        <Button icon={Minus} onClick={() => onLayer(scaleLayer(layer, 1 / 1.15), `scale:${layer.id}`)}>
-          {t("designer.layer.smaller")}
-        </Button>
-      </div>
+      ) : null}
       <div className={styles.simpleChoices} role="group" aria-label={t("designer.layer.placement")}>
         {(["top", "center", "bottom"] as const).map((w) => (
           <Button key={w} size="slim" onClick={() => onPlace(w)}>

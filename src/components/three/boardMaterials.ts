@@ -5,11 +5,13 @@ import {
   MeshStandardMaterial,
   RepeatWrapping,
   SRGBColorSpace,
+  Vector2,
   type Material,
   type Texture,
 } from "three";
 import type { FinishCode } from "@/types";
 import { finishSurface, type BoardAppearance } from "@/lib/dieline";
+import { paperNormalTexture } from "./finishes/textures";
 
 /** Material slots used by panel geometry groups. */
 export const MAT_OUTSIDE = 0;
@@ -128,6 +130,11 @@ export function createBoardMaterials(input: BoardMaterialInput): BoardMaterialSe
   const { appearance, finish, sheet } = input;
   const surface = finishSurface(finish, appearance);
   const owned: (Material | Texture)[] = [];
+  // paper tooth (tangent-space normal map, low strength): raking light shows board, not plastic
+  const paper = paperNormalTexture();
+  paper.repeat.set(sheet.width / 45, sheet.height / 45);
+  owned.push(paper);
+  const tooth = appearance.fluteColor ? 0.3 : 0.15;
 
   const outsideMap = input.outsideMap ?? fibreTexture(appearance.outside, appearance.fluteColor ? 10 : 3, sheet);
   if (!input.outsideMap && outsideMap) owned.push(outsideMap);
@@ -138,6 +145,8 @@ export function createBoardMaterials(input: BoardMaterialInput): BoardMaterialSe
     map: outsideMap ?? null,
     roughness: surface.roughness,
     metalness: 0,
+    normalMap: paper,
+    normalScale: new Vector2(tooth, tooth).multiplyScalar(surface.clearcoat > 0 ? 0.5 : 1),
   };
   const outside =
     surface.clearcoat > 0
@@ -151,6 +160,8 @@ export function createBoardMaterials(input: BoardMaterialInput): BoardMaterialSe
     map: insideTex ?? null,
     roughness: input.printInside && input.insideMap ? surface.roughness : 0.95,
     metalness: 0,
+    normalMap: paper,
+    normalScale: new Vector2(tooth, tooth),
   });
 
   const edgeTex = appearance.fluteColor ? fluteTexture(appearance.edge, appearance.fluteColor, appearance.outside, appearance.inside) : null;

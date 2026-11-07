@@ -4,6 +4,7 @@ import { generateDieline } from "@/lib/dieline";
 import {
   MAX_LAYERS,
   addLayer,
+  copyToSides,
   createDesignDoc,
   duplicateLayer,
   faceSizesOf,
@@ -114,5 +115,30 @@ describe("design document", () => {
 
   it("strips inline images for the local fallback copy", () => {
     expect(withoutInlineImages(sample()).artwork.outside.layers.map((l) => l.kind)).toEqual(["text"]);
+  });
+});
+
+describe("copyToSides (logo on every side)", () => {
+  const faces = { top: { width: 250, height: 180 }, front: { width: 250, height: 80 }, back: { width: 250, height: 80 }, left: { width: 180, height: 80 }, right: { width: 180, height: 80 }, bottom: { width: 250, height: 180 } };
+  it("adds one centred copy per side except the bottom, scaled to fit, and is idempotent", () => {
+    const d = sample();
+    const logo = d.artwork.outside.layers.find((l) => l.kind === "image")!;
+    const r = copyToSides(d, logo.id, faces);
+    expect(r.added).toBe(4);
+    const copies = r.doc.artwork.outside.layers.filter((l) => l.kind === "image" && l.id !== logo.id);
+    expect(copies.map((l) => l.face).sort()).toEqual(["back", "front", "left", "right"]);
+    for (const c of copies) {
+      const f = faces[c.face];
+      expect(c.x).toBe(f.width / 2);
+      expect(c.height).toBeLessThanOrEqual(f.height * 0.8 + 1e-9);
+      expect(c.width / c.height).toBeCloseTo(logo.width / logo.height, 6);
+    }
+    expect(copyToSides(r.doc, logo.id, faces).added).toBe(0);
+  });
+  it("skips sides that are too small and does nothing for an unknown id", () => {
+    const d = sample();
+    const logo = d.artwork.outside.layers.find((l) => l.kind === "image")!;
+    expect(copyToSides(d, logo.id, { ...faces, left: { width: 20, height: 80 }, right: { width: 20, height: 80 } }).added).toBe(2);
+    expect(copyToSides(d, "nope", faces).added).toBe(0);
   });
 });

@@ -23,6 +23,17 @@ The free 3D designer at `/{locale}/design`. A visitor picks a model, sets size, 
 | `src/types/design.ts` | `DesignDoc`, layers, `DESIGN_FINISH_CODES`, `PRICED_FINISH_OF` |
 | `src/lib/configurator/` | Rules engine for `ConfigPanel` (disabled options carry a reason) |
 
+## Layout
+
+The editor (`DesignerApp.tsx`, styles in `designer.module.css` under "editor layout") is one screen: its own thin white top bar
+(wordmark, design name, save state, language, sign-in, «الحفظ والمشاركة» menu, the one primary «طلب هذه العلبة»; the server
+`DesignerTopBar` is hidden with `:has(.edBar)` once the editor is on screen) over a full-bleed grey canvas. Floating white cards:
+the icon rail and its panel at the start (Basics: Logo, Colours, Size, More, plus Box type, which opens the model picker; All options:
+the Box, Artwork, Layers and Print check tabs), the tool column at the end (undo, redo, rotate, reset view), and the bottom dock
+(zoom, open/closed fold slider, 3D / face / laid flat / dimensions) with the price pill. The camera frames the box in the part the
+cards leave free (`setFitInsets`). Phones: the rail is a bottom tab bar and the panel a bottom sheet. See
+`docs/audit/simplicity-2026-11/designer-restyle.md`.
+
 ## The DesignDoc
 
 `{ v: 1, id?, name, structureCode, dims, materialCode, finishCode, printSides, artwork, features?, modelCode?, finishes?, vessel?, brandColors? }`

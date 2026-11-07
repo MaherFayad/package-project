@@ -3,7 +3,7 @@
 import { Lightformer } from "@react-three/drei";
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal, useThree } from "@react-three/fiber";
-import { BackSide, Color, CubeCamera, HalfFloatType, PMREMGenerator, Scene, ShaderMaterial, SphereGeometry, Vector3, WebGLCubeRenderTarget, type DirectionalLight, type WebGLRenderer } from "three";
+import { BackSide, Color, CubeCamera, DataTexture, HalfFloatType, LinearFilter, NoColorSpace, RGBAFormat, PMREMGenerator, Scene, ShaderMaterial, SphereGeometry, Vector3, WebGLCubeRenderTarget, type DirectionalLight, type WebGLRenderer } from "three";
 
 /**
  * Studio lighting for packaging product shots (owner: 3D engine).
@@ -97,28 +97,62 @@ export interface StudioEnvironmentProps {
   resolution?: number;
 }
 
+/**
+ * Diffuser falloff for a softbox (64 px, shared): a bright plateau that rolls off over the outer
+ * ~35 % like the fabric of a real softbox, so reflections on gloss and the broad highlight on
+ * matte board have soft edges instead of the hard rectangle of a flat emissive card.
+ */
+let softboxTex: DataTexture | null = null;
+function softboxMap(): DataTexture {
+  if (softboxTex) return softboxTex;
+  const n = 64;
+  const data = new Uint8Array(n * n * 4);
+  for (let y = 0; y < n; y++)
+    for (let x = 0; x < n; x++) {
+      const u = Math.abs((x + 0.5) / n - 0.5) * 2;
+      const v = Math.abs((y + 0.5) / n - 0.5) * 2;
+      const r = Math.pow(Math.pow(u, 4) + Math.pow(v, 4), 0.25); // superellipse: rounded corners
+      const t = Math.min(1, Math.max(0, (1 - r) / 0.35));
+      const a = Math.round(255 * t * t * (3 - 2 * t) * (0.9 + 0.1 * (1 - r)));
+      const i = (y * n + x) * 4;
+      data[i] = data[i + 1] = data[i + 2] = a;
+      data[i + 3] = 255;
+    }
+  softboxTex = new DataTexture(data, n, n, RGBAFormat);
+  softboxTex.colorSpace = NoColorSpace;
+  softboxTex.magFilter = softboxTex.minFilter = LinearFilter;
+  softboxTex.needsUpdate = true;
+  return softboxTex;
+}
+
+/** The whole light set turns ~18° off the camera axis (a three-quarter studio, not a flat front rig). */
+const ENV_TURN = (18 * Math.PI) / 180;
+
 /** Softbox environment for reflections (foil, gloss, spot UV). Rendered once. */
 export const StudioEnvironment = memo(function StudioEnvironment({ intensity = 1, resolution = 256 }: StudioEnvironmentProps) {
+  const soft = softboxMap();
   return (
     <EnvironmentScene resolution={resolution} intensity={0.42 * intensity}>
       <Cyclorama top="#a8a8a8" horizon="#8a8a8a" bottom="#77716a" />
+      <group rotation-y={ENV_TURN}>
       {/* overhead softbox */}
-      <Lightformer form="rect" intensity={2.6} position={[0, 5, 0.5]} rotation-x={Math.PI / 2} scale={[7, 5, 1]} />
+      <Lightformer form="rect" map={soft} intensity={3.1} position={[0, 5, 0.5]} rotation-x={Math.PI / 2} scale={[7, 5, 1]} />
       {/* key strip front-left: the long highlight that sells foil and gloss */}
-      <Lightformer form="rect" intensity={4} position={[-3.2, 1.6, 2.8]} rotation-y={Math.PI / 4} scale={[1.2, 5, 1]} />
+      <Lightformer form="rect" map={soft} intensity={4.6} position={[-3.2, 1.6, 2.8]} rotation-y={Math.PI / 4} scale={[1.2, 5, 1]} />
       {/* rim strip back-right */}
-      <Lightformer form="rect" intensity={2.2} position={[3.4, 1.4, -2.2]} rotation-y={(-3 * Math.PI) / 4} scale={[1, 4, 1]} />
+      <Lightformer form="rect" map={soft} intensity={2.6} position={[3.4, 1.4, -2.2]} rotation-y={(-3 * Math.PI) / 4} scale={[1, 4, 1]} />
       {/* front fill card, and a tall front-right softbox (R4-CR-10): most light on a vertical face
           comes from this environment, where the overhead softbox only reaches the lid. Without them
           the sides of dark prints sat at 35 % of the lid's luminance. */}
-      <Lightformer form="rect" intensity={2.2} position={[0, 1, 5]} scale={[10, 3, 1]} />
-      <Lightformer form="rect" intensity={3} position={[4.2, 1.2, 2.6]} rotation-y={Math.PI / 3} scale={[3, 4, 1]} />
-      <Lightformer form="rect" intensity={1.2} position={[5, 0.6, -0.4]} rotation-y={Math.PI / 2} scale={[4, 3, 1]} />
+      <Lightformer form="rect" map={soft} intensity={2.6} position={[0, 1, 5]} scale={[10, 3, 1]} />
+      <Lightformer form="rect" map={soft} intensity={3.5} position={[4.2, 1.2, 2.6]} rotation-y={Math.PI / 3} scale={[3, 4, 1]} />
+      <Lightformer form="rect" map={soft} intensity={1.4} position={[5, 0.6, -0.4]} rotation-y={Math.PI / 2} scale={[4, 3, 1]} />
       {/* floor bounce (R4-L01): a white sweep under the product lights down-facing faces, so a
           tilted underside reads as the same board one to two stops down, not near black */}
       <Lightformer form="rect" intensity={1.6} color="#f3ede4" position={[0, -3.2, 0.6]} rotation-x={-Math.PI / 2} scale={[8, 6, 1]} />
       {/* small round kicker: a crisp specular dot on metals */}
       <Lightformer form="circle" intensity={3} position={[2.6, 3, 3]} scale={0.8} />
+      </group>
     </EnvironmentScene>
   );
 });

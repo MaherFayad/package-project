@@ -16,7 +16,8 @@ async function dismissCookies(page: Page) {
 async function toolbarAction(page: Page, name: string) {
   const button = page.getByRole("toolbar").getByRole("button", { name, exact: true });
   if (await button.isVisible()) return button.click();
-  await page.getByRole("button", { name: "More actions" }).click();
+  // Basics folds Export / Share / Save into one menu: "Save and share" (desktop) or "More actions" (phones).
+  await page.getByRole("button", { name: /^(More actions|Save and share)$/ }).click();
   await page.getByRole("menuitem", { name }).click();
 }
 

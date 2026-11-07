@@ -1,28 +1,35 @@
 /* Designer (owner: designer). Tokens only (src/styles/tokens.css); logical properties for RTL.
    The 3D scene, face editor and dieline are never mirrored (they set dir="ltr"). */
 
-/* ── shell: dark top bar + full-height editor ─────────────────────────── */
+/* ── shell: thin white top bar + full-height editor ─────────────────── */
 .shell {
   display: flex;
   flex-direction: column;
   min-block-size: 100dvh;
   background: var(--p-color-bg);
 }
+/* The editor is exactly one screen (the canvas fills it; nothing scrolls under the bar). */
+.shell:has(.editor) { block-size: 100dvh; min-block-size: 0; overflow: hidden; }
+/* The live editor draws its own bar (wordmark, design name, save, order) in the same place. */
+.shell:has(.edBar) > .topBar { display: none; }
 
-.topBar {
-  position: sticky;
-  inset-block-start: 0;
+.topBar,
+.edBar {
+  position: relative;
   z-index: var(--p-z-index-2);
+  flex: none;
   display: flex;
   align-items: center;
   gap: var(--p-space-200);
   block-size: var(--p-top-bar-height);
   padding-inline: var(--p-space-300);
-  background: var(--p-color-bg-inverse);
-  color: var(--e-color-topbar-text);
+  border-block-end: var(--p-border-width-025, 1px) solid var(--p-color-border-secondary);
+  background: var(--p-color-bg-surface);
+  color: var(--p-color-text);
 }
 @media (min-width: 768px) {
-  .topBar { padding-inline: var(--p-space-400); gap: var(--p-space-400); }
+  .topBar,
+  .edBar { padding-inline: var(--p-space-500, 1.25rem); gap: var(--p-space-300); }
 }
 .topBarBrand {
   display: inline-flex;
@@ -36,13 +43,13 @@
 }
 .topBarBrand:focus-visible,
 .topBarLink:focus-visible {
-  outline: var(--p-focus-ring-width, 2px) solid var(--p-color-text-inverse, #fff);
+  outline: var(--p-focus-ring-width, 2px) solid var(--p-color-border-focus);
   outline-offset: 2px;
 }
 .topBarTitle {
   font-size: var(--p-font-size-325);
   font-weight: var(--p-font-weight-semibold);
-  color: var(--e-color-topbar-text-secondary);
+  color: var(--p-color-text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -62,15 +69,15 @@
   min-block-size: var(--p-control-height); /* medium button: 32, 40 on coarse pointers (CR-37) */
   padding-inline: var(--p-space-300);
   border-radius: var(--p-border-radius-200);
-  background: var(--e-color-topbar-search-bg);
-  border: var(--p-border-width-025, 1px) solid var(--e-color-topbar-search-border);
-  color: var(--e-color-topbar-text);
+  border: 0;
+  background: transparent;
+  color: var(--p-color-text);
   font-size: var(--p-font-size-325);
-  font-weight: var(--p-font-weight-semibold);
+  font-weight: var(--p-font-weight-medium, 500);
   text-decoration: none;
   white-space: nowrap;
 }
-.topBarLink:hover { background: var(--e-color-topbar-search-bg-hover); color: var(--e-color-topbar-text); } /* CR-01: 8.9:1 */
+.topBarLink:hover { background: var(--p-color-bg-surface-hover); color: var(--p-color-text); }
 @media (pointer: coarse) { .topBarLink { min-block-size: var(--e-control-height-touch); } }
 
 .main {
@@ -305,203 +312,9 @@
 /* Start page streaming fallback (R4-01): holds the footer below the fold until the page arrives. */
 .startFallback { min-block-size: 100dvh; }
 
-/* ── editor grid ─────────────────────────────────────────────────────── */
+/* ── editor grid: see "editor layout" at the end of this file ── */
 .dielineSize { display: block; font-weight: var(--p-font-weight-semibold); color: var(--p-color-text); margin-block-end: var(--p-space-100); }
-/* R11-01: the side-panel layout starts at 1000 px (was 1040), so a 1024 px tablet gets the side
-   panel and a full-height stage instead of the phone sheet (its canvas was 200 px in landscape). */
-.editor {
-  --sheet-closed: 36dvh;
-  --sheet-open: 72dvh;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-areas:
-    "toolbar"
-    "price"
-    "banner"
-    "stage"
-    "panel";
-  grid-template-rows: auto auto auto minmax(12rem, 1fr) auto;
-  gap: var(--p-space-200);
-  block-size: calc(100dvh - var(--p-top-bar-height));
-  min-block-size: 32rem;
-  padding: var(--p-space-200) var(--p-space-200) 0;
-}
-@media (min-width: 1000px) {
-  .editor {
-    grid-template-columns: minmax(0, 1fr) 24rem;
-    grid-template-areas:
-      "toolbar toolbar"
-      "banner banner"
-      "price panel"
-      "stage panel";
-    grid-template-rows: auto auto auto minmax(0, 1fr);
-    gap: var(--p-space-300) var(--p-space-400);
-    padding: var(--p-space-300) var(--p-space-400) var(--p-space-400);
-  }
-}
-
-.toolbar {
-  grid-area: toolbar;
-  display: flex;
-  align-items: center;
-  gap: var(--p-space-200);
-  min-inline-size: 0;
-}
-.toolbarSpacer { flex: 1 1 auto; }
-.nameField {
-  display: none;
-  inline-size: 14rem;
-  min-inline-size: 0;
-}
-@media (min-width: 768px) {
-  .nameField { display: block; }
-}
-.saveStatus {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--p-space-100);
-  min-inline-size: 0;
-  color: var(--p-color-text-secondary);
-  font-size: var(--p-font-size-300, 0.75rem);
-}
-.saveStatusText {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-@media (max-width: 767px) {
-  .saveStatusText { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-}
-.preflightChip { display: none; }
-@media (min-width: 1000px) {
-  .preflightChip { display: inline-flex; }
-}
-.desktopActions { display: none; gap: var(--p-space-200); }
-.mobileActions { display: inline-flex; }
-@media (min-width: 768px) {
-  .desktopActions { display: inline-flex; }
-  .mobileActions { display: none; }
-}
-
-.priceRow {
-  grid-area: price;
-  display: flex;
-  min-inline-size: 0;
-}
-.banner { grid-area: banner; }
-.banner:empty { display: none; }
-
-.priceBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--p-space-200);
-  inline-size: 100%;
-  min-block-size: 2.5rem;
-  padding: var(--p-space-150) var(--p-space-400);
-  border: 0;
-  border-radius: var(--p-border-radius-full);
-  background: var(--p-color-bg-surface);
-  box-shadow: var(--p-shadow-button, var(--e-shadow-card));
-  color: var(--p-color-text);
-  font: inherit;
-  font-weight: var(--p-font-weight-semibold);
-  text-align: start;
-  cursor: pointer;
-}
-@media (min-width: 768px) {
-  .priceBadge { inline-size: auto; max-inline-size: 100%; }
-}
-.priceBadge:hover { background: var(--p-color-bg-surface-hover); }
-.priceBadge:focus-visible {
-  outline: var(--p-focus-ring-width, 2px) solid var(--p-color-border-focus);
-  outline-offset: 1px;
-}
-.priceBadge[data-state="ready"] .priceBadgeIcon {
-  background: var(--p-color-bg-fill-success-secondary);
-  color: var(--p-color-text-success);
-}
-.priceBadgeIcon {
-  display: grid;
-  place-items: center;
-  inline-size: 1.75rem;
-  block-size: 1.75rem;
-  flex: none;
-  border-radius: var(--p-border-radius-full);
-  background: var(--p-color-bg-fill-tertiary);
-  color: var(--p-color-icon);
-}
-.priceBadgeText { min-inline-size: 0; overflow-wrap: anywhere; }
-
-/* ── stage ───────────────────────────────────────────────────────────── */
-.stage {
-  grid-area: stage;
-  display: flex;
-  flex-direction: column;
-  min-block-size: 0;
-  overflow: hidden;
-  border-radius: var(--p-border-radius-300);
-  background: var(--p-color-bg-surface);
-  box-shadow: var(--e-shadow-card);
-}
-.stageHeader {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--p-space-200);
-  padding: var(--p-space-200) var(--p-space-300);
-  border-block-end: var(--p-border-width-025, 1px) solid var(--p-color-border-secondary);
-}
-.faceSelect { flex: 0 1 14rem; min-inline-size: 0; }
-.stageBody {
-  position: relative;
-  flex: 1 1 auto;
-  min-block-size: 10rem;
-  background: var(--p-color-bg-surface-secondary);
-}
-.sceneWrap {
-  position: absolute;
-  inset: 0;
-}
-.sceneWrap[data-active="false"] {
-  visibility: hidden;
-  pointer-events: none;
-}
-.sceneLoading {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-}
-.sceneFallback {
-  padding: var(--p-space-400);
-  text-align: center;
-  color: var(--p-color-text-secondary);
-}
-.viewControls {
-  position: absolute;
-  inset-block-end: var(--p-space-200);
-  inset-inline: 0;
-  display: flex;
-  justify-content: center;
-  pointer-events: none;
-}
-.viewControls > * { pointer-events: auto; }
-.foldRow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: center;
-  gap: var(--p-space-200) var(--p-space-300);
-  padding: var(--p-space-200) var(--p-space-300) var(--p-space-300);
-  border-block-start: var(--p-border-width-025, 1px) solid var(--p-color-border-secondary);
-}
 .grow { flex: 1 1 10rem; min-inline-size: 0; }
-/* Phones: the Flat / Half / Closed buttons are the fold control; the slider joins from 768 px. */
-.foldSlider { display: none; }
-@media (min-width: 768px) {
-  .foldSlider { display: block; flex: 1 1 10rem; min-inline-size: 0; }
-}
 
 /* face editor */
 .faceStage {
@@ -614,85 +427,6 @@
   font-size: var(--p-font-size-300, 0.75rem);
   color: var(--p-color-text-secondary);
   text-align: center;
-}
-
-/* ── side panel / bottom sheet ───────────────────────────────────────── */
-.panel {
-  grid-area: panel;
-  display: flex;
-  flex-direction: column;
-  min-block-size: 0;
-  block-size: var(--sheet-closed);
-  margin-inline: calc(-1 * var(--p-space-200));
-  border-start-start-radius: var(--p-border-radius-400);
-  border-start-end-radius: var(--p-border-radius-400);
-  background: var(--p-color-bg-surface);
-  box-shadow: 0 -1px 0 0 var(--p-color-border-secondary), var(--p-shadow-300);
-  transition: block-size var(--p-motion-duration-200, 200ms) var(--p-motion-ease-out, ease-out);
-}
-/* R4-08: 72dvh plus the toolbar, price row and the stage's 12rem floor overflowed a 844 px phone by
-   ~124 px, so the page scrolled and the sticky top bar covered the view switch and face select.
-   The open sheet takes what is left after those (21rem = 12rem stage + toolbar + price + gaps). */
-.editor[data-sheet="open"] .panel { block-size: min(var(--sheet-open), calc(100dvh - var(--p-top-bar-height) - 21rem)); }
-@media (min-width: 1000px) {
-  .panel,
-  .editor[data-sheet="open"] .panel {
-    block-size: auto;
-    margin-inline: 0;
-    border-radius: var(--p-border-radius-300);
-    box-shadow: var(--e-shadow-card);
-  }
-}
-.sheetToggle {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--p-space-200);
-  inline-size: 100%;
-  min-block-size: 2.75rem;
-  padding-inline: var(--p-space-400);
-  border: 0;
-  border-block-end: var(--p-border-width-025, 1px) solid var(--p-color-border-secondary);
-  background: transparent;
-  color: var(--p-color-text-secondary);
-  font: inherit;
-  font-size: var(--p-font-size-300, 0.75rem);
-  cursor: pointer;
-}
-.sheetToggle::before {
-  content: "";
-  position: absolute;
-  top: var(--p-space-100);
-  left: 50%;
-  transform: translateX(-50%);
-  inline-size: 2.5rem;
-  block-size: 0.25rem;
-  border-radius: var(--p-border-radius-full);
-  background: var(--p-color-border-tertiary);
-}
-.sheetToggle { touch-action: none; }
-.sheetToggle:focus-visible {
-  outline: var(--p-focus-ring-width, 2px) solid var(--p-color-border-focus);
-  outline-offset: -2px;
-}
-@media (min-width: 1000px) {
-  .sheetToggle { display: none; }
-}
-.panelInner {
-  flex: 1 1 auto;
-  min-block-size: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  /* R15-01: the tab bar is sticky at the top of this scroller; a control scrolled into view by Tab
-     ("Change model", the colour swatches) landed fully under it (WCAG 2.4.11). Keep it below. */
-  scroll-padding-block: 3.75rem var(--p-space-200);
-}
-.panelBody {
-  display: flex;
-  flex-direction: column;
-  gap: var(--p-space-400);
-  padding: var(--p-space-400);
 }
 
 /* ── panel content ───────────────────────────────────────────────────── */
@@ -810,180 +544,16 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .panel,
   .productLink,
   .startCtaLink { transition: none; }
 }
 
-/* ── pass 1 audit additions ──────────────────────────────────────────── */
-/* Phones: 3D view buttons in their own row under the stage (never over the box). */
-.viewControlsRow {
-  display: flex;
-  justify-content: center;
-  padding: var(--p-space-200) var(--p-space-300) 0;
-  border-block-start: var(--p-border-width-025, 1px) solid var(--p-color-border-secondary);
-}
-.viewControlsRow + .foldRow { border-block-start: 0; padding-block-start: var(--p-space-200); }
-/* The tab bar stays visible while the panel scrolls (long inspector). */
-.panelInner > * > :first-child:has(> [role="tablist"]) {
-  position: sticky;
-  inset-block-start: 0;
-  z-index: 1;
-  background: var(--p-color-bg-surface);
-}
-.saveStatus[data-state="error"],
-.saveStatus[data-state="tooLarge"] { color: var(--p-color-text-critical); }
-.saveStatus[data-state="saved"] { color: var(--p-color-text-success); }
-.saveStatus[data-state="saved"] .saveStatusText { color: var(--p-color-text-secondary); }
 .skeletonBar {
   display: block;
   block-size: 2rem;
   border-radius: var(--p-border-radius-200);
   background: var(--p-color-bg-fill-tertiary, #e3e3e3);
 }
-
-/* R4-CR-11, phones (portrait): the stage gets at least 46dvh while the sheet is down (the canvas was
-   about 170 px and the model about 30 % of it). The closed sheet takes what is left (at least 10rem:
-   handle, tabs and the first field). The stage header drops its face select under 490 px: the
-   Artwork panel has the same select, and the 3D view turns with drag or "Adjust view". */
-@media (max-width: 999px) and (min-height: 501px) {
-  .editor[data-sheet="closed"] {
-    --sheet-closed: max(10rem, calc(54dvh - var(--p-top-bar-height) - 8.5rem));
-    grid-template-rows: auto auto auto minmax(46dvh, 1fr) auto;
-  }
-}
-@media (max-width: 489px) {
-  .stageHeader .faceSelect { display: none; }
-}
-/* R12-02: a banner (changed elsewhere, design not found) on a phone takes ~130 px; the stage gives
-   up its 46dvh floor while it shows, so the editor still fits the screen (no scroll under the bar). */
-@media (max-width: 999px) and (min-height: 501px) {
-  .editor[data-sheet="closed"][data-banner="true"] { grid-template-rows: auto auto auto minmax(12rem, 1fr) auto; }
-  /* Sheet pulled up: leave room for the banner too (R4-08's 21rem + ~9rem banner). */
-  .editor[data-sheet="open"][data-banner="true"] .panel { block-size: min(var(--sheet-open), calc(100dvh - var(--p-top-bar-height) - 30rem)); }
-}
-/* R13-01: short landscape (phones turned sideways) with a banner: the banner goes to the panel
-   column, above the panel, so the stage keeps its height (the canvas was 19 px at 844 × 390). */
-@media (max-height: 500px) and (min-width: 640px) and (max-width: 999px) {
-  .editor[data-banner="true"] {
-    grid-template-areas:
-      "toolbar toolbar"
-      "price banner"
-      "stage banner"
-      "stage panel";
-    /* R14-02: the panel row keeps a screen's height under the banner (it was 22 px at 740 × 360) */
-    grid-template-rows: auto auto auto var(--short-row);
-  }
-  .editor[data-banner="true"] .banner { align-self: start; }
-}
-/* R12-01: landscape screens from 768 to 999 px wide (small tablets, split views) take the side
-   panel too: with the phone sheet their 3D view was ~200 px tall. */
-@media (orientation: landscape) and (min-width: 768px) and (max-width: 999px) and (min-height: 501px) {
-  .editor,
-  .editor[data-sheet="closed"],
-  .editor[data-sheet="closed"][data-banner="true"] {
-    grid-template-columns: minmax(0, 1fr) minmax(16rem, 38%);
-    grid-template-areas:
-      "toolbar toolbar"
-      "banner banner"
-      "price panel"
-      "stage panel";
-    grid-template-rows: auto auto auto minmax(0, 1fr);
-    padding-block-end: var(--p-space-300);
-  }
-  .panel,
-  .editor[data-sheet="open"] .panel {
-    block-size: auto;
-    margin-inline: 0;
-    border-radius: var(--p-border-radius-300);
-  }
-  .sheetToggle { display: none; }
-}
-.viewMenuSlot { display: inline-flex; }
-
-/* Phones with the sheet pulled up: the short stage keeps only the 3D view (controls return when it closes). */
-@media (max-width: 999px) {
-  .editor[data-sheet="open"] .viewControlsRow,
-  .editor[data-sheet="open"] .foldRow { display: none; }
-  .faceSelect { flex: 1 1 auto; }
-}
-/* Landscape phones (short and wide): stage and panel side by side, no page scroll. */
-@media (max-height: 500px) and (min-width: 640px) and (max-width: 999px) {
-  .editor {
-    grid-template-columns: minmax(0, 1fr) minmax(16rem, 40%);
-    grid-template-areas:
-      "toolbar toolbar"
-      "banner banner"
-      "price panel"
-      "stage panel";
-    /* R14-02: a phone turned sideways is 360–412 px tall; under the top bar, toolbar, price row and
-       stage controls the 3D view was 66–118 px. Here the editor is one screen tall below the top bar
-       (which scrolls away instead of staying pinned): one scroll and the stage has the screen. */
-    --short-row: calc(100dvh - 6.5rem);
-    grid-template-rows: auto auto auto var(--short-row);
-    block-size: auto;
-    min-block-size: 0;
-    padding-block-end: var(--p-space-200);
-  }
-  .topBar { position: static; }
-  /* The panel spans the price and stage rows; sized from its content it grew those rows to its full
-     length (the stage slid ~1,500 px down). It now takes the rows' height and scrolls inside. */
-  .panel { contain: size; }
-  .panel,
-  .editor[data-sheet="open"] .panel {
-    block-size: auto;
-    margin-inline: 0;
-    border-radius: var(--p-border-radius-300);
-  }
-  .sheetToggle { display: none; }
-  .stageHeader { padding-block: var(--p-space-100); }
-  .stageBody { min-block-size: 0; }
-  .viewControlsRow { padding-block-start: var(--p-space-100); }
-  /* Fold stays on the 3D view's keyboard / portrait layout; here the stage needs the height, so
-     the row keeps only the "Adjust view" menu (R4-CR-11). */
-  .foldRow { padding-block: var(--p-space-100); }
-  .foldRow > :not(.viewMenuSlot) { display: none; }
-}
-/* The viewer's own 240 px floor must not push it under the rows below a short stage. */
-.stageBody { overflow: hidden; }
-/* (0,2,0): beats the engine's .viewport floor whatever order the CSS chunks load in (R2-02). */
-.sceneWrap > [role="application"] { min-block-size: 0; }
-/* Model thumbnail in the stage until the first 3D frame, then fades (PERF-10). */
-.stagePoster {
-  position: absolute;
-  inset: 0;
-  inline-size: 100%;
-  block-size: 100%;
-  object-fit: contain;
-  padding: 12%;
-  pointer-events: none;
-  opacity: 1;
-  /* R4-CR-01: the engine reveals the canvas in one step at onReady; only this poster fades, fast */
-  transition: opacity var(--motion-fast, 150ms) var(--p-motion-ease-out, ease-out);
-}
-.stagePoster[data-hidden="true"] { opacity: 0; }
-@media (prefers-reduced-motion: reduce) {
-  .stagePoster { transition: none; }
-}
-/* Price chip: only the amount ticks (CR-20); loading shimmer instead of a spinner (CR-21). */
-.priceBadgeAmount { display: inline-block; unicode-bidi: isolate; }
-.priceShimmer {
-  display: inline-block;
-  vertical-align: middle;
-  inline-size: 4rem;
-  block-size: 0.75rem;
-  margin-inline-start: var(--p-space-200);
-  border-radius: var(--p-border-radius-full);
-  background: linear-gradient(90deg, var(--p-color-bg-fill-tertiary) 0%, var(--p-color-bg-surface-secondary) 50%, var(--p-color-bg-fill-tertiary) 100%) 0 0 / 200% 100%;
-  animation: priceShimmer 1.2s linear infinite;
-}
-@keyframes priceShimmer { to { background-position: -200% 0; } }
-@media (prefers-reduced-motion: reduce) { .priceShimmer { animation: none; } }
-/* The face select has its label above (CR-58): align the stage header on the controls' baseline. */
-.stageHeader { align-items: flex-end; }
-/* CR-63: the price chip shares the toolbar's 32 px size scale (still a pill; target ≥ 24 px). */
-.priceBadge { min-block-size: 2rem; padding-block: var(--p-space-050); padding-inline: var(--p-space-100) var(--p-space-300); font-size: var(--p-font-size-325, 0.8125rem); }
-.priceBadgeIcon { inline-size: 1.5rem; block-size: 1.5rem; }
 
 /* ── brand colours (integrator decision: own colours, no Pantone library) ── */
 .brandList { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--p-space-200); }
@@ -1150,36 +720,624 @@
   border-block-start: var(--p-border-width-025, 1px) solid var(--p-color-border-secondary);
 }
 
-/* Phones (portrait): the main path in a bottom bar under the thumb: Logo, Text, Order. The toolbar
-   keeps undo, save state and "More"; its order button moves here (one visible at a time). */
-.actionBar { display: none; }
-@media (max-width: 767px) and (min-height: 501px) {
-  .toolbarOrder { display: none; }
+/* ── designer UX round (2026-11-08, docs/audit/simplicity-2026-11/designer-ux.md) ── */
+
+/* The moment a logo lands on the box: a short chip over the 3D view (Basics). */
+.landedChip {
+  position: absolute;
+  inset-block-start: var(--p-space-300);
+  inset-inline: 0;
+  margin-inline: auto;
+  inline-size: fit-content;
+  max-inline-size: calc(100% - 2 * var(--p-space-300));
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: var(--p-space-200);
+  padding: var(--p-space-200) var(--p-space-400);
+  border-radius: var(--p-border-radius-full, 999px);
+  background: var(--p-color-bg-fill-success, #047b5d);
+  color: var(--p-color-text-inverse, #fff);
+  font-weight: var(--p-font-weight-semibold);
+  box-shadow: var(--p-shadow-300, 0 4px 12px rgba(0, 0, 0, 0.18));
+  pointer-events: none;
+  animation: landedPop 420ms cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+}
+.landedChip > span { display: grid; }
+.landedChip small { font-size: var(--p-font-size-300); font-weight: var(--p-font-weight-regular, 400); }
+.landedChip[data-low="true"] { background: var(--p-color-bg-inverse); border-radius: var(--p-border-radius-300); }
+@keyframes landedPop {
+  0% { opacity: 0; transform: translateY(-8px) scale(0.9); }
+  100% { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landedChip { animation: none; }
+}
+
+/* ── editor layout (2026-11-08, docs/audit/simplicity-2026-11/designer-restyle.md) ────────────
+   A full-bleed canvas with the box on a soft floor; everything else floats over it on white
+   rounded cards: the icon rail and its panel at the start, the tool column at the end, the
+   view / fold dock and the price pill at the bottom. Phones: the rail is a bottom tab bar and the
+   panel a bottom sheet. Logical properties only; the scene, face editor and dieline are never mirrored. */
+.editor {
+  --ed-gap: var(--p-space-400);
+  --ed-radius: var(--p-border-radius-400);
+  --ed-radius-sm: 0.625rem;
+  --ed-shadow: 0 0 0 1px rgba(26, 26, 26, 0.04), 0 1px 2px rgba(26, 26, 26, 0.05), 0 10px 30px -10px rgba(26, 26, 26, 0.18);
+  /* darker at the top, lighter towards the floor (the box sits on a soft shadow) */
+  --ed-canvas-top: #c9cacd;
+  --ed-canvas-bottom: #efeff1;
+  --ed-rail: 4.75rem;
+  --ed-panel: 20.5rem;
+  --ed-tool: 2.5rem;
+  --ed-tabbar: 4rem;
+  --ed-sheet: 46dvh;
+  /* the part of the canvas the floating cards leave free (wide screens) */
+  --ed-free-start: calc(3 * var(--ed-gap) + var(--ed-rail) + var(--ed-panel));
+  --ed-free-end: calc(2 * var(--ed-gap) + var(--ed-tool) + var(--p-space-300));
+  /* physical sides, for the flat views (they are dir="ltr": logical insets would flip on them) */
+  --ed-free-left: var(--ed-free-start);
+  --ed-free-right: var(--ed-free-end);
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-block-size: 0;
+  block-size: 100%;
+}
+.editor[data-mode="advanced"] { --ed-panel: 23.5rem; }
+:global([dir="rtl"]) .editor { --ed-free-left: var(--ed-free-end); --ed-free-right: var(--ed-free-start); }
+[data-theme="dark"] .editor { --ed-canvas-top: #2a2a2a; --ed-canvas-bottom: #161616; }
+
+/* top bar (the live editor's; same height and look as the server bar it replaces) */
+.edBar { justify-content: flex-start; }
+.edBrand {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 2.25rem;
+  padding-inline: var(--p-space-100);
+  border-radius: var(--p-border-radius-200);
+  color: inherit;
+  text-decoration: none;
+}
+.edBrand:focus-visible { outline: var(--p-focus-ring-width, 2px) solid var(--p-color-border-focus); outline-offset: 2px; }
+.edDivider { flex: none; inline-size: 1px; block-size: 1.5rem; background: var(--p-color-border); }
+.edLinks { display: inline-flex; align-items: center; gap: var(--p-space-100); }
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--p-space-200);
+  min-inline-size: 0;
+}
+.toolbarSpacer { flex: 1 1 auto; }
+.nameField { display: none; inline-size: 13rem; min-inline-size: 0; }
+/* The name reads as a title until it is focused (the field keeps its label and border on focus). */
+.nameField :global(input) { font-weight: var(--p-font-weight-semibold); }
+.nameField :global(input):not(:focus) { background: transparent; }
+@media (min-width: 768px) {
+  .nameField { display: block; }
+}
+.saveStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--p-space-100);
+  min-inline-size: 0;
+  color: var(--p-color-text-secondary);
+  font-size: var(--p-font-size-300, 0.75rem);
+}
+.saveStatusText { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 1199px) {
+  .saveStatusText { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+.saveStatus[data-state="error"],
+.saveStatus[data-state="tooLarge"] { color: var(--p-color-text-critical); }
+.saveStatus[data-state="saved"] { color: var(--p-color-text-success); }
+.saveStatus[data-state="saved"] .saveStatusText { color: var(--p-color-text-secondary); }
+.preflightChip { display: none; }
+@media (min-width: 1200px) {
+  .preflightChip { display: inline-flex; }
+}
+.desktopActions { display: none; gap: var(--p-space-200); }
+.mobileActions { display: inline-flex; }
+@media (min-width: 1000px) {
+  .desktopActions { display: inline-flex; }
+  .mobileActions { display: none; }
+}
+.menuActions { display: inline-flex; }
+.toolbarOrder { display: inline-flex; }
+@media (max-width: 767px) {
+  .edBar { gap: var(--p-space-150); padding-inline: var(--p-space-200) var(--p-space-300); }
+  .edDivider { display: none; }
+  /* language: the icon only (its name stays for screen readers) */
+  .edLinks .topBarLink > svg + span { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .edLinks .topBarLink { padding-inline: var(--p-space-200); }
+}
+@media (max-width: 419px) {
+  .edBrand > * > span { display: none; }
+}
+
+/* workspace: the canvas behind everything */
+.workspace {
+  position: relative;
+  flex: 1 1 auto;
+  min-block-size: 0;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--ed-canvas-top) 0%, var(--ed-canvas-bottom) 100%);
+}
+.stage { position: absolute; inset: 0; }
+.stageBody { position: absolute; inset: 0; overflow: hidden; }
+.sceneWrap { position: absolute; inset: 0; }
+.sceneWrap[data-active="false"] { visibility: hidden; pointer-events: none; }
+/* (0,2,0): beats the engine's .viewport floor whatever order the CSS chunks load in (R2-02). */
+.sceneWrap > [role="application"] { min-block-size: 0; }
+.sceneLoading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding-inline: var(--ed-free-start) var(--ed-free-end);
+}
+.sceneFallback { padding: var(--p-space-400); text-align: center; color: var(--p-color-text-secondary); }
+/* Model thumbnail until the first 3D frame (PERF-10), framed where the 3D box will be. */
+.stagePoster {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+  padding-block: 12% 16%;
+  padding-inline: calc(var(--ed-free-start) + 4%) calc(var(--ed-free-end) + 4%);
+  pointer-events: none;
+  opacity: 1;
+  /* R4-CR-01: the engine reveals the canvas in one step at onReady; only this poster fades, fast */
+  transition: opacity var(--motion-fast, 150ms) var(--p-motion-ease-out, ease-out);
+}
+.stagePoster[data-hidden="true"] { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .stagePoster { transition: none; } }
+/* The flat views sit in the free part too, under the face chip and above the dock. */
+.stageBody > .faceStage,
+.stageBody > .dieline {
+  inset-block: 4.5rem 6.5rem;
+  left: var(--ed-free-left);
+  right: var(--ed-free-right);
+}
+.stageBody > .dieline { background: transparent; }
+/* hints and the landing chip: centred over the free part */
+.workspace .dropHint,
+.workspace .landedChip {
+  inset-block-start: var(--ed-gap);
+  inset-inline: var(--ed-free-start) var(--ed-free-end);
+}
+
+/* the banner (changed elsewhere, not found) floats at the top of the free part */
+.banner {
+  position: absolute;
+  z-index: 5;
+  inset-block-start: var(--ed-gap);
+  inset-inline: var(--ed-free-start) var(--ed-free-end);
+  display: grid;
+  gap: var(--p-space-200);
+  max-inline-size: 40rem;
+  margin-inline: auto;
+}
+/* All options: the panel the artwork tools work on, as a small card at the top */
+.stageHeader {
+  position: absolute;
+  z-index: 2;
+  inset-block-start: var(--ed-gap);
+  inset-inline: var(--ed-free-start) var(--ed-free-end);
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+.stageHeader > * {
+  pointer-events: auto;
+  padding: var(--p-space-150);
+  border-radius: var(--ed-radius-sm);
+  background: var(--p-color-bg-surface);
+  box-shadow: var(--ed-shadow);
+}
+.faceSelect { min-inline-size: 12rem; max-inline-size: 18rem; }
+.editor[data-mode="advanced"] .workspace .dropHint,
+.editor[data-mode="advanced"] .workspace .landedChip { inset-block-start: calc(var(--ed-gap) + 3.5rem); }
+
+/* tool column (end side) and the bottom dock share one button style */
+.toolColumn {
+  position: absolute;
+  z-index: 3;
+  inset-block-start: var(--ed-gap);
+  inset-inline-end: var(--ed-gap);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--p-space-050, 2px);
+  padding: var(--p-space-150);
+  border-radius: var(--ed-radius);
+  background: var(--p-color-bg-surface);
+  box-shadow: var(--ed-shadow);
+}
+.toolButton {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  inline-size: var(--ed-tool);
+  block-size: var(--ed-tool);
+  padding: 0;
+  border: 0;
+  border-radius: var(--ed-radius-sm);
+  background: transparent;
+  color: var(--p-color-text);
+  font: inherit;
+  font-size: var(--p-font-size-325);
+  font-weight: var(--p-font-weight-medium, 500);
+  cursor: pointer;
+}
+.toolButton[data-wide="true"] { inline-size: auto; padding-inline: var(--p-space-300); white-space: nowrap; }
+.toolButton:hover:not(:disabled) { background: var(--p-color-bg-surface-hover); }
+.toolButton[aria-pressed="true"] { background: var(--p-color-bg-surface-selected); box-shadow: inset 0 0 0 1px var(--p-color-border); }
+.toolButton:disabled { color: var(--p-color-text-disabled, #b5b5b5); cursor: default; }
+.toolButton:focus-visible { outline: var(--p-focus-ring-width, 2px) solid var(--p-color-border-focus); outline-offset: 1px; }
+.toolSep { flex: none; background: var(--p-color-border); }
+.toolColumn .toolSep { inline-size: 1.5rem; block-size: 1px; margin-block: var(--p-space-100); }
+.viewBar .toolSep { inline-size: 1px; block-size: 1.5rem; margin-inline: var(--p-space-200); }
+
+.dock {
+  position: absolute;
+  z-index: 3;
+  inset-block-end: var(--ed-gap);
+  inset-inline: var(--ed-free-start) var(--ed-free-end);
+  display: flex;
+  flex-wrap: wrap-reverse;
+  align-items: center;
+  justify-content: center;
+  gap: var(--p-space-300);
+  pointer-events: none;
+}
+.dock > * { pointer-events: auto; }
+.viewBar {
+  display: flex;
+  align-items: center;
+  gap: var(--p-space-050, 2px);
+  min-block-size: 3.25rem;
+  padding: var(--p-space-150) var(--p-space-200);
+  border-radius: var(--ed-radius);
+  background: var(--p-color-bg-surface);
+  box-shadow: var(--ed-shadow);
+}
+.foldControl {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--p-space-300);
+  padding-inline: var(--p-space-200);
+  color: var(--p-color-text-secondary);
+  font-size: var(--p-font-size-325);
+  white-space: nowrap;
+}
+.foldRange {
+  inline-size: 7.5rem;
+  margin: 0;
+  accent-color: var(--p-color-bg-fill-brand);
+  cursor: pointer;
+}
+.foldRange:focus-visible { outline: var(--p-focus-ring-width, 2px) solid var(--p-color-border-focus); outline-offset: 4px; border-radius: var(--p-border-radius-full); }
+
+/* price: a pill on the canvas, beside the dock (CR-20 / CR-21 kept: only the amount ticks) */
+.priceRow { display: flex; min-inline-size: 0; max-inline-size: 100%; }
+.priceBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--p-space-200);
+  max-inline-size: 100%;
+  min-block-size: 3.25rem;
+  padding-block: var(--p-space-150);
+  padding-inline: var(--p-space-300) var(--p-space-400);
+  border: 0;
+  border-radius: var(--ed-radius);
+  background: var(--p-color-bg-surface);
+  box-shadow: var(--ed-shadow);
+  color: var(--p-color-text);
+  font: inherit;
+  font-size: var(--p-font-size-325, 0.8125rem);
+  font-weight: var(--p-font-weight-semibold);
+  text-align: start;
+  cursor: pointer;
+}
+.priceBadge:hover { background: var(--p-color-bg-surface-hover); }
+.priceBadge:focus-visible { outline: var(--p-focus-ring-width, 2px) solid var(--p-color-border-focus); outline-offset: 1px; }
+.priceBadge[data-state="ready"] .priceBadgeIcon { background: var(--p-color-bg-fill-success-secondary); color: var(--p-color-text-success); }
+.priceBadgeIcon {
+  display: grid;
+  place-items: center;
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  flex: none;
+  border-radius: var(--p-border-radius-full);
+  background: var(--p-color-bg-fill-tertiary);
+  color: var(--p-color-icon);
+}
+.priceBadgeText { min-inline-size: 0; overflow-wrap: anywhere; }
+.priceBadgeAmount { display: inline-block; unicode-bidi: isolate; }
+.priceShimmer {
+  display: inline-block;
+  vertical-align: middle;
+  inline-size: 4rem;
+  block-size: 0.75rem;
+  margin-inline-start: var(--p-space-200);
+  border-radius: var(--p-border-radius-full);
+  background: linear-gradient(90deg, var(--p-color-bg-fill-tertiary) 0%, var(--p-color-bg-surface-secondary) 50%, var(--p-color-bg-fill-tertiary) 100%) 0 0 / 200% 100%;
+  animation: priceShimmer 1.2s linear infinite;
+}
+@keyframes priceShimmer { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .priceShimmer { animation: none; } }
+
+/* rail + panel (wide screens): floating at the start */
+.panel {
+  position: absolute;
+  z-index: 4;
+  inset-block: var(--ed-gap);
+  inset-inline-start: var(--ed-gap);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--p-space-300);
+  pointer-events: none;
+}
+.panel > * { pointer-events: auto; }
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--p-space-300);
+  max-block-size: 100%;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.railCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--p-space-100);
+  inline-size: var(--ed-rail);
+  padding: var(--p-space-200) var(--p-space-150);
+  border-radius: var(--ed-radius);
+  background: var(--p-color-bg-surface);
+  box-shadow: var(--ed-shadow);
+}
+.railItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--p-space-100);
+  min-block-size: 3.75rem;
+  padding: var(--p-space-200) var(--p-space-050, 2px);
+  border: 0;
+  border-radius: var(--ed-radius-sm);
+  background: transparent;
+  color: var(--p-color-text-secondary);
+  font: inherit;
+  font-size: var(--p-font-size-300, 0.75rem);
+  line-height: 1.25;
+  text-align: center;
+  cursor: pointer;
+}
+.railItem:hover { background: var(--p-color-bg-surface-hover); color: var(--p-color-text); }
+.railItem[aria-selected="true"] { color: var(--p-color-text); font-weight: var(--p-font-weight-semibold); }
+.railItem:focus-visible { outline: var(--p-focus-ring-width, 2px) solid var(--p-color-border-focus); outline-offset: -2px; }
+.railIcon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  inline-size: 2.5rem;
+  block-size: 2rem;
+  border-radius: var(--p-border-radius-full);
+  transition: background-color var(--motion-fast, 150ms) ease-out;
+}
+.railItem[aria-selected="true"] .railIcon { background: var(--p-color-bg-fill-brand); color: var(--p-color-text-brand-on-bg-fill); }
+.railBadge {
+  position: absolute;
+  inset-block-start: -0.25rem;
+  inset-inline-end: -0.125rem;
+  min-inline-size: 1.125rem;
+  block-size: 1.125rem;
+  padding-inline: 0.25rem;
+  border-radius: var(--p-border-radius-full);
+  background: var(--p-color-bg-fill-critical, #c70a24);
+  color: #fff;
+  font-size: 0.6875rem;
+  font-weight: var(--p-font-weight-semibold);
+  line-height: 1.125rem;
+}
+.railLabel { overflow-wrap: anywhere; }
+
+.sheet {
+  display: flex;
+  flex-direction: column;
+  inline-size: var(--ed-panel);
+  max-block-size: 100%;
+  overflow: hidden;
+  border-radius: var(--ed-radius);
+  background: var(--p-color-bg-surface);
+  box-shadow: var(--ed-shadow);
+}
+.sheetToggle {
+  position: relative;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: var(--p-space-200);
+  inline-size: 100%;
+  min-block-size: 2.75rem;
+  padding-inline: var(--p-space-400);
+  border: 0;
+  background: transparent;
+  color: var(--p-color-text-secondary);
+  font: inherit;
+  font-size: var(--p-font-size-300, 0.75rem);
+  cursor: pointer;
+  touch-action: none;
+}
+.sheetToggle::before {
+  content: "";
+  position: absolute;
+  top: var(--p-space-100);
+  left: 50%;
+  transform: translateX(-50%);
+  inline-size: 2.5rem;
+  block-size: 0.25rem;
+  border-radius: var(--p-border-radius-full);
+  background: var(--p-color-border-tertiary, #ccc);
+}
+.sheetToggle:focus-visible { outline: var(--p-focus-ring-width, 2px) solid var(--p-color-border-focus); outline-offset: -2px; }
+.panelInner {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-padding-block: var(--p-space-400);
+}
+.panelBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--p-space-400);
+  padding: var(--p-space-400);
+}
+.panelTitle { margin: 0; font-size: var(--p-font-size-400, 1rem); font-weight: var(--p-font-weight-semibold); line-height: 1.4; }
+.panelNote { margin: 0; font-size: var(--p-font-size-325); color: var(--p-color-text-secondary); text-align: center; }
+
+/* Basics: the upload zone is the hero of the Logo panel */
+.dropZone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--p-space-300);
+  min-block-size: 13rem;
+  padding: var(--p-space-600, 1.5rem) var(--p-space-400);
+  border: 1.5px dashed var(--p-color-border-emphasis, #8a8a8a);
+  border-radius: var(--p-border-radius-300);
+  background: var(--p-color-bg-surface-secondary);
+  text-align: center;
+  transition: background-color var(--motion-fast, 150ms) ease-out, border-color var(--motion-fast, 150ms) ease-out;
+}
+.dropZone[data-over="true"] { border-color: var(--p-color-border-focus); background: var(--p-color-bg-surface-selected); }
+.dropZoneIcon {
+  display: grid;
+  place-items: center;
+  inline-size: 3.5rem;
+  block-size: 3.5rem;
+  border-radius: var(--p-border-radius-full);
+  background: var(--p-color-bg-surface);
+  color: var(--p-color-text-secondary);
+  box-shadow: var(--e-shadow-card);
+}
+.dropZoneHint { max-inline-size: 16rem; font-size: var(--p-font-size-300, 0.75rem); color: var(--p-color-text-secondary); line-height: 1.5; }
+
+/* light-grey list rows with a chevron (material, size, box type) */
+.rowList {
+  display: grid;
+  gap: var(--p-space-200);
+}
+.simple > .rowList { padding-block-start: var(--p-space-400); border-block-start: var(--p-border-width-025, 1px) solid var(--p-color-border-secondary); }
+.panelRow {
+  display: flex;
+  align-items: center;
+  gap: var(--p-space-300);
+  inline-size: 100%;
+  min-block-size: 3.25rem;
+  padding: var(--p-space-200) var(--p-space-400);
+  border: var(--p-border-width-025, 1px) solid var(--p-color-border-secondary);
+  border-radius: var(--ed-radius-sm);
+  background: var(--p-color-bg-surface-secondary);
+  color: var(--p-color-text);
+  font: inherit;
+  font-size: var(--p-font-size-350, 0.875rem);
+  text-align: start;
+  cursor: pointer;
+}
+.panelRow:hover { background: var(--p-color-bg-surface-selected); }
+.panelRow:focus-visible { outline: var(--p-focus-ring-width, 2px) solid var(--p-color-border-focus); outline-offset: 1px; }
+.panelRowText { flex: 1 1 auto; display: grid; gap: 0.125rem; min-inline-size: 0; }
+.panelRowLabel { font-size: var(--p-font-size-300, 0.75rem); color: var(--p-color-text-secondary); }
+.panelRowValue { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.panelRowIcon,
+.panelRowChevron { flex: none; color: var(--p-color-icon-secondary, var(--p-color-text-secondary)); }
+:global([dir="rtl"]) .panelRowChevron { transform: scaleX(-1); }
+
+/* ── phones: tab bar at the bottom, the panel as a bottom sheet over the lower part ── */
+@media (max-width: 767px) {
   .editor {
-    grid-template-areas:
-      "toolbar"
-      "price"
-      "banner"
-      "stage"
-      "panel"
-      "actions";
+    --ed-gap: var(--p-space-300);
+    --ed-tool: 2.25rem;
+    --ed-free-start: var(--p-space-300);
+    --ed-free-end: calc(var(--ed-tool) + 2 * var(--p-space-300) + var(--p-space-150));
   }
-  .actionBar {
-    grid-area: actions;
-    display: grid;
-    grid-template-columns: auto auto minmax(0, 1fr);
-    gap: var(--p-space-200);
-    margin-inline: calc(-1 * var(--p-space-200));
-    padding: var(--p-space-200) var(--p-space-300) calc(var(--p-space-200) + env(safe-area-inset-bottom, 0px));
+  .panel {
+    inset-block: auto 0;
+    inset-inline: 0;
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 0;
+  }
+  .rail {
+    flex-direction: row;
+    gap: 0;
+    overflow: visible;
+    padding-block-end: env(safe-area-inset-bottom, 0px);
     border-block-start: var(--p-border-width-025, 1px) solid var(--p-color-border-secondary);
     background: var(--p-color-bg-surface);
   }
-  .actionBar button { min-block-size: 2.75rem; inline-size: 100%; }
-  /* The bar takes ~3.75rem: the closed and open sheet give it up (no page scroll under the top bar). */
-  .editor[data-sheet="closed"] { --sheet-closed: max(9rem, calc(54dvh - var(--p-top-bar-height) - 12rem)); }
-  .editor[data-sheet="open"] .panel { block-size: min(var(--sheet-open), calc(100dvh - var(--p-top-bar-height) - 25rem)); }
+  .railCard {
+    flex-direction: row;
+    inline-size: auto;
+    flex: 1 1 auto;
+    padding: var(--p-space-100);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .railCard[data-extra="true"] { flex: none; border-inline-start: var(--p-border-width-025, 1px) solid var(--p-color-border-secondary); }
+  .railItem { flex: 1 1 0; min-inline-size: 0; min-block-size: 3.5rem; padding-block: var(--p-space-150); }
+  .railCard[data-extra="true"] .railItem { inline-size: 4.25rem; }
+  .railIcon { block-size: 1.75rem; inline-size: 2.75rem; }
+  .sheet {
+    inline-size: 100%;
+    border-radius: var(--p-border-radius-400) var(--p-border-radius-400) 0 0;
+    box-shadow: 0 -8px 24px -12px rgba(26, 26, 26, 0.25), 0 -1px 0 0 var(--p-color-border-secondary);
+    transition: block-size var(--p-motion-duration-200, 200ms) var(--p-motion-ease-out, ease-out);
+  }
+  .sheetToggle { display: flex; }
+  .editor[data-sheet="closed"] .panelInner { display: none; }
+  .editor[data-sheet="open"] .sheet { block-size: var(--ed-sheet); }
+  .modeSwitch { padding-block-start: 0; }
+
+  .toolColumn { padding: var(--p-space-100); }
+  .dock {
+    flex-direction: column-reverse;
+    flex-wrap: nowrap;
+    gap: var(--p-space-200);
+    inset-inline: var(--p-space-300);
+    inset-block-end: calc(var(--ed-tabbar) + 2.75rem + var(--p-space-300) + env(safe-area-inset-bottom, 0px));
+  }
+  .editor[data-sheet="open"] .dock { inset-block-end: calc(var(--ed-tabbar) + var(--ed-sheet) + var(--p-space-200) + env(safe-area-inset-bottom, 0px)); }
+  /* sheet up: the price stays on screen, on one line */
+  .editor[data-sheet="open"] .priceBadge { min-block-size: 2.25rem; padding-block: var(--p-space-050, 2px); }
+  .editor[data-sheet="open"] .priceBadgeText { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .viewBar { min-block-size: 2.75rem; padding: var(--p-space-100); max-inline-size: 100%; }
+  .viewBar .toolSep { margin-inline: var(--p-space-100); }
+  .foldControl { padding-inline: var(--p-space-100); }
+  .foldEnd { display: none; }
+  .foldRange { inline-size: 6rem; }
+  .priceBadge { min-block-size: 2.5rem; padding-inline: var(--p-space-200) var(--p-space-300); }
+  .priceBadgeIcon { inline-size: 1.5rem; block-size: 1.5rem; }
+  .stageBody > .faceStage,
+  .stageBody > .dieline { inset-block: 4rem calc(var(--ed-tabbar) + 2.75rem + 4rem); left: var(--p-space-200); right: var(--p-space-200); }
+  .editor[data-sheet="open"] .stageBody > .faceStage,
+  .editor[data-sheet="open"] .stageBody > .dieline { inset-block-end: calc(var(--ed-tabbar) + var(--ed-sheet) + 3.5rem); }
+  .stagePoster { padding-block: 10% calc(var(--ed-tabbar) + 9rem); padding-inline: 8%; }
+  .banner { inset-inline: var(--p-space-300) var(--ed-free-end); }
 }
-.toolbarOrder { display: inline-flex; }
-@media (max-width: 767px) and (min-height: 501px) {
-  .toolbarOrder { display: none; }
+@media (max-width: 767px) and (prefers-reduced-motion: reduce) {
+  .sheet { transition: none; }
+}
+/* short landscape screens: the rail and panel scroll inside the canvas height */
+@media (min-width: 768px) and (max-height: 560px) {
+  .editor { --ed-gap: var(--p-space-200); }
+  .railItem { min-block-size: 3rem; padding-block: var(--p-space-100); }
+  .dropZone { min-block-size: 9rem; }
 }

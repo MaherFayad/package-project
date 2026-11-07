@@ -137,14 +137,17 @@ export async function logoPng(page: Page): Promise<Buffer> {
 export const ONE_PX_PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
 
 /**
- * The designer's Basics panel (the default for a new visitor: logo, text, colour, size). On phones
- * the panel is a bottom sheet that starts closed: open it first.
+ * The designer's Basics panel (the default for a new visitor), on one rail section: Logo (logo,
+ * text), Colours, Size or More (designer-restyle.md). The rail tab opens the section; on phones it
+ * also opens the bottom sheet. Defaults to Colours, what the journeys pick.
  */
-export async function basicsPanel(page: Page, locale: Locale): Promise<Locator> {
+export async function basicsPanel(page: Page, locale: Locale, section: "Logo" | "Colours" | "Size" | "More" = "Colours"): Promise<Locator> {
   const panel = page.getByTestId("simple-panel");
   await expect(panel).toBeAttached({ timeout: 30_000 });
-  const expand = page.getByRole("button", { name: tr(locale, "Show more controls") });
-  if (await expand.isVisible().catch(() => false)) await expand.click();
+  const key = ({ Logo: "designer.simple.railLogo", Colours: "designer.simple.railColours", Size: "designer.simple.railSize", More: "designer.simple.railMore" } as const)[section];
+  const tab = page.getByRole("tab", { name: getT(locale)(key), exact: true });
+  if ((await tab.getAttribute("aria-selected")) !== "true" || !(await panel.isVisible())) await tab.click();
+  await expect(panel).toBeVisible();
   return panel;
 }
 

@@ -1,30 +1,57 @@
 import styles from "@/components/designer/designer.module.css";
 import lib from "@/components/designer/library.module.css";
 
-/** Editor-shaped skeleton (toolbar, stage, panel) so the layout does not jump when it loads (CLS). */
+/** Editor-shaped skeleton (canvas, rail, panel, dock) so the layout does not jump when it loads (CLS). */
 export default function EditorLoading() {
   return (
-    <div className={styles.editor} aria-busy="true">
-      <div className={styles.toolbar}>
-        <span className={styles.skeletonBar} style={{ inlineSize: "8rem" }} />
-        <span className={styles.toolbarSpacer} />
-        <span className={styles.skeletonBar} style={{ inlineSize: "9rem" }} />
-      </div>
-      <div className={styles.priceRow}>
-        <span className={styles.skeletonBar} style={{ inlineSize: "14rem", blockSize: "2.5rem", borderRadius: "999px" }} />
-      </div>
-      <section className={styles.stage}>
-        <div className={styles.stageBody}>
-          <div className={lib.stageSkeleton} />
+    <div className={styles.editor} data-sheet="closed" aria-busy="true">
+      <div className={styles.workspace}>
+        <section className={styles.stage}>
+          <div className={styles.stageBody}>
+            <div className={styles.sceneLoading}>
+              <div className={lib.stageSkeleton} />
+            </div>
+          </div>
+        </section>
+        <div className={styles.dock}>
+          <span
+            className={styles.skeletonBar}
+            style={{
+              inlineSize: "20rem",
+              blockSize: "3.25rem",
+              borderRadius: "1rem",
+            }}
+          />
         </div>
-      </section>
-      <aside className={styles.panel}>
-        <div className={styles.panelBody}>
-          <span className={styles.skeletonBar} style={{ inlineSize: "100%", blockSize: "2.25rem" }} />
-          <span className={styles.skeletonBar} style={{ inlineSize: "60%" }} />
-          <span className={styles.skeletonBar} style={{ inlineSize: "100%", blockSize: "5rem" }} />
-        </div>
-      </aside>
+        <aside className={styles.panel}>
+          <div className={styles.rail}>
+            <div className={styles.railCard}>
+              <span
+                className={styles.skeletonBar}
+                style={{ blockSize: "15rem" }}
+              />
+            </div>
+          </div>
+          <div className={styles.sheet}>
+            <div className={styles.panelInner}>
+              <div className={styles.panelBody}>
+                <span
+                  className={styles.skeletonBar}
+                  style={{ inlineSize: "40%" }}
+                />
+                <span
+                  className={styles.skeletonBar}
+                  style={{ inlineSize: "100%", blockSize: "13rem" }}
+                />
+                <span
+                  className={styles.skeletonBar}
+                  style={{ inlineSize: "100%", blockSize: "3.25rem" }}
+                />
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }

@@ -8,14 +8,14 @@ import { ElbaWordmark } from "@/components/ui/Frame";
 import { TopBarLanguage, TopBarSignIn } from "./TopBarLanguage";
 import styles from "./designer.module.css";
 
-/** Near-black 56 px bar (Polaris frame style) for the full-screen designer. */
+/** Thin white 56 px bar for the full-screen designer (the live editor replaces it with its own, designer-restyle.md). */
 export async function DesignerTopBar({ locale }: { locale: Locale }) {
   const t = getT(locale);
   const session = await getSession();
   return (
     <header className={styles.topBar}>
       <Link href={`/${locale}`} className={styles.topBarBrand}>
-        <ElbaWordmark />
+        <ElbaWordmark tone="base" />
         {/* Visible wordmark leads the name (WCAG 2.5.3), "Home" follows for context. */}
         <span className="visually-hidden">{t("nav.home")}</span>
       </Link>

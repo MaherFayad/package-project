@@ -1,4 +1,4 @@
-import { CanvasTexture, DataTexture, LinearSRGBColorSpace, NoColorSpace, RepeatWrapping, RGBAFormat, SRGBColorSpace, type Texture } from "three";
+import { CanvasTexture, DataTexture, LinearFilter, LinearMipmapLinearFilter, LinearSRGBColorSpace, NoColorSpace, RepeatWrapping, RGBAFormat, SRGBColorSpace, type Texture } from "three";
 
 /**
  * Procedural textures for board realism, generated on the client (no image files, no
@@ -56,6 +56,77 @@ export function grainTexture(size = 256, seed = 7): Texture | null {
   tex.colorSpace = NoColorSpace; // data, not colour
   tex.wrapS = tex.wrapT = RepeatWrapping;
   tex.anisotropy = 4;
+  return tex;
+}
+
+/**
+ * Tileable paper-surface normal map (tangent space, 256 px): soft cloud of pulp plus short fibres
+ * running mostly along the machine direction. Pure arrays (no canvas read-back). Used at low
+ * normalScale on board faces so raking light shows a paper tooth instead of a plastic-smooth face.
+ */
+export function paperNormalTexture(size = 256, seed = 4242): Texture {
+  const rnd = lcg(seed);
+  const h = new Float32Array(size * size);
+  // tileable value noise, a few octaves
+  for (const [cells, amp] of [[8, 0.5], [16, 0.32], [32, 0.2], [64, 0.12]] as const) {
+    const g = new Float32Array(cells * cells).map(() => rnd() - 0.5);
+    const step = size / cells;
+    for (let y = 0; y < size; y++)
+      for (let x = 0; x < size; x++) {
+        const fx = x / step;
+        const fy = y / step;
+        const x0 = Math.floor(fx);
+        const y0 = Math.floor(fy);
+        const tx = fx - x0;
+        const ty = fy - y0;
+        const sx = tx * tx * (3 - 2 * tx);
+        const sy = ty * ty * (3 - 2 * ty);
+        const at = (i: number, j: number) => g[((j % cells) * cells + (i % cells)) | 0];
+        const a = at(x0, y0) + (at(x0 + 1, y0) - at(x0, y0)) * sx;
+        const b = at(x0, y0 + 1) + (at(x0 + 1, y0 + 1) - at(x0, y0 + 1)) * sx;
+        h[y * size + x] += (a + (b - a) * sy) * amp;
+      }
+  }
+  // fibres: short raised streaks, wrapped so the tile stays seamless
+  for (let f = 0; f < 700; f++) {
+    const x = rnd() * size;
+    const y = rnd() * size;
+    const ang = (rnd() - 0.5) * 0.9;
+    const len = 4 + rnd() * 18;
+    const amp = (rnd() > 0.4 ? 1 : -0.7) * (0.12 + rnd() * 0.18);
+    for (let t = 0; t < len; t += 0.5) {
+      const px = Math.floor(x + Math.cos(ang) * t + size) % size;
+      const py = Math.floor(y + Math.sin(ang) * t + size) % size;
+      h[py * size + px] += amp;
+    }
+  }
+  const data = new Uint8Array(size * size * 4);
+  const k = 2.2;
+  for (let y = 0; y < size; y++)
+    for (let x = 0; x < size; x++) {
+      const hx = h[y * size + ((x + 1) % size)] - h[y * size + ((x - 1 + size) % size)];
+      const hy = h[((y + 1) % size) * size + x] - h[((y - 1 + size) % size) * size + x];
+      let nx = -hx * k;
+      let ny = hy * k; // texture v runs up, rows run down
+      let nz = 1;
+      const l = Math.hypot(nx, ny, nz);
+      nx /= l;
+      ny /= l;
+      nz /= l;
+      const i = (y * size + x) * 4;
+      data[i] = Math.round((nx * 0.5 + 0.5) * 255);
+      data[i + 1] = Math.round((ny * 0.5 + 0.5) * 255);
+      data[i + 2] = Math.round((nz * 0.5 + 0.5) * 255);
+      data[i + 3] = 255;
+    }
+  const tex = new DataTexture(data, size, size, RGBAFormat);
+  tex.colorSpace = NoColorSpace;
+  tex.wrapS = tex.wrapT = RepeatWrapping;
+  tex.magFilter = LinearFilter;
+  tex.minFilter = LinearMipmapLinearFilter;
+  tex.generateMipmaps = true;
+  tex.anisotropy = 4;
+  tex.needsUpdate = true;
   return tex;
 }
 

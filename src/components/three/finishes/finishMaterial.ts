@@ -3,7 +3,7 @@ import type { BoardAppearance } from "@/lib/dieline";
 import { MAT_EDGE, MAT_INSIDE, MAT_OUTSIDE, type BoardMaterialSet } from "../boardMaterials";
 import { FOIL_LOOKS, RELIEF_BUMP_SCALE, SPOT_UV_LOOK, type SurfaceLook } from "./looks";
 import type { FinishMapCanvases } from "./masks";
-import { boardTileTexture, fluteEdgeTexture, grainTexture, solidDataTexture, solidEdgeTexture } from "./textures";
+import { boardTileTexture, fluteEdgeTexture, grainTexture, paperNormalTexture, solidDataTexture, solidEdgeTexture } from "./textures";
 
 /**
  * Board materials with real finishes:
@@ -34,6 +34,8 @@ export interface FinishUniforms {
   elbaBoardColor: { value: Color };
   /** Reflection strength inside foil, independent of the coating's envIntensity (soft-touch dims the print, not the foil). */
   elbaFoilEnv: { value: number };
+  /** 1 while artwork is mapped: printed pixels sit a little glossier than the bare board (ink film). */
+  elbaInkGloss: { value: number };
 }
 
 const DECL = /* glsl */ `
@@ -49,6 +51,7 @@ uniform float elbaInkTone;
 uniform float elbaInkOnBoard;
 uniform vec3 elbaBoardColor;
 uniform float elbaFoilEnv;
+uniform float elbaInkGloss;
 `;
 
 /**
@@ -75,6 +78,9 @@ export function patchFinishShader(mat: MeshPhysicalMaterial, uniforms: FinishUni
   float elbaGrain = texture2D( elbaDetailMap, elbaUv * elbaDetailRepeat ).r;
   // ink on kraft: only printed pixels multiply with the liner (unprinted pixels already ARE the
   // liner colour in the artwork canvas, so multiplying everything would darken the board twice)
+  // ink is a thin resin film: printed pixels are a touch less rough than the matte board around them
+  float elbaInked = elbaInkGloss * smoothstep( 0.03, 0.12, distance( diffuseColor.rgb, elbaBoardColor ) );
+  roughnessFactor *= 1.0 - 0.2 * elbaInked;
   float elbaInk = elbaInkOnBoard * smoothstep( 0.02, 0.1, distance( diffuseColor.rgb, elbaBoardColor ) );
   diffuseColor.rgb *= mix( vec3( 1.0 ), mix( vec3( 1.0 ), elbaBoardColor / max( max( elbaBoardColor.r, elbaBoardColor.g ), max( elbaBoardColor.b, 0.001 ) ), 0.85 ), elbaInk );
   diffuseColor.rgb *= elbaInkTone * mix( 1.0, 0.78 + 0.44 * elbaGrain, elbaDetail );
@@ -84,6 +90,11 @@ export function patchFinishShader(mat: MeshPhysicalMaterial, uniforms: FinishUni
       .replace(
         "#include <normal_fragment_maps>",
         /* glsl */ `#include <normal_fragment_maps>
+  // three applies a normal map OR a bump map: the paper-tooth normal map is always on, so add the
+  // bump (fibre relief, emboss / deboss) on top of it here
+  #if defined( USE_BUMPMAP ) && defined( USE_NORMALMAP_TANGENTSPACE )
+    normal = perturbNormalArb( - vViewPosition, normal, dHdxy_fwd(), faceDirection );
+  #endif
   // hot-foil is never optically flat: a faint crinkle (from the grain tile) breaks the reflection
   // into the glints that make foil read as metal instead of flat ochre ink
   vec2 elbaCrinkle = vec2( texture2D( elbaDetailMap, elbaUv * elbaDetailRepeat * 2.3 ).r, texture2D( elbaDetailMap, elbaUv * elbaDetailRepeat * 2.3 + 0.37 ).r ) - 0.5;
@@ -105,7 +116,7 @@ export function patchFinishShader(mat: MeshPhysicalMaterial, uniforms: FinishUni
   #endif`,
       );
   };
-  mat.customProgramCacheKey = () => "elba-finish-v4";
+  mat.customProgramCacheKey = () => "elba-finish-v5";
 }
 
 export interface FinishMapTextures {
@@ -175,6 +186,11 @@ export function createFinishedBoardMaterials(sheet: { width: number; height: num
     fibre.needsUpdate = true;
   }
   const fibreScale = { outside: detail * 1.8, inside: detail * 2.2 };
+  // Paper tooth: a tangent-space normal map at low strength (about 0.15 on white board, more on
+  // kraft, less under film), tiled every ~45 mm of sheet.
+  const paper = own(paperNormalTexture());
+  paper.repeat.set(sheet.width / 45, sheet.height / 45);
+  const paperScale = (d: number, side: "outside" | "inside") => (side === "outside" ? 0.1 + d * 0.75 : 0.14 + d * 0.8);
   const relief: Record<"outside" | "inside", Texture | null> = { outside: null, inside: null };
 
   const makeUniforms = (): FinishUniforms => ({
@@ -192,11 +208,15 @@ export function createFinishedBoardMaterials(sheet: { width: number; height: num
     // the studio sweep is mid-grey (~0.25 linear); a light tent around real foil is near white, so foil
     // reflections get ~2.6× to read as polished metal next to diffuse paper
     elbaFoilEnv: { value: 2.6 },
+    elbaInkGloss: { value: 0 },
   });
 
   // clearcoat / sheen stay > 0 so their shader paths compile once and tweens never recompile
-  const makeSide = (map: Texture | null, color: string, u: FinishUniforms) => {
+  const makeSide = (map: Texture | null, color: string, u: FinishUniforms, side: "outside" | "inside") => {
+    const s = paperScale(detail, side);
     const m = new MeshPhysicalMaterial({
+      normalMap: paper,
+      normalScale: new Vector2(s, s),
       color: new Color(color),
       map,
       roughness: app.roughness,
@@ -214,8 +234,8 @@ export function createFinishedBoardMaterials(sheet: { width: number; height: num
   };
   const uOut = makeUniforms();
   const uIn = makeUniforms();
-  const outside = own(makeSide(tile, app.outside, uOut));
-  const inside = own(makeSide(insideTile, app.inside, uIn));
+  const outside = own(makeSide(tile, app.outside, uOut, "outside"));
+  const inside = own(makeSide(insideTile, app.inside, uIn, "inside"));
   inside.roughness = 0.95;
 
   const edge = own(new MeshStandardMaterial({ color: new Color("#ffffff"), roughness: 0.95, metalness: 0 }));
@@ -249,6 +269,7 @@ export function createFinishedBoardMaterials(sheet: { width: number; height: num
     setArtwork(side, map) {
       const m = side === "outside" ? outside : inside;
       artwork[side] = map;
+      (side === "outside" ? uOut : uIn).elbaInkGloss.value = map ? 1 : 0;
       const next = map ?? (side === "outside" ? tile : insideTile);
       if (m.map !== next) {
         m.map = next;
@@ -295,6 +316,8 @@ export function createFinishedBoardMaterials(sheet: { width: number; height: num
       fibreScale.inside = d * 2.2;
       if (!relief.outside) outside.bumpScale = fibreScale.outside;
       if (!relief.inside) inside.bumpScale = fibreScale.inside;
+      outside.normalScale.setScalar(paperScale(d, "outside"));
+      inside.normalScale.setScalar(paperScale(d * 1.2, "inside"));
       uIn.elbaDetail.value = d * 1.2;
       // tiles are neutral; only the strength changes between corrugated and solid board
       const strength = a.fluteColor ? 12 : 4;

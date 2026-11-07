@@ -6,6 +6,7 @@ import { ACESFilmicToneMapping, AgXToneMapping, NeutralToneMapping, type ToneMap
 import { defaultMaxDpr } from "./hooks";
 import { KEY_SHORTCUTS, RendererSettings, ShaderWarmup, registerDebugRenderer, yieldToMain } from "./perf";
 import type { ScreenshotOptions } from "./screenshot";
+import type { PhotoRenderOptions, PhotoRenderResult } from "./photoRender";
 import type { FitInsets } from "./fit";
 import { useOptionalI18n } from "@/i18n/client";
 import styles from "./PackagingScene.module.css";
@@ -42,6 +43,8 @@ export interface EngineViewApi {
   getModel?(): import("three").Object3D | null;
   /** Glow the given panels' printed surface (hover / drop target); null clears it. */
   highlight?(panelIds: readonly string[] | null, surface?: "outside" | "inside"): void;
+  /** Path-traced studio image of the model (see photoRender.ts). */
+  renderPhoto?(opts?: PhotoRenderOptions): Promise<PhotoRenderResult>;
 }
 
 /** A point on the printed board under the pointer: panel, printed surface and sheet position (mm). */
@@ -80,6 +83,7 @@ export function useRegisterViewApi(apiRef: { current: EngineViewApi | null }) {
       pickAt: (x, y) => apiRef.current?.pickAt?.(x, y) ?? null,
       getModel: () => apiRef.current?.getModel?.() ?? null,
       highlight: (ids, s) => apiRef.current?.highlight?.(ids, s),
+      renderPhoto: (o) => (apiRef.current?.renderPhoto ? apiRef.current.renderPhoto(o) : Promise.reject(new Error("3D view not ready"))),
     };
     ctx.register(proxy);
     // report the first frame of this content (after a model / kind switch too)

@@ -3,6 +3,8 @@ import { STRUCTURE_FAMILY, panelAxis, panelLocalPoint, panelPivot, type DielineM
 import { MAT_EDGE, MAT_INSIDE, MAT_OUTSIDE } from "./boardMaterials";
 
 const DEG = Math.PI / 180;
+/** tan(40°): how far cut / fold edge normals lean toward the adjacent face (rounded rim shading). */
+const EDGE_ROUND = 0.84;
 
 /** The dieline engine returns its own three-free vectors (src/lib/dieline/math.ts); the mesh code uses three's. */
 const v3 = (v: { x: number; y: number; z: number }) => new Vector3(v.x, v.y, v.z);
@@ -214,16 +216,23 @@ export function buildPanelGeometry(model: DielineModel, panel: DielinePanel): Bu
         const u0 = fold ? 0 : alongFlute ? 0.02 : run / pitch;
         const u1 = fold ? 0 : alongFlute ? 0.02 : (run + l) / pitch;
         run += l;
+        // Rounded rim: the strip's vertex normals lean ~40° toward the face they meet (outside
+        // vertices toward +Z, inside ones toward -Z), so the 1-3 mm edge shades like a slightly
+        // crushed / rolled board edge and catches a thin pale highlight instead of a razor line.
+        // Shading only: positions (and the dieline) are unchanged.
+        const nO = new Vector3(0, 0, EDGE_ROUND).add(normal).normalize();
+        const nI = new Vector3(0, 0, -EDGE_ROUND).add(normal).normalize();
+        const nn = (v: Vector3) => (v === oa || v === ob ? nO : nI);
         const tri = (a: Vector3, b: Vector3, c: Vector3, ua: [number, number], ub: [number, number], uc: [number, number]) => {
           const cr = new Vector3().subVectors(b, a).cross(new Vector3().subVectors(c, a));
           if (cr.dot(normal) >= 0) {
-            push(a, normal, ...ua);
-            push(b, normal, ...ub);
-            push(c, normal, ...uc);
+            push(a, nn(a), ...ua);
+            push(b, nn(b), ...ub);
+            push(c, nn(c), ...uc);
           } else {
-            push(a, normal, ...ua);
-            push(c, normal, ...uc);
-            push(b, normal, ...ub);
+            push(a, nn(a), ...ua);
+            push(c, nn(c), ...uc);
+            push(b, nn(b), ...ub);
           }
         };
         if (fold) {

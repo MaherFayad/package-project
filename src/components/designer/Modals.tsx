@@ -11,7 +11,9 @@ import { Badge } from "@/components/ui/Badge";
 import { Banner } from "@/components/ui/Banner";
 import { BlockStack, Divider, InlineStack } from "@/components/ui/Stack";
 import { Button } from "@/components/ui/Button";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { ChoiceList } from "@/components/ui/ChoiceList";
+import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Inset } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { PriceTag } from "@/components/ui/PriceTag";
@@ -233,7 +235,7 @@ export function PriceModal({
 }
 
 /** What the export modal downloads: 3D renders (PNG), the 3D model, the print PDF, the dieline template. */
-export type ExportSize = "standard" | "hd" | "uhd" | "glb" | "pdf" | "dielineSvg" | "dielinePdf";
+export type ExportSize = "photo" | "standard" | "hd" | "uhd" | "glb" | "pdf" | "dielineSvg" | "dielinePdf";
 
 /** Export (screen 20 anatomy: choice lists with a "Recommended" badge): images, print and 3D files. */
 export function ExportModal({
@@ -244,41 +246,59 @@ export function ExportModal({
   onOrder,
   orderLabel,
   model3d = true,
+  photoProgress = null,
+  onCancelPhoto,
 }: {
   open: boolean;
   onClose: () => void;
-  onExport: (s: ExportSize) => void;
+  onExport: (s: ExportSize, opts?: { transparent?: boolean }) => void;
   busy: boolean;
   /** "Order this box / design" next to the download (B-03 bridge: every export leads back to an order). */
   onOrder?: () => void;
   orderLabel?: string;
-  /** Offer the GLB 3D model (boxes). */
+  /** Offer the GLB 3D model and the photo render (boxes). */
   model3d?: boolean;
+  /** 0..1 while a photo render runs, else null. */
+  photoProgress?: number | null;
+  onCancelPhoto?: () => void;
 }) {
   const { t } = useI18n();
   const [size, setSize] = useState<ExportSize | null>(null);
+  const [transparent, setTransparent] = useState(false);
   useEffect(() => {
     if (open) setSize(null);
   }, [open]);
   const pick = (v: string[]) => setSize((v[0] as ExportSize) ?? null);
+  const rendering = photoProgress !== null;
+  const pct = Math.round((photoProgress ?? 0) * 100);
   return (
     <Modal
       open={open}
-      onClose={onClose}
+      onClose={rendering && onCancelPhoto ? onCancelPhoto : onClose}
       title={t("designer.export.heading")}
       size="small"
-      primaryAction={{ content: t("designer.export.download"), disabled: !size, loading: busy, onAction: () => size && onExport(size) }}
-      secondaryActions={[
-        ...(onOrder && orderLabel ? [{ content: orderLabel, onAction: onOrder }] : []),
-        { content: t("common.cancel"), onAction: onClose },
-      ]}
+      primaryAction={{ content: t("designer.export.download"), disabled: !size, loading: busy, onAction: () => size && onExport(size, size === "photo" ? { transparent } : undefined) }}
+      secondaryActions={
+        rendering
+          ? [{ content: t("common.cancel"), onAction: onCancelPhoto ?? onClose }]
+          : [...(onOrder && orderLabel ? [{ content: orderLabel, onAction: onOrder }] : []), { content: t("common.cancel"), onAction: onClose }]
+      }
     >
+      {rendering ? (
+        <BlockStack gap="200">
+          <Text as="p" variant="bodyMd" aria-live="polite">
+            {t("designer.export.photoProgress", { pct })}
+          </Text>
+          <ProgressBar progress={pct} accessibilityLabel={t("designer.export.photo")} animated={false} />
+        </BlockStack>
+      ) : (
       <BlockStack gap="400">
         <ChoiceList
           title={t("designer.export.groupImage")}
           selected={size ? [size] : []}
           onChange={pick}
           choices={[
+            ...(model3d ? [{ value: "photo", label: t("designer.export.photo"), helpText: t("designer.export.photoHelp") }] : []),
             {
               value: "standard",
               label: (
@@ -293,6 +313,7 @@ export function ExportModal({
             { value: "uhd", label: t("designer.export.uhd"), helpText: t("designer.export.uhdHelp") },
           ]}
         />
+        {size === "photo" ? <Checkbox label={t("designer.export.photoTransparent")} checked={transparent} onChange={setTransparent} /> : null}
         <ChoiceList
           title={t("designer.export.groupFiles")}
           selected={size ? [size] : []}
@@ -310,6 +331,7 @@ export function ExportModal({
           </Banner>
         ) : null}
       </BlockStack>
+      )}
     </Modal>
   );
 }

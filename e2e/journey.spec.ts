@@ -35,8 +35,11 @@ test("home → design → gate → price → checkout → pay → vendor → QC 
   await expect(page.getByRole("application", { name: "3D preview of your box" })).toBeVisible({ timeout: 30_000 });
 
   // 2. Anonymous design in the Basics panel (the default): one print colour + a name, autosaved.
+  // The Basics panel shows one rail section at a time (Logo, Colours, Size, More); phones open it as a sheet.
   const basics = page.getByTestId("simple-panel");
+  await page.getByRole("tab", { name: "Colours", exact: true }).click();
   await basics.getByRole("button", { name: "Colour #1f3d2b" }).first().click();
+  await page.getByRole("tab", { name: "Logo", exact: true }).click();
   await basics.getByRole("button", { name: "Add a name or text" }).click();
   await expect(page).toHaveURL(/[?&]d=[\w-]+/, { timeout: 20_000 });
 

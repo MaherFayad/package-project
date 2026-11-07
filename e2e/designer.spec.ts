@@ -31,12 +31,15 @@ test("Basics (the default): logo and a name go on the 3D box; All options is rem
   await page.goto("/en/design/mailer-box");
   const stage = page.getByTestId("stage-3d");
   await expect(stage.locator("canvas").first()).toBeVisible({ timeout: 45_000 });
-  await expect(page.getByRole("button", { name: "Basics", exact: true })).toHaveAttribute("aria-pressed", "true");
-  // No printer tabs, no face / dieline switch for a first-time visitor.
-  await expect(page.getByRole("tab", { name: "Artwork" })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Laid flat", exact: true })).toHaveCount(0);
+  // Phones: the panel is a bottom sheet that starts closed.
   const expand = page.getByRole("button", { name: "Show more controls" });
   if (await expand.isVisible()) await expand.click();
+  await expect(page.getByRole("button", { name: "Basics", exact: true })).toHaveAttribute("aria-pressed", "true");
+  // No printer tabs and no face editor for a first-time visitor: the rail shows Logo, Colours, Size, More
+  // (designer-restyle.md); the bottom dock has 3D / Laid flat / dimensions.
+  await expect(page.getByRole("tab", { name: "Artwork" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Face", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("tab", { name: "Logo", exact: true })).toHaveAttribute("aria-selected", "true");
   const basics = page.getByTestId("simple-panel");
 
   // Logo: one tap + the file; the editor stays on the 3D box (no jump to the flat face editor).
@@ -45,6 +48,9 @@ test("Basics (the default): logo and a name go on the 3D box; All options is rem
   await (await chooser).setFiles({ name: "logo.png", mimeType: "image/png", buffer: await logo(page) });
   await expect(basics.getByRole("button", { name: "Add another picture" })).toBeVisible({ timeout: 30_000 });
   await expect(stage).toBeVisible();
+  // The new logo is selected: one tap copies it onto every other side (not the bottom).
+  await basics.getByRole("button", { name: "Put it on every side" }).click();
+  await expect(basics.getByRole("button", { name: /^Image · / })).toHaveCount(5);
 
   // A name: one tap, the text field is focused, typed text goes under the logo on the same side.
   await basics.getByRole("button", { name: "Add a name or text" }).click();
@@ -59,6 +65,7 @@ test("Basics (the default): logo and a name go on the 3D box; All options is rem
   const image = layers.find((l) => l.kind === "image");
   const text = layers.find((l) => l.kind === "text");
   expect(image).toBeTruthy();
+  expect(layers.filter((l) => l.kind === "image")).toHaveLength(5);
   expect(text?.text).toBe("Nour Bakery");
   expect(text?.face).toBe(image?.face);
 
@@ -74,8 +81,8 @@ async function noHorizontalScroll(page: Page) {
   expect(overflow).toBeLessThanOrEqual(0);
 }
 
-/** Desktop shows Export / Share / Save as buttons; phones fold them into the "More actions" menu. */
-async function toolbarAction(page: Page, name: string, more = "More actions") {
+/** All options on desktop shows Export / Share / Save as buttons; phones fold them into "More actions", Basics into "Save and share". */
+async function toolbarAction(page: Page, name: string, more: string | RegExp = /^(More actions|Save and share)$/) {
   const button = page.getByRole("toolbar").getByRole("button", { name, exact: true });
   if (await button.isVisible()) return button.click();
   await page.getByRole("button", { name: more }).click();
@@ -110,7 +117,7 @@ test("design a box, see the price signed out, sign up at the share gate, share a
   // 4. Text description of every panel + the print check.
   await page.getByRole("tab", { name: "Layers" }).click();
   await expect(page.getByRole("button", { name: /Text “Elba|Text “Your brand/ })).toBeVisible();
-  await page.getByRole("tab", { name: /Check/ }).click();
+  await page.getByRole("tab", { name: /check/i }).click();
   await expect(page.getByRole("tabpanel").getByText("Ready to print")).toBeVisible();
 
   // 5. Anonymous autosave to the server puts the design id in the URL.
@@ -162,7 +169,7 @@ test("Arabic editor is RTL, keeps the 3D view unmirrored and gates saving", asyn
   await expect(page.getByLabel("الطول")).toHaveValue("310");
   await noHorizontalScroll(page);
   await toolbarAction(page, "حفظ", "إجراءات أخرى");
-  await expect(page.getByRole("dialog", { name: "إنشاء حسابك المجاني" })).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "رقم محمولك للمتابعة" })).toBeVisible();
 });
 
 test("unknown structure is a 404", async ({ page }) => {

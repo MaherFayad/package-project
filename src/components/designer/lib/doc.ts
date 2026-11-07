@@ -345,6 +345,34 @@ export function duplicateLayer(doc: DesignDoc, id: string, offsetMm = 5): { doc:
   return { doc: addLayer(doc, copy), id: copy.id };
 }
 
+/**
+ * "Put it on every side": copy an item onto every other outside side (not the bottom) that is at
+ * least `minMm` on both edges and does not carry the same picture or text yet. Each copy takes the
+ * same share of its side's width as the original (capped at 80 % of the side's height), centred.
+ */
+export function copyToSides(doc: DesignDoc, id: string, faces: FaceSizes, minMm = 25): { doc: DesignDoc; added: number } {
+  const layer = findLayer(doc, id);
+  const from = layer ? faces[layer.face] : undefined;
+  if (!layer || !from || layer.surface !== "outside") return { doc, added: 0 };
+  const same = (l: ArtworkLayer) =>
+    l.kind === layer.kind && (l.kind === "image" ? l.src === (layer as ImageLayer).src : l.kind === "text" ? l.text === (layer as TextLayer).text : false);
+  let next = doc;
+  let added = 0;
+  for (const f of FACE_IDS) {
+    const size = faces[f];
+    if (f === layer.face || f === "bottom" || !size || size.width < minMm || size.height < minMm) continue;
+    if (next.artwork.outside.layers.some((l) => l.face === f && same(l))) continue;
+    if (layerCount(next) >= MAX_LAYERS) break;
+    let k = (size.width * (layer.width / from.width)) / layer.width;
+    if (layer.height * k > size.height * 0.8) k = (size.height * 0.8) / layer.height;
+    const copy = { ...layer, id: newId(), face: f, x: size.width / 2, y: size.height / 2, width: layer.width * k, height: layer.height * k } as ArtworkLayer;
+    if (copy.kind === "text") copy.fontSizePt = Math.max(4, Math.round(copy.fontSizePt * k * 10) / 10);
+    next = addLayer(next, copy);
+    added++;
+  }
+  return { doc: next, added };
+}
+
 export function setBackground(doc: DesignDoc, surface: PrintSurface, color: string | null): DesignDoc {
   return { ...doc, artwork: { ...doc.artwork, [surface]: { ...doc.artwork[surface], background: color } } };
 }
