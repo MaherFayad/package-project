@@ -8,6 +8,7 @@ Start with [`../CLAUDE.md`](../CLAUDE.md) (commands, rules, gotchas), then [ARCH
 |---|---|
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Runtime, request flow, routes, data model, auth, pricing, orders, payments, shipping, notifications, storage, jobs, i18n, analytics, headers, rate limits |
 | [DEPLOY-CLOUDFLARE.md](DEPLOY-CLOUDFLARE.md) | Production on Cloudflare Workers + Neon + R2: setup, every deploy, schema changes, verification log |
+| [DEPLOY-QUICKSTART.md](DEPLOY-QUICKSTART.md) | Short step-by-step to deploy your own copy on Cloudflare (about 30 minutes), and what does not work yet |
 | [design-system.md](design-system.md) | App UI kit (`src/components/ui`), tokens, RTL and money display rules |
 | [research-report.md](research-report.md) | Product research and build plan |
 | [packaging-availability.md](packaging-availability.md) | Packaging formats available in Egypt and worldwide (source for `src/data/packaging-availability`) |
