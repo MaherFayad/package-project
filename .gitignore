@@ -8,6 +8,7 @@ test-results
 playwright-report
 .env
 .env.local
+.env.cloudflare
 *.tsbuildinfo
 .DS_Store
 coverage
@@ -30,3 +31,4 @@ prisma/merge-check.db*
 .open-next/
 .wrangler/
 .dev.vars
+.neon
