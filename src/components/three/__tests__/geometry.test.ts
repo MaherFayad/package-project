@@ -14,16 +14,18 @@ const onSeg = (p: Pt, s: Segment) => {
   const t = ((p.x - s.a.x) * dx + (p.y - s.a.y) * dy) / l2;
   return t > -1e-6 && t < 1 + 1e-6 && Math.abs(dx * (p.y - s.a.y) - dy * (p.x - s.a.x)) / Math.sqrt(l2) < 1e-3;
 };
-/** R5-3Q-A-03: outline edges on a crease folded ~90° about the printed face carry no side face. */
+/** R5-3Q-A-03: a crease folded ~90° about the printed face (its end face is set back, see panelGeometry). */
 const squareCrease = (c: DielinePanel) => !!c.hinge && c.hingeKind !== "roll" && !c.pivotDepth && Math.abs(Math.abs(c.foldAngleClosed) - 90) <= 30;
 /**
  * Side quads of the outline after the R6 split (R6-3Q-C-01 follow-up): every outline edge is cut
- * where a collinear hinge (own, children's, roll) starts or ends; pieces on a roll hinge or a
- * square crease (A-03) get no side face. Returns { quads, hidden, foldOnLongEdge }.
+ * where a collinear hinge (own, children's, roll) starts or ends; pieces on a roll hinge get no
+ * side face. Pieces on a square crease keep theirs (set back, so a half-open fold shows no slot);
+ * `hidden` counts those. Returns { quads, hidden, foldOnLongEdge }.
  */
 function outlinePieces(model: DielineModel, panel: DielinePanel) {
   const hingeSegs = [panel, ...model.panels.filter((c) => c.parentId === panel.id)].filter((c) => c.hinge).map((c) => ({ c, h: c.hinge! }));
-  const skip = hingeSegs.filter(({ c }) => c.hingeKind === "roll" || squareCrease(c)).map((x) => x.h);
+  const skip = hingeSegs.filter(({ c }) => c.hingeKind === "roll").map((x) => x.h);
+  const square = hingeSegs.filter(({ c }) => c.hingeKind !== "roll" && squareCrease(c)).map((x) => x.h);
   const creases = hingeSegs.filter(({ c }) => c.hingeKind !== "roll").map((x) => x.h);
   const poly = panel.polygon;
   let quads = 0;
@@ -48,11 +50,12 @@ function outlinePieces(model: DielineModel, panel: DielinePanel) {
       if (ts[k + 1] - ts[k] < 1e-6 || Math.sqrt(L2) * (ts[k + 1] - ts[k]) < 1e-6) continue;
       const pa = { x: A.x + dx * ts[k], y: A.y + dy * ts[k] };
       const pb = { x: A.x + dx * ts[k + 1], y: A.y + dy * ts[k + 1] };
-      if (skip.some((h) => onSeg(pa, h) && onSeg(pb, h))) {
+      if (skip.some((h) => onSeg(pa, h) && onSeg(pb, h))) continue;
+      quads++;
+      if (square.some((h) => onSeg(pa, h) && onSeg(pb, h))) {
         hidden++;
         continue;
       }
-      quads++;
       if (split && creases.some((h) => onSeg(pa, h) && onSeg(pb, h))) foldOnLongEdge++;
     }
   }
@@ -122,18 +125,19 @@ describe("feature geometry", () => {
     perf.dispose();
   });
 
-  it("drops the crease side face of a 90° fold about the printed face (no z-fight band on fold rims)", () => {
+  it("closes a 90° crease about the printed face with a set-back end face (no slot when half open, no z-fight when square)", () => {
     const m = generateDieline("RIGID_BOX", DEFAULT_DIMS.RIGID_BOX, { thicknessMm: BOARD_SPECS[defaultMaterialFor("RIGID_BOX")].thicknessMm });
-    let hidden = 0;
-    for (const p of m.panels) hidden += hiddenEdges(m, p);
+    let square = 0;
+    for (const p of m.panels) square += hiddenEdges(m, p);
     // every wall of the lid and the base folds 90° on its crease
-    expect(hidden).toBeGreaterThanOrEqual(8);
+    expect(square).toBeGreaterThanOrEqual(8);
     const wall = m.panels.find((p) => squareCrease(p))!;
     const g = buildPanelGeometry(m, wall);
-    // no edge vertex sits on the hinge line at mid-thickness of a side face along it
+    // the crease end face is there (slab closed along the fold) ...
     const pos = g.getAttribute("position");
     const faces = (wall.polygon.length + (wall.holes ?? []).reduce((s, h) => s + h.length, 0) - 2 + 2 * (wall.holes?.length ?? 0)) * 6;
     expect(pos.count - faces).toBe((outlinePieces(m, wall).quads + (wall.holes ?? []).reduce((s, h) => s + h.length, 0)) * 6);
+    expect(Array.from(pos.array as Float32Array).every(Number.isFinite)).toBe(true);
     g.dispose();
   });
 

@@ -304,7 +304,10 @@ export function EngineCanvas({
       {poster ? <div aria-hidden="true" className={styles.poster} data-hidden={ready ? "true" : undefined} style={{ backgroundImage: `url(${JSON.stringify(poster)})` }} /> : null}
       <Canvas
         className={styles.canvas}
-        data-reveal={ready ? "shown" : "hidden"}
+        // not `data-reveal`: the marketing scroll-reveal CSS (motion.css) hides every [data-reveal]
+        // until its script marks it, and that CSS stays loaded after a client navigation from a
+        // marketing page, which left the 3D view invisible
+        data-gl-reveal={ready ? "shown" : "hidden"}
         frameloop={compiled || timedOut ? "demand" : "never"}
         dpr={[1, dprCap]}
         // PCF soft shadow maps: the key light shades flaps, walls and the inside of open boxes

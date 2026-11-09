@@ -5,6 +5,8 @@ import { MAT_EDGE, MAT_INSIDE, MAT_OUTSIDE } from "./boardMaterials";
 const DEG = Math.PI / 180;
 /** tan(40°): how far cut / fold edge normals lean toward the adjacent face (rounded rim shading). */
 const EDGE_ROUND = 0.84;
+/** Set-back (mm) of the end face along a square crease, behind the neighbour's printed face. */
+const CREASE_INSET = 0.08;
 
 /** The dieline engine returns its own three-free vectors (src/lib/dieline/math.ts); the mesh code uses three's. */
 const v3 = (v: { x: number; y: number; z: number }) => new Vector3(v.x, v.y, v.z);
@@ -191,13 +193,19 @@ export function buildPanelGeometry(model: DielineModel, panel: DielinePanel): Bu
         const e = new Vector3().subVectors(ob, oa);
         const l = e.length();
         if (l < 1e-6) continue;
-        if (li === 0 && (onRoll(pa, pb) || onHidden(pa, pb))) {
+        if (li === 0 && onRoll(pa, pb)) {
           run += l;
           continue;
         }
         const normal = new Vector3(e.y, -e.x, 0).normalize();
         if (flip) normal.negate();
-        const fold = (li === 0 && onCrease(pa, pb)) || (wrapped && li === 0);
+        // A ~90° crease about the printed face: at exactly 90° this end face lies in the other
+        // panel's printed face and z-fights, but leaving it out opened a see-through slot along the
+        // fold at every other angle (half open, folding, a lid standing up). Keep it, set back
+        // CREASE_INSET so it sits just behind the neighbour's face when square.
+        const squareCrease = li === 0 && onHidden(pa, pb);
+        if (squareCrease) for (const v of [oa, ob, ia, ib]) v.addScaledVector(normal, -CREASE_INSET);
+        const fold = (li === 0 && (onCrease(pa, pb) || squareCrease)) || (wrapped && li === 0);
         const alongFlute = corrugated && Math.abs(pb.y - pa.y) > 2.5 * Math.abs(pb.x - pa.x);
         cur = fold ? foldBuf : edgeBuf;
         // fold edges carry the print of their own panel: sample ~1.2 mm inside the panel, not on

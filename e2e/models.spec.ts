@@ -102,7 +102,7 @@ for (const m of models) {
 
     await changeSize(page);
     await pickOther(page, "material", "radio");
-    await pickOther(page, "finish", "checkbox");
+    await pickOther(page, "finish", "radio");
     // Still the same model, and it still builds (no size error).
     await expect(page.getByTestId("stage-3d")).toHaveAttribute("data-model", m.code);
     await expect(page.getByRole("alert").filter({ hasText: "cannot be made" })).toHaveCount(0);

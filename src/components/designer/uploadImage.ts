@@ -129,3 +129,31 @@ export async function prepareImage(file: File, opts: PrepareOptions = {}): Promi
     URL.revokeObjectURL(url);
   }
 }
+
+/**
+ * Measure a prepared image for the Fill / Fit default (designer: image fit): see-through pixels,
+ * and whether its border is one flat colour (a logo on white). Read on a 64 px copy; an image that
+ * cannot be read counts as a plain photo.
+ */
+export async function imageLook(src: string): Promise<{ transparent: boolean; plainEdges: boolean }> {
+  try {
+    const img = await loadImage(src);
+    const n = 64;
+    const canvas = document.createElement("canvas");
+    canvas.width = n;
+    canvas.height = n;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return { transparent: false, plainEdges: false };
+    ctx.drawImage(img, 0, 0, n, n);
+    const d = ctx.getImageData(0, 0, n, n).data;
+    let clear = 0;
+    for (let i = 3; i < d.length; i += 4) if (d[i] < 245) clear++;
+    const edge: number[] = [];
+    for (let k = 0; k < n; k++) for (const [x, y] of [[k, 0], [k, n - 1], [0, k], [n - 1, k]]) edge.push((y * n + x) * 4);
+    const mean = [0, 1, 2].map((c) => edge.reduce((s, i) => s + d[i + c], 0) / edge.length);
+    const flat = edge.filter((i) => Math.abs(d[i] - mean[0]) + Math.abs(d[i + 1] - mean[1]) + Math.abs(d[i + 2] - mean[2]) < 30).length;
+    return { transparent: clear > n * n * 0.005, plainEdges: flat >= edge.length * 0.92 };
+  } catch {
+    return { transparent: false, plainEdges: false };
+  }
+}

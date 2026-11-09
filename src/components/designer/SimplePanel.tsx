@@ -19,6 +19,7 @@ import { layerName } from "./lib/describe";
 import { MAX_LAYERS } from "./lib/doc";
 import { DPI_WARNING, effectiveDpi } from "./lib/preflight";
 import { ColorField } from "./fields";
+import { ImagePlaceControl, type ImagePlaceApi } from "./ImagePlaceControl";
 import styles from "./designer.module.css";
 
 /**
@@ -46,6 +47,8 @@ export interface SimplePanelProps {
   onDelete: (id: string) => void;
   /** Size of a side in mm (the size slider is a share of its width). */
   faceSize: (f: FaceId) => { width: number; height: number } | null;
+  /** Image fit: Fill side / Fit whole image for a picture (the only placing control in Basics). */
+  imagePlace?: ImagePlaceApi;
   /** Copy a picture onto every other side; absent for containers (one label). */
   onAllSides?: (id: string) => void;
   onBackground: (c: string | null) => void;
@@ -311,11 +314,13 @@ function PanelRow({ label, value, icon: RowIcon, onClick }: { label: string; val
   );
 }
 
-function QuickEdit({ layer, onLayer, onSeal, onPlace, onDelete, faceSize, onAllSides, textRef }: SimplePanelProps & { layer: ArtworkLayer; textRef: React.RefObject<HTMLDivElement | null> }) {
+function QuickEdit({ layer, onLayer, onSeal, onPlace, onDelete, faceSize, onAllSides, imagePlace, textRef }: SimplePanelProps & { layer: ArtworkLayer; textRef: React.RefObject<HTMLDivElement | null> }) {
   const { t } = useI18n();
   // Size as a share of the side's width: one slider instead of "bigger" / "smaller" steps.
   const side = faceSize(layer.face);
   const pct = side ? Math.round((layer.width / side.width) * 100) : null;
+  // A picture gets one control: Fill side / Fit whole image (with its own size for Fit).
+  const placed = layer.kind === "image" && imagePlace ? layer : null;
   return (
     <div className={styles.simpleEdit} onBlur={onSeal} role="group" aria-label={`${t("designer.artwork.selected")}: ${layerName(layer, t)}`}>
       {layer.kind === "text" ? (
@@ -331,7 +336,8 @@ function QuickEdit({ layer, onLayer, onSeal, onPlace, onDelete, faceSize, onAllS
           <ColorField label={t("designer.layer.color")} value={layer.color} onChange={(c) => c && onLayer({ ...layer, color: c } as TextLayer)} />
         </div>
       ) : null}
-      {side && pct !== null ? (
+      {placed && imagePlace ? <ImagePlaceControl layer={placed} api={imagePlace} /> : null}
+      {!placed && side && pct !== null ? (
         <RangeSlider
           label={t("designer.simple.size")}
           min={10}
@@ -348,13 +354,15 @@ function QuickEdit({ layer, onLayer, onSeal, onPlace, onDelete, faceSize, onAllS
           {t("designer.simple.allSides")}
         </Button>
       ) : null}
-      <div className={styles.simpleChoices} role="group" aria-label={t("designer.layer.placement")}>
-        {(["top", "center", "bottom"] as const).map((w) => (
-          <Button key={w} size="slim" onClick={() => onPlace(w)}>
-            {t(`designer.layer.place.${w}` as DictKey)}
-          </Button>
-        ))}
-      </div>
+      {!placed ? (
+        <div className={styles.simpleChoices} role="group" aria-label={t("designer.layer.placement")}>
+          {(["top", "center", "bottom"] as const).map((w) => (
+            <Button key={w} size="slim" onClick={() => onPlace(w)}>
+              {t(`designer.layer.place.${w}` as DictKey)}
+            </Button>
+          ))}
+        </div>
+      ) : null}
       <div>
         <Button variant="tertiary" tone="critical" icon={Trash2} onClick={() => onDelete(layer.id)}>
           {t("designer.layer.delete")}

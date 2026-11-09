@@ -62,7 +62,7 @@
   opacity: 0;
 }
 
-.canvas[data-reveal="hidden"] {
+.canvas[data-gl-reveal="hidden"] {
   opacity: 0;
 }
 

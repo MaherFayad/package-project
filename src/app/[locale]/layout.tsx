@@ -74,7 +74,8 @@ export default async function LocaleLayout({
   if (interHref) preload(interHref, { as: "font", type: "font/woff2", crossOrigin: "anonymous", fetchPriority: locale === "ar" ? "low" : "high" });
   return (
     <html lang={locale} dir={dirOf(locale)} className={`${inter.variable} ${plexArabic.variable} ${notoArabic.variable}`}>
-      <body>
+      {/* browser extensions (e.g. ColorZilla's cz-shortcut-listen) add attributes to <body> */}
+      <body suppressHydrationWarning>
         <a className="skip-link" href="#main">
           {dict.common.skipToContent}
         </a>

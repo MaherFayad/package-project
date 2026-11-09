@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { generateDieline } from "@/lib/dieline";
 import { addLayer, createDesignDoc, makeImageLayer, makeTextLayer, removeLayer } from "../doc";
-import { FINISH_PREVIEW_LAYER, defaultFinishLayerIds, extendFinishMasks, fillEmptyFinishMasks, finishPreview, setLayerFinish, toggleFinish } from "../config";
+import { FINISH_PREVIEW_LAYER, defaultFinishLayerIds, extendFinishMasks, fillEmptyFinishMasks, finishPreview, setLayerFinish, swapFinish, toggleFinish } from "../config";
 
 const PNG = "data:image/png;base64,iVBORw0KGgo=";
 
@@ -78,5 +78,14 @@ describe("finish masks (FN-02)", () => {
     const view = finishPreview(d.finishes!, d.artwork, model);
     expect(view.finishes).toEqual([{ code: "SPOT_UV", mask: { surface: "outside", layerIds: [logo.id] } }, { code: "MATTE_LAMINATION" }]);
     expect(view.artwork).toBe(d.artwork);
+  });
+
+  it("a pick-one swap replaces in one step and a new foil colour keeps the old one's items", () => {
+    const { doc, text, logo } = setup();
+    let d = setLayerFinish(toggleFinish(addLayer(addLayer(doc, text), logo), "FOIL_GOLD", true), "FOIL_GOLD", text.id, false);
+    d = swapFinish(toggleFinish(d, "MATTE_VARNISH", true), ["MATTE_VARNISH"], "GLOSS_VARNISH");
+    d = swapFinish(d, ["FOIL_GOLD"], "FOIL_SILVER");
+    expect(d.finishes).toEqual([{ code: "GLOSS_VARNISH" }, { code: "FOIL_SILVER", mask: { surface: "outside", layerIds: [logo.id] } }]);
+    expect(swapFinish(d, ["GLOSS_VARNISH"], null).finishes!.map((f) => f.code)).toEqual(["FOIL_SILVER"]);
   });
 });

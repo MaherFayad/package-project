@@ -6,12 +6,12 @@ import { CLOSURE_COLORS, LIQUIDS, type ClosureColorCode, type LiquidCode, type V
 import { BOARD_SPECS } from "@/lib/dieline";
 import type { BoxModelDef, ModelDef, VesselModelDef } from "@/lib/library";
 import type { DocGeometry } from "@/lib/library/doc";
-import { FINISHES } from "@/lib/configurator";
+import { FINISHES, MAX_FOIL_COLOURS } from "@/lib/configurator";
 import { formatDims, formatNumber } from "@/lib/format";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n/types";
 import { Badge } from "@/components/ui/Badge";
-import { BlockStack, InlineGrid } from "@/components/ui/Stack";
+import { InlineGrid } from "@/components/ui/Stack";
 import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { RangeSlider } from "@/components/ui/RangeSlider";
@@ -25,7 +25,10 @@ import { modelImage } from "./ModelPicker";
 import { FlexOptionsGroup } from "./FlexOptionsGroup";
 import { EGYPT_BADGE, egyptOf, orderModeOf } from "@/data/catalogue/order-mode";
 import { parseMmInput } from "./lib/mm";
+import { Check, Info } from "lucide-react";
+import { AddOnIcon, BoardSwatch, BoxSketch, FinishSwatch, type AddOnKind } from "./OptionVisuals";
 import styles from "./library.module.css";
+import o from "./options.module.css";
 
 /** a11y R6-AX-09 (WCAG 3.3.1): name the size field that is wrong, not only "this size cannot be made". */
 function useSizeError() {
@@ -55,6 +58,8 @@ export interface ConfigPanelProps {
   /** Geometry changes (size, board, features, container): the editor rescales artwork. */
   onGeometry: (patch: Partial<Pick<DesignDoc, "dims" | "materialCode" | "features" | "vessel">>) => void;
   onFinish: (code: DesignFinishCode, on: boolean) => void;
+  /** Pick-one finish groups: remove `off` and add `on` as one step (swapFinish). */
+  onFinishSwap: (off: DesignFinishCode[], on: DesignFinishCode | null) => void;
   onPrintSides: (sides: DesignDoc["printSides"]) => void;
 }
 
@@ -124,6 +129,8 @@ function plainMaterial(t: (k: DictKey) => string, code: string): string {
   return plain === key ? t(`materials.${code}` as DictKey) : plain;
 }
 
+const NONE = "__none";
+
 function OptionGroup<T extends string>({
   legend,
   type,
@@ -133,6 +140,12 @@ function OptionGroup<T extends string>({
   onChange,
   label,
   extra,
+  layout = "list",
+  visual,
+  line,
+  none,
+  foot,
+  testId,
 }: {
   legend: string;
   type: "radio" | "checkbox";
@@ -142,6 +155,16 @@ function OptionGroup<T extends string>({
   onChange: (value: T, checked: boolean) => void;
   label: (c: Choice<T>) => string;
   extra?: (c: Choice<T>) => ReactNode;
+  /** options-visual: "rows" = wide picture cards (board), "tiles" = a grid of picture tiles (finishes). */
+  layout?: "list" | "rows" | "tiles";
+  visual?: (c: Choice<T>) => ReactNode;
+  /** One short line under the name (part of the description). */
+  line?: (c: Choice<T>) => string | null;
+  /** Pick-one groups: a first «None» card (checked when nothing in the group is chosen). */
+  none?: { label: string; visual?: ReactNode; onPick: () => void };
+  /** Shown under the cards (a note, a link). */
+  foot?: ReactNode;
+  testId?: string;
 }) {
   const { t, locale } = useI18n();
   // R2-07: a warning shared by two or more options (the foil line-width note on every foil colour)
@@ -151,11 +174,58 @@ function OptionGroup<T extends string>({
   const shared = [...warnCount].filter(([, n]) => n > 1).map(([w]) => w);
   const sharedId = (w: string) => `${name}-shared-${shared.indexOf(w)}`;
   const row = (c: Choice<T>) => {
-    const checked = selected.includes(c.value);
+    const isNone = !!none && c.value === NONE;
+    const checked = isNone ? selected.length === 0 : selected.includes(c.value);
     const sharedWarn = c.warning && shared.includes(c.warning[locale]) && !(c.reason && !c.enabled) ? c.warning[locale] : null;
     // A selected option the rules no longer allow stays editable (so it can be removed).
     const disabled = !c.enabled && !checked;
     const id = `${name}-${c.value}`;
+    const describedBy = [sharedWarn ? sharedId(sharedWarn) : c.reason || c.warning ? `${id}-note` : "", checked && !isNone && extra ? `${id}-extra` : ""].filter(Boolean).join(" ") || undefined;
+    if (layout !== "list") {
+      const sub = isNone ? null : line?.(c);
+      return (
+        <li key={c.value}>
+          <label className={o.card} htmlFor={id} data-checked={checked} data-disabled={disabled} data-kind={type}>
+            <input
+              id={id}
+              className={o.srOnly}
+              type={type}
+              name={name}
+              value={c.value}
+              checked={checked}
+              disabled={disabled}
+              aria-labelledby={`${id}-name`}
+              aria-describedby={[sub ? `${id}-line` : "", describedBy ?? ""].filter(Boolean).join(" ") || undefined}
+              onChange={(e) => (isNone ? none.onPick() : onChange(c.value, e.currentTarget.checked))}
+            />
+            {isNone ? none.visual : visual ? visual(c) : null}
+            <span className={o.cardText}>
+              <span id={`${id}-name`} className={o.cardName}>
+                {isNone ? none.label : label(c)}
+              </span>
+              {sub ? (
+                <span id={`${id}-line`} className={o.cardLine}>
+                  {sub}
+                </span>
+              ) : null}
+              {c.reason && !c.enabled ? (
+                <span id={`${id}-note`} className={o.cardReason}>
+                  {t("library.panel.notAvailable")}: {c.reason[locale]}
+                </span>
+              ) : c.warning && !sharedWarn ? (
+                <span id={`${id}-note`} className={o.cardWarning}>
+                  {c.warning[locale]}
+                </span>
+              ) : null}
+              {checked && !isNone && extra ? <span id={`${id}-extra`}>{extra(c)}</span> : null}
+            </span>
+            <span className={o.tick} aria-hidden="true">
+              <Check size={12} strokeWidth={3} />
+            </span>
+          </label>
+        </li>
+      );
+    }
     return (
       <li key={c.value}>
         <label className={styles.optionRow} htmlFor={id} data-checked={checked} data-disabled={disabled}>
@@ -169,7 +239,7 @@ function OptionGroup<T extends string>({
             // a11y R4-07 / R5: the whole row stays the click target, but the name is the short
             // label only; the reason, warning and finish placement are the description (2.5.3, 2.4.6).
             aria-labelledby={`${id}-name`}
-            aria-describedby={[sharedWarn ? sharedId(sharedWarn) : c.reason || c.warning ? `${id}-note` : "", checked && extra ? `${id}-extra` : ""].filter(Boolean).join(" ") || undefined}
+            aria-describedby={describedBy}
             onChange={(e) => onChange(c.value, e.currentTarget.checked)}
           />
           <span className={styles.optionText}>
@@ -185,7 +255,7 @@ function OptionGroup<T extends string>({
                 {c.warning[locale]}
               </span>
             ) : null}
-            {checked && extra ? <span id={`${id}-extra`}>{extra(c)}</span> : null}
+            {checked && !isNone && extra ? <span id={`${id}-extra`}>{extra(c)}</span> : null}
           </span>
         </label>
       </li>
@@ -195,59 +265,170 @@ function OptionGroup<T extends string>({
   // reasons do not bury the choices that work (R2-05). Each reason stays tied to its input.
   const off = choices.filter((c) => !c.enabled && !selected.includes(c.value));
   const fold = off.length >= 2;
-  const on = fold ? choices.filter((c) => !off.includes(c)) : choices;
+  const usable = fold ? choices.filter((c) => !off.includes(c)) : choices;
+  const on = none ? [{ value: NONE as T, name: { ar: none.label, en: none.label }, enabled: true }, ...usable] : usable;
+  const listClass = layout === "rows" ? o.rows : layout === "tiles" ? o.tiles : styles.optionList;
   return (
-    <fieldset className={styles.group} data-testid={`group-${name}`}>
-      <legend className={styles.groupTitle}>{legend}</legend>
-      <ul className={styles.optionList}>{on.map(row)}</ul>
-      {shared.map((w) => (
-        <p key={w} id={sharedId(w)} className={styles.optionWarning}>
-          {w}
-        </p>
-      ))}
+    <fieldset className={styles.group} data-testid={testId ?? `group-${name}`} role={type === "radio" ? "radiogroup" : undefined} aria-labelledby={`${name}-legend`}>
+      <legend id={`${name}-legend`} className={styles.groupTitle}>
+        {legend}
+      </legend>
+      <ul className={listClass}>{on.map(row)}</ul>
+      {shared.map((w) =>
+        layout === "list" ? (
+          <p key={w} id={sharedId(w)} className={styles.optionWarning}>
+            {w}
+          </p>
+        ) : (
+          <p key={w} id={sharedId(w)} className={o.note}>
+            <Info size={14} aria-hidden />
+            <span>{w}</span>
+          </p>
+        ),
+      )}
       {fold ? (
         <details className={styles.unavailable}>
           <summary>{t("library.panel.unavailableCount", { count: formatNumber(off.length) })}</summary>
-          <ul className={styles.optionList}>{off.map(row)}</ul>
+          <ul className={listClass}>{off.map(row)}</ul>
         </details>
       ) : null}
+      {foot}
     </fieldset>
   );
 }
 
-function FinishesGroup({ doc, model, onFinish }: Pick<ConfigPanelProps, "doc" | "onFinish"> & { model: ModelDef }) {
+type FinishGroup = "coating" | "foil" | "spotUv" | "relief";
+const groupOf = (c: DesignFinishCode) => FINISHES[c].group as FinishGroup;
+/** The doc without the given finishes: a pick-one group is judged as "what if this one replaced the current one". */
+const without = (doc: DesignDoc, codes: DesignFinishCode[]): DesignDoc => ({ ...doc, finishes: (doc.finishes ?? []).filter((f) => !codes.includes(f.code)) });
+
+/**
+ * Finishes in the groups the rules define (finish groups, 2026-11-09): one coating, one foil colour
+ * (a second one on another part of the design, up to MAX_FOIL_COLOURS), spot UV on its own, one
+ * relief. Pick-one groups are radios with a «None» card; a card the rules rule out says why.
+ */
+function FinishesGroup({ doc, model, onFinish, onFinishSwap: swap }: Pick<ConfigPanelProps, "doc" | "onFinish" | "onFinishSwap"> & { model: ModelDef }) {
   const { t, locale } = useI18n();
-  const choices = useMemo(() => finishChoicesFor(doc, model), [doc, model]);
-  const selected = (doc.finishes ?? []).map((f) => f.code);
+  const [secondOpen, setSecondOpen] = useState(false);
+  const picked = (doc.finishes ?? []).map((f) => f.code);
+  const inGroup = (g: FinishGroup) => picked.filter((c) => groupOf(c) === g);
+  const coats = inGroup("coating");
+  const foils = inGroup("foil");
+  const reliefs = inGroup("relief");
+  const [foil1, foil2] = foils;
+  const base = model.kind === "box" && doc.materialCode.includes("KRAFT") ? "kraft" : "white";
+  const usedReason = t("library.panel.foilUsed");
+  const groups = useMemo(() => {
+    const judge = (d: DesignDoc, g: FinishGroup) => finishChoicesFor(d, model).filter((c) => groupOf(c.value) === g);
+    const codes = (doc.finishes ?? []).map((f) => f.code);
+    const of = (g: FinishGroup) => codes.filter((c) => groupOf(c) === g);
+    const [f1, f2] = of("foil");
+    return {
+      coating: judge(without(doc, of("coating")), "coating"),
+      foil: judge(without(doc, of("foil")), "foil"),
+      // the second colour: judged next to the first; the first colour itself is taken
+      second: f1 ? judge(without(doc, f2 ? [f2] : []), "foil").map((c) => (c.value === f1 ? { ...c, enabled: false, reason: { ar: usedReason, en: usedReason } } : c)) : [],
+      spotUv: judge(doc, "spotUv"),
+      relief: judge(without(doc, of("relief")), "relief"),
+    };
+  }, [doc, model, usedReason]);
+
+  const visual = (c: Choice<DesignFinishCode>) => <FinishSwatch code={c.value} base={base} />;
+  const noneVisual = <span className={o.finishSwatch} data-finish="NONE" data-base={base} aria-hidden="true" />;
+  // Where a masked finish sits (on the logo, on 2 items, the whole front).
+  const extra = (c: Choice<DesignFinishCode>) => {
+    if (!FINISHES[c.value].masked || model.kind !== "box") return null;
+    const f = doc.finishes?.find((x) => x.code === c.value);
+    if (!f) return null;
+    const live = doc.artwork.outside.layers.filter((l) => !l.hidden && f.mask?.layerIds.includes(l.id));
+    const text =
+      live.length === 0
+        ? t("library.panel.finishWholeFace")
+        : live.every((l) => l.kind === "image")
+          ? t(live.length === 1 ? "library.panel.finishOnLogo" : "library.panel.finishOnImages", { count: formatNumber(live.length) })
+          : t("library.panel.finishOnItems", { count: formatNumber(live.length) });
+    return <span className={styles.optionReason}>{text}</span>;
+  };
+  const common = { label: (c: Choice<DesignFinishCode>) => c.name[locale], layout: "tiles" as const, visual, extra };
+  const noneLabel = t("library.panel.finishNone");
+  const canSecond = !!foil1 && MAX_FOIL_COLOURS >= 2 && groups.second.some((c) => c.enabled);
+  const showSecond = !!foil2 || (secondOpen && canSecond);
+  const showRelief = reliefs.length > 0 || groups.relief.some((c) => c.enabled);
+
   return (
-    <BlockStack gap="100">
-      <OptionGroup
-        legend={t("library.panel.finishes")}
-        type="checkbox"
-        name="finish"
-        choices={choices}
-        selected={selected}
-        label={(c) => c.name[locale]}
-        onChange={(v, on) => onFinish(v, on)}
-        extra={(c) => {
-          // Containers: the finish covers the whole label, so there is nothing to choose.
-          if (!FINISHES[c.value].masked || model.kind !== "box") return null;
-          const f = doc.finishes?.find((x) => x.code === c.value);
-          if (!f) return null;
-          const live = doc.artwork.outside.layers.filter((l) => !l.hidden && f.mask?.layerIds.includes(l.id));
-          const text =
-            live.length === 0
-              ? t("library.panel.finishWholeFace")
-              : live.every((l) => l.kind === "image")
-                ? t(live.length === 1 ? "library.panel.finishOnLogo" : "library.panel.finishOnImages", { count: formatNumber(live.length) })
-                : t("library.panel.finishOnItems", { count: formatNumber(live.length) });
-          return <span className={styles.optionReason}>{text}</span>;
-        }}
-      />
-      <Text as="p" variant="bodySm" tone="subdued">
-        {t("library.panel.finishesHelp")}
+    <div className={o.finishGroups} data-testid="group-finish">
+      <Text as="h3" variant="headingSm">
+        {t("library.panel.finishes")}
       </Text>
-    </BlockStack>
+      <OptionGroup
+        {...common}
+        legend={t("library.panel.coating")}
+        type="radio"
+        name="finish-coating"
+        choices={groups.coating}
+        selected={coats}
+        none={{ label: noneLabel, visual: noneVisual, onPick: () => swap(coats, null) }}
+        onChange={(v) => swap(coats, v)}
+      />
+      <OptionGroup
+        {...common}
+        legend={t("library.panel.foil")}
+        type="radio"
+        name="finish-foil"
+        choices={groups.foil}
+        selected={foil1 ? [foil1] : []}
+        none={{ label: noneLabel, visual: noneVisual, onPick: () => swap(foils, null) }}
+        onChange={(v) => swap(foil1 ? [foil1] : [], v)}
+        foot={
+          <>
+            {foil1 && model.kind === "box" ? (
+              <Text as="p" variant="bodySm" tone="subdued">
+                {t("library.panel.foilWhere")}
+              </Text>
+            ) : null}
+            {canSecond && !showSecond ? (
+              <span>
+                <Button variant="plain" onClick={() => setSecondOpen(true)}>
+                  {t("library.panel.foilAddSecond")}
+                </Button>
+              </span>
+            ) : null}
+          </>
+        }
+      />
+      {showSecond ? (
+        <OptionGroup
+          {...common}
+          legend={t("library.panel.foilSecond")}
+          type="radio"
+          name="finish-foil2"
+          choices={groups.second}
+          selected={foil2 ? [foil2] : []}
+          none={{
+            label: noneLabel,
+            visual: noneVisual,
+            onPick: () => {
+              swap(foil2 ? [foil2] : [], null);
+              setSecondOpen(false);
+            },
+          }}
+          onChange={(v) => swap(foil2 ? [foil2] : [], v)}
+        />
+      ) : null}
+      <OptionGroup {...common} legend={t("library.panel.spotUv")} type="checkbox" name="finish-uv" choices={groups.spotUv} selected={inGroup("spotUv")} onChange={(v, on) => onFinish(v, on)} />
+      {showRelief ? (
+        <OptionGroup
+          {...common}
+          legend={t("library.panel.relief")}
+          type="radio"
+          name="finish-relief"
+          choices={groups.relief}
+          selected={reliefs}
+          none={{ label: noneLabel, visual: noneVisual, onPick: () => swap(reliefs, null) }}
+          onChange={(v) => swap(reliefs, v)}
+        />
+      ) : null}
+    </div>
   );
 }
 
@@ -281,7 +462,7 @@ function ViewGroup({ view, onView, vessel }: Pick<ConfigPanelProps, "view" | "on
 
 const AXIS_KEY = { L: "designer.box.length", W: "designer.box.width", H: "designer.box.height" } as const;
 
-function BoxSection({ doc, model, geo, view, onView, onGeometry, onFinish, onPrintSides }: ConfigPanelProps & { model: BoxModelDef }) {
+function BoxSection({ doc, model, geo, view, onView, onGeometry, onFinish, onFinishSwap, onPrintSides }: ConfigPanelProps & { model: BoxModelDef }) {
   const { t, locale } = useI18n();
   const cylinder = model.shape === "cylinder";
   const [draft, setDraft] = useState({ L: String(doc.dims.L), W: String(doc.dims.W), H: String(doc.dims.H) });
@@ -316,6 +497,7 @@ function BoxSection({ doc, model, geo, view, onView, onGeometry, onFinish, onPri
   const materials = useMemo(() => materialChoices(doc, model), [doc, model]);
   const sides = useMemo(() => printSidesChoices(doc, model), [doc, model]);
   const activePreset = model.presets.find((p) => p.dims.L === doc.dims.L && p.dims.W === doc.dims.W && p.dims.H === doc.dims.H);
+  const presetFit = useMemo<Dims>(() => ({ L: Math.max(...model.presets.map((p) => p.dims.L)), W: Math.max(...model.presets.map((p) => p.dims.W)), H: Math.max(...model.presets.map((p) => p.dims.H)) }), [model.presets]);
   const lims = model.limits;
   const axes = (cylinder ? (["L", "H"] as const) : (["L", "W", "H"] as const)) as readonly ("L" | "W" | "H")[];
 
@@ -324,13 +506,23 @@ function BoxSection({ doc, model, geo, view, onView, onGeometry, onFinish, onPri
       {model.presets.length > 0 ? (
         <fieldset className={styles.group}>
           <legend className={styles.groupTitle}>{t("library.panel.presets")}</legend>
-          <div className={styles.presetRow}>
+          {/* options-visual: a card per size with the box drawn to its own proportions. */}
+          <ul className={o.tiles} data-testid="preset-cards">
             {model.presets.map((p) => (
-              <Button key={p.id} size="slim" pressed={activePreset?.id === p.id} onClick={() => onGeometry({ dims: { ...p.dims } })}>
-                {p.name[locale]}
-              </Button>
+              <li key={p.id}>
+                <button type="button" className={o.card} aria-pressed={activePreset?.id === p.id} onClick={() => onGeometry({ dims: { ...p.dims } })}>
+                  <BoxSketch dims={p.dims} fit={presetFit} />
+                  <span className={o.cardText}>
+                    <span className={o.cardName}>{p.name[locale]}</span>
+                    <span className={o.cardLine}>{t("designer.simple.sizeCm", { dims: `⁦${cm(p.dims.L)} × ${cm(p.dims.W)} × ${cm(p.dims.H)}⁩` })}</span>
+                  </span>
+                  <span className={o.tick} aria-hidden="true">
+                    <Check size={12} strokeWidth={3} />
+                  </span>
+                </button>
+              </li>
             ))}
-          </div>
+          </ul>
           {activePreset?.standard ? (
             <span>
               <Badge tone="success" progress="complete">
@@ -390,13 +582,11 @@ function BoxSection({ doc, model, geo, view, onView, onGeometry, onFinish, onPri
         choices={materials}
         selected={[doc.materialCode]}
         label={(c) => plainMaterial(t, c.value)}
+        layout="rows"
+        visual={(c) => <BoardSwatch code={c.value} />}
+        line={(c) => boardLine(t, c.value)}
         onChange={(v) => onGeometry({ materialCode: v as MaterialCode })}
       />
-      {materials.some((m) => m.value.includes("FLUTE")) ? (
-        <Text as="p" variant="bodySm" tone="subdued">
-          {t("designer.box.boardHelp")}
-        </Text>
-      ) : null}
 
       <OptionGroup
         legend={t("library.panel.printSides")}
@@ -411,14 +601,24 @@ function BoxSection({ doc, model, geo, view, onView, onGeometry, onFinish, onPri
         {t("designer.box.printSidesHelp")}
       </Text>
 
-      <FinishesGroup doc={doc} model={model} onFinish={onFinish} />
+      <FinishesGroup doc={doc} model={model} onFinish={onFinish} onFinishSwap={onFinishSwap} />
 
       {support.windowFaces.length || support.handle || support.tearStrip || support.thumbNotch || support.partitions || support.lidHeight || support.displayFront ? (
         <fieldset className={styles.group}>
           <legend className={styles.groupTitle}>{t("library.panel.addOns")}</legend>
+          {/* options-visual: a tile with a line drawing per option; their settings follow below. */}
+          <ul className={o.tiles} data-testid="addon-tiles">
+            {support.windowFaces.length ? (
+              <AddOnTile kind="window" label={t("library.panel.window")} checked={!!f.window} onChange={(on) => setFeature({ window: on ? { face: support.windowFaces[0], film: true } : null })} />
+            ) : null}
+            {support.handle && model.code !== "GABLE_BOX" ? <AddOnTile kind="handle" label={t("library.panel.handle")} checked={!!f.handle} onChange={(on) => setFeature({ handle: on })} /> : null}
+            {support.tearStrip ? <AddOnTile kind="tearStrip" label={t("library.panel.tearStrip")} checked={!!f.tearStrip} onChange={(on) => setFeature({ tearStrip: on })} /> : null}
+            {support.thumbNotch ? <AddOnTile kind="thumbNotch" label={t("library.panel.thumbNotch")} checked={!!f.thumbNotch} onChange={(on) => setFeature({ thumbNotch: on })} /> : null}
+            {support.displayFront ? <AddOnTile kind="displayFront" label={t("library.panel.displayFront")} checked={!!f.displayFront} onChange={(on) => setFeature({ displayFront: on })} /> : null}
+            {support.partitions ? <AddOnTile kind="dividers" label={t("library.panel.dividers")} checked={!!f.partitions} onChange={(on) => setFeature({ partitions: on ? { rows: 2, cols: 2 } : null })} /> : null}
+          </ul>
           {support.windowFaces.length ? (
             <>
-              <Checkbox label={t("library.panel.window")} checked={!!f.window} onChange={(on) => setFeature({ window: on ? { face: support.windowFaces[0], film: true } : null })} />
               {f.window && support.windowFaces.length > 1 ? (
                 <Select
                   label={t("library.panel.windowFace")}
@@ -429,13 +629,8 @@ function BoxSection({ doc, model, geo, view, onView, onGeometry, onFinish, onPri
               ) : null}
             </>
           ) : null}
-          {support.handle && model.code !== "GABLE_BOX" ? <Checkbox label={t("library.panel.handle")} checked={!!f.handle} onChange={(on) => setFeature({ handle: on })} /> : null}
-          {support.tearStrip ? <Checkbox label={t("library.panel.tearStrip")} checked={!!f.tearStrip} onChange={(on) => setFeature({ tearStrip: on })} /> : null}
-          {support.thumbNotch ? <Checkbox label={t("library.panel.thumbNotch")} checked={!!f.thumbNotch} onChange={(on) => setFeature({ thumbNotch: on })} /> : null}
-          {support.displayFront ? <Checkbox label={t("library.panel.displayFront")} checked={!!f.displayFront} onChange={(on) => setFeature({ displayFront: on })} /> : null}
           {support.partitions ? (
             <>
-              <Checkbox label={t("library.panel.dividers")} checked={!!f.partitions} onChange={(on) => setFeature({ partitions: on ? { rows: 2, cols: 2 } : null })} />
               {f.partitions ? (
                 <InlineGrid columns={2} gap="200">
                   <Select label={t("library.panel.rows")} value={String(f.partitions.rows)} options={["1", "2", "3", "4"]} onChange={(v) => setFeature({ partitions: { ...f.partitions!, rows: Number(v) } })} />
@@ -468,9 +663,35 @@ function roundDims(d: Dims): Dims {
   return { L: Math.round(d.L), W: Math.round(d.W), H: Math.round(d.H) };
 }
 
+const cm = (mm: number) => formatNumber(Math.round(mm) / 10, 1);
+
+/** The board's one-line note on its card, when there is one. */
+function boardLine(t: (k: DictKey) => string, code: string): string | null {
+  const key = `library.panel.boardLine.${code}` as DictKey;
+  const s = t(key);
+  return s === key ? null : s;
+}
+
+/** An add-on tile: a line drawing, the name, a hidden checkbox (keeps the checkbox role and name). */
+function AddOnTile({ kind, label, checked, onChange }: { kind: AddOnKind; label: string; checked: boolean; onChange: (on: boolean) => void }) {
+  const id = `addon-${kind}`;
+  return (
+    <li>
+      <label className={o.card} htmlFor={id} data-checked={checked}>
+        <input id={id} className={o.srOnly} type="checkbox" checked={checked} onChange={(e) => onChange(e.currentTarget.checked)} />
+        <AddOnIcon kind={kind} />
+        <span className={o.cardName}>{label}</span>
+        <span className={o.tick} aria-hidden="true">
+          <Check size={12} strokeWidth={3} />
+        </span>
+      </label>
+    </li>
+  );
+}
+
 /* ───────────────────────────── containers ───────────────────────────── */
 
-function VesselSection({ doc, model, geo, view, onView, onGeometry, onFinish }: ConfigPanelProps & { model: VesselModelDef }) {
+function VesselSection({ doc, model, geo, view, onView, onGeometry, onFinish, onFinishSwap }: ConfigPanelProps & { model: VesselModelDef }) {
   const { t, locale } = useI18n();
   const v = doc.vessel!;
   const [draft, setDraft] = useState({ D: String(v.dims.D), H: String(v.dims.H), G: v.dims.G !== undefined ? String(v.dims.G) : "" });
@@ -667,7 +888,7 @@ function VesselSection({ doc, model, geo, view, onView, onGeometry, onFinish }: 
         onChange={(val) => onGeometry({ materialCode: val as MaterialCode })}
       />
 
-      <FinishesGroup doc={doc} model={model} onFinish={onFinish} />
+      <FinishesGroup doc={doc} model={model} onFinish={onFinish} onFinishSwap={onFinishSwap} />
 
       <ViewGroup view={view} onView={onView} vessel />
     </>

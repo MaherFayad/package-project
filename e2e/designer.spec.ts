@@ -48,6 +48,9 @@ test("Basics (the default): logo and a name go on the 3D box; All options is rem
   await (await chooser).setFiles({ name: "logo.png", mimeType: "image/png", buffer: await logo(page) });
   await expect(basics.getByRole("button", { name: "Add another picture" })).toBeVisible({ timeout: 30_000 });
   await expect(stage).toBeVisible();
+  // Image fit: a transparent logo starts as "Fit whole image" (Fill / Fit is its only placing control).
+  await expect(basics.getByTestId("image-place")).toHaveAttribute("data-place", "fit");
+  await expect(basics.getByRole("button", { name: "Fit whole image" })).toHaveAttribute("aria-pressed", "true");
   // The new logo is selected: one tap copies it onto every other side (not the bottom).
   await basics.getByRole("button", { name: "Put it on every side" }).click();
   await expect(basics.getByRole("button", { name: /^Image · / })).toHaveCount(5);
@@ -61,11 +64,12 @@ test("Basics (the default): logo and a name go on the 3D box; All options is rem
   await expect(page).toHaveURL(/[?&]d=[\w-]+/, { timeout: 20_000 });
   await expect(page.getByTestId("save-status")).toHaveAttribute("data-state", "saved", { timeout: 20_000 });
   const saved = await (await page.request.get(`/api/designs/${new URL(page.url()).searchParams.get("d")}`)).json();
-  const layers = saved.doc.artwork.outside.layers as { kind: string; face: string; text?: string }[];
+  const layers = saved.doc.artwork.outside.layers as { kind: string; face: string; text?: string; place?: string }[];
   const image = layers.find((l) => l.kind === "image");
   const text = layers.find((l) => l.kind === "text");
   expect(image).toBeTruthy();
   expect(layers.filter((l) => l.kind === "image")).toHaveLength(5);
+  expect(layers.filter((l) => l.kind === "image").every((l) => l.place === "fit")).toBe(true);
   expect(text?.text).toBe("Nour Bakery");
   expect(text?.face).toBe(image?.face);
 
@@ -312,6 +316,8 @@ test("crop an image to a square: non-destructive, kept in the saved design", asy
   await expect(dlg.getByLabel("Width %")).toHaveValue("50");
   await dlg.getByRole("button", { name: "Apply crop" }).click();
   await expect(dlg).toBeHidden();
+  // Image fit: exact sizes sit under the collapsed "Fine adjust".
+  await page.getByTestId("fine-adjust").locator("summary").click();
   const w = Number(await page.getByLabel("Width (mm)", { exact: true }).inputValue());
   const h = Number(await page.getByLabel("Height (mm)", { exact: true }).inputValue());
   expect(Math.abs(w - h)).toBeLessThan(0.6);

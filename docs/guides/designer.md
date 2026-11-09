@@ -41,6 +41,7 @@ cards leave free (`setFitInsets`). Phones: the rail is a bottom tab bar and the 
 - `structureCode` is always the **base** structure (pricing, rate cards, orders). `modelCode` is the library model. Use `docModelCode(doc)` (`src/lib/library/doc.ts`) for links and resume, never `structureCode` (D-03).
 - `artwork = { outside, inside }`, each `{ background, layers[] }` (index 0 is the bottom).
 - Layers: `image | text | shape`, placed per face in mm, (x, y) is the layer centre relative to the face top-left seen from outside, rotation in degrees clockwise. Never mirrored in RTL. Fonts: only "IBM Plex Sans Arabic" and "Inter".
+- Image fit: an image layer may carry `place: "fill" | "fit"` (`lib/imageFit.ts`). Fill covers the side to the bleed (cover), Fit shows the whole image inside the safe zone at a share of the biggest fit. Uploads pick one (`autoPlace`: transparent or plain-edged logo, odd shape or too small for a sharp fill → Fit; else Fill). The mode is resolved into x/y/width/height on upload, on a toggle and on every size change (`rescaleArtwork` with margins), so the texture, print PDF and preflight read plain boxes; a drag, rotation or typed size frees the image (`settlePlace`). No `place` = free, as before. See `docs/audit/simplicity-2026-11/image-fit.md`.
 - `finishes`: each finish with the layer ids that form its mask; `finishCode` is the main priced one.
 - Stored in `Design` as columns plus `config` Json (`features`, `finishes`, `vessel`).
 

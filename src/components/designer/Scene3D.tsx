@@ -76,7 +76,8 @@ export default memo(function Scene3D({
     [board, finishView, images, version],
   );
   const stage = useMemo(
-    () => (dimensions || scene !== "none" ? { context: scene, dimensions, formatMm: (mm: number) => `${formatNumber(Math.round(mm))} ${locale === "ar" ? "مم" : "mm"}` } : undefined),
+    // cm, like the size everywhere else a buyer sees it (one decimal, none when whole)
+    () => (dimensions || scene !== "none" ? { context: scene, dimensions, formatMm: (mm: number) => `${formatNumber(Math.round(mm) / 10, Number.isInteger(Math.round(mm) / 10) ? 0 : 1)} ${locale === "ar" ? "سم" : "cm"}` } : undefined),
     [dimensions, scene, locale],
   );
   const content = {

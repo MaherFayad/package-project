@@ -14,7 +14,7 @@ import { ConfigPanel, type ViewOptions } from "@/components/designer/ConfigPanel
 import { ModelBrowser } from "@/components/designer/ModelPicker";
 import { DesignScene } from "@/components/designer/DesignScene";
 import { createModelDoc, makeTextLayer } from "@/components/designer/lib/doc";
-import { pruneFinishes, toggleFinish } from "@/components/designer/lib/config";
+import { pruneFinishes, swapFinish, toggleFinish } from "@/components/designer/lib/config";
 import { useArtworkCanvases } from "@/components/designer/useArtworkCanvases";
 import designerStyles from "@/components/designer/designer.module.css";
 import styles from "./dev3d.module.css";
@@ -123,6 +123,7 @@ export function LibraryDevSection() {
               onOpenPicker={() => document.getElementById("lib-browser")?.scrollIntoView({ behavior: "smooth" })}
               onGeometry={geometry}
               onFinish={(code: DesignFinishCode, on: boolean) => setDoc(toggleFinish(doc, code, on))}
+              onFinishSwap={(off: DesignFinishCode[], on: DesignFinishCode | null) => setDoc(swapFinish(doc, off, on))}
               onPrintSides={(p) => setDoc({ ...doc, printSides: p })}
             />
           ) : null}

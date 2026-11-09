@@ -1,12 +1,13 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   ArrowDown,
   ArrowLeft,
   ArrowRight,
   ArrowUp,
   BringToFront,
+  ChevronDown,
   Circle,
   Copy,
   Crop,
@@ -20,11 +21,11 @@ import {
   Square,
   Trash2,
   Type,
-  Upload,
 } from "lucide-react";
-import type { ArtworkLayer, DesignFinishCode, FaceId, ImageCrop, ImageLayer, PrintSurface, SheetImage, TextLayer } from "@/types";
+import type { ArtworkLayer, DesignFinishCode, FaceId, ImageCrop, ImageLayer, PrintSurface, TextLayer } from "@/types";
 import { FACE_IDS } from "@/types";
-import type { FaceInfo } from "@/lib/dieline";
+import type { DielineModel, FaceInfo } from "@/lib/dieline";
+import { FaceMap } from "./OptionVisuals";
 import { useI18n } from "@/i18n/client";
 import type { DictKey } from "@/i18n/types";
 import { Banner } from "@/components/ui/Banner";
@@ -41,10 +42,13 @@ import { layerName } from "./lib/describe";
 import { IMAGE_ACCEPT, IMAGE_MAX_BYTES } from "./uploadImage";
 import { ColorField, NumberField } from "./fields";
 import { CropDialog } from "./CropDialog";
+import { ImagePlaceControl, type ImagePlaceApi } from "./ImagePlaceControl";
 import styles from "./designer.module.css";
 import lib from "./library.module.css";
 
 export interface ArtworkPanelProps {
+  /** The flat box, drawn as the panel picker (boxes only). */
+  dieline?: DielineModel | null;
   faces: Partial<Record<FaceId, FaceInfo>>;
   faceLabel?: (f: FaceId) => string;
   face: FaceId;
@@ -66,29 +70,34 @@ export interface ArtworkPanelProps {
   onLayer: (layer: ArtworkLayer, coalesce?: string) => void;
   onSeal: () => void;
   onPlace: (where: Placement) => void;
+  /** Image fit: Fill side / Fit whole image for a picture; its fine controls fold away. */
+  imagePlace?: ImagePlaceApi;
   onReorder: (delta: 1 | -1) => void;
   onDuplicate: () => void;
   onDelete: () => void;
   /** Masked finishes on the design (spot UV, foil, emboss) and whether the selected item carries each (FN-02). */
   layerFinishes?: { code: DesignFinishCode; name: string; on: boolean }[];
   onLayerFinish?: (code: DesignFinishCode, on: boolean) => void;
-  /** Full artwork over the whole dieline on this surface (designer: full artwork). */
-  sheetImage?: SheetImage | null;
-  onSheetUpload?: (file: File) => void;
-  onSheetRemove?: () => void;
-  onTemplate?: () => void;
+  /** Full artwork over the whole dieline, outside and inside slots with the fit check (SheetArtwork). */
+  sheetArtwork?: ReactNode;
 }
 
 export function ArtworkPanel(p: ArtworkPanelProps) {
   const { t } = useI18n();
   const full = p.layerTotal >= MAX_LAYERS;
-  const sheetInput = useRef<HTMLInputElement>(null);
   const faceOptions = FACE_IDS.filter((f) => p.faces[f]).map((f) => ({ value: f, label: p.faceLabel ? p.faceLabel(f) : t(`designer.faces.${f}` as DictKey) }));
 
   return (
     <BlockStack gap="400">
-      <InlineGrid columns={p.bothSides ? { xs: 1, sm: 2 } : 1} gap="300">
-        <Select label={t("designer.artwork.face")} value={p.face} options={faceOptions} onChange={(v) => p.onFace(v as FaceId)} />
+      {/* options-visual: the flat box is the panel picker (radios; the canvas keeps its Panel select). */}
+      {p.dieline ? (
+        <fieldset className={lib.group}>
+          <legend className={lib.groupTitle}>{t("designer.artwork.face")}</legend>
+          <FaceMap dieline={p.dieline} face={p.face} faceLabel={(f) => faceOptions.find((x) => x.value === f)?.label ?? f} onFace={p.onFace} label={t("designer.artwork.faceMap")} />
+        </fieldset>
+      ) : null}
+      <InlineGrid columns={p.bothSides && !p.dieline ? { xs: 1, sm: 2 } : 1} gap="300">
+        {p.dieline ? null : <Select label={t("designer.artwork.face")} value={p.face} options={faceOptions} onChange={(v) => p.onFace(v as FaceId)} />}
         {p.bothSides ? (
           <Select
             label={t("designer.artwork.surface")}
@@ -130,51 +139,7 @@ export function ArtworkPanel(p: ArtworkPanelProps) {
         {t("designer.artwork.click3dHint")}
       </Text>
 
-      {p.onSheetUpload ? (
-        <fieldset className={lib.group} data-testid="sheet-artwork">
-          <legend className={lib.groupTitle}>{t("designer.artwork.sheetTitle")}</legend>
-          <BlockStack gap="200">
-            <Text as="p" variant="bodySm" tone="subdued">
-              {t("designer.artwork.sheetHelp")}
-            </Text>
-            {p.sheetImage ? (
-              <InlineStack gap="200" blockAlign="center" wrap>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={p.sheetImage.src} alt="" className={styles.sheetThumb} />
-                <Text as="span" variant="bodySm">
-                  {p.sheetImage.pxWidth} × {p.sheetImage.pxHeight} px
-                </Text>
-                <Button variant="tertiary" tone="critical" icon={Trash2} onClick={p.onSheetRemove}>
-                  {t("designer.artwork.sheetRemove")}
-                </Button>
-              </InlineStack>
-            ) : null}
-            <InlineStack gap="200" wrap>
-              <input
-                ref={sheetInput}
-                type="file"
-                accept={IMAGE_ACCEPT}
-                hidden
-                tabIndex={-1}
-                aria-hidden="true"
-                onChange={(e) => {
-                  const f = e.currentTarget.files?.[0];
-                  e.currentTarget.value = "";
-                  if (f) p.onSheetUpload?.(f);
-                }}
-              />
-              <Button icon={Upload} onClick={() => sheetInput.current?.click()} disabled={p.uploading} loading={p.uploading}>
-                {p.sheetImage ? t("designer.artwork.sheetReplace") : t("designer.artwork.sheetAction")}
-              </Button>
-              {p.onTemplate ? (
-                <Button variant="tertiary" onClick={p.onTemplate}>
-                  {t("designer.artwork.sheetTemplate")}
-                </Button>
-              ) : null}
-            </InlineStack>
-          </BlockStack>
-        </fieldset>
-      ) : null}
+      {p.sheetArtwork ?? null}
 
       <InlineStack gap="200" wrap>
         <Button icon={Type} onClick={p.onAddText} disabled={full}>
@@ -229,8 +194,10 @@ export function withCrop(layer: ImageLayer, crop: ImageCrop | undefined, face: F
   return next;
 }
 
-function LayerInspector({ layer, onLayer, onSeal, onPlace, onReorder, onDuplicate, onDelete, layerFinishes, onLayerFinish, faces }: ArtworkPanelProps & { layer: ArtworkLayer }) {
+function LayerInspector({ layer, onLayer, onSeal, onPlace, onReorder, onDuplicate, onDelete, layerFinishes, onLayerFinish, faces, imagePlace }: ArtworkPanelProps & { layer: ArtworkLayer }) {
   const { t } = useI18n();
+  // Image fit: a picture shows Fill / Fit and Delete; the exact controls sit under "Fine adjust".
+  const simpleImage = layer.kind === "image" && !!imagePlace;
   const [cropping, setCropping] = useState(false);
   const face = faces[layer.face];
   const set = (patch: Partial<ArtworkLayer>, key?: string) => onLayer({ ...layer, ...patch } as ArtworkLayer, key);
@@ -246,6 +213,7 @@ function LayerInspector({ layer, onLayer, onSeal, onPlace, onReorder, onDuplicat
         </InlineStack>
 
         {layer.kind === "text" ? <TextControls layer={layer} set={set} /> : null}
+        {layer.kind === "image" && imagePlace ? <ImagePlaceControl layer={layer} api={imagePlace} /> : null}
         {layer.kind === "image" ? (
           <InlineStack gap="200" wrap>
             <Button icon={Crop} onClick={() => setCropping(true)}>
@@ -287,6 +255,15 @@ function LayerInspector({ layer, onLayer, onSeal, onPlace, onReorder, onDuplicat
           </fieldset>
         ) : null}
 
+        {simpleImage ? (
+          <InlineStack gap="200" wrap>
+            <Button icon={Trash2} tone="critical" onClick={onDelete}>
+              {t("designer.layer.delete")}
+            </Button>
+          </InlineStack>
+        ) : null}
+
+        <FineAdjust on={simpleImage}>
         <BlockStack gap="200">
           <Text as="h3" variant="headingXs">
             {t("designer.layer.move")}
@@ -319,7 +296,7 @@ function LayerInspector({ layer, onLayer, onSeal, onPlace, onReorder, onDuplicat
             {t("designer.layer.placement")}
           </Text>
           <div className={styles.presetRow} role="group" aria-label={t("designer.layer.placement")}>
-            {(["center", "top", "bottom", "topStart", "topEnd", "fill"] as const).map((w) => (
+            {(simpleImage ? (["center", "top", "bottom", "topStart", "topEnd"] as const) : (["center", "top", "bottom", "topStart", "topEnd", "fill"] as const)).map((w) => (
               <Button key={w} size="slim" onClick={() => onPlace(w)}>
                 {t(`designer.layer.place.${w}` as DictKey)}
               </Button>
@@ -373,12 +350,30 @@ function LayerInspector({ layer, onLayer, onSeal, onPlace, onReorder, onDuplicat
           <Button icon={layer.hidden ? Eye : EyeOff} onClick={() => set({ hidden: !layer.hidden })}>
             {layer.hidden ? t("designer.layer.show") : t("designer.layer.hide")}
           </Button>
-          <Button icon={Trash2} tone="critical" onClick={onDelete}>
-            {t("designer.layer.delete")}
-          </Button>
+          {!simpleImage ? (
+            <Button icon={Trash2} tone="critical" onClick={onDelete}>
+              {t("designer.layer.delete")}
+            </Button>
+          ) : null}
         </InlineStack>
+        </FineAdjust>
       </BlockStack>
     </section>
+  );
+}
+
+/** "Fine adjust": exact position, size, rotation and order, folded away for a picture (image fit). */
+function FineAdjust({ on, children }: { on: boolean; children: React.ReactNode }) {
+  const { t } = useI18n();
+  if (!on) return <>{children}</>;
+  return (
+    <details className={styles.fineAdjust} data-testid="fine-adjust">
+      <summary>
+        {t("designer.layer.fineAdjust")}
+        <ChevronDown size={16} aria-hidden className={styles.fineAdjustIcon} />
+      </summary>
+      <BlockStack gap="400">{children}</BlockStack>
+    </details>
   );
 }
 

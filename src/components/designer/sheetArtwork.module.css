@@ -1,0 +1,70 @@
+/* Full artwork slots and the fit check (designer: artwork fit). */
+.slots {
+  display: grid;
+  gap: var(--p-space-300);
+  grid-template-columns: 1fr;
+}
+.slots[data-count="2"] {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+}
+.slot {
+  display: grid;
+  gap: var(--p-space-200);
+  align-content: start;
+  padding: var(--p-space-300);
+  border: 1px solid var(--p-color-border);
+  border-radius: var(--p-border-radius-200);
+  background: var(--p-color-bg-surface);
+  min-inline-size: 0;
+}
+.slotTitle {
+  font-weight: var(--p-font-weight-semibold);
+  font-size: var(--p-font-size-325);
+}
+.thumbRow {
+  display: flex;
+  align-items: center;
+  gap: var(--p-space-200);
+  flex-wrap: wrap;
+}
+.thumb {
+  inline-size: 72px;
+  block-size: 48px;
+  object-fit: contain;
+  border: 1px solid var(--p-color-border);
+  border-radius: var(--p-border-radius-100);
+  background: var(--p-color-bg-surface-secondary);
+}
+.previews {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--p-space-200);
+}
+.preview {
+  display: grid;
+  gap: var(--p-space-100);
+  margin: 0;
+  min-inline-size: 0;
+}
+.preview svg,
+.preview img {
+  inline-size: 100%;
+  block-size: 96px;
+  object-fit: contain;
+  border: 1px solid var(--p-color-border);
+  border-radius: var(--p-border-radius-100);
+  background: var(--p-color-bg-surface-secondary);
+}
+.preview figcaption {
+  font-size: var(--p-font-size-300);
+  color: var(--p-color-text-secondary);
+}
+.actions {
+  display: grid;
+  gap: var(--p-space-150);
+}
+.actions > button {
+  justify-content: flex-start;
+  text-align: start;
+  white-space: normal;
+}

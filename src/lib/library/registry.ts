@@ -108,6 +108,18 @@ export function modelFromParam(param: string): ModelDef | null {
   return BY_SLUG.get(p.toLowerCase()) ?? BY_CODE.get(p) ?? BY_CODE.get(p.toUpperCase().replace(/-/g, "_")) ?? null;
 }
 
+/**
+ * Every box model, loading the box family packs that are not loaded yet (one chunk per family;
+ * containers are skipped). Used by the full-artwork fit search (designer: artwork fit).
+ */
+export async function loadBoxModels(): Promise<BoxModelDef[]> {
+  const sources = (Object.keys(PACK_LOADERS) as ModelSource[]).filter((s) => !s.startsWith("vessel-"));
+  await Promise.all(sources.map(loadPack));
+  return Object.keys(MODEL_INDEX)
+    .map((code) => BY_CODE.get(code))
+    .filter((m): m is BoxModelDef => m?.kind === "box");
+}
+
 export function boxModel(code: string | null | undefined): BoxModelDef | null {
   const m = modelByCode(code);
   return m?.kind === "box" ? m : null;

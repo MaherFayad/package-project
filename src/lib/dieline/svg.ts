@@ -15,6 +15,11 @@ export interface DielineSvgOptions {
   strokeMm?: number;
   /** Optional fill per panel (e.g. a face preview); default white. */
   panelFill?: string;
+  /**
+   * Draw the sheet as seen from the INSIDE surface (left-right flipped, labels still readable):
+   * the template for inside full artwork, which the designer paints mirrored onto the sheet.
+   */
+  inside?: boolean;
   colors?: Partial<{ cut: string; crease: string; perf: string; bleed: string; safe: string; glue: string; label: string; film: string }>;
 }
 
@@ -57,6 +62,7 @@ export function dielineToSvg(model: DielineModel, opts: DielineSvgOptions = {}):
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n(width)} ${n(height)}" width="${n(width)}mm" height="${n(height)}mm" direction="ltr" role="img"${opts.title ? ` aria-label="${esc(opts.title)}"` : ""}>`,
   );
   if (opts.title) parts.push(`<title>${esc(opts.title)}</title>`);
+  if (opts.inside) parts.push(`<g data-layer="inside" transform="matrix(-1 0 0 1 ${n(width)} 0)">`);
   if (opts.showBleed !== false) {
     parts.push(`<g data-layer="bleed" fill="${c.bleed}" stroke="none">${model.bleedRegions.map((r) => `<path d="${polyPath(r.polygon)}"/>`).join("")}</g>`);
   }
@@ -81,6 +87,7 @@ export function dielineToSvg(model: DielineModel, opts: DielineSvgOptions = {}):
     parts.push(`<path data-layer="perf" d="${segPath(model.perfLines)}" fill="none" stroke="${c.perf}" stroke-width="${n(sw)}" stroke-dasharray="${n(sw * 6)} ${n(sw * 3)} ${n(sw)} ${n(sw * 3)}"/>`);
   }
   parts.push(`<path data-layer="cut" d="${segPath(model.cutLines)}" fill="none" stroke="${c.cut}" stroke-width="${n(sw)}" stroke-linecap="round"/>`);
+  if (opts.inside) parts.push("</g>");
   if (opts.showLabels !== false) {
     // Size from the sheet's long side: fitted to a 600–1000 px viewer that is 10–16 px (WCAG 1.4.4
     // readable); a label is drawn only where its panel can hold it (≈ 40 px at the same fit).
@@ -95,7 +102,7 @@ export function dielineToSvg(model: DielineModel, opts: DielineSvgOptions = {}):
         .filter(({ p, text }) => p.bbox.width > Math.max(fs * 4, text.length * fs * 0.62) && p.bbox.height > fs * 2 && polygonArea(p.polygon) > 0.4 * p.bbox.width * p.bbox.height)
         .map(({ p, text }) => {
           const cc = centroid(p.polygon);
-          return `<text x="${n(cc.x)}" y="${n(cc.y)}">${esc(text)}</text>`;
+          return `<text x="${n(opts.inside ? width - cc.x : cc.x)}" y="${n(cc.y)}">${esc(text)}</text>`;
         })
         .join("")}</g>`,
     );

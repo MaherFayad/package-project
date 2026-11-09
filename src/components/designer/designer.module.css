@@ -475,6 +475,10 @@
   cursor: pointer;
 }
 .swatch[data-light="true"] { color: var(--p-color-text); }
+/* options-visual: 44 px colour targets on touch screens. */
+@media (pointer: coarse) {
+  .swatch { inline-size: 2.75rem; block-size: 2.75rem; }
+}
 .swatch[data-none="true"] {
   color: var(--p-color-text);
   background:
@@ -1340,4 +1344,39 @@
   .editor { --ed-gap: var(--p-space-200); }
   .railItem { min-block-size: 3rem; padding-block: var(--p-space-100); }
   .dropZone { min-block-size: 9rem; }
+}
+
+/* Image fit: Fill side / Fit whole image, the size slider, and the fine-adjust disclosure. */
+.imagePlace {
+  display: flex;
+  flex-direction: column;
+  gap: var(--p-space-200);
+}
+.fineAdjust > summary {
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-weight: var(--p-font-weight-semibold);
+}
+.fineAdjust[open] > summary {
+  margin-block-end: var(--p-space-300);
+}
+.fineAdjust > summary {
+  list-style: none;
+  justify-content: space-between;
+}
+.fineAdjust > summary::-webkit-details-marker {
+  display: none;
+}
+.fineAdjustIcon {
+  transition: transform 150ms ease;
+}
+.fineAdjust[open] .fineAdjustIcon {
+  transform: rotate(180deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .fineAdjustIcon {
+    transition: none;
+  }
 }

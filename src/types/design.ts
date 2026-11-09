@@ -37,7 +37,16 @@ export interface ImageLayer extends LayerBase {
    * (0..1, top-left origin). Non-destructive: `src` keeps the whole image. Absent = the whole image.
    */
   crop?: ImageCrop;
+  /**
+   * Added by designer (image fit): how the image sits on its side. "fill" covers the whole side to
+   * the bleed (cropped), "fit" shows the whole image inside the safe zone. Resolved into x, y,
+   * width, height and `fit` whenever it is set or the side changes size
+   * (src/components/designer/lib/imageFit.ts). Absent = placed freely.
+   */
+  place?: ImagePlace;
 }
+
+export type ImagePlace = "fill" | "fit";
 
 export interface ImageCrop {
   x: number;

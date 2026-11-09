@@ -78,6 +78,9 @@ export function runPreflight(doc: DesignDoc, model: DielineModel): PreflightIssu
         if (layer.fontSizePt < MIN_TEXT_PT) push("TEXT_TOO_SMALL", "warning");
       }
 
+      // A Fill image covers its side to the bleed on purpose: painting clips it to the side, so
+      // the safe-zone, fold and glue checks do not apply (image fit).
+      if (layer.kind === "image" && layer.place === "fill") continue;
       const prints = sheetFootprints(layer, face, surface);
       const onGlue = prints.some(({ poly }) => glue.some((g) => convexOverlap(poly, g)));
       const crossesFold = !onGlue && prints.some(({ poly }) => creases.some((seg) => convexOverlap(poly, seg, 0.25)));

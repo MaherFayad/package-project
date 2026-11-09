@@ -181,10 +181,20 @@ export function computePoses(input: FoldInput, progress: number): Map<string, Pa
     }
     const parentPose = poses.get(panel.parentId)!;
     const parentPivot = pivots.get(panel.parentId)!;
-    const angle = ((panel.foldAngleClosed * Math.PI) / 180) * panelFoldAmount(panel, progress, stages);
+    const amount = panelFoldAmount(panel, progress, stages);
+    const angle = ((panel.foldAngleClosed * Math.PI) / 180) * amount;
     const rot = new Matrix4().makeRotationAxis(panelAxis(panel), angle);
     const offset = pivot.clone().sub(parentPivot);
     local.makeTranslation(offset.x, offset.y, offset.z).multiply(rot);
+    // A stacked flap (stackOffset: tucked one or more board layers behind its neighbours when
+    // closed) is baked that far below the sheet. Ease the offset in with its fold, so the flat
+    // sheet and a half-folded box are one continuous board with no flap sunk below its parent.
+    const parentStack = input.panels.find((p) => p.id === panel.parentId)?.stackOffset ?? 0;
+    const rel = (panel.stackOffset - parentStack) * t;
+    // Fully in by half-way through the flap's own fold: later, flaps of some styles (0229, 0415)
+    // sweep through each other on the way in.
+    const settle = Math.min(1, amount * 2);
+    if (rel !== 0 && settle < 1) local.multiply(new Matrix4().makeTranslation(0, 0, -rel * (1 - settle)));
     poses.set(panel.id, { local, world: parentPose.world.clone().multiply(local) });
   }
   return poses;

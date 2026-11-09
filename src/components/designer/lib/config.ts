@@ -216,6 +216,20 @@ export function toggleFinish(doc: DesignDoc, code: DesignFinishCode, on: boolean
   return { ...doc, finishes: next, finishCode: main ? PRICED_FINISH_OF[main.code] : "NONE" };
 }
 
+/**
+ * Pick-one finish groups (coating, foil, relief): take `off` away and put `on` in, as one step.
+ * A foil colour that replaces another keeps the items it was on (gold logo → silver logo).
+ */
+export function swapFinish(doc: DesignDoc, off: DesignFinishCode[], on: DesignFinishCode | null): DesignDoc {
+  const keep = (doc.finishes ?? []).find((f) => off.includes(f.code) && f.mask);
+  let next = doc;
+  for (const c of off) next = toggleFinish(next, c, false);
+  if (!on) return next;
+  next = toggleFinish(next, on, true);
+  if (keep?.mask && FINISHES[on].masked) next = { ...next, finishes: (next.finishes ?? []).map((f) => (f.code === on ? { ...f, mask: keep.mask } : f)) };
+  return next;
+}
+
 /** Masked finishes with no layer that still exists and shows get the default layers (after an item is added or deleted). */
 export function fillEmptyFinishMasks(doc: DesignDoc): DesignDoc {
   if (!doc.finishes?.some((f) => FINISHES[f.code].masked)) return doc;

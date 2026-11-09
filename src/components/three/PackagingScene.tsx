@@ -173,7 +173,15 @@ export function modelKey(dieline: DielineModel): string {
  */
 function frameFor(dieline: DielineModel, progress: number, camera: PerspectiveCamera, view: { theta: number; phi: number } = heroView(dieline, progress)) {
   const size = boundsAt(dieline, progress).getSize(new Vector3()).multiplyScalar(MM);
-  const target = new Vector3(0, size.y / 2, 0);
+  const box = size.clone();
+  // the scale reference can (StudioStage, +x side of the box) is part of the framed set
+  if (camera.userData.elbaWithCan) {
+    const extra = 2 * REF_CAN.r + Math.max(0.02, Math.max(box.x, box.z) * 0.12);
+    size.x += extra;
+    size.y = Math.max(size.y, REF_CAN.h);
+    size.z = Math.max(size.z, 2 * REF_CAN.r);
+  }
+  const target = new Vector3((size.x - box.x) / 2, size.y / 2, 0);
   // overlays (toolbar) shrink the usable frame: fit inside the visible rectangle (CR-13)
   const fr = (camera.userData.elbaFit as { fx: number; fy: number } | undefined) ?? { fx: 1, fy: 1 };
   const tanV = Math.tan((camera.fov * DEG) / 2) * fr.fy;
@@ -193,8 +201,11 @@ function frameFor(dieline: DielineModel, progress: number, camera: PerspectiveCa
         const need = z + Math.max(Math.abs(c.dot(right)) / tanH, Math.abs(c.dot(up)) / tanV) * FRAME_MARGIN;
         distance = Math.max(distance, need);
       }
-  return { distance, target, size };
+  return { distance, target, size: box };
 }
+
+/** Size of StudioStage's reference can (keep in sync with CAN_R / CAN_H there), metres. */
+const REF_CAN = { r: 0.0331, h: 0.1152 };
 
 interface Tween {
   from: Spherical;
@@ -280,6 +291,22 @@ function Rig({
   const [apiInsets, setApiInsets] = useState<Required<FitInsets>>(NO_INSETS);
   const insets = useMemo(() => normInsets(fitInsets, apiInsets), [fitInsets, apiInsets]);
   const appliedInsets = useRef<Required<FitInsets> | null>(null);
+  // The scale-reference can is framed with the box (frameFor reads this flag); re-fit on toggle.
+  const withCan = stage?.context === "reference";
+  const appliedCan = useRef<boolean | null>(null);
+  useLayoutEffect(() => {
+    cam.userData.elbaWithCan = withCan;
+    const prev = appliedCan.current;
+    appliedCan.current = withCan;
+    if (prev !== null && prev !== withCan && autoFit) {
+      const s = spherical();
+      const f = frameFor(dieline, targetRef.current, cam, { theta: s.theta, phi: s.phi });
+      s.radius = f.distance;
+      goTo(s, f.target, true, 400);
+    }
+    invalidate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cam, withCan]);
   useLayoutEffect(() => {
     applyViewInsets(cam, size, insets);
     cam.userData.elbaFit = visibleFraction(size, insets);
@@ -301,7 +328,8 @@ function Rig({
     const flat = frameFor(dieline, 0, cam);
     const closed = frameFor(dieline, 1, cam);
     return { min: closed.distance * 0.25, max: Math.max(flat.distance, closed.distance) * 3 };
-  }, [dieline, cam]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dieline, cam, withCan]);
 
   useEffect(() => {
     if (!orbit) return;

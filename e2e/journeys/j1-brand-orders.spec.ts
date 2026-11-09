@@ -49,11 +49,11 @@ test("J1 · coffee brand: design → share → OTP → company checkout → pay 
   await panel.getByRole("textbox", { name: t("designer.layer.textValue"), exact: true }).fill("Bunn Coffee · Zamalek");
   await panel.getByRole("tab", { name: t("designer.tabs.box") }).click();
   await panel.getByRole("radio", { name: t("materials.E_FLUTE_WHITE") }).check();
-  // Anchored: the checkbox name carries a help line, and in Arabic "gold" is a prefix of "rose gold".
+  // Anchored: the radio name carries a help line, and in Arabic "gold" is a prefix of "rose gold".
   const gold = FINISHES.FOIL_GOLD.name[locale];
   const rose = FINISHES.FOIL_ROSE_GOLD.name[locale];
   const roseTail = rose.startsWith(gold) ? rose.slice(gold.length).trim() : null;
-  await panel.getByRole("checkbox", { name: new RegExp(`^${rx(gold).source}${roseTail ? `(?!\\s*${rx(roseTail).source})` : ""}`) }).check();
+  await panel.getByRole("radio", { name: new RegExp(`^${rx(gold).source}${roseTail ? `(?!\\s*${rx(roseTail).source})` : ""}`) }).check();
   // Anonymous autosave puts the design id in the URL.
   await expect(page).toHaveURL(/[?&]d=[\w-]+/, { timeout: 30_000 });
 

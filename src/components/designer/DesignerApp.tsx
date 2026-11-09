@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Box, Brush, ChevronDown, ChevronUp, CloudCheck, CloudOff, CloudUpload, Download, Ellipsis, Focus, ImagePlus, Layers, ListChecks, Minus, MoreHorizontal, Package, Palette, PanelsTopLeft, PartyPopper, Pencil, Plus, Redo2, Rotate3d, RotateCcw, RotateCw, Ruler, Save, Share2, Square, Undo2, UserRound, type LucideIcon } from "lucide-react";
 import { Suspense, startTransition, useCallback, useEffect, useMemo, useReducer, useRef, useState, type CSSProperties } from "react";
-import { FACE_IDS, type ArtworkLayer, type DesignDoc, type DesignFinishCode, type DimsPreset, type FaceId, type Locale, type PrintSurface, type StructureCode } from "@/types";
+import { FACE_IDS, type ArtworkLayer, type DesignDoc, type DesignFinishCode, type Dims, type DimsPreset, type FaceId, type ImageLayer, type ImagePlace, type Locale, type PrintSurface, type StructureCode } from "@/types";
 import { boardAppearance, dielineToSvg, type DielineModel } from "@/lib/dieline";
 import type { ModelDef } from "@/lib/library";
 import { loadModel, modelByCode } from "@/lib/library/registry";
@@ -50,22 +50,24 @@ import { contrastingInk } from "./lib/color";
 import { canRedo, canUndo, historyReducer, initHistory, type History, type HistoryAction } from "./lib/history";
 import { DPI_WARNING, effectiveDpi, runPreflight, summarizePreflight } from "./lib/preflight";
 import { faceAtHit, placeLayer, type Placement } from "./lib/geometry";
+import { autoPlace, fitScaleOf, LOGO_FIT_SCALE, placeImage, settlePlace } from "./lib/imageFit";
 import { BADGE_QTY, fetchQuote, quoteKey, type PriceState } from "./lib/quote";
 import { designerPath } from "./lib/catalog";
-import { extendFinishMasks, fillEmptyFinishMasks, pruneFinishes, setLayerFinish, toggleFinish } from "./lib/config";
+import { extendFinishMasks, fillEmptyFinishMasks, pruneFinishes, setLayerFinish, swapFinish, toggleFinish } from "./lib/config";
 import { createModelDoc } from "./lib/doc";
 import { layerName } from "./lib/describe";
 import { ConfigPanel, surfaceName, type ViewOptions } from "./ConfigPanel";
 import lib from "./library.module.css";
 import { loadLocalDraft, saveLocalDraft } from "./lib/storage";
 import { useArtworkCanvases } from "./useArtworkCanvases";
-import { IMAGE_ACCEPT, prepareImage, SHEET_IMAGE_OPTIONS, UploadError, type UploadErrorKind } from "./uploadImage";
+import { IMAGE_ACCEPT, imageLook, prepareImage, SHEET_IMAGE_OPTIONS, UploadError, type UploadErrorKind } from "./uploadImage";
 import { stampExportMark } from "@/components/marketing/exportMark";
 import { formatNumber } from "@/lib/format";
 import { fitTextBox, measureText } from "./fonts";
 import { FaceEditor } from "./FaceEditor";
 import { DielineView } from "./DielineView";
 import { ArtworkPanel } from "./ArtworkPanel";
+import { formatSheetCm, SheetArtwork } from "./SheetArtwork";
 import { SimplePanel, type SimpleSection } from "./SimplePanel";
 import { TopBarLanguage, TopBarSignIn } from "./TopBarLanguage";
 import { LayersPanel } from "./LayersPanel";
@@ -157,6 +159,10 @@ function downloadBlob(blob: Blob, filename: string) {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+/** Inside view: fold target (part open, walls up, flaps out) and camera tilt down into the box (deg). */
+const INSIDE_VIEW_FOLD = 0.6;
+const INSIDE_VIEW_TILT = 30;
 
 function slugify(name: string) {
   return (
@@ -353,7 +359,10 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
   useEffect(() => {
     if (pickerOpen) setPickerUsed(true);
   }, [pickerOpen]);
-  const [viewOpts, setViewOpts] = useState<ViewOptions>({ dimensions: false, scene: "none", turntable: false, open: false });
+  // Default view: measurements on and a drinks can beside the box, so its real size reads at a glance.
+  const [viewOpts, setViewOpts] = useState<ViewOptions>({ dimensions: true, scene: "reference", turntable: false, open: false });
+  const viewOptsRef = useRef(viewOpts);
+  viewOptsRef.current = viewOpts;
   const [notFound, setNotFound] = useState(loadError === "notFound");
   const sceneRef = useRef<PackagingSceneHandle | null>(null);
   const [sceneReady, setSceneReady] = useState(false);
@@ -478,6 +487,21 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
    * the artwork sheet without the "Your logo" hint first, then put it back (R4-10).
    */
   const withCleanArtwork = useCallback(async <T,>(fn: () => Promise<T>): Promise<T> => {
+    // Exports and thumbnails show the box alone: no measurement lines, no scale can.
+    const stage = viewOptsRef.current;
+    if (stage.dimensions || stage.scene !== "none") {
+      setViewOpts((o) => ({ ...o, dimensions: false, scene: "none" }));
+      await new Promise((r) => setTimeout(r, 60));
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      try {
+        return await withCleanArtworkInner(fn);
+      } finally {
+        setViewOpts((o) => ({ ...o, dimensions: stage.dimensions, scene: stage.scene }));
+      }
+    }
+    return withCleanArtworkInner(fn);
+  }, []);
+  const withCleanArtworkInner = async <T,>(fn: () => Promise<T>): Promise<T> => {
     const outside = docRef.current.artwork.outside;
     if (outside.layers.length > 0 || outside.background || outside.sheetImage) return fn();
     const before = versionRef.current;
@@ -490,7 +514,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
     } finally {
       setCleanShot(false);
     }
-  }, []);
+  };
   const shoot = useCallback(
     async (opts: Parameters<PackagingSceneHandle["screenshot"]>[0]) => {
       const scene = sceneRef.current;
@@ -782,7 +806,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
       if (!nextGeo) return false;
       const m = docModel(normal);
       const pruned = m ? pruneFinishes(normal, m) : { doc: normal, removed: [] as DesignFinishCode[] };
-      const { doc: rescaled, removed } = rescaleArtwork(pruned.doc, faceSizesOf(geoFacesRef.current), faceSizesOf(nextGeo.dieline.faces));
+      const { doc: rescaled, removed } = rescaleArtwork(pruned.doc, faceSizesOf(geoFacesRef.current), faceSizesOf(nextGeo.dieline.faces), nextGeo.dieline);
       geoFacesRef.current = nextGeo.dieline.faces;
       commit(rescaled, coalesce);
       if (removed) toast.show(t("designer.box.removedLayers", { count: removed }));
@@ -800,19 +824,22 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
   );
 
   /** Switch to another library model: its default size, the closest board, same artwork. */
-  const onModel = async (code: string) => {
+  const onModel = async (code: string, dims?: Dims) => {
     setPickerOpen(false);
     // Another family's pack loads on demand (PERF-04).
     const m = modelByCode(code) ?? (await loadModel(code));
-    if (!m) return;
+    if (!m) return false;
     const cur = docRef.current;
-    const fresh = createModelDoc(m, { name: cur.name, materialCode: cur.materialCode });
+    const fresh = createModelDoc(m, { name: cur.name, materialCode: cur.materialCode, dims });
     const next: DesignDoc = { ...fresh, artwork: cur.artwork, printSides: m.kind === "box" ? cur.printSides : "OUTSIDE", finishes: cur.finishes, finishCode: cur.finishCode };
-    if (applyGeometry(next)) setUrl(designIdRef.current, code);
+    if (!applyGeometry(next)) return false;
+    setUrl(designIdRef.current, code);
+    return true;
   };
 
   const openPicker = useCallback(() => setPickerOpen(true), []);
   const onFinish = useCallback((code: DesignFinishCode, on: boolean) => commit(toggleFinish(docRef.current, code, on)), [commit]);
+  const onFinishSwap = useCallback((off: DesignFinishCode[], on: DesignFinishCode | null) => commit(swapFinish(docRef.current, off, on)), [commit]);
   const onPrintSides = useCallback((p: DesignDoc["printSides"]) => commit({ ...docRef.current, printSides: p }), [commit]);
 
   const onLayerChange = useCallback(
@@ -830,6 +857,8 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
           next = fitTextBox({ ...next, fontSizePt: pt });
         }
       }
+      // Image fit: a new crop keeps Fill / Fit; a drag, rotation or typed size frees the image.
+      if (next.kind === "image" && next.place && info && modelRef.current) next = settlePlace(before?.kind === "image" ? before : null, next, info, modelRef.current);
       commit(updateLayer(docRef.current, layer.id, () => next), coalesce);
     },
     [commit],
@@ -865,14 +894,14 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
     setUploadError(null);
     try {
       const img = await prepareImage(file);
-      let layer = makeImageLayer(f, s, info, img);
-      if (target?.at) {
-        // centred where it was dropped, kept inside the panel's safe zone
-        const safe = modelRef.current?.safeMm ?? 3;
-        const hw = Math.min(layer.width / 2 + safe, info.width / 2);
-        const hh = Math.min(layer.height / 2 + safe, info.height / 2);
-        layer = { ...layer, x: Math.min(info.width - hw, Math.max(hw, target.at.x)), y: Math.min(info.height - hh, Math.max(hh, target.at.y)) };
-      }
+      // Image fit: an opaque photo shaped like the side fills it; a logo (or a picture that would
+      // not fill sharply) shows whole inside the safe zone, centred on the drop point when there
+      // is room, else on the side.
+      const look = await imageLook(img.src);
+      const m = modelRef.current ?? { safeMm: 3, bleedMm: 3 };
+      const mode = autoPlace(img, look, info, m);
+      const logo = look.transparent || look.plainEdges;
+      const layer = placeImage(makeImageLayer(f, s, info, img), info, m, mode, { scale: logo ? LOGO_FIT_SCALE : 1, at: target?.at });
       add(layer, { stay3d: !!target });
       // R2-12: a logo too small to print sharp is said right away, not first at checkout.
       // Basics: a short "on the box" moment over the 3D view and a glow on that side, instead of
@@ -901,24 +930,65 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
     }
   };
 
-  /** Full artwork: one image over the whole dieline of the current surface. */
-  const onSheetUpload = async (file: File) => {
+  /** Full artwork: one image over the whole dieline of one surface (outside, or inside when both print). */
+  const onSheetUpload = async (file: File, side: PrintSurface) => {
     setUploading(true);
     setUploadError(null);
     try {
       const img = await prepareImage(file, SHEET_IMAGE_OPTIONS);
       const cur = docRef.current;
-      commit({ ...cur, artwork: { ...cur.artwork, [surface]: { ...cur.artwork[surface], sheetImage: img } } });
-      toast.show(t("designer.artwork.sheetAdded"));
+      commit({ ...cur, artwork: { ...cur.artwork, [side]: { ...cur.artwork[side], sheetImage: img } } });
+      if (side === "inside") {
+        // Seeing it: open the box and look in (designer: inside artwork).
+        showInside(true);
+        toast.show(t("designer.artworkFit.insideAdded"));
+      } else {
+        if (insideView) showInside(false);
+        toast.show(t("designer.artwork.sheetAdded"));
+      }
     } catch (e) {
-      setUploadError(t(e instanceof UploadError ? UPLOAD_ERROR_KEY[e.kind] : "designer.artwork.uploadError"));
+      const msg = t(e instanceof UploadError ? UPLOAD_ERROR_KEY[e.kind] : "designer.artwork.uploadError");
+      setUploadError(msg);
+      // The drop zone that shows uploadError sits above this section: say it where the buyer is looking.
+      toast.show(msg, { tone: "critical" });
     } finally {
       setUploading(false);
     }
   };
-  const onSheetRemove = () => {
+  const onSheetRemove = (side: PrintSurface) => {
     const cur = docRef.current;
-    commit({ ...cur, artwork: { ...cur.artwork, [surface]: { ...cur.artwork[surface], sheetImage: null } } });
+    commit({ ...cur, artwork: { ...cur.artwork, [side]: { ...cur.artwork[side], sheetImage: null } } });
+  };
+  /** Fit check: apply a size of this model, or another model at a size, keeping the artwork. */
+  const onSheetFitDims = (dims: Dims) => {
+    changeGeometry({ dims });
+    toast.show(t("designer.artworkFit.sizeChanged", { size: formatSheetCm(dims, locale) }));
+  };
+  const onSheetFitModel = async (code: string, dims: Dims) => {
+    if (await onModel(code, dims)) toast.show(t("designer.artworkFit.boxChanged", { name: modelByCode(code)?.name[locale] ?? code }));
+  };
+
+  // ── inside view: open the box and look in, or back to the closed outside ──
+  const [insideView, setInsideView] = useState(false);
+  const insideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => clearTimeout(insideTimer.current), []);
+  // Back to outside only: the inside view has nothing to show.
+  useEffect(() => {
+    if (!bothSides && insideView) {
+      setInsideView(false);
+      setFold(1);
+    }
+  }, [bothSides, insideView]);
+  const showInside = (on: boolean) => {
+    setInsideView(on);
+    setView("3d");
+    setFold(on ? INSIDE_VIEW_FOLD : 1);
+    clearTimeout(insideTimer.current);
+    // Re-frame once the new fold target is set, then tilt the camera to look down into the box.
+    insideTimer.current = setTimeout(() => {
+      sceneRef.current?.reset();
+      if (on) insideTimer.current = setTimeout(() => sceneRef.current?.rotate(0, INSIDE_VIEW_TILT), 650);
+    }, 60);
   };
 
   // ── 3D: click or drop an image on a side of the box ──────────────────
@@ -1016,12 +1086,15 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
     },
   };
 
-  const downloadDieline = async (kind: "svg" | "pdf") => {
+  const downloadDieline = async (kind: "svg" | "pdf", side: PrintSurface = "outside") => {
     const m = modelRef.current;
     if (!m) return;
-    const name = `elba-${libModel?.slug ?? slugify(doc.structureCode)}-${doc.dims.L}x${doc.dims.W}x${doc.dims.H}-dieline`;
+    const name = `elba-${libModel?.slug ?? slugify(doc.structureCode)}-${doc.dims.L}x${doc.dims.W}x${doc.dims.H}-dieline${side === "inside" ? "-inside" : ""}`;
     if (kind === "svg") {
-      const svg = dielineToSvg(m, { showBleed: true, showSafeZones: true, showLabels: true, locale, title: `${doc.name || libModel?.slug || doc.structureCode} dieline` });
+      const label = doc.name || libModel?.slug || doc.structureCode;
+      // The inside template is the sheet seen from inside (flipped), as inside full artwork is painted.
+      const title = side === "inside" ? t("designer.artworkFit.insideTemplateTitle", { name: label }) : `${label} dieline`;
+      const svg = dielineToSvg(m, { showBleed: true, showSafeZones: true, showLabels: true, locale, title, inside: side === "inside" });
       downloadBlob(new Blob([svg], { type: "image/svg+xml" }), `${name}.svg`);
       return;
     }
@@ -1071,7 +1144,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
   };
   /** Basics: the same picture on every other side, one undo step. */
   const onAllSides = (id: string) => {
-    const r = copyToSides(docRef.current, id, faces);
+    const r = copyToSides(docRef.current, id, faces, undefined, modelRef.current ?? undefined);
     if (!r.added) {
       toast.show(t("designer.simple.allSidesNone"));
       return;
@@ -1079,6 +1152,23 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
     commit(fillEmptyFinishMasks(r.doc));
     sceneRef.current?.reset();
     toast.show(t("designer.simple.allSidesDone", { count: r.added }), { action: { content: t("designer.history.undo"), onAction: () => dispatch({ type: "undo" }) } });
+  };
+  /** Image fit: Fill the side or Fit the whole image (at a share of the biggest fit size). */
+  const imagePlace = {
+    scaleOf: (l: ImageLayer) => {
+      const m = modelRef.current;
+      const info = m?.faces[l.face];
+      return m && info && l.place === "fit" ? fitScaleOf(l, info, m) : null;
+    },
+    set: (l: ImageLayer, mode: ImagePlace, scale?: number) => {
+      const m = modelRef.current;
+      const info = m?.faces[l.face];
+      if (!m || !info) return;
+      // A Fit image keeps its spot when resized; one that was filling starts centred.
+      const at = l.place === "fit" ? { x: l.x, y: l.y } : undefined;
+      const k = scale ?? (l.place === "fit" && mode === "fit" ? fitScaleOf(l, info, m) : undefined);
+      commit(updateLayer(docRef.current, l.id, () => placeImage(l, info, m, mode, { scale: k, at })), scale === undefined ? undefined : `scale:${l.id}`);
+    },
   };
   const onAddShape = (shape: "rect" | "ellipse") => faceInfo && add(makeShapeLayer(face, surface, faceInfo, shape));
   const onDelete = (id: string) => {
@@ -1747,7 +1837,14 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
                   {openTop ? t("designer.view.assembled") : t("designer.simple.foldClosed")}
                 </span>
               </label>
-            ) : isVessel ? (
+            ) : null}
+            {boxModel && bothSides ? (
+              // Inside and outside both print: flip the 3D between the closed outside and the open inside.
+              <button type="button" className={styles.toolButton} data-wide="true" data-testid="inside-view-toggle" onClick={() => showInside(!insideView)}>
+                {insideView ? t("designer.artworkFit.showOutside") : t("designer.artworkFit.showInside")}
+              </button>
+            ) : null}
+            {boxModel ? null : isVessel ? (
               <>
                 <button type="button" className={styles.toolButton} data-wide="true" aria-pressed={viewOpts.open} onClick={() => setViewOpts((o) => ({ ...o, open: !o.open }))}>
                   {t("library.panel.openClosure")}
@@ -1885,6 +1982,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
                     onPlace={onPlace}
                     onDelete={onDelete}
                     faceSize={(f) => faces[f] ?? null}
+                    imagePlace={imagePlace}
                     onAllSides={isVessel ? undefined : onAllSides}
                     onBackground={(c) => commit(setBackground(docRef.current, "outside", c), "bg:outside")}
                     onGeometry={changeGeometry}
@@ -1916,11 +2014,13 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
                         onOpenPicker={openPicker}
                         onGeometry={changeGeometry}
                         onFinish={onFinish}
+                        onFinishSwap={onFinishSwap}
                         onPrintSides={onPrintSides}
                       />
                     ) : null
                   ) : tab === 1 ? (
                     <ArtworkPanel
+                      dieline={isVessel ? null : model}
                       faces={faces}
                       faceLabel={faceLabel}
                       face={face}
@@ -1941,6 +2041,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
                       onLayer={onLayerChange}
                       onSeal={seal}
                       onPlace={onPlace}
+                      imagePlace={imagePlace}
                       onReorder={(d) => selected && commit(reorderLayer(docRef.current, selected.id, d))}
                       onDuplicate={() => {
                         if (!selected) return;
@@ -1951,10 +2052,23 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
                       onDelete={() => selected && onDelete(selected.id)}
                       layerFinishes={layerFinishes}
                       onLayerFinish={(code, on) => selected && commit(setLayerFinish(docRef.current, code, selected.id, on))}
-                      sheetImage={doc.artwork[surface].sheetImage ?? null}
-                      onSheetUpload={isVessel ? undefined : onSheetUpload}
-                      onSheetRemove={onSheetRemove}
-                      onTemplate={() => void downloadDieline("svg")}
+                      sheetArtwork={
+                        !isVessel && model ? (
+                          <SheetArtwork
+                            locale={locale}
+                            model={model}
+                            surfaces={bothSides ? ["outside", "inside"] : ["outside"]}
+                            images={{ outside: doc.artwork.outside.sheetImage, inside: doc.artwork.inside.sheetImage }}
+                            fit={libModel?.kind === "box" ? { def: libModel, dims: doc.dims, material: doc.materialCode, features: doc.features } : null}
+                            uploading={uploading}
+                            onUpload={(file, side) => void onSheetUpload(file, side)}
+                            onRemove={onSheetRemove}
+                            onTemplate={(side) => void downloadDieline("svg", side)}
+                            onApplyDims={onSheetFitDims}
+                            onApplyModel={(code, dims) => void onSheetFitModel(code, dims)}
+                          />
+                        ) : null
+                      }
                     />
                   ) : tab === 2 ? (
                     <LayersPanel doc={doc} faces={faces} faceLabel={faceLabel} issues={issues} selectedId={selectedId} onSelect={(id, f, s) => goToLayer(id, f, s)} />

@@ -23,6 +23,7 @@ import { DESIGN_FINISH_CODES } from "@/types";
 import type { ModelDef } from "@/lib/library";
 import { modelByCode, modelSourceOf } from "@/lib/library/registry";
 import { baseOf, vesselPrintMaterials } from "@/lib/library/doc";
+import { fitScaleOf, placeImage, replaceOnResize, type PlaceMargins } from "./imageFit";
 
 /** Max items per design (both sides together). Keeps saves and textures small. */
 export const MAX_LAYERS = 60;
@@ -160,6 +161,7 @@ export const imageLayerSchema = z.object({
   pxWidth: z.number().int().min(1).max(20000),
   pxHeight: z.number().int().min(1).max(20000),
   fit: z.enum(["contain", "cover", "stretch"]).optional(),
+  place: z.enum(["fill", "fit"]).optional(),
   crop: z
     .object({ x: z.number().min(0).max(1), y: z.number().min(0).max(1), width: z.number().min(0.01).max(1), height: z.number().min(0.01).max(1) })
     .refine((c) => c.x + c.width <= 1.0001 && c.y + c.height <= 1.0001, { message: "CROP_OUTSIDE" })
@@ -350,7 +352,7 @@ export function duplicateLayer(doc: DesignDoc, id: string, offsetMm = 5): { doc:
  * least `minMm` on both edges and does not carry the same picture or text yet. Each copy takes the
  * same share of its side's width as the original (capped at 80 % of the side's height), centred.
  */
-export function copyToSides(doc: DesignDoc, id: string, faces: FaceSizes, minMm = 25): { doc: DesignDoc; added: number } {
+export function copyToSides(doc: DesignDoc, id: string, faces: FaceSizes, minMm = 25, margins?: PlaceMargins): { doc: DesignDoc; added: number } {
   const layer = findLayer(doc, id);
   const from = layer ? faces[layer.face] : undefined;
   if (!layer || !from || layer.surface !== "outside") return { doc, added: 0 };
@@ -365,7 +367,12 @@ export function copyToSides(doc: DesignDoc, id: string, faces: FaceSizes, minMm 
     if (layerCount(next) >= MAX_LAYERS) break;
     let k = (size.width * (layer.width / from.width)) / layer.width;
     if (layer.height * k > size.height * 0.8) k = (size.height * 0.8) / layer.height;
-    const copy = { ...layer, id: newId(), face: f, x: size.width / 2, y: size.height / 2, width: layer.width * k, height: layer.height * k } as ArtworkLayer;
+    let copy = { ...layer, id: newId(), face: f, x: size.width / 2, y: size.height / 2, width: layer.width * k, height: layer.height * k } as ArtworkLayer;
+    // An image with a Fill / Fit mode keeps it on every side (image fit).
+    if (copy.kind === "image" && copy.place && margins) {
+      const scale = copy.place === "fit" ? fitScaleOf(layer as ImageLayer, from, margins) : undefined;
+      copy = placeImage(copy, size, margins, copy.place, { scale });
+    }
     if (copy.kind === "text") copy.fontSizePt = Math.max(4, Math.round(copy.fontSizePt * k * 10) / 10);
     next = addLayer(next, copy);
     added++;
@@ -464,7 +471,7 @@ export function makeShapeLayer(face: FaceId, surface: PrintSurface, faceSize: { 
  * face, sizes are kept unless the item no longer fits (then it shrinks, keeping its aspect).
  * Items on faces the new style does not have are removed; `removed` counts them.
  */
-export function rescaleArtwork(doc: DesignDoc, oldFaces: FaceSizes, newFaces: FaceSizes): { doc: DesignDoc; removed: number } {
+export function rescaleArtwork(doc: DesignDoc, oldFaces: FaceSizes, newFaces: FaceSizes, margins?: PlaceMargins): { doc: DesignDoc; removed: number } {
   let removed = 0;
   const fix = (layers: ArtworkLayer[]) =>
     layers.flatMap((l) => {
@@ -474,6 +481,8 @@ export function rescaleArtwork(doc: DesignDoc, oldFaces: FaceSizes, newFaces: Fa
         return [];
       }
       const of = oldFaces[l.face] ?? nf;
+      // Fill / Fit images are placed again on the new side (image fit).
+      if (l.kind === "image" && l.place && margins) return [replaceOnResize(l, of, nf, margins)];
       const sx = nf.width / of.width;
       const sy = nf.height / of.height;
       const fit = Math.min(1, nf.width / l.width, nf.height / l.height);

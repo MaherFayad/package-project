@@ -44,7 +44,7 @@ Docs index: `docs/README.md`. Architecture: `docs/ARCHITECTURE.md`. Area guides:
 npm install                      # postinstall runs prisma generate (SQLite client)
 cp .env.example .env             # first time; gives SESSION_SECRET (dev flags are commented out)
 npm run db:push && npm run db:seed
-npm run dev                      # http://localhost:3000 -> /ar
+npm run dev                      # http://localhost:3000 -> /ar (Turbopack; npm run dev:webpack for the old bundler)
 npm run lint                     # eslint (also run by next build)
 npm run typecheck                # tsc --noEmit
 npm test                         # vitest run (unit, about 124 files)

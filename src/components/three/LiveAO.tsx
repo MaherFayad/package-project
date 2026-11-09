@@ -1,7 +1,7 @@
 "use client";
 
 import { useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { CustomBlending, DstColorFactor, OneFactor, ShaderMaterial, ZeroFactor, AddEquation, type WebGLRenderer } from "three";
 import { GTAOPass } from "three/examples/jsm/postprocessing/GTAOPass.js";
 import { FullScreenQuad } from "three/examples/jsm/postprocessing/Pass.js";
@@ -95,9 +95,16 @@ export function LiveAO({ radius, intensity = 0.9 }: { radius: number; intensity?
     [res],
   );
 
+  // This component takes over rendering, so a frame drawn while the scene was still settling
+  // (programs compiling, textures arriving, the first fit) could stay on screen with no box until
+  // the next interaction. Keep drawing a few more frames after mount and after anything changes.
+  const settle = useRef(12);
+  const programs = useRef(0);
+
   useEffect(() => {
     const k = dpr * aoScale(dpr);
     res.pass.setSize(Math.max(1, Math.round(size.width * k)), Math.max(1, Math.round(size.height * k)));
+    settle.current = 12;
     invalidate();
   }, [res, size.width, size.height, dpr, invalidate]);
 
@@ -124,6 +131,16 @@ export function LiveAO({ radius, intensity = 0.9 }: { radius: number; intensity?
     gl.setRenderTarget(null);
     res.quad.render(gl);
     gl.autoClear = autoClear;
+    // new shader programs this frame: the scene is still coming in, draw again shortly
+    const n = gl.info.programs?.length ?? 0;
+    if (n !== programs.current) {
+      programs.current = n;
+      settle.current = 12;
+    }
+    if (settle.current > 0) {
+      settle.current--;
+      invalidate();
+    }
   }, 1);
 
   return null;
