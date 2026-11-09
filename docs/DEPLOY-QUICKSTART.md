@@ -2,12 +2,18 @@
 
 This is the short version of [DEPLOY-CLOUDFLARE.md](DEPLOY-CLOUDFLARE.md), for putting your own copy of the site online. It takes about 30 minutes. You need a computer with Node 20 or newer and Git. Linux, macOS or Windows (Git Bash) all work.
 
-## What you get, and what doesn't work yet
+## Demo copy (for feedback) or real store
 
-| Works | Not yet |
-|---|---|
-| Public site, catalogue, prices, 3D designer, saving designs, share links, PDFs | **Signing in.** The code that sends the login code by SMS or WhatsApp is an empty stub (`sendOtpSms` in `src/lib/auth/otp.ts`). On an `https://` site the dev shortcut that shows the code on screen is switched off on purpose. So nobody can sign in, check out, or open `/admin` or `/vendor` until an SMS or WhatsApp provider is wired in. |
-| | **Online payment**, until Paymob keys are set. The mock gateway is also switched off on `https://`. |
+Pick one before you start:
+
+| | **Demo copy** (recommended for showing friends) | **Real store** |
+|---|---|---|
+| Address | `https://<name>.<subdomain>.workers.dev` only | Your own domain |
+| Sign-in | The 6-digit code is shown on screen. No SMS needed. Demo phones: admin `01000000001`, buyer `01000000002`, printers `01000000010` to `01000000015`. Any other Egyptian mobile number works too. | Needs an SMS or WhatsApp provider. The sending code is an empty stub (`sendOtpSms` in `src/lib/auth/otp.ts`), so nobody can sign in yet. |
+| Payment | A fake gateway with "pay" buttons. No money moves. | Paymob keys |
+| How | `ELBA_DEMO_SITE`, `OTP_DEV_ECHO` and `ALLOW_MOCK_PAYMENTS` set to `1` (step 3) | Leave them out |
+
+Demo mode only switches on when the address ends in `.workers.dev` (`isDemoSite()` in `src/lib/env.ts`). On a custom domain it stays off even if the variables are set, so a demo copy can't turn into an open real store by mistake. Everyone who opens a demo copy can sign in as the demo admin, so share the link only with people you trust, and never put real customer data in it.
 
 ## Accounts you need
 
@@ -48,7 +54,11 @@ Change only these lines:
 ...
 "vars": {
   "NEXT_PUBLIC_SITE_URL": "https://elba.YOUR-SUBDOMAIN.workers.dev",   // or your own domain
-  "TRUST_CF_CONNECTING_IP": "1"
+  "TRUST_CF_CONNECTING_IP": "1",
+  // Demo copy only (delete these three lines for a real store):
+  "ELBA_DEMO_SITE": "1",
+  "OTP_DEV_ECHO": "1",
+  "ALLOW_MOCK_PAYMENTS": "1"
 }
 ```
 
@@ -71,7 +81,7 @@ Optional, only when you have them:
 | `WHATSAPP_APP_SECRET`, `WHATSAPP_VERIFY_TOKEN` | WhatsApp webhook |
 | `BOSTA_API_KEY`, and `SHIPPING_PROVIDER` = `bosta` | Shipping |
 
-**Never** set `OTP_DEV_ECHO`, `ALLOW_MOCK_PAYMENTS`, `ELBA_E2E` or `ELBA_DEV_PAGES` on a real site. The app ignores them on `https://` anyway.
+**Never** set `ELBA_E2E` or `ELBA_DEV_PAGES` on a deployed copy, and on a real store leave out `OTP_DEV_ECHO` and `ALLOW_MOCK_PAYMENTS` too. The app ignores all four on `https://` anyway, except the two demo flags on a demo copy.
 
 ## 5. Create the database tables and load the data
 
@@ -98,6 +108,7 @@ The build needs `ELBA_DATABASE_URL` because it prerenders pages with live prices
 - Open `https://<your address>/api/health`. It should show `{"runtime":"workers","facts":true,"db":"ok"}`.
 - Open `https://<your address>/ar`: the site in Arabic. `/en` is English.
 - Open `https://<your address>/ar/design/mailer-box`: the 3D designer.
+- Demo copy: open `https://<your address>/ar/login`, enter `01000000001`. The code appears under the form. You are now the demo admin (`/ar/admin`).
 
 ## When something fails
 

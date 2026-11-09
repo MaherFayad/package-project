@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { devFlag, devPagesEnabled, isRealDeployment, otpDevEcho, otpIpLimits, resetDevFlagWarning } from "@/lib/env";
+import { devFlag, devPagesEnabled, isDemoSite, isRealDeployment, otpDevEcho, otpIpLimits, resetDevFlagWarning } from "@/lib/env";
 import { mockPaymentsEnabled } from "@/lib/payments/config";
 
 const E2E = { NODE_ENV: "production", NEXT_PUBLIC_SITE_URL: "http://localhost:3100", OTP_DEV_ECHO: "1", ALLOW_MOCK_PAYMENTS: "1", ELBA_E2E: "1" };
@@ -39,5 +39,32 @@ describe("dev-only flags are ignored on a real (https) deployment", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     expect(otpDevEcho({ NODE_ENV: "production", NEXT_PUBLIC_SITE_URL: "https://elba.example" })).toBe(false);
     expect(warn).not.toHaveBeenCalled();
+  });
+});
+
+describe("demo site (ELBA_DEMO_SITE=1 on a *.workers.dev address)", () => {
+  const DEMO = { NODE_ENV: "production", NEXT_PUBLIC_SITE_URL: "https://elba-demo.someone.workers.dev", ELBA_DEMO_SITE: "1", OTP_DEV_ECHO: "1", ALLOW_MOCK_PAYMENTS: "1", ELBA_E2E: "1", ELBA_DEV_PAGES: "1" };
+  afterEach(() => {
+    resetDevFlagWarning();
+    vi.restoreAllMocks();
+  });
+
+  it("keeps on-screen sign-in codes and the fake gateway, nothing else", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    expect(isDemoSite(DEMO)).toBe(true);
+    expect(otpDevEcho(DEMO)).toBe(true);
+    expect(mockPaymentsEnabled(DEMO)).toBe(true);
+    expect(devPagesEnabled(DEMO)).toBe(false);
+    expect(otpIpLimits(DEMO).requestPerHour).toBe(20);
+  });
+
+  it("never applies on a custom domain, without the flag, or on a look-alike host", () => {
+    for (const url of ["https://elba.eg", "https://workers.dev.elba.eg", "http://x.workers.dev", "not a url"]) {
+      expect(isDemoSite({ ...DEMO, NEXT_PUBLIC_SITE_URL: url })).toBe(false);
+    }
+    expect(isDemoSite({ ...DEMO, ELBA_DEMO_SITE: undefined })).toBe(false);
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    expect(otpDevEcho({ ...DEMO, NEXT_PUBLIC_SITE_URL: "https://elba.eg" })).toBe(false);
+    expect(mockPaymentsEnabled({ ...DEMO, NEXT_PUBLIC_SITE_URL: "https://elba.eg" })).toBe(false);
   });
 });

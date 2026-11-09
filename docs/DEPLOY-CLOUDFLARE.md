@@ -59,6 +59,7 @@ switches at runtime.
    ```
    Names: `SESSION_SECRET` (32+ random characters), `CRON_SECRET`, `WHATSAPP_APP_SECRET`, `WHATSAPP_VERIFY_TOKEN`, `BOSTA_API_KEY`, and the payment provider keys. Never set `OTP_DEV_ECHO`, `ALLOW_MOCK_PAYMENTS`, `ELBA_E2E` or `ELBA_DEV_PAGES` in production. As a backstop, the app ignores all four whenever `NEXT_PUBLIC_SITE_URL` starts with `https://` and logs one `[env] ignoring dev-only flags` warning (`devFlag()` in `src/lib/env.ts`); local runs, e2e and a local preview on `http://localhost` keep them.
 7. **Site URL:** set `vars.NEXT_PUBLIC_SITE_URL` in `wrangler.jsonc` to the real `https://` domain.
+   A feedback copy on `*.workers.dev` can keep on-screen sign-in codes and the fake gateway with `ELBA_DEMO_SITE=1` (see `DEPLOY-QUICKSTART.md`, `isDemoSite()` in `src/lib/env.ts`). It never applies on a custom domain.
 8. **Database schema.** Point the migration at the Neon direct URL:
    ```bash
    ELBA_DATABASE_URL="postgresql://USER:PASSWORD@HOST/neondb?sslmode=require" npm run db:migrate:pg

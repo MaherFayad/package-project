@@ -15,16 +15,36 @@ export function isRealDeployment(env: Env = process.env): boolean {
   return (env.NEXT_PUBLIC_SITE_URL ?? "").trim().toLowerCase().startsWith("https://");
 }
 
+/** Flags a demo site may keep: sign-in codes shown on screen and the fake payment gateway. */
+const DEMO_FLAGS: readonly DevOnlyFlag[] = ["OTP_DEV_ECHO", "ALLOW_MOCK_PAYMENTS"];
+
+/**
+ * A feedback copy for friends (docs/DEPLOY-QUICKSTART.md): ELBA_DEMO_SITE=1 AND the site URL is a
+ * Cloudflare `*.workers.dev` address. A custom domain is never a demo site, whatever the flag says,
+ * so the real store cannot be switched into demo mode by one stray variable. Pure.
+ */
+export function isDemoSite(env: Env = process.env): boolean {
+  if (env.ELBA_DEMO_SITE !== "1") return false;
+  try {
+    const u = new URL((env.NEXT_PUBLIC_SITE_URL ?? "").trim());
+    return u.protocol === "https:" && u.hostname.toLowerCase().endsWith(".workers.dev");
+  } catch {
+    return false;
+  }
+}
+
 let devFlagWarned = false;
 
 /**
  * Read a dev-only flag. On a real deployment (see isRealDeployment) every such flag reads as
  * unset, and a single warning names the ones that were set (OWASP ASVS 4.0.3 V14.1.3, R7 fix).
+ * A demo site (isDemoSite) keeps OTP_DEV_ECHO and ALLOW_MOCK_PAYMENTS only.
  */
 export function devFlag(name: DevOnlyFlag, env: Env = process.env): string | undefined {
   if (!isRealDeployment(env)) return env[name];
+  if (DEMO_FLAGS.includes(name) && isDemoSite(env)) return env[name];
   if (!devFlagWarned) {
-    const set = DEV_ONLY_FLAGS.filter((f) => env[f] !== undefined && env[f] !== "");
+    const set = DEV_ONLY_FLAGS.filter((f) => env[f] !== undefined && env[f] !== "" && !(DEMO_FLAGS.includes(f) && isDemoSite(env)));
     if (set.length) {
       devFlagWarned = true;
       console.warn(`[env] ignoring dev-only flags on a real deployment (${env.NEXT_PUBLIC_SITE_URL}): ${set.join(", ")}`);
