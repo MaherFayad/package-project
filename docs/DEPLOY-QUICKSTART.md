@@ -121,3 +121,16 @@ The build needs `ELBA_DATABASE_URL` because it prerenders pages with live prices
 | Local `npm run dev` breaks after a Cloudflare build | Run `npx prisma generate` to restore the local SQLite client. |
 
 To run it on your own computer instead: `cp .env.example .env`, `npm run db:push`, `npm run db:seed`, then `npm run dev`, and open http://localhost:3000. Locally the login code is shown on screen. Demo phone numbers: admin `01000000001`, buyer `01000000002`, printers `01000000010` to `01000000015`.
+
+## Deploying from a Claude Code cloud session
+
+Cloud sessions reach the internet only through an HTTPS proxy, so port 5432 is closed even with Unrestricted network access. Add `ELBA_NEON_HTTPS=1` to the seed and build commands: they then use Neon's serverless driver over WebSocket on port 443 (`src/lib/db.ts`). The Worker itself still uses Hyperdrive.
+
+```bash
+ELBA_NEON_HTTPS=1 ELBA_DATABASE_URL="NEON_URL" npm run cf:build
+```
+```bash
+npx opennextjs-cloudflare deploy -c wrangler.demo.jsonc
+```
+
+Headless Chromium in a cloud session gets a redirect loop on asset paths with `%5B` or `%40` (the session proxy decodes them and Cloudflare redirects to the encoded form). curl and real browsers get 200. To test a deployed copy from a session, route the page's requests through Playwright's `route.fetch()`.

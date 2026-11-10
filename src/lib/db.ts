@@ -42,13 +42,46 @@ function pgAdapter(connectionString: string, perRequest: boolean): PrismaPg {
   return new PrismaPg(perRequest ? { connectionString, maxUses: 1 } : { connectionString });
 }
 
+/** `ELBA_NEON_HTTPS=1`: reach Neon over WebSocket on port 443 (see `neonHttpsAdapter`). Node only. */
+export function neonHttpsEnabled(env: Record<string, string | undefined> = process.env): boolean {
+  return env.ELBA_NEON_HTTPS === "1";
+}
+
+/**
+ * Neon's serverless driver (Postgres over a WebSocket on port 443), for Node hosts that cannot
+ * open port 5432, such as Claude Code cloud sessions where all traffic goes through an HTTPS
+ * proxy. Used by the seed and the Cloudflare build when `ELBA_NEON_HTTPS=1`; the deployed Worker
+ * never takes this path (it uses Hyperdrive). The packages are loaded with Node's own require so
+ * the Worker and client bundles never include them.
+ */
+function neonHttpsAdapter(connectionString: string) {
+  const g = process as unknown as { getBuiltinModule?: (id: string) => { createRequire(p: string): NodeJS.Require } };
+  const mod = g.getBuiltinModule?.("node:module");
+  if (!mod) throw new Error("ELBA_NEON_HTTPS=1 needs Node 22 or later");
+  const req = mod.createRequire(`${process.cwd()}/package.json`);
+  const { PrismaNeon } = req("@prisma/adapter-neon");
+  const { neonConfig } = req("@neondatabase/serverless");
+  const WebSocket = req("ws");
+  const proxy = process.env.HTTPS_PROXY || process.env.https_proxy;
+  if (proxy) {
+    const { HttpsProxyAgent } = req("https-proxy-agent");
+    const agent = new HttpsProxyAgent(proxy);
+    neonConfig.webSocketConstructor = class extends WebSocket {
+      constructor(url: string, protocols?: string | string[]) {
+        super(url, protocols, { agent });
+      }
+    };
+  } else neonConfig.webSocketConstructor = WebSocket;
+  return new PrismaNeon({ connectionString });
+}
+
 /**
  * A standalone Node client for `url` (seed, scripts, e2e fixtures): the pg adapter for Postgres
  * (the client generated from prisma/postgres/schema.prisma has no Rust engine), the engine for
  * SQLite. The app itself uses `db`.
  */
 export function createClient(url: string | undefined = process.env.ELBA_DATABASE_URL, opts: { sqliteSingleWriter?: boolean } = {}): PrismaClient {
-  if (isPostgresUrl(url)) return new PrismaClient({ adapter: pgAdapter(url!, false), log });
+  if (isPostgresUrl(url)) return new PrismaClient({ adapter: neonHttpsEnabled() ? neonHttpsAdapter(url!) : pgAdapter(url!, false), log });
   const u = opts.sqliteSingleWriter === false ? url : databaseUrl(url);
   return new PrismaClient({ ...(u ? { datasourceUrl: u } : {}), log });
 }
