@@ -53,7 +53,7 @@ export function estimateLineWidth(img: RgbaImage, lines: readonly [number, numbe
  * (plus antialiasing) of a line takes the colour just beyond the line on its own side, so a panel
  * sampled up to its edge, or bleed sampled across a fold, never carries the red stroke.
  */
-export function paintOutLines(img: RgbaImage, lines: readonly [number, number, number, number][], widthPx: number): RgbaImage {
+export function paintOutLines(img: RgbaImage, lines: readonly [number, number, number, number][], widthPx: number, color?: string): RgbaImage {
   const { width: w, height: h } = img;
   const src = img.data;
   const out = new Uint8ClampedArray(src);
@@ -87,7 +87,77 @@ export function paintOutLines(img: RgbaImage, lines: readonly [number, number, n
       }
     }
   }
+  if (color) paintOutDieColour(out, w, h, lines, widthPx, color);
   return { data: out, width: w, height: h };
+}
+
+/**
+ * Second pass: pixels of the die colour near a line (a doubled stroke, a registration mark at a
+ * corner, the antialiased ends) take the colour of the nearest pixel that is not, grown inward
+ * from the edges of each run. Only within a few line widths of a detected line, so art of a
+ * similar colour elsewhere is kept.
+ */
+function paintOutDieColour(px: Uint8ClampedArray, w: number, h: number, lines: readonly [number, number, number, number][], widthPx: number, color: string) {
+  const [cr, cg, cb] = rgbOf(color);
+  const reach = Math.ceil(widthPx * 4 + 8);
+  const mark = new Uint8Array(w * h);
+  // Die-like: close to the die colour, or the same hue at least as strong (a brighter mark drawn
+  // with the same red, the stroke's antialiased core).
+  const dm = (cr + cg + cb) / 3;
+  const dv = [cr - dm, cg - dm, cb - dm];
+  const dl = Math.hypot(dv[0], dv[1], dv[2]);
+  const die = (i: number) => {
+    const r = px[i * 4];
+    const g = px[i * 4 + 1];
+    const b = px[i * 4 + 2];
+    if (Math.abs(r - cr) + Math.abs(g - cg) + Math.abs(b - cb) < 90) return true;
+    if (dl < 40) return false;
+    const m = (r + g + b) / 3;
+    const v = [r - m, g - m, b - m];
+    const l = Math.hypot(v[0], v[1], v[2]);
+    return l >= 0.8 * dl && (v[0] * dv[0] + v[1] * dv[1] + v[2] * dv[2]) / (l * dl) > 0.97;
+  };
+  let any = false;
+  for (const [x1, y1, x2, y2] of lines) {
+    const xa = Math.max(0, Math.floor(Math.min(x1, x2)) - reach);
+    const xb = Math.min(w - 1, Math.ceil(Math.max(x1, x2)) + reach);
+    const ya = Math.max(0, Math.floor(Math.min(y1, y2)) - reach);
+    const yb = Math.min(h - 1, Math.ceil(Math.max(y1, y2)) + reach);
+    for (let y = ya; y <= yb; y++)
+      for (let x = xa; x <= xb; x++) {
+        const i = y * w + x;
+        if (!mark[i] && die(i)) {
+          mark[i] = 1;
+          any = true;
+        }
+      }
+  }
+  if (!any) return;
+  // grow the surrounding colours into the marked pixels (4-neighbour BFS)
+  const queue = new Int32Array(w * h);
+  let head = 0;
+  let tail = 0;
+  for (let i = 0; i < mark.length; i++) {
+    if (mark[i]) continue;
+    const x = i % w;
+    if ((x > 0 && mark[i - 1]) || (x < w - 1 && mark[i + 1]) || (i >= w && mark[i - w]) || (i + w < mark.length && mark[i + w])) queue[tail++] = i;
+  }
+  while (head < tail) {
+    const i = queue[head++];
+    const x = i % w;
+    const take = (j: number) => {
+      if (!mark[j]) return;
+      mark[j] = 0;
+      px[j * 4] = px[i * 4];
+      px[j * 4 + 1] = px[i * 4 + 1];
+      px[j * 4 + 2] = px[i * 4 + 2];
+      queue[tail++] = j;
+    };
+    if (x > 0) take(i - 1);
+    if (x < w - 1) take(i + 1);
+    if (i >= w) take(i - w);
+    if (i + w < mark.length) take(i + w);
+  }
 }
 
 /** Scanline fill of a polygon (sheet mm) into a label raster at k px per mm. */

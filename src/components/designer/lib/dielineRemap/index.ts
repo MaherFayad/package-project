@@ -115,7 +115,7 @@ export function remapSheet(original: RgbaImage, target: DielineModel, source: Re
   const density = sourceDensity(target, plans);
   const cap = REMAP_MAX_PX / Math.max(target.sheet.width, target.sheet.height);
   const pxPerMm = opts.pxPerMm ?? Math.min(cap, MAX_PX_PER_MM, Math.max(MIN_PX_PER_MM, density));
-  const clean = paintOutLines(original, source.lines, source.lineWidthPx);
+  const clean = paintOutLines(original, source.lines, source.lineWidthPx, source.lineColor);
   const image = composeSheet(clean, target, plans, { surface: opts.surface, pxPerMm });
   const t1 = typeof performance !== "undefined" ? performance.now() : Date.now();
   return {

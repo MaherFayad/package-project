@@ -142,7 +142,7 @@ describe.each(FILES)("owner's dieline: $name", ({ file, surface }) => {
       const m = BOX_MODELS.find((x) => x.code === top.code)!;
       const model = target === "FEFCO_0427" ? mailer : m.build(top.dims, { thicknessMm: thicknessOf(m) });
       const r = remapSheet(img, model, top.source, cand, { surface });
-      const clean = paintOutLines(img, top.source.lines, top.source.lineWidthPx);
+      const clean = paintOutLines(img, top.source.lines, top.source.lineWidthPx, top.source.lineColor);
       expect(r.report.panels.filter((p) => p.via === "fill")).toEqual([]);
       for (const f of FACES) {
         const got = grid(r.image, targetAt(model, f, r.report.pxPerMm, surface));
