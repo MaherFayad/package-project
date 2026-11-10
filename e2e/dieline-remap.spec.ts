@@ -13,7 +13,6 @@ import { designerAllOptions } from "./fixtures/factory";
 const FILE = path.join(process.cwd(), "docs/owner-input/2026-11-10/dieline-outside-purple.webp");
 const OUT = path.join(process.cwd(), "docs/screenshots/audit/dieline-remap");
 // The owner's construction (not a mailer): tray, self-locking double end walls, hinged lid with a deep tuck.
-const TRAY_LID = ["FS_BAKERY_BOX", "FEFCO_0421_1", "FEFCO_0421", "FEFCO_0421a", "FEFCO_0426a", "FEFCO_0427", "FEFCO_0427_1", "FEFCO_0428", "FEFCO_0429", "FEFCO_0429a"];
 
 async function closedViews(page: Page, tag: string) {
   for (const v of ["front", "top", "left", "back"]) {
@@ -36,9 +35,9 @@ test("upload a printer's dieline: recognised, re-composed on the template, appli
   // Recognised: a hinged-lid mailer construction, with an estimated size and the one measurement.
   const card = page.getByTestId("sheet-recog");
   await expect(card).toHaveAttribute("data-mode", "model", { timeout: 90_000 });
-  // the -mailers session's new deep-tuck 0421-family model joins this group once merged
+  // MAILER_RETF (Gift box, tuck front) is the owner's own construction: it ranks first
   const code = (await card.getAttribute("data-code")) ?? "";
-  expect(TRAY_LID.includes(code) || /^FEFCO_042/.test(code), code).toBe(true);
+  expect(code).toBe("MAILER_RETF");
   await expect(card).toContainText("We recognised:");
   await expect(page.getByTestId("sheet-recog-measure")).toBeVisible();
   // No aspect-ratio warning for a re-composed sheet: it was arranged on this template.

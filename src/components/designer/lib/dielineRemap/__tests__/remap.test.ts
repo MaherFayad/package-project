@@ -28,7 +28,8 @@ const FILES: { name: string; file: string; surface: PrintSurface }[] = [
  * The owner's construction (not a mailer): a tray with self-locking double end walls and a hinged
  * lid with side flaps and a deep tuck, ears on the walls. The 0421 family and its twins.
  */
-const TRAY_LID = ["FS_BAKERY_BOX", "FEFCO_0421_1", "FEFCO_0421", "FEFCO_0421a", "FEFCO_0426a", "FEFCO_0427", "FEFCO_0427_1", "FEFCO_0428", "FEFCO_0429", "FEFCO_0429a"];
+// MAILER_RETF (Gift box, tuck front) is the owner's own construction and should rank first.
+const TRAY_LID = ["MAILER_RETF", "MAILER_RETF_PLAIN", "FS_BAKERY_BOX", "FEFCO_0421_1", "FEFCO_0421", "FEFCO_0421a", "FEFCO_0426a", "FEFCO_0427", "FEFCO_0427_1", "FEFCO_0428", "FEFCO_0429", "FEFCO_0429a"];
 const FACES: FaceId[] = ["top", "bottom", "front", "back", "left", "right"];
 
 async function decode(file: string): Promise<RgbaImage> {
@@ -117,25 +118,26 @@ describe.each(FILES)("owner's dieline: $name", ({ file, surface }) => {
 
   it("recognises the construction (hinged tuck lid, double end walls) with no fittings offered", () => {
     expect(res.found).toBe(true);
-    expect(TRAY_LID).toContain(res.matches[0].code);
+    expect(res.matches[0].code).toBe("MAILER_RETF");
     expect(res.matches.filter((m) => TRAY_LID.includes(m.code)).length).toBeGreaterThanOrEqual(2);
     expect(res.matches.some((m) => m.code.startsWith("FEFCO_09"))).toBe(false);
     expect(res.matches[0].agreement ?? 0).toBeGreaterThan(0.85);
   });
 
-  it("finds the six faces by topology and the fitted model's proportions agree within 2%", () => {
+  it("finds the six faces by topology and the fitted model's proportions agree within 2.5%", () => {
     for (const f of FACES) expect(truth[f], f).toBeTruthy();
     // the dims to apply, from the art's own panels after snapping: lid L / W and front H / L
     const d = res.matches[0].dims;
     const artLW = truth.top!.width / truth.top!.height;
     const artHL = truth.front!.height / truth.front!.width;
-    // panels are the inner size plus a board allowance: compare on the art's panel sizes
+    // panels are the inner size plus a board allowance: compare on the art's panel sizes.
+    // 2.5%: without a print size the dims are whole mm, which alone moves H/L by up to 0.7%.
     const m = candidateModelOf(res.matches[0].source, BOX_MODELS)!;
     const k = { L: d.L / m.dims.L, W: d.W / m.dims.W, H: d.H / m.dims.H };
     const top = m.faces.top!;
     const front = m.faces.front!;
-    expect(Math.abs((top.width * k.L) / (top.height * k.W) / artLW - 1)).toBeLessThan(0.02);
-    expect(Math.abs((front.height * k.H) / (front.width * k.L) / artHL - 1)).toBeLessThan(0.02);
+    expect(Math.abs((top.width * k.L) / (top.height * k.W) / artLW - 1)).toBeLessThan(0.025);
+    expect(Math.abs((front.height * k.H) / (front.width * k.L) / artHL - 1)).toBeLessThan(0.025);
   });
 
   for (const target of ["recognised", "FEFCO_0427"] as const) {
