@@ -26,10 +26,11 @@ import {
   type StructureCode,
   type StructureFamily,
   type StructureParamLimits,
+  type SheetImage,
 } from "@/types";
 import { DEFAULT_DIMS, STRUCTURE_FAMILY, STRUCTURE_LIMITS, defaultMaterialFor, materialFitsStructure } from "@/lib/dieline";
 import { FALLBACK_PRESETS, STRUCTURE_SLUGS } from "./lib/catalog";
-import { designConfigSchema as configSchema, designDocSchema, layerSchema } from "./lib/doc";
+import { designConfigSchema as configSchema, designDocSchema, layerSchema, sheetImageSchema } from "./lib/doc";
 import { canRead, canWrite, type Actor as AccessActor } from "./lib/access";
 
 export { canRead, canWrite };
@@ -97,6 +98,10 @@ export function rowToDoc(row: DesignRow): DesignDoc | null {
       .filter((r) => r.success)
       .map((r) => r.data as ArtworkLayer)
       .filter((l) => l.surface === side);
+    // Full artwork (and the dieline remap's original): it was dropped here, so a reload or the
+    // print PDF lost it.
+    const sheet = s.sheetImage ? sheetImageSchema.safeParse(s.sheetImage) : null;
+    if (sheet?.success) art[side].sheetImage = sheet.data as SheetImage;
   }
   const doc: DesignDoc = {
     v: 1,

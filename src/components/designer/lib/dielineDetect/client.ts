@@ -48,10 +48,24 @@ export function createDielineDetector(): DielineDetector {
     else if (msg.type === "remapped") p.resolve({ report: msg.report, sheet: msg.sheet });
     else p.reject(new Error(msg.message));
   };
+  // The worker script failed to load or threw: every waiting job fails (the caller keeps the plain
+  // upload) instead of waiting for ever, and so does every later one.
+  let broken: Error | null = null;
+  const failAll = (err: Error) => {
+    broken = err;
+    for (const p of pending.values()) p.reject(err);
+    pending.clear();
+  };
+  worker.onerror = (e) => {
+    e.preventDefault?.();
+    failAll(new Error(e.message || "detector worker failed"));
+  };
+  worker.onmessageerror = () => failAll(new Error("detector worker message failed"));
   const post = (m: DetectorRequest, transfer: Transferable[] = []) => worker.postMessage(m, transfer);
   const job = <T,>(make: (id: number) => DetectorRequest) => {
     const id = nextId++;
     return new Promise<T>((resolve, reject) => {
+      if (broken) return reject(broken);
       pending.set(id, { resolve, reject });
       post(make(id));
     });

@@ -191,10 +191,8 @@ export const shapeLayerSchema = z.object({
 
 export const layerSchema = z.discriminatedUnion("kind", [imageLayerSchema, textLayerSchema, shapeLayerSchema]);
 
-const surfaceSchema = z.object({
-  background: hex.nullable(),
-  layers: z.array(layerSchema).max(MAX_LAYERS),
-  sheetImage: z
+/** Full artwork over the sheet (designer), with the dieline remap's original and recipe. */
+export const sheetImageSchema = z
     .object({
       src: imageSrc,
       pxWidth: z.number().int().min(1).max(20000),
@@ -211,9 +209,12 @@ const surfaceSchema = z.object({
         })
         .nullable()
         .optional(),
-    })
-    .nullable()
-    .optional(),
+    });
+
+const surfaceSchema = z.object({
+  background: hex.nullable(),
+  layers: z.array(layerSchema).max(MAX_LAYERS),
+  sheetImage: sheetImageSchema.nullable().optional(),
 });
 
 const featuresSchema = z
