@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Box, Brush, ChevronDown, ChevronUp, CloudCheck, CloudOff, CloudUpload, Download, Ellipsis, Focus, ImagePlus, Layers, ListChecks, Minus, MoreHorizontal, Package, Palette, PanelsTopLeft, PartyPopper, Pencil, Plus, Redo2, Rotate3d, RotateCcw, RotateCw, Ruler, Save, Share2, Square, Undo2, UserRound, type LucideIcon } from "lucide-react";
+import { ArrowLeft, Box, Brush, ChevronDown, ChevronUp, CloudCheck, CloudOff, CloudUpload, CupSoda, Download, Ellipsis, Focus, ImagePlus, Layers, ListChecks, Minus, MoreHorizontal, Package, Palette, PanelsTopLeft, PartyPopper, Pencil, Plus, Redo2, Rotate3d, RotateCcw, RotateCw, Ruler, Save, Share2, Square, Undo2, UserRound, type LucideIcon } from "lucide-react";
 import { Suspense, startTransition, useCallback, useEffect, useMemo, useReducer, useRef, useState, type CSSProperties } from "react";
 import { FACE_IDS, type ArtworkLayer, type DesignDoc, type DesignFinishCode, type Dims, type DimsPreset, type FaceId, type ImageLayer, type ImagePlace, type Locale, type PrintSurface, type StructureCode } from "@/types";
 import { boardAppearance, dielineToSvg, type DielineModel } from "@/lib/dieline";
@@ -1920,6 +1920,22 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
                 }}
               >
                 <Ruler size={18} aria-hidden />
+              </button>
+            ) : null}
+            {boxModel ? (
+              <button
+                type="button"
+                className={styles.toolButton}
+                aria-pressed={viewOpts.scene === "reference"}
+                aria-label={t("library.panel.sceneReference")}
+                title={t("library.panel.sceneReference")}
+                data-testid="toggle-reference-can"
+                onClick={() => {
+                  setViewOpts((o) => ({ ...o, scene: o.scene === "reference" ? "none" : "reference" }));
+                  if (view !== "3d") setView("3d");
+                }}
+              >
+                <CupSoda size={18} aria-hidden />
               </button>
             ) : null}
           </div>

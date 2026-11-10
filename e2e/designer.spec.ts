@@ -383,3 +383,17 @@ test("phones can rename a design from More actions (R5-JR-14)", async ({ page },
   const saved = await (await page.request.get(`/api/designs/${new URL(page.url()).searchParams.get("d")}`)).json();
   expect(saved.doc.name).toBe("Phone named box");
 });
+
+test("bottom bar: the reference can toggles on and off; no View group in the panel", async ({ page }) => {
+  await designerAllOptions(page.context());
+  await page.goto("/en/design/mailer-box");
+  await expect(page.getByTestId("stage-3d").locator("canvas").first()).toBeVisible({ timeout: 60_000 });
+  const can = page.getByTestId("toggle-reference-can");
+  await expect(can).toHaveAttribute("aria-pressed", "true");
+  await can.click();
+  await expect(can).toHaveAttribute("aria-pressed", "false");
+  await can.click();
+  await expect(can).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByLabel("Turntable")).toHaveCount(0);
+  await expect(page.getByRole("combobox", { name: "Scene" })).toHaveCount(0);
+});

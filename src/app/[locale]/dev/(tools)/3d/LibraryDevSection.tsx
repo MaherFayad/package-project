@@ -120,6 +120,7 @@ export function LibraryDevSection() {
               geo={geo}
               view={view}
               onView={setView}
+              viewControls
               onOpenPicker={() => document.getElementById("lib-browser")?.scrollIntoView({ behavior: "smooth" })}
               onGeometry={geometry}
               onFinish={(code: DesignFinishCode, on: boolean) => setDoc(toggleFinish(doc, code, on))}

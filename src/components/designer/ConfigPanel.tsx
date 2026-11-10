@@ -55,6 +55,8 @@ export interface ConfigPanelProps {
   geo: DocGeometry | null;
   view: ViewOptions;
   onView: (v: ViewOptions) => void;
+  /** The View group (dimensions, scene, turntable). Dev page only: the designer has them in its bottom bar. */
+  viewControls?: boolean;
   onOpenPicker: () => void;
   /** Geometry changes (size, board, features, container): the editor rescales artwork. */
   onGeometry: (patch: Partial<Pick<DesignDoc, "dims" | "materialCode" | "features" | "vessel">>) => void;
@@ -465,7 +467,7 @@ function ViewGroup({ view, onView, vessel }: Pick<ConfigPanelProps, "view" | "on
 const BAG_AXIS_KEY = { L: "library.panel.width", W: "library.panel.gusset", H: "library.panel.height" } as const;
 const AXIS_KEY = { L: "designer.box.length", W: "designer.box.width", H: "designer.box.height" } as const;
 
-function BoxSection({ doc, model, geo, view, onView, onGeometry, onFinish, onFinishSwap, onPrintSides }: ConfigPanelProps & { model: BoxModelDef }) {
+function BoxSection({ doc, model, geo, view, onView, viewControls, onGeometry, onFinish, onFinishSwap, onPrintSides }: ConfigPanelProps & { model: BoxModelDef }) {
   const { t, locale } = useI18n();
   const cylinder = model.shape === "cylinder";
   const [draft, setDraft] = useState({ L: String(doc.dims.L), W: String(doc.dims.W), H: String(doc.dims.H) });
@@ -661,7 +663,7 @@ function BoxSection({ doc, model, geo, view, onView, onGeometry, onFinish, onFin
         </fieldset>
       ) : null}
 
-      <ViewGroup view={view} onView={onView} vessel={false} />
+      {viewControls ? <ViewGroup view={view} onView={onView} vessel={false} /> : null}
     </>
   );
 }
@@ -698,7 +700,7 @@ function AddOnTile({ kind, label, checked, onChange }: { kind: AddOnKind; label:
 
 /* ───────────────────────────── containers ───────────────────────────── */
 
-function VesselSection({ doc, model, geo, view, onView, onGeometry, onFinish, onFinishSwap }: ConfigPanelProps & { model: VesselModelDef }) {
+function VesselSection({ doc, model, geo, view, onView, viewControls, onGeometry, onFinish, onFinishSwap }: ConfigPanelProps & { model: VesselModelDef }) {
   const { t, locale } = useI18n();
   const v = doc.vessel!;
   const [draft, setDraft] = useState({ D: String(v.dims.D), H: String(v.dims.H), G: v.dims.G !== undefined ? String(v.dims.G) : "" });
@@ -897,7 +899,7 @@ function VesselSection({ doc, model, geo, view, onView, onGeometry, onFinish, on
 
       <FinishesGroup doc={doc} model={model} onFinish={onFinish} onFinishSwap={onFinishSwap} />
 
-      <ViewGroup view={view} onView={onView} vessel />
+      {viewControls ? <ViewGroup view={view} onView={onView} vessel /> : null}
     </>
   );
 }
