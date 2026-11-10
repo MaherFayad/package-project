@@ -133,10 +133,11 @@ function paintOutDieColour(px: Uint8ClampedArray, w: number, h: number, lines: r
       }
   }
   if (!any) return;
-  // grow the surrounding colours into the marked pixels (4-neighbour BFS)
   const queue = new Int32Array(w * h);
   let head = 0;
   let tail = 0;
+  traceStrokes(px, w, h, mark, queue, lines, widthPx, [cr, cg, cb]);
+  // grow the surrounding colours into the marked pixels (4-neighbour BFS)
   for (let i = 0; i < mark.length; i++) {
     if (mark[i]) continue;
     const x = i % w;
@@ -157,6 +158,122 @@ function paintOutDieColour(px: Uint8ClampedArray, w: number, h: number, lines: r
     if (x < w - 1) take(i + 1);
     if (i >= w) take(i - w);
     if (i + w < mark.length) take(i + w);
+  }
+}
+
+/**
+ * Curved and diagonal die lines (rounded flap corners, a thumb notch, slanted dust flaps) are not
+ * among the straight segments the detector finds, but every cut contour is joined to one. From the
+ * pixels already marked, follow 8-connected pixels of the die colour while the stroke stays thin
+ * (its run across, in x or in y, at most a few line widths), so a filled shape of the same colour is
+ * never entered. Then small separate marks in the die colour inside the die (registration crosses)
+ * are taken too, and one pixel of antialiased edge round every marked stroke.
+ */
+function traceStrokes(
+  px: Uint8ClampedArray,
+  w: number,
+  h: number,
+  mark: Uint8Array,
+  queue: Int32Array,
+  lines: readonly [number, number, number, number][],
+  widthPx: number,
+  [cr, cg, cb]: [number, number, number],
+) {
+  const n = w * h;
+  const strict = new Uint8Array(n);
+  for (let i = 0; i < n; i++) {
+    const d = Math.abs(px[i * 4] - cr) + Math.abs(px[i * 4 + 1] - cg) + Math.abs(px[i * 4 + 2] - cb);
+    if (d < 90) strict[i] = 1;
+  }
+  const maxRun = Math.ceil(widthPx * 3 + 3);
+  const run = (i: number, step: number, lim: (j: number) => boolean) => {
+    let c = 1;
+    for (let j = i + step; c <= maxRun && lim(j) && strict[j]; j += step) c++;
+    for (let j = i - step; c <= maxRun && lim(j) && strict[j]; j -= step) c++;
+    return c;
+  };
+  const thin = (i: number) => {
+    const y = Math.floor(i / w);
+    const row = (j: number) => j >= y * w && j < (y + 1) * w;
+    const col = (j: number) => j >= 0 && j < n;
+    return Math.min(run(i, 1, row), run(i, w, col)) <= maxRun;
+  };
+  let head = 0;
+  let tail = 0;
+  for (let i = 0; i < n; i++) if (mark[i]) queue[tail++] = i;
+  while (head < tail) {
+    const i = queue[head++];
+    const x = i % w;
+    for (let dy = -1; dy <= 1; dy++)
+      for (let dx = -1; dx <= 1; dx++) {
+        if ((!dx && !dy) || x + dx < 0 || x + dx >= w) continue;
+        const j = i + dy * w + dx;
+        if (j < 0 || j >= n || mark[j] || !strict[j] || !thin(j)) continue;
+        mark[j] = 1;
+        queue[tail++] = j;
+      }
+  }
+  // separate small marks inside the die's box
+  let xa = w;
+  let xb = 0;
+  let ya = h;
+  let yb = 0;
+  for (const [x1, y1, x2, y2] of lines) {
+    xa = Math.min(xa, x1, x2);
+    xb = Math.max(xb, x1, x2);
+    ya = Math.min(ya, y1, y2);
+    yb = Math.max(yb, y1, y2);
+  }
+  const small = Math.ceil(widthPx * 6 + 10);
+  const seen = new Uint8Array(n);
+  for (let y = Math.max(0, Math.floor(ya)); y <= Math.min(h - 1, Math.ceil(yb)); y++)
+    for (let x = Math.max(0, Math.floor(xa)); x <= Math.min(w - 1, Math.ceil(xb)); x++) {
+      const s = y * w + x;
+      if (!strict[s] || mark[s] || seen[s]) continue;
+      let qh = tail;
+      let qt = tail;
+      queue[qt++] = s;
+      seen[s] = 1;
+      let [mx, Mx, my, My] = [x, x, y, y];
+      while (qh < qt) {
+        const i = queue[qh++];
+        const ix = i % w;
+        const iy = (i - ix) / w;
+        mx = Math.min(mx, ix);
+        Mx = Math.max(Mx, ix);
+        my = Math.min(my, iy);
+        My = Math.max(My, iy);
+        if (Mx - mx > small || My - my > small) break;
+        for (const j of [ix > 0 ? i - 1 : -1, ix < w - 1 ? i + 1 : -1, i - w, i + w])
+          if (j >= 0 && j < n && strict[j] && !seen[j] && !mark[j]) {
+            seen[j] = 1;
+            queue[qt++] = j;
+          }
+      }
+      if (Mx - mx > small || My - my > small) {
+        // too big: art in a like colour; mark the rest of it seen so it is not walked again
+        while (qh < qt) {
+          const i = queue[qh++];
+          const ix = i % w;
+          for (const j of [ix > 0 ? i - 1 : -1, ix < w - 1 ? i + 1 : -1, i - w, i + w])
+            if (j >= 0 && j < n && strict[j] && !seen[j] && !mark[j]) {
+              seen[j] = 1;
+              queue[qt++] = j;
+            }
+        }
+        continue;
+      }
+      if (qt - tail >= 4) for (let k = tail; k < qt; k++) mark[queue[k]] = 1;
+    }
+  // the antialiased (or JPEG-blurred) edge round every marked stroke: two pixels
+  for (let pass = 0; pass < 2; pass++) {
+    const ring: number[] = [];
+    for (let i = 0; i < n; i++) {
+      if (!mark[i]) continue;
+      const x = i % w;
+      for (const j of [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, i - w, i + w]) if (j >= 0 && j < n && !mark[j]) ring.push(j);
+    }
+    for (const j of ring) mark[j] = 1;
   }
 }
 

@@ -191,6 +191,18 @@ describe.each(FILES)("owner's dieline: $name", ({ file, surface }) => {
     }
     expect(red).toBeLessThan(3);
   });
+
+  it("paints out the curved and diagonal die lines too (rounded flaps, the thumb notch)", () => {
+    const top = res.matches[0];
+    const clean = paintOutLines(img, top.source.lines, top.source.lineWidthPx, top.source.lineColor);
+    const [lr, lg, lb] = [1, 3, 5].map((i) => parseInt(top.source.lineColor!.slice(i, i + 2), 16));
+    const count = (d: ArrayLike<number>) => {
+      let k = 0;
+      for (let i = 0; i < d.length; i += 4) if (Math.abs(d[i] - lr) + Math.abs(d[i + 1] - lg) + Math.abs(d[i + 2] - lb) < 60) k++;
+      return k;
+    };
+    expect(count(clean.data)).toBeLessThan(Math.max(5, count(img.data) * 0.002));
+  });
 });
 
 describe("inside print: mirrored reading", () => {
@@ -242,4 +254,31 @@ describe("synthetic dielines: remap across models", () => {
       expect(c.meanDiff, `${f} mean colour`).toBeLessThan(20);
     }
   }, 60_000);
+});
+
+describe("die line paint-out", () => {
+  it("follows a curve joined to a straight line, but keeps a filled shape of the die colour", () => {
+    const w = 200;
+    const h = 120;
+    const data = new Uint8ClampedArray(w * h * 4);
+    const set = (x: number, y: number, c: [number, number, number]) => {
+      const i = (Math.round(y) * w + Math.round(x)) * 4;
+      [data[i], data[i + 1], data[i + 2], data[i + 3]] = [...c, 255];
+    };
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) set(x, y, [70, 40, 130]);
+    const red: [number, number, number] = [200, 20, 40];
+    // straight cut 20..120 at y 60, then a quarter circle down to (150, 100), 2 px wide
+    for (let x = 20; x <= 120; x++) for (const d of [0, 1]) set(x, 60 + d, red);
+    for (let a = 0; a <= 90; a += 0.5) {
+      const t = (a * Math.PI) / 180;
+      for (const d of [0, 1]) set(120 + (30 + d) * Math.sin(t), 60 + 40 * (1 - Math.cos(t)), red);
+    }
+    // a filled 30 x 30 red square touching the straight line from above
+    for (let y = 30; y < 60; y++) for (let x = 40; x < 70; x++) set(x, y, red);
+    const clean = paintOutLines({ data, width: w, height: h }, [[20, 60.5, 120, 60.5]], 2, "#c81428");
+    const at = (x: number, y: number) => Array.from(clean.data.slice((y * w + x) * 4, (y * w + x) * 4 + 3));
+    expect(at(141, 81)).not.toEqual(red); // on the curve
+    expect(at(150, 99)).not.toEqual(red); // the curve's far end
+    expect(at(55, 40)).toEqual(red); // inside the square: art, kept
+  });
 });
