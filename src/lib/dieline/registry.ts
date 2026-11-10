@@ -319,6 +319,22 @@ const ENTRIES: Record<StructureCode, Entry> = {
     glued: false,
     uses: ["cosmetics"],
   },
+  // Added by bags: the production base of every store bag model (src/lib/dieline/families/bags).
+  // Designed on the bag models; "flat" keeps it out of the box lists (bags ship flat).
+  PAPER_BAG: {
+    slug: "paper-bags",
+    standard: "Paper carrier bag, W x G x H",
+    name: { ar: "أكياس ورقية", en: "Paper bags" },
+    description: {
+      ar: "أكياس تسوق من الكرافت أو الكوشيه المسلفن بقاع مربع ويد ورقية أو حبل أو شريط، مطبوعة بشعارك.",
+      en: "Shopping bags in kraft or laminated art paper with a square bottom and paper, rope or ribbon handles, printed with your brand.",
+    },
+    presets: [p("medium", "متوسط", "Medium", { L: 260, W: 120, H: 350 }, true), p("large", "كبير", "Large", { L: 320, W: 120, H: 410 }, true)],
+    shape: "flat",
+    pieces: 1,
+    glued: true,
+    uses: ["retail", "apparel", "gift", "food"],
+  },
 };
 
 export const STRUCTURES: Record<StructureCode, StructureDef> = Object.fromEntries(

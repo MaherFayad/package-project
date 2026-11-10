@@ -18,6 +18,7 @@ export const STRUCTURE_FAMILY: Record<StructureCode, StructureFamily> = {
   ROLL_LABEL: "LABEL",
   PRINTED_POUCH: "FLEXIBLE",
   PRINTED_TUBE: "FLEXIBLE",
+  PAPER_BAG: "PAPER_BAG",
 };
 
 export interface BoardSpec {
@@ -50,7 +51,17 @@ export const BOARD_SPECS: Record<MaterialCode, BoardSpec> = {
   POUCH_PET_PE: { code: "POUCH_PET_PE", family: "FLEXIBLE", thicknessMm: 0.1, flute: null, color: "WHITE" },
   POUCH_KRAFT_PE: { code: "POUCH_KRAFT_PE", family: "FLEXIBLE", thicknessMm: 0.15, flute: null, color: "KRAFT" },
   TUBE_PE: { code: "TUBE_PE", family: "FLEXIBLE", thicknessMm: 0.4, flute: null, color: "WHITE" },
+  // Added by bags: carrier bag papers (calipers: kraft 80/120 gsm, laminated art 170/210/250 gsm).
+  BAG_KRAFT_80: { code: "BAG_KRAFT_80", family: "PAPER_BAG", thicknessMm: 0.11, flute: null, color: "KRAFT" },
+  BAG_KRAFT_120: { code: "BAG_KRAFT_120", family: "PAPER_BAG", thicknessMm: 0.16, flute: null, color: "KRAFT" },
+  BAG_WHITE_KRAFT_120: { code: "BAG_WHITE_KRAFT_120", family: "PAPER_BAG", thicknessMm: 0.15, flute: null, color: "WHITE" },
+  BAG_ART_170: { code: "BAG_ART_170", family: "PAPER_BAG", thicknessMm: 0.18, flute: null, color: "WHITE" },
+  BAG_ART_210: { code: "BAG_ART_210", family: "PAPER_BAG", thicknessMm: 0.22, flute: null, color: "WHITE" },
+  BAG_ART_250: { code: "BAG_ART_250", family: "PAPER_BAG", thicknessMm: 0.27, flute: null, color: "WHITE" },
 };
+
+/** Added by bags: laminated coated art paper (smooth, bright white, both faces). */
+export const isArtBagPaper = (m: MaterialCode): boolean => m.startsWith("BAG_ART_");
 
 /** Sensible default board per structure family (for previews before a material is chosen). */
 export function defaultMaterialFor(code: StructureCode): MaterialCode {
@@ -65,6 +76,8 @@ export function defaultMaterialFor(code: StructureCode): MaterialCode {
       return "LABEL_WHITE_BOPP";
     case "FLEXIBLE":
       return code === "PRINTED_TUBE" ? "TUBE_PE" : "POUCH_PET_PE";
+    case "PAPER_BAG":
+      return "BAG_KRAFT_120";
     default:
       return "SBS_350";
   }
@@ -120,6 +133,12 @@ export function boardAppearance(material: MaterialCode): BoardAppearance {
   }
   if (spec.family === "LABEL" || spec.family === "FLEXIBLE") {
     return { outside: spec.color === "KRAFT" ? KRAFT : "#fdfdfb", inside: "#f2f2ef", edge: "#ecebe6", fluteColor: null, flutePitchMm: null, roughness: 0.4 };
+  }
+  if (spec.family === "PAPER_BAG") {
+    // Kraft: brown both sides (white kraft: bleached outside, cream inside); art paper: coated white.
+    if (isArtBagPaper(material)) return { outside: "#fbfbf9", inside: "#f4f3ef", edge: "#efeeea", fluteColor: null, flutePitchMm: null, roughness: 0.5 };
+    if (spec.color === "WHITE") return { outside: "#f6f4ee", inside: "#ece7dc", edge: "#ebe6dc", fluteColor: null, flutePitchMm: null, roughness: 0.86 };
+    return { outside: "#b4845a", inside: "#a97a4f", edge: "#a77a50", fluteColor: null, flutePitchMm: null, roughness: 0.9 };
   }
   if (spec.family === "TUBE") {
     // The label paper is rolled over the tube's rims, so the visible edges read as label.

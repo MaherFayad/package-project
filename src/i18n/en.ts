@@ -132,6 +132,7 @@ export const en = {
     ROLL_LABEL: "Roll labels",
     PRINTED_POUCH: "Printed pouches",
     PRINTED_TUBE: "Printed squeeze tubes",
+    PAPER_BAG: "Paper bags",
   },
   materials: {
     E_FLUTE_KRAFT: "E-flute kraft",
@@ -149,6 +150,12 @@ export const en = {
     POUCH_PET_PE: "PET/PE pouch laminate",
     POUCH_KRAFT_PE: "Kraft/PE pouch laminate",
     TUBE_PE: "PE tube body",
+    BAG_KRAFT_80: "Brown kraft 80 gsm",
+    BAG_KRAFT_120: "Brown kraft 120 gsm",
+    BAG_WHITE_KRAFT_120: "White kraft 120 gsm",
+    BAG_ART_170: "Art paper 170 gsm, laminated",
+    BAG_ART_210: "Art paper 210 gsm, laminated",
+    BAG_ART_250: "Art paper 250 gsm, laminated",
   },
   /** Plain names for buyers (box pages, the designer's options); `materials` keeps the trade names for printers and staff (R2-06). */
   materialsPlain: {
@@ -167,6 +174,12 @@ export const en = {
     POUCH_PET_PE: "Printed plastic pouch",
     POUCH_KRAFT_PE: "Lined brown paper pouch",
     TUBE_PE: "Soft plastic tube",
+    BAG_KRAFT_80: "Light brown paper",
+    BAG_KRAFT_120: "Strong brown paper",
+    BAG_WHITE_KRAFT_120: "Strong white paper",
+    BAG_ART_170: "Smooth coated paper",
+    BAG_ART_210: "Thick smooth coated paper",
+    BAG_ART_250: "Extra thick smooth coated paper",
   },
   finishes: {
     NONE: "No finish",
@@ -458,6 +471,7 @@ export const en = {
         GABLE_BOX: "Custom printed gable box",
         PAPER_TUBE: "Custom printed paper tube",
         RIGID_BOX: "Custom printed rigid box",
+        PAPER_BAG: "Custom printed paper bag",
       },
       use: {
         FEFCO_0427: "Online shops, fashion, cosmetics, subscription and gift boxes.",
@@ -473,6 +487,7 @@ export const en = {
         GABLE_BOX: "Sweets, kids' meals and gifts.",
         PAPER_TUBE: "Tea, coffee, cosmetics and apparel.",
         RIGID_BOX: "Premium gifts, special editions and jewellery.",
+        PAPER_BAG: "Shops, fashion, restaurants and gifts.",
       },
     },
     vendors: {

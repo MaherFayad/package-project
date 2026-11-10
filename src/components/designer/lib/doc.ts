@@ -19,7 +19,7 @@ import {
   type TextLayer,
 } from "@/types";
 import { DEFAULT_DIMS, defaultMaterialFor, materialFitsStructure } from "@/lib/dieline";
-import { DESIGN_FINISH_CODES } from "@/types";
+import { BAG_HANDLE_COLOR_CODES, BAG_HANDLE_KINDS, DESIGN_FINISH_CODES, type BagHandleColor } from "@/types";
 import type { ModelDef } from "@/lib/library";
 import { modelByCode, modelSourceOf } from "@/lib/library/registry";
 import { baseOf, vesselPrintMaterials } from "@/lib/library/doc";
@@ -212,6 +212,7 @@ const featuresSchema = z
     partitions: z.object({ rows: z.number().int().min(1).max(8), cols: z.number().int().min(1).max(8) }).nullable().optional(),
     lidHeightMm: z.number().finite().positive().max(1000).optional(),
     displayFront: z.boolean().optional(),
+    bagHandle: z.object({ kind: z.enum(BAG_HANDLE_KINDS), color: z.enum(BAG_HANDLE_COLOR_CODES as [BagHandleColor, ...BagHandleColor[]]) }).nullable().optional(),
   })
   .strip();
 

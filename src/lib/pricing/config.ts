@@ -145,6 +145,8 @@ export const DEFAULT_PRICING_CONFIG: PricingConfig = {
       ROLL_LABEL: { glued: false, maxStackMm: 400 },
       PRINTED_POUCH: { glued: false, maxStackMm: 400 },
       PRINTED_TUBE: { glued: true, maxStackMm: 400 },
+      // Bags ship folded flat in bundles (4 paper layers at the gussets).
+      PAPER_BAG: { glued: true, maxStackMm: 400 },
     },
   },
   ranking: { price: 0.5, speed: 0.25, quality: 0.25 },

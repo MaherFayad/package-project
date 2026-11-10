@@ -15,7 +15,7 @@ import type { LabelSpec, LiquidCode, VesselDims, VesselKind, VesselProfile, Rang
  */
 
 /** Picker groups, in display order. */
-export const MODEL_GROUPS = ["BOXES", "CARTONS", "RIGID", "TRAYS", "TUBES", "BOTTLES_JARS", "POUCHES", "CANS"] as const;
+export const MODEL_GROUPS = ["BOXES", "CARTONS", "RIGID", "TRAYS", "TUBES", "BAGS", "BOTTLES_JARS", "POUCHES", "CANS"] as const;
 export type ModelGroup = (typeof MODEL_GROUPS)[number];
 
 export const MODEL_GROUP_NAMES: Record<ModelGroup, LocalizedText> = {
@@ -25,7 +25,9 @@ export const MODEL_GROUP_NAMES: Record<ModelGroup, LocalizedText> = {
   TRAYS: { ar: "صواني", en: "Trays" },
   TUBES: { ar: "أنابيب", en: "Tubes" },
   BOTTLES_JARS: { ar: "زجاجات وبرطمانات", en: "Bottles and jars" },
-  POUCHES: { ar: "أكياس", en: "Pouches" },
+  BAGS: { ar: "أكياس", en: "Bags" },
+  // Renamed with bags: «أكياس» is the paper bags group now; pouches are the flexible ones.
+  POUCHES: { ar: "أكياس مرنة", en: "Pouches" },
   CANS: { ar: "علب معدنية", en: "Cans" },
 };
 
@@ -41,6 +43,7 @@ export type ModelSource =
   | "ecma-specials"
   | "foodservice"
   | "rigid-tubes"
+  | "bags"
   | "vessel-core"
   | "vessel-bottles"
   | "vessel-cosmetic"

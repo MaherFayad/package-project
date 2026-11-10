@@ -42,6 +42,7 @@ export const STRUCTURE_THEME: Record<StructureCode, SampleTheme> = {
   ROLL_LABEL: T.sabra,
   PRINTED_POUCH: T.souq,
   PRINTED_TUBE: T.lamsa,
+  PAPER_BAG: T.kraft,
 };
 
 export function sampleArtwork(model: DielineModel, th: SampleTheme): ArtworkSurface {

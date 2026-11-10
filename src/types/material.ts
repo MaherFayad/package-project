@@ -18,10 +18,17 @@ export const MATERIAL_CODES = [
   "POUCH_PET_PE", //       PET 12 / PE 80 laminate (printed reverse on the PET)
   "POUCH_KRAFT_PE", //     kraft paper / PE laminate
   "TUBE_PE", //            co-extruded PE tube body (offset or silkscreen printed)
+  // Added by bags: carrier bag papers (src/lib/dieline/families/bags).
+  "BAG_KRAFT_80", //       brown kraft 80 gsm (SOS and light carrier bags)
+  "BAG_KRAFT_120", //      brown kraft 120 gsm (carrier bags)
+  "BAG_WHITE_KRAFT_120", // bleached white kraft 120 gsm
+  "BAG_ART_170", //        coated art paper 170 gsm, laminated (boutique bags)
+  "BAG_ART_210", //        coated art paper 210 gsm, laminated
+  "BAG_ART_250", //        coated art paper 250 gsm, laminated
 ] as const;
 export type MaterialCode = (typeof MATERIAL_CODES)[number];
 
-export type BoardType = "CORRUGATED" | "SBS" | "GREYBOARD" | "TUBE" | "LABEL" | "FILM";
+export type BoardType = "CORRUGATED" | "SBS" | "GREYBOARD" | "TUBE" | "LABEL" | "FILM" | "PAPER";
 export type Flute = "E" | "B";
 export type BoardColor = "KRAFT" | "WHITE";
 

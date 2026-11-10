@@ -131,6 +131,7 @@ export const ar: Dictionary = {
     ROLL_LABEL: "ملصقات رول",
     PRINTED_POUCH: "أكياس مطبوعة",
     PRINTED_TUBE: "أنابيب مطبوعة",
+    PAPER_BAG: "أكياس ورقية",
   },
   materials: {
     E_FLUTE_KRAFT: "كرتون مضلع E كرافت",
@@ -148,6 +149,12 @@ export const ar: Dictionary = {
     POUCH_PET_PE: "رقائق أكياس PET/PE",
     POUCH_KRAFT_PE: "رقائق أكياس كرافت/PE",
     TUBE_PE: "جسم أنبوب بولي إيثيلين",
+    BAG_KRAFT_80: "كرافت بني 80 جم",
+    BAG_KRAFT_120: "كرافت بني 120 جم",
+    BAG_WHITE_KRAFT_120: "كرافت أبيض 120 جم",
+    BAG_ART_170: "كوشيه 170 جم مسلفن",
+    BAG_ART_210: "كوشيه 210 جم مسلفن",
+    BAG_ART_250: "كوشيه 250 جم مسلفن",
   },
   materialsPlain: {
     E_FLUTE_KRAFT: "كرتون بني طبيعي",
@@ -165,6 +172,12 @@ export const ar: Dictionary = {
     POUCH_PET_PE: "كيس بلاستيك مطبوع",
     POUCH_KRAFT_PE: "كيس ورق بني مبطن",
     TUBE_PE: "أنبوب بلاستيك لين",
+    BAG_KRAFT_80: "ورق بني خفيف",
+    BAG_KRAFT_120: "ورق بني قوي",
+    BAG_WHITE_KRAFT_120: "ورق أبيض قوي",
+    BAG_ART_170: "ورق مصقول",
+    BAG_ART_210: "ورق مصقول سميك",
+    BAG_ART_250: "ورق مصقول سميك جدا",
   },
   finishes: {
     NONE: "بدون تشطيب",
@@ -456,6 +469,7 @@ export const ar: Dictionary = {
         GABLE_BOX: "علبة حمل بمقبض مطبوعة",
         PAPER_TUBE: "علبة أسطوانية ورقية مطبوعة",
         RIGID_BOX: "علبة صلبة فاخرة مطبوعة",
+        PAPER_BAG: "كيس ورقي مطبوع",
       },
       use: {
         FEFCO_0427: "المتاجر الإلكترونية والملابس ومستحضرات التجميل وعلب الهدايا والاشتراكات.",
@@ -471,6 +485,7 @@ export const ar: Dictionary = {
         GABLE_BOX: "الحلويات ووجبات الأطفال والهدايا.",
         PAPER_TUBE: "الشاي والقهوة ومستحضرات التجميل والملابس.",
         RIGID_BOX: "الهدايا الفاخرة والإصدارات الخاصة والمجوهرات.",
+        PAPER_BAG: "المحلات والملابس والمطاعم والهدايا.",
       },
     },
     vendors: {

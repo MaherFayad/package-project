@@ -1,6 +1,6 @@
 import type { Dims, DimsPreset } from "@/types";
 import type { FeatureSupport } from "../../features";
-import { carrierBag, flatBag, gussetBag, sosBag } from "./generators/bags";
+import { flatBag, sosBag } from "./generators/bags";
 import { bakeryBox, burgerClamshell, cakeBox, friesScoop, noodlePail, pizzaSlice, roundPizza, sandwichWedge } from "./generators/boxes";
 import { bellyBand, giftSleeve, hangTag } from "./generators/flat";
 import type { DielineDefinition, FoodserviceDefinition, FrustumDefinition, FrustumDims, FrustumPreset, LidDefinition, LidDims, PulpDefinition, PulpDims } from "./types";
@@ -11,8 +11,6 @@ const IN = 25.4;
 const r1 = (v: number) => Math.round(v);
 
 const BOARD_FOOD = ["SBS_300", "SBS_350", "CUK_300"] as const;
-const BAG_PAPERS = ["KRAFT_PAPER_80", "WHITE_KRAFT_100", "GREASEPROOF_50"] as const;
-const CARRIER_PAPERS = ["KRAFT_PAPER_120", "WHITE_KRAFT_100"] as const;
 
 const BAG_LABELS = { L: { ar: "العرض", en: "Width" }, W: { ar: "الجانب", en: "Gusset" }, H: { ar: "الارتفاع", en: "Height" } };
 
@@ -230,89 +228,9 @@ const boxes: DielineDefinition[] = [
 
 /* ───────────────────────── paper bags ───────────────────────── */
 
+// Carrier, SOS and bottle bags moved to the store bags family (src/lib/dieline/families/bags) as
+// designer models (codes in BAG_CODE_ALIASES). The food bags below stay quote-only here.
 const bags: DielineDefinition[] = [
-  {
-    kind: "dieline",
-    code: "FS_BAG_SOS",
-    slug: "sos-paper-bag",
-    name: { ar: "كيس ورقي بقاع مربع", en: "SOS flat-bottom paper bag" },
-    description: { ar: "كيس ورقي ينفتح ويقف وحده بقاع مربع وجوانب مطوية، للمخابز والبقالة والطلبات.", en: "Self-opening square-bottom bag with side gussets for bakeries, groceries and takeaway." },
-    family: "PAPER_BAG",
-    subFamily: "sos",
-    standard: "ISO 6591-1 (dimensional designation)",
-    materials: [...BAG_PAPERS],
-    defaultMaterial: "KRAFT_PAPER_80",
-    uses: ["bakery", "grocery", "takeaway"],
-    params: { L: { min: 100, max: 350 }, W: { min: 50, max: 200 }, H: { min: 150, max: 450 }, rules: ["W <= L"] },
-    defaultDims: { L: 159, W: 97, H: 318 },
-    presets: [
-      p("no4", "مقاس 4", "#4", { L: 127, W: 79, H: 244 }, true),
-      p("no6", "مقاس 6", "#6", { L: 152, W: 92, H: 281 }, true),
-      p("no8", "مقاس 8", "#8", { L: 159, W: 97, H: 318 }, true),
-      p("takeaway", "طلبات خارجية", "Takeaway", { L: 260, W: 150, H: 300 }),
-    ],
-    features: { ...NONE, thumbNotch: true },
-    dimLabels: BAG_LABELS,
-    shape: "bag",
-    pieces: 1,
-    glued: true,
-    generate: sosBag,
-  },
-  {
-    kind: "dieline",
-    code: "FS_BAG_FLAT_HANDLE",
-    slug: "paper-bag-flat-handle",
-    name: { ar: "كيس ورقي بمقبض مسطح", en: "Carrier bag, flat handle" },
-    description: { ar: "كيس ورقي بقاع مربع وثنية علوية ومقبض شريطي ملصوق من الداخل، للمطاعم والمحلات.", en: "Square-bottom carrier bag with a top turnover and flat paper strip handles glued inside." },
-    family: "PAPER_BAG",
-    subFamily: "carrier",
-    standard: "ISO 6591-1 (dimensional designation)",
-    materials: [...CARRIER_PAPERS],
-    defaultMaterial: "KRAFT_PAPER_120",
-    uses: ["takeaway", "retail", "grocery"],
-    params: { L: { min: 150, max: 500 }, W: { min: 60, max: 250 }, H: { min: 150, max: 500 }, rules: ["W <= L"] },
-    defaultDims: { L: 260, W: 120, H: 350 },
-    presets: [
-      p("small", "صغير", "Small", { L: 180, W: 80, H: 220 }, true),
-      p("medium", "وسط", "Medium", { L: 260, W: 120, H: 350 }, true),
-      p("large", "كبير", "Large", { L: 320, W: 140, H: 420 }, true),
-      p("takeaway-wide", "طلبات عريض", "Wide takeaway", { L: 320, W: 220, H: 280 }),
-    ],
-    features: NONE,
-    dimLabels: BAG_LABELS,
-    shape: "bag",
-    pieces: 1,
-    glued: true,
-    generate: carrierBag,
-    handle: "flat",
-  },
-  {
-    kind: "dieline",
-    code: "FS_BAG_TWISTED_HANDLE",
-    slug: "paper-bag-twisted-handle",
-    name: { ar: "كيس ورقي بمقبض مجدول", en: "Carrier bag, twisted handle" },
-    description: { ar: "كيس ورقي بقاع مربع ومقبض ورقي مجدول مثبت تحت الثنية العلوية برقعة تقوية.", en: "Square-bottom carrier bag with twisted paper rope handles anchored under the turnover with a patch." },
-    family: "PAPER_BAG",
-    subFamily: "carrier",
-    standard: "ISO 6591-1 (dimensional designation)",
-    materials: [...CARRIER_PAPERS],
-    defaultMaterial: "KRAFT_PAPER_120",
-    uses: ["retail", "gift", "takeaway"],
-    params: { L: { min: 150, max: 500 }, W: { min: 60, max: 250 }, H: { min: 150, max: 500 }, rules: ["W <= L"] },
-    defaultDims: { L: 260, W: 120, H: 350 },
-    presets: [
-      p("small", "صغير", "Small", { L: 190, W: 80, H: 210 }, true),
-      p("medium", "وسط", "Medium", { L: 260, W: 120, H: 350 }, true),
-      p("large", "كبير", "Large", { L: 320, W: 140, H: 420 }, true),
-    ],
-    features: NONE,
-    dimLabels: BAG_LABELS,
-    shape: "bag",
-    pieces: 1,
-    glued: true,
-    generate: carrierBag,
-    handle: "twisted",
-  },
   {
     kind: "dieline",
     code: "FS_BAG_MERCHANDISE",
@@ -339,32 +257,6 @@ const bags: DielineDefinition[] = [
     pieces: 1,
     glued: true,
     generate: flatBag,
-  },
-  {
-    kind: "dieline",
-    code: "FS_BAG_BOTTLE",
-    slug: "bottle-paper-bag",
-    name: { ar: "كيس ورقي للزجاجات", en: "Bottle bag" },
-    description: { ar: "كيس ورقي طويل بقاع مربع لزجاجة واحدة من الزيت أو العصير أو المياه.", en: "Tall square-bottom bag for a single bottle of oil, juice or water." },
-    family: "PAPER_BAG",
-    subFamily: "sos",
-    standard: "ISO 6591-1 (dimensional designation)",
-    materials: ["KRAFT_PAPER_120", "WHITE_KRAFT_100", "KRAFT_PAPER_80"],
-    defaultMaterial: "KRAFT_PAPER_120",
-    uses: ["grocery", "gift", "retail"],
-    params: { L: { min: 80, max: 140 }, W: { min: 70, max: 130 }, H: { min: 300, max: 450 }, rules: ["W <= L"] },
-    defaultDims: { L: 100, W: 90, H: 380 },
-    presets: [
-      p("bottle-750", "زجاجة 750 مل", "Bottle 750 ml", { L: 100, W: 90, H: 380 }, true),
-      p("oil-1l", "زيت 1 لتر", "Oil 1 l", { L: 110, W: 100, H: 400 }),
-      p("water-1500", "مياه 1.5 لتر", "Water 1.5 l", { L: 100, W: 95, H: 420 }),
-    ],
-    features: NONE,
-    dimLabels: BAG_LABELS,
-    shape: "bag",
-    pieces: 1,
-    glued: true,
-    generate: (d, t, f) => gussetBag(d, t, { turnover: 0, bottom: "sos" }, f),
   },
   {
     kind: "dieline",

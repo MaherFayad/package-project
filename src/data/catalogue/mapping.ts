@@ -41,6 +41,8 @@ export function availabilitySlugFor(source: string, code: string, style: string)
       return cosmetic(code, s);
     case "vessel-flexible":
       return flexible(code);
+    case "bags":
+      return `paper-bag/${s || "kraft-carrier"}`;
     default:
       return "corrugated";
   }

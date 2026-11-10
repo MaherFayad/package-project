@@ -136,19 +136,10 @@ describe("foodservice dieline specifics", () => {
     expect(m.faces.top!.height).toBeCloseTo(Math.hypot(d.W + 2 * t, d.H + 2 * t), 0);
   });
 
-  it("carrier bags: turnover panels and handle spec", () => {
-    for (const [code, kind] of [["FS_BAG_FLAT_HANDLE", "flat"], ["FS_BAG_TWISTED_HANDLE", "twisted"]] as const) {
-      const m = buildFoodservice(code, { L: 260, W: 120, H: 350 }).model as FamilyDielineModel;
-      expect(m.handle?.kind).toBe(kind);
-      expect(m.handle!.spanMm).toBeLessThan(260);
-      expect(m.panels.filter((p) => p.role === "inner")).toHaveLength(4);
-      // Turnover folds inside: closed height stays the bag height.
-      expect(m.closedOuter.H).toBeCloseTo(350, 0);
-    }
-    const sos = buildFoodservice("FS_BAG_SOS", { L: 159, W: 97, H: 318 }).model as FamilyDielineModel;
-    expect(sos.handle).toBeUndefined();
-    // Gusset centre folds + bottom diagonals are drawn as creases.
-    expect(sos.metrics.creaseLengthMm).toBeGreaterThan(2 * 318);
+  it("bread bag: gusset folds drawn as creases (carrier bags moved to families/bags)", () => {
+    const m = buildFoodservice("FS_BAG_BREAD_WINDOW", { L: 120, W: 60, H: 300 }).model as FamilyDielineModel;
+    expect(m.handle).toBeUndefined();
+    expect(m.metrics.creaseLengthMm).toBeGreaterThan(2 * 300);
   });
 
   it("hang tag: string hole cut", () => {

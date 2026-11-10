@@ -41,7 +41,10 @@ export type SurfaceClass =
   | "LABEL_FILM" //      BOPP label film (white, clear, metallic)
   | "SHRINK_FILM" //     PETG shrink sleeve (reverse printed)
   | "FLEXIBLE_FILM" //   printed laminate of a stand-up pouch
-  | "PE_TUBE"; //        printed PE tube body
+  | "PE_TUBE" //         printed PE tube body
+  // Added by bags:
+  | "KRAFT_PAPER" //     uncoated kraft bag paper (brown or white), flexo on bag machines
+  | "ART_PAPER_LAM"; //  coated art paper, offset printed and laminated (handmade boutique bags)
 
 /* ───────────────────────────── boards (boxes) ───────────────────────────── */
 
@@ -56,6 +59,13 @@ export const BOX_BOARD_CODES = [
   "SBS_350",
   "GREYBOARD_WRAP",
   "KRAFT_TUBE",
+  // Added by bags (carrier bag papers).
+  "BAG_KRAFT_80",
+  "BAG_KRAFT_120",
+  "BAG_WHITE_KRAFT_120",
+  "BAG_ART_170",
+  "BAG_ART_210",
+  "BAG_ART_250",
 ] as const;
 export type BoxBoardCode = (typeof BOX_BOARD_CODES)[number];
 
@@ -87,6 +97,12 @@ export const BOX_BOARDS: Record<BoxBoardCode, BoxBoard> = {
   SBS_350: b({ code: "SBS_350", family: "FOLDING_CARTON", surface: "COATED_BOARD", flute: null, color: "WHITE", thicknessMm: 0.48, gsm: 350, name: { ar: "كرتون دوبلكس أبيض 350 جم", en: "SBS 350 gsm" }, pricingMaterial: "SBS_350", foodSafe: true }),
   GREYBOARD_WRAP: b({ code: "GREYBOARD_WRAP", family: "RIGID", surface: "ART_PAPER_WRAP", flute: null, color: "WHITE", thicknessMm: 2.15, gsm: 1400, name: { ar: "كرتون رمادي 2 مم بورق تغليف مطبوع", en: "2 mm greyboard, printed wrap" }, pricingMaterial: "GREYBOARD_WRAP", foodSafe: false }),
   KRAFT_TUBE: b({ code: "KRAFT_TUBE", family: "TUBE", surface: "ART_PAPER_WRAP", flute: null, color: "WHITE", thicknessMm: 1.5, gsm: 1000, name: { ar: "أنبوبة كرتون بملصق مطبوع", en: "Kraft tube, printed label" }, pricingMaterial: "KRAFT_TUBE", foodSafe: true }),
+  BAG_KRAFT_80: b({ code: "BAG_KRAFT_80", family: "PAPER_BAG", surface: "KRAFT_PAPER", flute: null, color: "KRAFT", thicknessMm: 0.11, gsm: 80, name: { ar: "كرافت بني 80 جم", en: "Brown kraft 80 gsm" }, pricingMaterial: "BAG_KRAFT_80", foodSafe: true }),
+  BAG_KRAFT_120: b({ code: "BAG_KRAFT_120", family: "PAPER_BAG", surface: "KRAFT_PAPER", flute: null, color: "KRAFT", thicknessMm: 0.16, gsm: 120, name: { ar: "كرافت بني 120 جم", en: "Brown kraft 120 gsm" }, pricingMaterial: "BAG_KRAFT_120", foodSafe: true }),
+  BAG_WHITE_KRAFT_120: b({ code: "BAG_WHITE_KRAFT_120", family: "PAPER_BAG", surface: "KRAFT_PAPER", flute: null, color: "WHITE", thicknessMm: 0.15, gsm: 120, name: { ar: "كرافت أبيض 120 جم", en: "White kraft 120 gsm" }, pricingMaterial: "BAG_WHITE_KRAFT_120", foodSafe: true }),
+  BAG_ART_170: b({ code: "BAG_ART_170", family: "PAPER_BAG", surface: "ART_PAPER_LAM", flute: null, color: "WHITE", thicknessMm: 0.18, gsm: 170, name: { ar: "كوشيه 170 جم مسلفن", en: "Art paper 170 gsm, laminated" }, pricingMaterial: "BAG_ART_170", foodSafe: false }),
+  BAG_ART_210: b({ code: "BAG_ART_210", family: "PAPER_BAG", surface: "ART_PAPER_LAM", flute: null, color: "WHITE", thicknessMm: 0.22, gsm: 210, name: { ar: "كوشيه 210 جم مسلفن", en: "Art paper 210 gsm, laminated" }, pricingMaterial: "BAG_ART_210", foodSafe: false }),
+  BAG_ART_250: b({ code: "BAG_ART_250", family: "PAPER_BAG", surface: "ART_PAPER_LAM", flute: null, color: "WHITE", thicknessMm: 0.27, gsm: 250, name: { ar: "كوشيه 250 جم مسلفن", en: "Art paper 250 gsm, laminated" }, pricingMaterial: "BAG_ART_250", foodSafe: false }),
 };
 
 export function isCorrugated(board: BoxBoard): boolean {

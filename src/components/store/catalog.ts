@@ -24,6 +24,7 @@ export const STRUCTURE_SLUGS: Record<StructureCode, string> = {
   ROLL_LABEL: STRUCTURES.ROLL_LABEL.slug,
   PRINTED_POUCH: STRUCTURES.PRINTED_POUCH.slug,
   PRINTED_TUBE: STRUCTURES.PRINTED_TUBE.slug,
+  PAPER_BAG: STRUCTURES.PAPER_BAG.slug,
 };
 
 export function structureFromSlug(slug: string): StructureCode | null {
@@ -92,6 +93,7 @@ export const SEO_SIZES: Record<StructureCode, Dims[]> = {
   ROLL_LABEL: [],
   PRINTED_POUCH: [],
   PRINTED_TUBE: [],
+  PAPER_BAG: [],
 };
 
 /** "300x200x150" (mm, ASCII x so the URL is stable). */

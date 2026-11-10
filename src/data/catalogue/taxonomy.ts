@@ -7,6 +7,7 @@ export const CATALOGUE_FAMILIES = [
   "folding-carton",
   "rigid-box",
   "paper-tube",
+  "paper-bag",
   "food-service",
   "flexible",
   "glass",

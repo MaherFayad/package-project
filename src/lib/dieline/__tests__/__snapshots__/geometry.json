@@ -1643,6 +1643,48 @@
   "bounds": "938b9512ab679305bd2c7ed4",
   "svg": "61b4608a09c604ad9b0dbd28"
  },
+ "BAG_TWISTED_KRAFT": {
+  "dieline": "28b961d497a5051aa9463b99",
+  "poses": "30e5da9347ec67b671e54995",
+  "bounds": "474bbd4340bea08306d1e145",
+  "svg": "1fc83290f49be9a8d3dd7c14"
+ },
+ "BAG_FLAT_KRAFT": {
+  "dieline": "59e34142359f807949bf4f83",
+  "poses": "9bb749eade0dcf70f46a16f7",
+  "bounds": "704eabd23aee0e3ad8b1d19b",
+  "svg": "097ea08df4e219030d9ce1f0"
+ },
+ "BAG_SOS": {
+  "dieline": "1b373343b66dc6610e71fe83",
+  "poses": "80984ae69782870985096451",
+  "bounds": "10702c86f23abc95d2dde116",
+  "svg": "4d0e8f45cb1c7d373401a362"
+ },
+ "BAG_ROPE_ART": {
+  "dieline": "f101816e2fb2f1497bb09b80",
+  "poses": "9169a2101cf9de8d497c571c",
+  "bounds": "d842875e53e8f57e658b3159",
+  "svg": "8a3f914ba5268f44473ad5a9"
+ },
+ "BAG_GIFT_ART": {
+  "dieline": "7ab472a1f5c69fe13955b83a",
+  "poses": "66d2688d22552e4a86f13858",
+  "bounds": "fe64d9598bd4d2eacb4bb931",
+  "svg": "ffd9fe0b3b3d70e896956a49"
+ },
+ "BAG_DIECUT_PATCH": {
+  "dieline": "37a4ce2537758265d0da34b6",
+  "poses": "6cad613054499f982e15b55f",
+  "bounds": "921eac169940b4540c0b652e",
+  "svg": "781f2c4c335c89429b5394d7"
+ },
+ "BAG_BOTTLE": {
+  "dieline": "58fcae074db7d097d27b5312",
+  "poses": "ecd8bafdbe3d831d74fe99e8",
+  "bounds": "53ee22f124309f095ef7d011",
+  "svg": "93fc6dcb00944c89bf154950"
+ },
  "FEFCO_0427+features": {
   "dieline": "0573459152adee6823ae0c22",
   "poses": "72b210ef036482d5364a2fef",
@@ -1738,5 +1780,11 @@
   "poses": "751ba9fe070a61153377af60",
   "bounds": "249ee9cd905c5299d84b5b48",
   "svg": "9fbaa36b3fc9f3f6ffe2e427"
+ },
+ "PAPER_BAG+features": {
+  "dieline": "6b7b169de836075ace67f2b2",
+  "poses": "30e5da9347ec67b671e54995",
+  "bounds": "474bbd4340bea08306d1e145",
+  "svg": "1fc83290f49be9a8d3dd7c14"
  }
 }

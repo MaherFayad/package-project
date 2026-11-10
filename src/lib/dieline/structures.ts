@@ -1,3 +1,4 @@
+import { bagDraft } from "./families/bags/generator";
 import { Box3, Euler, Mat4 as Matrix4, Quat as Quaternion, Vec3 as Vector3 } from "./math";
 import type { Dims, FaceId, StructureCode, StructureFeatures } from "@/types";
 import { DielineBuilder, insetSeg, rectEdges } from "./builder";
@@ -1072,4 +1073,6 @@ export const GENERATORS: Record<StructureCode, Generator> = {
   ROLL_LABEL: flatPart,
   PRINTED_POUCH: flatPart,
   PRINTED_TUBE: flatPart,
+  // Added by bags: the core paper bag is the twisted-handle kraft carrier (models: families/bags).
+  PAPER_BAG: (d, t, f) => bagDraft(d, t, f, { code: "BAG_TWISTED_KRAFT", handle: { kind: "TWISTED_PAPER", color: "KRAFT" }, baseInsert: false }),
 };

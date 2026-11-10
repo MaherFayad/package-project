@@ -26,6 +26,8 @@ export const STRUCTURE_LIMITS: Record<StructureCode, StructureParamLimits> = {
   ROLL_LABEL: { L: { min: 10, max: 700 }, W: { min: 1, max: 1 }, H: { min: 10, max: 400 } },
   PRINTED_POUCH: { L: { min: 60, max: 900 }, W: { min: 1, max: 1 }, H: { min: 80, max: 600 } },
   PRINTED_TUBE: { L: { min: 40, max: 200 }, W: { min: 1, max: 1 }, H: { min: 50, max: 250 } },
+  // Added by bags: L = face width, W = gusset, H = finished height (carrier bags, families/bags).
+  PAPER_BAG: { L: { min: 90, max: 550 }, W: { min: 50, max: 220 }, H: { min: 120, max: 600 }, rules: ["W <= L"] },
 };
 
 /** Default inner dims per structure (mirrors Structure.defaultDims in the seed). */
@@ -46,6 +48,7 @@ export const DEFAULT_DIMS: Record<StructureCode, Dims> = {
   ROLL_LABEL: { L: 220, W: 1, H: 80 },
   PRINTED_POUCH: { L: 320, W: 1, H: 230 },
   PRINTED_TUBE: { L: 120, W: 1, H: 120 },
+  PAPER_BAG: { L: 260, W: 120, H: 350 },
 };
 
 export type DimsIssueCode = "TOO_SMALL" | "TOO_LARGE" | "RULE" | "INVALID";
