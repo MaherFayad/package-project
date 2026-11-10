@@ -178,7 +178,8 @@ describe("handle rules", () => {
   it("every kind has a turnover rule and colour list", () => {
     for (const k of BAG_HANDLE_KINDS) {
       const T = turnoverFor(k, { L: 260, W: 120, H: 350 });
-      if (k === "NONE") expect(T).toBe(0);
+      if (["NONE", "TSHIRT", "DIE_CUT_PATCH", "KIDNEY", "SOFT_LOOP", "RIGID_CLIP", "SEWN_STRAP"].includes(k)) expect(T).toBe(0);
+      else if (k === "DRAWSTRING") expect(T).toBe(30);
       else expect(T).toBeGreaterThanOrEqual(35);
       expect(Array.isArray(handleColors(k))).toBe(true);
     }

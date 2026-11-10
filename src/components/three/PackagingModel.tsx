@@ -1,5 +1,6 @@
 "use client";
 
+import { filmAppearance } from "@/lib/dieline/materials";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useLayoutEffect, useMemo, useRef, type ReactElement } from "react";
 import { Color, DoubleSide, MeshBasicMaterial, MeshPhysicalMaterial, Vector3, type BufferGeometry, type Group, type Material, type Texture } from "three";
@@ -55,7 +56,7 @@ export function PackagingModel({
   materialsOverride,
 }: PackagingModelProps) {
   const invalidate = useThree((s) => s.invalidate);
-  const appearance = typeof material === "string" ? boardAppearance(material) : material;
+  const appearance = typeof material === "string" ? filmAppearance(boardAppearance(material), dieline.features?.bagFilm) : material;
   const outsideMap = artworkTextures?.outside ?? null;
   const insideMap = artworkTextures?.inside ?? null;
   const showInside = printInside ?? !!insideMap;

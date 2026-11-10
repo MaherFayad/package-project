@@ -137,10 +137,12 @@ const FAMILIES: AvailabilityEntry[] = [
     sources: ["repo-research-report"],
     notes: "Industrial cores are plentiful; printed retail tubes with metal ends are a smaller niche. Estimate.",
   },
-  // Added by bags: store (carrier) bags as their own family; food bags stay in food-service.
+  // Added by bags: store (carrier) bags as their own family, sub-grouped paper / plastic / reusable
+  // (sub-family slugs start with the group, so the picker lists them in that order). Family-level
+  // facts are the paper ones; plastic and reusable sub-families carry their own.
   {
-    slug: "paper-bag",
-    name: { ar: "أكياس ورقية", en: "Paper bags" },
+    slug: "bags",
+    name: { ar: "أكياس", en: "Bags" },
     standards: ["W x G x H (EN 13590 carrier bags; ISO 6591-1 sack designation)", "Twisted, flat, rope, ribbon and die-cut handles"],
     egypt: "local",
     egyptPrintMethods: ["flexo-flexible", "offset-sheetfed", "digital-toner", "hot-foil"],
@@ -349,6 +351,23 @@ const FAMILIES: AvailabilityEntry[] = [
 ];
 
 // ---------------------------------------------------------------- sub-families
+/** Shared facts of the plastic (film) bag sub-families (docs/audit/bags.md). */
+const PLASTIC_SUB = {
+      egypt: "local" as const,
+      standards: ["ES 3040/2022 plastic shopping bags (mandatory)", "EPR fee EGP 37.5/kg, PM Decree 662/2025"],
+      egyptPrintMethods: ["flexo-flexible" as const],
+      sizes: ["20 x 25 cm", "30 x 40 cm", "40 x 60 cm"],
+      moq: moq(5, 500, "kg", "No published MOQ in kg; one printer sells printed bags with no minimum, factories deliver free above 500 kg."),
+      leadTimeDays: est(7, 20),
+      priceBandEGP: price(58, 90, "per kg of printed bags", "Printed virgin PE bags, 2026 (Palastic, Tigers stores); EGP 22 to 30/kg quotes are below resin cost and read as recycled grades"),
+      clusters: ["6th-of-october" as const, "greater-cairo" as const, "10th-of-ramadan" as const, "obour" as const],
+      manufacturerTypes: ["Blown-film and bag makers with inline flexo (e.g. Oliatra, Helwan Plast, 6th of October)", "Regional bag printers (e.g. Brotherplast, Mansoura)"],
+      regulatory: [...PLASTIC, "eg-es-3040"],
+      regions: R("Common; EPR fees and thickness minimums tightening.", "Common; UAE single-use bag bans.", "SUP Directive and bag levies.", "State bag bans and fees.", "China exports at scale."),
+      notes: "PE resin about EGP 60 to 90/kg in 2026 (El Makhzn, egyin). ES 3040 is reported to set a 50 micron minimum (standard text not seen). The EPR fee is paid by producers and importers and passed through in the price.",
+      sources: ["pm-decree-662-2025", "eos-es-3040", "youm7-es-3040", "oliatra-printed-bags", "helwanplast-bags", "brotherplast", "elmakhzn-pe-2026"],
+};
+
 type Sub = Partial<Omit<AvailabilityEntry, "slug" | "family">> & { name: AvailabilityEntry["name"] };
 const SUBS: Record<string, Record<string, Sub>> = {
   corrugated: {
@@ -612,25 +631,25 @@ const SUBS: Record<string, Record<string, Sub>> = {
     tin: { name: { ar: "علب صفيح", en: "Tins (round, rectangular, hinged)" }, standards: ["Slip lid, lever lid, hinged"], egypt: "local", moq: moq(3000, 10000, "tins"), priceBandEGP: price(15, 50, "per tin", "Ø 100 x 60 mm printed slip-lid tin, 5,000 pcs") },
     aerosol: { name: { ar: "عبوات بخاخ", en: "Aerosol cans" }, standards: ["Tinplate 3-piece Ø 52/57/65; aluminium monobloc"], egypt: "rare", notes: "Only one Egyptian listing mentions aerosol supply (Europack); aluminium monobloc aerosols are imported." },
   },
-  "paper-bag": {
-    "kraft-carrier": {
-      name: { ar: "أكياس كرافت بيد ورقية", en: "Kraft carrier bags (twisted and flat paper handles)" },
+  bags: {
+    "paper-kraft-carrier": {
+      name: { ar: "ورقية: أكياس كرافت بيد ورقية", en: "Paper: kraft carrier bags" },
       standards: ["Twisted paper cord 4 to 5 mm with patch", "Flat paper tape 10 to 20 mm"],
       egyptPrintMethods: ["flexo-flexible", "digital-toner"],
       sizes: ["18 x 8 x 23", "22 x 10 x 32", "26 x 12 x 35", "32 x 12 x 41", "46 x 16 x 49 cm"],
       priceBandEGP: price(7, 20, "per printed bag", "Kraft 120 gsm twisted handle, 1 to 2 colour, 250 to 1,000 bags (Bag 'n Pack about EGP 11 for 15 x 8 x 25 cm at 300; Dotline 7.55 to 20.50 at 500)"),
       sources: ["upack-paper-bags", "bagnpack-bags", "onlineprinters-twisted", "crp-bag-guide"],
     },
-    sos: {
-      name: { ar: "أكياس بقاع مربع دون يد", en: "SOS bags (no handle)" },
+    "paper-sos": {
+      name: { ar: "ورقية: أكياس بقاع مربع دون يد", en: "Paper: SOS bags" },
       standards: ["Self-opening square bottom"],
       egyptPrintMethods: ["flexo-flexible"],
       sizes: ["#4 127 x 79 x 244", "#6 152 x 92 x 281", "#8 159 x 97 x 318 mm"],
       priceBandEGP: price(3, 9, "per printed bag", "Kraft 80 gsm, 1 colour, 500 to 2,000 bags (estimate from plain stock prices)"),
       sources: ["etqan-paper-bags", "bagnpack-bags"],
     },
-    boutique: {
-      name: { ar: "أكياس كوشيه فاخرة بحبل أو شريط", en: "Laminated art-paper bags (rope and ribbon handles)" },
+    "paper-boutique": {
+      name: { ar: "ورقية: أكياس كوشيه فاخرة", en: "Paper: laminated boutique bags" },
       standards: ["Art paper 157 to 250 gsm, laminated", "Cotton or PP rope 5 to 8 mm, satin or grosgrain ribbon 15 to 25 mm", "Board base 400 to 800 gsm"],
       egyptPrintMethods: ["offset-sheetfed", "hot-foil"],
       sizes: ["15 x 8 x 25", "24 x 9 x 32", "32 x 12 x 41", "42 x 12 x 35", "46 x 16 x 49 cm"],
@@ -639,22 +658,40 @@ const SUBS: Record<string, Record<string, Sub>> = {
       priceBandEGP: price(20, 55, "per printed bag", "Art 210 gsm matt laminated, rope handle, board base, CMYK, 500 to 1,000 bags (Al-Hadaf about EGP 50, AMPRO up to 42.94)"),
       sources: ["etqan-paper-bags", "ampro-paper-bags", "huamei-luxury-bags", "crp-bag-guide"],
     },
-    "die-cut": {
-      name: { ar: "أكياس بيد مفرغة", en: "Die-cut handle bags" },
+    "paper-die-cut": {
+      name: { ar: "ورقية: أكياس بيد مفرغة", en: "Paper: die-cut handle bags" },
       standards: ["Hand hole through a reinforced turnover"],
       egyptPrintMethods: ["flexo-flexible", "offset-sheetfed"],
       moq: moq(1000, 5000),
       sources: ["paperindex-packtec", "paperindex-ecopack"],
       notes: "Listed by Packtec and Eco Pack; no public price. Quote only.",
     },
-    bottle: {
-      name: { ar: "أكياس زجاجات", en: "Bottle and wine bags" },
+    "paper-bottle": {
+      name: { ar: "ورقية: أكياس زجاجات", en: "Paper: bottle bags" },
       standards: ["Single bottle 14 x 8 x 39 cm"],
       egyptPrintMethods: ["offset-sheetfed", "flexo-flexible"],
       sizes: ["14 x 8 x 39", "14 x 8 x 40", "12 x 9 x 37 cm"],
       moq: moq(500, 2000),
       sources: ["paperindex-packtec"],
       notes: "Only Packtec lists liquor-bottle bags among Egyptian makers found; sizes are EU retail sizes. Quote only.",
+    },
+    "plastic-tshirt": { ...PLASTIC_SUB, name: { ar: "بلاستيك: أكياس فانلة", en: "Plastic: T-shirt bags" }, standards: [...PLASTIC_SUB.standards, "HDPE / LDPE, side gusset"] },
+    "plastic-die-cut": { ...PLASTIC_SUB, name: { ar: "بلاستيك: أكياس بيد مفرغة", en: "Plastic: die-cut and kidney handle bags" }, standards: [...PLASTIC_SUB.standards, "LDPE, patch optional, flat / side / bottom gusset"], notes: `${PLASTIC_SUB.notes} Sold in the market as يد مفرغة; no supplier page found with specs.` },
+    "plastic-loop-clip": { ...PLASTIC_SUB, name: { ar: "بلاستيك: أكياس بعروة أو مشبك أو رباط", en: "Plastic: loop, clip and drawstring bags" }, standards: [...PLASTIC_SUB.standards, "LDPE 70 to 100 microns"], moq: moq(100, 1000, "kg"), notes: "No Egyptian supplier found listing these lines: quote only." },
+    "plastic-merchandise": { ...PLASTIC_SUB, name: { ar: "بلاستيك: أكياس مسطحة", en: "Plastic: flat merchandise bags" }, sizes: ["15 x 30", "20 x 35", "25 x 40 cm"] },
+    "reusable-nonwoven": {
+      ...PLASTIC_SUB,
+      name: { ar: "قابلة لإعادة الاستخدام: شنط قماش غير منسوج", en: "Reusable: non-woven PP bags" },
+      standards: ["ES 8919/2024 non-woven bags", "PP spunbond 60 to 120 gsm (80 typical)"],
+      egyptPrintMethods: ["screen", "flexo-flexible"],
+      sizes: ["30 x 30 to 60 x 55 cm"],
+      moq: moq(100, 10000, "pcs", "Cloth bags from 100 (AMPRO); a non-woven exporter lists 10,000."),
+      leadTimeDays: est(10, 25),
+      priceBandEGP: price(6, 18, "per bag", "Printed fabric bags with handles, 100+ (AMPRO EGP 6.24 to 17.26)"),
+      manufacturerTypes: ["Non-woven fabric converters and sewing workshops", "Advertising printers (e.g. AMPRO)"],
+      regulatory: GENERAL,
+      sources: ["eos-bag-standards", "ampro-paper-bags"],
+      notes: "Egyptian standard ES 8919/2024; gsm data not published by Egyptian makers (60 to 120 gsm elsewhere). Not a single-use film bag, so the plastic bag EPR fee does not apply as far as found.",
     },
   },
   labels: {

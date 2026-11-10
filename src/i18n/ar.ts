@@ -132,6 +132,7 @@ export const ar: Dictionary = {
     PRINTED_POUCH: "أكياس مطبوعة",
     PRINTED_TUBE: "أنابيب مطبوعة",
     PAPER_BAG: "أكياس ورقية",
+    PLASTIC_BAG: "أكياس بلاستيك",
   },
   materials: {
     E_FLUTE_KRAFT: "كرتون مضلع E كرافت",
@@ -155,6 +156,12 @@ export const ar: Dictionary = {
     BAG_ART_170: "كوشيه 170 جم مسلفن",
     BAG_ART_210: "كوشيه 210 جم مسلفن",
     BAG_ART_250: "كوشيه 250 جم مسلفن",
+    PE_HDPE_50: "فيلم HDPE سمك 50 ميكرون",
+    PE_LDPE_50: "فيلم LDPE سمك 50 ميكرون",
+    PE_LDPE_70: "فيلم LDPE سمك 70 ميكرون",
+    PE_LDPE_100: "فيلم LDPE سمك 100 ميكرون",
+    NONWOVEN_PP_80: "قماش غير منسوج 80 جم",
+    NONWOVEN_PP_100: "قماش غير منسوج 100 جم",
   },
   materialsPlain: {
     E_FLUTE_KRAFT: "كرتون بني طبيعي",
@@ -178,6 +185,12 @@ export const ar: Dictionary = {
     BAG_ART_170: "ورق مصقول",
     BAG_ART_210: "ورق مصقول سميك",
     BAG_ART_250: "ورق مصقول سميك جدا",
+    PE_HDPE_50: "فيلم بلاستيك متماسك",
+    PE_LDPE_50: "فيلم بلاستيك لين",
+    PE_LDPE_70: "فيلم بلاستيك لين سميك",
+    PE_LDPE_100: "فيلم بلاستيك سميك جدا",
+    NONWOVEN_PP_80: "قماش قابل لإعادة الاستخدام",
+    NONWOVEN_PP_100: "قماش سميك قابل لإعادة الاستخدام",
   },
   finishes: {
     NONE: "بدون تشطيب",
@@ -251,6 +264,7 @@ export const ar: Dictionary = {
       productBag: "أكياس مطبوعة",
       bagHandle: "يد الأكياس",
       bagBoard: "قاعدة وشريط كرتون",
+      eprFee: "رسم المسؤولية الممتدة للأكياس البلاستيك (37.5 ج.م للكيلو)",
     },
   },
   preflight: {
@@ -473,6 +487,7 @@ export const ar: Dictionary = {
         PAPER_TUBE: "علبة أسطوانية ورقية مطبوعة",
         RIGID_BOX: "علبة صلبة فاخرة مطبوعة",
         PAPER_BAG: "كيس ورقي مطبوع",
+        PLASTIC_BAG: "كيس بلاستيك مطبوع",
       },
       use: {
         FEFCO_0427: "المتاجر الإلكترونية والملابس ومستحضرات التجميل وعلب الهدايا والاشتراكات.",
@@ -489,6 +504,7 @@ export const ar: Dictionary = {
         PAPER_TUBE: "الشاي والقهوة ومستحضرات التجميل والملابس.",
         RIGID_BOX: "الهدايا الفاخرة والإصدارات الخاصة والمجوهرات.",
         PAPER_BAG: "المحلات والملابس والمطاعم والهدايا.",
+        PLASTIC_BAG: "السوبر ماركت والصيدليات والملابس والمعارض.",
       },
     },
     vendors: {

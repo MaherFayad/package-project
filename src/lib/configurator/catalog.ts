@@ -44,7 +44,10 @@ export type SurfaceClass =
   | "PE_TUBE" //         printed PE tube body
   // Added by bags:
   | "KRAFT_PAPER" //     uncoated kraft bag paper (brown or white), flexo on bag machines
-  | "ART_PAPER_LAM"; //  coated art paper, offset printed and laminated (handmade boutique bags)
+  | "ART_PAPER_LAM" //   coated art paper, offset printed and laminated (handmade boutique bags)
+  // Added with plastic bags:
+  | "PE_FILM" //         blown PE film, flexo printed on the film line (1 to 6 colours)
+  | "NONWOVEN_FABRIC"; // non-woven PP spunbond, screen or flexo printed
 
 /* ───────────────────────────── boards (boxes) ───────────────────────────── */
 
@@ -66,6 +69,13 @@ export const BOX_BOARD_CODES = [
   "BAG_ART_170",
   "BAG_ART_210",
   "BAG_ART_250",
+  // Added with plastic bags.
+  "PE_HDPE_50",
+  "PE_LDPE_50",
+  "PE_LDPE_70",
+  "PE_LDPE_100",
+  "NONWOVEN_PP_80",
+  "NONWOVEN_PP_100",
 ] as const;
 export type BoxBoardCode = (typeof BOX_BOARD_CODES)[number];
 
@@ -102,6 +112,12 @@ export const BOX_BOARDS: Record<BoxBoardCode, BoxBoard> = {
   BAG_WHITE_KRAFT_120: b({ code: "BAG_WHITE_KRAFT_120", family: "PAPER_BAG", surface: "KRAFT_PAPER", flute: null, color: "WHITE", thicknessMm: 0.15, gsm: 120, name: { ar: "كرافت أبيض 120 جم", en: "White kraft 120 gsm" }, pricingMaterial: "BAG_WHITE_KRAFT_120", foodSafe: true }),
   BAG_ART_170: b({ code: "BAG_ART_170", family: "PAPER_BAG", surface: "ART_PAPER_LAM", flute: null, color: "WHITE", thicknessMm: 0.18, gsm: 170, name: { ar: "كوشيه 170 جم مسلفن", en: "Art paper 170 gsm, laminated" }, pricingMaterial: "BAG_ART_170", foodSafe: false }),
   BAG_ART_210: b({ code: "BAG_ART_210", family: "PAPER_BAG", surface: "ART_PAPER_LAM", flute: null, color: "WHITE", thicknessMm: 0.22, gsm: 210, name: { ar: "كوشيه 210 جم مسلفن", en: "Art paper 210 gsm, laminated" }, pricingMaterial: "BAG_ART_210", foodSafe: false }),
+  PE_HDPE_50: b({ code: "PE_HDPE_50", family: "PLASTIC_BAG", surface: "PE_FILM", flute: null, color: "WHITE", thicknessMm: 0.05, gsm: 48, name: { ar: "فيلم HDPE سمك 50 ميكرون", en: "HDPE film 50 microns" }, pricingMaterial: "PE_HDPE_50", foodSafe: true }),
+  PE_LDPE_50: b({ code: "PE_LDPE_50", family: "PLASTIC_BAG", surface: "PE_FILM", flute: null, color: "WHITE", thicknessMm: 0.05, gsm: 46, name: { ar: "فيلم LDPE سمك 50 ميكرون", en: "LDPE film 50 microns" }, pricingMaterial: "PE_LDPE_50", foodSafe: true }),
+  PE_LDPE_70: b({ code: "PE_LDPE_70", family: "PLASTIC_BAG", surface: "PE_FILM", flute: null, color: "WHITE", thicknessMm: 0.07, gsm: 64, name: { ar: "فيلم LDPE سمك 70 ميكرون", en: "LDPE film 70 microns" }, pricingMaterial: "PE_LDPE_70", foodSafe: true }),
+  PE_LDPE_100: b({ code: "PE_LDPE_100", family: "PLASTIC_BAG", surface: "PE_FILM", flute: null, color: "WHITE", thicknessMm: 0.1, gsm: 92, name: { ar: "فيلم LDPE سمك 100 ميكرون", en: "LDPE film 100 microns" }, pricingMaterial: "PE_LDPE_100", foodSafe: true }),
+  NONWOVEN_PP_80: b({ code: "NONWOVEN_PP_80", family: "PLASTIC_BAG", surface: "NONWOVEN_FABRIC", flute: null, color: "WHITE", thicknessMm: 0.4, gsm: 80, name: { ar: "قماش غير منسوج 80 جم", en: "Non-woven PP 80 gsm" }, pricingMaterial: "NONWOVEN_PP_80", foodSafe: false }),
+  NONWOVEN_PP_100: b({ code: "NONWOVEN_PP_100", family: "PLASTIC_BAG", surface: "NONWOVEN_FABRIC", flute: null, color: "WHITE", thicknessMm: 0.5, gsm: 100, name: { ar: "قماش غير منسوج 100 جم", en: "Non-woven PP 100 gsm" }, pricingMaterial: "NONWOVEN_PP_100", foodSafe: false }),
   BAG_ART_250: b({ code: "BAG_ART_250", family: "PAPER_BAG", surface: "ART_PAPER_LAM", flute: null, color: "WHITE", thicknessMm: 0.27, gsm: 250, name: { ar: "كوشيه 250 جم مسلفن", en: "Art paper 250 gsm, laminated" }, pricingMaterial: "BAG_ART_250", foodSafe: false }),
 };
 

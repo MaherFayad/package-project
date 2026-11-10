@@ -1,8 +1,10 @@
 "use client";
 
-import { BAG_HANDLE_COLORS, type BagHandleChoice, type BagHandleColor, type BagHandleKind, type StructureFeatures } from "@/types";
+import { BAG_HANDLE_COLORS, BAG_HANDLE_COLOR_CODES, type BagFilmChoice, type BagFilmTone, type BagGusset, type BagHandleChoice, type BagHandleColor, type BagHandleKind, type StructureFeatures } from "@/types";
+import type { DictKey } from "@/i18n/types";
 import { bagDefinitionOf } from "@/lib/dieline/families/bags/definitions";
 import { HANDLE_COLOR_NAMES, HANDLE_LINES, HANDLE_NAMES, handleColors, resolveHandle } from "@/lib/dieline/families/bags/handles";
+import type { BagDefinition } from "@/lib/dieline/families/bags/types";
 import { useI18n } from "@/i18n/client";
 import { Check } from "lucide-react";
 import styles from "./library.module.css";
@@ -12,7 +14,7 @@ import o from "./options.module.css";
  * Added by bags: handle type and colour of a store bag (DesignDoc.features.bagHandle). The handle
  * changes the die (eyelets, hand hole), the 3D model and the price, so it is a geometry change.
  */
-export function BagHandleGroup({ modelCode, features, onChange }: { modelCode: string; features: StructureFeatures | undefined; onChange: (h: BagHandleChoice) => void }) {
+export function BagHandleGroup({ modelCode, features, onChange, onFilm }: { modelCode: string; features: StructureFeatures | undefined; onChange: (h: BagHandleChoice) => void; onFilm?: (f: BagFilmChoice) => void }) {
   const { t, locale } = useI18n();
   const def = bagDefinitionOf(modelCode);
   if (!def) return null;
@@ -22,6 +24,7 @@ export function BagHandleGroup({ modelCode, features, onChange }: { modelCode: s
   const pickColor = (color: BagHandleColor) => onChange({ kind: current.kind, color });
   return (
     <>
+      {def.stock && onFilm ? <BagFilmGroup def={def} film={features?.bagFilm} onFilm={onFilm} /> : null}
       {def.handles.length > 1 ? (
         <fieldset className={styles.group} data-testid="bag-handle">
           <legend className={styles.groupTitle}>{t("library.panel.bagHandle")}</legend>
@@ -65,6 +68,90 @@ export function BagHandleGroup({ modelCode, features, onChange }: { modelCode: s
         </fieldset>
       ) : null}
     </>
+  );
+}
+
+/** Resolved film choice (same rule as families/bags resolveFilm; kept here so the panel stays light). */
+function filmOf(def: BagDefinition, req?: Partial<BagFilmChoice> | null): BagFilmChoice {
+  const tones = def.tones ?? ["WHITE"];
+  const tone = req?.tone && tones.includes(req.tone) ? req.tone : (def.defaultTone ?? tones[0]);
+  const gussets = def.gussets ?? ["SIDE"];
+  const gusset = req?.gusset && gussets.includes(req.gusset) ? req.gusset : gussets[0];
+  return { tone, gusset, ...(tone === "COLOUR" ? { color: req?.color ?? def.defaultFilmColor ?? "RED" } : {}) };
+}
+
+/** Added with plastic bags: film (or fabric) colour, gusset, and the rules that apply (ES 3040, EPR fee). */
+function BagFilmGroup({ def, film, onFilm }: { def: BagDefinition; film?: BagFilmChoice | null; onFilm: (f: BagFilmChoice) => void }) {
+  const { t, locale } = useI18n();
+  const cur = filmOf(def, film);
+  const fabric = def.stock === "nonwoven";
+  const tones = def.tones ?? ["WHITE"];
+  const gussets = def.gussets ?? ["SIDE"];
+  const swatch = (tone: BagFilmTone) => (tone === "CLEAR" ? "linear-gradient(135deg, rgba(220,235,232,0.5), rgba(255,255,255,0.9))" : tone === "WHITE" ? "#f7f7f5" : BAG_HANDLE_COLORS[cur.color ?? def.defaultFilmColor ?? "RED"]);
+  return (
+    <>
+      <fieldset className={styles.group} data-testid="bag-film">
+        <legend className={styles.groupTitle}>{t(fabric ? "library.panel.bagFilmFabric" : "library.panel.bagFilm")}</legend>
+        <ul className={o.tiles}>
+          {tones.map((tone) => {
+            const id = `bag-tone-${tone}`;
+            const checked = cur.tone === tone;
+            return (
+              <li key={tone}>
+                <label className={o.card} htmlFor={id} data-checked={checked}>
+                  <input id={id} className={o.srOnly} type="radio" name="bag-tone" value={tone} checked={checked} onChange={() => onFilm(filmOf(def, { ...cur, tone }))} />
+                  <span aria-hidden="true" style={{ display: "block", blockSize: 28, borderRadius: 6, background: swatch(tone), boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.15)" }} />
+                  <span className={o.cardName}>{t(`library.panel.bagTone.${tone}` as DictKey)}</span>
+                  <span className={o.tick} aria-hidden="true">
+                    <Check size={12} strokeWidth={3} />
+                  </span>
+                </label>
+              </li>
+            );
+          })}
+        </ul>
+        {cur.tone === "COLOUR" ? (
+          <div role="radiogroup" aria-label={t("library.panel.bagFilmColor")} style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBlockStart: 8 }}>
+            {BAG_HANDLE_COLOR_CODES.filter((c) => c !== "KRAFT").map((c) => (
+              <ColourDot key={c} name="bag-film-color" code={c} checked={cur.color === c} label={HANDLE_COLOR_NAMES[c][locale]} onPick={() => onFilm({ ...cur, color: c })} />
+            ))}
+          </div>
+        ) : null}
+      </fieldset>
+      {gussets.length > 1 ? (
+        <fieldset className={styles.group} data-testid="bag-gusset">
+          <legend className={styles.groupTitle}>{t("library.panel.bagGusset")}</legend>
+          <ul className={o.tiles}>
+            {gussets.map((g: BagGusset) => {
+              const id = `bag-gusset-${g}`;
+              return (
+                <li key={g}>
+                  <label className={o.card} htmlFor={id} data-checked={cur.gusset === g}>
+                    <input id={id} className={o.srOnly} type="radio" name="bag-gusset" value={g} checked={cur.gusset === g} onChange={() => onFilm({ ...cur, gusset: g })} />
+                    <span className={o.cardName}>{t(`library.panel.bagGussetKind.${g}` as DictKey)}</span>
+                    <span className={o.tick} aria-hidden="true">
+                      <Check size={12} strokeWidth={3} />
+                    </span>
+                  </label>
+                </li>
+              );
+            })}
+          </ul>
+        </fieldset>
+      ) : null}
+      <p className={styles.groupTitle} style={{ fontWeight: 400, fontSize: 13 }} data-testid="bag-rules">
+        {t(fabric ? "library.panel.bagRulesNonwoven" : "library.panel.bagRules")}
+      </p>
+    </>
+  );
+}
+
+function ColourDot({ name, code, checked, label, onPick }: { name: string; code: BagHandleColor; checked: boolean; label: string; onPick: () => void }) {
+  return (
+    <label title={label} style={{ position: "relative", display: "inline-grid", placeItems: "center", inlineSize: 44, blockSize: 44, borderRadius: 22, cursor: "pointer", boxShadow: checked ? "0 0 0 2px var(--p-color-text)" : "0 0 0 1px var(--p-color-border)" }}>
+      <input className={o.srOnly} type="radio" name={name} value={code} checked={checked} onChange={onPick} aria-label={label} />
+      <span aria-hidden="true" style={{ inlineSize: 30, blockSize: 30, borderRadius: 15, background: BAG_HANDLE_COLORS[code], boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.18)" }} />
+    </label>
   );
 }
 

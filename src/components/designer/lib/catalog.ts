@@ -60,6 +60,7 @@ export const FALLBACK_PRESETS: Record<StructureCode, DimsPreset[]> = {
   PRINTED_POUCH: STRUCTURES.PRINTED_POUCH.presets,
   PRINTED_TUBE: STRUCTURES.PRINTED_TUBE.presets,
   PAPER_BAG: STRUCTURES.PAPER_BAG.presets,
+  PLASTIC_BAG: STRUCTURES.PLASTIC_BAG.presets,
 };
 
 /** Product shortcuts shown on the picker ("shoe box", "perfume 50 ml", ...). */

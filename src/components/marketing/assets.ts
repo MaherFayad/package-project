@@ -23,6 +23,7 @@ export const RENDER_ID: Record<StructureCode, string> = {
   PRINTED_TUBE: "pump",
   // Added by bags: no bag render yet; the gable carrier is the closest carry pack.
   PAPER_BAG: "gable-box",
+  PLASTIC_BAG: "gable-box",
 };
 
 export function renderSrc(code: StructureCode): string {
@@ -54,6 +55,7 @@ export const TILE_BG: Record<StructureCode, string> = {
   PRINTED_POUCH: "#f6ecd2",
   PRINTED_TUBE: "#ece6f3",
   PAPER_BAG: "#efe6d8",
+  PLASTIC_BAG: "#e2efec",
 };
 
 /** Studio sample tiles (public/marketing/samples) and what they show, in order. */

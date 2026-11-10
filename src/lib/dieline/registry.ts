@@ -335,6 +335,21 @@ const ENTRIES: Record<StructureCode, Entry> = {
     glued: true,
     uses: ["retail", "apparel", "gift", "food"],
   },
+  // Added with plastic bags: the production base of every film and non-woven bag model.
+  PLASTIC_BAG: {
+    slug: "plastic-bags",
+    standard: "Plastic carrier bag, W x G x H (ES 3040/2022)",
+    name: { ar: "أكياس بلاستيك", en: "Plastic bags" },
+    description: {
+      ar: "أكياس تسوق من البولي إيثيلين بيد فانلة أو مفرغة أو عروة أو مشبك، وشنط قماش غير منسوج قابلة لإعادة الاستخدام، مطبوعة بشعارك.",
+      en: "Polyethylene shopping bags with T-shirt, die-cut, loop or clip handles, and reusable non-woven bags, printed with your brand.",
+    },
+    presets: [p("medium", "متوسط", "Medium", { L: 300, W: 80, H: 400 }), p("large", "كبير", "Large", { L: 400, W: 100, H: 600 })],
+    shape: "flat",
+    pieces: 1,
+    glued: false,
+    uses: ["retail", "apparel", "food"],
+  },
 };
 
 export const STRUCTURES: Record<StructureCode, StructureDef> = Object.fromEntries(

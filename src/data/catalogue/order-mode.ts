@@ -45,9 +45,10 @@ const NO_PRICE_BASIS = new Set(["flexible/flow-wrap", "flexible/pillow-bag", "fl
 /**
  * Store bags no seeded printer prices instantly (src/lib/dieline/families/bags, `orderMode`):
  * die-cut handle bags need a patch and hand-hole die per size, bottle bags are rare among Egyptian
- * bag makers (docs/audit/bags.md). A unit test keeps this equal to the definitions.
+ * bag makers; soft-loop, clip and drawstring film bags have no Egyptian supplier on record
+ * (docs/audit/bags.md). A unit test keeps this equal to the definitions.
  */
-export const QUOTE_ONLY_BAGS = new Set(["BAG_DIECUT_PATCH", "BAG_BOTTLE"]);
+export const QUOTE_ONLY_BAGS = new Set(["BAG_DIECUT_PATCH", "BAG_BOTTLE", "PBAG_SOFT_LOOP", "PBAG_CLIP", "PBAG_DRAWSTRING"]);
 
 export function orderModeForEntry(e: Pick<CatalogueEntry, "code" | "source" | "style" | "subFamily" | "availableInEgypt" | "quoteOnly">): { mode: OrderMode; reason: OrderModeReason } {
   // Not made by Egyptian SME converters at all: preview, even for quote-only stock (octabin, R4-13).

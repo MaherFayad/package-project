@@ -15,8 +15,11 @@ import type { BagDefinition } from "./types";
 export const PAPER_HANDLE_COLORS: BagHandleColor[] = ["KRAFT", "WHITE", "BLACK", "NAVY", "RED", "GREEN"];
 export const ALL_HANDLE_COLORS = Object.keys(BAG_HANDLE_COLORS) as BagHandleColor[];
 
+/** Handles cut from the film itself (no separate colour). */
+export const isFilmCut = (k: BagHandleKind) => k === "TSHIRT" || k === "DIE_CUT" || k === "DIE_CUT_PATCH" || k === "KIDNEY";
+
 export function handleColors(kind: BagHandleKind): BagHandleColor[] {
-  if (kind === "NONE" || kind === "DIE_CUT") return [];
+  if (kind === "NONE" || isFilmCut(kind)) return [];
   if (kind === "TWISTED_PAPER" || kind === "FLAT_PAPER") return PAPER_HANDLE_COLORS;
   return ALL_HANDLE_COLORS;
 }
@@ -36,7 +39,8 @@ export const isRibbon = (k: BagHandleKind) => k === "SATIN_RIBBON" || k === "GRO
 
 /** Top turnover depth (mm). Machine bags 30 to 50 mm; die-cut bags need room for the hand hole. */
 export function turnoverFor(kind: BagHandleKind, dims: Dims): number {
-  if (kind === "NONE") return 0;
+  if (kind === "NONE" || kind === "TSHIRT" || kind === "DIE_CUT_PATCH" || kind === "KIDNEY" || kind === "SOFT_LOOP" || kind === "RIGID_CLIP" || kind === "SEWN_STRAP") return 0;
+  if (kind === "DRAWSTRING") return 30;
   if (kind === "DIE_CUT") return clamp(dims.H * 0.15, 55, 70);
   if (isThreaded(kind) || kind === "GROSGRAIN_RIBBON") return clamp(dims.H * 0.13, 40, 50);
   return clamp(dims.H * 0.12, 35, 50);
@@ -80,7 +84,23 @@ export function handleGeometry(kind: BagHandleKind, dims: Dims, turnover: number
     case "GROSGRAIN_RIBBON":
       return { kind, spanMm: clamp(L * 0.4, 50, 130), loopHeightMm: clamp(L * 0.45, 75, 160), sizeMm: clamp(L * 0.09, 15, 25), holeDiameterMm: null, anchorDepthMm: turnover - 8 };
     case "DIE_CUT":
-      return { kind, spanMm: 0, loopHeightMm: 0, sizeMm: 0, holeDiameterMm: null, anchorDepthMm: turnover / 2, hole: { width: clamp(L * 0.32, 70, 100), height: 28 } };
+      // Paper: centred in the deep turnover. Film (no turnover): 40 mm below the mouth.
+      return { kind, spanMm: 0, loopHeightMm: 0, sizeMm: 0, holeDiameterMm: null, anchorDepthMm: turnover > 0 ? turnover / 2 : 40, hole: { width: clamp(L * 0.32, 70, 100), height: 28 } };
+    case "DIE_CUT_PATCH":
+      return { kind, spanMm: 0, loopHeightMm: 0, sizeMm: 0, holeDiameterMm: null, anchorDepthMm: 40, hole: { width: clamp(L * 0.3, 70, 100), height: 28 } };
+    case "KIDNEY":
+      return { kind, spanMm: 0, loopHeightMm: 0, sizeMm: 0, holeDiameterMm: null, anchorDepthMm: 42, hole: { width: clamp(L * 0.3, 75, 105), height: 34 } };
+    case "TSHIRT":
+      // strap width (each side) and strap height above the mouth
+      return { kind, spanMm: clamp(L * 0.17, 35, 75), loopHeightMm: clamp(L * 0.32, 70, 150), sizeMm: 0, holeDiameterMm: null, anchorDepthMm: 0 };
+    case "SOFT_LOOP":
+      return { kind, spanMm: clamp(L * 0.34, 60, 110), loopHeightMm: clamp(L * 0.28, 55, 95), sizeMm: 25, holeDiameterMm: null, anchorDepthMm: 12 };
+    case "RIGID_CLIP":
+      return { kind, spanMm: clamp(L * 0.55, 110, 260), loopHeightMm: clamp(L * 0.16, 40, 60), sizeMm: 8, holeDiameterMm: null, anchorDepthMm: 10 };
+    case "DRAWSTRING":
+      return { kind, spanMm: 0, loopHeightMm: 0, sizeMm: 5, holeDiameterMm: null, anchorDepthMm: 15 };
+    case "SEWN_STRAP":
+      return { kind, spanMm: clamp(L * 0.4, 80, 150), loopHeightMm: clamp(L * 0.55, 110, 240), sizeMm: 25, holeDiameterMm: null, anchorDepthMm: 45 };
     default:
       return { kind, spanMm: 0, loopHeightMm: 0, sizeMm: 0, holeDiameterMm: null, anchorDepthMm: 0 };
   }
@@ -267,6 +287,13 @@ export const HANDLE_NAMES: Record<BagHandleKind, { ar: string; en: string }> = {
   GROSGRAIN_RIBBON: { ar: "شريط جروجرين", en: "Grosgrain ribbon" },
   DIE_CUT: { ar: "يد مفرغة", en: "Die-cut hand hole" },
   NONE: { ar: "دون يد", en: "No handle" },
+  TSHIRT: { ar: "يد فانلة", en: "T-shirt handles" },
+  DIE_CUT_PATCH: { ar: "يد مفرغة برقعة تقوية", en: "Die-cut handle with patch" },
+  KIDNEY: { ar: "يد مفرغة على شكل كلية", en: "Kidney die-cut handle" },
+  SOFT_LOOP: { ar: "يد عروة لينة", en: "Soft loop handle" },
+  RIGID_CLIP: { ar: "يد مشبك صلب", en: "Rigid clip handle" },
+  DRAWSTRING: { ar: "رباط سحب", en: "Drawstring" },
+  SEWN_STRAP: { ar: "حزام مخيط", en: "Sewn straps" },
 };
 
 /** One line under each handle card. */
@@ -279,6 +306,13 @@ export const HANDLE_LINES: Record<BagHandleKind, { ar: string; en: string }> = {
   GROSGRAIN_RIBBON: { ar: "شريط مضلع ملصق داخل الثنية", en: "Ribbed ribbon glued inside the turnover" },
   DIE_CUT: { ar: "فتحة في الوجهين بثنية مقواة", en: "Hole through both faces, reinforced top" },
   NONE: { ar: "كيس مفتوح دون يد", en: "Open bag, no handle" },
+  TSHIRT: { ar: "حزامان من الفيلم نفسه", en: "Two straps cut from the film" },
+  DIE_CUT_PATCH: { ar: "رقعة فيلم ملحومة حول الفتحة", en: "Film patch welded round the hole" },
+  KIDNEY: { ar: "فتحة مريحة لليد", en: "Comfortable hand hole" },
+  SOFT_LOOP: { ar: "عروة فيلم ملحومة أعلى الوجه", en: "Film loop welded at the top" },
+  RIGID_CLIP: { ar: "مشبك بلاستيك يغلق الفوهة", en: "Plastic clip that closes the mouth" },
+  DRAWSTRING: { ar: "حبل في ثنية علوية", en: "Cord through a top hem" },
+  SEWN_STRAP: { ar: "حزامان مخيطان من الداخل", en: "Two straps sewn inside" },
 };
 
 export const HANDLE_COLOR_NAMES: Record<BagHandleColor, { ar: string; en: string }> = {

@@ -48,10 +48,10 @@ export interface BagDraft extends StructureDraft {
   paperBlank: { width: number; height: number };
 }
 
-const circle = (cx: number, cy: number, r: number, n = 16): Polygon => Array.from({ length: n }, (_, i) => pt(cx + r * Math.cos((2 * Math.PI * i) / n), cy + r * Math.sin((2 * Math.PI * i) / n)));
+export const circle = (cx: number, cy: number, r: number, n = 16): Polygon => Array.from({ length: n }, (_, i) => pt(cx + r * Math.cos((2 * Math.PI * i) / n), cy + r * Math.sin((2 * Math.PI * i) / n)));
 
 /** Stadium (rounded slot) hole, the die-cut hand hole. */
-function stadium(cx: number, cy: number, w: number, h: number, n = 8): Polygon {
+export function stadium(cx: number, cy: number, w: number, h: number, n = 8): Polygon {
   const r = h / 2;
   const out: Polygon = [];
   for (let i = 0; i <= n; i++) {
@@ -215,7 +215,7 @@ export function bagDraft(dims: Dims, t: number, features: StructureFeatures, o: 
 }
 
 /** Left and right faces: the two gusset halves of each side, side by side (they are not axis aligned). */
-function sideFaces(panels: DielinePanel[], t: number, computed: Partial<Record<FaceId, FaceInfo>>): Partial<Record<FaceId, FaceInfo>> {
+export function sideFaces(panels: DielinePanel[], t: number, computed: Partial<Record<FaceId, FaceInfo>>): Partial<Record<FaceId, FaceInfo>> {
   const out = { ...computed };
   for (const [face, ids] of [["left", ["leftA", "leftB"]], ["right", ["rightA", "rightB"]]] as const) {
     const f = sideBySide(face, panels, t, [...ids]);

@@ -1,4 +1,5 @@
 import type { BoardColor, FinishCode, Flute, MaterialCode, StructureCode, StructureFamily } from "@/types";
+import { BAG_HANDLE_COLORS } from "@/types";
 
 /** Mirrors Structure.family in the seed. */
 export const STRUCTURE_FAMILY: Record<StructureCode, StructureFamily> = {
@@ -19,6 +20,7 @@ export const STRUCTURE_FAMILY: Record<StructureCode, StructureFamily> = {
   PRINTED_POUCH: "FLEXIBLE",
   PRINTED_TUBE: "FLEXIBLE",
   PAPER_BAG: "PAPER_BAG",
+  PLASTIC_BAG: "PLASTIC_BAG",
 };
 
 export interface BoardSpec {
@@ -58,7 +60,20 @@ export const BOARD_SPECS: Record<MaterialCode, BoardSpec> = {
   BAG_ART_170: { code: "BAG_ART_170", family: "PAPER_BAG", thicknessMm: 0.18, flute: null, color: "WHITE" },
   BAG_ART_210: { code: "BAG_ART_210", family: "PAPER_BAG", thicknessMm: 0.22, flute: null, color: "WHITE" },
   BAG_ART_250: { code: "BAG_ART_250", family: "PAPER_BAG", thicknessMm: 0.27, flute: null, color: "WHITE" },
+  // Added with plastic bags: film calipers = microns; non-woven PP about 0.4 / 0.5 mm.
+  PE_HDPE_50: { code: "PE_HDPE_50", family: "PLASTIC_BAG", thicknessMm: 0.05, flute: null, color: "WHITE" },
+  PE_LDPE_50: { code: "PE_LDPE_50", family: "PLASTIC_BAG", thicknessMm: 0.05, flute: null, color: "WHITE" },
+  PE_LDPE_70: { code: "PE_LDPE_70", family: "PLASTIC_BAG", thicknessMm: 0.07, flute: null, color: "WHITE" },
+  PE_LDPE_100: { code: "PE_LDPE_100", family: "PLASTIC_BAG", thicknessMm: 0.1, flute: null, color: "WHITE" },
+  NONWOVEN_PP_80: { code: "NONWOVEN_PP_80", family: "PLASTIC_BAG", thicknessMm: 0.4, flute: null, color: "WHITE" },
+  NONWOVEN_PP_100: { code: "NONWOVEN_PP_100", family: "PLASTIC_BAG", thicknessMm: 0.5, flute: null, color: "WHITE" },
 };
+
+/** Added with plastic bags: film microns per material (null = not a film). */
+export const FILM_MICRONS: Partial<Record<MaterialCode, number>> = { PE_HDPE_50: 50, PE_LDPE_50: 50, PE_LDPE_70: 70, PE_LDPE_100: 100 };
+/** ES 3040/2022 (reported): no single-use film shopping bag under 50 microns. */
+export const MIN_FILM_MICRONS = 50;
+export const isNonWoven = (m: MaterialCode): boolean => m.startsWith("NONWOVEN_");
 
 /** Added by bags: laminated coated art paper (smooth, bright white, both faces). */
 export const isArtBagPaper = (m: MaterialCode): boolean => m.startsWith("BAG_ART_");
@@ -78,6 +93,8 @@ export function defaultMaterialFor(code: StructureCode): MaterialCode {
       return code === "PRINTED_TUBE" ? "TUBE_PE" : "POUCH_PET_PE";
     case "PAPER_BAG":
       return "BAG_KRAFT_120";
+    case "PLASTIC_BAG":
+      return "PE_LDPE_50";
     default:
       return "SBS_350";
   }
@@ -107,6 +124,8 @@ export interface BoardAppearance {
   /** Flute pitch in mm (E ≈ 3.3, B ≈ 6.5), null for solid board. */
   flutePitchMm: number | null;
   roughness: number;
+  /** Added with plastic bags: thin film (opacity, wrinkle normal strength) or non-woven fabric. */
+  film?: { opacity: number; wrinkle: number; fabric?: boolean };
 }
 
 const KRAFT = "#b98d5e";
@@ -140,6 +159,11 @@ export function boardAppearance(material: MaterialCode): BoardAppearance {
     if (spec.color === "WHITE") return { outside: "#f6f4ee", inside: "#ece7dc", edge: "#ebe6dc", fluteColor: null, flutePitchMm: null, roughness: 0.86 };
     return { outside: "#b4845a", inside: "#a97a4f", edge: "#a77a50", fluteColor: null, flutePitchMm: null, roughness: 0.9 };
   }
+  if (spec.family === "PLASTIC_BAG") {
+    // Film: smooth, slightly translucent, soft wrinkles (the renderer reads `film`); non-woven: matt fabric.
+    if (isNonWoven(material)) return { outside: "#f1f1ee", inside: "#e9e9e5", edge: "#e4e4df", fluteColor: null, flutePitchMm: null, roughness: 0.96, film: { opacity: 1, wrinkle: 0.25, fabric: true } };
+    return { outside: "#f7f7f5", inside: "#ededea", edge: "#e6e6e2", fluteColor: null, flutePitchMm: null, roughness: 0.42, film: { opacity: 0.93, wrinkle: 0.55 } };
+  }
   if (spec.family === "TUBE") {
     // The label paper is rolled over the tube's rims, so the visible edges read as label.
     return { outside: "#f8f7f3", inside: KRAFT_INNER, edge: "#e8e2d6", fluteColor: null, flutePitchMm: null, roughness: 0.55 };
@@ -147,6 +171,24 @@ export function boardAppearance(material: MaterialCode): BoardAppearance {
   // R5-3Q-D-11: SBS is bleached on both sides; the beige inside read as clay-back / CUK.
   return { outside: SBS_WHITE, inside: "#f3f2ef", edge: "#ecebe6", fluteColor: null, flutePitchMm: null, roughness: 0.62 };
 }
+
+/**
+ * Added with plastic bags: the film colour a plastic bag design chose (DesignDoc.features.bagFilm)
+ * over the material's look. Clear film is see-through, coloured film opaque, white slightly milky.
+ * Non-woven fabric takes the colour fully opaque. Paper and board are returned unchanged.
+ */
+export function filmAppearance(base: BoardAppearance, film?: { tone: "WHITE" | "CLEAR" | "COLOUR"; color?: string } | null): BoardAppearance {
+  if (!base.film || !film) return base;
+  if (film.tone === "CLEAR") return base.film.fabric ? base : { ...base, outside: "#eef3f2", inside: "#e6ecea", edge: "#dfe6e4", roughness: 0.25, film: { ...base.film, opacity: 0.42, wrinkle: 0.7 } };
+  if (film.tone === "COLOUR") {
+    const hex = BAG_FILM_HEX[film.color ?? "RED"] ?? "#9e1f2b";
+    return { ...base, outside: hex, inside: hex, edge: hex, film: { ...base.film, opacity: base.film.fabric ? 1 : 0.97 } };
+  }
+  return base;
+}
+
+/** Film colours (same named set as bag handles, src/types/bag.ts). */
+const BAG_FILM_HEX: Record<string, string> = BAG_HANDLE_COLORS;
 
 /** Surface roughness / clearcoat for the printed side after the finish. */
 export function finishSurface(finish: FinishCode | undefined, base: BoardAppearance): { roughness: number; clearcoat: number } {

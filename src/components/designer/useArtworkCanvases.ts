@@ -1,5 +1,6 @@
 "use client";
 
+import { filmAppearance } from "@/lib/dieline/materials";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Artwork, ArtworkSurface, MaterialCode, TextLayer } from "@/types";
 import { boardAppearance, paintArtworkSurface, surfaceCanvasSize, type DielineModel } from "@/lib/dieline";
@@ -118,7 +119,8 @@ export function useArtworkCanvases(
     if (!canvases || !model) return;
     const raf = requestAnimationFrame(() => {
       const size = surfaceCanvasSize(model, maxPx);
-      const look = boardAppearance(material);
+      // Plastic bags: the chosen film colour is the background the print sits on.
+      const look = filmAppearance(boardAppearance(material), model.features?.bagFilm);
       const sides = printInside ? (["outside", "inside"] as const) : (["outside"] as const);
       for (const surface of sides) {
         const c = canvases[surface];

@@ -50,6 +50,7 @@ export const FEATURE_SUPPORT: Record<StructureCode, FeatureSupport> = {
   PRINTED_TUBE: NONE,
   // The core bag is the twisted-handle carrier; the SOS model (families/bags) offers the thumb notch.
   PAPER_BAG: NONE,
+  PLASTIC_BAG: NONE,
 };
 
 /** Features on by default (the structure is not itself without them). */

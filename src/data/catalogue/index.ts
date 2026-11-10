@@ -46,7 +46,7 @@ const FAMILY_SOURCES: [string, readonly FamilyDefLike[]][] = [
   ["ecma-specials", SPEC.DEFINITIONS as unknown as FamilyDefLike[]],
   ["foodservice", FOOD.DEFINITIONS as unknown as FamilyDefLike[]],
   ["rigid-tubes", RT.DEFINITIONS as unknown as FamilyDefLike[]],
-  ["bags", BAGS.DEFINITIONS as unknown as FamilyDefLike[]],
+  ["bags", BAGS.ALL_BAG_DEFINITIONS as unknown as FamilyDefLike[]],
   ["vessel-bottles", BTL.DEFINITIONS as unknown as FamilyDefLike[]],
   ["vessel-cosmetic", COS.DEFINITIONS as unknown as FamilyDefLike[]],
   ["vessel-flexible", FLEX.DEFINITIONS as unknown as FamilyDefLike[]],

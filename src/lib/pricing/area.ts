@@ -47,6 +47,7 @@ const ESTIMATE_FACTOR: Record<StructureCode, { blank: number; net: number }> = {
   PRINTED_TUBE: { blank: 0.5, net: 0.5 },
   // Paper bag: tube + turnover + block bottom ≈ 1.1 × the closed surface (2·(LW + LH + WH)).
   PAPER_BAG: { blank: 1.1, net: 1.0 },
+  PLASTIC_BAG: { blank: 1.0, net: 1.0 },
 };
 
 export function estimateBoardArea(code: StructureCode, dims: Dims): BoardArea {

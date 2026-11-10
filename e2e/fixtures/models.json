@@ -1405,6 +1405,46 @@
   "kind": "box"
  },
  {
+  "code": "PBAG_TSHIRT",
+  "slug": "plastic-tshirt-bag",
+  "kind": "box"
+ },
+ {
+  "code": "PBAG_DIECUT",
+  "slug": "plastic-die-cut-handle-bag",
+  "kind": "box"
+ },
+ {
+  "code": "PBAG_KIDNEY",
+  "slug": "plastic-kidney-handle-bag",
+  "kind": "box"
+ },
+ {
+  "code": "PBAG_SOFT_LOOP",
+  "slug": "plastic-soft-loop-bag",
+  "kind": "box"
+ },
+ {
+  "code": "PBAG_CLIP",
+  "slug": "plastic-rigid-clip-bag",
+  "kind": "box"
+ },
+ {
+  "code": "PBAG_MERCHANDISE",
+  "slug": "plastic-merchandise-bag",
+  "kind": "box"
+ },
+ {
+  "code": "PBAG_DRAWSTRING",
+  "slug": "plastic-drawstring-bag",
+  "kind": "box"
+ },
+ {
+  "code": "PBAG_NONWOVEN",
+  "slug": "non-woven-shopping-bag",
+  "kind": "box"
+ },
+ {
   "code": "ROUND_BOTTLE",
   "slug": "round-bottle",
   "kind": "vessel"

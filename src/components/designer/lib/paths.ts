@@ -25,6 +25,7 @@ export const STRUCTURE_SLUGS: Record<StructureCode, string> = {
   PRINTED_POUCH: "printed-pouches",
   PRINTED_TUBE: "printed-tubes",
   PAPER_BAG: "paper-bags",
+  PLASTIC_BAG: "plastic-bags",
 };
 
 /** Accepts a slug ("mailer-box") or a code in any case ("fefco_0427"). */

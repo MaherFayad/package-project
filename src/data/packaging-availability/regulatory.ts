@@ -56,6 +56,16 @@ export const REGULATORY: Record<string, RegulatoryNote> = {
     status: "to-verify",
     sources: ["eos-es1546"],
   },
+  "eg-es-3040": {
+    id: "eg-es-3040",
+    title: "ES 3040/2022 plastic shopping bags (mandatory)",
+    authority: "Egyptian Organization for Standardization and Quality (EOS)",
+    scope: "egypt",
+    summary:
+      "Mandatory by decree 559/2022 (approved 27 Sep 2022, corrigendum 2024) for single-layer thermoplastic shopping bags of every shape and size. Press reports a 50 micron minimum and a ban on producing bags under 20 microns (Youm7, 1 Mar 2026); in Feb 2026 the environment minister asked industry to enforce the 50 micron minimum. The standard's text and an enforcement date were not seen: Elba offers no film under 50 microns.",
+    status: "to-verify",
+    sources: ["eos-es-3040", "youm7-es-3040"],
+  },
   "eg-epr": {
     id: "eg-epr",
     title: "EPR: Waste Management Law 202/2020",

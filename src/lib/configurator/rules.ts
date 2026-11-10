@@ -118,6 +118,7 @@ const FAMILY_NAME = {
   LABEL: t("label stock", "خامة الملصقات"),
   FLEXIBLE: t("a flexible laminate", "رقائق مرنة"),
   PAPER_BAG: t("bag paper (kraft or art paper)", "ورق الأكياس (كرافت أو كوشيه)"),
+  PLASTIC_BAG: t("PE film or non-woven fabric", "فيلم بولي إيثيلين أو قماش غير منسوج"),
 } as const;
 
 const AXIS_NAME: Record<string, LocalizedText> = {
@@ -304,6 +305,10 @@ export function colourModeRule(cfg: ModelConfig, mode: "SPOT" | "CMYK"): Verdict
       return warn("COLOUR_KRAFT", "Colours print darker on kraft and there is no white ink: white areas show the brown board.", "الألوان تظهر أغمق على الكرتون البني، ولا يوجد حبر أبيض فتظهر المناطق البيضاء بلون الكرتون.");
     if (surface === "WHITE_TOP_LINER")
       return warn("COLOUR_FLEXO", "Printed flexo directly on the board: photos print with a coarser screen than offset.", "يطبع فلكسو مباشرة على الكرتون، فتظهر الصور أقل دقة من الأوفست.");
+    if (surface === "PE_FILM")
+      return warn("COLOUR_FLEXO_FILM", "Plastic bags print flexo, 1 to 6 colours: flat colours and bold logos print best; on clear film add a white ink under colours that must be opaque.", "تطبع الأكياس البلاستيك فلكسو من لون إلى 6 ألوان: الألوان المصمتة والشعارات أفضل، وعلى الفيلم الشفاف أضف حبرا أبيض تحت الألوان التي يجب ألا تشف.");
+    if (surface === "NONWOVEN_FABRIC")
+      return warn("COLOUR_SCREEN", "Non-woven bags are screen printed: 1 to 4 flat colours, no photos.", "تطبع الشنط غير المنسوجة بالشاشة: من لون إلى 4 ألوان مصمتة دون صور.");
     if (surface === "KRAFT_PAPER")
       return warn("COLOUR_FLEXO_BAG", "Kraft bags are printed flexo on the bag machine: bold logos and flat colours print best, photos print coarse.", "تطبع أكياس الكرافت فلكسو على ماكينة الأكياس: الشعارات والألوان المصمتة أفضل، والصور تظهر أقل دقة.");
   } else if (cfg.material === "CLEAR_BOPP" || cfg.material === "PETG_SHRINK") {
@@ -352,6 +357,16 @@ function surfaceFinishRule(cfg: ModelConfig, code: ConfigFinishCode): Verdict {
     if (def.group === "foil")
       return warn("FINISH_FOIL_KRAFT", "Keep foil lines at least 0.5 mm thick: fine detail breaks up on kraft fibres.", "اجعل خطوط البصمة 0.5 مم على الأقل، فالتفاصيل الدقيقة تتقطع على ألياف الكرتون البني.");
     return OK;
+  }
+  if (surface === "PE_FILM" || surface === "NONWOVEN_FABRIC") {
+    // Plastic bags are printed on the film line (flexo) or screen printed: no coatings, UV or relief.
+    const fabric = surface === "NONWOVEN_FABRIC";
+    if (def.group === "foil" && !fabric) return warn("FINISH_FOIL_FILM", "Foil on PE film needs a heat-resistant film and a short dwell: ask the printer for a sample.", "البصمة على فيلم البولي إيثيلين تحتاج فيلما يتحمل الحرارة: اطلب عينة من المطبعة.");
+    return deny(
+      fabric ? "FINISH_NONWOVEN" : "FINISH_FILM",
+      fabric ? "Non-woven fabric is screen printed: no lamination, varnish, UV, foil or emboss." : "Plastic bags are flexo printed on the film line: no lamination, varnish, UV or emboss.",
+      fabric ? "يطبع القماش غير المنسوج بالشاشة: لا سلوفان ولا ورنيش ولا UV ولا بصمة ولا بارز." : "تطبع الأكياس البلاستيك فلكسو على خط الفيلم: لا سلوفان ولا ورنيش ولا UV ولا طباعة بارزة.",
+    );
   }
   if (surface === "ART_PAPER_LAM") {
     if (def.group === "relief" && cfg.material === "BAG_ART_170") return warn("FINISH_RELIEF_THIN", "170 gsm paper takes a shallow emboss only; 210 or 250 gsm gives a crisper edge.", "ورق 170 جم يقبل بروزا خفيفا فقط، وورق 210 أو 250 جم يعطي حوافا أوضح.");

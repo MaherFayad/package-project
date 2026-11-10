@@ -3,7 +3,7 @@ import type { BoardAppearance } from "@/lib/dieline";
 import { MAT_EDGE, MAT_INSIDE, MAT_OUTSIDE, type BoardMaterialSet } from "../boardMaterials";
 import { FOIL_LOOKS, RELIEF_BUMP_SCALE, SPOT_UV_LOOK, type SurfaceLook } from "./looks";
 import type { FinishMapCanvases } from "./masks";
-import { boardTileTexture, fluteEdgeTexture, grainTexture, paperNormalTexture, solidDataTexture, solidEdgeTexture } from "./textures";
+import { boardTileTexture, fluteEdgeTexture, grainTexture, paperNormalTexture, solidDataTexture, solidEdgeTexture, wrinkleNormalTexture } from "./textures";
 
 /**
  * Board materials with real finishes:
@@ -190,6 +190,9 @@ export function createFinishedBoardMaterials(sheet: { width: number; height: num
   // kraft, less under film), tiled every ~45 mm of sheet.
   const paper = own(paperNormalTexture());
   paper.repeat.set(sheet.width / 45, sheet.height / 45);
+  // Added with plastic bags: soft film wrinkles replace the paper tooth on PE film.
+  const wrinkles = own(wrinkleNormalTexture());
+  wrinkles.repeat.set(sheet.width / 120, sheet.height / 120);
   const paperScale = (d: number, side: "outside" | "inside") => (side === "outside" ? 0.1 + d * 0.75 : 0.14 + d * 0.8);
   const relief: Record<"outside" | "inside", Texture | null> = { outside: null, inside: null };
 
@@ -311,13 +314,29 @@ export function createFinishedBoardMaterials(sheet: { width: number; height: num
     },
     setBoard(a, layers, d) {
       setEdge(a, layers);
+      // Film: thin, slightly translucent, wrinkled; everything else opaque with the paper tooth.
+      for (const m of [outside, inside]) {
+        const film = a.film && !a.film.fabric ? a.film : null;
+        const next = film ? wrinkles : paper;
+        if (m.normalMap !== next) {
+          m.normalMap = next;
+          m.needsUpdate = true;
+        }
+        const transparent = !!film && film.opacity < 0.999;
+        if (m.transparent !== transparent) {
+          m.transparent = transparent;
+          m.needsUpdate = true;
+        }
+        m.opacity = film ? film.opacity : 1;
+        m.depthWrite = !transparent || film!.opacity > 0.8;
+      }
       uOut.elbaDetail.value = d;
       fibreScale.outside = d * 1.8;
       fibreScale.inside = d * 2.2;
       if (!relief.outside) outside.bumpScale = fibreScale.outside;
       if (!relief.inside) inside.bumpScale = fibreScale.inside;
-      outside.normalScale.setScalar(paperScale(d, "outside"));
-      inside.normalScale.setScalar(paperScale(d * 1.2, "inside"));
+      outside.normalScale.setScalar(a.film && !a.film.fabric ? a.film.wrinkle : paperScale(d, "outside"));
+      inside.normalScale.setScalar(a.film && !a.film.fabric ? a.film.wrinkle : paperScale(d * 1.2, "inside"));
       uIn.elbaDetail.value = d * 1.2;
       // tiles are neutral; only the strength changes between corrugated and solid board
       const strength = a.fluteColor ? 12 : 4;

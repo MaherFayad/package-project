@@ -99,6 +99,14 @@ const MODELS: [string, string][] = [
   ["BAG_GIFT_ART", "gift-bag-ribbon-handle"],
   ["BAG_DIECUT_PATCH", "die-cut-handle-bag"],
   ["BAG_BOTTLE", "bottle-bag-rope-handle"],
+  ["PBAG_TSHIRT", "plastic-tshirt-bag"],
+  ["PBAG_DIECUT", "plastic-die-cut-handle-bag"],
+  ["PBAG_KIDNEY", "plastic-kidney-handle-bag"],
+  ["PBAG_SOFT_LOOP", "plastic-soft-loop-bag"],
+  ["PBAG_CLIP", "plastic-rigid-clip-bag"],
+  ["PBAG_MERCHANDISE", "plastic-merchandise-bag"],
+  ["PBAG_DRAWSTRING", "plastic-drawstring-bag"],
+  ["PBAG_NONWOVEN", "non-woven-shopping-bag"],
 ];
 
 test("screenshots: every bag closed (standing open)", async ({ page }) => {
@@ -143,12 +151,82 @@ test("screenshots: three sizes and every handle type", async ({ page }) => {
 
 test("the bags page lists every bag with a price or a quote", async ({ page }) => {
   await page.goto("/en/bags");
-  await expect(page.getByRole("heading", { level: 1, name: "Printed paper bags for your shop" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Printed bags for your shop" })).toBeVisible();
   for (const [code] of MODELS) await expect(page.locator(`[data-bag="${code}"]`)).toBeVisible();
   await expect(page.locator('[data-bag="BAG_TWISTED_KRAFT"]').getByTestId("bag-price")).toHaveText(/EGP .+ per bag/);
   await expect(page.locator('[data-bag="BAG_BOTTLE"]').getByTestId("bag-price")).toHaveText(/Price by quote/);
+  await expect(page.locator('[data-bag="PBAG_DIECUT"]').getByTestId("bag-price")).toHaveText(/EGP .+ per bag/);
+  await expect(page.getByTestId("bag-rules")).toContainText("ES 3040/2022");
   await page.screenshot({ path: path.join(OUT, "bags-page-en.png"), fullPage: true });
   await page.goto("/ar/bags");
-  await expect(page.getByRole("heading", { level: 1, name: "أكياس ورقية مطبوعة لمتجرك" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "أكياس مطبوعة لمتجرك" })).toBeVisible();
   await page.screenshot({ path: path.join(OUT, "bags-page-ar.png"), fullPage: true });
+});
+
+test("plastic bag: film tone, gusset, handle with or without patch, logo, instant price", async ({ page }) => {
+  test.setTimeout(180_000);
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  await page.goto("/en/design/plastic-die-cut-handle-bag");
+  const stage = page.getByTestId("stage-3d");
+  await expect(stage).toHaveAttribute("data-model", "PBAG_DIECUT");
+  await settle(page);
+  await stageShot(page, "plastic-diecut-white-bottom-gusset");
+  // Rules shown next to the options (ES 3040 minimum thickness, EPR fee).
+  await expect(page.getByTestId("bag-rules")).toContainText("50 microns");
+  // Clear film, then a coloured film.
+  const film = page.getByTestId("bag-film");
+  await film.getByRole("radio", { name: /^Clear/ }).check();
+  await settle(page);
+  await stageShot(page, "plastic-diecut-clear");
+  await film.getByRole("radio", { name: /^Coloured/ }).check();
+  await film.getByRole("radio", { name: "Navy" }).check();
+  // Side gussets, then the plain die-cut handle (no patch).
+  await page.getByTestId("bag-gusset").getByRole("radio", { name: /^Side gussets/ }).check();
+  await page.getByTestId("bag-handle").getByRole("radio", { name: /^Die-cut hand hole/ }).check();
+  await settle(page);
+  await stageShot(page, "plastic-diecut-navy-side-gusset");
+  // Logo, then the price sheet carries the EPR fee line.
+  await page.getByRole("tab", { name: "Artwork" }).click();
+  await page.getByRole("tabpanel", { name: "Artwork" }).locator("input[type=file]").first().setInputFiles({ name: "logo.png", mimeType: "image/png", buffer: await logo(page) });
+  await expect(page.getByRole("button", { name: "Crop", exact: true })).toBeVisible({ timeout: 15_000 });
+  await page.getByRole("button", { name: "3D", exact: true }).click();
+  await expect(page.getByTestId("price-badge")).toHaveText(/EGP .+ delivered in \d+ days?/, { timeout: 30_000 });
+  await settle(page);
+  await stageShot(page, "plastic-diecut-navy-logo");
+  await page.getByTestId("price-badge").click();
+  const sheet = page.getByRole("dialog", { name: "Instant price" });
+  await expect(sheet).toBeVisible({ timeout: 20_000 });
+  await expect(sheet.getByText("Total with VAT")).toBeVisible({ timeout: 20_000 });
+  // The EPR fee is its own line in the quote checkout shows (the sheet shows the per-bag total).
+  const api = await page.request.post("/api/quote", {
+    data: { structureCode: "PLASTIC_BAG", dims: { L: 300, W: 80, H: 400 }, materialCode: "PE_LDPE_50", printSides: "OUTSIDE", colours: 2, quantity: 1000, model: { code: "PBAG_DIECUT", features: { bagFilm: { tone: "WHITE", gusset: "BOTTOM" } } } },
+  });
+  expect(api.status()).toBe(200);
+  const body = await api.json();
+  expect(body.mode).toBe("instant");
+  expect(body.offers[0].lines.some((l: { labelKey: string }) => l.labelKey === "pricing.line.eprFee")).toBe(true);
+  expect(errors, errors.join("\n")).toEqual([]);
+});
+
+test("screenshots: plastic handles and gussets", async ({ page }) => {
+  test.setTimeout(300_000);
+  const shots: [string, string, string | null][] = [
+    ["plastic-tshirt-bag", "tshirt", null],
+    ["plastic-kidney-handle-bag", "kidney-bottom-gusset", null],
+    ["plastic-soft-loop-bag", "soft-loop", null],
+    ["plastic-rigid-clip-bag", "rigid-clip", null],
+    ["plastic-drawstring-bag", "drawstring", null],
+    ["plastic-die-cut-handle-bag", "diecut-flat", "Flat, no gusset"],
+    ["non-woven-shopping-bag", "nonwoven", null],
+  ];
+  for (const [slug, name, gusset] of shots) {
+    await page.goto(`/en/design/${slug}`);
+    await settle(page);
+    if (gusset) {
+      await page.getByTestId("bag-gusset").getByRole("radio", { name: new RegExp(`^${gusset}`) }).check();
+      await settle(page);
+    }
+    await stageShot(page, `plastic-${name}`);
+  }
 });

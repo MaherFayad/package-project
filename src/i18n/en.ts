@@ -133,6 +133,7 @@ export const en = {
     PRINTED_POUCH: "Printed pouches",
     PRINTED_TUBE: "Printed squeeze tubes",
     PAPER_BAG: "Paper bags",
+    PLASTIC_BAG: "Plastic bags",
   },
   materials: {
     E_FLUTE_KRAFT: "E-flute kraft",
@@ -156,6 +157,12 @@ export const en = {
     BAG_ART_170: "Art paper 170 gsm, laminated",
     BAG_ART_210: "Art paper 210 gsm, laminated",
     BAG_ART_250: "Art paper 250 gsm, laminated",
+    PE_HDPE_50: "HDPE film 50 microns",
+    PE_LDPE_50: "LDPE film 50 microns",
+    PE_LDPE_70: "LDPE film 70 microns",
+    PE_LDPE_100: "LDPE film 100 microns",
+    NONWOVEN_PP_80: "Non-woven PP 80 gsm",
+    NONWOVEN_PP_100: "Non-woven PP 100 gsm",
   },
   /** Plain names for buyers (box pages, the designer's options); `materials` keeps the trade names for printers and staff (R2-06). */
   materialsPlain: {
@@ -180,6 +187,12 @@ export const en = {
     BAG_ART_170: "Smooth coated paper",
     BAG_ART_210: "Thick smooth coated paper",
     BAG_ART_250: "Extra thick smooth coated paper",
+    PE_HDPE_50: "Crisp plastic film",
+    PE_LDPE_50: "Soft plastic film",
+    PE_LDPE_70: "Thick soft plastic film",
+    PE_LDPE_100: "Extra thick plastic film",
+    NONWOVEN_PP_80: "Reusable fabric",
+    NONWOVEN_PP_100: "Thick reusable fabric",
   },
   finishes: {
     NONE: "No finish",
@@ -253,6 +266,7 @@ export const en = {
       productBag: "Printed bags",
       bagHandle: "Bag handles",
       bagBoard: "Base and top board",
+      eprFee: "Plastic bag EPR fee (EGP 37.5/kg)",
     },
   },
   preflight: {
@@ -475,6 +489,7 @@ export const en = {
         PAPER_TUBE: "Custom printed paper tube",
         RIGID_BOX: "Custom printed rigid box",
         PAPER_BAG: "Custom printed paper bag",
+        PLASTIC_BAG: "Custom printed plastic bag",
       },
       use: {
         FEFCO_0427: "Online shops, fashion, cosmetics, subscription and gift boxes.",
@@ -491,6 +506,7 @@ export const en = {
         PAPER_TUBE: "Tea, coffee, cosmetics and apparel.",
         RIGID_BOX: "Premium gifts, special editions and jewellery.",
         PAPER_BAG: "Shops, fashion, restaurants and gifts.",
+        PLASTIC_BAG: "Supermarkets, pharmacies, fashion and events.",
       },
     },
     vendors: {

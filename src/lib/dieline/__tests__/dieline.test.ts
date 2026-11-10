@@ -133,7 +133,7 @@ const BOX_CODES = STRUCTURE_CODES.filter((c) => STRUCTURES[c].shape !== "flat");
 
 describe("flat container parts", () => {
   // PAPER_BAG is "flat" (it ships flat) but is a real bag die: see families/bags/__tests__.
-  for (const code of STRUCTURE_CODES.filter((c) => STRUCTURES[c].shape === "flat" && c !== "PAPER_BAG")) {
+  for (const code of STRUCTURE_CODES.filter((c) => STRUCTURES[c].shape === "flat" && c !== "PAPER_BAG" && c !== "PLASTIC_BAG")) {
     it(`${code} is one printable L × H panel with its area`, () => {
       const m = generateDieline(code, DEFAULT_DIMS[code], { thicknessMm: 0.1 });
       expect(m.panels).toHaveLength(1);

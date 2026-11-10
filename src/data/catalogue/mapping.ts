@@ -42,7 +42,8 @@ export function availabilitySlugFor(source: string, code: string, style: string)
     case "vessel-flexible":
       return flexible(code);
     case "bags":
-      return `paper-bag/${s || "kraft-carrier"}`;
+      // One "bags" family, sub-grouped paper / plastic / reusable (the slug prefix orders them).
+      return s.startsWith("film-") ? `bags/plastic-${s.slice(5)}` : s === "nonwoven" ? "bags/reusable-nonwoven" : `bags/paper-${s || "kraft-carrier"}`;
     default:
       return "corrugated";
   }
