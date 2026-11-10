@@ -72,9 +72,15 @@ describe("FEFCO 04 catalogue metadata", () => {
   });
 
   it.each(DEFINITIONS.map((d) => [d.fefco, d] as const))("%s metadata is complete and valid", (_f, def) => {
-    expect(def.code).toBe(`FEFCO_${def.fefco}`);
-    expect(def.fefco).toMatch(/^04\d\d(_\d)?a?$/);
-    expect(def.standard.startsWith("FEFCO 04")).toBe(true);
+    if (def.code.startsWith("MAILER_")) {
+      // Trade-named mailers (retf.ts): not in the FEFCO code book.
+      expect(def.code).toBe(`MAILER_${def.fefco}`);
+      expect(def.standard).toMatch(/^RETF \(FEFCO 0427 family\)$/);
+    } else {
+      expect(def.code).toBe(`FEFCO_${def.fefco}`);
+      expect(def.fefco).toMatch(/^04\d\d(_\d)?a?$/);
+      expect(def.standard.startsWith("FEFCO 04")).toBe(true);
+    }
     expect(def.family).toBe("CORRUGATED");
     expect(def.name.en.length).toBeGreaterThan(5);
     expect(def.description.en.length).toBeGreaterThan(20);

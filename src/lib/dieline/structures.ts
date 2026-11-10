@@ -701,7 +701,7 @@ function defer(b: DielineBuilder, match: (p: DielinePanel) => boolean, by: numbe
  * into a rows × cols grid inside the closed box. Strips along L are slotted from the top,
  * strips along W from the bottom (half height each), so they interlock.
  */
-function addPartitions(b: DielineBuilder, t: number, closedRotation: [number, number, number, number], dims: Dims, grid: { rows: number; cols: number }, floor: number, stageAt?: number) {
+export function addPartitions(b: DielineBuilder, t: number, closedRotation: [number, number, number, number], dims: Dims, grid: { rows: number; cols: number }, floor: number, stageAt?: number) {
   const box = mainClosedBounds(b, t, closedRotation);
   const cx = (box.min.x + box.max.x) / 2;
   const cz = (box.min.z + box.max.z) / 2;

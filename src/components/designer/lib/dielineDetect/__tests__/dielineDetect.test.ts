@@ -52,7 +52,7 @@ describe("owner's mailer sample", () => {
     // The sample is a lock-corner mailer: tuck lid with dust flaps, double end walls, ears on a
     // single front wall. The library's FEFCO_0427 generator adds a rolled-in double front wall
     // the sample does not have, so the closest dies are the same construction without it.
-    const MAILERS = ["FS_BAKERY_BOX", "FEFCO_0421_1", "FEFCO_0421", "FEFCO_0426a", "FEFCO_0427", "FEFCO_0427_1", "FEFCO_0429"];
+    const MAILERS = ["MAILER_RETF", "MAILER_RETF_PLAIN", "FS_BAKERY_BOX", "FEFCO_0421_1", "FEFCO_0421", "FEFCO_0426a", "FEFCO_0427", "FEFCO_0427_1", "FEFCO_0429"];
     const top = res.candidates[0];
     expect(MAILERS).toContain(top.code);
     expect(res.candidates.slice(0, 5).filter((c) => MAILERS.includes(c.code)).length).toBeGreaterThanOrEqual(3);

@@ -893,6 +893,18 @@
   "bounds": "c8fc83377a61819110738590",
   "svg": "b9fd8ec59f83a20de33f9486"
  },
+ "MAILER_RETF": {
+  "dieline": "c5805fff1d9b75b74feb2525",
+  "poses": "75548ac4494447aab64011f6",
+  "bounds": "b5eb326abc964b98106ef8f8",
+  "svg": "ff7a8018a0f419281a08a423"
+ },
+ "MAILER_RETF_PLAIN": {
+  "dieline": "213991a7f4f4a39aaf1722a1",
+  "poses": "f9d04b6ad0020f28767599eb",
+  "bounds": "6034b4f388f673f273c79f4c",
+  "svg": "ff7a8018a0f419281a08a423"
+ },
  "FEFCO_0601": {
   "dieline": "4eebe270e262843c928d1f56",
   "poses": "ab41d58522fd8df871816ca2",

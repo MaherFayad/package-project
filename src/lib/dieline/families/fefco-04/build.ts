@@ -2,6 +2,7 @@ import { Mat4 as Matrix4 } from "@/lib/dieline/math";
 import { z } from "zod";
 import type { Dims, StructureFeatures } from "@/types";
 import { edgeBleed, panelCreases } from "../../builder";
+import { MAX_PARTITION_CELLS } from "../../features";
 import { computeFaces } from "../../fold";
 import { bboxOf, clamp, edgesOf, insetRect, offsetConvex, polygonArea, segLength, subtractSegments } from "../../geometry";
 import { DielineValidationError, thicknessSchema, type DimsIssue } from "../../limits";
@@ -80,6 +81,12 @@ export function familyFeatures(def: Pick<Fefco04Definition, "features">, f: Stru
   }
   if (f.thumbNotch && s.thumbNotch) out.thumbNotch = true;
   if (f.handle && s.handle) out.handle = true;
+  if (f.tearStrip && s.tearStrip) out.tearStrip = true;
+  if (f.partitions && s.partitions) {
+    const rows = clamp(Math.round(f.partitions.rows) || 1, 1, MAX_PARTITION_CELLS);
+    const cols = clamp(Math.round(f.partitions.cols) || 1, 1, MAX_PARTITION_CELLS);
+    if (rows > 1 || cols > 1) out.partitions = { rows, cols };
+  }
   return out;
 }
 

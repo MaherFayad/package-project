@@ -8,7 +8,7 @@ const def = definitionByCode("0421")!;                 // or "FEFCO_0421", or th
 const model = generateFamilyDieline(def, { L: 250, W: 180, H: 80 }, { thicknessMm: 3 });
 ```
 
-## Models (80)
+## Models (82)
 
 | FEFCO | code | en | ar | standard | sub-family | delivered | fidelity |
 |---|---|---|---|---|---|---|---|
@@ -92,6 +92,8 @@ const model = generateFamilyDieline(def, { L: 250, W: 180, H: 80 }, { thicknessM
 | 0471 | `FEFCO_0471` | Self-locking mailer with interior bottom flaps | علبة بريدية ذاتية القفل بألسنة قاع داخلية | FEFCO 0471 | interior-flap-tray | unglued | interpreted |
 | 0471a | `FEFCO_0471a` | Self-locking tray with interior bottom flaps, open | صينية مفتوحة ذاتية القفل بألسنة قاع داخلية | FEFCO 0471a | interior-flap-tray | unglued | interpreted |
 | 0472 | `FEFCO_0472` | Self-locking display tray with interior bottom flaps | صينية عرض ذاتية القفل بألسنة قاع داخلية | FEFCO 0472 | interior-flap-tray | unglued | interpreted |
+| RETF | `MAILER_RETF` | Gift box (tuck front) | علبة هدايا بلسان أمامي | RETF (FEFCO 0427 family) | mailer | unglued | described |
+| RETF_PLAIN | `MAILER_RETF_PLAIN` | Gift box (tuck front, plain tuck) | علبة هدايا بلسان أمامي بسيط | RETF (FEFCO 0427 family) | mailer | unglued | interpreted |
 **Fidelity.** `described`: a published text description confirms the construction (0401 and 0409 verbatim, 0452 and 0453 from a secondary guide). `interpreted`: the code and official name are confirmed, but the panel arrangement was reconstructed from the name and the group's construction rules, not from the licensed drawing. See "Verification" below.
 
 ### Already in the core engine (skipped here)
@@ -117,6 +119,7 @@ Their variants (0422_1, 0422_2, 0422a, 0426a, 0427_1) **are** generated here.
 - `kit.ts`, **`trayKit`**: one construction kit for every base-hinged 04 style. Options: rolled double walls per wall, corner ears on the long walls or the end walls, interior bottom flaps at the foot of rolled walls, top closure (none, cover flaps meeting / overlapping / rim, or a hinged lid with tuck or outside front flap and dust, rounded or outside side flaps), display cut-down front, back header, raised ends, and hand holes through both layers. Layers are counted per wall, so closed inner = requested inner (for example, 0421 outer = L + 6t, W + 2t, H + 2t).
 - `wraps.ts`, **`wrapFolder`**: chain-of-panels tubes (0404, 0406, 0409 to 0411 and their variants). Joint options are glue flap, fifth overlap panel, or centre or offset seam. End flaps can meet or fully overlap on the W or H panels.
 - `bliss.ts`: 0405 as three pieces. Two end panels are placed with core `piece()` and assembly matrices, and their glue flaps fold onto the inside of the body.
+- `retf.ts`, **`retfMailer`**: roll end tuck front gift boxes (`MAILER_*` codes, the construction suppliers sell as RETF mailers, sub-family `mailer`), drawn after the owner's die (`docs/owner-input/2026-11-10`, measured in `docs/audit/gift-box-tuck-front.md`). Single front wall, square ears about H deep on front and back, rolled double end walls whose inner walls lock into base slots with two tabs each, rounded (or trapezoid) lid side flaps, full-depth tuck with rounded side wings (or a plain round-cornered tuck) and a thumb notch on the tuck. Options: lid window, tear strip, divider insert (`addPartitions` from the core). Priced as `FEFCO_0427`.
 - `octagon.ts`: 0459, with a chamfered octagonal base, 8 walls, and triangular glue ears that fold 45° and fit the 45° gap on the flat sheet.
 - `build.ts`: **`generateFamilyDieline`**, a copy of the core `buildDieline` post-processing (normalise, cut/crease, bleed, faces, safe zones, metrics). It is needed because `GENERATORS` / `generateDieline` only accept the closed `StructureCode` union. It also holds the zod limits (`familyDimsSchema`, `validateFamilyDims`, same rule syntax as core: `"H <= W"`) and `familyFeatures`.
 - Fold stages: 0 walls, 1 ears / inner end flaps, 2 rolled inner walls / outer end flaps, 3 interior bottom flaps, 4 to 5 covers and lids.
