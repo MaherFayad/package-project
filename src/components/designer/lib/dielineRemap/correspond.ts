@@ -176,10 +176,24 @@ export function snapPanels(model: DielineModel, T: Affine, lines: readonly [numb
     const { x, y, width: w, height: h } = p.bbox;
     const gx = Math.min(0.3 * w, 0.04 * die);
     const gy = Math.min(0.3 * h, 0.04 * die);
-    let x0 = snap(vs, x, y, y + h, gx);
-    let x1 = snap(vs, x + w, y, y + h, gx);
-    let y0 = snap(hs, y, x, x + w, gy);
-    let y1 = snap(hs, y + h, x, x + w, gy);
+    // A flap's free edge (the one opposite its hinge) may sit much further out on the printer's
+    // template: a tuck as deep as the wall, wider dust flaps. Search it as far as the flap is deep.
+    const free = !FACE_ROLES.has(p.role) && p.hinge;
+    const hx = p.hinge && Math.abs(p.hinge.a.x - p.hinge.b.x) < 1e-3 ? p.hinge.a.x : null;
+    const hy = p.hinge && Math.abs(p.hinge.a.y - p.hinge.b.y) < 1e-3 ? p.hinge.a.y : null;
+    const far = (edge: number, hinge: number | null, extent: number, g: number) => (free && hinge != null && Math.abs(edge - hinge) > 0.5 * extent ? Math.max(g, Math.min(1.0 * extent, 0.15 * die)) : g);
+    // the far edge snaps outward only: the nearest line beyond the template's edge, else inward within the usual gate
+    const snapFar = (list: L[], pos: number, a: number, b: number, g: number, wide: number, outward: number) => {
+      if (wide <= g) return snap(list, pos, a, b, g);
+      const near = snap(list, pos, a, b, g);
+      if (near !== pos) return near;
+      const out = snap(list.filter((l) => (l.pos - pos) * outward > 0), pos, a, b, wide);
+      return out;
+    };
+    let x0 = snapFar(vs, x, y, y + h, gx, far(x, hx, w, gx), -1);
+    let x1 = snapFar(vs, x + w, y, y + h, gx, far(x + w, hx, w, gx), 1);
+    let y0 = snapFar(hs, y, x, x + w, gy, far(y, hy, h, gy), -1);
+    let y1 = snapFar(hs, y + h, x, x + w, gy, far(y + h, hy, h, gy), 1);
     if (x1 - x0 < 0.4 * w) [x0, x1] = [x, x + w];
     if (y1 - y0 < 0.4 * h) [y0, y1] = [y, y + h];
     out[p.id] = [r3(x0), r3(y0), r3(x1), r3(y1)];

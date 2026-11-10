@@ -4,7 +4,7 @@ import { designerAllOptions } from "./fixtures/factory";
 
 /**
  * Dieline remap (designer: full artwork made on the buyer's own printer template). The owner's
- * outside dieline (2026-11-10) is uploaded on the mailer box: the box is recognised, the art is
+ * outside dieline (2026-11-10) is uploaded on the FEFCO 0421-1 tray with a hinged lid (the owner's construction, not a mailer): the box is recognised, the art is
  * re-composed on Elba's template, and applying the match switches the model and keeps the art.
  * Closed views go to docs/screenshots/audit/dieline-remap/ to compare by eye with
  * docs/owner-input/2026-11-10/mockup-closed-views.webp.
@@ -12,7 +12,8 @@ import { designerAllOptions } from "./fixtures/factory";
 
 const FILE = path.join(process.cwd(), "docs/owner-input/2026-11-10/dieline-outside-purple.webp");
 const OUT = path.join(process.cwd(), "docs/screenshots/audit/dieline-remap");
-const MAILERS = ["FS_BAKERY_BOX", "FEFCO_0421_1", "FEFCO_0421", "FEFCO_0421a", "FEFCO_0426a", "FEFCO_0427", "FEFCO_0427_1", "FEFCO_0428", "FEFCO_0429", "FEFCO_0429a", "FEFCO_0427_RETF"];
+// The owner's construction (not a mailer): tray, self-locking double end walls, hinged lid with a deep tuck.
+const TRAY_LID = ["FS_BAKERY_BOX", "FEFCO_0421_1", "FEFCO_0421", "FEFCO_0421a", "FEFCO_0426a", "FEFCO_0427", "FEFCO_0427_1", "FEFCO_0428", "FEFCO_0429", "FEFCO_0429a"];
 
 async function closedViews(page: Page, tag: string) {
   for (const v of ["front", "top", "left", "back"]) {
@@ -27,7 +28,7 @@ test("upload a printer's dieline: recognised, re-composed on the template, appli
   test.skip(testInfo.project.name === "mobile", "the full artwork section is checked on desktop");
   test.setTimeout(240_000);
   await designerAllOptions(page.context());
-  await page.goto("/en/design/mailer-box");
+  await page.goto("/en/design/fefco-0421-1");
   await expect(page.getByTestId("stage-3d").locator("canvas").first()).toBeVisible({ timeout: 60_000 });
   await page.getByRole("tab", { name: "Artwork" }).click();
   await page.getByTestId("sheet-input-outside").setInputFiles(FILE);
@@ -35,18 +36,20 @@ test("upload a printer's dieline: recognised, re-composed on the template, appli
   // Recognised: a hinged-lid mailer construction, with an estimated size and the one measurement.
   const card = page.getByTestId("sheet-recog");
   await expect(card).toHaveAttribute("data-mode", "model", { timeout: 90_000 });
-  expect(MAILERS).toContain(await card.getAttribute("data-code"));
+  // the -mailers session's new deep-tuck 0421-family model joins this group once merged
+  const code = (await card.getAttribute("data-code")) ?? "";
+  expect(TRAY_LID.includes(code) || /^FEFCO_042/.test(code), code).toBe(true);
   await expect(card).toContainText("We recognised:");
   await expect(page.getByTestId("sheet-recog-measure")).toBeVisible();
   // No aspect-ratio warning for a re-composed sheet: it was arranged on this template.
   await expect(page.getByTestId("sheet-fit")).toHaveCount(0);
-  await closedViews(page, "mailer");
+  await closedViews(page, "fefco-0421-1");
 
   // One measurement fixes the size: a 26 cm lid.
   await page.getByTestId("sheet-recog-measure").fill("26");
   await expect(card).toContainText("26 ×");
   await page.getByTestId("sheet-recog-apply").getByRole("button").click();
-  await expect(page).not.toHaveURL(/\/design\/mailer-box/, { timeout: 30_000 });
+  await expect(page.getByText(/Box changed to/)).toBeVisible({ timeout: 30_000 });
   await expect(page.getByTestId("stage-3d").locator("canvas").first()).toBeVisible({ timeout: 60_000 });
 
   // Saved with the original upload and how the sheet was made.

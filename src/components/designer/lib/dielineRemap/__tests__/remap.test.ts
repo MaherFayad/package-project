@@ -24,8 +24,11 @@ const FILES: { name: string; file: string; surface: PrintSurface }[] = [
   { name: "sample (jpg)", file: path.join(ROOT, "src/components/designer/lib/dielineDetect/__fixtures__/owner-mailer-sample.jpg"), surface: "outside" },
 ];
 
-/** The owner's construction: hinged tuck lid with side flaps, double end walls with locks, ears. */
-const MAILERS = ["FS_BAKERY_BOX", "FEFCO_0421_1", "FEFCO_0421", "FEFCO_0421a", "FEFCO_0426a", "FEFCO_0427", "FEFCO_0427_1", "FEFCO_0428", "FEFCO_0429", "FEFCO_0429a"];
+/**
+ * The owner's construction (not a mailer): a tray with self-locking double end walls and a hinged
+ * lid with side flaps and a deep tuck, ears on the walls. The 0421 family and its twins.
+ */
+const TRAY_LID = ["FS_BAKERY_BOX", "FEFCO_0421_1", "FEFCO_0421", "FEFCO_0421a", "FEFCO_0426a", "FEFCO_0427", "FEFCO_0427_1", "FEFCO_0428", "FEFCO_0429", "FEFCO_0429a"];
 const FACES: FaceId[] = ["top", "bottom", "front", "back", "left", "right"];
 
 async function decode(file: string): Promise<RgbaImage> {
@@ -114,8 +117,8 @@ describe.each(FILES)("owner's dieline: $name", ({ file, surface }) => {
 
   it("recognises the construction (hinged tuck lid, double end walls) with no fittings offered", () => {
     expect(res.found).toBe(true);
-    expect(MAILERS).toContain(res.matches[0].code);
-    expect(res.matches.filter((m) => MAILERS.includes(m.code)).length).toBeGreaterThanOrEqual(2);
+    expect(TRAY_LID).toContain(res.matches[0].code);
+    expect(res.matches.filter((m) => TRAY_LID.includes(m.code)).length).toBeGreaterThanOrEqual(2);
     expect(res.matches.some((m) => m.code.startsWith("FEFCO_09"))).toBe(false);
     expect(res.matches[0].agreement ?? 0).toBeGreaterThan(0.85);
   });
@@ -153,6 +156,26 @@ describe.each(FILES)("owner's dieline: $name", ({ file, surface }) => {
       }
     }, 60_000);
   }
+
+  it("maps a tuck deeper than the template's to its full drawn depth", () => {
+    const top = res.matches[0];
+    const cand = candidateModelOf(top.source, BOX_MODELS)!;
+    const tuck = cand.panels.find((p) => p.role === "tuck");
+    if (!tuck) return;
+    const T = top.source.transform! as Affine;
+    const s = top.source.snapped![tuck.id];
+    const px = (x: number, y: number) => ({ x: T[0] * x + T[2] * y + T[4], y: T[1] * x + T[3] * y + T[5] });
+    const a = px(s[0], s[1]);
+    const b = px(s[2], s[3]);
+    const box = res.lines.dieBox!;
+    const ys = box.map((p) => p.y);
+    const xs = box.map((p) => p.x);
+    const size = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
+    // the tuck's free edge is the die's outer edge on its side (the owner's tuck is about H deep)
+    const edges = [Math.min(a.y, b.y), Math.max(a.y, b.y)];
+    const dieEdge = [Math.min(...ys), Math.max(...ys)];
+    expect(Math.min(...edges.flatMap((e) => dieEdge.map((d) => Math.abs(e - d))))).toBeLessThan(0.015 * size);
+  });
 
   it("keeps the die lines off the faces (the red strokes are painted out before sampling)", () => {
     const top = res.matches[0];
