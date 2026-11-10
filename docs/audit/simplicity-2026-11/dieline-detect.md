@@ -47,6 +47,8 @@ Call `prepareModels` when the panel opens so the first upload doesn't pay it.
 
 ## Integration (for the «Full artwork» fit check)
 
+Wired on 2026-11-10: the Full artwork upload recognises the box and re-composes the art on the open model's template. See `docs/audit/dieline-remap.md`.
+
 Do not import the detector into the main bundle. Use the worker client:
 
 ```ts
