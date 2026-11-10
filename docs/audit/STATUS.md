@@ -29,6 +29,7 @@ Summary of every report in `docs/audit/` as of 2026-11-07. Severity scale: criti
 | Engine | [3d-engine.md](3d-engine.md) | Pass 4 (round 3) | medium: E-32 / X-10 (inside-lid copy upside down, deferred), E-33 (mid-fold sweeps, per family). high: E-43 (fixed-capacity texture, reason given) |
 | Every model in the renderer | [3d.md](3d.md) | Round 4, pass 4 | medium: R4-05 (flat bag handles drawn as tubes). low: R4-06 (blister foil dark), R4-13 (default text too wide on narrow containers), R4-09 (accepted). Carried: FF-13, E-32 |
 | Visual audit, all models | [3d-visual.md](3d-visual.md) | Round 7 | medium: R6-3Q-D-06 (gable-top gusset not folded). low: R5-3Q-A-12, R5-3Q-C-08, R5-3Q-D-12, R6-3Q-A-07, B-05, B-06, C-02, D-07, D-08, D-09, E-02, E-03, E-04, G-08 |
+| Mailers (owner RETF die) | [mailers.md](mailers.md) | Single report, 2026-11-10 | low: ear edge shows faintly through the side wall at some sizes (renderer, also on FEFCO_0427); thumb notch on the tuck per the owner die, to confirm with the owner |
 | Bottles, jars, tubs | [3d-bottles.md](3d-bottles.md) | Single report, 2 passes | low: E-11 (jerrycan spout on axis). Unclear: E-05, E-13 |
 | Cans, cosmetic, flexible | [3d-cans-flexible.md](3d-cans-flexible.md) | Round 3 | medium: E-08 (flex options UI). low: CF-12, CF-13 (decision). Unclear: library hook rows E-02, E-03, E-06, E-07, E-11 |
 | ECMA tuck and specials | [3d-ecma.md](3d-ecma.md) | Single report | O-05 (= E-32) open. Unclear: O-01 (high, pricing base from substring match), O-02, O-04, O-07 |

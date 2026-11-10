@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The public catalogue lists **410** packaging models: the 370 designer models plus 40 family models the library leaves out (12 unprinted FEFCO 09 fittings, 6 moulded pulp, 4 cups and sleeves, 2 lids, 15 bags and envelopes, 1 blister). The 40 are quote-only and never open in the designer. Each entry has a family, sub-family, FEFCO / ECMA code, Egypt availability (local, imported, rare), regions and presets, and an **order mode** that decides whether the buyer gets an instant price or a price request.
+The public catalogue lists **412** packaging models: the 372 designer models plus 40 family models the library leaves out (12 unprinted FEFCO 09 fittings, 6 moulded pulp, 4 cups and sleeves, 2 lids, 15 bags and envelopes, 1 blister). The 40 are quote-only and never open in the designer. Each entry has a family, sub-family, FEFCO / ECMA code, Egypt availability (local, imported, rare), regions and presets, and an **order mode** that decides whether the buyer gets an instant price or a price request.
 
 The storefront also covers `/boxes` (box styles and SEO size pages), `/bottles`, `/vendors` (printer directory and profiles), legal pages and the account area.
 
@@ -60,7 +60,7 @@ The generated table has 44 listed, 45 quote, 19 preview rows. Regenerate with `n
 ## Tests
 
 - Unit: `src/data/catalogue/__tests__/catalogue.test.ts` (coverage, dedupe, slugs, taxonomy, parsing, thumbnails, table equals rules), `src/lib/configurator/__tests__/catalogue.test.ts`, `src/data/packaging-availability/availability.test.ts`, `src/components/store/__tests__/*`, `src/lib/routing/__tests__/static-404.test.ts`.
-- e2e: `e2e/catalogue.spec.ts` (filters, search, keyboard, RTL with axe, instant and quote pages, quote request dedupe; writes `docs/screenshots/audit/catalogue/`), `e2e/catalogue-order-modes.spec.ts` (quote-only models never show an order path anywhere), `e2e/catalogue-models.spec.ts` (all 410 renders, slow), `e2e/storefront.spec.ts`.
+- e2e: `e2e/catalogue.spec.ts` (filters, search, keyboard, RTL with axe, instant and quote pages, quote request dedupe; writes `docs/screenshots/audit/catalogue/`), `e2e/catalogue-order-modes.spec.ts` (quote-only models never show an order path anywhere), `e2e/catalogue-models.spec.ts` (all 412 renders, slow), `e2e/storefront.spec.ts`.
 
 ## Pitfalls
 

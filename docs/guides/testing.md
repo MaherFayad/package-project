@@ -35,7 +35,7 @@ npx playwright test e2e/vendor.spec.ts -g "QC" --trace off --reporter=line
 ## Fixtures and data
 
 - `e2e/fixtures/factory.ts`: every test makes its own users and orders, so specs run in parallel. Helpers: `uniquePhone`, `createUser({ role, vendorId, name })`, `signInAs(context, baseURL, userId)` (writes a session row and cookie), `signInPhone`, `sendOtp` (returns the dev OTP), `cloneOrder(template, { status, buyerId, withQcPhotos })` (numbers `ELB-E2E-...`), `track`, `deleteOrder`, `cleanup`. `SEEDED` holds the seeded phones.
-- `e2e/fixtures/models.json` (370) and `catalogue-models.json` (410) are generated manifests.
+- `e2e/fixtures/models.json` (372) and `catalogue-models.json` (412) are generated manifests.
 - `e2e/journeys/helpers.ts`: `localeOf(info)` runs every journey in English on desktop and Arabic on mobile; `tr()` looks labels up in the real dictionaries; `amounts()` parses EGP and «ج.م»; `ageShipments()` back-dates shipments; `noSideScroll()`.
 
 ## Seeded demo data (`prisma/seed.ts`, destructive: wipes every table)
@@ -70,7 +70,7 @@ axe runs with tags `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`, `wcag22aa`.
 There is no `test.slow`; slow tests raise `test.setTimeout`.
 
 - `models.spec.ts`: every designer model with software WebGL, desktop only. Run alone.
-- `catalogue-models.spec.ts`: all 410 renders in batches of 24: `npx playwright test e2e/catalogue-models.spec.ts --project=desktop --workers=2 --trace off`.
+- `catalogue-models.spec.ts`: all 412 renders in batches of 24: `npx playwright test e2e/catalogue-models.spec.ts --project=desktop --workers=2 --trace off`.
 - 300 s: `storefront.spec.ts` (slow-phone hydration), `j1`, `j4`. 240 s: `journey.spec.ts`, `j2`, `j3`. 180 s: `restyle-height`, `designer-page` (height), `j5`. 150 s: `checkout`, `designer`, `security-r6`.
 
 ## Screenshots written by e2e

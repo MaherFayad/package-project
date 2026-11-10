@@ -19,7 +19,7 @@ Start with [`../CLAUDE.md`](../CLAUDE.md) (commands, rules, gotchas), then [ARCH
 |---|---|
 | [3d-engine-and-model-library.md](guides/3d-engine-and-model-library.md) | Library packs, dielines, vessels, renderer, adding a model, geometry snapshot |
 | [designer.md](guides/designer.md) | The 3D editor, DesignDoc, save, share |
-| [catalogue.md](guides/catalogue.md) | 410-model catalogue, order modes, storefront routes |
+| [catalogue.md](guides/catalogue.md) | 412-model catalogue, order modes, storefront routes |
 | [checkout-and-orders.md](guides/checkout-and-orders.md) | Pricing, checkout, order states, payments, shipping |
 | [vendor-portal.md](guides/vendor-portal.md) | Printer portal, onboarding, rate cards, uploads |
 | [admin-console.md](guides/admin-console.md) | Ops console pages and actions, audit log |
