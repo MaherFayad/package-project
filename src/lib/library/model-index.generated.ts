@@ -151,6 +151,8 @@ export const MODEL_INDEX: Record<string, [ModelSource, string]> = {
   "FEFCO_0471": ["fefco-04", "fefco-0471"],
   "FEFCO_0471a": ["fefco-04", "fefco-0471a"],
   "FEFCO_0472": ["fefco-04", "fefco-0472"],
+  "MAILER_RETF": ["fefco-04", "mailer-box-tuck-front"],
+  "MAILER_RETF_PLAIN": ["fefco-04", "mailer-box-tuck-front-plain"],
   "FEFCO_0601": ["fefco-06-07", "fefco-0601-bliss-box"],
   "FEFCO_0602": ["fefco-06-07", "fefco-0602-bliss-box-tuck"],
   "FEFCO_0605": ["fefco-06-07", "fefco-0605-open-bliss-tray"],

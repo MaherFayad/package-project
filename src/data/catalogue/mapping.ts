@@ -15,8 +15,10 @@ export function availabilitySlugFor(source: string, code: string, style: string)
       return STRUCTURE_TO_AVAILABILITY[code as keyof typeof STRUCTURE_TO_AVAILABILITY] ?? "corrugated";
     case "vessel-core":
       return VESSEL_TO_AVAILABILITY[code as keyof typeof VESSEL_TO_AVAILABILITY] ?? "rigid-plastic";
-    case "fefco-02":
     case "fefco-04":
+      if (code.startsWith("MAILER_")) return "corrugated/fefco-04";
+      return `corrugated/fefco-${fefco?.[1] ?? "04"}`;
+    case "fefco-02":
     case "fefco-06-07":
     case "fefco-09":
       return `corrugated/fefco-${fefco?.[1] ?? "02"}`;

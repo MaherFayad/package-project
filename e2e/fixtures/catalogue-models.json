@@ -425,6 +425,16 @@
   "render": "box"
  },
  {
+  "code": "MAILER_RETF_PLAIN",
+  "slug": "mailer-box-tuck-front-plain",
+  "render": "box"
+ },
+ {
+  "code": "MAILER_RETF",
+  "slug": "mailer-box-tuck-front",
+  "render": "box"
+ },
+ {
   "code": "FEFCO_0427_1",
   "slug": "fefco-0427-1",
   "render": "box"
@@ -1140,13 +1150,13 @@
   "render": "box"
  },
  {
-  "code": "SLEEVE",
-  "slug": "sleeve",
+  "code": "ECMA_SLEEVE_OPEN",
+  "slug": "open-end-sleeve",
   "render": "box"
  },
  {
-  "code": "ECMA_SLEEVE_OPEN",
-  "slug": "open-end-sleeve",
+  "code": "SLEEVE",
+  "slug": "sleeve",
   "render": "box"
  },
  {
@@ -1250,16 +1260,6 @@
   "render": "box"
  },
  {
-  "code": "ECMA_RTE",
-  "slug": "reverse-tuck-end",
-  "render": "box"
- },
- {
-  "code": "ECMA_STE",
-  "slug": "straight-tuck-end",
-  "render": "box"
- },
- {
   "code": "ECMA_TUCK_AIRPLANE",
   "slug": "ecma-airplane-tuck",
   "render": "box"
@@ -1275,6 +1275,11 @@
   "render": "box"
  },
  {
+  "code": "ECMA_RTE",
+  "slug": "reverse-tuck-end",
+  "render": "box"
+ },
+ {
   "code": "ECMA_TUCK_RTE",
   "slug": "ecma-reverse-tuck-end",
   "render": "box"
@@ -1282,6 +1287,11 @@
  {
   "code": "ECMA_WINDOW_RTE",
   "slug": "ecma-window-carton",
+  "render": "box"
+ },
+ {
+  "code": "ECMA_STE",
+  "slug": "straight-tuck-end",
   "render": "box"
  },
  {
@@ -1575,13 +1585,13 @@
   "render": "vessel"
  },
  {
-  "code": "STAND_UP_POUCH",
-  "slug": "stand-up-pouch",
+  "code": "FLEX_STAND_UP_POUCH",
+  "slug": "stand-up-pouch-flex-stand-up-pouch",
   "render": "vessel"
  },
  {
-  "code": "FLEX_STAND_UP_POUCH",
-  "slug": "stand-up-pouch-flex-stand-up-pouch",
+  "code": "STAND_UP_POUCH",
+  "slug": "stand-up-pouch",
   "render": "vessel"
  },
  {

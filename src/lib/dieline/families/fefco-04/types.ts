@@ -9,7 +9,8 @@ import type { DielineModel } from "../../types";
  * into `src/types/structure.ts` / `registry.ts`). `StructureCode` is a closed union owned by
  * the core build, so family codes are plain strings here ("FEFCO_0421_1").
  */
-export type Fefco04Code = `FEFCO_04${string}`;
+/** `MAILER_*`: trade-named mailers outside the FEFCO code book (roll end tuck front, retf.ts). */
+export type Fefco04Code = `FEFCO_04${string}` | `MAILER_${string}`;
 
 export type Fefco04SubFamily =
   | "one-piece-folder" //       0400–0403, 0412–0420: walls hinged on the base, closed by flaps from the walls
@@ -21,7 +22,8 @@ export type Fefco04SubFamily =
   | "glued-tray" //             0443–0445, 0450–0455: corner glue flaps (gluer)
   | "display-tray" //           0435, 0449, 0460: lowered front / header / raised panels for POS
   | "interior-flap-tray" //     0439, 0470–0472: rolled walls ending in interior bottom flaps
-  | "octagonal-tray"; //        0459
+  | "octagonal-tray" //         0459
+  | "mailer"; //                 RETF mailers (retf.ts): single front, rolled end walls with locking tabs, tuck lid
 
 /** Same shape as the core `Generator`, kept local so the family does not depend on GENERATORS. */
 export type FamilyGenerator = (dims: Dims, t: number, features: StructureFeatures) => StructureDraft;

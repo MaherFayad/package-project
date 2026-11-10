@@ -745,6 +745,16 @@
   "kind": "box"
  },
  {
+  "code": "MAILER_RETF",
+  "slug": "mailer-box-tuck-front",
+  "kind": "box"
+ },
+ {
+  "code": "MAILER_RETF_PLAIN",
+  "slug": "mailer-box-tuck-front-plain",
+  "kind": "box"
+ },
+ {
   "code": "FEFCO_0601",
   "slug": "fefco-0601-bliss-box",
   "kind": "box"

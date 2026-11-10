@@ -3,6 +3,7 @@ import type { FeatureSupport } from "../../features";
 import { blissContainer } from "./bliss";
 import { trayKit, type TrayKitOpts } from "./kit";
 import { octagonalTray } from "./octagon";
+import { retfMailer } from "./retf";
 import type { Fefco04Code, Fefco04Definition, Fefco04SubFamily, FamilyGenerator } from "./types";
 import { wrapFolder, type WrapOpts } from "./wraps";
 
@@ -459,7 +460,73 @@ const SPECS: Spec[] = [
     gen: kit({ ears: "none", double: { ends: true, back: true }, bottomFlaps: { ends: true, back: true }, top: { kind: "none" }, displayFront: true }) },
 ];
 
-export const DEFINITIONS: Fefco04Definition[] = SPECS.map(entry);
+/* ───────────────────────── RETF mailers (trade names, retf.ts) ───────────────────────── */
+
+/**
+ * Roll end tuck front mailers, sized for e-commerce (inner mm). Sizes follow the standard ranges
+ * of mailer suppliers (Packlane, Arka, Vistaprint, Pacdora; see docs/audit/mailers.md), rounded
+ * to whole centimetres where Egyptian converters quote them.
+ */
+const MAILER_PRESETS: DimsPreset[] = [
+  // First: the owner's sample proportions (kids apparel brand, L:W:H about 1 : 1 : 0.31).
+  p("kids-apparel", "ملابس أطفال", "Kids apparel", { L: 240, W: 240, H: 75 }, true),
+  p("tshirt", "تيشيرت", "T-shirt", { L: 300, W: 230, H: 50 }, true),
+  p("cosmetics", "مستحضرات تجميل", "Cosmetics set", { L: 230, W: 150, H: 100 }, true),
+  p("accessories", "مجوهرات وإكسسوارات", "Jewellery and accessories", { L: 150, W: 100, H: 50 }, true),
+];
+
+const MAILER_META = {
+  params: { L: { min: 80, max: 600 }, W: { min: 60, max: 450 }, H: { min: 20, max: 250 }, rules: ["H <= W"] },
+  // Owner's die proportions (L:W:H about 1 : 1 : 0.31).
+  defaultDims: { L: 240, W: 240, H: 75 },
+  presets: MAILER_PRESETS,
+  materials: ALL_CORRUGATED,
+  features: { ...NONE, windowFaces: ["top"], tearStrip: true, partitions: true } as FeatureSupport,
+  uses: ["ecommerce", "apparel", "cosmetics", "gift"] as Fefco04Definition["uses"],
+};
+
+const MAILERS: Fefco04Definition[] = [
+  {
+    ...MAILER_META,
+    code: "MAILER_RETF",
+    fefco: "RETF",
+    slug: "mailer-box-tuck-front",
+    family: "CORRUGATED",
+    subFamily: "mailer",
+    standard: "RETF (FEFCO 0427 family)",
+    name: { ar: "علبة بريدية بلسان أمامي", en: "Mailer box (tuck front)" },
+    description: {
+      ar: "علبة كرتون مضلع بجدارين جانبيين مزدوجين يقفلان في القاعدة، وجدار أمامي مفرد، وغطاء بلسان أمامي بجناحين. القطع الشائع لدى المتاجر الإلكترونية.",
+      en: "Roll end tuck front mailer: rolled double side walls that lock into the base, a single front wall and a lid with a winged front tuck. The everyday e-commerce mailer.",
+    },
+    shape: "box",
+    pieces: 1,
+    glued: false,
+    generate: (d, t, f) => retfMailer(d, t, { tuckWings: true, dust: "rounded", tuckRatio: 1 }, f),
+    fidelity: "described",
+  },
+  {
+    ...MAILER_META,
+    code: "MAILER_RETF_PLAIN",
+    fefco: "RETF_PLAIN",
+    slug: "mailer-box-tuck-front-plain",
+    family: "CORRUGATED",
+    subFamily: "mailer",
+    standard: "RETF (FEFCO 0427 family)",
+    name: { ar: "علبة بريدية بلسان أمامي بسيط", en: "Mailer box (tuck front, plain tuck)" },
+    description: {
+      ar: "علبة بريدية بجدارين جانبيين مزدوجين وجدار أمامي مفرد، وغطاء بلسان مستدير الأركان وألسنة جانبية شبه منحرفة. قطع أبسط وأوفر في الكرتون.",
+      en: "Roll end tuck front mailer with a plain round-cornered tuck and trapezoid lid side flaps: a simpler die that uses less board.",
+    },
+    shape: "box",
+    pieces: 1,
+    glued: false,
+    generate: (d, t, f) => retfMailer(d, t, { tuckWings: false, dust: "trapezoid", tuckRatio: 0.75 }, f),
+    fidelity: "interpreted",
+  },
+];
+
+export const DEFINITIONS: Fefco04Definition[] = [...SPECS.map(entry), ...MAILERS];
 
 /** Codes of group 04 already built in the core engine (src/lib/dieline/structures.ts). */
 export const IMPLEMENTED_IN_CORE = { "0422": "FEFCO_0422", "0426": "PIZZA", "0427": "FEFCO_0427" } as const;
