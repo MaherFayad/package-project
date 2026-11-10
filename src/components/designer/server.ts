@@ -150,7 +150,9 @@ export interface LoadedDesign {
 
 export async function loadDesign(id: string, actor: Actor): Promise<LoadedDesign | null> {
   if (!/^[\w-]{1,64}$/.test(id)) return null;
-  const row = await db.design.findUnique({ where: { id }, include: { material: true } });
+  // In a transaction so Hyperdrive's query cache (Workers) never hands back an older version:
+  // its updatedAt is the base of the editor's next save (R10-R1).
+  const row = await db.$transaction((tx) => tx.design.findUnique({ where: { id }, include: { material: true } }));
   if (!row || !canRead(row, actor)) return null;
   const doc = rowToDoc(row);
   if (!doc) return null;
@@ -186,35 +188,41 @@ export async function saveDesign(
   const now = new Date();
 
   if (opts.id) {
-    const row = await db.design.findUnique({ where: { id: opts.id }, select: { ownerId: true, anonId: true, expiresAt: true, updatedAt: true } });
-    if (!row) return { ok: false, status: 404, error: "NOT_FOUND" };
-    if (!canWrite(row, actor, now)) {
-      // Someone else's design, or a signed-in user's own earlier anonymous draft from another
-      // browser. R6-SEC-07: answered like an unknown id (GET does the same), so ids cannot be
-      // probed; the designer saves a new copy on either answer.
-      return { ok: false, status: 404, error: "NOT_FOUND" };
-    }
-    const owned = !!row.ownerId;
-    const patch = {
-      ...data,
-      // Signing in claims the draft (verify-otp also claims by cookie).
-      ...(!owned && actor.user ? { ownerId: actor.user.id, expiresAt: null } : {}),
-      ...(!owned && !actor.user ? { expiresAt: new Date(now.getTime() + ANON_TTL_MS) } : {}),
-    };
-    const conflict = async (): Promise<SaveResult> => {
-      const cur = await db.design.findUnique({ where: { id: opts.id }, include: { material: true } });
-      return { ok: false, status: 409, error: "CONFLICT", updatedAt: (cur?.updatedAt ?? row.updatedAt).toISOString(), doc: cur ? rowToDoc(cur) : null };
-    };
-    if (isStaleBase(opts.baseUpdatedAt, row.updatedAt, opts.force)) return conflict();
-    if (opts.baseUpdatedAt && !opts.force) {
-      // Compare-and-set: only write if nobody saved between the read above and this write.
-      const res = await db.design.updateMany({ where: { id: opts.id, updatedAt: row.updatedAt }, data: patch });
-      if (res.count === 0) return conflict();
-      const after = await db.design.findUnique({ where: { id: opts.id }, select: { id: true, ownerId: true, updatedAt: true } });
-      return { ok: true, id: opts.id, owned: !!after?.ownerId, updatedAt: (after?.updatedAt ?? now).toISOString() };
-    }
-    const updated = await db.design.update({ where: { id: opts.id }, data: patch });
-    return { ok: true, id: updated.id, owned: !!updated.ownerId, updatedAt: updated.updatedAt.toISOString() };
+    const id = opts.id;
+    // One transaction for the read, the compare-and-set and the read-back. Besides being atomic,
+    // it keeps the reads off Hyperdrive's query cache (Workers): a cached `updatedAt` from the
+    // previous save made every later save look stale (409, "changed in another tab").
+    return db.$transaction(async (tx): Promise<SaveResult> => {
+      const row = await tx.design.findUnique({ where: { id: id }, select: { ownerId: true, anonId: true, expiresAt: true, updatedAt: true } });
+      if (!row) return { ok: false, status: 404, error: "NOT_FOUND" };
+      if (!canWrite(row, actor, now)) {
+        // Someone else's design, or a signed-in user's own earlier anonymous draft from another
+        // browser. R6-SEC-07: answered like an unknown id (GET does the same), so ids cannot be
+        // probed; the designer saves a new copy on either answer.
+        return { ok: false, status: 404, error: "NOT_FOUND" };
+      }
+      const owned = !!row.ownerId;
+      const patch = {
+        ...data,
+        // Signing in claims the draft (verify-otp also claims by cookie).
+        ...(!owned && actor.user ? { ownerId: actor.user.id, expiresAt: null } : {}),
+        ...(!owned && !actor.user ? { expiresAt: new Date(now.getTime() + ANON_TTL_MS) } : {}),
+      };
+      const conflict = async (): Promise<SaveResult> => {
+        const cur = await tx.design.findUnique({ where: { id: id }, include: { material: true } });
+        return { ok: false, status: 409, error: "CONFLICT", updatedAt: (cur?.updatedAt ?? row.updatedAt).toISOString(), doc: cur ? rowToDoc(cur) : null };
+      };
+      if (isStaleBase(opts.baseUpdatedAt, row.updatedAt, opts.force)) return conflict();
+      if (opts.baseUpdatedAt && !opts.force) {
+        // Compare-and-set: only write if nobody saved between the read above and this write.
+        const res = await tx.design.updateMany({ where: { id: id, updatedAt: row.updatedAt }, data: patch });
+        if (res.count === 0) return conflict();
+        const after = await tx.design.findUnique({ where: { id: id }, select: { id: true, ownerId: true, updatedAt: true } });
+        return { ok: true, id: id, owned: !!after?.ownerId, updatedAt: (after?.updatedAt ?? now).toISOString() };
+      }
+      const updated = await tx.design.update({ where: { id: id }, data: patch });
+      return { ok: true, id: updated.id, owned: !!updated.ownerId, updatedAt: updated.updatedAt.toISOString() };
+    });
   }
 
   if (actor.user) {
