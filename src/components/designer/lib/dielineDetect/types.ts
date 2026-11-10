@@ -84,6 +84,13 @@ export interface DetectCandidate {
   scaleKnown: boolean;
   /** 0..7: rotation (k × 90° clockwise, low 2 bits) and mirror (bit 2) of the template on the art. */
   orientation: number;
+  /**
+   * Exact fitted inner dims (mm) the template was placed at, and its placement: the model built at
+   * `fitDims` (sheet mm) → image px, canvas `setTransform` order. What the panel remap
+   * (../dielineRemap) starts from.
+   */
+  fitDims: Dims;
+  transform: Affine;
   why: string;
   /** Part scores (0..1). */
   parts: { lines: number; chamferModel: number; chamferImage: number; silhouette: number };

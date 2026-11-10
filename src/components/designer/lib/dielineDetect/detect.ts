@@ -296,7 +296,12 @@ export function detectDieline(img: RgbaImage, opts: DetectOptions = {}): DetectR
   finals.sort(byScore);
   lap("verify");
 
-  const candidates: DetectCandidate[] = finals.slice(0, opts.maxCandidates ?? 5).map(({ m, fit, dims, rs, score }) => {
+  const sheetPx = (f: Final): Affine => {
+    const geo = geoOf(f.m, f.dims)!;
+    return mul(toFull, mul(f.T, [1, 0, 0, 1, -geo.model.dieBounds.x, -geo.model.dieBounds.y]));
+  };
+  const candidates: DetectCandidate[] = finals.slice(0, opts.maxCandidates ?? 5).map((fin) => {
+    const { m, fit, dims, rs, score } = fin;
     const mx = Math.max(dims.L, dims.W, dims.H);
     const prop = { L: r3(dims.L / mx), W: r3(dims.W / mx), H: r3(dims.H / mx) };
     const outDims = sKnown ? { L: r1(dims.L), W: r1(dims.W), H: r1(dims.H) } : { L: Math.round(dims.L), W: Math.round(dims.W), H: Math.round(dims.H) };
@@ -316,6 +321,8 @@ export function detectDieline(img: RgbaImage, opts: DetectOptions = {}): DetectR
       score: r3(Math.max(0, Math.min(1, score))),
       scaleKnown: !!sKnown,
       orientation: fit.lin.o,
+      fitDims: { L: dims.L, W: dims.W, H: dims.H },
+      transform: sheetPx(fin).map((v) => Math.round(v * 1e6) / 1e6) as Affine,
       why,
       parts: { lines: r3(Math.max(0, fit.score)), chamferModel: r3(rs.chamferModel), chamferImage: r3(rs.chamferImage), silhouette: r3(rs.silhouette) },
     };
@@ -325,8 +332,7 @@ export function detectDieline(img: RgbaImage, opts: DetectOptions = {}): DetectR
   const top = finals[0];
   if (top) {
     const geo = geoOf(top.m, top.dims)!;
-    const sheetToDie: Affine = [1, 0, 0, 1, -geo.model.dieBounds.x, -geo.model.dieBounds.y];
-    const M = mul(toFull, mul(top.T, sheetToDie));
+    const M = sheetPx(top);
     const mapSeg = (s: { a: { x: number; y: number }; b: { x: number; y: number } }): PxSeg => {
       const a = round2(apply(M, s.a.x, s.a.y));
       const b = round2(apply(M, s.b.x, s.b.y));
