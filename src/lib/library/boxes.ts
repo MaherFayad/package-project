@@ -12,6 +12,7 @@ import * as SPEC from "./packs/ecma-specials";
 import * as FOODP from "./packs/foodservice";
 import * as RTP from "./packs/rigid-tubes";
 import * as F09 from "./packs/fefco-09";
+import * as BAGP from "./packs/bags";
 
 /**
  * Box library (eager, server and scripts): the 13 core structures plus every family generator
@@ -24,7 +25,7 @@ import * as F09 from "./packs/fefco-09";
 export { baseStructure, isOpenTop } from "./packs/common-box";
 
 /** Packs in precedence order: the first pack wins a duplicate code (core before families). */
-const BOX_PACKS = [CORE, F02, F0305, F04, F0607, TUCK, SPEC, FOODP, RTP, F09];
+const BOX_PACKS = [CORE, F02, F0305, F04, F0607, TUCK, SPEC, FOODP, RTP, F09, BAGP];
 
 function dedupe(list: BoxModelDef[]): BoxModelDef[] {
   const codes = new Set<string>();

@@ -375,7 +375,7 @@ function VirtualGrid({ locale, items }: { locale: Locale; items: CatalogueCard[]
 
 /** R2-13: the boxes we sell most have branded renders (the ones on /boxes); use them instead of the plain model shot. */
 const BRANDED: Record<string, string> = Object.fromEntries(
-  Object.entries(RENDER_ID).filter(([code]) => !["ROLL_LABEL", "PRINTED_POUCH", "PRINTED_TUBE"].includes(code)),
+  Object.entries(RENDER_ID).filter(([code]) => !["ROLL_LABEL", "PRINTED_POUCH", "PRINTED_TUBE", "PAPER_BAG"].includes(code)),
 );
 
 export function ModelCard({ locale, card, eager = false }: { locale: Locale; card: CatalogueCard; eager?: boolean }) {

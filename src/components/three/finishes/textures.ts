@@ -270,3 +270,66 @@ export function woodTexture(): Texture | null {
   tex.anisotropy = 8;
   return tex;
 }
+
+/**
+ * Added with plastic bags: tileable film-wrinkle normal map (tangent space, 256 px). Long, soft
+ * creases (mostly along the bag's height, a few diagonal) plus a faint orange-peel, the way thin
+ * PE film crumples. Used at normalScale ~0.5 on film faces; one tile covers ~120 mm.
+ */
+export function wrinkleNormalTexture(size = 256, seed = 9090): Texture {
+  const rnd = lcg(seed);
+  const h = new Float32Array(size * size);
+  const creases = 26;
+  for (let c = 0; c < creases; c++) {
+    const x0 = rnd() * size;
+    const y0 = rnd() * size;
+    const ang = Math.PI / 2 + (rnd() - 0.5) * (rnd() > 0.7 ? 1.6 : 0.5);
+    const len = size * (0.25 + rnd() * 0.6);
+    const width = 2 + rnd() * 7;
+    const amp = (rnd() > 0.5 ? 1 : -1) * (0.4 + rnd() * 0.6);
+    const dx = Math.cos(ang);
+    const dy = Math.sin(ang);
+    for (let y = 0; y < size; y++)
+      for (let x = 0; x < size; x++) {
+        // distance to the crease segment, on the torus (wrapped)
+        let px = x - x0;
+        let py = y - y0;
+        px -= Math.round(px / size) * size;
+        py -= Math.round(py / size) * size;
+        const along = px * dx + py * dy;
+        if (along < -len / 2 || along > len / 2) continue;
+        const across = -px * dy + py * dx;
+        const fade = Math.cos((along / len) * Math.PI);
+        h[y * size + x] += amp * fade * Math.exp(-(across * across) / (2 * width * width));
+      }
+  }
+  for (let i = 0; i < h.length; i++) h[i] += (rnd() - 0.5) * 0.02;
+  const data = new Uint8Array(size * size * 4);
+  const k = 1.4;
+  for (let y = 0; y < size; y++)
+    for (let x = 0; x < size; x++) {
+      const hx = h[y * size + ((x + 1) % size)] - h[y * size + ((x - 1 + size) % size)];
+      const hy = h[((y + 1) % size) * size + x] - h[((y - 1 + size) % size) * size + x];
+      let nx = -hx * k;
+      let ny = hy * k;
+      let nz = 1;
+      const l = Math.hypot(nx, ny, nz);
+      nx /= l;
+      ny /= l;
+      nz /= l;
+      const i = (y * size + x) * 4;
+      data[i] = Math.round((nx * 0.5 + 0.5) * 255);
+      data[i + 1] = Math.round((ny * 0.5 + 0.5) * 255);
+      data[i + 2] = Math.round((nz * 0.5 + 0.5) * 255);
+      data[i + 3] = 255;
+    }
+  const tex = new DataTexture(data, size, size, RGBAFormat);
+  tex.colorSpace = NoColorSpace;
+  tex.wrapS = tex.wrapT = RepeatWrapping;
+  tex.magFilter = LinearFilter;
+  tex.minFilter = LinearMipmapLinearFilter;
+  tex.generateMipmaps = true;
+  tex.anisotropy = 4;
+  tex.needsUpdate = true;
+  return tex;
+}

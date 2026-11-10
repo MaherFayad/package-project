@@ -18,10 +18,25 @@ export const MATERIAL_CODES = [
   "POUCH_PET_PE", //       PET 12 / PE 80 laminate (printed reverse on the PET)
   "POUCH_KRAFT_PE", //     kraft paper / PE laminate
   "TUBE_PE", //            co-extruded PE tube body (offset or silkscreen printed)
+  // Added by bags: carrier bag papers (src/lib/dieline/families/bags).
+  "BAG_KRAFT_80", //       brown kraft 80 gsm (SOS and light carrier bags)
+  "BAG_KRAFT_120", //      brown kraft 120 gsm (carrier bags)
+  "BAG_WHITE_KRAFT_120", // bleached white kraft 120 gsm
+  "BAG_ART_170", //        coated art paper 170 gsm, laminated (boutique bags)
+  "BAG_ART_210", //        coated art paper 210 gsm, laminated
+  "BAG_ART_250", //        coated art paper 250 gsm, laminated
+  // Added with plastic bags: PE films (microns) and non-woven PP fabric (gsm). No film under
+  // 50 microns: ES 3040/2022 is reported to set that minimum (docs/audit/bags.md).
+  "PE_HDPE_50", //         HDPE film 50 microns (T-shirt, merchandise)
+  "PE_LDPE_50", //         LDPE film 50 microns
+  "PE_LDPE_70", //         LDPE film 70 microns
+  "PE_LDPE_100", //        LDPE film 100 microns (loop and clip handles)
+  "NONWOVEN_PP_80", //     non-woven PP fabric 80 gsm (reusable bags)
+  "NONWOVEN_PP_100", //    non-woven PP fabric 100 gsm
 ] as const;
 export type MaterialCode = (typeof MATERIAL_CODES)[number];
 
-export type BoardType = "CORRUGATED" | "SBS" | "GREYBOARD" | "TUBE" | "LABEL" | "FILM";
+export type BoardType = "CORRUGATED" | "SBS" | "GREYBOARD" | "TUBE" | "LABEL" | "FILM" | "PAPER" | "NONWOVEN";
 export type Flute = "E" | "B";
 export type BoardColor = "KRAFT" | "WHITE";
 

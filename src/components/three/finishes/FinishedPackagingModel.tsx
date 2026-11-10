@@ -1,5 +1,6 @@
 "use client";
 
+import { filmAppearance } from "@/lib/dieline/materials";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import { Color } from "three";
@@ -48,7 +49,9 @@ export function FinishedPackagingModel({ surfaceFinish, ...model }: FinishedPack
   const invalidate = useThree((s) => s.invalidate);
   const reduced = usePrefersReducedMotion();
   const { dieline } = model;
-  const appearance = useMemo(() => configBoardAppearance(board), [board]);
+  // Plastic bags: the design's film tone (clear, white, coloured) over the film's look.
+  const film = dieline.features?.bagFilm;
+  const appearance = useMemo(() => filmAppearance(configBoardAppearance(board), film), [board, film?.tone, film?.color]); // eslint-disable-line react-hooks/exhaustive-deps
   const coating = coatingOf(finishes);
   const layers = fluteLayers(board);
   const detail = detailFor(board, coating);

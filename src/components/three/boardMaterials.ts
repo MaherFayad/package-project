@@ -172,6 +172,14 @@ export function createBoardMaterials(input: BoardMaterialInput): BoardMaterialSe
     roughness: 0.95,
     metalness: 0,
   });
+  // Added with plastic bags: translucent film (the finished-board path does the same in setBoard).
+  if (appearance.film && !appearance.film.fabric && appearance.film.opacity < 0.999) {
+    for (const m of [outside, inside]) {
+      m.transparent = true;
+      m.opacity = appearance.film.opacity;
+      m.depthWrite = appearance.film.opacity > 0.8;
+    }
+  }
   owned.push(outside, inside, edge);
 
   return {

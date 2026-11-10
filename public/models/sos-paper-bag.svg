@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360" viewBox="0 0 480 360" role="img" aria-label="SOS bag, no handle">
+
+<ellipse cx="240" cy="307.8" rx="63.3" ry="19.8" fill="rgba(0,0,0,.07)"/>
+<g stroke="rgba(0,0,0,.18)" stroke-width="1" stroke-linejoin="round"><path d="M173.4 271.5L267 302.3L291.8 284.5L200.6 254.5Z" fill-rule="evenodd" fill="#a2754c"/><path d="M197.2 57.8L197.2 259.7L213.1 245.1L213.1 43.2Z" fill-rule="evenodd" fill="#7a5839"/><path d="M212.9 43.2L212.9 245.1L306.6 275.9L306.6 74Z" fill-rule="evenodd" fill="#8e6642"/><path d="M173.4 69.8L173.4 271.6L197.2 259.7L197.2 57.8Z" fill-rule="evenodd" fill="#7a5839"/><path d="M306.6 74L306.6 275.8L282.8 287.8L282.8 85.9Z" fill-rule="evenodd" fill="#825f41"/><path d="M173.4 69.7L267 100.5L267 302.4L173.4 271.6Z" fill-rule="evenodd" fill="#976f4b"/><path d="M282.8 85.9L282.8 287.8L267 302.4L267 100.5Z" fill-rule="evenodd" fill="#825f41"/></g>
+</svg>

@@ -5,15 +5,16 @@ import type { DielineAccessory } from "@/lib/dieline";
  * Non-board parts of a closed box (ribbon pull, wire bail, cord), from `DielineModel.accessories`.
  * Closed-pose frame in mm: origin bottom centre, x right, y up, z front.
  */
-export function buildAccessoryGeometry(a: DielineAccessory, samples = 32): BufferGeometry {
+export function buildAccessoryGeometry(a: DielineAccessory, samples = a.samples ?? Math.max(32, a.path.length * 2)): BufferGeometry {
   const curve = new CatmullRomCurve3(a.path.map(([x, y, z]) => new Vector3(x, y, z)), false, "centripetal");
-  if (a.kind !== "ribbon") return new TubeGeometry(curve, samples, a.radiusMm ?? 1, 10, false);
+  if (a.kind !== "ribbon") return new TubeGeometry(curve, samples, a.radiusMm ?? 1, a.finish === "paper" || a.finish === "cotton" ? 7 : 10, false);
   // flat satin ribbon: a strip swept along the centre line, its width across the path's side vector
   const w = (a.widthMm ?? 10) / 2;
   const pos = new Float32Array((samples + 1) * 2 * 3);
   const nor = new Float32Array((samples + 1) * 2 * 3);
   const uv = new Float32Array((samples + 1) * 2 * 2);
-  const up = new Vector3(0, 1, 0);
+  // Bag handles lie flat on the bag wall (`normal`); ribbon pulls keep their width across world up.
+  const up = a.normal ? new Vector3(...a.normal).normalize() : new Vector3(0, 1, 0);
   const side = new Vector3();
   const n = new Vector3();
   for (let i = 0; i <= samples; i++) {
@@ -48,5 +49,11 @@ export function buildAccessoryGeometry(a: DielineAccessory, samples = 32): Buffe
 
 export function createAccessoryMaterial(a: DielineAccessory): Material {
   if (a.kind === "wire") return new MeshPhysicalMaterial({ color: new Color(a.color ?? "#b9bdc2"), metalness: 1, roughness: 0.3 });
+  // Added by bags: handle looks (twisted paper, cotton and PP rope, grosgrain).
+  const color = new Color(a.color ?? "#2b2b2b");
+  if (a.finish === "paper") return new MeshPhysicalMaterial({ color, roughness: 0.92, side: DoubleSide });
+  if (a.finish === "cotton") return new MeshPhysicalMaterial({ color, roughness: 0.97, sheen: 0.5, sheenRoughness: 0.8, sheenColor: new Color("#ffffff"), side: DoubleSide });
+  if (a.finish === "plastic") return new MeshPhysicalMaterial({ color, roughness: 0.42, clearcoat: 0.3, clearcoatRoughness: 0.5, side: DoubleSide });
+  if (a.finish === "grosgrain") return new MeshPhysicalMaterial({ color, roughness: 0.75, sheen: 0.35, sheenRoughness: 0.6, sheenColor: new Color("#ffffff"), side: DoubleSide });
   return new MeshPhysicalMaterial({ color: new Color(a.color ?? "#2b2b2b"), roughness: 0.38, sheen: 0.6, sheenRoughness: 0.35, sheenColor: new Color("#ffffff"), side: DoubleSide });
 }

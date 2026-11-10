@@ -230,6 +230,12 @@ export interface DielineAccessory {
   /** sRGB hex; default satin black for ribbons, steel for wire. */
   color?: string;
   label?: string;
+  /** Added by bags: surface look of a cord or ribbon (default satin). */
+  finish?: "satin" | "paper" | "cotton" | "plastic" | "grosgrain";
+  /** Added by bags: ribbons lie flat on this plane normal (default: width across world up). */
+  normal?: [number, number, number];
+  /** Added by bags: sweep samples along the path (default 32); dense twisted strands need more. */
+  samples?: number;
 }
 
 export interface DielineOptions {

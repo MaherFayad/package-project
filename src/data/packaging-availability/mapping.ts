@@ -28,6 +28,8 @@ export const STRUCTURE_TO_AVAILABILITY: Partial<Record<StructureCode, string>> =
   ROLL_LABEL: "labels/self-adhesive",
   PRINTED_POUCH: "flexible/stand-up-pouch",
   PRINTED_TUBE: "cosmetic-pharma/squeeze-tube",
+  PAPER_BAG: "bags/paper-kraft-carrier",
+  PLASTIC_BAG: "bags/plastic-die-cut",
 };
 
 /** Current vessel kinds (src/lib/vessels/types.ts). */

@@ -31,6 +31,7 @@ const PACK_LOADERS: Record<ModelSource, () => Promise<Pack>> = {
   "ecma-specials": () => import("./packs/ecma-specials"),
   foodservice: () => import("./packs/foodservice"),
   "rigid-tubes": () => import("./packs/rigid-tubes"),
+  bags: () => import("./packs/bags"),
   "vessel-core": () => import("./packs/vessel-core"),
   "vessel-bottles": () => import("./packs/vessel-bottles"),
   "vessel-cosmetic": () => import("./packs/vessel-cosmetic"),

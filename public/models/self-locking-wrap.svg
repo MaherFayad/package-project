@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="480" height="360" viewBox="0 0 480 360" role="img" aria-label="Self-locking wrap-around">
 
 <ellipse cx="240" cy="295" rx="164.2" ry="19.8" fill="rgba(0,0,0,.07)"/>
-<g stroke="rgba(0,0,0,.18)" stroke-width="1" stroke-linejoin="round"><path d="M173.4 139.9L412.1 218.3L412.1 134.9L173.4 56.5Z" fill-rule="evenodd" fill="#c9c8c2"/><path d="M67.2 210L305.9 288.5L412.8 216.8L174.1 138.3Z" fill-rule="evenodd" fill="#e6e4de"/><path d="M174.1 56L412.8 134.5L305.9 206.2L67.2 127.7ZM167.8 100.8L206.1 113.4L205 114.1L166.7 101.5ZM287.1 140L325.4 152.6L324.3 153.3L286 140.7Z" fill-rule="evenodd" fill="#f0f0ed"/><path d="M67.2 127.7L305.9 206.2L305.9 289.6L67.2 211.1Z" fill-rule="evenodd" fill="#d2d2d0"/></g>
+<g stroke="rgba(0,0,0,.18)" stroke-width="1" stroke-linejoin="round"><path d="M173.4 139.9L412.1 218.3L412.1 134.9L173.4 56.5Z" fill-rule="evenodd" fill="#cccbc8"/><path d="M67.2 210L305.9 288.5L412.8 216.8L174.1 138.3Z" fill-rule="evenodd" fill="#e8e7e5"/><path d="M174.1 56L412.8 134.5L305.9 206.2L67.2 127.7ZM167.8 100.8L206.1 113.4L205 114.1L166.7 101.5ZM287.1 140L325.4 152.6L324.3 153.3L286 140.7Z" fill-rule="evenodd" fill="#f0f0ed"/><path d="M67.2 127.7L305.9 206.2L305.9 289.6L67.2 211.1Z" fill-rule="evenodd" fill="#d2d2d0"/></g>
 </svg>

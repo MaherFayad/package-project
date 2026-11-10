@@ -11,6 +11,7 @@ import * as TUCK from "@/lib/dieline/families/ecma-tuck";
 import * as SPEC from "@/lib/dieline/families/ecma-specials";
 import * as FOOD from "@/lib/dieline/families/foodservice";
 import * as RT from "@/lib/dieline/families/rigid-tubes";
+import * as BAGS from "@/lib/dieline/families/bags";
 import * as BTL from "@/lib/vessels/families/bottles";
 import * as COS from "@/lib/vessels/families/cosmetic-cans";
 import * as FLEX from "@/lib/vessels/families/flexible";
@@ -45,6 +46,7 @@ const FAMILY_SOURCES: [string, readonly FamilyDefLike[]][] = [
   ["ecma-specials", SPEC.DEFINITIONS as unknown as FamilyDefLike[]],
   ["foodservice", FOOD.DEFINITIONS as unknown as FamilyDefLike[]],
   ["rigid-tubes", RT.DEFINITIONS as unknown as FamilyDefLike[]],
+  ["bags", BAGS.ALL_BAG_DEFINITIONS as unknown as FamilyDefLike[]],
   ["vessel-bottles", BTL.DEFINITIONS as unknown as FamilyDefLike[]],
   ["vessel-cosmetic", COS.DEFINITIONS as unknown as FamilyDefLike[]],
   ["vessel-flexible", FLEX.DEFINITIONS as unknown as FamilyDefLike[]],

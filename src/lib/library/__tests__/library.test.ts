@@ -22,7 +22,7 @@ describe("model library catalogue", () => {
 
   it("covers every picker group and keeps the 13 core box structures", () => {
     for (const g of MODEL_GROUPS) expect(MODELS.some((m) => m.group === g), g).toBe(true);
-    for (const c of STRUCTURE_CODES.filter((c) => !["ROLL_LABEL", "PRINTED_POUCH", "PRINTED_TUBE"].includes(c))) expect(modelByCode(c)?.kind, c).toBe("box");
+    for (const c of STRUCTURE_CODES.filter((c) => !["ROLL_LABEL", "PRINTED_POUCH", "PRINTED_TUBE", "PAPER_BAG", "PLASTIC_BAG"].includes(c))) expect(modelByCode(c)?.kind, c).toBe("box");
     expect(BOX_MODELS.length).toBeGreaterThan(250);
     expect(VESSEL_MODELS.length).toBeGreaterThan(80);
   });

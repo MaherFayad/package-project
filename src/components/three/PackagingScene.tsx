@@ -173,6 +173,8 @@ export function modelKey(dieline: DielineModel): string {
  */
 function frameFor(dieline: DielineModel, progress: number, camera: PerspectiveCamera, view: { theta: number; phi: number } = heroView(dieline, progress)) {
   const size = boundsAt(dieline, progress).getSize(new Vector3()).multiplyScalar(MM);
+  // Added by bags: handles stand above the mouth of a closed bag; keep them in the frame.
+  if (progress > 0.99 && dieline.accessories?.length) size.y = Math.max(size.y, MM * Math.max(...dieline.accessories.flatMap((a) => a.path.map((q) => q[1]))));
   const box = size.clone();
   // the scale reference can (StudioStage, +x side of the box) is part of the framed set
   if (camera.userData.elbaWithCan) {

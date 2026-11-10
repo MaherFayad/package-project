@@ -2,7 +2,7 @@
 
 ## Purpose
 
-One shared geometry engine drives the 3D view, the flat dieline, preflight, pricing area and the print PDF. The library registers every model the designer can open: **372 models** (276 boxes and 96 containers). The public catalogue adds 40 quote-only family models on top (412 total, see `catalogue.md`).
+One shared geometry engine drives the 3D view, the flat dieline, preflight, pricing area and the print PDF. The library registers every model the designer can open: **387 models** (291 boxes, 15 of them store bags, and 96 containers). The public catalogue adds 36 quote-only family models on top (423 total, see `catalogue.md`).
 
 ## Key files
 
@@ -17,7 +17,7 @@ One shared geometry engine drives the 3D view, the flat dieline, preflight, pric
 | `src/lib/library/model-index.generated.ts` | `MODEL_INDEX: code -> [pack, slug]`. Generated |
 | `src/lib/library/doc.ts` | `docGeometry(doc)`, `normaliseDocModel`, `baseOf`, `docBoardArea`, `vesselPrintMaterials` |
 | `src/lib/dieline/` | `generateDieline`, `fold.ts` (poses, bounds, faces), `svg.ts`, `structures.ts` (13 core generators), `builder.ts`, local `./math` |
-| `src/lib/dieline/families/<fam>/` | ecma-specials, ecma-tuck, fefco-02, fefco-03-05, fefco-04, fefco-06-07, fefco-09, foodservice, rigid-tubes. Each has a README, `definitions`, generators, tests |
+| `src/lib/dieline/families/<fam>/` | bags, ecma-specials, ecma-tuck, fefco-02, fefco-03-05, fefco-04, fefco-06-07, fefco-09, foodservice, rigid-tubes. Each has a README, `definitions`, generators, tests |
 | `src/lib/vessels/` | `profile.ts` (neck finishes, `buildProfile`), `labels.ts`, `layout.ts`, `stocks.ts`, `registry.ts` (`VESSELS`), `families/{bottles,cosmetic-cans,flexible}` |
 | `src/components/three/index.ts` | Light, lazy entry: `PackagingSceneLazy`, `VesselSceneLazy`, `loadEngineStack` |
 | `src/components/three/engine.ts` | Eager three/R3F exports. Import only from lazily loaded modules |
@@ -33,6 +33,7 @@ One shared geometry engine drives the 3D view, the flat dieline, preflight, pric
 | fefco-02 | 24 | foodservice | 8 |
 | fefco-03-05 | 32 | rigid-tubes | 14 |
 | fefco-04 | 82 | vessel-core | 10 |
+| bags | 15 | | |
 | fefco-06-07 | 33 | vessel-bottles | 34 |
 | fefco-09 | 36 | vessel-cosmetic | 37 |
 | ecma-tuck | 14 | vessel-flexible | 15 |
@@ -76,7 +77,7 @@ Design doc -> docGeometry(doc) -> DielineModel -> PackagingModel (3D) | DielineV
 
 ## Geometry snapshot workflow
 
-- Test: `src/lib/dieline/__tests__/geometry-snapshot.test.ts`. File: `__snapshots__/geometry.json` (292 keys: 276 box models plus 16 core structures with every feature on).
+- Test: `src/lib/dieline/__tests__/geometry-snapshot.test.ts`. File: `__snapshots__/geometry.json` (290 keys: 274 box models plus 16 core structures with every feature on).
 - Per model it builds at `defaultDims` with the first material's thickness and stores truncated sha256 hashes of the dieline JSON, the fold poses at 0, 0.37 and 1, the bounds at 0, 0.5 and 1, and the structure illustration SVG. Errors are stored as `"throws: ..."`.
 - It fails when the key set changes or any hash changes. Update only for intended geometry changes and say so in the commit. Timeout 300 s.
 - There are no image snapshots. `docs/audit/3d-visual-geometry.json` is audit tool output (`docs/audit/tools/geometry-check.ts`), not a test.
@@ -90,7 +91,7 @@ Design doc -> docGeometry(doc) -> DielineModel -> PackagingModel (3D) | DielineV
 | `src/lib/dieline/__tests__/*`, `families/*/__tests__` | Generators, folding, SVG, the snapshot |
 | `src/lib/vessels/__tests__`, `src/components/three/__tests__` | Profiles, labels, renderer geometry |
 | `e2e/models.spec.ts` | Opens every model in the designer, changes size, board and a finish, checks no errors and a painted canvas, writes `docs/screenshots/models/<code>.png` (desktop only, slow) |
-| `e2e/catalogue-models.spec.ts` | All 412 catalogue renders, contact sheets in `docs/screenshots/models/catalogue/` |
+| `e2e/catalogue-models.spec.ts` | All 410 catalogue renders, contact sheets in `docs/screenshots/models/catalogue/` |
 
 Dev pages: `/[locale]/dev/3d?model=<code>`, `/[locale]/dev/finishes`, `/[locale]/dev/catalogue/<code>`. Perf tools: `scripts/perf/measure-3d.cjs`, `shots-3d.cjs`, `leak-shared-canvas.cjs`.
 

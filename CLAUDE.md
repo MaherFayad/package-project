@@ -2,7 +2,7 @@
 
 Elba is a packaging marketplace for Egypt. A brand designs its packaging on a live 3D model, gets an instant price (or asks for a quote) and orders it from a vetted Egyptian printer. Elba is the merchant of record: it sells at its own price and buys from the printer at the rate card price.
 
-- **372 designer models** (276 boxes + 96 containers) live in `src/lib/library`. The public **catalogue lists 412** (`src/data/catalogue`): the 372 plus 40 quote-only family models (FEFCO 09 fittings, moulded pulp, cups, lids, bags, blister).
+- **387 designer models** (291 boxes incl. 15 store bags: 7 paper, 7 plastic film, 1 non-woven + 96 containers) live in `src/lib/library`. The public **catalogue lists 423** (`src/data/catalogue`): the 387 plus 36 quote-only family models (FEFCO 09 fittings, moulded pulp, cups, lids, food bags, blister).
 - Stack: Next.js 15 App Router, React 19, TypeScript (strict), Prisma 6 (SQLite in dev and tests, Postgres on Neon in production), three.js + react-three-fiber, pdf-lib, zod, Vitest, Playwright.
 - Locales: `/ar` (default, RTL) and `/en`. Every page lives under `/{locale}/...`.
 - Production: one Cloudflare Worker (OpenNext) + Neon via Hyperdrive + R2. Read `docs/DEPLOY-CLOUDFLARE.md` before touching deploy code. It is current.
@@ -20,7 +20,7 @@ Docs index: `docs/README.md`. Architecture: `docs/ARCHITECTURE.md`. Area guides:
 | `src/app/[locale]/vendor`, `admin`, `dev` | Printer portal, ops console, dev tools (gated by `devPagesEnabled()`) |
 | `src/app/api` | Route handlers: auth, designs, quote, orders, payments, vendor files/uploads, events, jobs, webhooks |
 | `src/lib/library` | Model registry (packs, lazy loader, `model-index.generated.ts`, `doc.ts`) |
-| `src/lib/dieline` | Box dielines in mm, folding (`fold.ts`), SVG, families under `families/` |
+| `src/lib/dieline` | Box dielines in mm, folding (`fold.ts`), SVG, families under `families/` (store bags: `families/bags`) |
 | `src/lib/vessels` | Bottles, jars, cans, tubes, flexible packs: profiles and print areas |
 | `src/components/three` | Renderer (`engine.ts` eager, `index.ts` lazy entry), finishes, vessels |
 | `src/components/designer` | Editor UI, `server.ts` (save, load, share), `lib/` (history, preflight, storage) |
@@ -30,7 +30,7 @@ Docs index: `docs/README.md`. Architecture: `docs/ARCHITECTURE.md`. Area guides:
 | `src/components/{vendor,admin}` | Portal and console UI plus `server/` (actions, queries) and `lib/` (pure rules) |
 | `src/components/marketing` | Public site shell and the R6 kit (`kit/`), page sections |
 | `src/components/ui` | App UI kit (Polaris-style). Import per file, never the barrel |
-| `src/data/catalogue`, `src/data/packaging-availability` | 412-row catalogue, order modes, Egypt availability research |
+| `src/data/catalogue`, `src/data/packaging-availability` | 410-row catalogue, order modes, Egypt availability research |
 | `src/i18n` | Dictionaries (`en.ts` defines the shape), namespaces, scopes |
 | `src/types` | Shared types and the String "enum" unions |
 | `prisma/` | `schema.prisma` (source of truth, SQLite), `postgres/` (generated copy + migrations), `seed.ts` |
@@ -125,7 +125,7 @@ Playwright starts `npm run start -- -p $E2E_PORT` (default 3100) with `ELBA_E2E=
 - **Postgres `contains` is case-sensitive**, SQLite is not (admin audit search).
 - **`next build` prerenders with live data**, so it needs a seeded database.
 - **e2e specs are parallel-safe** only because they clone orders and create users through `e2e/fixtures/factory.ts`. Do not mutate seeded rows in a spec without restoring them.
-- **Slow specs**: `e2e/models.spec.ts` (all 372 models, software WebGL), `e2e/catalogue-models.spec.ts` (412), `journeys/*`, `storefront.spec.ts`. Run them alone with `--project=desktop`.
+- **Slow specs**: `e2e/models.spec.ts` (all 370 models, software WebGL), `e2e/catalogue-models.spec.ts` (410), `journeys/*`, `storefront.spec.ts`. Run them alone with `--project=desktop`.
 - **Demo sign-in**: admin `01000000001`, buyer `01000000002`, printers `01000000010` to `01000000015`. The OTP is shown in the dev banner.
 
 ## Where to look first

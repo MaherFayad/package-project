@@ -1,4 +1,5 @@
 import type { LocalizedText, Mm } from "./common";
+import type { BagFilmChoice, BagHandleChoice } from "./bag";
 
 /**
  * Catalog structure codes (FEFCO for corrugated, ECMA for folding cartons).
@@ -22,11 +23,14 @@ export const STRUCTURE_CODES = [
   "ROLL_LABEL", //    Die-cut roll labels and shrink sleeves (sized from the container's print areas)
   "PRINTED_POUCH", // Printed flexible laminate pouch (stand-up, flat, gusset bags)
   "PRINTED_TUBE", //  Printed laminate / PE squeeze tube body
+  // Added by bags: paper carrier bags (kraft machine bags and laminated art-paper boutique bags).
+  "PAPER_BAG", //     Paper carrier bag: tube with side gussets, pasted block bottom, top turnover, handles
+  "PLASTIC_BAG", //   PE film or non-woven PP carrier bag (T-shirt, die-cut, loop, clip, drawstring, merchandise)
 ] as const;
 export type StructureCode = (typeof STRUCTURE_CODES)[number];
 
 /** RIGID = wrapped greyboard set-up boxes; TUBE = spiral-wound paper tubes (composite cans). */
-export type StructureFamily = "CORRUGATED" | "FOLDING_CARTON" | "RIGID" | "TUBE" | "LABEL" | "FLEXIBLE";
+export type StructureFamily = "CORRUGATED" | "FOLDING_CARTON" | "RIGID" | "TUBE" | "LABEL" | "FLEXIBLE" | "PAPER_BAG" | "PLASTIC_BAG";
 
 /** Inner dimensions in millimetres. L = length (front width), W = width (depth), H = height. */
 export interface Dims {
@@ -101,4 +105,8 @@ export interface StructureFeatures {
   lidHeightMm?: number;
   /** Lowered display front (shelf-ready trays). */
   displayFront?: boolean;
+  /** Added by bags: handle type and colour of a paper carrier bag. Absent = the model's default. */
+  bagHandle?: BagHandleChoice | null;
+  /** Added with plastic bags: film colour and gusset of a plastic carrier bag. Absent = the model's default. */
+  bagFilm?: BagFilmChoice | null;
 }

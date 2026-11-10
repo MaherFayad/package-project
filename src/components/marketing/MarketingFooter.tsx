@@ -21,6 +21,7 @@ export function MarketingFooter({ locale }: { locale: Locale }) {
       links: [
         { href: `${base}/boxes`, label: t("marketing.footer.boxes") },
         { href: `${base}/bottles`, label: t("marketing.footer.bottles") },
+        { href: `${base}/bags`, label: t("marketing.footer.bags") },
         { href: `${base}/designer`, label: t("marketing.footer.designer") },
         { href: `${base}/catalog`, label: t("marketing.footer.styles") },
       ],

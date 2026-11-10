@@ -23,6 +23,7 @@ import { fill } from "@/components/ui/strings";
 import { describeVesselDraft, featureSupportOf, neckFinishLabel, finishChoicesFor, materialChoices, printSidesChoices, type Choice } from "./lib/config";
 import { modelImage } from "./ModelPicker";
 import { FlexOptionsGroup } from "./FlexOptionsGroup";
+import { BagHandleGroup } from "./BagHandleGroup";
 import { EGYPT_BADGE, egyptOf, orderModeOf } from "@/data/catalogue/order-mode";
 import { parseMmInput } from "./lib/mm";
 import { Check, Info } from "lucide-react";
@@ -460,6 +461,8 @@ function ViewGroup({ view, onView, vessel }: Pick<ConfigPanelProps, "view" | "on
 
 /* ───────────────────────────── boxes ───────────────────────────── */
 
+/** Added by bags: a bag is sized width x gusset x height. */
+const BAG_AXIS_KEY = { L: "library.panel.width", W: "library.panel.gusset", H: "library.panel.height" } as const;
 const AXIS_KEY = { L: "designer.box.length", W: "designer.box.width", H: "designer.box.height" } as const;
 
 function BoxSection({ doc, model, geo, view, onView, onGeometry, onFinish, onFinishSwap, onPrintSides }: ConfigPanelProps & { model: BoxModelDef }) {
@@ -539,7 +542,7 @@ function BoxSection({ doc, model, geo, view, onView, onGeometry, onFinish, onFin
           {axes.map((axis) => (
             <TextField
               key={axis}
-              label={cylinder && axis === "L" ? t("library.panel.diameter") : t(AXIS_KEY[axis])}
+              label={cylinder && axis === "L" ? t("library.panel.diameter") : model.family === "PAPER_BAG" || model.family === "PLASTIC_BAG" ? t(BAG_AXIS_KEY[axis]) : t(AXIS_KEY[axis])}
               type="text"
               inputMode="decimal"
               spinbutton={{
@@ -602,6 +605,10 @@ function BoxSection({ doc, model, geo, view, onView, onGeometry, onFinish, onFin
       </Text>
 
       <FinishesGroup doc={doc} model={model} onFinish={onFinish} onFinishSwap={onFinishSwap} />
+
+      {model.family === "PAPER_BAG" || model.family === "PLASTIC_BAG" ? (
+        <BagHandleGroup modelCode={model.code} features={doc.features} onChange={(bagHandle) => setFeature({ bagHandle })} onFilm={(bagFilm) => setFeature({ bagFilm })} />
+      ) : null}
 
       {support.windowFaces.length || support.handle || support.tearStrip || support.thumbNotch || support.partitions || support.lidHeight || support.displayFront ? (
         <fieldset className={styles.group}>

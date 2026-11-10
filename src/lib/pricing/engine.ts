@@ -10,6 +10,7 @@ import { CITY_ZONE, deliveryEstimate, flatPackBundles } from "./delivery";
 import { sumPiasters, toPiasters, vatOf, withMargin } from "./money";
 import { nearbyStandardSizes, sameSize, vendorHasDie } from "./standard";
 import { interpolateUnit } from "./tiers";
+import { bagAreaRatio, bagCostExtras, FILM_WEIGHT_SHARE, plasticCostExtras, type BagCostExtras, type PlasticCostExtras } from "./bags";
 import type {
   DeliveryZone,
   IneligibleReason,
@@ -50,6 +51,10 @@ const LABEL = {
   DIE: "pricing.line.die",
   FINISH: "pricing.line.finish",
   SHIPPING: "pricing.line.shipping",
+  PRODUCT_BAG: "pricing.line.productBag",
+  BAG_HANDLE: "pricing.line.bagHandle",
+  BAG_BOARD: "pricing.line.bagBoard",
+  EPR_FEE: "pricing.line.eprFee",
 } as const;
 
 function normaliseFinishes(finishes: FinishCode[]): FinishCode[] {
@@ -75,10 +80,12 @@ export function printCost(
   areaRatio: number,
   boardMult: number,
   cfg: PricingConfig,
+  /** Added with plastic bags: share of the unit price that scales with area (default cfg.boardShare). */
+  share = cfg.boardShare,
 ): { chosen: CostBreakdown; offset: CostBreakdown; digital: CostBreakdown | null } {
   const q = input.quantity;
   const tierUnit = interpolateUnit(card.qtyTiers, q);
-  const sized = tierUnit * (cfg.boardShare * areaRatio * boardMult + (1 - cfg.boardShare));
+  const sized = tierUnit * (share * areaRatio * boardMult + (1 - share));
   const sides = input.printSides === "BOTH" ? 1 + card.printSidesSurchargePct / 100 : 1;
 
   const offsetUnit = sized * (cfg.colourUnitFactor[input.colours] ?? 1) * sides;
@@ -89,7 +96,8 @@ export function printCost(
   const offset: CostBreakdown = { method: "OFFSET", unit: offsetUnit, setup: offsetSetup, total: offsetUnit * q + offsetSetup };
 
   let digital: CostBreakdown | null = null;
-  if (vendor.capabilities.digitalShortRun && q <= cfg.digital.maxQty) {
+  // Plastic bags print on the film line (flexo): no digital short run on PE film.
+  if (vendor.capabilities.digitalShortRun && q <= cfg.digital.maxQty && card.structureCode !== "PLASTIC_BAG") {
     const unit = sized * cfg.digital.unitPremium * sides; // colour count does not change digital cost
     const setup = card.setupPiasters * cfg.digital.setupShare;
     digital = { method: "DIGITAL", unit, setup, total: unit * q + setup };
@@ -166,14 +174,18 @@ function priceVendor(
   index: PriceIndexRow,
   cfg: PricingConfig,
   validUntil: string,
+  bag: BagCostExtras | null = null,
+  plastic: PlasticCostExtras | null = null,
 ): VendorOffer {
   const q = input.quantity;
   const m = cfg.marginPct;
-  const rawRatio = area.blankAreaM2 / card.referenceAreaM2;
+  // Bags are quoted by size band (printers' price lists), boxes by their exact blank area.
+  const rawRatio = bag ? bagAreaRatio(area.blankAreaM2, card.referenceAreaM2) : area.blankAreaM2 / card.referenceAreaM2;
   const areaRatio = Math.min(cfg.areaRatioMax, Math.max(cfg.areaRatioMin, rawRatio));
   const boardMult = boardMultiplier(index, material.code);
 
-  const { chosen } = printCost(card, vendor, input, areaRatio, boardMult, cfg);
+  // Film bags are sold by weight: most of the price follows the area (x the film's own gsm, in its tiers).
+  const { chosen } = printCost(card, vendor, input, areaRatio, boardMult, cfg, plastic ? FILM_WEIGHT_SHARE : cfg.boardShare);
 
   // Finishes: unit surcharge scales with board area (lamination/UV are per m²); setup once.
   const finishLines = finishes.map((f) => {
@@ -192,7 +204,7 @@ function priceVendor(
 
   const lines: QuoteLine[] = [];
   const unitSell = withMargin(chosen.unit, m);
-  lines.push({ kind: "PRODUCT", labelKey: LABEL.PRODUCT, quantity: q, unitPiasters: unitSell, totalPiasters: unitSell * q });
+  lines.push({ kind: "PRODUCT", labelKey: bag || plastic ? LABEL.PRODUCT_BAG : LABEL.PRODUCT, quantity: q, unitPiasters: unitSell, totalPiasters: unitSell * q });
 
   const setupBuy = chosen.setup + sumPiasters(finishLines.map((x) => x.setup));
   const setupSell = withMargin(setupBuy, m);
@@ -206,6 +218,20 @@ function priceVendor(
     const u = withMargin(fl.buyUnit, m);
     if (u > 0) lines.push({ kind: "FINISH", labelKey: `finishes.${fl.f}`, quantity: q, unitPiasters: u, totalPiasters: u * q });
   }
+  // Bags: the handle (cord, tape, rope, ribbon, die-cut patch) and the board parts, per bag.
+  const bagUnits = bag
+    ? [{ key: LABEL.BAG_HANDLE, buy: bag.handleUnit }, { key: LABEL.BAG_BOARD, buy: bag.partsUnit }].filter((x) => x.buy > 0)
+    : plastic
+      ? [{ key: LABEL.BAG_HANDLE, buy: plastic.handleUnit }].filter((x) => x.buy > 0)
+      : [];
+  for (const b of bagUnits) {
+    const u = withMargin(b.buy, m);
+    lines.push({ kind: "FINISH", labelKey: b.key, quantity: q, unitPiasters: u, totalPiasters: u * q });
+  }
+
+  // Plastic bags: the EPR producer fee (PM Decree 662/2025), at cost, rounded up to the piaster.
+  const eprUnit = plastic && plastic.eprUnit > 0 ? Math.ceil(plastic.eprUnit) : 0;
+  if (eprUnit > 0) lines.push({ kind: "FINISH", labelKey: LABEL.EPR_FEE, quantity: q, unitPiasters: eprUnit, totalPiasters: eprUnit * q });
 
   const bundle = flatPackBundles(input.structureCode, area, material, q, cfg);
   const shipping = deliveryEstimate(bundle, CITY_ZONE[vendor.city] ?? "GREATER_CAIRO", input.zone, cfg);
@@ -221,7 +247,7 @@ function priceVendor(
   lead = Math.max(cfg.minLeadTimeDays, lead);
 
   const vendorCost = toPiasters(
-    chosen.unit * q + setupBuy + dieBuy + sumPiasters(finishLines.map((x) => toPiasters(x.buyUnit * q))),
+    chosen.unit * q + setupBuy + dieBuy + sumPiasters(finishLines.map((x) => toPiasters(x.buyUnit * q))) + sumPiasters(bagUnits.map((x) => toPiasters(x.buy * q))) + eprUnit * q,
   );
   const shippingCost = shipping.pricePiasters;
 
@@ -344,6 +370,8 @@ export function quote(input: QuoteInput, data: PricingData, opts: QuoteOptions =
   const index = resolvePriceIndex(cfg.priceIndex, now);
   const validUntil = new Date(now.getTime() + cfg.quoteValidityHours * 3_600_000).toISOString();
   const finishes = normaliseFinishes(input.finishes);
+  const plastic = input.structureCode === "PLASTIC_BAG" ? plasticCostExtras({ modelCode: input.model?.code, features: input.model?.features, material: material.code, gsm: material.gsm, areaM2: area.blankAreaM2 }) : null;
+  const bag = input.structureCode === "PAPER_BAG" ? bagCostExtras({ modelCode: input.model?.code, features: input.model?.features, material: material.code, paperAreaM2: area.blankAreaM2 }) : null;
 
   const offers: VendorOffer[] = [];
   const ineligible: InstantQuote["ineligible"] = [];
@@ -354,11 +382,15 @@ export function quote(input: QuoteInput, data: PricingData, opts: QuoteOptions =
       ineligible.push({ vendorId: vendor.id, reason: e.reason });
       continue;
     }
+    if ((bag || plastic) && input.quantity < Math.max((bag ?? plastic)!.moq, vendor.minOrderQty)) {
+      ineligible.push({ vendorId: vendor.id, reason: "BELOW_MIN_QTY" });
+      continue;
+    }
     if (order && input.model && !vendorListsModel(order.mode, input.model.code, vendor.capabilities.models)) {
       ineligible.push({ vendorId: vendor.id, reason: "MODEL_NOT_LISTED" });
       continue;
     }
-    offers.push(priceVendor(vendor, e.card, data, input, material, finishes, area, index, cfg, validUntil));
+    offers.push(priceVendor(vendor, e.card, data, input, material, finishes, area, index, cfg, validUntil, bag, plastic));
   }
   const ranked = rankOffers(offers, cfg);
   if (order?.mode === "listed" && ranked.length === 0) {

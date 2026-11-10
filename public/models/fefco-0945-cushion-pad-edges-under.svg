@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="480" height="360" viewBox="0 0 480 360" role="img" aria-label="Cushion pad, four edges folded under">
 
 <ellipse cx="240" cy="254.4" rx="164.2" ry="19.8" fill="rgba(0,0,0,.07)"/>
-<g stroke="rgba(0,0,0,.18)" stroke-width="1" stroke-linejoin="round"><path d="M158.4 110.2L394.4 187.8L412.8 175.5L176.8 97.9Z" fill-rule="evenodd" fill="#a1784d"/><path d="M176.8 96.6L412.8 174.2L303.2 247.7L67.2 170.1Z" fill-rule="evenodd" fill="#b1875a"/><path d="M67.2 171.4L303.2 249L321.6 236.7L85.6 159.1Z" fill-rule="evenodd" fill="#a1784d"/></g>
+<g stroke="rgba(0,0,0,.18)" stroke-width="1" stroke-linejoin="round"><path d="M158.4 110.2L85.6 159.1L111.8 167.7L184.7 118.8Z" fill-rule="evenodd" fill="#a1784d"/><path d="M158.4 110.2L394.4 187.8L412.8 175.5L176.8 97.9Z" fill-rule="evenodd" fill="#a1784d"/><path d="M176.8 96.6L412.8 174.2L303.2 247.7L67.2 170.1Z" fill-rule="evenodd" fill="#b1875a"/><path d="M67.2 171.4L303.2 249L321.6 236.7L85.6 159.1Z" fill-rule="evenodd" fill="#a1784d"/><path d="M368.2 179.2L295.3 228L321.6 236.7L394.4 187.8Z" fill-rule="evenodd" fill="#a1784d"/></g>
 </svg>

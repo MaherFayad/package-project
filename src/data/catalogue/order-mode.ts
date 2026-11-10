@@ -42,11 +42,19 @@ const FILLING_LINE = new Set(["folding-carton/aseptic-liquid", "folding-carton/g
  */
 const NO_PRICE_BASIS = new Set(["flexible/flow-wrap", "flexible/pillow-bag", "flexible/stick-pack", "flexible/bag-in-box", "food-service/noodle-box", "cosmetic-pharma/aluminium-tube"]);
 
+/**
+ * Store bags no seeded printer prices instantly (src/lib/dieline/families/bags, `orderMode`):
+ * die-cut handle bags need a patch and hand-hole die per size, bottle bags are rare among Egyptian
+ * bag makers; soft-loop, clip and drawstring film bags have no Egyptian supplier on record
+ * (docs/audit/bags.md). A unit test keeps this equal to the definitions.
+ */
+export const QUOTE_ONLY_BAGS = new Set(["BAG_DIECUT_PATCH", "BAG_BOTTLE", "PBAG_SOFT_LOOP", "PBAG_CLIP", "PBAG_DRAWSTRING"]);
+
 export function orderModeForEntry(e: Pick<CatalogueEntry, "code" | "source" | "style" | "subFamily" | "availableInEgypt" | "quoteOnly">): { mode: OrderMode; reason: OrderModeReason } {
   // Not made by Egyptian SME converters at all: preview, even for quote-only stock (octabin, R4-13).
   if (FILLING_LINE.has(e.subFamily)) return { mode: "preview", reason: "FILLING_LINE" };
   if (e.availableInEgypt === "rare") return { mode: "preview", reason: "RARE_IN_EGYPT" };
-  if (e.quoteOnly || NO_PRICE_BASIS.has(e.subFamily)) return { mode: "quote", reason: "QUOTE_ONLY_STOCK" };
+  if (e.quoteOnly || NO_PRICE_BASIS.has(e.subFamily) || QUOTE_ONLY_BAGS.has(e.code)) return { mode: "quote", reason: "QUOTE_ONLY_STOCK" };
   // Core structures (ECMA_CLB …) are listed by printers through capabilities.structures already.
   if (e.source !== "core" && (SPECIAL_GLUING_CODES.has(e.code) || SPECIAL_GLUING.test(e.style))) return { mode: "listed", reason: "SPECIAL_GLUING" };
   return { mode: "instant", reason: "STANDARD" };

@@ -185,6 +185,16 @@ const LIBRARY_PRICING: { code: StructureCode; slug: string; refArea: number; bas
   { code: "ROLL_LABEL", slug: "roll-labels", refArea: 0.015, baseTiers: [1.6, 1.05, 0.72, 0.52, 0.42], dieCost: 900 },
   { code: "PRINTED_POUCH", slug: "printed-pouches", refArea: 0.15, baseTiers: [16, 10.5, 7.5, 5.6, 4.6], dieCost: 0 },
   { code: "PRINTED_TUBE", slug: "printed-tubes", refArea: 0.016, baseTiers: [11, 7.4, 5.2, 4, 3.3], dieCost: 0 },
+  // Added by bags: a MEDIUM bag (26 x 12 x 35 cm, paper blank 0.36 m², src/lib/pricing/bags.ts),
+  // brown kraft 120 gsm, 4 colours, handle and board parts excluded. Calibrated on public Egyptian
+  // lists (docs/audit/bags.md): about EGP 10 to 11 sell for a small 1-colour kraft bag at 300 to 500.
+  // The die cost applies to laminated art bags only (sheet die-cut); kraft bags are made on the tube machine.
+  { code: "PAPER_BAG", slug: "paper-bags", refArea: 0.36, baseTiers: [16, 11, 8.5, 7, 6], dieCost: 900 },
+  // Added with plastic bags: a 30 x 8 x 40 cm bottom-gusset die-cut bag (film blank 0.365 m²), LDPE
+  // 50 microns (16.8 g), 4 colours. Tiers are EGP 120 / 95 / 80 / 70 / 62 per kg of bags (buy), so
+  // 2,000 bags sell near EGP 88/kg before the EPR fee: the top of the public EGP 58 to 90/kg band
+  // for printed PE (short runs cost more per kg). EPR, handles and MOQ: src/lib/pricing/bags.ts.
+  { code: "PLASTIC_BAG", slug: "plastic-bags", refArea: 0.365, baseTiers: [2.02, 1.6, 1.34, 1.18, 1.04], dieCost: 0 },
 ];
 for (const { code, slug, ...money } of LIBRARY_PRICING) {
   const def = STRUCTURES[code];
@@ -222,6 +232,22 @@ const materials = [
   { code: "POUCH_PET_PE", family: "FLEXIBLE", boardType: "FILM", flute: null, color: "WHITE", gsm: 95, thicknessMm: 0.1, nameAr: "رقائق أكياس PET/PE", nameEn: "PET/PE pouch laminate", foodSafe: true, mult: 1 },
   { code: "POUCH_KRAFT_PE", family: "FLEXIBLE", boardType: "FILM", flute: null, color: "KRAFT", gsm: 140, thicknessMm: 0.15, nameAr: "رقائق أكياس كرافت/PE", nameEn: "Kraft/PE pouch laminate", foodSafe: true, mult: 1.15 },
   { code: "TUBE_PE", family: "FLEXIBLE", boardType: "FILM", flute: null, color: "WHITE", gsm: 380, thicknessMm: 0.4, nameAr: "جسم أنبوب بولي إيثيلين", nameEn: "PE tube body", foodSafe: true, mult: 1 },
+  // Added by bags. mult is against brown kraft 120; laminated art bags are handmade (print, laminate,
+  // die-cut, punch, form and thread by hand), lamination included.
+  { code: "BAG_KRAFT_80", family: "PAPER_BAG", boardType: "PAPER", flute: null, color: "KRAFT", gsm: 80, thicknessMm: 0.11, nameAr: "كرافت بني 80 جم", nameEn: "Brown kraft 80 gsm", foodSafe: true, mult: 0.85 },
+  { code: "BAG_KRAFT_120", family: "PAPER_BAG", boardType: "PAPER", flute: null, color: "KRAFT", gsm: 120, thicknessMm: 0.16, nameAr: "كرافت بني 120 جم", nameEn: "Brown kraft 120 gsm", foodSafe: true, mult: 1 },
+  { code: "BAG_WHITE_KRAFT_120", family: "PAPER_BAG", boardType: "PAPER", flute: null, color: "WHITE", gsm: 120, thicknessMm: 0.15, nameAr: "كرافت أبيض 120 جم", nameEn: "White kraft 120 gsm", foodSafe: true, mult: 1.15 },
+  { code: "BAG_ART_170", family: "PAPER_BAG", boardType: "PAPER", flute: null, color: "WHITE", gsm: 170, thicknessMm: 0.18, nameAr: "كوشيه 170 جم مسلفن", nameEn: "Art paper 170 gsm, laminated", foodSafe: false, mult: 3.9 },
+  { code: "BAG_ART_210", family: "PAPER_BAG", boardType: "PAPER", flute: null, color: "WHITE", gsm: 210, thicknessMm: 0.22, nameAr: "كوشيه 210 جم مسلفن", nameEn: "Art paper 210 gsm, laminated", foodSafe: false, mult: 4.3 },
+  // Added with plastic bags. mult is per bag against LDPE 50 microns (weight ratio for films;
+  // non-woven bags are sewn: fabric + cutting + sewing, calibrated to about EGP 10 per bag at 500).
+  { code: "PE_HDPE_50", family: "PLASTIC_BAG", boardType: "FILM", flute: null, color: "WHITE", gsm: 48, thicknessMm: 0.05, nameAr: "فيلم HDPE سمك 50 ميكرون", nameEn: "HDPE film 50 microns", foodSafe: true, mult: 1.03 },
+  { code: "PE_LDPE_50", family: "PLASTIC_BAG", boardType: "FILM", flute: null, color: "WHITE", gsm: 46, thicknessMm: 0.05, nameAr: "فيلم LDPE سمك 50 ميكرون", nameEn: "LDPE film 50 microns", foodSafe: true, mult: 1 },
+  { code: "PE_LDPE_70", family: "PLASTIC_BAG", boardType: "FILM", flute: null, color: "WHITE", gsm: 64, thicknessMm: 0.07, nameAr: "فيلم LDPE سمك 70 ميكرون", nameEn: "LDPE film 70 microns", foodSafe: true, mult: 1.39 },
+  { code: "PE_LDPE_100", family: "PLASTIC_BAG", boardType: "FILM", flute: null, color: "WHITE", gsm: 92, thicknessMm: 0.1, nameAr: "فيلم LDPE سمك 100 ميكرون", nameEn: "LDPE film 100 microns", foodSafe: true, mult: 2 },
+  { code: "NONWOVEN_PP_80", family: "PLASTIC_BAG", boardType: "NONWOVEN", flute: null, color: "WHITE", gsm: 80, thicknessMm: 0.4, nameAr: "قماش غير منسوج 80 جم", nameEn: "Non-woven PP 80 gsm", foodSafe: false, mult: 6 },
+  { code: "NONWOVEN_PP_100", family: "PLASTIC_BAG", boardType: "NONWOVEN", flute: null, color: "WHITE", gsm: 100, thicknessMm: 0.5, nameAr: "قماش غير منسوج 100 جم", nameEn: "Non-woven PP 100 gsm", foodSafe: false, mult: 7 },
+  { code: "BAG_ART_250", family: "PAPER_BAG", boardType: "PAPER", flute: null, color: "WHITE", gsm: 250, thicknessMm: 0.27, nameAr: "كوشيه 250 جم مسلفن", nameEn: "Art paper 250 gsm, laminated", foodSafe: false, mult: 4.8 },
 ] as const;
 
 const finishes = [
@@ -265,6 +291,10 @@ const labelStocks: MaterialCode[] = ["LABEL_PAPER", "LABEL_WHITE_BOPP", "LABEL_C
 const flexStocks: MaterialCode[] = ["POUCH_PET_PE", "POUCH_KRAFT_PE", "TUBE_PE"];
 const corr: MaterialCode[] = ["E_FLUTE_KRAFT", "E_FLUTE_WHITE", "B_FLUTE_KRAFT"];
 const fc: MaterialCode[] = ["SBS_300", "SBS_350"];
+const kraftBags: MaterialCode[] = ["BAG_KRAFT_80", "BAG_KRAFT_120", "BAG_WHITE_KRAFT_120"];
+const artBags: MaterialCode[] = ["BAG_ART_170", "BAG_ART_210", "BAG_ART_250"];
+const filmBags: MaterialCode[] = ["PE_HDPE_50", "PE_LDPE_50", "PE_LDPE_70", "PE_LDPE_100"];
+const nonwovenBags: MaterialCode[] = ["NONWOVEN_PP_80", "NONWOVEN_PP_100"];
 
 const vendors: VendorSeed[] = [
   {
@@ -304,8 +334,9 @@ const vendors: VendorSeed[] = [
       { kind: "FOLDER_GLUER", model: "Bobst Expertfold", count: 1 },
       { kind: "UV_COATER", model: "Spot UV screen coater", count: 1 },
       { kind: "LAMINATOR", model: "Thermal laminator", count: 1 },
+      { kind: "DIE_CUTTER", model: "Handmade bag line: eyelet punch, forming and rope threading tables", count: 1 },
     ],
-    capabilities: { structures: ["ECMA_RTE", "ECMA_STE", "SLEEVE", "ECMA_CLB", "ECMA_SLB", "GABLE_BOX", "RIGID_BOX", "PAPER_TUBE"], materials: [...fc, "GREYBOARD_WRAP", "KRAFT_TUBE"], finishes: allFinishes, maxColors: 5, digitalShortRun: false, monthlyCapacityUnits: 1_500_000 },
+    capabilities: { structures: ["ECMA_RTE", "ECMA_STE", "SLEEVE", "ECMA_CLB", "ECMA_SLB", "GABLE_BOX", "RIGID_BOX", "PAPER_TUBE", "PAPER_BAG"], materials: [...fc, "GREYBOARD_WRAP", "KRAFT_TUBE", ...artBags], finishes: allFinishes, maxColors: 5, digitalShortRun: false, monthlyCapacityUnits: 1_500_000 },
     certifications: [
       { code: "FOOD_SAFE", issuer: "NFSA", validUntil: "2027-03-31" },
       { code: "ISO_22000", issuer: "TÜV", validUntil: "2027-09-30" },
@@ -331,7 +362,7 @@ const vendors: VendorSeed[] = [
       { kind: "DIGITAL", model: "Flatbed UV printer", count: 2 },
       { kind: "DIE_CUTTER", model: "Digital cutting table", count: 2 },
     ],
-    capabilities: { structures: ["FEFCO_0427", "ECMA_RTE", "ECMA_STE", "SLEEVE", "ECMA_SLB", "GABLE_BOX", "RIGID_BOX", "PAPER_TUBE", "ROLL_LABEL"], materials: ["E_FLUTE_KRAFT", "E_FLUTE_WHITE", "SBS_300", "SBS_350", "GREYBOARD_WRAP", "KRAFT_TUBE", "LABEL_PAPER", "LABEL_WHITE_BOPP", "LABEL_CLEAR_BOPP"], finishes: ["NONE", "MATTE_LAMINATION", "GLOSS_LAMINATION", "VARNISH"], maxColors: 4, digitalShortRun: true, monthlyCapacityUnits: 60_000 },
+    capabilities: { structures: ["FEFCO_0427", "ECMA_RTE", "ECMA_STE", "SLEEVE", "ECMA_SLB", "GABLE_BOX", "RIGID_BOX", "PAPER_TUBE", "ROLL_LABEL", "PAPER_BAG", "PLASTIC_BAG"], materials: ["E_FLUTE_KRAFT", "E_FLUTE_WHITE", "SBS_300", "SBS_350", "GREYBOARD_WRAP", "KRAFT_TUBE", "LABEL_PAPER", "LABEL_WHITE_BOPP", "LABEL_CLEAR_BOPP", "BAG_KRAFT_120", "BAG_WHITE_KRAFT_120", "BAG_ART_210", ...nonwovenBags], finishes: ["NONE", "MATTE_LAMINATION", "GLOSS_LAMINATION", "VARNISH"], maxColors: 4, digitalShortRun: true, monthlyCapacityUnits: 60_000 },
     certifications: [],
     rating: 4.5, ratingCount: 61, onTimePct: 98, leadTimeDays: 4, minOrderQty: 50,
     serviceAreas: ["CAIRO", "GIZA", "OBOUR"],
@@ -354,8 +385,9 @@ const vendors: VendorSeed[] = [
       { kind: "FLEXO", model: "2-colour flexo printer", count: 1 },
       { kind: "DIE_CUTTER", model: "Automatic platen die-cutter", count: 2 },
       { kind: "LAMINATOR", model: "Water-based laminator", count: 1 },
+      { kind: "FLEXO", model: "Paper bag machine, square bottom, twisted and flat handles, inline 2-colour flexo", count: 1 },
     ],
-    capabilities: { structures: ["PIZZA", "FEFCO_0201", "FEFCO_0427", "ECMA_STE", "FEFCO_0422", "ECMA_CLB"], materials: ["E_FLUTE_KRAFT", "E_FLUTE_WHITE", "B_FLUTE_KRAFT", "SBS_300"], finishes: ["NONE", "MATTE_LAMINATION", "GLOSS_LAMINATION"], maxColors: 4, digitalShortRun: false, monthlyCapacityUnits: 300_000 },
+    capabilities: { structures: ["PIZZA", "FEFCO_0201", "FEFCO_0427", "ECMA_STE", "FEFCO_0422", "ECMA_CLB", "PAPER_BAG"], materials: ["E_FLUTE_KRAFT", "E_FLUTE_WHITE", "B_FLUTE_KRAFT", "SBS_300", ...kraftBags], finishes: ["NONE", "MATTE_LAMINATION", "GLOSS_LAMINATION", "VARNISH"], maxColors: 4, digitalShortRun: false, monthlyCapacityUnits: 300_000 },
     certifications: [{ code: "FOOD_SAFE", issuer: "NFSA", validUntil: "2027-01-31" }],
     rating: 4.4, ratingCount: 77, onTimePct: 89, leadTimeDays: 8, minOrderQty: 250,
     serviceAreas: ["ALEXANDRIA", "CAIRO"],
@@ -402,8 +434,9 @@ const vendors: VendorSeed[] = [
       { kind: "DIGITAL", model: "Digital label press (CMYK + white)", count: 1 },
       { kind: "LAMINATOR", model: "Solventless laminator", count: 1 },
       { kind: "DIE_CUTTER", model: "Rotary die-cutting and slitting line", count: 1 },
+      { kind: "FLEXO", model: "Bag-making line for PE film: T-shirt, die-cut, flat bags, 6-colour CI flexo", count: 1 },
     ],
-    capabilities: { structures: ["ROLL_LABEL", "PRINTED_POUCH", "PRINTED_TUBE"], materials: [...labelStocks, ...flexStocks], finishes: ["NONE", "MATTE_LAMINATION", "GLOSS_LAMINATION", "SOFT_TOUCH_LAMINATION", "VARNISH", "SPOT_UV", "HOT_FOIL", "EMBOSS"], maxColors: 8, digitalShortRun: true, monthlyCapacityUnits: 5_000_000 },
+    capabilities: { structures: ["ROLL_LABEL", "PRINTED_POUCH", "PRINTED_TUBE", "PLASTIC_BAG"], materials: [...labelStocks, ...flexStocks, ...filmBags], finishes: ["NONE", "MATTE_LAMINATION", "GLOSS_LAMINATION", "SOFT_TOUCH_LAMINATION", "VARNISH", "SPOT_UV", "HOT_FOIL", "EMBOSS"], maxColors: 8, digitalShortRun: true, monthlyCapacityUnits: 5_000_000 },
     certifications: [{ code: "ISO_22000", issuer: "TÜV", validUntil: "2027-08-31" }],
     rating: 4.6, ratingCount: 52, onTimePct: 94, leadTimeDays: 7, minOrderQty: 500,
     serviceAreas: ["CAIRO", "GIZA", "OBOUR", "TENTH_OF_RAMADAN", "ALEXANDRIA"],
@@ -515,20 +548,34 @@ async function main() {
           unitPiasters: egp(st.seed.baseTiers[i] * mat.mult * v.priceMult),
         }));
         const finishSurcharges: Partial<Record<FinishCode, number>> = {};
+        const bag = sc === "PAPER_BAG";
+        const plasticBag = sc === "PLASTIC_BAG";
+        const artBag = bag && mc.startsWith("BAG_ART_");
         for (const f of v.capabilities.finishes) {
           const base = finishes.find((x) => x.code === f)!;
+          // Bags: kraft is never laminated or spot-UV coated (bag machine flexo); art bags include
+          // matte or gloss lamination in the paper price. Surcharges scale with the bag's paper area.
+          if (bag && !artBag && !["NONE", "VARNISH", "HOT_FOIL"].includes(f)) continue;
+          // Plastic bags: printed on the film line or screen printed; no finishes are priced.
+          if (plasticBag && f !== "NONE") continue;
+          if (artBag && (f === "MATTE_LAMINATION" || f === "GLOSS_LAMINATION")) {
+            finishSurcharges[f] = 0;
+            continue;
+          }
           // Labels and films are small: finish surcharges scale with their reference area.
-          const small = st.seed.family === "LABEL" || st.seed.family === "FLEXIBLE" ? Math.min(1, st.seed.refArea / 0.12) : 1;
+          const small = st.seed.family === "LABEL" || st.seed.family === "FLEXIBLE" ? Math.min(1, st.seed.refArea / 0.12) : bag && (f === "VARNISH" || f === "SOFT_TOUCH_LAMINATION") ? st.seed.refArea / 0.12 : 1;
           finishSurcharges[f] = egp(base.unit * v.priceMult * small);
         }
         await db.rateCard.create({
           data: {
             vendorId: row.id, structureId: st.id, materialId: mat.id,
             qtyTiers: tiers as object[], referenceAreaM2: st.seed.refArea,
-            setupPiasters: egp(st.seed.family === "CORRUGATED" ? 600 : 450),
-            dieCostPiasters: egp(st.seed.dieCost * v.priceMult),
+            // Bags: flexo plates (kraft) or offset plates + make-ready (art).
+            setupPiasters: egp(st.seed.family === "CORRUGATED" ? 600 : bag || plasticBag ? 900 : 450),
+            dieCostPiasters: egp((bag && !artBag ? 0 : st.seed.dieCost) * v.priceMult),
             printSidesSurchargePct: 35,
-            finishSurcharges, leadTimeDays: v.leadTimeDays,
+            // Handmade bags take longer: print, laminate, die-cut, then form and thread by hand.
+            finishSurcharges, leadTimeDays: v.leadTimeDays + (artBag ? 6 : bag ? 2 : plasticBag ? 3 : 0),
           },
         });
       }

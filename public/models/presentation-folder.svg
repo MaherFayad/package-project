@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="480" height="360" viewBox="0 0 480 360" role="img" aria-label="Presentation folder">
 
 <ellipse cx="240" cy="307.8" rx="66.9" ry="19.8" fill="rgba(0,0,0,.07)"/>
-<g stroke="rgba(0,0,0,.18)" stroke-width="1" stroke-linejoin="round"><path d="M309.9 302.2L169.9 256.2L169.9 205.3L209.7 201.2L309.9 234.2ZM261.7 257.2L261.4 257L261.4 247.4L261.7 247.5ZM204.5 238.3L204.1 238.2L204.1 228.6L204.5 228.7Z" fill-rule="evenodd" fill="#d2d2d0"/><path d="M170.3 43.2L170.3 255.9L310.4 301.9L310.4 89.2Z" fill-rule="evenodd" fill="#c9c8c2"/><path d="M169.6 43.7L309.7 89.7L309.7 302.4L169.6 256.4Z" fill-rule="evenodd" fill="#d2d2d0"/><path d="M310.1 300.7L310.1 235.4L302.5 237.8L302.5 293.3Z" fill-rule="evenodd" fill="#c9c8c2"/></g>
+<g stroke="rgba(0,0,0,.18)" stroke-width="1" stroke-linejoin="round"><path d="M309.9 302.2L169.9 256.2L169.9 205.3L209.7 201.2L309.9 234.2ZM261.7 257.2L261.4 257L261.4 247.4L261.7 247.5ZM204.5 238.3L204.1 238.2L204.1 228.6L204.5 228.7Z" fill-rule="evenodd" fill="#d2d2d0"/><path d="M170.3 43.2L170.3 255.9L310.4 301.9L310.4 89.2Z" fill-rule="evenodd" fill="#cccbc8"/><path d="M169.6 43.7L309.7 89.7L309.7 302.4L169.6 256.4Z" fill-rule="evenodd" fill="#d2d2d0"/><path d="M310.1 300.7L310.1 235.4L302.5 237.8L302.5 293.3Z" fill-rule="evenodd" fill="#cccbc8"/></g>
 </svg>
