@@ -1415,6 +1415,46 @@
   "render": "box"
  },
  {
+  "code": "PBAG_DIECUT",
+  "slug": "plastic-die-cut-handle-bag",
+  "render": "box"
+ },
+ {
+  "code": "PBAG_KIDNEY",
+  "slug": "plastic-kidney-handle-bag",
+  "render": "box"
+ },
+ {
+  "code": "PBAG_DRAWSTRING",
+  "slug": "plastic-drawstring-bag",
+  "render": "box"
+ },
+ {
+  "code": "PBAG_CLIP",
+  "slug": "plastic-rigid-clip-bag",
+  "render": "box"
+ },
+ {
+  "code": "PBAG_SOFT_LOOP",
+  "slug": "plastic-soft-loop-bag",
+  "render": "box"
+ },
+ {
+  "code": "PBAG_MERCHANDISE",
+  "slug": "plastic-merchandise-bag",
+  "render": "box"
+ },
+ {
+  "code": "PBAG_TSHIRT",
+  "slug": "plastic-tshirt-bag",
+  "render": "box"
+ },
+ {
+  "code": "PBAG_NONWOVEN",
+  "slug": "non-woven-shopping-bag",
+  "render": "box"
+ },
+ {
   "code": "FS_FRIES_SCOOP",
   "slug": "fries-scoop",
   "render": "box"

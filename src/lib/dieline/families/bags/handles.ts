@@ -304,7 +304,7 @@ export const HANDLE_LINES: Record<BagHandleKind, { ar: string; en: string }> = {
   PP_ROPE: { ar: "حبل ناعم يمر في ثقوب ويعقد", en: "Smooth cord, threaded and knotted" },
   SATIN_RIBBON: { ar: "شريط لامع يعقد من الداخل", en: "Glossy ribbon, knotted inside" },
   GROSGRAIN_RIBBON: { ar: "شريط مضلع ملصق داخل الثنية", en: "Ribbed ribbon glued inside the turnover" },
-  DIE_CUT: { ar: "فتحة في الوجهين بثنية مقواة", en: "Hole through both faces, reinforced top" },
+  DIE_CUT: { ar: "فتحة يد في الوجهين", en: "Hand hole through both faces" },
   NONE: { ar: "كيس مفتوح دون يد", en: "Open bag, no handle" },
   TSHIRT: { ar: "حزامان من الفيلم نفسه", en: "Two straps cut from the film" },
   DIE_CUT_PATCH: { ar: "رقعة فيلم ملحومة حول الفتحة", en: "Film patch welded round the hole" },

@@ -1,4 +1,4 @@
-# Store bags (أكياس): research, models, pricing
+# Store bags (أكياس): paper, plastic and reusable bags
 
 Owner ask (2026-11-10): "start working on bags like store bags with all its sizes and prints". This report covers what Egyptian retail and e-commerce brands order, what Elba now builds (7 designer models with live 3D, sizes, handles, prints and instant prices), how the prices are set, and what is still open.
 
@@ -79,7 +79,7 @@ Not found: a published shoe or garment bag size. Elba's "Shoe box" preset (38 x 
 - Prices seen 2026-11 (pages undated): AMPRO 7.96 to 42.94 per printed bag at MOQ 500; Dotline 7.55 (15 x 10 x 5) to 35.80 (60 x 39 x 10) at 500; Bag 'n Pack 3,290 for 300 one-colour kraft bags 15 x 25 x 8 (about 11 per bag); Upack plain kraft with thread handle 5 to 17 per bag; Al-Hadaf coated rope bag about 50 at 1,000 (snippet); Amazon.eg 50 large kraft bags at 430 (snippet, not verified).
 - Paper: Edfu and Qous state mills cut prices by about EGP 4,000/t from 1 July 2026; private mills sell at 38,000 to 41,000/t (Al-Mal News, 2026-08-23, https://almalnews.com/2131258/).
 
-These sources are in `src/data/packaging-availability/sources.ts`, and the new `paper-bag` availability family (kraft-carrier, sos, boutique, die-cut, bottle) in `data.ts` carries them.
+These sources are in `src/data/packaging-availability/sources.ts`. The `bags` availability family in `data.ts` carries them, sub-grouped paper (kraft-carrier, sos, boutique, die-cut, bottle), plastic (tshirt, die-cut, loop-clip, merchandise) and reusable (non-woven).
 
 ## 2. Models
 
@@ -97,7 +97,7 @@ Each model is a real die (glue seam, two gusset halves per side with the centre 
 
 Designer: picker group «أكياس» / "Bags" (the pouches group is now «أكياس مرنة», "Pouches"), size presets as cards, Width / Gusset / Height fields, paper cards, a handle card per type with a drawing, a colour swatch row. The handle is stored in `DesignDoc.features.bagHandle` (zod-validated), so the die, the 3D view and the price agree.
 
-Earlier quote-only rows: `FS_BAG_TWISTED_HANDLE`, `FS_BAG_FLAT_HANDLE`, `FS_BAG_SOS` and `FS_BAG_BOTTLE` were promoted (removed from `foodservice` and pointed at the new codes through `BAG_CODE_ALIASES`; the SOS slug `sos-paper-bag` is kept). `FS_BAG_MERCHANDISE` (flat, no gusset) and `FS_BAG_BREAD_WINDOW` (window film, food paper) stay quote-only food bags. Catalogue: 413 rows (377 designer models).
+Earlier quote-only rows: `FS_BAG_TWISTED_HANDLE`, `FS_BAG_FLAT_HANDLE`, `FS_BAG_SOS` and `FS_BAG_BOTTLE` were promoted (removed from `foodservice` and pointed at the new codes through `BAG_CODE_ALIASES`; the SOS slug `sos-paper-bag` is kept). `FS_BAG_MERCHANDISE` (flat, no gusset) and `FS_BAG_BREAD_WINDOW` (window film, food paper) stay quote-only food bags. Catalogue: 421 rows (385 designer models, plastic bags included, section 8).
 
 ## 3. Pricing basis
 
@@ -129,7 +129,7 @@ Checks against the public figures: a small 1-colour kraft bag is EGP 10 to 14 at
 ## 4. Public site
 
 - `/ar/bags`, `/en/bags`: every bag with its 3D render, sizes in cm (width x gusset x height), handles, and the price per bag the designer would show at the default size (1 colour on kraft, full colour on laminated paper, handle included, before VAT and delivery) or "Price by quote". No reviews, counts or logos: Elba has none for bags.
-- Header (Products menu) and footer link "Paper bags" / «أكياس ورقية»; the catalogue (`/catalog`) has a new "Paper bags" family with five kinds.
+- Header (Products menu) and footer link "Bags" / «أكياس»; the catalogue (`/catalog`) has one "Bags" family with paper, plastic and reusable kinds.
 - Arabic copy: MSA, noun-form labels («اختيار الكيس», «تصميم كيس كرافت»), no diacritics, «كيس» plural forms in `formatCount`.
 
 ## 5. Screenshots (`docs/screenshots/audit/bags/`)
@@ -148,7 +148,7 @@ Checks against the public figures: a small 1-colour kraft bag is EGP 10 to 14 at
 - e2e: `npx playwright test e2e/models.spec.ts --project=desktop --trace off --grep "model BAG_"` (7 models) and `e2e/bags.spec.ts` (designer journey, screenshots, bags page).
 - Geometry snapshot: 8 new keys (7 bags + the PAPER_BAG core structure), no existing key changed.
 
-## 7. Open items
+## 7. Open items (paper)
 
 1. **Copy says "box" around bags.** The designer's price badge and sheet say "500 boxes ... per box", and invoices print "Printed boxes" for the product line (quotes now carry "Printed bags", `pricing.line.productBag`). The badge lives in `src/components/designer/**`, which another session is changing; switch its noun on `model.family === "PAPER_BAG"` after that merge.
 2. **Handle and board costs are estimates.** No Egyptian source prices handles separately. Ask Alex Print House and Delta Cartons for a handle line on their rate cards; the vendor portal rate-card form does not edit `BAG_HANDLE_COST` yet (it is code config).
@@ -159,3 +159,101 @@ Checks against the public figures: a small 1-colour kraft bag is EGP 10 to 14 at
 7. **Marketing render**: `RENDER_ID.PAPER_BAG` points at the gable box render until a bag render is made with `scripts/marketing` (the /bags page uses the 3D catalogue thumbnails instead).
 8. **Store SEO pages** (`/boxes/paper-bags/...`) are not generated for bags (`SEO_SIZES.PAPER_BAG` is empty); the /bags page and the catalogue rows carry the bag pages.
 9. **Postgres**: no schema change (new values are String enums and seed rows), so no migration.
+
+## 8. Plastic and reusable bags (scope added 2026-11-10: "don't forget also the normal plastic bags")
+
+### Research (searched 2026-11-10)
+
+Types advertised by Egyptian makers:
+- T-shirt (vest) bags, printed and plain bags, gift bags, supermarket and clothing bags, window bags, "biodegradable" bags: Oliatra, 6th of October (https://oliatra.com/مصنع-اكياس-بلاستيك-مطبوعة/, 28 Mar 2026; https://oliatra.com/اسعار-شنط-بلاستيك-مطبوعة/, 21 May 2026).
+- HDPE, LDPE and PP bags and rolls, plain or printed, handled bags: Helwan Plast, 6th of October (https://helwanplast.com/plastic-bags-manufacturers).
+- Pharmacy, supermarket, restaurant and clothing-store bags, up to 6 colours: Brotherplast, Mansoura (https://www.brotherplast.com/).
+- Printed, plain, basket, shipping and OPP bags: Karamaplast, Cairo (https://karamaplast.com/); El Gawhara, Giza (https://elgawharaeg.com/).
+- Printed cloth bags with handles: AMPRO (https://amproadvertising.net/hand-textile-bag/). A non-woven maker with 10,000 pcs MOQ on the government export directory (expoegypt, snippet only).
+- NOT FOUND on any Egyptian supplier page with specs: die-cut patch handle (with or without patch), kidney, soft loop, rigid clip, drawstring, and explicit side or bottom gusset lines. The trade terms (يد مفرغة, فانلة) are used in the market. Elba offers die-cut, patch, kidney, T-shirt, flat and non-woven bags instantly, and soft loop, clip and drawstring bags by quote only.
+
+Materials and thickness:
+- Thickness bands: thin 15 to 30 µm, medium 40 to 70 µm, thick 80 to 120+ µm (Oliatra). Per-type micron norms from an Egyptian source: NOT FOUND (abroad: T-shirt 20 to 50 µm, LDPE die-cut 30 to 50+ µm).
+- Recycled content: suppliers say only that recycled grades are cheaper; no percentages.
+- Biodegradable claims: Helwan Plast says cornstarch or PLA "without toxic residues" (no certificate or timeframe); Oliatra mentions PLA. Egypt's position on oxo-degradable bags is unsettled (EIPR appeal, 9 May 2022, https://eipr.org/en/node/4141; reported EOS and ministry moves against d2w and oxo, undated). An enacted oxo ban is NOT VERIFIED. Elba makes no compostable or biodegradable claim and offers none.
+- Non-woven PP: 60 to 120 gsm, 80 typical (non-Egyptian sources); Egyptian standard ES 8919/2024 (https://www.eos.org.eg/ar/slider/130). Egyptian gsm data: NOT FOUND.
+
+Print: flexo up to 6 colours (Brotherplast); price depends on colours and one or two sides (Helwan Plast). Screen printing on non-woven in Egypt: NOT FOUND (AMPRO says "one colour or more").
+
+Sizes (W x H cm, no gusset published by any Egyptian source): 20 x 25, 30 x 40, 40 x 60+ (Oliatra); plain bags 15 x 30, 20 x 35, 25 x 40 (ikhlaspack); cloth bags 30 x 25 to 55 x 60 (AMPRO). Gusset widths, loop and clip sizes: NOT FOUND, ours are estimates.
+
+Prices and MOQ:
+
+| Item | Figure | Date | Source |
+|---|---|---|---|
+| Printed light / medium bags | EGP 22 to 30/kg ("approximate", below resin cost: stale or recycled) | Mar 2026 | Oliatra |
+| Printed bags | EGP 65 to 90/kg | 2026 (snippet) | palastic.com |
+| Printed bags, no MOQ | EGP 58/kg | undated | tigersstores.cloud |
+| Plain PE, 1 kg retail | about EGP 88 to 90/kg | undated | ikhlaspack.com |
+| Cloth bags with handles, MOQ 100 | EGP 6.24 to 17.26 per bag | undated | AMPRO |
+| Non-woven, export, MOQ 10,000 | USD 135 to 210 per 1,000 | undated | expoegypt (snippet) |
+| PE resin | HDPE about 60,000 (Mar 2026), about 74,000 (Jul 2026); LDPE about 62,000 to 72,000 EGP/t | 2026 | elmakhzn.com |
+
+MOQ in kg and cylinder or plate costs per colour: NOT FOUND.
+
+### Regulation (flagged in the designer and on /bags)
+
+- **EPR fee:** Prime Minister's Decree No. 662 of 2025, Official Gazette issue 9 bis (B), 2 March 2025, under Article 17 of the Waste Management Law No. 202 of 2020. Plastic shopping bags produced or imported under ES 3040 are priority products under extended producer responsibility; producers and importers pay **EGP 37.5 per kg** of bags sold locally, declared quarterly, collected by the Waste Management Regulatory Authority, in force about **3 June 2025** (https://www.almasdar.com/152992; https://amwalalghad.com/2025/03/04/...; https://www.egypt-business.com/...). No thickness threshold in the decree. Not verified: the Gazette text itself; no amendment found.
+- **Executive regulations:** PM Decree 722 of 2022 (22 Feb 2022): single-use bags must meet EOS specifications; free distribution needs written permission; large and medium retailers must offer multi-use bags (https://leap.unep.org/...; https://www.youm7.com/6377981).
+- **ES 3040/2022 "Plastic shopping bags":** mandatory by decree 559/2022 (approved 27 Sep 2022, corrigendum 2024), all single-layer thermoplastic shopping bags (https://www.eos.org.eg/ar/standard/3210). The press reports a **50 µm minimum** and a ban on producing bags under 20 µm (Youm7, 1 Mar 2026); in Feb 2026 the minister directed enforcement of the 50 µm minimum. The standard's text and an enforcement date were NOT seen.
+- **Governorate bans:** Red Sea single-use plastic ban (2019), South Sinai (Sharm, Dahab 2021), Alexandria (April 2022, scope NOT VERIFIED). No thickness thresholds found in them.
+
+How Elba applies it:
+- Configurator limit: every film offered is at least 50 µm (`MIN_FILM_MICRONS`, tested). There is no thinner film to pick.
+- The EPR fee is a separate quote line at cost (no margin): bag weight (film blank area x gsm) x EGP 37.5/kg, rounded up to the piaster (`pricing.line.eprFee`). Non-woven bags (ES 8919, not single-use film) carry no EPR line; verify with WMRA.
+- The designer shows the rule next to the film options; `/bags` shows it above the plastic section.
+
+### Models, 3D and options
+
+Eight models (table in `src/lib/dieline/families/bags/README.md`): T-shirt, die-cut (with or without patch), kidney, soft loop, rigid clip, flat merchandise, drawstring and non-woven. Films: HDPE 50, LDPE 50 / 70 / 100 µm; non-woven 80 / 100 gsm. Options: film tone (white, clear, coloured in 10 named colours), gusset (side, bottom, none, per model), handle type and colour where it is a separate part.
+
+Choice of engine: built in the bags family on the fold engine, not in the vessels flexible family, because carrier bags need a real die with handle cutouts, the T-shirt U-cut, gussets, hems and patches, plus the box tools (faces, artwork, preflight, PDF) and the Bags picker group. Film softness is a renderer material: translucent opacity and a procedural wrinkle normal map. Handles and holes are real cutouts or accessory geometry.
+
+Picker: one «أكياس» / "Bags" family in the catalogue picker with sub-families listed paper, then plastic, then reusable (the slug prefix orders them); the designer's own model groups keep a single "Bags" group in the same order.
+
+### Pricing basis
+
+- Rate card reference: a 30 x 8 x 40 cm bottom-gusset die-cut bag, film blank 0.365 m², LDPE 50 µm, 16.8 g, 4 colours. Tiers (buy, EGP per bag): 2.02 / 1.60 / 1.34 / 1.18 / 1.04, which is EGP 120 / 95 / 80 / 70 / 62 per kg. Material multipliers follow the weight: HDPE 50 x1.03, LDPE 70 x1.39, LDPE 100 x2. Non-woven: x6 (80 gsm), x7 (100 gsm), as sewn bags.
+- 90 % of the price follows the bag area (resin and film dominate); bags are flexo printed (no digital on film); setup EGP 900 x the colour factor.
+- MOQ: 5 kg of film bags (converted to bags per size), 100 non-woven bags. Estimates: no Egyptian MOQ in kg is published.
+- Extras: welded soft loop 0.35, rigid clip 1.20, drawstring 0.25, film patch 0.08, sewn straps 0.90 EGP per bag (buy, estimates).
+- Printer (seed): Cairo Label & Flex makes film bags (bag line with 6-colour CI flexo), Obour Box Works non-woven bags.
+
+Sell prices, ex-VAT and ex-delivery, per bag, EPR included (seeded data):
+
+| Model | Size (mm) | Material | Colours | 500 | 1,000 | 2,000 |
+|---|---|---|---|---|---|---|
+| PBAG_TSHIRT | 300 x 100 x 400 | HDPE 50 | 1 | 3.66 | 2.99 | 2.56 |
+| PBAG_DIECUT (patch, bottom gusset) | 300 x 80 x 400 | LDPE 50 | 2 | 3.12 | 2.70 | 2.26 |
+| PBAG_DIECUT (plain, black) | 400 x 100 x 600 | LDPE 70 | 4 | 7.59 | 6.81 | 5.99 |
+| PBAG_KIDNEY | 350 x 80 x 450 | LDPE 50 | 2 | 3.64 | 3.12 | 2.59 |
+| PBAG_MERCHANDISE (clear) | 200 x 350 | LDPE 50 | 1 | MOQ | 1.23 | 0.97 |
+| PBAG_NONWOVEN | 350 x 120 x 400 | 80 gsm | 1 | 14.89 | 12.91 | 11.35 |
+
+(The plastic rows above were computed before the plain die-cut handle cost was set to zero; the plain die-cut row is EGP 0.38 lower now.) Check: the die-cut bag at 2,000 is EGP 134/kg all-in, about EGP 96/kg before EPR and setup, the top of the public EGP 58 to 90/kg band, as short runs should be. The non-woven bag is EGP 11 to 15, inside AMPRO's EGP 6.24 to 17.26.
+
+### Screenshots
+
+`docs/screenshots/audit/bags/`: `closed-PBAG_*.png` (every plastic model), `plastic-diecut-white-bottom-gusset.png`, `plastic-diecut-clear.png`, `plastic-diecut-navy-side-gusset.png`, `plastic-diecut-navy-logo.png`, `plastic-tshirt.png`, `plastic-kidney-bottom-gusset.png`, `plastic-soft-loop.png`, `plastic-rigid-clip.png`, `plastic-drawstring.png`, `plastic-diecut-flat.png`, `plastic-nonwoven.png`; catalogue thumbnails `public/models/PBAG_*.webp`.
+
+### Tests
+
+`src/lib/dieline/families/bags/__tests__/plastic.test.ts` (every model x gusset x handle), `src/lib/pricing/__tests__/plastic-bags.test.ts` (EPR line, weight pricing, MOQ by kg, no digital, non-woven, quote-only), `e2e/models.spec.ts --grep "model PBAG_"` (8 of 8), `e2e/bags.spec.ts` (plastic journey: film tone, gusset, handle with and without patch, logo, instant price, the API quote carries the EPR line; screenshots). Geometry snapshot: 9 new keys (8 models and PLASTIC_BAG).
+
+### Open items (plastic)
+
+1. **50 µm minimum is press-reported.** ES 3040's text was not seen. If the real minimum is lower, add thinner T-shirt films (the market sells 15 to 30 µm) by adding materials; if enforcement starts, nothing changes.
+2. **Price per kg and MOQ are estimates.** The public figures conflict (EGP 22 to 90/kg) and no MOQ in kg or cylinder cost is published. Ask Cairo Label & Flex for a per-kg rate card and cylinder costs.
+3. **EPR on non-woven bags** is assumed out of scope (ES 8919, not ES 3040): confirm with WMRA.
+4. **Soft loop, clip and drawstring bags** are quote only: no Egyptian supplier found.
+5. **No biodegradable or compostable option** is offered: supplier claims are uncertified and Egypt's oxo position is unsettled.
+6. **Recycled content** is not an option (no supplier gives percentages).
+7. **Flat bags** ignore the Gusset field (the designer still shows it). Hide it for flat bags in a later designer pass.
+8. **Bottom gusset approximation:** tapered side strips; the back is about 1 % taller than the front.
+9. **Clear film** shows the film colour as an opaque print background on the artwork canvas, then 42 % opacity in 3D; unprinted clear areas read slightly milky.
+10. The designer's "boxes" wording (open item 1 in section 7) applies to plastic bags too.

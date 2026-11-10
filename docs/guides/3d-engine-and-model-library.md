@@ -2,7 +2,7 @@
 
 ## Purpose
 
-One shared geometry engine drives the 3D view, the flat dieline, preflight, pricing area and the print PDF. The library registers every model the designer can open: **377 models** (281 boxes, 7 of them store bags, and 96 containers). The public catalogue adds 36 quote-only family models on top (413 total, see `catalogue.md`).
+One shared geometry engine drives the 3D view, the flat dieline, preflight, pricing area and the print PDF. The library registers every model the designer can open: **385 models** (289 boxes, 15 of them store bags, and 96 containers). The public catalogue adds 36 quote-only family models on top (421 total, see `catalogue.md`).
 
 ## Key files
 
@@ -33,7 +33,7 @@ One shared geometry engine drives the 3D view, the flat dieline, preflight, pric
 | fefco-02 | 24 | foodservice | 8 |
 | fefco-03-05 | 32 | rigid-tubes | 14 |
 | fefco-04 | 80 | vessel-core | 10 |
-| bags | 7 | | |
+| bags | 15 | | |
 | fefco-06-07 | 33 | vessel-bottles | 34 |
 | fefco-09 | 36 | vessel-cosmetic | 37 |
 | ecma-tuck | 14 | vessel-flexible | 15 |

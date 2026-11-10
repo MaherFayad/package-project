@@ -36,3 +36,27 @@ Sizes: twisted cord 4.5 mm, flat tape 15 mm, cotton rope 6 mm, PP rope 5 mm, rib
 ## Tests
 
 `__tests__/bags.test.ts`: presets inside the limits, the blank area equals tube x (height + turnover + bottom), the bag closes to L x G cos 8° x H, flat sheet at 0, faces, every handle's geometry above the mouth and on both faces, eyelets through wall and turnover, pieces inside the bag, handle fallback rules, order modes match `QUOTE_ONLY_BAGS`. Pricing: `src/lib/pricing/__tests__/bags.test.ts`. e2e: `e2e/bags.spec.ts` and `e2e/models.spec.ts --grep "model BAG_"`.
+
+## Plastic and reusable bags (`film.ts`)
+
+Eight more models, base structure `PLASTIC_BAG`:
+
+| Code | EN | Films | Handles | Gussets | Order |
+|---|---|---|---|---|---|
+| PBAG_TSHIRT | T-shirt plastic bag | HDPE 50, LDPE 50 | T-shirt straps | side | instant |
+| PBAG_DIECUT | Die-cut handle plastic bag | LDPE 50 / 70, HDPE 50 | die-cut with patch, plain die-cut | bottom, side, none | instant |
+| PBAG_KIDNEY | Kidney handle plastic bag | same | kidney | bottom, none, side | instant |
+| PBAG_SOFT_LOOP | Soft loop handle plastic bag | LDPE 70 / 100 | welded loop | bottom, side | quote |
+| PBAG_CLIP | Rigid clip handle plastic bag | LDPE 100 / 70 | rigid clip | bottom | quote |
+| PBAG_MERCHANDISE | Flat plastic merchandise bag | LDPE 50, HDPE 50 | none | none | instant |
+| PBAG_DRAWSTRING | Drawstring plastic bag | LDPE 70 / 50 / 100 | drawstring through a hem | none | quote |
+| PBAG_NONWOVEN | Non-woven PP shopping bag | non-woven 80 / 100 gsm | sewn straps | side | instant |
+
+Why here and not in `src/lib/vessels/families/flexible`: the flexible family shapes filled pouches as a pillow height field and has no die, no holes and no handles. Carrier bags need a real die (handle cutouts, T-shirt U-cut, gussets, hems, patches), the same face mapping, artwork, preflight and PDF tools as boxes, and the Bags picker group; the fold engine gives all of that. Film softness is a renderer material (`BoardAppearance.film`: opacity and a procedural wrinkle normal map in `src/components/three/finishes/textures.ts`), not geometry.
+
+- Layout: the film tube has no glue seam (non-woven bags get a sewn 8 to 12 mm seam). Side gussets crease 10° inward (film is soft). A bottom gusset is drawn as tapered side strips (W at the base, a few mm at the mouth) with front and back leaning toward each other, up to 7° each, so the faces still map; the back is about 1 % taller than the front in this approximation. "No gusset" is a 2 mm gap, and the W field is ignored.
+- Handles: T-shirt straps are panels of the die (fold 0) on the outer strips of each face and the gussets, so the U between them is a real cut. Die-cut, patch and kidney holes cut both faces; the patch is a welded film piece with the same hole. Soft loop, rigid clip, drawstring (hem 30 mm) and sewn straps are accessories.
+- Film colour (`features.bagFilm.tone`): white, clear (see-through, about 42 % opacity) or a named colour. The artwork canvas paints the film colour as its background.
+- Rule: no film under 50 microns (`MIN_FILM_MICRONS`, ES 3040/2022 as reported), tested.
+
+Tests: `__tests__/plastic.test.ts` (every model x gusset x handle: builds, flat at 0, stands, faces, holes, straps or accessories). Pricing: `src/lib/pricing/__tests__/plastic-bags.test.ts`.
