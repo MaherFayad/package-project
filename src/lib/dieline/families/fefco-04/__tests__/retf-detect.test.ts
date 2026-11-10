@@ -7,7 +7,7 @@ import { detectDieline, prepareModels, readImageDpi, type RgbaImage } from "@/co
 /**
  * The owner's mailer dielines (docs/owner-input/2026-11-10 and the detector fixture, drawn upside
  * down) must come back as the RETF mailer, top-1, at the owner's proportions (L:W:H about 0.98 : 1 : 0.32).
- * Scores are recorded in docs/audit/mailers.md (scripts/detect-owner-mailers.ts).
+ * Scores are recorded in docs/audit/gift-box-tuck-front.md (scripts/detect-owner-dielines.ts).
  */
 const ROOT = path.join(__dirname, "..", "..", "..", "..", "..", "..");
 const FILES = [

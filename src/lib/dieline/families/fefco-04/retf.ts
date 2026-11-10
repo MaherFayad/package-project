@@ -8,7 +8,7 @@ import { CORNER_GAP, TILT_UP, rect, turn180 } from "./kit";
 
 /**
  * Roll end tuck front (RETF) mailer, drawn after the owner's die (docs/owner-input/2026-11-10,
- * docs/audit/mailers.md):
+ * docs/audit/gift-box-tuck-front.md):
  *
  *                     [  tuck + wings  ]        thumb notch on the tuck's free edge
  *           ( dust )  [      lid       ]  ( dust )   rounded side flaps, angled at the hinge ends
@@ -34,7 +34,7 @@ export interface RetfOpts {
   tuckRatio: number;
 }
 
-/** Owner's die, measured (fractions of the panel they sit on, see docs/audit/mailers.md). */
+/** Owner's die, measured (fractions of the panel they sit on, see docs/audit/gift-box-tuck-front.md). */
 export const RETF_RATIOS = {
   /** Ear depth: min(H, share of the end wall length). */
   earMaxOfW: 0.38,

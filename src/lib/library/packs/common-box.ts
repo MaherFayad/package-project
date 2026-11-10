@@ -92,6 +92,7 @@ export interface RawDef {
   features?: FeatureSupport;
   shape?: string;
   fidelity?: string;
+  keywords?: string[];
 }
 
 export function familyEntry(source: ModelSource, d: RawDef, build: BoxModelDef["build"], limits = d.params!, defaultDims = d.defaultDims!, presets = d.presets ?? []): BoxModelDef | null {
@@ -110,7 +111,8 @@ export function familyEntry(source: ModelSource, d: RawDef, build: BoxModelDef["
     standard: d.standard ?? "",
     name: d.name,
     description: d.description,
-    search: search(d.code, d.code.replace(/_/g, " "), d.name.en, d.name.ar, d.standard, d.slug, sub),
+    search: search(d.code, d.code.replace(/_/g, " "), d.name.en, d.name.ar, d.standard, d.slug, sub, ...(d.keywords ?? [])),
+    ...(d.keywords?.length ? { keywords: d.keywords } : {}),
     family,
     shape,
     limits,

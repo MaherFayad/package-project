@@ -460,11 +460,11 @@ const SPECS: Spec[] = [
     gen: kit({ ears: "none", double: { ends: true, back: true }, bottomFlaps: { ends: true, back: true }, top: { kind: "none" }, displayFront: true }) },
 ];
 
-/* ───────────────────────── RETF mailers (trade names, retf.ts) ───────────────────────── */
+/* ───────────────────────── RETF gift boxes (trade names, retf.ts) ───────────────────────── */
 
 /**
- * Roll end tuck front mailers, sized for e-commerce (inner mm). Sizes follow the standard ranges
- * of mailer suppliers (Packlane, Arka, Vistaprint, Pacdora; see docs/audit/mailers.md), rounded
+ * Roll end tuck front gift boxes (suppliers sell the construction as RETF / FEFCO 0427 mailers), inner mm. Sizes follow the standard ranges
+ * of mailer suppliers (Packlane, Arka, Vistaprint, Pacdora; see docs/audit/gift-box-tuck-front.md), rounded
  * to whole centimetres where Egyptian converters quote them.
  */
 const MAILER_PRESETS: DimsPreset[] = [
@@ -483,6 +483,8 @@ const MAILER_META = {
   materials: ALL_CORRUGATED,
   features: { ...NONE, windowFaces: ["top"], tearStrip: true, partitions: true } as FeatureSupport,
   uses: ["ecommerce", "apparel", "cosmetics", "gift"] as Fefco04Definition["uses"],
+  // The owner calls this box a gift box; suppliers file the construction under RETF / FEFCO 0427 mailers.
+  keywords: ["gift box", "mailer box", "mailer", "tuck front", "RETF", "roll end", "roll end tuck front", "e-commerce box", "هدايا", "علبة هدايا", "علبة بريدية", "علبة شحن"],
 };
 
 const MAILERS: Fefco04Definition[] = [
@@ -490,14 +492,14 @@ const MAILERS: Fefco04Definition[] = [
     ...MAILER_META,
     code: "MAILER_RETF",
     fefco: "RETF",
-    slug: "mailer-box-tuck-front",
+    slug: "gift-box-tuck-front",
     family: "CORRUGATED",
     subFamily: "mailer",
     standard: "RETF (FEFCO 0427 family)",
-    name: { ar: "علبة بريدية بلسان أمامي", en: "Mailer box (tuck front)" },
+    name: { ar: "علبة هدايا بلسان أمامي", en: "Gift box (tuck front)" },
     description: {
-      ar: "علبة كرتون مضلع بجدارين جانبيين مزدوجين يقفلان في القاعدة، وجدار أمامي مفرد، وغطاء بلسان أمامي بجناحين. القطع الشائع لدى المتاجر الإلكترونية.",
-      en: "Roll end tuck front mailer: rolled double side walls that lock into the base, a single front wall and a lid with a winged front tuck. The everyday e-commerce mailer.",
+      ar: "علبة هدايا من الكرتون المضلع بجدارين جانبيين مزدوجين يقفلان في القاعدة، وجدار أمامي مفرد، وغطاء بلسان أمامي بجناحين. مناسبة للهدايا وطلبات المتاجر الإلكترونية.",
+      en: "Corrugated gift box with rolled double side walls that lock into the base, a single front wall and a lid with a winged front tuck (roll end tuck front). For gifts and online orders.",
     },
     shape: "box",
     pieces: 1,
@@ -509,14 +511,14 @@ const MAILERS: Fefco04Definition[] = [
     ...MAILER_META,
     code: "MAILER_RETF_PLAIN",
     fefco: "RETF_PLAIN",
-    slug: "mailer-box-tuck-front-plain",
+    slug: "gift-box-tuck-front-plain",
     family: "CORRUGATED",
     subFamily: "mailer",
     standard: "RETF (FEFCO 0427 family)",
-    name: { ar: "علبة بريدية بلسان أمامي بسيط", en: "Mailer box (tuck front, plain tuck)" },
+    name: { ar: "علبة هدايا بلسان أمامي بسيط", en: "Gift box (tuck front, plain tuck)" },
     description: {
-      ar: "علبة بريدية بجدارين جانبيين مزدوجين وجدار أمامي مفرد، وغطاء بلسان مستدير الأركان وألسنة جانبية شبه منحرفة. قطع أبسط وأوفر في الكرتون.",
-      en: "Roll end tuck front mailer with a plain round-cornered tuck and trapezoid lid side flaps: a simpler die that uses less board.",
+      ar: "علبة هدايا بجدارين جانبيين مزدوجين وجدار أمامي مفرد، وغطاء بلسان مستدير الأركان وألسنة جانبية شبه منحرفة. قطع أبسط وأوفر في الكرتون.",
+      en: "Gift box (roll end tuck front) with a plain round-cornered tuck and trapezoid lid side flaps: a simpler die that uses less board.",
     },
     shape: "box",
     pieces: 1,

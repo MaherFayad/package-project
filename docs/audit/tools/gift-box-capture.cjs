@@ -2,7 +2,7 @@
  * Mailer audit captures (report-only; touches no source): the RETF mailers and the core mailer in
  * the live 3D library view (/en/dev/3d, same scene as the designer), closed from the front, top,
  * side and three-quarter, then open (walls up, lid back) and flat.
- * usage: BASE=http://localhost:3100 node docs/audit/tools/mailers-capture.cjs docs/screenshots/audit/mailers MAILER_RETF,MAILER_RETF_PLAIN,FEFCO_0427
+ * usage: BASE=http://localhost:3100 node docs/audit/tools/gift-box-capture.cjs docs/screenshots/audit/gift-box-tuck-front MAILER_RETF,MAILER_RETF_PLAIN,FEFCO_0427
  */
 const fs = require("fs");
 const path = require("path");

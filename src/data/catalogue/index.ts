@@ -101,10 +101,10 @@ function searchText(e: Omit<CatalogueEntry, "search">): string {
   return parts.filter(Boolean).join(" ").toLowerCase();
 }
 
-function entry(base: Omit<CatalogueEntry, "family" | "subFamily" | "availableInEgypt" | "regions" | "search" | "standard"> & { standardRef: string | null | undefined }): CatalogueEntry {
+function entry(base: Omit<CatalogueEntry, "family" | "subFamily" | "availableInEgypt" | "regions" | "search" | "standard"> & { standardRef: string | null | undefined; keywords?: string[] }): CatalogueEntry {
   const subFamily = availabilitySlugFor(base.source, base.code, base.style);
   const avail = availabilityForSlug(subFamily);
-  const { standardRef, ...rest } = base;
+  const { standardRef, keywords, ...rest } = base;
   const e = {
     ...rest,
     family: subFamily.split("/")[0],
@@ -113,7 +113,8 @@ function entry(base: Omit<CatalogueEntry, "family" | "subFamily" | "availableInE
     availableInEgypt: avail?.egypt ?? "imported",
     regions: regionsOf(subFamily),
   };
-  return { ...e, search: searchText(e) };
+  const extra = keywords?.length ? ` ${keywords.join(" ").toLowerCase()}` : "";
+  return { ...e, search: searchText(e) + extra };
 }
 
 const pickDims = (o: object, keys: AxisKey[]) => Object.fromEntries(keys.filter((k) => typeof (o as Record<string, unknown>)[k] === "number").map((k) => [k, (o as Record<string, number>)[k]])) as Partial<Record<AxisKey, number>>;
@@ -136,6 +137,7 @@ const LIBRARY_ENTRIES: CatalogueEntry[] = MODELS.map((m) => {
       render: "box",
       style,
       standardRef: m.standard,
+      keywords: m.keywords,
       designer: true,
       quoteOnly: false,
       axes,

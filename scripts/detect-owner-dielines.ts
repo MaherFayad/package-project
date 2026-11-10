@@ -1,8 +1,8 @@
 /**
  * Runs the dieline detector on the owner's mailer files and prints the top candidates.
- *   npx tsx scripts/detect-owner-mailers.ts            (every box model)
- *   npx tsx scripts/detect-owner-mailers.ts CODE ...   (only these models)
- * Numbers are quoted in docs/audit/mailers.md.
+ *   npx tsx scripts/detect-owner-dielines.ts            (every box model)
+ *   npx tsx scripts/detect-owner-dielines.ts CODE ...   (only these models)
+ * Numbers are quoted in docs/audit/gift-box-tuck-front.md.
  */
 import { readFileSync } from "node:fs";
 import path from "node:path";

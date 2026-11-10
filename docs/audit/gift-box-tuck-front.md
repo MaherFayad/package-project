@@ -1,11 +1,19 @@
-# Mailer boxes: the owner's tuck front mailer and its variants
+# Gift box (tuck front): the owner's box and its variants
 
-2026-11-10. Branch `claude/exciting-albattani-8kzgsu-mailers`. Owner input: `docs/owner-input/2026-11-10/` ("and this type of boxes"). Screenshots: `docs/screenshots/audit/mailers/`.
+2026-11-10. Branch `claude/exciting-albattani-8kzgsu-mailers`. Owner input: `docs/owner-input/2026-11-10/` ("and this type of boxes"). Screenshots: `docs/screenshots/audit/gift-box-tuck-front/`.
+
+## Naming
+
+The owner calls this box a **gift box**, not a mailer. Suppliers sell the same construction as an RETF (roll end tuck front) mailer and file it in the FEFCO 0427 mailer family (section 1). Elba names it the way the buyer does:
+- "Gift box (tuck front)" / «علبة هدايا بلسان أمامي», slug `gift-box-tuck-front`.
+- "Gift box (tuck front, plain tuck)" / «علبة هدايا بلسان أمامي بسيط», slug `gift-box-tuck-front-plain`.
+
+The trade names stay in the search terms, both languages, so a buyer finds the box either way: gift box, mailer box, tuck front, RETF, roll end, roll end tuck front, هدايا, علبة هدايا, علبة بريدية and علبة شحن. The model codes `MAILER_RETF` and `MAILER_RETF_PLAIN` are internal and unchanged. The boxes still sort next to "Mailer box" in the catalogue and the picker. No route or saved design used the earlier `mailer-box-tuck-front` slugs, which existed only on this branch, so no alias is needed.
 
 ## Summary
 
-- **New model `MAILER_RETF`, "Mailer box (tuck front)" / «علبة بريدية بلسان أمامي»**, slug `mailer-box-tuck-front`. It reproduces the owner's die: single front wall, square ears about H deep on the front and back walls, rolled double side walls that lock into the base with two tabs each, rounded lid side flaps, a full-depth tuck with rounded side wings and a thumb notch.
-- **New model `MAILER_RETF_PLAIN`, "Mailer box (tuck front, plain tuck)" / «علبة بريدية بلسان أمامي بسيط»**, slug `mailer-box-tuck-front-plain`. Same base, with a plain round-cornered tuck and trapezoid side flaps. It is a simpler die and uses less board.
+- **New model `MAILER_RETF`, "Gift box (tuck front)" / «علبة هدايا بلسان أمامي»**, slug `gift-box-tuck-front`. It reproduces the owner's die: single front wall, square ears about H deep on the front and back walls, rolled double side walls that lock into the base with two tabs each, rounded lid side flaps, a full-depth tuck with rounded side wings and a thumb notch.
+- **New model `MAILER_RETF_PLAIN`, "Gift box (tuck front, plain tuck)" / «علبة هدايا بلسان أمامي بسيط»**, slug `gift-box-tuck-front-plain`. Same base, with a plain round-cornered tuck and trapezoid side flaps. It is a simpler die and uses less board.
 - Both are fefco-04 family models (`src/lib/dieline/families/fefco-04/retf.ts`), priced on the `FEFCO_0427` mailer rate card, so they get an instant price. Options on both: lid window, tear strip and divider insert.
 - **The dieline detector now ranks `MAILER_RETF` first on all three owner files**, at L:W:H 0.97 : 1 : 0.32 (target 0.98 : 1 : 0.32). Scores are 0.851, 0.746 and 0.761, with a lead of 0.06 to 0.08 over the next model. The detector code is unchanged.
 - The core `FEFCO_0427` "Mailer box" (`mailer-box`) is untouched, so saved designs open exactly as before.
@@ -98,16 +106,16 @@ The single front saves 6 to 10% of the blank against the core mailer's rolled do
 
 | Code | English | Arabic | Slug | Fidelity |
 |---|---|---|---|---|
-| `MAILER_RETF` | Mailer box (tuck front) | علبة بريدية بلسان أمامي | `mailer-box-tuck-front` | described (the owner's die) |
-| `MAILER_RETF_PLAIN` | Mailer box (tuck front, plain tuck) | علبة بريدية بلسان أمامي بسيط | `mailer-box-tuck-front-plain` | interpreted |
+| `MAILER_RETF` | Gift box (tuck front) | علبة هدايا بلسان أمامي | `gift-box-tuck-front` | described (the owner's die) |
+| `MAILER_RETF_PLAIN` | Gift box (tuck front, plain tuck) | علبة هدايا بلسان أمامي بسيط | `gift-box-tuck-front-plain` | interpreted |
 
 Name options I considered. All are MSA noun phrases, with no imperatives and no diacritics:
 
-1. **علبة بريدية بلسان أمامي** / Mailer box (tuck front). **Shipped.** "علبة بريدية" is the word buyers already see on `mailer-box`, and "بلسان أمامي" is the visible difference.
-2. علبة بريدية بجدارين جانبيين مزدوجين / Mailer box (double side walls). Accurate, but too long for a card, and buyers do not choose by wall count.
-3. علبة شحن بريدية بلسان إدخال / Tuck-in e-commerce mailer. "شحن" collides with «كرتونة شحن» (`shipping-box`).
+1. **علبة هدايا بلسان أمامي** / Gift box (tuck front). **Shipped** (see Naming): it is the owner's own word for the box.
+2. علبة بريدية بلسان أمامي / Mailer box (tuck front). The supplier trade name, and the first name on this branch. It is kept as a search term.
+3. علبة بريدية بجدارين جانبيين مزدوجين / Mailer box (double side walls). Accurate, but too long for a card, and buyers do not choose by wall count.
 
-**Sibling, not a replacement for "Mailer box".** I kept `FEFCO_0427` as the default "Mailer box" and added `MAILER_RETF` as a sibling. Replacing it would change the geometry of every saved `mailer-box` design: its front wall, ear and tuck panels would move, and saved artwork is placed by face and panel. That would need a versioned artwork migration (see pitfall E-32 in the 3D guide). The sibling route keeps every saved design and the `mailer-box` slug byte-identical, and the geometry snapshot shows only additions. The catalogue and picker sort by sub-family and standard code, so the two RETF cards land directly after "Mailer box" (catalogue positions 84 to 86). If the owner wants the tuck front as *the* mailer, the follow-up is small: point `PRODUCT_PRESETS` and the "Mailer box" marketing links at `mailer-box-tuck-front` and keep the old slug alive.
+**Sibling, not a replacement for "Mailer box".** I kept `FEFCO_0427` as the default "Mailer box" and added the gift box `MAILER_RETF` as a sibling. Replacing it would change the geometry of every saved `mailer-box` design: its front wall, ear and tuck panels would move, and saved artwork is placed by face and panel. That would need a versioned artwork migration (see pitfall E-32 in the 3D guide). The sibling route keeps every saved design and the `mailer-box` slug byte-identical, and the geometry snapshot shows only additions. The catalogue and picker sort by sub-family and standard code, so the two gift box cards land directly next to "Mailer box" (catalogue positions 84 to 86). If the owner wants new designs to start from the gift box, the follow-up is small: point `PRODUCT_PRESETS` and the marketing links at `gift-box-tuck-front`, and keep `mailer-box` alive.
 
 **Variants as options, not as more models.** The research gives five sensible variants. One became a model (plain tuck). The other four are options or presets on both models, because they share the die:
 
@@ -124,7 +132,7 @@ Presets on both models (inner mm; the first opens by default): **Kids apparel 24
 
 ## 4. Detector check
 
-`npx tsx scripts/detect-owner-mailers.ts` uses every box model (`BOX_MODELS`). It is pinned by `src/lib/dieline/families/fefco-04/__tests__/retf-detect.test.ts`.
+`npx tsx scripts/detect-owner-dielines.ts` uses every box model (`BOX_MODELS`). It is pinned by `src/lib/dieline/families/fefco-04/__tests__/retf-detect.test.ts`.
 
 | File | Before (top 3) | After (top 3) | L:W:H after |
 |---|---|---|---|
@@ -154,7 +162,7 @@ For reference, the core mailers score lower on the owner's files: `FEFCO_0427` 0
   - The tuck wings first pivoted on the tuck's printed face and poked 3 mm through the front wall. That also hid the "front" face. They now pivot 3 calipers in and lie one caliper inside the lid side flaps.
   - The full-depth tabs ended in the printed bottom face. They now stop half-way into the base board.
 - `e2e/models.spec.ts --grep "model MAILER_RETF" --project=desktop --trace off`: 2 passed. Writes `docs/screenshots/models/MAILER_RETF.png` and `MAILER_RETF_PLAIN.png`. The designer shows "500 boxes: EGP 40.22 per box, all-in excl. VAT" for `MAILER_RETF`.
-- Screenshots in `docs/screenshots/audit/mailers/` (from `docs/audit/tools/mailers-capture.cjs` against `/en/dev/3d`, SwiftShader, 2x):
+- Screenshots in `docs/screenshots/audit/gift-box-tuck-front/` (from `docs/audit/tools/gift-box-capture.cjs` against `/en/dev/3d`, SwiftShader, 2x):
   - `mailers-vs-owner.webp`: the owner's mockup (front, top, right side, open) next to `MAILER_RETF` and the core `FEFCO_0427`.
   - `<CODE>__{iso,front,top,side,open,flat}.png` for `MAILER_RETF`, `MAILER_RETF_PLAIN` and `FEFCO_0427`, plus `<CODE>__sheet.png` contact sheets.
   - The open view shows the rounded side flaps, the winged tuck and the notch. The closed views match the mockup's silhouette: flush lid, single front, double side wall rim.
@@ -164,7 +172,7 @@ For reference, the core mailers score lower on the owner's files: `FEFCO_0427` 0
 1. **Faint ear line on the side wall (renderer).** At some sizes and angles, the far edge of an ear shows as a faint vertical line through the outer side wall. The line moves when the ear changes size. It survives a 0.2 mm air gap, so it is a renderer depth or shadow artifact, not geometry. **The core `FEFCO_0427` shows the same line** (`FEFCO_0427__side.png`). Ears capped at 0.38 W avoid it at small sizes. At the owner's proportions it still shows faintly at 31% and 69% of the side. This belongs with the 3D engine (shadow bias or polygon offset); I did not change the renderer.
 2. **Thumb notch position.** The owner's die puts the notch on the tuck's free edge, and I followed the die. Most suppliers put it on the front wall's rim, so the lid's front edge can be gripped ([Packola](https://www.packola.com/blogs/boxing-and-packaging-articles/different-parts-of-a-mailer-box)). On the closed box, a notch on the tuck sits inside, low in the box. This is worth asking the owner. Moving it is one line in `retf.ts`, plus a snapshot update.
 3. **Artwork mapping across the seams** (the owner's `seam-*.png`) is the -dieline-remap session's work. The new model gives that work a die that matches the owner's file line for line.
-4. **Make tuck front the default "Mailer box"?** This is a product decision (section 3). I recommend it once the remap session can carry saved `mailer-box` artwork over, or simply by pointing new-design entry points at `mailer-box-tuck-front`.
+4. **Start new designs from the gift box instead of "Mailer box"?** This is a product decision (section 3). I recommend it once the remap session can carry saved `mailer-box` artwork over, or simply by pointing new-design entry points at `gift-box-tuck-front`.
 5. **Egyptian sizes and MOQs are unverified.** Quotes from IPSC, Inception, Techno Rapid and UPack Egypt would ground the presets and the flexo and litho break points.
 6. **Shoe preset.** Family models carry at most 4 presets (a family test rule), so the shoe size lives on the core mailer only. Raising the cap for mailers is a one-line test change if the picker can show 5.
 7. **Generated-file noise.** The thumbnail generator on Linux changed the fill colours of about 218 existing SVGs by a shade (float drift from a different platform). I reverted those and committed only the two new SVGs. `e2e/fixtures/catalogue-models.json` also re-sorted two sleeve rows (`localeCompare` on this ICU). Both are generator output and regenerate at merge.

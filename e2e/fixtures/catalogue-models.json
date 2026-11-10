@@ -420,18 +420,18 @@
   "render": "box"
  },
  {
-  "code": "FEFCO_0427",
-  "slug": "mailer-box",
-  "render": "box"
- },
- {
   "code": "MAILER_RETF_PLAIN",
-  "slug": "mailer-box-tuck-front-plain",
+  "slug": "gift-box-tuck-front-plain",
   "render": "box"
  },
  {
   "code": "MAILER_RETF",
-  "slug": "mailer-box-tuck-front",
+  "slug": "gift-box-tuck-front",
+  "render": "box"
+ },
+ {
+  "code": "FEFCO_0427",
+  "slug": "mailer-box",
   "render": "box"
  },
  {

@@ -59,6 +59,8 @@ interface ModelBase {
   description: LocalizedText;
   /** Lower-case search text (codes, both names, standard). */
   search: string;
+  /** Extra search terms buyers use for this model (trade names, other names), both languages. */
+  keywords?: string[];
 }
 
 export interface BoxModelDef extends ModelBase {

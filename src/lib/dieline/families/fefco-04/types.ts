@@ -44,6 +44,8 @@ export interface Fefco04Definition extends Omit<StructureDef, "code" | "family" 
   pieces: 1 | 2 | 3;
   /** Builds the panels (inner mm in, sheet layout out). */
   generate: FamilyGenerator;
+  /** Extra search terms (trade names, other names buyers use), both languages. */
+  keywords?: string[];
   /** How literally the geometry follows the FEFCO drawing (see README). */
   fidelity: "described" | "interpreted";
 }

@@ -8,7 +8,7 @@ const box = (code: string) => modelByCode(code) as BoxModelDef;
 
 /**
  * Roll end tuck front mailers (retf.ts), drawn after the owner's die
- * (docs/owner-input/2026-11-10, measured in docs/audit/mailers.md).
+ * (docs/owner-input/2026-11-10, measured in docs/audit/gift-box-tuck-front.md).
  */
 
 const RETF = definitionByCode("MAILER_RETF")!;
@@ -97,12 +97,30 @@ describe("RETF mailer: options", () => {
 describe("RETF mailer: library model", () => {
   it("is a box model priced on the mailer rate card, separate from the core mailer-box", () => {
     const m = box("MAILER_RETF");
-    expect(m.slug).toBe("mailer-box-tuck-front");
+    expect(m.slug).toBe("gift-box-tuck-front");
     expect(m.group).toBe("BOXES");
     expect(m.openTop).toBeFalsy();
     for (const mat of m.materials) expect(m.baseFor(mat)).toBe("FEFCO_0427");
     expect(box("MAILER_RETF_PLAIN").baseFor("E_FLUTE_KRAFT")).toBe("FEFCO_0427");
     // The core mailer keeps its slug, so saved designs open unchanged.
     expect(box("FEFCO_0427").slug).toBe("mailer-box");
+  });
+});
+
+describe("RETF gift box: names and search", () => {
+  it("is named a gift box, and buyers find it by gift box, mailer and trade names", async () => {
+    const { CATALOGUE } = await import("@/data/catalogue");
+    const { matchesQuery } = await import("@/lib/library/search");
+    const m = box("MAILER_RETF");
+    expect(m.name).toEqual({ ar: "علبة هدايا بلسان أمامي", en: "Gift box (tuck front)" });
+    expect(box("MAILER_RETF_PLAIN").slug).toBe("gift-box-tuck-front-plain");
+    const find = (q: string) => CATALOGUE.filter((e) => matchesQuery(e, q)).map((e) => e.code);
+    for (const q of ["gift box", "هدايا", "علبة هدايا", "tuck front", "RETF", "roll end", "mailer"]) expect(find(q), q).toContain("MAILER_RETF");
+    for (const q of ["gift box", "RETF"]) expect(m.search, q).toContain(q.toLowerCase());
+    // Listed next to the core mailer in the catalogue and picker.
+    const order = CATALOGUE.map((e) => e.code);
+    const i = order.indexOf("FEFCO_0427");
+    expect(Math.abs(order.indexOf("MAILER_RETF") - i)).toBeLessThanOrEqual(2);
+    expect(Math.abs(order.indexOf("MAILER_RETF_PLAIN") - i)).toBeLessThanOrEqual(2);
   });
 });
