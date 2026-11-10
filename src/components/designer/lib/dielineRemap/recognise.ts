@@ -3,7 +3,7 @@ import type { Dims, PrintSurface } from "@/types";
 import { FOUND_SCORE, detectDieline } from "../dielineDetect/detect";
 import { geoOf } from "../dielineDetect/match";
 import type { DetectCandidate, DetectModel, DetectResult } from "../dielineDetect/types";
-import { findFaces } from "./faces";
+import { faceLinesOf, findFaces } from "./faces";
 import { remapSheet, remapSourceFrom, scaleSource } from "./index";
 import { faceAgreement, rankScore } from "./rank";
 import type { RemapReport, RemapSource, RgbaImage } from "./types";
@@ -61,12 +61,7 @@ export function recognise(
   const models = opts.models.filter(recognisable);
   const res = detectDieline(image, { models, dpi: opts.dpi, pxPerMm: opts.pxPerMm, maxCandidates: 8 });
   const t0 = now();
-  const lineList = res.lines.segments.map((s) => [s.x1, s.y1, s.x2, s.y2] as [number, number, number, number]);
-  const size = Math.max(1, ...lineList.flatMap((l) => [Math.abs(l[2] - l[0]), Math.abs(l[3] - l[1])]));
-  const faces = findFaces(
-    lineList.filter((l, i) => res.lines.segments[i].fill >= 0.75 || Math.hypot(l[2] - l[0], l[3] - l[1]) >= 0.2 * size),
-    opts.surface === "inside",
-  );
+  const faces = findFaces(faceLinesOf(res.lines.segments), opts.surface === "inside");
   const byCode = new Map(models.map((m) => [m.code, m]));
   const ranked: (Recognised & { cand: DetectCandidate; model: DielineModel })[] = [];
   for (const c of res.candidates) {
@@ -76,7 +71,12 @@ export function recognise(
     const agreement = faceAgreement(model, c.transform, faces);
     const source = remapSourceFrom(res, c, model, image, opts.surface, scale);
     if (!source) continue;
-    ranked.push({ code: c.code, slug: c.slug, name: c.name, nameAr: c.nameAr, dims: c.dims, proportions: c.proportions, scaleKnown: c.scaleKnown, score: c.score, agreement, rank: rankScore(c.score, agreement), source, cand: c, model });
+    const r = snapRatios(model, source.snapped ?? {});
+    const dims = { L: Math.round(c.dims.L * r.L * 10) / 10, W: Math.round(c.dims.W * r.W * 10) / 10, H: Math.round(c.dims.H * r.H * 10) / 10 };
+    if (!c.scaleKnown) for (const k of ["L", "W", "H"] as const) dims[k] = Math.round(dims[k]);
+    const mx = Math.max(dims.L, dims.W, dims.H);
+    const proportions = { L: r3(dims.L / mx), W: r3(dims.W / mx), H: r3(dims.H / mx) };
+    ranked.push({ code: c.code, slug: c.slug, name: c.name, nameAr: c.nameAr, dims, proportions, scaleKnown: c.scaleKnown, score: c.score, agreement, rank: rankScore(c.score, agreement), source, cand: c, model });
   }
   ranked.sort((a, b) => (Math.abs(a.rank - b.rank) > 0.003 ? b.rank - a.rank : 0));
   const found = !!ranked.length && ranked[0].score >= FOUND_SCORE && (ranked[0].agreement == null || ranked[0].agreement >= 0.35);
@@ -105,6 +105,30 @@ export function candidateModelOf(src: RemapSource, models: readonly DetectModel[
   if (src.mode !== "model" || !src.code || !src.fitDims) return null;
   const m = models.find((x) => x.code === src.code);
   return m ? (geoOf(m, src.fitDims)?.model ?? null) : null;
+}
+
+const r3 = (v: number) => Math.round(v * 1000) / 1000;
+
+/**
+ * How much the art's own panels differ from the fitted template's, per dimension: the lid's two
+ * sides (L, W) and the front wall's height (H), after snapping to the drawn lines. The detector's
+ * fit balances every line of the die; the faces are what the buyer measures.
+ */
+export function snapRatios(model: DielineModel, snapped: Record<string, [number, number, number, number]>): Dims {
+  const extent = (face: "top" | "front", axis: "x" | "y"): number | null => {
+    const info = model.faces[face];
+    if (!info?.parts.length) return null;
+    const part = [...info.parts].sort((a, b) => b.rect.width * b.rect.height - a.rect.width * a.rect.height)[0];
+    const p = model.panels.find((q) => q.id === part.panelId);
+    const sn = snapped[part.panelId];
+    if (!p || !sn) return null;
+    const t = part.transform;
+    // the sheet axis this face axis runs along
+    const sheetX = axis === "x" ? Math.abs(t[0]) >= Math.abs(t[1]) : Math.abs(t[2]) >= Math.abs(t[3]);
+    const r = sheetX ? (sn[2] - sn[0]) / p.bbox.width : (sn[3] - sn[1]) / p.bbox.height;
+    return r > 0.8 && r < 1.25 ? r : null;
+  };
+  return { L: extent("top", "x") ?? 1, W: extent("top", "y") ?? 1, H: extent("front", "y") ?? 1 };
 }
 
 const now = () => (typeof performance !== "undefined" ? performance.now() : Date.now());

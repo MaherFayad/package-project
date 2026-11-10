@@ -24,13 +24,13 @@ import type { PrintSurface } from "@/types";
 import type { DetectCandidate, DetectResult } from "../dielineDetect/types";
 import { composeSheet, estimateLineWidth, paintOutLines } from "./compose";
 import { planFromFaces, planFromModel, snapPanels } from "./correspond";
-import { findFaces } from "./faces";
+import { faceLinesOf, findFaces } from "./faces";
 import type { PanelPlan, RemapReport, RemapSource, RgbaImage } from "./types";
 
 export type * from "./types";
 export { pairPanels, closedFrames, snapPanels, planFromModel, planFromFaces, invertAffine } from "./correspond";
 export { composeSheet, paintOutLines, estimateLineWidth, meanColour } from "./compose";
-export { findFaces, rectCells } from "./faces";
+export { findFaces, rectCells, faceLinesOf } from "./faces";
 export { faceAgreement, rankScore } from "./rank";
 
 /** Longest side of a re-composed sheet (same cap as a full artwork upload). */
@@ -44,9 +44,11 @@ const MIN_PX_PER_MM = 3;
 export function mirrorSymmetric(model: DielineModel): boolean {
   const cx = model.dieBounds.x + model.dieBounds.width / 2;
   const tol = 0.01 * Math.max(model.dieBounds.width, model.dieBounds.height);
+  // a mirror swaps the left and right walls
+  const twin = (r: string) => (r === "left" ? "right" : r === "right" ? "left" : r);
   return model.panels.every((p) => {
     const mx = 2 * cx - (p.bbox.x + p.bbox.width);
-    return model.panels.some((q) => q.role === p.role && Math.abs(q.bbox.x - mx) <= tol && Math.abs(q.bbox.y - p.bbox.y) <= tol && Math.abs(q.bbox.width - p.bbox.width) <= tol && Math.abs(q.bbox.height - p.bbox.height) <= tol);
+    return model.panels.some((q) => q.role === twin(p.role) && Math.abs(q.bbox.x - mx) <= tol && Math.abs(q.bbox.y - p.bbox.y) <= tol && Math.abs(q.bbox.width - p.bbox.width) <= tol && Math.abs(q.bbox.height - p.bbox.height) <= tol);
   });
 }
 
@@ -83,10 +85,7 @@ export function remapSourceFrom(
     }
     return { mode: "model", code: candidate.code, fitDims: candidate.fitDims, transform: T.map(r6) as typeof T, snapped: snapPanels(candidateModel, T, lines), lineWidthPx, lines, lineColor };
   }
-  // Short dashed runs inside a panel are usually art (a rule under a line of text), not a fold.
-  const size = Math.max(1, ...lines.flatMap((l) => [Math.abs(l[2] - l[0]), Math.abs(l[3] - l[1])]));
-  const faceLines = lines.filter((l, i) => res.lines.segments[i].fill >= 0.75 || Math.hypot(l[2] - l[0], l[3] - l[1]) >= 0.2 * size);
-  const faces = findFaces(faceLines, surface === "inside");
+  const faces = findFaces(faceLinesOf(res.lines.segments), surface === "inside");
   if (!faces || !faces.top || !faces.bottom) return null;
   return { mode: "faces", faces, lineWidthPx, lines, lineColor };
 }

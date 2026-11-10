@@ -187,3 +187,12 @@ export function findFaces(lines: readonly Line[], mirrored: boolean): Partial<Re
   if (right) out.right = frameOn(right, neg(f), l);
   return out;
 }
+
+/**
+ * The detected lines worth reading faces from: solid cuts, and dashed runs long enough to be a
+ * fold (a short dashed run inside a panel is usually art, a rule under a line of text).
+ */
+export function faceLinesOf(segments: readonly { x1: number; y1: number; x2: number; y2: number; fill: number }[]): Line[] {
+  const size = Math.max(1, ...segments.flatMap((s) => [Math.abs(s.x2 - s.x1), Math.abs(s.y2 - s.y1)]));
+  return segments.filter((s) => s.fill >= 0.75 || Math.hypot(s.x2 - s.x1, s.y2 - s.y1) >= 0.2 * size).map((s) => [s.x1, s.y1, s.x2, s.y2]);
+}
