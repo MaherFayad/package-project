@@ -195,7 +195,23 @@ const surfaceSchema = z.object({
   background: hex.nullable(),
   layers: z.array(layerSchema).max(MAX_LAYERS),
   sheetImage: z
-    .object({ src: imageSrc, pxWidth: z.number().int().min(1).max(20000), pxHeight: z.number().int().min(1).max(20000) })
+    .object({
+      src: imageSrc,
+      pxWidth: z.number().int().min(1).max(20000),
+      pxHeight: z.number().int().min(1).max(20000),
+      // designer: dieline remap (the upload as made on the printer's template, and how src was made from it)
+      original: z.object({ src: imageSrc, pxWidth: z.number().int().min(1).max(20000), pxHeight: z.number().int().min(1).max(20000) }).nullable().optional(),
+      remap: z
+        .object({
+          mode: z.enum(["model", "faces"]),
+          code: z.string().max(80).optional(),
+          target: z.string().max(400),
+          sourcePxPerMm: z.number().min(0).max(1000),
+          source: z.record(z.string(), z.unknown()).refine((v) => JSON.stringify(v).length <= 80_000, "remap source too large"),
+        })
+        .nullable()
+        .optional(),
+    })
     .nullable()
     .optional(),
 });

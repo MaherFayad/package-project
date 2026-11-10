@@ -1,3 +1,4 @@
+import { withoutHighlight } from "./pickHighlight";
 import { Color, PerspectiveCamera, Vector2, type Camera, type Scene, type WebGLRenderer } from "three";
 
 export interface ScreenshotOptions {
@@ -63,7 +64,7 @@ export function captureScreenshot(gl: WebGLRenderer, scene: Scene, camera: Camer
     const bg = opts.background ?? (mime === "image/jpeg" ? "#ffffff" : null);
     if (bg) gl.setClearColor(new Color(bg), 1);
     else gl.setClearColor(prevClear, 0);
-    gl.render(scene, camera);
+    withoutHighlight(scene, () => gl.render(scene, camera));
     let out: HTMLCanvasElement = canvas;
     if (rw !== w || rh !== h) {
       // read the frame in this task (no preserveDrawingBuffer) and scale it down

@@ -59,3 +59,20 @@ export function setHighlight(scene: Object3D, panelIds: readonly string[] | null
     mesh.add(overlay, lines);
   }
 }
+
+/**
+ * Run `fn` with the hover / drop-target glow hidden: screenshots, exports and proofs show the
+ * box, never the pointer's glow on it (the blue rim along the lid edge in an export was the glow).
+ */
+export function withoutHighlight<T>(scene: Object3D, fn: () => T): T {
+  const shown: Object3D[] = [];
+  scene.traverse((o) => {
+    if (o.userData?.[TAG] && o.visible) shown.push(o);
+  });
+  for (const o of shown) o.visible = false;
+  try {
+    return fn();
+  } finally {
+    for (const o of shown) o.visible = true;
+  }
+}

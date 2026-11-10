@@ -107,6 +107,27 @@ export interface SheetImage {
   src: string;
   pxWidth: number;
   pxHeight: number;
+  /**
+   * Added by designer (dieline remap): the buyer's upload as made on their printer's template. When
+   * set, `src` is that art re-composed in Elba's template layout for the current model and size
+   * (it drives the 3D view, preflight and the print PDF); `remap` says how, so it can be made again.
+   */
+  original?: { src: string; pxWidth: number; pxHeight: number } | null;
+  remap?: SheetRemap | null;
+}
+
+/** How a sheet image was re-composed from the buyer's own dieline (designer: dieline remap). */
+export interface SheetRemap {
+  /** "model": a library model was recognised; "faces": the six faces were found by topology. */
+  mode: "model" | "faces";
+  /** Recognised model code (mode "model"). */
+  code?: string;
+  /** Model, size, board and features `src` was made for ("CODE|L|W|H|t|…"): stale when it differs. */
+  target: string;
+  /** Source px per mm on the visible faces: the art's real print density. */
+  sourcePxPerMm: number;
+  /** The remap source (dielineRemap RemapSource), JSON. */
+  source: Record<string, unknown>;
 }
 
 /** Stored in Design.artwork (Json). */

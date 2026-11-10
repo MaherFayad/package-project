@@ -58,7 +58,9 @@ export function runPreflight(doc: DesignDoc, model: DielineModel): PreflightIssu
     // Full artwork over the sheet: its resolution at the sheet's printed size.
     const sheetImage = doc.artwork[surface].sheetImage;
     if (sheetImage) {
-      const dpi = sheetImagePlacement(model, sheetImage).pxPerMm * 25.4;
+      // A re-composed sheet (dieline remap) is upsampled for crisp 3D edges: the art's own density counts.
+      const placed = sheetImagePlacement(model, sheetImage).pxPerMm;
+      const dpi = (sheetImage.remap?.sourcePxPerMm ? Math.min(placed, sheetImage.remap.sourcePxPerMm) : placed) * 25.4;
       if (dpi < DPI_WARNING) issues.push({ code: "LOW_DPI", severity: dpi < DPI_ERROR ? "error" : "warning", messageKey: "preflight.LOW_DPI" });
     }
     for (const layer of doc.artwork[surface].layers) {

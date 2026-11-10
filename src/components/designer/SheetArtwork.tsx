@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
 import { checkArtworkFit, scanModels, solveModelDims, type FitCheck, type FitSuggestion } from "./lib/artworkFit";
 import { IMAGE_ACCEPT } from "./uploadImage";
+import { DPI_ERROR, DPI_WARNING } from "./lib/preflight";
 import lib from "./library.module.css";
 import s from "./sheetArtwork.module.css";
 
@@ -43,6 +44,8 @@ export interface SheetArtworkProps {
    * a "we recognised this box" result per surface, shown above the fit check.
    */
   recognised?: Partial<Record<PrintSurface, ReactNode>>;
+  /** The section is open: start the cut-line detector early (its model caches take about 1 s). */
+  onPrepare?: () => void;
 }
 
 /** "25 × 18 × 8 cm" / "25 × 18 × 8 سم" (Western digits, never mirrored). */
@@ -55,6 +58,8 @@ export const formatSheetCm = (d: Dims, locale: Locale) => {
 export function SheetArtwork(p: SheetArtworkProps) {
   const { t } = useI18n();
   const both = p.surfaces.length > 1;
+  const prep = useRef(p.onPrepare);
+  useEffect(() => prep.current?.(), []);
   return (
     <fieldset className={lib.group} data-testid="sheet-artwork">
       <legend className={lib.groupTitle}>{t("designer.artwork.sheetTitle")}</legend>
@@ -75,10 +80,14 @@ export function SheetArtwork(p: SheetArtworkProps) {
 function SheetSlot(p: SheetArtworkProps & { surface: PrintSurface; titled: boolean }) {
   const { t } = useI18n();
   const input = useRef<HTMLInputElement>(null);
-  const img = p.images[p.surface] ?? null;
+  const sheet = p.images[p.surface] ?? null;
+  // A sheet re-composed from the buyer's own dieline (dieline remap): the fit check is about the
+  // file as uploaded, and a model match needs none (the art was arranged on this template).
+  const img = sheet?.original ?? sheet;
+  const remapped = sheet?.remap?.mode === "model";
   const inside = p.surface === "inside";
   const [kept, setKept] = useState<string | null>(null);
-  const fit = useArtworkFit(p.model, img, p.fit);
+  const fit = useArtworkFit(p.model, remapped ? null : img, p.fit);
   const keyOf = img ? `${img.src.length}:${img.pxWidth}x${img.pxHeight}:${p.model.sheet.width}x${p.model.sheet.height}` : null;
   const dismissed = kept !== null && kept === keyOf;
 
@@ -109,6 +118,7 @@ function SheetSlot(p: SheetArtworkProps & { surface: PrintSurface; titled: boole
         </div>
       ) : null}
       {img ? (p.recognised?.[p.surface] ?? null) : null}
+      {sheet?.remap?.mode === "model" ? <RemapLowRes model={p.model} pxPerMm={sheet.remap.sourcePxPerMm} locale={p.locale} /> : null}
       {img && fit.check && !dismissed ? (
         <FitReport {...p} img={img} check={fit.check} search={fit.search} onKeep={() => setKept(keyOf)} />
       ) : null}
@@ -140,6 +150,20 @@ function SheetSlot(p: SheetArtworkProps & { surface: PrintSurface; titled: boole
         </Button>
       </div>
     </section>
+  );
+}
+
+/** Resolution of a re-composed sheet: the art's own density on the faces, at this box's size. */
+function RemapLowRes({ model, pxPerMm, locale }: { model: DielineModel; pxPerMm: number; locale: Locale }) {
+  const { t } = useI18n();
+  const dpi = pxPerMm * 25.4;
+  if (!pxPerMm || dpi >= DPI_WARNING) return null;
+  const k = dpi / DPI_WARNING;
+  const size = `⁦${formatNumber((model.sheet.width * k) / 10, 1)} × ${formatNumber((model.sheet.height * k) / 10, 1)}⁩ ${locale === "ar" ? "سم" : "cm"}`;
+  return (
+    <Banner tone={dpi < DPI_ERROR ? "critical" : "warning"} inCard>
+      <span data-testid="sheet-fit-lowres">{t("designer.artworkFit.lowRes", { dpi: formatNumber(Math.round(dpi)), size })}</span>
+    </Banner>
   );
 }
 

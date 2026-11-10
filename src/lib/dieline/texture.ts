@@ -79,6 +79,29 @@ export function paintArtworkSurface(ctx: Ctx2D, model: DielineModel, art: Artwor
     if (opts.surface === "inside") ctx.transform(-1, 0, 0, 1, model.sheet.width, 0);
     ctx.drawImage(sheetImg, p.x, p.y, p.width, p.height);
     ctx.restore();
+    // Fold wrap: a flap that is hidden when the box is closed (tuck, dust flap, rolled-in wall,
+    // locking ear) still shows a sliver where it turns over its crease, at the lid's front edge and
+    // the box's corners. That sliver takes the face's art mirrored across the crease, so the edge
+    // reads as one printed fold instead of a line of whatever the flap's own part of the image is.
+    for (const panel of model.panels) {
+      if (!panel.hinge || !panel.printable || !FOLD_WRAP_ROLES.has(panel.role) || panel.hingeKind === "roll") continue;
+      const parent = model.panels.find((q) => q.id === panel.parentId);
+      if (!parent?.printable || FOLD_WRAP_ROLES.has(parent.role)) continue;
+      const strip = foldStrip(panel.hinge, panel.polygon, Math.min(2 + 2 * model.thicknessMm, 0.25 * Math.min(panel.bbox.width, panel.bbox.height)));
+      if (!strip) continue;
+      ctx.save();
+      ctx.beginPath();
+      tracePolygon(ctx, panel.polygon);
+      ctx.clip();
+      ctx.beginPath();
+      tracePolygon(ctx, strip.polygon);
+      ctx.clip();
+      const r = strip.reflect;
+      ctx.transform(r[0], r[1], r[2], r[3], r[4], r[5]);
+      if (opts.surface === "inside") ctx.transform(-1, 0, 0, 1, model.sheet.width, 0);
+      ctx.drawImage(sheetImg, p.x, p.y, p.width, p.height);
+      ctx.restore();
+    }
   }
 
   const layers = (art?.layers ?? []).filter((l) => !l.hidden && l.surface === opts.surface);
@@ -106,6 +129,35 @@ export function paintArtworkSurface(ctx: Ctx2D, model: DielineModel, art: Artwor
     }
   }
   ctx.restore();
+}
+
+/** Panels hidden in the closed box whose crease still shows at an edge (see the fold wrap). */
+const FOLD_WRAP_ROLES = new Set<string>(["tuck", "dust", "inner", "ear"]);
+
+/**
+ * The band of a flap along its hinge (`width` mm into the flap) and the reflection about the
+ * hinge line (canvas affine). Null for a degenerate hinge.
+ */
+export function foldStrip(hinge: { a: { x: number; y: number }; b: { x: number; y: number } }, polygon: Polygon, width: number): { polygon: Polygon; reflect: [number, number, number, number, number, number] } | null {
+  const { a, b } = hinge;
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const len = Math.hypot(dx, dy);
+  if (len < 1e-6 || width <= 0) return null;
+  // unit normal toward the flap (its vertices' mean side of the hinge)
+  let nx = -dy / len;
+  let ny = dx / len;
+  const side = polygon.reduce((acc, q) => acc + (q.x - a.x) * nx + (q.y - a.y) * ny, 0);
+  if (side < 0) {
+    nx = -nx;
+    ny = -ny;
+  }
+  const c = (dx * dx - dy * dy) / (len * len);
+  const sn = (2 * dx * dy) / (len * len);
+  return {
+    polygon: [a, b, { x: b.x + nx * width, y: b.y + ny * width }, { x: a.x + nx * width, y: a.y + ny * width }],
+    reflect: [c, sn, sn, -c, a.x - c * a.x - sn * a.y, a.y - sn * a.x + c * a.y],
+  };
 }
 
 /**

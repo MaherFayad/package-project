@@ -9,19 +9,33 @@
  *   if (res.found) suggest(res.candidates[0]);  // code, dims, scaleKnown, why
  *   detector.dispose();
  */
+import type { DielineModel } from "@/lib/dieline";
+import type { PrintSurface } from "@/types";
+import type { RecogniseResult } from "../dielineRemap/recognise";
+import type { RemapReport, RemapSource } from "../dielineRemap/types";
 import type { DetectResult, RgbaImage } from "./types";
-import type { DetectorRequest, DetectorResponse } from "./worker";
+import type { DetectorRequest, DetectorResponse, EncodedSheet } from "./worker";
+
+export type { EncodedSheet };
 import { readImageDpi } from "./dpi";
 
 export interface DielineDetector {
   prepare(): void;
   detect(image: RgbaImage, opts?: { dpi?: number | null; pxPerMm?: number | null; maxCandidates?: number }): Promise<DetectResult>;
+  /** Detect, rank for the designer and re-compose the sheet for `target` (the open model). */
+  recognise(
+    image: RgbaImage,
+    opts: { scale: number; surface: PrintSurface; target: DielineModel | null; dpi?: number | null; pxPerMm?: number | null },
+  ): Promise<{ result: Omit<RecogniseResult, "image">; sheet: EncodedSheet | null }>;
+  /** Re-compose a sheet from a stored source for another model or size. */
+  remap(image: RgbaImage, opts: { scale: number; surface: PrintSurface; target: DielineModel; source: RemapSource }): Promise<{ report: RemapReport; sheet: EncodedSheet }>;
   dispose(): void;
 }
 
 export function createDielineDetector(): DielineDetector {
   const worker = new Worker(new URL("./worker.ts", import.meta.url), { type: "module" });
-  const pending = new Map<number, { resolve: (r: DetectResult) => void; reject: (e: Error) => void }>();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const pending = new Map<number, { resolve: (r: any) => void; reject: (e: Error) => void }>();
   let nextId = 1;
   worker.onmessage = (e: MessageEvent<DetectorResponse>) => {
     const msg = e.data;
@@ -30,18 +44,23 @@ export function createDielineDetector(): DielineDetector {
     if (!p) return;
     pending.delete(msg.id);
     if (msg.type === "result") p.resolve(msg.result);
+    else if (msg.type === "recognised") p.resolve({ result: msg.result, sheet: msg.sheet });
+    else if (msg.type === "remapped") p.resolve({ report: msg.report, sheet: msg.sheet });
     else p.reject(new Error(msg.message));
   };
   const post = (m: DetectorRequest, transfer: Transferable[] = []) => worker.postMessage(m, transfer);
+  const job = <T,>(make: (id: number) => DetectorRequest) => {
+    const id = nextId++;
+    return new Promise<T>((resolve, reject) => {
+      pending.set(id, { resolve, reject });
+      post(make(id));
+    });
+  };
   return {
     prepare: () => post({ type: "prepare" }),
-    detect(image, opts = {}) {
-      const id = nextId++;
-      return new Promise<DetectResult>((resolve, reject) => {
-        pending.set(id, { resolve, reject });
-        post({ type: "detect", id, image, ...opts });
-      });
-    },
+    detect: (image, opts = {}) => job<DetectResult>((id) => ({ type: "detect", id, image, ...opts })),
+    recognise: (image, opts) => job((id) => ({ type: "recognise", id, image, ...opts })),
+    remap: (image, opts) => job((id) => ({ type: "remap", id, image, ...opts })),
     dispose() {
       worker.terminate();
       for (const p of pending.values()) p.reject(new Error("detector disposed"));

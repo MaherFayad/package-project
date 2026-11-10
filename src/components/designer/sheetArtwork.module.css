@@ -68,3 +68,18 @@
   text-align: start;
   white-space: normal;
 }
+
+/* Recognised box: the one measurement that fixes the size (dieline remap) */
+.measureLabel {
+  font-size: var(--p-font-size-325, 13px);
+  font-weight: 600;
+}
+.measure {
+  inline-size: 8rem;
+  min-block-size: 44px;
+  padding-inline: 10px;
+  border: 1px solid var(--p-color-border, #8a8a8a);
+  border-radius: 8px;
+  font: inherit;
+  background: var(--p-color-bg-surface, #fff);
+}

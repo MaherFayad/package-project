@@ -60,7 +60,7 @@ import { ConfigPanel, surfaceName, type ViewOptions } from "./ConfigPanel";
 import lib from "./library.module.css";
 import { loadLocalDraft, saveLocalDraft } from "./lib/storage";
 import { useArtworkCanvases } from "./useArtworkCanvases";
-import { IMAGE_ACCEPT, imageLook, prepareImage, SHEET_IMAGE_OPTIONS, UploadError, type UploadErrorKind } from "./uploadImage";
+import { IMAGE_ACCEPT, imageLook, prepareImage, UploadError, type UploadErrorKind } from "./uploadImage";
 import { stampExportMark } from "@/components/marketing/exportMark";
 import { formatNumber } from "@/lib/format";
 import { fitTextBox, measureText } from "./fonts";
@@ -68,6 +68,9 @@ import { FaceEditor } from "./FaceEditor";
 import { DielineView } from "./DielineView";
 import { ArtworkPanel } from "./ArtworkPanel";
 import { formatSheetCm, SheetArtwork } from "./SheetArtwork";
+import { RecognisedCard } from "./RecognisedCard";
+import { useSheetRemap } from "./useSheetRemap";
+import type { Recognised } from "./lib/dielineRemap/recognise";
 import { SimplePanel, type SimpleSection } from "./SimplePanel";
 import { TopBarLanguage, TopBarSignIn } from "./TopBarLanguage";
 import { LayersPanel } from "./LayersPanel";
@@ -75,7 +78,7 @@ import { PreflightBadge, PreflightPanel } from "./PreflightPanel";
 import { orderModeOf } from "@/data/catalogue/order-mode";
 import { ExportModal, GateModal, PriceBadge, PriceModal, ShareModal, type ExportSize, type GateReason } from "./Modals";
 import { BrandColorsModal, BrandColorsProvider, usedBrandColors, type BrandColorsApi } from "./BrandColors";
-import type { BrandColor } from "@/types";
+import type { BrandColor, SheetImage } from "@/types";
 import styles from "./designer.module.css";
 import { trackClient } from "@/lib/analytics/client";
 
@@ -824,14 +827,14 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
   );
 
   /** Switch to another library model: its default size, the closest board, same artwork. */
-  const onModel = async (code: string, dims?: Dims) => {
+  const onModel = async (code: string, dims?: Dims, artwork?: DesignDoc["artwork"]) => {
     setPickerOpen(false);
     // Another family's pack loads on demand (PERF-04).
     const m = modelByCode(code) ?? (await loadModel(code));
     if (!m) return false;
     const cur = docRef.current;
     const fresh = createModelDoc(m, { name: cur.name, materialCode: cur.materialCode, dims });
-    const next: DesignDoc = { ...fresh, artwork: cur.artwork, printSides: m.kind === "box" ? cur.printSides : "OUTSIDE", finishes: cur.finishes, finishCode: cur.finishCode };
+    const next: DesignDoc = { ...fresh, artwork: artwork ?? cur.artwork, printSides: m.kind === "box" ? cur.printSides : "OUTSIDE", finishes: cur.finishes, finishCode: cur.finishCode };
     if (!applyGeometry(next)) return false;
     setUrl(designIdRef.current, code);
     return true;
@@ -914,6 +917,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
         setHoverSurface(s);
         setHoverFace(f);
         clearTimeout(tapGlow.current);
+        setFlash(true);
         tapGlow.current = setTimeout(() => setHoverFace(null), 1400);
       } else if (target) toast.show(effectiveDpi(layer) < DPI_WARNING ? `${t("designer.artwork.addedTo", { face: faceLabel(f) })}. ${t("designer.simple.lowRes")}` : t("designer.artwork.addedTo", { face: faceLabel(f) }));
       if (!sentRef.current.uploaded) {
@@ -931,13 +935,37 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
   };
 
   /** Full artwork: one image over the whole dieline of one surface (outside, or inside when both print). */
+  const setSheet = useCallback(
+    (side: PrintSurface, img: SheetImage | null, coalesce?: string) => {
+      const cur = docRef.current;
+      const next = { ...cur, artwork: { ...cur.artwork, [side]: { ...cur.artwork[side], sheetImage: img } } };
+      docRef.current = next;
+      commit(next, coalesce);
+    },
+    [commit],
+  );
+  // Dieline remap: a file made on the buyer's own printer template is recognised and re-composed
+  // on this box's template (designer: dieline remap).
+  const sheetRemap = useSheetRemap({
+    model,
+    modelCode: docModelCode(doc),
+    sheets: { outside: doc.artwork.outside.sheetImage, inside: doc.artwork.inside.sheetImage },
+    enabled: !isVessel && libModel?.kind === "box",
+    setSheet,
+  });
+  const onRecognisedApply = async (side: PrintSurface, match: Recognised, dims: Dims) => {
+    const cur = docRef.current;
+    const sheet = sheetRemap.withMatch(side, match);
+    const artwork = sheet ? { ...cur.artwork, [side]: { ...cur.artwork[side], sheetImage: sheet } } : cur.artwork;
+    const ok = match.code === docModelCode(cur) ? applyGeometry({ ...cur, dims, artwork }) : await onModel(match.code, dims, artwork);
+    if (ok) toast.show(t("designer.artworkFit.recogApplied", { name: modelByCode(match.code)?.name[locale] ?? match.code, size: formatSheetCm(dims, locale) }));
+  };
   const onSheetUpload = async (file: File, side: PrintSurface) => {
     setUploading(true);
     setUploadError(null);
     try {
-      const img = await prepareImage(file, SHEET_IMAGE_OPTIONS);
-      const cur = docRef.current;
-      commit({ ...cur, artwork: { ...cur.artwork, [side]: { ...cur.artwork[side], sheetImage: img } } });
+      // The full-size file lands first; recognising its cut lines goes on in the worker.
+      await sheetRemap.upload(file, side);
       if (side === "inside") {
         // Seeing it: open the box and look in (designer: inside artwork).
         showInside(true);
@@ -1019,8 +1047,15 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
     if (drag) setDragFace(hit?.face ?? "none");
     else setHoverFace(hit?.face ?? null);
   };
-  // the side under the pointer (or the drop target) glows in the 3D view
-  const glowFace = dragFace && dragFace !== "none" ? dragFace : hoverFace;
+  // the side under the pointer (or the drop target) glows in the 3D view. Over a full artwork a
+  // plain mouse hover only shows the hint: the glow's tint and rim read as a seam on the printed
+  // edges (owner, 2026-11-10: line along the top edge). Drops and taps still glow.
+  const [flash, setFlash] = useState(false);
+  useEffect(() => {
+    if (!hoverFace) setFlash(false);
+  }, [hoverFace]);
+  const sheetUnder = !!doc.artwork[hoverSurface]?.sheetImage;
+  const glowFace = dragFace && dragFace !== "none" ? dragFace : hoverFace && (!sheetUnder || flash) ? hoverFace : null;
   useEffect(() => {
     const ids = glowFace ? modelRef.current?.faces[glowFace]?.parts.map((p) => p.panelId) : null;
     sceneRef.current?.highlight?.(ids ?? null, hoverSurface);
@@ -1045,6 +1080,7 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
       setHoverSurface(hit.surface);
       setHoverFace(hit.face);
       clearTimeout(tapGlow.current);
+        setFlash(true);
       tapGlow.current = setTimeout(() => setHoverFace(null), 1500);
       faceTarget.current = hit;
       faceInput.current?.click();
@@ -2066,6 +2102,19 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
                             onTemplate={(side) => void downloadDieline("svg", side)}
                             onApplyDims={onSheetFitDims}
                             onApplyModel={(code, dims) => void onSheetFitModel(code, dims)}
+                            onPrepare={sheetRemap.prepare}
+                            recognised={Object.fromEntries(
+                              (["outside", "inside"] as PrintSurface[]).map((side) => [
+                                side,
+                                <RecognisedCard
+                                  key={side}
+                                  locale={locale}
+                                  state={sheetRemap.state[side]}
+                                  current={{ code: docModelCode(doc), dims: doc.dims }}
+                                  onApply={(m, d) => void onRecognisedApply(side, m, d)}
+                                />,
+                              ]),
+                            )}
                           />
                         ) : null
                       }
