@@ -1,6 +1,6 @@
 # Foodservice and paper packaging family
 
-`src/lib/dieline/families/foodservice` holds 29 parametric models in four geometry kinds:
+`src/lib/dieline/families/foodservice` holds 25 parametric models (the carrier, SOS and bottle bags moved to `../bags`, see its README) in four geometry kinds:
 
 | Kind | What it produces | Engine |
 |---|---|---|
@@ -23,11 +23,7 @@ Entry point: `buildFoodservice(code, dims, { thicknessMm?, features?, bleedMm? }
 | FS_SANDWICH_WEDGE | Sandwich wedge | علبة ساندويتش مثلثة | none | dieline |
 | FS_PIZZA_SLICE | Pizza slice box | علبة شريحة بيتزا | none | dieline |
 | FS_PIZZA_ROUND | Pizza box, 8 to 16 inch | علبة بيتزا بمقاسات البوصة | FEFCO 0426 | dieline (core `pizza` generator) |
-| FS_BAG_SOS | SOS flat-bottom paper bag | كيس ورقي بقاع مربع | ISO 6591-1 (dimensional designation) | dieline |
-| FS_BAG_FLAT_HANDLE | Carrier bag, flat handle | حقيبة ورقية بمقبض مسطح | ISO 6591-1 | dieline + handle |
-| FS_BAG_TWISTED_HANDLE | Carrier bag, twisted handle | حقيبة ورقية بمقبض مجدول | ISO 6591-1 | dieline + handle |
 | FS_BAG_MERCHANDISE | Merchandise flat bag | كيس ورقي مسطح | none | dieline |
-| FS_BAG_BOTTLE | Bottle bag | كيس ورقي للزجاجات | ISO 6591-1 | dieline |
 | FS_BAG_BREAD_WINDOW | Bread bag with window | كيس خبز بنافذة | ISO 6591-1 | dieline |
 | FS_HANG_TAG | Hang tag | بطاقة تعليق | none | dieline (flat) |
 | FS_BELLY_BAND | Belly band | حزام تغليف | none | dieline (core `sleeve`) |

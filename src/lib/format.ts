@@ -94,11 +94,12 @@ export type CountUnit =
   | "error"
   | "priceList"
   | "design"
-  | "file";
+  | "file"
+  | "bag";
 
 export const COUNT_UNITS: readonly CountUnit[] = [
   "second", "minute", "hour", "day", "week", "month", "box", "order", "item", "vendor", "printer",
-  "review", "unit", "colour", "piece", "model", "photo", "error", "priceList", "design", "file",
+  "review", "unit", "colour", "piece", "model", "photo", "error", "priceList", "design", "file", "bag",
 ];
 
 /**
@@ -129,6 +130,7 @@ const AR_UNITS: Record<CountUnit, Record<"one" | "two" | "few" | "many" | "other
   priceList: { one: "قائمة أسعار واحدة", two: "قائمتي أسعار", few: "قوائم أسعار", many: "قائمة أسعار", other: "قائمة أسعار" },
   design: { one: "تصميم واحد", two: "تصميمين", few: "تصميمات", many: "تصميما", other: "تصميم" },
   file: { one: "ملف واحد", two: "ملفين", few: "ملفات", many: "ملفا", other: "ملف" },
+  bag: { one: "كيس واحد", two: "كيسين", few: "أكياس", many: "كيسا", other: "كيس" },
 };
 const EN_UNITS: Record<CountUnit, [string, string]> = {
   second: ["second", "seconds"],
@@ -152,6 +154,7 @@ const EN_UNITS: Record<CountUnit, [string, string]> = {
   priceList: ["price list", "price lists"],
   design: ["design", "designs"],
   file: ["file", "files"],
+  bag: ["bag", "bags"],
 };
 const arPlural = new Intl.PluralRules("ar");
 

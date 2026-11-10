@@ -2,7 +2,7 @@
 
 Elba is a packaging marketplace for Egypt. A brand designs its packaging on a live 3D model, gets an instant price (or asks for a quote) and orders it from a vetted Egyptian printer. Elba is the merchant of record: it sells at its own price and buys from the printer at the rate card price.
 
-- **370 designer models** (274 boxes + 96 containers) live in `src/lib/library`. The public **catalogue lists 410** (`src/data/catalogue`): the 370 plus 40 quote-only family models (FEFCO 09 fittings, moulded pulp, cups, lids, bags, blister).
+- **377 designer models** (281 boxes incl. 7 store bags + 96 containers) live in `src/lib/library`. The public **catalogue lists 413** (`src/data/catalogue`): the 377 plus 36 quote-only family models (FEFCO 09 fittings, moulded pulp, cups, lids, food bags, blister).
 - Stack: Next.js 15 App Router, React 19, TypeScript (strict), Prisma 6 (SQLite in dev and tests, Postgres on Neon in production), three.js + react-three-fiber, pdf-lib, zod, Vitest, Playwright.
 - Locales: `/ar` (default, RTL) and `/en`. Every page lives under `/{locale}/...`.
 - Production: one Cloudflare Worker (OpenNext) + Neon via Hyperdrive + R2. Read `docs/DEPLOY-CLOUDFLARE.md` before touching deploy code. It is current.
@@ -20,7 +20,7 @@ Docs index: `docs/README.md`. Architecture: `docs/ARCHITECTURE.md`. Area guides:
 | `src/app/[locale]/vendor`, `admin`, `dev` | Printer portal, ops console, dev tools (gated by `devPagesEnabled()`) |
 | `src/app/api` | Route handlers: auth, designs, quote, orders, payments, vendor files/uploads, events, jobs, webhooks |
 | `src/lib/library` | Model registry (packs, lazy loader, `model-index.generated.ts`, `doc.ts`) |
-| `src/lib/dieline` | Box dielines in mm, folding (`fold.ts`), SVG, families under `families/` |
+| `src/lib/dieline` | Box dielines in mm, folding (`fold.ts`), SVG, families under `families/` (store bags: `families/bags`) |
 | `src/lib/vessels` | Bottles, jars, cans, tubes, flexible packs: profiles and print areas |
 | `src/components/three` | Renderer (`engine.ts` eager, `index.ts` lazy entry), finishes, vessels |
 | `src/components/designer` | Editor UI, `server.ts` (save, load, share), `lib/` (history, preflight, storage) |

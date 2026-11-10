@@ -32,6 +32,7 @@ export function buildNav(locale: Locale, t: TFunction) {
             { href: `${base}/boxes`, label: t("mk.nav.items.boxes"), icon: "boxes" },
             { href: `${base}/boxes#shelf`, label: t("mk.nav.items.cartons"), icon: "cartons" },
             { href: `${base}/bottles`, label: t("mk.nav.items.bottles"), icon: "bottles" },
+            { href: `${base}/bags`, label: t("mk.nav.items.bags"), icon: "bags" },
             { href: `${base}/catalog`, label: t("mk.nav.items.styles"), icon: "styles" },
           ],
         },

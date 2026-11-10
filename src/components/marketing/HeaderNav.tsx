@@ -24,6 +24,7 @@ import {
   Truck,
   LayoutGrid,
   HelpCircle,
+  ShoppingBag,
   X,
 } from "lucide-react";
 import { useI18n } from "@/i18n/client";
@@ -35,6 +36,7 @@ const ICONS = {
   boxes: Boxes,
   cartons: PackageOpen,
   bottles: Milk,
+  bags: ShoppingBag,
   styles: LayoutGrid,
   designer: Rotate3d,
   newDesign: PenTool,

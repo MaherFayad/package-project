@@ -293,6 +293,24 @@ export async function getReferenceUnit(code: StructureCode, dims: Dims): Promise
   return row?.unitPiasters ?? null;
 }
 
+/**
+ * Added by bags: per-unit price of a LIBRARY model (a store bag) at the reference quantity, through
+ * its base structure and its own die (same headline defaults as `getPriceFrom`). null when the model
+ * is quote-only or no printer prices it at that quantity.
+ */
+export async function getModelReferenceUnit(base: StructureCode, modelCode: string, dims: Dims, material: MaterialCode, colours = 1): Promise<{ unitPiasters: Piasters; quantity: number } | null> {
+  try {
+    const [data, config, settings] = await Promise.all([pricingData(), pricingConfig(), checkoutSettings()]);
+    const table = priceTable({ ...headlineInput(base, dims, material), colours, model: { code: modelCode } }, data, { config });
+    const row = table.find((r) => r.quantity === PRICE_REFERENCE.quantity && r.best) ?? table.find((r) => r.best);
+    if (!row?.best) return null;
+    const p = buyerPrice(toPublicOffer(row.best as VendorOffer), settings.prepayDiscountPct);
+    return { unitPiasters: p.unitPiasters, quantity: row.quantity };
+  } catch {
+    return null;
+  }
+}
+
 /** @deprecated Name kept for existing call sites: returns the 500-box price (`getReferenceUnit`), not the lowest tier. */
 export const getLowestUnit = getReferenceUnit;
 

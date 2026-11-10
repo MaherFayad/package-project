@@ -55,7 +55,7 @@ export function BagHandleGroup({ modelCode, features, onChange }: { modelCode: s
             {colors.map((c) => {
               const checked = current.color === c;
               return (
-                <label key={c} title={HANDLE_COLOR_NAMES[c][locale]} style={{ display: "inline-grid", placeItems: "center", inlineSize: 44, blockSize: 44, borderRadius: 22, cursor: "pointer", boxShadow: checked ? "0 0 0 2px var(--p-color-text)" : "0 0 0 1px var(--p-color-border)" }}>
+                <label key={c} title={HANDLE_COLOR_NAMES[c][locale]} style={{ position: "relative", display: "inline-grid", placeItems: "center", inlineSize: 44, blockSize: 44, borderRadius: 22, cursor: "pointer", boxShadow: checked ? "0 0 0 2px var(--p-color-text)" : "0 0 0 1px var(--p-color-border)" }}>
                   <input className={o.srOnly} type="radio" name="bag-handle-color" value={c} checked={checked} onChange={() => pickColor(c)} aria-label={HANDLE_COLOR_NAMES[c][locale]} />
                   <span aria-hidden="true" style={{ inlineSize: 30, blockSize: 30, borderRadius: 15, background: BAG_HANDLE_COLORS[c], boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.18)" }} />
                 </label>

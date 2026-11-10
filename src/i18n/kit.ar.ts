@@ -28,6 +28,7 @@ export const kitAr: Widen<typeof kitEn> = {
       boxes: "علب بريدية وكراتين شحن",
       cartons: "علب دوبلكس",
       bottles: "زجاجات وملصقات",
+      bags: "أكياس ورقية",
       styles: "كل ما نطبعه",
       designer: "معاينة علبتك",
       newDesign: "معرفة سعر علبتك",

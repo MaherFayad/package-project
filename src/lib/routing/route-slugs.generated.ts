@@ -872,6 +872,7 @@ export const CATALOGUE_REDIRECT_SLUGS: readonly string[] = [
 ];
 /** Top-level segments with no route below them: any deeper path is unknown. */
 export const LEAF_SEGMENTS: readonly string[] = [
+  "bags",
   "bottles",
   "designer",
   "login",

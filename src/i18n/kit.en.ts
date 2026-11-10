@@ -24,6 +24,7 @@ export const kitEn = {
       boxes: "Mailer and shipping boxes",
       cartons: "Folding cartons",
       bottles: "Bottles and labels",
+      bags: "Paper bags",
       styles: "Everything we print",
       designer: "Preview your box",
       newDesign: "Price your box",

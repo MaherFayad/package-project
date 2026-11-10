@@ -1140,13 +1140,13 @@
   "render": "box"
  },
  {
-  "code": "SLEEVE",
-  "slug": "sleeve",
+  "code": "ECMA_SLEEVE_OPEN",
+  "slug": "open-end-sleeve",
   "render": "box"
  },
  {
-  "code": "ECMA_SLEEVE_OPEN",
-  "slug": "open-end-sleeve",
+  "code": "SLEEVE",
+  "slug": "sleeve",
   "render": "box"
  },
  {
@@ -1250,16 +1250,6 @@
   "render": "box"
  },
  {
-  "code": "ECMA_RTE",
-  "slug": "reverse-tuck-end",
-  "render": "box"
- },
- {
-  "code": "ECMA_STE",
-  "slug": "straight-tuck-end",
-  "render": "box"
- },
- {
   "code": "ECMA_TUCK_AIRPLANE",
   "slug": "ecma-airplane-tuck",
   "render": "box"
@@ -1275,6 +1265,11 @@
   "render": "box"
  },
  {
+  "code": "ECMA_RTE",
+  "slug": "reverse-tuck-end",
+  "render": "box"
+ },
+ {
   "code": "ECMA_TUCK_RTE",
   "slug": "ecma-reverse-tuck-end",
   "render": "box"
@@ -1282,6 +1277,11 @@
  {
   "code": "ECMA_WINDOW_RTE",
   "slug": "ecma-window-carton",
+  "render": "box"
+ },
+ {
+  "code": "ECMA_STE",
+  "slug": "straight-tuck-end",
   "render": "box"
  },
  {
@@ -1380,6 +1380,41 @@
   "render": "box"
  },
  {
+  "code": "BAG_BOTTLE",
+  "slug": "bottle-bag-rope-handle",
+  "render": "box"
+ },
+ {
+  "code": "BAG_GIFT_ART",
+  "slug": "gift-bag-ribbon-handle",
+  "render": "box"
+ },
+ {
+  "code": "BAG_ROPE_ART",
+  "slug": "art-paper-bag-rope-handle",
+  "render": "box"
+ },
+ {
+  "code": "BAG_DIECUT_PATCH",
+  "slug": "die-cut-handle-bag",
+  "render": "box"
+ },
+ {
+  "code": "BAG_FLAT_KRAFT",
+  "slug": "kraft-bag-flat-handle",
+  "render": "box"
+ },
+ {
+  "code": "BAG_TWISTED_KRAFT",
+  "slug": "kraft-bag-twisted-handle",
+  "render": "box"
+ },
+ {
+  "code": "BAG_SOS",
+  "slug": "sos-paper-bag",
+  "render": "box"
+ },
+ {
   "code": "FS_FRIES_SCOOP",
   "slug": "fries-scoop",
   "render": "box"
@@ -1455,33 +1490,13 @@
   "render": "box"
  },
  {
-  "code": "FS_BAG_BOTTLE",
-  "slug": "bottle-paper-bag",
-  "render": "dieline"
- },
- {
   "code": "FS_BAG_BREAD_WINDOW",
   "slug": "bread-bag-window",
   "render": "dieline"
  },
  {
-  "code": "FS_BAG_FLAT_HANDLE",
-  "slug": "paper-bag-flat-handle",
-  "render": "dieline"
- },
- {
-  "code": "FS_BAG_TWISTED_HANDLE",
-  "slug": "paper-bag-twisted-handle",
-  "render": "dieline"
- },
- {
   "code": "FS_BAG_MERCHANDISE",
   "slug": "merchandise-flat-bag",
-  "render": "dieline"
- },
- {
-  "code": "FS_BAG_SOS",
-  "slug": "sos-paper-bag",
   "render": "dieline"
  },
  {
@@ -1575,13 +1590,13 @@
   "render": "vessel"
  },
  {
-  "code": "STAND_UP_POUCH",
-  "slug": "stand-up-pouch",
+  "code": "FLEX_STAND_UP_POUCH",
+  "slug": "stand-up-pouch-flex-stand-up-pouch",
   "render": "vessel"
  },
  {
-  "code": "FLEX_STAND_UP_POUCH",
-  "slug": "stand-up-pouch-flex-stand-up-pouch",
+  "code": "STAND_UP_POUCH",
+  "slug": "stand-up-pouch",
   "render": "vessel"
  },
  {

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-One shared geometry engine drives the 3D view, the flat dieline, preflight, pricing area and the print PDF. The library registers every model the designer can open: **370 models** (274 boxes and 96 containers). The public catalogue adds 40 quote-only family models on top (410 total, see `catalogue.md`).
+One shared geometry engine drives the 3D view, the flat dieline, preflight, pricing area and the print PDF. The library registers every model the designer can open: **377 models** (281 boxes, 7 of them store bags, and 96 containers). The public catalogue adds 36 quote-only family models on top (413 total, see `catalogue.md`).
 
 ## Key files
 
@@ -17,7 +17,7 @@ One shared geometry engine drives the 3D view, the flat dieline, preflight, pric
 | `src/lib/library/model-index.generated.ts` | `MODEL_INDEX: code -> [pack, slug]`. Generated |
 | `src/lib/library/doc.ts` | `docGeometry(doc)`, `normaliseDocModel`, `baseOf`, `docBoardArea`, `vesselPrintMaterials` |
 | `src/lib/dieline/` | `generateDieline`, `fold.ts` (poses, bounds, faces), `svg.ts`, `structures.ts` (13 core generators), `builder.ts`, local `./math` |
-| `src/lib/dieline/families/<fam>/` | ecma-specials, ecma-tuck, fefco-02, fefco-03-05, fefco-04, fefco-06-07, fefco-09, foodservice, rigid-tubes. Each has a README, `definitions`, generators, tests |
+| `src/lib/dieline/families/<fam>/` | bags, ecma-specials, ecma-tuck, fefco-02, fefco-03-05, fefco-04, fefco-06-07, fefco-09, foodservice, rigid-tubes. Each has a README, `definitions`, generators, tests |
 | `src/lib/vessels/` | `profile.ts` (neck finishes, `buildProfile`), `labels.ts`, `layout.ts`, `stocks.ts`, `registry.ts` (`VESSELS`), `families/{bottles,cosmetic-cans,flexible}` |
 | `src/components/three/index.ts` | Light, lazy entry: `PackagingSceneLazy`, `VesselSceneLazy`, `loadEngineStack` |
 | `src/components/three/engine.ts` | Eager three/R3F exports. Import only from lazily loaded modules |
@@ -33,6 +33,7 @@ One shared geometry engine drives the 3D view, the flat dieline, preflight, pric
 | fefco-02 | 24 | foodservice | 8 |
 | fefco-03-05 | 32 | rigid-tubes | 14 |
 | fefco-04 | 80 | vessel-core | 10 |
+| bags | 7 | | |
 | fefco-06-07 | 33 | vessel-bottles | 34 |
 | fefco-09 | 36 | vessel-cosmetic | 37 |
 | ecma-tuck | 14 | vessel-flexible | 15 |

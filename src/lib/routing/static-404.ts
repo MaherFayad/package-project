@@ -24,7 +24,7 @@ export const NOT_FOUND_SEGMENT = "page-not-found";
 /** First path segments under /{locale}/ that have routes (route groups flattened). Kept in sync with
  * src/app/[locale] by src/lib/routing/__tests__/static-404.test.ts. */
 export const TOP_SEGMENTS: ReadonlySet<string> = new Set([
-  "account", "admin", "bottles", "boxes", "catalog", "checkout", "design", "designer", "dev", "legal",
+  "account", "admin", "bags", "bottles", "boxes", "catalog", "checkout", "design", "designer", "dev", "legal",
   "login", "orders", "pricing", "s", "start", "unsubscribe", "vendor", "vendors", "why-elba",
 ]);
 
