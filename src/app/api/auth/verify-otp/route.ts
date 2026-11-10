@@ -134,10 +134,15 @@ export async function POST(req: Request) {
   const anonId = jar.get(ANON_COOKIE)?.value;
   if (anonId) {
     await db.design.deleteMany({ where: { anonId, ownerId: null, expiresAt: { lt: now }, proofs: { none: {} } } });
-    await db.design.updateMany({
+    // Claiming is not a content change: keep each design's updatedAt, so an open editor's next
+    // save is not refused as "changed in another tab" (R10-R1 compares it).
+    const claim = await db.design.findMany({
       where: { anonId, ownerId: null, OR: [{ expiresAt: null }, { expiresAt: { gte: now } }] },
-      data: { ownerId: user.id, expiresAt: null },
+      select: { id: true, updatedAt: true },
     });
+    for (const d of claim) {
+      await db.design.updateMany({ where: { id: d.id, ownerId: null }, data: { ownerId: user.id, expiresAt: null, updatedAt: d.updatedAt } });
+    }
   }
 
   await createSession(user.id);

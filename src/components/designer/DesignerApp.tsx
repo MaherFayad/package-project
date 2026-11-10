@@ -591,8 +591,13 @@ function DesignerEditor({ locale, initialDoc, initialDesignId, initialUpdatedAt,
 
   const saveToServer = useCallback(
     async (opts: { thumbnail?: boolean; force?: boolean } = {}): Promise<string | null> => {
-      if (inflight.current) await inflight.current.catch(() => null);
+      // One save at a time, in order. The queue slot is taken synchronously: awaiting the
+      // in-flight save first let two waiting callers (autosave plus a thumbnail save for share,
+      // export or order) start together with the same base version, and the second was refused
+      // with 409, which showed "changed in another tab" for this tab's own save.
+      const prev = inflight.current;
       const run = (async () => {
+        if (prev) await prev.catch(() => null);
         const current = docRef.current;
         setSaveState("saving");
         let thumbnail: string | undefined;

@@ -158,6 +158,9 @@ test("design a box, see the price signed out, sign up at the share gate, share a
   await exp.getByLabel(/Standard PNG/).check();
   const [download] = await Promise.all([page.waitForEvent("download", { timeout: 30_000 }), exp.getByRole("button", { name: "Download" }).click()]);
   expect(download.suggestedFilename()).toMatch(/\.png$/);
+  // Signing in (claims the draft), sharing and exporting all save: none of them may look like
+  // "changed in another tab" (one tab, one device).
+  await expect(page.getByText("This design changed in another tab or on another device")).toHaveCount(0);
 
   await page.goto(new URL(shareUrl).pathname);
   await expect(page.getByText("Shared box design")).toBeVisible();
