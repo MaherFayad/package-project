@@ -10,6 +10,7 @@ import { CITY_ZONE, deliveryEstimate, flatPackBundles } from "./delivery";
 import { sumPiasters, toPiasters, vatOf, withMargin } from "./money";
 import { nearbyStandardSizes, sameSize, vendorHasDie } from "./standard";
 import { interpolateUnit } from "./tiers";
+import { bagAreaRatio, bagCostExtras, type BagCostExtras } from "./bags";
 import type {
   DeliveryZone,
   IneligibleReason,
@@ -50,6 +51,9 @@ const LABEL = {
   DIE: "pricing.line.die",
   FINISH: "pricing.line.finish",
   SHIPPING: "pricing.line.shipping",
+  PRODUCT_BAG: "pricing.line.productBag",
+  BAG_HANDLE: "pricing.line.bagHandle",
+  BAG_BOARD: "pricing.line.bagBoard",
 } as const;
 
 function normaliseFinishes(finishes: FinishCode[]): FinishCode[] {
@@ -166,10 +170,12 @@ function priceVendor(
   index: PriceIndexRow,
   cfg: PricingConfig,
   validUntil: string,
+  bag: BagCostExtras | null = null,
 ): VendorOffer {
   const q = input.quantity;
   const m = cfg.marginPct;
-  const rawRatio = area.blankAreaM2 / card.referenceAreaM2;
+  // Bags are quoted by size band (printers' price lists), boxes by their exact blank area.
+  const rawRatio = bag ? bagAreaRatio(area.blankAreaM2, card.referenceAreaM2) : area.blankAreaM2 / card.referenceAreaM2;
   const areaRatio = Math.min(cfg.areaRatioMax, Math.max(cfg.areaRatioMin, rawRatio));
   const boardMult = boardMultiplier(index, material.code);
 
@@ -192,7 +198,7 @@ function priceVendor(
 
   const lines: QuoteLine[] = [];
   const unitSell = withMargin(chosen.unit, m);
-  lines.push({ kind: "PRODUCT", labelKey: LABEL.PRODUCT, quantity: q, unitPiasters: unitSell, totalPiasters: unitSell * q });
+  lines.push({ kind: "PRODUCT", labelKey: bag ? LABEL.PRODUCT_BAG : LABEL.PRODUCT, quantity: q, unitPiasters: unitSell, totalPiasters: unitSell * q });
 
   const setupBuy = chosen.setup + sumPiasters(finishLines.map((x) => x.setup));
   const setupSell = withMargin(setupBuy, m);
@@ -205,6 +211,12 @@ function priceVendor(
   for (const fl of finishLines) {
     const u = withMargin(fl.buyUnit, m);
     if (u > 0) lines.push({ kind: "FINISH", labelKey: `finishes.${fl.f}`, quantity: q, unitPiasters: u, totalPiasters: u * q });
+  }
+  // Bags: the handle (cord, tape, rope, ribbon, die-cut patch) and the board parts, per bag.
+  const bagUnits = bag ? [{ key: LABEL.BAG_HANDLE, buy: bag.handleUnit }, { key: LABEL.BAG_BOARD, buy: bag.partsUnit }].filter((x) => x.buy > 0) : [];
+  for (const b of bagUnits) {
+    const u = withMargin(b.buy, m);
+    lines.push({ kind: "FINISH", labelKey: b.key, quantity: q, unitPiasters: u, totalPiasters: u * q });
   }
 
   const bundle = flatPackBundles(input.structureCode, area, material, q, cfg);
@@ -221,7 +233,7 @@ function priceVendor(
   lead = Math.max(cfg.minLeadTimeDays, lead);
 
   const vendorCost = toPiasters(
-    chosen.unit * q + setupBuy + dieBuy + sumPiasters(finishLines.map((x) => toPiasters(x.buyUnit * q))),
+    chosen.unit * q + setupBuy + dieBuy + sumPiasters(finishLines.map((x) => toPiasters(x.buyUnit * q))) + sumPiasters(bagUnits.map((x) => toPiasters(x.buy * q))),
   );
   const shippingCost = shipping.pricePiasters;
 
@@ -344,6 +356,7 @@ export function quote(input: QuoteInput, data: PricingData, opts: QuoteOptions =
   const index = resolvePriceIndex(cfg.priceIndex, now);
   const validUntil = new Date(now.getTime() + cfg.quoteValidityHours * 3_600_000).toISOString();
   const finishes = normaliseFinishes(input.finishes);
+  const bag = input.structureCode === "PAPER_BAG" ? bagCostExtras({ modelCode: input.model?.code, features: input.model?.features, material: material.code, paperAreaM2: area.blankAreaM2 }) : null;
 
   const offers: VendorOffer[] = [];
   const ineligible: InstantQuote["ineligible"] = [];
@@ -354,11 +367,15 @@ export function quote(input: QuoteInput, data: PricingData, opts: QuoteOptions =
       ineligible.push({ vendorId: vendor.id, reason: e.reason });
       continue;
     }
+    if (bag && input.quantity < Math.max(bag.moq, vendor.minOrderQty)) {
+      ineligible.push({ vendorId: vendor.id, reason: "BELOW_MIN_QTY" });
+      continue;
+    }
     if (order && input.model && !vendorListsModel(order.mode, input.model.code, vendor.capabilities.models)) {
       ineligible.push({ vendorId: vendor.id, reason: "MODEL_NOT_LISTED" });
       continue;
     }
-    offers.push(priceVendor(vendor, e.card, data, input, material, finishes, area, index, cfg, validUntil));
+    offers.push(priceVendor(vendor, e.card, data, input, material, finishes, area, index, cfg, validUntil, bag));
   }
   const ranked = rankOffers(offers, cfg);
   if (order?.mode === "listed" && ranked.length === 0) {

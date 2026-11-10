@@ -248,6 +248,9 @@ export const ar: Dictionary = {
       finish: "التشطيب",
       shipping: "الشحن",
       discount: "الخصم",
+      productBag: "أكياس مطبوعة",
+      bagHandle: "يد الأكياس",
+      bagBoard: "قاعدة وشريط كرتون",
     },
   },
   preflight: {

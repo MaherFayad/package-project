@@ -250,6 +250,9 @@ export const en = {
       finish: "Finish",
       shipping: "Shipping",
       discount: "Discount",
+      productBag: "Printed bags",
+      bagHandle: "Bag handles",
+      bagBoard: "Base and top board",
     },
   },
   preflight: {
