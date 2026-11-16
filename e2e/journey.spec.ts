@@ -98,10 +98,11 @@ test("home → design → gate → price → checkout → pay → vendor → QC 
   // Scope to the uploaded-photo list: the required-photos checklist in the same card names both kinds
   // too, so an unscoped list-item match passed before the upload finished (race under load).
   const photos = qc.getByRole("list", { name: "Quality check photos" });
-  await qc.locator('input[type="file"]').setInputFiles({ name: "sheet.png", mimeType: "image/png", buffer: PNG });
+  // One drop zone per QC slot, each a group named after its slot (DropZone aria-labelledby).
+  const slotInput = (name: string) => qc.getByRole("group", { name, exact: true }).locator('input[type="file"]');
+  await slotInput("First printed sheet").setInputFiles({ name: "sheet.png", mimeType: "image/png", buffer: PNG });
   await expect(photos.getByRole("listitem").filter({ hasText: "First printed sheet" })).toBeVisible({ timeout: 30_000 });
-  await qc.getByLabel("Photo type").selectOption("PACKED_BUNDLE");
-  await qc.locator('input[type="file"]').setInputFiles({ name: "bundle.png", mimeType: "image/png", buffer: PNG });
+  await slotInput("Packed bundle").setInputFiles({ name: "bundle.png", mimeType: "image/png", buffer: PNG });
   await expect(photos.getByRole("listitem").filter({ hasText: "Packed bundle" })).toBeVisible({ timeout: 30_000 });
   const submitQc = qc.getByRole("button", { name: "Submit for quality check" });
   await expect(submitQc).toBeEnabled({ timeout: 30_000 });
