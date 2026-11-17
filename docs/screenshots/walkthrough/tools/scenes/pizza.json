@@ -1,0 +1,178 @@
+{
+ "out": "/tmp/claude-0/-home-user-package-project/c484ab86-6bce-5144-8fb6-91c94260a9dd/scratchpad/vid/elba-pizza-ar.mp4",
+ "size": [
+  1600,
+  1000
+ ],
+ "scenes": [
+  {
+   "id": "p00",
+   "card": {
+    "kicker": "علبة",
+    "title": "علب بيتزا مطبوعة بشعار مطعمك",
+    "sub": "من التصميم إلى استلام العلب"
+   },
+   "narration": "هذه علبة. منصة تصمم فيها علب البيتزا بشعار مطعمك، وتطبعها لدى مطابع معتمدة في مصر."
+  },
+  {
+   "id": "p01",
+   "caption": "علبة البيتزا على مجسم ثلاثي الأبعاد",
+   "segments": [
+    [
+     "/tmp/claude-0/-home-user-package-project/c484ab86-6bce-5144-8fb6-91c94260a9dd/scratchpad/food-pizza/1-buyer.webm",
+     0,
+     12,
+     1.5
+    ]
+   ],
+   "narration": "نبدأ بعلبة البيتزا على مجسم ثلاثي الأبعاد، بمقاسها الحقيقي، وبجانبها علبة مشروبات للمقارنة."
+  },
+  {
+   "id": "p02",
+   "caption": "اللون واسم المطعم",
+   "segments": [
+    [
+     "/tmp/claude-0/-home-user-package-project/c484ab86-6bce-5144-8fb6-91c94260a9dd/scratchpad/food-pizza/1-buyer.webm",
+     21,
+     31,
+     1.0
+    ],
+    [
+     "/tmp/claude-0/-home-user-package-project/c484ab86-6bce-5144-8fb6-91c94260a9dd/scratchpad/food-pizza/1-buyer.webm",
+     31,
+     44,
+     1.3
+    ]
+   ],
+   "narration": "نختار لون العلبة، ثم نكتب اسم المطعم على الجانب الأمامي."
+  },
+  {
+   "id": "p03",
+   "caption": "الشعار على الغطاء",
+   "segments": [
+    [
+     "/tmp/claude-0/-home-user-package-project/c484ab86-6bce-5144-8fb6-91c94260a9dd/scratchpad/food-pizza/1-buyer.webm",
+     44,
+     53,
+     1.0
+    ],
+    [
+     "/tmp/claude-0/-home-user-package-project/c484ab86-6bce-5144-8fb6-91c94260a9dd/scratchpad/food-pizza/1-buyer.webm",
+     53,
+     104,
+     3.0
+    ]
+   ],
+   "narration": "ونضع الشعار على الغطاء، ونرى العلبة من كل الجهات قبل الطباعة."
+  },
+  {
+   "id": "p04",
+   "caption": "فتح العلبة ورؤية الداخل",
+   "segments": [
+    [
+     "/tmp/claude-0/-home-user-package-project/c484ab86-6bce-5144-8fb6-91c94260a9dd/scratchpad/food-pizza/1-buyer.webm",
+     104,
+     121,
+     1.5
+    ]
+   ],
+   "narration": "ويمكن فتح العلبة لرؤية الداخل وطريقة الطي."
+  },
+  {
+   "id": "p05",
+   "caption": "السعر الفوري وتسجيل الدخول برقم المحمول",
+   "segments": [
+    [
+     "/tmp/claude-0/-home-user-package-project/c484ab86-6bce-5144-8fb6-91c94260a9dd/scratchpad/food-pizza/1-buyer.webm",
+     121,
+     129.5,
+     1.0
+    ]
+   ],
+   "narration": "السعر يظهر فورا شاملا الضريبة والتوصيل. وللطلب يكفي رقم المحمول ورمز تحقق."
+  },
+  {
+   "id": "p06",
+   "caption": "إتمام الطلب: العنوان واعتماد البروفة",
+   "segments": [
+    [
+     "/tmp/claude-0/-home-user-package-project/c484ab86-6bce-5144-8fb6-91c94260a9dd/scratchpad/food-pizza/1-buyer.webm",
+     136.5,
+     149,
+     1.3
+    ]
+   ],
+   "narration": "في إتمام الطلب نكتب العنوان، ثم نراجع البروفة ونعتمدها."
+  },
+  {
+   "id": "p07",
+   "caption": "الدفع ومتابعة الطلب",
+   "segments": [
+    [
+     "/tmp/claude-0/-home-user-package-project/c484ab86-6bce-5144-8fb6-91c94260a9dd/scratchpad/food-pizza/1-buyer.webm",
+     149,
+     159.3,
+     1.0
+    ]
+   ],
+   "narration": "ثم الدفع بالبطاقة أو المحفظة الإلكترونية أو فوري، ونتابع الطلب خطوة بخطوة."
+  },
+  {
+   "id": "p08",
+   "card": {
+    "kicker": "بوابة المطبعة",
+    "title": "المطبعة تستلم الطلب",
+    "sub": "مطبعة معتمدة في القاهرة"
+   },
+   "narration": "على الجانب الآخر، تستلم مطبعة معتمدة الطلب."
+  },
+  {
+   "id": "p09",
+   "caption": "المطبعة: القبول ثم الطباعة وصور فحص الجودة",
+   "segments": [
+    [
+     "/tmp/claude-0/-home-user-package-project/c484ab86-6bce-5144-8fb6-91c94260a9dd/scratchpad/food-pizza/2-printer.webm",
+     0,
+     23.4,
+     1.2
+    ]
+   ],
+   "narration": "تراجع المطبعة التصميم المعتمد وسعرها، وتقبل الطلب، وتبدأ الطباعة، ثم ترسل صور فحص الجودة."
+  },
+  {
+   "id": "p10",
+   "caption": "فريق علبة: اعتماد الجودة وحجز الشحن",
+   "segments": [
+    [
+     "/tmp/claude-0/-home-user-package-project/c484ab86-6bce-5144-8fb6-91c94260a9dd/scratchpad/food-pizza/3-ops.webm",
+     0,
+     7.1,
+     1.0
+    ]
+   ],
+   "narration": "يراجع فريق علبة صور الجودة، ويحجز شركة الشحن."
+  },
+  {
+   "id": "p11",
+   "caption": "تم التسليم، مع إيصال الطلب",
+   "segments": [
+    [
+     "/tmp/claude-0/-home-user-package-project/c484ab86-6bce-5144-8fb6-91c94260a9dd/scratchpad/food-pizza/4-delivered.webm",
+     0,
+     7.5,
+     1.0
+    ]
+   ],
+   "narration": "وتصل العلب إلى المطعم، ومعها إيصال الطلب."
+  },
+  {
+   "id": "p12",
+   "card": {
+    "kicker": "علبة",
+    "title": "تصميم، وسعر فوري، وطباعة معتمدة",
+    "sub": "elba-demo.maherfayad55.workers.dev"
+   },
+   "narration": "علبة: تصميم، وسعر فوري، وطباعة لدى مطابع معتمدة."
+  }
+ ]
+}

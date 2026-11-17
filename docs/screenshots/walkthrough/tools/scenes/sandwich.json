@@ -1,0 +1,159 @@
+{
+ "out": "/tmp/claude-0/-home-user-package-project/c484ab86-6bce-5144-8fb6-91c94260a9dd/scratchpad/vid/elba-club-sandwich-ar.mp4",
+ "size": [
+  1600,
+  1000
+ ],
+ "scenes": [
+  {
+   "id": "s00",
+   "card": {
+    "kicker": "علبة",
+    "title": "علب ساندويتش الكلوب بشعار مطعمك",
+    "sub": "من التصميم إلى استلام العلب"
+   },
+   "narration": "هذه علبة. نصمم علب ساندويتش الكلوب المثلثة بشعار مطعمك، ونطبعها لدى مطابع معتمدة."
+  },
+  {
+   "id": "s01",
+   "caption": "علبة ساندويتش مثلثة بنافذة شفافة",
+   "segments": [
+    [
+     "/tmp/claude-0/-home-user-package-project/c484ab86-6bce-5144-8fb6-91c94260a9dd/scratchpad/food-sandwich/1-buyer.webm",
+     0,
+     15,
+     1.5
+    ]
+   ],
+   "narration": "هذه علبة الساندويتش المثلثة بنافذة شفافة، على مجسم ثلاثي الأبعاد بمقاسها الحقيقي."
+  },
+  {
+   "id": "s02",
+   "caption": "اللون والشعار على الجانبين",
+   "segments": [
+    [
+     "/tmp/claude-0/-home-user-package-project/c484ab86-6bce-5144-8fb6-91c94260a9dd/scratchpad/food-sandwich/1-buyer.webm",
+     18,
+     51,
+     1.4
+    ]
+   ],
+   "narration": "نختار اللون الأخضر، ونضع شعار المطعم على الجانبين."
+  },
+  {
+   "id": "s03",
+   "caption": "العلبة من كل الجهات، وفتحها",
+   "segments": [
+    [
+     "/tmp/claude-0/-home-user-package-project/c484ab86-6bce-5144-8fb6-91c94260a9dd/scratchpad/food-sandwich/1-buyer.webm",
+     51,
+     69,
+     2.0
+    ],
+    [
+     "/tmp/claude-0/-home-user-package-project/c484ab86-6bce-5144-8fb6-91c94260a9dd/scratchpad/food-sandwich/1-buyer.webm",
+     69,
+     80.5,
+     1.4
+    ]
+   ],
+   "narration": "ونخفي علبة المقارنة، وندير العلبة، ونفتحها لرؤية طريقة الطي."
+  },
+  {
+   "id": "s04",
+   "caption": "السعر الفوري وتسجيل الدخول برقم المحمول",
+   "segments": [
+    [
+     "/tmp/claude-0/-home-user-package-project/c484ab86-6bce-5144-8fb6-91c94260a9dd/scratchpad/food-sandwich/1-buyer.webm",
+     80.5,
+     87,
+     1.0
+    ]
+   ],
+   "narration": "السعر يظهر فورا شاملا الضريبة والتوصيل، والطلب برقم المحمول ورمز تحقق."
+  },
+  {
+   "id": "s05",
+   "caption": "إتمام الطلب: الكمية والعنوان واعتماد البروفة",
+   "segments": [
+    [
+     "/tmp/claude-0/-home-user-package-project/c484ab86-6bce-5144-8fb6-91c94260a9dd/scratchpad/food-sandwich/1-buyer.webm",
+     87,
+     101.5,
+     1.3
+    ]
+   ],
+   "narration": "نختار الكمية، ونكتب العنوان، ونعتمد البروفة."
+  },
+  {
+   "id": "s06",
+   "caption": "الدفع ومتابعة الطلب",
+   "segments": [
+    [
+     "/tmp/claude-0/-home-user-package-project/c484ab86-6bce-5144-8fb6-91c94260a9dd/scratchpad/food-sandwich/1-buyer.webm",
+     101.5,
+     110,
+     1.0
+    ]
+   ],
+   "narration": "ثم الدفع، ويبدأ تتبع الطلب."
+  },
+  {
+   "id": "s07",
+   "card": {
+    "kicker": "بوابة المطبعة",
+    "title": "المطبعة تستلم الطلب",
+    "sub": "مطبعة معتمدة في القاهرة"
+   },
+   "narration": "وتستلم مطبعة معتمدة الطلب."
+  },
+  {
+   "id": "s08",
+   "caption": "المطبعة: القبول ثم الطباعة وصور فحص الجودة",
+   "segments": [
+    [
+     "/tmp/claude-0/-home-user-package-project/c484ab86-6bce-5144-8fb6-91c94260a9dd/scratchpad/food-sandwich/2-printer.webm",
+     0,
+     23.7,
+     1.2
+    ]
+   ],
+   "narration": "تقبل المطبعة الطلب بعد مراجعة التصميم وسعرها، وتطبع، وترسل صور فحص الجودة."
+  },
+  {
+   "id": "s09",
+   "caption": "فريق علبة: اعتماد الجودة وحجز الشحن",
+   "segments": [
+    [
+     "/tmp/claude-0/-home-user-package-project/c484ab86-6bce-5144-8fb6-91c94260a9dd/scratchpad/food-sandwich/3-ops.webm",
+     0,
+     7.2,
+     1.0
+    ]
+   ],
+   "narration": "يعتمد فريق علبة الجودة، ويحجز الشحن."
+  },
+  {
+   "id": "s10",
+   "caption": "تم التسليم، مع إيصال الطلب",
+   "segments": [
+    [
+     "/tmp/claude-0/-home-user-package-project/c484ab86-6bce-5144-8fb6-91c94260a9dd/scratchpad/food-sandwich/4-delivered.webm",
+     0,
+     7.6,
+     1.0
+    ]
+   ],
+   "narration": "وتصل العلب إلى المطعم مع إيصال الطلب."
+  },
+  {
+   "id": "s11",
+   "card": {
+    "kicker": "علبة",
+    "title": "تصميم، وسعر فوري، وطباعة معتمدة",
+    "sub": "elba-demo.maherfayad55.workers.dev"
+   },
+   "narration": "علبة: تصميم، وسعر فوري، وطباعة لدى مطابع معتمدة."
+  }
+ ]
+}
