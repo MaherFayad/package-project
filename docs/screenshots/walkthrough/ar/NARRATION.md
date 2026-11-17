@@ -1,6 +1,8 @@
 # Arabic narration script (one line per scene)
 
-Voice: Higgsfield preset **Dylan** (`voice_id` b847bc29-f184-583a-8ad9-d1f1e16d1a60, `voice_type` preset), model `seed_audio`. Save each line as `<workdir>/narration/<scene id>.wav` (or .mp3) and re-run `tools/walkvid.py`; scenes stretch to fit the narration.
+**Current voice (2026-11-17):** Piper `ar_JO-kareem-medium` (open source, runs locally), text diacritized with Mishkal, speaking rate 0.72, each line checked by transcribing it back with Whisper medium (best of up to 4 takes; every line scores at least 0.85 word match). Words Piper misreads are hand-voiced in each scene's `tts` field (captions stay undiacritized). Pipeline: `tools/narrate-piper.py`.
+
+To swap in the Higgsfield voice once credits allow: Higgsfield preset **Dylan** (`voice_id` b847bc29-f184-583a-8ad9-d1f1e16d1a60, `voice_type` preset), model `seed_audio`. Save each line as `<workdir>/narration/<scene id>.wav` (or .mp3) and re-run `tools/walkvid.py`; scenes stretch to fit the narration.
 
 ## Pizza box
 
