@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<style>
+@font-face { font-family: "Inter"; src: url("file:///usr/share/fonts/opentype/inter/Inter-Regular.otf"); font-weight: 400; }
+@font-face { font-family: "Inter"; src: url("file:///usr/share/fonts/opentype/inter/Inter-Medium.otf"); font-weight: 500; }
+@font-face { font-family: "Inter"; src: url("file:///usr/share/fonts/opentype/inter/Inter-SemiBold.otf"); font-weight: 600; }
+@font-face { font-family: "Inter"; src: url("file:///usr/share/fonts/opentype/inter/Inter-Bold.otf"); font-weight: 700; }
+:root { --bg:#f7f4ef; --card:#fff; --ink:#1d1a16; --muted:#6b6257; --line:#e4ddd2; --kraft:#b07a3f; --kraft-soft:#f1e4d2; --buyer:#2f5d8a; --buyer-soft:#e3ecf5; --printer:#8a4f1f; --printer-soft:#f5e6d8; --ops:#4f6b3a; --ops-soft:#e6eedf; }
+* { box-sizing:border-box; margin:0; }
+body { background:#ddd; font-family:Inter, system-ui, sans-serif; color:var(--ink); }
+.sheet { width:1600px; background:var(--bg); padding:56px 64px 60px; display:grid; gap:28px; margin-bottom:40px; }
+.top { display:flex; justify-content:space-between; align-items:flex-end; gap:24px; }
+.eyebrow { font:600 15px/1 Inter; letter-spacing:.14em; text-transform:uppercase; color:var(--kraft); margin-bottom:10px; }
+h1 { font:700 46px/1.08 Inter; letter-spacing:-.015em; }
+.sub { font:400 19px/1.45 Inter; color:var(--muted); max-width:820px; margin-top:10px; }
+.brand { font:700 22px/1 Inter; color:var(--ink); white-space:nowrap; }
+.brand span { color:var(--kraft); }
+/* flow rows */
+.flow { display:grid; grid-template-columns:repeat(4, 1fr); gap:18px 40px; position:relative; }
+.step { position:relative; }
+.step .box { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px 18px 16px; height:100%; display:grid; gap:8px; align-content:start; }
+.step:not(.last)::after { content:""; position:absolute; right:-30px; top:50%; width:16px; height:2px; background:var(--kraft); }
+.step:not(.last)::before { content:""; position:absolute; right:-36px; top:calc(50% - 5px); border:6px solid transparent; border-left:8px solid var(--kraft); }
+.step.wrap::after, .step.wrap::before { display:none; }
+.n { width:30px; height:30px; border-radius:50%; display:grid; place-items:center; font:700 14px/1 Inter; color:#fff; }
+.buyer .n { background:var(--buyer); } .printer .n { background:var(--printer); }
+.t { font:600 19px/1.25 Inter; }
+.d { font:400 15px/1.45 Inter; color:var(--muted); }
+.path { font:500 12.5px/1.3 "DejaVu Sans Mono", monospace; color:var(--kraft); }
+.tag { display:inline-block; font:600 12px/1 Inter; padding:5px 8px; border-radius:6px; }
+.tag.alt { background:var(--kraft-soft); color:var(--ink); }
+.note { font:400 15px/1.5 Inter; color:var(--muted); display:flex; gap:22px; flex-wrap:wrap; }
+.note b { color:var(--ink); font-weight:600; }
+.branch { background:var(--card); border:1px dashed var(--kraft); border-radius:12px; padding:12px 16px; font:400 15px/1.45 Inter; color:var(--muted); }
+.branch b { color:var(--ink); }
+.rowlabel { font:600 13px/1 Inter; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); grid-column:1/-1; margin-top:6px; }
+/* lifecycle */
+.states { display:flex; align-items:center; gap:0; }
+.st { flex:1; text-align:center; min-height:76px; display:flex; flex-direction:column; justify-content:center; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 6px; font:600 14px/1.2 Inter; }
+.st small { display:block; font:400 12.5px/1.3 Inter; color:var(--muted); margin-top:4px; }
+.arr { width:26px; text-align:center; color:var(--kraft); font:700 20px/1 Inter, sans-serif; flex:none; }
+.st.b { border-top:4px solid var(--buyer); } .st.p { border-top:4px solid var(--printer); } .st.o { border-top:4px solid var(--ops); } .st.s { border-top:4px solid #9a8f80; }
+.lanes { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+.lane { border-radius:14px; padding:20px 22px; display:grid; gap:10px; align-content:start; }
+.lane h3 { font:700 20px/1.2 Inter; }
+.lane ul { padding-left:20px; display:grid; gap:6px; font:400 16px/1.45 Inter; }
+.lane.b { background:var(--buyer-soft); } .lane.b h3 { color:var(--buyer); }
+.lane.p { background:var(--printer-soft); } .lane.p h3 { color:var(--printer); }
+.lane.o { background:var(--ops-soft); } .lane.o h3 { color:var(--ops); }
+.legend { display:flex; gap:18px; font:500 14px/1 Inter; color:var(--muted); }
+.legend i { display:inline-block; width:14px; height:4px; border-radius:2px; vertical-align:middle; margin-inline-end:8px; }
+/* features */
+.groups { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; align-items:stretch; }
+.group { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px 22px; display:grid; gap:12px; align-content:start; }
+.group h3 { font:700 19px/1.2 Inter; display:flex; justify-content:space-between; align-items:baseline; }
+.group h3 span { font:500 13px/1 "DejaVu Sans Mono", monospace; color:var(--kraft); }
+.feat { display:grid; gap:2px; padding-top:10px; border-top:1px solid var(--line); }
+.feat:first-of-type { border-top:0; padding-top:0; }
+.feat .f { font:600 15.5px/1.3 Inter; }
+.feat .x { font:400 14.5px/1.4 Inter; color:var(--muted); }
+.span2 { grid-column:span 2; }
+.cols2 { display:grid; grid-template-columns:1fr 1fr; gap:10px 28px; }
+.cols2 .feat:nth-child(2) { border-top:0; padding-top:0; }
+.foot { font:400 14px/1.4 Inter; color:var(--muted); display:flex; justify-content:space-between; }
+</style></head><body>
+
+<!-- 1. Brand flow -->
+<section class="sheet" id="brand">
+  <div class="top"><div><div class="eyebrow" style="color:var(--buyer)">User flow · Brand (buyer)</div><h1>From an idea to a delivered box</h1>
+  <p class="sub">No account is needed to design or see the price. The mobile number is asked only to share, save or order.</p></div><div class="brand">Elba <span>علبة</span></div></div>
+  <div class="flow buyer">
+    <div class="step"><div class="box"><div class="n">1</div><div class="t">Pick a box</div><div class="d">Home, box styles, bags, or search the catalogue of 423 types.</div><div class="path">/ · /boxes · /catalog · /bags</div></div></div>
+    <div class="step"><div class="box"><div class="n">2</div><div class="t">Design in 3D</div><div class="d">Size, board, finishes, logo, text, colour. Turn it, open it, see every side.</div><div class="path">/design/[box]</div></div></div>
+    <div class="step"><div class="box"><div class="n">3</div><div class="t">Or upload a dieline</div><div class="d">A file from any printer: Elba finds the box and fits the art face by face.</div><div class="path">Artwork → Full artwork</div></div></div>
+    <div class="step last"><div class="box"><div class="n">4</div><div class="t">See the price</div><div class="d">Per box, all-in, VAT shown, with the delivery date. Live as you change it.</div><div class="path">price badge</div></div></div>
+    <div class="step"><div class="box"><div class="n">5</div><div class="t">Sign in</div><div class="d">Mobile number and a 6-digit code. No password.</div><div class="path">gate · /login</div></div></div>
+    <div class="step"><div class="box"><div class="n">6</div><div class="t">Checkout</div><div class="d">Quantity, printer, address, company invoice, then approve the proof.</div><div class="path">/checkout/[design]</div></div></div>
+    <div class="step"><div class="box"><div class="n">7</div><div class="t">Pay</div><div class="d">Card, mobile wallet, Fawry or InstaPay. Prepay discount when paid in full.</div><div class="path">/checkout/pay/[order]</div></div></div>
+    <div class="step last"><div class="box"><div class="n">8</div><div class="t">Track and receive</div><div class="d">Printer accepts, printing, quality check, shipped, delivered.</div><div class="path">/orders/[id]</div></div></div>
+  </div>
+  <div class="cols2">
+    <div class="branch"><b>No instant price?</b> Some models are priced on request: the brand sends a request, Elba ops reply with a quote, then the brand checks out the same way.</div>
+    <div class="branch"><b>After delivery:</b> receipt with VAT and company details, review the printer, reorder at today's price, or report a problem within 30 days.</div>
+  </div>
+</section>
+
+<!-- 2. Printer flow -->
+<section class="sheet" id="printer">
+  <div class="top"><div><div class="eyebrow" style="color:var(--printer)">User flow · Printer (vendor)</div><h1>From application to payout</h1>
+  <p class="sub">Printers see the job, the approved artwork and their own price. Never the brand's contact details: Elba handles every buyer conversation.</p></div><div class="brand">Elba <span>علبة</span></div></div>
+  <div class="flow printer">
+    <div class="rowlabel">Join once</div>
+    <div class="step"><div class="box"><div class="n">1</div><div class="t">Apply</div><div class="d">Shop details, machines, boards, finishes, documents.</div><div class="path">/vendor/apply</div></div></div>
+    <div class="step"><div class="box"><div class="n">2</div><div class="t">Approved by Elba</div><div class="d">Ops review the shop and approve it.</div><div class="path">admin</div></div></div>
+    <div class="step"><div class="box"><div class="n">3</div><div class="t">Set prices</div><div class="d">Starter rate cards arrive paused; the printer checks and switches each on.</div><div class="path">/vendor/rate-cards</div></div></div>
+    <div class="step last"><div class="box"><div class="n">4</div><div class="t">Set up the profile</div><div class="d">Capacity, lead time, delivery areas, portfolio.</div><div class="path">/vendor/profile</div></div></div>
+    <div class="rowlabel">Every order</div>
+    <div class="step"><div class="box"><div class="n">5</div><div class="t">New paid job</div><div class="d">Accept or decline within 24 hours.</div><div class="path">/vendor/jobs</div></div></div>
+    <div class="step"><div class="box"><div class="n">6</div><div class="t">Accept</div><div class="d">Print PDF and dieline unlock. 40% advance is raised.</div><div class="path">/vendor/jobs/[number]</div></div></div>
+    <div class="step"><div class="box"><div class="n">7</div><div class="t">Print and send QC</div><div class="d">Start production, then photos of the first sheet and the packed bundle.</div><div class="path">Quality check photos</div></div></div>
+    <div class="step last"><div class="box"><div class="n">8</div><div class="t">Hand over, get paid</div><div class="d">Courier pickup, then the 60% balance after delivery.</div><div class="path">/vendor/payouts</div></div></div>
+  </div>
+  <div class="cols2">
+    <div class="branch"><b>Declines a job?</b> The order stays paid and Elba ops reassign it to another printer.</div>
+    <div class="branch"><b>QC photos rejected?</b> The job goes back to production with ops' notes; the printer fixes and resends.</div>
+  </div>
+</section>
+
+<!-- 3. Lifecycle -->
+<section class="sheet" id="lifecycle">
+  <div class="top"><div><div class="eyebrow">Order lifecycle</div><h1>Who moves the order</h1>
+  <p class="sub">Every status change goes through one set of rules, so the brand, the printer and Elba ops always see the same order.</p></div><div class="brand">Elba <span>علبة</span></div></div>
+  <div class="states">
+    <div class="st b">Waiting for payment<small>order placed</small></div><div class="arr">→</div>
+    <div class="st s">Paid<small>payment confirmed</small></div><div class="arr">→</div>
+    <div class="st p">Accepted<small>by the printer</small></div><div class="arr">→</div>
+    <div class="st p">In production</div><div class="arr">→</div>
+    <div class="st p">Quality check<small>photos sent</small></div><div class="arr">→</div>
+    <div class="st o">Ready to ship<small>QC approved</small></div><div class="arr">→</div>
+    <div class="st o">Shipped</div><div class="arr">→</div>
+    <div class="st s">Delivered</div>
+  </div>
+  <div class="legend"><span><i style="background:var(--buyer)"></i>Brand</span><span><i style="background:var(--printer)"></i>Printer</span><span><i style="background:var(--ops)"></i>Elba ops</span><span><i style="background:#9a8f80"></i>Automatic (payment, courier)</span></div>
+  <div class="lanes">
+    <div class="lane b"><h3>Brand</h3><ul><li>Places and pays the order</li><li>Can cancel before paying</li><li>Reviews, reorders or reports a problem</li></ul></div>
+    <div class="lane p"><h3>Printer</h3><ul><li>Accepts or declines a paid job</li><li>Starts production</li><li>Sends the quality-check photos</li></ul></div>
+    <div class="lane o"><h3>Elba ops</h3><ul><li>Approve or reject the QC photos</li><li>Book the courier</li><li>Refund before shipping, settle disputes, pay printers</li></ul></div>
+  </div>
+</section>
+
+<!-- 4. Features: brand side -->
+<section class="sheet" id="features-brand">
+  <div class="top"><div><div class="eyebrow">Features · for brands</div><h1>Everything a brand can do</h1></div><div class="brand">Elba <span>علبة</span></div></div>
+  <div class="groups">
+    <div class="group"><h3>Public site</h3>
+      <div class="feat"><div class="f">Home</div><div class="x">Printed boxes for your brand, live starting prices.</div></div>
+      <div class="feat"><div class="f">Start</div><div class="x">Say what you pack; get pointed to the right box.</div></div>
+      <div class="feat"><div class="f">Box styles and sizes</div><div class="x">Each box with prices by quantity and an order button.</div></div>
+      <div class="feat"><div class="f">Bags and bottles</div><div class="x">Paper, plastic and reusable bags; bottles and jars with labels.</div></div>
+      <div class="feat"><div class="f">Catalogue</div><div class="x">All 423 packaging types, searchable.</div></div>
+      <div class="feat"><div class="f">Pricing · Why Elba</div><div class="x">How a price is built; one price, vetted printers, QC before shipping.</div></div>
+      <div class="feat"><div class="f">Printers</div><div class="x">Vetted printers with machines, portfolio and rating.</div></div>
+    </div>
+    <div class="group"><h3>3D designer <span>387 models</span></h3>
+      <div class="feat"><div class="f">Live 3D model</div><div class="x">Turn, zoom, fold open; flat dieline and single-face views.</div></div>
+      <div class="feat"><div class="f">Basics / All options</div><div class="x">Logo, name, colour, size; or every board, finish and layer.</div></div>
+      <div class="feat"><div class="f">Full artwork</div><div class="x">Upload a finished print file, outside and inside.</div></div>
+      <div class="feat"><div class="f">Dieline recognition</div><div class="x">Another printer's file: Elba finds the box and fits it per face.</div></div>
+      <div class="feat"><div class="f">Fit and print check</div><div class="x">Warns about crop, low resolution, text near folds.</div></div>
+      <div class="feat"><div class="f">Dimensions · reference can</div><div class="x">Real size in cm, a can for scale; both toggle in the bottom bar.</div></div>
+      <div class="feat"><div class="f">Export · Share · Autosave</div><div class="x">PNG, photo render, print PDF; a share link; saves as you go.</div></div>
+    </div>
+    <div class="group"><h3>Buying</h3>
+      <div class="feat"><div class="f">Live price</div><div class="x">Per box, all-in, VAT 14% shown, delivery date.</div></div>
+      <div class="feat"><div class="f">Quote request</div><div class="x">For models without an instant price.</div></div>
+      <div class="feat"><div class="f">Sign in</div><div class="x">Mobile number and a 6-digit code.</div></div>
+      <div class="feat"><div class="f">Checkout</div><div class="x">Quantity, printer, address, company invoice, proof approval.</div></div>
+      <div class="feat"><div class="f">Payment</div><div class="x">Card, wallet, Fawry, InstaPay through Paymob.</div></div>
+      <div class="feat"><div class="f">Orders · Receipt</div><div class="x">Tracking, QC photos, receipt with VAT, reorder, review, report.</div></div>
+      <div class="feat"><div class="f">Account</div><div class="x">Designs, orders, brand colours, privacy requests (PDPL).</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 5. Features: printer + ops + platform -->
+<section class="sheet" id="features-ops">
+  <div class="top"><div><div class="eyebrow">Features · for printers and Elba ops</div><h1>The portal, the console, the platform</h1></div><div class="brand">Elba <span>علبة</span></div></div>
+  <div class="groups">
+    <div class="group"><h3 style="color:var(--printer)">Printer portal</h3>
+      <div class="feat"><div class="f">Apply</div><div class="x">Application to print for Elba.</div></div>
+      <div class="feat"><div class="f">Dashboard</div><div class="x">New jobs, due dates, money to come.</div></div>
+      <div class="feat"><div class="f">Jobs</div><div class="x">Paid orders by status; accept or decline.</div></div>
+      <div class="feat"><div class="f">Job page</div><div class="x">Specs, artwork, print files, production, QC photos, notes.</div></div>
+      <div class="feat"><div class="f">Rate cards</div><div class="x">The printer's own prices by box, board, quantity.</div></div>
+      <div class="feat"><div class="f">Profile</div><div class="x">Machines, finishes, lead time, delivery areas, portfolio.</div></div>
+      <div class="feat"><div class="f">Payouts</div><div class="x">40% on accept, 60% after delivery.</div></div>
+    </div>
+    <div class="group"><h3 style="color:var(--ops)">Admin console</h3>
+      <div class="feat"><div class="f">Overview · Orders</div><div class="x">What needs action; QC approval, courier, refunds, reassignment.</div></div>
+      <div class="feat"><div class="f">Printers</div><div class="x">Applications, approvals, suspensions.</div></div>
+      <div class="feat"><div class="f">Disputes · Quotes</div><div class="x">Brand problems; price requests waiting for a reply.</div></div>
+      <div class="feat"><div class="f">Moderation</div><div class="x">Reviews, bios and portfolio photos before they go public.</div></div>
+      <div class="feat"><div class="f">Pricing · Catalogue</div><div class="x">Margin, VAT, prepay discount; which models are listed.</div></div>
+      <div class="feat"><div class="f">Payouts · Users</div><div class="x">Pay printers; accounts and roles.</div></div>
+      <div class="feat"><div class="f">Audit log · Privacy</div><div class="x">Every admin change; data requests under PDPL.</div></div>
+    </div>
+    <div class="group"><h3>Platform</h3>
+      <div class="feat"><div class="f">Arabic and English</div><div class="x">Arabic first, right to left; English on every page.</div></div>
+      <div class="feat"><div class="f">Merchant of record</div><div class="x">Elba sells at its price and buys from the printer at the rate card.</div></div>
+      <div class="feat"><div class="f">Money</div><div class="x">Exact to the piaster; VAT 14%; prepay discount.</div></div>
+      <div class="feat"><div class="f">Shipping</div><div class="x">Bosta courier across all governorates.</div></div>
+      <div class="feat"><div class="f">Notifications</div><div class="x">WhatsApp, SMS and email at each step (providers pending).</div></div>
+      <div class="feat"><div class="f">Privacy</div><div class="x">PDPL 151/2020 consent, retention and data requests.</div></div>
+      <div class="feat"><div class="f">Hosting</div><div class="x">Cloudflare Worker, Neon Postgres, R2 storage.</div></div>
+    </div>
+  </div>
+</section>
+</body></html>
