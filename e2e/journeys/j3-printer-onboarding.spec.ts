@@ -108,15 +108,17 @@ test("J3 · printer: apply → approved → rate card on → job → QC → ship
   await expect.poll(async () => (await db.order.findUniqueOrThrow({ where: { id: job.id } })).status, { timeout: 30_000 }).toBe("IN_PRODUCTION");
   const qc = page.locator("#qc");
   const photos = qc.getByRole("list", { name: t("vendorPortal.job.qcTitle") });
-  await qc.locator('input[type="file"]').setInputFiles({ name: "sheet.png", mimeType: "image/png", buffer: ONE_PX_PNG });
+  // One drop zone per QC slot, each a group named after its slot (DropZone aria-labelledby).
+  const slotInput = (kind: "FIRST_SHEET" | "PACKED_BUNDLE") =>
+    qc.getByRole("group", { name: t(`vendorPortal.job.qcSlots.${kind}`), exact: true }).locator('input[type="file"]');
+  await slotInput("FIRST_SHEET").setInputFiles({ name: "sheet.png", mimeType: "image/png", buffer: ONE_PX_PNG });
   await expect(photos.getByRole("listitem")).toHaveCount(1, { timeout: 30_000 });
-  await qc.getByLabel(t("vendorPortal.job.qcKind")).selectOption("PACKED_BUNDLE");
-  await qc.locator('input[type="file"]').setInputFiles({ name: "bundle.png", mimeType: "image/png", buffer: ONE_PX_PNG });
+  await slotInput("PACKED_BUNDLE").setInputFiles({ name: "bundle.png", mimeType: "image/png", buffer: ONE_PX_PNG });
   await expect(photos.getByRole("listitem")).toHaveCount(2, { timeout: 30_000 });
   await qc.getByRole("button", { name: t("vendorPortal.job.actions.submitQc") }).click();
   await expect.poll(async () => (await db.order.findUniqueOrThrow({ where: { id: job.id } })).status, { timeout: 30_000 }).toBe("QC_PENDING");
 
-  // 5. Ops approve QC, book the courier, approve and pay the 40% advance.
+  // 5. Ops approve QC, book the courier and mark the 40% advance paid.
   await ap.goto(`/${locale}/admin/orders/${job.number}`);
   await ap.getByRole("button", { name: t("admin.order.qc.approve") }).click();
   await ap.getByRole("dialog").getByRole("button", { name: t("admin.order.qc.approve") }).click();
@@ -128,8 +130,7 @@ test("J3 · printer: apply → approved → rate card on → job → QC → ship
   expect(advance.amountPiasters).toBe(Math.round(cost * 0.4));
   await ap.reload();
   const kind = t("admin.payouts.kinds.ADVANCE");
-  await ap.getByRole("button", { name: `${t("admin.payouts.steps.APPROVE")}: ${job.number}, ${kind}` }).click();
-  await expect.poll(async () => (await db.payout.findUniqueOrThrow({ where: { id: advance.id } })).status, { timeout: 30_000 }).toBe("APPROVED");
+  // A-01: "Mark paid" is one confirmed step from PENDING (approve is written with it), no separate Approve button.
   await ap.getByRole("button", { name: `${t("admin.payouts.steps.PAY")}: ${job.number}, ${kind}` }).click();
   await ap.getByRole("dialog").getByRole("button", { name: t("admin.payouts.steps.PAY") }).click();
   await expect.poll(async () => (await db.payout.findUniqueOrThrow({ where: { id: advance.id } })).status, { timeout: 30_000 }).toBe("PAID");

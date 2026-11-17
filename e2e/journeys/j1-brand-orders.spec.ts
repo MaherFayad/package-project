@@ -48,7 +48,8 @@ test("J1 · coffee brand: design → share → OTP → company checkout → pay 
   await panel.getByRole("button", { name: tr(locale, "Add text") }).click();
   await panel.getByRole("textbox", { name: t("designer.layer.textValue"), exact: true }).fill("Bunn Coffee · Zamalek");
   await panel.getByRole("tab", { name: t("designer.tabs.box") }).click();
-  await panel.getByRole("radio", { name: t("materials.E_FLUTE_WHITE") }).check();
+  // R2-07: the Board picker shows the plain board name ("White board"), not the trade grade.
+  await panel.getByRole("radio", { name: t("materialsPlain.E_FLUTE_WHITE"), exact: true }).check();
   // Anchored: the radio name carries a help line, and in Arabic "gold" is a prefix of "rose gold".
   const gold = FINISHES.FOIL_GOLD.name[locale];
   const rose = FINISHES.FOIL_ROSE_GOLD.name[locale];
@@ -81,7 +82,8 @@ test("J1 · coffee brand: design → share → OTP → company checkout → pay 
   const viewer = await browser.newPage();
   await viewer.goto(shareUrl);
   if (named) await expect(viewer.getByRole("heading", { level: 1 })).toContainText("Bunn Coffee");
-  await expect(viewer.getByText(FINISHES.FOIL_GOLD.name[locale]).first()).toBeVisible();
+  // Visible only: a hidden header menu item ("Preview gold foil and gloss…") matches the same text.
+  await expect(viewer.getByText(FINISHES.FOIL_GOLD.name[locale]).filter({ visible: true }).first()).toBeVisible();
   await viewer.close();
 
   // 4. Instant price → "Order this box" → checkout.
@@ -105,7 +107,11 @@ test("J1 · coffee brand: design → share → OTP → company checkout → pay 
   await page.getByLabel(t("buyer.company.name")).fill("Bunn Coffee LLC");
   await page.getByLabel(t("buyer.company.taxId")).fill("123456789");
   await expect(page.getByRole("tab", { name: t("checkout.proof.tab3d") })).toBeVisible({ timeout: 30_000 });
-  await page.getByLabel(t("buyer.easy.proof.approve")).check();
+  // The label gains ", with the notes above" when preflight has notes (the logo can trigger them).
+  await page
+    .getByRole("checkbox", { name: t("buyer.easy.proof.approve"), exact: true })
+    .or(page.getByRole("checkbox", { name: t("buyer.easy.proof.approveAsIs"), exact: true }))
+    .check();
   await summary.getByRole("button", { name: t("buyer.easy.actions.toPay") }).click();
 
   // 6. Payment page: the amount due is the order's total; VAT is 14% of the ex-VAT subtotal.
@@ -149,10 +155,12 @@ test("J1 · coffee brand: design → share → OTP → company checkout → pay 
   await expect.poll(async () => (await db.order.findUniqueOrThrow({ where: { id: orderId } })).status, { timeout: 30_000 }).toBe("IN_PRODUCTION");
   const qc = vp.locator("#qc");
   const photos = qc.getByRole("list", { name: t("vendorPortal.job.qcTitle") });
-  await qc.locator('input[type="file"]').setInputFiles({ name: "sheet.png", mimeType: "image/png", buffer: ONE_PX_PNG });
+  // One drop zone per QC slot, each a group named after its slot (DropZone aria-labelledby).
+  const slotInput = (kind: "FIRST_SHEET" | "PACKED_BUNDLE") =>
+    qc.getByRole("group", { name: t(`vendorPortal.job.qcSlots.${kind}`), exact: true }).locator('input[type="file"]');
+  await slotInput("FIRST_SHEET").setInputFiles({ name: "sheet.png", mimeType: "image/png", buffer: ONE_PX_PNG });
   await expect(photos.getByRole("listitem")).toHaveCount(1, { timeout: 30_000 });
-  await qc.getByLabel(t("vendorPortal.job.qcKind")).selectOption("PACKED_BUNDLE");
-  await qc.locator('input[type="file"]').setInputFiles({ name: "bundle.png", mimeType: "image/png", buffer: ONE_PX_PNG });
+  await slotInput("PACKED_BUNDLE").setInputFiles({ name: "bundle.png", mimeType: "image/png", buffer: ONE_PX_PNG });
   await expect(photos.getByRole("listitem")).toHaveCount(2, { timeout: 30_000 });
   await qc.getByRole("button", { name: t("vendorPortal.job.actions.submitQc") }).click();
   await expect.poll(async () => (await db.order.findUniqueOrThrow({ where: { id: orderId } })).status, { timeout: 30_000 }).toBe("QC_PENDING");
